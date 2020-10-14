@@ -71,7 +71,7 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'dedupError': None,
-                        'dedupOutput': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
                         'errored': False,
                         'id': 'event_id',
                         'matched': False,
@@ -100,7 +100,7 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'dedupError': None,
-                        'dedupOutput': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
                         'errored': True,
                         'id': 'event_id',
                         'matched': None,

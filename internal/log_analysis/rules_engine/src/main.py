@@ -78,6 +78,8 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
                 'titleError': format_exception(rule_result.title_exception),
                 'dedupOutput': rule_result.dedup_output,
                 'dedupError': format_exception(rule_result.dedup_exception),
+                'alertContextOutput': rule_result.alert_context,
+                'alertContextError': format_exception(rule_result.alert_context_exception),
             }
         )
 

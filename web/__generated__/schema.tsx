@@ -1069,6 +1069,17 @@ export type RuleDetails = {
   versionId?: Maybe<Scalars['ID']>;
 };
 
+export type RuleResult = {
+  __typename?: 'RuleResult';
+  id?: Maybe<Scalars['String']>;
+  rule_id?: Maybe<Scalars['String']>;
+  matched?: Maybe<Scalars['Boolean']>;
+  title_output?: Maybe<Scalars['String']>;
+  dedup_output?: Maybe<Scalars['String']>;
+  errored?: Maybe<Scalars['Boolean']>;
+  error_message?: Maybe<Scalars['String']>;
+};
+
 export type RuleSummary = {
   __typename?: 'RuleSummary';
   displayName?: Maybe<Scalars['String']>;
@@ -1271,13 +1282,10 @@ export type TestRuleRecordFunctions = {
 
 export type TestRuleResponse = {
   __typename?: 'TestRuleResponse';
-  results: Array<TestRuleRecord>;
-};
-
-export type TestRuleSubRecord = {
-  __typename?: 'TestRuleSubRecord';
-  output?: Maybe<Scalars['String']>;
-  error?: Maybe<Error>;
+  testSummary?: Maybe<Scalars['Boolean']>;
+  testsPassed?: Maybe<Array<Maybe<RuleResult>>>;
+  testsFailed?: Maybe<Array<Maybe<Scalars['String']>>>;
+  testsErrored?: Maybe<Array<Maybe<PolicyUnitTestError>>>;
 };
 
 export type UpdateAlertStatusInput = {
@@ -1588,6 +1596,11 @@ export type ResolversTypes = {
   AddPolicyInput: AddPolicyInput;
   DetectionTestDefinitionInput: DetectionTestDefinitionInput;
   AddRuleInput: AddRuleInput;
+  TestPolicyInput: TestPolicyInput;
+  AnalysisTypeEnum: AnalysisTypeEnum;
+  TestRuleResponse: ResolverTypeWrapper<TestRuleResponse>;
+  RuleResult: ResolverTypeWrapper<RuleResult>;
+  PolicyUnitTestError: ResolverTypeWrapper<PolicyUnitTestError>;
   AddGlobalPythonModuleInput: AddGlobalPythonModuleInput;
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
@@ -1601,15 +1614,6 @@ export type ResolversTypes = {
   SuppressPoliciesInput: SuppressPoliciesInput;
   TestPolicyInput: TestPolicyInput;
   TestPolicyResponse: ResolverTypeWrapper<TestPolicyResponse>;
-  TestPolicyRecord: ResolverTypeWrapper<TestPolicyRecord>;
-  TestRecord: ResolversTypes['TestPolicyRecord'] | ResolversTypes['TestRuleRecord'];
-  Error: ResolverTypeWrapper<Error>;
-  TestPolicyRecordFunctions: ResolverTypeWrapper<TestPolicyRecordFunctions>;
-  TestRuleSubRecord: ResolverTypeWrapper<TestRuleSubRecord>;
-  TestRuleInput: TestRuleInput;
-  TestRuleResponse: ResolverTypeWrapper<TestRuleResponse>;
-  TestRuleRecord: ResolverTypeWrapper<TestRuleRecord>;
-  TestRuleRecordFunctions: ResolverTypeWrapper<TestRuleRecordFunctions>;
   UpdateAlertStatusInput: UpdateAlertStatusInput;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
@@ -1741,6 +1745,11 @@ export type ResolversParentTypes = {
   AddPolicyInput: AddPolicyInput;
   DetectionTestDefinitionInput: DetectionTestDefinitionInput;
   AddRuleInput: AddRuleInput;
+  TestPolicyInput: TestPolicyInput;
+  AnalysisTypeEnum: AnalysisTypeEnum;
+  TestRuleResponse: TestRuleResponse;
+  RuleResult: RuleResult;
+  PolicyUnitTestError: PolicyUnitTestError;
   AddGlobalPythonModuleInput: AddGlobalPythonModuleInput;
   DeletePolicyInput: DeletePolicyInput;
   DeletePolicyInputItem: DeletePolicyInputItem;
@@ -1754,15 +1763,6 @@ export type ResolversParentTypes = {
   SuppressPoliciesInput: SuppressPoliciesInput;
   TestPolicyInput: TestPolicyInput;
   TestPolicyResponse: TestPolicyResponse;
-  TestPolicyRecord: TestPolicyRecord;
-  TestRecord: ResolversParentTypes['TestPolicyRecord'] | ResolversParentTypes['TestRuleRecord'];
-  Error: Error;
-  TestPolicyRecordFunctions: TestPolicyRecordFunctions;
-  TestRuleSubRecord: TestRuleSubRecord;
-  TestRuleInput: TestRuleInput;
-  TestRuleResponse: TestRuleResponse;
-  TestRuleRecord: TestRuleRecord;
-  TestRuleRecordFunctions: TestRuleRecordFunctions;
   UpdateAlertStatusInput: UpdateAlertStatusInput;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
@@ -2750,6 +2750,20 @@ export type RuleDetailsResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
+export type RuleResultResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['RuleResult'] = ResolversParentTypes['RuleResult']
+> = {
+  id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  rule_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  matched?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  title_output?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dedup_output?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  errored?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  error_message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
 export type RuleSummaryResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['RuleSummary'] = ResolversParentTypes['RuleSummary']
@@ -2987,16 +3001,18 @@ export type TestRuleResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['TestRuleResponse'] = ResolversParentTypes['TestRuleResponse']
 > = {
-  results?: Resolver<Array<ResolversTypes['TestRuleRecord']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type TestRuleSubRecordResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['TestRuleSubRecord'] = ResolversParentTypes['TestRuleSubRecord']
-> = {
-  output?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
+  testSummary?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  testsPassed?: Resolver<
+    Maybe<Array<Maybe<ResolversTypes['RuleResult']>>>,
+    ParentType,
+    ContextType
+  >;
+  testsFailed?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
+  testsErrored?: Resolver<
+    Maybe<Array<Maybe<ResolversTypes['PolicyUnitTestError']>>>,
+    ParentType,
+    ContextType
+  >;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

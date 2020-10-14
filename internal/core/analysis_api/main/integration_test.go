@@ -395,7 +395,6 @@ func testPolicyPass(t *testing.T) {
 			TestSummary: true,
 			Results: []*models.RuleResult{
 				{
-					TestName:    "This will be True",
 					DedupOutput: "defaultDedupString:RuleAPITestRule",
 					Errored:     false,
 					ID:          "0",
@@ -403,7 +402,6 @@ func testPolicyPass(t *testing.T) {
 					RuleID:      "RuleAPITestRule",
 					TitleOutput: "",
 				}, {
-					TestName:    "This will also be True",
 					DedupOutput: "defaultDedupString:RuleAPITestRule",
 					Errored:     false,
 					ID:          "1",
@@ -459,7 +457,6 @@ func testPolicyPassAllResourceTypes(t *testing.T) {
 			TestSummary: true,
 			Results: []*models.RuleResult{
 				{
-					TestName:    "This will be True",
 					DedupOutput: "defaultDedupString:RuleAPITestRule",
 					Errored:     false,
 					ID:          "0",
@@ -467,7 +464,6 @@ func testPolicyPassAllResourceTypes(t *testing.T) {
 					RuleID:      "RuleAPITestRule",
 					TitleOutput: "",
 				}, {
-					TestName:    "This will also be True",
 					DedupOutput: "defaultDedupString:RuleAPITestRule",
 					Errored:     false,
 					ID:          "1",
