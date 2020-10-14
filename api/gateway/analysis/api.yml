@@ -1178,6 +1178,7 @@ definitions:
     properties:
       testSummary:
         type: boolean
+        description: True if all tests passed
       results:
         type: 'array'
         items:

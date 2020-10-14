@@ -51,13 +51,8 @@ class RuleResult:
 
     @property
     def errored(self) -> bool:
-        """Returns whether the rule evaluation raised an error"""
-        return bool(self.exception)
-
-    @property
-    def exception(self) -> Optional[Exception]:
-        """Returns any exception raised by one of the rule functions """
-        return self.rule_exception or self.title_exception or self.dedup_exception
+        """Returns whether any of the rule functions (rule()/title()/dedup()) raised an error"""
+        return bool(self.rule_exception or self.title_exception or self.dedup_exception)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -126,30 +121,36 @@ class Rule:
 
         self._default_dedup_string = 'defaultDedupString:{}'.format(self.rule_id)
 
-    def run(self, event: Dict[str, Any], raise_title_dedup: bool = False) -> RuleResult:
+    def run(self, event: Dict[str, Any], batch_mode: bool = True) -> RuleResult:
         """
         Analyze a log line with this rule and return True, False, or an error.
         :param event: The event to run the rule against
-        :param raise_title_dedup: Whether to raise exceptions from title() and dedup() or use default values
+        :param batch_mode: Whether the rule runs as part of the log analysis or as part of a simple rule test.
+        In batch mode, title/dedup functions are not checked if the rule won't trigger an alert and also title()/dedup()
+        won't raise exceptions, so that an alert won't be missed.
         """
-        dedup_string, title = None, None
+        rule_result = RuleResult()
         try:
-            rule_result = self._run_command(self._module.rule, event, bool)
+            rule_result.matched = self._run_command(self._module.rule, event, bool)
         except Exception as err:  # pylint: disable=broad-except
-            return RuleResult(rule_exception=err)
+            rule_result.rule_exception = err
 
-        if rule_result:
-            use_default_on_exception = not raise_title_dedup
-            try:
-                title = self._get_title(event, use_default_on_exception)
-            except Exception as err:  # pylint: disable=broad-except
-                return RuleResult(title_exception=err)
-            try:
-                dedup_string = self._get_dedup(event, title, use_default_on_exception)
-            except Exception as err:  # pylint: disable=broad-except
-                return RuleResult(dedup_exception=err)
+        if batch_mode and not rule_result.matched:
+            # In batch mode (log analysis), there is no need to run the title/dedup functions
+            # if the rule isn't going to trigger an alert
+            return rule_result
 
-        return RuleResult(matched=rule_result, dedup_output=dedup_string, title_output=title)
+        try:
+            rule_result.title_output = self._get_title(event, use_default_on_exception=batch_mode)
+        except Exception as err:  # pylint: disable=broad-except
+            rule_result.title_exception = err
+
+        try:
+            rule_result.dedup_output = self._get_dedup(event, rule_result.title_output, use_default_on_exception=batch_mode)
+        except Exception as err:  # pylint: disable=broad-except
+            rule_result.dedup_exception = err
+
+        return rule_result
 
     # Returns the dedup string for this rule match
     # If the rule match had a custom title, use the title as a deduplication string

@@ -50,7 +50,7 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'dedupError': None,
-                        'dedupOutput': 'str: defaultDedupString:rule_id',
+                        'dedupOutput': 'defaultDedupString:rule_id',
                         'errored': False,
                         'id': 'event_id',
                         'matched': True,
@@ -71,7 +71,7 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'dedupError': None,
-                        'dedupOutput': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
                         'errored': False,
                         'id': 'event_id',
                         'matched': False,
@@ -100,7 +100,7 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'dedupError': None,
-                        'dedupOutput': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
                         'errored': True,
                         'id': 'event_id',
                         'matched': None,
@@ -146,7 +146,7 @@ class TestMainDirectAnalysis(TestCase):
                         'dedupOutput': None,
                         'errored': True,
                         'id': 'event_id',
-                        'matched': None,
+                        'matched': True,
                         'ruleError': None,
                         'ruleId': 'rule_id',
                         'titleError': None,
@@ -175,10 +175,10 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'dedupError': None,
-                        'dedupOutput': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
                         'errored': True,
                         'id': 'event_id',
-                        'matched': None,
+                        'matched': True,
                         'ruleError': None,
                         'ruleId': 'rule_id',
                         'titleError': 'Exception: title error',

@@ -66,7 +66,7 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
             results.append({'id': event['id'], 'ruleId': raw_rule['id'], 'errored': True, 'genericError': format_exception(init_exception)})
             continue
 
-        rule_result = test_rule.run(event['data'], raise_title_dedup=True)
+        rule_result = test_rule.run(event['data'], batch_mode=False)
         results.append(
             {
                 'id': event['id'],
@@ -74,9 +74,9 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
                 'errored': rule_result.errored,
                 'matched': rule_result.matched,
                 'ruleError': format_exception(rule_result.rule_exception),
-                'titleOutput': format_exception(rule_result.title_output),
+                'titleOutput': rule_result.title_output,
                 'titleError': format_exception(rule_result.title_exception),
-                'dedupOutput': format_exception(rule_result.dedup_output),
+                'dedupOutput': rule_result.dedup_output,
                 'dedupError': format_exception(rule_result.dedup_exception),
             }
         )

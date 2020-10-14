@@ -39,7 +39,7 @@ type TestRuleResult struct {
 	// results
 	Results []*RuleResult `json:"results"`
 
-	// test summary
+	// True if all tests passed
 	TestSummary bool `json:"testSummary,omitempty"`
 }
 
