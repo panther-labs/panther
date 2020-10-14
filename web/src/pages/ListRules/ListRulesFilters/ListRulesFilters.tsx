@@ -45,7 +45,7 @@ const defaultValues = {
 
 const sortingOpts: SortingOptions = [
   {
-    opt: 'Most Recent Modified',
+    opt: 'Most Recently Modified',
     resolution: {
       sortBy: 'lastModified' as ListRulesSortFieldsEnum,
       sortDir: 'descending' as SortDirEnum,
