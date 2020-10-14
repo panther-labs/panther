@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Form, Formik, FastField } from 'formik';
+import { Form, Formik, Field } from 'formik';
 import { Box, Flex, Button, Dropdown, DropdownButton, DropdownMenu } from 'pouncejs';
 import { ListRulesInput, SeverityEnum } from 'Generated/schema';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
@@ -73,7 +73,7 @@ const DropdownFilters: React.FC = () => {
           >
             <Form>
               <Box pb={4}>
-                <FastField
+                <Field
                   name="severity"
                   as={FormikCombobox}
                   items={['', ...severityOptions]}
@@ -84,7 +84,7 @@ const DropdownFilters: React.FC = () => {
                 />
               </Box>
               <Box pb={4}>
-                <FastField
+                <Field
                   name="enabled"
                   as={FormikCombobox}
                   items={['true', 'false']}
