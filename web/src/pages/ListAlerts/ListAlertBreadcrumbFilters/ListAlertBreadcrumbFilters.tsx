@@ -65,7 +65,7 @@ const ListAlertBreadcrumbFilters: React.FC = () => {
     const { logTypes, ...params } = requestParams;
     return {
       ...pick(params, filterKeys),
-      logTypes: logTypes && logTypes?.length > 0 ? logTypes : [ALL_TYPES],
+      logTypes: logTypes || ALL_TYPES,
     } as ListAlertsFiltersValues;
   }, [requestParams]);
 
