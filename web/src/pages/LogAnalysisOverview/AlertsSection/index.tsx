@@ -16,22 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Box, FadeIn } from 'pouncejs';
-import TabsSkeleton from './TabsSkeleton';
-
-const LogAnalysisOverviewPageSkeleton: React.FC = () => {
-  return (
-    <Box as="article" mb={6}>
-      <FadeIn duration={400}>
-        <TabsSkeleton tabs={[{ label: 'Real-Time Alerts' }, { label: 'Most Active Rules' }]} />
-        <TabsSkeleton
-          tabs={[{ label: 'Events by Log Type' }, { label: 'Data Latency by Log Type' }]}
-        />
-        <TabsSkeleton tabs={[{ label: 'Recent Alerts' }, { label: 'High Severity Alerts' }]} />
-      </FadeIn>
-    </Box>
-  );
-};
-
-export default LogAnalysisOverviewPageSkeleton;
+export { default } from './AlertsSection';
