@@ -1179,22 +1179,14 @@ definitions:
     type: object
     properties:
       testSummary:
-        $ref: '#/definitions/testSummary'
-      testsPassed:
+        type: boolean
+        description: True if all tests passed
+      results:
         type: 'array'
         items:
-          $ref: '#/definitions/rulePassResult'
-      testsFailed:
-        $ref: '#/definitions/testsFailed'
-      testsErrored:
-        $ref: '#/definitions/testsErrored'
-    required:
-      - testSummary
-      - testsPassed
-      - testsFailed
-      - testsErrored
+          $ref: '#/definitions/ruleResult'
 
-  rulePassResult:
+  ruleResult:
     # We already have a RuleResult struct with same fields as this model. The go-swagger extension below
     # could allow us to use it. However, it is not supported by the AWS API Gateway.
     #    x-go-type:
@@ -1205,17 +1197,25 @@ definitions:
     properties:
       id:
         type: string
-      rule_id:
+      testName:
+        type: string
+      ruleId:
         type: string
       matched:
         type: boolean
-      title_output:
+      ruleError:
         type: string
-      dedup_output:
+      titleOutput:
+        type: string
+      titleError:
+        type: string
+      dedupOutput:
+        type: string
+      dedupError:
         type: string
       errored:
         type: boolean
-      error_message:
+      genericError:
         type: string
 
   ##### Suppress #####

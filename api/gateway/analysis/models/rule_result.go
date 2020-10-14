@@ -28,19 +28,22 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// RulePassResult rule pass result
+// RuleResult rule result
 //
-// swagger:model rulePassResult
-type RulePassResult struct {
+// swagger:model ruleResult
+type RuleResult struct {
+
+	// dedup error
+	DedupError string `json:"dedupError,omitempty"`
 
 	// dedup output
-	DedupOutput string `json:"dedup_output,omitempty"`
-
-	// error message
-	ErrorMessage string `json:"error_message,omitempty"`
+	DedupOutput string `json:"dedupOutput,omitempty"`
 
 	// errored
 	Errored bool `json:"errored,omitempty"`
+
+	// generic error
+	GenericError string `json:"genericError,omitempty"`
 
 	// id
 	ID string `json:"id,omitempty"`
@@ -48,20 +51,29 @@ type RulePassResult struct {
 	// matched
 	Matched bool `json:"matched,omitempty"`
 
-	// rule id
-	RuleID string `json:"rule_id,omitempty"`
+	// rule error
+	RuleError string `json:"ruleError,omitempty"`
+
+	// rule Id
+	RuleID string `json:"ruleId,omitempty"`
+
+	// test name
+	TestName string `json:"testName,omitempty"`
+
+	// title error
+	TitleError string `json:"titleError,omitempty"`
 
 	// title output
-	TitleOutput string `json:"title_output,omitempty"`
+	TitleOutput string `json:"titleOutput,omitempty"`
 }
 
-// Validate validates this rule pass result
-func (m *RulePassResult) Validate(formats strfmt.Registry) error {
+// Validate validates this rule result
+func (m *RuleResult) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
 // MarshalBinary interface implementation
-func (m *RulePassResult) MarshalBinary() ([]byte, error) {
+func (m *RuleResult) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -69,8 +81,8 @@ func (m *RulePassResult) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *RulePassResult) UnmarshalBinary(b []byte) error {
-	var res RulePassResult
+func (m *RuleResult) UnmarshalBinary(b []byte) error {
+	var res RuleResult
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

@@ -29,7 +29,6 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
 )
 
 // TestRuleResult test rule result
@@ -37,40 +36,18 @@ import (
 // swagger:model TestRuleResult
 type TestRuleResult struct {
 
-	// test summary
-	// Required: true
-	TestSummary TestSummary `json:"testSummary"`
+	// results
+	Results []*RuleResult `json:"results"`
 
-	// tests errored
-	// Required: true
-	TestsErrored TestsErrored `json:"testsErrored"`
-
-	// tests failed
-	// Required: true
-	TestsFailed TestsFailed `json:"testsFailed"`
-
-	// tests passed
-	// Required: true
-	TestsPassed []*RulePassResult `json:"testsPassed"`
+	// True if all tests passed
+	TestSummary bool `json:"testSummary,omitempty"`
 }
 
 // Validate validates this test rule result
 func (m *TestRuleResult) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateTestSummary(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateTestsErrored(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateTestsFailed(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateTestsPassed(formats); err != nil {
+	if err := m.validateResults(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -80,65 +57,21 @@ func (m *TestRuleResult) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *TestRuleResult) validateTestSummary(formats strfmt.Registry) error {
+func (m *TestRuleResult) validateResults(formats strfmt.Registry) error {
 
-	if err := m.TestSummary.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("testSummary")
-		}
-		return err
+	if swag.IsZero(m.Results) { // not required
+		return nil
 	}
 
-	return nil
-}
-
-func (m *TestRuleResult) validateTestsErrored(formats strfmt.Registry) error {
-
-	if err := validate.Required("testsErrored", "body", m.TestsErrored); err != nil {
-		return err
-	}
-
-	if err := m.TestsErrored.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("testsErrored")
-		}
-		return err
-	}
-
-	return nil
-}
-
-func (m *TestRuleResult) validateTestsFailed(formats strfmt.Registry) error {
-
-	if err := validate.Required("testsFailed", "body", m.TestsFailed); err != nil {
-		return err
-	}
-
-	if err := m.TestsFailed.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("testsFailed")
-		}
-		return err
-	}
-
-	return nil
-}
-
-func (m *TestRuleResult) validateTestsPassed(formats strfmt.Registry) error {
-
-	if err := validate.Required("testsPassed", "body", m.TestsPassed); err != nil {
-		return err
-	}
-
-	for i := 0; i < len(m.TestsPassed); i++ {
-		if swag.IsZero(m.TestsPassed[i]) { // not required
+	for i := 0; i < len(m.Results); i++ {
+		if swag.IsZero(m.Results[i]) { // not required
 			continue
 		}
 
-		if m.TestsPassed[i] != nil {
-			if err := m.TestsPassed[i].Validate(formats); err != nil {
+		if m.Results[i] != nil {
+			if err := m.Results[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("testsPassed" + "." + strconv.Itoa(i))
+					return ve.ValidateName("results" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
