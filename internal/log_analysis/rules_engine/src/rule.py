@@ -146,9 +146,9 @@ class Rule:
         except Exception as err:  # pylint: disable=broad-except
             rule_result.rule_exception = err
 
-        if batch_mode and not rule_result.matched:
-            # In batch mode (log analysis), there is no need to run the title/dedup functions
-            # if the rule isn't going to trigger an alert
+        if not rule_result.matched:
+            # There is no need to run the dedup/title functions if rule didn't match (or raised an exception)
+            # because the dedup/title functions may depend on the contents of a matching event.
             return rule_result
 
         try:
