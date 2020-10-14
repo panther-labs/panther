@@ -74,9 +74,7 @@ const DropdownFilters: React.FC = () => {
       <DropdownMenu>
         <Box p={6} pb={4} backgroundColor="navyblue-400" minWidth={425}>
           <Formik<ListAlertsDropdownFiltersValues>
-            onSubmit={(values: ListAlertsDropdownFiltersValues) => {
-              updateRequestParams(values);
-            }}
+            onSubmit={updateRequestParams}
             initialValues={initialDropdownFilters}
           >
             <Form>
