@@ -392,26 +392,22 @@ func testPolicyPass(t *testing.T) {
 			Tests:         policy.Tests,
 		}
 		expected := &models.TestRuleResult{
-			TestSummary:  true,
-			TestsErrored: models.TestsErrored{},
-			TestsFailed:  models.TestsFailed{},
-			TestsPassed: []*models.RulePassResult{
+			TestSummary: true,
+			Results: []*models.RuleResult{
 				{
-					DedupOutput:  "defaultDedupString:RuleAPITestRule",
-					ErrorMessage: "",
-					Errored:      false,
-					ID:           "0",
-					Matched:      true,
-					RuleID:       "RuleAPITestRule",
-					TitleOutput:  "",
+					DedupOutput: "defaultDedupString:RuleAPITestRule",
+					Errored:     false,
+					ID:          "0",
+					Matched:     true,
+					RuleID:      "RuleAPITestRule",
+					TitleOutput: "",
 				}, {
-					DedupOutput:  "defaultDedupString:RuleAPITestRule",
-					ErrorMessage: "",
-					Errored:      false,
-					ID:           "1",
-					Matched:      true,
-					RuleID:       "RuleAPITestRule",
-					TitleOutput:  "",
+					DedupOutput: "defaultDedupString:RuleAPITestRule",
+					Errored:     false,
+					ID:          "1",
+					Matched:     true,
+					RuleID:      "RuleAPITestRule",
+					TitleOutput: "",
 				},
 			},
 		}
@@ -458,26 +454,22 @@ func testPolicyPassAllResourceTypes(t *testing.T) {
 			Tests:         policy.Tests, // just reuse from the example policy
 		}
 		expected := &models.TestRuleResult{
-			TestSummary:  true,
-			TestsErrored: models.TestsErrored{},
-			TestsFailed:  models.TestsFailed{},
-			TestsPassed: []*models.RulePassResult{
+			TestSummary: true,
+			Results: []*models.RuleResult{
 				{
-					DedupOutput:  "defaultDedupString:RuleAPITestRule",
-					ErrorMessage: "",
-					Errored:      false,
-					ID:           "0",
-					Matched:      true,
-					RuleID:       "RuleAPITestRule",
-					TitleOutput:  "",
+					DedupOutput: "defaultDedupString:RuleAPITestRule",
+					Errored:     false,
+					ID:          "0",
+					Matched:     true,
+					RuleID:      "RuleAPITestRule",
+					TitleOutput: "",
 				}, {
-					DedupOutput:  "defaultDedupString:RuleAPITestRule",
-					ErrorMessage: "",
-					Errored:      false,
-					ID:           "1",
-					Matched:      true,
-					RuleID:       "RuleAPITestRule",
-					TitleOutput:  "",
+					DedupOutput: "defaultDedupString:RuleAPITestRule",
+					Errored:     false,
+					ID:          "1",
+					Matched:     true,
+					RuleID:      "RuleAPITestRule",
+					TitleOutput: "",
 				},
 			},
 		}

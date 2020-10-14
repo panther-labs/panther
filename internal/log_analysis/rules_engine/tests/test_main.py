@@ -49,13 +49,15 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'id': 'event_id',
-                        'ruleId': 'rule_id',
-                        'matched': True,
+                        'dedupError': None,
                         'dedupOutput': 'defaultDedupString:rule_id',
-                        'titleOutput': None,
                         'errored': False,
-                        'errorMessage': None,
+                        'id': 'event_id',
+                        'matched': True,
+                        'ruleError': None,
+                        'ruleId': 'rule_id',
+                        'titleError': None,
+                        'titleOutput': None
                     }
                 ]
         }
@@ -68,13 +70,15 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'id': 'event_id',
-                        'ruleId': 'rule_id',
-                        'matched': False,
-                        'dedupOutput': None,
-                        'titleOutput': None,
+                        'dedupError': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
                         'errored': False,
-                        'errorMessage': None,
+                        'id': 'event_id',
+                        'matched': False,
+                        'ruleError': None,
+                        'ruleId': 'rule_id',
+                        'titleError': None,
+                        'titleOutput': None
                     }
                 ]
         }
@@ -95,13 +99,15 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'id': 'event_id',
-                        'ruleId': 'rule_id',
-                        'matched': None,
-                        'dedupOutput': None,
-                        'titleOutput': None,
+                        'dedupError': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
                         'errored': True,
-                        'errorMessage': 'Exception: Failure message',
+                        'id': 'event_id',
+                        'matched': None,
+                        'ruleError': 'Exception: Failure message',
+                        'ruleId': 'rule_id',
+                        'titleError': None,
+                        'titleOutput': None
                     }
                 ]
         }
@@ -111,15 +117,12 @@ class TestMainDirectAnalysis(TestCase):
         payload = {'rules': [{'id': 'rule_id', 'body': 'import stuff'}], 'events': [{'id': 'event_id', 'data': 'data'}]}
         expected_response = {
             'results':
-                [
-                    {
-                        'id': 'event_id',
-                        'ruleId': 'rule_id',
-                        'matched': False,
-                        'errored': True,
-                        'errorMessage': 'ModuleNotFoundError: No module named \'stuff\'',
-                    }
-                ]
+                [{
+                    'errored': True,
+                    'genericError': "ModuleNotFoundError: No module named 'stuff'",
+                    'id': 'event_id',
+                    'ruleId': 'rule_id'
+                }]
         }
         self.assertEqual(expected_response, lambda_handler(payload, None))
 
@@ -139,12 +142,14 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
+                        'dedupError': 'Exception: dedup error',
                         'dedupOutput': None,
-                        'errorMessage': 'Exception: dedup error',
                         'errored': True,
                         'id': 'event_id',
-                        'matched': None,
+                        'matched': True,
+                        'ruleError': None,
                         'ruleId': 'rule_id',
+                        'titleError': None,
                         'titleOutput': None
                     }
                 ]
@@ -169,12 +174,14 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'dedupOutput': None,
-                        'errorMessage': 'Exception: title error',
+                        'dedupError': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
                         'errored': True,
                         'id': 'event_id',
-                        'matched': None,
+                        'matched': True,
+                        'ruleError': None,
                         'ruleId': 'rule_id',
+                        'titleError': 'Exception: title error',
                         'titleOutput': None
                     }
                 ]
