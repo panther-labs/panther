@@ -43,9 +43,9 @@ const RuleCardOptions: React.FC<RuleCardOptionsProps> = ({ rule }) => {
     <Dropdown>
       <DropdownButton as={Box}>
         <IconButton
-          variant="outline"
+          variant="ghost"
           variantColor="navyblue"
-          icon="caret-down"
+          icon="more"
           size="small"
           aria-label="Rule Options"
         />
