@@ -61,7 +61,7 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
             />
           </GenericItemCard.ValuesGroup>
           <GenericItemCard.ValuesGroup>
-            <Flex ml="auto" mr={0} align="flex-end" spacing={2}>
+            <Flex ml="auto" mr={0} align="flex-end" spacing={4}>
               <GenericItemCard.Value
                 label="Threshold"
                 value={rule?.threshold ? rule?.threshold.toLocaleString() : '0'}
