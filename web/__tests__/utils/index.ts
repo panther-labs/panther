@@ -17,6 +17,7 @@
  */
 
 export * from '@testing-library/react';
+export { renderHook } from '@testing-library/react-hooks';
 export { default as faker } from 'faker';
 
 export * from './helpers';

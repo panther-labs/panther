@@ -126,7 +126,7 @@ func Deploy() error {
 
 // Stop early if there is a known issue with the dev environment.
 func masterDeployPreCheck() error {
-	if err := deploy.PreCheck(false); err != nil {
+	if err := deploy.PreCheck(); err != nil {
 		return err
 	}
 

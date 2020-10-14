@@ -65,7 +65,7 @@ var supportedRegions = map[string]bool{
 // Deploy Panther to your AWS account
 func Deploy() error {
 	start := time.Now()
-	if err := PreCheck(true); err != nil {
+	if err := PreCheck(); err != nil {
 		return err
 	}
 
@@ -102,7 +102,7 @@ func Deploy() error {
 }
 
 // Fail the deploy early if there is a known issue with the user's environment.
-func PreCheck(checkForOldVersion bool) error {
+func PreCheck() error {
 	// Ensure the AWS region is supported
 	if region := clients.Region(); !supportedRegions[region] {
 		return fmt.Errorf("panther is not supported in %s region", region)
@@ -130,19 +130,6 @@ func PreCheck(checkForOldVersion bool) error {
 	// Ensure swagger is available
 	if _, err = sh.Output(util.Swagger, "version"); err != nil {
 		return fmt.Errorf("swagger is not available (%v): try 'mage setup'", err)
-	}
-
-	// There were mage migrations to help with v1.3 and v1.4 source deployments,
-	// but these were removed in v1.6. As a result, old deployments first need to upgrade to v1.5.1
-	if checkForOldVersion {
-		bootstrapVersion, err := awscfn.StackTag(clients.Cfn(), "PantherVersion", cfnstacks.Bootstrap)
-		if err != nil {
-			log.Warnf("failed to describe stack %s: %v", cfnstacks.Bootstrap, err)
-		}
-		if bootstrapVersion != "" && bootstrapVersion < "v1.4.0" {
-			return fmt.Errorf("trying to upgrade from %s to %s will not work - upgrade to v1.5.1 first",
-				bootstrapVersion, util.RepoVersion())
-		}
 	}
 
 	return nil
@@ -199,40 +186,66 @@ func deploySingleStack(stack string) error {
 		if err := build.Lambda(); err != nil { // custom-resources
 			return err
 		}
-		_, err := deployBootstrapGatewayStack(settings,
-			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap))
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap)
+		if err != nil {
+			return err
+		}
+		_, err = deployBootstrapGatewayStack(settings, outputs)
 		return err
 	case cfnstacks.Appsync:
-		return deployAppsyncStack(awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
+		if err != nil {
+			return err
+		}
+		return deployAppsyncStack(outputs)
 	case cfnstacks.Cloudsec:
 		if err := build.Lambda(); err != nil {
 			return err
 		}
-		return deployCloudSecurityStack(settings,
-			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
+		if err != nil {
+			return err
+		}
+		return deployCloudSecurityStack(settings, outputs)
 	case cfnstacks.Core:
 		if err := build.Lambda(); err != nil {
 			return err
 		}
-		return deployCoreStack(settings,
-			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
+		if err != nil {
+			return err
+		}
+		return deployCoreStack(settings, outputs)
 	case cfnstacks.Dashboard:
-		bucket := awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap)["SourceBucket"]
-		return deployDashboardStack(bucket)
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap)
+		if err != nil {
+			return err
+		}
+		return deployDashboardStack(outputs["SourceBucket"])
 	case cfnstacks.Frontend:
 		if err := setFirstUser(settings); err != nil {
 			return err
 		}
-		return deployFrontend(awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway), settings)
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
+		if err != nil {
+			return err
+		}
+		return deployFrontend(outputs, settings)
 	case cfnstacks.LogAnalysis:
 		if err := build.Lambda(); err != nil {
 			return err
 		}
-		return deployLogAnalysisStack(settings,
-			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
+		if err != nil {
+			return err
+		}
+		return deployLogAnalysisStack(settings, outputs)
 	case cfnstacks.Onboard:
-		return deployOnboardStack(settings,
-			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap))
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap)
+		if err != nil {
+			return err
+		}
+		return deployOnboardStack(settings, outputs)
 	default:
 		return fmt.Errorf("unknown stack '%s'", stack)
 	}

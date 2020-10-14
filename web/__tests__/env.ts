@@ -17,6 +17,17 @@
  */
 
 import path from 'path';
-import { loadDotEnvVars } from '../scripts/utils';
+import { loadDotEnvVars, getAppTemplateParams } from '../scripts/utils';
 
 loadDotEnvVars(path.resolve(__dirname, '.env.test'));
+/**
+ * Mock the server-side EJS-injected AWS configuration.
+ * See `web/public/index.ejs`
+ */
+const { PANTHER_CONFIG } = getAppTemplateParams();
+
+const scriptTag = document.createElement('script');
+scriptTag.id = '__PANTHER_CONFIG__';
+scriptTag.type = 'application/json';
+scriptTag.innerHTML = JSON.stringify(PANTHER_CONFIG);
+document.body.appendChild(scriptTag);
