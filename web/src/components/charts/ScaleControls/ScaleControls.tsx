@@ -19,26 +19,57 @@
 import React from 'react';
 import { Flex } from 'pouncejs';
 import { EChartOption } from 'echarts';
-import ScaleButton from 'Components/charts/ScaleControls/ScaleButton';
+import ScaleButton from './ScaleButton';
+import ZoomButton from './ZoomButton';
 
 interface ScaleControlsProps {
   scaleType: string;
   onSelection: (option: EChartOption.BasicComponents.CartesianAxis.Type) => void;
+  dispatch: (object) => void;
 }
 
-const ScaleControls: React.FC<ScaleControlsProps> = ({ scaleType = 'value', onSelection }) => {
+const ScaleControls: React.FC<ScaleControlsProps> = ({
+  scaleType = 'value',
+  onSelection,
+  dispatch,
+}) => {
+  const [zoomEnabled, setZoomEnabled] = React.useState(false);
   return (
-    <Flex spacing={2}>
-      <ScaleButton
-        title="Linear"
-        selected={scaleType === 'value'}
-        onClick={() => onSelection('value')}
-      />
-      <ScaleButton
-        title="Logarithmic"
-        selected={scaleType === 'log'}
-        onClick={() => onSelection('log')}
-      />
+    <Flex align="center" justify="space-between">
+      <Flex spacing={2} zIndex={5}>
+        <ScaleButton
+          title="Linear"
+          selected={scaleType === 'value'}
+          onClick={() => onSelection('value')}
+        />
+        <ScaleButton
+          title="Logarithmic"
+          selected={scaleType === 'log'}
+          onClick={() => onSelection('log')}
+        />
+      </Flex>
+      <Flex spacing={2} zIndex={5}>
+        <ZoomButton
+          title="ZOOM"
+          selected={zoomEnabled}
+          onClick={() => {
+            dispatch({
+              type: 'takeGlobalCursor',
+              key: 'dataZoomSelect',
+              dataZoomSelectActive: !zoomEnabled,
+            });
+            setZoomEnabled(!zoomEnabled);
+          }}
+        />
+        <ZoomButton
+          title="RESET"
+          onClick={() =>
+            dispatch({
+              type: 'restore',
+            })
+          }
+        />
+      </Flex>
     </Flex>
   );
 };

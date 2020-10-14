@@ -15,22 +15,30 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 import React from 'react';
-import { Flex } from 'pouncejs';
-import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
-import { SeriesData } from 'Generated/schema';
+import { AbstractButton } from 'pouncejs';
 
-interface EventsByLogTypesProps {
-  events: SeriesData;
+interface ScaleButtonProps {
+  title: string;
+  selected?: boolean;
+  onClick: () => void;
 }
 
-const EventsByLogTypes: React.FC<EventsByLogTypesProps> = ({ events }) => {
+const ScaleButton: React.FC<ScaleButtonProps> = ({ title, selected, onClick }) => {
   return (
-    <Flex data-testid="events-by-log-type-chart" height="100%" position="relative">
-      <TimeSeriesChart data={events} zoomable />
-    </Flex>
+    <AbstractButton
+      borderRadius="pill"
+      py={1}
+      px={4}
+      fontSize="small"
+      color="black"
+      backgroundColor={selected ? 'blue-400' : 'navyblue-300'}
+      _hover={!selected && { backgroundColor: 'blue-400' }}
+      onClick={onClick}
+    >
+      {title}
+    </AbstractButton>
   );
 };
 
-export default React.memo(EventsByLogTypes);
+export default ScaleButton;
