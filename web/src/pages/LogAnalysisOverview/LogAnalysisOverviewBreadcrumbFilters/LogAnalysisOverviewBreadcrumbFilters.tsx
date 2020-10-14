@@ -21,23 +21,17 @@ import { Field, Form, Formik } from 'formik';
 import { LogAnalysisMetricsInput } from 'Generated/schema';
 import { Flex, Box } from 'pouncejs';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
-
-import pickBy from 'lodash/pickBy';
-import isEmpty from 'lodash/isEmpty';
-import pick from 'lodash/pick';
-
 import FormikDateRangeInput from 'Components/fields/DateRangeInput';
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikAutosave from 'Components/utils/Autosave';
 import Breadcrumbs from 'Components/Breadcrumbs';
-import { isNumber, minutesToString } from 'Helpers/utils';
+import { minutesToString } from 'Helpers/utils';
 
 export type LogAnalysisOverviewFiltersValues = Pick<
   LogAnalysisMetricsInput,
   'fromDate' | 'toDate' | 'intervalMinutes'
 >;
 
-const filterKeys = ['fromDate', 'toDate', 'intervalMinutes'];
 const intervalMinutesOptions = [15, 30, 60, 180, 720, 1440];
 
 interface LogAnalysisOverviewBreadcrumbFiltersProps {
@@ -51,29 +45,16 @@ const LogAnalysisOverviewBreadcrumbFilters: React.FC<LogAnalysisOverviewBreadcru
     LogAnalysisMetricsInput
   >();
 
-  const initialFilterValues = React.useMemo(() => {
-    const { ...params } = requestParams;
-    return {
-      ...initialValues,
-      ...pick(params, filterKeys),
-    } as LogAnalysisOverviewFiltersValues;
-  }, [requestParams, initialValues]);
-
-  const onFiltersChange = React.useCallback(
-    values => {
-      const params = pickBy({ ...requestParams, ...values }, param => {
-        return isNumber(param) || !isEmpty(param);
-      });
-      setRequestParams(params);
-    },
-    [requestParams, setRequestParams]
-  );
+  const onFiltersChange = React.useCallback(values => setRequestParams(values), [
+    requestParams,
+    setRequestParams,
+  ]);
 
   return (
     <Breadcrumbs.Actions>
       <Flex justify="flex-end">
         <Formik<LogAnalysisOverviewFiltersValues>
-          initialValues={initialFilterValues}
+          initialValues={initialValues}
           onSubmit={onFiltersChange}
         >
           <Form>
