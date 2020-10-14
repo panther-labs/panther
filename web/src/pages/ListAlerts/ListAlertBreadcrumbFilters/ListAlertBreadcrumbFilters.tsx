@@ -49,9 +49,7 @@ export const sanitizeLogTypes = logTypes => {
 
 const filterKeys = ['logTypes', 'createdAtAfter', 'createdAtBefore'];
 const ListAlertBreadcrumbFilters: React.FC = () => {
-  const { data, loading: logTypesLoading, error: logTypesError } = useListAvailableLogTypes({
-    fetchPolicy: 'cache-first',
-  });
+  const { data, loading: logTypesLoading, error: logTypesError } = useListAvailableLogTypes();
 
   const { requestParams, setRequestParams } = useRequestParamsWithoutPagination<ListAlertsInput>();
 

@@ -22,9 +22,7 @@ const filterKeys = ['logTypes', 'tags'];
 export type ListRulesBreadcrumbFiltersValues = Pick<ListRulesInput, 'tags' | 'logTypes'>;
 
 const ListRulesBreadcrumbFilters: React.FC = () => {
-  const { data, loading: logTypesLoading, error: logTypesError } = useListAvailableLogTypes({
-    fetchPolicy: 'cache-first',
-  });
+  const { data, loading: logTypesLoading, error: logTypesError } = useListAvailableLogTypes();
 
   const { requestParams, setRequestParams } = useRequestParamsWithoutPagination<ListRulesInput>();
 
