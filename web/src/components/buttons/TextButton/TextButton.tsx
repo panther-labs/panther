@@ -19,7 +19,7 @@
 import React from 'react';
 import { AbstractButton, AbstractButtonProps } from 'pouncejs';
 
-const TextButton: React.FC<AbstractButtonProps> = ({ children, ...rest }) => {
+const TextButton: React.FC<AbstractButtonProps> = props => {
   return (
     <AbstractButton
       textDecoration="underline"
@@ -30,10 +30,8 @@ const TextButton: React.FC<AbstractButtonProps> = ({ children, ...rest }) => {
           textDecoration: 'none',
         },
       }}
-      {...rest}
-    >
-      {children}
-    </AbstractButton>
+      {...props}
+    />
   );
 };
 
