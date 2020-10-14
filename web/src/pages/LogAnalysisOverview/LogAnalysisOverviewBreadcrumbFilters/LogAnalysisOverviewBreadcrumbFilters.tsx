@@ -61,8 +61,7 @@ const LogAnalysisOverviewBreadcrumbFilters: React.FC<LogAnalysisOverviewBreadcru
 
   const onFiltersChange = React.useCallback(
     values => {
-      const { ...rest } = values;
-      const params = pickBy({ ...requestParams, ...rest }, param => {
+      const params = pickBy({ ...requestParams, ...values }, param => {
         return isNumber(param) || !isEmpty(param);
       });
       setRequestParams(params);
