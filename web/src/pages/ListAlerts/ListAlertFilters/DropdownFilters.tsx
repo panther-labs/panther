@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Form, Formik, FastField } from 'formik';
-import { Box, SimpleGrid, Button, Dropdown, DropdownButton, DropdownMenu } from 'pouncejs';
+import { Box, SimpleGrid, Button, Dropdown, DropdownButton, DropdownMenu, Flex } from 'pouncejs';
 
 import { ListAlertsInput, SeverityEnum, AlertStatusesEnum } from 'Generated/schema';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
@@ -67,8 +67,7 @@ const DropdownFilters: React.FC = () => {
         as={Button}
         iconAlignment="right"
         icon="filter-light"
-        size="large"
-        aria-label="Rule Options"
+        aria-label="Additional Filters"
       >
         Filters {filtersCount ? `(${filtersCount})` : ''}
       </DropdownButton>
@@ -115,10 +114,10 @@ const DropdownFilters: React.FC = () => {
                   label="Max Events"
                 />
               </SimpleGrid>
-              <Box textAlign="center" pb={4}>
-                <Button type="submit">Apply Filters</Button>
-              </Box>
-              <Box textAlign="center">
+              <Flex direction="column" justify="center" align="center" spacing={4}>
+                <Box>
+                  <Button type="submit">Apply Filters</Button>
+                </Box>
                 <TextButton
                   role="button"
                   onClick={() => {
@@ -127,7 +126,7 @@ const DropdownFilters: React.FC = () => {
                 >
                   Clear All Filters
                 </TextButton>
-              </Box>
+              </Flex>
             </Form>
           </Formik>
         </Box>

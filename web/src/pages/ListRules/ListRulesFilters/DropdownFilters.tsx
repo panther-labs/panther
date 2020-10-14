@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Form, Formik, FastField } from 'formik';
-import { Box, Button, Dropdown, DropdownButton, DropdownMenu } from 'pouncejs';
+import { Box, Flex, Button, Dropdown, DropdownButton, DropdownMenu } from 'pouncejs';
 import { ListRulesInput, SeverityEnum } from 'Generated/schema';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isUndefined from 'lodash/isUndefined';
@@ -94,10 +94,11 @@ const DropdownFilters: React.FC = () => {
                   label="Enabled"
                 />
               </Box>
-              <Box textAlign="center" pb={4}>
-                <Button type="submit">Apply Filters</Button>
-              </Box>
-              <Box textAlign="center">
+
+              <Flex direction="column" justify="center" align="center" spacing={4}>
+                <Box>
+                  <Button type="submit">Apply Filters</Button>
+                </Box>
                 <TextButton
                   role="button"
                   onClick={() => {
@@ -106,7 +107,7 @@ const DropdownFilters: React.FC = () => {
                 >
                   Clear All Filters
                 </TextButton>
-              </Box>
+              </Flex>
             </Form>
           </Formik>
         </Box>
