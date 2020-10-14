@@ -32,11 +32,11 @@ import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import { Link as RRLink } from 'react-router-dom';
 
-interface ListPoliciesTableRowOptionsProps {
+interface RuleCardOptionsProps {
   rule: RuleSummary;
 }
 
-const ListRulesTableRowOptions: React.FC<ListPoliciesTableRowOptionsProps> = ({ rule }) => {
+const RuleCardOptions: React.FC<RuleCardOptionsProps> = ({ rule }) => {
   const { showModal } = useModal();
 
   return (
@@ -69,4 +69,4 @@ const ListRulesTableRowOptions: React.FC<ListPoliciesTableRowOptionsProps> = ({ 
   );
 };
 
-export default React.memo(ListRulesTableRowOptions);
+export default React.memo(RuleCardOptions);
