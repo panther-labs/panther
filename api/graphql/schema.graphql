@@ -222,7 +222,7 @@ input ListRulesInput {
   enabled: Boolean
   logTypes: String # Comma-separated string
   severity: SeverityEnum
-  tags: [String]
+  tags: [String!]
   # Sorting
   sortBy: ListRulesSortFieldsEnum # defaults to `id`
   sortDir: SortDirEnum # defaults to `ascending`
