@@ -88,4 +88,10 @@ func (event *Differential) updatePantherFields(p *DifferentialParser) {
 
 	event.AppendAnyIPAddress(event.Columns["local_address"])
 	event.AppendAnyIPAddress(event.Columns["remote_address"])
+	event.AppendAnyIPAddress(event.Columns["address"])
+	event.AppendAnyIPAddress(event.Columns["host_ip"])
+	event.AppendAnyIPAddress(event.Columns["ipv4_address"])
+	if host := event.Columns["host"]; !event.AppendAnyIPAddress(host) {
+		event.AppendAnyDomainNames(host)
+	}
 }
