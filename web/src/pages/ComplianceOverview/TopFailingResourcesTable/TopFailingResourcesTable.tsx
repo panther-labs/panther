@@ -41,7 +41,13 @@ const TopFailingResourcesTable: React.FC<TopFailingResourcesTableProps> = ({ res
             <Table.Cell>{index + 1}</Table.Cell>
 
             <Table.Cell>
-              <Link as={RRLink} to={urls.compliance.resources.details(resource.id)} py={4} pr={4} wordBreak="break-all">
+              <Link
+                as={RRLink}
+                to={urls.compliance.resources.details(resource.id)}
+                py={4}
+                pr={4}
+                wordBreak="break-all"
+              >
                 {resource.id}
               </Link>
             </Table.Cell>
