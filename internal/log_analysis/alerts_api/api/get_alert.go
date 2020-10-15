@@ -210,7 +210,7 @@ func getEventsForLogType(
 func timeFromJSONS3ObjectKey(key string) (time.Time, error) {
 	keyParts := strings.Split(key, "/")
 	timeInString := strings.Split(keyParts[len(keyParts)-1], "-")[0]
-	return time.ParseInLocation(destinations.S3ObjectTimestampFormat, timeInString, time.UTC)
+	return time.ParseInLocation(destinations.S3ObjectTimestampLayout, timeInString, time.UTC)
 }
 
 // Queries a specific S3 object events associated to `alertID`.

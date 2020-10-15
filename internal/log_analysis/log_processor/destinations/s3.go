@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
+	"path"
 	"runtime"
 	"sync"
 	"time"
@@ -37,20 +38,15 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
 const (
-	// s3ObjectKeyFormat represents the format of the S3 object key
-	// It has 3 parts:
-	// 1. The key prefix 2. Timestamp in format `s3ObjectTimestampFormat` 3. UUID4
-	s3ObjectKeyFormat = "%s%s-%s.json.gz"
-
-	// The timestamp format in the S3 objects with second precision: yyyyMMddTHHmmssZ
-	S3ObjectTimestampFormat = "20060102T150405Z"
+	// The timestamp layout used in the S3 object key filename part with second precision: yyyyMMddTHHmmssZ
+	S3ObjectTimestampLayout = "20060102T150405Z"
 
 	logDataTypeAttributeName = "type"
 	logTypeAttributeName     = "id"
@@ -78,12 +74,9 @@ func init() {
 	memUsedAtStartupMB = (int)(memStats.Sys/(bytesPerMB)) + 1
 }
 
-func CreateS3Destination(registry *logtypes.Registry, jsonAPI jsoniter.API) Destination {
+func CreateS3Destination(jsonAPI jsoniter.API) Destination {
 	if jsonAPI == nil {
 		jsonAPI = jsoniter.ConfigDefault
-	}
-	if registry == nil {
-		registry = logtypes.DefaultRegistry()
 	}
 	return &S3Destination{
 		s3Uploader:          common.S3Uploader,
@@ -92,7 +85,6 @@ func CreateS3Destination(registry *logtypes.Registry, jsonAPI jsoniter.API) Dest
 		snsTopicArn:         common.Config.SnsTopicARN,
 		maxBufferedMemBytes: maxS3BufferMemUsageBytes(common.Config.AwsLambdaFunctionMemorySize),
 		maxDuration:         maxDuration,
-		registry:            registry,
 		jsonAPI:             jsonAPI,
 	}
 }
@@ -135,7 +127,6 @@ type S3Destination struct {
 	// thresholds for ejection
 	maxBufferedMemBytes uint64 // max will hold in buffers before ejection
 	maxDuration         time.Duration
-	registry            *logtypes.Registry
 	jsonAPI             jsoniter.API
 }
 
@@ -244,7 +235,7 @@ func (destination *S3Destination) sendData(buffer *s3EventBuffer, errChan chan e
 			zap.String("key", key))
 	}()
 
-	key, err = destination.getS3ObjectKey(buffer.logType, buffer.hour)
+	key = getS3ObjectKey(buffer.logType, buffer.hour)
 	if err != nil {
 		errChan <- err
 		return
@@ -312,18 +303,16 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 	return err
 }
 
-func (destination *S3Destination) getS3ObjectKey(logType string, timestamp time.Time) (string, error) {
-	typ := destination.registry.Get(logType)
-	if typ == nil {
-		return "", errors.Errorf(`unknown log type %q`, logType)
-	}
-	meta := typ.GlueTableMeta()
-	timestamp = timestamp.UTC()
-	return fmt.Sprintf(s3ObjectKeyFormat,
-		meta.GetPartitionPrefix(timestamp), // get the path to store the data in S3
-		timestamp.Format(S3ObjectTimestampFormat),
-		uuid.New().String(),
-	), nil
+// getS3ObjectKey builds the S3 object key for storing a partition file of processed logs.
+func getS3ObjectKey(logType string, timestamp time.Time) string {
+	dbPrefix := awsglue.GetDataPrefix(awsglue.LogProcessingDatabaseName)
+	tblName := awsglue.GetTableName(logType)
+	partitionPrefix := awsglue.GlueTableHourly.PartitionPathS3(timestamp)
+	filename := fmt.Sprintf("%s-%s.json.gz",
+		timestamp.Format(S3ObjectTimestampLayout),
+		uuid.New(),
+	)
+	return path.Join(dbPrefix, tblName, partitionPrefix, filename)
 }
 
 // s3BufferSet is a group of buffers associated with hour time bins, pointing to maps logtype->s3EventBuffer

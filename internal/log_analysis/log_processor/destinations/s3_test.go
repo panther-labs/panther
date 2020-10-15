@@ -41,11 +41,9 @@ import (
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
@@ -159,7 +157,7 @@ type testS3Destination struct {
 	mockS3Uploader *mockS3ManagerUploader
 }
 
-func newS3Destination(logTypes ...string) *testS3Destination {
+func newS3Destination() *testS3Destination {
 	mockSns := &mockSns{}
 	mockS3Uploader := &mockS3ManagerUploader{}
 	return &testS3Destination{
@@ -170,34 +168,11 @@ func newS3Destination(logTypes ...string) *testS3Destination {
 			s3Uploader:          mockS3Uploader,
 			maxBufferedMemBytes: 10 * 1024 * 1024, // an arbitrary amount enough to hold default test data
 			maxDuration:         maxDuration,
-			registry:            newRegistry(logTypes...),
 			jsonAPI:             common.BuildJSON(),
 		},
 		mockSns:        mockSns,
 		mockS3Uploader: mockS3Uploader,
 	}
-}
-
-func newRegistry(names ...string) *logtypes.Registry {
-	names = append([]string{testLogType}, names...)
-	r := logtypes.Registry{}
-	for _, name := range names {
-		_, err := r.Register(logtypes.Config{
-			Name:         name,
-			Description:  "description",
-			ReferenceURL: "-",
-			Schema: struct {
-				Foo string `json:"foo" description:"foo field"`
-			}{},
-			NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
-				return testutil.ParserConfig{}.Parser(), nil
-			}),
-		})
-		if err != nil {
-			panic(err)
-		}
-	}
-	return &r
 }
 
 func TestSendDataToS3BeforeTerminating(t *testing.T) {
@@ -378,7 +353,7 @@ func TestSendDataToS3FromMultipleLogTypesBeforeTerminating(t *testing.T) {
 	testResult2 := testEvent2.Result()
 
 	// wire it up
-	destination := newS3Destination(logType1, logType2)
+	destination := newS3Destination()
 
 	eventChannel <- testResult1
 	eventChannel <- testResult2
