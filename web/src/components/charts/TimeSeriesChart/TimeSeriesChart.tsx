@@ -365,11 +365,6 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
     }
   }, [chartOptions]);
 
-  const dispatch = React.useCallback(
-    payload => timeSeriesChart.current.dispatchAction(payload),
-    []
-  );
-
   return (
     <React.Fragment>
       <Box position="absolute" width="200px" ml={1} fontWeight="bold">
@@ -382,14 +377,14 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           {zoomControls && (
             <ZoomControls
               onZoom={zoomEnabled =>
-                dispatch({
+                timeSeriesChart.current.dispatchAction({
                   type: 'takeGlobalCursor',
                   key: 'dataZoomSelect',
                   dataZoomSelectActive: !zoomEnabled,
                 })
               }
               onReset={() =>
-                dispatch({
+                timeSeriesChart.current.dispatchAction({
                   type: 'restore',
                 })
               }
