@@ -15,32 +15,30 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 import React from 'react';
-import { Flex } from 'pouncejs';
-import { EChartOption } from 'echarts';
-import ScaleButton from './ScaleButton';
+import { AbstractButton } from 'pouncejs';
 
-interface ScaleControlsProps {
-  scaleType: string;
-  onSelect: (option: EChartOption.BasicComponents.CartesianAxis.Type) => void;
+interface ZoomButtonProps {
+  title: string;
+  selected?: boolean;
+  onClick: () => void;
 }
 
-const ScaleControls: React.FC<ScaleControlsProps> = ({ scaleType = 'value', onSelect }) => {
+const ZoomButton: React.FC<ZoomButtonProps> = ({ title, selected, onClick }) => {
   return (
-    <Flex spacing={2} zIndex={5}>
-      <ScaleButton
-        title="Linear"
-        selected={scaleType === 'value'}
-        onClick={() => onSelect('value')}
-      />
-      <ScaleButton
-        title="Logarithmic"
-        selected={scaleType === 'log'}
-        onClick={() => onSelect('log')}
-      />
-    </Flex>
+    <AbstractButton
+      borderRadius="pill"
+      py={1}
+      px={4}
+      fontSize="small"
+      color="black"
+      backgroundColor={selected ? 'blue-400' : 'navyblue-300'}
+      _hover={!selected && { backgroundColor: 'blue-400' }}
+      onClick={onClick}
+    >
+      {title}
+    </AbstractButton>
   );
 };
 
-export default ScaleControls;
+export default ZoomButton;

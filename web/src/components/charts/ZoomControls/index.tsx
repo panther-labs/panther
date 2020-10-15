@@ -16,31 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Flex } from 'pouncejs';
-import { EChartOption } from 'echarts';
-import ScaleButton from './ScaleButton';
-
-interface ScaleControlsProps {
-  scaleType: string;
-  onSelect: (option: EChartOption.BasicComponents.CartesianAxis.Type) => void;
-}
-
-const ScaleControls: React.FC<ScaleControlsProps> = ({ scaleType = 'value', onSelect }) => {
-  return (
-    <Flex spacing={2} zIndex={5}>
-      <ScaleButton
-        title="Linear"
-        selected={scaleType === 'value'}
-        onClick={() => onSelect('value')}
-      />
-      <ScaleButton
-        title="Logarithmic"
-        selected={scaleType === 'log'}
-        onClick={() => onSelect('log')}
-      />
-    </Flex>
-  );
-};
-
-export default ScaleControls;
+export { default } from './ZoomControls';

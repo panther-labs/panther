@@ -26,6 +26,7 @@ import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { stringToPaleColor } from 'Helpers/colors';
 import ScaleControls from '../ScaleControls';
+import ZoomControls from '../ZoomControls';
 
 interface TimeSeriesLinesProps {
   /** The data for the time series */
@@ -374,11 +375,28 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       <Box position="absolute" width="200px" ml={1} fontWeight="bold">
         {title}
       </Box>
-      {scaleControls && (
-        <Box position="absolute" pl="210px" pr="50px" width={1}>
-          <ScaleControls scaleType={scaleType} onSelection={setScaleType} dispatch={dispatch} />
-        </Box>
-      )}
+
+      <Box position="absolute" pl="210px" pr="50px" width={1}>
+        <Flex align="center" justify="space-between">
+          {scaleControls && <ScaleControls scaleType={scaleType} onSelect={setScaleType} />}
+          {zoomControls && (
+            <ZoomControls
+              onZoom={zoomEnabled =>
+                dispatch({
+                  type: 'takeGlobalCursor',
+                  key: 'dataZoomSelect',
+                  dataZoomSelectActive: !zoomEnabled,
+                })
+              }
+              onReset={() =>
+                dispatch({
+                  type: 'restore',
+                })
+              }
+            />
+          )}
+        </Flex>
+      </Box>
       <Box ref={container} width="100%" height="100%" />
     </React.Fragment>
   );

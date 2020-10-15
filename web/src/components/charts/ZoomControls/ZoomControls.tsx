@@ -15,30 +15,31 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import React from 'react';
-import { AbstractButton } from 'pouncejs';
 
-interface ScaleButtonProps {
-  title: string;
-  selected?: boolean;
-  onClick: () => void;
+import React from 'react';
+import { Flex } from 'pouncejs';
+import ZoomButton from './ZoomButton';
+
+interface ScaleControlsProps {
+  onZoom: (boolean) => void;
+  onReset: () => void;
 }
 
-const ScaleButton: React.FC<ScaleButtonProps> = ({ title, selected, onClick }) => {
+const ScaleControls: React.FC<ScaleControlsProps> = ({ onZoom, onReset }) => {
+  const [zoomEnabled, setZoomEnabled] = React.useState(false);
   return (
-    <AbstractButton
-      borderRadius="pill"
-      py={1}
-      px={4}
-      fontSize="small"
-      color="black"
-      backgroundColor={selected ? 'blue-400' : 'navyblue-300'}
-      _hover={!selected && { backgroundColor: 'blue-400' }}
-      onClick={onClick}
-    >
-      {title}
-    </AbstractButton>
+    <Flex spacing={2} zIndex={5}>
+      <ZoomButton
+        title="ZOOM"
+        selected={zoomEnabled}
+        onClick={() => {
+          onZoom(zoomEnabled);
+          setZoomEnabled(!zoomEnabled);
+        }}
+      />
+      <ZoomButton title="RESET" onClick={onReset} />
+    </Flex>
   );
 };
 
-export default ScaleButton;
+export default ScaleControls;
