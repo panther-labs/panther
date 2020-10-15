@@ -84,12 +84,8 @@ interface BarChartProps {
    */
   alignment?: 'horizontal' | 'vertical';
   /**
-   * `gridPosition` property is
-   *
-   * string that can take the values of 'half'
-   * and 'full'. It defines what's the parent width, where card is the
-   * main component of pages
-   * @default {}
+   * `gridPosition` property is an object that defines spaces between chart
+   * container and other elements,including legend
    */
   gridPosition?: GridPosition;
   /**
@@ -101,7 +97,6 @@ interface BarChartProps {
    * `barGap` property represents the distance between bars related to the barWidth.
    * This is not as clean as it sounds you can find how this should be used here:
    * https://echarts.apache.org/en/option.html#series-bar.barGap
-   * @default 24
    */
   barGap?: string | number;
 }
