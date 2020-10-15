@@ -131,7 +131,9 @@ Resources:
 
   ###### Update Glue Table Schemas for Deployed Tables #####
   UpdateGlueTables:
-    DependsOn: AthenaConfigure
+    DependsOn:
+      - AthenaConfigure
+      - UpdaterFunction
     Type: Custom::UpdateGlueTables
     Properties:
       # Update in case TablesSignature or CustomResourceVersion has changed
