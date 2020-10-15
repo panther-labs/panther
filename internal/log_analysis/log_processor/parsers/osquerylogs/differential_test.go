@@ -62,7 +62,7 @@ func TestDifferentialLog(t *testing.T) {
 }
 
 func TestDifferentialLogWithExtraIps(t *testing.T) {
-	//nolint:ll	expectedEvent.AppendAnyIPAddress("192.168.1.5")l
+	//nolint:lll
 	log := `{"name":"pack_incident-response_mounts","hostIdentifier":"Quans-MacBook-Pro-2.local","calendarTime":"Tue Nov 5 06:08:26 2018 UTC","unixTime":"1572934106","epoch":"0","counter":"62","logNumericsAsNumbers":"false","decorations":{"host_uuid":"F919E9BF-0BF1-5456-8F6C-335243AEA537"},"columns":{"blocks":"61202533", "local_address":"192.168.1.1", "remote_address":"192.168.1.2", "address":"192.168.1.3", "ipv4_address": "192.168.1.4", "host_ip": "192.168.1.5", "host": "the.server.com"},"action":"added","log_type":"result"}`
 
 	expectedTime := time.Unix(1541398106, 0).UTC()
@@ -166,6 +166,7 @@ func TestDifferentialLogWithoutLogType(t *testing.T) {
 	expectedEvent.PantherLogType = aws.String("Osquery.Differential")
 	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
 	expectedEvent.AppendAnyDomainNames("jaguar.local")
+	expectedEvent.AppendAnyIPAddress("0.0.0.0")
 
 	checkOsQueryDifferentialLog(t, log, expectedEvent)
 }
