@@ -17,24 +17,26 @@
  */
 
 import React from 'react';
+import urls from 'Source/urls';
 import { Form, Formik, FastField } from 'formik';
+import { SortDirEnum, ListRulesInput, ListRulesSortFieldsEnum } from 'Generated/schema';
 import { Box, Flex } from 'pouncejs';
-import { ListAlertsInput, SortDirEnum, ListAlertsSortFieldsEnum } from 'Generated/schema';
-import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import pick from 'lodash/pick';
+import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import FormikAutosave from 'Components/utils/Autosave';
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikTextInput from 'Components/fields/TextInput';
+import LinkButton from 'Components/buttons/LinkButton';
 import DropdownFilters from './DropdownFilters';
 
-export type ListAlertsInlineFiltersValues = Pick<ListAlertsInput, 'sortBy' | 'sortDir'>;
+export type ListAlertsInlineFiltersValues = Pick<ListRulesInput, 'sortBy' | 'sortDir'>;
 
 export type SortingOptions = {
   opt: string;
-  resolution: ListAlertsInput;
+  resolution: ListRulesInput;
 }[];
 
-const filters = ['nameContains', 'sortBy', 'sortDir'] as (keyof ListAlertsInput)[];
+const filters = ['nameContains', 'sortBy', 'sortDir'] as (keyof ListRulesInput)[];
 
 const defaultValues = {
   nameContains: '',
@@ -43,17 +45,73 @@ const defaultValues = {
 
 const sortingOpts: SortingOptions = [
   {
-    opt: 'Most Recent',
+    opt: 'Most Recently Modified',
     resolution: {
-      sortBy: 'createdAt' as ListAlertsSortFieldsEnum,
+      sortBy: 'lastModified' as ListRulesSortFieldsEnum,
       sortDir: 'descending' as SortDirEnum,
     },
   },
   {
-    opt: 'Oldest',
+    opt: 'Oldest Modified',
     resolution: {
-      sortBy: 'createdAt' as ListAlertsSortFieldsEnum,
+      sortBy: 'lastModified' as ListRulesSortFieldsEnum,
       sortDir: 'ascending' as SortDirEnum,
+    },
+  },
+  {
+    opt: 'ID Ascending',
+    resolution: {
+      sortBy: 'id' as ListRulesSortFieldsEnum,
+      sortDir: 'ascending' as SortDirEnum,
+    },
+  },
+  {
+    opt: 'ID Descending',
+    resolution: {
+      sortBy: 'id' as ListRulesSortFieldsEnum,
+      sortDir: 'descending' as SortDirEnum,
+    },
+  },
+  {
+    opt: 'Severity Ascending',
+    resolution: {
+      sortBy: 'severity' as ListRulesSortFieldsEnum,
+      sortDir: 'ascending' as SortDirEnum,
+    },
+  },
+  {
+    opt: 'Severity Descending',
+    resolution: {
+      sortBy: 'severity' as ListRulesSortFieldsEnum,
+      sortDir: 'descending' as SortDirEnum,
+    },
+  },
+  {
+    opt: 'Status Ascending',
+    resolution: {
+      sortBy: 'status' as ListRulesSortFieldsEnum,
+      sortDir: 'ascending' as SortDirEnum,
+    },
+  },
+  {
+    opt: 'Status Descending',
+    resolution: {
+      sortBy: 'status' as ListRulesSortFieldsEnum,
+      sortDir: 'descending' as SortDirEnum,
+    },
+  },
+  {
+    opt: 'Log Types Ascending',
+    resolution: {
+      sortBy: 'logTypes' as ListRulesSortFieldsEnum,
+      sortDir: 'ascending' as SortDirEnum,
+    },
+  },
+  {
+    opt: 'Log Types Descending',
+    resolution: {
+      sortBy: 'logTypes' as ListRulesSortFieldsEnum,
+      sortDir: 'descending' as SortDirEnum,
     },
   },
 ];
@@ -85,10 +143,9 @@ const wrapSortingOptions = params => {
 };
 
 const ListAlertFilters: React.FC = () => {
-  const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
-    ListAlertsInput
+  const { requestParams, updateRequestParamsAndResetPaging } = useRequestParamsWithPagination<
+    ListRulesInput
   >();
-
   const initialFilterValues = React.useMemo(
     () =>
       ({
@@ -97,13 +154,12 @@ const ListAlertFilters: React.FC = () => {
       } as ListAlertsInlineFiltersValues),
     [requestParams]
   );
-
   return (
     <Flex justify="flex-end" align="center">
       <Formik<ListAlertsInlineFiltersValues>
         initialValues={initialFilterValues}
         onSubmit={(values: ListAlertsInlineFiltersValues) => {
-          updateRequestParams(extractSortingOpts(values));
+          updateRequestParamsAndResetPaging(extractSortingOpts(values));
         }}
       >
         <Form>
@@ -129,7 +185,10 @@ const ListAlertFilters: React.FC = () => {
           </Flex>
         </Form>
       </Formik>
-      <DropdownFilters />
+      <Box pr={4}>
+        <DropdownFilters />
+      </Box>
+      <LinkButton to={urls.logAnalysis.rules.create()}>Create New Rule</LinkButton>
     </Flex>
   );
 };

@@ -16,5 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './ListAlertBreadcrumbFilters';
-export * from './ListAlertBreadcrumbFilters';
+import React from 'react';
+import { AbstractButton, AbstractButtonProps } from 'pouncejs';
+
+const TextButton: React.FC<AbstractButtonProps> = props => {
+  return (
+    <AbstractButton
+      textDecoration="underline"
+      fontSize="small"
+      color="gray-300"
+      sx={{
+        '&:hover': {
+          textDecoration: 'none',
+        },
+      }}
+      {...props}
+    />
+  );
+};
+
+export default TextButton;

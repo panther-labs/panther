@@ -17,41 +17,32 @@
  */
 
 import React from 'react';
+import { ListRulesInput } from 'Generated/schema';
+import { Box, Flex } from 'pouncejs';
 import { Form, Formik, Field } from 'formik';
-import { ListAlertsInput } from 'Generated/schema';
-import { Flex } from 'pouncejs';
-import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 
-import pickBy from 'lodash/pickBy';
 import isEmpty from 'lodash/isEmpty';
 import pick from 'lodash/pick';
+import pickBy from 'lodash/pickBy';
 
-import FormikDateRangeInput from 'Components/fields/DateRangeInput';
+import { ALL_TYPES, sanitizeLogTypes } from 'Pages/ListAlerts/ListAlertBreadcrumbFilters';
+
 import FormikCombobox from 'Components/fields/ComboBox';
+import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import FormikAutosave from 'Components/utils/Autosave';
 import Breadcrumbs from 'Components/Breadcrumbs';
+
+import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
 
-export type ListAlertsFiltersValues = Pick<
-  ListAlertsInput,
-  'logTypes' | 'createdAtAfter' | 'createdAtBefore'
->;
+const filterKeys = ['logTypes', 'tags'];
 
-export const ALL_TYPES = 'All types';
+export type ListRulesBreadcrumbFiltersValues = Pick<ListRulesInput, 'tags' | 'logTypes'>;
 
-export const sanitizeLogTypes = logTypes => {
-  // Sanitize values coming from the URL as array and from the component as string.
-  if (Array.isArray(logTypes)) {
-    return logTypes.filter(type => type === 'ALL_TYPES');
-  }
-  return logTypes !== ALL_TYPES ? [logTypes] : [];
-};
-
-const filterKeys = ['logTypes', 'createdAtAfter', 'createdAtBefore'];
-const ListAlertBreadcrumbFilters: React.FC = () => {
+const ListRulesBreadcrumbFilters: React.FC = () => {
   const { data, loading: logTypesLoading, error: logTypesError } = useListAvailableLogTypes();
 
-  const { requestParams, setRequestParams } = useRequestParamsWithoutPagination<ListAlertsInput>();
+  const { requestParams, setRequestParams } = useRequestParamsWithoutPagination<ListRulesInput>();
 
   const availableLogTypes = React.useMemo(
     () =>
@@ -65,8 +56,9 @@ const ListAlertBreadcrumbFilters: React.FC = () => {
     const { logTypes, ...params } = requestParams;
     return {
       ...pick(params, filterKeys),
-      logTypes: logTypes && logTypes?.length > 0 ? logTypes : [ALL_TYPES],
-    } as ListAlertsFiltersValues;
+      logTypes: logTypes || ALL_TYPES,
+      tags: [],
+    } as ListRulesBreadcrumbFiltersValues;
   }, [requestParams]);
 
   const onFiltersChange = React.useCallback(
@@ -85,13 +77,24 @@ const ListAlertBreadcrumbFilters: React.FC = () => {
   return (
     <Breadcrumbs.Actions>
       <Flex justify="flex-end">
-        <Formik<ListAlertsFiltersValues>
+        <Formik<ListRulesBreadcrumbFiltersValues>
           initialValues={initialFilterValues}
           onSubmit={onFiltersChange}
         >
           <Form>
             <FormikAutosave threshold={50} />
             <Flex spacing={4}>
+              <Box width={250}>
+                <Field
+                  as={FormikMultiCombobox}
+                  variant="solid"
+                  label="Tags"
+                  searchable
+                  allowAdditions
+                  name="tags"
+                  items={[] as string[]}
+                />
+              </Box>
               {!logTypesLoading && !logTypesError && (
                 <Field
                   as={FormikCombobox}
@@ -101,19 +104,6 @@ const ListAlertBreadcrumbFilters: React.FC = () => {
                   items={availableLogTypes}
                 />
               )}
-              <FormikDateRangeInput
-                alignment="right"
-                withPresets
-                withTime
-                variant="solid"
-                format="MM/DD/YY HH:mm"
-                labelStart="Date Start"
-                labelEnd="Date End"
-                placeholderStart="MM/DD/YY HH:mm"
-                placeholderEnd="MM/DD/YY HH:mm"
-                nameStart="createdAtAfter"
-                nameEnd="createdAtBefore"
-              />
             </Flex>
           </Form>
         </Formik>
@@ -122,4 +112,4 @@ const ListAlertBreadcrumbFilters: React.FC = () => {
   );
 };
 
-export default React.memo(ListAlertBreadcrumbFilters);
+export default React.memo(ListRulesBreadcrumbFilters);
