@@ -39,26 +39,24 @@ var (
 func main() {
 	opstools.SetUsage("syncs AWS Glue partition schemas to match the schema of their table (Panther version %s)", version)
 	opts := struct {
-		MasterStack      *string
-		DryRun           *bool
-		Debug            *bool
-		Region           *string
-		NumWorkers       *int
-		MaxConnections   *int
-		MaxRetries       *int
-		Prefix           *string
-		SkipVersionCheck *bool
+		MasterStack    *string
+		DryRun         *bool
+		Debug          *bool
+		Region         *string
+		NumWorkers     *int
+		MaxConnections *int
+		MaxRetries     *int
+		Prefix         *string
 	}{
 		MasterStack: flag.String("master-stack", "",
 			"if set, this is the name of the Panther master stack used to deploy, if not set the deployment is assumed from source"),
-		DryRun:           flag.Bool("dry-run", false, "Scan for partitions to sync without applying any modifications"),
-		Debug:            flag.Bool("debug", false, "Enable additional logging"),
-		Region:           flag.String("region", "", "Set the AWS region to run on"),
-		MaxRetries:       flag.Int("max-retries", 12, "Max retries for AWS requests"),
-		MaxConnections:   flag.Int("max-connections", 100, "Max number of connections to AWS"),
-		NumWorkers:       flag.Int("workers", 8, "Number of parallel workers for each table"),
-		Prefix:           flag.String("prefix", "", "A prefix to filter log type names"),
-		SkipVersionCheck: flag.Bool("skip-version-check", false, "Skip panther version check"),
+		DryRun:         flag.Bool("dry-run", false, "Scan for partitions to sync without applying any modifications"),
+		Debug:          flag.Bool("debug", false, "Enable additional logging"),
+		Region:         flag.String("region", "", "Set the AWS region to run on"),
+		MaxRetries:     flag.Int("max-retries", 12, "Max retries for AWS requests"),
+		MaxConnections: flag.Int("max-connections", 100, "Max number of connections to AWS"),
+		NumWorkers:     flag.Int("workers", 8, "Number of parallel workers for each table"),
+		Prefix:         flag.String("prefix", "", "A prefix to filter log type names"),
 	}
 	flag.Parse()
 
@@ -78,9 +76,7 @@ func main() {
 		log.Fatalf("failed to start AWS session: %s", err)
 	}
 
-	if !*opts.SkipVersionCheck {
-		opstools.ValidatePantherVersion(sess, log, *opts.MasterStack, version)
-	}
+	opstools.ValidatePantherVersion(sess, log, *opts.MasterStack, version)
 
 	glueAPI := glue.New(sess)
 	group, ctx := errgroup.WithContext(context.Background())
