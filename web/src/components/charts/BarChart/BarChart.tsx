@@ -36,7 +36,7 @@ interface Data {
  *    top: isHorizontal ? 0 : 30,
  * }
  */
-interface GridPosition {
+export interface GridPosition {
   left?: string | number;
   right?: string | number;
   bottom?: string | number;
@@ -51,14 +51,11 @@ interface GridPosition {
  *    barGap: isHorizontal ? '-20%' : '-110%',
  *  }
  */
-interface BarConfig {
-  barGap?: string | number;
-  barWidth?: number;
-}
 
 export interface Spacing {
   grid?: GridPosition;
-  barConfig?: BarConfig;
+  barGap?: string | number;
+  barWidth?: number;
 }
 
 interface FormatterParams {
@@ -87,24 +84,40 @@ interface BarChartProps {
    */
   alignment?: 'horizontal' | 'vertical';
   /**
-   * `cardWidth` property is string that can take the values of 'half'
+   * `gridPosition` property is
+   *
+   * string that can take the values of 'half'
    * and 'full'. It defines what's the parent width, where card is the
    * main component of pages
-   * @default 'half'
+   * @default {}
    */
-  cardWidth?: CardWidthType;
+  gridPosition?: GridPosition;
+  /**
+   * `barWidth` property is the size number of bars in the chart
+   * @default 30
+   */
+  barWidth?: number;
+  /**
+   * `barGap` property represents the distance between bars related to the barWidth.
+   * This is not as clean as it sounds you can find how this should be used here:
+   * https://echarts.apache.org/en/option.html#series-bar.barGap
+   * @default 24
+   */
+  barGap?: string | number;
 }
 
 const BarChart: React.FC<BarChartProps> = ({
-  cardWidth = 'half',
   formatSeriesLabel,
   data,
   alignment = 'vertical',
+  gridPosition,
+  barWidth = 30,
+  barGap,
 }) => {
   const container = React.useRef<HTMLDivElement>(null);
   const isHorizontal = alignment === 'horizontal';
   const theme = useTheme();
-  const chartSpacing = useBarChartSpacing({ cardWidth, isHorizontal });
+  const chartSpacing = useBarChartSpacing({ gridPosition, barWidth, barGap, isHorizontal });
 
   React.useEffect(() => {
     // We are not allowed to put async function directly in useEffect. Instead, we should define
@@ -137,8 +150,8 @@ const BarChart: React.FC<BarChartProps> = ({
         return {
           name: e.label,
           type: 'bar',
-          barWidth: chartSpacing.barConfig.barWidth,
-          barGap: chartSpacing.barConfig.barGap,
+          barWidth: chartSpacing.barWidth,
+          barGap: chartSpacing.barGap,
           label: {
             show: true,
             position: isHorizontal ? 'right' : 'top',

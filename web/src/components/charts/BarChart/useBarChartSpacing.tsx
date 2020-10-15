@@ -16,38 +16,38 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import React from 'react';
-import { CardWidthType, Spacing } from './BarChart';
+import { GridPosition, Spacing } from './BarChart';
 
 interface UseBarChartSpacingProps {
-  cardWidth: CardWidthType;
+  gridPosition: GridPosition;
+  barWidth: number;
+  barGap: number | string;
   isHorizontal: boolean;
 }
 
-const getSpacing = ({ cardWidth, isHorizontal }: UseBarChartSpacingProps): Spacing => {
-  if (cardWidth === 'full') {
-    return {
-      grid: { left: '20%', bottom: 0, top: 0, right: 200 },
-      barConfig: { barGap: '-100%', barWidth: 24 },
-    };
-  }
+const getGrid = (gridPosition, isHorizontal): GridPosition => {
   return {
-    grid: {
-      left: 100,
-      right: 20,
-      bottom: 20,
-      top: isHorizontal ? 0 : 30,
-    },
-    barConfig: {
-      barWidth: 30,
-      barGap: isHorizontal ? '-20%' : '-110%',
-    },
+    left: 100,
+    right: 20,
+    bottom: 20,
+    top: isHorizontal ? 0 : 30,
+    ...gridPosition,
   };
 };
 
-const useBarChartSpacing = ({ cardWidth, isHorizontal }: UseBarChartSpacingProps): Spacing => {
+const useBarChartSpacing = ({
+  gridPosition,
+  barGap,
+  barWidth,
+  isHorizontal,
+}: UseBarChartSpacingProps): Spacing => {
   return React.useMemo(() => {
-    return getSpacing({ cardWidth, isHorizontal });
-  }, [getSpacing, isHorizontal, cardWidth]);
+    return {
+      grid: getGrid(gridPosition, isHorizontal),
+      barGap: barGap || (isHorizontal ? '-20%' : '-100%'),
+      barWidth,
+    };
+  }, [gridPosition, barGap, barWidth, isHorizontal]);
 };
 
 export default useBarChartSpacing;

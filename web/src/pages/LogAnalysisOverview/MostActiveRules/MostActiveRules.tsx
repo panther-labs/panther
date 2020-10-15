@@ -34,6 +34,10 @@ interface MostActiveRulesProps {
   alertsByRuleID: SingleValue[];
 }
 
+const gridPosition = { left: '20%', bottom: 0, top: 0, right: 200 };
+const barWidth = 24;
+const barGap = '-100%';
+
 const MostActiveRules: React.FC<MostActiveRulesProps> = ({ alertsByRuleID }) => {
   const reversedData = React.useMemo(
     () =>
@@ -55,7 +59,9 @@ const MostActiveRules: React.FC<MostActiveRulesProps> = ({ alertsByRuleID }) => 
       backgroundColor="navyblue-500"
     >
       <BarChart
-        cardWidth="full"
+        gridPosition={gridPosition}
+        barGap={barGap}
+        barWidth={barWidth}
         data={reversedData}
         formatSeriesLabel={params => `${params.value} Alerts`}
         alignment="horizontal"
