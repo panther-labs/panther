@@ -28,7 +28,7 @@ import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagi
 import { LogAnalysisMetricsInput } from 'Generated/schema';
 import AlertsSection from 'Pages/LogAnalysisOverview/AlertsSection';
 import LogAnalysisOverviewBreadcrumbFilters from './LogAnalysisOverviewBreadcrumbFilters';
-import { useGetAlerts } from './graphql/getAlerts.generated';
+import { useGetOverviewAlerts } from './graphql/getOverviewAlerts.generated';
 import LogTypeCharts from './LogTypeCharts';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 import LogAnalysisOverviewPageSkeleton from './Skeleton';
@@ -74,7 +74,7 @@ const LogAnalysisOverview: React.FC = () => {
     },
   });
 
-  const { loading: loadingAlerts, data: alertsData } = useGetAlerts({
+  const { loading: loadingAlerts, data: alertsData } = useGetOverviewAlerts({
     fetchPolicy: 'cache-and-network',
     variables: {
       recentAlertsInput: {
@@ -83,7 +83,7 @@ const LogAnalysisOverview: React.FC = () => {
     },
   });
 
-  if (loading && !data) {
+  if ((loading || loadingAlerts) && (!data || !alertsData)) {
     return <LogAnalysisOverviewPageSkeleton />;
   }
 

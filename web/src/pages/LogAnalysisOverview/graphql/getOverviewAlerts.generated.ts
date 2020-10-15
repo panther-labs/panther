@@ -24,17 +24,17 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type GetAlertsVariables = {
+export type GetOverviewAlertsVariables = {
   recentAlertsInput?: Types.Maybe<Types.ListAlertsInput>;
 };
 
-export type GetAlerts = {
+export type GetOverviewAlerts = {
   topAlerts?: Types.Maybe<{ alertSummaries: Array<Types.Maybe<AlertSummaryFull>> }>;
   recentAlerts?: Types.Maybe<{ alertSummaries: Array<Types.Maybe<AlertSummaryFull>> }>;
 };
 
-export const GetAlertsDocument = gql`
-  query GetAlerts($recentAlertsInput: ListAlertsInput) {
+export const GetOverviewAlertsDocument = gql`
+  query GetOverviewAlerts($recentAlertsInput: ListAlertsInput) {
     topAlerts: alerts(input: { severity: [CRITICAL, HIGH], pageSize: 10 }) {
       alertSummaries {
         ...AlertSummaryFull
@@ -50,48 +50,54 @@ export const GetAlertsDocument = gql`
 `;
 
 /**
- * __useGetAlerts__
+ * __useGetOverviewAlerts__
  *
- * To run a query within a React component, call `useGetAlerts` and pass it any options that fit your needs.
- * When your component renders, `useGetAlerts` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetOverviewAlerts` and pass it any options that fit your needs.
+ * When your component renders, `useGetOverviewAlerts` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetAlerts({
+ * const { data, loading, error } = useGetOverviewAlerts({
  *   variables: {
  *      recentAlertsInput: // value for 'recentAlertsInput'
  *   },
  * });
  */
-export function useGetAlerts(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<GetAlerts, GetAlertsVariables>
+export function useGetOverviewAlerts(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GetOverviewAlerts, GetOverviewAlertsVariables>
 ) {
-  return ApolloReactHooks.useQuery<GetAlerts, GetAlertsVariables>(GetAlertsDocument, baseOptions);
-}
-export function useGetAlertsLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetAlerts, GetAlertsVariables>
-) {
-  return ApolloReactHooks.useLazyQuery<GetAlerts, GetAlertsVariables>(
-    GetAlertsDocument,
+  return ApolloReactHooks.useQuery<GetOverviewAlerts, GetOverviewAlertsVariables>(
+    GetOverviewAlertsDocument,
     baseOptions
   );
 }
-export type GetAlertsHookResult = ReturnType<typeof useGetAlerts>;
-export type GetAlertsLazyQueryHookResult = ReturnType<typeof useGetAlertsLazyQuery>;
-export type GetAlertsQueryResult = ApolloReactCommon.QueryResult<GetAlerts, GetAlertsVariables>;
-export function mockGetAlerts({
+export function useGetOverviewAlertsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetOverviewAlerts, GetOverviewAlertsVariables>
+) {
+  return ApolloReactHooks.useLazyQuery<GetOverviewAlerts, GetOverviewAlertsVariables>(
+    GetOverviewAlertsDocument,
+    baseOptions
+  );
+}
+export type GetOverviewAlertsHookResult = ReturnType<typeof useGetOverviewAlerts>;
+export type GetOverviewAlertsLazyQueryHookResult = ReturnType<typeof useGetOverviewAlertsLazyQuery>;
+export type GetOverviewAlertsQueryResult = ApolloReactCommon.QueryResult<
+  GetOverviewAlerts,
+  GetOverviewAlertsVariables
+>;
+export function mockGetOverviewAlerts({
   data,
   variables,
   errors,
 }: {
-  data: GetAlerts;
-  variables?: GetAlertsVariables;
+  data: GetOverviewAlerts;
+  variables?: GetOverviewAlertsVariables;
   errors?: GraphQLError[];
 }) {
   return {
-    request: { query: GetAlertsDocument, variables },
+    request: { query: GetOverviewAlertsDocument, variables },
     result: { data, errors },
   };
 }
