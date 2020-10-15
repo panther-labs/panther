@@ -65,7 +65,9 @@ describe('AlertDeliveryTable', () => {
 
     const { queryByText } = render(<AlertDeliverySection alert={alert} alertDestinations={[]} />);
 
-    expect(queryByText('No delivery information could be found for this alert')).toBeInTheDocument();
+    expect(
+      queryByText('No delivery information could be found for this alert')
+    ).toBeInTheDocument();
     expect(queryByText('Show History')).not.toBeInTheDocument();
   });
 
