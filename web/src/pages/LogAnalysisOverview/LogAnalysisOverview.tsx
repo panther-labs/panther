@@ -26,10 +26,9 @@ import useTrackPageView from 'Hooks/useTrackPageView';
 import AlertsCharts from 'Pages/LogAnalysisOverview/AlertsCharts';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { LogAnalysisMetricsInput } from 'Generated/schema';
-import { useListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
 import AlertsSection from 'Pages/LogAnalysisOverview/AlertsSection';
 import LogAnalysisOverviewBreadcrumbFilters from './LogAnalysisOverviewBreadcrumbFilters';
-import { useGetTopAlerts } from './graphql/getTopAlerts.generated';
+import { useGetAlerts } from './graphql/getAlerts.generated';
 import LogTypeCharts from './LogTypeCharts';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 import LogAnalysisOverviewPageSkeleton from './Skeleton';
@@ -75,14 +74,10 @@ const LogAnalysisOverview: React.FC = () => {
     },
   });
 
-  const { loading: loadingTopAlerts, data: topAlerts } = useGetTopAlerts({
-    fetchPolicy: 'cache-and-network',
-  });
-
-  const { loading: loadRecentAlerts, data: recentAlerts } = useListAlerts({
+  const { loading: loadingAlerts, data: alertsData } = useGetAlerts({
     fetchPolicy: 'cache-and-network',
     variables: {
-      input: {
+      recentAlertsInput: {
         pageSize: 10,
       },
     },
@@ -103,8 +98,8 @@ const LogAnalysisOverview: React.FC = () => {
   }
 
   const { alertsBySeverity, totalAlertsDelta, eventsProcessed, eventsLatency, alertsByRuleID } = data.getLogAnalysisMetrics; // prettier-ignore
-  const topAlertSummaries = topAlerts?.alerts.alertSummaries || [];
-  const recentAlertSummaries = recentAlerts?.alerts.alertSummaries || [];
+  const topAlertSummaries = alertsData?.topAlerts?.alertSummaries || [];
+  const recentAlertSummaries = alertsData?.recentAlerts?.alertSummaries || [];
 
   return (
     <Box as="article" mb={6}>
@@ -120,7 +115,7 @@ const LogAnalysisOverview: React.FC = () => {
         <LogTypeCharts eventsProcessed={eventsProcessed} eventsLatency={eventsLatency} />
       </SimpleGrid>
       <SimpleGrid columns={1} spacingX={3} spacingY={2}>
-        {loadingTopAlerts || loadRecentAlerts ? (
+        {loadingAlerts ? (
           <TablePlaceholder />
         ) : (
           <AlertsSection topAlerts={topAlertSummaries} recentAlerts={recentAlertSummaries} />
