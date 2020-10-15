@@ -25,6 +25,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 )
@@ -32,13 +33,13 @@ import (
 // LogTypesAPILambdaClient implements LogTypesAPI by invoking a Lambda
 type LogTypesAPILambdaClient struct {
 	LambdaName string
-	LambdaAPI  *lambda.Lambda
+	LambdaAPI  lambdaiface.LambdaAPI
 	Validate   func(interface{}) error
 	JSON       jsoniter.API
 }
 
 type LogTypesAPIPayload struct {
-	ListAvailableLogTypes *struct{}
+	ListAvailableLogTypes *struct{} `json:"ListAvailableLogTypes,omitempty"`
 }
 
 func (c *LogTypesAPILambdaClient) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, error) {

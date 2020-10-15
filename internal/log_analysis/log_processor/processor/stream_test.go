@@ -223,7 +223,7 @@ func initTest() {
 	streamTestDeadline = time.Now().Add(defaultTestTimeLimit)
 }
 
-func noopProcessorFunc(streamChan chan *common.DataStream, dest destinations.Destination) error {
+func noopProcessorFunc(streamChan <-chan *common.DataStream, _ destinations.Destination) error {
 	// drain channel
 	for range streamChan {
 
@@ -232,7 +232,7 @@ func noopProcessorFunc(streamChan chan *common.DataStream, dest destinations.Des
 }
 
 // simulates error processing the data in a file
-func failProcessorFunc(streamChan chan *common.DataStream, dest destinations.Destination) error {
+func failProcessorFunc(_ <-chan *common.DataStream, _ destinations.Destination) error {
 	return fmt.Errorf("processError")
 }
 
@@ -241,6 +241,6 @@ func noopReadSnsMessagesFunc(messages []string) ([]*common.DataStream, error) {
 }
 
 // simulated error parsing sqs message or reading s3 object
-func failReadSnsMessagesFunc(messages []string) ([]*common.DataStream, error) {
+func failReadSnsMessagesFunc(_ []string) ([]*common.DataStream, error) {
 	return nil, fmt.Errorf("readEventError")
 }

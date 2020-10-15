@@ -70,7 +70,7 @@ func handleSQSEvent(event events.SQSEvent) error {
 				zap.L().Error("failed to unmarshal record", zap.Error(err))
 				continue
 			}
-			err := HandleCreateTablesMessage(msg)
+			err := HandleCreateTablesMessage(context.TODO(), &msg)
 			if err != nil {
 				return err
 			}

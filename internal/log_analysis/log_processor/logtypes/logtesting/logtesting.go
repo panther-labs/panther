@@ -35,7 +35,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/omitempty"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
 // RunTestsFromYAML reads all test cases in a YAML file and runs them.
@@ -92,10 +91,10 @@ func TestRegisteredParser(t *testing.T, resolve *logtypes.Registry, logType, inp
 	t.Helper()
 	assert := require.New(t)
 	if resolve == nil {
-		resolve = registry.Default()
+		resolve = logtypes.DefaultRegistry()
 	}
 	entry := resolve.Get(logType)
-	assert.NotNil(entry, "unregistered parser %q", logType)
+	assert.NotNil(entry, "unresolved log type parser %q", logType)
 	p, err := entry.NewParser(nil)
 	assert.NoError(err, "failed to create log parser")
 	results, err := p.ParseLog(input)
@@ -107,7 +106,7 @@ func TestRegisteredParser(t *testing.T, resolve *logtypes.Registry, logType, inp
 	schema := entry.Schema()
 	indicators := pantherlog.FieldSetFromType(reflect.TypeOf(schema))
 	assert.NotNil(results)
-	assert.Equal(len(expect), len(results), "Invalid number of patherlog results produced by parser")
+	assert.Equal(len(expect), len(results), "invalid number of pantherlog results produced by parser")
 	for i, result := range results {
 		expect := expect[i]
 		expect = mustRenderExpect(expect, logType)

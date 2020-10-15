@@ -163,12 +163,19 @@ func (m *Mux) Handle(name string, handler interface{}) error {
 func (m *Mux) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 	iter := resolveJSON(m.JSON).BorrowIterator(payload)
 	defer iter.Pool().ReturnIterator(iter)
-	name := iter.ReadObject()
-	handler, err := m.Get(name)
-	if err != nil {
-		return nil, err
+	for name := iter.ReadObject(); name != ""; name = iter.ReadObject() {
+		if iter.WhatIsNext() == jsoniter.NilValue {
+			iter.Skip()
+			continue
+		}
+		handler, err := m.Get(name)
+		if err != nil {
+			return nil, err
+		}
+		payload := iter.SkipAndReturnBytes()
+		return handler.Invoke(ctx, payload)
 	}
-	return handler.Invoke(ctx, iter.SkipAndReturnBytes())
+	return nil, errors.New("empty payload")
 }
 
 func (m *Mux) Get(name string) (Handler, error) {

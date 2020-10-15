@@ -19,6 +19,8 @@ package process
  */
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
@@ -27,6 +29,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 )
 
 // CreateTablesMessage is the event that triggers the creation of Glue tables/views for logtypes.
@@ -60,17 +63,37 @@ func (m CreateTablesMessage) Send(sqsClient sqsiface.SQSAPI, queueURL string) er
 	return nil
 }
 
-func HandleCreateTablesMessage(msg CreateTablesMessage) error {
+func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) error {
 	for _, logType := range msg.LogTypes {
-		_, err := gluetables.CreateOrUpdateGlueTablesForLogType(glueClient, logType, config.ProcessedDataBucket)
+		entry, err := logtypesResolver.Resolve(ctx, logType)
 		if err != nil {
-			return errors.Wrapf(err, "failed to create/update glue table for log type %s", logType)
+			return err
+		}
+		if entry == nil {
+			return errors.Errorf("unresolved log type %q", logType)
+		}
+		meta := entry.GlueTableMeta()
+		// NOTE: This function updates all logtype-related tables, not only the processed log tables
+		if _, err := gluetables.CreateOrUpdateGlueTables(glueClient, config.ProcessedDataBucket, meta); err != nil {
+			return errors.Wrapf(err, "failed to update tables for log type %q", logType)
 		}
 	}
 	// update the views with the new tables
-	err := athenaviews.CreateOrReplaceViews(glueClient, athenaClient)
+	availableLogTypes, err := listAvailableLogTypes(ctx)
 	if err != nil {
-		return errors.Wrap(err, "failed to create/replace views")
+		return err
+	}
+	deployedLogTypes, err := gluetables.DeployedLogTypes(ctx, glueClient, availableLogTypes)
+	if err != nil {
+		return err
+	}
+	deployedLogTables, err := logtypes.ResolveTables(ctx, logtypesResolver, deployedLogTypes...)
+	if err != nil {
+		return err
+	}
+	// update the views
+	if err := athenaviews.CreateOrReplaceViews(athenaClient, deployedLogTables); err != nil {
+		return errors.Wrap(err, "failed to update athena views")
 	}
 	return nil
 }
