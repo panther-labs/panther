@@ -16,5 +16,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './BarChart';
-export * from './BarChart';
+import React from 'react';
+import { Flex } from 'pouncejs';
+import ZoomButton from './ZoomButton';
+
+interface ScaleControlsProps {
+  onZoom: (boolean) => void;
+  onReset: () => void;
+}
+
+const ScaleControls: React.FC<ScaleControlsProps> = ({ onZoom, onReset }) => {
+  const [zoomEnabled, setZoomEnabled] = React.useState(false);
+  return (
+    <Flex spacing={2} zIndex={5}>
+      <ZoomButton
+        title="ZOOM"
+        selected={zoomEnabled}
+        onClick={() => {
+          onZoom(zoomEnabled);
+          setZoomEnabled(!zoomEnabled);
+        }}
+      />
+      <ZoomButton title="RESET" onClick={onReset} />
+    </Flex>
+  );
+};
+
+export default ScaleControls;

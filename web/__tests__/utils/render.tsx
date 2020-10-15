@@ -74,7 +74,10 @@ export const render = (element: React.ReactElement, options: RenderOptions = {})
     <MockedProvider link={apolloLink} cache={apolloCache}>
       <AuthContext.Provider value={authProviderValue}>
         <Router history={history}>
-          <UIProviders>{element}</UIProviders>
+          <UIProviders>
+            <header id="main-header" />
+            {element}
+          </UIProviders>
         </Router>
       </AuthContext.Provider>
     </MockedProvider>

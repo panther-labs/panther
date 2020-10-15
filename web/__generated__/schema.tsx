@@ -600,6 +600,7 @@ export type LogAnalysisMetricsResponse = {
   alertsBySeverity: SeriesData;
   eventsLatency: FloatSeriesData;
   totalAlertsDelta: Array<SingleValue>;
+  alertsByRuleID: Array<SingleValue>;
   fromDate: Scalars['AWSDateTime'];
   toDate: Scalars['AWSDateTime'];
   intervalMinutes: Scalars['Int'];
@@ -2107,6 +2108,7 @@ export type LogAnalysisMetricsResponseResolvers<
   alertsBySeverity?: Resolver<ResolversTypes['SeriesData'], ParentType, ContextType>;
   eventsLatency?: Resolver<ResolversTypes['FloatSeriesData'], ParentType, ContextType>;
   totalAlertsDelta?: Resolver<Array<ResolversTypes['SingleValue']>, ParentType, ContextType>;
+  alertsByRuleID?: Resolver<Array<ResolversTypes['SingleValue']>, ParentType, ContextType>;
   fromDate?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   toDate?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   intervalMinutes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;

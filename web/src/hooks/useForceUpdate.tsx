@@ -16,5 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './BarChart';
-export * from './BarChart';
+import React from 'react';
+
+const useForceUpdate = () => {
+  const [, dispatch] = React.useReducer(() => ({}), {});
+  return dispatch;
+};
+
+export default useForceUpdate;

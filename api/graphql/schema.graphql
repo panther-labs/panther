@@ -436,6 +436,7 @@ type LogAnalysisMetricsResponse {
   alertsBySeverity: SeriesData!
   eventsLatency: FloatSeriesData!
   totalAlertsDelta: [SingleValue!]!
+  alertsByRuleID: [SingleValue!]!
   fromDate: AWSDateTime!
   toDate: AWSDateTime!
   intervalMinutes: Int!

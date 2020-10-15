@@ -17,39 +17,46 @@
  */
 
 import React from 'react';
-import { Box, Card, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
+import { Box, Card, Flex, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
-import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType/EventsByLogType';
-import { SeriesData } from 'Generated/schema';
-import EventsByLatency from '../EventsByLatency';
+import { SeriesData, SingleValue } from 'Generated/schema';
+import AlertSummary from 'Pages/LogAnalysisOverview/AlertSummary';
+import AlertsBySeverity from 'Pages/LogAnalysisOverview/AlertsBySeverity/AlertsBySeverity';
+import MostActiveRules from 'Pages/LogAnalysisOverview/MostActiveRules/MostActiveRules';
 
 interface LogTypeChartsProps {
-  eventsProcessed: SeriesData;
-  eventsLatency: SeriesData;
+  totalAlertsDelta: SingleValue[];
+  alertsBySeverity: SeriesData;
+  alertsByRuleID: SingleValue[];
 }
 
-const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed, eventsLatency }) => {
+const AlertsCharts: React.FC<LogTypeChartsProps> = ({
+  totalAlertsDelta,
+  alertsBySeverity,
+  alertsByRuleID,
+}) => {
   return (
     <Card as="section">
       <Tabs>
         <Box position="relative" pl={2} pr={4}>
           <TabList>
-            <BorderedTab>Events by Log Type</BorderedTab>
-            <BorderedTab>Data Latency by Log Type</BorderedTab>
+            <BorderedTab>Real-Time Alerts</BorderedTab>
+            <BorderedTab>Most Active Rules</BorderedTab>
           </TabList>
           <BorderTabDivider />
         </Box>
         <Box p={6}>
           <TabPanels>
             <TabPanel lazy>
-              <Box height={289} py={5} pl={4} backgroundColor="navyblue-500">
-                <EventsByLogType events={eventsProcessed} />
+              <Box height={272}>
+                <Flex direction="row" width="100%" height="100%">
+                  <AlertSummary data={totalAlertsDelta} />
+                  <AlertsBySeverity alerts={alertsBySeverity} />
+                </Flex>
               </Box>
             </TabPanel>
             <TabPanel lazy>
-              <Box height={289} py={5} pl={4} backgroundColor="navyblue-500">
-                <EventsByLatency events={eventsLatency} />
-              </Box>
+              <MostActiveRules alertsByRuleID={alertsByRuleID} />
             </TabPanel>
           </TabPanels>
         </Box>
@@ -58,4 +65,4 @@ const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed, eventsLa
   );
 };
 
-export default LogTypeCharts;
+export default AlertsCharts;

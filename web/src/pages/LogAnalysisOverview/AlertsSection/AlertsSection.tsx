@@ -17,39 +17,42 @@
  */
 
 import React from 'react';
-import { Box, Card, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
+import { Box, Card, Flex, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
-import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType/EventsByLogType';
-import { SeriesData } from 'Generated/schema';
-import EventsByLatency from '../EventsByLatency';
+import AlertCard from 'Components/cards/AlertCard';
+import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 
-interface LogTypeChartsProps {
-  eventsProcessed: SeriesData;
-  eventsLatency: SeriesData;
+interface AlertsSectionProps {
+  topAlerts: AlertSummaryFull[];
+  recentAlerts: AlertSummaryFull[];
 }
 
-const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed, eventsLatency }) => {
+const AlertsSection: React.FC<AlertsSectionProps> = ({ topAlerts, recentAlerts }) => {
   return (
     <Card as="section">
       <Tabs>
         <Box position="relative" pl={2} pr={4}>
           <TabList>
-            <BorderedTab>Events by Log Type</BorderedTab>
-            <BorderedTab>Data Latency by Log Type</BorderedTab>
+            <BorderedTab>Recent Alerts ({recentAlerts.length})</BorderedTab>
+            <BorderedTab>High Severity Alerts ({topAlerts.length})</BorderedTab>
           </TabList>
           <BorderTabDivider />
         </Box>
         <Box p={6}>
           <TabPanels>
             <TabPanel lazy>
-              <Box height={289} py={5} pl={4} backgroundColor="navyblue-500">
-                <EventsByLogType events={eventsProcessed} />
-              </Box>
+              <Flex direction="column" spacing={2}>
+                {recentAlerts.map(alert => (
+                  <AlertCard key={alert.alertId} alert={alert} />
+                ))}
+              </Flex>
             </TabPanel>
             <TabPanel lazy>
-              <Box height={289} py={5} pl={4} backgroundColor="navyblue-500">
-                <EventsByLatency events={eventsLatency} />
-              </Box>
+              <Flex direction="column" spacing={2}>
+                {topAlerts.map(alert => (
+                  <AlertCard key={alert.alertId} alert={alert} />
+                ))}
+              </Flex>
             </TabPanel>
           </TabPanels>
         </Box>
@@ -58,4 +61,4 @@ const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed, eventsLa
   );
 };
 
-export default LogTypeCharts;
+export default AlertsSection;

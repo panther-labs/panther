@@ -16,5 +16,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './BarChart';
-export * from './BarChart';
+import React from 'react';
+import useForceUpdate from 'Hooks/useForceUpdate';
+import { fireEvent, render } from 'test-utils';
+
+const Component = () => {
+  const counter = React.useRef(0);
+  const forceUpdate = useForceUpdate();
+
+  return (
+    <button
+      onClick={() => {
+        counter.current += 1;
+        forceUpdate();
+      }}
+    >
+      rendered {counter.current} times
+    </button>
+  );
+};
+
+describe('useForceUpdate', () => {
+  it('forces an update', () => {
+    const { getByText } = render(<Component />);
+
+    fireEvent.click(getByText('rendered 0 times'));
+    fireEvent.click(getByText('rendered 1 times'));
+
+    expect(getByText('rendered 2 times')).toBeInTheDocument();
+  });
+});

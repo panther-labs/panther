@@ -15,6 +15,30 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+import React from 'react';
+import { AbstractButton } from 'pouncejs';
 
-export { default } from './BarChart';
-export * from './BarChart';
+interface ZoomButtonProps {
+  title: string;
+  selected?: boolean;
+  onClick: () => void;
+}
+
+const ZoomButton: React.FC<ZoomButtonProps> = ({ title, selected, onClick }) => {
+  return (
+    <AbstractButton
+      borderRadius="pill"
+      py={1}
+      px={4}
+      fontSize="small"
+      color="black"
+      backgroundColor={selected ? 'blue-400' : 'navyblue-300'}
+      _hover={!selected && { backgroundColor: 'blue-400' }}
+      onClick={onClick}
+    >
+      {title}
+    </AbstractButton>
+  );
+};
+
+export default ZoomButton;

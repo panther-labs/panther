@@ -15,22 +15,39 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 import React from 'react';
-import { Flex } from 'pouncejs';
-import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
-import { SeriesData } from 'Generated/schema';
+import { GridPosition, Spacing } from './BarChart';
 
-interface EventsByLogTypesProps {
-  events: SeriesData;
+interface UseBarChartSpacingProps {
+  gridPosition: GridPosition;
+  barWidth: number;
+  barGap: number | string;
+  isHorizontal: boolean;
 }
 
-const EventsByLogTypes: React.FC<EventsByLogTypesProps> = ({ events }) => {
-  return (
-    <Flex data-testid="events-by-log-type-chart" height="100%" position="relative">
-      <TimeSeriesChart data={events} zoomable />
-    </Flex>
-  );
+const getGrid = (gridPosition, isHorizontal): GridPosition => {
+  return {
+    left: 100,
+    right: 20,
+    bottom: 20,
+    top: isHorizontal ? 0 : 30,
+    ...gridPosition,
+  };
 };
 
-export default React.memo(EventsByLogTypes);
+const useBarChartSpacing = ({
+  gridPosition,
+  barGap,
+  barWidth,
+  isHorizontal,
+}: UseBarChartSpacingProps): Spacing => {
+  return React.useMemo(() => {
+    return {
+      grid: getGrid(gridPosition, isHorizontal),
+      barGap: barGap || (isHorizontal ? '-20%' : '-100%'),
+      barWidth,
+    };
+  }, [gridPosition, barGap, barWidth, isHorizontal]);
+};
+
+export default useBarChartSpacing;
