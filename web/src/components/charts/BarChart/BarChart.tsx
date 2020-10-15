@@ -18,6 +18,7 @@
 
 import React from 'react';
 import { Box, Theme, useTheme } from 'pouncejs';
+import useBarChartSpacing from 'Components/charts/BarChart/useBarChartSpacing';
 
 interface Data {
   value: number;
@@ -67,7 +68,7 @@ interface FormatterParams {
 
 type FormatSeriesLabelFunc = (params: FormatterParams) => string;
 
-type CardWidthType = 'half' | 'full';
+export type CardWidthType = 'half' | 'full';
 
 interface BarChartProps {
   /**
@@ -94,27 +95,6 @@ interface BarChartProps {
   cardWidth?: CardWidthType;
 }
 
-const getSpacing = (cardWidth: CardWidthType, isHorizontal: boolean): Spacing => {
-  if (cardWidth === 'full') {
-    return {
-      grid: { left: '20%', bottom: 0, top: 0, right: 200 },
-      barConfig: { barGap: '-100%', barWidth: 24 },
-    };
-  }
-  return {
-    grid: {
-      left: 100,
-      right: 20,
-      bottom: 20,
-      top: isHorizontal ? 0 : 30,
-    },
-    barConfig: {
-      barWidth: 30,
-      barGap: isHorizontal ? '-20%' : '-110%',
-    },
-  };
-};
-
 const BarChart: React.FC<BarChartProps> = ({
   cardWidth = 'half',
   formatSeriesLabel,
@@ -124,15 +104,7 @@ const BarChart: React.FC<BarChartProps> = ({
   const container = React.useRef<HTMLDivElement>(null);
   const isHorizontal = alignment === 'horizontal';
   const theme = useTheme();
-
-  /**
-   * Since `spacing` has a lot of child optional parameters that can be defined
-   * here we are initializing the object by taking some default values getDefaultSpacing
-   * function and overriding those passed as prop
-   */
-  const chartSpacing = React.useMemo(() => {
-    return getSpacing(cardWidth, isHorizontal);
-  }, [getSpacing, isHorizontal, cardWidth]);
+  const chartSpacing = useBarChartSpacing({ cardWidth, isHorizontal });
 
   React.useEffect(() => {
     // We are not allowed to put async function directly in useEffect. Instead, we should define
