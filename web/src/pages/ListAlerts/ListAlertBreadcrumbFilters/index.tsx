@@ -17,3 +17,4 @@
  */
 
 export { default } from './ListAlertBreadcrumbFilters';
+export * from './ListAlertBreadcrumbFilters';

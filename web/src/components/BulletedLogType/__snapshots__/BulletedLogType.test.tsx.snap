@@ -28,6 +28,9 @@ exports[`BulletedLogType renders the same color for the same log type 1`] = `
 }
 
 <div>
+  <header
+    id="main-header"
+  />
   <div
     class="panther-2"
   >

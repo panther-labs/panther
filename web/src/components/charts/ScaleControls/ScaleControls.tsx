@@ -19,25 +19,25 @@
 import React from 'react';
 import { Flex } from 'pouncejs';
 import { EChartOption } from 'echarts';
-import ScaleButton from 'Components/charts/ScaleControls/ScaleButton';
+import ScaleButton from './ScaleButton';
 
 interface ScaleControlsProps {
   scaleType: string;
-  onSelection: (option: EChartOption.BasicComponents.CartesianAxis.Type) => void;
+  onSelect: (option: EChartOption.BasicComponents.CartesianAxis.Type) => void;
 }
 
-const ScaleControls: React.FC<ScaleControlsProps> = ({ scaleType = 'value', onSelection }) => {
+const ScaleControls: React.FC<ScaleControlsProps> = ({ scaleType = 'value', onSelect }) => {
   return (
-    <Flex spacing={2}>
+    <Flex spacing={2} zIndex={5}>
       <ScaleButton
         title="Linear"
         selected={scaleType === 'value'}
-        onClick={() => onSelection('value')}
+        onClick={() => onSelect('value')}
       />
       <ScaleButton
         title="Logarithmic"
         selected={scaleType === 'log'}
-        onClick={() => onSelection('log')}
+        onClick={() => onSelect('log')}
       />
     </Flex>
   );

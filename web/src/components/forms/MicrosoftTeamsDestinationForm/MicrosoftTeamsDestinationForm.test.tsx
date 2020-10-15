@@ -117,7 +117,7 @@ describe('MicrosoftTeamsDestinationForm', () => {
     });
   });
 
-  it('should edit SQS Destination successfully', async () => {
+  it('should edit Microsoft Teams Destination successfully', async () => {
     const submitMockFunc = jest.fn();
     const { getByLabelText, getByText } = render(
       <MicrosoftTeamsDestinationForm onSubmit={submitMockFunc} initialValues={initialValues} />
