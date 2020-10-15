@@ -146,17 +146,32 @@ func getClusterTasks(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodels.E
 
 	// Describe tasks
 	//
-	// Oddly, the DescribeTasks API call does not have a version with builtin paging like the list
-	// API call does. If we run into issues here we may need to implement paging ourselves.
-	rawTasks, err := ecsSvc.DescribeTasks(&ecs.DescribeTasksInput{
-		Cluster: clusterArn,
-		// This only accepts one argument, which is the string TAGS
-		// Indicates that we want to included the task tags
-		Include: []*string{aws.String("TAGS")},
-		Tasks:   taskArns,
-	})
-	if err != nil {
-		return nil, errors.Wrapf(err, "ECS.DescribeTasks: %s", aws.StringValue(clusterArn))
+	// The DescribeTasks API call does not have a version with builtin paging like the list
+	// API call does. API set a limit of 100 tasks to describe in a single operation.
+	// Loop through results 100 elements at a time and aggregate the results
+	const ecsTasksBatchSize = 100
+	// initialize the rawTasks variable
+	var rawTasks ecs.DescribeTasksOutput
+	// loop through the items in taskArns, 100 at a time
+	for i := 0; i < len(taskArns); i += ecsTasksBatchSize {
+		end := i + ecsTasksBatchSize
+		if end > len(taskArns) {
+			end = len(taskArns)
+		}
+		rawTasksPage, err := ecsSvc.DescribeTasks(&ecs.DescribeTasksInput{
+			Cluster: clusterArn,
+			// This only accepts one argument, which is the string TAGS
+			// Indicates that we want to included the task tags
+			Include: []*string{aws.String("TAGS")},
+			Tasks:   taskArns[i:end],
+		})
+		if err != nil {
+			return nil, errors.Wrapf(err, "ECS.DescribeTasks: %s", aws.StringValue(clusterArn))
+		}
+		// Append each round of rawTasksPage.Tasks results to overall rawTasks var.
+		// rawTasks.Failures will only contain details of tasks removed between
+		// ListTasksPages and DescribeTasks, we can safely discard those results.
+		rawTasks.Tasks = append(rawTasks.Tasks, rawTasksPage.Tasks...)
 	}
 
 	tasks := make([]*awsmodels.EcsTask, 0, len(rawTasks.Tasks))
