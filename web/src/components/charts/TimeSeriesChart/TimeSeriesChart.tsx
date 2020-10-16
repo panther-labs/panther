@@ -323,14 +323,18 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       newChart.on('legendselectchanged', function (obj) {
         const { selected, name } = obj;
         const currentSelected = chartOptions.legend.selected;
+        console.log('log', selected, currentSelected);
         // On first selection currentSelected is 'undefined'
         if (!currentSelected || Object.keys(currentSelected).every(key => currentSelected[key])) {
+          console.log('if', currentSelected);
           const newSelection = {};
           Object.keys(selected).forEach(key => {
             newSelection[key] = key === name;
           });
           chartOptions.legend.selected = newSelection;
-        } else {
+
+          // This checks if everything is deselected, if not we can go ahead and update selection
+        } else if (!Object.keys(selected).every(key => !selected[key])) {
           chartOptions.legend.selected = selected;
         }
         this.setOption(chartOptions);
