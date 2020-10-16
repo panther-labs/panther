@@ -25,7 +25,7 @@ import { PageViewEnum } from 'Helpers/analytics';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import AlertsCharts from 'Pages/LogAnalysisOverview/AlertsCharts';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
-import { LogAnalysisMetricsInput } from 'Generated/schema';
+import { AlertStatusesEnum, LogAnalysisMetricsInput } from 'Generated/schema';
 import AlertsSection from 'Pages/LogAnalysisOverview/AlertsSection';
 import LogAnalysisOverviewBreadcrumbFilters from './LogAnalysisOverviewBreadcrumbFilters';
 import { useGetOverviewAlerts } from './graphql/getOverviewAlerts.generated';
@@ -79,6 +79,7 @@ const LogAnalysisOverview: React.FC = () => {
     variables: {
       recentAlertsInput: {
         pageSize: 10,
+        status: [AlertStatusesEnum.Open, AlertStatusesEnum.Triaged],
       },
     },
   });

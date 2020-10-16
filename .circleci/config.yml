@@ -114,6 +114,7 @@ commands:
             git add -A .
             git commit -m "mage gen fmt" || true
             git push origin $CIRCLE_BRANCH
+            
 
 jobs:
   setup:
