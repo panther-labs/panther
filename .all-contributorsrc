@@ -208,7 +208,8 @@
       "profile": "https://vorillaz.com",
       "contributions": [
         "code",
-        "bug"
+        "bug",
+        "security"
       ]
     }
   ],
