@@ -200,6 +200,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "dimitriszoitas",
+      "name": "Jim Zoitas",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/67599520?v=4",
+      "profile": "https://github.com/dimitriszoitas",
+      "contributions": [
+        "design"
+      ]
     }
   ],
   "contributorsPerLine": 7,
