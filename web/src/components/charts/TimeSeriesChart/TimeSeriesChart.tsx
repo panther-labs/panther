@@ -334,7 +334,12 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           chartOptions.legend.selected = newSelection;
 
           // This checks if everything is deselected, if not we can go ahead and update selection
-        } else if (!Object.keys(selected).every(key => !selected[key])) {
+        } else if (Object.keys(selected).every(key => !selected[key])) {
+          chartOptions.legend.selected = Object.keys(selected).reduce((acc, key) => {
+            acc[key] = true;
+            return acc;
+          }, {});
+        } else {
           chartOptions.legend.selected = selected;
         }
         this.setOption(chartOptions);
