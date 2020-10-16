@@ -174,11 +174,8 @@ func createChangeSet(
 		})
 	}
 
-	// add version tag to all objects ("untagged" if not set)
+	// add version tag to all objects
 	pantherVersion := util.RepoVersion()
-	if pantherVersion == "" {
-		pantherVersion = "untagged"
-	}
 
 	createInput := &cfn.CreateChangeSetInput{
 		Capabilities: []*string{

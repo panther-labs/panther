@@ -7,10 +7,7 @@ upload-all:
 	done
 
 upload-single:
-	version=`egrep 'Version: v' $(template)  | tr -s ' ' | cut -d ' ' -f 3`; \
+	version=`cat ../../../VERSION | xargs`; \
 	templateDisplayName=`echo $(template) | cut -d'.' -f1`; \
-	if [[ $$version != "" ]]; then \
-		aws s3 cp $(template) s3://$(bucket)/$$templateDisplayName/$$version/template.yml --acl public-read; \
-	fi; \
+	aws s3 cp $(template) s3://$(bucket)/$$templateDisplayName/v$$version/template.yml --acl public-read;
 	aws s3 cp $(template) s3://$(bucket)/$$templateDisplayName/latest/template.yml --acl public-read;
-

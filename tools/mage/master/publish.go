@@ -43,19 +43,15 @@ func Publish() error {
 		return err
 	}
 
-	version, err := GetVersion()
-	if err != nil {
-		return err
+	version := util.RepoVersion()
+	if strings.HasSuffix(version, "-dirty") {
+		return fmt.Errorf("you have local changes; commit or stash them before publishing")
+	}
+	if !strings.Contains(version, "-release-1.") {
+		return fmt.Errorf("publication is only allowed from a release-1.X branch")
 	}
 
-	// ensure the git tag in the repo matches the declared version in master template
-	repoVersion := util.RepoVersion()
-	if version != repoVersion {
-		return fmt.Errorf("master panther version %s does not match repo version %s",
-			version, repoVersion)
-	}
-
-	if err = getPublicationApproval(log, version); err != nil {
+	if err := getPublicationApproval(log, version); err != nil {
 		return err
 	}
 
@@ -104,7 +100,7 @@ func getPublicationApproval(log *zap.SugaredLogger, version string) error {
 			result := prompt.Read("Are you sure you want to overwrite the published release in each region? (yes|no) ",
 				prompt.NonemptyValidator)
 			if strings.ToLower(result) != "yes" {
-				return fmt.Errorf("publish v%s aborted by user", version)
+				return fmt.Errorf("publish %s aborted by user", version)
 			}
 			return nil // override approved - don't need to keep checking each region
 		}
@@ -142,7 +138,7 @@ func publishToRegion(log *zap.SugaredLogger, version, region string) error {
 // Returns bucket name, s3 object key, and S3 URL for the master template in the current region.
 func s3MasterTemplate(version string) (string, string, string) {
 	bucket := util.PublicAssetsBucket()
-	s3Key := version + "/panther.yml"
+	s3Key := strings.SplitN(version, "-", 2)[0] + "/panther.yml"
 	s3URL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, s3Key)
 	return bucket, s3Key, s3URL
 }
