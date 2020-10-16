@@ -177,11 +177,13 @@ func describeFlowLogs(ec2Svc ec2iface.EC2API, vpcID *string) (flowLogs []*ec2.Fl
 }
 
 // describeStaleSecurityGroups returns all the stale security groups for the given EC2 VPC
-func describeStaleSecurityGroups(ec2Svc ec2iface.EC2API, vpcID *string) (staleSecurityGroups []*ec2.StaleSecurityGroup, err error) {
+func describeStaleSecurityGroups(ec2Svc ec2iface.EC2API, vpcID *string) (staleSecurityGroups []*string, err error) {
 	err = ec2Svc.DescribeStaleSecurityGroupsPages(
 		&ec2.DescribeStaleSecurityGroupsInput{VpcId: vpcID},
 		func(page *ec2.DescribeStaleSecurityGroupsOutput, lastPage bool) bool {
-			staleSecurityGroups = append(staleSecurityGroups, page.StaleSecurityGroupSet...)
+			for _, staleSecurityGroup := range page.StaleSecurityGroupSet {
+				staleSecurityGroups = append(staleSecurityGroups, staleSecurityGroup.GroupId)
+			}
 			return true
 		})
 	if err != nil {
@@ -191,8 +193,9 @@ func describeStaleSecurityGroups(ec2Svc ec2iface.EC2API, vpcID *string) (staleSe
 	return
 }
 
-// describeSecurityGroupsVPC returns all the security groups for given VPC
-func describeSecurityGroupsVPC(svc ec2iface.EC2API, vpcID *string) (securityGroups []*ec2.SecurityGroup, err error) {
+// describeSecurityGroupsVPC returns all the security groups for given VPC. Additionally, it returns the
+//// id of the default network ACL.
+func describeSecurityGroupsVPC(svc ec2iface.EC2API, vpcID *string) (securityGroups []*string, defaultId *string, err error) {
 	err = svc.DescribeSecurityGroupsPages(&ec2.DescribeSecurityGroupsInput{
 		Filters: []*ec2.Filter{
 			{
@@ -201,18 +204,24 @@ func describeSecurityGroupsVPC(svc ec2iface.EC2API, vpcID *string) (securityGrou
 			},
 		},
 	}, func(page *ec2.DescribeSecurityGroupsOutput, lastPage bool) bool {
-		securityGroups = append(securityGroups, page.SecurityGroups...)
+		for _, securityGroup := range page.SecurityGroups {
+			securityGroups = append(securityGroups, securityGroup.GroupId)
+			if aws.StringValue(securityGroup.GroupName) == "default " {
+				defaultId = securityGroup.GroupId
+			}
+		}
 		return true
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "EC2.DescribeSecurityGroups: %s", aws.StringValue(vpcID))
+		return nil, nil, errors.Wrapf(err, "EC2.DescribeSecurityGroups: %s", aws.StringValue(vpcID))
 	}
 
 	return
 }
 
-// describeNetworkACLsVPC returns all the network ACLs for given VPC
-func describeNetworkACLsVPC(svc ec2iface.EC2API, vpcID *string) (nacls []*ec2.NetworkAcl, err error) {
+// describeNetworkACLsVPC returns all the network ACLs for given VPC. Additionally, it returns the
+// id of the default network ACL.
+func describeNetworkACLsVPC(svc ec2iface.EC2API, vpcID *string) (nacls []*string, defaultId *string, err error) {
 	err = svc.DescribeNetworkAclsPages(&ec2.DescribeNetworkAclsInput{
 		Filters: []*ec2.Filter{
 			{
@@ -221,11 +230,16 @@ func describeNetworkACLsVPC(svc ec2iface.EC2API, vpcID *string) (nacls []*ec2.Ne
 			},
 		},
 	}, func(page *ec2.DescribeNetworkAclsOutput, lastPage bool) bool {
-		nacls = append(nacls, page.NetworkAcls...)
+		for _, nacl := range page.NetworkAcls {
+			nacls = append(nacls, nacl.NetworkAclId)
+			if aws.BoolValue(nacl.IsDefault) {
+				defaultId = nacl.NetworkAclId
+			}
+		}
 		return true
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "EC2.DescribeNetworkAcls: %s", aws.StringValue(vpcID))
+		return nil, nil, errors.Wrapf(err, "EC2.DescribeNetworkAcls: %s", aws.StringValue(vpcID))
 	}
 
 	return
@@ -256,10 +270,10 @@ func buildEc2VpcSnapshot(ec2Svc ec2iface.EC2API, vpc *ec2.Vpc) (*awsmodels.Ec2Vp
 	}
 
 	var err error
-	if ec2Vpc.SecurityGroups, err = describeSecurityGroupsVPC(ec2Svc, vpc.VpcId); err != nil {
+	if ec2Vpc.SecurityGroups, ec2Vpc.DefaultSecurityGroupId, err = describeSecurityGroupsVPC(ec2Svc, vpc.VpcId); err != nil {
 		return nil, err
 	}
-	if ec2Vpc.NetworkAcls, err = describeNetworkACLsVPC(ec2Svc, vpc.VpcId); err != nil {
+	if ec2Vpc.NetworkAcls, ec2Vpc.DefaultNetworkAclId, err = describeNetworkACLsVPC(ec2Svc, vpc.VpcId); err != nil {
 		return nil, err
 	}
 	if ec2Vpc.RouteTables, err = describeRouteTables(ec2Svc, vpc.VpcId); err != nil {
