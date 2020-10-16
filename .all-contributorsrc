@@ -200,6 +200,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "vorillaz",
+      "name": "Theodore Vorillas",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/1022166?v=4",
+      "profile": "https://vorillaz.com",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
