@@ -169,7 +169,7 @@ jobs:
           command: /tmp/panther/magebin -v test:go
 
   test_python:
-    executor: panther-buildpak
+    executor: panther-buildpack
     steps:
       - checkout
       - attach_workspace:
