@@ -43,7 +43,8 @@ const (
 	maxBackoff = 30 * time.Second
 	// Expire resources after three days (slightly longer than compliance-api timeout of two days) automatically
 	// if we miss the delete API call
-	deleteMissWindow = 3 * 24 * 60 * 60
+	deleteMissWindow  = 3 * 24 * 60 * 60
+	maxDynamoItemSize = 390000
 )
 
 // AddResources batch writes a group of resources to the Dynamo table.
@@ -73,6 +74,14 @@ func AddResources(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 		if err != nil {
 			zap.L().Error("dynamodbattribute.MarshalMap failed", zap.Error(err))
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		}
+		itemSize := dynamodbbatch.GetDynamoItemSize(marshalled)
+		if itemSize > maxDynamoItemSize {
+			zap.L().Warn("item too large to send to dynamo",
+				zap.String("id", string(r.ID)),
+				zap.String("type", string(r.Type)),
+				zap.Int("size", itemSize))
+			continue
 		}
 		writeRequests[i] = &dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: marshalled}}
 
