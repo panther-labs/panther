@@ -57,6 +57,7 @@ var (
 		{
 			RuleID:            aws.String("ruleId"),
 			RuleVersion:       aws.String("ruleVersion"),
+			Type:              "RULE",
 			RuleDisplayName:   aws.String("ruleDisplayName"),
 			AlertID:           aws.String("alertId"),
 			Status:            "OPEN",
@@ -169,6 +170,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			RuleVersion:       aws.String("ruleVersion"),
 			AlertID:           aws.String("alertId"),
 			Status:            "OPEN",
+			Type:              "RULE",
 			UpdateTime:        aws.Time(timeInTest),
 			CreationTime:      aws.Time(timeInTest),
 			Severity:          aws.String("INFO"),
@@ -185,6 +187,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			RuleVersion:     aws.String("ruleVersion"),
 			AlertID:         aws.String("alertId"),
 			Status:          "TRIAGED",
+			Type:            "RULE",
 			UpdateTime:      aws.Time(timeInTest),
 			CreationTime:    aws.Time(timeInTest),
 			Severity:        aws.String("INFO"),
