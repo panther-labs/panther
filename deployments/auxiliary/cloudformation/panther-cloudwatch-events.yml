@@ -19,8 +19,6 @@ Description: >
   This stack configures Panther's real-time CloudWatch Event collection.
   It works by creating CloudWatch Event rules which feed to Panther's SQS Queue proxied by
   a local SNS topic in each region.
-Metadata:
-  Version: v0.1.8
 
 Parameters:
   MasterAccountId:
