@@ -35,7 +35,9 @@ export type GetOverviewAlerts = {
 
 export const GetOverviewAlertsDocument = gql`
   query GetOverviewAlerts($recentAlertsInput: ListAlertsInput) {
-    topAlerts: alerts(input: { severity: [CRITICAL, HIGH], pageSize: 10 }) {
+    topAlerts: alerts(
+      input: { severity: [CRITICAL, HIGH], pageSize: 10, status: [OPEN, TRIAGED] }
+    ) {
       alertSummaries {
         ...AlertSummaryFull
       }
