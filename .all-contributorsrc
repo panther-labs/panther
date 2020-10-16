@@ -200,6 +200,17 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "lindsey-w",
+      "name": "Lindsey Whitehurst",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/43453975?v=4",
+      "profile": "https://github.com/lindsey-w",
+      "contributions": [
+        "code",
+        "security",
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
