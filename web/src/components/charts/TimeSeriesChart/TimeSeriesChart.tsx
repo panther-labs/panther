@@ -26,6 +26,7 @@ import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { stringToPaleColor } from 'Helpers/colors';
 import ScaleControls from '../ScaleControls';
+import ZoomControls from '../ZoomControls';
 
 interface TimeSeriesLinesProps {
   /** The data for the time series */
@@ -151,47 +152,9 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
         toolbox: {
           show: true,
           right: 50,
-          iconStyle: {
-            color: theme.colors.white,
-          },
           feature: {
             dataZoom: {
               yAxisIndex: 'none',
-              iconStyle: {
-                color: theme.colors.white,
-                borderWidth: 0.5,
-                borderColor: theme.colors.white,
-              },
-              emphasis: {
-                iconStyle: {
-                  color: theme.colors['blue-400'],
-                  borderColor: theme.colors['blue-400'],
-                },
-              },
-              icon: {
-                zoom:
-                  'M7,0 C10.8659932,0 14,3.13400675 14,7 C14,8.66283733 13.4202012,10.1902554 12.4517398,11.3911181 L16.0303301,14.9696699 L14.9696699,16.0303301 L11.3911181,12.4517398 C10.1902554,13.4202012 8.66283733,14 7,14 C3.13400675,14 0,10.8659932 0,7 C0,3.13400675 3.13400675,0 7,0 Z M7,1.5 C3.96243388,1.5 1.5,3.96243388 1.5,7 C1.5,10.0375661 3.96243388,12.5 7,12.5 C10.0375661,12.5 12.5,10.0375661 12.5,7 C12.5,3.96243388 10.0375661,1.5 7,1.5 Z M7.75,4.25 L7.75,6.25 L9.75,6.25 L9.75,7.75 L7.75,7.75 L7.75,9.75 L6.25,9.75 L6.25,7.75 L4.25,7.75 L4.25,6.25 L6.25,6.25 L6.25,4.25 L7.75,4.25 Z',
-                back:
-                  'M13.7435054,1.25 L13.7435054,8.36513992 L13.7383074,8.56429849 C13.6347792,10.5427789 11.9977646,12.1151399 9.99350544,12.1151399 L9.99350544,12.1151399 L5.10249456,12.115 L6.67591195,13.6893398 L5.61525178,14.75 L2.25649456,11.3912428 L5.61525178,8.03248558 L6.67591195,9.09314575 L5.15249456,10.615 L9.99350544,10.6151399 L10.1475542,10.6099491 C11.3183438,10.5307848 12.2435054,9.55600391 12.2435054,8.36513992 L12.2435054,8.36513992 L12.2435054,1.25 L12.2435054,1.25 L13.7435054,1.25 Z',
-              },
-              title: '',
-            },
-            restore: {
-              iconStyle: {
-                color: theme.colors.white,
-                borderWidth: 0.5,
-                borderColor: theme.colors.white,
-              },
-              emphasis: {
-                iconStyle: {
-                  color: theme.colors['blue-400'],
-                  borderColor: theme.colors['blue-400'],
-                },
-              },
-              icon:
-                'M8.44995646,1.53927764 C12.0181149,1.53927764 14.9106788,4.43184157 14.9106788,8 C14.9106788,11.4922402 12.1398933,14.3373287 8.67677239,14.4568154 L8.44995646,14.4607224 L8.44995646,13.0250063 C11.2251908,13.0250063 13.4749627,10.7752343 13.4749627,8 C13.4749627,5.22476566 11.2251908,2.97499372 8.44995646,2.97499372 C7.70164195,2.97499372 6.97787869,3.13820882 6.31642193,3.44891204 C4.74395282,4.18754113 3.66310947,5.68398014 3.45972717,7.40740116 L4.93752431,6.29534746 L5.71955998,7.33314384 L2.47644628,9.77700531 L-2.22044605e-14,6.49065009 L1.02414117,5.71890437 L2.05370112,7.08637716 C2.35948084,4.93510009 3.73142984,3.07693159 5.70601612,2.14941775 C6.55747933,1.74946363 7.48953092,1.53927764 8.44995646,1.53927764 Z',
-              // Note: the empty space in title is sadly necessary to override default title
-              title: ' ',
             },
           },
         },
@@ -407,11 +370,28 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       <Box position="absolute" width="200px" ml={1} fontWeight="bold">
         {title}
       </Box>
-      {scaleControls && (
-        <Box position="absolute" ml="210px" zIndex={5}>
-          <ScaleControls scaleType={scaleType} onSelection={setScaleType} />
-        </Box>
-      )}
+
+      <Box position="absolute" pl="210px" pr="50px" width={1}>
+        <Flex align="center" justify="space-between">
+          {scaleControls && <ScaleControls scaleType={scaleType} onSelect={setScaleType} />}
+          {zoomControls && (
+            <ZoomControls
+              onZoom={zoomEnabled =>
+                timeSeriesChart.current.dispatchAction({
+                  type: 'takeGlobalCursor',
+                  key: 'dataZoomSelect',
+                  dataZoomSelectActive: !zoomEnabled,
+                })
+              }
+              onReset={() =>
+                timeSeriesChart.current.dispatchAction({
+                  type: 'restore',
+                })
+              }
+            />
+          )}
+        </Flex>
+      </Box>
       <Box ref={container} width="100%" height="100%" />
     </React.Fragment>
   );

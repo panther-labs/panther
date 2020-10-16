@@ -222,7 +222,7 @@ input ListRulesInput {
   enabled: Boolean
   logTypes: String # Comma-separated string
   severity: SeverityEnum
-  tags: String # Comma-separated string
+  tags: [String!]
   # Sorting
   sortBy: ListRulesSortFieldsEnum # defaults to `id`
   sortDir: SortDirEnum # defaults to `ascending`
@@ -287,7 +287,7 @@ type RuleSummary {
   createdAt: AWSDateTime
   logTypes: [String]
   severity: SeverityEnum
-  tags: [String]
+  tags: [String!]
 }
 
 type ListRulesResponse {
@@ -436,6 +436,7 @@ type LogAnalysisMetricsResponse {
   alertsBySeverity: SeriesData!
   eventsLatency: FloatSeriesData!
   totalAlertsDelta: [SingleValue!]!
+  alertsByRuleID: [SingleValue!]!
   fromDate: AWSDateTime!
   toDate: AWSDateTime!
   intervalMinutes: Int!

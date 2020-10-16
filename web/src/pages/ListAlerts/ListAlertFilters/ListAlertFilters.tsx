@@ -19,51 +19,26 @@
 import React from 'react';
 import { Form, Formik, FastField } from 'formik';
 import { Box, Flex } from 'pouncejs';
-import {
-  ListAlertsInput,
-  SeverityEnum,
-  AlertStatusesEnum,
-  SortDirEnum,
-  ListAlertsSortFieldsEnum,
-} from 'Generated/schema';
+import { ListAlertsInput, SortDirEnum, ListAlertsSortFieldsEnum } from 'Generated/schema';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
-import { capitalize } from 'Helpers/utils';
 import pick from 'lodash/pick';
 import FormikAutosave from 'Components/utils/Autosave';
-import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikTextInput from 'Components/fields/TextInput';
+import DropdownFilters from './DropdownFilters';
 
-export type ListAlertsInlineFiltersValues = Pick<
-  ListAlertsInput,
-  'severity' | 'status' | 'nameContains' | 'sortBy' | 'sortDir'
->;
+export type ListAlertsInlineFiltersValues = Pick<ListAlertsInput, 'sortBy' | 'sortDir'>;
+
 export type SortingOptions = {
   opt: string;
   resolution: ListAlertsInput;
 }[];
 
-const severityOptions = Object.values(SeverityEnum);
-const statusOptions = Object.values(AlertStatusesEnum);
-
-const filterItemToString = (item: SeverityEnum | AlertStatusesEnum) =>
-  capitalize(item.toLowerCase());
-
-const filters = [
-  'severity',
-  'status',
-  'nameContains',
-  'sortBy',
-  'sortDir',
-  'eventCountMin',
-  'eventCountMax',
-] as (keyof ListAlertsInput)[];
+const filters = ['nameContains', 'sortBy', 'sortDir'] as (keyof ListAlertsInput)[];
 
 const defaultValues = {
   nameContains: '',
   sorting: undefined,
-  severity: [],
-  status: [],
 };
 
 const sortingOpts: SortingOptions = [
@@ -133,8 +108,8 @@ const ListAlertFilters: React.FC = () => {
       >
         <Form>
           <FormikAutosave threshold={200} />
-          <Flex spacing={4} align="center">
-            <Box width={220}>
+          <Flex spacing={4} align="center" pr={4}>
+            <Box width={425}>
               <FastField
                 name="nameContains"
                 icon="search"
@@ -143,54 +118,18 @@ const ListAlertFilters: React.FC = () => {
                 label="Filter Alerts by text"
               />
             </Box>
-            <Box width={110}>
-              <FastField
-                name="eventCountMin"
-                as={FormikTextInput}
-                type="number"
-                min={0}
-                label="Max Events"
-              />
-            </Box>
-            <Box width={110}>
-              <FastField
-                min={1}
-                type="number"
-                name="eventCountMax"
-                as={FormikTextInput}
-                label="Min Events"
-              />
-            </Box>
-            <Box width={112}>
-              <FastField
-                name="severity"
-                as={FormikMultiCombobox}
-                items={severityOptions}
-                itemToString={filterItemToString}
-                label="Severity"
-              />
-            </Box>
-            <Box maxWidth={112}>
-              <FastField
-                name="status"
-                as={FormikMultiCombobox}
-                items={statusOptions}
-                itemToString={filterItemToString}
-                label="Status"
-              />
-            </Box>
             <Box>
               <FastField
                 name="sorting"
                 as={FormikCombobox}
                 items={sortingOpts.map(sortingOption => sortingOption.opt)}
-                itemToString={filterItemToString}
                 label="Sort By"
               />
             </Box>
           </Flex>
         </Form>
       </Formik>
+      <DropdownFilters />
     </Flex>
   );
 };

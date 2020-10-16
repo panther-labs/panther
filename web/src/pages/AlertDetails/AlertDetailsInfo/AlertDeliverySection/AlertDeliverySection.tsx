@@ -96,7 +96,7 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
     return (
       <Flex align="warning" spacing={4}>
         <Icon type="info" size="medium" color="blue-400" />
-        <Text fontWeight="medium">Delivery information could not be retrieved</Text>
+        <Text fontWeight="medium">No delivery information could be found for this alert</Text>
       </Flex>
     );
   }

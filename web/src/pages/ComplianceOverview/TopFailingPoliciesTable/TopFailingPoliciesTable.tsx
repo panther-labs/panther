@@ -42,7 +42,13 @@ const TopFailingPoliciesTable: React.FC<TopFailingPoliciesTableProps> = ({ polic
           <Table.Row key={policy.id}>
             <Table.Cell>{index + 1}</Table.Cell>
             <Table.Cell>
-              <Link as={RRLink} to={urls.compliance.policies.details(policy.id)} py={4} pr={4}>
+              <Link
+                as={RRLink}
+                to={urls.compliance.policies.details(policy.id)}
+                py={4}
+                pr={4}
+                wordBreak="break-all"
+              >
                 {policy.id}
               </Link>
             </Table.Cell>

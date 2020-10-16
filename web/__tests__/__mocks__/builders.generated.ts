@@ -862,7 +862,7 @@ export const buildListRulesInput = (overrides: Partial<ListRulesInput> = {}): Li
     enabled: 'enabled' in overrides ? overrides.enabled : false,
     logTypes: 'logTypes' in overrides ? overrides.logTypes : 'Drive',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Low,
-    tags: 'tags' in overrides ? overrides.tags : 'channels',
+    tags: 'tags' in overrides ? overrides.tags : ['channels'],
     sortBy: 'sortBy' in overrides ? overrides.sortBy : ListRulesSortFieldsEnum.Enabled,
     sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
     pageSize: 'pageSize' in overrides ? overrides.pageSize : 19,
@@ -902,6 +902,7 @@ export const buildLogAnalysisMetricsResponse = (
     eventsLatency: 'eventsLatency' in overrides ? overrides.eventsLatency : buildFloatSeriesData(),
     totalAlertsDelta:
       'totalAlertsDelta' in overrides ? overrides.totalAlertsDelta : [buildSingleValue()],
+    alertsByRuleID: 'alertsByRuleID' in overrides ? overrides.alertsByRuleID : [buildSingleValue()],
     fromDate: 'fromDate' in overrides ? overrides.fromDate : '2020-06-15T22:39:08.690Z',
     toDate: 'toDate' in overrides ? overrides.toDate : '2020-06-29T16:49:54.582Z',
     intervalMinutes: 'intervalMinutes' in overrides ? overrides.intervalMinutes : 670,

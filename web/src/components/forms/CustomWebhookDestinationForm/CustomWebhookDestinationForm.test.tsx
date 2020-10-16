@@ -115,7 +115,7 @@ describe('CustomWebhookDestinationForm', () => {
     });
   });
 
-  it('should edit SQS Destination successfully', async () => {
+  it('should edit Custom webhook Destination successfully', async () => {
     const submitMockFunc = jest.fn();
     const { getByLabelText, getByText } = render(
       <CustomWebhookDestinationForm onSubmit={submitMockFunc} initialValues={initialValues} />

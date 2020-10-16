@@ -62,6 +62,9 @@ exports[`BorderedTab renders 1`] = `
 }
 
 <div>
+  <header
+    id="main-header"
+  />
   <div
     data-orientation="horizontal"
     data-reach-tabs=""
