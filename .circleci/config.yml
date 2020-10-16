@@ -90,6 +90,13 @@ commands:
                 exit 0
             fi
 
+            # CircleCI docs state that when a PR is from a fork this env variable is set
+            # https://circleci.com/docs/2.0/env-vars/#built-in-environment-variables
+            if [[ -v CIRCLE_PR_USERNAME ]]; then
+                echo "this PR is from a fork: skipping autofmt"
+                exit 0
+            fi
+
             /tmp/panther/magebin gen fmt
             git config --global user.email "github-service-account@runpanther.io"
             git config --global user.name "panther-bot"
@@ -151,7 +158,7 @@ jobs:
           command: /tmp/panther/magebin -v test:go
 
   test_python:
-    executor: panther-buildpack
+    executor: panther-buildpak
     steps:
       - checkout
       - attach_workspace:
