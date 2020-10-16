@@ -227,6 +227,7 @@ func (m *EventBridgeMock) DeleteRule(input *eventbridge.DeleteRuleInput) (*event
 type GlueMock struct {
 	glueiface.GlueAPI
 	mock.Mock
+	LogTables []*glue.TableData
 }
 
 func (m *GlueMock) CreateTable(input *glue.CreateTableInput) (*glue.CreateTableOutput, error) {
@@ -262,6 +263,21 @@ func (m *GlueMock) GetPartitions(input *glue.GetPartitionsInput) (*glue.GetParti
 func (m *GlueMock) UpdatePartition(input *glue.UpdatePartitionInput) (*glue.UpdatePartitionOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*glue.UpdatePartitionOutput), args.Error(1)
+}
+
+// nolint:lll
+func (m *GlueMock) GetTablesPagesWithContext(
+	ctx aws.Context,
+	input *glue.GetTablesInput,
+	scan func(page *glue.GetTablesOutput, isLast bool) bool,
+	_ ...request.Option,
+) error {
+
+	args := m.Called(ctx, input, scan)
+	scan(&glue.GetTablesOutput{
+		TableList: m.LogTables,
+	}, true)
+	return args.Error(0)
 }
 
 type AthenaMock struct {

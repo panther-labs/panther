@@ -19,6 +19,7 @@ package logtypes
  */
 
 import (
+	"fmt"
 	"net/url"
 	"sync"
 
@@ -116,24 +117,25 @@ func (r *Registry) RegisterJSON(desc Desc, eventFactory func() interface{}) (Ent
 	return r.Register(config)
 }
 
-func (r *Registry) Register(config Config) (Entry, error) {
-	if err := config.Validate(); err != nil {
+func (r *Registry) Register(config Builder) (Entry, error) {
+	entry, err := config.Build()
+	if err != nil {
 		return nil, err
 	}
-	newEntry := newEntry(config.Describe(), config.Schema, config.NewParser)
+	name := entry.Describe().Name
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.entries == nil {
 		r.entries = make(map[string]Entry)
 	}
-	if oldEntry, duplicate := r.entries[newEntry.Name]; duplicate {
-		return oldEntry, errors.Errorf("duplicate log type config %q", newEntry.Name)
+	if oldEntry, duplicate := r.entries[name]; duplicate {
+		return oldEntry, errors.Errorf("duplicate log type config %q", name)
 	}
-	r.entries[newEntry.Name] = newEntry
-	return newEntry, nil
+	r.entries[name] = entry
+	return entry, nil
 }
 
-func (r *Registry) MustRegister(config Config) Entry {
+func (r *Registry) MustRegister(config Builder) Entry {
 	entry, err := r.Register(config)
 	if err != nil {
 		panic(err)
@@ -150,6 +152,11 @@ type Entry interface {
 	Schema() interface{}
 	GlueTableMeta() *awsglue.GlueTableMetadata
 	String() string
+	Builder
+}
+
+type Builder interface {
+	Build() (Entry, error)
 }
 
 // Config describes a log event type in a declarative way.
@@ -189,11 +196,28 @@ func (config *Config) Validate() error {
 	return nil
 }
 
+func (config Config) Build() (Entry, error) {
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+	entry := newEntry(config.Describe(), config.Schema, config.NewParser)
+	return entry, nil
+}
+
 // Desc describes an registered log type.
 type Desc struct {
-	Name         string
-	Description  string
-	ReferenceURL string
+	Name         string `json:"name" validate:"required,min=3"`
+	Description  string `json:"description"`
+	ReferenceURL string `json:"referenceURL" validate:"url"`
+}
+
+func (desc *Desc) Fill() {
+	if desc.ReferenceURL == "" {
+		desc.ReferenceURL = "-"
+	}
+	if desc.Description == "" {
+		desc.Description = fmt.Sprintf("%s log type", desc.Name)
+	}
 }
 
 func (desc *Desc) Validate() error {
@@ -246,6 +270,10 @@ func (e *entry) String() string {
 
 func (e *entry) Schema() interface{} {
 	return e.schema
+}
+
+func (e *entry) Build() (Entry, error) {
+	return e, nil
 }
 
 // GlueTableMeta returns the glue table metadata for this entry

@@ -19,9 +19,11 @@ package sources
  */
 
 import (
+	"context"
 	"time"
 
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
@@ -65,20 +67,24 @@ func LoadSourceS3(bucketName, objectKey string) (*models.SourceIntegration, erro
 }
 
 // BuildClassifier builds a classifier for a source
-func BuildClassifier(src *models.SourceIntegration, r *logtypes.Registry) (classification.ClassifierAPI, error) {
-	parsers := map[string]parsers.Interface{}
+func BuildClassifier(src *models.SourceIntegration, r logtypes.Resolver) (classification.ClassifierAPI, error) {
+	parserIndex := map[string]parsers.Interface{}
 	for _, logType := range src.RequiredLogTypes() {
-		entry := r.Get(logType)
+		entry, err := r.Resolve(context.TODO(), logType)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not resolve source log type %q", logType)
+		}
 		if entry == nil {
-			return nil, errors.Errorf("invalid source log type %q", logType)
+			zap.L().Warn("unresolved log type", zap.String("logType", logType), zap.String("sourceId", src.IntegrationID))
+			continue
 		}
 		parser, err := entry.NewParser(nil)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "failed to create %q parser", logType)
 		}
-		parsers[logType] = newSourceFieldsParser(src.IntegrationID, src.IntegrationLabel, parser)
+		parserIndex[logType] = newSourceFieldsParser(src.IntegrationID, src.IntegrationLabel, parser)
 	}
-	return classification.NewClassifier(parsers), nil
+	return classification.NewClassifier(parserIndex), nil
 }
 
 func newSourceFieldsParser(id, label string, parser parsers.Interface) parsers.Interface {

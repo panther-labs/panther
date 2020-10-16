@@ -227,12 +227,14 @@ func GenerateLambdaClient(pkg *types.Package, apiName string, methods []*Method)
 		Pkg       *types.Package
 		API       string
 		Methods   []*Method
+		Payload   string
 		Imports   []*types.Package
 	}{
 		Generator: generatorName,
 		Pkg:       pkg,
 		API:       apiName,
 		Methods:   methods,
+		Payload:   generatePayload(pkg, apiName, methods),
 		Imports:   methodsImports(pkg, methods...),
 	}
 	buffer := &bytes.Buffer{}
@@ -240,6 +242,37 @@ func GenerateLambdaClient(pkg *types.Package, apiName string, methods []*Method)
 		return nil, err
 	}
 	return buffer.Bytes(), nil
+}
+func generatePayload(pkg *types.Package, apiName string, methods []*Method) string {
+	buf := bytes.Buffer{}
+	buf.WriteString("type " + apiName + "Payload struct {\n")
+	for _, m := range methods {
+		buf.WriteString("  ")
+		buf.WriteString(m.Name)
+		buf.WriteString(" *")
+		if m.Input != nil {
+			buf.WriteString(resolveType(pkg, m.Input))
+		} else {
+			buf.WriteString("struct{}")
+		}
+		buf.WriteString(fmt.Sprintf(" `json:%q`\n", m.Name+",omitempty"))
+	}
+	buf.WriteString("}\n")
+	return buf.String()
+}
+
+func resolveType(pkg *types.Package, obj types.Object) string {
+	typ := obj.Type()
+	if ptr, ok := typ.(*types.Pointer); ok {
+		typ = ptr.Elem()
+	}
+	if named, ok := typ.(*types.Named); ok {
+		if obj.Pkg().Path() == pkg.Path() {
+			return named.Obj().Name()
+		}
+		return obj.Pkg().Name() + "." + named.Obj().Name()
+	}
+	return typ.String()
 }
 
 type Method = internal.Method

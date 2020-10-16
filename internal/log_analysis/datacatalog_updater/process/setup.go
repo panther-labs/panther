@@ -19,6 +19,8 @@ package process
  */
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -30,6 +32,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/kelseyhightower/envconfig"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsretry"
 )
 
@@ -42,10 +46,12 @@ var (
 		SyncWorkersPerTable int    `default:"10" split_words:"true"`
 		ProcessedDataBucket string `split_words:"true"`
 	}{}
-	awsSession   *session.Session
-	glueClient   glueiface.GlueAPI
-	lambdaClient lambdaiface.LambdaAPI
-	athenaClient athenaiface.AthenaAPI
+	awsSession            *session.Session
+	glueClient            glueiface.GlueAPI
+	lambdaClient          lambdaiface.LambdaAPI
+	athenaClient          athenaiface.AthenaAPI
+	logtypesResolver      logtypes.Resolver
+	listAvailableLogTypes func(ctx context.Context) ([]string, error)
 )
 
 func Setup() {
@@ -55,4 +61,9 @@ func Setup() {
 	glueClient = glue.New(awsSession)
 	lambdaClient = lambda.New(awsSession)
 	athenaClient = athena.New(awsSession)
+
+	logtypesResolver = registry.NativeLogTypesResolver()
+	listAvailableLogTypes = func(_ context.Context) ([]string, error) {
+		return registry.AvailableLogTypes(), nil
+	}
 }

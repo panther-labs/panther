@@ -169,7 +169,7 @@ func modelType(typ types.Type) types.Type {
 	case *types.Array:
 		return modelType(typ.Elem())
 	case *types.Slice:
-		return modelType(typ.Elem())
+		return types.NewSlice(modelType(typ.Elem()))
 	case *types.Basic:
 		return typ
 	case *types.Map:

@@ -26,8 +26,8 @@ func DefaultRegistry() *Registry {
 	return defaultRegistry
 }
 
-// Register registers log type entries to the package wide registry returning the first error it encounters
-func Register(entries ...Config) error {
+// Register builds and registers log type entries to the package wide registry returning the first error it encounters
+func Register(entries ...Builder) error {
 	for _, entry := range entries {
 		if _, err := defaultRegistry.Register(entry); err != nil {
 			return err
@@ -36,8 +36,8 @@ func Register(entries ...Config) error {
 	return nil
 }
 
-// Register registers log type entries to the package wide registry panicking if an error occurs
-func MustRegister(entries ...Config) {
+// Register builds and registers log type entries to the package wide registry panicking if an error occurs
+func MustRegister(entries ...Builder) {
 	for _, entry := range entries {
 		// nolint:errcheck
 		DefaultRegistry().MustRegister(entry)
