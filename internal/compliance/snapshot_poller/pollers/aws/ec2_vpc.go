@@ -194,7 +194,7 @@ func describeStaleSecurityGroups(ec2Svc ec2iface.EC2API, vpcID *string) (staleSe
 }
 
 // describeSecurityGroupsVPC returns all the security groups for given VPC. Additionally, it returns the
-//// id of the default network ACL.
+// id of the default security group.
 func describeSecurityGroupsVPC(svc ec2iface.EC2API, vpcID *string) (securityGroups []*string, defaultId *string, err error) {
 	err = svc.DescribeSecurityGroupsPages(&ec2.DescribeSecurityGroupsInput{
 		Filters: []*ec2.Filter{

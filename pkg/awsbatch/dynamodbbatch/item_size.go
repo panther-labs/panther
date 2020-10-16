@@ -23,7 +23,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-// getDynamoItemSize calculates the size that dynamo considers the item to be
+// GetDynamoItemSize calculates the size that dynamo considers the item to be
 func GetDynamoItemSize(item map[string]*dynamodb.AttributeValue) int {
 	itemSize := 0
 	// One dynamo row size is the sum of the size of all the keys and values of that row
@@ -34,11 +34,14 @@ func GetDynamoItemSize(item map[string]*dynamodb.AttributeValue) int {
 	return itemSize
 }
 
-// I hate AWS sometimes...
+// getDynamoAttributeValueSize gets the size of a single dynamodb AttributeValue based on its type.
+//
 // reference: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/CapacityUnitCalculations.html
-// double checked a couple values by comparing against this calculator I found online:
+//
+// I double checked a couple values by comparing against this calculator I found online:
 // https://zaccharles.github.io/dynamodb-calculator/
-// generally my estimates were within a hundred bytes for resources a few thousand bytes in size
+// generally my estimates were within a hundred bytes for resources that were a few thousand bytes
+// in size
 func getDynamoAttributeValueSize(value *dynamodb.AttributeValue) int {
 	if value.B != nil {
 		return len(value.B)
