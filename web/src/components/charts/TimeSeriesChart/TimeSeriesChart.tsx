@@ -325,11 +325,16 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
         const currentSelected = chartOptions.legend.selected;
         // On first selection currentSelected is 'undefined'
         if (!currentSelected || Object.keys(currentSelected).every(key => currentSelected[key])) {
-          const newSelection = {};
-          Object.keys(selected).forEach(key => {
-            newSelection[key] = key === name;
-          });
-          chartOptions.legend.selected = newSelection;
+          chartOptions.legend.selected = Object.keys(selected).reduce((acc, key) => {
+            acc[key] = key === name;
+            return acc;
+          }, {});
+          // This checks if everything is going to deselected, if yes we enable all series
+        } else if (!Object.keys(selected).some(key => selected[key])) {
+          chartOptions.legend.selected = Object.keys(selected).reduce((acc, key) => {
+            acc[key] = true;
+            return acc;
+          }, {});
         } else {
           chartOptions.legend.selected = selected;
         }

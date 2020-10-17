@@ -53,7 +53,7 @@ const PoliciesByStatusChart: React.FC<PoliciesByStatusChartData> = ({ policies }
 
   return (
     <Flex height="100%">
-      <ChartSummary total={totalFailingPolicies} title="Total Failing Policies" color="red-300" />
+      <ChartSummary total={totalFailingPolicies} title="Total Failing Policies" color="red-200" />
       <BarChart data={failingPoliciesChartData} />
     </Flex>
   );
