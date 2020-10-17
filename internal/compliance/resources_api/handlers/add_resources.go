@@ -55,8 +55,8 @@ func AddResources(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 	}
 
 	now := models.LastModified(time.Now())
-	writeRequests := make([]*dynamodb.WriteRequest, len(input.Resources))
-	sqsEntries := make([]*sqs.SendMessageBatchRequestEntry, len(input.Resources))
+	writeRequests := make([]*dynamodb.WriteRequest, 0, len(input.Resources))
+	sqsEntries := make([]*sqs.SendMessageBatchRequestEntry, 0, len(input.Resources))
 	for i, r := range input.Resources {
 		item := resourceItem{
 			Attributes:      r.Attributes,
@@ -83,17 +83,22 @@ func AddResources(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 				zap.Int("size", itemSize))
 			continue
 		}
-		writeRequests[i] = &dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: marshalled}}
+		writeRequests = append(writeRequests, &dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: marshalled}})
 
 		body, err := jsoniter.MarshalToString(item.Resource(""))
 		if err != nil {
 			zap.L().Error("jsoniter.MarshalToString(resource) failed", zap.Error(err))
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 		}
-		sqsEntries[i] = &sqs.SendMessageBatchRequestEntry{
+		sqsEntries = append(sqsEntries,  &sqs.SendMessageBatchRequestEntry{
 			Id:          aws.String(strconv.Itoa(i)),
 			MessageBody: aws.String(body),
-		}
+		})
+	}
+
+	// If everything was too big to send, send a generic message back
+	if len(writeRequests)== 0 {
+		return &events.APIGatewayProxyResponse{StatusCode: http.StatusCreated}
 	}
 
 	dynamoInput := &dynamodb.BatchWriteItemInput{
