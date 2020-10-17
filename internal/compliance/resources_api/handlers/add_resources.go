@@ -90,14 +90,14 @@ func AddResources(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 			zap.L().Error("jsoniter.MarshalToString(resource) failed", zap.Error(err))
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 		}
-		sqsEntries = append(sqsEntries,  &sqs.SendMessageBatchRequestEntry{
+		sqsEntries = append(sqsEntries, &sqs.SendMessageBatchRequestEntry{
 			Id:          aws.String(strconv.Itoa(i)),
 			MessageBody: aws.String(body),
 		})
 	}
 
 	// If everything was too big to send, send a generic message back
-	if len(writeRequests)== 0 {
+	if len(writeRequests) == 0 {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusCreated}
 	}
 
