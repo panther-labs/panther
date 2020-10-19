@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { useTheme } from 'pouncejs';
+import { useTheme, Box, Button } from 'pouncejs';
 import { copyTextToClipboard, remToPx } from 'Helpers/utils';
 
 const ReactJSONView = React.lazy(() =>
@@ -31,6 +31,11 @@ interface JsonViewerProps {
 
 const JsonViewer: React.FC<JsonViewerProps> = ({ data, collapsed }) => {
   const theme = useTheme();
+  const [isExpanded, toggle] = React.useState(false);
+
+  const toggleDepth = React.useCallback(() => {
+    toggle(!isExpanded);
+  }, [isExpanded]);
 
   const jsonViewerStyle = React.useMemo(
     () => ({
@@ -42,24 +47,47 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data, collapsed }) => {
     [theme]
   );
 
+  const depth = React.useMemo(() => {
+    if (collapsed && !isExpanded) {
+      return false;
+    }
+    if (isExpanded) {
+      return 100;
+    }
+    return 1;
+  }, [collapsed, isExpanded]);
+
   const handleCopy = React.useCallback(copy => {
     copyTextToClipboard(JSON.stringify(copy.src, null, '\t'));
   }, []);
 
   return (
     <React.Suspense fallback={null}>
-      <ReactJSONView
-        src={data}
-        name={false}
-        theme="shapeshifter"
-        iconStyle="triangle"
-        displayObjectSize={false}
-        displayDataTypes={false}
-        collapsed={collapsed || 1}
-        style={jsonViewerStyle}
-        sortKeys
-        enableClipboard={handleCopy}
-      />
+      <Box position="relative">
+        <Box position="absolute" top="0" right="0" zIndex={10}>
+          <Button
+            data-testid="toggle-json"
+            size="medium"
+            variantColor="navyblue"
+            onClick={toggleDepth}
+          >
+            {isExpanded ? 'Collapse All' : 'Expand All'}
+          </Button>
+        </Box>
+        <ReactJSONView
+          data-testId="json-viewer"
+          src={data}
+          name={false}
+          theme="shapeshifter"
+          iconStyle="triangle"
+          displayObjectSize={false}
+          displayDataTypes={false}
+          collapsed={depth}
+          style={jsonViewerStyle}
+          sortKeys
+          enableClipboard={handleCopy}
+        />
+      </Box>
     </React.Suspense>
   );
 };
