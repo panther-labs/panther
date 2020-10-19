@@ -38,6 +38,7 @@ import (
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sophoslogs"
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/suricatalogs"
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sysloglogs"
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/zeeklogs"

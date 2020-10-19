@@ -90,7 +90,25 @@ commands:
                 exit 0
             fi
 
+            # Run 'mage gen fmt'
             /tmp/panther/magebin gen fmt
+
+            # Check if any file diffs were produced
+            if [[ -z "$(git diff)" ]]; then
+              exit 0
+            fi;
+
+            # CircleCI docs state that when a PR is from a fork this env variable is set
+            # https://circleci.com/docs/2.0/env-vars/#built-in-environment-variables
+            if [[ -v CIRCLE_PR_USERNAME ]]; then
+                # We cannot commit and push the differences automatically, inform the user.
+                echo "Hey there $(CIRCLE_PR_USERNAME)!"
+                echo "Thanks for your contribution to Panther."
+                echo "We tried to auto-generate and format your code and it resulted in file differences."
+                echo "Please run 'mage gen fmt' on your local repo, commit and push the changes, so it can be processed by our CI pipeline."
+                exit 1
+            fi
+
             git config --global user.email "github-service-account@runpanther.io"
             git config --global user.name "panther-bot"
             git add -A .

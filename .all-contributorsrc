@@ -213,6 +213,15 @@
         "bug",
         "infra"
       ]
+    },
+    {
+      "login": "rynjms",
+      "name": "Ryan Moon",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/47795853?v=4",
+      "profile": "https://github.com/rynjms",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
