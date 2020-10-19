@@ -186,70 +186,92 @@ func deploySingleLambda(function string) error {
 	switch function {
 	// bootstrap-gateway
 	case "panther-cfn-custom-resources":
-		return updateGoLambda(function, filepath.Join("internal", "core", "custom_resources", "main"))
+		return updateLambdaCode(function, filepath.Join("internal", "core", "custom_resources", "main"), true)
 
 	// cloud-security
 	case "panther-alert-forwarder":
-		return updateGoLambda(function, filepath.Join("internal", "compliance", "alert_forwarder", "main"))
+		return updateLambdaCode(function, filepath.Join("internal", "compliance", "alert_forwarder", "main"), true)
 	case "panther-alert-processor":
-		return updateGoLambda(function, filepath.Join("internal", "compliance", "alert_processor", "main"))
+		return updateLambdaCode(function, filepath.Join("internal", "compliance", "alert_processor", "main"), true)
 	case "panther-aws-event-processor":
-		return updateGoLambda(function, filepath.Join("internal", "compliance", "aws_event_processor", "main"))
+		return updateLambdaCode(function, filepath.Join("internal", "compliance", "aws_event_processor", "main"), true)
 	case "panther-aws-remediation":
-		return nil // TODO - Python
+		return updateLambdaCode(function, filepath.Join("internal", "compliance", "remediation_aws", "src"), false)
 	case "panther-compliance-api":
-		return updateGoLambda(function, filepath.Join("internal", "compliance", "compliance_api", "main"))
+		return updateLambdaCode(function, filepath.Join("internal", "compliance", "compliance_api", "main"), true)
 	case "panther-policy-engine":
-		return nil // TODO - Python
+		return updateLambdaCode(function, filepath.Join("internal", "compliance", "policy_engine"), false)
 	case "panther-remediation-api":
-		return updateGoLambda(function, filepath.Join("internal", "compliance", "remediation_api", "main"))
+		return updateLambdaCode(function, filepath.Join("internal", "compliance", "remediation_api", "main"), true)
 	case "panther-remediation-processor":
-		return updateGoLambda(function, filepath.Join("internal", "compliance", "remediation_processor", "main"))
+		return updateLambdaCode(function, filepath.Join("internal", "compliance", "remediation_processor", "main"), true)
 	case "panther-resource-processor":
-		return updateGoLambda(function, filepath.Join("internal", "compliance", "resource_processor", "main"))
+		return updateLambdaCode(function, filepath.Join("internal", "compliance", "resource_processor", "main"), true)
 	case "panther-resources-api":
-		return updateGoLambda(function, filepath.Join("internal", "compliance", "resources_api", "main"))
+		return updateLambdaCode(function, filepath.Join("internal", "compliance", "resources_api", "main"), true)
 	case "panther-snapshot-pollers":
-		return updateGoLambda(function, filepath.Join("internal", "compliance", "snapshot_poller", "main"))
+		return updateLambdaCode(function, filepath.Join("internal", "compliance", "snapshot_poller", "main"), true)
 	case "panther-snapshot-scheduler":
-		return updateGoLambda(function, filepath.Join("internal", "compliance", "snapshot_scheduler", "main"))
+		return updateLambdaCode(function, filepath.Join("internal", "compliance", "snapshot_scheduler", "main"), true)
 
 	// core
-	case "panther-users-api":
-		return updateGoLambda(function, filepath.Join("internal", "core", "users_api", "main"))
-	case "panther-organization-api":
-		return updateGoLambda(function, filepath.Join("internal", "core", "organization_api", "main"))
 	case "panther-analysis-api":
-		return updateGoLambda(function, filepath.Join("internal", "core", "analysis_api", "main"))
-	case "panther-outputs-api":
-		return updateGoLambda(function, filepath.Join("internal", "core", "outputs_api", "main"))
+		return updateLambdaCode(function, filepath.Join("internal", "core", "analysis_api", "main"), true)
 	case "panther-alert-delivery-api":
-		return updateGoLambda(function, filepath.Join("internal", "core", "alert_delivery", "main"))
-	case "panther-source-api":
-		return updateGoLambda(function, filepath.Join("internal", "core", "source_api", "main"))
+		return updateLambdaCode(function, filepath.Join("internal", "core", "alert_delivery", "main"), true)
 	case "panther-layer-manager":
-		return updateGoLambda(function, filepath.Join("internal", "core", "layer_manager", "main"))
-	case "panther-metrics-api":
-		return updateGoLambda(function, filepath.Join("internal", "core", "metrics_api", "main"))
+		return updateLambdaCode(function, filepath.Join("internal", "core", "layer_manager", "main"), true)
 	case "panther-logtypes-api":
-		return updateGoLambda(function, filepath.Join("internal", "core", "logtypesapi", "main"))
+		return updateLambdaCode(function, filepath.Join("internal", "core", "logtypesapi", "main"), true)
+	case "panther-metrics-api":
+		return updateLambdaCode(function, filepath.Join("internal", "core", "metrics_api", "main"), true)
+	case "panther-organization-api":
+		return updateLambdaCode(function, filepath.Join("internal", "core", "organization_api", "main"), true)
+	case "panther-outputs-api":
+		return updateLambdaCode(function, filepath.Join("internal", "core", "outputs_api", "main"), true)
+	case "panther-source-api":
+		return updateLambdaCode(function, filepath.Join("internal", "core", "source_api", "main"), true)
+	case "panther-users-api":
+		return updateLambdaCode(function, filepath.Join("internal", "core", "users_api", "main"), true)
+
+	// log-analysis
+	case "panther-alerts-api":
+		return updateLambdaCode(function, filepath.Join("internal", "log_analysis", "alerts_api", "main"), true)
+	case "panther-datacatalog-updater":
+		return updateLambdaCode(function, filepath.Join("internal", "log_analysis", "datacatalog_updater", "main"), true)
+	case "panther-log-alert-forwarder":
+		return updateLambdaCode(function, filepath.Join("internal", "log_analysis", "alert_forwarder", "main"), true)
+	case "panther-log-processor":
+		return updateLambdaCode(function, filepath.Join("internal", "log_analysis", "log_processor", "main"), true)
+	case "panther-message-forwarder":
+		return updateLambdaCode(function, filepath.Join("internal", "log_analysis", "message_forwarder", "main"), true)
+	case "panther-rules-engine":
+		return updateLambdaCode(function, filepath.Join("internal", "log_analysis", "rules_engine"), false)
 
 	default:
 		return fmt.Errorf("unknown function LAMBDA=%s", function)
 	}
 }
 
-func updateGoLambda(function, srcPath string) error {
-	log.Infof("compiling %s", srcPath)
-	binary, err := build.LambdaPackage(srcPath)
-	if err != nil {
-		return err
+func updateLambdaCode(function, srcPath string, isGo bool) error {
+	var pathToZip string
+
+	if isGo {
+		log.Infof("compiling %s", srcPath)
+		binary, err := build.LambdaPackage(srcPath)
+		if err != nil {
+			return err
+		}
+		pathToZip = filepath.Dir(binary)
+	} else {
+		// Python Lambda - zip source directory
+		pathToZip = srcPath
 	}
 
 	// Create zipfile
 	pkg := filepath.Join("out", "deployments", function+".zip")
-	if err := shutil.ZipDirectory(filepath.Dir(binary), pkg, false); err != nil {
-		return fmt.Errorf("failed to zip %s into %s: %v", filepath.Dir(binary), pkg, err)
+	if err := shutil.ZipDirectory(pathToZip, pkg, false); err != nil {
+		return fmt.Errorf("failed to zip %s into %s: %v", pathToZip, pkg, err)
 	}
 
 	// Update function
