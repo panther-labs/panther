@@ -30,6 +30,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	alertdeliverymodels "github.com/panther-labs/panther/api/lambda/delivery/models"
 )
 
 // ListAll - lists all alerts and apply filtering, sorting logic
@@ -183,9 +184,9 @@ func getLastKey(input *models.ListAlertsInput, item DynamoItem) DynamoItem {
 // getIndex - gets the primary index to query
 func (table *AlertsTable) getIndex(input *models.ListAlertsInput) *string {
 	if input.RuleID != nil {
-		return aws.String(table.RuleIDCreationTimeIndexName)
+		return &table.RuleIDCreationTimeIndexName
 	}
-	return aws.String(table.TimePartitionCreationTimeIndexName)
+	return &table.TimePartitionCreationTimeIndexName
 }
 
 // getKeyCondition - gets the key condition for a query
@@ -229,6 +230,7 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 	filterByStatus(&filter, input)
 	filterByEventCount(&filter, input)
 	filterByLogType(&filter, input)
+	filterByType(&filter, input)
 
 	// Finally, overwrite the existing condition filter on the builder
 	*builder = builder.WithFilter(filter)
@@ -238,11 +240,11 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 func filterBySeverity(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
 	if len(input.Severity) > 0 {
 		// Start with the first known key
-		multiFilter := expression.Name(SeverityKey).Equal(expression.Value(*input.Severity[0]))
+		multiFilter := expression.Name(SeverityKey).Equal(expression.Value(input.Severity[0]))
 
 		// Then add or conditions starting at a new slice from the second index
 		for _, severityLevel := range input.Severity[1:] {
-			multiFilter = multiFilter.Or(expression.Name(SeverityKey).Equal(expression.Value(*severityLevel)))
+			multiFilter = multiFilter.Or(expression.Name(SeverityKey).Equal(expression.Value(severityLevel)))
 		}
 
 		*filter = filter.And(multiFilter)
@@ -293,6 +295,22 @@ func filterByLogType(filter *expression.ConditionBuilder, input *models.ListAler
 		// Then add or conditions starting at a new slice from the second index
 		for _, logType := range input.LogTypes[1:] {
 			multiFilter = multiFilter.Or(expression.Name(LogTypesKey).Contains(logType))
+		}
+
+		*filter = filter.And(multiFilter)
+	}
+}
+
+// filterByType - filters by the type of the alert
+func filterByType(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	if len(input.Type) > 0 {
+		var multiFilter expression.ConditionBuilder
+		switch input.Type {
+		case alertdeliverymodels.RuleErrorType:
+			multiFilter = expression.Name(TypeKey).Contains(input.Type)
+		case alertdeliverymodels.RuleType:
+			// Alerts for rule matches don't always have the attribute specified
+			multiFilter = expression.Name(TypeKey).Contains(input.Type).Or(expression.Name(TypeKey).AttributeNotExists())
 		}
 
 		*filter = filter.And(multiFilter)

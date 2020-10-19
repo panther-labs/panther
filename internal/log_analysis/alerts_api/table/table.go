@@ -42,6 +42,7 @@ const (
 	DeliveryResponsesKey = "deliveryResponses"
 	LastUpdatedByKey     = "lastUpdatedBy"
 	LastUpdatedByTimeKey = "lastUpdatedByTime"
+	TypeKey              = "type"
 )
 
 // API defines the interface for the alerts table which can be used for mocking.
