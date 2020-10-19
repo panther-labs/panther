@@ -54,17 +54,13 @@ func Deploy() error {
 		return err
 	}
 
-	version, err := GetVersion()
-	if err != nil {
-		return err
-	}
-
 	var stack string
 	if stack = os.Getenv("STACK"); stack == "" {
 		stack = defaultStackName
 	}
 
-	log.Infof("deploying %s v%s to %s (%s) as stack '%s'", masterTemplate, version, clients.AccountID(), clients.Region(), stack)
+	version := util.RepoVersion()
+	log.Infof("deploying %s %s to %s (%s) as stack '%s'", masterTemplate, version, clients.AccountID(), clients.Region(), stack)
 	email := prompt.Read("First user email: ", prompt.EmailValidator)
 
 	if err := Build(log); err != nil {

@@ -17,9 +17,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: IAM role for deploying Panther
 
-Metadata:
-  Version: v1.8.0
-
 Parameters:
   DeploymentRoleName:
     Type: String
