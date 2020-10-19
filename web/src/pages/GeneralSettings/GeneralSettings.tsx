@@ -106,10 +106,12 @@ const GeneralSettingsPage: React.FC = () => {
           </Box>
           <Flex spacing={9} align="center">
             <Box as="section">
-              <Box color="navyblue-100" fontSize="small" mb={1}>
+              <Box id="plan" as="dt" color="navyblue-100" fontSize="small" mb={1}>
                 Plan
               </Box>
-              <Box fontSize="medium">Community</Box>
+              <Box aria-labelledby="plan" as="dl" fontSize="medium">
+                Community
+              </Box>
             </Box>
             <Box as="section">
               <LinkButton
@@ -123,22 +125,28 @@ const GeneralSettingsPage: React.FC = () => {
               </LinkButton>
             </Box>
             <Box as="section">
-              <Box color="navyblue-100" fontSize="small" mb={1}>
+              <Box id="aws_account_id" as="dt" color="navyblue-100" fontSize="small" mb={1}>
                 AWS Account ID
               </Box>
-              <Box fontSize="medium">{pantherConfig.AWS_ACCOUNT_ID}</Box>
+              <Box aria-labelledby="aws_account_id" as="dl" fontSize="medium">
+                {pantherConfig.AWS_ACCOUNT_ID}
+              </Box>
             </Box>
             <Box as="section">
-              <Box color="navyblue-100" fontSize="small" mb={1}>
+              <Box id="panther_version" as="dt" color="navyblue-100" fontSize="small" mb={1}>
                 Version
               </Box>
-              <Box fontSize="medium">{pantherConfig.PANTHER_VERSION || 'N/A'}</Box>
+              <Box aria-labelledby="panther_version" as="dl" fontSize="medium">
+                {pantherConfig.PANTHER_VERSION || 'N/A'}
+              </Box>
             </Box>
             <Box as="section">
-              <Box color="navyblue-100" fontSize="small" mb={1}>
+              <Box id="aws_region" as="dt" color="navyblue-100" fontSize="small" mb={1}>
                 AWS Region
               </Box>
-              <Box fontSize="medium">{pantherConfig.AWS_REGION}</Box>
+              <Box aria-labelledby="aws_region" as="dl" fontSize="medium">
+                {pantherConfig.AWS_REGION}
+              </Box>
             </Box>
           </Flex>
         </Flex>
