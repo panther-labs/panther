@@ -63,7 +63,7 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data, collapsed }) => {
 
   return (
     <React.Suspense fallback={null}>
-      <Box position="relative">
+      <Box position="relative" width="100%">
         <Box position="absolute" top="0" right="0" zIndex={10}>
           <Button
             data-testid="toggle-json"
