@@ -21,6 +21,7 @@ package deploy
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -34,6 +35,7 @@ import (
 	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/prompt"
+	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/mage/build"
 	"github.com/panther-labs/panther/tools/mage/clients"
@@ -67,6 +69,14 @@ func Deploy() error {
 	start := time.Now()
 	if err := PreCheck(); err != nil {
 		return err
+	}
+
+	if function := os.Getenv("LAMBDA"); function != "" {
+		function = strings.ToLower(strings.TrimSpace(function))
+		if !strings.HasPrefix(function, "panther-") {
+			function = "panther-" + function
+		}
+		return deploySingleLambda(function)
 	}
 
 	if stack := os.Getenv("STACK"); stack != "" {
@@ -167,6 +177,89 @@ func setFirstUser(settings *PantherConfig) error {
 		Email:      email,
 	}
 	return nil
+}
+
+// Update a single Lambda function for rapid developer iteration.
+//
+// This will only update the Lambda source, not the function configuration.
+func deploySingleLambda(function string) error {
+	switch function {
+	// bootstrap-gateway
+	case "panther-cfn-custom-resources":
+		return updateGoLambda(function, filepath.Join("internal", "core", "custom_resources", "main"))
+
+	// cloud-security
+	case "panther-alert-forwarder":
+		return updateGoLambda(function, filepath.Join("internal", "compliance", "alert_forwarder", "main"))
+	case "panther-alert-processor":
+		return updateGoLambda(function, filepath.Join("internal", "compliance", "alert_processor", "main"))
+	case "panther-aws-event-processor":
+		return updateGoLambda(function, filepath.Join("internal", "compliance", "aws_event_processor", "main"))
+	case "panther-aws-remediation":
+		return nil // TODO - Python
+	case "panther-compliance-api":
+		return updateGoLambda(function, filepath.Join("internal", "compliance", "compliance_api", "main"))
+	case "panther-policy-engine":
+		return nil // TODO - Python
+	case "panther-remediation-api":
+		return updateGoLambda(function, filepath.Join("internal", "compliance", "remediation_api", "main"))
+	case "panther-remediation-processor":
+		return updateGoLambda(function, filepath.Join("internal", "compliance", "remediation_processor", "main"))
+	case "panther-resource-processor":
+		return updateGoLambda(function, filepath.Join("internal", "compliance", "resource_processor", "main"))
+	case "panther-resources-api":
+		return updateGoLambda(function, filepath.Join("internal", "compliance", "resources_api", "main"))
+	case "panther-snapshot-pollers":
+		return updateGoLambda(function, filepath.Join("internal", "compliance", "snapshot_poller", "main"))
+	case "panther-snapshot-scheduler":
+		return updateGoLambda(function, filepath.Join("internal", "compliance", "snapshot_scheduler", "main"))
+
+	// core
+	case "panther-users-api":
+		return updateGoLambda(function, filepath.Join("internal", "core", "users_api", "main"))
+	case "panther-organization-api":
+		return updateGoLambda(function, filepath.Join("internal", "core", "organization_api", "main"))
+	case "panther-analysis-api":
+		return updateGoLambda(function, filepath.Join("internal", "core", "analysis_api", "main"))
+	case "panther-outputs-api":
+		return updateGoLambda(function, filepath.Join("internal", "core", "outputs_api", "main"))
+	case "panther-alert-delivery-api":
+		return updateGoLambda(function, filepath.Join("internal", "core", "alert_delivery", "main"))
+	case "panther-source-api":
+		return updateGoLambda(function, filepath.Join("internal", "core", "source_api", "main"))
+	case "panther-layer-manager":
+		return updateGoLambda(function, filepath.Join("internal", "core", "layer_manager", "main"))
+	case "panther-metrics-api":
+		return updateGoLambda(function, filepath.Join("internal", "core", "metrics_api", "main"))
+	case "panther-logtypes-api":
+		return updateGoLambda(function, filepath.Join("internal", "core", "logtypesapi", "main"))
+
+	default:
+		return fmt.Errorf("unknown function LAMBDA=%s", function)
+	}
+}
+
+func updateGoLambda(function, srcPath string) error {
+	log.Infof("compiling %s", srcPath)
+	binary, err := build.LambdaPackage(srcPath)
+	if err != nil {
+		return err
+	}
+
+	// Create zipfile
+	pkg := filepath.Join("out", "deployments", function+".zip")
+	if err := shutil.ZipDirectory(filepath.Dir(binary), pkg, false); err != nil {
+		return fmt.Errorf("failed to zip %s into %s: %v", filepath.Dir(binary), pkg, err)
+	}
+
+	// Update function
+	log.Infof("updating code for lambda function %s", function)
+	response, err := clients.Lambda().UpdateFunctionCode(&lambda.UpdateFunctionCodeInput{
+		FunctionName: &function,
+		ZipFile:      util.MustReadFile(pkg),
+	})
+	log.Debugf("lambda update response: %v", response)
+	return err
 }
 
 // Deploy a single stack for rapid developer iteration.
