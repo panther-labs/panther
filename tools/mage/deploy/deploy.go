@@ -183,89 +183,61 @@ func setFirstUser(settings *PantherConfig) error {
 //
 // This will only update the Lambda source, not the function configuration.
 func deploySingleLambda(function string) error {
-	switch function {
-	// bootstrap-gateway
-	case "panther-cfn-custom-resources":
-		return updateLambdaCode(function, filepath.Join("internal", "core", "custom_resources", "main"), true)
-
-	// cloud-security
-	case "panther-alert-forwarder":
-		return updateLambdaCode(function, filepath.Join("internal", "compliance", "alert_forwarder", "main"), true)
-	case "panther-alert-processor":
-		return updateLambdaCode(function, filepath.Join("internal", "compliance", "alert_processor", "main"), true)
-	case "panther-aws-event-processor":
-		return updateLambdaCode(function, filepath.Join("internal", "compliance", "aws_event_processor", "main"), true)
-	case "panther-aws-remediation":
-		return updateLambdaCode(function, filepath.Join("internal", "compliance", "remediation_aws", "src"), false)
-	case "panther-compliance-api":
-		return updateLambdaCode(function, filepath.Join("internal", "compliance", "compliance_api", "main"), true)
-	case "panther-policy-engine":
-		return updateLambdaCode(function, filepath.Join("internal", "compliance", "policy_engine"), false)
-	case "panther-remediation-api":
-		return updateLambdaCode(function, filepath.Join("internal", "compliance", "remediation_api", "main"), true)
-	case "panther-remediation-processor":
-		return updateLambdaCode(function, filepath.Join("internal", "compliance", "remediation_processor", "main"), true)
-	case "panther-resource-processor":
-		return updateLambdaCode(function, filepath.Join("internal", "compliance", "resource_processor", "main"), true)
-	case "panther-resources-api":
-		return updateLambdaCode(function, filepath.Join("internal", "compliance", "resources_api", "main"), true)
-	case "panther-snapshot-pollers":
-		return updateLambdaCode(function, filepath.Join("internal", "compliance", "snapshot_poller", "main"), true)
-	case "panther-snapshot-scheduler":
-		return updateLambdaCode(function, filepath.Join("internal", "compliance", "snapshot_scheduler", "main"), true)
-
-	// core
-	case "panther-analysis-api":
-		return updateLambdaCode(function, filepath.Join("internal", "core", "analysis_api", "main"), true)
-	case "panther-alert-delivery-api":
-		return updateLambdaCode(function, filepath.Join("internal", "core", "alert_delivery", "main"), true)
-	case "panther-layer-manager":
-		return updateLambdaCode(function, filepath.Join("internal", "core", "layer_manager", "main"), true)
-	case "panther-logtypes-api":
-		return updateLambdaCode(function, filepath.Join("internal", "core", "logtypesapi", "main"), true)
-	case "panther-metrics-api":
-		return updateLambdaCode(function, filepath.Join("internal", "core", "metrics_api", "main"), true)
-	case "panther-organization-api":
-		return updateLambdaCode(function, filepath.Join("internal", "core", "organization_api", "main"), true)
-	case "panther-outputs-api":
-		return updateLambdaCode(function, filepath.Join("internal", "core", "outputs_api", "main"), true)
-	case "panther-source-api":
-		return updateLambdaCode(function, filepath.Join("internal", "core", "source_api", "main"), true)
-	case "panther-users-api":
-		return updateLambdaCode(function, filepath.Join("internal", "core", "users_api", "main"), true)
-
-	// log-analysis
-	case "panther-alerts-api":
-		return updateLambdaCode(function, filepath.Join("internal", "log_analysis", "alerts_api", "main"), true)
-	case "panther-datacatalog-updater":
-		return updateLambdaCode(function, filepath.Join("internal", "log_analysis", "datacatalog_updater", "main"), true)
-	case "panther-log-alert-forwarder":
-		return updateLambdaCode(function, filepath.Join("internal", "log_analysis", "alert_forwarder", "main"), true)
-	case "panther-log-processor":
-		return updateLambdaCode(function, filepath.Join("internal", "log_analysis", "log_processor", "main"), true)
-	case "panther-message-forwarder":
-		return updateLambdaCode(function, filepath.Join("internal", "log_analysis", "message_forwarder", "main"), true)
-	case "panther-rules-engine":
-		return updateLambdaCode(function, filepath.Join("internal", "log_analysis", "rules_engine"), false)
-
-	default:
-		return fmt.Errorf("unknown function LAMBDA=%s", function)
+	// Find the function source path and language from the CFN templates
+	type cfnResource struct {
+		Type       string
+		Properties map[string]interface{}
 	}
+
+	type cfnTemplate struct {
+		Resources map[string]cfnResource
+	}
+
+	for _, path := range []string{
+		cfnstacks.LogAnalysisTemplate,
+		cfnstacks.CloudsecTemplate,
+		cfnstacks.CoreTemplate,
+		cfnstacks.APITemplate,
+	} {
+		var template cfnTemplate
+		if err := util.ParseTemplate(path, &template); err != nil {
+			return err
+		}
+
+		for _, resource := range template.Resources {
+			if resource.Type != "AWS::Serverless::Function" {
+				continue
+			}
+
+			if resource.Properties["FunctionName"].(string) == function {
+				return updateLambdaCode(
+					function,
+					filepath.Join("deployments", resource.Properties["CodeUri"].(string)),
+					resource.Properties["Runtime"].(string),
+				)
+			}
+		}
+	}
+
+	// Couldn't find the lambda function in any of the templates
+	return fmt.Errorf("unknown function LAMBDA=%s", function)
 }
 
-func updateLambdaCode(function, srcPath string, isGo bool) error {
+func updateLambdaCode(function, srcPath, runtime string) error {
 	var pathToZip string
 
-	if isGo {
+	if strings.HasPrefix(runtime, "go") {
+		srcPath = strings.TrimPrefix(srcPath, "out/bin/")
 		log.Infof("compiling %s", srcPath)
 		binary, err := build.LambdaPackage(srcPath)
 		if err != nil {
 			return err
 		}
 		pathToZip = filepath.Dir(binary)
-	} else {
-		// Python Lambda - zip source directory
+	} else if strings.HasPrefix(runtime, "python") {
 		pathToZip = srcPath
+	} else {
+		return fmt.Errorf("unknown Lambda runtime %s", runtime)
 	}
 
 	// Create zipfile
@@ -275,12 +247,12 @@ func updateLambdaCode(function, srcPath string, isGo bool) error {
 	}
 
 	// Update function
-	log.Infof("updating code for lambda function %s", function)
+	log.Infof("updating code for %s Lambda function %s", runtime, function)
 	response, err := clients.Lambda().UpdateFunctionCode(&lambda.UpdateFunctionCodeInput{
 		FunctionName: &function,
 		ZipFile:      util.MustReadFile(pkg),
 	})
-	log.Debugf("lambda update response: %v", response)
+	log.Debugf("Lambda update response: %v", response)
 	return err
 }
 
