@@ -31,7 +31,7 @@ const Layout: React.FC = ({ children }) => {
           {children}
         </Flex>
         {/* Sticky footer used from some components */}
-        <Box id="footer" position="absolute" width="100%" bottom={0}></Box>
+        <Box as="footer" id="footer" position="absolute" width="100%" bottom={0}></Box>
       </Box>
     </Flex>
   );
