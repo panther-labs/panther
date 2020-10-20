@@ -307,10 +307,12 @@ func filterByType(filter *expression.ConditionBuilder, input *models.ListAlertsI
 		var multiFilter expression.ConditionBuilder
 		switch input.Type {
 		case alertdeliverymodels.RuleErrorType:
-			multiFilter = expression.Name(TypeKey).Contains(input.Type)
+			multiFilter = expression.Equal(expression.Name(TypeKey), expression.Value(input.Type))
 		case alertdeliverymodels.RuleType:
 			// Alerts for rule matches don't always have the attribute specified
-			multiFilter = expression.Name(TypeKey).Contains(input.Type).Or(expression.Name(TypeKey).AttributeNotExists())
+			multiFilter = expression.
+				Equal(expression.Name(TypeKey), expression.Value(input.Type)).
+				Or(expression.Name(TypeKey).AttributeNotExists())
 		default:
 			panic("Uknown type :" + input.Type)
 		}
