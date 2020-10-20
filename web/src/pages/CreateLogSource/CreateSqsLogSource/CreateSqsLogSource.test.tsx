@@ -37,7 +37,7 @@ describe('CreateSqsLogSource', () => {
     (document.execCommand as jest.MockedFunction<any>).mockClear();
   });
 
-  it('can successfully update an Sqs log source', async () => {
+  it('can successfully create an Sqs log source', async () => {
     const logSource = buildSqsLogSourceIntegration();
     const { logTypes } = logSource.sqsConfig;
 
@@ -97,7 +97,6 @@ describe('CreateSqsLogSource', () => {
 
     // Expect to see a loading animation while the resource is being validated ...
     expect(getByText('Creating an SQS queue')).toBeInTheDocument();
-    expect(getByText('Cancel')).toBeInTheDocument();
 
     // ... replaced by a success screen
     expect(await findByText('An SQS Queue has been created for you!')).toBeInTheDocument();

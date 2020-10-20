@@ -508,6 +508,5 @@ func customResourceVersion() string {
 
 	// By default, just use the major release version so developers do not have to trigger every
 	// custom resource on every deploy.
-	// The gitVersion is "v0.3.0" on tagged release, otherwise something like "v0.3.0-128-g77fd9ff"
 	return strings.Split(util.RepoVersion(), "-")[0]
 }

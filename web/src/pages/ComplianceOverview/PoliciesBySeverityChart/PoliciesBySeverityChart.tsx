@@ -54,7 +54,7 @@ const PoliciesBySeverityChart: React.FC<PoliciesBySeverityChartData> = ({ polici
 
   return (
     <Flex height="100%">
-      <ChartSummary total={totalPolicies} title="Total Policies" color="blue-600" />
+      <ChartSummary total={totalPolicies} title="Total Enabled Policies" color="violet-400" />
       <BarChart data={allPoliciesChartData} />
     </Flex>
   );

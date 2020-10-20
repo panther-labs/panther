@@ -17,9 +17,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Sets up an SNS topic and subscribes it to Panther Log processing SQS queue.
 
-Metadata:
-  Version: v1.0.0
-
 Parameters:
   SnsTopicName:
     Type: String

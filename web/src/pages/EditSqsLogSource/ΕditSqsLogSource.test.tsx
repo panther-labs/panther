@@ -97,7 +97,6 @@ describe('EditSqsLogSource', () => {
 
     // Expect to see a loading animation while the resource is being validated ...
     expect(getByText('Updating your SQS queue')).toBeInTheDocument();
-    expect(getByText('Cancel')).toBeInTheDocument();
 
     // ... replaced by a success screen
     expect(await findByText('Your SQS source was successfully updated')).toBeInTheDocument();

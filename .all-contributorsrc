@@ -211,6 +211,28 @@
         "bug",
         "security"
       ]
+    },
+    {
+      "login": "s0l0ist",
+      "name": "Nick Angelou",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/3663107?v=4",
+      "profile": "https://morfix.io",
+      "contributions": [
+        "code",
+        "doc",
+        "security",
+        "bug",
+        "infra"
+      ]
+    },
+    {
+      "login": "rynjms",
+      "name": "Ryan Moon",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/47795853?v=4",
+      "profile": "https://github.com/rynjms",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

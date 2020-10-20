@@ -18,7 +18,7 @@
 
 import React from 'react';
 import * as utils from 'Helpers/utils';
-import { SeverityEnum } from 'Generated/schema';
+import { AlertStatusesEnum, SeverityEnum } from 'Generated/schema';
 import {
   buildAlertSummary,
   buildListAlertsResponse,
@@ -80,6 +80,7 @@ const defaultMocks = [
     variables: {
       recentAlertsInput: {
         pageSize: 10,
+        status: [AlertStatusesEnum.Open, AlertStatusesEnum.Triaged],
       },
     },
   }),

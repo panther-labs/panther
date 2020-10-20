@@ -17,9 +17,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: IAM roles for log ingestion from an S3 bucket.
 
-Metadata:
-  Version: v1.0.0
-
 Mappings:
   # DO NOT EDIT PantherParameters section. Panther application relies on the exact format (including comments)
   # in order to replace the default values with an appropriate ones.
