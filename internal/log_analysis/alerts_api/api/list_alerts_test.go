@@ -84,7 +84,7 @@ func TestListAlertsForRule(t *testing.T) {
 		Status:            []string{models.TriagedStatus},
 		PageSize:          aws.Int(10),
 		ExclusiveStartKey: aws.String("startKey"),
-		Severity:          []*string{aws.String("INFO")},
+		Severity:          []string{"INFO"},
 	}
 
 	tableMock.On("ListAll", input).
@@ -106,7 +106,7 @@ func TestListAllAlerts(t *testing.T) {
 		PageSize:          aws.Int(10),
 		ExclusiveStartKey: aws.String("startKey"),
 		Status:            []string{models.TriagedStatus},
-		Severity:          []*string{aws.String("INFO")},
+		Severity:          []string{"INFO"},
 		NameContains:      aws.String("title"),
 		EventCountMin:     aws.Int(0),
 		EventCountMax:     aws.Int(100),
