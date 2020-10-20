@@ -16,7 +16,7 @@
 
 <p align="center">
   <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-<a href="#contributors"><img src="https://img.shields.io/badge/all_contributors-23-orange.svg?style=svg" alt="All Contributors"/></a>
+<a href="#contributors"><img src="https://img.shields.io/badge/all_contributors-24-orange.svg?style=svg" alt="All Contributors"/></a>
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
   <a href="https://panther-labs-oss-slackin.herokuapp.com/"><img src="https://panther-labs-oss-slackin.herokuapp.com/badge.svg" alt="Slack"/></a>
   <a href="https://circleci.com/gh/panther-labs/panther"><img src="https://circleci.com/gh/panther-labs/panther.svg?style=svg" alt="CircleCI"/></a>
@@ -180,6 +180,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/rynjms"><img src="https://avatars2.githubusercontent.com/u/47795853?v=4" width="100px;" alt=""/><br /><sub><b>Ryan Moon</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=rynjms" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/giorgosp"><img src="https://avatars1.githubusercontent.com/u/3627869?v=4" width="100px;" alt=""/><br /><sub><b>George Papadrosou</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=giorgosp" title="Code">💻</a> <a href="#security-giorgosp" title="Security">🛡️</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3Agiorgosp" title="Bug reports">🐛</a></td>
     <td align="center"><a href="https://github.com/lindsey-w"><img src="https://avatars3.githubusercontent.com/u/43453975?v=4" width="100px;" alt=""/><br /><sub><b>Lindsey Whitehurst</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=lindsey-w" title="Code">💻</a> <a href="#security-lindsey-w" title="Security">🛡️</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3Alindsey-w" title="Bug reports">🐛</a></td>
+    <td align="center"><a href="https://github.com/wey-chiang"><img src="https://avatars1.githubusercontent.com/u/71197790?v=4" width="100px;" alt=""/><br /><sub><b>Weyland</b></sub></a><br /><a href="https://github.com/panther-labs/panther/commits?author=wey-chiang" title="Code">💻</a> <a href="#security-wey-chiang" title="Security">🛡️</a> <a href="https://github.com/panther-labs/panther/issues?q=author%3Awey-chiang" title="Bug reports">🐛</a></td>
   </tr>
 </table>
 
