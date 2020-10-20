@@ -77,6 +77,7 @@ export const render = (element: React.ReactElement, options: RenderOptions = {})
           <UIProviders>
             <header id="main-header" />
             {element}
+            <footer id="footer"></footer>
           </UIProviders>
         </Router>
       </AuthContext.Provider>

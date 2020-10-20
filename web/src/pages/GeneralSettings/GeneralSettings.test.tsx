@@ -29,19 +29,13 @@ describe('GeneralSettings', () => {
     });
     const mocks = [mockGetGeneralSettings({ data: { generalSettings: settings } })];
 
-    const { getByText, container, getByLabelText } = render(
-      <div>
-        <GeneralSettings />
-        <footer id="footer"></footer>
-      </div>,
-      {
-        mocks,
-      }
-    );
+    const { getByText, container, getByLabelText } = render(<GeneralSettings />, {
+      mocks,
+    });
     await waitFor(() => expect(getByText('Company Information')).toBeInTheDocument());
 
-    expect(getByLabelText('Company Name')).toBeInTheDocument();
-    expect(getByLabelText('Email')).toBeInTheDocument();
+    expect(getByLabelText('Company Name')).toHaveValue('Panther labs');
+    expect(getByLabelText('Email')).toHaveValue('test@runpanther.io');
     expect(getByText('Save')).toBeInTheDocument();
 
     expect(getByText('Preferences')).toBeInTheDocument();

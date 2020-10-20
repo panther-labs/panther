@@ -507,338 +507,336 @@ exports[`GeneralSettings it renders the general settings page along with the foo
   <header
     id="main-header"
   />
-  <div>
+  <div
+    class="panther-40"
+  >
     <div
-      class="panther-40"
+      class="panther-39"
     >
-      <div
-        class="panther-39"
+      <article
+        class="panther-5"
       >
-        <article
-          class="panther-5"
+        <div
+          class="panther-37"
         >
-          <div
-            class="panther-37"
+          <form
+            action="#"
           >
-            <form
-              action="#"
+            <section
+              class="panther-12"
             >
-              <section
-                class="panther-12"
+              <h2
+                class="panther-0"
               >
-                <h2
-                  class="panther-0"
-                >
-                  Company Information
-                </h2>
+                Company Information
+              </h2>
+              <div
+                class="panther-11"
+              >
                 <div
-                  class="panther-11"
-                >
-                  <div
-                    class="panther-5"
-                  >
-                    <div
-                      class="panther-4"
-                    >
-                      <div
-                        class="panther-3"
-                      >
-                        <input
-                          aria-invalid="false"
-                          aria-required="true"
-                          class="panther-1"
-                          id="displayName"
-                          name="displayName"
-                          placeholder="The name of the company"
-                          required=""
-                          type="text"
-                          value="Panther labs"
-                        />
-                        <label
-                          class="panther-2"
-                          for="displayName"
-                        >
-                          Company Name
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <div
-                    class="panther-5"
-                  >
-                    <div
-                      class="panther-4"
-                    >
-                      <div
-                        class="panther-3"
-                      >
-                        <input
-                          aria-invalid="false"
-                          aria-required="true"
-                          class="panther-1"
-                          id="email"
-                          name="email"
-                          placeholder="The company's email"
-                          required=""
-                          type="text"
-                          value="test@runpanther.io"
-                        />
-                        <label
-                          class="panther-2"
-                          for="email"
-                        >
-                          Email
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-              <section
-                class="panther-12"
-              >
-                <h2
-                  class="panther-13"
-                >
-                  Preferences
-                </h2>
-                <fieldset
                   class="panther-5"
                 >
                   <div
-                    class="panther-22"
+                    class="panther-4"
                   >
                     <div
-                      class="panther-5"
+                      class="panther-3"
                     >
+                      <input
+                        aria-invalid="false"
+                        aria-required="true"
+                        class="panther-1"
+                        id="displayName"
+                        name="displayName"
+                        placeholder="The name of the company"
+                        required=""
+                        type="text"
+                        value="Panther labs"
+                      />
                       <label
-                        class="panther-19"
+                        class="panther-2"
+                        for="displayName"
                       >
-                        <span
-                          class="panther-14"
-                        >
-                          Report Web Application Errors
-                        </span>
-                        <div
-                          class="panther-18"
-                        >
-                          <div
-                            class="panther-15"
-                          />
-                          <div
-                            class="panther-16"
-                          >
-                            OFF
-                          </div>
-                          <input
-                            aria-checked="false"
-                            aria-invalid="false"
-                            class="panther-17"
-                            name="errorReportingConsent"
-                            type="checkbox"
-                            value="false"
-                          />
-                        </div>
+                        Company Name
                       </label>
                     </div>
-                    <p
-                      class="panther-21"
-                      id="error-reporting-section-helper-text"
-                    >
-                      Send anonymized runtime exception reports 
-                      <br />
-                       to improve Panther
-                      '
-                      s reliability.
-                    </p>
                   </div>
+                </div>
+                <div
+                  class="panther-5"
+                >
                   <div
-                    class="panther-22"
+                    class="panther-4"
                   >
                     <div
-                      class="panther-5"
+                      class="panther-3"
                     >
+                      <input
+                        aria-invalid="false"
+                        aria-required="true"
+                        class="panther-1"
+                        id="email"
+                        name="email"
+                        placeholder="The company's email"
+                        required=""
+                        type="text"
+                        value="test@runpanther.io"
+                      />
                       <label
-                        class="panther-19"
+                        class="panther-2"
+                        for="email"
                       >
-                        <span
-                          class="panther-14"
-                        >
-                          Send Product Analytics
-                        </span>
-                        <div
-                          class="panther-27"
-                        >
-                          <div
-                            class="panther-24"
-                          />
-                          <div
-                            class="panther-25"
-                          >
-                            ON
-                          </div>
-                          <input
-                            aria-checked="true"
-                            aria-invalid="false"
-                            checked=""
-                            class="panther-17"
-                            name="analyticsConsent"
-                            type="checkbox"
-                            value="true"
-                          />
-                        </div>
+                        Email
                       </label>
                     </div>
-                    <p
-                      class="panther-30"
-                      id="product-analytics-section-helper-text"
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section
+              class="panther-12"
+            >
+              <h2
+                class="panther-13"
+              >
+                Preferences
+              </h2>
+              <fieldset
+                class="panther-5"
+              >
+                <div
+                  class="panther-22"
+                >
+                  <div
+                    class="panther-5"
+                  >
+                    <label
+                      class="panther-19"
                     >
-                      Send anonymized product analytics to help us 
-                      <br />
-                      improve Panther.
-                    </p>
+                      <span
+                        class="panther-14"
+                      >
+                        Report Web Application Errors
+                      </span>
+                      <div
+                        class="panther-18"
+                      >
+                        <div
+                          class="panther-15"
+                        />
+                        <div
+                          class="panther-16"
+                        >
+                          OFF
+                        </div>
+                        <input
+                          aria-checked="false"
+                          aria-invalid="false"
+                          class="panther-17"
+                          name="errorReportingConsent"
+                          type="checkbox"
+                          value="false"
+                        />
+                      </div>
+                    </label>
                   </div>
                   <p
-                    class="panther-33"
-                    id="analytics-consent-link-helper-text"
+                    class="panther-21"
+                    id="error-reporting-section-helper-text"
                   >
-                    You can read more info about our security privacy
-                    <a
-                      class="panther-32"
-                      href="https://docs.runpanther.io/v/test.undefined-docs/user-guide/help/security-privacy#privacy"
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      here
-                    </a>
-                    .
+                    Send anonymized runtime exception reports 
+                    <br />
+                     to improve Panther
+                    '
+                    s reliability.
                   </p>
-                </fieldset>
-              </section>
-              <button
-                class="panther-36"
-                disabled=""
-                type="submit"
-              >
-                Save
-              </button>
-            </form>
-          </div>
-        </article>
-      </div>
+                </div>
+                <div
+                  class="panther-22"
+                >
+                  <div
+                    class="panther-5"
+                  >
+                    <label
+                      class="panther-19"
+                    >
+                      <span
+                        class="panther-14"
+                      >
+                        Send Product Analytics
+                      </span>
+                      <div
+                        class="panther-27"
+                      >
+                        <div
+                          class="panther-24"
+                        />
+                        <div
+                          class="panther-25"
+                        >
+                          ON
+                        </div>
+                        <input
+                          aria-checked="true"
+                          aria-invalid="false"
+                          checked=""
+                          class="panther-17"
+                          name="analyticsConsent"
+                          type="checkbox"
+                          value="true"
+                        />
+                      </div>
+                    </label>
+                  </div>
+                  <p
+                    class="panther-30"
+                    id="product-analytics-section-helper-text"
+                  >
+                    Send anonymized product analytics to help us 
+                    <br />
+                    improve Panther.
+                  </p>
+                </div>
+                <p
+                  class="panther-33"
+                  id="analytics-consent-link-helper-text"
+                >
+                  You can read more info about our security privacy
+                  <a
+                    class="panther-32"
+                    href="https://docs.runpanther.io/v/test.undefined-docs/user-guide/help/security-privacy#privacy"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    here
+                  </a>
+                  .
+                </p>
+              </fieldset>
+            </section>
+            <button
+              class="panther-36"
+              disabled=""
+              type="submit"
+            >
+              Save
+            </button>
+          </form>
+        </div>
+      </article>
     </div>
-    <footer
-      id="footer"
+  </div>
+  <footer
+    id="footer"
+  >
+    <div
+      class="panther-61"
     >
       <div
-        class="panther-61"
+        class="panther-60"
       >
         <div
-          class="panther-60"
+          class="panther-59"
         >
           <div
-            class="panther-59"
+            class="panther-5"
           >
-            <div
+            <img
+              alt="Panther logo"
+              class="panther-41"
+              height="20"
+              src="test-file-stub"
+              width="94"
+            />
+          </div>
+          <div
+            class="panther-58"
+          >
+            <section
               class="panther-5"
             >
-              <img
-                alt="Panther logo"
-                class="panther-41"
-                height="20"
-                src="test-file-stub"
-                width="94"
-              />
-            </div>
-            <div
-              class="panther-58"
+              <dt
+                class="panther-43"
+                id="plan"
+              >
+                Plan
+              </dt>
+              <dl
+                aria-labelledby="plan"
+                class="panther-44"
+              >
+                Community
+              </dl>
+            </section>
+            <section
+              class="panther-5"
             >
-              <section
-                class="panther-5"
+              <a
+                class="panther-47"
+                href="https://runpanther.io/pricing/"
+                rel="noopener noreferrer"
+                target="_blank"
               >
-                <dt
-                  class="panther-43"
-                  id="plan"
+                <span
+                  class="panther-46"
+                  type="button"
                 >
-                  Plan
-                </dt>
-                <dl
-                  aria-labelledby="plan"
-                  class="panther-44"
-                >
-                  Community
-                </dl>
-              </section>
-              <section
-                class="panther-5"
+                  Change
+                </span>
+              </a>
+            </section>
+            <section
+              class="panther-5"
+            >
+              <dt
+                class="panther-43"
+                id="aws_account_id"
               >
-                <a
-                  class="panther-47"
-                  href="https://runpanther.io/pricing/"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <span
-                    class="panther-46"
-                    type="button"
-                  >
-                    Change
-                  </span>
-                </a>
-              </section>
-              <section
-                class="panther-5"
+                AWS Account ID
+              </dt>
+              <dl
+                aria-labelledby="aws_account_id"
+                class="panther-44"
               >
-                <dt
-                  class="panther-43"
-                  id="aws_account_id"
-                >
-                  AWS Account ID
-                </dt>
-                <dl
-                  aria-labelledby="aws_account_id"
-                  class="panther-44"
-                >
-                  111111111111
-                </dl>
-              </section>
-              <section
-                class="panther-5"
+                111111111111
+              </dl>
+            </section>
+            <section
+              class="panther-5"
+            >
+              <dt
+                class="panther-43"
+                id="panther_version"
               >
-                <dt
-                  class="panther-43"
-                  id="panther_version"
-                >
-                  Version
-                </dt>
-                <dl
-                  aria-labelledby="panther_version"
-                  class="panther-44"
-                >
-                  test
-                </dl>
-              </section>
-              <section
-                class="panther-5"
+                Version
+              </dt>
+              <dl
+                aria-labelledby="panther_version"
+                class="panther-44"
               >
-                <dt
-                  class="panther-43"
-                  id="aws_region"
-                >
-                  AWS Region
-                </dt>
-                <dl
-                  aria-labelledby="aws_region"
-                  class="panther-44"
-                >
-                  us-west-2
-                </dl>
-              </section>
-            </div>
+                test
+              </dl>
+            </section>
+            <section
+              class="panther-5"
+            >
+              <dt
+                class="panther-43"
+                id="aws_region"
+              >
+                AWS Region
+              </dt>
+              <dl
+                aria-labelledby="aws_region"
+                class="panther-44"
+              >
+                us-west-2
+              </dl>
+            </section>
           </div>
         </div>
       </div>
-    </footer>
-  </div>
+    </div>
+  </footer>
 </div>
 `;
