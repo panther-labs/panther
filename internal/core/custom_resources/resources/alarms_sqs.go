@@ -90,7 +90,7 @@ func putSQSAlarmGroup(props SQSAlarmProperties) error {
 			fmt.Sprintf("Panther-%s-%s", sqsAgeAlarm, props.QueueName))
 		input.MetricName = aws.String("ApproximateAgeOfOldestMessage")
 		input.Statistic = aws.String(cloudwatch.StatisticMaximum)
-		var threshold float64 = 900.0
+		threshold := 900.0
 		if props.AgeThresholdSeconds != nil {
 			threshold = *props.AgeThresholdSeconds
 		}
