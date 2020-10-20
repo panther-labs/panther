@@ -225,6 +225,9 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 	// Start with an empty filter for a known attribute
 	filter := expression.AttributeExists(expression.Name(AlertIDKey))
 
+	// TODO: It would read better if each of the below methods returned the multifilter and this block of code would `And` the filters
+	// See https://github.com/panther-labs/panther/pull/1790#discussion_r508342774
+	//
 	// Then, apply our filters
 	filterBySeverity(&filter, input)
 	filterByStatus(&filter, input)
