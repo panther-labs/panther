@@ -284,5 +284,8 @@ exports[`AlertDetailsBanner renders 1`] = `
       </ul>
     </header>
   </article>
+  <footer
+    id="footer"
+  />
 </div>
 `;
