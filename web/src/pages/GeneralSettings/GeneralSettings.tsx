@@ -101,8 +101,18 @@ const GeneralSettingsPage: React.FC = () => {
               alt="Panther logo"
               nativeWidth={94}
               nativeHeight={20}
+              mb={3}
               display="block"
             />
+            <LinkButton
+              external
+              size="small"
+              to="https://runpanther.io/pricing/"
+              variantColor="navyblue"
+              variant="outline"
+            >
+              Get Enterprise
+            </LinkButton>
           </Box>
           <Flex spacing={9} align="center">
             <Box as="section">
@@ -113,17 +123,7 @@ const GeneralSettingsPage: React.FC = () => {
                 Community
               </Box>
             </Box>
-            <Box as="section">
-              <LinkButton
-                external
-                size="medium"
-                to="https://runpanther.io/pricing/"
-                variantColor="navyblue"
-                variant="outline"
-              >
-                Change
-              </LinkButton>
-            </Box>
+
             <Box as="section">
               <Box id="aws_account_id" as="dt" color="navyblue-100" fontSize="small" mb={1}>
                 AWS Account ID

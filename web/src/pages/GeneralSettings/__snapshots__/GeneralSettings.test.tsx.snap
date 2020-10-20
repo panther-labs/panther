@@ -390,11 +390,11 @@ exports[`GeneralSettings it renders the general settings page along with the foo
   border-color: #0077bb;
 }
 
-.panther-61 {
+.panther-60 {
   background-color: #1d2a3f;
 }
 
-.panther-60 {
+.panther-59 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -410,50 +410,26 @@ exports[`GeneralSettings it renders the general settings page along with the foo
   padding-bottom: 24px;
 }
 
-.panther-59 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-}
-
-.panther-59>*:not(:last-child) {
-  margin-right: 170px;
-}
-
-.panther-41 {
-  max-width: 100%;
-  display: block;
-}
-
 .panther-58 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-align-items: center;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
 }
 
 .panther-58>*:not(:last-child) {
-  margin-right: 36px;
+  margin-right: 170px;
 }
 
-.panther-43 {
-  color: #86a3c3;
-  font-size: 0.75rem;
-  margin-bottom: 4px;
-}
-
-.panther-44 {
-  font-size: 0.875rem;
+.panther-41 {
+  max-width: 100%;
+  margin-bottom: 12px;
+  display: block;
 }
 
 
 
-.panther-47>span {
+.panther-43>span {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -468,13 +444,13 @@ exports[`GeneralSettings it renders the general settings page along with the foo
   align-items: center;
 }
 
-.panther-46 {
+.panther-42 {
   width: auto;
   outline: none;
   padding-left: 20px;
   padding-right: 20px;
-  height: 32px;
-  font-size: 0.813rem;
+  height: 24px;
+  font-size: 0.75rem;
   -webkit-transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
   transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
   border-radius: 2px;
@@ -487,20 +463,45 @@ exports[`GeneralSettings it renders the general settings page along with the foo
   text-decoration: none;
 }
 
-.panther-46:hover {
+.panther-42:hover {
   background-color: #465973;
   border-color: #465973;
 }
 
-.panther-46:focus {
+.panther-42:focus {
   background-color: #465973;
   border-color: #93a6c0;
 }
 
-.panther-46:active,
-.panther-46[data-active=true] {
+.panther-42:active,
+.panther-42[data-active=true] {
   background-color: #253852;
   border-color: #253852;
+}
+
+.panther-57 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-57>*:not(:last-child) {
+  margin-right: 36px;
+}
+
+.panther-45 {
+  color: #86a3c3;
+  font-size: 0.75rem;
+  margin-bottom: 4px;
+}
+
+.panther-46 {
+  font-size: 0.875rem;
 }
 
 <div>
@@ -730,13 +731,13 @@ exports[`GeneralSettings it renders the general settings page along with the foo
     id="footer"
   >
     <div
-      class="panther-61"
+      class="panther-60"
     >
       <div
-        class="panther-60"
+        class="panther-59"
       >
         <div
-          class="panther-59"
+          class="panther-58"
         >
           <div
             class="panther-5"
@@ -748,22 +749,35 @@ exports[`GeneralSettings it renders the general settings page along with the foo
               src="test-file-stub"
               width="94"
             />
+            <a
+              class="panther-43"
+              href="https://runpanther.io/pricing/"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <span
+                class="panther-42"
+                type="button"
+              >
+                Get Enterprise
+              </span>
+            </a>
           </div>
           <div
-            class="panther-58"
+            class="panther-57"
           >
             <section
               class="panther-5"
             >
               <dt
-                class="panther-43"
+                class="panther-45"
                 id="plan"
               >
                 Plan
               </dt>
               <dl
                 aria-labelledby="plan"
-                class="panther-44"
+                class="panther-46"
               >
                 Community
               </dl>
@@ -771,32 +785,15 @@ exports[`GeneralSettings it renders the general settings page along with the foo
             <section
               class="panther-5"
             >
-              <a
-                class="panther-47"
-                href="https://runpanther.io/pricing/"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                <span
-                  class="panther-46"
-                  type="button"
-                >
-                  Change
-                </span>
-              </a>
-            </section>
-            <section
-              class="panther-5"
-            >
               <dt
-                class="panther-43"
+                class="panther-45"
                 id="aws_account_id"
               >
                 AWS Account ID
               </dt>
               <dl
                 aria-labelledby="aws_account_id"
-                class="panther-44"
+                class="panther-46"
               >
                 111111111111
               </dl>
@@ -805,14 +802,14 @@ exports[`GeneralSettings it renders the general settings page along with the foo
               class="panther-5"
             >
               <dt
-                class="panther-43"
+                class="panther-45"
                 id="panther_version"
               >
                 Version
               </dt>
               <dl
                 aria-labelledby="panther_version"
-                class="panther-44"
+                class="panther-46"
               >
                 test
               </dl>
@@ -821,14 +818,14 @@ exports[`GeneralSettings it renders the general settings page along with the foo
               class="panther-5"
             >
               <dt
-                class="panther-43"
+                class="panther-45"
                 id="aws_region"
               >
                 AWS Region
               </dt>
               <dl
                 aria-labelledby="aws_region"
-                class="panther-44"
+                class="panther-46"
               >
                 us-west-2
               </dl>
