@@ -26,6 +26,7 @@ import { WizardPanel } from 'Components/Wizard';
 import { pantherConfig } from 'Source/config';
 import logo from 'Assets/sqs-minimal-logo.svg';
 import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
+import { yupIntegrationLabelValidation } from 'Helpers/utils';
 import { SqsLogSourceWizardValues } from '../SqsSourceWizard';
 
 const emptyArray = [];
@@ -105,7 +106,12 @@ const SqsSourceConfigurationPanel: React.FC = () => {
       </Box>
       <WizardPanel.Actions>
         <WizardPanel.ActionNext
-          disabled={(!values.logTypes.length && !values.integrationLabel) || !isValid || !dirty}
+          disabled={
+            (!values.logTypes.length &&
+              !yupIntegrationLabelValidation.isValidSync(values.integrationLabel)) ||
+            !isValid ||
+            !dirty
+          }
         >
           Continue Setup
         </WizardPanel.ActionNext>
