@@ -26,13 +26,12 @@ import { WizardPanel } from 'Components/Wizard';
 import { pantherConfig } from 'Source/config';
 import logo from 'Assets/sqs-minimal-logo.svg';
 import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
-import { yupIntegrationLabelValidation } from 'Helpers/utils';
 import { SqsLogSourceWizardValues } from '../SqsSourceWizard';
 
 const emptyArray = [];
 
 const SqsSourceConfigurationPanel: React.FC = () => {
-  const { initialValues, values, isValid, dirty } = useFormikContext<SqsLogSourceWizardValues>();
+  const { initialValues, isValid, dirty } = useFormikContext<SqsLogSourceWizardValues>();
   const { pushSnackbar } = useSnackbar();
   const { data } = useListAvailableLogTypes({
     onError: () => pushSnackbar({ title: "Couldn't fetch your available log types" }),
@@ -105,14 +104,7 @@ const SqsSourceConfigurationPanel: React.FC = () => {
         </ErrorBoundary>
       </Box>
       <WizardPanel.Actions>
-        <WizardPanel.ActionNext
-          disabled={
-            (!values.logTypes.length &&
-              !yupIntegrationLabelValidation.isValidSync(values.integrationLabel)) ||
-            !isValid ||
-            !dirty
-          }
-        >
+        <WizardPanel.ActionNext disabled={!isValid || !dirty}>
           Continue Setup
         </WizardPanel.ActionNext>
       </WizardPanel.Actions>
