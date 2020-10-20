@@ -266,6 +266,9 @@ exports[`JsonViewer renders 1`] = `
       </div>
     </div>
   </div>
+  <footer
+    id="footer"
+  />
 </div>
 `;
 
@@ -534,6 +537,9 @@ exports[`JsonViewer toggles and expands the json view tree 1`] = `
       </div>
     </div>
   </div>
+  <footer
+    id="footer"
+  />
 </div>
 `;
 
@@ -1853,5 +1859,8 @@ exports[`JsonViewer toggles and expands the json view tree 2`] = `
       </div>
     </div>
   </div>
+  <footer
+    id="footer"
+  />
 </div>
 `;
