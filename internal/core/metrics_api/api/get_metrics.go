@@ -39,8 +39,6 @@ const (
 
 var (
 	metricsInternalError = &genericapi.InternalError{Message: "Failed to generate requested metrics. Please try again later"}
-	metricsNoDataError   = &genericapi.DoesNotExistError{
-		Message: "Could not find data points for the given metric in the selected time period"}
 	metricResolvers = map[string]func(input *models.GetMetricsInput, output *models.GetMetricsOutput) error{
 		"alertsByRuleID":   getAlertsByRuleID,
 		"alertsBySeverity": getAlertsBySeverity,
@@ -229,11 +227,6 @@ func getMetricData(input *models.GetMetricsInput, queries []*cloudwatch.MetricDa
 			zap.L().Error("unable to query metric data", zap.Any("queries", queries), zap.Error(err))
 			return nil, metricsInternalError
 		}
-	}
-
-	if len(responses) == 0 {
-		zap.L().Warn("no metrics returned for query", zap.Any("queries", queries))
-		return nil, metricsNoDataError
 	}
 
 	return responses, nil
