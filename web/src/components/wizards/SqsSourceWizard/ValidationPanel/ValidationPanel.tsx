@@ -35,7 +35,7 @@ const ValidationPanel: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
   const [errorMessage, setErrorMessage] = React.useState('');
   const result = React.useRef<AddSqsLogSourceMutationResult | UpdateSqsLogSourceMutationResult>(null); // prettier-ignore
-  const { goToPrevStep, reset: resetWizard, currentStepStatus, setCurrentStepStatus } = useWizardContext(); // prettier-ignore
+  const { reset: resetWizard, currentStepStatus, setCurrentStepStatus } = useWizardContext(); // prettier-ignore
   const { initialValues, submitForm, resetForm } = useFormikContext<SqsLogSourceWizardValues>();
 
   React.useEffect(() => {
@@ -148,11 +148,6 @@ const ValidationPanel: React.FC = () => {
           alt="Validating source health..."
           src={WaitingStatus}
         />
-        <WizardPanel.Actions>
-          <Button variantColor="darkgray" onClick={goToPrevStep}>
-            Cancel
-          </Button>
-        </WizardPanel.Actions>
       </Flex>
     </WizardPanel>
   );
