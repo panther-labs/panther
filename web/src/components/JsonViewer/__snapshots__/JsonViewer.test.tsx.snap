@@ -3,6 +3,7 @@
 exports[`JsonViewer renders 1`] = `
 .panther-2 {
   position: relative;
+  width: 100%;
 }
 
 .panther-1 {
@@ -271,6 +272,7 @@ exports[`JsonViewer renders 1`] = `
 exports[`JsonViewer toggles and expands the json view tree 1`] = `
 .panther-2 {
   position: relative;
+  width: 100%;
 }
 
 .panther-1 {
@@ -538,6 +540,7 @@ exports[`JsonViewer toggles and expands the json view tree 1`] = `
 exports[`JsonViewer toggles and expands the json view tree 2`] = `
 .panther-2 {
   position: relative;
+  width: 100%;
 }
 
 .panther-1 {
