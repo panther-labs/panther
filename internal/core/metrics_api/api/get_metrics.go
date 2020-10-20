@@ -39,7 +39,7 @@ const (
 
 var (
 	metricsInternalError = &genericapi.InternalError{Message: "Failed to generate requested metrics. Please try again later"}
-	metricResolvers = map[string]func(input *models.GetMetricsInput, output *models.GetMetricsOutput) error{
+	metricResolvers      = map[string]func(input *models.GetMetricsInput, output *models.GetMetricsOutput) error{
 		"alertsByRuleID":   getAlertsByRuleID,
 		"alertsBySeverity": getAlertsBySeverity,
 		"eventsLatency":    getEventsLatency,
