@@ -69,7 +69,6 @@ func dispatchUpdates(input *models.UpdateAlertStatusInput, maxPageSize uint64) (
 
 	// Slice up the AlertIDs into chunks to be processed in parallel
 	for page := uint64(0); page < pages; page++ {
-
 		pageSize := uint64(math.Min(float64((page*maxPageSize)+maxPageSize), float64(alertCount)))
 
 		// create shallow copy of the input with chunked AlertIDs

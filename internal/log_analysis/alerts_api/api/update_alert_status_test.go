@@ -86,7 +86,6 @@ func TestUpdateAlert(t *testing.T) {
 			EventsMatched:     aws.Int(0),
 			Title:             aws.String(""),
 		})
-
 	}
 
 	pages := uint64(math.Ceil(float64(alertCount) / float64(maxDDBPageSize)))
