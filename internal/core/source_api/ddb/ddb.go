@@ -19,6 +19,7 @@ package ddb
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
@@ -35,9 +36,9 @@ type DDB struct {
 }
 
 // New instantiates a new client.
-func New(tableName string) *DDB {
+func New(awsSession *session.Session, tableName string) *DDB {
 	return &DDB{
-		Client:    dynamodb.New(session.Must(session.NewSession())),
+		Client:    dynamodb.New(awsSession, aws.NewConfig().WithMaxRetries(5)),
 		TableName: tableName,
 	}
 }
