@@ -801,3 +801,9 @@ definitions:
       True if this resource is ignored/suppressed by this specific policy.
       Suppressed resources are still analyzed and reported, but do not trigger alerts/remediations.
     type: boolean
+
+  threshold:
+    description: The threshold (number of events) that will have to be reached during the dedupPeriodMinutes in order for the rule to fire an alarm
+    type: integer
+    minimum: 1
+    default: 1

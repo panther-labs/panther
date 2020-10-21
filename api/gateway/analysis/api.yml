@@ -1064,6 +1064,7 @@ definitions:
       - tags
       - suppressions
       - reports
+      - threshold
 
   ##### BulkUpload #####
   BulkUpload:

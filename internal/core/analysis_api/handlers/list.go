@@ -288,6 +288,7 @@ func buildListScan(params *listParams, codeType string) (*dynamodb.ScanInput, er
 		expression.Name("severity"),
 		expression.Name("suppressions"),
 		expression.Name("tags"),
+		expression.Name("threshold"),
 	)
 
 	filter := expression.Equal(expression.Name("type"), expression.Value(codeType))

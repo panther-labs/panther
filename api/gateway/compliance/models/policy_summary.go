@@ -46,6 +46,10 @@ type PolicySummary struct {
 	// severity
 	// Required: true
 	Severity PolicySeverity `json:"severity"`
+
+	// threshold
+	// Required: true
+	Threshold Threshold `json:"threshold"`
 }
 
 // Validate validates this policy summary
@@ -61,6 +65,10 @@ func (m *PolicySummary) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateSeverity(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateThreshold(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -105,6 +113,18 @@ func (m *PolicySummary) validateSeverity(formats strfmt.Registry) error {
 	if err := m.Severity.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("severity")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *PolicySummary) validateThreshold(formats strfmt.Registry) error {
+
+	if err := m.Threshold.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("threshold")
 		}
 		return err
 	}
