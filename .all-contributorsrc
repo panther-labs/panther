@@ -202,6 +202,17 @@
       ]
     },
     {
+      "login": "vorillaz",
+      "name": "Theodore Vorillas",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/1022166?v=4",
+      "profile": "https://vorillaz.com",
+      "contributions": [
+        "code",
+        "bug",
+        "security"
+      ]
+    },
+    {
       "login": "s0l0ist",
       "name": "Nick Angelou",
       "avatar_url": "https://avatars0.githubusercontent.com/u/3663107?v=4",
@@ -212,6 +223,75 @@
         "security",
         "bug",
         "infra"
+      ]
+    },
+    {
+      "login": "rynjms",
+      "name": "Ryan Moon",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/47795853?v=4",
+      "profile": "https://github.com/rynjms",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "giorgosp",
+      "name": "George Papadrosou",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/3627869?v=4",
+      "profile": "https://github.com/giorgosp",
+      "contributions": [
+        "code",
+        "security",
+        "bug"
+      ]
+    },
+    {
+      "login": "lindsey-w",
+      "name": "Lindsey Whitehurst",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/43453975?v=4",
+      "profile": "https://github.com/lindsey-w",
+      "contributions": [
+        "code",
+        "security",
+        "bug"
+      ]
+    },
+    {
+      "login": "wey-chiang",
+      "name": "Weyland",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/71197790?v=4",
+      "profile": "https://github.com/wey-chiang",
+      "contributions": [
+        "code",
+        "security",
+        "bug"
+      ]
+    },
+    {
+      "login": "willow9886",
+      "name": "William Lowe",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/5271048?v=4",
+      "profile": "https://github.com/willow9886",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "dimitriszoitas",
+      "name": "Jim Zoitas",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/67599520?v=4",
+      "profile": "https://github.com/dimitriszoitas",
+      "contributions": [
+        "design"
+      ]
+    },
+    {
+      "login": "antonisprovidakis",
+      "name": "Antonis Providakis",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/58694408?v=4",
+      "profile": "https://github.com/antonisprovidakis",
+      "contributions": [
+        "bug"
       ]
     }
   ],

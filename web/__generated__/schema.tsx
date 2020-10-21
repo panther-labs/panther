@@ -1075,7 +1075,7 @@ export type RuleSummary = {
   displayName?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
   id: Scalars['ID'];
-  threshold?: Maybe<Scalars['Int']>;
+  threshold: Scalars['Int'];
   lastModified?: Maybe<Scalars['AWSDateTime']>;
   createdAt?: Maybe<Scalars['AWSDateTime']>;
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
@@ -2680,7 +2680,7 @@ export type RuleSummaryResolvers<
   displayName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   enabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  threshold?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  threshold?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   createdAt?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   logTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;

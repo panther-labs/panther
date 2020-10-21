@@ -282,7 +282,7 @@ type RuleSummary {
   displayName: String
   enabled: Boolean
   id: ID!
-  threshold: Int
+  threshold: Int!
   lastModified: AWSDateTime
   createdAt: AWSDateTime
   logTypes: [String]

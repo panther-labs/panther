@@ -1,4 +1,4 @@
-package api
+package sophoslogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,28 +19,15 @@ package api
  */
 
 import (
-	"go.uber.org/zap"
-
-	"github.com/panther-labs/panther/api/lambda/source/models"
-	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 )
 
-var genericListError = &genericapi.InternalError{Message: "Failed to list integrations"}
-
-// ListIntegrations returns all enabled integrations.
-func (API) ListIntegrations(
-	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
-
-	integrationItems, err := dynamoClient.ScanIntegrations(input.IntegrationType)
-	if err != nil {
-		zap.L().Error("failed to list integrations", zap.Error(err))
-		return nil, genericListError
-	}
-
-	result := make([]*models.SourceIntegration, len(integrationItems))
-	for i, item := range integrationItems {
-		result[i] = itemToIntegration(item)
-	}
-
-	return result, nil
+func init() {
+	logtypes.MustRegisterJSON(logtypes.Desc{
+		Name:         "Sophos.Central",
+		Description:  `Sophos Central events`,
+		ReferenceURL: `https://support.sophos.com/support/s/article/KB-000038307?language=en_US`,
+	}, func() interface{} {
+		return &SophosCentralEvent{}
+	})
 }

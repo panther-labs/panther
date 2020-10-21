@@ -41,9 +41,11 @@ type Ec2Vpc struct {
 	State                       *string
 
 	// Additional fields
-	FlowLogs            []*ec2.FlowLog
-	NetworkAcls         []*ec2.NetworkAcl
-	RouteTables         []*ec2.RouteTable
-	SecurityGroups      []*ec2.SecurityGroup
-	StaleSecurityGroups []*ec2.StaleSecurityGroup
+	DefaultSecurityGroupId *string
+	DefaultNetworkAclId    *string
+	FlowLogs               []*ec2.FlowLog
+	NetworkAcls            []*string
+	RouteTables            []*ec2.RouteTable
+	SecurityGroups         []*string
+	StaleSecurityGroups    []*string
 }
