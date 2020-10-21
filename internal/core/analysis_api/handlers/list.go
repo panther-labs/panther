@@ -143,7 +143,6 @@ func handleList(request *events.APIGatewayProxyRequest, codeType string) *events
 			Threshold:    policy.Threshold,
 		}
 	}
-
 	return gatewayapi.MarshalResponse(ruleResult, http.StatusOK)
 }
 
