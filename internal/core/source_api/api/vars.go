@@ -68,11 +68,9 @@ func Setup() {
 	envconfig.MustProcess("", &env)
 
 	awsSession = session.Must(session.NewSession())
-	dynamoClient = ddb.New(env.TableName)
+	dynamoClient = ddb.New(awsSession, env.TableName)
 	sqsClient = sqs.New(awsSession)
-	templateS3Client = s3.New(awsSession, &aws.Config{
-		Region: aws.String(templateBucketRegion),
-	})
+	templateS3Client = s3.New(awsSession, aws.NewConfig().WithRegion(templateBucketRegion))
 	lambdaClient = lambda.New(awsSession)
 }
 
