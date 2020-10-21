@@ -21,6 +21,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/aws"
@@ -90,7 +91,7 @@ func putSQSAlarmGroup(props SQSAlarmProperties) error {
 			fmt.Sprintf("Panther-%s-%s", sqsAgeAlarm, props.QueueName))
 		input.MetricName = aws.String("ApproximateAgeOfOldestMessage")
 		input.Statistic = aws.String(cloudwatch.StatisticMaximum)
-		threshold := 900.0
+		threshold := 15 * time.Minute.Seconds()
 		if props.AgeThresholdSeconds != nil {
 			threshold = *props.AgeThresholdSeconds
 		}
