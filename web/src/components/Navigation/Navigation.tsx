@@ -90,9 +90,9 @@ const Navigation = () => {
       boxShadow="dark50"
       position="sticky"
       top={0}
+      zIndex={10}
       height="100vh"
       backgroundColor="navyblue-700"
-      py={6}
     >
       <Flex as="nav" direction="column" width={60} height="100%" aria-label="Main" align="center">
         <Box as={RRLink} to="/" py={3} mb={3}>

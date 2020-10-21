@@ -42,5 +42,8 @@ exports[`SourceHealthBadge matches original snapshot 1`] = `
   >
     UNHEALTHY
   </div>
+  <footer
+    id="footer"
+  />
 </div>
 `;

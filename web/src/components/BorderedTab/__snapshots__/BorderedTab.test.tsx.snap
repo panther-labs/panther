@@ -137,5 +137,8 @@ exports[`BorderedTab renders 1`] = `
       </div>
     </div>
   </div>
+  <footer
+    id="footer"
+  />
 </div>
 `;

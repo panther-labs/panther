@@ -43,5 +43,8 @@ exports[`BulletedLogType renders the same color for the same log type 1`] = `
       AWS.EC2
     </span>
   </div>
+  <footer
+    id="footer"
+  />
 </div>
 `;

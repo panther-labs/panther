@@ -1,5 +1,3 @@
-package api
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,29 +16,19 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"go.uber.org/zap"
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Box, Flex } from 'pouncejs';
 
-	"github.com/panther-labs/panther/api/lambda/source/models"
-	"github.com/panther-labs/panther/pkg/genericapi"
-)
+const Footer: React.FC = ({ children }) => {
+  return ReactDOM.createPortal(
+    <Box bg="navyblue-500">
+      <Flex width={1214} mx="auto" minHeight="100%" direction="column" py={6}>
+        {children}
+      </Flex>
+    </Box>,
+    document.getElementById('footer')
+  );
+};
 
-var genericListError = &genericapi.InternalError{Message: "Failed to list integrations"}
-
-// ListIntegrations returns all enabled integrations.
-func (API) ListIntegrations(
-	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
-
-	integrationItems, err := dynamoClient.ScanIntegrations(input.IntegrationType)
-	if err != nil {
-		zap.L().Error("failed to list integrations", zap.Error(err))
-		return nil, genericListError
-	}
-
-	result := make([]*models.SourceIntegration, len(integrationItems))
-	for i, item := range integrationItems {
-		result[i] = itemToIntegration(item)
-	}
-
-	return result, nil
-}
+export default Footer;

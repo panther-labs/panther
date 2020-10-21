@@ -189,5 +189,8 @@ exports[`GenericItemCard renders a step 1`] = `
       </div>
     </div>
   </section>
+  <footer
+    id="footer"
+  />
 </div>
 `;
