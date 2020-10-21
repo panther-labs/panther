@@ -67,6 +67,10 @@ type RuleSummary struct {
 	// tags
 	// Required: true
 	Tags Tags `json:"tags"`
+
+	// threshold
+	// Required: true
+	Threshold Threshold `json:"threshold"`
 }
 
 // Validate validates this rule summary
@@ -102,6 +106,10 @@ func (m *RuleSummary) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateTags(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateThreshold(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -208,6 +216,18 @@ func (m *RuleSummary) validateTags(formats strfmt.Registry) error {
 	if err := m.Tags.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("tags")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *RuleSummary) validateThreshold(formats strfmt.Registry) error {
+
+	if err := m.Threshold.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("threshold")
 		}
 		return err
 	}

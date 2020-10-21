@@ -140,6 +140,14 @@ func handleList(request *events.APIGatewayProxyRequest, codeType string) *events
 			LogTypes:     policy.ResourceTypes,
 			Severity:     policy.Severity,
 			Tags:         policy.Tags,
+			Threshold:    policy.Threshold,
+		}
+	}
+	zap.L().Info("LIST RESULTS for ", zap.String("codeType", codeType))
+
+	if codeType == "RULE" {
+		for _, rule := range ruleResult.Rules {
+			zap.L().Info("LIST RESULTS", zap.Any("rule", rule))
 		}
 	}
 	return gatewayapi.MarshalResponse(ruleResult, http.StatusOK)
