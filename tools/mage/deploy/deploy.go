@@ -227,7 +227,8 @@ func updateLambdaCode(function, srcPath, runtime string) error {
 	var pathToZip string
 
 	if strings.HasPrefix(runtime, "go") {
-		srcPath = strings.TrimPrefix(srcPath, "out/bin/")
+		srcPath = strings.TrimPrefix(srcPath, "out/")
+		srcPath = strings.TrimPrefix(srcPath, "bin/")
 		log.Infof("compiling %s", srcPath)
 		binary, err := build.LambdaPackage(srcPath)
 		if err != nil {
