@@ -85,8 +85,7 @@ type PolicySummary struct {
 	Tags Tags `json:"tags"`
 
 	// threshold
-	// Required: true
-	Threshold Threshold `json:"threshold"`
+	Threshold Threshold `json:"threshold,omitempty"`
 }
 
 // Validate validates this policy summary
@@ -308,6 +307,10 @@ func (m *PolicySummary) validateTags(formats strfmt.Registry) error {
 }
 
 func (m *PolicySummary) validateThreshold(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Threshold) { // not required
+		return nil
+	}
 
 	if err := m.Threshold.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {

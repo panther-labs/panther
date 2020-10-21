@@ -1050,7 +1050,7 @@ definitions:
       reports:
         $ref: '#/definitions/reports'
       threshold:
-        $ref: '#/definitions/threshold'
+        $ref: '#/definitions/threshold' # not required because this is really for RuleSummaries
     required:
       - autoRemediationId
       - autoRemediationParameters
@@ -1064,7 +1064,6 @@ definitions:
       - tags
       - suppressions
       - reports
-      - threshold
 
   ##### BulkUpload #####
   BulkUpload:
