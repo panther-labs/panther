@@ -19,6 +19,8 @@ package api
  */
 
 import (
+	"go.uber.org/zap"
+
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
@@ -31,6 +33,7 @@ func (API) ListIntegrations(
 
 	integrationItems, err := dynamoClient.ScanIntegrations(input.IntegrationType)
 	if err != nil {
+		zap.L().Error("failed to list integrations", zap.Error(err))
 		return nil, genericListError
 	}
 
