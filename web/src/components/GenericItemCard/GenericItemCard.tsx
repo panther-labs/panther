@@ -20,6 +20,12 @@ import React from 'react';
 import { Box, Card, Flex, IconButton, Img, Text, TextProps } from 'pouncejs';
 import { slugify } from 'Helpers/utils';
 
+export type ItemCardStatusEnum = 'pass' | 'fail';
+
+interface GenericItemCardProps {
+  status?: ItemCardStatusEnum;
+}
+
 interface GenericItemCardLogoProps {
   src: string;
 }
@@ -40,12 +46,23 @@ interface GenericItemCardComposition {
   LineBreak: React.FC;
 }
 
-const GenericItemCard: React.FC & GenericItemCardComposition = ({ children }) => {
+const GenericItemCard: React.FC<GenericItemCardProps> & GenericItemCardComposition = ({
+  children,
+  status,
+}) => {
+  const statusProps = status
+    ? {
+        borderLeft: '4px solid',
+        borderColor: status === 'fail' ? 'red-600' : 'teal-400',
+      }
+    : {};
   return (
-    <Card as="section" variant="dark" p={5}>
-      <Flex position="relative" height="100%">
-        {children}
-      </Flex>
+    <Card as="section" variant="dark" p={5} {...statusProps} overflow="hidden">
+      <Box>
+        <Flex position="relative" height="100%">
+          {children}
+        </Flex>
+      </Box>
     </Card>
   );
 };
