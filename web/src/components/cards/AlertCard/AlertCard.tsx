@@ -23,9 +23,11 @@ import SeverityBadge from 'Components/badges/SeverityBadge';
 import React from 'react';
 import urls from 'Source/urls';
 import LinkButton from 'Components/buttons/LinkButton';
+import RelatedDestinations from 'Components/RelatedDestinations';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { formatDatetime } from 'Helpers/utils';
 import BulletedLogType from 'Components/BulletedLogType';
+import useAlertDestinations from 'Hooks/useAlertDestinations';
 import UpdateAlertDropdown from '../../dropdowns/UpdateAlertDropdown';
 
 interface AlertCardProps {
@@ -33,6 +35,8 @@ interface AlertCardProps {
 }
 
 const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
+  const { alertDestinations, loading: loadingDestinations } = useAlertDestinations({ alert });
+
   return (
     <GenericItemCard>
       <GenericItemCard.Body>
@@ -60,8 +64,10 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
           />
 
           <GenericItemCard.Value
-            label="Events"
-            value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
+            label="Destinations"
+            value={
+              <RelatedDestinations destinations={alertDestinations} loading={loadingDestinations} />
+            }
           />
           <GenericItemCard.Value
             label="Log Types"
@@ -72,6 +78,10 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
                 ))}
               </Flex>
             }
+          />
+          <GenericItemCard.Value
+            label="Events"
+            value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
           />
           <GenericItemCard.Value label="Time Created" value={formatDatetime(alert.creationTime)} />
           <Flex ml="auto" mr={0} align="flex-end" spacing={2}>
