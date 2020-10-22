@@ -32,7 +32,7 @@ import (
 
 // UpdateAlertStatus - updates a list of alerts to a specified status and returns the updated list
 func (table *AlertsTable) UpdateAlertStatus(input *models.UpdateAlertStatusInput) ([]*AlertItem, error) {
-	updateItems := []dynamodb.UpdateItemInput{}
+	updateItems := []*dynamodb.UpdateItemInput{}
 	for _, alertID := range input.AlertIDs {
 		// Create the dynamo key we want to update
 		alertKey := DynamoItem{AlertIDKey: {S: aws.String(*alertID)}}
@@ -50,7 +50,7 @@ func (table *AlertsTable) UpdateAlertStatus(input *models.UpdateAlertStatusInput
 		}
 
 		// Create our dynamo update item
-		updateItem := dynamodb.UpdateItemInput{
+		updateItem := &dynamodb.UpdateItemInput{
 			ConditionExpression:       expression.Condition(),
 			ExpressionAttributeNames:  expression.Names(),
 			ExpressionAttributeValues: expression.Values(),
@@ -99,7 +99,7 @@ func (table *AlertsTable) UpdateAlertDelivery(input *models.UpdateAlertDeliveryI
 	}
 
 	// Create our dynamo update item
-	updateItem := dynamodb.UpdateItemInput{
+	updateItem := &dynamodb.UpdateItemInput{
 		ExpressionAttributeNames:  expression.Names(),
 		ExpressionAttributeValues: expression.Values(),
 		Key:                       alertKey,
@@ -161,7 +161,7 @@ func buildExpression(
 
 // table.updateAll - updates a list of items sequentially
 func (table *AlertsTable) updateAll(
-	updateInputs []dynamodb.UpdateItemInput,
+	updateInputs []*dynamodb.UpdateItemInput,
 	updatedItems []*AlertItem,
 ) error {
 
@@ -175,16 +175,16 @@ func (table *AlertsTable) updateAll(
 
 // table.update - runs a single update query
 func (table *AlertsTable) update(
-	updateInput dynamodb.UpdateItemInput,
+	updateInput *dynamodb.UpdateItemInput,
 	updatedItem interface{},
 ) error {
 
-	response, err := table.Client.UpdateItem(&updateInput)
+	response, err := table.Client.UpdateItem(updateInput)
 	if err != nil {
 		return &genericapi.AWSError{Method: "dynamodb.UpdateItem", Err: err}
 	}
 
-	if err = dynamodbattribute.UnmarshalMap(response.Attributes, updatedItem); err != nil {
+	if err = dynamodbattribute.UnmarshalMap(response.Attributes, &updatedItem); err != nil {
 		return &genericapi.InternalError{Message: "failed to unmarshal dynamo item: " + err.Error()}
 	}
 	return nil
