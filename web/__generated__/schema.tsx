@@ -130,6 +130,7 @@ export type AlertDetails = Alert & {
   severity: SeverityEnum;
   status: AlertStatusesEnum;
   title: Scalars['String'];
+  type: AlertTypesEnum;
   logTypes: Array<Scalars['String']>;
   lastUpdatedBy?: Maybe<Scalars['ID']>;
   lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
@@ -153,6 +154,7 @@ export type AlertSummary = Alert & {
   deliveryResponses: Array<Maybe<DeliveryResponse>>;
   eventsMatched: Scalars['Int'];
   ruleId?: Maybe<Scalars['ID']>;
+  type: AlertTypesEnum;
   severity: SeverityEnum;
   status: AlertStatusesEnum;
   title: Scalars['String'];
@@ -161,6 +163,11 @@ export type AlertSummary = Alert & {
   lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
   updateTime: Scalars['AWSDateTime'];
 };
+
+export enum AlertTypesEnum {
+  Rule = 'RULE',
+  RuleError = 'RULE_ERROR',
+}
 
 export enum AnalysisTypeEnum {
   Rule = 'RULE',
@@ -1438,6 +1445,7 @@ export type ResolversTypes = {
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   SeverityEnum: SeverityEnum;
   AlertStatusesEnum: AlertStatusesEnum;
+  AlertTypesEnum: AlertTypesEnum;
   AWSJSON: ResolverTypeWrapper<Scalars['AWSJSON']>;
   ListAlertsInput: ListAlertsInput;
   ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
@@ -1582,6 +1590,7 @@ export type ResolversParentTypes = {
   Boolean: Scalars['Boolean'];
   SeverityEnum: SeverityEnum;
   AlertStatusesEnum: AlertStatusesEnum;
+  AlertTypesEnum: AlertTypesEnum;
   AWSJSON: Scalars['AWSJSON'];
   ListAlertsInput: ListAlertsInput;
   ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
@@ -1762,6 +1771,7 @@ export type AlertDetailsResolvers<
   severity?: Resolver<ResolversTypes['SeverityEnum'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['AlertStatusesEnum'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['AlertTypesEnum'], ParentType, ContextType>;
   logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   lastUpdatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
@@ -1785,6 +1795,7 @@ export type AlertSummaryResolvers<
   >;
   eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['AlertTypesEnum'], ParentType, ContextType>;
   severity?: Resolver<ResolversTypes['SeverityEnum'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['AlertStatusesEnum'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
