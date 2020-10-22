@@ -55,7 +55,7 @@ func (table *AlertsTable) UpdateAlertStatus(input *models.UpdateAlertStatusInput
 				ExpressionAttributeNames:            expression.Names(),
 				ExpressionAttributeValues:           expression.Values(),
 				Key:                                 alertKey,
-				ReturnValuesOnConditionCheckFailure: aws.String("ALL_OLD"),
+				ReturnValuesOnConditionCheckFailure: aws.String("NONE"),
 				TableName:                           &table.AlertsTableName,
 				UpdateExpression:                    expression.Update(),
 			},
