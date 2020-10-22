@@ -64,6 +64,15 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
             }
           />
           <GenericItemCard.Value
+            label="Alert Type"
+            value={
+              <Text color={alert.type === AlertTypesEnum.RuleError ? 'red-500' : 'teal-100'}>
+                {alert.type === AlertTypesEnum.RuleError ? 'Rule Error' : 'Rule Match'}
+              </Text>
+            }
+          />
+
+          <GenericItemCard.Value
             label="Events"
             value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
           />
