@@ -111,7 +111,7 @@ Setup:
   # when processing large volumes of data.
   #
   # Access logs are sent either to the S3AccessLogsBucket below or a the panther audit bucket created for you.
-  EnableS3AccessLogs: true
+  EnableS3AccessLogs: false
 
   # Optionally use an existing S3 bucket name for storing S3 access logs.
   # If not specified, the generated panther audit logs bucket is used for access logs as well.
