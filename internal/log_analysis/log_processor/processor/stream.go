@@ -40,12 +40,23 @@ import (
 )
 
 const (
-	processingMinGradientThreshold = 0.05 // min threshold to trigger scaling based on gradient estimate of sqs q (messages % / sec)
-	processingMaxLambdaInvoke      = 3    // this limits how many lambdas can be invoked at once to cap rate of scaling
-	processingMaxFilesLimit        = 5000 // limit this so there is time to delete from the queue at the end
-	processingTimeLimitDivisor     = 2    // the processing runtime should be shorter than lambda timeout to make room to flush buffers
+	// How often we check if we need to scale (controls responsiveness).
+	processingScaleDecisionInterval = time.Minute
 
-	sqsMaxBatchSize = 10 // max messages per read for SQS (can't find an sqs constant to refer to)
+	// The min threshold to trigger scaling based on gradient estimate of sqs q (messages % change / sec).
+	processingMinGradientThreshold = 0.05
+
+	// This limits how many lambdas can be invoked at once to cap rate of scaling (controls responsiveness).
+	processingMaxLambdaInvoke = 1
+
+	// Limit this so there is time to delete from the queue at the end.
+	processingMaxFilesLimit = 5000
+
+	// The processing runtime should be shorter than lambda timeout to make room to flush buffers ad the end of the cycle.
+	processingTimeLimitDivisor = 2
+
+	// The max messages per read for SQS (can't find an sqs constant to refer to).
+	sqsMaxBatchSize = 10
 )
 
 /*
@@ -86,10 +97,11 @@ func streamEvents(
 
 	readEventErrorChan := make(chan error, 1) // below go routine closes over this for errors, 1 deep buffer
 	go func() {
-		startProcessingTime := time.Now()
-		var initialTotalQueuedMessages, // first non-zero estimate of queue size
-			lastTotalQueuedMessages int // last non-zero estimate of queue size
+		// runs periodically during processing making scaling decisions
+		stopScaling := scalingDecisions(sqsClient, lambdaClient)
+
 		defer func() {
+			stopScaling <- true       // terminate the scaling go routine
 			close(streamChan)         // done reading messages, this will cause processFunc() to return
 			close(readEventErrorChan) // no more writes on err chan
 		}()
@@ -120,13 +132,6 @@ func streamEvents(
 				break
 			}
 
-			// use these to estimate the derivative of the load on the events q (I said `derivative`, this must be ML!)
-			if initialTotalQueuedMessages == 0 { // first non-zero estimate
-				initialTotalQueuedMessages = totalQueuedMessages
-			}
-			// last non-zero estimate
-			lastTotalQueuedMessages = totalQueuedMessages
-
 			// keep reading from SQS to maximize output aggregation
 			messages, messageReceipts, err := sqsbatch.ReceiveMessage(sqsClient,
 				common.Config.SqsQueueURL, common.SQSWaitTimeSec)
@@ -155,19 +160,6 @@ func streamEvents(
 				streamChan <- dataStream
 			}
 		}
-
-		// if the slope of the change in event q is enough, then rescale relative to the change (gradient ascent)
-		gradient, gradientGood := queueGradient(initialTotalQueuedMessages, lastTotalQueuedMessages, startProcessingTime)
-		if gradientGood { // only if there was enough data to calculate a gradient
-			if gradient >= processingMinGradientThreshold {
-				processingScaleUp(lambdaClient, (lastTotalQueuedMessages-initialTotalQueuedMessages)/processingMaxFilesLimit)
-			}
-			// if the gradient is above -processingMinGradientThreshold, then work to reduce the dc bias in the event q curve
-			// NOTE: we do not do this if the gradient is RAPIDLY decreasing to avoid over shooting
-			if gradient > -processingMinGradientThreshold {
-				processingScaleUp(lambdaClient, lastTotalQueuedMessages/processingMaxFilesLimit)
-			}
-		}
 	}()
 
 	// Use a properly configured JSON API for Athena quirks
@@ -193,17 +185,71 @@ func processingDeadlineTime(deadlineTime time.Time) time.Time {
 	return deadlineTime.Add(time.Since(deadlineTime) / processingTimeLimitDivisor)
 }
 
+// scalingDecisions makes decisions to scale up based on the sqs queue stats periodically
+func scalingDecisions(sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.LambdaAPI) chan bool {
+	stopScaling := make(chan bool)
+
+	var initialTotalQueuedMessages int // first non-zero estimate of queue size
+	var lastTotalQueuedMessages int    // last non-zero estimate of queue size
+
+	startProcessingTime := time.Now()
+	go func() {
+		loop := true
+		for loop {
+			select {
+			// check if we need to scale
+			case <-time.After(processingScaleDecisionInterval):
+			case <-stopScaling:
+				loop = false
+			}
+
+			totalQueuedMessages, err := queueDepth(sqsClient) // this includes queued and delayed messages
+			if err != nil {
+				continue
+			}
+			// use these to estimate the derivative of the load on the events q (I said `derivative`, this must be ML!)
+			if initialTotalQueuedMessages == 0 { // first non-zero estimate
+				initialTotalQueuedMessages = totalQueuedMessages
+			}
+			// last non-zero estimate
+			lastTotalQueuedMessages = totalQueuedMessages
+
+			scalingDecision(lambdaClient, initialTotalQueuedMessages, lastTotalQueuedMessages,
+				time.Since(startProcessingTime).Seconds())
+		}
+	}()
+
+	return stopScaling
+}
+
+// scalingDecision makes a decision to scale up based on the sqs queue stats
+func scalingDecision(lambdaClient lambdaiface.LambdaAPI,
+        initialTotalQueuedMessages, lastTotalQueuedMessages int, secondsSinceStart float64) {
+
+	// if the slope of the change in event q is enough, then rescale relative to the change (gradient ascent)
+	gradient, gradientGood := queueGradient(initialTotalQueuedMessages, lastTotalQueuedMessages, secondsSinceStart)
+	if gradientGood { // only if there was enough data to calculate a gradient
+		if gradient >= processingMinGradientThreshold {
+			processingScaleUp(lambdaClient, (lastTotalQueuedMessages-initialTotalQueuedMessages)/processingMaxFilesLimit)
+		}
+		// if the gradient is above -processingMinGradientThreshold, then work to reduce the dc bias in the event q curve
+		// NOTE: we do not do this if the gradient is RAPIDLY decreasing to avoid over shooting
+		if gradient > -processingMinGradientThreshold {
+			processingScaleUp(lambdaClient, lastTotalQueuedMessages/processingMaxFilesLimit)
+		}
+	}
+}
+
 // queueGradient returns estimate of change to number of events in sqs queue and a boolean to indicate success
-func queueGradient(initialTotalQueuedMessages, lastTotalQueuedMessages int, startProcessingTime time.Time) (float64, bool) {
-	secondsSinceStart := time.Since(startProcessingTime).Seconds()
-	if  secondsSinceStart < 30 { // no enough time to get good estimate
+func queueGradient(initialTotalQueuedMessages, lastTotalQueuedMessages int, secondsSinceStart float64) (float64, bool) {
+	if secondsSinceStart < 30 { // not enough time to get good estimate
 		return 0.0, false
 	}
 	if lastTotalQueuedMessages < processingMaxFilesLimit { // not enough messages to get good estimate
 		return 0.0, false
 	}
 	changeRatio := float64(lastTotalQueuedMessages-initialTotalQueuedMessages) / float64(lastTotalQueuedMessages)
-	return  changeRatio / secondsSinceStart, true
+	return changeRatio / secondsSinceStart, true
 }
 
 // processingScaleUp will execute nLambdas to take on more load
