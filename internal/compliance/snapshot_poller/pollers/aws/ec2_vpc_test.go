@@ -151,6 +151,8 @@ func TestEC2BuildVpcSnapshot(t *testing.T) {
 	assert.Len(t, ec2Snapshot.NetworkAcls, 1)
 	assert.NotEmpty(t, ec2Snapshot.RouteTables)
 	assert.NotEmpty(t, ec2Snapshot.FlowLogs)
+	assert.NotNil(t, ec2Snapshot.DefaultNetworkAclId)
+	assert.NotNil(t, ec2Snapshot.DefaultSecurityGroupId)
 }
 
 func TestEC2PollVpcs(t *testing.T) {

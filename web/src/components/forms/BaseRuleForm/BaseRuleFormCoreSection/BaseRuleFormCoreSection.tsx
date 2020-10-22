@@ -170,7 +170,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
               <Field
                 as={FormikNumberInput}
                 label="* Events Threshold"
-                min={0}
+                min={1}
                 name="threshold"
                 placeholder="Send an alert only after # events"
               />
