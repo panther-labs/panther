@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
@@ -30,6 +31,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/pkg/awsretry"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -51,7 +53,10 @@ var (
 	// Setup the clients to talk to the Snapshot API
 	sess                               = session.Must(session.NewSession())
 	lambdaClient lambdaiface.LambdaAPI = lambda.New(sess)
-	s3Svc        s3iface.S3API         = s3.New(sess)
+
+	// S3 Client used for pulling Log Processor output S3 object.
+	// We want to retry for ~1'
+	s3Client s3iface.S3API = s3.New(sess, request.WithRetryer(aws.NewConfig(), awsretry.NewConnectionErrRetryer(10)))
 )
 
 func resetAccountCache() {

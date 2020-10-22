@@ -16,7 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './AlertDetails';
-export * from './AlertDetails';
-export * from './graphql/alertDetails.generated';
-export * from './graphql/ruleTeaser.generated';
+export { default } from './RelatedDestinations';
