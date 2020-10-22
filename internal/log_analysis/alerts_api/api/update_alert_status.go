@@ -49,13 +49,10 @@ func (API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (models.Updat
 	return utils.AlertItemsToSummaries(alertItems), nil
 }
 
-// dispatchUpdates - dispatches updates to all alerts in parallel
-// We are avoiding serialized update requests to ddb and instead will parallelize
-
+// dispatchUpdates - dispatches updates to alerts in in groups.
+// Each group will process updates in series, but all groups are executed in parallel
 func dispatchUpdates(input *models.UpdateAlertStatusInput, maxPageSize int) ([]*table.AlertItem, error) {
 	updateChannel := make(chan updateResult)
-
-	// alert count
 	alertCount := len(input.AlertIDs)
 
 	// Get the total number of pages. This will be the number of goroutines to create
