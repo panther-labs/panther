@@ -23,14 +23,12 @@ import PolicyFormTestResult from './PolicyFormTestResult';
 
 describe('PolicyFormTestResult', () => {
   it('shows the necessary information', () => {
-    const testResult = buildTestPolicyRecord();
+    const testResult = buildTestPolicyRecord({ passed: true });
 
     const { getByText } = render(<PolicyFormTestResult testResult={testResult} />);
     expect(getByText(testResult.name)).toBeInTheDocument();
     expect(getByText(testResult.error.message)).toBeInTheDocument();
-    expect(
-      getByText(testResult.passed ? ComplianceStatusEnum.Pass : ComplianceStatusEnum.Fail)
-    ).toBeInTheDocument();
+    expect(getByText(ComplianceStatusEnum.Pass)).toBeInTheDocument();
   });
 
   it('matches the snapshot', () => {

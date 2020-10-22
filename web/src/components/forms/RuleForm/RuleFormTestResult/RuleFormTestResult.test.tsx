@@ -29,13 +29,11 @@ import RuleFormTestResult from './RuleFormTestResult';
 
 describe('RuleFormTestResult', () => {
   it('shows the name & status of the test', () => {
-    const testResult = buildTestRuleRecord();
+    const testResult = buildTestRuleRecord({ passed: true });
 
     const { getByText } = render(<RuleFormTestResult testResult={testResult} />);
     expect(getByText(testResult.name)).toBeInTheDocument();
-    expect(
-      getByText(testResult.passed ? ComplianceStatusEnum.Pass : ComplianceStatusEnum.Fail)
-    ).toBeInTheDocument();
+    expect(getByText(ComplianceStatusEnum.Pass)).toBeInTheDocument();
   });
 
   it('shows a generic error when it exists', () => {
