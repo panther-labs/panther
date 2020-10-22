@@ -705,7 +705,7 @@ exports[`GeneralSettings it renders the general settings page along with the foo
                   You can read more info about our security privacy
                   <a
                     class="panther-32"
-                    href="https://docs.runpanther.io/v/test.undefined-docs/user-guide/help/security-privacy#privacy"
+                    href="https://docs.runpanther.io/v/release-test.undefined/user-guide/help/security-privacy#privacy"
                     rel="noopener noreferrer"
                     target="_blank"
                   >
