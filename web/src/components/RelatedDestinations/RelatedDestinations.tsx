@@ -22,6 +22,8 @@ import sortBy from 'lodash/sortBy';
 import { Flex, Img, Text, Spinner, Box } from 'pouncejs';
 import { DESTINATIONS } from 'Source/constants';
 import { Destination } from 'Generated/schema';
+import { Link as RRLink } from 'react-router-dom';
+import urls from 'Source/urls';
 
 const size = 24;
 
@@ -62,14 +64,14 @@ const RelatedDestinations: React.FC<RelatedDestinationsSectionProps> = ({
   // If component is verbose, we should render all destinations as row with the name of destination displayed
   if (verbose) {
     return (
-      <React.Fragment>
+      <Box as={RRLink} to={urls.settings.destinations.list()}>
         {destinations.map(destination => (
           <Flex key={destination.outputId} align="center" mb={2}>
             {getLogo(destination)}
             {destination.displayName}
           </Flex>
         ))}
-      </React.Fragment>
+      </Box>
     );
   }
 
