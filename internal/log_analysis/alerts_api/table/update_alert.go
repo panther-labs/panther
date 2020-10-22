@@ -166,7 +166,7 @@ func (table *AlertsTable) updateAll(
 ) error {
 
 	for i, updateInput := range updateInputs {
-		if err := table.update(updateInput, updatedItems[i]); err != nil {
+		if err := table.update(updateInput, &updatedItems[i]); err != nil {
 			return err
 		}
 	}
@@ -184,7 +184,7 @@ func (table *AlertsTable) update(
 		return &genericapi.AWSError{Method: "dynamodb.UpdateItem", Err: err}
 	}
 
-	if err = dynamodbattribute.UnmarshalMap(response.Attributes, &updatedItem); err != nil {
+	if err = dynamodbattribute.UnmarshalMap(response.Attributes, updatedItem); err != nil {
 		return &genericapi.InternalError{Message: "failed to unmarshal dynamo item: " + err.Error()}
 	}
 	return nil
