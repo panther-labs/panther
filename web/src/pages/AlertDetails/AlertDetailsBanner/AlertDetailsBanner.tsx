@@ -16,9 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Flex, Heading, Tooltip, Icon, Card } from 'pouncejs';
+import { Box, Flex, Heading, Card } from 'pouncejs';
 import React from 'react';
 import SeverityBadge from 'Components/badges/SeverityBadge';
+import { AlertTypesEnum } from 'Generated/schema';
+import BulletedLogType from 'Components/BulletedLogType';
 import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { AlertDetails } from 'Pages/AlertDetails';
@@ -29,28 +31,16 @@ interface AlertDetailsBannerProps {
 
 const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert }) => {
   return (
-    <Card as="article" p={6}>
-      <Flex as="header" align="top">
+    <Card
+      as="article"
+      p={6}
+      overflow="hidden"
+      borderLeft="4px solid"
+      borderColor={alert.type === AlertTypesEnum.Rule ? 'teal-400' : 'red-600'}
+    >
+      <Flex as="header" align="center">
         <Heading fontWeight="bold" wordBreak="break-word" flexShrink={1} mr={100}>
           {alert.title || alert.alertId}
-          <Tooltip
-            content={
-              <Flex spacing={3}>
-                <Flex direction="column" spacing={2}>
-                  <Box id="alert-id-label">Alert ID</Box>
-                  <Box id="log-types-label">Log Types</Box>
-                </Flex>
-                <Flex direction="column" spacing={2} fontWeight="bold">
-                  <Box aria-labelledby="alert-id-label">{alert.alertId}</Box>
-                  <Box aria-labelledby="log-types-label">
-                    {alert.logTypes.map(logType => <Box key={logType}>{logType}</Box>) ?? 'N/A'}
-                  </Box>
-                </Flex>
-              </Flex>
-            }
-          >
-            <Icon type="info" size="medium" verticalAlign="unset" ml={2} />
-          </Tooltip>
         </Heading>
         <Flex spacing={2} as="ul" flexShrink={0} ml="auto">
           <Box as="li" aria-describedby="alert-severity-description">
@@ -58,6 +48,41 @@ const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert }) => {
           </Box>
           <Box as="li" aria-describedby="alert-status-description">
             <UpdateAlertDropdown alert={alert as AlertSummaryFull} />
+          </Box>
+        </Flex>
+      </Flex>
+      <Flex fontSize="small-medium" pt={5}>
+        <Flex pr={8}>
+          <Box color="navyblue-100" aria-describedby="rule-type" as="dd" pr={2}>
+            Rule Type
+          </Box>
+          <Box
+            id="rule-type"
+            as="dl"
+            fontWeight="bold"
+            color={alert.type === AlertTypesEnum.Rule ? 'teal-100' : 'red-500'}
+          >
+            {alert.type === AlertTypesEnum.Rule ? 'Rule Match' : 'Rule Error'}
+          </Box>
+        </Flex>
+        <Flex pr={8}>
+          <Box color="navyblue-100" aria-describedby="alert-id" as="dd" pr={2}>
+            Alert ID
+          </Box>
+          <Box id="alert-id" as="dl" fontWeight="bold">
+            {alert.alertId}
+          </Box>
+        </Flex>
+        <Flex>
+          <Box color="navyblue-100" aria-describedby="alert-log-types" as="dd" pr={2}>
+            Log Types
+          </Box>
+          <Box id="alert-log-types" as="dl">
+            <Flex align="center" spacing={6}>
+              {alert.logTypes.map(logType => (
+                <BulletedLogType key={logType} logType={logType} />
+              ))}
+            </Flex>
           </Box>
         </Flex>
       </Flex>
