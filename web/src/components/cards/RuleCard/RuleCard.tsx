@@ -24,7 +24,7 @@ import SeverityBadge from 'Components/badges/SeverityBadge';
 import StatusBadge from 'Components/badges/StatusBadge';
 import urls from 'Source/urls';
 import { RuleSummary, ComplianceStatusEnum } from 'Generated/schema';
-import { formatDatetime } from 'Helpers/utils';
+import { formatDatetime, formatNumber } from 'Helpers/utils';
 import BulletedLogType from 'Components/BulletedLogType';
 import RuleCardOptions from './RuleCardOptions';
 
@@ -65,12 +65,8 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
           </GenericItemCard.ValuesGroup>
           <GenericItemCard.ValuesGroup>
             <Flex ml="auto" mr={0} align="flex-end" spacing={4}>
-              <GenericItemCard.Value
-                label="Threshold"
-                value={rule?.threshold ? rule?.threshold.toLocaleString() : '0'}
-              />
+              <GenericItemCard.Value label="Threshold" value={formatNumber(rule.threshold)} />
               <GenericItemCard.Value label="Time Created" value={formatDatetime(rule.createdAt)} />
-
               <StatusBadge
                 status={rule.enabled ? 'ENABLED' : ComplianceStatusEnum.Error}
                 disabled={!rule.enabled}

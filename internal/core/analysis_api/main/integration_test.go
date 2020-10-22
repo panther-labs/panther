@@ -1722,6 +1722,7 @@ func listRules(t *testing.T) {
 				Severity:     rule.Severity,
 				Tags:         rule.Tags,
 				Reports:      rule.Reports,
+				Threshold:    rule.Threshold,
 			},
 		},
 	}
