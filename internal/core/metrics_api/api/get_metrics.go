@@ -230,7 +230,7 @@ func getMetricData(input *models.GetMetricsInput, queries []*cloudwatch.MetricDa
 	}
 
 	if len(responses) == 0 {
-		zap.L().Warn("no metrics returned for query", zap.Any("queries", queries))
+		zap.L().Info("no metrics returned for query", zap.Any("queries", queries))
 	}
 
 	return responses, nil
