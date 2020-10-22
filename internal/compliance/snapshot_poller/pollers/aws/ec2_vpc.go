@@ -206,7 +206,7 @@ func describeSecurityGroupsVPC(svc ec2iface.EC2API, vpcID *string) (securityGrou
 	}, func(page *ec2.DescribeSecurityGroupsOutput, lastPage bool) bool {
 		for _, securityGroup := range page.SecurityGroups {
 			securityGroups = append(securityGroups, securityGroup.GroupId)
-			if aws.StringValue(securityGroup.GroupName) == "default " {
+			if aws.StringValue(securityGroup.GroupName) == "default" {
 				defaultId = securityGroup.GroupId
 			}
 		}
