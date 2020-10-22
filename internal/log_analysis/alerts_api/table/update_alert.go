@@ -164,6 +164,7 @@ func (table *AlertsTable) updateAll(
 	updateInputs []dynamodb.UpdateItemInput,
 	updatedItems []*AlertItem,
 ) error {
+
 	for i, updateInput := range updateInputs {
 		if err := table.update(updateInput, updatedItems[i]); err != nil {
 			return err
@@ -177,6 +178,7 @@ func (table *AlertsTable) update(
 	updateInput dynamodb.UpdateItemInput,
 	updatedItem interface{},
 ) error {
+
 	response, err := table.Client.UpdateItem(&updateInput)
 	if err != nil {
 		return &genericapi.AWSError{Method: "dynamodb.UpdateItem", Err: err}
