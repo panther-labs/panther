@@ -35,12 +35,13 @@ import (
 // API has all of the handlers as receiver methods.
 type API struct{}
 
+const maxDDBPageSize = 25
+
 var (
-	env            envConfig
-	awsSession     *session.Session
-	alertsDB       table.API
-	s3Client       s3iface.S3API
-	maxDDBPageSize = uint64(25) // This is the max number of items for DDB transactions
+	env        envConfig
+	awsSession *session.Session
+	alertsDB   table.API
+	s3Client   s3iface.S3API
 )
 
 type envConfig struct {

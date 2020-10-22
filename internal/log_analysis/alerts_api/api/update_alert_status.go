@@ -24,7 +24,6 @@ import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 type updateResult struct {
@@ -39,53 +38,48 @@ func (API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (models.Updat
 		return models.UpdateAlertStatusOutput{}, nil
 	}
 
-	alertItems, errors := dispatchUpdates(input, maxDDBPageSize)
+	alertItems, err := dispatchUpdates(input, maxDDBPageSize)
 	// Only process the most recent error. It would be extremely rare to have multiple errors
 	// so we show one at a time to the user.
-	if len(errors) != 0 {
-		return nil, errors[0]
+	if err != nil {
+		return nil, err
 	}
 
 	// Marshal to an alert summary
-	results := utils.AlertItemsToSummaries(alertItems)
-
-	for _, result := range results {
-		gatewayapi.ReplaceMapSliceNils(result)
-	}
-	return results, nil
+	return utils.AlertItemsToSummaries(alertItems), nil
 }
 
 // dispatchUpdates - dispatches updates to all alerts in parallel
 // We are avoiding serialized update requests to ddb and instead will parallelize
 
-func dispatchUpdates(input *models.UpdateAlertStatusInput, maxPageSize uint64) ([]*table.AlertItem, []error) {
+func dispatchUpdates(input *models.UpdateAlertStatusInput, maxPageSize int) ([]*table.AlertItem, error) {
 	updateChannel := make(chan updateResult)
 
 	// alert count
-	alertCount := uint64(len(input.AlertIDs))
+	alertCount := len(input.AlertIDs)
 
 	// Get the total number of pages. This will be the number of goroutines to create
-	pages := uint64(math.Ceil(float64(alertCount) / float64(maxPageSize)))
+	pages := int(math.Ceil(float64(alertCount) / float64(maxPageSize)))
 
 	// Slice up the AlertIDs into chunks to be processed in parallel
-	for page := uint64(0); page < pages; page++ {
-		pageSize := uint64(math.Min(float64((page*maxPageSize)+maxPageSize), float64(alertCount)))
+	for page := 0; page < pages; page++ {
+		endIndex := int(math.Min(float64((page+1)*maxPageSize), float64(alertCount)))
 
 		// create shallow copy of the input with chunked AlertIDs
 		inputItems := &models.UpdateAlertStatusInput{
 			Status:   input.Status,
 			UserID:   input.UserID,
-			AlertIDs: input.AlertIDs[page*maxPageSize : pageSize],
+			AlertIDs: input.AlertIDs[page*maxPageSize : endIndex],
 		}
 
 		// Run the updates
 		go dispatchUpdate(inputItems, updateChannel)
 	}
 
-	// Gather the results. If there were errors, we accumulate and return them
+	// Gather the results. If there were errors, we accumulate and let the routines complete
 	alertItems := []*table.AlertItem{}
 	errors := []error{}
-	for page := uint64(0); page < pages; page++ {
+	for page := 0; page < pages; page++ {
 		result := <-updateChannel
 		if result.Error != nil {
 			errors = append(errors, result.Error)
@@ -94,7 +88,13 @@ func dispatchUpdates(input *models.UpdateAlertStatusInput, maxPageSize uint64) (
 		alertItems = append(alertItems, result.AlertItems...)
 	}
 
-	return alertItems, errors
+	// Return the first error we see. If there were to be any errors, they would most likely
+	// be the same.
+	if len(errors) > 0 {
+		return nil, errors[0]
+	}
+
+	return alertItems, nil
 }
 
 // dispatch update routine

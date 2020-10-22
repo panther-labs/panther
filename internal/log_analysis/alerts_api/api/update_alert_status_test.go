@@ -51,12 +51,9 @@ func TestUpdateAlert(t *testing.T) {
 	output := []*table.AlertItem{}
 	expectedSummaries := []*models.AlertSummary{}
 
-	// Set the default ddb page size
-	maxDDBPageSize = uint64(25)
-
 	// Set the total number of alerts to generate
-	alertCount := uint64(12345)
-	for i := uint64(0); i < alertCount; i++ {
+	alertCount := 12345
+	for i := 0; i < alertCount; i++ {
 		alertID := fmt.Sprint(i) // make the alertID a number for easier sorting
 		input.AlertIDs = append(input.AlertIDs, aws.String(alertID))
 		output = append(output, &table.AlertItem{
@@ -75,7 +72,7 @@ func TestUpdateAlert(t *testing.T) {
 			RuleVersion:       aws.String(""),
 			RuleDisplayName:   nil,
 			DedupString:       aws.String(""),
-			LogTypes:          []string{},
+			LogTypes:          nil,
 			Severity:          aws.String("INFO"),
 			Status:            "CLOSED",
 			LastUpdatedBy:     *userID,
@@ -88,11 +85,11 @@ func TestUpdateAlert(t *testing.T) {
 		})
 	}
 
-	pages := uint64(math.Ceil(float64(alertCount) / float64(maxDDBPageSize)))
+	pages := int(math.Ceil(float64(alertCount) / float64(maxDDBPageSize)))
 
 	// We need to mimic the mock's true payload as it will happen in chunks
-	for page := uint64(0); page < pages; page++ {
-		pageSize := uint64(math.Min(float64((page*maxDDBPageSize)+maxDDBPageSize), float64(alertCount)))
+	for page := 0; page < pages; page++ {
+		pageSize := int(math.Min(float64((page+1)*maxDDBPageSize), float64(alertCount)))
 		tableMock.On("UpdateAlertStatus", mock.Anything).Return(output[page*maxDDBPageSize:pageSize], nil).Once()
 	}
 
