@@ -22,6 +22,21 @@ exports[`PolicyFormTestResult matches the snapshot 1`] = `
   margin-right: 16px;
 }
 
+
+
+.panther-1 {
+  font-weight: 500;
+  font-size: 1.125rem;
+}
+
+.panther-2 {
+  color: #86a3c3;
+}
+
+.panther-3 {
+  color: #e85959;
+}
+
 .panther-0 {
   display: -webkit-box;
   display: -webkit-flex;
@@ -49,21 +64,6 @@ exports[`PolicyFormTestResult matches the snapshot 1`] = `
   padding-left: 16px;
   padding-right: 16px;
   background-color: #d64242;
-}
-
-
-
-.panther-1 {
-  font-weight: 500;
-  font-size: 1.125rem;
-}
-
-.panther-2 {
-  color: #86a3c3;
-}
-
-.panther-3 {
-  color: #e85959;
 }
 
 <div>
