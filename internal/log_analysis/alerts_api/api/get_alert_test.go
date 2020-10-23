@@ -87,9 +87,9 @@ func (m *tableMock) ListAll(input *models.ListAlertsInput) ([]*table.AlertItem, 
 	return args.Get(0).([]*table.AlertItem), args.Get(1).(*string), args.Error(2)
 }
 
-func (m *tableMock) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (*table.AlertItem, error) {
+func (m *tableMock) UpdateAlertStatus(input *models.UpdateAlertStatusInput) ([]*table.AlertItem, error) {
 	args := m.Called(input)
-	return args.Get(0).(*table.AlertItem), args.Error(1)
+	return args.Get(0).([]*table.AlertItem), args.Error(1)
 }
 
 func (m *tableMock) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) (*table.AlertItem, error) {

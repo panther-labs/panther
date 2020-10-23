@@ -35,7 +35,7 @@ test('opens menu on click with correct entries', () => {
   fireEvent.mouseDown(getByAriaLabel('Toggle User Menu'));
 
   // Find proper static data
-  const menuElement = getByRole('menu');
+  const menuElement = getByRole('tooltip');
   expect(menuElement).toHaveTextContent(getUserDisplayName(userInfo));
   expect(menuElement).toHaveTextContent(userInfo.email);
 

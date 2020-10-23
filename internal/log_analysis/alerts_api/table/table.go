@@ -48,7 +48,7 @@ const (
 type API interface {
 	GetAlert(*string) (*AlertItem, error)
 	ListAll(*models.ListAlertsInput) ([]*AlertItem, *string, error)
-	UpdateAlertStatus(*models.UpdateAlertStatusInput) (*AlertItem, error)
+	UpdateAlertStatus(*models.UpdateAlertStatusInput) ([]*AlertItem, error)
 	UpdateAlertDelivery(*models.UpdateAlertDeliveryInput) (*AlertItem, error)
 }
 

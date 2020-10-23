@@ -28,7 +28,7 @@ export type UpdateAlertStatusVariables = {
   input: Types.UpdateAlertStatusInput;
 };
 
-export type UpdateAlertStatus = { updateAlertStatus?: Types.Maybe<AlertSummaryFull> };
+export type UpdateAlertStatus = { updateAlertStatus: Array<AlertSummaryFull> };
 
 export const UpdateAlertStatusDocument = gql`
   mutation UpdateAlertStatus($input: UpdateAlertStatusInput!) {
