@@ -30,7 +30,7 @@ type Mutation {
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
   testPolicy(input: TestPolicyInput!): TestPolicyResponse!
   testRule(input: TestRuleInput!): TestRuleResponse!
-  updateAlertStatus(input: UpdateAlertStatusInput!): AlertSummary
+  updateAlertStatus(input: UpdateAlertStatusInput!): [AlertSummary!]!
   updateDestination(input: DestinationInput!): Destination
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
   updateS3LogIntegration(input: UpdateS3LogIntegrationInput!): S3LogIntegration!

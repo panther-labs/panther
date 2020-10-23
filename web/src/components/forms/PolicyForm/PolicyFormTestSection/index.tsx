@@ -16,4 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+<<<<<<< HEAD:web/src/components/Breadcrumbs/index.tsx
+export { default } from './Breadcrumbs';
+=======
 export { default } from './PolicyFormTestSection';
+>>>>>>> Feat: Title & Dedup Rule testing (FE) (#1805):web/src/components/forms/PolicyForm/PolicyFormTestSection/index.tsx
