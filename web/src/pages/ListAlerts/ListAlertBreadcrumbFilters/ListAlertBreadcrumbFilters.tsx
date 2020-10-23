@@ -98,6 +98,7 @@ const ListAlertBreadcrumbFilters: React.FC = () => {
                   variant="solid"
                   label="Log Type"
                   name="logTypes"
+                  placeholder="Select a log type"
                   items={availableLogTypes}
                 />
               )}

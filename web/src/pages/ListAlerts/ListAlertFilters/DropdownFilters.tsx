@@ -99,6 +99,7 @@ const DropdownFilters: React.FC = () => {
                         items={statusOptions}
                         itemToString={filterItemToString}
                         label="Status"
+                        placeholder="Select statuses"
                       />
                     </Box>
                     <Box pb={4}>
@@ -108,6 +109,7 @@ const DropdownFilters: React.FC = () => {
                         items={severityOptions}
                         itemToString={filterItemToString}
                         label="Severity"
+                        placeholder="Select severities"
                       />
                     </Box>
                     <SimpleGrid columns={2} gap={4} pb={4}>
@@ -116,12 +118,14 @@ const DropdownFilters: React.FC = () => {
                         as={FormikNumberInput}
                         min={0}
                         label="Min Events"
+                        placeholder="Minimum number of events"
                       />
                       <FastField
                         name="eventCountMax"
                         as={FormikNumberInput}
                         min={0}
                         label="Max Events"
+                        placeholder="Maximum number of events"
                       />
                     </SimpleGrid>
                     <Flex direction="column" justify="center" align="center" spacing={4}>

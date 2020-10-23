@@ -116,6 +116,7 @@ const ListAlertFilters: React.FC = () => {
                 iconAlignment="left"
                 as={FormikTextInput}
                 label="Filter Alerts by text"
+                placeholder="Search for an alert..."
               />
             </Box>
             <Box>
@@ -123,6 +124,7 @@ const ListAlertFilters: React.FC = () => {
                 name="sorting"
                 as={FormikCombobox}
                 items={sortingOpts.map(sortingOption => sortingOption.opt)}
+                placeholder="Select a sort option"
                 label="Sort By"
               />
             </Box>

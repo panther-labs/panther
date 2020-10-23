@@ -40,7 +40,7 @@ const filters = ['nameContains', 'sortBy', 'sortDir'] as (keyof ListRulesInput)[
 
 const defaultValues = {
   nameContains: '',
-  sorting: undefined,
+  sorting: null,
 };
 
 const sortingOpts: SortingOptions = [
@@ -171,7 +171,8 @@ const ListAlertFilters: React.FC = () => {
                 icon="search"
                 iconAlignment="left"
                 as={FormikTextInput}
-                label="Filter Alerts by text"
+                label="Filter Rules by text"
+                placeholder="Search for a rule..."
               />
             </Box>
             <Box>
@@ -180,6 +181,7 @@ const ListAlertFilters: React.FC = () => {
                 as={FormikCombobox}
                 items={sortingOpts.map(sortingOption => sortingOption.opt)}
                 label="Sort By"
+                placeholder="Select a sort option"
               />
             </Box>
           </Flex>

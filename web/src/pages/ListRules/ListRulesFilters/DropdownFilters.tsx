@@ -92,6 +92,7 @@ const DropdownFilters: React.FC = () => {
                           severity === '' ? 'All' : capitalize(severity.toLowerCase())
                         }
                         label="Severity"
+                        placeholder="Select a severity"
                       />
                     </Box>
                     <Box pb={4}>

@@ -78,6 +78,7 @@ const ListRulesBreadcrumbFilters: React.FC = () => {
     <Breadcrumbs.Actions>
       <Flex justify="flex-end">
         <Formik<ListRulesBreadcrumbFiltersValues>
+          enableReinitialize
           initialValues={initialFilterValues}
           onSubmit={onFiltersChange}
         >
@@ -93,6 +94,7 @@ const ListRulesBreadcrumbFilters: React.FC = () => {
                   allowAdditions
                   name="tags"
                   items={[] as string[]}
+                  placeholder="Type in tags to filter by..."
                 />
               </Box>
               {!logTypesLoading && !logTypesError && (
@@ -102,6 +104,7 @@ const ListRulesBreadcrumbFilters: React.FC = () => {
                   label="Log Type"
                   name="logTypes"
                   items={availableLogTypes}
+                  placeholder="Filter by log type"
                 />
               )}
             </Flex>
