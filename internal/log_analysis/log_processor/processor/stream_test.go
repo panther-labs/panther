@@ -87,7 +87,6 @@ func TestProcessingDeadline(t *testing.T) {
 	deadline := now.Add(diff)
 	processingDeadlineTime := processingDeadlineTime(deadline)
 	assert.True(t, processingDeadlineTime.Before(deadline), "before deadline")
-	// FIXME: make better
 	assert.True(t,
 		// these should be very close
 		diff/processingTimeLimitDivisor-deadline.Sub(processingDeadlineTime) < time.Second/100,

@@ -122,8 +122,7 @@ func streamEvents(
 			}
 
 			// keep reading from SQS to maximize output aggregation
-			messages, messageReceipts, err := sqsbatch.ReceiveMessage(sqsClient,
-				common.Config.SqsQueueURL, common.SQSWaitTimeSec)
+			messages, messageReceipts, err := sqsbatch.ReceiveMessage(sqsClient, common.Config.SqsQueueURL, 0)
 			if err != nil {
 				readEventErrorChan <- err
 				return

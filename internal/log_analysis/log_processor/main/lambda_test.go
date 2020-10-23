@@ -73,5 +73,7 @@ func TestProcessOpLog(t *testing.T) {
 	assert.Equal(t, message, logs.FilterMessage(message).All()[0].Entry.Message)
 	serviceDim := logs.FilterMessage(message).All()[0].ContextMap()[common.OpLogLambdaServiceDim.Key]
 	assert.Equal(t, common.OpLogLambdaServiceDim.String, serviceDim)
+
+	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	sqsMock.AssertExpectations(t)
 }

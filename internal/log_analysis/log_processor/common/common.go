@@ -53,8 +53,6 @@ var (
 	SnsClient    snsiface.SNSAPI
 
 	Config EnvConfig
-
-	SQSWaitTimeSec int64 // set by env
 )
 
 type EnvConfig struct {
