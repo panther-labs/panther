@@ -39,11 +39,11 @@ func TestUpdateAlert(t *testing.T) {
 	tableMock := &tableMock{}
 	alertsDB = tableMock
 
-	status := aws.String("OPEN")
-	userID := aws.String("userId")
+	status := "OPEN"
+	userID := "userId"
 	timeNow := time.Now()
 	input := &models.UpdateAlertStatusInput{
-		AlertIDs: []*string{},
+		AlertIDs: []string{},
 		Status:   status,
 		UserID:   userID,
 	}
@@ -52,15 +52,15 @@ func TestUpdateAlert(t *testing.T) {
 	expectedSummaries := []*models.AlertSummary{}
 
 	// Set the total number of alerts to generate
-	alertCount := 12345
+	alertCount := 12346
 	for i := 0; i < alertCount; i++ {
 		alertID := fmt.Sprint(i) // make the alertID a number for easier sorting
-		input.AlertIDs = append(input.AlertIDs, aws.String(alertID))
+		input.AlertIDs = append(input.AlertIDs, alertID)
 		output = append(output, &table.AlertItem{
 			AlertID:           alertID,
 			Status:            "CLOSED",
 			Severity:          "INFO",
-			LastUpdatedBy:     *userID,
+			LastUpdatedBy:     userID,
 			LastUpdatedByTime: timeNow,
 			DeliveryResponses: []*models.DeliveryResponse{},
 			CreationTime:      timeNow,
@@ -75,7 +75,7 @@ func TestUpdateAlert(t *testing.T) {
 			LogTypes:          nil,
 			Severity:          aws.String("INFO"),
 			Status:            "CLOSED",
-			LastUpdatedBy:     *userID,
+			LastUpdatedBy:     userID,
 			LastUpdatedByTime: timeNow,
 			DeliveryResponses: []*models.DeliveryResponse{},
 			CreationTime:      aws.Time(timeNow),
@@ -85,8 +85,7 @@ func TestUpdateAlert(t *testing.T) {
 		})
 	}
 
-	pages := int(math.Ceil(float64(alertCount) / float64(maxDDBPageSize)))
-
+	pages := 1235 //int(math.Ceil(float64(alertCount) / float64(maxDDBPageSize)))
 	// We need to mimic the mock's true payload as it will happen in chunks
 	for page := 0; page < pages; page++ {
 		pageSize := int(math.Min(float64((page+1)*maxDDBPageSize), float64(alertCount)))

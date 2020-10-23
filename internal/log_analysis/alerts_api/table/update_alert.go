@@ -35,7 +35,7 @@ func (table *AlertsTable) UpdateAlertStatus(input *models.UpdateAlertStatusInput
 	updateItems := []*dynamodb.UpdateItemInput{}
 	for _, alertID := range input.AlertIDs {
 		// Create the dynamo key we want to update
-		alertKey := DynamoItem{AlertIDKey: {S: aws.String(*alertID)}}
+		alertKey := DynamoItem{AlertIDKey: {S: aws.String(alertID)}}
 
 		// Create the update builder
 		updateBuilder := createUpdateBuilder(input)
@@ -123,7 +123,7 @@ func createUpdateBuilder(input *models.UpdateAlertStatusInput) expression.Update
 	// When settig an "open" status we actually remove the attribute
 	// for uniformity against previous items in the database
 	// which also do not have a status attribute.
-	if *input.Status == models.OpenStatus {
+	if input.Status == models.OpenStatus {
 		return expression.
 			Remove(expression.Name(StatusKey)).
 			Set(expression.Name(LastUpdatedByKey), expression.Value(input.UserID)).
@@ -137,7 +137,7 @@ func createUpdateBuilder(input *models.UpdateAlertStatusInput) expression.Update
 }
 
 // createConditionBuilder - creates a condition builder
-func createConditionBuilder(alertID *string) expression.ConditionBuilder {
+func createConditionBuilder(alertID string) expression.ConditionBuilder {
 	return expression.Equal(expression.Name(AlertIDKey), expression.Value(alertID))
 }
 

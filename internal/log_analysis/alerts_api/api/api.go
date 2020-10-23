@@ -35,7 +35,7 @@ import (
 // API has all of the handlers as receiver methods.
 type API struct{}
 
-const maxDDBPageSize = 25
+const maxDDBPageSize = 10
 
 var (
 	env        envConfig

@@ -107,13 +107,13 @@ type ListAlertsInput struct {
 // }
 type UpdateAlertStatusInput struct {
 	// ID of the alert to update
-	AlertIDs []*string `json:"alertIds" validate:"gt=0,dive,hexadecimal,len=32"` // AlertID is an MD5 hash
+	AlertIDs []string `json:"alertIds" validate:"gt=0,dive,hexadecimal,len=32"` // AlertID is an MD5 hash
 
 	// Variables that we allow updating:
-	Status *string `json:"status" validate:"oneof=OPEN TRIAGED CLOSED RESOLVED"`
+	Status string `json:"status" validate:"oneof=OPEN TRIAGED CLOSED RESOLVED"`
 
 	// User who made the change
-	UserID *string `json:"userId" validate:"uuid4"`
+	UserID string `json:"userId" validate:"uuid4"`
 }
 
 // UpdateAlertDeliveryInput updates an alert by its ID
