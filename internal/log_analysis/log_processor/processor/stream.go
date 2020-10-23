@@ -192,7 +192,6 @@ func queueDepth(sqsClient sqsiface.SQSAPI) (totalQueuedMessages int, err error) 
 	getQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: []*string{
 			aws.String(sqs.QueueAttributeNameApproximateNumberOfMessages),        // tells us there is waiting events now
-			aws.String(sqs.QueueAttributeNameApproximateNumberOfMessagesDelayed), // tells us that there will be events in the near future
 		},
 		QueueUrl: &common.Config.SqsQueueURL,
 	}
@@ -207,13 +206,8 @@ func queueDepth(sqsClient sqsiface.SQSAPI) (totalQueuedMessages int, err error) 
 	if err != nil {
 		return 0, err
 	}
-	// number of delayed messages, the q should be set up with a delay so we can "see" if there are more events
-	numberOfQueuedMessagesDelayed, err := getQueueIntegerAttribute(getQueueAttributesOutput.Attributes,
-		sqs.QueueAttributeNameApproximateNumberOfMessagesDelayed)
-	if err != nil {
-		return 0, err
-	}
-	return numberOfQueuedMessages + numberOfQueuedMessagesDelayed, err
+
+	return numberOfQueuedMessages, err
 }
 
 func getQueueIntegerAttribute(attrs map[string]*string, attr string) (count int, err error) {

@@ -46,10 +46,6 @@ Infra:
   # https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html
   LogProcessorLambdaMemorySize: 2048 # 256 - 3008, in 64MB increments
 
-  # Adding a small queue delay can improve the ability of the log processor
-  # to aggregate processed log files. The value must be between 0 and 20 seconds.
-  LogProcessorSQSDelaySeconds: 5
-
   # Create a Python layer with these pip library versions for analysis and remediation.
   #
   # "mage deploy" will download and package these libraries, generating the "out/layer.zip" file.
