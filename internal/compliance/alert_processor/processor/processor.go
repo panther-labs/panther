@@ -189,7 +189,7 @@ func triggerAlert(event *models.ComplianceNotification) (canRemediate bool, err 
 		aerr, ok := err.(awserr.Error)
 		if ok && aerr.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
 			zap.L().Debug("update on ddb failed on condition, we will not trigger an alert")
-			return false, nil
+			return canRemediate, nil
 		}
 		return false, errors.Wrapf(err, "experienced issue while updating ddb table for policy: %s", event.PolicyID)
 	}
