@@ -36,9 +36,6 @@ const (
 
 	// This limits how many lambdas can be invoked at once to cap rate of scaling (controls responsiveness).
 	processingMaxLambdaInvoke = 1
-
-	// Limit this so there is time to delete from the queue at the end.
-	processingMaxFilesLimit = 5000
 )
 
 // scalingDecisions makes decisions to scale up based on the sqs queue stats periodically
@@ -46,21 +43,24 @@ func scalingDecisions(sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.Lambda
 	stopScaling := make(chan bool)
 
 	go func() {
+		ticker := time.NewTicker(processingScaleDecisionInterval)
+		defer ticker.Stop()
 		poll := true
 		for poll {
 			select {
-			// check if we need to scale
-			case <-time.After(processingScaleDecisionInterval):
+			case <-ticker.C:
 			case <-stopScaling:
 				poll = false
 			}
 
+			// check if we need to scale
 			totalQueuedMessages, err := queueDepth(sqsClient) // this includes queued and delayed messages
 			if err != nil {
-				zap.L().Warn("recale cannot read from sqs queue", zap.Error(err))
+				zap.L().Warn("rescale cannot read from sqs queue", zap.Error(err))
 				continue
 			}
 
+			// the number of lambdas to invoke are proportional to the message count (clipped to processingMaxLambdaInvoke)
 			processingScaleUp(lambdaClient, totalQueuedMessages/processingMaxFilesLimit)
 		}
 	}()
@@ -74,7 +74,7 @@ func processingScaleUp(lambdaClient lambdaiface.LambdaAPI, nLambdas int) {
 		if nLambdas > processingMaxLambdaInvoke { // clip to cap rate of increase under very high load
 			nLambdas = processingMaxLambdaInvoke
 		}
-		zap.L().Info("scaling up", zap.Int("nLambdas", nLambdas))
+		zap.L().Debug("scaling up", zap.Int("nLambdas", nLambdas))
 		for i := 0; i < nLambdas; i++ {
 			resp, err := lambdaClient.Invoke(&lambda.InvokeInput{
 				FunctionName:   box.String("panther-log-processor"),
