@@ -79,7 +79,7 @@ Parameters:
     Type: String
     Description: Enable S3 access logging for all Panther buckets. This is strongly recommended for security, but comes at an additional cost.
     AllowedValues: [true, false]
-    Default: false
+    Default: true
   FirstUserEmail:
     Type: String
     Description: Initial Panther user - email address
