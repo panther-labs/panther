@@ -50,6 +50,9 @@ func TestSendSns(t *testing.T) {
 		Severity:            "severity",
 		Runbook:             aws.String("runbook"),
 		CreatedAt:           createdAtTime,
+		Context: map[string]interface{}{
+			"key": "value",
+		},
 	}
 
 	analysisName := "policyName"
@@ -68,6 +71,9 @@ func TestSendSns(t *testing.T) {
 		Link:        "https://panther.io/policies/policyId",
 		Title:       "Policy Failure: " + analysisName,
 		Tags:        []string{},
+		AlertContext: map[string]interface{}{
+			"key": "value",
+		},
 	}
 
 	defaultSerializedMessage, err := jsoniter.MarshalToString(defaultMessage)

@@ -42,7 +42,7 @@ func (client *OutputClient) PagerDuty(alert *alertModels.Alert, config *outputMo
 		"severity":       severity,
 		"timestamp":      alert.CreatedAt.Format(time.RFC3339),
 		"source":         "pantherlabs",
-		"custom_details": generateNotificationFromAlert(alert),
+		"custom_details": generateNotificationFromAlert(alert, false),
 	}
 
 	pagerDutyRequest := map[string]interface{}{

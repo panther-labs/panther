@@ -209,7 +209,8 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         expected_result = RuleResult(
             matched=True,
             dedup_string='defaultDedupString:test_alert_context',
-            alert_context='{"string": "string", "int": 1, "nested": {}}')
+            alert_context='{"string": "string", "int": 1, "nested": {}}'
+        )
         self.assertEqual(expected_result, rule.run({}))
 
     def test_alert_context_invalid_return_value(self) -> None:

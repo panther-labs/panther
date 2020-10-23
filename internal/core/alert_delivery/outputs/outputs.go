@@ -125,6 +125,9 @@ type Notification struct {
 	// An AlertID that was triggered by a Rule. It will be `null` in case of policies
 	AlertID *string `json:"alertId"`
 
+	// An AlertContext
+	AlertContext map[string]interface{} `json:"alertContext"`
+
 	// The Description of the rule set in Panther UI
 	Description *string `json:"description"`
 
@@ -138,7 +141,7 @@ type Notification struct {
 	Version *string `json:"version"`
 }
 
-func generateNotificationFromAlert(alert *alertModels.Alert) Notification {
+func generateNotificationFromAlert(alert *alertModels.Alert, includeContext bool) Notification {
 	notification := Notification{
 		ID:          alert.AnalysisID,
 		AlertID:     alert.AlertID,
@@ -152,6 +155,9 @@ func generateNotificationFromAlert(alert *alertModels.Alert) Notification {
 		Tags:        alert.Tags,
 		Version:     alert.Version,
 		CreatedAt:   alert.CreatedAt,
+	}
+	if includeContext {
+		notification.AlertContext = alert.Context
 	}
 	gatewayapi.ReplaceMapSliceNils(&notification)
 	return notification

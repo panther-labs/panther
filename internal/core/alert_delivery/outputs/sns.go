@@ -44,7 +44,7 @@ var getSnsClient = buildSnsClient
 // Sns sends an alert to an SNS Topic.
 // nolint: dupl
 func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.SnsConfig) *AlertDeliveryResponse {
-	notification := generateNotificationFromAlert(alert)
+	notification := generateNotificationFromAlert(alert, true)
 	serializedDefaultMessage, err := jsoniter.MarshalToString(notification)
 	if err != nil {
 		errorMsg := "Failed to serialize default message"
