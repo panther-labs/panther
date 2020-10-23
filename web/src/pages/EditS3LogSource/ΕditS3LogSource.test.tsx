@@ -26,7 +26,7 @@ import {
   buildListAvailableLogTypesResponse,
   buildUpdateS3LogIntegrationInput,
 } from 'test-utils';
-import { mockListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
+import { mockListAvailableLogTypes } from 'Source/graphql/queries';
 import EditS3LogSource from './EditS3LogSource';
 import { mockGetS3LogSource } from './graphql/getS3LogSource.generated';
 import { mockUpdateS3LogSource } from './graphql/updateS3LogSource.generated';

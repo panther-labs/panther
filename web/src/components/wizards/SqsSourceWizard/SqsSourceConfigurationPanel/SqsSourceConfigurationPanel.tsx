@@ -25,7 +25,7 @@ import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import { WizardPanel } from 'Components/Wizard';
 import { pantherConfig } from 'Source/config';
 import logo from 'Assets/sqs-minimal-logo.svg';
-import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
+import { useListAvailableLogTypes } from 'Source/graphql/queries';
 import { SqsLogSourceWizardValues } from '../SqsSourceWizard';
 
 const emptyArray = [];

@@ -33,7 +33,7 @@ import FormikAutosave from 'Components/utils/Autosave';
 import Breadcrumbs from 'Components/Breadcrumbs';
 
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
-import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
+import { useListAvailableLogTypes } from 'Source/graphql/queries';
 
 const filterKeys = ['logTypes', 'tags'];
 
