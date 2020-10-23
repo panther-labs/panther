@@ -208,6 +208,9 @@ exports[`SensitiveTextInput renders 1`] = `
       Submit
     </button>
   </form>
+  <footer
+    id="footer"
+  />
 </div>
 `;
 
@@ -419,5 +422,8 @@ exports[`SensitiveTextInput renders without masked values on demand 1`] = `
       Submit
     </button>
   </form>
+  <footer
+    id="footer"
+  />
 </div>
 `;

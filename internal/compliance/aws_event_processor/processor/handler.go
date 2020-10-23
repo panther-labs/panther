@@ -177,7 +177,7 @@ func handleCloudTrail(cloudtrail gjson.Result, changes map[string]*resourceChang
 //
 // Because this data has already been pre-processed, we assume it is in the correct format and return all errors.
 func handleS3Download(object *sources.S3ObjectInfo, changes map[string]*resourceChange) error {
-	logs, err := s3Svc.GetObject(&s3.GetObjectInput{
+	logs, err := s3Client.GetObject(&s3.GetObjectInput{
 		Bucket: &object.S3Bucket,
 		Key:    &object.S3ObjectKey,
 	})

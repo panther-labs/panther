@@ -157,7 +157,7 @@ func getEventsForLogType(
 		} else { // not starting from a pagination token
 			// objects have a creation time as prefix we can use to speed listing,
 			// for example: '20200914T021539Z-0e54cab2-80a6-4c27-b622-55ad4d355175.json.gz'
-			listRequest.StartAfter = aws.String(partitionPrefix + alert.CreationTime.Format("20060102T150405Z"))
+			listRequest.StartAfter = aws.String(partitionPrefix + nextTime.Format("20060102T150405Z"))
 		}
 
 		var paginationError error
@@ -228,8 +228,8 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 		zap.String("query", query),
 		zap.Int("index", exclusiveStartIndex))
 	input := &s3.SelectObjectContentInput{
-		Bucket: aws.String(env.ProcessedDataBucket),
-		Key:    aws.String(key),
+		Bucket: &env.ProcessedDataBucket,
+		Key:    &key,
 		InputSerialization: &s3.InputSerialization{
 			CompressionType: aws.String(s3.CompressionTypeGzip),
 			JSON:            &s3.JSONInput{Type: aws.String(s3.JSONTypeLines)},
