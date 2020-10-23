@@ -131,7 +131,7 @@ var (
 		},
 		{
 			Name:    "p_alert_context",
-			Type:    MapOf(GlueStringType, ArrayOf(GlueStringType)),
+			Type:    MapOf(GlueStringType, GlueStringType),
 			Comment: "Alert id",
 		},
 		{
