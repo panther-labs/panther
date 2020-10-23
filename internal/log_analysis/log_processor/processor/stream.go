@@ -224,7 +224,7 @@ func scalingDecisions(sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.Lambda
 
 // scalingDecision makes a decision to scale up based on the sqs queue stats
 func scalingDecision(lambdaClient lambdaiface.LambdaAPI,
-        initialTotalQueuedMessages, lastTotalQueuedMessages int, secondsSinceStart float64) {
+	initialTotalQueuedMessages, lastTotalQueuedMessages int, secondsSinceStart float64) {
 
 	// if the slope of the change in event q is enough, then rescale relative to the change (gradient ascent)
 	gradient, gradientGood := queueGradient(initialTotalQueuedMessages, lastTotalQueuedMessages, secondsSinceStart)

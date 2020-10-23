@@ -111,7 +111,7 @@ func TestStreamEvents(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, len(streamTestReceiveMessageOutput.Messages), sqsMessageCount)
 
-	time.Sleep(time.Second/2) // allow time for all go routines to terminate
+	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	streamTestSqsClient.AssertExpectations(t)
 }
 
@@ -128,7 +128,7 @@ func TestStreamEventsProcessingTimeLimitExceeded(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 0, sqsMessageCount)
 
-	time.Sleep(time.Second/2) // allow time for all go routines to terminate
+	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	streamTestSqsClient.AssertExpectations(t)
 }
 
@@ -146,7 +146,7 @@ func TestStreamEventsReadEventError(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, "readEventError", err.Error())
 
-	time.Sleep(time.Second/2) // allow time for all go routines to terminate
+	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	streamTestSqsClient.AssertExpectations(t)
 }
 
@@ -163,7 +163,7 @@ func TestStreamEventsProcessError(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, "processError", err.Error())
 
-	time.Sleep(time.Second/2) // allow time for all go routines to terminate
+	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	streamTestSqsClient.AssertExpectations(t)
 }
 
@@ -181,7 +181,7 @@ func TestStreamEventsProcessErrorAndReadEventError(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, "processError", err.Error()) // expect the processError NOT readEventError
 
-	time.Sleep(time.Second/2) // allow time for all go routines to terminate
+	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	streamTestSqsClient.AssertExpectations(t)
 }
 
@@ -202,7 +202,7 @@ func TestStreamEventsReceiveSQSError(t *testing.T) {
 	assert.Equal(t, 0, sqsMessageCount)
 	assert.Equal(t, "failure receiving messages from https://fakesqsurl: receiveError", err.Error())
 
-	time.Sleep(time.Second/2) // allow time for all go routines to terminate
+	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	streamTestSqsClient.AssertExpectations(t)
 }
 
@@ -223,7 +223,7 @@ func TestStreamEventsDeleteSQSError(t *testing.T) {
 
 	// will be called by scalingDecisions() on exit
 	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestMessagesAboveThreshold, nil).Once()
-	
+
 	sqsMessageCount, err := streamEvents(streamTestSqsClient, streamTestLambdaClient, streamTestDeadline,
 		noopProcessorFunc, noopReadSnsMessagesFunc)
 
@@ -252,7 +252,7 @@ func TestStreamEventsDeleteSQSError(t *testing.T) {
 		assertLogEqual(t, expectedLogs[i], actualLogs[i])
 	}
 
-	time.Sleep(time.Second/2) // allow time for all go routines to terminate
+	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	streamTestSqsClient.AssertExpectations(t)
 }
 
