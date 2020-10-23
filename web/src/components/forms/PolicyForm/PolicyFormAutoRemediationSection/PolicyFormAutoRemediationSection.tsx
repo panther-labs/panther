@@ -23,7 +23,7 @@ import { extractErrorMessage } from 'Helpers/utils';
 import { REMEDIATION_DOC_URL } from 'Source/constants';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { PolicyFormValues } from '../PolicyForm';
-import { useListRemediations } from '../graphql/listRemediations.generated';
+import { useListRemediations } from './graphql/listRemediations.generated';
 import PolicyFormAutoRemediationFields, {
   PolicyFormAutoRemediationFieldsProps,
 } from './PolicyFormAutoRemediationFields';

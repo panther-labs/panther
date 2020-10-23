@@ -46,6 +46,9 @@ import {
   DestinationConfig,
   DestinationConfigInput,
   DestinationInput,
+  DetectionTestDefinition,
+  DetectionTestDefinitionInput,
+  Error,
   FloatSeries,
   FloatSeriesData,
   GeneralSettings,
@@ -92,15 +95,11 @@ import {
   PoliciesForResourceInput,
   PolicyDetails,
   PolicySummary,
-  PolicyUnitTest,
-  PolicyUnitTestError,
-  PolicyUnitTestInput,
   RemediateResourceInput,
   ResourceDetails,
   ResourcesForPolicyInput,
   ResourceSummary,
   RuleDetails,
-  RuleResult,
   RuleSummary,
   S3LogIntegration,
   S3LogIntegrationHealth,
@@ -122,8 +121,14 @@ import {
   SqsLogSourceIntegration,
   SuppressPoliciesInput,
   TestPolicyInput,
+  TestPolicyRecord,
+  TestPolicyRecordFunctions,
   TestPolicyResponse,
+  TestRuleInput,
+  TestRuleRecord,
+  TestRuleRecordFunctions,
   TestRuleResponse,
+  TestRuleSubRecord,
   UpdateAlertStatusInput,
   UpdateComplianceIntegrationInput,
   UpdateGeneralSettingsInput,
@@ -137,7 +142,6 @@ import {
   User,
   AccountTypeEnum,
   AlertStatusesEnum,
-  AnalysisTypeEnum,
   ComplianceStatusEnum,
   DestinationTypeEnum,
   ListAlertsSortFieldsEnum,
@@ -202,7 +206,7 @@ export const buildAddPolicyInput = (overrides: Partial<AddPolicyInput> = {}): Ad
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.High,
     suppressions: 'suppressions' in overrides ? overrides.suppressions : ['Tunisian Dinar'],
     tags: 'tags' in overrides ? overrides.tags : ['Security'],
-    tests: 'tests' in overrides ? overrides.tests : [buildPolicyUnitTestInput()],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinitionInput()],
   };
 };
 
@@ -222,7 +226,7 @@ export const buildAddRuleInput = (overrides: Partial<AddRuleInput> = {}): AddRul
     runbook: 'runbook' in overrides ? overrides.runbook : 'Practical Granite Salad',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Medium,
     tags: 'tags' in overrides ? overrides.tags : ['Way'],
-    tests: 'tests' in overrides ? overrides.tests : [buildPolicyUnitTestInput()],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinitionInput()],
   };
 };
 
@@ -542,6 +546,35 @@ export const buildDestinationInput = (
     outputType: 'outputType' in overrides ? overrides.outputType : 'New Hampshire',
     defaultForSeverity:
       'defaultForSeverity' in overrides ? overrides.defaultForSeverity : [SeverityEnum.Critical],
+  };
+};
+
+export const buildDetectionTestDefinition = (
+  overrides: Partial<DetectionTestDefinition> = {}
+): DetectionTestDefinition => {
+  return {
+    __typename: 'DetectionTestDefinition',
+    expectedResult: 'expectedResult' in overrides ? overrides.expectedResult : true,
+    name: 'name' in overrides ? overrides.name : 'Investment Account',
+    resource: 'resource' in overrides ? overrides.resource : 'capacitor',
+  };
+};
+
+export const buildDetectionTestDefinitionInput = (
+  overrides: Partial<DetectionTestDefinitionInput> = {}
+): DetectionTestDefinitionInput => {
+  return {
+    expectedResult: 'expectedResult' in overrides ? overrides.expectedResult : false,
+    name: 'name' in overrides ? overrides.name : 'Direct',
+    resource: 'resource' in overrides ? overrides.resource : 'Versatile',
+  };
+};
+
+export const buildError = (overrides: Partial<Error> = {}): Error => {
+  return {
+    __typename: 'Error',
+    code: 'code' in overrides ? overrides.code : 'navigating',
+    message: 'message' in overrides ? overrides.message : 'deposit',
   };
 };
 
@@ -1060,7 +1093,7 @@ export const buildPolicyDetails = (overrides: Partial<PolicyDetails> = {}): Poli
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
     suppressions: 'suppressions' in overrides ? overrides.suppressions : ['Bike'],
     tags: 'tags' in overrides ? overrides.tags : ['success'],
-    tests: 'tests' in overrides ? overrides.tests : [buildPolicyUnitTest()],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinition()],
     versionId:
       'versionId' in overrides ? overrides.versionId : 'ca391fc7-f186-4bcb-b717-3e34cb330d83',
   };
@@ -1085,35 +1118,6 @@ export const buildPolicySummary = (overrides: Partial<PolicySummary> = {}): Poli
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['EXE'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
     tags: 'tags' in overrides ? overrides.tags : ['navigating'],
-  };
-};
-
-export const buildPolicyUnitTest = (overrides: Partial<PolicyUnitTest> = {}): PolicyUnitTest => {
-  return {
-    __typename: 'PolicyUnitTest',
-    expectedResult: 'expectedResult' in overrides ? overrides.expectedResult : true,
-    name: 'name' in overrides ? overrides.name : 'Table',
-    resource: 'resource' in overrides ? overrides.resource : 'deposit',
-  };
-};
-
-export const buildPolicyUnitTestError = (
-  overrides: Partial<PolicyUnitTestError> = {}
-): PolicyUnitTestError => {
-  return {
-    __typename: 'PolicyUnitTestError',
-    name: 'name' in overrides ? overrides.name : 'override',
-    errorMessage: 'errorMessage' in overrides ? overrides.errorMessage : 'Frozen',
-  };
-};
-
-export const buildPolicyUnitTestInput = (
-  overrides: Partial<PolicyUnitTestInput> = {}
-): PolicyUnitTestInput => {
-  return {
-    expectedResult: 'expectedResult' in overrides ? overrides.expectedResult : false,
-    name: 'name' in overrides ? overrides.name : 'application',
-    resource: 'resource' in overrides ? overrides.resource : 'Right-sized',
   };
 };
 
@@ -1198,25 +1202,9 @@ export const buildRuleDetails = (overrides: Partial<RuleDetails> = {}): RuleDeta
     runbook: 'runbook' in overrides ? overrides.runbook : 'withdrawal',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Low,
     tags: 'tags' in overrides ? overrides.tags : ['digital'],
-    tests: 'tests' in overrides ? overrides.tests : [buildPolicyUnitTest()],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinition()],
     versionId:
       'versionId' in overrides ? overrides.versionId : 'cd730243-e772-446f-b820-ff796b83a51f',
-  };
-};
-
-export const buildRuleResult = (overrides: Partial<RuleResult> = {}): RuleResult => {
-  return {
-    __typename: 'RuleResult',
-    id: 'id' in overrides ? overrides.id : 'Global',
-    ruleId: 'ruleId' in overrides ? overrides.ruleId : 'workforce',
-    matched: 'matched' in overrides ? overrides.matched : false,
-    ruleError: 'ruleError' in overrides ? overrides.ruleError : 'leverage',
-    titleOutput: 'titleOutput' in overrides ? overrides.titleOutput : 'Somali Shilling',
-    titleError: 'titleError' in overrides ? overrides.titleError : 'Aruban Guilder',
-    dedupOutput: 'dedupOutput' in overrides ? overrides.dedupOutput : 'Plastic',
-    dedupError: 'dedupError' in overrides ? overrides.dedupError : 'synergies',
-    genericError: 'genericError' in overrides ? overrides.genericError : 'Inverse',
-    errored: 'errored' in overrides ? overrides.errored : true,
   };
 };
 
@@ -1445,8 +1433,30 @@ export const buildTestPolicyInput = (overrides: Partial<TestPolicyInput> = {}): 
   return {
     body: 'body' in overrides ? overrides.body : 'Centralized',
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['Automotive'],
-    analysisType: 'analysisType' in overrides ? overrides.analysisType : AnalysisTypeEnum.Rule,
-    tests: 'tests' in overrides ? overrides.tests : [buildPolicyUnitTestInput()],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinitionInput()],
+  };
+};
+
+export const buildTestPolicyRecord = (
+  overrides: Partial<TestPolicyRecord> = {}
+): TestPolicyRecord => {
+  return {
+    __typename: 'TestPolicyRecord',
+    id: 'id' in overrides ? overrides.id : 'Soft',
+    name: 'name' in overrides ? overrides.name : 'Utah',
+    passed: 'passed' in overrides ? overrides.passed : false,
+    functions: 'functions' in overrides ? overrides.functions : buildTestPolicyRecordFunctions(),
+    error: 'error' in overrides ? overrides.error : buildError(),
+  };
+};
+
+export const buildTestPolicyRecordFunctions = (
+  overrides: Partial<TestPolicyRecordFunctions> = {}
+): TestPolicyRecordFunctions => {
+  return {
+    __typename: 'TestPolicyRecordFunctions',
+    policyFunction:
+      'policyFunction' in overrides ? overrides.policyFunction : buildTestRuleSubRecord(),
   };
 };
 
@@ -1455,11 +1465,39 @@ export const buildTestPolicyResponse = (
 ): TestPolicyResponse => {
   return {
     __typename: 'TestPolicyResponse',
-    testSummary: 'testSummary' in overrides ? overrides.testSummary : false,
-    testsPassed: 'testsPassed' in overrides ? overrides.testsPassed : ['Producer'],
-    testsFailed: 'testsFailed' in overrides ? overrides.testsFailed : ['Granite'],
-    testsErrored:
-      'testsErrored' in overrides ? overrides.testsErrored : [buildPolicyUnitTestError()],
+    results: 'results' in overrides ? overrides.results : [buildTestPolicyRecord()],
+  };
+};
+
+export const buildTestRuleInput = (overrides: Partial<TestRuleInput> = {}): TestRuleInput => {
+  return {
+    body: 'body' in overrides ? overrides.body : 'Steel',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['project'],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinitionInput()],
+  };
+};
+
+export const buildTestRuleRecord = (overrides: Partial<TestRuleRecord> = {}): TestRuleRecord => {
+  return {
+    __typename: 'TestRuleRecord',
+    id: 'id' in overrides ? overrides.id : 'Oklahoma',
+    name: 'name' in overrides ? overrides.name : 'Pants',
+    passed: 'passed' in overrides ? overrides.passed : true,
+    functions: 'functions' in overrides ? overrides.functions : buildTestRuleRecordFunctions(),
+    error: 'error' in overrides ? overrides.error : buildError(),
+  };
+};
+
+export const buildTestRuleRecordFunctions = (
+  overrides: Partial<TestRuleRecordFunctions> = {}
+): TestRuleRecordFunctions => {
+  return {
+    __typename: 'TestRuleRecordFunctions',
+    ruleFunction: 'ruleFunction' in overrides ? overrides.ruleFunction : buildTestRuleSubRecord(),
+    titleFunction:
+      'titleFunction' in overrides ? overrides.titleFunction : buildTestRuleSubRecord(),
+    dedupFunction:
+      'dedupFunction' in overrides ? overrides.dedupFunction : buildTestRuleSubRecord(),
   };
 };
 
@@ -1468,8 +1506,17 @@ export const buildTestRuleResponse = (
 ): TestRuleResponse => {
   return {
     __typename: 'TestRuleResponse',
-    testSummary: 'testSummary' in overrides ? overrides.testSummary : true,
-    results: 'results' in overrides ? overrides.results : [buildRuleResult()],
+    results: 'results' in overrides ? overrides.results : [buildTestRuleRecord()],
+  };
+};
+
+export const buildTestRuleSubRecord = (
+  overrides: Partial<TestRuleSubRecord> = {}
+): TestRuleSubRecord => {
+  return {
+    __typename: 'TestRuleSubRecord',
+    output: 'output' in overrides ? overrides.output : 'Rustic Frozen Bacon',
+    error: 'error' in overrides ? overrides.error : buildError(),
   };
 };
 
@@ -1529,7 +1576,7 @@ export const buildUpdatePolicyInput = (
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Info,
     suppressions: 'suppressions' in overrides ? overrides.suppressions : ['green'],
     tags: 'tags' in overrides ? overrides.tags : ['transmit'],
-    tests: 'tests' in overrides ? overrides.tests : [buildPolicyUnitTestInput()],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinitionInput()],
   };
 };
 
@@ -1549,7 +1596,7 @@ export const buildUpdateRuleInput = (overrides: Partial<UpdateRuleInput> = {}): 
     runbook: 'runbook' in overrides ? overrides.runbook : 'Fresh',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.High,
     tags: 'tags' in overrides ? overrides.tags : ['Senior'],
-    tests: 'tests' in overrides ? overrides.tests : [buildPolicyUnitTestInput()],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinitionInput()],
   };
 };
 

@@ -24,28 +24,42 @@ import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type TestPolicyVariables = {
-  input?: Types.Maybe<Types.TestPolicyInput>;
+  input: Types.TestPolicyInput;
 };
 
 export type TestPolicy = {
-  testPolicy?: Types.Maybe<
-    Pick<Types.TestPolicyResponse, 'testSummary' | 'testsPassed' | 'testsFailed'> & {
-      testsErrored?: Types.Maybe<
-        Array<Types.Maybe<Pick<Types.PolicyUnitTestError, 'errorMessage' | 'name'>>>
-      >;
-    }
-  >;
+  testPolicy: {
+    results: Array<
+      Pick<Types.TestPolicyRecord, 'id' | 'name' | 'passed'> & {
+        error?: Types.Maybe<Pick<Types.Error, 'message'>>;
+        functions: {
+          policyFunction: Pick<Types.TestRuleSubRecord, 'output'> & {
+            error?: Types.Maybe<Pick<Types.Error, 'message'>>;
+          };
+        };
+      }
+    >;
+  };
 };
 
 export const TestPolicyDocument = gql`
-  mutation TestPolicy($input: TestPolicyInput) {
+  mutation TestPolicy($input: TestPolicyInput!) {
     testPolicy(input: $input) {
-      testSummary
-      testsPassed
-      testsFailed
-      testsErrored {
-        errorMessage
+      results {
+        id
         name
+        passed
+        error {
+          message
+        }
+        functions {
+          policyFunction {
+            output
+            error {
+              message
+            }
+          }
+        }
       }
     }
   }
