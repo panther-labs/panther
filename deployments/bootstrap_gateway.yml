@@ -366,6 +366,8 @@ Resources:
       AlarmTopicArn: !Ref AlarmTopicArn
       CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
+      # Listing rules/policies requires scanning the DDB table
+      LatencyThresholdMs: 3000
 
   RemediationApi:
     Type: AWS::Serverless::Api

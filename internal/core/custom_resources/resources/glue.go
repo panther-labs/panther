@@ -108,7 +108,7 @@ func updateGlueTables(ctx context.Context, props *UpdateGlueTablesProperties) er
 	}
 
 	// update the views with the new tables
-	err = athenaviews.CreateOrReplaceViews(glueClient, athenaClient)
+	err = athenaviews.CreateOrReplaceViews(athenaClient, deployedLogTables)
 	if err != nil {
 		return errors.Wrap(err, "failed creating views")
 	}

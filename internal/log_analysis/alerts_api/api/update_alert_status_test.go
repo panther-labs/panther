@@ -19,11 +19,16 @@ package api
  */
 
 import (
+	"fmt"
+	"math"
+	"sort"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
@@ -34,42 +39,69 @@ func TestUpdateAlert(t *testing.T) {
 	tableMock := &tableMock{}
 	alertsDB = tableMock
 
-	alertID := aws.String("alertId")
-	status := aws.String("")
-	userID := aws.String("userId")
+	status := "OPEN"
+	userID := "userId"
 	timeNow := time.Now()
 	input := &models.UpdateAlertStatusInput{
-		AlertID: alertID,
-		Status:  status,
-		UserID:  userID,
-	}
-	output := &table.AlertItem{
-		AlertID:           *alertID,
-		Status:            "CLOSED",
-		LastUpdatedBy:     *userID,
-		LastUpdatedByTime: timeNow,
-		DeliveryResponses: []*models.DeliveryResponse{},
-	}
-	expectedSummary := &models.AlertSummary{
-		AlertID:           aws.String("alertId"),
-		Status:            "CLOSED",
-		LastUpdatedBy:     "userId",
-		LastUpdatedByTime: timeNow,
-		DeliveryResponses: []*models.DeliveryResponse{},
+		AlertIDs: []string{},
+		Status:   status,
+		UserID:   userID,
 	}
 
-	tableMock.On("UpdateAlertStatus", input).Return(output, nil).Once()
-	result, err := API{}.UpdateAlertStatus(input)
+	output := []*table.AlertItem{}
+	expectedSummaries := []*models.AlertSummary{}
+
+	// Set the total number of alerts to generate
+	alertCount := 12346
+	for i := 0; i < alertCount; i++ {
+		alertID := fmt.Sprint(i) // make the alertID a number for easier sorting
+		input.AlertIDs = append(input.AlertIDs, alertID)
+		output = append(output, &table.AlertItem{
+			AlertID:           alertID,
+			Status:            "CLOSED",
+			Severity:          "INFO",
+			LastUpdatedBy:     userID,
+			LastUpdatedByTime: timeNow,
+			DeliveryResponses: []*models.DeliveryResponse{},
+			CreationTime:      timeNow,
+			UpdateTime:        timeNow,
+		})
+		expectedSummaries = append(expectedSummaries, &models.AlertSummary{
+			AlertID:           aws.String(alertID),
+			RuleID:            aws.String(""),
+			RuleVersion:       aws.String(""),
+			RuleDisplayName:   nil,
+			DedupString:       aws.String(""),
+			LogTypes:          nil,
+			Severity:          aws.String("INFO"),
+			Status:            "CLOSED",
+			LastUpdatedBy:     userID,
+			LastUpdatedByTime: timeNow,
+			DeliveryResponses: []*models.DeliveryResponse{},
+			CreationTime:      aws.Time(timeNow),
+			UpdateTime:        aws.Time(timeNow),
+			EventsMatched:     aws.Int(0),
+			Title:             aws.String(""),
+		})
+	}
+
+	pages := 1235 //int(math.Ceil(float64(alertCount) / float64(maxDDBPageSize)))
+	// We need to mimic the mock's true payload as it will happen in chunks
+	for page := 0; page < pages; page++ {
+		pageSize := int(math.Min(float64((page+1)*maxDDBPageSize), float64(alertCount)))
+		tableMock.On("UpdateAlertStatus", mock.Anything).Return(output[page*maxDDBPageSize:pageSize], nil).Once()
+	}
+
+	results, err := API{}.UpdateAlertStatus(input)
 	require.NoError(t, err)
 
-	// Marshal to convert "" to nils and focus on our properties
-	resultSummary := &models.AlertSummary{
-		AlertID:           result.AlertID,
-		Status:            result.Status,
-		LastUpdatedBy:     result.LastUpdatedBy,
-		LastUpdatedByTime: result.LastUpdatedByTime,
-		DeliveryResponses: []*models.DeliveryResponse{},
-	}
+	// The results will sometimes be out-of-order due to the concurrency
+	// We sort them here to compare against the original set
+	sort.Slice(results, func(i, j int) bool {
+		ID1, _ := strconv.Atoi(*results[i].AlertID)
+		ID2, _ := strconv.Atoi(*results[j].AlertID)
+		return ID1 < ID2
+	})
 
-	assert.Equal(t, expectedSummary, resultSummary)
+	assert.Equal(t, expectedSummaries, results)
 }

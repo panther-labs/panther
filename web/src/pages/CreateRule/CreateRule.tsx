@@ -73,6 +73,7 @@ const CreateRulePage: React.FC = () => {
         <Box mt={2} mb={6}>
           <Alert
             variant="error"
+            discardable
             title={
               extractErrorMessage(error) ||
               'An unknown error occured as we were trying to create your rule'

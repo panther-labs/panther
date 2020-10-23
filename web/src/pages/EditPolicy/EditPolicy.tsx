@@ -64,6 +64,7 @@ const EditPolicyPage: React.FC = () => {
         <Alert
           variant="error"
           title="Couldn't load the policy details"
+          discardable
           description={
             extractErrorMessage(fetchPolicyError) ||
             'There was an error when performing your request, please contact support@runpanther.io'

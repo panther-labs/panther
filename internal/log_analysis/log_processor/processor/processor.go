@@ -24,6 +24,7 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -32,7 +33,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
@@ -54,64 +54,109 @@ var (
 	ParsedEventBufferSize = 1000
 )
 
+type ProcessFunc func(streamCh <-chan *common.DataStream, dest destinations.Destination) error
+
 // Process orchestrates the tasks of parsing logs, classification, normalization
 // and forwarding the logs to the appropriate destination. Any errors will cause Lambda invocation to fail
-func Process(dataStreams chan *common.DataStream, destination destinations.Destination) error {
-	factory := func(r *common.DataStream) *Processor {
-		return MustBuildProcessor(r, registry.Default())
-	}
-	return process(dataStreams, destination, factory)
-}
+func Process(
+	dataStreams <-chan *common.DataStream,
+	destination destinations.Destination,
+	newProcessor func(stream *common.DataStream) (*Processor, error),
+) error {
 
-// entry point to allow customizing processor for testing
-func process(dataStreams chan *common.DataStream, destination destinations.Destination,
-	newProcessorFunc func(*common.DataStream) *Processor) error {
-
-	parsedEventChannel := make(chan *parsers.Result, ParsedEventBufferSize)
-	errorChannel := make(chan error)
-
-	// go routine aggregates data written to s3
-	var sendEventsWg sync.WaitGroup
-	sendEventsWg.Add(1)
-	go func() {
-		destination.SendEvents(parsedEventChannel, errorChannel) // runs until parsedEventChannel is closed
-		sendEventsWg.Done()
-	}()
-
-	// listen for errors, set to var below which will be returned
-	var errorsWg sync.WaitGroup
-	errorsWg.Add(1)
-	var err error
-	go func() {
-		for err = range errorChannel {
-		} // to ensure there are not writes to a closed channel, loop to drain
-		errorsWg.Done()
-	}()
-
-	// it is important to process the streams serially to manage memory!
-	for dataStream := range dataStreams {
-		processor := newProcessorFunc(dataStream)
-		err := processor.run(parsedEventChannel)
-		if err != nil {
-			errorChannel <- err
-			break
+	var (
+		wg             sync.WaitGroup
+		err            error
+		resultsChannel = make(chan *parsers.Result, ParsedEventBufferSize)
+		errorChannel   = make(chan error)
+		// Process streams serially to keep memory requirements low
+		processStreams = func() error {
+			defer close(resultsChannel)
+			// it is important to process the streams serially to manage memory!
+			for dataStream := range dataStreams {
+				processor, err := newProcessor(dataStream)
+				if err != nil {
+					zap.L().Error("failed to build log processor for source",
+						zap.String("sourceId", dataStream.Source.IntegrationID),
+						zap.String("sourceLabel", dataStream.Source.IntegrationLabel),
+						zap.Error(err))
+					return err
+				}
+				if err := processor.run(resultsChannel); err != nil {
+					return err
+				}
+			}
+			return nil
 		}
+	)
+
+	wg.Add(1)
+	// Write results and return error(s) via the channel
+	go func() {
+		defer wg.Done()
+		destination.SendEvents(resultsChannel, errorChannel) // runs until results channel is closed
+	}()
+
+	wg.Add(1)
+	// Process all streams and return error via the channel
+	go func() {
+		defer wg.Done()
+		if err := processStreams(); err != nil {
+			errorChannel <- err
+		}
+	}()
+	go func() {
+		// Close the errorChannel to broadcast end of task
+		defer close(errorChannel)
+		// Wait until both processor loop and destination have finished
+		wg.Wait()
+	}()
+	// collect errors
+	for e := range errorChannel {
+		err = multierr.Append(err, e)
 	}
-
-	// Close the channel after all goroutines have finished writing to it.
-	// The Destination that is reading the channel will terminate
-	// after consuming all the buffered messages
-	close(parsedEventChannel) // this will cause SendEvent() go routine to finish and exit
-	sendEventsWg.Wait()       // wait until all files and errors are written
-	close(errorChannel)       // this will allow err chan loop to finish
-	errorsWg.Wait()           // wait for err chan loop to finish
 	zap.L().Debug("data processing goroutines finished")
-
 	return err
 }
 
+type Processor struct {
+	input      *common.DataStream
+	classifier classification.ClassifierAPI
+	operation  *oplog.Operation
+}
+
+type Factory func(r *common.DataStream) (*Processor, error)
+
+func NewFactory(resolver logtypes.Resolver) Factory {
+	return func(input *common.DataStream) (*Processor, error) {
+		switch src := input.Source; src.IntegrationType {
+		case models.IntegrationTypeSqs:
+			return &Processor{
+				operation: common.OpLogManager.Start(operationName),
+				input:     input,
+				classifier: &sources.SQSClassifier{
+					Resolver:   resolver,
+					LoadSource: sources.LoadSource,
+				},
+			}, nil
+		case models.IntegrationTypeAWS3:
+			c, err := sources.BuildClassifier(src, resolver)
+			if err != nil {
+				return nil, err
+			}
+			return &Processor{
+				operation:  common.OpLogManager.Start(operationName),
+				input:      input,
+				classifier: c,
+			}, nil
+		default:
+			return nil, errors.Errorf("invalid source type %s", src.IntegrationType)
+		}
+	}
+}
+
 // processStream reads the data from an S3 the dataStream, parses it and writes events to the output channel
-func (p *Processor) run(outputChan chan *parsers.Result) error {
+func (p *Processor) run(outputChan chan<- *parsers.Result) error {
 	var err error
 	stream := bufio.NewReader(p.input.Reader)
 	for {
@@ -133,7 +178,7 @@ func (p *Processor) run(outputChan chan *parsers.Result) error {
 	return err
 }
 
-func (p *Processor) processLogLine(line string, outputChan chan *parsers.Result) {
+func (p *Processor) processLogLine(line string, outputChan chan<- *parsers.Result) {
 	result, err := p.classifier.Classify(line)
 	// A classifier returns an error when it cannot classify a non-empty log line
 	if err != nil {
@@ -170,49 +215,5 @@ func (p *Processor) logStats(err error) {
 		pMetrics[0].Value, pMetrics[1].Value, pMetrics[2].Value =
 			parserStats.BytesProcessedCount, parserStats.EventCount, parserStats.CombinedLatency
 		common.BytesProcessedLogger.Log(pMetrics, logType)
-	}
-}
-
-type Processor struct {
-	input      *common.DataStream
-	classifier classification.ClassifierAPI
-	operation  *oplog.Operation
-}
-
-func MustBuildProcessor(input *common.DataStream, registry *logtypes.Registry) *Processor {
-	proc, err := BuildProcessor(input, registry)
-	if err != nil {
-		zap.L().Error("invalid build log processor for source",
-			zap.String("sourceId", input.Source.IntegrationID),
-			zap.String("sourceLabel", input.Source.IntegrationLabel),
-			zap.Error(err))
-		panic(err)
-	}
-	return proc
-}
-
-func BuildProcessor(input *common.DataStream, registry *logtypes.Registry) (*Processor, error) {
-	switch src := input.Source; src.IntegrationType {
-	case models.IntegrationTypeSqs:
-		return &Processor{
-			operation: common.OpLogManager.Start(operationName),
-			input:     input,
-			classifier: &sources.SQSClassifier{
-				Registry:   registry,
-				LoadSource: sources.LoadSource,
-			},
-		}, nil
-	case models.IntegrationTypeAWS3:
-		c, err := sources.BuildClassifier(src, registry)
-		if err != nil {
-			return nil, err
-		}
-		return &Processor{
-			operation:  common.OpLogManager.Start(operationName),
-			input:      input,
-			classifier: c,
-		}, nil
-	default:
-		return nil, errors.Errorf("invalid source type %s", src.IntegrationType)
 	}
 }

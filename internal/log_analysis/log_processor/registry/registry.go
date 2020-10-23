@@ -38,13 +38,15 @@ import (
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sophoslogs"
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/suricatalogs"
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sysloglogs"
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/zeeklogs"
 )
 
-// Default returns the default log type registry
-func Default() *logtypes.Registry {
+// NativeLogTypesResolver returns a resolver for native log types.
+// Use this instead of registry.Default()
+func NativeLogTypesResolver() logtypes.Resolver {
 	return logtypes.DefaultRegistry()
 }
 
@@ -69,7 +71,7 @@ func AvailableTables() (tables []*awsglue.GlueTableMetadata) {
 	return
 }
 
-// Available parsers returns log parsers for all available log types with nil parameters.
+// AvailableParsers returns log parsers for all native log types with nil parameters.
 // Panics if a parser factory in the default registry fails with nil params.
 func AvailableParsers() map[string]parsers.Interface {
 	entries := logtypes.DefaultRegistry().Entries()

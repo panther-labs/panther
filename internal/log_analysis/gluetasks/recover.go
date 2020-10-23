@@ -23,7 +23,6 @@ import (
 	goerr "errors"
 	"fmt"
 	"path"
-	"regexp"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -79,7 +78,7 @@ func (r *RecoverDatabaseTables) Run(ctx context.Context, glueAPI glueiface.GlueA
 			DatabaseName: &r.DatabaseName,
 		}
 		if r.MatchPrefix != "" {
-			expr := "^" + regexp.QuoteMeta(r.MatchPrefix)
+			expr := r.MatchPrefix + "*"
 			input.Expression = &expr
 		}
 		err := glueAPI.GetTablesPagesWithContext(ctx, &input, func(page *glue.GetTablesOutput, _ bool) bool {

@@ -29,6 +29,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
@@ -52,6 +53,7 @@ func process(lc *lambdacontext.LambdaContext, deadline time.Time, event events.S
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", sqsMessageCount))
 	}()
 
-	sqsMessageCount, err = processor.StreamEvents(common.SqsClient, deadline, event)
+	logTypesResolver := registry.NativeLogTypesResolver()
+	sqsMessageCount, err = processor.StreamEvents(common.SqsClient, logTypesResolver, deadline, event)
 	return err
 }

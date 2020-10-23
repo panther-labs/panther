@@ -18,6 +18,7 @@
 
 import React from 'react';
 import { Box, Theme, useTheme } from 'pouncejs';
+import useBarChartSpacing from 'Components/charts/BarChart/useBarChartSpacing';
 
 interface Data {
   value: number;
@@ -25,15 +26,93 @@ interface Data {
   color?: keyof Theme['colors'];
 }
 
-interface BarChartProps {
-  data: Data[];
-  alignment?: 'horizontal' | 'vertical';
+/**
+ * `GridPosition` properties defines spaces between chart
+ * container and other elements,including legend
+ * @default {
+ *    left: 100,
+ *    right: 20,
+ *    bottom: 20,
+ *    top: isHorizontal ? 0 : 30,
+ * }
+ */
+export interface GridPosition {
+  left?: string | number;
+  right?: string | number;
+  bottom?: string | number;
+  top?: string | number;
 }
 
-const BarChart: React.FC<BarChartProps> = ({ data, alignment = 'vertical' }) => {
+/**
+ * `BarConfig` properties defines how bars are displayed currently support `barWidth`,
+ * and `barGap` which defines the gap between bars
+ * @default {
+ *    barWidth: 30,
+ *    barGap: isHorizontal ? '-20%' : '-110%',
+ *  }
+ */
+
+export interface Spacing {
+  grid?: GridPosition;
+  barGap?: string | number;
+  barWidth?: number;
+}
+
+interface FormatterParams {
+  seriesName: string;
+  value: number;
+}
+
+type FormatSeriesLabelFunc = (params: FormatterParams) => string;
+
+export type CardWidthType = 'half' | 'full';
+
+interface BarChartProps {
+  /**
+   * The `data` property is required for displaying the BarChart
+   */
+  data: Data[];
+  /**
+   * `formatSeriesLabel` is a function that should change how the label for series
+   * are displayed
+   */
+  formatSeriesLabel?: FormatSeriesLabelFunc;
+  /**
+   * `alignment` property is string that can take the values of 'horizontal'
+   * and 'vertical'. It defines how the bars will be displayed
+   * @default 'vertical'
+   */
+  alignment?: 'horizontal' | 'vertical';
+  /**
+   * `gridPosition` property is an object that defines spaces between chart
+   * container and other elements,including legend
+   */
+  gridPosition?: GridPosition;
+  /**
+   * `barWidth` property is the size number of bars in the chart
+   * @default 30
+   */
+  barWidth?: number;
+  /**
+   * `barGap` property represents the distance between bars related to the barWidth.
+   * This is not as clean as it sounds you can find how this should be used here:
+   * https://echarts.apache.org/en/option.html#series-bar.barGap
+   */
+  barGap?: string | number;
+}
+
+const BarChart: React.FC<BarChartProps> = ({
+  formatSeriesLabel,
+  data,
+  alignment = 'vertical',
+  gridPosition,
+  barWidth = 30,
+  barGap,
+}) => {
   const container = React.useRef<HTMLDivElement>(null);
-  const horizontal = alignment === 'horizontal';
+  const isHorizontal = alignment === 'horizontal';
   const theme = useTheme();
+  const chartSpacing = useBarChartSpacing({ gridPosition, barWidth, barGap, isHorizontal });
 
   React.useEffect(() => {
     // We are not allowed to put async function directly in useEffect. Instead, we should define
@@ -54,7 +133,7 @@ const BarChart: React.FC<BarChartProps> = ({ data, alignment = 'vertical' }) => 
        * e.g. [AWS.ALB]
        */
       const labels = data.map(e => e.label);
-      const legendData = horizontal ? [...labels].reverse() : [...labels];
+      const legendData = isHorizontal ? [...labels].reverse() : [...labels];
 
       /*
        * 'series' must be an array of objects that includes some graph options
@@ -66,12 +145,14 @@ const BarChart: React.FC<BarChartProps> = ({ data, alignment = 'vertical' }) => 
         return {
           name: e.label,
           type: 'bar',
-          barWidth: 30,
-          barGap: horizontal ? '-20%' : '-110%',
+          barWidth: chartSpacing.barWidth,
+          barGap: chartSpacing.barGap,
           label: {
             show: true,
-            position: horizontal ? 'right' : 'top',
+            position: isHorizontal ? 'right' : 'top',
             color: theme.colors['gray-50'],
+            // if seriesLabelFormatter is undefined, echarts resolves to default
+            formatter: formatSeriesLabel,
           },
           itemStyle: {
             color: theme.colors[e.color],
@@ -94,15 +175,10 @@ const BarChart: React.FC<BarChartProps> = ({ data, alignment = 'vertical' }) => 
         data: data.map((e, i) => i),
       };
 
-      const [yAxis, xAxis] = horizontal ? [categoryAxis, valueAxis] : [valueAxis, categoryAxis];
+      const [yAxis, xAxis] = isHorizontal ? [categoryAxis, valueAxis] : [valueAxis, categoryAxis];
 
       const options = {
-        grid: {
-          left: 100,
-          right: 20,
-          bottom: 20,
-          top: horizontal ? 0 : 30,
-        },
+        grid: chartSpacing.grid,
         tooltip: {
           position: pt => [pt[0], '100%'],
           formatter: params => {
@@ -115,6 +191,16 @@ const BarChart: React.FC<BarChartProps> = ({ data, alignment = 'vertical' }) => 
           left: 'left',
           icon: 'circle',
           data: legendData,
+          /*
+           * This formatter attempts to wrap the text of a legend label
+           * that currently is not supported by echarts.
+           */
+          formatter: name => {
+            if (name.length > 25) {
+              return `${name.slice(0, 25)}\n${name.slice(25, 48)}...`;
+            }
+            return name;
+          },
           textStyle: {
             color: theme.colors['gray-50'],
           },

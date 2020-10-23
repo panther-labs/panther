@@ -155,6 +155,9 @@ exports[`SensitiveTextInput renders 1`] = `
 }
 
 <div>
+  <header
+    id="main-header"
+  />
   <form
     action="#"
   >
@@ -205,6 +208,9 @@ exports[`SensitiveTextInput renders 1`] = `
       Submit
     </button>
   </form>
+  <footer
+    id="footer"
+  />
 </div>
 `;
 
@@ -363,6 +369,9 @@ exports[`SensitiveTextInput renders without masked values on demand 1`] = `
 }
 
 <div>
+  <header
+    id="main-header"
+  />
   <form
     action="#"
   >
@@ -413,5 +422,8 @@ exports[`SensitiveTextInput renders without masked values on demand 1`] = `
       Submit
     </button>
   </form>
+  <footer
+    id="footer"
+  />
 </div>
 `;

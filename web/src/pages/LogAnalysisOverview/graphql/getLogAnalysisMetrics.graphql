@@ -25,6 +25,10 @@ query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput!) {
       label
       value
     }
+    alertsByRuleID {
+      label
+      value
+    }
     intervalMinutes
   }
 }

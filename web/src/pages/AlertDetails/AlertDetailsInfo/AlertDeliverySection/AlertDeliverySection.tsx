@@ -18,11 +18,12 @@
 
 import React from 'react';
 import { Text, Flex, Icon, AbstractButton, Box, Collapse, useSnackbar } from 'pouncejs';
-import { AlertDetails, ListDestinations } from 'Pages/AlertDetails';
+import { AlertDetails } from 'Pages/AlertDetails';
 import last from 'lodash/last';
 import { DeliveryResponseFull } from 'Source/graphql/fragments/DeliveryResponseFull.generated';
 import groupBy from 'lodash/groupBy';
 import orderBy from 'lodash/orderBy';
+import { ListDestinations } from 'Source/graphql/queries';
 import AlertDeliveryTable from './AlertDeliveryTable';
 import { useRetryAlertDelivery } from './graphql/retryAlertDelivery.generated';
 
@@ -96,7 +97,7 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
     return (
       <Flex align="warning" spacing={4}>
         <Icon type="info" size="medium" color="blue-400" />
-        <Text fontWeight="medium">Delivery information could not be retrieved</Text>
+        <Text fontWeight="medium">No delivery information could be found for this alert</Text>
       </Flex>
     );
   }

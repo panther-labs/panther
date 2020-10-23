@@ -118,6 +118,7 @@ const EditRulePage: React.FC = () => {
         <Box mt={2} mb={6}>
           <Alert
             variant="error"
+            discardable
             title={
               extractErrorMessage(updateError) ||
               'An unknown error occured as were trying to update your rule'

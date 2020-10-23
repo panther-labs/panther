@@ -33,7 +33,7 @@ import (
 var jsonAPI = common.BuildJSON()
 
 type SQSClassifier struct {
-	Registry    *logtypes.Registry
+	Resolver    logtypes.Resolver
 	LoadSource  func(id string) (*models.SourceIntegration, error)
 	stats       classification.ClassifierStats
 	classifiers map[string]classification.ClassifierAPI
@@ -73,7 +73,7 @@ func (c *SQSClassifier) buildSourceClassifier(id string) (classification.Classif
 	if err != nil {
 		return nil, err
 	}
-	return BuildClassifier(src, c.Registry)
+	return BuildClassifier(src, c.Resolver)
 }
 
 func (c *SQSClassifier) Stats() *classification.ClassifierStats {

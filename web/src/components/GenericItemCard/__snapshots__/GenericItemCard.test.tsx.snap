@@ -89,6 +89,9 @@ exports[`GenericItemCard renders a step 1`] = `
 }
 
 <div>
+  <header
+    id="main-header"
+  />
   <section
     class="panther-19"
   >
@@ -186,5 +189,8 @@ exports[`GenericItemCard renders a step 1`] = `
       </div>
     </div>
   </section>
+  <footer
+    id="footer"
+  />
 </div>
 `;

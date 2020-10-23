@@ -196,6 +196,9 @@ exports[`AlertDetailsBanner renders 1`] = `
 }
 
 <div>
+  <header
+    id="main-header"
+  />
   <article
     class="panther-13"
   >
@@ -281,5 +284,8 @@ exports[`AlertDetailsBanner renders 1`] = `
       </ul>
     </header>
   </article>
+  <footer
+    id="footer"
+  />
 </div>
 `;

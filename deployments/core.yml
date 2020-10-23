@@ -40,10 +40,6 @@ Parameters:
     Description: Panther App Domain used as a link for the customer in the password reset email
     # Example: "web-115120885.us-west-2.elb.amazonaws.com" or "app.example.com"
     AllowedPattern: '^[a-z0-9.-]+\.[a-z]{2,}$'
-  AthenaResultsBucket:
-    Type: String
-    Description: Name of the S3 bucket created to hold Athena results
-    AllowedPattern: '^[a-z0-9.-]{3,63}$'
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
@@ -853,37 +849,6 @@ Resources:
             - Effect: Allow
               Action: s3:GetObject
               Resource: arn:aws:s3:::panther-public-cloudformation-templates/*
-        - Id: CreateGlueTables # to create tables for new log sources
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - glue:CreateTable
-                - glue:GetTable
-                - glue:UpdateTable
-              Resource:
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
-                - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
-        - Id: AthenaPermissions # to create views over Glue tables
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - athena:StartQueryExecution
-                - athena:StopQueryExecution
-                - athena:GetQuery*
-              Resource: '*'
-        - Id: AthenaResultsPermissions # athena writes results to S3
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - s3:GetBucketLocation
-                - s3:List*
-                - s3:GetObject
-                - s3:PutObject
-              Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
         - Id: CreateSqsQueues # Allows Lambda to manage SQS source queues - these are SQS queues users send data to for log analysis
           Version: 2012-10-17
           Statement:

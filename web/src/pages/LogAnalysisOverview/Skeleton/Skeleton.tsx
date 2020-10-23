@@ -17,57 +17,21 @@
  */
 
 import React from 'react';
-import { Box, Card, FadeIn, SimpleGrid, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
-import Panel from 'Components/Panel';
-import TablePlaceholder from 'Components/TablePlaceholder';
-import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
+import { Box, FadeIn } from 'pouncejs';
+import TabsSkeleton from './TabsSkeleton';
 
-const ComplianceOverviewPageSkeleton: React.FC = () => {
+const LogAnalysisOverviewPageSkeleton: React.FC = () => {
   return (
     <Box as="article" mb={6}>
       <FadeIn duration={400}>
-        <SimpleGrid columns={1} spacingX={3} spacingY={2} mb={3}>
-          <Panel title="Real-time Alerts">
-            <Box height={200}>
-              <TablePlaceholder />
-            </Box>
-          </Panel>
-        </SimpleGrid>
-        <SimpleGrid columns={1} spacingX={3} spacingY={2} mb={3}>
-          <Card as="section">
-            <Tabs>
-              <Box position="relative" pl={2} pr={4}>
-                <TabList>
-                  <BorderedTab>Events by Log Type</BorderedTab>
-                  <BorderedTab>Data Latency by Log Type</BorderedTab>
-                </TabList>
-                <BorderTabDivider />
-              </Box>
-              <Box p={6}>
-                <TabPanels>
-                  <TabPanel unmountWhenInactive lazy>
-                    <Box height={200}>
-                      <TablePlaceholder />
-                    </Box>
-                  </TabPanel>
-                  <TabPanel unmountWhenInactive lazy>
-                    <Box height={200}>
-                      <TablePlaceholder />
-                    </Box>
-                  </TabPanel>
-                </TabPanels>
-              </Box>
-            </Tabs>
-          </Card>
-        </SimpleGrid>
-        <SimpleGrid columns={1} spacingX={3} spacingY={2}>
-          <Panel title="Recent High Severity Alerts">
-            <TablePlaceholder />
-          </Panel>
-        </SimpleGrid>
+        <TabsSkeleton tabs={[{ label: 'Real-Time Alerts' }, { label: 'Most Active Rules' }]} />
+        <TabsSkeleton
+          tabs={[{ label: 'Events by Log Type' }, { label: 'Data Latency by Log Type' }]}
+        />
+        <TabsSkeleton tabs={[{ label: 'Recent Alerts' }, { label: 'High Severity Alerts' }]} />
       </FadeIn>
     </Box>
   );
 };
 
-export default ComplianceOverviewPageSkeleton;
+export default LogAnalysisOverviewPageSkeleton;

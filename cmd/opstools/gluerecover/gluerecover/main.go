@@ -35,9 +35,14 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/gluetasks"
 )
 
+var (
+	version string // we expect this to be set by the build tool as `-X main.version=<some version>`
+)
+
 func main() {
-	opstools.SetUsage("scans S3 for missing AWS Glue partitions and recovers them")
+	opstools.SetUsage("scans S3 for missing AWS Glue partitions and recovers them (Panther version %s)", version)
 	opts := struct {
+		MasterStack    *string
 		End            *string
 		Start          *string
 		DryRun         *bool
@@ -48,6 +53,8 @@ func main() {
 		MaxRetries     *int
 		Prefix         *string
 	}{
+		MasterStack: flag.String("master-stack", "",
+			"if set, this is the name of the Panther master stack used to deploy, if not set the deployment is assumed from source"),
 		Start:          flag.String("start", "", "Recover partitions after this date YYYY-MM-DD"),
 		End:            flag.String("end", "", "Recover partitions until this date YYYY-MM-DD"),
 		DryRun:         flag.Bool("dry-run", false, "Scan for missing partitions without without applying any changes"),
@@ -90,6 +97,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to build AWS session: %s", err)
 	}
+
+	opstools.ValidatePantherVersion(sess, log, *opts.MasterStack, version)
+
 	glueAPI := glue.New(sess)
 	s3API := s3.New(sess)
 	ctx := context.Background()

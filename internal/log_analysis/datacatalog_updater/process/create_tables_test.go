@@ -53,7 +53,7 @@ func TestSQS_CreateTables(t *testing.T) {
 
 	// Here comes the mocking
 	mockGlueClient.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil)
-	mockGlueClient.On("GetTable", mock.Anything).Return(&glue.GetTableOutput{}, nil)
+	mockGlueClient.On("GetTablesPagesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	mockAthenaClient := &testutils.AthenaMock{}
 	athenaClient = mockAthenaClient
 	mockAthenaClient.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{

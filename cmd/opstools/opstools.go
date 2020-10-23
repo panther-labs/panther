@@ -27,9 +27,16 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/hashicorp/go-cleanhttp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/panther-labs/panther/pkg/awscfn"
+	"github.com/panther-labs/panther/tools/cfnstacks"
 )
 
 func MustBuildLogger(debug bool) *zap.SugaredLogger {
@@ -58,11 +65,48 @@ func NewHTTPClient(maxConnections int, timeout time.Duration) *http.Client {
 	}
 }
 
-func SetUsage(banner string) {
+func SetUsage(banner string, args ...interface{}) {
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(),
 			"%s %s\nUsage:\n",
-			filepath.Base(os.Args[0]), banner)
+			filepath.Base(os.Args[0]), fmt.Sprintf(banner, args...))
 		flag.PrintDefaults()
+	}
+}
+
+// ValidatePantherVersion checks that the compiled version matches deployed version, if not log.Fatal()
+func ValidatePantherVersion(sess *session.Session, log *zap.SugaredLogger, masterStack, compiledVersion string) {
+	cfnClient := cloudformation.New(sess)
+
+	// find the bucket to associate with the table
+	bootstrapStack, err := cfnstacks.GetBootstrapStack(cfnClient, masterStack)
+	if err != nil {
+		log.Fatal(err)
+	}
+	outputs, err := awscfn.StackOutputs(cfnClient, bootstrapStack)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var dataBucket string
+	if dataBucket = outputs["ProcessedDataBucket"]; dataBucket == "" {
+		log.Fatalf("could not find processed data bucket in %s outputs", bootstrapStack)
+	}
+
+	// check the version of Panther deployed against what this as compiled against, they _must_ match!
+	s3Client := s3.New(sess)
+	tagResponse, err := s3Client.GetBucketTagging(&s3.GetBucketTaggingInput{Bucket: &dataBucket})
+	if err != nil {
+		log.Fatalf("could not read processed data bucket tags for %$: %s", bootstrapStack, err)
+	}
+	var deployedPantherVersion string
+	for _, tag := range tagResponse.TagSet {
+		if aws.StringValue(tag.Key) == "PantherVersion" {
+			deployedPantherVersion = *tag.Value
+		}
+	}
+
+	if compiledVersion != deployedPantherVersion {
+		log.Fatalf("deployed Panther version '%s' does not match compiled Panther version '%s'",
+			deployedPantherVersion, compiledVersion)
 	}
 }
