@@ -24,6 +24,8 @@ import (
 	// Packages that export log types
 	apachelogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/apachelogs"
 	awslogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
+	cloudflarelogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/cloudflarelogs"
+	fastlylogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fastlylogs"
 	fluentdsyslogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fluentdsyslogs"
 	gcplogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gcplogs"
 	gitlablogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gitlablogs"
@@ -33,6 +35,7 @@ import (
 	nginxlogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
 	osquerylogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
 	osseclogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
+	sophoslogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sophoslogs"
 	suricatalogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/suricatalogs"
 	sysloglogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sysloglogs"
 	zeeklogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/zeeklogs"
@@ -40,11 +43,15 @@ import (
 
 func init() {
 	// Initialize the registered log types group
-	registeredLogTypes = logtypes.MustMerge("registered",
+	nativeLogTypes = logtypes.MustMerge("registered",
 
 		apachelogs.LogTypes(),
 
 		awslogs.LogTypes(),
+
+		cloudflarelogs.LogTypes(),
+
+		fastlylogs.LogTypes(),
 
 		fluentdsyslogs.LogTypes(),
 
@@ -64,6 +71,8 @@ func init() {
 
 		osseclogs.LogTypes(),
 
+		sophoslogs.LogTypes(),
+
 		suricatalogs.LogTypes(),
 
 		sysloglogs.LogTypes(),
@@ -71,5 +80,5 @@ func init() {
 		zeeklogs.LogTypes(),
 	)
 	// Register all log types in the group with the availableLogTypes
-	availableLogTypes.MustRegister(registeredLogTypes)
+	availableLogTypes.MustRegister(nativeLogTypes)
 }

@@ -103,20 +103,6 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Deleting this resource has no effect on the user pool.
 	"Custom::CognitoUserPoolMfa": customCognitoUserPoolMfa,
 
-	// Allows configurable token expiration on a cognito user pool.
-	//
-	// Parameters:
-	//     AccessTokenValidityMinutes:  int
-	//     IdTokenValidityMinutes:      int
-	//     RefreshTokenValidityMinutes: int
-	//     AppClientId:                 string (required)
-	//     UserPoolId:                  string (required)
-	// Outputs: None
-	// PhysicalId: custom:cognito-client-token-expiration:$APP_CLIENT_ID
-	//
-	// Deleting this resource has no effect.
-	"Custom::CognitoClientTokenExpiration": customCognitoClientTokenExpiration,
-
 	// Updates databases and table schemas
 	//
 	// Parameters:
@@ -169,6 +155,7 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	//     DisplayName:           string
 	//     Email:                 string
 	//     ErrorReportingConsent: bool
+	//     AnalyticsConsent:      bool
 	// Outputs: None
 	// PhysicalId: custom:panther-settings:singleton
 	"Custom::PantherSettings": customPantherSettings,

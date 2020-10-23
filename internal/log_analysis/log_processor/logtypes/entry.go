@@ -95,12 +95,14 @@ func (desc *Desc) Validate() error {
 // ConfigJSON is a configuration that creates a log type entry for a JSON log.
 // The parser only handles the usual case where each JSON value produces a single pantherlog.Result.
 type ConfigJSON struct {
-	Desc
-	NewEvent  func() interface{}
-	Validate  func(interface{}) error
-	JSON      jsoniter.API
-	NextRowID func() string
-	Now       func() time.Time
+	Name         string
+	Description  string
+	ReferenceURL string
+	NewEvent     func() interface{}
+	Validate     func(interface{}) error
+	JSON         jsoniter.API
+	NextRowID    func() string
+	Now          func() time.Time
 }
 
 func (c ConfigJSON) BuildEntry() (Entry, error) {
@@ -108,19 +110,18 @@ func (c ConfigJSON) BuildEntry() (Entry, error) {
 		return nil, errors.New(`nil event factory`)
 	}
 
-	desc := c.Desc
 	event := c.NewEvent()
 	schema, err := pantherlog.BuildEventSchema(event)
 	if err != nil {
 		return nil, err
 	}
 	config := Config{
-		Name:         desc.Name,
-		Description:  desc.Description,
-		ReferenceURL: desc.ReferenceURL,
+		Name:         c.Name,
+		Description:  c.Description,
+		ReferenceURL: c.ReferenceURL,
 		Schema:       schema,
 		NewParser: &parsers.JSONParserFactory{
-			LogType:   desc.Name,
+			LogType:   c.Name,
 			JSON:      c.JSON,
 			Validate:  c.Validate,
 			NewEvent:  c.NewEvent,

@@ -133,15 +133,16 @@ func listResourceTags(kmsSvc kmsiface.KMSAPI, keyID *string) ([]*kms.Tag, error)
 func describeKey(kmsSvc kmsiface.KMSAPI, keyID *string) (*kms.KeyMetadata, error) {
 	out, err := kmsSvc.DescribeKey(&kms.DescribeKeyInput{KeyId: keyID})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "AccessDeniedException" {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) {
+			switch awsErr.Code() {
+			case "AccessDeniedException":
 				zap.L().Warn(
 					"AccessDeniedException, additional permissions were not granted or key is in another account",
 					zap.String("API", "KMS.DescribeKey"),
 					zap.String("key", *keyID))
 				return nil, nil
-			}
-			if awsErr.Code() == kms.ErrCodeNotFoundException {
+			case kms.ErrCodeNotFoundException:
 				zap.L().Warn("tried to scan non-existent resource",
 					zap.String("resource", *keyID),
 					zap.String("resourceType", awsmodels.KmsKeySchema))

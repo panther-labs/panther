@@ -28,6 +28,8 @@ var (
 		codecs: map[string]TimeCodec{
 			"unix":    UnixSecondsCodec(),
 			"unix_ms": UnixMillisecondsCodec(),
+			"unix_us": UnixMicrosecondsCodec(),
+			"unix_ns": UnixNanosecondsCodec(),
 			"rfc3339": Join(LayoutCodec(time.RFC3339), LayoutCodec(time.RFC3339Nano)),
 		},
 	}

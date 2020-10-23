@@ -514,8 +514,8 @@ func FieldSetFromTag(tag string) FieldSet {
 		}
 	}
 
-	// Check the panther tag to see if it maps to a registered scanner
-	pantherTag, err := tags.Get(TagName)
+	// Check the indicator tag to see if it maps to a registered scanner
+	pantherTag, err := tags.Get(TagNameIndicator)
 	if err != nil {
 		// No `panther` tag
 		return nil

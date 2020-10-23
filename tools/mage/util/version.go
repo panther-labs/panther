@@ -33,13 +33,42 @@ import (
 
 var gitVersion string
 
-// Return repo version (e.g. "v1.6.0-85-g8ffbbf60"), warn if not deploying a tagged release
+// Return full Panther version string, e.g. v1.10.0-master-5c2a8a76-dirty
+//
+// The base version ("v1.10.0") comes from the top-level VERSION file.
+// This is followed by the current branch name ("master"),
+// and then the last commit on the branch ("5c2a8a76").
+// If there are local uncommitted changes, a "-dirty" suffix will be added.
 func RepoVersion() string {
-	if gitVersion == "" {
-		var err error
-		gitVersion, err = sh.Output("git", "describe", "--tags")
-		if err != nil {
-			panic(fmt.Errorf("git describe failed: %v", err))
+	if gitVersion != "" {
+		return gitVersion
+	}
+
+	// Load base version from the top-level VERSION file, e.g. "1.10.0"
+	//
+	// We use this rather than the git release tag because the VERSION file is tied to the commit,
+	// whereas tags can be changed at any time (and don't always exist in every branch).
+	baseVersion := strings.TrimSpace(string(MustReadFile("VERSION")))
+
+	// "git branch --show-current" works for Git 2.22+, but this should work on older versions:
+	branch, err := sh.Output("git", "rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
+		panic(fmt.Errorf("failed to get name of current branch: %s", err))
+	}
+
+	commit, err := sh.Output("git", "rev-parse", "--short", "HEAD")
+	if err != nil {
+		panic(fmt.Errorf("failed to find most recent commit: %s", err))
+	}
+
+	gitVersion = fmt.Sprintf("v%s-%s-%s", baseVersion, branch, commit)
+
+	// If there are uncommitted local changes, add a "-dirty" suffix
+	if err := sh.Run("git", "diff", "--quiet"); err != nil {
+		if strings.HasSuffix(err.Error(), "failed with exit code 1") {
+			gitVersion += "-dirty"
+		} else {
+			panic(fmt.Errorf("git diff failed: %s", err))
 		}
 	}
 

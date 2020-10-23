@@ -40,3 +40,13 @@ declare module 'graphql' {
     errorInfo?: any;
   }
 }
+
+/**
+ * We want to override window.requestIdleCallback because Safari doesn't support it.
+ * We declare the new function in config.ts
+ */
+declare global {
+  interface Window {
+    requestIdleCallback: (Function) => void;
+  }
+}

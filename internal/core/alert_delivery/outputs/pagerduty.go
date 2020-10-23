@@ -70,6 +70,11 @@ func pantherSeverityToPagerDuty(severity string) (string, *AlertDeliveryResponse
 	case "CRITICAL":
 		return "critical", nil
 	default:
-		return "", &AlertDeliveryResponse{Message: "unknown severity" + severity}
+		return "", &AlertDeliveryResponse{
+			StatusCode: 500,
+			Message:    "unknown severity" + severity,
+			Permanent:  true, // We don't want to retry alert's that don't have a valid severity
+			Success:    false,
+		}
 	}
 }

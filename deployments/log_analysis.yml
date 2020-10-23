@@ -63,6 +63,11 @@ Parameters:
     Description: Log processor Lambda memory allocation
     MinValue: 256 # 128 is too small, risks OOM errors
     MaxValue: 3008
+  LogProcessorSQSDelaySeconds:
+    Type: Number
+    Description: The number of seconds to delay events into the log processor queue
+    MinValue: 0 # no delay, poor aggregation
+    MaxValue: 20 # this is the max time we can long poll sqs
   ProcessedDataBucket:
     Type: String
     Description: Name of the S3 bucket which stores processed logs
@@ -126,11 +131,14 @@ Resources:
 
   ###### Update Glue Table Schemas for Deployed Tables #####
   UpdateGlueTables:
-    DependsOn: AthenaConfigure
+    DependsOn:
+      - AthenaConfigure
+      - UpdaterFunction
     Type: Custom::UpdateGlueTables
     Properties:
-      # Here we use TablesSignature instead of CustomResourceVersion to trigger updates
+      # Update in case TablesSignature or CustomResourceVersion has changed
       TablesSignature: !Ref TablesSignature
+      CustomResourceVersion: !Ref CustomResourceVersion
       ProcessedDataBucket: !Ref ProcessedDataBucket
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
@@ -403,6 +411,7 @@ Resources:
       KmsMasterKeyId: !Ref SqsKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
+      DelaySeconds: !Ref LogProcessorSQSDelaySeconds # Allows log processor to see into the future!
       VisibilityTimeout: !FindInMap [Functions, LogProcessor, Timeout]
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt LogProcessorDLQ.Arn
@@ -415,6 +424,8 @@ Resources:
       CustomResourceVersion: !Ref CustomResourceVersion
       QueueName: !GetAtt LogProcessorQueue.QueueName
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      AgeThresholdSeconds: 3600 # Messages in this queue are getting retried for 1hour and then they will end up in the DLQ. If a
+      # message is older than 1h, it means the messages are not getting processed fast enough.
 
   LogProcessorDLQ:
     Type: AWS::SQS::Queue
@@ -484,6 +495,7 @@ Resources:
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
           SNS_TOPIC_ARN: !Ref ProcessedDataTopicArn
           SQS_QUEUE_URL: !Ref LogProcessorQueue
+          SQS_DELAY_SEC: !Ref LogProcessorSQSDelaySeconds
           INPUT_DATA_BUCKET: !Ref InputDataBucket
       Events:
         Queue:
@@ -667,6 +679,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
+          PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
       Events:
         Queue:
           Type: SQS
@@ -690,13 +703,36 @@ Resources:
             - Effect: Allow
               Action:
                 - glue:GetTable
+                - glue:GetTables
+                - glue:CreateTable
+                - glue:UpdateTable
                 - glue:CreatePartition
                 - glue:GetPartition
+                - glue:GetPartitions
                 - glue:UpdatePartition
               Resource:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+        - Id: AthenaPermissions # to create views over Glue tables
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - athena:StartQueryExecution
+                - athena:StopQueryExecution
+                - athena:GetQuery*
+              Resource: '*'
+        - Id: AthenaResultsPermissions # athena writes results to S3
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetBucketLocation
+                - s3:List*
+                - s3:GetObject
+                - s3:PutObject
+              Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
         - Id: ProbeS3 # used in sync
           Version: 2012-10-17
           Statement:
@@ -903,6 +939,13 @@ Resources:
                 - s3:GetObject
                 - s3:PutObject
               Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rules/*
+        - Id: WriteRuleErrors
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rule_errors/*
         - Id: DDBUpdate
           Version: 2012-10-17
           Statement:

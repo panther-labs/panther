@@ -127,12 +127,12 @@ import (
 
 func init() {
 	// Initialize the registered log types group
-	registeredLogTypes = {{.LogTypesPkg.Name}}.MustMerge("registered",
+	nativeLogTypes = {{.LogTypesPkg.Name}}.MustMerge("registered",
 {{ range .ExportedLogTypes }}
-	{{.Name}}.LogTypes(),
+       {{.Name}}.LogTypes(),
 {{ end }}
 	)
 	// Register all log types in the group with the availableLogTypes
-	availableLogTypes.MustRegister(registeredLogTypes)
+	availableLogTypes.MustRegister(nativeLogTypes)
 }
 `))

@@ -18,11 +18,8 @@
 
 import React from 'react';
 import withSEO from 'Hoc/withSEO';
-import { extractErrorMessage } from 'Helpers/utils';
 import S3LogSourceWizard from 'Components/wizards/S3LogSourceWizard';
-import urls from 'Source/urls';
-import { useSnackbar } from 'pouncejs';
-import useRouter from 'Hooks/useRouter';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
 import { useAddS3LogSource } from './graphql/addS3LogSource.generated';
 
 const initialValues = {
@@ -35,10 +32,7 @@ const initialValues = {
 };
 
 const CreateS3LogSource: React.FC = () => {
-  const { history } = useRouter();
-  const { pushSnackbar } = useSnackbar();
-
-  const [addLogSource, { error: s3LogError }] = useAddS3LogSource({
+  const [addLogSource] = useAddS3LogSource({
     update: (cache, { data }) => {
       cache.modify('ROOT_QUERY', {
         listLogIntegrations: (queryData, { toReference }) => {
@@ -47,21 +41,13 @@ const CreateS3LogSource: React.FC = () => {
         },
       });
     },
-    onCompleted: () => {
-      history.push(urls.logAnalysis.sources.list());
-      pushSnackbar({
-        duration: 20000,
-        variant: 'default',
-        title: 'Your S3 Bucket has been successfully integrated',
-        description: 'Panther will now automatically process any logs you send to this bucket',
-      });
-    },
+    onCompleted: () =>
+      trackEvent({ event: EventEnum.AddedLogSource, src: SrcEnum.LogSources, ctx: 'S3' }),
   });
 
   return (
     <S3LogSourceWizard
       initialValues={initialValues}
-      externalErrorMessage={s3LogError && extractErrorMessage(s3LogError)}
       onSubmit={values =>
         addLogSource({
           variables: {

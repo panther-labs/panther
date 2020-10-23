@@ -81,6 +81,7 @@ export const RESOURCE_TYPES = [
   'AWS.EC2.Volume',
   'AWS.EC2.VPC',
   'AWS.ECS.Cluster',
+  'AWS.EKS.Cluster',
   'AWS.ELBV2.ApplicationLoadBalancer',
   'AWS.GuardDuty.Detector',
   'AWS.IAM.Group',
@@ -102,8 +103,8 @@ const PANTHER_DOCS_BASE = 'https://docs.runpanther.io';
 
 export const STABLE_PANTHER_VERSION = pantherConfig.PANTHER_VERSION.split('-')[0]; // e.g. "v1.7.1"
 const VERSION_PARTS = STABLE_PANTHER_VERSION.split('.'); // ["v1", "7", "1]
-export const MINOR_PANTHER_VERSION = `${VERSION_PARTS[0]}.${VERSION_PARTS[1]}`; // "v1.7"
-export const PANTHER_DOCS_LINK = `${PANTHER_DOCS_BASE}/v/${MINOR_PANTHER_VERSION}-docs`;
+const MINOR_PANTHER_VERSION = `${VERSION_PARTS[0]}.${VERSION_PARTS[1]}`.replace('v', ''); // "1.7"
+export const PANTHER_DOCS_LINK = `${PANTHER_DOCS_BASE}/v/release-${MINOR_PANTHER_VERSION}`;
 
 export const ANALYSIS_UPLOAD_DOC_URL = `${PANTHER_DOCS_LINK}/user-guide/analysis/panther-analysis-tool#uploading-to-panther`;
 export const CLOUD_SECURITY_REAL_TIME_DOC_URL = `${PANTHER_DOCS_LINK}/cloud-security/setup#configure-real-time-monitoring`;
@@ -118,9 +119,12 @@ export const DEFAULT_LARGE_PAGE_SIZE = 25;
 // The key under which User-related data will be stored in the storage
 export const USER_INFO_STORAGE_KEY = 'panther.user.info';
 export const ERROR_REPORTING_CONSENT_STORAGE_KEY = 'panther.generalSettings.errorReportingConsent';
+export const ANALYTICS_CONSENT_STORAGE_KEY = 'panther.generalSettings.analyticsConsent';
 
 // The default panther system user id
 export const PANTHER_USER_ID = '00000000-0000-4000-8000-000000000000';
+
+export const DEFAULT_SENSITIVE_VALUE = '*******************';
 
 export const DESTINATIONS: Record<
   DestinationTypeEnum,

@@ -43,7 +43,8 @@ const (
 	maxBackoff = 30 * time.Second
 	// Expire resources after three days (slightly longer than compliance-api timeout of two days) automatically
 	// if we miss the delete API call
-	deleteMissWindow = 3 * 24 * 60 * 60
+	deleteMissWindow  = 3 * 24 * 60 * 60
+	maxDynamoItemSize = 390000
 )
 
 // AddResources batch writes a group of resources to the Dynamo table.
@@ -54,8 +55,8 @@ func AddResources(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 	}
 
 	now := models.LastModified(time.Now())
-	writeRequests := make([]*dynamodb.WriteRequest, len(input.Resources))
-	sqsEntries := make([]*sqs.SendMessageBatchRequestEntry, len(input.Resources))
+	writeRequests := make([]*dynamodb.WriteRequest, 0, len(input.Resources))
+	sqsEntries := make([]*sqs.SendMessageBatchRequestEntry, 0, len(input.Resources))
 	for i, r := range input.Resources {
 		item := resourceItem{
 			Attributes:      r.Attributes,
@@ -74,17 +75,30 @@ func AddResources(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 			zap.L().Error("dynamodbattribute.MarshalMap failed", zap.Error(err))
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 		}
-		writeRequests[i] = &dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: marshalled}}
+		itemSize := dynamodbbatch.GetDynamoItemSize(marshalled)
+		if itemSize > maxDynamoItemSize {
+			zap.L().Warn("item too large to send to dynamo",
+				zap.String("id", string(r.ID)),
+				zap.String("type", string(r.Type)),
+				zap.Int("size", itemSize))
+			continue
+		}
+		writeRequests = append(writeRequests, &dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: marshalled}})
 
 		body, err := jsoniter.MarshalToString(item.Resource(""))
 		if err != nil {
 			zap.L().Error("jsoniter.MarshalToString(resource) failed", zap.Error(err))
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 		}
-		sqsEntries[i] = &sqs.SendMessageBatchRequestEntry{
+		sqsEntries = append(sqsEntries, &sqs.SendMessageBatchRequestEntry{
 			Id:          aws.String(strconv.Itoa(i)),
 			MessageBody: aws.String(body),
-		}
+		})
+	}
+
+	// If everything was too big to send, send a generic message back
+	if len(writeRequests) == 0 {
+		return &events.APIGatewayProxyResponse{StatusCode: http.StatusCreated}
 	}
 
 	dynamoInput := &dynamodb.BatchWriteItemInput{

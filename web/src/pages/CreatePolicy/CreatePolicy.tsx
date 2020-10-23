@@ -26,6 +26,7 @@ import { DEFAULT_POLICY_FUNCTION } from 'Source/constants';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
 import { useCreatePolicy } from './graphql/createPolicy.generated';
 
 const initialValues: Required<AddPolicyInput> = {
@@ -50,7 +51,10 @@ const CreatePolicyPage: React.FC = () => {
   const { history } = useRouter();
   const [createPolicy, { error }] = useCreatePolicy({
     refetchQueries: [{ query: ListPoliciesDocument, variables: { input: {} } }],
-    onCompleted: data => history.push(urls.compliance.policies.details(data.addPolicy.id)),
+    onCompleted: data => {
+      trackEvent({ event: EventEnum.AddedPolicy, src: SrcEnum.Policies });
+      history.push(urls.compliance.policies.details(data.addPolicy.id));
+    },
   });
 
   const handleSubmit = React.useCallback(
@@ -66,6 +70,7 @@ const CreatePolicyPage: React.FC = () => {
           <Alert
             variant="error"
             title="Couldn't create your policy"
+            discardable
             description={
               extractErrorMessage(error) ||
               'An unknown error occured as we were trying to create your policy'

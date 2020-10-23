@@ -91,7 +91,7 @@ type ListAlertsInput struct {
 	AlertIDContains *string    `json:"alertIdContains"`
 	EventCountMin   *int       `json:"eventCountMin" validate:"omitempty,min=0"`
 	EventCountMax   *int       `json:"eventCountMax" validate:"omitempty,min=1"`
-
+	LogTypes        []string   `json:"logTypes" validate:"omitempty,dive,required"`
 	// Sorting
 	SortDir *string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 }
@@ -187,7 +187,8 @@ type AlertSummary struct {
 	RuleDisplayName   *string             `json:"ruleDisplayName,omitempty"`
 	RuleVersion       *string             `json:"ruleVersion" validate:"required"`
 	DedupString       *string             `json:"dedupString,omitempty"`
-	DeliveryResponses []*DeliveryResponse `json:"deliveryReponses,omitempty"`
+	DeliveryResponses []*DeliveryResponse `json:"deliveryResponses" validate:"required"`
+	LogTypes          []string            `json:"logTypes" validate:"required"`
 	CreationTime      *time.Time          `json:"creationTime" validate:"required"`
 	UpdateTime        *time.Time          `json:"updateTime" validate:"required"`
 	EventsMatched     *int                `json:"eventsMatched" validate:"required"`

@@ -19,7 +19,9 @@ package master
  */
 
 import (
+	"bytes"
 	"path/filepath"
+	"strings"
 
 	"go.uber.org/zap"
 
@@ -29,22 +31,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-// Get the Panther version indicated in the master template.
-func GetVersion() (string, error) {
-	type template struct {
-		Mappings struct {
-			Constants struct {
-				Panther struct {
-					Version string
-				}
-			}
-		}
-	}
-
-	var cfn template
-	err := util.ParseTemplate(filepath.Join("deployments", "master.yml"), &cfn)
-	return cfn.Mappings.Constants.Panther.Version, err
-}
+var masterTemplate = filepath.Join("deployments", "master.yml")
 
 // Compile Lambda source assets
 func Build(log *zap.SugaredLogger) error {
@@ -68,12 +55,22 @@ func Build(log *zap.SugaredLogger) error {
 //
 // Returns the path to the final generated template.
 func Package(log *zap.SugaredLogger, region, bucket, pantherVersion, imgRegistry string) (string, error) {
-	pkg, err := util.SamPackage(region, "deployments/master.yml", bucket)
+	if err := build.EmbedAPISpec(); err != nil {
+		return "", err
+	}
+
+	// Embed version directly into template - we don't want this to be a configurable parameter.
+	template := util.MustReadFile(masterTemplate)
+	template = bytes.Replace(template, []byte("${{PANTHER_VERSION}}"), []byte(pantherVersion), 1)
+	embedPath := filepath.Join("out", "deployments", "embedded.master.yml")
+	util.MustWriteFile(embedPath, template)
+
+	pkg, err := util.SamPackage(region, embedPath, bucket)
 	if err != nil {
 		return "", err
 	}
 
-	dockerImage, err := deploy.PushWebImg(imgRegistry, pantherVersion)
+	dockerImage, err := deploy.PushWebImg(imgRegistry, strings.SplitN(pantherVersion, "-", 2)[0])
 	if err != nil {
 		return "", err
 	}

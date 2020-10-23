@@ -27,13 +27,7 @@ interface EventsByLogTypesProps {
 
 const EventsByLogTypes: React.FC<EventsByLogTypesProps> = ({ events }) => {
   return (
-    <Flex
-      data-testid="events-by-log-type-chart"
-      height="100%"
-      pt={4}
-      px={4}
-      backgroundColor="navyblue-500"
-    >
+    <Flex data-testid="events-by-log-type-chart" height="100%" position="relative">
       <TimeSeriesChart data={events} zoomable />
     </Flex>
   );

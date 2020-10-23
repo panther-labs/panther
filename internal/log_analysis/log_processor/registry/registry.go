@@ -32,9 +32,15 @@ import (
 
 // These will be populated by the generated init() code
 var (
-	registeredLogTypes logtypes.Group
-	availableLogTypes  = &logtypes.Registry{}
+	nativeLogTypes    logtypes.Group
+	availableLogTypes = &logtypes.Registry{}
 )
+
+// NativeLogTypesResolver returns a resolver for native log types.
+// Use this instead of registry.Default()
+func NativeLogTypesResolver() logtypes.Resolver {
+	return logtypes.LocalResolver(nativeLogTypes)
+}
 
 // LogTypes exposes all available log types as a read-only group.
 func LogTypes() logtypes.Group {
@@ -45,8 +51,9 @@ func LogTypes() logtypes.Group {
 func Register(group logtypes.Group) error {
 	return availableLogTypes.Register(group)
 }
+
 func Del(logType string) bool {
-	if registeredLogTypes.Find(logType) != nil {
+	if nativeLogTypes.Find(logType) != nil {
 		panic(`tried to remove native log type`)
 	}
 	return availableLogTypes.Del(logType)
@@ -76,13 +83,13 @@ func AvailableTables() (tables []*awsglue.GlueTableMetadata) {
 	return
 }
 
-// Available parsers returns log parsers for all available log types with nil parameters.
+// AvailableParsers returns log parsers for all native log types with nil parameters.
 // Panics if a parser factory in the default registry fails with nil params.
 func AvailableParsers() map[string]parsers.Interface {
 	entries := LogTypes().Entries()
 	available := make(map[string]parsers.Interface, len(entries))
 	for _, entry := range entries {
-		logType := entry.Describe().Name
+		logType := entry.String()
 		parser, err := entry.NewParser(nil)
 		if err != nil {
 			panic(errors.Errorf("failed to create %q parser with nil params", logType))

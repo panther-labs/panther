@@ -17,25 +17,25 @@
  */
 
 import React from 'react';
-import { Box, BoxProps } from 'pouncejs';
+import { Heading, HeadingProps, Tab } from 'pouncejs';
 
 /**
- * These props are automatically passed by `TabList` and not by the developer
+ * These props are automatically passed by `TabList` and not by the developer. At the export level
+ * of this component, we "hide" them from the developer byy exporting this component `as React.FC`
  */
-interface BorderedTabProps {
+interface PrivateBorderedTabProps {
   /** Whether the tab is selected */
   isSelected: boolean;
+
   /** Whether the tab is focused */
   isFocused: boolean;
-
-  children: React.ReactNode;
 }
 
-const BorderedTab: React.FC<BorderedTabProps> = ({ isSelected, isFocused, children }) => {
+const BorderedTab: React.FC<PrivateBorderedTabProps> = ({ isSelected, isFocused, children }) => {
   const selectedColor = 'blue-400';
   const focusedColor = 'navyblue-300';
 
-  let borderColor: BoxProps['borderColor'];
+  let borderColor: HeadingProps['borderColor'];
   if (isSelected) {
     borderColor = selectedColor;
   } else if (isFocused) {
@@ -45,20 +45,24 @@ const BorderedTab: React.FC<BorderedTabProps> = ({ isSelected, isFocused, childr
   }
 
   return (
-    <Box
-      mx={4}
-      borderBottom="3px solid"
-      zIndex={5}
-      py={4}
-      transition="border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms"
-      borderColor={borderColor}
-      _hover={{
-        borderColor: !isSelected ? focusedColor : undefined,
-      }}
-    >
-      {children}
-    </Box>
+    <Tab>
+      <Heading
+        size="x-small"
+        as="h4"
+        borderBottom="3px solid"
+        zIndex={5}
+        mx={4}
+        py={6}
+        transition="border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms"
+        borderColor={borderColor}
+        _hover={{
+          borderColor: !isSelected ? focusedColor : undefined,
+        }}
+      >
+        {children}
+      </Heading>
+    </Tab>
   );
 };
 
-export default React.memo(BorderedTab);
+export default React.memo(BorderedTab) as React.FC;

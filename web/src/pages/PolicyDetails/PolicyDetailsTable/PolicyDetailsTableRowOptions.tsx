@@ -46,7 +46,7 @@ const PolicyDetailsTableRowOptions: React.FC<PolicyDetailsTableRowOptionsProps> 
         as={IconButton}
         icon="more"
         variant="ghost"
-        size="small"
+        size="medium"
         aria-label="Resource Options"
       />
       <DropdownMenu>

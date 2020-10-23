@@ -137,6 +137,7 @@ func TestRedshiftClusterPoller(t *testing.T) {
 }
 
 func TestRedshiftClusterPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockRedshiftForSetup = awstest.BuildMockRedshiftSvcAllError()
 
 	RedshiftClientFunc = awstest.SetupMockRedshift

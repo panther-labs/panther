@@ -74,10 +74,26 @@ Parameters:
   LogSubscriptionPrincipals:
     Type: CommaDelimitedList
     Description: The list of Principal ARNs to allow read access to the ProcessedDataBucket and subscribe access to ProcessedDataTopicArn
+  SecurityGroupID:
+    Type: String
+    Description: An existing SecurityGroup to deploy Panther into
+    AllowedPattern: '^(sg-[0-9a-f]{10,})?$'
+  SubnetOneIPRange:
+    Type: String
+    Description: A valid & available IP range in the existing VPC you plan to deploy Panther into.
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+  SubnetTwoIPRange:
+    Type: String
+    Description: A second valid & available IP range in the existing VPC you plan to deploy Panther into, for multiple AZ redundancy.
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
   TracingMode:
     Type: String
     Description: Enable XRay tracing on GraphQL queries & mutations
     AllowedValues: ['', Active, PassThrough]
+  VpcID:
+    Type: String
+    Description: An existing VPC to deploy Panther into
+    AllowedPattern: '^(vpc-[0-9a-f]{10,})?$'
 
 Mappings:
   SubnetConfig:
@@ -141,16 +157,18 @@ Conditions:
   ConfigureLogSubscriptions: !Not [!Equals [!Select [0, !Ref LogSubscriptionPrincipals], '']]
   EnableAccessLogs: !Equals [!Ref EnableS3AccessLogs, true]
   ExternalAccessLogs: !Not [!Equals [!Ref AccessLogsBucket, '']]
+  NotExternalAccessLogs: !Equals [!Ref AccessLogsBucket, '']
   ReplicateData: !Not [!Equals [!Ref DataReplicationBucket, '']]
   TracingEnabled: !Not [!Equals [!Ref TracingMode, '']]
   UseCustomDomain: !Not [!Equals [!Ref CustomDomain, '']]
   EnableDebug: !Equals [!Ref Debug, true]
   CreateAlarmSNSTopic: !Equals [!Ref AlarmTopicArn, '']
   IsDeployFromSource: !Equals [!Ref DeployFromSource, true]
+  CreateVpc: !Equals [!Ref VpcID, '']
 
 Resources:
   ########## S3 Buckets ##########
-  AuditLogs: # Panther self-auditing: S3 access logs, flow logs, etc
+  AuditLogs: # Panther self-auditing: S3 access logs (but NOT data processing related!), flow logs, etc
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
@@ -195,7 +213,7 @@ Resources:
     # trying to set the bucket policy. An easy fix is to just delay this resource until some
     # networking setup has completed, it doesn't particularly matter which resource this depends on,
     # as long as it happens later in the stack creation.
-    DependsOn: PublicRoute
+    DependsOn: PublicSubnetOne
 
     Properties:
       Bucket: !Ref AuditLogs
@@ -255,6 +273,57 @@ Resources:
             Principal: '*'
             Action: s3:GetObject
             Resource: !Sub arn:${AWS::Partition}:s3:::${AuditLogs}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+  # Here we store s3 access logs from buckets related to data processing. The reason we put the logs here
+  # instead of the AuditLogs bucket, is because the AuditLog bucket can be "self" monitored by Panther
+  # and if we have data processing related s3 access logs we create a positive feedback loop where we
+  # wrote to a bucket involved with data processing, which creates an access log, which triggers Panther
+  # log processing, which triggers an s3 access log ...
+  UnmonitoredAuditLogs:
+    Condition: NotExternalAccessLogs # only needed if Panther is tracking access logs
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      AccessControl: LogDeliveryWrite
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          # Keep access logs for 1 year, permanently delete 30 days after they expire
+          - ExpirationInDays: 365
+            NoncurrentVersionExpirationInDays: 30
+            Status: Enabled
+      LoggingConfiguration: !If
+        - EnableAccessLogs
+        - DestinationBucketName: !Ref 'AWS::NoValue'
+          LogFilePrefix: self/
+        - !Ref AWS::NoValue
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+
+  UnmonitoredAuditLogsBucketPolicy:
+    Condition: NotExternalAccessLogs # only needed if Panther is tracking access logs
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref UnmonitoredAuditLogs
+      PolicyDocument:
+        Statement:
+          - Sid: ForceSSL
+            Effect: Deny
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub arn:${AWS::Partition}:s3:::${UnmonitoredAuditLogs}/*
             Condition:
               Bool:
                 aws:SecureTransport: false
@@ -400,7 +469,8 @@ Resources:
     Properties:
       LoggingConfiguration: !If
         - EnableAccessLogs
-        - DestinationBucketName: !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref AuditLogs]
+        - DestinationBucketName:
+            !If [ExternalAccessLogs, !Ref AccessLogsBucket, !Ref UnmonitoredAuditLogs]
           LogFilePrefix: !Sub panther-processed-data-${AWS::AccountId}-${AWS::Region}/
         - !Ref AWS::NoValue
       ReplicationConfiguration: !If
@@ -666,13 +736,18 @@ Resources:
   ########## Networking ##########
   # A VPC that will be used by our stack's security group, added to our web-service
   VPC:
+    Condition: CreateVpc
     Type: AWS::EC2::VPC
     Properties:
       EnableDnsSupport: true
       EnableDnsHostnames: true
       CidrBlock: !FindInMap [SubnetConfig, VPC, CIDR]
+      Tags:
+        - Key: Name
+          Value: panther-vpc
 
   FlowLogs:
+    Condition: CreateVpc
     DependsOn: AuditLogsBucketPolicy
     Type: AWS::EC2::FlowLog
     Properties:
@@ -681,32 +756,62 @@ Resources:
       ResourceId: !Ref VPC
       ResourceType: VPC
       TrafficType: ALL
+      Tags:
+        - Key: Name
+          Value: panther-flowlogs
 
   # We define a public subnet so that we can access our web server from a public IP. The empty
   # string in !GetAZs is equivalent to AWS::Region
+  #
+  # These subnets are labelled Public for historical reasons, but will not actually be public if a
+  # private VPC is specified.
   PublicSubnetOne:
     Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select [0, !GetAZs '']
-      VpcId: !Ref VPC
-      CidrBlock: !FindInMap [SubnetConfig, PublicOne, CIDR]
+      VpcId: !If
+        - CreateVpc
+        - !Ref VPC
+        - !Ref VpcID
+      CidrBlock: !If
+        - CreateVpc
+        - !FindInMap [SubnetConfig, PublicOne, CIDR]
+        - !Ref SubnetOneIPRange
       MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: panther-subnet-one
 
   PublicSubnetTwo:
     Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select [1, !GetAZs '']
-      VpcId: !Ref VPC
-      CidrBlock: !FindInMap [SubnetConfig, PublicTwo, CIDR]
+      VpcId: !If
+        - CreateVpc
+        - !Ref VPC
+        - !Ref VpcID
+      CidrBlock: !If
+        - CreateVpc
+        - !FindInMap [SubnetConfig, PublicTwo, CIDR]
+        - !Ref SubnetTwoIPRange
       MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: panther-subnet-two
 
   # The lines below setup networking resources for the public subnets. Containers in the public
   # subnets have public IP addresses and the routing table sends network traffic via the IG.
   InternetGateway:
+    Condition: CreateVpc
     Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: panther-internet-gateway
 
   # Attach the public Internet Gateway to our VPC
   GatewayAttachment:
+    Condition: CreateVpc
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref VPC
@@ -714,13 +819,18 @@ Resources:
 
   # Define a route table in order to map & route IP addresses
   PublicRouteTable:
+    Condition: CreateVpc
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: panther-public-route-table
 
   # Because we have a public VPC, we need to map 0.0.0.0/0 through an Internet Gateway in order
   # to be out there in the network
   PublicRoute:
+    Condition: CreateVpc
     Type: AWS::EC2::Route
     DependsOn: GatewayAttachment
     Properties:
@@ -731,12 +841,14 @@ Resources:
   # Associate the route table that we have created (with the mapping right above) to our public
   # subnets in order to be used by it
   PublicSubnetOneRouteTableAssociation:
+    Condition: CreateVpc
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnetOne
       RouteTableId: !Ref PublicRouteTable
 
   PublicSubnetTwoRouteTableAssociation:
+    Condition: CreateVpc
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnetTwo
@@ -747,6 +859,7 @@ Resources:
   # facing services. This is used for accepting traffic from the public
   # internet and directing it to public facing microservices
   PublicLoadBalancerSecurityGroup:
+    Condition: CreateVpc
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: panther-web-lb
@@ -761,7 +874,12 @@ Resources:
           FromPort: 443
           ToPort: 443
           IpProtocol: tcp
+      Tags:
+        - Key: Name
+          Value: panther-web-lb-sg
 
+  # This load balancer is labelled Public for historical reasons, but is not actually public if a
+  # private VPC is specified.
   PublicLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     DependsOn: AuditLogsBucketPolicy
@@ -775,7 +893,10 @@ Resources:
       # Failure Impact
       # * The Panther user interface will not be available.
       # </cfndoc>
-      Scheme: internet-facing
+      Scheme: !If
+        - CreateVpc
+        - internet-facing
+        - internal
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
           Value: '30'
@@ -787,7 +908,10 @@ Resources:
         - !Ref PublicSubnetOne
         - !Ref PublicSubnetTwo
       SecurityGroups:
-        - !Ref PublicLoadBalancerSecurityGroup
+        - !If
+          - CreateVpc
+          - !Ref PublicLoadBalancerSecurityGroup
+          - !Ref SecurityGroupID
 
   # A target group is connected to a network or application load balancer, so it can automatically
   # distribute traffic across all the targets.
@@ -808,7 +932,10 @@ Resources:
       TargetType: ip
       Port: 80
       Protocol: HTTP
-      VpcId: !Ref VPC
+      VpcId: !If
+        - CreateVpc
+        - !Ref VPC
+        - !Ref VpcID
 
   # Adds the networking stack to a security group and exposes the necessary TCP ports that allow
   # our server to communicate with the outside world.
@@ -821,8 +948,17 @@ Resources:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          SourceSecurityGroupId: !Ref PublicLoadBalancerSecurityGroup
-      VpcId: !Ref VPC
+          SourceSecurityGroupId: !If
+            - CreateVpc
+            - !Ref PublicLoadBalancerSecurityGroup
+            - !Ref SecurityGroupID
+      VpcId: !If
+        - CreateVpc
+        - !Ref VPC
+        - !Ref VpcID
+      Tags:
+        - Key: Name
+          Value: panther-web-container-sg
 
   EcsSecurityGroupIngressFromPublicALB:
     Type: AWS::EC2::SecurityGroupIngress
@@ -830,7 +966,10 @@ Resources:
       Description: Ingress from the public ALB
       GroupId: !Ref WebApplicationServerSecurityGroup
       IpProtocol: '-1'
-      SourceSecurityGroupId: !Ref PublicLoadBalancerSecurityGroup
+      SourceSecurityGroupId: !If
+        - CreateVpc
+        - !Ref PublicLoadBalancerSecurityGroup
+        - !Ref SecurityGroupID
 
   ########## Appsync ##########
   AppsyncServiceRole:

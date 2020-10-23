@@ -24,24 +24,16 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
-	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/pkg/awsathena"
 )
 
-// CreateOrReplaceViews will update Athena with all views
-func CreateOrReplaceViews(glueClient glueiface.GlueAPI, athenaClient athenaiface.AthenaAPI) (err error) {
-	// check what tables are deployed
-	deployedLogTables, err := gluetables.DeployedLogTables(glueClient)
-	if err != nil {
-		return err
-	}
-
+// CreateOrReplaceViews will update Athena with all views for the tables provided
+func CreateOrReplaceViews(athenaClient athenaiface.AthenaAPI, deployedLogTables []*awsglue.GlueTableMetadata) error {
 	if len(deployedLogTables) == 0 { // nothing to do
 		return nil
 	}
@@ -74,6 +66,11 @@ func GenerateLogViews(tables []*awsglue.GlueTableMetadata) (sqlStatements []stri
 		return nil, err
 	}
 	sqlStatements = append(sqlStatements, sqlStatement)
+	sqlStatement, err = generateViewAllRuleErrors(tables)
+	if err != nil {
+		return nil, err
+	}
+	sqlStatements = append(sqlStatements, sqlStatement)
 	// add future views here
 	return sqlStatements, nil
 }
@@ -93,6 +90,18 @@ func generateViewAllRuleMatches(tables []*awsglue.GlueTableMetadata) (sql string
 		ruleTables = append(ruleTables, ruleTable)
 	}
 	return generateViewAllHelper("all_rule_matches", ruleTables, awsglue.RuleMatchColumns)
+}
+
+// generateViewAllRuleErrors creates a view over all log sources in rule error db the using "panther" fields
+func generateViewAllRuleErrors(tables []*awsglue.GlueTableMetadata) (sql string, err error) {
+	// the rule match tables share the same structure as the logs with some extra columns
+	var ruleErrorTables []*awsglue.GlueTableMetadata
+	for _, table := range tables {
+		ruleTable := awsglue.NewGlueTableMetadata(
+			models.RuleErrors, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+		ruleErrorTables = append(ruleErrorTables, ruleTable)
+	}
+	return generateViewAllHelper("all_rule_errors", ruleErrorTables, awsglue.RuleErrorColumns)
 }
 
 func generateViewAllHelper(viewName string, tables []*awsglue.GlueTableMetadata, extraColumns []awsglue.Column) (sql string, err error) {

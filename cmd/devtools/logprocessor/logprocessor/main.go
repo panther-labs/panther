@@ -29,6 +29,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
@@ -99,10 +100,15 @@ func main() {
 	}
 
 	dataStream := &common.DataStream{
-		Reader:      gzipReader,
-		SourceID:    *flagSourceID,
-		SourceLabel: *flagSourceLabel,
-		LogTypes:    logTypes,
+		Reader: gzipReader,
+		Source: &models.SourceIntegration{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				IntegrationID:    *flagSourceID,
+				IntegrationType:  models.IntegrationTypeAWS3,
+				IntegrationLabel: *flagSourceLabel,
+				LogTypes:         logTypes,
+			},
+		},
 	}
 
 	streamChan <- dataStream
@@ -135,9 +141,10 @@ func main() {
 	jsonAPI := common.BuildJSON()
 
 	// Use the global registry
-	dest := destinations.CreateS3Destination(registry.LogTypes(), jsonAPI)
+	dest := destinations.CreateS3Destination(jsonAPI)
 
-	err = processor.Process(streamChan, dest)
+	newProcessor := processor.NewFactory(registry.NativeLogTypesResolver())
+	err = processor.Process(streamChan, dest, newProcessor)
 	if err != nil {
 		log.Fatal(err)
 	}

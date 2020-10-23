@@ -25,6 +25,7 @@ type Mutation {
   deleteUser(id: ID!): Boolean
   inviteUser(input: InviteUserInput): User!
   remediateResource(input: RemediateResourceInput!): Boolean
+  deliverAlert(input: DeliverAlertInput!): AlertSummary!
   resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
   testPolicy(input: TestPolicyInput): TestPolicyResponse
@@ -44,7 +45,7 @@ type Mutation {
 type Query {
   alert(input: GetAlertInput!): AlertDetails
   alerts(input: ListAlertsInput): ListAlertsResponse
-  sendTestAlert(input: SendTestAlertInput!): SendTestAlertResponse
+  sendTestAlert(input: SendTestAlertInput!): [DeliveryResponse]!
   destination(id: ID!): Destination
   destinations: [Destination]
   generalSettings: GeneralSettings!
@@ -95,6 +96,7 @@ input ListAlertsInput {
   pageSize: Int # defaults to `25`
   exclusiveStartKey: String
   severity: [SeverityEnum]
+  logTypes: [String!]
   nameContains: String
   createdAtBefore: AWSDateTime
   createdAtAfter: AWSDateTime
@@ -143,11 +145,13 @@ type SqsLogIntegrationHealth {
 interface Alert {
   alertId: ID!
   creationTime: AWSDateTime!
+  deliveryResponses: [DeliveryResponse]!
   eventsMatched: Int!
   ruleId: ID
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
+  logTypes: [String!]!
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
@@ -156,11 +160,13 @@ interface Alert {
 type AlertDetails implements Alert {
   alertId: ID!
   creationTime: AWSDateTime!
+  deliveryResponses: [DeliveryResponse]!
   eventsMatched: Int!
   ruleId: ID
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
+  logTypes: [String!]!
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
@@ -172,14 +178,24 @@ type AlertDetails implements Alert {
 type AlertSummary implements Alert {
   alertId: ID!
   creationTime: AWSDateTime!
+  deliveryResponses: [DeliveryResponse]!
   eventsMatched: Int!
   ruleId: ID
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
+  logTypes: [String!]!
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
+}
+
+type DeliveryResponse {
+  outputId: ID!
+  message: String!
+  statusCode: Int!
+  success: Boolean!
+  dispatchedAt: AWSDateTime!
 }
 
 type ListAlertsResponse {
@@ -187,9 +203,18 @@ type ListAlertsResponse {
   lastEvaluatedKey: String
 }
 
+input DeliverAlertInput {
+  alertId: ID!
+  outputIds: [ID!]!
+}
+
 input UpdateAlertStatusInput {
   alertId: ID!
   status: AlertStatusesEnum!
+}
+
+input SendTestAlertInput {
+  outputIds: [ID!]!
 }
 
 input ListRulesInput {
@@ -197,7 +222,7 @@ input ListRulesInput {
   enabled: Boolean
   logTypes: String # Comma-separated string
   severity: SeverityEnum
-  tags: String # Comma-separated string
+  tags: [String!]
   # Sorting
   sortBy: ListRulesSortFieldsEnum # defaults to `id`
   sortDir: SortDirEnum # defaults to `ascending`
@@ -257,10 +282,12 @@ type RuleSummary {
   displayName: String
   enabled: Boolean
   id: ID!
+  threshold: Int!
   lastModified: AWSDateTime
+  createdAt: AWSDateTime
   logTypes: [String]
   severity: SeverityEnum
-  tags: [String]
+  tags: [String!]
 }
 
 type ListRulesResponse {
@@ -384,9 +411,19 @@ type Series {
   values: [Int]
 }
 
+type FloatSeries {
+  label: String!
+  values: [Float!]!
+}
+
 type SeriesData {
   timestamps: [AWSDateTime]
   series: [Series]
+}
+
+type FloatSeriesData {
+  timestamps: [AWSDateTime!]!
+  series: [FloatSeries!]!
 }
 
 type SingleValue {
@@ -395,9 +432,11 @@ type SingleValue {
 }
 
 type LogAnalysisMetricsResponse {
-  eventsProcessed: SeriesData
-  alertsBySeverity: SeriesData
-  totalAlertsDelta: [SingleValue]
+  eventsProcessed: SeriesData!
+  alertsBySeverity: SeriesData!
+  eventsLatency: FloatSeriesData!
+  totalAlertsDelta: [SingleValue!]!
+  alertsByRuleID: [SingleValue!]!
   fromDate: AWSDateTime!
   toDate: AWSDateTime!
   intervalMinutes: Int!
@@ -407,12 +446,14 @@ input UpdateGeneralSettingsInput {
   displayName: String
   email: String
   errorReportingConsent: Boolean
+  analyticsConsent: Boolean
 }
 
 type GeneralSettings {
   displayName: String
   email: String
   errorReportingConsent: Boolean
+  analyticsConsent: Boolean
 }
 
 input TestPolicyInput {
@@ -527,14 +568,6 @@ type ListPoliciesResponse {
 type ListResourcesResponse {
   paging: PagingData
   resources: [ResourceSummary]
-}
-
-input SendTestAlertInput {
-  outputIds: [ID!]!
-}
-
-type SendTestAlertResponse {
-  success: Boolean
 }
 
 type Destination {
@@ -889,6 +922,9 @@ type UploadPoliciesResponse {
   totalRules: Int
   newRules: Int
   modifiedRules: Int
+  totalGlobals: Int
+  newGlobals: Int
+  modifiedGlobals: Int
 }
 
 type PolicyUnitTestError {

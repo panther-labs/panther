@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -43,27 +45,16 @@ func init() {
 }
 
 const (
-	// TagName is used for defining value scan methods on string fields.
-	TagName = "panther"
-	// Mark a struct field of type time.Time to set the result timestamp if it is currently zero time.
-	// The first field to be decoded will set the event timestamp.
-	// This is meant to be used once in a struct.
-	// If used multiple times the first field found during JSON parsing will set the event timestamp.
-	// This does not affect events that implement EventTimer and have already set their timestamp.
-	tagEventTime = "event_time"
+	// TagNameIndicator is used for defining a field as an indicator field
+	TagNameIndicator = "panther"
 
-	// Add this tag option to `event_time` to force the use of a non-zero timestamp as the event timestamp.
-	// For cases where a timestamp is preferable if it exists this will force setting the result timestamp
-	// regardless of the order the fields were parsed in JSON. If used, this option *must* be used only once to have
-	// predictable results regardless of the order of fields in JSON.
-	// Example
-	// ```
-	// type T struct {
-	//   Time time.Time `json:"tm" panther:"event_time,override"`
-	//   FallbackTime time.Time `json:"alt_time" panther:"event_time"`
-	// }
-	// ```
-	tagOptionEventTimeOverride = `override`
+	// TagEventTime is used for defining a field as an event time
+	//
+	// Mark a struct field of type time.Time with a `event_time:"true"` tag to set the result timestamp.
+	// If multiple timestamps are present in a struct the first one in the order of definition in the struct
+	// will set the event timestamp.
+	// This does not affect events that implement EventTimer and have already set their timestamp.
+	TagNameEventTime = "event_time"
 )
 
 var (
@@ -224,44 +215,28 @@ func (e *customEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 func (ext *pantherExt) UpdateStructDescriptor(desc *jsoniter.StructDescriptor) {
 	for _, binding := range desc.Fields {
 		field := binding.Field
-		tag := string(field.Tag())
-		tags, err := structtag.Parse(tag)
-		if err != nil {
-			continue
-		}
-		pantherTag, err := tags.Get(TagName)
-		if err != nil {
-			continue
-		}
-		fieldType := field.Type().Type1()
-		switch {
-		case ext.updateTimeBinding(binding, pantherTag, fieldType):
-			// Decorate with an encoder that assigns time value to Result.EventTime if non-zero
-		case ext.updateStringBinding(binding, pantherTag, fieldType):
+		tag := field.Tag()
+		if isEventTimeTag(tag) {
 			// Decorate with an encoder that appends values to indicator fields using registered scanners
+			ext.decorateEventTimeField(binding)
+		} else if scanners, ok := isIndicatorTag(tag); ok {
+			// Decorate with an encoder that appends values to indicator fields using registered scanners
+			ext.decorateIndicatorField(binding, scanners...)
 		}
 	}
 }
 
 // Decorate with an encoder that assigns time value to Result.EventTime if non-zero
-func (*pantherExt) updateTimeBinding(b *jsoniter.Binding, tag *structtag.Tag, typ reflect.Type) bool {
-	if tag.Name != tagEventTime {
-		return false
+func (*pantherExt) decorateEventTimeField(b *jsoniter.Binding) {
+	if typ := b.Field.Type().Type1(); typ.ConvertibleTo(typTime) {
+		b.Encoder = &eventTimeEncoder{
+			ValEncoder: b.Encoder,
+		}
 	}
-	if !typ.ConvertibleTo(typTime) {
-		return false
-	}
-
-	b.Encoder = &eventTimeEncoder{
-		ValEncoder: b.Encoder,
-		override:   tag.HasOption(tagOptionEventTimeOverride),
-	}
-	return true
 }
 
 type eventTimeEncoder struct {
 	jsoniter.ValEncoder
-	override bool
 }
 
 // We add this method so that other extensions that need to modify the encoder can keep our decorations.
@@ -270,7 +245,6 @@ func (e *eventTimeEncoder) DecorateEncoder(typ reflect2.Type, encoder jsoniter.V
 	if typ.Type1().ConvertibleTo(typTime) {
 		return &eventTimeEncoder{
 			ValEncoder: encoder,
-			override:   e.override,
 		}
 	}
 	return encoder
@@ -291,19 +265,46 @@ func (e *eventTimeEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	if result, ok := stream.Attachment.(*Result); ok {
 		// We only override the result event time if the tag was `panther:"event_time,override" or
 		// if we're the first to set the event time. See usage comments on `tagEventTime` const above.
-		if e.override || result.PantherEventTime.IsZero() {
+		if result.PantherEventTime.IsZero() {
 			result.PantherEventTime = tm.UTC()
 		}
 	}
 }
 
-// Decorate with an encoder that appends values to indicator fields using registered scanners
-func (*pantherExt) updateStringBinding(b *jsoniter.Binding, tag *structtag.Tag, typ reflect.Type) bool {
-	scanner, _ := LookupScanner(tag.Name)
-	if scanner == nil {
-		// We don't affect string fields if no scanner was found
-		return false
+func isEventTimeTag(tag reflect.StructTag) (ok bool) {
+	tags, err := structtag.Parse(string(tag))
+	if err != nil {
+		return
 	}
+	eventTimeTag, err := tags.Get(TagNameEventTime)
+	if err != nil {
+		return
+	}
+	ok, _ = strconv.ParseBool(eventTimeTag.Name)
+	return
+}
+
+func isIndicatorTag(tag reflect.StructTag) (scanners []ValueScanner, ok bool) {
+	indicatorTag, ok := tag.Lookup(TagNameIndicator)
+	if !ok {
+		return
+	}
+	for _, scannerName := range strings.Split(indicatorTag, ",") {
+		scannerName = strings.TrimSpace(scannerName)
+		if scanner, _ := LookupScanner(scannerName); scanner != nil {
+			scanners = append(scanners, scanner)
+		}
+	}
+	return scanners, len(scanners) > 0
+}
+
+// Decorate with an encoder that appends values to indicator fields using registered scanners
+func (*pantherExt) decorateIndicatorField(b *jsoniter.Binding, scanners ...ValueScanner) {
+	scanner := MultiScanner(scanners...)
+	if scanner == nil {
+		return
+	}
+	typ := b.Field.Type().Type1()
 	// Decorate encoders
 	switch {
 	case typ.ConvertibleTo(typString):
@@ -311,26 +312,22 @@ func (*pantherExt) updateStringBinding(b *jsoniter.Binding, tag *structtag.Tag, 
 			parent:  b.Encoder,
 			scanner: scanner,
 		}
-		return true
 	case typ.ConvertibleTo(typStringPtr):
 		b.Encoder = &scanStringPtrEncoder{
 			parent:  b.Encoder,
 			scanner: scanner,
 		}
-		return true
 	case typ.ConvertibleTo(typNullString):
 		b.Encoder = &scanNullStringEncoder{
 			parent:  b.Encoder,
 			scanner: scanner,
 		}
-		return true
 	case reflect.PtrTo(typ).Implements(typStringer):
 		b.Encoder = &scanStringerEncoder{
 			parent:  b.Encoder,
 			typ:     typ,
 			scanner: scanner,
 		}
-		return true
 	case typ.Implements(typStringer):
 		indirect := typ.Kind() == reflect.Ptr
 		b.Encoder = &scanStringerEncoder{
@@ -339,9 +336,6 @@ func (*pantherExt) updateStringBinding(b *jsoniter.Binding, tag *structtag.Tag, 
 			indirect: indirect,
 			scanner:  scanner,
 		}
-		return true
-	default:
-		return false
 	}
 }
 

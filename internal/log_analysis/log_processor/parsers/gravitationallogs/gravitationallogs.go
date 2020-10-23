@@ -30,13 +30,11 @@ func LogTypes() logtypes.Group {
 var logTypes = logtypes.Must("Gravitational",
 	// nolint:lll
 	logtypes.ConfigJSON{
+		Name:         TypeTeleportAudit,
+		Description:  `Teleport logs events like successful user logins along with the metadata like remote IP address, time and the session ID.`,
+		ReferenceURL: `https://gravitational.com/teleport/docs/admin-guide/#audit-log`,
 		NewEvent: func() interface{} {
 			return &TeleportAudit{}
-		},
-		Desc: logtypes.Desc{
-			Name:         TypeTeleportAudit,
-			Description:  `Teleport logs events like successful user logins along with the metadata like remote IP address, time and the session ID.`,
-			ReferenceURL: `https://gravitational.com/teleport/docs/admin-guide/#audit-log`,
 		},
 	},
 )

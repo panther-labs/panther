@@ -17,6 +17,7 @@
  */
 
 import React from 'react';
+import urls from 'Source/urls';
 import { RESOURCE_TYPES } from 'Source/constants';
 import { ComplianceStatusEnum, SeverityEnum, ListPoliciesInput } from 'Generated/schema';
 import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
@@ -26,11 +27,11 @@ import FormikCombobox from 'Components/fields/ComboBox';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import { Box, Button, Card, Collapse, Flex } from 'pouncejs';
-import CreateButton from 'Pages/ListPolicies/CreateButton';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash/isEmpty';
 import pick from 'lodash/pick';
 import Breadcrumbs from 'Components/Breadcrumbs';
+import LinkButton from 'Components/buttons/LinkButton';
 
 const severityOptions = Object.values(SeverityEnum);
 const statusOptions = Object.values(ComplianceStatusEnum);
@@ -153,7 +154,7 @@ const ListPoliciesActions: React.FC = () => {
           >
             Filter Options {filtersCount ? `(${filtersCount})` : ''}
           </Button>
-          <CreateButton />
+          <LinkButton to={urls.compliance.policies.create()}>Create New Policy</LinkButton>
         </Flex>
       </Breadcrumbs.Actions>
       <Collapse open={areFiltersVisible}>

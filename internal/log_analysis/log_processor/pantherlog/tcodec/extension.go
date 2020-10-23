@@ -119,12 +119,17 @@ type EncoderDecorator interface {
 }
 
 func (ext *Extension) resolveCodec(tag string) (TimeCodec, error) {
-	// NOTE: [tcodec] Add support for other layout types such as strftime (https://strftime.org/)
 	if strings.HasPrefix(tag, "layout=") {
 		// The tag is of the form `layout=GO_TIME_LAYOUT`.
 		// We strip the prefix and use a LayoutCodec.
 		layout := strings.TrimPrefix(tag, "layout=")
 		return LayoutCodec(layout), nil
+	}
+	if strings.HasPrefix(tag, "strftime=") {
+		// The tag is of the form `strftime=STRFTIME_LAYOUT`.
+		// We strip the prefix and use a StrftimeCodec.
+		layout := strings.TrimPrefix(tag, "strftime=")
+		return StrftimeCodec(layout), nil
 	}
 	if codecs := ext.Codecs; codecs != nil {
 		if codec := codecs.Lookup(tag); codec != nil {

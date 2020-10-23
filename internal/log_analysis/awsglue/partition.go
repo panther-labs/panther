@@ -68,7 +68,7 @@ func (gp *GluePartition) GetGlueTableMetadata() *GlueTableMetadata {
 }
 
 func GetPartitionPrefix(datatype models.DataType, logType string, timebin GlueTableTimebin, time time.Time) string {
-	return getTablePrefix(datatype, GetTableName(logType)) + timebin.PartitionS3PathFromTime(time)
+	return getTablePrefix(datatype, GetTableName(logType)) + timebin.PartitionPathS3(time)
 }
 
 func (gp *GluePartition) GetPartitionLocation() string {
@@ -108,6 +108,9 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 	case ruleMatchS3Prefix:
 		partition.databaseName = RuleMatchDatabaseName
 		partition.datatype = models.RuleData
+	case ruleErrorsS3Prefix:
+		partition.databaseName = RuleErrorsDatabaseName
+		partition.datatype = models.RuleErrors
 	default:
 		return nil, errors.Errorf("unsupported S3 object prefix %s from %s", s3Keys[0], s3ObjectKey)
 	}

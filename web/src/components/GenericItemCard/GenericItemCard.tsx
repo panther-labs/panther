@@ -25,8 +25,9 @@ interface GenericItemCardLogoProps {
 }
 
 interface GenericItemCardValueProps {
-  label: string;
-  value: string | React.ReactElement;
+  id?: string;
+  label?: string;
+  value: string | number | React.ReactElement;
 }
 
 interface GenericItemCardComposition {
@@ -95,22 +96,24 @@ const GenericItemCardOptions = React.forwardRef<HTMLButtonElement>(function Gene
   );
 });
 
-const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, value }) => {
-  const id = slugify(`${label}${value}`);
+const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, value, id }) => {
+  const cardId = id || slugify(`${label}${value}`);
 
   return (
     <Box as="dl" mt={4}>
-      <Box
-        as="dt"
-        aria-labelledby={id}
-        color="gray-300"
-        fontSize="2x-small"
-        mb="1px"
-        fontWeight="medium"
-      >
-        {label}
-      </Box>
-      <Box as="dd" aria-labelledby={id} fontSize="medium" opacity={value ? 1 : 0.3}>
+      {label && (
+        <Box
+          as="dt"
+          aria-labelledby={cardId}
+          color="gray-300"
+          fontSize="2x-small"
+          mb="1px"
+          fontWeight="medium"
+        >
+          {label}
+        </Box>
+      )}
+      <Box as="dd" aria-labelledby={cardId} fontSize="medium" opacity={value ? 1 : 0.3}>
         {value || 'Not Set'}
       </Box>
     </Box>

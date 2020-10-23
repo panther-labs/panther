@@ -17,28 +17,20 @@
  */
 
 import React from 'react';
-import {
-  Box,
-  Flex,
-  Card,
-  Icon,
-  Text,
-  Heading,
-  SimpleGrid,
-  Link,
-  Button,
-  FadeIn,
-  Img,
-} from 'pouncejs';
-import { Link as RRLink } from 'react-router-dom';
+import { Box, Flex, Card, Icon, Text, Heading, SimpleGrid, Link, FadeIn, Img } from 'pouncejs';
 import logo from 'Source/assets/panther-minimal-logo.svg';
 import urls from 'Source/urls';
 import { PANTHER_DOCS_LINK } from 'Source/constants';
 import { pantherConfig } from 'Source/config';
 import withSEO from 'Hoc/withSEO';
 import { AlertStatusesEnum } from 'Generated/schema';
+import useTrackPageView from 'Hooks/useTrackPageView';
+import { PageViewEnum } from 'Helpers/analytics';
+import LinkButton from 'Components/buttons/LinkButton';
 
 const LandingPage: React.FC = () => {
+  useTrackPageView(PageViewEnum.Home);
+
   return (
     <FadeIn delay={100}>
       <Box as="article" textAlign="center">
@@ -64,10 +56,10 @@ const LandingPage: React.FC = () => {
               <Text fontSize="medium" color="gray-300" mb={6} maxWidth={275}>
                 Create users and get your team onboarded to Panther
               </Text>
-              <Box width={225} as={RRLink} to={urls.settings.users()}>
-                <Button fullWidth variantColor="teal" as="div">
+              <Box width={225}>
+                <LinkButton to={urls.settings.users()} fullWidth variantColor="teal">
                   Manage Users
-                </Button>
+                </LinkButton>
               </Box>
             </Flex>
             <Flex direction="column" justify="center" align="center">
@@ -78,10 +70,10 @@ const LandingPage: React.FC = () => {
               <Text fontSize="medium" color="gray-300" mb={6} maxWidth={275}>
                 Connect AWS accounts, scan resources and detect misconfigurations
               </Text>
-              <Box width={225} as={RRLink} to={urls.compliance.sources.create()}>
-                <Button fullWidth variantColor="teal" as="div">
+              <Box width={225}>
+                <LinkButton to={urls.compliance.sources.create()} fullWidth variantColor="teal">
                   Onboard an AWS account
-                </Button>
+                </LinkButton>
               </Box>
             </Flex>
             <Flex direction="column" justify="center" align="center">
@@ -92,10 +84,10 @@ const LandingPage: React.FC = () => {
               <Text fontSize="medium" color="gray-300" mb={6} maxWidth={275}>
                 Connect your log buckets and analyze data with rules
               </Text>
-              <Box width={225} as={RRLink} to={urls.logAnalysis.sources.create()}>
-                <Button fullWidth variantColor="teal" as="div">
+              <Box width={225}>
+                <LinkButton to={urls.logAnalysis.sources.create()} fullWidth variantColor="teal">
                   Connect S3 Buckets
-                </Button>
+                </LinkButton>
               </Box>
             </Flex>
           </SimpleGrid>
@@ -111,10 +103,10 @@ const LandingPage: React.FC = () => {
               <Text fontSize="medium" color="gray-300" mb={6} maxWidth={275}>
                 Add destinations so Panther can notify you of policy and rule findings
               </Text>
-              <Box width={225} as={RRLink} to={urls.settings.destinations.list()}>
-                <Button fullWidth variantColor="red" as="div">
+              <Box width={225}>
+                <LinkButton to={urls.settings.destinations.list()} fullWidth variantColor="red">
                   Setup Destinations
-                </Button>
+                </LinkButton>
               </Box>
             </Flex>
 
@@ -126,10 +118,10 @@ const LandingPage: React.FC = () => {
               <Text fontSize="medium" color="gray-300" mb={6} maxWidth={275}>
                 Create Cloud Security policies to evaluate your AWS infrastructure
               </Text>
-              <Box width={225} as={RRLink} to={urls.compliance.policies.create()}>
-                <Button fullWidth variantColor="red" as="div">
+              <Box width={225}>
+                <LinkButton to={urls.compliance.policies.create()} fullWidth variantColor="red">
                   Create a Policy
-                </Button>
+                </LinkButton>
               </Box>
             </Flex>
             <Flex direction="column" align="center" justify="center">
@@ -140,10 +132,10 @@ const LandingPage: React.FC = () => {
               <Text fontSize="medium" color="gray-300" mb={6} maxWidth={275}>
                 Create rules to evaluate your logs and trigger alerts on suspicious activity
               </Text>
-              <Box width={225} as={RRLink} to={urls.logAnalysis.rules.create()}>
-                <Button fullWidth variantColor="red" as="div">
+              <Box width={225}>
+                <LinkButton to={urls.logAnalysis.rules.create()} fullWidth variantColor="red">
                   Create a Rule
-                </Button>
+                </LinkButton>
               </Box>
             </Flex>
           </SimpleGrid>
@@ -158,16 +150,15 @@ const LandingPage: React.FC = () => {
               <Text fontSize="medium" color="gray-300" mb={6} maxWidth={275}>
                 View all alerts generated by rules that ran against your logs
               </Text>
-              <Box
-                width={225}
-                as={RRLink}
-                to={`${urls.logAnalysis.alerts.list()}?status[]=${
-                  AlertStatusesEnum.Open
-                }&status[]=${AlertStatusesEnum.Triaged}`}
-              >
-                <Button fullWidth as="div">
+              <Box width={225}>
+                <LinkButton
+                  to={`${urls.logAnalysis.alerts.list()}?status[]=${
+                    AlertStatusesEnum.Open
+                  }&status[]=${AlertStatusesEnum.Triaged}`}
+                  fullWidth
+                >
                   View Alerts
-                </Button>
+                </LinkButton>
               </Box>
             </Flex>
             <Flex direction="column" align="center" justify="center">
@@ -178,10 +169,10 @@ const LandingPage: React.FC = () => {
               <Text fontSize="medium" color="gray-300" mb={6} maxWidth={275}>
                 View your AWS resources and monitor their compliance with policies
               </Text>
-              <Box width={225} as={RRLink} to={urls.compliance.resources.list()}>
-                <Button fullWidth as="div">
+              <Box width={225}>
+                <LinkButton to={urls.compliance.resources.list()} fullWidth>
                   View Resources
-                </Button>
+                </LinkButton>
               </Box>
             </Flex>
             <Flex direction="column" align="center" justify="center">
@@ -192,16 +183,14 @@ const LandingPage: React.FC = () => {
               <Text fontSize="medium" color="gray-300" mb={6} maxWidth={275}>
                 Use AWS Athena to write complex queries against normalized log data
               </Text>
-              <Box
-                width={225}
-                as="a"
-                target="_blank"
-                rel="noopener noreferrer"
-                href={`https://${pantherConfig.AWS_REGION}.console.aws.amazon.com/athena/`}
-              >
-                <Button fullWidth as="div">
+              <Box width={225}>
+                <LinkButton
+                  external
+                  to={`https://${pantherConfig.AWS_REGION}.console.aws.amazon.com/athena/`}
+                  fullWidth
+                >
                   Launch Athena
-                </Button>
+                </LinkButton>
               </Box>
             </Flex>
           </SimpleGrid>

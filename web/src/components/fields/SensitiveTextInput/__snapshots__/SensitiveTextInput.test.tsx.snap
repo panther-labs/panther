@@ -1,0 +1,429 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SensitiveTextInput renders 1`] = `
+
+
+.panther-5 {
+  position: relative;
+}
+
+.panther-4 {
+  min-height: 47px;
+  position: relative;
+  border: 1px solid;
+  -webkit-transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  background-color: transparent;
+  border-radius: 4px;
+  border-color: #3e516b;
+}
+
+.panther-4:hover {
+  border-color: #0081c5;
+}
+
+.panther-4:focus-within {
+  border-color: #0081c5;
+}
+
+.panther-4:focus-within label {
+  font-weight: 500;
+  -webkit-transform: translate(6px, 4px) scale(0.65);
+  -moz-transform: translate(6px, 4px) scale(0.65);
+  -ms-transform: translate(6px, 4px) scale(0.65);
+  transform: translate(6px, 4px) scale(0.65);
+}
+
+.panther-3 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  position: relative;
+}
+
+.panther-0 {
+  vertical-align: top;
+  width: 100%;
+  height: 100%;
+  padding-left: 16px;
+  padding-right: 40px;
+  padding-top: 20px;
+  padding-bottom: 8px;
+  position: relative;
+  color: #f6f6f6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: transparent;
+  border: 0;
+  z-index: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panther-0::-webkit-input-placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-0::-moz-placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-0:-ms-input-placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-0::placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+
+
+.panther-0:focus::-webkit-input-placeholder {
+  opacity: 0.4;
+}
+
+.panther-0:focus::-moz-placeholder {
+  opacity: 0.4;
+}
+
+.panther-0:focus:-ms-input-placeholder {
+  opacity: 0.4;
+}
+
+.panther-0:focus::placeholder {
+  opacity: 0.4;
+}
+
+.panther-0:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px #192231 inset;
+  -webkit-text-fill-color: #f6f6f6;
+  border-radius: 4px;
+}
+
+.panther-1 {
+  pointer-events: none;
+  font-size: 0.875rem;
+  padding-left: 16px;
+  padding-right: 16px;
+  color: #bdbdbd;
+  top: 0;
+  position: absolute;
+  transform-origin: center left;
+  -webkit-transform: translate(6px, 4px) scale(0.65);
+  -moz-transform: translate(6px, 4px) scale(0.65);
+  -ms-transform: translate(6px, 4px) scale(0.65);
+  transform: translate(6px, 4px) scale(0.65);
+  -webkit-transition: -webkit-transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-2 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: #8178b3;
+  z-index: 1;
+  position: absolute;
+  right: 16px;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <form
+    action="#"
+  >
+    <div
+      class="panther-6"
+    >
+      <div
+        class="panther-5"
+        data-reach-tooltip-trigger=""
+      >
+        <div
+          class="panther-4"
+        >
+          <div
+            class="panther-3"
+          >
+            <input
+              aria-invalid="false"
+              autocomplete="off"
+              class="panther-0"
+              id="test"
+              name="test"
+              type="password"
+              value="*******************"
+            />
+            <label
+              class="panther-1"
+              for="test"
+            >
+              test
+            </label>
+            <svg
+              class="panther-2"
+              role="presentation"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12,2 C17.5228475,2 22,6.4771525 22,12 C22,17.5228475 17.5228475,22 12,22 C6.4771525,22 2,17.5228475 2,12 C2,6.4771525 6.4771525,2 12,2 Z M13,15.5 L11,15.5 L11,17.5 L13,17.5 L13,15.5 Z M13,7 L11,7 L11,14 L13,14 L13,7 Z"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button
+      type="submit"
+    >
+      Submit
+    </button>
+  </form>
+  <footer
+    id="footer"
+  />
+</div>
+`;
+
+exports[`SensitiveTextInput renders without masked values on demand 1`] = `
+
+
+.panther-5 {
+  position: relative;
+}
+
+.panther-4 {
+  min-height: 47px;
+  position: relative;
+  border: 1px solid;
+  -webkit-transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  background-color: transparent;
+  border-radius: 4px;
+  border-color: #3e516b;
+}
+
+.panther-4:hover {
+  border-color: #0081c5;
+}
+
+.panther-4:focus-within {
+  border-color: #0081c5;
+}
+
+.panther-4:focus-within label {
+  font-weight: 500;
+  -webkit-transform: translate(6px, 4px) scale(0.65);
+  -moz-transform: translate(6px, 4px) scale(0.65);
+  -ms-transform: translate(6px, 4px) scale(0.65);
+  transform: translate(6px, 4px) scale(0.65);
+}
+
+.panther-3 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  position: relative;
+}
+
+.panther-0 {
+  vertical-align: top;
+  width: 100%;
+  height: 100%;
+  padding-left: 16px;
+  padding-right: 40px;
+  padding-top: 20px;
+  padding-bottom: 8px;
+  position: relative;
+  color: #f6f6f6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: transparent;
+  border: 0;
+  z-index: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panther-0::-webkit-input-placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-0::-moz-placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-0:-ms-input-placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-0::placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+
+
+.panther-0:focus::-webkit-input-placeholder {
+  opacity: 0.4;
+}
+
+.panther-0:focus::-moz-placeholder {
+  opacity: 0.4;
+}
+
+.panther-0:focus:-ms-input-placeholder {
+  opacity: 0.4;
+}
+
+.panther-0:focus::placeholder {
+  opacity: 0.4;
+}
+
+.panther-0:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px #192231 inset;
+  -webkit-text-fill-color: #f6f6f6;
+  border-radius: 4px;
+}
+
+.panther-2 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: #8178b3;
+  z-index: 1;
+  position: absolute;
+  right: 16px;
+}
+
+.panther-1 {
+  pointer-events: none;
+  font-size: 0.875rem;
+  padding-left: 16px;
+  padding-right: 16px;
+  color: #bdbdbd;
+  top: 0;
+  position: absolute;
+  transform-origin: center left;
+  -webkit-transform: translate(0, 14px) scale(1);
+  -moz-transform: translate(0, 14px) scale(1);
+  -ms-transform: translate(0, 14px) scale(1);
+  transform: translate(0, 14px) scale(1);
+  -webkit-transition: -webkit-transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 400;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <form
+    action="#"
+  >
+    <div
+      class="panther-6"
+    >
+      <div
+        class="panther-5"
+        data-reach-tooltip-trigger=""
+      >
+        <div
+          class="panther-4"
+        >
+          <div
+            class="panther-3"
+          >
+            <input
+              aria-invalid="false"
+              autocomplete="off"
+              class="panther-0"
+              id="test"
+              name="test"
+              type="password"
+              value=""
+            />
+            <label
+              class="panther-1"
+              for="test"
+            >
+              test
+            </label>
+            <svg
+              class="panther-2"
+              role="presentation"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12,2 C17.5228475,2 22,6.4771525 22,12 C22,17.5228475 17.5228475,22 12,22 C6.4771525,22 2,17.5228475 2,12 C2,6.4771525 6.4771525,2 12,2 Z M13,15.5 L11,15.5 L11,17.5 L13,17.5 L13,15.5 Z M13,7 L11,7 L11,14 L13,14 L13,7 Z"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button
+      type="submit"
+    >
+      Submit
+    </button>
+  </form>
+  <footer
+    id="footer"
+  />
+</div>
+`;

@@ -19,6 +19,7 @@ package logtypes
  */
 
 import (
+	"context"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -32,6 +33,8 @@ type Registry struct {
 	group group
 }
 
+// Find returns finds an LogTypeConfig entry in a registry.
+// The returned pointer should be used as a *read-only* share of the LogTypeConfig.
 func (r *Registry) Find(logType string) Entry {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -44,6 +47,7 @@ func (r *Registry) Len() int {
 	return r.group.Len()
 }
 
+// Entries returns log type entries in a registry.
 func (r *Registry) Entries() []Entry {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -52,6 +56,11 @@ func (r *Registry) Entries() []Entry {
 
 func (r *Registry) Name() string {
 	return r.name
+}
+
+// Resolve implements Resolver for a Registry
+func (r *Registry) Resolve(_ context.Context, name string) (Entry, error) {
+	return r.Find(name), nil
 }
 
 var _ Group = (*Registry)(nil)

@@ -149,9 +149,15 @@ func getEventsForLogType(
 			Prefix: aws.String(partitionPrefix),
 		}
 
-		// if we are in the same partition, set the cursor
-		if token != nil && strings.HasPrefix(token.S3ObjectKey, partitionPrefix) {
-			listRequest.StartAfter = aws.String(token.S3ObjectKey)
+		// if we are paginating and in the same partition, set the cursor
+		if token != nil {
+			if strings.HasPrefix(token.S3ObjectKey, partitionPrefix) {
+				listRequest.StartAfter = aws.String(token.S3ObjectKey)
+			}
+		} else { // not starting from a pagination token
+			// objects have a creation time as prefix we can use to speed listing,
+			// for example: '20200914T021539Z-0e54cab2-80a6-4c27-b622-55ad4d355175.json.gz'
+			listRequest.StartAfter = aws.String(partitionPrefix + nextTime.Format("20060102T150405Z"))
 		}
 
 		var paginationError error
@@ -204,7 +210,7 @@ func getEventsForLogType(
 func timeFromJSONS3ObjectKey(key string) (time.Time, error) {
 	keyParts := strings.Split(key, "/")
 	timeInString := strings.Split(keyParts[len(keyParts)-1], "-")[0]
-	return time.ParseInLocation(destinations.S3ObjectTimestampFormat, timeInString, time.UTC)
+	return time.ParseInLocation(destinations.S3ObjectTimestampLayout, timeInString, time.UTC)
 }
 
 // Queries a specific S3 object events associated to `alertID`.
@@ -222,8 +228,8 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 		zap.String("query", query),
 		zap.Int("index", exclusiveStartIndex))
 	input := &s3.SelectObjectContentInput{
-		Bucket: aws.String(env.ProcessedDataBucket),
-		Key:    aws.String(key),
+		Bucket: &env.ProcessedDataBucket,
+		Key:    &key,
 		InputSerialization: &s3.InputSerialization{
 			CompressionType: aws.String(s3.CompressionTypeGzip),
 			JSON:            &s3.JSONInput{Type: aws.String(s3.JSONTypeLines)},

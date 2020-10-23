@@ -1,0 +1,144 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`BorderedTab renders 1`] = `
+.panther-4 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-flex-wrap: wrap;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+}
+
+.panther-1 {
+  z-index: 1;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: transparent;
+  -webkit-transition: all 0.1s linear;
+  transition: all 0.1s linear;
+}
+
+.panther-0 {
+  font-weight: 400;
+  font-size: 1.125rem;
+  border-bottom: 3px solid;
+  z-index: 5;
+  margin-left: 16px;
+  margin-right: 16px;
+  padding-top: 24px;
+  padding-bottom: 24px;
+  -webkit-transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-color: #0081c5;
+}
+
+
+
+.panther-2 {
+  font-weight: 400;
+  font-size: 1.125rem;
+  border-bottom: 3px solid;
+  z-index: 5;
+  margin-left: 16px;
+  margin-right: 16px;
+  padding-top: 24px;
+  padding-bottom: 24px;
+  -webkit-transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-color: transparent;
+}
+
+.panther-2:hover {
+  border-color: #3e516b;
+}
+
+.panther-5 {
+  outline: none;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <div
+    data-orientation="horizontal"
+    data-reach-tabs=""
+  >
+    <div
+      aria-orientation="horizontal"
+      class="panther-4"
+      data-reach-tab-list=""
+      role="tablist"
+    >
+      <button
+        aria-controls="tabs--1--panel--0"
+        aria-selected="true"
+        class="panther-1"
+        data-orientation="horizontal"
+        data-reach-tab=""
+        data-selected=""
+        id="tabs--1--tab--0"
+        role="tab"
+        tabindex="0"
+        type="button"
+      >
+        <h4
+          class="panther-0"
+        >
+          1
+        </h4>
+      </button>
+      <button
+        aria-controls="tabs--1--panel--1"
+        aria-selected="false"
+        class="panther-1"
+        data-orientation="horizontal"
+        data-reach-tab=""
+        id="tabs--1--tab--1"
+        role="tab"
+        tabindex="-1"
+        type="button"
+      >
+        <h4
+          class="panther-2"
+        >
+          2
+        </h4>
+      </button>
+    </div>
+    <div
+      data-reach-tab-panels=""
+    >
+      <div
+        aria-labelledby="tabs--1--tab--0"
+        class="panther-5"
+        data-reach-tab-panel=""
+        id="tabs--1--panel--0"
+        role="tabpanel"
+        tabindex="-1"
+      >
+        One
+      </div>
+      <div
+        aria-labelledby="tabs--1--tab--1"
+        class="panther-5"
+        data-reach-tab-panel=""
+        hidden=""
+        id="tabs--1--panel--1"
+        role="tabpanel"
+        tabindex="-1"
+      >
+        Two
+      </div>
+    </div>
+  </div>
+  <footer
+    id="footer"
+  />
+</div>
+`;

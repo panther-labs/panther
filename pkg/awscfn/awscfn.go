@@ -235,14 +235,14 @@ func LogResourceFailures(client *cloudformation.CloudFormation, logger *zap.Suga
 }
 
 // Returns combined outputs from one or more stacks. Treats errors as fatal.
-func StackOutputs(client *cloudformation.CloudFormation, logger *zap.SugaredLogger, stacks ...string) map[string]string {
+func StackOutputs(client *cloudformation.CloudFormation, stacks ...string) (map[string]string, error) {
 	result := make(map[string]string)
 
 	for _, stack := range stacks {
 		input := &cloudformation.DescribeStacksInput{StackName: aws.String(stack)}
 		response, err := client.DescribeStacks(input)
 		if err != nil {
-			logger.Fatal(err)
+			return nil, err
 		}
 
 		for k, v := range FlattenStackOutputs(response.Stacks[0]) {
@@ -250,7 +250,7 @@ func StackOutputs(client *cloudformation.CloudFormation, logger *zap.SugaredLogg
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 // StackTag returns the tag value for specified tag key for the given stack, will be blank if the stack or tag does not exist.

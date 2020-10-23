@@ -7,6 +7,13 @@ query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput!) {
       }
       timestamps
     }
+    eventsLatency {
+      series {
+        label
+        values
+      }
+      timestamps
+    }
     alertsBySeverity {
       series {
         label
@@ -15,6 +22,10 @@ query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput!) {
       timestamps
     }
     totalAlertsDelta {
+      label
+      value
+    }
+    alertsByRuleID {
       label
       value
     }

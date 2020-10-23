@@ -87,7 +87,12 @@ func RegisterValidators(validate *validator.Validate) {
 
 func ValidateNullType(val reflect.Value) interface{} {
 	if val.Field(1).Bool() {
-		return val.Field(0).Interface()
+		// We want a pointer value to catch only `null` and missing fields with `required`
+		// Otherwise numbers and booleans would fail if set to 0 or false and empty strings would be invalid.
+		fieldValue := val.Field(0)
+		ptrValue := reflect.New(fieldValue.Type())
+		ptrValue.Elem().Set(fieldValue)
+		return ptrValue.Interface()
 	}
 	return nil
 }

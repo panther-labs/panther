@@ -37,6 +37,8 @@ module.exports = {
     'max-len': 0,
     'no-unused-vars': 'off',
     'no-underscore-dangle': 'off',
+    'no-console': 'error',
+    curly: ['error', 'all'],
     'react/jsx-filename-extension': 0,
     'react/prop-types': 0,
     'import/no-extraneous-dependencies': 0,

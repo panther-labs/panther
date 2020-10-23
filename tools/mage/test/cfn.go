@@ -75,7 +75,15 @@ func testCfnLint() error {
 	//
 	// But if we keep them integers, yaml marshaling converts large integers to scientific notation,
 	// which CFN does not understand. So we force string values to serialize them correctly.
-	args := []string{"-x", "E3012:strict=false", "--"}
+	args := []string{
+		"-x", "E3012:strict=false",
+		// cfn-lint complains: E3002 Invalid Property Resources/WebApplicationServer/Properties/NetworkConfiguration/AwsvpcConfiguration
+		//deployments/web_server.yml:208:9 .
+		// nolint:lll
+		// However this property is valid: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ecs-service-networkconfiguration.html#cfn-ecs-service-networkconfiguration-awsvpcconfiguration
+		"-i", "E3002",
+		"-i", "W3002", // warns about templates which require packaging; ours all do
+		"--"}
 	args = append(args, templates...)
 	if err := sh.RunV(util.PipPath("cfn-lint"), args...); err != nil {
 		return err
@@ -331,7 +339,7 @@ func cfnValidateMaster(parsed map[string]cfnTemplate) []string {
 
 // Given a stack resource, return the templateURL relative to the repo root
 func resolvedTemplatePath(stackResource cfnResource) string {
-	templateURL := stackResource.Properties["TemplateURL"].(string)
+	templateURL := filepath.Base(stackResource.Properties["TemplateURL"].(string))
 	if filepath.Base(templateURL) == "embedded.bootstrap_gateway.yml" {
 		// For the purposes of the tests, read the original template, not the one with embedded swagger
 		templateURL = "bootstrap_gateway.yml"

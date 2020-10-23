@@ -33,11 +33,11 @@ import (
 
 const (
 	// Use the commit from the latest tagged release of https://github.com/golang/tools/releases
-	goimportsVersion = "03a346b" // gopls/v0.4.4
+	goimportsVersion = "c9b80dc" // gopls/v0.5.0
 
-	golangciVersion  = "1.30.0"
+	golangciVersion  = "1.31.0"
 	swaggerVersion   = "0.25.0"
-	terraformVersion = "0.13.2"
+	terraformVersion = "0.13.4"
 )
 
 var log = logger.Build("[setup]")
@@ -52,40 +52,26 @@ func Setup() error {
 		return fmt.Errorf("failed to create setup directory %s: %v", util.SetupDir, err)
 	}
 
-	results := make(chan util.TaskResult)
-	count := 0
+	if err := installSwagger(env); err != nil {
+		return err
+	}
+	if err := installGolangCiLint(env); err != nil {
+		return err
+	}
+	if err := installTerraform(env); err != nil {
+		return err
+	}
+	if err := installGoModules(); err != nil {
+		return err
+	}
+	if err := installPythonEnv(); err != nil {
+		return err
+	}
+	if err := installNodeModules(); err != nil {
+		return err
+	}
 
-	count++
-	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "download go modules", Err: installGoModules()}
-	}(results)
-
-	count++
-	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "download go-swagger", Err: installSwagger(env)}
-	}(results)
-
-	count++
-	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "download golangci-lint", Err: installGolangCiLint(env)}
-	}(results)
-
-	count++
-	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "download terraform", Err: installTerraform(env)}
-	}(results)
-
-	count++
-	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "pip install", Err: installPythonEnv()}
-	}(results)
-
-	count++
-	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "npm install", Err: installNodeModules()}
-	}(results)
-
-	return util.WaitForTasks(log, results, 1, count, count)
+	return nil
 }
 
 // Fetch all Go modules needed for tests and compilation.
@@ -94,7 +80,7 @@ func Setup() error {
 // to happen in parallel with the rest of the downloads. Pre-installing modules also allows
 // us to build Lambda functions in parallel.
 func installGoModules() error {
-	log.Info("download go modules...")
+	log.Info("downloading go modules...")
 
 	if err := sh.Run("go", "mod", "download"); err != nil {
 		return err
@@ -230,8 +216,17 @@ func installNodeModules() error {
 		return nil
 	}
 
-	log.Info("npm install...")
-	args := []string{"install", "--no-progress", "--no-audit"}
+	// 'npm ci' is a lightweight alternative to `npm install` that's faster since it omits
+	// lots of user-oriented features. In CIs, it's the recommended way to install packages
+	var args []string
+	if util.IsRunningInCI() {
+		log.Info("npm ci...")
+		args = []string{"ci", "--no-progress", "--no-audit"}
+	} else {
+		log.Info("npm install...")
+		args = []string{"install", "--no-progress", "--no-audit"}
+	}
+
 	if !mg.Verbose() {
 		args = append(args, "--silent")
 	}

@@ -17,36 +17,21 @@
  */
 
 import React from 'react';
-import { Box, FadeIn, SimpleGrid } from 'pouncejs';
-import Panel from 'Components/Panel';
-import TablePlaceholder from 'Components/TablePlaceholder';
+import { Box, FadeIn } from 'pouncejs';
+import TabsSkeleton from './TabsSkeleton';
 
-const ComplianceOverviewPageSkeleton: React.FC = () => {
+const LogAnalysisOverviewPageSkeleton: React.FC = () => {
   return (
     <Box as="article" mb={6}>
       <FadeIn duration={400}>
-        <SimpleGrid columns={1} spacingX={3} spacingY={2} mb={3}>
-          <Panel title="Real-time Alerts">
-            <Box height={200}>
-              <TablePlaceholder />
-            </Box>
-          </Panel>
-        </SimpleGrid>
-        <SimpleGrid columns={1} spacingX={3} spacingY={2} mb={3}>
-          <Panel title="Events by Log Type">
-            <Box height={200}>
-              <TablePlaceholder />
-            </Box>
-          </Panel>
-        </SimpleGrid>
-        <SimpleGrid columns={1} spacingX={3} spacingY={2}>
-          <Panel title="Recent High Severity Alerts">
-            <TablePlaceholder />
-          </Panel>
-        </SimpleGrid>
+        <TabsSkeleton tabs={[{ label: 'Real-Time Alerts' }, { label: 'Most Active Rules' }]} />
+        <TabsSkeleton
+          tabs={[{ label: 'Events by Log Type' }, { label: 'Data Latency by Log Type' }]}
+        />
+        <TabsSkeleton tabs={[{ label: 'Recent Alerts' }, { label: 'High Severity Alerts' }]} />
       </FadeIn>
     </Box>
   );
 };
 
-export default ComplianceOverviewPageSkeleton;
+export default LogAnalysisOverviewPageSkeleton;

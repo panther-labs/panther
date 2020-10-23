@@ -19,6 +19,8 @@ package testutils
  */
 
 import (
+	"errors"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/athena"
@@ -225,6 +227,7 @@ func (m *EventBridgeMock) DeleteRule(input *eventbridge.DeleteRuleInput) (*event
 type GlueMock struct {
 	glueiface.GlueAPI
 	mock.Mock
+	LogTables []*glue.TableData
 }
 
 func (m *GlueMock) CreateTable(input *glue.CreateTableInput) (*glue.CreateTableOutput, error) {
@@ -262,6 +265,21 @@ func (m *GlueMock) UpdatePartition(input *glue.UpdatePartitionInput) (*glue.Upda
 	return args.Get(0).(*glue.UpdatePartitionOutput), args.Error(1)
 }
 
+// nolint:lll
+func (m *GlueMock) GetTablesPagesWithContext(
+	ctx aws.Context,
+	input *glue.GetTablesInput,
+	scan func(page *glue.GetTablesOutput, isLast bool) bool,
+	_ ...request.Option,
+) error {
+
+	args := m.Called(ctx, input, scan)
+	scan(&glue.GetTablesOutput{
+		TableList: m.LogTables,
+	}, true)
+	return args.Error(0)
+}
+
 type AthenaMock struct {
 	athenaiface.AthenaAPI
 	mock.Mock
@@ -289,6 +307,9 @@ type SnsMock struct {
 
 func (m *SnsMock) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
 	args := m.Called(input)
+	if len(aws.StringValue(input.Subject)) > 100 {
+		return nil, errors.New("invalid subject")
+	}
 	return args.Get(0).(*sns.PublishOutput), args.Error(1)
 }
 

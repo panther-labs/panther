@@ -28,7 +28,7 @@ import (
 )
 
 // SendTestAlert sends a dummy alert to the specified destinations.
-func (API) SendTestAlert(input *deliveryModels.SendTestAlertInput) (*deliveryModels.SendTestAlertOutput, error) {
+func (API) SendTestAlert(input *deliveryModels.SendTestAlertInput) ([]*deliveryModels.SendTestAlertOutput, error) {
 	// First, fetch the alert
 	zap.L().Debug("Sending test alert")
 
@@ -38,24 +38,25 @@ func (API) SendTestAlert(input *deliveryModels.SendTestAlertInput) (*deliveryMod
 	// Get our Alert -> Output mappings. We determine which destinations an alert should be sent.
 	alertOutputMap, err := getAlertOutputMapping(alert, input.OutputIds)
 	if err != nil {
-		return &deliveryModels.SendTestAlertOutput{
-			Success: false,
-		}, err
+		return nil, err
 	}
 
 	// Send alerts to the specified destination(s) and obtain each response status
 	dispatchStatuses := sendAlerts(alertOutputMap)
 
-	// Log any failures and return
-	if err := returnIfFailed(dispatchStatuses); err != nil {
-		return &deliveryModels.SendTestAlertOutput{
-			Success: false,
-		}, err
+	// Convert the full dispatch statuses into ones that are friendly for the frontend
+	responseStatuses := []*deliveryModels.SendTestAlertOutput{}
+	for _, status := range dispatchStatuses {
+		responseStatuses = append(responseStatuses, &deliveryModels.SendTestAlertOutput{
+			OutputID:     status.OutputID,
+			Message:      status.Message,
+			StatusCode:   status.StatusCode,
+			Success:      status.Success,
+			DispatchedAt: status.DispatchedAt,
+		})
 	}
-	zap.L().Debug("Test Succeeded")
-	return &deliveryModels.SendTestAlertOutput{
-		Success: true,
-	}, nil
+
+	return responseStatuses, nil
 }
 
 // generateTestAlert - genreates an alert with dummy values

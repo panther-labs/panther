@@ -20,7 +20,6 @@ import {
   Box,
   Modal,
   ModalProps,
-  Tab,
   TabPanel,
   TabPanels,
   Tabs,
@@ -42,22 +41,10 @@ const ProfileSettingsModal: React.FC<ModalProps> = ({ onClose, ...rest }) => {
     <Modal showCloseButton aria-label="Profile & Account Settings" onClose={onClose} {...rest}>
       <Box width={450}>
         <Tabs>
-          <Box mt={-6} mx={-4}>
+          <Box mt={-8} mx={-6}>
             <TabList>
-              <Tab>
-                {({ isSelected, isFocused }) => (
-                  <BorderedTab isSelected={isSelected} isFocused={isFocused}>
-                    Profile Settings
-                  </BorderedTab>
-                )}
-              </Tab>
-              <Tab>
-                {({ isSelected, isFocused }) => (
-                  <BorderedTab isSelected={isSelected} isFocused={isFocused}>
-                    Account Security
-                  </BorderedTab>
-                )}
-              </Tab>
+              <BorderedTab>Profile Settings</BorderedTab>
+              <BorderedTab>Account Security</BorderedTab>
             </TabList>
             <BorderTabDivider />
           </Box>

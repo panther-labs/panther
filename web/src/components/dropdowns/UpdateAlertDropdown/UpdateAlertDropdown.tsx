@@ -33,6 +33,7 @@ import AlertStatusBadge from 'Components/badges/AlertStatusBadge';
 import { extractErrorMessage, formatDatetime, getUserDisplayName, capitalize } from 'Helpers/utils';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { useListUsers } from 'Pages/Users/graphql/listUsers.generated';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
 import { useUpdateAlertStatus } from './graphql/updateAlertStatus.generated';
 
 interface UpdateAlertDropdownProps {
@@ -92,9 +93,17 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
       },
     }),
     onCompleted: data => {
+      const { status, severity } = data.updateAlertStatus;
+      trackEvent({
+        event: EventEnum.UpdatedAlertStatus,
+        src: SrcEnum.Alerts,
+        data: { status, severity },
+      });
       pushSnackbar({
         variant: 'success',
-        title: `Alert set to ${capitalize(data.updateAlertStatus.status.toLowerCase())}`,
+        title: `Alert set to ${capitalize(
+          (status === AlertStatusesEnum.Closed ? 'INVALID' : status).toLowerCase()
+        )}`,
       });
     },
     onError: error => {
@@ -121,8 +130,6 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
       <Dropdown>
         <DropdownButton as={Box} display="inline-flex">
           <IconButton
-            // @ts-ignore
-            p="1px"
             variant="outline"
             variantColor="navyblue"
             icon="caret-down"
@@ -142,7 +149,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
               }
             >
               <Flex minWidth={85} spacing={2} justify="space-between" align="center">
-                <Box>{statusKey}</Box>
+                <Box>{statusKey === 'Closed' ? 'Invalid' : statusKey}</Box>
                 {alert.status === statusVal && <Icon size="x-small" type="check" />}
               </Flex>
             </DropdownItem>

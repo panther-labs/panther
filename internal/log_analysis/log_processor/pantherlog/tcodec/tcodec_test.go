@@ -29,14 +29,28 @@ import (
 )
 
 func TestUnixMilliseconds(t *testing.T) {
-	expect := time.Date(2020, 05, 24, 23, 50, 07, int(259*time.Millisecond.Nanoseconds()), time.UTC)
+	expect := time.Date(2020, 05, 24, 23, 50, 07, int(259*time.Millisecond.Nanoseconds()), time.UTC).Local()
 	actual := UnixMilliseconds(1590364207259)
-	require.Equal(t, expect, actual.UTC())
+	require.Equal(t, expect.Format(time.RFC3339Nano), actual.Format(time.RFC3339Nano))
+	require.Equal(t, expect, actual)
+}
+func TestUnixMicroseconds(t *testing.T) {
+	expect := time.Date(2020, 05, 24, 23, 50, 07, int(259123*time.Microsecond.Nanoseconds()), time.UTC).Local()
+	actual := UnixMicroseconds(1590364207259123)
+	require.Equal(t, expect.Format(time.RFC3339Nano), actual.Format(time.RFC3339Nano))
+	require.Equal(t, expect, actual)
+}
+func TestUnixNanoseconds(t *testing.T) {
+	expect := time.Date(2020, 05, 24, 23, 50, 07, int(259123456), time.UTC).Local()
+	actual := UnixNanoseconds(1590364207259123456)
+	require.Equal(t, expect.Format(time.RFC3339Nano), actual.Format(time.RFC3339Nano))
+	require.Equal(t, expect, actual)
 }
 func TestUnixSeconds(t *testing.T) {
-	expect := time.Date(2020, 05, 24, 23, 50, 07, int(259*time.Millisecond.Nanoseconds()), time.UTC)
+	expect := time.Date(2020, 05, 24, 23, 50, 07, int(259*time.Millisecond.Nanoseconds()), time.UTC).Local()
 	actual := UnixSeconds(1590364207.259)
-	require.Equal(t, expect, actual.UTC())
+	require.Equal(t, expect.Format(time.RFC3339Nano), actual.Format(time.RFC3339Nano))
+	require.Equal(t, expect, actual)
 }
 
 func TestGlobalRegister(t *testing.T) {

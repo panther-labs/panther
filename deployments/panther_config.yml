@@ -26,6 +26,15 @@ Infra:
   # Use 0.0.0.0/0 to allow unrestricted access
   LoadBalancerSecurityGroupCidr: 0.0.0.0/0
 
+  # These optional settings will allow you to deploy the panther load balancer into a security group
+  # And VPC of your choice. If you set VpcID, you must also set SecurityGroupID and ensure the
+  # subnet IP ranges are valid & available.
+  VpcID: ''
+  # These values only take affect if VpcID is specified
+  SecurityGroupID: ''
+  SubnetOneIPRange: '172.31.250.0/26' # By default, this IP range should be available in the default VPC
+  SubnetTwoIPRange: '172.31.251.0/26' # By default, this IP range should be available in the default VPC
+
   # Lambda functions scale memory and CPU together.
   # Those with the smallest memory are slower and cheaper.
   # Those with the larger memory are faster and more expensive.
@@ -36,6 +45,10 @@ Infra:
   # Lambda concurrent execution limit from default 1000, see:
   # https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html
   LogProcessorLambdaMemorySize: 1024 # 256 - 3008, in 64MB increments
+
+  # Adding a small queue delay can improve the ability of the log processor
+  # to aggregate processed log files. The value must be between 0 and 20 seconds.
+  LogProcessorSQSDelaySeconds: 5
 
   # Create a Python layer with these pip library versions for analysis and remediation.
   #

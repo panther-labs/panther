@@ -17,49 +17,95 @@
  */
 
 import React from 'react';
-import { render, fireEvent } from 'test-utils';
-import CreateSqsLogSource from './index';
+import {
+  render,
+  fireEvent,
+  buildSqsLogSourceIntegration,
+  waitMs,
+  buildAddSqsLogIntegrationInput,
+} from 'test-utils';
+import { mockListAvailableLogTypes } from 'Source/graphql/queries';
+import CreateSqsLogSource from './CreateSqsLogSource';
+import { mockAddSqsLogSource } from './graphql/addSqsLogSource.generated';
 
-test('renders SQS creation wizard', async () => {
-  const sqsInput = {
-    integrationLabel: 'SQS',
-    sqsConfig: {
-      logTypes: ['AWS.ALB'],
-      allowedSourceArns: ['source'],
-      allowedPrincipalArns: ['principal'],
-    },
-  };
-
-  const { getByText, queryByText, getAllByLabelText } = render(<CreateSqsLogSource />);
-
-  // Expect to see a loading interface
-  const configurationPanel = getByText("Let's start with the basics");
-  expect(configurationPanel).toBeTruthy();
-  const integrationLabelField = getAllByLabelText('* Name')[0];
-  const logTypesField = getAllByLabelText('* Log Types')[0];
-  const allowedPrincipalArnsField = getAllByLabelText('Allowed AWS Principal ARNs')[0];
-  const allowedSourceArnsField = getAllByLabelText('Allowed source ARNs')[0];
-  const nextButton = getByText('Continue Setup');
-  // Expecting input elements and button to be rendered
-  expect(integrationLabelField).not.toBeNull();
-  expect(logTypesField).not.toBeNull();
-  expect(allowedPrincipalArnsField).not.toBeNull();
-  expect(allowedSourceArnsField).not.toBeNull();
-  expect(nextButton).toBeDisabled();
-
-  // Adding input to fields
-  fireEvent.change(integrationLabelField, { target: { value: sqsInput.integrationLabel } });
-  fireEvent.change(logTypesField, { target: { value: sqsInput.sqsConfig.logTypes } });
-  fireEvent.change(allowedPrincipalArnsField, {
-    target: { value: sqsInput.sqsConfig.allowedPrincipalArns },
-  });
-  fireEvent.change(allowedSourceArnsField, {
-    target: { value: sqsInput.sqsConfig.allowedSourceArns },
+describe('CreateSqsLogSource', () => {
+  beforeAll(() => {
+    document.execCommand = jest.fn();
   });
 
-  expect(getByText('Continue Setup').closest('button')).not.toBeDisabled();
-  expect(queryByText('Save Source')).toBeNull();
-  // Triggering event for Next step
-  fireEvent.click(getByText('Continue Setup'));
-  expect(getByText('Save Source')).toBeDefined();
+  afterAll(() => {
+    (document.execCommand as jest.MockedFunction<any>).mockClear();
+  });
+
+  it('can successfully create an Sqs log source', async () => {
+    const logSource = buildSqsLogSourceIntegration();
+    const { logTypes } = logSource.sqsConfig;
+
+    const mocks = [
+      mockListAvailableLogTypes({
+        data: {
+          listAvailableLogTypes: {
+            logTypes,
+          },
+        },
+      }),
+      mockAddSqsLogSource({
+        variables: {
+          input: buildAddSqsLogIntegrationInput({
+            integrationLabel: logSource.integrationLabel,
+            sqsConfig: {
+              logTypes: logSource.sqsConfig.logTypes,
+              allowedPrincipalArns: logSource.sqsConfig.allowedPrincipalArns,
+              allowedSourceArns: logSource.sqsConfig.allowedSourceArns,
+            },
+          }),
+        },
+        data: {
+          addSqsLogIntegration: logSource,
+        },
+      }),
+    ];
+    const { getByText, getByLabelText, findByText, getAllByLabelText } = render(
+      <CreateSqsLogSource />,
+      {
+        mocks,
+      }
+    );
+
+    // Fill in  the form and press continue
+    fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
+
+    const logTypesField = getAllByLabelText('Log Types')[0];
+    fireEvent.change(logTypesField, { target: { value: logSource.sqsConfig.logTypes[0] } });
+    fireEvent.click(await findByText(logSource.sqsConfig.logTypes[0]));
+
+    const principalArnField = getAllByLabelText('Allowed AWS Principal ARNs')[0];
+    fireEvent.change(principalArnField, {
+      target: { value: logSource.sqsConfig.allowedPrincipalArns[0] },
+    });
+    fireEvent.keyDown(principalArnField, { key: 'Enter', code: 'Enter' });
+
+    const sourceArnField = getAllByLabelText('Allowed Source ARNs')[0];
+    fireEvent.change(sourceArnField, {
+      target: { value: logSource.sqsConfig.allowedSourceArns[0] },
+    });
+    fireEvent.keyDown(sourceArnField, { key: 'Enter', code: 'Enter' });
+
+    // Wait for form validation to kick in and move on to the next screen
+    await waitMs(50);
+    fireEvent.click(getByText('Continue Setup'));
+
+    // Expect to see a loading animation while the resource is being validated ...
+    expect(getByText('Creating an SQS queue')).toBeInTheDocument();
+
+    // ... replaced by a success screen
+    expect(await findByText('An SQS Queue has been created for you!')).toBeInTheDocument();
+    expect(getByText('Finish Setup')).toBeInTheDocument();
+    expect(getByText('Add Another')).toBeInTheDocument();
+
+    // Expect to see a copy button that works
+    fireEvent.click(getByText('Copy SQS Queue URL'));
+    expect(document.execCommand).toHaveBeenCalledWith('copy');
+    expect(getByText('Copied to clipboard')).toBeInTheDocument();
+  });
 });

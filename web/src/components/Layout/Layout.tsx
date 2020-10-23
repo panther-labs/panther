@@ -25,11 +25,13 @@ const Layout: React.FC = ({ children }) => {
   return (
     <Flex minHeight="100%" bg="navyblue-600">
       <Navigation />
-      <Box as="main" minHeight={1} flex="1 0 auto" bg="navyblue-600" zIndex={0}>
-        <Box width={1214} mx="auto">
+      <Box as="main" minHeight={1} flex="1 0 auto" bg="navyblue-600" zIndex={0} position="relative">
+        <Flex width={1214} mx="auto" minHeight="100%" direction="column">
           <Header />
           {children}
-        </Box>
+        </Flex>
+        {/* Sticky footer used from some components */}
+        <Box as="footer" id="footer" position="absolute" width="100%" bottom={0}></Box>
       </Box>
     </Flex>
   );

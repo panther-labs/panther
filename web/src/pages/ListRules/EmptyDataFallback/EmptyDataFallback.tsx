@@ -17,9 +17,10 @@
  */
 
 import React from 'react';
+import urls from 'Source/urls';
 import { Box, Flex, Heading, Text } from 'pouncejs';
 import EmptyNotepadImg from 'Assets/illustrations/empty-notepad.svg';
-import RuleCreateButton from '../CreateButton';
+import LinkButton from 'Components/buttons/LinkButton';
 
 const ListRulesPageEmptyDataFallback: React.FC = () => {
   return (
@@ -31,7 +32,7 @@ const ListRulesPageEmptyDataFallback: React.FC = () => {
       <Text color="gray-300" textAlign="center" mb={8}>
         Writing rules will allow you to get alerts about suspicious activity in your system
       </Text>
-      <RuleCreateButton />
+      <LinkButton to={urls.logAnalysis.rules.create()}>Create New Rule</LinkButton>
     </Flex>
   );
 };

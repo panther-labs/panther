@@ -44,6 +44,7 @@ type GetMetricsOutput struct {
 	EventsLatency    *MetricResult `json:"eventsLatency,omitempty"`
 	TotalAlertsDelta *MetricResult `json:"totalAlertsDelta,omitempty"`
 	AlertsBySeverity *MetricResult `json:"alertsBySeverity,omitempty"`
+	AlertsByRuleID   *MetricResult `json:"alertsByRuleID,omitempty"`
 	FromDate         time.Time     `json:"fromDate"`
 	ToDate           time.Time     `json:"toDate"`
 	IntervalMinutes  int64         `json:"intervalMinutes"`
@@ -51,8 +52,8 @@ type GetMetricsOutput struct {
 
 // MetricResult is either a single data point or a series of timestamped data points
 type MetricResult = struct {
-	SingleValue []SingleMetric   `json:"singleValue,omitempty"`
-	SeriesData  TimeSeriesMetric `json:"seriesData,omitempty"`
+	SingleValue []SingleMetric   `json:"singleValue"`
+	SeriesData  TimeSeriesMetric `json:"seriesData"`
 }
 
 type SingleMetric struct {

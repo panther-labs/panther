@@ -33,23 +33,28 @@ import (
 func TestRegisterValidators(t *testing.T) {
 	v := validator.New()
 	type T struct {
-		RequiredString String `validate:"required,eq=foo"`
-		RequiredInt64  Int64  `validate:"required,eq=42"`
+		RequiredStringFoo String `validate:"omitempty,eq=foo"`
+		RequiredString    String `validate:"required"`
+		RequiredInt64     Int64  `validate:"required"`
 	}
-	assert.NoError(t, v.Struct(T{}))
 	RegisterValidators(v)
-	require.Error(t, v.Struct(T{}))
-	require.Error(t, v.Struct(T{
-		RequiredString: FromString("bar"),
-		RequiredInt64:  FromInt64(42),
-	}))
-	require.Error(t, v.Struct(T{
-		RequiredString: FromString("foo"),
+	assert.NoError(t, v.Struct(T{
+		RequiredString: FromString(""),
 		RequiredInt64:  FromInt64(0),
 	}))
+	require.Error(t, v.Struct(T{}))
+	require.Error(t, v.Struct(T{
+		RequiredStringFoo: FromString("bar"),
+		RequiredInt64:     FromInt64(42),
+	}))
+	require.Error(t, v.Struct(T{
+		RequiredStringFoo: FromString("foo"),
+		RequiredInt64:     FromInt64(0),
+	}))
 	require.NoError(t, v.Struct(T{
-		RequiredString: FromString("foo"),
-		RequiredInt64:  FromInt64(42),
+		RequiredStringFoo: FromString("foo"),
+		RequiredString:    FromString(""),
+		RequiredInt64:     FromInt64(42),
 	}))
 }
 

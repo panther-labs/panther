@@ -188,6 +188,7 @@ func TestCloudTrailPoller(t *testing.T) {
 }
 
 func TestCloudTrailPollerError(t *testing.T) {
+	resetCache()
 	awstest.MockCloudTrailForSetup = awstest.BuildMockCloudTrailSvcError([]string{"DescribeTrails"})
 
 	CloudTrailClientFunc = awstest.SetupMockCloudTrail
@@ -206,6 +207,7 @@ func TestCloudTrailPollerError(t *testing.T) {
 }
 
 func TestCloudTrailPollerPartialError(t *testing.T) {
+	resetCache()
 	mockCloudTrailSvc := awstest.BuildMockCloudTrailSvc([]string{
 		"DescribeTrails",
 		"GetTrailStatus",
@@ -237,6 +239,7 @@ func TestCloudTrailPollerPartialError(t *testing.T) {
 }
 
 func TestCloudTrailPollerEmpty(t *testing.T) {
+	resetCache()
 	mockCloudTrailSvc := &awstest.MockCloudTrail{}
 	mockCloudTrailSvc.
 		On("DescribeTrails", mock.Anything).

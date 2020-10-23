@@ -32,7 +32,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 )
@@ -41,8 +41,7 @@ const (
 	processingMaxFilesLimit   = 5000 // limit this so there is time to delete from the queue at the end
 	processingTimeLimitScalar = 0.5  // the processing runtime should be shorter than lambda timeout to make room to flush buffers
 
-	sqsMaxBatchSize    = 10 // max messages per read for SQS (can't find an sqs constant to refer to)
-	sqsWaitTimeSeconds = 20 //  note: 20 is max for sqs
+	sqsMaxBatchSize = 10 // max messages per read for SQS (can't find an sqs constant to refer to)
 )
 
 /*
@@ -51,18 +50,30 @@ The function will attempt to read more messages from the queue when the queue ha
 the lambda will continue to read events and maximally aggregate data to produce fewer, bigger files.
 Fewer, bigger files makes Athena queries much faster.
 */
-func StreamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event events.SQSEvent) (sqsMessageCount int, err error) {
-	return streamEvents(sqsClient, deadlineTime, event, Process, sources.ReadSnsMessages)
+func StreamEvents(
+	sqsClient sqsiface.SQSAPI,
+	resolver logtypes.Resolver,
+	deadlineTime time.Time,
+	event events.SQSEvent,
+) (sqsMessageCount int, err error) {
+
+	newProcessor := NewFactory(resolver)
+	process := func(streams <-chan *common.DataStream, dest destinations.Destination) error {
+		return Process(streams, dest, newProcessor)
+	}
+	return streamEvents(sqsClient, deadlineTime, event, process, sources.ReadSnsMessages)
 }
 
 // entry point for unit testing, pass in read/process functions
-func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event events.SQSEvent,
-	processFunc func(chan *common.DataStream, destinations.Destination) error,
+func streamEvents(
+	sqsClient sqsiface.SQSAPI,
+	deadlineTime time.Time,
+	event events.SQSEvent,
+	processFunc ProcessFunc,
 	generateDataStreamsFunc func([]string) ([]*common.DataStream, error)) (int, error) {
 
 	// these cannot be named return vars because it would cause a data race
 	var sqsMessageCount int
-	var err error
 
 	streamChan := make(chan *common.DataStream, 2*sqsMaxBatchSize) // use small buffer to pipeline events
 	processingDeadlineTime := deadlineTime.Add(-time.Duration(float32(time.Since(deadlineTime)) * processingTimeLimitScalar))
@@ -106,17 +117,18 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 			}
 
 			// under low load we do not read from the sqs queue and just exit
-			numberOfQueuedMessages, err := queueDepth(sqsClient)
+			totalQueuedMessages, err := queueDepth(sqsClient) // this includes queued and delayed messages
 			if err != nil {
 				readEventErrorChan <- err
 				return
 			}
-			if numberOfQueuedMessages == 0 {
+			if totalQueuedMessages == 0 {
 				break
 			}
 
 			// keep reading from SQS to maximize output aggregation
-			messages, messageReceipts, err := sqsbatch.ReceiveMessage(sqsClient, common.Config.SqsQueueURL, sqsWaitTimeSeconds)
+			messages, messageReceipts, err := sqsbatch.ReceiveMessage(sqsClient,
+				common.Config.SqsQueueURL, common.SQSWaitTime)
 			if err != nil {
 				readEventErrorChan <- err
 				return
@@ -146,10 +158,9 @@ func streamEvents(sqsClient sqsiface.SQSAPI, deadlineTime time.Time, event event
 
 	// Use a properly configured JSON API for Athena quirks
 	jsonAPI := common.BuildJSON()
-	registeredLogTypes := registry.LogTypes()
 	// process streamChan until closed (blocks)
-	err = processFunc(streamChan, destinations.CreateS3Destination(registeredLogTypes, jsonAPI))
-	if err != nil { // prefer Process() error to readEventError
+	dest := destinations.CreateS3Destination(jsonAPI)
+	if err := processFunc(streamChan, dest); err != nil {
 		return 0, err
 	}
 	readEventError := <-readEventErrorChan
@@ -186,29 +197,46 @@ func sqsDataStreams(messages []*sqs.Message,
 	return readSnsMessagesFunc(eventMessages)
 }
 
-func queueDepth(sqsClient sqsiface.SQSAPI) (numberOfQueuedMessages int, err error) {
+func queueDepth(sqsClient sqsiface.SQSAPI) (totalQueuedMessages int, err error) {
 	getQueueAttributesInput := &sqs.GetQueueAttributesInput{
-		AttributeNames: []*string{aws.String(sqs.QueueAttributeNameApproximateNumberOfMessages)},
-		QueueUrl:       &common.Config.SqsQueueURL,
+		AttributeNames: []*string{
+			aws.String(sqs.QueueAttributeNameApproximateNumberOfMessages),        // tells us there is waiting events now
+			aws.String(sqs.QueueAttributeNameApproximateNumberOfMessagesDelayed), // tells us that there will be events in the near future
+		},
+		QueueUrl: &common.Config.SqsQueueURL,
 	}
 	getQueueAttributesOutput, err := sqsClient.GetQueueAttributes(getQueueAttributesInput)
 	if err != nil {
 		err = errors.Wrapf(err, "failure getting message count from %s", common.Config.SqsQueueURL)
 		return 0, err
 	}
-	approximateNumberOfMessages := getQueueAttributesOutput.Attributes[sqs.QueueAttributeNameApproximateNumberOfMessages]
-	if approximateNumberOfMessages == nil {
-		err = errors.Errorf("failure getting %s count from %s",
-			sqs.QueueAttributeNameApproximateNumberOfMessages, common.Config.SqsQueueURL)
-		return 0, err
-	}
-	numberOfQueuedMessages, err = strconv.Atoi(*approximateNumberOfMessages)
+	// number of messages
+	numberOfQueuedMessages, err := getQueueIntegerAttribute(getQueueAttributesOutput.Attributes,
+		sqs.QueueAttributeNameApproximateNumberOfMessages)
 	if err != nil {
-		err = errors.Wrapf(err, "failure reading %s (%s) count from %s",
-			sqs.QueueAttributeNameApproximateNumberOfMessages, *approximateNumberOfMessages, common.Config.SqsQueueURL)
 		return 0, err
 	}
-	return numberOfQueuedMessages, err
+	// number of delayed messages, the q should be set up with a delay so we can "see" if there are more events
+	numberOfQueuedMessagesDelayed, err := getQueueIntegerAttribute(getQueueAttributesOutput.Attributes,
+		sqs.QueueAttributeNameApproximateNumberOfMessagesDelayed)
+	if err != nil {
+		return 0, err
+	}
+	return numberOfQueuedMessages + numberOfQueuedMessagesDelayed, err
+}
+
+func getQueueIntegerAttribute(attrs map[string]*string, attr string) (count int, err error) {
+	intAsStringPtr := attrs[attr]
+	if intAsStringPtr == nil {
+		err = errors.Errorf("failure getting %s count from %s", attr, common.Config.SqsQueueURL)
+		return 0, err
+	}
+	count, err = strconv.Atoi(*intAsStringPtr)
+	if err != nil {
+		err = errors.Wrapf(err, "failure reading %s (%s) count from %s", attr, *intAsStringPtr, common.Config.SqsQueueURL)
+		return 0, err
+	}
+	return count, err
 }
 
 func highMemoryUsage() (heapUsedMB, memAvailableMB float32, isHigh bool) {

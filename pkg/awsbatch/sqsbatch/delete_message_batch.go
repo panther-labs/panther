@@ -62,8 +62,8 @@ func deleteMessageBatch(sqsClient sqsiface.SQSAPI, queueURL string,
 		Entries:  deleteMessageBatchRequestEntries,
 		QueueUrl: &queueURL,
 	})
-	if err != nil {
-		zap.L().Error("failure deleting sqs messages",
+	if err != nil || len(deleteMessageBatchOutput.Failed) > 0 {
+		zap.L().Warn("failure deleting sqs messages",
 			zap.String("guidance", "failed messages will be reprocessed"),
 			zap.String("queueURL", queueURL),
 			zap.Int("numberOfFailedMessages", len(deleteMessageBatchOutput.Failed)),

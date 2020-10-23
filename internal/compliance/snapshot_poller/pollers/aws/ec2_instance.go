@@ -70,13 +70,12 @@ func getInstance(svc ec2iface.EC2API, instanceID *string) (*ec2.Instance, error)
 		InstanceIds: []*string{instanceID},
 	})
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "InvalidInstanceID.NotFound" {
-				zap.L().Warn("tried to scan non-existent resource",
-					zap.String("resource", *instanceID),
-					zap.String("resourceType", awsmodels.Ec2InstanceSchema))
-				return nil, nil
-			}
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "InvalidInstanceID.NotFound" {
+			zap.L().Warn("tried to scan non-existent resource",
+				zap.String("resource", *instanceID),
+				zap.String("resourceType", awsmodels.Ec2InstanceSchema))
+			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "EC2.DescribeInstances: %s", aws.StringValue(instanceID))
 	}
@@ -154,6 +153,7 @@ func buildEc2InstanceSnapshot(instance *ec2.Instance) *awsmodels.Ec2Instance {
 		KernelId:                                instance.KernelId,
 		KeyName:                                 instance.KeyName,
 		Licenses:                                instance.Licenses,
+		MetadataOptions:                         instance.MetadataOptions,
 		Monitoring:                              instance.Monitoring,
 		NetworkInterfaces:                       instance.NetworkInterfaces,
 		Placement:                               instance.Placement,

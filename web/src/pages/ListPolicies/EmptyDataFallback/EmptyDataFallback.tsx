@@ -19,7 +19,8 @@
 import React from 'react';
 import { Box, Flex, Heading, Text } from 'pouncejs';
 import EmptyNotepadImg from 'Assets/illustrations/empty-notepad.svg';
-import PolicyCreateButton from '../CreateButton';
+import LinkButton from 'Components/buttons/LinkButton';
+import urls from 'Source/urls';
 
 const ListPoliciesPageEmptyDataFallback: React.FC = () => {
   return (
@@ -32,7 +33,7 @@ const ListPoliciesPageEmptyDataFallback: React.FC = () => {
       <Text color="gray-300" textAlign="center" mb={8}>
         Writing policies is the only way to secure your infrastructure against misconfigurations
       </Text>
-      <PolicyCreateButton />
+      <LinkButton to={urls.compliance.policies.create()}>Create New Policy</LinkButton>
     </Flex>
   );
 };

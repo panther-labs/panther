@@ -71,6 +71,7 @@ func TestEC2DescribeNetworkAclsError(t *testing.T) {
 }
 
 func TestEC2PollNetworkAcls(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
 	EC2ClientFunc = awstest.SetupMockEC2
@@ -94,6 +95,7 @@ func TestEC2PollNetworkAcls(t *testing.T) {
 }
 
 func TestEC2PollNetworkAclsError(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
 	EC2ClientFunc = awstest.SetupMockEC2

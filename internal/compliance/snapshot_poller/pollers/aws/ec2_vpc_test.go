@@ -151,9 +151,12 @@ func TestEC2BuildVpcSnapshot(t *testing.T) {
 	assert.Len(t, ec2Snapshot.NetworkAcls, 1)
 	assert.NotEmpty(t, ec2Snapshot.RouteTables)
 	assert.NotEmpty(t, ec2Snapshot.FlowLogs)
+	assert.NotNil(t, ec2Snapshot.DefaultNetworkAclId)
+	assert.NotNil(t, ec2Snapshot.DefaultSecurityGroupId)
 }
 
 func TestEC2PollVpcs(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
 	EC2ClientFunc = awstest.SetupMockEC2
@@ -177,6 +180,7 @@ func TestEC2PollVpcs(t *testing.T) {
 }
 
 func TestEC2PollVpcsError(t *testing.T) {
+	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
 	EC2ClientFunc = awstest.SetupMockEC2

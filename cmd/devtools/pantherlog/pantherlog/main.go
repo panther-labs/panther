@@ -37,7 +37,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
-	"github.com/panther-labs/panther/pkg/unbox"
 )
 
 var (
@@ -80,13 +79,13 @@ func main() {
 			continue
 		}
 		numLines++
-		result := classifier.Classify(line)
-		if result == nil {
-			debugLog.Printf("Failed to classify line %d\n", numLines)
+		result, err := classifier.Classify(line)
+		if err != nil {
+			debugLog.Printf("Failed to classify line %d: %s\n", numLines, err)
 			os.Exit(1)
 			return
 		}
-		debugLog.Printf("Line=%d Type=%q NumEvents=%d\n", numLines, unbox.String(result.LogType), len(result.Events))
+		debugLog.Printf("Line=%d NumEvents=%d\n", numLines, len(result.Events))
 		for _, event := range result.Events {
 			// Add source fields
 			event.PantherSourceID = *sourceID

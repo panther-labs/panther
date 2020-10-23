@@ -83,6 +83,8 @@ exports[`Wizard renders a step 1`] = `
   padding-top: 12px;
 }
 
+
+
 .panther-9 {
   will-change: opacity;
   -webkit-animation: animation-0 300ms 0ms ease-in-out both;
@@ -119,23 +121,22 @@ exports[`Wizard renders a step 1`] = `
 }
 
 .panther-7 {
+  width: auto;
+  outline: none;
+  padding-left: 20px;
+  padding-right: 20px;
+  height: 46px;
+  font-size: 0.938rem;
+  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-radius: 4px;
+  border: 1px solid;
+  border-color: #0081c5;
+  background-color: #0081c5;
   cursor: pointer;
   color: #f6f6f6;
   -webkit-text-decoration: none;
   text-decoration: none;
-  background-color: #0081c5;
-  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
-  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
-  width: auto;
-  padding-left: 20px;
-  padding-right: 20px;
-  padding-top: 12px;
-  padding-bottom: 12px;
-  font-size: 0.938rem;
-  outline: none;
-  border-radius: 4px;
-  border: 1px solid;
-  border-color: #0081c5;
 }
 
 .panther-7:hover {
@@ -155,6 +156,9 @@ exports[`Wizard renders a step 1`] = `
 }
 
 <div>
+  <header
+    id="main-header"
+  />
   <article
     class="panther-12"
   >
@@ -214,5 +218,8 @@ exports[`Wizard renders a step 1`] = `
       </section>
     </div>
   </article>
+  <footer
+    id="footer"
+  />
 </div>
 `;

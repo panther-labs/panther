@@ -21,16 +21,15 @@ from io import TextIOWrapper
 from timeit import default_timer
 from typing import Any, Dict, List, Optional, Tuple
 
-import boto3
-
 from .engine import Engine
 from .analysis_api import AnalysisAPIClient
 from .logging import get_logger
 from .output import MatchedEventsBuffer
 from .rule import Rule
+from .aws_clients import S3_CLIENT
 
-_S3_CLIENT = boto3.client('s3')
 _LOGGER = get_logger()
+
 _RULES_ENGINE = Engine(AnalysisAPIClient())
 
 
@@ -76,7 +75,7 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
             # If rule was invalid, no need to try to run it
 
         else:
-            rule_result = test_rule.run(event['data'])
+            rule_result = test_rule.run(event['data'], raise_title_dedup=True)
             if rule_result.exception:
                 result['errored'] = [
                     {
@@ -111,7 +110,9 @@ def log_analysis(event: Dict[str, Any]) -> None:
                     continue
 
                 for analysis_result in _RULES_ENGINE.analyze(log_type, json_data):
-                    matches += 1
+                    # The analysis results can be either a. Rule matches b. Rule errors
+                    if not analysis_result.error_message:
+                        matches += 1
                     output_buffer.add_event(analysis_result)
     output_buffer.flush()
     end = default_timer()
@@ -143,6 +144,6 @@ def _load_s3_notifications(records: List[Dict[str, Any]]) -> List[Tuple[str, str
 
 # Returns a TextIOWrapper for the S3 data. This makes sure that we don't have to keep all contents of S3 object in memory
 def _load_contents(bucket: str, key: str) -> TextIOWrapper:
-    response = _S3_CLIENT.get_object(Bucket=bucket, Key=key)
+    response = S3_CLIENT.get_object(Bucket=bucket, Key=key)
     gzipped = GzipFile(None, 'rb', fileobj=response['Body'])
     return TextIOWrapper(gzipped)  # type: ignore

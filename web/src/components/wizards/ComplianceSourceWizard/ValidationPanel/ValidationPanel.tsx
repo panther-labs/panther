@@ -22,8 +22,8 @@ import { useFormikContext } from 'formik';
 import FailureStatus from 'Assets/statuses/failure.svg';
 import WaitingStatus from 'Assets/statuses/waiting.svg';
 import SuccessStatus from 'Assets/statuses/success.svg';
-import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
+import LinkButton from 'Components/buttons/LinkButton';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
 import { extractErrorMessage } from 'Helpers/utils';
 import { ApolloError } from '@apollo/client';
@@ -31,8 +31,8 @@ import { ComplianceSourceWizardValues } from '../ComplianceSourceWizard';
 
 const ValidationPanel: React.FC = () => {
   const [errorMessage, setErrorMessage] = React.useState('');
-  const { goToPrevStep, reset, currentStepStatus, setCurrentStepStatus } = useWizardContext();
-  const { initialValues, submitForm } = useFormikContext<ComplianceSourceWizardValues>();
+  const { goToPrevStep, reset: resetWizard, currentStepStatus, setCurrentStepStatus } = useWizardContext(); // prettier-ignore
+  const { initialValues, submitForm, resetForm } = useFormikContext<ComplianceSourceWizardValues>();
 
   React.useEffect(() => {
     (async () => {
@@ -67,13 +67,16 @@ const ValidationPanel: React.FC = () => {
           />
           <WizardPanel.Actions>
             <Flex direction="column" spacing={4}>
-              <RRLink to={urls.compliance.sources.list()}>
-                <Button as="div" onClick={goToPrevStep}>
-                  Finish Setup
-                </Button>
-              </RRLink>
+              <LinkButton to={urls.compliance.sources.list()}>Finish Setup</LinkButton>
               {!initialValues.integrationId && (
-                <Link as={AbstractButton} variant="discreet" onClick={reset}>
+                <Link
+                  as={AbstractButton}
+                  variant="discreet"
+                  onClick={() => {
+                    resetForm();
+                    resetWizard();
+                  }}
+                >
                   Add Another
                 </Link>
               )}
@@ -96,7 +99,7 @@ const ValidationPanel: React.FC = () => {
             src={FailureStatus}
           />
           <WizardPanel.Actions>
-            <Button onClick={reset}>Start over</Button>
+            <Button onClick={resetWizard}>Start over</Button>
           </WizardPanel.Actions>
         </Flex>
       </WizardPanel>

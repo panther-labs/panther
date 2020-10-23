@@ -29,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -162,7 +163,8 @@ func removeTables(t *testing.T) {
 // Fetches the location of a partition. Return nil it the partition doesn't exist
 func getPartitionLocation(t *testing.T, partitionValues []string) *string {
 	response, err := GetPartition(glueClient, testDB, testTable, aws.StringSlice(partitionValues))
-	if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
+	var awsErr awserr.Error
+	if errors.As(err, &awsErr) && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
 		return nil
 	}
 	require.NoError(t, err)

@@ -19,14 +19,22 @@ package process
  */
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/athena"
+	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	"github.com/kelseyhightower/envconfig"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/pkg/awsretry"
 )
 
 const (
@@ -34,15 +42,28 @@ const (
 )
 
 var (
-	awsSession   *session.Session
-	glueClient   glueiface.GlueAPI
-	lambdaClient lambdaiface.LambdaAPI
-	s3Client     s3iface.S3API
+	config = struct {
+		SyncWorkersPerTable int    `default:"10" split_words:"true"`
+		ProcessedDataBucket string `split_words:"true"`
+	}{}
+	awsSession            *session.Session
+	glueClient            glueiface.GlueAPI
+	lambdaClient          lambdaiface.LambdaAPI
+	athenaClient          athenaiface.AthenaAPI
+	logtypesResolver      logtypes.Resolver
+	listAvailableLogTypes func(ctx context.Context) ([]string, error)
 )
 
 func Setup() {
-	awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries)))
+	envconfig.MustProcess("", &config)
+	awsSession = session.Must(session.NewSession(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
+		awsretry.NewConnectionErrRetryer(maxRetries))))
 	glueClient = glue.New(awsSession)
 	lambdaClient = lambda.New(awsSession)
-	s3Client = s3.New(awsSession)
+	athenaClient = athena.New(awsSession)
+
+	logtypesResolver = registry.NativeLogTypesResolver()
+	listAvailableLogTypes = func(_ context.Context) ([]string, error) {
+		return registry.AvailableLogTypes(), nil
+	}
 }

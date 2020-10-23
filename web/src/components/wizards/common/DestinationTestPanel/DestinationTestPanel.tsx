@@ -18,25 +18,30 @@
 
 import React from 'react';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
-import { Button, Text, Link, Img, Flex, Box, AbstractButton } from 'pouncejs';
+import { Button, Text, Link, Img, Flex, Box, AbstractButton, useSnackbar } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import SuccessStatus from 'Assets/statuses/success.svg';
 import FailureStatus from 'Assets/statuses/failure.svg';
 import NotificationStatus from 'Assets/statuses/notification.svg';
+import LinkButton from 'Components/buttons/LinkButton';
+import { extractErrorMessage } from 'Helpers/utils';
+import { DeliveryResponseFull } from 'Source/graphql/fragments/DeliveryResponseFull.generated';
 import { WizardData as CreateWizardData } from '../../CreateDestinationWizard';
 import { WizardData as EditWizardData } from '../../EditDestinationWizard';
 import { useSendTestAlertLazyQuery } from './graphql/sendTestAlert.generated';
 
-type TestStatus = 'PASSED' | 'FAILED' | null;
+type DeliveryResponses = Array<DeliveryResponseFull>;
 
 const DestinationTestPanel: React.FC = () => {
-  const [testStatus, setTestStatus] = React.useState<TestStatus>(null);
+  const [testResponses, setTestResponses] = React.useState<DeliveryResponses>([]);
   const {
     data: { destination },
     reset,
     goToPrevStep,
   } = useWizardContext<CreateWizardData & EditWizardData>();
+
+  const { pushSnackbar } = useSnackbar();
 
   const [sendTestAlert, { loading }] = useSendTestAlertLazyQuery({
     fetchPolicy: 'network-only', // Don't use cache
@@ -45,15 +50,23 @@ const DestinationTestPanel: React.FC = () => {
         outputIds: [destination.outputId],
       },
     },
-    onCompleted: () => setTestStatus('PASSED'),
-    onError: () => setTestStatus('FAILED'),
+    // Failed deliveries will also trigger onCompleted as we don't return exceptions
+    onCompleted: data => setTestResponses(data.sendTestAlert),
+    // This will be fired if there was a network issue or other unknown internal exception
+    onError: error => {
+      pushSnackbar({
+        variant: 'error',
+        title:
+          extractErrorMessage(error) || 'Failed to send a test alert to the given destination(s)',
+      });
+    },
   });
 
   const handleTestAlertClick = React.useCallback(() => {
     sendTestAlert();
   }, []);
 
-  if (testStatus === 'FAILED') {
+  if (testResponses.length && testResponses.some(response => response.success === false)) {
     return (
       <Box maxWidth={700} mx="auto">
         <WizardPanel.Heading
@@ -67,14 +80,15 @@ const DestinationTestPanel: React.FC = () => {
             alt="Test Alert failed to receive"
             src={FailureStatus}
           />
-          <Text mb={5}>
+          <Text>
             If you don{"'"}t feel like it right now, you can always change the configuration later
           </Text>
-          <Link as={RRLink} mb={6} to={urls.settings.destinations.edit(destination.outputId)}>
-            <Button as="div" onClick={goToPrevStep}>
-              Back to Configuration
-            </Button>
-          </Link>
+          <LinkButton
+            to={urls.settings.destinations.edit(destination.outputId)}
+            onClick={goToPrevStep}
+          >
+            Back to Configuration
+          </LinkButton>
           <Link as={RRLink} variant="discreet" to={urls.settings.destinations.list()}>
             Skip Testing
           </Link>
@@ -83,7 +97,7 @@ const DestinationTestPanel: React.FC = () => {
     );
   }
 
-  if (testStatus === 'PASSED') {
+  if (testResponses.length && testResponses.every(response => response.success === true)) {
     return (
       <Box maxWidth={700} mx="auto">
         <WizardPanel.Heading
@@ -97,10 +111,8 @@ const DestinationTestPanel: React.FC = () => {
             alt="Test Alert received"
             src={NotificationStatus}
           />
-          <Text mb={5}>Signed, sealed, and delivered. You are good to go!</Text>
-          <Link as={RRLink} mb={6} to={urls.settings.destinations.list()}>
-            <Button as="div">Finish Setup</Button>
-          </Link>
+          <Text>Signed, sealed, and delivered. You are good to go!</Text>
+          <LinkButton to={urls.settings.destinations.list()}>Finish Setup</LinkButton>
           <Link as={AbstractButton} variant="discreet" onClick={reset}>
             Add Another
           </Link>

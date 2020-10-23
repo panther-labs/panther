@@ -19,44 +19,14 @@ package main
  */
 
 import (
-	"context"
-	"time"
-
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-lambda-go/lambdacontext"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
 // The panther-datacatalog-updater lambda is responsible for managing Glue partitions as data is created.
 
-type DataCatalogEvent struct {
-	events.SQSEvent
-	process.SyncEvent
-}
-
-func handle(ctx context.Context, event DataCatalogEvent) (err error) {
-	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
-	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
-	defer func() {
-		operation.Stop().Log(err,
-			zap.Int("sqsMessageCount", len(event.Records)))
-	}()
-
-	if event.Sync {
-		lambdaDeadline, _ := ctx.Deadline()
-		syncDuration := time.Since(lambdaDeadline) / 2 //  allocate a fraction of total time, this value will be negative!
-		syncDeadline := lambdaDeadline.Add(syncDuration)
-		return process.Sync(&event.SyncEvent, syncDeadline)
-	}
-	return process.SQS(event.SQSEvent)
-}
-
 func main() {
 	process.Setup()
-	lambda.Start(handle)
+	lambda.Start(process.Handle)
 }

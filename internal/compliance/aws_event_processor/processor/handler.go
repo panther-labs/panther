@@ -38,8 +38,8 @@ import (
 
 	"github.com/panther-labs/panther/api/gateway/resources/client/operations"
 	api "github.com/panther-labs/panther/api/gateway/resources/models"
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
+	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 	"github.com/panther-labs/panther/pkg/oplog"
@@ -133,7 +133,7 @@ func Handle(lc *lambdacontext.LambdaContext, batch *events.SQSEvent) (err error)
 }
 
 func handleLogProcessorCloudTrail(messageBody string, changes map[string]*resourceChange) (ok bool, err error) {
-	notification := &models.S3Notification{}
+	notification := &process.S3Notification{}
 	if err := jsoniter.UnmarshalFromString(messageBody, notification); err != nil {
 		return false, errors.Wrap(err, "failed to unmarshal record")
 	}
@@ -177,7 +177,7 @@ func handleCloudTrail(cloudtrail gjson.Result, changes map[string]*resourceChang
 //
 // Because this data has already been pre-processed, we assume it is in the correct format and return all errors.
 func handleS3Download(object *sources.S3ObjectInfo, changes map[string]*resourceChange) error {
-	logs, err := s3Svc.GetObject(&s3.GetObjectInput{
+	logs, err := s3Client.GetObject(&s3.GetObjectInput{
 		Bucket: &object.S3Bucket,
 		Key:    &object.S3ObjectKey,
 	})

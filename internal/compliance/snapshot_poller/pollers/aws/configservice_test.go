@@ -113,6 +113,7 @@ func TestPollConfigServices(t *testing.T) {
 }
 
 func TestPollConfigServicesError(t *testing.T) {
+	resetCache()
 	awstest.MockConfigServiceForSetup = awstest.BuildMockConfigServiceSvcAllError()
 
 	ConfigServiceClientFunc = awstest.SetupMockConfigService

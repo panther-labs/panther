@@ -51,7 +51,7 @@ func TestBatchResources(t *testing.T) {
 }
 
 /*
- skipping until resources-api mock is in place
+TODO - skipping until resources-api mock is in place
 
 func testContext() context.Context {
 	return lambdacontext.NewContext(
