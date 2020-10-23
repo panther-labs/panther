@@ -172,13 +172,13 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Re
 		// Check if any buffer has data for longer than maxDuration
 		select {
 		case <-flushExpired.C:
-			now := time.Now()                                  // NOTE: not the same as the tick time which can be older
-			_ = bufferSet.apply(func(b *s3EventBuffer) error { // does not return an error
+			now := time.Now()                                          // NOTE: not the same as the tick time which can be older
+			_ = bufferSet.apply(func(b *s3EventBuffer) (bool, error) { // does not return an error
 				if now.Sub(b.createTime) >= destination.maxDuration {
 					bufferSet.removeBuffer(b) // bufferSet is not thread safe, do this here
 					sendChan <- b
 				}
-				return nil
+				return false, nil
 			})
 		default: // makes select non-blocking
 		}
@@ -203,10 +203,10 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Re
 
 	zap.L().Debug("output channel closed, sending last events")
 	// If the channel has been closed send the buffered messages before terminating
-	_ = bufferSet.apply(func(buffer *s3EventBuffer) error {
+	_ = bufferSet.apply(func(buffer *s3EventBuffer) (bool, error) {
 		bufferSet.removeBuffer(buffer) // bufferSet is not thread safe, do this here
 		sendChan <- buffer
-		return nil
+		return false, nil
 	})
 
 	// FIXME: closing the channel here is appropriate but we risk a panic leaving the write goroutine open forever.
@@ -371,13 +371,13 @@ func (bs *s3EventBufferSet) writeEvent(event *parsers.Result) (sendBuffers []*s3
 	if len(bs.set) > bs.maxBuffers {
 		// The hope is most of the flushed buffers were done updating (as events often come roughly in time order)
 		bufferReduction := bs.maxBuffers / 2
-		removeBuffers := func(buffer *s3EventBuffer) error {
+		removeBuffers := func(buffer *s3EventBuffer) (bool, error) {
 			if len(sendBuffers) >= bufferReduction {
-				return errors.New("stop") // this just makes apply() stop
+				return true, nil // stop the apply() function
 			}
 			bs.removeBuffer(buffer) // bufferSet is not thread safe, do this here
 			sendBuffers = append(sendBuffers, buffer)
-			return nil
+			return false, nil
 		}
 		_ = bs.apply(removeBuffers) // ignore error, error is just used to stop apply()
 	}
@@ -442,21 +442,21 @@ func (bs *s3EventBufferSet) removeBuffer(buffer *s3EventBuffer) {
 
 func (bs *s3EventBufferSet) largestBuffer() (largestBuffer *s3EventBuffer) {
 	var maxBufferSize int
-	_ = bs.apply(func(buffer *s3EventBuffer) error { // we do not return any errors
+	_ = bs.apply(func(buffer *s3EventBuffer) (bool, error) { // we do not return any errors
 		if buffer.bytes > maxBufferSize {
 			maxBufferSize = buffer.bytes
 			largestBuffer = buffer
 		}
-		return nil
+		return false, nil
 	})
 	return largestBuffer
 }
 
-func (bs *s3EventBufferSet) apply(f func(buffer *s3EventBuffer) error) error {
+func (bs *s3EventBufferSet) apply(f func(buffer *s3EventBuffer) (bool, error)) error {
 	for _, logTypeToBuffer := range bs.set {
 		for _, buffer := range logTypeToBuffer {
-			err := f(buffer)
-			if err != nil {
+			stop, err := f(buffer)
+			if err != nil || stop {
 				return err
 			}
 		}
