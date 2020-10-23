@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
@@ -36,22 +35,9 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
-	"github.com/panther-labs/panther/pkg/box"
 )
 
 const (
-	// How often we check if we need to scale (controls responsiveness).
-	processingScaleDecisionInterval = time.Minute
-
-	// The min threshold to trigger scaling based on gradient estimate of sqs q (messages % change / sec).
-	processingMinGradientThreshold = 0.05
-
-	// This limits how many lambdas can be invoked at once to cap rate of scaling (controls responsiveness).
-	processingMaxLambdaInvoke = 1
-
-	// Limit this so there is time to delete from the queue at the end.
-	processingMaxFilesLimit = 5000
-
 	// The processing runtime should be shorter than lambda timeout to make room to flush buffers ad the end of the cycle.
 	processingTimeLimitDivisor = 2
 
@@ -183,100 +169,6 @@ func streamEvents(
 func processingDeadlineTime(deadlineTime time.Time) time.Time {
 	// NOTE: time.Since(deadlineTime) will be negative since the deadline is in the future!
 	return deadlineTime.Add(time.Since(deadlineTime) / processingTimeLimitDivisor)
-}
-
-// scalingDecisions makes decisions to scale up based on the sqs queue stats periodically
-func scalingDecisions(sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.LambdaAPI) chan bool {
-	stopScaling := make(chan bool)
-
-	var initialTotalQueuedMessages int // first non-zero estimate of queue size
-	var lastTotalQueuedMessages int    // last non-zero estimate of queue size
-
-	startProcessingTime := time.Now()
-	go func() {
-		loop := true
-		for loop {
-			select {
-			// check if we need to scale
-			case <-time.After(processingScaleDecisionInterval):
-			case <-stopScaling:
-				loop = false
-			}
-
-			totalQueuedMessages, err := queueDepth(sqsClient) // this includes queued and delayed messages
-			if err != nil {
-				continue
-			}
-			// use these to estimate the derivative of the load on the events q (I said `derivative`, this must be ML!)
-			if initialTotalQueuedMessages == 0 { // first non-zero estimate
-				initialTotalQueuedMessages = totalQueuedMessages
-			}
-			// last non-zero estimate
-			lastTotalQueuedMessages = totalQueuedMessages
-
-			scalingDecision(lambdaClient, initialTotalQueuedMessages, lastTotalQueuedMessages,
-				time.Since(startProcessingTime).Seconds())
-		}
-	}()
-
-	return stopScaling
-}
-
-// scalingDecision makes a decision to scale up based on the sqs queue stats
-func scalingDecision(lambdaClient lambdaiface.LambdaAPI,
-	initialTotalQueuedMessages, lastTotalQueuedMessages int, secondsSinceStart float64) {
-
-	// if the slope of the change in event q is enough, then rescale relative to the change (gradient ascent)
-	gradient, gradientGood := queueGradient(initialTotalQueuedMessages, lastTotalQueuedMessages, secondsSinceStart)
-	if gradientGood { // only if there was enough data to calculate a gradient
-		if gradient >= processingMinGradientThreshold {
-			processingScaleUp(lambdaClient, (lastTotalQueuedMessages-initialTotalQueuedMessages)/processingMaxFilesLimit)
-		}
-		// if the gradient is above -processingMinGradientThreshold, then work to reduce the dc bias in the event q curve
-		// NOTE: we do not do this if the gradient is RAPIDLY decreasing to avoid over shooting
-		if gradient > -processingMinGradientThreshold {
-			processingScaleUp(lambdaClient, lastTotalQueuedMessages/processingMaxFilesLimit)
-		}
-	}
-}
-
-// queueGradient returns estimate of change to number of events in sqs queue and a boolean to indicate success
-func queueGradient(initialTotalQueuedMessages, lastTotalQueuedMessages int, secondsSinceStart float64) (float64, bool) {
-	if secondsSinceStart < 30 { // not enough time to get good estimate
-		return 0.0, false
-	}
-	if lastTotalQueuedMessages < processingMaxFilesLimit { // not enough messages to get good estimate
-		return 0.0, false
-	}
-	changeRatio := float64(lastTotalQueuedMessages-initialTotalQueuedMessages) / float64(lastTotalQueuedMessages)
-	return changeRatio / secondsSinceStart, true
-}
-
-// processingScaleUp will execute nLambdas to take on more load
-func processingScaleUp(lambdaClient lambdaiface.LambdaAPI, nLambdas int) {
-	if nLambdas > 0 {
-		if nLambdas > processingMaxLambdaInvoke { // clip to cap rate of increase under very high load
-			nLambdas = processingMaxLambdaInvoke
-		}
-		zap.L().Info("scaling up", zap.Int("nLambdas", nLambdas))
-		for i := 0; i < nLambdas; i++ {
-			resp, err := lambdaClient.Invoke(&lambda.InvokeInput{
-				FunctionName:   box.String("panther-log-processor"),
-				Payload:        []byte(`{"tick": true}`),
-				InvocationType: box.String(lambda.InvocationTypeEvent), // don't wait for response
-			})
-			if err != nil {
-				zap.L().Error("scaling up failed to invoke log processor",
-					zap.Error(errors.WithStack(err)))
-				return
-			}
-			if resp.FunctionError != nil {
-				zap.L().Error("scaling up failed to invoke log processor",
-					zap.Error(errors.Errorf(*resp.FunctionError)))
-				return
-			}
-		}
-	}
 }
 
 func isProcessingTimeRemaining(deadline time.Time) bool {

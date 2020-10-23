@@ -23,13 +23,26 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/pkg/testutils"
+)
+
+var (
+	messagesBelowThreshold = &sqs.GetQueueAttributesOutput{
+		Attributes: map[string]*string{
+			sqs.QueueAttributeNameApproximateNumberOfMessages:        aws.String("0"),
+			sqs.QueueAttributeNameApproximateNumberOfMessagesDelayed: aws.String("0"),
+		},
+	}
 )
 
 // Replace global logger with an in-memory observer for tests.
@@ -46,6 +59,12 @@ func TestProcessOpLog(t *testing.T) {
 	lc := lambdacontext.LambdaContext{
 		InvokedFunctionArn: functionName,
 	}
+
+	sqsMock := &testutils.SqsMock{}
+	common.SqsClient = sqsMock
+	// will be called by scalingDecisions() on exit
+	sqsMock.On("GetQueueAttributes", mock.Anything).Return(messagesBelowThreshold, nil).Once()
+
 	err := process(&lc, time.Now())
 	require.NoError(t, err)
 	message := common.OpLogNamespace + ":" + common.OpLogComponent + ":" + functionName
@@ -54,4 +73,5 @@ func TestProcessOpLog(t *testing.T) {
 	assert.Equal(t, message, logs.FilterMessage(message).All()[0].Entry.Message)
 	serviceDim := logs.FilterMessage(message).All()[0].ContextMap()[common.OpLogLambdaServiceDim.Key]
 	assert.Equal(t, common.OpLogLambdaServiceDim.String, serviceDim)
+	sqsMock.AssertExpectations(t)
 }
