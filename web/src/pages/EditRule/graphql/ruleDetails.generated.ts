@@ -46,7 +46,9 @@ export type RuleDetails = {
       | 'tags'
     > & {
       tests?: Types.Maybe<
-        Array<Types.Maybe<Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource'>>>
+        Array<
+          Types.Maybe<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>>
+        >
       >;
     }
   >;

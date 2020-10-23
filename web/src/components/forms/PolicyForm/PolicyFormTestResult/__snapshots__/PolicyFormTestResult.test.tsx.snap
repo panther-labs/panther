@@ -1,0 +1,106 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PolicyFormTestResult matches the snapshot 1`] = `
+.panther-6 {
+  background-color: #23344e;
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.panther-5 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: flex-start;
+  -webkit-box-align: flex-start;
+  -ms-flex-align: flex-start;
+  align-items: flex-start;
+}
+
+.panther-5>*:not(:last-child) {
+  margin-right: 16px;
+}
+
+
+
+.panther-1 {
+  font-weight: 500;
+  font-size: 1.125rem;
+}
+
+.panther-2 {
+  color: #86a3c3;
+}
+
+.panther-3 {
+  color: #e85959;
+}
+
+.panther-0 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  cursor: default;
+  width: -webkit-fit-content;
+  width: -moz-content;
+  width: fit-content;
+  min-width: 85px;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 40px;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 16px;
+  padding-right: 16px;
+  background-color: #d64242;
+}
+
+<div>
+  <article
+    class="panther-6"
+  >
+    <div
+      class="panther-5"
+    >
+      <div
+        aria-atomic="true"
+        class="panther-0"
+        role="status"
+      >
+        FAIL
+      </div>
+      <div
+        class="panther-4"
+        spacing="2"
+      >
+        <h2
+          class="panther-1"
+        >
+          Utah
+        </h2>
+        <dt
+          class="panther-2"
+        >
+          Policy Body
+        </dt>
+        <dd
+          class="panther-3"
+        >
+          deposit
+        </dd>
+      </div>
+    </div>
+  </article>
+</div>
+`;
