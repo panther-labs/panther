@@ -97,6 +97,7 @@ func putSQSAlarmGroup(props SQSAlarmProperties) error {
 		}
 		input.Threshold = &threshold
 		input.Unit = aws.String(cloudwatch.StandardUnitSeconds)
+		input.EvaluationPeriods = aws.Int64(3)
 	}
 
 	return putMetricAlarm(input)
