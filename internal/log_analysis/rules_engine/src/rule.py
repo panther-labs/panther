@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import json
 import os
 import tempfile
 from dataclasses import dataclass
@@ -30,6 +31,7 @@ MAX_DEDUP_STRING_SIZE = 1000
 
 # Maximum size for a title
 MAX_TITLE_SIZE = 1000
+MAX_ALERT_CONTEXT_SIZE = 200*1000 # 200kb
 
 TRUNCATED_STRING_SUFFIX = '... (truncated)'
 
@@ -43,6 +45,7 @@ class RuleResult:
     matched: Optional[bool] = None
     dedup_string: Optional[str] = None
     title: Optional[str] = None
+    alert_context: Optional[str] = None
 
 
 # pylint: disable=too-many-instance-attributes
@@ -125,16 +128,17 @@ class Rule:
 
         dedup_string: Optional[str] = None
         title: Optional[str] = None
+        alert_context: Optional[str] = None
         try:
             rule_result = self._run_command(self._module.rule, event, bool)
             if rule_result:
                 use_default_on_exception = not raise_title_dedup
                 title = self._get_title(event, use_default_on_exception)
                 dedup_string = self._get_dedup(event, title, use_default_on_exception)
-                alert_context = self.
+                alert_context = self._get_alert_context(event, use_default_on_exception)
         except Exception as err:  # pylint: disable=broad-except
             return RuleResult(exception=err)
-        return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title)
+        return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title, alert_context=alert_context)
 
     # Returns the dedup string for this rule match
     # If the rule match had a custom title, use the title as a deduplication string
@@ -194,27 +198,27 @@ class Rule:
         return title_string
 
     def _get_alert_context(self, event: Dict[str, Any], use_default_on_exception: bool = True) -> Optional[str]:
-        if not self._has_title:
+        if not self._has_alert_context:
             return None
 
         try:
-            alert_context = self._run_command(self._module.alert_context, event, Dict[str, Any])
+            alert_context = self._run_command(self._module.alert_context, event, dict)
+            serialized_alert_context = json.dumps(alert_context)
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.warning('title method raised exception. Using default. Exception: %s', err)
+                self.logger.warning('alert_context method raised exception. Using default. Exception: %s', err)
                 return None
             raise
 
-        if len(title_string) > MAX_TITLE_SIZE:
-            # If title exceeds max size, truncate it
+        if len(serialized_alert_context) > MAX_ALERT_CONTEXT_SIZE:
+            # If title exceeds max size, use default
             self.logger.warning(
-                'maximum title string size is [%d] characters. Title for rule with ID '
-                '[%s] is [%d] characters. Truncating.', MAX_TITLE_SIZE, self.rule_id, len(title_string)
+                'maximum alert_context size is [%d] characters. alert_context for rule with ID '
+                '[%s] is [%d] characters. Using default', MAX_ALERT_CONTEXT_SIZE, self.rule_id, len(serialized_alert_context)
             )
-            num_characters_to_keep = MAX_TITLE_SIZE - len(TRUNCATED_STRING_SUFFIX)
-            return title_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
+            return None
 
-        return title_string
+        return serialized_alert_context
 
     def _store_rule(self) -> None:
         """Stores rule to disk."""

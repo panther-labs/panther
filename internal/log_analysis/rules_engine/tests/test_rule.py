@@ -201,3 +201,33 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
 
         expected_result = RuleResult(matched=True, dedup_string='defaultDedupString:test_rule_title_returns_empty_string', title='')
         self.assertEqual(expected_result, rule.run({}))
+
+    def test_alert_context(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef alert_context(event):\n\treturn {"string": "string", "int": 1, "nested": {}}'
+        rule = Rule({'id': 'test_alert_context', 'body': rule_body, 'versionId': 'versionId'})
+
+        expected_result = RuleResult(
+            matched=True,
+            dedup_string='defaultDedupString:test_alert_context',
+            alert_context='{"string": "string", "int": 1, "nested": {}}')
+        self.assertEqual(expected_result, rule.run({}))
+
+    def test_alert_context_invalid_return_value(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\ndef alert_context(event):\n\treturn ""'
+        rule = Rule({'id': 'test_alert_context_invalid_return_value', 'body': rule_body, 'versionId': 'versionId'})
+
+        expected_result = RuleResult(matched=True, dedup_string='defaultDedupString:test_alert_context_invalid_return_value')
+        self.assertEqual(expected_result, rule.run({}))
+
+    def test_alert_context_too_big(self) -> None:
+        # Function should generate alert_context exceeding limit
+        alert_context_function = 'def alert_context(event):\n' \
+                                 '\ttest_dict = {}\n' \
+                                 '\tfor i in range(300000):\n' \
+                                 '\t\ttest_dict[str(i)] = "value"\n' \
+                                 '\treturn test_dict'
+        rule_body = 'def rule(event):\n\treturn True\n{}'.format(alert_context_function)
+        rule = Rule({'id': 'test_alert_context_too_big', 'body': rule_body, 'versionId': 'versionId'})
+
+        expected_result = RuleResult(matched=True, dedup_string='defaultDedupString:test_alert_context_too_big')
+        self.assertEqual(expected_result, rule.run({}))
