@@ -112,6 +112,7 @@ func (r *Registry) LogTypes() (logTypes []string) {
 	return
 }
 
+// Del deletes an entry from the registry
 func (r *Registry) Del(logType string) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -122,12 +123,14 @@ func (r *Registry) Del(logType string) bool {
 	return false
 }
 
+// Register registers log type entries or fails if there are name conflicts
 func (r *Registry) Register(g Group) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	return r.mergeGroup(g)
 }
 
+// MustRegister registers log type entries or panics if there are name conflicts
 func (r *Registry) MustRegister(g Group) {
 	if err := r.Register(g); err != nil {
 		panic(err)

@@ -34,6 +34,7 @@ type Resolver interface {
 	Resolve(ctx context.Context, name string) (Entry, error)
 }
 
+// LocalResolver returns a log type resolver that looks up entries locally
 func LocalResolver(finders ...Finder) Resolver {
 	return &localResolver{
 		finders: finders,
@@ -74,6 +75,7 @@ func (c chainResolver) Resolve(ctx context.Context, name string) (Entry, error) 
 	return nil, nil
 }
 
+// ResolveTables is a helper to resolve all glue table metadata for all log types
 func ResolveTables(ctx context.Context, resolver Resolver, logTypes ...string) ([]*awsglue.GlueTableMetadata, error) {
 	tables := make([]*awsglue.GlueTableMetadata, len(logTypes))
 	for i, logType := range logTypes {

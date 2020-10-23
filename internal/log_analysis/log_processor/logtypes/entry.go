@@ -105,6 +105,7 @@ type ConfigJSON struct {
 	Now          func() time.Time
 }
 
+// BuildEntry implements EntryBuilder interface
 func (c ConfigJSON) BuildEntry() (Entry, error) {
 	if c.NewEvent == nil {
 		return nil, errors.New(`nil event factory`)
@@ -169,6 +170,7 @@ func (c *Config) Validate() error {
 	return nil
 }
 
+// BuildEntry implements EntryBuilder interface
 func (c Config) BuildEntry() (Entry, error) {
 	if err := c.Validate(); err != nil {
 		return nil, err

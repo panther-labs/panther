@@ -25,21 +25,27 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Finder can find a log entry by name.
+// It should return nil if the entry is not found.
 type Finder interface {
 	Find(logType string) Entry
 }
 
+// Group is a named collection of log type entries.
+// The purpose of Group is to provide read-only access to a set of log types
 type Group interface {
 	Name() string
 	Collection
 	Finder
 }
 
+// Collection is a collection of log type entries
 type Collection interface {
 	Entries() []Entry
 	Len() int
 }
 
+// FilterPrefix is a helper that filters log type entries in a collection based on a prefix
 func FilterPrefix(col Collection, prefix string) (entries []Entry) {
 	if col == nil {
 		return
@@ -52,6 +58,7 @@ func FilterPrefix(col Collection, prefix string) (entries []Entry) {
 	return
 }
 
+// AppendFind is a low allocation helper to find multiple entries
 func AppendFind(entries []Entry, finder Finder, names ...string) []Entry {
 	for _, name := range names {
 		if entry := finder.Find(name); entry != nil {
@@ -68,6 +75,7 @@ type group struct {
 
 var _ Finder = (*group)(nil)
 
+// Must find panics if a log type entry is not found
 func MustFind(f Finder, name string) Entry {
 	if entry := f.Find(name); entry != nil {
 		return entry
@@ -75,6 +83,7 @@ func MustFind(f Finder, name string) Entry {
 	panic(fmt.Sprintf(`entry %q not found`, name))
 }
 
+// MustMerge panics the groups cannot be merged
 func MustMerge(name string, groups ...Group) Group {
 	merged, err := Merge(name, groups...)
 	if err != nil {
@@ -83,6 +92,7 @@ func MustMerge(name string, groups ...Group) Group {
 	return merged
 }
 
+// Merge merges log type entry groups without name conflicts
 func Merge(name string, groups ...Group) (Group, error) {
 	merged := group{
 		name:    name,
@@ -100,7 +110,7 @@ func Merge(name string, groups ...Group) (Group, error) {
 	return &merged, nil
 }
 
-// Must builds a group of logtypes or panics
+// Must builds a group of log type entries or panics
 func Must(name string, entries ...EntryBuilder) Group {
 	index, err := BuildGroup(name, entries...)
 	if err != nil {
