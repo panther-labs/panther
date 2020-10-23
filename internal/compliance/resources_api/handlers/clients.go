@@ -23,21 +23,20 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/kelseyhightower/envconfig"
-)
 
-const complianceAPI = "panther-compliance-api"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
+)
 
 var (
 	env envConfig
 
-	awsSession   *session.Session
-	dynamoClient dynamodbiface.DynamoDBAPI
-	lambdaClient lambdaiface.LambdaAPI
-	sqsClient    sqsiface.SQSAPI
+	awsSession       *session.Session
+	dynamoClient     dynamodbiface.DynamoDBAPI
+	sqsClient        sqsiface.SQSAPI
+	complianceClient gatewayapi.API
 )
 
 type envConfig struct {
@@ -51,6 +50,6 @@ func Setup() {
 
 	awsSession = session.Must(session.NewSession())
 	dynamoClient = dynamodb.New(awsSession)
-	lambdaClient = lambda.New(awsSession)
 	sqsClient = sqs.New(awsSession)
+	complianceClient = gatewayapi.NewClient(lambda.New(awsSession), "panther-compliance-api", nil)
 }

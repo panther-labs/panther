@@ -35,6 +35,7 @@ var router = genericapi.NewRouter("api", "organization", nil, handlers.API{})
 
 func lambdaHandler(ctx context.Context, input *models.LambdaInput) (interface{}, error) {
 	lambdalogger.ConfigureGlobal(ctx, nil)
+	// TODO
 	zap.L().Debug("raw input received", zap.Any("input", input))
 	return router.Handle(input)
 }

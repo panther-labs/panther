@@ -29,7 +29,6 @@ import (
 
 	"github.com/panther-labs/panther/api/gateway/resources/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // Deleted resources are retained for 30 days in the database
@@ -69,7 +68,7 @@ func DeleteResources(request *events.APIGatewayProxyRequest) *events.APIGatewayP
 	lambdaInput := compliancemodels.LambdaInput{
 		DeleteStatus: &compliancemodels.DeleteStatusInput{Entries: deletes},
 	}
-	if _, err = gatewayapi.Invoke(lambdaClient, complianceAPI, &lambdaInput, nil); err != nil {
+	if _, err = complianceClient.Invoke(&lambdaInput, nil); err != nil {
 		zap.L().Error("failed to delete compliance status", zap.Error(err))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}

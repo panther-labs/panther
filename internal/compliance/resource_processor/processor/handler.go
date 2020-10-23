@@ -42,7 +42,6 @@ import (
 	alertmodels "github.com/panther-labs/panther/internal/compliance/alert_processor/models"
 	"github.com/panther-labs/panther/internal/compliance/resource_processor/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
@@ -222,7 +221,7 @@ func (r *batchResults) analyze(resources resourceMap, policies policyMap) error 
 				},
 			}
 			var response compliancemodels.ComplianceEntry
-			statusCode, err := gatewayapi.Invoke(lambdaClient, complianceAPI, &input, &response)
+			statusCode, err := complianceClient.Invoke(&input, &response)
 
 			if err != nil && statusCode != http.StatusNotFound {
 				// An error other than NotFound
@@ -393,7 +392,7 @@ func (r *batchResults) deliver() error {
 			Entries: r.StatusEntries,
 		},
 	}
-	if _, err := gatewayapi.Invoke(lambdaClient, complianceAPI, &input, nil); err != nil {
+	if _, err := complianceClient.Invoke(&input, nil); err != nil {
 		zap.L().Error("failed to update status", zap.Error(err))
 		return err
 	}

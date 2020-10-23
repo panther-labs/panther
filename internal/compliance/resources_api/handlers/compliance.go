@@ -25,7 +25,6 @@ import (
 
 	"github.com/panther-labs/panther/api/gateway/resources/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // Cache pass/fail status for each policy for a few seconds so that ListResources can filter and
@@ -71,7 +70,7 @@ func getOrgCompliance() (*complianceCacheEntry, error) {
 		DescribeOrg: &compliancemodels.DescribeOrgInput{Type: "resource"},
 	}
 	var result compliancemodels.DescribeOrgOutput
-	if _, err := gatewayapi.Invoke(lambdaClient, complianceAPI, &input, &result); err != nil {
+	if _, err := complianceClient.Invoke(&input, &result); err != nil {
 		zap.L().Error("failed to load resource pass/fail from compliance-api", zap.Error(err))
 		return nil, err
 	}

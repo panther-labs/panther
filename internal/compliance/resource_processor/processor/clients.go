@@ -35,8 +35,7 @@ import (
 )
 
 const (
-	maxBackoff    = 30 * time.Second
-	complianceAPI = "panther-compliance-api"
+	maxBackoff = 30 * time.Second
 )
 
 type envConfig struct {
@@ -51,9 +50,10 @@ type envConfig struct {
 var (
 	env envConfig
 
-	awsSession   *session.Session
-	lambdaClient lambdaiface.LambdaAPI
-	sqsClient    sqsiface.SQSAPI
+	awsSession       *session.Session
+	lambdaClient     lambdaiface.LambdaAPI
+	sqsClient        sqsiface.SQSAPI
+	complianceClient gatewayapi.API
 
 	httpClient     *http.Client
 	analysisClient *analysisapi.PantherAnalysisAPI
@@ -67,6 +67,7 @@ func Setup() {
 	awsSession = session.Must(session.NewSession())
 	lambdaClient = lambda.New(awsSession)
 	sqsClient = sqs.New(awsSession)
+	complianceClient = gatewayapi.NewClient(lambdaClient, "panther-compliance-api", nil)
 
 	httpClient = gatewayapi.GatewayClient(awsSession)
 	analysisClient = analysisapi.NewHTTPClientWithConfig(

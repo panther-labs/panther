@@ -25,7 +25,6 @@ import (
 
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // Cache pass/fail status for each policy for a few seconds so that ListPolicies can filter and
@@ -74,8 +73,7 @@ func getOrgCompliance() (*complianceCacheEntry, error) {
 		DescribeOrg: &compliancemodels.DescribeOrgInput{Type: "policy"},
 	}
 	var result compliancemodels.DescribeOrgOutput
-
-	if _, err := gatewayapi.Invoke(lambdaClient, complianceAPI, &input, &result); err != nil {
+	if _, err := complianceClient.Invoke(&input, &result); err != nil {
 		zap.L().Error("failed to load policy pass/fail from compliance-api", zap.Error(err))
 		return nil, err
 	}
@@ -110,7 +108,7 @@ func complianceBatchDelete(policies []*models.DeleteEntry, resourceTypes []strin
 	input := compliancemodels.LambdaInput{
 		DeleteStatus: &compliancemodels.DeleteStatusInput{Entries: entries},
 	}
-	if _, err := gatewayapi.Invoke(lambdaClient, complianceAPI, &input, nil); err != nil {
+	if _, err := complianceClient.Invoke(&input, nil); err != nil {
 		zap.L().Error("failed to delete compliance status", zap.Error(err))
 		return err
 	}
@@ -193,6 +191,6 @@ func updateComplianceMetadata(policy *tableItem) error {
 		},
 	}
 
-	_, err := gatewayapi.Invoke(lambdaClient, complianceAPI, &input, nil)
+	_, err := complianceClient.Invoke(&input, nil)
 	return err
 }
