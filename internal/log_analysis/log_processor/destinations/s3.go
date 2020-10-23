@@ -379,7 +379,7 @@ func (bs *s3EventBufferSet) writeEvent(event *parsers.Result) (sendBuffers []*s3
 			sendBuffers = append(sendBuffers, buffer)
 			return false, nil
 		}
-		_ = bs.apply(removeBuffers) // ignore error, error is just used to stop apply()
+		_ = bs.apply(removeBuffers) // ignore error, not used in removeBuffers()
 	}
 	// Check if buffer is bigger than threshold for a single buffer
 	if buf.bytes >= bs.maxBufferSize {
