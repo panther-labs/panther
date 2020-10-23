@@ -191,7 +191,7 @@ func sqsDataStreams(messages []*sqs.Message,
 func queueDepth(sqsClient sqsiface.SQSAPI) (totalQueuedMessages int, err error) {
 	getQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: []*string{
-			aws.String(sqs.QueueAttributeNameApproximateNumberOfMessages),        // tells us there is waiting events now
+			aws.String(sqs.QueueAttributeNameApproximateNumberOfMessages), // tells us there is waiting events now
 		},
 		QueueUrl: &common.Config.SqsQueueURL,
 	}
