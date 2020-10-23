@@ -79,7 +79,7 @@ Parameters:
     Type: String
     Description: Enable S3 access logging for all Panther buckets. This is strongly recommended for security, but comes at an additional cost.
     AllowedValues: [true, false]
-    Default: true
+    Default: false
   FirstUserEmail:
     Type: String
     Description: Initial Panther user - email address
@@ -123,11 +123,11 @@ Parameters:
     Description: Log processor Lambda memory allocation. Increase to eliminate out-of-memory errors or reduce processing time (in exchange for higher cost)
     MinValue: 256 # 128 is too small, risks OOM errors
     MaxValue: 3008
-    Default: 1024
+    Default: 512
   LogProcessorSQSDelaySeconds:
     Type: Number
     Description: The number of seconds to delay events into the log processor queue
-    Default: 5
+    Default: 0
     MinValue: 0 # no delay, poor aggregation
     MaxValue: 20 # this is the max time we can long poll sqs
   LogSubscriptionPrincipals:
