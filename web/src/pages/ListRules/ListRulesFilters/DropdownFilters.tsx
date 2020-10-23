@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Form, Formik, Field } from 'formik';
-import { Box, Flex, Button, Dropdown, DropdownButton, DropdownMenu } from 'pouncejs';
+import { Box, Flex, Button, Popover, PopoverTrigger, PopoverContent, Card } from 'pouncejs';
 import { ListRulesInput, SeverityEnum } from 'Generated/schema';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isUndefined from 'lodash/isUndefined';
@@ -53,8 +53,8 @@ const DropdownFilters: React.FC = () => {
     .length;
 
   return (
-    <Dropdown>
-      <DropdownButton
+    <Popover>
+      <PopoverTrigger
         as={Button}
         iconAlignment="right"
         icon="filter-light"
@@ -62,10 +62,11 @@ const DropdownFilters: React.FC = () => {
         aria-label="Rule Options"
       >
         Filters {filtersCount ? `(${filtersCount})` : ''}
-      </DropdownButton>
-      <DropdownMenu>
-        <Box p={6} pb={4} backgroundColor="navyblue-400" minWidth={425}>
+      </PopoverTrigger>
+      <PopoverContent>
+        <Card shadow="dark300" my={14} p={6} pb={4} backgroundColor="navyblue-400" minWidth={425}>
           <Formik<ListAlertsDropdownFiltersValues>
+            enableReinitialize
             onSubmit={(values: ListAlertsDropdownFiltersValues) => {
               updateRequestParamsAndResetPaging(values);
             }}
@@ -110,9 +111,9 @@ const DropdownFilters: React.FC = () => {
               </Flex>
             </Form>
           </Formik>
-        </Box>
-      </DropdownMenu>
-    </Dropdown>
+        </Card>
+      </PopoverContent>
+    </Popover>
   );
 };
 

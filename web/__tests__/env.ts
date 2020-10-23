@@ -17,9 +17,9 @@
  */
 
 import path from 'path';
-import { loadDotEnvVars, getAppTemplateParams } from '../scripts/utils';
+import { overrideDotEnvVars, getAppTemplateParams } from '../scripts/utils';
 
-loadDotEnvVars(path.resolve(__dirname, '.env.test'));
+overrideDotEnvVars(path.resolve(__dirname, '.env.test'));
 /**
  * Mock the server-side EJS-injected AWS configuration.
  * See `web/public/index.ejs`
