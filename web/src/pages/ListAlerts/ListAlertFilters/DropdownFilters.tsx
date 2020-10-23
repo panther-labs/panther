@@ -34,7 +34,7 @@ import { capitalize } from 'Helpers/utils';
 import isEmpty from 'lodash/isEmpty';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import TextButton from 'Components/buttons/TextButton';
-import FormikTextInput from 'Components/fields/TextInput';
+import FormikNumberInput from 'Components/fields/NumberInput';
 
 export type ListAlertsDropdownFiltersValues = Pick<
   ListAlertsInput,
@@ -47,9 +47,13 @@ const filterItemToString = (item: SeverityEnum | AlertStatusesEnum) =>
 const statusOptions = Object.values(AlertStatusesEnum);
 const severityOptions = Object.values(SeverityEnum);
 
-const defaultValues = {
+const defaultValues: ListAlertsDropdownFiltersValues = {
   severity: [],
   status: [],
+  // @ts-ignore
+  eventCountMin: '',
+  // @ts-ignore
+  eventCountMax: '',
 };
 
 const DropdownFilters: React.FC = () => {
@@ -86,57 +90,52 @@ const DropdownFilters: React.FC = () => {
                 onSubmit={updateRequestParams}
                 initialValues={initialDropdownFilters}
               >
-                <Form>
-                  <Box pb={4}>
-                    <FastField
-                      name="status"
-                      as={FormikMultiCombobox}
-                      items={statusOptions}
-                      itemToString={filterItemToString}
-                      label="Status"
-                    />
-                  </Box>
-                  <Box pb={4}>
-                    <FastField
-                      name="severity"
-                      as={FormikMultiCombobox}
-                      items={severityOptions}
-                      itemToString={filterItemToString}
-                      label="Severity"
-                    />
-                  </Box>
-                  <SimpleGrid columns={2} gap={4} pb={4}>
-                    <FastField
-                      name="eventCountMin"
-                      as={FormikTextInput}
-                      type="number"
-                      min={0}
-                      label="Min Events"
-                    />
-                    <FastField
-                      name="eventCountMax"
-                      as={FormikTextInput}
-                      type="number"
-                      min={0}
-                      label="Max Events"
-                    />
-                  </SimpleGrid>
-                  <Flex direction="column" justify="center" align="center" spacing={4}>
-                    <Box>
-                      <Button type="submit" onClick={closePopover}>
-                        Apply Filters
-                      </Button>
+                {({ setValues }) => (
+                  <Form>
+                    <Box pb={4}>
+                      <FastField
+                        name="status"
+                        as={FormikMultiCombobox}
+                        items={statusOptions}
+                        itemToString={filterItemToString}
+                        label="Status"
+                      />
                     </Box>
-                    <TextButton
-                      role="button"
-                      onClick={() => {
-                        updateRequestParams(defaultValues);
-                      }}
-                    >
-                      Clear All Filters
-                    </TextButton>
-                  </Flex>
-                </Form>
+                    <Box pb={4}>
+                      <FastField
+                        name="severity"
+                        as={FormikMultiCombobox}
+                        items={severityOptions}
+                        itemToString={filterItemToString}
+                        label="Severity"
+                      />
+                    </Box>
+                    <SimpleGrid columns={2} gap={4} pb={4}>
+                      <FastField
+                        name="eventCountMin"
+                        as={FormikNumberInput}
+                        min={0}
+                        label="Min Events"
+                      />
+                      <FastField
+                        name="eventCountMax"
+                        as={FormikNumberInput}
+                        min={0}
+                        label="Max Events"
+                      />
+                    </SimpleGrid>
+                    <Flex direction="column" justify="center" align="center" spacing={4}>
+                      <Box>
+                        <Button type="submit" onClick={closePopover}>
+                          Apply Filters
+                        </Button>
+                      </Box>
+                      <TextButton role="button" onClick={() => setValues(defaultValues)}>
+                        Clear Filters
+                      </TextButton>
+                    </Flex>
+                  </Form>
+                )}
               </Formik>
             </Card>
           </PopoverContent>
