@@ -32,13 +32,22 @@ import (
 
 const (
 	// How often we check if we need to scale (controls responsiveness).
-	processingScaleDecisionInterval = time.Second * 30
+	defaultProcessingScaleDecisionInterval = time.Second * 30
 
 	// This limits how many lambdas can be invoked at once to cap rate of scaling (controls responsiveness).
+	// Setting this higher leads to faster response to spikes but risks throttling very quickly.
+	// Since each lambda makes this decision locally, this results in an exponential response under load.
+	// For example, if there is a load spike of a million events, then the first lambda will spawn
+	// a few new lambdas, they will work on the load but not drain the queue, then THEY spawn more lambdas,
+	// and this continues until the load reduces.
 	processingMaxLambdaInvoke = 1
 )
 
-// scalingDecisions makes decisions to scale up based on the sqs queue stats periodically
+var (
+	processingScaleDecisionInterval = defaultProcessingScaleDecisionInterval // var so we can set in tests
+)
+
+// scalingDecisions makes adaptive (now we can say we do ML!) decisions to scale up based on the sqs queue stats periodically
 func scalingDecisions(sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.LambdaAPI) chan bool {
 	stopScaling := make(chan bool)
 

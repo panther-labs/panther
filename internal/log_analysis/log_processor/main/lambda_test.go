@@ -37,10 +37,9 @@ import (
 )
 
 var (
-	messagesBelowThreshold = &sqs.GetQueueAttributesOutput{
+	emptyQueue = &sqs.GetQueueAttributesOutput{
 		Attributes: map[string]*string{
-			sqs.QueueAttributeNameApproximateNumberOfMessages:        aws.String("0"),
-			sqs.QueueAttributeNameApproximateNumberOfMessagesDelayed: aws.String("0"),
+			sqs.QueueAttributeNameApproximateNumberOfMessages: aws.String("0"),
 		},
 	}
 )
@@ -63,7 +62,7 @@ func TestProcessOpLog(t *testing.T) {
 	sqsMock := &testutils.SqsMock{}
 	common.SqsClient = sqsMock
 	// will be called by scalingDecisions() on exit
-	sqsMock.On("GetQueueAttributes", mock.Anything).Return(messagesBelowThreshold, nil).Once()
+	sqsMock.On("GetQueueAttributes", mock.Anything).Return(emptyQueue, nil).Once()
 
 	err := process(&lc, time.Now())
 	require.NoError(t, err)
