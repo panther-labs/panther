@@ -38,11 +38,11 @@ import (
 )
 
 const (
-	// The processing runtime should be shorter than lambda timeout to make room to flush buffers ad the end of the cycle.
-	processingTimeLimitDivisor = 2
-
 	// Limit this so there is time to delete from the queue at the end.
 	processingMaxFilesLimit = 5000
+
+	// The processing runtime should be shorter than lambda timeout to make room to flush buffers ad the end of the cycle.
+	processingTimeLimitDivisor = 2
 
 	// The max messages per read for SQS (can't find an sqs constant to refer to).
 	sqsMaxBatchSize = 10
