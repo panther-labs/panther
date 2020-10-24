@@ -39,7 +39,7 @@ const (
 	// Since each lambda makes this decision locally, this results in an exponential response under load.
 	// For example, if there is a load spike of a million events, then the first lambda will spawn
 	// a few new lambdas, they will work on the load but not drain the queue, then THEY spawn more lambdas,
-	// and this continues until the load reduces.
+	// and this continues to expand until the load reduces.
 	processingMaxLambdaInvoke = 1
 )
 
@@ -47,7 +47,8 @@ var (
 	processingScaleDecisionInterval = defaultProcessingScaleDecisionInterval // var so we can set in tests
 )
 
-// scalingDecisions makes adaptive (now we can say we do ML!) decisions to scale up based on the sqs queue stats periodically
+// scalingDecisions makes periodic adaptive decisions to scale up based on the sqs queue stats, it returns
+// immediately with a boolean stop channel (sending an event to the channel stops execution).
 func scalingDecisions(sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.LambdaAPI) chan bool {
 	stopScaling := make(chan bool)
 
