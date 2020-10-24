@@ -2,8 +2,8 @@ package fastmatch
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -11,35 +11,49 @@ type Pattern struct {
 	prefix     string
 	delimiters []delimiter
 	fields     []string
+	scratch    []rune
 }
+
 type delimiter struct {
 	match string
 	name  string
+	quote byte
 }
 
-var splitFields = regexp.MustCompile(`%\{\s*(?P<field>[^\}]*)\s*\}`)
+func (d *delimiter) reset(tag, match, prev string) {
+	quote := prevQuote(prev)
+	if quote != nextQuote(match) {
+		quote = 0
+	}
+	d.name = tag
+	d.quote = quote
+	d.match = match
+}
 
-func New(pattern string) (*Pattern, error) {
-	matchFields := splitFields.FindAllStringSubmatch(pattern, -1)
-	if matchFields == nil {
+var splitFields = regexp.MustCompile(`%\{\s*(?P<tag>[^\}]*)\s*\}`)
+
+func Compile(pattern string) (*Pattern, error) {
+	tags := splitFields.FindAllStringSubmatch(pattern, -1)
+	if tags == nil {
 		return nil, errInvalidPattern
 	}
 	matchDelimiters := splitFields.Split(pattern, -1)
 	prefix, matchDelimiters := matchDelimiters[0], matchDelimiters[1:]
-	delimiters := make([]delimiter, 0, len(matchFields))
-	fields := make([]string, 0, len(matchFields))
+	delimiters := make([]delimiter, 0, len(tags))
+	fields := make([]string, 0, len(tags))
 	last := len(matchDelimiters) - 1
+	prev := prefix
 	for i, m := range matchDelimiters {
 		if i < last && m == "" {
 			return nil, errInvalidPattern
 		}
-		name := matchFields[i][1]
-		delimiters = append(delimiters, delimiter{
-			match: m,
-			name:  name,
-		})
-		if name != "" {
-			fields = append(fields, name)
+		tag := tags[i][1]
+		d := delimiter{}
+		d.reset(tag, m, prev)
+		prev = m
+		delimiters = append(delimiters, d)
+		if d.name != "" {
+			fields = append(fields, d.name)
 		}
 	}
 	return &Pattern{
@@ -52,6 +66,7 @@ func New(pattern string) (*Pattern, error) {
 func (p *Pattern) NumFields() int {
 	return len(p.fields)
 }
+
 func (p *Pattern) FieldName(i int) string {
 	return p.fields[i]
 }
@@ -59,44 +74,84 @@ func (p *Pattern) FieldName(i int) string {
 var errMatch = errors.New("match failed")
 var errInvalidPattern = errors.New("invalid pattern")
 
-type matchError struct {
-	field string
-	delim string
-}
-
-func (e *matchError) Error() string {
-	return fmt.Sprintf("failed to match %q after field %q", e.delim, e.field)
-}
-
-func (p *Pattern) MatchString(dst []string, src string) ([]string, bool) {
+func (p *Pattern) MatchString(dst []string, src string) ([]string, error) {
 	tail := src
 	if prefix := p.prefix; len(prefix) <= len(tail) && tail[:len(prefix)] == prefix {
 		tail = tail[len(prefix):]
 	} else {
-		return dst, false
+		return dst, errMatch
 	}
-	var match string
 	matches := dst
 	delimiters := p.delimiters
 	for i := range delimiters {
 		d := &delimiters[i]
-		m := d.match
-		if m == "" {
-			if d.name != "" {
-				matches = append(matches, tail)
+		switch seek := d.match; seek {
+		case "":
+			if d.name == "" {
+				return matches, nil
 			}
-			return matches, true
-		}
-		end := strings.Index(tail, m)
-		if 0 <= end && end < len(tail) {
-			match, tail = tail[:end], tail[end:]
+			return append(matches, tail), nil
+		default:
+			match, ss, err := p.match(tail, seek, d.quote)
+			if err != nil {
+				return dst, err
+			}
 			if d.name != "" {
 				matches = append(matches, match)
 			}
-			tail = tail[len(m):]
-		} else {
-			return dst, false
+			tail = ss
 		}
 	}
-	return matches, true
+	return matches, nil
+}
+
+func (p *Pattern) match(src, delim string, quote byte) (match, tail string, err error) {
+	if (quote == '"' || quote == '\'') && strings.IndexByte(src, '\\') != -1 {
+		return p.matchQuoted(src, delim, quote)
+	}
+	if pos := strings.Index(src, delim); 0 <= pos && pos < len(src) {
+		match, tail = src[:pos], src[pos:]
+		tail = tail[len(delim):]
+		return match, tail, nil
+	}
+	return "", src, errMatch
+}
+
+func (p *Pattern) matchQuoted(src, delim string, quote byte) (match, tail string, err error) {
+	tail = src
+	scratch := p.scratch[:0]
+	for len(tail) > 0 && tail[0] != quote {
+		c, _, ss, err := strconv.UnquoteChar(tail, quote)
+		if err != nil {
+			p.scratch = scratch
+			return "", src, err
+		}
+		scratch = append(scratch, c)
+		tail = ss
+	}
+	p.scratch = scratch
+	if strings.HasPrefix(tail, delim) {
+		return string(scratch), strings.TrimPrefix(tail, delim), nil
+	}
+	return "", src, errMatch
+}
+
+func prevQuote(s string) byte {
+	if n := len(s) - 1; 0 <= n && n < len(s) {
+		switch q := s[n]; q {
+		case '"', '\'':
+			return q
+		}
+	}
+	return 0
+}
+
+func nextQuote(s string) byte {
+	if len(s) > 0 {
+		switch q := s[0]; q {
+		case '"', '\'':
+			return q
+		}
+	}
+	return 0
 }
