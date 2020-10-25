@@ -244,7 +244,7 @@ type StatusCount struct {
 // Note that errors can generally be considered failures - it means the Python policy failed
 // to analyze a specific resource. Suppressions are not included in any counts.
 //
-// Response: {
+// Response (OrgSummary): {
 //     "appliedPolicies": {
 //         // This ONLY includes enabled policies which scanned at least one resource.
 //         "info":     {"error": 0, "fail": 10, "pass": 0},
@@ -290,7 +290,7 @@ type StatusCount struct {
 //     ]
 // }
 type GetOrgOverviewInput struct {
-	LimitTopFailing int `json:"limitTopFailing" validate:"min=1,max=500"`
+	LimitTopFailing int `json:"limitTopFailing" validate:"min=0,max=500"`
 }
 
 type OrgSummary struct {
@@ -369,7 +369,7 @@ type DeleteResource struct {
 //
 // The resource-processor analyzes each modified resource and posts the results here.
 type SetStatusInput struct {
-	Entries []SetStatusEntry `json:"entries" validate:"required"`
+	Entries []SetStatusEntry `json:"entries" validate:"min=1"`
 }
 
 type SetStatusEntry struct {

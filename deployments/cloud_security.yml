@@ -577,7 +577,7 @@ Resources:
       Environment:
         Variables:
           COMPLIANCE_TABLE: !Ref ComplianceTable
-          DEBUG: True # TODO - restore: !Ref Debug
+          DEBUG: !Ref Debug
           INDEX_NAME: policy-index
       FunctionName: panther-compliance-api
       # <cfndoc>

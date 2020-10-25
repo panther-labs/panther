@@ -40,10 +40,13 @@ type Client struct {
 
 // Create a new client for invoking a lambda gateway API proxy directly.
 func NewClient(lambda lambdaiface.LambdaAPI, functionName string) *Client {
-	return &Client{
-		lambda:       lambda,
-		functionName: functionName,
-	}
+	return &Client{lambda: lambda, functionName: functionName}
+}
+
+// Error returned by genericapi for failed input validation
+type genericError struct {
+	ErrorMessage string `json:"errorMessage"`
+	ErrorType    string `json:"errorType"`
 }
 
 // Invoke a former API gateway proxy Lambda directly.
@@ -74,8 +77,14 @@ func (client *Client) Invoke(input, output interface{}) (int, error) {
 	}
 
 	// The Lambda function returned an error.
-	// For gateway handlers, this should only happen for a runtime exception: out of memory, timeout, panic, etc
 	if response.FunctionError != nil {
+		// This could be an input validation error
+		var result genericError
+		if err := jsoniter.Unmarshal(response.Payload, &result); err == nil && result.ErrorType == "InvalidInputError" {
+			return http.StatusBadRequest, fmt.Errorf("%s: InvalidInputError: %s", client.functionName, result.ErrorMessage)
+		}
+
+		// unknown error payload, probably a panic or other runtime exception
 		return http.StatusInternalServerError, fmt.Errorf("%s: execution failed: %s", client.functionName, response.Payload)
 	}
 

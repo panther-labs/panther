@@ -23,7 +23,6 @@ import (
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/kelseyhightower/envconfig"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/compliance/models"
 	"github.com/panther-labs/panther/internal/compliance/compliance_api/handlers"
@@ -31,12 +30,10 @@ import (
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-var router = genericapi.NewRouter("api", "organization", nil, handlers.API{})
+var router = genericapi.NewRouter("api", "compliance", nil, handlers.API{})
 
 func lambdaHandler(ctx context.Context, input *models.LambdaInput) (interface{}, error) {
 	lambdalogger.ConfigureGlobal(ctx, nil)
-	// TODO
-	zap.L().Debug("raw input received", zap.Any("input", input))
 	return router.Handle(input)
 }
 

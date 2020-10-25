@@ -1297,11 +1297,12 @@ Resources:
       FieldName: organizationStats
       DataSourceName: !GetAtt ComplianceAPILambdaDataSource.Name
       RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "getOrgOverview": $ctx.args.input
+            "getOrgOverview": $input
           })
         }
       ResponseMappingTemplate: |

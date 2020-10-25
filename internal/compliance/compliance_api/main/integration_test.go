@@ -17,216 +17,173 @@ package main
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-// TODO
-///**
-// * Panther is a Cloud-Native SIEM for the Modern Security Team.
-// * Copyright (C) 2020 Panther Labs Inc
-// *
-// * This program is free software: you can redistribute it and/or modify
-// * it under the terms of the GNU Affero General Public License as
-// * published by the Free Software Foundation, either version 3 of the
-// * License, or (at your option) any later version.
-// *
-// * This program is distributed in the hope that it will be useful,
-// * but WITHOUT ANY WARRANTY; without even the implied warranty of
-// * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// * GNU Affero General Public License for more details.
-// *
-// * You should have received a copy of the GNU Affero General Public License
-// * along with this program.  If not, see <https://www.gnu.org/licenses/>.
-// */
-//
-//import (
-//	"fmt"
-//	"os"
-//	"sort"
-//	"strings"
-//	"testing"
-//
-//	"github.com/aws/aws-sdk-go/aws"
-//	"github.com/aws/aws-sdk-go/aws/session"
-//	"github.com/aws/aws-sdk-go/service/cloudformation"
-//	"github.com/stretchr/testify/assert"
-//	"github.com/stretchr/testify/require"
-//
-//	"github.com/panther-labs/panther/api/gateway/compliance/client"
-//	"github.com/panther-labs/panther/api/gateway/compliance/client/operations"
-//	"github.com/panther-labs/panther/api/gateway/compliance/models"
-//	"github.com/panther-labs/panther/internal/compliance/compliance_api/handlers"
-//	"github.com/panther-labs/panther/pkg/gatewayapi"
-//	"github.com/panther-labs/panther/pkg/testutils"
-//)
-//
-//var (
-//	integrationTest bool
-//	awsSession      = session.Must(session.NewSession())
-//	httpClient      = gatewayapi.GatewayClient(awsSession)
-//	apiClient       *client.PantherComplianceAPI
-//
-//	integrationID = models.IntegrationID("f0e95b8b-6d93-4de5-a963-a2974fd2ba72")
-//
-//	// 5 policies: 1 error, 2 fail (1 suppressed), 2 pass across 3 resources and 4 policies
-//	statuses = []*models.ComplianceStatus{
-//		{
-//			ErrorMessage:   models.ErrorMessage("ZeroDivisionError"),
-//			PolicyID:       models.PolicyID("AWS-S3-EncryptionEnabled"),
-//			PolicySeverity: models.PolicySeverityHIGH,
-//			ResourceID:     models.ResourceID("arn:aws:s3:::my-bucket"),
-//			ResourceType:   models.ResourceType("AWS.S3.Bucket"),
-//			Status:         models.StatusERROR,
-//			Suppressed:     models.Suppressed(false),
-//			IntegrationID:  integrationID,
-//		},
-//		{
-//			PolicyID:       models.PolicyID("AWS-S3-Versioning"),
-//			PolicySeverity: models.PolicySeverityMEDIUM,
-//			ResourceID:     models.ResourceID("arn:aws:s3:::my-bucket"),
-//			ResourceType:   models.ResourceType("AWS.S3.Bucket"),
-//			Status:         models.StatusFAIL,
-//			Suppressed:     models.Suppressed(true),
-//			IntegrationID:  integrationID,
-//		},
-//		{
-//			PolicyID:       models.PolicyID("AWS-S3-Versioning"),
-//			PolicySeverity: models.PolicySeverityMEDIUM,
-//			ResourceID:     models.ResourceID("arn:aws:s3:::my-other-bucket"),
-//			ResourceType:   models.ResourceType("AWS.S3.Bucket"),
-//			Status:         models.StatusFAIL,
-//			Suppressed:     models.Suppressed(false),
-//			IntegrationID:  integrationID,
-//		},
-//		{
-//			PolicyID:       models.PolicyID("AWS-S3-BlockPublicAccess"),
-//			PolicySeverity: models.PolicySeverityCRITICAL,
-//			ResourceID:     models.ResourceID("arn:aws:s3:::my-bucket"),
-//			ResourceType:   models.ResourceType("AWS.S3.Bucket"),
-//			Status:         models.StatusPASS,
-//			Suppressed:     models.Suppressed(false),
-//			IntegrationID:  integrationID,
-//		},
-//		{
-//			PolicyID:       models.PolicyID("AWS-Cloudtrail-Encryption"),
-//			PolicySeverity: models.PolicySeverityCRITICAL,
-//			ResourceID:     models.ResourceID("arn:aws:cloudtrail:123412341234::my-trail"),
-//			ResourceType:   models.ResourceType("AWS.CloudTrail"),
-//			Status:         models.StatusPASS,
-//			Suppressed:     models.Suppressed(false),
-//			IntegrationID:  integrationID,
-//		},
-//	}
-//)
-//
-//func TestMain(m *testing.M) {
-//	integrationTest = strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
-//	os.Exit(m.Run())
-//}
-//
-//// TestIntegrationAPI is the single integration test - invokes the live Lambda function.
-//func TestIntegrationAPI(t *testing.T) {
-//	if !integrationTest {
-//		t.Skip()
-//	}
-//
-//	// Lookup CloudFormation outputs
-//	cfnClient := cloudformation.New(awsSession)
-//	response, err := cfnClient.DescribeStacks(
-//		&cloudformation.DescribeStacksInput{StackName: aws.String("panther-bootstrap-gateway")})
-//	require.NoError(t, err)
-//	var endpoint string
-//	for _, output := range response.Stacks[0].Outputs {
-//		if aws.StringValue(output.OutputKey) == "ComplianceApiEndpoint" {
-//			endpoint = *output.OutputValue
-//			break
-//		}
-//	}
-//
-//	// Reset Dynamo table and build API client
-//	require.NoError(t, testutils.ClearDynamoTable(awsSession, "panther-compliance"))
-//	require.NotEmpty(t, endpoint)
-//	apiClient = client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
-//		WithBasePath("/v1").WithHost(endpoint))
-//
-//	t.Run("CheckEmpty", func(t *testing.T) {
-//		t.Run("DescribeOrgEmpty", describeOrgEmpty)
-//		t.Run("GetOrgOverviewEmpty", getOrgOverviewEmpty)
-//	})
-//
-//	t.Run("SetStatus", func(t *testing.T) {
-//		t.Run("SetEmpty", setEmpty)
-//		t.Run("SetSuccess", setSuccess)
-//	})
-//	if t.Failed() {
-//		return
-//	}
-//
-//	t.Run("GetStatus", func(t *testing.T) {
-//		t.Run("GetNotFound", getNotFound)
-//		t.Run("GetSuccess", getSuccess)
-//	})
-//
-//	t.Run("DescribeOrg", func(t *testing.T) {
-//		t.Run("DescribeOrgPolicy", describeOrgPolicy)
-//		t.Run("DescribeOrgResource", describeOrgResource)
-//	})
-//
-//	t.Run("DescribePolicy", func(t *testing.T) {
-//		t.Run("DescribePolicyEmpty", describePolicyEmpty)
-//		t.Run("DescribePolicy", describePolicy)
-//	})
-//
-//	t.Run("DescribeResource", func(t *testing.T) {
-//		t.Run("DescribeResourceEmpty", describeResourceEmpty)
-//		t.Run("DescribeResource", describeResource)
-//	})
-//
-//	t.Run("GetOrgOverview", func(t *testing.T) {
-//		t.Run("GetOrgOverview", getOrgOverview)
-//		t.Run("GetOrgOverviewCustomLimit", getOrgOverviewCustomLimit)
-//	})
-//	t.Run("DescribePolicyPageAndFilter", describePolicyPageAndFilter)
-//
-//	t.Run("Update", update)
-//	t.Run("Delete", deleteBatch)
-//}
-//
-//func setEmpty(t *testing.T) {
-//	t.Parallel()
-//	result, err := apiClient.Operations.SetStatus(&operations.SetStatusParams{
-//		Body:       &models.SetStatusBatch{Entries: []*models.SetStatus{}},
-//		HTTPClient: httpClient,
-//	})
-//	assert.Nil(t, result)
-//	require.Error(t, err)
-//
-//	require.IsType(t, &operations.SetStatusBadRequest{}, err)
-//	errorMessage := aws.StringValue(err.(*operations.SetStatusBadRequest).Payload.Message)
-//	assert.Equal(t, "validation failure list:\nentries in body should have at least 1 items", errorMessage)
-//}
-//
-//func setSuccess(t *testing.T) {
-//	t.Parallel()
-//	entries := make([]*models.SetStatus, len(statuses))
-//	for i, status := range statuses {
-//		entries[i] = &models.SetStatus{
-//			ErrorMessage:   status.ErrorMessage,
-//			PolicyID:       status.PolicyID,
-//			PolicySeverity: status.PolicySeverity,
-//			ResourceID:     status.ResourceID,
-//			ResourceType:   status.ResourceType,
-//			Status:         status.Status,
-//			Suppressed:     status.Suppressed,
-//			IntegrationID:  status.IntegrationID,
-//		}
-//	}
-//
-//	result, err := apiClient.Operations.SetStatus(&operations.SetStatusParams{
-//		Body:       &models.SetStatusBatch{Entries: entries},
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	assert.Equal(t, &operations.SetStatusCreated{}, result)
-//}
-//
+
+import (
+	"net/http"
+	"os"
+	"strings"
+	"testing"
+
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/api/lambda/compliance/models"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/testutils"
+)
+
+var (
+	integrationTest bool
+	awsSession      = session.Must(session.NewSession())
+	apiClient       = gatewayapi.NewClient(lambda.New(awsSession), "panther-compliance-api")
+	integrationID   = "f0e95b8b-6d93-4de5-a963-a2974fd2ba72"
+
+	// 5 policies: 1 error, 2 fail (1 suppressed), 2 pass across 3 resources and 4 policies
+	statuses = []*models.ComplianceEntry{
+		{
+			ErrorMessage:   "ZeroDivisionError",
+			PolicyID:       "AWS-S3-EncryptionEnabled",
+			PolicySeverity: models.SeverityHigh,
+			ResourceID:     "arn:aws:s3:::my-bucket",
+			ResourceType:   "AWS.S3.Bucket",
+			Status:         models.StatusError,
+			Suppressed:     false,
+			IntegrationID:  integrationID,
+		},
+		{
+			PolicyID:       "AWS-S3-Versioning",
+			PolicySeverity: models.SeverityMedium,
+			ResourceID:     "arn:aws:s3:::my-bucket",
+			ResourceType:   "AWS.S3.Bucket",
+			Status:         models.StatusFail,
+			Suppressed:     true,
+			IntegrationID:  integrationID,
+		},
+		{
+			PolicyID:       "AWS-S3-Versioning",
+			PolicySeverity: models.SeverityMedium,
+			ResourceID:     "arn:aws:s3:::my-other-bucket",
+			ResourceType:   "AWS.S3.Bucket",
+			Status:         models.StatusFail,
+			Suppressed:     false,
+			IntegrationID:  integrationID,
+		},
+		{
+			PolicyID:       "AWS-S3-BlockPublicAccess",
+			PolicySeverity: models.SeverityCritical,
+			ResourceID:     "arn:aws:s3:::my-bucket",
+			ResourceType:   "AWS.S3.Bucket",
+			Status:         models.StatusPass,
+			Suppressed:     false,
+			IntegrationID:  integrationID,
+		},
+		{
+			PolicyID:       "AWS-Cloudtrail-Encryption",
+			PolicySeverity: models.SeverityCritical,
+			ResourceID:     "arn:aws:cloudtrail:123412341234::my-trail",
+			ResourceType:   "AWS.CloudTrail",
+			Status:         models.StatusPass,
+			Suppressed:     false,
+			IntegrationID:  integrationID,
+		},
+	}
+)
+
+func TestMain(m *testing.M) {
+	integrationTest = strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
+	os.Exit(m.Run())
+}
+
+// TestIntegrationAPI is the single integration test - invokes the live Lambda function.
+func TestIntegrationAPI(t *testing.T) {
+	if !integrationTest {
+		t.Skip()
+	}
+
+	// Reset Dynamo table
+	require.NoError(t, testutils.ClearDynamoTable(awsSession, "panther-compliance"))
+
+	t.Run("CheckEmpty", func(t *testing.T) {
+		t.Run("DescribeOrgEmpty", describeOrgEmpty)
+		t.Run("GetOrgOverviewEmpty", getOrgOverviewEmpty)
+	})
+
+	t.Run("SetStatus", func(t *testing.T) {
+		t.Run("SetEmpty", setEmpty)
+		t.Run("SetSuccess", setSuccess)
+	})
+	if t.Failed() {
+		return
+	}
+	//
+	//t.Run("GetStatus", func(t *testing.T) {
+	//	t.Run("GetNotFound", getNotFound)
+	//	t.Run("GetSuccess", getSuccess)
+	//})
+	//
+	//t.Run("DescribeOrg", func(t *testing.T) {
+	//	t.Run("DescribeOrgPolicy", describeOrgPolicy)
+	//	t.Run("DescribeOrgResource", describeOrgResource)
+	//})
+	//
+	//t.Run("DescribePolicy", func(t *testing.T) {
+	//	t.Run("DescribePolicyEmpty", describePolicyEmpty)
+	//	t.Run("DescribePolicy", describePolicy)
+	//})
+	//
+	//t.Run("DescribeResource", func(t *testing.T) {
+	//	t.Run("DescribeResourceEmpty", describeResourceEmpty)
+	//	t.Run("DescribeResource", describeResource)
+	//})
+	//
+	//t.Run("GetOrgOverview", func(t *testing.T) {
+	//	t.Run("GetOrgOverview", getOrgOverview)
+	//	t.Run("GetOrgOverviewCustomLimit", getOrgOverviewCustomLimit)
+	//})
+	//t.Run("DescribePolicyPageAndFilter", describePolicyPageAndFilter)
+	//
+	//t.Run("Update", update)
+	//t.Run("Delete", deleteBatch)
+}
+
+func setEmpty(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		SetStatus: &models.SetStatusInput{Entries: []models.SetStatusEntry{}},
+	}
+
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.Error(t, err)
+	assert.Equal(t, http.StatusBadRequest, statusCode)
+	assert.Equal(t, "panther-compliance-api: InvalidInputError: "+
+		"Entries invalid, failed to satisfy the condition: min=1", err.Error())
+}
+
+func setSuccess(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		SetStatus: &models.SetStatusInput{Entries: make([]models.SetStatusEntry, len(statuses))},
+	}
+	for i, status := range statuses {
+		input.SetStatus.Entries[i] = models.SetStatusEntry{
+			ErrorMessage:   status.ErrorMessage,
+			PolicyID:       status.PolicyID,
+			PolicySeverity: status.PolicySeverity,
+			ResourceID:     status.ResourceID,
+			ResourceType:   status.ResourceType,
+			Status:         status.Status,
+			Suppressed:     status.Suppressed,
+			IntegrationID:  status.IntegrationID,
+		}
+	}
+
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusCreated, statusCode)
+}
+
 //func getNotFound(t *testing.T) {
 //	t.Parallel()
 //	result, err := apiClient.Operations.GetStatus(&operations.GetStatusParams{
@@ -256,18 +213,21 @@ package main
 //	}
 //	assert.Equal(t, statuses[0], result.Payload)
 //}
-//
-//func describeOrgEmpty(t *testing.T) {
-//	t.Parallel()
-//	result, err := apiClient.Operations.DescribeOrg(&operations.DescribeOrgParams{
-//		Type:       "policy",
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	expected := &models.EntireOrg{Policies: []*models.ItemSummary{}, Resources: []*models.ItemSummary{}}
-//	assert.Equal(t, expected, result.Payload)
-//}
+
+func describeOrgEmpty(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		DescribeOrg: &models.DescribeOrgInput{Type: "policy"},
+	}
+
+	var result models.DescribeOrgOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	assert.Equal(t, models.DescribeOrgOutput{
+		Resources: []models.ItemSummary{}, Policies: []models.ItemSummary{}}, result)
+}
+
 //
 //func describeOrgPolicy(t *testing.T) {
 //	t.Parallel()
@@ -617,21 +577,28 @@ package main
 //	assert.Equal(t, expected, result.Payload)
 //}
 //
-//func getOrgOverviewEmpty(t *testing.T) {
-//	t.Parallel()
-//	result, err := apiClient.Operations.GetOrgOverview(&operations.GetOrgOverviewParams{
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	expected := &models.OrgSummary{
-//		AppliedPolicies:     handlers.NewStatusCountBySeverity(),
-//		ScannedResources:    &models.ScannedResources{ByType: []*models.ResourceOfType{}},
-//		TopFailingPolicies:  []*models.PolicySummary{},
-//		TopFailingResources: []*models.ResourceSummary{},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//}
+func getOrgOverviewEmpty(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		GetOrgOverview: &models.GetOrgOverviewInput{},
+	}
+
+	var result models.OrgSummary
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	// empty lists are initialized
+	expected := models.OrgSummary{
+		AppliedPolicies: models.StatusCountBySeverity{},
+		ScannedResources: models.ScannedResources{
+			ByType: []models.ResourceOfType{},
+		},
+		TopFailingPolicies:  []models.PolicySummary{},
+		TopFailingResources: []models.ResourceSummary{},
+	}
+	assert.Equal(t, expected, result)
+}
+
 //
 //func getOrgOverview(t *testing.T) {
 //	t.Parallel()
