@@ -71,9 +71,9 @@ func buildGetOrgOverviewQuery() (*dynamodb.ScanInput, error) {
 func buildOverview(policies policyMap, resources resourceMap, limitTopFailing int) *models.OrgSummary {
 	// Count policies by severity and record failed policies
 	var appliedPolicies models.StatusCountBySeverity
-	failedPolicies := make([]models.PolicySummary, 0)
+	var failedPolicies []models.PolicySummary
 	for _, policy := range policies {
-		status := countToStatus(&policy.Count)
+		status := countToStatus(policy.Count)
 		updateStatusCountBySeverity(&appliedPolicies, policy.Severity, status)
 		if status != models.StatusPass {
 			failedPolicies = append(failedPolicies, *policy)
@@ -90,17 +90,13 @@ func buildOverview(policies policyMap, resources resourceMap, limitTopFailing in
 	resourcesByType := make(map[string]models.StatusCount, 100)
 	failedResources := make([]models.ResourceSummary, 0, len(resources)/2)
 	for _, resource := range resources {
-		count, ok := resourcesByType[resource.Type]
-		if !ok {
-			count = models.StatusCount{}
-			resourcesByType[resource.Type] = count
-		}
-
+		count := resourcesByType[resource.Type]
 		status := countBySeverityToStatus(&resource.Count)
 		updateStatusCount(&count, status)
 		if status != models.StatusPass {
 			failedResources = append(failedResources, *resource)
 		}
+		resourcesByType[resource.Type] = count
 	}
 
 	// Convert resourcesByType into appropriate struct

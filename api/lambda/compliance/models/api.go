@@ -345,7 +345,7 @@ type GetStatusInput struct {
 // The policy-api deletes statuses when a policy is disabled or deleted or no longer applies to a resource type, and
 // the resources-api deletes statuses when a resource is deleted.
 type DeleteStatusInput struct {
-	Entries []DeleteStatusEntry `json:"entries" validate:"required"`
+	Entries []DeleteStatusEntry `json:"entries" validate:"min=1"`
 }
 
 type DeleteStatusEntry struct {

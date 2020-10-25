@@ -485,7 +485,7 @@ func describePolicyPageAndFilter(t *testing.T) {
 	input = models.LambdaInput{
 		DescribePolicy: &models.DescribePolicyInput{
 			PolicyID:   policyID,
-			Page: 2,
+			Page:       2,
 			PageSize:   1,
 			Status:     models.StatusFail,
 			Suppressed: aws.Bool(true),

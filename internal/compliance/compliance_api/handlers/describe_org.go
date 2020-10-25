@@ -99,7 +99,7 @@ func listPolicies(input *dynamodb.ScanInput) ([]models.ItemSummary, error) {
 	for i, policy := range policySlice {
 		result[i] = models.ItemSummary{
 			ID:     policy.ID,
-			Status: countToStatus(&policy.Count),
+			Status: countToStatus(policy.Count),
 		}
 	}
 

@@ -49,7 +49,7 @@ func updateStatusCount(count *models.StatusCount, status models.ComplianceStatus
 }
 
 // Convert pass/fail counts to a compliance status string
-func countToStatus(count *models.StatusCount) models.ComplianceStatus {
+func countToStatus(count models.StatusCount) models.ComplianceStatus {
 	if count.Error > 0 {
 		return models.StatusError
 	}
