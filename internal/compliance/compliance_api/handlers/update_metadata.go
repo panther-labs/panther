@@ -75,8 +75,8 @@ func itemsToUpdate(input *models.UpdateMetadataInput) ([]*dynamodb.WriteRequest,
 		}
 
 		// This status entry has changed - we need to rewrite it
-		if item.Suppressed != ignored || item.PolicySeverity != input.PolicySeverity {
-			item.PolicySeverity = input.PolicySeverity
+		if item.Suppressed != ignored || item.PolicySeverity != input.Severity {
+			item.PolicySeverity = input.Severity
 			item.Suppressed = ignored
 
 			marshalled, err := dynamodbattribute.MarshalMap(item)

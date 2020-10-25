@@ -386,7 +386,7 @@ type SetStatusEntry struct {
 // The policy-api updates the relevant policy attributes here when they change (severity/suppressions).
 // For these updates, we don't need to re-scan the resources and can instead directly modify the compliance state.
 type UpdateMetadataInput struct {
-	PolicyID       string         `json:"policyId" validate:"required"`
-	PolicySeverity PolicySeverity `json:"policySeverity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
-	Suppressions   []string       `json:"suppressions"`
+	PolicyID     string         `json:"policyId" validate:"required"`
+	Severity     PolicySeverity `json:"severity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Suppressions []string       `json:"suppressions"`
 }

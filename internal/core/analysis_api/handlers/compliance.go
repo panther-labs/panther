@@ -185,9 +185,9 @@ func updateComplianceMetadata(policy *tableItem) error {
 
 	input := compliancemodels.LambdaInput{
 		UpdateMetadata: &compliancemodels.UpdateMetadataInput{
-			PolicyID:       string(policy.ID),
-			PolicySeverity: compliancemodels.PolicySeverity(policy.Severity),
-			Suppressions:   policy.Suppressions,
+			PolicyID:     string(policy.ID),
+			Severity:     compliancemodels.PolicySeverity(policy.Severity),
+			Suppressions: policy.Suppressions,
 		},
 	}
 

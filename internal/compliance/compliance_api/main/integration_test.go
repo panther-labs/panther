@@ -19,12 +19,14 @@ package main
  */
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"sort"
 	"strings"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/stretchr/testify/assert"
@@ -143,10 +145,10 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("GetOrgOverview", getOrgOverview)
 		t.Run("GetOrgOverviewCustomLimit", getOrgOverviewCustomLimit)
 	})
-	//t.Run("DescribePolicyPageAndFilter", describePolicyPageAndFilter)
-	//
-	//t.Run("Update", update)
-	//t.Run("Delete", deleteBatch)
+	t.Run("DescribePolicyPageAndFilter", describePolicyPageAndFilter)
+
+	t.Run("Update", update)
+	t.Run("Delete", deleteBatch)
 }
 
 func setEmpty(t *testing.T) {
@@ -385,116 +387,122 @@ func describePolicy(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
-//
-//// Test paging + filtering with more items
-//func describePolicyPageAndFilter(t *testing.T) {
-//	t.Parallel()
-//
-//	// Add 18 entries with 3 copies of each (status, suppressed) combination
-//	entries := make([]*models.SetStatus, 18)
-//	integrationID := "52346bf0-e490-480b-a4b5-35fe83c98c17"
-//
-//	policyID := "copy-policy"
-//
-//	for i := 0; i < len(entries); i++ {
-//		var status models.Status
-//		switch {
-//		case i < 6:
-//			status = models.StatusERROR
-//		case i < 12:
-//			status = models.StatusFAIL
-//		default:
-//			status = models.StatusPASS
-//		}
-//
-//		suppressed := false
-//		if i%2 == 0 {
-//			suppressed = true
-//		}
-//
-//		entries[i] = &models.SetStatus{
-//			PolicyID:       models.PolicyID(policyID),
-//			PolicySeverity: models.PolicySeverityLOW,
-//			ResourceID:     models.ResourceID(fmt.Sprintf("resource-%d", i)),
-//			ResourceType:   "AWS.S3.Bucket",
-//			Status:         status,
-//			Suppressed:     models.Suppressed(suppressed),
-//			IntegrationID:  models.IntegrationID(integrationID),
-//		}
-//	}
-//
-//	_, err := apiClient.Operations.SetStatus(&operations.SetStatusParams{
-//		Body:       &models.SetStatusBatch{Entries: entries},
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	// Fetch suppressed FAIL entries with pageSize=1
-//	result, err := apiClient.Operations.DescribePolicy(&operations.DescribePolicyParams{
-//		PageSize:   aws.Int64(1),
-//		PolicyID:   policyID,
-//		Status:     aws.String(string(models.StatusFAIL)),
-//		Suppressed: aws.Bool(true),
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	require.Len(t, result.Payload.Items, 1)
-//
-//	expected := &models.PolicyResourceDetail{
-//		Items: []*models.ComplianceStatus{
-//			{
-//				ExpiresAt:      result.Payload.Items[0].ExpiresAt,
-//				IntegrationID:  models.IntegrationID(integrationID),
-//				LastUpdated:    result.Payload.Items[0].LastUpdated,
-//				PolicyID:       models.PolicyID(policyID),
-//				PolicySeverity: models.PolicySeverityLOW,
-//				ResourceID:     "resource-6",
-//				ResourceType:   "AWS.S3.Bucket",
-//				Status:         models.StatusFAIL,
-//				Suppressed:     models.Suppressed(true),
-//			},
-//		},
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(1),
-//			TotalItems: aws.Int64(3),
-//			TotalPages: aws.Int64(3),
-//		},
-//		Status: models.StatusERROR, // overall policy status is ERROR
-//		Totals: &models.ActiveSuppressCount{
-//			Active: &models.StatusCount{
-//				Error: aws.Int64(3),
-//				Fail:  aws.Int64(3),
-//				Pass:  aws.Int64(3),
-//			},
-//			Suppressed: &models.StatusCount{
-//				Error: aws.Int64(3),
-//				Fail:  aws.Int64(3),
-//				Pass:  aws.Int64(3),
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//
-//	// Get the next page - the result is almost the same
-//	result, err = apiClient.Operations.DescribePolicy(&operations.DescribePolicyParams{
-//		Page:       aws.Int64(2),
-//		PageSize:   aws.Int64(1),
-//		PolicyID:   policyID,
-//		Status:     aws.String(string(models.StatusFAIL)),
-//		Suppressed: aws.Bool(true),
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	require.Len(t, result.Payload.Items, 1)
-//	expected.Items[0].ExpiresAt = result.Payload.Items[0].ExpiresAt
-//	expected.Items[0].LastUpdated = result.Payload.Items[0].LastUpdated
-//	expected.Items[0].ResourceID = "resource-8"
-//	expected.Paging.ThisPage = aws.Int64(2)
-//	assert.Equal(t, expected, result.Payload)
-//}
-//
+// Test paging + filtering with more items
+func describePolicyPageAndFilter(t *testing.T) {
+	t.Parallel()
+
+	// Add 18 entries with 3 copies of each (status, suppressed) combination
+	entries := make([]models.SetStatusEntry, 18)
+	integrationID := "52346bf0-e490-480b-a4b5-35fe83c98c17"
+	policyID := "copy-policy"
+
+	for i := 0; i < len(entries); i++ {
+		var status models.ComplianceStatus
+		switch {
+		case i < 6:
+			status = models.StatusError
+		case i < 12:
+			status = models.StatusFail
+		default:
+			status = models.StatusPass
+		}
+
+		suppressed := false
+		if i%2 == 0 {
+			suppressed = true
+		}
+
+		entries[i] = models.SetStatusEntry{
+			PolicyID:       policyID,
+			PolicySeverity: models.SeverityLow,
+			ResourceID:     fmt.Sprintf("resource-%d", i),
+			ResourceType:   "AWS.S3.Bucket",
+			Status:         status,
+			Suppressed:     suppressed,
+			IntegrationID:  integrationID,
+		}
+	}
+
+	input := models.LambdaInput{
+		SetStatus: &models.SetStatusInput{Entries: entries},
+	}
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusCreated, statusCode)
+
+	// Fetch suppressed FAIL entries with pageSize=1
+	input = models.LambdaInput{
+		DescribePolicy: &models.DescribePolicyInput{
+			PolicyID:   policyID,
+			PageSize:   1,
+			Status:     models.StatusFail,
+			Suppressed: aws.Bool(true),
+		},
+	}
+	var result models.PolicyResourceDetail
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	require.Len(t, result.Items, 1)
+
+	expected := models.PolicyResourceDetail{
+		Items: []models.ComplianceEntry{
+			{
+				ExpiresAt:      result.Items[0].ExpiresAt,
+				IntegrationID:  integrationID,
+				LastUpdated:    result.Items[0].LastUpdated,
+				PolicyID:       policyID,
+				PolicySeverity: models.SeverityLow,
+				ResourceID:     "resource-6",
+				ResourceType:   "AWS.S3.Bucket",
+				Status:         models.StatusFail,
+				Suppressed:     true,
+			},
+		},
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 3,
+			TotalPages: 3,
+		},
+		Status: models.StatusError, // overall policy status is ERROR
+		Totals: models.ActiveSuppressCount{
+			Active: models.StatusCount{
+				Error: 3,
+				Fail:  3,
+				Pass:  3,
+			},
+			Suppressed: models.StatusCount{
+				Error: 3,
+				Fail:  3,
+				Pass:  3,
+			},
+		},
+	}
+	assert.Equal(t, expected, result)
+
+	// Get the next page - the result is almost the same
+	input = models.LambdaInput{
+		DescribePolicy: &models.DescribePolicyInput{
+			PolicyID:   policyID,
+			Page: 2,
+			PageSize:   1,
+			Status:     models.StatusFail,
+			Suppressed: aws.Bool(true),
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	require.Len(t, result.Items, 1)
+	expected.Items[0].ExpiresAt = result.Items[0].ExpiresAt
+	expected.Items[0].LastUpdated = result.Items[0].LastUpdated
+	expected.Items[0].ResourceID = "resource-8"
+	expected.Paging.ThisPage = 2
+	assert.Equal(t, expected, result)
+}
+
 // A resource which doesn't exist returns empty results.
 //
 // We don't return 404 because a resource might exist but have no policies applied to it.
@@ -679,86 +687,94 @@ func getOrgOverviewCustomLimit(t *testing.T) {
 	assert.Equal(t, "arn:aws:s3:::my-bucket", resources[0].ID)
 }
 
-//
-//func update(t *testing.T) {
-//	result, err := apiClient.Operations.UpdateMetadata(&operations.UpdateMetadataParams{
-//		Body: &models.UpdateMetadata{
-//			PolicyID:     "AWS-S3-Versioning",
-//			Severity:     "INFO",
-//			Suppressions: nil,
-//		},
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	assert.Equal(t, &operations.UpdateMetadataOK{}, result)
-//
-//	// Verify severity and suppressions were overwritten
-//	entry, err := apiClient.Operations.GetStatus(&operations.GetStatusParams{
-//		PolicyID:   string(statuses[1].PolicyID),
-//		ResourceID: string(statuses[1].ResourceID),
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	statuses[1].PolicySeverity = "INFO"
-//	statuses[1].Suppressed = false
-//	assert.Equal(t, statuses[1], entry.Payload)
-//
-//	// Verify severity and suppressions were overwritten
-//	entry, err = apiClient.Operations.GetStatus(&operations.GetStatusParams{
-//		PolicyID:   string(statuses[2].PolicyID),
-//		ResourceID: string(statuses[2].ResourceID),
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	statuses[2].PolicySeverity = "INFO" // still suppressed = false
-//	assert.Equal(t, statuses[2], entry.Payload)
-//}
-//
-//func deleteBatch(t *testing.T) {
-//	result, err := apiClient.Operations.DeleteStatus(&operations.DeleteStatusParams{
-//		Body: &models.DeleteStatusBatch{
-//			Entries: []*models.DeleteStatus{
-//				{
-//					Policy: &models.DeletePolicy{
-//						ID:            "AWS-S3-Versioning",
-//						ResourceTypes: []string{"AWS.KMS.Key", "AWS.S3.Bucket"},
-//					},
-//				},
-//				{
-//					Resource: &models.DeleteResource{ID: "arn:aws:cloudtrail:222222222222::my-trail"},
-//				},
-//			},
-//		},
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	assert.Equal(t, &operations.DeleteStatusOK{}, result)
-//
-//	// Trying to get any of the deleted entries now returns a 404
-//	getResult, err := apiClient.Operations.GetStatus(&operations.GetStatusParams{
-//		PolicyID:   "AWS-S3-Versioning",
-//		ResourceID: "arn:aws:s3:::my-bucket",
-//		HTTPClient: httpClient,
-//	})
-//	require.Error(t, err)
-//	assert.IsType(t, &operations.GetStatusNotFound{}, err)
-//	assert.Nil(t, getResult)
-//
-//	getResult, err = apiClient.Operations.GetStatus(&operations.GetStatusParams{
-//		PolicyID:   "AWS-S3-Versioning",
-//		ResourceID: "arn:aws:s3:::my-other-bucket",
-//		HTTPClient: httpClient,
-//	})
-//	require.Error(t, err)
-//	assert.IsType(t, &operations.GetStatusNotFound{}, err)
-//	assert.Nil(t, getResult)
-//
-//	getResult, err = apiClient.Operations.GetStatus(&operations.GetStatusParams{
-//		PolicyID:   "AWS-Cloudtrail-Encryption",
-//		ResourceID: "arn:aws:cloudtrail:222222222222::my-trail",
-//		HTTPClient: httpClient,
-//	})
-//	require.Error(t, err)
-//	assert.IsType(t, &operations.GetStatusNotFound{}, err)
-//	assert.Nil(t, getResult)
-//}
+func update(t *testing.T) {
+	input := models.LambdaInput{
+		UpdateMetadata: &models.UpdateMetadataInput{
+			PolicyID: "AWS-S3-Versioning",
+			Severity: "INFO",
+		},
+	}
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	// Verify severity and suppressions were overwritten
+	input = models.LambdaInput{
+		GetStatus: &models.GetStatusInput{
+			PolicyID:   statuses[1].PolicyID,
+			ResourceID: statuses[1].ResourceID,
+		},
+	}
+	var result models.ComplianceEntry
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	statuses[1].PolicySeverity = "INFO"
+	statuses[1].Suppressed = false
+	assert.Equal(t, statuses[1], result)
+
+	// Verify severity and suppressions were overwritten
+	input = models.LambdaInput{
+		GetStatus: &models.GetStatusInput{
+			PolicyID:   statuses[2].PolicyID,
+			ResourceID: statuses[2].ResourceID,
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	statuses[2].PolicySeverity = "INFO"
+	assert.Equal(t, statuses[2], result)
+}
+
+func deleteBatch(t *testing.T) {
+	input := models.LambdaInput{
+		DeleteStatus: &models.DeleteStatusInput{
+			Entries: []models.DeleteStatusEntry{
+				{
+					Policy: &models.DeletePolicy{
+						ID:            "AWS-S3-Versioning",
+						ResourceTypes: []string{"AWS.KMS.Key", "AWS.S3.Bucket"},
+					},
+				},
+				{
+					Resource: &models.DeleteResource{ID: "arn:aws:cloudtrail:222222222222::my-trail"},
+				},
+			},
+		},
+	}
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	// Trying to get any of the deleted entries now returns a 404
+	input = models.LambdaInput{
+		GetStatus: &models.GetStatusInput{
+			PolicyID:   "AWS-S3-Versioning",
+			ResourceID: "arn:aws:s3:::my-bucket",
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, nil)
+	assert.Error(t, err)
+	assert.Equal(t, http.StatusNotFound, statusCode)
+
+	input = models.LambdaInput{
+		GetStatus: &models.GetStatusInput{
+			PolicyID:   "AWS-S3-Versioning",
+			ResourceID: "arn:aws:s3:::my-other-bucket",
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, nil)
+	assert.Error(t, err)
+	assert.Equal(t, http.StatusNotFound, statusCode)
+
+	input = models.LambdaInput{
+		GetStatus: &models.GetStatusInput{
+			PolicyID:   "AWS-Cloudtrail-Encryption",
+			ResourceID: "arn:aws:cloudtrail:222222222222::my-trail",
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, nil)
+	assert.Error(t, err)
+	assert.Equal(t, http.StatusNotFound, statusCode)
+}
