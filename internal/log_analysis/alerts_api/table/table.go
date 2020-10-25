@@ -46,7 +46,7 @@ const (
 
 // API defines the interface for the alerts table which can be used for mocking.
 type API interface {
-	GetAlert(*string) (*AlertItem, error)
+	GetAlert(string) (*AlertItem, error)
 	ListAll(*models.ListAlertsInput) ([]*AlertItem, *string, error)
 	UpdateAlertStatus(*models.UpdateAlertStatusInput) ([]*AlertItem, error)
 	UpdateAlertDelivery(*models.UpdateAlertDeliveryInput) (*AlertItem, error)
@@ -58,6 +58,22 @@ type AlertsTable struct {
 	RuleIDCreationTimeIndexName        string
 	TimePartitionCreationTimeIndexName string
 	Client                             dynamodbiface.DynamoDBAPI
+}
+
+type AlertsTableEnvConfig struct {
+	// env config for instantiating a table.AlertsTable
+	AlertsTableName     string `required:"true" split_words:"true"`
+	AlertsRuleIndexName string `required:"true" split_words:"true"`
+	AlertsTimeIndexName string `required:"true" split_words:"true"`
+}
+
+func (config *AlertsTableEnvConfig) NewAlertsTable(client dynamodbiface.DynamoDBAPI) *AlertsTable {
+	return &AlertsTable{
+		AlertsTableName:                    config.AlertsTableName,
+		Client:                             client,
+		RuleIDCreationTimeIndexName:        config.AlertsRuleIndexName,
+		TimePartitionCreationTimeIndexName: config.AlertsTimeIndexName,
+	}
 }
 
 // The AlertsTable must satisfy the API interface.
