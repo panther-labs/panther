@@ -36,18 +36,13 @@ type API interface {
 type Client struct {
 	lambda       lambdaiface.LambdaAPI
 	functionName string
-	json         jsoniter.API
 }
 
 // Create a new client for invoking a lambda gateway API proxy directly.
-func NewClient(lambda lambdaiface.LambdaAPI, functionName string, json jsoniter.API) *Client {
-	if json == nil {
-		json = jsoniter.ConfigDefault
-	}
+func NewClient(lambda lambdaiface.LambdaAPI, functionName string) *Client {
 	return &Client{
 		lambda:       lambda,
 		functionName: functionName,
-		json:         json,
 	}
 }
 
@@ -62,7 +57,7 @@ func NewClient(lambda lambdaiface.LambdaAPI, functionName string, json jsoniter.
 //
 // This is similar to genericapi.Invoke and will be obsolete once we consolidate the internal API.
 func (client *Client) Invoke(input, output interface{}) (int, error) {
-	payload, err := client.json.Marshal(input)
+	payload, err := jsoniter.Marshal(input)
 	if err != nil {
 		return http.StatusBadRequest, fmt.Errorf("%s: jsoniter.Marshal(input) failed: %s", client.functionName, err)
 	}
@@ -86,7 +81,7 @@ func (client *Client) Invoke(input, output interface{}) (int, error) {
 
 	// All gateway proxies had to return this type for API gateway.
 	var result events.APIGatewayProxyResponse
-	if err := client.json.Unmarshal(response.Payload, &result); err != nil {
+	if err := jsoniter.Unmarshal(response.Payload, &result); err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("%s: proxy response could not be parsed: %s", client.functionName, response)
 	}
 
@@ -96,7 +91,7 @@ func (client *Client) Invoke(input, output interface{}) (int, error) {
 	}
 
 	if output != nil {
-		if err := client.json.UnmarshalFromString(result.Body, output); err != nil {
+		if err := jsoniter.UnmarshalFromString(result.Body, output); err != nil {
 			return http.StatusInternalServerError, fmt.Errorf("%s: response could not be parsed into output variable: %s",
 				client.functionName, err)
 		}

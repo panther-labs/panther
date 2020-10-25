@@ -65,7 +65,7 @@ func Setup() {
 	s3Client = s3.New(awsSession)
 	sqsClient = sqs.New(awsSession)
 	lambdaClient := lambda.New(awsSession)
-	complianceClient = gatewayapi.NewClient(lambdaClient, "panther-compliance-api", nil)
+	complianceClient = gatewayapi.NewClient(lambdaClient, "panther-compliance-api")
 
 	policyEngine = analysis.NewPolicyEngine(lambdaClient, env.PolicyEngine)
 	ruleEngine = analysis.NewRuleEngine(lambdaClient, env.RulesEngine)

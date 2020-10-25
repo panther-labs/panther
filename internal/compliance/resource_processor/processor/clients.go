@@ -67,7 +67,7 @@ func Setup() {
 	awsSession = session.Must(session.NewSession())
 	lambdaClient = lambda.New(awsSession)
 	sqsClient = sqs.New(awsSession)
-	complianceClient = gatewayapi.NewClient(lambdaClient, "panther-compliance-api", nil)
+	complianceClient = gatewayapi.NewClient(lambdaClient, "panther-compliance-api")
 
 	httpClient = gatewayapi.GatewayClient(awsSession)
 	analysisClient = analysisapi.NewHTTPClientWithConfig(

@@ -51,5 +51,5 @@ func Setup() {
 	awsSession = session.Must(session.NewSession())
 	dynamoClient = dynamodb.New(awsSession)
 	sqsClient = sqs.New(awsSession)
-	complianceClient = gatewayapi.NewClient(lambda.New(awsSession), "panther-compliance-api", nil)
+	complianceClient = gatewayapi.NewClient(lambda.New(awsSession), "panther-compliance-api")
 }

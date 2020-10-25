@@ -59,8 +59,7 @@ var (
 	ddbClient  dynamodbiface.DynamoDBAPI = dynamodb.New(awsSession)
 	httpClient                           = gatewayapi.GatewayClient(awsSession)
 
-	complianceClient gatewayapi.API = gatewayapi.NewClient(
-		lambda.New(awsSession), "panther-compliance-api", nil)
+	complianceClient gatewayapi.API = gatewayapi.NewClient(lambda.New(awsSession), "panther-compliance-api")
 
 	remediationconfig = remediationclient.DefaultTransportConfig().
 				WithHost(remediationServiceHost).
