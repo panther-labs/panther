@@ -21,6 +21,7 @@ package main
 import (
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"testing"
 
@@ -41,7 +42,7 @@ var (
 	integrationID   = "f0e95b8b-6d93-4de5-a963-a2974fd2ba72"
 
 	// 5 policies: 1 error, 2 fail (1 suppressed), 2 pass across 3 resources and 4 policies
-	statuses = []*models.ComplianceEntry{
+	statuses = []models.ComplianceEntry{
 		{
 			ErrorMessage:   "ZeroDivisionError",
 			PolicyID:       "AWS-S3-EncryptionEnabled",
@@ -117,31 +118,31 @@ func TestIntegrationAPI(t *testing.T) {
 	if t.Failed() {
 		return
 	}
-	//
-	//t.Run("GetStatus", func(t *testing.T) {
-	//	t.Run("GetNotFound", getNotFound)
-	//	t.Run("GetSuccess", getSuccess)
-	//})
-	//
-	//t.Run("DescribeOrg", func(t *testing.T) {
-	//	t.Run("DescribeOrgPolicy", describeOrgPolicy)
-	//	t.Run("DescribeOrgResource", describeOrgResource)
-	//})
-	//
-	//t.Run("DescribePolicy", func(t *testing.T) {
-	//	t.Run("DescribePolicyEmpty", describePolicyEmpty)
-	//	t.Run("DescribePolicy", describePolicy)
-	//})
-	//
-	//t.Run("DescribeResource", func(t *testing.T) {
-	//	t.Run("DescribeResourceEmpty", describeResourceEmpty)
-	//	t.Run("DescribeResource", describeResource)
-	//})
-	//
-	//t.Run("GetOrgOverview", func(t *testing.T) {
-	//	t.Run("GetOrgOverview", getOrgOverview)
-	//	t.Run("GetOrgOverviewCustomLimit", getOrgOverviewCustomLimit)
-	//})
+
+	t.Run("GetStatus", func(t *testing.T) {
+		t.Run("GetNotFound", getNotFound)
+		t.Run("GetSuccess", getSuccess)
+	})
+
+	t.Run("DescribeOrg", func(t *testing.T) {
+		t.Run("DescribeOrgPolicy", describeOrgPolicy)
+		t.Run("DescribeOrgResource", describeOrgResource)
+	})
+
+	t.Run("DescribePolicy", func(t *testing.T) {
+		t.Run("DescribePolicyEmpty", describePolicyEmpty)
+		t.Run("DescribePolicy", describePolicy)
+	})
+
+	t.Run("DescribeResource", func(t *testing.T) {
+		t.Run("DescribeResourceEmpty", describeResourceEmpty)
+		t.Run("DescribeResource", describeResource)
+	})
+
+	t.Run("GetOrgOverview", func(t *testing.T) {
+		t.Run("GetOrgOverview", getOrgOverview)
+		t.Run("GetOrgOverviewCustomLimit", getOrgOverviewCustomLimit)
+	})
 	//t.Run("DescribePolicyPageAndFilter", describePolicyPageAndFilter)
 	//
 	//t.Run("Update", update)
@@ -184,35 +185,42 @@ func setSuccess(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, statusCode)
 }
 
-//func getNotFound(t *testing.T) {
-//	t.Parallel()
-//	result, err := apiClient.Operations.GetStatus(&operations.GetStatusParams{
-//		PolicyID:   "no-such-policy",
-//		ResourceID: string(statuses[0].ResourceID),
-//		HTTPClient: httpClient,
-//	})
-//	assert.Nil(t, result)
-//	require.Error(t, err)
-//	require.IsType(t, &operations.GetStatusNotFound{}, err)
-//}
-//
-//func getSuccess(t *testing.T) {
-//	t.Parallel()
-//	result, err := apiClient.Operations.GetStatus(&operations.GetStatusParams{
-//		PolicyID:   string(statuses[0].PolicyID),
-//		ResourceID: string(statuses[0].ResourceID),
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	for i := 0; i < len(statuses); i++ {
-//		assert.NotEmpty(t, result.Payload.ExpiresAt)
-//		statuses[i].ExpiresAt = result.Payload.ExpiresAt
-//		assert.NotEmpty(t, result.Payload.LastUpdated)
-//		statuses[i].LastUpdated = result.Payload.LastUpdated
-//	}
-//	assert.Equal(t, statuses[0], result.Payload)
-//}
+func getNotFound(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		GetStatus: &models.GetStatusInput{
+			PolicyID:   "no-such-policy",
+			ResourceID: statuses[0].ResourceID,
+		},
+	}
+
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.Error(t, err)
+	assert.Equal(t, http.StatusNotFound, statusCode)
+}
+
+func getSuccess(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		GetStatus: &models.GetStatusInput{
+			PolicyID:   statuses[0].PolicyID,
+			ResourceID: statuses[0].ResourceID,
+		},
+	}
+
+	var result models.ComplianceEntry
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	for i := 0; i < len(statuses); i++ {
+		assert.NotEmpty(t, result.ExpiresAt)
+		statuses[i].ExpiresAt = result.ExpiresAt
+		assert.NotEmpty(t, result.LastUpdated)
+		statuses[i].LastUpdated = result.LastUpdated
+	}
+	assert.Equal(t, statuses[0], result)
+}
 
 func describeOrgEmpty(t *testing.T) {
 	t.Parallel()
@@ -228,174 +236,155 @@ func describeOrgEmpty(t *testing.T) {
 		Resources: []models.ItemSummary{}, Policies: []models.ItemSummary{}}, result)
 }
 
+func describeOrgPolicy(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		DescribeOrg: &models.DescribeOrgInput{Type: "policy"},
+	}
+
+	var result models.DescribeOrgOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.DescribeOrgOutput{
+		Policies: []models.ItemSummary{
+			{
+				ID:     "AWS-S3-EncryptionEnabled", // 1 HIGH error
+				Status: models.StatusError,
+			},
+			{
+				ID:     "AWS-S3-Versioning", // 1 MEDIUM failure
+				Status: models.StatusFail,
+			},
+			// passing policies are sorted by ID
+			{
+				ID:     "AWS-Cloudtrail-Encryption",
+				Status: models.StatusPass,
+			},
+			{
+				ID:     "AWS-S3-BlockPublicAccess",
+				Status: models.StatusPass,
+			},
+		},
+		Resources: []models.ItemSummary{},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func describeOrgResource(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		DescribeOrg: &models.DescribeOrgInput{Type: "resource"},
+	}
+
+	var result models.DescribeOrgOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.DescribeOrgOutput{
+		Policies: []models.ItemSummary{},
+		Resources: []models.ItemSummary{
+			{
+				ID:     "arn:aws:s3:::my-bucket", // 1 HIGH error
+				Status: models.StatusError,
+			},
+			{
+				ID:     "arn:aws:s3:::my-other-bucket", // 1 MEDIUM failure
+				Status: models.StatusFail,
+			},
+			{
+				ID:     "arn:aws:cloudtrail:123412341234::my-trail",
+				Status: models.StatusPass,
+			},
+		},
+	}
+	assert.Equal(t, expected, result)
+}
+
+// A policy which doesn't exist returns empty results.
 //
-//func describeOrgPolicy(t *testing.T) {
-//	t.Parallel()
-//
-//	// org1
-//	result, err := apiClient.Operations.DescribeOrg(&operations.DescribeOrgParams{
-//		Type:       "policy",
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	expected := &models.EntireOrg{
-//		Policies: []*models.ItemSummary{
-//			{
-//				ID:     aws.String("AWS-S3-EncryptionEnabled"), // 1 HIGH error
-//				Status: models.StatusERROR,
-//			},
-//			{
-//				ID:     aws.String("AWS-S3-Versioning"), // 1 MEDIUM failure
-//				Status: models.StatusFAIL,
-//			},
-//			// passing policies are sorted by ID
-//			{
-//				ID:     aws.String("AWS-Cloudtrail-Encryption"),
-//				Status: models.StatusPASS,
-//			},
-//			{
-//				ID:     aws.String("AWS-S3-BlockPublicAccess"),
-//				Status: models.StatusPASS,
-//			},
-//		},
-//		Resources: []*models.ItemSummary{},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//}
-//
-//func describeOrgResource(t *testing.T) {
-//	t.Parallel()
-//
-//	// org1
-//	result, err := apiClient.Operations.DescribeOrg(&operations.DescribeOrgParams{
-//		Type:       "resource",
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	expected := &models.EntireOrg{
-//		Policies: []*models.ItemSummary{},
-//		Resources: []*models.ItemSummary{
-//			{
-//				ID:     aws.String("arn:aws:s3:::my-bucket"), // 1 HIGH error
-//				Status: models.StatusERROR,
-//			},
-//			{
-//				ID:     aws.String("arn:aws:s3:::my-other-bucket"), // 1 MEDIUM failure
-//				Status: models.StatusFAIL,
-//			},
-//			{
-//				ID:     aws.String("arn:aws:cloudtrail:123412341234::my-trail"),
-//				Status: models.StatusPASS,
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//}
-//
-//// A policy which doesn't exist returns empty results.
-////
-//// We don't return 404 because a disabled policy will not exist in the compliance-api but would
-//// in the analysis-api
-//func describePolicyEmpty(t *testing.T) {
-//	t.Parallel()
-//	result, err := apiClient.Operations.DescribePolicy(&operations.DescribePolicyParams{
-//		PolicyID:   "no-such-policy",
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	expected := &models.PolicyResourceDetail{
-//		Items: []*models.ComplianceStatus{},
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(0),
-//			TotalItems: aws.Int64(0),
-//			TotalPages: aws.Int64(0),
-//		},
-//		Status: models.StatusPASS,
-//		Totals: &models.ActiveSuppressCount{
-//			Active: &models.StatusCount{
-//				Error: aws.Int64(0),
-//				Fail:  aws.Int64(0),
-//				Pass:  aws.Int64(0),
-//			},
-//			Suppressed: &models.StatusCount{
-//				Error: aws.Int64(0),
-//				Fail:  aws.Int64(0),
-//				Pass:  aws.Int64(0),
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//}
-//
-//func describePolicy(t *testing.T) {
-//	t.Parallel()
-//	result, err := apiClient.Operations.DescribePolicy(&operations.DescribePolicyParams{
-//		PolicyID:   "AWS-Cloudtrail-Encryption",
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	expected := &models.PolicyResourceDetail{
-//		Items: []*models.ComplianceStatus{
-//			statuses[4],
-//		},
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(1),
-//			TotalItems: aws.Int64(1),
-//			TotalPages: aws.Int64(1),
-//		},
-//		Status: models.StatusPASS,
-//		Totals: &models.ActiveSuppressCount{
-//			Active: &models.StatusCount{
-//				Error: aws.Int64(0),
-//				Fail:  aws.Int64(0),
-//				Pass:  aws.Int64(1),
-//			},
-//			Suppressed: &models.StatusCount{
-//				Error: aws.Int64(0),
-//				Fail:  aws.Int64(0),
-//				Pass:  aws.Int64(0),
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//
-//	// Query a policy with 2 entries, one of which is suppressed
-//	result, err = apiClient.Operations.DescribePolicy(&operations.DescribePolicyParams{
-//		PolicyID:   "AWS-S3-Versioning",
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	expected = &models.PolicyResourceDetail{
-//		Items: []*models.ComplianceStatus{
-//			statuses[2],
-//			statuses[1],
-//		},
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(1),
-//			TotalItems: aws.Int64(2),
-//			TotalPages: aws.Int64(1),
-//		},
-//		Status: models.StatusFAIL,
-//		Totals: &models.ActiveSuppressCount{
-//			Active: &models.StatusCount{
-//				Error: aws.Int64(0),
-//				Fail:  aws.Int64(1),
-//				Pass:  aws.Int64(0),
-//			},
-//			Suppressed: &models.StatusCount{
-//				Error: aws.Int64(0),
-//				Fail:  aws.Int64(1),
-//				Pass:  aws.Int64(0),
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//}
+// We don't return 404 because a disabled policy will not exist in the compliance-api but would
+// in the analysis-api
+func describePolicyEmpty(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		DescribePolicy: &models.DescribePolicyInput{PolicyID: "no-such-policy"},
+	}
+
+	var result models.PolicyResourceDetail
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.PolicyResourceDetail{
+		Items:  []models.ComplianceEntry{},
+		Status: models.StatusPass,
+	}
+	assert.Equal(t, expected, result)
+}
+
+func describePolicy(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		DescribePolicy: &models.DescribePolicyInput{PolicyID: "AWS-Cloudtrail-Encryption"},
+	}
+
+	var result models.PolicyResourceDetail
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.PolicyResourceDetail{
+		Items: []models.ComplianceEntry{
+			statuses[4],
+		},
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 1,
+			TotalPages: 1,
+		},
+		Status: models.StatusPass,
+		Totals: models.ActiveSuppressCount{
+			Active: models.StatusCount{
+				Pass: 1,
+			},
+		},
+	}
+	assert.Equal(t, expected, result)
+
+	// Query a policy with 2 entries, one of which is suppressed
+	input = models.LambdaInput{
+		DescribePolicy: &models.DescribePolicyInput{PolicyID: "AWS-S3-Versioning"},
+	}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected = models.PolicyResourceDetail{
+		Items: []models.ComplianceEntry{
+			statuses[2],
+			statuses[1],
+		},
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 2,
+			TotalPages: 1,
+		},
+		Status: models.StatusFail,
+		Totals: models.ActiveSuppressCount{
+			Active: models.StatusCount{
+				Fail: 1,
+			},
+			Suppressed: models.StatusCount{
+				Fail: 1,
+			},
+		},
+	}
+	assert.Equal(t, expected, result)
+}
+
 //
 //// Test paging + filtering with more items
 //func describePolicyPageAndFilter(t *testing.T) {
@@ -506,77 +495,63 @@ func describeOrgEmpty(t *testing.T) {
 //	assert.Equal(t, expected, result.Payload)
 //}
 //
-//// A resource which doesn't exist returns empty results.
-////
-//// We don't return 404 because a resource might exist but have no policies applied to it.
-//func describeResourceEmpty(t *testing.T) {
-//	t.Parallel()
-//	result, err := apiClient.Operations.DescribeResource(&operations.DescribeResourceParams{
-//		ResourceID: "no-such-resource",
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
+// A resource which doesn't exist returns empty results.
 //
-//	expected := &models.PolicyResourceDetail{
-//		Items: []*models.ComplianceStatus{},
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(0),
-//			TotalItems: aws.Int64(0),
-//			TotalPages: aws.Int64(0),
-//		},
-//		Status: models.StatusPASS,
-//		Totals: &models.ActiveSuppressCount{
-//			Active: &models.StatusCount{
-//				Error: aws.Int64(0),
-//				Fail:  aws.Int64(0),
-//				Pass:  aws.Int64(0),
-//			},
-//			Suppressed: &models.StatusCount{
-//				Error: aws.Int64(0),
-//				Fail:  aws.Int64(0),
-//				Pass:  aws.Int64(0),
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//}
-//
-//func describeResource(t *testing.T) {
-//	t.Parallel()
-//	result, err := apiClient.Operations.DescribeResource(&operations.DescribeResourceParams{
-//		ResourceID: "arn:aws:s3:::my-bucket",
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	expected := &models.PolicyResourceDetail{
-//		Items: []*models.ComplianceStatus{
-//			statuses[3], // sorted by policy ID
-//			statuses[0],
-//			statuses[1],
-//		},
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(1),
-//			TotalItems: aws.Int64(3),
-//			TotalPages: aws.Int64(1),
-//		},
-//		Status: models.StatusERROR,
-//		Totals: &models.ActiveSuppressCount{
-//			Active: &models.StatusCount{
-//				Error: aws.Int64(1),
-//				Fail:  aws.Int64(0),
-//				Pass:  aws.Int64(1),
-//			},
-//			Suppressed: &models.StatusCount{
-//				Error: aws.Int64(0),
-//				Fail:  aws.Int64(1),
-//				Pass:  aws.Int64(0),
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//}
-//
+// We don't return 404 because a resource might exist but have no policies applied to it.
+func describeResourceEmpty(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		DescribeResource: &models.DescribeResourceInput{ResourceID: "no-such-resource"},
+	}
+
+	var result models.PolicyResourceDetail
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.PolicyResourceDetail{
+		Items:  []models.ComplianceEntry{},
+		Status: models.StatusPass,
+	}
+	assert.Equal(t, expected, result)
+}
+
+func describeResource(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		DescribeResource: &models.DescribeResourceInput{ResourceID: "arn:aws:s3:::my-bucket"},
+	}
+
+	var result models.PolicyResourceDetail
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.PolicyResourceDetail{
+		Items: []models.ComplianceEntry{
+			statuses[3], // sorted by policy ID
+			statuses[0],
+			statuses[1],
+		},
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 3,
+			TotalPages: 1,
+		},
+		Status: models.StatusError,
+		Totals: models.ActiveSuppressCount{
+			Active: models.StatusCount{
+				Error: 1,
+				Pass:  1,
+			},
+			Suppressed: models.StatusCount{
+				Fail: 1,
+			},
+		},
+	}
+	assert.Equal(t, expected, result)
+}
+
 func getOrgOverviewEmpty(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
@@ -599,134 +574,111 @@ func getOrgOverviewEmpty(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
-//
-//func getOrgOverview(t *testing.T) {
-//	t.Parallel()
-//	result, err := apiClient.Operations.GetOrgOverview(&operations.GetOrgOverviewParams{
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	expected := &models.OrgSummary{
-//		AppliedPolicies: &models.StatusCountBySeverity{
-//			Critical: &models.StatusCount{
-//				Error: aws.Int64(0),
-//				Fail:  aws.Int64(0),
-//				Pass:  aws.Int64(2),
-//			},
-//			High: &models.StatusCount{
-//				Error: aws.Int64(1),
-//				Fail:  aws.Int64(0),
-//				Pass:  aws.Int64(0),
-//			},
-//			Medium: &models.StatusCount{
-//				Error: aws.Int64(0),
-//				Fail:  aws.Int64(1),
-//				Pass:  aws.Int64(0),
-//			},
-//			Low:  handlers.NewStatusCount(),
-//			Info: handlers.NewStatusCount(),
-//		},
-//		ScannedResources: &models.ScannedResources{
-//			ByType: []*models.ResourceOfType{
-//				{
-//					Count: &models.StatusCount{
-//						Error: aws.Int64(0),
-//						Fail:  aws.Int64(0),
-//						Pass:  aws.Int64(1),
-//					},
-//					Type: "AWS.CloudTrail",
-//				},
-//				{
-//					Count: &models.StatusCount{
-//						Error: aws.Int64(1),
-//						Fail:  aws.Int64(1),
-//						Pass:  aws.Int64(0),
-//					},
-//					Type: "AWS.S3.Bucket",
-//				},
-//			},
-//		},
-//		TopFailingPolicies: []*models.PolicySummary{
-//			{
-//				Count: &models.StatusCount{
-//					Error: aws.Int64(1),
-//					Fail:  aws.Int64(0),
-//					Pass:  aws.Int64(0),
-//				},
-//				ID:       "AWS-S3-EncryptionEnabled",
-//				Severity: models.PolicySeverityHIGH,
-//			},
-//			{
-//				Count: &models.StatusCount{
-//					Error: aws.Int64(0),
-//					Fail:  aws.Int64(1),
-//					Pass:  aws.Int64(0),
-//				},
-//				ID:       "AWS-S3-Versioning",
-//				Severity: models.PolicySeverityMEDIUM,
-//			},
-//		},
-//		TopFailingResources: []*models.ResourceSummary{
-//			{
-//				Count: &models.StatusCountBySeverity{
-//					Critical: &models.StatusCount{
-//						Error: aws.Int64(0),
-//						Fail:  aws.Int64(0),
-//						Pass:  aws.Int64(1),
-//					},
-//					High: &models.StatusCount{
-//						Error: aws.Int64(1), // 1 HIGH error puts this bucket at top of list
-//						Fail:  aws.Int64(0),
-//						Pass:  aws.Int64(0),
-//					},
-//					Medium: handlers.NewStatusCount(),
-//					Low:    handlers.NewStatusCount(),
-//					Info:   handlers.NewStatusCount(),
-//				},
-//				ID:   "arn:aws:s3:::my-bucket",
-//				Type: "AWS.S3.Bucket",
-//			},
-//			{
-//				Count: &models.StatusCountBySeverity{
-//					Critical: handlers.NewStatusCount(),
-//					High:     handlers.NewStatusCount(),
-//					Medium: &models.StatusCount{
-//						Error: aws.Int64(0),
-//						Fail:  aws.Int64(1),
-//						Pass:  aws.Int64(0),
-//					},
-//					Low:  handlers.NewStatusCount(),
-//					Info: handlers.NewStatusCount(),
-//				},
-//				ID:   "arn:aws:s3:::my-other-bucket",
-//				Type: "AWS.S3.Bucket",
-//			},
-//		},
-//	}
-//
-//	// sort scanned resources by type name
-//	sort.Slice(result.Payload.ScannedResources.ByType, func(i, j int) bool {
-//		return result.Payload.ScannedResources.ByType[i].Type < result.Payload.ScannedResources.ByType[j].Type
-//	})
-//	assert.Equal(t, expected, result.Payload)
-//}
-//
-//func getOrgOverviewCustomLimit(t *testing.T) {
-//	t.Parallel()
-//	result, err := apiClient.Operations.GetOrgOverview(&operations.GetOrgOverviewParams{
-//		LimitTopFailing: aws.Int64(1),
-//		HTTPClient:      httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	policies, resources := result.Payload.TopFailingPolicies, result.Payload.TopFailingResources
-//	require.Len(t, policies, 1)
-//	assert.Equal(t, models.PolicyID("AWS-S3-EncryptionEnabled"), policies[0].ID)
-//
-//	require.Len(t, result.Payload.TopFailingResources, 1)
-//	assert.Equal(t, models.ResourceID("arn:aws:s3:::my-bucket"), resources[0].ID)
-//}
+func getOrgOverview(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		GetOrgOverview: &models.GetOrgOverviewInput{},
+	}
+	var result models.OrgSummary
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.OrgSummary{
+		AppliedPolicies: models.StatusCountBySeverity{
+			Critical: models.StatusCount{
+				Pass: 2,
+			},
+			High: models.StatusCount{
+				Error: 1,
+			},
+			Medium: models.StatusCount{
+				Fail: 1,
+			},
+		},
+		ScannedResources: models.ScannedResources{
+			ByType: []models.ResourceOfType{
+				{
+					Count: models.StatusCount{
+						Pass: 1,
+					},
+					Type: "AWS.CloudTrail",
+				},
+				{
+					Count: models.StatusCount{
+						Error: 1,
+						Fail:  1,
+					},
+					Type: "AWS.S3.Bucket",
+				},
+			},
+		},
+		TopFailingPolicies: []models.PolicySummary{
+			{
+				Count: models.StatusCount{
+					Error: 1,
+				},
+				ID:       "AWS-S3-EncryptionEnabled",
+				Severity: models.SeverityHigh,
+			},
+			{
+				Count: models.StatusCount{
+					Fail: 1,
+				},
+				ID:       "AWS-S3-Versioning",
+				Severity: models.SeverityMedium,
+			},
+		},
+		TopFailingResources: []models.ResourceSummary{
+			{
+				Count: models.StatusCountBySeverity{
+					Critical: models.StatusCount{
+						Pass: 1,
+					},
+					High: models.StatusCount{
+						Error: 1, // 1 HIGH error puts this bucket at top of list
+					},
+				},
+				ID:   "arn:aws:s3:::my-bucket",
+				Type: "AWS.S3.Bucket",
+			},
+			{
+				Count: models.StatusCountBySeverity{
+					Medium: models.StatusCount{
+						Fail: 1,
+					},
+				},
+				ID:   "arn:aws:s3:::my-other-bucket",
+				Type: "AWS.S3.Bucket",
+			},
+		},
+	}
+
+	// sort scanned resources by type name
+	sort.Slice(result.ScannedResources.ByType, func(i, j int) bool {
+		return result.ScannedResources.ByType[i].Type < result.ScannedResources.ByType[j].Type
+	})
+	assert.Equal(t, expected, result)
+}
+
+func getOrgOverviewCustomLimit(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		GetOrgOverview: &models.GetOrgOverviewInput{LimitTopFailing: 1},
+	}
+	var result models.OrgSummary
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	policies, resources := result.TopFailingPolicies, result.TopFailingResources
+	require.Len(t, policies, 1)
+	assert.Equal(t, "AWS-S3-EncryptionEnabled", policies[0].ID)
+
+	require.Len(t, result.TopFailingResources, 1)
+	assert.Equal(t, "arn:aws:s3:::my-bucket", resources[0].ID)
+}
+
 //
 //func update(t *testing.T) {
 //	result, err := apiClient.Operations.UpdateMetadata(&operations.UpdateMetadataParams{
