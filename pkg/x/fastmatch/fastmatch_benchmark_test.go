@@ -19,7 +19,7 @@ func BenchmarkPattern_MatchString(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		if len(matches) != 9 {
+		if len(matches) != 18 {
 			b.Fatal(matches)
 		}
 	}

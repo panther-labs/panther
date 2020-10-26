@@ -15,65 +15,66 @@ const (
 	endDelimiter   = "}"
 )
 
-type Expression struct {
+type Pattern struct {
 	src   string
 	expr  *regexp.Regexp
 	names []string
 }
 
-func (e *Expression) Regexp() string {
-	return e.expr.String()
+func (p *Pattern) Regexp() string {
+	return p.expr.String()
 }
 
-func (e *Expression) String() string {
-	return e.src
+func (p *Pattern) String() string {
+	return p.src
 }
 
-func (e *Expression) MatchString(dst []string, src string) ([]string, error) {
-	matches := e.expr.FindStringSubmatchIndex(src)
+func (p *Pattern) MatchString(dst []string, src string) ([]string, error) {
+	matches := p.expr.FindStringSubmatchIndex(src)
 	if matches == nil {
 		return nil, nil
 	}
 	if len(matches) > 2 {
+		// Regexp always sets first match to full string
 		matches = matches[2:]
 		var start, end int
-		for i := 0; 0<= i && i < len(e.names) && len(matches) >= 2; i++ {
-			name := e.names[i]
+		for i := 0; 0 <= i && i < len(p.names) && len(matches) >= 2; i++ {
+			name := p.names[i]
+			// We skip unnamed groups
 			if name == "" {
 				continue
 			}
 			start, end, matches = matches[0], matches[1], matches[2:]
-			dst = append(dst, name)
-			dst = append(dst, src[start:end])
+			dst = append(dst, name, src[start:end])
 		}
 	}
 	return dst, nil
 }
 
-func (e *Expression) FieldName(i int) string {
-	return e.names[i]
+func (p *Pattern) FieldName(i int) string {
+	return p.names[i]
 }
 
-func (e *Expression) NumFields() int {
-	return len(e.names)
+func (p *Pattern) NumFields() int {
+	return len(p.names)
 }
 
 type Env struct {
 	parent   *Env
-	compiled map[string]*Expression
+	compiled map[string]*Pattern
 }
 
 func New() *Env {
-	return defaultEnv.NewChild()
+	return NewChild(defaultEnv)
 }
 
-func (e *Env) NewChild() *Env {
+func NewChild(parent *Env) *Env {
 	return &Env{
-		parent: e,
+		parent: parent,
 	}
 }
 
-func (e *Env) lookup(name string) *Expression {
+func (e *Env) lookup(name string) *Pattern {
 	expr, ok := e.compiled[name]
 	if ok {
 		return expr
@@ -102,11 +103,11 @@ func (e *Env) Set(name string, pattern string) error {
 	return nil
 }
 
-func (e *Env) Compile(pattern string) (*Expression, error) {
+func (e *Env) Compile(pattern string) (*Pattern, error) {
 	return e.compile(pattern, pattern, nil, nil)
 }
 
-func (e *Env) compile(root, src string, patterns map[string]string, visited []string) (*Expression, error) {
+func (e *Env) compile(root, src string, patterns map[string]string, visited []string) (*Pattern, error) {
 	tpl := fasttemplate.New(src, startDelimiter, endDelimiter)
 	s := strings.Builder{}
 	_, err := tpl.ExecuteFunc(&s, func(w io.Writer, tag string) (int, error) {
@@ -118,16 +119,18 @@ func (e *Env) compile(root, src string, patterns map[string]string, visited []st
 		}
 		expr := e.lookup(name)
 		if expr == nil {
+			// Try to compile the pattern
 			if src, ok := patterns[name]; ok {
-				e, err := e.compile(name, src, patterns, append(visited, name))
+				subexpr, err := e.compile(name, src, patterns, append(visited, name))
 				if err != nil {
 					return 0, err
 				}
-				expr = e
+				// Avoid duplicate compilations
+				e.set(name, subexpr)
+				expr = subexpr
+			} else {
+				return 0, errors.Errorf("unresolved pattern %q", name)
 			}
-		}
-		if expr == nil {
-			return 0, errors.Errorf("unresolved pattern %q", name)
 		}
 		var group string
 		if field == "" {
@@ -145,16 +148,16 @@ func (e *Env) compile(root, src string, patterns map[string]string, visited []st
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to compile pattern %q", root)
 	}
-	return &Expression{
+	return &Pattern{
 		src:   src,
 		expr:  expr,
 		names: expr.SubexpNames()[1:],
 	}, nil
 }
 
-func (e *Env) set(name string, expr *Expression) {
+func (e *Env) set(name string, expr *Pattern) {
 	if e.compiled == nil {
-		e.compiled = make(map[string]*Expression)
+		e.compiled = make(map[string]*Pattern)
 	}
 	e.compiled[name] = expr
 
@@ -165,7 +168,6 @@ func (e *Env) checkDuplicate(name string) error {
 	}
 	return nil
 }
-
 
 func splitTag(tag string) (pattern, field string) {
 	if pos := strings.IndexByte(tag, ':'); 0 <= pos && pos < len(tag) {
@@ -197,10 +199,15 @@ func (e *Env) ReadPatterns(r io.Reader) error {
 }
 
 func (e *Env) SetMap(patterns map[string]string) error {
-	child := e.NewChild()
+	child := NewChild(e)
 	for name, pattern := range patterns {
+		// We check for duplicate only in the parent environment.
 		if err := e.checkDuplicate(name); err != nil {
 			return err
+		}
+		// Compilation is recursive so we might have compiled this already
+		if _, skip := child.compiled[name]; skip {
+			continue
 		}
 		expr, err := child.compile(name, pattern, patterns, nil)
 		if err != nil {

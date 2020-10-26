@@ -9,11 +9,11 @@ import (
 func TestMatchString(t *testing.T) {
 	assert := require.New(t)
 	env := New()
-	pattern := `%{DATA:remote_ip} %{DATA:identity} %{DATA:user} \[%{DATA:timestamp}\] "%{DATA:method} %{DATA:request_uri} %{DATA:protocol}" %{DATA:status} %{DATA:bytes_sent}$`
-	expr, err := env.Compile(pattern)
+	src := `%{DATA:remote_ip} %{DATA:identity} %{DATA:user} \[%{DATA:timestamp}\] "%{DATA:method} %{DATA:request_uri} %{DATA:protocol}" %{DATA:status} %{DATA:bytes_sent}$`
+	pattern, err := env.Compile(src)
 	assert.NoError(err)
 	input := "127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] \"GET /apache_pb.gif HTTP/1.0\" 200 2326"
-	matches, err := expr.MatchString(nil, input)
+	matches, err := pattern.MatchString(nil, input)
 	assert.NoError(err)
 	assert.Equal([]string{
 		"remote_ip", "127.0.0.1",

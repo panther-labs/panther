@@ -13,18 +13,28 @@ func TestMatchString(t *testing.T) {
 		Matches []string
 	}
 	for _, tc := range []testCase{
-		{"two fields", "foo bar", "%{foo} %{bar}", []string{"foo", "bar"}},
-		{"two fields prefix", "LOG: foo bar", "LOG: %{foo} %{bar}", []string{"foo", "bar"}},
+		{"two fields", "foo bar", "%{foo} %{bar}", []string{"foo", "foo", "bar", "bar"}},
+		{"two fields prefix", "LOG: foo bar", "LOG: %{foo} %{bar}", []string{"foo", "foo", "bar", "bar"}},
 		{"no match", "foo", "%{foo} %{bar}", nil},
-		{"two fields empty last", "foo ", "%{foo} %{bar}", []string{"foo", ""}},
-		{"two fields empty first", " bar", "%{foo} %{bar}", []string{"", "bar"}},
-		{"two fields quoted first", `"\"foo\" bar" baz`, `"%{foo}" %{bar}`, []string{`"foo" bar`, "baz"}},
-		{"two fields quoted last", `foo "\"bar\"baz"`, `%{foo} "%{bar}"`, []string{`foo`, `"bar"baz`}},
-		{"two fields one empty", "foo bar", "%{foo} %{}", []string{"foo"}},
+		{"two fields empty last", "foo ", "%{foo} %{bar}", []string{"foo", "foo", "bar", ""}},
+		{"two fields empty first", " bar", "%{foo} %{bar}", []string{"foo", "", "bar", "bar"}},
+		{"two fields quoted first", `"\"foo\" bar" baz`, `"%{foo}" %{bar}`, []string{"foo", `"foo" bar`, "bar", "baz"}},
+		{"two fields quoted last", `foo "\"bar\"baz"`, `%{foo} "%{bar}"`, []string{"foo", `foo`, "bar", `"bar"baz`}},
+		{"two fields one empty", "foo bar", "%{foo} %{}", []string{"foo", "foo"}},
 		{"common log",
 			"127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] \"GET /apache_pb.gif HTTP/1.0\" 200 2326",
 			`%{remote_ip} %{identity} %{user} [%{timestamp}] "%{method} %{request_uri} %{protocol}" %{status} %{bytes_sent}`,
-			[]string{"127.0.0.1", "-", "frank", "10/Oct/2000:13:55:36 -0700", "GET", "/apache_pb.gif", "HTTP/1.0", "200", "2326"},
+			[]string{
+				"remote_ip", "127.0.0.1",
+				"identity", "-",
+				"user", "frank",
+				"timestamp", "10/Oct/2000:13:55:36 -0700",
+				"method", "GET",
+				"request_uri", "/apache_pb.gif",
+				"protocol", "HTTP/1.0",
+				"status", "200",
+				"bytes_sent", "2326",
+			},
 		},
 	} {
 		tc := tc

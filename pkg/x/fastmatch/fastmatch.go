@@ -87,17 +87,17 @@ func (p *Pattern) MatchString(dst []string, src string) ([]string, error) {
 		d := &delimiters[i]
 		switch seek := d.match; seek {
 		case "":
-			if d.name == "" {
-				return matches, nil
+			if name := d.name; name != "" {
+				matches = append(matches, name, tail)
 			}
-			return append(matches, tail), nil
+			return matches, nil
 		default:
 			match, ss, err := p.match(tail, seek, d.quote)
 			if err != nil {
 				return dst, err
 			}
-			if d.name != "" {
-				matches = append(matches, match)
+			if name := d.name; name != "" {
+				matches = append(matches, name, match)
 			}
 			tail = ss
 		}
