@@ -51,8 +51,8 @@ const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert }) => {
           </Box>
         </Flex>
       </Flex>
-      <Flex fontSize="small-medium" pt={5}>
-        <Flex pr={8}>
+      <Flex fontSize="small-medium" pt={5} spacing={8}>
+        <Flex>
           <Box color="navyblue-100" aria-describedby="rule-type" as="dd" pr={2}>
             Rule Type
           </Box>
@@ -65,7 +65,7 @@ const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert }) => {
             {alert.type === AlertTypesEnum.Rule ? 'Rule Match' : 'Rule Error'}
           </Box>
         </Flex>
-        <Flex pr={8}>
+        <Flex>
           <Box color="navyblue-100" aria-describedby="alert-id" as="dd" pr={2}>
             Alert ID
           </Box>
