@@ -52,7 +52,7 @@ const LogAnalysisOverviewBreadcrumbFilters: React.FC<LogAnalysisOverviewBreadcru
         >
           <Form>
             <FormikAutosave threshold={50} />
-            <Flex spacing={4} maxWidth={440}>
+            <Flex spacing={4} maxWidth={500}>
               <Box width={150}>
                 <Field
                   as={FormikCombobox}
