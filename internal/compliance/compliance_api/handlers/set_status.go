@@ -19,16 +19,16 @@ package handlers
  */
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/compliance/models"
+	"github.com/panther-labs/panther/api/lambda/compliance/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/dynamodbbatch"
 )
 
@@ -43,21 +43,16 @@ const (
 )
 
 // SetStatus batch writes a set of compliance status to the Dynamo table.
-func SetStatus(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	input, err := parseSetStatus(request)
-	if err != nil {
-		return badRequest(err)
-	}
-
+func (API) SetStatus(input *models.SetStatusInput) *events.APIGatewayProxyResponse {
 	now := time.Now()
 	expiresAt := now.Add(statusLifetime).Unix()
 	writeRequests := make([]*dynamodb.WriteRequest, len(input.Entries))
 	for i, entry := range input.Entries {
-		status := &models.ComplianceStatus{
+		newEntry := &models.ComplianceEntry{
 			ErrorMessage:   entry.ErrorMessage,
-			ExpiresAt:      models.ExpiresAt(expiresAt),
+			ExpiresAt:      expiresAt,
 			IntegrationID:  entry.IntegrationID,
-			LastUpdated:    models.LastUpdated(now),
+			LastUpdated:    now,
 			PolicyID:       entry.PolicyID,
 			PolicySeverity: entry.PolicySeverity,
 			ResourceID:     entry.ResourceID,
@@ -66,13 +61,14 @@ func SetStatus(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyRe
 			Suppressed:     entry.Suppressed,
 		}
 
-		marshalled, err := dynamodbattribute.MarshalMap(status)
+		marshaled, err := dynamodbattribute.MarshalMap(newEntry)
 		if err != nil {
-			zap.L().Error("dynamodbattribute.MarshalMap failed", zap.Error(err))
-			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+			err = fmt.Errorf("dynamodbattribute.MarshalMap failed: %s", err)
+			zap.L().Error("SetStatus failed", zap.Error(err))
+			return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusInternalServerError}
 		}
 
-		writeRequests[i] = &dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: marshalled}}
+		writeRequests[i] = &dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: marshaled}}
 	}
 
 	batchInput := &dynamodb.BatchWriteItemInput{
@@ -80,18 +76,10 @@ func SetStatus(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyRe
 	}
 
 	if err := dynamodbbatch.BatchWriteItem(dynamoClient, maxWriteBackoff, batchInput); err != nil {
-		zap.L().Error("dynamodbbatch.BatchWriteItem failed", zap.Error(err))
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		err = fmt.Errorf("dynamodbbatch.BatchWriteItem failed: %s", err)
+		zap.L().Error("SetStatus failed", zap.Error(err))
+		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusInternalServerError}
 	}
 
 	return &events.APIGatewayProxyResponse{StatusCode: http.StatusCreated}
-}
-
-func parseSetStatus(request *events.APIGatewayProxyRequest) (*models.SetStatusBatch, error) {
-	var result models.SetStatusBatch
-	if err := jsoniter.UnmarshalFromString(request.Body, &result); err != nil {
-		return nil, err
-	}
-
-	return &result, result.Validate(nil)
 }

@@ -19,26 +19,25 @@ package main
  */
 
 import (
+	"context"
+
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/kelseyhightower/envconfig"
 
+	"github.com/panther-labs/panther/api/lambda/compliance/models"
 	"github.com/panther-labs/panther/internal/compliance/compliance_api/handlers"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-var methodHandlers = map[string]gatewayapi.RequestHandler{
-	"GET /describe-org":      handlers.DescribeOrg,
-	"GET /describe-policy":   handlers.DescribePolicy,
-	"GET /describe-resource": handlers.DescribeResource,
-	"GET /org-overview":      handlers.GetOrgOverview,
-	"GET /status":            handlers.GetStatus,
+var router = genericapi.NewRouter("api", "compliance", nil, handlers.API{})
 
-	"POST /delete": handlers.DeleteStatus,
-	"POST /status": handlers.SetStatus,
-	"POST /update": handlers.UpdateMetadata,
+func lambdaHandler(ctx context.Context, input *models.LambdaInput) (interface{}, error) {
+	lambdalogger.ConfigureGlobal(ctx, nil)
+	return router.Handle(input)
 }
 
 func main() {
 	envconfig.MustProcess("", &handlers.Env)
-	lambda.Start(gatewayapi.LambdaProxy(methodHandlers))
+	lambda.Start(lambdaHandler)
 }

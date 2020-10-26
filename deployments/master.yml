@@ -251,7 +251,6 @@ Resources:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AnalysisApi: !Sub https://${BootstrapGateway.Outputs.AnalysisApiEndpoint}
         ApiId: !GetAtt Bootstrap.Outputs.GraphQLApiId
-        ComplianceApi: !Sub https://${BootstrapGateway.Outputs.ComplianceApiEndpoint}
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         RemediationApi: !Sub https://${BootstrapGateway.Outputs.RemediationApiEndpoint}
         ResourcesApi: !Sub https://${BootstrapGateway.Outputs.ResourcesApiEndpoint}
@@ -274,7 +273,6 @@ Resources:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
-        ComplianceApiId: !GetAtt BootstrapGateway.Outputs.ComplianceApiId
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         Debug: !Ref Debug
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
@@ -307,7 +305,6 @@ Resources:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CompanyDisplayName: !Ref CompanyDisplayName
         CompanyEmail: !Ref FirstUserEmail
-        ComplianceApiId: !GetAtt BootstrapGateway.Outputs.ComplianceApiId
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         Debug: !Ref Debug
         DynamoScalingRoleArn: !GetAtt Bootstrap.Outputs.DynamoScalingRoleArn

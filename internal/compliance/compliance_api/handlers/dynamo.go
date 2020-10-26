@@ -19,18 +19,19 @@ package handlers
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/compliance/models"
+	"github.com/panther-labs/panther/api/lambda/compliance/models"
 )
 
-type policyMap map[models.PolicyID]*models.PolicySummary
-type resourceMap map[models.ResourceID]*models.ResourceSummary
+type policyMap map[string]*models.PolicySummary
+type resourceMap map[string]*models.ResourceSummary
 
 var (
 	awsSession                             = session.Must(session.NewSession())
@@ -38,15 +39,15 @@ var (
 )
 
 // Build the table key in the format Dynamo expects
-func tableKey(resourceID models.ResourceID, policyID models.PolicyID) map[string]*dynamodb.AttributeValue {
+func tableKey(resourceID string, policyID string) map[string]*dynamodb.AttributeValue {
 	return map[string]*dynamodb.AttributeValue{
-		"resourceId": {S: aws.String(string(resourceID))},
-		"policyId":   {S: aws.String(string(policyID))},
+		"resourceId": {S: &resourceID},
+		"policyId":   {S: &policyID},
 	}
 }
 
 // Wrapper around dynamoClient.QueryPages that accepts a handler function to process each item.
-func queryPages(input *dynamodb.QueryInput, handler func(*models.ComplianceStatus) error) error {
+func queryPages(input *dynamodb.QueryInput, handler func(*models.ComplianceEntry) error) error {
 	var innerErr error
 	err := dynamoClient.QueryPages(input, func(page *dynamodb.QueryOutput, lastPage bool) bool {
 		if innerErr = handleItems(page.Items, handler); innerErr != nil {
@@ -68,7 +69,7 @@ func queryPages(input *dynamodb.QueryInput, handler func(*models.ComplianceStatu
 }
 
 // Wrapper around dynamoClient.ScanPages that accepts a handler function to process each item.
-func scanPages(input *dynamodb.ScanInput, handler func(*models.ComplianceStatus) error) error {
+func scanPages(input *dynamodb.ScanInput, handler func(*models.ComplianceEntry) error) error {
 	var innerErr error
 	err := dynamoClient.ScanPages(input, func(page *dynamodb.ScanOutput, lastPage bool) bool {
 		if innerErr = handleItems(page.Items, handler); innerErr != nil {
@@ -82,16 +83,15 @@ func scanPages(input *dynamodb.ScanInput, handler func(*models.ComplianceStatus)
 		return innerErr
 	}
 	if err != nil {
-		zap.L().Error("dynamoClient.ScanPages failed", zap.Error(err))
-		return err
+		return fmt.Errorf("dynamoClient.ScanPages failed: %s", err)
 	}
 
 	return nil
 }
 
 // Page handler shared by queryPages and ScanPages
-func handleItems(items []map[string]*dynamodb.AttributeValue, handler func(*models.ComplianceStatus) error) error {
-	var statusPage []*models.ComplianceStatus
+func handleItems(items []map[string]*dynamodb.AttributeValue, handler func(*models.ComplianceEntry) error) error {
+	var statusPage []*models.ComplianceEntry
 	if err := dynamodbattribute.UnmarshalListOfMaps(items, &statusPage); err != nil {
 		return err
 	}
@@ -122,19 +122,18 @@ func scanGroupByID(
 	}
 
 	// Summarize every policy and resource in the organization.
-	err := scanPages(input, func(item *models.ComplianceStatus) error {
+	err := scanPages(input, func(item *models.ComplianceEntry) error {
 		// Update policies
 		if includePolicies {
 			policy, ok := policies[item.PolicyID]
 			if !ok {
 				policy = &models.PolicySummary{
-					Count:    NewStatusCount(),
 					ID:       item.PolicyID,
 					Severity: item.PolicySeverity,
 				}
 				policies[item.PolicyID] = policy
 			}
-			updateStatusCount(policy.Count, item.Status)
+			updateStatusCount(&policy.Count, item.Status)
 		}
 
 		// Update resources
@@ -142,13 +141,12 @@ func scanGroupByID(
 			resource, ok := resources[item.ResourceID]
 			if !ok {
 				resource = &models.ResourceSummary{
-					Count: NewStatusCountBySeverity(),
-					ID:    item.ResourceID,
-					Type:  item.ResourceType,
+					ID:   item.ResourceID,
+					Type: item.ResourceType,
 				}
 				resources[item.ResourceID] = resource
 			}
-			updateStatusCountBySeverity(resource.Count, item.PolicySeverity, item.Status)
+			updateStatusCountBySeverity(&resource.Count, item.PolicySeverity, item.Status)
 		}
 
 		return nil

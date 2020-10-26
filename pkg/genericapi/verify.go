@@ -70,10 +70,8 @@ func verifySignature(name string, handler reflect.Type, input reflect.Type) erro
 
 	switch handler.NumOut() {
 	case 1:
-		if !handler.Out(0).Implements(errorInterface) {
-			return &InternalError{Message: fmt.Sprintf(
-				"%s returns %s, which does not satisfy error", name, handler.Out(0).String())}
-		}
+		// could be an error or the response payload
+		return nil
 	case 2:
 		if !handler.Out(1).Implements(errorInterface) {
 			return &InternalError{Message: fmt.Sprintf(
