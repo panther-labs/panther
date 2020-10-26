@@ -21,6 +21,11 @@ func TestMatchString(t *testing.T) {
 		{"two fields quoted first", `"\"foo\" bar" baz`, `"%{foo}" %{bar}`, []string{`"foo" bar`, "baz"}},
 		{"two fields quoted last", `foo "\"bar\"baz"`, `%{foo} "%{bar}"`, []string{`foo`, `"bar"baz`}},
 		{"two fields one empty", "foo bar", "%{foo} %{}", []string{"foo"}},
+		{"common log",
+			"127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] \"GET /apache_pb.gif HTTP/1.0\" 200 2326",
+			`%{remote_ip} %{identity} %{user} [%{timestamp}] "%{method} %{request_uri} %{protocol}" %{status} %{bytes_sent}`,
+			[]string{"127.0.0.1", "-", "frank", "10/Oct/2000:13:55:36 -0700", "GET", "/apache_pb.gif", "HTTP/1.0", "200", "2326"},
+		},
 	} {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {

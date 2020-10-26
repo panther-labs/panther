@@ -80,7 +80,7 @@ func TestIntegrationAPI(t *testing.T) {
 	require.NoError(t, testutils.ClearDynamoTable(awsSession, tableName))
 
 	// Add one of each output type in parallel.
-	t.Run("Add", func(t *testing.T) {
+	t.Run("Set", func(t *testing.T) {
 		t.Run("AddInvalid", addInvalid)
 		t.Run("AddSlack", addSlack)
 		t.Run("AddSns", addSns)
