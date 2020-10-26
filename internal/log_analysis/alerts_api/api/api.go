@@ -60,6 +60,7 @@ func Setup() *API {
 		awsSession: awsSession,
 		alertsDB:   env.NewAlertsTable(dynamodb.New(awsSession)),
 		s3Client:   s3.New(awsSession),
+		env:        env,
 	}
 
 	return api

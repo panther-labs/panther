@@ -19,7 +19,7 @@ package handlers
  */
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -28,20 +28,26 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/compliance/models"
+	"github.com/panther-labs/panther/api/lambda/compliance/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-type getParams struct {
-	ResourceID models.ResourceID
-	PolicyID   models.PolicyID
-}
-
 // GetStatus retrieves a single policy/resource status pair from the Dynamo table.
-func GetStatus(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	input, err := parseGetStatus(request)
+func (API) GetStatus(input *models.GetStatusInput) *events.APIGatewayProxyResponse {
+	var err error
+	input.PolicyID, err = url.QueryUnescape(input.PolicyID)
 	if err != nil {
-		return badRequest(err)
+		return &events.APIGatewayProxyResponse{
+			Body:       fmt.Sprintf("policyId '%s' could not be url-escaped: %s", input.PolicyID, err),
+			StatusCode: http.StatusBadRequest,
+		}
+	}
+	input.ResourceID, err = url.QueryUnescape(input.ResourceID)
+	if err != nil {
+		return &events.APIGatewayProxyResponse{
+			Body:       fmt.Sprintf("resourceId '%s' could not be url-escaped: %s", input.ResourceID, err),
+			StatusCode: http.StatusBadRequest,
+		}
 	}
 
 	response, err := dynamoClient.GetItem(&dynamodb.GetItemInput{
@@ -49,44 +55,21 @@ func GetStatus(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyRe
 		TableName: &Env.ComplianceTable,
 	})
 	if err != nil {
-		zap.L().Error("dynamoClient.GetItem failed", zap.Error(err))
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		err = fmt.Errorf("dynamoClient.GetItem failed: %s", err)
+		zap.L().Error("GetStatus failed", zap.Error(err))
+		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusInternalServerError}
 	}
 
 	if len(response.Item) == 0 {
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusNotFound}
+		return &events.APIGatewayProxyResponse{Body: "compliance entry not found", StatusCode: http.StatusNotFound}
 	}
 
-	var status models.ComplianceStatus
-	if err := dynamodbattribute.UnmarshalMap(response.Item, &status); err != nil {
-		zap.L().Error("dynamodbattribute.UnmarshalMap failed", zap.Error(err))
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+	var entry models.ComplianceEntry
+	if err := dynamodbattribute.UnmarshalMap(response.Item, &entry); err != nil {
+		err = fmt.Errorf("dynamodbattribute.UnmarshalMap failed: %s", err)
+		zap.L().Error("GetStatus failed", zap.Error(err))
+		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusInternalServerError}
 	}
 
-	return gatewayapi.MarshalResponse(&status, http.StatusOK)
-}
-
-func parseGetStatus(request *events.APIGatewayProxyRequest) (*getParams, error) {
-	escaped, err := url.QueryUnescape(request.QueryStringParameters["resourceId"])
-	if err != nil {
-		return nil, errors.New("invalid resourceId: query unescape: " + err.Error())
-	}
-	resourceID := models.ResourceID(escaped)
-	if err = resourceID.Validate(nil); err != nil {
-		return nil, errors.New("invalid resourceId: " + err.Error())
-	}
-
-	escaped, err = url.QueryUnescape(request.QueryStringParameters["policyId"])
-	if err != nil {
-		return nil, errors.New("invalid policyId: query unescape: " + err.Error())
-	}
-	policyID := models.PolicyID(escaped)
-	if err = policyID.Validate(nil); err != nil {
-		return nil, errors.New("invalid policyId: " + err.Error())
-	}
-
-	return &getParams{
-		ResourceID: resourceID,
-		PolicyID:   policyID,
-	}, nil
+	return gatewayapi.MarshalResponse(&entry, http.StatusOK)
 }

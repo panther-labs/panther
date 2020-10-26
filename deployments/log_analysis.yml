@@ -196,8 +196,8 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           ALERTS_TABLE_NAME: !Ref LogAlertsTable
-          RULE_INDEX_NAME: ruleId-creationTime-index
-          TIME_INDEX_NAME: timePartition-creationTime-index
+          ALERTS_RULE_INDEX_NAME: ruleId-creationTime-index
+          ALERTS_TIME_INDEX_NAME: timePartition-creationTime-index
           ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           ANALYSIS_API_PATH: v1
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket

@@ -38,10 +38,6 @@ Parameters:
     Description: Appsync GraphQL API ID
     # Example: "hen4qu3cpjgmdmxltuzand5kjm"
     AllowedPattern: '^[a-z0-9]{10,50}$'
-  ComplianceApi:
-    Type: String
-    Description: API Gateway HTTPS endpoint for panther-compliance-api
-    AllowedPattern: '^https:\/\/[0-9a-z]{10}\.execute-api\.[a-z]{2}-[a-z]{4,9}-[1-9]\.amazonaws\.com(\.cn)?$'
   CustomResourceVersion:
     Type: String
     Description: Forces updates to custom resources when changed
@@ -166,6 +162,17 @@ Resources:
       LambdaConfig:
         LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-logtypes-api
 
+  ComplianceAPILambdaDataSource:
+    Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !Ref ApiId
+      Name: PantherComplianceAPILambda
+      Type: AWS_LAMBDA
+      ServiceRoleArn: !Ref ServiceRole
+      LambdaConfig:
+        LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api
+
   ResourcesAPIHttpDataSource:
     Type: AWS::AppSync::DataSource
     DependsOn: GraphQLSchema
@@ -181,22 +188,6 @@ Resources:
             SigningRegion: !Ref AWS::Region
             SigningServiceName: execute-api
         Endpoint: !Ref ResourcesApi
-
-  ComplianceAPIHttpDataSource:
-    DependsOn: GraphQLSchema
-    Type: AWS::AppSync::DataSource
-    Properties:
-      ApiId: !Ref ApiId
-      Name: PantherComplianceAPIHttp
-      Type: HTTP
-      ServiceRoleArn: !Ref ServiceRole
-      HttpConfig:
-        AuthorizationConfig:
-          AuthorizationType: AWS_IAM
-          AwsIamConfig:
-            SigningRegion: !Ref AWS::Region
-            SigningServiceName: execute-api
-        Endpoint: !Ref ComplianceApi
 
   AnalysisAPIHttpDataSource:
     Type: AWS::AppSync::DataSource
@@ -1304,25 +1295,20 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: organizationStats
-      DataSourceName: !GetAtt ComplianceAPIHttpDataSource.Name
+      DataSourceName: !GetAtt ComplianceAPILambdaDataSource.Name
       RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/org-overview",
-          "params": {
-            "query": $util.toJson($ctx.args.input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getOrgOverview": $input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1365,25 +1351,19 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: resourcesForPolicy
-      DataSourceName: !GetAtt ComplianceAPIHttpDataSource.Name
+      DataSourceName: !GetAtt ComplianceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/describe-policy",
-          "params": {
-            "query": $util.toJson($ctx.args.input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "describePolicy": $ctx.args.input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1394,25 +1374,19 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: policiesForResource
-      DataSourceName: !GetAtt ComplianceAPIHttpDataSource.Name
+      DataSourceName: !GetAtt ComplianceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/describe-resource",
-          "params": {
-            "query": $util.toJson($ctx.args.input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "describeResource": $ctx.args.input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end

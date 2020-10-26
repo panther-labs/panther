@@ -19,7 +19,7 @@ package handlers
  */
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -28,74 +28,42 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/compliance/models"
+	"github.com/panther-labs/panther/api/lambda/compliance/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-type describeResourceParams struct {
-	pageParams
-	ResourceID models.ResourceID
-	Severity   models.PolicySeverity
-}
-
 // DescribeResource returns all pass/fail information needed for the resource overview page.
-func DescribeResource(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	params, err := parseDescribeResource(request)
+func (API) DescribeResource(input *models.DescribeResourceInput) *events.APIGatewayProxyResponse {
+	var err error
+	input.ResourceID, err = url.QueryUnescape(input.ResourceID)
 	if err != nil {
-		return badRequest(err)
+		return &events.APIGatewayProxyResponse{
+			Body:       fmt.Sprintf("resourceId '%s' could not be url-escaped: %s", input.ResourceID, err),
+			StatusCode: http.StatusBadRequest,
+		}
 	}
 
-	input, err := buildDescribeResourceQuery(params.ResourceID)
+	queryInput, err := buildDescribeResourceQuery(input.ResourceID)
 	if err != nil {
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		zap.L().Error("DescribeResource failed", zap.Error(err))
+		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusInternalServerError}
 	}
 
-	detail, err := policyResourceDetail(input, &params.pageParams, params.Severity)
+	detail, err := policyResourceDetail(queryInput, input.Page, input.PageSize, input.Severity, input.Status, input.Suppressed)
 	if err != nil {
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		zap.L().Error("DescribeResource failed", zap.Error(err))
+		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusInternalServerError}
 	}
 
 	return gatewayapi.MarshalResponse(detail, http.StatusOK)
 }
 
-func parseDescribeResource(request *events.APIGatewayProxyRequest) (*describeResourceParams, error) {
-	pageParams, err := parsePageParams(request)
-	if err != nil {
-		return nil, err
-	}
-
-	resourceID, err := url.QueryUnescape(request.QueryStringParameters["resourceId"])
-	if err != nil {
-		return nil, errors.New("invalid resourceId: " + err.Error())
-	}
-
-	resourceModel := models.ResourceID(resourceID)
-	if err = resourceModel.Validate(nil); err != nil {
-		return nil, errors.New("invalid resourceId: " + err.Error())
-	}
-
-	result := describeResourceParams{
-		pageParams: *pageParams,
-		ResourceID: resourceModel,
-		Severity:   models.PolicySeverity(request.QueryStringParameters["severity"]),
-	}
-
-	if result.Severity != "" {
-		if err = result.Severity.Validate(nil); err != nil {
-			return nil, errors.New("invalid severity: " + err.Error())
-		}
-	}
-
-	return &result, nil
-}
-
-func buildDescribeResourceQuery(resourceID models.ResourceID) (*dynamodb.QueryInput, error) {
+func buildDescribeResourceQuery(resourceID string) (*dynamodb.QueryInput, error) {
 	keyCondition := expression.Key("resourceId").Equal(expression.Value(resourceID))
 	// We can't do any additional filtering here because we need to include global totals
 	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
 	if err != nil {
-		zap.L().Error("expression.Build failed", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("expression.Build failed: %s", err)
 	}
 
 	return &dynamodb.QueryInput{

@@ -27,9 +27,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	complianceops "github.com/panther-labs/panther/api/gateway/compliance/client/operations"
-	compliance "github.com/panther-labs/panther/api/gateway/compliance/models"
 	"github.com/panther-labs/panther/api/gateway/resources/models"
+	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 )
 
 // Deleted resources are retained for 30 days in the database
@@ -42,13 +41,13 @@ func DeleteResources(request *events.APIGatewayProxyRequest) *events.APIGatewayP
 		return badRequest(err)
 	}
 
-	deletes := make([]*compliance.DeleteStatus, len(input.Resources))
+	deletes := make([]compliancemodels.DeleteStatusEntry, len(input.Resources))
 	update := expression.
 		Set(expression.Name("deleted"), expression.Value(true)).
 		Set(expression.Name("expiresAt"), expression.Value(time.Now().Unix()+deleteWindowSecs))
 	for i, entry := range input.Resources {
-		deletes[i] = &compliance.DeleteStatus{
-			Resource: &compliance.DeleteResource{ID: compliance.ResourceID(entry.ID)},
+		deletes[i] = compliancemodels.DeleteStatusEntry{
+			Resource: &compliancemodels.DeleteResource{ID: string(entry.ID)},
 		}
 
 		// Dynamo does not support batch update, so these are sequential
@@ -66,11 +65,10 @@ func DeleteResources(request *events.APIGatewayProxyRequest) *events.APIGatewayP
 
 	// Delete affected compliance states
 	zap.L().Info("deleting compliance status entries", zap.Int("itemCount", len(deletes)))
-	_, err = complianceClient.Operations.DeleteStatus(&complianceops.DeleteStatusParams{
-		Body:       &compliance.DeleteStatusBatch{Entries: deletes},
-		HTTPClient: httpClient,
-	})
-	if err != nil {
+	lambdaInput := compliancemodels.LambdaInput{
+		DeleteStatus: &compliancemodels.DeleteStatusInput{Entries: deletes},
+	}
+	if _, err = complianceClient.Invoke(&lambdaInput, nil); err != nil {
 		zap.L().Error("failed to delete compliance status", zap.Error(err))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
