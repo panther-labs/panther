@@ -66,7 +66,7 @@ const ListRulesBreadcrumbFilters: React.FC = () => {
 
   const onFiltersChange = React.useCallback(
     ({ logType, ...rest }: ListRulesBreadcrumbFiltersValues) => {
-      updateRequestParams({ ...rest, logTypes: logType !== ALL_TYPES ? logType : null });
+      updateRequestParams({ ...rest, logTypes: logType !== ALL_TYPES ? [logType] : undefined });
     },
     [updateRequestParams]
   );

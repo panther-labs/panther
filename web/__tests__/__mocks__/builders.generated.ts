@@ -860,7 +860,7 @@ export const buildListRulesInput = (overrides: Partial<ListRulesInput> = {}): Li
   return {
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'Cotton',
     enabled: 'enabled' in overrides ? overrides.enabled : false,
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : 'Drive',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Drive'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Low,
     tags: 'tags' in overrides ? overrides.tags : ['channels'],
     sortBy: 'sortBy' in overrides ? overrides.sortBy : ListRulesSortFieldsEnum.Enabled,
