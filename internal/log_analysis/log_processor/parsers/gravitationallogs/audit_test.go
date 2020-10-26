@@ -1,4 +1,4 @@
-package gravitationallogs_test
+package gravitationallogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -21,10 +21,9 @@ package gravitationallogs_test
 import (
 	"testing"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 )
 
 func TestTeleportAudit(t *testing.T) {
-	logtesting.RunTestsFromYAML(t, logtypes.DefaultRegistry(), "./testdata/audit_tests.yml")
+	logtesting.RunTestsFromYAML(t, LogTypes(), "./testdata/audit_tests.yml")
 }

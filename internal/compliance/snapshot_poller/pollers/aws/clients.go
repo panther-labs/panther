@@ -135,9 +135,9 @@ type cachedClient struct {
 var clientCache = make(map[clientKey]cachedClient)
 
 func Setup() {
-	awsConfig := aws.NewConfig().WithMaxRetries(maxRetries)
-	snapshotPollerSession = session.Must(session.NewSession(request.WithRetryer(awsConfig,
-		awsretry.NewConnectionErrRetryer(*awsConfig.MaxRetries))))
+	awsSession := session.Must(session.NewSession()) // use default retries for fetching creds, avoids hangs!
+	snapshotPollerSession = awsSession.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
+		awsretry.NewConnectionErrRetryer(maxRetries)))
 }
 
 // GetRegionsToScan determines what regions need to be scanned in order to perform a full account

@@ -38,7 +38,7 @@ import (
 )
 
 // RunTestsFromYAML reads all test cases in a YAML file and runs them.
-func RunTestsFromYAML(t *testing.T, resolve *logtypes.Registry, filename string) {
+func RunTestsFromYAML(t *testing.T, resolve logtypes.Finder, filename string) {
 	t.Helper()
 	f, err := os.Open(filename)
 	if err != nil {
@@ -73,12 +73,12 @@ func RunTests(t *testing.T, tests ...TestCase) {
 // TestCase is a test case validating the input and output for a parser
 // TODO: add fields to allow test cases to test that a parser produces errors
 type TestCase struct {
-	Name    string             `json:"name" yaml:"name"`
-	Input   string             `json:"input" yaml:"input"`
-	Result  string             `json:"result" yaml:"result"`
-	Results []string           `json:"results" yaml:"results"`
-	LogType string             `json:"logType" yaml:"logType"`
-	Resolve *logtypes.Registry `json:"-" yaml:"-"`
+	Name    string          `json:"name" yaml:"name"`
+	Input   string          `json:"input" yaml:"input"`
+	Result  string          `json:"result" yaml:"result"`
+	Results []string        `json:"results" yaml:"results"`
+	LogType string          `json:"logType" yaml:"logType"`
+	Resolve logtypes.Finder `json:"-" yaml:"-"`
 }
 
 // Run runs a test case
@@ -87,13 +87,13 @@ func (c *TestCase) Run(t *testing.T) {
 }
 
 // TestRegisteredParser is a helper to run a test for a registered log parser
-func TestRegisteredParser(t *testing.T, resolve *logtypes.Registry, logType, input string, expect ...string) {
+func TestRegisteredParser(t *testing.T, resolve logtypes.Finder, logType, input string, expect ...string) {
 	t.Helper()
 	assert := require.New(t)
 	if resolve == nil {
-		resolve = logtypes.DefaultRegistry()
+		resolve = logtypes.Must("empty")
 	}
-	entry := resolve.Get(logType)
+	entry := resolve.Find(logType)
 	assert.NotNil(entry, "unresolved log type parser %q", logType)
 	p, err := entry.NewParser(nil)
 	assert.NoError(err, "failed to create log parser")
