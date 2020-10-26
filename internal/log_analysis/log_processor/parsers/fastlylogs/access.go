@@ -57,15 +57,15 @@ func (p *AccessParser) Parse(log string) ([]*parsers.PantherLog, error) {
 	return event.Logs(), nil
 }
 
-func init() {
-	logtypes.MustRegister(
-		logtypes.Config{
-			Name: TypeAccess,
-			Description: `Fastly logs in the Common Log Format. To ensure Panther can parse the logs, make sure
-to select "Blank" in the "Log line format" field when creating an S3 logging endpoint for your Fastly service.`,
-			ReferenceURL: `https://docs.fastly.com/en/guides/useful-log-formats#common-log-format-clf`,
-			Schema:       Access{},
-			NewParser:    parsers.AdapterFactory(&AccessParser{}),
-		},
-	)
+func LogTypes() logtypes.Group {
+	return logTypes
 }
+
+var logTypes = logtypes.Must("Fastly", logtypes.Config{
+	Name: TypeAccess,
+	Description: `Fastly logs in the Common Log Format. To ensure Panther can parse the logs, make sure
+to select "Blank" in the "Log line format" field when creating an S3 logging endpoint for your Fastly service.`,
+	ReferenceURL: `https://docs.fastly.com/en/guides/useful-log-formats#common-log-format-clf`,
+	Schema:       Access{},
+	NewParser:    parsers.AdapterFactory(&AccessParser{}),
+})

@@ -24,46 +24,58 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+)
 
-	// Register log types in init() blocks
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/apachelogs"
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/cloudflarelogs"
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fastlylogs"
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fluentdsyslogs"
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gitlablogs"
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gravitationallogs"
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/juniperlogs"
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/laceworklogs"
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sophoslogs"
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/suricatalogs"
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sysloglogs"
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/zeeklogs"
+// Generates an init() function that populates the registry with all log types exported by
+// packages inside "internal/log_analysis/log_processor/parsers/..."
+//go:generate go run ./generate_init.go ../parsers/...
+
+// These will be populated by the generated init() code
+var (
+	nativeLogTypes    logtypes.Group
+	availableLogTypes = &logtypes.Registry{}
 )
 
 // NativeLogTypesResolver returns a resolver for native log types.
 // Use this instead of registry.Default()
 func NativeLogTypesResolver() logtypes.Resolver {
-	return logtypes.DefaultRegistry()
+	return logtypes.LocalResolver(nativeLogTypes)
+}
+
+// LogTypes exposes all available log types as a read-only group.
+func LogTypes() logtypes.Group {
+	return availableLogTypes
+}
+
+// Register adds a group to the registry of available log types
+func Register(group logtypes.Group) error {
+	return availableLogTypes.Register(group)
+}
+
+func Del(logType string) bool {
+	if nativeLogTypes.Find(logType) != nil {
+		panic(`tried to remove native log type`)
+	}
+	return availableLogTypes.Del(logType)
 }
 
 // Lookup finds a log type entry or panics
 // Panics if the name is not registered
 func Lookup(name string) logtypes.Entry {
-	return logtypes.DefaultRegistry().MustGet(name)
+	return logtypes.MustFind(LogTypes(), name)
 }
 
 // AvailableLogTypes returns all available log types in the default registry
-func AvailableLogTypes() []string {
-	return logtypes.DefaultRegistry().LogTypes()
+func AvailableLogTypes() (logTypes []string) {
+	for _, e := range LogTypes().Entries() {
+		logTypes = append(logTypes, e.String())
+	}
+	return
 }
 
 // AvailableTables returns a slice containing the Glue tables for all available log types
 func AvailableTables() (tables []*awsglue.GlueTableMetadata) {
-	entries := logtypes.DefaultRegistry().Entries()
+	entries := LogTypes().Entries()
 	tables = make([]*awsglue.GlueTableMetadata, len(entries))
 	for i, entry := range entries {
 		tables[i] = entry.GlueTableMeta()
@@ -74,10 +86,10 @@ func AvailableTables() (tables []*awsglue.GlueTableMetadata) {
 // AvailableParsers returns log parsers for all native log types with nil parameters.
 // Panics if a parser factory in the default registry fails with nil params.
 func AvailableParsers() map[string]parsers.Interface {
-	entries := logtypes.DefaultRegistry().Entries()
+	entries := LogTypes().Entries()
 	available := make(map[string]parsers.Interface, len(entries))
 	for _, entry := range entries {
-		logType := entry.Describe().Name
+		logType := entry.String()
 		parser, err := entry.NewParser(nil)
 		if err != nil {
 			panic(errors.Errorf("failed to create %q parser with nil params", logType))

@@ -29,16 +29,16 @@ import (
 )
 
 func TestRegistry(t *testing.T) {
-	r := Registry{}
+	r := &Registry{}
 	type T struct {
 		Foo string `json:"foo" description:"foo field"`
 	}
-	logTypes := r.LogTypes()
-	require.Empty(t, logTypes)
+	require.Empty(t, r.Entries())
+	require.Zero(t, r.Len())
 	require.Panics(t, func() {
-		r.MustGet("Foo.Bar")
+		MustFind(r, "Foo.Bar")
 	})
-	logTypeConfig := Config{
+	config := Config{
 		Name:         "Foo.Bar",
 		Description:  "Foo.Bar logs",
 		ReferenceURL: "-",
@@ -47,7 +47,8 @@ func TestRegistry(t *testing.T) {
 			return nil, nil
 		}),
 	}
-	api, err := r.Register(logTypeConfig)
+	api := MustBuild(config)
+	err := r.Register(api)
 	require.NoError(t, err)
 	require.NotNil(t, api)
 	require.Equal(t, Desc{
@@ -63,51 +64,35 @@ func TestRegistry(t *testing.T) {
 	)
 
 	// Ensure invalid schemas don't pass
-	configEmpty := logTypeConfig
+	configEmpty := Config{}
 	configEmpty.Schema = struct{}{}
-	nilEntry, err := r.Register(configEmpty)
+	nilEntry, err := configEmpty.BuildEntry()
 	require.Error(t, err)
 	require.Nil(t, nilEntry)
 
 	// Ensure nil schemas don't pass
-	configNil := logTypeConfig
+	configNil := Config{}
 	configNil.Schema = nil
-	nilEntry2, err := r.Register(configNil)
+	nilEntry2, err := configNil.BuildEntry()
 	require.Error(t, err)
 	require.Nil(t, nilEntry2)
 
-	entry, err := r.Register(logTypeConfig)
-	require.Error(t, err)
-	require.Equal(t, api, entry)
 	require.Panics(t, func() {
-		r.MustRegister(logTypeConfig)
+		r.MustRegister(Must(api.String(), api))
 	})
-	require.True(t, r.Del(logTypeConfig.Name))
+	require.True(t, r.Del(api.String()))
 	require.NotPanics(t, func() {
-		api = r.MustRegister(logTypeConfig)
+		r.MustRegister(Must(api.String(), api))
 	})
 
-	getAPI := r.Get("Foo.Bar")
-	require.Equal(t, api, getAPI)
+	require.Equal(t, api, r.Find("Foo.Bar"))
 	require.NotPanics(t, func() {
-		r.MustGet("Foo.Bar")
+		MustFind(r, "Foo.Bar")
 	})
 	require.Equal(t, []Entry{api}, r.Entries())
-	require.Equal(t, []Entry{api}, r.Entries("Foo.Bar"))
-	require.Equal(t, []Entry{}, r.Entries("Foo.Baz"))
-	require.Equal(t, []string{"Foo.Bar"}, r.LogTypes())
-	require.NotNil(t, DefaultRegistry())
-	require.NoError(t, Register(logTypeConfig))
-	globalEntry := DefaultRegistry().Get(logTypeConfig.Name)
-	require.NotNil(t, globalEntry)
-	require.Error(t, Register(logTypeConfig))
-	require.Panics(t, func() {
-		MustRegister(logTypeConfig)
-	})
-	require.True(t, DefaultRegistry().Del(logTypeConfig.Name))
-	require.NotPanics(t, func() {
-		MustRegister(logTypeConfig)
-	})
+	require.Equal(t, []Entry{api}, AppendFind(nil, r, r.LogTypes()...))
+	require.Equal(t, []Entry{api}, AppendFind(nil, r, "Foo.Bar"))
+	require.Nil(t, AppendFind(nil, r, "Foo.Baz"))
 }
 
 func TestDesc(t *testing.T) {

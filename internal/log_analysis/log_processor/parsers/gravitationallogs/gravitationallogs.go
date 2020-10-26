@@ -1,4 +1,4 @@
-package laceworklogs
+package gravitationallogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -18,21 +18,21 @@ package laceworklogs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-)
+import "github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 
+// LogTypes exports all available logtypes in this group
 func LogTypes() logtypes.Group {
 	return logTypes
 }
 
-var logTypes = logtypes.Must("Lacework",
-	logtypes.Config{
-		Name:         "Lacework.Events",
-		Description:  LaceworkDesc,
-		ReferenceURL: `https://www.lacework.com/platform-overview/`,
-		Schema:       Lacework{},
-		NewParser:    parsers.AdapterFactory(&LaceworkParser{}),
+var logTypes = logtypes.Must("Gravitational",
+	// nolint:lll
+	logtypes.ConfigJSON{
+		Name:         "Gravitational.TeleportAudit",
+		Description:  `Teleport logs events like successful user logins along with the metadata like remote IP address, time and the session ID.`,
+		ReferenceURL: `https://gravitational.com/teleport/docs/admin-guide/#audit-log`,
+		NewEvent: func() interface{} {
+			return &TeleportAudit{}
+		},
 	},
 )
