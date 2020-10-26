@@ -1449,7 +1449,8 @@ export const buildUpdateAlertStatusInput = (
   overrides: Partial<UpdateAlertStatusInput> = {}
 ): UpdateAlertStatusInput => {
   return {
-    alertId: 'alertId' in overrides ? overrides.alertId : '344a4508-25bd-42d0-bc1a-11a8551110cc',
+    alertIds:
+      'alertIds' in overrides ? overrides.alertIds : ['eb2e440c-22b8-4ba2-91ba-23d223957554'],
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
   };
 };
