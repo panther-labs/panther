@@ -27,13 +27,14 @@ const (
 	TypeZeekDNS = "Zeek.DNS"
 )
 
-func init() {
-	logtypes.MustRegister(
-		logtypes.Config{
-			Name:         TypeZeekDNS,
-			Description:  `Zeek DNS activity`,
-			ReferenceURL: `https://docs.zeek.org/en/current/scripts/base/protocols/dns/main.zeek.html#type-DNS::Info`,
-			Schema:       &ZeekDNS{},
-			NewParser:    parsers.AdapterFactory(&ZeekDNSParser{}),
-		})
+func LogTypes() logtypes.Group {
+	return logTypes
 }
+
+var logTypes = logtypes.Must("Zeek", logtypes.Config{
+	Name:         TypeZeekDNS,
+	Description:  `Zeek DNS activity`,
+	ReferenceURL: `https://docs.zeek.org/en/current/scripts/base/protocols/dns/main.zeek.html#type-DNS::Info`,
+	Schema:       &ZeekDNS{},
+	NewParser:    parsers.AdapterFactory(&ZeekDNSParser{}),
+})

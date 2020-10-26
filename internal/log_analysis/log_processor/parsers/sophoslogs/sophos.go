@@ -22,12 +22,15 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 )
 
-func init() {
-	logtypes.MustRegisterJSON(logtypes.Desc{
-		Name:         "Sophos.Central",
-		Description:  `Sophos Central events`,
-		ReferenceURL: `https://support.sophos.com/support/s/article/KB-000038307?language=en_US`,
-	}, func() interface{} {
-		return &SophosCentralEvent{}
-	})
+func LogTypes() logtypes.Group {
+	return logTypes
 }
+
+var logTypes = logtypes.Must("Sophos", logtypes.ConfigJSON{
+	Name:         "Sophos.Central",
+	Description:  `Sophos Central events`,
+	ReferenceURL: `https://support.sophos.com/support/s/article/KB-000038307?language=en_US`,
+	NewEvent: func() interface{} {
+		return &SophosCentralEvent{}
+	},
+})

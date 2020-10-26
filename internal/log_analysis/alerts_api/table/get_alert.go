@@ -26,16 +26,16 @@ import (
 )
 
 // GetAlert retrieve a AlertItem from DDB
-func (table *AlertsTable) GetAlert(alertID *string) (*AlertItem, error) {
+func (table *AlertsTable) GetAlert(alertID string) (*AlertItem, error) {
 	input := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			AlertIDKey: {S: alertID},
+			AlertIDKey: {S: &alertID},
 		},
 		TableName: aws.String(table.AlertsTableName),
 	}
 	ddbResult, err := table.Client.GetItem(input)
 	if err != nil {
-		return nil, errors.Wrap(err, "GetItem() failed for: "+*alertID)
+		return nil, errors.Wrap(err, "GetItem() failed for: "+alertID)
 	}
 
 	if ddbResult.Item == nil {
@@ -44,7 +44,7 @@ func (table *AlertsTable) GetAlert(alertID *string) (*AlertItem, error) {
 
 	alertItem := &AlertItem{}
 	if err = dynamodbattribute.UnmarshalMap(ddbResult.Item, alertItem); err != nil {
-		return nil, errors.Wrap(err, "UnmarshalMap() failed for: "+*alertID)
+		return nil, errors.Wrap(err, "UnmarshalMap() failed for: "+alertID)
 	}
 	return alertItem, nil
 }

@@ -21,7 +21,6 @@ package api
 import (
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -31,7 +30,6 @@ import (
 
 func TestUpdateAlertDelivery(t *testing.T) {
 	tableMock := &tableMock{}
-	alertsDB = tableMock
 
 	alertID := "alertId"
 	input := &models.UpdateAlertDeliveryInput{
@@ -48,12 +46,15 @@ func TestUpdateAlertDelivery(t *testing.T) {
 		DeliveryResponses: []*models.DeliveryResponse{deliveryResponse},
 	}
 	expectedSummary := &models.AlertSummary{
-		AlertID:           aws.String(alertID),
+		AlertID:           alertID,
 		DeliveryResponses: []*models.DeliveryResponse{deliveryResponse},
 	}
 
 	tableMock.On("UpdateAlertDelivery", input).Return(output, nil).Once()
-	result, err := API{}.UpdateAlertDelivery(input)
+	api := API{
+		alertsDB: tableMock,
+	}
+	result, err := api.UpdateAlertDelivery(input)
 	require.NoError(t, err)
 
 	// Marshal to convert "" to nils and focus on our properties

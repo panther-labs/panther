@@ -26,6 +26,59 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
+// LogTypes exports the available log type entries
+func LogTypes() logtypes.Group {
+	return logTypes
+}
+
+// nolint:lll
+var logTypes = logtypes.Must("Juniper",
+	logtypes.Config{
+		Name:         TypeAccess,
+		Description:  TypeAccess + ` logs for all traffic coming to and from the box.`,
+		ReferenceURL: `https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-access-log.html`,
+		Schema:       Access{},
+		NewParser:    parsers.AdapterFactory(&AccessParser{}),
+	},
+	logtypes.Config{
+		Name:         TypeAudit,
+		Description:  TypeAudit + ` The audit log contains log entries that indicate non-idempotent (state changing) actions performed on WebApp Secure.`,
+		ReferenceURL: `https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-incident-log-format.html`,
+		Schema:       Audit{},
+		NewParser:    parsers.AdapterFactory(&AuditParser{}),
+	},
+	logtypes.Config{
+		Name:         TypeFirewall,
+		Description:  TypeFirewall + ` stores information about dropped packets from the iptables firewall.`,
+		ReferenceURL: `https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-incident-log-format.html`,
+		Schema:       Firewall{},
+		NewParser:    parsers.AdapterFactory(&FirewallParser{}),
+	},
+	logtypes.Config{
+		Name:         TypeMWS,
+		Description:  TypeMWS + ` is the main log file for most WebApp Secure logging needs. All messages that don't have a specific log location are sent, by default, to mws.log.`,
+		ReferenceURL: `https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-mws-log.html`,
+		Schema:       MWS{},
+		NewParser:    parsers.AdapterFactory(&MWSParser{}),
+	},
+	logtypes.Config{
+		Name:         TypePostgres,
+		Description:  TypePostgres + ` contains logs of manipulations on the schema of the database that WebApp Secure uses, as well as any errors that occurred during database operations.`,
+		ReferenceURL: `https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-postgres-log.html`,
+		Schema:       Postgres{},
+		NewParser:    parsers.AdapterFactory(&PostgresParser{}),
+	},
+	logtypes.Config{
+		Name: TypeSecurity,
+		Description: TypeSecurity + ` Webapp Secure is configured to log security incidents to mws-security.log.
+		All security alerts should be sent to security.log (previously named security-alert.log).
+		There are different types of security incidents that will be a part of this log: new profiles, security incidents, new counter responses.`,
+		ReferenceURL: `https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-log-format.html`,
+		Schema:       Security{},
+		NewParser:    parsers.AdapterFactory(&SecurityParser{}),
+	},
+)
+
 const (
 	rxBrackets  = `\[[^\]]*\]`
 	rxQuoted    = `"[^"]*"`
@@ -52,54 +105,4 @@ func (p *timestampParser) ParseTimestamp(s string) (time.Time, error) {
 		year--
 	}
 	return tm.AddDate(year, 0, 0), nil
-}
-
-func init() {
-	// nolint:lll
-	logtypes.MustRegister(
-		logtypes.Config{
-			Name:         TypeAccess,
-			Description:  TypeAccess + ` logs for all traffic coming to and from the box.`,
-			ReferenceURL: `https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-access-log.html`,
-			Schema:       Access{},
-			NewParser:    parsers.AdapterFactory(&AccessParser{}),
-		},
-		logtypes.Config{
-			Name:         TypeAudit,
-			Description:  TypeAudit + ` The audit log contains log entries that indicate non-idempotent (state changing) actions performed on WebApp Secure.`,
-			ReferenceURL: `https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-incident-log-format.html`,
-			Schema:       Audit{},
-			NewParser:    parsers.AdapterFactory(&AuditParser{}),
-		},
-		logtypes.Config{
-			Name:         TypeFirewall,
-			Description:  TypeFirewall + ` stores information about dropped packets from the iptables firewall.`,
-			ReferenceURL: `https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-incident-log-format.html`,
-			Schema:       Firewall{},
-			NewParser:    parsers.AdapterFactory(&FirewallParser{}),
-		},
-		logtypes.Config{
-			Name:         TypeMWS,
-			Description:  TypeMWS + ` is the main log file for most WebApp Secure logging needs. All messages that don't have a specific log location are sent, by default, to mws.log.`,
-			ReferenceURL: `https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-mws-log.html`,
-			Schema:       MWS{},
-			NewParser:    parsers.AdapterFactory(&MWSParser{}),
-		},
-		logtypes.Config{
-			Name:         TypePostgres,
-			Description:  TypePostgres + ` contains logs of manipulations on the schema of the database that WebApp Secure uses, as well as any errors that occurred during database operations.`,
-			ReferenceURL: `https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-postgres-log.html`,
-			Schema:       Postgres{},
-			NewParser:    parsers.AdapterFactory(&PostgresParser{}),
-		},
-		logtypes.Config{
-			Name: TypeSecurity,
-			Description: TypeSecurity + ` Webapp Secure is configured to log security incidents to mws-security.log.
-All security alerts should be sent to security.log (previously named security-alert.log).
-There are different types of security incidents that will be a part of this log: new profiles, security incidents, new counter responses.`,
-			ReferenceURL: `https://www.juniper.net/documentation/en_US/webapp5.6/topics/reference/w-a-s-log-format.html`,
-			Schema:       Security{},
-			NewParser:    parsers.AdapterFactory(&SecurityParser{}),
-		},
-	)
 }

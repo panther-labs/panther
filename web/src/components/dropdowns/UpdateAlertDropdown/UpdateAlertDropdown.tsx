@@ -57,20 +57,22 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
     variables: {
       input: {
         status: alert.status,
-        alertId: alert.alertId,
+        alertIds: [alert.alertId],
       },
     },
 
     // This hook ensures we also update the AlertDetails item in the cache
     update: (cache, { data }) => {
-      const dataId = cache.identify({
-        __typename: 'AlertDetails',
-        alertId: data.updateAlertStatus.alertId,
-      });
-      cache.modify(dataId, {
-        status: () => data.updateAlertStatus.status,
-        lastUpdatedBy: () => data.updateAlertStatus.lastUpdatedBy,
-        lastUpdatedByTime: () => data.updateAlertStatus.lastUpdatedByTime,
+      data.updateAlertStatus.forEach(newAlert => {
+        const dataId = cache.identify({
+          __typename: 'AlertDetails',
+          alertId: newAlert.alertId,
+        });
+        cache.modify(dataId, {
+          status: () => newAlert.status,
+          lastUpdatedBy: () => newAlert.lastUpdatedBy,
+          lastUpdatedByTime: () => newAlert.lastUpdatedByTime,
+        });
       });
       // TODO: when apollo client is updated to 3.0.0-rc.12+, use this code
       // cache.modify({
@@ -87,13 +89,15 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
     },
     // We want to simulate an instant change in the UI which will fallback if there's a failure
     optimisticResponse: data => ({
-      updateAlertStatus: {
-        ...alert,
-        status: data.input.status,
-      },
+      updateAlertStatus: [
+        {
+          ...alert,
+          status: data.input.status,
+        },
+      ],
     }),
     onCompleted: data => {
-      const { status, severity } = data.updateAlertStatus;
+      const { status, severity } = data.updateAlertStatus[0];
       trackEvent({
         event: EventEnum.UpdatedAlertStatus,
         src: SrcEnum.Alerts,
@@ -144,7 +148,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
               disabled={alert.status === statusVal}
               onSelect={() =>
                 updateAlertStatus({
-                  variables: { input: { status: statusVal, alertId: alert.alertId } },
+                  variables: { input: { status: statusVal, alertIds: [alert.alertId] } },
                 })
               }
             >

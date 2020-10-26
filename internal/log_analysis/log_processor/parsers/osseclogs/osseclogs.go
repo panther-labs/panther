@@ -27,12 +27,14 @@ const (
 	TypeEventInfo = "OSSEC.EventInfo"
 )
 
-func init() {
-	logtypes.MustRegister(logtypes.Config{
-		Name:         TypeEventInfo,
-		Description:  `OSSEC EventInfo alert parser. Currently only JSON output is supported.`,
-		ReferenceURL: `https://www.ossec.net/docs/docs/formats/alerts.html`,
-		Schema:       EventInfo{},
-		NewParser:    parsers.AdapterFactory(&EventInfoParser{}),
-	})
+func LogTypes() logtypes.Group {
+	return logTypes
 }
+
+var logTypes = logtypes.Must("OSSEC", logtypes.Config{
+	Name:         TypeEventInfo,
+	Description:  `OSSEC EventInfo alert parser. Currently only JSON output is supported.`,
+	ReferenceURL: `https://www.ossec.net/docs/docs/formats/alerts.html`,
+	Schema:       EventInfo{},
+	NewParser:    parsers.AdapterFactory(&EventInfoParser{}),
+})
