@@ -99,11 +99,10 @@ const DropdownFilters: React.FC = () => {
                       <Field
                         name="enabled"
                         as={FormikCombobox}
-                        items={['true', 'false']}
-                        itemToString={(item: boolean | string) => {
-                          return item === 'true' ? 'Yes' : 'No';
-                        }}
+                        items={[true, false]}
+                        itemToString={(item: boolean) => (item ? 'Yes' : 'No')}
                         label="Enabled"
+                        placeholder="Only show enabled rules?"
                       />
                     </Box>
 
