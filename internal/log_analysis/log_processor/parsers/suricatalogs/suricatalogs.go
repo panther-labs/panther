@@ -28,21 +28,23 @@ const (
 	TypeAnomaly = "Suricata.Anomaly"
 )
 
-func init() {
-	logtypes.MustRegister(
-		logtypes.Config{
-			Name:         TypeAnomaly,
-			Description:  `Suricata parser for the Anomaly event type in the EVE JSON output.`,
-			ReferenceURL: `https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json-output.html#anomaly`,
-			Schema:       Anomaly{},
-			NewParser:    parsers.AdapterFactory(&AnomalyParser{}),
-		},
-		logtypes.Config{
-			Name:         TypeDNS,
-			Description:  `Suricata parser for the DNS event type in the EVE JSON output.`,
-			ReferenceURL: `https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json-output.html#dns`,
-			Schema:       DNS{},
-			NewParser:    parsers.AdapterFactory(&DNSParser{}),
-		},
-	)
+func LogTypes() logtypes.Group {
+	return logTypes
 }
+
+var logTypes = logtypes.Must("Suricata",
+	logtypes.Config{
+		Name:         TypeAnomaly,
+		Description:  `Suricata parser for the Anomaly event type in the EVE JSON output.`,
+		ReferenceURL: `https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json-output.html#anomaly`,
+		Schema:       Anomaly{},
+		NewParser:    parsers.AdapterFactory(&AnomalyParser{}),
+	},
+	logtypes.Config{
+		Name:         TypeDNS,
+		Description:  `Suricata parser for the DNS event type in the EVE JSON output.`,
+		ReferenceURL: `https://suricata.readthedocs.io/en/suricata-5.0.2/output/eve/eve-json-output.html#dns`,
+		Schema:       DNS{},
+		NewParser:    parsers.AdapterFactory(&DNSParser{}),
+	},
+)
