@@ -17,13 +17,13 @@
  */
 
 import React from 'react';
-import { Box, Card, Flex, IconButton, Img, Text, TextProps } from 'pouncejs';
+import { Box, Card, Flex, IconButton, Img, Text, TextProps, Theme } from 'pouncejs';
 import { slugify } from 'Helpers/utils';
 
 export type ItemCardStatusEnum = 'pass' | 'fail';
 
 interface GenericItemCardProps {
-  status?: ItemCardStatusEnum;
+  borderColor?: keyof Theme['colors'];
 }
 
 interface GenericItemCardLogoProps {
@@ -48,12 +48,12 @@ interface GenericItemCardComposition {
 
 const GenericItemCard: React.FC<GenericItemCardProps> & GenericItemCardComposition = ({
   children,
-  status,
+  borderColor,
 }) => {
-  const statusProps = status
+  const statusProps = borderColor
     ? {
         borderLeft: '4px solid',
-        borderColor: status === 'fail' ? 'red-600' : 'teal-400',
+        borderColor,
       }
     : {};
   return (

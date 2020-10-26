@@ -39,7 +39,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
   const { alertDestinations, loading: loadingDestinations } = useAlertDestinations({ alert });
 
   return (
-    <GenericItemCard status={alert.type === AlertTypesEnum.RuleError ? 'fail' : 'pass'}>
+    <GenericItemCard borderColor={alert.type === AlertTypesEnum.RuleError ? 'red-600' : 'teal-400'}>
       <GenericItemCard.Body>
         <Link
           as={RRLink}
