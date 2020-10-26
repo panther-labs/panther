@@ -51,7 +51,9 @@ const filterKeys = ['logTypes', 'createdAtAfter', 'createdAtBefore'];
 const ListAlertBreadcrumbFilters: React.FC = () => {
   const { data, loading: logTypesLoading, error: logTypesError } = useListAvailableLogTypes();
 
-  const { requestParams, setRequestParams } = useRequestParamsWithoutPagination<ListAlertsInput>();
+  const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
+    ListAlertsInput
+  >();
 
   const availableLogTypes = React.useMemo(
     () =>
@@ -77,9 +79,9 @@ const ListAlertBreadcrumbFilters: React.FC = () => {
         { ...requestParams, ...rest, logTypes: sanitizedLogTypes },
         param => !isEmpty(param)
       );
-      setRequestParams(params);
+      updateRequestParams(params);
     },
-    [requestParams, setRequestParams]
+    [requestParams, updateRequestParams]
   );
 
   return (

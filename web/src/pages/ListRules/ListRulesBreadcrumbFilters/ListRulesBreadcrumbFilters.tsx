@@ -42,7 +42,9 @@ export type ListRulesBreadcrumbFiltersValues = Pick<ListRulesInput, 'tags' | 'lo
 const ListRulesBreadcrumbFilters: React.FC = () => {
   const { data, loading: logTypesLoading, error: logTypesError } = useListAvailableLogTypes();
 
-  const { requestParams, setRequestParams } = useRequestParamsWithoutPagination<ListRulesInput>();
+  const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
+    ListRulesInput
+  >();
 
   const availableLogTypes = React.useMemo(
     () =>
@@ -69,9 +71,9 @@ const ListRulesBreadcrumbFilters: React.FC = () => {
         { ...requestParams, ...rest, logTypes: sanitizedLogTypes },
         param => !isEmpty(param)
       );
-      setRequestParams(params);
+      updateRequestParams(params);
     },
-    [requestParams, setRequestParams]
+    [requestParams, updateRequestParams]
   );
 
   return (
