@@ -30,35 +30,37 @@ const (
 	TypeStatus       = "Osquery.Status"
 )
 
-func init() {
-	logtypes.MustRegister(
-		logtypes.Config{
-			Name:         TypeBatch,
-			Description:  `Batch contains all the data included in OsQuery batch logs`,
-			ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,
-			Schema:       Batch{},
-			NewParser:    parsers.AdapterFactory(&BatchParser{}),
-		},
-		logtypes.Config{
-			Name:         TypeDifferential,
-			Description:  `Differential contains all the data included in OsQuery differential logs`,
-			ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,
-			Schema:       Differential{},
-			NewParser:    parsers.AdapterFactory(&DifferentialParser{}),
-		},
-		logtypes.Config{
-			Name:         TypeSnapshot,
-			Description:  `Snapshot contains all the data included in OsQuery differential logs`,
-			ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,
-			Schema:       Snapshot{},
-			NewParser:    parsers.AdapterFactory(&SnapshotParser{}),
-		},
-		logtypes.Config{
-			Name:         TypeStatus,
-			Description:  `Status is a diagnostic osquery log about the daemon.`,
-			ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,
-			Schema:       Status{},
-			NewParser:    parsers.AdapterFactory(&StatusParser{}),
-		},
-	)
+func LogTypes() logtypes.Group {
+	return logTypes
 }
+
+var logTypes = logtypes.Must("Osquery",
+	logtypes.Config{
+		Name:         TypeBatch,
+		Description:  `Batch contains all the data included in OsQuery batch logs`,
+		ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,
+		Schema:       Batch{},
+		NewParser:    parsers.AdapterFactory(&BatchParser{}),
+	},
+	logtypes.Config{
+		Name:         TypeDifferential,
+		Description:  `Differential contains all the data included in OsQuery differential logs`,
+		ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,
+		Schema:       Differential{},
+		NewParser:    parsers.AdapterFactory(&DifferentialParser{}),
+	},
+	logtypes.Config{
+		Name:         TypeSnapshot,
+		Description:  `Snapshot contains all the data included in OsQuery differential logs`,
+		ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,
+		Schema:       Snapshot{},
+		NewParser:    parsers.AdapterFactory(&SnapshotParser{}),
+	},
+	logtypes.Config{
+		Name:         TypeStatus,
+		Description:  `Status is a diagnostic osquery log about the daemon.`,
+		ReferenceURL: `https://osquery.readthedocs.io/en/stable/deployment/logging/`,
+		Schema:       Status{},
+		NewParser:    parsers.AdapterFactory(&StatusParser{}),
+	},
+)

@@ -80,7 +80,7 @@ func TestDeployedTablesSignature(t *testing.T) {
 	assert.Equal(t, sig, sig2)
 
 	// change the data, the sigs should be different
-	_, err = logtypes.DefaultRegistry().Register(logtypes.Config{
+	require.NoError(t, registry.Register(logtypes.MustBuild(logtypes.Config{
 		Name:         "Foo.Bar",
 		Description:  "foo",
 		ReferenceURL: "-",
@@ -90,9 +90,8 @@ func TestDeployedTablesSignature(t *testing.T) {
 		NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
 			return nil, nil
 		}),
-	})
-	assert.NoError(t, err)
-	defer logtypes.DefaultRegistry().Del("Foo.Bar")
+	})))
+	defer registry.Del("Foo.Bar")
 	mockGlueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Times(numLogTables + 1)
 	modifiedSig, err := DeployedTablesSignature(mockGlueClient)
 	require.NoError(t, err)

@@ -63,13 +63,13 @@ type EnvConfig struct {
 }
 
 func Setup() {
-	awsConfig := aws.NewConfig().WithMaxRetries(MaxRetries)
-	Session = session.Must(session.NewSession(request.WithRetryer(awsConfig,
-		awsretry.NewConnectionErrRetryer(*awsConfig.MaxRetries))))
-	LambdaClient = lambda.New(Session)
-	S3Uploader = s3manager.NewUploader(Session)
-	SqsClient = sqs.New(Session)
-	SnsClient = sns.New(Session)
+	Session = session.Must(session.NewSession()) // use default retries for fetching creds, avoids hangs!
+	clientsSession := Session.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(MaxRetries),
+		awsretry.NewConnectionErrRetryer(MaxRetries)))
+	LambdaClient = lambda.New(clientsSession)
+	S3Uploader = s3manager.NewUploader(clientsSession)
+	SqsClient = sqs.New(clientsSession)
+	SnsClient = sns.New(clientsSession)
 
 	err := envconfig.Process("", &Config)
 	if err != nil {

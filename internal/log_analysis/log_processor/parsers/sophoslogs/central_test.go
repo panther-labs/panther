@@ -1,4 +1,4 @@
-package sophoslogs_test
+package sophoslogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -21,10 +21,9 @@ package sophoslogs_test
 import (
 	"testing"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 )
 
 func TestSophosCentralParser(t *testing.T) {
-	logtesting.RunTestsFromYAML(t, logtypes.DefaultRegistry(), "./testdata/central_tests.yml")
+	logtesting.RunTestsFromYAML(t, LogTypes(), "./testdata/central_tests.yml")
 }

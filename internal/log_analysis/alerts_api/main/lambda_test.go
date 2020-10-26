@@ -24,9 +24,12 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/api"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // The handler signatures must match those in the LambdaInput struct.
 func TestRouter(t *testing.T) {
+	router = genericapi.NewRouter("log_analysis", "alerts", nil, &api.API{})
 	assert.Nil(t, router.VerifyHandlers(&models.LambdaInput{}))
 }
