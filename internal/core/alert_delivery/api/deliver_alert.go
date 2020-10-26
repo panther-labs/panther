@@ -73,7 +73,7 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 
 // getAlert - extracts the alert from the input payload and handles corner cases
 func getAlert(input *deliveryModels.DeliverAlertInput) (*alertTable.AlertItem, error) {
-	alertItem, err := alertsTableClient.GetAlert(&input.AlertID)
+	alertItem, err := alertsTableClient.GetAlert(input.AlertID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to fetch alert %s from ddb", input.AlertID)
 	}

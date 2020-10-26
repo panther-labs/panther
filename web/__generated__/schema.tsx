@@ -645,7 +645,7 @@ export type Mutation = {
   resetUserPassword: User;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
   testPolicy?: Maybe<TestPolicyResponse>;
-  updateAlertStatus?: Maybe<AlertSummary>;
+  updateAlertStatus: Array<AlertSummary>;
   updateDestination?: Maybe<Destination>;
   updateComplianceIntegration: ComplianceIntegration;
   updateS3LogIntegration: S3LogIntegration;
@@ -1232,7 +1232,7 @@ export type TestPolicyResponse = {
 };
 
 export type UpdateAlertStatusInput = {
-  alertId: Scalars['ID'];
+  alertIds: Array<Scalars['ID']>;
   status: AlertStatusesEnum;
 };
 
@@ -2259,7 +2259,7 @@ export type MutationResolvers<
     RequireFields<MutationTestPolicyArgs, never>
   >;
   updateAlertStatus?: Resolver<
-    Maybe<ResolversTypes['AlertSummary']>,
+    Array<ResolversTypes['AlertSummary']>,
     ParentType,
     ContextType,
     RequireFields<MutationUpdateAlertStatusArgs, 'input'>
