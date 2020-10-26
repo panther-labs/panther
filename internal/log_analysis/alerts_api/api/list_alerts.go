@@ -27,7 +27,7 @@ import (
 )
 
 // ListAlerts retrieves alert and event details.
-func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsOutput, err error) {
+func (api *API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsOutput, err error) {
 	result = &models.ListAlertsOutput{}
 	var alertItems []*table.AlertItem
 
@@ -41,7 +41,7 @@ func (API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAlertsO
 	}
 
 	// Fetch all alerts. The results will have filters, sorting applied.
-	alertItems, result.LastEvaluatedKey, err = alertsDB.ListAll(input)
+	alertItems, result.LastEvaluatedKey, err = api.alertsDB.ListAll(input)
 
 	if err != nil {
 		return nil, err

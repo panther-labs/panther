@@ -32,13 +32,13 @@ type updateResult struct {
 }
 
 // UpdateAlertStatus modifies an alert's attributes.
-func (API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (models.UpdateAlertStatusOutput, error) {
+func (api *API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (models.UpdateAlertStatusOutput, error) {
 	// Run the update alert query
 	if len(input.AlertIDs) == 0 {
 		return models.UpdateAlertStatusOutput{}, nil
 	}
 
-	alertItems, err := dispatchUpdates(input, maxDDBPageSize)
+	alertItems, err := api.dispatchUpdates(input, maxDDBPageSize)
 	// Only process the most recent error. It would be extremely rare to have multiple errors
 	// so we show one at a time to the user.
 	if err != nil {
@@ -51,7 +51,7 @@ func (API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (models.Updat
 
 // dispatchUpdates - dispatches updates to alerts in in groups.
 // Each group will process updates in series, but all groups are executed in parallel
-func dispatchUpdates(input *models.UpdateAlertStatusInput, maxPageSize int) ([]*table.AlertItem, error) {
+func (api *API) dispatchUpdates(input *models.UpdateAlertStatusInput, maxPageSize int) ([]*table.AlertItem, error) {
 	updateChannel := make(chan updateResult)
 	alertCount := len(input.AlertIDs)
 
@@ -70,7 +70,7 @@ func dispatchUpdates(input *models.UpdateAlertStatusInput, maxPageSize int) ([]*
 		}
 
 		// Run the updates
-		go dispatchUpdate(inputItems, updateChannel)
+		go api.dispatchUpdate(inputItems, updateChannel)
 	}
 
 	// Gather the results. If there were errors, we accumulate and let the routines complete
@@ -95,8 +95,8 @@ func dispatchUpdates(input *models.UpdateAlertStatusInput, maxPageSize int) ([]*
 }
 
 // dispatch update routine
-func dispatchUpdate(input *models.UpdateAlertStatusInput, updateChannel chan updateResult) {
-	alertItems, err := alertsDB.UpdateAlertStatus(input)
+func (api *API) dispatchUpdate(input *models.UpdateAlertStatusInput, updateChannel chan updateResult) {
+	alertItems, err := api.alertsDB.UpdateAlertStatus(input)
 	updateChannel <- updateResult{
 		AlertItems: alertItems,
 		Error:      err,

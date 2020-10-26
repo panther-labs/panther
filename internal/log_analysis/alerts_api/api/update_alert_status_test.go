@@ -37,7 +37,6 @@ import (
 
 func TestUpdateAlert(t *testing.T) {
 	tableMock := &tableMock{}
-	alertsDB = tableMock
 
 	status := "OPEN"
 	userID := "userId"
@@ -67,7 +66,7 @@ func TestUpdateAlert(t *testing.T) {
 			UpdateTime:        timeNow,
 		})
 		expectedSummaries = append(expectedSummaries, &models.AlertSummary{
-			AlertID:           aws.String(alertID),
+			AlertID:           alertID,
 			RuleID:            aws.String(""),
 			RuleVersion:       aws.String(""),
 			RuleDisplayName:   nil,
@@ -92,14 +91,17 @@ func TestUpdateAlert(t *testing.T) {
 		tableMock.On("UpdateAlertStatus", mock.Anything).Return(output[page*maxDDBPageSize:pageSize], nil).Once()
 	}
 
-	results, err := API{}.UpdateAlertStatus(input)
+	api := API{
+		alertsDB: tableMock,
+	}
+	results, err := api.UpdateAlertStatus(input)
 	require.NoError(t, err)
 
 	// The results will sometimes be out-of-order due to the concurrency
 	// We sort them here to compare against the original set
 	sort.Slice(results, func(i, j int) bool {
-		ID1, _ := strconv.Atoi(*results[i].AlertID)
-		ID2, _ := strconv.Atoi(*results[j].AlertID)
+		ID1, _ := strconv.Atoi(results[i].AlertID)
+		ID2, _ := strconv.Atoi(results[j].AlertID)
 		return ID1 < ID2
 	})
 

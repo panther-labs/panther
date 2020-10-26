@@ -33,38 +33,37 @@ import (
 )
 
 // API has all of the handlers as receiver methods.
-type API struct{}
-
-const maxDDBPageSize = 10
-
-var (
-	env        envConfig
+type API struct {
 	awsSession *session.Session
 	alertsDB   table.API
 	s3Client   s3iface.S3API
-)
+
+	env envConfig
+}
+
+const maxDDBPageSize = 10
 
 type envConfig struct {
+	table.AlertsTableEnvConfig
 	AnalysisAPIHost     string `required:"true" split_words:"true"`
-	AnalysisAPIPath     string `required:"true" split_words:"true"`
-	AlertsTableName     string `required:"true" split_words:"true"`
-	RuleIndexName       string `required:"true" split_words:"true"`
-	TimeIndexName       string `required:"true" split_words:"true"`
 	ProcessedDataBucket string `required:"true" split_words:"true"`
 }
 
 // Setup - parses the environment and builds the AWS and http clients.
-func Setup() {
+func Setup() *API {
+	var env envConfig
 	envconfig.MustProcess("", &env)
 
-	awsSession = session.Must(session.NewSession())
-	alertsDB = &table.AlertsTable{
-		AlertsTableName:                    env.AlertsTableName,
-		Client:                             dynamodb.New(awsSession),
-		RuleIDCreationTimeIndexName:        env.RuleIndexName,
-		TimePartitionCreationTimeIndexName: env.TimeIndexName,
+	awsSession := session.Must(session.NewSession())
+
+	api := &API{
+		awsSession: awsSession,
+		alertsDB:   env.NewAlertsTable(dynamodb.New(awsSession)),
+		s3Client:   s3.New(awsSession),
+		env:        env,
 	}
-	s3Client = s3.New(awsSession)
+
+	return api
 }
 
 // EventPaginationToken - token used for paginating through the events in an alert
