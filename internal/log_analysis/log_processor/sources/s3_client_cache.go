@@ -294,9 +294,9 @@ func getNewS3Client(region *string, creds *credentials.Credentials) (result s3if
 	}
 	// We have seen that in some case AWS will return AccessDenied while accessing data
 	// through STS creds. The issue seems to disappear after some retries
-	session := session.Must(session.NewSession(request.WithRetryer(config,
+	awsSession := session.Must(session.NewSession(config)) // use default retries for fetching creds, avoids hangs!
+	return s3.New(awsSession.Copy(request.WithRetryer(config.WithMaxRetries(s3ClientMaxRetries),
 		awsretry.NewAccessDeniedRetryer(s3ClientMaxRetries))))
-	return s3.New(session)
 }
 
 // Returns the configured S3 bucket and S3 object prefix for this source

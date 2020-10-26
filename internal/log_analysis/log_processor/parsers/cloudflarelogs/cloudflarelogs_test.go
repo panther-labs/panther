@@ -1,4 +1,4 @@
-package cloudflarelogs_test
+package cloudflarelogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -21,10 +21,9 @@ package cloudflarelogs_test
 import (
 	"testing"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 )
 
 func TestCloudflareLogParsers(t *testing.T) {
-	logtesting.RunTestsFromYAML(t, logtypes.DefaultRegistry(), "./testdata/cloudflare_tests.yml")
+	logtesting.RunTestsFromYAML(t, LogTypes(), "./testdata/cloudflare_tests.yml")
 }

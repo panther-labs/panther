@@ -28,12 +28,16 @@ const (
 	TypeAccess = `Nginx.Access`
 )
 
-func init() {
-	logtypes.MustRegister(logtypes.Config{
+func LogTypes() logtypes.Group {
+	return logTypes
+}
+
+var logTypes = logtypes.Must("Nginx",
+	logtypes.Config{
 		Name:         TypeAccess,
 		Description:  `Access Logs for your Nginx server. We currently support Nginx 'combined' format.`,
 		ReferenceURL: `http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format`,
 		Schema:       Access{},
 		NewParser:    parsers.AdapterFactory(&AccessParser{}),
-	})
-}
+	},
+)
