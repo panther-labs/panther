@@ -31,7 +31,9 @@ MAX_DEDUP_STRING_SIZE = 1000
 
 # Maximum size for a title
 MAX_TITLE_SIZE = 1000
-MAX_ALERT_CONTEXT_SIZE = 200 * 1000  # 200kb
+MAX_ALERT_CONTEXT_SIZE = 200 * 1024  # 200kb
+
+ALERT_CONTEXT_ERROR_KEY = "_error"
 
 TRUNCATED_STRING_SUFFIX = '... (truncated)'
 
@@ -206,17 +208,15 @@ class Rule:
             serialized_alert_context = json.dumps(alert_context)
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.warning('alert_context method raised exception. Using default. Exception: %s', err)
-                return None
+                return json.dumps({ALERT_CONTEXT_ERROR_KEY: repr(err)})
             raise
 
         if len(serialized_alert_context) > MAX_ALERT_CONTEXT_SIZE:
-            # If title exceeds max size, use default
-            self.logger.warning(
-                'maximum alert_context size is [%d] characters. alert_context for rule with ID '
-                '[%s] is [%d] characters. Using default', MAX_ALERT_CONTEXT_SIZE, self.rule_id, len(serialized_alert_context)
+            # If context exceeds max size, return empty one
+            alert_context_error = 'alert_context size is [{}] characters, bigger than maximum of [{}] characters'.format(
+                len(serialized_alert_context), MAX_ALERT_CONTEXT_SIZE
             )
-            return None
+            return json.dumps({ALERT_CONTEXT_ERROR_KEY: alert_context_error})
 
         return serialized_alert_context
 

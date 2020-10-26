@@ -132,7 +132,7 @@ var (
 		{
 			Name:    "p_alert_context",
 			Type:    GlueStringType,
-			Comment: "Alert id",
+			Comment: "Additional alert context",
 		},
 		{
 			Name:    "p_alert_creation_time",

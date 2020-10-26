@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from unittest import TestCase
+import json
 
 from ..src.rule import MAX_DEDUP_STRING_SIZE, MAX_TITLE_SIZE, Rule, RuleResult, TRUNCATED_STRING_SUFFIX
 
@@ -217,7 +218,15 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         rule_body = 'def rule(event):\n\treturn True\ndef alert_context(event):\n\treturn ""'
         rule = Rule({'id': 'test_alert_context_invalid_return_value', 'body': rule_body, 'versionId': 'versionId'})
 
-        expected_result = RuleResult(matched=True, dedup_string='defaultDedupString:test_alert_context_invalid_return_value')
+        expected_alert_context = json.dumps(
+            {
+                '_error':
+                    'Exception(\'rule [test_alert_context_invalid_return_value] function [alert_context] returned [str], expected [dict]\')'
+            }
+        )
+        expected_result = RuleResult(
+            matched=True, dedup_string='defaultDedupString:test_alert_context_invalid_return_value', alert_context=expected_alert_context
+        )
         self.assertEqual(expected_result, rule.run({}))
 
     def test_alert_context_too_big(self) -> None:
@@ -229,6 +238,10 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
                                  '\treturn test_dict'
         rule_body = 'def rule(event):\n\treturn True\n{}'.format(alert_context_function)
         rule = Rule({'id': 'test_alert_context_too_big', 'body': rule_body, 'versionId': 'versionId'})
-
-        expected_result = RuleResult(matched=True, dedup_string='defaultDedupString:test_alert_context_too_big')
+        expected_alert_context = json.dumps(
+            {'_error': 'alert_context size is [5588890] characters, bigger than maximum of [204800] characters'}
+        )
+        expected_result = RuleResult(
+            matched=True, dedup_string='defaultDedupString:test_alert_context_too_big', alert_context=expected_alert_context
+        )
         self.assertEqual(expected_result, rule.run({}))
