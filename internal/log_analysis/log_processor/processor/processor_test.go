@@ -47,7 +47,18 @@ import (
 var (
 	parseDelay   = time.Millisecond / 2 // time it takes to process a log line
 	sendDelay    = time.Millisecond / 2 // time it takes to send event to destination
-	testRegistry = &logtypes.Registry{}
+	testRegistry = logtypes.Must("testLogTypes", logtypes.Config{
+		Name:         testLogType,
+		Description:  "Test log type",
+		ReferenceURL: "-",
+		Schema: &struct {
+			LogLine string `json:"logLine" description:"log line"`
+		}{},
+		NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
+			return testutil.AlwaysFailParser(errors.New("fail parser")), nil
+		}),
+	})
+	testResolver = logtypes.LocalResolver(testRegistry)
 
 	testLogType          = "testLogType"
 	testLogLine          = "line"
@@ -60,20 +71,6 @@ var (
 	testKey         = "testKey"
 	testContentType = "testContentType"
 )
-
-func init() {
-	testRegistry.MustRegister(logtypes.Config{
-		Name:         testLogType,
-		Description:  "Test log type",
-		ReferenceURL: "-",
-		Schema: &struct {
-			LogLine string `json:"logLine" description:"log line"`
-		}{},
-		NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
-			return testutil.AlwaysFailParser(errors.New("fail parser")), nil
-		}),
-	})
-}
 
 type testLog struct {
 	logLine string
@@ -93,7 +90,7 @@ func TestProcess(t *testing.T) {
 	destination := (&testDestination{}).standardMock()
 
 	dataStream := makeDataStream()
-	f := NewFactory(testRegistry)
+	f := NewFactory(testResolver)
 	p, err := f(dataStream)
 	require.NoError(t, err)
 	mockClassifier := &testClassifier{}
@@ -133,7 +130,7 @@ func TestProcessDataStreamError(t *testing.T) {
 
 	destination := (&testDestination{}).standardMock()
 	dataStream := makeBadDataStream() // failure to read data, never hits classifier
-	f := NewFactory(testRegistry)
+	f := NewFactory(testResolver)
 	p, err := f(dataStream)
 	require.NoError(t, err)
 	mockClassifier := &testClassifier{}
@@ -199,7 +196,7 @@ func TestProcessDestinationError(t *testing.T) {
 	})
 
 	dataStream := makeDataStream()
-	f := NewFactory(testRegistry)
+	f := NewFactory(testResolver)
 	p, err := f(dataStream)
 	require.NoError(t, err)
 	mockClassifier := &testClassifier{}
@@ -244,7 +241,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 
 	destination := (&testDestination{}).standardMock()
 	dataStream := makeDataStream()
-	f := NewFactory(testRegistry)
+	f := NewFactory(testResolver)
 	p, err := f(dataStream)
 	require.NoError(t, err)
 	mockClassifier := &testClassifier{}
