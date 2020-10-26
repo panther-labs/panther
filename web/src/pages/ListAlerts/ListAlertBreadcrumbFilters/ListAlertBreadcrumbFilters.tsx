@@ -69,7 +69,7 @@ const ListAlertBreadcrumbFilters: React.FC = () => {
 
   const onFiltersChange = React.useCallback(
     ({ logType, ...rest }: ListAlertsFiltersValues) => {
-      updateRequestParams({ ...rest, logTypes: logType ? [logType] : [] });
+      updateRequestParams({ ...rest, logTypes: logType !== ALL_TYPES ? [logType] : [] });
     },
     [updateRequestParams]
   );
