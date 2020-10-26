@@ -20,7 +20,6 @@ package process
 
 import (
 	"context"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -31,10 +30,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/panther-labs/panther/pkg/awsretry"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
-	"github.com/panther-labs/panther/pkg/awsretry"
 )
 
 const (
@@ -56,11 +55,12 @@ var (
 
 func Setup() {
 	envconfig.MustProcess("", &config)
-	awsSession = session.Must(session.NewSession(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
-		awsretry.NewConnectionErrRetryer(maxRetries))))
-	glueClient = glue.New(awsSession)
-	lambdaClient = lambda.New(awsSession)
-	athenaClient = athena.New(awsSession)
+	awsSession = session.Must(session.NewSession()) // use default retries for fetching creds, avoids hangs!
+	clientsSession := awsSession.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
+		awsretry.NewConnectionErrRetryer(maxRetries)))
+	glueClient = glue.New(clientsSession)
+	lambdaClient = lambda.New(clientsSession)
+	athenaClient = athena.New(clientsSession)
 
 	logtypesResolver = registry.NativeLogTypesResolver()
 	listAvailableLogTypes = func(_ context.Context) ([]string, error) {
