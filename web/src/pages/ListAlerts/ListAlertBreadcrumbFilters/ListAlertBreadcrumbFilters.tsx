@@ -86,6 +86,7 @@ const ListAlertBreadcrumbFilters: React.FC = () => {
     <Breadcrumbs.Actions>
       <Flex justify="flex-end">
         <Formik<ListAlertsFiltersValues>
+          enableReinitialize
           initialValues={initialFilterValues}
           onSubmit={onFiltersChange}
         >

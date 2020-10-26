@@ -38,7 +38,7 @@ const filters = ['nameContains', 'sortBy', 'sortDir'] as (keyof ListAlertsInput)
 
 const defaultValues = {
   nameContains: '',
-  sorting: undefined,
+  sorting: null,
 };
 
 const sortingOpts: SortingOptions = [
@@ -59,7 +59,7 @@ const sortingOpts: SortingOptions = [
 ];
 
 /**
- * Since sorting is not responding to some ListAlertsInput key we shall exctract
+ * Since sorting is not responding to some ListAlertsInput key we shall extract
  * this information from `sortBy` and `sortDir` parameters in order to align the
  * combobox values.
  */
@@ -101,6 +101,7 @@ const ListAlertFilters: React.FC = () => {
   return (
     <Flex justify="flex-end" align="center">
       <Formik<ListAlertsInlineFiltersValues>
+        enableReinitialize
         initialValues={initialFilterValues}
         onSubmit={(values: ListAlertsInlineFiltersValues) => {
           updateRequestParams(extractSortingOpts(values));

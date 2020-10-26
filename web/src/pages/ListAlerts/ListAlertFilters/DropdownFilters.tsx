@@ -87,6 +87,7 @@ const DropdownFilters: React.FC = () => {
           <PopoverContent alignment="bottom-left">
             <Card shadow="dark300" my={14} p={6} pb={4} minWidth={425}>
               <Formik<ListAlertsDropdownFiltersValues>
+                enableReinitialize
                 onSubmit={updateRequestParams}
                 initialValues={initialDropdownFilters}
               >
