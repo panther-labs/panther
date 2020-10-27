@@ -31,6 +31,8 @@ MAX_DEDUP_STRING_SIZE = 1000
 
 # Maximum size for a title
 MAX_TITLE_SIZE = 1000
+# The limit for DDB is 400kb per item (we store this one in DDB) and the limit for SQS/SNS is 256KB.
+# The limit of 200kb is an approximation - the other fields included in the request will be less than the remaining 56kb
 MAX_ALERT_CONTEXT_SIZE = 200 * 1024  # 200kb
 
 ALERT_CONTEXT_ERROR_KEY = "_error"
