@@ -134,7 +134,7 @@ Resources:
     DependsOn:
       - AthenaConfigure
       - UpdaterFunction
-    Type: Custom::UpdateGlueTables
+    Type: Custom::UpdateLogProcessorTables
     Properties:
       # Update in case TablesSignature or CustomResourceVersion has changed
       TablesSignature: !Ref TablesSignature
