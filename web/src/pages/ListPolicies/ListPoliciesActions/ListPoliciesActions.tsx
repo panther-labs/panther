@@ -87,12 +87,12 @@ export const filters = {
     component: FormikCombobox,
     props: {
       label: 'Enabled',
-      items: ['', 'true', 'false'],
+      items: ['', true, false],
       itemToString: (item: boolean | string) => {
-        if (!item) {
-          return 'All';
+        if (item === '') {
+          return 'All Policies';
         }
-        return item === 'true' ? 'Yes' : 'No';
+        return item === true ? 'Enabled Policies' : 'Disabled Policies';
       },
       placeholder: 'Show only enabled?',
     },
@@ -101,12 +101,12 @@ export const filters = {
     component: FormikCombobox,
     props: {
       label: 'Auto-remediation Status',
-      items: ['', 'true', 'false'],
+      items: ['', true, false],
       itemToString: (item: boolean | string) => {
-        if (!item) {
+        if (item === '') {
           return 'All';
         }
-        return item === 'true' ? 'Configured' : 'Not Configured';
+        return item === true ? 'Configured' : 'Not Configured';
       },
       placeholder: 'Choose a status...',
     },
