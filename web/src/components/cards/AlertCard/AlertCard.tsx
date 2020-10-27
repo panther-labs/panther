@@ -17,7 +17,7 @@
  */
 
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Link } from 'pouncejs';
+import { Flex, Icon, Link, Text } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import React from 'react';
@@ -28,6 +28,7 @@ import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.gene
 import { formatDatetime } from 'Helpers/utils';
 import BulletedLogType from 'Components/BulletedLogType';
 import useAlertDestinations from 'Hooks/useAlertDestinations';
+import useDestinationsDeliverySuccess from 'Hooks/useDestinationsDeliverySuccess';
 import UpdateAlertDropdown from '../../dropdowns/UpdateAlertDropdown';
 
 interface AlertCardProps {
@@ -36,7 +37,10 @@ interface AlertCardProps {
 
 const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
   const { alertDestinations, loading: loadingDestinations } = useAlertDestinations({ alert });
-
+  const { allDestinationDeliveredSuccessfully } = useDestinationsDeliverySuccess({
+    deliveryResponses: alert.deliveryResponses,
+    alertDestinations,
+  });
   return (
     <GenericItemCard>
       <GenericItemCard.Body>
@@ -89,6 +93,15 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
             <UpdateAlertDropdown alert={alert} />
           </Flex>
         </GenericItemCard.ValuesGroup>
+        {!allDestinationDeliveredSuccessfully && (
+          <Flex align="center" spacing={2} mt={2}>
+            <Icon type="alert-circle-filled" size="medium" color="red-300" />
+            <Text fontSize="small" fontStyle="italic" color="red-300">
+              There was an issue with the delivery of this alert to a selected destination. See
+              specific Alert for details.
+            </Text>
+          </Flex>
+        )}
       </GenericItemCard.Body>
     </GenericItemCard>
   );
