@@ -166,6 +166,7 @@ type AlertDetails implements Alert {
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
+  type: AlertTypesEnum!
   logTypes: [String!]!
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
@@ -181,6 +182,7 @@ type AlertSummary implements Alert {
   deliveryResponses: [DeliveryResponse]!
   eventsMatched: Int!
   ruleId: ID
+  type: AlertTypesEnum!
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
@@ -1013,6 +1015,11 @@ enum AlertStatusesEnum {
   TRIAGED
   CLOSED
   RESOLVED
+}
+
+enum AlertTypesEnum {
+  RULE
+  RULE_ERROR
 }
 
 enum SortDirEnum {

@@ -17,7 +17,8 @@
  */
 
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Link } from 'pouncejs';
+import { Flex, Link, Text } from 'pouncejs';
+import { AlertTypesEnum } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import React from 'react';
@@ -38,7 +39,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
   const { alertDestinations, loading: loadingDestinations } = useAlertDestinations({ alert });
 
   return (
-    <GenericItemCard>
+    <GenericItemCard borderColor={alert.type === AlertTypesEnum.RuleError ? 'red-600' : 'teal-400'}>
       <GenericItemCard.Body>
         <Link
           as={RRLink}
@@ -62,7 +63,10 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
               </LinkButton>
             }
           />
-
+          <GenericItemCard.Value
+            label="Events"
+            value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
+          />
           <GenericItemCard.Value
             label="Destinations"
             value={
@@ -80,9 +84,14 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
             }
           />
           <GenericItemCard.Value
-            label="Events"
-            value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
+            label="Alert Type"
+            value={
+              <Text color={alert.type === AlertTypesEnum.RuleError ? 'red-500' : 'teal-100'}>
+                {alert.type === AlertTypesEnum.RuleError ? 'Rule Error' : 'Rule Match'}
+              </Text>
+            }
           />
+
           <GenericItemCard.Value label="Time Created" value={formatDatetime(alert.creationTime)} />
           <Flex ml="auto" mr={0} align="flex-end" spacing={2}>
             <SeverityBadge severity={alert.severity} />

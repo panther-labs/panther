@@ -135,6 +135,7 @@ import {
   User,
   AccountTypeEnum,
   AlertStatusesEnum,
+  AlertTypesEnum,
   AnalysisTypeEnum,
   ComplianceStatusEnum,
   DestinationTypeEnum,
@@ -259,6 +260,7 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
     title: 'title' in overrides ? overrides.title : 'Steel',
+    type: 'type' in overrides ? overrides.type : AlertTypesEnum.Rule,
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Books'],
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
@@ -283,6 +285,7 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
       'deliveryResponses' in overrides ? overrides.deliveryResponses : [buildDeliveryResponse()],
     eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 670,
     ruleId: 'ruleId' in overrides ? overrides.ruleId : '6eb9c948-5a13-4955-bd91-b98801b55bed',
+    type: 'type' in overrides ? overrides.type : AlertTypesEnum.Rule,
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Medium,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Triaged,
     title: 'title' in overrides ? overrides.title : 'indexing',
