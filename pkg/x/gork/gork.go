@@ -21,11 +21,12 @@ package gork
 import (
 	"bufio"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/valyala/fasttemplate"
 	"io"
 	"regexp"
 	"strings"
+
+	"github.com/pkg/errors"
+	"github.com/valyala/fasttemplate"
 )
 
 const (
