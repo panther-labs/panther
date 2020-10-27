@@ -29,7 +29,7 @@ func (client *OutputClient) CustomWebhook(
 
 	postInput := &PostInput{
 		url:  config.WebhookURL,
-		body: generateNotificationFromAlert(alert, true),
+		body: generateNotificationFromAlert(alert),
 	}
 	return client.httpWrapper.post(postInput)
 }

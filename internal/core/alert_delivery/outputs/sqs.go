@@ -38,7 +38,7 @@ var getSqsClient = buildSqsClient
 // Sqs sends an alert to an SQS Queue.
 // nolint: dupl
 func (client *OutputClient) Sqs(alert *alertModels.Alert, config *outputModels.SqsConfig) *AlertDeliveryResponse {
-	notification := generateNotificationFromAlert(alert, true)
+	notification := generateNotificationFromAlert(alert)
 
 	serializedMessage, err := jsoniter.MarshalToString(notification)
 	if err != nil {
