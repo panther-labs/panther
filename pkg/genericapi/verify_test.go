@@ -63,20 +63,6 @@ func TestVerifyWrongArgType(t *testing.T) {
 		"input has type *genericapi.addRuleInput", err.(*InternalError).Message)
 }
 
-type wrongReturnSingle struct{}
-
-func (*wrongReturnSingle) AddRule(*addRuleInput) InternalError { return InternalError{} }
-
-func TestVerifySingleReturnNotError(t *testing.T) {
-	type input struct{ AddRule *addRuleInput }
-	err := NewRouter("testNamespace", "testComponent", nil, &wrongReturnSingle{}).VerifyHandlers(&input{})
-	assert.Equal(
-		t,
-		"AddRule returns genericapi.InternalError, which does not satisfy error",
-		err.(*InternalError).Message,
-	)
-}
-
 type wrongReturnDouble struct{}
 
 func (*wrongReturnDouble) AddRule(*addRuleInput) (*string, *string) { return nil, nil }

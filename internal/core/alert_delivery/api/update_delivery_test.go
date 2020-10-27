@@ -38,14 +38,14 @@ func TestUpdateAlerts(t *testing.T) {
 	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
 
-	alertID := aws.String("alert-id")
+	alertID := "alert-id"
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
 	dispatchedAt := time.Now().UTC()
 
 	statuses := []DispatchStatus{
 		{
 			Alert: deliveryModels.Alert{
-				AlertID:   alertID,
+				AlertID:   &alertID,
 				Type:      deliveryModels.RuleType,
 				OutputIds: outputIds,
 				Severity:  "INFO",
@@ -60,7 +60,7 @@ func TestUpdateAlerts(t *testing.T) {
 		},
 		{
 			Alert: deliveryModels.Alert{
-				AlertID:   alertID,
+				AlertID:   &alertID,
 				Type:      deliveryModels.RuleType,
 				OutputIds: outputIds,
 				Severity:  "INFO",
@@ -75,7 +75,7 @@ func TestUpdateAlerts(t *testing.T) {
 		},
 		{
 			Alert: deliveryModels.Alert{
-				AlertID:   alertID,
+				AlertID:   &alertID,
 				Type:      deliveryModels.RuleType,
 				OutputIds: outputIds,
 				Severity:  "INFO",
@@ -115,7 +115,7 @@ func TestUpdateAlerts(t *testing.T) {
 	}
 	expectedResponse := []*alertModels.AlertSummary{
 		{
-			AlertID:           aws.String("alert-id"),
+			AlertID:           "alert-id",
 			DeliveryResponses: deliveryResponses,
 		},
 	}
@@ -173,7 +173,7 @@ func TestUpdateAlert(t *testing.T) {
 
 	ch := make(chan alertModels.AlertSummary, 1)
 
-	alertID := aws.String("alert-id")
+	alertID := "alert-id"
 	dispatchedAt := time.Now().UTC()
 	deliveryResponses := []*alertModels.DeliveryResponse{
 		{
@@ -209,7 +209,7 @@ func TestUpdateAlert(t *testing.T) {
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
 
-	go updateAlert(*alertID, deliveryResponses, ch)
+	go updateAlert(alertID, deliveryResponses, ch)
 	response := <-ch
 	assert.Equal(t, expectedResponse, response)
 	mockClient.AssertExpectations(t)

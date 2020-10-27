@@ -25,33 +25,40 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
 
-func init() {
+func LogTypes() logtypes.Group {
+	return logTypes
+}
+
+// We use an immediately called function to register the time decoder before building the logtype entries.
+var logTypes = func() logtypes.Group {
 	tcodec.MustRegister(`cloudflare`, tcodec.Join(
 		&timeDecoder{},
 		tcodec.LayoutCodec(time.RFC3339), // encoder
 	))
-
-	logtypes.MustRegisterJSON(logtypes.Desc{
-		Name:         "Cloudflare.HttpRequest",
-		Description:  `Cloudflare http request logs`,
-		ReferenceURL: `https://developers.cloudflare.com/logs/log-fields#http-requests`,
-	}, func() interface{} {
-		return &HTTPRequest{}
-	})
-
-	logtypes.MustRegisterJSON(logtypes.Desc{
-		Name:         "Cloudflare.Spectrum",
-		Description:  `Cloudflare Spectrum logs`,
-		ReferenceURL: `https://developers.cloudflare.com/logs/log-fields#spectrum-events`,
-	}, func() interface{} {
-		return &SpectrumEvent{}
-	})
-
-	logtypes.MustRegisterJSON(logtypes.Desc{
-		Name:         "Cloudflare.Firewall",
-		Description:  `Cloudflare Firewall logs`,
-		ReferenceURL: `https://developers.cloudflare.com/logs/log-fields#firewall-events`,
-	}, func() interface{} {
-		return &FirewallEvent{}
-	})
-}
+	return logtypes.Must("Cloudflare",
+		logtypes.ConfigJSON{
+			Name:         "Cloudflare.HttpRequest",
+			Description:  `Cloudflare http request logs`,
+			ReferenceURL: `https://developers.cloudflare.com/logs/log-fields#http-requests`,
+			NewEvent: func() interface{} {
+				return &HTTPRequest{}
+			},
+		},
+		logtypes.ConfigJSON{
+			Name:         "Cloudflare.Spectrum",
+			Description:  `Cloudflare Spectrum logs`,
+			ReferenceURL: `https://developers.cloudflare.com/logs/log-fields#spectrum-events`,
+			NewEvent: func() interface{} {
+				return &SpectrumEvent{}
+			},
+		},
+		logtypes.ConfigJSON{
+			Name:         "Cloudflare.Firewall",
+			Description:  `Cloudflare Firewall logs`,
+			ReferenceURL: `https://developers.cloudflare.com/logs/log-fields#firewall-events`,
+			NewEvent: func() interface{} {
+				return &FirewallEvent{}
+			},
+		},
+	)
+}()

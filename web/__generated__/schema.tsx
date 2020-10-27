@@ -564,7 +564,7 @@ export enum ListResourcesSortFieldsEnum {
 export type ListRulesInput = {
   nameContains?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
-  logTypes?: Maybe<Scalars['String']>;
+  logTypes?: Maybe<Array<Scalars['String']>>;
   severity?: Maybe<SeverityEnum>;
   tags?: Maybe<Array<Scalars['String']>>;
   sortBy?: Maybe<ListRulesSortFieldsEnum>;

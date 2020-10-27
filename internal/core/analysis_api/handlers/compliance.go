@@ -24,8 +24,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
-	complianceops "github.com/panther-labs/panther/api/gateway/compliance/client/operations"
-	compliancemodels "github.com/panther-labs/panther/api/gateway/compliance/models"
+	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 )
 
 // Cache pass/fail status for each policy for a few seconds so that ListPolicies can filter and
@@ -69,22 +68,22 @@ func getOrgCompliance() (*complianceCacheEntry, error) {
 		return complianceCache, nil
 	}
 
-	zap.L().Info("loading policy pass/fail from compliance-api")
-	result, err := complianceClient.Operations.DescribeOrg(&complianceops.DescribeOrgParams{
-		Type:       "policy",
-		HTTPClient: httpClient,
-	})
-	if err != nil {
+	zap.L().Debug("loading policy pass/fail from compliance-api")
+	input := compliancemodels.LambdaInput{
+		DescribeOrg: &compliancemodels.DescribeOrgInput{Type: "policy"},
+	}
+	var result compliancemodels.DescribeOrgOutput
+	if _, err := complianceClient.Invoke(&input, &result); err != nil {
 		zap.L().Error("failed to load policy pass/fail from compliance-api", zap.Error(err))
 		return nil, err
 	}
 
 	entry := &complianceCacheEntry{
 		ExpiresAt: time.Now().Add(complianceCacheDuration),
-		Policies:  make(map[models.ID]*complianceStatus, len(result.Payload.Policies)),
+		Policies:  make(map[models.ID]*complianceStatus, len(result.Policies)),
 	}
-	for i, policy := range result.Payload.Policies {
-		entry.Policies[models.ID(*policy.ID)] = &complianceStatus{
+	for i, policy := range result.Policies {
+		entry.Policies[models.ID(policy.ID)] = &complianceStatus{
 			SortIndex: i,
 			Status:    models.ComplianceStatus(policy.Status),
 		}
@@ -95,22 +94,21 @@ func getOrgCompliance() (*complianceCacheEntry, error) {
 
 // Delete compliance status for entire policies or just some resource types within each policy.
 func complianceBatchDelete(policies []*models.DeleteEntry, resourceTypes []string) error {
-	entries := make([]*compliancemodels.DeleteStatus, len(policies))
+	entries := make([]compliancemodels.DeleteStatusEntry, len(policies))
 	for i, policy := range policies {
-		entries[i] = &compliancemodels.DeleteStatus{
+		entries[i] = compliancemodels.DeleteStatusEntry{
 			Policy: &compliancemodels.DeletePolicy{
-				ID:            compliancemodels.PolicyID(policy.ID),
+				ID:            string(policy.ID),
 				ResourceTypes: resourceTypes,
 			},
 		}
 	}
 
 	zap.L().Info("deleting compliance entries", zap.Int("itemCount", len(entries)))
-	_, err := complianceClient.Operations.DeleteStatus(&complianceops.DeleteStatusParams{
-		Body:       &compliancemodels.DeleteStatusBatch{Entries: entries},
-		HTTPClient: httpClient,
-	})
-	if err != nil {
+	input := compliancemodels.LambdaInput{
+		DeleteStatus: &compliancemodels.DeleteStatusInput{Entries: entries},
+	}
+	if _, err := complianceClient.Invoke(&input, nil); err != nil {
 		zap.L().Error("failed to delete compliance status", zap.Error(err))
 		return err
 	}
@@ -184,13 +182,15 @@ func updateComplianceMetadata(policy *tableItem) error {
 	zap.L().Info("updating compliance status entry",
 		zap.String("policyId", string(policy.ID)),
 	)
-	_, err := complianceClient.Operations.UpdateMetadata(&complianceops.UpdateMetadataParams{
-		Body: &compliancemodels.UpdateMetadata{
-			PolicyID:     compliancemodels.PolicyID(policy.ID),
+
+	input := compliancemodels.LambdaInput{
+		UpdateMetadata: &compliancemodels.UpdateMetadataInput{
+			PolicyID:     string(policy.ID),
 			Severity:     compliancemodels.PolicySeverity(policy.Severity),
-			Suppressions: compliancemodels.IgnoreSet(policy.Suppressions),
+			Suppressions: policy.Suppressions,
 		},
-		HTTPClient: httpClient,
-	})
+	}
+
+	_, err := complianceClient.Invoke(&input, nil)
 	return err
 }

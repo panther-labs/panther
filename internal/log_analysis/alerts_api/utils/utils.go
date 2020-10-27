@@ -44,7 +44,7 @@ func AlertItemToSummary(item *table.AlertItem) *models.AlertSummary {
 	}
 
 	return &models.AlertSummary{
-		AlertID:           &item.AlertID,
+		AlertID:           item.AlertID,
 		CreationTime:      &item.CreationTime,
 		DedupString:       &item.DedupString,
 		EventsMatched:     &item.EventCount,
