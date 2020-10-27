@@ -20,8 +20,6 @@ import React from 'react';
 import { Box, Card, Flex, IconButton, Img, Text, TextProps, Theme } from 'pouncejs';
 import { slugify } from 'Helpers/utils';
 
-export type ItemCardStatusEnum = 'pass' | 'fail';
-
 interface GenericItemCardProps {
   borderColor?: keyof Theme['colors'];
 }
