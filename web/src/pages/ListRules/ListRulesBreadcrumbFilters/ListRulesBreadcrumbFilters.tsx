@@ -21,11 +21,9 @@ import { ListRulesInput } from 'Generated/schema';
 import { Box, Flex } from 'pouncejs';
 import { Form, Formik, Field } from 'formik';
 
-import isEmpty from 'lodash/isEmpty';
 import pick from 'lodash/pick';
-import pickBy from 'lodash/pickBy';
 
-import { ALL_TYPES, sanitizeLogTypes } from 'Pages/ListAlerts/ListAlertBreadcrumbFilters';
+import { ALL_TYPES } from 'Pages/ListAlerts/ListAlertBreadcrumbFilters';
 
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
@@ -35,14 +33,19 @@ import Breadcrumbs from 'Components/Breadcrumbs';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
 
-const filterKeys = ['logTypes', 'tags'];
+export type ListRulesBreadcrumbFiltersValues = {
+  logType: string;
+  tags: string[];
+};
 
-export type ListRulesBreadcrumbFiltersValues = Pick<ListRulesInput, 'tags' | 'logTypes'>;
+const filterKeys: (keyof Partial<ListRulesInput>)[] = ['logTypes', 'tags'];
 
 const ListRulesBreadcrumbFilters: React.FC = () => {
   const { data, loading: logTypesLoading, error: logTypesError } = useListAvailableLogTypes();
 
-  const { requestParams, setRequestParams } = useRequestParamsWithoutPagination<ListRulesInput>();
+  const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
+    ListRulesInput
+  >();
 
   const availableLogTypes = React.useMemo(
     () =>
@@ -53,31 +56,26 @@ const ListRulesBreadcrumbFilters: React.FC = () => {
   );
 
   const initialFilterValues = React.useMemo(() => {
-    const { logTypes, ...params } = requestParams;
+    const { logTypes, tags, ...params } = requestParams;
     return {
       ...pick(params, filterKeys),
-      logTypes: logTypes || ALL_TYPES,
-      tags: [],
+      logType: logTypes?.length > 0 ? logTypes[0] : ALL_TYPES,
+      tags: tags || [],
     } as ListRulesBreadcrumbFiltersValues;
   }, [requestParams]);
 
   const onFiltersChange = React.useCallback(
-    values => {
-      const { logTypes, ...rest } = values;
-      const sanitizedLogTypes = sanitizeLogTypes(logTypes);
-      const params = pickBy(
-        { ...requestParams, ...rest, logTypes: sanitizedLogTypes },
-        param => !isEmpty(param)
-      );
-      setRequestParams(params);
+    ({ logType, ...rest }: ListRulesBreadcrumbFiltersValues) => {
+      updateRequestParams({ ...rest, logTypes: logType !== ALL_TYPES ? [logType] : undefined });
     },
-    [requestParams, setRequestParams]
+    [updateRequestParams]
   );
 
   return (
     <Breadcrumbs.Actions>
       <Flex justify="flex-end">
         <Formik<ListRulesBreadcrumbFiltersValues>
+          enableReinitialize
           initialValues={initialFilterValues}
           onSubmit={onFiltersChange}
         >
@@ -93,16 +91,20 @@ const ListRulesBreadcrumbFilters: React.FC = () => {
                   allowAdditions
                   name="tags"
                   items={[] as string[]}
+                  placeholder="Type in tags to filter by..."
                 />
               </Box>
               {!logTypesLoading && !logTypesError && (
-                <Field
-                  as={FormikCombobox}
-                  variant="solid"
-                  label="Log Type"
-                  name="logTypes"
-                  items={availableLogTypes}
-                />
+                <Box width={250}>
+                  <Field
+                    as={FormikCombobox}
+                    variant="solid"
+                    label="Log Type"
+                    name="logType"
+                    items={availableLogTypes}
+                    placeholder="Filter by log type"
+                  />
+                </Box>
               )}
             </Flex>
           </Form>
