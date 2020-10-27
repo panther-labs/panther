@@ -29,7 +29,7 @@ import FormikTextInput from 'Components/fields/TextInput';
 import LinkButton from 'Components/buttons/LinkButton';
 import DropdownFilters from './DropdownFilters';
 
-export type ListAlertsInlineFiltersValues = Pick<ListRulesInput, 'sortBy' | 'sortDir'>;
+export type ListRulesInlineFiltersValues = Pick<ListRulesInput, 'sortBy' | 'sortDir'>;
 
 export type SortingOptions = {
   opt: string;
@@ -40,7 +40,7 @@ const filters = ['nameContains', 'sortBy', 'sortDir'] as (keyof ListRulesInput)[
 
 const defaultValues = {
   nameContains: '',
-  sorting: undefined,
+  sorting: null,
 };
 
 const sortingOpts: SortingOptions = [
@@ -117,7 +117,7 @@ const sortingOpts: SortingOptions = [
 ];
 
 /**
- * Since sorting is not responding to some ListAlertsInput key we shall exctract
+ * Since sorting is not responding to some ListRulesInput key we shall extract
  * this information from `sortBy` and `sortDir` parameters in order to align the
  * combobox values.
  */
@@ -142,7 +142,7 @@ const wrapSortingOptions = params => {
   };
 };
 
-const ListAlertFilters: React.FC = () => {
+const ListRuleFilters: React.FC = () => {
   const { requestParams, updateRequestParamsAndResetPaging } = useRequestParamsWithPagination<
     ListRulesInput
   >();
@@ -151,14 +151,15 @@ const ListAlertFilters: React.FC = () => {
       ({
         ...defaultValues,
         ...wrapSortingOptions(pick(requestParams, filters)),
-      } as ListAlertsInlineFiltersValues),
+      } as ListRulesInlineFiltersValues),
     [requestParams]
   );
   return (
     <Flex justify="flex-end" align="center">
-      <Formik<ListAlertsInlineFiltersValues>
+      <Formik<ListRulesInlineFiltersValues>
+        enableReinitialize
         initialValues={initialFilterValues}
-        onSubmit={(values: ListAlertsInlineFiltersValues) => {
+        onSubmit={(values: ListRulesInlineFiltersValues) => {
           updateRequestParamsAndResetPaging(extractSortingOpts(values));
         }}
       >
@@ -171,7 +172,8 @@ const ListAlertFilters: React.FC = () => {
                 icon="search"
                 iconAlignment="left"
                 as={FormikTextInput}
-                label="Filter Alerts by text"
+                label="Filter Rules by text"
+                placeholder="Search for a rule..."
               />
             </Box>
             <Box>
@@ -180,6 +182,7 @@ const ListAlertFilters: React.FC = () => {
                 as={FormikCombobox}
                 items={sortingOpts.map(sortingOption => sortingOption.opt)}
                 label="Sort By"
+                placeholder="Select a sort option"
               />
             </Box>
           </Flex>
@@ -193,4 +196,4 @@ const ListAlertFilters: React.FC = () => {
   );
 };
 
-export default React.memo(ListAlertFilters);
+export default React.memo(ListRuleFilters);

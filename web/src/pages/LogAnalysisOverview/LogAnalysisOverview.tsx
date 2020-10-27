@@ -33,27 +33,24 @@ import LogTypeCharts from './LogTypeCharts';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 import LogAnalysisOverviewPageSkeleton from './Skeleton';
 
-export const intervalMinutes = 180;
-export const defaultPastDays = 3;
+export const DEFAULT_INTERVAL = 180;
+export const DEFAULT_PAST_DAYS = 3;
 
 const LogAnalysisOverview: React.FC = () => {
   useTrackPageView(PageViewEnum.LogAnalysisOverview);
 
-  const [fromDate, toDate] = React.useMemo(() => {
+  const {
+    requestParams: { fromDate, toDate, intervalMinutes },
+  } = useRequestParamsWithoutPagination<LogAnalysisMetricsInput>();
+
+  const initialValues = React.useMemo(() => {
     const utcnow = getCurrentDate();
-    return [subtractDays(utcnow, defaultPastDays), utcnow];
-  }, []);
-
-  const initialValues = React.useMemo(
-    () => ({
-      intervalMinutes,
-      fromDate,
-      toDate,
-    }),
-    [intervalMinutes, fromDate, toDate]
-  );
-
-  const { requestParams } = useRequestParamsWithoutPagination<LogAnalysisMetricsInput>();
+    return {
+      intervalMinutes: intervalMinutes ?? DEFAULT_INTERVAL,
+      fromDate: fromDate ?? subtractDays(utcnow, DEFAULT_PAST_DAYS),
+      toDate: toDate ?? utcnow,
+    };
+  }, [intervalMinutes, fromDate, toDate]);
 
   const { data, loading, error } = useGetLogAnalysisMetrics({
     fetchPolicy: 'cache-and-network',
@@ -66,10 +63,7 @@ const LogAnalysisOverview: React.FC = () => {
           'eventsLatency',
           'alertsByRuleID',
         ],
-        fromDate,
-        toDate,
-        intervalMinutes,
-        ...requestParams,
+        ...initialValues,
       },
     },
   });
