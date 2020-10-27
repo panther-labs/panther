@@ -39,6 +39,7 @@ func TestConvertAttribute(t *testing.T) {
 		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
 		GeneratedTitle:      aws.String("test title"),
 		Type:                aws.String("RULE_ERROR"),
+		AlertContext:        "{}",
 	}
 
 	alertDedupEvent, err := FromDynamodDBAttribute(getNewTestCase())
@@ -61,6 +62,7 @@ func TestConvertAttributeWithoutOptionalFields(t *testing.T) {
 		CreationTime:        time.Unix(1582285279, 0).UTC(),
 		UpdateTime:          time.Unix(1582285280, 0).UTC(),
 		EventCount:          100,
+		AlertContext:        "{}",
 		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
 	}
 
@@ -157,5 +159,6 @@ func getNewTestCase() map[string]events.DynamoDBAttributeValue {
 		"title":             events.NewStringAttribute("test title"),
 		"status":            events.NewStringAttribute("OPEN"),
 		"alertType":         events.NewStringAttribute("RULE_ERROR"),
+		"context":           events.NewStringAttribute("{}"),
 	}
 }

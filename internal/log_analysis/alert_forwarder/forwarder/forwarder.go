@@ -32,6 +32,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	ruleModel "github.com/panther-labs/panther/api/gateway/analysis/models"
 	alertModel "github.com/panther-labs/panther/api/lambda/delivery/models"
@@ -204,6 +205,17 @@ func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertD
 		Type:         alertModel.RuleType,
 		Title:        aws.String(getAlertTitle(rule, alertDedup)),
 		Version:      &alertDedup.RuleVersion,
+	}
+
+	if len(alertDedup.AlertContext) > 0 {
+		var context map[string]interface{}
+		err := jsoniter.UnmarshalFromString(alertDedup.AlertContext, &context)
+		if err != nil {
+			// best effort
+			zap.L().Warn("failed to unmarshal alert context", zap.Error(err))
+		} else {
+			alertNotification.Context = context
+		}
 	}
 
 	msgBody, err := jsoniter.MarshalToString(alertNotification)
