@@ -1,0 +1,246 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+name: Event::Endpoint::UpdateFailure
+logType: Sophos.Central
+input: |
+  {
+      "endpoint_type":      "computer",
+      "endpoint_id":        "decb3c59-1791-44cf-88cf-603fb4895baf",
+      "customer_id":        "70511420-ab08-4b6b-ab52-239213ee27d9",
+      "severity":           "low",
+      "source_info": {
+        "ip":    "192.168.4.25"
+      },
+      "type":               "Event::Endpoint::UpdateFailure",
+      "name":               "Failed to apply updates.",
+      "id":                 "403f1bf5-7fe4-484b-bbc9-18f1c601e111",
+      "group":              "UPDATING",
+      "datastream":         "event",
+      "end":                "2020-05-19T22:17:26.033Z",
+      "duid":               "5ba12fb3347c9a133517d258",
+      "rt":                 "2020-05-19T22:17:26.059Z",
+      "dhost":              "JSmith-MBP-Remote",
+      "suser":              "JSmith-MBP-Remote\\johnsmith"
+  }
+result: |
+  {
+      "endpoint_type":      "computer",
+      "endpoint_id":        "decb3c59-1791-44cf-88cf-603fb4895baf",
+      "customer_id":        "70511420-ab08-4b6b-ab52-239213ee27d9",
+      "severity":           "low",
+      "source_info": {
+        "ip":    "192.168.4.25"
+      },
+      "type":               "Event::Endpoint::UpdateFailure",
+      "name":               "Failed to apply updates.",
+      "id":                 "403f1bf5-7fe4-484b-bbc9-18f1c601e111",
+      "duid":               "5ba12fb3347c9a133517d258",
+      "group":              "UPDATING",
+      "datastream":         "event",
+      "end":                "2020-05-19T22:17:26.033Z",
+      "rt":                 "2020-05-19T22:17:26.059Z",
+      "dhost":              "JSmith-MBP-Remote",
+      "suser":              "JSmith-MBP-Remote\\johnsmith",
+
+      "p_event_time":       "2020-05-19T22:17:26.033Z",
+      "p_any_ip_addresses": [ "192.168.4.25" ],
+      "p_log_type":         "Sophos.Central"
+  }
+
+---
+name: Event::Endpoint::DataLossPreventionUserAllowed
+logType: Sophos.Central
+input: |
+  {
+      "customer_id":        "70511420-ab08-4b6b-ab52-239213ee27d9",
+      "severity":           "low",
+      "source_info": {
+        "ip":    "192.168.2.213"
+      },
+      "endpoint_id":        "2019e526-65db-4d53-b16b-9a908c37d3ca",
+      "endpoint_type":      "computer",
+      "type":               "Event::Endpoint::DataLossPreventionUserAllowed",
+      "id":                 "c34081fe-0db1-4ed9-805b-5530a04be09e",
+      "group":              "DATA_LOSS_PREVENTION",
+      "name":               "allow transfer on acceptance by user",
+      "datastream":         "event",
+      "duid":               "5b14b14bf7d0ea1330117768",
+      "rt":                 "2020-07-28T02:21:10.000Z",
+      "end":                "2020-07-28T02:21:07.000Z",
+      "suser":              "DESKTOP-B5ADQ52\\John Smith",
+      "dhost":              "DESKTOP-B5ADQ52",
+      "user":               "DESKTOP-B5ADQ52\\John Smith",
+      "rule":               "Finance and share trading activities [USA] - Person identification numbers [USA] - 1",
+      "user_action":        "File open",
+      "app_name":           "Google Chrome",
+      "action":             "Allow",
+      "file_type":          "Spreadsheet (Microsoft Excel-OLE)",
+      "file_size":          "89984",
+      "file_path":          "C:\\Users\\John Smith\\Downloads\\YEARENDDATA_01012019_12312019 (4).XLS"
+  }
+result: |
+  {
+      "customer_id":        "70511420-ab08-4b6b-ab52-239213ee27d9",
+      "severity":           "low",
+      "source_info": {
+        "ip":    "192.168.2.213"
+      },
+      "endpoint_id":        "2019e526-65db-4d53-b16b-9a908c37d3ca",
+      "endpoint_type":      "computer",
+      "type":               "Event::Endpoint::DataLossPreventionUserAllowed",
+      "id":                 "c34081fe-0db1-4ed9-805b-5530a04be09e",
+      "group":              "DATA_LOSS_PREVENTION",
+      "name":               "allow transfer on acceptance by user",
+      "datastream":         "event",
+      "duid":               "5b14b14bf7d0ea1330117768",
+      "rt":                 "2020-07-28T02:21:10Z",
+      "end":                "2020-07-28T02:21:07Z",
+      "suser":              "DESKTOP-B5ADQ52\\John Smith",
+      "dhost":              "DESKTOP-B5ADQ52",
+      "user":               "DESKTOP-B5ADQ52\\John Smith",
+      "rule":               "Finance and share trading activities [USA] - Person identification numbers [USA] - 1",
+      "user_action":        "File open",
+      "app_name":           "Google Chrome",
+      "action":             "Allow",
+      "file_type":          "Spreadsheet (Microsoft Excel-OLE)",
+      "file_size":          89984,
+      "file_path":          "C:\\Users\\John Smith\\Downloads\\YEARENDDATA_01012019_12312019 (4).XLS",
+
+      "p_event_time":       "2020-07-28T02:21:07Z",
+      "p_any_ip_addresses": [ "192.168.2.213" ],
+      "p_log_type":         "Sophos.Central"
+  }
+
+---
+name: Event::Endpoint::CorePuaDetection
+logType: Sophos.Central
+input: |
+  {
+      "appSha256":          "c1c0160ddeeb82388aaf1b9957112a3ac9dbcfce6ef3822a9a3250dce2efec11",
+      "appCerts": [
+          {
+          "signer":     "Prey, Inc.",
+          "thumbprint": "872eb5b781c744be01b914434e03d771046557c40ee0192bb6d4a15d80590f45"
+          }
+      ],
+      "customer_id":        "70511420-ab08-4b6b-ab52-239213ee27d9",
+      "severity":           "medium",
+      "source_info": {
+        "ip":    "10.0.0.251"
+      },
+      "threat":             "Generic ML PUA",
+      "endpoint_id":        "86daafa5-16e8-4435-85d0-86d0ffca9841",
+      "endpoint_type":      "computer",
+      "origin":             "ML",
+      "name":               "PUA detected: 'Generic ML PUA' at 'C:\\Users\\John Smith\\Downloads\\threat.exe'",
+      "id":                 "d56a541b-87f2-44af-8e59-d384c2fe2943",
+      "type":               "Event::Endpoint::CorePuaDetection",
+      "group":              "PUA",
+      "datastream":         "event",
+      "end":                "2020-07-20T16:26:32.837Z",
+      "duid":               "5be0c11c7aa01a131ebfcad1",
+      "rt":                 "2020-07-20T16:26:38.424Z",
+      "dhost":              "LAPTOP-O0ADB39D",
+      "suser":              "LAPTOP-O0ADB39D\\John Smith"
+  }
+result: |
+  {
+      "appSha256":          "c1c0160ddeeb82388aaf1b9957112a3ac9dbcfce6ef3822a9a3250dce2efec11",
+      "appCerts": [
+        {
+          "signer":     "Prey, Inc.",
+          "thumbprint": "872eb5b781c744be01b914434e03d771046557c40ee0192bb6d4a15d80590f45"
+        }
+      ],
+      "customer_id":        "70511420-ab08-4b6b-ab52-239213ee27d9",
+      "severity":           "medium",
+      "source_info": {
+        "ip":    "10.0.0.251"
+      },
+      "threat":             "Generic ML PUA",
+      "endpoint_id":        "86daafa5-16e8-4435-85d0-86d0ffca9841",
+      "endpoint_type":      "computer",
+      "origin":             "ML",
+      "name":               "PUA detected: 'Generic ML PUA' at 'C:\\Users\\John Smith\\Downloads\\threat.exe'",
+      "id":                 "d56a541b-87f2-44af-8e59-d384c2fe2943",
+      "type":               "Event::Endpoint::CorePuaDetection",
+      "group":              "PUA",
+      "datastream":         "event",
+      "end":                "2020-07-20T16:26:32.837Z",
+      "duid":               "5be0c11c7aa01a131ebfcad1",
+      "rt":                 "2020-07-20T16:26:38.424Z",
+      "dhost":              "LAPTOP-O0ADB39D",
+      "suser":              "LAPTOP-O0ADB39D\\John Smith",
+
+      "p_event_time":       "2020-07-20T16:26:32.837Z",
+      "p_any_ip_addresses": [ "10.0.0.251" ],
+      "p_any_sha256_hashes": [ "c1c0160ddeeb82388aaf1b9957112a3ac9dbcfce6ef3822a9a3250dce2efec11" ],
+      "p_log_type":         "Sophos.Central"
+  }
+
+---
+name: Event::Endpoint::Threat::CleanupFailed
+logType: Sophos.Central
+input: |
+  {
+      "customer_id":        "70511420-ab08-4b6b-ab52-239213ee27d9",
+      "severity":           "high",
+      "source_info": {
+        "ip":    "192.168.1.68"
+      },
+      "threat":             "W32/Elkern-C",
+      "endpoint_id":        "2c85be2e-9341-4aca-aa2a-fb27eebee8e0",
+      "endpoint_type":      "computer",
+      "name":               "W32/Elkern-C",
+      "id":                 "8c254d23-7a8d-4d91-b7e7-56a30500e465",
+      "type":               "Event::Endpoint::Threat::CleanupFailed",
+      "group":              "MALWARE",
+      "datastream":         "event",
+      "end":                "2020-07-03T05:50:43.000Z",
+      "duid":               "599cc41e1c2bb41295ac959e",
+      "rt":                 "2020-07-03T06:01:11.416Z",
+      "dhost":              "JSMITH-MAC-SJ",
+      "suser":              "JSMITH-MAC-SJ\\jsmith",
+      "detection_identity_name": "W32/Elkern-C",
+      "filePath":           "/Users/jsmith/Dropbox/.dropbox.cache/new_files/eec8381bba1914aa2207f4a53c0fad1e"
+  }
+result: |
+  {
+      "customer_id":        "70511420-ab08-4b6b-ab52-239213ee27d9",
+      "severity":           "high",
+      "source_info": {
+        "ip":    "192.168.1.68"
+      },
+      "threat":             "W32/Elkern-C",
+      "endpoint_id":        "2c85be2e-9341-4aca-aa2a-fb27eebee8e0",
+      "endpoint_type":      "computer",
+      "name":               "W32/Elkern-C",
+      "id":                 "8c254d23-7a8d-4d91-b7e7-56a30500e465",
+      "type":               "Event::Endpoint::Threat::CleanupFailed",
+      "group":              "MALWARE",
+      "datastream":         "event",
+      "end":                "2020-07-03T05:50:43Z",
+      "duid":               "599cc41e1c2bb41295ac959e",
+      "rt":                 "2020-07-03T06:01:11.416Z",
+      "dhost":              "JSMITH-MAC-SJ",
+      "suser":              "JSMITH-MAC-SJ\\jsmith",
+      "detection_identity_name": "W32/Elkern-C",
+      "filePath":           "/Users/jsmith/Dropbox/.dropbox.cache/new_files/eec8381bba1914aa2207f4a53c0fad1e",
+      "p_event_time":       "2020-07-03T05:50:43.000Z",
+      "p_any_ip_addresses": [ "192.168.1.68" ],
+      "p_log_type":         "Sophos.Central"
+  }

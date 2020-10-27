@@ -218,5 +218,8 @@ exports[`Wizard renders a step 1`] = `
       </section>
     </div>
   </article>
+  <footer
+    id="footer"
+  />
 </div>
 `;

@@ -70,6 +70,7 @@ const CreatePolicyPage: React.FC = () => {
           <Alert
             variant="error"
             title="Couldn't create your policy"
+            discardable
             description={
               extractErrorMessage(error) ||
               'An unknown error occured as we were trying to create your policy'
