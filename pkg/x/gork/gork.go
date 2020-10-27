@@ -55,32 +55,27 @@ func (p *Pattern) FieldName(i int) string {
 	return p.names[i]
 }
 
-func (p *Pattern) NumFields() int {
-	return len(p.names)
-}
-
 type Env struct {
-	parent   *Env
-	compiled map[string]*Pattern
+	patterns map[string]*Pattern
 }
 
 func New() *Env {
-	return NewChild(defaultEnv)
+	return defaultEnv.Clone()
 }
 
-func NewChild(parent *Env) *Env {
+func (e *Env) Clone() *Env {
+	patterns := make(map[string]*Pattern, len(e.patterns))
+	for name, pattern := range e.patterns {
+		patterns[name] = pattern
+	}
 	return &Env{
-		parent: parent,
+		patterns: patterns,
 	}
 }
 
 func (e *Env) lookup(name string) *Pattern {
-	expr, ok := e.compiled[name]
-	if ok {
-		return expr
-	}
-	if e.parent != nil {
-		return e.parent.lookup(name)
+	if p, ok := e.patterns[name]; ok {
+		return p
 	}
 	return nil
 }
@@ -107,11 +102,23 @@ func (e *Env) Compile(pattern string) (*Pattern, error) {
 	return e.compile(pattern, pattern, nil, nil)
 }
 
+var (
+	validPatternName = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
+	validFieldName = regexp.MustCompile(`[A-Za-z_][A-Za-z0-9_]*`)
+)
 func (e *Env) compile(root, src string, patterns map[string]string, visited []string) (*Pattern, error) {
 	tpl := fasttemplate.New(src, startDelimiter, endDelimiter)
 	s := strings.Builder{}
 	_, err := tpl.ExecuteFunc(&s, func(w io.Writer, tag string) (int, error) {
+		// TODO: Allow arbitrary field names by switching named groups with auto-incrementing name
+		// To achieve this we need to build the 'names' slice as we render the template
 		name, field := splitTag(tag)
+		if !validPatternName.MatchString(name) {
+			return 0, errors.Errorf("invalid pattern name %q in tag %q of pattern %q", name, tag, root)
+		}
+		if field != "" && !validFieldName.MatchString(field) {
+			return 0, errors.Errorf("invalid field name %q in tag %q of pattern %q", field, tag, root)
+		}
 		for _, visited := range visited {
 			if visited == name {
 				return 0, errors.Errorf("recursive pattern %q %v", root, visited)
@@ -156,10 +163,10 @@ func (e *Env) compile(root, src string, patterns map[string]string, visited []st
 }
 
 func (e *Env) set(name string, expr *Pattern) {
-	if e.compiled == nil {
-		e.compiled = make(map[string]*Pattern)
+	if e.patterns == nil {
+		e.patterns = make(map[string]*Pattern)
 	}
-	e.compiled[name] = expr
+	e.patterns[name] = expr
 
 }
 func (e *Env) checkDuplicate(name string) error {
@@ -170,6 +177,7 @@ func (e *Env) checkDuplicate(name string) error {
 }
 
 func splitTag(tag string) (pattern, field string) {
+	tag = strings.TrimSpace(tag)
 	if pos := strings.IndexByte(tag, ':'); 0 <= pos && pos < len(tag) {
 		return tag[:pos], tag[pos+1:]
 	}
@@ -180,7 +188,7 @@ var defaultEnv = mustDefaultEnv()
 
 func mustDefaultEnv() *Env {
 	env := Env{}
-	r := strings.NewReader(corePatterns)
+	r := strings.NewReader(BuiltinPatterns)
 	if err := env.ReadPatterns(r); err != nil {
 		panic(err)
 	}
@@ -199,14 +207,14 @@ func (e *Env) ReadPatterns(r io.Reader) error {
 }
 
 func (e *Env) SetMap(patterns map[string]string) error {
-	child := NewChild(e)
+	child := e.Clone()
 	for name, pattern := range patterns {
 		// We check for duplicate only in the parent environment.
 		if err := e.checkDuplicate(name); err != nil {
 			return err
 		}
 		// Compilation is recursive so we might have compiled this already
-		if _, skip := child.compiled[name]; skip {
+		if _, skip := child.patterns[name]; skip {
 			continue
 		}
 		expr, err := child.compile(name, pattern, patterns, nil)
@@ -215,7 +223,7 @@ func (e *Env) SetMap(patterns map[string]string) error {
 		}
 		e.set(name, expr)
 	}
-	for name, pattern := range child.compiled {
+	for name, pattern := range child.patterns {
 		e.set(name, pattern)
 	}
 	return nil
