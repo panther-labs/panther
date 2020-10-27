@@ -1,5 +1,23 @@
 package gork
 
+/**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import (
 	"bufio"
 	"fmt"
@@ -15,24 +33,29 @@ const (
 	endDelimiter   = "}"
 )
 
+// Pattern can match strings to extract key/value pairs
 type Pattern struct {
 	src   string
 	expr  *regexp.Regexp
 	names []string
 }
 
+// Regexp returns the full regular expression for this pattern
 func (p *Pattern) Regexp() string {
 	return p.expr.String()
 }
 
+// String returns the pattern
 func (p *Pattern) String() string {
 	return p.src
 }
 
+// MatchString matches src appending key/value pairs to dst.
+// If the text does not match an error is return
 func (p *Pattern) MatchString(dst []string, src string) ([]string, error) {
 	matches := p.expr.FindStringSubmatchIndex(src)
 	if matches == nil {
-		return nil, nil
+		return dst, errors.New("No match")
 	}
 	if len(matches) > 2 {
 		// Regexp always sets first match to full string
@@ -51,18 +74,90 @@ func (p *Pattern) MatchString(dst []string, src string) ([]string, error) {
 	return dst, nil
 }
 
-func (p *Pattern) FieldName(i int) string {
-	return p.names[i]
-}
-
+// Env is a collection of named patterns
 type Env struct {
 	patterns map[string]*Pattern
 }
 
+// New returns an environment containing basic patterns
 func New() *Env {
 	return defaultEnv.Clone()
 }
 
+var defaultEnv = mustDefaultEnv()
+
+func mustDefaultEnv() *Env {
+	env := Env{}
+	r := strings.NewReader(BuiltinPatterns)
+	if err := env.ReadPatterns(r); err != nil {
+		panic(err)
+	}
+	return &env
+}
+
+// ReadPatterns reads, compiles and adds named patterns to an environment from an io.Reader
+func (e *Env) ReadPatterns(r io.Reader) error {
+	patterns, err := ReadPatterns(r)
+	if err != nil {
+		return err
+	}
+	if err := e.SetMap(patterns); err != nil {
+		return err
+	}
+	return nil
+}
+
+// ReadPatterns reads named patterns from an io.Reader
+func ReadPatterns(r io.Reader) (map[string]string, error) {
+	patterns := make(map[string]string)
+	scanner := bufio.NewScanner(r)
+	numLines := 0
+	for scanner.Scan() {
+		numLines++
+		line := scanner.Text()
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		match := patternDef.FindStringSubmatch(line)
+		if match == nil {
+			return nil, errors.Errorf("invalid pattern definition at line #%d", numLines)
+		}
+		name, src := match[1], match[2]
+		patterns[name] = src
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return patterns, nil
+}
+
+var patternDef = regexp.MustCompile(`^(\w+)\s+(.*)`)
+
+// SetMap adds multiple patterns to an environment.
+func (e *Env) SetMap(patterns map[string]string) error {
+	child := e.Clone()
+	for name, pattern := range patterns {
+		// We check for duplicate only in the parent environment.
+		if err := e.checkDuplicate(name); err != nil {
+			return err
+		}
+		// Compilation is recursive so we might have compiled this already
+		if _, skip := child.patterns[name]; skip {
+			continue
+		}
+		expr, err := child.compile(name, pattern, patterns, nil)
+		if err != nil {
+			return err
+		}
+		e.set(name, expr)
+	}
+	for name, pattern := range child.patterns {
+		e.set(name, pattern)
+	}
+	return nil
+}
+
+// Clone clones an environment
 func (e *Env) Clone() *Env {
 	patterns := make(map[string]*Pattern, len(e.patterns))
 	for name, pattern := range e.patterns {
@@ -73,19 +168,14 @@ func (e *Env) Clone() *Env {
 	}
 }
 
-func (e *Env) lookup(name string) *Pattern {
-	if p, ok := e.patterns[name]; ok {
-		return p
-	}
-	return nil
-}
-
+// MustSet compiles and stores a named pattern or panics if the pattern is invalid or exists already.
 func (e *Env) MustSet(name string, pattern string) {
 	if err := e.Set(name, pattern); err != nil {
 		panic(err)
 	}
 }
 
+// MustSet compiles and stores a named pattern or fails if the pattern is invalid or exists already.
 func (e *Env) Set(name string, pattern string) error {
 	if err := e.checkDuplicate(name); err != nil {
 		return err
@@ -98,14 +188,16 @@ func (e *Env) Set(name string, pattern string) error {
 	return nil
 }
 
+// Compile compiles a pattern expanding named patterns.
 func (e *Env) Compile(pattern string) (*Pattern, error) {
 	return e.compile(pattern, pattern, nil, nil)
 }
 
 var (
 	validPatternName = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
-	validFieldName = regexp.MustCompile(`[A-Za-z_][A-Za-z0-9_]*`)
+	validFieldName   = regexp.MustCompile(`[A-Za-z_][A-Za-z0-9_]*`)
 )
+
 func (e *Env) compile(root, src string, patterns map[string]string, visited []string) (*Pattern, error) {
 	tpl := fasttemplate.New(src, startDelimiter, endDelimiter)
 	s := strings.Builder{}
@@ -162,6 +254,13 @@ func (e *Env) compile(root, src string, patterns map[string]string, visited []st
 	}, nil
 }
 
+func (e *Env) lookup(name string) *Pattern {
+	if p, ok := e.patterns[name]; ok {
+		return p
+	}
+	return nil
+}
+
 func (e *Env) set(name string, expr *Pattern) {
 	if e.patterns == nil {
 		e.patterns = make(map[string]*Pattern)
@@ -183,73 +282,3 @@ func splitTag(tag string) (pattern, field string) {
 	}
 	return tag, ""
 }
-
-var defaultEnv = mustDefaultEnv()
-
-func mustDefaultEnv() *Env {
-	env := Env{}
-	r := strings.NewReader(BuiltinPatterns)
-	if err := env.ReadPatterns(r); err != nil {
-		panic(err)
-	}
-	return &env
-}
-
-func (e *Env) ReadPatterns(r io.Reader) error {
-	patterns, err := ReadPatterns(r)
-	if err != nil {
-		return err
-	}
-	if err := e.SetMap(patterns); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (e *Env) SetMap(patterns map[string]string) error {
-	child := e.Clone()
-	for name, pattern := range patterns {
-		// We check for duplicate only in the parent environment.
-		if err := e.checkDuplicate(name); err != nil {
-			return err
-		}
-		// Compilation is recursive so we might have compiled this already
-		if _, skip := child.patterns[name]; skip {
-			continue
-		}
-		expr, err := child.compile(name, pattern, patterns, nil)
-		if err != nil {
-			return err
-		}
-		e.set(name, expr)
-	}
-	for name, pattern := range child.patterns {
-		e.set(name, pattern)
-	}
-	return nil
-}
-
-func ReadPatterns(r io.Reader) (map[string]string, error) {
-	patterns := make(map[string]string)
-	scanner := bufio.NewScanner(r)
-	numLines := 0
-	for scanner.Scan() {
-		numLines++
-		line := scanner.Text()
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		match := patternDef.FindStringSubmatch(line)
-		if match == nil {
-			return nil, errors.Errorf("invalid pattern definition at line #%d", numLines)
-		}
-		name, src := match[1], match[2]
-		patterns[name] = src
-	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-	return patterns, nil
-}
-
-var patternDef = regexp.MustCompile(`^(\w+)\s+(.*)`)

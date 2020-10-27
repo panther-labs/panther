@@ -1,5 +1,23 @@
 package fastmatch
 
+/**
+ * Panther is a Cloud-Native SIEM for the Modern Security Team.
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import (
 	"errors"
 	"regexp"
@@ -7,6 +25,7 @@ import (
 	"strings"
 )
 
+// Pattern matches a string and extracts key/value pairs.
 type Pattern struct {
 	prefix     string
 	delimiters []delimiter
@@ -20,18 +39,9 @@ type delimiter struct {
 	quote byte
 }
 
-func (d *delimiter) reset(tag, match, prev string) {
-	quote := prevQuote(prev)
-	if quote != nextQuote(match) {
-		quote = 0
-	}
-	d.name = tag
-	d.quote = quote
-	d.match = match
-}
+var splitFields = regexp.MustCompile(`%{\s*(?P<tag>[^}]*)\s*}`)
 
-var splitFields = regexp.MustCompile(`%\{\s*(?P<tag>[^\}]*)\s*\}`)
-
+// Compile compiles a pattern.
 func Compile(pattern string) (*Pattern, error) {
 	tags := splitFields.FindAllStringSubmatch(pattern, -1)
 	if tags == nil {
@@ -63,17 +73,42 @@ func Compile(pattern string) (*Pattern, error) {
 	}, nil
 }
 
-func (p *Pattern) NumFields() int {
-	return len(p.fields)
+func (d *delimiter) reset(tag, match, prev string) {
+	quote := prevQuote(prev)
+	if quote != nextQuote(match) {
+		quote = 0
+	}
+	d.name = tag
+	d.quote = quote
+	d.match = match
 }
 
-func (p *Pattern) FieldName(i int) string {
-	return p.fields[i]
+func prevQuote(s string) byte {
+	if n := len(s) - 1; 0 <= n && n < len(s) {
+		switch q := s[n]; q {
+		case '"', '\'':
+			return q
+		}
+	}
+	return 0
 }
 
-var errMatch = errors.New("match failed")
-var errInvalidPattern = errors.New("invalid pattern")
+func nextQuote(s string) byte {
+	if len(s) > 0 {
+		switch q := s[0]; q {
+		case '"', '\'':
+			return q
+		}
+	}
+	return 0
+}
 
+var (
+	errMatch          = errors.New("match failed")
+	errInvalidPattern = errors.New("invalid pattern")
+)
+
+// MatchString matches src and appends key/value pairs to dst
 func (p *Pattern) MatchString(dst []string, src string) ([]string, error) {
 	tail := src
 	if prefix := p.prefix; len(prefix) <= len(tail) && tail[:len(prefix)] == prefix {
@@ -134,24 +169,4 @@ func (p *Pattern) matchQuoted(src, delim string, quote byte) (match, tail string
 		return string(scratch), strings.TrimPrefix(tail, delim), nil
 	}
 	return "", src, errMatch
-}
-
-func prevQuote(s string) byte {
-	if n := len(s) - 1; 0 <= n && n < len(s) {
-		switch q := s[n]; q {
-		case '"', '\'':
-			return q
-		}
-	}
-	return 0
-}
-
-func nextQuote(s string) byte {
-	if len(s) > 0 {
-		switch q := s[0]; q {
-		case '"', '\'':
-			return q
-		}
-	}
-	return 0
 }
