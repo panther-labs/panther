@@ -253,7 +253,6 @@ Resources:
         ApiId: !GetAtt Bootstrap.Outputs.GraphQLApiId
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         RemediationApi: !Sub https://${BootstrapGateway.Outputs.RemediationApiEndpoint}
-        ResourcesApi: !Sub https://${BootstrapGateway.Outputs.ResourcesApiEndpoint}
         ServiceRole: !GetAtt Bootstrap.Outputs.AppsyncServiceRoleArn
       Tags:
         - Key: Application
@@ -280,7 +279,6 @@ Resources:
         ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
         PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
         RemediationApiId: !GetAtt BootstrapGateway.Outputs.RemediationApiId
-        ResourcesApiId: !GetAtt BootstrapGateway.Outputs.ResourcesApiId
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TracingMode: !Ref TracingMode
       Tags:
