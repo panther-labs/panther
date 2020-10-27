@@ -19,85 +19,35 @@ package handlers
  */
 
 import (
-	"errors"
-	"strconv"
-
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 
-	"github.com/panther-labs/panther/api/gateway/compliance/models"
+	"github.com/panther-labs/panther/api/lambda/compliance/models"
 )
-
-// Common GET parameters for paging operations (DescribePolicy and DescribeResource)
-type pageParams struct {
-	Page       int
-	PageSize   int
-	Status     models.Status
-	Suppressed *bool
-}
-
-// Parse page parameters for DescribePolicy and DescribeResource.
-func parsePageParams(request *events.APIGatewayProxyRequest) (*pageParams, error) {
-	result := pageParams{
-		Page:       defaultPage,
-		PageSize:   defaultPageSize,
-		Status:     models.Status(request.QueryStringParameters["status"]),
-		Suppressed: nil,
-	}
-
-	var err error
-
-	if result.Status != "" {
-		if err = result.Status.Validate(nil); err != nil {
-			return nil, errors.New("invalid status: " + err.Error())
-		}
-	}
-
-	if rawPage := request.QueryStringParameters["page"]; rawPage != "" {
-		result.Page, err = strconv.Atoi(rawPage)
-		if err != nil {
-			return nil, errors.New("invalid page: " + err.Error())
-		}
-	}
-
-	if rawPageSize := request.QueryStringParameters["pageSize"]; rawPageSize != "" {
-		result.PageSize, err = strconv.Atoi(rawPageSize)
-		if err != nil {
-			return nil, errors.New("invalid pageSize: " + err.Error())
-		}
-	}
-
-	if rawSuppressed := request.QueryStringParameters["suppressed"]; rawSuppressed != "" {
-		suppressBool, err := strconv.ParseBool(rawSuppressed)
-		if err != nil {
-			return nil, errors.New("invalid suppressed: " + err.Error())
-		}
-		result.Suppressed = aws.Bool(suppressBool)
-	}
-
-	return &result, nil
-}
 
 // Common query logic for both DescribePolicy and DescribeResource.
 func policyResourceDetail(
-	input *dynamodb.QueryInput, params *pageParams, severity models.PolicySeverity) (*models.PolicyResourceDetail, error) {
+	input *dynamodb.QueryInput,
+	page, pageSize int,
+	severity models.PolicySeverity,
+	status models.ComplianceStatus,
+	suppressed *bool,
+) (*models.PolicyResourceDetail, error) {
+
+	if page == 0 {
+		page = models.DefaultPage
+	}
+	if pageSize == 0 {
+		pageSize = models.DefaultPageSize
+	}
 
 	// TODO - global totals could be cached so not every page query has to scan everything
 	result := models.PolicyResourceDetail{
-		Items: make([]*models.ComplianceStatus, 0, params.PageSize),
-		Paging: &models.Paging{
-			TotalItems: aws.Int64(0),
-		},
-		Status: models.StatusPASS,
-		Totals: &models.ActiveSuppressCount{
-			Active:     NewStatusCount(),
-			Suppressed: NewStatusCount(),
-		},
+		Items:  make([]models.ComplianceEntry, 0, pageSize),
+		Status: models.StatusPass,
 	}
 
-	err := queryPages(input, func(item *models.ComplianceStatus) error {
-		addItemToResult(item, &result, params, severity)
+	err := queryPages(input, func(item *models.ComplianceEntry) error {
+		addItemToResult(item, &result, page, pageSize, severity, status, suppressed)
 		return nil
 	})
 	if err != nil {
@@ -105,16 +55,14 @@ func policyResourceDetail(
 	}
 
 	// Compute the total number of pages needed to show all the matching results
-	result.Paging.TotalPages = aws.Int64(*result.Paging.TotalItems / int64(params.PageSize))
-	remainder := *result.Paging.TotalItems % int64(params.PageSize)
+	result.Paging.TotalPages = result.Paging.TotalItems / pageSize
+	remainder := result.Paging.TotalItems % pageSize
 	if remainder > 0 {
-		*result.Paging.TotalPages++
+		result.Paging.TotalPages++
 	}
 
-	if *result.Paging.TotalItems == 0 {
-		result.Paging.ThisPage = aws.Int64(0)
-	} else {
-		result.Paging.ThisPage = aws.Int64(int64(params.Page))
+	if result.Paging.TotalItems > 0 {
+		result.Paging.ThisPage = page
 	}
 
 	return &result, nil
@@ -122,62 +70,73 @@ func policyResourceDetail(
 
 // Update the paging result with a single compliance status entry.
 func addItemToResult(
-	item *models.ComplianceStatus,
+	item *models.ComplianceEntry,
 	result *models.PolicyResourceDetail,
-	params *pageParams,
+	page, pageSize int,
 	severity models.PolicySeverity,
+	status models.ComplianceStatus,
+	suppressed *bool,
 ) {
 
 	// Update overall status and global totals (pre-filter)
 	// ERROR trumps FAIL trumps PASS
 	switch item.Status {
-	case models.StatusERROR:
+	case models.StatusError:
 		if item.Suppressed {
-			*result.Totals.Suppressed.Error++
+			result.Totals.Suppressed.Error++
 		} else {
-			result.Status = models.StatusERROR
-			*result.Totals.Active.Error++
+			result.Status = models.StatusError
+			result.Totals.Active.Error++
 		}
 
-	case models.StatusFAIL:
+	case models.StatusFail:
 		if item.Suppressed {
-			*result.Totals.Suppressed.Fail++
+			result.Totals.Suppressed.Fail++
 		} else {
-			if result.Status != models.StatusERROR {
-				result.Status = models.StatusFAIL
+			if result.Status != models.StatusError {
+				result.Status = models.StatusFail
 			}
-			*result.Totals.Active.Fail++
+			result.Totals.Active.Fail++
+		}
+
+	case models.StatusPass:
+		if item.Suppressed {
+			result.Totals.Suppressed.Pass++
+		} else {
+			result.Totals.Active.Pass++
 		}
 
 	default:
-		if item.Suppressed {
-			*result.Totals.Suppressed.Pass++
-		} else {
-			*result.Totals.Active.Pass++
-		}
+		panic("unknown compliance status " + item.Status)
 	}
 
 	// Drop this table entry if it doesn't match the filters
-	if !itemMatchesFilter(item, params, severity) {
+	if !itemMatchesFilter(item, severity, status, suppressed) {
 		return
 	}
 
-	*result.Paging.TotalItems++
-	firstItem := int64((params.Page-1)*params.PageSize) + 1 // first matching item # in the requested page
-	if *result.Paging.TotalItems >= firstItem && len(result.Items) < params.PageSize {
+	result.Paging.TotalItems++
+	firstItem := (page-1)*pageSize + 1 // first matching item # in the requested page
+	if result.Paging.TotalItems >= firstItem && len(result.Items) < pageSize {
 		// This matching item is in the requested page number
-		result.Items = append(result.Items, item)
+		result.Items = append(result.Items, *item)
 	}
 }
 
-func itemMatchesFilter(item *models.ComplianceStatus, params *pageParams, severity models.PolicySeverity) bool {
-	if params.Suppressed != nil && *params.Suppressed != bool(item.Suppressed) {
-		return false
-	}
-	if params.Status != "" && params.Status != item.Status {
-		return false
-	}
+func itemMatchesFilter(
+	item *models.ComplianceEntry,
+	severity models.PolicySeverity,
+	status models.ComplianceStatus,
+	suppressed *bool,
+) bool {
+
 	if severity != "" && severity != item.PolicySeverity {
+		return false
+	}
+	if status != "" && status != item.Status {
+		return false
+	}
+	if suppressed != nil && *suppressed != item.Suppressed {
 		return false
 	}
 
