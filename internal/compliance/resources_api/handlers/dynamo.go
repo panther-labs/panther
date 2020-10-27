@@ -20,6 +20,7 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
@@ -29,18 +30,19 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/resources/models"
+	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
+	"github.com/panther-labs/panther/api/lambda/resources/models"
 )
 
 // The resource struct stored in Dynamo has some different fields compared to the external models.Resource
 type resourceItem struct {
-	Attributes      models.Attributes      `json:"attributes"`
-	Deleted         models.Deleted         `json:"deleted"`
-	ID              models.ResourceID      `json:"id"`
-	IntegrationID   models.IntegrationID   `json:"integrationId"`
-	IntegrationType models.IntegrationType `json:"integrationType"`
-	LastModified    models.LastModified    `json:"lastModified"`
-	Type            models.ResourceType    `json:"type"`
+	Attributes      interface{} `json:"attributes"`
+	Deleted         bool        `json:"deleted"`
+	ID              string      `json:"id"`
+	IntegrationID   string      `json:"integrationId"`
+	IntegrationType string      `json:"integrationType"`
+	LastModified    time.Time   `json:"lastModified"`
+	Type            string      `json:"type"`
 
 	// Internal fields: TTL and more efficient filtering
 	ExpiresAt int64  `json:"expiresAt,omitempty"`
@@ -48,8 +50,8 @@ type resourceItem struct {
 }
 
 // Convert dynamo item to external models.Resource
-func (r *resourceItem) Resource(status models.ComplianceStatus) *models.Resource {
-	return &models.Resource{
+func (r *resourceItem) Resource(status compliancemodels.ComplianceStatus) models.Resource {
+	return models.Resource{
 		Attributes:       r.Attributes,
 		ComplianceStatus: status,
 		Deleted:          r.Deleted,
@@ -62,19 +64,19 @@ func (r *resourceItem) Resource(status models.ComplianceStatus) *models.Resource
 }
 
 // Build the table key in the format Dynamo expects
-func tableKey(resourceID models.ResourceID) map[string]*dynamodb.AttributeValue {
+func tableKey(resourceID string) map[string]*dynamodb.AttributeValue {
 	return map[string]*dynamodb.AttributeValue{
 		"id": {S: aws.String(string(resourceID))},
 	}
 }
 
 // Build a condition expression if the resource must exist in the table
-func existsCondition(resourceID models.ResourceID) expression.ConditionBuilder {
+func existsCondition(resourceID string) expression.ConditionBuilder {
 	return expression.Name("id").Equal(expression.Value(resourceID))
 }
 
 // Complete a conditional Dynamo update and return the appropriate status code
-func doUpdate(update expression.UpdateBuilder, resourceID models.ResourceID) *events.APIGatewayProxyResponse {
+func doUpdate(update expression.UpdateBuilder, resourceID string) *events.APIGatewayProxyResponse {
 	condition := existsCondition(resourceID)
 	expr, err := expression.NewBuilder().WithCondition(condition).WithUpdate(update).Build()
 	if err != nil {
@@ -82,7 +84,7 @@ func doUpdate(update expression.UpdateBuilder, resourceID models.ResourceID) *ev
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
-	zap.L().Info("submitting dynamo item update",
+	zap.L().Debug("submitting dynamo item update",
 		zap.String("resourceId", string(resourceID)))
 	_, err = dynamoClient.UpdateItem(&dynamodb.UpdateItemInput{
 		ConditionExpression:       expr.Condition(),

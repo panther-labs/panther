@@ -44,7 +44,7 @@ const (
 	StatusError ComplianceStatus = "ERROR"
 )
 
-// LambdaInput is the request structure for the organization-api Lambda function.
+// LambdaInput is the request structure for the compliance-api Lambda function.
 type LambdaInput struct {
 	DescribeOrg      *DescribeOrgInput      `json:"describeOrg"`
 	DescribePolicy   *DescribePolicyInput   `json:"describePolicy"`
