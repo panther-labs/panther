@@ -17,13 +17,22 @@
  */
 
 import React from 'react';
-import { Dropdown, DropdownButton, DropdownItem, DropdownMenu, DropdownLink } from 'pouncejs';
+import {
+  Dropdown,
+  DropdownButton,
+  DropdownItem,
+  DropdownMenu,
+  DropdownLink,
+  useSnackbar,
+} from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
 import GenericItemCard from 'Components/GenericItemCard';
 import urls from 'Source/urls';
+import { useSendTestAlertLazyQuery } from 'Source/graphql/queries';
+import { extractErrorMessage } from 'Helpers/utils';
 
 interface DestinationCardOptionsProps {
   destination: DestinationFull;
@@ -31,11 +40,48 @@ interface DestinationCardOptionsProps {
 
 const DestinationCardOptions: React.FC<DestinationCardOptionsProps> = ({ destination }) => {
   const { showModal } = useModal();
+  const { pushSnackbar } = useSnackbar();
+
+  const [sendTestAlert] = useSendTestAlertLazyQuery({
+    fetchPolicy: 'network-only', // Don't use cache
+    variables: {
+      input: {
+        outputIds: [destination.outputId],
+      },
+    },
+    // Failed deliveries will also trigger onCompleted as we don't return exceptions
+    onCompleted: data => {
+      const { success } = data.sendTestAlert[0];
+      if (success === true) {
+        pushSnackbar({
+          variant: 'success',
+          title: `Successfully sent test alert for: ${destination.displayName}`,
+        });
+      } else {
+        pushSnackbar({
+          variant: 'error',
+          title: `Failed to send a test alert to: ${destination.displayName}`,
+        });
+      }
+    },
+    // This will be fired if there was a network issue or other unknown internal exception
+    onError: error => {
+      pushSnackbar({
+        variant: 'error',
+        title: extractErrorMessage(error) || `Failed to attempt sending a test alert.`,
+      });
+    },
+  });
+
+  const handleTestAlertClick = React.useCallback(() => {
+    sendTestAlert();
+  }, []);
 
   return (
     <Dropdown>
       <DropdownButton as={GenericItemCard.Options} />
       <DropdownMenu>
+        <DropdownItem onSelect={() => handleTestAlertClick()}>Send Test Alert</DropdownItem>
         <DropdownLink as={RRLink} to={urls.settings.destinations.edit(destination.outputId)}>
           Edit
         </DropdownLink>
