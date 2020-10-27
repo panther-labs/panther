@@ -97,7 +97,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, hideRuleButton = false }) 
           </Flex>
         </GenericItemCard.ValuesGroup>
         {!allDestinationDeliveredSuccessfully && (
-          <Flex align="center" spacing={2} mt={2}>
+          <Flex align="center" spacing={2} mt={2} aria-label="Destination delivery failure">
             <Icon type="alert-circle-filled" size="medium" color="red-300" />
             <Text fontSize="small" fontStyle="italic" color="red-300">
               There was an issue with the delivery of this alert to a selected destination. See

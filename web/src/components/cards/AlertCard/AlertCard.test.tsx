@@ -30,6 +30,14 @@ import { mockListDestinations } from 'Source/graphql/queries';
 import AlertCard from './index';
 
 describe('AlertCard', () => {
+  it('should match snapshot', async () => {
+    const alertData = buildAlertSummary();
+
+    const { container } = render(<AlertCard alert={alertData} />);
+
+    expect(container).toMatchSnapshot();
+  });
+
   it('displays the correct Alert data in the card', async () => {
     const alertData = buildAlertSummary();
 
@@ -43,6 +51,15 @@ describe('AlertCard', () => {
     expect(getByText(SeverityEnum.Medium)).toBeInTheDocument();
     expect(getByText(AlertStatusesEnum.Triaged)).toBeInTheDocument();
     expect(getByAriaLabel('Change Alert Status')).toBeInTheDocument();
+  });
+
+  it('should not display link to Rule', async () => {
+    const alertData = buildAlertSummary();
+
+    const { queryByText } = render(<AlertCard alert={alertData} hideRuleButton />);
+
+    expect(queryByText(alertData.title)).toBeInTheDocument();
+    expect(queryByText('View Rule')).not.toBeInTheDocument();
   });
 
   it('should check links are valid', async () => {
@@ -68,5 +85,21 @@ describe('AlertCard', () => {
     expect(loadingInterfaceElement).toBeInTheDocument();
     await waitForElementToBeRemoved(loadingInterfaceElement);
     expect(getByAltText(`${destination.outputType} logo`)).toBeInTheDocument();
+  });
+
+  it('should render message that destination delivery is failing', async () => {
+    const outputId = 'destination-of-alert';
+    const alertData = buildAlertSummary({
+      deliveryResponses: [buildDeliveryResponse({ outputId, success: false })],
+    });
+    const destination = buildDestination({ outputId, outputType: DestinationTypeEnum.Slack });
+    const mocks = [mockListDestinations({ data: { destinations: [destination] } })];
+
+    const { getByAriaLabel, getByAltText } = render(<AlertCard alert={alertData} />, { mocks });
+    const loadingInterfaceElement = getByAriaLabel('Loading...');
+    expect(loadingInterfaceElement).toBeInTheDocument();
+    await waitForElementToBeRemoved(loadingInterfaceElement);
+    expect(getByAltText(`${destination.outputType} logo`)).toBeInTheDocument();
+    expect(getByAriaLabel('Destination delivery failure')).toBeInTheDocument();
   });
 });
