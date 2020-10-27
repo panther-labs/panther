@@ -98,7 +98,7 @@ const RelatedDestinations: React.FC<RelatedDestinationsSectionProps> = ({
 
   return (
     <Flex align="center" spacing={2} mt={1}>
-      {destinations.map(getLogo)}
+      {destinations.length ? destinations.map(getLogo) : 'N/A'}
     </Flex>
   );
 };

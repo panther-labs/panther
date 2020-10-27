@@ -33,9 +33,10 @@ import UpdateAlertDropdown from '../../dropdowns/UpdateAlertDropdown';
 
 interface AlertCardProps {
   alert: AlertSummaryFull;
+  hideRuleButton?: boolean;
 }
 
-const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
+const AlertCard: React.FC<AlertCardProps> = ({ alert, hideRuleButton = false }) => {
   const { alertDestinations, loading: loadingDestinations } = useAlertDestinations({ alert });
   const { allDestinationDeliveredSuccessfully } = useDestinationsDeliverySuccess({
     deliveryResponses: alert.deliveryResponses,
@@ -53,19 +54,21 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
           <GenericItemCard.Heading>{alert.title}</GenericItemCard.Heading>
         </Link>
         <GenericItemCard.ValuesGroup>
-          <GenericItemCard.Value
-            id="link-to-rule"
-            value={
-              <LinkButton
-                aria-label="Link to Rule"
-                to={urls.logAnalysis.rules.details(alert.ruleId)}
-                variantColor="navyblue"
-                size="medium"
-              >
-                View Rule
-              </LinkButton>
-            }
-          />
+          {!hideRuleButton && (
+            <GenericItemCard.Value
+              id="link-to-rule"
+              value={
+                <LinkButton
+                  aria-label="Link to Rule"
+                  to={urls.logAnalysis.rules.details(alert.ruleId)}
+                  variantColor="navyblue"
+                  size="medium"
+                >
+                  View Rule
+                </LinkButton>
+              }
+            />
+          )}
 
           <GenericItemCard.Value
             label="Destinations"
