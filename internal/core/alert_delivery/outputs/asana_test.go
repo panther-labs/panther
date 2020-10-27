@@ -52,7 +52,8 @@ func TestAsanaAlert(t *testing.T) {
 		"data": map[string]interface{}{
 			"name": "Policy Failure: policy_name",
 			"notes": "policy_name failed on new resources\n" +
-				"For more details please visit: https://panther.io/policies/ruleId\nSeverity: INFO\nRunbook: \nDescription: description\nAlertContext: {\"key\":\"value\"}",
+				"For more details please visit: https://panther.io/policies/ruleId\nSeverity: INFO\nRunbook: " +
+				"\nDescription: description\nAlertContext: {\"key\":\"value\"}",
 			"projects": []string{"projectGid"},
 		},
 	}
