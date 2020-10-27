@@ -24,7 +24,7 @@ import {
   waitMs,
   buildAddSqsLogIntegrationInput,
 } from 'test-utils';
-import { mockListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
+import { mockListAvailableLogTypes } from 'Source/graphql/queries';
 import CreateSqsLogSource from './CreateSqsLogSource';
 import { mockAddSqsLogSource } from './graphql/addSqsLogSource.generated';
 

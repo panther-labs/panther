@@ -35,10 +35,6 @@ Parameters:
     Type: Number
     Description: CloudWatch log retention period
     MinValue: 1
-  ComplianceApiId:
-    Type: String
-    Description: API Gateway for compliance-api
-    AllowedPattern: '^[0-9a-z]{10}$'
   CustomResourceVersion:
     Type: String
     Description: Forces updates to custom resources when changed
@@ -200,8 +196,6 @@ Resources:
           DEBUG: !Ref Debug
           REMEDIATION_SERVICE_HOST: !Sub '${RemediationApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           REMEDIATION_SERVICE_PATH: v1
-          COMPLIANCE_SERVICE_HOST: !Sub '${ComplianceApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          COMPLIANCE_SERVICE_PATH: v1
           POLICY_SERVICE_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           POLICY_SERVICE_PATH: v1
           TABLE_NAME: !Ref AlertForwarderTable
@@ -246,14 +240,16 @@ Resources:
             - Effect: Allow
               Action: dynamodb:UpdateItem
               Resource: !GetAtt AlertForwarderTable.Arn
-        - Id: InvokeGatewayApi
+        - Id: InvokeApis
           Version: 2012-10-17
           Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api
             - Effect: Allow
               Action: execute-api:Invoke
               Resource:
                 - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${RemediationApiId}/v1/POST/remediateasync
-                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/GET/status
                 - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
 
   AlertProcessorAlarms:
@@ -636,14 +632,6 @@ Resources:
       FunctionTimeoutSec: !FindInMap [Functions, ComplianceApi, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
-  ComplianceGatewayInvocation: # allow API gateway to invoke the compliance-api Lambda function
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref ComplianceApiFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/*
-
   ComplianceTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -981,8 +969,6 @@ Resources:
       Description: Resources API
       Environment:
         Variables:
-          COMPLIANCE_API_HOST: !Sub '${ComplianceApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          COMPLIANCE_API_PATH: v1
           DEBUG: !Ref Debug
           RESOURCES_QUEUE_URL: !Ref ResourcesQueue
           RESOURCES_TABLE: !Ref ResourcesTable
@@ -1005,10 +991,8 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action: execute-api:Invoke
-              Resource:
-                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/GET/describe-org
-                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/POST/delete
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api
         - Id: DynamoManageItems
           Version: 2012-10-17
           Statement:
@@ -1165,8 +1149,6 @@ Resources:
           ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           ANALYSIS_API_PATH: v1
           POLICY_ENGINE: panther-policy-engine
-          COMPLIANCE_API_HOST: !Sub '${ComplianceApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          COMPLIANCE_API_PATH: v1
           RESOURCE_API_HOST: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           RESOURCE_API_PATH: v1
       Events:
@@ -1216,7 +1198,9 @@ Resources:
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
             - Effect: Allow
               Action: execute-api:Invoke
               Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/list
@@ -1229,11 +1213,6 @@ Resources:
             - Effect: Allow
               Action: execute-api:Invoke
               Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
-            - Effect: Allow
-              Action: execute-api:Invoke
-              Resource:
-                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/GET/status
-                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ComplianceApiId}/v1/POST/status
 
   ResourceProcessorAlarms:
     Type: Custom::LambdaAlarms

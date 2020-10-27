@@ -63,7 +63,7 @@ func TestGetAlert(t *testing.T) {
 
 	mockDdbClient.On("GetItem", expectedGetItemRequest).Return(&dynamodb.GetItemOutput{Item: item}, nil)
 
-	result, err := table.GetAlert(aws.String("alertId"))
+	result, err := table.GetAlert("alertId")
 	require.NoError(t, err)
 	require.Equal(t, expectedAlert, result)
 }
@@ -79,7 +79,7 @@ func TestGetAlertDoesNotExist(t *testing.T) {
 
 	mockDdbClient.On("GetItem", mock.Anything).Return(&dynamodb.GetItemOutput{}, nil)
 
-	result, err := table.GetAlert(aws.String("alertId"))
+	result, err := table.GetAlert("alertId")
 	require.NoError(t, err)
 	require.Nil(t, result)
 }
@@ -95,7 +95,7 @@ func TestGetAlertErrorQueryingDynamo(t *testing.T) {
 
 	mockDdbClient.On("GetItem", mock.Anything).Return(&dynamodb.GetItemOutput{}, errors.New("test"))
 
-	_, err := table.GetAlert(aws.String("alertId"))
+	_, err := table.GetAlert("alertId")
 	require.Error(t, err)
 }
 

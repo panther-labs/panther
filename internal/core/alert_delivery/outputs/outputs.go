@@ -26,6 +26,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	jsoniter "github.com/json-iterator/go"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
@@ -93,8 +94,6 @@ func New(sess *session.Session) *OutputClient {
 	}
 }
 
-const detailedMessageTemplate = "%s\nFor more details please visit: %s\nSeverity: %s\nRunbook: %s\nDescription: %s"
-
 // The default payload delivered by all outputs to destinations
 // Each destination can augment this with its own custom fields.
 // This struct intentionally never uses the `omitempty` attribute as we want to keep the keys even
@@ -125,6 +124,9 @@ type Notification struct {
 	// An AlertID that was triggered by a Rule. It will be `null` in case of policies
 	AlertID *string `json:"alertId"`
 
+	// An AlertContext
+	AlertContext map[string]interface{} `json:"alertContext"`
+
 	// The Description of the rule set in Panther UI
 	Description *string `json:"description"`
 
@@ -140,19 +142,21 @@ type Notification struct {
 
 func generateNotificationFromAlert(alert *alertModels.Alert) Notification {
 	notification := Notification{
-		ID:          alert.AnalysisID,
-		AlertID:     alert.AlertID,
-		Name:        alert.AnalysisName,
-		Severity:    alert.Severity,
-		Type:        alert.Type,
-		Link:        generateURL(alert),
-		Title:       generateAlertTitle(alert),
-		Description: alert.AnalysisDescription,
-		Runbook:     alert.Runbook,
-		Tags:        alert.Tags,
-		Version:     alert.Version,
-		CreatedAt:   alert.CreatedAt,
+		ID:           alert.AnalysisID,
+		AlertID:      alert.AlertID,
+		Name:         alert.AnalysisName,
+		Severity:     alert.Severity,
+		Type:         alert.Type,
+		Link:         generateURL(alert),
+		Title:        generateAlertTitle(alert),
+		Description:  alert.AnalysisDescription,
+		Runbook:      alert.Runbook,
+		Tags:         alert.Tags,
+		Version:      alert.Version,
+		CreatedAt:    alert.CreatedAt,
+		AlertContext: alert.Context,
 	}
+
 	gatewayapi.ReplaceMapSliceNils(&notification)
 	return notification
 }
@@ -171,6 +175,10 @@ func generateAlertMessage(alert *alertModels.Alert) string {
 }
 
 func generateDetailedAlertMessage(alert *alertModels.Alert) string {
+	const detailedMessageTemplate = "%s\nFor more details please visit: %s\nSeverity: %s\nRunbook: %s\nDescription: %s\nAlertContext: %s"
+	// Best effort to marshal alert context
+	marshaledContext, _ := jsoniter.MarshalToString(alert.Context)
+
 	return fmt.Sprintf(
 		detailedMessageTemplate,
 		generateAlertMessage(alert),
@@ -178,6 +186,7 @@ func generateDetailedAlertMessage(alert *alertModels.Alert) string {
 		alert.Severity,
 		aws.StringValue(alert.Runbook),
 		aws.StringValue(alert.AnalysisDescription),
+		marshaledContext,
 	)
 }
 

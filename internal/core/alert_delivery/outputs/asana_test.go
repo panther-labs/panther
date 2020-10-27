@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
@@ -43,6 +44,7 @@ func TestAsanaAlert(t *testing.T) {
 		AnalysisDescription: aws.String("description"),
 		AnalysisName:        aws.String("policy_name"),
 		Severity:            "INFO",
+		Context:             map[string]interface{}{"key": "value"},
 	}
 
 	asanaConfig := &outputModels.AsanaConfig{PersonalAccessToken: "token", ProjectGids: []string{"projectGid"}}
@@ -51,7 +53,8 @@ func TestAsanaAlert(t *testing.T) {
 		"data": map[string]interface{}{
 			"name": "Policy Failure: policy_name",
 			"notes": "policy_name failed on new resources\n" +
-				"For more details please visit: https://panther.io/policies/ruleId\nSeverity: INFO\nRunbook: \nDescription: description",
+				"For more details please visit: https://panther.io/policies/ruleId\nSeverity: INFO\nRunbook: " +
+				"\nDescription: description\nAlertContext: {\"key\":\"value\"}",
 			"projects": []string{"projectGid"},
 		},
 	}
@@ -68,6 +71,6 @@ func TestAsanaAlert(t *testing.T) {
 
 	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
-	require.Nil(t, client.Asana(alert, asanaConfig))
+	assert.Nil(t, client.Asana(alert, asanaConfig))
 	httpWrapper.AssertExpectations(t)
 }

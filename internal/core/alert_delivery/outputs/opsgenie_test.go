@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
@@ -46,6 +47,7 @@ func TestOpsgenieAlert(t *testing.T) {
 		AnalysisName: aws.String("policyName"),
 		Severity:     "CRITICAL",
 		Tags:         []string{"tag"},
+		Context:      map[string]interface{}{"key": "value"},
 	}
 
 	opsgenieRequest := map[string]interface{}{
@@ -55,6 +57,7 @@ func TestOpsgenieAlert(t *testing.T) {
 			"<a href=\"https://panther.io/policies/policyId\">Click here to view in the Panther UI</a>",
 			" <strong>Runbook:</strong> ",
 			" <strong>Severity:</strong> CRITICAL",
+			" <strong>AlertContext:</strong> {\"key\":\"value\"}",
 		}, "\n"),
 		"tags":     []string{"tag"},
 		"priority": "P1",
@@ -74,6 +77,6 @@ func TestOpsgenieAlert(t *testing.T) {
 
 	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
-	require.Nil(t, client.Opsgenie(alert, opsgenieConfig))
+	assert.Nil(t, client.Opsgenie(alert, opsgenieConfig))
 	httpWrapper.AssertExpectations(t)
 }

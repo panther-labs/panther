@@ -18,6 +18,15 @@
 
 const dotenv = require('dotenv');
 const chalk = require('chalk');
+const fs = require('fs');
+
+function overrideDotEnvVars(path) {
+  const envConfig = dotenv.parse(fs.readFileSync(path));
+  // eslint-disable-next-line
+  for (const k in envConfig) {
+    process.env[k] = envConfig[k];
+  }
+}
 
 function loadDotEnvVars(path) {
   const dotenvResult = dotenv.config({ path });
@@ -57,4 +66,9 @@ const getCacheControlForFileType = filepath => {
   return 'no-cache';
 };
 
-module.exports = { loadDotEnvVars, getAppTemplateParams, getCacheControlForFileType };
+module.exports = {
+  overrideDotEnvVars,
+  loadDotEnvVars,
+  getAppTemplateParams,
+  getCacheControlForFileType,
+};

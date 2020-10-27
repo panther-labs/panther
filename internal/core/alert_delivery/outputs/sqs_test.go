@@ -48,6 +48,9 @@ func TestSendSqs(t *testing.T) {
 		AnalysisDescription: aws.String("policyDescription"),
 		Severity:            "severity",
 		Runbook:             aws.String("runbook"),
+		Context: map[string]interface{}{
+			"key": "value",
+		},
 	}
 
 	expectedSqsMessage := &Notification{
@@ -60,6 +63,9 @@ func TestSendSqs(t *testing.T) {
 		Link:        "https://panther.io/policies/policyId",
 		Title:       "Policy Failure: policyName",
 		Tags:        []string{},
+		AlertContext: map[string]interface{}{
+			"key": "value",
+		},
 	}
 	expectedSerializedSqsMessage, err := jsoniter.MarshalToString(expectedSqsMessage)
 	require.NoError(t, err)

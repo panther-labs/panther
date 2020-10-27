@@ -29,7 +29,7 @@ type Mutation {
   resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
   testPolicy(input: TestPolicyInput): TestPolicyResponse
-  updateAlertStatus(input: UpdateAlertStatusInput!): AlertSummary
+  updateAlertStatus(input: UpdateAlertStatusInput!): [AlertSummary!]!
   updateDestination(input: DestinationInput!): Destination
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
   updateS3LogIntegration(input: UpdateS3LogIntegrationInput!): S3LogIntegration!
@@ -209,7 +209,7 @@ input DeliverAlertInput {
 }
 
 input UpdateAlertStatusInput {
-  alertId: ID!
+  alertIds: [ID!]!
   status: AlertStatusesEnum!
 }
 
@@ -220,7 +220,7 @@ input SendTestAlertInput {
 input ListRulesInput {
   nameContains: String
   enabled: Boolean
-  logTypes: String # Comma-separated string
+  logTypes: [String!]
   severity: SeverityEnum
   tags: [String!]
   # Sorting
@@ -282,7 +282,7 @@ type RuleSummary {
   displayName: String
   enabled: Boolean
   id: ID!
-  threshold: Int
+  threshold: Int!
   lastModified: AWSDateTime
   createdAt: AWSDateTime
   logTypes: [String]

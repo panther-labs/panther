@@ -23,8 +23,8 @@ import (
 
 	"go.uber.org/zap"
 
-	complianceops "github.com/panther-labs/panther/api/gateway/compliance/client/operations"
 	"github.com/panther-labs/panther/api/gateway/resources/models"
+	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 )
 
 // Cache pass/fail status for each policy for a few seconds so that ListResources can filter and
@@ -65,22 +65,22 @@ func getOrgCompliance() (*complianceCacheEntry, error) {
 		return complianceCache, nil
 	}
 
-	zap.L().Info("loading resource pass/fail from compliance-api")
-	result, err := complianceClient.Operations.DescribeOrg(&complianceops.DescribeOrgParams{
-		Type:       "resource",
-		HTTPClient: httpClient,
-	})
-	if err != nil {
+	zap.L().Debug("loading resource pass/fail from compliance-api")
+	input := compliancemodels.LambdaInput{
+		DescribeOrg: &compliancemodels.DescribeOrgInput{Type: "resource"},
+	}
+	var result compliancemodels.DescribeOrgOutput
+	if _, err := complianceClient.Invoke(&input, &result); err != nil {
 		zap.L().Error("failed to load resource pass/fail from compliance-api", zap.Error(err))
 		return nil, err
 	}
 
 	entry := &complianceCacheEntry{
 		ExpiresAt: time.Now().Add(complianceCacheDuration),
-		Resources: make(map[models.ResourceID]*complianceStatus, len(result.Payload.Resources)),
+		Resources: make(map[models.ResourceID]*complianceStatus, len(result.Resources)),
 	}
-	for i, resource := range result.Payload.Resources {
-		entry.Resources[models.ResourceID(*resource.ID)] = &complianceStatus{
+	for i, resource := range result.Resources {
+		entry.Resources[models.ResourceID(resource.ID)] = &complianceStatus{
 			SortIndex: i,
 			Status:    models.ComplianceStatus(resource.Status),
 		}

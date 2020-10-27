@@ -19,27 +19,21 @@ package handlers
  */
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 	"path"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/compliance/models"
+	"github.com/panther-labs/panther/api/lambda/compliance/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/dynamodbbatch"
 )
 
 // UpdateMetadata updates status entries for a given policy with a new severity / suppression set.
-func UpdateMetadata(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	input, err := parseUpdateMetadata(request)
-	if err != nil {
-		return badRequest(err)
-	}
-
+func (API) UpdateMetadata(input *models.UpdateMetadataInput) *events.APIGatewayProxyResponse {
 	writes, errResponse := itemsToUpdate(input)
 	if errResponse != nil {
 		return errResponse
@@ -57,41 +51,33 @@ func UpdateMetadata(request *events.APIGatewayProxyRequest) *events.APIGatewayPr
 	}
 
 	if err := dynamodbbatch.BatchWriteItem(dynamoClient, maxWriteBackoff, batchInput); err != nil {
-		zap.L().Error("dynamodbbatch.BatchWriteItem failed", zap.Error(err))
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		err = fmt.Errorf("dynamodbbatch.BatchWriteItem failed: %s", err)
+		zap.L().Error("UpdateMetadata failed", zap.Error(err))
+		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusInternalServerError}
 	}
 
 	return &events.APIGatewayProxyResponse{StatusCode: http.StatusOK}
 }
 
-func parseUpdateMetadata(request *events.APIGatewayProxyRequest) (*models.UpdateMetadata, error) {
-	var result models.UpdateMetadata
-	if err := jsoniter.UnmarshalFromString(request.Body, &result); err != nil {
-		return nil, err
-	}
-
-	return &result, result.Validate(nil)
-}
-
-func itemsToUpdate(input *models.UpdateMetadata) ([]*dynamodb.WriteRequest, *events.APIGatewayProxyResponse) {
+func itemsToUpdate(input *models.UpdateMetadataInput) ([]*dynamodb.WriteRequest, *events.APIGatewayProxyResponse) {
 	query, err := buildDescribePolicyQuery(input.PolicyID)
 	if err != nil {
-		return nil, &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		zap.L().Error("UpdateMetadata failed", zap.Error(err))
+		return nil, &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusInternalServerError}
 	}
 
-	zap.L().Info("querying items to update",
-		zap.String("policyId", string(input.PolicyID)))
+	zap.L().Debug("querying items to update", zap.String("policyId", input.PolicyID))
 	var writes []*dynamodb.WriteRequest
-	err = queryPages(query, func(item *models.ComplianceStatus) error {
-		ignored, patternErr := isIgnored(string(item.ResourceID), input.Suppressions)
+	err = queryPages(query, func(item *models.ComplianceEntry) error {
+		ignored, patternErr := isIgnored(item.ResourceID, input.Suppressions)
 		if patternErr != nil {
 			return patternErr
 		}
 
 		// This status entry has changed - we need to rewrite it
-		if bool(item.Suppressed) != ignored || item.PolicySeverity != input.Severity {
+		if item.Suppressed != ignored || item.PolicySeverity != input.Severity {
 			item.PolicySeverity = input.Severity
-			item.Suppressed = models.Suppressed(ignored)
+			item.Suppressed = ignored
 
 			marshalled, err := dynamodbattribute.MarshalMap(item)
 			if err != nil {
@@ -108,9 +94,17 @@ func itemsToUpdate(input *models.UpdateMetadata) ([]*dynamodb.WriteRequest, *eve
 
 	if err != nil {
 		if err == path.ErrBadPattern {
-			return nil, badRequest(errors.New("invalid suppression pattern: " + err.Error()))
+			return nil, &events.APIGatewayProxyResponse{
+				Body:       "invalid suppression pattern: " + err.Error(),
+				StatusCode: http.StatusBadRequest,
+			}
 		}
-		return nil, &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+
+		zap.L().Error("UpdateMetadata failed", zap.Error(err))
+		return nil, &events.APIGatewayProxyResponse{
+			Body:       err.Error(),
+			StatusCode: http.StatusInternalServerError,
+		}
 	}
 
 	return writes, nil

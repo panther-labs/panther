@@ -18,11 +18,12 @@
 
 import React from 'react';
 import { Text, Flex, Icon, AbstractButton, Box, Collapse, useSnackbar } from 'pouncejs';
-import { AlertDetails, ListDestinations } from 'Pages/AlertDetails';
+import { AlertDetails } from 'Pages/AlertDetails';
 import last from 'lodash/last';
 import { DeliveryResponseFull } from 'Source/graphql/fragments/DeliveryResponseFull.generated';
 import groupBy from 'lodash/groupBy';
 import orderBy from 'lodash/orderBy';
+import { ListDestinations } from 'Source/graphql/queries';
 import AlertDeliveryTable from './AlertDeliveryTable';
 import { useRetryAlertDelivery } from './graphql/retryAlertDelivery.generated';
 

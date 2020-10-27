@@ -34,12 +34,22 @@ type Resolver interface {
 	Resolve(ctx context.Context, name string) (Entry, error)
 }
 
-var _ Resolver = (*Registry)(nil)
+// LocalResolver returns a log type resolver that looks up entries locally
+func LocalResolver(finders ...Finder) Resolver {
+	return &localResolver{
+		finders: finders,
+	}
+}
 
-// Resolve implements Resolver for a Registry
-func (r *Registry) Resolve(_ context.Context, name string) (Entry, error) {
-	if entry := r.Get(name); entry != nil {
-		return entry, nil
+type localResolver struct {
+	finders []Finder
+}
+
+func (r *localResolver) Resolve(_ context.Context, logType string) (Entry, error) {
+	for _, finder := range r.finders {
+		if entry := finder.Find(logType); entry != nil {
+			return entry, nil
+		}
 	}
 	return nil, nil
 }
@@ -65,6 +75,7 @@ func (c chainResolver) Resolve(ctx context.Context, name string) (Entry, error) 
 	return nil, nil
 }
 
+// ResolveTables is a helper to resolve all glue table metadata for all log types
 func ResolveTables(ctx context.Context, resolver Resolver, logTypes ...string) ([]*awsglue.GlueTableMetadata, error) {
 	tables := make([]*awsglue.GlueTableMetadata, len(logTypes))
 	for i, logType := range logTypes {

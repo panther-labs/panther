@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
@@ -51,6 +51,7 @@ func TestJiraAlert(t *testing.T) {
 		OutputIds:           []string{"output-id"},
 		AnalysisDescription: aws.String("policyDescription"),
 		Severity:            "INFO",
+		Context:             map[string]interface{}{"key": "value"},
 	}
 
 	jiraPayload := map[string]interface{}{
@@ -58,7 +59,7 @@ func TestJiraAlert(t *testing.T) {
 			"summary": "Policy Failure: policyId",
 			"description": "*Description:* policyDescription\n " +
 				"[Click here to view in the Panther UI](https://panther.io/policies/policyId)\n" +
-				" *Runbook:* \n *Severity:* INFO\n *Tags:* ",
+				" *Runbook:* \n *Severity:* INFO\n *Tags:* \n *AlertContext:* {\"key\":\"value\"}",
 			"project": map[string]*string{
 				"key": aws.String(jiraConfig.ProjectKey),
 			},
@@ -84,6 +85,6 @@ func TestJiraAlert(t *testing.T) {
 
 	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
-	require.Nil(t, client.Jira(alert, jiraConfig))
+	assert.Nil(t, client.Jira(alert, jiraConfig))
 	httpWrapper.AssertExpectations(t)
 }

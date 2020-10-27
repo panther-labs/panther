@@ -19,27 +19,86 @@ package api
  */
 
 import (
+	"math"
+
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
+type updateResult struct {
+	AlertItems []*table.AlertItem
+	Error      error
+}
+
 // UpdateAlertStatus modifies an alert's attributes.
-func (API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (result *models.UpdateAlertStatusOutput, err error) {
+func (api *API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (models.UpdateAlertStatusOutput, error) {
 	// Run the update alert query
-	alertItem, err := alertsDB.UpdateAlertStatus(input)
+	if len(input.AlertIDs) == 0 {
+		return models.UpdateAlertStatusOutput{}, nil
+	}
+
+	alertItems, err := api.dispatchUpdates(input, maxDDBPageSize)
+	// Only process the most recent error. It would be extremely rare to have multiple errors
+	// so we show one at a time to the user.
 	if err != nil {
 		return nil, err
 	}
 
-	// If there was no item from the DB, we return an empty response
-	if alertItem == nil {
-		return &models.UpdateAlertStatusOutput{}, nil
+	// Marshal to an alert summary
+	return utils.AlertItemsToSummaries(alertItems), nil
+}
+
+// dispatchUpdates - dispatches updates to alerts in in groups.
+// Each group will process updates in series, but all groups are executed in parallel
+func (api *API) dispatchUpdates(input *models.UpdateAlertStatusInput, maxPageSize int) ([]*table.AlertItem, error) {
+	updateChannel := make(chan updateResult)
+	alertCount := len(input.AlertIDs)
+
+	// Get the total number of pages. This will be the number of goroutines to create
+	pages := int(math.Ceil(float64(alertCount) / float64(maxPageSize)))
+
+	// Slice up the AlertIDs into chunks to be processed in parallel
+	for page := 0; page < pages; page++ {
+		endIndex := int(math.Min(float64((page+1)*maxPageSize), float64(alertCount)))
+
+		// create shallow copy of the input with chunked AlertIDs
+		inputItems := &models.UpdateAlertStatusInput{
+			Status:   input.Status,
+			UserID:   input.UserID,
+			AlertIDs: input.AlertIDs[page*maxPageSize : endIndex],
+		}
+
+		// Run the updates
+		go api.dispatchUpdate(inputItems, updateChannel)
 	}
 
-	// Marshal to an alert summary
-	result = utils.AlertItemToSummary(alertItem)
+	// Gather the results. If there were errors, we accumulate and let the routines complete
+	alertItems := []*table.AlertItem{}
+	errors := []error{}
+	for page := 0; page < pages; page++ {
+		result := <-updateChannel
+		if result.Error != nil {
+			errors = append(errors, result.Error)
+			continue
+		}
+		alertItems = append(alertItems, result.AlertItems...)
+	}
 
-	gatewayapi.ReplaceMapSliceNils(result)
-	return result, nil
+	// Return the first error we see. If there were to be any errors, they would most likely
+	// be the same.
+	if len(errors) > 0 {
+		return nil, errors[0]
+	}
+
+	return alertItems, nil
+}
+
+// dispatch update routine
+func (api *API) dispatchUpdate(input *models.UpdateAlertStatusInput, updateChannel chan updateResult) {
+	alertItems, err := api.alertsDB.UpdateAlertStatus(input)
+	updateChannel <- updateResult{
+		AlertItems: alertItems,
+		Error:      err,
+	}
 }

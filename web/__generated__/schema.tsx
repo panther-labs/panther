@@ -564,7 +564,7 @@ export enum ListResourcesSortFieldsEnum {
 export type ListRulesInput = {
   nameContains?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
-  logTypes?: Maybe<Scalars['String']>;
+  logTypes?: Maybe<Array<Scalars['String']>>;
   severity?: Maybe<SeverityEnum>;
   tags?: Maybe<Array<Scalars['String']>>;
   sortBy?: Maybe<ListRulesSortFieldsEnum>;
@@ -645,7 +645,7 @@ export type Mutation = {
   resetUserPassword: User;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
   testPolicy?: Maybe<TestPolicyResponse>;
-  updateAlertStatus?: Maybe<AlertSummary>;
+  updateAlertStatus: Array<AlertSummary>;
   updateDestination?: Maybe<Destination>;
   updateComplianceIntegration: ComplianceIntegration;
   updateS3LogIntegration: S3LogIntegration;
@@ -1075,7 +1075,7 @@ export type RuleSummary = {
   displayName?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
   id: Scalars['ID'];
-  threshold?: Maybe<Scalars['Int']>;
+  threshold: Scalars['Int'];
   lastModified?: Maybe<Scalars['AWSDateTime']>;
   createdAt?: Maybe<Scalars['AWSDateTime']>;
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
@@ -1232,7 +1232,7 @@ export type TestPolicyResponse = {
 };
 
 export type UpdateAlertStatusInput = {
-  alertId: Scalars['ID'];
+  alertIds: Array<Scalars['ID']>;
   status: AlertStatusesEnum;
 };
 
@@ -2259,7 +2259,7 @@ export type MutationResolvers<
     RequireFields<MutationTestPolicyArgs, never>
   >;
   updateAlertStatus?: Resolver<
-    Maybe<ResolversTypes['AlertSummary']>,
+    Array<ResolversTypes['AlertSummary']>,
     ParentType,
     ContextType,
     RequireFields<MutationUpdateAlertStatusArgs, 'input'>
@@ -2680,7 +2680,7 @@ export type RuleSummaryResolvers<
   displayName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   enabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  threshold?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  threshold?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   createdAt?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   logTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;

@@ -25,9 +25,9 @@ import (
 )
 
 // UpdateAlertDelivery modifies an alert's attributes.
-func (API) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) (result *models.UpdateAlertDeliveryOutput, err error) {
+func (api *API) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) (result *models.UpdateAlertDeliveryOutput, err error) {
 	// Run the update alert query
-	alertItem, err := alertsDB.UpdateAlertDelivery(input)
+	alertItem, err := api.alertsDB.UpdateAlertDelivery(input)
 	if err != nil {
 		return nil, err
 	}

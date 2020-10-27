@@ -1049,6 +1049,8 @@ definitions:
         $ref: '#/definitions/suppressions'
       reports:
         $ref: '#/definitions/reports'
+      threshold:
+        $ref: '#/definitions/threshold' # not required because this is really for RuleSummaries
     required:
       - autoRemediationId
       - autoRemediationParameters
@@ -1385,6 +1387,8 @@ definitions:
         $ref: '#/definitions/tags'
       reports:
         $ref: '#/definitions/reports'
+      threshold:
+        $ref: '#/definitions/threshold'
     required:
       - displayName
       - enabled
@@ -1394,6 +1398,7 @@ definitions:
       - severity
       - tags
       - reports
+      - threshold
 
   ##### object properties #####
   autoRemediationId:

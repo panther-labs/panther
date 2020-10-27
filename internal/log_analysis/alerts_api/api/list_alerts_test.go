@@ -59,7 +59,7 @@ var (
 			RuleVersion:       aws.String("ruleVersion"),
 			Type:              "RULE",
 			RuleDisplayName:   aws.String("ruleDisplayName"),
-			AlertID:           aws.String("alertId"),
+			AlertID:           "alertId",
 			Status:            "OPEN",
 			UpdateTime:        aws.Time(timeInTest),
 			CreationTime:      aws.Time(timeInTest),
@@ -77,7 +77,6 @@ var (
 
 func TestListAlertsForRule(t *testing.T) {
 	tableMock := &tableMock{}
-	alertsDB = tableMock
 
 	input := &models.ListAlertsInput{
 		RuleID:            aws.String("ruleId"),
@@ -89,7 +88,10 @@ func TestListAlertsForRule(t *testing.T) {
 
 	tableMock.On("ListAll", input).
 		Return(alertItems, aws.String("lastKey"), nil)
-	result, err := API{}.ListAlerts(input)
+	api := API{
+		alertsDB: tableMock,
+	}
+	result, err := api.ListAlerts(input)
 	require.NoError(t, err)
 
 	assert.Equal(t, &models.ListAlertsOutput{
@@ -100,7 +102,6 @@ func TestListAlertsForRule(t *testing.T) {
 
 func TestListAllAlerts(t *testing.T) {
 	tableMock := &tableMock{}
-	alertsDB = tableMock
 
 	input := &models.ListAlertsInput{
 		PageSize:          aws.Int(10),
@@ -117,7 +118,10 @@ func TestListAllAlerts(t *testing.T) {
 
 	tableMock.On("ListAll", input).
 		Return(alertItems, aws.String("lastKey"), nil)
-	result, err := API{}.ListAlerts(input)
+	api := API{
+		alertsDB: tableMock,
+	}
+	result, err := api.ListAlerts(input)
 	require.NoError(t, err)
 
 	assert.Equal(t, &models.ListAlertsOutput{
@@ -130,7 +134,6 @@ func TestListAllAlerts(t *testing.T) {
 // Verifies that API returns correct results when alert title is not specified
 func TestListAllAlertsWithoutTitle(t *testing.T) {
 	tableMock := &tableMock{}
-	alertsDB = tableMock
 
 	alertItems := []*table.AlertItem{
 		{
@@ -168,7 +171,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 		{
 			RuleID:            aws.String("ruleId"),
 			RuleVersion:       aws.String("ruleVersion"),
-			AlertID:           aws.String("alertId"),
+			AlertID:           "alertId",
 			Status:            "OPEN",
 			Type:              "RULE",
 			UpdateTime:        aws.Time(timeInTest),
@@ -185,7 +188,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 		{
 			RuleID:          aws.String("ruleId"),
 			RuleVersion:     aws.String("ruleVersion"),
-			AlertID:         aws.String("alertId"),
+			AlertID:         "alertId",
 			Status:          "TRIAGED",
 			Type:            "RULE",
 			UpdateTime:      aws.Time(timeInTest),
@@ -211,7 +214,10 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 
 	tableMock.On("ListAll", input).
 		Return(alertItems, aws.String("lastKey"), nil)
-	result, err := API{}.ListAlerts(input)
+	api := API{
+		alertsDB: tableMock,
+	}
+	result, err := api.ListAlerts(input)
 	require.NoError(t, err)
 
 	assert.Equal(t, &models.ListAlertsOutput{

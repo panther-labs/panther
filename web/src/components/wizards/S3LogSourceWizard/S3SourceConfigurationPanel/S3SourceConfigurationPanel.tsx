@@ -24,7 +24,7 @@ import React from 'react';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import { WizardPanel } from 'Components/Wizard';
 import logo from 'Assets/s3-minimal-logo.svg';
-import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
+import { useListAvailableLogTypes } from 'Source/graphql/queries';
 import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
 
 const S3SourceConfigurationPanel: React.FC = () => {
