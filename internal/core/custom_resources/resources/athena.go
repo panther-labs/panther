@@ -23,8 +23,19 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-lambda-go/cfn"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/athena"
 
 	"github.com/panther-labs/panther/pkg/awsathena"
+	"github.com/panther-labs/panther/pkg/awsutils"
+)
+
+const (
+	// FIXME: remove when DDB connector is GA https://docs.aws.amazon.com/athena/latest/ug/connect-to-a-data-source.html
+	// Available Regions – The Athena federated query feature is available in preview in the US East (N. Virginia),
+	//                     Asia Pacific (Mumbai), Europe (Ireland), and US West (Oregon) Regions.
+	previewWorkgroup = "AmazonAthenaPreviewFunctionality"
+	workgroup        = "primary" // workgroup "primary" is default and always present
 )
 
 type AthenaInitProperties struct {
@@ -40,8 +51,29 @@ func customAthenaInit(_ context.Context, event cfn.Event) (string, map[string]in
 			return resourceID, nil, err
 		}
 
-		// Workgroup "primary" is default.
-		const workgroup = "primary"
+		// FIXME: remove this when the DDB connector is GA
+		athenaClient := athena.New(awsSession)
+		previewWorkGroupInput := &athena.CreateWorkGroupInput{
+			Name: aws.String(previewWorkgroup),
+			Configuration: &athena.WorkGroupConfiguration{
+				ResultConfiguration: &athena.ResultConfiguration{
+					OutputLocation: aws.String("s3://" + props.AthenaResultsBucket + "/preview"),
+				},
+			},
+		}
+		if _, err := athenaClient.CreateWorkGroup(previewWorkGroupInput); err != nil {
+			// InvalidRequestException happens when it already exists
+			if awsutils.IsAnyError(err, "InvalidRequestException") {
+				if err := awsathena.WorkgroupAssociateS3(awsSession, previewWorkgroup, props.AthenaResultsBucket); err != nil {
+					return resourceID, nil, fmt.Errorf("failed to associate %s Athena workgroup with %s bucket: %v",
+						previewWorkgroup, props.AthenaResultsBucket, err)
+				}
+			} else {
+				return resourceID, nil, fmt.Errorf("failed to create %s Athena workgroup with %s bucket: %v",
+					previewWorkgroup, props.AthenaResultsBucket, err)
+			}
+		}
+
 		if err := awsathena.WorkgroupAssociateS3(awsSession, workgroup, props.AthenaResultsBucket); err != nil {
 			return resourceID, nil, fmt.Errorf("failed to associate %s Athena workgroup with %s bucket: %v",
 				workgroup, props.AthenaResultsBucket, err)

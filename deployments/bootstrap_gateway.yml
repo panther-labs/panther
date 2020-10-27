@@ -142,6 +142,7 @@ Resources:
                 - athena:GetQuery*
                 - athena:StartQueryExecution
                 - athena:StopQueryExecution
+                - athena:CreateWorkGroup
                 - athena:UpdateWorkGroup
                 - guardduty:Create*
                 - guardduty:DeletePublishingDestination

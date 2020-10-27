@@ -20,6 +20,7 @@ package awsglue
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
@@ -31,11 +32,28 @@ const (
 	CloudSecurityDatabase            = "panther_cloudsecurity"
 	CloudSecurityDatabaseDescription = "Hold tables related to Panther cloud security scanning"
 
-	ResourcesTable            = "resources"
-	ResourcesTableDescription = "The resources discovered by Panther scanning"
+	// https://github.com/awslabs/aws-athena-query-federation/tree/master/athena-dynamodb
 
+	// FIXME: Update the description when the DDB connector is GA
+	ResourcesTableDDB         = "panther-resources"
+	ResourcesTable            = "resources"
+	ResourcesTableDescription = "The resources discovered by Panther scanning (Note: The Athena federated query feature is available in preview in the US East (N. Virginia), Asia Pacific (Mumbai), Europe (Ireland), and US West (Oregon) Regions.)" // nolint:lll
+
+	ComplianceTableDDB         = "panther-compliance"
 	ComplianceTable            = "compliance"
-	ComplianceTableDescription = "The policies and statues from Panther scanning"
+	ComplianceTableDescription = "The policies and statuses from Panther scanning (Note: The Athena federated query feature is available in preview in the US East (N. Virginia), Asia Pacific (Mumbai), Europe (Ireland), and US West (Oregon) Regions.)" // nolint:lll
+)
+
+var (
+	// FIXME: Remove when the DDB connector is GA
+	// Available Regions – The Athena federated query feature is available in preview in the US East (N. Virginia),
+	//                     Asia Pacific (Mumbai), Europe (Ireland), and US West (Oregon) Regions.
+	anthenaDDBConnectorRegions = map[string]struct{}{
+		"us-east-1":  {},
+		"ap-south-1": {},
+		"eu-west-1":  {},
+		"us-west-2":  {},
+	}
 )
 
 func CreateOrUpdateCloudSecurityDatabase(glueClient glueiface.GlueAPI) error {
@@ -56,13 +74,26 @@ func CreateOrUpdateCloudSecurityDatabase(glueClient glueiface.GlueAPI) error {
 }
 
 func CreateOrUpdateResourcesTable(glueClient glueiface.GlueAPI, locationARN string) error {
+	// FIXME: Remove when the DDB connector is GA
+	parsedARN, err := arn.Parse(locationARN)
+	if err != nil {
+		return err
+	}
+	if _, found := anthenaDDBConnectorRegions[parsedARN.Region]; !found {
+		return nil // not supported
+	}
+
 	tableInput := &glue.TableInput{
 		Name:        aws.String(ResourcesTable),
 		Description: aws.String(ResourcesTableDescription),
 		Parameters: map[string]*string{
+			// per https://github.com/awslabs/aws-athena-query-federation/tree/master/athena-dynamodb
 			"classification": aws.String("dynamodb"),
+			"sourceTable":    aws.String(ResourcesTableDDB),
+			// for attrs with upper case
+			"columnMapping": aws.String(`expiresat=expiresAt,lastmodified=lastModified,integrationtype=integrationType`),
 		},
-		StorageDescriptor: &glue.StorageDescriptor{ // configure as JSON
+		StorageDescriptor: &glue.StorageDescriptor{
 			Location: &locationARN,
 
 			// FIXME: add descriptions to each field
@@ -122,7 +153,7 @@ func CreateOrUpdateResourcesTable(glueClient glueiface.GlueAPI, locationARN stri
 		TableInput:   tableInput,
 	}
 
-	_, err := glueClient.CreateTable(createTableInput)
+	_, err = glueClient.CreateTable(createTableInput)
 	if err != nil {
 		if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
 			// need to do an update
@@ -140,13 +171,26 @@ func CreateOrUpdateResourcesTable(glueClient glueiface.GlueAPI, locationARN stri
 }
 
 func CreateOrUpdateComplianceTable(glueClient glueiface.GlueAPI, locationARN string) error {
+	// FIXME: Remove when the DDB connector is GA
+	parsedARN, err := arn.Parse(locationARN)
+	if err != nil {
+		return err
+	}
+	if _, found := anthenaDDBConnectorRegions[parsedARN.Region]; !found {
+		return nil // not supported
+	}
+
 	tableInput := &glue.TableInput{
 		Name:        aws.String(ComplianceTable),
 		Description: aws.String(ComplianceTableDescription),
 		Parameters: map[string]*string{
+			// per https://github.com/awslabs/aws-athena-query-federation/tree/master/athena-dynamodb
 			"classification": aws.String("dynamodb"),
+			"sourceTable":    aws.String(ComplianceTableDDB),
+			// for attrs with upper case
+			"columnMapping": aws.String(`errormessage=errorMessage,expiresat=expiresAt,lastupdated=lastUpdated,resourcetype=resourceType`),
 		},
-		StorageDescriptor: &glue.StorageDescriptor{ // configure as JSON
+		StorageDescriptor: &glue.StorageDescriptor{
 			Location: &locationARN,
 
 			// FIXME: add descriptions to each field
@@ -211,7 +255,7 @@ func CreateOrUpdateComplianceTable(glueClient glueiface.GlueAPI, locationARN str
 		TableInput:   tableInput,
 	}
 
-	_, err := glueClient.CreateTable(createTableInput)
+	_, err = glueClient.CreateTable(createTableInput)
 	if err != nil {
 		if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
 			// need to do an update
