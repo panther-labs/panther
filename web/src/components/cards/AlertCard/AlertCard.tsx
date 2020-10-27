@@ -64,23 +64,14 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
             }
           />
           <GenericItemCard.Value
+            label="Events"
+            value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
+          />
+          <GenericItemCard.Value
             label="Destinations"
             value={
               <RelatedDestinations destinations={alertDestinations} loading={loadingDestinations} />
             }
-          />
-          <GenericItemCard.Value
-            label="Alert Type"
-            value={
-              <Text color={alert.type === AlertTypesEnum.RuleError ? 'red-500' : 'teal-100'}>
-                {alert.type === AlertTypesEnum.RuleError ? 'Rule Error' : 'Rule Match'}
-              </Text>
-            }
-          />
-
-          <GenericItemCard.Value
-            label="Events"
-            value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
           />
           <GenericItemCard.Value
             label="Log Types"
@@ -93,9 +84,14 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
             }
           />
           <GenericItemCard.Value
-            label="Events"
-            value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
+            label="Alert Type"
+            value={
+              <Text color={alert.type === AlertTypesEnum.RuleError ? 'red-500' : 'teal-100'}>
+                {alert.type === AlertTypesEnum.RuleError ? 'Rule Error' : 'Rule Match'}
+              </Text>
+            }
           />
+
           <GenericItemCard.Value label="Time Created" value={formatDatetime(alert.creationTime)} />
           <Flex ml="auto" mr={0} align="flex-end" spacing={2}>
             <SeverityBadge severity={alert.severity} />
