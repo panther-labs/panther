@@ -56,14 +56,6 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// PhysicalId: custom:alarms:appsync:$API_ID
 	"Custom::AppSyncAlarms": customAppSyncAlarms,
 
-	// Initialize Athena
-	//
-	// Parameters:
-	//     AthenaResultsBucket:  string (required)
-	// Outputs: None
-	// PhysicalId: custom:athena:init
-	"Custom::AthenaInit": customAthenaInit,
-
 	// CloudWatch alarms for Dynamo errors, throttles, and latency
 	//
 	// Parameters:

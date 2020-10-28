@@ -145,9 +145,6 @@ Resources:
                 - athena:GetQuery*
                 - athena:StartQueryExecution
                 - athena:StopQueryExecution
-                - athena:CreateWorkGroup
-                - athena:UpdateWorkGroup
-                - athena:CreateDataCatalog
                 - guardduty:Create*
                 - guardduty:DeletePublishingDestination
                 - guardduty:Get*
@@ -445,7 +442,7 @@ Resources:
   AthenaWorkGroup:
     Type: AWS::Athena::WorkGroup
     Properties:
-      # FIXME: remove when DDB connector is GA https://docs.aws.amazon.com/athena/latest/ug/connect-to-a-data-source.html
+      # FIXME: switch to 'Panther' when DDB connector is GA https://docs.aws.amazon.com/athena/latest/ug/connect-to-a-data-source.html
       Name: AmazonAthenaPreviewFunctionality # Panther
       Description: The Panther workgroup
       WorkGroupConfiguration:
