@@ -38,11 +38,11 @@ type AddResourcesInput struct {
 }
 
 type AddResourceEntry struct {
-	Attributes      interface{} `json:"attributes" validate:"min=1"`
+	Attributes      interface{} `json:"attributes" validate:"required"`
 	ID              string      `json:"id" validate:"required"`
 	IntegrationID   string      `json:"integrationId" validate:"uuid4"`
 	IntegrationType string      `json:"integrationType" validate:"oneof=aws"`
-	Type            string      `json:"type"`
+	Type            string      `json:"type" validate:"required"`
 }
 
 type GetResourceInput struct {
@@ -67,13 +67,13 @@ type DeleteResourcesInput struct {
 }
 
 type DeleteEntry struct {
-	ID string `json:"id"`
+	ID string `json:"id" validate:"required"`
 }
 
 type ListResourcesInput struct {
 	// ***** Filtering *****
 	// Only include resources with a specific compliance status
-	ComplianceStatus models.ComplianceStatus `json:"complianceStatus" validate:"oneof=ERROR FAIL PASS"`
+	ComplianceStatus models.ComplianceStatus `json:"complianceStatus" validate:"omitempty,oneof=ERROR FAIL PASS"`
 
 	// Only include resources which are or are not deleted
 	Deleted *bool `json:"deleted"`
@@ -99,7 +99,7 @@ type ListResourcesInput struct {
 	SortDir string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 
 	// ***** Paging *****
-	PageSize int `json:"pageeSize" validate:"omitempty,min=1,max=1000"`
+	PageSize int `json:"pageSize" validate:"omitempty,min=1"`
 	Page     int `json:"page" validate:"omitempty,min=1"`
 }
 
