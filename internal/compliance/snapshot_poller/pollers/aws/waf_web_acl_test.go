@@ -234,7 +234,7 @@ func TestWafWebAclsPoller(t *testing.T) {
 	})
 
 	assert.NotEmpty(t, resources)
-	assert.Equal(t, *awstest.ExampleGetWebAclOutput.WebACL.WebACLArn, string(resources[0].ID))
+	assert.Equal(t, *awstest.ExampleGetWebAclOutput.WebACL.WebACLArn, resources[0].ID)
 	assert.Nil(t, marker)
 	assert.NoError(t, err)
 }
@@ -276,7 +276,7 @@ func TestWafRegionalWebAclsPoller(t *testing.T) {
 	})
 
 	assert.NotEmpty(t, resources)
-	assert.Equal(t, *awstest.ExampleGetWebAclOutput.WebACL.WebACLArn, string(resources[0].ID))
+	assert.Equal(t, *awstest.ExampleGetWebAclOutput.WebACL.WebACLArn, resources[0].ID)
 	assert.Nil(t, marker)
 	assert.NoError(t, err)
 }

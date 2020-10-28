@@ -154,7 +154,7 @@ func TestIAMPolicyPoller(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Len(t, resources, 1)
-	assert.Equal(t, *awstest.ExampleListPolicies.Policies[0].Arn, string(resources[0].ID))
+	assert.Equal(t, *awstest.ExampleListPolicies.Policies[0].Arn, resources[0].ID)
 	assert.Nil(t, marker)
 }
 

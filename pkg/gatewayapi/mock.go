@@ -1,4 +1,4 @@
-package aws
+package gatewayapi
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,18 +19,28 @@ package aws
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws/session"
-
-	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws/awstest"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/stretchr/testify/mock"
 )
 
-func init() {
-	// sets an empty session for tests
-	snapshotPollerSession = &session.Session{}
+type MockClient struct {
+	API
+	mock.Mock
+}
 
-	// mocks the assume role
-	AssumeRoleFunc = awstest.AssumeRoleMock
-	VerifyAssumedCredsFunc = func(creds *session.Session, region string) error {
-		return nil
+func (m *MockClient) Invoke(input, output interface{}) (int, error) {
+	args := m.Called(input, output)
+
+	// The third "return value" of the mock is used to set the output
+	body, err := jsoniter.Marshal(args.Get(2))
+	if err != nil {
+		panic(err)
 	}
+	if output != nil {
+		if err := jsoniter.Unmarshal(body, output); err != nil {
+			panic(err)
+		}
+	}
+
+	return args.Int(0), args.Error(1)
 }

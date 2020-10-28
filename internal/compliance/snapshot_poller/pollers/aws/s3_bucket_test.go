@@ -254,7 +254,7 @@ func TestS3BucketPoller(t *testing.T) {
 	})
 
 	require.NotEmpty(t, resources)
-	assert.Equal(t, "arn:aws:s3:::unit-test-cloudtrail-bucket", string(resources[0].ID))
+	assert.Equal(t, "arn:aws:s3:::unit-test-cloudtrail-bucket", resources[0].ID)
 	assert.Nil(t, marker)
 	assert.NoError(t, err)
 }

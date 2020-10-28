@@ -27,7 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -352,7 +352,7 @@ func buildEcsClusterSnapshot(ecsSvc ecsiface.ECSAPI, clusterArn *string) (*awsmo
 }
 
 // PollEcsCluster gathers information on each ECS Cluster for an AWS account.
-func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting ECS Cluster resource poller")
 	ecsClusterSnapshots := make(map[string]*awsmodels.EcsCluster)
 
@@ -367,7 +367,7 @@ func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(ecsClusterSnapshots))
+	resources := make([]apimodels.AddResourceEntry, 0, len(ecsClusterSnapshots))
 	for _, clusterArn := range clusters {
 		ecsClusterSnapshot, err := buildEcsClusterSnapshot(ecsSvc, clusterArn)
 		if err != nil {
@@ -376,11 +376,11 @@ func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		ecsClusterSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		ecsClusterSnapshot.Region = pollerInput.Region
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      ecsClusterSnapshot,
-			ID:              apimodels.ResourceID(*ecsClusterSnapshot.ResourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *ecsClusterSnapshot.ResourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.EcsClusterSchema,
 		})
 	}

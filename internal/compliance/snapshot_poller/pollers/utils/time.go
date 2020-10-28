@@ -20,8 +20,6 @@ package utils
 
 import (
 	"time"
-
-	"github.com/go-openapi/strfmt"
 )
 
 var (
@@ -30,9 +28,9 @@ var (
 	TimeNowFunc = TimeNowRFC3339
 )
 
-// DateTimeFormat converts time.Time to strfmt.DateTime.
-func DateTimeFormat(inputTime time.Time) *strfmt.DateTime {
-	conv := strfmt.DateTime(inputTime)
+// DateTimeFormat converts time.Time to time.Time.
+func DateTimeFormat(inputTime time.Time) *time.Time {
+	conv := time.Time(inputTime)
 	return &conv
 }
 
@@ -51,12 +49,12 @@ func ParseTimeRFC3339(timeString string) time.Time {
 	return parsedTime
 }
 
-// StringToDateTime parses a time string into a strfmt.DateTime struct
-func StringToDateTime(timeString string) *strfmt.DateTime {
+// StringToDateTime parses a time string into a time.Time struct
+func StringToDateTime(timeString string) *time.Time {
 	return DateTimeFormat(ParseTimeRFC3339(timeString))
 }
 
-// UnixTimeToDateTime parses an Int64 representing an epoch timestamp to a strfmt.DateTime struct
-func UnixTimeToDateTime(epochTimeStamp int64) *strfmt.DateTime {
+// UnixTimeToDateTime parses an Int64 representing an epoch timestamp to a time.Time struct
+func UnixTimeToDateTime(epochTimeStamp int64) *time.Time {
 	return DateTimeFormat(time.Unix(epochTimeStamp, 0))
 }

@@ -30,7 +30,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -233,7 +233,7 @@ func buildKmsKeySnapshot(kmsSvc kmsiface.KMSAPI, key *kms.KeyListEntry) (*awsmod
 }
 
 // PollKmsKeys gathers information on each KMS key for an AWS account.
-func PollKmsKeys(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollKmsKeys(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting KMS Key resource poller")
 
 	kmsSvc, err := getKMSClient(pollerInput, *pollerInput.Region)
@@ -247,7 +247,7 @@ func PollKmsKeys(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(keys))
+	resources := make([]apimodels.AddResourceEntry, 0, len(keys))
 	for _, key := range keys {
 		kmsKeySnapshot, err := buildKmsKeySnapshot(kmsSvc, key)
 		if err != nil {
@@ -260,11 +260,11 @@ func PollKmsKeys(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 		kmsKeySnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		kmsKeySnapshot.Region = pollerInput.Region
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      kmsKeySnapshot,
-			ID:              apimodels.ResourceID(*kmsKeySnapshot.ResourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *kmsKeySnapshot.ResourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.KmsKeySchema,
 		})
 	}

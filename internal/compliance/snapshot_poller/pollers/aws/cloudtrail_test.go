@@ -180,7 +180,7 @@ func TestCloudTrailPoller(t *testing.T) {
 	assert.NotEmpty(t, resources)
 
 	assert.IsType(t, &awsmodels.CloudTrail{}, resources[0].Attributes)
-	assert.Equal(t, *awstest.ExampleTrail.TrailARN, string(resources[0].ID))
+	assert.Equal(t, *awstest.ExampleTrail.TrailARN, resources[0].ID)
 
 	assert.IsType(t, &awsmodels.CloudTrailMeta{}, resources[len(resources)-1].Attributes)
 	assert.Equal(t, "123456789012::AWS.CloudTrail.Meta", string(resources[len(resources)-1].ID))

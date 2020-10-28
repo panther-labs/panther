@@ -29,7 +29,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -197,7 +197,7 @@ func buildEc2VolumeSnapshot(ec2Svc ec2iface.EC2API, volume *ec2.Volume) (*awsmod
 }
 
 // PollEc2Volumes gathers information on each EC2 Volume for an AWS account.
-func PollEc2Volumes(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollEc2Volumes(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting EC2 Volume resource poller")
 
 	ec2Svc, err := getEC2Client(pollerInput, *pollerInput.Region)
@@ -211,7 +211,7 @@ func PollEc2Volumes(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Ad
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(volumes))
+	resources := make([]apimodels.AddResourceEntry, 0, len(volumes))
 	for _, volume := range volumes {
 		ec2VolumeSnapshot, err := buildEc2VolumeSnapshot(ec2Svc, volume)
 		if err != nil {
@@ -238,11 +238,11 @@ func PollEc2Volumes(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Ad
 		ec2VolumeSnapshot.Region = pollerInput.Region
 		ec2VolumeSnapshot.ARN = aws.String(resourceID)
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      ec2VolumeSnapshot,
-			ID:              apimodels.ResourceID(resourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              resourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.Ec2VolumeSchema,
 		})
 	}

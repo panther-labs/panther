@@ -29,7 +29,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -187,7 +187,7 @@ func buildIAMPolicySnapshot(iamSvc iamiface.IAMAPI, policy *iam.Policy) (*awsmod
 }
 
 // PollIamPolicies gathers information on each IAM policy for an AWS account.
-func PollIamPolicies(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollIamPolicies(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting IAM Policy resource poller")
 	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
@@ -200,7 +200,7 @@ func PollIamPolicies(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		return nil, nil, err
 	}
 
-	var resources []*apimodels.AddResourceEntry
+	var resources []apimodels.AddResourceEntry
 	for _, policy := range policies {
 		iamPolicySnapshot, err := buildIAMPolicySnapshot(iamSvc, policy)
 		if err != nil {
@@ -208,11 +208,11 @@ func PollIamPolicies(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		}
 		iamPolicySnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      iamPolicySnapshot,
-			ID:              apimodels.ResourceID(*iamPolicySnapshot.ARN),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *iamPolicySnapshot.ARN,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.IAMPolicySchema,
 		})
 	}

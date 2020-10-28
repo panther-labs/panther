@@ -29,7 +29,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -185,7 +185,7 @@ func buildCloudWatchLogsLogGroupSnapshot(
 }
 
 // PollCloudWatchLogsLogGroups gathers information on each CloudWatchLogs LogGroup for an AWS account
-func PollCloudWatchLogsLogGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollCloudWatchLogsLogGroups(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting CloudWatch LogGroup resource poller")
 
 	cloudwatchLogGroupSvc, err := getCloudWatchLogsClient(pollerInput, *pollerInput.Region)
@@ -199,7 +199,7 @@ func PollCloudWatchLogsLogGroups(pollerInput *awsmodels.ResourcePollerInput) ([]
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(logGroups))
+	resources := make([]apimodels.AddResourceEntry, 0, len(logGroups))
 	for i, logGroup := range logGroups {
 		logGroupSnapshot, err := buildCloudWatchLogsLogGroupSnapshot(cloudwatchLogGroupSvc, logGroup)
 		if err != nil {
@@ -209,11 +209,11 @@ func PollCloudWatchLogsLogGroups(pollerInput *awsmodels.ResourcePollerInput) ([]
 		logGroupSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		logGroupSnapshot.Region = pollerInput.Region
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      logGroupSnapshot,
-			ID:              apimodels.ResourceID(*logGroupSnapshot.ResourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *logGroupSnapshot.ResourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.CloudWatchLogGroupSchema,
 		})
 	}

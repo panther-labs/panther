@@ -27,7 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -181,7 +181,7 @@ func buildAcmCertificateSnapshot(acmSvc acmiface.ACMAPI, certificateArn *string)
 }
 
 // PollAcmCertificates gathers information on each ACM Certificate for an AWS account.
-func PollAcmCertificates(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollAcmCertificates(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting ACM Certificate resource poller")
 
 	acmSvc, err := getAcmClient(pollerInput, *pollerInput.Region)
@@ -196,7 +196,7 @@ func PollAcmCertificates(pollerInput *awsmodels.ResourcePollerInput) ([]*apimode
 	}
 
 	// For each certificate, build a snapshot of that certificate
-	resources := make([]*apimodels.AddResourceEntry, 0, len(certificates))
+	resources := make([]apimodels.AddResourceEntry, 0, len(certificates))
 	for _, certificateSummary := range certificates {
 		acmCertificateSnapshot, err := buildAcmCertificateSnapshot(acmSvc, certificateSummary.CertificateArn)
 		if err != nil {
@@ -205,11 +205,11 @@ func PollAcmCertificates(pollerInput *awsmodels.ResourcePollerInput) ([]*apimode
 		acmCertificateSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		acmCertificateSnapshot.Region = pollerInput.Region
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      acmCertificateSnapshot,
-			ID:              apimodels.ResourceID(*acmCertificateSnapshot.ResourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *acmCertificateSnapshot.ResourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.AcmCertificateSchema,
 		})
 	}
