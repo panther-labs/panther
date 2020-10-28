@@ -75,7 +75,8 @@ class Engine:
                     dedup=result.dedup_string,  # type: ignore
                     dedup_period_mins=rule.rule_dedup_period_mins,
                     event=event,
-                    title=result.title
+                    title=result.title,
+                    alert_context=result.alert_context
                 )
                 engine_results.append(match)
 

@@ -318,7 +318,9 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
        * Overriding default behaviour for legend selection. With this functionality,
        * when user select an specific series, we isolate this series only, subsequent clicks on
        * other series will show them up too. When all series are enabled again this behaviour is reseted
+       * We need to disable listeners before enabling them to avoid generating multiple listeners
        */
+      newChart.off('legendselectchanged');
       // eslint-disable-next-line func-names
       newChart.on('legendselectchanged', function (obj) {
         const { selected, name } = obj;
@@ -343,8 +345,10 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
 
       /*
        * Overriding default behaviour for restore functionality. With this functionality,
-       * we reset all legend selections, zooms and scaleType
+       * we reset all legend selections, zooms and scaleType. We need to disable listeners
+       * before enabling them to avoid generating multiple listeners
        */
+      newChart.off('restore');
       // eslint-disable-next-line func-names
       newChart.on('restore', function () {
         const options = chartOptions;
@@ -361,7 +365,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       newChart.setOption(chartOptions);
       timeSeriesChart.current = newChart;
     })();
-  }, []);
+  }, [chartOptions]);
 
   // useEffect to apply changes from chartOptions
   React.useEffect(() => {
