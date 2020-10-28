@@ -19,7 +19,7 @@ package handlers
  */
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -28,63 +28,43 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/compliance/models"
+	"github.com/panther-labs/panther/api/lambda/compliance/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-type describePolicyParams struct {
-	pageParams
-	PolicyID models.PolicyID
-}
-
 // DescribePolicy returns all pass/fail information needed for the policy overview page.
-func DescribePolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	params, err := parseDescribePolicy(request)
+func (API) DescribePolicy(input *models.DescribePolicyInput) *events.APIGatewayProxyResponse {
+	var err error
+	input.PolicyID, err = url.QueryUnescape(input.PolicyID)
 	if err != nil {
-		return badRequest(err)
+		return &events.APIGatewayProxyResponse{
+			Body:       fmt.Sprintf("policyId '%s' could not be url-escaped: %s", input.PolicyID, err),
+			StatusCode: http.StatusBadRequest,
+		}
 	}
 
-	input, err := buildDescribePolicyQuery(params.PolicyID)
+	queryInput, err := buildDescribePolicyQuery(input.PolicyID)
 	if err != nil {
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		zap.L().Error("DescribePolicy failed", zap.Error(err))
+		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusInternalServerError}
 	}
 
-	detail, err := policyResourceDetail(input, &params.pageParams, "")
+	detail, err := policyResourceDetail(queryInput, input.Page, input.PageSize, "", input.Status, input.Suppressed)
 	if err != nil {
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		zap.L().Error("DescribePolicy failed", zap.Error(err))
+		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusInternalServerError}
 	}
 
 	return gatewayapi.MarshalResponse(detail, http.StatusOK)
 }
 
-func parseDescribePolicy(request *events.APIGatewayProxyRequest) (*describePolicyParams, error) {
-	pageParams, err := parsePageParams(request)
-	if err != nil {
-		return nil, err
-	}
-
-	policyID, err := url.QueryUnescape(request.QueryStringParameters["policyId"])
-	if err != nil {
-		return nil, errors.New("invalid policyId: " + err.Error())
-	}
-
-	result := describePolicyParams{pageParams: *pageParams, PolicyID: models.PolicyID(policyID)}
-
-	if err = result.PolicyID.Validate(nil); err != nil {
-		return nil, errors.New("invalid policyId: " + err.Error())
-	}
-
-	return &result, nil
-}
-
-func buildDescribePolicyQuery(policyID models.PolicyID) (*dynamodb.QueryInput, error) {
+func buildDescribePolicyQuery(policyID string) (*dynamodb.QueryInput, error) {
 	keyCondition := expression.Key("policyId").Equal(expression.Value(policyID))
 
 	// We can't do any additional filtering here because we need to include global totals
 	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
 	if err != nil {
-		zap.L().Error("expression.Build failed", zap.Error(err))
-		return nil, err
+		return nil, fmt.Errorf("expression.Build failed: %s", err)
 	}
 
 	return &dynamodb.QueryInput{

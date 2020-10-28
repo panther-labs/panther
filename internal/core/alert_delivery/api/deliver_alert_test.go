@@ -54,12 +54,12 @@ func TestGetAlert(t *testing.T) {
 		TimePartitionCreationTimeIndexName: "timePartitionCreationTimeIndexName",
 	}
 
-	alertID := aws.String("alert-id")
+	alertID := "alert-id"
 	timeNow := time.Now().UTC()
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
 
 	alert := &deliveryModels.Alert{
-		AlertID:             alertID,
+		AlertID:             &alertID,
 		AnalysisDescription: aws.String("A test alert"),
 		AnalysisID:          "Test.Analysis.ID",
 		AnalysisName:        aws.String("Test Analysis Name"),
@@ -89,7 +89,7 @@ func TestGetAlert(t *testing.T) {
 
 	expectedGetItemRequest := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			"id": {S: alertID},
+			"id": {S: &alertID},
 		},
 		TableName: aws.String(alertsTableClient.AlertsTableName),
 	}

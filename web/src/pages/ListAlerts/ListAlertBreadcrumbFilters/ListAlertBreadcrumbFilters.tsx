@@ -19,39 +19,37 @@
 import React from 'react';
 import { Form, Formik, Field } from 'formik';
 import { ListAlertsInput } from 'Generated/schema';
-import { Flex } from 'pouncejs';
+import { Box, Flex } from 'pouncejs';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 
-import pickBy from 'lodash/pickBy';
-import isEmpty from 'lodash/isEmpty';
 import pick from 'lodash/pick';
 
 import FormikDateRangeInput from 'Components/fields/DateRangeInput';
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikAutosave from 'Components/utils/Autosave';
 import Breadcrumbs from 'Components/Breadcrumbs';
-import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
+import { useListAvailableLogTypes } from 'Source/graphql/queries';
 
-export type ListAlertsFiltersValues = Pick<
-  ListAlertsInput,
-  'logTypes' | 'createdAtAfter' | 'createdAtBefore'
->;
+export type ListAlertsFiltersValues = {
+  logType: string;
+  createdAtBefore: string;
+  createdAtAfter: string;
+};
 
 export const ALL_TYPES = 'All types';
 
-export const sanitizeLogTypes = logTypes => {
-  // Sanitize values coming from the URL as array and from the component as string.
-  if (Array.isArray(logTypes)) {
-    return logTypes.filter(type => type === 'ALL_TYPES');
-  }
-  return logTypes !== ALL_TYPES ? [logTypes] : [];
-};
+const filterKeys: (keyof Partial<ListAlertsInput>)[] = [
+  'logTypes',
+  'createdAtAfter',
+  'createdAtBefore',
+];
 
-const filterKeys = ['logTypes', 'createdAtAfter', 'createdAtBefore'];
 const ListAlertBreadcrumbFilters: React.FC = () => {
   const { data, loading: logTypesLoading, error: logTypesError } = useListAvailableLogTypes();
 
-  const { requestParams, setRequestParams } = useRequestParamsWithoutPagination<ListAlertsInput>();
+  const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
+    ListAlertsInput
+  >();
 
   const availableLogTypes = React.useMemo(
     () =>
@@ -65,27 +63,22 @@ const ListAlertBreadcrumbFilters: React.FC = () => {
     const { logTypes, ...params } = requestParams;
     return {
       ...pick(params, filterKeys),
-      logTypes: logTypes && logTypes?.length > 0 ? logTypes : [ALL_TYPES],
+      logType: logTypes?.length > 0 ? logTypes[0] : ALL_TYPES,
     } as ListAlertsFiltersValues;
   }, [requestParams]);
 
   const onFiltersChange = React.useCallback(
-    values => {
-      const { logTypes, ...rest } = values;
-      const sanitizedLogTypes = sanitizeLogTypes(logTypes);
-      const params = pickBy(
-        { ...requestParams, ...rest, logTypes: sanitizedLogTypes },
-        param => !isEmpty(param)
-      );
-      setRequestParams(params);
+    ({ logType, ...rest }: ListAlertsFiltersValues) => {
+      updateRequestParams({ ...rest, logTypes: logType !== ALL_TYPES ? [logType] : undefined });
     },
-    [requestParams, setRequestParams]
+    [updateRequestParams]
   );
 
   return (
     <Breadcrumbs.Actions>
       <Flex justify="flex-end">
         <Formik<ListAlertsFiltersValues>
+          enableReinitialize
           initialValues={initialFilterValues}
           onSubmit={onFiltersChange}
         >
@@ -93,13 +86,16 @@ const ListAlertBreadcrumbFilters: React.FC = () => {
             <FormikAutosave threshold={50} />
             <Flex spacing={4}>
               {!logTypesLoading && !logTypesError && (
-                <Field
-                  as={FormikCombobox}
-                  variant="solid"
-                  label="Log Type"
-                  name="logTypes"
-                  items={availableLogTypes}
-                />
+                <Box width={250}>
+                  <Field
+                    as={FormikCombobox}
+                    variant="solid"
+                    label="Log Type"
+                    name="logType"
+                    placeholder="Select a log type"
+                    items={availableLogTypes}
+                  />
+                </Box>
               )}
               <FormikDateRangeInput
                 alignment="right"

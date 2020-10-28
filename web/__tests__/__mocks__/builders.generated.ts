@@ -860,7 +860,7 @@ export const buildListRulesInput = (overrides: Partial<ListRulesInput> = {}): Li
   return {
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'Cotton',
     enabled: 'enabled' in overrides ? overrides.enabled : false,
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : 'Drive',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Drive'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Low,
     tags: 'tags' in overrides ? overrides.tags : ['channels'],
     sortBy: 'sortBy' in overrides ? overrides.sortBy : ListRulesSortFieldsEnum.Enabled,
@@ -1449,7 +1449,8 @@ export const buildUpdateAlertStatusInput = (
   overrides: Partial<UpdateAlertStatusInput> = {}
 ): UpdateAlertStatusInput => {
   return {
-    alertId: 'alertId' in overrides ? overrides.alertId : '344a4508-25bd-42d0-bc1a-11a8551110cc',
+    alertIds:
+      'alertIds' in overrides ? overrides.alertIds : ['eb2e440c-22b8-4ba2-91ba-23d223957554'],
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
   };
 };

@@ -41,25 +41,18 @@ interface LogAnalysisOverviewBreadcrumbFiltersProps {
 const LogAnalysisOverviewBreadcrumbFilters: React.FC<LogAnalysisOverviewBreadcrumbFiltersProps> = ({
   initialValues,
 }) => {
-  const { requestParams, setRequestParams } = useRequestParamsWithoutPagination<
-    LogAnalysisMetricsInput
-  >();
-
-  const onFiltersChange = React.useCallback(values => setRequestParams(values), [
-    requestParams,
-    setRequestParams,
-  ]);
+  const { updateRequestParams } = useRequestParamsWithoutPagination<LogAnalysisMetricsInput>();
 
   return (
     <Breadcrumbs.Actions>
       <Flex justify="flex-end">
         <Formik<LogAnalysisOverviewFiltersValues>
           initialValues={initialValues}
-          onSubmit={onFiltersChange}
+          onSubmit={updateRequestParams}
         >
           <Form>
             <FormikAutosave threshold={50} />
-            <Flex spacing={4} maxWidth={440}>
+            <Flex spacing={4} maxWidth={500}>
               <Box width={150}>
                 <Field
                   as={FormikCombobox}

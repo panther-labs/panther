@@ -18,15 +18,23 @@
 
 import React from 'react';
 import { Form, Formik, FastField } from 'formik';
-import { Box, SimpleGrid, Button, Dropdown, DropdownButton, DropdownMenu, Flex } from 'pouncejs';
-
+import {
+  Box,
+  SimpleGrid,
+  Button,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  Flex,
+  Card,
+} from 'pouncejs';
 import { ListAlertsInput, SeverityEnum, AlertStatusesEnum } from 'Generated/schema';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { capitalize } from 'Helpers/utils';
 import isEmpty from 'lodash/isEmpty';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import TextButton from 'Components/buttons/TextButton';
-import FormikTextInput from 'Components/fields/TextInput';
+import FormikNumberInput from 'Components/fields/NumberInput';
 
 export type ListAlertsDropdownFiltersValues = Pick<
   ListAlertsInput,
@@ -39,9 +47,13 @@ const filterItemToString = (item: SeverityEnum | AlertStatusesEnum) =>
 const statusOptions = Object.values(AlertStatusesEnum);
 const severityOptions = Object.values(SeverityEnum);
 
-const defaultValues = {
+const defaultValues: ListAlertsDropdownFiltersValues = {
   severity: [],
   status: [],
+  // @ts-ignore
+  eventCountMin: '',
+  // @ts-ignore
+  eventCountMax: '',
 };
 
 const DropdownFilters: React.FC = () => {
@@ -61,74 +73,80 @@ const DropdownFilters: React.FC = () => {
     .length;
 
   return (
-    <Dropdown>
-      <DropdownButton
-        as={Button}
-        iconAlignment="right"
-        icon="filter-light"
-        aria-label="Additional Filters"
-      >
-        Filters {filtersCount ? `(${filtersCount})` : ''}
-      </DropdownButton>
-      <DropdownMenu>
-        <Box p={6} pb={4} backgroundColor="navyblue-400" minWidth={425}>
-          <Formik<ListAlertsDropdownFiltersValues>
-            onSubmit={updateRequestParams}
-            initialValues={initialDropdownFilters}
+    <Popover>
+      {({ close: closePopover }) => (
+        <React.Fragment>
+          <PopoverTrigger
+            as={Button}
+            iconAlignment="right"
+            icon="filter-light"
+            aria-label="Additional Filters"
           >
-            <Form>
-              <Box pb={4}>
-                <FastField
-                  name="status"
-                  as={FormikMultiCombobox}
-                  items={statusOptions}
-                  itemToString={filterItemToString}
-                  label="Status"
-                />
-              </Box>
-              <Box pb={4}>
-                <FastField
-                  name="severity"
-                  as={FormikMultiCombobox}
-                  items={severityOptions}
-                  itemToString={filterItemToString}
-                  label="Severity"
-                />
-              </Box>
-              <SimpleGrid columns={2} gap={4} pb={4}>
-                <FastField
-                  name="eventCountMin"
-                  as={FormikTextInput}
-                  type="number"
-                  min={0}
-                  label="Min Events"
-                />
-                <FastField
-                  name="eventCountMax"
-                  as={FormikTextInput}
-                  type="number"
-                  min={0}
-                  label="Max Events"
-                />
-              </SimpleGrid>
-              <Flex direction="column" justify="center" align="center" spacing={4}>
-                <Box>
-                  <Button type="submit">Apply Filters</Button>
-                </Box>
-                <TextButton
-                  role="button"
-                  onClick={() => {
-                    updateRequestParams(defaultValues);
-                  }}
-                >
-                  Clear All Filters
-                </TextButton>
-              </Flex>
-            </Form>
-          </Formik>
-        </Box>
-      </DropdownMenu>
-    </Dropdown>
+            Filters {filtersCount ? `(${filtersCount})` : ''}
+          </PopoverTrigger>
+          <PopoverContent alignment="bottom-left">
+            <Card shadow="dark300" my={14} p={6} pb={4} minWidth={425}>
+              <Formik<ListAlertsDropdownFiltersValues>
+                enableReinitialize
+                onSubmit={updateRequestParams}
+                initialValues={initialDropdownFilters}
+              >
+                {({ setValues }) => (
+                  <Form>
+                    <Box pb={4}>
+                      <FastField
+                        name="status"
+                        as={FormikMultiCombobox}
+                        items={statusOptions}
+                        itemToString={filterItemToString}
+                        label="Status"
+                        placeholder="Select statuses"
+                      />
+                    </Box>
+                    <Box pb={4}>
+                      <FastField
+                        name="severity"
+                        as={FormikMultiCombobox}
+                        items={severityOptions}
+                        itemToString={filterItemToString}
+                        label="Severity"
+                        placeholder="Select severities"
+                      />
+                    </Box>
+                    <SimpleGrid columns={2} gap={4} pb={4}>
+                      <FastField
+                        name="eventCountMin"
+                        as={FormikNumberInput}
+                        min={0}
+                        label="Min Events"
+                        placeholder="Minimum number of events"
+                      />
+                      <FastField
+                        name="eventCountMax"
+                        as={FormikNumberInput}
+                        min={0}
+                        label="Max Events"
+                        placeholder="Maximum number of events"
+                      />
+                    </SimpleGrid>
+                    <Flex direction="column" justify="center" align="center" spacing={4}>
+                      <Box>
+                        <Button type="submit" onClick={closePopover}>
+                          Apply Filters
+                        </Button>
+                      </Box>
+                      <TextButton role="button" onClick={() => setValues(defaultValues)}>
+                        Clear Filters
+                      </TextButton>
+                    </Flex>
+                  </Form>
+                )}
+              </Formik>
+            </Card>
+          </PopoverContent>
+        </React.Fragment>
+      )}
+    </Popover>
   );
 };
 

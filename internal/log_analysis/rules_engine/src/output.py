@@ -44,6 +44,7 @@ _SNS_TOPIC_ARN = os.environ['NOTIFICATIONS_TOPIC']
 _LOGGER = get_logger()
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class EventCommonFields:
     """Fields that will be added to all stored events"""
@@ -54,6 +55,7 @@ class EventCommonFields:
     p_alert_creation_time: str
     p_alert_update_time: str
     p_rule_error: Optional[str] = None
+    p_alert_context: Optional[str] = None
 
 
 @dataclass
@@ -135,7 +137,8 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
         num_matches=len(events),
         title=events[0].title,
         processing_time=time,
-        is_rule_error=key.is_rule_error
+        is_rule_error=key.is_rule_error,
+        alert_context=events[0].alert_context,
     )
     alert_info = update_get_alert_info(group_info)
     data_stream = BytesIO()
@@ -248,6 +251,7 @@ def _get_common_fields(match: EngineResult, alert_info: AlertInfo) -> Dict[str, 
         p_rule_reports=match.rule_reports,
         p_alert_creation_time=alert_info.alert_creation_time.strftime(_DATE_FORMAT),
         p_alert_update_time=alert_info.alert_update_time.strftime(_DATE_FORMAT),
-        p_rule_error=match.error_message
+        p_rule_error=match.error_message,
+        p_alert_context=match.alert_context
     )
     return asdict(common_fields)

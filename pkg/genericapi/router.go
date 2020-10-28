@@ -110,15 +110,28 @@ func (r *Router) Handle(input interface{}) (output interface{}, err error) {
 
 	results := handler.Call([]reflect.Value{req.input})
 
-	if len(results) == 1 {
-		return nil, toError(results[0], req.route)
+	var payload interface{}
+	switch len(results) {
+	case 1:
+		// single return: could be an error or the payload
+		if results[0].IsNil() {
+			return nil, nil
+		}
+
+		payload = results[0].Interface()
+		if _, ok := payload.(error); ok {
+			return nil, toError(results[0], req.route)
+		}
+	case 2:
+		payload, err = results[0].Interface(), toError(results[1], req.route)
+	default:
+		panic(fmt.Sprintf("%s has %d returns, expected 1 or 2", req.route, len(results)))
 	}
 
-	result, err := results[0].Interface(), toError(results[1], req.route)
-	if result != nil {
-		gatewayapi.ReplaceMapSliceNils(&result)
+	if payload != nil {
+		gatewayapi.ReplaceMapSliceNils(&payload)
 	}
-	return result, err
+	return payload, err
 }
 
 type request struct {

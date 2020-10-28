@@ -50,7 +50,8 @@ func RepoVersion() string {
 	// whereas tags can be changed at any time (and don't always exist in every branch).
 	baseVersion := strings.TrimSpace(string(MustReadFile("VERSION")))
 
-	branch, err := sh.Output("git", "branch", "--show-current")
+	// "git branch --show-current" works for Git 2.22+, but this should work on older versions:
+	branch, err := sh.Output("git", "rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
 		panic(fmt.Errorf("failed to get name of current branch: %s", err))
 	}

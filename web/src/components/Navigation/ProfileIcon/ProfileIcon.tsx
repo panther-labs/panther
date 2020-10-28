@@ -18,9 +18,9 @@
 
 import React from 'react';
 import {
-  Dropdown,
-  DropdownButton,
-  DropdownMenu,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
   Divider,
   Box,
   Text,
@@ -28,6 +28,7 @@ import {
   AbstractButton,
   Flex,
   Img,
+  Card,
 } from 'pouncejs';
 import useAuth from 'Hooks/useAuth';
 import { UserInfo } from 'Components/utils/AuthContext';
@@ -63,15 +64,15 @@ const ProfileIcon: React.FC = () => {
   const { showModal } = useModal();
 
   return (
-    <Dropdown>
-      {({ isExpanded }) => (
+    <Popover>
+      {({ isOpen, close: closePopover }) => (
         <React.Fragment>
-          <DropdownButton
+          <PopoverTrigger
             as={AbstractButton}
             display="flex"
             width={40}
             height={40}
-            backgroundColor={isExpanded ? 'violet-400' : 'violet-500'}
+            backgroundColor={isOpen ? 'violet-400' : 'violet-500'}
             _hover={{ backgroundColor: 'violet-400' }}
             transition="background-color 0.1s linear"
             borderRadius="circle"
@@ -82,44 +83,62 @@ const ProfileIcon: React.FC = () => {
             aria-label="Toggle User Menu"
           >
             {getUserInitials(userInfo).toUpperCase()}
-          </DropdownButton>
-          <DropdownMenu alignment="right" transform="translate(65px, -65px)">
-            <Box p={6} minWidth={240} backgroundColor="navyblue-400" fontSize="medium">
-              <Text>{getUserDisplayName(userInfo)}</Text>
-              <Link external href={`mailto:${userInfo.email}`}>
-                {userInfo.email}
-              </Link>
-              <Divider mt={6} mb={3} color="navyblue-200" />
-              <Box mb={2} mx={-2}>
-                <AbstractButton
-                  p={2}
-                  onClick={() => showModal({ modal: MODALS.EDIT_PROFILE_SETTINGS })}
-                >
-                  Profile Settings
-                </AbstractButton>
-              </Box>
-              <Box mx={-2}>
-                <AbstractButton p={2} onClick={() => signOut({ global: true, onError: alert })}>
-                  Log Out
-                </AbstractButton>
-              </Box>
-            </Box>
-            <Flex
-              as="footer"
-              justify="center"
-              backgroundColor="navyblue-600"
-              p={3}
-              mt={-2}
-              fontSize="small"
-              fontStyle="italic"
+          </PopoverTrigger>
+          <PopoverContent alignment="right-bottom">
+            <Card
+              mx={20}
+              my={-12}
+              shadow="dark300"
+              minWidth={240}
+              fontSize="medium"
+              overflow="hidden"
             >
-              <Img src={PantherIcon} alt="Panther logo" nativeWidth={16} nativeHeight={16} mr={2} />
-              Panther&nbsp;<b>{STABLE_PANTHER_VERSION}</b>
-            </Flex>
-          </DropdownMenu>
+              <Box p={6}>
+                <Text>{getUserDisplayName(userInfo)}</Text>
+                <Link external href={`mailto:${userInfo.email}`}>
+                  {userInfo.email}
+                </Link>
+                <Divider mt={6} mb={3} color="navyblue-200" />
+                <Box mb={2} mx={-2}>
+                  <AbstractButton
+                    p={2}
+                    onClick={() => {
+                      showModal({ modal: MODALS.EDIT_PROFILE_SETTINGS });
+                      closePopover();
+                    }}
+                  >
+                    Profile Settings
+                  </AbstractButton>
+                </Box>
+                <Box mx={-2}>
+                  <AbstractButton p={2} onClick={() => signOut({ global: true, onError: alert })}>
+                    Log Out
+                  </AbstractButton>
+                </Box>
+              </Box>
+              <Flex
+                as="footer"
+                justify="center"
+                backgroundColor="navyblue-600"
+                p={3}
+                mt={-2}
+                fontSize="small"
+                fontStyle="italic"
+              >
+                <Img
+                  src={PantherIcon}
+                  alt="Panther logo"
+                  nativeWidth={16}
+                  nativeHeight={16}
+                  mr={2}
+                />
+                Panther&nbsp;<b>{STABLE_PANTHER_VERSION}</b>
+              </Flex>
+            </Card>
+          </PopoverContent>
         </React.Fragment>
       )}
-    </Dropdown>
+    </Popover>
   );
 };
 

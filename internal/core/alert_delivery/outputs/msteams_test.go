@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
@@ -44,6 +44,7 @@ func TestMsTeamsAlert(t *testing.T) {
 		OutputIds:    []string{"output-id"},
 		AnalysisName: aws.String("policyName"),
 		Severity:     "INFO",
+		Context:      map[string]interface{}{"key": "value"},
 	}
 
 	msTeamsPayload := map[string]interface{}{
@@ -57,6 +58,7 @@ func TestMsTeamsAlert(t *testing.T) {
 					map[string]string{"name": "Runbook", "value": ""},
 					map[string]string{"name": "Severity", "value": "INFO"},
 					map[string]string{"name": "Tags", "value": ""},
+					map[string]string{"name": "AlertContext", "value": `{"key":"value"}`},
 				},
 				"text": "[Click here to view in the Panther UI](https://panther.io/policies/policyId).\n",
 			},
@@ -84,6 +86,6 @@ func TestMsTeamsAlert(t *testing.T) {
 
 	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
-	require.Nil(t, client.MsTeams(alert, msTeamConfig))
+	assert.Nil(t, client.MsTeams(alert, msTeamConfig))
 	httpWrapper.AssertExpectations(t)
 }

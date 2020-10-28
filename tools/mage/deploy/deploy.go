@@ -21,6 +21,7 @@ package deploy
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -34,6 +35,7 @@ import (
 	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/prompt"
+	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/mage/build"
 	"github.com/panther-labs/panther/tools/mage/clients"
@@ -67,6 +69,14 @@ func Deploy() error {
 	start := time.Now()
 	if err := PreCheck(); err != nil {
 		return err
+	}
+
+	if function := os.Getenv("LAMBDA"); function != "" {
+		function = strings.ToLower(strings.TrimSpace(function))
+		if !strings.HasPrefix(function, "panther-") {
+			function = "panther-" + function
+		}
+		return deploySingleLambda(function)
 	}
 
 	if stack := os.Getenv("STACK"); stack != "" {
@@ -167,6 +177,84 @@ func setFirstUser(settings *PantherConfig) error {
 		Email:      email,
 	}
 	return nil
+}
+
+// Update a single Lambda function for rapid developer iteration.
+//
+// This will only update the Lambda source, not the function configuration.
+func deploySingleLambda(function string) error {
+	// Find the function source path and language from the CFN templates
+	type cfnResource struct {
+		Type       string
+		Properties map[string]interface{}
+	}
+
+	type cfnTemplate struct {
+		Resources map[string]cfnResource
+	}
+
+	for _, path := range []string{
+		cfnstacks.LogAnalysisTemplate,
+		cfnstacks.CloudsecTemplate,
+		cfnstacks.CoreTemplate,
+		cfnstacks.APITemplate,
+	} {
+		var template cfnTemplate
+		if err := util.ParseTemplate(path, &template); err != nil {
+			return err
+		}
+
+		for _, resource := range template.Resources {
+			if resource.Type != "AWS::Serverless::Function" {
+				continue
+			}
+
+			if resource.Properties["FunctionName"].(string) == function {
+				return updateLambdaCode(
+					function,
+					filepath.Join("deployments", resource.Properties["CodeUri"].(string)),
+					resource.Properties["Runtime"].(string),
+				)
+			}
+		}
+	}
+
+	// Couldn't find the lambda function in any of the templates
+	return fmt.Errorf("unknown function LAMBDA=%s", function)
+}
+
+func updateLambdaCode(function, srcPath, runtime string) error {
+	var pathToZip string
+
+	if strings.HasPrefix(runtime, "go") {
+		srcPath = strings.TrimPrefix(srcPath, "out/")
+		srcPath = strings.TrimPrefix(srcPath, "bin/")
+		log.Infof("compiling %s", srcPath)
+		binary, err := build.LambdaPackage(srcPath)
+		if err != nil {
+			return err
+		}
+		pathToZip = filepath.Dir(binary)
+	} else if strings.HasPrefix(runtime, "python") {
+		pathToZip = srcPath
+	} else {
+		return fmt.Errorf("unknown Lambda runtime %s", runtime)
+	}
+
+	// Create zipfile
+	pkg := filepath.Join("out", "deployments", function+".zip")
+	if err := shutil.ZipDirectory(pathToZip, pkg, false); err != nil {
+		return fmt.Errorf("failed to zip %s into %s: %v", pathToZip, pkg, err)
+	}
+
+	// Update function
+	log.Infof("updating code for %s Lambda function %s", runtime, function)
+	response, err := clients.Lambda().UpdateFunctionCode(&lambda.UpdateFunctionCodeInput{
+		FunctionName: &function,
+		ZipFile:      util.MustReadFile(pkg),
+	})
+	log.Debugf("Lambda update response: %v", response)
+	return err
 }
 
 // Deploy a single stack for rapid developer iteration.
@@ -393,7 +481,6 @@ func deployAppsyncStack(outputs map[string]string) error {
 		"AlarmTopicArn":         outputs["AlarmTopicArn"],
 		"AnalysisApi":           "https://" + outputs["AnalysisApiEndpoint"],
 		"ApiId":                 outputs["GraphQLApiId"],
-		"ComplianceApi":         "https://" + outputs["ComplianceApiEndpoint"],
 		"CustomResourceVersion": customResourceVersion(),
 		"RemediationApi":        "https://" + outputs["RemediationApiEndpoint"],
 		"ResourcesApi":          "https://" + outputs["ResourcesApiEndpoint"],
@@ -407,7 +494,6 @@ func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
 		"AnalysisApiId":              outputs["AnalysisApiId"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-		"ComplianceApiId":            outputs["ComplianceApiId"],
 		"CustomResourceVersion":      customResourceVersion(),
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
@@ -431,7 +517,6 @@ func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CompanyDisplayName":         settings.Setup.Company.DisplayName,
 		"CompanyEmail":               settings.Setup.Company.Email,
-		"ComplianceApiId":            outputs["ComplianceApiId"],
 		"CustomResourceVersion":      customResourceVersion(),
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 		"DynamoScalingRoleArn":       outputs["DynamoScalingRoleArn"],

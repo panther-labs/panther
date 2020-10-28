@@ -103,6 +103,9 @@ func handleNotificationMessage(notification *SnsNotification) (result []*common.
 		return nil, err
 	}
 	for _, s3Object := range s3Objects {
+		if shouldIgnoreS3Object(s3Object) {
+			continue
+		}
 		var dataStream *common.DataStream
 		dataStream, err = readS3Object(s3Object)
 		if err != nil {
@@ -116,6 +119,12 @@ func handleNotificationMessage(notification *SnsNotification) (result []*common.
 		result = append(result, dataStream)
 	}
 	return result, err
+}
+
+func shouldIgnoreS3Object(s3Object *S3ObjectInfo) bool {
+	// We should ignore S3 objects that end in `/`.
+	// These objects are used in S3 to define a "folder" and do not contain data.
+	return strings.HasSuffix(s3Object.S3ObjectKey, "/")
 }
 
 func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err error) {

@@ -48,7 +48,7 @@ Infra:
 
   # Adding a small queue delay can improve the ability of the log processor
   # to aggregate processed log files. The value must be between 0 and 20 seconds.
-  LogProcessorSQSDelaySeconds: 5
+  LogProcessorSQSDelaySeconds: 0
 
   # Create a Python layer with these pip library versions for analysis and remediation.
   #

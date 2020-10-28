@@ -52,8 +52,8 @@ type GetMetricsOutput struct {
 
 // MetricResult is either a single data point or a series of timestamped data points
 type MetricResult = struct {
-	SingleValue []SingleMetric   `json:"singleValue,omitempty"`
-	SeriesData  TimeSeriesMetric `json:"seriesData,omitempty"`
+	SingleValue []SingleMetric   `json:"singleValue"`
+	SeriesData  TimeSeriesMetric `json:"seriesData"`
 }
 
 type SingleMetric struct {

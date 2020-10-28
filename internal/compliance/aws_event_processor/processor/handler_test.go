@@ -224,7 +224,7 @@ func TestHandleLogCloudTailInvalid(t *testing.T) {
 
 func TestLogProcessorCloudTrail(t *testing.T) {
 	mockS3 := testutils.S3Mock{}
-	s3Svc = &mockS3
+	s3Client = &mockS3
 
 	var dataBuf bytes.Buffer
 	gzipWriter := gzip.NewWriter(&dataBuf)

@@ -58,7 +58,7 @@ func Lambda() error {
 		len(packages), runtime.Version())
 
 	for _, pkg := range packages {
-		if err := buildLambdaPackage(pkg); err != nil {
+		if _, err := LambdaPackage(pkg); err != nil {
 			return err
 		}
 	}
@@ -66,17 +66,18 @@ func Lambda() error {
 	return nil
 }
 
-func buildLambdaPackage(pkg string) error {
+// Build a binary for a single Lambda function, returning (binary path, error)
+func LambdaPackage(pkg string) (string, error) {
 	targetDir := filepath.Join("out", "bin", pkg)
 	binary := filepath.Join(targetDir, "main")
 	var buildEnv = map[string]string{"GOARCH": "amd64", "GOOS": "linux"}
 
 	if err := os.MkdirAll(targetDir, 0700); err != nil {
-		return fmt.Errorf("failed to create %s directory: %v", targetDir, err)
+		return binary, fmt.Errorf("failed to create %s directory: %v", targetDir, err)
 	}
 	if err := sh.RunWith(buildEnv, "go", "build", "-p", "1", "-ldflags", "-s -w", "-o", targetDir, "./"+pkg); err != nil {
-		return fmt.Errorf("go build %s failed: %v", binary, err)
+		return binary, fmt.Errorf("go build %s failed: %v", binary, err)
 	}
 
-	return nil
+	return binary, nil
 }

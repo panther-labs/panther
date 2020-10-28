@@ -49,7 +49,7 @@ import (
 // var output models.AddRuleOutput
 // err := Invoke(client, "panther-rules-api", &input, &output)
 func Invoke(
-	client lambdaiface.LambdaAPI, function string, input interface{}, output interface{}) error {
+	client lambdaiface.LambdaAPI, function string, input, output interface{}) error {
 
 	payload, err := jsoniter.Marshal(input)
 	if err != nil {
