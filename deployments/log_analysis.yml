@@ -121,18 +121,9 @@ Conditions:
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
-  ##### Configure Athena #####
-  AthenaConfigure:
-    Type: Custom::AthenaInit # this will associate the bucket as the default location for results
-    Properties:
-      AthenaResultsBucket: !Ref AthenaResultsBucket
-      CustomResourceVersion: !Ref CustomResourceVersion
-      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
-
   ###### Update Glue Table Schemas for Deployed Tables #####
   UpdateGlueTables:
     DependsOn:
-      - AthenaConfigure
       - UpdaterFunction
     Type: Custom::UpdateLogProcessorTables
     Properties:

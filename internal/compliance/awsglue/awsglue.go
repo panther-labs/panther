@@ -37,11 +37,11 @@ const (
 	// FIXME: Update the description when the DDB connector is GA
 	ResourcesTableDDB         = "panther-resources"
 	ResourcesTable            = "resources"
-	ResourcesTableDescription = "The resources discovered by Panther scanning (Note: The Athena federated query feature is available in preview in the US East (N. Virginia), Asia Pacific (Mumbai), Europe (Ireland), and US West (Oregon) Regions.)" // nolint:lll
+	ResourcesTableDescription = "(ddb.panther_cloudsecurity.panther-resources) The resources discovered by Panther scanning"
 
 	ComplianceTableDDB         = "panther-compliance"
 	ComplianceTable            = "compliance"
-	ComplianceTableDescription = "The policies and statuses from Panther scanning (Note: The Athena federated query feature is available in preview in the US East (N. Virginia), Asia Pacific (Mumbai), Europe (Ireland), and US West (Oregon) Regions.)" // nolint:lll
+	ComplianceTableDescription = "(ddb.panther_cloudsecurity.panther-compliance) The policies and statuses from Panther scanning"
 )
 
 var (
@@ -91,58 +91,64 @@ func CreateOrUpdateResourcesTable(glueClient glueiface.GlueAPI, locationARN stri
 			"classification": aws.String("dynamodb"),
 			"sourceTable":    aws.String(ResourcesTableDDB),
 			// for attrs with upper case
-			"columnMapping": aws.String(`expiresat=expiresAt,lastmodified=lastModified,integrationtype=integrationType`),
+			// nolint:lll
+			"columnMapping": aws.String(`expiresat=expiresAt,lastmodified=lastModified,integrationid=integrationId,integrationtype=integrationType`),
 		},
 		StorageDescriptor: &glue.StorageDescriptor{
 			Location: &locationARN,
 
-			// FIXME: add descriptions to each field
 			Columns: []*glue.Column{
+				/* Commenting out for now: always 'aws'
 				{
 					Name:    aws.String("integrationtype"),
 					Type:    aws.String("string"),
-					Comment: aws.String(""),
+					Comment: aws.String("Indicates what type of integration this resource came from"),
 				},
+				*/
 				{
 					Name:    aws.String("deleted"),
 					Type:    aws.String("boolean"),
-					Comment: aws.String(""),
+					Comment: aws.String("True if this is the snapshot of a deleted resource."),
 				},
 				{
 					Name:    aws.String("integrationid"),
 					Type:    aws.String("string"),
-					Comment: aws.String(""),
+					Comment: aws.String("The unique ID indicating of the source integration."),
 				},
 				{
 					Name:    aws.String("attributes"),
 					Type:    aws.String("string"),
-					Comment: aws.String(""),
+					Comment: aws.String("The JSON representation of the resource."),
 				},
+				/* Commenting out: not useful
 				{
 					Name:    aws.String("lowerid"),
 					Type:    aws.String("string"),
-					Comment: aws.String(""),
+					Comment: aws.String("The resource ID converted to all lower case letters."),
 				},
+				*/
 				{
 					Name:    aws.String("lastmodified"),
 					Type:    aws.String("string"),
-					Comment: aws.String(""),
+					Comment: aws.String("Timestamp of the most recent scan of this resource occurred."),
 				},
 				{
 					Name:    aws.String("id"),
 					Type:    aws.String("string"),
-					Comment: aws.String(""),
+					Comment: aws.String("The panther wide unique identifier of the resource."),
 				},
 				{
 					Name:    aws.String("type"),
 					Type:    aws.String("string"),
-					Comment: aws.String(""),
+					Comment: aws.String(" The type of resource (see https://docs.runpanther.io/cloud-security/resources)."),
 				},
+				/* Commenting out: not useful
 				{
 					Name:    aws.String("expiresat"),
 					Type:    aws.String("bigint"),
-					Comment: aws.String(""),
+					Comment: aws.String("Unix timestamp representing when this resource will age out of the resources table."),
 				},
+				*/
 			},
 		},
 		TableType: aws.String("EXTERNAL_TABLE"),
@@ -188,62 +194,64 @@ func CreateOrUpdateComplianceTable(glueClient glueiface.GlueAPI, locationARN str
 			"classification": aws.String("dynamodb"),
 			"sourceTable":    aws.String(ComplianceTableDDB),
 			// for attrs with upper case
-			"columnMapping": aws.String(`errormessage=errorMessage,expiresat=expiresAt,lastupdated=lastUpdated,resourcetype=resourceType`),
+			// nolint:lll
+			"columnMapping": aws.String(`policyseverity=policySeverity,errormessage=errorMessage,expiresat=expiresAt,lastupdated=lastUpdated,policyid=policyId,resourceid=resourceId,resourcetype=resourceType,integrationid=integrationId`),
 		},
 		StorageDescriptor: &glue.StorageDescriptor{
 			Location: &locationARN,
 
-			// FIXME: add descriptions to each field
 			Columns: []*glue.Column{
 				{
 					Name:    aws.String("lastupdated"),
 					Type:    aws.String("string"),
-					Comment: aws.String(""),
+					Comment: aws.String("That last date the specified policy was evaluated against the specified resource."),
 				},
 				{
 					Name:    aws.String("resourceid"),
 					Type:    aws.String("string"),
-					Comment: aws.String(""),
+					Comment: aws.String("The panther wide unique identifier of the resource being evaluated."),
 				},
 				{
 					Name:    aws.String("policyseverity"),
 					Type:    aws.String("string"),
-					Comment: aws.String(""),
+					Comment: aws.String("The severity of the policy being evaluated."),
 				},
 				{
 					Name:    aws.String("policyid"),
 					Type:    aws.String("string"),
-					Comment: aws.String(""),
+					Comment: aws.String("The unique identifier of the policy being evaluated."),
 				},
 				{
 					Name:    aws.String("integrationid"),
 					Type:    aws.String("string"),
-					Comment: aws.String(""),
+					Comment: aws.String("The unique ID indicating of the source integration."),
 				},
 				{
 					Name:    aws.String("suppressed"),
 					Type:    aws.String("boolean"),
-					Comment: aws.String(""),
+					Comment: aws.String("True if this compliance status is currently being omitted from compliance findings."),
 				},
+				/* Commenting out: not useful
 				{
 					Name:    aws.String("expiresat"),
 					Type:    aws.String("bigint"),
-					Comment: aws.String(""),
+					Comment: aws.String("Unix timestamp representing when this resource will age out of the resources table."),
 				},
+				*/
 				{
 					Name:    aws.String("resourcetype"),
 					Type:    aws.String("string"),
-					Comment: aws.String(""),
+					Comment: aws.String("The type of the specified resource."),
 				},
 				{
 					Name:    aws.String("status"),
 					Type:    aws.String("string"),
-					Comment: aws.String(""),
+					Comment: aws.String("Whether the policy evaluation of this resource resulted in a PASS, FAIL, or ERROR state."),
 				},
 				{
 					Name:    aws.String("errormessage"),
 					Type:    aws.String("string"),
-					Comment: aws.String(""),
+					Comment: aws.String("If an error occurred, the associated error message."),
 				},
 			},
 		},

@@ -31,6 +31,9 @@ import (
 )
 
 const (
+	PantherWorkGroup          = previewWorkgroup
+	PantherDynamodbDataSource = "ddb" // must match the CF tha creates the application
+
 	// FIXME: remove when DDB connector is GA https://docs.aws.amazon.com/athena/latest/ug/connect-to-a-data-source.html
 	// Available Regions – The Athena federated query feature is available in preview in the US East (N. Virginia),
 	//                     Asia Pacific (Mumbai), Europe (Ireland), and US West (Oregon) Regions.
@@ -39,6 +42,7 @@ const (
 )
 
 type AthenaInitProperties struct {
+	LambdaARN           string `validate:"required"`
 	AthenaResultsBucket string `validate:"required"`
 }
 
@@ -78,6 +82,25 @@ func customAthenaInit(_ context.Context, event cfn.Event) (string, map[string]in
 			return resourceID, nil, fmt.Errorf("failed to associate %s Athena workgroup with %s bucket: %v",
 				workgroup, props.AthenaResultsBucket, err)
 		}
+
+		/*
+			// this binds the lambda created by the serverless app to Athena for the ddb connector
+			// https://docs.aws.amazon.com/athena/latest/ug/athena-prebuilt-data-connectors-dynamodb.html
+			catalogName := PantherDynamodbDataSource
+			ddbCreateCatalogInput := &athena.CreateDataCatalogInput{
+				Name: &catalogName,
+				Type: aws.String(athena.DataCatalogTypeLambda),
+				Parameters: map[string]*string{
+					"function": &props.LambdaARN,
+				},
+			}
+			if _, err := athenaClient.CreateDataCatalog(ddbCreateCatalogInput); err != nil &&
+				!awsutils.IsAnyError(err, "InvalidRequestException") { // InvalidRequestException happens when it already exists
+
+				return resourceID, nil, fmt.Errorf("failed to create %s Athena catalog with %s lambda: %v",
+					catalogName, props.LambdaARN, err)
+			}
+		*/
 
 		return resourceID, nil, nil
 
