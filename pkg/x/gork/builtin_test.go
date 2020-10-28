@@ -92,12 +92,15 @@ func TestBuiltinPatterns(t *testing.T) {
 			pattern, err := env.Compile(src)
 			assert.NoError(err)
 			matches, err := pattern.MatchString(nil, input)
-			assert.NoError(err)
+
 			if len(expect) == 0 {
-				expect = nil
+				assert.Error(err)
+				assert.Nil(matches)
+			} else {
+				assert.NoError(err)
+				assert.Equal(expect, matches, "match %q failed", name)
+				numTests[name] += 1
 			}
-			assert.Equal(expect, matches, "match %q failed", name)
-			numTests[name] += 1
 		})
 	}
 	for name := range patterns {
