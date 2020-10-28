@@ -37,8 +37,8 @@ import (
 
 	enginemodels "github.com/panther-labs/panther/api/gateway/analysis"
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
-	resourcemodels "github.com/panther-labs/panther/api/gateway/resources/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
+	resourcemodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	alertmodels "github.com/panther-labs/panther/internal/compliance/alert_processor/models"
 	"github.com/panther-labs/panther/internal/compliance/resource_processor/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
@@ -79,7 +79,7 @@ func Handle(ctx context.Context, batch *events.SQSEvent) (err error) {
 			}
 		} else if resource != nil {
 			// Resource updated - analyze with applicable policies (after grouping + deduping)
-			resources[string(resource.ID)] = resource
+			resources[resource.ID] = resource
 		} else if lookup != nil {
 			resource, err = getResource(*lookup)
 			if err != nil {
@@ -151,8 +151,8 @@ func (r *batchResults) analyzeUpdatedPolicy(policy *analysismodels.Policy) error
 
 	// Analyze each page of resources
 	// TODO - check for duplicates here
-	var totalPages int64 = 1
-	for pageno := int64(1); pageno <= totalPages; pageno++ {
+	totalPages := 1
+	for pageno := 1; pageno <= totalPages; pageno++ {
 		resources, pageCount, err := getResources(policy.ResourceTypes, pageno)
 		if err != nil {
 			return err
@@ -243,7 +243,7 @@ func (r *batchResults) analyze(resources resourceMap, policies policyMap) error 
 			// Every failed policy, if not suppressed, will trigger the remediation flow
 			complianceNotification := &alertmodels.ComplianceNotification{
 				OutputIds:       policy.OutputIds,
-				ResourceID:      string(resource.ID),
+				ResourceID:      resource.ID,
 				PolicyID:        string(policy.ID),
 				PolicyVersionID: string(policy.VersionID),
 				Timestamp:       time.Now(),
@@ -289,8 +289,8 @@ func evaluatePolicies(policies policyMap, resources resourceMap) (*enginemodels.
 	for _, resource := range resources {
 		input.Resources = append(input.Resources, enginemodels.Resource{
 			Attributes: resource.Attributes,
-			ID:         string(resource.ID),
-			Type:       string(resource.Type),
+			ID:         resource.ID,
+			Type:       resource.Type,
 		})
 	}
 
@@ -339,10 +339,10 @@ func buildStatus(
 	return compliancemodels.SetStatusEntry{
 		PolicyID:       string(policy.ID),
 		PolicySeverity: compliancemodels.PolicySeverity(policy.Severity),
-		ResourceID:     string(resource.ID),
-		ResourceType:   string(resource.Type),
-		Suppressed:     isSuppressed(string(resource.ID), policy),
-		IntegrationID:  string(resource.IntegrationID),
+		ResourceID:     resource.ID,
+		ResourceType:   resource.Type,
+		Suppressed:     isSuppressed(resource.ID, policy),
+		IntegrationID:  resource.IntegrationID,
 
 		Status: status,
 	}

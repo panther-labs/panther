@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
-	resourcemodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	resourcemodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	"github.com/panther-labs/panther/internal/compliance/resource_processor/models"
 )
 

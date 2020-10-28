@@ -38,11 +38,11 @@ type AddResourcesInput struct {
 }
 
 type AddResourceEntry struct {
-	Attributes      map[string]interface{} `json:"attributes" validate:"min=1"`
-	ID              string                 `json:"id" validate:"required"`
-	IntegrationID   string                 `json:"integrationId" validate:"uuid4"`
-	IntegrationType string                 `json:"integrationType" validate:"oneof=aws"`
-	Type            string                 `json:"type"`
+	Attributes      interface{} `json:"attributes" validate:"min=1"`
+	ID              string      `json:"id" validate:"required"`
+	IntegrationID   string      `json:"integrationId" validate:"uuid4"`
+	IntegrationType string      `json:"integrationType" validate:"oneof=aws"`
+	Type            string      `json:"type"`
 }
 
 type GetResourceInput struct {
