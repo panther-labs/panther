@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -62,6 +63,7 @@ func (API) ListResources(input *models.ListResourcesInput) *events.APIGatewayPro
 	if err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
+	zap.L().Debug("built Dynamo scan input", zap.Any("scanInput", scanInput))
 
 	resources, err := listFilteredResources(scanInput, input)
 	if err != nil {
@@ -117,7 +119,8 @@ func buildListScan(input *models.ListResourcesInput) (*dynamodb.ScanInput, error
 	}
 
 	if input.IDContains != "" {
-		filter = filter.And(expression.Contains(expression.Name("lowerId"), input.IDContains))
+		filter = filter.And(expression.Contains(
+			expression.Name("lowerId"), strings.ToLower(input.IDContains)))
 	}
 
 	if input.IntegrationID != "" {

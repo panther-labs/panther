@@ -23,7 +23,9 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/stretchr/testify/assert"
@@ -39,21 +41,21 @@ var (
 	awsSession      = session.Must(session.NewSession())
 	apiClient       = gatewayapi.NewClient(lambda.New(awsSession), "panther-resources-api")
 
-	bucket = &models.Resource{
+	bucket = models.Resource{
 		Attributes:      map[string]interface{}{"Panther": "Labs"},
 		ID:              "arn:aws:s3:::my-bucket",
 		IntegrationID:   "df6652ff-22d7-4c6a-a9ec-3fe50fadbbbf",
 		IntegrationType: "aws",
 		Type:            "AWS.S3.Bucket",
 	}
-	key = &models.Resource{
+	key = models.Resource{
 		Attributes:      map[string]interface{}{"Panther": "Labs"},
 		ID:              "arn:aws:kms:us-west-2:111111111111:key/09510b31-48bf-464f-8c16-c5669e414c4a",
 		IntegrationID:   "df6652ff-22d7-4c6a-a9ec-3fe50fadbbbf",
 		IntegrationType: "aws",
 		Type:            "AWS.KMS.Key",
 	}
-	queue = &models.Resource{
+	queue = models.Resource{
 		Attributes:      map[string]interface{}{"Panther": "Labs"},
 		ID:              "arn:aws:sqs:us-west-2:222222222222:my-queue",
 		IntegrationID:   "240fcd50-11c3-496a-ae5a-61ab8e698041",
@@ -78,11 +80,9 @@ func TestIntegrationAPI(t *testing.T) {
 	require.NoError(t, testutils.ClearDynamoTable(awsSession, "panther-compliance"))
 
 	t.Run("AddResource", func(t *testing.T) {
-		t.Run("AddInvalid", addInvalid)
 		t.Run("AddSuccess", addSuccess)
 	})
 
-	// TODO - flaky integration test (don't worry about compliance status)
 	t.Run("GetResource", func(t *testing.T) {
 		t.Run("GetInvalid", getInvalid)
 		t.Run("GetNotFound", getNotFound)
@@ -91,45 +91,18 @@ func TestIntegrationAPI(t *testing.T) {
 	if t.Failed() {
 		return
 	}
-	//
-	//t.Run("OrgOverview", func(t *testing.T) {
-	//	t.Run("OrgOverview", orgOverview)
-	//})
-	//
-	//t.Run("ListResources", func(t *testing.T) {
-	//	t.Run("ListAll", listAll)
-	//	t.Run("ListPaged", listPaged)
-	//	t.Run("ListFiltered", listFiltered)
-	//})
-	//
-	//t.Run("DeleteResources", func(t *testing.T) {
-	//	t.Run("DeleteInvalid", deleteInvalid)
-	//	t.Run("DeleteNotFound", deleteNotFound)
-	//	t.Run("DeleteSuccess", deleteSuccess)
-	//})
-}
 
-func addInvalid(t *testing.T) {
-	input := models.LambdaInput{
-		AddResources: &models.AddResourcesInput{
-			Resources: []models.AddResourceEntry{
-				{
-					Attributes:      map[string]interface{}{}, // missing attributes
-					ID:              bucket.ID + "invalid",
-					IntegrationID:   bucket.IntegrationID,
-					IntegrationType: bucket.IntegrationType,
-					Type:            bucket.Type,
-				},
-			},
-		},
-	}
+	t.Run("ListResources", func(t *testing.T) {
+		t.Run("ListAll", listAll)
+		t.Run("ListPaged", listPaged)
+		t.Run("ListFiltered", listFiltered)
+	})
 
-	statusCode, err := apiClient.Invoke(&input, nil)
-	require.Error(t, err)
-	assert.Equal(t, http.StatusBadRequest, statusCode)
-	assert.Equal(t,
-		"resources[0].attributes cannot be empty",
-		err.Error())
+	t.Run("DeleteResources", func(t *testing.T) {
+		t.Run("DeleteInvalid", deleteInvalid)
+		t.Run("DeleteNotFound", deleteNotFound)
+		t.Run("DeleteSuccess", deleteSuccess)
+	})
 }
 
 func addSuccess(t *testing.T) {
@@ -167,6 +140,7 @@ func addSuccess(t *testing.T) {
 }
 
 func getInvalid(t *testing.T) {
+	t.Parallel()
 	input := models.LambdaInput{
 		GetResource: &models.GetResourceInput{},
 	}
@@ -175,11 +149,12 @@ func getInvalid(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, http.StatusBadRequest, statusCode)
 	assert.Equal(t,
-		"resources[0].attributes cannot be empty",
+		"panther-resources-api: InvalidInputError: ID invalid, failed to satisfy the condition: required",
 		err.Error())
 }
 
 func getNotFound(t *testing.T) {
+	t.Parallel()
 	input := models.LambdaInput{
 		GetResource: &models.GetResourceInput{ID: "arn:aws:s3:::no-such-bucket"},
 	}
@@ -189,7 +164,17 @@ func getNotFound(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, statusCode)
 }
 
+// Compliance status and last modified time should be non-empty, but exact values don't matter
+func resetUnpredictableFields(t *testing.T, r *models.Resource) {
+	assert.NotEmpty(t, r.ComplianceStatus)
+	assert.NotEmpty(t, r.LastModified)
+
+	r.ComplianceStatus = ""
+	r.LastModified = time.Time{}
+}
+
 func getSuccess(t *testing.T) {
+	t.Parallel()
 	input := models.LambdaInput{
 		GetResource: &models.GetResourceInput{ID: bucket.ID},
 	}
@@ -198,283 +183,262 @@ func getSuccess(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
 
-	bucket.LastModified = result.LastModified
-	assert.NotEmpty(t, result.ComplianceStatus) // doesn't matter what the status actually is
-	result.ComplianceStatus = ""
+	resetUnpredictableFields(t, &result)
 	require.Equal(t, bucket, result)
 }
 
-//
-//func listAll(t *testing.T) {
-//	result, err := apiClient.Operations.ListResources(
-//		&operations.ListResourcesParams{
-//			HTTPClient: httpClient,
-//		})
-//	require.NoError(t, err)
-//	require.Len(t, result.Payload.Resources, 3)
-//
-//	expected := &models.ResourceList{
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(1),
-//			TotalItems: aws.Int64(3),
-//			TotalPages: aws.Int64(1),
-//		},
-//		Resources: []*models.Resource{
-//			// resources will be in alphabetical order by their ID
-//			// attributes are not included in the list operation
-//			{
-//				ComplianceStatus: models.ComplianceStatusPASS,
-//				Deleted:          false,
-//				ID:               key.ID,
-//				IntegrationID:    key.IntegrationID,
-//				IntegrationType:  key.IntegrationType,
-//				LastModified:     result.Payload.Resources[0].LastModified,
-//				Type:             key.Type,
-//			},
-//			{
-//				ComplianceStatus: models.ComplianceStatusPASS,
-//				Deleted:          false,
-//				ID:               bucket.ID,
-//				IntegrationID:    bucket.IntegrationID,
-//				IntegrationType:  bucket.IntegrationType,
-//				LastModified:     result.Payload.Resources[1].LastModified,
-//				Type:             bucket.Type,
-//			},
-//			{
-//				ComplianceStatus: models.ComplianceStatusPASS,
-//				Deleted:          false,
-//				ID:               queue.ID,
-//				IntegrationID:    queue.IntegrationID,
-//				IntegrationType:  queue.IntegrationType,
-//				LastModified:     result.Payload.Resources[2].LastModified,
-//				Type:             queue.Type,
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//}
-//
-//func listPaged(t *testing.T) {
-//	result, err := apiClient.Operations.ListResources(
-//		&operations.ListResourcesParams{
-//			PageSize:   aws.Int64(1),
-//			SortDir:    aws.String("descending"), // sort by ID descending
-//			HTTPClient: httpClient,
-//		})
-//	require.NoError(t, err)
-//
-//	expected := &models.ResourceList{
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(1),
-//			TotalItems: aws.Int64(3),
-//			TotalPages: aws.Int64(3),
-//		},
-//		Resources: []*models.Resource{
-//			{
-//				ComplianceStatus: models.ComplianceStatusPASS,
-//				Deleted:          false,
-//				ID:               queue.ID,
-//				IntegrationID:    queue.IntegrationID,
-//				IntegrationType:  queue.IntegrationType,
-//				LastModified:     result.Payload.Resources[0].LastModified,
-//				Type:             queue.Type,
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//
-//	// Page 2
-//	result, err = apiClient.Operations.ListResources(
-//		&operations.ListResourcesParams{
-//			Page:       aws.Int64(2),
-//			PageSize:   aws.Int64(1),
-//			SortDir:    aws.String("descending"),
-//			HTTPClient: httpClient,
-//		})
-//	require.NoError(t, err)
-//
-//	expected = &models.ResourceList{
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(2),
-//			TotalItems: aws.Int64(3),
-//			TotalPages: aws.Int64(3),
-//		},
-//		Resources: []*models.Resource{
-//			{
-//				ComplianceStatus: models.ComplianceStatusPASS,
-//				Deleted:          false,
-//				ID:               bucket.ID,
-//				IntegrationID:    bucket.IntegrationID,
-//				IntegrationType:  bucket.IntegrationType,
-//				LastModified:     result.Payload.Resources[0].LastModified,
-//				Type:             bucket.Type,
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//
-//	// Page 3
-//	result, err = apiClient.Operations.ListResources(
-//		&operations.ListResourcesParams{
-//			Page:       aws.Int64(3),
-//			PageSize:   aws.Int64(1),
-//			SortDir:    aws.String("descending"),
-//			HTTPClient: httpClient,
-//		})
-//	require.NoError(t, err)
-//
-//	expected = &models.ResourceList{
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(3),
-//			TotalItems: aws.Int64(3),
-//			TotalPages: aws.Int64(3),
-//		},
-//		Resources: []*models.Resource{
-//			{
-//				ComplianceStatus: models.ComplianceStatusPASS,
-//				Deleted:          false,
-//				ID:               key.ID,
-//				IntegrationID:    key.IntegrationID,
-//				IntegrationType:  key.IntegrationType,
-//				LastModified:     result.Payload.Resources[0].LastModified,
-//				Type:             key.Type,
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//}
-//
-//func listFiltered(t *testing.T) {
-//	result, err := apiClient.Operations.ListResources(
-//		&operations.ListResourcesParams{
-//			Deleted:         aws.Bool(false),
-//			Fields:          []string{"attributes,id,type"},
-//			IDContains:      aws.String("MY"), // queue + bucket
-//			IntegrationID:   aws.String(string(bucket.IntegrationID)),
-//			IntegrationType: aws.String(string(bucket.IntegrationType)),
-//			Types:           []string{"AWS.S3.Bucket"},
-//			HTTPClient:      httpClient,
-//		})
-//	require.NoError(t, err)
-//	require.Len(t, result.Payload.Resources, 1)
-//
-//	expected := &models.ResourceList{
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(1),
-//			TotalItems: aws.Int64(1),
-//			TotalPages: aws.Int64(1),
-//		},
-//		Resources: []*models.Resource{
-//			{
-//				Attributes: bucket.Attributes,
-//				ID:         bucket.ID,
-//				Type:       bucket.Type,
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//}
-//
-//func orgOverview(t *testing.T) {
-//	params := &operations.GetOrgOverviewParams{
-//		HTTPClient: httpClient,
-//	}
-//	result, err := apiClient.Operations.GetOrgOverview(params)
-//	require.NoError(t, err)
-//
-//	expected := &models.OrgOverview{
-//		Resources: []*models.ResourceTypeSummary{
-//			{
-//				Count: aws.Int64(1),
-//				Type:  models.ResourceType("AWS.KMS.Key"),
-//			},
-//			{
-//				Count: aws.Int64(1),
-//				Type:  models.ResourceType("AWS.S3.Bucket"),
-//			},
-//			{
-//				Count: aws.Int64(1),
-//				Type:  models.ResourceType("AWS.SQS.Queue"),
-//			},
-//		},
-//	}
-//
-//	// Sort results by Type
-//	sort.Slice(result.Payload.Resources, func(i, j int) bool {
-//		return result.Payload.Resources[i].Type < result.Payload.Resources[j].Type
-//	})
-//	assert.Equal(t, expected, result.Payload)
-//}
-//
-//func deleteInvalid(t *testing.T) {
-//	result, err := apiClient.Operations.DeleteResources(&operations.DeleteResourcesParams{
-//		Body: &models.DeleteResources{
-//			Resources: []*models.DeleteEntry{},
-//		},
-//		HTTPClient: httpClient,
-//	})
-//	assert.Nil(t, result)
-//	require.Error(t, err)
-//
-//	require.IsType(t, &operations.DeleteResourcesBadRequest{}, err)
-//	badRequest := err.(*operations.DeleteResourcesBadRequest)
-//	assert.Equal(t,
-//		"validation failure list:\nresources in body should have at least 1 items",
-//		aws.StringValue(badRequest.Payload.Message))
-//}
-//
-//// No error is returned if deletes are requested for resources that don't exist
-//func deleteNotFound(t *testing.T) {
-//	result, err := apiClient.Operations.DeleteResources(&operations.DeleteResourcesParams{
-//		Body: &models.DeleteResources{
-//			Resources: []*models.DeleteEntry{
-//				{ID: "no-such-resource"},
-//			},
-//		},
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	assert.Equal(t, &operations.DeleteResourcesOK{}, result)
-//}
-//
-//func deleteSuccess(t *testing.T) {
-//	result, err := apiClient.Operations.DeleteResources(&operations.DeleteResourcesParams{
-//		Body: &models.DeleteResources{
-//			Resources: []*models.DeleteEntry{
-//				{ID: bucket.ID},
-//				{ID: key.ID},
-//				{ID: queue.ID},
-//			},
-//		},
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	assert.Equal(t, &operations.DeleteResourcesOK{}, result)
-//
-//	// Deleted resources should not show up when filtered out
-//	list, err := apiClient.Operations.ListResources(
-//		&operations.ListResourcesParams{
-//			Deleted:    aws.Bool(false),
-//			HTTPClient: httpClient,
-//		})
-//	require.NoError(t, err)
-//	expected := &models.ResourceList{
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(0),
-//			TotalItems: aws.Int64(0),
-//			TotalPages: aws.Int64(0),
-//		},
-//		Resources: []*models.Resource{},
-//	}
-//
-//	assert.Equal(t, expected, list.Payload)
-//
-//	// Unless you specifically ask for them
-//	list, err = apiClient.Operations.ListResources(
-//		&operations.ListResourcesParams{
-//			Deleted:    aws.Bool(true),
-//			HTTPClient: httpClient,
-//		})
-//	require.NoError(t, err)
-//	assert.Len(t, list.Payload.Resources, 3)
-//}
+func listAll(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListResources: &models.ListResourcesInput{},
+	}
+	var result models.ListResourcesOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListResourcesOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 3,
+			TotalPages: 1,
+		},
+		Resources: []models.Resource{
+			// resources will be in alphabetical order by their ID
+			// attributes are not included in the list operation
+			{
+				Deleted:         false,
+				ID:              key.ID,
+				IntegrationID:   key.IntegrationID,
+				IntegrationType: key.IntegrationType,
+				Type:            key.Type,
+			},
+			{
+				Deleted:         false,
+				ID:              bucket.ID,
+				IntegrationID:   bucket.IntegrationID,
+				IntegrationType: bucket.IntegrationType,
+				Type:            bucket.Type,
+			},
+			{
+				Deleted:         false,
+				ID:              queue.ID,
+				IntegrationID:   queue.IntegrationID,
+				IntegrationType: queue.IntegrationType,
+				Type:            queue.Type,
+			},
+		},
+	}
+
+	// compliance status and last modified time are unpredictable
+	for i := range result.Resources {
+		resetUnpredictableFields(t, &result.Resources[i])
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listPaged(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListResources: &models.ListResourcesInput{
+			PageSize: 1,
+			SortDir:  "descending", // sort by ID descending
+		},
+	}
+	var result models.ListResourcesOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListResourcesOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 3,
+			TotalPages: 3,
+		},
+		Resources: []models.Resource{
+			{
+				Deleted:         false,
+				ID:              queue.ID,
+				IntegrationID:   queue.IntegrationID,
+				IntegrationType: queue.IntegrationType,
+				Type:            queue.Type,
+			},
+		},
+	}
+	require.Len(t, result.Resources, 1)
+	resetUnpredictableFields(t, &result.Resources[0])
+	assert.Equal(t, expected, result)
+
+	// Page 2
+	input = models.LambdaInput{
+		ListResources: &models.ListResourcesInput{
+			Page:     2,
+			PageSize: 1,
+			SortDir:  "descending",
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected = models.ListResourcesOutput{
+		Paging: models.Paging{
+			ThisPage:   2,
+			TotalItems: 3,
+			TotalPages: 3,
+		},
+		Resources: []models.Resource{
+			{
+				Deleted:         false,
+				ID:              bucket.ID,
+				IntegrationID:   bucket.IntegrationID,
+				IntegrationType: bucket.IntegrationType,
+				Type:            bucket.Type,
+			},
+		},
+	}
+	require.Len(t, result.Resources, 1)
+	resetUnpredictableFields(t, &result.Resources[0])
+	assert.Equal(t, expected, result)
+
+	// Page 3
+	input = models.LambdaInput{
+		ListResources: &models.ListResourcesInput{
+			Page:     3,
+			PageSize: 1,
+			SortDir:  "descending",
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected = models.ListResourcesOutput{
+		Paging: models.Paging{
+			ThisPage:   3,
+			TotalItems: 3,
+			TotalPages: 3,
+		},
+		Resources: []models.Resource{
+			{
+				Deleted:         false,
+				ID:              key.ID,
+				IntegrationID:   key.IntegrationID,
+				IntegrationType: key.IntegrationType,
+				Type:            key.Type,
+			},
+		},
+	}
+	require.Len(t, result.Resources, 1)
+	resetUnpredictableFields(t, &result.Resources[0])
+	assert.Equal(t, expected, result)
+}
+
+func listFiltered(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListResources: &models.ListResourcesInput{
+			Deleted:         aws.Bool(false),
+			Fields:          []string{"attributes", "id", "type"},
+			IDContains:      "MY", // queue + bucket
+			IntegrationID:   bucket.IntegrationID,
+			IntegrationType: bucket.IntegrationType,
+			Types:           []string{bucket.Type},
+		},
+	}
+	var result models.ListResourcesOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListResourcesOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 1,
+			TotalPages: 1,
+		},
+		Resources: []models.Resource{
+			{
+				Attributes: bucket.Attributes,
+				ID:         bucket.ID,
+				Type:       bucket.Type,
+			},
+		},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func deleteInvalid(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		DeleteResources: &models.DeleteResourcesInput{
+			Resources: []models.DeleteEntry{},
+		},
+	}
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.Error(t, err)
+	assert.Equal(t, http.StatusBadRequest, statusCode)
+
+	assert.Equal(t,
+		"panther-resources-api: InvalidInputError: Resources invalid, failed to satisfy the condition: min=1",
+		err.Error())
+}
+
+// No error is returned if deletes are requested for resources that don't exist
+func deleteNotFound(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		DeleteResources: &models.DeleteResourcesInput{
+			Resources: []models.DeleteEntry{
+				{ID: "no-such-resource"},
+			},
+		},
+	}
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+}
+
+func deleteSuccess(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		DeleteResources: &models.DeleteResourcesInput{
+			Resources: []models.DeleteEntry{
+				{ID: bucket.ID},
+				{ID: key.ID},
+				{ID: queue.ID},
+			},
+		},
+	}
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	// Deleted resources should not show up for a standard list
+	input = models.LambdaInput{
+		ListResources: &models.ListResourcesInput{
+			Deleted: aws.Bool(false),
+		},
+	}
+	var listResult models.ListResourcesOutput
+	statusCode, err = apiClient.Invoke(&input, &listResult)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListResourcesOutput{
+		Resources: []models.Resource{},
+	}
+	assert.Equal(t, expected, listResult)
+
+	// Unless you specifically ask for them
+	input = models.LambdaInput{
+		ListResources: &models.ListResourcesInput{
+			Deleted: aws.Bool(true),
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, &listResult)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	assert.Len(t, listResult.Resources, 3)
+}
