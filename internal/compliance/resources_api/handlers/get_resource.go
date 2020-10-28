@@ -64,5 +64,6 @@ func (API) GetResource(input *models.GetResourceInput) *events.APIGatewayProxyRe
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
-	return gatewayapi.MarshalResponse(item.Resource(status.Status), http.StatusOK)
+	result := item.Resource(status.Status)
+	return gatewayapi.MarshalResponse(&result, http.StatusOK)
 }

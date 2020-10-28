@@ -46,7 +46,7 @@ type AddResourceEntry struct {
 }
 
 type GetResourceInput struct {
-	ID string `json:"id" validate:"required"` // url-encoded
+	ID string `json:"resourceId" validate:"required"` // url-encoded
 }
 
 type GetResourceOutput = Resource
