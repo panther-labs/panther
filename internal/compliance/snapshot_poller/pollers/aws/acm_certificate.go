@@ -166,9 +166,9 @@ func buildAcmCertificateSnapshot(acmSvc acmiface.ACMAPI, certificateArn *string)
 	}
 
 	if *metadata.Type == "AMAZON_CREATED" {
-		acmCertificate.TimeCreated = utils.DateTimeFormat(*metadata.CreatedAt)
+		acmCertificate.TimeCreated = metadata.CreatedAt
 	} else if *metadata.Type == "IMPORTED" {
-		acmCertificate.TimeCreated = utils.DateTimeFormat(*metadata.ImportedAt)
+		acmCertificate.TimeCreated = metadata.ImportedAt
 	}
 
 	tags, err := listTagsForCertificate(acmSvc, certificateArn)

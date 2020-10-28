@@ -158,7 +158,7 @@ func buildEc2VolumeSnapshot(ec2Svc ec2iface.EC2API, volume *ec2.Volume) (*awsmod
 
 	ec2Volume := &awsmodels.Ec2Volume{
 		GenericResource: awsmodels.GenericResource{
-			TimeCreated:  utils.DateTimeFormat(*volume.CreateTime),
+			TimeCreated:  volume.CreateTime,
 			ResourceType: aws.String(awsmodels.Ec2VolumeSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{

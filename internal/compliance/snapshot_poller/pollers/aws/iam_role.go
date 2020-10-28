@@ -159,7 +159,7 @@ func BuildIAMRoleSnapshot(iamSvc iamiface.IAMAPI, role *iam.Role) (*awsmodels.IA
 	iamRoleSnapshot := &awsmodels.IAMRole{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   role.Arn,
-			TimeCreated:  utils.DateTimeFormat(*role.CreateDate),
+			TimeCreated:  role.CreateDate,
 			ResourceType: aws.String(awsmodels.IAMRoleSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{

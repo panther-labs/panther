@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -66,7 +65,7 @@ func (r *resourceItem) Resource(status compliancemodels.ComplianceStatus) models
 // Build the table key in the format Dynamo expects
 func tableKey(resourceID string) map[string]*dynamodb.AttributeValue {
 	return map[string]*dynamodb.AttributeValue{
-		"id": {S: aws.String(string(resourceID))},
+		"id": {S: &resourceID},
 	}
 }
 
@@ -85,7 +84,7 @@ func doUpdate(update expression.UpdateBuilder, resourceID string) *events.APIGat
 	}
 
 	zap.L().Debug("submitting dynamo item update",
-		zap.String("resourceId", string(resourceID)))
+		zap.String("resourceId", resourceID))
 	_, err = dynamoClient.UpdateItem(&dynamodb.UpdateItemInput{
 		ConditionExpression:       expr.Condition(),
 		ExpressionAttributeNames:  expr.Names(),

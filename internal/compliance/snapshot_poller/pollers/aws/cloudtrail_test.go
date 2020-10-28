@@ -183,7 +183,7 @@ func TestCloudTrailPoller(t *testing.T) {
 	assert.Equal(t, *awstest.ExampleTrail.TrailARN, resources[0].ID)
 
 	assert.IsType(t, &awsmodels.CloudTrailMeta{}, resources[len(resources)-1].Attributes)
-	assert.Equal(t, "123456789012::AWS.CloudTrail.Meta", string(resources[len(resources)-1].ID))
+	assert.Equal(t, "123456789012::AWS.CloudTrail.Meta", resources[len(resources)-1].ID)
 	assert.Len(t, resources[len(resources)-1].Attributes.(*awsmodels.CloudTrailMeta).Trails, 1)
 }
 

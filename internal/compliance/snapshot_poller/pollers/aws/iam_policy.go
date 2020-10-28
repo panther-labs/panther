@@ -32,7 +32,6 @@ import (
 	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
-	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
 )
 
 const (
@@ -153,7 +152,7 @@ func buildIAMPolicySnapshot(iamSvc iamiface.IAMAPI, policy *iam.Policy) (*awsmod
 	policySnapshot := &awsmodels.IAMPolicy{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   policy.Arn,
-			TimeCreated:  utils.DateTimeFormat(*policy.CreateDate),
+			TimeCreated:  policy.CreateDate,
 			ResourceType: aws.String(awsmodels.IAMPolicySchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{

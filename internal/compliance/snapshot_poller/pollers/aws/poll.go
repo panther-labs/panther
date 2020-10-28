@@ -24,6 +24,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -162,7 +163,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		// This field may be nil
 		Region: scanRequest.Region,
 		// Note: The resources-api expects a time.Time formatted string.
-		Timestamp:     utils.DateTimeFormat(utils.TimeNowFunc()),
+		Timestamp:     aws.Time(utils.TimeNowFunc()),
 		NextPageToken: scanRequest.NextPageToken,
 	}
 

@@ -28,7 +28,6 @@ import (
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws/awstest"
-	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
 )
 
 func TestGetCredentialReport(t *testing.T) {
@@ -243,7 +242,7 @@ func TestIAMUsersPoller(t *testing.T) {
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   aws.String("arn:aws:iam::123456789012:root"),
 			ResourceType: aws.String(awsmodels.IAMRootUserSchema),
-			TimeCreated:  utils.DateTimeFormat(*awstest.ExampleDate),
+			TimeCreated:  awstest.ExampleDate,
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
 			AccountID: awstest.ExampleAccountId,
@@ -264,7 +263,7 @@ func TestIAMUsersPoller(t *testing.T) {
 			GenericResource: awsmodels.GenericResource{
 				ResourceID:   aws.String("arn:aws:iam::123456789012:user/unit_test_user"),
 				ResourceType: aws.String(awsmodels.IAMUserSchema),
-				TimeCreated:  utils.DateTimeFormat(*awstest.ExampleDate),
+				TimeCreated:  awstest.ExampleDate,
 			},
 			GenericAWSResource: awsmodels.GenericAWSResource{
 				AccountID: awstest.ExampleAccountId,
@@ -293,7 +292,7 @@ func TestIAMUsersPoller(t *testing.T) {
 			GenericResource: awsmodels.GenericResource{
 				ResourceID:   aws.String("arn:aws:iam::123456789012:user/Franklin"),
 				ResourceType: aws.String(awsmodels.IAMUserSchema),
-				TimeCreated:  utils.DateTimeFormat(*awstest.ExampleDate),
+				TimeCreated:  awstest.ExampleDate,
 			},
 			GenericAWSResource: awsmodels.GenericAWSResource{
 				AccountID: awstest.ExampleAccountId,

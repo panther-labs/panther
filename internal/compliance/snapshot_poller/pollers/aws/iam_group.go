@@ -33,7 +33,6 @@ import (
 	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
-	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
 )
 
 // PollIAMGroup polls a single IAM Group resource
@@ -155,7 +154,7 @@ func buildIamGroupSnapshot(iamSvc iamiface.IAMAPI, group *iam.Group) (*awsmodels
 	iamGroupSnapshot := &awsmodels.IamGroup{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   group.Arn,
-			TimeCreated:  utils.DateTimeFormat(*group.CreateDate),
+			TimeCreated:  group.CreateDate,
 			ResourceType: aws.String(awsmodels.IAMGroupSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{

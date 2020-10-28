@@ -212,7 +212,7 @@ func buildElbv2ApplicationLoadBalancerSnapshot(
 	applicationLoadBalancer := &awsmodels.Elbv2ApplicationLoadBalancer{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   lb.LoadBalancerArn,
-			TimeCreated:  utils.DateTimeFormat(*lb.CreatedTime),
+			TimeCreated:  lb.CreatedTime,
 			ResourceType: aws.String(awsmodels.Elbv2LoadBalancerSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{

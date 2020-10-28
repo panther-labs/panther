@@ -221,7 +221,7 @@ func buildCloudFormationStackSnapshot(
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   stack.StackId,
 			ResourceType: aws.String(awsmodels.CloudFormationStackSchema),
-			TimeCreated:  utils.DateTimeFormat(*stack.CreationTime),
+			TimeCreated:  stack.CreationTime,
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
 			ARN:  stack.StackId,

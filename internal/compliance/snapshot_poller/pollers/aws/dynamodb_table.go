@@ -206,7 +206,7 @@ func buildDynamoDBTableSnapshot(
 		GenericResource: awsmodels.GenericResource{
 			ResourceType: aws.String(awsmodels.DynamoDBTableSchema),
 			ResourceID:   description.TableArn,
-			TimeCreated:  utils.DateTimeFormat(*description.CreationDateTime),
+			TimeCreated:  description.CreationDateTime,
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
 			Name: tableName,

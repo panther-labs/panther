@@ -28,12 +28,6 @@ var (
 	TimeNowFunc = TimeNowRFC3339
 )
 
-// DateTimeFormat converts time.Time to time.Time.
-func DateTimeFormat(inputTime time.Time) *time.Time {
-	conv := time.Time(inputTime)
-	return &conv
-}
-
 // TimeNowRFC3339 returns the current time in RFC3339 format.
 func TimeNowRFC3339() time.Time {
 	return time.Now()
@@ -51,10 +45,12 @@ func ParseTimeRFC3339(timeString string) time.Time {
 
 // StringToDateTime parses a time string into a time.Time struct
 func StringToDateTime(timeString string) *time.Time {
-	return DateTimeFormat(ParseTimeRFC3339(timeString))
+	result := ParseTimeRFC3339(timeString)
+	return &result
 }
 
 // UnixTimeToDateTime parses an Int64 representing an epoch timestamp to a time.Time struct
 func UnixTimeToDateTime(epochTimeStamp int64) *time.Time {
-	return DateTimeFormat(time.Unix(epochTimeStamp, 0))
+	result := time.Unix(epochTimeStamp, 0)
+	return &result
 }

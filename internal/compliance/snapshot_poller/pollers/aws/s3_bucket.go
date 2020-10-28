@@ -253,7 +253,7 @@ func buildS3BucketSnapshot(s3Svc s3iface.S3API, bucket *s3.Bucket) (*awsmodels.S
 	}
 	s3Snapshot := &awsmodels.S3Bucket{
 		GenericResource: awsmodels.GenericResource{
-			TimeCreated:  utils.DateTimeFormat(*bucket.CreationDate),
+			TimeCreated:  bucket.CreationDate,
 			ResourceType: aws.String(awsmodels.S3BucketSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{

@@ -186,7 +186,7 @@ func buildKmsKeySnapshot(kmsSvc kmsiface.KMSAPI, key *kms.KeyListEntry) (*awsmod
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   key.KeyArn,
 			ResourceType: aws.String(awsmodels.KmsKeySchema),
-			TimeCreated:  utils.DateTimeFormat(aws.TimeValue(metadata.CreationDate)),
+			TimeCreated:  metadata.CreationDate,
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
 			ARN: key.KeyArn,

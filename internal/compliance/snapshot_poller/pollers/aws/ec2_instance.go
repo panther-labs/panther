@@ -126,7 +126,7 @@ func buildEc2InstanceSnapshot(instance *ec2.Instance) *awsmodels.Ec2Instance {
 	}
 	return &awsmodels.Ec2Instance{
 		GenericResource: awsmodels.GenericResource{
-			TimeCreated:  utils.DateTimeFormat(*instance.LaunchTime),
+			TimeCreated:  instance.LaunchTime,
 			ResourceType: aws.String(awsmodels.Ec2InstanceSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{

@@ -57,7 +57,7 @@ func getResources(resourceTypes []string, pageno int) (resourceMap, int, error) 
 	}
 
 	for _, resource := range output.Resources {
-		result[resource.ID] = &resource
+		result[resource.ID] = resource
 	}
 	return result, output.Paging.TotalPages, nil
 }

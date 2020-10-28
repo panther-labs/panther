@@ -158,7 +158,7 @@ func getEKSFargateProfiles(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsm
 			Status:              profile.Status,
 			Subnets:             profile.Subnets,
 			// Normalised Name for CreatedAt
-			TimeCreated: utils.DateTimeFormat(aws.TimeValue(profile.CreatedAt)),
+			TimeCreated: profile.CreatedAt,
 		})
 	}
 
@@ -218,7 +218,7 @@ func getEKSNodegroups(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsmodels
 			Subnets:        curNodegroup.Subnets,
 			Version:        curNodegroup.Version,
 			// Normalized name for CreatedAt
-			TimeCreated: utils.DateTimeFormat(aws.TimeValue(curNodegroup.CreatedAt)),
+			TimeCreated: curNodegroup.CreatedAt,
 		})
 	}
 
@@ -246,7 +246,7 @@ func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string) (*awsm
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   details.Arn,
 			ResourceType: aws.String(awsmodels.EksClusterSchema),
-			TimeCreated:  utils.DateTimeFormat(aws.TimeValue(details.CreatedAt)),
+			TimeCreated:  details.CreatedAt,
 		},
 		CertificateAuthority: details.CertificateAuthority,
 		EncryptionConfig:     details.EncryptionConfig,

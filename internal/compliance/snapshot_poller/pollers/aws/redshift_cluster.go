@@ -146,7 +146,7 @@ func describeLoggingStatus(redshiftSvc redshiftiface.RedshiftAPI, clusterID *str
 func buildRedshiftClusterSnapshot(redshiftSvc redshiftiface.RedshiftAPI, cluster *redshift.Cluster) (*awsmodels.RedshiftCluster, error) {
 	clusterSnapshot := &awsmodels.RedshiftCluster{
 		GenericResource: awsmodels.GenericResource{
-			TimeCreated:  utils.DateTimeFormat(*cluster.ClusterCreateTime),
+			TimeCreated:  cluster.ClusterCreateTime,
 			ResourceType: aws.String(awsmodels.RedshiftClusterSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{

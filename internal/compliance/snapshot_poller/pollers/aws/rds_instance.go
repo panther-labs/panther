@@ -168,7 +168,7 @@ func buildRDSInstanceSnapshot(rdsSvc rdsiface.RDSAPI, instance *rds.DBInstance) 
 	instanceSnapshot := &awsmodels.RDSInstance{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   instance.DBInstanceArn,
-			TimeCreated:  utils.DateTimeFormat(*instance.InstanceCreateTime),
+			TimeCreated:  instance.InstanceCreateTime,
 			ResourceType: aws.String(awsmodels.RDSInstanceSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{

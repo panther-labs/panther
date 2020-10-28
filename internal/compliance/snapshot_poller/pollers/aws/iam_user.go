@@ -422,7 +422,7 @@ func buildIAMUserSnapshot(iamSvc iamiface.IAMAPI, user *iam.User) (*awsmodels.IA
 	iamUserSnapshot := &awsmodels.IAMUser{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   user.Arn,
-			TimeCreated:  utils.DateTimeFormat(*user.CreateDate),
+			TimeCreated:  user.CreateDate,
 			ResourceType: aws.String(awsmodels.IAMUserSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
@@ -484,7 +484,7 @@ func buildIAMRootUserSnapshot() (*awsmodels.IAMRootUser, error) {
 	rootSnapshot := &awsmodels.IAMRootUser{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   rootCredReport.ARN,
-			TimeCreated:  utils.DateTimeFormat(*rootCredReport.UserCreationTime),
+			TimeCreated:  rootCredReport.UserCreationTime,
 			ResourceType: aws.String(awsmodels.IAMRootUserSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{

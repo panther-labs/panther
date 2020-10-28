@@ -50,7 +50,7 @@ const defaultDelaySeconds = 30
 
 // Map policy/resource ID to the instance of the object
 type policyMap map[string]*analysismodels.EnabledPolicy
-type resourceMap map[string]*resourcemodels.Resource
+type resourceMap map[string]resourcemodels.Resource
 
 // Every batch of sqs messages results in compliance updates and alert/remediation deliveries
 type batchResults struct {
@@ -79,14 +79,14 @@ func Handle(ctx context.Context, batch *events.SQSEvent) (err error) {
 			}
 		} else if resource != nil {
 			// Resource updated - analyze with applicable policies (after grouping + deduping)
-			resources[resource.ID] = resource
+			resources[resource.ID] = *resource
 		} else if lookup != nil {
 			resource, err = getResource(*lookup)
 			if err != nil {
 				zap.L().Error("failed to get resource", zap.String("resourceId", *lookup), zap.Error(err))
 				continue
 			}
-			resources[string(resource.ID)] = resource
+			resources[resource.ID] = *resource
 		} else {
 			zap.L().Error("failed to parse msg as resource, policy, or resource lookup", zap.String("body", record.Body))
 		}
@@ -109,7 +109,7 @@ func parseQueueMsg(body string) (*resourcemodels.Resource, *analysismodels.Polic
 	err := jsoniter.UnmarshalFromString(body, &resource)
 	if err == nil && resource.Attributes != nil && resource.Type != "" {
 		zap.L().Info("found new/updated resource",
-			zap.String("resourceId", string(resource.ID)))
+			zap.String("resourceId", resource.ID))
 		return &resource, nil, nil
 	}
 
@@ -332,7 +332,7 @@ func evaluatePolicies(policies policyMap, resources resourceMap) (*enginemodels.
 // Convert a policy/resource pair into the compliance status struct
 func buildStatus(
 	policy *analysismodels.EnabledPolicy,
-	resource *resourcemodels.Resource,
+	resource resourcemodels.Resource,
 	status compliancemodels.ComplianceStatus,
 ) compliancemodels.SetStatusEntry {
 
