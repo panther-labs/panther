@@ -1408,12 +1408,29 @@ Resources:
       FieldName: rules
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
+        #set( $payload = $ctx.args.input)
+
+        #if($payload.logTypes)
+          #set($logTypesCSV = "")
+          #foreach($logType in $payload.logTypes)
+              #set($logTypesCSV = $logTypesCSV  + "," + $logType)
+          #end
+        #end
+        $util.qr($payload.put("logTypes", $logTypesCSV))
+
+        #if($payload.tags)
+          #set($tagsCSV = "")
+          #foreach($tag in $$payload.tags)
+              #set($tagsCSV = $tagsCSV  + "," + $tag)
+          #end
+        #end
+        $util.qr($payload.put("tags", $tagsCSV))
         {
           "version": "2018-05-29",
           "method": "GET",
           "resourcePath": "/v1/rule/list",
           "params": {
-            "query": $util.toJson($ctx.args.input),
+            "query": $util.toJson($payload),
             "headers": {
               "Content-Type": "application/json"
             }

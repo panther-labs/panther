@@ -20,6 +20,7 @@ package outputs
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
+	jsoniter "github.com/json-iterator/go"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
@@ -44,9 +45,13 @@ func (client *OutputClient) Opsgenie(
 	runBook := "\n <strong>Runbook:</strong> " + aws.StringValue(alert.Runbook)
 	severity := "\n <strong>Severity:</strong> " + alert.Severity
 
+	// Best effort attempt to marshal Alert Context
+	marshaledContext, _ := jsoniter.MarshalToString(alert.Context)
+	alertContext := "\n <strong>AlertContext:</strong> " + marshaledContext
+
 	opsgenieRequest := map[string]interface{}{
 		"message":     generateAlertTitle(alert),
-		"description": description + link + runBook + severity,
+		"description": description + link + runBook + severity + alertContext,
 		"tags":        alert.Tags,
 		"priority":    pantherToOpsGeniePriority[alert.Severity],
 	}

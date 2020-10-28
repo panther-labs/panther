@@ -30,12 +30,12 @@ import {
   waitForElementToBeRemoved,
 } from 'test-utils';
 import { mockGetOverviewAlerts } from 'Pages/LogAnalysisOverview/graphql/getOverviewAlerts.generated';
-import LogAnalysisOverview, { defaultPastDays, intervalMinutes } from './LogAnalysisOverview';
+import LogAnalysisOverview, { DEFAULT_PAST_DAYS, DEFAULT_INTERVAL } from './LogAnalysisOverview';
 import { mockGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 
 const mockedToDate = '2020-07-22T19:04:33Z';
+const mockedFromDate = utils.subtractDays(mockedToDate, DEFAULT_PAST_DAYS);
 const getLogAnalysisMetrics = buildLogAnalysisMetricsResponse();
-const mockedFromDate = utils.subtractDays(mockedToDate, defaultPastDays);
 const getLogAnalysisMetricsInput = buildLogAnalysisMetricsInput({
   metricNames: [
     'eventsProcessed',
@@ -46,20 +46,19 @@ const getLogAnalysisMetricsInput = buildLogAnalysisMetricsInput({
   ],
   fromDate: mockedFromDate,
   toDate: mockedToDate,
-  intervalMinutes,
+  intervalMinutes: DEFAULT_INTERVAL,
 });
 
 // Mocking getCurrentDate in order to have a common date for the query
 const mockedGetCurrentDate = jest.spyOn(utils, 'getCurrentDate');
 mockedGetCurrentDate.mockImplementation(() => mockedToDate);
 
-function genAlert(severity) {
-  return buildAlertSummary({ severity });
-}
-
 const recentAlerts = buildListAlertsResponse();
 const topAlerts = buildListAlertsResponse({
-  alertSummaries: [genAlert(SeverityEnum.Critical), genAlert(SeverityEnum.High)],
+  alertSummaries: [
+    buildAlertSummary({ alertId: '1', severity: SeverityEnum.Critical }),
+    buildAlertSummary({ alertId: '2', severity: SeverityEnum.High }),
+  ],
 });
 
 const defaultMocks = [
@@ -90,6 +89,7 @@ describe('Log Analysis Overview', () => {
   it('should render 2 canvas, click on tab button and render latency chart', async () => {
     const { getByTestId, getAllByTitle, getByText } = render(<LogAnalysisOverview />, {
       mocks: defaultMocks,
+      initialRoute: `/?fromDate=${mockedFromDate}&toDate=${mockedToDate}`,
     });
 
     // Expect to see 3 loading interfaces
@@ -120,6 +120,7 @@ describe('Log Analysis Overview', () => {
   it('should display Alerts Cards for Top Alerts and Recent Alerts', async () => {
     const { getAllByTitle, getByText, getAllByText } = render(<LogAnalysisOverview />, {
       mocks: defaultMocks,
+      initialRoute: `/?fromDate=${mockedFromDate}&toDate=${mockedToDate}`,
     });
     // Expect to see 3 loading interfaces
     const loadingInterfaceElements = getAllByTitle('Loading interface...');

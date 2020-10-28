@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	jsoniter "github.com/json-iterator/go"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
@@ -32,6 +33,9 @@ func (client *OutputClient) MsTeams(
 	alert *alertModels.Alert, config *outputModels.MsTeamsConfig) *AlertDeliveryResponse {
 
 	link := "[Click here to view in the Panther UI](" + policyURLPrefix + alert.AnalysisID + ").\n"
+
+	// Best effort attempt to marshal Alert Context
+	marshaledContext, _ := jsoniter.MarshalToString(alert.Context)
 
 	msTeamsRequestBody := map[string]interface{}{
 		"@context": "http://schema.org/extensions",
@@ -44,6 +48,7 @@ func (client *OutputClient) MsTeams(
 					map[string]string{"name": "Runbook", "value": aws.StringValue(alert.Runbook)},
 					map[string]string{"name": "Severity", "value": alert.Severity},
 					map[string]string{"name": "Tags", "value": strings.Join(alert.Tags, ", ")},
+					map[string]string{"name": "AlertContext", "value": marshaledContext},
 				},
 				"text": link,
 			},
