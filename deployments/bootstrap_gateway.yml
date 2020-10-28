@@ -445,6 +445,7 @@ Resources:
       # FIXME: switch to 'Panther' when DDB connector is GA https://docs.aws.amazon.com/athena/latest/ug/connect-to-a-data-source.html
       Name: AmazonAthenaPreviewFunctionality # Panther
       Description: The Panther workgroup
+      RecursiveDeleteOption: true
       WorkGroupConfiguration:
         ResultConfiguration:
           OutputLocation: !Sub s3://${AthenaResultsBucket}/panther
