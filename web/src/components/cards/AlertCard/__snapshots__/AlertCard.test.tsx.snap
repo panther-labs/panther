@@ -1075,11 +1075,11 @@ exports[`AlertCard should not display link to Rule 1`] = `
                 </div>
               </div>
               <div
-                aria-controls="menu--12"
+                aria-controls="menu--13"
                 aria-haspopup="true"
                 class="panther-26"
                 data-reach-menu-button=""
-                id="menu-button--menu--12"
+                id="menu-button--menu--13"
                 type="button"
               >
                 <button
@@ -1631,11 +1631,11 @@ exports[`AlertCard should render alert destinations logos 1`] = `
                 </div>
               </div>
               <div
-                aria-controls="menu--22"
+                aria-controls="menu--25"
                 aria-haspopup="true"
                 class="panther-29"
                 data-reach-menu-button=""
-                id="menu-button--menu--22"
+                id="menu-button--menu--25"
                 type="button"
               >
                 <button
@@ -2220,11 +2220,11 @@ exports[`AlertCard should render message that destination delivery is failing 1`
                 </div>
               </div>
               <div
-                aria-controls="menu--26"
+                aria-controls="menu--30"
                 aria-haspopup="true"
                 class="panther-29"
                 data-reach-menu-button=""
-                id="menu-button--menu--26"
+                id="menu-button--menu--30"
                 type="button"
               >
                 <button
