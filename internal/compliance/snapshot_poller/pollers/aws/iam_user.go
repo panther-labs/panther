@@ -35,7 +35,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -422,7 +422,7 @@ func buildIAMUserSnapshot(iamSvc iamiface.IAMAPI, user *iam.User) (*awsmodels.IA
 	iamUserSnapshot := &awsmodels.IAMUser{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   user.Arn,
-			TimeCreated:  utils.DateTimeFormat(*user.CreateDate),
+			TimeCreated:  user.CreateDate,
 			ResourceType: aws.String(awsmodels.IAMUserSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
@@ -484,7 +484,7 @@ func buildIAMRootUserSnapshot() (*awsmodels.IAMRootUser, error) {
 	rootSnapshot := &awsmodels.IAMRootUser{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   rootCredReport.ARN,
-			TimeCreated:  utils.DateTimeFormat(*rootCredReport.UserCreationTime),
+			TimeCreated:  rootCredReport.UserCreationTime,
 			ResourceType: aws.String(awsmodels.IAMRootUserSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
@@ -508,7 +508,7 @@ func buildIAMRootUserSnapshot() (*awsmodels.IAMRootUser, error) {
 }
 
 // PollIAMUsers generates a snapshot for each IAM User.
-func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting IAM User resource poller")
 	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
@@ -554,7 +554,7 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 	}
 
 	// Create IAM User snapshots
-	var resources []*apimodels.AddResourceEntry
+	var resources []apimodels.AddResourceEntry
 	for _, user := range users {
 		// The IAM.User struct has a Tags field, indicating what tags the User has
 		// The API call IAM.GetUser returns an IAM.User struct, with all appropriate fields set
@@ -591,11 +591,11 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 			}
 		}
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      iamUserSnapshot,
-			ID:              apimodels.ResourceID(*user.Arn),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *user.Arn,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.IAMUserSchema,
 		})
 	}
@@ -611,11 +611,11 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddR
 		return nil, nil, err
 	}
 	// Create the IAM Root User snapshot
-	resources = append(resources, &apimodels.AddResourceEntry{
+	resources = append(resources, apimodels.AddResourceEntry{
 		Attributes:      rootSnapshot,
-		ID:              apimodels.ResourceID(*rootSnapshot.ARN),
-		IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-		IntegrationType: apimodels.IntegrationTypeAws,
+		ID:              *rootSnapshot.ARN,
+		IntegrationID:   *pollerInput.IntegrationID,
+		IntegrationType: integrationType,
 		Type:            awsmodels.IAMRootUserSchema,
 	})
 

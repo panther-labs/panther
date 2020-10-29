@@ -32,7 +32,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -206,7 +206,7 @@ func buildDynamoDBTableSnapshot(
 		GenericResource: awsmodels.GenericResource{
 			ResourceType: aws.String(awsmodels.DynamoDBTableSchema),
 			ResourceID:   description.TableArn,
-			TimeCreated:  utils.DateTimeFormat(*description.CreationDateTime),
+			TimeCreated:  description.CreationDateTime,
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
 			Name: tableName,
@@ -257,7 +257,7 @@ func buildDynamoDBTableSnapshot(
 }
 
 // PollDynamoDBTables gathers information on each Dynamo DB Table for an AWS account.
-func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting DynamoDB Table resource poller")
 	dynamoDBSvc, err := getDynamoDBClient(pollerInput, *pollerInput.Region)
 	if err != nil {
@@ -275,7 +275,7 @@ func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(tables))
+	resources := make([]apimodels.AddResourceEntry, 0, len(tables))
 	for i, table := range tables {
 		dynamoDBTable, err := buildDynamoDBTableSnapshot(dynamoDBSvc, applicationAutoScalingSvc, table)
 		if err != nil {
@@ -288,11 +288,11 @@ func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 		dynamoDBTable.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		dynamoDBTable.Region = pollerInput.Region
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      dynamoDBTable,
-			ID:              apimodels.ResourceID(*dynamoDBTable.ResourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *dynamoDBTable.ResourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.DynamoDBTableSchema,
 		})
 	}
