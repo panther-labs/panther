@@ -35,23 +35,23 @@ import (
 	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
-type UpdateGlueTablesProperties struct {
+type UpdateLogProcessorTablesProperties struct {
 	// TablesSignature should change every time the tables change (for CF master.yml this can be the Panther version)
 	TablesSignature     string `validate:"required"`
 	ProcessedDataBucket string `validate:"required"`
 }
 
-func customUpdateGlueTables(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
+func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
 		// It's important to always return this physicalResourceID
-		const physicalResourceID = "custom:glue:update-tables"
-		var props UpdateGlueTablesProperties
+		const physicalResourceID = "custom:glue:update-log-processor-tables"
+		var props UpdateLogProcessorTablesProperties
 		if err := parseProperties(event.ResourceProperties, &props); err != nil {
 			zap.L().Error("failed to parse resource properties", zap.Error(err))
 			return physicalResourceID, nil, err
 		}
-		if err := updateGlueTables(ctx, &props); err != nil {
+		if err := updateLogProcessorTables(ctx, &props); err != nil {
 			zap.L().Error("failed to update glue tables", zap.Error(err))
 			return physicalResourceID, nil, err
 		}
@@ -74,7 +74,7 @@ func customUpdateGlueTables(ctx context.Context, event cfn.Event) (string, map[s
 	}
 }
 
-func updateGlueTables(ctx context.Context, props *UpdateGlueTablesProperties) error {
+func updateLogProcessorTables(ctx context.Context, props *UpdateLogProcessorTablesProperties) error {
 	// ensure databases are all there
 	for pantherDatabase, pantherDatabaseDescription := range awsglue.PantherDatabases {
 		zap.L().Info("creating database", zap.String("database", pantherDatabase))

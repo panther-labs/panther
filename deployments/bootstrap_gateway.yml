@@ -81,6 +81,9 @@ Parameters:
     AllowedPattern: '^[a-zA-Z0-9_-]{15,}$'
 
 Mappings:
+  AthenaDataSources:
+    Dynamodb:
+      Name: ddb
   Functions:
     CustomResource:
       Memory: 1024 # use a larger size to run faster, since this is used rarely the small cost difference is not a concern
@@ -142,7 +145,6 @@ Resources:
                 - athena:GetQuery*
                 - athena:StartQueryExecution
                 - athena:StopQueryExecution
-                - athena:UpdateWorkGroup
                 - guardduty:Create*
                 - guardduty:DeletePublishingDestination
                 - guardduty:Get*
@@ -415,6 +417,39 @@ Resources:
       # here as for the compliance-api
       LatencyThresholdMs: 3000
 
+  # https://docs.aws.amazon.com/athena/latest/ug/athena-prebuilt-data-connectors-dynamodb.html
+  AthenaDDBConnector:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        # FIXME: this is currently a FIXED arn but the connector is not GA. Once GA it might be regional or different
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:292517598671:applications/AthenaDynamoDBConnector
+        SemanticVersion: 2020.33.1
+      Parameters:
+        AthenaCatalogName: !FindInMap [AthenaDataSources, Dynamodb, Name] # this is now called the "DataSource"
+        SpillBucket: !Ref AthenaResultsBucket
+
+  AnthenaDDBDataSource: # this binds the lambda created in AthenaDDBConnector resource to Athena
+    DependsOn: AthenaDDBConnector
+    Type: AWS::Athena::DataCatalog
+    Properties:
+      Name: !FindInMap [AthenaDataSources, Dynamodb, Name]
+      Description: Dynamodb data source
+      Type: LAMBDA
+      Parameters:
+        function: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:ddb
+
+  AthenaWorkGroup:
+    Type: AWS::Athena::WorkGroup
+    Properties:
+      # FIXME: switch to 'Panther' when DDB connector is GA https://docs.aws.amazon.com/athena/latest/ug/connect-to-a-data-source.html
+      Name: AmazonAthenaPreviewFunctionality # Panther
+      Description: The Panther workgroup
+      RecursiveDeleteOption: true
+      WorkGroupConfiguration:
+        ResultConfiguration:
+          OutputLocation: !Sub s3://${AthenaResultsBucket}/panther
+
 Outputs:
   AppClientId:
     Description: Cognito user pool client ID
@@ -441,3 +476,7 @@ Outputs:
   ResourcesApiEndpoint:
     Description: HTTPS endpoint for the resources api
     Value: !Sub ${ResourcesApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
+
+  AthenaWorkGroup:
+    Description: The Athena workgroup for Panther queries
+    Value: !Ref AthenaWorkGroup
