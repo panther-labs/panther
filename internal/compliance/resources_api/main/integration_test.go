@@ -80,6 +80,7 @@ func TestIntegrationAPI(t *testing.T) {
 	require.NoError(t, testutils.ClearDynamoTable(awsSession, "panther-compliance"))
 
 	t.Run("AddResource", func(t *testing.T) {
+		t.Run("AddEmpty", addEmpty)
 		t.Run("AddSuccess", addSuccess)
 	})
 
@@ -105,7 +106,31 @@ func TestIntegrationAPI(t *testing.T) {
 	})
 }
 
+func addEmpty(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		AddResources: &models.AddResourcesInput{
+			Resources: []models.AddResourceEntry{
+				{
+					// missing attributes
+					ID:              bucket.ID,
+					IntegrationID:   bucket.IntegrationID,
+					IntegrationType: bucket.IntegrationType,
+					Type:            bucket.Type,
+				},
+			},
+		},
+	}
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.Error(t, err)
+	assert.Equal(t, http.StatusBadRequest, statusCode)
+	assert.Equal(t,
+		"panther-resources-api: InvalidInputError: Attributes invalid, failed to satisfy the condition: required",
+		err.Error())
+}
+
 func addSuccess(t *testing.T) {
+	t.Parallel()
 	input := models.LambdaInput{
 		AddResources: &models.AddResourcesInput{
 			Resources: []models.AddResourceEntry{

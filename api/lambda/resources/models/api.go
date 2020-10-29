@@ -34,7 +34,7 @@ type LambdaInput struct {
 
 // Backend adds or replaces resources
 type AddResourcesInput struct {
-	Resources []AddResourceEntry `json:"resources" validate:"min=1"`
+	Resources []AddResourceEntry `json:"resources" validate:"min=1,dive"`
 }
 
 type AddResourceEntry struct {
@@ -63,7 +63,7 @@ type Resource struct {
 }
 
 type DeleteResourcesInput struct {
-	Resources []DeleteEntry `json:"resources" validate:"min=1"`
+	Resources []DeleteEntry `json:"resources" validate:"min=1,dive"`
 }
 
 type DeleteEntry struct {
