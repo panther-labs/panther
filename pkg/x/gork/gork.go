@@ -256,10 +256,7 @@ func (e *Env) compile(root, src string, patterns map[string]string, visited []st
 }
 
 func (e *Env) lookup(name string) *Pattern {
-	if p, ok := e.patterns[name]; ok {
-		return p
-	}
-	return nil
+	return e.patterns[name]
 }
 
 func (e *Env) set(name string, expr *Pattern) {
