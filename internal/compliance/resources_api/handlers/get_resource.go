@@ -20,7 +20,6 @@ package handlers
 
 import (
 	"net/http"
-	"net/url"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -33,12 +32,6 @@ import (
 
 // GetResource retrieves a single resource from the Dynamo table.
 func (API) GetResource(input *models.GetResourceInput) *events.APIGatewayProxyResponse {
-	var err error
-	input.ID, err = url.QueryUnescape(input.ID)
-	if err != nil {
-		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusBadRequest}
-	}
-
 	response, err := dynamoClient.GetItem(&dynamodb.GetItemInput{
 		Key:       tableKey(input.ID),
 		TableName: &env.ResourcesTable,

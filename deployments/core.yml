@@ -215,7 +215,7 @@ Resources:
   CustomMessageTriggerInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !GetAtt UsersAPIFunction.Arn
+      FunctionName: !Ref UsersAPIFunction
       Action: lambda:InvokeFunction
       Principal: cognito-idp.amazonaws.com
       SourceArn: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}

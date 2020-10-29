@@ -19,9 +19,7 @@ package handlers
  */
 
 import (
-	"fmt"
 	"net/http"
-	"net/url"
 	"sort"
 	"strings"
 
@@ -55,9 +53,7 @@ var (
 
 // ListResources returns a filtered list of resources.
 func (API) ListResources(input *models.ListResourcesInput) *events.APIGatewayProxyResponse {
-	if err := parseListResources(input); err != nil {
-		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusBadRequest}
-	}
+	setListDefaults(input)
 
 	scanInput, err := buildListScan(input)
 	if err != nil {
@@ -75,14 +71,7 @@ func (API) ListResources(input *models.ListResourcesInput) *events.APIGatewayPro
 	return gatewayapi.MarshalResponse(result, http.StatusOK)
 }
 
-// URL decode parameters and set defaults
-func parseListResources(input *models.ListResourcesInput) error {
-	var err error
-	input.IDContains, err = url.QueryUnescape(input.IDContains)
-	if err != nil {
-		return fmt.Errorf("invalid idContains parameter: %v", err)
-	}
-
+func setListDefaults(input *models.ListResourcesInput) {
 	if len(input.Fields) == 0 {
 		input.Fields = defaultFields
 	}
@@ -92,8 +81,6 @@ func parseListResources(input *models.ListResourcesInput) error {
 	if input.PageSize == 0 {
 		input.PageSize = 25
 	}
-
-	return nil
 }
 
 func buildListScan(input *models.ListResourcesInput) (*dynamodb.ScanInput, error) {
@@ -189,13 +176,12 @@ func listFilteredResources(scanInput *dynamodb.ScanInput, input *models.ListReso
 			return err
 		}
 
-		// Compliance status isn't stored in this table, so we filter it out here if needed
-		if input.ComplianceStatus != "" && input.ComplianceStatus != status.Status {
-			return nil
+		// Filter on the compliance status (if applicable)
+		if input.ComplianceStatus == "" || input.ComplianceStatus == status.Status {
+			// Resource passed all of the filters - add it to the result set
+			result = append(result, item.Resource(status.Status))
 		}
 
-		// Resource passed all of the filters - add it to the result set
-		result = append(result, item.Resource(status.Status))
 		return nil
 	})
 

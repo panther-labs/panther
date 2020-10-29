@@ -46,7 +46,7 @@ type AddResourceEntry struct {
 }
 
 type GetResourceInput struct {
-	ID string `json:"resourceId" validate:"required"` // url-encoded
+	ID string `json:"resourceId" validate:"required"`
 }
 
 type GetResourceOutput = Resource
@@ -59,7 +59,7 @@ type Resource struct {
 	IntegrationID    string                  `json:"integrationId"`
 	IntegrationType  string                  `json:"integrationType"`
 	LastModified     time.Time               `json:"lastModified"`
-	Type             string
+	Type             string                  `json:"type"`
 }
 
 type DeleteResourcesInput struct {
@@ -78,7 +78,7 @@ type ListResourcesInput struct {
 	// Only include resources which are or are not deleted
 	Deleted *bool `json:"deleted"`
 
-	// Only include resources whose ID contains this URL-encoded substring (case-insensitive)
+	// Only include resources whose ID contains this substring (case-insensitive)
 	IDContains string `json:"idContains"`
 
 	// Only include resources from this source integration
