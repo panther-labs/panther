@@ -98,7 +98,11 @@ const RelatedDestinations: React.FC<RelatedDestinationsSectionProps> = ({
 
   return (
     <Flex align="center" spacing={2} mt={1}>
-      {destinations.length ? destinations.map(getLogo) : 'N/A'}
+      {destinations.length ? (
+        destinations.map(getLogo)
+      ) : (
+        <Text fontSize="small">Not configured</Text>
+      )}
     </Flex>
   );
 };
