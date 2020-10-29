@@ -28,7 +28,7 @@ import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.gene
 import { formatDatetime } from 'Helpers/utils';
 import BulletedLogType from 'Components/BulletedLogType';
 import useAlertDestinations from 'Hooks/useAlertDestinations';
-import useDestinationsDeliverySuccess from 'Hooks/useDestinationsDeliverySuccess';
+import useAlertDestinationsDeliverySuccess from 'Hooks/useAlertDestinationsDeliverySuccess';
 import UpdateAlertDropdown from '../../dropdowns/UpdateAlertDropdown';
 
 interface AlertCardProps {
@@ -38,9 +38,8 @@ interface AlertCardProps {
 
 const AlertCard: React.FC<AlertCardProps> = ({ alert, hideRuleButton = false }) => {
   const { alertDestinations, loading: loadingDestinations } = useAlertDestinations({ alert });
-  const { allDestinationDeliveredSuccessfully } = useDestinationsDeliverySuccess({
-    deliveryResponses: alert.deliveryResponses,
-    alertDestinations,
+  const { allDestinationDeliveredSuccessfully, loading } = useAlertDestinationsDeliverySuccess({
+    alert,
   });
   return (
     <GenericItemCard>
@@ -95,7 +94,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, hideRuleButton = false }) 
             <UpdateAlertDropdown alert={alert} />
           </Flex>
         </GenericItemCard.ValuesGroup>
-        {!allDestinationDeliveredSuccessfully && (
+        {!loading && !allDestinationDeliveredSuccessfully && (
           <Flex
             as="section"
             align="center"

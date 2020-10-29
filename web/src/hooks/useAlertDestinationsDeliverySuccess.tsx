@@ -15,29 +15,31 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import { DeliveryResponse, Destination } from 'Generated/schema';
+
 import React from 'react';
 import groupBy from 'lodash/groupBy';
 import { DeliveryResponseFull } from 'Source/graphql/fragments/DeliveryResponseFull.generated';
 import orderBy from 'lodash/orderBy';
+import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
+import useAlertDestinations from 'Hooks/useAlertDestinations';
 
-interface UseDestinationsDeliverySuccessProps {
-  deliveryResponses: Pick<
-    DeliveryResponse,
-    'outputId' | 'statusCode' | 'message' | 'success' | 'dispatchedAt'
-  >[];
-  alertDestinations: Pick<Destination, 'outputType' | 'outputId' | 'displayName'>[];
+interface UseAlertDestinationsDeliverySuccessProps {
+  alert: AlertSummaryFull;
 }
 
-interface UseDestinationDeliverSuccessResponse {
+interface UseAlertDestinationsDeliverySuccessResponse {
   allDestinationDeliveredSuccessfully: boolean;
   enhancedAndSortedAlertDeliveries: any[];
+  loading: boolean;
 }
 
-const useDestinationsDeliverySuccess = ({
-  deliveryResponses,
-  alertDestinations,
-}: UseDestinationsDeliverySuccessProps): UseDestinationDeliverSuccessResponse => {
+const useAlertDestinationsDeliverySuccess = ({
+  alert,
+}: UseAlertDestinationsDeliverySuccessProps): UseAlertDestinationsDeliverySuccessResponse => {
+  const { deliveryResponses } = alert;
+  // FIXME: `alertDestinations` should be part of Alert & coming directly from GraphQL
+  //  Someday...
+  const { alertDestinations, loading } = useAlertDestinations({ alert });
   const enhancedAndSortedAlertDeliveries = React.useMemo(() => {
     return deliveryResponses
       .reduce((acc, dr) => {
@@ -78,9 +80,10 @@ const useDestinationsDeliverySuccess = ({
     () => ({
       allDestinationDeliveredSuccessfully,
       enhancedAndSortedAlertDeliveries,
+      loading,
     }),
-    [allDestinationDeliveredSuccessfully, enhancedAndSortedAlertDeliveries]
+    [allDestinationDeliveredSuccessfully, enhancedAndSortedAlertDeliveries, loading]
   );
 };
 
-export default useDestinationsDeliverySuccess;
+export default useAlertDestinationsDeliverySuccess;

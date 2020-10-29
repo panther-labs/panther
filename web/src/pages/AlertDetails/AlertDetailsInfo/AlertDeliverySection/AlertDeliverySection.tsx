@@ -20,20 +20,15 @@ import React from 'react';
 import { Text, Flex, Icon, AbstractButton, Box, Collapse, useSnackbar } from 'pouncejs';
 import { AlertDetails } from 'Pages/AlertDetails';
 import last from 'lodash/last';
-import { ListDestinations } from 'Source/graphql/queries';
-import useDestinationsDeliverySuccess from 'Hooks/useDestinationsDeliverySuccess';
+import useAlertDestinationsDeliverySuccess from 'Hooks/useAlertDestinationsDeliverySuccess';
 import AlertDeliveryTable from './AlertDeliveryTable';
 import { useRetryAlertDelivery } from './graphql/retryAlertDelivery.generated';
 
 interface AlertDeliverySectionProps {
   alert: AlertDetails['alert'];
-  alertDestinations: ListDestinations['destinations'];
 }
 
-const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
-  alert,
-  alertDestinations,
-}) => {
+const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({ alert }) => {
   const [isHistoryVisible, setHistoryVisibility] = React.useState(false);
 
   const { pushSnackbar } = useSnackbar();
@@ -73,13 +68,12 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
     [retryAlertDelivery, alert]
   );
 
-  // FIXME: `alertDestinations` should be part of Alert & coming directly from GraphQL
-  //  Someday...
   const { deliveryResponses } = alert;
   const {
     enhancedAndSortedAlertDeliveries,
     allDestinationDeliveredSuccessfully,
-  } = useDestinationsDeliverySuccess({ deliveryResponses, alertDestinations });
+    loading: loadingDeliverySuccess,
+  } = useAlertDestinationsDeliverySuccess({ alert });
 
   if (!deliveryResponses.length || !enhancedAndSortedAlertDeliveries.length) {
     return (
@@ -93,7 +87,7 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
   return (
     <Box>
       <Flex justify="space-between">
-        {allDestinationDeliveredSuccessfully ? (
+        {!loadingDeliverySuccess && allDestinationDeliveredSuccessfully ? (
           <Flex align="center" spacing={4}>
             <Icon type="check-circle" size="medium" color="green-400" />
             <Text fontWeight="medium">Alert was delivered successfully</Text>
