@@ -38,6 +38,7 @@ import (
 type UpdateLogProcessorTablesProperties struct {
 	// TablesSignature should change every time the tables change (for CF master.yml this can be the Panther version)
 	TablesSignature     string `validate:"required"`
+	AthenaWorkGroup     string `validate:"required"`
 	ProcessedDataBucket string `validate:"required"`
 }
 
@@ -108,7 +109,7 @@ func updateLogProcessorTables(ctx context.Context, props *UpdateLogProcessorTabl
 	}
 
 	// update the views with the new tables
-	err = athenaviews.CreateOrReplaceViews(athenaClient, deployedLogTables)
+	err = athenaviews.CreateOrReplaceViews(athenaClient, props.AthenaWorkGroup, deployedLogTables)
 	if err != nil {
 		return errors.Wrap(err, "failed creating views")
 	}

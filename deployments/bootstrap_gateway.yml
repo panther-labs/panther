@@ -439,11 +439,21 @@ Resources:
       Parameters:
         function: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:ddb
 
+  # FIXME: remove when DDB connector is GA https://docs.aws.amazon.com/athena/latest/ug/connect-to-a-data-source.html
+  AthenaPreviewWorkGroup: # this is used for the ddb tables until out of preview, only available to query via the Athena console!
+    Type: AWS::Athena::WorkGroup
+    Properties:
+      Name: AmazonAthenaPreviewFunctionality
+      Description: Preview Workgroup
+      RecursiveDeleteOption: true
+      WorkGroupConfiguration:
+        ResultConfiguration:
+          OutputLocation: !Sub s3://${AthenaResultsBucket}/panther/preview
+
   AthenaWorkGroup:
     Type: AWS::Athena::WorkGroup
     Properties:
-      # FIXME: switch to 'Panther' when DDB connector is GA https://docs.aws.amazon.com/athena/latest/ug/connect-to-a-data-source.html
-      Name: AmazonAthenaPreviewFunctionality # Panther
+      Name: Panther
       Description: The Panther workgroup
       RecursiveDeleteOption: true
       WorkGroupConfiguration:
