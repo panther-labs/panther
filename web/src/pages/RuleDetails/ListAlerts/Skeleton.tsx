@@ -18,20 +18,14 @@
 
 import React from 'react';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { Box, Card, FadeIn } from 'pouncejs';
+import { Card, FadeIn } from 'pouncejs';
 
 const RuleDetailsPageSkeleton: React.FC = () => {
   return (
     <FadeIn from="bottom">
-      <TablePlaceholder rowCount={1} rowHeight={15} />
       <Card p={6}>
-        <TablePlaceholder rowCount={2} rowHeight={10} />
+        <TablePlaceholder rowCount={5} rowHeight={10} />
       </Card>
-      <Box mt={5}>
-        <Card p={6}>
-          <TablePlaceholder rowCount={2} rowHeight={10} />
-        </Card>
-      </Box>
     </FadeIn>
   );
 };

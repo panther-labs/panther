@@ -16,24 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import TablePlaceholder from 'Components/TablePlaceholder';
-import { Box, Card, FadeIn } from 'pouncejs';
-
-const RuleDetailsPageSkeleton: React.FC = () => {
-  return (
-    <FadeIn from="bottom">
-      <TablePlaceholder rowCount={1} rowHeight={15} />
-      <Card p={6}>
-        <TablePlaceholder rowCount={2} rowHeight={10} />
-      </Card>
-      <Box mt={5}>
-        <Card p={6}>
-          <TablePlaceholder rowCount={2} rowHeight={10} />
-        </Card>
-      </Box>
-    </FadeIn>
-  );
-};
-
-export default RuleDetailsPageSkeleton;
+export { default } from './ListAlerts';
