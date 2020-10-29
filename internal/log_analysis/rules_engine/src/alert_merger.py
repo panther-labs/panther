@@ -88,7 +88,10 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
     2. This rule with the same dedup string has fired before, but after the dedup period has expired
     """
     condition_expression = '(#1 < :1) OR (attribute_not_exists(#2))'
-    update_expression = 'ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10, #11=:11'
+    update_expression = 'ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10'
+
+    if group_info.alert_context:
+        update_expression += ', #11=:11'
 
     if group_info.title:
         update_expression += ', #12=:12'
