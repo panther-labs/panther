@@ -100,7 +100,7 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Parameters:
 	//    DeploymentId:  string (required)
 	// Outputs: None
-	// PhysicalId: custom:glue:update-log-processor-tables
+	// PhysicalId: custom:glue:update-tables
 	"Custom::UpdateLogProcessorTables": customUpdateLogProcessorTables,
 
 	// Updates databases and table schemas from the cloud security
