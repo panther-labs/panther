@@ -419,7 +419,7 @@ exports[`AlertCard should match snapshot 1`] = `
             class="panther-5"
           >
             <dd
-              aria-labelledby="link-to-rule"
+              aria-labelledby="undefinedobject-object"
               class="panther-4"
             >
               <a
@@ -1075,11 +1075,11 @@ exports[`AlertCard should not display link to Rule 1`] = `
                 </div>
               </div>
               <div
-                aria-controls="menu--11"
+                aria-controls="menu--12"
                 aria-haspopup="true"
                 class="panther-26"
                 data-reach-menu-button=""
-                id="menu-button--menu--11"
+                id="menu-button--menu--12"
                 type="button"
               >
                 <button
@@ -1500,7 +1500,7 @@ exports[`AlertCard should render alert destinations logos 1`] = `
             class="panther-5"
           >
             <dd
-              aria-labelledby="link-to-rule"
+              aria-labelledby="undefinedobject-object"
               class="panther-4"
             >
               <a
@@ -1631,11 +1631,11 @@ exports[`AlertCard should render alert destinations logos 1`] = `
                 </div>
               </div>
               <div
-                aria-controls="menu--21"
+                aria-controls="menu--22"
                 aria-haspopup="true"
                 class="panther-29"
                 data-reach-menu-button=""
-                id="menu-button--menu--21"
+                id="menu-button--menu--22"
                 type="button"
               >
                 <button
@@ -2089,7 +2089,7 @@ exports[`AlertCard should render message that destination delivery is failing 1`
             class="panther-5"
           >
             <dd
-              aria-labelledby="link-to-rule"
+              aria-labelledby="undefinedobject-object"
               class="panther-4"
             >
               <a
@@ -2220,11 +2220,11 @@ exports[`AlertCard should render message that destination delivery is failing 1`
                 </div>
               </div>
               <div
-                aria-controls="menu--25"
+                aria-controls="menu--26"
                 aria-haspopup="true"
                 class="panther-29"
                 data-reach-menu-button=""
-                id="menu-button--menu--25"
+                id="menu-button--menu--26"
                 type="button"
               >
                 <button
@@ -2247,7 +2247,7 @@ exports[`AlertCard should render message that destination delivery is failing 1`
             </div>
           </div>
         </div>
-        <div
+        <section
           aria-label="Destination delivery failure"
           class="panther-35"
         >
@@ -2265,7 +2265,7 @@ exports[`AlertCard should render message that destination delivery is failing 1`
           >
             There was an issue with the delivery of this alert to a selected destination. See specific Alert for details.
           </p>
-        </div>
+        </section>
       </div>
     </div>
   </section>
