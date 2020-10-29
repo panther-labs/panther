@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Types from 'Generated/schema';
+import * as Types from '../../../__generated__/schema';
 
 import { DeliveryResponseFull } from '../fragments/DeliveryResponseFull.generated';
 import { GraphQLError } from 'graphql';
