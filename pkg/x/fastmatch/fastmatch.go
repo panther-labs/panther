@@ -42,23 +42,35 @@ type delimiter struct {
 var splitFields = regexp.MustCompile(`%{\s*(?P<tag>[^}]*)\s*}`)
 
 // Compile compiles a pattern.
+// Patterns use `%{` and `}` delimiters to define the placing of fields in a string.
+// Two consecutive fields *must* have some delimiter text between them for the pattern to be valid.
+// For example:
+// `%{foo} %{bar}` is valid
+// `%{foo}%{bar}` is not valid
+// Pattern names currently have no restrictions apart from that they cannot contain `}`.
+// Please be conservative with your field names as that might change in the future...
 func Compile(pattern string) (*Pattern, error) {
 	tags := splitFields.FindAllStringSubmatch(pattern, -1)
 	if tags == nil {
+		// pattern contains no fields
 		return nil, errInvalidPattern
 	}
 	matchDelimiters := splitFields.Split(pattern, -1)
+	// First delimiter is a prefix at the start of text.
 	prefix, matchDelimiters := matchDelimiters[0], matchDelimiters[1:]
 	delimiters := make([]delimiter, 0, len(tags))
 	fields := make([]string, 0, len(tags))
 	last := len(matchDelimiters) - 1
+	// Keep not of the previous delimiter for auto detecting quotes
 	prev := prefix
 	for i, m := range matchDelimiters {
+		// Do not allow empty delimiters unless it's the last field
 		if i < last && m == "" {
 			return nil, errInvalidPattern
 		}
 		tag := tags[i][1]
 		d := delimiter{}
+		// Autodetects quotes
 		d.reset(tag, m, prev)
 		prev = m
 		delimiters = append(delimiters, d)
@@ -108,7 +120,8 @@ var (
 	errInvalidPattern = errors.New("invalid pattern")
 )
 
-// MatchString matches src and appends key/value pairs to dst
+// MatchString matches src and appends key/value pairs to dst.
+// Note that if an error occurs the original slice is returned.
 func (p *Pattern) MatchString(dst []string, src string) ([]string, error) {
 	tail := src
 	if prefix := p.prefix; len(prefix) <= len(tail) && tail[:len(prefix)] == prefix {
@@ -142,30 +155,43 @@ func (p *Pattern) MatchString(dst []string, src string) ([]string, error) {
 
 func (p *Pattern) match(src, delim string, quote byte) (match, tail string, err error) {
 	if (quote == '"' || quote == '\'') && strings.IndexByte(src, '\\') != -1 {
+		// Only trigger quoted match if there is an escaping slash (`\\`) somewhere ahead
 		return p.matchQuoted(src, delim, quote)
 	}
+	// Fast match case
 	if pos := strings.Index(src, delim); 0 <= pos && pos < len(src) {
+		// Split match part from rest of text
 		match, tail = src[:pos], src[pos:]
+		// Consume the delimiter
 		tail = tail[len(delim):]
 		return match, tail, nil
 	}
 	return "", src, errMatch
 }
 
+// matchQuoted matches fields while escaping quotes in a single pass.
+// It properly handles unicode multibytes so it is much slower than non-quoted match.
 func (p *Pattern) matchQuoted(src, delim string, quote byte) (match, tail string, err error) {
 	tail = src
+	// Copy and reset scratch slice header to stack
 	scratch := p.scratch[:0]
+	// Go over each unicode character in src until we reach the quote
 	for len(tail) > 0 && tail[0] != quote {
+		// This reads a unicode character properly handling `\\` escapes
 		c, _, ss, err := strconv.UnquoteChar(tail, quote)
 		if err != nil {
-			p.scratch = scratch
+			p.scratch = scratch // Restore scratch buffer
 			return "", src, err
 		}
+		// Gather all characters
 		scratch = append(scratch, c)
+		// Advance the loop
 		tail = ss
 	}
-	p.scratch = scratch
+	p.scratch = scratch // Restore scratch buffer
+	// Check that the rest for the text starts with delimiter
 	if strings.HasPrefix(tail, delim) {
+		// Match found, consume the delimiter and return
 		return string(scratch), strings.TrimPrefix(tail, delim), nil
 	}
 	return "", src, errMatch
