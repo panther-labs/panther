@@ -33,9 +33,10 @@ import UpdateAlertDropdown from '../../dropdowns/UpdateAlertDropdown';
 
 interface AlertCardProps {
   alert: AlertSummaryFull;
+  hideRuleLink?: boolean;
 }
 
-const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
+const AlertCard: React.FC<AlertCardProps> = ({ alert, hideRuleLink }) => {
   const { alertDestinations, loading: loadingDestinations } = useAlertDestinations({ alert });
 
   return (
@@ -49,20 +50,23 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
         >
           <GenericItemCard.Heading>{alert.title}</GenericItemCard.Heading>
         </Link>
+
         <GenericItemCard.ValuesGroup>
-          <GenericItemCard.Value
-            id="link-to-rule"
-            value={
-              <LinkButton
-                aria-label="Link to Rule"
-                to={urls.logAnalysis.rules.details(alert.ruleId)}
-                variantColor="navyblue"
-                size="medium"
-              >
-                View Rule
-              </LinkButton>
-            }
-          />
+          {!hideRuleLink && (
+            <GenericItemCard.Value
+              id="link-to-rule"
+              value={
+                <LinkButton
+                  aria-label="Link to Rule"
+                  to={urls.logAnalysis.rules.details(alert.ruleId)}
+                  variantColor="navyblue"
+                  size="medium"
+                >
+                  View Rule
+                </LinkButton>
+              }
+            />
+          )}
           <GenericItemCard.Value
             label="Alert Type"
             value={
@@ -76,6 +80,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
             label="Events"
             value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
           />
+
           <GenericItemCard.Value
             label="Destinations"
             value={
