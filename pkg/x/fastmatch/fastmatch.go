@@ -27,15 +27,20 @@ import (
 
 // Pattern matches a string and extracts key/value pairs.
 type Pattern struct {
-	prefix     string
+	// text to match at start of input
+	prefix string
+	// the rest of the fields
 	delimiters []delimiter
-	fields     []string
-	scratch    []rune
+	// reusable buffer for unquoting stings
+	scratch []rune
 }
 
 type delimiter struct {
+	// delimiter to match at end of field
 	match string
-	name  string
+	// name of the field
+	name string
+	// if set to `'` or `"` we should look out for escaping quotes
 	quote byte
 }
 
@@ -81,7 +86,6 @@ func Compile(pattern string) (*Pattern, error) {
 	return &Pattern{
 		prefix:     prefix,
 		delimiters: delimiters,
-		fields:     fields,
 	}, nil
 }
 
