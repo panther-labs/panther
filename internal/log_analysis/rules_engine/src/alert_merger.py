@@ -107,8 +107,11 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
         '#8': _ALERT_EVENT_COUNT,
         '#9': _ALERT_LOG_TYPES,
         '#10': _RULE_VERSION_ATTR_NAME,
-        '#11': _ALERT_CONTEXT,
     }
+
+    if group_info.alert_context:
+        expresion_attribute_names['#11'] = _ALERT_CONTEXT
+
     if group_info.title:
         expresion_attribute_names['#12'] = _ALERT_TITLE
 
@@ -145,10 +148,11 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
         ':10': {
             'S': group_info.rule_version
         },
-        ':11': {
-            'S': group_info.alert_context
-        },
     }
+
+    if group_info.alert_context:
+        expression_attribute_values[':11'] = {'S': group_info.alert_context}
+
     if group_info.title:
         expression_attribute_values[':12'] = {'S': group_info.title}
 
