@@ -24,8 +24,8 @@ import (
 	"github.com/panther-labs/panther/pkg/x/gork"
 )
 
+//nolint:lll
 func BenchmarkMatchString(b *testing.B) {
-
 	env := gork.New()
 	pattern := `%{NS:remote_ip} %{NS:identity} %{NS:user} \[%{HTTPDATE:timestamp}\] "%{NS:method} %{NS:request_uri} %{NS:protocol}" %{NS:status} %{NS:bytes_sent}`
 	expr, err := env.Compile(pattern)
@@ -44,5 +44,4 @@ func BenchmarkMatchString(b *testing.B) {
 			b.Error(matches)
 		}
 	}
-
 }

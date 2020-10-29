@@ -19,6 +19,7 @@ package gork
  */
 
 // Patterns based on https://github.com/logrusorgru/grokky
+// nolint: lll
 const BuiltinPatterns = `
 DATA              .*?
 GREEDYDATA        .*

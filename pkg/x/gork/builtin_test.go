@@ -99,7 +99,7 @@ func TestBuiltinPatterns(t *testing.T) {
 			} else {
 				assert.NoError(err)
 				assert.Equal(expect, matches, "match %q failed", name)
-				numTests[name] += 1
+				numTests[name]++
 			}
 		})
 	}
@@ -108,5 +108,4 @@ func TestBuiltinPatterns(t *testing.T) {
 			t.Logf("no tests for pattern %q", name)
 		}
 	}
-
 }

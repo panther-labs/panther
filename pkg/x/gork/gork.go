@@ -267,7 +267,6 @@ func (e *Env) set(name string, expr *Pattern) {
 		e.patterns = make(map[string]*Pattern)
 	}
 	e.patterns[name] = expr
-
 }
 func (e *Env) checkDuplicate(name string) error {
 	if duplicate := e.lookup(name); duplicate != nil {

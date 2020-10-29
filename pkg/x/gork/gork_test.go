@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// nolint:lll
 func TestMatchString(t *testing.T) {
 	assert := require.New(t)
 	env := New()

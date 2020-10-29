@@ -69,6 +69,7 @@ func TestMatchString(t *testing.T) {
 }
 
 func TestPattern_match(t *testing.T) {
+	// nolint:maligned
 	type testCase struct {
 		Name      string
 		Input     string
