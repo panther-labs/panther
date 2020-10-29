@@ -92,7 +92,7 @@ func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) er
 		return err
 	}
 	// update the views
-	if err := athenaviews.CreateOrReplaceViews(athenaClient, deployedLogTables); err != nil {
+	if err := athenaviews.CreateOrReplaceViews(athenaClient, config.AthenaWorkgroup, deployedLogTables); err != nil {
 		return errors.Wrap(err, "failed to update athena views")
 	}
 	return nil

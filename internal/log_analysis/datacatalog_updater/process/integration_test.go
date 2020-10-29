@@ -29,6 +29,11 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 )
 
+const (
+	// this needs to match the CF where we create the WG in bootstrap_gateway.yml
+	workgroup = "Panther"
+)
+
 var (
 	integrationTest bool
 )
@@ -36,6 +41,7 @@ var (
 func TestMain(m *testing.M) {
 	integrationTest = strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
 	if integrationTest {
+		os.Setenv("ATHENA_WORKGROUP", workgroup)
 		Setup()
 	}
 	os.Exit(m.Run())

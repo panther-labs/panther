@@ -211,9 +211,9 @@ func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertD
 		Version:      &alertDedup.RuleVersion,
 	}
 
-	if len(alertDedup.AlertContext) > 0 {
+	if alertDedup.AlertContext != nil {
 		var context map[string]interface{}
-		err := jsoniter.UnmarshalFromString(alertDedup.AlertContext, &context)
+		err := jsoniter.UnmarshalFromString(*alertDedup.AlertContext, &context)
 		if err != nil {
 			// best effort
 			zap.L().Warn("failed to unmarshal alert context", zap.Error(err))

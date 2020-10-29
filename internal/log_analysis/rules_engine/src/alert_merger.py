@@ -88,7 +88,10 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
     2. This rule with the same dedup string has fired before, but after the dedup period has expired
     """
     condition_expression = '(#1 < :1) OR (attribute_not_exists(#2))'
-    update_expression = 'ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10, #11=:11, #12=:12'
+    update_expression = 'ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10, #11=:11'
+
+    if group_info.alert_context:
+        update_expression += ', #12=:12'
 
     if group_info.title:
         update_expression += ', #13=:13'
@@ -104,9 +107,11 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
         '#8': _ALERT_EVENT_COUNT,
         '#9': _ALERT_LOG_TYPES,
         '#10': _RULE_VERSION_ATTR_NAME,
-        '#11': _ALERT_CONTEXT,
-        '#12': _ALERT_TYPE
+        '#11': _ALERT_TYPE
     }
+
+    if group_info.alert_context:
+        expresion_attribute_names['#12'] = _ALERT_CONTEXT
 
     if group_info.title:
         expresion_attribute_names['#13'] = _ALERT_TITLE
@@ -147,12 +152,13 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
             'S': group_info.rule_version
         },
         ':11': {
-            'S': group_info.alert_context
-        },
-        ':12': {
             'S': alert_type
         },
     }
+
+    if group_info.alert_context:
+        expression_attribute_values[':12'] = {'S': group_info.alert_context}
+
     if group_info.title:
         expression_attribute_values[':13'] = {'S': group_info.title}
 
