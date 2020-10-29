@@ -99,39 +99,41 @@ const ListAlertFilters: React.FC = () => {
   );
 
   return (
-    <Flex justify="flex-end" align="center">
-      <Formik<ListAlertsInlineFiltersValues>
-        enableReinitialize
-        initialValues={initialFilterValues}
-        onSubmit={(values: ListAlertsInlineFiltersValues) => {
-          updateRequestParams(extractSortingOpts(values));
-        }}
-      >
-        <Form>
-          <FormikAutosave threshold={200} />
-          <Flex spacing={4} align="center" pr={4}>
-            <Box width={425}>
-              <FastField
-                name="nameContains"
-                icon="search"
-                iconAlignment="left"
-                as={FormikTextInput}
-                label="Filter Alerts by text"
-                placeholder="Search for an alert..."
-              />
-            </Box>
-            <Box>
-              <FastField
-                name="sorting"
-                as={FormikCombobox}
-                items={sortingOpts.map(sortingOption => sortingOption.opt)}
-                placeholder="Select a sort option"
-                label="Sort By"
-              />
-            </Box>
-          </Flex>
-        </Form>
-      </Formik>
+    <Flex justify="flex-end" align="center" width="100%">
+      <Box flexGrow={3}>
+        <Formik<ListAlertsInlineFiltersValues>
+          enableReinitialize
+          initialValues={initialFilterValues}
+          onSubmit={(values: ListAlertsInlineFiltersValues) => {
+            updateRequestParams(extractSortingOpts(values));
+          }}
+        >
+          <Form>
+            <FormikAutosave threshold={200} />
+            <Flex spacing={4} align="center" pr={4} width="100%">
+              <Box minWidth={425} flexGrow={3}>
+                <FastField
+                  name="nameContains"
+                  icon="search"
+                  iconAlignment="left"
+                  as={FormikTextInput}
+                  label="Filter Alerts by text"
+                  placeholder="Search for an alert..."
+                />
+              </Box>
+              <Box>
+                <FastField
+                  name="sorting"
+                  as={FormikCombobox}
+                  items={sortingOpts.map(sortingOption => sortingOption.opt)}
+                  placeholder="Select a sort option"
+                  label="Sort By"
+                />
+              </Box>
+            </Flex>
+          </Form>
+        </Formik>
+      </Box>
       <DropdownFilters />
     </Flex>
   );
