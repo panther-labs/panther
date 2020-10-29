@@ -519,16 +519,16 @@ exports[`AlertCard should match snapshot 1`] = `
             class="panther-5"
           >
             <dt
-              aria-labelledby="time-created2020-08-08-1515-gmt3"
+              aria-labelledby="time-created2020-08-08-1215-gmt"
               class="panther-6"
             >
               Time Created
             </dt>
             <dd
-              aria-labelledby="time-created2020-08-08-1515-gmt3"
+              aria-labelledby="time-created2020-08-08-1215-gmt"
               class="panther-4"
             >
-              2020-08-08 15:15 GMT+3
+              2020-08-08 12:15 GMT
             </dd>
           </dl>
           <div
@@ -1038,16 +1038,16 @@ exports[`AlertCard should not display link to Rule 1`] = `
             class="panther-7"
           >
             <dt
-              aria-labelledby="time-created2020-08-08-1515-gmt3"
+              aria-labelledby="time-created2020-08-08-1215-gmt"
               class="panther-2"
             >
               Time Created
             </dt>
             <dd
-              aria-labelledby="time-created2020-08-08-1515-gmt3"
+              aria-labelledby="time-created2020-08-08-1215-gmt"
               class="panther-6"
             >
-              2020-08-08 15:15 GMT+3
+              2020-08-08 12:15 GMT
             </dd>
           </dl>
           <div
@@ -1594,16 +1594,16 @@ exports[`AlertCard should render alert destinations logos 1`] = `
             class="panther-5"
           >
             <dt
-              aria-labelledby="time-created2020-08-08-1515-gmt3"
+              aria-labelledby="time-created2020-08-08-1215-gmt"
               class="panther-6"
             >
               Time Created
             </dt>
             <dd
-              aria-labelledby="time-created2020-08-08-1515-gmt3"
+              aria-labelledby="time-created2020-08-08-1215-gmt"
               class="panther-4"
             >
-              2020-08-08 15:15 GMT+3
+              2020-08-08 12:15 GMT
             </dd>
           </dl>
           <div
@@ -2183,16 +2183,16 @@ exports[`AlertCard should render message that destination delivery is failing 1`
             class="panther-5"
           >
             <dt
-              aria-labelledby="time-created2020-08-08-1515-gmt3"
+              aria-labelledby="time-created2020-08-08-1215-gmt"
               class="panther-6"
             >
               Time Created
             </dt>
             <dd
-              aria-labelledby="time-created2020-08-08-1515-gmt3"
+              aria-labelledby="time-created2020-08-08-1215-gmt"
               class="panther-4"
             >
-              2020-08-08 15:15 GMT+3
+              2020-08-08 12:15 GMT
             </dd>
           </dl>
           <div
