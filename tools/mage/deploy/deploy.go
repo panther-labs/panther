@@ -545,6 +545,7 @@ func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) 
 		"AlarmTopicArn":                outputs["AlarmTopicArn"],
 		"AnalysisApiId":                outputs["AnalysisApiId"],
 		"AthenaResultsBucket":          outputs["AthenaResultsBucket"],
+		"AthenaWorkGroup":              outputs["AthenaWorkGroup"],
 		"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomResourceVersion":        customResourceVersion(),
 		"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
