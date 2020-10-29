@@ -30,6 +30,9 @@ import { mockListDestinations } from 'Source/graphql/queries';
 import AlertCard from './index';
 
 describe('AlertCard', () => {
+  beforeEach(() => {
+    document.getElementsByTagName('html')[0].innerHTML = '';
+  });
   it('should match snapshot', async () => {
     const alertData = buildAlertSummary();
 
