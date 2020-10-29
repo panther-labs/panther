@@ -97,6 +97,7 @@ input ListAlertsInput {
   exclusiveStartKey: String
   severity: [SeverityEnum]
   logTypes: [String!]
+  type: AlertTypesEnum
   nameContains: String
   createdAtBefore: AWSDateTime
   createdAtAfter: AWSDateTime
