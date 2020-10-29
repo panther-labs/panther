@@ -46,7 +46,7 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
 		// It's important to always return this physicalResourceID
-		const physicalResourceID = "custom:glue:update-log-processor-tables"
+		const physicalResourceID = "custom:glue:update-tables" // NOTE: this can NEVER be changed!
 		var props UpdateLogProcessorTablesProperties
 		if err := parseProperties(event.ResourceProperties, &props); err != nil {
 			zap.L().Error("failed to parse resource properties", zap.Error(err))
