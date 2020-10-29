@@ -31,6 +31,8 @@ type Pattern struct {
 	prefix string
 	// the rest of the fields
 	delimiters []delimiter
+	// non-empty field names
+	fields []string
 	// reusable buffer for unquoting stings
 	scratch []rune
 }
@@ -86,6 +88,7 @@ func Compile(pattern string) (*Pattern, error) {
 	return &Pattern{
 		prefix:     prefix,
 		delimiters: delimiters,
+		fields:     fields,
 	}, nil
 }
 
@@ -117,6 +120,18 @@ func nextQuote(s string) byte {
 		}
 	}
 	return 0
+}
+
+// Returns the number of non-empty field names
+func (p *Pattern) NumFields() int {
+	return len(p.fields)
+}
+
+// Returns a non-empty field name by index.
+// Panics if index is out of range.
+// Use in conjunction with NumFields to check the range
+func (p *Pattern) FieldName(i int) string {
+	return p.fields[i]
 }
 
 var (
