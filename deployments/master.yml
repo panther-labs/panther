@@ -346,6 +346,7 @@ Resources:
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
+        AthenaWorkGroup: !GetAtt BootstrapGateway.Outputs.AthenaWorkGroup
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]

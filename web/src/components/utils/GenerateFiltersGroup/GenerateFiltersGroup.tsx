@@ -80,7 +80,9 @@ function GenerateFiltersGroup<T extends { [key: string]: any }>({
   // time. The value of `initialValues` doesn't get updated as the component updates, since we only
   // need it during form initialization (a.k.a. component mount-time)
   const initialValuesWithDefaults = React.useMemo(() => {
-    return mapValues(filters, (value, name) => initialValues[name] || defaultValues[name]) as T;
+    return mapValues(filters, (value, name) =>
+      initialValues[name] === undefined ? defaultValues[name] : initialValues[name]
+    ) as T;
   }, []);
 
   // On a successful submit, the URL params are updated and the page query gets re-fetched, since

@@ -130,6 +130,11 @@ var (
 			Comment: "Alert id",
 		},
 		{
+			Name:    "p_alert_context",
+			Type:    GlueStringType,
+			Comment: "Additional alert context",
+		},
+		{
 			Name:    "p_alert_creation_time",
 			Type:    GlueTimestampType,
 			Comment: "The time the alert was initially created (first match)",

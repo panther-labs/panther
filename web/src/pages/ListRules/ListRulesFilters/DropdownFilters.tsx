@@ -17,8 +17,8 @@
  */
 
 import React from 'react';
-import { Form, Formik, Field } from 'formik';
-import { Box, Flex, Button, Popover, PopoverTrigger, PopoverContent, Card } from 'pouncejs';
+import { Field, Form, Formik } from 'formik';
+import { Box, Button, Card, Flex, Popover, PopoverContent, PopoverTrigger } from 'pouncejs';
 import { ListRulesInput, SeverityEnum } from 'Generated/schema';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isUndefined from 'lodash/isUndefined';
@@ -54,65 +54,75 @@ const DropdownFilters: React.FC = () => {
 
   return (
     <Popover>
-      <PopoverTrigger
-        as={Button}
-        iconAlignment="right"
-        icon="filter-light"
-        size="large"
-        aria-label="Rule Options"
-      >
-        Filters {filtersCount ? `(${filtersCount})` : ''}
-      </PopoverTrigger>
-      <PopoverContent>
-        <Card shadow="dark300" my={14} p={6} pb={4} backgroundColor="navyblue-400" minWidth={425}>
-          <Formik<ListAlertsDropdownFiltersValues>
-            enableReinitialize
-            onSubmit={(values: ListAlertsDropdownFiltersValues) => {
-              updateRequestParamsAndResetPaging(values);
-            }}
-            initialValues={initialDropdownFilters}
+      {({ close: closePopover }) => (
+        <React.Fragment>
+          <PopoverTrigger
+            as={Button}
+            iconAlignment="right"
+            icon="filter-light"
+            size="large"
+            aria-label="Rule Options"
           >
-            <Form>
-              <Box pb={4}>
-                <Field
-                  name="severity"
-                  as={FormikCombobox}
-                  items={['', ...severityOptions]}
-                  itemToString={(severity: SeverityEnum | '') =>
-                    severity === '' ? 'All' : capitalize(severity.toLowerCase())
-                  }
-                  label="Severity"
-                />
-              </Box>
-              <Box pb={4}>
-                <Field
-                  name="enabled"
-                  as={FormikCombobox}
-                  items={['true', 'false']}
-                  itemToString={(item: boolean | string) => {
-                    return item === 'true' ? 'Yes' : 'No';
-                  }}
-                  label="Enabled"
-                />
-              </Box>
+            Filters {filtersCount ? `(${filtersCount})` : ''}
+          </PopoverTrigger>
+          <PopoverContent>
+            <Card
+              shadow="dark300"
+              my={14}
+              p={6}
+              pb={4}
+              backgroundColor="navyblue-400"
+              minWidth={425}
+            >
+              <Formik<ListAlertsDropdownFiltersValues>
+                enableReinitialize
+                onSubmit={(values: ListAlertsDropdownFiltersValues) => {
+                  updateRequestParamsAndResetPaging(values);
+                }}
+                initialValues={initialDropdownFilters}
+              >
+                {({ setValues }) => (
+                  <Form>
+                    <Box pb={4}>
+                      <Field
+                        name="severity"
+                        as={FormikCombobox}
+                        items={['', ...severityOptions]}
+                        itemToString={(severity: SeverityEnum | '') =>
+                          severity === '' ? 'All' : capitalize(severity.toLowerCase())
+                        }
+                        label="Severity"
+                        placeholder="Select a severity"
+                      />
+                    </Box>
+                    <Box pb={4}>
+                      <Field
+                        name="enabled"
+                        as={FormikCombobox}
+                        items={[true, false]}
+                        itemToString={(item: boolean) => (item ? 'Yes' : 'No')}
+                        label="Enabled"
+                        placeholder="Only show enabled rules?"
+                      />
+                    </Box>
 
-              <Flex direction="column" justify="center" align="center" spacing={4}>
-                <Box>
-                  <Button type="submit">Apply Filters</Button>
-                </Box>
-                <TextButton
-                  role="button"
-                  onClick={() => {
-                    updateRequestParamsAndResetPaging(defaultValues);
-                  }}
-                >
-                  Clear All Filters
-                </TextButton>
-              </Flex>
-            </Form>
-          </Formik>
-        </Card>
-      </PopoverContent>
+                    <Flex direction="column" justify="center" align="center" spacing={4}>
+                      <Box>
+                        <Button type="submit" onClick={closePopover}>
+                          Apply Filters
+                        </Button>
+                      </Box>
+                      <TextButton role="button" onClick={() => setValues(defaultValues)}>
+                        Clear Filters
+                      </TextButton>
+                    </Flex>
+                  </Form>
+                )}
+              </Formik>
+            </Card>
+          </PopoverContent>
+        </React.Fragment>
+      )}
     </Popover>
   );
 };

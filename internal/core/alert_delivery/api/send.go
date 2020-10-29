@@ -56,7 +56,7 @@ func sendAlerts(alertOutputs AlertOutputMap) []DispatchStatus {
 	}
 
 	// Wait until all outputs have finished, gathering all the statuses of each delivery
-	deliveryStatuses := []DispatchStatus{}
+	var deliveryStatuses []DispatchStatus
 	for _, outputIds := range alertOutputs {
 		for range outputIds {
 			status := <-statusChannel

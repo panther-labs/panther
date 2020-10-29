@@ -1,4 +1,4 @@
-package awsathena
+package gork_test
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,22 +19,29 @@ package awsathena
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/athena"
+	"testing"
+
+	"github.com/panther-labs/panther/pkg/x/gork"
 )
 
-// WorkgroupAssociateS3 associates the S3 bucket with named workgroup
-func WorkgroupAssociateS3(sess *session.Session, name, s3Bucket string) (err error) {
-	athenaSession := athena.New(sess)
-	input := athena.UpdateWorkGroupInput{
-		ConfigurationUpdates: &athena.WorkGroupConfigurationUpdates{
-			ResultConfigurationUpdates: &athena.ResultConfigurationUpdates{
-				OutputLocation: aws.String("s3://" + s3Bucket),
-			},
-		},
-		WorkGroup: aws.String(name),
+//nolint:lll
+func BenchmarkMatchString(b *testing.B) {
+	env := gork.New()
+	pattern := `%{NS:remote_ip} %{NS:identity} %{NS:user} \[%{HTTPDATE:timestamp}\] "%{NS:method} %{NS:request_uri} %{NS:protocol}" %{NS:status} %{NS:bytes_sent}`
+	expr, err := env.Compile(pattern)
+	if err != nil {
+		b.Fatal(err)
 	}
-	_, err = athenaSession.UpdateWorkGroup(&input)
-	return err
+	input := "127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] \"GET /apache_pb.gif HTTP/1.0\" 200 2326"
+	matches := make([]string, 10)
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		matches, err = expr.MatchString(matches[:0], input)
+		if err != nil {
+			b.Fatal(err)
+		}
+		if len(matches) != 18 {
+			b.Error(matches)
+		}
+	}
 }
