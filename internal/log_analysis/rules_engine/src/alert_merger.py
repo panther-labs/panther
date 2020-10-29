@@ -36,6 +36,7 @@ _ALERT_COUNT_ATTR_NAME = 'alertCount'
 _ALERT_EVENT_COUNT = 'eventCount'
 _ALERT_LOG_TYPES = 'logTypes'
 _ALERT_TITLE = 'title'
+_ALERT_CONTEXT = 'context'
 # The attribute defining the type of the error
 _ALERT_TYPE = 'alertType'
 
@@ -52,6 +53,7 @@ class MatchingGroupInfo:
     num_matches: int
     processing_time: datetime
     title: Optional[str]
+    alert_context: Optional[str]
     is_rule_error: bool = False
 
 
@@ -88,11 +90,14 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
     condition_expression = '(#1 < :1) OR (attribute_not_exists(#2))'
     update_expression = 'ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10'
 
-    if group_info.title:
+    if group_info.alert_context:
         update_expression += ', #11=:11'
 
-    if group_info.is_rule_error:
+    if group_info.title:
         update_expression += ', #12=:12'
+
+    if group_info.is_rule_error:
+        update_expression += ', #13=:13'
 
     expresion_attribute_names = {
         '#1': _ALERT_CREATION_TIME_ATTR_NAME,
@@ -106,11 +111,15 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
         '#9': _ALERT_LOG_TYPES,
         '#10': _RULE_VERSION_ATTR_NAME,
     }
+
+    if group_info.alert_context:
+        expresion_attribute_names['#11'] = _ALERT_CONTEXT
+
     if group_info.title:
-        expresion_attribute_names['#11'] = _ALERT_TITLE
+        expresion_attribute_names['#12'] = _ALERT_TITLE
 
     if group_info.is_rule_error:
-        expresion_attribute_names['#12'] = _ALERT_TYPE
+        expresion_attribute_names['#13'] = _ALERT_TYPE
 
     expression_attribute_values = {
         ':1':
@@ -143,11 +152,15 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
             'S': group_info.rule_version
         },
     }
+
+    if group_info.alert_context:
+        expression_attribute_values[':11'] = {'S': group_info.alert_context}
+
     if group_info.title:
-        expression_attribute_values[':11'] = {'S': group_info.title}
+        expression_attribute_values[':12'] = {'S': group_info.title}
 
     if group_info.is_rule_error:
-        expression_attribute_values[':12'] = {'S': 'RULE_ERROR'}
+        expression_attribute_values[':13'] = {'S': 'RULE_ERROR'}
 
     response = DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,

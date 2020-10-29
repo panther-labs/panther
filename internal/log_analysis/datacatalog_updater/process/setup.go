@@ -43,6 +43,7 @@ const (
 
 var (
 	config = struct {
+		AthenaWorkgroup     string `required:"true" split_words:"true"`
 		SyncWorkersPerTable int    `default:"10" split_words:"true"`
 		ProcessedDataBucket string `split_words:"true"`
 	}{}

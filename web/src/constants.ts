@@ -65,6 +65,9 @@ export const DEFAULT_TITLE_FUNCTION =
 export const DEFAULT_DEDUP_FUNCTION =
   "# def dedup(event):\n\t#  (Optional) Return a string which will be used to deduplicate similar alerts.\n\t# return ''";
 
+export const DEFAULT_ALERT_CONTEXT_FUNCTION =
+  "# def alert_context(event):\n\t#  (Optional) Return a dictionary with additional data you would like to be included in the alert send to SNS/SQS/Webhook destination\n\t# return {'key':'value'}";
+
 export const RESOURCE_TYPES = [
   'AWS.ACM.Certificate',
   'AWS.CloudFormation.Stack',

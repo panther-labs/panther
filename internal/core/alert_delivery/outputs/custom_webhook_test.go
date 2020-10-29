@@ -47,6 +47,9 @@ func TestCustomWebhookAlert(t *testing.T) {
 		AnalysisID: "policyId",
 		CreatedAt:  createdAtTime,
 		Severity:   "INFO",
+		Context: map[string]interface{}{
+			"key": "value",
+		},
 	}
 
 	expectedNotification := Notification{
@@ -62,6 +65,9 @@ func TestCustomWebhookAlert(t *testing.T) {
 		Tags:        []string{},
 		Version:     alert.Version,
 		CreatedAt:   alert.CreatedAt,
+		AlertContext: map[string]interface{}{
+			"key": "value",
+		},
 	}
 
 	expectedPostInput := &PostInput{

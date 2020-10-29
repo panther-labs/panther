@@ -35,6 +35,9 @@ Parameters:
     Type: String
     Description: Name of the S3 bucket created to hold Athena results
     AllowedPattern: '^[a-z0-9.-]{3,63}$'
+  AthenaWorkGroup:
+    Type: String
+    Description: The Athena workgroup for Panther queries
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
@@ -116,24 +119,16 @@ Conditions:
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
-  ##### Configure Athena #####
-  AthenaConfigure:
-    Type: Custom::AthenaInit # this will associate the bucket as the default location for results
-    Properties:
-      AthenaResultsBucket: !Ref AthenaResultsBucket
-      CustomResourceVersion: !Ref CustomResourceVersion
-      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
-
   ###### Update Glue Table Schemas for Deployed Tables #####
   UpdateGlueTables:
     DependsOn:
-      - AthenaConfigure
       - UpdaterFunction
-    Type: Custom::UpdateGlueTables
+    Type: Custom::UpdateLogProcessorTables
     Properties:
       # Update in case TablesSignature or CustomResourceVersion has changed
       TablesSignature: !Ref TablesSignature
       CustomResourceVersion: !Ref CustomResourceVersion
+      AthenaWorkGroup: !Ref AthenaWorkGroup
       ProcessedDataBucket: !Ref ProcessedDataBucket
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
@@ -682,6 +677,7 @@ Resources:
       Timeout: !FindInMap [Functions, Updater, Timeout]
       Environment:
         Variables:
+          ATHENA_WORKGROUP: !Ref AthenaWorkGroup
           DEBUG: !Ref Debug
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
       Events:
