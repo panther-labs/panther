@@ -57,7 +57,7 @@ func TestPasswordPolicyPoller(t *testing.T) {
 	})
 
 	assert.Len(t, resources, 1)
-	assert.Equal(t, "123456789012::AWS.PasswordPolicy", string(resources[0].ID))
+	assert.Equal(t, "123456789012::AWS.PasswordPolicy", resources[0].ID)
 	assert.Nil(t, marker)
 	assert.NoError(t, err)
 }

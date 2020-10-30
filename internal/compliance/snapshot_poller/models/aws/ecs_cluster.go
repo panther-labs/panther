@@ -19,8 +19,9 @@ package aws
  */
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/service/ecs"
-	"github.com/go-openapi/strfmt"
 )
 
 const (
@@ -61,7 +62,7 @@ type EcsService struct {
 	// Fields embedded from ecs.Service
 	CapacityProviderStrategy []*ecs.CapacityProviderStrategyItem
 	// Normalized name for CreatedAt
-	TimeCreated                   *strfmt.DateTime
+	TimeCreated                   *time.Time
 	CreatedBy                     *string
 	DeploymentConfiguration       *ecs.DeploymentConfiguration
 	DeploymentController          *ecs.DeploymentController
@@ -100,14 +101,14 @@ type EcsTask struct {
 	AvailabilityZone     *string
 	CapacityProviderName *string
 	Connectivity         *string
-	ConnectivityAt       *strfmt.DateTime
+	ConnectivityAt       *time.Time
 	ContainerInstanceArn *string
 	Containers           []*ecs.Container
 	Cpu                  *string
 	// Normalized name for CreatedAt
-	TimeCreated           *strfmt.DateTime
+	TimeCreated           *time.Time
 	DesiredStatus         *string
-	ExecutionStoppedAt    *strfmt.DateTime
+	ExecutionStoppedAt    *time.Time
 	Group                 *string
 	HealthStatus          *string
 	InferenceAccelerators []*ecs.InferenceAccelerator
@@ -116,14 +117,14 @@ type EcsTask struct {
 	Memory                *string
 	Overrides             *ecs.TaskOverride
 	PlatformVersion       *string
-	PullStartedAt         *strfmt.DateTime
-	PullStoppedAt         *strfmt.DateTime
-	StartedAt             *strfmt.DateTime
+	PullStartedAt         *time.Time
+	PullStoppedAt         *time.Time
+	StartedAt             *time.Time
 	StartedBy             *string
 	StopCode              *string
-	StoppedAt             *strfmt.DateTime
+	StoppedAt             *time.Time
 	StoppedReason         *string
-	StoppingAt            *strfmt.DateTime
+	StoppingAt            *time.Time
 	TaskDefinitionArn     *string
 	Version               *int64
 }

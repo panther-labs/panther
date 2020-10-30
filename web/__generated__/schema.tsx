@@ -548,7 +548,7 @@ export type ListResourcesInput = {
   deleted?: Maybe<Scalars['Boolean']>;
   idContains?: Maybe<Scalars['String']>;
   integrationId?: Maybe<Scalars['ID']>;
-  types?: Maybe<Scalars['String']>;
+  types?: Maybe<Array<Scalars['String']>>;
   sortBy?: Maybe<ListResourcesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
   pageSize?: Maybe<Scalars['Int']>;

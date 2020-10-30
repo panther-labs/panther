@@ -27,7 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -161,7 +161,7 @@ func buildConfigServiceSnapshot(
 }
 
 // PollConfigServices gathers information on each config service for an AWS account.
-func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting ConfigService poller")
 	configSnapshots := make(map[string]*awsmodels.ConfigService)
 
@@ -220,18 +220,18 @@ func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 		Recorders:           []*string{},
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(configSnapshots)+1)
+	resources := make([]apimodels.AddResourceEntry, 0, len(configSnapshots)+1)
 	for resourceID, configSnapshot := range configSnapshots {
 		configMetaSnapshot.Recorders = append(configMetaSnapshot.Recorders, aws.String(resourceID))
 		if *configSnapshot.RecordingGroup.AllSupported && *configSnapshot.RecordingGroup.IncludeGlobalResourceTypes {
 			*configMetaSnapshot.GlobalRecorderCount++
 		}
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      configSnapshot,
-			ID:              apimodels.ResourceID(resourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              resourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.ConfigServiceSchema,
 		})
 	}
@@ -244,11 +244,11 @@ func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 	)
 	configMetaSnapshot.ResourceID = aws.String(configMetaResourceID)
 
-	resources = append(resources, &apimodels.AddResourceEntry{
+	resources = append(resources, apimodels.AddResourceEntry{
 		Attributes:      configMetaSnapshot,
-		ID:              apimodels.ResourceID(configMetaResourceID),
-		IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-		IntegrationType: apimodels.IntegrationTypeAws,
+		ID:              configMetaResourceID,
+		IntegrationID:   *pollerInput.IntegrationID,
+		IntegrationType: integrationType,
 		Type:            awsmodels.ConfigServiceMetaSchema,
 	})
 

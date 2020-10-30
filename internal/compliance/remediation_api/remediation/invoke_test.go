@@ -19,7 +19,6 @@ package remediation
  */
 
 import (
-	"errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -35,7 +34,8 @@ import (
 
 	policymodels "github.com/panther-labs/panther/api/gateway/analysis/models"
 	processormodels "github.com/panther-labs/panther/api/gateway/remediation/models"
-	"github.com/panther-labs/panther/api/gateway/resources/models"
+	resourcemodels "github.com/panther-labs/panther/api/lambda/resources/models"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 type mockLambdaClient struct {
@@ -81,23 +81,26 @@ var (
 		"Region": "us-west-2",
 	}
 
-	resource = &models.Resource{
+	resource = &resourcemodels.Resource{
 		Attributes: resourceAttributes,
 	}
 )
 
 func init() {
-	resourcesServiceHostname = "resourcesServiceHostname"
 	policiesServiceHostname = "policiesServiceHostname"
 	remediationLambdaArn = "arn:aws:lambda:us-west-2:123456789012:function:function"
 }
 
 func TestRemediate(t *testing.T) {
-	mockClient := &mockLambdaClient{}
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient = &http.Client{Transport: mockRoundTripper}
-	remediator := &Invoker{lambdaClient: mockClient}
+	mockResourcesClient := &gatewayapi.MockClient{}
+	expectedGetResource := &resourcemodels.LambdaInput{
+		GetResource: &resourcemodels.GetResourceInput{ID: "resourceId"},
+	}
+	mockResourcesClient.On("Invoke", expectedGetResource, &resourcemodels.Resource{}).Return(
+		http.StatusOK, nil, resource)
+	resourcesClient = mockResourcesClient
 
+	// remediation lambda mock
 	expectedPayload := Payload{
 		RemediationID: string(policy.AutoRemediationID),
 		Resource:      resourceAttributes,
@@ -115,53 +118,21 @@ func TestRemediate(t *testing.T) {
 		Payload:      expectedSerializedInput,
 	}
 
+	mockClient := &mockLambdaClient{}
 	mockClient.On("Invoke", expectedLambdaInput).Return(&lambda.InvokeOutput{}, nil)
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policy, http.StatusOK), nil).Once()
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(resource, http.StatusOK), nil).Once()
+	remediator := &Invoker{lambdaClient: mockClient}
 
+	// analysis-api mock
+	mockRoundTripper := &mockRoundTripper{}
+	httpClient = &http.Client{Transport: mockRoundTripper}
+	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policy, http.StatusOK), nil).Once()
+
+	// run the function under test
 	result := remediator.Remediate(input)
+
+	// assert expectations
 	assert.NoError(t, result)
-
-	mockClient.AssertExpectations(t)
-	mockRoundTripper.AssertExpectations(t)
-}
-
-func TestRemediateLambdaError(t *testing.T) {
-	mockClient := &mockLambdaClient{}
-
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient = &http.Client{Transport: mockRoundTripper}
-
-	remediator := &Invoker{lambdaClient: mockClient}
-	mockClient.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{}, errors.New("error"))
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policy, http.StatusOK), nil).Once()
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(resource, http.StatusOK), nil).Once()
-
-	result := remediator.Remediate(input)
-	assert.Error(t, result)
-
-	mockClient.AssertExpectations(t)
-	mockRoundTripper.AssertExpectations(t)
-}
-
-func TestRemediateLambdaFunctionError(t *testing.T) {
-	mockClient := &mockLambdaClient{}
-
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient = &http.Client{Transport: mockRoundTripper}
-
-	lambdaOutput := &lambda.InvokeOutput{
-		FunctionError: aws.String("LambdaError"),
-	}
-
-	mockClient.On("Invoke", mock.Anything).Return(lambdaOutput, nil)
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policy, http.StatusOK), nil).Once()
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(resource, http.StatusOK), nil).Once()
-
-	remediator := &Invoker{lambdaClient: mockClient}
-	result := remediator.Remediate(input)
-	assert.Error(t, result)
-
+	mockResourcesClient.AssertExpectations(t)
 	mockClient.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
 }

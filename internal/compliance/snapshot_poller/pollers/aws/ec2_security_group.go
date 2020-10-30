@@ -29,7 +29,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -137,7 +137,7 @@ func buildEc2SecurityGroupSnapshot(securityGroup *ec2.SecurityGroup) *awsmodels.
 }
 
 // PollEc2SecurityGroups gathers information on each Security Group in an AWS account.
-func PollEc2SecurityGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollEc2SecurityGroups(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting EC2 Security Group resource poller")
 
 	ec2Svc, err := getEC2Client(pollerInput, *pollerInput.Region)
@@ -152,7 +152,7 @@ func PollEc2SecurityGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimo
 	}
 
 	// For each Security Group, build out a full snapshot
-	resources := make([]*apimodels.AddResourceEntry, 0, len(securityGroups))
+	resources := make([]apimodels.AddResourceEntry, 0, len(securityGroups))
 	for _, securityGroup := range securityGroups {
 		ec2SecurityGroupSnapshot := buildEc2SecurityGroupSnapshot(securityGroup)
 
@@ -177,11 +177,11 @@ func PollEc2SecurityGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimo
 		ec2SecurityGroupSnapshot.Region = pollerInput.Region
 		ec2SecurityGroupSnapshot.ARN = aws.String(resourceID)
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      ec2SecurityGroupSnapshot,
-			ID:              apimodels.ResourceID(resourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              resourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.Ec2SecurityGroupSchema,
 		})
 	}
