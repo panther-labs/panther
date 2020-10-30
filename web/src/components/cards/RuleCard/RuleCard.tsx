@@ -66,7 +66,10 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
           <GenericItemCard.ValuesGroup>
             <Flex ml="auto" mr={0} align="flex-end" spacing={4}>
               <GenericItemCard.Value label="Threshold" value={formatNumber(rule.threshold)} />
-              <GenericItemCard.Value label="Time Created" value={formatDatetime(rule.createdAt)} />
+              <GenericItemCard.Value
+                label="Last Modified"
+                value={formatDatetime(rule.lastModified)}
+              />
               <StatusBadge
                 status={rule.enabled ? 'ENABLED' : ComplianceStatusEnum.Error}
                 disabled={!rule.enabled}
