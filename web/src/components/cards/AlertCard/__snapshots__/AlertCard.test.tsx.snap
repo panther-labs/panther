@@ -27,13 +27,13 @@ exports[`AlertCard should match snapshot 1`] = `
   }
 }
 
-.panther-37 {
+.panther-36 {
   background-color: #1d2a3f;
   border-radius: 4px;
   padding: 20px;
 }
 
-.panther-36 {
+.panther-35 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -42,7 +42,7 @@ exports[`AlertCard should match snapshot 1`] = `
   height: 100%;
 }
 
-.panther-35 {
+.panther-34 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -56,7 +56,33 @@ exports[`AlertCard should match snapshot 1`] = `
   width: 100%;
 }
 
-.panther-2 {
+.panther-1 {
+  font-weight: 500;
+}
+
+.panther-0 {
+  -webkit-transition: color 0.1s ease-out;
+  transition: color 0.1s ease-out;
+  font-weight: 500;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  color: #7fd3ff;
+}
+
+.panther-0:hover {
+  color: #ace2ff;
+}
+
+.panther-0:focus {
+  color: #ace2ff;
+}
+
+.panther-0:active,
+.panther-0[data-active=true] {
+  color: #11a5f3;
+}
+
+.panther-33 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -67,49 +93,22 @@ exports[`AlertCard should match snapshot 1`] = `
   flex-wrap: wrap;
 }
 
-.panther-2>*:not(:last-child) {
+.panther-33>*:not(:last-child) {
   margin-right: 32px;
 }
 
-.panther-1 {
-  -webkit-transition: color 0.1s ease-out;
-  transition: color 0.1s ease-out;
-  font-weight: 500;
-  -webkit-text-decoration: none;
-  text-decoration: none;
-  color: #7fd3ff;
-  cursor: pointer;
-}
-
-.panther-1:hover {
-  color: #ace2ff;
-}
-
-.panther-1:focus {
-  color: #ace2ff;
-}
-
-.panther-1:active,
-.panther-1[data-active=true] {
-  color: #11a5f3;
-}
-
-.panther-0 {
-  font-weight: 500;
-}
-
-.panther-6 {
+.panther-5 {
   margin-top: 16px;
 }
 
-.panther-5 {
+.panther-4 {
   font-size: 0.875rem;
   opacity: 1;
 }
 
 
 
-.panther-4>span {
+.panther-3>span {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -124,7 +123,7 @@ exports[`AlertCard should match snapshot 1`] = `
   align-items: center;
 }
 
-.panther-3 {
+.panther-2 {
   width: auto;
   outline: none;
   padding-left: 20px;
@@ -143,34 +142,34 @@ exports[`AlertCard should match snapshot 1`] = `
   text-decoration: none;
 }
 
-.panther-3:hover {
+.panther-2:hover {
   background-color: #485b75;
   border-color: #485b75;
 }
 
-.panther-3:focus {
+.panther-2:focus {
   background-color: #485b75;
   border-color: #93a6c0;
 }
 
-.panther-3:active,
-.panther-3[data-active=true] {
+.panther-2:active,
+.panther-2[data-active=true] {
   background-color: #344761;
   border-color: #344761;
 }
 
-.panther-7 {
+.panther-6 {
   color: #bdbdbd;
   font-size: 0.563rem;
   margin-bottom: 1px;
   font-weight: 500;
 }
 
-.panther-10 {
+.panther-9 {
   height: 24px;
 }
 
-.panther-9 {
+.panther-8 {
   display: inline-block;
   vertical-align: sub;
   -webkit-animation: animation-0 2s linear infinite;
@@ -179,7 +178,7 @@ exports[`AlertCard should match snapshot 1`] = `
   height: 18px;
 }
 
-.panther-8 {
+.panther-7 {
   stroke-dashoffset: 600;
   stroke-dasharray: 300;
   stroke-width: 13;
@@ -191,7 +190,7 @@ exports[`AlertCard should match snapshot 1`] = `
   fill: transparent;
 }
 
-.panther-17 {
+.panther-16 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -203,11 +202,11 @@ exports[`AlertCard should match snapshot 1`] = `
   margin-top: 4px;
 }
 
-.panther-17>*:not(:last-child) {
+.panther-16>*:not(:last-child) {
   margin-right: 24px;
 }
 
-.panther-16 {
+.panther-15 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -218,22 +217,22 @@ exports[`AlertCard should match snapshot 1`] = `
   align-items: center;
 }
 
-.panther-16>*:not(:last-child) {
+.panther-15>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-14 {
+.panther-13 {
   width: 12px;
   height: 12px;
   background-color: hsl(353, 43%, 63%);
   border-radius: 99999px;
 }
 
-.panther-15 {
+.panther-14 {
   font-size: 0.75rem;
 }
 
-.panther-33 {
+.panther-32 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -246,11 +245,11 @@ exports[`AlertCard should match snapshot 1`] = `
   margin-right: 0;
 }
 
-.panther-33>*:not(:last-child) {
+.panther-32>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-26 {
+.panther-25 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -281,7 +280,7 @@ exports[`AlertCard should match snapshot 1`] = `
   background-color: transparent;
 }
 
-.panther-32 {
+.panther-31 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -296,11 +295,11 @@ exports[`AlertCard should match snapshot 1`] = `
   align-items: center;
 }
 
-.panther-32>*:not(:last-child) {
+.panther-31>*:not(:last-child) {
   margin-right: 4px;
 }
 
-.panther-28 {
+.panther-27 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -308,7 +307,7 @@ exports[`AlertCard should match snapshot 1`] = `
   width: 85px;
 }
 
-.panther-27 {
+.panther-26 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -337,14 +336,14 @@ exports[`AlertCard should match snapshot 1`] = `
   background-color: #6e3078;
 }
 
-.panther-31 {
+.panther-30 {
   display: -webkit-inline-box;
   display: -webkit-inline-flex;
   display: -ms-inline-flexbox;
   display: inline-flex;
 }
 
-.panther-30 {
+.panther-29 {
   outline: none;
   line-height: 1;
   height: 24px;
@@ -361,23 +360,23 @@ exports[`AlertCard should match snapshot 1`] = `
   text-decoration: none;
 }
 
-.panther-30:hover {
+.panther-29:hover {
   background-color: #465973;
   border-color: #465973;
 }
 
-.panther-30:focus {
+.panther-29:focus {
   background-color: #465973;
   border-color: #93a6c0;
 }
 
-.panther-30:active,
-.panther-30[data-active=true] {
+.panther-29:active,
+.panther-29[data-active=true] {
   background-color: #253852;
   border-color: #253852;
 }
 
-.panther-29 {
+.panther-28 {
   display: inline-block;
   vertical-align: sub;
   -webkit-flex-shrink: 0;
@@ -393,46 +392,42 @@ exports[`AlertCard should match snapshot 1`] = `
     id="main-header"
   />
   <section
-    class="panther-37"
+    class="panther-36"
   >
     <div
-      class="panther-36"
+      class="panther-35"
     >
       <div
-        class="panther-35"
+        class="panther-34"
       >
-        <div
-          class="panther-2"
+        <h4
+          class="panther-1"
         >
           <a
             aria-label="Link to Alert"
-            class="panther-1"
+            class="panther-0"
             href="/log-analysis/alerts/f67b8f04-5fac-404a-93a4-38db29f258ba/"
           >
-            <h4
-              class="panther-0"
-            >
-              indexing
-            </h4>
+            indexing
           </a>
-        </div>
+        </h4>
         <div
-          class="panther-2"
+          class="panther-33"
         >
           <dl
-            class="panther-6"
+            class="panther-5"
           >
             <dd
               aria-labelledby="undefinedobject-object"
-              class="panther-5"
+              class="panther-4"
             >
               <a
-                class="panther-4"
+                class="panther-3"
                 href="/log-analysis/rules/6eb9c948-5a13-4955-bd91-b98801b55bed/"
               >
                 <span
                   aria-label="Link to Rule"
-                  class="panther-3"
+                  class="panther-2"
                   type="button"
                 >
                   View Rule
@@ -441,28 +436,28 @@ exports[`AlertCard should match snapshot 1`] = `
             </dd>
           </dl>
           <dl
-            class="panther-6"
+            class="panther-5"
           >
             <dt
               aria-labelledby="destinationsobject-object"
-              class="panther-7"
+              class="panther-6"
             >
               Destinations
             </dt>
             <dd
               aria-labelledby="destinationsobject-object"
-              class="panther-5"
+              class="panther-4"
             >
               <div
-                class="panther-10"
+                class="panther-9"
               >
                 <svg
                   aria-label="Loading..."
-                  class="panther-9"
+                  class="panther-8"
                   viewBox="0 0 150 150"
                 >
                   <circle
-                    class="panther-8"
+                    class="panther-7"
                     color="current"
                     cx="75"
                     cy="75"
@@ -473,29 +468,29 @@ exports[`AlertCard should match snapshot 1`] = `
             </dd>
           </dl>
           <dl
-            class="panther-6"
+            class="panther-5"
           >
             <dt
               aria-labelledby="log-typesobject-object"
-              class="panther-7"
+              class="panther-6"
             >
               Log Types
             </dt>
             <dd
               aria-labelledby="log-typesobject-object"
-              class="panther-5"
+              class="panther-4"
             >
               <div
-                class="panther-17"
+                class="panther-16"
               >
                 <div
-                  class="panther-16"
+                  class="panther-15"
                 >
                   <span
-                    class="panther-14"
+                    class="panther-13"
                   />
                   <span
-                    class="panther-15"
+                    class="panther-14"
                   >
                     Costa Rica
                   </span>
@@ -504,56 +499,56 @@ exports[`AlertCard should match snapshot 1`] = `
             </dd>
           </dl>
           <dl
-            class="panther-6"
+            class="panther-5"
           >
             <dt
               aria-labelledby="events670"
-              class="panther-7"
+              class="panther-6"
             >
               Events
             </dt>
             <dd
               aria-labelledby="events670"
-              class="panther-5"
+              class="panther-4"
             >
               670
             </dd>
           </dl>
           <dl
-            class="panther-6"
+            class="panther-5"
           >
             <dt
               aria-labelledby="time-created2020-08-08-1215-gmt"
-              class="panther-7"
+              class="panther-6"
             >
               Time Created
             </dt>
             <dd
               aria-labelledby="time-created2020-08-08-1215-gmt"
-              class="panther-5"
+              class="panther-4"
             >
               2020-08-08 12:15 GMT
             </dd>
           </dl>
           <div
-            class="panther-33"
+            class="panther-32"
           >
             <div
               aria-atomic="true"
-              class="panther-26"
+              class="panther-25"
               role="status"
             >
               MEDIUM
             </div>
             <div
-              class="panther-32"
+              class="panther-31"
             >
               <div
-                class="panther-28"
+                class="panther-27"
               >
                 <div
                   aria-atomic="true"
-                  class="panther-27"
+                  class="panther-26"
                   role="status"
                 >
                   TRIAGED
@@ -562,7 +557,7 @@ exports[`AlertCard should match snapshot 1`] = `
               <div
                 aria-controls="menu--1"
                 aria-haspopup="true"
-                class="panther-31"
+                class="panther-30"
                 data-reach-menu-button=""
                 id="menu-button--menu--1"
                 type="button"
@@ -570,11 +565,11 @@ exports[`AlertCard should match snapshot 1`] = `
                 <button
                   aria-label="Change Alert Status"
                   aria-pressed="false"
-                  class="panther-30"
+                  class="panther-29"
                   type="button"
                 >
                   <svg
-                    class="panther-29"
+                    class="panther-28"
                     role="presentation"
                     viewBox="0 0 24 24"
                   >
