@@ -553,7 +553,6 @@ func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) 
 		"InputDataTopicArn":            outputs["InputDataTopicArn"],
 		"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
 		"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
-		"LogProcessorSQSDelaySeconds":  strconv.Itoa(settings.Infra.LogProcessorSQSDelaySeconds),
 		"ProcessedDataBucket":          outputs["ProcessedDataBucket"],
 		"ProcessedDataTopicArn":        outputs["ProcessedDataTopicArn"],
 		"PythonLayerVersionArn":        outputs["PythonLayerVersionArn"],

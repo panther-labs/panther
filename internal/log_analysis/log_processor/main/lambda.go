@@ -22,7 +22,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	"go.uber.org/zap"
@@ -38,13 +37,13 @@ func main() {
 	lambda.Start(handle)
 }
 
-func handle(ctx context.Context, event events.SQSEvent) error {
+func handle(ctx context.Context) error {
 	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
 	deadline, _ := ctx.Deadline()
-	return process(lc, deadline, event)
+	return process(lc, deadline)
 }
 
-func process(lc *lambdacontext.LambdaContext, deadline time.Time, event events.SQSEvent) (err error) {
+func process(lc *lambdacontext.LambdaContext, deadline time.Time) (err error) {
 	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
 
 	var sqsMessageCount int
@@ -54,6 +53,6 @@ func process(lc *lambdacontext.LambdaContext, deadline time.Time, event events.S
 	}()
 
 	logTypesResolver := registry.NativeLogTypesResolver()
-	sqsMessageCount, err = processor.StreamEvents(common.SqsClient, logTypesResolver, deadline, event)
+	sqsMessageCount, err = processor.StreamEvents(common.SqsClient, common.LambdaClient, logTypesResolver, deadline)
 	return err
 }

@@ -22,15 +22,26 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/pkg/testutils"
+)
+
+var (
+	emptyQueue = &sqs.GetQueueAttributesOutput{
+		Attributes: map[string]*string{
+			sqs.QueueAttributeNameApproximateNumberOfMessages: aws.String("0"),
+		},
+	}
 )
 
 // Replace global logger with an in-memory observer for tests.
@@ -47,9 +58,13 @@ func TestProcessOpLog(t *testing.T) {
 	lc := lambdacontext.LambdaContext{
 		InvokedFunctionArn: functionName,
 	}
-	err := process(&lc, time.Now(), events.SQSEvent{
-		Records: []events.SQSMessage{}, // empty, should do no work
-	})
+
+	sqsMock := &testutils.SqsMock{}
+	common.SqsClient = sqsMock
+	// will be called by scalingDecisions() on exit
+	sqsMock.On("GetQueueAttributes", mock.Anything).Return(emptyQueue, nil).Once()
+
+	err := process(&lc, time.Now())
 	require.NoError(t, err)
 	message := common.OpLogNamespace + ":" + common.OpLogComponent + ":" + functionName
 	require.Equal(t, 1, len(logs.FilterMessage(message).All())) // should be just one like this
@@ -57,14 +72,7 @@ func TestProcessOpLog(t *testing.T) {
 	assert.Equal(t, message, logs.FilterMessage(message).All()[0].Entry.Message)
 	serviceDim := logs.FilterMessage(message).All()[0].ContextMap()[common.OpLogLambdaServiceDim.Key]
 	assert.Equal(t, common.OpLogLambdaServiceDim.String, serviceDim)
-	// deal with native int type which is how this is defined
-	sqsMessageCount := logs.FilterMessage(message).All()[0].ContextMap()["sqsMessageCount"]
-	switch v := sqsMessageCount.(type) {
-	case int64:
-		assert.Equal(t, int64(0), v)
-	case int32:
-		assert.Equal(t, int32(0), v)
-	default:
-		t.Errorf("unknown type for sqsMessageCount: %#v", sqsMessageCount)
-	}
+
+	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
+	sqsMock.AssertExpectations(t)
 }
