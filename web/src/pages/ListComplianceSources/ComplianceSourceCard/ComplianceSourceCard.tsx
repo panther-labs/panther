@@ -46,9 +46,11 @@ const ComplianceSourceCard: React.FC<ComplianceSourceCardProps> = ({ source }) =
       <GenericItemCard.Logo src={logo} />
       <ComplianceSourceCardOptions source={source} />
       <GenericItemCard.Body>
-        <Link as={RRLink} to={urls.compliance.sources.edit(source.integrationId)} cursor="pointer">
-          <GenericItemCard.Heading>{source.integrationLabel}</GenericItemCard.Heading>
-        </Link>
+        <GenericItemCard.Heading>
+          <Link as={RRLink} to={urls.compliance.sources.edit(source.integrationId)}>
+            {source.integrationLabel}
+          </Link>
+        </GenericItemCard.Heading>
         <GenericItemCard.ValuesGroup>
           <GenericItemCard.Value label="AWS Account ID" value={source.awsAccountId} />
           <GenericItemCard.Value

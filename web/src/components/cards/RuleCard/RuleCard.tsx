@@ -37,14 +37,15 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
     <GenericItemCard>
       <GenericItemCard.Body>
         <Flex align="center">
-          <Link
-            as={RRLink}
-            aria-label="Link to Rule"
-            to={urls.logAnalysis.rules.details(rule.id)}
-            cursor="pointer"
-          >
-            <GenericItemCard.Heading>{rule.displayName || rule.id}</GenericItemCard.Heading>
-          </Link>
+          <GenericItemCard.Heading>
+            <Link
+              as={RRLink}
+              aria-label="Link to Rule"
+              to={urls.logAnalysis.rules.details(rule.id)}
+            >
+              {rule.displayName || rule.id}
+            </Link>
+          </GenericItemCard.Heading>
           <Flex ml="auto" mr={0} align="flex-end">
             <RuleCardOptions rule={rule} />
           </Flex>

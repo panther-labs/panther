@@ -68,13 +68,11 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
       {!isCreatedByPanther && <LogSourceCardOptions source={source} />}
       <GenericItemCard.Body>
         {!isCreatedByPanther ? (
-          <Link
-            as={RRLink}
-            to={urls.logAnalysis.sources.edit(source.integrationId, sourceType)}
-            cursor="pointer"
-          >
-            <GenericItemCard.Heading>{source.integrationLabel}</GenericItemCard.Heading>
-          </Link>
+          <GenericItemCard.Heading>
+            <Link as={RRLink} to={urls.logAnalysis.sources.edit(source.integrationId, sourceType)}>
+              {source.integrationLabel}
+            </Link>
+          </GenericItemCard.Heading>
         ) : (
           <Box color="blue-200">
             <GenericItemCard.Heading>{source.integrationLabel}</GenericItemCard.Heading>
