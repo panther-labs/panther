@@ -51,7 +51,7 @@ const DestinationCardOptions: React.FC<DestinationCardOptionsProps> = ({ destina
     },
     // Failed deliveries will also trigger onCompleted as we don't return exceptions
     onCompleted: data => {
-      const { success } = data.sendTestAlert[0];
+      const success = data.sendTestAlert.every(delivery => delivery.success === true);
       if (success === true) {
         pushSnackbar({
           variant: 'success',
@@ -81,7 +81,7 @@ const DestinationCardOptions: React.FC<DestinationCardOptionsProps> = ({ destina
     <Dropdown>
       <DropdownButton as={GenericItemCard.Options} />
       <DropdownMenu>
-        <DropdownItem onSelect={() => handleTestAlertClick()}>Send Test Alert</DropdownItem>
+        <DropdownItem onSelect={handleTestAlertClick}>Send Test Alert</DropdownItem>
         <DropdownLink as={RRLink} to={urls.settings.destinations.edit(destination.outputId)}>
           Edit
         </DropdownLink>
