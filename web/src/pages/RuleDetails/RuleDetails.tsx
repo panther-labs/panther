@@ -67,7 +67,7 @@ const RuleDetailsPage: React.FC = () => {
 
   if (error) {
     return (
-      <Box mb={6}>
+      <Box mb={6} data-testid={`rule-${match.params.id}`}>
         <Alert
           variant="error"
           title="Couldn't load rule"
