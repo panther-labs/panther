@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Flex, Link, Box } from 'pouncejs';
+import { Flex, Link, Text } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import GenericItemCard from 'Components/GenericItemCard';
 import { LogIntegration } from 'Generated/schema';
@@ -74,9 +74,9 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
             </Link>
           </GenericItemCard.Heading>
         ) : (
-          <Box color="blue-200">
-            <GenericItemCard.Heading>{source.integrationLabel}</GenericItemCard.Heading>
-          </Box>
+          <GenericItemCard.Heading>
+            <Text color="blue-200">{source.integrationLabel}</Text>
+          </GenericItemCard.Heading>
         )}
         <GenericItemCard.ValuesGroup>
           {children}
