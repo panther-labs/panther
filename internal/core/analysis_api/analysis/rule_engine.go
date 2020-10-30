@@ -91,7 +91,7 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 		}
 		test := rule.Tests[testIndex]
 
-		testResult.TestSummary = testResult.TestSummary && !result.Errored
+		testResult.TestSummary = testResult.TestSummary && result.Passed
 
 		testResult.Results[i] = &models.RuleResult{
 			ID:           result.ID,
