@@ -23,7 +23,6 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-lambda-go/cfn"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -46,7 +45,7 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
 		// It's important to always return this physicalResourceID
-		const physicalResourceID = "custom:glue:update-tables" // NOTE: this can NEVER be changed!
+		const physicalResourceID = "custom:glue:update-log-processor-tables"
 		var props UpdateLogProcessorTablesProperties
 		if err := parseProperties(event.ResourceProperties, &props); err != nil {
 			zap.L().Error("failed to parse resource properties", zap.Error(err))
@@ -61,8 +60,7 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 		for pantherDatabase := range awsglue.PantherDatabases {
 			zap.L().Info("deleting database", zap.String("database", pantherDatabase))
 			if _, err := awsglue.DeleteDatabase(glueClient, pantherDatabase); err != nil {
-				var awsErr awserr.Error
-				if errors.As(err, &awsErr) && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
+				if awsutils.IsAnyError(err, glue.ErrCodeEntityNotFoundException) {
 					zap.L().Info("already deleted", zap.String("database", pantherDatabase))
 				} else {
 					return "", nil, errors.Wrapf(err, "failed deleting %s", pantherDatabase)

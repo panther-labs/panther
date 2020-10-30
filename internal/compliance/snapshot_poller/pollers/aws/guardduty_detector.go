@@ -26,7 +26,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -158,7 +158,7 @@ func buildGuardDutyDetectorSnapshot(guardDutySvc guarddutyiface.GuardDutyAPI, de
 }
 
 // PollGuardDutyDetectors gathers information on each GuardDuty detector for an AWS account.
-func PollGuardDutyDetectors(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollGuardDutyDetectors(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting GuardDuty Detector resource poller")
 	guardDutyDetectorSnapshots := make(map[string]*awsmodels.GuardDutyDetector)
 
@@ -222,23 +222,23 @@ func PollGuardDutyDetectors(pollerInput *awsmodels.ResourcePollerInput) ([]*apim
 		Detectors: []*string{},
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(guardDutyDetectorSnapshots)+1)
+	resources := make([]apimodels.AddResourceEntry, 0, len(guardDutyDetectorSnapshots)+1)
 	for resourceID, guardDutyDetectorSnapshot := range guardDutyDetectorSnapshots {
 		detectorMetaSnapshot.Detectors = append(detectorMetaSnapshot.Detectors, aws.String(resourceID))
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      guardDutyDetectorSnapshot,
-			ID:              apimodels.ResourceID(resourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              resourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.GuardDutySchema,
 		})
 	}
 
-	resources = append(resources, &apimodels.AddResourceEntry{
+	resources = append(resources, apimodels.AddResourceEntry{
 		Attributes:      detectorMetaSnapshot,
-		ID:              apimodels.ResourceID(*detectorMetaSnapshot.ResourceID),
-		IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-		IntegrationType: apimodels.IntegrationTypeAws,
+		ID:              *detectorMetaSnapshot.ResourceID,
+		IntegrationID:   *pollerInput.IntegrationID,
+		IntegrationType: integrationType,
 		Type:            awsmodels.GuardDutyMetaSchema,
 	})
 

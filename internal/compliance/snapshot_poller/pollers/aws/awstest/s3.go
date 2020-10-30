@@ -59,7 +59,7 @@ var (
 	ExampleBuckets = []*s3.Bucket{
 		{
 			Name:         aws.String("unit-test-cloudtrail-bucket"),
-			CreationDate: ExampleDate,
+			CreationDate: &ExampleTime,
 		},
 	}
 

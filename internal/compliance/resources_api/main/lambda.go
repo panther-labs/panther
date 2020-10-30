@@ -19,21 +19,24 @@ package main
  */
 
 import (
+	"context"
+
 	"github.com/aws/aws-lambda-go/lambda"
 
+	"github.com/panther-labs/panther/api/lambda/resources/models"
 	"github.com/panther-labs/panther/internal/compliance/resources_api/handlers"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-var methodHandlers = map[string]gatewayapi.RequestHandler{
-	"POST /delete":      handlers.DeleteResources,
-	"GET /list":         handlers.ListResources,
-	"GET /org-overview": handlers.OrgOverview,
-	"GET /resource":     handlers.GetResource,
-	"POST /resource":    handlers.AddResources,
+var router = genericapi.NewRouter("api", "resources", nil, handlers.API{})
+
+func lambdaHandler(ctx context.Context, input *models.LambdaInput) (interface{}, error) {
+	lambdalogger.ConfigureGlobal(ctx, nil)
+	return router.Handle(input)
 }
 
 func main() {
 	handlers.Setup()
-	lambda.Start(gatewayapi.LambdaProxy(methodHandlers))
+	lambda.Start(lambdaHandler)
 }

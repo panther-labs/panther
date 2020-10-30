@@ -115,7 +115,7 @@ const RuleAlertsListing: React.FC<Required<Pick<ListAlertsInput, 'type' | 'ruleI
         {hasAnyAlerts && (
           <Flex direction="column" spacing={2}>
             {data.alerts.alertSummaries.map(alert => (
-              <AlertCard hideRuleLink={true} key={alert.alertId} alert={alert} />
+              <AlertCard hideRuleButton key={alert.alertId} alert={alert} />
             ))}
           </Flex>
         )}

@@ -17,7 +17,7 @@
  */
 
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Link, Text } from 'pouncejs';
+import { Flex, Icon, Link, Text } from 'pouncejs';
 import { AlertTypesEnum } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
@@ -29,16 +29,19 @@ import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.gene
 import { formatDatetime } from 'Helpers/utils';
 import BulletedLogType from 'Components/BulletedLogType';
 import useAlertDestinations from 'Hooks/useAlertDestinations';
+import useAlertDestinationsDeliverySuccess from 'Hooks/useAlertDestinationsDeliverySuccess';
 import UpdateAlertDropdown from '../../dropdowns/UpdateAlertDropdown';
 
 interface AlertCardProps {
   alert: AlertSummaryFull;
-  hideRuleLink?: boolean;
+  hideRuleButton?: boolean;
 }
 
-const AlertCard: React.FC<AlertCardProps> = ({ alert, hideRuleLink }) => {
+const AlertCard: React.FC<AlertCardProps> = ({ alert, hideRuleButton = false }) => {
   const { alertDestinations, loading: loadingDestinations } = useAlertDestinations({ alert });
-
+  const { allDestinationDeliveredSuccessfully, loading } = useAlertDestinationsDeliverySuccess({
+    alert,
+  });
   return (
     <GenericItemCard borderColor={alert.type === AlertTypesEnum.RuleError ? 'red-600' : 'teal-400'}>
       <GenericItemCard.Body>
@@ -50,11 +53,9 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, hideRuleLink }) => {
         >
           <GenericItemCard.Heading>{alert.title}</GenericItemCard.Heading>
         </Link>
-
         <GenericItemCard.ValuesGroup>
-          {!hideRuleLink && (
+          {!hideRuleButton && (
             <GenericItemCard.Value
-              id={`link-to-rule-${alert.ruleId}`}
               value={
                 <LinkButton
                   aria-label="Link to Rule"
@@ -75,12 +76,6 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, hideRuleLink }) => {
               </Text>
             }
           />
-
-          <GenericItemCard.Value
-            label="Events"
-            value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
-          />
-
           <GenericItemCard.Value
             label="Destinations"
             value={
@@ -98,20 +93,30 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, hideRuleLink }) => {
             }
           />
           <GenericItemCard.Value
-            label="Alert Type"
-            value={
-              <Text color={alert.type === AlertTypesEnum.RuleError ? 'red-500' : 'teal-100'}>
-                {alert.type === AlertTypesEnum.RuleError ? 'Rule Error' : 'Rule Match'}
-              </Text>
-            }
+            label="Events"
+            value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
           />
-
           <GenericItemCard.Value label="Time Created" value={formatDatetime(alert.creationTime)} />
           <Flex ml="auto" mr={0} align="flex-end" spacing={2}>
             <SeverityBadge severity={alert.severity} />
             <UpdateAlertDropdown alert={alert} />
           </Flex>
         </GenericItemCard.ValuesGroup>
+        {!loading && !allDestinationDeliveredSuccessfully && (
+          <Flex
+            as="section"
+            align="center"
+            spacing={2}
+            mt={2}
+            aria-label="Destination delivery failure"
+          >
+            <Icon type="alert-circle-filled" size="medium" color="red-300" />
+            <Text fontSize="small" fontStyle="italic" color="red-300">
+              There was an issue with the delivery of this alert to a selected destination. See
+              specific Alert for details.
+            </Text>
+          </Flex>
+        )}
       </GenericItemCard.Body>
     </GenericItemCard>
   );

@@ -24,30 +24,24 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/resources/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
+	"github.com/panther-labs/panther/api/lambda/resources/models"
 )
 
 // Deleted resources are retained for 30 days in the database
 const deleteWindowSecs = 30 * 24 * 60 * 60
 
 // DeleteResources marks one or more resources as deleted.
-func DeleteResources(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	input, err := parseDeleteResources(request)
-	if err != nil {
-		return badRequest(err)
-	}
-
+func (API) DeleteResources(input *models.DeleteResourcesInput) *events.APIGatewayProxyResponse {
 	deletes := make([]compliancemodels.DeleteStatusEntry, len(input.Resources))
 	update := expression.
 		Set(expression.Name("deleted"), expression.Value(true)).
 		Set(expression.Name("expiresAt"), expression.Value(time.Now().Unix()+deleteWindowSecs))
 	for i, entry := range input.Resources {
 		deletes[i] = compliancemodels.DeleteStatusEntry{
-			Resource: &compliancemodels.DeleteResource{ID: string(entry.ID)},
+			Resource: &compliancemodels.DeleteResource{ID: entry.ID},
 		}
 
 		// Dynamo does not support batch update, so these are sequential
@@ -68,19 +62,10 @@ func DeleteResources(request *events.APIGatewayProxyRequest) *events.APIGatewayP
 	lambdaInput := compliancemodels.LambdaInput{
 		DeleteStatus: &compliancemodels.DeleteStatusInput{Entries: deletes},
 	}
-	if _, err = complianceClient.Invoke(&lambdaInput, nil); err != nil {
+	if _, err := complianceClient.Invoke(&lambdaInput, nil); err != nil {
 		zap.L().Error("failed to delete compliance status", zap.Error(err))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
 	return &events.APIGatewayProxyResponse{StatusCode: http.StatusOK}
-}
-
-func parseDeleteResources(request *events.APIGatewayProxyRequest) (*models.DeleteResources, error) {
-	var result models.DeleteResources
-	if err := jsoniter.UnmarshalFromString(request.Body, &result); err != nil {
-		return nil, err
-	}
-
-	return &result, result.Validate(nil)
 }

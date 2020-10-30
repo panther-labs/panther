@@ -31,15 +31,15 @@ const (
 )
 
 // RunQuery executes query, blocking until done
-func RunQuery(client athenaiface.AthenaAPI, workgroup, database, sql string, s3Path *string) (*athena.GetQueryResultsOutput, error) {
-	startOutput, err := StartQuery(client, workgroup, database, sql, s3Path)
+func RunQuery(client athenaiface.AthenaAPI, workgroup, database, sql string) (*athena.GetQueryResultsOutput, error) {
+	startOutput, err := StartQuery(client, workgroup, database, sql)
 	if err != nil {
 		return nil, err
 	}
 	return WaitForResults(client, *startOutput.QueryExecutionId)
 }
 
-func StartQuery(client athenaiface.AthenaAPI, workgroup, database, sql string, s3Path *string) (*athena.StartQueryExecutionOutput, error) {
+func StartQuery(client athenaiface.AthenaAPI, workgroup, database, sql string) (*athena.StartQueryExecutionOutput, error) {
 	var startInput athena.StartQueryExecutionInput
 	startInput.SetWorkGroup(workgroup)
 	startInput.SetQueryString(sql)
@@ -49,9 +49,6 @@ func StartQuery(client athenaiface.AthenaAPI, workgroup, database, sql string, s
 	startInput.SetQueryExecutionContext(&startContext)
 
 	var resultConfig athena.ResultConfiguration
-	if s3Path != nil {
-		resultConfig.SetOutputLocation(*s3Path)
-	}
 	startInput.SetResultConfiguration(&resultConfig)
 
 	return client.StartQueryExecution(&startInput)

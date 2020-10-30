@@ -885,7 +885,7 @@ input ListResourcesInput {
   deleted: Boolean
   idContains: String
   integrationId: ID
-  types: String # comma separated string
+  types: [String!]
   # Sorting
   sortBy: ListResourcesSortFieldsEnum # defaults to `id`
   sortDir: SortDirEnum # defaults to `ascending`

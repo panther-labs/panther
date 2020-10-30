@@ -23,7 +23,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/resources/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 )
 
@@ -33,12 +32,12 @@ const complianceCacheDuration = 3 * time.Second
 
 type complianceCacheEntry struct {
 	ExpiresAt time.Time
-	Resources map[models.ResourceID]*complianceStatus
+	Resources map[string]*complianceStatus
 }
 
 type complianceStatus struct {
-	SortIndex int                     // 0 is the top failing resource, 1 the next most failing, etc
-	Status    models.ComplianceStatus // PASS, FAIL, ERROR
+	SortIndex int                               // 0 is the top failing resource, 1 the next most failing, etc
+	Status    compliancemodels.ComplianceStatus // PASS, FAIL, ERROR
 }
 
 var complianceCache *complianceCacheEntry
@@ -46,7 +45,7 @@ var complianceCache *complianceCacheEntry
 // Get the pass/fail compliance status for a particular resource.
 //
 // Each org's pass/fail information for all policies is cached for a minute.
-func getComplianceStatus(resourceID models.ResourceID) (*complianceStatus, error) {
+func getComplianceStatus(resourceID string) (*complianceStatus, error) {
 	entry, err := getOrgCompliance()
 	if err != nil {
 		return nil, err
@@ -57,7 +56,7 @@ func getComplianceStatus(resourceID models.ResourceID) (*complianceStatus, error
 	}
 
 	// A resource with no compliance entries is passing (no policies applied to it)
-	return &complianceStatus{SortIndex: -1, Status: models.ComplianceStatusPASS}, nil
+	return &complianceStatus{SortIndex: -1, Status: compliancemodels.StatusPass}, nil
 }
 
 func getOrgCompliance() (*complianceCacheEntry, error) {
@@ -77,12 +76,12 @@ func getOrgCompliance() (*complianceCacheEntry, error) {
 
 	entry := &complianceCacheEntry{
 		ExpiresAt: time.Now().Add(complianceCacheDuration),
-		Resources: make(map[models.ResourceID]*complianceStatus, len(result.Resources)),
+		Resources: make(map[string]*complianceStatus, len(result.Resources)),
 	}
 	for i, resource := range result.Resources {
-		entry.Resources[models.ResourceID(resource.ID)] = &complianceStatus{
+		entry.Resources[resource.ID] = &complianceStatus{
 			SortIndex: i,
-			Status:    models.ComplianceStatus(resource.Status),
+			Status:    resource.Status,
 		}
 	}
 	complianceCache = entry

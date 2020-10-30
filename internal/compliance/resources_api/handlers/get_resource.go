@@ -19,7 +19,6 @@ package handlers
  */
 
 import (
-	"errors"
 	"net/http"
 	"net/url"
 
@@ -28,19 +27,21 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/resources/models"
+	"github.com/panther-labs/panther/api/lambda/resources/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // GetResource retrieves a single resource from the Dynamo table.
-func GetResource(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	resourceID, err := parseGetResource(request)
+func (API) GetResource(input *models.GetResourceInput) *events.APIGatewayProxyResponse {
+	// TODO - remove url-encoding from frontend; it's no longer necessary with API gateway removed
+	var err error
+	input.ID, err = url.QueryUnescape(input.ID)
 	if err != nil {
-		return badRequest(err)
+		return &events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest, Body: err.Error()}
 	}
 
 	response, err := dynamoClient.GetItem(&dynamodb.GetItemInput{
-		Key:       tableKey(resourceID),
+		Key:       tableKey(input.ID),
 		TableName: &env.ResourcesTable,
 	})
 	if err != nil {
@@ -49,7 +50,7 @@ func GetResource(request *events.APIGatewayProxyRequest) *events.APIGatewayProxy
 	}
 
 	if len(response.Item) == 0 {
-		zap.L().Debug("could not find resource", zap.String("resourceID", string(resourceID)))
+		zap.L().Debug("could not find resource", zap.String("resourceID", input.ID))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusNotFound}
 	}
 
@@ -59,25 +60,11 @@ func GetResource(request *events.APIGatewayProxyRequest) *events.APIGatewayProxy
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
-	status, err := getComplianceStatus(resourceID)
+	status, err := getComplianceStatus(input.ID)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
-	return gatewayapi.MarshalResponse(item.Resource(status.Status), http.StatusOK)
-}
-
-// API gateway doesn't do advanced validation of query parameters, but we can do it here.
-func parseGetResource(request *events.APIGatewayProxyRequest) (resourceID models.ResourceID, err error) {
-	escaped, err := url.QueryUnescape(request.QueryStringParameters["resourceId"])
-	if err != nil {
-		err = errors.New("invalid resourceId: " + err.Error())
-		return
-	}
-
-	resourceID = models.ResourceID(escaped)
-	if err = resourceID.Validate(nil); err != nil {
-		err = errors.New("invalid resourceId: " + err.Error())
-	}
-	return
+	result := item.Resource(status.Status)
+	return gatewayapi.MarshalResponse(&result, http.StatusOK)
 }

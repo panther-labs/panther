@@ -169,7 +169,7 @@ func TestElbv2ApplicationLoadBalancersPoller(t *testing.T) {
 	assert.Equal(
 		t,
 		*awstest.ExampleDescribeLoadBalancersOutput.LoadBalancers[0].LoadBalancerArn,
-		string(resources[0].ID),
+		resources[0].ID,
 	)
 	assert.NotEmpty(t, resources[0].Attributes.(*awsmodels.Elbv2ApplicationLoadBalancer).Listeners)
 	assert.NotNil(t, resources[0].Attributes.(*awsmodels.Elbv2ApplicationLoadBalancer).SSLPolicies)

@@ -29,8 +29,8 @@ func init() {
 	snapshotPollerSession = &session.Session{}
 
 	// mocks the assume role
-	assumeRoleFunc = awstest.AssumeRoleMock
-	verifyAssumedCredsFunc = func(creds *session.Session, region string) error {
+	AssumeRoleFunc = awstest.AssumeRoleMock
+	VerifyAssumedCredsFunc = func(creds *session.Session, region string) error {
 		return nil
 	}
 }

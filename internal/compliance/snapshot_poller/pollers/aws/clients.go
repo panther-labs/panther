@@ -64,9 +64,11 @@ const (
 
 var (
 	snapshotPollerSession *session.Session
-	// assumeRoleFunc is the function to return valid AWS credentials.
-	assumeRoleFunc         = assumeRole
-	verifyAssumedCredsFunc = verifyAssumedCreds
+
+	// These are exported so the top-level unit tests can mock them out.
+	// AssumeRoleFunc is the function to return valid AWS credentials.
+	AssumeRoleFunc         = assumeRole
+	VerifyAssumedCredsFunc = verifyAssumedCreds
 	GetServiceRegionsFunc  = GetServiceRegions
 
 	// This maps the name we have given to a type of resource to the corresponding AWS name for the
@@ -226,7 +228,7 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput,
 
 	// First we need to use our existing AWS session (in the Panther account) to create credentials
 	// for the IAM role in the account to be scanned
-	creds := assumeRoleFunc(pollerInput, snapshotPollerSession)
+	creds := AssumeRoleFunc(pollerInput, snapshotPollerSession)
 
 	// Second, we need to create a new session in the account to be scanned using the credentials
 	// we just created. This works around a situation where the account being scanned has an opt-in
@@ -240,8 +242,7 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput,
 	}
 
 	// Verify that the session is valid
-	err = verifyAssumedCredsFunc(clientSession, region)
-	if err != nil {
+	if err = VerifyAssumedCredsFunc(clientSession, region); err != nil {
 		return nil, errors.Wrapf(err, "failed to get %s client in %s region", service, region)
 	}
 

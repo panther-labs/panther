@@ -29,7 +29,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -126,7 +126,7 @@ func buildEc2InstanceSnapshot(instance *ec2.Instance) *awsmodels.Ec2Instance {
 	}
 	return &awsmodels.Ec2Instance{
 		GenericResource: awsmodels.GenericResource{
-			TimeCreated:  utils.DateTimeFormat(*instance.LaunchTime),
+			TimeCreated:  instance.LaunchTime,
 			ResourceType: aws.String(awsmodels.Ec2InstanceSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
@@ -180,7 +180,7 @@ func buildEc2InstanceSnapshot(instance *ec2.Instance) *awsmodels.Ec2Instance {
 }
 
 // PollEc2Instances gathers information on each EC2 instance in an AWS account.
-func PollEc2Instances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollEc2Instances(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting EC2 Instance resource poller")
 
 	ec2Svc, err := getEC2Client(pollerInput, *pollerInput.Region)
@@ -196,7 +196,7 @@ func PollEc2Instances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.
 
 	// For each instance, build out a full snapshot
 	zap.L().Debug("building EC2 Instance snapshots", zap.String("region", *pollerInput.Region))
-	resources := make([]*apimodels.AddResourceEntry, 0, len(instances))
+	resources := make([]apimodels.AddResourceEntry, 0, len(instances))
 	for _, instance := range instances {
 		ec2Instance := buildEc2InstanceSnapshot(instance)
 
@@ -221,11 +221,11 @@ func PollEc2Instances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.
 		ec2Instance.Region = pollerInput.Region
 		ec2Instance.ARN = aws.String(resourceID)
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      ec2Instance,
-			ID:              apimodels.ResourceID(resourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              resourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.Ec2InstanceSchema,
 		})
 	}

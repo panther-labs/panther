@@ -392,31 +392,6 @@ Resources:
       CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
-  ResourcesApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      DefinitionBody: api/gateway/resources/api.yml
-      EndpointConfiguration: REGIONAL
-      Name: panther-resources-api
-      # <cfndoc>
-      # The `panther-resources-api` API Gateway calls the `panther-resources-api` lambda.
-      # </cfndoc>
-      StageName: v1
-      TracingEnabled: !If [TracingEnabled, true, false]
-
-  ResourcesApiAlarms:
-    Type: Custom::ApiGatewayAlarms
-    DependsOn: CustomTeardown
-    Properties:
-      ApiName: panther-resources-api
-      AlarmTopicArn: !Ref AlarmTopicArn
-      CustomResourceVersion: !Ref CustomResourceVersion
-      ServiceToken: !GetAtt CustomResourceFunction.Arn
-      # The `get resource` operation invokes the `describe-org` operation of the compliance-api in order
-      # to see if a resource is compliant or not. Setting the same threshold
-      # here as for the compliance-api
-      LatencyThresholdMs: 3000
-
   # https://docs.aws.amazon.com/athena/latest/ug/athena-prebuilt-data-connectors-dynamodb.html
   AthenaDDBConnector:
     Type: AWS::Serverless::Application
@@ -480,12 +455,6 @@ Outputs:
   RemediationApiEndpoint:
     Description: HTTPS endpoint for the remediation api
     Value: !Sub ${RemediationApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
-  ResourcesApiId:
-    Description: Resources API Gateway ID
-    Value: !Ref ResourcesApi
-  ResourcesApiEndpoint:
-    Description: HTTPS endpoint for the resources api
-    Value: !Sub ${ResourcesApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
 
   AthenaWorkGroup:
     Description: The Athena workgroup for Panther queries

@@ -44,6 +44,10 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 		return nil, err
 	}
 
+	if err = api.validateUniqueConstraints(existingIntegrationItem, input); err != nil {
+		return nil, err
+	}
+
 	// Validate the updated existingIntegrationItem settings
 	reason, passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
 		// From existing existingIntegrationItem
@@ -91,6 +95,46 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 	existingIntegration := itemToIntegration(existingIntegrationItem)
 
 	return existingIntegration, nil
+}
+
+func (api API) validateUniqueConstraints(existingIntegrationItem *ddb.Integration, input *models.UpdateIntegrationSettingsInput) error {
+	existingIntegrations, err := api.ListIntegrations(&models.ListIntegrationsInput{})
+	if err != nil {
+		zap.L().Error("failed to fetch integrations", zap.Error(errors.WithStack(err)))
+		return updateIntegrationInternalError
+	}
+	for _, existingIntegration := range existingIntegrations {
+		if existingIntegration.IntegrationType == existingIntegrationItem.IntegrationType &&
+			existingIntegration.IntegrationID != existingIntegrationItem.IntegrationID {
+
+			switch existingIntegration.IntegrationType {
+			case models.IntegrationTypeAWS3:
+				if existingIntegration.AWSAccountID == existingIntegrationItem.AWSAccountID &&
+					existingIntegration.IntegrationLabel == input.IntegrationLabel {
+					// Log sources for same account need to have different labels
+					return &genericapi.InvalidInputError{
+						Message: fmt.Sprintf("Log source for account %s with label %s already onboarded",
+							existingIntegrationItem.AWSAccountID,
+							input.IntegrationLabel),
+					}
+				}
+
+				if existingIntegration.S3Bucket == input.S3Bucket && existingIntegration.S3Prefix == input.S3Prefix {
+					return &genericapi.InvalidInputError{
+						Message: "An S3 integration with the same S3 bucket and prefix already exists.",
+					}
+				}
+			case models.IntegrationTypeSqs:
+				if existingIntegration.IntegrationLabel == input.IntegrationLabel {
+					// Sqs sources need to have different labels
+					return &genericapi.InvalidInputError{
+						Message: fmt.Sprintf("Integration with label %s already exists", input.IntegrationLabel),
+					}
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func normalizeIntegration(item *ddb.Integration, input *models.UpdateIntegrationSettingsInput) error {

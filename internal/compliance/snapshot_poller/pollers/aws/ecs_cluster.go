@@ -27,7 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -186,13 +186,13 @@ func getECSClusterTasks(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodel
 			AvailabilityZone:      task.AvailabilityZone,
 			CapacityProviderName:  task.CapacityProviderName,
 			Connectivity:          task.Connectivity,
-			ConnectivityAt:        utils.DateTimeFormat(aws.TimeValue(task.ConnectivityAt)),
+			ConnectivityAt:        task.ConnectivityAt,
 			ContainerInstanceArn:  task.ContainerInstanceArn,
 			Containers:            task.Containers,
 			Cpu:                   task.Cpu,
-			TimeCreated:           utils.DateTimeFormat(aws.TimeValue(task.CreatedAt)),
+			TimeCreated:           task.CreatedAt,
 			DesiredStatus:         task.DesiredStatus,
-			ExecutionStoppedAt:    utils.DateTimeFormat(aws.TimeValue(task.ExecutionStoppedAt)),
+			ExecutionStoppedAt:    task.ExecutionStoppedAt,
 			Group:                 task.Group,
 			HealthStatus:          task.HealthStatus,
 			InferenceAccelerators: task.InferenceAccelerators,
@@ -201,14 +201,14 @@ func getECSClusterTasks(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmodel
 			Memory:                task.Memory,
 			Overrides:             task.Overrides,
 			PlatformVersion:       task.PlatformVersion,
-			PullStartedAt:         utils.DateTimeFormat(aws.TimeValue(task.PullStartedAt)),
-			PullStoppedAt:         utils.DateTimeFormat(aws.TimeValue(task.PullStoppedAt)),
-			StartedAt:             utils.DateTimeFormat(aws.TimeValue(task.StartedAt)),
+			PullStartedAt:         task.PullStartedAt,
+			PullStoppedAt:         task.PullStoppedAt,
+			StartedAt:             task.StartedAt,
 			StartedBy:             task.StartedBy,
 			StopCode:              task.StopCode,
-			StoppedAt:             utils.DateTimeFormat(aws.TimeValue(task.StoppedAt)),
+			StoppedAt:             task.StoppedAt,
 			StoppedReason:         task.StoppedReason,
-			StoppingAt:            utils.DateTimeFormat(aws.TimeValue(task.StoppingAt)),
+			StoppingAt:            task.StoppingAt,
 			TaskDefinitionArn:     task.TaskDefinitionArn,
 			Version:               task.Version,
 		})
@@ -273,7 +273,7 @@ func getECSClusterServices(ecsSvc ecsiface.ECSAPI, clusterArn *string) ([]*awsmo
 				Tags: utils.ParseTagSlice(service.Tags),
 			},
 			CapacityProviderStrategy:      service.CapacityProviderStrategy,
-			TimeCreated:                   utils.DateTimeFormat(aws.TimeValue(service.CreatedAt)),
+			TimeCreated:                   service.CreatedAt,
 			CreatedBy:                     service.CreatedBy,
 			DeploymentConfiguration:       service.DeploymentConfiguration,
 			DeploymentController:          service.DeploymentController,
@@ -352,7 +352,7 @@ func buildEcsClusterSnapshot(ecsSvc ecsiface.ECSAPI, clusterArn *string) (*awsmo
 }
 
 // PollEcsCluster gathers information on each ECS Cluster for an AWS account.
-func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting ECS Cluster resource poller")
 	ecsClusterSnapshots := make(map[string]*awsmodels.EcsCluster)
 
@@ -367,7 +367,7 @@ func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(ecsClusterSnapshots))
+	resources := make([]apimodels.AddResourceEntry, 0, len(ecsClusterSnapshots))
 	for _, clusterArn := range clusters {
 		ecsClusterSnapshot, err := buildEcsClusterSnapshot(ecsSvc, clusterArn)
 		if err != nil {
@@ -376,11 +376,11 @@ func PollEcsClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		ecsClusterSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		ecsClusterSnapshot.Region = pollerInput.Region
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      ecsClusterSnapshot,
-			ID:              apimodels.ResourceID(*ecsClusterSnapshot.ResourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *ecsClusterSnapshot.ResourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.EcsClusterSchema,
 		})
 	}
