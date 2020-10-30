@@ -94,6 +94,7 @@ const ListAlertBreadcrumbFilters: React.FC = () => {
                     name="logType"
                     placeholder="Select a log type"
                     items={availableLogTypes}
+                    searchable
                   />
                 </Box>
               )}
