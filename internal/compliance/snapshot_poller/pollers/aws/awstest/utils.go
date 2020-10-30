@@ -27,20 +27,12 @@ import (
 
 // Example output from the AWS API
 var (
-	ExampleTimeParsed, _       = time.Parse(time.RFC3339, "2019-04-02T17:16:30+00:00")
-	ExampleTime                = ExampleTimeParsed
-	ExampleDate                = aws.Time(ExampleTimeParsed)
+	ExampleTime, _             = time.Parse(time.RFC3339, "2019-04-02T17:16:30+00:00")
 	ExampleIntegrationID       = aws.String("8e39aa9d-9823-4872-a1bd-40fd8795634b")
 	ExampleAuthSource          = "arn:aws:iam::123456789012:role/PantherAuditRole"
 	ExampleAuthSourceParsedARN = ParseExampleAuthSourceARN(ExampleAuthSource)
 	ExampleAccountId           = aws.String("123456789012")
-
-	ExampleRegions = []*string{
-		aws.String("ap-southeast-2"),
-		aws.String("eu-central-1"),
-		aws.String("us-west-2"),
-	}
-	ExampleRegion = aws.String("us-west-2")
+	ExampleRegion              = aws.String("us-west-2")
 )
 
 // ParseExampleAuthSourceARN returns a parsed Auth Source ARN

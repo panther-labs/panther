@@ -58,11 +58,11 @@ var (
 	ExampleDescribeCertificateOutput = &acm.DescribeCertificateOutput{
 		Certificate: &acm.CertificateDetail{
 			CertificateArn:     ExampleCertificateArn,
-			CreatedAt:          ExampleDate,
+			CreatedAt:          &ExampleTime,
 			DomainName:         aws.String("runpanther.xyz"),
 			Serial:             aws.String("b7:5b:09:63:dd:47:9c:46"),
-			NotBefore:          ExampleDate,
-			NotAfter:           ExampleDate,
+			NotBefore:          &ExampleTime,
+			NotAfter:           &ExampleTime,
 			KeyAlgorithm:       aws.String("RSA-2048"),
 			SignatureAlgorithm: aws.String("SHA256WITHRSA"),
 			Type:               aws.String("AMAZON_CREATED"),
