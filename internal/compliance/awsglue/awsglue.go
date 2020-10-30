@@ -37,11 +37,11 @@ const (
 	// FIXME: Update the description when the DDB connector is GA
 	ResourcesTableDDB         = "panther-resources"
 	ResourcesTable            = "resources"
-	ResourcesTableDescription = "(ddb.panther_cloudsecurity.panther-resources) The resources discovered by Panther scanning"
+	ResourcesTableDescription = "(ddb.panther_cloudsecurity.resources) The resources discovered by Panther scanning"
 
 	ComplianceTableDDB         = "panther-compliance"
 	ComplianceTable            = "compliance"
-	ComplianceTableDescription = "(ddb.panther_cloudsecurity.panther-compliance) The policies and statuses from Panther scanning"
+	ComplianceTableDescription = "(ddb.panther_cloudsecurity.compliance) The policies and statuses from Panther scanning"
 )
 
 var (

@@ -43,7 +43,7 @@ func CreateOrReplaceViews(athenaClient athenaiface.AthenaAPI, workgroup string, 
 		return err
 	}
 	for _, sql := range sqlStatements {
-		_, err := awsathena.RunQuery(athenaClient, workgroup, awsglue.ViewsDatabaseName, sql, nil) // use default bucket
+		_, err := awsathena.RunQuery(athenaClient, workgroup, awsglue.ViewsDatabaseName, sql)
 		if err != nil {
 			return errors.Wrap(err, "CreateOrReplaceViews() failed")
 		}

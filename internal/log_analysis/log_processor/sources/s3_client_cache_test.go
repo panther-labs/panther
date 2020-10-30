@@ -138,7 +138,7 @@ func TestGetS3ClientUnknownBucket(t *testing.T) {
 	}
 
 	result, sourceInfo, err := getS3Client(s3Object.S3Bucket, s3Object.S3ObjectKey)
-	require.Error(t, err)
+	require.NoError(t, err)
 	require.Nil(t, result)
 	require.Nil(t, sourceInfo)
 

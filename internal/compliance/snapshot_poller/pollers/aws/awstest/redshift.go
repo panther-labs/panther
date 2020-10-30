@@ -42,7 +42,7 @@ var (
 					Address: aws.String("example-cluster.asdf123.us-west-2.redshift.amazonaws.com"),
 					Port:    aws.Int64(5439),
 				},
-				ClusterCreateTime:                ExampleDate,
+				ClusterCreateTime:                &ExampleTime,
 				AutomatedSnapshotRetentionPeriod: aws.Int64(1),
 				ManualSnapshotRetentionPeriod:    aws.Int64(-1),
 				ClusterParameterGroups: []*redshift.ClusterParameterGroupStatus{

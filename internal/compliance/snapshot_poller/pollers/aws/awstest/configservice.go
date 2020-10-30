@@ -50,10 +50,10 @@ var (
 	ExampleDescribeConfigurationRecorderStatus = &configservice.DescribeConfigurationRecorderStatusOutput{
 		ConfigurationRecordersStatus: []*configservice.ConfigurationRecorderStatus{
 			{
-				LastStartTime:        &ExampleTimeParsed,
+				LastStartTime:        &ExampleTime,
 				LastStatus:           aws.String("SUCCESS"),
-				LastStatusChangeTime: &ExampleTimeParsed,
-				LastStopTime:         &ExampleTimeParsed,
+				LastStatusChangeTime: &ExampleTime,
+				LastStopTime:         &ExampleTime,
 				Name:                 aws.String("default"),
 				Recording:            aws.Bool(true),
 			},

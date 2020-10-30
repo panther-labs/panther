@@ -131,7 +131,7 @@ const RuleDetailsPage = () => {
             {hasAnyAlerts && (
               <Flex direction="column" spacing={2}>
                 {listAlertsData.alerts.alertSummaries.map(alert => (
-                  <AlertCard key={alert.alertId} alert={alert} />
+                  <AlertCard key={alert.alertId} alert={alert} hideRuleButton />
                 ))}
               </Flex>
             )}

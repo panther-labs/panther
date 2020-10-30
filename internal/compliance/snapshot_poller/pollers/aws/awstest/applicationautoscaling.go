@@ -39,7 +39,7 @@ var (
 				MinCapacity:       aws.Int64(5),
 				MaxCapacity:       aws.Int64(4000),
 				RoleARN:           aws.String("arn:aws:iam::123456789012:role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AutoScalingRole"),
-				CreationTime:      ExampleDate,
+				CreationTime:      &ExampleTime,
 			},
 			{
 				ServiceNamespace:  aws.String("dynamodb"),
@@ -48,7 +48,7 @@ var (
 				MinCapacity:       aws.Int64(5),
 				MaxCapacity:       aws.Int64(40000),
 				RoleARN:           aws.String("arn:aws:iam::123456789012:role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AutoScalingRole"),
-				CreationTime:      ExampleDate,
+				CreationTime:      &ExampleTime,
 			},
 		},
 	}
