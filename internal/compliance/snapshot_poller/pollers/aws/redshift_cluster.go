@@ -30,7 +30,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -146,7 +146,7 @@ func describeLoggingStatus(redshiftSvc redshiftiface.RedshiftAPI, clusterID *str
 func buildRedshiftClusterSnapshot(redshiftSvc redshiftiface.RedshiftAPI, cluster *redshift.Cluster) (*awsmodels.RedshiftCluster, error) {
 	clusterSnapshot := &awsmodels.RedshiftCluster{
 		GenericResource: awsmodels.GenericResource{
-			TimeCreated:  utils.DateTimeFormat(*cluster.ClusterCreateTime),
+			TimeCreated:  cluster.ClusterCreateTime,
 			ResourceType: aws.String(awsmodels.RedshiftClusterSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
@@ -205,7 +205,7 @@ func buildRedshiftClusterSnapshot(redshiftSvc redshiftiface.RedshiftAPI, cluster
 }
 
 // PollRedshiftClusters gathers information on each Redshift Cluster for an AWS account.
-func PollRedshiftClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollRedshiftClusters(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting Redshift Cluster resource poller")
 	redshiftSvc, err := getRedshiftClient(pollerInput, *pollerInput.Region)
 	if err != nil {
@@ -218,7 +218,7 @@ func PollRedshiftClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimod
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(clusters))
+	resources := make([]apimodels.AddResourceEntry, 0, len(clusters))
 	for _, cluster := range clusters {
 		redshiftClusterSnapshot, err := buildRedshiftClusterSnapshot(redshiftSvc, cluster)
 		if err != nil {
@@ -244,11 +244,11 @@ func PollRedshiftClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimod
 		redshiftClusterSnapshot.Region = pollerInput.Region
 		redshiftClusterSnapshot.ARN = aws.String(resourceID)
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      redshiftClusterSnapshot,
-			ID:              apimodels.ResourceID(resourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              resourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.RedshiftClusterSchema,
 		})
 	}

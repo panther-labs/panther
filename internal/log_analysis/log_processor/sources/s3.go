@@ -116,7 +116,9 @@ func handleNotificationMessage(notification *SnsNotification) (result []*common.
 			}
 			return
 		}
-		result = append(result, dataStream)
+		if dataStream != nil {
+			result = append(result, dataStream)
+		}
 	}
 	return result, err
 }
@@ -141,7 +143,13 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 	if err != nil {
 		err = errors.Wrapf(err, "failed to get S3 client for s3://%s/%s",
 			s3Object.S3Bucket, s3Object.S3ObjectKey)
-		return
+		return nil, err
+	}
+	if sourceInfo == nil {
+		zap.L().Warn("no source configured for S3 object",
+			zap.String("bucket", s3Object.S3Bucket),
+			zap.String("key", s3Object.S3ObjectKey))
+		return nil, nil
 	}
 
 	getObjectInput := &s3.GetObjectInput{
@@ -152,7 +160,7 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 	if err != nil {
 		err = errors.Wrapf(err, "GetObject() failed for s3://%s/%s",
 			s3Object.S3Bucket, s3Object.S3ObjectKey)
-		return
+		return nil, err
 	}
 
 	bufferedReader := bufio.NewReader(output.Body)
@@ -161,7 +169,7 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 	if err != nil {
 		err = errors.Wrapf(err, "failed to detect content type of S3 payload for s3://%s/%s",
 			s3Object.S3Bucket, s3Object.S3ObjectKey)
-		return
+		return nil, err
 	}
 
 	var streamReader io.Reader

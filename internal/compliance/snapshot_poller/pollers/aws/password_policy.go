@@ -27,7 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -78,7 +78,7 @@ func getPasswordPolicy(svc iamiface.IAMAPI) (*iam.PasswordPolicy, error) {
 }
 
 // PollPasswordPolicy gathers information on all PasswordPolicy in an AWS account.
-func PollPasswordPolicy(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollPasswordPolicy(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting Password Policy resource poller")
 	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
@@ -115,29 +115,29 @@ func PollPasswordPolicy(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 
 	// Password Policy never pages
 	if anyExist && passwordPolicy != nil {
-		return []*apimodels.AddResourceEntry{{
+		return []apimodels.AddResourceEntry{{
 			Attributes: &awsmodels.PasswordPolicy{
 				GenericResource:    genericFields,
 				GenericAWSResource: genericAWSFields,
 				AnyExist:           anyExist,
 				PasswordPolicy:     *passwordPolicy,
 			},
-			ID:              apimodels.ResourceID(resourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              resourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.PasswordPolicySchema,
 		}}, nil, nil
 	}
 
-	return []*apimodels.AddResourceEntry{{
+	return []apimodels.AddResourceEntry{{
 		Attributes: &awsmodels.PasswordPolicy{
 			GenericResource:    genericFields,
 			GenericAWSResource: genericAWSFields,
 			AnyExist:           anyExist,
 		},
-		ID:              apimodels.ResourceID(resourceID),
-		IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-		IntegrationType: apimodels.IntegrationTypeAws,
+		ID:              resourceID,
+		IntegrationID:   *pollerInput.IntegrationID,
+		IntegrationType: integrationType,
 		Type:            awsmodels.PasswordPolicySchema,
 	}}, nil, nil
 }

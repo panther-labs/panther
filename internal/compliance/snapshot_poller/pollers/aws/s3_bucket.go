@@ -30,7 +30,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -253,7 +253,7 @@ func buildS3BucketSnapshot(s3Svc s3iface.S3API, bucket *s3.Bucket) (*awsmodels.S
 	}
 	s3Snapshot := &awsmodels.S3Bucket{
 		GenericResource: awsmodels.GenericResource{
-			TimeCreated:  utils.DateTimeFormat(*bucket.CreationDate),
+			TimeCreated:  bucket.CreationDate,
 			ResourceType: aws.String(awsmodels.S3BucketSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
@@ -333,7 +333,7 @@ func buildS3BucketSnapshot(s3Svc s3iface.S3API, bucket *s3.Bucket) (*awsmodels.S
 }
 
 // PollS3Buckets gathers information on each S3 bucket for an AWS account.
-func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting S3 Bucket resource poller")
 	s3Svc, err := getS3Client(pollerInput, *pollerInput.Region)
 	if err != nil {
@@ -370,7 +370,7 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 		}
 	}
 
-	var resources []*apimodels.AddResourceEntry
+	var resources []apimodels.AddResourceEntry
 	for _, bucket := range buckets {
 		s3BucketSnapshot, err := buildS3BucketSnapshot(s3Svc, bucket)
 		if err != nil {
@@ -389,11 +389,11 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 		s3BucketSnapshot.ARN = aws.String(resourceID)
 		s3BucketSnapshot.Region = pollerInput.Region
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      s3BucketSnapshot,
-			ID:              apimodels.ResourceID(resourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              resourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.S3BucketSchema,
 		})
 	}

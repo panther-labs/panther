@@ -27,7 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -158,7 +158,7 @@ func getEKSFargateProfiles(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsm
 			Status:              profile.Status,
 			Subnets:             profile.Subnets,
 			// Normalised Name for CreatedAt
-			TimeCreated: utils.DateTimeFormat(aws.TimeValue(profile.CreatedAt)),
+			TimeCreated: profile.CreatedAt,
 		})
 	}
 
@@ -218,7 +218,7 @@ func getEKSNodegroups(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsmodels
 			Subnets:        curNodegroup.Subnets,
 			Version:        curNodegroup.Version,
 			// Normalized name for CreatedAt
-			TimeCreated: utils.DateTimeFormat(aws.TimeValue(curNodegroup.CreatedAt)),
+			TimeCreated: curNodegroup.CreatedAt,
 		})
 	}
 
@@ -246,7 +246,7 @@ func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string) (*awsm
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   details.Arn,
 			ResourceType: aws.String(awsmodels.EksClusterSchema),
-			TimeCreated:  utils.DateTimeFormat(aws.TimeValue(details.CreatedAt)),
+			TimeCreated:  details.CreatedAt,
 		},
 		CertificateAuthority: details.CertificateAuthority,
 		EncryptionConfig:     details.EncryptionConfig,
@@ -280,7 +280,7 @@ func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string) (*awsm
 }
 
 // PollEksCluster gathers information on each EKS Cluster for an AWS account.
-func PollEksClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollEksClusters(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	eksSvc, err := getEksClient(pollerInput, *pollerInput.Region)
 	if err != nil {
 		return nil, nil, err
@@ -293,7 +293,7 @@ func PollEksClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(clusters))
+	resources := make([]apimodels.AddResourceEntry, 0, len(clusters))
 	for _, clusterName := range clusters {
 		eksClusterSnapshot, err := buildEksClusterSnapshot(eksSvc, clusterName)
 		if err != nil {
@@ -302,11 +302,11 @@ func PollEksClusters(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.A
 		eksClusterSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		eksClusterSnapshot.Region = pollerInput.Region
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      eksClusterSnapshot,
-			ID:              apimodels.ResourceID(*eksClusterSnapshot.ResourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *eksClusterSnapshot.ResourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.EksClusterSchema,
 		})
 	}

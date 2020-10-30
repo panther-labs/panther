@@ -483,7 +483,6 @@ func deployAppsyncStack(outputs map[string]string) error {
 		"ApiId":                 outputs["GraphQLApiId"],
 		"CustomResourceVersion": customResourceVersion(),
 		"RemediationApi":        "https://" + outputs["RemediationApiEndpoint"],
-		"ResourcesApi":          "https://" + outputs["ResourcesApiEndpoint"],
 		"ServiceRole":           outputs["AppsyncServiceRoleArn"],
 	})
 	return err
@@ -501,7 +500,6 @@ func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string
 		"ProcessedDataTopicArn":      outputs["ProcessedDataTopicArn"],
 		"PythonLayerVersionArn":      outputs["PythonLayerVersionArn"],
 		"RemediationApiId":           outputs["RemediationApiId"],
-		"ResourcesApiId":             outputs["ResourcesApiId"],
 		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 	})
@@ -555,7 +553,6 @@ func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) 
 		"InputDataTopicArn":            outputs["InputDataTopicArn"],
 		"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
 		"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
-		"LogProcessorSQSDelaySeconds":  strconv.Itoa(settings.Infra.LogProcessorSQSDelaySeconds),
 		"ProcessedDataBucket":          outputs["ProcessedDataBucket"],
 		"ProcessedDataTopicArn":        outputs["ProcessedDataTopicArn"],
 		"PythonLayerVersionArn":        outputs["PythonLayerVersionArn"],

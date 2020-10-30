@@ -70,16 +70,12 @@ type sourceCache struct {
 
 // LoadS3 loads the source configuration for an S3 object.
 // This will update the cache if needed.
-// It will return error if it encountered an issue retrieving the source information or if the source is not found.
+// It will return error if it encountered an issue retrieving the source information
 func (c *sourceCache) LoadS3(bucketName, objectKey string) (*models.SourceIntegration, error) {
 	if err := c.Sync(time.Now()); err != nil {
 		return nil, err
 	}
-	src := c.FindS3(bucketName, objectKey)
-	if src != nil {
-		return src, nil
-	}
-	return nil, errors.Errorf("source for s3://%s/%s not found", bucketName, objectKey)
+	return c.FindS3(bucketName, objectKey), nil
 }
 
 // Loads the source configuration for an source id.
@@ -203,7 +199,7 @@ func getS3Client(bucketName, objectKey string) (s3iface.S3API, *models.SourceInt
 	}
 
 	if sourceInfo == nil {
-		return nil, nil, errors.Errorf("there is no source configured for S3 object %s/%s", bucketName, objectKey)
+		return nil, nil, nil
 	}
 	var awsCreds *credentials.Credentials // lazy create below
 	roleArn := getSourceLogProcessingRole(sourceInfo)

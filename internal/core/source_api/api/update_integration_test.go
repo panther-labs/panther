@@ -48,6 +48,7 @@ func TestUpdateIntegrationSettingsAwsScanType(t *testing.T) {
 	}}
 	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
 	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
+	mockClient.On("Scan", mock.Anything).Return(&dynamodb.ScanOutput{}, nil)
 	mockSQS.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
@@ -79,6 +80,7 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	}}
 	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
 	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
+	mockClient.On("Scan", mock.Anything).Return(&dynamodb.ScanOutput{}, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		S3Bucket: "test-bucket-1",
