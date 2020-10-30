@@ -20,22 +20,15 @@ import React from 'react';
 import { Text, Flex, Icon, AbstractButton, Box, Collapse, useSnackbar } from 'pouncejs';
 import { AlertDetails } from 'Pages/AlertDetails';
 import last from 'lodash/last';
-import { DeliveryResponseFull } from 'Source/graphql/fragments/DeliveryResponseFull.generated';
-import groupBy from 'lodash/groupBy';
-import orderBy from 'lodash/orderBy';
-import { ListDestinations } from 'Source/graphql/queries';
+import useAlertDestinationsDeliverySuccess from 'Hooks/useAlertDestinationsDeliverySuccess';
 import AlertDeliveryTable from './AlertDeliveryTable';
 import { useRetryAlertDelivery } from './graphql/retryAlertDelivery.generated';
 
 interface AlertDeliverySectionProps {
   alert: AlertDetails['alert'];
-  alertDestinations: ListDestinations['destinations'];
 }
 
-const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
-  alert,
-  alertDestinations,
-}) => {
+const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({ alert }) => {
   const [isHistoryVisible, setHistoryVisibility] = React.useState(false);
 
   const { pushSnackbar } = useSnackbar();
@@ -75,23 +68,12 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
     [retryAlertDelivery, alert]
   );
 
-  // FIXME: `alertDestinations` should be part of Alert & coming directly from GraphQL
-  //  Someday...
   const { deliveryResponses } = alert;
-  const enhancedAndSortedAlertDeliveries = React.useMemo(() => {
-    return deliveryResponses
-      .reduce((acc, dr) => {
-        const dest = alertDestinations.find(d => d.outputId === dr.outputId);
-        if (dest) {
-          acc.push({
-            ...dr,
-            ...dest,
-          });
-        }
-        return acc;
-      }, [])
-      .reverse();
-  }, [deliveryResponses, alertDestinations]);
+  const {
+    enhancedAndSortedAlertDeliveries,
+    allDestinationDeliveredSuccessfully,
+    loading: loadingDeliverySuccess,
+  } = useAlertDestinationsDeliverySuccess({ alert });
 
   if (!deliveryResponses.length || !enhancedAndSortedAlertDeliveries.length) {
     return (
@@ -102,31 +84,10 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
     );
   }
 
-  const allDestinationDeliveryStatuesSuccessful = React.useMemo(() => {
-    // Need to determine success for each destination (group by destination).
-    const deliveryStatusByDestination = groupBy(
-      enhancedAndSortedAlertDeliveries,
-      (d: DeliveryResponseFull) => d.outputId
-    );
-
-    // Next, we sort each status inside each group by dispatchedAt and determine if it was successful
-    // This is all or nothing. The most recent status for ALL destinations should be successful, otherwise
-    // notify the user of a failure.
-    return Object.values(deliveryStatusByDestination).every((dest: Array<DeliveryResponseFull>) => {
-      // We cant convert to date and compare because it would truncate
-      // dispatchedAt to milliseconds, but they're often dispatched within
-      // a few nano seconds. Therefore, we compare on strings.
-      const sorted = orderBy(dest, ['dispatchedAt'], ['desc']);
-      // Now that we've sorted the statues, the most recent status
-      // should indicate success or failure to the user.
-      return sorted[0].success;
-    });
-  }, [enhancedAndSortedAlertDeliveries]);
-
   return (
     <Box>
       <Flex justify="space-between">
-        {allDestinationDeliveryStatuesSuccessful ? (
+        {!loadingDeliverySuccess && allDestinationDeliveredSuccessfully ? (
           <Flex align="center" spacing={4}>
             <Icon type="check-circle" size="medium" color="green-400" />
             <Text fontWeight="medium">Alert was delivered successfully</Text>

@@ -208,7 +208,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
         </SimpleGrid>
       </Card>
       <Card variant="dark" as="section" p={4}>
-        <AlertDeliverySection alert={alert} alertDestinations={alertDestinations} />
+        <AlertDeliverySection alert={alert} />
       </Card>
     </Flex>
   );
