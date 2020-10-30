@@ -23,13 +23,12 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/go-openapi/strfmt"
 )
 
 // Example output from the AWS API
 var (
 	ExampleTimeParsed, _       = time.Parse(time.RFC3339, "2019-04-02T17:16:30+00:00")
-	ExampleTime                = strfmt.DateTime(ExampleTimeParsed)
+	ExampleTime                = ExampleTimeParsed
 	ExampleDate                = aws.Time(ExampleTimeParsed)
 	ExampleIntegrationID       = aws.String("8e39aa9d-9823-4872-a1bd-40fd8795634b")
 	ExampleAuthSource          = "arn:aws:iam::123456789012:role/PantherAuditRole"

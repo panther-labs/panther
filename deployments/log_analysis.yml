@@ -120,7 +120,7 @@ Conditions:
 
 Resources:
   ###### Update Glue Table Schemas for Deployed Tables #####
-  UpdateGlueTables:
+  UpdateLogProcessorGlueTables:
     DependsOn:
       - UpdaterFunction
     Type: Custom::UpdateLogProcessorTables

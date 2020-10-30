@@ -838,7 +838,7 @@ export const buildListResourcesInput = (
       'integrationId' in overrides
         ? overrides.integrationId
         : 'ccdadc7d-2460-418b-9e63-69d7110ffc5f',
-    types: 'types' in overrides ? overrides.types : 'black',
+    types: 'types' in overrides ? overrides.types : ['black'],
     sortBy: 'sortBy' in overrides ? overrides.sortBy : ListResourcesSortFieldsEnum.Type,
     sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Descending,
     pageSize: 'pageSize' in overrides ? overrides.pageSize : 228,

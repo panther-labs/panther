@@ -30,10 +30,9 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
-	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
 )
 
 // PollIAMGroup polls a single IAM Group resource
@@ -155,7 +154,7 @@ func buildIamGroupSnapshot(iamSvc iamiface.IAMAPI, group *iam.Group) (*awsmodels
 	iamGroupSnapshot := &awsmodels.IamGroup{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   group.Arn,
-			TimeCreated:  utils.DateTimeFormat(*group.CreateDate),
+			TimeCreated:  group.CreateDate,
 			ResourceType: aws.String(awsmodels.IAMGroupSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
@@ -199,7 +198,7 @@ func buildIamGroupSnapshot(iamSvc iamiface.IAMAPI, group *iam.Group) (*awsmodels
 }
 
 // PollIamGroups gathers information on each IAM Group for an AWS account.
-func PollIamGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollIamGroups(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting IAM Group resource poller")
 	iamSvc, err := getIAMClient(pollerInput, defaultRegion)
 	if err != nil {
@@ -212,7 +211,7 @@ func PollIamGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 		return nil, nil, err
 	}
 
-	var resources []*apimodels.AddResourceEntry
+	var resources []apimodels.AddResourceEntry
 	for _, group := range groups {
 		iamGroupSnapshot, err := buildIamGroupSnapshot(iamSvc, group)
 		if err != nil {
@@ -220,11 +219,11 @@ func PollIamGroups(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Add
 		}
 		iamGroupSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      iamGroupSnapshot,
-			ID:              apimodels.ResourceID(*iamGroupSnapshot.ARN),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *iamGroupSnapshot.ARN,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.IAMGroupSchema,
 		})
 	}

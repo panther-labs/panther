@@ -142,7 +142,7 @@ func TestEcsClusterPoller(t *testing.T) {
 	})
 
 	assert.NoError(t, err)
-	assert.Equal(t, *awstest.ExampleEcsClusterArn, string(resources[0].ID))
+	assert.Equal(t, *awstest.ExampleEcsClusterArn, resources[0].ID)
 	assert.NotEmpty(t, resources)
 	assert.Nil(t, marker)
 }

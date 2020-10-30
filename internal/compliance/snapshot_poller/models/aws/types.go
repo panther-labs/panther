@@ -19,10 +19,11 @@ package aws
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/go-openapi/strfmt"
+	"time"
 
-	resourcesapimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	"github.com/aws/aws-sdk-go/aws/arn"
+
+	resourcesapimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 )
 
 // Used to populate the GenericAWSResource.Region field for global AWS resources
@@ -32,9 +33,9 @@ const GlobalRegion = "global"
 // probably exist in a more global package but for now since this is the only poller it will exist
 // here.
 type GenericResource struct {
-	ResourceID   *string          `json:"ResourceId"`   // A panther wide unique identifier
-	ResourceType *string          `json:"ResourceType"` // A panther defined resource type
-	TimeCreated  *strfmt.DateTime `json:"TimeCreated"`  // A standardized format for when the resource was created
+	ResourceID   *string    `json:"ResourceId"`   // A panther wide unique identifier
+	ResourceType *string    `json:"ResourceType"` // A panther defined resource type
+	TimeCreated  *time.Time `json:"TimeCreated"`  // A standardized format for when the resource was created
 }
 
 // GenericAWSResource contains information that is standard across AWS resources
@@ -67,9 +68,9 @@ type ResourcePollerInput struct {
 	AuthSourceParsedARN arn.ARN
 	IntegrationID       *string
 	Region              *string
-	Timestamp           *strfmt.DateTime
+	Timestamp           *time.Time
 	NextPageToken       *string
 }
 
 // ResourcePoller represents a function to poll a specific AWS resource.
-type ResourcePoller func(input *ResourcePollerInput) ([]*resourcesapimodels.AddResourceEntry, *string, error)
+type ResourcePoller func(input *ResourcePollerInput) ([]resourcesapimodels.AddResourceEntry, *string, error)

@@ -185,7 +185,7 @@ func TestIamGroupPoller(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Len(t, resources, 1)
-	assert.Equal(t, *awstest.ExampleGroup.Arn, string(resources[0].ID))
+	assert.Equal(t, *awstest.ExampleGroup.Arn, resources[0].ID)
 	assert.Nil(t, marker)
 }
 

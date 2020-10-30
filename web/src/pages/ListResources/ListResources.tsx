@@ -20,12 +20,7 @@ import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
 import { ListResourcesInput, ListResourcesSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 import { TableControlsPagination } from 'Components/utils/TableControls';
-import {
-  convertObjArrayValuesToCsv,
-  encodeParams,
-  extendResourceWithIntegrationLabel,
-  extractErrorMessage,
-} from 'Helpers/utils';
+import { extendResourceWithIntegrationLabel, extractErrorMessage } from 'Helpers/utils';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash/isEmpty';
 import withSEO from 'Hoc/withSEO';
@@ -46,7 +41,7 @@ const ListResources = () => {
   const { loading, data, error } = useListResources({
     fetchPolicy: 'cache-and-network',
     variables: {
-      input: encodeParams(convertObjArrayValuesToCsv(requestParams), ['idContains']),
+      input: requestParams,
     },
   });
   if (loading && !data) {

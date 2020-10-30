@@ -48,31 +48,11 @@ func (m *mockRoundTripper) RoundTrip(request *http.Request) (*http.Response, err
 	return args.Get(0).(*http.Response), args.Error(1)
 }
 
-type mockCompliance struct {
-	gatewayapi.API
-	mock.Mock
-}
-
-func (m *mockCompliance) Invoke(input, output interface{}) (int, error) {
-	args := m.Called(input, output)
-
-	// The third "return value" of the mock is used to set the output
-	body, err := jsoniter.Marshal(args.Get(2))
-	if err != nil {
-		panic(err)
-	}
-	if err := jsoniter.Unmarshal(body, output); err != nil {
-		panic(err)
-	}
-
-	return args.Int(0), args.Error(1)
-}
-
 func TestHandleEventWithAlert(t *testing.T) {
 	mockDdbClient := &testutils.DynamoDBMock{}
 	ddbClient = mockDdbClient
 
-	mockComplianceClient := &mockCompliance{}
+	mockComplianceClient := &gatewayapi.MockClient{}
 	complianceClient = mockComplianceClient
 
 	mockRoundTripper := &mockRoundTripper{}
@@ -123,7 +103,7 @@ func TestHandleEventWithAlert(t *testing.T) {
 func TestHandleEventWithAlertButNoAutoRemediationID(t *testing.T) {
 	mockDdbClient := &testutils.DynamoDBMock{}
 	ddbClient = mockDdbClient
-	mockComplianceClient := &mockCompliance{}
+	mockComplianceClient := &gatewayapi.MockClient{}
 	complianceClient = mockComplianceClient
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient = &http.Client{Transport: mockRoundTripper}
@@ -171,7 +151,7 @@ func TestHandleEventWithAlertButNoAutoRemediationID(t *testing.T) {
 func TestHandleEventWithoutAlert(t *testing.T) {
 	mockDdbClient := &testutils.DynamoDBMock{}
 	ddbClient = mockDdbClient
-	mockComplianceClient := &mockCompliance{}
+	mockComplianceClient := &gatewayapi.MockClient{}
 	complianceClient = mockComplianceClient
 
 	input := &models.ComplianceNotification{
@@ -206,7 +186,7 @@ func TestHandleEventWithoutAlert(t *testing.T) {
 func TestSkipActionsIfResourceIsNotFailing(t *testing.T) {
 	mockDdbClient := &testutils.DynamoDBMock{}
 	ddbClient = mockDdbClient
-	mockComplianceClient := &mockCompliance{}
+	mockComplianceClient := &gatewayapi.MockClient{}
 	complianceClient = mockComplianceClient
 
 	input := &models.ComplianceNotification{
@@ -241,7 +221,7 @@ func TestSkipActionsIfResourceIsNotFailing(t *testing.T) {
 func TestSkipActionsIfLookupFailed(t *testing.T) {
 	mockDdbClient := &testutils.DynamoDBMock{}
 	ddbClient = mockDdbClient
-	mockComplianceClient := &mockCompliance{}
+	mockComplianceClient := &gatewayapi.MockClient{}
 	complianceClient = mockComplianceClient
 
 	input := &models.ComplianceNotification{

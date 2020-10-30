@@ -27,7 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -168,7 +168,7 @@ func buildRDSInstanceSnapshot(rdsSvc rdsiface.RDSAPI, instance *rds.DBInstance) 
 	instanceSnapshot := &awsmodels.RDSInstance{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   instance.DBInstanceArn,
-			TimeCreated:  utils.DateTimeFormat(*instance.InstanceCreateTime),
+			TimeCreated:  instance.InstanceCreateTime,
 			ResourceType: aws.String(awsmodels.RDSInstanceSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
@@ -254,7 +254,7 @@ func buildRDSInstanceSnapshot(rdsSvc rdsiface.RDSAPI, instance *rds.DBInstance) 
 }
 
 // PollRDSInstances gathers information on each RDS DB Instance for an AWS account.
-func PollRDSInstances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollRDSInstances(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting RDS Instance resource poller")
 
 	rdsSvc, err := getRDSClient(pollerInput, *pollerInput.Region)
@@ -268,7 +268,7 @@ func PollRDSInstances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(instances))
+	resources := make([]apimodels.AddResourceEntry, 0, len(instances))
 	for _, instance := range instances {
 		rdsInstanceSnapshot, err := buildRDSInstanceSnapshot(rdsSvc, instance)
 		if err != nil {
@@ -277,11 +277,11 @@ func PollRDSInstances(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.
 		rdsInstanceSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		rdsInstanceSnapshot.Region = pollerInput.Region
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      rdsInstanceSnapshot,
-			ID:              apimodels.ResourceID(*rdsInstanceSnapshot.ResourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *rdsInstanceSnapshot.ResourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.RDSInstanceSchema,
 		})
 	}
