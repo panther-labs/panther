@@ -1,47 +1,434 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`AlertCard should match snapshot 1`] = `
+@keyframes animation-0 {
+  0% {
+    -webkit-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -ms-transform: rotate(0);
+    transform: rotate(0);
+  }
+
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes animation-1 {
+  0% {
+    stroke-dashoffset: 600;
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.panther-36 {
+  background-color: #1d2a3f;
+  border-radius: 4px;
+  padding: 20px;
+}
+
+.panther-35 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  position: relative;
+  height: 100%;
+}
+
+.panther-34 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.panther-1 {
+  -webkit-transition: color 0.1s ease-out;
+  transition: color 0.1s ease-out;
+  font-weight: 500;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  color: #7fd3ff;
+  cursor: pointer;
+}
+
+.panther-1:hover {
+  color: #ace2ff;
+}
+
+.panther-1:focus {
+  color: #ace2ff;
+}
+
+.panther-1:active,
+.panther-1[data-active=true] {
+  color: #11a5f3;
+}
+
+.panther-0 {
+  font-weight: 500;
+}
+
+.panther-33 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-flex-wrap: wrap;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+}
+
+.panther-33>*:not(:last-child) {
+  margin-right: 32px;
+}
+
+.panther-5 {
+  margin-top: 16px;
+}
+
+.panther-4 {
+  font-size: 0.875rem;
+  opacity: 1;
+}
+
+
+
+.panther-3>span {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-2 {
+  width: auto;
+  outline: none;
+  padding-left: 20px;
+  padding-right: 20px;
+  height: 32px;
+  font-size: 0.813rem;
+  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-radius: 4px;
+  border: 1px solid;
+  border-color: #3e516b;
+  background-color: #3e516b;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.panther-2:hover {
+  background-color: #485b75;
+  border-color: #485b75;
+}
+
+.panther-2:focus {
+  background-color: #485b75;
+  border-color: #93a6c0;
+}
+
+.panther-2:active,
+.panther-2[data-active=true] {
+  background-color: #344761;
+  border-color: #344761;
+}
+
+.panther-6 {
+  color: #bdbdbd;
+  font-size: 0.563rem;
+  margin-bottom: 1px;
+  font-weight: 500;
+}
+
+.panther-9 {
+  height: 24px;
+}
+
+.panther-8 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-animation: animation-0 2s linear infinite;
+  animation: animation-0 2s linear infinite;
+  width: 18px;
+  height: 18px;
+}
+
+.panther-7 {
+  stroke-dashoffset: 600;
+  stroke-dasharray: 300;
+  stroke-width: 13;
+  stroke-miterlimit: 10;
+  stroke-linecap: round;
+  -webkit-animation: animation-1 1.6s cubic-bezier(0.4, 0.15, 0.6, 0.85) infinite;
+  animation: animation-1 1.6s cubic-bezier(0.4, 0.15, 0.6, 0.85) infinite;
+  stroke: currentColor;
+  fill: transparent;
+}
+
+.panther-16 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.panther-16>*:not(:last-child) {
+  margin-right: 24px;
+}
+
+.panther-15 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-15>*:not(:last-child) {
+  margin-right: 8px;
+}
+
+.panther-13 {
+  width: 12px;
+  height: 12px;
+  background-color: hsl(353, 43%, 63%);
+  border-radius: 99999px;
+}
+
+.panther-14 {
+  font-size: 0.75rem;
+}
+
+.panther-32 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: flex-end;
+  -webkit-box-align: flex-end;
+  -ms-flex-align: flex-end;
+  align-items: flex-end;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.panther-32>*:not(:last-child) {
+  margin-right: 8px;
+}
+
+.panther-25 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  cursor: default;
+  width: -webkit-fit-content;
+  width: -moz-content;
+  width: fit-content;
+  min-width: 85px;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 40px;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 16px;
+  padding-right: 16px;
+  border: 1px solid;
+  border-color: #ffa500;
+  background-color: transparent;
+}
+
+.panther-31 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-31>*:not(:last-child) {
+  margin-right: 4px;
+}
+
+.panther-27 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  width: 85px;
+}
+
+.panther-26 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  cursor: default;
+  width: -webkit-fit-content;
+  width: -moz-content;
+  width: fit-content;
+  min-width: 85px;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 40px;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 16px;
+  padding-right: 16px;
+  background-color: #6e3078;
+}
+
+.panther-30 {
+  display: -webkit-inline-box;
+  display: -webkit-inline-flex;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+}
+
+.panther-29 {
+  outline: none;
+  line-height: 1;
+  height: 24px;
+  width: 24px;
+  -webkit-transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-radius: 99999px;
+  border: 1px solid;
+  border-color: #3e516b;
+  background-color: transparent;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.panther-29:hover {
+  background-color: #465973;
+  border-color: #465973;
+}
+
+.panther-29:focus {
+  background-color: #465973;
+  border-color: #93a6c0;
+}
+
+.panther-29:active,
+.panther-29[data-active=true] {
+  background-color: #253852;
+  border-color: #253852;
+}
+
+.panther-28 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: currentColor;
+}
+
 <div>
   <header
     id="main-header"
   />
   <section
-    class="css-1f0bq0k"
+    class="panther-36"
   >
     <div
-      class="css-1ygcbpf"
+      class="panther-35"
     >
       <div
-        class="css-shs5m8"
+        class="panther-34"
       >
         <a
           aria-label="Link to Alert"
-          class="css-13sy0ai"
+          class="panther-1"
           href="/log-analysis/alerts/f67b8f04-5fac-404a-93a4-38db29f258ba/"
         >
           <h4
-            class="css-s55j3t"
+            class="panther-0"
           >
             indexing
           </h4>
         </a>
         <div
-          class="css-p6ovoi"
+          class="panther-33"
         >
           <dl
-            class="css-1wli741"
+            class="panther-5"
           >
             <dd
               aria-labelledby="undefinedobject-object"
-              class="css-ehqwas"
+              class="panther-4"
             >
               <a
-                class="css-ly3lze"
+                class="panther-3"
                 href="/log-analysis/rules/6eb9c948-5a13-4955-bd91-b98801b55bed/"
               >
                 <span
                   aria-label="Link to Rule"
-                  class="css-175i5p"
+                  class="panther-2"
                   type="button"
                 >
                   View Rule
@@ -50,28 +437,28 @@ exports[`AlertCard should match snapshot 1`] = `
             </dd>
           </dl>
           <dl
-            class="css-1wli741"
+            class="panther-5"
           >
             <dt
               aria-labelledby="destinationsobject-object"
-              class="css-15fs2ry"
+              class="panther-6"
             >
               Destinations
             </dt>
             <dd
               aria-labelledby="destinationsobject-object"
-              class="css-ehqwas"
+              class="panther-4"
             >
               <div
-                class="css-1t0imtl"
+                class="panther-9"
               >
                 <svg
                   aria-label="Loading..."
-                  class="css-1fkvngm"
+                  class="panther-8"
                   viewBox="0 0 150 150"
                 >
                   <circle
-                    class="css-1j56u6z"
+                    class="panther-7"
                     color="current"
                     cx="75"
                     cy="75"
@@ -82,29 +469,29 @@ exports[`AlertCard should match snapshot 1`] = `
             </dd>
           </dl>
           <dl
-            class="css-1wli741"
+            class="panther-5"
           >
             <dt
               aria-labelledby="log-typesobject-object"
-              class="css-15fs2ry"
+              class="panther-6"
             >
               Log Types
             </dt>
             <dd
               aria-labelledby="log-typesobject-object"
-              class="css-ehqwas"
+              class="panther-4"
             >
               <div
-                class="css-jfghd6"
+                class="panther-16"
               >
                 <div
-                  class="css-6yqme3"
+                  class="panther-15"
                 >
                   <span
-                    class="css-uhy5q3"
+                    class="panther-13"
                   />
                   <span
-                    class="css-1oztiic"
+                    class="panther-14"
                   >
                     Costa Rica
                   </span>
@@ -113,56 +500,56 @@ exports[`AlertCard should match snapshot 1`] = `
             </dd>
           </dl>
           <dl
-            class="css-1wli741"
+            class="panther-5"
           >
             <dt
               aria-labelledby="events670"
-              class="css-15fs2ry"
+              class="panther-6"
             >
               Events
             </dt>
             <dd
               aria-labelledby="events670"
-              class="css-ehqwas"
+              class="panther-4"
             >
               670
             </dd>
           </dl>
           <dl
-            class="css-1wli741"
+            class="panther-5"
           >
             <dt
               aria-labelledby="time-created2020-08-08-1215-gmt"
-              class="css-15fs2ry"
+              class="panther-6"
             >
               Time Created
             </dt>
             <dd
               aria-labelledby="time-created2020-08-08-1215-gmt"
-              class="css-ehqwas"
+              class="panther-4"
             >
               2020-08-08 12:15 GMT
             </dd>
           </dl>
           <div
-            class="css-16r6lkr"
+            class="panther-32"
           >
             <div
               aria-atomic="true"
-              class="css-1xnpqmn"
+              class="panther-25"
               role="status"
             >
               MEDIUM
             </div>
             <div
-              class="css-cbi22q"
+              class="panther-31"
             >
               <div
-                class="css-f274z1"
+                class="panther-27"
               >
                 <div
                   aria-atomic="true"
-                  class="css-1vb5dnc"
+                  class="panther-26"
                   role="status"
                 >
                   TRIAGED
@@ -171,7 +558,7 @@ exports[`AlertCard should match snapshot 1`] = `
               <div
                 aria-controls="menu--1"
                 aria-haspopup="true"
-                class="css-mvl7pn"
+                class="panther-30"
                 data-reach-menu-button=""
                 id="menu-button--menu--1"
                 type="button"
@@ -179,11 +566,11 @@ exports[`AlertCard should match snapshot 1`] = `
                 <button
                   aria-label="Change Alert Status"
                   aria-pressed="false"
-                  class="css-1l1qeqt"
+                  class="panther-29"
                   type="button"
                 >
                   <svg
-                    class="css-ngvb10"
+                    class="panther-28"
                     role="presentation"
                     viewBox="0 0 24 24"
                   >
@@ -196,607 +583,6 @@ exports[`AlertCard should match snapshot 1`] = `
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </section>
-  <footer
-    id="footer"
-  />
-</div>
-`;
-
-exports[`AlertCard should not display link to Rule 1`] = `
-<div>
-  <header
-    id="main-header"
-  />
-  <section
-    class="css-1f0bq0k"
-  >
-    <div
-      class="css-1ygcbpf"
-    >
-      <div
-        class="css-shs5m8"
-      >
-        <a
-          aria-label="Link to Alert"
-          class="css-13sy0ai"
-          href="/log-analysis/alerts/f67b8f04-5fac-404a-93a4-38db29f258ba/"
-        >
-          <h4
-            class="css-s55j3t"
-          >
-            indexing
-          </h4>
-        </a>
-        <div
-          class="css-p6ovoi"
-        >
-          <dl
-            class="css-1wli741"
-          >
-            <dt
-              aria-labelledby="destinationsobject-object"
-              class="css-15fs2ry"
-            >
-              Destinations
-            </dt>
-            <dd
-              aria-labelledby="destinationsobject-object"
-              class="css-ehqwas"
-            >
-              <div
-                class="css-1t0imtl"
-              >
-                <svg
-                  aria-label="Loading..."
-                  class="css-1fkvngm"
-                  viewBox="0 0 150 150"
-                >
-                  <circle
-                    class="css-1j56u6z"
-                    color="current"
-                    cx="75"
-                    cy="75"
-                    r="60"
-                  />
-                </svg>
-              </div>
-            </dd>
-          </dl>
-          <dl
-            class="css-1wli741"
-          >
-            <dt
-              aria-labelledby="log-typesobject-object"
-              class="css-15fs2ry"
-            >
-              Log Types
-            </dt>
-            <dd
-              aria-labelledby="log-typesobject-object"
-              class="css-ehqwas"
-            >
-              <div
-                class="css-jfghd6"
-              >
-                <div
-                  class="css-6yqme3"
-                >
-                  <span
-                    class="css-uhy5q3"
-                  />
-                  <span
-                    class="css-1oztiic"
-                  >
-                    Costa Rica
-                  </span>
-                </div>
-              </div>
-            </dd>
-          </dl>
-          <dl
-            class="css-1wli741"
-          >
-            <dt
-              aria-labelledby="events670"
-              class="css-15fs2ry"
-            >
-              Events
-            </dt>
-            <dd
-              aria-labelledby="events670"
-              class="css-ehqwas"
-            >
-              670
-            </dd>
-          </dl>
-          <dl
-            class="css-1wli741"
-          >
-            <dt
-              aria-labelledby="time-created2020-08-08-1215-gmt"
-              class="css-15fs2ry"
-            >
-              Time Created
-            </dt>
-            <dd
-              aria-labelledby="time-created2020-08-08-1215-gmt"
-              class="css-ehqwas"
-            >
-              2020-08-08 12:15 GMT
-            </dd>
-          </dl>
-          <div
-            class="css-16r6lkr"
-          >
-            <div
-              aria-atomic="true"
-              class="css-1xnpqmn"
-              role="status"
-            >
-              MEDIUM
-            </div>
-            <div
-              class="css-cbi22q"
-            >
-              <div
-                class="css-f274z1"
-              >
-                <div
-                  aria-atomic="true"
-                  class="css-1vb5dnc"
-                  role="status"
-                >
-                  TRIAGED
-                </div>
-              </div>
-              <div
-                aria-controls="menu--13"
-                aria-haspopup="true"
-                class="css-mvl7pn"
-                data-reach-menu-button=""
-                id="menu-button--menu--13"
-                type="button"
-              >
-                <button
-                  aria-label="Change Alert Status"
-                  aria-pressed="false"
-                  class="css-1l1qeqt"
-                  type="button"
-                >
-                  <svg
-                    class="css-ngvb10"
-                    role="presentation"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M7 10L12 15L17 10H7Z"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-  <footer
-    id="footer"
-  />
-</div>
-`;
-
-exports[`AlertCard should render alert destinations logos 1`] = `
-<div>
-  <header
-    id="main-header"
-  />
-  <section
-    class="css-1f0bq0k"
-  >
-    <div
-      class="css-1ygcbpf"
-    >
-      <div
-        class="css-shs5m8"
-      >
-        <a
-          aria-label="Link to Alert"
-          class="css-13sy0ai"
-          href="/log-analysis/alerts/f67b8f04-5fac-404a-93a4-38db29f258ba/"
-        >
-          <h4
-            class="css-s55j3t"
-          >
-            indexing
-          </h4>
-        </a>
-        <div
-          class="css-p6ovoi"
-        >
-          <dl
-            class="css-1wli741"
-          >
-            <dd
-              aria-labelledby="undefinedobject-object"
-              class="css-ehqwas"
-            >
-              <a
-                class="css-ly3lze"
-                href="/log-analysis/rules/6eb9c948-5a13-4955-bd91-b98801b55bed/"
-              >
-                <span
-                  aria-label="Link to Rule"
-                  class="css-175i5p"
-                  type="button"
-                >
-                  View Rule
-                </span>
-              </a>
-            </dd>
-          </dl>
-          <dl
-            class="css-1wli741"
-          >
-            <dt
-              aria-labelledby="destinationsobject-object"
-              class="css-15fs2ry"
-            >
-              Destinations
-            </dt>
-            <dd
-              aria-labelledby="destinationsobject-object"
-              class="css-ehqwas"
-            >
-              <div
-                class="css-udayh7"
-              >
-                <img
-                  alt="slack logo"
-                  class="css-aebbrg"
-                  height="24"
-                  src="test-file-stub"
-                  width="24"
-                />
-              </div>
-            </dd>
-          </dl>
-          <dl
-            class="css-1wli741"
-          >
-            <dt
-              aria-labelledby="log-typesobject-object"
-              class="css-15fs2ry"
-            >
-              Log Types
-            </dt>
-            <dd
-              aria-labelledby="log-typesobject-object"
-              class="css-ehqwas"
-            >
-              <div
-                class="css-jfghd6"
-              >
-                <div
-                  class="css-6yqme3"
-                >
-                  <span
-                    class="css-uhy5q3"
-                  />
-                  <span
-                    class="css-1oztiic"
-                  >
-                    Costa Rica
-                  </span>
-                </div>
-              </div>
-            </dd>
-          </dl>
-          <dl
-            class="css-1wli741"
-          >
-            <dt
-              aria-labelledby="events670"
-              class="css-15fs2ry"
-            >
-              Events
-            </dt>
-            <dd
-              aria-labelledby="events670"
-              class="css-ehqwas"
-            >
-              670
-            </dd>
-          </dl>
-          <dl
-            class="css-1wli741"
-          >
-            <dt
-              aria-labelledby="time-created2020-08-08-1215-gmt"
-              class="css-15fs2ry"
-            >
-              Time Created
-            </dt>
-            <dd
-              aria-labelledby="time-created2020-08-08-1215-gmt"
-              class="css-ehqwas"
-            >
-              2020-08-08 12:15 GMT
-            </dd>
-          </dl>
-          <div
-            class="css-16r6lkr"
-          >
-            <div
-              aria-atomic="true"
-              class="css-1xnpqmn"
-              role="status"
-            >
-              MEDIUM
-            </div>
-            <div
-              class="css-cbi22q"
-            >
-              <div
-                class="css-f274z1"
-              >
-                <div
-                  aria-atomic="true"
-                  class="css-1vb5dnc"
-                  role="status"
-                >
-                  TRIAGED
-                </div>
-              </div>
-              <div
-                aria-controls="menu--25"
-                aria-haspopup="true"
-                class="css-mvl7pn"
-                data-reach-menu-button=""
-                id="menu-button--menu--25"
-                type="button"
-              >
-                <button
-                  aria-label="Change Alert Status"
-                  aria-pressed="false"
-                  class="css-1l1qeqt"
-                  type="button"
-                >
-                  <svg
-                    class="css-ngvb10"
-                    role="presentation"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M7 10L12 15L17 10H7Z"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-  <footer
-    id="footer"
-  />
-</div>
-`;
-
-exports[`AlertCard should render message that destination delivery is failing 1`] = `
-<div>
-  <header
-    id="main-header"
-  />
-  <section
-    class="css-1f0bq0k"
-  >
-    <div
-      class="css-1ygcbpf"
-    >
-      <div
-        class="css-shs5m8"
-      >
-        <a
-          aria-label="Link to Alert"
-          class="css-13sy0ai"
-          href="/log-analysis/alerts/f67b8f04-5fac-404a-93a4-38db29f258ba/"
-        >
-          <h4
-            class="css-s55j3t"
-          >
-            indexing
-          </h4>
-        </a>
-        <div
-          class="css-p6ovoi"
-        >
-          <dl
-            class="css-1wli741"
-          >
-            <dd
-              aria-labelledby="undefinedobject-object"
-              class="css-ehqwas"
-            >
-              <a
-                class="css-ly3lze"
-                href="/log-analysis/rules/6eb9c948-5a13-4955-bd91-b98801b55bed/"
-              >
-                <span
-                  aria-label="Link to Rule"
-                  class="css-175i5p"
-                  type="button"
-                >
-                  View Rule
-                </span>
-              </a>
-            </dd>
-          </dl>
-          <dl
-            class="css-1wli741"
-          >
-            <dt
-              aria-labelledby="destinationsobject-object"
-              class="css-15fs2ry"
-            >
-              Destinations
-            </dt>
-            <dd
-              aria-labelledby="destinationsobject-object"
-              class="css-ehqwas"
-            >
-              <div
-                class="css-udayh7"
-              >
-                <img
-                  alt="slack logo"
-                  class="css-aebbrg"
-                  height="24"
-                  src="test-file-stub"
-                  width="24"
-                />
-              </div>
-            </dd>
-          </dl>
-          <dl
-            class="css-1wli741"
-          >
-            <dt
-              aria-labelledby="log-typesobject-object"
-              class="css-15fs2ry"
-            >
-              Log Types
-            </dt>
-            <dd
-              aria-labelledby="log-typesobject-object"
-              class="css-ehqwas"
-            >
-              <div
-                class="css-jfghd6"
-              >
-                <div
-                  class="css-6yqme3"
-                >
-                  <span
-                    class="css-uhy5q3"
-                  />
-                  <span
-                    class="css-1oztiic"
-                  >
-                    Costa Rica
-                  </span>
-                </div>
-              </div>
-            </dd>
-          </dl>
-          <dl
-            class="css-1wli741"
-          >
-            <dt
-              aria-labelledby="events670"
-              class="css-15fs2ry"
-            >
-              Events
-            </dt>
-            <dd
-              aria-labelledby="events670"
-              class="css-ehqwas"
-            >
-              670
-            </dd>
-          </dl>
-          <dl
-            class="css-1wli741"
-          >
-            <dt
-              aria-labelledby="time-created2020-08-08-1215-gmt"
-              class="css-15fs2ry"
-            >
-              Time Created
-            </dt>
-            <dd
-              aria-labelledby="time-created2020-08-08-1215-gmt"
-              class="css-ehqwas"
-            >
-              2020-08-08 12:15 GMT
-            </dd>
-          </dl>
-          <div
-            class="css-16r6lkr"
-          >
-            <div
-              aria-atomic="true"
-              class="css-1xnpqmn"
-              role="status"
-            >
-              MEDIUM
-            </div>
-            <div
-              class="css-cbi22q"
-            >
-              <div
-                class="css-f274z1"
-              >
-                <div
-                  aria-atomic="true"
-                  class="css-1vb5dnc"
-                  role="status"
-                >
-                  TRIAGED
-                </div>
-              </div>
-              <div
-                aria-controls="menu--30"
-                aria-haspopup="true"
-                class="css-mvl7pn"
-                data-reach-menu-button=""
-                id="menu-button--menu--30"
-                type="button"
-              >
-                <button
-                  aria-label="Change Alert Status"
-                  aria-pressed="false"
-                  class="css-1l1qeqt"
-                  type="button"
-                >
-                  <svg
-                    class="css-ngvb10"
-                    role="presentation"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M7 10L12 15L17 10H7Z"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <section
-          aria-label="Destination delivery failure"
-          class="css-1xkbneh"
-        >
-          <svg
-            class="css-13rgkj"
-            role="presentation"
-            viewBox="0 0 24 24"
-          >
-            <path
-              d="M12,2 C17.5228475,2 22,6.4771525 22,12 C22,17.5228475 17.5228475,22 12,22 C6.4771525,22 2,17.5228475 2,12 C2,6.4771525 6.4771525,2 12,2 Z M13,15.5 L11,15.5 L11,17.5 L13,17.5 L13,15.5 Z M13,7 L11,7 L11,14 L13,14 L13,7 Z"
-            />
-          </svg>
-          <p
-            class="css-uwklb0"
-          >
-            There was an issue with the delivery of this alert to a selected destination. See specific Alert for details.
-          </p>
-        </section>
       </div>
     </div>
   </section>

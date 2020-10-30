@@ -30,9 +30,6 @@ import { mockListDestinations } from 'Source/graphql/queries';
 import AlertCard from './index';
 
 describe('AlertCard', () => {
-  beforeEach(() => {
-    document.getElementsByTagName('html')[0].innerHTML = '';
-  });
   it('should match snapshot', async () => {
     const alertData = buildAlertSummary();
 
@@ -59,11 +56,10 @@ describe('AlertCard', () => {
   it('should not display link to Rule', async () => {
     const alertData = buildAlertSummary();
 
-    const { queryByText, container } = render(<AlertCard alert={alertData} hideRuleButton />);
+    const { queryByText } = render(<AlertCard alert={alertData} hideRuleButton />);
 
     expect(queryByText(alertData.title)).toBeInTheDocument();
     expect(queryByText('View Rule')).not.toBeInTheDocument();
-    expect(container).toMatchSnapshot();
   });
 
   it('should check links are valid', async () => {
@@ -84,14 +80,13 @@ describe('AlertCard', () => {
     const destination = buildDestination({ outputId, outputType: DestinationTypeEnum.Slack });
     const mocks = [mockListDestinations({ data: { destinations: [destination] } })];
 
-    const { getByAriaLabel, getByAltText, container } = render(<AlertCard alert={alertData} />, {
+    const { getByAriaLabel, getByAltText } = render(<AlertCard alert={alertData} />, {
       mocks,
     });
     const loadingInterfaceElement = getByAriaLabel('Loading...');
     expect(loadingInterfaceElement).toBeInTheDocument();
     await waitForElementToBeRemoved(loadingInterfaceElement);
     expect(getByAltText(`${destination.outputType} logo`)).toBeInTheDocument();
-    expect(container).toMatchSnapshot();
   });
 
   it('should render message that destination delivery is failing', async () => {
@@ -102,7 +97,7 @@ describe('AlertCard', () => {
     const destination = buildDestination({ outputId, outputType: DestinationTypeEnum.Slack });
     const mocks = [mockListDestinations({ data: { destinations: [destination] } })];
 
-    const { getByAriaLabel, getByAltText, container } = render(<AlertCard alert={alertData} />, {
+    const { getByAriaLabel, getByAltText } = render(<AlertCard alert={alertData} />, {
       mocks,
     });
     const loadingInterfaceElement = getByAriaLabel('Loading...');
@@ -110,6 +105,5 @@ describe('AlertCard', () => {
     await waitForElementToBeRemoved(loadingInterfaceElement);
     expect(getByAltText(`${destination.outputType} logo`)).toBeInTheDocument();
     expect(getByAriaLabel('Destination delivery failure')).toBeInTheDocument();
-    expect(container).toMatchSnapshot();
   });
 });
