@@ -16,8 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-<<<<<<< HEAD:web/src/components/AuthPageContainer/index.tsx
-export { default } from './AuthPageContainer';
-=======
 export { default } from './PolicyFormTestResult';
->>>>>>> Feat: Title & Dedup Rule testing (FE) (#1805):web/src/components/forms/PolicyForm/PolicyFormTestResult/index.tsx

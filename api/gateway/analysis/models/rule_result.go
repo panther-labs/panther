@@ -33,29 +33,38 @@ import (
 // swagger:model ruleResult
 type RuleResult struct {
 
+	// alert context error
+	AlertContextError string `json:"alertContextError,omitempty"`
+
+	// alert context output
+	AlertContextOutput string `json:"alertContextOutput,omitempty"`
+
 	// dedup error
 	DedupError string `json:"dedupError,omitempty"`
 
 	// dedup output
 	DedupOutput string `json:"dedupOutput,omitempty"`
 
-	// errored
+	// True if the result includes an error.
 	Errored bool `json:"errored,omitempty"`
 
-	// generic error
+	// An error produced before running any of the rule functions, like import or syntax error.
 	GenericError string `json:"genericError,omitempty"`
 
 	// id
 	ID string `json:"id,omitempty"`
 
-	// matched
-	Matched bool `json:"matched,omitempty"`
+	// True if the test returned the expected result. Always false if the result includes an error.
+	Passed bool `json:"passed,omitempty"`
 
 	// rule error
 	RuleError string `json:"ruleError,omitempty"`
 
 	// rule Id
 	RuleID string `json:"ruleId,omitempty"`
+
+	// rule output
+	RuleOutput bool `json:"ruleOutput,omitempty"`
 
 	// test name
 	TestName string `json:"testName,omitempty"`

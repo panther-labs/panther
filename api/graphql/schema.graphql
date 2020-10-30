@@ -970,6 +970,7 @@ type TestRuleRecordFunctions {
   ruleFunction: TestRuleSubRecord!
   titleFunction: TestRuleSubRecord
   dedupFunction: TestRuleSubRecord
+  alertContextFunction: TestRuleSubRecord
 }
 
 type TestRuleRecord implements TestRecord {

@@ -42,6 +42,7 @@ TRUNCATED_STRING_SUFFIX = '... (truncated)'
 DEFAULT_RULE_DEDUP_PERIOD_MINS = 60
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class RuleResult:
     """Class containing the result of running a rule"""
@@ -61,12 +62,7 @@ class RuleResult:
     @property
     def errored(self) -> bool:
         """Returns whether any of the rule functions raised an error"""
-        return bool(
-            self.rule_exception
-            or self.title_exception
-            or self.dedup_exception
-            or self.alert_context_exception
-        )
+        return bool(self.rule_exception or self.title_exception or self.dedup_exception or self.alert_context_exception)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -170,7 +166,7 @@ class Rule:
             rule_result.dedup_exception = err
 
         try:
-            alert_context = self._get_alert_context(event, use_default_on_exception=batch_mode)
+            rule_result.alert_context = self._get_alert_context(event, use_default_on_exception=batch_mode)
         except Exception as err:  # pylint: disable=broad-except
             rule_result.alert_context_exception = err
 

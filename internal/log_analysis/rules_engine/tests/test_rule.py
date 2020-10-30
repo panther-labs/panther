@@ -161,7 +161,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         expected_rule = RuleResult(matched=True, dedup_output='defaultDedupString:test_dedup_throws_exception')
         self.assertEqual(expected_rule, rule.run({}))
 
-    def test_dedup_exception_batch_mode(self):
+    def test_dedup_exception_batch_mode(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\traise Exception("test")'
         rule = Rule({'id': 'test_dedup_throws_exception', 'body': rule_body, 'versionId': 'versionId'})
 
@@ -219,7 +219,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
 
         expected_result = RuleResult(
             matched=True,
-            dedup_string='defaultDedupString:test_alert_context',
+            dedup_output='defaultDedupString:test_alert_context',
             alert_context='{"string": "string", "int": 1, "nested": {}}'
         )
         self.assertEqual(expected_result, rule.run({}))
@@ -235,7 +235,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
             }
         )
         expected_result = RuleResult(
-            matched=True, dedup_string='defaultDedupString:test_alert_context_invalid_return_value', alert_context=expected_alert_context
+            matched=True, dedup_output='defaultDedupString:test_alert_context_invalid_return_value', alert_context=expected_alert_context
         )
         self.assertEqual(expected_result, rule.run({}))
 
@@ -252,6 +252,6 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
             {'_error': 'alert_context size is [5588890] characters, bigger than maximum of [204800] characters'}
         )
         expected_result = RuleResult(
-            matched=True, dedup_string='defaultDedupString:test_alert_context_too_big', alert_context=expected_alert_context
+            matched=True, dedup_output='defaultDedupString:test_alert_context_too_big', alert_context=expected_alert_context
         )
         self.assertEqual(expected_result, rule.run({}))

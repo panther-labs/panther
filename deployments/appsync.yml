@@ -1942,7 +1942,7 @@ Resources:
             #set ($payloadItem = {})
             $util.qr($payloadItem.put("id", $resultItem.id))
             $util.qr($payloadItem.put("name", $resultItem.testName))
-            $util.qr($payloadItem.put("passed", $util.defaultIfNull($resultItem.matched, false)))
+            $util.qr($payloadItem.put("passed", $util.defaultIfNull($resultItem.passed, false)))
             $util.qr($payloadItem.put("functions", {}))
 
             $util.qr($payloadItem.functions.put("ruleFunction", { "output": $ctx.args.input.tests[$foreach.index].expectedResult }))
