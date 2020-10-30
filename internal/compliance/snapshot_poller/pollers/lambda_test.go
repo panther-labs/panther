@@ -213,7 +213,7 @@ func TestHandler(t *testing.T) {
 						GenericResource: awsmodels.GenericResource{
 							ResourceID:   aws.String("arn:aws:kms:us-west-2:111111111111:key/188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
 							ResourceType: aws.String(awsmodels.KmsKeySchema),
-							TimeCreated:  &awstest.ExampleTimeParsed,
+							TimeCreated:  &awstest.ExampleTime,
 						},
 						Description:        aws.String("Encryption key for panther-snapshot-queue data"),
 						Enabled:            aws.Bool(true),
@@ -240,7 +240,7 @@ func TestHandler(t *testing.T) {
 						GenericResource: awsmodels.GenericResource{
 							ResourceID:   aws.String("arn:aws:kms:us-west-2:111111111111:key/d15a1e37-3ef7-4882-9be5-ef3a024114db"),
 							ResourceType: aws.String(awsmodels.KmsKeySchema),
-							TimeCreated:  &awstest.ExampleTimeParsed,
+							TimeCreated:  &awstest.ExampleTime,
 						},
 						Description:        aws.String("Encryption key for panther-snapshot-queue data"),
 						Enabled:            aws.Bool(true),

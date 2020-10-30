@@ -64,6 +64,8 @@ const (
 
 var (
 	snapshotPollerSession *session.Session
+
+	// These are exported so the top-level unit tests can mock them out.
 	// AssumeRoleFunc is the function to return valid AWS credentials.
 	AssumeRoleFunc         = assumeRole
 	VerifyAssumedCredsFunc = verifyAssumedCreds
