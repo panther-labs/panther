@@ -29,12 +29,12 @@ import useUrlParams from 'Hooks/useUrlParams';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { AlertTypesEnum } from 'Generated/schema';
 import RuleDetailsPageSkeleton from './Skeleton';
-import ListRuleAlerts from './ListAlerts';
+import ListRuleAlerts from './RuleAlertsListing';
 import CardDetails from './RuleCardDetails';
 import RuleDetailsInfo from './RuleDetailsInfo';
 import { useRuleDetails } from './graphql/ruleDetails.generated';
 
-interface RuleDetailsPageUrlParams {
+export interface RuleDetailsPageUrlParams {
   section?: 'details' | 'matches' | 'errors';
 }
 

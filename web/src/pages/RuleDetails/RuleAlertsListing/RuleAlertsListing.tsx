@@ -30,17 +30,17 @@ import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import ListAlertFilters from 'Pages/ListAlerts/ListAlertFilters';
 import { useListAlertsForRule } from '../graphql/listAlertsForRule.generated';
 import Skeleton from './Skeleton';
+import { RuleDetailsPageUrlParams } from '../RuleDetails';
 
 const RuleAlertsListing: React.FC<Required<Pick<ListAlertsInput, 'type' | 'ruleId'>>> = ({
   ruleId,
   type,
 }) => {
   const { requestParams } = useRequestParamsWithoutPagination<
-    Omit<ListAlertsInput, 'ruleId' | 'type'>
+    Omit<ListAlertsInput, 'ruleId' | 'type'> & RuleDetailsPageUrlParams
   >();
 
   // Omit the actual tab section as it exists on the url params
-  // @ts-ignore
   const { section, ...params } = requestParams;
 
   const { error, data, loading, fetchMore, variables } = useListAlertsForRule({
