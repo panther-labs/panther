@@ -19,8 +19,9 @@ package aws
  */
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/service/guardduty"
-	"github.com/go-openapi/strfmt"
 )
 
 const (
@@ -38,7 +39,7 @@ type GuardDutyDetector struct {
 	FindingPublishingFrequency *string
 	ServiceRole                *string
 	Status                     *string
-	UpdatedAt                  *strfmt.DateTime
+	UpdatedAt                  *time.Time
 
 	// Additional fields
 	Master *guardduty.Master

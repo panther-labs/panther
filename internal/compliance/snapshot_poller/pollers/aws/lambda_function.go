@@ -28,7 +28,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 )
@@ -207,7 +207,7 @@ func buildLambdaFunctionSnapshot(
 }
 
 // PollLambdaFunctions gathers information on each Lambda Function for an AWS account.
-func PollLambdaFunctions(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollLambdaFunctions(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting Lambda Function resource poller")
 
 	lambdaSvc, err := getLambdaClient(pollerInput, *pollerInput.Region)
@@ -221,7 +221,7 @@ func PollLambdaFunctions(pollerInput *awsmodels.ResourcePollerInput) ([]*apimode
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(functions))
+	resources := make([]apimodels.AddResourceEntry, 0, len(functions))
 	for _, functionConfiguration := range functions {
 		lambdaFunctionSnapshot, err := buildLambdaFunctionSnapshot(lambdaSvc, functionConfiguration)
 		if err != nil {
@@ -230,11 +230,11 @@ func PollLambdaFunctions(pollerInput *awsmodels.ResourcePollerInput) ([]*apimode
 		lambdaFunctionSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		lambdaFunctionSnapshot.Region = pollerInput.Region
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      lambdaFunctionSnapshot,
-			ID:              apimodels.ResourceID(*lambdaFunctionSnapshot.ResourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *lambdaFunctionSnapshot.ResourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.LambdaFunctionSchema,
 		})
 	}

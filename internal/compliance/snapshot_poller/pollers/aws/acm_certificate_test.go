@@ -142,7 +142,7 @@ func TestAcmCertificatePoller(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Nil(t, marker)
-	assert.Equal(t, *awstest.ExampleCertificateArn, string(resources[0].ID))
+	assert.Equal(t, *awstest.ExampleCertificateArn, resources[0].ID)
 	assert.NotEmpty(t, resources)
 }
 

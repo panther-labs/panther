@@ -45,6 +45,7 @@ const (
 
 var (
 	// Session and clients that can be used by components of the log processor
+	// FIXME: these should be removed as globals
 	Session      *session.Session
 	LambdaClient lambdaiface.LambdaAPI
 	S3Uploader   s3manageriface.UploaderAPI
@@ -52,15 +53,12 @@ var (
 	SnsClient    snsiface.SNSAPI
 
 	Config EnvConfig
-
-	SQSWaitTime int64 // set by env
 )
 
 type EnvConfig struct {
 	AwsLambdaFunctionMemorySize int    `required:"true" split_words:"true"`
 	ProcessedDataBucket         string `required:"true" split_words:"true"`
 	SqsQueueURL                 string `required:"true" split_words:"true"`
-	SqsDelaySec                 int64  `required:"true" split_words:"true"`
 	SnsTopicARN                 string `required:"true" split_words:"true"`
 }
 
@@ -76,16 +74,6 @@ func Setup() {
 	err := envconfig.Process("", &Config)
 	if err != nil {
 		panic(err)
-	}
-
-	// we will use the queue delay as the sqs WaitTime
-	// NOTE: we want it at least 1 and at most 20
-	if Config.SqsDelaySec < 1 {
-		SQSWaitTime = 1
-	} else if Config.SqsDelaySec > 20 {
-		SQSWaitTime = 20 //  note: 20 is max for sqs
-	} else {
-		SQSWaitTime = Config.SqsDelaySec
 	}
 }
 

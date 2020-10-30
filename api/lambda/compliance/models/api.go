@@ -44,7 +44,7 @@ const (
 	StatusError ComplianceStatus = "ERROR"
 )
 
-// LambdaInput is the request structure for the organization-api Lambda function.
+// LambdaInput is the request structure for the compliance-api Lambda function.
 type LambdaInput struct {
 	DescribeOrg      *DescribeOrgInput      `json:"describeOrg"`
 	DescribePolicy   *DescribePolicyInput   `json:"describePolicy"`
@@ -345,7 +345,7 @@ type GetStatusInput struct {
 // The policy-api deletes statuses when a policy is disabled or deleted or no longer applies to a resource type, and
 // the resources-api deletes statuses when a resource is deleted.
 type DeleteStatusInput struct {
-	Entries []DeleteStatusEntry `json:"entries" validate:"min=1"`
+	Entries []DeleteStatusEntry `json:"entries" validate:"min=1,dive"`
 }
 
 type DeleteStatusEntry struct {
@@ -369,7 +369,7 @@ type DeleteResource struct {
 //
 // The resource-processor analyzes each modified resource and posts the results here.
 type SetStatusInput struct {
-	Entries []SetStatusEntry `json:"entries" validate:"min=1"`
+	Entries []SetStatusEntry `json:"entries" validate:"min=1,dive"`
 }
 
 type SetStatusEntry struct {

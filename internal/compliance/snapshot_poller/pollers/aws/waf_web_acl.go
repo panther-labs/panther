@@ -32,7 +32,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -238,7 +238,7 @@ func buildWafWebACLSnapshot(wafSvc wafiface.WAFAPI, webACLID *string) (*awsmodel
 	return webACLSnapshot, nil
 }
 
-func PollWafRegionalWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollWafRegionalWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting regional WAF Web Acl resource poller")
 
 	wafRegionalSvc, err := getWafRegionalClient(pollerInput, *pollerInput.Region)
@@ -252,7 +252,7 @@ func PollWafRegionalWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apim
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
-	var resources []*apimodels.AddResourceEntry
+	var resources []apimodels.AddResourceEntry
 	for _, regionalWebACL := range regionalWebACLsSummaries {
 		regionalWebACLSnapshot, err := buildWafWebACLSnapshot(wafRegionalSvc, regionalWebACL.WebACLId)
 		if err != nil {
@@ -265,11 +265,11 @@ func PollWafRegionalWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apim
 		regionalWebACLSnapshot.Region = pollerInput.Region
 		regionalWebACLSnapshot.ResourceType = aws.String(awsmodels.WafRegionalWebAclSchema)
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      regionalWebACLSnapshot,
-			ID:              apimodels.ResourceID(*regionalWebACLSnapshot.ARN),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *regionalWebACLSnapshot.ARN,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.WafRegionalWebAclSchema,
 		})
 	}
@@ -278,7 +278,7 @@ func PollWafRegionalWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apim
 }
 
 // PollWafWebAcls gathers information on each Web ACL for an AWS account.
-func PollWafWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollWafWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting global WAF Web Acl resource poller")
 
 	wafSvc, err := getWafClient(pollerInput, defaultRegion)
@@ -291,7 +291,7 @@ func PollWafWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Ad
 	if err != nil {
 		return nil, nil, errors.WithMessagef(err, "region: global")
 	}
-	var resources []*apimodels.AddResourceEntry
+	var resources []apimodels.AddResourceEntry
 	for _, webACL := range globalWebAclsSummaries {
 		webACLSnapshot, err := buildWafWebACLSnapshot(wafSvc, webACL.WebACLId)
 		if err != nil {
@@ -304,11 +304,11 @@ func PollWafWebAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.Ad
 		webACLSnapshot.Region = aws.String(awsmodels.GlobalRegion)
 		webACLSnapshot.ResourceType = aws.String(awsmodels.WafWebAclSchema)
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      webACLSnapshot,
-			ID:              apimodels.ResourceID(*webACLSnapshot.ARN),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *webACLSnapshot.ARN,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.WafWebAclSchema,
 		})
 	}
