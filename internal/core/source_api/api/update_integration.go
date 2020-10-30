@@ -106,6 +106,7 @@ func (api API) validateUniqueConstraints(existingIntegrationItem *ddb.Integratio
 	for _, existingIntegration := range existingIntegrations {
 		if existingIntegration.IntegrationType == existingIntegrationItem.IntegrationType &&
 			existingIntegration.IntegrationID != existingIntegrationItem.IntegrationID {
+
 			switch existingIntegration.IntegrationType {
 			case models.IntegrationTypeAWS3:
 				if existingIntegration.AWSAccountID == existingIntegrationItem.AWSAccountID &&
