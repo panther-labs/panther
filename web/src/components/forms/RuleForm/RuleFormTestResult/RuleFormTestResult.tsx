@@ -27,7 +27,7 @@ interface RuleFormTestResultProps {
 
 const RuleFormTestResult: React.FC<RuleFormTestResultProps> = ({ testResult }) => {
   const {
-    functions: { ruleFunction, dedupFunction, titleFunction },
+    functions: { ruleFunction, dedupFunction, titleFunction, alertContextFunction },
     passed,
     name,
     error: unknownError,
@@ -95,6 +95,20 @@ const RuleFormTestResult: React.FC<RuleFormTestResultProps> = ({ testResult }) =
                 ) : (
                   <Text as="dd" color="red-200">
                     {dedupFunction.error.message}
+                  </Text>
+                )}
+              </React.Fragment>
+            )}
+            {alertContextFunction && (
+              <React.Fragment>
+                <Box as="dt" color="navyblue-100">
+                  Alert Context
+                </Box>
+                {!alertContextFunction.error ? (
+                  <Text as="dd">{alertContextFunction.output}</Text>
+                ) : (
+                  <Text as="dd" color="red-200">
+                    {alertContextFunction.error.message}
                   </Text>
                 )}
               </React.Fragment>

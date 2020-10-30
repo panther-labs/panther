@@ -982,7 +982,6 @@ type TestRuleRecord implements TestRecord {
 }
 
 type TestRuleResponse {
-  testSummary: Boolean # True if all tests passed
   results: [TestRuleRecord!]!
 }
 

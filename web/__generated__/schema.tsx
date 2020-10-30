@@ -1273,7 +1273,6 @@ export type TestRuleRecordFunctions = {
 
 export type TestRuleResponse = {
   __typename?: 'TestRuleResponse';
-  testSummary?: Maybe<Scalars['Boolean']>;
   results: Array<TestRuleRecord>;
 };
 
@@ -2995,7 +2994,6 @@ export type TestRuleResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['TestRuleResponse'] = ResolversParentTypes['TestRuleResponse']
 > = {
-  testSummary?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   results?: Resolver<Array<ResolversTypes['TestRuleRecord']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };

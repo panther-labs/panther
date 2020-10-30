@@ -1510,7 +1510,6 @@ export const buildTestRuleResponse = (
 ): TestRuleResponse => {
   return {
     __typename: 'TestRuleResponse',
-    testSummary: 'testSummary' in overrides ? overrides.testSummary : true,
     results: 'results' in overrides ? overrides.results : [buildTestRuleRecord()],
   };
 };

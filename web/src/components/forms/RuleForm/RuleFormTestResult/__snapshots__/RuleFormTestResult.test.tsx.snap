@@ -1,13 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`RuleFormTestResult matches the snapshot 1`] = `
-.panther-13 {
+.panther-15 {
   background-color: #23344e;
   border-radius: 4px;
   padding: 16px;
 }
 
-.panther-12 {
+.panther-14 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -18,7 +18,7 @@ exports[`RuleFormTestResult matches the snapshot 1`] = `
   align-items: flex-start;
 }
 
-.panther-12>*:not(:last-child) {
+.panther-14>*:not(:last-child) {
   margin-right: 16px;
 }
 
@@ -58,7 +58,7 @@ exports[`RuleFormTestResult matches the snapshot 1`] = `
   font-size: 1.125rem;
 }
 
-.panther-10 {
+.panther-12 {
   display: grid;
   grid-row-gap: 8px;
   grid-column-gap: 16px;
@@ -78,11 +78,14 @@ exports[`RuleFormTestResult matches the snapshot 1`] = `
 }
 
 <div>
+  <header
+    id="main-header"
+  />
   <article
-    class="panther-13"
+    class="panther-15"
   >
     <div
-      class="panther-12"
+      class="panther-14"
     >
       <div
         aria-atomic="true"
@@ -92,7 +95,7 @@ exports[`RuleFormTestResult matches the snapshot 1`] = `
         PASS
       </div>
       <div
-        class="panther-11"
+        class="panther-13"
         spacing="2"
       >
         <h2
@@ -101,7 +104,7 @@ exports[`RuleFormTestResult matches the snapshot 1`] = `
           Pants
         </h2>
         <dl
-          class="panther-10"
+          class="panther-12"
         >
           <dt
             class="panther-2"
@@ -143,9 +146,22 @@ exports[`RuleFormTestResult matches the snapshot 1`] = `
           >
             deposit
           </dd>
+          <dt
+            class="panther-2"
+          >
+            Alert Context
+          </dt>
+          <dd
+            class="panther-3"
+          >
+            deposit
+          </dd>
         </dl>
       </div>
     </div>
   </article>
+  <footer
+    id="footer"
+  />
 </div>
 `;

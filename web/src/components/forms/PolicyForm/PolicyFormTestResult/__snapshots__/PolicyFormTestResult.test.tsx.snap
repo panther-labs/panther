@@ -67,6 +67,9 @@ exports[`PolicyFormTestResult matches the snapshot 1`] = `
 }
 
 <div>
+  <header
+    id="main-header"
+  />
   <article
     class="panther-6"
   >
@@ -102,5 +105,8 @@ exports[`PolicyFormTestResult matches the snapshot 1`] = `
       </div>
     </div>
   </article>
+  <footer
+    id="footer"
+  />
 </div>
 `;
