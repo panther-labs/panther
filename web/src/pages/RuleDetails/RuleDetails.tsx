@@ -102,10 +102,10 @@ const RuleDetailsPage: React.FC = () => {
                 <TabPanel data-testid="rule-details-tabpanel">
                   <CardDetails rule={data.rule} />
                 </TabPanel>
-                <TabPanel data-testid="rule-matches-tabpanel">
+                <TabPanel data-testid="rule-matches-tabpanel" lazy unmountWhenInactive>
                   <ListRuleAlerts ruleId={match.params.id} type={AlertTypesEnum.Rule} />
                 </TabPanel>
-                <TabPanel data-testid="rule-errors-tabpanel">
+                <TabPanel data-testid="rule-errors-tabpanel" lazy unmountWhenInactive>
                   <ListRuleAlerts ruleId={match.params.id} type={AlertTypesEnum.RuleError} />
                 </TabPanel>
               </TabPanels>
