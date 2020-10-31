@@ -280,6 +280,7 @@ func TestScaleup(t *testing.T) {
 	}()
 
 	var wg sync.WaitGroup
+	// we want to wait for 2 executions of the scale up go routine
 	wg.Add(2)
 	// this is what we return showing a queue size big enough to scale
 	spikeCount := processingMaxFilesLimit * 2
