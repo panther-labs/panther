@@ -34,7 +34,7 @@ const BulletedLogType: React.FC<BulletedLogTypeProps> = ({ logType }) => {
         backgroundColor={stringToPaleColor(logType) as any}
         borderRadius="circle"
       />
-      <Box as="span" fontSize="small">
+      <Box as="span" fontSize="small" fontWeight="normal">
         {logType}
       </Box>
     </Flex>
