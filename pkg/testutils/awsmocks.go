@@ -100,6 +100,15 @@ func (m *LambdaMock) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutput, er
 	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
 }
 
+func (m *LambdaMock) InvokeWithContext(
+	ctx aws.Context,
+	input *lambda.InvokeInput,
+	options ...request.Option) (*lambda.InvokeOutput, error) {
+
+	args := m.Called(ctx, input, options)
+	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
+}
+
 func (m *LambdaMock) CreateEventSourceMapping(
 	input *lambda.CreateEventSourceMappingInput) (*lambda.EventSourceMappingConfiguration, error) {
 
@@ -174,7 +183,11 @@ func (m *SqsMock) GetQueueAttributes(input *sqs.GetQueueAttributesInput) (*sqs.G
 	return args.Get(0).(*sqs.GetQueueAttributesOutput), args.Error(1)
 }
 
-func (m *SqsMock) GetQueueAttributesWithContext(ctx aws.Context, input *sqs.GetQueueAttributesInput, options ...request.Option) (*sqs.GetQueueAttributesOutput, error) {
+func (m *SqsMock) GetQueueAttributesWithContext(
+	ctx aws.Context,
+	input *sqs.GetQueueAttributesInput,
+	options ...request.Option) (*sqs.GetQueueAttributesOutput, error) {
+
 	args := m.Called(ctx, input, options)
 	return args.Get(0).(*sqs.GetQueueAttributesOutput), args.Error(1)
 }

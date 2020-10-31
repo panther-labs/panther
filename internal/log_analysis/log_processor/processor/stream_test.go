@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -97,14 +98,14 @@ func TestProcessingDeadline(t *testing.T) {
 func TestStreamEvents(t *testing.T) {
 	streamTestSqsClient, streamTestLambdaClient, streamTestDeadline := initTest()
 
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestNotEmptyQueue, nil).Once()
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
-	// this one is below threshold, which breaks the loop
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestEmptyQueue, nil).Once()
+	// this one return 0 messages, which breaks the loop
+	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil).Once()
 	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
 
 	// will be called by scalingDecisions() on exit
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestNotEmptyQueue, nil).Once()
+	streamTestSqsClient.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestNotEmptyQueue, nil).Once()
 
 	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, streamTestDeadline,
 		noopProcessorFunc, noopReadSnsMessagesFunc)
@@ -122,7 +123,8 @@ func TestStreamEventsProcessingTimeLimitExceeded(t *testing.T) {
 	deadline := streamTestDeadline.Add(-defaultTestTimeLimit * 2) // set in the past so code exits immediately
 
 	// will be called by scalingDecisions() on exit
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestNotEmptyQueue, nil).Once()
+	streamTestSqsClient.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestNotEmptyQueue, nil).Once()
 
 	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, deadline,
 		noopProcessorFunc, noopReadSnsMessagesFunc)
@@ -137,11 +139,11 @@ func TestStreamEventsProcessingTimeLimitExceeded(t *testing.T) {
 func TestStreamEventsReadEventError(t *testing.T) {
 	streamTestSqsClient, streamTestLambdaClient, streamTestDeadline := initTest()
 
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestNotEmptyQueue, nil).Once()
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
 
 	// will be called by scalingDecisions() on exit
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestNotEmptyQueue, nil).Once()
+	streamTestSqsClient.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestNotEmptyQueue, nil).Once()
 
 	_, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, streamTestDeadline,
 		noopProcessorFunc, failReadSnsMessagesFunc)
@@ -159,7 +161,8 @@ func TestStreamEventsProcessError(t *testing.T) {
 	deadline := streamTestDeadline.Add(-defaultTestTimeLimit * 2) // set in the past so code exits immediately
 
 	// will be called by scalingDecisions() on exit
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestNotEmptyQueue, nil).Once()
+	streamTestSqsClient.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestNotEmptyQueue, nil).Once()
 
 	_, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, deadline,
 		failProcessorFunc, noopReadSnsMessagesFunc)
@@ -174,11 +177,11 @@ func TestStreamEventsProcessError(t *testing.T) {
 func TestStreamEventsProcessErrorAndReadEventError(t *testing.T) {
 	streamTestSqsClient, streamTestLambdaClient, streamTestDeadline := initTest()
 
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestNotEmptyQueue, nil).Once()
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
 
 	// will be called by scalingDecisions() on exit
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestNotEmptyQueue, nil).Once()
+	streamTestSqsClient.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestNotEmptyQueue, nil).Once()
 
 	_, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, streamTestDeadline,
 		failProcessorFunc, failReadSnsMessagesFunc)
@@ -193,13 +196,13 @@ func TestStreamEventsProcessErrorAndReadEventError(t *testing.T) {
 func TestStreamEventsReceiveSQSError(t *testing.T) {
 	streamTestSqsClient, streamTestLambdaClient, streamTestDeadline := initTest()
 
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestNotEmptyQueue, nil).Once()
 	// this one fails
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{},
 		fmt.Errorf("receiveError")).Once()
 
 	// will be called by scalingDecisions() on exit
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestNotEmptyQueue, nil).Once()
+	streamTestSqsClient.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestNotEmptyQueue, nil).Once()
 
 	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, streamTestDeadline,
 		noopProcessorFunc, noopReadSnsMessagesFunc)
@@ -217,10 +220,10 @@ func TestStreamEventsDeleteSQSError(t *testing.T) {
 
 	logs := mockLogger()
 
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestNotEmptyQueue, nil).Once()
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
 	// this one is below threshold, which breaks the loop
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestEmptyQueue, nil).Once()
+	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil).Once()
+
 	// this one fails
 	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{
 		Failed:     []*sqs.BatchResultErrorEntry{{}},
@@ -228,7 +231,8 @@ func TestStreamEventsDeleteSQSError(t *testing.T) {
 	}, fmt.Errorf("deleteError")).Once()
 
 	// will be called by scalingDecisions() on exit
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestNotEmptyQueue, nil).Once()
+	streamTestSqsClient.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestNotEmptyQueue, nil).Once()
 
 	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, streamTestDeadline,
 		noopProcessorFunc, noopReadSnsMessagesFunc)
@@ -275,11 +279,8 @@ func TestScaleup(t *testing.T) {
 		processingScaleDecisionInterval = defaultProcessingScaleDecisionInterval
 	}()
 
-	delayReadSNSMessage := func(messages []string) ([]*common.DataStream, error) {
-		time.Sleep(scaleupTestDuration)
-		return make([]*common.DataStream, len(messages)), nil
-	}
-
+	var wg sync.WaitGroup
+	wg.Add(2)
 	// this is what we return showing a queue size big enough to scale
 	spikeCount := processingMaxFilesLimit * 2
 	streamTestSpikeInEventsQueue := &sqs.GetQueueAttributesOutput{
@@ -287,29 +288,38 @@ func TestScaleup(t *testing.T) {
 			sqs.QueueAttributeNameApproximateNumberOfMessages: aws.String(strconv.Itoa(spikeCount)),
 		},
 	}
-
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestSpikeInEventsQueue, nil).Once()
-	// this will pause scaleupTestDuration to give time for the scale up go routine to run a few cycles
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
-
+	// this will pause scaleupTestDuration to give time for the scale up go routine to run twice
+	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once().
+		Run(func(args mock.Arguments) {
+			wg.Wait()
+		})
 	// the scaleup go routine will check the queue, then execute a lambda
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestSpikeInEventsQueue, nil).Once()
-	streamTestLambdaClient.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{}, nil).Once()
+	streamTestSqsClient.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestSpikeInEventsQueue, nil).Once().
+		Run(func(args mock.Arguments) {
+			wg.Done()
+		})
+	streamTestLambdaClient.On("InvokeWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&lambda.InvokeOutput{}, nil).Once()
 
 	// this will return a number for the queue size smaller than needed to scale, so no lambda calls
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestNotEmptyQueue, nil).Once()
+	streamTestSqsClient.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestNotEmptyQueue, nil).Once().
+		Run(func(args mock.Arguments) {
+			wg.Done()
+		})
 
 	// at this point the scaleupTestDuration blocking the sns read will expire
 
 	// this one is below threshold, which breaks the loop
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestEmptyQueue, nil).Once()
+	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil).Once()
 	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
 
 	// will be called by scalingDecisions() on exit
-	streamTestSqsClient.On("GetQueueAttributes", mock.Anything).Return(streamTestNotEmptyQueue, nil).Once()
+	streamTestSqsClient.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestEmptyQueue, nil).Once()
 
 	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, streamTestDeadline,
-		noopProcessorFunc, delayReadSNSMessage)
+		noopProcessorFunc, noopReadSnsMessagesFunc)
 	require.NoError(t, err)
 	assert.Equal(t, len(streamTestReceiveMessageOutput.Messages), sqsMessageCount)
 
