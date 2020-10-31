@@ -53,6 +53,6 @@ func process(lc *lambdacontext.LambdaContext, deadline time.Time) (err error) {
 	}()
 
 	logTypesResolver := registry.NativeLogTypesResolver()
-	sqsMessageCount, err = processor.StreamEvents(common.SqsClient, common.LambdaClient, logTypesResolver, deadline)
+	sqsMessageCount, err = processor.StreamEvents(context.TODO(), common.SqsClient, common.LambdaClient, logTypesResolver, deadline)
 	return err
 }

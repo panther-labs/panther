@@ -36,14 +36,6 @@ import (
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
-var (
-	emptyQueue = &sqs.GetQueueAttributesOutput{
-		Attributes: map[string]*string{
-			sqs.QueueAttributeNameApproximateNumberOfMessages: aws.String("0"),
-		},
-	}
-)
-
 // Replace global logger with an in-memory observer for tests.
 func mockLogger() *observer.ObservedLogs {
 	core, mockLog := observer.New(zap.DebugLevel)
@@ -61,8 +53,13 @@ func TestProcessOpLog(t *testing.T) {
 
 	sqsMock := &testutils.SqsMock{}
 	common.SqsClient = sqsMock
+	emptyQueue := &sqs.GetQueueAttributesOutput{
+		Attributes: map[string]*string{
+			sqs.QueueAttributeNameApproximateNumberOfMessages: aws.String("0"),
+		},
+	}
 	// will be called by scalingDecisions() on exit
-	sqsMock.On("GetQueueAttributes", mock.Anything).Return(emptyQueue, nil).Once()
+	sqsMock.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(emptyQueue, nil).Once()
 
 	err := process(&lc, time.Now())
 	require.NoError(t, err)

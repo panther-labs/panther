@@ -19,14 +19,18 @@ package processor
  */
 
 import (
+	"context"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/box"
 )
 
@@ -49,49 +53,67 @@ var (
 
 // scalingDecisions makes periodic adaptive decisions to scale up based on the sqs queue stats, it returns
 // immediately with a boolean stop channel (sending an event to the channel stops execution).
-func scalingDecisions(sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.LambdaAPI) chan bool {
-	stopScaling := make(chan bool)
-
+func scalingDecisions(ctx context.Context, sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.LambdaAPI) {
 	go func() {
 		ticker := time.NewTicker(processingScaleDecisionInterval)
 		defer ticker.Stop()
-		poll := true
-		for poll {
+		pull := true
+		for pull {
 			select {
 			case <-ticker.C:
-			case <-stopScaling:
-				poll = false
+			case <-ctx.Done():
+				pull = false
 			}
 
 			// check if we need to scale
-			totalQueuedMessages, err := queueDepth(sqsClient) // this includes queued and delayed messages
+			totalQueuedMessages, err := queueDepth(ctx, sqsClient) // this includes queued and delayed messages
 			if err != nil {
 				zap.L().Warn("rescale cannot read from sqs queue", zap.Error(err))
 				continue
 			}
 
 			// the number of lambdas to invoke are proportional to the message count (clipped to processingMaxLambdaInvoke)
-			processingScaleUp(lambdaClient, totalQueuedMessages/processingMaxFilesLimit)
+			processingScaleUp(ctx, lambdaClient, totalQueuedMessages/processingMaxFilesLimit)
 		}
 	}()
+}
 
-	return stopScaling
+func queueDepth(ctx context.Context, sqsClient sqsiface.SQSAPI) (int, error) {
+	getQueueAttributesInput := &sqs.GetQueueAttributesInput{
+		AttributeNames: []*string{
+			aws.String(sqs.QueueAttributeNameApproximateNumberOfMessages), // tells us there is waiting events now
+		},
+		QueueUrl: &common.Config.SqsQueueURL,
+	}
+	getQueueAttributesOutput, err := sqsClient.GetQueueAttributesWithContext(ctx, getQueueAttributesInput)
+	if err != nil && err != context.Canceled {
+		err = errors.Wrapf(err, "failure getting message count from %s", common.Config.SqsQueueURL)
+		return 0, err
+	}
+	// number of messages
+	numberOfQueuedMessages, err := getQueueIntegerAttribute(getQueueAttributesOutput.Attributes,
+		sqs.QueueAttributeNameApproximateNumberOfMessages)
+	if err != nil {
+		return 0, err
+	}
+
+	return numberOfQueuedMessages, err
 }
 
 // processingScaleUp will execute nLambdas to take on more load
-func processingScaleUp(lambdaClient lambdaiface.LambdaAPI, nLambdas int) {
+func processingScaleUp(ctx context.Context, lambdaClient lambdaiface.LambdaAPI, nLambdas int) {
 	if nLambdas > 0 {
 		if nLambdas > processingMaxLambdaInvoke { // clip to cap rate of increase under very high load
 			nLambdas = processingMaxLambdaInvoke
 		}
 		zap.L().Debug("scaling up", zap.Int("nLambdas", nLambdas))
 		for i := 0; i < nLambdas; i++ {
-			resp, err := lambdaClient.Invoke(&lambda.InvokeInput{
+			resp, err := lambdaClient.InvokeWithContext(ctx, &lambda.InvokeInput{
 				FunctionName:   box.String("panther-log-processor"),
 				Payload:        []byte(`{"tick": true}`),
 				InvocationType: box.String(lambda.InvocationTypeEvent), // don't wait for response
 			})
-			if err != nil {
+			if err != nil && err != context.Canceled {
 				zap.L().Error("scaling up failed to invoke log processor",
 					zap.Error(errors.WithStack(err)))
 				return

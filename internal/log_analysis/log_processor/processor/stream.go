@@ -19,11 +19,11 @@ package processor
  */
 
 import (
+	"context"
 	"runtime"
 	"strconv"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
@@ -55,6 +55,7 @@ the lambda will continue to read events and maximally aggregate data to produce 
 Fewer, bigger files makes Athena queries much faster.
 */
 func StreamEvents(
+	ctx context.Context,
 	sqsClient sqsiface.SQSAPI,
 	lambdaClient lambdaiface.LambdaAPI,
 	resolver logtypes.Resolver,
@@ -65,19 +66,17 @@ func StreamEvents(
 	process := func(streams <-chan *common.DataStream, dest destinations.Destination) error {
 		return Process(streams, dest, newProcessor)
 	}
-	return streamEvents(sqsClient, lambdaClient, deadlineTime, process, sources.ReadSnsMessages)
+	return streamEvents(ctx, sqsClient, lambdaClient, deadlineTime, process, sources.ReadSnsMessages)
 }
 
 // entry point for unit testing, pass in read/process functions
 func streamEvents(
+	ctx context.Context,
 	sqsClient sqsiface.SQSAPI,
 	lambdaClient lambdaiface.LambdaAPI,
 	deadlineTime time.Time,
 	processFunc ProcessFunc,
 	generateDataStreamsFunc func([]string) ([]*common.DataStream, error)) (int, error) {
-
-	// this cannot be a named return var because it would cause a data race
-	var sqsMessageCount int
 
 	streamChan := make(chan *common.DataStream, 2*sqsMaxBatchSize) // use small buffer to pipeline events
 	processingDeadlineTime := processingDeadlineTime(deadlineTime)
@@ -86,11 +85,12 @@ func streamEvents(
 
 	readEventErrorChan := make(chan error, 1) // below go routine closes over this for errors, 1 deep buffer
 	go func() {
+		scalingDecisionCtx, cancel := context.WithCancel(ctx)
 		// runs periodically during processing making scaling decisions
-		stopScaling := scalingDecisions(sqsClient, lambdaClient)
+		scalingDecisions(scalingDecisionCtx, sqsClient, lambdaClient)
 
 		defer func() {
-			stopScaling <- true       // terminate the scaling go routine
+			cancel()                  // terminate the scaling go routine
 			close(streamChan)         // done reading messages, this will cause processFunc() to return
 			close(readEventErrorChan) // no more writes on err chan
 		}()
@@ -109,16 +109,6 @@ func streamEvents(
 				time.Sleep(time.Second)
 				highMemoryCounter++
 				continue
-			}
-
-			// under no load we do not read from the sqs queue and just exit
-			totalQueuedMessages, err := queueDepth(sqsClient) // this includes queued and delayed messages
-			if err != nil {
-				readEventErrorChan <- err
-				return
-			}
-			if totalQueuedMessages == 0 {
-				break
 			}
 
 			// keep reading from SQS to maximize output aggregation
@@ -141,9 +131,6 @@ func streamEvents(
 				readEventErrorChan <- err
 				return
 			}
-
-			// process sqs messages
-			sqsMessageCount += len(dataStreams)
 			for _, dataStream := range dataStreams {
 				streamChan <- dataStream
 			}
@@ -164,7 +151,7 @@ func streamEvents(
 
 	// delete messages from sqs q on success (best effort)
 	sqsbatch.DeleteMessageBatch(sqsClient, common.Config.SqsQueueURL, accumulatedMessageReceipts)
-	return sqsMessageCount, nil
+	return len(accumulatedMessageReceipts), nil
 }
 
 // processingDeadlineTime calcs a time less than the deadllineTime to allow time for buffers to flush
@@ -185,28 +172,6 @@ func sqsDataStreams(messages []*sqs.Message,
 		eventMessages[i] = *message.Body
 	}
 	return readSnsMessagesFunc(eventMessages)
-}
-
-func queueDepth(sqsClient sqsiface.SQSAPI) (totalQueuedMessages int, err error) {
-	getQueueAttributesInput := &sqs.GetQueueAttributesInput{
-		AttributeNames: []*string{
-			aws.String(sqs.QueueAttributeNameApproximateNumberOfMessages), // tells us there is waiting events now
-		},
-		QueueUrl: &common.Config.SqsQueueURL,
-	}
-	getQueueAttributesOutput, err := sqsClient.GetQueueAttributes(getQueueAttributesInput)
-	if err != nil {
-		err = errors.Wrapf(err, "failure getting message count from %s", common.Config.SqsQueueURL)
-		return 0, err
-	}
-	// number of messages
-	numberOfQueuedMessages, err := getQueueIntegerAttribute(getQueueAttributesOutput.Attributes,
-		sqs.QueueAttributeNameApproximateNumberOfMessages)
-	if err != nil {
-		return 0, err
-	}
-
-	return numberOfQueuedMessages, err
 }
 
 func getQueueIntegerAttribute(attrs map[string]*string, attr string) (count int, err error) {
