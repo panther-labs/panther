@@ -19,6 +19,7 @@ package main
  */
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -47,7 +48,7 @@ func TestProcessOpLog(t *testing.T) {
 	common.Config.AwsLambdaFunctionMemorySize = 1024
 	logs := mockLogger()
 	functionName := "myfunction"
-	lc := lambdacontext.LambdaContext{
+	lc := &lambdacontext.LambdaContext{
 		InvokedFunctionArn: functionName,
 	}
 
@@ -61,7 +62,8 @@ func TestProcessOpLog(t *testing.T) {
 	// will be called by scalingDecisions() on exit
 	sqsMock.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(emptyQueue, nil).Once()
 
-	err := process(&lc, time.Now())
+	ctx := lambdacontext.NewContext(context.Background(), lc)
+	err := process(ctx)
 	require.NoError(t, err)
 	message := common.OpLogNamespace + ":" + common.OpLogComponent + ":" + functionName
 	require.Equal(t, 1, len(logs.FilterMessage(message).All())) // should be just one like this

@@ -36,18 +36,23 @@ func main() {
 	lambda.Start(handle)
 }
 
-func handle(ctx context.Context) (err error) {
-	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
-	deadline, _ := ctx.Deadline()
+func handle(ctx context.Context) error {
+	lambdalogger.ConfigureGlobal(ctx, nil)
+	return process(ctx)
+}
+
+func process(ctx context.Context) (err error) {
+	lc, _ := lambdacontext.FromContext(ctx)
 	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
 
 	var sqsMessageCount int
-
 	defer func() {
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", sqsMessageCount))
 	}()
 
 	logTypesResolver := registry.NativeLogTypesResolver()
+
+	deadline, _ := ctx.Deadline() // TODO Remove deadline, rely on ctx for cancellation
 	sqsMessageCount, err = processor.StreamEvents(ctx, common.SqsClient, common.LambdaClient, logTypesResolver, deadline)
 	return err
 }
