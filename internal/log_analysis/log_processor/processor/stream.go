@@ -85,9 +85,9 @@ func streamEvents(
 
 	readEventErrorChan := make(chan error, 1) // below go routine closes over this for errors, 1 deep buffer
 	go func() {
-		scalingDecisionCtx, cancel := context.WithCancel(ctx)
+		ctx, cancel := context.WithCancel(ctx)
 		// runs periodically during processing making scaling decisions
-		scalingDecisions(scalingDecisionCtx, sqsClient, lambdaClient)
+		scalingDecisions(ctx, sqsClient, lambdaClient)
 
 		defer func() {
 			cancel()                  // terminate the scaling go routine

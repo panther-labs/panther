@@ -66,7 +66,7 @@ func scalingDecisions(ctx context.Context, sqsClient sqsiface.SQSAPI, lambdaClie
 			}
 
 			// check if we need to scale
-			totalQueuedMessages, err := queueDepth(ctx, sqsClient) // this includes queued and delayed messages
+			totalQueuedMessages, err := queueDepth(ctx, sqsClient)
 			if err != nil {
 				zap.L().Warn("rescale cannot read from sqs queue", zap.Error(err))
 				continue

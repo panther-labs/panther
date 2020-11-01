@@ -20,7 +20,6 @@ package main
 
 import (
 	"context"
-	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
@@ -37,13 +36,9 @@ func main() {
 	lambda.Start(handle)
 }
 
-func handle(ctx context.Context) error {
+func handle(ctx context.Context) (err error) {
 	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
 	deadline, _ := ctx.Deadline()
-	return process(lc, deadline)
-}
-
-func process(lc *lambdacontext.LambdaContext, deadline time.Time) (err error) {
 	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
 
 	var sqsMessageCount int
@@ -53,6 +48,6 @@ func process(lc *lambdacontext.LambdaContext, deadline time.Time) (err error) {
 	}()
 
 	logTypesResolver := registry.NativeLogTypesResolver()
-	sqsMessageCount, err = processor.StreamEvents(context.TODO(), common.SqsClient, common.LambdaClient, logTypesResolver, deadline)
+	sqsMessageCount, err = processor.StreamEvents(ctx, common.SqsClient, common.LambdaClient, logTypesResolver, deadline)
 	return err
 }
