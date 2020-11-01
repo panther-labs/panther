@@ -57,12 +57,11 @@ func scalingDecisions(ctx context.Context, sqsClient sqsiface.SQSAPI, lambdaClie
 	go func() {
 		ticker := time.NewTicker(processingScaleDecisionInterval)
 		defer ticker.Stop()
-		pull := true
-		for pull {
+		for {
 			select {
 			case <-ticker.C:
 			case <-ctx.Done():
-				pull = false
+				return
 			}
 
 			// check if we need to scale

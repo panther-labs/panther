@@ -24,17 +24,13 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
-	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 // Replace global logger with an in-memory observer for tests.
@@ -52,16 +48,6 @@ func TestProcessOpLog(t *testing.T) {
 		InvokedFunctionArn: functionName,
 	}
 
-	sqsMock := &testutils.SqsMock{}
-	common.SqsClient = sqsMock
-	emptyQueue := &sqs.GetQueueAttributesOutput{
-		Attributes: map[string]*string{
-			sqs.QueueAttributeNameApproximateNumberOfMessages: aws.String("0"),
-		},
-	}
-	// will be called by scalingDecisions() on exit
-	sqsMock.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(emptyQueue, nil).Once()
-
 	ctx := lambdacontext.NewContext(context.Background(), lc)
 	err := process(ctx)
 	require.NoError(t, err)
@@ -73,5 +59,4 @@ func TestProcessOpLog(t *testing.T) {
 	assert.Equal(t, common.OpLogLambdaServiceDim.String, serviceDim)
 
 	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
-	sqsMock.AssertExpectations(t)
 }
