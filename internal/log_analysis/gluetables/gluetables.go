@@ -29,15 +29,66 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	cloudsecGlue "github.com/panther-labs/panther/internal/compliance/awsglue"
+	loganalysisGlue "github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
-// DeployedLogTables returns the glue tables from the registry that have been deployed
-func DeployedLogTables(glueClient glueiface.GlueAPI) (deployedLogTables []*awsglue.GlueTableMetadata, err error) {
+// DeployedLogTypes scans glue API to filter log types with deployed tables
+func DeployedLogTypes(ctx context.Context, glueClient glueiface.GlueAPI, logTypes []string) ([]string, error) {
+	dbNames := []string{loganalysisGlue.LogProcessingDatabaseName, cloudsecGlue.CloudSecurityDatabase}
+	index := make(map[string]string, len(logTypes))
+	deployed := make([]string, 0, len(logTypes))
+
+	// set up filter via map
+	for _, logType := range logTypes {
+		tableName := loganalysisGlue.GetTableName(logType)
+		index[tableName] = logType
+	}
+
+	// collects logTypes
+	scan := func(page *glue.GetTablesOutput, _ bool) bool {
+		for _, table := range page.TableList {
+			tableName := aws.StringValue(table.Name)
+			logType, ok := index[tableName]
+			if ok {
+				deployed = append(deployed, logType)
+			}
+		}
+		return true
+	}
+
+	// loop over each database, collecting the logTypes
+	for i := range dbNames {
+		input := glue.GetTablesInput{
+			DatabaseName: &dbNames[i],
+		}
+		err := glueClient.GetTablesPagesWithContext(ctx, &input, scan)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return deployed, nil
+}
+
+// DeployedTablesSignature returns a string "signature" for the schema of the deployed native tables used to detect change
+func DeployedTablesSignature(glueClient glueiface.GlueAPI) (deployedLogTablesSignature string, err error) {
+	deployedLogTables, err := deployedNativeLogTables(glueClient)
+	if err != nil {
+		return "", err
+	}
+
+	allTables := ExpandLogTables(deployedLogTables...)
+
+	return BuildSignature(allTables...)
+}
+
+// deployedNativeLogTables returns the glue tables from the registry that have been deployed (possibly with schema updates)
+func deployedNativeLogTables(glueClient glueiface.GlueAPI) (deployedLogTables []*loganalysisGlue.GlueTableMetadata, err error) {
 	for _, gm := range registry.AvailableTables() {
-		_, err := awsglue.GetTable(glueClient, gm.DatabaseName(), gm.TableName())
+		_, err := loganalysisGlue.GetTable(glueClient, gm.DatabaseName(), gm.TableName())
 		if err != nil {
 			if awsutils.IsAnyError(err, glue.ErrCodeEntityNotFoundException) {
 				continue
@@ -52,52 +103,11 @@ func DeployedLogTables(glueClient glueiface.GlueAPI) (deployedLogTables []*awsgl
 	return deployedLogTables, nil
 }
 
-// DeployedLogTypes scans glue API to filter log types with deployed tables
-func DeployedLogTypes(ctx context.Context, glueClient glueiface.GlueAPI, logTypes []string) ([]string, error) {
-	dbName := awsglue.LogProcessingDatabaseName
-	index := make(map[string]string, len(logTypes))
-	deployed := make([]string, 0, len(logTypes))
-	for _, logType := range logTypes {
-		tableName := awsglue.GetTableName(logType)
-		index[tableName] = logType
-	}
-	scan := func(page *glue.GetTablesOutput, _ bool) bool {
-		for _, table := range page.TableList {
-			tableName := aws.StringValue(table.Name)
-			logType, ok := index[tableName]
-			if ok {
-				deployed = append(deployed, logType)
-			}
-		}
-		return true
-	}
-	input := glue.GetTablesInput{
-		DatabaseName: &dbName,
-	}
-	err := glueClient.GetTablesPagesWithContext(ctx, &input, scan)
-	if err != nil {
-		return nil, err
-	}
-	return deployed, nil
-}
-
-// DeployedTablesSignature returns a string "signature" for the schema of the deployed tables used to detect change
-func DeployedTablesSignature(glueClient glueiface.GlueAPI) (deployedLogTablesSignature string, err error) {
-	deployedLogTables, err := DeployedLogTables(glueClient)
-	if err != nil {
-		return "", err
-	}
-
-	allTables := ExpandLogTables(deployedLogTables...)
-
-	return BuildSignature(allTables...)
-}
-
 // Expand log tables expands tables from the log processing database to include additional tables (rules, ruleErrors)
-func ExpandLogTables(tables ...*awsglue.GlueTableMetadata) (expanded []*awsglue.GlueTableMetadata) {
-	expanded = make([]*awsglue.GlueTableMetadata, 0, 3*len(tables))
+func ExpandLogTables(tables ...*loganalysisGlue.GlueTableMetadata) (expanded []*loganalysisGlue.GlueTableMetadata) {
+	expanded = make([]*loganalysisGlue.GlueTableMetadata, 0, 3*len(tables))
 	for _, table := range tables {
-		if table.DatabaseName() != awsglue.LogProcessingDatabaseName {
+		if table.DatabaseName() != loganalysisGlue.LogProcessingDatabaseName {
 			continue
 		}
 		expanded = append(expanded, table, table.RuleTable(), table.RuleErrorTable())
@@ -105,7 +115,7 @@ func ExpandLogTables(tables ...*awsglue.GlueTableMetadata) (expanded []*awsglue.
 	return
 }
 
-func BuildSignature(tables ...*awsglue.GlueTableMetadata) (string, error) {
+func BuildSignature(tables ...*loganalysisGlue.GlueTableMetadata) (string, error) {
 	tableSignatures := make([]string, 0, len(tables))
 	for _, table := range tables {
 		sig, err := table.Signature()
@@ -123,14 +133,14 @@ func BuildSignature(tables ...*awsglue.GlueTableMetadata) (string, error) {
 }
 
 type TablesForLogType struct {
-	LogTable       *awsglue.GlueTableMetadata
-	RuleTable      *awsglue.GlueTableMetadata
-	RuleErrorTable *awsglue.GlueTableMetadata
+	LogTable       *loganalysisGlue.GlueTableMetadata
+	RuleTable      *loganalysisGlue.GlueTableMetadata
+	RuleErrorTable *loganalysisGlue.GlueTableMetadata
 }
 
 // CreateOrUpdateGlueTables, given a log meta data table, creates all tables related to this log table in the glue catalog.
 func CreateOrUpdateGlueTables(glueClient glueiface.GlueAPI, bucket string,
-	logTable *awsglue.GlueTableMetadata) (*TablesForLogType, error) {
+	logTable *loganalysisGlue.GlueTableMetadata) (*TablesForLogType, error) {
 
 	// Create the log table
 	err := logTable.CreateOrUpdateTable(glueClient, bucket)

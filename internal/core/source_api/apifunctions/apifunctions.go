@@ -1,4 +1,4 @@
-package main
+package apifunctions
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,32 +19,30 @@ package main
  */
 
 import (
-	"context"
+	"fmt"
 
-	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
-	"github.com/panther-labs/panther/internal/core/source_api/api"
 	"github.com/panther-labs/panther/pkg/genericapi"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-var router *genericapi.Router
+// Below are function call entry points to the api that allow callers easily use the lambda interface.
+// There are no referenced external packages (other than `models`) to minimize pulling in unneeded code.
 
-func init() {
-	validator, err := models.Validator()
-	if err != nil {
-		panic(err)
+const (
+	LambdaName = "panther-source-api"
+)
+
+// ListLogTypes gets the current set of logTypes in use
+func ListLogTypes(lambdaClient lambdaiface.LambdaAPI) ([]string, error) {
+	var listLogTypesOutput models.ListLogTypesOutput
+	var listLogTypesInput = &models.LambdaInput{
+		ListLogTypes: &models.ListLogTypesInput{},
 	}
-	router = genericapi.NewRouter("api", "sources", validator, &api.API{})
-}
+	if err := genericapi.Invoke(lambdaClient, LambdaName, listLogTypesInput, &listLogTypesOutput); err != nil {
+		return nil, fmt.Errorf("error calling source-api to list logTypes: %v", err)
+	}
 
-func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
-	lambdalogger.ConfigureGlobal(ctx, nil)
-	return router.Handle(request)
-}
-
-func main() {
-	api.Setup()
-	lambda.Start(lambdaHandler)
+	return listLogTypesOutput.LogTypes, nil
 }
