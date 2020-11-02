@@ -48,8 +48,8 @@ var (
 						ParameterValue: aws.String("DevNick"),
 					},
 				},
-				CreationTime:    ExampleDate,
-				LastUpdatedTime: ExampleDate,
+				CreationTime:    &ExampleTime,
+				LastUpdatedTime: &ExampleTime,
 				RollbackConfiguration: &cloudformation.RollbackConfiguration{
 					RollbackTriggers: []*cloudformation.RollbackTrigger{},
 				},
@@ -62,7 +62,7 @@ var (
 				Tags: []*cloudformation.Tag{},
 				DriftInformation: &cloudformation.StackDriftInformation{
 					StackDriftStatus:   aws.String("DRIFTED"),
-					LastCheckTimestamp: ExampleDate,
+					LastCheckTimestamp: &ExampleTime,
 				},
 			},
 		},
@@ -93,7 +93,7 @@ var (
 					},
 				},
 				StackResourceDriftStatus: aws.String("MODIFIED"),
-				Timestamp:                ExampleDate,
+				Timestamp:                &ExampleTime,
 			},
 		},
 	}
@@ -108,7 +108,7 @@ var (
 		StackDriftStatus:          aws.String("DRIFTED"),
 		DetectionStatus:           aws.String("DETECTION_COMPLETE"),
 		DriftedStackResourceCount: aws.Int64(1),
-		Timestamp:                 ExampleDate,
+		Timestamp:                 &ExampleTime,
 	}
 
 	ExampleDescribeStackDriftDetectionStatusInProgress = &cloudformation.DescribeStackDriftDetectionStatusOutput{
@@ -117,7 +117,7 @@ var (
 		StackDriftStatus:          aws.String("DRIFTED"),
 		DetectionStatus:           aws.String("DETECTION_IN_PROGESS"),
 		DriftedStackResourceCount: aws.Int64(1),
-		Timestamp:                 ExampleDate,
+		Timestamp:                 &ExampleTime,
 	}
 
 	svcCloudFormationSetupCalls = map[string]func(*MockCloudFormation){

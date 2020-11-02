@@ -48,6 +48,7 @@ var (
 	// defaultRegion = endpoints.UsWest2RegionID
 	defaultRegion = os.Getenv("AWS_REGION")
 
+	// Exported for top-level unit tests to mock out
 	AuditRoleName = os.Getenv("AUDIT_ROLE_NAME")
 
 	// The default max number of resources to scan at once. We will keep paging until we scan this

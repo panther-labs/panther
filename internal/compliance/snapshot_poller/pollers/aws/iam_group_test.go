@@ -143,7 +143,7 @@ func TestBuildIamGroupSnapshot(t *testing.T) {
 			GroupName:  aws.String("example-group"),
 			GroupId:    aws.String("123456"),
 			Arn:        aws.String("arn:::::group/example-group"),
-			CreateDate: awstest.ExampleDate,
+			CreateDate: &awstest.ExampleTime,
 		},
 	)
 
@@ -160,7 +160,7 @@ func TestBuildIamGroupSnapshotError(t *testing.T) {
 		mockSvc,
 		&iam.Group{
 			Arn:        aws.String("arn:::::group/example-group"),
-			CreateDate: awstest.ExampleDate,
+			CreateDate: &awstest.ExampleTime,
 			GroupId:    aws.String("123456"),
 			GroupName:  aws.String("example-group"),
 		},

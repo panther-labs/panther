@@ -67,7 +67,7 @@ var (
 		KeyMetadata: &kms.KeyMetadata{
 			AWSAccountId: aws.String("111111111111"),
 			Arn:          aws.String("arn:aws:kms:us-west-2:111111111111:key/188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
-			CreationDate: ExampleDate,
+			CreationDate: &ExampleTime,
 			Description:  aws.String("Encryption key for panther-snapshot-queue data"),
 			Enabled:      aws.Bool(true),
 			KeyId:        aws.String("188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
@@ -82,7 +82,7 @@ var (
 		KeyMetadata: &kms.KeyMetadata{
 			AWSAccountId: aws.String("123456789012"),
 			Arn:          aws.String("arn:aws:kms:us-west-2:111111111111:key/188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
-			CreationDate: ExampleDate,
+			CreationDate: &ExampleTime,
 			Description:  aws.String("Default master key"),
 			Enabled:      aws.Bool(true),
 			KeyId:        aws.String("188c57ed-b28a-4c0e-9821-f4940d15cb0a"),
