@@ -225,6 +225,7 @@ Resources:
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         PythonLayerVersionArn: !Ref PythonLayerVersionArn
+        SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TracingMode: !Ref TracingMode
         UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
       Tags:
@@ -332,6 +333,7 @@ Resources:
           Value: panther-cw-dashboards
 
   LogAnalysis:
+    DependsOn: Core
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ../../deployments/log_analysis.yml
