@@ -1,4 +1,4 @@
-package main
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,32 +19,34 @@ package main
  */
 
 import (
-	"context"
+	"testing"
 
-	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
-	"github.com/panther-labs/panther/internal/core/source_api/api"
-	"github.com/panther-labs/panther/pkg/genericapi"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-var router *genericapi.Router
-
-func init() {
-	validator, err := models.Validator()
-	if err != nil {
-		panic(err)
+func TestAPI_ListLogTypes(t *testing.T) {
+	expectedLogTypes := []string{"one", "two"}
+	listOutput := []*models.SourceIntegration{
+		{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				IntegrationType: models.IntegrationTypeAWS3,
+				LogTypes:        []string{"one"},
+			},
+		},
+		{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				IntegrationType: models.IntegrationTypeSqs,
+				LogTypes:        []string{"one", "two"}, // "one" is duplicate with above
+			},
+		},
+		{ // should not match
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				IntegrationType: models.IntegrationTypeAWSScan,
+				LogTypes:        nil,
+			},
+		},
 	}
-	router = genericapi.NewRouter("api", "sources", validator, &api.API{})
-}
-
-func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
-	lambdalogger.ConfigureGlobal(ctx, nil)
-	return router.Handle(request)
-}
-
-func main() {
-	api.Setup()
-	lambda.Start(lambdaHandler)
+	assert.Equal(t, expectedLogTypes, collectLogTypes(listOutput))
 }
