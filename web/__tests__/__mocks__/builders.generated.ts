@@ -120,6 +120,7 @@ import {
   SqsLogIntegrationHealth,
   SqsLogSourceIntegration,
   SuppressPoliciesInput,
+  TestDetectionSubRecord,
   TestPolicyInput,
   TestPolicyRecord,
   TestPolicyRecordFunctions,
@@ -128,7 +129,6 @@ import {
   TestRuleRecord,
   TestRuleRecordFunctions,
   TestRuleResponse,
-  TestRuleSubRecord,
   UpdateAlertStatusInput,
   UpdateComplianceIntegrationInput,
   UpdateGeneralSettingsInput,
@@ -1429,6 +1429,16 @@ export const buildSuppressPoliciesInput = (
   };
 };
 
+export const buildTestDetectionSubRecord = (
+  overrides: Partial<TestDetectionSubRecord> = {}
+): TestDetectionSubRecord => {
+  return {
+    __typename: 'TestDetectionSubRecord',
+    output: 'output' in overrides ? overrides.output : 'Borders',
+    error: 'error' in overrides ? overrides.error : buildError(),
+  };
+};
+
 export const buildTestPolicyInput = (overrides: Partial<TestPolicyInput> = {}): TestPolicyInput => {
   return {
     body: 'body' in overrides ? overrides.body : 'Centralized',
@@ -1456,7 +1466,7 @@ export const buildTestPolicyRecordFunctions = (
   return {
     __typename: 'TestPolicyRecordFunctions',
     policyFunction:
-      'policyFunction' in overrides ? overrides.policyFunction : buildTestRuleSubRecord(),
+      'policyFunction' in overrides ? overrides.policyFunction : buildTestDetectionSubRecord(),
   };
 };
 
@@ -1493,15 +1503,16 @@ export const buildTestRuleRecordFunctions = (
 ): TestRuleRecordFunctions => {
   return {
     __typename: 'TestRuleRecordFunctions',
-    ruleFunction: 'ruleFunction' in overrides ? overrides.ruleFunction : buildTestRuleSubRecord(),
+    ruleFunction:
+      'ruleFunction' in overrides ? overrides.ruleFunction : buildTestDetectionSubRecord(),
     titleFunction:
-      'titleFunction' in overrides ? overrides.titleFunction : buildTestRuleSubRecord(),
+      'titleFunction' in overrides ? overrides.titleFunction : buildTestDetectionSubRecord(),
     dedupFunction:
-      'dedupFunction' in overrides ? overrides.dedupFunction : buildTestRuleSubRecord(),
+      'dedupFunction' in overrides ? overrides.dedupFunction : buildTestDetectionSubRecord(),
     alertContextFunction:
       'alertContextFunction' in overrides
         ? overrides.alertContextFunction
-        : buildTestRuleSubRecord(),
+        : buildTestDetectionSubRecord(),
   };
 };
 
@@ -1511,16 +1522,6 @@ export const buildTestRuleResponse = (
   return {
     __typename: 'TestRuleResponse',
     results: 'results' in overrides ? overrides.results : [buildTestRuleRecord()],
-  };
-};
-
-export const buildTestRuleSubRecord = (
-  overrides: Partial<TestRuleSubRecord> = {}
-): TestRuleSubRecord => {
-  return {
-    __typename: 'TestRuleSubRecord',
-    output: 'output' in overrides ? overrides.output : 'Rustic Frozen Bacon',
-    error: 'error' in overrides ? overrides.error : buildError(),
   };
 };
 

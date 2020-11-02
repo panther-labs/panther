@@ -9,10 +9,7 @@ mutation TestPolicy($input: TestPolicyInput!) {
       }
       functions {
         policyFunction {
-          output
-          error {
-            message
-          }
+          ...TestFunctionResult
         }
       }
     }

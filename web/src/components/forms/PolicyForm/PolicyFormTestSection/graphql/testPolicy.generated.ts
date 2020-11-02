@@ -18,6 +18,7 @@
 
 import * as Types from '../../../../../../__generated__/schema';
 
+import { TestFunctionResult } from '../../../../../graphql/fragments/TestFunctionResult.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
@@ -32,11 +33,7 @@ export type TestPolicy = {
     results: Array<
       Pick<Types.TestPolicyRecord, 'id' | 'name' | 'passed'> & {
         error?: Types.Maybe<Pick<Types.Error, 'message'>>;
-        functions: {
-          policyFunction: Pick<Types.TestRuleSubRecord, 'output'> & {
-            error?: Types.Maybe<Pick<Types.Error, 'message'>>;
-          };
-        };
+        functions: { policyFunction: TestFunctionResult };
       }
     >;
   };
@@ -54,15 +51,13 @@ export const TestPolicyDocument = gql`
         }
         functions {
           policyFunction {
-            output
-            error {
-              message
-            }
+            ...TestFunctionResult
           }
         }
       }
     }
   }
+  ${TestFunctionResult}
 `;
 export type TestPolicyMutationFn = ApolloReactCommon.MutationFunction<
   TestPolicy,

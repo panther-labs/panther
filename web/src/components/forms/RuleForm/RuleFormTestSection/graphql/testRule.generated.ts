@@ -18,6 +18,7 @@
 
 import * as Types from '../../../../../../__generated__/schema';
 
+import { TestFunctionResult } from '../../../../../graphql/fragments/TestFunctionResult.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
@@ -33,19 +34,10 @@ export type TestRule = {
       Pick<Types.TestRuleRecord, 'id' | 'name' | 'passed'> & {
         error?: Types.Maybe<Pick<Types.Error, 'message'>>;
         functions: {
-          ruleFunction: Pick<Types.TestRuleSubRecord, 'output'> & {
-            error?: Types.Maybe<Pick<Types.Error, 'message'>>;
-          };
-          titleFunction?: Types.Maybe<
-            Pick<Types.TestRuleSubRecord, 'output'> & {
-              error?: Types.Maybe<Pick<Types.Error, 'message'>>;
-            }
-          >;
-          dedupFunction?: Types.Maybe<
-            Pick<Types.TestRuleSubRecord, 'output'> & {
-              error?: Types.Maybe<Pick<Types.Error, 'message'>>;
-            }
-          >;
+          ruleFunction: TestFunctionResult;
+          titleFunction?: Types.Maybe<TestFunctionResult>;
+          dedupFunction?: Types.Maybe<TestFunctionResult>;
+          alertContextFunction?: Types.Maybe<TestFunctionResult>;
         };
       }
     >;
@@ -64,27 +56,22 @@ export const TestRuleDocument = gql`
         }
         functions {
           ruleFunction {
-            output
-            error {
-              message
-            }
+            ...TestFunctionResult
           }
           titleFunction {
-            output
-            error {
-              message
-            }
+            ...TestFunctionResult
           }
           dedupFunction {
-            output
-            error {
-              message
-            }
+            ...TestFunctionResult
+          }
+          alertContextFunction {
+            ...TestFunctionResult
           }
         }
       }
     }
   }
+  ${TestFunctionResult}
 `;
 export type TestRuleMutationFn = ApolloReactCommon.MutationFunction<TestRule, TestRuleVariables>;
 

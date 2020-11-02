@@ -9,22 +9,16 @@ mutation TestRule($input: TestRuleInput!) {
       }
       functions {
         ruleFunction {
-          output
-          error {
-            message
-          }
+          ...TestFunctionResult
         }
         titleFunction {
-          output
-          error {
-            message
-          }
+          ...TestFunctionResult
         }
         dedupFunction {
-          output
-          error {
-            message
-          }
+          ...TestFunctionResult
+        }
+        alertContextFunction {
+          ...TestFunctionResult
         }
       }
     }

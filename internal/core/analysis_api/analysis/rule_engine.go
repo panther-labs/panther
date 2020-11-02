@@ -91,27 +91,54 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 		}
 		test := rule.Tests[testIndex]
 
-		passed := result.RuleOutput == bool(test.ExpectedResult)
-		testResult.TestSummary = testResult.TestSummary && passed
+		passed := hasPassed(bool(test.ExpectedResult), result)
 
 		testResult.Results[i] = &models.RuleResult{
-			ID:                 result.ID,
-			RuleID:             result.RuleID,
-			TestName:           string(test.Name),
-			Passed:             passed,
-			Errored:            result.Errored,
-			RuleOutput:         result.RuleOutput,
-			RuleError:          result.RuleError,
-			DedupOutput:        result.DedupOutput,
-			DedupError:         result.DedupError,
-			TitleOutput:        result.TitleOutput,
-			TitleError:         result.TitleError,
-			AlertContextOutput: result.AlertContextOutput,
-			AlertContextError:  result.AlertContextError,
-			GenericError:       result.GenericError,
+			ID:           result.ID,
+			RuleID:       result.RuleID,
+			TestName:     string(test.Name),
+			Passed:       passed,
+			Errored:      result.Errored,
+			GenericError: result.GenericError,
+			RuleOutput:   result.RuleOutput,
+			RuleError:    result.RuleError,
 		}
+		if test.ExpectedResult {
+			// Show the output of other functions only if user expects rule() to match the event (ie return True).
+			testResult.Results[i].DedupOutput = result.DedupOutput
+			testResult.Results[i].DedupError = result.DedupError
+			testResult.Results[i].TitleOutput = result.TitleOutput
+			testResult.Results[i].TitleError = result.TitleError
+			testResult.Results[i].AlertContextOutput = truncate(result.AlertContextOutput) // truncate, can be huge json
+			testResult.Results[i].AlertContextError = result.AlertContextError
+		}
+		testResult.TestSummary = testResult.TestSummary && passed
 	}
 	return testResult, nil
+}
+
+func truncate(s string) string {
+	maxChars := 140
+	if len(s) > maxChars {
+		return s[:maxChars] + "..."
+	}
+	return s
+}
+
+func hasPassed(expectedRuleOutput bool, result enginemodels.RuleResult) bool {
+	if len(result.GenericError) > 0 || len(result.RuleError) > 0 {
+		// If there is an error in the script functions, like import/syntax/indentation error or rule() raised
+		// an exception, fail the test.
+		return false
+	}
+	if !expectedRuleOutput {
+		// rule() should return false (not match the event), so the other functions (title/dedup etc) should not
+		// affect the test result.
+		return result.RuleOutput == expectedRuleOutput
+	}
+
+	// rule() should return True. We also expect the other functions to not raise any exceptions.
+	return !result.Errored && (result.RuleOutput == expectedRuleOutput)
 }
 
 const testRuleID = "RuleAPITestRule"

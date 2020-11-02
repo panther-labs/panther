@@ -26,7 +26,7 @@ import {
   render,
   fireEvent,
   buildTestRuleRecordFunctions,
-  buildTestRuleSubRecord,
+  buildTestDetectionSubRecord,
 } from 'test-utils';
 import { UpdateRuleInput } from 'Generated/schema';
 import { Formik } from 'formik';
@@ -80,9 +80,18 @@ describe('RuleFormTestSection', () => {
                 passed: true,
                 error: null,
                 functions: buildTestRuleRecordFunctions({
-                  ruleFunction: buildTestRuleSubRecord({ output: 'Rule Output 1', error: null }),
-                  titleFunction: buildTestRuleSubRecord({ output: 'Title Output 1', error: null }),
-                  dedupFunction: buildTestRuleSubRecord({ output: 'Dedup Output 1', error: null }),
+                  ruleFunction: buildTestDetectionSubRecord({
+                    output: 'Rule Output 1',
+                    error: null,
+                  }),
+                  titleFunction: buildTestDetectionSubRecord({
+                    output: 'Title Output 1',
+                    error: null,
+                  }),
+                  dedupFunction: buildTestDetectionSubRecord({
+                    output: 'Dedup Output 1',
+                    error: null,
+                  }),
                 }),
               }),
               buildTestRuleRecord({
@@ -91,7 +100,7 @@ describe('RuleFormTestSection', () => {
                 passed: false,
                 error: buildError({ message: 'General Error Message' }),
                 functions: buildTestRuleRecordFunctions({
-                  ruleFunction: buildTestRuleSubRecord({
+                  ruleFunction: buildTestDetectionSubRecord({
                     output: 'Rule Output 2',
                     error: buildError({ message: 'Not Good' }),
                   }),
