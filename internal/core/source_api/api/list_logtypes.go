@@ -1,4 +1,4 @@
-package main
+package api
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,32 +19,35 @@ package main
  */
 
 import (
-	"context"
-
-	"github.com/aws/aws-lambda-go/lambda"
-
 	"github.com/panther-labs/panther/api/lambda/source/models"
-	"github.com/panther-labs/panther/internal/core/source_api/api"
-	"github.com/panther-labs/panther/pkg/genericapi"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-var router *genericapi.Router
-
-func init() {
-	validator, err := models.Validator()
+// ListLogTypes gets the current set of logTypes in use
+func (api *API) ListLogTypes(_ *models.ListLogTypesInput) (*models.ListLogTypesOutput, error) {
+	// this simply wraps the ListListIntegrations call
+	listOutput, err := api.ListIntegrations(&models.ListIntegrationsInput{})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	router = genericapi.NewRouter("api", "sources", validator, &api.API{})
+
+	return &models.ListLogTypesOutput{
+		LogTypes: collectLogTypes(listOutput),
+	}, nil
 }
 
-func lambdaHandler(ctx context.Context, request *models.LambdaInput) (interface{}, error) {
-	lambdalogger.ConfigureGlobal(ctx, nil)
-	return router.Handle(request)
-}
+func collectLogTypes(listOutput []*models.SourceIntegration) []string {
+	// collect them all in a set to ensure uniqueness
+	logTypesSet := make(map[string]struct{})
+	for _, integration := range listOutput {
+		for _, logType := range integration.RequiredLogTypes() {
+			logTypesSet[logType] = struct{}{}
+		}
+	}
 
-func main() {
-	api.Setup()
-	lambda.Start(lambdaHandler)
+	// make slice from map
+	logTypes := make([]string, 0, len(logTypesSet))
+	for logType := range logTypesSet {
+		logTypes = append(logTypes, logType)
+	}
+	return logTypes
 }

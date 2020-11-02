@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/glue"
+	"github.com/aws/aws-sdk-go/service/lambda"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -53,7 +54,8 @@ func TestSQS_CreateTables(t *testing.T) {
 
 	// Here comes the mocking
 	mockGlueClient.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil)
-	mockGlueClient.On("GetTablesPagesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	// below called once for each database
+	mockGlueClient.On("GetTablesPagesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
 	mockAthenaClient := &testutils.AthenaMock{}
 	athenaClient = mockAthenaClient
 	mockAthenaClient.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
@@ -71,4 +73,57 @@ func TestSQS_CreateTables(t *testing.T) {
 
 	err = handleSQSEvent(event)
 	require.NoError(t, err)
+	mockGlueClient.AssertExpectations(t)
+	mockAthenaClient.AssertExpectations(t)
+}
+
+func TestSQS_CreateTablesWithSync(t *testing.T) {
+	initProcessTest()
+
+	body := CreateTablesMessage{
+		LogTypes: []string{"AWS.S3ServerAccess", "AWS.VPCFlow"},
+		Sync:     true, // force a partition sync
+	}
+	marshalled, err := jsoniter.Marshal(body)
+	require.NoError(t, err)
+	msg := events.SQSMessage{
+		Body: string(marshalled),
+		MessageAttributes: map[string]events.SQSMessageAttribute{
+			PantherMessageType: {
+				DataType:    *CreateTableMessageAttribute.DataType,
+				StringValue: CreateTableMessageAttribute.StringValue,
+			},
+		},
+	}
+	event := events.SQSEvent{Records: []events.SQSMessage{msg}}
+
+	// Here comes the mocking
+	mockGlueClient.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil)
+	// below called once for each database
+	mockGlueClient.On("GetTablesPagesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
+	mockAthenaClient := &testutils.AthenaMock{}
+	athenaClient = mockAthenaClient
+	mockAthenaClient.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
+		QueryExecutionId: aws.String("test-query-1234"),
+	}, nil)
+	mockAthenaClient.On("GetQueryExecution", mock.Anything).Return(&athena.GetQueryExecutionOutput{
+		QueryExecution: &athena.QueryExecution{
+			QueryExecutionId: aws.String("test-query-1234"),
+			Status: &athena.QueryExecutionStatus{
+				State: aws.String(athena.QueryExecutionStateSucceeded),
+			},
+		},
+	}, nil)
+	mockAthenaClient.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil)
+
+	// Sync
+	mockLambdaClient := &testutils.LambdaMock{}
+	lambdaClient = mockLambdaClient
+	mockLambdaClient.On("InvokeWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&lambda.InvokeOutput{}, nil).Once()
+
+	err = handleSQSEvent(event)
+	require.NoError(t, err)
+	mockGlueClient.AssertExpectations(t)
+	mockAthenaClient.AssertExpectations(t)
+	mockLambdaClient.AssertExpectations(t)
 }

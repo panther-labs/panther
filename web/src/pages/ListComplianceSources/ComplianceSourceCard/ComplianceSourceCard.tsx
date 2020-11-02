@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Flex, Link } from 'pouncejs';
+import { Flex, Link, Text, Tooltip } from 'pouncejs';
 import GenericItemCard from 'Components/GenericItemCard';
 import { ComplianceIntegration } from 'Generated/schema';
 import { formatDatetime } from 'Helpers/utils';
@@ -25,6 +25,7 @@ import urls from 'Source/urls';
 import logo from 'Assets/aws-minimal-logo.svg';
 import { Link as RRLink } from 'react-router-dom';
 import SourceHealthBadge from 'Components/badges/SourceHealthBadge';
+import { PANTHER_USER_ID } from 'Source/constants';
 import ComplianceSourceCardOptions from './ComplianceSourceCardOptions';
 
 interface ComplianceSourceCardProps {
@@ -32,6 +33,8 @@ interface ComplianceSourceCardProps {
 }
 
 const ComplianceSourceCard: React.FC<ComplianceSourceCardProps> = ({ source }) => {
+  const isCreatedByPanther = source.createdBy === PANTHER_USER_ID;
+
   const healthMetrics = React.useMemo(
     () => [
       source.health.auditRoleStatus,
@@ -44,11 +47,23 @@ const ComplianceSourceCard: React.FC<ComplianceSourceCardProps> = ({ source }) =
   return (
     <GenericItemCard>
       <GenericItemCard.Logo src={logo} />
-      <ComplianceSourceCardOptions source={source} />
+      {!isCreatedByPanther && <ComplianceSourceCardOptions source={source} />}
       <GenericItemCard.Body>
-        <Link as={RRLink} to={urls.compliance.sources.edit(source.integrationId)} cursor="pointer">
-          <GenericItemCard.Heading>{source.integrationLabel}</GenericItemCard.Heading>
-        </Link>
+        {!isCreatedByPanther ? (
+          <GenericItemCard.Heading>
+            <Link as={RRLink} to={urls.compliance.sources.edit(source.integrationId)}>
+              {source.integrationLabel}
+            </Link>
+          </GenericItemCard.Heading>
+        ) : (
+          <GenericItemCard.Heading>
+            <Tooltip content="This is a compliance source we created for you.">
+              <Text color="teal-300" as="span">
+                {source.integrationLabel}
+              </Text>
+            </Tooltip>
+          </GenericItemCard.Heading>
+        )}
         <GenericItemCard.ValuesGroup>
           <GenericItemCard.Value label="AWS Account ID" value={source.awsAccountId} />
           <GenericItemCard.Value
