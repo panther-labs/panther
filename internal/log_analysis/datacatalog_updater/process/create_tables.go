@@ -28,6 +28,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 )
@@ -35,6 +36,7 @@ import (
 // CreateTablesMessage is the event that triggers the creation of Glue tables/views for logtypes.
 type CreateTablesMessage struct {
 	LogTypes []string
+	Sync     bool // if true issue a non-blocking sync of all partitions
 }
 
 // CreateTableMessageAttribute is the SQS message attribute for the CreateTablesMessage.
@@ -64,6 +66,7 @@ func (m CreateTablesMessage) Send(sqsClient sqsiface.SQSAPI, queueURL string) er
 }
 
 func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) error {
+	// create/update all tables associated with logTypes
 	for _, logType := range msg.LogTypes {
 		entry, err := logtypesResolver.Resolve(ctx, logType)
 		if err != nil {
@@ -78,6 +81,7 @@ func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) er
 			return errors.Wrapf(err, "failed to update tables for log type %q", logType)
 		}
 	}
+
 	// update the views with the new tables
 	availableLogTypes, err := listAvailableLogTypes(ctx)
 	if err != nil {
@@ -95,5 +99,22 @@ func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) er
 	if err := athenaviews.CreateOrReplaceViews(athenaClient, config.AthenaWorkgroup, deployedLogTables); err != nil {
 		return errors.Wrap(err, "failed to update athena views")
 	}
+
+	// optionally force sync of all partitions (used during deployments)
+	if msg.Sync {
+		err = InvokeBackgroundSync(ctx, lambdaClient, &SyncEvent{
+			DatabaseNames: []string{
+				awsglue.LogProcessingDatabaseName,
+				awsglue.RuleMatchDatabaseName,
+				awsglue.RuleErrorsDatabaseName,
+			},
+			LogTypes: msg.LogTypes,
+			DryRun:   false,
+		})
+		if err != nil {
+			return errors.Wrap(err, "failed invoking sync")
+		}
+	}
+
 	return nil
 }

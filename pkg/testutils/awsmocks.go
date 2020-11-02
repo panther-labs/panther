@@ -100,6 +100,15 @@ func (m *LambdaMock) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutput, er
 	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
 }
 
+func (m *LambdaMock) InvokeWithContext(
+	ctx aws.Context,
+	input *lambda.InvokeInput,
+	options ...request.Option) (*lambda.InvokeOutput, error) {
+
+	args := m.Called(ctx, input, options)
+	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
+}
+
 func (m *LambdaMock) CreateEventSourceMapping(
 	input *lambda.CreateEventSourceMappingInput) (*lambda.EventSourceMappingConfiguration, error) {
 
