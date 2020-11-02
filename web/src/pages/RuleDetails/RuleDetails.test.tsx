@@ -434,7 +434,7 @@ describe('RuleDetails', () => {
     });
 
     // wait for autosave to kick in
-    await waitMs(550);
+    await waitMs(210);
     expect(getByText('Unique alert 2')).toBeInTheDocument();
     expect(queryStringToObj(history.location.search)).toEqual({
       nameContains: 'foo',
@@ -451,11 +451,11 @@ describe('RuleDetails', () => {
 
     fireEvent.click(oldestOption);
 
-    await waitMs(550);
+    await waitMs(210);
     expect(getByText('Unique alert 3')).toBeInTheDocument();
 
     // once again wait for autosave to kick in
-    await waitMs(550);
+    await waitMs(210);
 
     expect(queryStringToObj(history.location.search)).toEqual({
       nameContains: 'foo',
