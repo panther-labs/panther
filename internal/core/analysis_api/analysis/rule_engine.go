@@ -109,12 +109,20 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 			testResult.Results[i].DedupError = result.DedupError
 			testResult.Results[i].TitleOutput = result.TitleOutput
 			testResult.Results[i].TitleError = result.TitleError
-			testResult.Results[i].AlertContextOutput = result.AlertContextOutput
+			testResult.Results[i].AlertContextOutput = truncate(result.AlertContextOutput) // truncate, can be huge json
 			testResult.Results[i].AlertContextError = result.AlertContextError
 		}
 		testResult.TestSummary = testResult.TestSummary && passed
 	}
 	return testResult, nil
+}
+
+func truncate(s string) string {
+	maxChars := 140
+	if len(s) > maxChars {
+		return s[:maxChars] + "..."
+	}
+	return s
 }
 
 func hasPassed(expectedRuleOutput bool, result enginemodels.RuleResult) bool {
