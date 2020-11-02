@@ -91,20 +91,24 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 		}
 		test := rule.Tests[testIndex]
 
-		testResult.TestSummary = testResult.TestSummary && !result.Errored
+		passed := result.RuleOutput == bool(test.ExpectedResult)
+		testResult.TestSummary = testResult.TestSummary && passed
 
 		testResult.Results[i] = &models.RuleResult{
-			ID:           result.ID,
-			RuleID:       result.RuleID,
-			TestName:     string(test.Name),
-			Matched:      result.Matched,
-			RuleError:    result.RuleError,
-			DedupOutput:  result.DedupOutput,
-			DedupError:   result.DedupError,
-			TitleOutput:  result.TitleOutput,
-			TitleError:   result.TitleError,
-			GenericError: result.GenericError,
-			Errored:      result.Errored,
+			ID:                 result.ID,
+			RuleID:             result.RuleID,
+			TestName:           string(test.Name),
+			Passed:             passed,
+			Errored:            result.Errored,
+			RuleOutput:         result.RuleOutput,
+			RuleError:          result.RuleError,
+			DedupOutput:        result.DedupOutput,
+			DedupError:         result.DedupError,
+			TitleOutput:        result.TitleOutput,
+			TitleError:         result.TitleError,
+			AlertContextOutput: result.AlertContextOutput,
+			AlertContextError:  result.AlertContextError,
+			GenericError:       result.GenericError,
 		}
 	}
 	return testResult, nil

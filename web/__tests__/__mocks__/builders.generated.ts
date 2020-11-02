@@ -1498,6 +1498,10 @@ export const buildTestRuleRecordFunctions = (
       'titleFunction' in overrides ? overrides.titleFunction : buildTestRuleSubRecord(),
     dedupFunction:
       'dedupFunction' in overrides ? overrides.dedupFunction : buildTestRuleSubRecord(),
+    alertContextFunction:
+      'alertContextFunction' in overrides
+        ? overrides.alertContextFunction
+        : buildTestRuleSubRecord(),
   };
 };
 

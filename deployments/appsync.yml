@@ -1942,10 +1942,10 @@ Resources:
             #set ($payloadItem = {})
             $util.qr($payloadItem.put("id", $resultItem.id))
             $util.qr($payloadItem.put("name", $resultItem.testName))
-            $util.qr($payloadItem.put("passed", $util.defaultIfNull($resultItem.matched, false)))
+            $util.qr($payloadItem.put("passed", $util.defaultIfNull($resultItem.passed, false)))
             $util.qr($payloadItem.put("functions", {}))
 
-            $util.qr($payloadItem.functions.put("ruleFunction", { "output": $ctx.args.input.tests[$foreach.index].expectedResult }))
+            $util.qr($payloadItem.functions.put("ruleFunction", { "output": $resultItem.ruleOutput }))
             #if ($resultItem.ruleError)
               $util.qr($payloadItem.functions.ruleFunction.put("error", { "message": $resultItem.ruleError }))
             #end
@@ -1969,6 +1969,17 @@ Resources:
               #end
               #if ($resultItem.dedupError)
                 $util.qr($payloadItem.functions.dedupFunction.put("error", { "message": $resultItem.dedupError }))
+              #end
+            #end
+
+            #if ($resultItem.alertContextOutput || $resultItem.alertContextError)
+              $util.qr($payloadItem.functions.put("alertContextFunction", {}))
+
+              #if ($resultItem.alertContextOutput)
+                $util.qr($payloadItem.functions.alertContextFunction.put("output", $resultItem.alertContextOutput))
+              #end
+              #if ($resultItem.alertContextError)
+                $util.qr($payloadItem.functions.alertContextFunction.put("error", { "message": $resultItem.alertContextError }))
               #end
             #end
 

@@ -1201,7 +1201,13 @@ definitions:
         type: string
       ruleId:
         type: string
-      matched:
+      passed:
+        type: boolean
+        description: True if the test returned the expected result. Always false if the result includes an error.
+      errored:
+        type: boolean
+        description: True if the result includes an error.
+      ruleOutput:
         type: boolean
       ruleError:
         type: string
@@ -1213,10 +1219,13 @@ definitions:
         type: string
       dedupError:
         type: string
-      errored:
-        type: boolean
+      alertContextOutput:
+        type: string
+      alertContextError:
+        type: string
       genericError:
         type: string
+        description: An error produced before running any of the rule functions, like import or syntax error.
 
   ##### Suppress #####
   Suppress:

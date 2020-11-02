@@ -658,7 +658,8 @@ export type Mutation = {
   deliverAlert: AlertSummary;
   resetUserPassword: User;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
-  testPolicy?: Maybe<TestPolicyResponse>;
+  testPolicy: TestPolicyResponse;
+  testRule: TestRuleResponse;
   updateAlertStatus: Array<AlertSummary>;
   updateDestination?: Maybe<Destination>;
   updateComplianceIntegration: ComplianceIntegration;
@@ -1267,6 +1268,7 @@ export type TestRuleRecordFunctions = {
   ruleFunction: TestRuleSubRecord;
   titleFunction?: Maybe<TestRuleSubRecord>;
   dedupFunction?: Maybe<TestRuleSubRecord>;
+  alertContextFunction?: Maybe<TestRuleSubRecord>;
 };
 
 export type TestRuleResponse = {
@@ -2980,6 +2982,11 @@ export type TestRuleRecordFunctionsResolvers<
   ruleFunction?: Resolver<ResolversTypes['TestRuleSubRecord'], ParentType, ContextType>;
   titleFunction?: Resolver<Maybe<ResolversTypes['TestRuleSubRecord']>, ParentType, ContextType>;
   dedupFunction?: Resolver<Maybe<ResolversTypes['TestRuleSubRecord']>, ParentType, ContextType>;
+  alertContextFunction?: Resolver<
+    Maybe<ResolversTypes['TestRuleSubRecord']>,
+    ParentType,
+    ContextType
+  >;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

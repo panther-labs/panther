@@ -42,6 +42,7 @@ TRUNCATED_STRING_SUFFIX = '... (truncated)'
 DEFAULT_RULE_DEDUP_PERIOD_MINS = 60
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class RuleResult:
     """Class containing the result of running a rule"""
@@ -55,10 +56,13 @@ class RuleResult:
     title_output: Optional[str] = None
     title_exception: Optional[Exception] = None
 
+    alert_context: Optional[str] = None
+    alert_context_exception: Optional[Exception] = None
+
     @property
     def errored(self) -> bool:
-        """Returns whether any of the rule functions (rule()/title()/dedup()) raised an error"""
-        return bool(self.rule_exception or self.title_exception or self.dedup_exception)
+        """Returns whether any of the rule functions raised an error"""
+        return bool(self.rule_exception or self.title_exception or self.dedup_exception or self.alert_context_exception)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -146,9 +150,9 @@ class Rule:
         except Exception as err:  # pylint: disable=broad-except
             rule_result.rule_exception = err
 
-        if not rule_result.matched:
-            # There is no need to run the dedup/title functions if rule didn't match (or raised an exception)
-            # because the dedup/title functions may depend on the contents of a matching event.
+        if batch_mode and not rule_result.matched:
+            # In batch mode (log analysis), there is no need to run the title/dedup functions
+            # if the rule isn't going to trigger an alert
             return rule_result
 
         try:
@@ -160,6 +164,11 @@ class Rule:
             rule_result.dedup_output = self._get_dedup(event, rule_result.title_output, use_default_on_exception=batch_mode)
         except Exception as err:  # pylint: disable=broad-except
             rule_result.dedup_exception = err
+
+        try:
+            rule_result.alert_context = self._get_alert_context(event, use_default_on_exception=batch_mode)
+        except Exception as err:  # pylint: disable=broad-except
+            rule_result.alert_context_exception = err
 
         return rule_result
 
