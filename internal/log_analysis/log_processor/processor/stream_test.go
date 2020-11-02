@@ -89,8 +89,9 @@ func TestStreamEvents(t *testing.T) {
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil).Once()
 	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
 
-	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestDeadline,
-		noopProcessorFunc, noopReadSnsMessagesFunc)
+	ctx, cancel := context.WithDeadline(context.Background(), streamTestDeadline)
+	defer cancel()
+	sqsMessageCount, err := streamEvents(ctx, streamTestSqsClient, noopProcessorFunc, noopReadSnsMessagesFunc)
 	require.NoError(t, err)
 	assert.Equal(t, len(streamTestReceiveMessageOutput.Messages), sqsMessageCount)
 
@@ -102,9 +103,9 @@ func TestStreamEventsProcessingTimeLimitExceeded(t *testing.T) {
 	streamTestSqsClient, streamTestDeadline := initTest()
 
 	deadline := streamTestDeadline.Add(-defaultTestTimeLimit * 2) // set in the past so code exits immediately
-
-	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, deadline,
-		noopProcessorFunc, noopReadSnsMessagesFunc)
+	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	defer cancel()
+	sqsMessageCount, err := streamEvents(ctx, streamTestSqsClient, noopProcessorFunc, noopReadSnsMessagesFunc)
 	require.NoError(t, err)
 	assert.Equal(t, 0, sqsMessageCount)
 
@@ -117,8 +118,9 @@ func TestStreamEventsReadEventError(t *testing.T) {
 
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
 
-	_, err := streamEvents(context.Background(), streamTestSqsClient, streamTestDeadline,
-		noopProcessorFunc, failReadSnsMessagesFunc)
+	ctx, cancel := context.WithDeadline(context.Background(), streamTestDeadline)
+	defer cancel()
+	_, err := streamEvents(ctx, streamTestSqsClient, noopProcessorFunc, failReadSnsMessagesFunc)
 	require.Error(t, err)
 	assert.Equal(t, "readEventError", err.Error())
 
@@ -131,8 +133,9 @@ func TestStreamEventsProcessError(t *testing.T) {
 
 	deadline := streamTestDeadline.Add(-defaultTestTimeLimit * 2) // set in the past so code exits immediately
 
-	_, err := streamEvents(context.Background(), streamTestSqsClient, deadline,
-		failProcessorFunc, noopReadSnsMessagesFunc)
+	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	defer cancel()
+	_, err := streamEvents(ctx, streamTestSqsClient, failProcessorFunc, noopReadSnsMessagesFunc)
 	require.Error(t, err)
 	assert.Equal(t, "processError", err.Error())
 
@@ -145,8 +148,9 @@ func TestStreamEventsProcessErrorAndReadEventError(t *testing.T) {
 
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
 
-	_, err := streamEvents(context.Background(), streamTestSqsClient, streamTestDeadline,
-		failProcessorFunc, failReadSnsMessagesFunc)
+	ctx, cancel := context.WithDeadline(context.Background(), streamTestDeadline)
+	defer cancel()
+	_, err := streamEvents(ctx, streamTestSqsClient, failProcessorFunc, failReadSnsMessagesFunc)
 	require.Error(t, err)
 	assert.Equal(t, "processError", err.Error()) // expect the processError NOT readEventError
 
@@ -161,8 +165,9 @@ func TestStreamEventsReceiveSQSError(t *testing.T) {
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{},
 		fmt.Errorf("receiveError")).Once()
 
-	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestDeadline,
-		noopProcessorFunc, noopReadSnsMessagesFunc)
+	ctx, cancel := context.WithDeadline(context.Background(), streamTestDeadline)
+	defer cancel()
+	sqsMessageCount, err := streamEvents(ctx, streamTestSqsClient, noopProcessorFunc, noopReadSnsMessagesFunc)
 	assert.Error(t, err)
 	assert.Equal(t, 0, sqsMessageCount)
 	assert.Equal(t, "failure receiving messages from https://fakesqsurl: receiveError", err.Error())
@@ -186,8 +191,9 @@ func TestStreamEventsDeleteSQSError(t *testing.T) {
 		Successful: []*sqs.DeleteMessageBatchResultEntry{},
 	}, fmt.Errorf("deleteError")).Once()
 
-	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestDeadline,
-		noopProcessorFunc, noopReadSnsMessagesFunc)
+	ctx, cancel := context.WithDeadline(context.Background(), streamTestDeadline)
+	defer cancel()
+	sqsMessageCount, err := streamEvents(ctx, streamTestSqsClient, noopProcessorFunc, noopReadSnsMessagesFunc)
 
 	// keep sure we get error logging
 	actualLogs := logs.AllUntimed()

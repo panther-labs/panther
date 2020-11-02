@@ -57,26 +57,25 @@ func StreamEvents(
 	ctx context.Context,
 	sqsClient sqsiface.SQSAPI,
 	resolver logtypes.Resolver,
-	deadlineTime time.Time,
 ) (sqsMessageCount int, err error) {
 
 	newProcessor := NewFactory(resolver)
 	process := func(streams <-chan *common.DataStream, dest destinations.Destination) error {
 		return Process(streams, dest, newProcessor)
 	}
-	return streamEvents(ctx, sqsClient, deadlineTime, process, sources.ReadSnsMessages)
+	return streamEvents(ctx, sqsClient, process, sources.ReadSnsMessages)
 }
 
 // entry point for unit testing, pass in read/process functions
 func streamEvents(
-	_ context.Context,
+	ctx context.Context,
 	sqsClient sqsiface.SQSAPI,
-	deadlineTime time.Time,
 	processFunc ProcessFunc,
 	generateDataStreamsFunc func([]string) ([]*common.DataStream, error)) (int, error) {
 
 	streamChan := make(chan *common.DataStream, 2*sqsMaxBatchSize) // use small buffer to pipeline events
-	processingDeadlineTime := processingDeadlineTime(deadlineTime)
+	deadlineTime, _ := ctx.Deadline()
+	processingDeadlineTime := processingDeadlineTime(deadlineTime) // FIXME: remove deadline check, use ctx expiration
 
 	var accumulatedMessageReceipts []*string // accumulate message receipts for delete at the end
 

@@ -54,8 +54,7 @@ func process(ctx context.Context) (err error) {
 	}()
 
 	logTypesResolver := registry.NativeLogTypesResolver()
-	deadline, _ := ctx.Deadline() // TODO Remove deadline, rely on ctx for cancellation
-	sqsMessageCount, err = processor.StreamEvents(ctx, common.SqsClient, logTypesResolver, deadline)
+	sqsMessageCount, err = processor.StreamEvents(ctx, common.SqsClient, logTypesResolver)
 
 	return err
 }
