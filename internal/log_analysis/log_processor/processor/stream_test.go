@@ -22,13 +22,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -55,17 +52,6 @@ var (
 				Body:          aws.String(snsMessage),
 				ReceiptHandle: aws.String("testMessageHandle"),
 			},
-		},
-	}
-
-	streamTestNotEmptyQueue = &sqs.GetQueueAttributesOutput{
-		Attributes: map[string]*string{
-			sqs.QueueAttributeNameApproximateNumberOfMessages: aws.String("200"),
-		},
-	}
-	streamTestEmptyQueue = &sqs.GetQueueAttributesOutput{
-		Attributes: map[string]*string{
-			sqs.QueueAttributeNameApproximateNumberOfMessages: aws.String("0"),
 		},
 	}
 )
@@ -96,91 +82,86 @@ func TestProcessingDeadline(t *testing.T) {
 }
 
 func TestStreamEvents(t *testing.T) {
-	streamTestSqsClient, streamTestLambdaClient, streamTestDeadline := initTest()
+	streamTestSqsClient, streamTestDeadline := initTest()
 
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
 	// this one return 0 messages, which breaks the loop
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil).Once()
 	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
 
-	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, streamTestDeadline,
+	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestDeadline,
 		noopProcessorFunc, noopReadSnsMessagesFunc)
 	require.NoError(t, err)
 	assert.Equal(t, len(streamTestReceiveMessageOutput.Messages), sqsMessageCount)
 
 	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	streamTestSqsClient.AssertExpectations(t)
-	streamTestLambdaClient.AssertExpectations(t)
 }
 
 func TestStreamEventsProcessingTimeLimitExceeded(t *testing.T) {
-	streamTestSqsClient, streamTestLambdaClient, streamTestDeadline := initTest()
+	streamTestSqsClient, streamTestDeadline := initTest()
 
 	deadline := streamTestDeadline.Add(-defaultTestTimeLimit * 2) // set in the past so code exits immediately
 
-	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, deadline,
+	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, deadline,
 		noopProcessorFunc, noopReadSnsMessagesFunc)
 	require.NoError(t, err)
 	assert.Equal(t, 0, sqsMessageCount)
 
 	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	streamTestSqsClient.AssertExpectations(t)
-	streamTestLambdaClient.AssertExpectations(t)
 }
 
 func TestStreamEventsReadEventError(t *testing.T) {
-	streamTestSqsClient, streamTestLambdaClient, streamTestDeadline := initTest()
+	streamTestSqsClient, streamTestDeadline := initTest()
 
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
 
-	_, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, streamTestDeadline,
+	_, err := streamEvents(context.Background(), streamTestSqsClient, streamTestDeadline,
 		noopProcessorFunc, failReadSnsMessagesFunc)
 	require.Error(t, err)
 	assert.Equal(t, "readEventError", err.Error())
 
 	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	streamTestSqsClient.AssertExpectations(t)
-	streamTestLambdaClient.AssertExpectations(t)
 }
 
 func TestStreamEventsProcessError(t *testing.T) {
-	streamTestSqsClient, streamTestLambdaClient, streamTestDeadline := initTest()
+	streamTestSqsClient, streamTestDeadline := initTest()
 
 	deadline := streamTestDeadline.Add(-defaultTestTimeLimit * 2) // set in the past so code exits immediately
 
-	_, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, deadline,
+	_, err := streamEvents(context.Background(), streamTestSqsClient, deadline,
 		failProcessorFunc, noopReadSnsMessagesFunc)
 	require.Error(t, err)
 	assert.Equal(t, "processError", err.Error())
 
 	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	streamTestSqsClient.AssertExpectations(t)
-	streamTestLambdaClient.AssertExpectations(t)
 }
 
 func TestStreamEventsProcessErrorAndReadEventError(t *testing.T) {
-	streamTestSqsClient, streamTestLambdaClient, streamTestDeadline := initTest()
+	streamTestSqsClient, streamTestDeadline := initTest()
 
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
 
-	_, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, streamTestDeadline,
+	_, err := streamEvents(context.Background(), streamTestSqsClient, streamTestDeadline,
 		failProcessorFunc, failReadSnsMessagesFunc)
 	require.Error(t, err)
 	assert.Equal(t, "processError", err.Error()) // expect the processError NOT readEventError
 
 	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	streamTestSqsClient.AssertExpectations(t)
-	streamTestLambdaClient.AssertExpectations(t)
 }
 
 func TestStreamEventsReceiveSQSError(t *testing.T) {
-	streamTestSqsClient, streamTestLambdaClient, streamTestDeadline := initTest()
+	streamTestSqsClient, streamTestDeadline := initTest()
 
 	// this one fails
 	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{},
 		fmt.Errorf("receiveError")).Once()
 
-	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, streamTestDeadline,
+	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestDeadline,
 		noopProcessorFunc, noopReadSnsMessagesFunc)
 	assert.Error(t, err)
 	assert.Equal(t, 0, sqsMessageCount)
@@ -188,11 +169,10 @@ func TestStreamEventsReceiveSQSError(t *testing.T) {
 
 	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	streamTestSqsClient.AssertExpectations(t)
-	streamTestLambdaClient.AssertExpectations(t)
 }
 
 func TestStreamEventsDeleteSQSError(t *testing.T) {
-	streamTestSqsClient, streamTestLambdaClient, streamTestDeadline := initTest()
+	streamTestSqsClient, streamTestDeadline := initTest()
 
 	logs := mockLogger()
 
@@ -206,7 +186,7 @@ func TestStreamEventsDeleteSQSError(t *testing.T) {
 		Successful: []*sqs.DeleteMessageBatchResultEntry{},
 	}, fmt.Errorf("deleteError")).Once()
 
-	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, streamTestDeadline,
+	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestDeadline,
 		noopProcessorFunc, noopReadSnsMessagesFunc)
 
 	// keep sure we get error logging
@@ -236,71 +216,11 @@ func TestStreamEventsDeleteSQSError(t *testing.T) {
 
 	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	streamTestSqsClient.AssertExpectations(t)
-	streamTestLambdaClient.AssertExpectations(t)
 }
 
-func TestScaleup(t *testing.T) {
-	streamTestSqsClient, streamTestLambdaClient, streamTestDeadline := initTest()
-
-	// this is used to delay the message read to give time for the scale up go routine to run
-	scaleupTestDuration := -time.Since(streamTestDeadline) / 2
-
-	// make test run faster
-	processingScaleDecisionInterval = scaleupTestDuration / 3 // we should have 2 executions then scaleupTestDuration will expire
-	defer func() {
-		processingScaleDecisionInterval = defaultProcessingScaleDecisionInterval
-	}()
-
-	var wg sync.WaitGroup
-	// we want to wait for 2 executions of the scale up go routine
-	wg.Add(2)
-	// this is what we return showing a queue size big enough to scale
-	spikeCount := processingMaxFilesLimit * 2
-	streamTestSpikeInEventsQueue := &sqs.GetQueueAttributesOutput{
-		Attributes: map[string]*string{
-			sqs.QueueAttributeNameApproximateNumberOfMessages: aws.String(strconv.Itoa(spikeCount)),
-		},
-	}
-	// this will pause scaleupTestDuration to give time for the scale up go routine to run twice
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once().
-		Run(func(args mock.Arguments) {
-			wg.Wait()
-		})
-	// the scaleup go routine will check the queue, then execute a lambda
-	streamTestSqsClient.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).
-		Return(streamTestSpikeInEventsQueue, nil).Once().
-		Run(func(args mock.Arguments) {
-			wg.Done()
-		})
-	streamTestLambdaClient.On("InvokeWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&lambda.InvokeOutput{}, nil).Once()
-
-	// this will return a number for the queue size smaller than needed to scale, so no lambda calls
-	streamTestSqsClient.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).
-		Return(streamTestNotEmptyQueue, nil).Once().
-		Run(func(args mock.Arguments) {
-			wg.Done()
-		})
-
-	// at this point the scaleupTestDuration blocking the sns read will expire
-
-	// this one is below threshold, which breaks the loop
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil).Once()
-	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
-
-	sqsMessageCount, err := streamEvents(context.Background(), streamTestSqsClient, streamTestLambdaClient, streamTestDeadline,
-		noopProcessorFunc, noopReadSnsMessagesFunc)
-	require.NoError(t, err)
-	assert.Equal(t, len(streamTestReceiveMessageOutput.Messages), sqsMessageCount)
-
-	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
-	streamTestSqsClient.AssertExpectations(t)
-	streamTestLambdaClient.AssertExpectations(t)
-}
-
-func initTest() (streamTestSqsClient *testutils.SqsMock, streamTestLambdaClient *testutils.LambdaMock, streamTestDeadline time.Time) {
+func initTest() (streamTestSqsClient *testutils.SqsMock, streamTestDeadline time.Time) {
 	// new mocks for each test
 	streamTestSqsClient = &testutils.SqsMock{}
-	streamTestLambdaClient = &testutils.LambdaMock{}
 	streamTestDeadline = time.Now().Add(defaultTestTimeLimit)
 	return
 }

@@ -35,9 +35,6 @@ import (
 )
 
 const (
-	// How often we check if we need to scale (controls responsiveness).
-	defaultProcessingScaleDecisionInterval = time.Second * 30
-
 	// This limits how many lambdas can be invoked at once to cap rate of scaling (controls responsiveness).
 	// Setting this higher leads to faster response to spikes but risks throttling very quickly.
 	// Since each lambda makes this decision locally, this results in an exponential response under load.
@@ -47,15 +44,11 @@ const (
 	processingMaxLambdaInvoke = 1
 )
 
-var (
-	processingScaleDecisionInterval = defaultProcessingScaleDecisionInterval // var so we can set in tests
-)
-
-// scalingDecisions makes periodic adaptive decisions to scale up based on the sqs queue stats, it returns
+// ScalingDecisions makes periodic adaptive decisions to scale up based on the sqs queue stats, it returns
 // immediately with a boolean stop channel (sending an event to the channel stops execution).
-func scalingDecisions(ctx context.Context, sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.LambdaAPI) {
+func ScalingDecisions(ctx context.Context, sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.LambdaAPI, decisionInterval time.Duration) {
 	go func() {
-		ticker := time.NewTicker(processingScaleDecisionInterval)
+		ticker := time.NewTicker(decisionInterval)
 		defer ticker.Stop()
 		for {
 			select {

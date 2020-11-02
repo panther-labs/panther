@@ -24,7 +24,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/pkg/errors"
@@ -57,7 +56,6 @@ Fewer, bigger files makes Athena queries much faster.
 func StreamEvents(
 	ctx context.Context,
 	sqsClient sqsiface.SQSAPI,
-	lambdaClient lambdaiface.LambdaAPI,
 	resolver logtypes.Resolver,
 	deadlineTime time.Time,
 ) (sqsMessageCount int, err error) {
@@ -66,14 +64,13 @@ func StreamEvents(
 	process := func(streams <-chan *common.DataStream, dest destinations.Destination) error {
 		return Process(streams, dest, newProcessor)
 	}
-	return streamEvents(ctx, sqsClient, lambdaClient, deadlineTime, process, sources.ReadSnsMessages)
+	return streamEvents(ctx, sqsClient, deadlineTime, process, sources.ReadSnsMessages)
 }
 
 // entry point for unit testing, pass in read/process functions
 func streamEvents(
-	ctx context.Context,
+	_ context.Context,
 	sqsClient sqsiface.SQSAPI,
-	lambdaClient lambdaiface.LambdaAPI,
 	deadlineTime time.Time,
 	processFunc ProcessFunc,
 	generateDataStreamsFunc func([]string) ([]*common.DataStream, error)) (int, error) {
@@ -85,12 +82,7 @@ func streamEvents(
 
 	readEventErrorChan := make(chan error, 1) // below go routine closes over this for errors, 1 deep buffer
 	go func() {
-		ctx, cancel := context.WithCancel(ctx)
-		// runs periodically during processing making scaling decisions
-		scalingDecisions(ctx, sqsClient, lambdaClient)
-
 		defer func() {
-			cancel()                  // terminate the scaling go routine
 			close(streamChan)         // done reading messages, this will cause processFunc() to return
 			close(readEventErrorChan) // no more writes on err chan
 		}()

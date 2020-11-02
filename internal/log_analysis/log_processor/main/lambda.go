@@ -20,6 +20,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
@@ -45,14 +46,26 @@ func process(ctx context.Context) (err error) {
 	lc, _ := lambdacontext.FromContext(ctx)
 	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
 
+	cancelScaling := scheduleScalingDecisions(ctx)
 	var sqsMessageCount int
 	defer func() {
+		cancelScaling()
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", sqsMessageCount))
 	}()
 
 	logTypesResolver := registry.NativeLogTypesResolver()
-
 	deadline, _ := ctx.Deadline() // TODO Remove deadline, rely on ctx for cancellation
-	sqsMessageCount, err = processor.StreamEvents(ctx, common.SqsClient, common.LambdaClient, logTypesResolver, deadline)
+	sqsMessageCount, err = processor.StreamEvents(ctx, common.SqsClient, logTypesResolver, deadline)
+
 	return err
+}
+
+func scheduleScalingDecisions(ctx context.Context) context.CancelFunc {
+	// Create cancellable deadline for Scaling Decisions go routine
+	ctx, cancel := context.WithCancel(ctx)
+	// runs periodically during processing making scaling decisions
+	// How often we check if we need to scale (controls responsiveness).
+	const scalingDecisionInterval = 30 * time.Second
+	processor.ScalingDecisions(ctx, common.SqsClient, common.LambdaClient, scalingDecisionInterval)
+	return cancel
 }
