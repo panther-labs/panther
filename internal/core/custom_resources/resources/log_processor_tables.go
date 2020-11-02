@@ -27,18 +27,18 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
+	"github.com/panther-labs/panther/internal/core/source_api/apifunctions"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
-	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 type UpdateLogProcessorTablesProperties struct {
 	// TablesSignature should change every time the tables change (for CF master.yml this can be the Panther version)
-	TablesSignature     string `validate:"required"`
-	AthenaWorkGroup     string `validate:"required"`
-	ProcessedDataBucket string `validate:"required"`
+	TablesSignature            string `validate:"required"`
+	AthenaWorkGroup            string `validate:"required"`
+	ProcessedDataBucket        string `validate:"required"`
+	DataCatalogUpdaterQueueURL string `validate:"required"`
 }
 
 func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
@@ -86,47 +86,14 @@ func updateLogProcessorTables(ctx context.Context, props *UpdateLogProcessorTabl
 		}
 	}
 
-	// update schemas for tables that are deployed
-	deployedLogTables, err := gluetables.DeployedLogTables(glueClient)
+	// update schemas and views for tables that are deployed
+	logTypes, err := apifunctions.ListLogTypes(ctx, lambdaClient)
 	if err != nil {
 		return err
 	}
-	logTypes := make([]string, len(deployedLogTables))
-	for i, logTable := range deployedLogTables {
-		zap.L().Info("updating table", zap.String("database", logTable.DatabaseName()), zap.String("table", logTable.TableName()))
-
-		// update catalog
-		// NOTE: This function updates all tables, not only the log tables
-		_, err := gluetables.CreateOrUpdateGlueTables(glueClient, props.ProcessedDataBucket, logTable)
-		if err != nil {
-			return err
-		}
-
-		// collect the log types
-		logTypes[i] = logTable.LogType()
+	m := process.CreateTablesMessage{
+		LogTypes: logTypes,
+		Sync:     true, // force a partition sync
 	}
-
-	// update the views with the new tables
-	err = athenaviews.CreateOrReplaceViews(athenaClient, props.AthenaWorkGroup, deployedLogTables)
-	if err != nil {
-		return errors.Wrap(err, "failed creating views")
-	}
-
-	// sync partitions via recursive lambda to avoid blocking the deployment
-	if len(logTypes) > 0 {
-		err = process.InvokeBackgroundSync(ctx, lambdaClient, &process.SyncEvent{
-			DatabaseNames: []string{
-				awsglue.LogProcessingDatabaseName,
-				awsglue.RuleMatchDatabaseName,
-				awsglue.RuleErrorsDatabaseName,
-			},
-			LogTypes: logTypes,
-			DryRun:   false,
-		})
-		if err != nil {
-			return errors.Wrap(err, "failed invoking sync")
-		}
-	}
-
-	return nil
+	return m.Send(sqsClient, props.DataCatalogUpdaterQueueURL)
 }
