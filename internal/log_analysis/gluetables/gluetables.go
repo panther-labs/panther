@@ -29,21 +29,21 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
-	cloudsecGlue "github.com/panther-labs/panther/internal/compliance/awsglue"
-	loganalysisGlue "github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	cloudsecglue "github.com/panther-labs/panther/internal/compliance/awsglue"
+	loganalysisglue "github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 // DeployedLogTypes scans glue API to filter log types with deployed tables
 func DeployedLogTypes(ctx context.Context, glueClient glueiface.GlueAPI, logTypes []string) ([]string, error) {
-	dbNames := []string{loganalysisGlue.LogProcessingDatabaseName, cloudsecGlue.CloudSecurityDatabase}
+	dbNames := []string{loganalysisglue.LogProcessingDatabaseName, cloudsecglue.CloudSecurityDatabase}
 	index := make(map[string]string, len(logTypes))
 	deployed := make([]string, 0, len(logTypes))
 
 	// set up filter via map
 	for _, logType := range logTypes {
-		tableName := loganalysisGlue.GetTableName(logType)
+		tableName := loganalysisglue.GetTableName(logType)
 		index[tableName] = logType
 	}
 
@@ -86,9 +86,9 @@ func DeployedTablesSignature(glueClient glueiface.GlueAPI) (deployedLogTablesSig
 }
 
 // deployedNativeLogTables returns the glue tables from the registry that have been deployed (possibly with schema updates)
-func deployedNativeLogTables(glueClient glueiface.GlueAPI) (deployedLogTables []*loganalysisGlue.GlueTableMetadata, err error) {
+func deployedNativeLogTables(glueClient glueiface.GlueAPI) (deployedLogTables []*loganalysisglue.GlueTableMetadata, err error) {
 	for _, gm := range registry.AvailableTables() {
-		_, err := loganalysisGlue.GetTable(glueClient, gm.DatabaseName(), gm.TableName())
+		_, err := loganalysisglue.GetTable(glueClient, gm.DatabaseName(), gm.TableName())
 		if err != nil {
 			if awsutils.IsAnyError(err, glue.ErrCodeEntityNotFoundException) {
 				continue
@@ -104,10 +104,10 @@ func deployedNativeLogTables(glueClient glueiface.GlueAPI) (deployedLogTables []
 }
 
 // Expand log tables expands tables from the log processing database to include additional tables (rules, ruleErrors)
-func ExpandLogTables(tables ...*loganalysisGlue.GlueTableMetadata) (expanded []*loganalysisGlue.GlueTableMetadata) {
-	expanded = make([]*loganalysisGlue.GlueTableMetadata, 0, 3*len(tables))
+func ExpandLogTables(tables ...*loganalysisglue.GlueTableMetadata) (expanded []*loganalysisglue.GlueTableMetadata) {
+	expanded = make([]*loganalysisglue.GlueTableMetadata, 0, 3*len(tables))
 	for _, table := range tables {
-		if table.DatabaseName() != loganalysisGlue.LogProcessingDatabaseName {
+		if table.DatabaseName() != loganalysisglue.LogProcessingDatabaseName {
 			continue
 		}
 		expanded = append(expanded, table, table.RuleTable(), table.RuleErrorTable())
@@ -115,7 +115,7 @@ func ExpandLogTables(tables ...*loganalysisGlue.GlueTableMetadata) (expanded []*
 	return
 }
 
-func BuildSignature(tables ...*loganalysisGlue.GlueTableMetadata) (string, error) {
+func BuildSignature(tables ...*loganalysisglue.GlueTableMetadata) (string, error) {
 	tableSignatures := make([]string, 0, len(tables))
 	for _, table := range tables {
 		sig, err := table.Signature()
@@ -133,14 +133,14 @@ func BuildSignature(tables ...*loganalysisGlue.GlueTableMetadata) (string, error
 }
 
 type TablesForLogType struct {
-	LogTable       *loganalysisGlue.GlueTableMetadata
-	RuleTable      *loganalysisGlue.GlueTableMetadata
-	RuleErrorTable *loganalysisGlue.GlueTableMetadata
+	LogTable       *loganalysisglue.GlueTableMetadata
+	RuleTable      *loganalysisglue.GlueTableMetadata
+	RuleErrorTable *loganalysisglue.GlueTableMetadata
 }
 
 // CreateOrUpdateGlueTables, given a log meta data table, creates all tables related to this log table in the glue catalog.
 func CreateOrUpdateGlueTables(glueClient glueiface.GlueAPI, bucket string,
-	logTable *loganalysisGlue.GlueTableMetadata) (*TablesForLogType, error) {
+	logTable *loganalysisglue.GlueTableMetadata) (*TablesForLogType, error) {
 
 	// Create the log table
 	err := logTable.CreateOrUpdateTable(glueClient, bucket)

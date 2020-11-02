@@ -19,29 +19,28 @@ package apifunctions
  */
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/core/source_api/api"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // Below are function call entry points to the api that allow callers easily use the lambda interface.
 // There are no referenced external packages (other than `models`) to minimize pulling in unneeded code.
 
-const (
-	LambdaName = "panther-source-api"
-)
-
 // ListLogTypes gets the current set of logTypes in use
-func ListLogTypes(lambdaClient lambdaiface.LambdaAPI) ([]string, error) {
+func ListLogTypes(_ context.Context, lambdaClient lambdaiface.LambdaAPI) ([]string, error) {
 	var listLogTypesOutput models.ListLogTypesOutput
 	var listLogTypesInput = &models.LambdaInput{
 		ListLogTypes: &models.ListLogTypesInput{},
 	}
-	if err := genericapi.Invoke(lambdaClient, LambdaName, listLogTypesInput, &listLogTypesOutput); err != nil {
-		return nil, fmt.Errorf("error calling source-api to list logTypes: %v", err)
+	// FIXME: extend genericapi to use context
+	if err := genericapi.Invoke(lambdaClient, api.LambdaName, listLogTypesInput, &listLogTypesOutput); err != nil {
+		return nil, errors.Wrap(err, "error calling source-api to list logTypes")
 	}
 
 	return listLogTypesOutput.LogTypes, nil

@@ -39,12 +39,8 @@ func collectLogTypes(listOutput []*models.SourceIntegration) []string {
 	// collect them all in a set to ensure uniqueness
 	logTypesSet := make(map[string]struct{})
 	for _, integration := range listOutput {
-		switch integration.IntegrationType {
-		// types related to log processing
-		case models.IntegrationTypeAWS3, models.IntegrationTypeSqs:
-			for _, logType := range integration.LogTypes {
-				logTypesSet[logType] = struct{}{}
-			}
+		for _, logType := range integration.RequiredLogTypes() {
+			logTypesSet[logType] = struct{}{}
 		}
 	}
 

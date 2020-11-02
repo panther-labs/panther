@@ -51,7 +51,7 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 			zap.L().Error("failed to parse resource properties", zap.Error(err))
 			return physicalResourceID, nil, err
 		}
-		if err := updateLogProcessorTables(&props); err != nil {
+		if err := updateLogProcessorTables(ctx, &props); err != nil {
 			zap.L().Error("failed to update glue tables", zap.Error(err))
 			return physicalResourceID, nil, err
 		}
@@ -73,7 +73,7 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 	}
 }
 
-func updateLogProcessorTables(props *UpdateLogProcessorTablesProperties) error {
+func updateLogProcessorTables(ctx context.Context, props *UpdateLogProcessorTablesProperties) error {
 	// ensure databases are all there
 	for pantherDatabase, pantherDatabaseDescription := range awsglue.PantherDatabases {
 		zap.L().Info("creating database", zap.String("database", pantherDatabase))
@@ -87,7 +87,7 @@ func updateLogProcessorTables(props *UpdateLogProcessorTablesProperties) error {
 	}
 
 	// update schemas and views for tables that are deployed
-	logTypes, err := apifunctions.ListLogTypes(lambdaClient)
+	logTypes, err := apifunctions.ListLogTypes(ctx, lambdaClient)
 	if err != nil {
 		return err
 	}
