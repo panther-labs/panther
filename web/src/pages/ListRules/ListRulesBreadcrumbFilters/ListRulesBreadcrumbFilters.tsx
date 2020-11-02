@@ -103,6 +103,7 @@ const ListRulesBreadcrumbFilters: React.FC = () => {
                     name="logType"
                     items={availableLogTypes}
                     placeholder="Filter by log type"
+                    searchable
                   />
                 </Box>
               )}
