@@ -91,8 +91,27 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 		}
 		test := rule.Tests[testIndex]
 
-		passed := result.RuleOutput == bool(test.ExpectedResult)
-		testResult.TestSummary = testResult.TestSummary && passed
+		// The test is considered failed iff:
+		// - there is a global error in the rule script (import error, syntax error, etc).
+		// - rule() raises an exception.
+		// - rule() return value is different than the expected value user provided.
+		// Otherwise the test is considered passed.
+		//
+		// If the other functions (title/dedup/alert_context etc) raise an exception, it has no
+		// effect on the test outcome, because:
+		// 1. Users can provide unit tests for the rule() function only,
+		// 2. It most intuitive. Consider the following scenario:
+		//	- User creates a test case where the input is missing some fields and expects rule() to return False.
+		//	- title() fails with KeyError or similar because it uses a field that is missing from the test input.
+		// The test should be successful, because rule() returns False as the user expects.
+		// This is also consistent with log analysis, where if rule won't trigger the alert, the other functions
+		// are not run.
+		var passed bool
+		if len(result.GenericError) > 0 || len(result.RuleError) > 0 {
+			passed = false
+		} else {
+			passed = result.RuleOutput == bool(test.ExpectedResult)
+		}
 
 		testResult.Results[i] = &models.RuleResult{
 			ID:                 result.ID,
@@ -110,6 +129,7 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 			AlertContextError:  result.AlertContextError,
 			GenericError:       result.GenericError,
 		}
+		testResult.TestSummary = testResult.TestSummary && passed
 	}
 	return testResult, nil
 }
