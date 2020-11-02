@@ -127,7 +127,8 @@ func truncate(s string) string {
 
 func hasPassed(expectedRuleOutput bool, result enginemodels.RuleResult) bool {
 	if len(result.GenericError) > 0 || len(result.RuleError) > 0 {
-		// If there is an error the script functions, like import/syntax/indentation error, fail the test.
+		// If there is an error in the script functions, like import/syntax/indentation error or rule() raised
+		// an exception, fail the test.
 		return false
 	}
 	if !expectedRuleOutput {
