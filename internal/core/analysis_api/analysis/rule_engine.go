@@ -130,7 +130,7 @@ func hasPassed(expectedRuleOutput bool, result enginemodels.RuleResult) bool {
 		// If there is an error the script functions, like import/syntax/indentation error, fail the test.
 		return false
 	}
-	if expectedRuleOutput == false {
+	if !expectedRuleOutput {
 		// rule() should return false (not match the event), so the other functions (title/dedup etc) should not
 		// affect the test result.
 		return result.RuleOutput == expectedRuleOutput
