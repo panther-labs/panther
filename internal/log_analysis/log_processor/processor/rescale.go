@@ -78,7 +78,7 @@ func queueDepth(ctx context.Context, sqsClient sqsiface.SQSAPI) (int, error) {
 		QueueUrl: &common.Config.SqsQueueURL,
 	}
 	getQueueAttributesOutput, err := sqsClient.GetQueueAttributesWithContext(ctx, getQueueAttributesInput)
-	if err != nil && err != context.Canceled && err != context.DeadlineExceeded{
+	if err != nil && err != context.Canceled && err != context.DeadlineExceeded {
 		err = errors.Wrapf(err, "failure getting message count from %s", common.Config.SqsQueueURL)
 		return 0, err
 	}
