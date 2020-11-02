@@ -259,6 +259,7 @@ exports[`AlertDetailsBanner renders 1`] = `
 
 .panther-20 {
   font-size: 0.75rem;
+  font-weight: 400;
 }
 
 .panther-53 {
