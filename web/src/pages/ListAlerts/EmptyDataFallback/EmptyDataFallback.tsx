@@ -22,7 +22,14 @@ import { Box, Flex, Heading, Text } from 'pouncejs';
 
 const ListAlertsPageEmptyDataFallback: React.FC = () => {
   return (
-    <Flex height="100%" width="100%" justify="center" align="center" direction="column">
+    <Flex
+      height="100%"
+      width="100%"
+      justify="center"
+      align="center"
+      direction="column"
+      data-testid="list-alerts-empty-fallback"
+    >
       <Box m={10}>
         <img
           alt="Shield with checkmark illustration"

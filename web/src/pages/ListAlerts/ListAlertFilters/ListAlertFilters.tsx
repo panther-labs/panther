@@ -124,6 +124,7 @@ const ListAlertFilters: React.FC = () => {
               <Box>
                 <FastField
                   name="sorting"
+                  data-testid="list-alert-sorting"
                   as={FormikCombobox}
                   items={sortingOpts.map(sortingOption => sortingOption.opt)}
                   placeholder="Select a sort option"

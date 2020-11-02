@@ -23,7 +23,7 @@ import { Card, FadeIn } from 'pouncejs';
 const RuleDetailsPageSkeleton: React.FC = () => {
   return (
     <FadeIn from="bottom">
-      <Card p={6}>
+      <Card p={6} data-testid="rule-alerts-listing-loading">
         <TablePlaceholder rowCount={5} rowHeight={10} />
       </Card>
     </FadeIn>
