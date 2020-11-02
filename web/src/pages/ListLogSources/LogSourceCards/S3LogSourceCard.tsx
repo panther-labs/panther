@@ -21,6 +21,7 @@ import { S3LogIntegration } from 'Generated/schema';
 import GenericItemCard from 'Components/GenericItemCard';
 import { formatDatetime } from 'Helpers/utils';
 import { Flex } from 'pouncejs';
+import LimitItemDisplay from 'Components/LimitItemDisplay';
 import BulletedLogType from 'Components/BulletedLogType';
 import s3Logo from 'Assets/s3-minimal-logo.svg';
 import LogSourceCard from './LogSourceCard';
@@ -49,10 +50,12 @@ const S3LogSourceCard: React.FC<S3LogSourceCardProps> = ({ source }) => {
       <GenericItemCard.Value
         label="Log Types"
         value={
-          <Flex align="center" spacing={6} mt={1}>
-            {source.logTypes.map(logType => (
-              <BulletedLogType key={logType} logType={logType} />
-            ))}
+          <Flex align="center" spacing={2} mt={1}>
+            <LimitItemDisplay limit={4}>
+              {source.logTypes.map(logType => (
+                <BulletedLogType key={logType} logType={logType} />
+              ))}
+            </LimitItemDisplay>
           </Flex>
         }
       />

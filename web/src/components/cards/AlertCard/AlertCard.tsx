@@ -24,6 +24,7 @@ import React from 'react';
 import urls from 'Source/urls';
 import LinkButton from 'Components/buttons/LinkButton';
 import RelatedDestinations from 'Components/RelatedDestinations';
+import LimitItemDisplay from 'Components/LimitItemDisplay';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { formatDatetime } from 'Helpers/utils';
 import BulletedLogType from 'Components/BulletedLogType';
@@ -77,10 +78,12 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, hideRuleButton = false }) 
           <GenericItemCard.Value
             label="Log Types"
             value={
-              <Flex align="center" spacing={6} mt={1}>
-                {alert.logTypes.map(logType => (
-                  <BulletedLogType key={logType} logType={logType} />
-                ))}
+              <Flex align="center" spacing={2} mt={1}>
+                <LimitItemDisplay limit={2}>
+                  {alert.logTypes.map(logType => (
+                    <BulletedLogType key={logType} logType={logType} />
+                  ))}
+                </LimitItemDisplay>
               </Flex>
             }
           />
