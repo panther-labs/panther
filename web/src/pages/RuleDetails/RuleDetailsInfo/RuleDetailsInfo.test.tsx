@@ -17,28 +17,18 @@
  */
 
 import React from 'react';
-import { Box, Flex } from 'pouncejs';
-import { stringToPaleColor } from 'Helpers/colors';
+import { render, buildRuleDetails } from 'test-utils';
+import RuleDetailsInfo from './index';
 
-interface BulletedLogTypeProps {
-  logType: string;
-}
+describe('RuleDetailsInfo', () => {
+  it('renders the correct data', async () => {
+    const rule = buildRuleDetails({ displayName: 'My Rule' });
+    const { getByText } = render(<RuleDetailsInfo rule={rule} />);
+    expect(getByText('Edit')).toBeInTheDocument();
+    expect(getByText('Delete')).toBeInTheDocument();
 
-const BulletedLogType: React.FC<BulletedLogTypeProps> = ({ logType }) => {
-  return (
-    <Flex spacing={2} align="center">
-      <Box
-        as="span"
-        width={12}
-        height={12}
-        backgroundColor={stringToPaleColor(logType) as any}
-        borderRadius="circle"
-      />
-      <Box as="span" fontSize="small" fontWeight="normal">
-        {logType}
-      </Box>
-    </Flex>
-  );
-};
-
-export default BulletedLogType;
+    expect(getByText('My Rule')).toBeInTheDocument();
+    expect(getByText('DISABLED')).toBeInTheDocument();
+    expect(getByText('LOW')).toBeInTheDocument();
+  });
+});

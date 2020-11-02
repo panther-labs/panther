@@ -128,7 +128,13 @@ const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, valu
           {label}
         </Box>
       )}
-      <Box as="dd" aria-labelledby={cardId} fontSize="medium" opacity={value ? 1 : 0.3}>
+      <Box
+        as="dd"
+        fontSize="medium"
+        fontWeight="medium"
+        aria-labelledby={cardId}
+        opacity={value ? 1 : 0.3}
+      >
         {value || 'Not Set'}
       </Box>
     </Box>

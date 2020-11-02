@@ -66,6 +66,7 @@ exports[`GenericItemCard renders a step 1`] = `
 
 .panther-2 {
   font-size: 0.875rem;
+  font-weight: 500;
   opacity: 1;
 }
 
@@ -259,6 +260,7 @@ exports[`GenericItemCard renders a step with border color 1`] = `
 
 .panther-2 {
   font-size: 0.875rem;
+  font-weight: 500;
   opacity: 1;
 }
 

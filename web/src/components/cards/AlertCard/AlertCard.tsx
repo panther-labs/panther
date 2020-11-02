@@ -85,7 +85,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, hideRuleButton = false }) 
           <GenericItemCard.Value
             label="Log Types"
             value={
-              <Flex align="center" spacing={6} mt={1}>
+              <Flex align="center" spacing={6} mt="2px">
                 {alert.logTypes.map(logType => (
                   <BulletedLogType key={logType} logType={logType} />
                 ))}

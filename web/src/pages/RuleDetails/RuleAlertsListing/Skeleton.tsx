@@ -17,28 +17,17 @@
  */
 
 import React from 'react';
-import { Box, Flex } from 'pouncejs';
-import { stringToPaleColor } from 'Helpers/colors';
+import TablePlaceholder from 'Components/TablePlaceholder';
+import { Card, FadeIn } from 'pouncejs';
 
-interface BulletedLogTypeProps {
-  logType: string;
-}
-
-const BulletedLogType: React.FC<BulletedLogTypeProps> = ({ logType }) => {
+const RuleDetailsPageSkeleton: React.FC = () => {
   return (
-    <Flex spacing={2} align="center">
-      <Box
-        as="span"
-        width={12}
-        height={12}
-        backgroundColor={stringToPaleColor(logType) as any}
-        borderRadius="circle"
-      />
-      <Box as="span" fontSize="small" fontWeight="normal">
-        {logType}
-      </Box>
-    </Flex>
+    <FadeIn from="bottom">
+      <Card p={6} data-testid="rule-alerts-listing-loading">
+        <TablePlaceholder rowCount={5} rowHeight={10} />
+      </Card>
+    </FadeIn>
   );
 };
 
-export default BulletedLogType;
+export default RuleDetailsPageSkeleton;
