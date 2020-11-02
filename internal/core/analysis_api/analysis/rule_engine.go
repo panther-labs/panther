@@ -91,47 +91,45 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 		}
 		test := rule.Tests[testIndex]
 
-		// The test is considered failed iff:
-		// - there is a global error in the rule script (import error, syntax error, etc).
-		// - rule() raises an exception.
-		// - rule() return value is different than the expected value user provided.
-		// Otherwise the test is considered passed.
-		//
-		// If the other functions (title/dedup/alert_context etc) raise an exception, it has no
-		// effect on the test outcome, because:
-		// 1. Users can provide unit tests for the rule() function only,
-		// 2. It most intuitive. Consider the following scenario:
-		//	- User creates a test case where the input is missing some fields and expects rule() to return False.
-		//	- title() fails with KeyError or similar because it uses a field that is missing from the test input.
-		// The test should be successful, because rule() returns False as the user expects.
-		// This is also consistent with log analysis, where if rule won't trigger the alert, the other functions
-		// are not run.
-		var passed bool
-		if len(result.GenericError) > 0 || len(result.RuleError) > 0 {
-			passed = false
-		} else {
-			passed = result.RuleOutput == bool(test.ExpectedResult)
-		}
+		passed := hasPassed(bool(test.ExpectedResult), result)
 
 		testResult.Results[i] = &models.RuleResult{
-			ID:                 result.ID,
-			RuleID:             result.RuleID,
-			TestName:           string(test.Name),
-			Passed:             passed,
-			Errored:            result.Errored,
-			RuleOutput:         result.RuleOutput,
-			RuleError:          result.RuleError,
-			DedupOutput:        result.DedupOutput,
-			DedupError:         result.DedupError,
-			TitleOutput:        result.TitleOutput,
-			TitleError:         result.TitleError,
-			AlertContextOutput: result.AlertContextOutput,
-			AlertContextError:  result.AlertContextError,
-			GenericError:       result.GenericError,
+			ID:           result.ID,
+			RuleID:       result.RuleID,
+			TestName:     string(test.Name),
+			Passed:       passed,
+			Errored:      result.Errored,
+			GenericError: result.GenericError,
+			RuleOutput:   result.RuleOutput,
+			RuleError:    result.RuleError,
+		}
+		if test.ExpectedResult {
+			// Show the output of other functions only if user expects rule() to match the event (ie return True).
+			testResult.Results[i].DedupOutput = result.DedupOutput
+			testResult.Results[i].DedupError = result.DedupError
+			testResult.Results[i].TitleOutput = result.TitleOutput
+			testResult.Results[i].TitleError = result.TitleError
+			testResult.Results[i].AlertContextOutput = result.AlertContextOutput
+			testResult.Results[i].AlertContextError = result.AlertContextError
 		}
 		testResult.TestSummary = testResult.TestSummary && passed
 	}
 	return testResult, nil
+}
+
+func hasPassed(expectedRuleOutput bool, result enginemodels.RuleResult) bool {
+	if len(result.GenericError) > 0 || len(result.RuleError) > 0 {
+		// If there is an error the script functions, like import/syntax/indentation error, fail the test.
+		return false
+	}
+	if expectedRuleOutput == false {
+		// rule() should return false (not match the event), so the other functions (title/dedup etc) should not
+		// affect the test result.
+		return result.RuleOutput == expectedRuleOutput
+	}
+
+	// rule() should return True. We also expect the other functions to not raise any exceptions.
+	return !result.Errored && (result.RuleOutput == expectedRuleOutput)
 }
 
 const testRuleID = "RuleAPITestRule"
