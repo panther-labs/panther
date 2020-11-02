@@ -38,11 +38,7 @@ const DestinationCard: React.FC<DestinationCardProps> = ({ destination, logo, ch
       <DestinationCardOptions destination={destination} />
       <GenericItemCard.Body>
         <GenericItemCard.Heading>
-          <Link
-            as={RRLink}
-            to={urls.settings.destinations.edit(destination.outputId)}
-            cursor="pointer"
-          >
+          <Link as={RRLink} to={urls.settings.destinations.edit(destination.outputId)}>
             {destination.displayName}
           </Link>
         </GenericItemCard.Heading>
