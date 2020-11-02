@@ -1216,6 +1216,12 @@ export type SuppressPoliciesInput = {
   resourcePatterns: Array<Maybe<Scalars['String']>>;
 };
 
+export type TestDetectionSubRecord = {
+  __typename?: 'TestDetectionSubRecord';
+  output?: Maybe<Scalars['String']>;
+  error?: Maybe<Error>;
+};
+
 export type TestPolicyInput = {
   body: Scalars['String'];
   resourceTypes: Array<Scalars['String']>;
@@ -1233,7 +1239,7 @@ export type TestPolicyRecord = TestRecord & {
 
 export type TestPolicyRecordFunctions = {
   __typename?: 'TestPolicyRecordFunctions';
-  policyFunction: TestRuleSubRecord;
+  policyFunction: TestDetectionSubRecord;
 };
 
 export type TestPolicyResponse = {
@@ -1265,21 +1271,15 @@ export type TestRuleRecord = TestRecord & {
 
 export type TestRuleRecordFunctions = {
   __typename?: 'TestRuleRecordFunctions';
-  ruleFunction: TestRuleSubRecord;
-  titleFunction?: Maybe<TestRuleSubRecord>;
-  dedupFunction?: Maybe<TestRuleSubRecord>;
-  alertContextFunction?: Maybe<TestRuleSubRecord>;
+  ruleFunction: TestDetectionSubRecord;
+  titleFunction?: Maybe<TestDetectionSubRecord>;
+  dedupFunction?: Maybe<TestDetectionSubRecord>;
+  alertContextFunction?: Maybe<TestDetectionSubRecord>;
 };
 
 export type TestRuleResponse = {
   __typename?: 'TestRuleResponse';
   results: Array<TestRuleRecord>;
-};
-
-export type TestRuleSubRecord = {
-  __typename?: 'TestRuleSubRecord';
-  output?: Maybe<Scalars['String']>;
-  error?: Maybe<Error>;
 };
 
 export type UpdateAlertStatusInput = {
@@ -1607,7 +1607,7 @@ export type ResolversTypes = {
   TestRecord: ResolversTypes['TestPolicyRecord'] | ResolversTypes['TestRuleRecord'];
   Error: ResolverTypeWrapper<Error>;
   TestPolicyRecordFunctions: ResolverTypeWrapper<TestPolicyRecordFunctions>;
-  TestRuleSubRecord: ResolverTypeWrapper<TestRuleSubRecord>;
+  TestDetectionSubRecord: ResolverTypeWrapper<TestDetectionSubRecord>;
   TestRuleInput: TestRuleInput;
   TestRuleResponse: ResolverTypeWrapper<TestRuleResponse>;
   TestRuleRecord: ResolverTypeWrapper<TestRuleRecord>;
@@ -1760,7 +1760,7 @@ export type ResolversParentTypes = {
   TestRecord: ResolversParentTypes['TestPolicyRecord'] | ResolversParentTypes['TestRuleRecord'];
   Error: Error;
   TestPolicyRecordFunctions: TestPolicyRecordFunctions;
-  TestRuleSubRecord: TestRuleSubRecord;
+  TestDetectionSubRecord: TestDetectionSubRecord;
   TestRuleInput: TestRuleInput;
   TestRuleResponse: TestRuleResponse;
   TestRuleRecord: TestRuleRecord;
@@ -2924,6 +2924,15 @@ export type SqsLogSourceIntegrationResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
+export type TestDetectionSubRecordResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['TestDetectionSubRecord'] = ResolversParentTypes['TestDetectionSubRecord']
+> = {
+  output?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
 export type TestPolicyRecordResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['TestPolicyRecord'] = ResolversParentTypes['TestPolicyRecord']
@@ -2940,7 +2949,7 @@ export type TestPolicyRecordFunctionsResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['TestPolicyRecordFunctions'] = ResolversParentTypes['TestPolicyRecordFunctions']
 > = {
-  policyFunction?: Resolver<ResolversTypes['TestRuleSubRecord'], ParentType, ContextType>;
+  policyFunction?: Resolver<ResolversTypes['TestDetectionSubRecord'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2979,11 +2988,19 @@ export type TestRuleRecordFunctionsResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['TestRuleRecordFunctions'] = ResolversParentTypes['TestRuleRecordFunctions']
 > = {
-  ruleFunction?: Resolver<ResolversTypes['TestRuleSubRecord'], ParentType, ContextType>;
-  titleFunction?: Resolver<Maybe<ResolversTypes['TestRuleSubRecord']>, ParentType, ContextType>;
-  dedupFunction?: Resolver<Maybe<ResolversTypes['TestRuleSubRecord']>, ParentType, ContextType>;
+  ruleFunction?: Resolver<ResolversTypes['TestDetectionSubRecord'], ParentType, ContextType>;
+  titleFunction?: Resolver<
+    Maybe<ResolversTypes['TestDetectionSubRecord']>,
+    ParentType,
+    ContextType
+  >;
+  dedupFunction?: Resolver<
+    Maybe<ResolversTypes['TestDetectionSubRecord']>,
+    ParentType,
+    ContextType
+  >;
   alertContextFunction?: Resolver<
-    Maybe<ResolversTypes['TestRuleSubRecord']>,
+    Maybe<ResolversTypes['TestDetectionSubRecord']>,
     ParentType,
     ContextType
   >;
@@ -2995,15 +3012,6 @@ export type TestRuleResponseResolvers<
   ParentType extends ResolversParentTypes['TestRuleResponse'] = ResolversParentTypes['TestRuleResponse']
 > = {
   results?: Resolver<Array<ResolversTypes['TestRuleRecord']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type TestRuleSubRecordResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['TestRuleSubRecord'] = ResolversParentTypes['TestRuleSubRecord']
-> = {
-  output?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -3100,6 +3108,7 @@ export type Resolvers<ContextType = any> = {
   SqsDestinationConfig?: SqsDestinationConfigResolvers<ContextType>;
   SqsLogIntegrationHealth?: SqsLogIntegrationHealthResolvers<ContextType>;
   SqsLogSourceIntegration?: SqsLogSourceIntegrationResolvers<ContextType>;
+  TestDetectionSubRecord?: TestDetectionSubRecordResolvers<ContextType>;
   TestPolicyRecord?: TestPolicyRecordResolvers<ContextType>;
   TestPolicyRecordFunctions?: TestPolicyRecordFunctionsResolvers<ContextType>;
   TestPolicyResponse?: TestPolicyResponseResolvers<ContextType>;
@@ -3107,7 +3116,6 @@ export type Resolvers<ContextType = any> = {
   TestRuleRecord?: TestRuleRecordResolvers<ContextType>;
   TestRuleRecordFunctions?: TestRuleRecordFunctionsResolvers<ContextType>;
   TestRuleResponse?: TestRuleResponseResolvers<ContextType>;
-  TestRuleSubRecord?: TestRuleSubRecordResolvers<ContextType>;
   UploadPoliciesResponse?: UploadPoliciesResponseResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
 };

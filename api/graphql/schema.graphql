@@ -938,7 +938,7 @@ type Error {
   message: String!
 }
 
-type TestRuleSubRecord {
+type TestDetectionSubRecord {
   output: String
   error: Error
 }
@@ -951,7 +951,7 @@ interface TestRecord {
 }
 
 type TestPolicyRecordFunctions {
-  policyFunction: TestRuleSubRecord!
+  policyFunction: TestDetectionSubRecord!
 }
 
 type TestPolicyRecord implements TestRecord {
@@ -967,10 +967,10 @@ type TestPolicyResponse {
 }
 
 type TestRuleRecordFunctions {
-  ruleFunction: TestRuleSubRecord!
-  titleFunction: TestRuleSubRecord
-  dedupFunction: TestRuleSubRecord
-  alertContextFunction: TestRuleSubRecord
+  ruleFunction: TestDetectionSubRecord!
+  titleFunction: TestDetectionSubRecord
+  dedupFunction: TestDetectionSubRecord
+  alertContextFunction: TestDetectionSubRecord
 }
 
 type TestRuleRecord implements TestRecord {

@@ -21,7 +21,7 @@ import {
   buildError,
   buildTestRuleRecord,
   buildTestRuleRecordFunctions,
-  buildTestRuleSubRecord,
+  buildTestDetectionSubRecord,
   render,
 } from 'test-utils';
 import { ComplianceStatusEnum } from 'Generated/schema';
@@ -53,9 +53,9 @@ describe('RuleFormTestResult', () => {
     const testResult = buildTestRuleRecord({
       error: null,
       functions: buildTestRuleRecordFunctions({
-        ruleFunction: buildTestRuleSubRecord({ error: buildError({ message: 'Rule' }) }),
-        titleFunction: buildTestRuleSubRecord({ error: buildError({ message: 'Title' }) }),
-        dedupFunction: buildTestRuleSubRecord({ error: buildError({ message: 'Dedup' }) }),
+        ruleFunction: buildTestDetectionSubRecord({ error: buildError({ message: 'Rule' }) }),
+        titleFunction: buildTestDetectionSubRecord({ error: buildError({ message: 'Title' }) }),
+        dedupFunction: buildTestDetectionSubRecord({ error: buildError({ message: 'Dedup' }) }),
       }),
     });
 
@@ -69,8 +69,8 @@ describe('RuleFormTestResult', () => {
     const testResult = buildTestRuleRecord({
       error: null,
       functions: buildTestRuleRecordFunctions({
-        titleFunction: buildTestRuleSubRecord({ output: 'Title', error: null }),
-        dedupFunction: buildTestRuleSubRecord({ output: 'Dedup', error: null }),
+        titleFunction: buildTestDetectionSubRecord({ output: 'Title', error: null }),
+        dedupFunction: buildTestDetectionSubRecord({ output: 'Dedup', error: null }),
       }),
     });
 

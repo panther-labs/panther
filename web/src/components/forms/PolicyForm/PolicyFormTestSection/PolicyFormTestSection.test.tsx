@@ -26,7 +26,7 @@ import {
   render,
   fireEvent,
   buildTestPolicyRecordFunctions,
-  buildTestRuleSubRecord,
+  buildTestDetectionSubRecord,
 } from 'test-utils';
 import { UpdatePolicyInput } from 'Generated/schema';
 import { Formik } from 'formik';
@@ -79,7 +79,7 @@ describe('PolicyFormTestSection', () => {
                 name: 'Test 1',
                 passed: true,
                 functions: buildTestPolicyRecordFunctions({
-                  policyFunction: buildTestRuleSubRecord({ error: null }),
+                  policyFunction: buildTestDetectionSubRecord({ error: null }),
                 }),
               }),
               buildTestPolicyRecord({
@@ -87,7 +87,7 @@ describe('PolicyFormTestSection', () => {
                 name: 'Test 2',
                 passed: false,
                 functions: buildTestPolicyRecordFunctions({
-                  policyFunction: buildTestRuleSubRecord({
+                  policyFunction: buildTestDetectionSubRecord({
                     error: buildError({ message: 'Not Good' }),
                   }),
                 }),
