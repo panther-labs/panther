@@ -61,7 +61,7 @@ func TestProcessOpLog(t *testing.T) {
 	sqsMock.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(emptyQueue, nil).Once().
 		Run(func(args mock.Arguments) {
 			wg.Done()
-	})
+		})
 	sqsMock.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(emptyQueue, nil).
 		Maybe() // it might be called depending on sync issues
 
