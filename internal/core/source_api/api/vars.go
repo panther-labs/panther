@@ -36,11 +36,14 @@ import (
 )
 
 const (
+	LambdaName = "panther-source-api"
+
 	maxElapsedTime       = 5 * time.Second
 	templateBucketRegion = endpoints.UsWest2RegionID
 )
 
 var (
+	// FIXME: move globals into API struct
 	env        envConfig
 	awsSession *session.Session
 

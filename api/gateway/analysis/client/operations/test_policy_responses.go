@@ -79,7 +79,7 @@ type TestPolicyOK struct {
 }
 
 func (o *TestPolicyOK) Error() string {
-	return fmt.Sprintf("[POST /test][%d] testPolicyOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[POST /policy/test][%d] testPolicyOK  %+v", 200, o.Payload)
 }
 
 func (o *TestPolicyOK) GetPayload() *models.TestPolicyResult {
@@ -112,7 +112,7 @@ type TestPolicyBadRequest struct {
 }
 
 func (o *TestPolicyBadRequest) Error() string {
-	return fmt.Sprintf("[POST /test][%d] testPolicyBadRequest  %+v", 400, o.Payload)
+	return fmt.Sprintf("[POST /policy/test][%d] testPolicyBadRequest  %+v", 400, o.Payload)
 }
 
 func (o *TestPolicyBadRequest) GetPayload() *models.Error {
@@ -144,7 +144,7 @@ type TestPolicyInternalServerError struct {
 }
 
 func (o *TestPolicyInternalServerError) Error() string {
-	return fmt.Sprintf("[POST /test][%d] testPolicyInternalServerError ", 500)
+	return fmt.Sprintf("[POST /policy/test][%d] testPolicyInternalServerError ", 500)
 }
 
 func (o *TestPolicyInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

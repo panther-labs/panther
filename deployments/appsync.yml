@@ -1842,18 +1842,155 @@ Resources:
         {
           "version": "2018-05-29",
           "method": "POST",
-          "resourcePath": "/v1/test",
+          "resourcePath": "/v1/policy/test",
           "params": {
             "headers": {
               "Content-Type": "application/json"
             },
-            "body": $util.toJson($ctx.args.input)
+            "body": $util.toJson({
+              "body": $ctx.args.input.body,
+              "resourceTypes": $ctx.args.input.resourceTypes,
+              "tests": $ctx.args.input.tests,
+              "analysisType": "POLICY"
+            })
           }
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
         #if($statusCode == 200)
-            $ctx.result.body
+          #set ($testBreakdown = $util.parseJson($ctx.result.body))
+          #set ($payload = [])
+
+          #foreach($testName in $testBreakdown.testsPassed)
+            #set ($payloadItem = {})
+            $util.qr($payloadItem.put("id", "passed-$foreach.index"))
+            $util.qr($payloadItem.put("name", $testName))
+            $util.qr($payloadItem.put("passed", true))
+            $util.qr($payloadItem.put("functions", {
+              "policyFunction": {
+                "output": $ctx.args.input.tests[$foreach.index].expectedResult
+              }
+            }))
+            $util.qr($payload.add($payloadItem))
+          #end
+
+          #foreach($testName in $testBreakdown.testsFailed)
+            #set ($payloadItem = {})
+            $util.qr($payloadItem.put("id", "failed-$foreach.index"))
+            $util.qr($payloadItem.put("name", $testName))
+            $util.qr($payloadItem.put("passed", false))
+            $util.qr($payloadItem.put("functions", {
+              "policyFunction": {
+                "output": $ctx.args.input.tests[$foreach.index].expectedResult
+              }
+            }))
+            $util.qr($payload.add($payloadItem))
+          #end
+
+          #foreach($test in $testBreakdown.testsErrored)
+            #set ($payloadItem = {})
+            $util.qr($payloadItem.put("id", "errored-$foreach.index"))
+            $util.qr($payloadItem.put("name", $test.name))
+            $util.qr($payloadItem.put("passed", false))
+            $util.qr($payloadItem.put("functions", {
+              "policyFunction": {
+                "output": $ctx.args.input.tests[$foreach.index].expectedResult,
+                "error": {
+                  "message": $test.errorMessage
+                }
+              }
+            }))
+            $util.qr($payload.add($payloadItem))
+          #end
+
+          $util.toJson({ "results": $payload })
+        #elseif($statusCode >= 400 && $statusCode < 500)
+            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
+        #else
+            $util.error($ctx.result.body, "$statusCode", $input)
+        #end
+
+  TestRuleResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: testRule
+      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2018-05-29",
+          "method": "POST",
+          "resourcePath": "/v1/rule/test",
+          "params": {
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": $util.toJson({
+              "body": $ctx.args.input.body,
+              "resourceTypes": $ctx.args.input.logTypes,
+              "tests": $ctx.args.input.tests,
+              "analysisType": "RULE"
+            })
+          }
+        }
+      ResponseMappingTemplate: |
+        #set ($statusCode = $ctx.result.statusCode)
+        #if($statusCode == 200)
+          #set ($payload = [])
+          #foreach($resultItem in $util.parseJson($ctx.result.body).results)
+            #set ($payloadItem = {})
+            $util.qr($payloadItem.put("id", $resultItem.id))
+            $util.qr($payloadItem.put("name", $resultItem.testName))
+            $util.qr($payloadItem.put("passed", $util.defaultIfNull($resultItem.passed, false)))
+            $util.qr($payloadItem.put("functions", {}))
+
+            $util.qr($payloadItem.functions.put("ruleFunction", { "output": $resultItem.ruleOutput }))
+            #if ($resultItem.ruleError)
+              $util.qr($payloadItem.functions.ruleFunction.put("error", { "message": $resultItem.ruleError }))
+            #end
+
+        	#if ($resultItem.titleOutput || $resultItem.titleError)
+              $util.qr($payloadItem.functions.put("titleFunction", {}))
+
+              #if ($resultItem.titleOutput)
+              	$util.qr($payloadItem.functions.titleFunction.put("output", $resultItem.titleOutput))
+              #end
+              #if ($resultItem.titleError)
+                $util.qr($payloadItem.functions.titleFunction.put("error", { "message": $resultItem.titleError }))
+              #end
+            #end
+
+        	#if ($resultItem.dedupOutput || $resultItem.dedupError)
+              $util.qr($payloadItem.functions.put("dedupFunction", {}))
+
+              #if ($resultItem.dedupOutput)
+              	$util.qr($payloadItem.functions.dedupFunction.put("output", $resultItem.dedupOutput))
+              #end
+              #if ($resultItem.dedupError)
+                $util.qr($payloadItem.functions.dedupFunction.put("error", { "message": $resultItem.dedupError }))
+              #end
+            #end
+
+            #if ($resultItem.alertContextOutput || $resultItem.alertContextError)
+              $util.qr($payloadItem.functions.put("alertContextFunction", {}))
+
+              #if ($resultItem.alertContextOutput)
+                $util.qr($payloadItem.functions.alertContextFunction.put("output", $resultItem.alertContextOutput))
+              #end
+              #if ($resultItem.alertContextError)
+                $util.qr($payloadItem.functions.alertContextFunction.put("error", { "message": $resultItem.alertContextError }))
+              #end
+            #end
+
+            #if ($resultItem.genericError)
+              $util.qr($payloadItem.put("error", { "message": $resultItem.genericError }))
+            #end
+
+            $util.qr($payload.add($payloadItem))
+          #end
+          $util.toJson({ "results": $payload })
+
         #elseif($statusCode >= 400 && $statusCode < 500)
             $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else

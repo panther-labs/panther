@@ -47,8 +47,8 @@ class Engine:
 
         for rule in self.log_type_to_rules[log_type]:
             self.logger.debug('running rule [%s]', rule.rule_id)
-            result = rule.run(event)
-            if result.exception:
+            result = rule.run(event, batch_mode=True)
+            if result.errored:
                 rule_error = EngineResult(
                     rule_id=rule.rule_id,
                     rule_version=rule.rule_version,
@@ -58,8 +58,8 @@ class Engine:
                     dedup=type(result.exception).__name__,
                     dedup_period_mins=1440,  # one day
                     event=event,
-                    title=repr(result.exception),
-                    error_message=repr(result.exception)
+                    title=repr(result.rule_exception),
+                    error_message=repr(result.rule_exception)
                 )
                 engine_results.append(rule_error)
             elif result.matched:
@@ -69,10 +69,10 @@ class Engine:
                     rule_tags=rule.rule_tags,
                     rule_reports=rule.rule_reports,
                     log_type=log_type,
-                    dedup=result.dedup_string,  # type: ignore
+                    dedup=result.dedup_output,  # type: ignore
                     dedup_period_mins=rule.rule_dedup_period_mins,
                     event=event,
-                    title=result.title,
+                    title=result.title_output,
                     alert_context=result.alert_context
                 )
                 engine_results.append(match)

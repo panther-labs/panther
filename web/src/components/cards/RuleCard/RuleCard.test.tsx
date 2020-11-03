@@ -30,7 +30,7 @@ describe('RuleCard', () => {
 
     expect(getByText(ruleData.displayName)).toBeInTheDocument();
     expect(getByText('Threshold')).toBeInTheDocument();
-    expect(getByText('Time Created')).toBeInTheDocument();
+    expect(getByText('Last Modified')).toBeInTheDocument();
     expect(getByText(SeverityEnum.Info)).toBeInTheDocument();
     expect(getByText('DISABLED')).toBeInTheDocument();
   });
