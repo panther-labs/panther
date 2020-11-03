@@ -22,6 +22,7 @@ import useRouter from 'Hooks/useRouter';
 import { Alert, Box, Flex, Card, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import { extractErrorMessage } from 'Helpers/utils';
+import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
 
 import withSEO from 'Hoc/withSEO';
 import invert from 'lodash/invert';
@@ -33,6 +34,7 @@ import ListRuleAlerts from './RuleAlertsListing';
 import CardDetails from './RuleCardDetails';
 import RuleDetailsInfo from './RuleDetailsInfo';
 import { useRuleDetails } from './graphql/ruleDetails.generated';
+import { useListAlertsForRule } from './graphql/listAlertsForRule.generated';
 
 export interface RuleDetailsPageUrlParams {
   section?: 'details' | 'matches' | 'errors';
@@ -57,6 +59,30 @@ const RuleDetailsPage: React.FC = () => {
     variables: {
       input: {
         ruleId: match.params.id,
+      },
+    },
+  });
+
+  // dry runs for tabs indicator
+
+  const { data: matchesData } = useListAlertsForRule({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      input: {
+        type: AlertTypesEnum.Rule,
+        ruleId: match.params.id,
+        pageSize: DEFAULT_SMALL_PAGE_SIZE,
+      },
+    },
+  });
+
+  const { data: errorData } = useListAlertsForRule({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      input: {
+        type: AlertTypesEnum.RuleError,
+        ruleId: match.params.id,
+        pageSize: DEFAULT_SMALL_PAGE_SIZE,
       },
     },
   });
@@ -94,8 +120,16 @@ const RuleDetailsPage: React.FC = () => {
             <Box px={2}>
               <TabList>
                 <BorderedTab>Details</BorderedTab>
-                <BorderedTab>Rule Matches</BorderedTab>
-                <BorderedTab>Rule Errors</BorderedTab>
+                <BorderedTab>
+                  <Box opacity={matchesData?.alerts?.alertSummaries.length > 0 ? 1 : 0.5}>
+                    Rule Matches
+                  </Box>
+                </BorderedTab>
+                <BorderedTab>
+                  <Box opacity={errorData?.alerts?.alertSummaries.length > 0 ? 1 : 0.5}>
+                    Rule Errors
+                  </Box>
+                </BorderedTab>
               </TabList>
               <BorderTabDivider />
               <TabPanels>
