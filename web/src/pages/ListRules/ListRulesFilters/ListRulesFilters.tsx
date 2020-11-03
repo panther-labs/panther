@@ -87,16 +87,16 @@ const sortingOpts: SortingOptions = [
     },
   },
   {
-    opt: 'Status Ascending',
+    opt: 'Enabled',
     resolution: {
-      sortBy: 'status' as ListRulesSortFieldsEnum,
+      sortBy: 'enabled' as ListRulesSortFieldsEnum,
       sortDir: 'ascending' as SortDirEnum,
     },
   },
   {
-    opt: 'Status Descending',
+    opt: 'Disabled',
     resolution: {
-      sortBy: 'status' as ListRulesSortFieldsEnum,
+      sortBy: 'enabled' as ListRulesSortFieldsEnum,
       sortDir: 'descending' as SortDirEnum,
     },
   },
