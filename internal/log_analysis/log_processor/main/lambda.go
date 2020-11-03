@@ -32,6 +32,9 @@ import (
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
+// How often we check if we need to scale (controls responsiveness).
+const defaultScalingDecisionInterval = 30 * time.Second
+
 func main() {
 	common.Setup()
 	lambda.Start(handle)
@@ -39,14 +42,14 @@ func main() {
 
 func handle(ctx context.Context) error {
 	lambdalogger.ConfigureGlobal(ctx, nil)
-	return process(ctx)
+	return process(ctx, defaultScalingDecisionInterval)
 }
 
-func process(ctx context.Context) (err error) {
+func process(ctx context.Context, scalingDecisionInterval time.Duration) (err error) {
 	lc, _ := lambdacontext.FromContext(ctx)
 	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
 
-	cancelScaling := scheduleScalingDecisions(ctx)
+	cancelScaling := scheduleScalingDecisions(ctx, scalingDecisionInterval)
 	var sqsMessageCount int
 	defer func() {
 		cancelScaling()
@@ -59,12 +62,10 @@ func process(ctx context.Context) (err error) {
 	return err
 }
 
-func scheduleScalingDecisions(ctx context.Context) context.CancelFunc {
+func scheduleScalingDecisions(ctx context.Context, scalingDecisionInterval time.Duration) context.CancelFunc {
 	// Create cancellable deadline for Scaling Decisions go routine
 	ctx, cancel := context.WithCancel(ctx)
 	// runs periodically during processing making scaling decisions
-	// How often we check if we need to scale (controls responsiveness).
-	const scalingDecisionInterval = 30 * time.Second
 	processor.ScalingDecisions(ctx, common.SqsClient, common.LambdaClient, scalingDecisionInterval)
 	return cancel
 }
