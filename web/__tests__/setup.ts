@@ -55,6 +55,10 @@ jest.mock('mixpanel-browser', () => {
   };
 });
 
+// Mock Ace Editor and map it to a simple <textarea> element so we can easily reason about
+// You should use `getByPlaceholderText` in order to get the related textarea field
+jest.mock('Components/Editor');
+
 window.alert = () => {};
 window.scrollTo = () => {};
 

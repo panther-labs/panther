@@ -18,11 +18,11 @@
 
 import React from 'react';
 import { ModalProps } from 'pouncejs';
-import { PolicyUnitTest, PolicyUnitTestInput } from 'Generated/schema';
+import { DetectionTestDefinition, DetectionTestDefinitionInput } from 'Generated/schema';
 import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
 export interface DeleteTestModalProps extends ModalProps {
-  test: PolicyUnitTest | PolicyUnitTestInput;
+  test: DetectionTestDefinition | DetectionTestDefinitionInput;
   onConfirm: () => void;
 }
 
