@@ -121,12 +121,18 @@ const RuleDetailsPage: React.FC = () => {
               <TabList>
                 <BorderedTab>Details</BorderedTab>
                 <BorderedTab>
-                  <Box opacity={matchesData?.alerts?.alertSummaries.length > 0 ? 1 : 0.5}>
+                  <Box
+                    data-testid="rule-matches"
+                    opacity={matchesData?.alerts?.alertSummaries.length > 0 ? 1 : 0.5}
+                  >
                     Rule Matches
                   </Box>
                 </BorderedTab>
                 <BorderedTab>
-                  <Box opacity={errorData?.alerts?.alertSummaries.length > 0 ? 1 : 0.5}>
+                  <Box
+                    data-testid="rule-errors"
+                    opacity={errorData?.alerts?.alertSummaries.length > 0 ? 1 : 0.5}
+                  >
                     Rule Errors
                   </Box>
                 </BorderedTab>

@@ -28,7 +28,7 @@ import {
   waitForElementToBeRemoved,
   fireEvent,
 } from 'test-utils';
-import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
+import { DEFAULT_LARGE_PAGE_SIZE, DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
 import { AlertTypesEnum, ListAlertsSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 import { Route } from 'react-router-dom';
 import urls from 'Source/urls';
@@ -100,6 +100,85 @@ describe('RuleDetails', () => {
     expect(getByText('Details')).toBeTruthy();
     expect(getByText('Rule Matches')).toBeTruthy();
     expect(getByText('Rule Errors')).toBeTruthy();
+  });
+
+  it('shows the tabs as disabled when no alerts are in place', async () => {
+    const rule = buildRuleDetails({
+      id: '123',
+      displayName: 'This is an amazing rule',
+      description: 'This is an amazing description',
+      runbook: 'Panther labs runbook',
+    });
+    const mocks = [
+      mockRuleDetails({
+        data: { rule },
+        variables: {
+          input: {
+            ruleId: '123',
+          },
+        },
+      }),
+      mockListAlertsForRule({
+        data: {
+          alerts: {
+            ...buildListAlertsResponse(),
+            alertSummaries: [],
+          },
+        },
+        variables: {
+          input: {
+            ruleId: '123',
+            type: AlertTypesEnum.RuleError,
+            pageSize: DEFAULT_SMALL_PAGE_SIZE,
+          },
+        },
+      }),
+      mockListAlertsForRule({
+        data: {
+          alerts: {
+            ...buildListAlertsResponse(),
+            alertSummaries: [
+              buildAlertSummary({
+                ruleId: '123',
+                title: `Alert 1`,
+                alertId: `alert_1`,
+                type: AlertTypesEnum.Rule,
+              }),
+            ],
+          },
+        },
+        variables: {
+          input: {
+            ruleId: '123',
+            type: AlertTypesEnum.Rule,
+            pageSize: DEFAULT_SMALL_PAGE_SIZE,
+          },
+        },
+      }),
+    ];
+
+    const { getAllByTestId, getByTestId } = render(
+      <Route exact path={urls.logAnalysis.rules.details(':id')}>
+        <RuleDetails />
+      </Route>,
+      {
+        mocks,
+        initialRoute: `${urls.logAnalysis.rules.details(rule.id)}`,
+      }
+    );
+    const loadingInterfaceElement = getByTestId('rule-details-loading');
+    expect(loadingInterfaceElement).toBeTruthy();
+
+    await waitForElementToBeRemoved(loadingInterfaceElement);
+    await waitMs(500);
+    const matchesTab = getAllByTestId('rule-matches');
+    const errorsTab = getAllByTestId('rule-errors');
+
+    const styleMatches = window.getComputedStyle(matchesTab[0]);
+    const styleError = window.getComputedStyle(errorsTab[0]);
+
+    expect(styleMatches.opacity).toBe('1');
+    expect(styleError.opacity).toBe('0.5');
   });
 
   it('allows URL matching of tab navigation', async () => {
