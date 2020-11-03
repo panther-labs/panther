@@ -19,6 +19,8 @@ package api
  */
 
 import (
+	"sort"
+
 	"github.com/panther-labs/panther/api/lambda/source/models"
 )
 
@@ -49,5 +51,9 @@ func collectLogTypes(listOutput []*models.SourceIntegration) []string {
 	for logType := range logTypesSet {
 		logTypes = append(logTypes, logType)
 	}
+
+	// ensure stable order
+	sort.Strings(logTypes)
+
 	return logTypes
 }
