@@ -44,21 +44,19 @@ func NewRuleEngine(lambdaClient lambdaiface.LambdaAPI, lambdaName string) RuleEn
 	}
 }
 
-func (e *RuleEngine) TestRule(rule *models.TestPolicy) (models.TestPolicyResult, error) {
-	empty := models.TestPolicyResult{}
-
+func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, error) {
 	// Build the list of events to run the rule against
 	inputEvents := make([]enginemodels.Event, len(rule.Tests))
 	for i, test := range rule.Tests {
 		var attrs map[string]interface{}
 		if err := jsoniter.UnmarshalFromString(string(test.Resource), &attrs); err != nil {
 			//nolint // Error is capitalized because will be returned to the UI
-			return empty, &TestInputError{fmt.Errorf(`Event for test "%s" is not valid json: %w`, test.Name, err)}
+			return nil, &TestInputError{fmt.Errorf(`Event for test "%s" is not valid json: %w`, test.Name, err)}
 		}
 
 		inputEvents[i] = enginemodels.Event{
 			Data: attrs,
-			ID:   testResourceID + strconv.Itoa(i),
+			ID:   strconv.Itoa(i),
 		}
 	}
 
@@ -66,7 +64,7 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (models.TestPolicyResult,
 		Rules: []enginemodels.Rule{
 			{
 				Body:     string(rule.Body),
-				ID:       testPolicyID, // doesn't matter as we're only running one rule
+				ID:       testRuleID, // doesn't matter as we're only running one rule
 				LogTypes: rule.ResourceTypes,
 			},
 		},
@@ -77,22 +75,70 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (models.TestPolicyResult,
 	var engineOutput enginemodels.RulesEngineOutput
 	err := genericapi.Invoke(e.lambdaClient, e.lambdaName, &input, &engineOutput)
 	if err != nil {
-		return empty, errors.Wrap(err, "error invoking rule engine")
+		return nil, errors.Wrap(err, "error invoking rule engine")
 	}
 
 	// Translate rule engine output to test results.
-	testResults, err := makeTestSummaryRule(rule, engineOutput)
-	return testResults, err
+	testResult := &models.TestRuleResult{
+		TestSummary: true,
+		Results:     make([]*models.RuleResult, len(engineOutput.Results)),
+	}
+	for i, result := range engineOutput.Results {
+		// Determine which test case this result corresponds to.
+		testIndex, err := strconv.Atoi(result.ID)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to extract test number from test result resourceID %s", result.ID)
+		}
+		test := rule.Tests[testIndex]
+
+		passed := hasPassed(bool(test.ExpectedResult), result)
+
+		testResult.Results[i] = &models.RuleResult{
+			ID:           result.ID,
+			RuleID:       result.RuleID,
+			TestName:     string(test.Name),
+			Passed:       passed,
+			Errored:      result.Errored,
+			GenericError: result.GenericError,
+			RuleOutput:   result.RuleOutput,
+			RuleError:    result.RuleError,
+		}
+		if test.ExpectedResult {
+			// Show the output of other functions only if user expects rule() to match the event (ie return True).
+			testResult.Results[i].DedupOutput = result.DedupOutput
+			testResult.Results[i].DedupError = result.DedupError
+			testResult.Results[i].TitleOutput = result.TitleOutput
+			testResult.Results[i].TitleError = result.TitleError
+			testResult.Results[i].AlertContextOutput = truncate(result.AlertContextOutput) // truncate, can be huge json
+			testResult.Results[i].AlertContextError = result.AlertContextError
+		}
+		testResult.TestSummary = testResult.TestSummary && passed
+	}
+	return testResult, nil
 }
 
-func makeTestSummaryRule(rule *models.TestPolicy, engineOutput enginemodels.RulesEngineOutput) (models.TestPolicyResult, error) {
-	// Normalize rule engine output to policy engine output to facilitate consistent handling
-	// in makeTestSummary().
-	output := enginemodels.PolicyEngineOutput{
-		Resources: make([]enginemodels.Result, len(engineOutput.Events)),
+func truncate(s string) string {
+	maxChars := 140
+	if len(s) > maxChars {
+		return s[:maxChars] + "..."
 	}
-	for i, event := range engineOutput.Events {
-		output.Resources[i] = event.ToResult()
-	}
-	return makeTestSummary(rule, output)
+	return s
 }
+
+func hasPassed(expectedRuleOutput bool, result enginemodels.RuleResult) bool {
+	if len(result.GenericError) > 0 || len(result.RuleError) > 0 {
+		// If there is an error in the script functions, like import/syntax/indentation error or rule() raised
+		// an exception, fail the test.
+		return false
+	}
+	if !expectedRuleOutput {
+		// rule() should return false (not match the event), so the other functions (title/dedup etc) should not
+		// affect the test result.
+		return result.RuleOutput == expectedRuleOutput
+	}
+
+	// rule() should return True. We also expect the other functions to not raise any exceptions.
+	return !result.Errored && (result.RuleOutput == expectedRuleOutput)
+}
+
+const testRuleID = "RuleAPITestRule"

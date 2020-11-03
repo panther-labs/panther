@@ -1,0 +1,17 @@
+mutation TestPolicy($input: TestPolicyInput!) {
+  testPolicy(input: $input) {
+    results {
+      id
+      name
+      passed
+      error {
+        message
+      }
+      functions {
+        policyFunction {
+          ...TestFunctionResult
+        }
+      }
+    }
+  }
+}

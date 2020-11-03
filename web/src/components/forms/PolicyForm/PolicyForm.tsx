@@ -17,27 +17,24 @@
  */
 
 import React from 'react';
-import { AddPolicyInput, PolicyUnitTest, UpdatePolicyInput } from 'Generated/schema';
+import { AddPolicyInput, DetectionTestDefinition, UpdatePolicyInput } from 'Generated/schema';
 import * as Yup from 'yup';
 import { Button, Flex } from 'pouncejs';
 import { Form, Formik } from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 import useRouter from 'Hooks/useRouter';
-import {
-  BaseRuleFormTestSection as PolicyFormTestSection,
-  BaseRuleFormCoreSection,
-  BaseRuleFormEditorSection,
-} from 'Components/forms/BaseRuleForm';
+import { BaseRuleFormCoreSection, BaseRuleFormEditorSection } from 'Components/forms/BaseRuleForm';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import FormSessionRestoration from 'Components/utils/FormSessionRestoration';
 import PolicyFormAutoRemediationSection from './PolicyFormAutoRemediationSection';
+import PolicyFormTestSection from './PolicyFormTestSection';
 
 // The validation checks that Formik will run
 const validationSchema = Yup.object().shape({
   id: Yup.string().required(),
   body: Yup.string().required(),
   severity: Yup.string().required(),
-  tests: Yup.array<PolicyUnitTest>().of(
+  tests: Yup.array<DetectionTestDefinition>().of(
     Yup.object().shape({
       name: Yup.string().required(),
       expectedResult: Yup.boolean().required(),

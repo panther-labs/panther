@@ -26,31 +26,32 @@ import (
 )
 
 var methodHandlers = map[string]gatewayapi.RequestHandler{
-	// Policies only
-	"GET /list":      handlers.ListPolicies,
-	"GET /policy":    handlers.GetPolicy,
-	"POST /policy":   handlers.CreatePolicy,
-	"POST /suppress": handlers.Suppress,
-	"POST /update":   handlers.ModifyPolicy,
-	"POST /upload":   handlers.BulkUpload,
+	// Policies
+	"GET /list":         handlers.ListPolicies,
+	"GET /policy":       handlers.GetPolicy,
+	"POST /policy":      handlers.CreatePolicy,
+	"POST /policy/test": handlers.TestAnalysis,
+	"POST /suppress":    handlers.Suppress,
+	"POST /update":      handlers.ModifyPolicy,
+	"POST /upload":      handlers.BulkUpload,
 
-	// Rules only
+	// Rules
 	"GET /rule":         handlers.GetRule,
 	"POST /rule":        handlers.CreateRule,
 	"GET /rule/list":    handlers.ListRules,
 	"POST /rule/update": handlers.ModifyRule,
+	"POST /rule/test":   handlers.TestAnalysis,
 
-	// Globals only
+	// Rules and Policies handled in common
+	"POST /delete": handlers.DeletePolicies,
+	"GET /enabled": handlers.GetEnabledAnalyses,
+
+	// Globals
 	"GET /global":         handlers.GetGlobal,
 	"POST /global":        handlers.CreateGlobal,
 	"GET /global/list":    handlers.ListGlobals,
 	"POST /global/update": handlers.ModifyGlobal,
 	"POST /global/delete": handlers.DeleteGlobal,
-
-	// Rules and Policies
-	"POST /delete": handlers.DeletePolicies,
-	"GET /enabled": handlers.GetEnabledAnalyses,
-	"POST /test":   handlers.TestPolicy,
 }
 
 func main() {
