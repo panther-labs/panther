@@ -164,19 +164,11 @@ export type AlertSummary = Alert & {
   updateTime: Scalars['AWSDateTime'];
 };
 
-<<<<<<< HEAD
 export enum AlertTypesEnum {
   Rule = 'RULE',
   RuleError = 'RULE_ERROR',
 }
 
-export enum AnalysisTypeEnum {
-  Rule = 'RULE',
-  Policy = 'POLICY',
-}
-
-=======
->>>>>>> master
 export type AsanaConfig = {
   __typename?: 'AsanaConfig';
   personalAccessToken: Scalars['String'];

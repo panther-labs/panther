@@ -142,11 +142,7 @@ import {
   User,
   AccountTypeEnum,
   AlertStatusesEnum,
-<<<<<<< HEAD
   AlertTypesEnum,
-  AnalysisTypeEnum,
-=======
->>>>>>> master
   ComplianceStatusEnum,
   DestinationTypeEnum,
   ListAlertsSortFieldsEnum,
