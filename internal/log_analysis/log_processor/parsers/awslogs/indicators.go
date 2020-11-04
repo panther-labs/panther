@@ -112,8 +112,19 @@ func ExtractRawMessageIndicators(w pantherlog.ValueWriter, messages ...pantherlo
 func extractIndicators(w pantherlog.ValueWriter, iter *jsoniter.Iterator, key string) {
 	switch iter.WhatIsNext() {
 	case jsoniter.ObjectValue:
-		for key := iter.ReadObject(); key != ""; key = iter.ReadObject() {
-			extractIndicators(w, iter, key)
+		switch key {
+		case "tags":
+			tag := struct {
+				Key   string `json:"key"`
+				Value string `json:"value"`
+			}{}
+			if iter.ReadVal(&tag); tag.Key != "" && tag.Value != "" {
+				w.WriteValues(pantherlog.FieldAWSTag, tag.Key+":"+tag.Value)
+			}
+		default:
+			for key := iter.ReadObject(); key != ""; key = iter.ReadObject() {
+				extractIndicators(w, iter, key)
+			}
 		}
 	case jsoniter.ArrayValue:
 		for iter.ReadArray() {
@@ -137,7 +148,12 @@ func extractIndicators(w pantherlog.ValueWriter, iter *jsoniter.Iterator, key st
 				w.WriteValues(pantherlog.FieldDomainName, value)
 			}
 		default:
-			if arn.IsARN(value) {
+			switch {
+			case strings.HasSuffix(key, "AccountId"):
+				ScanAccountID(w, value)
+			case strings.HasSuffix(key, "InstanceId"):
+				ScanInstanceID(w, value)
+			case arn.IsARN(value):
 				ScanARN(w, value)
 			}
 		}
