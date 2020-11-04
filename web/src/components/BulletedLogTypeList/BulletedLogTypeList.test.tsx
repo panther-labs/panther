@@ -17,28 +17,17 @@
  */
 
 import React from 'react';
-import { Box, Flex } from 'pouncejs';
-import { stringToPaleColor } from 'Helpers/colors';
+import { render, fireEvent } from 'test-utils';
+import BulletedLogTypeList from './BulletedLogTypeList';
 
-interface BulletedLogTypeProps {
-  logType: string;
-}
+describe('BulletedLogTypeList', () => {
+  it('matches snapshots', () => {
+    const { container, getByText } = render(
+      <BulletedLogTypeList logTypes={['a', 'b', 'c', 'd']} limit={2} />
+    );
+    expect(container).toMatchSnapshot();
 
-const BulletedLogType: React.FC<BulletedLogTypeProps> = ({ logType }) => {
-  return (
-    <Flex spacing={2} align="center">
-      <Box
-        as="span"
-        width={12}
-        height={12}
-        backgroundColor={stringToPaleColor(logType) as any}
-        borderRadius="circle"
-      />
-      <Box as="span" fontSize="small" fontWeight="normal" lineHeight="typical">
-        {logType}
-      </Box>
-    </Flex>
-  );
-};
-
-export default BulletedLogType;
+    fireEvent.mouseEnter(getByText('+2'));
+    expect(container).toMatchSnapshot();
+  });
+});

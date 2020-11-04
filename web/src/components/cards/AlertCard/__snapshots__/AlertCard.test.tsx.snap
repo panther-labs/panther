@@ -103,6 +103,7 @@ exports[`AlertCard should match snapshot 1`] = `
 
 .panther-4 {
   font-size: 0.875rem;
+  font-weight: 500;
   opacity: 1;
 }
 
@@ -161,12 +162,12 @@ exports[`AlertCard should match snapshot 1`] = `
 .panther-6 {
   color: #bdbdbd;
   font-size: 0.563rem;
-  margin-bottom: 1px;
+  margin-bottom: 6px;
   font-weight: 500;
 }
 
 .panther-9 {
-  height: 24px;
+  height: 18px;
 }
 
 .panther-8 {
@@ -199,11 +200,14 @@ exports[`AlertCard should match snapshot 1`] = `
   -webkit-box-align: center;
   -ms-flex-align: center;
   align-items: center;
-  margin-top: 4px;
+  -webkit-box-flex-wrap: wrap;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
 }
 
 .panther-16>*:not(:last-child) {
-  margin-right: 24px;
+  margin-right: 8px;
 }
 
 .panther-15 {
@@ -230,6 +234,8 @@ exports[`AlertCard should match snapshot 1`] = `
 
 .panther-14 {
   font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.5;
 }
 
 .panther-32 {
