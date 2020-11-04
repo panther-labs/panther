@@ -88,8 +88,6 @@ func ScanInstanceID(w pantherlog.ValueWriter, input string) {
 	}
 }
 
-type AWSRawMessage pantherlog.RawMessage
-
 func ExtractRawMessageIndicators(w pantherlog.ValueWriter, messages ...pantherlog.RawMessage) {
 	var iter *jsoniter.Iterator
 	for _, msg := range messages {
