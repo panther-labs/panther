@@ -1,5 +1,3 @@
-package awslogs
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,12 +16,26 @@ package awslogs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"testing"
+import React from 'react';
+import { Flex } from 'pouncejs';
+import LimitItemDisplay from 'Components/LimitItemDisplay/LimitItemDisplay';
+import BulletedLogType from 'Components/BulletedLogType';
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
-)
-
-func TestCloudTrail(t *testing.T) {
-	logtesting.RunTestsFromYAML(t, LogTypes(), "./testdata/cloudtrail_tests.yml")
+interface BulletedLogTypeListProps {
+  logTypes: string[];
+  limit?: number;
 }
+
+const BulletedLogTypeList: React.FC<BulletedLogTypeListProps> = ({ logTypes, limit = 1000 }) => {
+  return (
+    <Flex align="center" spacing={2} flexWrap="wrap">
+      <LimitItemDisplay limit={limit}>
+        {logTypes.map(logType => (
+          <BulletedLogType key={logType} logType={logType} />
+        ))}
+      </LimitItemDisplay>
+    </Flex>
+  );
+};
+
+export default BulletedLogTypeList;
