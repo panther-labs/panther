@@ -23,9 +23,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
@@ -77,10 +75,9 @@ func TestGetS3Client(t *testing.T) {
 	s3Mock.On("GetBucketLocation", expectedGetBucketLocationInput).Return(
 		&s3.GetBucketLocationOutput{LocationConstraint: aws.String("us-west-2")}, nil).Once()
 
-	newCredentialsFunc =
-		func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
-			return &credentials.Credentials{}
-		}
+	newCredentialsFunc = func(roleArn string) *credentials.Credentials {
+		return &credentials.Credentials{}
+	}
 
 	s3Object := &S3ObjectInfo{
 		S3Bucket:    "test-bucket",
@@ -127,10 +124,9 @@ func TestGetS3ClientUnknownBucket(t *testing.T) {
 
 	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil).Once()
 
-	newCredentialsFunc =
-		func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
-			return &credentials.Credentials{}
-		}
+	newCredentialsFunc = func(roleArn string) *credentials.Credentials {
+		return &credentials.Credentials{}
+	}
 
 	s3Object := &S3ObjectInfo{
 		S3Bucket:    "test-bucket-unknown",
@@ -181,10 +177,9 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 	s3Mock.On("GetBucketLocation", expectedGetBucketLocationInput).Return(
 		&s3.GetBucketLocationOutput{LocationConstraint: aws.String("us-west-2")}, nil).Once()
 
-	newCredentialsFunc =
-		func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
-			return &credentials.Credentials{}
-		}
+	newCredentialsFunc = func(roleArn string) *credentials.Credentials {
+		return &credentials.Credentials{}
+	}
 
 	s3Object := &S3ObjectInfo{
 		S3Bucket:    "test-bucket",
