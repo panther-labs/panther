@@ -166,7 +166,7 @@ var (
 	globalSourceCache = &sourceCache{}
 
 	//used to simplify mocking during testing
-	newCredentialsFunc = stscreds.NewCredentials
+	newCredentialsFunc = getAwsCredentials
 	newS3ClientFunc    = getNewS3Client
 
 	// Map from integrationId -> last time an event was received
@@ -206,7 +206,7 @@ func getS3Client(bucketName, objectKey string) (s3iface.S3API, *models.SourceInt
 	bucketRegion, ok := bucketCache.Get(bucketName)
 	if !ok {
 		zap.L().Debug("bucket region was not cached, fetching it", zap.String("bucket", bucketName))
-		awsCreds = getAwsCredentials(roleArn)
+		awsCreds = newCredentialsFunc(roleArn)
 		if awsCreds == nil {
 			return nil, nil, errors.Errorf("failed to fetch credentials for assumed role %s to read %s/%s",
 				roleArn, bucketName, objectKey)
@@ -228,7 +228,7 @@ func getS3Client(bucketName, objectKey string) (s3iface.S3API, *models.SourceInt
 	if !ok {
 		zap.L().Debug("s3 client was not cached, creating it")
 		if awsCreds == nil {
-			awsCreds = getAwsCredentials(roleArn)
+			awsCreds = newCredentialsFunc(roleArn)
 			if awsCreds == nil {
 				return nil, nil, errors.Errorf("failed to fetch credentials for assumed role %s to read %s/%s",
 					roleArn, bucketName, objectKey)
@@ -263,7 +263,7 @@ func getAwsCredentials(roleArn string) *credentials.Credentials {
 	zap.L().Debug("fetching new credentials from assumed role", zap.String("roleArn", roleArn))
 	// Use regional STS endpoints as per AWS recommendation https://docs.aws.amazon.com/general/latest/gr/sts.html
 	credsSession := common.Session.Copy(aws.NewConfig().WithSTSRegionalEndpoint(endpoints.RegionalSTSEndpoint))
-	return newCredentialsFunc(credsSession, roleArn, func(p *stscreds.AssumeRoleProvider) {
+	return stscreds.NewCredentials(credsSession, roleArn, func(p *stscreds.AssumeRoleProvider) {
 		p.Duration = time.Duration(sessionDurationSeconds) * time.Second
 		p.ExpiryWindow = time.Minute // give plenty of time to refresh
 	})
