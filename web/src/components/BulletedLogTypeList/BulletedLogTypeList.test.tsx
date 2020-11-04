@@ -23,7 +23,7 @@ import BulletedLogTypeList from './BulletedLogTypeList';
 describe('BulletedLogTypeList', () => {
   it('matches snapshots', () => {
     const { container, getByText } = render(
-      <BulletedLogTypeList logTypes={['a', 'b', 'c', 'd']} limit={4} />
+      <BulletedLogTypeList logTypes={['a', 'b', 'c', 'd']} limit={2} />
     );
     expect(container).toMatchSnapshot();
 
