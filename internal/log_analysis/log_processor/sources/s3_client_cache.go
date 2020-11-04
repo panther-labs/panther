@@ -38,7 +38,6 @@ import (
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/awsretry"
-	"github.com/panther-labs/panther/pkg/box"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -235,7 +234,7 @@ func getS3Client(bucketName, objectKey string) (s3iface.S3API, *models.SourceInt
 					roleArn, bucketName, objectKey)
 			}
 		}
-		client = newS3ClientFunc(box.String(cacheKey.awsRegion), awsCreds)
+		client = newS3ClientFunc(&cacheKey.awsRegion, awsCreds)
 		s3ClientCache.Add(cacheKey, client)
 	}
 	return client.(s3iface.S3API), sourceInfo, nil
@@ -262,7 +261,9 @@ func getBucketRegion(s3Bucket string, awsCreds *credentials.Credentials) (string
 // getAwsCredentials fetches the AWS Credentials from STS for by assuming a role in the given account
 func getAwsCredentials(roleArn string) *credentials.Credentials {
 	zap.L().Debug("fetching new credentials from assumed role", zap.String("roleArn", roleArn))
-	return newCredentialsFunc(common.Session, roleArn, func(p *stscreds.AssumeRoleProvider) {
+	// Use regional STS endpoints as per AWS recommendation https://docs.aws.amazon.com/general/latest/gr/sts.html
+	credsSession := common.Session.Copy(aws.NewConfig().WithSTSRegionalEndpoint(endpoints.RegionalSTSEndpoint))
+	return newCredentialsFunc(credsSession, roleArn, func(p *stscreds.AssumeRoleProvider) {
 		p.Duration = time.Duration(sessionDurationSeconds) * time.Second
 		p.ExpiryWindow = time.Minute // give plenty of time to refresh
 	})
