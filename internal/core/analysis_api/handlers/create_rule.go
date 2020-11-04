@@ -129,5 +129,5 @@ func enabledRuleTestsPass(rule *models.UpdateRule) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return bool(testResults.TestSummary), nil
+	return testResults.TestSummary, nil
 }
