@@ -19,8 +19,9 @@ package awslogs
  */
 
 import (
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 	"testing"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 )
 
 func TestCloudTrail(t *testing.T) {

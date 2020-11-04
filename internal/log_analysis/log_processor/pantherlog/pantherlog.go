@@ -19,10 +19,10 @@ package pantherlog
  */
 
 import (
-	"gopkg.in/go-playground/validator.v9"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )

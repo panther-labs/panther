@@ -19,12 +19,13 @@ package parsers
  */
 
 import (
-	"github.com/pkg/errors"
 	"io"
 	"strings"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
