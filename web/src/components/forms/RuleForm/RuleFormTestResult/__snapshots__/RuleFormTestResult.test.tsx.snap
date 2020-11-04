@@ -139,7 +139,7 @@ exports[`RuleFormTestResult matches the snapshot 1`] = `
           <dt
             class="panther-2"
           >
-            Dedup Message
+            Dedup String
           </dt>
           <dd
             class="panther-3"
