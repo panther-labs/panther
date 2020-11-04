@@ -87,15 +87,7 @@ exports[`AlertCard should match snapshot 1`] = `
   color: #11a5f3;
 }
 
-<<<<<<< HEAD
-.panther-0 {
-  font-weight: 500;
-}
-
 .panther-37 {
-=======
-.panther-33 {
->>>>>>> master
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -419,34 +411,20 @@ exports[`AlertCard should match snapshot 1`] = `
       <div
         class="panther-39"
       >
-<<<<<<< HEAD
-=======
-        <h4
-          class="panther-1"
-        >
-          <a
-            aria-label="Link to Alert"
-            class="panther-0"
-            href="/log-analysis/alerts/f67b8f04-5fac-404a-93a4-38db29f258ba/"
-          >
-            indexing
-          </a>
-        </h4>
->>>>>>> master
         <div
           class="panther-38"
         >
-          <a
-            aria-label="Link to Alert"
+          <h4
             class="panther-1"
-            href="/log-analysis/alerts/f67b8f04-5fac-404a-93a4-38db29f258ba/"
           >
-            <h4
+            <a
+              aria-label="Link to Alert"
               class="panther-0"
+              href="/log-analysis/alerts/f67b8f04-5fac-404a-93a4-38db29f258ba/"
             >
               indexing
-            </h4>
-          </a>
+            </a>
+          </h4>
           <div
             class="panther-37"
           >

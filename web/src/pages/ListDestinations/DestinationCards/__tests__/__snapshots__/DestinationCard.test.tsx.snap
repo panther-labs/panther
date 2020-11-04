@@ -193,7 +193,6 @@ exports[`Generic Destination Card should match snapshot 1`] = `
       <div
         class="panther-10"
       >
-<<<<<<< HEAD
         <img
           alt="Logo"
           class="panther-0"
@@ -225,31 +224,19 @@ exports[`Generic Destination Card should match snapshot 1`] = `
             </svg>
           </button>
         </div>
-=======
-        <h4
-          class="panther-5"
-        >
-          <a
-            class="panther-4"
-            href="/settings/destinations/8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7/edit/"
-          >
-            Accountability
-          </a>
-        </h4>
->>>>>>> master
         <div
           class="panther-9"
         >
-          <a
+          <h4
             class="panther-5"
-            href="/settings/destinations/8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7/edit/"
           >
-            <h4
+            <a
               class="panther-4"
+              href="/settings/destinations/8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7/edit/"
             >
               Accountability
-            </h4>
-          </a>
+            </a>
+          </h4>
           <div
             class="panther-8"
           >
