@@ -61,11 +61,11 @@ func ScanARN(w pantherlog.ValueWriter, input string) {
 	w.WriteValues(pantherlog.FieldAWSARN, input)
 	w.WriteValues(pantherlog.FieldAWSAccountID, arn.AccountID)
 	// instanceId: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policy-structure.html#EC2_ARN_Format
-	if !strings.HasPrefix(input, "instance/") {
+	if !strings.HasPrefix(arn.Resource, "instance/") {
 		return
 	}
-	if pos := strings.LastIndex(input, "/"); 0 <= pos && pos < len(input) { // not if ends in "/"
-		instanceID := input[pos:]
+	if pos := strings.LastIndex(arn.Resource, "/"); 0 <= pos && pos < len(input) { // not if ends in "/"
+		instanceID := arn.Resource[pos:]
 		if len(instanceID) > 0 {
 			ScanInstanceID(w, instanceID[1:])
 		}
