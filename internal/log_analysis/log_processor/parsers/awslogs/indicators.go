@@ -19,6 +19,7 @@ package awslogs
  */
 
 import (
+	jsoniter "github.com/json-iterator/go"
 	"regexp"
 	"strings"
 
@@ -84,5 +85,63 @@ func ScanAccountID(w pantherlog.ValueWriter, input string) {
 func ScanInstanceID(w pantherlog.ValueWriter, input string) {
 	if strings.HasPrefix(input, "i-") {
 		w.WriteValues(pantherlog.FieldAWSInstanceID, input)
+	}
+}
+
+type AWSRawMessage pantherlog.RawMessage
+
+func ExtractRawMessageIndicators(w pantherlog.ValueWriter, messages ...pantherlog.RawMessage) {
+	var iter *jsoniter.Iterator
+	for _, msg := range messages {
+		if msg == nil {
+			continue
+		}
+		if iter == nil {
+			iter = jsoniter.ConfigDefault.BorrowIterator(msg)
+		} else {
+			iter.Error = nil
+			iter.ResetBytes(msg)
+		}
+		extractIndicators(w, iter, "")
+	}
+	if iter != nil {
+		iter.Pool().ReturnIterator(iter)
+	}
+}
+
+func extractIndicators(w pantherlog.ValueWriter, iter *jsoniter.Iterator, key string) {
+	switch iter.WhatIsNext() {
+	case jsoniter.ObjectValue:
+		for key := iter.ReadObject(); key != ""; key = iter.ReadObject() {
+			extractIndicators(w, iter, key)
+		}
+	case jsoniter.ArrayValue:
+		for iter.ReadArray() {
+			extractIndicators(w, iter, key)
+		}
+	case jsoniter.StringValue:
+		value := iter.ReadString()
+		switch key {
+		case "arn", "ARN":
+			ScanARN(w, value)
+		case "instanceId", "instance-id":
+			ScanInstanceID(w, value)
+		case "accountId", "account":
+			ScanAccountID(w, value)
+		case "tags":
+			ScanTag(w, value)
+		case "ipv6Addresses", "publicIp", "privateIpAddress", "ipAddressV4", "sourceIPAddress":
+			pantherlog.ScanIPAddress(w, value)
+		case "publicDnsName", "privateDnsName", "domain":
+			if value != "" {
+				w.WriteValues(pantherlog.FieldDomainName, value)
+			}
+		default:
+			if arn.IsARN(value) {
+				ScanARN(w, value)
+			}
+		}
+	default:
+		iter.Skip()
 	}
 }
