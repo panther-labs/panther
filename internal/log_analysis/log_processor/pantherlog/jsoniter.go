@@ -32,9 +32,8 @@ import (
 	"github.com/modern-go/reflect2"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
-
-	// We ensure that `tcodec`'s `init()` runs before pantherlog's `init()` by importing it anonymously
-	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/omitempty"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
 
 func init() {
@@ -444,4 +443,31 @@ func (enc *scanStringEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream
 	if values, ok := stream.Attachment.(ValueWriter); ok {
 		enc.scanner.ScanValues(values, input)
 	}
+}
+
+func buildJSON() jsoniter.API {
+	api := jsoniter.Config{
+		EscapeHTML: true,
+		// We don't need to validate JSON raw messages.
+		// This option is useful for raw messages that are produced by go directly and can contain errors.
+		// Our `jsoniter.RawMessage` come from decoding the input JSON so if they contained errors the parsers would
+		// already have failed to read the input JSON.
+		ValidateJsonRawMessage: false,
+		SortMapKeys:            true,
+		// Use case sensitive keys when decoding
+		CaseSensitive: true,
+	}.Froze()
+	// Force omitempty on all struct fields
+	api.RegisterExtension(omitempty.New("json"))
+	// Add tcodec using the default registry
+	api.RegisterExtension(&tcodec.Extension{})
+	// Register pantherlog last so event_time tags work fine
+	api.RegisterExtension(NewExtension())
+	return api
+}
+
+var jsonAPI = buildJSON()
+
+func ConfigJSON() jsoniter.API {
+	return jsonAPI
 }
