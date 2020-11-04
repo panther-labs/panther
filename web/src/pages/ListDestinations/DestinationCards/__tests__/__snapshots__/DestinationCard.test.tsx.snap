@@ -91,30 +91,29 @@ exports[`Generic Destination Card should match snapshot 1`] = `
 }
 
 .panther-5 {
+  font-weight: 500;
+}
+
+.panther-4 {
   -webkit-transition: color 0.1s ease-out;
   transition: color 0.1s ease-out;
   font-weight: 500;
   -webkit-text-decoration: none;
   text-decoration: none;
   color: #7fd3ff;
-  cursor: pointer;
 }
 
-.panther-5:hover {
+.panther-4:hover {
   color: #ace2ff;
 }
 
-.panther-5:focus {
+.panther-4:focus {
   color: #ace2ff;
 }
 
-.panther-5:active,
-.panther-5[data-active=true] {
+.panther-4:active,
+.panther-4[data-active=true] {
   color: #11a5f3;
-}
-
-.panther-4 {
-  font-weight: 500;
 }
 
 .panther-8 {
@@ -228,16 +227,16 @@ exports[`Generic Destination Card should match snapshot 1`] = `
         <div
           class="panther-9"
         >
-          <a
+          <h4
             class="panther-5"
-            href="/settings/destinations/8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7/edit/"
           >
-            <h4
+            <a
               class="panther-4"
+              href="/settings/destinations/8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7/edit/"
             >
               Accountability
-            </h4>
-          </a>
+            </a>
+          </h4>
           <div
             class="panther-8"
           >

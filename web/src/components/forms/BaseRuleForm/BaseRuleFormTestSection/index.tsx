@@ -17,4 +17,3 @@
  */
 
 export { default } from './BaseRuleFormTestSection';
-export * from './BaseRuleFormTestSection';

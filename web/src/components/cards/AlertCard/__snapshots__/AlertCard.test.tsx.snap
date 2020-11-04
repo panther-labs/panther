@@ -62,30 +62,29 @@ exports[`AlertCard should match snapshot 1`] = `
 }
 
 .panther-1 {
+  font-weight: 500;
+}
+
+.panther-0 {
   -webkit-transition: color 0.1s ease-out;
   transition: color 0.1s ease-out;
   font-weight: 500;
   -webkit-text-decoration: none;
   text-decoration: none;
   color: #7fd3ff;
-  cursor: pointer;
 }
 
-.panther-1:hover {
+.panther-0:hover {
   color: #ace2ff;
 }
 
-.panther-1:focus {
+.panther-0:focus {
   color: #ace2ff;
 }
 
-.panther-1:active,
-.panther-1[data-active=true] {
+.panther-0:active,
+.panther-0[data-active=true] {
   color: #11a5f3;
-}
-
-.panther-0 {
-  font-weight: 500;
 }
 
 .panther-37 {
@@ -415,17 +414,17 @@ exports[`AlertCard should match snapshot 1`] = `
         <div
           class="panther-38"
         >
-          <a
-            aria-label="Link to Alert"
+          <h4
             class="panther-1"
-            href="/log-analysis/alerts/f67b8f04-5fac-404a-93a4-38db29f258ba/"
           >
-            <h4
+            <a
+              aria-label="Link to Alert"
               class="panther-0"
+              href="/log-analysis/alerts/f67b8f04-5fac-404a-93a4-38db29f258ba/"
             >
               indexing
-            </h4>
-          </a>
+            </a>
+          </h4>
           <div
             class="panther-37"
           >

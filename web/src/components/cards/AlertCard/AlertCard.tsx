@@ -45,14 +45,15 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, hideRuleButton = false }) 
   return (
     <GenericItemCard borderColor={alert.type === AlertTypesEnum.RuleError ? 'red-600' : 'teal-400'}>
       <GenericItemCard.Body>
-        <Link
-          as={RRLink}
-          aria-label="Link to Alert"
-          to={urls.logAnalysis.alerts.details(alert.alertId)}
-          cursor="pointer"
-        >
-          <GenericItemCard.Heading>{alert.title}</GenericItemCard.Heading>
-        </Link>
+        <GenericItemCard.Heading>
+          <Link
+            as={RRLink}
+            aria-label="Link to Alert"
+            to={urls.logAnalysis.alerts.details(alert.alertId)}
+          >
+            {alert.title}
+          </Link>
+        </GenericItemCard.Heading>
         <GenericItemCard.ValuesGroup>
           {!hideRuleButton && (
             <GenericItemCard.Value

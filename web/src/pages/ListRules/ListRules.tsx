@@ -82,7 +82,7 @@ const ListRules = () => {
             <Box position="relative">
               <Flex direction="column" spacing={2}>
                 {ruleItems.map(rule => (
-                  <RuleCard rule={rule} key={rule.id}></RuleCard>
+                  <RuleCard rule={rule} key={rule.id} />
                 ))}
               </Flex>
             </Box>

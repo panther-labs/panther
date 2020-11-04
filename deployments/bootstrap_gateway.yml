@@ -70,6 +70,11 @@ Parameters:
     Description: Optional versioned custom Python layer for analysis and remediation
     # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
     AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+)?$'
+  SqsKeyId:
+    Type: String
+    Description: KMS key ID for SQS encryption
+    # Example: "484fb80c-4ae5-40d0-b22a-bdd5d0953b3e"
+    AllowedPattern: '^[0-9a-f-]{36}$'
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
@@ -250,6 +255,14 @@ Resources:
             - Effect: Allow
               Action: s3:Get*
               Resource: arn:aws:s3:::panther-public-cloudformation-templates*
+            - Effect: Allow
+              Action: sqs:SendMessage # this is for sending a message to datacatalog_updater to update/sync Glue tables
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-datacatalog-updater-queue
+            - Effect: Allow
+              Action: # this is for sending a message to datacatalog_updater to update/sync Glue tables
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
 
   # The PantherTeardown resource adds an IAM permission boundary to the custom resource role
   # which blocks future logs.

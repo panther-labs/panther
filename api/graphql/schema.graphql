@@ -28,7 +28,8 @@ type Mutation {
   deliverAlert(input: DeliverAlertInput!): AlertSummary!
   resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
-  testPolicy(input: TestPolicyInput): TestPolicyResponse
+  testPolicy(input: TestPolicyInput!): TestPolicyResponse!
+  testRule(input: TestRuleInput!): TestRuleResponse!
   updateAlertStatus(input: UpdateAlertStatusInput!): [AlertSummary!]!
   updateDestination(input: DestinationInput!): Destination
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
@@ -248,7 +249,7 @@ input AddRuleInput {
   runbook: String
   severity: SeverityEnum!
   tags: [String]
-  tests: [PolicyUnitTestInput] # Rule and Policy share the same tests structure
+  tests: [DetectionTestDefinitionInput] # Rule and Policy share the same tests structure
 }
 
 input UpdateRuleInput {
@@ -265,7 +266,7 @@ input UpdateRuleInput {
   runbook: String
   severity: SeverityEnum
   tags: [String]
-  tests: [PolicyUnitTestInput] # Rule and Policy share the same tests structure
+  tests: [DetectionTestDefinitionInput] # Rule and Policy share the same tests structure
 }
 
 input GetRuleInput {
@@ -316,7 +317,7 @@ type RuleDetails {
   runbook: String
   severity: SeverityEnum
   tags: [String]
-  tests: [PolicyUnitTest] # Policy and Rule have the same tests structure so we reuse the struct here
+  tests: [DetectionTestDefinition] # Policy and Rule have the same tests structure so we reuse the struct here
   versionId: ID
 }
 
@@ -460,10 +461,15 @@ type GeneralSettings {
 }
 
 input TestPolicyInput {
-  body: String
-  resourceTypes: [String]
-  analysisType: AnalysisTypeEnum
-  tests: [PolicyUnitTestInput!]
+  body: String!
+  resourceTypes: [String!]!
+  tests: [DetectionTestDefinitionInput!]!
+}
+
+input TestRuleInput {
+  body: String!
+  logTypes: [String!]!
+  tests: [DetectionTestDefinitionInput!]!
 }
 
 type SqsConfig {
@@ -734,7 +740,7 @@ type PolicyDetails {
   severity: SeverityEnum
   suppressions: [String]
   tags: [String]
-  tests: [PolicyUnitTest]
+  tests: [DetectionTestDefinition]
   versionId: ID
 }
 
@@ -786,7 +792,7 @@ input AddPolicyInput {
   severity: SeverityEnum!
   suppressions: [String]
   tags: [String]
-  tests: [PolicyUnitTestInput]
+  tests: [DetectionTestDefinitionInput]
 }
 
 input UpdatePolicyInput {
@@ -804,7 +810,7 @@ input UpdatePolicyInput {
   severity: SeverityEnum
   suppressions: [String]
   tags: [String]
-  tests: [PolicyUnitTestInput]
+  tests: [DetectionTestDefinitionInput]
 }
 
 input GetPolicyInput {
@@ -899,13 +905,13 @@ input RemediateResourceInput {
   resourceId: ID!
 }
 
-type PolicyUnitTest {
+type DetectionTestDefinition {
   expectedResult: Boolean
   name: String
   resource: String # The `attributes` field of the Resource in stringified JSON format
 }
 
-input PolicyUnitTestInput {
+input DetectionTestDefinitionInput {
   expectedResult: Boolean
   name: String
   resource: String # The `attributes` field of the Resource in stringified JSON format
@@ -930,16 +936,56 @@ type UploadPoliciesResponse {
   modifiedGlobals: Int
 }
 
-type PolicyUnitTestError {
-  name: String
-  errorMessage: String
+type Error {
+  code: String
+  message: String!
+}
+
+type TestDetectionSubRecord {
+  output: String
+  error: Error
+}
+
+interface TestRecord {
+  id: String!
+  name: String!
+  passed: Boolean!
+  error: Error
+}
+
+type TestPolicyRecordFunctions {
+  policyFunction: TestDetectionSubRecord!
+}
+
+type TestPolicyRecord implements TestRecord {
+  id: String!
+  name: String!
+  passed: Boolean!
+  functions: TestPolicyRecordFunctions!
+  error: Error
 }
 
 type TestPolicyResponse {
-  testSummary: Boolean # True if all tests passed
-  testsPassed: [String] # List of test names that passed
-  testsFailed: [String] # List of test names that failed
-  testsErrored: [PolicyUnitTestError] # List of test names that raised an error along with the message
+  results: [TestPolicyRecord!]!
+}
+
+type TestRuleRecordFunctions {
+  ruleFunction: TestDetectionSubRecord!
+  titleFunction: TestDetectionSubRecord
+  dedupFunction: TestDetectionSubRecord
+  alertContextFunction: TestDetectionSubRecord
+}
+
+type TestRuleRecord implements TestRecord {
+  id: String!
+  name: String!
+  passed: Boolean!
+  functions: TestRuleRecordFunctions!
+  error: Error
+}
+
+type TestRuleResponse {
+  results: [TestRuleRecord!]!
 }
 
 type ResourceSummary {
@@ -1051,11 +1097,6 @@ enum DestinationTypeEnum {
   sqs
   asana
   customwebhook
-}
-
-enum AnalysisTypeEnum {
-  RULE
-  POLICY
 }
 
 type ListAvailableLogTypesResponse {
