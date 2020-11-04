@@ -55,7 +55,7 @@ class Engine:
                     rule_tags=rule.rule_tags,
                     rule_reports=rule.rule_reports,
                     log_type=log_type,
-                    dedup=type(result.exception).__name__,
+                    dedup=type(result.rule_exception).__name__,
                     dedup_period_mins=1440,  # one day
                     event=event,
                     title=repr(result.rule_exception),
