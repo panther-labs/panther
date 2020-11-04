@@ -17,13 +17,12 @@
  */
 
 import React from 'react';
-import { Box, Flex } from 'pouncejs';
+import { Box } from 'pouncejs';
 import { SqsLogSourceIntegration } from 'Generated/schema';
 import GenericItemCard from 'Components/GenericItemCard';
-import LimitItemDisplay from 'Components/LimitItemDisplay';
+import BulletedLogTypeList from 'Components/BulletedLogTypeList';
 import { formatDatetime } from 'Helpers/utils';
 import sqsLogo from 'Assets/sqs-minimal-logo.svg';
-import BulletedLogType from 'Components/BulletedLogType';
 import LogSourceCard from './LogSourceCard';
 
 interface SqsLogSourceCardProps {
@@ -70,15 +69,7 @@ const SqsLogSourceCard: React.FC<SqsLogSourceCardProps> = ({ source }) => {
       <GenericItemCard.LineBreak />
       <GenericItemCard.Value
         label="Log Types"
-        value={
-          <Flex align="center" spacing={4} mt={1}>
-            <LimitItemDisplay limit={4}>
-              {source.sqsConfig.logTypes.map(logType => (
-                <BulletedLogType key={logType} logType={logType} />
-              ))}
-            </LimitItemDisplay>
-          </Flex>
-        }
+        value={<BulletedLogTypeList logTypes={source.sqsConfig.logTypes} limit={4} />}
       />
     </LogSourceCard>
   );

@@ -22,11 +22,10 @@ import { Flex, Link, SimpleGrid } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import StatusBadge from 'Components/badges/StatusBadge';
-import LimitItemDisplay from 'Components/LimitItemDisplay';
+import BulletedLogTypeList from 'Components/BulletedLogTypeList';
 import urls from 'Source/urls';
 import { RuleSummary, ComplianceStatusEnum } from 'Generated/schema';
 import { formatDatetime, formatNumber } from 'Helpers/utils';
-import BulletedLogType from 'Components/BulletedLogType';
 import RuleCardOptions from './RuleCardOptions';
 
 interface RuleCardProps {
@@ -56,15 +55,7 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
           <GenericItemCard.ValuesGroup>
             <GenericItemCard.Value
               label="Log Types"
-              value={
-                <Flex align="center" spacing={2} mt={1} flexWrap="wrap">
-                  <LimitItemDisplay limit={2}>
-                    {rule.logTypes.map(logType => (
-                      <BulletedLogType key={logType} logType={logType} />
-                    ))}
-                  </LimitItemDisplay>
-                </Flex>
-              }
+              value={<BulletedLogTypeList logTypes={rule.logTypes} limit={2} />}
             />
           </GenericItemCard.ValuesGroup>
           <GenericItemCard.ValuesGroup>

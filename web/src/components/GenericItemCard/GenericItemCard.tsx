@@ -107,7 +107,7 @@ const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, valu
           aria-labelledby={cardId}
           color="gray-300"
           fontSize="2x-small"
-          mb="1px"
+          mb="6px"
           fontWeight="medium"
         >
           {label}
