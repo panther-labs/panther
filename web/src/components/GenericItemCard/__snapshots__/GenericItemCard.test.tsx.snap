@@ -57,12 +57,13 @@ exports[`GenericItemCard renders a step 1`] = `
 .panther-1 {
   color: #bdbdbd;
   font-size: 0.563rem;
-  margin-bottom: 1px;
+  margin-bottom: 6px;
   font-weight: 500;
 }
 
 .panther-2 {
   font-size: 0.875rem;
+  font-weight: 500;
   opacity: 1;
 }
 
