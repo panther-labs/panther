@@ -36,8 +36,6 @@ import (
 type UpdateLogProcessorTablesProperties struct {
 	// TablesSignature should change every time the tables change (for CF master.yml this can be the Panther version)
 	TablesSignature            string `validate:"required"`
-	AthenaWorkGroup            string `validate:"required"`
-	ProcessedDataBucket        string `validate:"required"`
 	DataCatalogUpdaterQueueURL string `validate:"required"`
 }
 
