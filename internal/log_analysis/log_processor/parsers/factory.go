@@ -24,11 +24,10 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
-	"gopkg.in/go-playground/validator.v9"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
 
 // Factory creates new parser instances.
@@ -85,7 +84,7 @@ type JSONParserFactory struct {
 func (f *JSONParserFactory) NewParser(_ interface{}) (Interface, error) {
 	validate := f.Validate
 	if validate == nil {
-		validate = ValidateStruct
+		validate = pantherlog.ValidateStruct
 	}
 
 	logReader := strings.NewReader(`null`)
@@ -114,16 +113,6 @@ func (f *JSONParserFactory) NewParser(_ interface{}) (Interface, error) {
 	}, nil
 }
 
-var validate = func() *validator.Validate {
-	v := validator.New()
-	null.RegisterValidators(v)
-	return v
-}()
-
-func ValidateStruct(s interface{}) error {
-	return validate.Struct(s)
-}
-
 type simpleJSONParser struct {
 	logType   string
 	newEvent  func() interface{}
@@ -140,14 +129,14 @@ func (p *simpleJSONParser) ParseLog(log string) ([]*Result, error) {
 	p.iter.Error = nil
 	p.iter.ReadVal(event)
 	if err := p.iter.Error; err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to read %q JSON event", p.logType)
 	}
 	if err := p.validate(event); err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "log event %q validation failed", p.logType)
 	}
 	result, err := p.builder.BuildResult(p.logType, event)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to build %q log event", p.logType)
 	}
 	return []*Result{result}, nil
 }

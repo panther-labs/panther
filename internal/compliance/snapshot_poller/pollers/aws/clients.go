@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
@@ -266,7 +267,7 @@ func assumeRole(pollerInput *awsmodels.ResourcePollerInput, sess *session.Sessio
 	}
 
 	creds := stscreds.NewCredentials(
-		sess,
+		sess.Copy(aws.NewConfig().WithSTSRegionalEndpoint(endpoints.RegionalSTSEndpoint)),
 		*pollerInput.AuthSource,
 		func(p *stscreds.AssumeRoleProvider) {
 			p.Duration = assumeRoleDuration
@@ -277,11 +278,7 @@ func assumeRole(pollerInput *awsmodels.ResourcePollerInput, sess *session.Sessio
 }
 
 func verifyAssumedCreds(sess *session.Session, region string) error {
-	svc := sts.New(sess,
-		&aws.Config{
-			Region: &region,
-		},
-	)
+	svc := sts.New(sess, aws.NewConfig().WithRegion(region))
 	_, err := svc.GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	return err
 }

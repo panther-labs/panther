@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
@@ -60,11 +61,11 @@ func ScanARN(w pantherlog.ValueWriter, input string) {
 	w.WriteValues(pantherlog.FieldAWSARN, input)
 	w.WriteValues(pantherlog.FieldAWSAccountID, arn.AccountID)
 	// instanceId: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policy-structure.html#EC2_ARN_Format
-	if !strings.HasPrefix(input, "instance/") {
+	if !strings.HasPrefix(arn.Resource, "instance/") {
 		return
 	}
-	if pos := strings.LastIndex(input, "/"); 0 <= pos && pos < len(input) { // not if ends in "/"
-		instanceID := input[pos:]
+	if pos := strings.LastIndex(arn.Resource, "/"); 0 <= pos && pos < len(input) { // not if ends in "/"
+		instanceID := arn.Resource[pos:]
 		if len(instanceID) > 0 {
 			ScanInstanceID(w, instanceID[1:])
 		}
@@ -84,5 +85,77 @@ func ScanAccountID(w pantherlog.ValueWriter, input string) {
 func ScanInstanceID(w pantherlog.ValueWriter, input string) {
 	if strings.HasPrefix(input, "i-") {
 		w.WriteValues(pantherlog.FieldAWSInstanceID, input)
+	}
+}
+
+func ExtractRawMessageIndicators(w pantherlog.ValueWriter, messages ...pantherlog.RawMessage) {
+	var iter *jsoniter.Iterator
+	for _, msg := range messages {
+		if msg == nil {
+			continue
+		}
+		if iter == nil {
+			iter = jsoniter.ConfigDefault.BorrowIterator(msg)
+		} else {
+			iter.Error = nil
+			iter.ResetBytes(msg)
+		}
+		extractIndicators(w, iter, "")
+	}
+	if iter != nil {
+		iter.Pool().ReturnIterator(iter)
+	}
+}
+
+func extractIndicators(w pantherlog.ValueWriter, iter *jsoniter.Iterator, key string) {
+	switch iter.WhatIsNext() {
+	case jsoniter.ObjectValue:
+		switch key {
+		case "tags":
+			tag := struct {
+				Key   string `json:"key"`
+				Value string `json:"value"`
+			}{}
+			if iter.ReadVal(&tag); tag.Key != "" && tag.Value != "" {
+				w.WriteValues(pantherlog.FieldAWSTag, tag.Key+":"+tag.Value)
+			}
+		default:
+			for key := iter.ReadObject(); key != ""; key = iter.ReadObject() {
+				extractIndicators(w, iter, key)
+			}
+		}
+	case jsoniter.ArrayValue:
+		for iter.ReadArray() {
+			extractIndicators(w, iter, key)
+		}
+	case jsoniter.StringValue:
+		value := iter.ReadString()
+		switch key {
+		case "arn", "ARN":
+			ScanARN(w, value)
+		case "instanceId", "instance-id":
+			ScanInstanceID(w, value)
+		case "accountId", "account":
+			ScanAccountID(w, value)
+		case "tags":
+			ScanTag(w, value)
+		case "ipv6Addresses", "publicIp", "privateIpAddress", "ipAddressV4", "sourceIPAddress":
+			pantherlog.ScanIPAddress(w, value)
+		case "publicDnsName", "privateDnsName", "domain":
+			if value != "" {
+				w.WriteValues(pantherlog.FieldDomainName, value)
+			}
+		default:
+			switch {
+			case strings.HasSuffix(key, "AccountId"):
+				ScanAccountID(w, value)
+			case strings.HasSuffix(key, "InstanceId"):
+				ScanInstanceID(w, value)
+			case arn.IsARN(value):
+				ScanARN(w, value)
+			}
+		}
+	default:
+		iter.Skip()
 	}
 }
