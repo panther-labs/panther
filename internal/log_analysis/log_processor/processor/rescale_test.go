@@ -70,7 +70,7 @@ func TestScaleup(t *testing.T) {
 		})
 
 	ctx, cancel := context.WithCancel(context.Background())
-	ScalingDecisions(ctx, sqsClient, lambdaClient, time.Millisecond)
+	go RunScalingDecisions(ctx, sqsClient, lambdaClient, time.Millisecond)
 	wg.Wait()
 	cancel()
 	sqsClient.AssertExpectations(t)

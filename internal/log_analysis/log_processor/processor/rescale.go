@@ -44,30 +44,28 @@ const (
 	processingMaxLambdaInvoke = 1
 )
 
-// ScalingDecisions makes periodic adaptive decisions to scale up based on the sqs queue stats, it returns
+// RunScalingDecisions makes periodic adaptive decisions to scale up based on the sqs queue stats, it returns
 // immediately with a boolean stop channel (sending an event to the channel stops execution).
-func ScalingDecisions(ctx context.Context, sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.LambdaAPI, decisionInterval time.Duration) {
-	go func() {
-		ticker := time.NewTicker(decisionInterval)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-			case <-ctx.Done():
-				return
-			}
-
-			// check if we need to scale
-			totalQueuedMessages, err := queueDepth(ctx, sqsClient)
-			if err != nil {
-				zap.L().Warn("rescale cannot read from sqs queue", zap.Error(err))
-				continue
-			}
-
-			// the number of lambdas to invoke are proportional to the message count (clipped to processingMaxLambdaInvoke)
-			processingScaleUp(ctx, lambdaClient, totalQueuedMessages/processingMaxFilesLimit)
+func RunScalingDecisions(ctx context.Context, sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.LambdaAPI, decisionInterval time.Duration) {
+	ticker := time.NewTicker(decisionInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+		case <-ctx.Done():
+			return
 		}
-	}()
+
+		// check if we need to scale
+		totalQueuedMessages, err := queueDepth(ctx, sqsClient)
+		if err != nil {
+			zap.L().Warn("rescale cannot read from sqs queue", zap.Error(err))
+			continue
+		}
+
+		// the number of lambdas to invoke are proportional to the message count (clipped to processingMaxLambdaInvoke)
+		processingScaleUp(ctx, lambdaClient, totalQueuedMessages/processingMaxFilesLimit)
+	}
 }
 
 func queueDepth(ctx context.Context, sqsClient sqsiface.SQSAPI) (int, error) {
@@ -94,27 +92,28 @@ func queueDepth(ctx context.Context, sqsClient sqsiface.SQSAPI) (int, error) {
 
 // processingScaleUp will execute nLambdas to take on more load
 func processingScaleUp(ctx context.Context, lambdaClient lambdaiface.LambdaAPI, nLambdas int) {
-	if nLambdas > 0 {
-		if nLambdas > processingMaxLambdaInvoke { // clip to cap rate of increase under very high load
-			nLambdas = processingMaxLambdaInvoke
+	if nLambdas <= 0 {
+		return
+	}
+	if nLambdas > processingMaxLambdaInvoke { // clip to cap rate of increase under very high load
+		nLambdas = processingMaxLambdaInvoke
+	}
+	zap.L().Debug("scaling up", zap.Int("nLambdas", nLambdas))
+	for i := 0; i < nLambdas; i++ {
+		resp, err := lambdaClient.InvokeWithContext(ctx, &lambda.InvokeInput{
+			FunctionName:   box.String("panther-log-processor"),
+			Payload:        []byte(`{"tick": true}`),
+			InvocationType: box.String(lambda.InvocationTypeEvent), // don't wait for response
+		})
+		if err != nil && err != context.Canceled && err != context.DeadlineExceeded {
+			zap.L().Error("scaling up failed to invoke log processor",
+				zap.Error(errors.WithStack(err)))
+			return
 		}
-		zap.L().Debug("scaling up", zap.Int("nLambdas", nLambdas))
-		for i := 0; i < nLambdas; i++ {
-			resp, err := lambdaClient.InvokeWithContext(ctx, &lambda.InvokeInput{
-				FunctionName:   box.String("panther-log-processor"),
-				Payload:        []byte(`{"tick": true}`),
-				InvocationType: box.String(lambda.InvocationTypeEvent), // don't wait for response
-			})
-			if err != nil && err != context.Canceled && err != context.DeadlineExceeded {
-				zap.L().Error("scaling up failed to invoke log processor",
-					zap.Error(errors.WithStack(err)))
-				return
-			}
-			if resp.FunctionError != nil {
-				zap.L().Error("scaling up failed to invoke log processor",
-					zap.Error(errors.Errorf(*resp.FunctionError)))
-				return
-			}
+		if resp.FunctionError != nil {
+			zap.L().Error("scaling up failed to invoke log processor",
+				zap.Error(errors.Errorf(*resp.FunctionError)))
+			return
 		}
 	}
 }

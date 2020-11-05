@@ -76,7 +76,7 @@ func TestProcessOpLog(t *testing.T) {
 		InvokedFunctionArn: functionName,
 	}
 
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Minute)) // Pulling deadline somewhere in the future
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute) // Pulling deadline somewhere in the future
 	defer cancel()
 	ctx = lambdacontext.NewContext(ctx, lc)
 

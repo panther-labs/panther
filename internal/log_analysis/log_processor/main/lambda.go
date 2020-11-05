@@ -49,7 +49,11 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 	lc, _ := lambdacontext.FromContext(ctx)
 	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
 
-	cancelScaling := scheduleScalingDecisions(ctx, scalingDecisionInterval)
+	// Create cancellable deadline for Scaling Decisions go routine
+	scalingCtx, cancelScaling := context.WithCancel(ctx)
+	// runs in the background, periodically polling the queue to make scaling decisions
+	go processor.RunScalingDecisions(scalingCtx, common.SqsClient, common.LambdaClient, scalingDecisionInterval)
+
 	var sqsMessageCount int
 	defer func() {
 		cancelScaling()
@@ -60,12 +64,4 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 	sqsMessageCount, err = processor.StreamEvents(ctx, common.SqsClient, logTypesResolver)
 
 	return err
-}
-
-func scheduleScalingDecisions(ctx context.Context, scalingDecisionInterval time.Duration) context.CancelFunc {
-	// Create cancellable deadline for Scaling Decisions go routine
-	ctx, cancel := context.WithCancel(ctx)
-	// runs periodically during processing making scaling decisions
-	processor.ScalingDecisions(ctx, common.SqsClient, common.LambdaClient, scalingDecisionInterval)
-	return cancel
 }
