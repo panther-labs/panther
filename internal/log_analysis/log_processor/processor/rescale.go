@@ -46,8 +46,8 @@ const (
 
 // RunScalingDecisions makes periodic adaptive decisions to scale up based on the sqs queue stats, it returns
 // immediately with a boolean stop channel (sending an event to the channel stops execution).
-func RunScalingDecisions(ctx context.Context, sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.LambdaAPI, decisionInterval time.Duration) {
-	ticker := time.NewTicker(decisionInterval)
+func RunScalingDecisions(ctx context.Context, sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.LambdaAPI, interval time.Duration) {
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for {
 		select {
