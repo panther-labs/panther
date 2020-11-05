@@ -20,6 +20,7 @@ package process
 
 import (
 	"context"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -81,6 +82,9 @@ func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) er
 			return errors.Wrapf(err, "failed to update tables for log type %q", logType)
 		}
 	}
+
+	// the Glue Catalog is eventually consistent and if we are too fast the above schema changes will not be visible to Athena
+	time.Sleep(time.Second)
 
 	// update the views with the new tables
 	availableLogTypes, err := listAvailableLogTypes(ctx)

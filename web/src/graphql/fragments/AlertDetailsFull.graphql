@@ -1,6 +1,7 @@
 fragment AlertDetailsFull on AlertDetails {
   alertId
   ruleId
+  type
   title
   creationTime
   deliveryResponses {
