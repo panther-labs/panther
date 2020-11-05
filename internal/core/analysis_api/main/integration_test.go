@@ -396,18 +396,22 @@ func testPolicyPass(t *testing.T) {
 			Results: []*models.RuleResult{
 				{
 					DedupOutput: "defaultDedupString:RuleAPITestRule",
+					Passed:      true,
 					Errored:     false,
 					ID:          "0",
 					RuleOutput:  true,
 					RuleID:      "RuleAPITestRule",
 					TitleOutput: "",
+					TestName:    string(policy.Tests[0].Name),
 				}, {
 					DedupOutput: "defaultDedupString:RuleAPITestRule",
+					Passed:      true,
 					Errored:     false,
 					ID:          "1",
 					RuleOutput:  true,
 					RuleID:      "RuleAPITestRule",
 					TitleOutput: "",
+					TestName:    string(policy.Tests[1].Name),
 				},
 			},
 		}
@@ -464,6 +468,7 @@ func testPolicyPassAllResourceTypes(t *testing.T) {
 					RuleOutput:  true,
 					RuleID:      "RuleAPITestRule",
 					TitleOutput: "",
+					TestName:    string(policy.Tests[0].Name),
 				}, {
 					DedupOutput: "defaultDedupString:RuleAPITestRule",
 					Passed:      true,
@@ -472,6 +477,7 @@ func testPolicyPassAllResourceTypes(t *testing.T) {
 					RuleOutput:  true,
 					RuleID:      "RuleAPITestRule",
 					TitleOutput: "",
+					TestName:    string(policy.Tests[1].Name),
 				},
 			},
 		}

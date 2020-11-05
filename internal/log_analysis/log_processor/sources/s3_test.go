@@ -24,9 +24,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
@@ -148,10 +146,9 @@ func TestHandleUnsupportedFileType(t *testing.T) {
 	s3Mock.On("GetBucketLocation", mock.Anything).Return(
 		&s3.GetBucketLocationOutput{LocationConstraint: aws.String("us-west-2")}, nil).Once()
 
-	newCredentialsFunc =
-		func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
-			return &credentials.Credentials{}
-		}
+	newCredentialsFunc = func(roleArn string) *credentials.Credentials {
+		return &credentials.Credentials{}
+	}
 
 	objectData := []byte(`<?xml version="1.0" encoding="UTF-8" standalone="no" ?>`)
 	getObjectOutput := &s3.GetObjectOutput{Body: ioutil.NopCloser(bytes.NewReader(objectData))}

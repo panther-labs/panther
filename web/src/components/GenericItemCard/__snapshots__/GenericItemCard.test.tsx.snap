@@ -60,7 +60,7 @@ exports[`GenericItemCard renders a step 1`] = `
 .panther-1 {
   color: #bdbdbd;
   font-size: 0.563rem;
-  margin-bottom: 1px;
+  margin-bottom: 6px;
   font-weight: 500;
 }
 
@@ -254,7 +254,7 @@ exports[`GenericItemCard renders a step with border color 1`] = `
 .panther-1 {
   color: #bdbdbd;
   font-size: 0.563rem;
-  margin-bottom: 1px;
+  margin-bottom: 6px;
   font-weight: 500;
 }
 
