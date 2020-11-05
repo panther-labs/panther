@@ -21,6 +21,7 @@ package awslogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -61,7 +62,7 @@ var logTypes = logtypes.Must("AWS",
 		Name:         TypeCloudTrail,
 		Description:  `AWSCloudTrail represents the content of a CloudTrail S3 object.`,
 		ReferenceURL: `https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html`,
-		Schema:       CloudTrail{},
+		Schema:       pantherlog.MustBuildEventSchema(CloudTrail{}),
 		NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
 			return &CloudTrailParser{}, nil
 		}),
