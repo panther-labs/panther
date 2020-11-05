@@ -182,7 +182,12 @@ Resources:
             Resource:
               - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/panther*
               - !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stackset/panther*
-              - !Sub arn:${AWS::Partition}:cloudformation:*:aws:transform/Serverless-2016-10-31
+          - Effect: Allow # for ddb athena connector
+            Action: cloudformation:*
+            Resource: !Sub arn:${AWS::Partition}:cloudformation:*:aws:transform/Serverless-2016-10-31
+          - Effect: Allow # for ddb athena connector
+            Action: serverlessrepo:*
+            Resource: !Sub arn:${AWS::Partition}:serverlessrepo:*:*:applications/*
           - Effect: Allow
             Action: dynamodb:*
             Resource: !Sub arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/panther-*
