@@ -27,6 +27,16 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
+// mustBuildEventSchema builds a log event schema with all AWS indicators to be compatible with the legacy tables
+func mustBuildEventSchema(schema interface{}) interface{} {
+	return pantherlog.MustBuildEventSchema(schema, append(pantherlog.DefaultIndicators(),
+		pantherlog.FieldAWSARN,
+		pantherlog.FieldAWSAccountID,
+		pantherlog.FieldAWSInstanceID,
+		pantherlog.FieldAWSTag,
+	)...)
+}
+
 func ExtractRawMessageIndicators(w pantherlog.ValueWriter, messages ...pantherlog.RawMessage) {
 	var iter *jsoniter.Iterator
 	for _, msg := range messages {
