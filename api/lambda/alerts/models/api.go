@@ -57,6 +57,7 @@ type GetAlertOutput = Alert
 // {
 //     "listAlerts": {
 //         "ruleId": "My.Rule",
+//	    "type" : "RULE_ERROR",
 //         "pageSize": 25,
 //         "exclusiveStartKey": "abcdef",
 //         "severity": ["INFO"],
@@ -82,7 +83,8 @@ type ListAlertsInput struct {
 	ExclusiveStartKey *string `json:"exclusiveStartKey"`
 
 	// Filtering
-	Severity        []*string  `json:"severity" validate:"omitempty,dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Type            string     `json:"type" validate:"omitempty,oneof=RULE RULE_ERROR"`
+	Severity        []string   `json:"severity" validate:"omitempty,dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	NameContains    *string    `json:"nameContains"`
 	Status          []string   `json:"status" validate:"omitempty,dive,oneof=OPEN TRIAGED CLOSED RESOLVED"`
 	CreatedAtBefore *time.Time `json:"createdAtBefore"`
@@ -183,6 +185,7 @@ type ListAlertsOutput struct {
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
 	AlertID           string              `json:"alertId" validate:"required"`
+	Type              string              `json:"type,omitempty"`
 	RuleID            *string             `json:"ruleId" validate:"required"`
 	RuleDisplayName   *string             `json:"ruleDisplayName,omitempty"`
 	RuleVersion       *string             `json:"ruleVersion" validate:"required"`

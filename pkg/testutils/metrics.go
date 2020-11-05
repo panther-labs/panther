@@ -1,3 +1,5 @@
+package testutils
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,24 +18,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { buildAlertDetails, render } from 'test-utils';
-import { AlertTypesEnum } from 'Generated/schema';
-import AlertDetailsBanner from './index';
+import (
+	"github.com/stretchr/testify/mock"
 
-describe('AlertDetailsBanner', () => {
-  it('renders', () => {
-    const alert = buildAlertDetails();
-    const alertWithRuleError = buildAlertDetails({
-      type: AlertTypesEnum.RuleError,
-    });
+	"github.com/panther-labs/panther/pkg/metrics"
+)
 
-    const { container } = render(
-      <>
-        <AlertDetailsBanner alert={alert} />
-        <AlertDetailsBanner alert={alertWithRuleError} />
-      </>
-    );
-    expect(container).toMatchSnapshot();
-  });
-});
+type LoggerMock struct {
+	metrics.Logger
+	mock.Mock
+}
+
+func (m *LoggerMock) Log(dimensions []metrics.Dimension, metrics ...metrics.Metric) {
+	m.Called(dimensions, metrics)
+}

@@ -31,6 +31,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	logprocessormodels "github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
@@ -97,7 +98,7 @@ func (api *API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOu
 	result = &models.Alert{
 		AlertSummary:           *alertSummary,
 		Events:                 aws.StringSlice(events),
-		EventsLastEvaluatedKey: aws.String(encodedToken),
+		EventsLastEvaluatedKey: &encodedToken,
 	}
 
 	gatewayapi.ReplaceMapSliceNils(result)
@@ -142,18 +143,24 @@ func (api *API) getEventsForLogType(
 			break
 		}
 
-		partitionPrefix := awsglue.GetPartitionPrefix(logprocessormodels.RuleData, logType, awsglue.GlueTableHourly, nextTime)
+		var dataType logprocessormodels.DataType
+		if alert.Type == alertmodels.RuleErrorType {
+			dataType = logprocessormodels.RuleErrors
+		} else {
+			dataType = logprocessormodels.RuleData
+		}
+		partitionPrefix := awsglue.GetPartitionPrefix(dataType, logType, awsglue.GlueTableHourly, nextTime)
 		partitionPrefix += fmt.Sprintf(ruleSuffixFormat, alert.RuleID) // JSON data has more specific paths based on ruleID
 
 		listRequest := &s3.ListObjectsV2Input{
-			Bucket: aws.String(api.env.ProcessedDataBucket),
-			Prefix: aws.String(partitionPrefix),
+			Bucket: &api.env.ProcessedDataBucket,
+			Prefix: &partitionPrefix,
 		}
 
 		// if we are paginating and in the same partition, set the cursor
 		if token != nil {
 			if strings.HasPrefix(token.S3ObjectKey, partitionPrefix) {
-				listRequest.StartAfter = aws.String(token.S3ObjectKey)
+				listRequest.StartAfter = &token.S3ObjectKey
 			}
 		} else { // not starting from a pagination token
 			// objects have a creation time as prefix we can use to speed listing,
@@ -239,7 +246,7 @@ func (api *API) queryS3Object(key, alertID string, exclusiveStartIndex, maxResul
 			JSON: &s3.JSONOutput{RecordDelimiter: aws.String(recordDelimiter)},
 		},
 		ExpressionType: aws.String(s3.ExpressionTypeSql),
-		Expression:     aws.String(query),
+		Expression:     &query,
 	}
 
 	output, err := api.s3Client.SelectObjectContent(input)

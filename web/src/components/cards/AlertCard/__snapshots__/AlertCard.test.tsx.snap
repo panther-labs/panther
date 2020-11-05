@@ -27,13 +27,18 @@ exports[`AlertCard should match snapshot 1`] = `
   }
 }
 
-.panther-36 {
+.panther-41 {
   background-color: #1d2a3f;
   border-radius: 4px;
   padding: 20px;
+  border-left: 4px solid;
+  border-color: #14b597;
+  overflow: hidden;
 }
 
-.panther-35 {
+
+
+.panther-39 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -42,7 +47,7 @@ exports[`AlertCard should match snapshot 1`] = `
   height: 100%;
 }
 
-.panther-34 {
+.panther-38 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -82,7 +87,7 @@ exports[`AlertCard should match snapshot 1`] = `
   color: #11a5f3;
 }
 
-.panther-33 {
+.panther-37 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -93,7 +98,7 @@ exports[`AlertCard should match snapshot 1`] = `
   flex-wrap: wrap;
 }
 
-.panther-33>*:not(:last-child) {
+.panther-37>*:not(:last-child) {
   margin-right: 32px;
 }
 
@@ -166,11 +171,15 @@ exports[`AlertCard should match snapshot 1`] = `
   font-weight: 500;
 }
 
-.panther-9 {
+.panther-7 {
+  color: #91eddc;
+}
+
+.panther-13 {
   height: 18px;
 }
 
-.panther-8 {
+.panther-12 {
   display: inline-block;
   vertical-align: sub;
   -webkit-animation: animation-0 2s linear infinite;
@@ -179,7 +188,7 @@ exports[`AlertCard should match snapshot 1`] = `
   height: 18px;
 }
 
-.panther-7 {
+.panther-11 {
   stroke-dashoffset: 600;
   stroke-dasharray: 300;
   stroke-width: 13;
@@ -191,7 +200,7 @@ exports[`AlertCard should match snapshot 1`] = `
   fill: transparent;
 }
 
-.panther-16 {
+.panther-20 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -206,11 +215,11 @@ exports[`AlertCard should match snapshot 1`] = `
   flex-wrap: wrap;
 }
 
-.panther-16>*:not(:last-child) {
+.panther-20>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-15 {
+.panther-19 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -221,24 +230,24 @@ exports[`AlertCard should match snapshot 1`] = `
   align-items: center;
 }
 
-.panther-15>*:not(:last-child) {
+.panther-19>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-13 {
+.panther-17 {
   width: 12px;
   height: 12px;
   background-color: hsl(353, 43%, 63%);
   border-radius: 99999px;
 }
 
-.panther-14 {
+.panther-18 {
   font-size: 0.75rem;
   font-weight: 400;
   line-height: 1.5;
 }
 
-.panther-32 {
+.panther-36 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -251,11 +260,11 @@ exports[`AlertCard should match snapshot 1`] = `
   margin-right: 0;
 }
 
-.panther-32>*:not(:last-child) {
+.panther-36>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-25 {
+.panther-29 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -286,7 +295,7 @@ exports[`AlertCard should match snapshot 1`] = `
   background-color: transparent;
 }
 
-.panther-31 {
+.panther-35 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -301,11 +310,11 @@ exports[`AlertCard should match snapshot 1`] = `
   align-items: center;
 }
 
-.panther-31>*:not(:last-child) {
+.panther-35>*:not(:last-child) {
   margin-right: 4px;
 }
 
-.panther-27 {
+.panther-31 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -313,7 +322,7 @@ exports[`AlertCard should match snapshot 1`] = `
   width: 85px;
 }
 
-.panther-26 {
+.panther-30 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -342,14 +351,14 @@ exports[`AlertCard should match snapshot 1`] = `
   background-color: #6e3078;
 }
 
-.panther-30 {
+.panther-34 {
   display: -webkit-inline-box;
   display: -webkit-inline-flex;
   display: -ms-inline-flexbox;
   display: inline-flex;
 }
 
-.panther-29 {
+.panther-33 {
   outline: none;
   line-height: 1;
   height: 24px;
@@ -366,23 +375,23 @@ exports[`AlertCard should match snapshot 1`] = `
   text-decoration: none;
 }
 
-.panther-29:hover {
+.panther-33:hover {
   background-color: #465973;
   border-color: #465973;
 }
 
-.panther-29:focus {
+.panther-33:focus {
   background-color: #465973;
   border-color: #93a6c0;
 }
 
-.panther-29:active,
-.panther-29[data-active=true] {
+.panther-33:active,
+.panther-33[data-active=true] {
   background-color: #253852;
   border-color: #253852;
 }
 
-.panther-28 {
+.panther-32 {
   display: inline-block;
   vertical-align: sub;
   -webkit-flex-shrink: 0;
@@ -398,192 +407,216 @@ exports[`AlertCard should match snapshot 1`] = `
     id="main-header"
   />
   <section
-    class="panther-36"
+    class="panther-41"
   >
     <div
-      class="panther-35"
+      class="panther-40"
     >
       <div
-        class="panther-34"
+        class="panther-39"
       >
-        <h4
-          class="panther-1"
-        >
-          <a
-            aria-label="Link to Alert"
-            class="panther-0"
-            href="/log-analysis/alerts/f67b8f04-5fac-404a-93a4-38db29f258ba/"
-          >
-            indexing
-          </a>
-        </h4>
         <div
-          class="panther-33"
+          class="panther-38"
         >
-          <dl
-            class="panther-5"
+          <h4
+            class="panther-1"
           >
-            <dd
-              aria-labelledby="undefinedobject-object"
-              class="panther-4"
+            <a
+              aria-label="Link to Alert"
+              class="panther-0"
+              href="/log-analysis/alerts/f67b8f04-5fac-404a-93a4-38db29f258ba/"
             >
-              <a
-                class="panther-3"
-                href="/log-analysis/rules/6eb9c948-5a13-4955-bd91-b98801b55bed/"
-              >
-                <span
-                  aria-label="Link to Rule"
-                  class="panther-2"
-                  type="button"
-                >
-                  View Rule
-                </span>
-              </a>
-            </dd>
-          </dl>
-          <dl
-            class="panther-5"
-          >
-            <dt
-              aria-labelledby="destinationsobject-object"
-              class="panther-6"
-            >
-              Destinations
-            </dt>
-            <dd
-              aria-labelledby="destinationsobject-object"
-              class="panther-4"
-            >
-              <div
-                class="panther-9"
-              >
-                <svg
-                  aria-label="Loading..."
-                  class="panther-8"
-                  viewBox="0 0 150 150"
-                >
-                  <circle
-                    class="panther-7"
-                    color="current"
-                    cx="75"
-                    cy="75"
-                    r="60"
-                  />
-                </svg>
-              </div>
-            </dd>
-          </dl>
-          <dl
-            class="panther-5"
-          >
-            <dt
-              aria-labelledby="log-typesobject-object"
-              class="panther-6"
-            >
-              Log Types
-            </dt>
-            <dd
-              aria-labelledby="log-typesobject-object"
-              class="panther-4"
-            >
-              <div
-                class="panther-16"
-              >
-                <div
-                  class="panther-15"
-                >
-                  <span
-                    class="panther-13"
-                  />
-                  <span
-                    class="panther-14"
-                  >
-                    Costa Rica
-                  </span>
-                </div>
-              </div>
-            </dd>
-          </dl>
-          <dl
-            class="panther-5"
-          >
-            <dt
-              aria-labelledby="events670"
-              class="panther-6"
-            >
-              Events
-            </dt>
-            <dd
-              aria-labelledby="events670"
-              class="panther-4"
-            >
-              670
-            </dd>
-          </dl>
-          <dl
-            class="panther-5"
-          >
-            <dt
-              aria-labelledby="time-created2020-08-08-1215-gmt"
-              class="panther-6"
-            >
-              Time Created
-            </dt>
-            <dd
-              aria-labelledby="time-created2020-08-08-1215-gmt"
-              class="panther-4"
-            >
-              2020-08-08 12:15 GMT
-            </dd>
-          </dl>
+              indexing
+            </a>
+          </h4>
           <div
-            class="panther-32"
+            class="panther-37"
           >
-            <div
-              aria-atomic="true"
-              class="panther-25"
-              role="status"
+            <dl
+              class="panther-5"
             >
-              MEDIUM
-            </div>
-            <div
-              class="panther-31"
+              <dd
+                aria-labelledby="undefinedobject-object"
+                class="panther-4"
+              >
+                <a
+                  class="panther-3"
+                  href="/log-analysis/rules/6eb9c948-5a13-4955-bd91-b98801b55bed/"
+                >
+                  <span
+                    aria-label="Link to Rule"
+                    class="panther-2"
+                    type="button"
+                  >
+                    View Rule
+                  </span>
+                </a>
+              </dd>
+            </dl>
+            <dl
+              class="panther-5"
             >
-              <div
-                class="panther-27"
+              <dt
+                aria-labelledby="alert-typeobject-object"
+                class="panther-6"
+              >
+                Alert Type
+              </dt>
+              <dd
+                aria-labelledby="alert-typeobject-object"
+                class="panther-4"
+              >
+                <p
+                  class="panther-7"
+                >
+                  Rule Match
+                </p>
+              </dd>
+            </dl>
+            <dl
+              class="panther-5"
+            >
+              <dt
+                aria-labelledby="destinationsobject-object"
+                class="panther-6"
+              >
+                Destinations
+              </dt>
+              <dd
+                aria-labelledby="destinationsobject-object"
+                class="panther-4"
               >
                 <div
-                  aria-atomic="true"
-                  class="panther-26"
-                  role="status"
-                >
-                  TRIAGED
-                </div>
-              </div>
-              <div
-                aria-controls="menu--1"
-                aria-haspopup="true"
-                class="panther-30"
-                data-reach-menu-button=""
-                id="menu-button--menu--1"
-                type="button"
-              >
-                <button
-                  aria-label="Change Alert Status"
-                  aria-pressed="false"
-                  class="panther-29"
-                  type="button"
+                  class="panther-13"
                 >
                   <svg
-                    class="panther-28"
-                    role="presentation"
-                    viewBox="0 0 24 24"
+                    aria-label="Loading..."
+                    class="panther-12"
+                    viewBox="0 0 150 150"
                   >
-                    <path
-                      d="M7 10L12 15L17 10H7Z"
+                    <circle
+                      class="panther-11"
+                      color="current"
+                      cx="75"
+                      cy="75"
+                      r="60"
                     />
                   </svg>
-                </button>
+                </div>
+              </dd>
+            </dl>
+            <dl
+              class="panther-5"
+            >
+              <dt
+                aria-labelledby="log-typesobject-object"
+                class="panther-6"
+              >
+                Log Types
+              </dt>
+              <dd
+                aria-labelledby="log-typesobject-object"
+                class="panther-4"
+              >
+                <div
+                  class="panther-20"
+                >
+                  <div
+                    class="panther-19"
+                  >
+                    <span
+                      class="panther-17"
+                    />
+                    <span
+                      class="panther-18"
+                    >
+                      Costa Rica
+                    </span>
+                  </div>
+                </div>
+              </dd>
+            </dl>
+            <dl
+              class="panther-5"
+            >
+              <dt
+                aria-labelledby="events670"
+                class="panther-6"
+              >
+                Events
+              </dt>
+              <dd
+                aria-labelledby="events670"
+                class="panther-4"
+              >
+                670
+              </dd>
+            </dl>
+            <dl
+              class="panther-5"
+            >
+              <dt
+                aria-labelledby="time-created2020-08-08-1215-gmt"
+                class="panther-6"
+              >
+                Time Created
+              </dt>
+              <dd
+                aria-labelledby="time-created2020-08-08-1215-gmt"
+                class="panther-4"
+              >
+                2020-08-08 12:15 GMT
+              </dd>
+            </dl>
+            <div
+              class="panther-36"
+            >
+              <div
+                aria-atomic="true"
+                class="panther-29"
+                role="status"
+              >
+                MEDIUM
+              </div>
+              <div
+                class="panther-35"
+              >
+                <div
+                  class="panther-31"
+                >
+                  <div
+                    aria-atomic="true"
+                    class="panther-30"
+                    role="status"
+                  >
+                    TRIAGED
+                  </div>
+                </div>
+                <div
+                  aria-controls="menu--1"
+                  aria-haspopup="true"
+                  class="panther-34"
+                  data-reach-menu-button=""
+                  id="menu-button--menu--1"
+                  type="button"
+                >
+                  <button
+                    aria-label="Change Alert Status"
+                    aria-pressed="false"
+                    class="panther-33"
+                    type="button"
+                  >
+                    <svg
+                      class="panther-32"
+                      role="presentation"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M7 10L12 15L17 10H7Z"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

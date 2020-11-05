@@ -40,6 +40,7 @@ func TestMsTeamsAlert(t *testing.T) {
 	var createdAtTime, _ = time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
 	alert := &alertModels.Alert{
 		AnalysisID:   "policyId",
+		Type:         alertModels.PolicyType,
 		CreatedAt:    createdAtTime,
 		OutputIds:    []string{"output-id"},
 		AnalysisName: aws.String("policyName"),
