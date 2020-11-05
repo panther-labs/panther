@@ -187,6 +187,19 @@ resource "aws_iam_policy" "deployment" {
       "Resource": "arn:${var.aws_partition}:serverlessrepo:*:*:applications/*"
     },
     {
+      "Action": [
+        "lambda:GetFunction",
+        "lambda:CreateFunction"
+      ],
+      "Effect": "Allow",
+      "Resource": "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:function:ddb"
+    },
+    {
+      "Action": "s3:GetObject",
+      "Effect": "Allow",
+      "Resource": "arn:aws:s3:::awsserverlessrepo-changesets-*"
+    },
+    {
       "Action": "dynamodb:*",
       "Effect": "Allow",
       "Resource": "arn:${var.aws_partition}:dynamodb:*:${var.aws_account_id}:table/panther-*"

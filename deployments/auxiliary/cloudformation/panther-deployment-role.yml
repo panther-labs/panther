@@ -188,6 +188,14 @@ Resources:
           - Effect: Allow # for ddb athena connector
             Action: serverlessrepo:*
             Resource: !Sub arn:${AWS::Partition}:serverlessrepo:*:*:applications/*
+          - Effect: Allow # for ddb athena connector
+            Action:
+              - lambda:GetFunction
+              - lambda:CreateFunction
+            Resource: !Sub arn:${AWS::Partition}:lambda:*:${AWS::AccountId}:function:ddb
+          - Effect: Allow # for ddb athena connector
+            Action: s3:GetObject
+            Resource: arn:aws:s3:::awsserverlessrepo-changesets-*
           - Effect: Allow
             Action: dynamodb:*
             Resource: !Sub arn:${AWS::Partition}:dynamodb:*:${AWS::AccountId}:table/panther-*
