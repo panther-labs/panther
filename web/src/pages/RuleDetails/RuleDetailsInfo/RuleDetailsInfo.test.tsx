@@ -17,23 +17,18 @@
  */
 
 import React from 'react';
-import { buildAlertDetails, render } from 'test-utils';
-import { AlertTypesEnum } from 'Generated/schema';
-import AlertDetailsBanner from './index';
+import { render, buildRuleDetails } from 'test-utils';
+import RuleDetailsInfo from './index';
 
-describe('AlertDetailsBanner', () => {
-  it('renders', () => {
-    const alert = buildAlertDetails();
-    const alertWithRuleError = buildAlertDetails({
-      type: AlertTypesEnum.RuleError,
-    });
+describe('RuleDetailsInfo', () => {
+  it('renders the correct data', async () => {
+    const rule = buildRuleDetails({ displayName: 'My Rule' });
+    const { getByText } = render(<RuleDetailsInfo rule={rule} />);
+    expect(getByText('Edit')).toBeInTheDocument();
+    expect(getByText('Delete')).toBeInTheDocument();
 
-    const { container } = render(
-      <>
-        <AlertDetailsBanner alert={alert} />
-        <AlertDetailsBanner alert={alertWithRuleError} />
-      </>
-    );
-    expect(container).toMatchSnapshot();
+    expect(getByText('My Rule')).toBeInTheDocument();
+    expect(getByText('DISABLED')).toBeInTheDocument();
+    expect(getByText('LOW')).toBeInTheDocument();
   });
 });

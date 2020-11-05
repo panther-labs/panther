@@ -17,23 +17,17 @@
  */
 
 import React from 'react';
-import { buildAlertDetails, render } from 'test-utils';
-import { AlertTypesEnum } from 'Generated/schema';
-import AlertDetailsBanner from './index';
+import TablePlaceholder from 'Components/TablePlaceholder';
+import { Card, FadeIn } from 'pouncejs';
 
-describe('AlertDetailsBanner', () => {
-  it('renders', () => {
-    const alert = buildAlertDetails();
-    const alertWithRuleError = buildAlertDetails({
-      type: AlertTypesEnum.RuleError,
-    });
+const RuleDetailsPageSkeleton: React.FC = () => {
+  return (
+    <FadeIn from="bottom">
+      <Card p={6} data-testid="rule-alerts-listing-loading">
+        <TablePlaceholder rowCount={5} rowHeight={10} />
+      </Card>
+    </FadeIn>
+  );
+};
 
-    const { container } = render(
-      <>
-        <AlertDetailsBanner alert={alert} />
-        <AlertDetailsBanner alert={alertWithRuleError} />
-      </>
-    );
-    expect(container).toMatchSnapshot();
-  });
-});
+export default RuleDetailsPageSkeleton;
