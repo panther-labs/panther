@@ -20,6 +20,8 @@ package notify
 
 import (
 	"github.com/aws/aws-sdk-go/service/sns"
+
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 )
 
 const (
@@ -31,10 +33,10 @@ var (
 	messageAttributeDataType = "String"
 )
 
-func NewLogAnalysisSNSMessageAttributes(dataType, logType string) map[string]*sns.MessageAttributeValue {
+func NewLogAnalysisSNSMessageAttributes(dataType models.DataType, logType string) map[string]*sns.MessageAttributeValue {
 	return map[string]*sns.MessageAttributeValue{
 		logDataTypeAttributeName: {
-			StringValue: &dataType,
+			StringValue: (*string)(&dataType),
 			DataType:    &messageAttributeDataType,
 		},
 		logTypeAttributeName: {

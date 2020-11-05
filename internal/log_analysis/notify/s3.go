@@ -44,7 +44,7 @@ func NewS3ObjectPutNotification(bucket, key string, nbytes int) *S3Notification 
 					},
 					Object: events.S3Object{
 						Key:  key,
-						Size: int64(nbytes),
+						Size: int64(nbytes), // this is very important to include because some subscribers will ignore 0 length files
 					},
 				},
 			},

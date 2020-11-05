@@ -27,7 +27,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
 	"github.com/aws/aws-sdk-go/service/sns"
@@ -283,9 +282,9 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 	}
 
 	input := &sns.PublishInput{
-		TopicArn:          aws.String(destination.snsTopicArn),
-		Message:           aws.String(marshalledNotification),
-		MessageAttributes: notify.NewLogAnalysisSNSMessageAttributes(models.LogData.String(), buffer.logType),
+		TopicArn:          &destination.snsTopicArn,
+		Message:           &marshalledNotification,
+		MessageAttributes: notify.NewLogAnalysisSNSMessageAttributes(models.LogData, buffer.logType),
 	}
 	if _, err = destination.snsClient.Publish(input); err != nil {
 		err = errors.Wrap(err, "failed to send notification to topic")
