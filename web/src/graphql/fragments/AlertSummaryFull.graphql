@@ -3,6 +3,7 @@ fragment AlertSummaryFull on AlertSummary {
   ruleId
   title
   severity
+  type
   status
   creationTime
   deliveryResponses {
