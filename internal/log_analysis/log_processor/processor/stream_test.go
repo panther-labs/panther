@@ -39,17 +39,11 @@ import (
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
-const (
-	defaultTestTimeLimit = time.Second * 2
-)
-
 var (
-	snsMessage = `{}` // empty JSON is fine
-
 	streamTestReceiveMessageOutput = &sqs.ReceiveMessageOutput{
 		Messages: []*sqs.Message{
 			{
-				Body:          aws.String(snsMessage),
+				Body:          aws.String("{}"), // empty JSON is fine
 				ReceiptHandle: aws.String("testMessageHandle"),
 			},
 		},
@@ -62,138 +56,123 @@ func init() {
 	common.Config.SqsQueueURL = "https://fakesqsurl"
 }
 
-func TestDeadline(t *testing.T) {
-	deadline := time.Now().Add(time.Second)
-	assert.True(t, isProcessingTimeRemaining(deadline), "before deadline")
-	time.Sleep(time.Second)
-	assert.False(t, isProcessingTimeRemaining(deadline), "after deadline")
-}
-
-func TestProcessingDeadline(t *testing.T) {
-	diff := time.Second
-	now := time.Now()
-	deadline := now.Add(diff)
-	processingDeadlineTime := processingDeadlineTime(deadline)
-	assert.True(t, processingDeadlineTime.Before(deadline), "before deadline")
-	assert.True(t,
-		// these should be very close
-		diff/processingTimeLimitDivisor-deadline.Sub(processingDeadlineTime) < time.Second/100,
-		"correct")
-}
-
 func TestStreamEvents(t *testing.T) {
-	streamTestSqsClient, streamTestDeadline := initTest()
-
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
+	t.Parallel()
+	sqsMock := &testutils.SqsMock{}
+	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestReceiveMessageOutput, nil).Once()
 	// this one return 0 messages, which breaks the loop
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil).Once()
-	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
+	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(&sqs.ReceiveMessageOutput{}, nil).Once()
+	sqsMock.On("DeleteMessageBatch", mock.Anything).
+		Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
 
-	ctx, cancel := context.WithDeadline(context.Background(), streamTestDeadline)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	sqsMessageCount, err := streamEvents(ctx, streamTestSqsClient, noopProcessorFunc, noopReadSnsMessagesFunc)
+	sqsMessageCount, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopReadSnsMessagesFunc)
 	require.NoError(t, err)
 	assert.Equal(t, len(streamTestReceiveMessageOutput.Messages), sqsMessageCount)
 
 	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
-	streamTestSqsClient.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
 }
 
 func TestStreamEventsProcessingTimeLimitExceeded(t *testing.T) {
-	streamTestSqsClient, streamTestDeadline := initTest()
+	t.Parallel()
+	sqsMock := &testutils.SqsMock{}
 
-	deadline := streamTestDeadline.Add(-defaultTestTimeLimit * 2) // set in the past so code exits immediately
-	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now()) // set to current time so code exits immediately
 	defer cancel()
-	sqsMessageCount, err := streamEvents(ctx, streamTestSqsClient, noopProcessorFunc, noopReadSnsMessagesFunc)
+	sqsMessageCount, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopReadSnsMessagesFunc)
 	require.NoError(t, err)
 	assert.Equal(t, 0, sqsMessageCount)
-
-	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
-	streamTestSqsClient.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
 }
 
 func TestStreamEventsReadEventError(t *testing.T) {
-	streamTestSqsClient, streamTestDeadline := initTest()
+	t.Parallel()
+	sqsMock := &testutils.SqsMock{}
+	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestReceiveMessageOutput, nil).Once()
 
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
-
-	ctx, cancel := context.WithDeadline(context.Background(), streamTestDeadline)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	_, err := streamEvents(ctx, streamTestSqsClient, noopProcessorFunc, failReadSnsMessagesFunc)
+	_, err := pollEvents(ctx, sqsMock, noopProcessorFunc, failReadSnsMessagesFunc)
 	require.Error(t, err)
 	assert.Equal(t, "readEventError", err.Error())
 
-	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
-	streamTestSqsClient.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
 }
 
 func TestStreamEventsProcessError(t *testing.T) {
-	streamTestSqsClient, streamTestDeadline := initTest()
+	t.Parallel()
+	sqsMock := &testutils.SqsMock{}
+	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestReceiveMessageOutput, nil).Once()
+	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(&sqs.ReceiveMessageOutput{}, nil).Once() // this one return 0 messages, which breaks the loop
 
-	deadline := streamTestDeadline.Add(-defaultTestTimeLimit * 2) // set in the past so code exits immediately
-
-	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	_, err := streamEvents(ctx, streamTestSqsClient, failProcessorFunc, noopReadSnsMessagesFunc)
+	_, err := pollEvents(ctx, sqsMock, failProcessorFunc, noopReadSnsMessagesFunc)
 	require.Error(t, err)
 	assert.Equal(t, "processError", err.Error())
 
-	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
-	streamTestSqsClient.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
 }
 
 func TestStreamEventsProcessErrorAndReadEventError(t *testing.T) {
-	streamTestSqsClient, streamTestDeadline := initTest()
+	t.Parallel()
+	sqsMock := &testutils.SqsMock{}
+	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestReceiveMessageOutput, nil).Once() // Should be called only once because operation fails
 
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
-
-	ctx, cancel := context.WithDeadline(context.Background(), streamTestDeadline)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	_, err := streamEvents(ctx, streamTestSqsClient, failProcessorFunc, failReadSnsMessagesFunc)
+	_, err := pollEvents(ctx, sqsMock, failProcessorFunc, failReadSnsMessagesFunc)
 	require.Error(t, err)
 	assert.Equal(t, "processError", err.Error()) // expect the processError NOT readEventError
 
-	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
-	streamTestSqsClient.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
 }
 
 func TestStreamEventsReceiveSQSError(t *testing.T) {
-	streamTestSqsClient, streamTestDeadline := initTest()
-
+	t.Parallel()
+	sqsMock := &testutils.SqsMock{}
 	// this one fails
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{},
-		fmt.Errorf("receiveError")).Once()
+	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(&sqs.ReceiveMessageOutput{}, fmt.Errorf("receiveError")).Once()
 
-	ctx, cancel := context.WithDeadline(context.Background(), streamTestDeadline)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	sqsMessageCount, err := streamEvents(ctx, streamTestSqsClient, noopProcessorFunc, noopReadSnsMessagesFunc)
+	sqsMessageCount, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopReadSnsMessagesFunc)
 	assert.Error(t, err)
 	assert.Equal(t, 0, sqsMessageCount)
 	assert.Equal(t, "failure receiving messages from https://fakesqsurl: receiveError", err.Error())
 
-	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
-	streamTestSqsClient.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
 }
 
 func TestStreamEventsDeleteSQSError(t *testing.T) {
-	streamTestSqsClient, streamTestDeadline := initTest()
+	sqsMock := &testutils.SqsMock{}
 
 	logs := mockLogger()
 
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(streamTestReceiveMessageOutput, nil).Once()
+	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestReceiveMessageOutput, nil).Once()
 	// this one is below threshold, which breaks the loop
-	streamTestSqsClient.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil).Once()
+	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(&sqs.ReceiveMessageOutput{}, nil).Once()
 
 	// this one fails
-	streamTestSqsClient.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{
+	sqsMock.On("DeleteMessageBatch", mock.Anything).Return(&sqs.DeleteMessageBatchOutput{
 		Failed:     []*sqs.BatchResultErrorEntry{{}},
 		Successful: []*sqs.DeleteMessageBatchResultEntry{},
 	}, fmt.Errorf("deleteError")).Once()
 
-	ctx, cancel := context.WithDeadline(context.Background(), streamTestDeadline)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	sqsMessageCount, err := streamEvents(ctx, streamTestSqsClient, noopProcessorFunc, noopReadSnsMessagesFunc)
+	sqsMessageCount, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopReadSnsMessagesFunc)
 
 	// keep sure we get error logging
 	actualLogs := logs.AllUntimed()
@@ -220,35 +199,28 @@ func TestStreamEventsDeleteSQSError(t *testing.T) {
 		assertLogEqual(t, expectedLogs[i], actualLogs[i])
 	}
 
-	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
-	streamTestSqsClient.AssertExpectations(t)
-}
-
-func initTest() (streamTestSqsClient *testutils.SqsMock, streamTestDeadline time.Time) {
-	// new mocks for each test
-	streamTestSqsClient = &testutils.SqsMock{}
-	streamTestDeadline = time.Now().Add(defaultTestTimeLimit)
-	return
+	sqsMock.AssertExpectations(t)
 }
 
 func noopProcessorFunc(streamChan <-chan *common.DataStream, _ destinations.Destination) error {
 	// drain channel
 	for range streamChan {
-
 	}
 	return nil
 }
 
 // simulates error processing the data in a file
-func failProcessorFunc(_ <-chan *common.DataStream, _ destinations.Destination) error {
+func failProcessorFunc(streamChan <-chan *common.DataStream, _ destinations.Destination) error {
+	for range streamChan {
+	}
 	return fmt.Errorf("processError")
 }
 
-func noopReadSnsMessagesFunc(messages []string) ([]*common.DataStream, error) {
-	return make([]*common.DataStream, len(messages)), nil
+func noopReadSnsMessagesFunc(_ string) ([]*common.DataStream, error) {
+	return make([]*common.DataStream, 1), nil
 }
 
 // simulated error parsing sqs message or reading s3 object
-func failReadSnsMessagesFunc(_ []string) ([]*common.DataStream, error) {
+func failReadSnsMessagesFunc(_ string) ([]*common.DataStream, error) {
 	return nil, fmt.Errorf("readEventError")
 }

@@ -65,10 +65,11 @@ func TestProcessOpLog(t *testing.T) {
 	sqsMock.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(emptyQueue, nil).
 		Maybe() // it might be called depending on sync issues
 
-	sqsMock.On("ReceiveMessage", mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil).Once().Run(func(args mock.Arguments) {
-		// wait until scaling decisions has run at least once
-		wg.Wait()
-	}) // should run only once and then stop since it pulled 0 messages
+	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&sqs.ReceiveMessageOutput{}, nil).Once().
+		Run(func(args mock.Arguments) {
+			// wait until scaling decisions has run at least once
+			wg.Wait()
+		}) // should run only once and then stop since it pulled 0 messages
 
 	logs := mockLogger()
 	functionName := "myfunction"
