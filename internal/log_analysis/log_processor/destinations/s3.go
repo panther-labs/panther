@@ -27,7 +27,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
 	"github.com/aws/aws-sdk-go/service/sns"
@@ -39,19 +38,14 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/notify"
 )
 
 const (
 	// The timestamp layout used in the S3 object key filename part with second precision: yyyyMMddTHHmmssZ
 	S3ObjectTimestampLayout = "20060102T150405Z"
-
-	logDataTypeAttributeName = "type"
-	logTypeAttributeName     = "id"
-
-	messageAttributeDataType = "String"
 
 	//  maximum time to hold an s3 buffer in memory (controls latency of rules engine which processes this output)
 	maxDuration = 2 * time.Minute
@@ -279,7 +273,7 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 			zap.String("topicArn", destination.snsTopicArn))
 	}()
 
-	s3Notification := process.NewS3ObjectPutNotification(destination.s3Bucket, key, buffer.bytes)
+	s3Notification := notify.NewS3ObjectPutNotification(destination.s3Bucket, key, buffer.bytes)
 
 	marshalledNotification, err := jsoniter.MarshalToString(s3Notification)
 	if err != nil {
@@ -288,18 +282,9 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 	}
 
 	input := &sns.PublishInput{
-		TopicArn: aws.String(destination.snsTopicArn),
-		Message:  aws.String(marshalledNotification),
-		MessageAttributes: map[string]*sns.MessageAttributeValue{
-			logDataTypeAttributeName: {
-				StringValue: aws.String(models.LogData.String()),
-				DataType:    aws.String(messageAttributeDataType),
-			},
-			logTypeAttributeName: {
-				StringValue: aws.String(buffer.logType),
-				DataType:    aws.String(messageAttributeDataType),
-			},
-		},
+		TopicArn:          &destination.snsTopicArn,
+		Message:           &marshalledNotification,
+		MessageAttributes: notify.NewLogAnalysisSNSMessageAttributes(models.LogData, buffer.logType),
 	}
 	if _, err = destination.snsClient.Publish(input); err != nil {
 		err = errors.Wrap(err, "failed to send notification to topic")

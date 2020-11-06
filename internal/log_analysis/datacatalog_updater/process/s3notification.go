@@ -19,50 +19,18 @@ package process
  */
 
 import (
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/notify"
 )
 
 // partitionPrefixCache is a cache that stores all the prefixes of the partitions we have created
 // The cache is used to avoid attempts to create the same partitions in Glue table
 var partitionPrefixCache = make(map[string]struct{})
 
-// S3Notification is sent when new data is available in S3
-type S3Notification struct {
-	// https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
-	Records []events.S3EventRecord
-}
-
-func NewS3ObjectPutNotification(bucket, key string, nbytes int) *S3Notification {
-	const (
-		eventVersion = "2.0"
-		eventSource  = "aws:s3"
-		eventName    = "ObjectCreated:Put"
-	)
-	return &S3Notification{
-		Records: []events.S3EventRecord{
-			{
-				EventVersion: eventVersion,
-				EventSource:  eventSource,
-				EventName:    eventName,
-				S3: events.S3Entity{
-					Bucket: events.S3Bucket{
-						Name: bucket,
-					},
-					Object: events.S3Object{
-						Key:  key,
-						Size: int64(nbytes),
-					},
-				},
-			},
-		},
-	}
-}
-
-func HandleS3Notification(notification S3Notification) error {
+func HandleS3Notification(notification *notify.S3Notification) error {
 	if len(notification.Records) == 0 { // indications of a bug someplace
 		zap.L().Warn("no s3 event notifications in message", zap.Any("message", notification))
 		return nil
