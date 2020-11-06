@@ -96,7 +96,7 @@ Parameters:
 Mappings:
   Functions:
     AlertsApi:
-      Memory: 256
+      Memory: 512
       Timeout: 60
     AlertsForwarder:
       Memory: 128
