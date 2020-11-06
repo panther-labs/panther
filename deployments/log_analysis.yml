@@ -577,6 +577,12 @@ Resources:
       Region: !Ref AWS::Region
       TopicArn: !Ref ProcessedDataTopicArn
       RawMessageDelivery: true
+      # Receive notifications only for Panther log processor events (ignore all others!)
+      FilterPolicy:
+        type:
+          - LogData
+          - RuleMatches
+          - RuleErrors
 
   UpdaterQueuePolicy:
     Type: AWS::SQS::QueuePolicy
