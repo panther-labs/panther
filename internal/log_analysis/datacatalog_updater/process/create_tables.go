@@ -67,8 +67,23 @@ func (m CreateTablesMessage) Send(sqsClient sqsiface.SQSAPI, queueURL string) er
 }
 
 func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) error {
+	syncLogTypes := msg.LogTypes
+	// This is a quick fix for the sync issues
+	if msg.Sync {
+		// update the views with the new tables
+		availableLogTypes, err := listAvailableLogTypes(ctx)
+		if err != nil {
+			return err
+		}
+		deployedLogTypes, err := gluetables.DeployedLogTypes(ctx, glueClient, availableLogTypes)
+		if err != nil {
+			return err
+		}
+		syncLogTypes = mergeDistinct(msg.LogTypes, deployedLogTypes)
+	}
+
 	// create/update all tables associated with logTypes
-	for _, logType := range msg.LogTypes {
+	for _, logType := range syncLogTypes {
 		entry, err := logtypesResolver.Resolve(ctx, logType)
 		if err != nil {
 			return err
@@ -112,7 +127,7 @@ func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) er
 				awsglue.RuleMatchDatabaseName,
 				awsglue.RuleErrorsDatabaseName,
 			},
-			LogTypes: msg.LogTypes,
+			LogTypes: deployedLogTypes,
 			DryRun:   false,
 		})
 		if err != nil {
@@ -121,4 +136,29 @@ func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) er
 	}
 
 	return nil
+}
+
+func mergeDistinct(values ...[]string) []string {
+	size := 0
+	for _, values := range values {
+		size += len(values)
+	}
+	union := make([]string, 0, size)
+	for _, values := range values {
+		union = appendDistinct(union, values)
+	}
+	return union
+}
+
+func appendDistinct(dst, src []string) []string {
+loopValues:
+	for _, s := range src {
+		for _, d := range dst {
+			if d == s {
+				continue loopValues
+			}
+		}
+		dst = append(dst, s)
+	}
+	return dst
 }
