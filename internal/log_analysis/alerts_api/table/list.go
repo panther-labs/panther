@@ -82,7 +82,6 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 		KeyConditionExpression:    queryExpression.KeyCondition(),
 		ExclusiveStartKey:         queryExclusiveStartKey,
 		IndexName:                 index,
-		Limit:                     aws.Int64(*queryResultsLimit * 4), //optimization accounting for filtering
 	}
 
 	var lastKey DynamoItem
