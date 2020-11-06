@@ -83,5 +83,4 @@ type DataStream struct {
 	Source      *models.SourceIntegration
 	S3ObjectKey string
 	S3Bucket    string
-	ContentType string
 }

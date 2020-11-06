@@ -19,9 +19,9 @@ package processor
  */
 
 import (
-	"github.com/pkg/errors"
 	"time"
 
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
