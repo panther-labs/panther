@@ -32,6 +32,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 // CreateTablesMessage is the event that triggers the creation of Glue tables/views for logtypes.
@@ -79,7 +80,7 @@ func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) er
 		if err != nil {
 			return err
 		}
-		syncLogTypes = mergeDistinct(msg.LogTypes, deployedLogTypes)
+		syncLogTypes = stringset.Concat(msg.LogTypes, deployedLogTypes)
 	}
 
 	// create/update all tables associated with logTypes
@@ -136,29 +137,4 @@ func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) er
 	}
 
 	return nil
-}
-
-func mergeDistinct(values ...[]string) []string {
-	size := 0
-	for _, values := range values {
-		size += len(values)
-	}
-	union := make([]string, 0, size)
-	for _, values := range values {
-		union = appendDistinct(union, values)
-	}
-	return union
-}
-
-func appendDistinct(dst, src []string) []string {
-loopValues:
-	for _, s := range src {
-		for _, d := range dst {
-			if d == s {
-				continue loopValues
-			}
-		}
-		dst = append(dst, s)
-	}
-	return dst
 }
