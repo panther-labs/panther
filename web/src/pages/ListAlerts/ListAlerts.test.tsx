@@ -17,9 +17,9 @@ import {
 import { queryStringOptions } from 'Hooks/useUrlParams';
 import MockDate from 'mockdate';
 import queryString from 'query-string';
-import { mockListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
 import { mockListAvailableLogTypes } from 'Source/graphql/queries';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
+import { mockListAlerts } from './graphql/listAlerts.generated';
 import ListAlerts from './ListAlerts';
 
 // Mock debounce so it just executes the callback instantly
@@ -61,7 +61,7 @@ describe('ListAlerts', () => {
       `&logTypes[]=${mockedlogType}` +
       `&nameContains=test` +
       `&severity[]=${SeverityEnum.Info}&severity[]=${SeverityEnum.Medium}` +
-      `&sortBy=createdAt&sortDir=descending` +
+      `&sortBy=${ListAlertsSortFieldsEnum.CreatedAt}&sortDir=${SortDirEnum.Descending}` +
       `&status[]=${AlertStatusesEnum.Open}&status[]=${AlertStatusesEnum.Triaged}` +
       `&pageSize=${DEFAULT_LARGE_PAGE_SIZE}`;
 
@@ -126,7 +126,7 @@ describe('ListAlerts', () => {
       `?createdAtAfter=2020-11-05T19%3A33%3A55Z` +
       `&createdAtBefore=2020-12-17T19%3A33%3A55Z` +
       `&nameContains=test` +
-      `&sortBy=createdAt&sortDir=descending` +
+      `&sortBy=${ListAlertsSortFieldsEnum.CreatedAt}&sortDir=${SortDirEnum.Descending}` +
       `&logTypes[]=${mockedlogType}` +
       `&pageSize=${DEFAULT_LARGE_PAGE_SIZE}`;
 
@@ -163,6 +163,16 @@ describe('ListAlerts', () => {
         data: {
           alerts: buildListAlertsResponse({
             alertSummaries: [buildAlertSummary({ title: 'Filtered Alert' })],
+          }),
+        },
+      }),
+      mockListAlerts({
+        variables: {
+          input: parsedInitialParams,
+        },
+        data: {
+          alerts: buildListAlertsResponse({
+            alertSummaries: [buildAlertSummary({ title: 'Initial Alert' })],
           }),
         },
       }),
@@ -399,7 +409,7 @@ describe('ListAlerts', () => {
     await waitMs(1);
 
     // Expect the URL to be updated
-    const paramsWithSortingAndTextFilter = `${paramsWithTextFilter}&sortBy=createdAt&sortDir=descending`;
+    const paramsWithSortingAndTextFilter = `${paramsWithTextFilter}&sortBy=${ListAlertsSortFieldsEnum.CreatedAt}&sortDir=${SortDirEnum.Descending}`;
     expect(parseParams(history.location.search)).toEqual(parseParams(paramsWithSortingAndTextFilter)); // prettier-ignore
 
     // Expect the API request to have fired and a new alert to have returned (verifies API execution)
@@ -419,7 +429,7 @@ describe('ListAlerts', () => {
     await waitMs(1);
 
     // Expect the URL to be updated
-    const paramsWithSortingAndTextFilterAndLogType = `${paramsWithSortingAndTextFilter}&logTypes[]=AWS.ALB`;
+    const paramsWithSortingAndTextFilterAndLogType = `${paramsWithSortingAndTextFilter}&logTypes[]=${mockedlogType}`;
     expect(parseParams(history.location.search)).toEqual(parseParams(paramsWithSortingAndTextFilterAndLogType)); // prettier-ignore
 
     // Expect the API request to have fired and a new alert to have returned (verifies API execution)
