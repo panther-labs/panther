@@ -114,7 +114,7 @@ class TestEngine(TestCase):
                 dedup='Exception',
                 event={},
                 dedup_period_mins=1440,
-                error_message="--place holder for check below--",
+                error_message='Found an issue: rule_id_2.py, line 2, in rule    raise Exception("Found an issue")',
                 title="Exception('Found an issue')"
             ),
             EngineResult(
@@ -126,11 +126,5 @@ class TestEngine(TestCase):
                 dedup_period_mins=60
             )
         ]
-
-        # since the error message will have a variable file path, test it separately
-        expected_event_matches[1].error_message = result[1].error_message
-        self.assertIsNotNone(result[1].error_message)
-        if result[1].error_message is not None:
-            self.assertTrue(result[1].error_message.endswith('''Exception("Found an issue")'''))
 
         self.assertEqual(result, expected_event_matches)

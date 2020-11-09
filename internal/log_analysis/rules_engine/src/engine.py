@@ -50,8 +50,6 @@ class Engine:
             result = rule.run(event, batch_mode=True)
             if result.errored:
                 short_error_message = repr(result.rule_exception)
-                # TODO(kostaspap): remove error logging once error reporting notification system is in place
-                self.logger.error('failed to run rule %s %s', rule.rule_id, short_error_message)
                 error_type = type(result.rule_exception).__name__
                 rule_error = EngineResult(
                     rule_id=rule.rule_id,
