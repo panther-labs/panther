@@ -110,7 +110,7 @@ const ListAlertFilters: React.FC = () => {
         >
           <Form>
             <FormikAutosave threshold={200} />
-            <Flex spacing={4} align="center" pr={4} width="100%">
+            <Flex spacing={4} align="center" px={4} width="100%">
               <Box minWidth={425} flexGrow={3}>
                 <FastField
                   name="nameContains"
