@@ -19,10 +19,10 @@ package awslogs
  */
 
 import (
-	"github.com/pkg/errors"
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"

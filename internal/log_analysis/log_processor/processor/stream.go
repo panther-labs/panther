@@ -151,7 +151,7 @@ func streamEvents(
 	}()
 
 	// Use a properly configured JSON API for Athena quirks
-	jsonAPI := common.BuildJSON()
+	jsonAPI := common.ConfigForDataLakeWriters()
 	// process streamChan until closed (blocks)
 	dest := destinations.CreateS3Destination(jsonAPI)
 	if err := processFunc(streamChan, dest); err != nil {

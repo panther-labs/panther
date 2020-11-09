@@ -64,7 +64,7 @@ func main() {
 	out := bufio.NewWriter(stdout)
 	defer out.Flush()
 
-	jsonAPI := common.BuildJSON()
+	jsonAPI := common.ConfigForDataLakeWriters()
 
 	parsers := registry.AvailableParsers()
 
