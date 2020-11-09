@@ -46,14 +46,12 @@ func ModifyDataModel(request *events.APIGatewayProxyRequest) *events.APIGatewayP
 
 	// check for conflicting enabled DataModels and return an error
 	// so the user doesn't expect this value to be updated
-	if bool(input.Enabled) {
-		enabledCheck, err := isSingleDataModelEnabled(input)
-		if err != nil {
-			return badRequest(err)
-		}
-		if !enabledCheck {
-			return badRequest(errMultipleDataModelsEnabled)
-		}
+	enabledCheck, err := isSingleDataModelEnabled(input)
+	if err != nil {
+		return badRequest(err)
+	}
+	if !enabledCheck {
+		return badRequest(errMultipleDataModelsEnabled)
 	}
 
 	if _, err := writeItem(item, input.UserID, aws.Bool(true)); err != nil {

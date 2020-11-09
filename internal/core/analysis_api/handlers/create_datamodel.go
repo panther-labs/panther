@@ -27,7 +27,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
@@ -48,14 +47,12 @@ func CreateDataModel(request *events.APIGatewayProxyRequest) *events.APIGatewayP
 
 	// we only need to check for conflicting enabled DataModels if the new one is
 	// going to be enabled
-	if bool(input.Enabled) {
-		isEnabled, err := isSingleDataModelEnabled(input)
-		if err != nil {
-			return badRequest(err)
-		}
-		if !isEnabled {
-			return badRequest(errMultipleDataModelsEnabled)
-		}
+	isEnabled, err := isSingleDataModelEnabled(input)
+	if err != nil {
+		return badRequest(err)
+	}
+	if !isEnabled {
+		return badRequest(errMultipleDataModelsEnabled)
 	}
 
 	item := &tableItem{
@@ -91,11 +88,10 @@ func parseUpdateDataModel(request *events.APIGatewayProxyRequest) (*models.Updat
 
 	// we also need to verify that field and method are mutually exclusive in the input
 	for _, mapping := range result.Mappings {
-		if mapping.Field != "" {
-			if mapping.Method != "" {
-				return nil, errMappingTooManyOptions
-			}
-		} else if mapping.Method == "" {
+		if mapping.Field != "" && mapping.Method != "" {
+			return nil, errMappingTooManyOptions
+		}
+		if mapping.Field == "" && mapping.Method == "" {
 			return nil, errFieldOrMethodMissing
 		}
 	}
@@ -150,7 +146,6 @@ func isSingleDataModelEnabled(updateDataModel *models.UpdateDataModel) (bool, er
 		Build()
 
 	if err != nil {
-		zap.L().Error("unable to build dynamodb scan expression", zap.Error(err))
 		return false, err
 	}
 	scanInput := &dynamodb.ScanInput{
@@ -171,7 +166,6 @@ func isSingleDataModelEnabled(updateDataModel *models.UpdateDataModel) (bool, er
 	})
 
 	if err != nil {
-		zap.L().Error("failed to scan dynamodb for enabled data models", zap.Error(err))
 		return false, err
 	}
 	if len(dataModels) != 0 {
