@@ -48,7 +48,7 @@ func ModifyDataModel(request *events.APIGatewayProxyRequest) *events.APIGatewayP
 	// so the user doesn't expect this value to be updated
 	enabledCheck, err := isSingleDataModelEnabled(input)
 	if err != nil {
-		return badRequest(err)
+		return failedRequest(err.Error(), http.StatusInternalServerError)
 	}
 	if !enabledCheck {
 		return badRequest(errMultipleDataModelsEnabled)

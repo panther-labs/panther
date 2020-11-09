@@ -49,7 +49,7 @@ func CreateDataModel(request *events.APIGatewayProxyRequest) *events.APIGatewayP
 	// going to be enabled
 	isEnabled, err := isSingleDataModelEnabled(input)
 	if err != nil {
-		return badRequest(err)
+		return failedRequest(err.Error(), http.StatusInternalServerError)
 	}
 	if !isEnabled {
 		return badRequest(errMultipleDataModelsEnabled)
