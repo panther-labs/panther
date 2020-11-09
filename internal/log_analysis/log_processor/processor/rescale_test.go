@@ -69,6 +69,9 @@ func TestScaleup(t *testing.T) {
 			wg.Done()
 		})
 
+	// The method might be called again depending on sync issues
+	sqsClient.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(streamTestEmptyQueue, nil).Maybe()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go RunScalingDecisions(ctx, sqsClient, lambdaClient, time.Millisecond)
