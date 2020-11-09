@@ -61,7 +61,16 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 	}()
 
 	logTypesResolver := registry.NativeLogTypesResolver()
-	sqsMessageCount, err = processor.StreamEvents(ctx, common.SqsClient, logTypesResolver)
+
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		panic("Lambda context doesn't have a deadline!")
+	}
+	// We should poll events for half the Lambda's duration
+	pollingTimeout := time.Until(deadline) / 2
+	ctx, cancel := context.WithTimeout(ctx, pollingTimeout)
+	defer cancel()
+	sqsMessageCount, err = processor.PollEvents(ctx, common.SqsClient, logTypesResolver)
 
 	return err
 }

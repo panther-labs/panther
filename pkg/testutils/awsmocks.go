@@ -202,6 +202,15 @@ func (m *SqsMock) ReceiveMessage(input *sqs.ReceiveMessageInput) (*sqs.ReceiveMe
 	return args.Get(0).(*sqs.ReceiveMessageOutput), args.Error(1)
 }
 
+func (m *SqsMock) ReceiveMessageWithContext(
+	ctx aws.Context,
+	input *sqs.ReceiveMessageInput,
+	options ...request.Option) (*sqs.ReceiveMessageOutput, error) {
+
+	args := m.Called(ctx, input, options)
+	return args.Get(0).(*sqs.ReceiveMessageOutput), args.Error(1)
+}
+
 func (m *SqsMock) CreateQueue(input *sqs.CreateQueueInput) (*sqs.CreateQueueOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*sqs.CreateQueueOutput), args.Error(1)
