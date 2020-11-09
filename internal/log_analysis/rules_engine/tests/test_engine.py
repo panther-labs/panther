@@ -114,7 +114,7 @@ class TestEngine(TestCase):
                 dedup='Exception',
                 event={},
                 dedup_period_mins=1440,
-                error_message="Exception('Found an issue')",
+                error_message='Found an issue: rule_id_2.py, line 2, in rule    raise Exception("Found an issue")',
                 title="Exception('Found an issue')"
             ),
             EngineResult(
