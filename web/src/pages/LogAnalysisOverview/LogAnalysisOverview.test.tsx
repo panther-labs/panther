@@ -86,20 +86,6 @@ const defaultMocks = [
 ];
 
 describe('Log Analysis Overview', () => {
-  it('should match snapshot', async () => {
-    const { getAllByTitle, container } = render(<LogAnalysisOverview />, {
-      mocks: defaultMocks,
-      initialRoute: `/?fromDate=${mockedFromDate}&toDate=${mockedToDate}`,
-    });
-    // Expect to see 3 loading interfaces
-    const loadingInterfaceElements = getAllByTitle('Loading interface...');
-    expect(loadingInterfaceElements.length).toEqual(3);
-
-    // Waiting for all loading interfaces to be removed;
-    await Promise.all(loadingInterfaceElements.map(ele => waitForElementToBeRemoved(ele)));
-    expect(container).toMatchSnapshot();
-  });
-
   it('should render 2 canvas, click on tab button and render latency chart', async () => {
     const { getByTestId, getAllByTitle, getByText } = render(<LogAnalysisOverview />, {
       mocks: defaultMocks,
