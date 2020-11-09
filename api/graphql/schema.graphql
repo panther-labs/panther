@@ -291,6 +291,7 @@ type RuleSummary {
   createdAt: AWSDateTime
   logTypes: [String]
   severity: SeverityEnum
+  outputIds: [ID!]
   tags: [String!]
 }
 

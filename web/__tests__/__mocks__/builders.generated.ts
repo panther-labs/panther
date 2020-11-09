@@ -1223,6 +1223,8 @@ export const buildRuleSummary = (overrides: Partial<RuleSummary> = {}): RuleSumm
     createdAt: 'createdAt' in overrides ? overrides.createdAt : '2020-09-24T09:09:49.137Z',
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['AI'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Info,
+    outputIds:
+      'outputIds' in overrides ? overrides.outputIds : ['a2f89a13-3b31-4365-b40d-2495c13a6f65'],
     tags: 'tags' in overrides ? overrides.tags : ['Virginia'],
   };
 };
