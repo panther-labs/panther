@@ -15,5 +15,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+import React from 'react';
+import { useSelect } from 'Components/utils/SelectContext';
+import ListAlertSelection from '../ListAlertSelection';
+import ListAlertFilters from '../ListAlertFilters';
 
-export { default } from './PanelWithSelection';
+const ListAlertsActions: React.FC = () => {
+  const { selection } = useSelect();
+  return selection.length ? <ListAlertSelection /> : <ListAlertFilters />;
+};
+
+export default React.memo(ListAlertsActions);

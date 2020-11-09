@@ -30,13 +30,12 @@ import withSEO from 'Hoc/withSEO';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import { PageViewEnum } from 'Helpers/analytics';
 import AlertCard from 'Components/cards/AlertCard/AlertCard';
-import PanelWithSelection from 'Components/PanelWithSelection';
-import { useSelect, withSelectContext } from 'Components/utils/SelectContext';
+import { SelectAllCheckbox, withSelectContext } from 'Components/utils/SelectContext';
 import { compose } from 'Helpers/compose';
+import ListAlertsActions from 'Pages/ListAlerts/ListAlertsActions';
+import Panel from 'Components/Panel';
 import { useListAlerts } from './graphql/listAlerts.generated';
 import ListAlertBreadcrumbFilters from './ListAlertBreadcrumbFilters';
-import ListAlertFilters from './ListAlertFilters';
-import ListAlertSelection from './ListAlertSelection';
 import ListAlertsPageSkeleton from './Skeleton';
 import ListAlertsPageEmptyDataFallback from './EmptyDataFallback';
 
@@ -52,7 +51,7 @@ const ListAlerts = () => {
       },
     },
   });
-  const { selection } = useSelect();
+
   const alertItems = data?.alerts.alertSummaries || [];
   const lastEvaluatedKey = data?.alerts.lastEvaluatedKey || null;
   const hasNextPage = !!data?.alerts?.lastEvaluatedKey;
@@ -126,10 +125,14 @@ const ListAlerts = () => {
         </Box>
       )}
       <ListAlertBreadcrumbFilters />
-      <PanelWithSelection
-        title="Alerts"
-        header={selection?.length ? <ListAlertSelection /> : <ListAlertFilters />}
-        ids={alertItems.map(a => a.alertId)}
+      <Panel
+        title={
+          <Flex align="center">
+            <SelectAllCheckbox ids={alertItems.map(a => a.alertId)} />
+            Alerts
+          </Flex>
+        }
+        actions={<ListAlertsActions />}
       >
         <Card as="section" position="relative">
           <Box position="relative">
@@ -145,7 +148,7 @@ const ListAlerts = () => {
             )}
           </Box>
         </Card>
-      </PanelWithSelection>
+      </Panel>
     </ErrorBoundary>
   );
 };
