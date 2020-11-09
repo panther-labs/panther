@@ -61,6 +61,11 @@ const SelectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =
     setSelected(ids);
   }, []);
 
+  /**
+   * @public
+   * Simple function that checks whether an item is selected
+   *
+   */
   const checkIfSelected = React.useCallback(
     id => {
       return !!selection.find(i => i === id);
@@ -68,6 +73,11 @@ const SelectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =
     [selection]
   );
 
+  /**
+   * @public
+   * This function check whether an item is selected
+   * and change its status to the opposite
+   */
   const toggleItem = React.useCallback(
     id => {
       const isSelected = checkIfSelected(id);
