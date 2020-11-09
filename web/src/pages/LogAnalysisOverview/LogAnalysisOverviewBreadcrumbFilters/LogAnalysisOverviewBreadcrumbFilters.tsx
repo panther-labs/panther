@@ -68,7 +68,7 @@ const LogAnalysisOverviewBreadcrumbFilters: React.FC<LogAnalysisOverviewBreadcru
                 withPresets
                 withTime
                 variant="solid"
-                format="MM/DD/YY HH:mm"
+                format="MM/DD/YYYY HH:mm"
                 labelStart="Date Start"
                 labelEnd="Date End"
                 placeholderStart="MM/DD/YY HH:mm"
