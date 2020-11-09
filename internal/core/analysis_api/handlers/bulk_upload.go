@@ -252,7 +252,10 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 		typeNormalizeTableItem(&analysisItem, config)
 
 		for i, mapping := range config.Mappings {
-			analysisItem.Mappings[i] = buildMapping(mapping)
+			analysisItem.Mappings[i], err = buildMapping(mapping)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		for i, test := range config.Tests {
@@ -358,12 +361,18 @@ func buildPolicyTest(test analysis.Test) (*models.UnitTest, error) {
 	}, nil
 }
 
-func buildMapping(mapping analysis.Mapping) *models.DataModelMapping {
+func buildMapping(mapping analysis.Mapping) (*models.DataModelMapping, error) {
+	if mapping.Field != "" && mapping.Method != "" {
+		return nil, errMappingTooManyOptions
+	}
+	if mapping.Field == "" && mapping.Method == "" {
+		return nil, errFieldOrMethodMissing
+	}
 	return &models.DataModelMapping{
 		Name:   models.SourceName(mapping.Name),
 		Field:  models.Field(mapping.Field),
 		Method: models.Method(mapping.Method),
-	}
+	}, nil
 }
 
 func readZipFile(zf *zip.File) ([]byte, error) {
