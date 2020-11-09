@@ -30,6 +30,7 @@ Jinja2==2.11.2
 jinja2-time==0.2.0
 jmespath==0.9.5
 jsonpatch==1.26
+jsonpath-ng==1.5.2
 jsonpointer==2.0
 jsonschema==3.2.0
 junit-xml==1.9
