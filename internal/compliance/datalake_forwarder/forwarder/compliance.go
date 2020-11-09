@@ -19,22 +19,26 @@ package forwarder
  */
 
 import (
-	"errors"
-
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/go-playground/validator"
+	jsoniter "github.com/json-iterator/go"
 )
 
+var validate = validator.New()
+
 type ComplianceChange struct {
-	ChangeType       string
-	IntegrationID    string
-	IntegrationLabel string
-	LastUpdated      string
-	PolicyID         string
-	PolicySeverity   string
-	ResourceID       string
-	ResourceType     string
-	Status           string
-	Suppressed       bool
+	ChangeType       string `json:"changeType" validate:"required"`
+	IntegrationID    string `json:"integrationId" validate:"required"`
+	IntegrationLabel string `json:"integrationLabel" validate:"required"`
+	LastUpdated      string `json:"lastUpdated" validate:"required"`
+	PolicyID         string `json:"policyId" validate:"required"`
+	PolicySeverity   string `json:"policySeverity" validate:"required"`
+	ResourceID       string `json:"resourceId" validate:"required"`
+	ResourceType     string `json:"resourceType" validate:"required"`
+	Status           string `json:"status" validate:"required"`
+	Suppressed       bool   `json:"suppressed" validate:"required"`
 }
 
 func (sh StreamHandler) processComplianceSnapshot(record events.DynamoDBEventRecord) (*ComplianceChange, error) {
@@ -75,30 +79,36 @@ func (sh StreamHandler) processComplianceSnapshot(record events.DynamoDBEventRec
 }
 
 func dynamoRecordToCompliance(image map[string]events.DynamoDBAttributeValue) (*ComplianceChange, error) {
-	if !validateDynamoRecordAsCompliance(image) {
-		return nil, errors.New("unexpected compliance record image format")
+	change := ComplianceChange{}
+	if err := unmarshalMap(image, &change); err != nil {
+		return nil, err
 	}
-
-	return &ComplianceChange{
-		IntegrationID:  image["integrationId"].String(),
-		LastUpdated:    image["lastUpdated"].String(),
-		PolicyID:       image["policyId"].String(),
-		PolicySeverity: image["policySeverity"].String(),
-		ResourceID:     image["resourceId"].String(),
-		ResourceType:   image["resourceType"].String(),
-		Status:         image["status"].String(),
-		Suppressed:     image["suppressed"].Boolean(),
-	}, nil
+	if err := validate.Struct(&change); err != nil {
+		return nil, err
+	}
+	return &change, nil
 }
 
-func validateDynamoRecordAsCompliance(image map[string]events.DynamoDBAttributeValue) bool {
-	return image != nil &&
-		image["integrationId"].DataType() == events.DataTypeString &&
-		image["lastUpdated"].DataType() == events.DataTypeString &&
-		image["policyId"].DataType() == events.DataTypeString &&
-		image["policySeverity"].DataType() == events.DataTypeString &&
-		image["resourceId"].DataType() == events.DataTypeString &&
-		image["resourceType"].DataType() == events.DataTypeString &&
-		image["status"].DataType() == events.DataTypeString &&
-		image["suppressed"].DataType() == events.DataTypeBoolean
+func unmarshalMap(attributes map[string]events.DynamoDBAttributeValue, out interface{}) error {
+	m, err := convertDynamoDBAttributeValues(attributes)
+	if err != nil {
+		return err
+	}
+	return dynamodbattribute.UnmarshalMap(m, out)
+}
+
+func convertDynamoDBAttributeValues(attributes map[string]events.DynamoDBAttributeValue) (map[string]*dynamodb.AttributeValue, error) {
+	out := map[string]*dynamodb.AttributeValue{}
+	for key, value := range attributes {
+		raw, err := value.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		attr := dynamodb.AttributeValue{}
+		if err := jsoniter.Unmarshal(raw, &attr); err != nil {
+			return nil, err
+		}
+		out[key] = &attr
+	}
+	return out, nil
 }

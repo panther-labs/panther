@@ -24,6 +24,8 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+// NOTE: it would be wise to use a dedicated lib for this such as https://github.com/r3labs/diff
+
 type Diff struct {
 	From interface{}
 	To   interface{}
