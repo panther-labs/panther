@@ -71,8 +71,9 @@ class TestMatchedEventsBuffer(TestCase):
                 '#8': 'eventCount',
                 '#9': 'logTypes',
                 '#10': 'ruleVersion',
-                '#11': 'context',
-                '#12': 'title'
+                '#11': 'type',
+                '#12': 'context',
+                '#13': 'title'
             },
             ExpressionAttributeValues={
                 ':1': {
@@ -103,11 +104,14 @@ class TestMatchedEventsBuffer(TestCase):
                     'S': 'rule_version'
                 },
                 ':11': {
-                    'S': '{"key":"value"}'
+                    'S': 'RULE'
                 },
                 ':12': {
+                    'S': '{"key":"value"}'
+                },
+                ':13': {
                     'S': 'test title'
-                }
+                },
             },
             Key={
                 'partitionKey': {
@@ -117,7 +121,7 @@ class TestMatchedEventsBuffer(TestCase):
             },
             ReturnValues='ALL_NEW',
             TableName='table_name',
-            UpdateExpression='ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10, #11=:11, #12=:12'
+            UpdateExpression='ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10, #11=:11, #12=:12, #13=:13'
         )
 
         S3_MOCK.put_object.assert_called_once_with(Body=mock.ANY, Bucket='s3_bucket', ContentType='gzip', Key=mock.ANY)

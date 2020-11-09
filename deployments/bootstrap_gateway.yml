@@ -436,7 +436,7 @@ Resources:
       RecursiveDeleteOption: true
       WorkGroupConfiguration:
         ResultConfiguration:
-          OutputLocation: !Sub s3://${AthenaResultsBucket}/panther/preview
+          OutputLocation: !Sub s3://${AthenaResultsBucket}/panther/preview/
 
   AthenaWorkGroup:
     Type: AWS::Athena::WorkGroup
@@ -445,8 +445,9 @@ Resources:
       Description: The Panther workgroup
       RecursiveDeleteOption: true
       WorkGroupConfiguration:
+        EnforceWorkGroupConfiguration: false # we want client side overrides
         ResultConfiguration:
-          OutputLocation: !Sub s3://${AthenaResultsBucket}/panther
+          OutputLocation: !Sub s3://${AthenaResultsBucket}/panther/
 
 Outputs:
   AppClientId:

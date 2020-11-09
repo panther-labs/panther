@@ -29,6 +29,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/internal/log_analysis/notify"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
@@ -75,8 +76,8 @@ func handleSQSEvent(event events.SQSEvent) error {
 				return err
 			}
 		} else {
-			notification := S3Notification{}
-			if err := jsoniter.UnmarshalFromString(record.Body, &notification); err != nil {
+			notification := &notify.S3Notification{}
+			if err := jsoniter.UnmarshalFromString(record.Body, notification); err != nil {
 				zap.L().Error("failed to unmarshal record", zap.Error(errors.WithStack(err)))
 				continue
 			}

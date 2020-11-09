@@ -26,6 +26,7 @@ export type AlertDetailsFull = Pick<
   Types.AlertDetails,
   | 'alertId'
   | 'ruleId'
+  | 'type'
   | 'title'
   | 'creationTime'
   | 'eventsMatched'
@@ -44,6 +45,7 @@ export const AlertDetailsFull = gql`
   fragment AlertDetailsFull on AlertDetails {
     alertId
     ruleId
+    type
     title
     creationTime
     deliveryResponses {

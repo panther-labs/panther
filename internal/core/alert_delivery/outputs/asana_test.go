@@ -38,6 +38,7 @@ func TestAsanaAlert(t *testing.T) {
 	require.NoError(t, err)
 	alert := &alertModels.Alert{
 		AnalysisID:          "ruleId",
+		Type:                alertModels.PolicyType,
 		CreatedAt:           createdAtTime,
 		OutputIds:           []string{"output-id"},
 		AnalysisDescription: aws.String("description"),

@@ -124,7 +124,16 @@ const ListAlerts = () => {
         </Box>
       )}
       <ListAlertsActions />
-      <Panel title="Alerts" actions={<ListAlertFilters />}>
+      <Panel
+        title="Alerts"
+        actions={
+          // Using a Box to add some spacing as
+          // ListAlertFilters tends to cover the whole space available
+          <Box>
+            <ListAlertFilters />
+          </Box>
+        }
+      >
         <Card as="section" position="relative">
           <Box position="relative">
             <Flex direction="column" spacing={2}>
