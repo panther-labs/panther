@@ -1,22 +1,22 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Log Analysis Overview should match snapshot 1`] = `
-.panther-140 {
+.panther-142 {
   margin-bottom: 24px;
 }
 
-.panther-61 {
+.panther-63 {
   background-color: #23344e;
   border-radius: 4px;
 }
 
-.panther-30 {
+.panther-32 {
   position: relative;
   padding-left: 8px;
   padding-right: 16px;
 }
 
-.panther-28 {
+.panther-30 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -27,7 +27,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   flex-wrap: wrap;
 }
 
-.panther-25 {
+.panther-27 {
   z-index: 1;
   cursor: pointer;
   color: #f6f6f6;
@@ -38,7 +38,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   transition: all 0.1s linear;
 }
 
-.panther-24 {
+.panther-26 {
   font-weight: 400;
   font-size: 1.125rem;
   border-bottom: 3px solid;
@@ -54,7 +54,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
 
 
 
-.panther-26 {
+.panther-28 {
   font-weight: 400;
   font-size: 1.125rem;
   border-bottom: 3px solid;
@@ -68,11 +68,11 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   border-color: transparent;
 }
 
-.panther-26:hover {
+.panther-28:hover {
   border-color: #3e516b;
 }
 
-.panther-29 {
+.panther-31 {
   position: absolute;
   width: 100%;
   height: 1px;
@@ -82,15 +82,15 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   margin-top: -2px;
 }
 
-.panther-60 {
+.panther-62 {
   padding: 24px;
 }
 
-.panther-58 {
+.panther-60 {
   outline: none;
 }
 
-.panther-23 {
+.panther-25 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -101,7 +101,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   justify-content: flex-end;
 }
 
-.panther-22 {
+.panther-24 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -109,7 +109,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   max-width: 500px;
 }
 
-.panther-22>*:not(:last-child) {
+.panther-24>*:not(:last-child) {
   margin-right: 16px;
 }
 
@@ -264,16 +264,12 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   right: 16px;
 }
 
-.panther-20 {
+.panther-22 {
   position: relative;
   z-index: 1;
 }
 
-.panther-19 {
-  cursor: pointer;
-}
-
-.panther-16 {
+.panther-15 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -356,7 +352,33 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   border-radius: 4px;
 }
 
-.panther-15 {
+.panther-21 {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 2;
+}
+
+.panther-20 {
+  outline: none;
+  line-height: 1;
+  height: 32px;
+  width: 32px;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: transparent;
+  -webkit-transition: all 0.1s linear;
+  transition: all 0.1s linear;
+}
+
+.panther-20:focus {
+  border-radius: 99999px;
+  background-color: rgba(255,255,255,0.1);
+}
+
+.panther-19 {
   display: inline-block;
   vertical-align: sub;
   -webkit-flex-shrink: 0;
@@ -365,11 +387,9 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   width: 20px;
   height: 20px;
   color: currentColor;
-  margin-left: 16px;
-  margin-right: 16px;
 }
 
-.panther-62 {
+.panther-64 {
   display: grid;
   grid-row-gap: 8px;
   grid-column-gap: 12px;
@@ -377,11 +397,11 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   margin-bottom: 20px;
 }
 
-.panther-57 {
+.panther-59 {
   height: 272px;
 }
 
-.panther-56 {
+.panther-58 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -393,7 +413,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   height: 100%;
 }
 
-.panther-44 {
+.panther-46 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -415,28 +435,28 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   padding-bottom: 16px;
 }
 
-.panther-33 {
+.panther-35 {
   text-align: center;
 }
 
-.panther-31 {
+.panther-33 {
   font-weight: 700;
   font-size: 3.438rem;
   color: #c82727;
 }
 
-.panther-32 {
+.panther-34 {
   font-weight: 700;
   font-size: 0.875rem;
 }
 
-.panther-43 {
+.panther-45 {
   width: 100%;
   padding-left: 16px;
   padding-right: 24px;
 }
 
-.panther-42 {
+.panther-44 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -448,36 +468,36 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   min-width: 80%;
 }
 
-.panther-34 {
+.panther-36 {
   font-size: 0.75rem;
   color: #bdbdbd;
 }
 
-.panther-35 {
+.panther-37 {
   font-size: 0.75rem;
   padding-top: 4px;
   color: #bdbdbd;
 }
 
-.panther-36 {
+.panther-38 {
   font-size: 0.75rem;
   padding-top: 16px;
 }
 
-.panther-41 {
+.panther-43 {
   text-align: end;
 }
 
-.panther-38 {
+.panther-40 {
   color: #bdbdbd;
 }
 
-.panther-40 {
+.panther-42 {
   padding-top: 8px;
   font-weight: 700;
 }
 
-.panther-55 {
+.panther-57 {
   margin-left: 8px;
   padding-top: 24px;
   padding-bottom: 24px;
@@ -486,7 +506,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   background-color: #1d2a3f;
 }
 
-.panther-54 {
+.panther-56 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -495,21 +515,21 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   position: relative;
 }
 
-.panther-45 {
+.panther-47 {
   position: absolute;
   width: 200px;
   margin-left: 4px;
   font-weight: 700;
 }
 
-.panther-52 {
+.panther-54 {
   position: absolute;
   padding-left: 210px;
   padding-right: 50px;
   width: 100%;
 }
 
-.panther-51 {
+.panther-53 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -523,7 +543,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   align-items: center;
 }
 
-.panther-48 {
+.panther-50 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -531,11 +551,11 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   z-index: 5;
 }
 
-.panther-48>*:not(:last-child) {
+.panther-50>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-46 {
+.panther-48 {
   border-radius: 40px;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -551,7 +571,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   transition: all 0.1s linear;
 }
 
-.panther-47 {
+.panther-49 {
   border-radius: 40px;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -567,15 +587,15 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   transition: all 0.1s linear;
 }
 
-.panther-47:hover {
+.panther-49:hover {
   background-color: #3e516b;
 }
 
-.panther-50 {
+.panther-52 {
   z-index: 5;
 }
 
-.panther-49 {
+.panther-51 {
   border-radius: 40px;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -591,16 +611,16 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   transition: all 0.1s linear;
 }
 
-.panther-49:hover {
+.panther-51:hover {
   background-color: #0081c5;
 }
 
-.panther-53 {
+.panther-55 {
   width: 100%;
   height: 100%;
 }
 
-.panther-85 {
+.panther-87 {
   display: grid;
   grid-row-gap: 8px;
   grid-column-gap: 12px;
@@ -609,7 +629,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   margin-bottom: 20px;
 }
 
-.panther-80 {
+.panther-82 {
   height: 289px;
   padding-top: 20px;
   padding-bottom: 20px;
@@ -617,14 +637,14 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   background-color: #1d2a3f;
 }
 
-.panther-139 {
+.panther-141 {
   display: grid;
   grid-row-gap: 8px;
   grid-column-gap: 12px;
   grid-template-columns: repeat(1, 1fr);
 }
 
-.panther-134 {
+.panther-136 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -634,11 +654,11 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   flex-direction: column;
 }
 
-.panther-134>*:not(:last-child) {
+.panther-136>*:not(:last-child) {
   margin-bottom: 8px;
 }
 
-.panther-133 {
+.panther-135 {
   background-color: #1d2a3f;
   border-radius: 4px;
   padding: 20px;
@@ -647,7 +667,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   overflow: hidden;
 }
 
-.panther-131 {
+.panther-133 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -656,7 +676,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   height: 100%;
 }
 
-.panther-130 {
+.panther-132 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -670,11 +690,11 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   width: 100%;
 }
 
-.panther-94 {
+.panther-96 {
   font-weight: 500;
 }
 
-.panther-93 {
+.panther-95 {
   -webkit-transition: color 0.1s ease-out;
   transition: color 0.1s ease-out;
   font-weight: 500;
@@ -683,20 +703,20 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   color: #7fd3ff;
 }
 
-.panther-93:hover {
+.panther-95:hover {
   color: #ace2ff;
 }
 
-.panther-93:focus {
+.panther-95:focus {
   color: #ace2ff;
 }
 
-.panther-93:active,
-.panther-93[data-active=true] {
+.panther-95:active,
+.panther-95[data-active=true] {
   color: #11a5f3;
 }
 
-.panther-129 {
+.panther-131 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -707,15 +727,15 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   flex-wrap: wrap;
 }
 
-.panther-129>*:not(:last-child) {
+.panther-131>*:not(:last-child) {
   margin-right: 32px;
 }
 
-.panther-98 {
+.panther-100 {
   margin-top: 16px;
 }
 
-.panther-97 {
+.panther-99 {
   font-size: 0.875rem;
   font-weight: 500;
   opacity: 1;
@@ -723,7 +743,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
 
 
 
-.panther-96>span {
+.panther-98>span {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -738,7 +758,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   align-items: center;
 }
 
-.panther-95 {
+.panther-97 {
   width: auto;
   outline: none;
   padding-left: 20px;
@@ -757,34 +777,34 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   text-decoration: none;
 }
 
-.panther-95:hover {
+.panther-97:hover {
   background-color: #485b75;
   border-color: #485b75;
 }
 
-.panther-95:focus {
+.panther-97:focus {
   background-color: #485b75;
   border-color: #93a6c0;
 }
 
-.panther-95:active,
-.panther-95[data-active=true] {
+.panther-97:active,
+.panther-97[data-active=true] {
   background-color: #344761;
   border-color: #344761;
 }
 
-.panther-99 {
+.panther-101 {
   color: #bdbdbd;
   font-size: 0.563rem;
   margin-bottom: 6px;
   font-weight: 500;
 }
 
-.panther-100 {
+.panther-102 {
   color: #91eddc;
 }
 
-.panther-112 {
+.panther-114 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -799,11 +819,11 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   flex-wrap: wrap;
 }
 
-.panther-112>*:not(:last-child) {
+.panther-114>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-105 {
+.panther-107 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -814,24 +834,24 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   align-items: center;
 }
 
-.panther-105>*:not(:last-child) {
+.panther-107>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-109 {
+.panther-111 {
   width: 12px;
   height: 12px;
   background-color: hsl(353, 43%, 63%);
   border-radius: 99999px;
 }
 
-.panther-110 {
+.panther-112 {
   font-size: 0.75rem;
   font-weight: 400;
   line-height: 1.5;
 }
 
-.panther-128 {
+.panther-130 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -844,11 +864,11 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   margin-right: 0;
 }
 
-.panther-128>*:not(:last-child) {
+.panther-130>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-121 {
+.panther-123 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -879,7 +899,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   background-color: transparent;
 }
 
-.panther-127 {
+.panther-129 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -894,11 +914,11 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   align-items: center;
 }
 
-.panther-127>*:not(:last-child) {
+.panther-129>*:not(:last-child) {
   margin-right: 4px;
 }
 
-.panther-123 {
+.panther-125 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -906,7 +926,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   width: 85px;
 }
 
-.panther-122 {
+.panther-124 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -935,14 +955,14 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   background-color: #6e3078;
 }
 
-.panther-126 {
+.panther-128 {
   display: -webkit-inline-box;
   display: -webkit-inline-flex;
   display: -ms-inline-flexbox;
   display: inline-flex;
 }
 
-.panther-125 {
+.panther-127 {
   outline: none;
   line-height: 1;
   height: 24px;
@@ -959,23 +979,23 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   text-decoration: none;
 }
 
-.panther-125:hover {
+.panther-127:hover {
   background-color: #465973;
   border-color: #465973;
 }
 
-.panther-125:focus {
+.panther-127:focus {
   background-color: #465973;
   border-color: #93a6c0;
 }
 
-.panther-125:active,
-.panther-125[data-active=true] {
+.panther-127:active,
+.panther-127[data-active=true] {
   background-color: #253852;
   border-color: #253852;
 }
 
-.panther-124 {
+.panther-126 {
   display: inline-block;
   vertical-align: sub;
   -webkit-flex-shrink: 0;
@@ -986,7 +1006,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
   color: currentColor;
 }
 
-.panther-104 {
+.panther-106 {
   font-size: 0.75rem;
 }
 
@@ -995,13 +1015,13 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
     id="main-header"
   >
     <div
-      class="panther-23"
+      class="panther-25"
     >
       <form
         action="#"
       >
         <div
-          class="panther-22"
+          class="panther-24"
         >
           <div
             class="panther-8"
@@ -1068,10 +1088,10 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
             class="panther-5"
           >
             <div
-              class="panther-20"
+              class="panther-22"
             >
               <div
-                class="panther-19"
+                class="panther-5"
               >
                 <fieldset
                   class="panther-4"
@@ -1080,7 +1100,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                     class="panther-2"
                   >
                     <div
-                      class="panther-16"
+                      class="panther-15"
                     >
                       <div
                         class="panther-4"
@@ -1126,18 +1146,29 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                           Date End
                         </label>
                       </div>
-                      <svg
-                        class="panther-15"
-                        role="presentation"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          d="M19,4 L18,4 L18,2 L16,2 L16,4 L8,4 L8,2 L6,2 L6,4 L5,4 C3.89,4 3.01,4.9 3.01,6 L3,20 C3,21.1 3.89,22 5,22 L19,22 C20.1,22 21,21.1 21,20 L21,6 C21,4.9 20.1,4 19,4 Z M19,20 L5,20 L5,9 L19,9 L19,20 Z"
-                        />
-                      </svg>
                     </div>
                   </div>
                 </fieldset>
+              </div>
+              <div
+                class="panther-21"
+              >
+                <button
+                  aria-label="Toggle picker"
+                  aria-pressed="false"
+                  class="panther-20"
+                  type="button"
+                >
+                  <svg
+                    class="panther-19"
+                    role="presentation"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M19,4 L18,4 L18,2 L16,2 L16,4 L8,4 L8,2 L6,2 L6,4 L5,4 C3.89,4 3.01,4.9 3.01,6 L3,20 C3,21.1 3.89,22 5,22 L19,22 C20.1,22 21,21.1 21,20 L21,6 C21,4.9 20.1,4 19,4 Z M19,20 L5,20 L5,9 L19,9 L19,20 Z"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -1146,31 +1177,31 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
     </div>
   </header>
   <article
-    class="panther-140"
+    class="panther-142"
   >
     <section
-      class="panther-62"
+      class="panther-64"
     >
       <section
-        class="panther-61"
+        class="panther-63"
       >
         <div
           data-orientation="horizontal"
           data-reach-tabs=""
         >
           <div
-            class="panther-30"
+            class="panther-32"
           >
             <div
               aria-orientation="horizontal"
-              class="panther-28"
+              class="panther-30"
               data-reach-tab-list=""
               role="tablist"
             >
               <button
                 aria-controls="tabs--19--panel--0"
                 aria-selected="true"
-                class="panther-25"
+                class="panther-27"
                 data-orientation="horizontal"
                 data-reach-tab=""
                 data-selected=""
@@ -1180,7 +1211,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                 type="button"
               >
                 <h4
-                  class="panther-24"
+                  class="panther-26"
                 >
                   Real-Time Alerts
                 </h4>
@@ -1188,7 +1219,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
               <button
                 aria-controls="tabs--19--panel--1"
                 aria-selected="false"
-                class="panther-25"
+                class="panther-27"
                 data-orientation="horizontal"
                 data-reach-tab=""
                 id="tabs--19--tab--1"
@@ -1197,95 +1228,95 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                 type="button"
               >
                 <h4
-                  class="panther-26"
+                  class="panther-28"
                 >
                   Most Active Rules
                 </h4>
               </button>
             </div>
             <div
-              class="panther-29"
+              class="panther-31"
             />
           </div>
           <div
-            class="panther-60"
+            class="panther-62"
           >
             <div
               data-reach-tab-panels=""
             >
               <div
                 aria-labelledby="tabs--19--tab--0"
-                class="panther-58"
+                class="panther-60"
                 data-reach-tab-panel=""
                 id="tabs--19--panel--0"
                 role="tabpanel"
                 tabindex="-1"
               >
                 <div
-                  class="panther-57"
+                  class="panther-59"
                 >
                   <div
-                    class="panther-56"
+                    class="panther-58"
                   >
                     <div
-                      class="panther-44"
+                      class="panther-46"
                     >
                       <div
-                        class="panther-33"
+                        class="panther-35"
                       >
                         <h2
                           aria-describedby="title"
-                          class="panther-31"
+                          class="panther-33"
                         >
                           72
                         </h2>
                         <div
-                          class="panther-32"
+                          class="panther-34"
                           id="total-alerts"
                         >
                           Total Alerts
                         </div>
                       </div>
                       <div
-                        class="panther-43"
+                        class="panther-45"
                       >
                         <div
-                          class="panther-42"
+                          class="panther-44"
                         >
                           <div
                             class="panther-5"
                           >
                             <p
-                              class="panther-34"
+                              class="panther-36"
                             >
                               Last period
                             </p>
                             <p
-                              class="panther-35"
+                              class="panther-37"
                             >
                               Current period
                             </p>
                             <p
-                              class="panther-36"
+                              class="panther-38"
                             >
                               No change
                             </p>
                           </div>
                           <div
-                            class="panther-41"
+                            class="panther-43"
                           >
                             <p
-                              class="panther-38"
-                            >
-                              72
-                            </p>
-                            <p
-                              class="panther-38"
+                              class="panther-40"
                             >
                               72
                             </p>
                             <p
                               class="panther-40"
+                            >
+                              72
+                            </p>
+                            <p
+                              class="panther-42"
                             >
                               0
                             </p>
@@ -1294,44 +1325,44 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                       </div>
                     </div>
                     <div
-                      class="panther-55"
+                      class="panther-57"
                     >
                       <div
-                        class="panther-54"
+                        class="panther-56"
                         data-testid="alert-by-severity-chart"
                       >
                         <div
-                          class="panther-45"
+                          class="panther-47"
                         >
                           Alert Severity
                         </div>
                         <div
-                          class="panther-52"
+                          class="panther-54"
                         >
                           <div
-                            class="panther-51"
+                            class="panther-53"
                           >
                             <div
-                              class="panther-48"
+                              class="panther-50"
                             >
                               <button
-                                class="panther-46"
+                                class="panther-48"
                                 type="button"
                               >
                                 Linear
                               </button>
                               <button
-                                class="panther-47"
+                                class="panther-49"
                                 type="button"
                               >
                                 Logarithmic
                               </button>
                             </div>
                             <div
-                              class="panther-50"
+                              class="panther-52"
                             >
                               <button
-                                class="panther-49"
+                                class="panther-51"
                                 type="button"
                               >
                                 RESET
@@ -1340,8 +1371,8 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                           </div>
                         </div>
                         <div
-                          _echarts_instance_="ec_1604590410760"
-                          class="panther-53"
+                          _echarts_instance_="ec_1604921770599"
+                          class="panther-55"
                           style="user-select: none; position: relative;"
                         >
                           <div
@@ -1363,7 +1394,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
               </div>
               <div
                 aria-labelledby="tabs--19--tab--1"
-                class="panther-58"
+                class="panther-60"
                 data-reach-tab-panel=""
                 hidden=""
                 id="tabs--19--panel--1"
@@ -1376,28 +1407,28 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
       </section>
     </section>
     <div
-      class="panther-85"
+      class="panther-87"
     >
       <section
-        class="panther-61"
+        class="panther-63"
       >
         <div
           data-orientation="horizontal"
           data-reach-tabs=""
         >
           <div
-            class="panther-30"
+            class="panther-32"
           >
             <div
               aria-orientation="horizontal"
-              class="panther-28"
+              class="panther-30"
               data-reach-tab-list=""
               role="tablist"
             >
               <button
                 aria-controls="tabs--20--panel--0"
                 aria-selected="true"
-                class="panther-25"
+                class="panther-27"
                 data-orientation="horizontal"
                 data-reach-tab=""
                 data-selected=""
@@ -1407,7 +1438,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                 type="button"
               >
                 <h4
-                  class="panther-24"
+                  class="panther-26"
                 >
                   Events by Log Type
                 </h4>
@@ -1415,7 +1446,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
               <button
                 aria-controls="tabs--20--panel--1"
                 aria-selected="false"
-                class="panther-25"
+                class="panther-27"
                 data-orientation="horizontal"
                 data-reach-tab=""
                 id="tabs--20--tab--1"
@@ -1424,67 +1455,67 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                 type="button"
               >
                 <h4
-                  class="panther-26"
+                  class="panther-28"
                 >
                   Data Latency by Log Type
                 </h4>
               </button>
             </div>
             <div
-              class="panther-29"
+              class="panther-31"
             />
           </div>
           <div
-            class="panther-60"
+            class="panther-62"
           >
             <div
               data-reach-tab-panels=""
             >
               <div
                 aria-labelledby="tabs--20--tab--0"
-                class="panther-58"
+                class="panther-60"
                 data-reach-tab-panel=""
                 id="tabs--20--panel--0"
                 role="tabpanel"
                 tabindex="-1"
               >
                 <div
-                  class="panther-80"
+                  class="panther-82"
                 >
                   <div
-                    class="panther-54"
+                    class="panther-56"
                     data-testid="events-by-log-type-chart"
                   >
                     <div
-                      class="panther-45"
+                      class="panther-47"
                     />
                     <div
-                      class="panther-52"
+                      class="panther-54"
                     >
                       <div
-                        class="panther-51"
+                        class="panther-53"
                       >
                         <div
-                          class="panther-48"
+                          class="panther-50"
                         >
                           <button
-                            class="panther-46"
+                            class="panther-48"
                             type="button"
                           >
                             Linear
                           </button>
                           <button
-                            class="panther-47"
+                            class="panther-49"
                             type="button"
                           >
                             Logarithmic
                           </button>
                         </div>
                         <div
-                          class="panther-50"
+                          class="panther-52"
                         >
                           <button
-                            class="panther-49"
+                            class="panther-51"
                             type="button"
                           >
                             RESET
@@ -1493,8 +1524,8 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                       </div>
                     </div>
                     <div
-                      _echarts_instance_="ec_1604590410761"
-                      class="panther-53"
+                      _echarts_instance_="ec_1604921770600"
+                      class="panther-55"
                       style="user-select: none; position: relative;"
                     >
                       <div
@@ -1514,7 +1545,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
               </div>
               <div
                 aria-labelledby="tabs--20--tab--1"
-                class="panther-58"
+                class="panther-60"
                 data-reach-tab-panel=""
                 hidden=""
                 id="tabs--20--panel--1"
@@ -1527,28 +1558,28 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
       </section>
     </div>
     <div
-      class="panther-139"
+      class="panther-141"
     >
       <section
-        class="panther-61"
+        class="panther-63"
       >
         <div
           data-orientation="horizontal"
           data-reach-tabs=""
         >
           <div
-            class="panther-30"
+            class="panther-32"
           >
             <div
               aria-orientation="horizontal"
-              class="panther-28"
+              class="panther-30"
               data-reach-tab-list=""
               role="tablist"
             >
               <button
                 aria-controls="tabs--21--panel--0"
                 aria-selected="true"
-                class="panther-25"
+                class="panther-27"
                 data-orientation="horizontal"
                 data-reach-tab=""
                 data-selected=""
@@ -1558,7 +1589,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                 type="button"
               >
                 <h4
-                  class="panther-24"
+                  class="panther-26"
                 >
                   Recent Alerts (
                   1
@@ -1568,7 +1599,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
               <button
                 aria-controls="tabs--21--panel--1"
                 aria-selected="false"
-                class="panther-25"
+                class="panther-27"
                 data-orientation="horizontal"
                 data-reach-tab=""
                 id="tabs--21--tab--1"
@@ -1577,7 +1608,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                 type="button"
               >
                 <h4
-                  class="panther-26"
+                  class="panther-28"
                 >
                   High Severity Alerts (
                   2
@@ -1586,66 +1617,66 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
               </button>
             </div>
             <div
-              class="panther-29"
+              class="panther-31"
             />
           </div>
           <div
-            class="panther-60"
+            class="panther-62"
           >
             <div
               data-reach-tab-panels=""
             >
               <div
                 aria-labelledby="tabs--21--tab--0"
-                class="panther-58"
+                class="panther-60"
                 data-reach-tab-panel=""
                 id="tabs--21--panel--0"
                 role="tabpanel"
                 tabindex="-1"
               >
                 <div
-                  class="panther-134"
+                  class="panther-136"
                 >
                   <section
-                    class="panther-133"
+                    class="panther-135"
                   >
                     <div
                       class="panther-5"
                     >
                       <div
-                        class="panther-131"
+                        class="panther-133"
                       >
                         <div
-                          class="panther-130"
+                          class="panther-132"
                         >
                           <h4
-                            class="panther-94"
+                            class="panther-96"
                           >
                             <a
                               aria-label="Link to Alert"
-                              class="panther-93"
+                              class="panther-95"
                               href="/log-analysis/alerts/f67b8f04-5fac-404a-93a4-38db29f258ba/"
                             >
                               indexing
                             </a>
                           </h4>
                           <div
-                            class="panther-129"
+                            class="panther-131"
                           >
                             <dl
-                              class="panther-98"
+                              class="panther-100"
                             >
                               <dd
                                 aria-labelledby="undefinedobject-object"
-                                class="panther-97"
+                                class="panther-99"
                               >
                                 <a
-                                  class="panther-96"
+                                  class="panther-98"
                                   href="/log-analysis/rules/6eb9c948-5a13-4955-bd91-b98801b55bed/"
                                 >
                                   <span
                                     aria-label="Link to Rule"
-                                    class="panther-95"
+                                    class="panther-97"
                                     type="button"
                                   >
                                     View Rule
@@ -1654,43 +1685,43 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                               </dd>
                             </dl>
                             <dl
-                              class="panther-98"
+                              class="panther-100"
                             >
                               <dt
                                 aria-labelledby="alert-typeobject-object"
-                                class="panther-99"
+                                class="panther-101"
                               >
                                 Alert Type
                               </dt>
                               <dd
                                 aria-labelledby="alert-typeobject-object"
-                                class="panther-97"
+                                class="panther-99"
                               >
                                 <p
-                                  class="panther-100"
+                                  class="panther-102"
                                 >
                                   Rule Match
                                 </p>
                               </dd>
                             </dl>
                             <dl
-                              class="panther-98"
+                              class="panther-100"
                             >
                               <dt
                                 aria-labelledby="destinationsobject-object"
-                                class="panther-99"
+                                class="panther-101"
                               >
                                 Destinations
                               </dt>
                               <dd
                                 aria-labelledby="destinationsobject-object"
-                                class="panther-97"
+                                class="panther-99"
                               >
                                 <div
-                                  class="panther-105"
+                                  class="panther-107"
                                 >
                                   <p
-                                    class="panther-104"
+                                    class="panther-106"
                                   >
                                     Not configured
                                   </p>
@@ -1698,29 +1729,29 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                               </dd>
                             </dl>
                             <dl
-                              class="panther-98"
+                              class="panther-100"
                             >
                               <dt
                                 aria-labelledby="log-typesobject-object"
-                                class="panther-99"
+                                class="panther-101"
                               >
                                 Log Types
                               </dt>
                               <dd
                                 aria-labelledby="log-typesobject-object"
-                                class="panther-97"
+                                class="panther-99"
                               >
                                 <div
-                                  class="panther-112"
+                                  class="panther-114"
                                 >
                                   <div
-                                    class="panther-105"
+                                    class="panther-107"
                                   >
                                     <span
-                                      class="panther-109"
+                                      class="panther-111"
                                     />
                                     <span
-                                      class="panther-110"
+                                      class="panther-112"
                                     >
                                       Costa Rica
                                     </span>
@@ -1729,56 +1760,56 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                               </dd>
                             </dl>
                             <dl
-                              class="panther-98"
+                              class="panther-100"
                             >
                               <dt
                                 aria-labelledby="events670"
-                                class="panther-99"
+                                class="panther-101"
                               >
                                 Events
                               </dt>
                               <dd
                                 aria-labelledby="events670"
-                                class="panther-97"
+                                class="panther-99"
                               >
                                 670
                               </dd>
                             </dl>
                             <dl
-                              class="panther-98"
+                              class="panther-100"
                             >
                               <dt
                                 aria-labelledby="time-created2020-08-08-1215-gmt"
-                                class="panther-99"
+                                class="panther-101"
                               >
                                 Time Created
                               </dt>
                               <dd
                                 aria-labelledby="time-created2020-08-08-1215-gmt"
-                                class="panther-97"
+                                class="panther-99"
                               >
                                 2020-08-08 12:15 GMT
                               </dd>
                             </dl>
                             <div
-                              class="panther-128"
+                              class="panther-130"
                             >
                               <div
                                 aria-atomic="true"
-                                class="panther-121"
+                                class="panther-123"
                                 role="status"
                               >
                                 MEDIUM
                               </div>
                               <div
-                                class="panther-127"
+                                class="panther-129"
                               >
                                 <div
-                                  class="panther-123"
+                                  class="panther-125"
                                 >
                                   <div
                                     aria-atomic="true"
-                                    class="panther-122"
+                                    class="panther-124"
                                     role="status"
                                   >
                                     TRIAGED
@@ -1787,7 +1818,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                                 <div
                                   aria-controls="menu--22"
                                   aria-haspopup="true"
-                                  class="panther-126"
+                                  class="panther-128"
                                   data-reach-menu-button=""
                                   id="menu-button--menu--22"
                                   type="button"
@@ -1795,11 +1826,11 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
                                   <button
                                     aria-label="Change Alert Status"
                                     aria-pressed="false"
-                                    class="panther-125"
+                                    class="panther-127"
                                     type="button"
                                   >
                                     <svg
-                                      class="panther-124"
+                                      class="panther-126"
                                       role="presentation"
                                       viewBox="0 0 24 24"
                                     >
@@ -1820,7 +1851,7 @@ exports[`Log Analysis Overview should match snapshot 1`] = `
               </div>
               <div
                 aria-labelledby="tabs--21--tab--1"
-                class="panther-58"
+                class="panther-60"
                 data-reach-tab-panel=""
                 hidden=""
                 id="tabs--21--panel--1"
