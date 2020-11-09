@@ -1563,6 +1563,7 @@ func modifyDataModelFail(t *testing.T) {
 	require.Error(t, err)
 	require.IsType(t, &operations.ModifyDataModelBadRequest{}, err)
 
+	/* this check can be enabled if/when we support multiple logtypes per data model
 	// check that enabling overlapping logtype will fail
 	// first modify DataModel to overlap
 	originalLogTypes := dataModel.LogTypes
@@ -1626,6 +1627,7 @@ func modifyDataModelFail(t *testing.T) {
 	dataModel.LastModified = result.Payload.LastModified
 	dataModel.VersionID = result.Payload.VersionID
 	assert.Equal(t, dataModel, result.Payload)
+	*/
 }
 
 // Modify a global

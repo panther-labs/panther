@@ -33,6 +33,7 @@ import (
 )
 
 var (
+	errDataModelTooManyLogTypes  = errors.New("only one ResourceType may be specified per DataModel")
 	errFieldOrMethodMissing      = errors.New("exactly one field or one method must be specified per mapping entry")
 	errMappingTooManyOptions     = errors.New("a field or a method, but not both, must be specified per mapping entry")
 	errMultipleDataModelsEnabled = errors.New("only one DataModel can be enabled per ResourceType")
@@ -96,6 +97,11 @@ func parseUpdateDataModel(request *events.APIGatewayProxyRequest) (*models.Updat
 		}
 	}
 
+	// For now, we only allow setting one LogType per DataModel
+	if len(result.LogTypes) > 1 {
+		return nil, errDataModelTooManyLogTypes
+	}
+
 	return &result, nil
 }
 
@@ -119,8 +125,9 @@ func isSingleDataModelEnabled(updateDataModel *models.UpdateDataModel) (bool, er
 			if setEquality(oldItem.ResourceTypes, updateDataModel.LogTypes) {
 				return true, nil
 			}
+			// This can be uncommented when we enabled multiple LogTypes per DataModel
 			// if not updating the enabled status, only need to check new LogTypes
-			newLogTypes = setDifference(updateDataModel.LogTypes, oldItem.ResourceTypes)
+			//newLogTypes = setDifference(updateDataModel.LogTypes, oldItem.ResourceTypes)
 		}
 	}
 
@@ -169,7 +176,7 @@ func isSingleDataModelEnabled(updateDataModel *models.UpdateDataModel) (bool, er
 		return false, err
 	}
 	if len(dataModels) != 0 {
-		return false, errMultipleDataModelsEnabled
+		return false, nil
 	}
 	return true, nil
 }

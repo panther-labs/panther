@@ -398,6 +398,13 @@ func validateUploadedPolicy(item *tableItem, userID models.UserID) error {
 		item.Severity = models.SeverityINFO
 	}
 
+	// for now, only allow one LogType per DataModel
+	if item.Type == typeDataModel {
+		if len(item.ResourceTypes) > 1 {
+			return errDataModelTooManyLogTypes
+		}
+	}
+
 	policy := item.Policy(models.ComplianceStatusPASS) // Convert to the external Policy model for validation
 	policy.CreatedAt = models.ModifyTime(time.Now())
 	policy.CreatedBy = userID
