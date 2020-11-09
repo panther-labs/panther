@@ -173,9 +173,31 @@ resource "aws_iam_policy" "deployment" {
       "Effect": "Allow",
       "Resource": [
         "arn:${var.aws_partition}:cloudformation:*:${var.aws_account_id}:stack/panther*",
-        "arn:${var.aws_partition}:cloudformation:*:${var.aws_account_id}:stackset/panther*",
-        "arn:${var.aws_partition}:cloudformation:*:aws:transform/Serverless-2016-10-31"
+        "arn:${var.aws_partition}:cloudformation:*:${var.aws_account_id}:stackset/panther*"
       ]
+    },
+    {
+      "Action": "cloudformation:*",
+      "Effect": "Allow",
+      "Resource": "arn:${var.aws_partition}:cloudformation:*:aws:transform/Serverless-2016-10-31"
+    },
+    {
+      "Action": "serverlessrepo:*",
+      "Effect": "Allow",
+      "Resource": "arn:${var.aws_partition}:serverlessrepo:*:*:applications/*"
+    },
+    {
+      "Action": [
+        "lambda:GetFunction",
+        "lambda:CreateFunction"
+      ],
+      "Effect": "Allow",
+      "Resource": "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:function:ddb"
+    },
+    {
+      "Action": "s3:GetObject",
+      "Effect": "Allow",
+      "Resource": "arn:aws:s3:::awsserverlessrepo-changesets-*"
     },
     {
       "Action": "dynamodb:*",

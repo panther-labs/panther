@@ -20,6 +20,7 @@ package process
 
 import (
 	"context"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -31,6 +32,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 // CreateTablesMessage is the event that triggers the creation of Glue tables/views for logtypes.
@@ -66,8 +68,23 @@ func (m CreateTablesMessage) Send(sqsClient sqsiface.SQSAPI, queueURL string) er
 }
 
 func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) error {
+	syncLogTypes := msg.LogTypes
+	// This is a quick fix for the sync issues
+	if msg.Sync {
+		// update the views with the new tables
+		availableLogTypes, err := listAvailableLogTypes(ctx)
+		if err != nil {
+			return err
+		}
+		deployedLogTypes, err := gluetables.DeployedLogTypes(ctx, glueClient, availableLogTypes)
+		if err != nil {
+			return err
+		}
+		syncLogTypes = stringset.Concat(msg.LogTypes, deployedLogTypes)
+	}
+
 	// create/update all tables associated with logTypes
-	for _, logType := range msg.LogTypes {
+	for _, logType := range syncLogTypes {
 		entry, err := logtypesResolver.Resolve(ctx, logType)
 		if err != nil {
 			return err
@@ -81,6 +98,9 @@ func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) er
 			return errors.Wrapf(err, "failed to update tables for log type %q", logType)
 		}
 	}
+
+	// the Glue Catalog is eventually consistent and if we are too fast the above schema changes will not be visible to Athena
+	time.Sleep(time.Second)
 
 	// update the views with the new tables
 	availableLogTypes, err := listAvailableLogTypes(ctx)
@@ -108,7 +128,7 @@ func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) er
 				awsglue.RuleMatchDatabaseName,
 				awsglue.RuleErrorsDatabaseName,
 			},
-			LogTypes: msg.LogTypes,
+			LogTypes: deployedLogTypes,
 			DryRun:   false,
 		})
 		if err != nil {

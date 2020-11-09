@@ -17,29 +17,18 @@
  */
 
 import React from 'react';
-import { Flex } from 'pouncejs';
-import ZoomButton from './ZoomButton';
+import { render, buildRuleDetails } from 'test-utils';
+import RuleDetailsInfo from './index';
 
-interface ScaleControlsProps {
-  onZoom: (boolean) => void;
-  onReset: () => void;
-}
+describe('RuleDetailsInfo', () => {
+  it('renders the correct data', async () => {
+    const rule = buildRuleDetails({ displayName: 'My Rule' });
+    const { getByText } = render(<RuleDetailsInfo rule={rule} />);
+    expect(getByText('Edit')).toBeInTheDocument();
+    expect(getByText('Delete')).toBeInTheDocument();
 
-const ScaleControls: React.FC<ScaleControlsProps> = ({ onZoom, onReset }) => {
-  const [zoomEnabled, setZoomEnabled] = React.useState(false);
-  return (
-    <Flex spacing={2} zIndex={5}>
-      <ZoomButton
-        title="ZOOM"
-        selected={zoomEnabled}
-        onClick={() => {
-          onZoom(zoomEnabled);
-          setZoomEnabled(!zoomEnabled);
-        }}
-      />
-      <ZoomButton title="RESET" onClick={onReset} />
-    </Flex>
-  );
-};
-
-export default ScaleControls;
+    expect(getByText('My Rule')).toBeInTheDocument();
+    expect(getByText('DISABLED')).toBeInTheDocument();
+    expect(getByText('LOW')).toBeInTheDocument();
+  });
+});

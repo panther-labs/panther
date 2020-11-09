@@ -45,6 +45,8 @@ func TestSendSns(t *testing.T) {
 
 	createdAtTime := time.Now()
 	alert := &alertModels.Alert{
+		AnalysisName:        aws.String("policyName"),
+		Type:                alertModels.PolicyType,
 		AnalysisID:          "policyId",
 		AnalysisDescription: aws.String("policyDescription"),
 		Severity:            "severity",
@@ -63,6 +65,7 @@ func TestSendSns(t *testing.T) {
 
 	defaultMessage := Notification{
 		ID:          "policyId",
+		Type:        alertModels.PolicyType,
 		Name:        aws.String(analysisName),
 		Description: aws.String("policyDescription"),
 		Severity:    "severity",

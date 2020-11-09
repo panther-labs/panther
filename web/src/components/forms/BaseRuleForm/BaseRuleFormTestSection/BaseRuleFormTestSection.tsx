@@ -120,85 +120,83 @@ const BaseRuleFormTestSection: React.FC<BaseRuleFormTestSectionProps> = ({
               </Button>
             }
           >
-            <Card variant="dark" p={4}>
-              {testsCount > 0 && (
-                <React.Fragment>
-                  <Flex as="ul" wrap="wrap" spacing={4}>
-                    {tests.map((test, index) => (
-                      <Box as="li" mb={4} key={test.name}>
-                        <AbstractButton
-                          borderRadius="pill"
-                          px={4}
-                          py={2}
-                          backgroundColor={activeTabIndex === index ? 'blue-400' : 'navyblue-300'}
-                          onClick={() => setActiveTabIndex(index)}
-                        >
-                          <Flex align="center">
-                            {test.name}
-                            <Icon
-                              type="close"
-                              size="x-small"
-                              ml={6}
-                              onClick={e => handleTestRemoval(e, index)}
-                            />
-                          </Flex>
-                        </AbstractButton>
-                      </Box>
-                    ))}
-                  </Flex>
-                  <Grid columnGap={5} templateColumns="1fr 2fr" mt={2} mb={6}>
+            {testsCount > 0 && (
+              <Card variant="dark" p={4}>
+                <Flex as="ul" wrap="wrap" spacing={4}>
+                  {tests.map((test, index) => (
+                    <Box as="li" mb={4} key={test.name}>
+                      <AbstractButton
+                        borderRadius="pill"
+                        px={4}
+                        py={2}
+                        backgroundColor={activeTabIndex === index ? 'blue-400' : 'navyblue-300'}
+                        onClick={() => setActiveTabIndex(index)}
+                      >
+                        <Flex align="center">
+                          {test.name}
+                          <Icon
+                            type="close"
+                            size="x-small"
+                            ml={6}
+                            onClick={e => handleTestRemoval(e, index)}
+                          />
+                        </Flex>
+                      </AbstractButton>
+                    </Box>
+                  ))}
+                </Flex>
+                <Grid columnGap={5} templateColumns="1fr 2fr" mt={2} mb={6}>
+                  <Field
+                    as={FormikTextInput}
+                    name={`tests[${activeTabIndex}].name`}
+                    placeholder="The name of your test"
+                    label="Name"
+                  />
+                  <Flex align="center" spacing={5}>
+                    <Box fontSize="medium" fontWeight="medium" flexGrow={1} textAlign="right">
+                      {type === 'policy'
+                        ? 'Test resource should be compliant'
+                        : 'Test event should trigger an alert'}
+                    </Box>
                     <Field
-                      as={FormikTextInput}
-                      name={`tests[${activeTabIndex}].name`}
-                      placeholder="The name of your test"
-                      label="Name"
+                      as={FormikRadio}
+                      name={`tests[${activeTabIndex}].expectedResult`}
+                      value={true}
+                      label="Yes"
                     />
-                    <Flex align="center" spacing={5}>
-                      <Box fontSize="medium" fontWeight="medium" flexGrow={1} textAlign="right">
-                        {type === 'policy'
-                          ? 'Test resource should be compliant'
-                          : 'Test event should trigger an alert'}
-                      </Box>
-                      <Field
-                        as={FormikRadio}
-                        name={`tests[${activeTabIndex}].expectedResult`}
-                        value={true}
-                        label="Yes"
-                      />
-                      <Field
-                        as={FormikRadio}
-                        name={`tests[${activeTabIndex}].expectedResult`}
-                        value={false}
-                        label="No"
-                      />
-                    </Flex>
-                  </Grid>
-                  <Box mb={5}>
                     <Field
-                      as={FormikEditor}
-                      placeholder="# Enter a JSON object describing the resource to test against"
-                      name={`tests[${activeTabIndex}].resource`}
-                      width="100%"
-                      minLines={20}
-                      mode="json"
+                      as={FormikRadio}
+                      name={`tests[${activeTabIndex}].expectedResult`}
+                      value={false}
+                      label="No"
                     />
-                  </Box>
-                  {renderTestResults}
-                  <Flex mt={5} spacing={4}>
-                    <Button
-                      variantColor="orange"
-                      icon="play"
-                      onClick={() => runTests([tests[activeTabIndex]])}
-                    >
-                      Run Test
-                    </Button>
-                    <Button variantColor="orange" icon="play-all" onClick={() => runTests(tests)}>
-                      Run All
-                    </Button>
                   </Flex>
-                </React.Fragment>
-              )}
-            </Card>
+                </Grid>
+                <Box mb={5}>
+                  <Field
+                    as={FormikEditor}
+                    placeholder="# Enter a JSON object describing the resource to test against"
+                    name={`tests[${activeTabIndex}].resource`}
+                    width="100%"
+                    minLines={20}
+                    mode="json"
+                  />
+                </Box>
+                {renderTestResults}
+                <Flex mt={5} spacing={4}>
+                  <Button
+                    variantColor="orange"
+                    icon="play"
+                    onClick={() => runTests([tests[activeTabIndex]])}
+                  >
+                    Run Test
+                  </Button>
+                  <Button variantColor="orange" icon="play-all" onClick={() => runTests(tests)}>
+                    Run All
+                  </Button>
+                </Flex>
+              </Card>
+            )}
           </Panel>
         );
       }}

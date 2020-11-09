@@ -183,6 +183,15 @@ func (m *SqsMock) GetQueueAttributes(input *sqs.GetQueueAttributesInput) (*sqs.G
 	return args.Get(0).(*sqs.GetQueueAttributesOutput), args.Error(1)
 }
 
+func (m *SqsMock) GetQueueAttributesWithContext(
+	ctx aws.Context,
+	input *sqs.GetQueueAttributesInput,
+	options ...request.Option) (*sqs.GetQueueAttributesOutput, error) {
+
+	args := m.Called(ctx, input, options)
+	return args.Get(0).(*sqs.GetQueueAttributesOutput), args.Error(1)
+}
+
 func (m *SqsMock) DeleteMessageBatch(input *sqs.DeleteMessageBatchInput) (*sqs.DeleteMessageBatchOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*sqs.DeleteMessageBatchOutput), args.Error(1)
@@ -190,6 +199,15 @@ func (m *SqsMock) DeleteMessageBatch(input *sqs.DeleteMessageBatchInput) (*sqs.D
 
 func (m *SqsMock) ReceiveMessage(input *sqs.ReceiveMessageInput) (*sqs.ReceiveMessageOutput, error) {
 	args := m.Called(input)
+	return args.Get(0).(*sqs.ReceiveMessageOutput), args.Error(1)
+}
+
+func (m *SqsMock) ReceiveMessageWithContext(
+	ctx aws.Context,
+	input *sqs.ReceiveMessageInput,
+	options ...request.Option) (*sqs.ReceiveMessageOutput, error) {
+
+	args := m.Called(ctx, input, options)
 	return args.Get(0).(*sqs.ReceiveMessageOutput), args.Error(1)
 }
 
