@@ -30,6 +30,7 @@ export type PolicyTeaser = Pick<
   | 'id'
   | 'displayName'
   | 'enabled'
+  | 'outputIds'
 >;
 
 export const PolicyTeaser = gql`
@@ -41,5 +42,6 @@ export const PolicyTeaser = gql`
     id
     displayName
     enabled
+    outputIds
   }
 `;

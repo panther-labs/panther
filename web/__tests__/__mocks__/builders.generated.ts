@@ -1119,6 +1119,8 @@ export const buildPolicySummary = (overrides: Partial<PolicySummary> = {}): Poli
     enabled: 'enabled' in overrides ? overrides.enabled : false,
     id: 'id' in overrides ? overrides.id : '260cad31-ef71-4eb6-9ac1-1ca1d0da39c7',
     lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-09-11T01:58:47.481Z',
+    outputIds:
+      'outputIds' in overrides ? overrides.outputIds : ['94fd4ab9-7edc-4b27-8c37-bcfab0e2f825'],
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['EXE'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
     tags: 'tags' in overrides ? overrides.tags : ['navigating'],
