@@ -52,7 +52,7 @@ const ListAlerts = () => {
       },
     },
   });
-  const { selectAll } = useSelect();
+  const { selection } = useSelect();
   const alertItems = data?.alerts.alertSummaries || [];
   const lastEvaluatedKey = data?.alerts.lastEvaluatedKey || null;
   const hasNextPage = !!data?.alerts?.lastEvaluatedKey;
@@ -128,9 +128,8 @@ const ListAlerts = () => {
       <ListAlertBreadcrumbFilters />
       <PanelWithSelection
         title="Alerts"
-        filters={<ListAlertFilters />}
-        select={<ListAlertSelection />}
-        selectAll={() => selectAll(alertItems.map(a => a.alertId))}
+        header={selection?.length ? <ListAlertSelection /> : <ListAlertFilters />}
+        ids={alertItems.map(a => a.alertId)}
       >
         <Card as="section" position="relative">
           <Box position="relative">

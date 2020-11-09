@@ -17,11 +17,6 @@
  */
 
 import React from 'react';
-import { Checkbox } from 'pouncejs';
-
-interface SelectCheckboxProps {
-  id: string;
-}
 
 export interface SelectContextValue {
   selection: string[];
@@ -29,6 +24,8 @@ export interface SelectContextValue {
   deselectItem: (id: string) => void;
   resetSelection: () => void;
   selectAll: (ids: string[]) => void;
+  checkIfSelected: (id) => boolean;
+  toggleItem: (id) => void;
 }
 
 const SelectContext = React.createContext<SelectContextValue>(undefined);
@@ -64,6 +61,21 @@ const SelectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =
     setSelected(ids);
   }, []);
 
+  const checkIfSelected = React.useCallback(
+    id => {
+      return !!selection.find(i => i === id);
+    },
+    [selection]
+  );
+
+  const toggleItem = React.useCallback(
+    id => {
+      const isSelected = checkIfSelected(id);
+      return isSelected ? deselectItem(id) : selectItem(id);
+    },
+    [checkIfSelected, deselectItem, selectItem]
+  );
+
   const contextValue = React.useMemo(
     () => ({
       selection,
@@ -71,8 +83,10 @@ const SelectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =
       deselectItem,
       selectItem,
       resetSelection,
+      checkIfSelected,
+      toggleItem,
     }),
-    [selection, resetSelection, selectAll, selectItem, deselectItem]
+    [selection, resetSelection, selectAll, selectItem, deselectItem, checkIfSelected]
   );
 
   return <SelectContext.Provider value={contextValue}>{children}</SelectContext.Provider>;
@@ -89,17 +103,3 @@ const withSelectContext = (Component: React.FC) => props => (
 const useSelect = () => React.useContext(SelectContext);
 
 export { SelectContext, MemoizedSelectProvider as SelectProvider, withSelectContext, useSelect };
-
-const SelectCheckboxComponent: React.FC<SelectCheckboxProps> = ({ id, ...rest }) => {
-  const { selection, selectItem, deselectItem } = useSelect();
-  const isSelected = selection && selection.find(i => i === id);
-  return (
-    <Checkbox
-      checked={!!isSelected}
-      onClick={() => (isSelected ? deselectItem(id) : selectItem(id))}
-      {...rest}
-    />
-  );
-};
-
-export const SelectCheckbox = React.memo(SelectCheckboxComponent);

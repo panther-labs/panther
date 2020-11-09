@@ -17,8 +17,17 @@
  */
 
 import React from 'react';
-import { SelectContext } from 'Components/utils/SelectContext';
+import { Checkbox } from 'pouncejs';
+import { useSelect } from './SelectContext';
 
-const useSelect = () => React.useContext(SelectContext);
+interface SelectCheckboxProps {
+  id: string;
+}
 
-export default useSelect();
+const SelectCheckboxComponent: React.FC<SelectCheckboxProps> = ({ id, ...rest }) => {
+  const { checkIfSelected, toggleItem } = useSelect();
+  const isSelected = checkIfSelected(id);
+  return <Checkbox checked={isSelected} onClick={() => toggleItem(id)} {...rest} />;
+};
+
+export const SelectCheckbox = React.memo(SelectCheckboxComponent);

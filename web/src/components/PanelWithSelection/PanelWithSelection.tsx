@@ -17,24 +17,22 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading, Card, Checkbox } from 'pouncejs';
-import { useSelect } from 'Components/utils/SelectContext';
+import { Box, Flex, Heading, Card } from 'pouncejs';
+import { SelectAllCheckbox } from 'Components/utils/SelectContext';
 
-interface PanelProps {
+interface PanelWithSelectionProps {
   title: string;
-  filters?: React.ReactNode;
-  select: React.ReactNode;
-  selectAll: () => void;
+  header: React.ReactNode;
+  children: React.ReactNode;
+  ids: string[];
 }
 
-const PanelWithSelection: React.FC<PanelProps> = ({
+const PanelWithSelection: React.FC<PanelWithSelectionProps> = ({
   title,
-  select,
-  filters,
   children,
-  selectAll,
+  header,
+  ids,
 }) => {
-  const { selection, resetSelection } = useSelect();
   return (
     <Card as="section" width={1}>
       <Flex
@@ -46,26 +44,16 @@ const PanelWithSelection: React.FC<PanelProps> = ({
         maxHeight={80}
       >
         <Flex align="center" spacing={2} ml={4}>
-          <Checkbox
-            checked={!!selection.length}
-            onClick={() => {
-              if (selection.length) {
-                resetSelection();
-              } else {
-                selectAll();
-              }
-            }}
-            aria-label="select all checkbox"
-          />
+          <SelectAllCheckbox ids={ids} />
           <Heading size="x-small" as="h4">
             {title}
           </Heading>
         </Flex>
-        {selection.length ? select : filters || select}
+        {header}
       </Flex>
       {children && <Box p={6}>{children}</Box>}
     </Card>
   );
 };
 
-export default PanelWithSelection;
+export default React.memo(PanelWithSelection);

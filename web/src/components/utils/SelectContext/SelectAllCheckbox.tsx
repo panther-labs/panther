@@ -16,6 +16,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export * from './SelectContext';
-export * from './SelectCheckbox';
-export * from './SelectAllCheckbox';
+import React from 'react';
+import { useSelect } from 'Components/utils/SelectContext/SelectContext';
+import { Checkbox } from 'pouncejs';
+
+interface SelectAllCheckboxProps {
+  ids: string[];
+}
+
+const SelectAllCheckboxComponent: React.FC<SelectAllCheckboxProps> = ({ ids, ...rest }) => {
+  const { selection, resetSelection, selectAll } = useSelect();
+  return (
+    <Checkbox
+      checked={!!selection.length}
+      onClick={() => {
+        if (selection.length) {
+          resetSelection();
+        } else {
+          selectAll(ids);
+        }
+      }}
+      aria-label={selection.length ? 'unselect all' : 'select all'}
+      {...rest}
+    />
+  );
+};
+
+export const SelectAllCheckbox = React.memo(SelectAllCheckboxComponent);
