@@ -199,7 +199,7 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 }
 
 func detectContentType(r *bufio.Reader) (string, error) {
-	sniffLen := 512 // max byte len needed by http.DetectContentType()
+	const sniffLen = 512 // max byte len needed by http.DetectContentType()
 	header, err := r.Peek(sniffLen)
 	if err != nil && err != bufio.ErrBufferFull && err != io.EOF {
 		// EOF / ErrBufferFull means file is shorter than sniffLen, but not all detections need so large data.

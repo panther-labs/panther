@@ -171,6 +171,7 @@ func (p *Processor) run(outputChan chan<- *parsers.Result) error {
 			}
 			break
 		}
+		p.processLogLine(line, outputChan)
 	}
 	if err != nil {
 		err = errors.Wrap(err, "failed to read log line")
