@@ -338,7 +338,7 @@ func buildStatus(
 
 	return compliancemodels.SetStatusEntry{
 		PolicyID:       string(policy.ID),
-		PolicySeverity: compliancemodels.PolicySeverity(policy.Severity),
+		PolicySeverity: compliancemodels.Severity(policy.Severity),
 		ResourceID:     resource.ID,
 		ResourceType:   resource.Type,
 		Suppressed:     isSuppressed(resource.ID, policy),
