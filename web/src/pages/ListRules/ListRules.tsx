@@ -24,6 +24,7 @@ import { TableControlsPagination } from 'Components/utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash/isEmpty';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import NoResultsFound from 'Components/NoResultsFound';
 import withSEO from 'Hoc/withSEO';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import { PageViewEnum } from 'Helpers/analytics';
@@ -72,6 +73,7 @@ const ListRules = () => {
   if (!ruleItems.length && isEmpty(requestParams)) {
     return <ListRulesPageEmptyDataFallback />;
   }
+
   //  Check how many active filters exist by checking how many columns keys exist in the URL
   return (
     <React.Fragment>
@@ -81,9 +83,13 @@ const ListRules = () => {
           <Card as="section" position="relative">
             <Box position="relative">
               <Flex direction="column" spacing={2}>
-                {ruleItems.map(rule => (
-                  <RuleCard rule={rule} key={rule.id} />
-                ))}
+                {ruleItems.length ? (
+                  ruleItems.map(rule => <RuleCard rule={rule} key={rule.id} />)
+                ) : (
+                  <Box my={8}>
+                    <NoResultsFound />
+                  </Box>
+                )}
               </Flex>
             </Box>
           </Card>
