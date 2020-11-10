@@ -142,6 +142,7 @@ import {
   User,
   AccountTypeEnum,
   AlertStatusesEnum,
+  AlertTypesEnum,
   ComplianceStatusEnum,
   DestinationTypeEnum,
   ListAlertsSortFieldsEnum,
@@ -266,6 +267,7 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
     title: 'title' in overrides ? overrides.title : 'Steel',
+    type: 'type' in overrides ? overrides.type : AlertTypesEnum.Rule,
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Books'],
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
@@ -290,6 +292,7 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
       'deliveryResponses' in overrides ? overrides.deliveryResponses : [buildDeliveryResponse()],
     eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 670,
     ruleId: 'ruleId' in overrides ? overrides.ruleId : '6eb9c948-5a13-4955-bd91-b98801b55bed',
+    type: 'type' in overrides ? overrides.type : AlertTypesEnum.Rule,
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Medium,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Triaged,
     title: 'title' in overrides ? overrides.title : 'indexing',
@@ -764,6 +767,7 @@ export const buildListAlertsInput = (overrides: Partial<ListAlertsInput> = {}): 
       'exclusiveStartKey' in overrides ? overrides.exclusiveStartKey : 'Throughway',
     severity: 'severity' in overrides ? overrides.severity : [SeverityEnum.Low],
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Awesome Wooden Mouse'],
+    type: 'type' in overrides ? overrides.type : AlertTypesEnum.Rule,
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'Island',
     createdAtBefore:
       'createdAtBefore' in overrides ? overrides.createdAtBefore : '2020-05-22T12:33:45.819Z',

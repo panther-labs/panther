@@ -20,7 +20,7 @@ import React from 'react';
 import { Alert, Box, SimpleGrid } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { extractErrorMessage, getCurrentDate, subtractDays } from 'Helpers/utils';
+import { extractErrorMessage, getGraphqlSafeDateRange } from 'Helpers/utils';
 import { PageViewEnum } from 'Helpers/analytics';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import AlertsCharts from 'Pages/LogAnalysisOverview/AlertsCharts';
@@ -44,11 +44,11 @@ const LogAnalysisOverview: React.FC = () => {
   } = useRequestParamsWithoutPagination<LogAnalysisMetricsInput>();
 
   const initialValues = React.useMemo(() => {
-    const utcnow = getCurrentDate();
+    const [utcDaysAgo, utcNow] = getGraphqlSafeDateRange({ days: DEFAULT_PAST_DAYS });
     return {
       intervalMinutes: intervalMinutes ?? DEFAULT_INTERVAL,
-      fromDate: fromDate ?? subtractDays(utcnow, DEFAULT_PAST_DAYS),
-      toDate: toDate ?? utcnow,
+      fromDate: fromDate ?? utcDaysAgo,
+      toDate: toDate ?? utcNow,
     };
   }, [intervalMinutes, fromDate, toDate]);
 

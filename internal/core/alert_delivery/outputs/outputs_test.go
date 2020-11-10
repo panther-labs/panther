@@ -46,6 +46,7 @@ func (m *mockHTTPWrapper) post(postInput *PostInput) *AlertDeliveryResponse {
 func TestGenerateAlertTitleReturnGivenTitle(t *testing.T) {
 	alert := &alertModel.Alert{
 		Title: aws.String("my title"),
+		Type:  alertModel.RuleType,
 	}
 
 	assert.Equal(t, "New Alert: my title", generateAlertTitle(alert))

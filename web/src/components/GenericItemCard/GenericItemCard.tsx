@@ -17,8 +17,12 @@
  */
 
 import React from 'react';
-import { Box, Card, Flex, IconButton, Img, Text, TextProps } from 'pouncejs';
+import { Box, Card, Flex, IconButton, Img, Text, TextProps, Theme } from 'pouncejs';
 import { slugify } from 'Helpers/utils';
+
+interface GenericItemCardProps {
+  borderColor?: keyof Theme['colors'];
+}
 
 interface GenericItemCardLogoProps {
   src: string;
@@ -40,12 +44,23 @@ interface GenericItemCardComposition {
   LineBreak: React.FC;
 }
 
-const GenericItemCard: React.FC & GenericItemCardComposition = ({ children }) => {
+const GenericItemCard: React.FC<GenericItemCardProps> & GenericItemCardComposition = ({
+  children,
+  borderColor,
+}) => {
+  const statusProps = borderColor
+    ? {
+        borderLeft: '4px solid',
+        borderColor,
+      }
+    : {};
   return (
-    <Card as="section" variant="dark" p={5}>
-      <Flex position="relative" height="100%">
-        {children}
-      </Flex>
+    <Card as="section" variant="dark" p={5} {...statusProps} overflow="hidden">
+      <Box>
+        <Flex position="relative" height="100%">
+          {children}
+        </Flex>
+      </Box>
     </Card>
   );
 };

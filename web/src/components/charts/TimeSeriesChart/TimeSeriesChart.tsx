@@ -25,8 +25,8 @@ import { EChartOption, ECharts } from 'echarts';
 import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { stringToPaleColor } from 'Helpers/colors';
+import ResetButton from '../ResetButton';
 import ScaleControls from '../ScaleControls';
-import ZoomControls from '../ZoomControls';
 
 interface TimeSeriesLinesProps {
   /** The data for the time series */
@@ -49,12 +49,6 @@ interface TimeSeriesLinesProps {
    * @default true
    */
   scaleControls?: boolean;
-
-  /**
-   * Whether the chart will display zoom controls toolbox
-   * @default true
-   */
-  zoomControls?: boolean;
 
   /**
    * If defined, the chart will be zoomable and will zoom up to a range specified in `ms` by this
@@ -89,7 +83,6 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
   data,
   zoomable = false,
   scaleControls = true,
-  zoomControls = true,
   segments = 12,
   maxZoomPeriod = 3600 * 1000 * 24,
   units,
@@ -132,12 +125,19 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
         itemStyle: {
           color: theme.colors[severityColors[label]] || stringToPaleColor(label),
         },
-        data: values.map((v, i) => {
-          return {
-            name: label,
-            value: [timestamps[i], v],
-          };
-        }),
+        data: values
+          .map((v, i) => {
+            return {
+              name: label,
+              value: [timestamps[i], v],
+            };
+          })
+          /* This reverse is needed cause data provided by API are coming by descending timestamp.
+           * Although data are displayed correctly on the graph because are ordered by timestamp,
+           * echarts dont seem to apply the same logic when displaying the mini-chart, this reverse only
+           * affects that feature
+           */
+          .reverse(),
       };
     });
 
@@ -148,17 +148,6 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
         bottom: 50,
         containLabel: true,
       },
-      ...(zoomControls && {
-        toolbox: {
-          show: true,
-          right: 50,
-          feature: {
-            dataZoom: {
-              yAxisIndex: 'none',
-            },
-          },
-        },
-      }),
       ...(zoomable && {
         dataZoom: [
           {
@@ -309,7 +298,8 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           import(/* webpackChunkName: "echarts" */ 'echarts/lib/chart/line'),
           import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/tooltip'),
           zoomable && import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/dataZoom'),
-          zoomControls && import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/toolbox'),
+          // This is needed for reset functionality
+          import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/toolbox'),
           import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/legendScroll'),
         ].filter(Boolean)
       );
@@ -383,22 +373,15 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       <Box position="absolute" pl="210px" pr="50px" width={1}>
         <Flex align="center" justify="space-between">
           {scaleControls && <ScaleControls scaleType={scaleType} onSelect={setScaleType} />}
-          {zoomControls && (
-            <ZoomControls
-              onZoom={zoomEnabled =>
-                timeSeriesChart.current.dispatchAction({
-                  type: 'takeGlobalCursor',
-                  key: 'dataZoomSelect',
-                  dataZoomSelectActive: !zoomEnabled,
-                })
-              }
+          <Box zIndex={5}>
+            <ResetButton
               onReset={() =>
                 timeSeriesChart.current.dispatchAction({
                   type: 'restore',
                 })
               }
             />
-          )}
+          </Box>
         </Flex>
       </Box>
       <Box ref={container} width="100%" height="100%" />

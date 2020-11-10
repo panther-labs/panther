@@ -20,6 +20,7 @@ package sources
 
 import (
 	"bufio"
+	"bytes"
 	"compress/gzip"
 	"io"
 	"net/http"
@@ -43,30 +44,27 @@ const (
 	cloudTrailValidationMessage = "CloudTrail validation message."
 )
 
-// ReadSnsMessages reads incoming messages containing SNS notifications and returns a slice of DataStream items
-func ReadSnsMessages(messages []string) (result []*common.DataStream, err error) {
-	zap.L().Debug("reading data from messages", zap.Int("numMessages", len(messages)))
-	for _, message := range messages {
-		snsNotificationMessage := &SnsNotification{}
-		if err := jsoniter.UnmarshalFromString(message, snsNotificationMessage); err != nil {
+// ReadSnsMessage reads incoming messages containing SNS notifications and returns a slice of DataStream items
+func ReadSnsMessage(message string) (result []*common.DataStream, err error) {
+	snsNotificationMessage := &SnsNotification{}
+	if err := jsoniter.UnmarshalFromString(message, snsNotificationMessage); err != nil {
+		return nil, err
+	}
+
+	switch snsNotificationMessage.Type {
+	case "Notification":
+		streams, err := handleNotificationMessage(snsNotificationMessage)
+		if err != nil {
 			return nil, err
 		}
-
-		switch snsNotificationMessage.Type {
-		case "Notification":
-			streams, err := handleNotificationMessage(snsNotificationMessage)
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, streams...)
-		case "SubscriptionConfirmation":
-			err := ConfirmSubscription(snsNotificationMessage)
-			if err != nil {
-				return nil, err
-			}
-		default:
-			return nil, errors.New("received unexpected message in SQS queue")
+		result = append(result, streams...)
+	case "SubscriptionConfirmation":
+		err := ConfirmSubscription(snsNotificationMessage)
+		if err != nil {
+			return nil, err
 		}
+	default:
+		return nil, errors.New("received unexpected message in SQS queue")
 	}
 	return result, nil
 }
@@ -179,17 +177,16 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 		// if it's plain text, just return the buffered reader
 		streamReader = bufferedReader
 	} else if strings.HasPrefix(contentType, "application/x-gzip") {
-		var gzipReader *gzip.Reader
-		gzipReader, err = gzip.NewReader(bufferedReader)
+		gzipReader, err := gzip.NewReader(bufferedReader)
 		if err != nil {
 			err = errors.Wrapf(err, "failed to created gzip reader for s3://%s/%s",
 				s3Object.S3Bucket, s3Object.S3ObjectKey)
-			return
+			return nil, err
 		}
 		streamReader = gzipReader
 	} else {
 		err = &ErrUnsupportedFileType{Type: contentType}
-		return
+		return nil, err
 	}
 
 	dataStream = &common.DataStream{
@@ -197,26 +194,30 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 		Source:      sourceInfo,
 		S3Bucket:    s3Object.S3Bucket,
 		S3ObjectKey: s3Object.S3ObjectKey,
-		ContentType: contentType,
 	}
 	return dataStream, err
 }
 
 func detectContentType(r *bufio.Reader) (string, error) {
-	// We peek into the file header to identify the content type
-	// http.DetectContentType only uses up to the first 512 bytes
-	headerBytes, err := r.Peek(512)
-	if err != nil {
-		switch err {
-		// EOF or ErrBufferFull means file is shorter than n
-		case bufio.ErrBufferFull, io.EOF:
-			// not really an error
-		default:
-			return "", err
-		}
+	const sniffLen = 512 // max byte len needed by http.DetectContentType()
+	header, err := r.Peek(sniffLen)
+	if err != nil && err != bufio.ErrBufferFull && err != io.EOF {
+		// EOF / ErrBufferFull means file is shorter than sniffLen, but not all detections need so large data.
+		return "", err
 	}
-	return http.DetectContentType(headerBytes), nil
+
+	// Try gzip first, for two reasons:
+	// 1. Performance: It the most usual file type for logs and there is an exact prefix check we can do to detect it.
+	// No need to wait for all the checks done by http.DetectContentType() before checking for gzip.
+	// 2. http.DetectContentType() has a bug which mis-detects gzip for ms-fontobject.
+	if bytes.HasPrefix(header, gzipSignature) {
+		return "application/x-gzip", nil
+	}
+
+	return http.DetectContentType(header), nil
 }
+
+var gzipSignature = []byte("\x1F\x8B\x08") // https://mimesniff.spec.whatwg.org/#matching-an-archive-type-pattern
 
 // ParseNotification parses a message received
 func ParseNotification(message string) ([]*S3ObjectInfo, error) {

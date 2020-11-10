@@ -41,6 +41,7 @@ func TestOpsgenieAlert(t *testing.T) {
 	require.NoError(t, err)
 	alert := &alertModels.Alert{
 		AnalysisID:   "policyId",
+		Type:         alertModels.PolicyType,
 		CreatedAt:    createdAtTime,
 		OutputIds:    []string{"output-id"},
 		AnalysisName: aws.String("policyName"),

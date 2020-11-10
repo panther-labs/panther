@@ -85,7 +85,14 @@ const DropdownFilters: React.FC = () => {
             Filters {filtersCount ? `(${filtersCount})` : ''}
           </PopoverTrigger>
           <PopoverContent alignment="bottom-left">
-            <Card shadow="dark300" my={14} p={6} pb={4} minWidth={425}>
+            <Card
+              shadow="dark300"
+              my={14}
+              p={6}
+              pb={4}
+              minWidth={425}
+              data-testid="dropdown-alert-listing-filters"
+            >
               <Formik<ListAlertsDropdownFiltersValues>
                 enableReinitialize
                 onSubmit={updateRequestParams}
@@ -100,6 +107,7 @@ const DropdownFilters: React.FC = () => {
                         items={statusOptions}
                         itemToString={filterItemToString}
                         label="Status"
+                        data-testid="alert-listing-status-filtering"
                         placeholder="Select statuses"
                       />
                     </Box>
@@ -110,6 +118,7 @@ const DropdownFilters: React.FC = () => {
                         items={severityOptions}
                         itemToString={filterItemToString}
                         label="Severity"
+                        data-testid="alert-listing-severity-filtering"
                         placeholder="Select severities"
                       />
                     </Box>
@@ -119,6 +128,7 @@ const DropdownFilters: React.FC = () => {
                         as={FormikNumberInput}
                         min={0}
                         label="Min Events"
+                        data-testid="alert-listing-min-event"
                         placeholder="Minimum number of events"
                       />
                       <FastField
@@ -126,6 +136,7 @@ const DropdownFilters: React.FC = () => {
                         as={FormikNumberInput}
                         min={0}
                         label="Max Events"
+                        data-testid="alert-listing-max-event"
                         placeholder="Maximum number of events"
                       />
                     </SimpleGrid>
