@@ -79,69 +79,69 @@ parameters: # Parameters shared across multiple methods
 
 paths:
   /global:
-    # The UI global detail shows all details for an individual global.
-    #
-    # Example: GET /global? globalId=panther
-    #
-    # Response: {
-    #     "body":                      "def policy(resource): return True",
-    #     "createdAt":                 "2019-08-26T00:00:00.000Z",
-    #     "createdBy":                 "5f54cf4a-ec56-44c2-83bc-8b742600f307",
-    #     "description":               "This policy is always compliant",
-    #     "id":                        "BucketEncryptionEnabled",
-    #     "lastModified":              "2019-08-26T00:00:00.000Z",
-    #     "lastModifiedBy":            "5f54cf4a-ec56-44c2-83bc-8b742600f307",
-    #     "tags":                      [],
-    #     "versionId": "TsKejJ6GGi_KdH65g2iu9bcww8JxkkwI"
-    # }
-    get:
-      operationId: GetGlobal
-      summary: Get global details
-      parameters:
-        - $ref: '#/parameters/globalId'
-        - $ref: '#/parameters/versionId'
+  # The UI global detail shows all details for an individual global.
+  #
+  # Example: GET /global? globalId=panther
+  #
+  # Response: {
+  #     "body":                      "def policy(resource): return True",
+  #     "createdAt":                 "2019-08-26T00:00:00.000Z",
+  #     "createdBy":                 "5f54cf4a-ec56-44c2-83bc-8b742600f307",
+  #     "description":               "This policy is always compliant",
+  #     "id":                        "BucketEncryptionEnabled",
+  #     "lastModified":              "2019-08-26T00:00:00.000Z",
+  #     "lastModifiedBy":            "5f54cf4a-ec56-44c2-83bc-8b742600f307",
+  #     "tags":                      [],
+  #     "versionId": "TsKejJ6GGi_KdH65g2iu9bcww8JxkkwI"
+  # }
+  #    get:
+  #      operationId: GetGlobal
+  #      summary: Get global details
+  #      parameters:
+  #        - $ref: '#/parameters/globalId'
+  #        - $ref: '#/parameters/versionId'
+  #
+  #      responses:
+  #        200:
+  #          description: OK
+  #          schema:
+  #            $ref: '#/definitions/Global'
+  #        400:
+  #          description: Bad request
+  #          schema:
+  #            $ref: '#/definitions/Error'
+  #        404:
+  #          description: Global does not exist
+  #        500:
+  #          description: Internal server error
 
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: '#/definitions/Global'
-        400:
-          description: Bad request
-          schema:
-            $ref: '#/definitions/Error'
-        404:
-          description: Global does not exist
-        500:
-          description: Internal server error
-
-    # When users create a new global, the frontend uses this endpoint.
-    #
-    # This is almost identical to updating a global, except the globalId must not already exist.
-    #
-    # Example: (see ModifyGlobal)
-    post:
-      operationId: CreateGlobal
-      summary: Create a new global module
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/UpdateGlobal'
-      responses:
-        201:
-          description: Global created successfully
-          schema:
-            $ref: '#/definitions/Global'
-        400:
-          description: Bad request
-          schema:
-            $ref: '#/definitions/Error'
-        409:
-          description: Global with the given ID already exists
-        500:
-          description: Internal server error
+  # When users create a new global, the frontend uses this endpoint.
+  #
+  # This is almost identical to updating a global, except the globalId must not already exist.
+  #
+  # Example: (see ModifyGlobal)
+  #    post:
+  #      operationId: CreateGlobal
+  #      summary: Create a new global module
+  #      parameters:
+  #        - name: body
+  #          in: body
+  #          required: true
+  #          schema:
+  #            $ref: '#/definitions/UpdateGlobal'
+  #      responses:
+  #        201:
+  #          description: Global created successfully
+  #          schema:
+  #            $ref: '#/definitions/Global'
+  #        400:
+  #          description: Bad request
+  #          schema:
+  #            $ref: '#/definitions/Error'
+  #        409:
+  #          description: Global with the given ID already exists
+  #        500:
+  #          description: Internal server error
 
   /policy:
     # The UI policy detail shows all details for an individual policy.
@@ -179,100 +179,100 @@ paths:
     #     ],
     #     "versionId": "TsKejJ6GGi_KdH65g2iu9bcww8JxkkwI"
     # }
-    get:
-      operationId: GetPolicy
-      summary: Get policy details
-      parameters:
-        - $ref: '#/parameters/policyId'
-        - $ref: '#/parameters/versionId'
+  #    get:
+  #      operationId: GetPolicy
+  #      summary: Get policy details
+  #      parameters:
+  #        - $ref: '#/parameters/policyId'
+  #        - $ref: '#/parameters/versionId'
+  #
+  #      responses:
+  #        200:
+  #          description: OK
+  #          schema:
+  #            $ref: '#/definitions/Policy'
+  #        400:
+  #          description: Bad request
+  #          schema:
+  #            $ref: '#/definitions/Error'
+  #        404:
+  #          description: Policy does not exist
+  #        500:
+  #          description: Internal server error
 
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: '#/definitions/Policy'
-        400:
-          description: Bad request
-          schema:
-            $ref: '#/definitions/Error'
-        404:
-          description: Policy does not exist
-        500:
-          description: Internal server error
+  # When users create a new policy, the frontend uses this endpoint.
+  #
+  # This is almost identical to updating a policy, except the policyId must not already exist.
+  #
+  # Example: (see ModifyPolicy)
+  #    post:
+  #      operationId: CreatePolicy
+  #      summary: Create a new compliance policy
+  #      parameters:
+  #        - name: body
+  #          in: body
+  #          required: true
+  #          schema:
+  #            $ref: '#/definitions/UpdatePolicy'
+  #      responses:
+  #        201:
+  #          description: Policy created successfully
+  #          schema:
+  #            $ref: '#/definitions/Policy'
+  #        400:
+  #          description: Bad request
+  #          schema:
+  #            $ref: '#/definitions/Error'
+  #        409:
+  #          description: Rule or policy with the given ID already exists
+  #        500:
+  #          description: Internal server error
 
-    # When users create a new policy, the frontend uses this endpoint.
-    #
-    # This is almost identical to updating a policy, except the policyId must not already exist.
-    #
-    # Example: (see ModifyPolicy)
-    post:
-      operationId: CreatePolicy
-      summary: Create a new compliance policy
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/UpdatePolicy'
-      responses:
-        201:
-          description: Policy created successfully
-          schema:
-            $ref: '#/definitions/Policy'
-        400:
-          description: Bad request
-          schema:
-            $ref: '#/definitions/Error'
-        409:
-          description: Rule or policy with the given ID already exists
-        500:
-          description: Internal server error
+  #  /rule:
+  #    # Same as GetPolicy, but for a log analysis rule (which has slightly different parameters).
+  #    get:
+  #      operationId: GetRule
+  #      summary: Get rule details
+  #      parameters:
+  #        - $ref: '#/parameters/ruleId'
+  #        - $ref: '#/parameters/versionId'
+  #      responses:
+  #        200:
+  #          description: OK
+  #          schema:
+  #            $ref: '#/definitions/Rule'
+  #        400:
+  #          description: Bad request
+  #          schema:
+  #            $ref: '#/definitions/Error'
+  #        404:
+  #          description: Rule does not exist
+  #        500:
+  #          description: Internal server error
 
-  /rule:
-    # Same as GetPolicy, but for a log analysis rule (which has slightly different parameters).
-    get:
-      operationId: GetRule
-      summary: Get rule details
-      parameters:
-        - $ref: '#/parameters/ruleId'
-        - $ref: '#/parameters/versionId'
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: '#/definitions/Rule'
-        400:
-          description: Bad request
-          schema:
-            $ref: '#/definitions/Error'
-        404:
-          description: Rule does not exist
-        500:
-          description: Internal server error
-
-    # Same as CreatePolicy, but for a log analysis rule.
-    post:
-      operationId: CreateRule
-      summary: Create a new log analysis rule
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/UpdateRule'
-      responses:
-        201:
-          description: Rule created successfully
-          schema:
-            $ref: '#/definitions/Rule'
-        400:
-          description: Bad request
-          schema:
-            $ref: '#/definitions/Error'
-        409:
-          description: Rule or policy with the given ID already exists
-        500:
-          description: Internal server error
+  # Same as CreatePolicy, but for a log analysis rule.
+  #    post:
+  #      operationId: CreateRule
+  #      summary: Create a new log analysis rule
+  #      parameters:
+  #        - name: body
+  #          in: body
+  #          required: true
+  #          schema:
+  #            $ref: '#/definitions/UpdateRule'
+  #      responses:
+  #        201:
+  #          description: Rule created successfully
+  #          schema:
+  #            $ref: '#/definitions/Rule'
+  #        400:
+  #          description: Bad request
+  #          schema:
+  #            $ref: '#/definitions/Error'
+  #        409:
+  #          description: Rule or policy with the given ID already exists
+  #        500:
+  #          description: Internal server error
 
   /delete:
     # Request deletion for one or more policies/rules, optionally across organizations.
@@ -287,69 +287,69 @@ paths:
     #         }
     #     ]
     # }
-    post:
-      operationId: DeletePolicies
-      summary: Delete one or more policies/rules
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/DeletePolicies'
-      responses:
-        200:
-          description: OK
-        400:
-          description: Bad request
-          schema:
-            $ref: '#/definitions/Error'
-        500:
-          description: Internal server error
+  #    post:
+  #      operationId: DeletePolicies
+  #      summary: Delete one or more policies/rules
+  #      parameters:
+  #        - name: body
+  #          in: body
+  #          required: true
+  #          schema:
+  #            $ref: '#/definitions/DeletePolicies'
+  #      responses:
+  #        200:
+  #          description: OK
+  #        400:
+  #          description: Bad request
+  #          schema:
+  #            $ref: '#/definitions/Error'
+  #        500:
+  #          description: Internal server error
 
-  /global/delete:
-    # Same as DeletePolicies, but for a global module
-    post:
-      operationId: DeleteGlobals
-      summary: Delete one or more globals
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/DeletePolicies'
-      responses:
-        200:
-          description: OK
-        400:
-          description: Bad request
-          schema:
-            $ref: '#/definitions/Error'
-        500:
-          description: Internal server error
+  #  /global/delete:
+  #    # Same as DeletePolicies, but for a global module
+  #    post:
+  #      operationId: DeleteGlobals
+  #      summary: Delete one or more globals
+  #      parameters:
+  #        - name: body
+  #          in: body
+  #          required: true
+  #          schema:
+  #            $ref: '#/definitions/DeletePolicies'
+  #      responses:
+  #        200:
+  #          description: OK
+  #        400:
+  #          description: Bad request
+  #          schema:
+  #            $ref: '#/definitions/Error'
+  #        500:
+  #          description: Internal server error
 
-  /enabled:
-    # The backend resource-processor uses enabled policies to scan modified resources.
-    #
-    # Here, we assume all policies fit in the 6MB response limit (no paging required)
-    # since only the fields we need for processing are returned in the response.
-    #
-    # TODO: add paging / merge into ListPolicies endpoint
-    get:
-      operationId: GetEnabledPolicies
-      summary: List all enabled rules/policies for a customer account for backend processing
-      parameters:
-        - $ref: '#/parameters/type'
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: '#/definitions/EnabledPolicies'
-        400:
-          description: Bad request
-          schema:
-            $ref: '#/definitions/Error'
-        500:
-          description: Internal server error
+  #  /enabled:
+  #    # The backend resource-processor uses enabled policies to scan modified resources.
+  #    #
+  #    # Here, we assume all policies fit in the 6MB response limit (no paging required)
+  #    # since only the fields we need for processing are returned in the response.
+  #    #
+  #    # TODO: add paging / merge into ListPolicies endpoint
+  #    get:
+  #      operationId: GetEnabledPolicies
+  #      summary: List all enabled rules/policies for a customer account for backend processing
+  #      parameters:
+  #        - $ref: '#/parameters/type'
+  #      responses:
+  #        200:
+  #          description: OK
+  #          schema:
+  #            $ref: '#/definitions/EnabledPolicies'
+  #        400:
+  #          description: Bad request
+  #          schema:
+  #            $ref: '#/definitions/Error'
+  #        500:
+  #          description: Internal server error
 
   /list:
     # The frontend pages through the policies in a customer account.
@@ -385,204 +385,204 @@ paths:
     #         }
     #     ]
     # }
-    get:
-      operationId: ListPolicies
-      summary: Page through policies in a customer's account
-      parameters:
-        # filtering
-        - name: complianceStatus
-          in: query
-          description: Only include policies with a specific compliance status
-          type: string
-          enum: [ERROR, FAIL, PASS]
-        - name: nameContains
-          in: query
-          description: Only include policies whose ID or display name contains this substring (case-insensitive)
-          type: string
-        - name: enabled
-          in: query
-          description: Only include policies which are enabled or disabled
-          type: boolean
-        - name: hasRemediation
-          in: query
-          description: Only include policies with or without auto-remediation enabled
-          type: boolean
-        - name: resourceTypes
-          in: query
-          description: Only include policies which apply to one of these resource types
-          type: array
-          collectionFormat: csv
-          uniqueItems: true
-          items:
-            type: string
-        - name: severity
-          in: query
-          description: Only include policies with this severity
-          type: string
-          enum: [INFO, LOW, MEDIUM, HIGH, CRITICAL]
-        - name: tags
-          in: query
-          description: Only include policies with all of these tags (case-insensitive)
-          type: array
-          collectionFormat: csv
-          uniqueItems: true
-          items:
-            type: string
+  #    get:
+  #      operationId: ListPolicies
+  #      summary: Page through policies in a customer's account
+  #      parameters:
+  #        # filtering
+  #        - name: complianceStatus
+  #          in: query
+  #          description: Only include policies with a specific compliance status
+  #          type: string
+  #          enum: [ERROR, FAIL, PASS]
+  #        - name: nameContains
+  #          in: query
+  #          description: Only include policies whose ID or display name contains this substring (case-insensitive)
+  #          type: string
+  #        - name: enabled
+  #          in: query
+  #          description: Only include policies which are enabled or disabled
+  #          type: boolean
+  #        - name: hasRemediation
+  #          in: query
+  #          description: Only include policies with or without auto-remediation enabled
+  #          type: boolean
+  #        - name: resourceTypes
+  #          in: query
+  #          description: Only include policies which apply to one of these resource types
+  #          type: array
+  #          collectionFormat: csv
+  #          uniqueItems: true
+  #          items:
+  #            type: string
+  #        - name: severity
+  #          in: query
+  #          description: Only include policies with this severity
+  #          type: string
+  #          enum: [INFO, LOW, MEDIUM, HIGH, CRITICAL]
+  #        - name: tags
+  #          in: query
+  #          description: Only include policies with all of these tags (case-insensitive)
+  #          type: array
+  #          collectionFormat: csv
+  #          uniqueItems: true
+  #          items:
+  #            type: string
+  #
+  #        # sorting
+  #        - name: sortBy
+  #          in: query
+  #          description: Name of the field to sort by
+  #          type: string
+  #          enum:
+  #            - complianceStatus
+  #            - enabled
+  #            - id
+  #            - lastModified
+  #            - resourceTypes
+  #            - severity
+  #          default: severity
+  #        - name: sortDir
+  #          in: query
+  #          description: Sort direction
+  #          type: string
+  #          enum: [ascending, descending]
+  #          default: descending
+  #
+  #        # paging
+  #        - name: pageSize
+  #          in: query
+  #          description: Number of items in each page of results
+  #          type: integer
+  #          minimum: 1
+  #          maximum: 1000
+  #          default: 25
+  #        - name: page
+  #          in: query
+  #          description: Which page of results to retrieve
+  #          type: integer
+  #          minimum: 1
+  #          default: 1
+  #      responses:
+  #        200:
+  #          description: OK
+  #          schema:
+  #            $ref: '#/definitions/PolicyList'
+  #        400:
+  #          description: Bad request
+  #          schema:
+  #            $ref: '#/definitions/Error'
+  #        500:
+  #          description: Internal server error
 
-        # sorting
-        - name: sortBy
-          in: query
-          description: Name of the field to sort by
-          type: string
-          enum:
-            - complianceStatus
-            - enabled
-            - id
-            - lastModified
-            - resourceTypes
-            - severity
-          default: severity
-        - name: sortDir
-          in: query
-          description: Sort direction
-          type: string
-          enum: [ascending, descending]
-          default: descending
+  #  /suppress:
+  #    # Suppress resource patterns across one or more policies
+  #    #
+  #    # Example: POST /suppress
+  #    # {
+  #    #     "policyIds": ["MyTestPolicy", "SomeOtherPolicy"],
+  #    #     "resourcePatterns": ["arn:aws:s3:::panther-.*", "dev"]
+  #    # }
+  #    post:
+  #      operationId: Suppress
+  #      summary: Suppress resource patterns across one or more policies
+  #      parameters:
+  #        - name: body
+  #          in: body
+  #          required: true
+  #          schema:
+  #            $ref: '#/definitions/Suppress'
+  #      responses:
+  #        200:
+  #          description: OK
+  #        400:
+  #          description: Bad request
+  #          schema:
+  #            $ref: '#/definitions/Error'
+  #        500:
+  #          description: Internal server error
 
-        # paging
-        - name: pageSize
-          in: query
-          description: Number of items in each page of results
-          type: integer
-          minimum: 1
-          maximum: 1000
-          default: 25
-        - name: page
-          in: query
-          description: Which page of results to retrieve
-          type: integer
-          minimum: 1
-          default: 1
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: '#/definitions/PolicyList'
-        400:
-          description: Bad request
-          schema:
-            $ref: '#/definitions/Error'
-        500:
-          description: Internal server error
-
-  /suppress:
-    # Suppress resource patterns across one or more policies
-    #
-    # Example: POST /suppress
-    # {
-    #     "policyIds": ["MyTestPolicy", "SomeOtherPolicy"],
-    #     "resourcePatterns": ["arn:aws:s3:::panther-.*", "dev"]
-    # }
-    post:
-      operationId: Suppress
-      summary: Suppress resource patterns across one or more policies
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/Suppress'
-      responses:
-        200:
-          description: OK
-        400:
-          description: Bad request
-          schema:
-            $ref: '#/definitions/Error'
-        500:
-          description: Internal server error
-
-  /rule/list:
-    # Same as ListPolicies, but for log analysis rules
-    get:
-      operationId: ListRules
-      summary: Page through rules in a customer's account
-      parameters:
-        # filtering
-        - name: nameContains
-          in: query
-          description: Only include rules whose ID or display name contains this substring (case-insensitive)
-          type: string
-        - name: enabled
-          in: query
-          description: Only include rules which are enabled or disabled
-          type: boolean
-        - name: logTypes
-          in: query
-          description: Only include rules which apply to one of these log types
-          type: array
-          collectionFormat: csv
-          uniqueItems: true
-          items:
-            type: string
-        - name: severity
-          in: query
-          description: Only include policies with this severity
-          type: string
-          enum: [INFO, LOW, MEDIUM, HIGH, CRITICAL]
-        - name: tags
-          in: query
-          description: Only include policies with all of these tags (case-insensitive)
-          type: array
-          collectionFormat: csv
-          uniqueItems: true
-          items:
-            type: string
-
-        # sorting
-        - name: sortBy
-          in: query
-          description: Name of the field to sort by
-          type: string
-          enum:
-            - enabled
-            - id
-            - lastModified
-            - logTypes
-            - severity
-          default: severity
-        - name: sortDir
-          in: query
-          description: Sort direction
-          type: string
-          enum: [ascending, descending]
-          default: ascending
-
-        # paging
-        - name: pageSize
-          in: query
-          description: Number of items in each page of results
-          type: integer
-          minimum: 1
-          maximum: 1000
-          default: 25
-        - name: page
-          in: query
-          description: Which page of results to retrieve
-          type: integer
-          minimum: 1
-          default: 1
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: '#/definitions/RuleList'
-        400:
-          description: Bad request
-          schema:
-            $ref: '#/definitions/Error'
-        500:
-          description: Internal server error
+  #  /rule/list:
+  #    # Same as ListPolicies, but for log analysis rules
+  #    get:
+  #      operationId: ListRules
+  #      summary: Page through rules in a customer's account
+  #      parameters:
+  #        # filtering
+  #        - name: nameContains
+  #          in: query
+  #          description: Only include rules whose ID or display name contains this substring (case-insensitive)
+  #          type: string
+  #        - name: enabled
+  #          in: query
+  #          description: Only include rules which are enabled or disabled
+  #          type: boolean
+  #        - name: logTypes
+  #          in: query
+  #          description: Only include rules which apply to one of these log types
+  #          type: array
+  #          collectionFormat: csv
+  #          uniqueItems: true
+  #          items:
+  #            type: string
+  #        - name: severity
+  #          in: query
+  #          description: Only include policies with this severity
+  #          type: string
+  #          enum: [INFO, LOW, MEDIUM, HIGH, CRITICAL]
+  #        - name: tags
+  #          in: query
+  #          description: Only include policies with all of these tags (case-insensitive)
+  #          type: array
+  #          collectionFormat: csv
+  #          uniqueItems: true
+  #          items:
+  #            type: string
+  #
+  #        # sorting
+  #        - name: sortBy
+  #          in: query
+  #          description: Name of the field to sort by
+  #          type: string
+  #          enum:
+  #            - enabled
+  #            - id
+  #            - lastModified
+  #            - logTypes
+  #            - severity
+  #          default: severity
+  #        - name: sortDir
+  #          in: query
+  #          description: Sort direction
+  #          type: string
+  #          enum: [ascending, descending]
+  #          default: ascending
+  #
+  #        # paging
+  #        - name: pageSize
+  #          in: query
+  #          description: Number of items in each page of results
+  #          type: integer
+  #          minimum: 1
+  #          maximum: 1000
+  #          default: 25
+  #        - name: page
+  #          in: query
+  #          description: Which page of results to retrieve
+  #          type: integer
+  #          minimum: 1
+  #          default: 1
+  #      responses:
+  #        200:
+  #          description: OK
+  #          schema:
+  #            $ref: '#/definitions/RuleList'
+  #        400:
+  #          description: Bad request
+  #          schema:
+  #            $ref: '#/definitions/Error'
+  #        500:
+  #          description: Internal server error
 
   /global/list:
     # Same as ListPolicies, but for globals
@@ -914,178 +914,178 @@ definitions:
       - POLICY
       - RULE
 
-  UpdatePolicy:
-    type: object
-    properties:
-      autoRemediationId:
-        $ref: '#/definitions/autoRemediationId'
-      autoRemediationParameters:
-        $ref: '#/definitions/autoRemediationParameters'
-      body:
-        $ref: '#/definitions/body'
-      description:
-        $ref: '#/definitions/description'
-      displayName:
-        $ref: '#/definitions/displayName'
-      enabled:
-        $ref: '#/definitions/enabled'
-      id:
-        $ref: '#/definitions/id'
-      outputIds:
-        $ref: '#/definitions/outputIds'
-      reference:
-        $ref: '#/definitions/reference'
-      resourceTypes:
-        $ref: '#/definitions/TypeSet'
-      runbook:
-        $ref: '#/definitions/runbook'
-      severity:
-        $ref: '#/definitions/severity'
-      suppressions:
-        $ref: '#/definitions/suppressions'
-      tags:
-        $ref: '#/definitions/tags'
-      tests:
-        $ref: '#/definitions/TestSuite'
-      userId:
-        $ref: '#/definitions/userId'
-    required:
-      - body
-      - enabled
-      - id
-      - severity
-      - userId
+  #  UpdatePolicy:
+  #    type: object
+  #    properties:
+  #      autoRemediationId:
+  #        $ref: '#/definitions/autoRemediationId'
+  #      autoRemediationParameters:
+  #        $ref: '#/definitions/autoRemediationParameters'
+  #      body:
+  #        $ref: '#/definitions/body'
+  #      description:
+  #        $ref: '#/definitions/description'
+  #      displayName:
+  #        $ref: '#/definitions/displayName'
+  #      enabled:
+  #        $ref: '#/definitions/enabled'
+  #      id:
+  #        $ref: '#/definitions/id'
+  #      outputIds:
+  #        $ref: '#/definitions/outputIds'
+  #      reference:
+  #        $ref: '#/definitions/reference'
+  #      resourceTypes:
+  #        $ref: '#/definitions/TypeSet'
+  #      runbook:
+  #        $ref: '#/definitions/runbook'
+  #      severity:
+  #        $ref: '#/definitions/severity'
+  #      suppressions:
+  #        $ref: '#/definitions/suppressions'
+  #      tags:
+  #        $ref: '#/definitions/tags'
+  #      tests:
+  #        $ref: '#/definitions/TestSuite'
+  #      userId:
+  #        $ref: '#/definitions/userId'
+  #    required:
+  #      - body
+  #      - enabled
+  #      - id
+  #      - severity
+  #      - userId
 
   ##### DeletePolicies #####
-  DeletePolicies:
-    type: object
-    properties:
-      policies:
-        type: array
-        items:
-          $ref: '#/definitions/DeleteEntry'
-        minItems: 1
-        maxItems: 1000 # max deletes in a single S3 DeleteObjects call
-        uniqueItems: true
-    required:
-      - policies
-
-  DeleteEntry:
-    type: object
-    properties:
-      id:
-        $ref: '#/definitions/id'
-    required:
-      - id
+  #  DeletePolicies:
+  #    type: object
+  #    properties:
+  #      policies:
+  #        type: array
+  #        items:
+  #          $ref: '#/definitions/DeleteEntry'
+  #        minItems: 1
+  #        maxItems: 1000 # max deletes in a single S3 DeleteObjects call
+  #        uniqueItems: true
+  #    required:
+  #      - policies
+  #
+  #  DeleteEntry:
+  #    type: object
+  #    properties:
+  #      id:
+  #        $ref: '#/definitions/id'
+  #    required:
+  #      - id
 
   ##### GetEnabledPolicies #####
-  EnabledPolicies:
-    type: object
-    properties:
-      policies:
-        type: array
-        items:
-          $ref: '#/definitions/EnabledPolicy'
-    required:
-      - policies
+  #  EnabledPolicies:
+  #    type: object
+  #    properties:
+  #      policies:
+  #        type: array
+  #        items:
+  #          $ref: '#/definitions/EnabledPolicy'
+  #    required:
+  #      - policies
 
-  EnabledPolicy:
-    type: object
-    properties: # only the fields we need for backend processing
-      body:
-        $ref: '#/definitions/body'
-      dedupPeriodMinutes:
-        $ref: '#/definitions/dedupPeriodMinutes'
-      id:
-        $ref: '#/definitions/id'
-      outputIds:
-        $ref: '#/definitions/outputIds'
-      reports:
-        $ref: '#/definitions/reports'
-      resourceTypes:
-        $ref: '#/definitions/TypeSet'
-      severity:
-        $ref: '#/definitions/severity'
-      suppressions:
-        $ref: '#/definitions/suppressions'
-      tags:
-        $ref: '#/definitions/tags'
-      versionId:
-        $ref: '#/definitions/versionId'
+  #  EnabledPolicy:
+  #    type: object
+  #    properties: # only the fields we need for backend processing
+  #      body:
+  #        $ref: '#/definitions/body'
+  #      dedupPeriodMinutes:
+  #        $ref: '#/definitions/dedupPeriodMinutes'
+  #      id:
+  #        $ref: '#/definitions/id'
+  #      outputIds:
+  #        $ref: '#/definitions/outputIds'
+  #      reports:
+  #        $ref: '#/definitions/reports'
+  #      resourceTypes:
+  #        $ref: '#/definitions/TypeSet'
+  #      severity:
+  #        $ref: '#/definitions/severity'
+  #      suppressions
+  #        $ref: '#/definitions/suppressions'
+  #      tags:
+  #        $ref: '#/definitions/tags'
+  #      versionId:
+  #        $ref: '#/definitions/versionId'
 
   ##### ListPolicies #####
-  PolicyList:
-    type: object
-    properties:
-      paging:
-        $ref: '#/definitions/Paging'
-      policies:
-        type: array
-        items:
-          $ref: '#/definitions/PolicySummary'
-    required:
-      - paging
-      - policies
+  #  PolicyList:
+  #    type: object
+  #    properties:
+  #      paging:
+  #        $ref: '#/definitions/Paging'
+  #      policies:
+  #        type: array
+  #        items:
+  #          $ref: '#/definitions/PolicySummary'
+  #    required:
+  #      - paging
+  #      - policies
 
-  Paging:
-    type: object
-    properties:
-      thisPage:
-        type: integer
-        minimum: 1
-      totalPages:
-        type: integer
-        minimum: 1
-      totalItems:
-        type: integer
-        minimum: 1
-    required:
-      - thisPage
-      - totalPages
-      - totalItems
+  #  Paging:
+  #    type: object
+  #    properties:
+  #      thisPage:
+  #        type: integer
+  #        minimum: 1
+  #      totalPages:
+  #        type: integer
+  #        minimum: 1
+  #      totalItems:
+  #        type: integer
+  #        minimum: 1
+  #    required:
+  #      - thisPage
+  #      - totalPages
+  #      - totalItems
 
-  PolicySummary:
-    type: object
-    properties: # only the fields we need for the table in the UI
-      autoRemediationId:
-        $ref: '#/definitions/autoRemediationId'
-      autoRemediationParameters:
-        $ref: '#/definitions/autoRemediationParameters'
-      complianceStatus:
-        $ref: '#/definitions/complianceStatus'
-      displayName:
-        $ref: '#/definitions/displayName'
-      enabled:
-        $ref: '#/definitions/enabled'
-      id:
-        $ref: '#/definitions/id'
-      lastModified:
-        $ref: '#/definitions/modifyTime'
-      resourceTypes:
-        $ref: '#/definitions/TypeSet'
-      severity:
-        $ref: '#/definitions/severity'
-      tags:
-        $ref: '#/definitions/tags'
-      suppressions:
-        $ref: '#/definitions/suppressions'
-      reports:
-        $ref: '#/definitions/reports'
-      threshold:
-        $ref: '#/definitions/threshold' # not required because this is really for RuleSummaries
-    required:
-      - autoRemediationId
-      - autoRemediationParameters
-      - complianceStatus
-      - displayName
-      - enabled
-      - id
-      - lastModified
-      - resourceTypes
-      - severity
-      - tags
-      - suppressions
-      - reports
+  #  PolicySummary:
+  #    type: object
+  #    properties: # only the fields we need for the table in the UI
+  #      autoRemediationId:
+  #        $ref: '#/definitions/autoRemediationId'
+  #      autoRemediationParameters:
+  #        $ref: '#/definitions/autoRemediationParameters'
+  #      complianceStatus:
+  #        $ref: '#/definitions/complianceStatus'
+  #      displayName:
+  #        $ref: '#/definitions/displayName'
+  #      enabled:
+  #        $ref: '#/definitions/enabled'
+  #      id:
+  #        $ref: '#/definitions/id'
+  #      lastModified:
+  #        $ref: '#/definitions/modifyTime'
+  #      resourceTypes:
+  #        $ref: '#/definitions/TypeSet'
+  #      severity:
+  #        $ref: '#/definitions/severity'
+  #      tags:
+  #        $ref: '#/definitions/tags'
+  #      suppressions:
+  #        $ref: '#/definitions/suppressions'
+  #      reports:
+  #        $ref: '#/definitions/reports'
+  #      threshold:
+  #        $ref: '#/definitions/threshold' # not required because this is really for RuleSummaries
+  #    required:
+  #      - autoRemediationId
+  #      - autoRemediationParameters
+  #      - complianceStatus
+  #      - displayName
+  #      - enabled
+  #      - id
+  #      - lastModified
+  #      - resourceTypes
+  #      - severity
+  #      - tags
+  #      - suppressions
+  #      - reports
 
   ##### BulkUpload #####
   BulkUpload:
@@ -1228,70 +1228,70 @@ definitions:
         description: An error produced before running any of the rule functions, like import or syntax error.
 
   ##### Suppress #####
-  Suppress:
-    type: object
-    properties:
-      policyIds:
-        type: array
-        items:
-          $ref: '#/definitions/id'
-        minItems: 1
-      resourcePatterns:
-        $ref: '#/definitions/suppressions'
-    required:
-      - policyIds
-      - resourcePatterns
+  #  Suppress:
+  #    type: object
+  #    properties:
+  #      policyIds:
+  #        type: array
+  #        items:
+  #          $ref: '#/definitions/id'
+  #        minItems: 1
+  #      resourcePatterns:
+  #        $ref: '#/definitions/suppressions'
+  #    required:
+  #      - policyIds
+  #      - resourcePatterns
 
   ##### Create/Modify/Update Globals #####
-  Global:
-    type: object
-    properties:
-      body:
-        $ref: '#/definitions/body'
-      createdAt:
-        $ref: '#/definitions/modifyTime'
-      createdBy:
-        $ref: '#/definitions/userId'
-      description:
-        $ref: '#/definitions/description'
-      id:
-        $ref: '#/definitions/id'
-      lastModified:
-        $ref: '#/definitions/modifyTime'
-      lastModifiedBy:
-        $ref: '#/definitions/userId'
-      tags:
-        $ref: '#/definitions/tags'
-      versionId:
-        $ref: '#/definitions/versionId'
-    required:
-      - body
-      - createdAt
-      - createdBy
-      - description
-      - id
-      - lastModified
-      - lastModifiedBy
-      - tags
-      - versionId
+  #  Global:
+  #    type: object
+  #    properties:
+  #      body:
+  #        $ref: '#/definitions/body'
+  #      createdAt:
+  #        $ref: '#/definitions/modifyTime'
+  #      createdBy:
+  #        $ref: '#/definitions/userId'
+  #      description:
+  #        $ref: '#/definitions/description'
+  #      id:
+  #        $ref: '#/definitions/id'
+  #      lastModified:
+  #        $ref: '#/definitions/modifyTime'
+  #      lastModifiedBy:
+  #        $ref: '#/definitions/userId'
+  #      tags:
+  #        $ref: '#/definitions/tags'
+  #      versionId:
+  #        $ref: '#/definitions/versionId'
+  #    required:
+  #      - body
+  #      - createdAt
+  #      - createdBy
+  #      - description
+  #      - id
+  #      - lastModified
+  #      - lastModifiedBy
+  #      - tags
+  #      - versionId
 
-  UpdateGlobal:
-    type: object
-    properties:
-      body:
-        $ref: '#/definitions/body'
-      description:
-        $ref: '#/definitions/description'
-      id:
-        $ref: '#/definitions/id'
-      tags:
-        $ref: '#/definitions/tags'
-      userId:
-        $ref: '#/definitions/userId'
-    required:
-      - body # is this needed if someone just wants to update the meta data?
-      - id
-      - userId
+  #  UpdateGlobal:
+  #    type: object
+  #    properties:
+  #      body:
+  #        $ref: '#/definitions/body'
+  #      description:
+  #        $ref: '#/definitions/description'
+  #      id:
+  #        $ref: '#/definitions/id'
+  #      tags:
+  #        $ref: '#/definitions/tags'
+  #      userId:
+  #        $ref: '#/definitions/userId'
+  #    required:
+  #      - body # is this needed if someone just wants to update the meta data?
+  #      - id
+  #      - userId
 
   ##### Create/Modify/Update Rules (Log Analysis) #####
   Rule:
@@ -1359,61 +1359,61 @@ definitions:
       - reports
       - threshold
 
-  UpdateRule:
-    type: object
-    properties:
-      body:
-        $ref: '#/definitions/body'
-      description:
-        $ref: '#/definitions/description'
-      displayName:
-        $ref: '#/definitions/displayName'
-      enabled:
-        $ref: '#/definitions/enabled'
-      id:
-        $ref: '#/definitions/id'
-      logTypes:
-        $ref: '#/definitions/TypeSet'
-      outputIds:
-        $ref: '#/definitions/outputIds'
-      reference:
-        $ref: '#/definitions/reference'
-      runbook:
-        $ref: '#/definitions/runbook'
-      severity:
-        $ref: '#/definitions/severity'
-      tags:
-        $ref: '#/definitions/tags'
-      tests:
-        $ref: '#/definitions/TestSuite'
-      userId:
-        $ref: '#/definitions/userId'
-      dedupPeriodMinutes:
-        $ref: '#/definitions/dedupPeriodMinutes'
-      reports:
-        $ref: '#/definitions/reports'
-      threshold:
-        $ref: '#/definitions/threshold'
-    required:
-      - body
-      - enabled
-      - id
-      - severity
-      - userId
+  #  UpdateRule:
+  #    type: object
+  #    properties:
+  #      body:
+  #        $ref: '#/definitions/body'
+  #      description:
+  #        $ref: '#/definitions/description'
+  #      displayName:
+  #        $ref: '#/definitions/displayName'
+  #      enabled:
+  #        $ref: '#/definitions/enabled'
+  #      id:
+  #        $ref: '#/definitions/id'
+  #      logTypes:
+  #        $ref: '#/definitions/TypeSet'
+  #      outputIds:
+  #        $ref: '#/definitions/outputIds'
+  #      reference:
+  #        $ref: '#/definitions/reference'
+  #      runbook:
+  #        $ref: '#/definitions/runbook'
+  #      severity:
+  #        $ref: '#/definitions/severity'
+  #      tags:
+  #        $ref: '#/definitions/tags'
+  #      tests:
+  #        $ref: '#/definitions/TestSuite'
+  #      userId:
+  #        $ref: '#/definitions/userId'
+  #      dedupPeriodMinutes:
+  #        $ref: '#/definitions/dedupPeriodMinutes'
+  #      reports:
+  #        $ref: '#/definitions/reports'
+  #      threshold:
+  #        $ref: '#/definitions/threshold'
+  #    required:
+  #      - body
+  #      - enabled
+  #      - id
+  #      - severity
+  #      - userId
 
   ##### ListRules #####
-  RuleList:
-    type: object
-    properties:
-      paging:
-        $ref: '#/definitions/Paging'
-      rules:
-        type: array
-        items:
-          $ref: '#/definitions/RuleSummary'
-    required:
-      - paging
-      - rules
+  #  RuleList:
+  #    type: object
+  #    properties:
+  #      paging:
+  #        $ref: '#/definitions/Paging'
+  #      rules:
+  #        type: array
+  #        items:
+  #          $ref: '#/definitions/RuleSummary'
+  #    required:
+  #      - paging
+  #      - rules
 
   GlobalList:
     type: object
@@ -1581,16 +1581,16 @@ definitions:
       - HIGH
       - CRITICAL
 
-  suppressions:
-    description: >
-      List of resource ID regexes that are excepted from this policy.
-      The policy will still be evaluated, but failures will not trigger alerts nor remediations.
-    type: array
-    maxItems: 500
-    uniqueItems: true
-    items:
-      type: string
-      maxLength: 1000
+  #  suppressions:
+  #    description: >
+  #      List of resource ID regexes that are excepted from this policy.
+  #      The policy will still be evaluated, but failures will not trigger alerts nor remediations.
+  #    type: array
+  #    maxItems: 500
+  #    uniqueItems: true
+  #    items:
+  #      type: string
+  #      maxLength: 1000
 
   tags:
     description: List of tags to categorize the policy

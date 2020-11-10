@@ -26,6 +26,7 @@ const (
 	DefaultLimitTopFailing = 10 // GetOrgOverview
 )
 
+// TODO - replace references to this severity with analysis-api models
 type PolicySeverity string
 
 const (
