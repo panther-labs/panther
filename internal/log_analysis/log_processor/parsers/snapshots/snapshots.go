@@ -19,20 +19,9 @@ package snapshots
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
-
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-
 	// FIXME: remove this once synced with master
 	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
-)
-
-const (
-	TypeCompliance = "Snapshot.ComplianceHistory"
-	TypeResource   = "Snapshot.ResourceHistory"
 )
 
 // LogTypes exports the available log type entries
@@ -41,88 +30,4 @@ func LogTypes() logtypes.Group {
 }
 
 // nolint:lll
-var logTypes = logtypes.Must("SnapshotHistory",
-	logtypes.ConfigJSON{
-		Name:         TypeCompliance,
-		Description:  `Contains Cloud Security compliance snapshots`,
-		ReferenceURL: `https://docs.runpanther.io/cloud-security/overview`,
-		NewEvent: func() interface{} {
-			return &Compliance{}
-		},
-		Validate: parsers.ValidateStruct,
-	},
-	logtypes.ConfigJSON{
-		Name:         TypeResource,
-		Description:  `Contains Cloud Security resource snapshots`,
-		ReferenceURL: `https://docs.runpanther.io/cloud-security/resources`,
-		NewEvent: func() interface{} {
-			return &Resource{}
-		},
-		Validate: func(event interface{}) error {
-			// This is a cheating a bit to reuse ConfigJSON for boilerplate code.
-			// We know this functions is running right after the first JSON parsing,
-			// so we 'sneak' some extra parsing code in here
-			resource, ok := event.(*Resource)
-			if !ok {
-				return errors.Errorf("invalid event to validate %v", event)
-			}
-			if resource.Resource == nil {
-				return errors.Errorf("nil resource %v", event)
-			}
-			if err := jsoniter.Unmarshal(*resource.Resource, &resource.NormalizedFields); err != nil {
-				return errors.Wrap(err, "could not unmarshal resource fields")
-			}
-			// End of cheating
-
-			return parsers.ValidateStruct(event)
-		},
-		JSON: jsoniter.Config{
-			CaseSensitive: false,
-		}.Froze(),
-	},
-)
-
-// nolint:lll
-type Compliance struct {
-	ChangeType       pantherlog.String `json:"changeType" validate:"required,oneof=created deleted modified sync" description:"The type of change that initiated this snapshot creation."`
-	IntegrationID    pantherlog.String `json:"integrationId" validate:"required" description:"The unique source ID of the account this resource lives in."`
-	IntegrationLabel pantherlog.String `json:"integrationLabel" validate:"required" description:"The friendly source name of the account this resource lives in."`
-	LastUpdated      pantherlog.Time   `json:"lastUpdated" tcodec:"rfc3339" event_time:"true" validate:"required" description:"The time this snapshot occurred."`
-	PolicyID         pantherlog.String `json:"policyId" validate:"required" description:"The unique ID of the policy evaluating the resource."`
-	PolicySeverity   pantherlog.String `json:"policySeverity" validate:"required" description:"The severity of the policy evaluating the resource."`
-	ResourceID       pantherlog.String `json:"resourceId" panther:"aws_arn" validate:"required" description:"The unique Panther ID of the resource being evaluated."`
-	ResourceType     pantherlog.String `json:"resourceType" validate:"required" description:"The type of resource being evaluated."`
-	Status           pantherlog.String `json:"status" validate:"required,oneof=PASS FAIL ERROR" description:"Whether this resource is passing, failing, or erroring on this policy."`
-	Suppressed       pantherlog.Bool   `json:"suppressed" validate:"required" description:"Whether this resource is being ignored for the purpose of reports."`
-}
-
-// nolint:lll
-type Resource struct {
-	ChangeType       pantherlog.String              `json:"changeType" validate:"required,oneof=created deleted modified sync" description:"The type of change that initiated this snapshot creation."`
-	Changes          map[string]jsoniter.RawMessage `json:"changes" description:"The changes, if any, from the prior snapshot to this one."`
-	IntegrationID    pantherlog.String              `json:"integrationId" validate:"required" description:"The unique source ID of the account this resource lives in."`
-	IntegrationLabel pantherlog.String              `json:"integrationLabel" validate:"required" description:"The friendly source name of the account this resource lives in."`
-	LastUpdated      pantherlog.Time                `json:"lastUpdated" tcodec:"rfc3339" event_time:"true" validate:"required" description:"The time this snapshot occurred."`
-	Resource         *pantherlog.RawMessage         `json:"resource" description:"This object represents the state of the resource."`
-	NormalizedFields SnapshotNormalizedFields       `json:"normalizedFields" description:"This object represents normalized fields extracted by the scanner."`
-}
-
-type SnapshotNormalizedFields struct {
-	// Embedded from internal/compliance/snapshot_poller/models/aws/types.go
-	ResourceID   pantherlog.String `json:"ResourceId" description:"A panther wide unique identifier of the resource."`
-	ResourceType pantherlog.String `json:"ResourceType" description:"A panther defined resource type for the resource."`
-	TimeCreated  pantherlog.Time   `json:"TimeCreated" description:"When this resource was created."`
-	AccountID    pantherlog.String `json:"AccountId" panther:"aws_account_id" description:"The ID of the AWS Account the resource resides in."`
-	Region       pantherlog.String `json:"Region" description:"The region the resource exists in."`
-	ARN          pantherlog.String `json:"Arn,omitempty" panther:"aws_arn" description:"The Amazon Resource Name (ARN) of the resource."`
-	ID           pantherlog.String `json:"Id,omitempty" description:"The AWS resource identifier of the resource."`
-	Name         pantherlog.String `json:"Name,omitempty" description:"The AWS resource name of the resource."`
-	Tags         map[string]string `json:"Tags,omitempty" description:"A standardized format for AWS key/value resource tags."`
-}
-
-// WriteValuesTo implements pantherlog.ValueWriterTo interface
-func (n *SnapshotNormalizedFields) WriteValuesTo(w pantherlog.ValueWriter) {
-	for key, value := range n.Tags {
-		w.WriteValues(pantherlog.FieldAWSTag, key+":"+value)
-	}
-}
+var logTypes = logtypes.Must("SnapshotHistory", logTypeCompliance, logTypeResource)
