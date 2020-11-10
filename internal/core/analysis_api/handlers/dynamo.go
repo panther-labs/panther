@@ -38,6 +38,7 @@ const (
 	typePolicy       = string(models.AnalysisTypePOLICY)
 	typeGlobal       = string(models.AnalysisTypeGLOBAL)
 	typeRule         = string(models.AnalysisTypeRULE)
+	typeDataModel    = string(models.AnalysisTypeDATAMODEL)
 	maxDynamoBackoff = 30 * time.Second
 )
 
@@ -66,15 +67,16 @@ type tableItem struct {
 	LowerID          string   `json:"lowerId,omitempty"`
 	LowerTags        []string `json:"lowerTags,omitempty" dynamodbav:"lowerTags,stringset,omitempty"`
 
-	OutputIds     models.OutputIds    `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
-	Reference     models.Reference    `json:"reference,omitempty"`
-	Reports       models.Reports      `json:"reports,omitempty"`
-	ResourceTypes models.TypeSet      `json:"resourceTypes,omitempty" dynamodbav:"resourceTypes,stringset,omitempty"`
-	Runbook       models.Runbook      `json:"runbook,omitempty"`
-	Severity      models.Severity     `json:"severity"`
-	Suppressions  models.Suppressions `json:"suppressions,omitempty" dynamodbav:"suppressions,stringset,omitempty"`
-	Tags          models.Tags         `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
-	Tests         []*models.UnitTest  `json:"tests,omitempty"`
+	Mappings      []*models.DataModelMapping `json:"mappings,omitempty"`
+	OutputIds     models.OutputIds           `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
+	Reference     models.Reference           `json:"reference,omitempty"`
+	Reports       models.Reports             `json:"reports,omitempty"`
+	ResourceTypes models.TypeSet             `json:"resourceTypes,omitempty" dynamodbav:"resourceTypes,stringset,omitempty"`
+	Runbook       models.Runbook             `json:"runbook,omitempty"`
+	Severity      models.Severity            `json:"severity"`
+	Suppressions  models.Suppressions        `json:"suppressions,omitempty" dynamodbav:"suppressions,stringset,omitempty"`
+	Tags          models.Tags                `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
+	Tests         []*models.UnitTest         `json:"tests,omitempty"`
 
 	// Logic type (policy or rule)
 	Type string `json:"type"`
@@ -188,6 +190,26 @@ func (r *tableItem) Global() *models.Global {
 		LastModified:   r.LastModified,
 		LastModifiedBy: r.LastModifiedBy,
 		Tags:           r.Tags,
+		VersionID:      r.VersionID,
+	}
+	gatewayapi.ReplaceMapSliceNils(result)
+	return result
+}
+
+// DataModel converts a Dynamo row into a DataModel external model.
+func (r *tableItem) DataModel() *models.DataModel {
+	r.normalize()
+	result := &models.DataModel{
+		Body:           r.Body,
+		CreatedAt:      r.CreatedAt,
+		CreatedBy:      r.CreatedBy,
+		Description:    r.Description,
+		Enabled:        r.Enabled,
+		ID:             r.ID,
+		LastModified:   r.LastModified,
+		LastModifiedBy: r.LastModifiedBy,
+		LogTypes:       r.ResourceTypes,
+		Mappings:       r.Mappings,
 		VersionID:      r.VersionID,
 	}
 	gatewayapi.ReplaceMapSliceNils(result)
