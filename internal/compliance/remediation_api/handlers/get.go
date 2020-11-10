@@ -1,4 +1,4 @@
-package apihandlers
+package handlers
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -25,19 +25,15 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/pkg/gatewayapi"
-	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/api/lambda/remediation/models"
 )
 
-// GetRemediations returns the list of remediations available for an organization
-func GetRemediations(_ *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+// ListRemediations returns the list of remediations available for an organization
+func (API) ListRemediations(_ *models.ListRemediationsInput) *events.APIGatewayProxyResponse {
 	zap.L().Debug("getting list of remediations")
 	// TODO - differentiate between different error types
 	remediations, err := invoker.GetRemediations()
 	if err != nil {
-		if _, ok := err.(*genericapi.DoesNotExistError); ok {
-			return gatewayapi.MarshalResponse(RemediationLambdaNotFound, http.StatusNotFound)
-		}
 		zap.L().Warn("failed to fetch available remediations", zap.Error(err))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}

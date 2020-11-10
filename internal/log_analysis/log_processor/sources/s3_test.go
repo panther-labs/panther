@@ -19,7 +19,9 @@ package sources
  */
 
 import (
+	"bufio"
 	"bytes"
+	"compress/gzip"
 	"io/ioutil"
 	"testing"
 
@@ -154,7 +156,7 @@ func TestHandleUnsupportedFileType(t *testing.T) {
 	getObjectOutput := &s3.GetObjectOutput{Body: ioutil.NopCloser(bytes.NewReader(objectData))}
 	s3Mock.On("GetObject", mock.Anything).Return(getObjectOutput, nil)
 
-	dataStreams, err := ReadSnsMessages([]string{marshaledNotification})
+	dataStreams, err := ReadSnsMessage(marshaledNotification)
 	// Method shouldn't return error
 	require.NoError(t, err)
 	// Method should not return data stream
@@ -180,7 +182,7 @@ func TestHandleS3Folder(t *testing.T) {
 	marshaledNotification, err := jsoniter.MarshalToString(notification)
 	require.NoError(t, err)
 
-	dataStreams, err := ReadSnsMessages([]string{marshaledNotification})
+	dataStreams, err := ReadSnsMessage(marshaledNotification)
 	// Method shouldn't return error
 	require.NoError(t, err)
 	// Method should not return data stream
@@ -218,11 +220,30 @@ func TestHandleUnregisteredSource(t *testing.T) {
 	// Getting the list of available sources
 	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil).Once()
 
-	dataStreams, err := ReadSnsMessages([]string{marshaledNotification})
+	dataStreams, err := ReadSnsMessage(marshaledNotification)
 	// Method shouldn't return error
 	require.NoError(t, err)
 	// Method should not return data stream
 	require.Equal(t, 0, len(dataStreams))
 	lambdaMock.AssertExpectations(t)
 	s3Mock.AssertExpectations(t)
+}
+
+func Test_detectContentType_gzip(t *testing.T) {
+	//nolint:lll
+	data := []byte("Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.")
+	var buf []byte
+	gzippedBuf := bytes.NewBuffer(buf)
+	gzipWriter := gzip.NewWriter(gzippedBuf)
+	defer gzipWriter.Close()
+	_, err := gzipWriter.Write(data)
+	require.NoError(t, err)
+	err = gzipWriter.Flush()
+	require.NoError(t, err)
+
+	br := bufio.NewReader(gzippedBuf)
+	ct, err := detectContentType(br)
+
+	require.NoError(t, err)
+	require.Equal(t, "application/x-gzip", ct)
 }

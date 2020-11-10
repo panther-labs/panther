@@ -20,6 +20,7 @@ import React from 'react';
 import { Box, Card, Flex, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import AlertCard from 'Components/cards/AlertCard';
+import NoResultsFound from 'Components/NoResultsFound';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 
 interface AlertsSectionProps {
@@ -42,16 +43,24 @@ const AlertsSection: React.FC<AlertsSectionProps> = ({ topAlerts, recentAlerts }
           <TabPanels>
             <TabPanel lazy>
               <Flex direction="column" spacing={2}>
-                {recentAlerts.map(alert => (
-                  <AlertCard key={alert.alertId} alert={alert} />
-                ))}
+                {recentAlerts.length ? (
+                  recentAlerts.map(alert => <AlertCard key={alert.alertId} alert={alert} />)
+                ) : (
+                  <Box my={6}>
+                    <NoResultsFound />
+                  </Box>
+                )}
               </Flex>
             </TabPanel>
             <TabPanel lazy>
               <Flex direction="column" spacing={2}>
-                {topAlerts.map(alert => (
-                  <AlertCard key={alert.alertId} alert={alert} />
-                ))}
+                {topAlerts.length ? (
+                  topAlerts.map(alert => <AlertCard key={alert.alertId} alert={alert} />)
+                ) : (
+                  <Box my={6}>
+                    <NoResultsFound />
+                  </Box>
+                )}
               </Flex>
             </TabPanel>
           </TabPanels>

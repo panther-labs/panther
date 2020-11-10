@@ -61,10 +61,8 @@ var logTypes = logtypes.Must("AWS",
 		Name:         TypeCloudTrail,
 		Description:  `AWSCloudTrail represents the content of a CloudTrail S3 object.`,
 		ReferenceURL: `https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html`,
-		Schema:       CloudTrail{},
-		NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
-			return &CloudTrailParser{}, nil
-		}),
+		Schema:       mustBuildEventSchema(CloudTrail{}),
+		NewParser:    parsers.FactoryFunc(newCloudTrailParser),
 	},
 	logtypes.Config{
 		Name:         TypeCloudTrailDigest,

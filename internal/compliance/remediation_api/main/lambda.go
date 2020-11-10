@@ -19,18 +19,23 @@ package main
  */
 
 import (
+	"context"
+
 	"github.com/aws/aws-lambda-go/lambda"
 
-	apihandlers "github.com/panther-labs/panther/internal/compliance/remediation_api/handlers"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/api/lambda/remediation/models"
+	"github.com/panther-labs/panther/internal/compliance/remediation_api/handlers"
+	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-var methodHandlers = map[string]gatewayapi.RequestHandler{
-	"GET /":                apihandlers.GetRemediations,
-	"POST /remediate":      apihandlers.RemediateResource,
-	"POST /remediateasync": apihandlers.RemediateResourceAsync,
+var router = genericapi.NewRouter("api", "remediation", nil, handlers.API{})
+
+func lambdaHandler(ctx context.Context, input *models.LambdaInput) (interface{}, error) {
+	lambdalogger.ConfigureGlobal(ctx, nil)
+	return router.Handle(input)
 }
 
 func main() {
-	lambda.Start(gatewayapi.LambdaProxy(methodHandlers))
+	lambda.Start(lambdaHandler)
 }
