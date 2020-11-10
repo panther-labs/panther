@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from unittest import TestCase
+from jsonpath_ng import Fields
 
 from ..src.data_model import DataModel
 
@@ -116,16 +117,16 @@ class TestDataModel(TestCase):  # pylint: disable=too-many-public-methods
         self.assertEqual(data_model_body, data_model.body)
         self.assertEqual('version', data_model.version)
 
-        expected_field_value = 'dst_ip'
-        self.assertEqual(expected_field_value, data_model.mappings['destination_ip'])
+        expected_field_value = Fields('dst_ip')
+        self.assertEqual(expected_field_value, data_model.fields['destination_ip'])
 
     def test_data_model_method(self) -> None:
         data_model_body = 'def get_source_ip(event):\n\treturn "source_ip"'
         data_model_mappings = [{'name': 'destination_ip', 'field': 'dst_ip'}, {'name': 'source_ip', 'method': 'get_source_ip'}]
         data_model = DataModel({'id': 'data.model.id', 'body': data_model_body, 'versionId': 'version', 'mappings': data_model_mappings})
         expected_result = 'source_ip'
-        self.assertTrue(callable(data_model.mappings['source_ip']))
-        self.assertEqual(expected_result, data_model.mappings['source_ip']({}))
+        self.assertTrue(callable(data_model.methods['source_ip']))
+        self.assertEqual(expected_result, data_model.methods['source_ip']({}))
 
     def test_data_model_method_throws_exception(self) -> None:
         exception = False
@@ -133,7 +134,7 @@ class TestDataModel(TestCase):  # pylint: disable=too-many-public-methods
         data_model_mappings = [{'name': 'destination_ip', 'field': 'dst_ip'}, {'name': 'source_ip', 'method': 'get_source_ip'}]
         data_model = DataModel({'id': 'data.model.id', 'body': data_model_body, 'versionId': 'version', 'mappings': data_model_mappings})
         try:
-            data_model.mappings['source_ip']({})
+            data_model.methods['source_ip']({})
         except NameError:
             exception = True
         self.assertTrue(exception)

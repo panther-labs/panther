@@ -17,8 +17,6 @@
 from collections.abc import Mapping
 from typing import Any, Iterator
 
-from jsonpath_ng import parse
-
 from .data_model import DataModel
 from .logging import get_logger
 
@@ -50,21 +48,24 @@ class EnrichedEvent(Mapping):
         if key in self._data.keys():
             return self.get(key)
         # access values via standardized fields
-        if key in self.data_model.mappings.keys():
-            value_or_method = self.data_model.mappings.get(key)
-            if value_or_method:
-                if callable(value_or_method):
-                    # return self.get(self.data_model.mappings.get(key)(self._data))
-                    return value_or_method(self._data)
-                # we are dealing with a jsonpath
-                json_path = parse(value_or_method)
+        if key in self.data_model.fields.keys():
+            # we are dealing with a jsonpath
+            json_path = self.data_model.fields.get(key)
+            if json_path:
                 matches = json_path.find(self._data)
                 if len(matches) == 1:
                     return matches[0].value
                 if len(matches) > 1:
-                    # if we wanted, we could also extract the field names that match as well
+                    # if we wanted, we could also extract the field names that match
                     self.logger.error('JSONPath [%s] in DataModel [%s] matched multiple fields.', json_path, self.data_model.data_model_id)
                     raise Exception(
                         'JSONPath [{}] in DataModel [{}], matched multiple fields.'.format(json_path, self.data_model.data_model_id)
                     )
+        if key in self.data_model.methods.keys():
+            # we are dealing with method
+            method = self.data_model.methods.get(key)
+            if callable(method):
+                # return self.get(method(self._data))
+                return method(self._data)
+        # no matches, return None by default
         return None

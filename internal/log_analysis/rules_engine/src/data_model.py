@@ -18,7 +18,9 @@ import os
 import tempfile
 from importlib import util as import_util
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
+
+from jsonpath_ng import Fields, parse
 
 from .logging import get_logger
 
@@ -42,7 +44,8 @@ class DataModel:
         # mappings are required
         if not ('mappings' in config) and not isinstance(config['mappings'], list):
             raise AssertionError('Field "mappings" of type list')
-        self.mappings: Dict[str, Any] = dict()  # setup mappings
+        self.fields: Dict[str, Fields] = dict()  # setup field mappings
+        self.methods: Dict[str, Callable] = dict()  # setup method mappings
 
         # body is optional in a data model
         self.body = ''
@@ -69,13 +72,15 @@ class DataModel:
                 continue
             if field in mapping.keys():
                 # we are dealing with a string field or a jsonpath
-                self.mappings[mapping[name]] = mapping[field]
+                self.fields[mapping[name]] = parse(mapping[field])
             elif method in mapping.keys():
                 if not hasattr(self._module, mapping[method]):
                     self.logger.warning('DataModel [%s] is missing implementation of method: [%s]', self.data_model_id, mapping[method])
                     # should this just continue rather than throw an exception?
                     raise AssertionError("DataModel missing method named [" + mapping[method] + "]")
-                self.mappings[mapping[name]] = getattr(self._module, mapping[method])
+                self.methods[mapping[name]] = getattr(self._module, mapping[method])
+            else:
+                self.logger.warning('DataModel [%s] is missing a field or method for [%s]', self.data_model_id, mapping[name])
 
     def _import_data_model_as_module(self) -> Any:
         """Dynamically import a Python module from a file.

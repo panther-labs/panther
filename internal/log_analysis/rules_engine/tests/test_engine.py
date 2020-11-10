@@ -41,7 +41,8 @@ class TestEngine(TestCase):
         ]
         engine = Engine(analysis_api)
         self.assertEqual(len(engine.log_type_to_data_models.keys()), 1)
-        self.assertEqual(len(engine.log_type_to_data_models['log'].mappings), 2)
+        self.assertEqual(len(engine.log_type_to_data_models['log'].fields), 1)
+        self.assertEqual(len(engine.log_type_to_data_models['log'].methods), 1)
 
     def test_loading_rules(self) -> None:
         analysis_api = mock.MagicMock()
