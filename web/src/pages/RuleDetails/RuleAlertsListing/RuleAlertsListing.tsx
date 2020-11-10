@@ -17,17 +17,19 @@
  */
 
 import React from 'react';
-import { Flex, Box, Card, Alert } from 'pouncejs';
+import { Flex, Box, Card, Alert, Heading } from 'pouncejs';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
-import { ListAlertsInput } from 'Generated/schema';
+import { AlertTypesEnum, ListAlertsInput } from 'Generated/schema';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import NoResultsFound from 'Components/NoResultsFound';
 import { extractErrorMessage } from 'Helpers/utils';
-import ListAlertsPageEmptyDataFallback from 'Pages/ListAlerts/EmptyDataFallback/EmptyDataFallback';
+import EmptyBoxImg from 'Assets/illustrations/empty-box.svg';
 import AlertCard from 'Components/cards/AlertCard/AlertCard';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import ListAlertFilters from 'Pages/ListAlerts/ListAlertFilters';
+import isEmpty from 'lodash/isEmpty';
 import { useListAlertsForRule } from '../graphql/listAlertsForRule.generated';
 import Skeleton from './Skeleton';
 import { RuleDetailsPageUrlParams } from '../RuleDetails';
@@ -41,13 +43,13 @@ const RuleAlertsListing: React.FC<Required<Pick<ListAlertsInput, 'type' | 'ruleI
   >();
 
   // Omit the actual tab section as it exists on the url params
-  const { section, ...params } = requestParams;
+  const { section, ...filterParams } = requestParams;
 
   const { error, data, loading, fetchMore, variables } = useListAlertsForRule({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        ...params,
+        ...filterParams,
         type,
         ruleId,
         pageSize: DEFAULT_LARGE_PAGE_SIZE,
@@ -103,8 +105,28 @@ const RuleAlertsListing: React.FC<Required<Pick<ListAlertsInput, 'type' | 'ruleI
     );
   }
 
-  const hasAnyAlerts = data?.alerts?.alertSummaries?.length > 0;
-  const hasMoreAlerts = !!data?.alerts.lastEvaluatedKey;
+  const { alertSummaries, lastEvaluatedKey } = data.alerts;
+  const hasAnyAlerts = alertSummaries.length > 0;
+  const areFiltersApplied = !isEmpty(filterParams);
+  const hasMoreAlerts = !!lastEvaluatedKey;
+
+  if (!hasAnyAlerts && !areFiltersApplied) {
+    return (
+      <Flex
+        justify="center"
+        align="center"
+        direction="column"
+        my={8}
+        spacing={8}
+        data-testid="list-alerts-empty-fallback"
+      >
+        <img alt="Empty Box Illustration" src={EmptyBoxImg} width="auto" height={200} />
+        <Heading size="small" color="navyblue-100">
+          {type === AlertTypesEnum.Rule ? 'No rule matches found' : 'No rule errors found'}
+        </Heading>
+      </Flex>
+    );
+  }
 
   return (
     <ErrorBoundary>
@@ -112,15 +134,18 @@ const RuleAlertsListing: React.FC<Required<Pick<ListAlertsInput, 'type' | 'ruleI
         <ListAlertFilters />
       </Flex>
       <Card as="article" p={6}>
-        {hasAnyAlerts && (
+        {hasAnyAlerts ? (
           <Flex direction="column" spacing={2}>
-            {data.alerts.alertSummaries.map(alert => (
+            {alertSummaries.map(alert => (
               <AlertCard hideRuleButton key={alert.alertId} alert={alert} />
             ))}
           </Flex>
+        ) : (
+          <Box my={8}>
+            <NoResultsFound />
+          </Box>
         )}
-        {!hasAnyAlerts && <ListAlertsPageEmptyDataFallback />}
-        {hasMoreAlerts && hasAnyAlerts && (
+        {hasMoreAlerts && (
           <Box mt={8} ref={sentinelRef}>
             <TablePlaceholder rowCount={10} rowHeight={6} />
           </Box>

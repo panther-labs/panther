@@ -125,12 +125,19 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
         itemStyle: {
           color: theme.colors[severityColors[label]] || stringToPaleColor(label),
         },
-        data: values.map((v, i) => {
-          return {
-            name: label,
-            value: [timestamps[i], v],
-          };
-        }),
+        data: values
+          .map((v, i) => {
+            return {
+              name: label,
+              value: [timestamps[i], v],
+            };
+          })
+          /* This reverse is needed cause data provided by API are coming by descending timestamp.
+           * Although data are displayed correctly on the graph because are ordered by timestamp,
+           * echarts dont seem to apply the same logic when displaying the mini-chart, this reverse only
+           * affects that feature
+           */
+          .reverse(),
       };
     });
 

@@ -19,6 +19,8 @@
 import React from 'react';
 import useRouter from 'Hooks/useRouter';
 import { ComplianceStatusEnum, PoliciesForResourceInput } from 'Generated/schema';
+import EmptyBoxImg from 'Assets/illustrations/empty-box.svg';
+import NoResultsFound from 'Components/NoResultsFound';
 import Panel from 'Components/Panel';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import {
@@ -27,7 +29,7 @@ import {
   getComplianceItemsTotalCount,
   extractErrorMessage,
 } from 'Helpers/utils';
-import { Alert, Box, Flex } from 'pouncejs';
+import { Alert, Box, Flex, Heading } from 'pouncejs';
 import {
   TableControlsPagination,
   TableControlsComplianceFilter,
@@ -97,6 +99,9 @@ const ResourceDetailsPage = () => {
     data.listComplianceIntegrations
   );
 
+  const policyResultsExist = policies.length > 0;
+  const arePoliciesFiltered = !!requestParams.status || !!requestParams.suppressed;
+  const resourceHasPolicies = getComplianceItemsTotalCount(totalCounts) > 0;
   return (
     <article>
       <ErrorBoundary>
@@ -111,67 +116,86 @@ const ResourceDetailsPage = () => {
         <Panel
           title="Policies"
           actions={
-            <Flex spacing={1}>
-              <TableControlsComplianceFilter
-                mr={1}
-                count={getComplianceItemsTotalCount(totalCounts)}
-                text="All"
-                isActive={!requestParams.status && !requestParams.suppressed}
-                onClick={() => setRequestParamsAndResetPaging({})}
-              />
-              <TableControlsComplianceFilter
-                mr={1}
-                count={totalCounts.active.fail}
-                countColor="red-300"
-                text="Failing"
-                isActive={requestParams.status === ComplianceStatusEnum.Fail}
-                onClick={() =>
-                  setRequestParamsAndResetPaging({
-                    status: ComplianceStatusEnum.Fail,
-                    suppressed: false,
-                  })
-                }
-              />
-              <TableControlsComplianceFilter
-                mr={1}
-                countColor="green-400"
-                count={totalCounts.active.pass}
-                text="Passing"
-                isActive={requestParams.status === ComplianceStatusEnum.Pass}
-                onClick={() =>
-                  setRequestParamsAndResetPaging({
-                    status: ComplianceStatusEnum.Pass,
-                    suppressed: false,
-                  })
-                }
-              />
-              <TableControlsComplianceFilter
-                mr={1}
-                countColor="yellow-500"
-                count={
-                  totalCounts.suppressed.fail +
-                  totalCounts.suppressed.pass +
-                  totalCounts.suppressed.error
-                }
-                text="Ignored"
-                isActive={!requestParams.status && requestParams.suppressed}
-                onClick={() =>
-                  setRequestParamsAndResetPaging({
-                    suppressed: true,
-                  })
-                }
-              />
-            </Flex>
+            resourceHasPolicies && (
+              <Flex spacing={1}>
+                <TableControlsComplianceFilter
+                  mr={1}
+                  count={getComplianceItemsTotalCount(totalCounts)}
+                  text="All"
+                  isActive={!arePoliciesFiltered}
+                  onClick={() => setRequestParamsAndResetPaging({})}
+                />
+                <TableControlsComplianceFilter
+                  mr={1}
+                  count={totalCounts.active.fail}
+                  countColor="red-300"
+                  text="Failing"
+                  isActive={requestParams.status === ComplianceStatusEnum.Fail}
+                  onClick={() =>
+                    setRequestParamsAndResetPaging({
+                      status: ComplianceStatusEnum.Fail,
+                      suppressed: false,
+                    })
+                  }
+                />
+                <TableControlsComplianceFilter
+                  mr={1}
+                  countColor="green-400"
+                  count={totalCounts.active.pass}
+                  text="Passing"
+                  isActive={requestParams.status === ComplianceStatusEnum.Pass}
+                  onClick={() =>
+                    setRequestParamsAndResetPaging({
+                      status: ComplianceStatusEnum.Pass,
+                      suppressed: false,
+                    })
+                  }
+                />
+                <TableControlsComplianceFilter
+                  mr={1}
+                  countColor="yellow-500"
+                  count={
+                    totalCounts.suppressed.fail +
+                    totalCounts.suppressed.pass +
+                    totalCounts.suppressed.error
+                  }
+                  text="Ignored"
+                  isActive={!requestParams.status && requestParams.suppressed}
+                  onClick={() =>
+                    setRequestParamsAndResetPaging({
+                      suppressed: true,
+                    })
+                  }
+                />
+              </Flex>
+            )
           }
         >
           <ErrorBoundary>
-            <ResourceDetailsTable policies={policies} />
+            {!policyResultsExist && !arePoliciesFiltered && (
+              <Flex justify="center" align="center" direction="column" my={8} spacing={8}>
+                <img alt="Empty Box Illustration" src={EmptyBoxImg} width="auto" height={200} />
+                <Heading size="small" color="navyblue-100">
+                  This resource doesn{"'"}t have any policies applied to it
+                </Heading>
+              </Flex>
+            )}
+            {!policyResultsExist && arePoliciesFiltered && (
+              <Box my={6}>
+                <NoResultsFound />
+              </Box>
+            )}
+            {policyResultsExist && (
+              <Flex direction="column" spacing={6}>
+                <ResourceDetailsTable policies={policies} />
+                <TableControlsPagination
+                  page={pagingData.thisPage}
+                  totalPages={pagingData.totalPages}
+                  onPageChange={updatePagingParams}
+                />
+              </Flex>
+            )}
           </ErrorBoundary>
-          <TableControlsPagination
-            page={pagingData.thisPage}
-            totalPages={pagingData.totalPages}
-            onPageChange={updatePagingParams}
-          />
         </Panel>
       </Box>
     </article>

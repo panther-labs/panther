@@ -23,6 +23,7 @@ import { ListPoliciesInput, SortDirEnum, ListPoliciesSortFieldsEnum } from 'Gene
 import { TableControlsPagination } from 'Components/utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import NoResultsFound from 'Components/NoResultsFound';
 import isEmpty from 'lodash/isEmpty';
 import withSEO from 'Hoc/withSEO';
 import ListPoliciesTable from './ListPoliciesTable';
@@ -80,12 +81,18 @@ const ListPolicies = () => {
       <ListPoliciesActions />
       <ErrorBoundary>
         <Card as="section" px={8} py={4} position="relative">
-          <ListPoliciesTable
-            items={policyItems}
-            onSort={updateRequestParamsAndResetPaging}
-            sortBy={requestParams.sortBy || ListPoliciesSortFieldsEnum.Id}
-            sortDir={requestParams.sortDir || SortDirEnum.Ascending}
-          />
+          {policyItems.length ? (
+            <ListPoliciesTable
+              items={policyItems}
+              onSort={updateRequestParamsAndResetPaging}
+              sortBy={requestParams.sortBy || ListPoliciesSortFieldsEnum.Id}
+              sortDir={requestParams.sortDir || SortDirEnum.Ascending}
+            />
+          ) : (
+            <Box my={8}>
+              <NoResultsFound />
+            </Box>
+          )}
         </Card>
       </ErrorBoundary>
       <Box my={6}>
