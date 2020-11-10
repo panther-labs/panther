@@ -1,4 +1,4 @@
-package snapshots
+package snapshotlogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,11 +19,15 @@ package snapshots
  */
 
 import (
-	"testing"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	// FIXME: remove this once synced with master
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 )
 
-func TestSnapshotsLogs(t *testing.T) {
-	logtesting.RunTestsFromYAML(t, LogTypes(), "./testdata/snapshot_tests.yml")
+// LogTypes exports the available log type entries
+func LogTypes() logtypes.Group {
+	return logTypes
 }
+
+// nolint:lll
+var logTypes = logtypes.Must("SnapshotHistory", logTypeCompliance, logTypeResource)

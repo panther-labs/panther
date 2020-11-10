@@ -35,7 +35,7 @@ import (
 	nginxlogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
 	osquerylogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
 	osseclogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
-	snapshots "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/snapshots"
+	snapshotlogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/snapshotlogs"
 	sophoslogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sophoslogs"
 	suricatalogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/suricatalogs"
 	sysloglogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sysloglogs"
@@ -72,7 +72,7 @@ func init() {
 
 		osseclogs.LogTypes(),
 
-		snapshots.LogTypes(),
+		snapshotlogs.LogTypes(),
 
 		sophoslogs.LogTypes(),
 
