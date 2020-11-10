@@ -20,6 +20,7 @@ package main
 
 import (
 	"context"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -60,7 +61,11 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", sqsMessageCount))
 	}()
 
-	logTypesResolver := registry.NativeLogTypesResolver()
+	logTypesResolver := logtypes.ChainResolvers(
+		registry.NativeLogTypesResolver(),
+		// Also make internal log types available to the log processor
+		registry.InternalLogTypesResolver(),
+	)
 
 	deadline, ok := ctx.Deadline()
 	if !ok {
