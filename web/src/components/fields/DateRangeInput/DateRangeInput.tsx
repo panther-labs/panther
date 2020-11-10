@@ -28,7 +28,8 @@ export interface FieldDateRangeInputProps
   nameEnd: string;
 }
 
-const dateFormatter = formatTime('YYYY-MM-DDTHH:mm:ss[Z]');
+const postFormatter = formatTime('YYYY-MM-DDTHH:mm:ss[Z]');
+const preFormatter = formatTime('YYYY-MM-DDTHH:mm:ss');
 
 const FormikDateRangeInput: React.FC<FieldDateRangeInputProps> = ({
   nameStart,
@@ -49,16 +50,22 @@ const FormikDateRangeInput: React.FC<FieldDateRangeInputProps> = ({
   const errorElementId = isInvalid ? `${nameStart}-${nameEnd}-error` : undefined;
 
   const value = React.useMemo(() => {
-    return [valueStart, valueEnd];
+    return [valueStart, valueEnd].map(date => {
+      if (date) {
+        return preFormatter(date, true, false);
+      }
+      return date;
+    });
   }, [valueStart, valueEnd]);
 
   const onRangeChange = React.useCallback(
     ([start, end]) => {
-      setValueStart(dateFormatter(start));
-      setValueEnd(dateFormatter(end));
+      setValueStart(postFormatter(start, false, true));
+      setValueEnd(postFormatter(end, false, true));
     },
     [setValueStart, setValueEnd]
   );
+
   const error = React.useMemo(() => {
     if (!isEmpty(errorStart)) {
       return errorStart;

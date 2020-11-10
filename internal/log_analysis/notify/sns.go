@@ -1,3 +1,5 @@
+package notify
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -15,30 +17,31 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import React from 'react';
-import { AbstractButton } from 'pouncejs';
 
-interface ZoomButtonProps {
-  title: string;
-  selected?: boolean;
-  onClick: () => void;
+import (
+	"github.com/aws/aws-sdk-go/service/sns"
+
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+)
+
+const (
+	logDataTypeAttributeName = "type"
+	logTypeAttributeName     = "id"
+)
+
+var (
+	messageAttributeDataType = "String"
+)
+
+func NewLogAnalysisSNSMessageAttributes(dataType models.DataType, logType string) map[string]*sns.MessageAttributeValue {
+	return map[string]*sns.MessageAttributeValue{
+		logDataTypeAttributeName: {
+			StringValue: (*string)(&dataType),
+			DataType:    &messageAttributeDataType,
+		},
+		logTypeAttributeName: {
+			StringValue: &logType,
+			DataType:    &messageAttributeDataType,
+		},
+	}
 }
-
-const ZoomButton: React.FC<ZoomButtonProps> = ({ title, selected, onClick }) => {
-  return (
-    <AbstractButton
-      borderRadius="pill"
-      py={1}
-      px={4}
-      fontSize="small"
-      color="black"
-      backgroundColor={selected ? 'blue-400' : 'navyblue-300'}
-      _hover={!selected && { backgroundColor: 'blue-400' }}
-      onClick={onClick}
-    >
-      {title}
-    </AbstractButton>
-  );
-};
-
-export default ZoomButton;
