@@ -20,7 +20,6 @@ package main
 
 import (
 	"context"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -28,6 +27,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
