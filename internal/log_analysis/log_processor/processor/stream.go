@@ -19,12 +19,12 @@ package processor
  */
 
 import (
+	"context"
 	"runtime"
 	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/pkg/errors"
@@ -41,63 +41,56 @@ const (
 	// Limit this so there is time to delete from the queue at the end.
 	processingMaxFilesLimit = 5000
 
-	// The processing runtime should be shorter than lambda timeout to make room to flush buffers ad the end of the cycle.
-	processingTimeLimitDivisor = 2
-
 	// The max messages per read for SQS (can't find an sqs constant to refer to).
 	sqsMaxBatchSize = 10
 )
 
 /*
-StreamEvents acts as an interface to aggregate sqs messages to avoid many small S3 files being created under load.
+PollEvents acts as an interface to aggregate sqs messages to avoid many small S3 files being created under load.
 The function will attempt to read more messages from the queue when the queue has messages. Under load
 the lambda will continue to read events and maximally aggregate data to produce fewer, bigger files.
 Fewer, bigger files makes Athena queries much faster.
 */
-func StreamEvents(
+func PollEvents(
+	ctx context.Context,
 	sqsClient sqsiface.SQSAPI,
-	lambdaClient lambdaiface.LambdaAPI,
 	resolver logtypes.Resolver,
-	deadlineTime time.Time,
 ) (sqsMessageCount int, err error) {
 
 	newProcessor := NewFactory(resolver)
 	process := func(streams <-chan *common.DataStream, dest destinations.Destination) error {
 		return Process(streams, dest, newProcessor)
 	}
-	return streamEvents(sqsClient, lambdaClient, deadlineTime, process, sources.ReadSnsMessages)
+	return pollEvents(ctx, sqsClient, process, sources.ReadSnsMessage)
 }
 
 // entry point for unit testing, pass in read/process functions
-func streamEvents(
+func pollEvents(
+	ctx context.Context,
 	sqsClient sqsiface.SQSAPI,
-	lambdaClient lambdaiface.LambdaAPI,
-	deadlineTime time.Time,
 	processFunc ProcessFunc,
-	generateDataStreamsFunc func([]string) ([]*common.DataStream, error)) (int, error) {
-
-	// this cannot be a named return var because it would cause a data race
-	var sqsMessageCount int
+	generateDataStreamsFunc func(string) ([]*common.DataStream, error)) (int, error) {
 
 	streamChan := make(chan *common.DataStream, 2*sqsMaxBatchSize) // use small buffer to pipeline events
-	processingDeadlineTime := processingDeadlineTime(deadlineTime)
-
-	var accumulatedMessageReceipts []*string // accumulate message receipts for delete at the end
+	var accumulatedMessageReceipts []*string                       // accumulate message receipts for delete at the end
 
 	readEventErrorChan := make(chan error, 1) // below go routine closes over this for errors, 1 deep buffer
 	go func() {
-		// runs periodically during processing making scaling decisions
-		stopScaling := scalingDecisions(sqsClient, lambdaClient)
-
 		defer func() {
-			stopScaling <- true       // terminate the scaling go routine
 			close(streamChan)         // done reading messages, this will cause processFunc() to return
 			close(readEventErrorChan) // no more writes on err chan
 		}()
 
 		// continue to read until either there are no sqs messages or we have exceeded the processing time/file limit
 		highMemoryCounter := 0
-		for isProcessingTimeRemaining(processingDeadlineTime) && len(accumulatedMessageReceipts) < processingMaxFilesLimit {
+		for len(accumulatedMessageReceipts) < processingMaxFilesLimit {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				// Makes select non blocking
+			}
+
 			// if we push too fast we can oom
 			if heapUsedMB, memAvailableMB, isHigh := highMemoryUsage(); isHigh {
 				if highMemoryCounter%100 == 0 { // limit logging
@@ -110,19 +103,8 @@ func streamEvents(
 				highMemoryCounter++
 				continue
 			}
-
-			// under no load we do not read from the sqs queue and just exit
-			totalQueuedMessages, err := queueDepth(sqsClient) // this includes queued and delayed messages
-			if err != nil {
-				readEventErrorChan <- err
-				return
-			}
-			if totalQueuedMessages == 0 {
-				break
-			}
-
 			// keep reading from SQS to maximize output aggregation
-			messages, messageReceipts, err := sqsbatch.ReceiveMessage(sqsClient, common.Config.SqsQueueURL, 0)
+			messages, err := receiveFromSqs(ctx, sqsClient)
 			if err != nil {
 				readEventErrorChan <- err
 				return
@@ -132,20 +114,17 @@ func streamEvents(
 				break
 			}
 
-			// remember so we can delete when done
-			accumulatedMessageReceipts = append(accumulatedMessageReceipts, messageReceipts...)
+			for _, msg := range messages {
+				dataStreams, err := generateDataStreamsFunc(aws.StringValue(msg.Body))
+				if err != nil {
+					readEventErrorChan <- err
+					return
+				}
+				for _, dataStream := range dataStreams {
+					streamChan <- dataStream
+				}
 
-			// extract from sqs read responses
-			dataStreams, err := sqsDataStreams(messages, generateDataStreamsFunc)
-			if err != nil {
-				readEventErrorChan <- err
-				return
-			}
-
-			// process sqs messages
-			sqsMessageCount += len(dataStreams)
-			for _, dataStream := range dataStreams {
-				streamChan <- dataStream
+				accumulatedMessageReceipts = append(accumulatedMessageReceipts, msg.ReceiptHandle)
 			}
 		}
 	}()
@@ -164,49 +143,7 @@ func streamEvents(
 
 	// delete messages from sqs q on success (best effort)
 	sqsbatch.DeleteMessageBatch(sqsClient, common.Config.SqsQueueURL, accumulatedMessageReceipts)
-	return sqsMessageCount, nil
-}
-
-// processingDeadlineTime calcs a time less than the deadllineTime to allow time for buffers to flush
-func processingDeadlineTime(deadlineTime time.Time) time.Time {
-	// NOTE: time.Since(deadlineTime) will be negative since the deadline is in the future!
-	return deadlineTime.Add(time.Since(deadlineTime) / processingTimeLimitDivisor)
-}
-
-func isProcessingTimeRemaining(deadline time.Time) bool {
-	return time.Since(deadline) < 0 // deadline is in future, will be positive once passed
-}
-
-func sqsDataStreams(messages []*sqs.Message,
-	readSnsMessagesFunc func([]string) ([]*common.DataStream, error)) ([]*common.DataStream, error) {
-
-	eventMessages := make([]string, len(messages))
-	for i, message := range messages {
-		eventMessages[i] = *message.Body
-	}
-	return readSnsMessagesFunc(eventMessages)
-}
-
-func queueDepth(sqsClient sqsiface.SQSAPI) (totalQueuedMessages int, err error) {
-	getQueueAttributesInput := &sqs.GetQueueAttributesInput{
-		AttributeNames: []*string{
-			aws.String(sqs.QueueAttributeNameApproximateNumberOfMessages), // tells us there is waiting events now
-		},
-		QueueUrl: &common.Config.SqsQueueURL,
-	}
-	getQueueAttributesOutput, err := sqsClient.GetQueueAttributes(getQueueAttributesInput)
-	if err != nil {
-		err = errors.Wrapf(err, "failure getting message count from %s", common.Config.SqsQueueURL)
-		return 0, err
-	}
-	// number of messages
-	numberOfQueuedMessages, err := getQueueIntegerAttribute(getQueueAttributesOutput.Attributes,
-		sqs.QueueAttributeNameApproximateNumberOfMessages)
-	if err != nil {
-		return 0, err
-	}
-
-	return numberOfQueuedMessages, err
+	return len(accumulatedMessageReceipts), nil
 }
 
 func getQueueIntegerAttribute(attrs map[string]*string, attr string) (count int, err error) {
@@ -234,4 +171,20 @@ func highMemoryUsage() (heapUsedMB, memAvailableMB float32, isHigh bool) {
 	heapUsedMB = float32(memStats.HeapAlloc / bytesPerMB)
 	memAvailableMB = float32(common.Config.AwsLambdaFunctionMemorySize)
 	return heapUsedMB, memAvailableMB, heapUsedMB/memAvailableMB > threshold
+}
+
+func receiveFromSqs(ctx context.Context, sqsClient sqsiface.SQSAPI) ([]*sqs.Message, error) {
+	request := &sqs.ReceiveMessageInput{
+		WaitTimeSeconds:     aws.Int64(0),
+		MaxNumberOfMessages: aws.Int64(sqsMaxBatchSize),
+		QueueUrl:            &common.Config.SqsQueueURL,
+	}
+	receiveMessageOutput, err := sqsClient.ReceiveMessageWithContext(ctx, request)
+
+	if err != nil && err != context.DeadlineExceeded && err != context.Canceled {
+		err = errors.Wrapf(err, "failure receiving messages from %s", common.Config.SqsQueueURL)
+		return nil, err
+	}
+
+	return receiveMessageOutput.Messages, nil
 }

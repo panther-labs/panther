@@ -100,7 +100,7 @@ func TestSQS_CreateTablesWithSync(t *testing.T) {
 	// Here comes the mocking
 	mockGlueClient.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil)
 	// below called once for each database
-	mockGlueClient.On("GetTablesPagesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
+	mockGlueClient.On("GetTablesPagesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(4)
 	mockAthenaClient := &testutils.AthenaMock{}
 	athenaClient = mockAthenaClient
 	mockAthenaClient.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{

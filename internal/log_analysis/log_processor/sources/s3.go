@@ -43,30 +43,27 @@ const (
 	cloudTrailValidationMessage = "CloudTrail validation message."
 )
 
-// ReadSnsMessages reads incoming messages containing SNS notifications and returns a slice of DataStream items
-func ReadSnsMessages(messages []string) (result []*common.DataStream, err error) {
-	zap.L().Debug("reading data from messages", zap.Int("numMessages", len(messages)))
-	for _, message := range messages {
-		snsNotificationMessage := &SnsNotification{}
-		if err := jsoniter.UnmarshalFromString(message, snsNotificationMessage); err != nil {
+// ReadSnsMessage reads incoming messages containing SNS notifications and returns a slice of DataStream items
+func ReadSnsMessage(message string) (result []*common.DataStream, err error) {
+	snsNotificationMessage := &SnsNotification{}
+	if err := jsoniter.UnmarshalFromString(message, snsNotificationMessage); err != nil {
+		return nil, err
+	}
+
+	switch snsNotificationMessage.Type {
+	case "Notification":
+		streams, err := handleNotificationMessage(snsNotificationMessage)
+		if err != nil {
 			return nil, err
 		}
-
-		switch snsNotificationMessage.Type {
-		case "Notification":
-			streams, err := handleNotificationMessage(snsNotificationMessage)
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, streams...)
-		case "SubscriptionConfirmation":
-			err := ConfirmSubscription(snsNotificationMessage)
-			if err != nil {
-				return nil, err
-			}
-		default:
-			return nil, errors.New("received unexpected message in SQS queue")
+		result = append(result, streams...)
+	case "SubscriptionConfirmation":
+		err := ConfirmSubscription(snsNotificationMessage)
+		if err != nil {
+			return nil, err
 		}
+	default:
+		return nil, errors.New("received unexpected message in SQS queue")
 	}
 	return result, nil
 }
