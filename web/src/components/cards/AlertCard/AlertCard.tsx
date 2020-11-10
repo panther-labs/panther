@@ -17,7 +17,7 @@
  */
 
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Icon, Link, Text } from 'pouncejs';
+import { Flex, Icon, Link, Text, Box } from 'pouncejs';
 import { AlertTypesEnum } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
@@ -30,20 +30,34 @@ import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.gene
 import { formatDatetime } from 'Helpers/utils';
 import useAlertDestinations from 'Hooks/useAlertDestinations';
 import useAlertDestinationsDeliverySuccess from 'Hooks/useAlertDestinationsDeliverySuccess';
+import { SelectCheckbox } from 'Components/utils/SelectContext';
 import UpdateAlertDropdown from '../../dropdowns/UpdateAlertDropdown';
 
 interface AlertCardProps {
   alert: AlertSummaryFull;
   hideRuleButton?: boolean;
+  selectionEnabled?: boolean;
 }
 
-const AlertCard: React.FC<AlertCardProps> = ({ alert, hideRuleButton = false }) => {
+const AlertCard: React.FC<AlertCardProps> = ({
+  alert,
+  hideRuleButton = false,
+  selectionEnabled = false,
+}) => {
   const { alertDestinations, loading: loadingDestinations } = useAlertDestinations({ alert });
   const { allDestinationDeliveredSuccessfully, loading } = useAlertDestinationsDeliverySuccess({
     alert,
   });
+
   return (
     <GenericItemCard borderColor={alert.type === AlertTypesEnum.RuleError ? 'red-600' : 'teal-400'}>
+      <Flex align="start" pr={2}>
+        {selectionEnabled && (
+          <Box transform="translate3d(0,-8px,0)">
+            <SelectCheckbox selectionId={alert.alertId} />
+          </Box>
+        )}
+      </Flex>
       <GenericItemCard.Body>
         <GenericItemCard.Heading>
           <Link
