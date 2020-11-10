@@ -21,6 +21,7 @@ package processor
 import (
 	"time"
 
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
@@ -49,8 +50,7 @@ func getPolicies() (policyMap, error) {
 	result, err := analysisClient.Operations.GetEnabledPolicies(
 		&operations.GetEnabledPoliciesParams{HTTPClient: httpClient, Type: string(models.AnalysisTypePOLICY)})
 	if err != nil {
-		zap.L().Error("failed to load policies from analysis-api", zap.Error(err))
-		return nil, err
+		return nil, errors.WithMessage(err, "failed to load policies from analysis-api")
 	}
 	zap.L().Info("successfully loaded enabled policies from analysis-api",
 		zap.Int("policyCount", len(result.Payload.Policies)))
