@@ -1698,9 +1698,6 @@ definitions:
         $ref: '#/definitions/method'
     required:
       - name
-    #oneOf:
-    #  - required: [method, name]
-    #  - required: [field, name]
 
   DataModelMappings:
     description: yml schema mappings

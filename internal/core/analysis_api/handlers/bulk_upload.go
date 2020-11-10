@@ -235,7 +235,6 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 			DisplayName:   models.DisplayName(config.DisplayName),
 			Enabled:       models.Enabled(config.Enabled),
 			ID:            models.ID(config.PolicyID),
-			Mappings:      make([]*models.DataModelMapping, len(config.Mappings)),
 			OutputIds:     models.OutputIds(config.OutputIds),
 			Reference:     models.Reference(config.Reference),
 			ResourceTypes: config.ResourceTypes,
@@ -251,10 +250,14 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 
 		typeNormalizeTableItem(&analysisItem, config)
 
-		for i, mapping := range config.Mappings {
-			analysisItem.Mappings[i], err = buildMapping(mapping)
-			if err != nil {
-				return nil, err
+		// ensure Mappings are nil rather than an empty slice
+		if len(config.Mappings) > 0 {
+			analysisItem.Mappings = make([]*models.DataModelMapping, len(config.Mappings))
+			for i, mapping := range config.Mappings {
+				analysisItem.Mappings[i], err = buildMapping(mapping)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 
