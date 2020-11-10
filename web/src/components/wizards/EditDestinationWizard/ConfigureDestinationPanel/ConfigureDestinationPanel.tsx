@@ -18,9 +18,10 @@
 
 import React from 'react';
 import { Box, Flex, Spinner, useSnackbar } from 'pouncejs';
-import { DestinationConfigInput } from 'Generated/schema';
+import { DESTINATIONS } from 'Source/constants';
+import { DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
-import { extractErrorMessage } from 'Helpers/utils';
+import { capitalize, extractErrorMessage } from 'Helpers/utils';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
 import DestinationFormSwitcher from 'Components/forms/DestinationFormSwitcher';
 import useRouter from 'Hooks/useRouter';
@@ -89,11 +90,17 @@ const ConfigureDestinationPanel: React.FC = () => {
     [destination]
   );
 
+  const destinationDisplayName = capitalize(
+    destination.outputType === DestinationTypeEnum.Customwebhook
+      ? 'Webhook'
+      : destination.outputType
+  );
   return (
     <Box maxWidth={700} mx="auto">
       <WizardPanel.Heading
-        title="Update Your Destination"
+        title={`Update Your ${destinationDisplayName} Destination`}
         subtitle="Make changes to the form below in order to update your Destination"
+        logo={DESTINATIONS[destination.outputType].logo}
       />
       {loading ? (
         <Flex justify="center" my={10}>
