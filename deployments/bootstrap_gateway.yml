@@ -384,27 +384,6 @@ Resources:
       # Listing rules/policies requires scanning the DDB table
       LatencyThresholdMs: 3000
 
-  RemediationApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      DefinitionBody: api/gateway/remediation/api.yml
-      EndpointConfiguration: REGIONAL
-      Name: panther-remediation-api
-      # <cfndoc>
-      # The `panther-remediation-api` API Gateway calls the `panther-remediation-api` lambda.
-      # </cfndoc>
-      StageName: v1
-      TracingEnabled: !If [TracingEnabled, true, false]
-
-  RemediationApiAlarms:
-    Type: Custom::ApiGatewayAlarms
-    DependsOn: CustomTeardown
-    Properties:
-      ApiName: panther-remediation-api
-      AlarmTopicArn: !Ref AlarmTopicArn
-      CustomResourceVersion: !Ref CustomResourceVersion
-      ServiceToken: !GetAtt CustomResourceFunction.Arn
-
   # https://docs.aws.amazon.com/athena/latest/ug/athena-prebuilt-data-connectors-dynamodb.html
   AthenaDDBConnector:
     Type: AWS::Serverless::Application
@@ -463,12 +442,6 @@ Outputs:
   AnalysisApiEndpoint:
     Description: HTTPS endpoint for the analysis api
     Value: !Sub ${AnalysisApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
-  RemediationApiId:
-    Description: Remediation API Gateway ID
-    Value: !Ref RemediationApi
-  RemediationApiEndpoint:
-    Description: HTTPS endpoint for the remediation api
-    Value: !Sub ${RemediationApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
 
   AthenaWorkGroup:
     Description: The Athena workgroup for Panther queries

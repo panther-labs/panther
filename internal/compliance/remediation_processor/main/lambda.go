@@ -29,7 +29,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/remediation/models"
+	"github.com/panther-labs/panther/api/lambda/remediation/models"
 	"github.com/panther-labs/panther/internal/compliance/remediation_api/remediation"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 	"github.com/panther-labs/panther/pkg/oplog"
@@ -49,7 +49,7 @@ func lambdaHandler(ctx context.Context, event events.SQSEvent) (err error) {
 	}()
 
 	for _, record := range event.Records {
-		var input models.RemediateResource
+		var input models.RemediateResourceInput
 		if err = jsoniter.UnmarshalFromString(record.Body, &input); err != nil {
 			err = errors.Wrap(err, "Failed to unmarshal item")
 			return err

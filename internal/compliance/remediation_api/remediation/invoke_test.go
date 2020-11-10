@@ -33,7 +33,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	policymodels "github.com/panther-labs/panther/api/gateway/analysis/models"
-	processormodels "github.com/panther-labs/panther/api/gateway/remediation/models"
+	remediationmodels "github.com/panther-labs/panther/api/lambda/remediation/models"
 	resourcemodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
@@ -59,12 +59,12 @@ func (m *mockRoundTripper) RoundTrip(request *http.Request) (*http.Response, err
 }
 
 var (
-	input = &processormodels.RemediateResource{
+	input = &remediationmodels.RemediateResourceInput{
 		PolicyID:   "policyId",
 		ResourceID: "resourceId",
 	}
 
-	remediation = &processormodels.Remediations{
+	remediation = &remediationmodels.ListRemediationsOutput{
 		"AWS.S3.EnableBucketEncryption": map[string]interface{}{
 			"SSEAlgorithm": "AES256",
 		},
