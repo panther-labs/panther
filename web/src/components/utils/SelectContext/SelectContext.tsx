@@ -30,24 +30,37 @@ export interface SelectContextValue {
 
 const SelectContext = React.createContext<SelectContextValue>(undefined);
 
-const SelectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [selection, setSelected] = React.useState<Array<string>>([]);
+interface SelectProviderProps {
+  children: React.ReactNode;
+  initialSelection?: string[];
+}
+
+const SelectProvider: React.FC<SelectProviderProps> = ({ initialSelection = [], children }) => {
+  const [selection, setSelected] = React.useState<Array<string>>(initialSelection);
 
   /**
    * @public
    * Add an item to the selection
    *
    */
-  const selectItem = React.useCallback(id => setSelected([...selection, id]), [selection]);
+  const selectItem = React.useCallback(
+    id => {
+      return setSelected([...selection, id]);
+    },
+    [selection]
+  );
 
   /**
    * @public
    * Deselects an item from the selection
    *
    */
-  const deselectItem = React.useCallback(id => setSelected(selection.filter(i => i !== id)), [
-    selection,
-  ]);
+  const deselectItem = React.useCallback(
+    id => {
+      return setSelected(selection.filter(i => i !== id));
+    },
+    [selection]
+  );
 
   /**
    * @public
@@ -56,9 +69,8 @@ const SelectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =
    */
   const resetSelection = React.useCallback(() => setSelected([]), []);
 
-  // NOTE: Those ids could be passed on hook declaration
   const selectAll = React.useCallback((ids: string[]) => {
-    setSelected(ids);
+    return setSelected(ids);
   }, []);
 
   /**
@@ -96,7 +108,7 @@ const SelectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =
       checkIfSelected,
       toggleItem,
     }),
-    [selection, resetSelection, selectAll, selectItem, deselectItem, checkIfSelected]
+    [selection, resetSelection, selectAll, selectItem, deselectItem, checkIfSelected, toggleItem]
   );
 
   return <SelectContext.Provider value={contextValue}>{children}</SelectContext.Provider>;

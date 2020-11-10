@@ -17,7 +17,7 @@
  */
 
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Icon, Link, Text } from 'pouncejs';
+import { Flex, Icon, Link, Text, Box } from 'pouncejs';
 import { AlertTypesEnum } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
@@ -53,7 +53,9 @@ const AlertCard: React.FC<AlertCardProps> = ({
     <GenericItemCard borderColor={alert.type === AlertTypesEnum.RuleError ? 'red-600' : 'teal-400'}>
       <Flex align="start" pr={2}>
         {selectionEnabled && (
-          <SelectCheckbox id={alert.alertId} aria-label={`select alert ${alert.alertId}`} />
+          <Box transform="translate3d(0,-10px,0)">
+            <SelectCheckbox selectionId={alert.alertId} />
+          </Box>
         )}
       </Flex>
       <GenericItemCard.Body>

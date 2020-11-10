@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Box, Card, Flex } from 'pouncejs';
+import { Alert, Box, Card, Flex, Text } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
 import { ListAlertsInput } from 'Generated/schema';
@@ -111,6 +111,15 @@ const ListAlerts = () => {
 
   const hasError = Boolean(error);
 
+  const PanelTitle = React.useMemo(() => {
+    return (
+      <Flex align="center" spacing={2}>
+        <SelectAllCheckbox selectionIds={alertItems.map(a => a.alertId)} />
+        <Text>Alerts</Text>
+      </Flex>
+    );
+  }, [alertItems]);
+
   return (
     <ErrorBoundary>
       {hasError && (
@@ -126,15 +135,7 @@ const ListAlerts = () => {
         </Box>
       )}
       <ListAlertBreadcrumbFilters />
-      <Panel
-        title={
-          <Flex align="center">
-            <SelectAllCheckbox ids={alertItems.map(a => a.alertId)} />
-            Alerts
-          </Flex>
-        }
-        actions={<ListAlertsActions />}
-      >
+      <Panel title={PanelTitle} actions={<ListAlertsActions />}>
         <Card as="section" position="relative">
           <Box position="relative">
             <Flex direction="column" spacing={2}>
@@ -160,4 +161,4 @@ const ListAlerts = () => {
   );
 };
 
-export default compose(withSEO({ title: 'Alerts' }), withSelectContext)(ListAlerts);
+export default compose(withSEO({ title: 'Alerts' }), withSelectContext, React.memo)(ListAlerts);

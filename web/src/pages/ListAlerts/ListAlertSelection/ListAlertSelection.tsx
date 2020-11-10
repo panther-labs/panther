@@ -53,9 +53,9 @@ const ListAlertSelection: React.FC = () => {
         }
       >
         <Form>
-          <Flex spacing={4} align="center" pr={4}>
+          <Flex spacing={4} align="center">
             <Text>{selection.length} Selected</Text>
-            <Box width={151}>
+            <Box width={150}>
               <FastField
                 name="status"
                 as={FormikCombobox}

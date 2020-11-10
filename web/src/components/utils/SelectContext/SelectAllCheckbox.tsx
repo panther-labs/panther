@@ -21,10 +21,13 @@ import { useSelect } from 'Components/utils/SelectContext/SelectContext';
 import { Checkbox } from 'pouncejs';
 
 interface SelectAllCheckboxProps {
-  ids: string[];
+  selectionIds: string[];
 }
 
-const SelectAllCheckboxComponent: React.FC<SelectAllCheckboxProps> = ({ ids, ...rest }) => {
+const SelectAllCheckboxComponent: React.FC<SelectAllCheckboxProps> = ({
+  selectionIds,
+  ...rest
+}) => {
   const { selection, resetSelection, selectAll } = useSelect();
   return (
     <Checkbox
@@ -33,7 +36,7 @@ const SelectAllCheckboxComponent: React.FC<SelectAllCheckboxProps> = ({ ids, ...
         if (selection.length) {
           resetSelection();
         } else {
-          selectAll(ids);
+          selectAll(selectionIds);
         }
       }}
       aria-label={selection.length ? 'unselect all' : 'select all'}

@@ -21,13 +21,20 @@ import { Checkbox } from 'pouncejs';
 import { useSelect } from './SelectContext';
 
 interface SelectCheckboxProps {
-  id: string;
+  selectionId: string;
 }
 
-const SelectCheckboxComponent: React.FC<SelectCheckboxProps> = ({ id, ...rest }) => {
+const SelectCheckboxComponent: React.FC<SelectCheckboxProps> = ({ selectionId, ...rest }) => {
   const { checkIfSelected, toggleItem } = useSelect();
-  const isSelected = checkIfSelected(id);
-  return <Checkbox checked={isSelected} onClick={() => toggleItem(id)} {...rest} />;
+  const isSelected = checkIfSelected(selectionId);
+  return (
+    <Checkbox
+      checked={isSelected}
+      aria-label={`select checkbox for ${selectionId}`}
+      onClick={() => toggleItem(selectionId)}
+      {...rest}
+    />
+  );
 };
 
 export const SelectCheckbox = React.memo(SelectCheckboxComponent);
