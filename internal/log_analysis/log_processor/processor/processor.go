@@ -20,6 +20,7 @@ package processor
 
 import (
 	"bufio"
+	"io"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -156,12 +157,22 @@ func NewFactory(resolver logtypes.Resolver) Factory {
 
 // processStream reads the data from an S3 the dataStream, parses it and writes events to the output channel
 func (p *Processor) run(outputChan chan<- *parsers.Result) error {
-	stream := bufio.NewScanner(p.input.Reader)
-	for stream.Scan() {
-		line := stream.Text()
+	var err error
+	// DO NOT use bufio.NewScanner
+	// bufio.NewScanner has a max buffer size which we might hit as we read bigger log lines
+	stream := bufio.NewReader(p.input.Reader)
+	for {
+		var line string
+		line, err = stream.ReadString(common.EventDelimiter)
+		if err != nil {
+			if err == io.EOF {
+				err = nil
+				p.processLogLine(line, outputChan)
+			}
+			break
+		}
 		p.processLogLine(line, outputChan)
 	}
-	err := stream.Err()
 	if err != nil {
 		err = errors.Wrap(err, "failed to read log line")
 	}
