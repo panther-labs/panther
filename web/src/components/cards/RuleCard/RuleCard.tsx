@@ -26,6 +26,8 @@ import BulletedLogTypeList from 'Components/BulletedLogTypeList';
 import urls from 'Source/urls';
 import { RuleSummary, ComplianceStatusEnum } from 'Generated/schema';
 import { formatDatetime, formatNumber } from 'Helpers/utils';
+import useDetectionDestinations from 'Hooks/useDetectionDestinations';
+import RelatedDestinations from 'Components/RelatedDestinations';
 import RuleCardOptions from './RuleCardOptions';
 
 interface RuleCardProps {
@@ -33,6 +35,10 @@ interface RuleCardProps {
 }
 
 const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
+  const {
+    detectionDestinations,
+    loading: loadingDetectionDestinations,
+  } = useDetectionDestinations({ rule });
   return (
     <GenericItemCard>
       <GenericItemCard.Body>
@@ -61,6 +67,15 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
           <GenericItemCard.ValuesGroup>
             <Flex ml="auto" mr={0} align="flex-end" spacing={4}>
               <GenericItemCard.Value label="Threshold" value={formatNumber(rule.threshold)} />
+              <GenericItemCard.Value
+                label="Destinations"
+                value={
+                  <RelatedDestinations
+                    destinations={detectionDestinations}
+                    loading={loadingDetectionDestinations}
+                  />
+                }
+              />
               <GenericItemCard.Value
                 label="Last Modified"
                 value={formatDatetime(rule.lastModified)}
