@@ -30,7 +30,7 @@ import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import FormikAutosave from 'Components/utils/Autosave';
 import Breadcrumbs from 'Components/Breadcrumbs';
 
-import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
+import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import { useListAvailableLogTypes } from 'Source/graphql/queries';
 
 export type ListRulesBreadcrumbFiltersValues = {
@@ -43,7 +43,7 @@ const filterKeys: (keyof Partial<ListRulesInput>)[] = ['logTypes', 'tags'];
 const ListRulesBreadcrumbFilters: React.FC = () => {
   const { data, loading: logTypesLoading, error: logTypesError } = useListAvailableLogTypes();
 
-  const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
+  const { requestParams, updateRequestParamsAndResetPaging } = useRequestParamsWithPagination<
     ListRulesInput
   >();
 
@@ -66,9 +66,12 @@ const ListRulesBreadcrumbFilters: React.FC = () => {
 
   const onFiltersChange = React.useCallback(
     ({ logType, ...rest }: ListRulesBreadcrumbFiltersValues) => {
-      updateRequestParams({ ...rest, logTypes: logType !== ALL_TYPES ? [logType] : undefined });
+      updateRequestParamsAndResetPaging({
+        ...rest,
+        logTypes: logType !== ALL_TYPES ? [logType] : undefined,
+      });
     },
-    [updateRequestParams]
+    [updateRequestParamsAndResetPaging]
   );
 
   return (
