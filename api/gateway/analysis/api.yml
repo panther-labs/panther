@@ -1167,7 +1167,7 @@ definitions:
       id:
         $ref: '#/definitions/id'
       mappings:
-        $ref: '#/definitions/Mappings'
+        $ref: '#/definitions/DataModelMappings'
       outputIds:
         $ref: '#/definitions/outputIds'
       reports:
@@ -1447,7 +1447,7 @@ definitions:
       logTypes:
         $ref: '#/definitions/TypeSet'
       mappings:
-        $ref: '#/definitions/Mappings'
+        $ref: '#/definitions/DataModelMappings'
       versionId:
         $ref: '#/definitions/versionId'
     required:
@@ -1476,7 +1476,7 @@ definitions:
       logTypes:
         $ref: '#/definitions/TypeSet'
       mappings:
-        $ref: '#/definitions/Mappings'
+        $ref: '#/definitions/DataModelMappings'
       userId:
         $ref: '#/definitions/userId'
     required:
@@ -1687,7 +1687,7 @@ definitions:
       - id
       - lastModified
 
-  Mapping:
+  DataModelMapping:
     type: object
     properties:
       name:
@@ -1698,15 +1698,12 @@ definitions:
         $ref: '#/definitions/method'
     required:
       - name
-    #oneOf:
-    #  - required: [method, name]
-    #  - required: [field, name]
 
-  Mappings:
+  DataModelMappings:
     description: yml schema mappings
     type: array
     items:
-      $ref: '#/definitions/Mapping'
+      $ref: '#/definitions/DataModelMapping'
 
   GlobalList:
     type: object

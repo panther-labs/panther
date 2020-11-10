@@ -54,7 +54,7 @@ type UpdateDataModel struct {
 
 	// mappings
 	// Required: true
-	Mappings Mappings `json:"mappings"`
+	Mappings DataModelMappings `json:"mappings"`
 
 	// user Id
 	// Required: true

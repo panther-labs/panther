@@ -73,7 +73,7 @@ type DataModel struct {
 
 	// mappings
 	// Required: true
-	Mappings Mappings `json:"mappings"`
+	Mappings DataModelMappings `json:"mappings"`
 
 	// version Id
 	// Required: true

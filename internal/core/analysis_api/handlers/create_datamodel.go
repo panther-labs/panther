@@ -27,13 +27,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 var (
+	errDataModelTooManyLogTypes  = errors.New("only one ResourceType may be specified per DataModel")
 	errFieldOrMethodMissing      = errors.New("exactly one field or one method must be specified per mapping entry")
 	errMappingTooManyOptions     = errors.New("a field or a method, but not both, must be specified per mapping entry")
 	errMultipleDataModelsEnabled = errors.New("only one DataModel can be enabled per ResourceType")
@@ -48,14 +48,12 @@ func CreateDataModel(request *events.APIGatewayProxyRequest) *events.APIGatewayP
 
 	// we only need to check for conflicting enabled DataModels if the new one is
 	// going to be enabled
-	if bool(input.Enabled) {
-		isEnabled, err := isSingleDataModelEnabled(input)
-		if err != nil {
-			return badRequest(err)
-		}
-		if !isEnabled {
-			return badRequest(errMultipleDataModelsEnabled)
-		}
+	isEnabled, err := isSingleDataModelEnabled(input)
+	if err != nil {
+		return failedRequest(err.Error(), http.StatusInternalServerError)
+	}
+	if !isEnabled {
+		return badRequest(errMultipleDataModelsEnabled)
 	}
 
 	item := &tableItem{
@@ -91,13 +89,17 @@ func parseUpdateDataModel(request *events.APIGatewayProxyRequest) (*models.Updat
 
 	// we also need to verify that field and method are mutually exclusive in the input
 	for _, mapping := range result.Mappings {
-		if mapping.Field != "" {
-			if mapping.Method != "" {
-				return nil, errMappingTooManyOptions
-			}
-		} else if mapping.Method == "" {
+		if mapping.Field != "" && mapping.Method != "" {
+			return nil, errMappingTooManyOptions
+		}
+		if mapping.Field == "" && mapping.Method == "" {
 			return nil, errFieldOrMethodMissing
 		}
+	}
+
+	// For now, we only allow setting one LogType per DataModel
+	if len(result.LogTypes) > 1 {
+		return nil, errDataModelTooManyLogTypes
 	}
 
 	return &result, nil
@@ -123,8 +125,9 @@ func isSingleDataModelEnabled(updateDataModel *models.UpdateDataModel) (bool, er
 			if setEquality(oldItem.ResourceTypes, updateDataModel.LogTypes) {
 				return true, nil
 			}
+			// This can be uncommented when we enabled multiple LogTypes per DataModel
 			// if not updating the enabled status, only need to check new LogTypes
-			newLogTypes = setDifference(updateDataModel.LogTypes, oldItem.ResourceTypes)
+			//newLogTypes = setDifference(updateDataModel.LogTypes, oldItem.ResourceTypes)
 		}
 	}
 
@@ -150,7 +153,6 @@ func isSingleDataModelEnabled(updateDataModel *models.UpdateDataModel) (bool, er
 		Build()
 
 	if err != nil {
-		zap.L().Error("unable to build dynamodb scan expression", zap.Error(err))
 		return false, err
 	}
 	scanInput := &dynamodb.ScanInput{
@@ -171,11 +173,10 @@ func isSingleDataModelEnabled(updateDataModel *models.UpdateDataModel) (bool, er
 	})
 
 	if err != nil {
-		zap.L().Error("failed to scan dynamodb for enabled data models", zap.Error(err))
 		return false, err
 	}
 	if len(dataModels) != 0 {
-		return false, errMultipleDataModelsEnabled
+		return false, nil
 	}
 	return true, nil
 }

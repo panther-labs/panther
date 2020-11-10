@@ -67,16 +67,16 @@ type tableItem struct {
 	LowerID          string   `json:"lowerId,omitempty"`
 	LowerTags        []string `json:"lowerTags,omitempty" dynamodbav:"lowerTags,stringset,omitempty"`
 
-	Mappings      []*models.Mapping   `json:"mappings,omitempty"`
-	OutputIds     models.OutputIds    `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
-	Reference     models.Reference    `json:"reference,omitempty"`
-	Reports       models.Reports      `json:"reports,omitempty"`
-	ResourceTypes models.TypeSet      `json:"resourceTypes,omitempty" dynamodbav:"resourceTypes,stringset,omitempty"`
-	Runbook       models.Runbook      `json:"runbook,omitempty"`
-	Severity      models.Severity     `json:"severity"`
-	Suppressions  models.Suppressions `json:"suppressions,omitempty" dynamodbav:"suppressions,stringset,omitempty"`
-	Tags          models.Tags         `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
-	Tests         []*models.UnitTest  `json:"tests,omitempty"`
+	Mappings      []*models.DataModelMapping `json:"mappings,omitempty"`
+	OutputIds     models.OutputIds           `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
+	Reference     models.Reference           `json:"reference,omitempty"`
+	Reports       models.Reports             `json:"reports,omitempty"`
+	ResourceTypes models.TypeSet             `json:"resourceTypes,omitempty" dynamodbav:"resourceTypes,stringset,omitempty"`
+	Runbook       models.Runbook             `json:"runbook,omitempty"`
+	Severity      models.Severity            `json:"severity"`
+	Suppressions  models.Suppressions        `json:"suppressions,omitempty" dynamodbav:"suppressions,stringset,omitempty"`
+	Tags          models.Tags                `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
+	Tests         []*models.UnitTest         `json:"tests,omitempty"`
 
 	// Logic type (policy or rule)
 	Type string `json:"type"`

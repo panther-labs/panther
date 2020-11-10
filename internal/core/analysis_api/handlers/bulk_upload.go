@@ -235,7 +235,6 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 			DisplayName:   models.DisplayName(config.DisplayName),
 			Enabled:       models.Enabled(config.Enabled),
 			ID:            models.ID(config.PolicyID),
-			Mappings:      make([]*models.Mapping, len(config.Mappings)),
 			OutputIds:     models.OutputIds(config.OutputIds),
 			Reference:     models.Reference(config.Reference),
 			ResourceTypes: config.ResourceTypes,
@@ -251,8 +250,15 @@ func extractZipFile(input *models.BulkUpload) (map[models.ID]*tableItem, error) 
 
 		typeNormalizeTableItem(&analysisItem, config)
 
-		for i, mapping := range config.Mappings {
-			analysisItem.Mappings[i] = buildMapping(mapping)
+		// ensure Mappings are nil rather than an empty slice
+		if len(config.Mappings) > 0 {
+			analysisItem.Mappings = make([]*models.DataModelMapping, len(config.Mappings))
+			for i, mapping := range config.Mappings {
+				analysisItem.Mappings[i], err = buildMapping(mapping)
+				if err != nil {
+					return nil, err
+				}
+			}
 		}
 
 		for i, test := range config.Tests {
@@ -358,12 +364,18 @@ func buildPolicyTest(test analysis.Test) (*models.UnitTest, error) {
 	}, nil
 }
 
-func buildMapping(mapping analysis.Mapping) *models.Mapping {
-	return &models.Mapping{
+func buildMapping(mapping analysis.Mapping) (*models.DataModelMapping, error) {
+	if mapping.Field != "" && mapping.Method != "" {
+		return nil, errMappingTooManyOptions
+	}
+	if mapping.Field == "" && mapping.Method == "" {
+		return nil, errFieldOrMethodMissing
+	}
+	return &models.DataModelMapping{
 		Name:   models.SourceName(mapping.Name),
 		Field:  models.Field(mapping.Field),
 		Method: models.Method(mapping.Method),
-	}
+	}, nil
 }
 
 func readZipFile(zf *zip.File) ([]byte, error) {
@@ -387,6 +399,13 @@ func validateUploadedPolicy(item *tableItem, userID models.UserID) error {
 
 	if item.Type == typeGlobal || item.Type == typeDataModel {
 		item.Severity = models.SeverityINFO
+	}
+
+	// for now, only allow one LogType per DataModel
+	if item.Type == typeDataModel {
+		if len(item.ResourceTypes) > 1 {
+			return errDataModelTooManyLogTypes
+		}
 	}
 
 	policy := item.Policy(models.ComplianceStatusPASS) // Convert to the external Policy model for validation
