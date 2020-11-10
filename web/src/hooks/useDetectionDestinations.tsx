@@ -16,11 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import React from 'react';
-import { Destination, RuleSummary } from 'Generated/schema';
+import { Destination, RuleDetails, RuleSummary } from 'Generated/schema';
 import { useListDestinations } from 'Source/graphql/queries';
 
 interface UseDetectionDestinationsProps {
-  rule: RuleSummary;
+  rule: RuleSummary | RuleDetails;
 }
 
 interface UseDetectionDestinationsResponse {
