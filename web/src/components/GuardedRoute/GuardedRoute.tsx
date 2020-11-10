@@ -51,7 +51,7 @@ const GuardedRoute: React.FC<GuardedRouteProps> = ({ limitAccessTo, ...rest }) =
   if (limitAccessTo === 'authenticated') {
     redirectData = {
       pathname: urls.account.auth.signIn(),
-      state: { referrer: location },
+      state: { ...location.state, referrer: location },
     };
     // This one means that an authenticated user is trying to access an anonymous only page. What we
     // do is redirect them to a referrer page if it existed or just the base page. Now why the
@@ -64,6 +64,7 @@ const GuardedRoute: React.FC<GuardedRouteProps> = ({ limitAccessTo, ...rest }) =
     // referrer will exist)
   } else {
     redirectData = {
+      ...location.state?.referrer,
       pathname: location?.state?.referrer?.pathname || '/',
       state: undefined,
     };

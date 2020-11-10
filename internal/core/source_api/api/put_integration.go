@@ -169,6 +169,12 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 							input.IntegrationLabel),
 					}
 				}
+
+				if existingIntegration.S3Bucket == input.S3Bucket && existingIntegration.S3Prefix == input.S3Prefix {
+					return &genericapi.InvalidInputError{
+						Message: "An S3 integration with the same S3 bucket and prefix already exists.",
+					}
+				}
 			case models.IntegrationTypeSqs:
 				if existingIntegration.IntegrationLabel == input.IntegrationLabel {
 					// Sqs sources need to have different labels

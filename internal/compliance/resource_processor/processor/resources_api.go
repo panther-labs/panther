@@ -22,8 +22,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/resources/client/operations"
-	resourcemodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	resourcemodels "github.com/panther-labs/panther/api/lambda/resources/models"
 )
 
 // How many resources (with attributes) we can request in a single page.
@@ -33,32 +32,34 @@ const resourcePageSize = 2000
 // Get a page of resources from the resources-api
 //
 // Returns {resourceID: resource}, totalPages, error
-func getResources(resourceTypes []string, pageno int64) (resourceMap, int64, error) {
+func getResources(resourceTypes []string, pageno int) (resourceMap, int, error) {
 	result := make(resourceMap)
 
 	zap.L().Debug("listing resources from resources-api",
-		zap.Int64("pageNo", pageno),
+		zap.Int("pageNo", pageno),
 		zap.Int("pageSize", resourcePageSize),
 		zap.Strings("resourceTypes", resourceTypes),
 	)
 
-	page, err := resourceClient.Operations.ListResources(&operations.ListResourcesParams{
-		Deleted:    aws.Bool(false),
-		Fields:     []string{"attributes", "id", "integrationId", "integrationType", "type"},
-		Page:       &pageno,
-		PageSize:   aws.Int64(resourcePageSize),
-		Types:      resourceTypes,
-		HTTPClient: httpClient,
-	})
-	if err != nil {
+	input := resourcemodels.LambdaInput{
+		ListResources: &resourcemodels.ListResourcesInput{
+			Deleted:  aws.Bool(false),
+			Fields:   []string{"attributes", "id", "integrationId", "integrationType", "type"},
+			Page:     pageno,
+			PageSize: resourcePageSize,
+			Types:    resourceTypes,
+		},
+	}
+	var output resourcemodels.ListResourcesOutput
+	if _, err := resourceClient.Invoke(&input, &output); err != nil {
 		zap.L().Error("failed to list resources", zap.Error(err))
 		return nil, 0, err
 	}
 
-	for _, resource := range page.Payload.Resources {
-		result[string(resource.ID)] = resource
+	for _, resource := range output.Resources {
+		result[resource.ID] = resource
 	}
-	return result, *page.Payload.Paging.TotalPages, nil
+	return result, output.Paging.TotalPages, nil
 }
 
 func getResource(resourceID string) (*resourcemodels.Resource, error) {
@@ -66,14 +67,14 @@ func getResource(resourceID string) (*resourcemodels.Resource, error) {
 		zap.String("resourceID", resourceID),
 	)
 
-	resource, err := resourceClient.Operations.GetResource(&operations.GetResourceParams{
-		ResourceID: resourceID,
-		HTTPClient: httpClient,
-	})
-	if err != nil {
+	input := resourcemodels.LambdaInput{
+		GetResource: &resourcemodels.GetResourceInput{ID: resourceID},
+	}
+	var output resourcemodels.GetResourceOutput
+	if _, err := resourceClient.Invoke(&input, &output); err != nil {
 		zap.L().Error("failed to get resource", zap.Error(err), zap.String("resourceID", resourceID))
 		return nil, err
 	}
 
-	return resource.Payload, nil
+	return &output, nil
 }

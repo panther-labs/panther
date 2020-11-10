@@ -44,7 +44,7 @@ var (
 		InstanceId:     ExampleInstanceId,
 		InstanceType:   aws.String("t2.micro"),
 		KeyName:        aws.String("ec2-instance-key-pair"),
-		LaunchTime:     ExampleDate,
+		LaunchTime:     &ExampleTime,
 		Monitoring: &ec2.Monitoring{
 			State: aws.String("disabled"),
 		},
@@ -70,7 +70,7 @@ var (
 			{
 				DeviceName: aws.String("/dev/sda1"),
 				Ebs: &ec2.EbsInstanceBlockDevice{
-					AttachTime:          ExampleDate,
+					AttachTime:          &ExampleTime,
 					DeleteOnTermination: aws.Bool(true),
 					Status:              aws.String("attached"),
 					VolumeId:            ExampleVolumeId,
@@ -89,7 +89,7 @@ var (
 					PublicIp:      aws.String("54.0.0.0"),
 				},
 				Attachment: &ec2.InstanceNetworkInterfaceAttachment{
-					AttachTime:          ExampleDate,
+					AttachTime:          &ExampleTime,
 					AttachmentId:        aws.String("eni-attach-112233445566"),
 					DeleteOnTermination: aws.Bool(true),
 					DeviceIndex:         aws.Int64(0),
@@ -175,7 +175,7 @@ var (
 			{
 				Attachments: []*ec2.VolumeAttachment{
 					{
-						AttachTime:          ExampleDate,
+						AttachTime:          &ExampleTime,
 						Device:              aws.String("/dev/sda1"),
 						InstanceId:          ExampleInstanceId,
 						State:               aws.String("attached"),
@@ -184,7 +184,7 @@ var (
 					},
 				},
 				AvailabilityZone: aws.String("us-west-2b"),
-				CreateTime:       ExampleDate,
+				CreateTime:       &ExampleTime,
 				Encrypted:        aws.Bool(false),
 				Size:             aws.Int64(10),
 				SnapshotId:       aws.String("snap-abcdefg012345"),
@@ -365,7 +365,7 @@ var (
 	ExampleDescribeFlowLogsOutput = &ec2.DescribeFlowLogsOutput{
 		FlowLogs: []*ec2.FlowLog{
 			{
-				CreationTime:             ExampleDate,
+				CreationTime:             &ExampleTime,
 				DeliverLogsPermissionArn: aws.String("arn:aws:iam::123456789012:role/PantherDevNickAdministrator"),
 				DeliverLogsStatus:        aws.String("SUCCESS"),
 				FlowLogStatus:            aws.String("ACTIVE"),
@@ -462,7 +462,7 @@ var (
 				OwnerId:     ExampleAccountId,
 				Progress:    aws.String("100%"),
 				SnapshotId:  ExampleSnapshotId,
-				StartTime:   ExampleDate,
+				StartTime:   &ExampleTime,
 				State:       aws.String("completed"),
 				VolumeId:    ExampleVolumeId,
 				VolumeSize:  aws.Int64(16),

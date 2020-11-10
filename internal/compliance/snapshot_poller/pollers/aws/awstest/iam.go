@@ -62,7 +62,7 @@ var (
 
 	ExampleCredentialReport = &iam.GetCredentialReportOutput{
 		Content:       []byte("user,arn,user_creation_time,password_enabled,password_last_used,password_last_changed,password_next_rotation,mfa_active,access_key_1_active,access_key_1_last_rotated,access_key_1_last_used_date,access_key_1_last_used_region,access_key_1_last_used_service,access_key_2_active,access_key_2_last_rotated,access_key_2_last_used_date,access_key_2_last_used_region,access_key_2_last_used_service,cert_1_active,cert_1_last_rotated,cert_2_active,cert_2_last_rotated\nFranklin,arn:aws:iam::123456789012:user/Franklin,2019-04-01T23:51:37+00:00,not_supported,2019-04-02T17:16:30+00:00,not_supported,not_supported,false,false,N/A,N/A,N/A,N/A,false,N/A,N/A,N/A,N/A,false,N/A,false,N/A\n<root_account>,arn:aws:iam::123456789012:root,2019-04-02T17:16:30+00:00,not_supported,2019-04-02T17:16:30+00:00,not_supported,not_supported,false,false,N/A,N/A,N/A,N/A,false,N/A,N/A,N/A,N/A,false,N/A,false,N/A\nunit_test_user,arn:aws:iam::123456789012:user/unit_test_user,2018-12-18T23:44:51+00:00,TRUE,2019-05-30T15:40:58+00:00,2019-04-03T15:16:13+00:00,2019-07-02T15:16:13+00:00,TRUE,TRUE,2019-05-29T23:36:39+00:00,2019-05-30T20:14:00+00:00,us-east-1,sts,FALSE,2019-04-02T20:45:11+00:00,2019-05-29T20:33:00+00:00,us-east-1,sts,FALSE,N/A,FALSE,N/A"),
-		GeneratedTime: ExampleDate,
+		GeneratedTime: &ExampleTime,
 		ReportFormat:  aws.String("text/csv"),
 	}
 
@@ -162,14 +162,14 @@ var (
 		Users: []*iam.User{
 			{
 				Arn:        aws.String("arn:aws:iam::123456789012:user/unit_test_user"),
-				CreateDate: ExampleDate,
+				CreateDate: &ExampleTime,
 				Path:       aws.String("/service_accounts/"),
 				UserId:     aws.String("AAAAAAAQQQQQO2HVVVVVV"),
 				UserName:   aws.String("unit_test_user"),
 			},
 			{
 				Arn:        aws.String("arn:aws:iam::123456789012:user/Franklin"),
-				CreateDate: ExampleDate,
+				CreateDate: &ExampleTime,
 				Path:       aws.String("/"),
 				UserId:     aws.String("AIDA4PIQ2YYOO2HYP2JNV"),
 				UserName:   aws.String("Franklin"),
@@ -204,10 +204,10 @@ var (
 		VirtualMFADevices: []*iam.VirtualMFADevice{
 			{
 				SerialNumber: aws.String("arn:aws:iam::123456789012:mfa/root-account-mfa-device"),
-				EnableDate:   ExampleDate,
+				EnableDate:   &ExampleTime,
 				User: &iam.User{
 					Arn:        aws.String("arn:aws:iam::123456789012:root"),
-					CreateDate: ExampleDate,
+					CreateDate: &ExampleTime,
 					Path:       aws.String("/"),
 					UserId:     aws.String("123456789012"),
 					UserName:   aws.String(""),
@@ -215,10 +215,10 @@ var (
 			},
 			{
 				SerialNumber: aws.String("arn:aws:iam::123456789012:mfa/unit_test_user"),
-				EnableDate:   ExampleDate,
+				EnableDate:   &ExampleTime,
 				User: &iam.User{
 					Arn:        aws.String("arn:aws:iam::123456789012:user/unit_test_user"),
-					CreateDate: ExampleDate,
+					CreateDate: &ExampleTime,
 					Path:       aws.String("/service_accounts/"),
 					UserId:     aws.String("AAAAAAAQQQQQO2HVVVVVV"),
 					UserName:   aws.String("service_accounts"),
@@ -246,7 +246,7 @@ var (
 	}
 
 	ExampleGroup = &iam.Group{
-		CreateDate: &ExampleTimeParsed,
+		CreateDate: &ExampleTime,
 		GroupId:    aws.String("1234"),
 		GroupName:  aws.String("example-group"),
 		Path:       aws.String("/"),
@@ -308,14 +308,14 @@ var (
 			{
 				Arn:                           aws.String("arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"),
 				AttachmentCount:               aws.Int64(1),
-				CreateDate:                    ExampleDate,
+				CreateDate:                    &ExampleTime,
 				DefaultVersionId:              aws.String("v4"),
 				IsAttachable:                  aws.Bool(false),
 				Path:                          aws.String("/aws-service-role/"),
 				PermissionsBoundaryUsageCount: aws.Int64(0),
 				PolicyId:                      aws.String("ANPAJ7W6266ELXF5MISDS"),
 				PolicyName:                    aws.String("AWSSupportServiceRolePolicy"),
-				UpdateDate:                    ExampleDate,
+				UpdateDate:                    &ExampleTime,
 			},
 		},
 	}
@@ -361,7 +361,7 @@ var (
 		RoleName:   aws.String("test-role"),
 		RoleId:     ExampleRoleID,
 		Arn:        aws.String("arn:aws:iam::123456789012:role/test-role"),
-		CreateDate: ExampleDate,
+		CreateDate: &ExampleTime,
 		AssumeRolePolicyDocument: aws.String("" +
 			"Version: \"2012-10-17, " +
 			"Statement: [" +

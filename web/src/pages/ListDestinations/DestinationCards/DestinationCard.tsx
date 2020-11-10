@@ -37,13 +37,11 @@ const DestinationCard: React.FC<DestinationCardProps> = ({ destination, logo, ch
       <GenericItemCard.Logo src={logo} />
       <DestinationCardOptions destination={destination} />
       <GenericItemCard.Body>
-        <Link
-          as={RRLink}
-          to={urls.settings.destinations.edit(destination.outputId)}
-          cursor="pointer"
-        >
-          <GenericItemCard.Heading>{destination.displayName}</GenericItemCard.Heading>
-        </Link>
+        <GenericItemCard.Heading>
+          <Link as={RRLink} to={urls.settings.destinations.edit(destination.outputId)}>
+            {destination.displayName}
+          </Link>
+        </GenericItemCard.Heading>
         <GenericItemCard.ValuesGroup>
           {children}
           <Flex ml="auto" mr={0} mt={4} align="flex-end" spacing={2}>

@@ -30,7 +30,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -212,7 +212,7 @@ func buildElbv2ApplicationLoadBalancerSnapshot(
 	applicationLoadBalancer := &awsmodels.Elbv2ApplicationLoadBalancer{
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   lb.LoadBalancerArn,
-			TimeCreated:  utils.DateTimeFormat(*lb.CreatedTime),
+			TimeCreated:  lb.CreatedTime,
 			ResourceType: aws.String(awsmodels.Elbv2LoadBalancerSchema),
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
@@ -274,7 +274,7 @@ func buildElbv2ApplicationLoadBalancerSnapshot(
 }
 
 // PollElbv2ApplicationLoadBalancers gathers information on each application load balancer for an AWS account.
-func PollElbv2ApplicationLoadBalancers(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollElbv2ApplicationLoadBalancers(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting ELBV2 Application Load Balancer resource poller")
 
 	elbv2Svc, err := getElbv2Client(pollerInput, *pollerInput.Region)
@@ -299,7 +299,7 @@ func PollElbv2ApplicationLoadBalancers(pollerInput *awsmodels.ResourcePollerInpu
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(loadBalancers))
+	resources := make([]apimodels.AddResourceEntry, 0, len(loadBalancers))
 	for _, loadBalancer := range loadBalancers {
 		elbv2LoadBalancer, err := buildElbv2ApplicationLoadBalancerSnapshot(
 			elbv2Svc,
@@ -313,11 +313,11 @@ func PollElbv2ApplicationLoadBalancers(pollerInput *awsmodels.ResourcePollerInpu
 		elbv2LoadBalancer.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		elbv2LoadBalancer.Region = pollerInput.Region
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      elbv2LoadBalancer,
-			ID:              apimodels.ResourceID(*elbv2LoadBalancer.ResourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *elbv2LoadBalancer.ResourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.Elbv2LoadBalancerSchema,
 		})
 	}

@@ -23,13 +23,13 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-lambda-go/cfn"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	cloudsecglue "github.com/panther-labs/panther/internal/compliance/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 type UpdateCloudSecurityTablesProperties struct {
@@ -55,8 +55,7 @@ func customCloudSecurityTables(_ context.Context, event cfn.Event) (string, map[
 	case cfn.RequestDelete:
 		zap.L().Info("deleting database", zap.String("database", cloudsecglue.CloudSecurityDatabase))
 		if _, err := awsglue.DeleteDatabase(glueClient, cloudsecglue.CloudSecurityDatabase); err != nil {
-			var awsErr awserr.Error
-			if errors.As(err, &awsErr) && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
+			if awsutils.IsAnyError(err, glue.ErrCodeEntityNotFoundException) {
 				zap.L().Info("already deleted", zap.String("database", cloudsecglue.CloudSecurityDatabase))
 			} else {
 				return "", nil, errors.Wrapf(err, "failed deleting %s", cloudsecglue.CloudSecurityDatabase)

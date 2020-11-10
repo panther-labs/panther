@@ -75,7 +75,7 @@ func TestEC2PollSecurityGroups(t *testing.T) {
 	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAll()
 
-	assumeRoleFunc = awstest.AssumeRoleMock
+	AssumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, marker, err := PollEc2SecurityGroups(&awsmodels.ResourcePollerInput{
@@ -100,7 +100,7 @@ func TestEC2PollSecurityGroupsError(t *testing.T) {
 	resetCache()
 	awstest.MockEC2ForSetup = awstest.BuildMockEC2SvcAllError()
 
-	assumeRoleFunc = awstest.AssumeRoleMock
+	AssumeRoleFunc = awstest.AssumeRoleMock
 	EC2ClientFunc = awstest.SetupMockEC2
 
 	resources, marker, err := PollEc2SecurityGroups(&awsmodels.ResourcePollerInput{

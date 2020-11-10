@@ -29,14 +29,14 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-// TestPolicy runs a policy (or rule) against a set of unit tests.
-func TestPolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+// TestAnalysis runs a policy (or rule) against a set of unit tests.
+func TestAnalysis(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
 	input, err := parseTestPolicy(request)
 	if err != nil {
 		return badRequest(err)
 	}
 
-	var testResults models.TestPolicyResult
+	var testResults interface{}
 	if input.AnalysisType == models.AnalysisTypeRULE {
 		testResults, err = ruleEngine.TestRule(input)
 	} else {

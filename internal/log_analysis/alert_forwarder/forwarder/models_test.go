@@ -38,8 +38,8 @@ func TestConvertAttribute(t *testing.T) {
 		EventCount:          100,
 		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
 		GeneratedTitle:      aws.String("test title"),
-		Type:                aws.String("RULE_ERROR"),
-		AlertContext:        "{}",
+		Type:                "RULE_ERROR",
+		AlertContext:        aws.String("{}"),
 	}
 
 	alertDedupEvent, err := FromDynamodDBAttribute(getNewTestCase())
@@ -62,13 +62,13 @@ func TestConvertAttributeWithoutOptionalFields(t *testing.T) {
 		CreationTime:        time.Unix(1582285279, 0).UTC(),
 		UpdateTime:          time.Unix(1582285280, 0).UTC(),
 		EventCount:          100,
-		AlertContext:        "{}",
+		AlertContext:        aws.String("{}"),
 		LogTypes:            []string{"Log.Type.1", "Log.Type.2"},
 	}
 
 	ddbItem := getNewTestCase()
 	delete(ddbItem, "title")
-	delete(ddbItem, "alertType")
+	delete(ddbItem, "type")
 	alertDedupEvent, err := FromDynamodDBAttribute(ddbItem)
 	require.NoError(t, err)
 	require.Equal(t, expectedAlertDedup, alertDedupEvent)
@@ -158,7 +158,7 @@ func getNewTestCase() map[string]events.DynamoDBAttributeValue {
 		"logTypes":          events.NewStringSetAttribute([]string{"Log.Type.1", "Log.Type.2"}),
 		"title":             events.NewStringAttribute("test title"),
 		"status":            events.NewStringAttribute("OPEN"),
-		"alertType":         events.NewStringAttribute("RULE_ERROR"),
+		"type":              events.NewStringAttribute("RULE_ERROR"),
 		"context":           events.NewStringAttribute("{}"),
 	}
 }

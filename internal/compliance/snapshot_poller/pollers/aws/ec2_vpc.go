@@ -30,7 +30,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -290,7 +290,7 @@ func buildEc2VpcSnapshot(ec2Svc ec2iface.EC2API, vpc *ec2.Vpc) (*awsmodels.Ec2Vp
 }
 
 // PollEc2Vpcs gathers information on each VPC in an AWS account.
-func PollEc2Vpcs(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollEc2Vpcs(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("building EC2 VPC snapshots", zap.String("region", *pollerInput.Region))
 	ec2Svc, err := getEC2Client(pollerInput, *pollerInput.Region)
 	if err != nil {
@@ -304,7 +304,7 @@ func PollEc2Vpcs(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 	}
 
 	// For each VPC, build out a full snapshot
-	resources := make([]*apimodels.AddResourceEntry, 0, len(vpcs))
+	resources := make([]apimodels.AddResourceEntry, 0, len(vpcs))
 	for _, vpc := range vpcs {
 		ec2Vpc, err := buildEc2VpcSnapshot(ec2Svc, vpc)
 		if err != nil {
@@ -331,11 +331,11 @@ func PollEc2Vpcs(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 		ec2Vpc.Region = pollerInput.Region
 		ec2Vpc.ARN = aws.String(resourceID)
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      ec2Vpc,
-			ID:              apimodels.ResourceID(resourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              resourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.Ec2VpcSchema,
 		})
 	}

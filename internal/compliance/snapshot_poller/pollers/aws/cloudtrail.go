@@ -28,7 +28,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -234,7 +234,7 @@ func buildCloudTrails(
 
 // PollCloudTrails gathers information on all CloudTrails in an AWS account.
 func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) (
-	[]*apimodels.AddResourceEntry, *string, error) {
+	[]apimodels.AddResourceEntry, *string, error) {
 
 	zap.L().Debug("starting CloudTrail resource poller")
 	cloudTrailSnapshots := make(awsmodels.CloudTrails)
@@ -285,7 +285,7 @@ func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) (
 	}
 
 	// Append each individual trail to  the results and update the meta resource appropriately
-	resources := make([]*apimodels.AddResourceEntry, 0, len(cloudTrailSnapshots)+1)
+	resources := make([]apimodels.AddResourceEntry, 0, len(cloudTrailSnapshots)+1)
 	for _, trail := range cloudTrailSnapshots {
 		// Update the meta resource, regardless of if we are processing an organization trail
 		accountSnapshot.Trails = append(accountSnapshot.Trails, trail.ResourceID)
@@ -313,21 +313,21 @@ func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) (
 		}
 
 		// For non-organization trails and organization trails in the master account, add the trail to the results
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      trail,
-			ID:              apimodels.ResourceID(*trail.ARN),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *trail.ARN,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.CloudTrailSchema,
 		})
 	}
 
 	// Append the meta resource to the results
-	resources = append(resources, &apimodels.AddResourceEntry{
+	resources = append(resources, apimodels.AddResourceEntry{
 		Attributes:      accountSnapshot,
-		ID:              apimodels.ResourceID(metaResourceID),
-		IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-		IntegrationType: apimodels.IntegrationTypeAws,
+		ID:              metaResourceID,
+		IntegrationID:   *pollerInput.IntegrationID,
+		IntegrationType: integrationType,
 		Type:            awsmodels.CloudTrailMetaSchema,
 	})
 

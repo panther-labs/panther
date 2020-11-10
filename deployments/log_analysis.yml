@@ -66,11 +66,6 @@ Parameters:
     Description: Log processor Lambda memory allocation
     MinValue: 256 # 128 is too small, risks OOM errors
     MaxValue: 3008
-  LogProcessorSQSDelaySeconds:
-    Type: Number
-    Description: The number of seconds to delay events into the log processor queue
-    MinValue: 0 # no delay, poor aggregation
-    MaxValue: 20 # this is the max time we can long poll sqs
   ProcessedDataBucket:
     Type: String
     Description: Name of the S3 bucket which stores processed logs
@@ -101,7 +96,7 @@ Parameters:
 Mappings:
   Functions:
     AlertsApi:
-      Memory: 256
+      Memory: 512
       Timeout: 60
     AlertsForwarder:
       Memory: 128
@@ -125,7 +120,7 @@ Conditions:
 
 Resources:
   ###### Update Glue Table Schemas for Deployed Tables #####
-  UpdateGlueTables:
+  UpdateLogProcessorGlueTables:
     DependsOn:
       - UpdaterFunction
     Type: Custom::UpdateLogProcessorTables
@@ -133,8 +128,7 @@ Resources:
       # Update in case TablesSignature or CustomResourceVersion has changed
       TablesSignature: !Ref TablesSignature
       CustomResourceVersion: !Ref CustomResourceVersion
-      AthenaWorkGroup: !Ref AthenaWorkGroup
-      ProcessedDataBucket: !Ref ProcessedDataBucket
+      DataCatalogUpdaterQueueURL: !Ref UpdaterQueue
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   InputDataSnsSubscription:
@@ -406,7 +400,6 @@ Resources:
       KmsMasterKeyId: !Ref SqsKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
-      DelaySeconds: !Ref LogProcessorSQSDelaySeconds # Allows log processor to see into the future!
       VisibilityTimeout: !FindInMap [Functions, LogProcessor, Timeout]
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt LogProcessorDLQ.Arn
@@ -490,14 +483,13 @@ Resources:
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
           SNS_TOPIC_ARN: !Ref ProcessedDataTopicArn
           SQS_QUEUE_URL: !Ref LogProcessorQueue
-          SQS_DELAY_SEC: !Ref LogProcessorSQSDelaySeconds
           INPUT_DATA_BUCKET: !Ref InputDataBucket
       Events:
-        Queue:
-          Type: SQS
+        Tick: # This drives polling by the log processor
+          Type: Schedule
           Properties:
-            Queue: !GetAtt LogProcessorQueue.Arn
-            BatchSize: 10
+            Schedule: rate(1 minute) # NOTE: CloudWatch does not support sub-minute timers. We might want to get around this with Step Functions.
+            Input: '{"tick": true}'
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ConfirmSubscriptions
@@ -510,6 +502,15 @@ Resources:
               # This account will be whitelisted and SNS topic from it can subscribe to the SQS queue.
               Action: sns:ConfirmSubscription
               Resource: '*'
+        - Id: SQS
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sqs:GetQueueAttributes
+                - sqs:DeleteMessage*
+                - sqs:ReceiveMessage
+              Resource: !GetAtt LogProcessorQueue.Arn
         - Id: OutputToS3
           Version: 2012-10-17
           Statement:
@@ -540,12 +541,14 @@ Resources:
               Condition:
                 Bool:
                   aws:SecureTransport: true
-        - Id: InvokeSnapshotAPI
+        - Id: InvokeLambdas
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-log-processor
         - Id: AccessSqsKms
           Version: 2012-10-17
           Statement:
@@ -574,6 +577,12 @@ Resources:
       Region: !Ref AWS::Region
       TopicArn: !Ref ProcessedDataTopicArn
       RawMessageDelivery: true
+      # Receive notifications only for Panther log processor events (ignore all others!)
+      FilterPolicy:
+        type:
+          - LogData
+          - RuleMatches
+          - RuleErrors
 
   UpdaterQueuePolicy:
     Type: AWS::SQS::QueuePolicy

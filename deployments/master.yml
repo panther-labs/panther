@@ -123,13 +123,7 @@ Parameters:
     Description: Log processor Lambda memory allocation. Increase to eliminate out-of-memory errors or reduce processing time (in exchange for higher cost)
     MinValue: 256 # 128 is too small, risks OOM errors
     MaxValue: 3008
-    Default: 1024
-  LogProcessorSQSDelaySeconds:
-    Type: Number
-    Description: The number of seconds to delay events into the log processor queue
-    Default: 0
-    MinValue: 0 # no delay, poor aggregation
-    MaxValue: 20 # this is the max time we can long poll sqs
+    Default: 2048
   LogSubscriptionPrincipals:
     Type: CommaDelimitedList
     Description: Comma-separated list of AWS principal ARNs which will be authorized to subscribe to processed log data S3 notifications
@@ -231,6 +225,7 @@ Resources:
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         PythonLayerVersionArn: !Ref PythonLayerVersionArn
+        SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TracingMode: !Ref TracingMode
         UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
       Tags:
@@ -253,7 +248,6 @@ Resources:
         ApiId: !GetAtt Bootstrap.Outputs.GraphQLApiId
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         RemediationApi: !Sub https://${BootstrapGateway.Outputs.RemediationApiEndpoint}
-        ResourcesApi: !Sub https://${BootstrapGateway.Outputs.ResourcesApiEndpoint}
         ServiceRole: !GetAtt Bootstrap.Outputs.AppsyncServiceRoleArn
       Tags:
         - Key: Application
@@ -281,7 +275,6 @@ Resources:
         ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
         PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
         RemediationApiId: !GetAtt BootstrapGateway.Outputs.RemediationApiId
-        ResourcesApiId: !GetAtt BootstrapGateway.Outputs.ResourcesApiId
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TracingMode: !Ref TracingMode
       Tags:
@@ -341,6 +334,7 @@ Resources:
           Value: panther-cw-dashboards
 
   LogAnalysis:
+    DependsOn: Core
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ../../deployments/log_analysis.yml
@@ -356,7 +350,6 @@ Resources:
         InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         LogProcessorLambdaMemorySize: !Ref LogProcessorLambdaMemorySize
-        LogProcessorSQSDelaySeconds: !Ref LogProcessorSQSDelaySeconds
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
         PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn

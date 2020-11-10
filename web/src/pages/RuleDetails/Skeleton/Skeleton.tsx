@@ -19,19 +19,18 @@
 import React from 'react';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { Box, Card, FadeIn } from 'pouncejs';
-import Panel from 'Components/Panel';
 
 const RuleDetailsPageSkeleton: React.FC = () => {
   return (
     <FadeIn from="bottom">
       <TablePlaceholder rowCount={1} rowHeight={15} />
-      <Card p={6}>
+      <Card p={6} data-testid="rule-details-loading">
         <TablePlaceholder rowCount={2} rowHeight={10} />
       </Card>
       <Box mt={5}>
-        <Panel title="Resources">
-          <TablePlaceholder />
-        </Panel>
+        <Card p={6}>
+          <TablePlaceholder rowCount={2} rowHeight={10} />
+        </Card>
       </Box>
     </FadeIn>
   );

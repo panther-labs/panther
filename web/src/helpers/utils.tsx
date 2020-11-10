@@ -362,12 +362,22 @@ export const getCurrentYear = () => {
   return dayjs().format('YYYY');
 };
 
-export const getCurrentDate = () => {
-  return `${dayjs().toISOString().split('.')[0]}Z`;
-};
+export const getGraphqlSafeDateRange = ({
+  days = 0,
+  hours = 0,
+}: {
+  days?: number;
+  hours?: number;
+}) => {
+  const utcNow = dayjs.utc();
+  const utcDaysAgo = utcNow.subtract(days, 'day').subtract(hours, 'hour');
 
-export const subtractDays = (date: string, days: number) => {
-  return `${dayjs(date).subtract(days, 'day').toISOString().split('.')[0]}Z`;
+  // the `startOf` and `endOf` help us have "constant" inputs for a few minutes, when we are using
+  // those values as inputs to a GraphQL query. Of course there are edge cases.
+  return [
+    utcDaysAgo.startOf('hour').format('YYYY-MM-DDTHH:mm:ss[Z]'),
+    utcNow.endOf('hour').format('YYYY-MM-DDTHH:mm:ss[Z]'),
+  ];
 };
 
 export const formatNumber = (num: number): string => {

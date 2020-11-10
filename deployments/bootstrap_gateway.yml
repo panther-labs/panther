@@ -70,6 +70,11 @@ Parameters:
     Description: Optional versioned custom Python layer for analysis and remediation
     # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
     AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+)?$'
+  SqsKeyId:
+    Type: String
+    Description: KMS key ID for SQS encryption
+    # Example: "484fb80c-4ae5-40d0-b22a-bdd5d0953b3e"
+    AllowedPattern: '^[0-9a-f-]{36}$'
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
@@ -250,6 +255,14 @@ Resources:
             - Effect: Allow
               Action: s3:Get*
               Resource: arn:aws:s3:::panther-public-cloudformation-templates*
+            - Effect: Allow
+              Action: sqs:SendMessage # this is for sending a message to datacatalog_updater to update/sync Glue tables
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-datacatalog-updater-queue
+            - Effect: Allow
+              Action: # this is for sending a message to datacatalog_updater to update/sync Glue tables
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
 
   # The PantherTeardown resource adds an IAM permission boundary to the custom resource role
   # which blocks future logs.
@@ -392,31 +405,6 @@ Resources:
       CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
-  ResourcesApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      DefinitionBody: api/gateway/resources/api.yml
-      EndpointConfiguration: REGIONAL
-      Name: panther-resources-api
-      # <cfndoc>
-      # The `panther-resources-api` API Gateway calls the `panther-resources-api` lambda.
-      # </cfndoc>
-      StageName: v1
-      TracingEnabled: !If [TracingEnabled, true, false]
-
-  ResourcesApiAlarms:
-    Type: Custom::ApiGatewayAlarms
-    DependsOn: CustomTeardown
-    Properties:
-      ApiName: panther-resources-api
-      AlarmTopicArn: !Ref AlarmTopicArn
-      CustomResourceVersion: !Ref CustomResourceVersion
-      ServiceToken: !GetAtt CustomResourceFunction.Arn
-      # The `get resource` operation invokes the `describe-org` operation of the compliance-api in order
-      # to see if a resource is compliant or not. Setting the same threshold
-      # here as for the compliance-api
-      LatencyThresholdMs: 3000
-
   # https://docs.aws.amazon.com/athena/latest/ug/athena-prebuilt-data-connectors-dynamodb.html
   AthenaDDBConnector:
     Type: AWS::Serverless::Application
@@ -448,7 +436,7 @@ Resources:
       RecursiveDeleteOption: true
       WorkGroupConfiguration:
         ResultConfiguration:
-          OutputLocation: !Sub s3://${AthenaResultsBucket}/panther/preview
+          OutputLocation: !Sub s3://${AthenaResultsBucket}/panther/preview/
 
   AthenaWorkGroup:
     Type: AWS::Athena::WorkGroup
@@ -457,8 +445,9 @@ Resources:
       Description: The Panther workgroup
       RecursiveDeleteOption: true
       WorkGroupConfiguration:
+        EnforceWorkGroupConfiguration: false # we want client side overrides
         ResultConfiguration:
-          OutputLocation: !Sub s3://${AthenaResultsBucket}/panther
+          OutputLocation: !Sub s3://${AthenaResultsBucket}/panther/
 
 Outputs:
   AppClientId:
@@ -480,12 +469,6 @@ Outputs:
   RemediationApiEndpoint:
     Description: HTTPS endpoint for the remediation api
     Value: !Sub ${RemediationApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
-  ResourcesApiId:
-    Description: Resources API Gateway ID
-    Value: !Ref ResourcesApi
-  ResourcesApiEndpoint:
-    Description: HTTPS endpoint for the resources api
-    Value: !Sub ${ResourcesApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
 
   AthenaWorkGroup:
     Description: The Athena workgroup for Panther queries

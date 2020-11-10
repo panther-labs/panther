@@ -22,10 +22,10 @@ import { Flex, Link, SimpleGrid } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import StatusBadge from 'Components/badges/StatusBadge';
+import BulletedLogTypeList from 'Components/BulletedLogTypeList';
 import urls from 'Source/urls';
 import { RuleSummary, ComplianceStatusEnum } from 'Generated/schema';
 import { formatDatetime, formatNumber } from 'Helpers/utils';
-import BulletedLogType from 'Components/BulletedLogType';
 import RuleCardOptions from './RuleCardOptions';
 
 interface RuleCardProps {
@@ -37,14 +37,15 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
     <GenericItemCard>
       <GenericItemCard.Body>
         <Flex align="center">
-          <Link
-            as={RRLink}
-            aria-label="Link to Rule"
-            to={urls.logAnalysis.rules.details(rule.id)}
-            cursor="pointer"
-          >
-            <GenericItemCard.Heading>{rule.displayName || rule.id}</GenericItemCard.Heading>
-          </Link>
+          <GenericItemCard.Heading>
+            <Link
+              as={RRLink}
+              aria-label="Link to Rule"
+              to={urls.logAnalysis.rules.details(rule.id)}
+            >
+              {rule.displayName || rule.id}
+            </Link>
+          </GenericItemCard.Heading>
           <Flex ml="auto" mr={0} align="flex-end">
             <RuleCardOptions rule={rule} />
           </Flex>
@@ -54,19 +55,16 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
           <GenericItemCard.ValuesGroup>
             <GenericItemCard.Value
               label="Log Types"
-              value={
-                <Flex align="center" spacing={6} mt={1} flexWrap="wrap">
-                  {rule.logTypes.map(logType => (
-                    <BulletedLogType key={logType} logType={logType} />
-                  ))}
-                </Flex>
-              }
+              value={<BulletedLogTypeList logTypes={rule.logTypes} limit={2} />}
             />
           </GenericItemCard.ValuesGroup>
           <GenericItemCard.ValuesGroup>
             <Flex ml="auto" mr={0} align="flex-end" spacing={4}>
               <GenericItemCard.Value label="Threshold" value={formatNumber(rule.threshold)} />
-              <GenericItemCard.Value label="Time Created" value={formatDatetime(rule.createdAt)} />
+              <GenericItemCard.Value
+                label="Last Modified"
+                value={formatDatetime(rule.lastModified)}
+              />
               <StatusBadge
                 status={rule.enabled ? 'ENABLED' : ComplianceStatusEnum.Error}
                 disabled={!rule.enabled}

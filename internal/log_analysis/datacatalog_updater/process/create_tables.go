@@ -20,6 +20,7 @@ package process
 
 import (
 	"context"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -28,13 +29,16 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 // CreateTablesMessage is the event that triggers the creation of Glue tables/views for logtypes.
 type CreateTablesMessage struct {
 	LogTypes []string
+	Sync     bool // if true issue a non-blocking sync of all partitions
 }
 
 // CreateTableMessageAttribute is the SQS message attribute for the CreateTablesMessage.
@@ -64,7 +68,23 @@ func (m CreateTablesMessage) Send(sqsClient sqsiface.SQSAPI, queueURL string) er
 }
 
 func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) error {
-	for _, logType := range msg.LogTypes {
+	syncLogTypes := msg.LogTypes
+	// This is a quick fix for the sync issues
+	if msg.Sync {
+		// update the views with the new tables
+		availableLogTypes, err := listAvailableLogTypes(ctx)
+		if err != nil {
+			return err
+		}
+		deployedLogTypes, err := gluetables.DeployedLogTypes(ctx, glueClient, availableLogTypes)
+		if err != nil {
+			return err
+		}
+		syncLogTypes = stringset.Concat(msg.LogTypes, deployedLogTypes)
+	}
+
+	// create/update all tables associated with logTypes
+	for _, logType := range syncLogTypes {
 		entry, err := logtypesResolver.Resolve(ctx, logType)
 		if err != nil {
 			return err
@@ -78,6 +98,10 @@ func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) er
 			return errors.Wrapf(err, "failed to update tables for log type %q", logType)
 		}
 	}
+
+	// the Glue Catalog is eventually consistent and if we are too fast the above schema changes will not be visible to Athena
+	time.Sleep(time.Second)
+
 	// update the views with the new tables
 	availableLogTypes, err := listAvailableLogTypes(ctx)
 	if err != nil {
@@ -95,5 +119,22 @@ func HandleCreateTablesMessage(ctx context.Context, msg *CreateTablesMessage) er
 	if err := athenaviews.CreateOrReplaceViews(athenaClient, config.AthenaWorkgroup, deployedLogTables); err != nil {
 		return errors.Wrap(err, "failed to update athena views")
 	}
+
+	// optionally force sync of all partitions (used during deployments)
+	if msg.Sync {
+		err = InvokeBackgroundSync(ctx, lambdaClient, &SyncEvent{
+			DatabaseNames: []string{
+				awsglue.LogProcessingDatabaseName,
+				awsglue.RuleMatchDatabaseName,
+				awsglue.RuleErrorsDatabaseName,
+			},
+			LogTypes: deployedLogTypes,
+			DryRun:   false,
+		})
+		if err != nil {
+			return errors.Wrap(err, "failed invoking sync")
+		}
+	}
+
 	return nil
 }

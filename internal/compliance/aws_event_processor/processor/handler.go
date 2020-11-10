@@ -36,11 +36,10 @@ import (
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/resources/client/operations"
-	api "github.com/panther-labs/panther/api/gateway/resources/models"
+	api "github.com/panther-labs/panther/api/lambda/resources/models"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
-	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
+	"github.com/panther-labs/panther/internal/log_analysis/notify"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
@@ -133,7 +132,7 @@ func Handle(lc *lambdacontext.LambdaContext, batch *events.SQSEvent) (err error)
 }
 
 func handleLogProcessorCloudTrail(messageBody string, changes map[string]*resourceChange) (ok bool, err error) {
-	notification := &process.S3Notification{}
+	notification := &notify.S3Notification{}
 	if err := jsoniter.UnmarshalFromString(messageBody, notification); err != nil {
 		return false, errors.Wrap(err, "failed to unmarshal record")
 	}
@@ -237,13 +236,13 @@ func generateSourceKey(metadata *CloudTrailMetadata) string {
 }
 
 func submitChanges(changes map[string]*resourceChange) error {
-	var deleteRequest api.DeleteResources
+	var deleteRequest api.DeleteResourcesInput
 	requestsByDelay := make(map[int64]*poller.ScanMsg)
 
 	for _, change := range changes {
 		if change.Delete {
-			deleteRequest.Resources = append(deleteRequest.Resources, &api.DeleteEntry{
-				ID: api.ResourceID(change.ResourceID),
+			deleteRequest.Resources = append(deleteRequest.Resources, api.DeleteEntry{
+				ID: change.ResourceID,
 			})
 		} else {
 			// Possible configurations:
@@ -280,10 +279,8 @@ func submitChanges(changes map[string]*resourceChange) error {
 	// Send deletes to resources-api
 	if len(deleteRequest.Resources) > 0 {
 		zap.L().Debug("deleting resources", zap.Any("deleteRequest", &deleteRequest))
-		_, err := apiClient.Operations.DeleteResources(
-			&operations.DeleteResourcesParams{Body: &deleteRequest, HTTPClient: httpClient})
-
-		if err != nil {
+		input := api.LambdaInput{DeleteResources: &deleteRequest}
+		if _, err := resourcesClient.Invoke(&input, nil); err != nil {
 			return errors.Wrapf(err, "resource deletion failed for: %#v", deleteRequest)
 		}
 	}

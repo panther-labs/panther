@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { FastField } from 'formik';
-import { Link, IconButton, FormHelperText } from 'pouncejs';
+import { Link, IconButton, FormHelperText, Card, Flex, Heading, Box } from 'pouncejs';
 import FormikEditor from 'Components/fields/Editor';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
@@ -33,39 +33,41 @@ const BaseRuleFormEditorSection: React.FC<BaseRuleFormEditorSectionProps> = ({ t
   const isPolicy = type === 'policy';
 
   return (
-    <Panel
-      title={isPolicy ? 'Policy Body' : 'Rule Body'}
-      actions={
-        <IconButton
-          variant="ghost"
-          active={open}
-          variantColor="navyblue"
-          icon={open ? 'caret-up' : 'caret-down'}
-          onClick={() => setOpen(!open)}
-          aria-label="Toggle Editor visibility"
-        />
-      }
-    >
-      {open && (
-        <React.Fragment>
-          <FastField
-            as={FormikEditor}
-            placeholder={`# Enter the body of the ${type} here...`}
-            name="body"
-            width="100%"
-            minLines={16}
-            mode="python"
-            required
-            aria-describedby="editor-helper-text"
+    <Panel title={isPolicy ? 'Policy Body' : 'Rule Body'}>
+      <Card variant="dark" p={4}>
+        <Flex align="center" spacing={4}>
+          <IconButton
+            variant="ghost"
+            active={open}
+            variantColor="navyblue"
+            icon={open ? 'caret-up' : 'caret-down'}
+            onClick={() => setOpen(!open)}
+            size="medium"
+            aria-label="Toggle Editor visibility"
           />
-          <FormHelperText id="editor-helper-text" mt={3}>
-            Need to define re-usable functions? Define them in a
-            <Link ml={1} as={RRLink} to={urls.settings.globalPythonModules.list()}>
-              global module
-            </Link>
-          </FormHelperText>
-        </React.Fragment>
-      )}
+          <Heading size="x-small">{isPolicy ? 'Policy Function' : 'Rule Function'} </Heading>
+        </Flex>
+        {open && (
+          <Box mt={5}>
+            <FastField
+              as={FormikEditor}
+              placeholder={`# Enter the body of the ${type} here...`}
+              name="body"
+              width="100%"
+              minLines={10}
+              mode="python"
+              required
+              aria-describedby="editor-helper-text"
+            />
+          </Box>
+        )}
+      </Card>
+      <FormHelperText id="editor-helper-text" mt={3}>
+        Need to define re-usable functions? Define them in a
+        <Link ml={1} as={RRLink} to={urls.settings.globalPythonModules.list()}>
+          global module
+        </Link>
+      </FormHelperText>
     </Panel>
   );
 };
