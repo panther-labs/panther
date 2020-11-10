@@ -57,6 +57,8 @@ const ListAlerts = () => {
   const lastEvaluatedKey = data?.alerts.lastEvaluatedKey || null;
   const hasNextPage = !!data?.alerts?.lastEvaluatedKey;
 
+  const alertIds = React.useMemo(() => alertItems.map(a => a.alertId), [alertItems.length]);
+
   const { sentinelRef } = useInfiniteScroll<HTMLDivElement>({
     loading,
     threshold: 500,
@@ -111,15 +113,6 @@ const ListAlerts = () => {
 
   const hasError = Boolean(error);
 
-  const PanelTitle = React.useMemo(() => {
-    return (
-      <Flex align="center" spacing={2}>
-        <SelectAllCheckbox selectionIds={alertItems.map(a => a.alertId)} />
-        <Text>Alerts</Text>
-      </Flex>
-    );
-  }, [alertItems]);
-
   return (
     <ErrorBoundary>
       {hasError && (
@@ -135,7 +128,15 @@ const ListAlerts = () => {
         </Box>
       )}
       <ListAlertBreadcrumbFilters />
-      <Panel title={PanelTitle} actions={<ListAlertsActions />}>
+      <Panel
+        title={
+          <Flex align="center" spacing={2}>
+            <SelectAllCheckbox selectionIds={alertIds} />
+            <Text>Alerts</Text>
+          </Flex>
+        }
+        actions={<ListAlertsActions />}
+      >
         <Card as="section" position="relative">
           <Box position="relative">
             <Flex direction="column" spacing={2}>

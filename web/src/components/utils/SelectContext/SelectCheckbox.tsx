@@ -30,7 +30,7 @@ const SelectCheckboxComponent: React.FC<SelectCheckboxProps> = ({ selectionId, .
   return (
     <Checkbox
       checked={isSelected}
-      aria-label={`select checkbox for ${selectionId}`}
+      aria-label={isSelected ? `unselect ${selectionId}` : `select ${selectionId}`}
       onClick={() => toggleItem(selectionId)}
       {...rest}
     />

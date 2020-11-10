@@ -53,7 +53,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
     <GenericItemCard borderColor={alert.type === AlertTypesEnum.RuleError ? 'red-600' : 'teal-400'}>
       <Flex align="start" pr={2}>
         {selectionEnabled && (
-          <Box transform="translate3d(0,-10px,0)">
+          <Box transform="translate3d(0,-8px,0)">
             <SelectCheckbox selectionId={alert.alertId} />
           </Box>
         )}
