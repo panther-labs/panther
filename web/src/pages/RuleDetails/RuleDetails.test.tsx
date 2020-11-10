@@ -260,7 +260,7 @@ describe('RuleDetails', () => {
       }),
     ];
 
-    const { getByText, getByTestId, getByAriaLabel } = render(
+    const { getByText, getByTestId, getByAriaLabel, getAllByText } = render(
       <Route exact path={urls.logAnalysis.rules.details(':id')}>
         <RuleDetails />
       </Route>,
@@ -282,8 +282,7 @@ describe('RuleDetails', () => {
 
     expect(getByText('Alert Type')).toBeInTheDocument();
     expect(getByText('Rule Match')).toBeInTheDocument();
-
-    expect(getByText('Destinations')).toBeInTheDocument();
+    expect(getAllByText('Destinations').length).toEqual(2);
     expect(getByText('Log Types')).toBeInTheDocument();
     expect(getByText('Events')).toBeInTheDocument();
     expect(getByAriaLabel('Change Alert Status')).toBeInTheDocument();
@@ -329,7 +328,7 @@ describe('RuleDetails', () => {
       }),
     ];
 
-    const { getByText, getByTestId, getByAriaLabel } = render(
+    const { getByText, getByTestId, getByAriaLabel, getAllByText } = render(
       <Route exact path={urls.logAnalysis.rules.details(':id')}>
         <RuleDetails />
       </Route>,
@@ -352,7 +351,7 @@ describe('RuleDetails', () => {
     expect(getByText('Alert Type')).toBeInTheDocument();
     expect(getByText('Rule Error')).toBeInTheDocument();
 
-    expect(getByText('Destinations')).toBeInTheDocument();
+    expect(getAllByText('Destinations').length).toEqual(2);
     expect(getByText('Log Types')).toBeInTheDocument();
     expect(getByText('Events')).toBeInTheDocument();
     expect(getByAriaLabel('Change Alert Status')).toBeInTheDocument();
