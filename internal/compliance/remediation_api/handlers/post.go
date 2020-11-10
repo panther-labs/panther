@@ -28,8 +28,6 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/remediation/models"
 	"github.com/panther-labs/panther/internal/compliance/remediation_api/remediation"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // RemediateResource remediates a resource synchronously
@@ -42,9 +40,6 @@ func (API) RemediateResource(request *models.RemediateResourceInput) *events.API
 				Body:       err.Error(),
 				StatusCode: http.StatusBadRequest,
 			}
-		}
-		if _, ok := err.(*genericapi.DoesNotExistError); ok {
-			return gatewayapi.MarshalResponse(RemediationLambdaNotFound, http.StatusNotFound)
 		}
 		zap.L().Warn("failed to invoke remediation", zap.Error(err))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}

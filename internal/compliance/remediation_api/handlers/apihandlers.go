@@ -34,21 +34,7 @@ var (
 	awsSession                        = session.Must(session.NewSession())
 	sqsClient  sqsiface.SQSAPI        = sqs.New(awsSession)
 	invoker    remediation.InvokerAPI = remediation.NewInvoker(session.Must(session.NewSession()))
-
-	//RemediationLambdaNotFound is the Error when the remediation Lambda is not found
-	RemediationLambdaNotFound = "Remediation Lambda not found or misconfigured"
 )
 
 // API has all of the handlers as receiver methods
 type API struct{}
-
-//func badRequest(errorMessage *string) *events.APIGatewayProxyResponse {
-//	errModel := &models.Error{Message: errorMessage}
-//	body, err := jsoniter.MarshalToString(errModel)
-//	if err != nil {
-//		zap.L().Error("errModel.MarshalBinary failed", zap.Error(err))
-//		body = "invalid request"
-//		return &events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest, Body: body}
-//	}
-//	return &events.APIGatewayProxyResponse{StatusCode: http.StatusBadRequest, Body: body}
-//}
