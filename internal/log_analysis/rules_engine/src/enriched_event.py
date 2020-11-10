@@ -28,6 +28,8 @@ class EnrichedEvent(Mapping):
         """Create data model lookups
 
         Args:
+            event: Dictionary representing the event
+            data_model: the data model used for the LogType associated with this event
         """
         self.logger = get_logger()
         self._data = event

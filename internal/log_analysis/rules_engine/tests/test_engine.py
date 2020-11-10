@@ -65,15 +65,14 @@ class TestEngine(TestCase):
             {
                 'id': 'rule_id',
                 'resourceTypes': ['log'],
-                'body': 'def rule(event):\n\treturn True',
+                'body': 'def rule(event):\n\tif event.udm("destination"):\n\t\treturn True\n\treturn False',
                 'versionId': 'version'
             }
         ]
-        analysis_api.get_enabled_data_models().return_value = [
+        analysis_api.get_enabled_data_models.return_value = [
             {
                 'id': 'data_model_id',
                 'resourceTypes': ['log'],
-                'body': 'def get_source_ip(event):\n\tif event.udm("destination"):\n\t\treturn True\n\treturn False',
                 'versionId': 'version',
                 'mappings': [{
                     'name': 'destination',

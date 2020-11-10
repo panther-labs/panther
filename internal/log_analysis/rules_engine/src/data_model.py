@@ -34,6 +34,11 @@ class DataModel:
         """Create data model lookups
 
         Args:
+            config: Dictionary that should have the folllowing keys:
+                id: unique data model id
+                mappings: list of log type fields to standard field conversions
+                version: the version of the data model
+                (Optional) body: python body associated with the mappings
         """
         self.logger = get_logger()
         # data models contains logtype to schema definitions

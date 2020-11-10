@@ -158,9 +158,9 @@ class Engine:
         return self._analysis_client.get_enabled_rules()
 
     def _get_data_models(self) -> List[Dict[str, Any]]:
-        """Retrieves all enabled rules.
+        """Retrieves all enabled data models.
 
         Returns:
-            An array of Dict['id': rule_id, 'body': rule_body, ...] that contain all fields of a rule.
+            An array of Dict['id': data_model_id, 'body': body, 'mappings': [...] ...] that contain all fields of a data model.
         """
         return self._analysis_client.get_enabled_data_models()
