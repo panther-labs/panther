@@ -71,7 +71,9 @@ func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventReco
 	return snapshot, nil
 }
 
-func (sh *StreamHandler) processResourceSnapshotDiff(eventName string, oldImage, newImage map[string]*dynamodb.AttributeValue) (*CloudSecuritySnapshotChange, error) {
+func (sh *StreamHandler) processResourceSnapshotDiff(eventName string,
+	oldImage, newImage map[string]*dynamodb.AttributeValue) (*CloudSecuritySnapshotChange, error) {
+
 	oldSnapshot := resourceSnapshot{}
 	if err := dynamodbattribute.UnmarshalMap(oldImage, &oldSnapshot); err != nil || oldSnapshot.Attributes == nil {
 		return nil, errors.New("resources-table record old image did include top level key attributes")
@@ -124,7 +126,9 @@ func (sh *StreamHandler) processResourceSnapshotDiff(eventName string, oldImage,
 	}, nil
 }
 
-func (sh *StreamHandler) processResourceSnapshot(changeType string, image map[string]*dynamodb.AttributeValue) (*CloudSecuritySnapshotChange, error) {
+func (sh *StreamHandler) processResourceSnapshot(changeType string,
+	image map[string]*dynamodb.AttributeValue) (*CloudSecuritySnapshotChange, error) {
+
 	change := resourceSnapshot{}
 	if err := dynamodbattribute.UnmarshalMap(image, &change); err != nil || change.Attributes == nil {
 		return nil, errors.New("resources-table record image did include top level key attributes")
