@@ -17,79 +17,87 @@
  */
 
 import React from 'react';
-import * as utils from 'Helpers/utils';
+import MockDate from 'mockdate';
 import { AlertStatusesEnum, SeverityEnum } from 'Generated/schema';
 import {
   buildAlertSummary,
   buildListAlertsResponse,
-  buildLogAnalysisMetricsInput,
   buildLogAnalysisMetricsResponse,
   buildSingleValue,
   fireEvent,
   render,
   waitForElementToBeRemoved,
 } from 'test-utils';
+import { MockedResponse } from '@apollo/client/testing';
+import { getGraphqlSafeDateRange } from 'Helpers/utils';
 import { mockGetOverviewAlerts } from 'Pages/LogAnalysisOverview/graphql/getOverviewAlerts.generated';
 import LogAnalysisOverview, { DEFAULT_PAST_DAYS, DEFAULT_INTERVAL } from './LogAnalysisOverview';
 import { mockGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 
-const mockedToDate = '2020-07-22T19:04:33Z';
-const mockedFromDate = utils.subtractDays(mockedToDate, DEFAULT_PAST_DAYS);
-const getLogAnalysisMetrics = buildLogAnalysisMetricsResponse();
-const getLogAnalysisMetricsInput = buildLogAnalysisMetricsInput({
-  metricNames: [
-    'eventsProcessed',
-    'totalAlertsDelta',
-    'alertsBySeverity',
-    'eventsLatency',
-    'alertsByRuleID',
-  ],
-  fromDate: mockedFromDate,
-  toDate: mockedToDate,
-  intervalMinutes: DEFAULT_INTERVAL,
-});
-
-// Mocking getCurrentDate in order to have a common date for the query
-const mockedGetCurrentDate = jest.spyOn(utils, 'getCurrentDate');
-mockedGetCurrentDate.mockImplementation(() => mockedToDate);
-
-const recentAlerts = buildListAlertsResponse();
-const topAlerts = buildListAlertsResponse({
-  alertSummaries: [
-    buildAlertSummary({ alertId: '1', severity: SeverityEnum.Critical }),
-    buildAlertSummary({ alertId: '2', severity: SeverityEnum.High }),
-  ],
-});
-
-const defaultMocks = [
-  mockGetLogAnalysisMetrics({
-    data: {
-      getLogAnalysisMetrics: {
-        ...getLogAnalysisMetrics,
-        totalAlertsDelta: [
-          buildSingleValue({ label: 'Previous Period' }),
-          buildSingleValue({ label: 'Current Period' }),
-        ],
-      },
-    },
-    variables: { input: getLogAnalysisMetricsInput },
-  }),
-  mockGetOverviewAlerts({
-    data: { recentAlerts, topAlerts },
-    variables: {
-      recentAlertsInput: {
-        pageSize: 10,
-        status: [AlertStatusesEnum.Open, AlertStatusesEnum.Triaged],
-      },
-    },
-  }),
-];
+let defaultMocks: MockedResponse[];
 
 describe('Log Analysis Overview', () => {
+  beforeAll(() => {
+    // https://github.com/boblauer/MockDate#example
+    // Forces a fixed resolution on `Date.now()`
+    MockDate.set('1/30/2000');
+  });
+
+  afterAll(() => {
+    MockDate.reset();
+  });
+
+  beforeEach(() => {
+    const [mockedFromDate, mockedToDate] = getGraphqlSafeDateRange({ days: DEFAULT_PAST_DAYS });
+
+    defaultMocks = [
+      mockGetLogAnalysisMetrics({
+        data: {
+          getLogAnalysisMetrics: buildLogAnalysisMetricsResponse({
+            totalAlertsDelta: [
+              buildSingleValue({ label: 'Previous Period' }),
+              buildSingleValue({ label: 'Current Period' }),
+            ],
+          }),
+        },
+        variables: {
+          input: {
+            metricNames: [
+              'eventsProcessed',
+              'totalAlertsDelta',
+              'alertsBySeverity',
+              'eventsLatency',
+              'alertsByRuleID',
+            ],
+            fromDate: mockedFromDate,
+            toDate: mockedToDate,
+            intervalMinutes: DEFAULT_INTERVAL,
+          },
+        },
+      }),
+      mockGetOverviewAlerts({
+        data: {
+          recentAlerts: buildListAlertsResponse(),
+          topAlerts: buildListAlertsResponse({
+            alertSummaries: [
+              buildAlertSummary({ alertId: '1', severity: SeverityEnum.Critical }),
+              buildAlertSummary({ alertId: '2', severity: SeverityEnum.High }),
+            ],
+          }),
+        },
+        variables: {
+          recentAlertsInput: {
+            pageSize: 10,
+            status: [AlertStatusesEnum.Open, AlertStatusesEnum.Triaged],
+          },
+        },
+      }),
+    ];
+  });
+
   it('should render 2 canvas, click on tab button and render latency chart', async () => {
     const { getByTestId, getAllByTitle, getByText } = render(<LogAnalysisOverview />, {
       mocks: defaultMocks,
-      initialRoute: `/?fromDate=${mockedFromDate}&toDate=${mockedToDate}`,
     });
 
     // Expect to see 3 loading interfaces
@@ -120,7 +128,6 @@ describe('Log Analysis Overview', () => {
   it('should display Alerts Cards for Top Alerts and Recent Alerts', async () => {
     const { getAllByTitle, getByText, getAllByText } = render(<LogAnalysisOverview />, {
       mocks: defaultMocks,
-      initialRoute: `/?fromDate=${mockedFromDate}&toDate=${mockedToDate}`,
     });
     // Expect to see 3 loading interfaces
     const loadingInterfaceElements = getAllByTitle('Loading interface...');

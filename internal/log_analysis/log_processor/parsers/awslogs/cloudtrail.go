@@ -19,10 +19,10 @@ package awslogs
  */
 
 import (
-	"errors"
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -105,15 +105,19 @@ type CloudTrailSessionContextWebIDFederationData struct {
 	Attributes        pantherlog.RawMessage `json:"attributes"`
 }
 
-// CloudTrailParser parses CloudTrail logs
-type CloudTrailParser struct {
+// cloudTrailParser parses CloudTrail logs
+type cloudTrailParser struct {
 	builder pantherlog.ResultBuilder
 }
 
-var _ parsers.Interface = (*CloudTrailParser)(nil)
+func newCloudTrailParser(_ interface{}) (parsers.Interface, error) {
+	return &cloudTrailParser{}, nil
+}
+
+var _ parsers.Interface = (*cloudTrailParser)(nil)
 
 // Parse returns the parsed events or nil if parsing failed
-func (p *CloudTrailParser) ParseLog(log string) (results []*parsers.Result, err error) {
+func (p *cloudTrailParser) ParseLog(log string) (results []*parsers.Result, err error) {
 	// Use strings.Reader to avoid duplicate allocation of `log` as bytes
 	const bufferSize = 8192
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, strings.NewReader(log), bufferSize)
@@ -133,7 +137,7 @@ func (p *CloudTrailParser) ParseLog(log string) (results []*parsers.Result, err 
 			event := CloudTrail{}
 			iter.ReadVal(&event)
 			if err := iter.Error; err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "failed to read CloudTrail record JSON")
 			}
 			if err := pantherlog.ValidateStruct(&event); err != nil {
 				return nil, err
@@ -150,11 +154,6 @@ func (p *CloudTrailParser) ParseLog(log string) (results []*parsers.Result, err 
 		return nil, err
 	}
 	return nil, errors.New(`missing 'Records' field`)
-}
-
-// LogType returns the log type supported by this parser
-func (p *CloudTrailParser) LogType() string {
-	return TypeCloudTrail
 }
 
 var _ pantherlog.ValueWriterTo = (*CloudTrail)(nil)

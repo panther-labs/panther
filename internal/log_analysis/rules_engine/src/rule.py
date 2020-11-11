@@ -16,7 +16,9 @@
 
 import json
 import os
+import re
 import tempfile
+import traceback
 from dataclasses import dataclass
 from importlib import util as import_util
 from pathlib import Path
@@ -58,6 +60,17 @@ class RuleResult:
 
     alert_context: Optional[str] = None
     alert_context_exception: Optional[Exception] = None
+
+    def error_message(self) -> Optional[str]:
+        """Returns formatted error message with traceback"""
+        if self.rule_exception is not None:
+            trace = traceback.format_tb(self.rule_exception.__traceback__)
+            # we only take last element of trace which will show the rule file name and line of the error, for example:
+            #    division by zero: AlwaysFail.py, line 4, in rule 1/0
+            file_trace = trace[len(trace) - 1].strip().replace("\n", "")
+            # this looks like: File "/tmp/rules/AlwaysFail.py", line 4, in rule 1/0 BUT we want just the file name
+            return str(self.rule_exception) + ": " + re.sub(r'File.*/(.*[.]py)"', r'\1', file_trace)
+        return None
 
     @property
     def errored(self) -> bool:

@@ -1,5 +1,3 @@
-package handlers
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,23 +16,4 @@ package handlers
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"os"
-
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
-
-	"github.com/panther-labs/panther/internal/compliance/remediation_api/remediation"
-)
-
-var (
-	sqsQueueURL = os.Getenv("SQS_QUEUE_URL")
-
-	awsSession                        = session.Must(session.NewSession())
-	sqsClient  sqsiface.SQSAPI        = sqs.New(awsSession)
-	invoker    remediation.InvokerAPI = remediation.NewInvoker(session.Must(session.NewSession()))
-)
-
-// API has all of the handlers as receiver methods
-type API struct{}
+export { default } from './ResetButton';

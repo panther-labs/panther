@@ -15,30 +15,36 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 import React from 'react';
-import { AbstractButton } from 'pouncejs';
+import { Text, Flex, Img } from 'pouncejs';
+import NothingFound from 'Assets/illustrations/nothing-found.svg';
 
-interface ZoomButtonProps {
-  title: string;
-  selected?: boolean;
-  onClick: () => void;
-}
-
-const ZoomButton: React.FC<ZoomButtonProps> = ({ title, selected, onClick }) => {
+const NoResultsFound: React.FC = () => {
   return (
-    <AbstractButton
-      borderRadius="pill"
-      py={1}
-      px={4}
-      fontSize="small"
-      color="black"
-      backgroundColor={selected ? 'blue-400' : 'navyblue-300'}
-      _hover={!selected && { backgroundColor: 'blue-400' }}
-      onClick={onClick}
-    >
-      {title}
-    </AbstractButton>
+    <Flex justify="center">
+      <Flex
+        direction="column"
+        align="center"
+        justify="center"
+        backgroundColor="navyblue-500"
+        borderRadius="circle"
+        width={260}
+        height={260}
+      >
+        <Img
+          ml={6}
+          nativeWidth={95}
+          nativeHeight={90}
+          alt="Document and magnifying glass"
+          src={NothingFound}
+        />
+        <Text color="navyblue-100" fontWeight="bold" mt={2}>
+          No Results
+        </Text>
+      </Flex>
+    </Flex>
   );
 };
 
-export default ZoomButton;
+export default NoResultsFound;
