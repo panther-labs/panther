@@ -48,7 +48,6 @@ func NativeLogTypesResolver() logtypes.Resolver {
 // Sources for these log types are managed by panther and they should not be available to users for source onboarding
 func InternalLogTypesResolver() logtypes.Resolver {
 	return logtypes.LocalResolver(internalLogTypes)
-
 }
 
 // LogTypes exposes all available log types as a read-only group.
