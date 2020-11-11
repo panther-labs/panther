@@ -123,5 +123,13 @@ const withSelectContext = (Component: React.FC) => props => (
 );
 
 const useSelect = () => React.useContext(SelectContext);
+/** A shortcut for the consumer component */
+const SelectConsumer = SelectContext.Consumer;
 
-export { SelectContext, MemoizedSelectProvider as SelectProvider, withSelectContext, useSelect };
+export {
+  SelectContext,
+  SelectConsumer,
+  MemoizedSelectProvider as SelectProvider,
+  withSelectContext,
+  useSelect,
+};
