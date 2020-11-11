@@ -25,6 +25,6 @@ import (
 )
 
 func main() {
-	sh := forwarder.NewStreamhandler()
+	sh := forwarder.NewStreamHandler()
 	lambda.Start(sh.Run)
 }

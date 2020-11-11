@@ -1,4 +1,4 @@
-package utils
+package diff
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -27,9 +27,10 @@ import (
 // NOTE: it would be wise to use a dedicated lib for this such as https://github.com/r3labs/diff
 
 type Diff struct {
-	From interface{}
-	To   interface{}
+	From interface{} `json:"from"`
+	To   interface{} `json:"to"`
 }
+type Changelog map[string]Diff
 
 // CompJsons compares two JSON strings, and returns a map of paths to changed fields to a tuple of
 // the old and new value of that field

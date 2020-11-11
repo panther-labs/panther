@@ -19,11 +19,12 @@ package forwarder
  */
 
 import (
-	"github.com/aws/aws-lambda-go/events"
+	lambdaevents "github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/go-playground/validator"
-	jsoniter "github.com/json-iterator/go"
+
+	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/internal/events"
 )
 
 var validate = validator.New()
@@ -41,74 +42,52 @@ type ComplianceChange struct {
 	Suppressed       bool   `json:"suppressed" validate:"required"`
 }
 
-func (sh StreamHandler) processComplianceSnapshot(record events.DynamoDBEventRecord) (*ComplianceChange, error) {
-	var newComplianceStatus *ComplianceChange
-	var err error
-
+func (sh *StreamHandler) processComplianceSnapshot(record *events.DynamoDBEventRecord) (change *ComplianceChange, err error) {
 	switch record.EventName {
-	case string(events.DynamoDBOperationTypeInsert):
-		newComplianceStatus, err = dynamoRecordToCompliance(record.Change.NewImage)
+	case string(lambdaevents.DynamoDBOperationTypeInsert):
+		change, err = dynamoRecordToCompliance(record.Change.NewImage)
 		if err != nil {
 			return nil, err
 		}
-		newComplianceStatus.ChangeType = ChangeTypeCreate
-	case string(events.DynamoDBOperationTypeRemove):
-		newComplianceStatus, err = dynamoRecordToCompliance(record.Change.OldImage)
+		change.ChangeType = ChangeTypeCreate
+	case string(lambdaevents.DynamoDBOperationTypeRemove):
+		change, err = dynamoRecordToCompliance(record.Change.OldImage)
 		if err != nil {
 			return nil, err
 		}
-		newComplianceStatus.ChangeType = ChangeTypeDelete
-	case string(events.DynamoDBOperationTypeModify):
-		newComplianceStatus, err = dynamoRecordToCompliance(record.Change.NewImage)
+		change.ChangeType = ChangeTypeDelete
+	case string(lambdaevents.DynamoDBOperationTypeModify):
+		change, err = dynamoRecordToCompliance(record.Change.NewImage)
 		if err != nil {
 			return nil, err
 		}
-		newComplianceStatus.ChangeType = ChangeTypeModify
+		change.ChangeType = ChangeTypeModify
 		oldStatus, err := dynamoRecordToCompliance(record.Change.OldImage)
 		if err != nil {
 			return nil, err
 		}
 		// If the status didn't change and the suppression didn't change, no need to report anything
-		if newComplianceStatus.ChangeType == oldStatus.Status && newComplianceStatus.Suppressed == oldStatus.Suppressed {
+		if change.ChangeType == oldStatus.Status && change.Suppressed == oldStatus.Suppressed {
 			return nil, nil
 		}
+	default:
+		return nil, nil
 	}
-
-	newComplianceStatus.IntegrationLabel, err = sh.getIntegrationLabel(newComplianceStatus.IntegrationID)
-	return newComplianceStatus, err
+	label, err := sh.getIntegrationLabel(change.IntegrationID)
+	if err != nil {
+		return nil, err
+	}
+	change.IntegrationLabel = label
+	return change, nil
 }
 
-func dynamoRecordToCompliance(image map[string]events.DynamoDBAttributeValue) (*ComplianceChange, error) {
+func dynamoRecordToCompliance(image map[string]*dynamodb.AttributeValue) (*ComplianceChange, error) {
 	change := ComplianceChange{}
-	if err := unmarshalMap(image, &change); err != nil {
+	if err := dynamodbattribute.UnmarshalMap(image, &change); err != nil {
 		return nil, err
 	}
 	if err := validate.Struct(&change); err != nil {
 		return nil, err
 	}
 	return &change, nil
-}
-
-func unmarshalMap(attributes map[string]events.DynamoDBAttributeValue, out interface{}) error {
-	m, err := convertDynamoDBAttributeValues(attributes)
-	if err != nil {
-		return err
-	}
-	return dynamodbattribute.UnmarshalMap(m, out)
-}
-
-func convertDynamoDBAttributeValues(attributes map[string]events.DynamoDBAttributeValue) (map[string]*dynamodb.AttributeValue, error) {
-	out := map[string]*dynamodb.AttributeValue{}
-	for key, value := range attributes {
-		raw, err := value.MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-		attr := dynamodb.AttributeValue{}
-		if err := jsoniter.Unmarshal(raw, &attr); err != nil {
-			return nil, err
-		}
-		out[key] = &attr
-	}
-	return out, nil
 }

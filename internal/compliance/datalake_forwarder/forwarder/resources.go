@@ -19,54 +19,86 @@ package forwarder
  */
 
 import (
-	"github.com/aws/aws-lambda-go/events"
+	lambdaevents "github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/utils"
+	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/internal/diff"
+	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/internal/events"
 )
 
 type CloudSecuritySnapshotChange struct {
-	ChangeType       string
-	Changes          map[string]utils.Diff
-	IntegrationID    string
-	IntegrationLabel string
-	LastUpdated      string
-	Resource         jsoniter.RawMessage
+	ChangeType       string              `json:"changeType"`
+	Changes          diff.Changelog      `json:"changes"`
+	IntegrationID    string              `json:"integrationID"`
+	IntegrationLabel string              `json:"integrationLabel"`
+	LastUpdated      string              `json:"lastUpdated"`
+	Resource         jsoniter.RawMessage `json:"resource"`
 }
 
-func (sh StreamHandler) processResourceSnapshotDiff(record events.DynamoDBEventRecord) (*CloudSecuritySnapshotChange, error) {
-	if record.Change.NewImage == nil || record.Change.OldImage == nil {
-		return nil, errors.New("expected Change.NewImage and Change.OldImage to not be nil when processing resource diff")
+type resourceSnapshot struct {
+	LastModified  string                 `json:"lastModified"`
+	IntegrationID string                 `json:"integrationId"`
+	Attributes    map[string]interface{} `json:"attributes"`
+}
+
+// processResourceChanges processes a record from the resources-table dynamoDB stream,
+func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventRecord) (snapshot *CloudSecuritySnapshotChange, err error) {
+	// For INSERT and REMOVE events, we don't need to calculate a diff
+	switch lambdaevents.DynamoDBOperationType(record.EventName) {
+	case lambdaevents.DynamoDBOperationTypeInsert:
+		snapshot, err = sh.processResourceSnapshot(ChangeTypeCreate, record.Change.NewImage)
+	case lambdaevents.DynamoDBOperationTypeRemove:
+		snapshot, err = sh.processResourceSnapshot(ChangeTypeDelete, record.Change.OldImage)
+	default:
+		snapshot, err = sh.processResourceSnapshotDiff(record.EventName, record.Change.OldImage, record.Change.NewImage)
 	}
-	oldImage := changeImage{}
-	if err := unmarshalMap(record.Change.OldImage, &oldImage); err != nil || oldImage.Attributes == nil {
+
+	if err != nil {
+		zap.L().Error("unable to process resource snapshot",
+			zap.Error(err),
+			zap.String("EventID", record.EventID),
+			zap.String("EventName", record.EventName),
+		)
+		zap.L().Debug("verbose error info",
+			zap.Any("NewImage", record.Change.NewImage),
+			zap.Any("OldImage", record.Change.OldImage))
+		return nil, errors.WithMessagef(err, "unable to process resource snapshot for %q", record.EventName)
+	}
+	return snapshot, nil
+}
+
+func (sh *StreamHandler) processResourceSnapshotDiff(eventName string, oldImage, newImage map[string]*dynamodb.AttributeValue) (*CloudSecuritySnapshotChange, error) {
+	oldSnapshot := resourceSnapshot{}
+	if err := dynamodbattribute.UnmarshalMap(oldImage, &oldSnapshot); err != nil || oldSnapshot.Attributes == nil {
 		return nil, errors.New("resources-table record old image did include top level key attributes")
 	}
-	newImage := changeImage{}
-	if err := unmarshalMap(record.Change.NewImage, &newImage); err != nil || oldImage.Attributes == nil {
+	newSnapshot := resourceSnapshot{}
+	if err := dynamodbattribute.UnmarshalMap(newImage, &newSnapshot); err != nil || oldSnapshot.Attributes == nil {
 		return nil, errors.New("resources-table record new image did include top level key attributes")
 	}
 
 	// First convert the old & new image from the useless dynamodb stream format into a JSON string
-	newImageJSON, err := jsoniter.Marshal(newImage.Attributes)
+	newImageJSON, err := jsoniter.Marshal(newSnapshot.Attributes)
 	if err != nil {
 		return nil, errors.WithMessage(err, "error parsing new resource snapshot")
 	}
-	oldImageJSON, err := jsoniter.Marshal(oldImage.Attributes)
+	oldImageJSON, err := jsoniter.Marshal(oldSnapshot.Attributes)
 	if err != nil {
 		return nil, errors.WithMessage(err, "error parsing old resource snapshot")
 	}
 
 	// Do a very rudimentary JSON diff to determine which top level fields have changed
-	changes, err := utils.CompJsons(string(oldImageJSON), string(newImageJSON))
+	changes, err := diff.CompJsons(string(oldImageJSON), string(newImageJSON))
 	if err != nil {
 		return nil, errors.WithMessage(err, "error comparing old resource snapshot with new resource snapshot")
 	}
 	zap.L().Debug(
 		"processing resource record",
-		zap.Any("record.EventName", record.EventName),
+		zap.Any("record.EventName", eventName),
 		zap.Any("newImage", newImageJSON),
 		zap.Any("changes", changes),
 		zap.Error(err),
@@ -77,14 +109,14 @@ func (sh StreamHandler) processResourceSnapshotDiff(record events.DynamoDBEventR
 		return nil, nil
 	}
 
-	integrationLabel, err := sh.getIntegrationLabel(newImage.IntegrationID)
+	integrationLabel, err := sh.getIntegrationLabel(newSnapshot.IntegrationID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to retrieve integration label for %q", newImage.IntegrationID)
+		return nil, errors.Wrapf(err, "failed to retrieve integration label for %q", newSnapshot.IntegrationID)
 	}
 
 	return &CloudSecuritySnapshotChange{
-		LastUpdated:      newImage.LastModified,
-		IntegrationID:    newImage.IntegrationID,
+		LastUpdated:      newSnapshot.LastModified,
+		IntegrationID:    newSnapshot.IntegrationID,
 		IntegrationLabel: integrationLabel,
 		Resource:         newImageJSON,
 		Changes:          changes,
@@ -92,22 +124,9 @@ func (sh StreamHandler) processResourceSnapshotDiff(record events.DynamoDBEventR
 	}, nil
 }
 
-func (sh StreamHandler) processResourceSnapshot(record events.DynamoDBEventRecord) (*CloudSecuritySnapshotChange, error) {
-	var image map[string]events.DynamoDBAttributeValue
-	var changeType string
-	if record.EventName == string(events.DynamoDBOperationTypeInsert) {
-		image = record.Change.NewImage
-		changeType = ChangeTypeCreate
-	}
-	if record.EventName == string(events.DynamoDBOperationTypeRemove) {
-		image = record.Change.OldImage
-		changeType = ChangeTypeDelete
-	}
-	if image == nil {
-		return nil, errors.New("expected Image to not be nil when processing resource diff")
-	}
-	change := changeImage{}
-	if err := unmarshalMap(image, &change); err != nil || change.Attributes == nil {
+func (sh *StreamHandler) processResourceSnapshot(changeType string, image map[string]*dynamodb.AttributeValue) (*CloudSecuritySnapshotChange, error) {
+	change := resourceSnapshot{}
+	if err := dynamodbattribute.UnmarshalMap(image, &change); err != nil || change.Attributes == nil {
 		return nil, errors.New("resources-table record image did include top level key attributes")
 	}
 	integrationLabel, err := sh.getIntegrationLabel(change.IntegrationID)
@@ -125,10 +144,4 @@ func (sh StreamHandler) processResourceSnapshot(record events.DynamoDBEventRecor
 		Resource:         rawResource,
 		ChangeType:       changeType,
 	}, nil
-}
-
-type changeImage struct {
-	LastModified  string                 `json:"lastModified"`
-	IntegrationID string                 `json:"integrationId"`
-	Attributes    map[string]interface{} `json:"attributes"`
 }

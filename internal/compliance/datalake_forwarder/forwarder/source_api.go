@@ -38,9 +38,9 @@ const (
 	sourceAPIFunctionName = "panther-source-api"
 )
 
-func (sh StreamHandler) getIntegrationLabel(integrationID string) (string, error) {
+func (sh *StreamHandler) getIntegrationLabel(integrationID string) (string, error) {
 	label, ok := integrationIDMappings[integrationID]
-	if !ok || lastUpdated.Add(mappingAgeOut).Before(time.Now()) {
+	if !ok || time.Since(lastUpdated) > mappingAgeOut {
 		err := sh.updateIntegrationMapping()
 		if err != nil {
 			return "", err
