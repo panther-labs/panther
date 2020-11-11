@@ -28,11 +28,6 @@ Parameters:
     Description: SNS topic for CloudWatch alarms
     # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
-  AnalysisApi:
-    Type: String
-    Description: API Gateway HTTPS endpoint for panther-analysis-api
-    # Example: "https://0jcmwnr9cj.execute-api.us-west-2.amazonaws.com"
-    AllowedPattern: '^https:\/\/[0-9a-z]{10}\.execute-api\.[a-z]{2}-[a-z]{4,9}-[1-9]\.amazonaws\.com(\.cn)?$'
   ApiId:
     Type: String
     Description: Appsync GraphQL API ID
@@ -187,21 +182,16 @@ Resources:
       LambdaConfig:
         LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-resources-api
 
-  AnalysisAPIHttpDataSource:
+  AnalysisAPILambdaDataSource:
     Type: AWS::AppSync::DataSource
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
-      Name: PantherAnalysisAPIHttp
-      Type: HTTP
+      Name: PantherAnalysisAPILambda
+      Type: AWS_LAMBDA
       ServiceRoleArn: !Ref ServiceRole
-      HttpConfig:
-        AuthorizationConfig:
-          AuthorizationType: AWS_IAM
-          AwsIamConfig:
-            SigningRegion: !Ref AWS::Region
-            SigningServiceName: execute-api
-        Endpoint: !Ref AnalysisApi
+      LambdaConfig:
+        LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
 
   ########## Resolvers ##########
 
@@ -976,25 +966,20 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: policies
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/list",
-          "params": {
-            "query": $util.toJson($ctx.args.input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "listPolicies": $input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1005,25 +990,19 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: policy
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/policy",
-          "params": {
-            "query": $util.toJson($ctx.args.input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getPolicy": $ctx.args.input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1034,27 +1013,21 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Mutation
       FieldName: updatePolicy
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        #set ($input = $ctx.args.input)
         $util.qr($input.put("userId", $ctx.identity.username))
         {
-          "version": "2018-05-29",
-          "method": "POST",
-          "resourcePath": "/v1/update",
-          "params": {
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "body": $util.toJson($input)
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "updatePolicy": $input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1065,27 +1038,21 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Mutation
       FieldName: addPolicy
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        #set ($input = $ctx.args.input)
         $util.qr($input.put("userId", $ctx.identity.username))
         {
-          "version": "2018-05-29",
-          "method": "POST",
-          "resourcePath": "/v1/policy",
-          "params": {
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "body": $util.toJson($input)
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "createPolicy": $input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 201)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1096,29 +1063,23 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Mutation
       FieldName: deletePolicy
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "POST",
-          "resourcePath": "/v1/delete",
-          "params": {
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "body": $util.toJson({
-              "policies": $ctx.args.input.policies
-            })
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "deleteDetections": {
+              "entries": $ctx.args.input.policies
+            }
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             true
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, $statusCode, $ctx.args)
         #else
-            $util.error($ctx.result.body, $statusCode, $ctx.args)
+            $util.error($ctx.result.body, "$statusCode", $input)
         #end
 
   UploadPoliciesResolver:
@@ -1127,27 +1088,21 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Mutation
       FieldName: uploadPolicies
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        #set ($input = $ctx.args.input)
         $util.qr($input.put("userId", $ctx.identity.username))
         {
-          "version": "2018-05-29",
-          "method": "POST",
-          "resourcePath": "/v1/upload",
-          "params": {
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "body": $util.toJson($input)
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "bulkUpload": $input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1354,26 +1309,19 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Mutation
       FieldName: suppressPolicies
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "POST",
-          "resourcePath": "/v1/suppress",
-          "params": {
-            "body": $util.toJson($ctx.args.input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "suppress": $ctx.args.input
+          })
         }
-
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             true
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1384,42 +1332,19 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: rules
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        #set( $payload = $ctx.args.input)
-
-        #if($payload.logTypes)
-          #set($logTypesCSV = "")
-          #foreach($logType in $payload.logTypes)
-              #set($logTypesCSV = $logTypesCSV  + "," + $logType)
-          #end
-        #end
-        $util.qr($payload.put("logTypes", $logTypesCSV))
-
-        #if($payload.tags)
-          #set($tagsCSV = "")
-          #foreach($tag in $$payload.tags)
-              #set($tagsCSV = $tagsCSV  + "," + $tag)
-          #end
-        #end
-        $util.qr($payload.put("tags", $tagsCSV))
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/rule/list",
-          "params": {
-            "query": $util.toJson($payload),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "listRules": $ctx.args.input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1430,25 +1355,19 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: rule
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/rule",
-          "params": {
-            "query": $util.toJson($ctx.args.input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getRule": $ctx.args.input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1459,27 +1378,21 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Mutation
       FieldName: updateRule
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        #set ($input = $ctx.args.input)
         $util.qr($input.put("userId", $ctx.identity.username))
         {
-          "version": "2018-05-29",
-          "method": "POST",
-          "resourcePath": "/v1/rule/update",
-          "params": {
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "body": $util.toJson($input)
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "updateRule": $input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1490,27 +1403,21 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Mutation
       FieldName: addRule
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        #set ($input = $ctx.args.input)
         $util.qr($input.put("userId", $ctx.identity.username))
         {
-          "version": "2018-05-29",
-          "method": "POST",
-          "resourcePath": "/v1/rule",
-          "params": {
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "body": $util.toJson($input)
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "addRule": $input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 201)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1521,29 +1428,23 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Mutation
       FieldName: deleteRule
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "POST",
-          "resourcePath": "/v1/delete",
-          "params": {
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "body": $util.toJson({
-              "policies": $ctx.args.input.rules
-            })
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "deleteDetections": {
+              "entries": $ctx.args.input.rules
+            }
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             true
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, $statusCode, $ctx.args)
         #else
-            $util.error($ctx.result.body, $statusCode, $ctx.args)
+            $util.error($ctx.result.body, "$statusCode", $input)
         #end
 
   GetGlobalModuleResolver:
@@ -1552,25 +1453,19 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: getGlobalPythonModule
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/global",
-          "params": {
-            "query": $util.toJson($ctx.args.input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getGlobal": $ctx.args.input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1581,27 +1476,21 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Mutation
       FieldName: updateGlobalPythonlModule
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        #set ($input = $ctx.args.input)
         $util.qr($input.put("userId", $ctx.identity.username))
         {
-          "version": "2018-05-29",
-          "method": "POST",
-          "resourcePath": "/v1/global/update",
-          "params": {
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "body": $util.toJson($input)
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "updateGlobal": $input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1612,25 +1501,19 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: listGlobalPythonModules
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/global/list",
-          "params": {
-            "query": $util.toJson($ctx.args.input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "listGlobals": $ctx.args.input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1641,27 +1524,21 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Mutation
       FieldName: addGlobalPythonModule
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        #set ($input = $ctx.args.input)
         $util.qr($input.put("userId", $ctx.identity.username))
         {
-          "version": "2018-05-29",
-          "method": "POST",
-          "resourcePath": "/v1/global",
-          "params": {
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "body": $util.toJson($input)
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "createGlobal": $input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 201)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1672,29 +1549,23 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Mutation
       FieldName: deleteGlobalPythonModule
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "POST",
-          "resourcePath": "/v1/global/delete",
-          "params": {
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "body": $util.toJson({
-              "policies": $ctx.args.input.globals
-            })
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "deleteDetections": {
+              "entries": $ctx.args.input.globals
+            }
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             true
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, $statusCode, $ctx.args)
         #else
-            $util.error($ctx.result.body, $statusCode, $ctx.args)
+            $util.error($ctx.result.body, "$statusCode", $input)
         #end
 
   SendTestAlertResolver:
@@ -1815,23 +1686,19 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Mutation
       FieldName: testPolicy
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "POST",
-          "resourcePath": "/v1/policy/test",
-          "params": {
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "body": $util.toJson({
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "testPolicy": {
               "body": $ctx.args.input.body,
               "resourceTypes": $ctx.args.input.resourceTypes,
               "tests": $ctx.args.input.tests,
               "analysisType": "POLICY"
-            })
-          }
+            }
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
@@ -1882,8 +1749,6 @@ Resources:
           #end
 
           $util.toJson({ "results": $payload })
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1894,24 +1759,20 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Mutation
       FieldName: testRule
-      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "POST",
-          "resourcePath": "/v1/rule/test",
-          "params": {
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "body": $util.toJson({
-              "body": $ctx.args.input.body,
-              "resourceTypes": $ctx.args.input.logTypes,
-              "tests": $ctx.args.input.tests,
-              "analysisType": "RULE"
-            })
-          }
-        }
+           "version" : "2017-02-28",
+           "operation": "Invoke",
+           "payload": $util.toJson({
+             "testPolicy": {
+               "body": $ctx.args.input.body,
+               "resourceTypes": $ctx.args.input.logTypes,
+               "tests": $ctx.args.input.tests,
+               "analysisType": "RULE"
+             }
+           })
+         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
         #if($statusCode == 200)
@@ -1969,8 +1830,6 @@ Resources:
           #end
           $util.toJson({ "results": $payload })
 
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end

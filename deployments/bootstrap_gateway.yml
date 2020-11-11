@@ -191,9 +191,6 @@ Resources:
               Action: ecr:DeleteRepository
               Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ImageRegistryName}
             - Effect: Allow
-              Action: execute-api:Invoke
-              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApi}/v1/POST/upload
-            - Effect: Allow
               Action:
                 - glue:CreateDatabase
                 - glue:DeleteDatabase
@@ -228,6 +225,7 @@ Resources:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-organization-api
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-users-api
@@ -361,29 +359,6 @@ Resources:
         - given_name
         - family_name
 
-  AnalysisApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      DefinitionBody: api/gateway/analysis/api.yml
-      EndpointConfiguration: REGIONAL
-      Name: panther-analysis-api
-      # <cfndoc>
-      # The `panther-analysis-api` API Gateway calls the `panther-analysis-api` lambda.
-      # </cfndoc>
-      StageName: v1
-      TracingEnabled: !If [TracingEnabled, true, false]
-
-  AnalysisApiAlarms:
-    Type: Custom::ApiGatewayAlarms
-    DependsOn: CustomTeardown
-    Properties:
-      ApiName: panther-analysis-api
-      AlarmTopicArn: !Ref AlarmTopicArn
-      CustomResourceVersion: !Ref CustomResourceVersion
-      ServiceToken: !GetAtt CustomResourceFunction.Arn
-      # Listing rules/policies requires scanning the DDB table
-      LatencyThresholdMs: 3000
-
   # https://docs.aws.amazon.com/athena/latest/ug/athena-prebuilt-data-connectors-dynamodb.html
   AthenaDDBConnector:
     Type: AWS::Serverless::Application
@@ -435,13 +410,6 @@ Outputs:
   PythonLayerVersionArn:
     Description: Python layer version
     Value: !If [CreatePythonLayer, !Ref PythonLayer, !Ref PythonLayerVersionArn]
-
-  AnalysisApiId:
-    Description: Analysis API Gateway ID
-    Value: !Ref AnalysisApi
-  AnalysisApiEndpoint:
-    Description: HTTPS endpoint for the analysis api
-    Value: !Sub ${AnalysisApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
 
   AthenaWorkGroup:
     Description: The Athena workgroup for Panther queries
