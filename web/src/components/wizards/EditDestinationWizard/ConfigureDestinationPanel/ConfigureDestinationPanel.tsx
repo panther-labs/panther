@@ -28,6 +28,7 @@ import useRouter from 'Hooks/useRouter';
 import { useUpdateDestination } from './graphql/updateDestination.generated';
 import { useGetDestinationDetails } from './graphql/getDestinationDetails.generated';
 import { WizardData } from '../EditDestination';
+import Skeleton from './Skeleton';
 
 const ConfigureDestinationPanel: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
@@ -90,11 +91,16 @@ const ConfigureDestinationPanel: React.FC = () => {
     [destination]
   );
 
+  if (loading) {
+    return <Skeleton />;
+  }
+
   const destinationDisplayName = capitalize(
     destination.outputType === DestinationTypeEnum.Customwebhook
       ? 'Webhook'
       : destination.outputType
   );
+
   return (
     <Box maxWidth={700} mx="auto">
       <WizardPanel.Heading

@@ -16,24 +16,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { FadeIn, Box, Flex, Spinner } from 'pouncejs';
 import React from 'react';
-import { Button, ButtonProps } from 'pouncejs';
+import { WizardPanel } from 'Components/Wizard';
 
-interface SubmitButtonProps extends Omit<ButtonProps, 'size' | 'variant' | 'disabled'> {
-  isSubmitting?: boolean;
-  isValid?: boolean;
-  dirty: boolean;
-}
-
-const SubmitButton: React.FC<SubmitButtonProps> = ({ isSubmitting, isValid, dirty, ...rest }) => {
+const Skeleton: React.FC = () => {
   return (
-    <Button
-      type="submit"
-      loading={isSubmitting}
-      disabled={isSubmitting || !isValid || !dirty}
-      {...rest}
-    />
+    <FadeIn from="bottom">
+      <Box maxWidth={700} mx="auto">
+        <WizardPanel.Heading title="" subtitle="" />
+        <Flex justify="center" my={10}>
+          <Spinner />
+        </Flex>
+      </Box>
+    </FadeIn>
   );
 };
 
-export default React.memo(SubmitButton);
+export default Skeleton;

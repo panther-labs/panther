@@ -146,8 +146,8 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
           {!initialValues.outputId && (
             <Flex justify="center" my={6}>
               <SubmitButton
+                type="submit"
                 aria-label="Add destination"
-                submitForm={submitForm}
                 isSubmitting={isSubmitting}
                 isValid={isValid}
                 dirty={dirty}
@@ -168,7 +168,7 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
                 </LinkButton>
                 <SubmitButton
                   aria-label="Update Destination"
-                  submitForm={submitForm}
+                  onClick={submitForm}
                   isSubmitting={isSubmitting}
                   isValid={isValid}
                   dirty={dirty}
