@@ -21,6 +21,7 @@ package registry
 import (
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -34,12 +35,19 @@ import (
 var (
 	nativeLogTypes    logtypes.Group
 	availableLogTypes = &logtypes.Registry{}
+	internalLogTypes  = logtypes.MustMerge("internal", snapshotlogs.LogTypes())
 )
 
 // NativeLogTypesResolver returns a resolver for native log types.
 // Use this instead of registry.Default()
 func NativeLogTypesResolver() logtypes.Resolver {
 	return logtypes.LocalResolver(nativeLogTypes)
+}
+
+// InternalLogTypesResolver returns a resolver for internal log types.
+// Sources for these log types are managed by panther and they should not be available to users for source onboarding
+func InternalLogTypesResolver() logtypes.Resolver {
+	return logtypes.LocalResolver(internalLogTypes)
 }
 
 // LogTypes exposes all available log types as a read-only group.

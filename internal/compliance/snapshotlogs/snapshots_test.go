@@ -1,4 +1,4 @@
-package main
+package snapshotlogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,12 +19,11 @@ package main
  */
 
 import (
-	"github.com/aws/aws-lambda-go/lambda"
+	"testing"
 
-	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 )
 
-func main() {
-	sh := forwarder.NewStreamHandler()
-	lambda.Start(sh.Run)
+func TestSnapshotsLogs(t *testing.T) {
+	logtesting.RunTestsFromYAML(t, LogTypes(), "./testdata/snapshot_tests.yml")
 }

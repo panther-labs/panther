@@ -1,4 +1,4 @@
-package snapshots
+package snapshotlogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,7 +20,8 @@ package snapshots
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	// FIXME: remove this once synced with master
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 )
 
 // LogTypes exports the available log type entries
@@ -29,18 +30,4 @@ func LogTypes() logtypes.Group {
 }
 
 // nolint:lll
-var logTypes = logtypes.Must("SnapshotHistory",
-	logtypes.Config{
-		Name:         TypeCompliance,
-		Description:  `Contains Cloud Security compliance snapshots`,
-		ReferenceURL: `https://docs.runpanther.io/cloud-security/overview`,
-		NewParser:    parsers.AdapterFactory(NewComplianceParser()),
-		Schema:       Compliance{},
-	}, logtypes.Config{
-		Name:         TypeResource,
-		Description:  `Contains Cloud Security resource snapshots`,
-		ReferenceURL: `https://docs.runpanther.io/cloud-security/resources`,
-		NewParser:    parsers.AdapterFactory(NewResourceParser()),
-		Schema:       Resource{},
-	},
-)
+var logTypes = logtypes.Must("SnapshotHistory", logTypeCompliance, logTypeResource)
