@@ -82,7 +82,7 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 		return nil, err
 	}
 
-	if err := updateTables(existingIntegrationItem.IntegrationType, input); err != nil {
+	if err := updateTables(existingIntegrationItem, input); err != nil {
 		zap.L().Error("failed to update tables", zap.Error(err))
 		return nil, updateIntegrationInternalError
 	}
@@ -209,21 +209,48 @@ func getItem(integrationID string) (*ddb.Integration, error) {
 	return item, nil
 }
 
-func updateTables(integrationType string, input *models.UpdateIntegrationSettingsInput) error {
-	var logtypes []string
-	switch integrationType {
+func updateTables(item *ddb.Integration, input *models.UpdateIntegrationSettingsInput) error {
+	var existingLogTypes, newLogTypes []string
+	switch item.IntegrationType {
 	case models.IntegrationTypeAWS3:
-		logtypes = input.LogTypes
+		existingLogTypes = item.LogTypes
+		newLogTypes = input.LogTypes
 	case models.IntegrationTypeSqs:
-		logtypes = input.SqsConfig.LogTypes
+		existingLogTypes = item.SqsConfig.LogTypes
+		newLogTypes = input.SqsConfig.LogTypes
+	}
+
+	// If log types haven't been updated, return
+	if slicesEqual(existingLogTypes, newLogTypes) {
+		return nil
 	}
 
 	m := process.CreateTablesMessage{
-		LogTypes: logtypes,
+		LogTypes: newLogTypes,
 	}
 	err := m.Send(sqsClient, env.DataCatalogUpdaterQueueURL)
 	if err != nil {
 		return errors.Wrap(err, "failed to create Glue tables")
 	}
 	return nil
+}
+
+func slicesEqual(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+
+	for i := range left {
+		found := false
+		for j := range right {
+			if left[i] == right[j] {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
 }

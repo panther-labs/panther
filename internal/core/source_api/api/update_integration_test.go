@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"strconv"
 	"testing"
 	"time"
 
@@ -160,4 +161,50 @@ func TestUpdateIntegrationLastScanEnd(t *testing.T) {
 
 	assert.NoError(t, err)
 	mockClient.AssertExpectations(t)
+}
+
+func TestSliceEquality(t *testing.T) {
+	type testCase struct {
+		first, second []string
+		expect        bool
+	}
+
+	for i, tc := range []testCase{
+		{
+			first:  []string{},
+			second: []string{},
+			expect: true,
+		},
+		{
+			first:  []string{"a"},
+			second: []string{},
+			expect: false,
+		},
+		{
+			first:  []string{},
+			second: []string{"a"},
+			expect: false,
+		},
+		{
+			first:  []string{"a", "b"},
+			second: []string{"a", "b"},
+			expect: true,
+		},
+		{
+			first:  []string{"a", "b"},
+			second: []string{"b", "a"},
+			expect: true,
+		},
+		{
+			first:  []string{"a", "b"},
+			second: []string{"a", "b", "ab"},
+			expect: false,
+		},
+	} {
+		tc := tc
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			result := slicesEqual(tc.first, tc.second)
+			assert.Equal(t, tc.expect, result)
+		})
+	}
 }
