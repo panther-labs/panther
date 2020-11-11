@@ -64,7 +64,7 @@ export type AddPolicyInput = {
   displayName?: Maybe<Scalars['String']>;
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
-  outputIds: Array<Scalars['ID']>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   runbook?: Maybe<Scalars['String']>;
@@ -83,7 +83,7 @@ export type AddRuleInput = {
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  outputIds: Array<Scalars['ID']>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   runbook?: Maybe<Scalars['String']>;
   severity: SeverityEnum;
@@ -1319,7 +1319,7 @@ export type UpdatePolicyInput = {
   displayName?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
   id: Scalars['ID'];
-  outputIds: Array<Scalars['ID']>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   runbook?: Maybe<Scalars['String']>;
@@ -1338,7 +1338,7 @@ export type UpdateRuleInput = {
   enabled?: Maybe<Scalars['Boolean']>;
   id: Scalars['ID'];
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  outputIds: Array<Scalars['ID']>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   runbook?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
