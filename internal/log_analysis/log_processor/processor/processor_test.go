@@ -69,7 +69,6 @@ var (
 	testSourceID    = "testSource"
 	testSourceLabel = "testSourceLabel"
 	testKey         = "testKey"
-	testContentType = "testContentType"
 )
 
 type testLog struct {
@@ -161,7 +160,7 @@ func TestProcessDataStreamError(t *testing.T) {
 			zap.Any(statsKey, *mockStats),
 
 			// error
-			zap.Error(errors.Wrap(errFailingReader, "failed to ReadString()")), // from run()
+			zap.Error(errors.Wrap(errFailingReader, "failed to read log line")), // from run()
 
 			// standard
 			zap.String("namespace", common.OpLogNamespace),
@@ -500,7 +499,6 @@ func makeDataStream() (dataStream *common.DataStream) {
 		Source:      testSource,
 		S3ObjectKey: testKey,
 		S3Bucket:    testBucket,
-		ContentType: testContentType,
 	}
 	return
 }

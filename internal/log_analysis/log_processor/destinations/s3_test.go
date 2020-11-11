@@ -169,7 +169,7 @@ func newS3Destination() *testS3Destination {
 			maxBufferedMemBytes: 10 * 1024 * 1024, // an arbitrary amount enough to hold default test data
 			maxDuration:         maxDuration,
 			maxBuffers:          maxBuffers,
-			jsonAPI:             common.BuildJSON(),
+			jsonAPI:             common.ConfigForDataLakeWriters(),
 		},
 		mockSns:        mockSns,
 		mockS3Uploader: mockS3Uploader,
@@ -191,7 +191,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	{
 		var buffer bytes.Buffer
 		writer := gzip.NewWriter(&buffer)
-		stream := common.BuildJSON().BorrowStream(writer)
+		stream := common.ConfigForDataLakeWriters().BorrowStream(writer)
 		stream.WriteVal(testResult)
 		require.NoError(t, stream.Flush())
 		_, _ = writer.Write([]byte("\n"))
@@ -498,7 +498,7 @@ func TestSendDataFailsIfSnsFails(t *testing.T) {
 func TestBufferSetLargest(t *testing.T) {
 	const size = 100
 	event := newTestEvent(testLogType, refTime)
-	bs := newS3EventBufferSet(&S3Destination{jsonAPI: common.BuildJSON()}, 128)
+	bs := newS3EventBufferSet(&S3Destination{jsonAPI: common.ConfigForDataLakeWriters()}, 128)
 	result := event.Result()
 	expectedLargest := bs.getBuffer(result)
 	expectedLargest.bytes = size

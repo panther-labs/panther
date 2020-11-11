@@ -357,7 +357,7 @@ describe('RuleDetails', () => {
     expect(getByAriaLabel('Change Alert Status')).toBeInTheDocument();
   });
 
-  it('fetches the alerts matching the rule, shows an empty fallback and the filters available', async () => {
+  it('fetches the alerts matching the rule & shows an empty fallback if no alerts exist', async () => {
     const rule = buildRuleDetails({
       id: '123',
       displayName: 'This is an amazing rule',
@@ -369,27 +369,28 @@ describe('RuleDetails', () => {
         data: { rule },
         variables: {
           input: {
-            ruleId: '123',
+            ruleId: rule.id,
           },
         },
       }),
       mockListAlertsForRule({
         data: {
-          alerts: {
+          alerts: buildListAlertsResponse({
             alertSummaries: [],
-          },
+            lastEvaluatedKey: null,
+          }),
         },
         variables: {
           input: {
-            ruleId: '123',
             type: AlertTypesEnum.Rule,
+            ruleId: rule.id,
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
         },
       }),
     ];
 
-    const { getByText, getByTestId, getByLabelText, getByAriaLabel } = render(
+    const { getByText, getByAltText, getAllByAriaLabel } = render(
       <Route exact path={urls.logAnalysis.rules.details(':id')}>
         <RuleDetails />
       </Route>,
@@ -398,34 +399,82 @@ describe('RuleDetails', () => {
         initialRoute: `${urls.logAnalysis.rules.details(rule.id)}`,
       }
     );
-    const loadingInterfaceElement = getByTestId('rule-details-loading');
+    const loadingInterfaceElement = getAllByAriaLabel('Loading interface...');
     expect(loadingInterfaceElement).toBeTruthy();
 
     await waitForElementToBeRemoved(loadingInterfaceElement);
     fireEvent.click(getByText('Rule Matches'));
 
-    const loadingListingInterfaceElement = getByTestId('rule-alerts-listing-loading');
+    const loadingListingInterfaceElement = getAllByAriaLabel('Loading interface...');
     expect(loadingListingInterfaceElement).toBeTruthy();
     await waitForElementToBeRemoved(loadingListingInterfaceElement);
 
-    const emptyFallback = getByTestId('list-alerts-empty-fallback');
+    const emptyFallback = getByAltText('Empty Box Illustration');
     expect(emptyFallback).toBeTruthy();
+  });
 
-    expect(getByLabelText('Filter Alerts by text')).toBeInTheDocument();
-    expect(getByAriaLabel('Additional Filters')).toBeInTheDocument();
-    expect(getByTestId('list-alert-sorting')).toBeInTheDocument();
+  it('shows an empty illustration if filtering returns no results', async () => {
+    const rule = buildRuleDetails();
+    const alert = buildAlertSummary();
 
-    // expand the dropdown filters
-    fireEvent.mouseDown(getByAriaLabel('Additional Filters'));
-    await waitFor(() => expect(getByTestId('dropdown-alert-listing-filters')).toBeInTheDocument());
+    const mocks = [
+      mockRuleDetails({
+        data: { rule },
+        variables: {
+          input: {
+            ruleId: rule.id,
+          },
+        },
+      }),
+      mockListAlertsForRule({
+        data: {
+          alerts: buildListAlertsResponse({
+            alertSummaries: [alert],
+            lastEvaluatedKey: null,
+          }),
+        },
+        variables: {
+          input: {
+            type: AlertTypesEnum.Rule,
+            ruleId: rule.id,
+            pageSize: DEFAULT_LARGE_PAGE_SIZE,
+          },
+        },
+      }),
+      mockListAlertsForRule({
+        data: {
+          alerts: buildListAlertsResponse({
+            alertSummaries: [],
+            lastEvaluatedKey: null,
+          }),
+        },
+        variables: {
+          input: {
+            nameContains: 'test',
+            type: AlertTypesEnum.Rule,
+            ruleId: rule.id,
+            pageSize: DEFAULT_LARGE_PAGE_SIZE,
+          },
+        },
+      }),
+    ];
 
-    expect(getByTestId('alert-listing-status-filtering')).toBeInTheDocument();
-    expect(getByTestId('alert-listing-severity-filtering')).toBeInTheDocument();
-    expect(getByTestId('alert-listing-max-event')).toBeInTheDocument();
-    expect(getByTestId('alert-listing-min-event')).toBeInTheDocument();
+    const { findByText, findByAltText, getByLabelText } = render(
+      <Route exact path={urls.logAnalysis.rules.details(':id')}>
+        <RuleDetails />
+      </Route>,
+      {
+        mocks,
+        initialRoute: `${urls.logAnalysis.rules.details(rule.id)}?section=matches`,
+      }
+    );
 
-    expect(getByText('Apply Filters')).toBeInTheDocument();
-    expect(getByText('Clear Filters')).toBeInTheDocument();
+    await findByText(alert.title);
+
+    fireEvent.change(getByLabelText('Filter Alerts by text'), { target: { value: 'test' } });
+
+    expect(await findByAltText('Document and magnifying glass')).toBeInTheDocument();
+    expect(await findByText('No Results')).toBeInTheDocument();
   });
 
   it('allows conditionally filtering the alerts matching the rule rule', async () => {

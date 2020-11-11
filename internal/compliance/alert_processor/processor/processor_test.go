@@ -33,6 +33,7 @@ import (
 
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
+	remediationmodels "github.com/panther-labs/panther/api/lambda/remediation/models"
 	"github.com/panther-labs/panther/internal/compliance/alert_processor/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/testutils"
@@ -54,6 +55,9 @@ func TestHandleEventWithAlert(t *testing.T) {
 
 	mockComplianceClient := &gatewayapi.MockClient{}
 	complianceClient = mockComplianceClient
+
+	mockRemediationClient := &gatewayapi.MockClient{}
+	remediationClient = mockRemediationClient
 
 	mockRoundTripper := &mockRoundTripper{}
 	httpClient = &http.Client{Transport: mockRoundTripper}
@@ -89,13 +93,22 @@ func TestHandleEventWithAlert(t *testing.T) {
 
 	// mock call to analysis-api
 	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policyResponse, http.StatusOK), nil).Once()
+
 	// mock call to remediate-api
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse("", http.StatusOK), nil).Once()
+	remediationInput := &remediationmodels.LambdaInput{
+		RemediateResourceAsync: &remediationmodels.RemediateResourceAsyncInput{
+			PolicyID:   "test-policy",
+			ResourceID: "test-resource",
+		},
+	}
+	mockRemediationClient.On("Invoke", remediationInput, nil).Return(http.StatusOK, nil, nil)
+
 	mockDdbClient.On("UpdateItem", mock.Anything).Return(&dynamodb.UpdateItemOutput{}, nil)
 
 	require.NoError(t, Handle(input))
 
 	mockComplianceClient.AssertExpectations(t)
+	mockRemediationClient.AssertExpectations(t)
 	mockDdbClient.AssertExpectations(t)
 	mockRoundTripper.AssertExpectations(t)
 }

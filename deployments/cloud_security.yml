@@ -59,10 +59,6 @@ Parameters:
     Description: Versioned lambda layer with pip libraries for python analysis and remediation
     # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+$'
-  RemediationApiId:
-    Type: String
-    Description: API Gateway for remediation-api
-    AllowedPattern: '^[0-9a-z]{10}$'
   SqsKeyId:
     Type: String
     Description: KMS key ID for SQS encryption
@@ -200,8 +196,6 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          REMEDIATION_SERVICE_HOST: !Sub '${RemediationApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          REMEDIATION_SERVICE_PATH: v1
           POLICY_SERVICE_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
           POLICY_SERVICE_PATH: v1
           TABLE_NAME: !Ref AlertForwarderTable
@@ -251,12 +245,12 @@ Resources:
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-remediation-api
             - Effect: Allow
               Action: execute-api:Invoke
-              Resource:
-                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${RemediationApiId}/v1/POST/remediateasync
-                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
 
   AlertProcessorAlarms:
     Type: Custom::LambdaAlarms
@@ -678,14 +672,6 @@ Resources:
       TableName: !Ref ComplianceTable
 
   ##### Remediation API #####
-  RemediationGatewayInvocation:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref RemediationApiFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${RemediationApiId}/*
-
   RemediationApiFunction:
     Type: AWS::Serverless::Function
     Properties:

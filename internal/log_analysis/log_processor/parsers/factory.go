@@ -26,7 +26,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
@@ -96,7 +95,7 @@ func (f *JSONParserFactory) NewParser(_ interface{}) (Interface, error) {
 	}
 	api := f.JSON
 	if api == nil {
-		api = common.BuildJSON()
+		api = pantherlog.ConfigJSON()
 	}
 	iter := jsoniter.Parse(api, logReader, bufferSize)
 
