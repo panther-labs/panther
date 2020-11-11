@@ -77,14 +77,14 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 		}
 	}
 
-	if err := normalizeIntegration(existingIntegrationItem, input); err != nil {
-		zap.L().Error("failed to normalize integration", zap.Error(err))
-		return nil, err
-	}
-
 	if err := updateTables(existingIntegrationItem, input); err != nil {
 		zap.L().Error("failed to update tables", zap.Error(err))
 		return nil, updateIntegrationInternalError
+	}
+
+	if err := normalizeIntegration(existingIntegrationItem, input); err != nil {
+		zap.L().Error("failed to normalize integration", zap.Error(err))
+		return nil, err
 	}
 
 	if err := dynamoClient.PutItem(existingIntegrationItem); err != nil {
