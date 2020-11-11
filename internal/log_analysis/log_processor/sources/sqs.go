@@ -25,12 +25,10 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/message_forwarder/forwarder"
 )
-
-var jsonAPI = common.BuildJSON()
 
 type SQSClassifier struct {
 	Resolver    logtypes.Resolver
@@ -48,7 +46,7 @@ func (c *SQSClassifier) Classify(log string) (*classification.ClassifierResult, 
 		return &classification.ClassifierResult{}, nil
 	}
 	msg := forwarder.Message{}
-	err := jsonAPI.UnmarshalFromString(log, &msg)
+	err := pantherlog.ConfigJSON().UnmarshalFromString(log, &msg)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse JSON message")
 	}

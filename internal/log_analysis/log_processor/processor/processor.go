@@ -158,13 +158,15 @@ func NewFactory(resolver logtypes.Resolver) Factory {
 // processStream reads the data from an S3 the dataStream, parses it and writes events to the output channel
 func (p *Processor) run(outputChan chan<- *parsers.Result) error {
 	var err error
+	// DO NOT use bufio.NewScanner
+	// bufio.NewScanner has a max buffer size which we might hit as we read bigger log lines
 	stream := bufio.NewReader(p.input.Reader)
 	for {
 		var line string
 		line, err = stream.ReadString(common.EventDelimiter)
 		if err != nil {
-			if err == io.EOF { // we are done
-				err = nil // not really an error
+			if err == io.EOF {
+				err = nil
 				p.processLogLine(line, outputChan)
 			}
 			break
@@ -172,7 +174,7 @@ func (p *Processor) run(outputChan chan<- *parsers.Result) error {
 		p.processLogLine(line, outputChan)
 	}
 	if err != nil {
-		err = errors.Wrap(err, "failed to ReadString()")
+		err = errors.Wrap(err, "failed to read log line")
 	}
 	p.logStats(err) // emit log line describing the processing of the file and any errors
 	return err
