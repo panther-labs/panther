@@ -18,39 +18,89 @@
 
 import React from 'react';
 import { Form, Formik, FastField } from 'formik';
-import { Box, Flex, Text } from 'pouncejs';
+import { Box, Flex, Text, useSnackbar } from 'pouncejs';
 import { AlertStatusesEnum } from 'Generated/schema';
 import FormikCombobox from 'Components/fields/ComboBox';
-import { capitalize } from 'Helpers/utils';
+import { capitalize, extractErrorMessage } from 'Helpers/utils';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import { useSelect } from 'Components/utils/SelectContext';
+import { useUpdateAlertStatus } from 'Source/graphql/queries';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
 
 const initialValues = {
   status: AlertStatusesEnum.Resolved,
 };
+
 const statusOptions = Object.values(AlertStatusesEnum);
 
 const filterItemToString = (item: AlertStatusesEnum) => capitalize(item.toLowerCase());
 
 interface ListAlertSelectionFormValues {
-  status: string;
+  status: AlertStatusesEnum;
 }
 
 const ListAlertSelection: React.FC = () => {
-  const { selection } = useSelect();
+  const { selection, resetSelection } = useSelect();
+  const { pushSnackbar } = useSnackbar();
+  const [updateAlertStatus] = useUpdateAlertStatus({
+    // This hook ensures we also update the AlertDetails item in the cache
+    update: (cache, { data }) => {
+      data.updateAlertStatus.forEach(newAlert => {
+        const dataId = cache.identify({
+          __typename: 'AlertDetails',
+          alertId: newAlert.alertId,
+        });
+        cache.modify(dataId, {
+          status: () => newAlert.status,
+          lastUpdatedBy: () => newAlert.lastUpdatedBy,
+          lastUpdatedByTime: () => newAlert.lastUpdatedByTime,
+        });
+      });
+      // TODO: when apollo client is updated to 3.0.0-rc.12+, use this code
+      // cache.modify({
+      //   id: cache.identify({
+      //     __typename: 'AlertDetails',
+      //     alertId: data.updateAlertStatus.alertId,
+      //   }),
+      //   fields: {
+      //     status: () => data.updateAlertStatus.status,
+      //     lastUpdatedBy: () => data.updateAlertStatus.lastUpdatedBy,
+      //     lastUpdatedByTime: () => data.updateAlertStatus.lastUpdatedByTime,
+      //   },
+      // });
+    },
+    onCompleted: data => {
+      const { status, severity } = data.updateAlertStatus[0];
+      trackEvent({
+        event: EventEnum.BulkUpdatedAlertStatus,
+        src: SrcEnum.Alerts,
+        data: { status, severity },
+      });
+      resetSelection();
+      pushSnackbar({
+        variant: 'success',
+        title: `${data.updateAlertStatus.length} Alert(s) set to ${capitalize(
+          (status === AlertStatusesEnum.Closed ? 'INVALID' : status).toLowerCase()
+        )}`,
+      });
+    },
+    onError: error => {
+      pushSnackbar({
+        variant: 'error',
+        title: `Failed to bulk update alert(s) status`,
+        description: extractErrorMessage(error),
+      });
+    },
+  });
   return (
     <Flex justify="flex-end" align="center">
       <Formik<ListAlertSelectionFormValues>
         initialValues={initialValues}
-        onSubmit={
-          // TODO: Make this functional
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          (values: ListAlertSelectionFormValues) => {
-            // @ts-ignore
-            // eslint-disable-next-line no-console
-            console.log('values');
-          }
-        }
+        onSubmit={(values: ListAlertSelectionFormValues) => {
+          updateAlertStatus({
+            variables: { input: { status: values.status, alertIds: selection } },
+          });
+        }}
       >
         <Form>
           <Flex spacing={4} align="center">
