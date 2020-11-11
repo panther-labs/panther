@@ -21,11 +21,11 @@ package processor
 import (
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 )
 
 const cacheDuration = 30 * time.Second
@@ -47,18 +47,27 @@ func getPolicies() (policyMap, error) {
 	}
 
 	// Load from analysis-api
-	result, err := analysisClient.Operations.GetEnabledPolicies(
-		&operations.GetEnabledPoliciesParams{HTTPClient: httpClient, Type: string(models.AnalysisTypePOLICY)})
-	if err != nil {
+	listInput := analysismodels.LambdaInput{
+		ListPolicies: &analysismodels.ListPoliciesInput{
+			Enabled: aws.Bool(true),
+			Fields: []string{
+				// select only the fields we need so it fits in a single response
+				"body", "id", "outputIds", "reports", "resourceTypes", "severity", "suppressions", "tags", "versionId",
+			},
+			PageSize: -1,
+		},
+	}
+	var listOutput analysismodels.ListPoliciesOutput
+	if _, err := analysisClient.Invoke(&listInput, &listOutput); err != nil {
 		return nil, errors.WithMessage(err, "failed to load policies from analysis-api")
 	}
 	zap.L().Info("successfully loaded enabled policies from analysis-api",
-		zap.Int("policyCount", len(result.Payload.Policies)))
+		zap.Int("policyCount", len(listOutput.Policies)))
 
 	// Convert list of policies into a map by ID
-	policies := make(policyMap, len(result.Payload.Policies))
-	for _, policy := range result.Payload.Policies {
-		policies[string(policy.ID)] = policy
+	policies := make(policyMap, len(listOutput.Policies))
+	for _, policy := range listOutput.Policies {
+		policies[policy.ID] = policy
 	}
 
 	policyCache = policyCacheEntry{LastUpdated: time.Now(), Policies: policies}

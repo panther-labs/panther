@@ -63,7 +63,9 @@ type ListPoliciesInput struct {
 	SortDir string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 
 	// ----- Paging -----
-	PageSize int `json:"pageSize" validate:"min=0"`
+	// Set to -1 to force all policies into the same response.
+	// Lambda will error if this exceeds the 6MB payload limit, so select only the fields you need
+	PageSize int `json:"pageSize" validate:"min=-1"`
 	Page     int `json:"page" validate:"min=0"`
 }
 
