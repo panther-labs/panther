@@ -31,6 +31,7 @@ NAME = 'name'
 FIELD = 'field'
 METHOD = 'method'
 
+
 class DataModel:
     """Panther data model and imported methods."""
 
@@ -74,8 +75,7 @@ class DataModel:
     def _extract_mappings(self, source_mappings: List[Dict[str, str]]) -> None:
         for mapping in source_mappings:
             if NAME not in mapping:
-                raise AssertionError('DataModel [{}] is missing required field: [{}]'.format(
-                    self.data_model_id, NAME))
+                raise AssertionError('DataModel [{}] is missing required field: [{}]'.format(self.data_model_id, NAME))
             if FIELD in mapping:
                 # we are dealing with a string field or a jsonpath
                 self.fields[mapping[NAME]] = parse(mapping[FIELD])
@@ -84,8 +84,7 @@ class DataModel:
                     raise AssertionError('DataModel is missing method named [{}]'.format(mapping[METHOD]))
                 self.methods[mapping[NAME]] = getattr(self._module, mapping[METHOD])
             else:
-                raise AssertionError('DataModel [{}] is missing a field or method for [{}]'.format(
-                    self.data_model_id, mapping[NAME]))
+                raise AssertionError('DataModel [{}] is missing a field or method for [{}]'.format(self.data_model_id, mapping[NAME]))
 
     def _import_data_model_as_module(self) -> Any:
         """Dynamically import a Python module from a file.
