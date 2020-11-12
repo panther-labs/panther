@@ -137,21 +137,19 @@ const RuleAlertsListing: React.FC<Required<Pick<ListAlertsInput, 'type' | 'ruleI
     <SelectProvider>
       <ErrorBoundary>
         <Flex width="100%" pt={6} px={6}>
-          <SelectConsumer>
-            {value => {
-              return (
-                <Flex width="100%" spacing={2} justify="space-between">
-                  <Flex align="center" spacing={2} ml={6}>
-                    <SelectAllCheckbox selectionIds={alertIds} />
-                    <Text>Alerts</Text>
-                  </Flex>
-                  <Flex justify="flex-end">
-                    {value.selection.length ? <ListAlertSelection /> : <ListAlertFilters />}
-                  </Flex>
-                </Flex>
-              );
-            }}
-          </SelectConsumer>
+          <Flex width="100%" spacing={2} justify="space-between">
+            <Flex align="center" spacing={2} ml={6}>
+              <SelectAllCheckbox selectionIds={alertIds} />
+              <Text>Alerts</Text>
+            </Flex>
+            <Flex justify="flex-end">
+              <SelectConsumer>
+                {value => {
+                  return value.selection.length ? <ListAlertSelection /> : <ListAlertFilters />;
+                }}
+              </SelectConsumer>
+            </Flex>
+          </Flex>
         </Flex>
         <Card as="article" p={6}>
           {hasAnyAlerts ? (
