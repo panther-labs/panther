@@ -30,12 +30,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // ListGlobals pages through globals from a single organization.
-func ListGlobals(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+func (API) ListGlobals(input *models.ListGlobalsInput) *events.APIGatewayProxyResponse {
 	var err error
 
 	// Parse the input

@@ -60,23 +60,23 @@ type LambdaInput struct {
 	UpdateRule *UpdateRuleInput `json:"updateRule"`
 
 	// Data models (log analysis)
-	CreateDataModel *CreateDataModelInput `json:"createDataModel"`
-	GetDataModel    *GetDataModelInput    `json:"getDataModel"`
-	ListDataModels  *ListDataModelsInput  `json:"listDataModels"`
-	UpdateDataModel *UpdateDataModelInput `json:"updateDataModel"`
+	//CreateDataModel *CreateDataModelInput `json:"createDataModel"`
+	//GetDataModel    *GetDataModelInput    `json:"getDataModel"`
+	//ListDataModels  *ListDataModelsInput  `json:"listDataModels"`
+	//UpdateDataModel *UpdateDataModelInput `json:"updateDataModel"`
 }
 
 // All detection types (global/data-model/policy/rule/query) have these fields in common
 type CoreEntry struct {
-	Body           string    `json:"body"`
-	CreatedAt      time.Time `json:"createdAt"`
-	CreatedBy      string    `json:"createdBy"`
+	Body           string    `json:"body"` // not required for data models
+	CreatedAt      time.Time `json:"createdAt" validate:"required"`
+	CreatedBy      string    `json:"createdBy" validate:"uuid4"`
 	Description    string    `json:"description"`
-	ID             string    `json:"id"`
-	LastModified   time.Time `json:"lastModified"`
-	LastModifiedBy string    `json:"lastModifiedBy"`
-	Tags           []string  `json:"tags"`
-	VersionID      string    `json:"versionId"`
+	ID             string    `json:"id" validate:"required"`
+	LastModified   time.Time `json:"lastModified" validate:"required"`
+	LastModifiedBy string    `json:"lastModifiedBy" validate:"uuid4"`
+	Tags           []string  `json:"tags" validate:"omitempty,dive,required"`
+	VersionID      string    `json:"versionId" validate:"required"`
 }
 
 // Creating or updating any item supports these fields
@@ -96,7 +96,7 @@ type PythonDetection struct {
 	Reference   string              `json:"reference"`
 	Reports     map[string][]string `json:"reports"`
 	Runbook     string              `json:"runbook"`
-	Severity    models.Severity     `json:"severity"`
+	Severity    models.Severity     `json:"severity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	Tests       []UnitTest          `json:"tests" validate:"dive"`
 }
 

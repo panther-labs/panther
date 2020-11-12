@@ -55,7 +55,7 @@ func ModifyRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 		DisplayName:        input.DisplayName,
 		Enabled:            input.Enabled,
 		ID:                 input.ID,
-		OutputIds:          input.OutputIds,
+		OutputIDs:          input.OutputIds,
 		Reference:          input.Reference,
 		ResourceTypes:      input.LogTypes,
 		Runbook:            input.Runbook,

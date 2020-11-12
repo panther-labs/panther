@@ -28,8 +28,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/api/gateway/analysis"
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 )
 
 type mockLambdaClient struct {
@@ -68,8 +68,7 @@ func TestRuleEngine_TestRule(t *testing.T) {
 		lambdaClient: &lambdaClient,
 	}
 
-	testRuleInput := &models.TestPolicy{
-		AnalysisType: models.AnalysisTypeRULE,
+	testRuleInput := &models.TestPolicyInput{
 		Body: `
 def rule(e): 
 	return True
@@ -81,7 +80,7 @@ def dedup(e):
 	return 'alert-dedup'
 `,
 		ResourceTypes: []string{"Resource.Type"},
-		Tests: []*models.UnitTest{
+		Tests: []models.UnitTest{
 			{
 				Name:           "This will be True",
 				ExpectedResult: true,
@@ -94,9 +93,9 @@ def dedup(e):
 	require.NoError(t, err)
 	lambdaClient.AssertExpectations(t)
 
-	expected := &models.TestRuleResult{
+	expected := &models.TestRuleOutput{
 		TestSummary: true,
-		Results: []*models.RuleResult{
+		Results: []models.RuleTestResult{
 			{
 				ID:                 "0",
 				RuleID:             testRuleID,

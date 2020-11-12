@@ -26,8 +26,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
-	enginemodels "github.com/panther-labs/panther/api/gateway/analysis"
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	enginemodels "github.com/panther-labs/panther/api/lambda/analysis"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -44,12 +44,12 @@ func NewRuleEngine(lambdaClient lambdaiface.LambdaAPI, lambdaName string) RuleEn
 	}
 }
 
-func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, error) {
+func (e *RuleEngine) TestRule(rule *models.TestRuleInput) (*models.TestRuleOutput, error) {
 	// Build the list of events to run the rule against
 	inputEvents := make([]enginemodels.Event, len(rule.Tests))
 	for i, test := range rule.Tests {
 		var attrs map[string]interface{}
-		if err := jsoniter.UnmarshalFromString(string(test.Resource), &attrs); err != nil {
+		if err := jsoniter.UnmarshalFromString(test.Resource, &attrs); err != nil {
 			//nolint // Error is capitalized because will be returned to the UI
 			return nil, &TestInputError{fmt.Errorf(`Event for test "%s" is not valid json: %w`, test.Name, err)}
 		}
@@ -63,7 +63,7 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 	input := enginemodels.RulesEngineInput{
 		Rules: []enginemodels.Rule{
 			{
-				Body:     string(rule.Body),
+				Body:     rule.Body,
 				ID:       testRuleID, // doesn't matter as we're only running one rule
 				LogTypes: rule.ResourceTypes,
 			},
@@ -79,9 +79,9 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 	}
 
 	// Translate rule engine output to test results.
-	testResult := &models.TestRuleResult{
+	testResult := &models.TestRuleOutput{
 		TestSummary: true,
-		Results:     make([]*models.RuleResult, len(engineOutput.Results)),
+		Results:     make([]models.RuleTestResult, len(engineOutput.Results)),
 	}
 	for i, result := range engineOutput.Results {
 		// Determine which test case this result corresponds to.
@@ -91,12 +91,12 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 		}
 		test := rule.Tests[testIndex]
 
-		passed := hasPassed(bool(test.ExpectedResult), result)
+		passed := hasPassed(test.ExpectedResult, result)
 
-		testResult.Results[i] = &models.RuleResult{
+		testResult.Results[i] = models.RuleTestResult{
 			ID:           result.ID,
 			RuleID:       result.RuleID,
-			TestName:     string(test.Name),
+			TestName:     test.Name,
 			Passed:       passed,
 			Errored:      result.Errored,
 			GenericError: result.GenericError,

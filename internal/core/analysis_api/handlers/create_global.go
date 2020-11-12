@@ -23,25 +23,19 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
-	jsoniter "github.com/json-iterator/go"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // CreateGlobal adds a new global to the Dynamo table.
-func CreateGlobal(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	input, err := parseUpdateGlobal(request)
-	if err != nil {
-		return badRequest(err)
-	}
-
+func (API) CreateGlobal(input *models.CreateGlobalInput) *events.APIGatewayProxyResponse {
 	item := &tableItem{
 		Body:        input.Body,
 		Description: input.Description,
 		ID:          input.ID,
 		Tags:        input.Tags,
-		Type:        typeGlobal,
+		Type:        models.TypeGlobal,
 	}
 
 	if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {
@@ -51,23 +45,9 @@ func CreateGlobal(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
-	if err = updateLayer(); err != nil {
+	if err := updateLayer(); err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
 	return gatewayapi.MarshalResponse(item.Global(), http.StatusCreated)
-}
-
-// body parsing shared by CreatePolicy and ModifyPolicy
-func parseUpdateGlobal(request *events.APIGatewayProxyRequest) (*models.UpdateGlobal, error) {
-	var result models.UpdateGlobal
-	if err := jsoniter.UnmarshalFromString(request.Body, &result); err != nil {
-		return nil, err
-	}
-
-	if err := result.Validate(nil); err != nil {
-		return nil, err
-	}
-
-	return &result, nil
 }

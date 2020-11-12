@@ -22,15 +22,11 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
+
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 )
 
-// DeleteGlobal deletes existing globals.
-func DeleteGlobal(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	input, err := parseDeletePolicies(request)
-	if err != nil {
-		return badRequest(err)
-	}
-
+func (API) DeleteGlobals(input *models.DeleteGlobalsInput) *events.APIGatewayProxyResponse {
 	/*
 		There are three separate actions here, and each one could fail in turn leading to different scenarios:
 
@@ -43,13 +39,13 @@ func DeleteGlobal(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 		3. S3 delete fails. At this point, there is no memory of the global anywhere except in s3. Currently we're not
 		using the s3 history for anything, but if we ever do then this could become problematic then.
 	*/
-	if err = dynamoBatchDelete(input); err != nil {
+	if err := dynamoBatchDelete(input); err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
-	if err = updateLayer(); err != nil {
+	if err := updateLayer(); err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
-	if err = s3BatchDelete(input); err != nil {
+	if err := s3BatchDelete(input); err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 

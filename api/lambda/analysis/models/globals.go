@@ -28,7 +28,7 @@ type GetGlobalInput struct {
 }
 
 type ListGlobalsInput struct {
-	// TODO - update appsync to specify the fields it needs (id, modifyTime, tags)
+	// TODO - update appsync to specify the fields it needs (id, lastModified, tags)
 	Fields []string `json:"fields" validate:"omitempty,dive,required"`
 
 	SortDir  string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`

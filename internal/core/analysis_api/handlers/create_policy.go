@@ -20,36 +20,40 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
-	jsoniter "github.com/json-iterator/go"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
+	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // CreatePolicy adds a new policy to the Dynamo table.
-func CreatePolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	input, err := parseUpdatePolicy(request)
-	if err != nil {
-		return badRequest(err)
+func (API) CreatePolicy(input *models.CreatePolicyInput) *events.APIGatewayProxyResponse {
+	// Policy names are embedded in emails, alert outputs, etc. Prevent a possible injection attack
+	if genericapi.ContainsHTML(input.DisplayName) {
+		return &events.APIGatewayProxyResponse{
+			Body:       "invalid display name: " + genericapi.ErrContainsHTML.Error(),
+			StatusCode: http.StatusBadRequest,
+		}
 	}
 
 	// Disallow saving if policy is enabled and its tests fail.
 	testsPass, err := enabledPolicyTestsPass(input)
-	if _, ok := err.(*analysis.TestInputError); ok {
-		return badRequest(err)
-	}
+
 	if err != nil {
-		return failedRequest(err.Error(), http.StatusInternalServerError)
+		statusCode := http.StatusInternalServerError
+		if _, ok := err.(*analysis.TestInputError); ok {
+			statusCode = http.StatusBadRequest
+		}
+		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: statusCode}
 	}
 	if !testsPass {
-		return badRequest(errPolicyTestsFail)
+		return &events.APIGatewayProxyResponse{Body: errPolicyTestsFail.Error(), StatusCode: http.StatusBadRequest}
 	}
 
 	item := &tableItem{
@@ -60,7 +64,7 @@ func CreatePolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 		DisplayName:               input.DisplayName,
 		Enabled:                   input.Enabled,
 		ID:                        input.ID,
-		OutputIds:                 input.OutputIds,
+		OutputIDs:                 input.OutputIDs,
 		Reference:                 input.Reference,
 		ResourceTypes:             input.ResourceTypes,
 		Runbook:                   input.Runbook,
@@ -68,7 +72,7 @@ func CreatePolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 		Suppressions:              input.Suppressions,
 		Tags:                      input.Tags,
 		Tests:                     input.Tests,
-		Type:                      typePolicy,
+		Type:                      models.TypePolicy,
 	}
 
 	if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {
@@ -79,32 +83,13 @@ func CreatePolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 	}
 
 	// New policies are "passing" since they haven't evaluated anything yet.
-	return gatewayapi.MarshalResponse(item.Policy(models.ComplianceStatusPASS), http.StatusCreated)
-}
-
-// body parsing shared by CreatePolicy and ModifyPolicy
-func parseUpdatePolicy(request *events.APIGatewayProxyRequest) (*models.UpdatePolicy, error) {
-	var result models.UpdatePolicy
-	if err := jsoniter.UnmarshalFromString(request.Body, &result); err != nil {
-		return nil, err
-	}
-
-	if err := result.Validate(nil); err != nil {
-		return nil, err
-	}
-
-	// Policy names are embedded in emails, alert outputs, etc. Prevent a possible injection attack
-	if genericapi.ContainsHTML(string(result.DisplayName)) {
-		return nil, fmt.Errorf("display name: %v", genericapi.ErrContainsHTML)
-	}
-
-	return &result, nil
+	return gatewayapi.MarshalResponse(item.Policy(compliancemodels.StatusPass), http.StatusCreated)
 }
 
 var errPolicyTestsFail = errors.New("cannot save an enabled policy with failing unit tests")
 
 // enabledPolicyTestsPass returns false if the policy is enabled and its tests fail.
-func enabledPolicyTestsPass(policy *models.UpdatePolicy) (bool, error) {
+func enabledPolicyTestsPass(policy *models.UpdatePolicyInput) (bool, error) {
 	if !policy.Enabled || len(policy.Tests) == 0 {
 		return true, nil
 	}
@@ -112,12 +97,12 @@ func enabledPolicyTestsPass(policy *models.UpdatePolicy) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return bool(testResults.TestSummary), nil
+	return testResults.TestSummary, nil
 }
 
-func toTestPolicy(updatePolicy *models.UpdatePolicy) *models.TestPolicy {
-	return &models.TestPolicy{
-		AnalysisType:  models.AnalysisTypePOLICY,
+func toTestPolicy(updatePolicy *models.UpdatePolicyInput) *models.TestPolicyInput {
+	return &models.TestPolicyInput{
+		AnalysisType:  models.TypePolicy,
 		Body:          updatePolicy.Body,
 		ResourceTypes: updatePolicy.ResourceTypes,
 		Tests:         updatePolicy.Tests,

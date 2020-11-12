@@ -20,14 +20,12 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
-	jsoniter "github.com/json-iterator/go"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
@@ -41,22 +39,31 @@ const (
 )
 
 // CreateRule adds a new rule to the Dynamo table.
-func CreateRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	input, err := parseUpdateRule(request)
-	if err != nil {
-		return badRequest(err)
+func (API) CreateRule(input *models.CreateRuleInput) *events.APIGatewayProxyResponse {
+	// Rule names are embedded in emails, alert outputs, etc. Prevent a possible injection attack
+	if genericapi.ContainsHTML(input.DisplayName) {
+		return &events.APIGatewayProxyResponse{
+			Body:       "invalid display name: " + genericapi.ErrContainsHTML.Error(),
+			StatusCode: http.StatusBadRequest,
+		}
+	}
+
+	// in case it is not set, put a default. Minimum value for DedupPeriodMinutes is 15, so 0 means it's not set
+	if input.DedupPeriodMinutes == 0 {
+		input.DedupPeriodMinutes = defaultDedupPeriodMinutes
 	}
 
 	// Disallow saving if rule is enabled and its tests fail.
 	testsPass, err := enabledRuleTestsPass(input)
-	if _, ok := err.(*analysis.TestInputError); ok {
-		return badRequest(err)
-	}
 	if err != nil {
-		return failedRequest(err.Error(), http.StatusInternalServerError)
+		statusCode := http.StatusInternalServerError
+		if _, ok := err.(*analysis.TestInputError); ok {
+			statusCode = http.StatusBadRequest
+		}
+		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: statusCode}
 	}
 	if !testsPass {
-		return badRequest(errRuleTestsFail)
+		return &events.APIGatewayProxyResponse{Body: errRuleTestsFail.Error(), StatusCode: http.StatusBadRequest}
 	}
 
 	item := &tableItem{
@@ -67,14 +74,14 @@ func CreateRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 		DisplayName:        input.DisplayName,
 		Enabled:            input.Enabled,
 		ID:                 input.ID,
-		OutputIds:          input.OutputIds,
+		OutputIDs:          input.OutputIDs,
 		Reference:          input.Reference,
 		ResourceTypes:      input.LogTypes,
 		Runbook:            input.Runbook,
 		Severity:           input.Severity,
 		Tags:               input.Tags,
 		Tests:              input.Tests,
-		Type:               typeRule,
+		Type:               models.TypeRule,
 	}
 
 	if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {
@@ -87,40 +94,16 @@ func CreateRule(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyR
 	return gatewayapi.MarshalResponse(item.Rule(), http.StatusCreated)
 }
 
-// body parsing shared by CreateRule and ModifyRule
-func parseUpdateRule(request *events.APIGatewayProxyRequest) (*models.UpdateRule, error) {
-	var result models.UpdateRule
-	if err := jsoniter.UnmarshalFromString(request.Body, &result); err != nil {
-		return nil, err
-	}
-
-	// in case it is not set, put a default. Minimum value for DedupPeriodMinutes is 15, so 0 means it's not set
-	if result.DedupPeriodMinutes == 0 {
-		result.DedupPeriodMinutes = defaultDedupPeriodMinutes
-	}
-
-	if err := result.Validate(nil); err != nil {
-		return nil, err
-	}
-
-	// Rule names are embedded in emails, alert outputs, etc. Prevent a possible injection attack
-	if genericapi.ContainsHTML(string(result.DisplayName)) {
-		return nil, fmt.Errorf("display name: %v", genericapi.ErrContainsHTML)
-	}
-
-	return &result, nil
-}
-
 var errRuleTestsFail = errors.New("cannot save an enabled rule with failing unit tests")
 
 // enabledRuleTestsPass returns false if the rule is enabled and its tests fail.
-func enabledRuleTestsPass(rule *models.UpdateRule) (bool, error) {
+func enabledRuleTestsPass(rule *models.UpdateRuleInput) (bool, error) {
 	if !rule.Enabled || len(rule.Tests) == 0 {
 		return true, nil
 	}
 
-	tp := &models.TestPolicy{
-		AnalysisType:  models.AnalysisTypeRULE,
+	tp := &models.TestPolicyInput{
+		AnalysisType:  models.TypeRule,
 		Body:          rule.Body,
 		ResourceTypes: rule.LogTypes,
 		Tests:         rule.Tests,

@@ -87,10 +87,10 @@ type SuppressInput struct {
 }
 
 type TestPolicyInput struct {
-	AnalysisType  string     `json:"analysisType" validate:"oneof=GLOBAL POLICY RULE"`
-	Body          string     `json:"body" validate:"required"`
-	ResourceTypes []string   `json:"resourceTypes" validate:"omitempty,dive,required"`
-	Tests         []UnitTest `json:"tests"`
+	AnalysisType  DetectionType `json:"analysisType" validate:"oneof=GLOBAL POLICY RULE"`
+	Body          string        `json:"body" validate:"required"`
+	ResourceTypes []string      `json:"resourceTypes" validate:"omitempty,dive,required"`
+	Tests         []UnitTest    `json:"tests"`
 }
 
 type TestPolicyOutput struct {

@@ -55,7 +55,7 @@ func ModifyPolicy(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 		DisplayName:               input.DisplayName,
 		Enabled:                   input.Enabled,
 		ID:                        input.ID,
-		OutputIds:                 input.OutputIds,
+		OutputIDs:                 input.OutputIds,
 		Reference:                 input.Reference,
 		ResourceTypes:             input.ResourceTypes,
 		Runbook:                   input.Runbook,
