@@ -124,6 +124,7 @@ describe('ListAlerts', () => {
       getByAriaLabel,
       findAllByText,
       queryByAriaLabel,
+      queryAllByText,
     } = render(<ListAlerts />, {
       mocks,
     });
@@ -140,18 +141,18 @@ describe('ListAlerts', () => {
 
     // Single select all of 3 Alerts
     const checkboxForAlert1 = getByAriaLabel(`select ${alertSummaries[0].alertId}`);
-    await fireClickAndMouseEvents(checkboxForAlert1);
+    fireClickAndMouseEvents(checkboxForAlert1);
     expect(getByText('1 Selected')).toBeInTheDocument();
     const checkboxForAlert2 = getByAriaLabel(`select ${alertSummaries[1].alertId}`);
-    await fireClickAndMouseEvents(checkboxForAlert2);
+    fireClickAndMouseEvents(checkboxForAlert2);
     expect(getByText('2 Selected')).toBeInTheDocument();
     const checkboxForAlert3 = getByAriaLabel(`select ${alertSummaries[2].alertId}`);
-    await fireClickAndMouseEvents(checkboxForAlert3);
+    fireClickAndMouseEvents(checkboxForAlert3);
     expect(getByText('3 Selected')).toBeInTheDocument();
 
     // Deselect first alert
     const checkedCheckboxForAlert1 = getByAriaLabel(`unselect ${alertSummaries[0].alertId}`);
-    await fireClickAndMouseEvents(checkedCheckboxForAlert1);
+    fireClickAndMouseEvents(checkedCheckboxForAlert1);
     expect(getByText('2 Selected')).toBeInTheDocument();
 
     // Expect status field to have Resolved as default
@@ -162,6 +163,7 @@ describe('ListAlerts', () => {
     fireClickAndMouseEvents(statusField);
     fireClickAndMouseEvents(getByText('Invalid'));
     expect(statusField).toHaveValue('Invalid');
+    expect(await queryAllByText('INVALID')).toHaveLength(0);
     fireClickAndMouseEvents(getByText('Apply'));
 
     // Find the alerts with the updated status
@@ -240,7 +242,7 @@ describe('ListAlerts', () => {
       expect(getByAriaLabel(`select ${alertSummary.alertId}`)).toBeInTheDocument();
     });
 
-    await fireClickAndMouseEvents(selectAllCheckbox);
+    fireClickAndMouseEvents(selectAllCheckbox);
     expect(getByText('3 Selected')).toBeInTheDocument();
 
     // Expect status field to have Resolved as default
