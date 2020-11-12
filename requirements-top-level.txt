@@ -16,6 +16,7 @@ bandit
 boto3~=1.14.40  # Matches version in Lambda: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
 cfn-lint
 cfn-flip
+jsonpath-ng
 mypy
 pip==20.2.3
 pylint
