@@ -26,7 +26,7 @@ import FormikCheckbox from 'Components/fields/Checkbox';
 import LinkButton from 'Components/buttons/LinkButton';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import Breadcrumbs from 'Components/Breadcrumbs';
-import SubmitButton from './SumbitButton';
+import SubmitButton from 'Components/buttons/SubmitButton';
 
 export interface BaseDestinationFormValues<
   AdditionalValues extends Partial<DestinationConfigInput>
@@ -111,75 +111,57 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
       validationSchema={validationSchema}
       onSubmit={onSubmitWithConvertedValues}
     >
-      {({ submitForm, isSubmitting, isValid, dirty }) => (
-        <Form autoComplete="off">
-          {children}
-          <Box my={8} aria-describedby="severity-disclaimer" textAlign="center">
-            Severity Levels
-            <Text
-              color="gray-300"
-              fontSize="small-medium"
-              id="severity-disclaimer"
-              mt={1}
-              mb={4}
-              fontWeight="medium"
-            >
-              We will only notify you on issues related to the severity types chosen above
-            </Text>
-            <Flex spacing={5} cursor="pointer">
-              {Object.values(SeverityEnum)
-                .reverse()
-                .map(severity => (
-                  <Field name="defaultForSeverity" key={severity}>
-                    {() => (
-                      <Field
-                        as={FormikCheckbox}
-                        name={`defaultForSeverity.${severity}`}
-                        id={severity}
-                        label={<SeverityBadge severity={severity} />}
-                      />
-                    )}
-                  </Field>
-                ))}
-            </Flex>
-          </Box>
+      <Form autoComplete="off">
+        {children}
+        <Box my={8} aria-describedby="severity-disclaimer" textAlign="center">
+          Severity Levels
+          <Text
+            color="gray-300"
+            fontSize="small-medium"
+            id="severity-disclaimer"
+            mt={1}
+            mb={4}
+            fontWeight="medium"
+          >
+            We will only notify you on issues related to the severity types chosen above
+          </Text>
+          <Flex spacing={5} cursor="pointer">
+            {Object.values(SeverityEnum)
+              .reverse()
+              .map(severity => (
+                <Field name="defaultForSeverity" key={severity}>
+                  {() => (
+                    <Field
+                      as={FormikCheckbox}
+                      name={`defaultForSeverity.${severity}`}
+                      id={severity}
+                      label={<SeverityBadge severity={severity} />}
+                    />
+                  )}
+                </Field>
+              ))}
+          </Flex>
+        </Box>
 
-          {initialValues.outputId ? (
-            <Breadcrumbs.Actions>
-              <Flex spacing={4} justify="flex-end">
-                <LinkButton
-                  variantColor="darkgray"
-                  aria-label="Cancel destination editing"
-                  to={urls.settings.destinations.list()}
-                >
-                  Cancel
-                </LinkButton>
-                <SubmitButton
-                  aria-label="Update Destination"
-                  onClick={submitForm}
-                  isSubmitting={isSubmitting}
-                  isValid={isValid}
-                  dirty={dirty}
-                >
-                  Update Destination
-                </SubmitButton>
-              </Flex>
-            </Breadcrumbs.Actions>
-          ) : (
-            <Flex justify="center" my={6}>
-              <SubmitButton
-                type="submit"
-                aria-label="Add destination"
-                isSubmitting={isSubmitting}
-                isValid={isValid}
-                dirty={dirty}
+        {initialValues.outputId ? (
+          <Breadcrumbs.Actions>
+            <Flex spacing={4} justify="flex-end">
+              <LinkButton
+                variantColor="darkgray"
+                aria-label="Cancel destination editing"
+                to={urls.settings.destinations.list()}
               >
-                Add Destination
-              </SubmitButton>
+                Cancel
+              </LinkButton>
+              <SubmitButton aria-label="Update Destination">Update Destination</SubmitButton>
             </Flex>
-          )}
-        </Form>
-      )}
+          </Breadcrumbs.Actions>
+        ) : (
+          <Flex justify="center" my={6}>
+            <SubmitButton aria-label="Add destination">Add Destination</SubmitButton>
+          </Flex>
+        )}
+      </Form>
     </Formik>
   );
 }
