@@ -143,20 +143,8 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
                 ))}
             </Flex>
           </Box>
-          {!initialValues.outputId && (
-            <Flex justify="center" my={6}>
-              <SubmitButton
-                type="submit"
-                aria-label="Add destination"
-                isSubmitting={isSubmitting}
-                isValid={isValid}
-                dirty={dirty}
-              >
-                Add Destination
-              </SubmitButton>
-            </Flex>
-          )}
-          {initialValues.outputId && (
+
+          {initialValues.outputId ? (
             <Breadcrumbs.Actions>
               <Flex spacing={4} justify="flex-end">
                 <LinkButton
@@ -177,6 +165,18 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
                 </SubmitButton>
               </Flex>
             </Breadcrumbs.Actions>
+          ) : (
+            <Flex justify="center" my={6}>
+              <SubmitButton
+                type="submit"
+                aria-label="Add destination"
+                isSubmitting={isSubmitting}
+                isValid={isValid}
+                dirty={dirty}
+              >
+                Add Destination
+              </SubmitButton>
+            </Flex>
           )}
         </Form>
       )}

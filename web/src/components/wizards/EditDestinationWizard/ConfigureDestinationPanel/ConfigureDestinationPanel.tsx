@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, Spinner, useSnackbar } from 'pouncejs';
+import { Box, useSnackbar } from 'pouncejs';
 import { DESTINATIONS } from 'Source/constants';
 import { DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
@@ -108,13 +108,7 @@ const ConfigureDestinationPanel: React.FC = () => {
         subtitle="Make changes to the form below in order to update your Destination"
         logo={DESTINATIONS[destination.outputType].logo}
       />
-      {loading ? (
-        <Flex justify="center" my={10}>
-          <Spinner />
-        </Flex>
-      ) : (
-        <DestinationFormSwitcher initialValues={destination} onSubmit={handleSubmit} />
-      )}
+      <DestinationFormSwitcher initialValues={destination} onSubmit={handleSubmit} />
     </Box>
   );
 };
