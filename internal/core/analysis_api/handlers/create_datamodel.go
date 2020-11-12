@@ -20,6 +20,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -30,6 +31,7 @@ import (
 
 	"github.com/panther-labs/panther/api/gateway/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 var (
@@ -59,6 +61,7 @@ func CreateDataModel(request *events.APIGatewayProxyRequest) *events.APIGatewayP
 	item := &tableItem{
 		Body:          input.Body,
 		Description:   input.Description,
+		DisplayName:   input.DisplayName,
 		Enabled:       input.Enabled,
 		ID:            input.ID,
 		Mappings:      input.Mappings,
@@ -85,6 +88,11 @@ func parseUpdateDataModel(request *events.APIGatewayProxyRequest) (*models.Updat
 
 	if err := result.Validate(nil); err != nil {
 		return nil, err
+	}
+
+	// Display names are embedded in emails, alert outputs, etc. Prevent a possible injection attack
+	if genericapi.ContainsHTML(string(result.DisplayName)) {
+		return nil, fmt.Errorf("display name: %v", genericapi.ErrContainsHTML)
 	}
 
 	// we also need to verify that field and method are mutually exclusive in the input
