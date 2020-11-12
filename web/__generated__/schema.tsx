@@ -64,7 +64,7 @@ export type AddPolicyInput = {
   displayName?: Maybe<Scalars['String']>;
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   runbook?: Maybe<Scalars['String']>;
@@ -83,7 +83,7 @@ export type AddRuleInput = {
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   runbook?: Maybe<Scalars['String']>;
   severity: SeverityEnum;
@@ -885,7 +885,7 @@ export type PolicyDetails = {
   id: Scalars['ID'];
   lastModified?: Maybe<Scalars['AWSDateTime']>;
   lastModifiedBy?: Maybe<Scalars['ID']>;
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds: Array<Scalars['ID']>;
   reference?: Maybe<Scalars['String']>;
   resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   runbook?: Maybe<Scalars['String']>;
@@ -906,6 +906,7 @@ export type PolicySummary = {
   enabled?: Maybe<Scalars['Boolean']>;
   id: Scalars['ID'];
   lastModified?: Maybe<Scalars['AWSDateTime']>;
+  outputIds: Array<Scalars['ID']>;
   resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   severity?: Maybe<SeverityEnum>;
   tags?: Maybe<Array<Maybe<Scalars['String']>>>;
@@ -1076,7 +1077,7 @@ export type RuleDetails = {
   lastModified?: Maybe<Scalars['AWSDateTime']>;
   lastModifiedBy?: Maybe<Scalars['ID']>;
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds: Array<Scalars['ID']>;
   reference?: Maybe<Scalars['String']>;
   runbook?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
@@ -1095,6 +1096,7 @@ export type RuleSummary = {
   createdAt?: Maybe<Scalars['AWSDateTime']>;
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   severity?: Maybe<SeverityEnum>;
+  outputIds: Array<Scalars['ID']>;
   tags?: Maybe<Array<Scalars['String']>>;
 };
 
@@ -1324,7 +1326,7 @@ export type UpdatePolicyInput = {
   displayName?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
   id: Scalars['ID'];
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   runbook?: Maybe<Scalars['String']>;
@@ -1343,7 +1345,7 @@ export type UpdateRuleInput = {
   enabled?: Maybe<Scalars['Boolean']>;
   id: Scalars['ID'];
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   runbook?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
@@ -2519,7 +2521,7 @@ export type PolicyDetailsResolvers<
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   lastModifiedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  outputIds?: Resolver<Maybe<Array<Maybe<ResolversTypes['ID']>>>, ParentType, ContextType>;
+  outputIds?: Resolver<Array<ResolversTypes['ID']>, ParentType, ContextType>;
   reference?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   resourceTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   runbook?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2551,6 +2553,7 @@ export type PolicySummaryResolvers<
   enabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  outputIds?: Resolver<Array<ResolversTypes['ID']>, ParentType, ContextType>;
   resourceTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
   tags?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
@@ -2760,7 +2763,7 @@ export type RuleDetailsResolvers<
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   lastModifiedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   logTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  outputIds?: Resolver<Maybe<Array<Maybe<ResolversTypes['ID']>>>, ParentType, ContextType>;
+  outputIds?: Resolver<Array<ResolversTypes['ID']>, ParentType, ContextType>;
   reference?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   runbook?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
@@ -2786,6 +2789,7 @@ export type RuleSummaryResolvers<
   createdAt?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   logTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
+  outputIds?: Resolver<Array<ResolversTypes['ID']>, ParentType, ContextType>;
   tags?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };

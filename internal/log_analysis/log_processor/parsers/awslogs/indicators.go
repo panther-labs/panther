@@ -19,7 +19,6 @@ package awslogs
  */
 
 import (
-	"regexp"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -28,64 +27,14 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
-const SizeAccountID = 12
-
-var rxAccountID = regexp.MustCompile(`^\d{12}$`)
-
-func init() {
-	pantherlog.MustRegisterScannerFunc("aws_arn", ScanARN,
+// mustBuildEventSchema builds a log event schema with all AWS indicators to be compatible with the legacy tables
+func mustBuildEventSchema(schema interface{}) interface{} {
+	return pantherlog.MustBuildEventSchema(schema, append(pantherlog.DefaultIndicators(),
 		pantherlog.FieldAWSARN,
-		pantherlog.FieldAWSInstanceID,
 		pantherlog.FieldAWSAccountID,
-	)
-	pantherlog.MustRegisterScannerFunc("aws_account_id", ScanAccountID, pantherlog.FieldAWSAccountID)
-	pantherlog.MustRegisterScannerFunc("aws_instance_id", ScanInstanceID, pantherlog.FieldAWSInstanceID)
-	pantherlog.MustRegisterScannerFunc("aws_tag", ScanTag, pantherlog.FieldAWSTag)
-}
-
-func ScanARN(w pantherlog.ValueWriter, input string) {
-	// value based matching
-	if !strings.HasPrefix(input, "arn:") {
-		return
-	}
-	// ARNs may contain an embedded account id as well as interesting resources
-	// See: https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html
-	// Formats:
-	//  arn:partition:service:region:account-id:resource-id
-	//  arn:partition:service:region:account-id:resource-type/resource-id
-	//  arn:partition:service:region:account-id:resource-type:resource-id
-	arn, err := arn.Parse(input)
-	if err != nil {
-		return
-	}
-	w.WriteValues(pantherlog.FieldAWSARN, input)
-	w.WriteValues(pantherlog.FieldAWSAccountID, arn.AccountID)
-	// instanceId: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policy-structure.html#EC2_ARN_Format
-	if !strings.HasPrefix(arn.Resource, "instance/") {
-		return
-	}
-	if pos := strings.LastIndex(arn.Resource, "/"); 0 <= pos && pos < len(input) { // not if ends in "/"
-		instanceID := arn.Resource[pos:]
-		if len(instanceID) > 0 {
-			ScanInstanceID(w, instanceID[1:])
-		}
-	}
-}
-
-func ScanTag(w pantherlog.ValueWriter, input string) {
-	w.WriteValues(pantherlog.FieldAWSTag, input)
-}
-
-func ScanAccountID(w pantherlog.ValueWriter, input string) {
-	if len(input) == SizeAccountID && rxAccountID.MatchString(input) {
-		w.WriteValues(pantherlog.FieldAWSAccountID, input)
-	}
-}
-
-func ScanInstanceID(w pantherlog.ValueWriter, input string) {
-	if strings.HasPrefix(input, "i-") {
-		w.WriteValues(pantherlog.FieldAWSInstanceID, input)
-	}
+		pantherlog.FieldAWSInstanceID,
+		pantherlog.FieldAWSTag,
+	)...)
 }
 
 func ExtractRawMessageIndicators(w pantherlog.ValueWriter, messages ...pantherlog.RawMessage) {
@@ -132,13 +81,13 @@ func extractIndicators(w pantherlog.ValueWriter, iter *jsoniter.Iterator, key st
 		value := iter.ReadString()
 		switch key {
 		case "arn", "ARN":
-			ScanARN(w, value)
+			pantherlog.ScanARN(w, value)
 		case "instanceId", "instance-id":
-			ScanInstanceID(w, value)
+			pantherlog.ScanAWSInstanceID(w, value)
 		case "accountId", "account":
-			ScanAccountID(w, value)
+			pantherlog.ScanAWSAccountID(w, value)
 		case "tags":
-			ScanTag(w, value)
+			pantherlog.ScanAWSTag(w, value)
 		case "ipv6Addresses", "publicIp", "privateIpAddress", "ipAddressV4", "sourceIPAddress":
 			pantherlog.ScanIPAddress(w, value)
 		case "publicDnsName", "privateDnsName", "domain":
@@ -148,11 +97,11 @@ func extractIndicators(w pantherlog.ValueWriter, iter *jsoniter.Iterator, key st
 		default:
 			switch {
 			case strings.HasSuffix(key, "AccountId"):
-				ScanAccountID(w, value)
+				pantherlog.ScanAWSAccountID(w, value)
 			case strings.HasSuffix(key, "InstanceId"):
-				ScanInstanceID(w, value)
+				pantherlog.ScanAWSInstanceID(w, value)
 			case arn.IsARN(value):
-				ScanARN(w, value)
+				pantherlog.ScanARN(w, value)
 			}
 		}
 	default:

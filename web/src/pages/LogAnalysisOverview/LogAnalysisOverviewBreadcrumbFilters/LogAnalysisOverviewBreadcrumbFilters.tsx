@@ -53,7 +53,7 @@ const LogAnalysisOverviewBreadcrumbFilters: React.FC<LogAnalysisOverviewBreadcru
           <Form>
             <FormikAutosave threshold={50} />
             <Flex spacing={4} maxWidth={500}>
-              <Box width={150}>
+              <Box maxWidth={100}>
                 <Field
                   as={FormikCombobox}
                   variant="solid"
@@ -68,7 +68,7 @@ const LogAnalysisOverviewBreadcrumbFilters: React.FC<LogAnalysisOverviewBreadcru
                 withPresets
                 withTime
                 variant="solid"
-                format="MM/DD/YY HH:mm"
+                format="MM/DD/YYYY HH:mm"
                 labelStart="Date Start"
                 labelEnd="Date End"
                 placeholderStart="MM/DD/YY HH:mm"
