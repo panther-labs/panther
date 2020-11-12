@@ -20,6 +20,8 @@ import React from 'react';
 
 export interface SelectContextValue {
   selection: string[];
+  selectItem: (id: string) => void;
+  deselectItem: (id: string) => void;
   resetSelection: () => void;
   selectAll: (ids: string[]) => void;
   checkIfSelected: (id) => boolean;
@@ -100,11 +102,13 @@ const SelectProvider: React.FC<SelectProviderProps> = ({ initialSelection = [], 
     () => ({
       selection,
       selectAll,
+      deselectItem,
+      selectItem,
       resetSelection,
       checkIfSelected,
       toggleItem,
     }),
-    [selection, resetSelection, selectAll, checkIfSelected, toggleItem]
+    [selection, resetSelection, selectAll, selectItem, deselectItem, checkIfSelected, toggleItem]
   );
 
   return <SelectContext.Provider value={contextValue}>{children}</SelectContext.Provider>;
