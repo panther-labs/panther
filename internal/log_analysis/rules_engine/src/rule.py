@@ -21,11 +21,10 @@ import tempfile
 from collections.abc import Mapping
 import traceback
 from dataclasses import dataclass
-from importlib import util as import_util
-from pathlib import Path
 from typing import Any, Optional, Callable
 
 from .logging import get_logger
+from .util import id_to_path, import_file_as_module, store_modules
 
 _RULE_FOLDER = os.path.join(tempfile.gettempdir(), 'rules')
 
@@ -266,24 +265,17 @@ class Rule:
 
     def _store_rule(self) -> None:
         """Stores rule to disk."""
-        path = _rule_id_to_path(self.rule_id)
+        path = id_to_path(_RULE_FOLDER, self.rule_id)
         self.logger.debug('storing rule in path %s', path)
-
-        # Create dir if it doesn't exist
-        Path(os.path.dirname(path)).mkdir(parents=True, exist_ok=True)
-        with open(path, 'w') as py_file:
-            py_file.write(self.rule_body)
+        store_modules(path, self.rule_body)
 
     def _import_rule_as_module(self) -> Any:
         """Dynamically import a Python module from a file.
 
         See also: https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
         """
-
-        path = _rule_id_to_path(self.rule_id)
-        spec = import_util.spec_from_file_location(self.rule_id, path)
-        mod = import_util.module_from_spec(spec)
-        spec.loader.exec_module(mod)  # type: ignore
+        path = id_to_path(_RULE_FOLDER, self.rule_id)
+        mod = import_file_as_module(path, self.rule_id)
         self.logger.debug('imported module %s from path %s', self.rule_id, path)
         return mod
 
@@ -297,15 +289,3 @@ class Rule:
                 )
             )
         return result
-
-
-def _rule_id_to_path(rule_id: str) -> str:
-    """Method returns the file path where the rule will be stored"""
-    safe_id = ''.join(x if _allowed_char(x) else '_' for x in rule_id)
-    path = os.path.join(_RULE_FOLDER, safe_id + '.py')
-    return path
-
-
-def _allowed_char(char: str) -> bool:
-    """Return true if the character is part of a valid rule ID."""
-    return char.isalnum() or char in {' ', '-', '.'}

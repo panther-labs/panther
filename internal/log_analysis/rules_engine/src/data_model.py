@@ -16,13 +16,12 @@
 
 import os
 import tempfile
-from importlib import util as import_util
-from pathlib import Path
 from typing import Any, Callable, Dict, List
 
 from jsonpath_ng import Fields, parse
 
 from .logging import get_logger
+from .util import id_to_path, import_file_as_module, store_modules
 
 _DATAMODEL_FOLDER = os.path.join(tempfile.gettempdir(), 'datamodels')
 
@@ -92,32 +91,13 @@ class DataModel:
 
         See also: https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
         """
-
-        path = _data_model_id_to_path(self.data_model_id)
-        spec = import_util.spec_from_file_location(self.data_model_id, path)
-        mod = import_util.module_from_spec(spec)
-        spec.loader.exec_module(mod)  # type: ignore
+        path = id_to_path(_DATAMODEL_FOLDER, self.data_model_id)
+        mod = import_file_as_module(path, self.data_model_id)
         self.logger.info('imported module %s from path %s', self.data_model_id, path)
         return mod
 
     def _store_data_models(self) -> None:
         """Stores data models to disk."""
-        path = _data_model_id_to_path(self.data_model_id)
+        path = id_to_path(_DATAMODEL_FOLDER, self.data_model_id)
         self.logger.info('storing data model in path %s', path)
-
-        # Create dir if it doesn't exist
-        Path(os.path.dirname(path)).mkdir(parents=True, exist_ok=True)
-        with open(path, 'w') as py_file:
-            py_file.write(self.body)
-
-
-def _data_model_id_to_path(data_model_id: str) -> str:
-    """Method returns the file path where the data model will be stored"""
-    safe_id = ''.join(x if _allowed_char(x) else '_' for x in data_model_id)
-    path = os.path.join(_DATAMODEL_FOLDER, safe_id + '.py')
-    return path
-
-
-def _allowed_char(char: str) -> bool:
-    """Return true if the character is part of a valid data model ID."""
-    return char.isalnum() or char in {' ', '-', '.'}
+        store_modules(path, self.body)
