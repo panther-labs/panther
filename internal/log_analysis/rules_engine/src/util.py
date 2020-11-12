@@ -23,11 +23,13 @@ def allowed_char(char: str) -> bool:
     """Return true if the character is part of a valid ID."""
     return char.isalnum() or char in {' ', '-', '.'}
 
+
 def id_to_path(directory: str, object_id: str) -> str:
     """Method returns the file path where the module will be stored"""
     safe_id = ''.join(x if allowed_char(x) else '_' for x in object_id)
     path = os.path.join(directory, safe_id + '.py')
     return path
+
 
 def import_file_as_module(path: str, object_id: str) -> Any:
     """Dynamically import a Python module from a file.
@@ -39,6 +41,7 @@ def import_file_as_module(path: str, object_id: str) -> Any:
     mod = import_util.module_from_spec(spec)
     spec.loader.exec_module(mod)  # type: ignore
     return mod
+
 
 def store_modules(path: str, body: str) -> None:
     """Stores modules to disk."""
