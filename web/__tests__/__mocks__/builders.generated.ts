@@ -1119,6 +1119,8 @@ export const buildPolicySummary = (overrides: Partial<PolicySummary> = {}): Poli
     enabled: 'enabled' in overrides ? overrides.enabled : false,
     id: 'id' in overrides ? overrides.id : '260cad31-ef71-4eb6-9ac1-1ca1d0da39c7',
     lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-09-11T01:58:47.481Z',
+    outputIds:
+      'outputIds' in overrides ? overrides.outputIds : ['94fd4ab9-7edc-4b27-8c37-bcfab0e2f825'],
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['EXE'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
     tags: 'tags' in overrides ? overrides.tags : ['navigating'],
@@ -1223,6 +1225,8 @@ export const buildRuleSummary = (overrides: Partial<RuleSummary> = {}): RuleSumm
     createdAt: 'createdAt' in overrides ? overrides.createdAt : '2020-09-24T09:09:49.137Z',
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['AI'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Info,
+    outputIds:
+      'outputIds' in overrides ? overrides.outputIds : ['a2f89a13-3b31-4365-b40d-2495c13a6f65'],
     tags: 'tags' in overrides ? overrides.tags : ['Virginia'],
   };
 };

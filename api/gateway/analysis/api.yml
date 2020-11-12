@@ -1073,6 +1073,8 @@ definitions:
         $ref: '#/definitions/reports'
       threshold:
         $ref: '#/definitions/threshold' # not required because this is really for RuleSummaries
+      outputIds:
+        $ref: '#/definitions/outputIds'
     required:
       - autoRemediationId
       - autoRemediationParameters
@@ -1086,6 +1088,7 @@ definitions:
       - tags
       - suppressions
       - reports
+      - outputIds
 
   ##### BulkUpload #####
   BulkUpload:
@@ -1463,6 +1466,8 @@ definitions:
         $ref: '#/definitions/reports'
       threshold:
         $ref: '#/definitions/threshold'
+      outputIds:
+        $ref: '#/definitions/outputIds'
     required:
       - displayName
       - enabled
@@ -1473,6 +1478,7 @@ definitions:
       - tags
       - reports
       - threshold
+      - outputIds
 
   ##### object properties #####
   autoRemediationId:
