@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Field } from 'formik';
+import { FastField, Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
 import SensitiveTextInput from 'Components/fields/SensitiveTextInput';
@@ -26,11 +26,14 @@ import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
-import { Box, FormHelperText, SimpleGrid } from 'pouncejs';
-import FormikCombobox from 'Components/fields/ComboBox';
+import { Box, Flex, FormHelperText, SimpleGrid } from 'pouncejs';
+import FormikRadio from 'Components/fields/Radio';
 
 type OpsgenieFieldValues = Pick<DestinationConfigInput, 'opsgenie'>;
-
+type RegionFieldName = {
+  US: string;
+  EU: string;
+};
 interface OpsgenieDestinationFormProps {
   initialValues: BaseDestinationFormValues<OpsgenieFieldValues>;
   onSubmit: (values: BaseDestinationFormValues<OpsgenieFieldValues>) => void;
@@ -40,6 +43,14 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
   onSubmit,
   initialValues,
 }) => {
+  const [serviceRegion, setServiceRegion] = React.useState<OpsgenieServiceRegionEnum>(
+    OpsgenieServiceRegionEnum.Eu
+  );
+  const [fieldNames, setFieldNames] = React.useState<RegionFieldName>({
+    US: 'outputConfig.opsgenie.serviceRegion.US',
+    EU: 'outputConfig.opsgenie.serviceRegion',
+  });
+
   const existing = initialValues.outputId;
 
   const opsgenieFieldsValidationSchema = Yup.object().shape({
@@ -50,16 +61,26 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
       }),
     }),
   });
-
   const mergedValidationSchema = defaultValidationSchema.concat(opsgenieFieldsValidationSchema);
 
+  const handleSelectChange = (region: OpsgenieServiceRegionEnum) => {
+    setFieldNames(prevState => ({
+      ...prevState,
+      [region]: 'outputConfig.opsgenie.serviceRegion',
+    }));
+    setServiceRegion(region);
+  };
+
+  // console.log('fieldNames', fieldNames)
+  // console.log('serviceRegion', serviceRegion)
+  // console.log('initialValues', initialValues.outputConfig.opsgenie.serviceRegion)
   return (
     <BaseDestinationForm<OpsgenieFieldValues>
       initialValues={initialValues}
       validationSchema={mergedValidationSchema}
       onSubmit={onSubmit}
     >
-      <SimpleGrid gap={5} columns={3}>
+      <SimpleGrid gap={5} columns={2}>
         <Field
           name="displayName"
           as={FormikTextInput}
@@ -67,19 +88,6 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
           placeholder="How should we name this?"
           required
         />
-        <Box as="fieldset">
-          <Field
-            as={FormikCombobox}
-            name="outputConfig.opsgenie.serviceRegion"
-            items={[OpsgenieServiceRegionEnum.Us, OpsgenieServiceRegionEnum.Eu]}
-            label="Service Region"
-            aria-describedby="serviceRegion-helper"
-            required
-          />
-          <FormHelperText mt={2} id="serviceRegion-helper-text">
-            If you are registered to Opsgenie Europe (app.eu.opsgenie.com), select EU
-          </FormHelperText>
-        </Box>
         <Field
           as={SensitiveTextInput}
           shouldMask={!!existing}
@@ -89,6 +97,34 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
           required={!existing}
           autoComplete="new-password"
         />
+        <Box fontSize="medium" fontWeight="medium" flexGrow={1} textAlign="left">
+          <FormHelperText mt={2} id="serviceRegion-helper-text">
+            Change this selection to EU if you are registered to Opsgenie Europe
+            (app.eu.opsgenie.com).
+          </FormHelperText>
+        </Box>
+        <Flex align="center" justify="space-between">
+          <FastField
+            key={'test1'}
+            as={FormikRadio}
+            name={fieldNames.US}
+            onChange={() => handleSelectChange(OpsgenieServiceRegionEnum.Us)}
+            // checked={selectedSupportRegion === OpsgenieServiceRegionEnum.Eu}
+            value={serviceRegion}
+            label="US Service Region"
+            aria-describedby="serviceRegion-helper-text"
+          />
+          <FastField
+            key={'test2'}
+            as={FormikRadio}
+            name={fieldNames.EU}
+            onChange={() => handleSelectChange(OpsgenieServiceRegionEnum.Eu)}
+            // checked={selectedSupportRegion === OpsgenieServiceRegionEnum.Eu}
+            value={serviceRegion}
+            label="EU Service Region"
+            aria-describedby="serviceRegion-helper-text"
+          />
+        </Flex>
       </SimpleGrid>
     </BaseDestinationForm>
   );
