@@ -58,8 +58,6 @@ class EnrichedEvent(Mapping):
                 if len(matches) == 1:
                     return matches[0].value
                 if len(matches) > 1:
-                    # if we wanted, we could also extract the field names that match
-                    self.logger.error('JSONPath [%s] in DataModel [%s] matched multiple fields.', json_path, self.data_model.data_model_id)
                     raise Exception(
                         'JSONPath [{}] in DataModel [{}], matched multiple fields.'.format(json_path, self.data_model.data_model_id)
                     )
@@ -67,7 +65,6 @@ class EnrichedEvent(Mapping):
             # we are dealing with method
             method = self.data_model.methods.get(key)
             if callable(method):
-                # return self.get(method(self._data))
                 return method(self._data)
         # no matches, return None by default
         return None

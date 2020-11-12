@@ -26,6 +26,10 @@ from .logging import get_logger
 
 _DATAMODEL_FOLDER = os.path.join(tempfile.gettempdir(), 'datamodels')
 
+# constants used to extract data from data model
+NAME = 'name'
+FIELD = 'field'
+METHOD = 'method'
 
 class DataModel:
     """Panther data model and imported methods."""
@@ -42,12 +46,12 @@ class DataModel:
         """
         self.logger = get_logger()
         # data models contains logtype to schema definitions
-        if not ('id' in config) or not isinstance(config['id'], str):
+        if not isinstance(config.get('id'), str):
             raise AssertionError('Field "id" of type str is required field')
         self.data_model_id = config['id']
 
         # mappings are required
-        if not ('mappings' in config) and not isinstance(config['mappings'], list):
+        if not isinstance(config.get('mappings'), list):
             raise AssertionError('Field "mappings" of type list')
         self.fields: Dict[str, Fields] = dict()  # setup field mappings
         self.methods: Dict[str, Callable] = dict()  # setup method mappings
@@ -55,11 +59,11 @@ class DataModel:
         # body is optional in a data model
         self.body = ''
         if 'body' in config:
-            if not isinstance(config['body'], str):
+            if not isinstance(config.get('body'), str):
                 raise AssertionError('Field "body" of type str')
             self.body = config['body']
 
-        if not ('versionId' in config) or not isinstance(config['versionId'], str):
+        if not isinstance(config.get('versionId'), str):
             raise AssertionError('Field "versionId" of type str is required field')
         self.version = config['versionId']
 
@@ -68,24 +72,20 @@ class DataModel:
         self._extract_mappings(config['mappings'])
 
     def _extract_mappings(self, source_mappings: List[Dict[str, str]]) -> None:
-        name = 'name'
-        field = 'field'
-        method = 'method'
         for mapping in source_mappings:
-            if name not in mapping.keys():
-                self.logger.error('DataModel [%s] is missing required field: [%s]', self.data_model_id, name)
-                continue
-            if field in mapping.keys():
+            if NAME not in mapping:
+                raise AssertionError('DataModel [{}] is missing required field: [{}]'.format(
+                    self.data_model_id, NAME))
+            if FIELD in mapping:
                 # we are dealing with a string field or a jsonpath
-                self.fields[mapping[name]] = parse(mapping[field])
-            elif method in mapping.keys():
-                if not hasattr(self._module, mapping[method]):
-                    self.logger.warning('DataModel [%s] is missing implementation of method: [%s]', self.data_model_id, mapping[method])
-                    # should this just continue rather than throw an exception?
-                    raise AssertionError("DataModel missing method named [" + mapping[method] + "]")
-                self.methods[mapping[name]] = getattr(self._module, mapping[method])
+                self.fields[mapping[NAME]] = parse(mapping[FIELD])
+            elif METHOD in mapping:
+                if not hasattr(self._module, mapping[METHOD]):
+                    raise AssertionError('DataModel is missing method named [{}]'.format(mapping[METHOD]))
+                self.methods[mapping[NAME]] = getattr(self._module, mapping[METHOD])
             else:
-                self.logger.warning('DataModel [%s] is missing a field or method for [%s]', self.data_model_id, mapping[name])
+                raise AssertionError('DataModel [{}] is missing a field or method for [{}]'.format(
+                    self.data_model_id, mapping[NAME]))
 
     def _import_data_model_as_module(self) -> Any:
         """Dynamically import a Python module from a file.
@@ -112,12 +112,12 @@ class DataModel:
 
 
 def _data_model_id_to_path(data_model_id: str) -> str:
-    """Method returns the file path where the rule will be stored"""
+    """Method returns the file path where the data model will be stored"""
     safe_id = ''.join(x if _allowed_char(x) else '_' for x in data_model_id)
     path = os.path.join(_DATAMODEL_FOLDER, safe_id + '.py')
     return path
 
 
 def _allowed_char(char: str) -> bool:
-    """Return true if the character is part of a valid rule ID."""
+    """Return true if the character is part of a valid data model ID."""
     return char.isalnum() or char in {' ', '-', '.'}
