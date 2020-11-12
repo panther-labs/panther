@@ -28,8 +28,9 @@ _DATAMODEL_FOLDER = os.path.join(tempfile.gettempdir(), 'datamodels')
 
 # constants used to extract data from data model
 NAME = 'name'
-FIELD = 'field'
+PATH = 'path'
 METHOD = 'method'
+
 
 class DataModel:
     """Panther data model and imported methods."""
@@ -53,7 +54,7 @@ class DataModel:
         # mappings are required
         if not isinstance(config.get('mappings'), list):
             raise AssertionError('Field "mappings" of type list')
-        self.fields: Dict[str, Fields] = dict()  # setup field mappings
+        self.paths: Dict[str, Fields] = dict()  # setup paths mappings
         self.methods: Dict[str, Callable] = dict()  # setup method mappings
 
         # body is optional in a data model
@@ -74,18 +75,17 @@ class DataModel:
     def _extract_mappings(self, source_mappings: List[Dict[str, str]]) -> None:
         for mapping in source_mappings:
             if NAME not in mapping:
-                raise AssertionError('DataModel [{}] is missing required field: [{}]'.format(
-                    self.data_model_id, NAME))
-            if FIELD in mapping:
+                raise AssertionError('DataModel [{}] is missing required field: [{}]'.format(self.data_model_id, NAME))
+            if PATH in mapping:
                 # we are dealing with a string field or a jsonpath
-                self.fields[mapping[NAME]] = parse(mapping[FIELD])
+                self.paths[mapping[NAME]] = parse(mapping[PATH])
             elif METHOD in mapping:
+                # we are dealing with a method
                 if not hasattr(self._module, mapping[METHOD]):
                     raise AssertionError('DataModel is missing method named [{}]'.format(mapping[METHOD]))
                 self.methods[mapping[NAME]] = getattr(self._module, mapping[METHOD])
             else:
-                raise AssertionError('DataModel [{}] is missing a field or method for [{}]'.format(
-                    self.data_model_id, mapping[NAME]))
+                raise AssertionError('DataModel [{}] is missing a field or method for [{}]'.format(self.data_model_id, mapping[NAME]))
 
     def _import_data_model_as_module(self) -> Any:
         """Dynamically import a Python module from a file.

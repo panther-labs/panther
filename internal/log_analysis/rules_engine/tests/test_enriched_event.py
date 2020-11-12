@@ -30,7 +30,7 @@ class TestEnrichedEvent(TestCase):
                 'versionId': 'version',
                 'mappings': [{
                     'name': 'destination_ip',
-                    'field': 'dst_ip'
+                    'path': 'dst_ip'
                 }, {
                     'name': 'source_ip',
                     'method': 'get_source_ip'
@@ -49,7 +49,7 @@ class TestEnrichedEvent(TestCase):
                 'versionId': 'version',
                 'mappings': [{
                     'name': 'destination_ip',
-                    'field': 'dst_ip'
+                    'path': 'dst_ip'
                 }, {
                     'name': 'source_ip',
                     'method': 'get_source_ip'
@@ -60,7 +60,7 @@ class TestEnrichedEvent(TestCase):
         enriched_event = EnrichedEvent(event, data_model)
         self.assertEqual(enriched_event.udm('source_ip'), '1.2.3.4')
 
-    def test_udm_field(self) -> None:
+    def test_udm_path(self) -> None:
         event = {'dst_ip': '1.1.1.1', 'dst_port': '2222'}
         data_model = DataModel(
             {
@@ -68,10 +68,24 @@ class TestEnrichedEvent(TestCase):
                 'versionId': 'version',
                 'mappings': [{
                     'name': 'destination_ip',
-                    'field': 'dst_ip'
+                    'path': 'dst_ip'
                 }, {
                     'name': 'source_ip',
                     'method': 'get_source_ip'
+                }],
+                'id': 'data_model_id'
+            }
+        )
+        enriched_event = EnrichedEvent(event, data_model)
+        self.assertEqual(enriched_event.udm('destination_ip'), '1.1.1.1')
+        # test path with '.' in it
+        event = {'destination.ip': '1.1.1.1', 'dst_port': '2222'}
+        data_model = DataModel(
+            {
+                'versionId': 'version',
+                'mappings': [{
+                    'name': 'destination_ip',
+                    'path': '\"destination.ip\"'
                 }],
                 'id': 'data_model_id'
             }
@@ -87,7 +101,7 @@ class TestEnrichedEvent(TestCase):
                 'versionId': 'version',
                 'mappings': [{
                     'name': 'destination_ip',
-                    'field': '$.dst.ip'
+                    'path': '$.dst.ip'
                 }, {
                     'name': 'source_ip',
                     'method': 'get_source_ip'
@@ -107,7 +121,7 @@ class TestEnrichedEvent(TestCase):
                 'versionId': 'version',
                 'mappings': [{
                     'name': 'destination_ip',
-                    'field': '$.dst.*'
+                    'path': '$.dst.*'
                 }, {
                     'name': 'source_ip',
                     'method': 'get_source_ip'

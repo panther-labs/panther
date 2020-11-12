@@ -32,7 +32,7 @@ class TestEngine(TestCase):
                 'versionId': 'version',
                 'mappings': [{
                     'name': 'destination_ip',
-                    'field': 'dst_ip'
+                    'path': 'dst_ip'
                 }, {
                     'name': 'source_ip',
                     'method': 'get_source_ip'
@@ -41,7 +41,7 @@ class TestEngine(TestCase):
         ]
         engine = Engine(analysis_api)
         self.assertEqual(len(engine.log_type_to_data_models.keys()), 1)
-        self.assertEqual(len(engine.log_type_to_data_models['log'].fields), 1)
+        self.assertEqual(len(engine.log_type_to_data_models['log'].paths), 1)
         self.assertEqual(len(engine.log_type_to_data_models['log'].methods), 1)
 
     def test_loading_rules(self) -> None:
@@ -76,7 +76,7 @@ class TestEngine(TestCase):
                 'versionId': 'version',
                 'mappings': [{
                     'name': 'destination',
-                    'field': 'is_dst'
+                    'path': 'is_dst'
                 }]
             }
         ]

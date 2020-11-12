@@ -46,20 +46,7 @@ class TestDataModel(TestCase):  # pylint: disable=too-many-public-methods
     def test_create_data_model_missing_body(self) -> None:
         exception = False
         try:
-            DataModel(
-                {
-                    'body': 'def get_source_ip(event):\n\t return "source_ip"',
-                    'id': 'data.model.id',
-                    'versionId': 'version',
-                    'mappings': [{
-                        'name': 'destination_ip',
-                        'field': 'dst_ip'
-                    }, {
-                        'name': 'source_ip',
-                        'method': 'get_source_ip'
-                    }]
-                }
-            )
+            DataModel({'id': 'data.model.id', 'versionId': 'version', 'mappings': [{'name': 'destination_ip', 'path': 'dst_ip'}]})
         except AssertionError:
             exception = True
         # body is optional for DataModels
@@ -70,7 +57,7 @@ class TestDataModel(TestCase):  # pylint: disable=too-many-public-methods
         try:
             DataModel(
                 {
-                    'body': 'rule',
+                    'body': 'a data model body',
                     'id': 'data.model.id',
                     'mappings': [{
                         'name': 'destination_ip',
@@ -110,19 +97,19 @@ class TestDataModel(TestCase):  # pylint: disable=too-many-public-methods
 
     def test_data_model_field(self) -> None:
         data_model_body = 'def get_source_ip(event):\n\treturn "source_ip"'
-        data_model_mappings = [{'name': 'destination_ip', 'field': 'dst_ip'}, {'name': 'source_ip', 'method': 'get_source_ip'}]
+        data_model_mappings = [{'name': 'destination_ip', 'path': 'dst_ip'}, {'name': 'source_ip', 'method': 'get_source_ip'}]
         data_model = DataModel({'id': 'data.model.id', 'body': data_model_body, 'versionId': 'version', 'mappings': data_model_mappings})
 
         self.assertEqual('data.model.id', data_model.data_model_id)
         self.assertEqual(data_model_body, data_model.body)
         self.assertEqual('version', data_model.version)
 
-        expected_field_value = Fields('dst_ip')
-        self.assertEqual(expected_field_value, data_model.fields['destination_ip'])
+        expected_path_value = Fields('dst_ip')
+        self.assertEqual(expected_path_value, data_model.paths['destination_ip'])
 
     def test_data_model_method(self) -> None:
         data_model_body = 'def get_source_ip(event):\n\treturn "source_ip"'
-        data_model_mappings = [{'name': 'destination_ip', 'field': 'dst_ip'}, {'name': 'source_ip', 'method': 'get_source_ip'}]
+        data_model_mappings = [{'name': 'destination_ip', 'path': 'dst_ip'}, {'name': 'source_ip', 'method': 'get_source_ip'}]
         data_model = DataModel({'id': 'data.model.id', 'body': data_model_body, 'versionId': 'version', 'mappings': data_model_mappings})
         expected_result = 'source_ip'
         self.assertTrue(callable(data_model.methods['source_ip']))
@@ -131,7 +118,7 @@ class TestDataModel(TestCase):  # pylint: disable=too-many-public-methods
     def test_data_model_method_throws_exception(self) -> None:
         exception = False
         data_model_body = 'def get_source_ip(event):\n\traise NameError("Found an issue")'
-        data_model_mappings = [{'name': 'destination_ip', 'field': 'dst_ip'}, {'name': 'source_ip', 'method': 'get_source_ip'}]
+        data_model_mappings = [{'name': 'destination_ip', 'path': 'dst_ip'}, {'name': 'source_ip', 'method': 'get_source_ip'}]
         data_model = DataModel({'id': 'data.model.id', 'body': data_model_body, 'versionId': 'version', 'mappings': data_model_mappings})
         try:
             data_model.methods['source_ip']({})

@@ -50,9 +50,9 @@ class EnrichedEvent(Mapping):
         if key in self._data.keys():
             return self.get(key)
         # access values via standardized fields
-        if key in self.data_model.fields.keys():
+        if key in self.data_model.paths.keys():
             # we are dealing with a jsonpath
-            json_path = self.data_model.fields.get(key)
+            json_path = self.data_model.paths.get(key)
             if json_path:
                 matches = json_path.find(self._data)
                 if len(matches) == 1:
