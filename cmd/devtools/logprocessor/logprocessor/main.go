@@ -138,7 +138,7 @@ func main() {
 	}
 	zap.ReplaceGlobals(logger)
 	// Use a properly configured JSON instance with AWS Glue quirks
-	jsonAPI := common.BuildJSON()
+	jsonAPI := common.ConfigForDataLakeWriters()
 
 	// Use the global registry
 	dest := destinations.CreateS3Destination(jsonAPI)

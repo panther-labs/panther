@@ -495,7 +495,6 @@ func deployAppsyncStack(outputs map[string]string) error {
 		"AnalysisApi":           "https://" + outputs["AnalysisApiEndpoint"],
 		"ApiId":                 outputs["GraphQLApiId"],
 		"CustomResourceVersion": customResourceVersion(),
-		"RemediationApi":        "https://" + outputs["RemediationApiEndpoint"],
 		"ServiceRole":           outputs["AppsyncServiceRoleArn"],
 	})
 	return err
@@ -512,7 +511,6 @@ func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string
 		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
 		"ProcessedDataTopicArn":      outputs["ProcessedDataTopicArn"],
 		"PythonLayerVersionArn":      outputs["PythonLayerVersionArn"],
-		"RemediationApiId":           outputs["RemediationApiId"],
 		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 	})

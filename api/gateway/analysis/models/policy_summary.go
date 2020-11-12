@@ -64,6 +64,10 @@ type PolicySummary struct {
 	// Format: date-time
 	LastModified ModifyTime `json:"lastModified"`
 
+	// output ids
+	// Required: true
+	OutputIds OutputIds `json:"outputIds"`
+
 	// reports
 	// Required: true
 	Reports Reports `json:"reports"`
@@ -117,6 +121,10 @@ func (m *PolicySummary) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateLastModified(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateOutputIds(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -227,6 +235,22 @@ func (m *PolicySummary) validateLastModified(formats strfmt.Registry) error {
 	if err := m.LastModified.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("lastModified")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *PolicySummary) validateOutputIds(formats strfmt.Registry) error {
+
+	if err := validate.Required("outputIds", "body", m.OutputIds); err != nil {
+		return err
+	}
+
+	if err := m.OutputIds.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("outputIds")
 		}
 		return err
 	}

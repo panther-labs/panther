@@ -244,7 +244,7 @@ input AddRuleInput {
   enabled: Boolean!
   id: ID!
   logTypes: [String]
-  outputIds: [ID]
+  outputIds: [ID!]
   reference: String
   runbook: String
   severity: SeverityEnum!
@@ -261,7 +261,7 @@ input UpdateRuleInput {
   enabled: Boolean
   id: ID!
   logTypes: [String]
-  outputIds: [ID]
+  outputIds: [ID!]
   reference: String
   runbook: String
   severity: SeverityEnum
@@ -291,6 +291,7 @@ type RuleSummary {
   createdAt: AWSDateTime
   logTypes: [String]
   severity: SeverityEnum
+  outputIds: [ID!]!
   tags: [String!]
 }
 
@@ -312,7 +313,7 @@ type RuleDetails {
   lastModified: AWSDateTime
   lastModifiedBy: ID
   logTypes: [String]
-  outputIds: [ID]
+  outputIds: [ID!]!
   reference: String
   runbook: String
   severity: SeverityEnum
@@ -733,7 +734,7 @@ type PolicyDetails {
   id: ID!
   lastModified: AWSDateTime
   lastModifiedBy: ID
-  outputIds: [ID]
+  outputIds: [ID!]!
   reference: String
   resourceTypes: [String]
   runbook: String
@@ -772,6 +773,7 @@ type PolicySummary {
   enabled: Boolean
   id: ID!
   lastModified: AWSDateTime
+  outputIds: [ID!]!
   resourceTypes: [String]
   severity: SeverityEnum
   tags: [String]
@@ -785,7 +787,7 @@ input AddPolicyInput {
   displayName: String
   enabled: Boolean!
   id: ID!
-  outputIds: [ID]
+  outputIds: [ID!]
   reference: String
   resourceTypes: [String]
   runbook: String
@@ -803,7 +805,7 @@ input UpdatePolicyInput {
   displayName: String
   enabled: Boolean
   id: ID!
-  outputIds: [ID]
+  outputIds: [ID!]
   reference: String
   resourceTypes: [String]
   runbook: String
