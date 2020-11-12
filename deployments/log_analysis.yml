@@ -955,7 +955,7 @@ Resources:
                 - kms:Encrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
-        - Id: InvokeGatewayApi
+        - Id: InvokeAnalysisApi
           Version: 2012-10-17
           Statement:
             - Effect: Allow

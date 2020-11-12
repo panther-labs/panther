@@ -14,34 +14,44 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
+import json
 from typing import Any, Dict, List
 
-from botocore.auth import SigV4Auth
-from botocore.awsrequest import AWSRequest
-from botocore.session import Session
-import requests
+import boto3
 
 
 class AnalysisAPIClient:
     """Client for interacting with Analysis API."""
 
     def __init__(self) -> None:
-        current_session = Session()
-        region = current_session.get_config_variable('region')
-        creds = current_session.get_credentials()
-        self.signer = SigV4Auth(creds, 'execute-api', region)
-
-        analysis_api_fqdn = os.environ['ANALYSIS_API_FQDN']
-        analysis_api_path = os.environ['ANALYSIS_API_PATH']
-        self.url = 'https://' + analysis_api_fqdn + '/' + analysis_api_path
+        self.client = boto3.client('lambda')
 
     def get_enabled_rules(self) -> List[Dict[str, Any]]:
         """Gets information for all enabled rules."""
-        request = AWSRequest(method='GET', url=self.url + '/enabled', params={'type': 'RULE'})
-        self.signer.add_auth(request)
-        prepped_request = request.prepare()
+        # There should only be one page, but loop over them just in case
+        list_input: Dict[str, Any] = {
+            'listRules':
+                {
+                    'enabled': True,
+                    # select only the fields we need to minimize the size of the response
+                    'fields': ['body', 'id', 'logTypes', 'outputIds', 'reports', 'severity', 'tags', 'versionId'],
+                    'pageSize': 1000,
+                }
+        }
+        page = 1
+        total_pages = 1
+        result = []
 
-        response = requests.get(prepped_request.url, headers=prepped_request.headers)
-        response.raise_for_status()
-        return response.json()['policies']
+        while page <= total_pages:
+            list_input['page'] = page
+            response = self.client.invoke(FunctionName='panther-analysis-api', Payload=json.dumps(list_input).encode('utf-8'))
+            body = json.loads(response['Payload'].read())
+
+            if response.get('FunctionError'):
+                raise RuntimeError('failed to list rules: ' + str(body))
+            total_pages = body['paging']['totalPages']
+            page += 1
+
+            result.extend(body.get('rules', []))
+
+        return result

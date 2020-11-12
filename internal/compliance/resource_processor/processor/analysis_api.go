@@ -62,7 +62,7 @@ func getPolicies() (policyMap, error) {
 
 	// There should only be one page, but loop over them just in case
 	policies := make(policyMap)
-	for page := 1; page < listOutput.Paging.TotalPages; page++ {
+	for page := 1; page <= listOutput.Paging.TotalPages; page++ {
 		listInput.ListPolicies.Page = page
 
 		if _, err := analysisClient.Invoke(&listInput, &listOutput); err != nil {
