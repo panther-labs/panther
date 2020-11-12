@@ -42,10 +42,6 @@ Parameters:
     Type: String
     Description: Forces updates to custom resources when changed
     MinLength: 1
-  RemediationApi:
-    Type: String
-    Description: API Gateway HTTPS endpoint for panther-remediation-api
-    AllowedPattern: '^https:\/\/[0-9a-z]{10}\.execute-api\.[a-z]{2}-[a-z]{4,9}-[1-9]\.amazonaws\.com(\.cn)?$'
   ServiceRole:
     Type: String
     Description: Appsync IAM service role ARN
@@ -169,6 +165,17 @@ Resources:
       LambdaConfig:
         LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api
 
+  RemediationAPILambdaDataSource:
+    Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !Ref ApiId
+      Name: PantherRemediationAPILambda
+      Type: AWS_LAMBDA
+      ServiceRoleArn: !Ref ServiceRole
+      LambdaConfig:
+        LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-remediation-api
+
   ResourcesAPILambdaDataSource:
     Type: AWS::AppSync::DataSource
     DependsOn: GraphQLSchema
@@ -195,22 +202,6 @@ Resources:
             SigningRegion: !Ref AWS::Region
             SigningServiceName: execute-api
         Endpoint: !Ref AnalysisApi
-
-  RemediationAPIHttpDataSource:
-    Type: AWS::AppSync::DataSource
-    DependsOn: GraphQLSchema
-    Properties:
-      ApiId: !Ref ApiId
-      Name: PantherRemediationAPIHttp
-      Type: HTTP
-      ServiceRoleArn: !Ref ServiceRole
-      HttpConfig:
-        AuthorizationConfig:
-          AuthorizationType: AWS_IAM
-          AwsIamConfig:
-            SigningRegion: !Ref AWS::Region
-            SigningServiceName: execute-api
-        Endpoint: !Ref RemediationApi
 
   ########## Resolvers ##########
 
@@ -1214,25 +1205,19 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Mutation
       FieldName: remediateResource
-      DataSourceName: !GetAtt RemediationAPIHttpDataSource.Name
+      DataSourceName: !GetAtt RemediationAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "POST",
-          "resourcePath": "/v1/remediate",
-          "params": {
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "body": $util.toJson($ctx.args.input)
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "remediateResource": $ctx.args.input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
         #if($statusCode == 200)
             true
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1243,27 +1228,20 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: remediations
-      DataSourceName: !GetAtt RemediationAPIHttpDataSource.Name
+      DataSourceName: !GetAtt RemediationAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.username))
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/",
-          "params": {
-            "query": $util.toJson($input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "listRemediations": $input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
         #if($statusCode == 200)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
