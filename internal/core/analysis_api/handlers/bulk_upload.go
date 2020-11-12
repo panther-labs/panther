@@ -365,16 +365,16 @@ func buildPolicyTest(test analysis.Test) (*models.UnitTest, error) {
 }
 
 func buildMapping(mapping analysis.Mapping) (*models.DataModelMapping, error) {
-	if mapping.Field != "" && mapping.Method != "" {
+	if mapping.Path != "" && mapping.Method != "" {
 		return nil, errMappingTooManyOptions
 	}
-	if mapping.Field == "" && mapping.Method == "" {
-		return nil, errFieldOrMethodMissing
+	if mapping.Path == "" && mapping.Method == "" {
+		return nil, errPathOrMethodMissing
 	}
 	return &models.DataModelMapping{
-		Name:   models.SourceName(mapping.Name),
-		Field:  models.Field(mapping.Field),
-		Method: models.Method(mapping.Method),
+		Name:   models.DataModelName(mapping.Name),
+		Path:   models.DataModelPath(mapping.Path),
+		Method: models.DataModelMethod(mapping.Method),
 	}, nil
 }
 

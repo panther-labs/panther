@@ -238,12 +238,12 @@ var (
 		LogTypes:    []string{"Some.Events"},
 		Mappings: []*models.DataModelMapping{
 			{
-				Name:  "source_ip",
-				Field: "ipAddress",
+				Name: "source_ip",
+				Path: "ipAddress",
 			},
 			{
-				Name:  "dest_ip",
-				Field: "destAddress",
+				Name: "dest_ip",
+				Path: "destAddress",
 			},
 		},
 	}
@@ -1185,7 +1185,7 @@ func createDataModelFail(t *testing.T) {
 	mappings := []*models.DataModelMapping{
 		{
 			Name:   "source_ip",
-			Field:  "src_ip",
+			Path:   "src_ip",
 			Method: "get_source_ip",
 		},
 	}

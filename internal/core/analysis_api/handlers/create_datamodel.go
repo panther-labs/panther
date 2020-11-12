@@ -34,8 +34,8 @@ import (
 
 var (
 	errDataModelTooManyLogTypes  = errors.New("only one ResourceType may be specified per DataModel")
-	errFieldOrMethodMissing      = errors.New("exactly one field or one method must be specified per mapping entry")
-	errMappingTooManyOptions     = errors.New("a field or a method, but not both, must be specified per mapping entry")
+	errPathOrMethodMissing       = errors.New("exactly one path or one method must be specified per mapping entry")
+	errMappingTooManyOptions     = errors.New("a path or a method, but not both, must be specified per mapping entry")
 	errMultipleDataModelsEnabled = errors.New("only one DataModel can be enabled per ResourceType")
 )
 
@@ -89,11 +89,11 @@ func parseUpdateDataModel(request *events.APIGatewayProxyRequest) (*models.Updat
 
 	// we also need to verify that field and method are mutually exclusive in the input
 	for _, mapping := range result.Mappings {
-		if mapping.Field != "" && mapping.Method != "" {
+		if mapping.Path != "" && mapping.Method != "" {
 			return nil, errMappingTooManyOptions
 		}
-		if mapping.Field == "" && mapping.Method == "" {
-			return nil, errFieldOrMethodMissing
+		if mapping.Path == "" && mapping.Method == "" {
+			return nil, errPathOrMethodMissing
 		}
 	}
 

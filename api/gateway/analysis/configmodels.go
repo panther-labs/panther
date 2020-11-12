@@ -51,7 +51,7 @@ type Config struct {
 
 // Mapping converts source log field name to standard field name.
 type Mapping struct {
-	Field  string `yaml:"Field"`
+	Path   string `yaml:"Path"`
 	Method string `yaml:"Method"`
 	Name   string `yaml:"Name"`
 }

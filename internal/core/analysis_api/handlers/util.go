@@ -331,7 +331,7 @@ func itemUpdated(oldItem, newItem *tableItem) bool {
 }
 
 func mappingEquality(oldItem, newItem *tableItem) bool {
-	oldMappings := make(map[models.SourceName]*models.DataModelMapping)
+	oldMappings := make(map[models.DataModelName]*models.DataModelMapping)
 	for _, mapping := range oldItem.Mappings {
 		oldMappings[mapping.Name] = mapping
 	}
@@ -339,7 +339,7 @@ func mappingEquality(oldItem, newItem *tableItem) bool {
 		oldMapping, ok := oldMappings[newMapping.Name]
 		if !ok ||
 			oldMapping.Name != newMapping.Name ||
-			oldMapping.Field != newMapping.Field ||
+			oldMapping.Path != newMapping.Path ||
 			oldMapping.Method != newMapping.Method {
 
 			return false
