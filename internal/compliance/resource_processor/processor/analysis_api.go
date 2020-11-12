@@ -54,21 +54,29 @@ func getPolicies() (policyMap, error) {
 				// select only the fields we need so it fits in a single response
 				"body", "id", "outputIds", "reports", "resourceTypes", "severity", "suppressions", "tags", "versionId",
 			},
-			PageSize: -1,
+			PageSize: 1000,
 		},
 	}
 	var listOutput analysismodels.ListPoliciesOutput
-	if _, err := analysisClient.Invoke(&listInput, &listOutput); err != nil {
-		return nil, errors.WithMessage(err, "failed to load policies from analysis-api")
-	}
-	zap.L().Info("successfully loaded enabled policies from analysis-api",
-		zap.Int("policyCount", len(listOutput.Policies)))
+	listOutput.Paging.TotalPages = 1
 
-	// Convert list of policies into a map by ID
-	policies := make(policyMap, len(listOutput.Policies))
-	for _, policy := range listOutput.Policies {
-		policies[policy.ID] = policy
+	// There should only be one page, but loop over them just in case
+	policies := make(policyMap)
+	for page := 1; page < listOutput.Paging.TotalPages; page++ {
+		listInput.ListPolicies.Page = page
+
+		if _, err := analysisClient.Invoke(&listInput, &listOutput); err != nil {
+			return nil, errors.WithMessage(err, "failed to load policies from analysis-api")
+		}
+
+		// Convert list of policies into a map by ID
+		for _, policy := range listOutput.Policies {
+			policies[policy.ID] = policy
+		}
 	}
+
+	zap.L().Info("successfully loaded enabled policies from analysis-api",
+		zap.Int("policyCount", len(policies)))
 
 	policyCache = policyCacheEntry{LastUpdated: time.Now(), Policies: policies}
 	return policies, nil
