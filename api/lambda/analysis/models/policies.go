@@ -55,7 +55,7 @@ type ListPoliciesInput struct {
 	// ----- Projection -----
 	// Policy fields to return in the response (default: all)
 	// TODO - update appsync to specify the fields needed for frontend here
-	// autoRemediationID, autoRemediationParams, complianceStatus, displayName, enabled, id, lastModified, resourceTypes, severity, tags, suppressions, reports
+	// autoRemediationID, autoRemediationParams, complianceStatus, displayName, enabled, id, lastModified, resourceTypes, severity, tags, suppressions, outputIds, reports
 	Fields []string `json:"fields" validate:"omitempty,dive,required"`
 
 	// ----- Sorting -----
