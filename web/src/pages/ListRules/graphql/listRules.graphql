@@ -8,6 +8,7 @@ query ListRules($input: ListRulesInput) {
       displayName
       threshold
       enabled
+      outputIds
     }
     paging {
       totalPages
