@@ -20,6 +20,8 @@ package api
 
 import (
 	"fmt"
+	"reflect"
+	"sort"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -222,7 +224,7 @@ func updateTables(item *ddb.Integration, input *models.UpdateIntegrationSettings
 	}
 
 	// If log types haven't been updated, return
-	if stringset.SlicesEqual(existingLogTypes, newLogTypes) {
+	if slicesContainSameElements(existingLogTypes, newLogTypes) {
 		return nil
 	}
 
@@ -234,4 +236,16 @@ func updateTables(item *ddb.Integration, input *models.UpdateIntegrationSettings
 		return errors.Wrap(err, "failed to create Glue tables")
 	}
 	return nil
+}
+
+// Returns True if the string slices contain the same unique elements
+// False otherwise
+func slicesContainSameElements(left, right []string) bool {
+	leftSet := stringset.New(left...)
+	rightSet := stringset.New(right...)
+
+	sort.Strings(leftSet)
+	sort.Strings(rightSet)
+
+	return reflect.DeepEqual(leftSet, rightSet)
 }
