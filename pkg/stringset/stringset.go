@@ -63,3 +63,25 @@ loopValues:
 	}
 	return dst
 }
+
+// Returns True if the string slices contain the same elements
+// False otherwise
+func SlicesEqual(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+
+	for i := range left {
+		found := false
+		for j := range right {
+			if left[i] == right[j] {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}

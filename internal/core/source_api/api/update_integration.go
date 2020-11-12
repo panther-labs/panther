@@ -28,6 +28,7 @@ import (
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 var (
@@ -221,7 +222,7 @@ func updateTables(item *ddb.Integration, input *models.UpdateIntegrationSettings
 	}
 
 	// If log types haven't been updated, return
-	if slicesEqual(existingLogTypes, newLogTypes) {
+	if stringset.SlicesEqual(existingLogTypes, newLogTypes) {
 		return nil
 	}
 
@@ -233,24 +234,4 @@ func updateTables(item *ddb.Integration, input *models.UpdateIntegrationSettings
 		return errors.Wrap(err, "failed to create Glue tables")
 	}
 	return nil
-}
-
-func slicesEqual(left, right []string) bool {
-	if len(left) != len(right) {
-		return false
-	}
-
-	for i := range left {
-		found := false
-		for j := range right {
-			if left[i] == right[j] {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false
-		}
-	}
-	return true
 }
