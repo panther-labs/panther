@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Form, Formik, FastField } from 'formik';
+import { FastField, Form, Formik } from 'formik';
 import { Box, Flex, Text, useSnackbar } from 'pouncejs';
 import { AlertStatusesEnum } from 'Generated/schema';
 import FormikCombobox from 'Components/fields/ComboBox';
@@ -33,7 +33,8 @@ const initialValues = {
 
 const statusOptions = Object.values(AlertStatusesEnum);
 
-const filterItemToString = (item: AlertStatusesEnum) => capitalize(item.toLowerCase());
+const filterItemToString = (item: AlertStatusesEnum) =>
+  capitalize(item === AlertStatusesEnum.Closed ? 'Invalid' : item.toLowerCase());
 
 interface ListAlertSelectionFormValues {
   status: AlertStatusesEnum;

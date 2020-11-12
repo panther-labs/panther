@@ -32,7 +32,7 @@ const SelectAllCheckboxComponent: React.FC<SelectAllCheckboxProps> = ({
   return (
     <Checkbox
       checked={!!selection.length}
-      onClick={() => {
+      onChange={() => {
         if (selection.length) {
           resetSelection();
         } else {
