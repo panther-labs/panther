@@ -19,7 +19,6 @@ package handlers
  */
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -38,8 +37,16 @@ const (
 	defaultRuleThreshold = 1
 )
 
-// CreateRule adds a new rule to the Dynamo table.
 func (API) CreateRule(input *models.CreateRuleInput) *events.APIGatewayProxyResponse {
+	return writeRule(input, true)
+}
+
+func (API) UpdateRule(input *models.UpdateRuleInput) *events.APIGatewayProxyResponse {
+	return writeRule(input, false)
+}
+
+// Shared by CreateRule and UpdateRule
+func writeRule(input *models.CreateRuleInput, create bool) *events.APIGatewayProxyResponse {
 	// Rule names are embedded in emails, alert outputs, etc. Prevent a possible injection attack
 	if genericapi.ContainsHTML(input.DisplayName) {
 		return &events.APIGatewayProxyResponse{
@@ -63,7 +70,10 @@ func (API) CreateRule(input *models.CreateRuleInput) *events.APIGatewayProxyResp
 		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: statusCode}
 	}
 	if !testsPass {
-		return &events.APIGatewayProxyResponse{Body: errRuleTestsFail.Error(), StatusCode: http.StatusBadRequest}
+		return &events.APIGatewayProxyResponse{
+			Body:       "cannot save an enabled rule with failing unit tests",
+			StatusCode: http.StatusBadRequest,
+		}
 	}
 
 	item := &tableItem{
@@ -84,17 +94,30 @@ func (API) CreateRule(input *models.CreateRuleInput) *events.APIGatewayProxyResp
 		Type:               models.TypeRule,
 	}
 
-	if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {
-		if err == errExists {
-			return &events.APIGatewayProxyResponse{StatusCode: http.StatusConflict}
+	var statusCode int
+
+	if create {
+		if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {
+			if err == errExists {
+				return &events.APIGatewayProxyResponse{StatusCode: http.StatusConflict}
+			}
+			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 		}
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		statusCode = http.StatusCreated
+	} else {
+		if _, err := writeItem(item, input.UserID, aws.Bool(true)); err != nil {
+			if err == errNotExists || err == errWrongType {
+				// errWrongType means we tried to modify a rule which is actually a policy.
+				// In this case return 404 - the rule you tried to modify does not exist.
+				return &events.APIGatewayProxyResponse{StatusCode: http.StatusNotFound}
+			}
+			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		}
+		statusCode = http.StatusOK
 	}
 
-	return gatewayapi.MarshalResponse(item.Rule(), http.StatusCreated)
+	return gatewayapi.MarshalResponse(item.Rule(), statusCode)
 }
-
-var errRuleTestsFail = errors.New("cannot save an enabled rule with failing unit tests")
 
 // enabledRuleTestsPass returns false if the rule is enabled and its tests fail.
 func enabledRuleTestsPass(rule *models.UpdateRuleInput) (bool, error) {
@@ -102,13 +125,11 @@ func enabledRuleTestsPass(rule *models.UpdateRuleInput) (bool, error) {
 		return true, nil
 	}
 
-	tp := &models.TestPolicyInput{
-		AnalysisType:  models.TypeRule,
-		Body:          rule.Body,
-		ResourceTypes: rule.LogTypes,
-		Tests:         rule.Tests,
-	}
-	testResults, err := ruleEngine.TestRule(tp)
+	testResults, err := ruleEngine.TestRule(&models.TestRuleInput{
+		Body:     rule.Body,
+		LogTypes: rule.LogTypes,
+		Tests:    rule.Tests,
+	})
 	if err != nil {
 		return false, err
 	}

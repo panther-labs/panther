@@ -65,7 +65,7 @@ func (e *RuleEngine) TestRule(rule *models.TestRuleInput) (*models.TestRuleOutpu
 			{
 				Body:     rule.Body,
 				ID:       testRuleID, // doesn't matter as we're only running one rule
-				LogTypes: rule.ResourceTypes,
+				LogTypes: rule.LogTypes,
 			},
 		},
 		Events: inputEvents,

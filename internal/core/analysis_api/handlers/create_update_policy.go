@@ -19,7 +19,6 @@ package handlers
  */
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -34,7 +33,17 @@ import (
 
 // CreatePolicy adds a new policy to the Dynamo table.
 func (API) CreatePolicy(input *models.CreatePolicyInput) *events.APIGatewayProxyResponse {
+	return writePolicy(input, true)
+}
+
+func (API) UpdatePolicy(input *models.UpdatePolicyInput) *events.APIGatewayProxyResponse {
+	return writePolicy(input, false)
+}
+
+// Shared by CreatePolicy and UpdatePolicy
+func writePolicy(input *models.CreatePolicyInput, create bool) *events.APIGatewayProxyResponse {
 	// Policy names are embedded in emails, alert outputs, etc. Prevent a possible injection attack
+	// TODO - is url-decoding of the ID required? (same for rule)
 	if genericapi.ContainsHTML(input.DisplayName) {
 		return &events.APIGatewayProxyResponse{
 			Body:       "invalid display name: " + genericapi.ErrContainsHTML.Error(),
@@ -53,7 +62,10 @@ func (API) CreatePolicy(input *models.CreatePolicyInput) *events.APIGatewayProxy
 		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: statusCode}
 	}
 	if !testsPass {
-		return &events.APIGatewayProxyResponse{Body: errPolicyTestsFail.Error(), StatusCode: http.StatusBadRequest}
+		return &events.APIGatewayProxyResponse{
+			Body:       "cannot save an enabled policy with failing unit tests",
+			StatusCode: http.StatusBadRequest,
+		}
 	}
 
 	item := &tableItem{
@@ -75,36 +87,55 @@ func (API) CreatePolicy(input *models.CreatePolicyInput) *events.APIGatewayProxy
 		Type:                      models.TypePolicy,
 	}
 
-	if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {
-		if err == errExists {
-			return &events.APIGatewayProxyResponse{StatusCode: http.StatusConflict}
+	var status compliancemodels.ComplianceStatus
+	var statusCode int
+
+	if create {
+		// create new policy - no entry with that ID should exist
+		if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {
+			if err == errExists {
+				return &events.APIGatewayProxyResponse{StatusCode: http.StatusConflict}
+			}
+			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 		}
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+
+		// New policies are "passing" since they haven't evaluated anything yet.
+		status = compliancemodels.StatusPass
+		statusCode = http.StatusCreated
+	} else {
+		// update existing policy - entry must already exist
+		if _, err := writeItem(item, input.UserID, aws.Bool(true)); err != nil {
+			if err == errNotExists || err == errWrongType {
+				// errWrongType means we tried to modify a policy that is actually a rule.
+				// In this case return 404 - the policy you tried to modify does not exist.
+				return &events.APIGatewayProxyResponse{StatusCode: http.StatusNotFound}
+			}
+			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		}
+
+		statusStruct, err := getComplianceStatus(input.ID)
+		if err != nil {
+			return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusInternalServerError}
+		}
+		status = statusStruct.Status
+		statusCode = http.StatusOK
 	}
 
-	// New policies are "passing" since they haven't evaluated anything yet.
-	return gatewayapi.MarshalResponse(item.Policy(compliancemodels.StatusPass), http.StatusCreated)
+	return gatewayapi.MarshalResponse(item.Policy(status), statusCode)
 }
-
-var errPolicyTestsFail = errors.New("cannot save an enabled policy with failing unit tests")
 
 // enabledPolicyTestsPass returns false if the policy is enabled and its tests fail.
 func enabledPolicyTestsPass(policy *models.UpdatePolicyInput) (bool, error) {
 	if !policy.Enabled || len(policy.Tests) == 0 {
 		return true, nil
 	}
-	testResults, err := policyEngine.TestPolicy(toTestPolicy(policy))
+	testResults, err := policyEngine.TestPolicy(&models.TestPolicyInput{
+		Body:          policy.Body,
+		ResourceTypes: policy.ResourceTypes,
+		Tests:         policy.Tests,
+	})
 	if err != nil {
 		return false, err
 	}
 	return testResults.TestSummary, nil
-}
-
-func toTestPolicy(updatePolicy *models.UpdatePolicyInput) *models.TestPolicyInput {
-	return &models.TestPolicyInput{
-		AnalysisType:  models.TypePolicy,
-		Body:          updatePolicy.Body,
-		ResourceTypes: updatePolicy.ResourceTypes,
-		Tests:         updatePolicy.Tests,
-	}
 }

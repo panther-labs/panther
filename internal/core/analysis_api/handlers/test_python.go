@@ -22,25 +22,29 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
+	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-// Suppress adds suppressions for one or more policies in the same organization.
-func (API) Suppress(input *models.SuppressInput) *events.APIGatewayProxyResponse {
-	updates, err := addSuppressions(input.PolicyIDs, input.ResourcePatterns)
+func (API) TestPolicy(input *models.TestPolicyInput) *events.APIGatewayProxyResponse {
+	return testPython(policyEngine.TestPolicy(input))
+}
+
+func (API) TestRule(input *models.TestRuleInput) *events.APIGatewayProxyResponse {
+	return testPython(ruleEngine.TestRule(input))
+}
+
+func testPython(result interface{}, err error) *events.APIGatewayProxyResponse {
 	if err != nil {
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
-	}
-
-	// Update compliance status with new suppressions
-	for _, policy := range updates {
-		if err := updateComplianceMetadata(policy); err != nil {
-			// Log an error, but don't mark the API call as a failure
-			zap.L().Error("failed to update compliance entries with new suppression", zap.Error(err))
+		if _, ok := err.(*analysis.TestInputError); ok {
+			return &events.APIGatewayProxyResponse{
+				Body: err.Error(), StatusCode: http.StatusBadRequest}
 		}
+		return &events.APIGatewayProxyResponse{
+			Body: err.Error(), StatusCode: http.StatusInternalServerError}
 	}
 
-	return &events.APIGatewayProxyResponse{StatusCode: http.StatusOK}
+	return gatewayapi.MarshalResponse(&result, http.StatusOK)
 }

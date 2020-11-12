@@ -1692,12 +1692,7 @@ Resources:
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "testPolicy": {
-              "body": $ctx.args.input.body,
-              "resourceTypes": $ctx.args.input.resourceTypes,
-              "tests": $ctx.args.input.tests,
-              "analysisType": "POLICY"
-            }
+            "testPolicy": $ctx.args.input
           })
         }
       ResponseMappingTemplate: |
@@ -1765,12 +1760,7 @@ Resources:
            "version" : "2017-02-28",
            "operation": "Invoke",
            "payload": $util.toJson({
-             "testPolicy": {
-               "body": $ctx.args.input.body,
-               "resourceTypes": $ctx.args.input.logTypes,
-               "tests": $ctx.args.input.tests,
-               "analysisType": "RULE"
-             }
+             "testRule": $ctx.args.input
            })
          }
       ResponseMappingTemplate: |

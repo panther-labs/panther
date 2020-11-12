@@ -29,8 +29,6 @@ type GetRuleInput struct {
 	VersionID string `json:"versionId"`
 }
 
-// TODO: combine with ListPoliciesInput, either using embedding subset of common fields or creating
-// a single shared model (union)
 type ListRulesInput struct {
 	// ----- Filtering -----
 	// Only include rules whose ID or display name contains this case-insensitive substring
@@ -68,7 +66,11 @@ type ListRulesOutput struct {
 	Rules  []Rule `json:"rules"`
 }
 
-type TestRuleInput = TestPolicyInput
+type TestRuleInput struct {
+	Body     string     `json:"body" validate:"required"`
+	LogTypes []string   `json:"logTypes" validate:"omitempty,dive,required"`
+	Tests    []UnitTest `json:"tests"`
+}
 
 type TestRuleOutput struct {
 	TestSummary bool             `json:"testSummary"`

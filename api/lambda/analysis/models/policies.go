@@ -83,14 +83,13 @@ type SuppressInput struct {
 
 	// List of resource ID regexes that are excepted from the policy.
 	// The policy will still be evaluated, but failures will not trigger alerts nor remediations
-	ResourcePatterns []string `json:"resourcePatterns"`
+	ResourcePatterns []string `json:"resourcePatterns" validate:"min=1,dive,required"`
 }
 
 type TestPolicyInput struct {
-	AnalysisType  DetectionType `json:"analysisType" validate:"oneof=GLOBAL POLICY RULE"`
-	Body          string        `json:"body" validate:"required"`
-	ResourceTypes []string      `json:"resourceTypes" validate:"omitempty,dive,required"`
-	Tests         []UnitTest    `json:"tests"`
+	Body          string     `json:"body" validate:"required"`
+	ResourceTypes []string   `json:"resourceTypes" validate:"omitempty,dive,required"`
+	Tests         []UnitTest `json:"tests"`
 }
 
 type TestPolicyOutput struct {

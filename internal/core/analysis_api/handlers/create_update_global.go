@@ -28,8 +28,16 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-// CreateGlobal adds a new global to the Dynamo table.
 func (API) CreateGlobal(input *models.CreateGlobalInput) *events.APIGatewayProxyResponse {
+	return writeGlobal(input, true)
+}
+
+func (API) UpdateGlobal(input *models.UpdateGlobalInput) *events.APIGatewayProxyResponse {
+	return writeGlobal(input, false)
+}
+
+// Shared by CreateGlobal and UpdateGlobal
+func writeGlobal(input *models.CreateGlobalInput, create bool) *events.APIGatewayProxyResponse {
 	item := &tableItem{
 		Body:        input.Body,
 		Description: input.Description,
@@ -38,16 +46,31 @@ func (API) CreateGlobal(input *models.CreateGlobalInput) *events.APIGatewayProxy
 		Type:        models.TypeGlobal,
 	}
 
-	if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {
-		if err == errExists {
-			return &events.APIGatewayProxyResponse{StatusCode: http.StatusConflict}
+	var statusCode int
+
+	if create {
+		if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {
+			if err == errExists {
+				return &events.APIGatewayProxyResponse{StatusCode: http.StatusConflict}
+			}
+			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 		}
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		statusCode = http.StatusCreated
+	} else { // update
+		if _, err := writeItem(item, input.UserID, aws.Bool(true)); err != nil {
+			if err == errNotExists || err == errWrongType {
+				// errWrongType means we tried to modify a global that is actually a policy/rule.
+				// In this case return 404 - the global you tried to modify does not exist.
+				return &events.APIGatewayProxyResponse{StatusCode: http.StatusNotFound}
+			}
+			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		}
+		statusCode = http.StatusOK
 	}
 
 	if err := updateLayer(); err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
-	return gatewayapi.MarshalResponse(item.Global(), http.StatusCreated)
+	return gatewayapi.MarshalResponse(item.Global(), statusCode)
 }
