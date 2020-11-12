@@ -92,16 +92,18 @@ const ListAlertSelection: React.FC = () => {
       });
     },
   });
+
+  const onSubmit = React.useCallback(
+    (values: ListAlertSelectionFormValues) =>
+      updateAlertStatus({
+        variables: { input: { status: values.status, alertIds: selection } },
+      }),
+    [selection]
+  );
+
   return (
     <Flex justify="flex-end" align="center">
-      <Formik<ListAlertSelectionFormValues>
-        initialValues={initialValues}
-        onSubmit={(values: ListAlertSelectionFormValues) => {
-          updateAlertStatus({
-            variables: { input: { status: values.status, alertIds: selection } },
-          });
-        }}
-      >
+      <Formik<ListAlertSelectionFormValues> initialValues={initialValues} onSubmit={onSubmit}>
         <Form>
           <Flex spacing={4} align="center">
             <Text>{selection.length} Selected</Text>
