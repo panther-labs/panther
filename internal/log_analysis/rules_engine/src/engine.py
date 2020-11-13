@@ -102,7 +102,7 @@ class Engine:
 
             import_count = import_count + 1
             # update lookup table from log type to rule
-            for log_type in raw_rule['resourceTypes']:
+            for log_type in raw_rule['logTypes']:
                 self.log_type_to_rules[log_type].append(rule)
 
         end = default_timer()

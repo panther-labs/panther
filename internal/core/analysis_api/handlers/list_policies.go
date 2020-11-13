@@ -29,6 +29,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
+	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
@@ -47,17 +48,28 @@ func (API) ListPolicies(input *models.ListPoliciesInput) *events.APIGatewayProxy
 	var items []tableItem
 	compliance := make(map[string]complianceStatus)
 
+	// We need to include compliance status in the response if the user asked for it
+	// (or if they left the input.Fields blank, which defaults to all fields)
+	statusProjection := len(input.Fields) == 0
+	for _, field := range input.Fields {
+		if field == "complianceStatus" {
+			statusProjection = true
+			break
+		}
+	}
+
 	err = scanPages(scanInput, func(item tableItem) error {
-		// Filter by compliance status: this information is in the compliance-api, not this table
-		if input.ComplianceStatus != "" {
-			status, err := getComplianceStatus(item.ID)
+		// Fetch the compliance status if we need it for the filter or projection
+		if statusProjection || input.ComplianceStatus != "" {
+			status, err := getComplianceStatus(item.ID) // compliance-api
 			if err != nil {
 				return err
 			}
-			if input.ComplianceStatus != status.Status {
-				return nil // compliance status does not match filter: skip
-			}
 			compliance[item.ID] = *status
+		}
+
+		if input.ComplianceStatus != "" && input.ComplianceStatus != compliance[item.ID].Status {
+			return nil // compliance status does not match filter: skip
 		}
 
 		items = append(items, item)
@@ -79,7 +91,11 @@ func (API) ListPolicies(input *models.ListPoliciesInput) *events.APIGatewayProxy
 		Paging:   paging,
 	}
 	for _, item := range items {
-		result.Policies = append(result.Policies, *item.Policy(compliance[item.ID].Status))
+		var status compliancemodels.ComplianceStatus
+		if statusProjection {
+			status = compliance[item.ID].Status
+		}
+		result.Policies = append(result.Policies, *item.Policy(status))
 	}
 
 	return gatewayapi.MarshalResponse(&result, http.StatusOK)

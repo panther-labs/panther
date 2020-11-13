@@ -43,12 +43,14 @@ class AnalysisAPIClient:
         result = []
 
         while page <= total_pages:
-            list_input['page'] = page
+            list_input['listRules']['page'] = page
             response = self.client.invoke(FunctionName='panther-analysis-api', Payload=json.dumps(list_input).encode('utf-8'))
-            body = json.loads(response['Payload'].read())
+            gateway_response = json.loads(response['Payload'].read())
 
-            if response.get('FunctionError'):
-                raise RuntimeError('failed to list rules: ' + str(body))
+            if response.get('FunctionError') or gateway_response['statusCode'] != 200:
+                raise RuntimeError('failed to list rules: ' + str(gateway_response))
+
+            body = json.loads(gateway_response['body'])
             total_pages = body['paging']['totalPages']
             page += 1
 

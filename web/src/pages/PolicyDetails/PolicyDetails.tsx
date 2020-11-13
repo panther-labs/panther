@@ -29,7 +29,6 @@ import {
 import {
   extendResourceWithIntegrationLabel,
   getComplianceItemsTotalCount,
-  convertObjArrayValuesToCsv,
   extractErrorMessage,
 } from 'Helpers/utils';
 import EmptyBoxImg from 'Assets/illustrations/empty-box.svg';
@@ -61,11 +60,11 @@ const PolicyDetailsPage = () => {
       policyDetailsInput: {
         policyId: match.params.id,
       },
-      resourcesForPolicyInput: convertObjArrayValuesToCsv({
+      resourcesForPolicyInput: {
         ...pick(requestParams, acceptedRequestParams),
         policyId: match.params.id,
         pageSize: DEFAULT_SMALL_PAGE_SIZE,
-      }),
+      },
     },
   });
 

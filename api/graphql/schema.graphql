@@ -869,9 +869,9 @@ input ListPoliciesInput {
   nameContains: String
   enabled: Boolean
   hasRemediation: Boolean
-  resourceTypes: String # Comma-separated string
+  resourceTypes: [String!]
   severity: SeverityEnum
-  tags: String # Comma-separated string
+  tags: [String!]
   # Sorting
   sortBy: ListPoliciesSortFieldsEnum # defaults to `id`
   sortDir: SortDirEnum # defaults to `ascending`

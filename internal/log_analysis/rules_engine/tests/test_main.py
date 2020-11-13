@@ -24,12 +24,16 @@ import boto3
 from . import mock_to_return, LAMBDA_MOCK
 
 LAMBDA_MOCK.invoke.return_value = {
-    'Payload': io.BytesIO(json.dumps({
-        'paging': {
-            'totalPages': 1
-        },
-        'rules': [],
-    }).encode('utf-8'))
+    'Payload':
+        io.BytesIO(json.dumps({
+            'body': json.dumps({
+                'paging': {
+                    'totalPages': 1
+                },
+                'rules': [],
+            }),
+            'statusCode': 200,
+        }).encode('utf-8'))
 }
 
 _ENV_VARIABLES_MOCK = {

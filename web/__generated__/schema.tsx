@@ -534,9 +534,9 @@ export type ListPoliciesInput = {
   nameContains?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
   hasRemediation?: Maybe<Scalars['Boolean']>;
-  resourceTypes?: Maybe<Scalars['String']>;
+  resourceTypes?: Maybe<Array<Scalars['String']>>;
   severity?: Maybe<SeverityEnum>;
-  tags?: Maybe<Scalars['String']>;
+  tags?: Maybe<Array<Scalars['String']>>;
   sortBy?: Maybe<ListPoliciesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
   pageSize?: Maybe<Scalars['Int']>;

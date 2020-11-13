@@ -143,7 +143,7 @@ func (API) BulkUpload(input *models.BulkUploadInput) *events.APIGatewayProxyResp
 	if response != nil {
 		return response
 	}
-	return gatewayapi.MarshalResponse(counts, http.StatusOK)
+	return gatewayapi.MarshalResponse(&counts, http.StatusOK)
 }
 
 func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error) {
