@@ -101,7 +101,7 @@ paths:
     #     "lastModified":              "2019-08-26T00:00:00.000Z",
     #     "lastModifiedBy":            "5f54cf4a-ec56-44c2-83bc-8b742600f307",
     #     "logTypes":                  ["OneLogin.Events"],
-    #     "mappings":                  [{"field":"ipAddr","name":"source_address"}],
+    #     "mappings":                  [{"path":"ipAddr","name":"source_address"}],
     #     "versionId": "TsKejJ6GGi_KdH65g2iu9bcww8JxkkwI"
     # }
     get:
@@ -1695,11 +1695,11 @@ definitions:
     type: object
     properties:
       name:
-        $ref: '#/definitions/sourceName'
-      field:
-        $ref: '#/definitions/field'
+        $ref: '#/definitions/dataModelName'
+      path:
+        $ref: '#/definitions/dataModelPath'
       method:
-        $ref: '#/definitions/method'
+        $ref: '#/definitions/dataModelMethod'
     required:
       - name
 
@@ -1801,6 +1801,21 @@ definitions:
       - FAIL # Policy failed on at least one resource
       - PASS # Policy passed for all applicable resources
 
+  dataModelMethod:
+    description: method name used to map data in a DataModel
+    type: string
+    pattern: '[a-zA-Z0-9\-\. ]{1,200}'
+
+  dataModelName:
+    description: standardized field name used in DataModel
+    type: string
+    pattern: '[a-zA-Z0-9\-\. ]{1,200}'
+
+  dataModelPath:
+    description: path name used to map data in a DataModel
+    type: string
+    pattern: '[a-zA-Z0-9@\-\.\,\$\[\]\(\)\*\?]{1,200}' # support JSONPath
+
   dedupPeriodMinutes:
     description: The time in minutes for which we deduplicate events when generating alerts for log analysis
     type: integer
@@ -1828,18 +1843,8 @@ definitions:
     description: True if the policy is currently being evaluated
     type: boolean
 
-  field:
-    description: field name used to map data in a DataModel
-    type: string
-    pattern: '[a-zA-Z0-9@\-\.\,\$\[\]\(\)\*\?]{1,200}' # support JSONPath
-
   id:
     description: User-specified unique rule/policy ID
-    type: string
-    pattern: '[a-zA-Z0-9\-\. ]{1,200}'
-
-  method:
-    description: method name used to map data in a DataModel
     type: string
     pattern: '[a-zA-Z0-9\-\. ]{1,200}'
 
@@ -1847,11 +1852,6 @@ definitions:
     description: Policy modification timestamp
     type: string
     format: date-time
-
-  sourceName:
-    description: standardized field name used in DataModel
-    type: string
-    pattern: '[a-zA-Z0-9\-\. ]{1,200}'
 
   outputIds:
     description: >

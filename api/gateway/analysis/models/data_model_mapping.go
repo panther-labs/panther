@@ -34,24 +34,20 @@ import (
 // swagger:model DataModelMapping
 type DataModelMapping struct {
 
-	// field
-	Field Field `json:"field,omitempty"`
-
 	// method
-	Method Method `json:"method,omitempty"`
+	Method DataModelMethod `json:"method,omitempty"`
 
 	// name
 	// Required: true
-	Name SourceName `json:"name"`
+	Name DataModelName `json:"name"`
+
+	// path
+	Path DataModelPath `json:"path,omitempty"`
 }
 
 // Validate validates this data model mapping
 func (m *DataModelMapping) Validate(formats strfmt.Registry) error {
 	var res []error
-
-	if err := m.validateField(formats); err != nil {
-		res = append(res, err)
-	}
 
 	if err := m.validateMethod(formats); err != nil {
 		res = append(res, err)
@@ -61,25 +57,13 @@ func (m *DataModelMapping) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validatePath(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
-	return nil
-}
-
-func (m *DataModelMapping) validateField(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Field) { // not required
-		return nil
-	}
-
-	if err := m.Field.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("field")
-		}
-		return err
-	}
-
 	return nil
 }
 
@@ -104,6 +88,22 @@ func (m *DataModelMapping) validateName(formats strfmt.Registry) error {
 	if err := m.Name.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("name")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *DataModelMapping) validatePath(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Path) { // not required
+		return nil
+	}
+
+	if err := m.Path.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("path")
 		}
 		return err
 	}

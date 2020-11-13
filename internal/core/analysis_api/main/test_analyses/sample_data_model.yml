@@ -22,6 +22,6 @@ DataModelID: Some.Events.DataModel
 Enabled: true
 Mappings:
   - Name: source_ip
-    Field: ipAddress
+    Path: ipAddress
   - Name: dest_ip
-    Field: destAddress
+    Path: destAddress

@@ -45,3 +45,13 @@ class AnalysisAPIClient:
         response = requests.get(prepped_request.url, headers=prepped_request.headers)
         response.raise_for_status()
         return response.json()['policies']
+
+    def get_enabled_data_models(self) -> List[Dict[str, Any]]:
+        """Gets information for all enabled rules."""
+        request = AWSRequest(method='GET', url=self.url + '/enabled', params={'type': 'DATAMODEL'})
+        self.signer.add_auth(request)
+        prepped_request = request.prepare()
+
+        response = requests.get(prepped_request.url, headers=prepped_request.headers)
+        response.raise_for_status()
+        return response.json()['policies']

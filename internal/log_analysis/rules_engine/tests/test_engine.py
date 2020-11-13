@@ -22,6 +22,28 @@ from ..src.engine import Engine
 
 class TestEngine(TestCase):
 
+    def test_loading_data_models(self) -> None:
+        analysis_api = mock.MagicMock()
+        analysis_api.get_enabled_data_models.return_value = [
+            {
+                'id': 'data_model_id',
+                'resourceTypes': ['log'],
+                'body': 'def get_source_ip(event):\n\treturn "source_ip"',
+                'versionId': 'version',
+                'mappings': [{
+                    'name': 'destination_ip',
+                    'path': 'dst_ip'
+                }, {
+                    'name': 'source_ip',
+                    'method': 'get_source_ip'
+                }]
+            }
+        ]
+        engine = Engine(analysis_api)
+        self.assertEqual(len(engine.log_type_to_data_models.keys()), 1)
+        self.assertEqual(len(engine.log_type_to_data_models['log'].paths), 1)
+        self.assertEqual(len(engine.log_type_to_data_models['log'].methods), 1)
+
     def test_loading_rules(self) -> None:
         analysis_api = mock.MagicMock()
         analysis_api.get_enabled_rules.return_value = [
@@ -36,6 +58,42 @@ class TestEngine(TestCase):
         self.assertEqual(len(engine.log_type_to_rules), 1)
         self.assertEqual(len(engine.log_type_to_rules['log']), 1)
         self.assertEqual(engine.log_type_to_rules['log'][0].rule_id, 'rule_id')
+
+    def test_analyze_rule_with_udm(self) -> None:
+        analysis_api = mock.MagicMock()
+        analysis_api.get_enabled_rules.return_value = [
+            {
+                'id': 'rule_id',
+                'resourceTypes': ['log'],
+                'body': 'def rule(event):\n\tif event.udm("destination"):\n\t\treturn True\n\treturn False',
+                'versionId': 'version'
+            }
+        ]
+        analysis_api.get_enabled_data_models.return_value = [
+            {
+                'id': 'data_model_id',
+                'resourceTypes': ['log'],
+                'versionId': 'version',
+                'mappings': [{
+                    'name': 'destination',
+                    'path': 'is_dst'
+                }]
+            }
+        ]
+        log_entry = {'is_dst': True}
+        engine = Engine(analysis_api)
+        result = engine.analyze('log', log_entry)
+        expected_event_matches = [
+            EngineResult(
+                rule_id='rule_id',
+                rule_version='version',
+                log_type='log',
+                dedup='defaultDedupString:rule_id',
+                dedup_period_mins=60,
+                event=log_entry
+            )
+        ]
+        self.assertEqual(result, expected_event_matches)
 
     def test_analyse_many_rules(self) -> None:
         analysis_api = mock.MagicMock()
