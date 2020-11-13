@@ -247,7 +247,7 @@ func checkSqsQueueHealth(input *models.CheckIntegrationInput) *models.SourceInte
 	// is performed before the SQS queue is created.
 	if len(input.SqsConfig.QueueURL) == 0 {
 		health.SqsStatus.Healthy = true
-		health.SqsStatus.Message = "Queue does not exist yet (old time setup)."
+		health.SqsStatus.Message = "Queue does not exist yet (first time setup)."
 		return health
 	}
 

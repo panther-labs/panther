@@ -265,6 +265,11 @@ func TestSlicesContainSameElements(t *testing.T) {
 			new:    []string{"Log.A"},
 			expect: false,
 		},
+		{
+			old:    []string{"Log.A", "Log.B"},
+			new:    []string{"Log.C", "Log.D"},
+			expect: true,
+		},
 	} {
 		tc := tc
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
