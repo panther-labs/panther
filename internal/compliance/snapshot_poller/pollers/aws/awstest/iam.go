@@ -587,7 +587,7 @@ var (
 			svc.On("GetRolePolicy", mock.Anything).
 				Return(&iam.GetRolePolicyOutput{},
 					awserr.New(
-						"NoSuchEntity",
+						iam.ErrCodeNoSuchEntityException,
 						"The role policy with name MYNAME cannot be found",
 						errors.New("fake GetRolePolicy error"),
 					))
