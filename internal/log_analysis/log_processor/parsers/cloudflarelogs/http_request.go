@@ -22,7 +22,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
-// Note: No field is marked "required" because Cloudflare allows the user to select which fields to include in the logs.
 // nolint:lll,maligned
 type HTTPRequest struct {
 	BotScore                       pantherlog.Int64   `json:"BotScore" description:"Cloudflare Bot Score (available for Bot Management customers; please contact your account team to enable)"`
@@ -39,7 +38,7 @@ type HTTPRequest struct {
 	ClientRequestBytes             pantherlog.Int64   `json:"ClientRequestBytes" description:"Number of bytes in the client request"`
 	ClientRequestHost              pantherlog.String  `json:"ClientRequestHost" panther:"hostname" description:"Host requested by the client"`
 	ClientRequestMethod            pantherlog.String  `json:"ClientRequestMethod" description:"HTTP method of client request"`
-	ClientRequestPath              pantherlog.String  `json:"ClientRequestPath" validate:"required" description:"URI path requested by the client"`
+	ClientRequestPath              pantherlog.String  `json:"ClientRequestPath" description:"URI path requested by the client"`
 	ClientRequestProtocol          pantherlog.String  `json:"ClientRequestProtocol" description:"HTTP protocol of client request"`
 	ClientRequestReferer           pantherlog.String  `json:"ClientRequestReferer" panther:"hostname" description:"HTTP request referrer"`
 	ClientRequestURI               pantherlog.String  `json:"ClientRequestURI" description:"URI requested by the client"`
