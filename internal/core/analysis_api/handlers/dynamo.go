@@ -203,6 +203,7 @@ func (r *tableItem) DataModel() *models.DataModel {
 		Body:           r.Body,
 		CreatedAt:      r.CreatedAt,
 		CreatedBy:      r.CreatedBy,
+		DisplayName:    r.DisplayName,
 		Description:    r.Description,
 		Enabled:        r.Enabled,
 		ID:             r.ID,
