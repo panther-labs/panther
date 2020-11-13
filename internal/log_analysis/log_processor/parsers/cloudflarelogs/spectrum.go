@@ -22,7 +22,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
-// Note: No field is marked "required" because Cloudflare allows the user to select which fields to include in the logs.
 // nolint:lll,maligned
 type SpectrumEvent struct {
 	Application                    pantherlog.String `json:"Application" description:"The unique public ID of the application on which the event occurred"`
@@ -41,7 +40,7 @@ type SpectrumEvent struct {
 	ColoCode                       pantherlog.String `json:"ColoCode" description:"IATA airport code of data center that received the request"`
 	ConnectTimestamp               pantherlog.Time   `json:"ConnectTimestamp" tcodec:"cloudflare" description:"Timestamp at which both legs of the connection (client/edge, edge/origin or nexthop) were established"`
 	DisconnectTimestamp            pantherlog.Time   `json:"DisconnectTimestamp" tcodec:"cloudflare" description:"Timestamp at which the connection was closed"`
-	Event                          pantherlog.String `json:"Event" validate:"required" description:"connect | disconnect | clientFiltered | tlsError | resolveOrigin | originError"`
+	Event                          pantherlog.String `json:"Event" description:"connect | disconnect | clientFiltered | tlsError | resolveOrigin | originError"`
 	IPFirewall                     pantherlog.Bool   `json:"IpFirewall" description:"Whether IP Firewall was enabled at time of connection"`
 	OriginBytes                    pantherlog.Int64  `json:"OriginBytes" description:"The number of bytes read from the origin by Spectrum"`
 	OriginIP                       pantherlog.String `json:"OriginIP" panther:"ip" description:"Origin IP address"`

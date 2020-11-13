@@ -75,6 +75,7 @@ exports[`AlertCard should match snapshot 1`] = `
 
 .panther-2 {
   font-weight: 500;
+  word-break: break-word;
 }
 
 .panther-1 {

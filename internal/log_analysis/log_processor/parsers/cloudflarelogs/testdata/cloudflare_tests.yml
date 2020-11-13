@@ -91,6 +91,19 @@ result: |
   }
 
 ---
+name: firewall required fields only
+logType: Cloudflare.Firewall
+input: |
+  {
+    "Datetime": "2020-09-17T18:00:00Z"
+  }
+result: |
+  {
+    "Datetime": "2020-09-17T18:00:00Z",
+    "p_log_type": "Cloudflare.Firewall",
+    "p_event_time":"2020-09-17T18:00:00Z"
+  }
+---
 name: http_request
 logType: Cloudflare.HttpRequest
 input: |
@@ -229,6 +242,20 @@ result: |
   	"p_any_trace_ids": ["parent-ray-id", "ray-id"]
   }
 ---
+name: httprequest required fields only
+logType: Cloudflare.HttpRequest
+input: |
+  {
+    "EdgeStartTimestamp": "2020-09-17T18:00:00Z"
+  }
+result: |
+  {
+    "EdgeStartTimestamp": "2020-09-17T18:00:00Z",
+    "p_log_type": "Cloudflare.HttpRequest",
+    "p_event_time":"2020-09-17T18:00:00Z"
+  }
+
+---
 name: spectrum
 logType: Cloudflare.Spectrum
 input: |
@@ -302,4 +329,18 @@ result: |
   	"p_log_type": "Cloudflare.Spectrum",
   	"p_event_time":"2020-09-17T18:49:46.194526741Z",
   	"p_any_ip_addresses": ["127.127.127.127", "128.128.128.128"]
+  }
+
+---
+name: spectrum required fields only
+logType: Cloudflare.Spectrum
+input: |
+  {
+    "Timestamp": "2020-09-17T18:00:00Z"
+  }
+result: |
+  {
+    "Timestamp": "2020-09-17T18:00:00Z",
+    "p_log_type": "Cloudflare.Spectrum",
+    "p_event_time":"2020-09-17T18:00:00Z"
   }

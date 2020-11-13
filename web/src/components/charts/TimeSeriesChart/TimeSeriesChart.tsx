@@ -219,6 +219,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
         top: title ? 30 : 'auto',
         icon: 'circle',
         data: legendData,
+        inactiveColor: theme.colors['gray-400'],
         textStyle: {
           color: theme.colors['gray-50'],
           fontFamily: theme.fonts.primary,

@@ -26,6 +26,7 @@ type Config struct {
 	AnalysisType              string              `yaml:"AnalysisType"`
 	AutoRemediationID         string              `yaml:"AutoRemediationID"`
 	AutoRemediationParameters map[string]string   `yaml:"AutoRemediationParameters"`
+	DataModelID               string              `yaml:"DataModelID"`
 	DedupPeriodMinutes        int                 `yaml:"DedupPeriodMinutes"`
 	Description               string              `yaml:"Description"`
 	DisplayName               string              `yaml:"DisplayName"`
@@ -33,6 +34,7 @@ type Config struct {
 	Filename                  string              `yaml:"Filename"`
 	GlobalID                  string              `yaml:"GlobalID"`
 	LogTypes                  []string            `yaml:"LogTypes"`
+	Mappings                  []Mapping           `yaml:"Mappings"`
 	OutputIds                 []string            `yaml:"OutputIds"`
 	PolicyID                  string              `yaml:"PolicyID"`
 	Reference                 string              `yaml:"Reference"`
@@ -45,6 +47,13 @@ type Config struct {
 	Tags                      []string            `yaml:"Tags"`
 	Tests                     []Test              `yaml:"Tests"`
 	Threshold                 int                 `yaml:"Threshold"`
+}
+
+// Mapping converts source log field name to standard field name.
+type Mapping struct {
+	Path   string `yaml:"Path"`
+	Method string `yaml:"Method"`
+	Name   string `yaml:"Name"`
 }
 
 // Test is a unit test definition when parsing policies in a bulk upload.

@@ -67,7 +67,7 @@ const GenericItemCard: React.FC<GenericItemCardProps> & GenericItemCardCompositi
 
 const GenericItemCardHeading: React.FC<TextProps> = ({ children, ...rest }) => {
   return (
-    <Text fontWeight="medium" as="h4" {...rest}>
+    <Text fontWeight="medium" wordBreak="break-word" as="h4" {...rest}>
       {children}
     </Text>
   );
