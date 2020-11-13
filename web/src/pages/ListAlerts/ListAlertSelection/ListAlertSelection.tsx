@@ -118,7 +118,9 @@ const ListAlertSelection: React.FC = () => {
                 placeholder="Select statuses"
               />
             </Box>
-            <SubmitButton allowPristineSubmission>Apply</SubmitButton>
+            <SubmitButton variantColor="violet" allowPristineSubmission>
+              Apply
+            </SubmitButton>
           </Flex>
         </Form>
       </Formik>
