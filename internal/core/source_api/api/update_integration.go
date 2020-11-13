@@ -20,8 +20,6 @@ package api
 
 import (
 	"fmt"
-	"reflect"
-	"sort"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -30,7 +28,6 @@ import (
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/pkg/genericapi"
-	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 var (
@@ -223,8 +220,9 @@ func updateTables(item *ddb.Integration, input *models.UpdateIntegrationSettings
 		newLogTypes = input.SqsConfig.LogTypes
 	}
 
-	// If log types haven't been updated, return
-	if slicesContainSameElements(existingLogTypes, newLogTypes) {
+	// If the user hasn't added new log types to the integration
+	// don't create new tables
+	if !newLogsAdded(existingLogTypes, newLogTypes) {
 		return nil
 	}
 
@@ -238,14 +236,19 @@ func updateTables(item *ddb.Integration, input *models.UpdateIntegrationSettings
 	return nil
 }
 
-// Returns True if the string slices contain the same unique elements
-// False otherwise
-func slicesContainSameElements(left, right []string) bool {
-	leftSet := stringset.New(left...)
-	rightSet := stringset.New(right...)
-
-	sort.Strings(leftSet)
-	sort.Strings(rightSet)
-
-	return reflect.DeepEqual(leftSet, rightSet)
+// Returns True if user has added new logs, false otherwise
+func newLogsAdded(old, new []string) bool {
+	for i := range new {
+		found := false
+		for j := range old {
+			if new[i] == old[j] {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return true
+		}
+	}
+	return false
 }

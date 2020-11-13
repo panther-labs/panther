@@ -215,55 +215,60 @@ func TestUpdateIntegrationLastScanEnd(t *testing.T) {
 
 func TestSlicesContainSameElements(t *testing.T) {
 	type testCase struct {
-		first, second []string
-		expect        bool
+		old, new []string
+		expect   bool
 	}
 
 	for i, tc := range []testCase{
 		{
-			first:  []string{},
-			second: []string{},
-			expect: true,
-		},
-		{
-			first:  []string{"a"},
-			second: []string{},
+			old:    []string{},
+			new:    []string{},
 			expect: false,
 		},
 		{
-			first:  []string{},
-			second: []string{"a"},
+			old:    []string{"Log.A"},
+			new:    []string{},
 			expect: false,
 		},
 		{
-			first:  []string{"a", "b"},
-			second: []string{"a", "a", "b"},
+			old:    []string{},
+			new:    []string{"Log.A"},
 			expect: true,
 		},
 		{
-			first:  []string{"a", "b", "a"},
-			second: []string{"a", "b"},
+			old:    []string{"Log.A", "Log.B"},
+			new:    []string{"Log.A", "Log.A", "Log.B"},
+			expect: false,
+		},
+		{
+			old:    []string{"Log.A", "Log.B", "Log.A"},
+			new:    []string{"Log.A", "Log.B"},
+			expect: false,
+		},
+		{
+			old:    []string{"Log.A", "Log.B"},
+			new:    []string{"Log.A", "Log.B"},
+			expect: false,
+		},
+		{
+			old:    []string{"Log.A", "Log.B"},
+			new:    []string{"Log.B", "Log.A"},
+			expect: false,
+		},
+		{
+			old:    []string{"Log.A", "Log.B"},
+			new:    []string{"Log.A", "Log.B", "Log.C"},
 			expect: true,
 		},
 		{
-			first:  []string{"a", "b"},
-			second: []string{"a", "b"},
-			expect: true,
-		},
-		{
-			first:  []string{"a", "b"},
-			second: []string{"b", "a"},
-			expect: true,
-		},
-		{
-			first:  []string{"a", "b"},
-			second: []string{"a", "b", "ab"},
+			old:    []string{"Log.A", "Log.B"},
+			new:    []string{"Log.A"},
 			expect: false,
 		},
 	} {
 		tc := tc
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			result := slicesContainSameElements(tc.first, tc.second)
+			result := newLogsAdded(tc.old, tc.new)
 			assert.Equal(t, tc.expect, result)
 		})
 	}
