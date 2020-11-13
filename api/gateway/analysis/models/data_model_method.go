@@ -24,59 +24,21 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"encoding/json"
-
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 )
 
-// AnalysisType analysis type
+// DataModelMethod method name used to map data in a DataModel
 //
-// swagger:model AnalysisType
-type AnalysisType string
+// swagger:model dataModelMethod
+type DataModelMethod string
 
-const (
-
-	// AnalysisTypeDATAMODEL captures enum value "DATAMODEL"
-	AnalysisTypeDATAMODEL AnalysisType = "DATAMODEL"
-
-	// AnalysisTypeGLOBAL captures enum value "GLOBAL"
-	AnalysisTypeGLOBAL AnalysisType = "GLOBAL"
-
-	// AnalysisTypePOLICY captures enum value "POLICY"
-	AnalysisTypePOLICY AnalysisType = "POLICY"
-
-	// AnalysisTypeRULE captures enum value "RULE"
-	AnalysisTypeRULE AnalysisType = "RULE"
-)
-
-// for schema
-var analysisTypeEnum []interface{}
-
-func init() {
-	var res []AnalysisType
-	if err := json.Unmarshal([]byte(`["DATAMODEL","GLOBAL","POLICY","RULE"]`), &res); err != nil {
-		panic(err)
-	}
-	for _, v := range res {
-		analysisTypeEnum = append(analysisTypeEnum, v)
-	}
-}
-
-func (m AnalysisType) validateAnalysisTypeEnum(path, location string, value AnalysisType) error {
-	if err := validate.EnumCase(path, location, value, analysisTypeEnum, true); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Validate validates this analysis type
-func (m AnalysisType) Validate(formats strfmt.Registry) error {
+// Validate validates this data model method
+func (m DataModelMethod) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	// value enum
-	if err := m.validateAnalysisTypeEnum("", "body", m); err != nil {
+	if err := validate.Pattern("", "body", string(m), `[a-zA-Z0-9\-\. ]{1,200}`); err != nil {
 		return err
 	}
 

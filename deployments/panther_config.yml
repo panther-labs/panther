@@ -60,6 +60,7 @@ Infra:
   # Contributors, take note: the default layer (packaged with Panther releases) bundled in the
   # bootstrap-gateway stack must fit within the ~50MB SAR package limit. boto3, for example, is too big
   PipLayer:
+    - jsonpath-ng==1.5.2
     - policyuniverse==1.3.2.2
     - requests==2.23.0
 
