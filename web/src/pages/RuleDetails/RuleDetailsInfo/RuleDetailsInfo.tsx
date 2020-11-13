@@ -25,6 +25,7 @@ import { MODALS } from 'Components/utils/Modal';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import StatusBadge from 'Components/badges/StatusBadge';
 import LinkButton from 'Components/buttons/LinkButton';
+import Breadcrumbs from 'Components/Breadcrumbs';
 
 interface ResourceDetailsInfoProps {
   rule?: RuleDetails;
@@ -35,20 +36,25 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
 
   return (
     <React.Fragment>
-      <Flex spacing={4} mb={6} justify="flex-end">
-        <LinkButton to={urls.logAnalysis.rules.edit(rule.id)}>Edit</LinkButton>
-        <Button
-          variantColor="red"
-          onClick={() =>
-            showModal({
-              modal: MODALS.DELETE_RULE,
-              props: { rule },
-            })
-          }
-        >
-          Delete
-        </Button>
-      </Flex>
+      <Breadcrumbs.Actions>
+        <Flex spacing={4} justify="flex-end">
+          <LinkButton aria-label="Edit Rule" to={urls.logAnalysis.rules.edit(rule.id)}>
+            Edit
+          </LinkButton>
+          <Button
+            variantColor="red"
+            aria-label="Delete Rule"
+            onClick={() =>
+              showModal({
+                modal: MODALS.DELETE_RULE,
+                props: { rule },
+              })
+            }
+          >
+            Delete
+          </Button>
+        </Flex>
+      </Breadcrumbs.Actions>
       <Card as="article" p={6}>
         <Flex as="header" align="center">
           <Heading

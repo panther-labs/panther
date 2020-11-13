@@ -31,7 +31,6 @@ import {
 import { ListAlertsInput, SeverityEnum, AlertStatusesEnum } from 'Generated/schema';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { capitalize } from 'Helpers/utils';
-import isEmpty from 'lodash/isEmpty';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import TextButton from 'Components/buttons/TextButton';
 import FormikNumberInput from 'Components/fields/NumberInput';
@@ -69,9 +68,8 @@ const DropdownFilters: React.FC = () => {
       } as ListAlertsDropdownFiltersValues),
     [requestParams]
   );
-  const filtersCount = Object.keys(defaultValues).filter(key => !isEmpty(requestParams[key]))
-    .length;
 
+  const filtersCount = Object.keys(defaultValues).filter(key => key in requestParams).length;
   return (
     <Popover>
       {({ close: closePopover }) => (

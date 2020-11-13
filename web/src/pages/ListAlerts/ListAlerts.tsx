@@ -24,6 +24,7 @@ import { ListAlertsInput } from 'Generated/schema';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import TablePlaceholder from 'Components/TablePlaceholder';
+import NoResultsFound from 'Components/NoResultsFound';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import isEmpty from 'lodash/isEmpty';
 import withSEO from 'Hoc/withSEO';
@@ -137,9 +138,13 @@ const ListAlerts = () => {
         <Card as="section" position="relative">
           <Box position="relative">
             <Flex direction="column" spacing={2}>
-              {alertItems.map(alert => (
-                <AlertCard key={alert.alertId} alert={alert} />
-              ))}
+              {alertItems.length ? (
+                alertItems.map(alert => <AlertCard key={alert.alertId} alert={alert} />)
+              ) : (
+                <Box my={8}>
+                  <NoResultsFound />
+                </Box>
+              )}
             </Flex>
             {hasNextPage && (
               <Box py={8} ref={sentinelRef}>
