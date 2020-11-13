@@ -113,7 +113,7 @@ func getRolePolicy(iamSvc iamiface.IAMAPI, roleName *string, policyName *string)
 	policy, err := iamSvc.GetRolePolicy(&iam.GetRolePolicyInput{RoleName: roleName, PolicyName: policyName})
 	if err != nil {
 		var awsError awserr.Error
-		if errors.As(err, &awsError) && awsError.Code() == "NoSuchEntity" {
+		if errors.As(err, &awsError) && awsError.Code() == iam.ErrCodeNoSuchEntityException {
 			zap.L().Debug("role policy could not be found", zap.String("policyName", *policyName))
 			return nil, nil
 		}
