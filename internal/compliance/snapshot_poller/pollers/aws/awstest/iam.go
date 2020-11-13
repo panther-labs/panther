@@ -23,6 +23,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
@@ -581,6 +583,15 @@ var (
 			svc.On("GetRolePolicy", mock.Anything).
 				Return(&iam.GetRolePolicyOutput{},
 					errors.New("IAM.GetRolePolicy error"))
+		},
+		"GetRolePolicyAWSErr": func(svc *MockIAM) {
+			svc.On("GetRolePolicy", mock.Anything).
+				Return(&iam.GetRolePolicyOutput{},
+					awserr.New(
+						"NoSuchEntity",
+						"The role policy with name MYNAME cannot be found",
+						errors.New("fake GetRolePolicy error"),
+					))
 		},
 		"GetRole": func(svc *MockIAM) {
 			svc.On("GetRole", mock.Anything).
