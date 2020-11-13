@@ -36,6 +36,7 @@ import Linkify from 'Components/Linkify';
 import { PolicyDetails } from 'Generated/schema';
 import urls from 'Source/urls';
 import JsonViewer from 'Components/JsonViewer';
+import Breadcrumbs from 'Components/Breadcrumbs';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import SeverityBadge from 'Components/badges/SeverityBadge';
@@ -51,20 +52,26 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
 
   return (
     <React.Fragment>
-      <Flex spacing={4} mb={6} justify="flex-end">
-        <LinkButton to={urls.compliance.policies.edit(policy.id)}>Edit</LinkButton>
-        <Button
-          variantColor="red"
-          onClick={() =>
-            showModal({
-              modal: MODALS.DELETE_POLICY,
-              props: { policy },
-            })
-          }
-        >
-          Delete
-        </Button>
-      </Flex>
+      <Breadcrumbs.Actions>
+        <Flex spacing={4} justify="flex-end">
+          <LinkButton icon="pencil" to={urls.compliance.policies.edit(policy.id)}>
+            Edit Policy
+          </LinkButton>
+          <Button
+            variantColor="red"
+            icon="trash"
+            onClick={() =>
+              showModal({
+                modal: MODALS.DELETE_POLICY,
+                props: { policy },
+              })
+            }
+          >
+            Delete Policy
+          </Button>
+        </Flex>
+      </Breadcrumbs.Actions>
+
       <Card as="article" p={6}>
         <Flex as="header" align="center" mb={4} spacing={4}>
           <Heading fontWeight="bold" wordBreak="break-word" aria-describedby="policy-description">
