@@ -22,7 +22,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
-// Note: No field is marked "required" because Cloudflare allows the user to select which fields to include in the logs.
 // nolint:lll,maligned
 type FirewallEvent struct {
 	Action                 pantherlog.String                `json:"Action" description:"The code of the first-class action the Cloudflare Firewall took on this request"`
@@ -37,7 +36,7 @@ type FirewallEvent struct {
 	ClientRefererScheme    pantherlog.String                `json:"ClientRefererScheme" description:"The referer url scheme requested by the visitor"`
 	ClientRequestHost      pantherlog.String                `json:"ClientRequestHost" panther:"hostname" description:"The HTTP hostname requested by the visitor"`
 	ClientRequestMethod    pantherlog.String                `json:"ClientRequestMethod" description:"The HTTP method used by the visitor"`
-	ClientRequestPath      pantherlog.String                `json:"ClientRequestPath" validate:"required" description:"The path requested by visitor"`
+	ClientRequestPath      pantherlog.String                `json:"ClientRequestPath" description:"The path requested by visitor"`
 	ClientRequestProtocol  pantherlog.String                `json:"ClientRequestProtocol" description:"The version of HTTP protocol requested by the visitor"`
 	ClientRequestQuery     pantherlog.String                `json:"ClientRequestQuery" description:"The query-string was requested by the visitor"`
 	ClientRequestScheme    pantherlog.String                `json:"ClientRequestScheme" description:"The url scheme requested by the visitor"`
