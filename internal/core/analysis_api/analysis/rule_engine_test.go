@@ -68,7 +68,7 @@ func TestRuleEngine_TestRule(t *testing.T) {
 		lambdaClient: &lambdaClient,
 	}
 
-	testRuleInput := &models.TestPolicyInput{
+	testRuleInput := &models.TestRuleInput{
 		Body: `
 def rule(e): 
 	return True
@@ -79,7 +79,7 @@ def title(e):
 def dedup(e):
 	return 'alert-dedup'
 `,
-		ResourceTypes: []string{"Resource.Type"},
+		LogTypes: []string{"Resource.Type"},
 		Tests: []models.UnitTest{
 			{
 				Name:           "This will be True",

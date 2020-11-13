@@ -19,29 +19,25 @@ package handlers
  */
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-func (API) ListGlobals(input *models.ListGlobalsInput) *events.APIGatewayProxyResponse {
-	// Set defaults
-	if input.Page == 0 {
-		input.Page = defaultPage
-	}
-	if input.PageSize == 0 {
-		input.PageSize = defaultPageSize
-	}
-	if input.SortDir == "" {
-		input.SortDir = defaultSortDir
+func (API) ListRules(input *models.ListRulesInput) *events.APIGatewayProxyResponse {
+	if err := stdRuleListInput(input); err != nil {
+		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusBadRequest}
 	}
 
 	// Scan dynamo
-	scanInput, err := buildScanInput(models.TypeGlobal, input.Fields)
+	scanInput, err := ruleScanInput(input)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{
 			Body: err.Error(), StatusCode: http.StatusInternalServerError}
@@ -53,23 +49,51 @@ func (API) ListGlobals(input *models.ListGlobalsInput) *events.APIGatewayProxyRe
 		return nil
 	})
 	if err != nil {
-		zap.L().Error("failed to scan globals", zap.Error(err))
+		zap.L().Error("failed to scan rules", zap.Error(err))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
 	// Sort and page
-	sortItems(items, "id", input.SortDir, nil)
+	sortItems(items, input.SortBy, input.SortDir, nil)
 	var paging models.Paging
 	paging, items = pageItems(items, input.Page, input.PageSize)
 
 	// Convert to output struct
-	result := models.ListGlobalsOutput{
-		Globals: make([]models.Global, 0, len(items)),
-		Paging:  paging,
+	result := models.ListRulesOutput{
+		Rules:  make([]models.Rule, 0, len(items)),
+		Paging: paging,
 	}
 	for _, item := range items {
-		result.Globals = append(result.Globals, *item.Global())
+		result.Rules = append(result.Rules, *item.Rule())
 	}
 
 	return gatewayapi.MarshalResponse(&result, http.StatusOK)
+}
+
+// Set defaults and standardize input request
+func stdRuleListInput(input *models.ListRulesInput) error {
+	if input.Page == 0 {
+		input.Page = defaultPage
+	}
+	if input.PageSize == 0 {
+		input.PageSize = defaultPageSize
+	}
+	if input.SortBy == "" {
+		input.SortBy = defaultSortBy
+	}
+	if input.SortDir == "" {
+		input.SortDir = defaultSortDir
+	}
+
+	// TODO - frontend no longer needs to query escape this
+	var err error
+	if input.NameContains, err = url.QueryUnescape(input.NameContains); err != nil {
+		return fmt.Errorf("invalid nameContains: " + err.Error())
+	}
+	return nil
+}
+
+func ruleScanInput(input *models.ListRulesInput) (*dynamodb.ScanInput, error) {
+	filters := pythonListFilters(input.Enabled, input.NameContains, string(input.Severity), input.LogTypes, input.Tags)
+	return buildScanInput(models.TypeRule, input.Fields, filters...)
 }

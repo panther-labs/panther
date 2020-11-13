@@ -48,8 +48,6 @@ type ListRulesInput struct {
 
 	// ----- Projection -----
 	// Policy fields to return in the response (default: all)
-	// TODO - update appsync to specify the fields needed for frontend here
-	// (displayName, enabled, id, lastModified, logTypes, severity, tags, reports, threshold)
 	Fields []string `json:"fields" validate:"omitempty,dive,required"`
 
 	// ----- Sorting -----
@@ -78,14 +76,15 @@ type TestRuleOutput struct {
 }
 
 type RuleTestResult struct {
+	Errored    bool `json:"errored"`
+	Passed     bool `json:"passed"`
+	RuleOutput bool `json:"ruleOutput"`
+
 	AlertContextError  string `json:"alertContextError"`
 	AlertContextOutput string `json:"alertContextOutput"`
-	Errored            bool   `json:"errored"`
 	ID                 string `json:"id"`
-	Passed             bool   `json:"passed"`
 	RuleID             string `json:"ruleId"`
 	RuleError          string `json:"ruleError"`
-	RuleOutput         bool   `json:"ruleOutput"`
 	TestName           string `json:"testName"`
 	TitleError         string `json:"titleError"`
 	TitleOutput        string `json:"titleOutput"`

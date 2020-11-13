@@ -69,7 +69,7 @@ func (remediator *Invoker) Remediate(remediation *remediationmodels.RemediateRes
 		return errors.Wrap(err, "Encountered issue when getting resource")
 	}
 	remediationPayload := &Payload{
-		RemediationID: string(policy.AutoRemediationID),
+		RemediationID: policy.AutoRemediationID,
 		Resource:      resource.Attributes,
 		Parameters:    policy.AutoRemediationParameters,
 	}

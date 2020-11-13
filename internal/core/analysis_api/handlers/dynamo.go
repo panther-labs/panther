@@ -64,9 +64,10 @@ type tableItem struct {
 	LowerID          string   `json:"lowerId,omitempty"`
 	LowerTags        []string `json:"lowerTags,omitempty" dynamodbav:"lowerTags,stringset,omitempty"`
 
-	OutputIDs     []string                  `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
-	Reference     string                    `json:"reference,omitempty"`
-	Reports       map[string][]string       `json:"reports,omitempty"`
+	OutputIDs []string            `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
+	Reference string              `json:"reference,omitempty"`
+	Reports   map[string][]string `json:"reports,omitempty"`
+	// For log analysis rules, these are actually log types
 	ResourceTypes []string                  `json:"resourceTypes,omitempty" dynamodbav:"resourceTypes,stringset,omitempty"`
 	Runbook       string                    `json:"runbook,omitempty"`
 	Severity      compliancemodels.Severity `json:"severity"`
@@ -297,11 +298,11 @@ func dynamoPut(policy *tableItem) error {
 }
 
 // Wrapper around dynamoClient.ScanPages that accepts a handler function to process each item.
-func scanPages(input *dynamodb.ScanInput, handler func(*tableItem) error) error {
+func scanPages(input *dynamodb.ScanInput, handler func(tableItem) error) error {
 	var handlerErr, unmarshalErr error
 
 	err := dynamoClient.ScanPages(input, func(page *dynamodb.ScanOutput, lastPage bool) bool {
-		var items []*tableItem
+		var items []tableItem
 		if unmarshalErr = dynamodbattribute.UnmarshalListOfMaps(page.Items, &items); unmarshalErr != nil {
 			return false // stop paginating
 		}
@@ -331,4 +332,37 @@ func scanPages(input *dynamodb.ScanInput, handler func(*tableItem) error) error 
 	}
 
 	return nil
+}
+
+// Build dynamo scan input for list operations
+func buildScanInput(itemType models.DetectionType, fields []string, filters ...expression.ConditionBuilder) (*dynamodb.ScanInput, error) {
+	masterFilter := expression.Equal(expression.Name("type"), expression.Value(itemType))
+	for _, filter := range filters {
+		masterFilter.And(filter)
+	}
+	builder := expression.NewBuilder().WithFilter(masterFilter)
+
+	if len(fields) > 0 {
+		projection := expression.NamesList(expression.Name(fields[0]))
+		for _, field := range fields[1:] {
+			projection = projection.AddNames(expression.Name(field))
+		}
+		builder = builder.WithProjection(projection)
+	}
+
+	expr, err := builder.Build()
+	if err != nil {
+		zap.L().Error("unable to build dynamodb scan expression", zap.Error(err))
+		return nil, err
+	}
+
+	result := dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		ProjectionExpression:      expr.Projection(),
+		TableName:                 &env.Table,
+	}
+	zap.L().Debug("built dynamo scan input", zap.Any("scanInput", result))
+	return &result, nil
 }

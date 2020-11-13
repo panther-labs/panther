@@ -114,7 +114,7 @@ func setEquality(first, second []string) bool {
 func standardizeTests(p *models.Policy) error {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 
-	for _, test := range p.Tests {
+	for i, test := range p.Tests {
 		var data map[string]interface{}
 		if err := json.UnmarshalFromString(test.Resource, &data); err != nil {
 			return err
@@ -123,7 +123,7 @@ func standardizeTests(p *models.Policy) error {
 		if err != nil {
 			return err
 		}
-		test.Resource = normalized
+		p.Tests[i].Resource = normalized
 	}
 
 	return nil

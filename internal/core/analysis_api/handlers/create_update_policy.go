@@ -78,6 +78,7 @@ func writePolicy(input *models.CreatePolicyInput, create bool) *events.APIGatewa
 		ID:                        input.ID,
 		OutputIDs:                 input.OutputIDs,
 		Reference:                 input.Reference,
+		Reports:                   input.Reports,
 		ResourceTypes:             input.ResourceTypes,
 		Runbook:                   input.Runbook,
 		Severity:                  input.Severity,

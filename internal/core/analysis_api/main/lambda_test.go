@@ -19,23 +19,14 @@ package main
  */
 
 import (
-	"context"
+	"testing"
 
-	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
-	"github.com/panther-labs/panther/internal/core/analysis_api/handlers"
-	"github.com/panther-labs/panther/pkg/genericapi"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-var router = genericapi.NewRouter("api", "analysis", nil, handlers.API{})
-
-func lambdaHandler(ctx context.Context, input *models.LambdaInput) (interface{}, error) {
-	lambdalogger.ConfigureGlobal(ctx, nil)
-	return router.Handle(input)
-}
-
-func main() {
-	lambda.Start(lambdaHandler)
+// The handler signatures must match those in the LambdaInput struct.
+func TestRouter(t *testing.T) {
+	assert.NoError(t, router.VerifyHandlers(&models.LambdaInput{}))
 }

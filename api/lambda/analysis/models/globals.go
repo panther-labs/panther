@@ -28,7 +28,8 @@ type GetGlobalInput struct {
 }
 
 type ListGlobalsInput struct {
-	// TODO - update appsync to specify the fields it needs (id, lastModified, tags)
+	// JSON field names (passed to Dynamo as a projection). For example,
+	// ["id", "lastModified", "tags"]
 	Fields []string `json:"fields" validate:"omitempty,dive,required"`
 
 	SortDir  string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`

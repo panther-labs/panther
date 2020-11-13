@@ -118,7 +118,7 @@ func parseQueueMsg(body string) (*resourcemodels.Resource, *analysismodels.Polic
 	err = jsoniter.UnmarshalFromString(body, &policy)
 	if err == nil && policy.Body != "" {
 		zap.L().Debug("found new/updated policy",
-			zap.String("policyId", string(policy.ID)))
+			zap.String("policyId", policy.ID))
 		return nil, &policy, nil
 	}
 
@@ -271,8 +271,8 @@ func evaluatePolicies(policies policyMap, resources resourceMap) (*enginemodels.
 	}
 	for _, policy := range policies {
 		input.Policies = append(input.Policies, enginemodels.Policy{
-			Body:          string(policy.Body),
-			ID:            string(policy.ID),
+			Body:          policy.Body,
+			ID:            policy.ID,
 			ResourceTypes: policy.ResourceTypes,
 		})
 	}

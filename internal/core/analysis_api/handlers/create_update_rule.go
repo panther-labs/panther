@@ -86,6 +86,7 @@ func writeRule(input *models.CreateRuleInput, create bool) *events.APIGatewayPro
 		ID:                 input.ID,
 		OutputIDs:          input.OutputIDs,
 		Reference:          input.Reference,
+		Reports:            input.Reports,
 		ResourceTypes:      input.LogTypes,
 		Runbook:            input.Runbook,
 		Severity:           input.Severity,

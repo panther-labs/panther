@@ -126,9 +126,7 @@ func listAllGlobals() ([]string, error) {
 	zap.L().Debug("listing all globals")
 	for {
 		input := models.LambdaInput{
-			ListGlobals: &models.ListGlobalsInput{
-				Page: page,
-			},
+			ListGlobals: &models.ListGlobalsInput{Page: page},
 		}
 		var globals models.ListGlobalsOutput
 		if _, err := analysisClient.Invoke(&input, &globals); err != nil {
