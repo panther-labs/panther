@@ -22,45 +22,43 @@ The default trust principals for various IAM roles and one SNS topic policy sid 
 --- for AWS configuration scanning and remediation
 
 "panther_audit" role trust principal:
-- arn:aws:iam::${var.master_account_id}:role/panther-app-SnapshotInfra-1111-PollerFunctionRole-11111111111
-- arn:aws:iam::${var.master_account_id}:role/panther-Core-11111-SourceApiFunctionRole-111111111
+
+- arn:aws:iam::\${var.master_account_id}:role/panther-app-SnapshotInfra-1111-PollerFunctionRole-11111111111
+- arn:aws:iam::\${var.master_account_id}:role/panther-Core-11111-SourceApiFunctionRole-111111111
 
 "panther_cloud_formation_stackset_execution" role trust principal:
+
 - arn:aws:iam::${var.master_account_id}:role/PantherCloudFormationStackSetAdminRole-${var.aws_region}
-- arn:aws:iam::${var.master_account_id}:role/panther-Core-11111-SourceApiFunctionRole-111111111
+- arn:aws:iam::\${var.master_account_id}:role/panther-Core-11111-SourceApiFunctionRole-111111111
 
 -- Note: no Panther component ever assumes the PantherCloudFormationStackSetExecutionRole. The StackSet Execution role allows admins to manually to deploy StackSets that create "real time notifications" from the master account using the AWS CloudFormation service. If you plan to use this role, the PantherCloudFormationStackSetAdminRole (see separate template) has to be created in the master account. If you plan to apply the "Cloudwatch Events" to satellite accounts via Terraform directly, you will not need the StackSetExecution role or the StackSetAdmin role and should not deploy them.
 
 "panther_remediation" role trust principals:
-- arn:aws:iam::${var.master_account_id}:role/panther-CloudSecurity-111111-RemediationFunctionRole-111111111
-- arn:aws:iam::${var.master_account_id}:role/panther-Core-11111-SourceApiFunctionRole-111111111
 
-
+- arn:aws:iam::\${var.master_account_id}:role/panther-CloudSecurity-111111-RemediationFunctionRole-111111111
+- arn:aws:iam::\${var.master_account_id}:role/panther-Core-11111-SourceApiFunctionRole-111111111
 
 "Cloudwatch Events" template:
---- for "real time notifications" of changes in AWS configuration; you will not need the contents of this template if you are using the StackSetExecution/Admin roles (above) to create the Panther components with Stack  Sets for real time notifications.
+--- for "real time notifications" of changes in AWS configuration; you will not need the contents of this template if you are using the StackSetExecution/Admin roles (above) to create the Panther components with Stack Sets for real time notifications.
 
 "panther_events" SNS topic policy "CrossAccountSubscription" sid trust principal:
-- arn:aws:iam::${var.master_account_id}:role/panther-cloud-security-EventProcessorFunctionRole-1111111111
 
-
+- arn:aws:iam::\${var.master_account_id}:role/panther-cloud-security-EventProcessorFunctionRole-1111111111
 
 "Log Analysis" template:
 -- for log analysis
 
 "log_processing" role trust principals:
-- arn:aws:iam::${var.master_account_id}:role/panther-Core-11111-SourceApiFunctionRole-1111
-- arn:aws:iam::${var.master_account_id}:role/panther-LogAnalysis-11111-LogProcessorFunctionRole-111111111
 
-
+- arn:aws:iam::\${var.master_account_id}:role/panther-Core-11111-SourceApiFunctionRole-1111
+- arn:aws:iam::\${var.master_account_id}:role/panther-LogAnalysis-11111-LogProcessorFunctionRole-111111111
 
 "Log Processing Notifications" template:
 --- analog to Cloudwatch event notifications for cloud security real time notifications
 
 "policy" SNS topic policy "AllowSubscriptionToPanther" sid trust principal:
-- arn:aws:iam::${var.master_account_id}:role/panther-LogAnalysis-11111-LogProcessorFunctionRole-111111111 (same as for Log Analysis)
 
-
+- arn:aws:iam::\${var.master_account_id}:role/panther-LogAnalysis-11111-LogProcessorFunctionRole-111111111 (same as for Log Analysis)
 
 "Deployment" template:
 --- for programmatically deploying Panther
