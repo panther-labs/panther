@@ -16,5 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './LinkButton';
-export * from './LinkButton';
+import React from 'react';
+import SubmitButton, { SubmitButtonProps } from '../SubmitButton';
+
+export type SaveButtonProps = Omit<SubmitButtonProps, 'variantColor' | 'icon'>;
+
+const SaveButton: React.FC<SaveButtonProps> = ({ ...rest }) => {
+  return <SubmitButton variantColor="green" icon="check-outline" {...rest} />;
+};
+
+export default React.memo(SaveButton);

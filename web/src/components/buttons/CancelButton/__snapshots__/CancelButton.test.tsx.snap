@@ -1,0 +1,156 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CancelButton renders 1`] = `
+
+
+.panther-2>span {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-1 {
+  width: auto;
+  outline: none;
+  padding-left: 20px;
+  padding-right: 20px;
+  height: 46px;
+  font-size: 0.938rem;
+  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-radius: 4px;
+  border: 1px solid;
+  border-color: #4f4f4f;
+  background-color: #4f4f4f;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.panther-1:hover {
+  background-color: #595959;
+  border-color: #595959;
+}
+
+.panther-1:focus {
+  background-color: #595959;
+  border-color: #a4a4a4;
+}
+
+.panther-1:active,
+.panther-1[data-active=true] {
+  background-color: #454545;
+  border-color: #454545;
+}
+
+.panther-0 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+  margin-left: -4px;
+  margin-right: 8px;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <a
+    class="panther-2"
+    href="/http://test.com"
+  >
+    <span
+      class="panther-1"
+      type="button"
+    >
+      <svg
+        class="panther-0"
+        role="presentation"
+        viewBox="0 0 24 24"
+      >
+        <path
+          d="M0 0h24v24H0z"
+          fill="none"
+        />
+        <path
+          d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm0 2a8 8 0 100 16 8 8 0 000-16zm2.828 3.757l1.415 1.415L13.414 12l2.829 2.828-1.415 1.415L12 13.414l-2.828 2.829-1.415-1.415L10.586 12 7.757 9.172l1.415-1.415L12 10.586l2.828-2.829z"
+        />
+         
+      </svg>
+      Cancel
+    </span>
+  </a>
+  <a
+    class="panther-2"
+    href="/http://test.com"
+  >
+    <span
+      aria-label="Test destination"
+      class="panther-1"
+      type="button"
+    >
+      <svg
+        class="panther-0"
+        role="presentation"
+        viewBox="0 0 24 24"
+      >
+        <path
+          d="M0 0h24v24H0z"
+          fill="none"
+        />
+        <path
+          d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm0 2a8 8 0 100 16 8 8 0 000-16zm2.828 3.757l1.415 1.415L13.414 12l2.829 2.828-1.415 1.415L12 13.414l-2.828 2.829-1.415-1.415L10.586 12 7.757 9.172l1.415-1.415L12 10.586l2.828-2.829z"
+        />
+         
+      </svg>
+      Cancel
+    </span>
+  </a>
+  <a
+    class="panther-2"
+    href="http://test.com"
+    rel="noopener noreferrer"
+    target="_blank"
+  >
+    <span
+      aria-label="Test destination"
+      class="panther-1"
+      type="button"
+    >
+      <svg
+        class="panther-0"
+        role="presentation"
+        viewBox="0 0 24 24"
+      >
+        <path
+          d="M0 0h24v24H0z"
+          fill="none"
+        />
+        <path
+          d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm0 2a8 8 0 100 16 8 8 0 000-16zm2.828 3.757l1.415 1.415L13.414 12l2.829 2.828-1.415 1.415L12 13.414l-2.828 2.829-1.415-1.415L10.586 12 7.757 9.172l1.415-1.415L12 10.586l2.828-2.829z"
+        />
+         
+      </svg>
+      Cancel
+    </span>
+  </a>
+  <footer
+    id="footer"
+  />
+</div>
+`;

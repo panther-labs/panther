@@ -16,5 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './LinkButton';
-export * from './LinkButton';
+import React from 'react';
+import LinkButton, { LinkButtonProps } from '../LinkButton';
+
+export type CancelButtonProps = Omit<LinkButtonProps, 'variantColor' | 'icon'>;
+
+const CancelButton: React.FC<CancelButtonProps> = ({ ...rest }) => {
+  return <LinkButton variantColor="darkgray" icon="close-outline" {...rest} />;
+};
+
+export default React.memo(CancelButton);

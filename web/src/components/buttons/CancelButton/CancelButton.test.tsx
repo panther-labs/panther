@@ -16,5 +16,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './LinkButton';
-export * from './LinkButton';
+import React from 'react';
+import { render } from 'test-utils';
+import CancelButton from './index';
+
+describe('CancelButton', () => {
+  it('renders', () => {
+    const { container } = render(
+      <>
+        <CancelButton to="http://test.com">Cancel</CancelButton>
+        <CancelButton to="http://test.com" aria-label="Test destination">
+          Cancel
+        </CancelButton>
+
+        <CancelButton external to="http://test.com" aria-label="Test destination">
+          Cancel
+        </CancelButton>
+      </>
+    );
+    expect(container).toMatchSnapshot();
+  });
+});
