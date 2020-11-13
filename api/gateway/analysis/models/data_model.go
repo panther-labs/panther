@@ -50,6 +50,9 @@ type DataModel struct {
 	// description
 	Description Description `json:"description,omitempty"`
 
+	// display name
+	DisplayName DisplayName `json:"displayName,omitempty"`
+
 	// enabled
 	// Required: true
 	Enabled Enabled `json:"enabled"`
@@ -97,6 +100,10 @@ func (m *DataModel) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateDescription(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateDisplayName(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -183,6 +190,22 @@ func (m *DataModel) validateDescription(formats strfmt.Registry) error {
 	if err := m.Description.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("description")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *DataModel) validateDisplayName(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.DisplayName) { // not required
+		return nil
+	}
+
+	if err := m.DisplayName.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("displayName")
 		}
 		return err
 	}

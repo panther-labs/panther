@@ -37,6 +37,7 @@ func ModifyDataModel(request *events.APIGatewayProxyRequest) *events.APIGatewayP
 	item := &tableItem{
 		Body:          input.Body,
 		Description:   input.Description,
+		DisplayName:   input.DisplayName,
 		Enabled:       input.Enabled,
 		ID:            input.ID,
 		Mappings:      input.Mappings,
