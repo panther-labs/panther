@@ -37,24 +37,27 @@ var logTypes = func() logtypes.Group {
 	))
 	return logtypes.Must("Cloudflare",
 		logtypes.ConfigJSON{
-			Name:         "Cloudflare.HttpRequest",
-			Description:  `Cloudflare http request logs`,
+			Name: "Cloudflare.HttpRequest",
+			// nolint:lll
+			Description:  `Cloudflare http request logs. When selecting event fields on the Cloudflare UI, make sure you include the "EdgeStartTimestamp" field as it is required by Panther.`,
 			ReferenceURL: `https://developers.cloudflare.com/logs/log-fields#http-requests`,
 			NewEvent: func() interface{} {
 				return &HTTPRequest{}
 			},
 		},
 		logtypes.ConfigJSON{
-			Name:         "Cloudflare.Spectrum",
-			Description:  `Cloudflare Spectrum logs`,
+			Name: "Cloudflare.Spectrum",
+			// nolint:lll
+			Description:  `Cloudflare Spectrum logs. When selecting event fields on the Cloudflare UI, make sure you include the "Timestamp" field as it is required by Panther.`,
 			ReferenceURL: `https://developers.cloudflare.com/logs/log-fields#spectrum-events`,
 			NewEvent: func() interface{} {
 				return &SpectrumEvent{}
 			},
 		},
 		logtypes.ConfigJSON{
-			Name:         "Cloudflare.Firewall",
-			Description:  `Cloudflare Firewall logs`,
+			Name: "Cloudflare.Firewall",
+			// nolint:lll
+			Description:  `Cloudflare Firewall logs. When selecting event fields on the Cloudflare UI, make sure you include the "Datetime" field as it is required by Panther.`,
 			ReferenceURL: `https://developers.cloudflare.com/logs/log-fields#firewall-events`,
 			NewEvent: func() interface{} {
 				return &FirewallEvent{}
