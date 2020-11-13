@@ -31,6 +31,9 @@ exports[`SourceHealthBadge matches original snapshot 1`] = `
 }
 
 <div>
+  <header
+    id="main-header"
+  />
   <div
     aria-atomic="true"
     class="panther-0"
@@ -39,5 +42,8 @@ exports[`SourceHealthBadge matches original snapshot 1`] = `
   >
     UNHEALTHY
   </div>
+  <footer
+    id="footer"
+  />
 </div>
 `;

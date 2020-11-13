@@ -14,8 +14,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import json
 import os
+import re
 import tempfile
+import traceback
 from dataclasses import dataclass
 from importlib import util as import_util
 from pathlib import Path
@@ -30,19 +33,49 @@ MAX_DEDUP_STRING_SIZE = 1000
 
 # Maximum size for a title
 MAX_TITLE_SIZE = 1000
+# The limit for DDB is 400kb per item (we store this one in DDB) and the limit for SQS/SNS is 256KB.
+# The limit of 200kb is an approximation - the other fields included in the request will be less than the remaining 56kb
+MAX_ALERT_CONTEXT_SIZE = 200 * 1024  # 200kb
+
+ALERT_CONTEXT_ERROR_KEY = "_error"
 
 TRUNCATED_STRING_SUFFIX = '... (truncated)'
 
 DEFAULT_RULE_DEDUP_PERIOD_MINS = 60
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class RuleResult:
     """Class containing the result of running a rule"""
-    exception: Optional[Exception] = None
-    matched: Optional[bool] = None
-    dedup_string: Optional[str] = None
-    title: Optional[str] = None
+
+    matched: Optional[bool] = None  # rule output
+    rule_exception: Optional[Exception] = None
+
+    dedup_output: Optional[str] = None
+    dedup_exception: Optional[Exception] = None
+
+    title_output: Optional[str] = None
+    title_exception: Optional[Exception] = None
+
+    alert_context: Optional[str] = None
+    alert_context_exception: Optional[Exception] = None
+
+    def error_message(self) -> Optional[str]:
+        """Returns formatted error message with traceback"""
+        if self.rule_exception is not None:
+            trace = traceback.format_tb(self.rule_exception.__traceback__)
+            # we only take last element of trace which will show the rule file name and line of the error, for example:
+            #    division by zero: AlwaysFail.py, line 4, in rule 1/0
+            file_trace = trace[len(trace) - 1].strip().replace("\n", "")
+            # this looks like: File "/tmp/rules/AlwaysFail.py", line 4, in rule 1/0 BUT we want just the file name
+            return str(self.rule_exception) + ": " + re.sub(r'File.*/(.*[.]py)"', r'\1', file_trace)
+        return None
+
+    @property
+    def errored(self) -> bool:
+        """Returns whether any of the rule functions raised an error"""
+        return bool(self.rule_exception or self.title_exception or self.dedup_exception or self.alert_context_exception)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -109,26 +142,48 @@ class Rule:
         else:
             self._has_dedup = False
 
+        if hasattr(self._module, 'alert_context'):
+            self._has_alert_context = True
+        else:
+            self._has_alert_context = False
+
         self._default_dedup_string = 'defaultDedupString:{}'.format(self.rule_id)
 
-    def run(self, event: Dict[str, Any], raise_title_dedup: bool = False) -> RuleResult:
+    def run(self, event: Dict[str, Any], batch_mode: bool = True) -> RuleResult:
         """
         Analyze a log line with this rule and return True, False, or an error.
         :param event: The event to run the rule against
-        :param raise_title_dedup: Whether to raise exceptions from title() and dedup() or use default values
+        :param batch_mode: Whether the rule runs as part of the log analysis or as part of a simple rule test.
+        In batch mode, title/dedup functions are not checked if the rule won't trigger an alert and also title()/dedup()
+        won't raise exceptions, so that an alert won't be missed.
         """
-
-        dedup_string: Optional[str] = None
-        title: Optional[str] = None
+        rule_result = RuleResult()
         try:
-            rule_result = self._run_command(self._module.rule, event, bool)
-            if rule_result:
-                use_default_on_exception = not raise_title_dedup
-                title = self._get_title(event, use_default_on_exception)
-                dedup_string = self._get_dedup(event, title, use_default_on_exception)
+            rule_result.matched = self._run_command(self._module.rule, event, bool)
         except Exception as err:  # pylint: disable=broad-except
-            return RuleResult(exception=err)
-        return RuleResult(matched=rule_result, dedup_string=dedup_string, title=title)
+            rule_result.rule_exception = err
+
+        if batch_mode and not rule_result.matched:
+            # In batch mode (log analysis), there is no need to run the title/dedup functions
+            # if the rule isn't going to trigger an alert
+            return rule_result
+
+        try:
+            rule_result.title_output = self._get_title(event, use_default_on_exception=batch_mode)
+        except Exception as err:  # pylint: disable=broad-except
+            rule_result.title_exception = err
+
+        try:
+            rule_result.dedup_output = self._get_dedup(event, rule_result.title_output, use_default_on_exception=batch_mode)
+        except Exception as err:  # pylint: disable=broad-except
+            rule_result.dedup_exception = err
+
+        try:
+            rule_result.alert_context = self._get_alert_context(event, use_default_on_exception=batch_mode)
+        except Exception as err:  # pylint: disable=broad-except
+            rule_result.alert_context_exception = err
+
+        return rule_result
 
     # Returns the dedup string for this rule match
     # If the rule match had a custom title, use the title as a deduplication string
@@ -186,6 +241,27 @@ class Rule:
             return title_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
 
         return title_string
+
+    def _get_alert_context(self, event: Dict[str, Any], use_default_on_exception: bool = True) -> Optional[str]:
+        if not self._has_alert_context:
+            return None
+
+        try:
+            alert_context = self._run_command(self._module.alert_context, event, dict)
+            serialized_alert_context = json.dumps(alert_context)
+        except Exception as err:  # pylint: disable=broad-except
+            if use_default_on_exception:
+                return json.dumps({ALERT_CONTEXT_ERROR_KEY: repr(err)})
+            raise
+
+        if len(serialized_alert_context) > MAX_ALERT_CONTEXT_SIZE:
+            # If context exceeds max size, return empty one
+            alert_context_error = 'alert_context size is [{}] characters, bigger than maximum of [{}] characters'.format(
+                len(serialized_alert_context), MAX_ALERT_CONTEXT_SIZE
+            )
+            return json.dumps({ALERT_CONTEXT_ERROR_KEY: alert_context_error})
+
+        return serialized_alert_context
 
     def _store_rule(self) -> None:
         """Stores rule to disk."""

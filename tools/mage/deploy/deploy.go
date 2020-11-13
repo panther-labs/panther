@@ -21,6 +21,7 @@ package deploy
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -34,6 +35,7 @@ import (
 	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/prompt"
+	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/mage/build"
 	"github.com/panther-labs/panther/tools/mage/clients"
@@ -65,8 +67,16 @@ var supportedRegions = map[string]bool{
 // Deploy Panther to your AWS account
 func Deploy() error {
 	start := time.Now()
-	if err := PreCheck(true); err != nil {
+	if err := PreCheck(); err != nil {
 		return err
+	}
+
+	if function := os.Getenv("LAMBDA"); function != "" {
+		function = strings.ToLower(strings.TrimSpace(function))
+		if !strings.HasPrefix(function, "panther-") {
+			function = "panther-" + function
+		}
+		return deploySingleLambda(function)
 	}
 
 	if stack := os.Getenv("STACK"); stack != "" {
@@ -102,7 +112,7 @@ func Deploy() error {
 }
 
 // Fail the deploy early if there is a known issue with the user's environment.
-func PreCheck(checkForOldVersion bool) error {
+func PreCheck() error {
 	// Ensure the AWS region is supported
 	if region := clients.Region(); !supportedRegions[region] {
 		return fmt.Errorf("panther is not supported in %s region", region)
@@ -130,19 +140,6 @@ func PreCheck(checkForOldVersion bool) error {
 	// Ensure swagger is available
 	if _, err = sh.Output(util.Swagger, "version"); err != nil {
 		return fmt.Errorf("swagger is not available (%v): try 'mage setup'", err)
-	}
-
-	// There were mage migrations to help with v1.3 and v1.4 source deployments,
-	// but these were removed in v1.6. As a result, old deployments first need to upgrade to v1.5.1
-	if checkForOldVersion {
-		bootstrapVersion, err := awscfn.StackTag(clients.Cfn(), "PantherVersion", cfnstacks.Bootstrap)
-		if err != nil {
-			log.Warnf("failed to describe stack %s: %v", cfnstacks.Bootstrap, err)
-		}
-		if bootstrapVersion != "" && bootstrapVersion < "v1.4.0" {
-			return fmt.Errorf("trying to upgrade from %s to %s will not work - upgrade to v1.5.1 first",
-				bootstrapVersion, util.RepoVersion())
-		}
 	}
 
 	return nil
@@ -182,6 +179,84 @@ func setFirstUser(settings *PantherConfig) error {
 	return nil
 }
 
+// Update a single Lambda function for rapid developer iteration.
+//
+// This will only update the Lambda source, not the function configuration.
+func deploySingleLambda(function string) error {
+	// Find the function source path and language from the CFN templates
+	type cfnResource struct {
+		Type       string
+		Properties map[string]interface{}
+	}
+
+	type cfnTemplate struct {
+		Resources map[string]cfnResource
+	}
+
+	for _, path := range []string{
+		cfnstacks.LogAnalysisTemplate,
+		cfnstacks.CloudsecTemplate,
+		cfnstacks.CoreTemplate,
+		cfnstacks.APITemplate,
+	} {
+		var template cfnTemplate
+		if err := util.ParseTemplate(path, &template); err != nil {
+			return err
+		}
+
+		for _, resource := range template.Resources {
+			if resource.Type != "AWS::Serverless::Function" {
+				continue
+			}
+
+			if resource.Properties["FunctionName"].(string) == function {
+				return updateLambdaCode(
+					function,
+					filepath.Join("deployments", resource.Properties["CodeUri"].(string)),
+					resource.Properties["Runtime"].(string),
+				)
+			}
+		}
+	}
+
+	// Couldn't find the lambda function in any of the templates
+	return fmt.Errorf("unknown function LAMBDA=%s", function)
+}
+
+func updateLambdaCode(function, srcPath, runtime string) error {
+	var pathToZip string
+
+	if strings.HasPrefix(runtime, "go") {
+		srcPath = strings.TrimPrefix(srcPath, "out/")
+		srcPath = strings.TrimPrefix(srcPath, "bin/")
+		log.Infof("compiling %s", srcPath)
+		binary, err := build.LambdaPackage(srcPath)
+		if err != nil {
+			return err
+		}
+		pathToZip = filepath.Dir(binary)
+	} else if strings.HasPrefix(runtime, "python") {
+		pathToZip = srcPath
+	} else {
+		return fmt.Errorf("unknown Lambda runtime %s", runtime)
+	}
+
+	// Create zipfile
+	pkg := filepath.Join("out", "deployments", function+".zip")
+	if err := shutil.ZipDirectory(pathToZip, pkg, false); err != nil {
+		return fmt.Errorf("failed to zip %s into %s: %v", pathToZip, pkg, err)
+	}
+
+	// Update function
+	log.Infof("updating code for %s Lambda function %s", runtime, function)
+	response, err := clients.Lambda().UpdateFunctionCode(&lambda.UpdateFunctionCodeInput{
+		FunctionName: &function,
+		ZipFile:      util.MustReadFile(pkg),
+	})
+	log.Debugf("Lambda update response: %v", response)
+	return err
+}
+
 // Deploy a single stack for rapid developer iteration.
 //
 // Can only be used to update an existing deployment.
@@ -199,40 +274,66 @@ func deploySingleStack(stack string) error {
 		if err := build.Lambda(); err != nil { // custom-resources
 			return err
 		}
-		_, err := deployBootstrapGatewayStack(settings,
-			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap))
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap)
+		if err != nil {
+			return err
+		}
+		_, err = deployBootstrapGatewayStack(settings, outputs)
 		return err
 	case cfnstacks.Appsync:
-		return deployAppsyncStack(awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
+		if err != nil {
+			return err
+		}
+		return deployAppsyncStack(outputs)
 	case cfnstacks.Cloudsec:
 		if err := build.Lambda(); err != nil {
 			return err
 		}
-		return deployCloudSecurityStack(settings,
-			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
+		if err != nil {
+			return err
+		}
+		return deployCloudSecurityStack(settings, outputs)
 	case cfnstacks.Core:
 		if err := build.Lambda(); err != nil {
 			return err
 		}
-		return deployCoreStack(settings,
-			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
+		if err != nil {
+			return err
+		}
+		return deployCoreStack(settings, outputs)
 	case cfnstacks.Dashboard:
-		bucket := awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap)["SourceBucket"]
-		return deployDashboardStack(bucket)
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap)
+		if err != nil {
+			return err
+		}
+		return deployDashboardStack(outputs["SourceBucket"])
 	case cfnstacks.Frontend:
 		if err := setFirstUser(settings); err != nil {
 			return err
 		}
-		return deployFrontend(awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway), settings)
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
+		if err != nil {
+			return err
+		}
+		return deployFrontend(outputs, settings)
 	case cfnstacks.LogAnalysis:
 		if err := build.Lambda(); err != nil {
 			return err
 		}
-		return deployLogAnalysisStack(settings,
-			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap, cfnstacks.Gateway))
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
+		if err != nil {
+			return err
+		}
+		return deployLogAnalysisStack(settings, outputs)
 	case cfnstacks.Onboard:
-		return deployOnboardStack(settings,
-			awscfn.StackOutputs(clients.Cfn(), log, cfnstacks.Bootstrap))
+		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap)
+		if err != nil {
+			return err
+		}
+		return deployOnboardStack(settings, outputs)
 	default:
 		return fmt.Errorf("unknown stack '%s'", stack)
 	}
@@ -273,6 +374,7 @@ func bootstrap(settings *PantherConfig) (map[string]string, error) {
 // Deploy main stacks (everything after bootstrap and bootstrap-gateway)
 func deployMainStacks(settings *PantherConfig, outputs map[string]string) error {
 	results := make(chan util.TaskResult)
+	completedStackCount := 3 // There are two stacks before this function call
 	count := 0
 
 	// Appsync
@@ -299,31 +401,42 @@ func deployMainStacks(settings *PantherConfig, outputs map[string]string) error 
 		c <- util.TaskResult{Summary: cfnstacks.Dashboard, Err: deployDashboardStack(outputs["SourceBucket"])}
 	}(results)
 
-	// Log analysis
+	// Wait for above stacks to finish.
+	if err := util.WaitForTasks(log, results, completedStackCount, count+completedStackCount-1, cfnstacks.NumStacks); err != nil {
+		return err
+	}
+
+	// next set of stacks
+	completedStackCount += count
+	count = 0 // reset
+
+	// Log analysis (requires core stack to exist first)
 	count++
 	go func(c chan util.TaskResult) {
 		c <- util.TaskResult{Summary: cfnstacks.LogAnalysis, Err: deployLogAnalysisStack(settings, outputs)}
 	}(results)
 
-	// Wait for stacks to finish.
-	// There are two stacks before and two stacks after.
-	if err := util.WaitForTasks(log, results, 3, count+2, cfnstacks.NumStacks); err != nil {
-		return err
-	}
-
+	// Web stack (requires core stack to exist first)
+	count++
 	go func(c chan util.TaskResult) {
-		// Web stack requires core stack to exist first
 		c <- util.TaskResult{Summary: cfnstacks.Frontend, Err: deployFrontend(outputs, settings)}
 	}(results)
 
-	// Onboard Panther to scan itself
+	// Wait,  counting where the last parallel group left off to give the illusion of one continuous deploy progress tracker.
+	if err := util.WaitForTasks(log, results, completedStackCount, count+completedStackCount-1, cfnstacks.NumStacks); err != nil {
+		return err
+	}
+
+	// next set of stacks (last)
+	completedStackCount += count
+
+	// Onboard Panther to scan itself (requires all stacks deployed)
 	go func(c chan util.TaskResult) {
 		c <- util.TaskResult{Summary: cfnstacks.Onboard, Err: deployOnboardStack(settings, outputs)}
 	}(results)
 
-	// Log stack results, counting where the last parallel group left off to give the illusion of
-	// one continuous deploy progress tracker.
-	return util.WaitForTasks(log, results, count+3, cfnstacks.NumStacks, cfnstacks.NumStacks)
+	// Wait,  counting where the last parallel group left off to give the illusion of one continuous deploy progress tracker.
+	return util.WaitForTasks(log, results, completedStackCount, cfnstacks.NumStacks, cfnstacks.NumStacks)
 }
 
 func deployBootstrapStack(settings *PantherConfig) (map[string]string, error) {
@@ -338,7 +451,11 @@ func deployBootstrapStack(settings *PantherConfig) (map[string]string, error) {
 		"EnableS3AccessLogs":            strconv.FormatBool(settings.Setup.EnableS3AccessLogs),
 		"LoadBalancerSecurityGroupCidr": settings.Infra.LoadBalancerSecurityGroupCidr,
 		"LogSubscriptionPrincipals":     strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
+		"SecurityGroupID":               settings.Infra.SecurityGroupID,
+		"SubnetOneIPRange":              settings.Infra.SubnetOneIPRange,
+		"SubnetTwoIPRange":              settings.Infra.SubnetTwoIPRange,
 		"TracingMode":                   settings.Monitoring.TracingMode,
+		"VpcID":                         settings.Infra.VpcID,
 	})
 }
 
@@ -366,6 +483,7 @@ func deployBootstrapGatewayStack(
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
 		"PythonLayerVersionArn":      settings.Infra.PythonLayerVersionArn,
+		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],
 	})
@@ -376,10 +494,7 @@ func deployAppsyncStack(outputs map[string]string) error {
 		"AlarmTopicArn":         outputs["AlarmTopicArn"],
 		"AnalysisApi":           "https://" + outputs["AnalysisApiEndpoint"],
 		"ApiId":                 outputs["GraphQLApiId"],
-		"ComplianceApi":         "https://" + outputs["ComplianceApiEndpoint"],
 		"CustomResourceVersion": customResourceVersion(),
-		"RemediationApi":        "https://" + outputs["RemediationApiEndpoint"],
-		"ResourcesApi":          "https://" + outputs["ResourcesApiEndpoint"],
 		"ServiceRole":           outputs["AppsyncServiceRoleArn"],
 	})
 	return err
@@ -390,15 +505,12 @@ func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
 		"AnalysisApiId":              outputs["AnalysisApiId"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-		"ComplianceApiId":            outputs["ComplianceApiId"],
 		"CustomResourceVersion":      customResourceVersion(),
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
 		"ProcessedDataTopicArn":      outputs["ProcessedDataTopicArn"],
 		"PythonLayerVersionArn":      outputs["PythonLayerVersionArn"],
-		"RemediationApiId":           outputs["RemediationApiId"],
-		"ResourcesApiId":             outputs["ResourcesApiId"],
 		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 	})
@@ -411,11 +523,9 @@ func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
 		"AnalysisApiId":              outputs["AnalysisApiId"],
 		"AnalysisVersionsBucket":     outputs["AnalysisVersionsBucket"],
 		"AppDomainURL":               outputs["LoadBalancerUrl"],
-		"AthenaResultsBucket":        outputs["AthenaResultsBucket"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CompanyDisplayName":         settings.Setup.Company.DisplayName,
 		"CompanyEmail":               settings.Setup.Company.Email,
-		"ComplianceApiId":            outputs["ComplianceApiId"],
 		"CustomResourceVersion":      customResourceVersion(),
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
 		"DynamoScalingRoleArn":       outputs["DynamoScalingRoleArn"],
@@ -423,7 +533,6 @@ func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
 		"InputDataTopicArn":          outputs["InputDataTopicArn"],
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"OutputsKeyId":               outputs["OutputsEncryptionKeyId"],
-		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
 		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],
@@ -447,6 +556,7 @@ func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) 
 		"AlarmTopicArn":                outputs["AlarmTopicArn"],
 		"AnalysisApiId":                outputs["AnalysisApiId"],
 		"AthenaResultsBucket":          outputs["AthenaResultsBucket"],
+		"AthenaWorkGroup":              outputs["AthenaWorkGroup"],
 		"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomResourceVersion":        customResourceVersion(),
 		"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
@@ -454,7 +564,6 @@ func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) 
 		"InputDataTopicArn":            outputs["InputDataTopicArn"],
 		"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
 		"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
-		"LogProcessorSQSDelaySeconds":  strconv.Itoa(settings.Infra.LogProcessorSQSDelaySeconds),
 		"ProcessedDataBucket":          outputs["ProcessedDataBucket"],
 		"ProcessedDataTopicArn":        outputs["ProcessedDataTopicArn"],
 		"PythonLayerVersionArn":        outputs["PythonLayerVersionArn"],
@@ -493,6 +602,5 @@ func customResourceVersion() string {
 
 	// By default, just use the major release version so developers do not have to trigger every
 	// custom resource on every deploy.
-	// The gitVersion is "v0.3.0" on tagged release, otherwise something like "v0.3.0-128-g77fd9ff"
 	return strings.Split(util.RepoVersion(), "-")[0]
 }

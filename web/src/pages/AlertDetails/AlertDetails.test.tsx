@@ -30,9 +30,9 @@ import {
 import urls from 'Source/urls';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { Route } from 'react-router-dom';
+import { mockListDestinations } from 'Source/graphql/queries';
 import { mockAlertDetails } from './graphql/alertDetails.generated';
 import { mockRuleTeaser } from './graphql/ruleTeaser.generated';
-import { mockListDestinations } from './graphql/listDestinations.generated';
 import { mockRetryAlertDelivery } from './AlertDetailsInfo/AlertDeliverySection/graphql/retryAlertDelivery.generated';
 import AlertDetails from './AlertDetails';
 

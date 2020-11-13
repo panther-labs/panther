@@ -16,13 +16,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { buildAlertSummary, render } from 'test-utils';
+import {
+  buildAlertSummary,
+  buildDeliveryResponse,
+  buildDestination,
+  render,
+  waitForElementToBeRemoved,
+} from 'test-utils';
 import React from 'react';
-import { AlertStatusesEnum, SeverityEnum } from 'Generated/schema';
+import { AlertStatusesEnum, DestinationTypeEnum, SeverityEnum } from 'Generated/schema';
 import urls from 'Source/urls';
+import { mockListDestinations } from 'Source/graphql/queries';
 import AlertCard from './index';
 
 describe('AlertCard', () => {
+  it('should match snapshot', async () => {
+    const alertData = buildAlertSummary();
+
+    const { container } = render(<AlertCard alert={alertData} />);
+
+    expect(container).toMatchSnapshot();
+  });
+
   it('displays the correct Alert data in the card', async () => {
     const alertData = buildAlertSummary();
 
@@ -31,10 +46,20 @@ describe('AlertCard', () => {
     expect(getByText(alertData.title)).toBeInTheDocument();
     expect(getByText('View Rule')).toBeInTheDocument();
     expect(getByText('Events')).toBeInTheDocument();
+    expect(getByText('Destinations')).toBeInTheDocument();
     expect(getByText('Time Created')).toBeInTheDocument();
     expect(getByText(SeverityEnum.Medium)).toBeInTheDocument();
     expect(getByText(AlertStatusesEnum.Triaged)).toBeInTheDocument();
     expect(getByAriaLabel('Change Alert Status')).toBeInTheDocument();
+  });
+
+  it('should not display link to Rule', async () => {
+    const alertData = buildAlertSummary();
+
+    const { queryByText } = render(<AlertCard alert={alertData} hideRuleButton />);
+
+    expect(queryByText(alertData.title)).toBeInTheDocument();
+    expect(queryByText('View Rule')).not.toBeInTheDocument();
   });
 
   it('should check links are valid', async () => {
@@ -44,9 +69,41 @@ describe('AlertCard', () => {
       'href',
       urls.logAnalysis.alerts.details(alertData.alertId)
     );
-    expect(getByAriaLabel('Link to Rule')).toHaveAttribute(
-      'href',
-      urls.logAnalysis.rules.details(alertData.ruleId)
-    );
+    expect(getByAriaLabel('Link to Rule')).toBeInTheDocument();
+  });
+
+  it('should render alert destinations logos', async () => {
+    const outputId = 'destination-of-alert';
+    const alertData = buildAlertSummary({
+      deliveryResponses: [buildDeliveryResponse({ outputId })],
+    });
+    const destination = buildDestination({ outputId, outputType: DestinationTypeEnum.Slack });
+    const mocks = [mockListDestinations({ data: { destinations: [destination] } })];
+
+    const { getByAriaLabel, getByAltText } = render(<AlertCard alert={alertData} />, {
+      mocks,
+    });
+    const loadingInterfaceElement = getByAriaLabel('Loading...');
+    expect(loadingInterfaceElement).toBeInTheDocument();
+    await waitForElementToBeRemoved(loadingInterfaceElement);
+    expect(getByAltText(`${destination.outputType} logo`)).toBeInTheDocument();
+  });
+
+  it('should render message that destination delivery is failing', async () => {
+    const outputId = 'destination-of-alert';
+    const alertData = buildAlertSummary({
+      deliveryResponses: [buildDeliveryResponse({ outputId, success: false })],
+    });
+    const destination = buildDestination({ outputId, outputType: DestinationTypeEnum.Slack });
+    const mocks = [mockListDestinations({ data: { destinations: [destination] } })];
+
+    const { getByAriaLabel, getByAltText } = render(<AlertCard alert={alertData} />, {
+      mocks,
+    });
+    const loadingInterfaceElement = getByAriaLabel('Loading...');
+    expect(loadingInterfaceElement).toBeInTheDocument();
+    await waitForElementToBeRemoved(loadingInterfaceElement);
+    expect(getByAltText(`${destination.outputType} logo`)).toBeInTheDocument();
+    expect(getByAriaLabel('Destination delivery failure')).toBeInTheDocument();
   });
 });

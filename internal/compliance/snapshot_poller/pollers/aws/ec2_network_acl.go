@@ -29,7 +29,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -134,7 +134,7 @@ func buildEc2NetworkAclSnapshot(networkACL *ec2.NetworkAcl) *awsmodels.Ec2Networ
 }
 
 // PollEc2NetworkAcls gathers information on each Network ACL in an AWS account.
-func PollEc2NetworkAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollEc2NetworkAcls(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting EC2 Network ACL resource poller")
 	ec2Svc, err := getEC2Client(pollerInput, *pollerInput.Region)
 	if err != nil {
@@ -148,7 +148,7 @@ func PollEc2NetworkAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 	}
 
 	// For each Network ACL, build out a full snapshot
-	resources := make([]*apimodels.AddResourceEntry, 0, len(networkACLs))
+	resources := make([]apimodels.AddResourceEntry, 0, len(networkACLs))
 	for _, networkACL := range networkACLs {
 		ec2NetworkACLSnapshot := buildEc2NetworkAclSnapshot(networkACL)
 
@@ -173,11 +173,11 @@ func PollEc2NetworkAcls(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 		ec2NetworkACLSnapshot.Region = pollerInput.Region
 		ec2NetworkACLSnapshot.ARN = aws.String(resourceID)
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      ec2NetworkACLSnapshot,
-			ID:              apimodels.ResourceID(resourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              resourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.Ec2NetworkAclSchema,
 		})
 	}

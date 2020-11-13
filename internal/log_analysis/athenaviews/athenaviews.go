@@ -24,24 +24,16 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
-	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/pkg/awsathena"
 )
 
-// CreateOrReplaceViews will update Athena with all views
-func CreateOrReplaceViews(glueClient glueiface.GlueAPI, athenaClient athenaiface.AthenaAPI) (err error) {
-	// check what tables are deployed
-	deployedLogTables, err := gluetables.DeployedLogTables(glueClient)
-	if err != nil {
-		return err
-	}
-
+// CreateOrReplaceViews will update Athena with all views for the tables provided
+func CreateOrReplaceViews(athenaClient athenaiface.AthenaAPI, workgroup string, deployedLogTables []*awsglue.GlueTableMetadata) error {
 	if len(deployedLogTables) == 0 { // nothing to do
 		return nil
 	}
@@ -51,7 +43,7 @@ func CreateOrReplaceViews(glueClient glueiface.GlueAPI, athenaClient athenaiface
 		return err
 	}
 	for _, sql := range sqlStatements {
-		_, err := awsathena.RunQuery(athenaClient, awsglue.ViewsDatabaseName, sql, nil) // use default bucket
+		_, err := awsathena.RunQuery(athenaClient, workgroup, awsglue.ViewsDatabaseName, sql)
 		if err != nil {
 			return errors.Wrap(err, "CreateOrReplaceViews() failed")
 		}

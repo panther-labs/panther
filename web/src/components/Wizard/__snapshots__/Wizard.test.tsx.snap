@@ -156,6 +156,9 @@ exports[`Wizard renders a step 1`] = `
 }
 
 <div>
+  <header
+    id="main-header"
+  />
   <article
     class="panther-12"
   >
@@ -215,5 +218,8 @@ exports[`Wizard renders a step 1`] = `
       </section>
     </div>
   </article>
+  <footer
+    id="footer"
+  />
 </div>
 `;

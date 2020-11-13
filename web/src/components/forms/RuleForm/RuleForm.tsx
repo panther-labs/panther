@@ -17,19 +17,16 @@
  */
 
 import React from 'react';
-import { AddRuleInput, PolicyUnitTest, UpdateRuleInput } from 'Generated/schema';
+import { AddRuleInput, DetectionTestDefinition, UpdateRuleInput } from 'Generated/schema';
 import * as Yup from 'yup';
 import { Button, Flex } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import {
-  BaseRuleFormCoreSection,
-  BaseRuleFormEditorSection,
-  BaseRuleFormTestSection,
-} from 'Components/forms/BaseRuleForm';
+import { BaseRuleFormCoreSection, BaseRuleFormEditorSection } from 'Components/forms/BaseRuleForm';
 import { Form, Formik } from 'formik';
 import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 import FormSessionRestoration from 'Components/utils/FormSessionRestoration';
 import useRouter from 'Hooks/useRouter';
+import RuleFormTestSection from 'Components/forms/RuleForm/RuleFormTestSection';
 
 // The validation checks that Formik will run
 const validationSchema = Yup.object().shape({
@@ -37,9 +34,9 @@ const validationSchema = Yup.object().shape({
   body: Yup.string().required(),
   severity: Yup.string().required(),
   dedupPeriodMinutes: Yup.number().integer(),
-  threshold: Yup.number().integer().moreThan(-1).required(),
+  threshold: Yup.number().integer().moreThan(0).required(),
   logTypes: Yup.array().of(Yup.string()).required(),
-  tests: Yup.array<PolicyUnitTest>().of(
+  tests: Yup.array<DetectionTestDefinition>().of(
     Yup.object().shape({
       name: Yup.string().required(),
       expectedResult: Yup.boolean().required(),
@@ -78,7 +75,7 @@ const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
                 <BaseRuleFormEditorSection type="rule" />
               </ErrorBoundary>
               <ErrorBoundary>
-                <BaseRuleFormTestSection />
+                <RuleFormTestSection />
               </ErrorBoundary>
             </Flex>
             <Flex spacing={4} mt={5} justify="flex-end">

@@ -21,6 +21,7 @@ package processor
 import (
 	"context"
 	"errors"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -36,9 +37,8 @@ import (
 
 	enginemodels "github.com/panther-labs/panther/api/gateway/analysis"
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
-	complianceops "github.com/panther-labs/panther/api/gateway/compliance/client/operations"
-	compliancemodels "github.com/panther-labs/panther/api/gateway/compliance/models"
-	resourcemodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
+	resourcemodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	alertmodels "github.com/panther-labs/panther/internal/compliance/alert_processor/models"
 	"github.com/panther-labs/panther/internal/compliance/resource_processor/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
@@ -50,11 +50,11 @@ const defaultDelaySeconds = 30
 
 // Map policy/resource ID to the instance of the object
 type policyMap map[string]*analysismodels.EnabledPolicy
-type resourceMap map[string]*resourcemodels.Resource
+type resourceMap map[string]resourcemodels.Resource
 
 // Every batch of sqs messages results in compliance updates and alert/remediation deliveries
 type batchResults struct {
-	StatusEntries []*compliancemodels.SetStatus
+	StatusEntries []compliancemodels.SetStatusEntry
 	Alerts        []*sqs.SendMessageBatchRequestEntry
 }
 
@@ -79,14 +79,14 @@ func Handle(ctx context.Context, batch *events.SQSEvent) (err error) {
 			}
 		} else if resource != nil {
 			// Resource updated - analyze with applicable policies (after grouping + deduping)
-			resources[string(resource.ID)] = resource
+			resources[resource.ID] = *resource
 		} else if lookup != nil {
 			resource, err = getResource(*lookup)
 			if err != nil {
 				zap.L().Error("failed to get resource", zap.String("resourceId", *lookup), zap.Error(err))
 				continue
 			}
-			resources[string(resource.ID)] = resource
+			resources[resource.ID] = *resource
 		} else {
 			zap.L().Error("failed to parse msg as resource, policy, or resource lookup", zap.String("body", record.Body))
 		}
@@ -109,7 +109,7 @@ func parseQueueMsg(body string) (*resourcemodels.Resource, *analysismodels.Polic
 	err := jsoniter.UnmarshalFromString(body, &resource)
 	if err == nil && resource.Attributes != nil && resource.Type != "" {
 		zap.L().Info("found new/updated resource",
-			zap.String("resourceId", string(resource.ID)))
+			zap.String("resourceId", resource.ID))
 		return &resource, nil, nil
 	}
 
@@ -151,8 +151,8 @@ func (r *batchResults) analyzeUpdatedPolicy(policy *analysismodels.Policy) error
 
 	// Analyze each page of resources
 	// TODO - check for duplicates here
-	var totalPages int64 = 1
-	for pageno := int64(1); pageno <= totalPages; pageno++ {
+	totalPages := 1
+	for pageno := 1; pageno <= totalPages; pageno++ {
 		resources, pageCount, err := getResources(policy.ResourceTypes, pageno)
 		if err != nil {
 			return err
@@ -197,14 +197,14 @@ func (r *batchResults) analyze(resources resourceMap, policies policyMap) error 
 	// Add a status entry for every policy/resource pair
 	for _, result := range analysis.Resources {
 		for _, policyError := range result.Errored {
-			entry := buildStatus(policies[policyError.ID], resources[result.ID], compliancemodels.StatusERROR)
-			entry.ErrorMessage = compliancemodels.ErrorMessage(policyError.Message)
+			entry := buildStatus(policies[policyError.ID], resources[result.ID], compliancemodels.StatusError)
+			entry.ErrorMessage = policyError.Message
 			r.StatusEntries = append(r.StatusEntries, entry)
 		}
 
 		for _, policyID := range result.Failed {
 			policy, resource := policies[policyID], resources[result.ID]
-			entry := buildStatus(policy, resource, compliancemodels.StatusFAIL)
+			entry := buildStatus(policy, resource, compliancemodels.StatusFail)
 			r.StatusEntries = append(r.StatusEntries, entry)
 
 			if entry.Suppressed {
@@ -214,22 +214,24 @@ func (r *batchResults) analyze(resources resourceMap, policies policyMap) error 
 			}
 
 			// Check the current pass/fail status for this policy/resource pair
-			var response *complianceops.GetStatusOK
-			response, err = complianceClient.Operations.GetStatus(&complianceops.GetStatusParams{
-				PolicyID:   policyID,
-				ResourceID: result.ID,
-				HTTPClient: httpClient,
-			})
+			input := &compliancemodels.LambdaInput{
+				GetStatus: &compliancemodels.GetStatusInput{
+					PolicyID:   policyID,
+					ResourceID: result.ID,
+				},
+			}
+			var response compliancemodels.ComplianceEntry
+			statusCode, err := complianceClient.Invoke(&input, &response)
 
-			if _, ok := err.(*complianceops.GetStatusNotFound); err != nil && !ok {
+			if err != nil && statusCode != http.StatusNotFound {
 				// An error other than NotFound
 				zap.L().Error("failed to fetch compliance status", zap.Error(err))
 				return err
 			}
 
-			status := compliancemodels.StatusPASS
-			if response != nil {
-				status = response.Payload.Status
+			status := compliancemodels.StatusPass
+			if response.Status != "" {
+				status = response.Status
 			}
 
 			zap.L().Info("loaded previous compliance status",
@@ -241,13 +243,13 @@ func (r *batchResults) analyze(resources resourceMap, policies policyMap) error 
 			// Every failed policy, if not suppressed, will trigger the remediation flow
 			complianceNotification := &alertmodels.ComplianceNotification{
 				OutputIds:       policy.OutputIds,
-				ResourceID:      string(resource.ID),
+				ResourceID:      resource.ID,
 				PolicyID:        string(policy.ID),
 				PolicyVersionID: string(policy.VersionID),
 				Timestamp:       time.Now(),
 
 				// We only need to send an alert to the user if the status is newly FAILing
-				ShouldAlert: status != compliancemodels.StatusFAIL,
+				ShouldAlert: status != compliancemodels.StatusFail,
 			}
 			var sqsMessageBody string
 			if sqsMessageBody, err = jsoniter.MarshalToString(complianceNotification); err != nil {
@@ -263,7 +265,7 @@ func (r *batchResults) analyze(resources resourceMap, policies policyMap) error 
 		}
 
 		for _, policyID := range result.Passed {
-			entry := buildStatus(policies[policyID], resources[result.ID], compliancemodels.StatusPASS)
+			entry := buildStatus(policies[policyID], resources[result.ID], compliancemodels.StatusPass)
 			r.StatusEntries = append(r.StatusEntries, entry)
 		}
 	}
@@ -287,8 +289,8 @@ func evaluatePolicies(policies policyMap, resources resourceMap) (*enginemodels.
 	for _, resource := range resources {
 		input.Resources = append(input.Resources, enginemodels.Resource{
 			Attributes: resource.Attributes,
-			ID:         string(resource.ID),
-			Type:       string(resource.Type),
+			ID:         resource.ID,
+			Type:       resource.Type,
 		})
 	}
 
@@ -330,17 +332,17 @@ func evaluatePolicies(policies policyMap, resources resourceMap) (*enginemodels.
 // Convert a policy/resource pair into the compliance status struct
 func buildStatus(
 	policy *analysismodels.EnabledPolicy,
-	resource *resourcemodels.Resource,
-	status compliancemodels.Status,
-) *compliancemodels.SetStatus {
+	resource resourcemodels.Resource,
+	status compliancemodels.ComplianceStatus,
+) compliancemodels.SetStatusEntry {
 
-	return &compliancemodels.SetStatus{
-		PolicyID:       compliancemodels.PolicyID(policy.ID),
+	return compliancemodels.SetStatusEntry{
+		PolicyID:       string(policy.ID),
 		PolicySeverity: compliancemodels.PolicySeverity(policy.Severity),
-		ResourceID:     compliancemodels.ResourceID(resource.ID),
-		ResourceType:   compliancemodels.ResourceType(resource.Type),
-		Suppressed:     compliancemodels.Suppressed(isSuppressed(string(resource.ID), policy)),
-		IntegrationID:  compliancemodels.IntegrationID(resource.IntegrationID),
+		ResourceID:     resource.ID,
+		ResourceType:   resource.Type,
+		Suppressed:     isSuppressed(resource.ID, policy),
+		IntegrationID:  resource.IntegrationID,
 
 		Status: status,
 	}
@@ -384,10 +386,13 @@ func (r *batchResults) deliver() error {
 
 	zap.L().Info("sending status information to compliance-api",
 		zap.Int("statusCount", len(r.StatusEntries)))
-	if _, err := complianceClient.Operations.SetStatus(&complianceops.SetStatusParams{
-		Body:       &compliancemodels.SetStatusBatch{Entries: r.StatusEntries},
-		HTTPClient: httpClient,
-	}); err != nil {
+
+	input := compliancemodels.LambdaInput{
+		SetStatus: &compliancemodels.SetStatusInput{
+			Entries: r.StatusEntries,
+		},
+	}
+	if _, err := complianceClient.Invoke(&input, nil); err != nil {
 		zap.L().Error("failed to update status", zap.Error(err))
 		return err
 	}

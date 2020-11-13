@@ -27,9 +27,9 @@ import NotificationStatus from 'Assets/statuses/notification.svg';
 import LinkButton from 'Components/buttons/LinkButton';
 import { extractErrorMessage } from 'Helpers/utils';
 import { DeliveryResponseFull } from 'Source/graphql/fragments/DeliveryResponseFull.generated';
+import { useSendTestAlertLazyQuery } from 'Source/graphql/queries';
 import { WizardData as CreateWizardData } from '../../CreateDestinationWizard';
 import { WizardData as EditWizardData } from '../../EditDestinationWizard';
-import { useSendTestAlertLazyQuery } from './graphql/sendTestAlert.generated';
 
 type DeliveryResponses = Array<DeliveryResponseFull>;
 

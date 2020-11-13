@@ -17,65 +17,87 @@
  */
 
 import React from 'react';
-import * as utils from 'Helpers/utils';
-import { SeverityEnum } from 'Generated/schema';
-import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
+import MockDate from 'mockdate';
+import { AlertStatusesEnum, SeverityEnum } from 'Generated/schema';
 import {
+  buildAlertSummary,
+  buildListAlertsResponse,
   buildLogAnalysisMetricsResponse,
-  buildLogAnalysisMetricsInput,
+  buildSingleValue,
+  fireEvent,
   render,
   waitForElementToBeRemoved,
-  buildSingleValue,
-  buildListAlertsResponse,
-  fireEvent,
 } from 'test-utils';
-import { mockListAlerts } from 'Pages/ListAlerts/graphql/listAlerts.generated';
-import LogAnalysisOverview, { intervalMinutes, defaultPastDays } from './LogAnalysisOverview';
+import { MockedResponse } from '@apollo/client/testing';
+import { getGraphqlSafeDateRange } from 'Helpers/utils';
+import { mockGetOverviewAlerts } from 'Pages/LogAnalysisOverview/graphql/getOverviewAlerts.generated';
+import LogAnalysisOverview, { DEFAULT_PAST_DAYS, DEFAULT_INTERVAL } from './LogAnalysisOverview';
 import { mockGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 
+let defaultMocks: MockedResponse[];
+
 describe('Log Analysis Overview', () => {
-  test('render 2 canvas, click on tab button and render latency chart', async () => {
-    const mockedToDate = '2020-07-22T19:04:33Z';
-    const getLogAnalysisMetrics = buildLogAnalysisMetricsResponse();
-    const mockedFromDate = utils.subtractDays(mockedToDate, defaultPastDays);
-    const getLogAnalysisMetricsInput = buildLogAnalysisMetricsInput({
-      metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity', 'eventsLatency'],
-      fromDate: mockedFromDate,
-      toDate: mockedToDate,
-      intervalMinutes,
-    });
+  beforeAll(() => {
+    // https://github.com/boblauer/MockDate#example
+    // Forces a fixed resolution on `Date.now()`
+    MockDate.set('1/30/2000');
+  });
 
-    // Mocking getCurrentDate in order to have a common date for the query
-    const mockedGetCurrentDate = jest.spyOn(utils, 'getCurrentDate');
-    mockedGetCurrentDate.mockImplementation(() => mockedToDate);
+  afterAll(() => {
+    MockDate.reset();
+  });
 
-    const alerts = buildListAlertsResponse();
-    const mocks = [
+  beforeEach(() => {
+    const [mockedFromDate, mockedToDate] = getGraphqlSafeDateRange({ days: DEFAULT_PAST_DAYS });
+
+    defaultMocks = [
       mockGetLogAnalysisMetrics({
         data: {
-          getLogAnalysisMetrics: {
-            ...getLogAnalysisMetrics,
+          getLogAnalysisMetrics: buildLogAnalysisMetricsResponse({
             totalAlertsDelta: [
               buildSingleValue({ label: 'Previous Period' }),
               buildSingleValue({ label: 'Current Period' }),
             ],
-          },
+          }),
         },
-        variables: { input: getLogAnalysisMetricsInput },
-      }),
-      mockListAlerts({
-        data: { alerts },
         variables: {
           input: {
-            severity: [SeverityEnum.Critical, SeverityEnum.High],
-            pageSize: DEFAULT_LARGE_PAGE_SIZE,
+            metricNames: [
+              'eventsProcessed',
+              'totalAlertsDelta',
+              'alertsBySeverity',
+              'eventsLatency',
+              'alertsByRuleID',
+            ],
+            fromDate: mockedFromDate,
+            toDate: mockedToDate,
+            intervalMinutes: DEFAULT_INTERVAL,
+          },
+        },
+      }),
+      mockGetOverviewAlerts({
+        data: {
+          recentAlerts: buildListAlertsResponse(),
+          topAlerts: buildListAlertsResponse({
+            alertSummaries: [
+              buildAlertSummary({ alertId: '1', severity: SeverityEnum.Critical }),
+              buildAlertSummary({ alertId: '2', severity: SeverityEnum.High }),
+            ],
+          }),
+        },
+        variables: {
+          recentAlertsInput: {
+            pageSize: 10,
+            status: [AlertStatusesEnum.Open, AlertStatusesEnum.Triaged],
           },
         },
       }),
     ];
+  });
 
+  it('should render 2 canvas, click on tab button and render latency chart', async () => {
     const { getByTestId, getAllByTitle, getByText } = render(<LogAnalysisOverview />, {
-      mocks,
+      mocks: defaultMocks,
     });
 
     // Expect to see 3 loading interfaces
@@ -91,10 +113,35 @@ describe('Log Analysis Overview', () => {
     expect(alertsChart).toBeInTheDocument();
     expect(eventChart).toBeInTheDocument();
 
-    // Checking tab click works and renders Data Latency chart
+    // Checking tab click works and renders Data Latency tab
     const latencyChartTabButton = getByText('Data Latency by Log Type');
     fireEvent.click(latencyChartTabButton);
     const latencyChart = getByTestId('events-by-latency');
     expect(latencyChart).toBeInTheDocument();
+    // Checking tab click works and renders Most Active rules tab
+    const mostActiveRulesTabButton = getByText('Most Active Rules');
+    fireEvent.click(mostActiveRulesTabButton);
+    const mostActiveRulesChart = getByTestId('most-active-rules-chart');
+    expect(mostActiveRulesChart).toBeInTheDocument();
+  });
+
+  it('should display Alerts Cards for Top Alerts and Recent Alerts', async () => {
+    const { getAllByTitle, getByText, getAllByText } = render(<LogAnalysisOverview />, {
+      mocks: defaultMocks,
+    });
+    // Expect to see 3 loading interfaces
+    const loadingInterfaceElements = getAllByTitle('Loading interface...');
+    expect(loadingInterfaceElements.length).toEqual(3);
+
+    // Waiting for all loading interfaces to be removed;
+    await Promise.all(loadingInterfaceElements.map(ele => waitForElementToBeRemoved(ele)));
+
+    const recentAlertCards = getAllByText('View Rule');
+    expect(recentAlertCards.length).toEqual(1);
+    const topAlertsTabButton = getByText('High Severity Alerts (2)');
+    fireEvent.click(topAlertsTabButton);
+    const alertCards = getAllByText('View Rule');
+    // There are 3 alerts cards because previous Alerts cards are not unmounted
+    expect(alertCards.length).toEqual(3);
   });
 });

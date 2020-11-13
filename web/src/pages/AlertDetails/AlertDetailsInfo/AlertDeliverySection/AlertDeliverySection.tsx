@@ -18,24 +18,21 @@
 
 import React from 'react';
 import { Text, Flex, Icon, AbstractButton, Box, Collapse, useSnackbar } from 'pouncejs';
-import { AlertDetails, ListDestinations } from 'Pages/AlertDetails';
+import { AlertDetails } from 'Pages/AlertDetails';
 import last from 'lodash/last';
+import useAlertDestinationsDeliverySuccess from 'Hooks/useAlertDestinationsDeliverySuccess';
 import AlertDeliveryTable from './AlertDeliveryTable';
 import { useRetryAlertDelivery } from './graphql/retryAlertDelivery.generated';
 
 interface AlertDeliverySectionProps {
   alert: AlertDetails['alert'];
-  alertDestinations: ListDestinations['destinations'];
 }
 
-const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
-  alert,
-  alertDestinations,
-}) => {
+const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({ alert }) => {
   const [isHistoryVisible, setHistoryVisibility] = React.useState(false);
 
   const { pushSnackbar } = useSnackbar();
-  const [retryAlertDelivery] = useRetryAlertDelivery({
+  const [retryAlertDelivery, { loading }] = useRetryAlertDelivery({
     update: (cache, { data }) => {
       const dataId = cache.identify({
         __typename: 'AlertDetails',
@@ -71,38 +68,26 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
     [retryAlertDelivery, alert]
   );
 
-  // FIXME: `alertDestinations` should be part of Alert & coming directly from GraphQL
-  //  Someday...
   const { deliveryResponses } = alert;
-  const enhancedAndSortedAlertDeliveries = React.useMemo(() => {
-    return deliveryResponses
-      .reduce((acc, dr) => {
-        const dest = alertDestinations.find(d => d.outputId === dr.outputId);
-        if (dest) {
-          acc.push({
-            ...dr,
-            ...dest,
-          });
-        }
-        return acc;
-      }, [])
-      .reverse();
-  }, [deliveryResponses, alertDestinations]);
+  const {
+    enhancedAndSortedAlertDeliveries,
+    allDestinationDeliveredSuccessfully,
+    loading: loadingDeliverySuccess,
+  } = useAlertDestinationsDeliverySuccess({ alert });
 
   if (!deliveryResponses.length || !enhancedAndSortedAlertDeliveries.length) {
     return (
       <Flex align="warning" spacing={4}>
         <Icon type="info" size="medium" color="blue-400" />
-        <Text fontWeight="medium">Delivery information could not be retrieved</Text>
+        <Text fontWeight="medium">No delivery information could be found for this alert</Text>
       </Flex>
     );
   }
 
-  const isMostRecentDeliverySuccessful = enhancedAndSortedAlertDeliveries[0].success;
   return (
     <Box>
       <Flex justify="space-between">
-        {isMostRecentDeliverySuccessful ? (
+        {!loadingDeliverySuccess && allDestinationDeliveredSuccessfully ? (
           <Flex align="center" spacing={4}>
             <Icon type="check-circle" size="medium" color="green-400" />
             <Text fontWeight="medium">Alert was delivered successfully</Text>
@@ -129,6 +114,7 @@ const AlertDeliverySection: React.FC<AlertDeliverySectionProps> = ({
           <AlertDeliveryTable
             alertDeliveries={enhancedAndSortedAlertDeliveries}
             onAlertDeliveryRetry={onAlertDeliveryRetry}
+            isResending={loading}
           />
         </Box>
       </Collapse>

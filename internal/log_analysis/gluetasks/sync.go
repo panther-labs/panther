@@ -21,7 +21,6 @@ package gluetasks
 import (
 	"context"
 	"reflect"
-	"regexp"
 	"sync/atomic"
 	"time"
 
@@ -62,7 +61,7 @@ func (s *SyncDatabaseTables) Run(ctx context.Context, api glueiface.GlueAPI, log
 			DatabaseName: &s.DatabaseName,
 		}
 		if s.MatchPrefix != "" {
-			expr := "^" + regexp.QuoteMeta(s.MatchPrefix)
+			expr := s.MatchPrefix + "*"
 			input.Expression = &expr
 		}
 		log.Info("scanning for tables")

@@ -28,7 +28,6 @@ import (
 
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws/awstest"
-	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
 )
 
 func TestGetCredentialReport(t *testing.T) {
@@ -204,11 +203,11 @@ func TestIAMUsersListVirtualMFADevices(t *testing.T) {
 
 	expected := map[string]*awsmodels.VirtualMFADevice{
 		"123456789012": {
-			EnableDate:   awstest.ExampleDate,
+			EnableDate:   &awstest.ExampleTime,
 			SerialNumber: aws.String("arn:aws:iam::123456789012:mfa/root-account-mfa-device"),
 		},
 		"AAAAAAAQQQQQO2HVVVVVV": {
-			EnableDate:   awstest.ExampleDate,
+			EnableDate:   &awstest.ExampleTime,
 			SerialNumber: aws.String("arn:aws:iam::123456789012:mfa/unit_test_user"),
 		},
 	}
@@ -243,7 +242,7 @@ func TestIAMUsersPoller(t *testing.T) {
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   aws.String("arn:aws:iam::123456789012:root"),
 			ResourceType: aws.String(awsmodels.IAMRootUserSchema),
-			TimeCreated:  utils.DateTimeFormat(*awstest.ExampleDate),
+			TimeCreated:  &awstest.ExampleTime,
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
 			AccountID: awstest.ExampleAccountId,
@@ -254,7 +253,7 @@ func TestIAMUsersPoller(t *testing.T) {
 		},
 		CredentialReport: awstest.ExampleExtractedCredentialReport["<root_account>"],
 		VirtualMFA: &awsmodels.VirtualMFADevice{
-			EnableDate:   awstest.ExampleDate,
+			EnableDate:   &awstest.ExampleTime,
 			SerialNumber: aws.String("arn:aws:iam::123456789012:mfa/root-account-mfa-device"),
 		},
 	}
@@ -264,7 +263,7 @@ func TestIAMUsersPoller(t *testing.T) {
 			GenericResource: awsmodels.GenericResource{
 				ResourceID:   aws.String("arn:aws:iam::123456789012:user/unit_test_user"),
 				ResourceType: aws.String(awsmodels.IAMUserSchema),
-				TimeCreated:  utils.DateTimeFormat(*awstest.ExampleDate),
+				TimeCreated:  &awstest.ExampleTime,
 			},
 			GenericAWSResource: awsmodels.GenericAWSResource{
 				AccountID: awstest.ExampleAccountId,
@@ -280,7 +279,7 @@ func TestIAMUsersPoller(t *testing.T) {
 				awstest.ExampleGroup,
 			},
 			VirtualMFA: &awsmodels.VirtualMFADevice{
-				EnableDate:   awstest.ExampleDate,
+				EnableDate:   &awstest.ExampleTime,
 				SerialNumber: aws.String("arn:aws:iam::123456789012:mfa/unit_test_user"),
 			},
 			InlinePolicies: map[string]*string{
@@ -293,7 +292,7 @@ func TestIAMUsersPoller(t *testing.T) {
 			GenericResource: awsmodels.GenericResource{
 				ResourceID:   aws.String("arn:aws:iam::123456789012:user/Franklin"),
 				ResourceType: aws.String(awsmodels.IAMUserSchema),
-				TimeCreated:  utils.DateTimeFormat(*awstest.ExampleDate),
+				TimeCreated:  &awstest.ExampleTime,
 			},
 			GenericAWSResource: awsmodels.GenericAWSResource{
 				AccountID: awstest.ExampleAccountId,

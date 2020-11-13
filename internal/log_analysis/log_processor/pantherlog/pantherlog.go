@@ -22,6 +22,7 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 )
@@ -43,3 +44,13 @@ type Uint8 = null.Uint8
 type Bool = null.Bool
 type Time = time.Time
 type RawMessage = jsoniter.RawMessage
+
+func ValidateStruct(x interface{}) error {
+	return validate.Struct(x)
+}
+
+var validate = func() *validator.Validate {
+	v := validator.New()
+	null.RegisterValidators(v)
+	return v
+}()

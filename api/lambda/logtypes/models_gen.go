@@ -33,5 +33,5 @@ type LogTypesAPIPayload struct {
 }
 
 type ListAvailableLogTypesResponse struct {
-	LogTypes string `json:"logTypes"`
+	LogTypes []string `json:"logTypes"`
 }

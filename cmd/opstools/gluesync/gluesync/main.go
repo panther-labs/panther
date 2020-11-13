@@ -32,9 +32,14 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/gluetasks"
 )
 
+var (
+	version string // we expect this to be set by the build tool as `-X main.version=<some version>`
+)
+
 func main() {
-	opstools.SetUsage("syncs AWS Glue partition schemas to match the schema of the table they belong to")
+	opstools.SetUsage("syncs AWS Glue partition schemas to match the schema of their table (Panther version %s)", version)
 	opts := struct {
+		MasterStack    *string
 		DryRun         *bool
 		Debug          *bool
 		Region         *string
@@ -43,6 +48,8 @@ func main() {
 		MaxRetries     *int
 		Prefix         *string
 	}{
+		MasterStack: flag.String("master-stack", "",
+			"if set, this is the name of the Panther master stack used to deploy, if not set the deployment is assumed from source"),
 		DryRun:         flag.Bool("dry-run", false, "Scan for partitions to sync without applying any modifications"),
 		Debug:          flag.Bool("debug", false, "Enable additional logging"),
 		Region:         flag.String("region", "", "Set the AWS region to run on"),
@@ -68,6 +75,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to start AWS session: %s", err)
 	}
+
+	opstools.ValidatePantherVersion(sess, log, *opts.MasterStack, version)
+
 	glueAPI := glue.New(sess)
 	group, ctx := errgroup.WithContext(context.Background())
 	tasks := []gluetasks.SyncDatabaseTables{

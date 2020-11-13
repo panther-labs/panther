@@ -40,12 +40,11 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/panther-labs/panther/internal/log_analysis/notify"
 )
 
 const (
@@ -158,7 +157,7 @@ type testS3Destination struct {
 	mockS3Uploader *mockS3ManagerUploader
 }
 
-func newS3Destination(logTypes ...string) *testS3Destination {
+func newS3Destination() *testS3Destination {
 	mockSns := &mockSns{}
 	mockS3Uploader := &mockS3ManagerUploader{}
 	return &testS3Destination{
@@ -169,34 +168,12 @@ func newS3Destination(logTypes ...string) *testS3Destination {
 			s3Uploader:          mockS3Uploader,
 			maxBufferedMemBytes: 10 * 1024 * 1024, // an arbitrary amount enough to hold default test data
 			maxDuration:         maxDuration,
-			registry:            newRegistry(logTypes...),
-			jsonAPI:             common.BuildJSON(),
+			maxBuffers:          maxBuffers,
+			jsonAPI:             common.ConfigForDataLakeWriters(),
 		},
 		mockSns:        mockSns,
 		mockS3Uploader: mockS3Uploader,
 	}
-}
-
-func newRegistry(names ...string) *logtypes.Registry {
-	names = append([]string{testLogType}, names...)
-	r := logtypes.Registry{}
-	for _, name := range names {
-		_, err := r.Register(logtypes.Config{
-			Name:         name,
-			Description:  "description",
-			ReferenceURL: "-",
-			Schema: struct {
-				Foo string `json:"foo" description:"foo field"`
-			}{},
-			NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
-				return testutil.ParserConfig{}.Parser(), nil
-			}),
-		})
-		if err != nil {
-			panic(err)
-		}
-	}
-	return &r
 }
 
 func TestSendDataToS3BeforeTerminating(t *testing.T) {
@@ -214,7 +191,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	{
 		var buffer bytes.Buffer
 		writer := gzip.NewWriter(&buffer)
-		stream := common.BuildJSON().BorrowStream(writer)
+		stream := common.ConfigForDataLakeWriters().BorrowStream(writer)
 		stream.WriteVal(testResult)
 		require.NoError(t, stream.Flush())
 		_, _ = writer.Write([]byte("\n"))
@@ -246,7 +223,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 
 	// Verifying Sns Publish payload
 	publishInput := destination.mockSns.Calls[0].Arguments.Get(0).(*sns.PublishInput)
-	expectedS3Notification := models.NewS3ObjectPutNotification(destination.s3Bucket, *uploadInput.Key,
+	expectedS3Notification := notify.NewS3ObjectPutNotification(destination.s3Bucket, *uploadInput.Key,
 		len(expectedBytes))
 
 	marshaledExpectedS3Notification, _ := jsoniter.MarshalToString(expectedS3Notification)
@@ -377,7 +354,7 @@ func TestSendDataToS3FromMultipleLogTypesBeforeTerminating(t *testing.T) {
 	testResult2 := testEvent2.Result()
 
 	// wire it up
-	destination := newS3Destination(logType1, logType2)
+	destination := newS3Destination()
 
 	eventChannel <- testResult1
 	eventChannel <- testResult2
@@ -453,6 +430,29 @@ func TestSendDataToS3FromMultipleHoursBeforeTerminating(t *testing.T) {
 		strings.HasPrefix(*uploadInput.Key, expectedS3Prefix2)) // order of results is async
 }
 
+func TestSendDataWhenExceedMaxBuffers(t *testing.T) {
+	initTest()
+
+	destination := newS3Destination()
+	eventChannel := make(chan *parsers.Result, 1)
+
+	testEvent := newSimpleTestEvent()
+	testResult := testEvent.Result()
+
+	destination.maxBuffers = 0 // this will cause all events to be written immediately
+
+	// sending 1 event to buffered channel and the max buffers is 0, so it will immediately send the buffer to s3
+	eventChannel <- testResult
+
+	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Once()
+	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
+
+	runSendEvents(t, destination, eventChannel, false)
+
+	destination.mockS3Uploader.AssertExpectations(t)
+	destination.mockSns.AssertExpectations(t)
+}
+
 func TestSendDataFailsIfS3Fails(t *testing.T) {
 	initTest()
 
@@ -498,7 +498,7 @@ func TestSendDataFailsIfSnsFails(t *testing.T) {
 func TestBufferSetLargest(t *testing.T) {
 	const size = 100
 	event := newTestEvent(testLogType, refTime)
-	bs := newS3EventBufferSet(common.BuildJSON())
+	bs := newS3EventBufferSet(&S3Destination{jsonAPI: common.ConfigForDataLakeWriters()}, 128)
 	result := event.Result()
 	expectedLargest := bs.getBuffer(result)
 	expectedLargest.bytes = size

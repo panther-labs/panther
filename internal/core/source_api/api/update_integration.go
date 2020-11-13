@@ -26,6 +26,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
+	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -40,6 +41,10 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 	// First get the current existingIntegrationItem settings so that we can properly evaluate it
 	existingIntegrationItem, err := getItem(input.IntegrationID)
 	if err != nil {
+		return nil, err
+	}
+
+	if err = api.validateUniqueConstraints(existingIntegrationItem, input); err != nil {
 		return nil, err
 	}
 
@@ -73,20 +78,63 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 	}
 
 	if err := normalizeIntegration(existingIntegrationItem, input); err != nil {
+		zap.L().Error("failed to normalize integration", zap.Error(err))
 		return nil, err
 	}
 
 	if err := updateTables(existingIntegrationItem.IntegrationType, input); err != nil {
+		zap.L().Error("failed to update tables", zap.Error(err))
 		return nil, updateIntegrationInternalError
 	}
 
 	if err := dynamoClient.PutItem(existingIntegrationItem); err != nil {
+		zap.L().Error("failed to put item in ddb", zap.Error(err))
 		return nil, updateIntegrationInternalError
 	}
 
 	existingIntegration := itemToIntegration(existingIntegrationItem)
 
 	return existingIntegration, nil
+}
+
+func (api API) validateUniqueConstraints(existingIntegrationItem *ddb.Integration, input *models.UpdateIntegrationSettingsInput) error {
+	existingIntegrations, err := api.ListIntegrations(&models.ListIntegrationsInput{})
+	if err != nil {
+		zap.L().Error("failed to fetch integrations", zap.Error(errors.WithStack(err)))
+		return updateIntegrationInternalError
+	}
+	for _, existingIntegration := range existingIntegrations {
+		if existingIntegration.IntegrationType == existingIntegrationItem.IntegrationType &&
+			existingIntegration.IntegrationID != existingIntegrationItem.IntegrationID {
+
+			switch existingIntegration.IntegrationType {
+			case models.IntegrationTypeAWS3:
+				if existingIntegration.AWSAccountID == existingIntegrationItem.AWSAccountID &&
+					existingIntegration.IntegrationLabel == input.IntegrationLabel {
+					// Log sources for same account need to have different labels
+					return &genericapi.InvalidInputError{
+						Message: fmt.Sprintf("Log source for account %s with label %s already onboarded",
+							existingIntegrationItem.AWSAccountID,
+							input.IntegrationLabel),
+					}
+				}
+
+				if existingIntegration.S3Bucket == input.S3Bucket && existingIntegration.S3Prefix == input.S3Prefix {
+					return &genericapi.InvalidInputError{
+						Message: "An S3 integration with the same S3 bucket and prefix already exists.",
+					}
+				}
+			case models.IntegrationTypeSqs:
+				if existingIntegration.IntegrationLabel == input.IntegrationLabel {
+					// Sqs sources need to have different labels
+					return &genericapi.InvalidInputError{
+						Message: fmt.Sprintf("Integration with label %s already exists", input.IntegrationLabel),
+					}
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func normalizeIntegration(item *ddb.Integration, input *models.UpdateIntegrationSettingsInput) error {
@@ -161,13 +209,19 @@ func getItem(integrationID string) (*ddb.Integration, error) {
 	return item, nil
 }
 
-func updateTables(integrationType string, input *models.UpdateIntegrationSettingsInput) (err error) {
+func updateTables(integrationType string, input *models.UpdateIntegrationSettingsInput) error {
+	var logtypes []string
 	switch integrationType {
 	case models.IntegrationTypeAWS3:
-		err = addGlueTables(input.LogTypes)
+		logtypes = input.LogTypes
 	case models.IntegrationTypeSqs:
-		err = addGlueTables(input.SqsConfig.LogTypes)
+		logtypes = input.SqsConfig.LogTypes
 	}
+
+	m := process.CreateTablesMessage{
+		LogTypes: logtypes,
+	}
+	err := m.Send(sqsClient, env.DataCatalogUpdaterQueueURL)
 	if err != nil {
 		return errors.Wrap(err, "failed to create Glue tables")
 	}

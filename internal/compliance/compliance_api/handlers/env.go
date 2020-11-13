@@ -25,3 +25,6 @@ type envConfig struct {
 
 // Env is the parsed environment variables
 var Env envConfig
+
+// API has all of the handlers as receiver methods.
+type API struct{}

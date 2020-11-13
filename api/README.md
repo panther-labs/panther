@@ -15,4 +15,4 @@ In either case, the Lambda function ultimately manages data in an underlying dat
 
 ## Building
 
-To generate the Go client/models packages from Swagger files, run `mage build:api` from the repo root.
+To generate the Go client/models packages from Swagger files, run `mage gen fmt` from the repo root.

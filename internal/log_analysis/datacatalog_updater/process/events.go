@@ -32,6 +32,9 @@ import (
 )
 
 const (
+	// The message type key to be used when sending SQS messages. Use it to distinguish
+	// the type of the message payload.
+	PantherMessageType = "PantherMessageType"
 	lambdaFunctionName = "panther-datacatalog-updater"
 )
 

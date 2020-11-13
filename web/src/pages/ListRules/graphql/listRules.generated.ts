@@ -34,7 +34,14 @@ export type ListRules = {
         Types.Maybe<
           Pick<
             Types.RuleSummary,
-            'lastModified' | 'logTypes' | 'severity' | 'id' | 'displayName' | 'enabled'
+            | 'lastModified'
+            | 'logTypes'
+            | 'severity'
+            | 'id'
+            | 'displayName'
+            | 'threshold'
+            | 'enabled'
+            | 'outputIds'
           >
         >
       >
@@ -52,7 +59,9 @@ export const ListRulesDocument = gql`
         severity
         id
         displayName
+        threshold
         enabled
+        outputIds
       }
       paging {
         totalPages

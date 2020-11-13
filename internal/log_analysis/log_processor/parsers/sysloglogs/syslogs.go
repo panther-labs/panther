@@ -29,21 +29,23 @@ const (
 	TypeRFC3164 = "Syslog.RFC3164"
 )
 
-func init() {
-	logtypes.MustRegister(
-		logtypes.Config{
-			Name:         TypeRFC3164,
-			Description:  `Syslog parser for the RFC3164 format (ie. BSD-syslog messages)`,
-			ReferenceURL: `https://tools.ietf.org/html/rfc3164`,
-			Schema:       RFC3164{},
-			NewParser:    parsers.AdapterFactory(&RFC5424Parser{}),
-		},
-		logtypes.Config{
-			Name:         TypeRFC5424,
-			Description:  `Syslog parser for the RFC5424 format.`,
-			ReferenceURL: `https://tools.ietf.org/html/rfc5424`,
-			Schema:       RFC5424{},
-			NewParser:    parsers.AdapterFactory(&RFC5424Parser{}),
-		},
-	)
+func LogTypes() logtypes.Group {
+	return logTypes
 }
+
+var logTypes = logtypes.Must("Syslog",
+	logtypes.Config{
+		Name:         TypeRFC3164,
+		Description:  `Syslog parser for the RFC3164 format (ie. BSD-syslog messages)`,
+		ReferenceURL: `https://tools.ietf.org/html/rfc3164`,
+		Schema:       RFC3164{},
+		NewParser:    parsers.AdapterFactory(&RFC5424Parser{}),
+	},
+	logtypes.Config{
+		Name:         TypeRFC5424,
+		Description:  `Syslog parser for the RFC5424 format.`,
+		ReferenceURL: `https://tools.ietf.org/html/rfc5424`,
+		Schema:       RFC5424{},
+		NewParser:    parsers.AdapterFactory(&RFC5424Parser{}),
+	},
+)

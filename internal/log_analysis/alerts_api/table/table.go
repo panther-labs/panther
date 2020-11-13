@@ -42,13 +42,14 @@ const (
 	DeliveryResponsesKey = "deliveryResponses"
 	LastUpdatedByKey     = "lastUpdatedBy"
 	LastUpdatedByTimeKey = "lastUpdatedByTime"
+	TypeKey              = "type"
 )
 
 // API defines the interface for the alerts table which can be used for mocking.
 type API interface {
-	GetAlert(*string) (*AlertItem, error)
+	GetAlert(string) (*AlertItem, error)
 	ListAll(*models.ListAlertsInput) ([]*AlertItem, *string, error)
-	UpdateAlertStatus(*models.UpdateAlertStatusInput) (*AlertItem, error)
+	UpdateAlertStatus(*models.UpdateAlertStatusInput) ([]*AlertItem, error)
 	UpdateAlertDelivery(*models.UpdateAlertDeliveryInput) (*AlertItem, error)
 }
 
@@ -60,6 +61,22 @@ type AlertsTable struct {
 	Client                             dynamodbiface.DynamoDBAPI
 }
 
+type AlertsTableEnvConfig struct {
+	// env config for instantiating a table.AlertsTable
+	AlertsTableName     string `required:"true" split_words:"true"`
+	AlertsRuleIndexName string `required:"true" split_words:"true"`
+	AlertsTimeIndexName string `required:"true" split_words:"true"`
+}
+
+func (config *AlertsTableEnvConfig) NewAlertsTable(client dynamodbiface.DynamoDBAPI) *AlertsTable {
+	return &AlertsTable{
+		AlertsTableName:                    config.AlertsTableName,
+		Client:                             client,
+		RuleIDCreationTimeIndexName:        config.AlertsRuleIndexName,
+		TimePartitionCreationTimeIndexName: config.AlertsTimeIndexName,
+	}
+}
+
 // The AlertsTable must satisfy the API interface.
 var _ API = (*AlertsTable)(nil)
 
@@ -69,6 +86,7 @@ type DynamoItem = map[string]*dynamodb.AttributeValue
 // AlertItem is a DDB representation of an Alert
 type AlertItem struct {
 	AlertID             string                     `json:"id"`
+	Type                string                     `json:"type"`
 	RuleID              string                     `json:"ruleId"`
 	RuleVersion         string                     `json:"ruleVersion"`
 	RuleDisplayName     *string                    `json:"ruleDisplayName"`

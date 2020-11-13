@@ -100,6 +100,15 @@ func (m *LambdaMock) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutput, er
 	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
 }
 
+func (m *LambdaMock) InvokeWithContext(
+	ctx aws.Context,
+	input *lambda.InvokeInput,
+	options ...request.Option) (*lambda.InvokeOutput, error) {
+
+	args := m.Called(ctx, input, options)
+	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
+}
+
 func (m *LambdaMock) CreateEventSourceMapping(
 	input *lambda.CreateEventSourceMappingInput) (*lambda.EventSourceMappingConfiguration, error) {
 
@@ -174,6 +183,15 @@ func (m *SqsMock) GetQueueAttributes(input *sqs.GetQueueAttributesInput) (*sqs.G
 	return args.Get(0).(*sqs.GetQueueAttributesOutput), args.Error(1)
 }
 
+func (m *SqsMock) GetQueueAttributesWithContext(
+	ctx aws.Context,
+	input *sqs.GetQueueAttributesInput,
+	options ...request.Option) (*sqs.GetQueueAttributesOutput, error) {
+
+	args := m.Called(ctx, input, options)
+	return args.Get(0).(*sqs.GetQueueAttributesOutput), args.Error(1)
+}
+
 func (m *SqsMock) DeleteMessageBatch(input *sqs.DeleteMessageBatchInput) (*sqs.DeleteMessageBatchOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*sqs.DeleteMessageBatchOutput), args.Error(1)
@@ -181,6 +199,15 @@ func (m *SqsMock) DeleteMessageBatch(input *sqs.DeleteMessageBatchInput) (*sqs.D
 
 func (m *SqsMock) ReceiveMessage(input *sqs.ReceiveMessageInput) (*sqs.ReceiveMessageOutput, error) {
 	args := m.Called(input)
+	return args.Get(0).(*sqs.ReceiveMessageOutput), args.Error(1)
+}
+
+func (m *SqsMock) ReceiveMessageWithContext(
+	ctx aws.Context,
+	input *sqs.ReceiveMessageInput,
+	options ...request.Option) (*sqs.ReceiveMessageOutput, error) {
+
+	args := m.Called(ctx, input, options)
 	return args.Get(0).(*sqs.ReceiveMessageOutput), args.Error(1)
 }
 
@@ -227,6 +254,7 @@ func (m *EventBridgeMock) DeleteRule(input *eventbridge.DeleteRuleInput) (*event
 type GlueMock struct {
 	glueiface.GlueAPI
 	mock.Mock
+	LogTables []*glue.TableData
 }
 
 func (m *GlueMock) CreateTable(input *glue.CreateTableInput) (*glue.CreateTableOutput, error) {
@@ -262,6 +290,21 @@ func (m *GlueMock) GetPartitions(input *glue.GetPartitionsInput) (*glue.GetParti
 func (m *GlueMock) UpdatePartition(input *glue.UpdatePartitionInput) (*glue.UpdatePartitionOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*glue.UpdatePartitionOutput), args.Error(1)
+}
+
+// nolint:lll
+func (m *GlueMock) GetTablesPagesWithContext(
+	ctx aws.Context,
+	input *glue.GetTablesInput,
+	scan func(page *glue.GetTablesOutput, isLast bool) bool,
+	_ ...request.Option,
+) error {
+
+	args := m.Called(ctx, input, scan)
+	scan(&glue.GetTablesOutput{
+		TableList: m.LogTables,
+	}, true)
+	return args.Error(0)
 }
 
 type AthenaMock struct {

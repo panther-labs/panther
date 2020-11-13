@@ -21,6 +21,7 @@ package utils
 
 import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	alertdeliverymodels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
@@ -42,9 +43,14 @@ func AlertItemToSummary(item *table.AlertItem) *models.AlertSummary {
 	if alertStatus == "" {
 		alertStatus = models.OpenStatus
 	}
+	alertType := item.Type
+	if len(alertType) == 0 {
+		alertType = alertdeliverymodels.RuleType
+	}
 
 	return &models.AlertSummary{
-		AlertID:           &item.AlertID,
+		AlertID:           item.AlertID,
+		Type:              alertType,
 		CreationTime:      &item.CreationTime,
 		DedupString:       &item.DedupString,
 		EventsMatched:     &item.EventCount,

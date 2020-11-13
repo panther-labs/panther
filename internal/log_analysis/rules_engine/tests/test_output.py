@@ -47,7 +47,9 @@ class TestMatchedEventsBuffer(TestCase):
             log_type='log_type',
             dedup='dedup',
             dedup_period_mins=100,
-            event={'data_key': 'data_value'}
+            alert_context='{"key":"value"}',
+            event={'data_key': 'data_value'},
+            title='test title'
         )
         buffer.add_event(event_match)
 
@@ -68,7 +70,10 @@ class TestMatchedEventsBuffer(TestCase):
                 '#7': 'alertUpdateTime',
                 '#8': 'eventCount',
                 '#9': 'logTypes',
-                '#10': 'ruleVersion'
+                '#10': 'ruleVersion',
+                '#11': 'type',
+                '#12': 'context',
+                '#13': 'title'
             },
             ExpressionAttributeValues={
                 ':1': {
@@ -97,7 +102,16 @@ class TestMatchedEventsBuffer(TestCase):
                 },
                 ':10': {
                     'S': 'rule_version'
-                }
+                },
+                ':11': {
+                    'S': 'RULE'
+                },
+                ':12': {
+                    'S': '{"key":"value"}'
+                },
+                ':13': {
+                    'S': 'test title'
+                },
             },
             Key={
                 'partitionKey': {
@@ -107,7 +121,7 @@ class TestMatchedEventsBuffer(TestCase):
             },
             ReturnValues='ALL_NEW',
             TableName='table_name',
-            UpdateExpression='ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10'
+            UpdateExpression='ADD #3 :3\nSET #4=:4, #5=:5, #6=:6, #7=:7, #8=:8, #9=:9, #10=:10, #11=:11, #12=:12, #13=:13'
         )
 
         S3_MOCK.put_object.assert_called_once_with(Body=mock.ANY, Bucket='s3_bucket', ContentType='gzip', Key=mock.ANY)

@@ -28,7 +28,6 @@ import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import pick from 'lodash/pick';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
-import isEmpty from 'lodash/isEmpty';
 import Breadcrumbs from 'Components/Breadcrumbs';
 import { useListAccountIds } from './graphql/listAccountIds.generated';
 
@@ -119,7 +118,7 @@ const ListResourcesActions: React.FC = () => {
   // Mutate initial values since the initial values provide an `integrationId` and we want to map
   // that to an `ComplianceIntegration` object, since that is the kind of items that the MultiCombobox has
   const filterKeys = Object.keys(filters) as (keyof ListResourcesFiltersValues)[];
-  const filtersCount = filterKeys.filter(key => !isEmpty(requestParams[key])).length;
+  const filtersCount = filterKeys.filter(key => key in requestParams).length;
 
   // If there is at least one filter set visibility to true
   React.useEffect(() => {

@@ -17,14 +17,19 @@
  */
 
 import React from 'react';
-import { Box, Card, Flex, IconButton, Img, Text, TextProps } from 'pouncejs';
+import { Box, Card, Flex, IconButton, Img, Text, TextProps, Theme } from 'pouncejs';
 import { slugify } from 'Helpers/utils';
+
+interface GenericItemCardProps {
+  borderColor?: keyof Theme['colors'];
+}
 
 interface GenericItemCardLogoProps {
   src: string;
 }
 
 interface GenericItemCardValueProps {
+  id?: string;
   label?: string;
   value: string | number | React.ReactElement;
 }
@@ -39,12 +44,23 @@ interface GenericItemCardComposition {
   LineBreak: React.FC;
 }
 
-const GenericItemCard: React.FC & GenericItemCardComposition = ({ children }) => {
+const GenericItemCard: React.FC<GenericItemCardProps> & GenericItemCardComposition = ({
+  children,
+  borderColor,
+}) => {
+  const statusProps = borderColor
+    ? {
+        borderLeft: '4px solid',
+        borderColor,
+      }
+    : {};
   return (
-    <Card as="section" variant="dark" p={5}>
-      <Flex position="relative" height="100%">
-        {children}
-      </Flex>
+    <Card as="section" variant="dark" p={5} {...statusProps} overflow="hidden">
+      <Box>
+        <Flex position="relative" height="100%">
+          {children}
+        </Flex>
+      </Box>
     </Card>
   );
 };
@@ -95,24 +111,30 @@ const GenericItemCardOptions = React.forwardRef<HTMLButtonElement>(function Gene
   );
 });
 
-const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, value }) => {
-  const id = slugify(`${label}${value}`);
+const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, value, id }) => {
+  const cardId = id || slugify(`${label}${value}`);
 
   return (
     <Box as="dl" mt={4}>
       {label && (
         <Box
           as="dt"
-          aria-labelledby={id}
+          aria-labelledby={cardId}
           color="gray-300"
           fontSize="2x-small"
-          mb="1px"
+          mb="6px"
           fontWeight="medium"
         >
           {label}
         </Box>
       )}
-      <Box as="dd" aria-labelledby={id} fontSize="medium" opacity={value ? 1 : 0.3}>
+      <Box
+        as="dd"
+        aria-labelledby={cardId}
+        fontSize="medium"
+        fontWeight="medium"
+        opacity={value ? 1 : 0.3}
+      >
         {value || 'Not Set'}
       </Box>
     </Box>

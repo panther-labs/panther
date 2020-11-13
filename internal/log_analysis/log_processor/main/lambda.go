@@ -22,36 +22,55 @@ import (
 	"context"
 	"time"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
+
+// How often we check if we need to scale (controls responsiveness).
+const defaultScalingDecisionInterval = 30 * time.Second
 
 func main() {
 	common.Setup()
 	lambda.Start(handle)
 }
 
-func handle(ctx context.Context, event events.SQSEvent) error {
-	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
-	deadline, _ := ctx.Deadline()
-	return process(lc, deadline, event)
+func handle(ctx context.Context) error {
+	lambdalogger.ConfigureGlobal(ctx, nil)
+	return process(ctx, defaultScalingDecisionInterval)
 }
 
-func process(lc *lambdacontext.LambdaContext, deadline time.Time, event events.SQSEvent) (err error) {
+func process(ctx context.Context, scalingDecisionInterval time.Duration) (err error) {
+	lc, _ := lambdacontext.FromContext(ctx)
 	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
 
-	var sqsMessageCount int
+	// Create cancellable deadline for Scaling Decisions go routine
+	scalingCtx, cancelScaling := context.WithCancel(ctx)
+	// runs in the background, periodically polling the queue to make scaling decisions
+	go processor.RunScalingDecisions(scalingCtx, common.SqsClient, common.LambdaClient, scalingDecisionInterval)
 
+	var sqsMessageCount int
 	defer func() {
+		cancelScaling()
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", sqsMessageCount))
 	}()
 
-	sqsMessageCount, err = processor.StreamEvents(common.SqsClient, deadline, event)
+	logTypesResolver := registry.NativeLogTypesResolver()
+
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		panic("Lambda context doesn't have a deadline!")
+	}
+	// We should poll events for half the Lambda's duration
+	pollingTimeout := time.Until(deadline) / 2
+	ctx, cancel := context.WithTimeout(ctx, pollingTimeout)
+	defer cancel()
+	sqsMessageCount, err = processor.PollEvents(ctx, common.SqsClient, logTypesResolver)
+
 	return err
 }

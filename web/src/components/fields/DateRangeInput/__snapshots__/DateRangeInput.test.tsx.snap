@@ -1,0 +1,2769 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`FormikDateRangeInput renders 1`] = `
+.panther-0 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: flex-end;
+  -webkit-box-align: flex-end;
+  -ms-flex-align: flex-end;
+  align-items: flex-end;
+  position: fixed;
+  bottom: 12px;
+  right: 24px;
+  z-index: 9999;
+}
+
+.panther-3 {
+  position: relative;
+}
+
+
+
+.panther-317 {
+  position: relative;
+  z-index: 1;
+}
+
+.panther-8 {
+  min-height: 47px;
+  position: relative;
+  border: 1px solid;
+  -webkit-transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  background-color: transparent;
+  border-radius: 4px;
+  border-color: #3e516b;
+}
+
+.panther-8:hover {
+  border-color: #0081c5;
+}
+
+.panther-8:focus-within {
+  border-color: #0081c5;
+}
+
+.panther-8:focus-within label {
+  font-weight: 500;
+  -webkit-transform: translate(6px, 4px) scale(0.65);
+  -moz-transform: translate(6px, 4px) scale(0.65);
+  -ms-transform: translate(6px, 4px) scale(0.65);
+  transform: translate(6px, 4px) scale(0.65);
+}
+
+.panther-7 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-1 {
+  vertical-align: top;
+  width: 100%;
+  height: 100%;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-top: 20px;
+  padding-bottom: 8px;
+  position: relative;
+  color: #f6f6f6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: transparent;
+  border: 0;
+}
+
+.panther-1::-webkit-input-placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-1::-moz-placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-1:-ms-input-placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-1::placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+
+
+.panther-1:focus::-webkit-input-placeholder {
+  opacity: 0.4;
+}
+
+.panther-1:focus::-moz-placeholder {
+  opacity: 0.4;
+}
+
+.panther-1:focus:-ms-input-placeholder {
+  opacity: 0.4;
+}
+
+.panther-1:focus::placeholder {
+  opacity: 0.4;
+}
+
+.panther-1:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px #192231 inset;
+  -webkit-text-fill-color: #f6f6f6;
+  border-radius: 4px;
+}
+
+.panther-2 {
+  pointer-events: none;
+  font-size: 0.875rem;
+  padding-left: 16px;
+  padding-right: 16px;
+  color: #bdbdbd;
+  top: 0;
+  left: 0;
+  position: absolute;
+  transform-origin: center left;
+  -webkit-transform: translate(0, 14px) scale(1);
+  -moz-transform: translate(0, 14px) scale(1);
+  -ms-transform: translate(0, 14px) scale(1);
+  transform: translate(0, 14px) scale(1);
+  -webkit-transition: -webkit-transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 400;
+}
+
+.panther-13 {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 2;
+}
+
+.panther-12 {
+  outline: none;
+  line-height: 1;
+  height: 32px;
+  width: 32px;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: transparent;
+  -webkit-transition: all 0.1s linear;
+  transition: all 0.1s linear;
+}
+
+.panther-12:focus {
+  border-radius: 99999px;
+  background-color: rgba(255,255,255,0.1);
+}
+
+.panther-11 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+}
+
+.panther-316 {
+  background-color: #23344e;
+  border-radius: 4px;
+  position: absolute;
+  box-shadow: 0px 0px 15px 0px rgba(21, 23, 26, 0.5);
+  right: 100%;
+  margin-top: 16px;
+  top: 0;
+  z-index: 10;
+}
+
+.panther-315 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: columns;
+  -ms-flex-pack: columns;
+  -webkit-justify-content: columns;
+  justify-content: columns;
+}
+
+.panther-28 {
+  border-right: 1px solid;
+  border-color: #3e516b;
+}
+
+.panther-27 {
+  padding: 24px;
+  width: 140px;
+}
+
+.panther-15 {
+  margin-bottom: 24px;
+}
+
+.panther-14 {
+  color: #86a3c3;
+  font-size: 0.875rem;
+  cursor: pointer;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: transparent;
+  -webkit-transition: all 0.1s linear;
+  transition: all 0.1s linear;
+}
+
+.panther-14[aria-selected=true],
+[data-selected]>.panther-14 {
+  color: #f6f6f6;
+}
+
+.panther-14:hover {
+  color: #f6f6f6;
+}
+
+.panther-37 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-top: 22px;
+  padding-bottom: 22px;
+  position: relative;
+}
+
+.panther-31 {
+  position: absolute;
+  left: 16px;
+}
+
+.panther-30 {
+  outline: none;
+  line-height: 1;
+  height: 32px;
+  width: 32px;
+  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-radius: 4px;
+  border: 1px solid;
+  border-color: #0081c5;
+  background-color: #0081c5;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.panther-30:hover {
+  background-color: #0a8bcf;
+  border-color: #0a8bcf;
+}
+
+.panther-30:focus {
+  background-color: #0a8bcf;
+  border-color: #55d6ff;
+}
+
+.panther-30:active,
+.panther-30[data-active=true] {
+  background-color: #0077bb;
+  border-color: #0077bb;
+}
+
+.panther-32 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  width: 50%;
+  text-align: center;
+}
+
+.panther-36 {
+  position: absolute;
+  right: 16px;
+}
+
+.panther-276 {
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-bottom: 16px;
+}
+
+.panther-275 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+.panther-275>*:not(:last-child) {
+  margin-right: 32px;
+}
+
+.panther-52 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: space-around;
+  -ms-flex-pack: space-around;
+  -webkit-justify-content: space-around;
+  justify-content: space-around;
+  margin-bottom: 8px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  border-top: 1px solid;
+  border-bottom: 1px solid;
+  border-color: #3e516b;
+}
+
+.panther-38 {
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.panther-156 {
+  display: table;
+  border-collapse: separate;
+  border-spacing: 0 2px;
+}
+
+.panther-155 {
+  display: table-row-group;
+}
+
+.panther-62 {
+  -webkit-display: table-row;
+  display: table-row;
+}
+
+.panther-53 {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.panther-53 [aria-relevant]:hover {
+  background-color: #11a5f3;
+}
+
+.panther-53 [aria-placeholder] {
+  position: absolute;
+  z-index: 1;
+  width: 50%;
+  height: 100%;
+  top: 0;
+}
+
+
+
+.panther-53[aria-busy='true']+[aria-selected='true'] [aria-placeholder],
+.panther-53[aria-selected='true']+[aria-busy='true'] [aria-placeholder],
+.panther-53[aria-selected='true']+.panther-53[aria-selected='true'] [aria-placeholder] {
+  background-color: rgba(134,163,195,0.2);
+}
+
+.panther-53[aria-selected='true']+.panther-53[aria-selected='true'] [aria-placeholder] {
+  width: 100%;
+  left: -50%;
+}
+
+.panther-53[aria-busy='true']+.panther-53[aria-selected='true'] [aria-placeholder] {
+  left: 0;
+}
+
+.panther-53[aria-selected='true']+.panther-53[aria-busy='true'] [aria-placeholder] {
+  left: -50%;
+}
+
+.panther-53[aria-selected='true'] [aria-relevant] {
+  background-color: #0081c5;
+}
+
+.panther-53[aria-busy='true'] [aria-relevant] {
+  border-radius: 0;
+  background-color: rgba(134,163,195,0.2);
+}
+
+
+
+.panther-53[aria-disabled='true']+.panther-53[aria-busy='true'] [aria-relevant] {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+
+
+.panther-53[aria-busy='true']:last-of-type [aria-relevant] {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.panther-53[aria-busy='true']:first-of-type [aria-relevant] {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.panther-53[aria-busy='true']:only-of-type [aria-relevant] {
+  border-radius: 4px;
+}
+
+.panther-59 {
+  pointer-events: none;
+}
+
+.panther-60 {
+  padding: 8px;
+  border-radius: 99999px;
+  position: relative;
+  z-index: 2;
+  width: 37px;
+  height: 37px;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: transparent;
+  -webkit-transition: all 0.1s linear;
+  transition: all 0.1s linear;
+}
+
+.panther-309 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  border-top: 1px solid;
+  border-color: #3e516b;
+  padding: 16px;
+}
+
+.panther-309>*:not(:last-child) {
+  margin-right: 32px;
+}
+
+.panther-292 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-292>*:not(:last-child) {
+  margin-right: 12px;
+}
+
+.panther-277 {
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  font-weight: 700;
+  padding-right: 16px;
+}
+
+.panther-278 {
+  vertical-align: top;
+  width: 100%;
+  height: 100%;
+  padding-left: 16px;
+  padding-right: 32px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  position: relative;
+  color: #f6f6f6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: transparent;
+  border: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panther-278::-webkit-input-placeholder {
+  opacity: 1;
+  color: #bdbdbd;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 400;
+}
+
+.panther-278::-moz-placeholder {
+  opacity: 1;
+  color: #bdbdbd;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 400;
+}
+
+.panther-278:-ms-input-placeholder {
+  opacity: 1;
+  color: #bdbdbd;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 400;
+}
+
+.panther-278::placeholder {
+  opacity: 1;
+  color: #bdbdbd;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 400;
+}
+
+
+
+.panther-278:focus::-webkit-input-placeholder {
+  opacity: 0.4;
+  color: #f6f6f6;
+  font-weight: 500;
+}
+
+.panther-278:focus::-moz-placeholder {
+  opacity: 0.4;
+  color: #f6f6f6;
+  font-weight: 500;
+}
+
+.panther-278:focus:-ms-input-placeholder {
+  opacity: 0.4;
+  color: #f6f6f6;
+  font-weight: 500;
+}
+
+.panther-278:focus::placeholder {
+  opacity: 0.4;
+  color: #f6f6f6;
+  font-weight: 500;
+}
+
+.panther-278:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px #192231 inset;
+  -webkit-text-fill-color: #f6f6f6;
+  border-radius: 4px;
+}
+
+.panther-279 {
+  pointer-events: none;
+  font-size: 0.875rem;
+  padding-left: 16px;
+  padding-right: 16px;
+  color: #bdbdbd;
+  top: 0;
+  left: 0;
+  position: absolute;
+  transform-origin: center left;
+  -webkit-transform: translate(6px, 4px) scale(0.65);
+  -moz-transform: translate(6px, 4px) scale(0.65);
+  -ms-transform: translate(6px, 4px) scale(0.65);
+  transform: translate(6px, 4px) scale(0.65);
+  -webkit-transition: -webkit-transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+  border: 0px;
+  height: 1px;
+  width: 1px;
+  margin: -1px;
+  padding: 0px;
+  overflow: hidden;
+  white-space: nowrap;
+  position: absolute;
+}
+
+.panther-281 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  color: currentColor;
+  opacity: 1;
+  position: absolute;
+  pointer-events: none;
+  margin-top: auto;
+  margin-bottom: auto;
+  top: 0;
+  bottom: 0;
+  right: 16px;
+}
+
+.panther-313 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  border-top: 1px solid;
+  border-color: #3e516b;
+}
+
+.panther-312 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  padding: 12px;
+}
+
+.panther-312>*:not(:last-child) {
+  margin-right: 12px;
+}
+
+.panther-310 {
+  width: auto;
+  outline: none;
+  padding-left: 20px;
+  padding-right: 20px;
+  height: 32px;
+  font-size: 0.813rem;
+  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-radius: 4px;
+  border: 1px solid;
+  border-color: #716f6f;
+  background-color: #716f6f;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.panther-310:hover {
+  background-color: #7b7979;
+  border-color: #7b7979;
+}
+
+.panther-310:focus {
+  background-color: #7b7979;
+  border-color: #c6c4c4;
+}
+
+.panther-310:active,
+.panther-310[data-active=true] {
+  background-color: #676565;
+  border-color: #676565;
+}
+
+.panther-311 {
+  width: auto;
+  outline: none;
+  padding-left: 20px;
+  padding-right: 20px;
+  height: 32px;
+  font-size: 0.813rem;
+  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-radius: 4px;
+  border: 1px solid;
+  border-color: #0081c5;
+  background-color: #0081c5;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.panther-311:hover {
+  background-color: #0a8bcf;
+  border-color: #0a8bcf;
+}
+
+.panther-311:focus {
+  background-color: #0a8bcf;
+  border-color: #55d6ff;
+}
+
+.panther-311:active,
+.panther-311[data-active=true] {
+  background-color: #0077bb;
+  border-color: #0077bb;
+}
+
+<div>
+  <div
+    class="panther-0"
+  />
+  <header
+    id="main-header"
+  />
+  <div
+    class="panther-3"
+  >
+    <form
+      action="#"
+    >
+      <div
+        class="panther-10"
+      >
+        <div
+          class="panther-317"
+        >
+          <div
+            class="panther-10"
+          >
+            <fieldset
+              class="panther-3"
+            >
+              <div
+                class="panther-8"
+              >
+                <div
+                  class="panther-7"
+                >
+                  <div
+                    class="panther-3"
+                  >
+                    <input
+                      aria-invalid="false"
+                      aria-readonly="true"
+                      autocomplete="off"
+                      class="panther-1"
+                      id="start-end-from"
+                      name="start-end-from"
+                      readonly=""
+                      type="text"
+                      value=""
+                    />
+                    <label
+                      class="panther-2"
+                      for="start-end-from"
+                    >
+                      Date Start
+                    </label>
+                  </div>
+                  <div
+                    class="panther-3"
+                  >
+                    <input
+                      aria-invalid="false"
+                      aria-readonly="true"
+                      autocomplete="off"
+                      class="panther-1"
+                      id="start-end-to"
+                      name="start-end-to"
+                      readonly=""
+                      type="text"
+                      value=""
+                    />
+                    <label
+                      class="panther-2"
+                      for="start-end-to"
+                    >
+                      Date End
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <div
+            class="panther-13"
+          >
+            <button
+              aria-label="Toggle picker"
+              aria-pressed="false"
+              class="panther-12"
+              type="button"
+            >
+              <svg
+                class="panther-11"
+                role="presentation"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M19,4 L18,4 L18,2 L16,2 L16,4 L8,4 L8,2 L6,2 L6,4 L5,4 C3.89,4 3.01,4.9 3.01,6 L3,20 C3,21.1 3.89,22 5,22 L19,22 C20.1,22 21,21.1 21,20 L21,6 C21,4.9 20.1,4 19,4 Z M19,20 L5,20 L5,9 L19,9 L19,20 Z"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            data-reach-popover=""
+            style="position: absolute; transform: translate3d(0, 0, 0); opacity: 1; pointer-events: auto; left: 0px; top: 0px;"
+          >
+            <div
+              class="panther-316"
+            >
+              <div
+                class="panther-315"
+              >
+                <div
+                  class="panther-28"
+                >
+                  <div
+                    class="panther-27"
+                  >
+                    <ol
+                      class="panther-10"
+                    >
+                      <li
+                        class="panther-15"
+                      >
+                        <button
+                          aria-label="Last 24 Hours"
+                          aria-selected="false"
+                          class="panther-14"
+                          type="button"
+                        >
+                          Last 24 Hours
+                        </button>
+                      </li>
+                      <li
+                        class="panther-15"
+                      >
+                        <button
+                          aria-label="Last Week"
+                          aria-selected="false"
+                          class="panther-14"
+                          type="button"
+                        >
+                          Last Week
+                        </button>
+                      </li>
+                      <li
+                        class="panther-15"
+                      >
+                        <button
+                          aria-label="Last Month"
+                          aria-selected="false"
+                          class="panther-14"
+                          type="button"
+                        >
+                          Last Month
+                        </button>
+                      </li>
+                      <li
+                        class="panther-15"
+                      >
+                        <button
+                          aria-label="Last 3 Months"
+                          aria-selected="false"
+                          class="panther-14"
+                          type="button"
+                        >
+                          Last 3 Months
+                        </button>
+                      </li>
+                      <li
+                        class="panther-15"
+                      >
+                        <button
+                          aria-label="Last 6 Months"
+                          aria-selected="false"
+                          class="panther-14"
+                          type="button"
+                        >
+                          Last 6 Months
+                        </button>
+                      </li>
+                      <li
+                        class="panther-15"
+                      >
+                        <button
+                          aria-label="Custom"
+                          aria-selected="true"
+                          class="panther-14"
+                          type="button"
+                        >
+                          Custom
+                        </button>
+                      </li>
+                    </ol>
+                  </div>
+                </div>
+                <div
+                  class="panther-10"
+                >
+                  <div
+                    class="panther-37"
+                  >
+                    <div
+                      class="panther-31"
+                    >
+                      <button
+                        aria-label="Go to previous month"
+                        aria-pressed="false"
+                        class="panther-30"
+                        type="button"
+                      >
+                        <svg
+                          class="panther-11"
+                          role="presentation"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                    <h4
+                      class="panther-32"
+                    >
+                      November 2020
+                    </h4>
+                    <h4
+                      class="panther-32"
+                    >
+                      December 2020
+                    </h4>
+                    <div
+                      class="panther-36"
+                    >
+                      <button
+                        aria-label="Go to next month"
+                        aria-pressed="false"
+                        class="panther-30"
+                        type="button"
+                      >
+                        <svg
+                          class="panther-11"
+                          role="presentation"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            d="M12 4L10.59 5.41L16.17 11H4V13H16.17L10.59 18.59L12 20L20 12L12 4Z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    class="panther-276"
+                  >
+                    <div
+                      class="panther-275"
+                    >
+                      <div
+                        class="panther-10"
+                      >
+                        <div>
+                          <div
+                            class="panther-52"
+                            role="row"
+                          >
+                            <div
+                              class="panther-10"
+                              role="columnheader"
+                            >
+                              <abbr
+                                class="panther-38"
+                                title="Monday"
+                              >
+                                Mo
+                              </abbr>
+                            </div>
+                            <div
+                              class="panther-10"
+                              role="columnheader"
+                            >
+                              <abbr
+                                class="panther-38"
+                                title="Tuesday"
+                              >
+                                Tu
+                              </abbr>
+                            </div>
+                            <div
+                              class="panther-10"
+                              role="columnheader"
+                            >
+                              <abbr
+                                class="panther-38"
+                                title="Wednesday"
+                              >
+                                We
+                              </abbr>
+                            </div>
+                            <div
+                              class="panther-10"
+                              role="columnheader"
+                            >
+                              <abbr
+                                class="panther-38"
+                                title="Thurdsday"
+                              >
+                                Th
+                              </abbr>
+                            </div>
+                            <div
+                              class="panther-10"
+                              role="columnheader"
+                            >
+                              <abbr
+                                class="panther-38"
+                                title="Friday"
+                              >
+                                Fr
+                              </abbr>
+                            </div>
+                            <div
+                              class="panther-10"
+                              role="columnheader"
+                            >
+                              <abbr
+                                class="panther-38"
+                                title="Saturday"
+                              >
+                                Sa
+                              </abbr>
+                            </div>
+                            <div
+                              class="panther-10"
+                              role="columnheader"
+                            >
+                              <abbr
+                                class="panther-38"
+                                title="Sunday"
+                              >
+                                Su
+                              </abbr>
+                            </div>
+                          </div>
+                        </div>
+                        <div
+                          class="panther-156"
+                        >
+                          <div
+                            class="panther-155"
+                          >
+                            <div
+                              class="panther-62"
+                            >
+                              <div
+                                aria-disabled="true"
+                                class="panther-53"
+                              />
+                              <div
+                                aria-disabled="true"
+                                class="panther-53"
+                              />
+                              <div
+                                aria-disabled="true"
+                                class="panther-53"
+                              />
+                              <div
+                                aria-disabled="true"
+                                class="panther-53"
+                              />
+                              <div
+                                aria-disabled="true"
+                                class="panther-53"
+                              />
+                              <div
+                                aria-disabled="true"
+                                class="panther-53"
+                              />
+                              <div
+                                aria-busy="false"
+                                aria-label="Su Nov 01 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  1
+                                </button>
+                              </div>
+                            </div>
+                            <div
+                              class="panther-62"
+                            >
+                              <div
+                                aria-busy="false"
+                                aria-label="Mo Nov 02 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  2
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Tu Nov 03 2020"
+                                aria-selected="true"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  3
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="We Nov 04 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  4
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Th Nov 05 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  5
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Fr Nov 06 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  6
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Sa Nov 07 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  7
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Su Nov 08 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  8
+                                </button>
+                              </div>
+                            </div>
+                            <div
+                              class="panther-62"
+                            >
+                              <div
+                                aria-busy="false"
+                                aria-label="Mo Nov 09 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  9
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Tu Nov 10 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  10
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="We Nov 11 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  11
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Th Nov 12 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  12
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Fr Nov 13 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  13
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Sa Nov 14 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  14
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Su Nov 15 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  15
+                                </button>
+                              </div>
+                            </div>
+                            <div
+                              class="panther-62"
+                            >
+                              <div
+                                aria-busy="false"
+                                aria-label="Mo Nov 16 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  16
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Tu Nov 17 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  17
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="We Nov 18 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  18
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Th Nov 19 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  19
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Fr Nov 20 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  20
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Sa Nov 21 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  21
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Su Nov 22 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  22
+                                </button>
+                              </div>
+                            </div>
+                            <div
+                              class="panther-62"
+                            >
+                              <div
+                                aria-busy="false"
+                                aria-label="Mo Nov 23 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  23
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Tu Nov 24 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  24
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="We Nov 25 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  25
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Th Nov 26 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  26
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Fr Nov 27 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  27
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Sa Nov 28 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  28
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Su Nov 29 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  29
+                                </button>
+                              </div>
+                            </div>
+                            <div
+                              class="panther-62"
+                            >
+                              <div
+                                aria-busy="false"
+                                aria-label="Mo Nov 30 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  30
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        class="panther-10"
+                      >
+                        <div>
+                          <div
+                            class="panther-52"
+                            role="row"
+                          >
+                            <div
+                              class="panther-10"
+                              role="columnheader"
+                            >
+                              <abbr
+                                class="panther-38"
+                                title="Monday"
+                              >
+                                Mo
+                              </abbr>
+                            </div>
+                            <div
+                              class="panther-10"
+                              role="columnheader"
+                            >
+                              <abbr
+                                class="panther-38"
+                                title="Tuesday"
+                              >
+                                Tu
+                              </abbr>
+                            </div>
+                            <div
+                              class="panther-10"
+                              role="columnheader"
+                            >
+                              <abbr
+                                class="panther-38"
+                                title="Wednesday"
+                              >
+                                We
+                              </abbr>
+                            </div>
+                            <div
+                              class="panther-10"
+                              role="columnheader"
+                            >
+                              <abbr
+                                class="panther-38"
+                                title="Thurdsday"
+                              >
+                                Th
+                              </abbr>
+                            </div>
+                            <div
+                              class="panther-10"
+                              role="columnheader"
+                            >
+                              <abbr
+                                class="panther-38"
+                                title="Friday"
+                              >
+                                Fr
+                              </abbr>
+                            </div>
+                            <div
+                              class="panther-10"
+                              role="columnheader"
+                            >
+                              <abbr
+                                class="panther-38"
+                                title="Saturday"
+                              >
+                                Sa
+                              </abbr>
+                            </div>
+                            <div
+                              class="panther-10"
+                              role="columnheader"
+                            >
+                              <abbr
+                                class="panther-38"
+                                title="Sunday"
+                              >
+                                Su
+                              </abbr>
+                            </div>
+                          </div>
+                        </div>
+                        <div
+                          class="panther-156"
+                        >
+                          <div
+                            class="panther-155"
+                          >
+                            <div
+                              class="panther-62"
+                            >
+                              <div
+                                aria-disabled="true"
+                                class="panther-53"
+                              />
+                              <div
+                                aria-busy="false"
+                                aria-label="Tu Dec 01 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  1
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="We Dec 02 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  2
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Th Dec 03 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  3
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Fr Dec 04 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  4
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Sa Dec 05 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  5
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Su Dec 06 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  6
+                                </button>
+                              </div>
+                            </div>
+                            <div
+                              class="panther-62"
+                            >
+                              <div
+                                aria-busy="false"
+                                aria-label="Mo Dec 07 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  7
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Tu Dec 08 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  8
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="We Dec 09 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  9
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Th Dec 10 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  10
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Fr Dec 11 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  11
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Sa Dec 12 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  12
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Su Dec 13 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  13
+                                </button>
+                              </div>
+                            </div>
+                            <div
+                              class="panther-62"
+                            >
+                              <div
+                                aria-busy="false"
+                                aria-label="Mo Dec 14 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  14
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Tu Dec 15 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  15
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="We Dec 16 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  16
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Th Dec 17 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  17
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Fr Dec 18 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  18
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Sa Dec 19 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  19
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Su Dec 20 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  20
+                                </button>
+                              </div>
+                            </div>
+                            <div
+                              class="panther-62"
+                            >
+                              <div
+                                aria-busy="false"
+                                aria-label="Mo Dec 21 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  21
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Tu Dec 22 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  22
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="We Dec 23 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  23
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Th Dec 24 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  24
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Fr Dec 25 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  25
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Sa Dec 26 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  26
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Su Dec 27 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  27
+                                </button>
+                              </div>
+                            </div>
+                            <div
+                              class="panther-62"
+                            >
+                              <div
+                                aria-busy="false"
+                                aria-label="Mo Dec 28 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  28
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Tu Dec 29 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  29
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="We Dec 30 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  30
+                                </button>
+                              </div>
+                              <div
+                                aria-busy="false"
+                                aria-label="Th Dec 31 2020"
+                                aria-selected="false"
+                                class="panther-53"
+                                role="gridcell"
+                              >
+                                <div
+                                  aria-placeholder="true"
+                                  class="panther-59"
+                                  tabindex="-1"
+                                />
+                                <button
+                                  aria-relevant="true"
+                                  class="panther-60"
+                                  type="button"
+                                >
+                                  31
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    class="panther-309"
+                  >
+                    <div
+                      class="panther-292"
+                    >
+                      <label
+                        class="panther-277"
+                        for="from-time-hours"
+                        role="status"
+                      >
+                        From Time
+                      </label>
+                      <div
+                        aria-expanded="false"
+                        aria-haspopup="listbox"
+                        aria-labelledby="downshift-0-label"
+                        class="panther-3"
+                        role="combobox"
+                      >
+                        <div
+                          class="panther-3"
+                        >
+                          <div
+                            aria-disabled="false"
+                            class="panther-8"
+                          >
+                            <input
+                              aria-autocomplete="list"
+                              aria-disabled="false"
+                              aria-invalid="false"
+                              aria-labelledby="downshift-0-label"
+                              autocomplete="off"
+                              class="panther-278"
+                              id="from-time-hours"
+                              placeholder="15"
+                              type="text"
+                              value="15"
+                            />
+                            <label
+                              class="panther-279"
+                              for="downshift-0-input"
+                              id="downshift-0-label"
+                            >
+                              From Time Hours
+                            </label>
+                          </div>
+                          <svg
+                            class="panther-281"
+                            role="presentation"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              d="M7 10L12 15L17 10H7Z"
+                            />
+                          </svg>
+                        </div>
+                        <ul
+                          aria-labelledby="downshift-0-label"
+                          class="panther-10"
+                          id="downshift-0-menu"
+                          role="listbox"
+                        />
+                      </div>
+                      <div
+                        aria-expanded="false"
+                        aria-haspopup="listbox"
+                        aria-labelledby="downshift-1-label"
+                        class="panther-3"
+                        role="combobox"
+                      >
+                        <div
+                          class="panther-3"
+                        >
+                          <div
+                            aria-disabled="false"
+                            class="panther-8"
+                          >
+                            <input
+                              aria-autocomplete="list"
+                              aria-disabled="false"
+                              aria-invalid="false"
+                              aria-labelledby="downshift-1-label"
+                              autocomplete="off"
+                              class="panther-278"
+                              id="from-time-minutes"
+                              placeholder="00"
+                              type="text"
+                              value="00"
+                            />
+                            <label
+                              class="panther-279"
+                              for="downshift-1-input"
+                              id="downshift-1-label"
+                            >
+                              From Time Minutes
+                            </label>
+                          </div>
+                          <svg
+                            class="panther-281"
+                            role="presentation"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              d="M7 10L12 15L17 10H7Z"
+                            />
+                          </svg>
+                        </div>
+                        <ul
+                          aria-labelledby="downshift-1-label"
+                          class="panther-10"
+                          id="downshift-1-menu"
+                          role="listbox"
+                        />
+                      </div>
+                    </div>
+                    <div
+                      class="panther-292"
+                    >
+                      <label
+                        class="panther-277"
+                        for="to-time-hours"
+                        role="status"
+                      >
+                        To Time
+                      </label>
+                      <div
+                        aria-expanded="false"
+                        aria-haspopup="listbox"
+                        aria-labelledby="downshift-2-label"
+                        class="panther-3"
+                        role="combobox"
+                      >
+                        <div
+                          class="panther-3"
+                        >
+                          <div
+                            aria-disabled="false"
+                            class="panther-8"
+                          >
+                            <input
+                              aria-autocomplete="list"
+                              aria-disabled="false"
+                              aria-invalid="false"
+                              aria-labelledby="downshift-2-label"
+                              autocomplete="off"
+                              class="panther-278"
+                              id="to-time-hours"
+                              placeholder="15"
+                              type="text"
+                              value="15"
+                            />
+                            <label
+                              class="panther-279"
+                              for="downshift-2-input"
+                              id="downshift-2-label"
+                            >
+                              To Time Hours
+                            </label>
+                          </div>
+                          <svg
+                            class="panther-281"
+                            role="presentation"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              d="M7 10L12 15L17 10H7Z"
+                            />
+                          </svg>
+                        </div>
+                        <ul
+                          aria-labelledby="downshift-2-label"
+                          class="panther-10"
+                          id="downshift-2-menu"
+                          role="listbox"
+                        />
+                      </div>
+                      <div
+                        aria-expanded="false"
+                        aria-haspopup="listbox"
+                        aria-labelledby="downshift-3-label"
+                        class="panther-3"
+                        role="combobox"
+                      >
+                        <div
+                          class="panther-3"
+                        >
+                          <div
+                            aria-disabled="false"
+                            class="panther-8"
+                          >
+                            <input
+                              aria-autocomplete="list"
+                              aria-disabled="false"
+                              aria-invalid="false"
+                              aria-labelledby="downshift-3-label"
+                              autocomplete="off"
+                              class="panther-278"
+                              id="to-time-minutes"
+                              placeholder="00"
+                              type="text"
+                              value="00"
+                            />
+                            <label
+                              class="panther-279"
+                              for="downshift-3-input"
+                              id="downshift-3-label"
+                            >
+                              To Time Minutes
+                            </label>
+                          </div>
+                          <svg
+                            class="panther-281"
+                            role="presentation"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              d="M7 10L12 15L17 10H7Z"
+                            />
+                          </svg>
+                        </div>
+                        <ul
+                          aria-labelledby="downshift-3-label"
+                          class="panther-10"
+                          id="downshift-3-menu"
+                          role="listbox"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    class="panther-313"
+                  >
+                    <div
+                      class="panther-312"
+                    >
+                      <button
+                        class="panther-310"
+                        type="button"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        class="panther-311"
+                        type="button"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button
+        type="submit"
+      >
+        Submit
+      </button>
+    </form>
+  </div>
+  <footer
+    id="footer"
+  />
+</div>
+`;

@@ -4,7 +4,7 @@ A collection of CloudFormation templates to configure auxiliary Panther infrastr
 
 `https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/TEMPLATE-NAME/VERSION/template.yml`
 
-VERSION can be `latest` or a specific version number from the template metadata.
+VERSION can be `latest` or a specific Panther version number.
 
 ## Makefile
 

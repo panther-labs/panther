@@ -19,25 +19,12 @@ package main
  */
 
 import (
-	"go/types"
 	"text/template"
 )
 
 var (
 	funcMap = map[string]interface{}{
-		"resolve": func(pkg *types.Package, obj types.Object) string {
-			typ := obj.Type()
-			if ptr, ok := typ.(*types.Pointer); ok {
-				typ = ptr.Elem()
-			}
-			if named, ok := typ.(*types.Named); ok {
-				if obj.Pkg().Path() == pkg.Path() {
-					return named.Obj().Name()
-				}
-				return obj.Pkg().Name() + "." + named.Obj().Name()
-			}
-			return typ.String()
-		},
+		"resolve": resolveType,
 	}
 	tplLambdaClient = template.Must(template.New("lambdaClient").Funcs(funcMap).Parse(lambdaClientTemplate))
 	tplModels       = template.Must(template.New("models").Parse(modelsTemplate))
@@ -50,6 +37,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/aws/aws-sdk-go/aws"
+    "github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/pkg/errors"
 	jsoniter "github.com/json-iterator/go"
@@ -62,22 +50,14 @@ import (
 // {{ $Client }} implements {{.API}} by invoking a Lambda
 type {{ $Client }} struct {
 	LambdaName string
-	LambdaAPI *lambda.Lambda
+	LambdaAPI lambdaiface.LambdaAPI
 	Validate func(interface{}) error
 	JSON jsoniter.API
 }
 
+{{ .Payload }} 
 {{ $Payload := .API | printf "%sPayload" }}
-type {{ $Payload }} struct {
 {{- $pkg := .Pkg -}}
-{{ range .Methods }}
-{{- if .Input }}
-	{{.Name}} *{{.Input|resolve $pkg}}
-{{- else }}
-	{{.Name}} *struct{}
-{{- end }}
-{{- end -}}
-}
 
 {{ range .Methods }}
 {{- if and .Input .Output }}

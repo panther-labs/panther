@@ -28,7 +28,6 @@ import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import { Box, Button, Card, Collapse, Flex } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import isEmpty from 'lodash/isEmpty';
 import pick from 'lodash/pick';
 import Breadcrumbs from 'Components/Breadcrumbs';
 import LinkButton from 'Components/buttons/LinkButton';
@@ -87,12 +86,12 @@ export const filters = {
     component: FormikCombobox,
     props: {
       label: 'Enabled',
-      items: ['', 'true', 'false'],
+      items: ['', true, false],
       itemToString: (item: boolean | string) => {
-        if (!item) {
-          return 'All';
+        if (item === '') {
+          return 'All Policies';
         }
-        return item === 'true' ? 'Yes' : 'No';
+        return item === true ? 'Enabled Policies' : 'Disabled Policies';
       },
       placeholder: 'Show only enabled?',
     },
@@ -101,12 +100,12 @@ export const filters = {
     component: FormikCombobox,
     props: {
       label: 'Auto-remediation Status',
-      items: ['', 'true', 'false'],
+      items: ['', true, false],
       itemToString: (item: boolean | string) => {
-        if (!item) {
+        if (item === '') {
           return 'All';
         }
-        return item === 'true' ? 'Configured' : 'Not Configured';
+        return item === true ? 'Configured' : 'Not Configured';
       },
       placeholder: 'Choose a status...',
     },
@@ -125,7 +124,7 @@ const ListPoliciesActions: React.FC = () => {
   >();
 
   const filterKeys = Object.keys(filters) as (keyof ListPoliciesInput)[];
-  const filtersCount = filterKeys.filter(key => !isEmpty(requestParams[key])).length;
+  const filtersCount = filterKeys.filter(key => key in requestParams).length;
 
   // If there is at least one filter set visibility to true
   React.useEffect(() => {

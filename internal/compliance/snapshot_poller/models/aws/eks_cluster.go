@@ -19,8 +19,9 @@ package aws
  */
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/service/eks"
-	"github.com/go-openapi/strfmt"
 )
 
 const (
@@ -74,7 +75,7 @@ type EksNodegroup struct {
 	Version        *string
 
 	// Normalized name for CreatedAt
-	TimeCreated *strfmt.DateTime
+	TimeCreated *time.Time
 }
 
 // EksFargateProfile contains all the information about an EKS Fargate Profile, for embedding into the EksCluster resource
@@ -93,5 +94,5 @@ type EksFargateProfile struct {
 	Subnets             []*string
 
 	// Normalized name for CreatedAt
-	TimeCreated *strfmt.DateTime
+	TimeCreated *time.Time
 }

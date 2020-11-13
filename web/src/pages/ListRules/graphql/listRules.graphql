@@ -6,7 +6,9 @@ query ListRules($input: ListRulesInput) {
       severity
       id
       displayName
+      threshold
       enabled
+      outputIds
     }
     paging {
       totalPages

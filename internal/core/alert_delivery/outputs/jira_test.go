@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
@@ -45,19 +45,21 @@ func TestJiraAlert(t *testing.T) {
 
 	var createdAtTime, _ = time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
 	alert := &alertModels.Alert{
-		AnalysisID:          "ruleId",
+		AnalysisID:          "policyId",
+		Type:                alertModels.PolicyType,
 		CreatedAt:           createdAtTime,
 		OutputIds:           []string{"output-id"},
 		AnalysisDescription: aws.String("policyDescription"),
 		Severity:            "INFO",
+		Context:             map[string]interface{}{"key": "value"},
 	}
 
 	jiraPayload := map[string]interface{}{
 		"fields": map[string]interface{}{
-			"summary": "Policy Failure: ruleId",
+			"summary": "Policy Failure: policyId",
 			"description": "*Description:* policyDescription\n " +
-				"[Click here to view in the Panther UI](https://panther.io/policies/ruleId)\n" +
-				" *Runbook:* \n *Severity:* INFO\n *Tags:* ",
+				"[Click here to view in the Panther UI](https://panther.io/policies/policyId)\n" +
+				" *Runbook:* \n *Severity:* INFO\n *Tags:* \n *AlertContext:* {\"key\":\"value\"}",
 			"project": map[string]*string{
 				"key": aws.String(jiraConfig.ProjectKey),
 			},
@@ -83,6 +85,6 @@ func TestJiraAlert(t *testing.T) {
 
 	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
-	require.Nil(t, client.Jira(alert, jiraConfig))
+	assert.Nil(t, client.Jira(alert, jiraConfig))
 	httpWrapper.AssertExpectations(t)
 }

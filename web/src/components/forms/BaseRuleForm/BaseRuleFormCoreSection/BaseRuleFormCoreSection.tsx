@@ -33,7 +33,7 @@ import { PolicyFormValues } from 'Components/forms/PolicyForm';
 import Panel from 'Components/Panel';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
-import { useListAvailableLogTypes } from 'Source/graphql/queries/listAvailableLogTypes.generated';
+import { useListAvailableLogTypes } from 'Source/graphql/queries';
 import useListAvailableDestinations from '../useListAvailableDestinations';
 
 interface BaseRuleFormCoreSectionProps {
@@ -170,7 +170,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
               <Field
                 as={FormikNumberInput}
                 label="* Events Threshold"
-                min={0}
+                min={1}
                 name="threshold"
                 placeholder="Send an alert only after # events"
               />

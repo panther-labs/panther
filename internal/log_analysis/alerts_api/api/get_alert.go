@@ -31,6 +31,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	logprocessormodels "github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
@@ -46,8 +47,8 @@ const (
 )
 
 // GetAlert retrieves details for a given alert
-func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput, err error) {
-	alertItem, err := alertsDB.GetAlert(input.AlertID)
+func (api *API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput, err error) {
+	alertItem, err := api.alertsDB.GetAlert(input.AlertID)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +74,8 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 
 		// We only need to retrieve as many returns as to fit the EventsPageSize given by the user
 		eventsToReturn := *input.EventsPageSize - len(events)
-		eventsReturned, resultToken, getEventsErr := getEventsForLogType(logType, token.LogTypeToToken[logType], alertItem, eventsToReturn)
+		eventsReturned, resultToken, getEventsErr := api.getEventsForLogType(logType, token.LogTypeToToken[logType],
+			alertItem, eventsToReturn)
 		if getEventsErr != nil {
 			err = getEventsErr // set err so it is captured in oplog
 			return nil, err
@@ -96,7 +98,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 	result = &models.Alert{
 		AlertSummary:           *alertSummary,
 		Events:                 aws.StringSlice(events),
-		EventsLastEvaluatedKey: aws.String(encodedToken),
+		EventsLastEvaluatedKey: &encodedToken,
 	}
 
 	gatewayapi.ReplaceMapSliceNils(result)
@@ -105,7 +107,7 @@ func (API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOutput,
 
 // This method returns events from a specific log type that are associated to a given alert.
 // It will only return up to `maxResults` events
-func getEventsForLogType(
+func (api *API) getEventsForLogType(
 	logType string,
 	token *LogTypeToken,
 	alert *table.AlertItem,
@@ -116,13 +118,13 @@ func getEventsForLogType(
 	nextTime := getFirstEventTime(alert)
 
 	if token != nil {
-		events, index, err := queryS3Object(token.S3ObjectKey, alert.AlertID, token.EventIndex, maxResults)
+		events, index, err := api.queryS3Object(token.S3ObjectKey, alert.AlertID, token.EventIndex, maxResults)
 		if err != nil {
 			return nil, resultToken, err
 		}
 		result = append(result, events...)
 		// start iterating over the partitions here
-		gluePartition, err := awsglue.GetPartitionFromS3(env.ProcessedDataBucket, token.S3ObjectKey)
+		gluePartition, err := awsglue.GetPartitionFromS3(api.env.ProcessedDataBucket, token.S3ObjectKey)
 		if err != nil {
 			return nil, resultToken, errors.Wrapf(err, "cannot parse token s3 path")
 		}
@@ -141,28 +143,34 @@ func getEventsForLogType(
 			break
 		}
 
-		partitionPrefix := awsglue.GetPartitionPrefix(logprocessormodels.RuleData, logType, awsglue.GlueTableHourly, nextTime)
+		var dataType logprocessormodels.DataType
+		if alert.Type == alertmodels.RuleErrorType {
+			dataType = logprocessormodels.RuleErrors
+		} else {
+			dataType = logprocessormodels.RuleData
+		}
+		partitionPrefix := awsglue.GetPartitionPrefix(dataType, logType, awsglue.GlueTableHourly, nextTime)
 		partitionPrefix += fmt.Sprintf(ruleSuffixFormat, alert.RuleID) // JSON data has more specific paths based on ruleID
 
 		listRequest := &s3.ListObjectsV2Input{
-			Bucket: aws.String(env.ProcessedDataBucket),
-			Prefix: aws.String(partitionPrefix),
+			Bucket: &api.env.ProcessedDataBucket,
+			Prefix: &partitionPrefix,
 		}
 
 		// if we are paginating and in the same partition, set the cursor
 		if token != nil {
 			if strings.HasPrefix(token.S3ObjectKey, partitionPrefix) {
-				listRequest.StartAfter = aws.String(token.S3ObjectKey)
+				listRequest.StartAfter = &token.S3ObjectKey
 			}
 		} else { // not starting from a pagination token
 			// objects have a creation time as prefix we can use to speed listing,
 			// for example: '20200914T021539Z-0e54cab2-80a6-4c27-b622-55ad4d355175.json.gz'
-			listRequest.StartAfter = aws.String(partitionPrefix + alert.CreationTime.Format("20060102T150405Z"))
+			listRequest.StartAfter = aws.String(partitionPrefix + nextTime.Format("20060102T150405Z"))
 		}
 
 		var paginationError error
 
-		err := s3Client.ListObjectsV2Pages(listRequest, func(output *s3.ListObjectsV2Output, lastPage bool) bool {
+		err := api.s3Client.ListObjectsV2Pages(listRequest, func(output *s3.ListObjectsV2Output, lastPage bool) bool {
 			for _, object := range output.Contents {
 				objectTime, err := timeFromJSONS3ObjectKey(*object.Key)
 				if err != nil {
@@ -176,7 +184,7 @@ func getEventsForLogType(
 					// skip the object
 					continue
 				}
-				events, EventIndex, err := queryS3Object(*object.Key, alert.AlertID, 0, maxResults-len(result))
+				events, EventIndex, err := api.queryS3Object(*object.Key, alert.AlertID, 0, maxResults-len(result))
 				if err != nil {
 					paginationError = err
 					return false
@@ -210,7 +218,7 @@ func getEventsForLogType(
 func timeFromJSONS3ObjectKey(key string) (time.Time, error) {
 	keyParts := strings.Split(key, "/")
 	timeInString := strings.Split(keyParts[len(keyParts)-1], "-")[0]
-	return time.ParseInLocation(destinations.S3ObjectTimestampFormat, timeInString, time.UTC)
+	return time.ParseInLocation(destinations.S3ObjectTimestampLayout, timeInString, time.UTC)
 }
 
 // Queries a specific S3 object events associated to `alertID`.
@@ -218,7 +226,7 @@ func timeFromJSONS3ObjectKey(key string) (time.Time, error) {
 // 1. The events that are associated to the given alertID that are present in that S3 oject. It will return maximum `maxResults` events
 // 2. The index of the last event returned. This will be used as a pagination token - future queries to the same S3 object can start listing
 // after that.
-func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]string, int, error) {
+func (api *API) queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]string, int, error) {
 	// nolint:gosec
 	// The alertID is an MD5 hash. AlertsAPI is performing the appropriate validation
 	query := fmt.Sprintf("SELECT * FROM S3Object o WHERE o.p_alert_id='%s'", alertID)
@@ -228,8 +236,8 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 		zap.String("query", query),
 		zap.Int("index", exclusiveStartIndex))
 	input := &s3.SelectObjectContentInput{
-		Bucket: aws.String(env.ProcessedDataBucket),
-		Key:    aws.String(key),
+		Bucket: &api.env.ProcessedDataBucket,
+		Key:    &key,
 		InputSerialization: &s3.InputSerialization{
 			CompressionType: aws.String(s3.CompressionTypeGzip),
 			JSON:            &s3.JSONInput{Type: aws.String(s3.JSONTypeLines)},
@@ -238,10 +246,10 @@ func queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]
 			JSON: &s3.JSONOutput{RecordDelimiter: aws.String(recordDelimiter)},
 		},
 		ExpressionType: aws.String(s3.ExpressionTypeSql),
-		Expression:     aws.String(query),
+		Expression:     &query,
 	}
 
-	output, err := s3Client.SelectObjectContent(input)
+	output, err := api.s3Client.SelectObjectContent(input)
 	if err != nil {
 		return nil, 0, err
 	}

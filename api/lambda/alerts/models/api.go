@@ -40,7 +40,7 @@ type LambdaInput struct {
 //     }
 // }
 type GetAlertInput struct {
-	AlertID                 *string `json:"alertId" validate:"required,hexadecimal,len=32"` // AlertID is an MD5 hash
+	AlertID                 string  `json:"alertId" validate:"required,hexadecimal,len=32"` // AlertID is an MD5 hash
 	EventsPageSize          *int    `json:"eventsPageSize"  validate:"required,min=1,max=50"`
 	EventsExclusiveStartKey *string `json:"eventsExclusiveStartKey,omitempty"`
 }
@@ -57,6 +57,7 @@ type GetAlertOutput = Alert
 // {
 //     "listAlerts": {
 //         "ruleId": "My.Rule",
+//	    "type" : "RULE_ERROR",
 //         "pageSize": 25,
 //         "exclusiveStartKey": "abcdef",
 //         "severity": ["INFO"],
@@ -82,7 +83,8 @@ type ListAlertsInput struct {
 	ExclusiveStartKey *string `json:"exclusiveStartKey"`
 
 	// Filtering
-	Severity        []*string  `json:"severity" validate:"omitempty,dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Type            string     `json:"type" validate:"omitempty,oneof=RULE RULE_ERROR"`
+	Severity        []string   `json:"severity" validate:"omitempty,dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	NameContains    *string    `json:"nameContains"`
 	Status          []string   `json:"status" validate:"omitempty,dive,oneof=OPEN TRIAGED CLOSED RESOLVED"`
 	CreatedAtBefore *time.Time `json:"createdAtBefore"`
@@ -96,10 +98,10 @@ type ListAlertsInput struct {
 	SortDir *string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 }
 
-// UpdateAlertStatusInput updates an alert by its ID
+// UpdateAlertStatusInput updates alert statuses by their IDs
 // {
 //     "updateAlertStatus": {
-//         "alertId": "84c3e4b27c702a1c31e6eb412fc377f6",
+//         "alertIds": ["84c3e4b27c702a1c31e6eb412fc377f6"],
 //         "status": "CLOSED"
 //         // userId is added by AppSync resolver (UpdateAlertStatusResolver)
 //         "userId": "5f54cf4a-ec56-44c2-83bc-8b742600f307"
@@ -107,13 +109,13 @@ type ListAlertsInput struct {
 // }
 type UpdateAlertStatusInput struct {
 	// ID of the alert to update
-	AlertID *string `json:"alertId" validate:"hexadecimal,len=32"` // AlertID is an MD5 hash
+	AlertIDs []string `json:"alertIds" validate:"gt=0,dive,hexadecimal,len=32"` // AlertID is an MD5 hash
 
 	// Variables that we allow updating:
-	Status *string `json:"status" validate:"oneof=OPEN TRIAGED CLOSED RESOLVED"`
+	Status string `json:"status" validate:"oneof=OPEN TRIAGED CLOSED RESOLVED"`
 
 	// User who made the change
-	UserID *string `json:"userId" validate:"uuid4"`
+	UserID string `json:"userId" validate:"uuid4"`
 }
 
 // UpdateAlertDeliveryInput updates an alert by its ID
@@ -149,7 +151,7 @@ type DeliveryResponse struct {
 }
 
 // UpdateAlertStatusOutput is an alias for an alert summary
-type UpdateAlertStatusOutput = AlertSummary
+type UpdateAlertStatusOutput = []*AlertSummary
 
 // UpdateAlertDeliveryOutput is an alias for an alert summary
 type UpdateAlertDeliveryOutput = AlertSummary
@@ -182,7 +184,8 @@ type ListAlertsOutput struct {
 
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
-	AlertID           *string             `json:"alertId" validate:"required"`
+	AlertID           string              `json:"alertId" validate:"required"`
+	Type              string              `json:"type,omitempty"`
 	RuleID            *string             `json:"ruleId" validate:"required"`
 	RuleDisplayName   *string             `json:"ruleDisplayName,omitempty"`
 	RuleVersion       *string             `json:"ruleVersion" validate:"required"`

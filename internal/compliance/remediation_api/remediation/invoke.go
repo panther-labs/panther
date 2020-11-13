@@ -31,10 +31,8 @@ import (
 	analysisclient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	analysisoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
 	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
-	remediationmodels "github.com/panther-labs/panther/api/gateway/remediation/models"
-	resourcesclient "github.com/panther-labs/panther/api/gateway/resources/client"
-	resourcesoperations "github.com/panther-labs/panther/api/gateway/resources/client/operations"
-	resourcesmodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	remediationmodels "github.com/panther-labs/panther/api/lambda/remediation/models"
+	resourcemodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
@@ -42,11 +40,9 @@ const remediationAction = "remediate"
 const listRemediationsAction = "listRemediations"
 
 var (
-	remediationLambdaArn     = os.Getenv("REMEDIATION_LAMBDA_ARN")
-	policiesServiceHostname  = os.Getenv("POLICIES_SERVICE_HOSTNAME")
-	policiesServicePath      = os.Getenv("POLICIES_SERVICE_PATH")
-	resourcesServiceHostname = os.Getenv("RESOURCES_SERVICE_HOSTNAME")
-	resourcesServicePath     = os.Getenv("RESOURCES_SERVICE_PATH")
+	remediationLambdaArn    = os.Getenv("REMEDIATION_LAMBDA_ARN")
+	policiesServiceHostname = os.Getenv("POLICIES_SERVICE_HOSTNAME")
+	policiesServicePath     = os.Getenv("POLICIES_SERVICE_PATH")
 
 	awsSession     = session.Must(session.NewSession())
 	httpClient     = gatewayapi.GatewayClient(awsSession)
@@ -55,21 +51,18 @@ var (
 			WithHost(policiesServiceHostname)
 	policiesClient = analysisclient.NewHTTPClientWithConfig(nil, policiesConfig)
 
-	resourcesConfig = resourcesclient.DefaultTransportConfig().
-			WithBasePath(resourcesServicePath).
-			WithHost(resourcesServiceHostname)
-	resourcesClient = resourcesclient.NewHTTPClientWithConfig(nil, resourcesConfig)
+	resourcesClient gatewayapi.API = gatewayapi.NewClient(lambda.New(awsSession), "panther-resources-api")
 
 	ErrNotFound = errors.New("Remediation not associated with policy")
 )
 
 // Remediate will invoke remediation action in an AWS account
-func (remediator *Invoker) Remediate(remediation *remediationmodels.RemediateResource) error {
+func (remediator *Invoker) Remediate(remediation *remediationmodels.RemediateResourceInput) error {
 	zap.L().Debug("handling remediation",
 		zap.Any("policyId", remediation.PolicyID),
 		zap.Any("resourceId", remediation.ResourceID))
 
-	policy, err := getPolicy(string(remediation.PolicyID))
+	policy, err := getPolicy(remediation.PolicyID)
 	if err != nil {
 		return errors.Wrap(err, "Encountered issue when getting policy")
 	}
@@ -78,7 +71,7 @@ func (remediator *Invoker) Remediate(remediation *remediationmodels.RemediateRes
 		return ErrNotFound
 	}
 
-	resource, err := getResource(string(remediation.ResourceID))
+	resource, err := getResource(remediation.ResourceID)
 	if err != nil {
 		return errors.Wrap(err, "Encountered issue when getting resource")
 	}
@@ -102,7 +95,7 @@ func (remediator *Invoker) Remediate(remediation *remediationmodels.RemediateRes
 }
 
 //GetRemediations invokes the Lambda in customer account and retrieves the list of available remediations
-func (remediator *Invoker) GetRemediations() (*remediationmodels.Remediations, error) {
+func (remediator *Invoker) GetRemediations() (*remediationmodels.ListRemediationsOutput, error) {
 	zap.L().Info("getting list of remediations")
 
 	lambdaInput := &LambdaInput{Action: aws.String(listRemediationsAction)}
@@ -115,7 +108,7 @@ func (remediator *Invoker) GetRemediations() (*remediationmodels.Remediations, e
 	zap.L().Debug("got response from Remediation Lambda",
 		zap.String("lambdaResponse", string(result)))
 
-	var remediations remediationmodels.Remediations
+	var remediations remediationmodels.ListRemediationsOutput
 	if err := jsoniter.Unmarshal(result, &remediations); err != nil {
 		return nil, err
 	}
@@ -136,16 +129,15 @@ func getPolicy(policyID string) (*analysismodels.Policy, error) {
 	return policy.Payload, nil
 }
 
-func getResource(resourceID string) (*resourcesmodels.Resource, error) {
-	resource, err := resourcesClient.Operations.GetResource(&resourcesoperations.GetResourceParams{
-		ResourceID: resourceID,
-		HTTPClient: httpClient,
-	})
-
-	if err != nil {
+func getResource(resourceID string) (*resourcemodels.Resource, error) {
+	input := resourcemodels.LambdaInput{
+		GetResource: &resourcemodels.GetResourceInput{ID: resourceID},
+	}
+	var result resourcemodels.Resource
+	if _, err := resourcesClient.Invoke(&input, &result); err != nil {
 		return nil, err
 	}
-	return resource.Payload, nil
+	return &result, nil
 }
 
 func (remediator *Invoker) invokeLambda(lambdaInput *LambdaInput) ([]byte, error) {

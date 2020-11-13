@@ -39,6 +39,7 @@ export type GetLogAnalysisMetrics = {
       series?: Types.Maybe<Array<Types.Maybe<Pick<Types.Series, 'label' | 'values'>>>>;
     };
     totalAlertsDelta: Array<Pick<Types.SingleValue, 'label' | 'value'>>;
+    alertsByRuleID: Array<Pick<Types.SingleValue, 'label' | 'value'>>;
   };
 };
 
@@ -67,6 +68,10 @@ export const GetLogAnalysisMetricsDocument = gql`
         timestamps
       }
       totalAlertsDelta {
+        label
+        value
+      }
+      alertsByRuleID {
         label
         value
       }

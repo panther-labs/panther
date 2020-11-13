@@ -27,6 +27,7 @@ import {
   DEFAULT_DEDUP_FUNCTION,
   DEFAULT_RULE_FUNCTION,
   DEFAULT_TITLE_FUNCTION,
+  DEFAULT_ALERT_CONTEXT_FUNCTION,
 } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
@@ -34,7 +35,7 @@ import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Help
 import { useCreateRule } from './graphql/createRule.generated';
 
 const initialValues: Required<AddRuleInput> = {
-  body: `${DEFAULT_RULE_FUNCTION}\n\n${DEFAULT_TITLE_FUNCTION}\n\n${DEFAULT_DEDUP_FUNCTION}`,
+  body: `${DEFAULT_RULE_FUNCTION}\n\n${DEFAULT_TITLE_FUNCTION}\n\n${DEFAULT_DEDUP_FUNCTION}\n\n${DEFAULT_ALERT_CONTEXT_FUNCTION}`,
   dedupPeriodMinutes: 60,
   threshold: 1,
   description: '',
@@ -58,8 +59,7 @@ const CreateRulePage: React.FC = () => {
       trackEvent({ event: EventEnum.AddedRule, src: SrcEnum.Rules });
       history.push(urls.logAnalysis.rules.details(data.addRule.id));
     },
-    onError: err =>
-      trackError({ event: TrackErrorEnum.FailedToAddRule, src: SrcEnum.Rules, data: err }),
+    onError: () => trackError({ event: TrackErrorEnum.FailedToAddRule, src: SrcEnum.Rules }),
   });
 
   const handleSubmit = React.useCallback(
@@ -74,6 +74,7 @@ const CreateRulePage: React.FC = () => {
         <Box mt={2} mb={6}>
           <Alert
             variant="error"
+            discardable
             title={
               extractErrorMessage(error) ||
               'An unknown error occured as we were trying to create your rule'

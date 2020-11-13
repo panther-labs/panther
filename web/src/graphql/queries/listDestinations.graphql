@@ -1,0 +1,8 @@
+query ListDestinations {
+  destinations {
+    outputId
+    outputType
+    displayName
+    defaultForSeverity
+  }
+}

@@ -47,22 +47,7 @@ import (
 var (
 	parseDelay   = time.Millisecond / 2 // time it takes to process a log line
 	sendDelay    = time.Millisecond / 2 // time it takes to send event to destination
-	testRegistry = &logtypes.Registry{}
-
-	testLogType          = "testLogType"
-	testLogLine          = "line"
-	testLogLines  uint64 = 2000
-	testLogEvents        = testLogLines // for these tests they are 1-1
-
-	testBucket      = "testBucket"
-	testSourceID    = "testSource"
-	testSourceLabel = "testSourceLabel"
-	testKey         = "testKey"
-	testContentType = "testContentType"
-)
-
-func init() {
-	testRegistry.MustRegister(logtypes.Config{
+	testRegistry = logtypes.Must("testLogTypes", logtypes.Config{
 		Name:         testLogType,
 		Description:  "Test log type",
 		ReferenceURL: "-",
@@ -73,7 +58,18 @@ func init() {
 			return testutil.AlwaysFailParser(errors.New("fail parser")), nil
 		}),
 	})
-}
+	testResolver = logtypes.LocalResolver(testRegistry)
+
+	testLogType          = "testLogType"
+	testLogLine          = "line"
+	testLogLines  uint64 = 2000
+	testLogEvents        = testLogLines // for these tests they are 1-1
+
+	testBucket      = "testBucket"
+	testSourceID    = "testSource"
+	testSourceLabel = "testSourceLabel"
+	testKey         = "testKey"
+)
 
 type testLog struct {
 	logLine string
@@ -93,7 +89,9 @@ func TestProcess(t *testing.T) {
 	destination := (&testDestination{}).standardMock()
 
 	dataStream := makeDataStream()
-	p := MustBuildProcessor(dataStream, testRegistry)
+	f := NewFactory(testResolver)
+	p, err := f(dataStream)
+	require.NoError(t, err)
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -117,11 +115,11 @@ func TestProcess(t *testing.T) {
 
 	mockClassifier.standardMocks(mockStats, mockParserStats)
 
-	newProcessorFunc := func(*common.DataStream) *Processor { return p }
+	newProcessorFunc := func(*common.DataStream) (*Processor, error) { return p, nil }
 	streamChan := make(chan *common.DataStream, 1)
 	streamChan <- dataStream
 	close(streamChan)
-	err := process(streamChan, destination, newProcessorFunc)
+	err = Process(streamChan, destination, newProcessorFunc)
 	require.NoError(t, err)
 	require.Equal(t, testLogEvents, destination.nEvents)
 }
@@ -131,7 +129,9 @@ func TestProcessDataStreamError(t *testing.T) {
 
 	destination := (&testDestination{}).standardMock()
 	dataStream := makeBadDataStream() // failure to read data, never hits classifier
-	p := MustBuildProcessor(dataStream, testRegistry)
+	f := NewFactory(testResolver)
+	p, err := f(dataStream)
+	require.NoError(t, err)
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -141,11 +141,11 @@ func TestProcessDataStreamError(t *testing.T) {
 
 	mockClassifier.standardMocks(mockStats, mockParserStats)
 
-	newProcessorFunc := func(*common.DataStream) *Processor { return p }
+	newProcessorFunc := func(*common.DataStream) (*Processor, error) { return p, nil }
 	streamChan := make(chan *common.DataStream, 1)
 	streamChan <- dataStream
 	close(streamChan)
-	err := process(streamChan, destination, newProcessorFunc)
+	err = Process(streamChan, destination, newProcessorFunc)
 	require.Error(t, err)
 
 	// confirm error log is as expected
@@ -160,7 +160,7 @@ func TestProcessDataStreamError(t *testing.T) {
 			zap.Any(statsKey, *mockStats),
 
 			// error
-			zap.Error(errors.Wrap(errFailingReader, "failed to ReadString()")), // from run()
+			zap.Error(errors.Wrap(errFailingReader, "failed to read log line")), // from run()
 
 			// standard
 			zap.String("namespace", common.OpLogNamespace),
@@ -195,7 +195,9 @@ func TestProcessDestinationError(t *testing.T) {
 	})
 
 	dataStream := makeDataStream()
-	p := MustBuildProcessor(dataStream, testRegistry)
+	f := NewFactory(testResolver)
+	p, err := f(dataStream)
+	require.NoError(t, err)
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -219,11 +221,11 @@ func TestProcessDestinationError(t *testing.T) {
 
 	mockClassifier.standardMocks(mockStats, mockParserStats)
 
-	newProcessorFunc := func(*common.DataStream) *Processor { return p }
+	newProcessorFunc := func(*common.DataStream) (*Processor, error) { return p, nil }
 	streamChan := make(chan *common.DataStream, 1)
 	streamChan <- dataStream
 	close(streamChan)
-	err := process(streamChan, destination, newProcessorFunc)
+	err = Process(streamChan, destination, newProcessorFunc)
 	require.Error(t, err)
 }
 
@@ -238,7 +240,9 @@ func TestProcessClassifyFailure(t *testing.T) {
 
 	destination := (&testDestination{}).standardMock()
 	dataStream := makeDataStream()
-	p := MustBuildProcessor(dataStream, testRegistry)
+	f := NewFactory(testResolver)
+	p, err := f(dataStream)
+	require.NoError(t, err)
 	mockClassifier := &testClassifier{}
 	p.classifier = mockClassifier
 
@@ -269,11 +273,11 @@ func TestProcessClassifyFailure(t *testing.T) {
 	mockClassifier.On("Stats", mock.Anything).Return(mockStats)
 	mockClassifier.On("ParserStats", mock.Anything).Return(mockParserStats)
 
-	newProcessorFunc := func(*common.DataStream) *Processor { return p }
+	newProcessorFunc := func(*common.DataStream) (*Processor, error) { return p, nil }
 	streamChan := make(chan *common.DataStream, 1)
 	streamChan <- dataStream
 	close(streamChan)
-	err := process(streamChan, destination, newProcessorFunc)
+	err = Process(streamChan, destination, newProcessorFunc)
 	require.NoError(t, err)
 
 	actual := logs.AllUntimed()
@@ -495,7 +499,6 @@ func makeDataStream() (dataStream *common.DataStream) {
 		Source:      testSource,
 		S3ObjectKey: testKey,
 		S3Bucket:    testBucket,
-		ContentType: testContentType,
 	}
 	return
 }

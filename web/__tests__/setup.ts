@@ -16,7 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import { createSerializer } from 'jest-emotion';
-import { getAppTemplateParams } from '../scripts/utils';
 
 // extends the basic `expect` function, by adding additional DOM assertions such as
 // `.toHaveAttribute`, `.toHaveTextContent` etc.
@@ -27,6 +26,38 @@ import '@testing-library/jest-dom';
 // whether a mock has been called before another mock
 // https://github.com/jest-community/jest-extended#api
 import 'jest-extended';
+import {
+  ANALYTICS_CONSENT_STORAGE_KEY,
+  ERROR_REPORTING_CONSENT_STORAGE_KEY,
+} from 'Source/constants';
+
+// This mocks sentry module for all tests
+const MockedSentryScope = { setExtras: jest.fn(), setTag: jest.fn() };
+jest.mock('@sentry/browser', () => {
+  const original = jest.requireActual('@sentry/browser');
+  return {
+    ...original,
+    init: jest.fn(),
+    withScope(callback): any {
+      return callback(MockedSentryScope);
+    },
+    captureException: jest.fn(),
+  };
+});
+
+// This mocks mixpanel module for all tests
+jest.mock('mixpanel-browser', () => {
+  const original = jest.requireActual('mixpanel-browser');
+  return {
+    ...original,
+    init: jest.fn(),
+    track: jest.fn(),
+  };
+});
+
+// Mock Ace Editor and map it to a simple <textarea> element so we can easily reason about
+// You should use `getByPlaceholderText` in order to get the related textarea field
+jest.mock('Components/Editor');
 
 window.alert = () => {};
 window.scrollTo = () => {};
@@ -56,18 +87,6 @@ if (window.URL.revokeObjectURL === undefined) {
 }
 
 /**
- * Mock the server-side EJS-injected AWS configuration.
- * See `web/public/index.ejs`
- */
-const { PANTHER_CONFIG } = getAppTemplateParams();
-
-const scriptTag = document.createElement('script');
-scriptTag.id = '__PANTHER_CONFIG__';
-scriptTag.type = 'application/json';
-scriptTag.innerHTML = JSON.stringify(PANTHER_CONFIG);
-document.body.appendChild(scriptTag);
-
-/**
  * Make sure that mock style tags exist to help with emotion bugs + mock console.error to "hide"
  * act  warnings
  */
@@ -91,11 +110,16 @@ beforeAll(() => {
 });
 
 /**
- * Make sure that localStorage & sessionStorage are clean before each test
+ * Make sure that localStorage & sessionStorage and mocks are clean before each test
  */
-afterEach(() => {
+beforeEach(() => {
+  // It important clearAllMocks to happen before updating local storage
+  jest.clearAllMocks();
   localStorage.clear();
   sessionStorage.clear();
+
+  localStorage.setItem(ERROR_REPORTING_CONSENT_STORAGE_KEY, 'true');
+  localStorage.setItem(ANALYTICS_CONSENT_STORAGE_KEY, 'true');
 });
 
 /**

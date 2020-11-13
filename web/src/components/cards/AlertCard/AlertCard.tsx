@@ -17,60 +17,79 @@
  */
 
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Link, Button } from 'pouncejs';
+import { Flex, Icon, Link, Text } from 'pouncejs';
+import { AlertTypesEnum } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import React from 'react';
 import urls from 'Source/urls';
+import LinkButton from 'Components/buttons/LinkButton';
+import RelatedDestinations from 'Components/RelatedDestinations';
+import BulletedLogTypeList from 'Components/BulletedLogTypeList';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { formatDatetime } from 'Helpers/utils';
-import BulletedLogType from 'Components/BulletedLogType';
+import useAlertDestinations from 'Hooks/useAlertDestinations';
+import useAlertDestinationsDeliverySuccess from 'Hooks/useAlertDestinationsDeliverySuccess';
 import UpdateAlertDropdown from '../../dropdowns/UpdateAlertDropdown';
 
 interface AlertCardProps {
   alert: AlertSummaryFull;
+  hideRuleButton?: boolean;
 }
 
-const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
+const AlertCard: React.FC<AlertCardProps> = ({ alert, hideRuleButton = false }) => {
+  const { alertDestinations, loading: loadingDestinations } = useAlertDestinations({ alert });
+  const { allDestinationDeliveredSuccessfully, loading } = useAlertDestinationsDeliverySuccess({
+    alert,
+  });
   return (
-    <GenericItemCard>
+    <GenericItemCard borderColor={alert.type === AlertTypesEnum.RuleError ? 'red-600' : 'teal-400'}>
       <GenericItemCard.Body>
-        <Link
-          as={RRLink}
-          aria-label="Link to Alert"
-          to={urls.logAnalysis.alerts.details(alert.alertId)}
-          cursor="pointer"
-        >
-          <GenericItemCard.Heading>{alert.title}</GenericItemCard.Heading>
-        </Link>
+        <GenericItemCard.Heading>
+          <Link
+            as={RRLink}
+            aria-label="Link to Alert"
+            to={urls.logAnalysis.alerts.details(alert.alertId)}
+          >
+            {alert.title}
+          </Link>
+        </GenericItemCard.Heading>
         <GenericItemCard.ValuesGroup>
-          <GenericItemCard.Value
-            value={
-              <Link
-                as={RRLink}
-                aria-label="Link to Rule"
-                to={urls.logAnalysis.rules.details(alert.ruleId)}
-              >
-                <Button variantColor="navyblue" as="div" size="small">
+          {!hideRuleButton && (
+            <GenericItemCard.Value
+              value={
+                <LinkButton
+                  aria-label="Link to Rule"
+                  to={urls.logAnalysis.rules.details(alert.ruleId)}
+                  variantColor="navyblue"
+                  size="medium"
+                >
                   View Rule
-                </Button>
-              </Link>
+                </LinkButton>
+              }
+            />
+          )}
+          <GenericItemCard.Value
+            label="Alert Type"
+            value={
+              <Text color={alert.type === AlertTypesEnum.RuleError ? 'red-500' : 'teal-100'}>
+                {alert.type === AlertTypesEnum.RuleError ? 'Rule Error' : 'Rule Match'}
+              </Text>
             }
           />
-
           <GenericItemCard.Value
-            label="Events"
-            value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
+            label="Destinations"
+            value={
+              <RelatedDestinations destinations={alertDestinations} loading={loadingDestinations} />
+            }
           />
           <GenericItemCard.Value
             label="Log Types"
-            value={
-              <Flex align="center" spacing={6} mt={1}>
-                {alert.logTypes.map(logType => (
-                  <BulletedLogType key={logType} logType={logType} />
-                ))}
-              </Flex>
-            }
+            value={<BulletedLogTypeList logTypes={alert.logTypes} limit={2} />}
+          />
+          <GenericItemCard.Value
+            label="Events"
+            value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
           />
           <GenericItemCard.Value label="Time Created" value={formatDatetime(alert.creationTime)} />
           <Flex ml="auto" mr={0} align="flex-end" spacing={2}>
@@ -78,6 +97,21 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert }) => {
             <UpdateAlertDropdown alert={alert} />
           </Flex>
         </GenericItemCard.ValuesGroup>
+        {!loading && !allDestinationDeliveredSuccessfully && (
+          <Flex
+            as="section"
+            align="center"
+            spacing={2}
+            mt={2}
+            aria-label="Destination delivery failure"
+          >
+            <Icon type="alert-circle-filled" size="medium" color="red-300" />
+            <Text fontSize="small" fontStyle="italic" color="red-300">
+              There was an issue with the delivery of this alert to a selected destination. See
+              specific Alert for details.
+            </Text>
+          </Flex>
+        )}
       </GenericItemCard.Body>
     </GenericItemCard>
   );

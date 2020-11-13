@@ -1,0 +1,12 @@
+query GetOverviewAlerts($recentAlertsInput: ListAlertsInput) {
+  topAlerts: alerts(input: { severity: [CRITICAL, HIGH], pageSize: 10, status: [OPEN, TRIAGED]  }) {
+    alertSummaries {
+      ...AlertSummaryFull
+    }
+  }
+  recentAlerts: alerts(input: $recentAlertsInput) {
+    alertSummaries {
+      ...AlertSummaryFull
+    }
+  }
+}

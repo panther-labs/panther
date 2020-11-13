@@ -43,14 +43,19 @@ func TestSendSqs(t *testing.T) {
 	}
 	alert := &alertModels.Alert{
 		AnalysisName:        aws.String("policyName"),
+		Type:                alertModels.PolicyType,
 		AnalysisID:          "policyId",
 		AnalysisDescription: aws.String("policyDescription"),
 		Severity:            "severity",
 		Runbook:             aws.String("runbook"),
+		Context: map[string]interface{}{
+			"key": "value",
+		},
 	}
 
 	expectedSqsMessage := &Notification{
 		ID:          alert.AnalysisID,
+		Type:        alertModels.PolicyType,
 		Name:        alert.AnalysisName,
 		Description: alert.AnalysisDescription,
 		Severity:    alert.Severity,
@@ -58,6 +63,9 @@ func TestSendSqs(t *testing.T) {
 		Link:        "https://panther.io/policies/policyId",
 		Title:       "Policy Failure: policyName",
 		Tags:        []string{},
+		AlertContext: map[string]interface{}{
+			"key": "value",
+		},
 	}
 	expectedSerializedSqsMessage, err := jsoniter.MarshalToString(expectedSqsMessage)
 	require.NoError(t, err)

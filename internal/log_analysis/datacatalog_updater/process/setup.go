@@ -19,13 +19,22 @@ package process
  */
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/athena"
+	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/kelseyhightower/envconfig"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/pkg/awsretry"
 )
 
 const (
@@ -34,16 +43,29 @@ const (
 
 var (
 	config = struct {
-		SyncWorkersPerTable int `default:"10" split_words:"true"`
+		AthenaWorkgroup     string `required:"true" split_words:"true"`
+		SyncWorkersPerTable int    `default:"10" split_words:"true"`
+		ProcessedDataBucket string `split_words:"true"`
 	}{}
-	awsSession   *session.Session
-	glueClient   glueiface.GlueAPI
-	lambdaClient lambdaiface.LambdaAPI
+	awsSession            *session.Session
+	glueClient            glueiface.GlueAPI
+	lambdaClient          lambdaiface.LambdaAPI
+	athenaClient          athenaiface.AthenaAPI
+	logtypesResolver      logtypes.Resolver
+	listAvailableLogTypes func(ctx context.Context) ([]string, error)
 )
 
 func Setup() {
 	envconfig.MustProcess("", &config)
-	awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(maxRetries)))
-	glueClient = glue.New(awsSession)
-	lambdaClient = lambda.New(awsSession)
+	awsSession = session.Must(session.NewSession()) // use default retries for fetching creds, avoids hangs!
+	clientsSession := awsSession.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
+		awsretry.NewConnectionErrRetryer(maxRetries)))
+	glueClient = glue.New(clientsSession)
+	lambdaClient = lambda.New(clientsSession)
+	athenaClient = athena.New(clientsSession)
+
+	logtypesResolver = registry.NativeLogTypesResolver()
+	listAvailableLogTypes = func(_ context.Context) ([]string, error) {
+		return registry.AvailableLogTypes(), nil
+	}
 }

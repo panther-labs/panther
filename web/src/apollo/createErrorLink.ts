@@ -48,6 +48,7 @@ const createErrorLink = (history: History<LocationErrorState>) => {
         history.replace({
           ...history.location,
           state: {
+            ...history.location.state,
             errorType: error.errorType,
           },
         });

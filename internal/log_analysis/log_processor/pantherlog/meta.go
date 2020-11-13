@@ -205,6 +205,14 @@ func init() {
 	MustRegisterScanner("url", ValueScannerFunc(ScanURL), FieldDomainName, FieldIPAddress)
 	MustRegisterScanner("trace_id", FieldTraceID, FieldTraceID)
 	MustRegisterScanner("net_addr", ValueScannerFunc(ScanNetworkAddress), FieldIPAddress, FieldDomainName)
+	MustRegisterScannerFunc("aws_arn", ScanARN,
+		FieldAWSARN,
+		FieldAWSInstanceID,
+		FieldAWSAccountID,
+	)
+	MustRegisterScannerFunc("aws_account_id", ScanAWSAccountID, FieldAWSAccountID)
+	MustRegisterScannerFunc("aws_instance_id", ScanAWSInstanceID, FieldAWSInstanceID)
+	MustRegisterScannerFunc("aws_tag", ScanAWSTag, FieldAWSTag)
 }
 
 // MustRegisterIndicator allows modules to define their own indicator fields.

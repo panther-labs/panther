@@ -48,7 +48,7 @@ var (
 				},
 			},
 			TableStatus:      aws.String("ACTIVE"),
-			CreationDateTime: ExampleDate,
+			CreationDateTime: &ExampleTime,
 			ProvisionedThroughput: &dynamodb.ProvisionedThroughputDescription{
 				NumberOfDecreasesToday: aws.Int64(0),
 				ReadCapacityUnits:      aws.Int64(5),
@@ -60,7 +60,7 @@ var (
 			TableId:        aws.String("1234abcd-12ab-aabb-123456abcde"),
 			BillingModeSummary: &dynamodb.BillingModeSummary{
 				BillingMode:                       aws.String("PROVISIONED"),
-				LastUpdateToPayPerRequestDateTime: ExampleDate,
+				LastUpdateToPayPerRequestDateTime: &ExampleTime,
 			},
 			GlobalSecondaryIndexes: []*dynamodb.GlobalSecondaryIndexDescription{
 				{
@@ -76,8 +76,8 @@ var (
 					},
 					IndexStatus: aws.String("ACTIVE"),
 					ProvisionedThroughput: &dynamodb.ProvisionedThroughputDescription{
-						LastDecreaseDateTime:   ExampleDate,
-						LastIncreaseDateTime:   ExampleDate,
+						LastDecreaseDateTime:   &ExampleTime,
+						LastIncreaseDateTime:   &ExampleTime,
 						NumberOfDecreasesToday: aws.Int64(0),
 						ReadCapacityUnits:      aws.Int64(5),
 						WriteCapacityUnits:     aws.Int64(5),

@@ -38,22 +38,10 @@ Parameters:
     Description: Appsync GraphQL API ID
     # Example: "hen4qu3cpjgmdmxltuzand5kjm"
     AllowedPattern: '^[a-z0-9]{10,50}$'
-  ComplianceApi:
-    Type: String
-    Description: API Gateway HTTPS endpoint for panther-compliance-api
-    AllowedPattern: '^https:\/\/[0-9a-z]{10}\.execute-api\.[a-z]{2}-[a-z]{4,9}-[1-9]\.amazonaws\.com(\.cn)?$'
   CustomResourceVersion:
     Type: String
     Description: Forces updates to custom resources when changed
     MinLength: 1
-  RemediationApi:
-    Type: String
-    Description: API Gateway HTTPS endpoint for panther-remediation-api
-    AllowedPattern: '^https:\/\/[0-9a-z]{10}\.execute-api\.[a-z]{2}-[a-z]{4,9}-[1-9]\.amazonaws\.com(\.cn)?$'
-  ResourcesApi:
-    Type: String
-    Description: API Gateway HTTPS endpoint for panther-resources-api
-    AllowedPattern: '^https:\/\/[0-9a-z]{10}\.execute-api\.[a-z]{2}-[a-z]{4,9}-[1-9]\.amazonaws\.com(\.cn)?$'
   ServiceRole:
     Type: String
     Description: Appsync IAM service role ARN
@@ -166,37 +154,38 @@ Resources:
       LambdaConfig:
         LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-logtypes-api
 
-  ResourcesAPIHttpDataSource:
+  ComplianceAPILambdaDataSource:
     Type: AWS::AppSync::DataSource
     DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
-      Name: PantherResourcesAPIHttp
-      Type: HTTP
+      Name: PantherComplianceAPILambda
+      Type: AWS_LAMBDA
       ServiceRoleArn: !Ref ServiceRole
-      HttpConfig:
-        AuthorizationConfig:
-          AuthorizationType: AWS_IAM
-          AwsIamConfig:
-            SigningRegion: !Ref AWS::Region
-            SigningServiceName: execute-api
-        Endpoint: !Ref ResourcesApi
+      LambdaConfig:
+        LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api
 
-  ComplianceAPIHttpDataSource:
-    DependsOn: GraphQLSchema
+  RemediationAPILambdaDataSource:
     Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
     Properties:
       ApiId: !Ref ApiId
-      Name: PantherComplianceAPIHttp
-      Type: HTTP
+      Name: PantherRemediationAPILambda
+      Type: AWS_LAMBDA
       ServiceRoleArn: !Ref ServiceRole
-      HttpConfig:
-        AuthorizationConfig:
-          AuthorizationType: AWS_IAM
-          AwsIamConfig:
-            SigningRegion: !Ref AWS::Region
-            SigningServiceName: execute-api
-        Endpoint: !Ref ComplianceApi
+      LambdaConfig:
+        LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-remediation-api
+
+  ResourcesAPILambdaDataSource:
+    Type: AWS::AppSync::DataSource
+    DependsOn: GraphQLSchema
+    Properties:
+      ApiId: !Ref ApiId
+      Name: PantherResourcesAPILambda
+      Type: AWS_LAMBDA
+      ServiceRoleArn: !Ref ServiceRole
+      LambdaConfig:
+        LambdaFunctionArn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-resources-api
 
   AnalysisAPIHttpDataSource:
     Type: AWS::AppSync::DataSource
@@ -213,22 +202,6 @@ Resources:
             SigningRegion: !Ref AWS::Region
             SigningServiceName: execute-api
         Endpoint: !Ref AnalysisApi
-
-  RemediationAPIHttpDataSource:
-    Type: AWS::AppSync::DataSource
-    DependsOn: GraphQLSchema
-    Properties:
-      ApiId: !Ref ApiId
-      Name: PantherRemediationAPIHttp
-      Type: HTTP
-      ServiceRoleArn: !Ref ServiceRole
-      HttpConfig:
-        AuthorizationConfig:
-          AuthorizationType: AWS_IAM
-          AwsIamConfig:
-            SigningRegion: !Ref AWS::Region
-            SigningServiceName: execute-api
-        Endpoint: !Ref RemediationApi
 
   ########## Resolvers ##########
 
@@ -1185,26 +1158,20 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: resources
-      DataSourceName: !GetAtt ResourcesAPIHttpDataSource.Name
+      DataSourceName: !GetAtt ResourcesAPILambdaDataSource.Name
       RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/list",
-          "params": {
-            "query": $util.toJson($ctx.args.input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "listResources": $input
+          })
         }
-
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1215,25 +1182,19 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: resource
-      DataSourceName: !GetAtt ResourcesAPIHttpDataSource.Name
+      DataSourceName: !GetAtt ResourcesAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/resource",
-          "params": {
-            "query": $util.toJson($ctx.args.input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getResource": $ctx.args.input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1244,25 +1205,19 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Mutation
       FieldName: remediateResource
-      DataSourceName: !GetAtt RemediationAPIHttpDataSource.Name
+      DataSourceName: !GetAtt RemediationAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "POST",
-          "resourcePath": "/v1/remediate",
-          "params": {
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "body": $util.toJson($ctx.args.input)
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "remediateResource": $ctx.args.input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
         #if($statusCode == 200)
             true
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1273,27 +1228,20 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: remediations
-      DataSourceName: !GetAtt RemediationAPIHttpDataSource.Name
+      DataSourceName: !GetAtt RemediationAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("userId", $ctx.identity.username))
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/",
-          "params": {
-            "query": $util.toJson($input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "listRemediations": $input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
         #if($statusCode == 200)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1304,25 +1252,20 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: organizationStats
-      DataSourceName: !GetAtt ComplianceAPIHttpDataSource.Name
+      DataSourceName: !GetAtt ComplianceAPILambdaDataSource.Name
       RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/org-overview",
-          "params": {
-            "query": $util.toJson($ctx.args.input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getOrgOverview": $input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1351,6 +1294,7 @@ Resources:
             "alertsBySeverity": $ctx.result.alertsBySeverity.seriesData,
             "eventsLatency": $ctx.result.eventsLatency.seriesData,
             "totalAlertsDelta": $ctx.result.totalAlertsDelta.singleValue,
+            "alertsByRuleID": $ctx.result.alertsByRuleID.singleValue,
             "fromDate": $ctx.result.fromDate,
             "toDate": $ctx.result.toDate,
             "intervalMinutes": $ctx.result.intervalMinutes
@@ -1364,25 +1308,19 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: resourcesForPolicy
-      DataSourceName: !GetAtt ComplianceAPIHttpDataSource.Name
+      DataSourceName: !GetAtt ComplianceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/describe-policy",
-          "params": {
-            "query": $util.toJson($ctx.args.input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "describePolicy": $ctx.args.input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1393,25 +1331,19 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: Query
       FieldName: policiesForResource
-      DataSourceName: !GetAtt ComplianceAPIHttpDataSource.Name
+      DataSourceName: !GetAtt ComplianceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
-          "version": "2018-05-29",
-          "method": "GET",
-          "resourcePath": "/v1/describe-resource",
-          "params": {
-            "query": $util.toJson($ctx.args.input),
-            "headers": {
-              "Content-Type": "application/json"
-            }
-          }
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "describeResource": $ctx.args.input
+          })
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($statusCode >= 200 && $statusCode < 300)
             $ctx.result.body
-        #elseif($statusCode >= 400 && $statusCode < 500)
-            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
             $util.error($ctx.result.body, "$statusCode", $input)
         #end
@@ -1454,12 +1386,29 @@ Resources:
       FieldName: rules
       DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
       RequestMappingTemplate: |
+        #set( $payload = $ctx.args.input)
+
+        #if($payload.logTypes)
+          #set($logTypesCSV = "")
+          #foreach($logType in $payload.logTypes)
+              #set($logTypesCSV = $logTypesCSV  + "," + $logType)
+          #end
+        #end
+        $util.qr($payload.put("logTypes", $logTypesCSV))
+
+        #if($payload.tags)
+          #set($tagsCSV = "")
+          #foreach($tag in $$payload.tags)
+              #set($tagsCSV = $tagsCSV  + "," + $tag)
+          #end
+        #end
+        $util.qr($payload.put("tags", $tagsCSV))
         {
           "version": "2018-05-29",
           "method": "GET",
           "resourcePath": "/v1/rule/list",
           "params": {
-            "query": $util.toJson($ctx.args.input),
+            "query": $util.toJson($payload),
             "headers": {
               "Content-Type": "application/json"
             }
@@ -1871,18 +1820,155 @@ Resources:
         {
           "version": "2018-05-29",
           "method": "POST",
-          "resourcePath": "/v1/test",
+          "resourcePath": "/v1/policy/test",
           "params": {
             "headers": {
               "Content-Type": "application/json"
             },
-            "body": $util.toJson($ctx.args.input)
+            "body": $util.toJson({
+              "body": $ctx.args.input.body,
+              "resourceTypes": $ctx.args.input.resourceTypes,
+              "tests": $ctx.args.input.tests,
+              "analysisType": "POLICY"
+            })
           }
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
         #if($statusCode == 200)
-            $ctx.result.body
+          #set ($testBreakdown = $util.parseJson($ctx.result.body))
+          #set ($payload = [])
+
+          #foreach($testName in $testBreakdown.testsPassed)
+            #set ($payloadItem = {})
+            $util.qr($payloadItem.put("id", "passed-$foreach.index"))
+            $util.qr($payloadItem.put("name", $testName))
+            $util.qr($payloadItem.put("passed", true))
+            $util.qr($payloadItem.put("functions", {
+              "policyFunction": {
+                "output": $ctx.args.input.tests[$foreach.index].expectedResult
+              }
+            }))
+            $util.qr($payload.add($payloadItem))
+          #end
+
+          #foreach($testName in $testBreakdown.testsFailed)
+            #set ($payloadItem = {})
+            $util.qr($payloadItem.put("id", "failed-$foreach.index"))
+            $util.qr($payloadItem.put("name", $testName))
+            $util.qr($payloadItem.put("passed", false))
+            $util.qr($payloadItem.put("functions", {
+              "policyFunction": {
+                "output": $ctx.args.input.tests[$foreach.index].expectedResult
+              }
+            }))
+            $util.qr($payload.add($payloadItem))
+          #end
+
+          #foreach($test in $testBreakdown.testsErrored)
+            #set ($payloadItem = {})
+            $util.qr($payloadItem.put("id", "errored-$foreach.index"))
+            $util.qr($payloadItem.put("name", $test.name))
+            $util.qr($payloadItem.put("passed", false))
+            $util.qr($payloadItem.put("functions", {
+              "policyFunction": {
+                "output": $ctx.args.input.tests[$foreach.index].expectedResult,
+                "error": {
+                  "message": $test.errorMessage
+                }
+              }
+            }))
+            $util.qr($payload.add($payloadItem))
+          #end
+
+          $util.toJson({ "results": $payload })
+        #elseif($statusCode >= 400 && $statusCode < 500)
+            $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
+        #else
+            $util.error($ctx.result.body, "$statusCode", $input)
+        #end
+
+  TestRuleResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: testRule
+      DataSourceName: !GetAtt AnalysisAPIHttpDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2018-05-29",
+          "method": "POST",
+          "resourcePath": "/v1/rule/test",
+          "params": {
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": $util.toJson({
+              "body": $ctx.args.input.body,
+              "resourceTypes": $ctx.args.input.logTypes,
+              "tests": $ctx.args.input.tests,
+              "analysisType": "RULE"
+            })
+          }
+        }
+      ResponseMappingTemplate: |
+        #set ($statusCode = $ctx.result.statusCode)
+        #if($statusCode == 200)
+          #set ($payload = [])
+          #foreach($resultItem in $util.parseJson($ctx.result.body).results)
+            #set ($payloadItem = {})
+            $util.qr($payloadItem.put("id", $resultItem.id))
+            $util.qr($payloadItem.put("name", $resultItem.testName))
+            $util.qr($payloadItem.put("passed", $util.defaultIfNull($resultItem.passed, false)))
+            $util.qr($payloadItem.put("functions", {}))
+
+            $util.qr($payloadItem.functions.put("ruleFunction", { "output": $resultItem.ruleOutput }))
+            #if ($resultItem.ruleError)
+              $util.qr($payloadItem.functions.ruleFunction.put("error", { "message": $resultItem.ruleError }))
+            #end
+
+        	#if ($resultItem.titleOutput || $resultItem.titleError)
+              $util.qr($payloadItem.functions.put("titleFunction", {}))
+
+              #if ($resultItem.titleOutput)
+              	$util.qr($payloadItem.functions.titleFunction.put("output", $resultItem.titleOutput))
+              #end
+              #if ($resultItem.titleError)
+                $util.qr($payloadItem.functions.titleFunction.put("error", { "message": $resultItem.titleError }))
+              #end
+            #end
+
+        	#if ($resultItem.dedupOutput || $resultItem.dedupError)
+              $util.qr($payloadItem.functions.put("dedupFunction", {}))
+
+              #if ($resultItem.dedupOutput)
+              	$util.qr($payloadItem.functions.dedupFunction.put("output", $resultItem.dedupOutput))
+              #end
+              #if ($resultItem.dedupError)
+                $util.qr($payloadItem.functions.dedupFunction.put("error", { "message": $resultItem.dedupError }))
+              #end
+            #end
+
+            #if ($resultItem.alertContextOutput || $resultItem.alertContextError)
+              $util.qr($payloadItem.functions.put("alertContextFunction", {}))
+
+              #if ($resultItem.alertContextOutput)
+                $util.qr($payloadItem.functions.alertContextFunction.put("output", $resultItem.alertContextOutput))
+              #end
+              #if ($resultItem.alertContextError)
+                $util.qr($payloadItem.functions.alertContextFunction.put("error", { "message": $resultItem.alertContextError }))
+              #end
+            #end
+
+            #if ($resultItem.genericError)
+              $util.qr($payloadItem.put("error", { "message": $resultItem.genericError }))
+            #end
+
+            $util.qr($payload.add($payloadItem))
+          #end
+          $util.toJson({ "results": $payload })
+
         #elseif($statusCode >= 400 && $statusCode < 500)
             $util.error($util.parseJson($ctx.result.body).message, "$statusCode", $input)
         #else
@@ -1901,7 +1987,7 @@ Resources:
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "ListAvailableLogTypes": $ctx.args.input
+            "ListAvailableLogTypes": {}
           })
         }
       ResponseMappingTemplate: |

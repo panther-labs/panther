@@ -17,22 +17,24 @@
  */
 
 import React from 'react';
-import { Box, Card, Flex, Img, Link, SimpleGrid } from 'pouncejs';
+import { Box, Card, Flex, Link, SimpleGrid } from 'pouncejs';
 import Linkify from 'Components/Linkify';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import { formatDatetime, formatNumber, minutesToString } from 'Helpers/utils';
-import { AlertDetails, RuleTeaser, ListDestinations } from 'Pages/AlertDetails';
+import { AlertDetails, RuleTeaser } from 'Pages/AlertDetails';
 import AlertDeliverySection from 'Pages/AlertDetails/AlertDetailsInfo/AlertDeliverySection';
-import { DESTINATIONS } from 'Source/constants';
+import RelatedDestinations from 'Components/RelatedDestinations';
+import useAlertDestinations from 'Hooks/useAlertDestinations';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails['alert'];
   rule: RuleTeaser['rule'];
-  alertDestinations: ListDestinations['destinations'];
 }
 
-const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule, alertDestinations }) => {
+const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
+  const { alertDestinations, loading: loadingDestinations } = useAlertDestinations({ alert });
+
   return (
     <Flex direction="column" spacing={4}>
       {rule && (
@@ -195,25 +197,18 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule, alertD
               </Box>
 
               <Box id="destinations" gridColumn="3/8">
-                {alertDestinations.map(destination => (
-                  <Flex key={destination.outputId} align="center" mb={2}>
-                    <Img
-                      alt={`${destination.outputType} logo`}
-                      src={DESTINATIONS[destination.outputType].logo}
-                      nativeWidth={18}
-                      nativeHeight={18}
-                      mr={2}
-                    />
-                    {destination.displayName}
-                  </Flex>
-                ))}
+                <RelatedDestinations
+                  destinations={alertDestinations}
+                  loading={loadingDestinations}
+                  verbose
+                />
               </Box>
             </SimpleGrid>
           </Box>
         </SimpleGrid>
       </Card>
       <Card variant="dark" as="section" p={4}>
-        <AlertDeliverySection alert={alert} alertDestinations={alertDestinations} />
+        <AlertDeliverySection alert={alert} />
       </Card>
     </Flex>
   );

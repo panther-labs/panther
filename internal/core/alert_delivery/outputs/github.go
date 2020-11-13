@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	jsoniter "github.com/json-iterator/go"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
@@ -42,10 +43,13 @@ func (client *OutputClient) Github(
 	runBook := "\n **Runbook:** " + aws.StringValue(alert.Runbook)
 	severity := "\n **Severity:** " + alert.Severity
 	tags := "\n **Tags:** " + strings.Join(alert.Tags, ", ")
+	// Best effort attempt to marshal Alert Context
+	marshaledContext, _ := jsoniter.MarshalToString(alert.Context)
+	alertContext := "\n **AlertContext:** " + marshaledContext
 
 	githubRequest := map[string]interface{}{
 		"title": generateAlertTitle(alert),
-		"body":  description + link + runBook + severity + tags,
+		"body":  description + link + runBook + severity + tags + alertContext,
 	}
 
 	token := "token " + config.Token

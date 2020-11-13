@@ -19,72 +19,73 @@ package process
  */
 
 import (
+	"context"
+
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambdacontext"
+	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/internal/log_analysis/notify"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-var (
-	// partitionPrefixCache is a cache that stores all the prefixes of the partitions we have created
-	// The cache is used to avoid attempts to create the same partitions in Glue table
-	partitionPrefixCache = make(map[string]struct{})
-)
+func Handle(ctx context.Context, event *DataCatalogEvent) (err error) {
+	lc, logger := lambdalogger.ConfigureGlobal(ctx, nil)
+	operation := common.OpLogManager.Start(lc.InvokedFunctionArn, common.OpLogLambdaServiceDim).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	defer func() {
+		operation.Stop().Log(err,
+			zap.Int("sqsMessageCount", len(event.Records)))
+	}()
 
-func SQS(event events.SQSEvent) error {
+	// This lambda handles 3 type of events:
+	switch {
+	// 1. A SyncDatabase event to trigger a full database sync (used by custom resource manager)
+	case event.SyncDatabaseEvent != nil:
+		ctx = lambdalogger.Context(ctx, logger)
+		err = HandleSyncEvent(ctx, event.SyncDatabaseEvent)
+	// 2. A SyncTablePartitions event to trigger a single table sync (triggered recursively by sync database events)
+	case event.SyncTablePartitions != nil:
+		ctx = lambdalogger.Context(ctx, logger)
+		err = HandleSyncTableEvent(ctx, event.SyncTablePartitions)
+	// 3. An SQS message. See handleSQSEvent() for the supported message types.
+	default:
+		err = handleSQSEvent(event.SQSEvent)
+	}
+	return
+}
+
+func handleSQSEvent(event events.SQSEvent) error {
 	for _, record := range event.Records {
 		// uncomment to see all payloads
 		//zap.L().Debug("processing record", zap.String("content", record.Body))
-		notification := &models.S3Notification{}
-		if err := jsoniter.UnmarshalFromString(record.Body, notification); err != nil {
-			zap.L().Error("failed to unmarshal record", zap.Error(errors.WithStack(err)))
-			continue
-		}
+		if msgType, ok := record.MessageAttributes[PantherMessageType]; ok &&
+			aws.StringValue(msgType.StringValue) == aws.StringValue(CreateTableMessageAttribute.StringValue) {
 
-		if len(notification.Records) == 0 { // indications of a bug someplace
-			zap.L().Warn("no s3 event notifications in message", zap.String("message", record.Body))
-			continue
-		}
-
-		for _, eventRecord := range notification.Records {
-			existsInCache, gluePartition, err := getPartition(eventRecord.S3.Bucket.Name, eventRecord.S3.Object.Key)
-			if err != nil {
-				zap.L().Error("failed to get partition information from notification",
-					zap.Any("notification", notification), zap.Error(err))
+			msg := CreateTablesMessage{}
+			if err := jsoniter.UnmarshalFromString(record.Body, &msg); err != nil {
+				err = errors.WithStack(err)
+				zap.L().Error("failed to unmarshal record", zap.Error(err))
 				continue
 			}
-			if existsInCache { // already exists, nothing to do
+			err := HandleCreateTablesMessage(context.TODO(), &msg)
+			if err != nil {
+				return err
+			}
+		} else {
+			notification := &notify.S3Notification{}
+			if err := jsoniter.UnmarshalFromString(record.Body, notification); err != nil {
+				zap.L().Error("failed to unmarshal record", zap.Error(errors.WithStack(err)))
 				continue
 			}
-
-			// attempt to create the partition
-			_, err = gluePartition.GetGlueTableMetadata().CreateJSONPartition(glueClient, gluePartition.GetTime())
+			err := HandleS3Notification(notification)
 			if err != nil {
-				return errors.Wrapf(err, "failed to create partition %#v", notification)
+				return err
 			}
-
-			// remember in cache
-			partitionPrefixCache[gluePartition.GetPartitionLocation()] = struct{}{}
 		}
 	}
 	return nil
-}
-
-func getPartition(bucketName, key string) (existsInCache bool, gluePartition *awsglue.GluePartition, err error) {
-	gluePartition, err = awsglue.GetPartitionFromS3(bucketName, key)
-	if err != nil {
-		return false, nil, errors.Wrapf(err, "cannot get partition from s3://%s/%s", bucketName, key)
-	}
-
-	// already done?
-	partitionLocation := gluePartition.GetPartitionLocation()
-	if _, ok := partitionPrefixCache[partitionLocation]; ok {
-		zap.L().Debug("partition has already been created")
-		return true, gluePartition, nil
-	}
-
-	return false, gluePartition, nil
 }

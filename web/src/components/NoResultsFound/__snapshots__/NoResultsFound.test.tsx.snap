@@ -1,0 +1,76 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`NoResultsFound matches snapshot 1`] = `
+.panther-3 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+}
+
+.panther-2 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  background-color: #1d2a3f;
+  border-radius: 99999px;
+  width: 260px;
+  height: 260px;
+}
+
+.panther-0 {
+  max-width: 100%;
+  margin-left: 24px;
+}
+
+.panther-1 {
+  color: #86a3c3;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <div
+    class="panther-3"
+  >
+    <div
+      class="panther-2"
+    >
+      <img
+        alt="Document and magnifying glass"
+        class="panther-0"
+        height="90"
+        src="test-file-stub"
+        width="95"
+      />
+      <p
+        class="panther-1"
+      >
+        No Results
+      </p>
+    </div>
+  </div>
+  <footer
+    id="footer"
+  />
+</div>
+`;
