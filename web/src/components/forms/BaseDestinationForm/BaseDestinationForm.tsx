@@ -23,9 +23,10 @@ import { Field, Form, Formik } from 'formik';
 import urls from 'Source/urls';
 import React from 'react';
 import FormikCheckbox from 'Components/fields/Checkbox';
-import LinkButton from 'Components/buttons/LinkButton';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import Breadcrumbs from 'Components/Breadcrumbs';
+import SaveButton from 'Components/buttons/SaveButton';
+import CancelButton from 'Components/buttons/CancelButton';
 import SubmitButton from 'Components/buttons/SubmitButton';
 
 export interface BaseDestinationFormValues<
@@ -146,14 +147,13 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
         {initialValues.outputId ? (
           <Breadcrumbs.Actions>
             <Flex spacing={4} justify="flex-end">
-              <LinkButton
-                variantColor="darkgray"
+              <SaveButton aria-label="Update Destination">Update Destination</SaveButton>
+              <CancelButton
                 aria-label="Cancel destination editing"
                 to={urls.settings.destinations.list()}
               >
                 Cancel
-              </LinkButton>
-              <SubmitButton aria-label="Update Destination">Update Destination</SubmitButton>
+              </CancelButton>
             </Flex>
           </Breadcrumbs.Actions>
         ) : (
