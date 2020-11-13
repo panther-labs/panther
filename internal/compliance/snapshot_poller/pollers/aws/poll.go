@@ -292,7 +292,7 @@ func singleResourceScan(
 		parsedResourceID := utils.ParseResourceID(*scanRequest.ResourceID)
 		resource, err = pollFunction(pollerInput, parsedResourceID, scanRequest)
 		if err != nil {
-			return nil, errors.Wrapf(err, "could not scan %#v", *scanRequest)
+			return nil, errors.Wrapf(err, "could not scan aws resource: %v, in account: %v", *scanRequest.ResourceID, *scanRequest.AWSAccountID)
 		}
 	} else if pollFunction, ok := IndividualARNResourcePollers[*scanRequest.ResourceType]; ok {
 		// Handle cases where the ResourceID is an ARN
@@ -304,7 +304,7 @@ func singleResourceScan(
 		}
 		resource, err = pollFunction(pollerInput, resourceARN, scanRequest)
 		if err != nil {
-			return nil, errors.Wrapf(err, "could not scan %#v", *scanRequest)
+			return nil, errors.Wrapf(err, "could not scan aws resource: %v, in account: %v", *scanRequest.ResourceID, *scanRequest.AWSAccountID)
 		}
 	} else {
 		zap.L().Error("unable to perform scan of specified resource type", zap.String("resourceType", *scanRequest.ResourceType))
