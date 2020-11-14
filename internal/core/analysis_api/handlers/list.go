@@ -29,7 +29,6 @@ import (
 )
 
 const (
-	defaultSortBy   = "severity"
 	defaultSortDir  = "ascending"
 	defaultPage     = 1
 	defaultPageSize = 25

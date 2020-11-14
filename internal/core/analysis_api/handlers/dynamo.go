@@ -338,7 +338,7 @@ func scanPages(input *dynamodb.ScanInput, handler func(tableItem) error) error {
 func buildScanInput(itemType models.DetectionType, fields []string, filters ...expression.ConditionBuilder) (*dynamodb.ScanInput, error) {
 	masterFilter := expression.Equal(expression.Name("type"), expression.Value(itemType))
 	for _, filter := range filters {
-		masterFilter.And(filter)
+		masterFilter = masterFilter.And(filter)
 	}
 	builder := expression.NewBuilder().WithFilter(masterFilter)
 

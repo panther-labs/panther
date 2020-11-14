@@ -19,9 +19,8 @@ package handlers
  */
 
 import (
-	"fmt"
 	"net/http"
-	"net/url"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -34,9 +33,7 @@ import (
 )
 
 func (API) ListPolicies(input *models.ListPoliciesInput) *events.APIGatewayProxyResponse {
-	if err := stdPolicyListInput(input); err != nil {
-		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusBadRequest}
-	}
+	stdPolicyListInput(input)
 
 	// Scan dynamo
 	scanInput, err := policyScanInput(input)
@@ -102,26 +99,31 @@ func (API) ListPolicies(input *models.ListPoliciesInput) *events.APIGatewayProxy
 }
 
 // Set defaults and standardize input request
-func stdPolicyListInput(input *models.ListPoliciesInput) error {
+func stdPolicyListInput(input *models.ListPoliciesInput) {
 	if input.Page == 0 {
 		input.Page = defaultPage
 	}
 	if input.PageSize == 0 {
 		input.PageSize = defaultPageSize
 	}
-	if input.SortBy == "" {
-		input.SortBy = defaultSortBy
-	}
 	if input.SortDir == "" {
 		input.SortDir = defaultSortDir
 	}
 
-	// TODO - frontend no longer needs to query escape this
-	var err error
-	if input.NameContains, err = url.QueryUnescape(input.NameContains); err != nil {
-		return fmt.Errorf("invalid nameContains: " + err.Error())
+	// TODO - fix frontend to send array inputs instead of CSV strings
+	// Right now, the incoming request from a user looks like this:
+	// {
+	//     "resourceTypes": ["AWS.S3.Bucket,AWS.CloudFormation.Stack"],
+	//     "tags": ["my,tag,filters"]
+	// }
+	//
+	// So we split the strings here as a workaround
+	if len(input.ResourceTypes) == 1 {
+		input.ResourceTypes = strings.Split(input.ResourceTypes[0], ",")
 	}
-	return nil
+	if len(input.Tags) == 1 {
+		input.Tags = strings.Split(input.Tags[0], ",")
+	}
 }
 
 func policyScanInput(input *models.ListPoliciesInput) (*dynamodb.ScanInput, error) {

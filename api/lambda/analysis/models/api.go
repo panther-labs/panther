@@ -34,30 +34,30 @@ const (
 
 type LambdaInput struct {
 	// Shared
-	BulkUpload       *BulkUploadInput       `json:"bulkUpload"`
-	DeleteDetections *DeleteDetectionsInput `json:"deleteDetections"`
+	BulkUpload       *BulkUploadInput       `json:"bulkUpload,omitempty"`
+	DeleteDetections *DeleteDetectionsInput `json:"deleteDetections,omitempty"`
 
 	// Globals
-	CreateGlobal  *CreateGlobalInput  `json:"createGlobal"`
-	DeleteGlobals *DeleteGlobalsInput `json:"deleteGlobals"`
-	GetGlobal     *GetGlobalInput     `json:"getGlobal"`
-	ListGlobals   *ListGlobalsInput   `json:"listGlobals"`
-	UpdateGlobal  *UpdateGlobalInput  `json:"updateGlobal"`
+	CreateGlobal  *CreateGlobalInput  `json:"createGlobal,omitempty"`
+	DeleteGlobals *DeleteGlobalsInput `json:"deleteGlobals,omitempty"`
+	GetGlobal     *GetGlobalInput     `json:"getGlobal,omitempty"`
+	ListGlobals   *ListGlobalsInput   `json:"listGlobals,omitempty"`
+	UpdateGlobal  *UpdateGlobalInput  `json:"updateGlobal,omitempty"`
 
 	// Policies (cloud security)
-	CreatePolicy *CreatePolicyInput `json:"createPolicy"`
-	GetPolicy    *GetPolicyInput    `json:"getPolicy"`
-	ListPolicies *ListPoliciesInput `json:"listPolicies"`
-	Suppress     *SuppressInput     `json:"suppress"`
-	TestPolicy   *TestPolicyInput   `json:"testPolicy"`
-	UpdatePolicy *UpdatePolicyInput `json:"updatePolicy"`
+	CreatePolicy *CreatePolicyInput `json:"createPolicy,omitempty"`
+	GetPolicy    *GetPolicyInput    `json:"getPolicy,omitempty"`
+	ListPolicies *ListPoliciesInput `json:"listPolicies,omitempty"`
+	Suppress     *SuppressInput     `json:"suppress,omitempty"`
+	TestPolicy   *TestPolicyInput   `json:"testPolicy,omitempty"`
+	UpdatePolicy *UpdatePolicyInput `json:"updatePolicy,omitempty"`
 
 	// Rules (log analysis)
-	CreateRule *CreateRuleInput `json:"createRule"`
-	GetRule    *GetRuleInput    `json:"getRule"`
-	ListRules  *ListRulesInput  `json:"listRules"`
-	TestRule   *TestRuleInput   `json:"testRule"`
-	UpdateRule *UpdateRuleInput `json:"updateRule"`
+	CreateRule *CreateRuleInput `json:"createRule,omitempty"`
+	GetRule    *GetRuleInput    `json:"getRule,omitempty"`
+	ListRules  *ListRulesInput  `json:"listRules,omitempty"`
+	TestRule   *TestRuleInput   `json:"testRule,omitempty"`
+	UpdateRule *UpdateRuleInput `json:"updateRule,omitempty"`
 
 	// Data models (log analysis)
 	//CreateDataModel *CreateDataModelInput `json:"createDataModel"`

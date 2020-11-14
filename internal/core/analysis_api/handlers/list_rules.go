@@ -19,9 +19,7 @@ package handlers
  */
 
 import (
-	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -32,9 +30,7 @@ import (
 )
 
 func (API) ListRules(input *models.ListRulesInput) *events.APIGatewayProxyResponse {
-	if err := stdRuleListInput(input); err != nil {
-		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusBadRequest}
-	}
+	stdRuleListInput(input)
 
 	// Scan dynamo
 	scanInput, err := ruleScanInput(input)
@@ -71,26 +67,16 @@ func (API) ListRules(input *models.ListRulesInput) *events.APIGatewayProxyRespon
 }
 
 // Set defaults and standardize input request
-func stdRuleListInput(input *models.ListRulesInput) error {
+func stdRuleListInput(input *models.ListRulesInput) {
 	if input.Page == 0 {
 		input.Page = defaultPage
 	}
 	if input.PageSize == 0 {
 		input.PageSize = defaultPageSize
 	}
-	if input.SortBy == "" {
-		input.SortBy = defaultSortBy
-	}
 	if input.SortDir == "" {
 		input.SortDir = defaultSortDir
 	}
-
-	// TODO - frontend no longer needs to query escape this
-	var err error
-	if input.NameContains, err = url.QueryUnescape(input.NameContains); err != nil {
-		return fmt.Errorf("invalid nameContains: " + err.Error())
-	}
-	return nil
 }
 
 func ruleScanInput(input *models.ListRulesInput) (*dynamodb.ScanInput, error) {
