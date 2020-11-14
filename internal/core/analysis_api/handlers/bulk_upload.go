@@ -124,6 +124,14 @@ func (API) BulkUpload(input *models.BulkUploadInput) *events.APIGatewayProxyResp
 				counts.ModifiedGlobals++
 			}
 
+		case models.TypeDataModel:
+			counts.TotalDataModels++
+			if result.changeType == newItem {
+				counts.NewDataModels++
+			} else if result.changeType == updatedItem {
+				counts.ModifiedDataModels++
+			}
+
 		default:
 			response = &events.APIGatewayProxyResponse{
 				Body:       "unknown detection type " + string(result.item.Type),
@@ -223,6 +231,17 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 
 		typeNormalizeTableItem(&analysisItem, config)
 
+		// ensure Mappings are nil rather than an empty slice
+		if len(config.Mappings) > 0 {
+			analysisItem.Mappings = make([]models.DataModelMapping, len(config.Mappings))
+			for i, mapping := range config.Mappings {
+				analysisItem.Mappings[i], err = buildMapping(mapping)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+
 		for i, test := range config.Tests {
 			// A test can specify a resource and a resource type or a log and a log type.
 			// By convention, log and log type are used for rules and resource and resource type are used for policies.
@@ -249,7 +268,8 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 			if err := validateUploadedPolicy(policy, input.UserID); err != nil {
 				return nil, err
 			}
-		} else {
+		} else if policy.Type != models.TypeDataModel {
+			// it is ok for DataModels to be missing python body
 			return nil, fmt.Errorf("policy %s is missing a body", policy.ID)
 		}
 	}
@@ -289,6 +309,12 @@ func typeNormalizeTableItem(item *tableItem, config analysis.Config) {
 		if item.ID == "" {
 			item.ID = "panther"
 		}
+
+	case models.TypeDataModel:
+		item.ID = config.DataModelID
+		if len(config.ResourceTypes) == 0 {
+			item.ResourceTypes = config.LogTypes
+		}
 	}
 }
 
@@ -310,6 +336,21 @@ func buildPolicyTest(test analysis.Test) (models.UnitTest, error) {
 	}, err
 }
 
+func buildMapping(mapping analysis.Mapping) (models.DataModelMapping, error) {
+	var result models.DataModelMapping
+	if mapping.Path != "" && mapping.Method != "" {
+		return result, errMappingTooManyOptions
+	}
+	if mapping.Path == "" && mapping.Method == "" {
+		return result, errPathOrMethodMissing
+	}
+	return models.DataModelMapping{
+		Name:   mapping.Name,
+		Path:   mapping.Path,
+		Method: mapping.Method,
+	}, nil
+}
+
 func readZipFile(zf *zip.File) ([]byte, error) {
 	f, err := zf.Open()
 	if err != nil {
@@ -328,6 +369,12 @@ func validateUploadedPolicy(item *tableItem, userID string) error {
 	switch item.Type {
 	case models.TypeGlobal:
 		item.Severity = compliancemodels.SeverityInfo
+	case models.TypeDataModel:
+		item.Severity = compliancemodels.SeverityInfo
+		// for now, only allow one LogType per DataModel
+		if len(item.ResourceTypes) > 1 {
+			return errors.New("only one ResourceType may be specified per DataModel")
+		}
 	case models.TypePolicy, models.TypeRule:
 		break
 	default:

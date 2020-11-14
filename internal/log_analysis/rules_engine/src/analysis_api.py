@@ -57,3 +57,34 @@ class AnalysisAPIClient:
             result.extend(body.get('rules', []))
 
         return result
+
+    def get_enabled_data_models(self) -> List[Dict[str, Any]]:
+        """Gets information for all enabled data models."""
+        # There should only be one page, but loop over them just in case
+        list_input: Dict[str, Any] = {
+            'listDataModels': {
+                'enabled': True,
+                'pageSize': 1000,
+            }
+        }
+        page = 1
+        total_pages = 1
+        result = []
+
+        while page <= total_pages:
+            list_input['listDataModels']['page'] = page
+            print('getEnabledInput', list_input)
+            response = self.client.invoke(FunctionName='panther-analysis-api', Payload=json.dumps(list_input).encode('utf-8'))
+            print('getEnabledResponse', response)
+            gateway_response = json.loads(response['Payload'].read())
+
+            if response.get('FunctionError') or gateway_response['statusCode'] != 200:
+                raise RuntimeError('failed to list models: ' + str(gateway_response))
+
+            body = json.loads(gateway_response['body'])
+            total_pages = body['paging']['totalPages']
+            page += 1
+
+            result.extend(body.get('models', []))
+
+        return result

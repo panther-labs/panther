@@ -29,19 +29,20 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-// GetPolicy retrieves a policy from Dynamo or S3.
 func (API) GetPolicy(input *models.GetPolicyInput) *events.APIGatewayProxyResponse {
 	return handleGet(input.PolicyID, input.VersionID, models.TypePolicy)
 }
 
-// GetRule retrieves a rule from Dynamo or S3.
 func (API) GetRule(input *models.GetRuleInput) *events.APIGatewayProxyResponse {
 	return handleGet(input.RuleID, input.VersionID, models.TypeRule)
 }
 
-// GetRule retrieves a rule from Dynamo or S3.
 func (API) GetGlobal(input *models.GetGlobalInput) *events.APIGatewayProxyResponse {
 	return handleGet(input.GlobalID, input.VersionID, models.TypeGlobal)
+}
+
+func (API) GetDataModel(input *models.GetDataModelInput) *events.APIGatewayProxyResponse {
+	return handleGet(input.DataModelID, input.VersionID, models.TypeDataModel)
 }
 
 // Handle GET request for GetPolicy, GetRule, and GetGlobal
@@ -74,7 +75,6 @@ func handleGet(itemID, versionID string, codeType models.DetectionType) *events.
 		}
 	}
 
-	// Add current pass/fail information and convert to external Policy model
 	switch codeType {
 	case models.TypePolicy:
 		status, err := getComplianceStatus(itemID)
@@ -98,6 +98,9 @@ func handleGet(itemID, versionID string, codeType models.DetectionType) *events.
 
 	case models.TypeGlobal:
 		return gatewayapi.MarshalResponse(item.Global(), http.StatusOK)
+
+	case models.TypeDataModel:
+		return gatewayapi.MarshalResponse(item.DataModel(), http.StatusOK)
 
 	default:
 		panic("unexpected codeType " + codeType)

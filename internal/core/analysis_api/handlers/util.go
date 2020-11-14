@@ -40,8 +40,8 @@ const (
 
 var (
 	// Custom errors make it easy for callers to identify which error was triggered
-	errNotExists = errors.New("policy/rule does not exist")
-	errExists    = errors.New("policy/rule already exists")
+	errNotExists = errors.New("analysis type instance does not exist")
+	errExists    = errors.New("analysis type instance already exists")
 	errWrongType = errors.New("trying to replace a rule with a policy (or vice versa)")
 )
 
@@ -151,7 +151,7 @@ func policiesEqual(first, second *tableItem) (bool, error) {
 	return reflect.DeepEqual(p1, p2), nil
 }
 
-// Create/update a policy or rule.
+// Create/update a policy, rule, global, or data model
 //
 // The following fields are set automatically (need not be set by the caller):
 //     CreatedAt, CreatedBy, LastModified, LastModifiedBy, VersionID
@@ -217,7 +217,7 @@ func writeItem(item *tableItem, userID string, mustExist *bool) (int, error) {
 		return changeType, err
 	}
 
-	if item.Type == models.TypeRule {
+	if item.Type == models.TypeRule || item.Type == models.TypeDataModel {
 		return changeType, nil
 	}
 
@@ -255,7 +255,8 @@ func itemUpdated(oldItem, newItem *tableItem) bool {
 		setEquality(oldItem.ResourceTypes, newItem.ResourceTypes) &&
 		setEquality(oldItem.Suppressions, newItem.Suppressions) && setEquality(oldItem.Tags, newItem.Tags) &&
 		len(oldItem.AutoRemediationParameters) == len(newItem.AutoRemediationParameters) &&
-		len(oldItem.Tests) == len(newItem.Tests)
+		len(oldItem.Tests) == len(newItem.Tests) &&
+		len(oldItem.Mappings) == len(newItem.Mappings)
 
 	if !itemsEqual {
 		return true
@@ -307,8 +308,29 @@ func itemUpdated(oldItem, newItem *tableItem) bool {
 		}
 	}
 
+	// Check mappings for equality
+	itemsEqual = mappingEquality(oldItem, newItem)
+
 	// If they're the same, the item wasn't really updated
 	return !itemsEqual
+}
+
+func mappingEquality(oldItem, newItem *tableItem) bool {
+	oldMappings := make(map[string]models.DataModelMapping)
+	for _, mapping := range oldItem.Mappings {
+		oldMappings[mapping.Name] = mapping
+	}
+	for _, newMapping := range newItem.Mappings {
+		oldMapping, ok := oldMappings[newMapping.Name]
+		if !ok ||
+			oldMapping.Name != newMapping.Name ||
+			oldMapping.Path != newMapping.Path ||
+			oldMapping.Method != newMapping.Method {
+
+			return false
+		}
+	}
+	return true
 }
 
 // Sort a slice of strings ignoring case when possible

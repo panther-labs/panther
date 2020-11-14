@@ -27,9 +27,10 @@ import (
 type DetectionType string
 
 const (
-	TypePolicy DetectionType = "POLICY"
-	TypeRule   DetectionType = "RULE"
-	TypeGlobal DetectionType = "GLOBAL"
+	TypePolicy    DetectionType = "POLICY"
+	TypeRule      DetectionType = "RULE"
+	TypeGlobal    DetectionType = "GLOBAL"
+	TypeDataModel DetectionType = "DATAMODEL"
 )
 
 type LambdaInput struct {
@@ -60,10 +61,10 @@ type LambdaInput struct {
 	UpdateRule *UpdateRuleInput `json:"updateRule,omitempty"`
 
 	// Data models (log analysis)
-	//CreateDataModel *CreateDataModelInput `json:"createDataModel"`
-	//GetDataModel    *GetDataModelInput    `json:"getDataModel"`
-	//ListDataModels  *ListDataModelsInput  `json:"listDataModels"`
-	//UpdateDataModel *UpdateDataModelInput `json:"updateDataModel"`
+	CreateDataModel *CreateDataModelInput `json:"createDataModel,omitempty"`
+	GetDataModel    *GetDataModelInput    `json:"getDataModel,omitempty"`
+	ListDataModels  *ListDataModelsInput  `json:"listDataModels,omitempty"`
+	UpdateDataModel *UpdateDataModelInput `json:"updateDataModel,omitempty"`
 }
 
 // All detection types (global/data-model/policy/rule/query) have these fields in common
@@ -123,6 +124,10 @@ type BulkUploadOutput struct {
 	TotalGlobals    int `json:"totalGlobals"`
 	NewGlobals      int `json:"newGlobals"`
 	ModifiedGlobals int `json:"modifiedGlobals"`
+
+	TotalDataModels    int `json:"totalDataModels"`
+	NewDataModels      int `json:"newDataModels"`
+	ModifiedDataModels int `json:"modifiedDataModels"`
 }
 
 type DeleteDetectionsInput struct {

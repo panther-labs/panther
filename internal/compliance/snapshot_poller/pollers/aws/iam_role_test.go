@@ -80,12 +80,19 @@ func TestIAMRolesGetPolicy(t *testing.T) {
 }
 
 func TestIAMRolesGetPolicyError(t *testing.T) {
-	mockSvc := awstest.BuildMockIAMSvcError([]string{"ListRolesPages"})
+	mockSvc := awstest.BuildMockIAMSvcError([]string{"GetRolePolicy"})
 
-	out, marker, err := listRoles(mockSvc, nil)
+	out, err := getRolePolicy(mockSvc, aws.String("RoleName"), aws.String("PolicyName"))
 	assert.Nil(t, out)
-	assert.Nil(t, marker)
 	assert.Error(t, err)
+}
+
+func TestIAMROlesGetPolicyAWSError(t *testing.T) {
+	mockSvc := awstest.BuildMockIAMSvcError([]string{"GetRolePolicyAWSErr"})
+
+	out, err := getRolePolicy(mockSvc, aws.String("RoleName"), aws.String("PolicyName"))
+	assert.NoError(t, err)
+	assert.Nil(t, out)
 }
 
 func TestIAMRolesGetPolicies(t *testing.T) {

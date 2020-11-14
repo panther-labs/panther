@@ -112,6 +112,11 @@ func iamRoleIterator(page *iam.ListRolesOutput, roles *[]*iam.Role, marker **str
 func getRolePolicy(iamSvc iamiface.IAMAPI, roleName *string, policyName *string) (*string, error) {
 	policy, err := iamSvc.GetRolePolicy(&iam.GetRolePolicyInput{RoleName: roleName, PolicyName: policyName})
 	if err != nil {
+		var awsError awserr.Error
+		if errors.As(err, &awsError) && awsError.Code() == iam.ErrCodeNoSuchEntityException {
+			zap.L().Debug("role policy could not be found", zap.String("policyName", *policyName))
+			return nil, nil
+		}
 		return nil, errors.Wrapf(err, "IAM.GetRolePolicy: %s", aws.StringValue(roleName))
 	}
 

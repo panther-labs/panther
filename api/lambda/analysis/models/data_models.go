@@ -46,16 +46,17 @@ type ListDataModelsInput struct {
 }
 
 type ListDataModelsOutput struct {
-	DataModels []DataModel `json:"dataModels"`
-	Paging     Paging      `json:"paging"`
+	Models []DataModel `json:"models"`
+	Paging Paging      `json:"paging"`
 }
 
 type UpdateDataModelInput struct {
 	Body        string             `json:"body"` // not required
 	Description string             `json:"description"`
+	DisplayName string             `json:"displayName"`
 	Enabled     bool               `json:"enabled"`
 	ID          string             `json:"id" validate:"required"`
-	LogTypes    []string           `json:"logTypes" validate:"omitempty,dive,required"`
+	LogTypes    []string           `json:"logTypes" validate:"len=1,dive,required"` // for now, only one logtype allowed
 	Mappings    []DataModelMapping `json:"mappings" validate:"min=1,dive"`
 	UserID      string             `json:"userId" validate:"uuid4"`
 }
@@ -63,13 +64,14 @@ type UpdateDataModelInput struct {
 type DataModel struct {
 	CoreEntry
 
-	Enabled  bool               `json:"enabled"`
-	LogTypes []string           `json:"logTypes"`
-	Mappings []DataModelMapping `json:"mappings"`
+	DisplayName string             `json:"displayName"`
+	Enabled     bool               `json:"enabled"`
+	LogTypes    []string           `json:"logTypes"`
+	Mappings    []DataModelMapping `json:"mappings"`
 }
 
 type DataModelMapping struct {
 	Name   string `json:"name" validate:"required"`
-	Field  string `json:"field"`
-	Method string `json:"method"`
+	Path   string `json:"path" validate:"required_without=Method"`
+	Method string `json:"method" validate:"required_without=Path"`
 }

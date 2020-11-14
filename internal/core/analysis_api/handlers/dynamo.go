@@ -64,16 +64,18 @@ type tableItem struct {
 	LowerID          string   `json:"lowerId,omitempty"`
 	LowerTags        []string `json:"lowerTags,omitempty" dynamodbav:"lowerTags,stringset,omitempty"`
 
-	OutputIDs []string            `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
-	Reference string              `json:"reference,omitempty"`
-	Reports   map[string][]string `json:"reports,omitempty"`
 	// For log analysis rules, these are actually log types
-	ResourceTypes []string                  `json:"resourceTypes,omitempty" dynamodbav:"resourceTypes,stringset,omitempty"`
-	Runbook       string                    `json:"runbook,omitempty"`
-	Severity      compliancemodels.Severity `json:"severity"`
-	Suppressions  []string                  `json:"suppressions,omitempty" dynamodbav:"suppressions,stringset,omitempty"`
-	Tags          []string                  `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
-	Tests         []models.UnitTest         `json:"tests,omitempty"`
+	ResourceTypes []string `json:"resourceTypes,omitempty" dynamodbav:"resourceTypes,stringset,omitempty"`
+
+	Mappings     []models.DataModelMapping `json:"mappings,omitempty"`
+	OutputIDs    []string                  `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
+	Reference    string                    `json:"reference,omitempty"`
+	Reports      map[string][]string       `json:"reports,omitempty"`
+	Runbook      string                    `json:"runbook,omitempty"`
+	Severity     compliancemodels.Severity `json:"severity"`
+	Suppressions []string                  `json:"suppressions,omitempty" dynamodbav:"suppressions,stringset,omitempty"`
+	Tags         []string                  `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
+	Tests        []models.UnitTest         `json:"tests,omitempty"`
 
 	Type      models.DetectionType `json:"type"`
 	VersionID string               `json:"versionId,omitempty"`
@@ -182,6 +184,30 @@ func (r *tableItem) Global() *models.Global {
 	return result
 }
 
+// DataModel converts a Dynamo row into a DataModel external model.
+func (r *tableItem) DataModel() *models.DataModel {
+	r.normalize()
+	result := &models.DataModel{
+		CoreEntry: models.CoreEntry{
+			Body:           r.Body,
+			CreatedAt:      r.CreatedAt,
+			CreatedBy:      r.CreatedBy,
+			Description:    r.Description,
+			ID:             r.ID,
+			LastModified:   r.LastModified,
+			LastModifiedBy: r.LastModifiedBy,
+			Tags:           r.Tags,
+			VersionID:      r.VersionID,
+		},
+		DisplayName: r.DisplayName,
+		Enabled:     r.Enabled,
+		LogTypes:    r.ResourceTypes,
+		Mappings:    r.Mappings,
+	}
+	gatewayapi.ReplaceMapSliceNils(result)
+	return result
+}
+
 func tableKey(policyID string) map[string]*dynamodb.AttributeValue {
 	return map[string]*dynamodb.AttributeValue{
 		"id": {S: &policyID},
@@ -234,6 +260,8 @@ func dynamoGet(policyID string, consistentRead bool) (*tableItem, error) {
 
 	return &policy, nil
 }
+
+// TODO - add data model
 
 // Add suppressions to an existing policy, returning the updated list of policies.
 func addSuppressions(policyIDs []string, patterns []string) ([]*tableItem, error) {

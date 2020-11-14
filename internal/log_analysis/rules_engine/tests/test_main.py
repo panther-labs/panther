@@ -17,24 +17,36 @@
 import io
 import json
 import os
+from typing import Any, Dict
 from unittest import TestCase, mock
 
 import boto3
 
 from . import mock_to_return, LAMBDA_MOCK
 
-LAMBDA_MOCK.invoke.return_value = {
-    'Payload':
-        io.BytesIO(json.dumps({
-            'body': json.dumps({
-                'paging': {
-                    'totalPages': 1
-                },
-                'rules': [],
-            }),
-            'statusCode': 200,
-        }).encode('utf-8'))
-}
+
+def _mock_invoke(**unused_kwargs: Any) -> Dict[str, Any]:
+    return {
+        'Payload':
+            io.BytesIO(
+                json.dumps(
+                    {
+                        'body':
+                            json.dumps({
+                                'paging': {
+                                    'totalPages': 1
+                                },
+                                'models': [],  # for listModels
+                                'rules': [],  # for listRules
+                            }),
+                        'statusCode': 200,
+                    }
+                ).encode('utf-8')
+            )
+    }
+
+
+LAMBDA_MOCK.invoke.side_effect = _mock_invoke
 
 _ENV_VARIABLES_MOCK = {
     'ALERTS_DEDUP_TABLE': 'table_name',
