@@ -50,12 +50,10 @@ func NewPolicyEngine(lambdaClient lambdaiface.LambdaAPI, lambdaName string) Poli
 	}
 }
 
-func (e *PolicyEngine) TestPolicy(policy *models.TestPolicyInput) (models.TestPolicyOutput, error) {
-	var testResults models.TestPolicyOutput
-
+func (e *PolicyEngine) TestPolicy(policy *models.TestPolicyInput) (*models.TestPolicyOutput, error) {
 	testResources, err := makeTestResources(policy)
 	if err != nil {
-		return testResults, err
+		return nil, err
 	}
 	engineInput := enginemodels.PolicyEngineInput{
 		Policies: []enginemodels.Policy{
@@ -71,21 +69,21 @@ func (e *PolicyEngine) TestPolicy(policy *models.TestPolicyInput) (models.TestPo
 	var engineOutput enginemodels.PolicyEngineOutput
 	err = genericapi.Invoke(e.lambdaClient, e.lambdaName, &engineInput, &engineOutput)
 	if err != nil {
-		return testResults, errors.Wrap(err, "error invoking policy engine")
+		return nil, errors.Wrap(err, "error invoking policy engine")
 	}
 
 	// Translate policy engine output to test results.
 	return makeTestSummary(policy, engineOutput)
 }
 
-func makeTestSummary(policy *models.TestPolicyInput, engineOutput enginemodels.PolicyEngineOutput) (models.TestPolicyOutput, error) {
+func makeTestSummary(policy *models.TestPolicyInput, engineOutput enginemodels.PolicyEngineOutput) (*models.TestPolicyOutput, error) {
 	var testResults models.TestPolicyOutput
 	for _, result := range engineOutput.Resources {
 		// Determine which test case this result corresponds to. We constructed resourceID with the
 		// format Panther:Test:Resource:TestNumber (see testResourceID),
 		testIndex, err := strconv.Atoi(strings.Split(result.ID, ":")[3])
 		if err != nil {
-			return testResults, errors.Wrapf(err, "unable to extract test number from test result resourceID %s", result.ID)
+			return nil, errors.Wrapf(err, "unable to extract test number from test result resourceID %s", result.ID)
 		}
 
 		test := policy.Tests[testIndex]
@@ -107,13 +105,13 @@ func makeTestSummary(policy *models.TestPolicyInput, engineOutput enginemodels.P
 
 		default:
 			// This test didn't run (result.{Errored, Passed, Failed} are all empty). This must not happen absent a bug.
-			return testResults, errors.Errorf("unable to run test for %s", result.ID)
+			return nil, errors.Errorf("unable to run test for %s", result.ID)
 		}
 	}
 
 	testResults.TestSummary = len(testResults.TestsFailed) == 0 && len(testResults.TestsErrored) == 0
 
-	return testResults, nil
+	return &testResults, nil
 }
 
 type TestInputError struct {
