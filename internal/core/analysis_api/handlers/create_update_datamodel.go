@@ -25,7 +25,6 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
@@ -130,63 +129,23 @@ func isSingleDataModelEnabled(input *models.UpdateDataModelInput) (bool, error) 
 	if !input.Enabled {
 		return true, nil
 	}
-	// setup var for new LogTypes this data model will apply to
-	newLogTypes := input.LogTypes
-	// check if this is an update or a new item
-	oldItem, err := dynamoGet(input.ID, true)
-	if err != nil {
-		return false, err
-	}
-	// this is updating an existing item
-	if oldItem != nil {
-		if input.Enabled == oldItem.Enabled {
-			// if not updating enabled status nor the LogTypes, no need to continue check
-			if setEquality(oldItem.ResourceTypes, input.LogTypes) {
-				return true, nil
-			}
-			// This can be uncommented when we enabled multiple LogTypes per DataModel
-			// if not updating the enabled status, only need to check new LogTypes
-			//newLogTypes = setDifference(input.LogTypes, oldItem.ResourceTypes)
-		}
-	}
 
-	// Scan dynamo
-	// Build the dynamodb scan expression
-	projection := expression.NamesList(
-		expression.Name("id"),
-		expression.Name("enabled"),
-		expression.Name("resourceTypes"),
-	)
-	// Build filter to search for enabled DataModels with the new LogTypes
-	typeFilter := expression.Equal(expression.Name("type"), expression.Value(models.TypeDataModel))
 	enabledFilter := expression.Equal(expression.Name("enabled"), expression.Value(true))
 	logTypeFilter := expression.AttributeNotExists(expression.Name("resourceTypes"))
-	for _, typeName := range newLogTypes {
+	for _, typeName := range input.LogTypes {
 		logTypeFilter = logTypeFilter.Or(expression.Contains(expression.Name("resourceTypes"), typeName))
 	}
-	filter := expression.And(typeFilter, enabledFilter, logTypeFilter)
-
-	expr, err := expression.NewBuilder().
-		WithFilter(filter).
-		WithProjection(projection).
-		Build()
+	scanInput, err := buildScanInput(models.TypeDataModel, []string{"id"}, expression.And(enabledFilter, logTypeFilter))
 
 	if err != nil {
 		return false, err
 	}
-	scanInput := &dynamodb.ScanInput{
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		FilterExpression:          expr.Filter(),
-		ProjectionExpression:      expr.Projection(),
-		TableName:                 &env.Table,
-	}
 
-	found := false
+	conflict := false
 	err = scanPages(scanInput, func(item tableItem) error {
-		found = true
+		conflict = true
 		return nil
 	})
 
-	return found, err
+	return !conflict, err
 }
