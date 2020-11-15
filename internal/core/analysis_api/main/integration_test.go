@@ -35,7 +35,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/google/uuid"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -96,36 +95,10 @@ var (
 			ID: "AWS.CloudTrail.Log.Validation.Enabled",
 		},
 	}
-
 	policyFromBulkJSON = &models.Policy{
 		CoreEntry: models.CoreEntry{
-			CreatedBy:      userID,
-			Description:    "Matches every resource",
-			ID:             "Test:Policy:JSON",
-			LastModifiedBy: userID,
-			Tags:           []string{},
+			ID: "Test:Policy:JSON",
 		},
-		PythonDetection: models.PythonDetection{
-			DisplayName: "AlwaysTrue",
-			Enabled:     true,
-			OutputIDs:   []string{},
-			Reports: map[string][]string{
-				"Test": {"Value1", "Value2"},
-			},
-			Severity: compliancemodels.SeverityMedium,
-			Tests: []models.UnitTest{
-				{
-					Name:           "This will be True",
-					ExpectedResult: true,
-					Resource:       `{"Bucket":"empty"}`,
-				},
-			},
-		},
-		AutoRemediationID:         "fix-it",
-		AutoRemediationParameters: map[string]string{"hello": "goodbye"},
-		ComplianceStatus:          compliancemodels.StatusPass,
-		ResourceTypes:             []string{"AWS.S3.Bucket"},
-		Suppressions:              []string{},
 	}
 
 	rule = &models.Rule{
@@ -318,14 +291,16 @@ func TestIntegrationAPI(t *testing.T) {
 	if t.Failed() {
 		return
 	}
-	//
-	//	t.Run("List", func(t *testing.T) {
-	//		t.Run("ListSuccess", listSuccess)
-	//		t.Run("ListFiltered", listFiltered)
-	//		t.Run("ListPaging", listPaging)
-	//		t.Run("ListRules", listRules)
-	//		t.Run("ListDataModels", listDataModels)
-	//	})
+
+	t.Run("List", func(t *testing.T) {
+		t.Run("ListPolicies", listPolicies)
+		t.Run("ListFiltered", listFiltered)
+		t.Run("ListPaging", listPaging)
+		t.Run("ListProjection", listProjection)
+		t.Run("ListRules", listRules)
+		t.Run("ListGlobals", listGlobals)
+		t.Run("ListDataModels", listDataModels)
+	})
 	//
 	//	t.Run("Modify", func(t *testing.T) {
 	//		t.Run("ModifyInvalid", modifyInvalid)
@@ -1757,28 +1732,10 @@ func bulkUploadSuccess(t *testing.T) {
 
 	// Verify newly created policy #2
 	input.GetPolicy.PolicyID = policyFromBulkJSON.ID
-	_, err = apiClient.Invoke(&input, &getResult)
+	_, err = apiClient.Invoke(&input, &policyFromBulkJSON)
 	require.NoError(t, err)
-
-	assert.NotZero(t, getResult.CreatedAt)
-	assert.NotZero(t, getResult.LastModified)
-	policyFromBulkJSON.CreatedAt = getResult.CreatedAt
-	policyFromBulkJSON.LastModified = getResult.LastModified
-	policyFromBulkJSON.Tags = []string{}
-	policyFromBulkJSON.OutputIDs = []string{}
-	policyFromBulkJSON.VersionID = getResult.VersionID
-
-	// Verify the resource string is the same as we expect, by unmarshaling it into its object map
-	for i, test := range policyFromBulkJSON.Tests {
-		var expected map[string]interface{}
-		var actual map[string]interface{}
-		require.NoError(t, jsoniter.UnmarshalFromString(test.Resource, &expected))
-		require.NoError(t, jsoniter.UnmarshalFromString(getResult.Tests[i].Resource, &actual))
-		assert.Equal(t, expected, actual)
-		test.Resource = getResult.Tests[i].Resource
-	}
-
-	assert.Equal(t, *policyFromBulkJSON, getResult)
+	assert.Equal(t, "Matches every resource", policyFromBulkJSON.Description)
+	assert.Equal(t, "Test:Policy:JSON", policyFromBulkJSON.ID)
 
 	// Verify newly created Rule
 	expectedNewRule := models.Rule{
@@ -1844,287 +1801,234 @@ func bulkUploadSuccess(t *testing.T) {
 	assert.Equal(t, *dataModelFromBulkYML, getDataModel)
 }
 
-//
-//func listSuccess(t *testing.T) {
-//	result, err := apiClient.Operations.ListPolicies(&operations.ListPoliciesParams{
-//		HTTPClient: httpClient,
-//		SortBy:     aws.String("id"),
-//	})
-//	require.NoError(t, err)
-//
-//	expected := &models.PolicyList{
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(1),
-//			TotalItems: aws.Int64(3),
-//			TotalPages: aws.Int64(1),
-//		},
-//		Policies: []*models.PolicySummary{ // sorted by id
-//			{
-//				AutoRemediationID:         policyFromBulkJSON.AutoRemediationID,
-//				AutoRemediationParameters: policyFromBulkJSON.AutoRemediationParameters,
-//				ComplianceStatus:          models.ComplianceStatusPASS,
-//				DisplayName:               policyFromBulkJSON.DisplayName,
-//				Enabled:                   policyFromBulkJSON.Enabled,
-//				ID:                        policyFromBulkJSON.ID,
-//				LastModified:              policyFromBulkJSON.LastModified,
-//				OutputIds:                 policyFromBulkJSON.OutputIds,
-//				ResourceTypes:             policyFromBulkJSON.ResourceTypes,
-//				Severity:                  policyFromBulkJSON.Severity,
-//				Suppressions:              policyFromBulkJSON.Suppressions,
-//				Tags:                      []string{},
-//				Reports:                   map[string][]string{},
-//			},
-//			{
-//				AutoRemediationID:         policy.AutoRemediationID,
-//				AutoRemediationParameters: policy.AutoRemediationParameters,
-//				ComplianceStatus:          models.ComplianceStatusPASS,
-//				DisplayName:               policy.DisplayName,
-//				Enabled:                   policy.Enabled,
-//				ID:                        policy.ID,
-//				LastModified:              result.Payload.Policies[1].LastModified, // this gets set
-//				OutputIds:                 policy.OutputIds,
-//				ResourceTypes:             policy.ResourceTypes,
-//				Severity:                  policy.Severity,
-//				Suppressions:              policy.Suppressions,
-//				Tags:                      []string{},
-//				Reports:                   map[string][]string{},
-//			},
-//			{
-//				AutoRemediationID:         policyFromBulk.AutoRemediationID,
-//				AutoRemediationParameters: policyFromBulk.AutoRemediationParameters,
-//				ComplianceStatus:          models.ComplianceStatusPASS,
-//				DisplayName:               policyFromBulk.DisplayName,
-//				Enabled:                   policyFromBulk.Enabled,
-//				ID:                        policyFromBulk.ID,
-//				LastModified:              policyFromBulk.LastModified,
-//				OutputIds:                 policyFromBulk.OutputIds,
-//				ResourceTypes:             policyFromBulk.ResourceTypes,
-//				Severity:                  policyFromBulk.Severity,
-//				Suppressions:              policyFromBulk.Suppressions,
-//				Tags:                      policyFromBulk.Tags,
-//				Reports:                   map[string][]string{},
-//			},
-//		},
-//	}
-//
-//	require.Len(t, result.Payload.Policies, len(expected.Policies))
-//	assert.Equal(t, expected, result.Payload)
-//}
-//
-//func listFiltered(t *testing.T) {
-//	result, err := apiClient.Operations.ListPolicies(&operations.ListPoliciesParams{
-//		Enabled:        aws.Bool(true),
-//		HasRemediation: aws.Bool(true),
-//		NameContains:   aws.String("json"), // policyFromBulkJSON only
-//		ResourceTypes:  []string{"AWS.S3.Bucket"},
-//		Severity:       aws.String(string(models.SeverityMEDIUM)),
-//		HTTPClient:     httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	expected := &models.PolicyList{
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(1),
-//			TotalItems: aws.Int64(1),
-//			TotalPages: aws.Int64(1),
-//		},
-//		Policies: []*models.PolicySummary{
-//			{
-//				AutoRemediationID:         policyFromBulkJSON.AutoRemediationID,
-//				AutoRemediationParameters: policyFromBulkJSON.AutoRemediationParameters,
-//				ComplianceStatus:          models.ComplianceStatusPASS,
-//				DisplayName:               policyFromBulkJSON.DisplayName,
-//				Enabled:                   policyFromBulkJSON.Enabled,
-//				ID:                        policyFromBulkJSON.ID,
-//				LastModified:              policyFromBulkJSON.LastModified,
-//				OutputIds:                 policyFromBulkJSON.OutputIds,
-//				ResourceTypes:             policyFromBulkJSON.ResourceTypes,
-//				Severity:                  policyFromBulkJSON.Severity,
-//				Suppressions:              policyFromBulkJSON.Suppressions,
-//				Tags:                      policyFromBulkJSON.Tags,
-//				Reports:                   policyFromBulkJSON.Reports,
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//}
-//
-//func listPaging(t *testing.T) {
-//	// Page 1
-//	result, err := apiClient.Operations.ListPolicies(&operations.ListPoliciesParams{
-//		PageSize:   aws.Int64(1),
-//		SortBy:     aws.String("id"),
-//		SortDir:    aws.String("descending"),
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	expected := &models.PolicyList{
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(1),
-//			TotalItems: aws.Int64(3),
-//			TotalPages: aws.Int64(3),
-//		},
-//		Policies: []*models.PolicySummary{
-//			{
-//				AutoRemediationID:         policyFromBulkJSON.AutoRemediationID,
-//				AutoRemediationParameters: policyFromBulkJSON.AutoRemediationParameters,
-//				ComplianceStatus:          models.ComplianceStatusPASS,
-//				DisplayName:               policyFromBulkJSON.DisplayName,
-//				Enabled:                   policyFromBulkJSON.Enabled,
-//				ID:                        policyFromBulkJSON.ID,
-//				LastModified:              policyFromBulkJSON.LastModified,
-//				OutputIds:                 policyFromBulkJSON.OutputIds,
-//				ResourceTypes:             policyFromBulkJSON.ResourceTypes,
-//				Severity:                  policyFromBulkJSON.Severity,
-//				Suppressions:              policyFromBulkJSON.Suppressions,
-//				Tags:                      policyFromBulkJSON.Tags,
-//				Reports:                   policyFromBulkJSON.Reports,
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//
-//	// Page 2
-//	result, err = apiClient.Operations.ListPolicies(&operations.ListPoliciesParams{
-//		Page:       aws.Int64(2),
-//		PageSize:   aws.Int64(1),
-//		SortBy:     aws.String("id"),
-//		SortDir:    aws.String("descending"),
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	expected = &models.PolicyList{
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(2),
-//			TotalItems: aws.Int64(3),
-//			TotalPages: aws.Int64(3),
-//		},
-//		Policies: []*models.PolicySummary{
-//			{
-//				AutoRemediationID:         policy.AutoRemediationID,
-//				AutoRemediationParameters: policy.AutoRemediationParameters,
-//				ComplianceStatus:          models.ComplianceStatusPASS,
-//				DisplayName:               policy.DisplayName,
-//				Enabled:                   policy.Enabled,
-//				ID:                        policy.ID,
-//				LastModified:              result.Payload.Policies[0].LastModified, // this gets set
-//				OutputIds:                 policy.OutputIds,
-//				ResourceTypes:             policy.ResourceTypes,
-//				Severity:                  policy.Severity,
-//				Suppressions:              policy.Suppressions,
-//				Tags:                      policy.Tags,
-//				Reports:                   policy.Reports,
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//
-//	// Page 3
-//	result, err = apiClient.Operations.ListPolicies(&operations.ListPoliciesParams{
-//		Page:       aws.Int64(3),
-//		PageSize:   aws.Int64(1),
-//		SortBy:     aws.String("id"),
-//		SortDir:    aws.String("descending"),
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	expected = &models.PolicyList{
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(3),
-//			TotalItems: aws.Int64(3),
-//			TotalPages: aws.Int64(3),
-//		},
-//		Policies: []*models.PolicySummary{
-//			{
-//				AutoRemediationID:         policyFromBulk.AutoRemediationID,
-//				AutoRemediationParameters: policyFromBulk.AutoRemediationParameters,
-//				ComplianceStatus:          models.ComplianceStatusPASS,
-//				DisplayName:               policyFromBulk.DisplayName,
-//				Enabled:                   policyFromBulk.Enabled,
-//				ID:                        policyFromBulk.ID,
-//				LastModified:              policyFromBulk.LastModified,
-//				OutputIds:                 policyFromBulk.OutputIds,
-//				ResourceTypes:             policyFromBulk.ResourceTypes,
-//				Severity:                  policyFromBulk.Severity,
-//				Suppressions:              policyFromBulk.Suppressions,
-//				Tags:                      policyFromBulk.Tags,
-//				Reports:                   policyFromBulk.Reports,
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//}
-//
-//// List rules (not policies)
-//func listRules(t *testing.T) {
-//	result, err := apiClient.Operations.ListRules(&operations.ListRulesParams{
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	expected := &models.RuleList{
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(1),
-//			TotalItems: aws.Int64(1),
-//			TotalPages: aws.Int64(1),
-//		},
-//		Rules: []*models.RuleSummary{
-//			{
-//				DisplayName:  rule.DisplayName,
-//				Enabled:      rule.Enabled,
-//				ID:           rule.ID,
-//				LastModified: result.Payload.Rules[0].LastModified, // this is changed
-//				LogTypes:     rule.LogTypes,
-//				OutputIds:    rule.OutputIds,
-//				Severity:     rule.Severity,
-//				Tags:         rule.Tags,
-//				Reports:      rule.Reports,
-//				Threshold:    rule.Threshold,
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//}
-//
-//// List data models
-//func listDataModels(t *testing.T) {
-//	result, err := apiClient.Operations.ListDataModels(&operations.ListDataModelsParams{
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	expected := &models.DataModelList{
-//		Paging: &models.Paging{
-//			ThisPage:   aws.Int64(1),
-//			TotalItems: aws.Int64(3),
-//			TotalPages: aws.Int64(1),
-//		},
-//		DataModels: []*models.DataModelSummary{
-//			{
-//				Enabled:      dataModel.Enabled,
-//				ID:           dataModel.ID,
-//				LastModified: result.Payload.DataModels[0].LastModified, // this is changed
-//				LogTypes:     dataModel.LogTypes,
-//			},
-//			{
-//				Enabled:      dataModelTwo.Enabled,
-//				ID:           dataModelTwo.ID,
-//				LastModified: result.Payload.DataModels[1].LastModified, // this is changed
-//				LogTypes:     dataModelTwo.LogTypes,
-//			},
-//			{ // bulk upload entry
-//				Enabled:      dataModelFromBulkYML.Enabled,
-//				ID:           dataModelFromBulkYML.ID,
-//				LastModified: result.Payload.DataModels[2].LastModified,
-//				LogTypes:     dataModelFromBulkYML.LogTypes,
-//			},
-//		},
-//	}
-//	assert.Equal(t, expected, result.Payload)
-//}
+func listPolicies(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListPolicies: &models.ListPoliciesInput{},
+	}
+	var result models.ListPoliciesOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListPoliciesOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 3,
+			TotalPages: 1,
+		},
+		Policies: []models.Policy{ // sorted by id
+			*policyFromBulk,     // AWS.CloudTrail.Log.Validation.Enabled
+			*policy,             // Test:Policy
+			*policyFromBulkJSON, // Test:Policy:JSON
+		},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listFiltered(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListPolicies: &models.ListPoliciesInput{
+			Enabled:        aws.Bool(true),
+			HasRemediation: aws.Bool(true),
+			NameContains:   "json", // policyFromBulkJSON only
+			ResourceTypes:  []string{"AWS.S3.Bucket"},
+			Severity:       compliancemodels.SeverityMedium,
+		},
+	}
+	var result models.ListPoliciesOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListPoliciesOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 1,
+			TotalPages: 1,
+		},
+		Policies: []models.Policy{*policyFromBulkJSON},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listPaging(t *testing.T) {
+	t.Parallel()
+	// Page 1
+	input := models.LambdaInput{
+		ListPolicies: &models.ListPoliciesInput{
+			PageSize: 1,
+			SortBy:   "id",
+			SortDir:  "descending",
+		},
+	}
+	var result models.ListPoliciesOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListPoliciesOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 3,
+			TotalPages: 3,
+		},
+		Policies: []models.Policy{*policyFromBulkJSON},
+	}
+	assert.Equal(t, expected, result)
+
+	// Page 2
+	input.ListPolicies.Page = 2
+	result = models.ListPoliciesOutput{}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected = models.ListPoliciesOutput{
+		Paging: models.Paging{
+			ThisPage:   2,
+			TotalItems: 3,
+			TotalPages: 3,
+		},
+		Policies: []models.Policy{*policy},
+	}
+	assert.Equal(t, expected, result)
+
+	// Page 3
+	input.ListPolicies.Page = 3
+	result = models.ListPoliciesOutput{}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected = models.ListPoliciesOutput{
+		Paging: models.Paging{
+			ThisPage:   3,
+			TotalItems: 3,
+			TotalPages: 3,
+		},
+		Policies: []models.Policy{*policyFromBulk},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listProjection(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListPolicies: &models.ListPoliciesInput{
+			// Select only a subset of fields
+			Fields: []string{"id", "displayName"},
+		},
+	}
+	var result models.ListPoliciesOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	// Empty lists/maps will always be initialized in the response
+	emptyPolicy := models.Policy{
+		CoreEntry: models.CoreEntry{
+			Tags: []string{},
+		},
+		PythonDetection: models.PythonDetection{
+			OutputIDs: []string{},
+			Reports:   map[string][]string{},
+			Tests:     []models.UnitTest{},
+		},
+		AutoRemediationParameters: map[string]string{},
+		ResourceTypes:             []string{},
+		Suppressions:              []string{},
+	}
+
+	firstItem := emptyPolicy
+	firstItem.ID = policyFromBulk.ID
+	firstItem.DisplayName = policyFromBulk.DisplayName
+
+	secondItem := emptyPolicy
+	secondItem.ID = policy.ID
+	secondItem.DisplayName = policy.DisplayName
+
+	thirdItem := emptyPolicy
+	thirdItem.ID = policyFromBulkJSON.ID
+	thirdItem.DisplayName = policyFromBulkJSON.DisplayName
+
+	expected := models.ListPoliciesOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 3,
+			TotalPages: 1,
+		},
+		Policies: []models.Policy{firstItem, secondItem, thirdItem},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listRules(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListRules: &models.ListRulesInput{},
+	}
+	var result models.ListRulesOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListRulesOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 1,
+			TotalPages: 1,
+		},
+		Rules: []models.Rule{*rule},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listGlobals(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListGlobals: &models.ListGlobalsInput{},
+	}
+	var result models.ListGlobalsOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListGlobalsOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 1,
+			TotalPages: 1,
+		},
+		Globals: []models.Global{*global},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listDataModels(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListDataModels: &models.ListDataModelsInput{},
+	}
+	var result models.ListDataModelsOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListDataModelsOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 3,
+			TotalPages: 1,
+		},
+		Models: []models.DataModel{
+			*dataModel, *dataModelTwo, *dataModelFromBulkYML,
+		},
+	}
+	assert.Equal(t, expected, result)
+}
+
 //
 //func deleteInvalid(t *testing.T) {
 //	result, err := apiClient.Operations.DeletePolicies(&operations.DeletePoliciesParams{
