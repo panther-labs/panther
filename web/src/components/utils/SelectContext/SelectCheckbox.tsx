@@ -17,33 +17,24 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading, Card } from 'pouncejs';
+import { Checkbox } from 'pouncejs';
+import { useSelect } from './SelectContext';
 
-interface PanelProps {
-  title: string | React.ReactNode;
-  actions?: React.ReactNode;
-  children: React.ReactNode;
+interface SelectCheckboxProps {
+  selectionId: string;
 }
 
-const Panel: React.FC<PanelProps> = ({ title, actions, children }) => {
+const SelectCheckboxComponent: React.FC<SelectCheckboxProps> = ({ selectionId, ...rest }) => {
+  const { checkIfSelected, toggleItem } = useSelect();
+  const isSelected = checkIfSelected(selectionId);
   return (
-    <Card as="section" width={1}>
-      <Flex
-        p={6}
-        borderBottom="1px solid"
-        borderColor={children ? 'navyblue-300' : 'transparent'}
-        justify="space-between"
-        align="center"
-        maxHeight={80}
-      >
-        <Heading size="x-small" as="h4">
-          {title}
-        </Heading>
-        {actions}
-      </Flex>
-      {children && <Box p={6}>{children}</Box>}
-    </Card>
+    <Checkbox
+      checked={isSelected}
+      aria-label={isSelected ? `unselect ${selectionId}` : `select ${selectionId}`}
+      onChange={() => toggleItem(selectionId)}
+      {...rest}
+    />
   );
 };
 
-export default React.memo(Panel);
+export const SelectCheckbox = React.memo(SelectCheckboxComponent);
