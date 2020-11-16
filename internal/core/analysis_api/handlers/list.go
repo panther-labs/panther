@@ -89,6 +89,11 @@ func ListRules(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyRe
 	return handleList(request, typeRule)
 }
 
+// ListDataModels pages through datamodels from a single organization.
+func ListDataModels(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
+	return handleList(request, typeDataModel)
+}
+
 func handleList(request *events.APIGatewayProxyRequest, codeType string) *events.APIGatewayProxyResponse {
 	params, err := parseList(request, codeType)
 	if err != nil {
@@ -114,6 +119,9 @@ func handleList(request *events.APIGatewayProxyRequest, codeType string) *events
 		if codeType == typePolicy {
 			return gatewayapi.MarshalResponse(
 				&models.PolicyList{Paging: paging, Policies: []*models.PolicySummary{}}, http.StatusOK)
+		} else if codeType == typeDataModel {
+			return gatewayapi.MarshalResponse(
+				&models.DataModelList{Paging: paging, DataModels: []*models.DataModelSummary{}}, http.StatusOK)
 		}
 		return gatewayapi.MarshalResponse(
 			&models.RuleList{Paging: paging, Rules: []*models.RuleSummary{}}, http.StatusOK)
@@ -124,6 +132,21 @@ func handleList(request *events.APIGatewayProxyRequest, codeType string) *events
 	result := pagePolicies(policies, params.pageSize, params.page)
 	if codeType == typePolicy {
 		return gatewayapi.MarshalResponse(result, http.StatusOK)
+	} else if codeType == typeDataModel {
+		// convert to DataModelList
+		dataModelResult := &models.DataModelList{
+			Paging:     result.Paging,
+			DataModels: make([]*models.DataModelSummary, len(result.Policies)),
+		}
+		for i, policy := range result.Policies {
+			dataModelResult.DataModels[i] = &models.DataModelSummary{
+				Enabled:      policy.Enabled,
+				ID:           policy.ID,
+				LastModified: policy.LastModified,
+				LogTypes:     policy.ResourceTypes,
+			}
+		}
+		return gatewayapi.MarshalResponse(dataModelResult, http.StatusOK)
 	}
 
 	// Downgrade result to RuleSummary (excludes compliance status, remediations, suppressions)
@@ -189,7 +212,7 @@ func parseList(request *events.APIGatewayProxyRequest, codeType string) (*listPa
 	}
 
 	typeKey := "resourceTypes"
-	if codeType == typeRule {
+	if codeType == typeRule || codeType == typeDataModel {
 		typeKey = "logTypes"
 	}
 	rawTypes := strings.Split(request.QueryStringParameters[typeKey], ",")
@@ -282,6 +305,7 @@ func buildListScan(params *listParams, codeType string) (*dynamodb.ScanInput, er
 		expression.Name("severity"),
 		expression.Name("suppressions"),
 		expression.Name("tags"),
+		expression.Name("type"),
 		expression.Name("threshold"),
 		expression.Name("outputIds"),
 	)
@@ -317,7 +341,8 @@ func buildListScan(params *listParams, codeType string) (*dynamodb.ScanInput, er
 		filter = filter.And(typeFilter)
 	}
 
-	if params.severity != "" {
+	// severity doesn't apply to data models
+	if params.severity != "" && codeType != typeDataModel {
 		filter = filter.And(expression.Equal(
 			expression.Name("severity"), expression.Value(params.severity)))
 	}
@@ -353,8 +378,8 @@ func buildListScan(params *listParams, codeType string) (*dynamodb.ScanInput, er
 func listFiltered(scanInput *dynamodb.ScanInput, params *listParams) ([]*models.PolicySummary, error) {
 	var result []*models.PolicySummary
 	err := scanPages(scanInput, func(item *tableItem) error {
-		if item.Type == typeRule {
-			// Log analysis rules do not have a compliance status
+		if item.Type != typePolicy {
+			// Log analysis rules and data models do not have a compliance status
 			result = append(result, item.PolicySummary(""))
 			return nil
 		}

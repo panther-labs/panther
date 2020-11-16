@@ -38,6 +38,9 @@ type AnalysisType string
 
 const (
 
+	// AnalysisTypeDATAMODEL captures enum value "DATAMODEL"
+	AnalysisTypeDATAMODEL AnalysisType = "DATAMODEL"
+
 	// AnalysisTypeGLOBAL captures enum value "GLOBAL"
 	AnalysisTypeGLOBAL AnalysisType = "GLOBAL"
 
@@ -53,7 +56,7 @@ var analysisTypeEnum []interface{}
 
 func init() {
 	var res []AnalysisType
-	if err := json.Unmarshal([]byte(`["GLOBAL","POLICY","RULE"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["DATAMODEL","GLOBAL","POLICY","RULE"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {

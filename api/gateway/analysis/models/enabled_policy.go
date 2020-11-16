@@ -43,6 +43,9 @@ type EnabledPolicy struct {
 	// id
 	ID ID `json:"id,omitempty"`
 
+	// mappings
+	Mappings DataModelMappings `json:"mappings,omitempty"`
+
 	// output ids
 	OutputIds OutputIds `json:"outputIds,omitempty"`
 
@@ -78,6 +81,10 @@ func (m *EnabledPolicy) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateID(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateMappings(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -156,6 +163,22 @@ func (m *EnabledPolicy) validateID(formats strfmt.Registry) error {
 	if err := m.ID.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("id")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *EnabledPolicy) validateMappings(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Mappings) { // not required
+		return nil
+	}
+
+	if err := m.Mappings.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("mappings")
 		}
 		return err
 	}

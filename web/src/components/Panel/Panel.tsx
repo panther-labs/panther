@@ -20,8 +20,9 @@ import React from 'react';
 import { Box, Flex, Heading, Card } from 'pouncejs';
 
 interface PanelProps {
-  title: string;
+  title: string | React.ReactNode;
   actions?: React.ReactNode;
+  children: React.ReactNode;
 }
 
 const Panel: React.FC<PanelProps> = ({ title, actions, children }) => {
@@ -45,4 +46,4 @@ const Panel: React.FC<PanelProps> = ({ title, actions, children }) => {
   );
 };
 
-export default Panel;
+export default React.memo(Panel);

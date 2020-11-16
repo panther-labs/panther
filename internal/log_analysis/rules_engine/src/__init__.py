@@ -16,6 +16,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from collections.abc import Mapping
 from typing import Any, Dict, Optional, List
 
 
@@ -28,7 +29,7 @@ class EngineResult:
     log_type: str
     dedup: str
     dedup_period_mins: int
-    event: Dict[str, Any]
+    event: Mapping
     # error_message will be populated only if the rule threw an exception
     error_message: Optional[str] = None
     rule_tags: List[str] = field(default_factory=list)

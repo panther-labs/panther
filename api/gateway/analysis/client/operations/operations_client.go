@@ -47,6 +47,8 @@ type Client struct {
 type ClientService interface {
 	BulkUpload(params *BulkUploadParams) (*BulkUploadOK, error)
 
+	CreateDataModel(params *CreateDataModelParams) (*CreateDataModelCreated, error)
+
 	CreateGlobal(params *CreateGlobalParams) (*CreateGlobalCreated, error)
 
 	CreatePolicy(params *CreatePolicyParams) (*CreatePolicyCreated, error)
@@ -57,6 +59,8 @@ type ClientService interface {
 
 	DeletePolicies(params *DeletePoliciesParams) (*DeletePoliciesOK, error)
 
+	GetDataModel(params *GetDataModelParams) (*GetDataModelOK, error)
+
 	GetEnabledPolicies(params *GetEnabledPoliciesParams) (*GetEnabledPoliciesOK, error)
 
 	GetGlobal(params *GetGlobalParams) (*GetGlobalOK, error)
@@ -65,11 +69,15 @@ type ClientService interface {
 
 	GetRule(params *GetRuleParams) (*GetRuleOK, error)
 
+	ListDataModels(params *ListDataModelsParams) (*ListDataModelsOK, error)
+
 	ListGlobals(params *ListGlobalsParams) (*ListGlobalsOK, error)
 
 	ListPolicies(params *ListPoliciesParams) (*ListPoliciesOK, error)
 
 	ListRules(params *ListRulesParams) (*ListRulesOK, error)
+
+	ModifyDataModel(params *ModifyDataModelParams) (*ModifyDataModelOK, error)
 
 	ModifyGlobal(params *ModifyGlobalParams) (*ModifyGlobalOK, error)
 
@@ -117,6 +125,40 @@ func (a *Client) BulkUpload(params *BulkUploadParams) (*BulkUploadOK, error) {
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for BulkUpload: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  CreateDataModel creates a new data model module
+*/
+func (a *Client) CreateDataModel(params *CreateDataModelParams) (*CreateDataModelCreated, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewCreateDataModelParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "CreateDataModel",
+		Method:             "POST",
+		PathPattern:        "/datamodel",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &CreateDataModelReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*CreateDataModelCreated)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for CreateDataModel: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
@@ -291,7 +333,41 @@ func (a *Client) DeletePolicies(params *DeletePoliciesParams) (*DeletePoliciesOK
 }
 
 /*
-  GetEnabledPolicies lists all enabled rules policies for a customer account for backend processing
+  GetDataModel gets data model details
+*/
+func (a *Client) GetDataModel(params *GetDataModelParams) (*GetDataModelOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetDataModelParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "GetDataModel",
+		Method:             "GET",
+		PathPattern:        "/datamodel",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &GetDataModelReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetDataModelOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetDataModel: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  GetEnabledPolicies lists all enabled rules policies datamodels for a customer account for backend processing
 */
 func (a *Client) GetEnabledPolicies(params *GetEnabledPoliciesParams) (*GetEnabledPoliciesOK, error) {
 	// TODO: Validate the params before sending
@@ -427,6 +503,40 @@ func (a *Client) GetRule(params *GetRuleParams) (*GetRuleOK, error) {
 }
 
 /*
+  ListDataModels pages through data models in a customer s account
+*/
+func (a *Client) ListDataModels(params *ListDataModelsParams) (*ListDataModelsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewListDataModelsParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "ListDataModels",
+		Method:             "GET",
+		PathPattern:        "/datamodel/list",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &ListDataModelsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*ListDataModelsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for ListDataModels: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
   ListGlobals pages through globals in a customer s account
 */
 func (a *Client) ListGlobals(params *ListGlobalsParams) (*ListGlobalsOK, error) {
@@ -525,6 +635,40 @@ func (a *Client) ListRules(params *ListRulesParams) (*ListRulesOK, error) {
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for ListRules: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+  ModifyDataModel modifies an existing data model
+*/
+func (a *Client) ModifyDataModel(params *ModifyDataModelParams) (*ModifyDataModelOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewModifyDataModelParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "ModifyDataModel",
+		Method:             "POST",
+		PathPattern:        "/datamodel/update",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &ModifyDataModelReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*ModifyDataModelOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for ModifyDataModel: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

@@ -35,6 +35,11 @@ import (
 // swagger:model BulkUploadResult
 type BulkUploadResult struct {
 
+	// modified data models
+	// Required: true
+	// Minimum: 0
+	ModifiedDataModels *int64 `json:"modifiedDataModels"`
+
 	// modified globals
 	// Required: true
 	// Minimum: 0
@@ -50,6 +55,11 @@ type BulkUploadResult struct {
 	// Minimum: 0
 	ModifiedRules *int64 `json:"modifiedRules"`
 
+	// new data models
+	// Required: true
+	// Minimum: 0
+	NewDataModels *int64 `json:"newDataModels"`
+
 	// new globals
 	// Required: true
 	// Minimum: 0
@@ -64,6 +74,11 @@ type BulkUploadResult struct {
 	// Required: true
 	// Minimum: 0
 	NewRules *int64 `json:"newRules"`
+
+	// total data models
+	// Required: true
+	// Minimum: 0
+	TotalDataModels *int64 `json:"totalDataModels"`
 
 	// total globals
 	// Required: true
@@ -85,6 +100,10 @@ type BulkUploadResult struct {
 func (m *BulkUploadResult) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateModifiedDataModels(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateModifiedGlobals(formats); err != nil {
 		res = append(res, err)
 	}
@@ -97,6 +116,10 @@ func (m *BulkUploadResult) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateNewDataModels(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateNewGlobals(formats); err != nil {
 		res = append(res, err)
 	}
@@ -106,6 +129,10 @@ func (m *BulkUploadResult) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateNewRules(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateTotalDataModels(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -124,6 +151,19 @@ func (m *BulkUploadResult) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *BulkUploadResult) validateModifiedDataModels(formats strfmt.Registry) error {
+
+	if err := validate.Required("modifiedDataModels", "body", m.ModifiedDataModels); err != nil {
+		return err
+	}
+
+	if err := validate.MinimumInt("modifiedDataModels", "body", int64(*m.ModifiedDataModels), 0, false); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -166,6 +206,19 @@ func (m *BulkUploadResult) validateModifiedRules(formats strfmt.Registry) error 
 	return nil
 }
 
+func (m *BulkUploadResult) validateNewDataModels(formats strfmt.Registry) error {
+
+	if err := validate.Required("newDataModels", "body", m.NewDataModels); err != nil {
+		return err
+	}
+
+	if err := validate.MinimumInt("newDataModels", "body", int64(*m.NewDataModels), 0, false); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *BulkUploadResult) validateNewGlobals(formats strfmt.Registry) error {
 
 	if err := validate.Required("newGlobals", "body", m.NewGlobals); err != nil {
@@ -199,6 +252,19 @@ func (m *BulkUploadResult) validateNewRules(formats strfmt.Registry) error {
 	}
 
 	if err := validate.MinimumInt("newRules", "body", int64(*m.NewRules), 0, false); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *BulkUploadResult) validateTotalDataModels(formats strfmt.Registry) error {
+
+	if err := validate.Required("totalDataModels", "body", m.TotalDataModels); err != nil {
+		return err
+	}
+
+	if err := validate.MinimumInt("totalDataModels", "body", int64(*m.TotalDataModels), 0, false); err != nil {
 		return err
 	}
 
