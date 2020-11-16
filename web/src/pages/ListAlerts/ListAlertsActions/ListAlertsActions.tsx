@@ -15,35 +15,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 import React from 'react';
-import { Box, Flex, Heading, Card } from 'pouncejs';
+import { useSelect } from 'Components/utils/SelectContext';
+import ListAlertSelection from '../ListAlertSelection';
+import ListAlertFilters from '../ListAlertFilters';
 
-interface PanelProps {
-  title: string | React.ReactNode;
-  actions?: React.ReactNode;
-  children: React.ReactNode;
-}
-
-const Panel: React.FC<PanelProps> = ({ title, actions, children }) => {
-  return (
-    <Card as="section" width={1}>
-      <Flex
-        p={6}
-        borderBottom="1px solid"
-        borderColor={children ? 'navyblue-300' : 'transparent'}
-        justify="space-between"
-        align="center"
-        maxHeight={80}
-      >
-        <Heading size="x-small" as="h4">
-          {title}
-        </Heading>
-        {actions}
-      </Flex>
-      {children && <Box p={6}>{children}</Box>}
-    </Card>
-  );
+const ListAlertsActions: React.FC = () => {
+  const { selection } = useSelect();
+  return selection.length ? <ListAlertSelection /> : <ListAlertFilters />;
 };
 
-export default React.memo(Panel);
+export default React.memo(ListAlertsActions);

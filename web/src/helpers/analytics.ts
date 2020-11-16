@@ -75,6 +75,7 @@ export enum EventEnum {
   PickedLogSource = 'Picked Log Source to created',
   InvitedUser = 'Invited user',
   UpdatedAlertStatus = 'Updated Alert Status',
+  BulkUpdatedAlertStatus = 'Bulk Updated Alert Status',
 }
 
 export enum SrcEnum {
@@ -133,10 +134,18 @@ interface InvitedUserEvent {
   src: SrcEnum.Users;
 }
 
-interface UpdatedAlertStatus {
-  event: EventEnum.UpdatedAlertStatus;
+interface AlertStatusEvents {
+  event: EventEnum.UpdatedAlertStatus | EventEnum.BulkUpdatedAlertStatus;
   src: SrcEnum.Alerts;
   data: Pick<AlertSummaryFull, 'status' | 'severity'>;
+}
+
+interface UpdatedAlertStatus extends AlertStatusEvents {
+  event: EventEnum.UpdatedAlertStatus;
+}
+
+interface BulkUpdatedAlertStatus extends AlertStatusEvents {
+  event: EventEnum.BulkUpdatedAlertStatus;
 }
 
 type TrackEvent =
@@ -148,7 +157,8 @@ type TrackEvent =
   | PickedDestinationEvent
   | PickedLogSourceEvent
   | InvitedUserEvent
-  | UpdatedAlertStatus;
+  | UpdatedAlertStatus
+  | BulkUpdatedAlertStatus;
 
 export const trackEvent = (payload: TrackEvent) => {
   evaluateTracking(payload.event, {
