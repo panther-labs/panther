@@ -301,16 +301,14 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ListGlobals", listGlobals)
 		t.Run("ListDataModels", listDataModels)
 	})
-	//
-	//	t.Run("Modify", func(t *testing.T) {
-	//		t.Run("ModifyInvalid", modifyInvalid)
-	//		t.Run("ModifyNotFound", modifyNotFound)
-	//		t.Run("ModifySuccess", modifySuccess)
-	//		t.Run("ModifyRule", modifyRule)
-	//		t.Run("ModifyGlobal", modifyGlobal)
-	//		t.Run("ModifyDataModelSuccess", modifyDataModelSuccess)
-	//		t.Run("ModifyDataModelFail", modifyDataModelFail)
-	//	})
+
+	t.Run("Modify", func(t *testing.T) {
+		t.Run("ModifyNotFound", modifyNotFound)
+		t.Run("ModifySuccess", modifySuccess)
+		t.Run("ModifyRule", modifyRule)
+		t.Run("ModifyGlobal", modifyGlobal)
+		t.Run("ModifyDataModel", modifyDataModel)
+	})
 	//
 	//	t.Run("Suppress", func(t *testing.T) {
 	//		t.Run("SuppressNotFound", suppressNotFound)
@@ -1297,310 +1295,209 @@ func getRuleWrongType(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, statusCode)
 }
 
-//
-//func modifyInvalid(t *testing.T) {
-//	result, err := apiClient.Operations.ModifyPolicy(&operations.ModifyPolicyParams{
-//		// missing fields
-//		Body:       &models.UpdatePolicy{},
-//		HTTPClient: httpClient,
-//	})
-//	assert.Nil(t, result)
-//	require.Error(t, err)
-//	require.IsType(t, &operations.ModifyPolicyBadRequest{}, err)
-//}
-//
-//func modifyNotFound(t *testing.T) {
-//	result, err := apiClient.Operations.ModifyPolicy(&operations.ModifyPolicyParams{
-//		Body: &models.UpdatePolicy{
-//			Body:     "def policy(resource): return False",
-//			Enabled:  policy.Enabled,
-//			ID:       "DOES.NOT.EXIST",
-//			Severity: policy.Severity,
-//			UserID:   userID,
-//		},
-//		HTTPClient: httpClient,
-//	})
-//	assert.Nil(t, result)
-//	require.Error(t, err)
-//	require.IsType(t, &operations.ModifyPolicyNotFound{}, err)
-//}
-//
-//func modifySuccess(t *testing.T) {
-//	// things we will change
-//	expectedPolicy := *policy
-//	expectedPolicy.Description = "A new and modified description!"
-//	expectedPolicy.Tests = []*models.UnitTest{
-//		{
-//			Name:           "This will be True",
-//			ExpectedResult: true,
-//			Resource:       `{}`,
-//		},
-//	}
-//	result, err := apiClient.Operations.ModifyPolicy(&operations.ModifyPolicyParams{
-//		Body: &models.UpdatePolicy{
-//			AutoRemediationID:         policy.AutoRemediationID,
-//			AutoRemediationParameters: policy.AutoRemediationParameters,
-//			Body:                      policy.Body,
-//			Description:               expectedPolicy.Description,
-//			DisplayName:               policy.DisplayName,
-//			Enabled:                   policy.Enabled,
-//			ID:                        policy.ID,
-//			ResourceTypes:             policy.ResourceTypes,
-//			Severity:                  policy.Severity,
-//			Suppressions:              policy.Suppressions,
-//			Tags:                      policy.Tags,
-//			OutputIds:                 policy.OutputIds,
-//			Tests:                     expectedPolicy.Tests,
-//			UserID:                    userID,
-//		},
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	// these get assigned
-//	expectedPolicy.CreatedBy = result.Payload.CreatedBy
-//	expectedPolicy.LastModifiedBy = result.Payload.LastModifiedBy
-//	expectedPolicy.CreatedAt = result.Payload.CreatedAt
-//	expectedPolicy.LastModified = result.Payload.LastModified
-//	expectedPolicy.VersionID = result.Payload.VersionID
-//	assert.Equal(t, &expectedPolicy, result.Payload)
-//}
-//
-//// Modify a rule
-//func modifyRule(t *testing.T) {
-//	// these are changes
-//	expectedRule := *rule
-//	expectedRule.Description = "SkyNet integration"
-//	expectedRule.DedupPeriodMinutes = 60
-//	expectedRule.Threshold = rule.Threshold + 1
-//
-//	result, err := apiClient.Operations.ModifyRule(&operations.ModifyRuleParams{
-//		Body: &models.UpdateRule{
-//			Body:               expectedRule.Body,
-//			Description:        expectedRule.Description,
-//			Enabled:            expectedRule.Enabled,
-//			ID:                 expectedRule.ID,
-//			LogTypes:           expectedRule.LogTypes,
-//			Severity:           expectedRule.Severity,
-//			UserID:             userID,
-//			DedupPeriodMinutes: expectedRule.DedupPeriodMinutes,
-//			Tags:               expectedRule.Tags,
-//			OutputIds:          expectedRule.OutputIds,
-//			Threshold:          expectedRule.Threshold,
-//		},
-//		HTTPClient: httpClient,
-//	})
-//
-//	require.NoError(t, err)
-//
-//	require.NoError(t, result.Payload.Validate(nil))
-//	assert.NotZero(t, result.Payload.CreatedAt)
-//	assert.NotZero(t, result.Payload.LastModified)
-//
-//	expectedRule.CreatedBy = result.Payload.CreatedBy
-//	expectedRule.LastModifiedBy = result.Payload.LastModifiedBy
-//	expectedRule.CreatedAt = result.Payload.CreatedAt
-//	expectedRule.LastModified = result.Payload.LastModified
-//	expectedRule.VersionID = result.Payload.VersionID
-//	assert.Equal(t, &expectedRule, result.Payload)
-//}
-//
-//// Modify a dataModel - success
-//func modifyDataModelSuccess(t *testing.T) {
-//	dataModel.Description = "A new description"
-//	dataModel.Body = "def get_source_ip(event): return src_ip\n"
-//
-//	result, err := apiClient.Operations.ModifyDataModel(&operations.ModifyDataModelParams{
-//		Body: &models.UpdateDataModel{
-//			Body:        dataModel.Body,
-//			Description: dataModel.Description,
-//			Enabled:     dataModel.Enabled,
-//			ID:          dataModel.ID,
-//			LogTypes:    dataModel.LogTypes,
-//			Mappings:    dataModel.Mappings,
-//			UserID:      userID,
-//		},
-//		HTTPClient: httpClient,
-//	})
-//
-//	require.NoError(t, err)
-//
-//	require.NoError(t, result.Payload.Validate(nil))
-//	assert.NotZero(t, result.Payload.CreatedAt)
-//	assert.NotZero(t, result.Payload.LastModified)
-//
-//	dataModel.LastModified = result.Payload.LastModified
-//	dataModel.VersionID = result.Payload.VersionID
-//	assert.Equal(t, dataModel, result.Payload)
-//
-//	// verify can update logtypes to overlap if enabled is false
-//	originalLogTypes := dataModel.LogTypes
-//	dataModel.Enabled = false
-//	dataModel.LogTypes = dataModelTwo.LogTypes
-//	result, err = apiClient.Operations.ModifyDataModel(&operations.ModifyDataModelParams{
-//		Body: &models.UpdateDataModel{
-//			Body:        dataModel.Body,
-//			Description: dataModel.Description,
-//			Enabled:     dataModel.Enabled,
-//			ID:          dataModel.ID,
-//			LogTypes:    dataModel.LogTypes,
-//			Mappings:    dataModel.Mappings,
-//			UserID:      userID,
-//		},
-//		HTTPClient: httpClient,
-//	})
-//
-//	require.NoError(t, err)
-//
-//	require.NoError(t, result.Payload.Validate(nil))
-//	assert.NotZero(t, result.Payload.CreatedAt)
-//	assert.NotZero(t, result.Payload.LastModified)
-//
-//	dataModel.LastModified = result.Payload.LastModified
-//	dataModel.VersionID = result.Payload.VersionID
-//	assert.Equal(t, dataModel, result.Payload)
-//
-//	// change logtype back
-//	dataModel.Enabled = true
-//	dataModel.LogTypes = originalLogTypes
-//	result, err = apiClient.Operations.ModifyDataModel(&operations.ModifyDataModelParams{
-//		Body: &models.UpdateDataModel{
-//			Body:        dataModel.Body,
-//			Description: dataModel.Description,
-//			Enabled:     dataModel.Enabled,
-//			ID:          dataModel.ID,
-//			LogTypes:    dataModel.LogTypes,
-//			Mappings:    dataModel.Mappings,
-//			UserID:      userID,
-//		},
-//		HTTPClient: httpClient,
-//	})
-//
-//	require.NoError(t, err)
-//
-//	require.NoError(t, result.Payload.Validate(nil))
-//	assert.NotZero(t, result.Payload.CreatedAt)
-//	assert.NotZero(t, result.Payload.LastModified)
-//
-//	dataModel.LastModified = result.Payload.LastModified
-//	dataModel.VersionID = result.Payload.VersionID
-//	assert.Equal(t, dataModel, result.Payload)
-//}
-//
-//// Modify a dataModel - fail
-//func modifyDataModelFail(t *testing.T) {
-//	// Validate updating the logtypes that would create two data models
-//	// that cover the same logtypes fails
-//	result, err := apiClient.Operations.ModifyDataModel(&operations.ModifyDataModelParams{
-//		Body: &models.UpdateDataModel{
-//			Body:        dataModel.Body,
-//			Description: dataModel.Description,
-//			Enabled:     dataModel.Enabled,
-//			ID:          dataModel.ID,
-//			LogTypes:    dataModelTwo.LogTypes,
-//			Mappings:    dataModel.Mappings,
-//			UserID:      userID,
-//		},
-//		HTTPClient: httpClient,
-//	})
-//
-//	assert.Nil(t, result)
-//	require.Error(t, err)
-//	require.IsType(t, &operations.ModifyDataModelBadRequest{}, err)
-//
-//	/* this check can be enabled if/when we support multiple logtypes per data model
-//	// check that enabling overlapping logtype will fail
-//	// first modify DataModel to overlap
-//	originalLogTypes := dataModel.LogTypes
-//	dataModel.Enabled = false
-//	dataModel.LogTypes = append(dataModel.LogTypes, dataModelTwo.LogTypes[0])
-//	result, err = apiClient.Operations.ModifyDataModel(&operations.ModifyDataModelParams{
-//		Body: &models.UpdateDataModel{
-//			Body:        dataModel.Body,
-//			Description: dataModel.Description,
-//			Enabled:     dataModel.Enabled,
-//			ID:          dataModel.ID,
-//			LogTypes:    dataModel.LogTypes,
-//			Mappings:    dataModel.Mappings,
-//			UserID:      userID,
-//		},
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	assert.ElementsMatch(t, dataModel.LogTypes, result.Payload.LogTypes)
-//
-//	// then try to update the enabled status
-//	dataModel.Enabled = true
-//	result, err = apiClient.Operations.ModifyDataModel(&operations.ModifyDataModelParams{
-//		Body: &models.UpdateDataModel{
-//			Body:        dataModel.Body,
-//			Description: dataModel.Description,
-//			Enabled:     dataModel.Enabled,
-//			ID:          dataModel.ID,
-//			LogTypes:    dataModel.LogTypes,
-//			Mappings:    dataModel.Mappings,
-//			UserID:      userID,
-//		},
-//		HTTPClient: httpClient,
-//	})
-//	assert.Nil(t, result)
-//	require.Error(t, err)
-//	require.IsType(t, &operations.ModifyDataModelBadRequest{}, err)
-//
-//	// cleanup: change logtype back
-//	dataModel.Enabled = true
-//	dataModel.LogTypes = originalLogTypes
-//	result, err = apiClient.Operations.ModifyDataModel(&operations.ModifyDataModelParams{
-//		Body: &models.UpdateDataModel{
-//			Body:        dataModel.Body,
-//			Description: dataModel.Description,
-//			Enabled:     dataModel.Enabled,
-//			ID:          dataModel.ID,
-//			LogTypes:    dataModel.LogTypes,
-//			Mappings:    dataModel.Mappings,
-//			UserID:      userID,
-//		},
-//		HTTPClient: httpClient,
-//	})
-//
-//	require.NoError(t, err)
-//
-//	require.NoError(t, result.Payload.Validate(nil))
-//	assert.NotZero(t, result.Payload.CreatedAt)
-//	assert.NotZero(t, result.Payload.LastModified)
-//
-//	dataModel.LastModified = result.Payload.LastModified
-//	dataModel.VersionID = result.Payload.VersionID
-//	assert.Equal(t, dataModel, result.Payload)
-//	*/
-//}
-//
-//// Modify a global
-//func modifyGlobal(t *testing.T) {
-//	global.Description = "Now returns False"
-//	global.Body = "def helper_is_true(truthy): return truthy is False\n"
-//
-//	result, err := apiClient.Operations.ModifyGlobal(&operations.ModifyGlobalParams{
-//		Body: &models.UpdateGlobal{
-//			Body:        global.Body,
-//			Description: global.Description,
-//			ID:          global.ID,
-//			UserID:      userID,
-//		},
-//		HTTPClient: httpClient,
-//	})
-//
-//	require.NoError(t, err)
-//
-//	require.NoError(t, result.Payload.Validate(nil))
-//	assert.NotZero(t, result.Payload.CreatedAt)
-//	assert.NotZero(t, result.Payload.LastModified)
-//
-//	global.LastModified = result.Payload.LastModified
-//	global.VersionID = result.Payload.VersionID
-//	assert.Equal(t, global, result.Payload)
-//}
-//
+func modifyNotFound(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		UpdatePolicy: &models.UpdatePolicyInput{
+			CoreEntryUpdate: models.CoreEntryUpdate{
+				Body:   "def policy(resource): return False",
+				ID:     "DOES.NOT.EXIST",
+				UserID: userID,
+			},
+			PythonDetection: models.PythonDetection{
+				Enabled:  policy.Enabled,
+				Severity: policy.Severity,
+			},
+		},
+	}
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.Error(t, err)
+	assert.Equal(t, http.StatusNotFound, statusCode)
+}
+
+func modifySuccess(t *testing.T) {
+	t.Parallel()
+	// things we will change
+	expectedPolicy := *policy
+	expectedPolicy.Description = "A new and modified description!"
+	expectedPolicy.Tests = []models.UnitTest{
+		{
+			Name:           "This will be True",
+			ExpectedResult: true,
+			Resource:       `{}`,
+		},
+	}
+	input := models.LambdaInput{
+		UpdatePolicy: &models.UpdatePolicyInput{
+			CoreEntryUpdate: models.CoreEntryUpdate{
+				Body:        policy.Body,
+				Description: expectedPolicy.Description,
+				ID:          policy.ID,
+				Tags:        policy.Tags,
+				UserID:      userID,
+			},
+			PythonDetection: models.PythonDetection{
+				DisplayName: policy.DisplayName,
+				Enabled:     policy.Enabled,
+				OutputIDs:   policy.OutputIDs,
+				Reference:   policy.Reference,
+				Reports:     policy.Reports,
+				Runbook:     policy.Runbook,
+				Severity:    policy.Severity,
+				Tests:       expectedPolicy.Tests,
+			},
+			AutoRemediationID:         policy.AutoRemediationID,
+			AutoRemediationParameters: policy.AutoRemediationParameters,
+			ResourceTypes:             policy.ResourceTypes,
+			Suppressions:              policy.Suppressions,
+		},
+	}
+	var result models.Policy
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	// these get assigned
+	assert.NotEmpty(t, result.LastModified)
+	assert.NotEmpty(t, result.VersionID)
+	expectedPolicy.LastModified = result.LastModified
+	expectedPolicy.VersionID = result.VersionID
+	assert.Equal(t, expectedPolicy, result)
+}
+
+// Modify a rule
+func modifyRule(t *testing.T) {
+	t.Parallel()
+	// these are changes
+	expectedRule := *rule
+	expectedRule.Description = "SkyNet integration"
+	expectedRule.DedupPeriodMinutes = 60
+	expectedRule.Threshold = rule.Threshold + 1
+
+	input := models.LambdaInput{
+		UpdateRule: &models.UpdateRuleInput{
+			CoreEntryUpdate: models.CoreEntryUpdate{
+				Body:        rule.Body,
+				Description: expectedRule.Description,
+				ID:          rule.ID,
+				Tags:        rule.Tags,
+				UserID:      userID,
+			},
+			PythonDetection: rule.PythonDetection,
+
+			DedupPeriodMinutes: expectedRule.DedupPeriodMinutes,
+			LogTypes:           rule.LogTypes,
+			Threshold:          expectedRule.Threshold,
+		},
+	}
+	var result models.Rule
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	assert.NotEmpty(t, result.LastModified)
+	assert.NotEmpty(t, result.VersionID)
+
+	expectedRule.LastModified = result.LastModified
+	expectedRule.VersionID = result.VersionID
+	assert.Equal(t, expectedRule, result)
+}
+
+func modifyDataModel(t *testing.T) {
+	t.Parallel()
+	dataModel.Description = "A new description"
+	dataModel.Body = "def get_source_ip(event): return src_ip\n"
+
+	input := models.LambdaInput{
+		UpdateDataModel: &models.UpdateDataModelInput{
+			Body:        dataModel.Body,
+			Description: dataModel.Description,
+			DisplayName: dataModel.DisplayName,
+			Enabled:     dataModel.Enabled,
+			ID:          dataModel.ID,
+			LogTypes:    dataModel.LogTypes,
+			Mappings:    dataModel.Mappings,
+			UserID:      userID,
+		},
+	}
+	var result models.DataModel
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	assert.NotEmpty(t, result.LastModified)
+	assert.NotEmpty(t, result.VersionID)
+
+	dataModel.LastModified = result.LastModified
+	dataModel.VersionID = result.VersionID
+	assert.Equal(t, *dataModel, result)
+
+	// verify can update logtypes to overlap if enabled is false
+	originalLogTypes := dataModel.LogTypes
+	dataModel.Enabled = false
+	dataModel.LogTypes = dataModelTwo.LogTypes
+
+	input.UpdateDataModel.Enabled = dataModel.Enabled
+	input.UpdateDataModel.LogTypes = dataModel.LogTypes
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	dataModel.LastModified = result.LastModified
+	dataModel.VersionID = result.VersionID
+	assert.Equal(t, *dataModel, result)
+
+	// change logtype back
+	dataModel.Enabled = true
+	dataModel.LogTypes = originalLogTypes
+	input.UpdateDataModel.Enabled = dataModel.Enabled
+	input.UpdateDataModel.LogTypes = dataModel.LogTypes
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	dataModel.LastModified = result.LastModified
+	dataModel.VersionID = result.VersionID
+	assert.Equal(t, *dataModel, result)
+
+	// Updating the logtypes that would create two data models
+	// that cover the same logtypes fails
+	input.UpdateDataModel.LogTypes = dataModelTwo.LogTypes
+	statusCode, err = apiClient.Invoke(&input, nil)
+	require.Error(t, err)
+	assert.Equal(t, http.StatusBadRequest, statusCode)
+}
+
+// Modify a global
+func modifyGlobal(t *testing.T) {
+	t.Parallel()
+	global.Description = "Now returns False"
+	global.Body = "def helper_is_true(truthy): return truthy is False\n"
+
+	input := models.LambdaInput{
+		UpdateGlobal: &models.UpdateGlobalInput{
+			CoreEntryUpdate: models.CoreEntryUpdate{
+				Body:        global.Body,
+				Description: global.Description,
+				ID:          global.ID,
+				Tags:        global.Tags,
+				UserID:      userID,
+			},
+		},
+	}
+	var result models.Global
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	assert.NotEmpty(t, result.LastModified)
+	assert.NotEmpty(t, result.VersionID)
+
+	global.LastModified = result.LastModified
+	global.VersionID = result.VersionID
+	assert.Equal(t, *global, result)
+}
+
 //func suppressNotFound(t *testing.T) {
 //	result, err := apiClient.Operations.Suppress(&operations.SuppressParams{
 //		Body: &models.Suppress{
@@ -1635,7 +1532,7 @@ func getRuleWrongType(t *testing.T) {
 //	// It was added to the existing suppressions
 //	assert.Equal(t, models.Suppressions{"new-suppression", "panther.*"}, getResult.Payload.Suppressions)
 //}
-//
+
 func bulkUploadInvalid(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{

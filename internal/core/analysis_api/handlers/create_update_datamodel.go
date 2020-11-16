@@ -131,11 +131,14 @@ func isSingleDataModelEnabled(input *models.UpdateDataModelInput) (bool, error) 
 	}
 
 	enabledFilter := expression.Equal(expression.Name("enabled"), expression.Value(true))
+	idFilter := expression.NotEqual(expression.Name("id"), expression.Value(input.ID))
 	logTypeFilter := expression.AttributeNotExists(expression.Name("resourceTypes"))
 	for _, typeName := range input.LogTypes {
 		logTypeFilter = logTypeFilter.Or(expression.Contains(expression.Name("resourceTypes"), typeName))
 	}
-	scanInput, err := buildScanInput(models.TypeDataModel, []string{"id"}, expression.And(enabledFilter, logTypeFilter))
+
+	scanInput, err := buildScanInput(
+		models.TypeDataModel, []string{"id"}, expression.And(enabledFilter, idFilter, logTypeFilter))
 
 	if err != nil {
 		return false, err
