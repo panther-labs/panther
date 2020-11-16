@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -240,15 +241,6 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("TestPolicyMixed", testPolicyMixed)
 	})
 
-	// These tests must be run before any data is input
-	// TODO - maybe just move this to the delete test
-	t.Run("TestEmpty", func(t *testing.T) {
-		t.Run("ListDataModelsEmpty", testListDataModelsEmpty)
-		t.Run("ListGlobalsEmpty", testListGlobalsEmpty)
-		t.Run("ListPoliciesEmpty", testListPoliciesEmpty)
-		t.Run("ListRulesEmpty", testListRulesEmpty)
-	})
-
 	t.Run("Create", func(t *testing.T) {
 		t.Run("CreatePolicyInvalid", createInvalid)
 		t.Run("CreatePolicySuccess", createPolicySuccess)
@@ -309,20 +301,19 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ModifyGlobal", modifyGlobal)
 		t.Run("ModifyDataModel", modifyDataModel)
 	})
-	//
-	//	t.Run("Suppress", func(t *testing.T) {
-	//		t.Run("SuppressNotFound", suppressNotFound)
-	//		t.Run("SuppressSuccess", suppressSuccess)
-	//	})
-	//
-	//	t.Run("Delete", func(t *testing.T) {
-	//		t.Run("DeleteInvalid", deleteInvalid)
-	//		t.Run("DeleteNotExists", deleteNotExists)
-	//		t.Run("DeleteSuccess", deleteSuccess)
-	//		t.Run("DeleteDataModel", deleteDataModel)
-	//		t.Run("DeleteGlobal", deleteGlobal)
-	//	})
-	//}
+
+	t.Run("Suppress", func(t *testing.T) {
+		t.Run("SuppressNotFound", suppressNotFound)
+		t.Run("SuppressSuccess", suppressSuccess)
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		t.Run("DeleteNotExists", deleteNotExists)
+		t.Run("DeletePolicies", deletePolicies)
+		t.Run("DeleteRules", deleteRules)
+		t.Run("DeleteDataModels", deleteDataModels)
+		t.Run("DeleteGlobals", deleteGlobals)
+	})
 }
 
 func testPolicyPass(t *testing.T) {
@@ -599,62 +590,6 @@ func testPolicyMixed(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
-func testListDataModelsEmpty(t *testing.T) {
-	t.Parallel()
-	input := models.LambdaInput{
-		ListDataModels: &models.ListDataModelsInput{},
-	}
-	var result models.ListDataModelsOutput
-
-	expected := models.ListDataModelsOutput{Models: []models.DataModel{}}
-	statusCode, err := apiClient.Invoke(&input, &result)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, statusCode)
-	assert.Equal(t, expected, result)
-}
-
-func testListGlobalsEmpty(t *testing.T) {
-	t.Parallel()
-	input := models.LambdaInput{
-		ListGlobals: &models.ListGlobalsInput{},
-	}
-	var result models.ListGlobalsOutput
-
-	expected := models.ListGlobalsOutput{Globals: []models.Global{}}
-	statusCode, err := apiClient.Invoke(&input, &result)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, statusCode)
-	assert.Equal(t, expected, result)
-}
-
-func testListPoliciesEmpty(t *testing.T) {
-	t.Parallel()
-	input := models.LambdaInput{
-		ListPolicies: &models.ListPoliciesInput{},
-	}
-	var result models.ListPoliciesOutput
-
-	expected := models.ListPoliciesOutput{Policies: []models.Policy{}}
-	statusCode, err := apiClient.Invoke(&input, &result)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, statusCode)
-	assert.Equal(t, expected, result)
-}
-
-func testListRulesEmpty(t *testing.T) {
-	t.Parallel()
-	input := models.LambdaInput{
-		ListRules: &models.ListRulesInput{},
-	}
-	var result models.ListRulesOutput
-
-	expected := models.ListRulesOutput{Rules: []models.Rule{}}
-	statusCode, err := apiClient.Invoke(&input, &result)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, statusCode)
-	assert.Equal(t, expected, result)
-}
-
 func createInvalid(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
@@ -713,7 +648,7 @@ func createPolicySuccess(t *testing.T) {
 func saveEnabledPolicyFailingTests(t *testing.T) {
 	t.Parallel()
 	policyID := uuid.New().String()
-	defer cleanupAnalyses(t, policyID)
+	defer batchDeletePolicies(t, policyID)
 
 	req := models.UpdatePolicyInput{
 		CoreEntryUpdate: models.CoreEntryUpdate{
@@ -764,7 +699,7 @@ func saveEnabledPolicyFailingTests(t *testing.T) {
 func saveDisabledPolicyFailingTests(t *testing.T) {
 	t.Parallel()
 	policyID := uuid.New().String()
-	defer cleanupAnalyses(t, policyID)
+	defer batchDeletePolicies(t, policyID)
 
 	req := models.UpdatePolicyInput{
 		CoreEntryUpdate: models.CoreEntryUpdate{
@@ -804,7 +739,7 @@ func saveDisabledPolicyFailingTests(t *testing.T) {
 func saveEnabledPolicyPassingTests(t *testing.T) {
 	t.Parallel()
 	policyID := uuid.New().String()
-	defer cleanupAnalyses(t, policyID)
+	defer batchDeletePolicies(t, policyID)
 
 	req := models.UpdatePolicyInput{
 		CoreEntryUpdate: models.CoreEntryUpdate{
@@ -847,7 +782,7 @@ func saveEnabledPolicyPassingTests(t *testing.T) {
 func savePolicyInvalidTestInputJSON(t *testing.T) {
 	t.Parallel()
 	policyID := uuid.New().String()
-	defer cleanupAnalyses(t, policyID)
+	defer batchDeletePolicies(t, policyID)
 
 	req := models.UpdatePolicyInput{
 		CoreEntryUpdate: models.CoreEntryUpdate{
@@ -890,7 +825,7 @@ func savePolicyInvalidTestInputJSON(t *testing.T) {
 func saveEnabledRuleFailingTests(t *testing.T) {
 	t.Parallel()
 	ruleID := uuid.New().String()
-	defer cleanupAnalyses(t, ruleID)
+	defer batchDeleteRules(t, ruleID)
 
 	req := models.UpdateRuleInput{
 		CoreEntryUpdate: models.CoreEntryUpdate{
@@ -943,7 +878,7 @@ func saveEnabledRuleFailingTests(t *testing.T) {
 func saveEnabledRulePassingTests(t *testing.T) {
 	t.Parallel()
 	ruleID := uuid.New().String()
-	defer cleanupAnalyses(t, ruleID)
+	defer batchDeleteRules(t, ruleID)
 
 	req := models.UpdateRuleInput{
 		CoreEntryUpdate: models.CoreEntryUpdate{
@@ -986,7 +921,7 @@ func saveEnabledRulePassingTests(t *testing.T) {
 func saveRuleInvalidTestInputJSON(t *testing.T) {
 	t.Parallel()
 	ruleID := uuid.New().String()
-	defer cleanupAnalyses(t, ruleID)
+	defer batchDeleteRules(t, ruleID)
 
 	req := models.UpdateRuleInput{
 		CoreEntryUpdate: models.CoreEntryUpdate{
@@ -1029,7 +964,7 @@ func saveRuleInvalidTestInputJSON(t *testing.T) {
 func saveDisabledRuleFailingTests(t *testing.T) {
 	t.Parallel()
 	ruleID := uuid.New().String()
-	defer cleanupAnalyses(t, ruleID)
+	defer batchDeleteRules(t, ruleID)
 
 	req := models.UpdateRuleInput{
 		CoreEntryUpdate: models.CoreEntryUpdate{
@@ -1498,40 +1433,45 @@ func modifyGlobal(t *testing.T) {
 	assert.Equal(t, *global, result)
 }
 
-//func suppressNotFound(t *testing.T) {
-//	result, err := apiClient.Operations.Suppress(&operations.SuppressParams{
-//		Body: &models.Suppress{
-//			PolicyIds:        []models.ID{"no-such-id"},
-//			ResourcePatterns: models.Suppressions{"s3:.*"},
-//		},
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	// a policy which doesn't exist logs a warning but doesn't return an API error
-//	assert.Equal(t, &operations.SuppressOK{}, result)
-//}
-//
-//func suppressSuccess(t *testing.T) {
-//	result, err := apiClient.Operations.Suppress(&operations.SuppressParams{
-//		Body: &models.Suppress{
-//			PolicyIds:        []models.ID{policy.ID},
-//			ResourcePatterns: models.Suppressions{"new-suppression"},
-//		},
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	assert.Equal(t, &operations.SuppressOK{}, result)
-//
-//	// Verify suppressions were added correctly
-//	getResult, err := apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
-//		PolicyID:   string(policy.ID),
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	sort.Strings(getResult.Payload.Suppressions)
-//	// It was added to the existing suppressions
-//	assert.Equal(t, models.Suppressions{"new-suppression", "panther.*"}, getResult.Payload.Suppressions)
-//}
+func suppressNotFound(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		Suppress: &models.SuppressInput{
+			PolicyIDs:        []string{"no-such-id"},
+			ResourcePatterns: []string{"s3:.*"},
+		},
+	}
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.NoError(t, err)
+	// a policy which doesn't exist logs a warning but doesn't return an API error
+	assert.Equal(t, http.StatusOK, statusCode)
+}
+
+func suppressSuccess(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		Suppress: &models.SuppressInput{
+			PolicyIDs:        []string{policy.ID},
+			ResourcePatterns: []string{"new-suppression", "and-another"},
+		},
+	}
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	// Verify suppressions were added correctly
+	input = models.LambdaInput{
+		GetPolicy: &models.GetPolicyInput{PolicyID: policy.ID},
+	}
+	var result models.Policy
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	sort.Strings(result.Suppressions)
+	// It was added to the existing suppressions
+	assert.Equal(t, []string{"and-another", "new-suppression", "panther.*"}, result.Suppressions)
+}
 
 func bulkUploadInvalid(t *testing.T) {
 	t.Parallel()
@@ -1552,7 +1492,7 @@ func bulkUploadSuccess(t *testing.T) {
 	require.NoError(t, err)
 
 	// cleaning up added Rule
-	defer cleanupAnalyses(t, "Rule.Always.True")
+	defer batchDeleteRules(t, "Rule.Always.True")
 
 	encoded := base64.StdEncoding.EncodeToString(content)
 	input := models.LambdaInput{
@@ -1926,180 +1866,159 @@ func listDataModels(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
-//
-//func deleteInvalid(t *testing.T) {
-//	result, err := apiClient.Operations.DeletePolicies(&operations.DeletePoliciesParams{
-//		Body:       &models.DeletePolicies{},
-//		HTTPClient: httpClient,
-//	})
-//	assert.Nil(t, result)
-//	require.Error(t, err)
-//	require.IsType(t, &operations.DeletePoliciesBadRequest{}, err)
-//}
-//
-//// Delete a set of policies that don't exist - returns OK
-//func deleteNotExists(t *testing.T) {
-//	result, err := apiClient.Operations.DeletePolicies(&operations.DeletePoliciesParams{
-//		Body: &models.DeletePolicies{
-//			Policies: []*models.DeleteEntry{
-//				{
-//					ID: "does-not-exist",
-//				},
-//				{
-//					ID: "also-does-not-exist",
-//				},
-//			},
-//		},
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	assert.Equal(t, &operations.DeletePoliciesOK{}, result)
-//}
-//
-//func deleteSuccess(t *testing.T) {
-//	result, err := apiClient.Operations.DeletePolicies(&operations.DeletePoliciesParams{
-//		Body: &models.DeletePolicies{
-//			Policies: []*models.DeleteEntry{
-//				{
-//					ID: policy.ID,
-//				},
-//				{
-//					ID: policyFromBulk.ID,
-//				},
-//				{
-//					ID: policyFromBulkJSON.ID,
-//				},
-//				{
-//					ID: rule.ID,
-//				},
-//			},
-//		},
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	assert.Equal(t, &operations.DeletePoliciesOK{}, result)
-//
-//	// Trying to retrieve the deleted policy should now return 404
-//	_, err = apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
-//		PolicyID:   string(policy.ID),
-//		HTTPClient: httpClient,
-//	})
-//	require.Error(t, err)
-//	require.IsType(t, &operations.GetPolicyNotFound{}, err)
-//
-//	// But retrieving an older version will still work...
-//	getResult, err := apiClient.Operations.GetPolicy(&operations.GetPolicyParams{
-//		PolicyID:   string(versionedPolicy.ID),
-//		VersionID:  aws.String(string(versionedPolicy.VersionID)),
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//
-//	assert.Equal(t, versionedPolicy, getResult.Payload)
-//
-//	// List operations should be empty
-//	emptyPaging := &models.Paging{
-//		ThisPage:   aws.Int64(0),
-//		TotalItems: aws.Int64(0),
-//		TotalPages: aws.Int64(0),
-//	}
-//
-//	policyList, err := apiClient.Operations.ListPolicies(&operations.ListPoliciesParams{
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	expectedPolicyList := &models.PolicyList{Paging: emptyPaging, Policies: []*models.PolicySummary{}}
-//	assert.Equal(t, expectedPolicyList, policyList.Payload)
-//
-//	ruleList, err := apiClient.Operations.ListRules(&operations.ListRulesParams{
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	expectedRuleList := &models.RuleList{Paging: emptyPaging, Rules: []*models.RuleSummary{}}
-//	assert.Equal(t, expectedRuleList, ruleList.Payload)
-//}
-//
-//func deleteDataModel(t *testing.T) {
-//	allDataModels := make([]*models.DataModel, len(dataModels))
-//	for i, model := range dataModels {
-//		allDataModels[i] = model
-//	}
-//	allDataModels = append(allDataModels, dataModelFromBulkYML)
-//	for _, model := range allDataModels {
-//		result, err := apiClient.Operations.DeletePolicies(&operations.DeletePoliciesParams{
-//			Body: &models.DeletePolicies{
-//				Policies: []*models.DeleteEntry{
-//					{
-//						ID: model.ID,
-//					},
-//				},
-//			},
-//			HTTPClient: httpClient,
-//		})
-//		require.NoError(t, err)
-//		assert.Equal(t, &operations.DeletePoliciesOK{}, result)
-//
-//		// Trying to retrieve the deleted data model should now return 404
-//		_, err = apiClient.Operations.GetDataModel(&operations.GetDataModelParams{
-//			DataModelID: string(model.ID),
-//			HTTPClient:  httpClient,
-//		})
-//		require.Error(t, err)
-//		require.IsType(t, &operations.GetDataModelNotFound{}, err)
-//
-//		// But retrieving an older version will still work
-//		getResult, err := apiClient.Operations.GetDataModel(&operations.GetDataModelParams{
-//			DataModelID: string(model.ID),
-//			VersionID:   aws.String(string(model.VersionID)),
-//			HTTPClient:  httpClient,
-//		})
-//		require.NoError(t, err)
-//		assert.Equal(t, model, getResult.Payload)
-//	}
-//}
-//
-//func deleteGlobal(t *testing.T) {
-//	result, err := apiClient.Operations.DeleteGlobals(&operations.DeleteGlobalsParams{
-//		Body: &models.DeletePolicies{
-//			Policies: []*models.DeleteEntry{
-//				{
-//					ID: global.ID,
-//				},
-//			},
-//		},
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	assert.Equal(t, &operations.DeleteGlobalsOK{}, result)
-//
-//	// Trying to retrieve the deleted policy should now return 404
-//	_, err = apiClient.Operations.GetGlobal(&operations.GetGlobalParams{
-//		GlobalID:   string(global.ID),
-//		HTTPClient: httpClient,
-//	})
-//	require.Error(t, err)
-//	require.IsType(t, &operations.GetGlobalNotFound{}, err)
-//
-//	// But retrieving an older version will still work
-//	getResult, err := apiClient.Operations.GetGlobal(&operations.GetGlobalParams{
-//		GlobalID:   string(global.ID),
-//		VersionID:  aws.String(string(global.VersionID)),
-//		HTTPClient: httpClient,
-//	})
-//	require.NoError(t, err)
-//	assert.Equal(t, global, getResult.Payload)
-//}
-//
-// Can be used for both policies and rules since they share the same api handler.
-func cleanupAnalyses(t *testing.T, analysisID ...string) {
+// Delete a set of policies that don't exist - returns OK
+func deleteNotExists(t *testing.T) {
+	t.Parallel()
+	batchDeletePolicies(t, "does-not-exist", "also-does-not-exist")
+}
+
+func deletePolicies(t *testing.T) {
+	t.Parallel()
+	batchDeletePolicies(t, policy.ID, policyFromBulk.ID, policyFromBulkJSON.ID)
+
+	// Trying to retrieve the deleted policy should now return 404
 	input := models.LambdaInput{
-		DeleteDetections: &models.DeleteDetectionsInput{
-			Entries: make([]models.DeleteEntry, len(analysisID)),
+		GetPolicy: &models.GetPolicyInput{PolicyID: policy.ID},
+	}
+	statusCode, err := apiClient.Invoke(&input, nil)
+	assert.Error(t, err)
+	assert.Equal(t, http.StatusNotFound, statusCode)
+
+	// But retrieving an older version will still work
+	input.GetPolicy = &models.GetPolicyInput{
+		PolicyID:  versionedPolicy.ID,
+		VersionID: versionedPolicy.VersionID,
+	}
+	var result models.Policy
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	assert.Equal(t, *versionedPolicy, result)
+
+	// List operation should be empty
+	input = models.LambdaInput{
+		ListPolicies: &models.ListPoliciesInput{},
+	}
+	var policies models.ListPoliciesOutput
+
+	expected := models.ListPoliciesOutput{Policies: []models.Policy{}}
+	statusCode, err = apiClient.Invoke(&input, &policies)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	assert.Equal(t, expected, policies)
+}
+
+func deleteRules(t *testing.T) {
+	t.Parallel()
+	batchDeleteRules(t, rule.ID)
+
+	// Trying to retrieve the deleted rule should now return 404
+	input := models.LambdaInput{
+		GetRule: &models.GetRuleInput{RuleID: rule.ID},
+	}
+	statusCode, err := apiClient.Invoke(&input, nil)
+	assert.Error(t, err)
+	assert.Equal(t, http.StatusNotFound, statusCode)
+
+	// List operation should be empty
+	input = models.LambdaInput{
+		ListRules: &models.ListRulesInput{},
+	}
+	var result models.ListRulesOutput
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	assert.Equal(t, models.ListRulesOutput{Rules: []models.Rule{}}, result)
+}
+
+func deleteDataModels(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		DeleteDataModels: &models.DeleteDataModelsInput{
+			Entries: make([]models.DeleteEntry, 0, len(dataModels)+1),
+		},
+	}
+	for _, model := range dataModels {
+		input.DeleteDataModels.Entries = append(
+			input.DeleteDataModels.Entries, models.DeleteEntry{ID: model.ID})
+	}
+	input.DeleteDataModels.Entries = append(
+		input.DeleteDataModels.Entries, models.DeleteEntry{ID: dataModelFromBulkYML.ID})
+
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	// List operation should be empty
+	input = models.LambdaInput{
+		ListDataModels: &models.ListDataModelsInput{},
+	}
+	var result models.ListDataModelsOutput
+
+	expected := models.ListDataModelsOutput{Models: []models.DataModel{}}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	assert.Equal(t, expected, result)
+}
+
+func deleteGlobals(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		DeleteGlobals: &models.DeleteGlobalsInput{
+			Entries: []models.DeleteEntry{{ID: global.ID}},
+		},
+	}
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	// Trying to retrieve the deleted policy should now return 404
+	input = models.LambdaInput{
+		GetGlobal: &models.GetGlobalInput{GlobalID: global.ID},
+	}
+	statusCode, err = apiClient.Invoke(&input, nil)
+	require.Error(t, err)
+	assert.Equal(t, http.StatusNotFound, statusCode)
+
+	// List operation is empty
+	input = models.LambdaInput{
+		ListGlobals: &models.ListGlobalsInput{},
+	}
+	var result models.ListGlobalsOutput
+
+	expected := models.ListGlobalsOutput{Globals: []models.Global{}}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	assert.Equal(t, expected, result)
+}
+
+func batchDeletePolicies(t *testing.T, policyID ...string) {
+	input := models.LambdaInput{
+		DeletePolicies: &models.DeletePoliciesInput{
+			Entries: make([]models.DeleteEntry, len(policyID)),
 		},
 	}
 
-	for i, pid := range analysisID {
-		input.DeleteDetections.Entries[i].ID = pid
+	for i, pid := range policyID {
+		input.DeletePolicies.Entries[i].ID = pid
+	}
+
+	statusCode, err := apiClient.Invoke(&input, nil)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+}
+
+func batchDeleteRules(t *testing.T, ruleID ...string) {
+	input := models.LambdaInput{
+		DeleteRules: &models.DeleteRulesInput{
+			Entries: make([]models.DeleteEntry, len(ruleID)),
+		},
+	}
+
+	for i, pid := range ruleID {
+		input.DeleteRules.Entries[i].ID = pid
 	}
 
 	statusCode, err := apiClient.Invoke(&input, nil)

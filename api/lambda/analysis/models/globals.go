@@ -20,7 +20,7 @@ package models
 
 type CreateGlobalInput = UpdateGlobalInput
 
-type DeleteGlobalsInput = DeleteDetectionsInput
+type DeleteGlobalsInput = DeletePoliciesInput
 
 type GetGlobalInput struct {
 	GlobalID  string `json:"globalId" validate:"required"`

@@ -26,6 +26,38 @@ import (
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 )
 
+func (API) DeletePolicies(input *models.DeletePoliciesInput) *events.APIGatewayProxyResponse {
+	if err := dynamoBatchDelete(input); err != nil {
+		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+	}
+
+	if err := s3BatchDelete(input); err != nil {
+		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+	}
+
+	if err := complianceBatchDelete(input.Entries, []string{}); err != nil {
+		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+	}
+
+	return &events.APIGatewayProxyResponse{StatusCode: http.StatusOK}
+}
+
+func (API) DeleteRules(input *models.DeleteRulesInput) *events.APIGatewayProxyResponse {
+	if err := dynamoBatchDelete(input); err != nil {
+		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+	}
+
+	if err := s3BatchDelete(input); err != nil {
+		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+	}
+
+	return &events.APIGatewayProxyResponse{StatusCode: http.StatusOK}
+}
+
+func (api API) DeleteDataModels(input *models.DeleteDataModelsInput) *events.APIGatewayProxyResponse {
+	return api.DeleteRules(input)
+}
+
 func (API) DeleteGlobals(input *models.DeleteGlobalsInput) *events.APIGatewayProxyResponse {
 	/*
 		There are three separate actions here, and each one could fail in turn leading to different scenarios:

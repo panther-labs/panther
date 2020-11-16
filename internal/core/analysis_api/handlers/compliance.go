@@ -114,11 +114,12 @@ func complianceBatchDelete(policies []models.DeleteEntry, resourceTypes []string
 	}
 
 	// Remove the cached status as well
-	for _, policy := range policies {
-		if complianceCache != nil {
+	if complianceCache != nil {
+		for _, policy := range policies {
 			delete(complianceCache.Policies, policy.ID)
 		}
 	}
+
 	return nil
 }
 

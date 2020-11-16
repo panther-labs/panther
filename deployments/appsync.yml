@@ -1073,7 +1073,7 @@ Resources:
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "deleteDetections": {
+            "deletePolicies": {
               "entries": $ctx.args.input.policies
             }
           })
@@ -1442,7 +1442,7 @@ Resources:
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "deleteDetections": {
+            "deleteRules": {
               "entries": $ctx.args.input.rules
             }
           })
@@ -1565,7 +1565,7 @@ Resources:
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "deleteDetections": {
+            "deleteGlobals": {
               "entries": $ctx.args.input.globals
             }
           })

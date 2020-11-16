@@ -215,7 +215,7 @@ func tableKey(policyID string) map[string]*dynamodb.AttributeValue {
 }
 
 // Batch delete multiple entries from the Dynamo table.
-func dynamoBatchDelete(input *models.DeleteDetectionsInput) error {
+func dynamoBatchDelete(input *models.DeletePoliciesInput) error {
 	deleteRequests := make([]*dynamodb.WriteRequest, len(input.Entries))
 	for i, entry := range input.Entries {
 		deleteRequests[i] = &dynamodb.WriteRequest{
@@ -261,11 +261,20 @@ func dynamoGet(policyID string, consistentRead bool) (*tableItem, error) {
 	return &policy, nil
 }
 
-// TODO - add data model
+type stringSet []string
+
+// Marshal string slice as a Dynamo StringSet instead of a List
+func (s stringSet) MarshalDynamoDBAttributeValue(av *dynamodb.AttributeValue) error {
+	av.SS = make([]*string, 0, len(s))
+	for _, pattern := range s {
+		av.SS = append(av.SS, aws.String(pattern))
+	}
+	return nil
+}
 
 // Add suppressions to an existing policy, returning the updated list of policies.
 func addSuppressions(policyIDs []string, patterns []string) ([]*tableItem, error) {
-	update := expression.Add(expression.Name("suppressions"), expression.Value(patterns))
+	update := expression.Add(expression.Name("suppressions"), expression.Value(stringSet(patterns)))
 	condition := expression.AttributeExists(expression.Name("id"))
 	expr, err := expression.NewBuilder().WithUpdate(update).WithCondition(condition).Build()
 	if err != nil {
@@ -297,12 +306,12 @@ func addSuppressions(policyIDs []string, patterns []string) ([]*tableItem, error
 			return nil, err
 		}
 
-		item := new(tableItem)
-		if err := dynamodbattribute.UnmarshalMap(response.Attributes, item); err != nil {
+		var item tableItem
+		if err := dynamodbattribute.UnmarshalMap(response.Attributes, &item); err != nil {
 			zap.L().Error("failed to unmarshal updated policy", zap.Error(err))
 			return nil, err
 		}
-		result = append(result, item)
+		result = append(result, &item)
 	}
 
 	return result, nil

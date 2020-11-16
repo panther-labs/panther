@@ -33,7 +33,7 @@ import (
 // Delete one or more policies from S3.
 //
 // It is the caller's responsibility to ensure there are not more than 1000 policies in the request.
-func s3BatchDelete(input *models.DeleteDetectionsInput) error {
+func s3BatchDelete(input *models.DeletePoliciesInput) error {
 	objects := make([]*s3.ObjectIdentifier, len(input.Entries))
 	for i, entry := range input.Entries {
 		objects[i] = &s3.ObjectIdentifier{Key: aws.String(entry.ID)}

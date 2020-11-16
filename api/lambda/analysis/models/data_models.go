@@ -20,6 +20,8 @@ package models
 
 type CreateDataModelInput = UpdateDataModelInput
 
+type DeleteDataModelsInput = DeletePoliciesInput
+
 type GetDataModelInput struct {
 	DataModelID string `json:"dataModelId" validate:"required"`
 	VersionID   string `json:"versionId"`

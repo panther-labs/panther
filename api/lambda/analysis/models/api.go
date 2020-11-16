@@ -35,8 +35,7 @@ const (
 
 type LambdaInput struct {
 	// Shared
-	BulkUpload       *BulkUploadInput       `json:"bulkUpload,omitempty"`
-	DeleteDetections *DeleteDetectionsInput `json:"deleteDetections,omitempty"`
+	BulkUpload *BulkUploadInput `json:"bulkUpload,omitempty"`
 
 	// Globals
 	CreateGlobal  *CreateGlobalInput  `json:"createGlobal,omitempty"`
@@ -46,25 +45,28 @@ type LambdaInput struct {
 	UpdateGlobal  *UpdateGlobalInput  `json:"updateGlobal,omitempty"`
 
 	// Policies (cloud security)
-	CreatePolicy *CreatePolicyInput `json:"createPolicy,omitempty"`
-	GetPolicy    *GetPolicyInput    `json:"getPolicy,omitempty"`
-	ListPolicies *ListPoliciesInput `json:"listPolicies,omitempty"`
-	Suppress     *SuppressInput     `json:"suppress,omitempty"`
-	TestPolicy   *TestPolicyInput   `json:"testPolicy,omitempty"`
-	UpdatePolicy *UpdatePolicyInput `json:"updatePolicy,omitempty"`
+	CreatePolicy   *CreatePolicyInput   `json:"createPolicy,omitempty"`
+	DeletePolicies *DeletePoliciesInput `json:"deletePolicies,omitempty"`
+	GetPolicy      *GetPolicyInput      `json:"getPolicy,omitempty"`
+	ListPolicies   *ListPoliciesInput   `json:"listPolicies,omitempty"`
+	Suppress       *SuppressInput       `json:"suppress,omitempty"`
+	TestPolicy     *TestPolicyInput     `json:"testPolicy,omitempty"`
+	UpdatePolicy   *UpdatePolicyInput   `json:"updatePolicy,omitempty"`
 
 	// Rules (log analysis)
-	CreateRule *CreateRuleInput `json:"createRule,omitempty"`
-	GetRule    *GetRuleInput    `json:"getRule,omitempty"`
-	ListRules  *ListRulesInput  `json:"listRules,omitempty"`
-	TestRule   *TestRuleInput   `json:"testRule,omitempty"`
-	UpdateRule *UpdateRuleInput `json:"updateRule,omitempty"`
+	CreateRule  *CreateRuleInput  `json:"createRule,omitempty"`
+	DeleteRules *DeleteRulesInput `json:"deleteRules,omitempty"`
+	GetRule     *GetRuleInput     `json:"getRule,omitempty"`
+	ListRules   *ListRulesInput   `json:"listRules,omitempty"`
+	TestRule    *TestRuleInput    `json:"testRule,omitempty"`
+	UpdateRule  *UpdateRuleInput  `json:"updateRule,omitempty"`
 
 	// Data models (log analysis)
-	CreateDataModel *CreateDataModelInput `json:"createDataModel,omitempty"`
-	GetDataModel    *GetDataModelInput    `json:"getDataModel,omitempty"`
-	ListDataModels  *ListDataModelsInput  `json:"listDataModels,omitempty"`
-	UpdateDataModel *UpdateDataModelInput `json:"updateDataModel,omitempty"`
+	CreateDataModel  *CreateDataModelInput  `json:"createDataModel,omitempty"`
+	DeleteDataModels *DeleteDataModelsInput `json:"deleteDataModels,omitempty"`
+	GetDataModel     *GetDataModelInput     `json:"getDataModel,omitempty"`
+	ListDataModels   *ListDataModelsInput   `json:"listDataModels,omitempty"`
+	UpdateDataModel  *UpdateDataModelInput  `json:"updateDataModel,omitempty"`
 }
 
 // All detection types (global/data-model/policy/rule/query) have these fields in common
@@ -128,12 +130,4 @@ type BulkUploadOutput struct {
 	TotalDataModels    int `json:"totalDataModels"`
 	NewDataModels      int `json:"newDataModels"`
 	ModifiedDataModels int `json:"modifiedDataModels"`
-}
-
-type DeleteDetectionsInput struct {
-	Entries []DeleteEntry `json:"entries" validate:"min=1,max=1000,dive"`
-}
-
-type DeleteEntry struct {
-	ID string `json:"id" validate:"required"`
 }
