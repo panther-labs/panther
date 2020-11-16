@@ -410,6 +410,8 @@ func sortPolicies(policies []*models.PolicySummary, sortBy string, ascending boo
 	switch sortBy {
 	case "complianceStatus":
 		sortByStatus(policies, ascending, complianceCache.Policies)
+	case "displayName":
+		sortByDisplayName(policies, ascending)
 	case "enabled":
 		sortByEnabled(policies, ascending)
 	case "lastModified":
@@ -421,6 +423,37 @@ func sortPolicies(policies []*models.PolicySummary, sortBy string, ascending boo
 	default:
 		sortByID(policies, ascending)
 	}
+}
+
+// TODO - add unit tests (list_test.go) for examples
+// - displayName is optional
+func sortByDisplayName(policies []*models.PolicySummary, ascending bool) {
+	sort.Slice(policies, func(i, j int) bool {
+		left, right := policies[i], policies[j]
+
+		var leftName, rightName string
+		// TODO: search lower case
+		leftName, rightName = string(left.DisplayName), string(right.DisplayName)
+		if leftName == "" {
+			leftName = string(left.ID)
+		}
+		if rightName == "" {
+			rightName = string(right.ID)
+		}
+
+		if leftName != rightName {
+			if ascending {
+				return leftName < rightName
+			}
+			return leftName > rightName
+		}
+
+		// Same display name: sort by ID
+		if ascending {
+			return left.ID < right.ID
+		}
+		return left.ID > right.ID
+	})
 }
 
 func sortByStatus(policies []*models.PolicySummary, ascending bool, policyStatus map[models.ID]*complianceStatus) {

@@ -619,6 +619,7 @@ paths:
           description: Name of the field to sort by
           type: string
           enum:
+            - displayName
             - enabled
             - id
             - lastModified

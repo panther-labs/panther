@@ -902,7 +902,7 @@ export const buildListRulesInput = (overrides: Partial<ListRulesInput> = {}): Li
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Drive'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Low,
     tags: 'tags' in overrides ? overrides.tags : ['channels'],
-    sortBy: 'sortBy' in overrides ? overrides.sortBy : ListRulesSortFieldsEnum.Enabled,
+    sortBy: 'sortBy' in overrides ? overrides.sortBy : ListRulesSortFieldsEnum.DisplayName,
     sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
     pageSize: 'pageSize' in overrides ? overrides.pageSize : 19,
     page: 'page' in overrides ? overrides.page : 323,
