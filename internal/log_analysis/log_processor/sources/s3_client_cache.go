@@ -42,7 +42,7 @@ import (
 )
 
 const (
-	// sessionDuration is the duration of the STS session the S3 client uses
+	// sessionDuration is the duration of S3 client STS session
 	sessionDuration = time.Hour
 	// Expirty window for the STS credentials.
 	// Give plenty of time for refresh, we have seen that 1 minute refresh time can sometimes lead to InvalidAccessKeyId errors
