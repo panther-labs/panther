@@ -20,12 +20,12 @@ package api
 
 import (
 	"errors"
-	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 
 	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
