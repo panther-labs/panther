@@ -20,11 +20,11 @@ import React from 'react';
 import {
   buildAlertSummary,
   buildListAlertsResponse,
-  render,
-  fireEvent,
-  within,
   fireClickAndMouseEvents,
+  fireEvent,
+  render,
   waitMs,
+  within,
 } from 'test-utils';
 import {
   AlertStatusesEnum,
@@ -35,7 +35,7 @@ import {
 import { queryStringOptions } from 'Hooks/useUrlParams';
 import MockDate from 'mockdate';
 import queryString from 'query-string';
-import { mockListAvailableLogTypes } from 'Source/graphql/queries';
+import { mockListAvailableLogTypes, mockUpdateAlertStatus } from 'Source/graphql/queries';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { mockListAlerts } from './graphql/listAlerts.generated';
 import ListAlerts from './ListAlerts';
@@ -67,6 +67,200 @@ describe('ListAlerts', () => {
 
     const loadingBlocks = getAllByAriaLabel('Loading interface...');
     expect(loadingBlocks.length).toBeGreaterThan(1);
+  });
+
+  it('can single select and update 2 alert status', async () => {
+    const mockedlogType = 'AWS.ALB';
+
+    // Populate Alerts
+    const alertSummaries = [
+      buildAlertSummary({ title: 'Test Alert 1', alertId: 'a' }),
+      buildAlertSummary({ title: 'Test Alert 2', alertId: 'b' }),
+      buildAlertSummary({ title: 'Test Alert 3', alertId: 'c' }),
+    ];
+
+    const mocks = [
+      mockListAvailableLogTypes({
+        data: {
+          listAvailableLogTypes: {
+            logTypes: [mockedlogType],
+          },
+        },
+      }),
+      mockListAlerts({
+        variables: {
+          input: {
+            pageSize: DEFAULT_LARGE_PAGE_SIZE,
+          },
+        },
+        data: {
+          alerts: buildListAlertsResponse({
+            alertSummaries,
+          }),
+        },
+      }),
+      mockUpdateAlertStatus({
+        variables: {
+          input: {
+            // Set API call, so that it will change status for 2 alerts to Closed
+            alertIds: [alertSummaries[1].alertId, alertSummaries[2].alertId],
+            status: AlertStatusesEnum.Closed,
+          },
+        },
+        data: {
+          updateAlertStatus: [
+            // Expected Response
+            { ...alertSummaries[1], status: AlertStatusesEnum.Closed },
+            { ...alertSummaries[2], status: AlertStatusesEnum.Closed },
+          ],
+        },
+      }),
+    ];
+
+    const {
+      getAllByLabelText,
+      getByText,
+      findByAriaLabel,
+      getByAriaLabel,
+      findAllByText,
+      queryByAriaLabel,
+      queryAllByText,
+    } = render(<ListAlerts />, {
+      mocks,
+    });
+
+    // Check that select all checkbox is present
+    expect(await findByAriaLabel('select all')).toBeInTheDocument();
+    // Check Alerts and checkboxs are rendered
+    alertSummaries.forEach(alertSummary => {
+      expect(getByText(alertSummary.title)).toBeInTheDocument();
+    });
+    alertSummaries.forEach(alertSummary => {
+      expect(getByAriaLabel(`select ${alertSummary.alertId}`)).toBeInTheDocument();
+    });
+
+    // Single select all of 3 Alerts
+    const checkboxForAlert1 = getByAriaLabel(`select ${alertSummaries[0].alertId}`);
+    fireClickAndMouseEvents(checkboxForAlert1);
+    expect(getByText('1 Selected')).toBeInTheDocument();
+    const checkboxForAlert2 = getByAriaLabel(`select ${alertSummaries[1].alertId}`);
+    fireClickAndMouseEvents(checkboxForAlert2);
+    expect(getByText('2 Selected')).toBeInTheDocument();
+    const checkboxForAlert3 = getByAriaLabel(`select ${alertSummaries[2].alertId}`);
+    fireClickAndMouseEvents(checkboxForAlert3);
+    expect(getByText('3 Selected')).toBeInTheDocument();
+
+    // Deselect first alert
+    const checkedCheckboxForAlert1 = getByAriaLabel(`unselect ${alertSummaries[0].alertId}`);
+    fireClickAndMouseEvents(checkedCheckboxForAlert1);
+    expect(getByText('2 Selected')).toBeInTheDocument();
+
+    // Expect status field to have Resolved as default
+    const statusField = getAllByLabelText('Status')[0];
+    expect(statusField).toHaveValue('Resolved');
+
+    // Change its value to Invalid (Closed)
+    fireClickAndMouseEvents(statusField);
+    fireClickAndMouseEvents(getByText('Invalid'));
+    expect(statusField).toHaveValue('Invalid');
+    expect(await queryAllByText('INVALID')).toHaveLength(0);
+    fireClickAndMouseEvents(getByText('Apply'));
+
+    // Find the alerts with the updated status
+    expect(await findAllByText('INVALID')).toHaveLength(2);
+    // And expect that the selection has been reset
+    expect(await queryByAriaLabel(`unselect ${alertSummaries[1].alertId}`)).not.toBeInTheDocument();
+    expect(await queryByAriaLabel(`unselect ${alertSummaries[2].alertId}`)).not.toBeInTheDocument();
+  });
+
+  it('can select all alerts and update their status', async () => {
+    const mockedlogType = 'AWS.ALB';
+
+    // Populate Alerts
+    const alertSummaries = [
+      buildAlertSummary({ title: 'Test Alert 1', alertId: 'a' }),
+      buildAlertSummary({ title: 'Test Alert 2', alertId: 'b' }),
+      buildAlertSummary({ title: 'Test Alert 3', alertId: 'c' }),
+    ];
+
+    const mocks = [
+      mockListAvailableLogTypes({
+        data: {
+          listAvailableLogTypes: {
+            logTypes: [mockedlogType],
+          },
+        },
+      }),
+      mockListAlerts({
+        variables: {
+          input: {
+            pageSize: DEFAULT_LARGE_PAGE_SIZE,
+          },
+        },
+        data: {
+          alerts: buildListAlertsResponse({
+            alertSummaries,
+          }),
+        },
+      }),
+      mockUpdateAlertStatus({
+        variables: {
+          input: {
+            // Set API call, so that it will change status for Alerts to Open
+            alertIds: alertSummaries.map(a => a.alertId),
+            status: AlertStatusesEnum.Open,
+          },
+        },
+        data: {
+          updateAlertStatus: alertSummaries.map(a => ({
+            ...a,
+            status: AlertStatusesEnum.Open,
+          })),
+        },
+      }),
+    ];
+
+    const {
+      getAllByLabelText,
+      getByText,
+      findByAriaLabel,
+      getByAriaLabel,
+      findAllByText,
+      queryByAriaLabel,
+    } = render(<ListAlerts />, {
+      mocks,
+    });
+
+    // Check that select all checkbox is present
+    const selectAllCheckbox = await findByAriaLabel('select all');
+    expect(selectAllCheckbox).toBeInTheDocument();
+    // Check Alerts and checkboxes are rendered
+    alertSummaries.forEach(alertSummary => {
+      expect(getByText(alertSummary.title)).toBeInTheDocument();
+    });
+    alertSummaries.forEach(alertSummary => {
+      expect(getByAriaLabel(`select ${alertSummary.alertId}`)).toBeInTheDocument();
+    });
+
+    fireClickAndMouseEvents(selectAllCheckbox);
+    expect(getByText('3 Selected')).toBeInTheDocument();
+
+    // Expect status field to have Resolved as default
+    const statusField = getAllByLabelText('Status')[0];
+    expect(statusField).toHaveValue('Resolved');
+
+    // Change its value to Triaged
+    fireClickAndMouseEvents(statusField);
+    fireClickAndMouseEvents(getByText('Open'));
+    expect(statusField).toHaveValue('Open');
+    fireClickAndMouseEvents(getByText('Apply'));
+
+    // Find the alerts with the updated status
+    expect(await findAllByText('OPEN')).toHaveLength(alertSummaries.length);
+    // And expect that the selection has been reset
+    alertSummaries.forEach(alertSummary => {
+      expect(queryByAriaLabel(`unselect ${alertSummary.alertId}`)).not.toBeInTheDocument();
+    });
   });
 
   it('can correctly boot from URL params', async () => {
