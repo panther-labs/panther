@@ -17,7 +17,14 @@
  */
 
 import React from 'react';
-import { buildDestination, buildOpsgenieConfig, faker, fireEvent, render } from 'test-utils';
+import {
+  buildDestination,
+  buildDestinationConfig,
+  buildOpsgenieConfig,
+  faker,
+  fireEvent,
+  render,
+} from 'test-utils';
 import urls from 'Source/urls';
 import EditDestination, {
   mockGetDestinationDetails,
@@ -463,12 +470,13 @@ describe('EditDestination', () => {
       displayName: oldDisplayName,
       outputType: DestinationTypeEnum.Opsgenie,
       defaultForSeverity: [SeverityEnum.Critical],
-      outputConfig: {
+      outputConfig: buildDestinationConfig({
+        __typename: 'DestinationConfig',
         opsgenie: buildOpsgenieConfig({
           apiKey: '',
           serviceRegion: OpsgenieServiceRegionEnum.Us,
         }),
-      },
+      }),
     }) as DestinationFull;
 
     const mocks = [
