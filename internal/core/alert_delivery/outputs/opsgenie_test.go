@@ -85,6 +85,7 @@ func TestOpsgenieAlert(t *testing.T) {
 
 func TestOpsgenieServiceRegion(t *testing.T) {
 	opsGenieRegions := []string{"", OpsgenieServiceRegionUS, OpsgenieServiceRegionEU}
+	//nolint:lll
 	expectedEndpoints := []string{"https://api.opsgenie.com/v2/alerts", "https://api.opsgenie.com/v2/alerts", "https://api.eu.opsgenie.com/v2/alerts"}
 	for i, serviceRegion := range opsGenieRegions {
 		assert.Equal(t, expectedEndpoints[i], getOpsGenieRegion(serviceRegion))
