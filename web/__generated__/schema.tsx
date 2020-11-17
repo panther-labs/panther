@@ -18,7 +18,6 @@
 
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
 export type Maybe<T> = T | null;
-export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type RequireFields<T, K extends keyof T> = { [X in Exclude<keyof T, K>]?: T[X] } &
   { [P in K]-?: NonNullable<T[P]> };
 /** All built-in and custom scalars, mapped to their actual values */
@@ -362,6 +361,12 @@ export type FloatSeries = {
   values: Array<Scalars['Float']>;
 };
 
+export type FloatSeriesData = {
+  __typename?: 'FloatSeriesData';
+  timestamps: Array<Scalars['AWSDateTime']>;
+  series: Array<FloatSeries>;
+};
+
 export type GeneralSettings = {
   __typename?: 'GeneralSettings';
   displayName?: Maybe<Scalars['String']>;
@@ -614,9 +619,9 @@ export type LogAnalysisMetricsInput = {
 
 export type LogAnalysisMetricsResponse = {
   __typename?: 'LogAnalysisMetricsResponse';
-  eventsProcessed: SeriesData;
-  alertsBySeverity: SeriesData;
-  eventsLatency: SeriesData;
+  eventsProcessed: LongSeriesData;
+  alertsBySeverity: LongSeriesData;
+  eventsLatency: FloatSeriesData;
   totalAlertsDelta: Array<SingleValue>;
   alertsByRuleID: Array<SingleValue>;
   fromDate: Scalars['AWSDateTime'];
@@ -630,6 +635,12 @@ export type LongSeries = {
   __typename?: 'LongSeries';
   label: Scalars['String'];
   values: Array<Scalars['Long']>;
+};
+
+export type LongSeriesData = {
+  __typename?: 'LongSeriesData';
+  timestamps: Array<Scalars['AWSDateTime']>;
+  series: Array<LongSeries>;
 };
 
 export type ModifyGlobalPythonModuleInput = {
@@ -1134,14 +1145,6 @@ export type SendTestAlertInput = {
   outputIds: Array<Scalars['ID']>;
 };
 
-export type Series = LongSeries | FloatSeries;
-
-export type SeriesData = {
-  __typename?: 'SeriesData';
-  timestamps: Array<Scalars['AWSDateTime']>;
-  series: Array<Series>;
-};
-
 export enum SeverityEnum {
   Info = 'INFO',
   Low = 'LOW',
@@ -1562,12 +1565,10 @@ export type ResolversTypes = {
   ScannedResourceStats: ResolverTypeWrapper<ScannedResourceStats>;
   LogAnalysisMetricsInput: LogAnalysisMetricsInput;
   LogAnalysisMetricsResponse: ResolverTypeWrapper<LogAnalysisMetricsResponse>;
-  SeriesData: ResolverTypeWrapper<
-    Omit<SeriesData, 'series'> & { series: Array<ResolversTypes['Series']> }
-  >;
-  Series: ResolversTypes['LongSeries'] | ResolversTypes['FloatSeries'];
+  LongSeriesData: ResolverTypeWrapper<LongSeriesData>;
   LongSeries: ResolverTypeWrapper<LongSeries>;
   Long: ResolverTypeWrapper<Scalars['Long']>;
+  FloatSeriesData: ResolverTypeWrapper<FloatSeriesData>;
   FloatSeries: ResolverTypeWrapper<FloatSeries>;
   Float: ResolverTypeWrapper<Scalars['Float']>;
   SingleValue: ResolverTypeWrapper<SingleValue>;
@@ -1719,10 +1720,10 @@ export type ResolversParentTypes = {
   ScannedResourceStats: ScannedResourceStats;
   LogAnalysisMetricsInput: LogAnalysisMetricsInput;
   LogAnalysisMetricsResponse: LogAnalysisMetricsResponse;
-  SeriesData: Omit<SeriesData, 'series'> & { series: Array<ResolversParentTypes['Series']> };
-  Series: ResolversParentTypes['LongSeries'] | ResolversParentTypes['FloatSeries'];
+  LongSeriesData: LongSeriesData;
   LongSeries: LongSeries;
   Long: Scalars['Long'];
+  FloatSeriesData: FloatSeriesData;
   FloatSeries: FloatSeries;
   Float: Scalars['Float'];
   SingleValue: SingleValue;
@@ -2051,6 +2052,15 @@ export type FloatSeriesResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
+export type FloatSeriesDataResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['FloatSeriesData'] = ResolversParentTypes['FloatSeriesData']
+> = {
+  timestamps?: Resolver<Array<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  series?: Resolver<Array<ResolversTypes['FloatSeries']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
 export type GeneralSettingsResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['GeneralSettings'] = ResolversParentTypes['GeneralSettings']
@@ -2195,9 +2205,9 @@ export type LogAnalysisMetricsResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['LogAnalysisMetricsResponse'] = ResolversParentTypes['LogAnalysisMetricsResponse']
 > = {
-  eventsProcessed?: Resolver<ResolversTypes['SeriesData'], ParentType, ContextType>;
-  alertsBySeverity?: Resolver<ResolversTypes['SeriesData'], ParentType, ContextType>;
-  eventsLatency?: Resolver<ResolversTypes['SeriesData'], ParentType, ContextType>;
+  eventsProcessed?: Resolver<ResolversTypes['LongSeriesData'], ParentType, ContextType>;
+  alertsBySeverity?: Resolver<ResolversTypes['LongSeriesData'], ParentType, ContextType>;
+  eventsLatency?: Resolver<ResolversTypes['FloatSeriesData'], ParentType, ContextType>;
   totalAlertsDelta?: Resolver<Array<ResolversTypes['SingleValue']>, ParentType, ContextType>;
   alertsByRuleID?: Resolver<Array<ResolversTypes['SingleValue']>, ParentType, ContextType>;
   fromDate?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
@@ -2227,6 +2237,15 @@ export type LongSeriesResolvers<
 > = {
   label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   values?: Resolver<Array<ResolversTypes['Long']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type LongSeriesDataResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['LongSeriesData'] = ResolversParentTypes['LongSeriesData']
+> = {
+  timestamps?: Resolver<Array<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  series?: Resolver<Array<ResolversTypes['LongSeries']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2845,22 +2864,6 @@ export type ScannedResourceStatsResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
-export type SeriesResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Series'] = ResolversParentTypes['Series']
-> = {
-  __resolveType: TypeResolveFn<'LongSeries' | 'FloatSeries', ParentType, ContextType>;
-};
-
-export type SeriesDataResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['SeriesData'] = ResolversParentTypes['SeriesData']
-> = {
-  timestamps?: Resolver<Array<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
-  series?: Resolver<Array<ResolversTypes['Series']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
 export type SingleValueResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['SingleValue'] = ResolversParentTypes['SingleValue']
@@ -3081,6 +3084,7 @@ export type Resolvers<ContextType = any> = {
   DetectionTestDefinition?: DetectionTestDefinitionResolvers<ContextType>;
   Error?: ErrorResolvers<ContextType>;
   FloatSeries?: FloatSeriesResolvers<ContextType>;
+  FloatSeriesData?: FloatSeriesDataResolvers<ContextType>;
   GeneralSettings?: GeneralSettingsResolvers<ContextType>;
   GithubConfig?: GithubConfigResolvers<ContextType>;
   GlobalPythonModule?: GlobalPythonModuleResolvers<ContextType>;
@@ -3098,6 +3102,7 @@ export type Resolvers<ContextType = any> = {
   LogIntegration?: LogIntegrationResolvers;
   Long?: GraphQLScalarType;
   LongSeries?: LongSeriesResolvers<ContextType>;
+  LongSeriesData?: LongSeriesDataResolvers<ContextType>;
   MsTeamsConfig?: MsTeamsConfigResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   OpsgenieConfig?: OpsgenieConfigResolvers<ContextType>;
@@ -3116,8 +3121,6 @@ export type Resolvers<ContextType = any> = {
   S3LogIntegrationHealth?: S3LogIntegrationHealthResolvers<ContextType>;
   ScannedResources?: ScannedResourcesResolvers<ContextType>;
   ScannedResourceStats?: ScannedResourceStatsResolvers<ContextType>;
-  Series?: SeriesResolvers;
-  SeriesData?: SeriesDataResolvers<ContextType>;
   SingleValue?: SingleValueResolvers<ContextType>;
   SlackConfig?: SlackConfigResolvers<ContextType>;
   SnsConfig?: SnsConfigResolvers<ContextType>;

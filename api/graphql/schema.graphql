@@ -417,16 +417,19 @@ type LongSeries {
   values: [Long!]!
 }
 
+type LongSeriesData {
+  timestamps: [AWSDateTime!]!
+  series: [LongSeries!]!
+}
+
 type FloatSeries {
   label: String!
   values: [Float!]!
 }
 
-union Series = LongSeries | FloatSeries
-
-type SeriesData {
+type FloatSeriesData {
   timestamps: [AWSDateTime!]!
-  series: [Series!]!
+  series: [FloatSeries!]!
 }
 
 type SingleValue {
@@ -435,9 +438,9 @@ type SingleValue {
 }
 
 type LogAnalysisMetricsResponse {
-  eventsProcessed: SeriesData!
-  alertsBySeverity: SeriesData!
-  eventsLatency: SeriesData!
+  eventsProcessed: LongSeriesData!
+  alertsBySeverity: LongSeriesData!
+  eventsLatency: FloatSeriesData!
   totalAlertsDelta: [SingleValue!]!
   alertsByRuleID: [SingleValue!]!
   fromDate: AWSDateTime!

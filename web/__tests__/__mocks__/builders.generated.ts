@@ -50,6 +50,7 @@ import {
   DetectionTestDefinitionInput,
   Error,
   FloatSeries,
+  FloatSeriesData,
   GeneralSettings,
   GetAlertInput,
   GetComplianceIntegrationTemplateInput,
@@ -81,6 +82,7 @@ import {
   LogAnalysisMetricsInput,
   LogAnalysisMetricsResponse,
   LongSeries,
+  LongSeriesData,
   ModifyGlobalPythonModuleInput,
   MsTeamsConfig,
   MsTeamsConfigInput,
@@ -106,7 +108,6 @@ import {
   ScannedResources,
   ScannedResourceStats,
   SendTestAlertInput,
-  SeriesData,
   SingleValue,
   SlackConfig,
   SlackConfigInput,
@@ -149,7 +150,6 @@ import {
   ListResourcesSortFieldsEnum,
   ListRulesSortFieldsEnum,
   LogIntegration,
-  Series,
   SeverityEnum,
   SortDirEnum,
 } from '../../__generated__/schema';
@@ -589,6 +589,14 @@ export const buildFloatSeries = (overrides: Partial<FloatSeries> = {}): FloatSer
   };
 };
 
+export const buildFloatSeriesData = (overrides: Partial<FloatSeriesData> = {}): FloatSeriesData => {
+  return {
+    __typename: 'FloatSeriesData',
+    timestamps: 'timestamps' in overrides ? overrides.timestamps : ['2020-04-22T20:42:06.736Z'],
+    series: 'series' in overrides ? overrides.series : [buildFloatSeries()],
+  };
+};
+
 export const buildGeneralSettings = (overrides: Partial<GeneralSettings> = {}): GeneralSettings => {
   return {
     __typename: 'GeneralSettings',
@@ -927,10 +935,11 @@ export const buildLogAnalysisMetricsResponse = (
 ): LogAnalysisMetricsResponse => {
   return {
     __typename: 'LogAnalysisMetricsResponse',
-    eventsProcessed: 'eventsProcessed' in overrides ? overrides.eventsProcessed : buildSeriesData(),
+    eventsProcessed:
+      'eventsProcessed' in overrides ? overrides.eventsProcessed : buildLongSeriesData(),
     alertsBySeverity:
-      'alertsBySeverity' in overrides ? overrides.alertsBySeverity : buildSeriesData(),
-    eventsLatency: 'eventsLatency' in overrides ? overrides.eventsLatency : buildSeriesData(),
+      'alertsBySeverity' in overrides ? overrides.alertsBySeverity : buildLongSeriesData(),
+    eventsLatency: 'eventsLatency' in overrides ? overrides.eventsLatency : buildFloatSeriesData(),
     totalAlertsDelta:
       'totalAlertsDelta' in overrides ? overrides.totalAlertsDelta : [buildSingleValue()],
     alertsByRuleID: 'alertsByRuleID' in overrides ? overrides.alertsByRuleID : [buildSingleValue()],
@@ -945,6 +954,14 @@ export const buildLongSeries = (overrides: Partial<LongSeries> = {}): LongSeries
     __typename: 'LongSeries',
     label: 'label' in overrides ? overrides.label : 'envisioneer',
     values: 'values' in overrides ? overrides.values : [95698],
+  };
+};
+
+export const buildLongSeriesData = (overrides: Partial<LongSeriesData> = {}): LongSeriesData => {
+  return {
+    __typename: 'LongSeriesData',
+    timestamps: 'timestamps' in overrides ? overrides.timestamps : ['2020-05-29T02:52:10.141Z'],
+    series: 'series' in overrides ? overrides.series : [buildLongSeries()],
   };
 };
 
@@ -1299,14 +1316,6 @@ export const buildSendTestAlertInput = (
   return {
     outputIds:
       'outputIds' in overrides ? overrides.outputIds : ['900d0911-ac12-4720-a1a9-89d6f1995c9f'],
-  };
-};
-
-export const buildSeriesData = (overrides: Partial<SeriesData> = {}): SeriesData => {
-  return {
-    __typename: 'SeriesData',
-    timestamps: 'timestamps' in overrides ? overrides.timestamps : ['2020-10-18T14:12:28.273Z'],
-    series: 'series' in overrides ? overrides.series : [buildFloatSeries()],
   };
 };
 

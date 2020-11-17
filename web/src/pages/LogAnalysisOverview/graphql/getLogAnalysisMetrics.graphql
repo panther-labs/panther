@@ -2,28 +2,22 @@ query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput!) {
   getLogAnalysisMetrics(input: $input) {
     eventsProcessed {
       series {
-        ... on LongSeries {
-          label
-          values
-        }
+        label
+        values
       }
       timestamps
     }
     eventsLatency {
       series {
-        ... on FloatSeries {
-          label
-          values
-        }
+        label
+        values
       }
       timestamps
     }
     alertsBySeverity {
       series {
-        ... on LongSeries {
-          label
-          values
-        }
+        label
+        values
       }
       timestamps
     }
