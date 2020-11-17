@@ -20,6 +20,7 @@ package api
 
 import (
 	"errors"
+	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 
 	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
@@ -102,6 +103,14 @@ func redactOutput(outputConfig *models.OutputConfig) {
 	}
 	if outputConfig.CustomWebhook != nil {
 		outputConfig.CustomWebhook.WebhookURL = redacted
+	}
+}
+
+func configureOutputFallbacks(outputConfig *models.OutputConfig) {
+	if outputConfig.Opsgenie != nil {
+		if outputConfig.Opsgenie.ServiceRegion == "" {
+			outputConfig.Opsgenie.ServiceRegion = outputs.OpsgenieServiceRegionUS
+		}
 	}
 }
 
