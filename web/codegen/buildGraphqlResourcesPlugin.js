@@ -97,6 +97,8 @@ const getNamedType = (typeName, fieldName, types, namedType) => {
                 return wrapWithQuotes(faker_1.default.date.past().toISOString());
               case 'AWSJSON':
                 return wrapWithQuotes(JSON.stringify(faker_1.default.random.objectElement()));
+              case 'Long':
+                return faker_1.default.random.number();
               default:
                 throw new Error(`Found unknown Scalar: ${foundType.name}`);
             }
