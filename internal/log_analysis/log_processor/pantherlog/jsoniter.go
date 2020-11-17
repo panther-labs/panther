@@ -31,7 +31,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/modern-go/reflect2"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/omitempty"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
@@ -59,10 +58,7 @@ const (
 var (
 	typValueWriterTo = reflect.TypeOf((*ValueWriterTo)(nil)).Elem()
 	typStringer      = reflect.TypeOf((*fmt.Stringer)(nil)).Elem()
-	typString        = reflect.TypeOf("")
 	typByteSlice     = reflect.TypeOf([]byte{})
-	typStringPtr     = reflect.TypeOf((*string)(nil))
-	typNullString    = reflect.TypeOf(null.String{})
 	typTime          = reflect.TypeOf(time.Time{})
 	typResult        = reflect.TypeOf(Result{})
 )
@@ -305,32 +301,13 @@ func (*pantherExt) decorateIndicatorField(b *jsoniter.Binding, scanners ...Value
 		return
 	}
 	typ := b.Field.Type().Type1()
-	// Decorate encoders
-	switch {
-	case typ != typString && typ.ConvertibleTo(typByteSlice):
-		// Special slice case
-		b.Encoder = &indicatorEncoder{
-			parent:   b.Encoder,
-			typ:      typ,
-			scanner:  scanner,
-			indirect: !reflect.PtrTo(typ).Implements(typStringer),
-		}
-	case typ.Kind() == reflect.Slice:
-		b.Encoder = &sliceIndicatorEncoder{
-			parent:   b.Encoder,
-			typ:      typ,
-			scanner:  scanner,
-			indirect: typ.Elem().ConvertibleTo(typStringPtr) && !typ.Elem().Implements(typStringer),
-			addr:     reflect.PtrTo(typ.Elem()).Implements(typStringer),
-		}
-	default:
-		// fallback to generic encoder
-		b.Encoder = &indicatorEncoder{
-			parent:   b.Encoder,
-			typ:      typ,
-			scanner:  scanner,
-			indirect: !reflect.PtrTo(typ).Implements(typStringer),
-		}
+	if enc, ok := newIndicatorEncoder(typ, b.Encoder, scanner); ok {
+		b.Encoder = enc
+		return
+	}
+	if enc, ok := newSliceIndicatorEncoder(typ, b.Encoder, scanner); ok {
+		b.Encoder = enc
+		return
 	}
 }
 

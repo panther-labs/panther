@@ -30,7 +30,59 @@ type indicatorEncoder struct {
 	parent   jsoniter.ValEncoder
 	typ      reflect.Type
 	scanner  ValueScanner
+	addr     bool
 	indirect bool
+}
+
+func newIndicatorEncoder(typ reflect.Type, parent jsoniter.ValEncoder, scanner ValueScanner) (jsoniter.ValEncoder, bool) {
+	var addr, indirect bool
+	switch {
+	case isIndicatorType(typ):
+		addr, indirect = false, false
+	case isIndicatorType(reflect.PtrTo(typ)):
+		addr, indirect = true, false
+	case typ.Kind() == reflect.Ptr && isIndicatorType(typ.Elem()):
+		addr, indirect = false, true
+	default:
+		return nil, false
+	}
+	return &indicatorEncoder{
+		parent:   parent,
+		typ:      typ,
+		scanner:  scanner,
+		addr:     addr,
+		indirect: indirect,
+	}, true
+}
+
+func newSliceIndicatorEncoder(typ reflect.Type, parent jsoniter.ValEncoder, scanner ValueScanner) (*sliceIndicatorEncoder, bool) {
+	if typ.Kind() != reflect.Slice {
+		return nil, false
+	}
+	var addr, indirect bool
+	el := typ.Elem()
+	// slice of indicator values
+	switch {
+	case isIndicatorType(el):
+		addr, indirect = false, false
+	case isIndicatorType(reflect.PtrTo(el)):
+		addr, indirect = true, false
+	case el.Kind() == reflect.Ptr && isIndicatorType(el.Elem()):
+		addr, indirect = false, true
+	default:
+		return nil, false
+	}
+	return &sliceIndicatorEncoder{
+		parent:   parent,
+		typ:      typ,
+		scanner:  scanner,
+		indirect: indirect,
+		addr:     addr,
+	}, true
+}
+
+func isIndicatorType(typ reflect.Type) bool {
+	return typ.Implements(typStringer) || typ.ConvertibleTo(typByteSlice)
 }
 
 // IsEmpty implements jsoniter.ValEncoder interface
@@ -49,11 +101,14 @@ func (enc *indicatorEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 		return
 	}
 	val := reflect.NewAt(enc.typ, ptr)
-	if enc.indirect {
+	if !enc.addr {
 		val = val.Elem()
-	}
-	if enc.typ == typStringPtr {
-		val = val.Elem()
+		if enc.indirect {
+			if val.IsNil() {
+				return
+			}
+			val = val.Elem()
+		}
 	}
 	s := fmt.Sprint(val.Interface())
 	enc.scanner.ScanValues(vw, s)
