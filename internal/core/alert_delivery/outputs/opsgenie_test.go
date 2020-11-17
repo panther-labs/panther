@@ -69,7 +69,7 @@ func TestOpsgenieAlert(t *testing.T) {
 		AuthorizationHTTPHeader: authorization,
 	}
 
-	requestEndpoint := getOpsGenieRegion(opsgenieConfig.ServiceRegion)
+	requestEndpoint := GetOpsGenieRegion(opsgenieConfig.ServiceRegion)
 
 	expectedPostInput := &PostInput{
 		url:     requestEndpoint,
@@ -88,6 +88,6 @@ func TestOpsgenieServiceRegion(t *testing.T) {
 	//nolint:lll
 	expectedEndpoints := []string{"https://api.opsgenie.com/v2/alerts", "https://api.opsgenie.com/v2/alerts", "https://api.eu.opsgenie.com/v2/alerts"}
 	for i, serviceRegion := range opsGenieRegions {
-		assert.Equal(t, expectedEndpoints[i], getOpsGenieRegion(serviceRegion))
+		assert.Equal(t, expectedEndpoints[i], GetOpsGenieRegion(serviceRegion))
 	}
 }

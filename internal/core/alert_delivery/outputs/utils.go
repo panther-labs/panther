@@ -99,7 +99,7 @@ func mapSQSSendMessageErrorCodeToStatusCode(awsErr awserr.Error) int {
 		return 500
 	}
 }
-func getOpsGenieRegion(serviceRegion string) string {
+func GetOpsGenieRegion(serviceRegion string) string {
 	switch serviceRegion {
 	case OpsgenieServiceRegionUS:
 		return "https://api.opsgenie.com/v2/alerts"

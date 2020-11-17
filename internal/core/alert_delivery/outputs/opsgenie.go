@@ -63,7 +63,7 @@ func (client *OutputClient) Opsgenie(
 		AuthorizationHTTPHeader: authorization,
 	}
 
-	requestEndpoint := getOpsGenieRegion(config.ServiceRegion)
+	requestEndpoint := GetOpsGenieRegion(config.ServiceRegion)
 
 	postInput := &PostInput{
 		url:     requestEndpoint,
