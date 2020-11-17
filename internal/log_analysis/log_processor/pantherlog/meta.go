@@ -552,14 +552,13 @@ func appendFieldSet(fields FieldSet, field *reflect.StructField) FieldSet {
 	if id, ok := fieldsByName[field.Name]; ok {
 		return fields.Add(id)
 	}
+
+	tag := string(field.Tag)
+	fields = fields.Extend(FieldSetFromTag(tag)...)
 	switch fieldType := derefType(field.Type); fieldType.Kind() {
 	case reflect.Struct:
 		switch fieldType {
-		case typNullString:
-			tag := string(field.Tag)
-			return fields.Extend(FieldSetFromTag(tag)...)
-		case typTime:
-			// We know there are no field ids to be found in time.Time, avoid some needless recursion
+		case typNullString, typTime:
 			return fields
 		default:
 			return fields.Extend(FieldSetFromType(fieldType)...)
@@ -567,9 +566,6 @@ func appendFieldSet(fields FieldSet, field *reflect.StructField) FieldSet {
 	case reflect.Slice:
 		el := derefType(fieldType.Elem())
 		return fields.Extend(FieldSetFromType(el)...)
-	case reflect.String:
-		tag := string(field.Tag)
-		return fields.Extend(FieldSetFromTag(tag)...)
 	default:
 		return fields
 	}
