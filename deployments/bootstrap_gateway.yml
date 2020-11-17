@@ -291,7 +291,7 @@ Resources:
       FunctionMemoryMB: !FindInMap [Functions, CustomResource, Memory]
       FunctionName: !Ref CustomResourceFunction
       FunctionTimeoutSec: !FindInMap [Functions, CustomResource, Timeout]
-      LoggedWarnThreshold: 1
+      LoggedWarnThreshold: 10
       ThrottleThreshold: 0
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
