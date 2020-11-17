@@ -38,10 +38,15 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
     <React.Fragment>
       <Breadcrumbs.Actions>
         <Flex spacing={4} justify="flex-end">
-          <LinkButton aria-label="Edit Rule" to={urls.logAnalysis.rules.edit(rule.id)}>
-            Edit
+          <LinkButton
+            icon="pencil"
+            aria-label="Edit Rule"
+            to={urls.logAnalysis.rules.edit(rule.id)}
+          >
+            Edit Rule
           </LinkButton>
           <Button
+            icon="trash"
             variantColor="red"
             aria-label="Delete Rule"
             onClick={() =>
@@ -51,7 +56,7 @@ const RuleDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
               })
             }
           >
-            Delete
+            Delete Rule
           </Button>
         </Flex>
       </Breadcrumbs.Actions>
