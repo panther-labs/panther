@@ -98,11 +98,11 @@ describe('OpsGenieDestinationForm', () => {
 
   it('should trigger submit successfully', async () => {
     const submitMockFunc = jest.fn();
-    const { getByLabelText, getByText, getByTestId } = render(
+    const { getByLabelText, getByText } = render(
       <OpsgenieDestinationForm onSubmit={submitMockFunc} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
-    const serviceRegion = getByLabelText('Service Region', { selector: 'input' });
+    const euServiceRegion = getByLabelText('EU Service Region');
     const apiKeyField = getByLabelText('Opsgenie API key');
     const submitButton = getByText('Add Destination');
     const criticalSeverityCheckBox = document.getElementById(severity);
@@ -110,18 +110,16 @@ describe('OpsGenieDestinationForm', () => {
     expect(submitButton).toHaveAttribute('disabled');
 
     fireEvent.change(displayNameField, { target: { value: displayName } });
-
-    fireEvent.mouseDown(serviceRegion);
-    fireEvent.click(getByTestId('service-region-eu'));
-    expect(serviceRegion).toHaveValue(OpsgenieServiceRegionEnum.Eu);
-
-    fireEvent.click(criticalSeverityCheckBox);
     fireEvent.change(apiKeyField, { target: { value: '123' } });
+    fireEvent.click(euServiceRegion);
+    fireEvent.click(criticalSeverityCheckBox);
+
     await waitMs(50);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);
     await waitFor(() => expect(submitMockFunc).toHaveBeenCalledTimes(1));
+
     expect(submitMockFunc).toHaveBeenCalledWith({
       outputId: null,
       displayName,
@@ -132,11 +130,10 @@ describe('OpsGenieDestinationForm', () => {
 
   it('should edit Opsgenie Destination successfully', async () => {
     const submitMockFunc = jest.fn();
-    const { getByLabelText, getByText, getByTestId } = render(
+    const { getByLabelText, getByText } = render(
       <OpsgenieDestinationForm onSubmit={submitMockFunc} initialValues={initialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
-    const serviceRegion = getByLabelText('Service Region', { selector: 'input' });
     const submitButton = getByText('Update Destination');
     expect(displayNameField).toHaveValue(initialValues.displayName);
     expect(submitButton).toHaveAttribute('disabled');
@@ -144,9 +141,6 @@ describe('OpsGenieDestinationForm', () => {
     const newDisplayName = 'New Opsgenie Name';
     fireEvent.change(displayNameField, { target: { value: newDisplayName } });
 
-    fireEvent.mouseDown(serviceRegion);
-    fireEvent.click(getByTestId('service-region-us'));
-    expect(serviceRegion).toHaveValue(OpsgenieServiceRegionEnum.Us);
     await waitMs(50);
     expect(submitButton).not.toHaveAttribute('disabled');
 
