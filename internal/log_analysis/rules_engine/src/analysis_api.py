@@ -73,9 +73,7 @@ class AnalysisAPIClient:
 
         while page <= total_pages:
             list_input['listDataModels']['page'] = page
-            print('getEnabledInput', list_input)
             response = self.client.invoke(FunctionName='panther-analysis-api', Payload=json.dumps(list_input).encode('utf-8'))
-            print('getEnabledResponse', response)
             gateway_response = json.loads(response['Payload'].read())
 
             if response.get('FunctionError') or gateway_response['statusCode'] != 200:

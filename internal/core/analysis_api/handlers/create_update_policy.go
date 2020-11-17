@@ -43,7 +43,6 @@ func (API) UpdatePolicy(input *models.UpdatePolicyInput) *events.APIGatewayProxy
 // Shared by CreatePolicy and UpdatePolicy
 func writePolicy(input *models.CreatePolicyInput, create bool) *events.APIGatewayProxyResponse {
 	// Policy names are embedded in emails, alert outputs, etc. Prevent a possible injection attack
-	// TODO - is url-decoding of the ID required? (same for rule)
 	if genericapi.ContainsHTML(input.DisplayName) {
 		return &events.APIGatewayProxyResponse{
 			Body:       "invalid display name: " + genericapi.ErrContainsHTML.Error(),
