@@ -87,11 +87,13 @@ func init() {
 func TestPantherExt_DecorateEncoder(t *testing.T) {
 	// Check all possible string types
 	type T struct {
-		Foo  *testStringer `json:"foo" panther:"foo"`
-		Bar  testStringer  `json:"bar" panther:"bar"`
-		Baz  string        `json:"baz" panther:"baz"`
-		Qux  *string       `json:"qux" panther:"qux"`
-		Quux null.String   `json:"quux" panther:"quux"`
+		Foo      *testStringer `json:"foo" panther:"foo"`
+		Bar      testStringer  `json:"bar" panther:"bar"`
+		Baz      string        `json:"baz" panther:"baz"`
+		Qux      *string       `json:"qux" panther:"qux"`
+		Quux     null.String   `json:"quux" panther:"quux"`
+		FooSlice []string      `json:"foos" panther:"foo"`
+		BarSlice []null.String `json:"bars" panther:"bar"`
 	}
 
 	v := T{
@@ -101,9 +103,11 @@ func TestPantherExt_DecorateEncoder(t *testing.T) {
 		Bar: testStringer{
 			Foo: "ok",
 		},
-		Baz:  "ok",
-		Qux:  box.String("ok"),
-		Quux: null.FromString("ok"),
+		Baz:      "ok",
+		Qux:      box.String("ok"),
+		Quux:     null.FromString("ok"),
+		FooSlice: []string{"in", "slice"},
+		BarSlice: []null.String{null.FromString("in"), null.FromString("slice")},
 	}
 
 	result := Result{
@@ -112,13 +116,13 @@ func TestPantherExt_DecorateEncoder(t *testing.T) {
 	stream := jsoniter.ConfigDefault.BorrowStream(nil)
 	stream.Attachment = &result
 	stream.WriteVal(&v)
-	require.Equal(t, []string{"ok"}, result.values.Get(kindFoo), "foo")
-	require.Equal(t, []string{"ok"}, result.values.Get(kindBar), "bar")
+	require.Equal(t, []string{"in", "ok", "slice"}, result.values.Get(kindFoo), "foo")
+	require.Equal(t, []string{"in", "ok", "slice"}, result.values.Get(kindBar), "bar")
 	require.Equal(t, []string{"ok"}, result.values.Get(kindBaz), "baz")
 	require.Equal(t, []string{"ok"}, result.values.Get(kindQux), "qux")
 	require.Equal(t, []string{"ok"}, result.values.Get(kindQuux), "quux")
 	actual := string(stream.Buffer())
-	require.Equal(t, `{"foo":"ok","bar":"ok","baz":"ok","qux":"ok","quux":"ok"}`, actual)
+	require.Equal(t, `{"foo":"ok","bar":"ok","baz":"ok","qux":"ok","quux":"ok","foos":["in","slice"],"bars":["in","slice"]}`, actual)
 }
 
 func TestResultEncoder(t *testing.T) {

@@ -306,6 +306,25 @@ func (*pantherExt) decorateIndicatorField(b *jsoniter.Binding, scanners ...Value
 	typ := b.Field.Type().Type1()
 	// Decorate encoders
 	switch {
+	case typ.Kind() == reflect.Slice:
+		el := typ.Elem()
+		switch {
+		case el.ConvertibleTo(typString):
+			b.Encoder = &scanStringSliceEncoder{
+				parent:  b.Encoder,
+				scanner: scanner,
+			}
+		case el.ConvertibleTo(typStringPtr):
+			b.Encoder = &scanStringSliceEncoder{
+				parent:  b.Encoder,
+				scanner: scanner,
+			}
+		case el.ConvertibleTo(typNullString):
+			b.Encoder = &scanNullStringSliceEncoder{
+				parent:  b.Encoder,
+				scanner: scanner,
+			}
+		}
 	case typ.ConvertibleTo(typString):
 		b.Encoder = &scanStringEncoder{
 			parent:  b.Encoder,
@@ -388,6 +407,34 @@ func (enc *scanNullStringEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.St
 	}
 }
 
+type scanNullStringSliceEncoder struct {
+	parent  jsoniter.ValEncoder
+	scanner ValueScanner
+}
+
+func (enc *scanNullStringSliceEncoder) IsEmpty(ptr unsafe.Pointer) bool {
+	return enc.parent.IsEmpty(ptr)
+}
+
+// Encode implements jsoniter.ValEncoder interface
+func (enc *scanNullStringSliceEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+	enc.parent.Encode(ptr, stream)
+	if stream.Error != nil {
+		return
+	}
+	input := *((*[]null.String)(ptr))
+	if len(input) == 0 {
+		return
+	}
+	if values, ok := stream.Attachment.(ValueWriter); ok {
+		for _, value := range input {
+			if value.Exists {
+				enc.scanner.ScanValues(values, value.Value)
+			}
+		}
+	}
+}
+
 type scanStringerEncoder struct {
 	parent   jsoniter.ValEncoder
 	scanner  ValueScanner
@@ -442,6 +489,32 @@ func (enc *scanStringEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream
 	}
 	if values, ok := stream.Attachment.(ValueWriter); ok {
 		enc.scanner.ScanValues(values, input)
+	}
+}
+
+type scanStringSliceEncoder struct {
+	parent  jsoniter.ValEncoder
+	scanner ValueScanner
+}
+
+func (enc *scanStringSliceEncoder) IsEmpty(ptr unsafe.Pointer) bool {
+	return enc.parent.IsEmpty(ptr)
+}
+
+// Encode implements jsoniter.ValEncoder interface
+func (enc *scanStringSliceEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+	enc.parent.Encode(ptr, stream)
+	if stream.Error != nil {
+		return
+	}
+	input := *((*[]string)(ptr))
+	if len(input) == 0 {
+		return
+	}
+	if values, ok := stream.Attachment.(ValueWriter); ok {
+		for _, value := range input {
+			enc.scanner.ScanValues(values, value)
+		}
 	}
 }
 
