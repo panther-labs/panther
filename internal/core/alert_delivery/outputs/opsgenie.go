@@ -63,15 +63,7 @@ func (client *OutputClient) Opsgenie(
 		AuthorizationHTTPHeader: authorization,
 	}
 
-	requestEndpoint := ""
-	switch config.ServiceRegion {
-	case OpsgenieServiceRegionUS:
-		requestEndpoint = "https://api.opsgenie.com/v2/alerts"
-	case OpsgenieServiceRegionEU:
-		requestEndpoint = "https://api.eu.opsgenie.com/v2/alerts"
-	default:
-		requestEndpoint = "https://api.opsgenie.com/v2/alerts"
-	}
+	requestEndpoint := getOpsGenieRegion(config.ServiceRegion)
 
 	postInput := &PostInput{
 		url:     requestEndpoint,
