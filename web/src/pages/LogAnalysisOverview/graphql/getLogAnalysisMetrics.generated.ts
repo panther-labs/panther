@@ -30,13 +30,13 @@ export type GetLogAnalysisMetricsVariables = {
 export type GetLogAnalysisMetrics = {
   getLogAnalysisMetrics: Pick<Types.LogAnalysisMetricsResponse, 'intervalMinutes'> & {
     eventsProcessed: Pick<Types.SeriesData, 'timestamps'> & {
-      series?: Types.Maybe<Array<Types.Maybe<Pick<Types.Series, 'label' | 'values'>>>>;
+      series: Array<Pick<Types.LongSeries, 'label' | 'values'>>;
     };
-    eventsLatency: Pick<Types.FloatSeriesData, 'timestamps'> & {
+    eventsLatency: Pick<Types.SeriesData, 'timestamps'> & {
       series: Array<Pick<Types.FloatSeries, 'label' | 'values'>>;
     };
     alertsBySeverity: Pick<Types.SeriesData, 'timestamps'> & {
-      series?: Types.Maybe<Array<Types.Maybe<Pick<Types.Series, 'label' | 'values'>>>>;
+      series: Array<Pick<Types.LongSeries, 'label' | 'values'>>;
     };
     totalAlertsDelta: Array<Pick<Types.SingleValue, 'label' | 'value'>>;
     alertsByRuleID: Array<Pick<Types.SingleValue, 'label' | 'value'>>;
@@ -48,22 +48,28 @@ export const GetLogAnalysisMetricsDocument = gql`
     getLogAnalysisMetrics(input: $input) {
       eventsProcessed {
         series {
-          label
-          values
+          ... on LongSeries {
+            label
+            values
+          }
         }
         timestamps
       }
       eventsLatency {
         series {
-          label
-          values
+          ... on FloatSeries {
+            label
+            values
+          }
         }
         timestamps
       }
       alertsBySeverity {
         series {
-          label
-          values
+          ... on LongSeries {
+            label
+            values
+          }
         }
         timestamps
       }

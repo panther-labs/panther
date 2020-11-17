@@ -2,6 +2,7 @@ scalar AWSEmail
 scalar AWSDateTime
 scalar AWSTimestamp
 scalar AWSJSON
+scalar Long
 
 schema {
   query: Query
@@ -411,9 +412,9 @@ type OrganizationStatsResponse {
   topFailingResources: [ResourceSummary]
 }
 
-type Series {
-  label: String
-  values: [Int]
+type LongSeries {
+  label: String!
+  values: [Long!]!
 }
 
 type FloatSeries {
@@ -421,14 +422,11 @@ type FloatSeries {
   values: [Float!]!
 }
 
-type SeriesData {
-  timestamps: [AWSDateTime]
-  series: [Series]
-}
+union Series = LongSeries | FloatSeries
 
-type FloatSeriesData {
+type SeriesData {
   timestamps: [AWSDateTime!]!
-  series: [FloatSeries!]!
+  series: [Series!]!
 }
 
 type SingleValue {
@@ -439,7 +437,7 @@ type SingleValue {
 type LogAnalysisMetricsResponse {
   eventsProcessed: SeriesData!
   alertsBySeverity: SeriesData!
-  eventsLatency: FloatSeriesData!
+  eventsLatency: SeriesData!
   totalAlertsDelta: [SingleValue!]!
   alertsByRuleID: [SingleValue!]!
   fromDate: AWSDateTime!
