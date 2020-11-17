@@ -613,6 +613,7 @@ type SqsDestinationConfig {
 
 type OpsgenieConfig {
   apiKey: String!
+  serviceRegion: OpsgenieServiceRegionEnum!
 }
 
 type MsTeamsConfig {
@@ -681,6 +682,7 @@ input SqsConfigInput {
 
 input OpsgenieConfigInput {
   apiKey: String!
+  serviceRegion: OpsgenieServiceRegionEnum!
 }
 
 input MsTeamsConfigInput {
@@ -1100,6 +1102,11 @@ enum DestinationTypeEnum {
   sqs
   asana
   customwebhook
+}
+
+enum OpsgenieServiceRegionEnum {
+  EU
+  US
 }
 
 type ListAvailableLogTypesResponse {
