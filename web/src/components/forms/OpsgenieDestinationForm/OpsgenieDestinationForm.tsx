@@ -17,17 +17,17 @@
  */
 
 import React from 'react';
+import { Flex, Text, SimpleGrid } from 'pouncejs';
 import { FastField, Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
 import SensitiveTextInput from 'Components/fields/SensitiveTextInput';
+import FormikRadio from 'Components/fields/Radio';
 import { DestinationConfigInput, OpsgenieServiceRegionEnum } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
-import { Flex, Text, SimpleGrid } from 'pouncejs';
-import FormikRadio from 'Components/fields/Radio';
 
 type OpsgenieFieldValues = Pick<DestinationConfigInput, 'opsgenie'>;
 
@@ -50,6 +50,7 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
       }),
     }),
   });
+
   const mergedValidationSchema = defaultValidationSchema.concat(opsgenieFieldsValidationSchema);
 
   return (
@@ -82,14 +83,14 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
         <Flex align="flex-start" justify="space-between">
           <FastField
             as={FormikRadio}
-            name="serviceRegion"
+            name="outputConfig.opsgenie.serviceRegion"
             value={OpsgenieServiceRegionEnum.Us}
             label="US Service Region"
             aria-describedby="serviceRegion-label-text"
           />
           <FastField
             as={FormikRadio}
-            name="serviceRegion"
+            name="outputConfig.opsgenie.serviceRegion"
             value={OpsgenieServiceRegionEnum.Eu}
             label="EU Service Region"
             aria-describedby="serviceRegion-label-text"
