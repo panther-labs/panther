@@ -471,7 +471,6 @@ describe('EditDestination', () => {
       outputType: DestinationTypeEnum.Opsgenie,
       defaultForSeverity: [SeverityEnum.Critical],
       outputConfig: buildDestinationConfig({
-        __typename: 'DestinationConfig',
         opsgenie: buildOpsgenieConfig({
           apiKey: '',
           serviceRegion: OpsgenieServiceRegionEnum.Us,
