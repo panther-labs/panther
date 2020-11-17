@@ -1,4 +1,4 @@
-package awsglue
+package gluetimestamp
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -23,39 +23,26 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/renamefields"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
 
 const (
 	// We want our output JSON timestamps to be: YYYY-MM-DD HH:MM:SS.fffffffff
 	// https://aws.amazon.com/premiumsupport/knowledge-center/query-table-athena-timestamp-empty/
-	TimestampLayout     = `2006-01-02 15:04:05.000000000`
-	TimestampLayoutJSON = `"` + TimestampLayout + `"`
+	Layout     = `2006-01-02 15:04:05.000000000`
+	LayoutJSON = `"` + Layout + `"`
 )
 
-func NewTimestampEncoder() tcodec.TimeEncoder {
-	return &timestampEncoder{}
-}
-
-var _ tcodec.TimeEncoder = (*timestampEncoder)(nil)
-
-type timestampEncoder struct{}
-
-func (*timestampEncoder) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
-	if tm.IsZero() {
-		stream.WriteNil()
-		return
+// JSONEncoder returns a time encoder all timestamps to be Glue format and UTC.
+func JSONEncoder() tcodec.TimeEncoderFunc {
+	return func(tm time.Time, stream *jsoniter.Stream) {
+		if tm.IsZero() {
+			stream.WriteNil()
+			return
+		}
+		// Avoid allocations by using AppendFormat directly on the buffer
+		buf := stream.Buffer()
+		buf = tm.UTC().AppendFormat(buf, LayoutJSON)
+		stream.SetBuffer(buf)
 	}
-	buf := stream.Buffer()
-	buf = tm.UTC().AppendFormat(buf, TimestampLayoutJSON)
-	stream.SetBuffer(buf)
-}
-
-func RegisterExtensions(api jsoniter.API) jsoniter.API {
-	api.RegisterExtension(renamefields.New(glueschema.ColumnName))
-	// Force all timestamps to be awsglue format and UTC.
-	api.RegisterExtension(tcodec.OverrideEncoders(NewTimestampEncoder()))
-	return api
 }
