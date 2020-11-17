@@ -25,6 +25,7 @@ import {
   OpsgenieServiceRegionEnum,
 } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
+import { DESTINATIONS } from 'Source/constants';
 import DestinationFormSwitcher from 'Components/forms/DestinationFormSwitcher';
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
@@ -127,6 +128,7 @@ const ConfigureDestinationPanel: React.FC = () => {
       <WizardPanel.Heading
         title={`Configure Your ${destinationDisplayName} Destination`}
         subtitle="Fill out the form below to configure your Destination"
+        logo={DESTINATIONS[selectedDestinationType].logo}
       />
       <DestinationFormSwitcher
         initialValues={{ ...initialValues, outputType: selectedDestinationType }}
