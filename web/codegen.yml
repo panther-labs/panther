@@ -32,6 +32,7 @@ generates:
         AWSTimestamp: number
         AWSDateTime: string
         AWSJSON: string
+        Long: number
 
   web/__tests__/__mocks__/builders.generated.ts:
     plugins:
