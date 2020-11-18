@@ -27,6 +27,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"strings"
+	"fmt"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
@@ -40,6 +42,26 @@ type snsMessage struct {
 
 // Tests can replace this with a mock implementation
 var getSnsClient = buildSnsClient
+
+// Helper Function handles title input validation and makes SNS API Call
+func snsPublishHelper(snsClient snsiface.SNSAPI, snsMessageInput *sns.PublishInput) (*sns.PublishOutput, error) {
+	fmt.Println("Function Here")
+	tmp := *snsMessageInput.Subject
+	// Replace line breaks to preserve original title
+	title := strings.Replace(tmp, "\n", "", 100)
+	// Restrict title length to 100 Chars
+	if len(title) > 100 {
+		*snsMessageInput.Subject = title[0:100]
+	}
+	result, err := snsClient.Publish(snsMessageInput)
+	if err != nil {
+		// If error is returned assign new title and make an additional SNS API Call
+		*snsMessageInput.Subject = "New Panther Alert"
+		result, err := snsClient.Publish(snsMessageInput)
+		return result, err
+	}
+	return result, err
+}
 
 // Sns sends an alert to an SNS Topic.
 // nolint: dupl
@@ -75,9 +97,10 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 	}
 
 	title := generateAlertTitle(alert)
-	if len(title) > 100 {
-		title = title[0:100]
-	}
+	// Relocated to snsPublishHelper Function
+	// if len(title) > 100 {
+	// 	title = title[0:100]
+	// }
 
 	snsMessageInput := &sns.PublishInput{
 		TopicArn: aws.String(config.TopicArn),
@@ -98,8 +121,9 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 			Success:    false,
 		}
 	}
-
-	response, err := snsClient.Publish(snsMessageInput)
+	// Relocated to snsPublishHelper Function
+	// response, err := snsClient.Publish(snsMessageInput)
+	response, err := snsPublishHelper(snsClient, snsMessageInput)
 	if err != nil {
 		zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
 		return getAlertResponseFromSNSError(err)
