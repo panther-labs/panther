@@ -47,30 +47,4 @@ describe('GenericItemCard', () => {
 
     expect(container).toMatchSnapshot();
   });
-  it('renders a step with border color', () => {
-    const { container } = render(
-      <>
-        <GenericItemCard borderColor="blue-800">
-          <GenericItemCard.Logo src={logo} />
-          <GenericItemCard.Body>
-            <GenericItemCard.ValuesGroup>
-              <GenericItemCard.Value label="Test label" value="String value" />
-              <GenericItemCard.Value label="Test label" value="Another value" />
-            </GenericItemCard.ValuesGroup>
-          </GenericItemCard.Body>
-        </GenericItemCard>
-        <GenericItemCard borderColor="red-100">
-          <GenericItemCard.Logo src={logo} />
-          <GenericItemCard.Body>
-            <GenericItemCard.ValuesGroup>
-              <GenericItemCard.Value label="Test label" value="String value" />
-              <GenericItemCard.Value label="Test label" value="Another value" />
-            </GenericItemCard.ValuesGroup>
-          </GenericItemCard.Body>
-        </GenericItemCard>
-      </>
-    );
-
-    expect(container).toMatchSnapshot();
-  });
 });
