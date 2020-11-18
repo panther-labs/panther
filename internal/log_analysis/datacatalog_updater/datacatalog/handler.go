@@ -99,6 +99,10 @@ func (h *LambdaHandler) HandleSQSEvent(ctx context.Context, event *events.SQSEve
 	return nil
 }
 
+// tasksFromSQSMessages parses SQS messages and organizes them into distinct tasks.
+//
+// A single SQS event can contain multiple messages and each message can contain multiple S3Record events.
+// This function will aggregate all S3Record events into a single S3Event so that they are all handled together.
 func tasksFromSQSMessages(messages ...events.SQSMessage) (tasks []interface{}, err error) {
 	var s3Events []events.S3EventRecord
 	for _, msg := range messages {
@@ -109,6 +113,7 @@ func tasksFromSQSMessages(messages ...events.SQSMessage) (tasks []interface{}, e
 		}
 		switch {
 		case task.Records != nil:
+			// Aggregate all events.S3EventRecord values together
 			s3Events = append(s3Events, task.Records...)
 		case task.SyncDatabase != nil:
 			tasks = append(tasks, task.SyncDatabase)
@@ -122,6 +127,7 @@ func tasksFromSQSMessages(messages ...events.SQSMessage) (tasks []interface{}, e
 			err = multierr.Append(err, errors.Errorf("invalid SQS message body %q", msg.MessageId))
 		}
 	}
+	// If any event.S3EventRecord values where collected, add them as a single events.S3Event task
 	if len(s3Events) > 0 {
 		tasks = append(tasks, &events.S3Event{
 			Records: s3Events,
