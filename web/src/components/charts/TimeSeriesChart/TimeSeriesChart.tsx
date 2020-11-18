@@ -18,15 +18,20 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Box, Flex, Text, useTheme } from 'pouncejs';
+import { Box, Flex, Text, theme as Theme, useTheme } from 'pouncejs';
 import { formatTime, formatDatetime, remToPx, capitalize } from 'Helpers/utils';
 import { FloatSeriesData, LongSeriesData, FloatSeries, LongSeries } from 'Generated/schema';
 import { EChartOption, ECharts } from 'echarts';
 import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { stringToPaleColor } from 'Helpers/colors';
+import { getLegend } from 'Components/charts/TimeSeriesChart/options';
 import ResetButton from '../ResetButton';
 import ScaleControls from '../ScaleControls';
+
+type SeriesMetadata = {
+  color: keyof typeof Theme['colors'];
+};
 
 interface TimeSeriesLinesProps {
   /** The data for the time series */
@@ -60,6 +65,18 @@ interface TimeSeriesLinesProps {
   maxZoomPeriod?: number;
 
   /**
+   * Whether to render chart as lines or bars
+   * @default line
+   */
+  seriesType?: 'line' | 'bar';
+
+  /**
+   * Whether to hide legend
+   * @default false
+   */
+  hideLegend?: boolean;
+
+  /**
    * This is parameter determines if we need to display the values with an appropriate suffix
    */
   units?: string;
@@ -85,6 +102,8 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
   scaleControls = true,
   segments = 12,
   maxZoomPeriod = 3600 * 1000 * 24,
+  seriesType = 'line',
+  hideLegend = false,
   units,
   title,
 }) => {
@@ -102,13 +121,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
      *  Timestamps & Series are common for all series since everything has the same interval
      *  and the same time frame
      */
-    const series = data.series as (LongSeries | FloatSeries)[];
-    /*
-     * 'legendData' must be an array of values that matches 'series.name'in order
-     * to display them in correct order and color
-     * e.g. [AWS.ALB, AWS.S3, ...etc]
-     */
-    const legendData = series.map(({ label }) => label);
+    const series = data.series as ((LongSeries | FloatSeries) & SeriesMetadata)[];
 
     /*
      * 'series' must be an array of objects that includes some graph options
@@ -116,14 +129,14 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
      * is an array of values for all datapoints
      * Must be ordered
      */
-    const seriesData = series.map(({ label, values }) => {
+    const seriesData = series.map(({ label, values, color }) => {
       return {
         name: label,
-        type: 'line',
+        type: seriesType,
         symbol: 'none',
         smooth: true,
         itemStyle: {
-          color: theme.colors[severityColors[label]] || stringToPaleColor(label),
+          color: theme.colors[color || severityColors[label]] || stringToPaleColor(label),
         },
         data: values
           .map((v, i) => {
@@ -143,7 +156,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
 
     const options: EChartOption = {
       grid: {
-        left: 180,
+        left: hideLegend ? 0 : 180,
         right: 50,
         bottom: 50,
         containLabel: true,
@@ -210,35 +223,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           return tooltip.current.innerHTML;
         },
       },
-      legend: {
-        type: 'scroll' as const,
-        orient: 'vertical' as const,
-        left: 'auto',
-        right: 'auto',
-        // Pushing down legend to fit title
-        top: title ? 30 : 'auto',
-        icon: 'circle',
-        data: legendData,
-        inactiveColor: theme.colors['gray-400'],
-        textStyle: {
-          color: theme.colors['gray-50'],
-          fontFamily: theme.fonts.primary,
-          fontSize: remToPx(theme.fontSizes['x-small']),
-        },
-        pageIcons: {
-          vertical: ['M7 10L12 15L17 10H7Z', 'M7 14L12 9L17 14H7Z'],
-        },
-        pageIconColor: theme.colors['gray-50'],
-        pageIconInactiveColor: theme.colors['navyblue-300'],
-        pageIconSize: 12,
-        pageTextStyle: {
-          fontFamily: theme.fonts.primary,
-          color: theme.colors['gray-50'],
-          fontWeight: theme.fontWeights.bold as any,
-          fontSize: remToPx(theme.fontSizes['x-small']),
-        },
-        pageButtonGap: theme.space[3] as number,
-      },
+      ...(!hideLegend && { legend: getLegend({ theme, series, title }) }),
       xAxis: {
         type: 'time' as const,
         splitNumber: segments,
@@ -296,7 +281,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       const [echarts] = await Promise.all(
         [
           import(/* webpackChunkName: "echarts" */ 'echarts/lib/echarts'),
-          import(/* webpackChunkName: "echarts" */ 'echarts/lib/chart/line'),
+          import(/* webpackChunkName: "echarts" */ `echarts/lib/chart/${seriesType}`),
           import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/tooltip'),
           zoomable && import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/dataZoom'),
           // This is needed for reset functionality
