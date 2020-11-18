@@ -60,11 +60,14 @@ type sqsTask struct {
 	SyncTablePartitions    *SyncTableEvent
 }
 
+// Invoke implements lambda.Handler interface.
+//
+// This is the main entry point for Lambda code.
 func (h *LambdaHandler) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 	ctx = lambdalogger.Context(ctx, h.Logger)
 	event := events.SQSEvent{}
 	if err := jsoniter.Unmarshal(payload, &event); err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal JSON payload")
+		return nil, errors.Wrap(err, "failed to unmarshal Lambda payload")
 	}
 	if err := h.HandleSQSEvent(ctx, &event); err != nil {
 		return nil, err
@@ -72,6 +75,7 @@ func (h *LambdaHandler) Invoke(ctx context.Context, payload []byte) ([]byte, err
 	return nil, nil
 }
 
+// HandleSQSEvent handles messages in an SQS event.
 func (h *LambdaHandler) HandleSQSEvent(ctx context.Context, event *events.SQSEvent) error {
 	tasks, err := tasksFromSQSMessages(event.Records...)
 	if err != nil {
@@ -92,9 +96,11 @@ func (h *LambdaHandler) HandleSQSEvent(ctx context.Context, event *events.SQSEve
 		default:
 			err = errors.New("invalid task")
 		}
-	}
-	if err != nil {
-		return err
+		// We fail immediately on first failed task so that all messages are retried later.
+		// The tasksFromSQSMessages function makes sure S3 events are processed first.
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -103,6 +109,7 @@ func (h *LambdaHandler) HandleSQSEvent(ctx context.Context, event *events.SQSEve
 //
 // A single SQS event can contain multiple messages and each message can contain multiple S3Record events.
 // This function will aggregate all S3Record events into a single S3Event so that they are all handled together.
+// It also ensures that S3 events are processed before sync-related events.
 func tasksFromSQSMessages(messages ...events.SQSMessage) (tasks []interface{}, err error) {
 	var s3Events []events.S3EventRecord
 	for _, msg := range messages {
@@ -129,9 +136,14 @@ func tasksFromSQSMessages(messages ...events.SQSMessage) (tasks []interface{}, e
 	}
 	// If any event.S3EventRecord values where collected, add them as a single events.S3Event task
 	if len(s3Events) > 0 {
-		tasks = append(tasks, &events.S3Event{
-			Records: s3Events,
-		})
+		// It is important to process the S3 events first.
+		// This ensures that sync and update events (which can queue up more events) are not retried due to errors in
+		// the 'simple' S3 events.
+		tasks = append([]interface{}{
+			&events.S3Event{
+				Records: s3Events,
+			},
+		}, tasks...)
 	}
 	return
 }
