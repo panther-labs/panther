@@ -78,14 +78,14 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 		}
 	}
 
+	if err := updateTables(existingIntegrationItem, input); err != nil {
+		zap.L().Error("failed to update tables", zap.Error(err))
+		return nil, updateIntegrationInternalError
+	}
+
 	if err := normalizeIntegration(existingIntegrationItem, input); err != nil {
 		zap.L().Error("failed to normalize integration", zap.Error(err))
 		return nil, err
-	}
-
-	if err := updateTables(existingIntegrationItem.IntegrationType, input); err != nil {
-		zap.L().Error("failed to update tables", zap.Error(err))
-		return nil, updateIntegrationInternalError
 	}
 
 	if err := dynamoClient.PutItem(existingIntegrationItem); err != nil {
@@ -210,22 +210,47 @@ func getItem(integrationID string) (*ddb.Integration, error) {
 	return item, nil
 }
 
-func updateTables(integrationType string, input *models.UpdateIntegrationSettingsInput) error {
-	var logTypes []string
-	switch integrationType {
+func updateTables(item *ddb.Integration, input *models.UpdateIntegrationSettingsInput) error {
+	var existingLogTypes, newLogTypes []string
+	switch item.IntegrationType {
 	case models.IntegrationTypeAWS3:
-		logTypes = input.LogTypes
+		existingLogTypes = item.LogTypes
+		newLogTypes = input.LogTypes
 	case models.IntegrationTypeSqs:
-		logTypes = input.SqsConfig.LogTypes
+		existingLogTypes = item.SqsConfig.LogTypes
+		newLogTypes = input.SqsConfig.LogTypes
+	}
+
+	// If the user hasn't added new log types to the integration
+	// don't create new tables
+	if !newLogsAdded(existingLogTypes, newLogTypes) {
+		return nil
 	}
 
 	client := datacatalog.Client{
 		SQSAPI:   sqsClient,
 		QueueURL: env.DataCatalogUpdaterQueueURL,
 	}
-	err := client.SendCreateTablesForLogTypes(context.TODO(), logTypes...)
+	err := client.SendCreateTablesForLogTypes(context.TODO(), newLogTypes...)
 	if err != nil {
 		return errors.Wrap(err, "failed to create Glue tables")
 	}
 	return nil
+}
+
+// Returns True if user has added new logs, false otherwise
+func newLogsAdded(old, new []string) bool {
+	for i := range new {
+		found := false
+		for j := range old {
+			if new[i] == old[j] {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return true
+		}
+	}
+	return false
 }

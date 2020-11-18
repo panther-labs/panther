@@ -18,8 +18,6 @@
 
 const { defaults } = require('jest-config');
 
-process.env.TZ = 'UTC';
-
 module.exports = {
   // Only search for typescript tests
   rootDir: '../',

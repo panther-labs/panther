@@ -89,7 +89,7 @@ const RelatedDestinations: React.FC<RelatedDestinationsSectionProps> = ({
     // Showcasing how many additional destinations exist for this alert
     const numberOfExtraDestinations = destinations.length - renderedDestinations.length;
     return (
-      <Flex align="center" spacing={2}>
+      <Flex align="center" minWidth={85} spacing={2}>
         {renderedDestinations.map(getLogo)}
         <Text textAlign="center">+ {numberOfExtraDestinations}</Text>
       </Flex>
@@ -97,7 +97,7 @@ const RelatedDestinations: React.FC<RelatedDestinationsSectionProps> = ({
   }
 
   return (
-    <Flex align="center" spacing={2}>
+    <Flex align="center" minWidth={85} spacing={2}>
       {destinations.length ? (
         destinations.map(getLogo)
       ) : (

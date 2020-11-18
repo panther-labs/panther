@@ -81,6 +81,8 @@ import {
   ListRulesResponse,
   LogAnalysisMetricsInput,
   LogAnalysisMetricsResponse,
+  LongSeries,
+  LongSeriesData,
   ModifyGlobalPythonModuleInput,
   MsTeamsConfig,
   MsTeamsConfigInput,
@@ -106,8 +108,6 @@ import {
   ScannedResources,
   ScannedResourceStats,
   SendTestAlertInput,
-  Series,
-  SeriesData,
   SingleValue,
   SlackConfig,
   SlackConfigInput,
@@ -150,6 +150,7 @@ import {
   ListResourcesSortFieldsEnum,
   ListRulesSortFieldsEnum,
   LogIntegration,
+  OpsgenieServiceRegionEnum,
   SeverityEnum,
   SortDirEnum,
 } from '../../__generated__/schema';
@@ -935,9 +936,10 @@ export const buildLogAnalysisMetricsResponse = (
 ): LogAnalysisMetricsResponse => {
   return {
     __typename: 'LogAnalysisMetricsResponse',
-    eventsProcessed: 'eventsProcessed' in overrides ? overrides.eventsProcessed : buildSeriesData(),
+    eventsProcessed:
+      'eventsProcessed' in overrides ? overrides.eventsProcessed : buildLongSeriesData(),
     alertsBySeverity:
-      'alertsBySeverity' in overrides ? overrides.alertsBySeverity : buildSeriesData(),
+      'alertsBySeverity' in overrides ? overrides.alertsBySeverity : buildLongSeriesData(),
     eventsLatency: 'eventsLatency' in overrides ? overrides.eventsLatency : buildFloatSeriesData(),
     totalAlertsDelta:
       'totalAlertsDelta' in overrides ? overrides.totalAlertsDelta : [buildSingleValue()],
@@ -945,6 +947,22 @@ export const buildLogAnalysisMetricsResponse = (
     fromDate: 'fromDate' in overrides ? overrides.fromDate : '2020-06-15T22:39:08.690Z',
     toDate: 'toDate' in overrides ? overrides.toDate : '2020-06-29T16:49:54.582Z',
     intervalMinutes: 'intervalMinutes' in overrides ? overrides.intervalMinutes : 670,
+  };
+};
+
+export const buildLongSeries = (overrides: Partial<LongSeries> = {}): LongSeries => {
+  return {
+    __typename: 'LongSeries',
+    label: 'label' in overrides ? overrides.label : 'envisioneer',
+    values: 'values' in overrides ? overrides.values : [95698],
+  };
+};
+
+export const buildLongSeriesData = (overrides: Partial<LongSeriesData> = {}): LongSeriesData => {
+  return {
+    __typename: 'LongSeriesData',
+    timestamps: 'timestamps' in overrides ? overrides.timestamps : ['2020-05-29T02:52:10.141Z'],
+    series: 'series' in overrides ? overrides.series : [buildLongSeries()],
   };
 };
 
@@ -977,6 +995,8 @@ export const buildOpsgenieConfig = (overrides: Partial<OpsgenieConfig> = {}): Op
   return {
     __typename: 'OpsgenieConfig',
     apiKey: 'apiKey' in overrides ? overrides.apiKey : 'IB',
+    serviceRegion:
+      'serviceRegion' in overrides ? overrides.serviceRegion : OpsgenieServiceRegionEnum.Us,
   };
 };
 
@@ -985,6 +1005,8 @@ export const buildOpsgenieConfigInput = (
 ): OpsgenieConfigInput => {
   return {
     apiKey: 'apiKey' in overrides ? overrides.apiKey : 'hacking',
+    serviceRegion:
+      'serviceRegion' in overrides ? overrides.serviceRegion : OpsgenieServiceRegionEnum.Us,
   };
 };
 
@@ -1119,6 +1141,8 @@ export const buildPolicySummary = (overrides: Partial<PolicySummary> = {}): Poli
     enabled: 'enabled' in overrides ? overrides.enabled : false,
     id: 'id' in overrides ? overrides.id : '260cad31-ef71-4eb6-9ac1-1ca1d0da39c7',
     lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-09-11T01:58:47.481Z',
+    outputIds:
+      'outputIds' in overrides ? overrides.outputIds : ['94fd4ab9-7edc-4b27-8c37-bcfab0e2f825'],
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['EXE'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
     tags: 'tags' in overrides ? overrides.tags : ['navigating'],
@@ -1223,6 +1247,8 @@ export const buildRuleSummary = (overrides: Partial<RuleSummary> = {}): RuleSumm
     createdAt: 'createdAt' in overrides ? overrides.createdAt : '2020-09-24T09:09:49.137Z',
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['AI'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Info,
+    outputIds:
+      'outputIds' in overrides ? overrides.outputIds : ['a2f89a13-3b31-4365-b40d-2495c13a6f65'],
     tags: 'tags' in overrides ? overrides.tags : ['Virginia'],
   };
 };
@@ -1295,22 +1321,6 @@ export const buildSendTestAlertInput = (
   return {
     outputIds:
       'outputIds' in overrides ? overrides.outputIds : ['900d0911-ac12-4720-a1a9-89d6f1995c9f'],
-  };
-};
-
-export const buildSeries = (overrides: Partial<Series> = {}): Series => {
-  return {
-    __typename: 'Series',
-    label: 'label' in overrides ? overrides.label : 'Idaho',
-    values: 'values' in overrides ? overrides.values : [371],
-  };
-};
-
-export const buildSeriesData = (overrides: Partial<SeriesData> = {}): SeriesData => {
-  return {
-    __typename: 'SeriesData',
-    timestamps: 'timestamps' in overrides ? overrides.timestamps : ['2020-10-18T14:12:28.273Z'],
-    series: 'series' in overrides ? overrides.series : [buildSeries()],
   };
 };
 

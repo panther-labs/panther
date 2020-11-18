@@ -534,45 +534,34 @@ func FieldSetFromTag(tag string) FieldSet {
 
 // FieldSetFromType produces the minimum required field set to support scanners and core fields defined in a struct.
 func FieldSetFromType(typ reflect.Type) (fields FieldSet) {
-	typ = derefType(typ)
-	if typ.Kind() != reflect.Struct {
-		return
-	}
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
-		// Anonymous struct fields can have their public fields exposed to JSON
-		if field.Anonymous || isPublicFieldName(field.Name) {
-			fields = appendFieldSet(fields, &field)
+	switch typ := derefType(typ); typ.Kind() {
+	case reflect.Struct:
+		for i := 0; i < typ.NumField(); i++ {
+			field := typ.Field(i)
+			// Anonymous struct fields can have their public fields exposed to JSON
+			if field.Anonymous || isPublicFieldName(field.Name) {
+				fields = appendFieldSet(fields, &field)
+			}
 		}
+		return fields
+	case reflect.Map:
+		return fields.Extend(FieldSetFromType(typ.Elem())...)
+	case reflect.Slice:
+		return fields.Extend(FieldSetFromType(typ.Elem())...)
+	default:
+		return fields
 	}
-	return
 }
 
 func appendFieldSet(fields FieldSet, field *reflect.StructField) FieldSet {
 	if id, ok := fieldsByName[field.Name]; ok {
 		return fields.Add(id)
 	}
-	switch fieldType := derefType(field.Type); fieldType.Kind() {
-	case reflect.Struct:
-		switch fieldType {
-		case typNullString:
-			tag := string(field.Tag)
-			return fields.Extend(FieldSetFromTag(tag)...)
-		case typTime:
-			// We know there are no field ids to be found in time.Time, avoid some needless recursion
-			return fields
-		default:
-			return fields.Extend(FieldSetFromType(fieldType)...)
-		}
-	case reflect.Slice:
-		el := derefType(fieldType.Elem())
-		return fields.Extend(FieldSetFromType(el)...)
-	case reflect.String:
-		tag := string(field.Tag)
-		return fields.Extend(FieldSetFromTag(tag)...)
-	default:
-		return fields
-	}
+
+	tag := string(field.Tag)
+	fields = fields.Extend(FieldSetFromTag(tag)...)
+	fields = fields.Extend(FieldSetFromType(field.Type)...)
+	return fields
 }
 
 // FieldSetFromJSON checks top-level field names in a JSON object and produces the field set of all panther fields.

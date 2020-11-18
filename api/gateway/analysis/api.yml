@@ -59,6 +59,14 @@ parameters: # Parameters shared across multiple methods
     type: string
     pattern: '[a-zA-Z0-9\-\. ]{1,200}'
 
+  dataModelId:
+    name: dataModelId
+    in: query
+    description: Unique ASCII dataModel identifier
+    required: true
+    type: string
+    pattern: '[a-zA-Z0-9\-\. ]{1,200}'
+
   type:
     name: type
     in: query
@@ -78,6 +86,72 @@ parameters: # Parameters shared across multiple methods
     pattern: '[a-zA-Z\._0-9]{32}'
 
 paths:
+  /datamodel:
+    # The UI datamodel detail shows all details for an individual user provided data model.
+    #
+    # Example: GET /datamodel? dataModelId=onelogin
+    #
+    # Response: {
+    #     "body":                      "def mapping_method(event): return event.get('a field')",
+    #     "createdAt":                 "2019-08-26T00:00:00.000Z",
+    #     "createdBy":                 "5f54cf4a-ec56-44c2-83bc-8b742600f307",
+    #     "description":               "This policy is always compliant",
+    #     "enabled":                   true,
+    #     "id":                        "OneLogin.DataModel",
+    #     "lastModified":              "2019-08-26T00:00:00.000Z",
+    #     "lastModifiedBy":            "5f54cf4a-ec56-44c2-83bc-8b742600f307",
+    #     "logTypes":                  ["OneLogin.Events"],
+    #     "mappings":                  [{"path":"ipAddr","name":"source_address"}],
+    #     "versionId": "TsKejJ6GGi_KdH65g2iu9bcww8JxkkwI"
+    # }
+    get:
+      operationId: GetDataModel
+      summary: Get data model details
+      parameters:
+        - $ref: '#/parameters/dataModelId'
+        - $ref: '#/parameters/versionId'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/DataModel'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: DataModel does not exist
+        500:
+          description: Internal server error
+
+    # When users create a new dataModel, the frontend uses this endpoint.
+    #
+    # This is almost identical to updating a dataModel, except the dataModelId must not already exist.
+    #
+    # Example: (see ModifyDataModel)
+    post:
+      operationId: CreateDataModel
+      summary: Create a new Data Model module
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UpdateDataModel'
+      responses:
+        201:
+          description: DataModel created successfully
+          schema:
+            $ref: '#/definitions/DataModel'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        409:
+          description: DataModel with the given ID already exists
+        500:
+          description: Internal server error
+
   /global:
     # The UI global detail shows all details for an individual global.
     #
@@ -336,7 +410,7 @@ paths:
     # TODO: add paging / merge into ListPolicies endpoint
     get:
       operationId: GetEnabledPolicies
-      summary: List all enabled rules/policies for a customer account for backend processing
+      summary: List all enabled rules/policies/datamodels for a customer account for backend processing
       parameters:
         - $ref: '#/parameters/type'
       responses:
@@ -584,6 +658,74 @@ paths:
         500:
           description: Internal server error
 
+  /datamodel/list:
+    # Same as ListPolicies, but for data models
+    get:
+      operationId: ListDataModels
+      summary: Page through data models in a customer's account
+      parameters:
+        # filtering
+        - name: nameContains
+          in: query
+          description: Only include data models whose ID contains this substring (case-insensitive)
+          type: string
+        - name: enabled
+          in: query
+          description: Only include data models which are enabled or disabled
+          type: boolean
+        - name: logTypes
+          in: query
+          description: Only include data models which apply to one of these log types
+          type: array
+          collectionFormat: csv
+          uniqueItems: true
+          items:
+            type: string
+
+        # sorting
+        - name: sortBy
+          in: query
+          description: Name of the field to sort by
+          type: string
+          enum:
+            - enabled
+            - id
+            - lastModified
+            - logTypes
+          default: id
+        - name: sortDir
+          in: query
+          description: Sort direction
+          type: string
+          enum: [ascending, descending]
+          default: ascending
+
+        # paging
+        - name: pageSize
+          in: query
+          description: Number of items in each page of results
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 25
+        - name: page
+          in: query
+          description: Which page of results to retrieve
+          type: integer
+          minimum: 1
+          default: 1
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/DataModelList'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+
   /global/list:
     # Same as ListPolicies, but for globals
     get:
@@ -707,6 +849,31 @@ paths:
           description: Bad request
           schema:
             $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+
+  /datamodel/update:
+    # Same as UpdatePolicy, but for a dataModel module
+    post:
+      operationId: ModifyDataModel
+      summary: Modify an existing Data Model
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UpdateDataModel'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/DataModel'
+        400:
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: DataModel not found
         500:
           description: Internal server error
 
@@ -910,6 +1077,7 @@ definitions:
   AnalysisType:
     type: string
     enum:
+      - DATAMODEL
       - GLOBAL
       - POLICY
       - RULE
@@ -998,6 +1166,8 @@ definitions:
         $ref: '#/definitions/dedupPeriodMinutes'
       id:
         $ref: '#/definitions/id'
+      mappings:
+        $ref: '#/definitions/DataModelMappings'
       outputIds:
         $ref: '#/definitions/outputIds'
       reports:
@@ -1073,6 +1243,8 @@ definitions:
         $ref: '#/definitions/reports'
       threshold:
         $ref: '#/definitions/threshold' # not required because this is really for RuleSummaries
+      outputIds:
+        $ref: '#/definitions/outputIds'
     required:
       - autoRemediationId
       - autoRemediationParameters
@@ -1086,6 +1258,7 @@ definitions:
       - tags
       - suppressions
       - reports
+      - outputIds
 
   ##### BulkUpload #####
   BulkUpload:
@@ -1129,6 +1302,15 @@ definitions:
       modifiedGlobals:
         type: integer
         minimum: 0
+      totalDataModels:
+        type: integer
+        minimum: 0
+      newDataModels:
+        type: integer
+        minimum: 0
+      modifiedDataModels:
+        type: integer
+        minimum: 0
     required:
       - totalPolicies
       - newPolicies
@@ -1139,6 +1321,9 @@ definitions:
       - totalGlobals
       - newGlobals
       - modifiedGlobals
+      - totalDataModels
+      - newDataModels
+      - modifiedDataModels
 
   ##### TestPolicy / TestRule #####
   TestPolicy:
@@ -1241,6 +1426,71 @@ definitions:
     required:
       - policyIds
       - resourcePatterns
+
+  ##### Create/Modify/Update DataModels #####
+  DataModel:
+    type: object
+    properties:
+      body:
+        $ref: '#/definitions/body'
+      createdAt:
+        $ref: '#/definitions/modifyTime'
+      createdBy:
+        $ref: '#/definitions/userId'
+      description:
+        $ref: '#/definitions/description'
+      displayName:
+        $ref: '#/definitions/displayName'
+      enabled:
+        $ref: '#/definitions/enabled'
+      id:
+        $ref: '#/definitions/id'
+      lastModified:
+        $ref: '#/definitions/modifyTime'
+      lastModifiedBy:
+        $ref: '#/definitions/userId'
+      logTypes:
+        $ref: '#/definitions/TypeSet'
+      mappings:
+        $ref: '#/definitions/DataModelMappings'
+      versionId:
+        $ref: '#/definitions/versionId'
+    required:
+      # Note: body is optional for DataModel
+      - createdAt
+      - createdBy
+      - enabled
+      - id
+      - lastModified
+      - lastModifiedBy
+      - logTypes
+      - mappings
+      - versionId
+
+  UpdateDataModel:
+    type: object
+    properties:
+      body:
+        $ref: '#/definitions/body'
+      description:
+        $ref: '#/definitions/description'
+      displayName:
+        $ref: '#/definitions/displayName'
+      enabled:
+        $ref: '#/definitions/enabled'
+      id:
+        $ref: '#/definitions/id'
+      logTypes:
+        $ref: '#/definitions/TypeSet'
+      mappings:
+        $ref: '#/definitions/DataModelMappings'
+      userId:
+        $ref: '#/definitions/userId'
+    required:
+      - enabled
+      - id
+      - mappings
+      - userId
 
   ##### Create/Modify/Update Globals #####
   Global:
@@ -1415,6 +1665,53 @@ definitions:
       - paging
       - rules
 
+  DataModelList:
+    type: object
+    properties:
+      paging:
+        $ref: '#/definitions/Paging'
+      dataModels:
+        type: array
+        items:
+          $ref: '#/definitions/DataModelSummary'
+    required:
+      - paging
+      - dataModels
+
+  DataModelSummary:
+    type: object
+    properties:
+      id:
+        $ref: '#/definitions/id'
+      enabled:
+        $ref: '#/definitions/enabled'
+      lastModified:
+        $ref: '#/definitions/modifyTime'
+      logTypes:
+        $ref: '#/definitions/TypeSet'
+
+    required:
+      - id
+      - lastModified
+
+  DataModelMapping:
+    type: object
+    properties:
+      name:
+        $ref: '#/definitions/dataModelName'
+      path:
+        $ref: '#/definitions/dataModelPath'
+      method:
+        $ref: '#/definitions/dataModelMethod'
+    required:
+      - name
+
+  DataModelMappings:
+    description: yml schema mappings
+    type: array
+    items:
+      $ref: '#/definitions/DataModelMapping'
+
   GlobalList:
     type: object
     properties:
@@ -1463,6 +1760,8 @@ definitions:
         $ref: '#/definitions/reports'
       threshold:
         $ref: '#/definitions/threshold'
+      outputIds:
+        $ref: '#/definitions/outputIds'
     required:
       - displayName
       - enabled
@@ -1473,6 +1772,7 @@ definitions:
       - tags
       - reports
       - threshold
+      - outputIds
 
   ##### object properties #####
   autoRemediationId:
@@ -1506,6 +1806,21 @@ definitions:
       - ERROR # Policy raised an exception when evaluating a resource
       - FAIL # Policy failed on at least one resource
       - PASS # Policy passed for all applicable resources
+
+  dataModelMethod:
+    description: method name used to map data in a DataModel
+    type: string
+    pattern: '[a-zA-Z0-9\-\. ]{1,200}'
+
+  dataModelName:
+    description: standardized field name used in DataModel
+    type: string
+    pattern: '[a-zA-Z0-9\-\. ]{1,200}'
+
+  dataModelPath:
+    description: path name used to map data in a DataModel
+    type: string
+    pattern: '[a-zA-Z0-9@\-\.\,\$\[\]\(\)\*\?]{1,200}' # support JSONPath
 
   dedupPeriodMinutes:
     description: The time in minutes for which we deduplicate events when generating alerts for log analysis

@@ -213,6 +213,40 @@ var (
 		Description: "Provides a helper function",
 		ID:          "GlobalTypeAnalysis",
 	}
+
+	dataModel = &models.DataModel{
+		Body:        "def get_source_ip(event): return 'source_ip'\n",
+		Description: "Example LogType Schema",
+		Enabled:     true,
+		ID:          "DataModelTypeAnalysis",
+		LogTypes:    []string{"OneLogin.Events"},
+		Mappings:    []*models.DataModelMapping{},
+	}
+	dataModelTwo = &models.DataModel{
+		Body:        "def get_source_ip(event): return 'source_ip'\n",
+		Description: "Example LogType Schema",
+		Enabled:     true,
+		ID:          "SecondDataModelTypeAnalysis",
+		LogTypes:    []string{"Box.Events"},
+		Mappings:    []*models.DataModelMapping{},
+	}
+	dataModels           = [2]*models.DataModel{dataModel, dataModelTwo}
+	dataModelFromBulkYML = &models.DataModel{
+		Description: "",
+		Enabled:     true,
+		ID:          "Some.Events.DataModel",
+		LogTypes:    []string{"Some.Events"},
+		Mappings: []*models.DataModelMapping{
+			{
+				Name: "source_ip",
+				Path: "ipAddress",
+			},
+			{
+				Name: "dest_ip",
+				Path: "destAddress",
+			},
+		},
+	}
 )
 
 func TestMain(m *testing.M) {
@@ -273,7 +307,7 @@ func TestIntegrationAPI(t *testing.T) {
 	// ORDER MATTERS!
 
 	t.Run("TestPolicies", func(t *testing.T) {
-		t.Run("TestPolicyPass", testPolicyPass)
+		t.Run("Pass", testPolicyPass)
 		t.Run("TestPolicyPassAllResourceTypes", testPolicyPassAllResourceTypes)
 		t.Run("TestPolicyFail", testPolicyFail)
 		t.Run("TestPolicyError", testPolicyError)
@@ -294,6 +328,8 @@ func TestIntegrationAPI(t *testing.T) {
 		// support for a single global nothing changes (the version gets bumped a few times). Once multiple globals are
 		// supported, these tests can be improved to run policies and rules that rely on these imports.
 		t.Run("CreateGlobalSuccess", createGlobalSuccess)
+		t.Run("CreateDataModelSuccess", createDataModelSuccess)
+		t.Run("CreateDataModelFail", createDataModelFail)
 
 		t.Run("SaveEnabledPolicyFailingTests", saveEnabledPolicyFailingTests)
 		t.Run("SaveDisabledPolicyFailingTests", saveDisabledPolicyFailingTests)
@@ -316,6 +352,7 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("GetRule", getRule)
 		t.Run("GetRuleWrongType", getRuleWrongType)
 		t.Run("GetGlobal", getGlobal)
+		t.Run("GetDataModel", getDataModel)
 	})
 
 	// NOTE! This will mutate the original policy above!
@@ -332,8 +369,10 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ListFiltered", listFiltered)
 		t.Run("ListPaging", listPaging)
 		t.Run("ListRules", listRules)
+		t.Run("ListDataModels", listDataModels)
 		t.Run("GetEnabledPolicies", getEnabledPolicies)
 		t.Run("GetEnabledRules", getEnabledRules)
+		t.Run("GetEnabledDataModels", getEnabledDataModels)
 	})
 
 	t.Run("Modify", func(t *testing.T) {
@@ -342,6 +381,8 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ModifySuccess", modifySuccess)
 		t.Run("ModifyRule", modifyRule)
 		t.Run("ModifyGlobal", modifyGlobal)
+		t.Run("ModifyDataModelSuccess", modifyDataModelSuccess)
+		t.Run("ModifyDataModelFail", modifyDataModelFail)
 	})
 
 	t.Run("Suppress", func(t *testing.T) {
@@ -356,6 +397,7 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("DeleteInvalid", deleteInvalid)
 		t.Run("DeleteNotExists", deleteNotExists)
 		t.Run("DeleteSuccess", deleteSuccess)
+		t.Run("DeleteDataModel", deleteDataModel)
 		t.Run("DeleteGlobal", deleteGlobal)
 	})
 }
@@ -1081,6 +1123,97 @@ func createRuleSuccess(t *testing.T) {
 	assert.Equal(t, &expectedRule, result.Payload)
 }
 
+func createDataModelSuccess(t *testing.T) {
+	for _, model := range dataModels {
+		result, err := apiClient.Operations.CreateDataModel(&operations.CreateDataModelParams{
+			Body: &models.UpdateDataModel{
+				Body:        model.Body,
+				Description: model.Description,
+				Enabled:     model.Enabled,
+				ID:          model.ID,
+				LogTypes:    model.LogTypes,
+				Mappings:    model.Mappings,
+				UserID:      userID,
+			},
+			HTTPClient: httpClient,
+		})
+
+		require.NoError(t, err)
+
+		require.NoError(t, result.Payload.Validate(nil))
+		assert.NotZero(t, result.Payload.CreatedAt)
+		assert.NotZero(t, result.Payload.LastModified)
+
+		model.CreatedAt = result.Payload.CreatedAt
+		model.CreatedBy = userID
+		model.LastModified = result.Payload.LastModified
+		model.LastModifiedBy = userID
+		model.VersionID = result.Payload.VersionID
+		assert.Equal(t, model, result.Payload)
+	}
+}
+
+func createDataModelFail(t *testing.T) {
+	dataModelDuplicate := &models.DataModel{
+		Body:        "def get_source_ip(event): return 'source_ip'\n",
+		Description: "Example LogType Schema",
+		Enabled:     true,
+		ID:          "AnotherDataModelTypeAnalysis",
+		LogTypes:    []string{"OneLogin.Events"},
+		Mappings:    []*models.DataModelMapping{},
+	}
+	result, err := apiClient.Operations.CreateDataModel(&operations.CreateDataModelParams{
+		Body: &models.UpdateDataModel{
+			Body:        dataModelDuplicate.Body,
+			Description: dataModelDuplicate.Description,
+			Enabled:     dataModelDuplicate.Enabled,
+			ID:          dataModelDuplicate.ID,
+			LogTypes:    dataModelDuplicate.LogTypes,
+			Mappings:    dataModelDuplicate.Mappings,
+			UserID:      userID,
+		},
+		HTTPClient: httpClient,
+	})
+	// This should fail because it tries to create a DataModel
+	// for a logType that already has a DataModel enabled
+	assert.Nil(t, result)
+	require.Error(t, err)
+	require.IsType(t, &operations.CreateDataModelBadRequest{}, err)
+
+	// This should fail because it attempts to add a mapping with both
+	// a field and a method
+	mappings := []*models.DataModelMapping{
+		{
+			Name:   "source_ip",
+			Path:   "src_ip",
+			Method: "get_source_ip",
+		},
+	}
+	dataModelDuplicate = &models.DataModel{
+		Body:        "def get_source_ip(event): return 'source_ip'\n",
+		Description: "Example LogType Schema",
+		Enabled:     true,
+		ID:          "AnotherDataModelTypeAnalysis",
+		LogTypes:    []string{"Unique.Events"},
+		Mappings:    mappings,
+	}
+	result, err = apiClient.Operations.CreateDataModel(&operations.CreateDataModelParams{
+		Body: &models.UpdateDataModel{
+			Body:        dataModelDuplicate.Body,
+			Description: dataModelDuplicate.Description,
+			Enabled:     dataModelDuplicate.Enabled,
+			ID:          dataModelDuplicate.ID,
+			LogTypes:    dataModelDuplicate.LogTypes,
+			Mappings:    dataModelDuplicate.Mappings,
+			UserID:      userID,
+		},
+		HTTPClient: httpClient,
+	})
+	assert.Nil(t, result)
+	require.Error(t, err)
+	require.IsType(t, &operations.CreateDataModelBadRequest{}, err)
+}
+
 func createGlobalSuccess(t *testing.T) {
 	result, err := apiClient.Operations.CreateGlobal(&operations.CreateGlobalParams{
 		Body: &models.UpdateGlobal{
@@ -1185,6 +1318,17 @@ func getRule(t *testing.T) {
 	expectedRule.LastModified = result.Payload.LastModified
 	expectedRule.VersionID = result.Payload.VersionID
 	assert.Equal(t, &expectedRule, result.Payload)
+}
+
+// Get a datamodel
+func getDataModel(t *testing.T) {
+	result, err := apiClient.Operations.GetDataModel(&operations.GetDataModelParams{
+		DataModelID: string(dataModel.ID),
+		HTTPClient:  httpClient,
+	})
+	require.NoError(t, err)
+	assert.NoError(t, result.Payload.Validate(nil))
+	assert.Equal(t, dataModel, result.Payload)
 }
 
 // Get a global
@@ -1316,6 +1460,176 @@ func modifyRule(t *testing.T) {
 	assert.Equal(t, &expectedRule, result.Payload)
 }
 
+// Modify a dataModel - success
+func modifyDataModelSuccess(t *testing.T) {
+	dataModel.Description = "A new description"
+	dataModel.Body = "def get_source_ip(event): return src_ip\n"
+
+	result, err := apiClient.Operations.ModifyDataModel(&operations.ModifyDataModelParams{
+		Body: &models.UpdateDataModel{
+			Body:        dataModel.Body,
+			Description: dataModel.Description,
+			Enabled:     dataModel.Enabled,
+			ID:          dataModel.ID,
+			LogTypes:    dataModel.LogTypes,
+			Mappings:    dataModel.Mappings,
+			UserID:      userID,
+		},
+		HTTPClient: httpClient,
+	})
+
+	require.NoError(t, err)
+
+	require.NoError(t, result.Payload.Validate(nil))
+	assert.NotZero(t, result.Payload.CreatedAt)
+	assert.NotZero(t, result.Payload.LastModified)
+
+	dataModel.LastModified = result.Payload.LastModified
+	dataModel.VersionID = result.Payload.VersionID
+	assert.Equal(t, dataModel, result.Payload)
+
+	// verify can update logtypes to overlap if enabled is false
+	originalLogTypes := dataModel.LogTypes
+	dataModel.Enabled = false
+	dataModel.LogTypes = dataModelTwo.LogTypes
+	result, err = apiClient.Operations.ModifyDataModel(&operations.ModifyDataModelParams{
+		Body: &models.UpdateDataModel{
+			Body:        dataModel.Body,
+			Description: dataModel.Description,
+			Enabled:     dataModel.Enabled,
+			ID:          dataModel.ID,
+			LogTypes:    dataModel.LogTypes,
+			Mappings:    dataModel.Mappings,
+			UserID:      userID,
+		},
+		HTTPClient: httpClient,
+	})
+
+	require.NoError(t, err)
+
+	require.NoError(t, result.Payload.Validate(nil))
+	assert.NotZero(t, result.Payload.CreatedAt)
+	assert.NotZero(t, result.Payload.LastModified)
+
+	dataModel.LastModified = result.Payload.LastModified
+	dataModel.VersionID = result.Payload.VersionID
+	assert.Equal(t, dataModel, result.Payload)
+
+	// change logtype back
+	dataModel.Enabled = true
+	dataModel.LogTypes = originalLogTypes
+	result, err = apiClient.Operations.ModifyDataModel(&operations.ModifyDataModelParams{
+		Body: &models.UpdateDataModel{
+			Body:        dataModel.Body,
+			Description: dataModel.Description,
+			Enabled:     dataModel.Enabled,
+			ID:          dataModel.ID,
+			LogTypes:    dataModel.LogTypes,
+			Mappings:    dataModel.Mappings,
+			UserID:      userID,
+		},
+		HTTPClient: httpClient,
+	})
+
+	require.NoError(t, err)
+
+	require.NoError(t, result.Payload.Validate(nil))
+	assert.NotZero(t, result.Payload.CreatedAt)
+	assert.NotZero(t, result.Payload.LastModified)
+
+	dataModel.LastModified = result.Payload.LastModified
+	dataModel.VersionID = result.Payload.VersionID
+	assert.Equal(t, dataModel, result.Payload)
+}
+
+// Modify a dataModel - fail
+func modifyDataModelFail(t *testing.T) {
+	// Validate updating the logtypes that would create two data models
+	// that cover the same logtypes fails
+	result, err := apiClient.Operations.ModifyDataModel(&operations.ModifyDataModelParams{
+		Body: &models.UpdateDataModel{
+			Body:        dataModel.Body,
+			Description: dataModel.Description,
+			Enabled:     dataModel.Enabled,
+			ID:          dataModel.ID,
+			LogTypes:    dataModelTwo.LogTypes,
+			Mappings:    dataModel.Mappings,
+			UserID:      userID,
+		},
+		HTTPClient: httpClient,
+	})
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	require.IsType(t, &operations.ModifyDataModelBadRequest{}, err)
+
+	/* this check can be enabled if/when we support multiple logtypes per data model
+	// check that enabling overlapping logtype will fail
+	// first modify DataModel to overlap
+	originalLogTypes := dataModel.LogTypes
+	dataModel.Enabled = false
+	dataModel.LogTypes = append(dataModel.LogTypes, dataModelTwo.LogTypes[0])
+	result, err = apiClient.Operations.ModifyDataModel(&operations.ModifyDataModelParams{
+		Body: &models.UpdateDataModel{
+			Body:        dataModel.Body,
+			Description: dataModel.Description,
+			Enabled:     dataModel.Enabled,
+			ID:          dataModel.ID,
+			LogTypes:    dataModel.LogTypes,
+			Mappings:    dataModel.Mappings,
+			UserID:      userID,
+		},
+		HTTPClient: httpClient,
+	})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, dataModel.LogTypes, result.Payload.LogTypes)
+
+	// then try to update the enabled status
+	dataModel.Enabled = true
+	result, err = apiClient.Operations.ModifyDataModel(&operations.ModifyDataModelParams{
+		Body: &models.UpdateDataModel{
+			Body:        dataModel.Body,
+			Description: dataModel.Description,
+			Enabled:     dataModel.Enabled,
+			ID:          dataModel.ID,
+			LogTypes:    dataModel.LogTypes,
+			Mappings:    dataModel.Mappings,
+			UserID:      userID,
+		},
+		HTTPClient: httpClient,
+	})
+	assert.Nil(t, result)
+	require.Error(t, err)
+	require.IsType(t, &operations.ModifyDataModelBadRequest{}, err)
+
+	// cleanup: change logtype back
+	dataModel.Enabled = true
+	dataModel.LogTypes = originalLogTypes
+	result, err = apiClient.Operations.ModifyDataModel(&operations.ModifyDataModelParams{
+		Body: &models.UpdateDataModel{
+			Body:        dataModel.Body,
+			Description: dataModel.Description,
+			Enabled:     dataModel.Enabled,
+			ID:          dataModel.ID,
+			LogTypes:    dataModel.LogTypes,
+			Mappings:    dataModel.Mappings,
+			UserID:      userID,
+		},
+		HTTPClient: httpClient,
+	})
+
+	require.NoError(t, err)
+
+	require.NoError(t, result.Payload.Validate(nil))
+	assert.NotZero(t, result.Payload.CreatedAt)
+	assert.NotZero(t, result.Payload.LastModified)
+
+	dataModel.LastModified = result.Payload.LastModified
+	dataModel.VersionID = result.Payload.VersionID
+	assert.Equal(t, dataModel, result.Payload)
+	*/
+}
+
 // Modify a global
 func modifyGlobal(t *testing.T) {
 	global.Description = "Now returns False"
@@ -1418,6 +1732,10 @@ func bulkUploadSuccess(t *testing.T) {
 		ModifiedGlobals: aws.Int64(0),
 		NewGlobals:      aws.Int64(0),
 		TotalGlobals:    aws.Int64(0),
+
+		ModifiedDataModels: aws.Int64(0),
+		NewDataModels:      aws.Int64(1),
+		TotalDataModels:    aws.Int64(1),
 	}
 	require.Equal(t, expected, result.Payload)
 
@@ -1538,6 +1856,20 @@ func bulkUploadSuccess(t *testing.T) {
 	assert.Equal(t, expectedNewRule, getRule.Payload)
 	// Checking if the body contains the provide `rule` function (the body contains licence information that we are not interested in)
 	assert.Contains(t, getRule.Payload.Body, "def rule(event):\n    return True\n")
+
+	// Verify newly created DataModel
+	getDataModel, err := apiClient.Operations.GetDataModel(&operations.GetDataModelParams{
+		DataModelID: string(dataModelFromBulkYML.ID),
+		HTTPClient:  httpClient,
+	})
+	require.NoError(t, err)
+	// setting updated values
+	dataModelFromBulkYML.CreatedAt = getDataModel.Payload.CreatedAt
+	dataModelFromBulkYML.CreatedBy = getDataModel.Payload.CreatedBy
+	dataModelFromBulkYML.LastModified = getDataModel.Payload.LastModified
+	dataModelFromBulkYML.LastModifiedBy = getDataModel.Payload.LastModifiedBy
+	dataModelFromBulkYML.VersionID = getDataModel.Payload.VersionID
+	assert.Equal(t, dataModelFromBulkYML, getDataModel.Payload)
 }
 
 func listNotFound(t *testing.T) {
@@ -1579,6 +1911,7 @@ func listSuccess(t *testing.T) {
 				Enabled:                   policyFromBulkJSON.Enabled,
 				ID:                        policyFromBulkJSON.ID,
 				LastModified:              policyFromBulkJSON.LastModified,
+				OutputIds:                 policyFromBulkJSON.OutputIds,
 				ResourceTypes:             policyFromBulkJSON.ResourceTypes,
 				Severity:                  policyFromBulkJSON.Severity,
 				Suppressions:              policyFromBulkJSON.Suppressions,
@@ -1593,6 +1926,7 @@ func listSuccess(t *testing.T) {
 				Enabled:                   policy.Enabled,
 				ID:                        policy.ID,
 				LastModified:              result.Payload.Policies[1].LastModified, // this gets set
+				OutputIds:                 policy.OutputIds,
 				ResourceTypes:             policy.ResourceTypes,
 				Severity:                  policy.Severity,
 				Suppressions:              policy.Suppressions,
@@ -1607,6 +1941,7 @@ func listSuccess(t *testing.T) {
 				Enabled:                   policyFromBulk.Enabled,
 				ID:                        policyFromBulk.ID,
 				LastModified:              policyFromBulk.LastModified,
+				OutputIds:                 policyFromBulk.OutputIds,
 				ResourceTypes:             policyFromBulk.ResourceTypes,
 				Severity:                  policyFromBulk.Severity,
 				Suppressions:              policyFromBulk.Suppressions,
@@ -1646,6 +1981,7 @@ func listFiltered(t *testing.T) {
 				Enabled:                   policyFromBulkJSON.Enabled,
 				ID:                        policyFromBulkJSON.ID,
 				LastModified:              policyFromBulkJSON.LastModified,
+				OutputIds:                 policyFromBulkJSON.OutputIds,
 				ResourceTypes:             policyFromBulkJSON.ResourceTypes,
 				Severity:                  policyFromBulkJSON.Severity,
 				Suppressions:              policyFromBulkJSON.Suppressions,
@@ -1682,6 +2018,7 @@ func listPaging(t *testing.T) {
 				Enabled:                   policyFromBulkJSON.Enabled,
 				ID:                        policyFromBulkJSON.ID,
 				LastModified:              policyFromBulkJSON.LastModified,
+				OutputIds:                 policyFromBulkJSON.OutputIds,
 				ResourceTypes:             policyFromBulkJSON.ResourceTypes,
 				Severity:                  policyFromBulkJSON.Severity,
 				Suppressions:              policyFromBulkJSON.Suppressions,
@@ -1717,6 +2054,7 @@ func listPaging(t *testing.T) {
 				Enabled:                   policy.Enabled,
 				ID:                        policy.ID,
 				LastModified:              result.Payload.Policies[0].LastModified, // this gets set
+				OutputIds:                 policy.OutputIds,
 				ResourceTypes:             policy.ResourceTypes,
 				Severity:                  policy.Severity,
 				Suppressions:              policy.Suppressions,
@@ -1752,6 +2090,7 @@ func listPaging(t *testing.T) {
 				Enabled:                   policyFromBulk.Enabled,
 				ID:                        policyFromBulk.ID,
 				LastModified:              policyFromBulk.LastModified,
+				OutputIds:                 policyFromBulk.OutputIds,
 				ResourceTypes:             policyFromBulk.ResourceTypes,
 				Severity:                  policyFromBulk.Severity,
 				Suppressions:              policyFromBulk.Suppressions,
@@ -1783,10 +2122,48 @@ func listRules(t *testing.T) {
 				ID:           rule.ID,
 				LastModified: result.Payload.Rules[0].LastModified, // this is changed
 				LogTypes:     rule.LogTypes,
+				OutputIds:    rule.OutputIds,
 				Severity:     rule.Severity,
 				Tags:         rule.Tags,
 				Reports:      rule.Reports,
 				Threshold:    rule.Threshold,
+			},
+		},
+	}
+	assert.Equal(t, expected, result.Payload)
+}
+
+// List data models
+func listDataModels(t *testing.T) {
+	result, err := apiClient.Operations.ListDataModels(&operations.ListDataModelsParams{
+		HTTPClient: httpClient,
+	})
+	require.NoError(t, err)
+
+	expected := &models.DataModelList{
+		Paging: &models.Paging{
+			ThisPage:   aws.Int64(1),
+			TotalItems: aws.Int64(3),
+			TotalPages: aws.Int64(1),
+		},
+		DataModels: []*models.DataModelSummary{
+			{
+				Enabled:      dataModel.Enabled,
+				ID:           dataModel.ID,
+				LastModified: result.Payload.DataModels[0].LastModified, // this is changed
+				LogTypes:     dataModel.LogTypes,
+			},
+			{
+				Enabled:      dataModelTwo.Enabled,
+				ID:           dataModelTwo.ID,
+				LastModified: result.Payload.DataModels[1].LastModified, // this is changed
+				LogTypes:     dataModelTwo.LogTypes,
+			},
+			{ // bulk upload entry
+				Enabled:      dataModelFromBulkYML.Enabled,
+				ID:           dataModelFromBulkYML.ID,
+				LastModified: result.Payload.DataModels[2].LastModified,
+				LogTypes:     dataModelFromBulkYML.LogTypes,
 			},
 		},
 	}
@@ -1864,6 +2241,39 @@ func getEnabledRules(t *testing.T) {
 				DedupPeriodMinutes: rule.DedupPeriodMinutes,
 				Tags:               rule.Tags,
 				OutputIds:          rule.OutputIds,
+			},
+		},
+	}
+	assert.Equal(t, expected, result.Payload)
+}
+
+// Get enabled Data Models
+func getEnabledDataModels(t *testing.T) {
+	result, err := apiClient.Operations.GetEnabledPolicies(&operations.GetEnabledPoliciesParams{
+		Type:       string(models.AnalysisTypeDATAMODEL),
+		HTTPClient: httpClient,
+	})
+	require.NoError(t, err)
+
+	expected := &models.EnabledPolicies{
+		Policies: []*models.EnabledPolicy{
+			{
+				Body:          dataModel.Body,
+				ID:            dataModel.ID,
+				ResourceTypes: dataModel.LogTypes,
+				VersionID:     dataModel.VersionID,
+			},
+			{ // bulk upload entry
+				ID:            dataModelFromBulkYML.ID,
+				Mappings:      dataModelFromBulkYML.Mappings,
+				ResourceTypes: dataModelFromBulkYML.LogTypes,
+				VersionID:     dataModelFromBulkYML.VersionID,
+			},
+			{
+				Body:          dataModelTwo.Body,
+				ID:            dataModelTwo.ID,
+				ResourceTypes: dataModelTwo.LogTypes,
+				VersionID:     dataModelTwo.VersionID,
 			},
 		},
 	}
@@ -1960,6 +2370,45 @@ func deleteSuccess(t *testing.T) {
 	require.NoError(t, err)
 	expectedRuleList := &models.RuleList{Paging: emptyPaging, Rules: []*models.RuleSummary{}}
 	assert.Equal(t, expectedRuleList, ruleList.Payload)
+}
+
+func deleteDataModel(t *testing.T) {
+	allDataModels := make([]*models.DataModel, len(dataModels))
+	for i, model := range dataModels {
+		allDataModels[i] = model
+	}
+	allDataModels = append(allDataModels, dataModelFromBulkYML)
+	for _, model := range allDataModels {
+		result, err := apiClient.Operations.DeletePolicies(&operations.DeletePoliciesParams{
+			Body: &models.DeletePolicies{
+				Policies: []*models.DeleteEntry{
+					{
+						ID: model.ID,
+					},
+				},
+			},
+			HTTPClient: httpClient,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, &operations.DeletePoliciesOK{}, result)
+
+		// Trying to retrieve the deleted data model should now return 404
+		_, err = apiClient.Operations.GetDataModel(&operations.GetDataModelParams{
+			DataModelID: string(model.ID),
+			HTTPClient:  httpClient,
+		})
+		require.Error(t, err)
+		require.IsType(t, &operations.GetDataModelNotFound{}, err)
+
+		// But retrieving an older version will still work
+		getResult, err := apiClient.Operations.GetDataModel(&operations.GetDataModelParams{
+			DataModelID: string(model.ID),
+			VersionID:   aws.String(string(model.VersionID)),
+			HTTPClient:  httpClient,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, model, getResult.Payload)
+	}
 }
 
 func deleteGlobal(t *testing.T) {

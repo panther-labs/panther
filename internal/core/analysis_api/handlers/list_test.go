@@ -28,7 +28,11 @@ import (
 )
 
 func TestPagePoliciesPageSize1(t *testing.T) {
-	policies := []*models.PolicySummary{{ID: "a"}, {ID: "b"}, {ID: "c"}, {ID: "d"}}
+	policies := []*models.PolicySummary{
+		{ID: "a", OutputIds: []string{"output-1", "output-2"}},
+		{ID: "b", OutputIds: []string{"output-3", "output-4"}},
+		{ID: "c", OutputIds: []string{"output-5", "output-6"}},
+		{ID: "d", OutputIds: []string{"output-7", "output-8"}}}
 	result := pagePolicies(policies, 1, 1)
 	expected := &models.PolicyList{
 		Paging: &models.Paging{
@@ -36,23 +40,23 @@ func TestPagePoliciesPageSize1(t *testing.T) {
 			TotalItems: aws.Int64(4),
 			TotalPages: aws.Int64(4),
 		},
-		Policies: []*models.PolicySummary{{ID: "a"}},
+		Policies: []*models.PolicySummary{{ID: "a", OutputIds: []string{"output-1", "output-2"}}},
 	}
 	assert.Equal(t, expected, result)
 
 	result = pagePolicies(policies, 1, 2)
 	expected.Paging.ThisPage = aws.Int64(2)
-	expected.Policies = []*models.PolicySummary{{ID: "b"}}
+	expected.Policies = []*models.PolicySummary{{ID: "b", OutputIds: []string{"output-3", "output-4"}}}
 	assert.Equal(t, expected, result)
 
 	result = pagePolicies(policies, 1, 3)
 	expected.Paging.ThisPage = aws.Int64(3)
-	expected.Policies = []*models.PolicySummary{{ID: "c"}}
+	expected.Policies = []*models.PolicySummary{{ID: "c", OutputIds: []string{"output-5", "output-6"}}}
 	assert.Equal(t, expected, result)
 
 	result = pagePolicies(policies, 1, 4)
 	expected.Paging.ThisPage = aws.Int64(4)
-	expected.Policies = []*models.PolicySummary{{ID: "d"}}
+	expected.Policies = []*models.PolicySummary{{ID: "d", OutputIds: []string{"output-7", "output-8"}}}
 	assert.Equal(t, expected, result)
 }
 
