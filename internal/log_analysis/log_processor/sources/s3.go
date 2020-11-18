@@ -31,6 +31,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/sns"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
@@ -150,18 +151,31 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 		return nil, nil
 	}
 
+	downloader := s3manager.NewDownloaderWithClient(s3Client, func(d *s3manager.Downloader) {
+		d.Concurrency = 1 // must be serial because we are reading stream!
+	})
+
 	getObjectInput := &s3.GetObjectInput{
 		Bucket: &s3Object.S3Bucket,
 		Key:    &s3Object.S3ObjectKey,
 	}
-	output, err := s3Client.GetObject(getObjectInput)
-	if err != nil {
-		err = errors.Wrapf(err, "GetObject() failed for s3://%s/%s",
-			s3Object.S3Bucket, s3Object.S3ObjectKey)
-		return nil, err
-	}
 
-	bufferedReader := bufio.NewReader(output.Body)
+	downloadPipe := newDownloadPipe()
+
+	// run the downloader in the background writing into the pipe
+	go func() {
+		_, err = downloader.Download(downloadPipe, getObjectInput)
+		if err != nil {
+			err = errors.Wrapf(err, "Download() failed for s3://%s/%s",
+				s3Object.S3Bucket, s3Object.S3ObjectKey)
+			zap.L().Error("s3 download failed", zap.Error(err))
+			downloadPipe.CloseWithError(err) // this will cause the reader to fail
+		} else {
+			downloadPipe.Close()
+		}
+	}()
+
+	bufferedReader := bufio.NewReader(downloadPipe)
 	contentType, err := detectContentType(bufferedReader)
 
 	if err != nil {
@@ -324,4 +338,34 @@ type S3ObjectInfo struct {
 type SnsNotification struct {
 	events.SNSEntity
 	Token *string `json:"Token"`
+}
+
+// Implements a pipe with the writer having the WriteAt interface
+type downloadPipe struct {
+	reader *io.PipeReader
+	writer *io.PipeWriter
+}
+
+func (dp *downloadPipe) Read(p []byte) (n int, err error) {
+	return dp.reader.Read(p)
+}
+
+func (dp *downloadPipe) WriteAt(p []byte, off int64) (n int, err error) {
+	return dp.writer.Write(p)
+}
+
+func (dp *downloadPipe) Close() {
+	dp.writer.Close()
+}
+
+func (dp *downloadPipe) CloseWithError(err error) {
+	dp.writer.CloseWithError(err)
+}
+
+func newDownloadPipe() *downloadPipe {
+	readPipe, writePipe := io.Pipe()
+	return &downloadPipe{
+		reader: readPipe,
+		writer: writePipe,
+	}
 }
