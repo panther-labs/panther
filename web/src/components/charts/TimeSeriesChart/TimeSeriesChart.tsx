@@ -20,7 +20,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Box, Flex, Text, useTheme } from 'pouncejs';
 import { formatTime, formatDatetime, remToPx, capitalize } from 'Helpers/utils';
-import { SeriesData } from 'Generated/schema';
+import { FloatSeriesData, LongSeriesData, FloatSeries, LongSeries } from 'Generated/schema';
 import { EChartOption, ECharts } from 'echarts';
 import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
@@ -30,7 +30,7 @@ import ScaleControls from '../ScaleControls';
 
 interface TimeSeriesLinesProps {
   /** The data for the time series */
-  data: SeriesData;
+  data: LongSeriesData | FloatSeriesData;
 
   /**
    * The number of segments that the X-axis is split into
@@ -99,10 +99,10 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
    */
   const chartOptions = React.useMemo(() => {
     /*
-     *  Timestamps are common for all series since everything has the same interval
+     *  Timestamps & Series are common for all series since everything has the same interval
      *  and the same time frame
      */
-    const { timestamps, series } = data;
+    const series = data.series as (LongSeries | FloatSeries)[];
     /*
      * 'legendData' must be an array of values that matches 'series.name'in order
      * to display them in correct order and color
@@ -129,7 +129,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           .map((v, i) => {
             return {
               name: label,
-              value: [timestamps[i], v],
+              value: [data.timestamps[i], v],
             };
           })
           /* This reverse is needed cause data provided by API are coming by descending timestamp.

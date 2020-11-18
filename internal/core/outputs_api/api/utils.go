@@ -25,6 +25,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
@@ -102,6 +103,12 @@ func redactOutput(outputConfig *models.OutputConfig) {
 	}
 	if outputConfig.CustomWebhook != nil {
 		outputConfig.CustomWebhook.WebhookURL = redacted
+	}
+}
+
+func configureOutputFallbacks(outputConfig *models.OutputConfig) {
+	if outputConfig.Opsgenie != nil {
+		outputConfig.Opsgenie.ServiceRegion = outputs.GetOpsGenieRegion(outputConfig.Opsgenie.ServiceRegion)
 	}
 }
 
