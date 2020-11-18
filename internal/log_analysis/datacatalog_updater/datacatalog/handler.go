@@ -145,5 +145,5 @@ func tasksFromSQSMessages(messages ...events.SQSMessage) (tasks []interface{}, e
 			},
 		}, tasks...)
 	}
-	return
+	return tasks, err
 }

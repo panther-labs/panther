@@ -163,7 +163,7 @@ func TestProcessInvalidS3Key(t *testing.T) {
 
 // initProcessTest is run at the start of each test to create new mocks and reset state
 func initProcessTest() {
-	handler.partitionsCreated = make(map[string]string)
+	handler.partitionsCreated = make(map[string]struct{})
 	mockGlueClient = &testutils.GlueMock{
 		LogTables: generateLogTablesMock(registry.AvailableLogTypes()...),
 	}
