@@ -53,7 +53,7 @@ func (h *LambdaHandler) HandleS3EventRecord(ctx context.Context, event *events.S
 		return nil
 	}
 	partitionURL := partition.GetPartitionLocation()
-	if _, created := h.partitionsCreated[partitionURL]; created {
+	if h.isPartitionAlreadyCreated(partitionURL) {
 		return nil
 	}
 	partitionTime := partition.GetTime()
@@ -61,11 +61,21 @@ func (h *LambdaHandler) HandleS3EventRecord(ctx context.Context, event *events.S
 	if _, err := tableMeta.CreateJSONPartition(h.GlueClient, partitionTime); err != nil {
 		return err
 	}
-	// Store partition in cache as successfully created
-	if h.partitionsCreated == nil {
-		h.partitionsCreated = make(map[string]string)
-	}
-	h.partitionsCreated[partitionURL] = partitionURL
+
+	h.observeCreatedPartition(partitionURL)
 
 	return nil
+}
+
+func (h *LambdaHandler) isPartitionAlreadyCreated(partitionURL string) bool {
+	_, created := h.partitionsCreated[partitionURL]
+	return created
+}
+
+func (h *LambdaHandler) observeCreatedPartition(partitionURL string) {
+	// Store partition in cache as successfully created
+	if h.partitionsCreated == nil {
+		h.partitionsCreated = make(map[string]struct{})
+	}
+	h.partitionsCreated[partitionURL] = struct{}{}
 }

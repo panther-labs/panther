@@ -47,7 +47,7 @@ type LambdaHandler struct {
 	Logger                *zap.Logger
 
 	// Glue partitions known to have been created. (use map[string]string where key == value for map size)
-	partitionsCreated map[string]string
+	partitionsCreated map[string]struct{}
 }
 
 var _ lambda.Handler = (*LambdaHandler)(nil)
@@ -69,7 +69,7 @@ func (h *LambdaHandler) Invoke(ctx context.Context, payload []byte) ([]byte, err
 	if err := h.HandleSQSEvent(ctx, &event); err != nil {
 		return nil, err
 	}
-	return []byte(`{"status":"OK"}`), nil
+	return nil, nil
 }
 
 func (h *LambdaHandler) HandleSQSEvent(ctx context.Context, event *events.SQSEvent) error {
