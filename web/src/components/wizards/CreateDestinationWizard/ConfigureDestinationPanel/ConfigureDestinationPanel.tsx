@@ -18,8 +18,14 @@
 
 import React from 'react';
 import { Box, useSnackbar } from 'pouncejs';
-import { DestinationConfigInput, DestinationInput, DestinationTypeEnum } from 'Generated/schema';
+import {
+  DestinationConfigInput,
+  DestinationInput,
+  DestinationTypeEnum,
+  OpsgenieServiceRegionEnum,
+} from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
+import { DESTINATIONS } from 'Source/constants';
 import DestinationFormSwitcher from 'Components/forms/DestinationFormSwitcher';
 import { capitalize, extractErrorMessage } from 'Helpers/utils';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
@@ -41,7 +47,7 @@ const initialValues: Omit<DestinationInput, 'outputType'> = {
       assigneeId: '',
       issueType: '',
     },
-    opsgenie: { apiKey: '' },
+    opsgenie: { apiKey: '', serviceRegion: OpsgenieServiceRegionEnum.Us },
     slack: { webhookURL: '' },
     msTeams: { webhookURL: '' },
     sns: { topicArn: '' },
@@ -122,6 +128,7 @@ const ConfigureDestinationPanel: React.FC = () => {
       <WizardPanel.Heading
         title={`Configure Your ${destinationDisplayName} Destination`}
         subtitle="Fill out the form below to configure your Destination"
+        logo={DESTINATIONS[selectedDestinationType].logo}
       />
       <DestinationFormSwitcher
         initialValues={{ ...initialValues, outputType: selectedDestinationType }}

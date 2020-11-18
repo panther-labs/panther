@@ -20,12 +20,12 @@ import React from 'react';
 import { Box, Card, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType/EventsByLogType';
-import { SeriesData } from 'Generated/schema';
+import { LongSeriesData, FloatSeriesData } from 'Generated/schema';
 import EventsByLatency from '../EventsByLatency';
 
 interface LogTypeChartsProps {
-  eventsProcessed: SeriesData;
-  eventsLatency: SeriesData;
+  eventsProcessed: LongSeriesData;
+  eventsLatency: FloatSeriesData;
 }
 
 const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed, eventsLatency }) => {
