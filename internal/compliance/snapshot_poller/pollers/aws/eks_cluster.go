@@ -24,13 +24,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/eks"
 	"github.com/aws/aws-sdk-go/service/eks/eksiface"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
-
 	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 // Set as variables to be overridden in testing
@@ -121,6 +120,12 @@ func getEKSFargateProfiles(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsm
 		})
 
 	if err != nil {
+			var awsErr awserr.Error
+			if errors.As(err, &awsErr) && awsErr.Code() == "AccessDeniedException" {
+				zap.L().Warn("Error with IAM Permissions - Use the AWS Console or CloudFormation to update the Panther" +
+					"Audit Role policy to include the eks:ListFargateProfiles and eks:DescribeFargateProfile permissions")
+				return nil, nil
+			}
 		return nil, errors.Wrapf(err, "EKS.ListFargateProfilesPages: %s", aws.StringValue(clusterName))
 	}
 
@@ -262,13 +267,7 @@ func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string) (*awsm
 
 	eksCluster.FargateProfile, err = getEKSFargateProfiles(eksSvc, details.Name)
 	if err != nil {
-		var awsErr awserr.Error
-		if errors.As(err, &awsErr) && awsErr.Code() == eks.ErrorCodeAccessDenied {
-			zap.L().Warn("Error with IAM Permissions - Use the AWS Console or CloudFormation to update the Panther" +
-				"Audit Role policy to include the eks:ListFargateProfiles and eks:DescribeFargateProfile permissions")
-		} else {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	eksCluster.NodeGroup, err = getEKSNodegroups(eksSvc, details.Name)
