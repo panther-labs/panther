@@ -17,16 +17,18 @@
  */
 
 import React from 'react';
-import { Box, Flex, Spinner, useSnackbar } from 'pouncejs';
-import { DestinationConfigInput } from 'Generated/schema';
+import { Box, useSnackbar } from 'pouncejs';
+import { DESTINATIONS } from 'Source/constants';
+import { DestinationConfigInput, DestinationTypeEnum } from 'Generated/schema';
 import { BaseDestinationFormValues } from 'Components/forms/BaseDestinationForm';
-import { extractErrorMessage } from 'Helpers/utils';
+import { capitalize, extractErrorMessage } from 'Helpers/utils';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
 import DestinationFormSwitcher from 'Components/forms/DestinationFormSwitcher';
 import useRouter from 'Hooks/useRouter';
 import { useUpdateDestination } from './graphql/updateDestination.generated';
 import { useGetDestinationDetails } from './graphql/getDestinationDetails.generated';
 import { WizardData } from '../EditDestination';
+import Skeleton from './Skeleton';
 
 const ConfigureDestinationPanel: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
@@ -89,19 +91,24 @@ const ConfigureDestinationPanel: React.FC = () => {
     [destination]
   );
 
+  if (loading) {
+    return <Skeleton />;
+  }
+
+  const destinationDisplayName = capitalize(
+    destination.outputType === DestinationTypeEnum.Customwebhook
+      ? 'Webhook'
+      : destination.outputType
+  );
+
   return (
     <Box maxWidth={700} mx="auto">
       <WizardPanel.Heading
-        title="Update Your Destination"
+        title={`Update Your ${destinationDisplayName} Destination`}
         subtitle="Make changes to the form below in order to update your Destination"
+        logo={DESTINATIONS[destination.outputType].logo}
       />
-      {loading ? (
-        <Flex justify="center" my={10}>
-          <Spinner />
-        </Flex>
-      ) : (
-        <DestinationFormSwitcher initialValues={destination} onSubmit={handleSubmit} />
-      )}
+      <DestinationFormSwitcher initialValues={destination} onSubmit={handleSubmit} />
     </Box>
   );
 };

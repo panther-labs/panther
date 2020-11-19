@@ -25,10 +25,16 @@ interface SubmitButtonProps extends Omit<ButtonProps, 'size' | 'variant' | 'disa
 }
 
 const SubmitButton: React.FC<SubmitButtonProps> = ({ allowPristineSubmission, ...rest }) => {
-  const { isSubmitting, isValid, dirty } = useFormikContext<any>();
+  const { isSubmitting, isValid, dirty, submitForm } = useFormikContext<any>();
   return (
     <Button
       type="submit"
+      onClick={e => {
+        // We force a submission instead of relying in native HTML (from `type="submit"`), in order
+        // to cover cases of a remote form submission
+        e.preventDefault();
+        submitForm();
+      }}
       loading={isSubmitting}
       disabled={isSubmitting || !isValid || (!dirty && !allowPristineSubmission)}
       {...rest}

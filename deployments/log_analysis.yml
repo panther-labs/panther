@@ -678,6 +678,7 @@ Resources:
         Variables:
           ATHENA_WORKGROUP: !Ref AthenaWorkGroup
           DEBUG: !Ref Debug
+          QUEUE_URL: !Ref UpdaterQueue
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
       Events:
         Queue:
@@ -704,6 +705,7 @@ Resources:
                 - glue:GetTable
                 - glue:GetTables
                 - glue:CreateTable
+                - glue:CreateDatabase
                 - glue:UpdateTable
                 - glue:CreatePartition
                 - glue:GetPartition
@@ -713,6 +715,13 @@ Resources:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+        - Id: SQSPermissions # allow writing
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sqs:SendMessage
+              Resource:
+                - !GetAtt UpdaterQueue.Arn # send messages to updater queue (defer tasks)
         - Id: AthenaPermissions # to create views over Glue tables
           Version: 2012-10-17
           Statement:
@@ -743,7 +752,8 @@ Resources:
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-datacatalog-updater
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-logtypes-api
 
   UpdaterAlarms:
     Type: Custom::LambdaAlarms

@@ -29,7 +29,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/core/source_api/apifunctions"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
+	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
@@ -47,7 +47,15 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 			zap.L().Error("failed to parse resource properties", zap.Error(err))
 			return physicalResourceID, nil, err
 		}
-		if err := updateLogProcessorTables(ctx, &props); err != nil {
+		requiredLogTypes, err := apifunctions.ListLogTypes(ctx, lambdaClient)
+		if err != nil {
+			return physicalResourceID, nil, errors.Wrap(err, "failed to fetch required log types from Sources API")
+		}
+		client := datacatalog.Client{
+			SQSAPI:   sqsClient,
+			QueueURL: props.DataCatalogUpdaterQueueURL,
+		}
+		if err := client.SendSyncDatabase(ctx, "", requiredLogTypes); err != nil {
 			zap.L().Error("failed to update glue tables", zap.Error(err))
 			return physicalResourceID, nil, err
 		}
@@ -67,29 +75,4 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 	default:
 		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
 	}
-}
-
-func updateLogProcessorTables(ctx context.Context, props *UpdateLogProcessorTablesProperties) error {
-	// ensure databases are all there
-	for pantherDatabase, pantherDatabaseDescription := range awsglue.PantherDatabases {
-		zap.L().Info("creating database", zap.String("database", pantherDatabase))
-		if _, err := awsglue.CreateDatabase(glueClient, pantherDatabase, pantherDatabaseDescription); err != nil {
-			if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
-				zap.L().Info("database exists", zap.String("database", pantherDatabase))
-			} else {
-				return errors.Wrapf(err, "failed creating database %s", pantherDatabase)
-			}
-		}
-	}
-
-	// update schemas and views for tables that are deployed
-	logTypes, err := apifunctions.ListLogTypes(ctx, lambdaClient)
-	if err != nil {
-		return err
-	}
-	m := process.CreateTablesMessage{
-		LogTypes: logTypes,
-		Sync:     true, // force a partition sync
-	}
-	return m.Send(sqsClient, props.DataCatalogUpdaterQueueURL)
 }

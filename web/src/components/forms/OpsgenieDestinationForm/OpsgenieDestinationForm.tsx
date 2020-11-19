@@ -17,16 +17,17 @@
  */
 
 import React from 'react';
-import { Field } from 'formik';
+import { Flex, Text, SimpleGrid } from 'pouncejs';
+import { FastField, Field } from 'formik';
 import * as Yup from 'yup';
 import FormikTextInput from 'Components/fields/TextInput';
 import SensitiveTextInput from 'Components/fields/SensitiveTextInput';
-import { DestinationConfigInput } from 'Generated/schema';
+import FormikRadio from 'Components/fields/Radio';
+import { DestinationConfigInput, OpsgenieServiceRegionEnum } from 'Generated/schema';
 import BaseDestinationForm, {
   BaseDestinationFormValues,
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
-import { SimpleGrid } from 'pouncejs';
 
 type OpsgenieFieldValues = Pick<DestinationConfigInput, 'opsgenie'>;
 
@@ -45,6 +46,7 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
     outputConfig: Yup.object().shape({
       opsgenie: Yup.object().shape({
         apiKey: existing ? Yup.string() : Yup.string().required(),
+        serviceRegion: Yup.string().required(),
       }),
     }),
   });
@@ -74,6 +76,26 @@ const OpsgenieDestinationForm: React.FC<OpsgenieDestinationFormProps> = ({
           required={!existing}
           autoComplete="new-password"
         />
+        <Text fontSize="small-medium" id="serviceRegion-label-text" color="gray-300" my={1}>
+          Change this selection to EU if you are registered to Opsgenie Europe
+          (app.eu.opsgenie.com).
+        </Text>
+        <Flex align="flex-start" justify="space-between">
+          <FastField
+            as={FormikRadio}
+            name="outputConfig.opsgenie.serviceRegion"
+            value={OpsgenieServiceRegionEnum.Us}
+            label="US Service Region"
+            aria-describedby="serviceRegion-label-text"
+          />
+          <FastField
+            as={FormikRadio}
+            name="outputConfig.opsgenie.serviceRegion"
+            value={OpsgenieServiceRegionEnum.Eu}
+            label="EU Service Region"
+            aria-describedby="serviceRegion-label-text"
+          />
+        </Flex>
       </SimpleGrid>
     </BaseDestinationForm>
   );

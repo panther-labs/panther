@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Flex, Box, Card, Alert, Heading } from 'pouncejs';
+import { Flex, Box, Card, Alert, Heading, Text } from 'pouncejs';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { AlertTypesEnum, ListAlertsInput } from 'Generated/schema';
@@ -30,6 +30,8 @@ import TablePlaceholder from 'Components/TablePlaceholder';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import ListAlertFilters from 'Pages/ListAlerts/ListAlertFilters';
 import isEmpty from 'lodash/isEmpty';
+import { SelectAllCheckbox, SelectProvider, SelectConsumer } from 'Components/utils/SelectContext';
+import ListAlertSelection from 'Pages/ListAlerts/ListAlertSelection';
 import { useListAlertsForRule } from '../graphql/listAlertsForRule.generated';
 import Skeleton from './Skeleton';
 import { RuleDetailsPageUrlParams } from '../RuleDetails';
@@ -56,6 +58,9 @@ const RuleAlertsListing: React.FC<Required<Pick<ListAlertsInput, 'type' | 'ruleI
       },
     },
   });
+
+  const alertItems = data?.alerts.alertSummaries || [];
+  const alertIds = React.useMemo(() => alertItems.map(a => a.alertId), [alertItems.length]);
 
   const { sentinelRef } = useInfiniteScroll<HTMLDivElement>({
     loading,
@@ -129,29 +134,43 @@ const RuleAlertsListing: React.FC<Required<Pick<ListAlertsInput, 'type' | 'ruleI
   }
 
   return (
-    <ErrorBoundary>
-      <Flex width="100%" pt={6} px={6}>
-        <ListAlertFilters />
-      </Flex>
-      <Card as="article" p={6}>
-        {hasAnyAlerts ? (
-          <Flex direction="column" spacing={2}>
-            {alertSummaries.map(alert => (
-              <AlertCard hideRuleButton key={alert.alertId} alert={alert} />
-            ))}
+    <SelectProvider>
+      <ErrorBoundary>
+        <Flex width="100%" pt={6} px={6}>
+          <Flex width="100%" spacing={2} justify="space-between">
+            <Flex align="center" spacing={2} ml={6}>
+              <SelectAllCheckbox selectionIds={alertIds} />
+              <Text>Alerts</Text>
+            </Flex>
+            <Flex justify="flex-end">
+              <SelectConsumer>
+                {value => {
+                  return value.selection.length ? <ListAlertSelection /> : <ListAlertFilters />;
+                }}
+              </SelectConsumer>
+            </Flex>
           </Flex>
-        ) : (
-          <Box my={8}>
-            <NoResultsFound />
-          </Box>
-        )}
-        {hasMoreAlerts && (
-          <Box mt={8} ref={sentinelRef}>
-            <TablePlaceholder rowCount={10} rowHeight={6} />
-          </Box>
-        )}
-      </Card>
-    </ErrorBoundary>
+        </Flex>
+        <Card as="article" p={6}>
+          {hasAnyAlerts ? (
+            <Flex direction="column" spacing={2}>
+              {alertSummaries.map(alert => (
+                <AlertCard hideRuleButton key={alert.alertId} alert={alert} selectionEnabled />
+              ))}
+            </Flex>
+          ) : (
+            <Box my={8}>
+              <NoResultsFound />
+            </Box>
+          )}
+          {hasMoreAlerts && (
+            <Box mt={8} ref={sentinelRef}>
+              <TablePlaceholder rowCount={10} rowHeight={6} />
+            </Box>
+          )}
+        </Card>
+      </ErrorBoundary>
+    </SelectProvider>
   );
 };
 

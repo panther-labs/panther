@@ -17,13 +17,14 @@
  */
 
 import React from 'react';
-import { Alert, Button, Box, useSnackbar, Flex } from 'pouncejs';
+import { Alert, Button, Box, useSnackbar } from 'pouncejs';
 import RuleForm from 'Components/forms/RuleForm';
 import useModal from 'Hooks/useModal';
 import useRouter from 'Hooks/useRouter';
 import { MODALS } from 'Components/utils/Modal';
 import { extractErrorMessage, formatJSON } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
+import Breadcrumbs from 'Components/Breadcrumbs';
 import Skeleton from './Skeleton';
 import { useRuleDetails } from './graphql/ruleDetails.generated';
 import { useUpdateRule } from './graphql/updateRule.generated';
@@ -100,8 +101,9 @@ const EditRulePage: React.FC = () => {
 
   return (
     <Box mb={6}>
-      <Flex justify="flex-end" mb={5}>
+      <Breadcrumbs.Actions>
         <Button
+          aria-label="Delete Rule"
           variantColor="red"
           onClick={() =>
             showModal({
@@ -112,7 +114,7 @@ const EditRulePage: React.FC = () => {
         >
           Delete
         </Button>
-      </Flex>
+      </Breadcrumbs.Actions>
       <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       {updateError && (
         <Box mt={2} mb={6}>

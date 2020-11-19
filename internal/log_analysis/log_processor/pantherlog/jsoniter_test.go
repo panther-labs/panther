@@ -87,23 +87,29 @@ func init() {
 func TestPantherExt_DecorateEncoder(t *testing.T) {
 	// Check all possible string types
 	type T struct {
-		Foo  *testStringer `json:"foo" panther:"foo"`
-		Bar  testStringer  `json:"bar" panther:"bar"`
-		Baz  string        `json:"baz" panther:"baz"`
-		Qux  *string       `json:"qux" panther:"qux"`
-		Quux null.String   `json:"quux" panther:"quux"`
+		Foo      testStringer  `json:"foo" panther:"foo"`
+		Bar      testStringer  `json:"bar" panther:"bar"`
+		Baz      string        `json:"baz" panther:"baz"`
+		Qux      *string       `json:"qux" panther:"qux"`
+		Quux     null.String   `json:"quux" panther:"quux"`
+		FooSlice []string      `json:"foos" panther:"foo"`
+		BarSlice []null.String `json:"bars" panther:"bar"`
+		QuxSlice []*string     `json:"quxs" panther:"qux"`
 	}
 
 	v := T{
-		Foo: &testStringer{
+		Foo: testStringer{
 			Foo: "ok",
 		},
 		Bar: testStringer{
 			Foo: "ok",
 		},
-		Baz:  "ok",
-		Qux:  box.String("ok"),
-		Quux: null.FromString("ok"),
+		Baz:      "baz",
+		Qux:      box.String("qux"),
+		Quux:     null.FromString("quux"),
+		FooSlice: []string{"in", "slice"},
+		BarSlice: []null.String{null.FromString("in"), null.FromString("slice")},
+		QuxSlice: []*string{box.String("qux1"), box.String("qux2"), nil},
 	}
 
 	result := Result{
@@ -112,13 +118,14 @@ func TestPantherExt_DecorateEncoder(t *testing.T) {
 	stream := jsoniter.ConfigDefault.BorrowStream(nil)
 	stream.Attachment = &result
 	stream.WriteVal(&v)
-	require.Equal(t, []string{"ok"}, result.values.Get(kindFoo), "foo")
-	require.Equal(t, []string{"ok"}, result.values.Get(kindBar), "bar")
-	require.Equal(t, []string{"ok"}, result.values.Get(kindBaz), "baz")
-	require.Equal(t, []string{"ok"}, result.values.Get(kindQux), "qux")
-	require.Equal(t, []string{"ok"}, result.values.Get(kindQuux), "quux")
+	require.Equal(t, []string{"in", "ok", "slice"}, result.values.Get(kindFoo), "foo")
+	require.Equal(t, []string{"in", "ok", "slice"}, result.values.Get(kindBar), "bar")
+	require.Equal(t, []string{"baz"}, result.values.Get(kindBaz), "baz")
+	require.Equal(t, []string{"qux", "qux1", "qux2"}, result.values.Get(kindQux), "qux")
+	require.Equal(t, []string{"quux"}, result.values.Get(kindQuux), "quux")
 	actual := string(stream.Buffer())
-	require.Equal(t, `{"foo":"ok","bar":"ok","baz":"ok","qux":"ok","quux":"ok"}`, actual)
+	//nolint:lll
+	require.Equal(t, `{"foo":"ok","bar":"ok","baz":"baz","qux":"qux","quux":"quux","foos":["in","slice"],"bars":["in","slice"],"quxs":["qux1","qux2",null]}`, actual)
 }
 
 func TestResultEncoder(t *testing.T) {
@@ -131,11 +138,13 @@ func TestResultEncoder(t *testing.T) {
 		Time     time.Time `json:"tm" event_time:"true"`
 		RemoteIP string    `json:"remote_ip" panther:"ip"`
 		LocalIP  string    `json:"local_ip" panther:"ip"`
+		Tags     []string  `json:"tags" panther:"aws_tag"`
 	}
 	event := T{
 		Time:     tm.In(loc),
 		RemoteIP: "2.2.2.2",
 		LocalIP:  "1.1.1.1",
+		Tags:     []string{"foo:bar", "bar:baz"},
 	}
 	result := Result{
 		CoreFields: CoreFields{
@@ -151,10 +160,12 @@ func TestResultEncoder(t *testing.T) {
 		"tm": "%s",
 		"remote_ip":"2.2.2.2",
 		"local_ip":"1.1.1.1",
+		"tags": ["foo:bar","bar:baz"],
 		"p_row_id": "id",
 		"p_event_time": "%s",
 		"p_parse_time": "%s",
 		"p_any_ip_addresses": ["1.1.1.1", "2.2.2.2"],
+		"p_any_aws_tags": ["bar:baz","foo:bar"],
 		"p_log_type": "Foo.Bar"
 	}`, tm.In(loc).Format(time.RFC3339Nano), tm.UTC().Format(time.RFC3339Nano), now.UTC().Format(time.RFC3339Nano))
 	assert.JSONEq(expect, actual)
