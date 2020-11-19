@@ -130,7 +130,7 @@ const ListAlerts = () => {
       <ListAlertBreadcrumbFilters />
       <Panel
         title={
-          <Flex align="center" spacing={2} ml={6}>
+          <Flex align="center" spacing={2} ml={4}>
             <SelectAllCheckbox selectionIds={alertIds} />
             <Text>Alerts</Text>
           </Flex>

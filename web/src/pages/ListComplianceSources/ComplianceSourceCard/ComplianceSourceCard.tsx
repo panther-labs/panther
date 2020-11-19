@@ -47,7 +47,11 @@ const ComplianceSourceCard: React.FC<ComplianceSourceCardProps> = ({ source }) =
   return (
     <GenericItemCard>
       <GenericItemCard.Logo src={logo} />
-      {!isCreatedByPanther && <ComplianceSourceCardOptions source={source} />}
+      {!isCreatedByPanther && (
+        <GenericItemCard.Options>
+          <ComplianceSourceCardOptions source={source} />
+        </GenericItemCard.Options>
+      )}
       <GenericItemCard.Body>
         {!isCreatedByPanther ? (
           <GenericItemCard.Heading>
