@@ -114,7 +114,7 @@ func Process(
 		}
 	}()
 	go func() {
-		// CloseWriter the errorChannel to broadcast end of task
+		// Close the errorChannel to broadcast end of task
 		defer close(errorChannel)
 		// Wait until both processor loop and destination have finished
 		wg.Wait()

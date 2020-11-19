@@ -210,7 +210,7 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 	}
 
 	dataStream = &common.DataStream{
-		Closer:      downloadPipe, // when file is done processing, the CloseWriter() method will be called
+		Closer:      downloadPipe, // when file is done processing, the Close() method will be called
 		Reader:      streamReader,
 		Source:      sourceInfo,
 		S3Bucket:    s3Object.S3Bucket,
