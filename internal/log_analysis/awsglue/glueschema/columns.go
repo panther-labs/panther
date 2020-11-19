@@ -55,4 +55,5 @@ var columnNamesReplacer = strings.NewReplacer(
 	"`", "_backtick_",
 	"'", "_apostrophe_",
 	".", "_",
+	"$", "_dollar_sign_",
 )
