@@ -20,6 +20,7 @@ package logtypes
 
 import (
 	"fmt"
+
 	"github.com/pkg/errors"
 )
 
