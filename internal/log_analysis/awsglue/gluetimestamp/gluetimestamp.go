@@ -1,3 +1,4 @@
+// Package gluetimestamp handles encoding/decoding of timestamp values for AWS glue.
 package gluetimestamp
 
 /**
@@ -33,16 +34,20 @@ const (
 	LayoutJSON = `"` + Layout + `"`
 )
 
-// JSONEncoder returns a time encoder all timestamps to be Glue format and UTC.
-func JSONEncoder() tcodec.TimeEncoderFunc {
-	return func(tm time.Time, stream *jsoniter.Stream) {
-		if tm.IsZero() {
-			stream.WriteNil()
-			return
-		}
-		// Avoid allocations by using AppendFormat directly on the buffer
-		buf := stream.Buffer()
-		buf = tm.UTC().AppendFormat(buf, LayoutJSON)
-		stream.SetBuffer(buf)
+// TimeEncoder returns a time encoder all timestamps to be Glue format and UTC.
+func TimeEncoder() tcodec.TimeEncoder {
+	return &timeEncoder{}
+}
+
+type timeEncoder struct{}
+
+func (*timeEncoder) EncodeTime(tm time.Time, stream *jsoniter.Stream) {
+	if tm.IsZero() {
+		stream.WriteNil()
+		return
 	}
+	// Avoid allocations by using AppendFormat directly on the buffer
+	buf := stream.Buffer()
+	buf = tm.UTC().AppendFormat(buf, LayoutJSON)
+	stream.SetBuffer(buf)
 }

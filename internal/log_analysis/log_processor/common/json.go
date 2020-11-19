@@ -53,7 +53,7 @@ func ConfigForDataLakeWriters() jsoniter.API {
 	// Rename all fields according to Glue requirements
 	api.RegisterExtension(renamefields.New(glueschema.ColumnName))
 	// Fix all timestamps to use Glue layout and UTC
-	api.RegisterExtension(tcodec.OverrideEncoders(gluetimestamp.JSONEncoder()))
+	api.RegisterExtension(tcodec.OverrideEncoders(gluetimestamp.TimeEncoder()))
 	// Register pantherlog last so event_time tags work fine
 	api.RegisterExtension(pantherlog.NewExtension())
 	return api
