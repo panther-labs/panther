@@ -57,35 +57,29 @@ const AlertCard: React.FC<AlertCardProps> = ({
           </Box>
         )}
       </Flex>
-      <GenericItemCard.Options>
-        <GenericItemCard.Date
-          aria-label={`Creation time for ${alert.alertId}`}
-          date={formatDatetime(alert.creationTime)}
-        />
-      </GenericItemCard.Options>
       <GenericItemCard.Body>
-        <GenericItemCard.Heading>
-          <Link
-            as={RRLink}
-            aria-label="Link to Alert"
-            to={urls.logAnalysis.alerts.details(alert.alertId)}
-          >
-            {alert.title}
-          </Link>
-        </GenericItemCard.Heading>
-        <GenericItemCard.ValuesGroup>
-          <GenericItemCard.Value
-            value={
-              <Text
-                fontSize="small"
-                as="span"
-                color={alert.type === AlertTypesEnum.Rule ? 'red-300' : 'teal-500'}
-              >
-                {alert.type === AlertTypesEnum.Rule ? 'Rule Match' : 'Rule Error'}
-              </Text>
-            }
+        <GenericItemCard.Header>
+          <GenericItemCard.Heading>
+            <Link
+              as={RRLink}
+              aria-label="Link to Alert"
+              to={urls.logAnalysis.alerts.details(alert.alertId)}
+            >
+              {alert.title}
+            </Link>
+          </GenericItemCard.Heading>
+          <GenericItemCard.Date
+            aria-label={`Creation time for ${alert.alertId}`}
+            date={formatDatetime(alert.creationTime)}
           />
-        </GenericItemCard.ValuesGroup>
+        </GenericItemCard.Header>
+        <Text
+          fontSize="small"
+          as="span"
+          color={alert.type === AlertTypesEnum.Rule ? 'red-300' : 'teal-500'}
+        >
+          {alert.type === AlertTypesEnum.Rule ? 'Rule Match' : 'Rule Error'}
+        </Text>
         <GenericItemCard.ValuesGroup>
           {!hideRuleButton && (
             <GenericItemCard.Value
@@ -95,23 +89,10 @@ const AlertCard: React.FC<AlertCardProps> = ({
                   <Text display="inline-flex" alignItems="center" as="span">
                     {alert.ruleId}
                   </Text>
-                  <RRLink
+                  <GenericItemCard.Link
                     aria-label={`Link to rule ${alert.ruleId}`}
                     to={urls.logAnalysis.rules.details(alert.ruleId)}
-                  >
-                    <Flex
-                      justify="center"
-                      align="center"
-                      width={24}
-                      height={24}
-                      backgroundColor="navyblue-200"
-                      borderColor="navyblue-200"
-                      _hover={{ backgroundColor: 'blue-300', borderColor: 'blue-300' }}
-                      borderRadius="circle"
-                    >
-                      <Icon type="arrow-forward" size="x-small" />
-                    </Flex>
-                  </RRLink>
+                  />
                 </Flex>
               }
             />
@@ -124,7 +105,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
           />
           <GenericItemCard.Value
             label="Log Types"
-            value={<BulletedLogTypeList logTypes={alert.logTypes} limit={2} />}
+            value={<BulletedLogTypeList logTypes={alert.logTypes} limit={1} />}
           />
           <GenericItemCard.Value
             label="Events"
