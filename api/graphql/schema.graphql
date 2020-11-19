@@ -2,6 +2,7 @@ scalar AWSEmail
 scalar AWSDateTime
 scalar AWSTimestamp
 scalar AWSJSON
+scalar Long
 
 schema {
   query: Query
@@ -411,19 +412,19 @@ type OrganizationStatsResponse {
   topFailingResources: [ResourceSummary]
 }
 
-type Series {
-  label: String
-  values: [Int]
+type LongSeries {
+  label: String!
+  values: [Long!]!
+}
+
+type LongSeriesData {
+  timestamps: [AWSDateTime!]!
+  series: [LongSeries!]!
 }
 
 type FloatSeries {
   label: String!
   values: [Float!]!
-}
-
-type SeriesData {
-  timestamps: [AWSDateTime]
-  series: [Series]
 }
 
 type FloatSeriesData {
@@ -437,8 +438,8 @@ type SingleValue {
 }
 
 type LogAnalysisMetricsResponse {
-  eventsProcessed: SeriesData!
-  alertsBySeverity: SeriesData!
+  eventsProcessed: LongSeriesData!
+  alertsBySeverity: LongSeriesData!
   eventsLatency: FloatSeriesData!
   totalAlertsDelta: [SingleValue!]!
   alertsByRuleID: [SingleValue!]!
@@ -612,6 +613,7 @@ type SqsDestinationConfig {
 
 type OpsgenieConfig {
   apiKey: String!
+  serviceRegion: OpsgenieServiceRegionEnum!
 }
 
 type MsTeamsConfig {
@@ -680,6 +682,7 @@ input SqsConfigInput {
 
 input OpsgenieConfigInput {
   apiKey: String!
+  serviceRegion: OpsgenieServiceRegionEnum!
 }
 
 input MsTeamsConfigInput {
@@ -1099,6 +1102,11 @@ enum DestinationTypeEnum {
   sqs
   asana
   customwebhook
+}
+
+enum OpsgenieServiceRegionEnum {
+  EU
+  US
 }
 
 type ListAvailableLogTypesResponse {

@@ -138,7 +138,7 @@ const RuleAlertsListing: React.FC<Required<Pick<ListAlertsInput, 'type' | 'ruleI
       <ErrorBoundary>
         <Flex width="100%" pt={6} px={6}>
           <Flex width="100%" spacing={2} justify="space-between">
-            <Flex align="center" spacing={2} ml={6}>
+            <Flex align="center" spacing={2} ml={4}>
               <SelectAllCheckbox selectionIds={alertIds} />
               <Text>Alerts</Text>
             </Flex>

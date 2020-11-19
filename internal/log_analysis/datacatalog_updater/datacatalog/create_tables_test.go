@@ -1,4 +1,4 @@
-package process
+package datacatalog
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,13 +19,14 @@ package process
  */
 
 import (
+	"context"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/glue"
-	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -36,19 +37,15 @@ import (
 func TestSQS_CreateTables(t *testing.T) {
 	initProcessTest()
 
-	body := CreateTablesMessage{
-		LogTypes: []string{"AWS.S3ServerAccess", "AWS.VPCFlow"},
+	body := sqsTask{
+		CreateTables: &CreateTablesEvent{
+			LogTypes: []string{"AWS.S3ServerAccess", "AWS.VPCFlow"},
+		},
 	}
 	marshalled, err := jsoniter.Marshal(body)
 	require.NoError(t, err)
 	msg := events.SQSMessage{
 		Body: string(marshalled),
-		MessageAttributes: map[string]events.SQSMessageAttribute{
-			PantherMessageType: {
-				DataType:    *CreateTableMessageAttribute.DataType,
-				StringValue: CreateTableMessageAttribute.StringValue,
-			},
-		},
 	}
 	event := events.SQSEvent{Records: []events.SQSMessage{msg}}
 
@@ -57,7 +54,7 @@ func TestSQS_CreateTables(t *testing.T) {
 	// below called once for each database
 	mockGlueClient.On("GetTablesPagesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
 	mockAthenaClient := &testutils.AthenaMock{}
-	athenaClient = mockAthenaClient
+	handler.AthenaClient = mockAthenaClient
 	mockAthenaClient.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
 		QueryExecutionId: aws.String("test-query-1234"),
 	}, nil)
@@ -71,38 +68,34 @@ func TestSQS_CreateTables(t *testing.T) {
 	}, nil)
 	mockAthenaClient.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil)
 
-	err = handleSQSEvent(event)
+	err = handler.HandleSQSEvent(context.Background(), &event)
 	require.NoError(t, err)
 	mockGlueClient.AssertExpectations(t)
 	mockAthenaClient.AssertExpectations(t)
 }
 
-func TestSQS_CreateTablesWithSync(t *testing.T) {
+func TestSQS_Sync(t *testing.T) {
 	initProcessTest()
 
-	body := CreateTablesMessage{
-		LogTypes: []string{"AWS.S3ServerAccess", "AWS.VPCFlow"},
-		Sync:     true, // force a partition sync
+	body := &sqsTask{
+		SyncDatabase: &SyncDatabaseEvent{
+			TraceID: "testsync",
+		},
 	}
 	marshalled, err := jsoniter.Marshal(body)
 	require.NoError(t, err)
 	msg := events.SQSMessage{
 		Body: string(marshalled),
-		MessageAttributes: map[string]events.SQSMessageAttribute{
-			PantherMessageType: {
-				DataType:    *CreateTableMessageAttribute.DataType,
-				StringValue: CreateTableMessageAttribute.StringValue,
-			},
-		},
 	}
 	event := events.SQSEvent{Records: []events.SQSMessage{msg}}
 
 	// Here comes the mocking
+	mockGlueClient.On("CreateDatabaseWithContext", mock.Anything, mock.Anything).Return(&glue.CreateDatabaseOutput{}, nil)
 	mockGlueClient.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil)
 	// below called once for each database
 	mockGlueClient.On("GetTablesPagesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(4)
 	mockAthenaClient := &testutils.AthenaMock{}
-	athenaClient = mockAthenaClient
+	handler.AthenaClient = mockAthenaClient
 	mockAthenaClient.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
 		QueryExecutionId: aws.String("test-query-1234"),
 	}, nil)
@@ -117,13 +110,11 @@ func TestSQS_CreateTablesWithSync(t *testing.T) {
 	mockAthenaClient.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil)
 
 	// Sync
-	mockLambdaClient := &testutils.LambdaMock{}
-	lambdaClient = mockLambdaClient
-	mockLambdaClient.On("InvokeWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&lambda.InvokeOutput{}, nil).Once()
+	mockSqsClient.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil).Once()
 
-	err = handleSQSEvent(event)
+	err = handler.HandleSQSEvent(context.Background(), &event)
 	require.NoError(t, err)
 	mockGlueClient.AssertExpectations(t)
 	mockAthenaClient.AssertExpectations(t)
-	mockLambdaClient.AssertExpectations(t)
+	mockSqsClient.AssertExpectations(t)
 }
