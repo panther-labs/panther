@@ -105,7 +105,7 @@ func buildLayer() ([]byte, error) {
 	for _, globalName := range globals {
 		zap.L().Debug("getting global", zap.String("id", globalName))
 		input := models.LambdaInput{
-			GetGlobal: &models.GetGlobalInput{GlobalID: globalName},
+			GetGlobal: &models.GetGlobalInput{ID: globalName},
 		}
 		var global models.Global
 

@@ -19,6 +19,8 @@ package models
  */
 
 import (
+	"time"
+
 	"github.com/panther-labs/panther/api/lambda/compliance/models"
 )
 
@@ -27,37 +29,37 @@ type CreateRuleInput = UpdateRuleInput
 type DeleteRulesInput = DeletePoliciesInput
 
 type GetRuleInput struct {
-	RuleID    string `json:"ruleId" validate:"required"`
-	VersionID string `json:"versionId"`
+	ID        string `json:"id" validate:"required,max=1000"`
+	VersionID string `json:"versionId" validate:"omitempty,len=32"`
 }
 
 type ListRulesInput struct {
 	// ----- Filtering -----
 	// Only include rules whose ID or display name contains this case-insensitive substring
-	NameContains string `json:"nameContains"`
+	NameContains string `json:"nameContains" validate:"max=1000"`
 
 	// Only include rules which are enabled or disabled
 	Enabled *bool `json:"enabled"`
 
 	// Only include rules which apply to one of these log types
-	LogTypes []string `json:"logTypes" validate:"omitempty,dive,required"`
+	LogTypes []string `json:"logTypes" validate:"max=500,dive,required,max=500"`
 
 	// Only include policies with this severity
-	Severity models.Severity `json:"severity"`
+	Severity models.Severity `json:"severity" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 
 	// Only include policies with all of these tags (case-insensitive)
-	Tags []string `json:"tags" validate:"omitempty,dive,required"`
+	Tags []string `json:"tags" validate:"max=500,dive,required,max=500"`
 
 	// ----- Projection -----
 	// Policy fields to return in the response (default: all)
-	Fields []string `json:"fields" validate:"omitempty,dive,required"`
+	Fields []string `json:"fields" validate:"max=20,dive,required,max=100"`
 
 	// ----- Sorting -----
 	SortBy  string `json:"sortBy" validate:"omitempty,oneof=enabled id lastModified logTypes severity"`
 	SortDir string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 
 	// ----- Paging -----
-	PageSize int `json:"pageSize" validate:"min=0"`
+	PageSize int `json:"pageSize" validate:"min=0,max=1000"`
 	Page     int `json:"page" validate:"min=0"`
 }
 
@@ -67,9 +69,9 @@ type ListRulesOutput struct {
 }
 
 type TestRuleInput struct {
-	Body     string     `json:"body" validate:"required"`
-	LogTypes []string   `json:"logTypes" validate:"omitempty,dive,required"`
-	Tests    []UnitTest `json:"tests"`
+	Body     string     `json:"body" validate:"required,max=100000"`
+	LogTypes []string   `json:"logTypes" validate:"max=500,dive,required,max=500"`
+	Tests    []UnitTest `json:"tests" validate:"max=500,dive"`
 }
 
 type TestRuleOutput struct {
@@ -98,19 +100,43 @@ type RuleTestResult struct {
 }
 
 type UpdateRuleInput struct {
-	CoreEntryUpdate
-	PythonDetection
-
-	DedupPeriodMinutes int      `json:"dedupPeriodMinutes" validate:"min=0"`
-	LogTypes           []string `json:"logTypes" validate:"omitempty,dive,required"`
-	Threshold          int      `json:"threshold" validate:"min=0"`
+	Body               string              `json:"body" validate:"required,max=100000"`
+	DedupPeriodMinutes int                 `json:"dedupPeriodMinutes" validate:"min=0"`
+	Description        string              `json:"description" validate:"max=10000"`
+	DisplayName        string              `json:"displayName" validate:"max=1000,excludesall='<>&\""`
+	Enabled            bool                `json:"enabled"`
+	ID                 string              `json:"id" validate:"required,max=1000,excludesall='<>&\""`
+	LogTypes           []string            `json:"logTypes" validate:"max=500,dive,required,max=500"`
+	OutputIDs          []string            `json:"outputIds" validate:"max=500,dive,required,max=5000"`
+	Reference          string              `json:"reference" validate:"max=10000"`
+	Reports            map[string][]string `json:"reports" validate:"max=500"`
+	Runbook            string              `json:"runbook" validate:"max=10000"`
+	Severity           models.Severity     `json:"severity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Tags               []string            `json:"tags" validate:"max=500,dive,required,max=1000"`
+	Tests              []UnitTest          `json:"tests" validate:"max=500,dive"`
+	Threshold          int                 `json:"threshold" validate:"min=0"`
+	UserID             string              `json:"userId" validate:"uuid4"`
 }
 
 type Rule struct {
-	CoreEntry
-	PythonDetection
-
-	DedupPeriodMinutes int      `json:"dedupPeriodMinutes"`
-	LogTypes           []string `json:"logTypes"`
-	Threshold          int      `json:"threshold"`
+	Body               string              `json:"body"`
+	CreatedAt          time.Time           `json:"createdAt"`
+	CreatedBy          string              `json:"createdBy"`
+	DedupPeriodMinutes int                 `json:"dedupPeriodMinutes"`
+	Description        string              `json:"description"`
+	DisplayName        string              `json:"displayName"`
+	Enabled            bool                `json:"enabled"`
+	ID                 string              `json:"id"`
+	LastModified       time.Time           `json:"lastModified"`
+	LastModifiedBy     string              `json:"lastModifiedBy"`
+	LogTypes           []string            `json:"logTypes"`
+	OutputIDs          []string            `json:"outputIds"`
+	Reference          string              `json:"reference"`
+	Reports            map[string][]string `json:"reports"`
+	Runbook            string              `json:"runbook"`
+	Severity           models.Severity     `json:"severity"`
+	Tags               []string            `json:"tags"`
+	Tests              []UnitTest          `json:"tests"`
+	Threshold          int                 `json:"threshold"`
+	VersionID          string              `json:"versionId"`
 }

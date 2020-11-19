@@ -150,30 +150,26 @@ func TestPopulateAlert(t *testing.T) {
 	}
 
 	rule := &analysisModels.Rule{
-		CoreEntry: analysisModels.CoreEntry{
-			CreatedAt:      timeNow,
-			CreatedBy:      "user-id",
-			Description:    description,
-			ID:             analysisID,
-			LastModified:   timeNow,
-			LastModifiedBy: "user-id",
-			Tags:           tags,
-			VersionID:      "version",
-		},
-		PythonDetection: analysisModels.PythonDetection{
-			DisplayName: *analysisDisplayName,
-			Enabled:     true,
-			Runbook:     runbook,
-			Severity:    severity,
-			OutputIDs:   []string{},
-		},
+		CreatedAt:          timeNow,
+		CreatedBy:          "user-id",
 		DedupPeriodMinutes: 15,
+		Description:        description,
+		DisplayName:        *analysisDisplayName,
+		Enabled:            true,
+		ID:                 analysisID,
+		LastModified:       timeNow,
+		LastModifiedBy:     "user-id",
 		LogTypes:           []string{"log-type"},
+		OutputIDs:          []string{},
+		Runbook:            runbook,
+		Severity:           severity,
+		Tags:               tags,
+		VersionID:          "version",
 	}
 
 	getRuleInput := &analysisModels.LambdaInput{
 		GetRule: &analysisModels.GetRuleInput{
-			RuleID:    analysisID,
+			ID:        analysisID,
 			VersionID: "version",
 		},
 	}

@@ -20,7 +20,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -29,7 +28,6 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 var (
@@ -108,12 +106,7 @@ func writeDataModel(input *models.UpdateDataModelInput, create bool) *events.API
 
 // Some extra validation which is not implemented in the input struct tags
 func validateUpdateDataModel(input *models.UpdateDataModelInput) error {
-	// Display names are embedded in emails, alert outputs, etc. Prevent a possible injection attack
-	if genericapi.ContainsHTML(input.DisplayName) {
-		return fmt.Errorf("display name: %v", genericapi.ErrContainsHTML)
-	}
-
-	// we also need to verify that field and method are mutually exclusive in the input
+	// verify that field and method are mutually exclusive in the input
 	for _, mapping := range input.Mappings {
 		if mapping.Path != "" && mapping.Method != "" {
 			return errMappingTooManyOptions

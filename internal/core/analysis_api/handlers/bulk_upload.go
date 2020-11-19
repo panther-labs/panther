@@ -28,7 +28,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	jsoniter "github.com/json-iterator/go"
@@ -40,7 +39,6 @@ import (
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 type writeResult struct {
@@ -265,7 +263,7 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 	for _, policy := range result {
 		if body, ok := policyBodies[policy.Body]; ok {
 			policy.Body = body
-			if err := validateUploadedPolicy(policy, input.UserID); err != nil {
+			if err := validateUploadedPolicy(policy); err != nil {
 				return nil, err
 			}
 		} else if policy.Type != models.TypeDataModel {
@@ -365,7 +363,7 @@ func readZipFile(zf *zip.File) ([]byte, error) {
 }
 
 // Ensure that the uploaded policy is valid according to the API spec for a Policy
-func validateUploadedPolicy(item *tableItem, userID string) error {
+func validateUploadedPolicy(item *tableItem) error {
 	switch item.Type {
 	case models.TypeGlobal:
 		item.Severity = compliancemodels.SeverityInfo
@@ -382,19 +380,8 @@ func validateUploadedPolicy(item *tableItem, userID string) error {
 	}
 
 	policy := item.Policy(compliancemodels.StatusPass) // Convert to the external Policy model for validation
-	policy.CreatedAt = time.Now()
-	policy.CreatedBy = userID
-	policy.LastModified = policy.CreatedAt
-	policy.LastModifiedBy = userID
-	policy.VersionID = "mock.version.id.mock.version.id."
-
 	if err := validate.New().Struct(policy); err != nil {
 		return fmt.Errorf("policy ID %s is invalid: %s", policy.ID, err)
 	}
-
-	if genericapi.ContainsHTML(policy.DisplayName) {
-		return fmt.Errorf("policy ID %s invalid: display name: %v", policy.ID, genericapi.ErrContainsHTML)
-	}
-
 	return nil
 }

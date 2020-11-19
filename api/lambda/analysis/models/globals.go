@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -23,17 +25,17 @@ type CreateGlobalInput = UpdateGlobalInput
 type DeleteGlobalsInput = DeletePoliciesInput
 
 type GetGlobalInput struct {
-	GlobalID  string `json:"globalId" validate:"required"`
-	VersionID string `json:"versionId"`
+	ID        string `json:"id" validate:"required,max=1000"`
+	VersionID string `json:"versionId" validate:"omitempty,len=32"`
 }
 
 type ListGlobalsInput struct {
 	// JSON field names (passed to Dynamo as a projection). For example,
 	// ["id", "lastModified", "tags"]
-	Fields []string `json:"fields" validate:"omitempty,dive,required"`
+	Fields []string `json:"fields" validate:"max=15,dive,required,max=100"`
 
 	SortDir  string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
-	PageSize int    `json:"pageSize" validate:"min=0"`
+	PageSize int    `json:"pageSize" validate:"min=0,max=1000"`
 	Page     int    `json:"page" validate:"min=0"`
 }
 
@@ -43,9 +45,21 @@ type ListGlobalsOutput struct {
 }
 
 type UpdateGlobalInput struct {
-	CoreEntryUpdate
+	Body        string   `json:"body" validate:"required,max=100000"`
+	Description string   `json:"description" validate:"max=10000"`
+	ID          string   `json:"id" validate:"required,max=1000,excludesall='<>&\""`
+	Tags        []string `json:"tags" validate:"max=500,dive,required,max=1000"`
+	UserID      string   `json:"userId" validate:"uuid4"`
 }
 
 type Global struct {
-	CoreEntry
+	Body           string    `json:"body"`
+	CreatedAt      time.Time `json:"createdAt"`
+	CreatedBy      string    `json:"createdBy"`
+	Description    string    `json:"description"`
+	ID             string    `json:"id"`
+	LastModified   time.Time `json:"lastModified"`
+	LastModifiedBy string    `json:"lastModifiedBy"`
+	Tags           []string  `json:"tags"`
+	VersionID      string    `json:"versionId"`
 }

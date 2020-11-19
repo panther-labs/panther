@@ -27,7 +27,6 @@ import (
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
@@ -47,14 +46,6 @@ func (API) UpdateRule(input *models.UpdateRuleInput) *events.APIGatewayProxyResp
 
 // Shared by CreateRule and UpdateRule
 func writeRule(input *models.CreateRuleInput, create bool) *events.APIGatewayProxyResponse {
-	// Rule names are embedded in emails, alert outputs, etc. Prevent a possible injection attack
-	if genericapi.ContainsHTML(input.DisplayName) {
-		return &events.APIGatewayProxyResponse{
-			Body:       "invalid display name: " + genericapi.ErrContainsHTML.Error(),
-			StatusCode: http.StatusBadRequest,
-		}
-	}
-
 	// in case it is not set, put a default. Minimum value for DedupPeriodMinutes is 15, so 0 means it's not set
 	if input.DedupPeriodMinutes == 0 {
 		input.DedupPeriodMinutes = defaultDedupPeriodMinutes

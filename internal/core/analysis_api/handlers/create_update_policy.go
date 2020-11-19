@@ -28,7 +28,6 @@ import (
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // CreatePolicy adds a new policy to the Dynamo table.
@@ -42,14 +41,6 @@ func (API) UpdatePolicy(input *models.UpdatePolicyInput) *events.APIGatewayProxy
 
 // Shared by CreatePolicy and UpdatePolicy
 func writePolicy(input *models.CreatePolicyInput, create bool) *events.APIGatewayProxyResponse {
-	// Policy names are embedded in emails, alert outputs, etc. Prevent a possible injection attack
-	if genericapi.ContainsHTML(input.DisplayName) {
-		return &events.APIGatewayProxyResponse{
-			Body:       "invalid display name: " + genericapi.ErrContainsHTML.Error(),
-			StatusCode: http.StatusBadRequest,
-		}
-	}
-
 	// Disallow saving if policy is enabled and its tests fail.
 	testsPass, err := enabledPolicyTestsPass(input)
 

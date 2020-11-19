@@ -69,21 +69,17 @@ var (
 	}
 
 	testRuleResponse = &ruleModel.Rule{
-		CoreEntry: ruleModel.CoreEntry{
-			Description: "Description",
-			ID:          "ruleId",
-			Tags:        []string{"Tag"},
-		},
-		PythonDetection: ruleModel.PythonDetection{
-			DisplayName: "DisplayName",
-			Runbook:     "Runbook",
-			Severity:    "INFO",
-		},
+		Description: "Description",
+		DisplayName: "DisplayName",
+		ID:          "ruleId",
+		Runbook:     "Runbook",
+		Severity:    "INFO",
+		Tags:        []string{"Tag"},
 	}
 
 	expectedGetRuleInput = &ruleModel.LambdaInput{
 		GetRule: &ruleModel.GetRuleInput{
-			RuleID:    oldAlertDedupEvent.RuleID,
+			ID:        oldAlertDedupEvent.RuleID,
 			VersionID: oldAlertDedupEvent.RuleVersion,
 		},
 	}
@@ -223,15 +219,11 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 	}
 
 	testRuleResponseWithoutDisplayName := &ruleModel.Rule{
-		CoreEntry: ruleModel.CoreEntry{
-			Description: "Description",
-			ID:          "ruleId",
-			Tags:        []string{"Tag"},
-		},
-		PythonDetection: ruleModel.PythonDetection{
-			Severity: "INFO",
-			Runbook:  "Runbook",
-		},
+		Description: "Description",
+		ID:          "ruleId",
+		Runbook:     "Runbook",
+		Severity:    "INFO",
+		Tags:        []string{"Tag"},
 	}
 
 	analysisMock.On("Invoke", expectedGetRuleInput, &ruleModel.Rule{}).Return(
@@ -567,17 +559,13 @@ func TestHandleShouldNotCreateOrUpdateAlertIfThresholdNotReached(t *testing.T) {
 	}
 
 	ruleWithThreshold := &ruleModel.Rule{
-		CoreEntry: ruleModel.CoreEntry{
-			ID:          "ruleId",
-			Description: "Description",
-			Tags:        []string{"Tag"},
-		},
-		PythonDetection: ruleModel.PythonDetection{
-			DisplayName: "DisplayName",
-			Runbook:     "Runbook",
-			Severity:    "INFO",
-		},
-		Threshold: 1000,
+		ID:          "ruleId",
+		Description: "Description",
+		DisplayName: "DisplayName",
+		Runbook:     "Runbook",
+		Severity:    "INFO",
+		Tags:        []string{"Tag"},
+		Threshold:   1000,
 	}
 
 	analysisMock.On("Invoke", expectedGetRuleInput, &ruleModel.Rule{}).Return(
@@ -606,17 +594,13 @@ func TestHandleShouldCreateAlertIfThresholdNowReached(t *testing.T) {
 	}
 
 	ruleWithThreshold := &ruleModel.Rule{
-		CoreEntry: ruleModel.CoreEntry{
-			ID:          "ruleId",
-			Description: "Description",
-			Tags:        []string{"Tag"},
-		},
-		PythonDetection: ruleModel.PythonDetection{
-			DisplayName: "DisplayName",
-			Runbook:     "Runbook",
-			Severity:    "INFO",
-		},
-		Threshold: 1000,
+		ID:          "ruleId",
+		Description: "Description",
+		DisplayName: "DisplayName",
+		Runbook:     "Runbook",
+		Severity:    "INFO",
+		Tags:        []string{"Tag"},
+		Threshold:   1000,
 	}
 
 	newAlertDedup := &AlertDedupEvent{

@@ -19,6 +19,8 @@ package models
  */
 
 import (
+	"time"
+
 	"github.com/panther-labs/panther/api/lambda/compliance/models"
 )
 
@@ -29,21 +31,21 @@ type DeletePoliciesInput struct {
 }
 
 type DeleteEntry struct {
-	ID string `json:"id" validate:"required"`
+	ID string `json:"id" validate:"required,max=1000"`
 }
 
 type GetPolicyInput struct {
-	PolicyID  string `json:"policyId" validate:"required"`
-	VersionID string `json:"versionId"`
+	ID        string `json:"id" validate:"required,max=1000"`
+	VersionID string `json:"versionId" validate:"omitempty,len=32"`
 }
 
 type ListPoliciesInput struct {
 	// ----- Filtering -----
 	// Only include policies with a specific compliance status
-	ComplianceStatus models.ComplianceStatus `json:"complianceStatus"`
+	ComplianceStatus models.ComplianceStatus `json:"complianceStatus" validate:"omitempty,oneof=PASS FAIL ERROR"`
 
 	// Only include policies whose ID or display name contains this case-insensitive substring
-	NameContains string `json:"nameContains"`
+	NameContains string `json:"nameContains" validate:"max=1000"`
 
 	// Only include policies which are enabled or disabled
 	Enabled *bool `json:"enabled"`
@@ -52,24 +54,24 @@ type ListPoliciesInput struct {
 	HasRemediation *bool `json:"hasRemediation"`
 
 	// Only include policies which apply to one of these resource types
-	ResourceTypes []string `json:"resourceTypes" validate:"omitempty,dive,required"`
+	ResourceTypes []string `json:"resourceTypes" validate:"max=500,dive,required,max=500"`
 
 	// Only include policies with this severity
-	Severity models.Severity `json:"severity"`
+	Severity models.Severity `json:"severity" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 
 	// Only include policies with all of these tags (case-insensitive)
-	Tags []string `json:"tags" validate:"omitempty,dive,required"`
+	Tags []string `json:"tags" validate:"max=500,dive,required,max=500"`
 
 	// ----- Projection -----
 	// Policy fields to return in the response (default: all)
-	Fields []string `json:"fields" validate:"omitempty,dive,required"`
+	Fields []string `json:"fields" validate:"max=20,dive,required,max=100"`
 
 	// ----- Sorting -----
 	SortBy  string `json:"sortBy" validate:"omitempty,oneof=complianceStatus enabled id lastModified resourceTypes severity"`
 	SortDir string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 
 	// ----- Paging -----
-	PageSize int `json:"pageSize" validate:"min=0"`
+	PageSize int `json:"pageSize" validate:"min=0,max=1000"`
 	Page     int `json:"page" validate:"min=0"`
 }
 
@@ -85,17 +87,17 @@ type Paging struct {
 }
 
 type SuppressInput struct {
-	PolicyIDs []string `json:"policyIds" validate:"min=1,dive,required"`
+	PolicyIDs []string `json:"policyIds" validate:"min=1,dive,required,max=1000"`
 
 	// List of resource ID regexes that are excepted from the policy.
 	// The policy will still be evaluated, but failures will not trigger alerts nor remediations
-	ResourcePatterns []string `json:"resourcePatterns" validate:"min=1,dive,required"`
+	ResourcePatterns []string `json:"resourcePatterns" validate:"min=1,dive,required,max=10000"`
 }
 
 type TestPolicyInput struct {
-	Body          string     `json:"body" validate:"required"`
-	ResourceTypes []string   `json:"resourceTypes" validate:"omitempty,dive,required"`
-	Tests         []UnitTest `json:"tests"`
+	Body          string     `json:"body" validate:"required,max=100000"`
+	ResourceTypes []string   `json:"resourceTypes" validate:"max=500,dive,required,max=500"`
+	Tests         []UnitTest `json:"tests" validate:"max=500,dive"`
 }
 
 type TestPolicyOutput struct {
@@ -118,22 +120,47 @@ type TestError struct {
 }
 
 type UpdatePolicyInput struct {
-	CoreEntryUpdate
-	PythonDetection
-
-	AutoRemediationID         string            `json:"autoRemediationId"`
-	AutoRemediationParameters map[string]string `json:"autoRemediationParameters"`
-	ResourceTypes             []string          `json:"resourceTypes"`
-	Suppressions              []string          `json:"suppressions" validate:"omitempty,dive,required"`
+	AutoRemediationID         string              `json:"autoRemediationId" validate:"max=1000"`
+	AutoRemediationParameters map[string]string   `json:"autoRemediationParameters" validate:"max=500"`
+	Body                      string              `json:"body" validate:"required,max=100000"`
+	Description               string              `json:"description" validate:"max=10000"`
+	DisplayName               string              `json:"displayName" validate:"max=1000,excludesall='<>&\""`
+	Enabled                   bool                `json:"enabled"`
+	ID                        string              `json:"id" validate:"required,max=1000,excludesall='<>&\""`
+	OutputIDs                 []string            `json:"outputIds" validate:"max=500,dive,required,max=5000"`
+	Reference                 string              `json:"reference" validate:"max=10000"`
+	Reports                   map[string][]string `json:"reports" validate:"max=500"`
+	ResourceTypes             []string            `json:"resourceTypes" validate:"max=500,dive,required,max=500"`
+	Runbook                   string              `json:"runbook" validate:"max=10000"`
+	Severity                  models.Severity     `json:"severity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Suppressions              []string            `json:"suppressions" validate:"max=500,dive,required,max=1000"`
+	Tags                      []string            `json:"tags" validate:"max=500,dive,required,max=1000"`
+	Tests                     []UnitTest          `json:"tests" validate:"max=500,dive"`
+	UserID                    string              `json:"userId" validate:"uuid4"`
 }
 
+// The validate tags here are used by BulkUpload
 type Policy struct {
-	CoreEntry
-	PythonDetection
-
-	AutoRemediationID         string                  `json:"autoRemediationId"`
-	AutoRemediationParameters map[string]string       `json:"autoRemediationParameters"`
+	AutoRemediationID         string                  `json:"autoRemediationId" validate:"max=1000"`
+	AutoRemediationParameters map[string]string       `json:"autoRemediationParameters" validte:"max=500"`
+	Body                      string                  `json:"body" validate:"required,max=100000"`
 	ComplianceStatus          models.ComplianceStatus `json:"complianceStatus"`
-	ResourceTypes             []string                `json:"resourceTypes"`
-	Suppressions              []string                `json:"suppressions"`
+	CreatedAt                 time.Time               `json:"createdAt"`
+	CreatedBy                 string                  `json:"createdBy"`
+	Description               string                  `json:"description" validate:"max=10000"`
+	DisplayName               string                  `json:"displayName" validate:"max=1000,excludesall='<>&\""`
+	Enabled                   bool                    `json:"enabled"`
+	ID                        string                  `json:"id" validate:"required,max=1000,excludesall='<>&\""`
+	LastModified              time.Time               `json:"lastModified"`
+	LastModifiedBy            string                  `json:"lastModifiedBy"`
+	OutputIDs                 []string                `json:"outputIds" validate:"max=500,dive,required,max=5000"`
+	Reference                 string                  `json:"reference" validate:"max=10000"`
+	Reports                   map[string][]string     `json:"reports" validate:"max=500"`
+	ResourceTypes             []string                `json:"resourceTypes" validate:"max=500,dive,required,max=500"`
+	Runbook                   string                  `json:"runbook" validate:"max=10000"`
+	Severity                  models.Severity         `json:"severity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Suppressions              []string                `json:"suppressions" validate:"max=500,dive,required,max=1000"`
+	Tags                      []string                `json:"tags" validate:"max=500,dive,required,max=1000"`
+	Tests                     []UnitTest              `json:"tests" validate:"max=500,dive"`
+	VersionID                 string                  `json:"versionId"`
 }

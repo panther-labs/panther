@@ -95,7 +95,7 @@ func populateAlertData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, 
 
 	getRuleInput := analysismodels.LambdaInput{
 		GetRule: &analysismodels.GetRuleInput{
-			RuleID:    alertItem.RuleID,
+			ID:        alertItem.RuleID,
 			VersionID: alertItem.RuleVersion,
 		},
 	}

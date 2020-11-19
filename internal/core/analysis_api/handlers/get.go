@@ -30,19 +30,19 @@ import (
 )
 
 func (API) GetPolicy(input *models.GetPolicyInput) *events.APIGatewayProxyResponse {
-	return handleGet(input.PolicyID, input.VersionID, models.TypePolicy)
+	return handleGet(input.ID, input.VersionID, models.TypePolicy)
 }
 
 func (API) GetRule(input *models.GetRuleInput) *events.APIGatewayProxyResponse {
-	return handleGet(input.RuleID, input.VersionID, models.TypeRule)
+	return handleGet(input.ID, input.VersionID, models.TypeRule)
 }
 
 func (API) GetGlobal(input *models.GetGlobalInput) *events.APIGatewayProxyResponse {
-	return handleGet(input.GlobalID, input.VersionID, models.TypeGlobal)
+	return handleGet(input.ID, input.VersionID, models.TypeGlobal)
 }
 
 func (API) GetDataModel(input *models.GetDataModelInput) *events.APIGatewayProxyResponse {
-	return handleGet(input.DataModelID, input.VersionID, models.TypeDataModel)
+	return handleGet(input.ID, input.VersionID, models.TypeDataModel)
 }
 
 // Handle GET request for GetPolicy, GetRule, and GetGlobal

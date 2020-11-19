@@ -77,7 +77,7 @@ describe('RuleDetails', () => {
         data: { rule },
         variables: {
           input: {
-            ruleId: '123',
+            id: '123',
           },
         },
       }),
@@ -121,7 +121,7 @@ describe('RuleDetails', () => {
         data: { rule },
         variables: {
           input: {
-            ruleId: '123',
+            id: '123',
           },
         },
       }),
@@ -200,7 +200,7 @@ describe('RuleDetails', () => {
         data: { rule },
         variables: {
           input: {
-            ruleId: '123',
+            id: '123',
           },
         },
       }),
@@ -239,7 +239,7 @@ describe('RuleDetails', () => {
         data: { rule },
         variables: {
           input: {
-            ruleId: '123',
+            id: '123',
           },
         },
       }),
@@ -307,7 +307,7 @@ describe('RuleDetails', () => {
         data: { rule },
         variables: {
           input: {
-            ruleId: '123',
+            id: '123',
           },
         },
       }),
@@ -376,7 +376,7 @@ describe('RuleDetails', () => {
         data: { rule },
         variables: {
           input: {
-            ruleId: rule.id,
+            id: rule.id,
           },
         },
       }),
@@ -429,7 +429,7 @@ describe('RuleDetails', () => {
         data: { rule },
         variables: {
           input: {
-            ruleId: rule.id,
+            id: rule.id,
           },
         },
       }),
@@ -522,7 +522,7 @@ describe('RuleDetails', () => {
         data: { rule },
         variables: {
           input: {
-            ruleId: '123',
+            id: '123',
           },
         },
       }),
@@ -625,7 +625,7 @@ describe('RuleDetails', () => {
         data: { rule },
         variables: {
           input: {
-            ruleId: '123',
+            id: '123',
           },
         },
       }),
@@ -781,7 +781,7 @@ describe('RuleDetails', () => {
         data: { rule },
         variables: {
           input: {
-            ruleId: '123',
+            id: '123',
           },
         },
       }),

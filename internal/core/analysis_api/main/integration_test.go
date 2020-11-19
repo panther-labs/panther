@@ -29,7 +29,6 @@ import (
 	"sort"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -60,87 +59,63 @@ var (
 
 	// NOTE: this gets changed by the bulk upload!
 	policy = &models.Policy{
-		CoreEntry: models.CoreEntry{
-			Description: "Matches every resource",
-			ID:          "Test:Policy",
-			Tags:        []string{"policyTag"},
-		},
-		PythonDetection: models.PythonDetection{
-			DisplayName: "AlwaysTrue",
-			Enabled:     true,
-			OutputIDs:   []string{"policyOutput"},
-			Reports:     map[string][]string{},
-			Severity:    compliancemodels.SeverityMedium,
-			Tests: []models.UnitTest{
-				{
-					Name:           "This will be True",
-					ExpectedResult: true,
-					Resource:       `{}`,
-				},
-				{
-					Name:           "This will also be True",
-					ExpectedResult: true,
-					Resource:       `{"nested": {}}`,
-				},
+		AutoRemediationParameters: map[string]string{},
+		Description:               "Matches every resource",
+		DisplayName:               "AlwaysTrue",
+		Enabled:                   true,
+		ID:                        "Test:Policy",
+		OutputIDs:                 []string{"policyOutput"},
+		Reports:                   map[string][]string{},
+		ResourceTypes:             []string{},
+		Severity:                  compliancemodels.SeverityMedium,
+		Suppressions:              []string{},
+		Tags:                      []string{"policyTag"},
+		Tests: []models.UnitTest{
+			{
+				Name:           "This will be True",
+				ExpectedResult: true,
+				Resource:       `{}`,
+			},
+			{
+				Name:           "This will also be True",
+				ExpectedResult: true,
+				Resource:       `{"nested": {}}`,
 			},
 		},
-		AutoRemediationParameters: map[string]string{},
-		ResourceTypes:             []string{},
-		Suppressions:              []string{},
 	}
 	versionedPolicy *models.Policy // this will get set when we modify policy for use in delete testing
 
 	// Set during bulk upload
-	policyFromBulk = &models.Policy{
-		CoreEntry: models.CoreEntry{
-			ID: "AWS.CloudTrail.Log.Validation.Enabled",
-		},
-	}
-	policyFromBulkJSON = &models.Policy{
-		CoreEntry: models.CoreEntry{
-			ID: "Test:Policy:JSON",
-		},
-	}
+	policyFromBulk     = &models.Policy{ID: "AWS.CloudTrail.Log.Validation.Enabled"}
+	policyFromBulkJSON = &models.Policy{ID: "Test:Policy:JSON"}
 
 	rule = &models.Rule{
-		CoreEntry: models.CoreEntry{
-			Body:        "def rule(event): return len(event) > 0\n",
-			Description: "Matches every non-empty event",
-			ID:          "NonEmptyEvent",
-			Tags:        []string{"test-tag"},
-		},
-		PythonDetection: models.PythonDetection{
-			DisplayName: "",
-			Enabled:     true,
-			OutputIDs:   []string{"test-output1", "test-output2"},
-			Reference:   "",
-			Reports:     map[string][]string{},
-			Runbook:     "",
-			Severity:    compliancemodels.SeverityHigh,
-			Tests:       []models.UnitTest{},
-		},
+		Body:               "def rule(event): return len(event) > 0\n",
 		DedupPeriodMinutes: 1440,
+		Description:        "Matches every non-empty event",
+		Enabled:            true,
+		ID:                 "NonEmptyEvent",
 		LogTypes:           []string{"AWS.CloudTrail"},
+		OutputIDs:          []string{"test-output1", "test-output2"},
+		Reports:            map[string][]string{},
+		Severity:           compliancemodels.SeverityHigh,
+		Tags:               []string{"test-tag"},
+		Tests:              []models.UnitTest{},
 		Threshold:          10,
 	}
 
 	global = &models.Global{
-		CoreEntry: models.CoreEntry{
-			Body:        "def helper_is_true(truthy): return truthy is True\n",
-			Description: "Provides a helper function",
-			ID:          "GlobalTypeAnalysis",
-		},
+		Body:        "def helper_is_true(truthy): return truthy is True\n",
+		Description: "Provides a helper function",
+		ID:          "GlobalTypeAnalysis",
 	}
 
 	dataModel = &models.DataModel{
-		CoreEntry: models.CoreEntry{
-			Body:        "def get_source_ip(event): return 'source_ip'\n",
-			Description: "Example LogType Schema",
-			ID:          "DataModelTypeAnalysis",
-			Tags:        []string{},
-		},
-		Enabled:  true,
-		LogTypes: []string{"OneLogin.Events"},
+		Body:        "def get_source_ip(event): return 'source_ip'\n",
+		Description: "Example LogType Schema",
+		Enabled:     true,
+		ID:          "DataModelTypeAnalysis",
+		LogTypes:    []string{"OneLogin.Events"},
 		Mappings: []models.DataModelMapping{
 			{
 				Name: "source_ip",
@@ -149,14 +124,11 @@ var (
 		},
 	}
 	dataModelTwo = &models.DataModel{
-		CoreEntry: models.CoreEntry{
-			Body:        "def get_source_ip(event): return 'source_ip'\n",
-			Description: "Example LogType Schema",
-			ID:          "SecondDataModelTypeAnalysis",
-			Tags:        []string{},
-		},
-		Enabled:  true,
-		LogTypes: []string{"Box.Events"},
+		Body:        "def get_source_ip(event): return 'source_ip'\n",
+		Description: "Example LogType Schema",
+		Enabled:     true,
+		ID:          "SecondDataModelTypeAnalysis",
+		LogTypes:    []string{"Box.Events"},
 		Mappings: []models.DataModelMapping{
 			{
 				Name: "source_ip",
@@ -166,11 +138,8 @@ var (
 	}
 	dataModels           = [2]*models.DataModel{dataModel, dataModelTwo}
 	dataModelFromBulkYML = &models.DataModel{
-		CoreEntry: models.CoreEntry{
-			ID:   "Some.Events.DataModel",
-			Tags: []string{},
-		},
 		Enabled:  true,
+		ID:       "Some.Events.DataModel",
 		LogTypes: []string{"Some.Events"},
 		Mappings: []models.DataModelMapping{
 			{
@@ -604,24 +573,20 @@ func createPolicySuccess(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
 		CreatePolicy: &models.CreatePolicyInput{
-			CoreEntryUpdate: models.CoreEntryUpdate{
-				Body:        policy.Body,
-				Description: policy.Description,
-				ID:          policy.ID,
-				Tags:        policy.Tags,
-				UserID:      userID,
-			},
-			PythonDetection: models.PythonDetection{
-				DisplayName: policy.DisplayName,
-				Enabled:     policy.Enabled,
-				Severity:    policy.Severity,
-				OutputIDs:   policy.OutputIDs,
-				Tests:       policy.Tests,
-			},
 			AutoRemediationID:         policy.AutoRemediationID,
 			AutoRemediationParameters: policy.AutoRemediationParameters,
+			Body:                      policy.Body,
+			Description:               policy.Description,
+			DisplayName:               policy.DisplayName,
+			Enabled:                   policy.Enabled,
+			ID:                        policy.ID,
+			OutputIDs:                 policy.OutputIDs,
 			ResourceTypes:             policy.ResourceTypes,
+			Severity:                  policy.Severity,
 			Suppressions:              policy.Suppressions,
+			Tags:                      policy.Tags,
+			Tests:                     policy.Tests,
+			UserID:                    userID,
 		},
 	}
 	var result models.Policy
@@ -651,30 +616,26 @@ func saveEnabledPolicyFailingTests(t *testing.T) {
 	defer batchDeletePolicies(t, policyID)
 
 	req := models.UpdatePolicyInput{
-		CoreEntryUpdate: models.CoreEntryUpdate{
-			Body:   "def policy(resource): return resource['key']",
-			ID:     policyID,
-			UserID: userID,
-		},
-		PythonDetection: models.PythonDetection{
-			Enabled:  true,
-			Severity: policy.Severity,
-			Tests: []models.UnitTest{
-				{
-					Name:           "This will pass",
-					ExpectedResult: true,
-					Resource:       `{"key":true}`,
-				}, {
-					Name:           "This will fail",
-					ExpectedResult: false,
-					Resource:       `{"key":true}`,
-				}, {
-					Name:           "This will fail too",
-					ExpectedResult: false,
-					Resource:       `{}`,
-				},
+		Body:     "def policy(resource): return resource['key']",
+		Enabled:  true,
+		ID:       policyID,
+		Severity: policy.Severity,
+		Tests: []models.UnitTest{
+			{
+				Name:           "This will pass",
+				ExpectedResult: true,
+				Resource:       `{"key":true}`,
+			}, {
+				Name:           "This will fail",
+				ExpectedResult: false,
+				Resource:       `{"key":true}`,
+			}, {
+				Name:           "This will fail too",
+				ExpectedResult: false,
+				Resource:       `{}`,
 			},
 		},
+		UserID: userID,
 	}
 
 	expectedErrorMessage := "cannot save an enabled policy with failing unit tests"
@@ -702,22 +663,18 @@ func saveDisabledPolicyFailingTests(t *testing.T) {
 	defer batchDeletePolicies(t, policyID)
 
 	req := models.UpdatePolicyInput{
-		CoreEntryUpdate: models.CoreEntryUpdate{
-			Body:   "def policy(resource): return True",
-			ID:     policyID,
-			UserID: userID,
-		},
-		PythonDetection: models.PythonDetection{
-			Enabled:  false,
-			Severity: policy.Severity,
-			Tests: []models.UnitTest{
-				{
-					Name:           "This will fail",
-					ExpectedResult: false,
-					Resource:       `{}`,
-				},
+		Body:     "def policy(resource): return True",
+		Enabled:  false,
+		ID:       policyID,
+		Severity: policy.Severity,
+		Tests: []models.UnitTest{
+			{
+				Name:           "This will fail",
+				ExpectedResult: false,
+				Resource:       `{}`,
 			},
 		},
+		UserID: userID,
 	}
 
 	t.Run("Create", func(t *testing.T) {
@@ -742,26 +699,22 @@ func saveEnabledPolicyPassingTests(t *testing.T) {
 	defer batchDeletePolicies(t, policyID)
 
 	req := models.UpdatePolicyInput{
-		CoreEntryUpdate: models.CoreEntryUpdate{
-			Body:   "def policy(resource): return True",
-			ID:     policyID,
-			UserID: userID,
-		},
-		PythonDetection: models.PythonDetection{
-			Enabled:  true,
-			Severity: policy.Severity,
-			Tests: []models.UnitTest{
-				{
-					Name:           "Compliant",
-					ExpectedResult: true,
-					Resource:       `{}`,
-				}, {
-					Name:           "Compliant 2",
-					ExpectedResult: true,
-					Resource:       `{}`,
-				},
+		Body:     "def policy(resource): return True",
+		Enabled:  true,
+		ID:       policyID,
+		Severity: policy.Severity,
+		Tests: []models.UnitTest{
+			{
+				Name:           "Compliant",
+				ExpectedResult: true,
+				Resource:       `{}`,
+			}, {
+				Name:           "Compliant 2",
+				ExpectedResult: true,
+				Resource:       `{}`,
 			},
 		},
+		UserID: userID,
 	}
 
 	t.Run("Create", func(t *testing.T) {
@@ -785,22 +738,18 @@ func savePolicyInvalidTestInputJSON(t *testing.T) {
 	defer batchDeletePolicies(t, policyID)
 
 	req := models.UpdatePolicyInput{
-		CoreEntryUpdate: models.CoreEntryUpdate{
-			Body:   "def policy(resource): return True",
-			ID:     policyID,
-			UserID: userID,
-		},
-		PythonDetection: models.PythonDetection{
-			Enabled:  true,
-			Severity: policy.Severity,
-			Tests: []models.UnitTest{
-				{
-					Name:           "PolicyName",
-					ExpectedResult: true,
-					Resource:       "invalid json",
-				},
+		Body:     "def policy(resource): return True",
+		Enabled:  true,
+		ID:       policyID,
+		Severity: policy.Severity,
+		Tests: []models.UnitTest{
+			{
+				Name:           "PolicyName",
+				ExpectedResult: true,
+				Resource:       "invalid json",
 			},
 		},
+		UserID: userID,
 	}
 
 	expectedErrorMessage := fmt.Sprintf(`Resource for test "%s" is not valid json:`, req.Tests[0].Name)
@@ -828,30 +777,26 @@ func saveEnabledRuleFailingTests(t *testing.T) {
 	defer batchDeleteRules(t, ruleID)
 
 	req := models.UpdateRuleInput{
-		CoreEntryUpdate: models.CoreEntryUpdate{
-			Body:   "def rule(event): return event['key']",
-			ID:     ruleID,
-			UserID: userID,
-		},
-		PythonDetection: models.PythonDetection{
-			Enabled:  true,
-			Severity: rule.Severity,
-			Tests: []models.UnitTest{
-				{
-					Name:           "This will fail",
-					ExpectedResult: false,
-					Resource:       `{"key":true}`,
-				}, {
-					Name:           "This will fail too",
-					ExpectedResult: true,
-					Resource:       `{}`,
-				}, {
-					Name:           "This will pass",
-					ExpectedResult: true,
-					Resource:       `{"key":true}`,
-				},
+		Body:     "def rule(event): return event['key']",
+		Enabled:  true,
+		ID:       ruleID,
+		Severity: rule.Severity,
+		Tests: []models.UnitTest{
+			{
+				Name:           "This will fail",
+				ExpectedResult: false,
+				Resource:       `{"key":true}`,
+			}, {
+				Name:           "This will fail too",
+				ExpectedResult: true,
+				Resource:       `{}`,
+			}, {
+				Name:           "This will pass",
+				ExpectedResult: true,
+				Resource:       `{"key":true}`,
 			},
 		},
+		UserID: userID,
 	}
 
 	expectedErrorMessage := "cannot save an enabled rule with failing unit tests"
@@ -881,26 +826,22 @@ func saveEnabledRulePassingTests(t *testing.T) {
 	defer batchDeleteRules(t, ruleID)
 
 	req := models.UpdateRuleInput{
-		CoreEntryUpdate: models.CoreEntryUpdate{
-			Body:   "def rule(event): return True",
-			ID:     ruleID,
-			UserID: userID,
-		},
-		PythonDetection: models.PythonDetection{
-			Enabled:  true,
-			Severity: rule.Severity,
-			Tests: []models.UnitTest{
-				{
-					Name:           "Trigger alert",
-					ExpectedResult: true,
-					Resource:       `{}`,
-				}, {
-					Name:           "Trigger alert 2",
-					ExpectedResult: true,
-					Resource:       `{}`,
-				},
+		Body:     "def rule(event): return True",
+		Enabled:  true,
+		ID:       ruleID,
+		Severity: rule.Severity,
+		Tests: []models.UnitTest{
+			{
+				Name:           "Trigger alert",
+				ExpectedResult: true,
+				Resource:       `{}`,
+			}, {
+				Name:           "Trigger alert 2",
+				ExpectedResult: true,
+				Resource:       `{}`,
 			},
 		},
+		UserID: userID,
 	}
 
 	t.Run("Create", func(t *testing.T) {
@@ -924,22 +865,18 @@ func saveRuleInvalidTestInputJSON(t *testing.T) {
 	defer batchDeleteRules(t, ruleID)
 
 	req := models.UpdateRuleInput{
-		CoreEntryUpdate: models.CoreEntryUpdate{
-			Body:   "def rule(event): return True",
-			ID:     ruleID,
-			UserID: userID,
-		},
-		PythonDetection: models.PythonDetection{
-			Enabled:  true,
-			Severity: rule.Severity,
-			Tests: []models.UnitTest{
-				{
-					Name:           "Trigger alert",
-					ExpectedResult: true,
-					Resource:       "invalid json",
-				},
+		Body:     "def rule(event): return True",
+		Enabled:  true,
+		ID:       ruleID,
+		Severity: rule.Severity,
+		Tests: []models.UnitTest{
+			{
+				Name:           "Trigger alert",
+				ExpectedResult: true,
+				Resource:       "invalid json",
 			},
 		},
+		UserID: userID,
 	}
 
 	expectedErrorMessage := fmt.Sprintf(`Event for test "%s" is not valid json:`, req.Tests[0].Name)
@@ -967,22 +904,18 @@ func saveDisabledRuleFailingTests(t *testing.T) {
 	defer batchDeleteRules(t, ruleID)
 
 	req := models.UpdateRuleInput{
-		CoreEntryUpdate: models.CoreEntryUpdate{
-			Body:   "def rule(event): return True",
-			ID:     ruleID,
-			UserID: userID,
-		},
-		PythonDetection: models.PythonDetection{
-			Enabled:  false,
-			Severity: rule.Severity,
-			Tests: []models.UnitTest{
-				{
-					Name:           "This will fail",
-					ExpectedResult: false,
-					Resource:       `{}`,
-				},
+		Body:     "def rule(event): return True",
+		Enabled:  false,
+		ID:       ruleID,
+		Severity: rule.Severity,
+		Tests: []models.UnitTest{
+			{
+				Name:           "This will fail",
+				ExpectedResult: false,
+				Resource:       `{}`,
 			},
 		},
+		UserID: userID,
 	}
 
 	t.Run("Create", func(t *testing.T) {
@@ -1004,21 +937,17 @@ func createRuleSuccess(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
 		CreateRule: &models.CreateRuleInput{
-			CoreEntryUpdate: models.CoreEntryUpdate{
-				Body:        rule.Body,
-				Description: rule.Description,
-				ID:          rule.ID,
-				Tags:        rule.Tags,
-				UserID:      userID,
-			},
-			PythonDetection: models.PythonDetection{
-				Enabled:   rule.Enabled,
-				Severity:  rule.Severity,
-				OutputIDs: rule.OutputIDs,
-			},
+			Body:               rule.Body,
 			DedupPeriodMinutes: rule.DedupPeriodMinutes,
+			Description:        rule.Description,
+			Enabled:            rule.Enabled,
+			ID:                 rule.ID,
 			LogTypes:           rule.LogTypes,
+			OutputIDs:          rule.OutputIDs,
+			Severity:           rule.Severity,
+			Tags:               rule.Tags,
 			Threshold:          rule.Threshold,
+			UserID:             userID,
 		},
 	}
 	var result models.Rule
@@ -1112,12 +1041,10 @@ func createGlobalSuccess(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
 		CreateGlobal: &models.CreateGlobalInput{
-			CoreEntryUpdate: models.CoreEntryUpdate{
-				Body:        global.Body,
-				Description: global.Description,
-				ID:          global.ID,
-				UserID:      userID,
-			},
+			Body:        global.Body,
+			Description: global.Description,
+			ID:          global.ID,
+			UserID:      userID,
 		},
 	}
 	var result models.Global
@@ -1140,7 +1067,7 @@ func createGlobalSuccess(t *testing.T) {
 func getNotFound(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
-		GetPolicy: &models.GetPolicyInput{PolicyID: "does-not-exist"},
+		GetPolicy: &models.GetPolicyInput{ID: "does-not-exist"},
 	}
 	statusCode, err := apiClient.Invoke(&input, nil)
 	require.Error(t, err)
@@ -1151,7 +1078,7 @@ func getNotFound(t *testing.T) {
 func getLatest(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
-		GetPolicy: &models.GetPolicyInput{PolicyID: policy.ID},
+		GetPolicy: &models.GetPolicyInput{ID: policy.ID},
 	}
 	var result models.Policy
 	statusCode, err := apiClient.Invoke(&input, &result)
@@ -1166,7 +1093,7 @@ func getVersion(t *testing.T) {
 
 	// first get the version now as latest
 	input := models.LambdaInput{
-		GetPolicy: &models.GetPolicyInput{PolicyID: policy.ID},
+		GetPolicy: &models.GetPolicyInput{ID: policy.ID},
 	}
 	var result models.Policy
 	statusCode, err := apiClient.Invoke(&input, &result)
@@ -1186,7 +1113,7 @@ func getVersion(t *testing.T) {
 func getRule(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
-		GetRule: &models.GetRuleInput{RuleID: rule.ID},
+		GetRule: &models.GetRuleInput{ID: rule.ID},
 	}
 	var result models.Rule
 	statusCode, err := apiClient.Invoke(&input, &result)
@@ -1198,7 +1125,7 @@ func getRule(t *testing.T) {
 func getDataModel(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
-		GetDataModel: &models.GetDataModelInput{DataModelID: dataModel.ID},
+		GetDataModel: &models.GetDataModelInput{ID: dataModel.ID},
 	}
 	var result models.DataModel
 	statusCode, err := apiClient.Invoke(&input, &result)
@@ -1210,7 +1137,7 @@ func getDataModel(t *testing.T) {
 func getGlobal(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
-		GetGlobal: &models.GetGlobalInput{GlobalID: global.ID},
+		GetGlobal: &models.GetGlobalInput{ID: global.ID},
 	}
 	var result models.Global
 	statusCode, err := apiClient.Invoke(&input, &result)
@@ -1223,7 +1150,7 @@ func getGlobal(t *testing.T) {
 func getRuleWrongType(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
-		GetRule: &models.GetRuleInput{RuleID: policy.ID},
+		GetRule: &models.GetRuleInput{ID: policy.ID},
 	}
 	statusCode, err := apiClient.Invoke(&input, nil)
 	require.Error(t, err)
@@ -1234,15 +1161,11 @@ func modifyNotFound(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
 		UpdatePolicy: &models.UpdatePolicyInput{
-			CoreEntryUpdate: models.CoreEntryUpdate{
-				Body:   "def policy(resource): return False",
-				ID:     "DOES.NOT.EXIST",
-				UserID: userID,
-			},
-			PythonDetection: models.PythonDetection{
-				Enabled:  policy.Enabled,
-				Severity: policy.Severity,
-			},
+			Body:     "def policy(resource): return False",
+			Enabled:  policy.Enabled,
+			ID:       "DOES.NOT.EXIST",
+			Severity: policy.Severity,
+			UserID:   userID,
 		},
 	}
 	statusCode, err := apiClient.Invoke(&input, nil)
@@ -1264,27 +1187,23 @@ func modifySuccess(t *testing.T) {
 	}
 	input := models.LambdaInput{
 		UpdatePolicy: &models.UpdatePolicyInput{
-			CoreEntryUpdate: models.CoreEntryUpdate{
-				Body:        policy.Body,
-				Description: expectedPolicy.Description,
-				ID:          policy.ID,
-				Tags:        policy.Tags,
-				UserID:      userID,
-			},
-			PythonDetection: models.PythonDetection{
-				DisplayName: policy.DisplayName,
-				Enabled:     policy.Enabled,
-				OutputIDs:   policy.OutputIDs,
-				Reference:   policy.Reference,
-				Reports:     policy.Reports,
-				Runbook:     policy.Runbook,
-				Severity:    policy.Severity,
-				Tests:       expectedPolicy.Tests,
-			},
 			AutoRemediationID:         policy.AutoRemediationID,
 			AutoRemediationParameters: policy.AutoRemediationParameters,
+			Body:                      policy.Body,
+			Description:               expectedPolicy.Description,
+			DisplayName:               policy.DisplayName,
+			Enabled:                   policy.Enabled,
+			ID:                        policy.ID,
+			OutputIDs:                 policy.OutputIDs,
+			Reference:                 policy.Reference,
+			Reports:                   policy.Reports,
 			ResourceTypes:             policy.ResourceTypes,
+			Runbook:                   policy.Runbook,
+			Severity:                  policy.Severity,
 			Suppressions:              policy.Suppressions,
+			Tags:                      policy.Tags,
+			Tests:                     expectedPolicy.Tests,
+			UserID:                    userID,
 		},
 	}
 	var result models.Policy
@@ -1311,18 +1230,22 @@ func modifyRule(t *testing.T) {
 
 	input := models.LambdaInput{
 		UpdateRule: &models.UpdateRuleInput{
-			CoreEntryUpdate: models.CoreEntryUpdate{
-				Body:        rule.Body,
-				Description: expectedRule.Description,
-				ID:          rule.ID,
-				Tags:        rule.Tags,
-				UserID:      userID,
-			},
-			PythonDetection: rule.PythonDetection,
-
+			Body:               rule.Body,
 			DedupPeriodMinutes: expectedRule.DedupPeriodMinutes,
+			Description:        expectedRule.Description,
+			DisplayName:        rule.DisplayName,
+			Enabled:            rule.Enabled,
+			ID:                 rule.ID,
 			LogTypes:           rule.LogTypes,
+			OutputIDs:          rule.OutputIDs,
+			Reference:          rule.Reference,
+			Reports:            rule.Reports,
+			Runbook:            rule.Runbook,
+			Severity:           rule.Severity,
+			Tags:               rule.Tags,
+			Tests:              rule.Tests,
 			Threshold:          expectedRule.Threshold,
+			UserID:             userID,
 		},
 	}
 	var result models.Rule
@@ -1411,13 +1334,11 @@ func modifyGlobal(t *testing.T) {
 
 	input := models.LambdaInput{
 		UpdateGlobal: &models.UpdateGlobalInput{
-			CoreEntryUpdate: models.CoreEntryUpdate{
-				Body:        global.Body,
-				Description: global.Description,
-				ID:          global.ID,
-				Tags:        global.Tags,
-				UserID:      userID,
-			},
+			Body:        global.Body,
+			Description: global.Description,
+			ID:          global.ID,
+			Tags:        global.Tags,
+			UserID:      userID,
 		},
 	}
 	var result models.Global
@@ -1461,7 +1382,7 @@ func suppressSuccess(t *testing.T) {
 
 	// Verify suppressions were added correctly
 	input = models.LambdaInput{
-		GetPolicy: &models.GetPolicyInput{PolicyID: policy.ID},
+		GetPolicy: &models.GetPolicyInput{ID: policy.ID},
 	}
 	var result models.Policy
 	statusCode, err = apiClient.Invoke(&input, &result)
@@ -1524,7 +1445,7 @@ func bulkUploadSuccess(t *testing.T) {
 
 	// Verify the existing policy was updated - the created fields were unchanged
 	input = models.LambdaInput{
-		GetPolicy: &models.GetPolicyInput{PolicyID: policy.ID},
+		GetPolicy: &models.GetPolicyInput{ID: policy.ID},
 	}
 	var getResult models.Policy
 	_, err = apiClient.Invoke(&input, &getResult)
@@ -1555,7 +1476,7 @@ func bulkUploadSuccess(t *testing.T) {
 	policy = &getResult
 
 	// Verify newly created policy #1
-	input.GetPolicy.PolicyID = policyFromBulk.ID
+	input.GetPolicy.ID = policyFromBulk.ID
 	_, err = apiClient.Invoke(&input, &policyFromBulk)
 	require.NoError(t, err)
 
@@ -1568,7 +1489,7 @@ func bulkUploadSuccess(t *testing.T) {
 	assert.Len(t, policyFromBulk.Tests, 2)
 
 	// Verify newly created policy #2
-	input.GetPolicy.PolicyID = policyFromBulkJSON.ID
+	input.GetPolicy.ID = policyFromBulkJSON.ID
 	_, err = apiClient.Invoke(&input, &policyFromBulkJSON)
 	require.NoError(t, err)
 	assert.Equal(t, "Matches every resource", policyFromBulkJSON.Description)
@@ -1576,34 +1497,23 @@ func bulkUploadSuccess(t *testing.T) {
 
 	// Verify newly created Rule
 	expectedNewRule := models.Rule{
-		CoreEntry: models.CoreEntry{
-			Body:           "",
-			CreatedAt:      time.Time{},
-			CreatedBy:      "",
-			Description:    "Test rule",
-			ID:             "Rule.Always.True",
-			LastModified:   time.Time{},
-			LastModifiedBy: "",
-			Tags:           []string{"DNS"},
-			VersionID:      "",
-		},
-		PythonDetection: models.PythonDetection{
-			DisplayName: "Rule Always True display name",
-			Enabled:     true,
-			OutputIDs:   []string{},
-			Reference:   "",
-			Reports:     map[string][]string{},
-			Runbook:     "Test runbook",
-			Severity:    compliancemodels.SeverityLow,
-			Tests:       []models.UnitTest{},
-		},
 		DedupPeriodMinutes: 480,
+		Description:        "Test rule",
+		DisplayName:        "Rule Always True display name",
+		Enabled:            true,
+		ID:                 "Rule.Always.True",
 		LogTypes:           []string{"CiscoUmbrella.DNS"},
+		OutputIDs:          []string{},
+		Reports:            map[string][]string{},
+		Runbook:            "Test runbook",
+		Severity:           compliancemodels.SeverityLow,
+		Tags:               []string{"DNS"},
+		Tests:              []models.UnitTest{},
 		Threshold:          42,
 	}
 
 	input = models.LambdaInput{
-		GetRule: &models.GetRuleInput{RuleID: expectedNewRule.ID},
+		GetRule: &models.GetRuleInput{ID: expectedNewRule.ID},
 	}
 	var getRule models.Rule
 	_, err = apiClient.Invoke(&input, &getRule)
@@ -1623,7 +1533,7 @@ func bulkUploadSuccess(t *testing.T) {
 
 	// Verify newly created DataModel
 	input = models.LambdaInput{
-		GetDataModel: &models.GetDataModelInput{DataModelID: dataModelFromBulkYML.ID},
+		GetDataModel: &models.GetDataModelInput{ID: dataModelFromBulkYML.ID},
 	}
 	var getDataModel models.DataModel
 	_, err = apiClient.Invoke(&input, &getDataModel)
@@ -1765,17 +1675,13 @@ func listProjection(t *testing.T) {
 
 	// Empty lists/maps will always be initialized in the response
 	emptyPolicy := models.Policy{
-		CoreEntry: models.CoreEntry{
-			Tags: []string{},
-		},
-		PythonDetection: models.PythonDetection{
-			OutputIDs: []string{},
-			Reports:   map[string][]string{},
-			Tests:     []models.UnitTest{},
-		},
 		AutoRemediationParameters: map[string]string{},
+		OutputIDs:                 []string{},
+		Reports:                   map[string][]string{},
 		ResourceTypes:             []string{},
 		Suppressions:              []string{},
+		Tags:                      []string{},
+		Tests:                     []models.UnitTest{},
 	}
 
 	firstItem := emptyPolicy
@@ -1878,7 +1784,7 @@ func deletePolicies(t *testing.T) {
 
 	// Trying to retrieve the deleted policy should now return 404
 	input := models.LambdaInput{
-		GetPolicy: &models.GetPolicyInput{PolicyID: policy.ID},
+		GetPolicy: &models.GetPolicyInput{ID: policy.ID},
 	}
 	statusCode, err := apiClient.Invoke(&input, nil)
 	assert.Error(t, err)
@@ -1886,7 +1792,7 @@ func deletePolicies(t *testing.T) {
 
 	// But retrieving an older version will still work
 	input.GetPolicy = &models.GetPolicyInput{
-		PolicyID:  versionedPolicy.ID,
+		ID:        versionedPolicy.ID,
 		VersionID: versionedPolicy.VersionID,
 	}
 	var result models.Policy
@@ -1914,7 +1820,7 @@ func deleteRules(t *testing.T) {
 
 	// Trying to retrieve the deleted rule should now return 404
 	input := models.LambdaInput{
-		GetRule: &models.GetRuleInput{RuleID: rule.ID},
+		GetRule: &models.GetRuleInput{ID: rule.ID},
 	}
 	statusCode, err := apiClient.Invoke(&input, nil)
 	assert.Error(t, err)
@@ -1975,7 +1881,7 @@ func deleteGlobals(t *testing.T) {
 
 	// Trying to retrieve the deleted policy should now return 404
 	input = models.LambdaInput{
-		GetGlobal: &models.GetGlobalInput{GlobalID: global.ID},
+		GetGlobal: &models.GetGlobalInput{ID: global.ID},
 	}
 	statusCode, err = apiClient.Invoke(&input, nil)
 	require.Error(t, err)

@@ -202,7 +202,7 @@ func triggerRemediation(event *models.ComplianceNotification) error {
 
 func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Alert, bool, error) {
 	input := analysismodels.LambdaInput{
-		GetPolicy: &analysismodels.GetPolicyInput{PolicyID: event.PolicyID},
+		GetPolicy: &analysismodels.GetPolicyInput{ID: event.PolicyID},
 	}
 
 	var policy analysismodels.Policy

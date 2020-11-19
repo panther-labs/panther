@@ -114,7 +114,7 @@ func TestRemediate(t *testing.T) {
 	analysisClient = mockAnalysisClient
 
 	getPolicyInput := &analysismodels.LambdaInput{
-		GetPolicy: &analysismodels.GetPolicyInput{PolicyID: input.PolicyID},
+		GetPolicy: &analysismodels.GetPolicyInput{ID: input.PolicyID},
 	}
 	mockAnalysisClient.On("Invoke", getPolicyInput, &analysismodels.Policy{}).Return(
 		http.StatusOK, nil, policy).Once()
@@ -166,7 +166,7 @@ func TestRemediationNotFoundErrorIfNoRemediationConfigured(t *testing.T) {
 	mockAnalysisClient := &gatewayapi.MockClient{}
 	analysisClient = mockAnalysisClient
 	getPolicyInput := &analysismodels.LambdaInput{
-		GetPolicy: &analysismodels.GetPolicyInput{PolicyID: input.PolicyID},
+		GetPolicy: &analysismodels.GetPolicyInput{ID: input.PolicyID},
 	}
 	mockAnalysisClient.On("Invoke", getPolicyInput, &analysismodels.Policy{}).Return(
 		http.StatusOK, nil, policy).Once()

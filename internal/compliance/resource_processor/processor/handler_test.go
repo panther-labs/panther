@@ -44,10 +44,8 @@ func TestParseQueueMsgResource(t *testing.T) {
 
 func TestParseQueueMsgPolicy(t *testing.T) {
 	policyIn := &analysismodels.Policy{
-		CoreEntry: analysismodels.CoreEntry{
-			Body: "def policy(resource):\nreturn True",
-			ID:   "TestPolicy",
-		},
+		Body: "def policy(resource):\nreturn True",
+		ID:   "TestPolicy",
 	}
 	body, _ := jsoniter.MarshalToString(policyIn)
 

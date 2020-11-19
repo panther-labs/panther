@@ -58,7 +58,7 @@ const PolicyDetailsPage = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       policyDetailsInput: {
-        policyId: match.params.id,
+        id: match.params.id,
       },
       resourcesForPolicyInput: {
         ...pick(requestParams, acceptedRequestParams),

@@ -78,7 +78,7 @@ func TestHandleEventWithAlert(t *testing.T) {
 
 	// mock call to analysis-api
 	getPolicyInput := &analysismodels.LambdaInput{
-		GetPolicy: &analysismodels.GetPolicyInput{PolicyID: "test-policy"},
+		GetPolicy: &analysismodels.GetPolicyInput{ID: "test-policy"},
 	}
 	mockPolicyClient.On("Invoke", getPolicyInput, mock.Anything).Return(
 		http.StatusOK, nil, policyResponse).Once()
@@ -139,7 +139,7 @@ func TestHandleEventWithAlertButNoAutoRemediationID(t *testing.T) {
 
 	// mock call to analysis-api
 	getPolicyInput := &analysismodels.LambdaInput{
-		GetPolicy: &analysismodels.GetPolicyInput{PolicyID: "test-policy"},
+		GetPolicy: &analysismodels.GetPolicyInput{ID: "test-policy"},
 	}
 	mockPolicyClient.On("Invoke", getPolicyInput, mock.Anything).Return(
 		http.StatusOK, nil, policyResponse).Once()

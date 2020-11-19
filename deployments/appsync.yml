@@ -878,16 +878,11 @@ Resources:
       FieldName: policies
       DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("fields",
-            ["autoRemediationId", "autoRemediationParams", "complianceStatus",
-             "displayName", "enabled", "id", "lastModified", "resourceTypes", "severity", "tags",
-             "threshold", "suppressions", "outputIds", "reports"]))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "listPolicies": $input
+            "listPolicies": $util.defaultIfNull($ctx.args.input, {})
           })
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
@@ -1164,15 +1159,11 @@ Resources:
       FieldName: rules
       DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
-        $util.qr($input.put("fields",
-            ["displayName", "enabled", "id", "lastModified", "resourceTypes", "severity", "tags",
-             "threshold", "outputIds", "reports"]))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "listRules": $input
+            "listRules": $util.defaultIfNull($ctx.args.input, {})
           })
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
@@ -1295,13 +1286,11 @@ Resources:
       FieldName: listGlobalPythonModules
       DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
-        #set ($input = $ctx.args.input)
-        $util.qr($input.put("fields", ["id", "lastModified", "tags"]))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "listGlobals": $input
+            "listGlobals": $ctx.args.input
           })
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]

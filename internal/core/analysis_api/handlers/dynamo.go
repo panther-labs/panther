@@ -100,32 +100,28 @@ func (r *tableItem) normalize() {
 func (r *tableItem) Policy(status compliancemodels.ComplianceStatus) *models.Policy {
 	r.normalize()
 	result := &models.Policy{
-		CoreEntry: models.CoreEntry{
-			Body:           r.Body,
-			CreatedAt:      r.CreatedAt,
-			CreatedBy:      r.CreatedBy,
-			Description:    r.Description,
-			ID:             r.ID,
-			LastModified:   r.LastModified,
-			LastModifiedBy: r.LastModifiedBy,
-			Tags:           r.Tags,
-			VersionID:      r.VersionID,
-		},
-		PythonDetection: models.PythonDetection{
-			DisplayName: r.DisplayName,
-			Enabled:     r.Enabled,
-			OutputIDs:   r.OutputIDs,
-			Reference:   r.Reference,
-			Reports:     r.Reports,
-			Runbook:     r.Runbook,
-			Severity:    r.Severity,
-			Tests:       r.Tests,
-		},
 		AutoRemediationID:         r.AutoRemediationID,
 		AutoRemediationParameters: r.AutoRemediationParameters,
 		ComplianceStatus:          status,
+		Body:                      r.Body,
+		CreatedAt:                 r.CreatedAt,
+		CreatedBy:                 r.CreatedBy,
+		Description:               r.Description,
+		DisplayName:               r.DisplayName,
+		Enabled:                   r.Enabled,
+		ID:                        r.ID,
+		LastModified:              r.LastModified,
+		LastModifiedBy:            r.LastModifiedBy,
+		OutputIDs:                 r.OutputIDs,
+		Reference:                 r.Reference,
+		Reports:                   r.Reports,
 		ResourceTypes:             r.ResourceTypes,
+		Runbook:                   r.Runbook,
+		Severity:                  r.Severity,
 		Suppressions:              r.Suppressions,
+		Tags:                      r.Tags,
+		Tests:                     r.Tests,
+		VersionID:                 r.VersionID,
 	}
 	gatewayapi.ReplaceMapSliceNils(result)
 	return result
@@ -135,30 +131,26 @@ func (r *tableItem) Policy(status compliancemodels.ComplianceStatus) *models.Pol
 func (r *tableItem) Rule() *models.Rule {
 	r.normalize()
 	result := &models.Rule{
-		CoreEntry: models.CoreEntry{
-			Body:           r.Body,
-			CreatedAt:      r.CreatedAt,
-			CreatedBy:      r.CreatedBy,
-			Description:    r.Description,
-			ID:             r.ID,
-			LastModified:   r.LastModified,
-			LastModifiedBy: r.LastModifiedBy,
-			Tags:           r.Tags,
-			VersionID:      r.VersionID,
-		},
-		PythonDetection: models.PythonDetection{
-			DisplayName: r.DisplayName,
-			Enabled:     r.Enabled,
-			OutputIDs:   r.OutputIDs,
-			Reference:   r.Reference,
-			Reports:     r.Reports,
-			Runbook:     r.Runbook,
-			Severity:    r.Severity,
-			Tests:       r.Tests,
-		},
+		Body:               r.Body,
+		CreatedAt:          r.CreatedAt,
+		CreatedBy:          r.CreatedBy,
 		DedupPeriodMinutes: r.DedupPeriodMinutes,
+		Description:        r.Description,
+		DisplayName:        r.DisplayName,
+		Enabled:            r.Enabled,
+		ID:                 r.ID,
+		LastModified:       r.LastModified,
+		LastModifiedBy:     r.LastModifiedBy,
 		LogTypes:           r.ResourceTypes,
+		OutputIDs:          r.OutputIDs,
+		Reference:          r.Reference,
+		Reports:            r.Reports,
+		Runbook:            r.Runbook,
+		Severity:           r.Severity,
+		Tags:               r.Tags,
+		Tests:              r.Tests,
 		Threshold:          r.Threshold,
+		VersionID:          r.VersionID,
 	}
 	gatewayapi.ReplaceMapSliceNils(result)
 	return result
@@ -168,17 +160,15 @@ func (r *tableItem) Rule() *models.Rule {
 func (r *tableItem) Global() *models.Global {
 	r.normalize()
 	result := &models.Global{
-		CoreEntry: models.CoreEntry{
-			Body:           r.Body,
-			CreatedAt:      r.CreatedAt,
-			CreatedBy:      r.CreatedBy,
-			Description:    r.Description,
-			ID:             r.ID,
-			LastModified:   r.LastModified,
-			LastModifiedBy: r.LastModifiedBy,
-			Tags:           r.Tags,
-			VersionID:      r.VersionID,
-		},
+		Body:           r.Body,
+		CreatedAt:      r.CreatedAt,
+		CreatedBy:      r.CreatedBy,
+		Description:    r.Description,
+		ID:             r.ID,
+		LastModified:   r.LastModified,
+		LastModifiedBy: r.LastModifiedBy,
+		Tags:           r.Tags,
+		VersionID:      r.VersionID,
 	}
 	gatewayapi.ReplaceMapSliceNils(result)
 	return result
@@ -188,21 +178,18 @@ func (r *tableItem) Global() *models.Global {
 func (r *tableItem) DataModel() *models.DataModel {
 	r.normalize()
 	result := &models.DataModel{
-		CoreEntry: models.CoreEntry{
-			Body:           r.Body,
-			CreatedAt:      r.CreatedAt,
-			CreatedBy:      r.CreatedBy,
-			Description:    r.Description,
-			ID:             r.ID,
-			LastModified:   r.LastModified,
-			LastModifiedBy: r.LastModifiedBy,
-			Tags:           r.Tags,
-			VersionID:      r.VersionID,
-		},
-		DisplayName: r.DisplayName,
-		Enabled:     r.Enabled,
-		LogTypes:    r.ResourceTypes,
-		Mappings:    r.Mappings,
+		Body:           r.Body,
+		CreatedAt:      r.CreatedAt,
+		CreatedBy:      r.CreatedBy,
+		Description:    r.Description,
+		DisplayName:    r.DisplayName,
+		Enabled:        r.Enabled,
+		ID:             r.ID,
+		LastModified:   r.LastModified,
+		LastModifiedBy: r.LastModifiedBy,
+		LogTypes:       r.ResourceTypes,
+		Mappings:       r.Mappings,
+		VersionID:      r.VersionID,
 	}
 	gatewayapi.ReplaceMapSliceNils(result)
 	return result

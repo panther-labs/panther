@@ -112,7 +112,7 @@ func (remediator *Invoker) GetRemediations() (*remediationmodels.ListRemediation
 
 func getPolicy(policyID string) (*analysismodels.Policy, error) {
 	input := analysismodels.LambdaInput{
-		GetPolicy: &analysismodels.GetPolicyInput{PolicyID: policyID},
+		GetPolicy: &analysismodels.GetPolicyInput{ID: policyID},
 	}
 	var policy analysismodels.Policy
 

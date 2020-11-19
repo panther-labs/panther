@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -23,8 +25,8 @@ type CreateDataModelInput = UpdateDataModelInput
 type DeleteDataModelsInput = DeletePoliciesInput
 
 type GetDataModelInput struct {
-	DataModelID string `json:"dataModelId" validate:"required"`
-	VersionID   string `json:"versionId"`
+	ID        string `json:"id" validate:"required,max=1000"`
+	VersionID string `json:"versionId" validate:"omitempty,len=32"`
 }
 
 type ListDataModelsInput struct {
@@ -36,14 +38,14 @@ type ListDataModelsInput struct {
 	NameContains string `json:"nameContains"`
 
 	// Only include data models which apply to one of these log types
-	LogTypes []string `json:"logTypes" validate:"omitempty,dive,required"`
+	LogTypes []string `json:"logTypes" validate:"dive,required,max=500"`
 
 	// ----- Sorting -----
 	SortBy  string `json:"sortBy" validate:"omitempty,oneof=enabled id lastModified logTypes"`
 	SortDir string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 
 	// ----- Paging -----
-	PageSize int `json:"pageSize" validate:"min=0"`
+	PageSize int `json:"pageSize" validate:"min=0,max=1000"`
 	Page     int `json:"page" validate:"min=0"`
 }
 
@@ -53,27 +55,33 @@ type ListDataModelsOutput struct {
 }
 
 type UpdateDataModelInput struct {
-	Body        string             `json:"body"` // not required
-	Description string             `json:"description"`
-	DisplayName string             `json:"displayName"`
+	Body        string             `json:"body" validate:"omitempty,max=100000"` // not required
+	Description string             `json:"description" validate:"max=10000"`
+	DisplayName string             `json:"displayName" validate:"max=1000,excludesall='<>&\""`
 	Enabled     bool               `json:"enabled"`
-	ID          string             `json:"id" validate:"required"`
-	LogTypes    []string           `json:"logTypes" validate:"len=1,dive,required"` // for now, only one logtype allowed
-	Mappings    []DataModelMapping `json:"mappings" validate:"min=1,dive"`
+	ID          string             `json:"id" validate:"required,max=1000,excludesall='<>&\""`
+	LogTypes    []string           `json:"logTypes" validate:"len=1,dive,required,max=500"` // for now, only one logtype allowed
+	Mappings    []DataModelMapping `json:"mappings" validate:"min=1,max=500,dive"`
 	UserID      string             `json:"userId" validate:"uuid4"`
 }
 
 type DataModel struct {
-	CoreEntry
-
-	DisplayName string             `json:"displayName"`
-	Enabled     bool               `json:"enabled"`
-	LogTypes    []string           `json:"logTypes"`
-	Mappings    []DataModelMapping `json:"mappings"`
+	Body           string             `json:"body"`
+	CreatedAt      time.Time          `json:"createdAt"`
+	CreatedBy      string             `json:"createdBy"`
+	Description    string             `json:"description"`
+	DisplayName    string             `json:"displayName"`
+	Enabled        bool               `json:"enabled"`
+	ID             string             `json:"id"`
+	LastModified   time.Time          `json:"lastModified"`
+	LastModifiedBy string             `json:"lastModifiedBy"`
+	LogTypes       []string           `json:"logTypes"`
+	Mappings       []DataModelMapping `json:"mappings"`
+	VersionID      string             `json:"versionId"`
 }
 
 type DataModelMapping struct {
-	Name   string `json:"name" validate:"required"`
-	Path   string `json:"path" validate:"required_without=Method"`
-	Method string `json:"method" validate:"required_without=Path"`
+	Name   string `json:"name" validate:"required,max=1000"`
+	Path   string `json:"path" validate:"required_without=Method,max=1000"`
+	Method string `json:"method" validate:"required_without=Path,max=1000"`
 }

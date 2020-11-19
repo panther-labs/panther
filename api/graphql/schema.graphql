@@ -270,7 +270,7 @@ input UpdateRuleInput {
 }
 
 input GetRuleInput {
-  ruleId: ID!
+  id: ID!
   versionId: ID
 }
 
@@ -816,7 +816,7 @@ input UpdatePolicyInput {
 }
 
 input GetPolicyInput {
-  policyId: ID!
+  id: ID!
   versionId: ID
 }
 
@@ -832,7 +832,7 @@ input ListGlobalPythonModuleInput {
 }
 
 input GetGlobalPythonModuleInput {
-  globalId: ID!
+  id: ID!
   versionId: ID
 }
 

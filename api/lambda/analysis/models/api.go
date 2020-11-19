@@ -18,12 +18,6 @@ package models
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"time"
-
-	"github.com/panther-labs/panther/api/lambda/compliance/models"
-)
-
 type DetectionType string
 
 const (
@@ -67,40 +61,6 @@ type LambdaInput struct {
 	GetDataModel     *GetDataModelInput     `json:"getDataModel,omitempty"`
 	ListDataModels   *ListDataModelsInput   `json:"listDataModels,omitempty"`
 	UpdateDataModel  *UpdateDataModelInput  `json:"updateDataModel,omitempty"`
-}
-
-// All detection types (global/data-model/policy/rule/query) have these fields in common
-type CoreEntry struct {
-	Body           string    `json:"body"` // not required for data models
-	CreatedAt      time.Time `json:"createdAt" validate:"required"`
-	CreatedBy      string    `json:"createdBy" validate:"uuid4"`
-	Description    string    `json:"description"`
-	ID             string    `json:"id" validate:"required"`
-	LastModified   time.Time `json:"lastModified" validate:"required"`
-	LastModifiedBy string    `json:"lastModifiedBy" validate:"uuid4"`
-	Tags           []string  `json:"tags" validate:"omitempty,dive,required"`
-	VersionID      string    `json:"versionId" validate:"required"`
-}
-
-// Creating or updating any item supports these fields
-type CoreEntryUpdate struct {
-	Body        string   `json:"body" validate:"required"`
-	Description string   `json:"description"`
-	ID          string   `json:"id" validate:"required"`
-	Tags        []string `json:"tags" validate:"omitempty,dive,required"`
-	UserID      string   `json:"userId" validate:"uuid4"`
-}
-
-// Python rules and policies share these fields
-type PythonDetection struct {
-	DisplayName string              `json:"displayName"`
-	Enabled     bool                `json:"enabled"`
-	OutputIDs   []string            `json:"outputIds" validate:"omitempty,dive,required"`
-	Reference   string              `json:"reference"`
-	Reports     map[string][]string `json:"reports"`
-	Runbook     string              `json:"runbook"`
-	Severity    models.Severity     `json:"severity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
-	Tests       []UnitTest          `json:"tests" validate:"dive"`
 }
 
 type UnitTest struct {

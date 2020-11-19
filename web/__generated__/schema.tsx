@@ -388,12 +388,12 @@ export type GetComplianceIntegrationTemplateInput = {
 };
 
 export type GetGlobalPythonModuleInput = {
-  globalId: Scalars['ID'];
+  id: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
 };
 
 export type GetPolicyInput = {
-  policyId: Scalars['ID'];
+  id: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
 };
 
@@ -402,7 +402,7 @@ export type GetResourceInput = {
 };
 
 export type GetRuleInput = {
-  ruleId: Scalars['ID'];
+  id: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
 };
 
