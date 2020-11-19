@@ -130,7 +130,7 @@ func classifyELBV2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourc
 	}
 
 	if parseErr != nil {
-		zap.L().Warn("elbv2: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Any("event", metadata), zap.Error(parseErr))
+		zap.L().Error("elbv2: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Any("event", metadata), zap.Error(parseErr))
 		return nil
 	}
 	return []*resourceChange{{
