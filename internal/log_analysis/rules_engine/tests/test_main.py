@@ -32,13 +32,17 @@ def _mock_invoke(**unused_kwargs: Any) -> Dict[str, Any]:
                 json.dumps(
                     {
                         'body':
-                            json.dumps({
-                                'paging': {
-                                    'totalPages': 1
-                                },
-                                'models': [],  # for listModels
-                                'rules': [],  # for listRules
-                            }),
+                            json.dumps(
+                                {
+                                    'paging': {
+                                        'thisPage': 1,
+                                        'totalItems': 0,
+                                        'totalPages': 1
+                                    },
+                                    'models': [],  # for listModels
+                                    'rules': [],  # for listRules
+                                }
+                            ),
                         'statusCode': 200,
                     }
                 ).encode('utf-8')

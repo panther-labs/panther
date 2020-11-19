@@ -49,22 +49,16 @@ func getPolicies() (policyMap, error) {
 	// Load from analysis-api
 	listInput := analysismodels.LambdaInput{
 		ListPolicies: &analysismodels.ListPoliciesInput{
-			Enabled: aws.Bool(true),
-			Fields: []string{
-				// select only the fields we need so it fits in a single response
-				"body", "id", "outputIds", "reports", "resourceTypes", "severity", "suppressions", "tags", "versionId",
-			},
-			PageSize: 1000,
+			Enabled:  aws.Bool(true),
+			Page:     1,
+			PageSize: 250,
 		},
 	}
-	var listOutput analysismodels.ListPoliciesOutput
-	listOutput.Paging.TotalPages = 1
 
 	// There should only be one page, but loop over them just in case
 	policies := make(policyMap)
-	for page := 1; page <= listOutput.Paging.TotalPages; page++ {
-		listInput.ListPolicies.Page = page
-
+	for {
+		var listOutput analysismodels.ListPoliciesOutput
 		if _, err := analysisClient.Invoke(&listInput, &listOutput); err != nil {
 			return nil, errors.WithMessage(err, "failed to load policies from analysis-api")
 		}
@@ -73,9 +67,14 @@ func getPolicies() (policyMap, error) {
 		for _, policy := range listOutput.Policies {
 			policies[policy.ID] = policy
 		}
+
+		if listOutput.Paging.ThisPage == listOutput.Paging.TotalPages {
+			break
+		}
+		listInput.ListPolicies.Page++
 	}
 
-	zap.L().Info("successfully loaded enabled policies from analysis-api",
+	zap.L().Debug("successfully loaded enabled policies from analysis-api",
 		zap.Int("policyCount", len(policies)))
 
 	policyCache = policyCacheEntry{LastUpdated: time.Now(), Policies: policies}

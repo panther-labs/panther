@@ -367,9 +367,9 @@ func buildScanInput(itemType models.DetectionType, fields []string, filters ...e
 	builder := expression.NewBuilder().WithFilter(masterFilter)
 
 	if len(fields) > 0 {
-		projection := expression.NamesList(expression.Name(fields[0]))
+		projection := expression.NamesList(expression.Name(dynamoColumn(fields[0])))
 		for _, field := range fields[1:] {
-			projection = projection.AddNames(expression.Name(field))
+			projection = projection.AddNames(expression.Name(dynamoColumn(field)))
 		}
 		builder = builder.WithProjection(projection)
 	}
@@ -389,4 +389,13 @@ func buildScanInput(itemType models.DetectionType, fields []string, filters ...e
 	}
 	zap.L().Debug("built dynamo scan input", zap.Any("scanInput", result))
 	return &result, nil
+}
+
+// When the caller selects a list of fields to return in the response,
+// they may not exactly match the Dynamo column name.
+func dynamoColumn(field string) string {
+	if field == "logTypes" {
+		return "resourceTypes"
+	}
+	return field
 }

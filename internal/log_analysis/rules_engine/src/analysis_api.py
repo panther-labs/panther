@@ -29,21 +29,10 @@ class AnalysisAPIClient:
     def get_enabled_rules(self) -> List[Dict[str, Any]]:
         """Gets information for all enabled rules."""
         # There should only be one page, but loop over them just in case
-        list_input: Dict[str, Any] = {
-            'listRules':
-                {
-                    'enabled': True,
-                    # select only the fields we need to minimize the size of the response
-                    'fields': ['body', 'id', 'logTypes', 'outputIds', 'reports', 'severity', 'tags', 'versionId'],
-                    'pageSize': 1000,
-                }
-        }
-        page = 1
-        total_pages = 1
-        result = []
+        list_input: Dict[str, Any] = {'listRules': {'enabled': True, 'page': 1, 'pageSize': 250}}
 
-        while page <= total_pages:
-            list_input['listRules']['page'] = page
+        result = []
+        while True:
             response = self.client.invoke(FunctionName='panther-analysis-api', Payload=json.dumps(list_input).encode('utf-8'))
             gateway_response = json.loads(response['Payload'].read())
 
@@ -51,28 +40,22 @@ class AnalysisAPIClient:
                 raise RuntimeError('failed to list rules: ' + str(gateway_response))
 
             body = json.loads(gateway_response['body'])
-            total_pages = body['paging']['totalPages']
-            page += 1
-
             result.extend(body.get('rules', []))
+
+            if body['paging']['thisPage'] == body['paging']['totalPages']:
+                break
+
+            list_input['listRules']['page'] += 1
 
         return result
 
     def get_enabled_data_models(self) -> List[Dict[str, Any]]:
         """Gets information for all enabled data models."""
         # There should only be one page, but loop over them just in case
-        list_input: Dict[str, Any] = {
-            'listDataModels': {
-                'enabled': True,
-                'pageSize': 1000,
-            }
-        }
-        page = 1
-        total_pages = 1
-        result = []
+        list_input: Dict[str, Any] = {'listDataModels': {'enabled': True, 'page': 1, 'pageSize': 250}}
 
-        while page <= total_pages:
-            list_input['listDataModels']['page'] = page
+        result = []
+        while True:
             response = self.client.invoke(FunctionName='panther-analysis-api', Payload=json.dumps(list_input).encode('utf-8'))
             gateway_response = json.loads(response['Payload'].read())
 
@@ -80,9 +63,11 @@ class AnalysisAPIClient:
                 raise RuntimeError('failed to list models: ' + str(gateway_response))
 
             body = json.loads(gateway_response['body'])
-            total_pages = body['paging']['totalPages']
-            page += 1
-
             result.extend(body.get('models', []))
+
+            if body['paging']['thisPage'] == body['paging']['totalPages']:
+                break
+
+            list_input['listDataModels']['page'] += 1
 
         return result
