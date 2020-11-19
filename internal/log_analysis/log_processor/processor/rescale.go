@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -32,6 +33,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/box"
 )
 
@@ -43,6 +45,9 @@ const (
 	// a few new lambdas, they will work on the load but not drain the queue, then THEY spawn more lambdas,
 	// and this continues to expand until the load reduces.
 	processingMaxLambdaInvoke = 1
+
+	// The message increase required to trigger a rescale
+	processingQueueIncreaseThreshold = 5
 )
 
 // RunScalingDecisions makes periodic adaptive decisions to scale up based on the sqs queue stats, it returns
@@ -68,8 +73,8 @@ func RunScalingDecisions(ctx context.Context, sqsClient sqsiface.SQSAPI, lambdaC
 		// for bursts: the number of lambdas to invoke are proportional to the message count (clipped to processingMaxLambdaInvoke)
 		nMoreLambdas := totalQueuedMessages / processingMaxFilesLimit
 
-		// for increasing queue size
-		if totalQueuedMessages > lastTotalQueueMessages {
+		// for increasing queue size: the threshold is used to avoid over reacting to small changes
+		if totalQueuedMessages-lastTotalQueueMessages > processingQueueIncreaseThreshold {
 			nMoreLambdas++
 		}
 		lastTotalQueueMessages = totalQueuedMessages
@@ -86,7 +91,7 @@ func queueDepth(ctx context.Context, sqsClient sqsiface.SQSAPI) (int, error) {
 		QueueUrl: &common.Config.SqsQueueURL,
 	}
 	getQueueAttributesOutput, err := sqsClient.GetQueueAttributesWithContext(ctx, getQueueAttributesInput)
-	if err != nil && err != context.Canceled && err != context.DeadlineExceeded {
+	if err != nil && !IsCanceled(err) {
 		err = errors.Wrapf(err, "failure getting message count from %s", common.Config.SqsQueueURL)
 		return 0, err
 	}
@@ -115,7 +120,7 @@ func processingScaleUp(ctx context.Context, lambdaClient lambdaiface.LambdaAPI, 
 			Payload:        []byte(`{"tick": true}`),
 			InvocationType: box.String(lambda.InvocationTypeEvent), // don't wait for response
 		})
-		if err != nil && err != context.Canceled && err != context.DeadlineExceeded {
+		if err != nil && !IsCanceled(err) {
 			zap.L().Error("scaling up failed to invoke log processor",
 				zap.Error(errors.WithStack(err)))
 			return
@@ -126,4 +131,8 @@ func processingScaleUp(ctx context.Context, lambdaClient lambdaiface.LambdaAPI, 
 			return
 		}
 	}
+}
+
+func IsCanceled(err error) bool {
+	return err == context.Canceled || err == context.DeadlineExceeded || awsutils.IsAnyError(err, request.CanceledErrorCode)
 }

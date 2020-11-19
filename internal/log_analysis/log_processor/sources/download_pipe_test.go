@@ -35,21 +35,18 @@ func TestDownloadPipe(t *testing.T) {
 	}
 
 	var dataWritten []byte
-	var dataRead *bytes.Buffer
 
 	// case: data smaller than d.PartSize
 	dataWritten = []byte("small")
-	dataRead = doPipe(t, downloader, dataWritten)
-	assert.Equal(t, dataWritten, dataRead.Bytes())
+	doPipe(t, downloader, dataWritten, "smaller")
 
 	// case: data larger than d.PartSize
 	dataWritten = []byte("two writes")
 	downloader.PartSize = int64(len(dataWritten)/2) + 1
-	dataRead = doPipe(t, downloader, dataWritten)
-	assert.Equal(t, dataWritten, dataRead.Bytes())
+	doPipe(t, downloader, dataWritten, "larger")
 }
 
-func doPipe(t *testing.T, downloader *s3manager.Downloader, dataWritten []byte) *bytes.Buffer {
+func doPipe(t *testing.T, downloader *s3manager.Downloader, dataWritten []byte, testName string) *bytes.Buffer {
 	var dataRead bytes.Buffer
 	var wg sync.WaitGroup
 
@@ -60,6 +57,7 @@ func doPipe(t *testing.T, downloader *s3manager.Downloader, dataWritten []byte) 
 		var n int
 		var err error
 
+		// this simulates the downloader
 		for i := 0; i < len(dataWritten); i += n {
 			extent := len(dataWritten) - n
 			if extent > int(downloader.PartSize) {
@@ -83,6 +81,8 @@ func doPipe(t *testing.T, downloader *s3manager.Downloader, dataWritten []byte) 
 		}
 	}()
 	wg.Wait()
+
+	assert.Equal(t, string(dataWritten), dataRead.String(), testName)
 
 	return &dataRead
 }
