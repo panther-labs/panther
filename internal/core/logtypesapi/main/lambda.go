@@ -49,7 +49,7 @@ func main() {
 	// Syncing the zap.Logger always results in Lambda errors. Commented code kept as a reminder.
 	// defer logger.Sync()
 
-	nativeLogTypes := logtypes.EntryNames(registry.NativeLogTypes().Entries()...)
+	nativeLogTypes := logtypes.CollectNames(registry.NativeLogTypes())
 	api := &logtypesapi.LogTypesAPI{
 		// Use the default registry with all available log types
 		NativeLogTypes: func() []string {

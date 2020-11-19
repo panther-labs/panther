@@ -97,7 +97,7 @@ func main() {
 		logTypes = append(logTypes, *LOGTYPE)
 	} else {
 		// Use all available log types
-		logTypes = logtypes.EntryNames(registry.NativeLogTypes().Entries()...)
+		logTypes = logtypes.CollectNames(registry.NativeLogTypes())
 	}
 
 	dataStream := &common.DataStream{
