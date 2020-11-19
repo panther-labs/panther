@@ -89,6 +89,9 @@ func resolveTables(ctx context.Context, r logtypes.Resolver, names ...string) ([
 		if err != nil {
 			return nil, err
 		}
+		if entry == nil {
+			return nil, errors.Errorf("unresolved log type %q", name)
+		}
 		eventSchema := entry.Schema()
 		desc := entry.Describe()
 		meta := awsglue.NewGlueTableMetadata(models.LogData, desc.Name, desc.Description, awsglue.GlueTableHourly, eventSchema)

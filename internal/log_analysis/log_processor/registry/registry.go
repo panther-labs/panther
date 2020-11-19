@@ -28,8 +28,7 @@ import (
 
 // These will be populated by the generated init() code
 var (
-	nativeLogTypes    logtypes.Group
-	availableLogTypes = &logtypes.Registry{}
+	nativeLogTypes logtypes.Group
 )
 
 // NativeLogTypesResolver returns a resolver for native log types.
@@ -39,17 +38,4 @@ func NativeLogTypesResolver() logtypes.Resolver {
 }
 func NativeLogTypes() logtypes.Group {
 	return nativeLogTypes
-}
-
-// LogTypes exposes all available log types as a read-only group.
-func LogTypes() logtypes.Group {
-	return availableLogTypes
-}
-
-// AvailableLogTypes returns all available log types in the default registry
-func AvailableLogTypes() (logTypes []string) {
-	for _, e := range availableLogTypes.Entries() {
-		logTypes = append(logTypes, e.String())
-	}
-	return
 }

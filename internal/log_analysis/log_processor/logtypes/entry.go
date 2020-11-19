@@ -209,6 +209,14 @@ func (e *entry) Entries() []Entry {
 	return []Entry{e}
 }
 
+func EntryNames(entries ...Entry) []string {
+	out := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		out = append(out, entry.String())
+	}
+	return out
+}
+
 func (e *entry) BuildEntry() (Entry, error) {
 	return e, nil
 }

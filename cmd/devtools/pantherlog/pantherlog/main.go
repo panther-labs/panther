@@ -118,7 +118,7 @@ func main() {
 // availableParsers returns log parsers for all native log types with nil parameters.
 // Panics if a parser factory in the default registry fails with nil params.
 func availableParsers() map[string]parsers.Interface {
-	entries := registry.LogTypes().Entries()
+	entries := registry.NativeLogTypes().Entries()
 	available := make(map[string]parsers.Interface, len(entries))
 	for _, entry := range entries {
 		logType := entry.String()
