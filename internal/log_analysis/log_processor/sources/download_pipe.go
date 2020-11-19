@@ -38,7 +38,7 @@ func (dp *downloadPipe) Read(p []byte) (n int, err error) {
 
 func (dp *downloadPipe) WriteAt(p []byte, offset int64) (n int, err error) {
 	// we assume that offset is increasing or staying the same each call!
-	// the writer expects to be able to re-write the chuck at the offset if there are errors reading!
+	// the writer expects to be able to re-write the chunk at the offset if there are errors reading!
 	bufferOffset := offset % dp.downloader.PartSize
 	n = copy(dp.buffer[bufferOffset:bufferOffset+int64(len(p))], p)
 	dp.buffer = dp.buffer[:len(dp.buffer)+n] // extend slice
