@@ -43,6 +43,36 @@ Parameters:
     # Example: "arn:aws:iam::111122223333:role/panther-bootstrap-AppsyncServiceRole-3NCFADATNZGN"
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):iam::\d{12}:role\/\S+$'
 
+Mappings:
+  ResponseTemplates:
+    Lambda: # Standard Lambda function error handling
+      VTL: |
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, $ctx.args)
+        #else
+          $util.toJson($ctx.result)
+        #end
+    LambdaStatusCode: # Standard error handling for Lambda functions which return http status codes
+      VTL: |
+        #set ($statusCode = $ctx.result.statusCode)
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, $ctx.args)
+        #elseif($statusCode >= 200 && $statusCode < 300)
+          $ctx.result.body
+        #else
+          $util.error($ctx.result.body, "$statusCode", $ctx.args)
+        #end
+    LambdaStatusCodeNoBody:
+      VTL: |
+        #set ($statusCode = $ctx.result.statusCode)
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, $ctx.args)
+        #elseif($statusCode >= 200 && $statusCode < 300)
+          true
+        #else
+          $util.error($ctx.result.body, "$statusCode", $ctx.args)
+        #end
+
 Resources:
   AppsyncAlarms:
     Type: Custom::AppSyncAlarms
@@ -213,12 +243,7 @@ Resources:
             }
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   UpdateUserResolver:
     Type: AWS::AppSync::Resolver
@@ -237,12 +262,7 @@ Resources:
             "updateUser": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   DeleteUserResolver:
     Type: AWS::AppSync::Resolver
@@ -263,8 +283,8 @@ Resources:
           })
         }
       ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, $ctx.args)
         #else
           true
         #end
@@ -285,10 +305,10 @@ Resources:
           })
         }
       ResponseMappingTemplate: |
-        #if( $context.error )
-          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #if( $ctx.error )
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, {})
         #else
-          $util.toJson($context.result.users)
+          $util.toJson($ctx.result.users)
         #end
 
   InviteUserResolver:
@@ -308,12 +328,7 @@ Resources:
             "inviteUser": $input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   GetDestinationResolver:
     Type: AWS::AppSync::Resolver
@@ -332,12 +347,7 @@ Resources:
             }
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   ListDestinationsResolver:
     Type: AWS::AppSync::Resolver
@@ -354,12 +364,7 @@ Resources:
             "getOutputs": {}
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, {})
-        #else
-          $util.toJson($ctx.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   AddDestinationResolver:
     Type: AWS::AppSync::Resolver
@@ -378,12 +383,7 @@ Resources:
             "addOutput": $input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-            $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   DeleteDestinationResolver:
     Type: AWS::AppSync::Resolver
@@ -403,12 +403,7 @@ Resources:
             }
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   UpdateDestinationResolver:
     Type: AWS::AppSync::Resolver
@@ -427,12 +422,7 @@ Resources:
             "updateOutput": $input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   ListComplianceIntegrationsResolver:
     Type: AWS::AppSync::Resolver
@@ -451,12 +441,7 @@ Resources:
             }
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, {})
-        #else
-          $util.toJson($ctx.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   ListLogIntegrationsResolver:
     Type: AWS::AppSync::Resolver
@@ -474,8 +459,8 @@ Resources:
           })
         }
       ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, {})
         #else
           #set($logIntegrations = [])
           #foreach($item in $ctx.result)
@@ -515,12 +500,7 @@ Resources:
             "integrationHealthCheck": $input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, {})
-        #else
-          $util.toJson($ctx.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   GetComplianceIntegrationResolver:
     Type: AWS::AppSync::Resolver
@@ -540,8 +520,8 @@ Resources:
           })
         }
       ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, {})
         #else
           #set ($requestedIntegration = "null")
           #foreach($item in $ctx.result)
@@ -570,8 +550,8 @@ Resources:
           })
         }
       ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, {})
         #else
           #set ($requestedIntegration = "null")
           #foreach($item in $ctx.result)
@@ -600,8 +580,8 @@ Resources:
           })
         }
       ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, {})
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, {})
         #else
           #set ($requestedIntegration = "null")
           #foreach($item in $ctx.result)
@@ -634,12 +614,7 @@ Resources:
             "integrationHealthCheck": $input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, {})
-        #else
-          $util.toJson($ctx.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   SqsLogIntegrationHealthFieldResolver:
     Type: AWS::AppSync::Resolver
@@ -660,12 +635,7 @@ Resources:
             "integrationHealthCheck": $input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, {})
-        #else
-          $util.toJson($ctx.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   GetComplianceIntegrationTemplateResolver:
     Type: AWS::AppSync::Resolver
@@ -684,12 +654,7 @@ Resources:
             "getIntegrationTemplate": $input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, {})
-        #else
-          $util.toJson($ctx.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   GetS3LogIntegrationTemplateResolver:
     Type: AWS::AppSync::Resolver
@@ -708,12 +673,7 @@ Resources:
             "getIntegrationTemplate": $input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, {})
-        #else
-          $util.toJson($ctx.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   AddComplianceIntegrationResolver:
     Type: AWS::AppSync::Resolver
@@ -734,12 +694,7 @@ Resources:
             "putIntegration": $input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   AddS3LogIntegrationResolver:
     Type: AWS::AppSync::Resolver
@@ -759,12 +714,7 @@ Resources:
             "putIntegration": $input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   AddSqsLogIntegrationResolver:
     Type: AWS::AppSync::Resolver
@@ -789,12 +739,7 @@ Resources:
             "putIntegration": $data
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   UpdateComplianceIntegrationResolver:
     Type: AWS::AppSync::Resolver
@@ -813,12 +758,7 @@ Resources:
             "updateIntegrationSettings": $input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   UpdateS3LogIntegrationResolver:
     Type: AWS::AppSync::Resolver
@@ -837,12 +777,7 @@ Resources:
             "updateIntegrationSettings": $input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   UpdateSqsLogIntegrationResolver:
     Type: AWS::AppSync::Resolver
@@ -861,12 +796,7 @@ Resources:
             "updateIntegrationSettings": $input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   DeleteComplianceIntegrationResolver:
     Type: AWS::AppSync::Resolver
@@ -885,12 +815,7 @@ Resources:
             }
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   DeleteLogIntegrationResolver:
     Type: AWS::AppSync::Resolver
@@ -909,12 +834,7 @@ Resources:
             }
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   GetGeneralSettingsResolver:
     Type: AWS::AppSync::Resolver
@@ -931,12 +851,7 @@ Resources:
             "getSettings": {}
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, {})
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   UpdateGeneralSettingsResolver:
     Type: AWS::AppSync::Resolver
@@ -953,12 +868,7 @@ Resources:
             "updateSettings": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   ListPoliciesResolver:
     Type: AWS::AppSync::Resolver
@@ -980,13 +890,7 @@ Resources:
             "listPolicies": $input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   GetPolicyResolver:
     Type: AWS::AppSync::Resolver
@@ -1003,13 +907,7 @@ Resources:
             "getPolicy": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   UpdatePolicyResolver:
     Type: AWS::AppSync::Resolver
@@ -1028,13 +926,7 @@ Resources:
             "updatePolicy": $input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   AddPolicyResolver:
     Type: AWS::AppSync::Resolver
@@ -1053,13 +945,7 @@ Resources:
             "createPolicy": $input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   DeletePolicyResolver:
     Type: AWS::AppSync::Resolver
@@ -1078,13 +964,7 @@ Resources:
             }
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            true
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCodeNoBody, VTL]
 
   UploadPoliciesResolver:
     Type: AWS::AppSync::Resolver
@@ -1103,13 +983,7 @@ Resources:
             "bulkUpload": $input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   ListResourcesResolver:
     Type: AWS::AppSync::Resolver
@@ -1127,13 +1001,7 @@ Resources:
             "listResources": $input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   GetResourceResolver:
     Type: AWS::AppSync::Resolver
@@ -1150,13 +1018,7 @@ Resources:
             "getResource": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   RemediateResourceResolver:
     Type: AWS::AppSync::Resolver
@@ -1173,13 +1035,7 @@ Resources:
             "remediateResource": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
-            true
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCodeNoBody, VTL]
 
   ListRemediationsResolver:
     Type: AWS::AppSync::Resolver
@@ -1197,13 +1053,7 @@ Resources:
             "listRemediations": $input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   OrganizationStatsResolver:
     Type: AWS::AppSync::Resolver
@@ -1221,13 +1071,7 @@ Resources:
             "getOrgOverview": $input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   LogAnalysisMetricsResolver:
     Type: AWS::AppSync::Resolver
@@ -1276,13 +1120,7 @@ Resources:
             "describePolicy": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   PoliciesForResourceResolver:
     Type: AWS::AppSync::Resolver
@@ -1299,13 +1137,7 @@ Resources:
             "describeResource": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   SuppressPoliciesResolver:
     Type: AWS::AppSync::Resolver
@@ -1322,13 +1154,7 @@ Resources:
             "suppress": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            true
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCodeNoBody, VTL]
 
   ListRulesResolver:
     Type: AWS::AppSync::Resolver
@@ -1349,13 +1175,7 @@ Resources:
             "listRules": $input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   GetRuleResolver:
     Type: AWS::AppSync::Resolver
@@ -1372,13 +1192,7 @@ Resources:
             "getRule": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   UpdateRuleResolver:
     Type: AWS::AppSync::Resolver
@@ -1397,13 +1211,7 @@ Resources:
             "updateRule": $input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   AddRuleResolver:
     Type: AWS::AppSync::Resolver
@@ -1422,13 +1230,7 @@ Resources:
             "createRule": $input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   DeleteRuleResolver:
     Type: AWS::AppSync::Resolver
@@ -1447,13 +1249,7 @@ Resources:
             }
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            true
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCodeNoBody, VTL]
 
   GetGlobalModuleResolver:
     Type: AWS::AppSync::Resolver
@@ -1470,13 +1266,7 @@ Resources:
             "getGlobal": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   UpdateGlobalModuleResolver:
     Type: AWS::AppSync::Resolver
@@ -1495,13 +1285,7 @@ Resources:
             "updateGlobal": $input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   ListGlobalPythonModulesResolver:
     Type: AWS::AppSync::Resolver
@@ -1520,13 +1304,7 @@ Resources:
             "listGlobals": $input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   AddGlobalPythonModuleResolver:
     Type: AWS::AppSync::Resolver
@@ -1545,13 +1323,7 @@ Resources:
             "createGlobal": $input
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            $ctx.result.body
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   DeleteGlobalPythonModuleResolver:
     Type: AWS::AppSync::Resolver
@@ -1570,13 +1342,7 @@ Resources:
             }
           })
         }
-      ResponseMappingTemplate: |
-        #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode >= 200 && $statusCode < 300)
-            true
-        #else
-            $util.error($ctx.result.body, "$statusCode", $input)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCodeNoBody, VTL]
 
   SendTestAlertResolver:
     Type: AWS::AppSync::Resolver
@@ -1593,12 +1359,7 @@ Resources:
             "sendTestAlert": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   DeliverAlertResolver:
     Type: AWS::AppSync::Resolver
@@ -1615,12 +1376,7 @@ Resources:
             "deliverAlert": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   ListAlertsResolver:
     Type: AWS::AppSync::Resolver
@@ -1637,12 +1393,7 @@ Resources:
             "listAlerts": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   GetAlertResolver:
     Type: AWS::AppSync::Resolver
@@ -1659,12 +1410,7 @@ Resources:
             "getAlert": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   UpdateAlertStatusResolver:
     Type: AWS::AppSync::Resolver
@@ -1683,12 +1429,7 @@ Resources:
             "updateAlertStatus": $input
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-            $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
   TestPolicyResolver:
     Type: AWS::AppSync::Resolver
@@ -1707,7 +1448,9 @@ Resources:
         }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, $ctx.args)
+        #elseif($statusCode == 200)
           #set ($testBreakdown = $util.parseJson($ctx.result.body))
           #set ($payload = [])
 
@@ -1755,7 +1498,7 @@ Resources:
 
           $util.toJson({ "results": $payload })
         #else
-            $util.error($ctx.result.body, "$statusCode", $input)
+          $util.error($ctx.result.body, "$statusCode", $ctx.args)
         #end
 
   TestRuleResolver:
@@ -1775,7 +1518,9 @@ Resources:
          }
       ResponseMappingTemplate: |
         #set ($statusCode = $ctx.result.statusCode)
-        #if($statusCode == 200)
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, $ctx.args)
+        #elseif($statusCode == 200)
           #set ($payload = [])
           #foreach($resultItem in $util.parseJson($ctx.result.body).results)
             #set ($payloadItem = {})
@@ -1831,7 +1576,7 @@ Resources:
           $util.toJson({ "results": $payload })
 
         #else
-            $util.error($ctx.result.body, "$statusCode", $input)
+          $util.error($ctx.result.body, "$statusCode", $ctx.args)
         #end
 
   LogTypesResolver:
@@ -1849,9 +1594,4 @@ Resources:
             "ListAvailableLogTypes": {}
           })
         }
-      ResponseMappingTemplate: |
-        #if($context.error)
-          $util.error($context.error.errorMessage, $context.error.errorType, $ctx.args)
-        #else
-          $util.toJson($context.result)
-        #end
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
