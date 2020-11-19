@@ -126,11 +126,6 @@ func (g *group) Entries() []Entry {
 	return entries
 }
 
-// Len implements Group
-func (g *group) Len() int {
-	return len(g.entries)
-}
-
 // Name implements Group
 func (g *group) Name() string {
 	return g.name

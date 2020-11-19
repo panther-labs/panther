@@ -201,10 +201,6 @@ func (e *entry) Find(logType string) Entry {
 	return nil
 }
 
-func (e *entry) Len() int {
-	return 1
-}
-
 func (e *entry) Entries() []Entry {
 	return []Entry{e}
 }
