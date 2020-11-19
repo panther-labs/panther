@@ -53,7 +53,7 @@ const (
 
 	s3BucketLocationCacheSize = 1000
 	s3ClientCacheSize         = 1000
-	s3ClientMaxRetries        = 10 // ~1'
+	s3ClientMaxRetries        = 3 // 10 // ~1'
 )
 
 type s3ClientCacheKey struct {

@@ -66,8 +66,8 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 	if !ok {
 		panic("Lambda context doesn't have a deadline!")
 	}
-	// We should poll events for half the Lambda's duration
-	pollingTimeout := time.Until(deadline) / 2
+	// We should poll events for 1/4 the Lambda's duration, leaving the balance for processing and flushing data
+	pollingTimeout := time.Until(deadline) / 4
 	ctx, cancel := context.WithTimeout(ctx, pollingTimeout)
 	defer cancel()
 	sqsMessageCount, err = processor.PollEvents(ctx, common.SqsClient, logTypesResolver)

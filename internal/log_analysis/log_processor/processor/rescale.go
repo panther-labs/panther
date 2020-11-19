@@ -20,6 +20,7 @@ package processor
 
 import (
 	"context"
+	"math"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -47,6 +48,7 @@ const (
 // RunScalingDecisions makes periodic adaptive decisions to scale up based on the sqs queue stats, it returns
 // immediately with a boolean stop channel (sending an event to the channel stops execution).
 func RunScalingDecisions(ctx context.Context, sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.LambdaAPI, interval time.Duration) {
+	lastTotalQueueMessages := math.MaxInt32
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for {
@@ -63,8 +65,16 @@ func RunScalingDecisions(ctx context.Context, sqsClient sqsiface.SQSAPI, lambdaC
 			continue
 		}
 
-		// the number of lambdas to invoke are proportional to the message count (clipped to processingMaxLambdaInvoke)
-		processingScaleUp(ctx, lambdaClient, totalQueuedMessages/processingMaxFilesLimit)
+		// for bursts: the number of lambdas to invoke are proportional to the message count (clipped to processingMaxLambdaInvoke)
+		nMoreLambdas := totalQueuedMessages / processingMaxFilesLimit
+
+		// for increasing queue size
+		if totalQueuedMessages > lastTotalQueueMessages {
+			nMoreLambdas++
+		}
+		lastTotalQueueMessages = totalQueuedMessages
+
+		processingScaleUp(ctx, lambdaClient, nMoreLambdas)
 	}
 }
 

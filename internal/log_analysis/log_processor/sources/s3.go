@@ -41,6 +41,8 @@ import (
 )
 
 const (
+	DownloadPartSize = 1024 * 1024 * 8 // the buffer size use for downloader
+
 	s3TestEvent                 = "s3:TestEvent"
 	cloudTrailValidationMessage = "CloudTrail validation message."
 )
@@ -152,7 +154,8 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 	}
 
 	downloader := s3manager.NewDownloaderWithClient(s3Client, func(d *s3manager.Downloader) {
-		d.Concurrency = 1 // must be serial because we are reading stream!
+		d.Concurrency = 1 // must be serial because we are reading a stream!
+		d.PartSize = DownloadPartSize
 	})
 
 	getObjectInput := &s3.GetObjectInput{
@@ -160,24 +163,31 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 		Key:    &s3Object.S3ObjectKey,
 	}
 
-	downloadPipe := newDownloadPipe()
+	downloadPipe := newDownloadPipe(downloader)
 
 	// run the downloader in the background writing into the pipe
 	go func() {
+		// while not important to processing, errors on close could indicate other issues
+		var closeErr error
+		defer func() {
+			if closeErr != nil {
+				zap.L().Error("s3 download pipe close failed", zap.Error(closeErr))
+			}
+		}()
+
 		_, err = downloader.Download(downloadPipe, getObjectInput)
 		if err != nil {
-			err = errors.Wrapf(err, "Download() failed for s3://%s/%s",
-				s3Object.S3Bucket, s3Object.S3ObjectKey)
+			err = errors.Wrapf(err, "Download() failed for s3://%s/%s", s3Object.S3Bucket, s3Object.S3ObjectKey)
 			zap.L().Error("s3 download failed", zap.Error(err))
-			downloadPipe.CloseWithError(err) // this will cause the reader to fail
+			closeErr = downloadPipe.CloseWithError(err) // this will cause the reader to fail
 		} else {
-			downloadPipe.Close()
+			closeErr = downloadPipe.Close()
 		}
 	}()
 
 	bufferedReader := bufio.NewReader(downloadPipe)
-	contentType, err := detectContentType(bufferedReader)
 
+	contentType, err := detectContentType(bufferedReader)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to detect content type of S3 payload for s3://%s/%s",
 			s3Object.S3Bucket, s3Object.S3ObjectKey)
@@ -338,34 +348,4 @@ type S3ObjectInfo struct {
 type SnsNotification struct {
 	events.SNSEntity
 	Token *string `json:"Token"`
-}
-
-// Implements a pipe with the writer having the WriteAt interface
-type downloadPipe struct {
-	reader *io.PipeReader
-	writer *io.PipeWriter
-}
-
-func (dp *downloadPipe) Read(p []byte) (n int, err error) {
-	return dp.reader.Read(p)
-}
-
-func (dp *downloadPipe) WriteAt(p []byte, off int64) (n int, err error) {
-	return dp.writer.Write(p)
-}
-
-func (dp *downloadPipe) Close() {
-	dp.writer.Close()
-}
-
-func (dp *downloadPipe) CloseWithError(err error) {
-	dp.writer.CloseWithError(err)
-}
-
-func newDownloadPipe() *downloadPipe {
-	readPipe, writePipe := io.Pipe()
-	return &downloadPipe{
-		reader: readPipe,
-		writer: writePipe,
-	}
 }

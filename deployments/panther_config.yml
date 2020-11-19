@@ -44,7 +44,7 @@ Infra:
   # Processing capability can be further increased by raising the
   # Lambda concurrent execution limit from default 1000, see:
   # https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html
-  LogProcessorLambdaMemorySize: 1024 # 256 - 3008, in 64MB increments
+  LogProcessorLambdaMemorySize: 2048 # 256 - 3008, in 64MB increments
 
   # Create a Python layer with these pip library versions for analysis and remediation.
   #
@@ -124,7 +124,7 @@ Setup:
 
   # Whether or not to create a CloudTrail in the Panther account and monitor.
   # You may want this off if you have org-level CT configured for Panther to avoid ingesting the same data twice.
-  EnableCloudTrail: false
+  EnableCloudTrail: true
 
   # Whether or not to enable GuardDuty in the Panther account and monitor.
   # You may want this off if you have org-level GD configured for Panther.

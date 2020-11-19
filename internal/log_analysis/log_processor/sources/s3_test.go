@@ -153,8 +153,11 @@ func TestHandleUnsupportedFileType(t *testing.T) {
 	}
 
 	objectData := []byte(`<?xml version="1.0" encoding="UTF-8" standalone="no" ?>`)
-	getObjectOutput := &s3.GetObjectOutput{Body: ioutil.NopCloser(bytes.NewReader(objectData))}
-	s3Mock.On("GetObject", mock.Anything).Return(getObjectOutput, nil)
+	getObjectOutput := &s3.GetObjectOutput{
+		ContentLength: aws.Int64(int64(len(objectData))),
+		Body:          ioutil.NopCloser(bytes.NewReader(objectData)),
+	}
+	s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return(getObjectOutput, nil)
 
 	dataStreams, err := ReadSnsMessage(marshaledNotification)
 	// Method shouldn't return error
