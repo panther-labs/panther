@@ -105,7 +105,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
           />
           <GenericItemCard.Value
             label="Log Types"
-            value={<BulletedLogTypeList logTypes={alert.logTypes} limit={1} />}
+            value={<BulletedLogTypeList logTypes={alert.logTypes} limit={2} />}
           />
           <GenericItemCard.Value
             label="Events"
