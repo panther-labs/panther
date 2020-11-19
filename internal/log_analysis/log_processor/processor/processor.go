@@ -85,6 +85,14 @@ func Process(
 				if err := processor.run(resultsChannel); err != nil {
 					return err
 				}
+				// at this point the file has been processed
+				err = dataStream.Closer.Close()
+				if err != nil {
+					zap.L().Warn("failed to close data stream",
+						zap.String("sourceId", dataStream.Source.IntegrationID),
+						zap.String("sourceLabel", dataStream.Source.IntegrationLabel),
+						zap.Error(err))
+				}
 			}
 			return nil
 		}
@@ -106,7 +114,7 @@ func Process(
 		}
 	}()
 	go func() {
-		// Close the errorChannel to broadcast end of task
+		// CloseWriter the errorChannel to broadcast end of task
 		defer close(errorChannel)
 		// Wait until both processor loop and destination have finished
 		wg.Wait()

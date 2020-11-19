@@ -1,4 +1,4 @@
-package sources
+package downloadpipe
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -50,7 +50,7 @@ func doPipe(t *testing.T, downloader *s3manager.Downloader, dataWritten []byte, 
 	var dataRead bytes.Buffer
 	var wg sync.WaitGroup
 
-	downloadPipe := newDownloadPipe(downloader)
+	downloadPipe := NewDownloadPipe(downloader)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -66,7 +66,7 @@ func doPipe(t *testing.T, downloader *s3manager.Downloader, dataWritten []byte, 
 			n, err = downloadPipe.WriteAt(dataWritten[i:i+extent], int64(i))
 			require.NoError(t, err)
 		}
-		err = downloadPipe.Close()
+		err = downloadPipe.CloseWriter()
 		require.NoError(t, err)
 	}()
 	wg.Add(1)

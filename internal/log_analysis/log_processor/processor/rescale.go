@@ -50,8 +50,7 @@ const (
 	processingQueueIncreaseThreshold = 5
 )
 
-// RunScalingDecisions makes periodic adaptive decisions to scale up based on the sqs queue stats, it returns
-// immediately with a boolean stop channel (sending an event to the channel stops execution).
+// RunScalingDecisions makes periodic adaptive decisions to scale up based on the sqs queue stats
 func RunScalingDecisions(ctx context.Context, sqsClient sqsiface.SQSAPI, lambdaClient lambdaiface.LambdaAPI, interval time.Duration) {
 	lastTotalQueueMessages := math.MaxInt32
 	ticker := time.NewTicker(interval)

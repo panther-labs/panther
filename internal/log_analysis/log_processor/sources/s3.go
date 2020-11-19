@@ -38,11 +38,10 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/downloadpipe"
 )
 
 const (
-	DownloadPartSize = 1024 * 1024 * 8 // the buffer size use for downloader
-
 	s3TestEvent                 = "s3:TestEvent"
 	cloudTrailValidationMessage = "CloudTrail validation message."
 )
@@ -153,17 +152,14 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 		return nil, nil
 	}
 
-	downloader := s3manager.NewDownloaderWithClient(s3Client, func(d *s3manager.Downloader) {
-		d.Concurrency = 1 // must be serial because we are reading a stream!
-		d.PartSize = DownloadPartSize
-	})
+	downloader := s3manager.NewDownloaderWithClient(s3Client)
 
 	getObjectInput := &s3.GetObjectInput{
 		Bucket: &s3Object.S3Bucket,
 		Key:    &s3Object.S3ObjectKey,
 	}
 
-	downloadPipe := newDownloadPipe(downloader)
+	downloadPipe := downloadpipe.NewDownloadPipe(downloader)
 
 	// run the downloader in the background writing into the pipe
 	go func() {
@@ -179,9 +175,9 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 		if err != nil {
 			err = errors.Wrapf(err, "Download() failed for s3://%s/%s", s3Object.S3Bucket, s3Object.S3ObjectKey)
 			zap.L().Error("s3 download failed", zap.Error(err))
-			closeErr = downloadPipe.CloseWithError(err) // this will cause the reader to fail
+			closeErr = downloadPipe.CloseWriterWithError(err) // this will cause the reader to fail
 		} else {
-			closeErr = downloadPipe.Close()
+			closeErr = downloadPipe.CloseWriter()
 		}
 	}()
 
@@ -214,6 +210,7 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 	}
 
 	dataStream = &common.DataStream{
+		Closer:      downloadPipe, // when file is done processing, the CloseWriter() method will be called
 		Reader:      streamReader,
 		Source:      sourceInfo,
 		S3Bucket:    s3Object.S3Bucket,

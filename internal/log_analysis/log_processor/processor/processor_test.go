@@ -494,13 +494,22 @@ func makeDataStream() (dataStream *common.DataStream) {
 	for i := uint64(0); i < testLogLines; i++ {
 		testData[i] = testLogLine
 	}
+
 	dataStream = &common.DataStream{
+		Closer:      &dummyCloser{},
 		Reader:      strings.NewReader(strings.Join(testData, "\n")),
 		Source:      testSource,
 		S3ObjectKey: testKey,
 		S3Bucket:    testBucket,
 	}
 	return
+}
+
+type dummyCloser struct {
+}
+
+func (*dummyCloser) Close() error {
+	return nil
 }
 
 var errFailingReader = errors.New("failed")

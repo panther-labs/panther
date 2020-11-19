@@ -1,4 +1,4 @@
-package sources
+package downloadpipe
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,23 +20,51 @@ package sources
 
 import (
 	"io"
+	"sync"
 
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
+const (
+	DownloadPartSize = 1024 * 1024 * 8 // the buffer size use for downloader
+)
+
 // Implements a pipe with the writer having the WriteAt interface
-type downloadPipe struct {
+type DownloadPipe struct {
 	downloader *s3manager.Downloader
 	reader     *io.PipeReader
 	writer     *io.PipeWriter
 	buffer     []byte // sized to part size
 }
 
-func (dp *downloadPipe) Read(p []byte) (n int, err error) {
+// these buffers are expensive, use a pool
+var downloadPipePool = sync.Pool{
+	New: func() interface{} {
+		return &DownloadPipe{
+			buffer: make([]byte, 0, DownloadPartSize),
+		}
+	},
+}
+
+func NewDownloadPipe(d *s3manager.Downloader) *DownloadPipe {
+	d.Concurrency = 1
+	d.PartSize = DownloadPartSize
+	dp := downloadPipePool.Get().(*DownloadPipe)
+	dp.downloader = d
+	dp.reader, dp.writer = io.Pipe()
+	dp.buffer = dp.buffer[:0] // reset slice
+	return dp
+}
+
+func (dp *DownloadPipe) free() {
+	downloadPipePool.Put(dp)
+}
+
+func (dp *DownloadPipe) Read(p []byte) (n int, err error) {
 	return dp.reader.Read(p)
 }
 
-func (dp *downloadPipe) WriteAt(p []byte, offset int64) (n int, err error) {
+func (dp *DownloadPipe) WriteAt(p []byte, offset int64) (n int, err error) {
 	// we assume that offset is increasing or staying the same each call!
 	// the writer expects to be able to re-write the chunk at the offset if there are errors reading!
 	bufferOffset := offset % dp.downloader.PartSize
@@ -54,7 +82,7 @@ func (dp *downloadPipe) WriteAt(p []byte, offset int64) (n int, err error) {
 	return n, err
 }
 
-func (dp *downloadPipe) Flush() error {
+func (dp *DownloadPipe) Flush() error {
 	_, err := dp.writer.Write(dp.buffer) // flush
 	if err != nil {
 		return err
@@ -63,27 +91,19 @@ func (dp *downloadPipe) Flush() error {
 	return nil
 }
 
-func (dp *downloadPipe) Close() error {
+func (dp *DownloadPipe) Close() error {
+	dp.free()
+	return nil
+}
+
+func (dp *DownloadPipe) CloseWriter() error {
 	err := dp.Flush()
 	if err != nil {
-		return dp.CloseWithError(err)
+		return dp.writer.CloseWithError(err)
 	}
 	return dp.writer.Close()
 }
 
-func (dp *downloadPipe) CloseWithError(err error) error {
+func (dp *DownloadPipe) CloseWriterWithError(err error) error {
 	return dp.writer.CloseWithError(err)
-}
-
-func newDownloadPipe(d *s3manager.Downloader) *downloadPipe {
-	if d.Concurrency != 1 {
-		panic("downloader must have Concurrency = 1")
-	}
-	readPipe, writePipe := io.Pipe()
-	return &downloadPipe{
-		downloader: d,
-		reader:     readPipe,
-		writer:     writePipe,
-		buffer:     make([]byte, 0, d.PartSize),
-	}
 }

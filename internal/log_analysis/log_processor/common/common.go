@@ -82,6 +82,7 @@ func Setup() {
 
 // DataStream represents a data stream that read by the processor
 type DataStream struct {
+	Closer      io.Closer // cleans up resources
 	Reader      io.Reader
 	Source      *models.SourceIntegration
 	S3ObjectKey string
