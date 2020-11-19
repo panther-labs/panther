@@ -26,7 +26,7 @@ import FormikCheckbox from 'Components/fields/Checkbox';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import Breadcrumbs from 'Components/Breadcrumbs';
 import SaveButton from 'Components/buttons/SaveButton';
-import CancelButton from 'Components/buttons/CancelButton';
+import LinkButton from 'Components/buttons/LinkButton';
 import SubmitButton from 'Components/buttons/SubmitButton';
 
 export interface BaseDestinationFormValues<
@@ -148,12 +148,14 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
           <Breadcrumbs.Actions>
             <Flex spacing={4} justify="flex-end">
               <SaveButton aria-label="Update Destination">Update Destination</SaveButton>
-              <CancelButton
+              <LinkButton
+                variantColor="darkgray"
+                icon="close-outline"
                 aria-label="Cancel destination editing"
                 to={urls.settings.destinations.list()}
               >
                 Cancel
-              </CancelButton>
+              </LinkButton>
             </Flex>
           </Breadcrumbs.Actions>
         ) : (
