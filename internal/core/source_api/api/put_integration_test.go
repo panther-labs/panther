@@ -38,7 +38,6 @@ import (
 	awspoller "github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb/modelstest"
-	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -274,7 +273,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 		QueueUrl:   &env.LogProcessorQueueURL,
 	}
 	mockSQS.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil).Once()
-	mockSQS.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
+	mockSQS.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
@@ -300,7 +299,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	mockSQS.On("GetQueueAttributes", mock.Anything).Return(&sqs.GetQueueAttributesOutput{}, errors.New("error")).Once()
-	mockSQS.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
+	mockSQS.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
@@ -344,18 +343,7 @@ func TestPutSqsIntegration(t *testing.T) {
 	// Create a new SQS queue - we are verifying the parameters below
 	mockSQS.On("CreateQueue", mock.Anything).Return(&sqs.CreateQueueOutput{}, nil).Once()
 
-	marshalled, err := jsoniter.MarshalToString(process.CreateTablesMessage{
-		LogTypes: []string{"AWS.CloudTrail"},
-	})
-	require.NoError(t, err)
-	msgInput := &sqs.SendMessageInput{
-		MessageBody: &marshalled,
-		QueueUrl:    aws.String(""),
-		MessageAttributes: map[string]*sqs.MessageAttributeValue{
-			process.PantherMessageType: &process.CreateTableMessageAttribute,
-		},
-	}
-	mockSQS.On("SendMessage", msgInput).Return(&sqs.SendMessageOutput{}, nil)
+	mockSQS.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
 
 	mockLambda.On("CreateEventSourceMapping", mock.Anything).Return(&lambda.EventSourceMappingConfiguration{}, nil)
 

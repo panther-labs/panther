@@ -108,7 +108,9 @@ func redactOutput(outputConfig *models.OutputConfig) {
 
 func configureOutputFallbacks(outputConfig *models.OutputConfig) {
 	if outputConfig.Opsgenie != nil {
-		outputConfig.Opsgenie.ServiceRegion = outputs.GetOpsGenieRegion(outputConfig.Opsgenie.ServiceRegion)
+		if outputConfig.Opsgenie.ServiceRegion == "" {
+			outputConfig.Opsgenie.ServiceRegion = outputs.OpsgenieServiceRegionUS
+		}
 	}
 }
 

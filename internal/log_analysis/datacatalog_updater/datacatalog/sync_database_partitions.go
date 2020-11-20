@@ -1,4 +1,4 @@
-package process
+package datacatalog
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -29,8 +29,8 @@ import (
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-// SyncEvent is a request to start a full database sync in the background.
-type SyncEvent struct {
+// SyncDatabasePartitionsEvent is a request to sync all database partitions
+type SyncDatabasePartitionsEvent struct {
 	// An identifier to use in order to keep track of all 'child' Lambda invocations for this sync.
 	TraceID string
 	// Which databases to sync
@@ -41,8 +41,8 @@ type SyncEvent struct {
 	DryRun bool
 }
 
-// HandleSyncEvent handles a full database sync by invoking all required table sync events in the background
-func HandleSyncEvent(ctx context.Context, event *SyncEvent) error {
+// HandleSyncDatabasePartitionsEvent handles a full database sync by invoking all required table sync events in the background
+func (h *LambdaHandler) HandleSyncDatabasePartitionsEvent(ctx context.Context, event *SyncDatabasePartitionsEvent) error {
 	log := lambdalogger.FromContext(ctx)
 	log = log.With(
 		zap.String("traceId", event.TraceID),
@@ -69,11 +69,11 @@ func HandleSyncEvent(ctx context.Context, event *SyncEvent) error {
 	numTasks := 0
 	var err error
 	for _, event := range tableEvents {
-		invokeErr := invokeEvent(ctx, lambdaClient, &DataCatalogEvent{
+		sendErr := sendEvent(ctx, h.SQSClient, h.QueueURL, sqsTask{
 			SyncTablePartitions: event,
 		})
-		err = multierr.Append(err, invokeErr)
-		if invokeErr != nil {
+		err = multierr.Append(err, sendErr)
+		if sendErr != nil {
 			log.Error("failed to invoke table sync", zap.String("table", event.TableName), zap.Error(err))
 			continue
 		}

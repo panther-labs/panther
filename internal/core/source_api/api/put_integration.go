@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -33,7 +34,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	awspoller "github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws"
-	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
+	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
@@ -282,8 +283,14 @@ func createTables(integration *models.SourceIntegration) error {
 		return nil
 	}
 
-	m := process.CreateTablesMessage{
-		LogTypes: integration.RequiredLogTypes(),
+	client := datacatalog.Client{
+		SQSAPI:   sqsClient,
+		QueueURL: env.DataCatalogUpdaterQueueURL,
 	}
-	return m.Send(sqsClient, env.DataCatalogUpdaterQueueURL)
+	logTypes := integration.RequiredLogTypes()
+	err := client.SendCreateTablesForLogTypes(context.TODO(), logTypes...)
+	if err != nil {
+		return errors.Wrap(err, "failed to create Glue tables")
+	}
+	return nil
 }

@@ -1,4 +1,4 @@
-package process
+package datacatalog
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -29,6 +29,21 @@ import (
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
+// Max number of calls for a single table sync.
+// Each year of hourly partitions is 8760 partitions.
+// Avg page size seems to vary between 100-200 partitions per page.
+// We expect ~100 pages per year of data.
+// Each invocation should handle 1-4 pages within the time limit.
+// This value is high enough to not block updates on tables with many partitions and low enough to not let costs
+// spiral out of control when we encounter network outage/latency or other such rare failure scenarios.
+const maxNumCalls = 1000
+
+// Max number of retries on the same token without progress
+const maxConsecutiveSyncTimeouts = 5
+
+// Set the number of parallel partition updates
+const numSyncWorkersPerTable = 8
+
 // SyncTableEvent initializes or continues a gluetasks.SyncTablePartitions task
 type SyncTableEvent struct {
 	// Use a common trace id (the SyncDatabase request id) for all events triggered by a sync event.
@@ -46,21 +61,9 @@ type SyncTableEvent struct {
 	gluetasks.SyncTablePartitions
 }
 
-// Max number of calls for a single table sync.
-// Each year of hourly partitions is 8760 partitions.
-// Avg page size seems to vary between 100-200 partitions per page.
-// We expect ~100 pages per year of data.
-// Each invocation should handle 1-4 pages within the time limit.
-// This value is high enough to not block updates on tables with many partitions and low enough to not let costs
-// spiral out of control when we encounter network outage/latency or other such rare failure scenarios.
-const maxNumCalls = 1000
-
-// Max number of retries on the same token without progress
-const maxConsecutiveSyncTimeouts = 5
-
 // HandleSyncTableEvent starts or continues a gluetasks.SyncTablePartitions task.
 // nolint: nakedret
-func HandleSyncTableEvent(ctx context.Context, event *SyncTableEvent) error {
+func (h *LambdaHandler) HandleSyncTableEvent(ctx context.Context, event *SyncTableEvent) error {
 	// Reserve some time for continuing the task in a new lambda invocation
 	// If the timeout too short we resort to using context.Background to send the request outside of the
 	// lambda handler time slot.
@@ -81,10 +84,9 @@ func HandleSyncTableEvent(ctx context.Context, event *SyncTableEvent) error {
 		zap.Int("numTimeouts", event.NumTimeouts),
 	)
 	sync := event.SyncTablePartitions
-	// Set the number of parallel partition updates from env
-	sync.NumWorkers = config.SyncWorkersPerTable
+	sync.NumWorkers = numSyncWorkersPerTable
 
-	err := sync.Run(ctx, glueClient, logger)
+	err := sync.Run(ctx, h.GlueClient, logger)
 
 	// We add these fields after Run() to avoid duplicate fields in the log output of sync.Run()
 	logger = logger.With(
@@ -100,8 +102,13 @@ func HandleSyncTableEvent(ctx context.Context, event *SyncTableEvent) error {
 
 	// We only continue our work if failure was due to timeout
 	if errors.Is(err, context.DeadlineExceeded) {
+		nextEvent, nextErr := buildNextSyncEvent(event, &sync)
+		if nextErr != nil {
+			return nextErr
+		}
+
 		// We use context.Background to limit the probability of missing the continuation request
-		if continueErr := continueSyncTableEvent(context.Background(), event, &sync); continueErr != nil {
+		if continueErr := sendEvent(context.Background(), h.SQSClient, h.QueueURL, *nextEvent); continueErr != nil {
 			err = errors.WithMessage(continueErr, "sync failed to continue")
 		}
 	}
@@ -116,31 +123,27 @@ func HandleSyncTableEvent(ctx context.Context, event *SyncTableEvent) error {
 	return nil
 }
 
-func continueSyncTableEvent(ctx context.Context, event *SyncTableEvent, sync *gluetasks.SyncTablePartitions) error {
+func buildNextSyncEvent(event *SyncTableEvent, sync *gluetasks.SyncTablePartitions) (*sqsTask, error) {
 	numTimeouts := 0
 	if sync.NextToken != "" && sync.NextToken == event.NextToken {
 		// Deadline reached without any progress
 		numTimeouts = event.NumTimeouts + 1
 	}
 	if numTimeouts > maxConsecutiveSyncTimeouts {
-		return errors.Errorf("no progress after %d retries", numTimeouts)
+		return nil, errors.Errorf("no progress after %d retries", numTimeouts)
 	}
 	// protect against infinite recursion
 	numCalls := event.NumCalls + 1
 	if numCalls > maxNumCalls {
-		return errors.Errorf("sync did not complete after %d lambdsa calls", numCalls)
+		return nil, errors.Errorf("sync did not complete after %d lambdsa calls", numCalls)
 	}
 
-	err := invokeEvent(ctx, lambdaClient, &DataCatalogEvent{
+	return &sqsTask{
 		SyncTablePartitions: &SyncTableEvent{
 			SyncTablePartitions: *sync,
 			NumCalls:            numCalls,
 			NumTimeouts:         numTimeouts,
 			TraceID:             event.TraceID, // keep the original trace id
 		},
-	})
-	if err != nil {
-		return err
-	}
-	return nil
+	}, nil
 }
