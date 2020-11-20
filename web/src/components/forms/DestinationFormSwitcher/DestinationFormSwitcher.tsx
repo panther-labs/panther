@@ -93,7 +93,10 @@ const DestinationFormSwitcher: React.FC<DestinationFormSwitcherProps> = ({
         <OpsgenieDestinationForm
           initialValues={{
             ...commonInitialValues,
-            outputConfig: pick(initialValues.outputConfig, 'opsgenie.apiKey'),
+            outputConfig: pick(initialValues.outputConfig, [
+              'opsgenie.apiKey',
+              'opsgenie.serviceRegion',
+            ]),
           }}
           onSubmit={onSubmit}
         />

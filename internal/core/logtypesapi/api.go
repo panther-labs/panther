@@ -22,6 +22,8 @@ import (
 	"context"
 )
 
+const LambdaName = "panther-logtypes-api"
+
 // Generate a lambda client using apigen
 // nolint:lll
 //go:generate go run github.com/panther-labs/panther/pkg/x/apigen -target LogTypesAPI -type lambdaclient -out ./lambdaclient_gen.go

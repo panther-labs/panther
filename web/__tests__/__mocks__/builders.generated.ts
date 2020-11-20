@@ -150,6 +150,7 @@ import {
   ListResourcesSortFieldsEnum,
   ListRulesSortFieldsEnum,
   LogIntegration,
+  OpsgenieServiceRegionEnum,
   SeverityEnum,
   SortDirEnum,
 } from '../../__generated__/schema';
@@ -994,6 +995,8 @@ export const buildOpsgenieConfig = (overrides: Partial<OpsgenieConfig> = {}): Op
   return {
     __typename: 'OpsgenieConfig',
     apiKey: 'apiKey' in overrides ? overrides.apiKey : 'IB',
+    serviceRegion:
+      'serviceRegion' in overrides ? overrides.serviceRegion : OpsgenieServiceRegionEnum.Us,
   };
 };
 
@@ -1002,6 +1005,8 @@ export const buildOpsgenieConfigInput = (
 ): OpsgenieConfigInput => {
   return {
     apiKey: 'apiKey' in overrides ? overrides.apiKey : 'hacking',
+    serviceRegion:
+      'serviceRegion' in overrides ? overrides.serviceRegion : OpsgenieServiceRegionEnum.Us,
   };
 };
 

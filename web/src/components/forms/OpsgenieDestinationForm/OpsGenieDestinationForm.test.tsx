@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs } from 'test-utils';
-import { SeverityEnum } from 'Generated/schema';
+import { OpsgenieServiceRegionEnum, SeverityEnum } from 'Generated/schema';
 import OpsgenieDestinationForm from './index';
 
 const emptyInitialValues = {
@@ -28,6 +28,7 @@ const emptyInitialValues = {
   outputConfig: {
     opsgenie: {
       apiKey: '',
+      serviceRegion: OpsgenieServiceRegionEnum.Us,
     },
   },
 };
@@ -41,8 +42,10 @@ const initialValues = {
   outputConfig: {
     opsgenie: {
       apiKey: '',
+      serviceRegion: OpsgenieServiceRegionEnum.Us,
     },
   },
+
   defaultForSeverity: [severity],
 };
 
@@ -53,9 +56,14 @@ describe('OpsGenieDestinationForm', () => {
     );
     const displayNameField = getByLabelText('* Display Name');
     const apiKeyField = getByLabelText('Opsgenie API key');
+    const euServiceRegion = getByText('EU Service Region');
+    const usServiceRegion = getByText('US Service Region');
     const submitButton = getByText('Add Destination');
+
     expect(displayNameField).toBeInTheDocument();
     expect(apiKeyField).toBeInTheDocument();
+    expect(euServiceRegion).toBeInTheDocument();
+    expect(usServiceRegion).toBeInTheDocument();
     Object.values(SeverityEnum).forEach(sev => {
       expect(getByText(sev)).toBeInTheDocument();
     });
@@ -71,15 +79,20 @@ describe('OpsGenieDestinationForm', () => {
     const apiKeyField = getByLabelText('Opsgenie API key');
     const submitButton = getByText('Add Destination');
     const criticalSeverityCheckBox = document.getElementById(severity);
-    expect(criticalSeverityCheckBox).not.toBeNull();
+
     expect(submitButton).toHaveAttribute('disabled');
 
     fireEvent.change(displayNameField, { target: { value: displayName } });
     fireEvent.click(criticalSeverityCheckBox);
+
     await waitMs(50);
+
     expect(submitButton).toHaveAttribute('disabled');
+
     fireEvent.change(apiKeyField, { target: { value: '123' } });
+
     await waitMs(50);
+
     expect(submitButton).not.toHaveAttribute('disabled');
   });
 
@@ -89,6 +102,7 @@ describe('OpsGenieDestinationForm', () => {
       <OpsgenieDestinationForm onSubmit={submitMockFunc} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
+    const euServiceRegion = getByLabelText('EU Service Region');
     const apiKeyField = getByLabelText('Opsgenie API key');
     const submitButton = getByText('Add Destination');
     const criticalSeverityCheckBox = document.getElementById(severity);
@@ -96,17 +110,20 @@ describe('OpsGenieDestinationForm', () => {
     expect(submitButton).toHaveAttribute('disabled');
 
     fireEvent.change(displayNameField, { target: { value: displayName } });
-    fireEvent.click(criticalSeverityCheckBox);
     fireEvent.change(apiKeyField, { target: { value: '123' } });
+    fireEvent.click(euServiceRegion);
+    fireEvent.click(criticalSeverityCheckBox);
+
     await waitMs(50);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);
     await waitFor(() => expect(submitMockFunc).toHaveBeenCalledTimes(1));
+
     expect(submitMockFunc).toHaveBeenCalledWith({
       outputId: null,
       displayName,
-      outputConfig: { opsgenie: { apiKey: '123' } },
+      outputConfig: { opsgenie: { apiKey: '123', serviceRegion: OpsgenieServiceRegionEnum.Eu } },
       defaultForSeverity: [severity],
     });
   });
@@ -123,6 +140,7 @@ describe('OpsGenieDestinationForm', () => {
 
     const newDisplayName = 'New Opsgenie Name';
     fireEvent.change(displayNameField, { target: { value: newDisplayName } });
+
     await waitMs(50);
     expect(submitButton).not.toHaveAttribute('disabled');
 

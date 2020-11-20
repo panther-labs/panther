@@ -19,15 +19,20 @@
 import { buildDestination, buildOpsgenieConfig, render } from 'test-utils';
 import React from 'react';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
-import { DestinationTypeEnum } from 'Generated/schema';
+import { DestinationTypeEnum, OpsgenieServiceRegionEnum } from 'Generated/schema';
 import { OpsGenieDestinationCard } from '../index';
 
 describe('OpsGenieDestinationCard', () => {
   it('displays OpsGenie data in the card', async () => {
     const opsGenieDestination = buildDestination({
       outputType: DestinationTypeEnum.Opsgenie,
-      outputConfig: { opsgenie: buildOpsgenieConfig() },
+      outputConfig: {
+        opsgenie: buildOpsgenieConfig({
+          serviceRegion: OpsgenieServiceRegionEnum.Eu,
+        }),
+      },
     }) as DestinationFull;
+
     const { getByText, getByAriaLabel, getByAltText } = render(
       <OpsGenieDestinationCard destination={opsGenieDestination} />
     );
@@ -37,5 +42,6 @@ describe('OpsGenieDestinationCard', () => {
     expect(getByText(opsGenieDestination.displayName)).toBeInTheDocument();
     expect(getByText('Date Created')).toBeInTheDocument();
     expect(getByText('Last Updated')).toBeInTheDocument();
+    expect(getByText('European')).toBeInTheDocument();
   });
 });

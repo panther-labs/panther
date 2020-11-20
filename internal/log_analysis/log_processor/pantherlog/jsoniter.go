@@ -31,7 +31,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/modern-go/reflect2"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/omitempty"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
@@ -59,9 +58,7 @@ const (
 var (
 	typValueWriterTo = reflect.TypeOf((*ValueWriterTo)(nil)).Elem()
 	typStringer      = reflect.TypeOf((*fmt.Stringer)(nil)).Elem()
-	typString        = reflect.TypeOf("")
-	typStringPtr     = reflect.TypeOf((*string)(nil))
-	typNullString    = reflect.TypeOf(null.String{})
+	typByteSlice     = reflect.TypeOf([]byte{})
 	typTime          = reflect.TypeOf(time.Time{})
 	typResult        = reflect.TypeOf(Result{})
 )
@@ -304,144 +301,13 @@ func (*pantherExt) decorateIndicatorField(b *jsoniter.Binding, scanners ...Value
 		return
 	}
 	typ := b.Field.Type().Type1()
-	// Decorate encoders
-	switch {
-	case typ.ConvertibleTo(typString):
-		b.Encoder = &scanStringEncoder{
-			parent:  b.Encoder,
-			scanner: scanner,
-		}
-	case typ.ConvertibleTo(typStringPtr):
-		b.Encoder = &scanStringPtrEncoder{
-			parent:  b.Encoder,
-			scanner: scanner,
-		}
-	case typ.ConvertibleTo(typNullString):
-		b.Encoder = &scanNullStringEncoder{
-			parent:  b.Encoder,
-			scanner: scanner,
-		}
-	case reflect.PtrTo(typ).Implements(typStringer):
-		b.Encoder = &scanStringerEncoder{
-			parent:  b.Encoder,
-			typ:     typ,
-			scanner: scanner,
-		}
-	case typ.Implements(typStringer):
-		indirect := typ.Kind() == reflect.Ptr
-		b.Encoder = &scanStringerEncoder{
-			parent:   b.Encoder,
-			typ:      typ,
-			indirect: indirect,
-			scanner:  scanner,
-		}
-	}
-}
-
-type scanStringPtrEncoder struct {
-	parent  jsoniter.ValEncoder
-	scanner ValueScanner
-}
-
-// IsEmpty implements jsoniter.ValEncoder interface
-func (enc *scanStringPtrEncoder) IsEmpty(ptr unsafe.Pointer) bool {
-	return enc.parent.IsEmpty(ptr)
-}
-
-// Encode implements jsoniter.ValEncoder interface
-func (enc *scanStringPtrEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	enc.parent.Encode(ptr, stream)
-	if stream.Error != nil {
+	if enc, ok := newIndicatorEncoder(typ, b.Encoder, scanner); ok {
+		b.Encoder = enc
 		return
 	}
-	input := *((**string)(ptr))
-	if input == nil {
+	if enc, ok := newSliceIndicatorEncoder(typ, b.Encoder, scanner); ok {
+		b.Encoder = enc
 		return
-	}
-	if values, ok := stream.Attachment.(ValueWriter); ok {
-		enc.scanner.ScanValues(values, *input)
-	}
-}
-
-type scanNullStringEncoder struct {
-	parent  jsoniter.ValEncoder
-	scanner ValueScanner
-}
-
-// IsEmpty implements jsoniter.ValEncoder interface
-func (enc *scanNullStringEncoder) IsEmpty(ptr unsafe.Pointer) bool {
-	return enc.parent.IsEmpty(ptr)
-}
-
-// Encode implements jsoniter.ValEncoder interface
-func (enc *scanNullStringEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	enc.parent.Encode(ptr, stream)
-	if stream.Error != nil {
-		return
-	}
-	input := *((*null.String)(ptr))
-	if !input.Exists || input.Value == "" {
-		return
-	}
-	if values, ok := stream.Attachment.(ValueWriter); ok {
-		enc.scanner.ScanValues(values, input.Value)
-	}
-}
-
-type scanStringerEncoder struct {
-	parent   jsoniter.ValEncoder
-	scanner  ValueScanner
-	typ      reflect.Type
-	indirect bool
-}
-
-// IsEmpty implements jsoniter.ValEncoder interface
-func (enc *scanStringerEncoder) IsEmpty(ptr unsafe.Pointer) bool {
-	return enc.parent.IsEmpty(ptr)
-}
-
-// Encode implements jsoniter.ValEncoder interface
-func (enc *scanStringerEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	enc.parent.Encode(ptr, stream)
-	if stream.Error != nil {
-		return
-	}
-	values, ok := stream.Attachment.(ValueWriter)
-	if !ok {
-		return
-	}
-	val := reflect.NewAt(enc.typ, ptr)
-	if enc.indirect {
-		val = val.Elem()
-	}
-	str := val.Interface().(fmt.Stringer)
-	if input := str.String(); input != "" {
-		enc.scanner.ScanValues(values, input)
-	}
-}
-
-type scanStringEncoder struct {
-	parent  jsoniter.ValEncoder
-	scanner ValueScanner
-}
-
-// IsEmpty implements jsoniter.ValEncoder interface
-func (enc *scanStringEncoder) IsEmpty(ptr unsafe.Pointer) bool {
-	return enc.parent.IsEmpty(ptr)
-}
-
-// Encode implements jsoniter.ValEncoder interface
-func (enc *scanStringEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	enc.parent.Encode(ptr, stream)
-	if stream.Error != nil {
-		return
-	}
-	input := *((*string)(ptr))
-	if input == "" {
-		return
-	}
-	if values, ok := stream.Attachment.(ValueWriter); ok {
-		enc.scanner.ScanValues(values, input)
 	}
 }
 

@@ -825,11 +825,18 @@ export type MutationUpdateGlobalPythonlModuleArgs = {
 export type OpsgenieConfig = {
   __typename?: 'OpsgenieConfig';
   apiKey: Scalars['String'];
+  serviceRegion: OpsgenieServiceRegionEnum;
 };
 
 export type OpsgenieConfigInput = {
   apiKey: Scalars['String'];
+  serviceRegion: OpsgenieServiceRegionEnum;
 };
+
+export enum OpsgenieServiceRegionEnum {
+  Eu = 'EU',
+  Us = 'US',
+}
 
 export type OrganizationReportBySeverity = {
   __typename?: 'OrganizationReportBySeverity';
@@ -1518,6 +1525,7 @@ export type ResolversTypes = {
   GithubConfig: ResolverTypeWrapper<GithubConfig>;
   JiraConfig: ResolverTypeWrapper<JiraConfig>;
   OpsgenieConfig: ResolverTypeWrapper<OpsgenieConfig>;
+  OpsgenieServiceRegionEnum: OpsgenieServiceRegionEnum;
   MsTeamsConfig: ResolverTypeWrapper<MsTeamsConfig>;
   AsanaConfig: ResolverTypeWrapper<AsanaConfig>;
   CustomWebhookConfig: ResolverTypeWrapper<CustomWebhookConfig>;
@@ -1671,6 +1679,7 @@ export type ResolversParentTypes = {
   GithubConfig: GithubConfig;
   JiraConfig: JiraConfig;
   OpsgenieConfig: OpsgenieConfig;
+  OpsgenieServiceRegionEnum: OpsgenieServiceRegionEnum;
   MsTeamsConfig: MsTeamsConfig;
   AsanaConfig: AsanaConfig;
   CustomWebhookConfig: CustomWebhookConfig;
@@ -2460,6 +2469,7 @@ export type OpsgenieConfigResolvers<
   ParentType extends ResolversParentTypes['OpsgenieConfig'] = ResolversParentTypes['OpsgenieConfig']
 > = {
   apiKey?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  serviceRegion?: Resolver<ResolversTypes['OpsgenieServiceRegionEnum'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
