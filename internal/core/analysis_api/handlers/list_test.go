@@ -65,7 +65,7 @@ func TestPagePoliciesPageOutOfBounds(t *testing.T) {
 }
 
 func TestPagePoliciesDisplayNameSort(t *testing.T) {
-	items := []tableItem {
+	items := []tableItem{
 		{ID: "a", DisplayName: "z"},
 		{ID: "h", DisplayName: "b"},
 		{ID: "c", DisplayName: "y"},
