@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
 	"github.com/aws/aws-sdk-go/service/sns"
@@ -39,6 +40,10 @@ import (
 )
 
 const (
+	// NOTE: max buffer size in ram is 50M
+	UploaderConcurrency = 5
+	UploaderPartSize    = 10 * 1024 * 1024
+
 	MaxRetries     = 13 // ~7'
 	EventDelimiter = '\n'
 )
@@ -72,7 +77,10 @@ func Setup() {
 
 	s3UploaderSession := Session.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(MaxRetries),
 		awsretry.NewAccessDeniedRetryer(MaxRetries)))
-	S3Uploader = s3manager.NewUploader(s3UploaderSession)
+	S3Uploader = s3manager.NewUploaderWithClient(s3.New(s3UploaderSession), func(u *s3manager.Uploader) {
+		u.Concurrency = UploaderConcurrency
+		u.PartSize = UploaderPartSize
+	})
 
 	err := envconfig.Process("", &Config)
 	if err != nil {

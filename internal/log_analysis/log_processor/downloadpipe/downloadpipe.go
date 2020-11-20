@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	DownloadPartSize = 1024 * 1024 * 8 // the buffer size use for downloader
+	DownloadPartSize = 8 * 1024 * 1024 // the buffer size use for downloader
 )
 
 // Implements a pipe with the writer having the WriteAt interface
@@ -47,7 +47,7 @@ var downloadPipePool = sync.Pool{
 }
 
 func NewDownloadPipe(d *s3manager.Downloader) *DownloadPipe {
-	d.Concurrency = 1
+	d.Concurrency = 1 // this MUST be 1 so the chunks come in order so they can be uncompressed
 	d.PartSize = DownloadPartSize
 	dp := downloadPipePool.Get().(*DownloadPipe)
 	dp.downloader = d
