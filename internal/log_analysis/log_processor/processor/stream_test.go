@@ -93,12 +93,15 @@ func TestStreamEventsReadEventError(t *testing.T) {
 	sqsMock := &testutils.SqsMock{}
 	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
 		Return(streamTestReceiveMessageOutput, nil).Once()
+	// Empty result should cause polling to stop
+	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(&sqs.ReceiveMessageOutput{}, nil).Once()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	_, err := pollEvents(ctx, sqsMock, noopProcessorFunc, failGenerateDataStream)
 	// Failure in the generateDataStreamsFunc should no cause the function invocation to fail
-	// but we shouldn't invoke the DeleteBatch operation
+	// but we shouldn't invoke the DeleteBatch operation neither since the messages haven't been processed
 	require.NoError(t, err)
 
 	sqsMock.AssertExpectations(t)

@@ -80,6 +80,7 @@ func pollEvents(
 
 		// continue to read until either there are no sqs messages or we have exceeded the processing time/file limit
 		highMemoryCounter := 0
+
 		for len(accumulatedMessageReceipts) < processingMaxFilesLimit {
 			select {
 			case <-ctx.Done():
@@ -115,7 +116,7 @@ func pollEvents(
 				dataStreams, err := generateDataStreamsFunc(aws.StringValue(msg.Body))
 				if err != nil {
 					zap.L().Warn("Unable to process event", zap.Error(err))
-					return
+					continue
 				}
 				for _, dataStream := range dataStreams {
 					streamChan <- dataStream
