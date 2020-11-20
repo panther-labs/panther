@@ -20,7 +20,6 @@ import React from 'react';
 import { StepStatus } from './Wizard';
 
 interface WizardContextValue<WizardData> {
-  goToStep: (index: number) => void;
   goToPrevStep: () => void;
   goToNextStep: () => void;
   setData: (data: WizardData) => void;

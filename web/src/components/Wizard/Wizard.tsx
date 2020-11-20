@@ -120,7 +120,6 @@ function Wizard<WizardData = any>({
       setCurrentStepStatus,
     }),
     [
-      goToStep,
       goToPrevStep,
       goToNextStep,
       wizardData,
