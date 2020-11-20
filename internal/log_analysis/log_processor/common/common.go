@@ -41,7 +41,7 @@ import (
 
 const (
 	MaxS3BufferSizeBytes = 50 * 1024 * 1024
-	UploaderPartSize     = 18 * 1024 * 1024 // the size of this affects performance
+	UploaderPartSize     = 5 * 1024 * 1024 // the size of this affects performance
 	UploaderConcurrency  = MaxS3BufferSizeBytes / UploaderPartSize
 
 	MaxRetries     = 13 // ~7'
