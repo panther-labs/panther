@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/pkg/errors"
@@ -35,6 +36,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
+	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 const (
@@ -169,17 +171,17 @@ func highMemoryUsage() (heapUsedMB, memAvailableMB float32, isHigh bool) {
 }
 
 func receiveFromSqs(ctx context.Context, sqsClient sqsiface.SQSAPI) ([]*sqs.Message, error) {
-	request := &sqs.ReceiveMessageInput{
+	input := &sqs.ReceiveMessageInput{
 		WaitTimeSeconds:     aws.Int64(0),
 		MaxNumberOfMessages: aws.Int64(sqsMaxBatchSize),
 		QueueUrl:            &common.Config.SqsQueueURL,
 	}
-	receiveMessageOutput, err := sqsClient.ReceiveMessageWithContext(ctx, request)
+	output, err := sqsClient.ReceiveMessageWithContext(ctx, input)
 
-	if err != nil && err != context.DeadlineExceeded && err != context.Canceled {
+	if err != nil && !awsutils.IsAnyError(err, request.CanceledErrorCode) {
 		err = errors.Wrapf(err, "failure receiving messages from %s", common.Config.SqsQueueURL)
 		return nil, err
 	}
 
-	return receiveMessageOutput.Messages, nil
+	return output.Messages, nil
 }
