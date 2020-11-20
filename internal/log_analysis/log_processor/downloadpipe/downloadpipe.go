@@ -33,7 +33,7 @@ const (
 	DownloadPartSize = 8 * 1024 * 1024 // the buffer size use for downloader
 )
 
-// Implements a pipe with the writer having the WriteAt interface
+// Implements a pipe with the writer having the WriteAt() interface
 type DownloadPipe struct {
 	downloader     *s3manager.Downloader
 	getObjectInput *s3.GetObjectInput
@@ -64,30 +64,9 @@ func NewDownloadPipe(s3Client s3iface.S3API, getObjectInput *s3.GetObjectInput) 
 	return dp
 }
 
-func (dp *DownloadPipe) free() {
+func (dp *DownloadPipe) Close() error {
 	downloadPipePool.Put(dp)
-}
-
-func (dp *DownloadPipe) Read(p []byte) (n int, err error) {
-	return dp.reader.Read(p)
-}
-
-func (dp *DownloadPipe) WriteAt(p []byte, offset int64) (n int, err error) {
-	// we assume that offset is increasing or staying the same each call!
-	// the writer expects to be able to re-write the chunk at the offset if there are errors reading!
-	bufferOffset := offset % dp.downloader.PartSize
-	n = copy(dp.buffer[bufferOffset:bufferOffset+int64(len(p))], p)
-	dp.buffer = dp.buffer[:len(dp.buffer)+n] // extend slice
-
-	// flush?
-	if len(dp.buffer) == cap(dp.buffer) {
-		err := dp.Flush()
-		if err != nil {
-			return n, err
-		}
-	}
-
-	return n, err
+	return nil
 }
 
 func (dp *DownloadPipe) Run() {
@@ -104,13 +83,35 @@ func (dp *DownloadPipe) Run() {
 		err = errors.Wrapf(err, "Download() failed for s3://%s/%s",
 			*dp.getObjectInput.Bucket, *dp.getObjectInput.Key)
 		zap.L().Error("s3 download failed", zap.Error(err))
-		closeErr = dp.CloseWriterWithError(err) // this will cause the reader to fail
+		closeErr = dp.closeWriterWithError(err) // this will cause the reader to fail
 	} else {
-		closeErr = dp.CloseWriter()
+		closeErr = dp.closeWriter()
 	}
 }
 
-func (dp *DownloadPipe) Flush() error {
+func (dp *DownloadPipe) Read(p []byte) (n int, err error) {
+	return dp.reader.Read(p)
+}
+
+func (dp *DownloadPipe) WriteAt(p []byte, offset int64) (n int, err error) {
+	// we assume that offset is increasing or staying the same each call!
+	// the writer expects to be able to re-write the chunk at the offset if there are errors reading from S3!
+	bufferOffset := offset % dp.downloader.PartSize
+	n = copy(dp.buffer[bufferOffset:bufferOffset+int64(len(p))], p)
+	dp.buffer = dp.buffer[:len(dp.buffer)+n] // extend slice
+
+	// flush?
+	if len(dp.buffer) == cap(dp.buffer) {
+		err := dp.flush()
+		if err != nil {
+			return n, err
+		}
+	}
+
+	return n, err
+}
+
+func (dp *DownloadPipe) flush() error {
 	_, err := dp.writer.Write(dp.buffer) // flush
 	if err != nil {
 		return err
@@ -119,19 +120,14 @@ func (dp *DownloadPipe) Flush() error {
 	return nil
 }
 
-func (dp *DownloadPipe) Close() error {
-	dp.free()
-	return nil
-}
-
-func (dp *DownloadPipe) CloseWriter() error {
-	err := dp.Flush()
+func (dp *DownloadPipe) closeWriter() error {
+	err := dp.flush()
 	if err != nil {
 		return dp.writer.CloseWithError(err)
 	}
 	return dp.writer.Close()
 }
 
-func (dp *DownloadPipe) CloseWriterWithError(err error) error {
+func (dp *DownloadPipe) closeWriterWithError(err error) error {
 	return dp.writer.CloseWithError(err)
 }

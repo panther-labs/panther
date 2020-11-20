@@ -21,6 +21,7 @@ package processor
 import (
 	"context"
 	"math"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -90,7 +91,7 @@ func queueDepth(ctx context.Context, sqsClient sqsiface.SQSAPI) (int, error) {
 		QueueUrl: &common.Config.SqsQueueURL,
 	}
 	getQueueAttributesOutput, err := sqsClient.GetQueueAttributesWithContext(ctx, getQueueAttributesInput)
-	if err != nil && !IsCanceled(err) {
+	if err != nil && !awsutils.IsAnyError(err, request.CanceledErrorCode) {
 		err = errors.Wrapf(err, "failure getting message count from %s", common.Config.SqsQueueURL)
 		return 0, err
 	}
@@ -102,6 +103,19 @@ func queueDepth(ctx context.Context, sqsClient sqsiface.SQSAPI) (int, error) {
 	}
 
 	return numberOfQueuedMessages, err
+}
+
+func getQueueIntegerAttribute(attrs map[string]*string, attr string) (count int, err error) {
+	intAsStringPtr := attrs[attr]
+	if intAsStringPtr == nil { // assume 0
+		return 0, nil
+	}
+	count, err = strconv.Atoi(*intAsStringPtr)
+	if err != nil {
+		err = errors.Wrapf(err, "failure reading %s (%s) count from %s", attr, *intAsStringPtr, common.Config.SqsQueueURL)
+		return 0, err
+	}
+	return count, err
 }
 
 // processingScaleUp will execute nLambdas to take on more load
@@ -119,7 +133,7 @@ func processingScaleUp(ctx context.Context, lambdaClient lambdaiface.LambdaAPI, 
 			Payload:        []byte(`{"tick": true}`),
 			InvocationType: box.String(lambda.InvocationTypeEvent), // don't wait for response
 		})
-		if err != nil && !IsCanceled(err) {
+		if err != nil && !awsutils.IsAnyError(err, request.CanceledErrorCode) {
 			zap.L().Error("scaling up failed to invoke log processor",
 				zap.Error(errors.WithStack(err)))
 			return
@@ -130,8 +144,4 @@ func processingScaleUp(ctx context.Context, lambdaClient lambdaiface.LambdaAPI, 
 			return
 		}
 	}
-}
-
-func IsCanceled(err error) bool {
-	return err == context.Canceled || err == context.DeadlineExceeded || awsutils.IsAnyError(err, request.CanceledErrorCode)
 }

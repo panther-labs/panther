@@ -75,7 +75,7 @@ func doPipe(t *testing.T, downloader *s3manager.Downloader, dataWritten []byte, 
 			n, err = downloadPipe.WriteAt(dataWritten[i:i+extent], int64(i))
 			require.NoError(t, err)
 		}
-		err = downloadPipe.CloseWriter()
+		err = downloadPipe.closeWriter()
 		require.NoError(t, err)
 	}()
 	wg.Add(1)

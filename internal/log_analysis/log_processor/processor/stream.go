@@ -21,7 +21,6 @@ package processor
 import (
 	"context"
 	"runtime"
-	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -145,20 +144,6 @@ func pollEvents(
 	// delete messages from sqs q on success (best effort)
 	sqsbatch.DeleteMessageBatch(sqsClient, common.Config.SqsQueueURL, accumulatedMessageReceipts)
 	return len(accumulatedMessageReceipts), nil
-}
-
-func getQueueIntegerAttribute(attrs map[string]*string, attr string) (count int, err error) {
-	intAsStringPtr := attrs[attr]
-	if intAsStringPtr == nil {
-		err = errors.Errorf("failure getting %s count from %s", attr, common.Config.SqsQueueURL)
-		return 0, err
-	}
-	count, err = strconv.Atoi(*intAsStringPtr)
-	if err != nil {
-		err = errors.Wrapf(err, "failure reading %s (%s) count from %s", attr, *intAsStringPtr, common.Config.SqsQueueURL)
-		return 0, err
-	}
-	return count, err
 }
 
 func highMemoryUsage() (heapUsedMB, memAvailableMB float32, isHigh bool) {
