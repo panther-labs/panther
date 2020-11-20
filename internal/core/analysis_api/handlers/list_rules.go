@@ -77,6 +77,9 @@ func stdRuleListInput(input *models.ListRulesInput) {
 	if input.SortDir == "" {
 		input.SortDir = defaultSortDir
 	}
+	if input.SortBy == "" {
+		input.SortBy = defaultSortBy
+	}
 }
 
 func ruleScanInput(input *models.ListRulesInput) (*dynamodb.ScanInput, error) {

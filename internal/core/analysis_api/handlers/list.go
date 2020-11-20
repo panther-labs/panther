@@ -29,6 +29,7 @@ import (
 )
 
 const (
+	defaultSortBy   = "displayName"
 	defaultSortDir  = "ascending"
 	defaultPage     = 1
 	defaultPageSize = 25
@@ -163,7 +164,7 @@ func sortByDisplayName(items []tableItem, ascending bool) {
 
 		// Same display name: sort by ID
 		if ascending {
-			return left.ID < right.ID
+			return strings.ToLower(left.ID) < strings.ToLower(right.ID)
 		}
 		return strings.ToLower(left.ID) > strings.ToLower(right.ID)
 	})
