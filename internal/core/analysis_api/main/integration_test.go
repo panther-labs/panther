@@ -287,7 +287,7 @@ func TestIntegrationAPI(t *testing.T) {
 
 func testPolicyPass(t *testing.T) {
 	t.Parallel()
-	testPolicy := models.LambdaInput{
+	input := models.LambdaInput{
 		TestPolicy: &models.TestPolicyInput{
 			Body:          policy.Body,
 			ResourceTypes: []string{"AWS.S3.Bucket"},
@@ -295,14 +295,32 @@ func testPolicyPass(t *testing.T) {
 		},
 	}
 	expected := models.TestPolicyOutput{
-		TestSummary:  true,
-		TestsErrored: []models.TestError{},
-		TestsFailed:  []string{},
-		TestsPassed:  []string{policy.Tests[0].Name, policy.Tests[1].Name},
+		Results: []models.TestPolicyRecord{
+			{
+				ID:     "passed-0",
+				Name:   input.TestPolicy.Tests[0].Name,
+				Passed: true,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: models.TestDetectionSubRecord{
+						Output: aws.String("true"),
+					},
+				},
+			},
+			{
+				ID:     "passed-1",
+				Name:   input.TestPolicy.Tests[1].Name,
+				Passed: true,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: models.TestDetectionSubRecord{
+						Output: aws.String("true"),
+					},
+				},
+			},
+		},
 	}
 
 	var result models.TestPolicyOutput
-	statusCode, err := apiClient.Invoke(&testPolicy, &result)
+	statusCode, err := apiClient.Invoke(&input, &result)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
 	assert.Equal(t, expected, result)
@@ -310,7 +328,7 @@ func testPolicyPass(t *testing.T) {
 
 func testRulePass(t *testing.T) {
 	t.Parallel()
-	testRule := models.LambdaInput{
+	input := models.LambdaInput{
 		TestRule: &models.TestRuleInput{
 			Body:     "def rule(e): return True",
 			LogTypes: []string{"Osquery.Differential"},
@@ -329,30 +347,37 @@ func testRulePass(t *testing.T) {
 		},
 	}
 	expected := models.TestRuleOutput{
-		TestSummary: true,
-		Results: []models.RuleTestResult{
+		Results: []models.TestRuleRecord{
 			{
-				DedupOutput: "defaultDedupString:RuleAPITestRule",
-				Passed:      true,
-				Errored:     false,
-				ID:          "0",
-				RuleOutput:  true,
-				RuleID:      "RuleAPITestRule",
-				TestName:    policy.Tests[0].Name,
+				ID:     "0",
+				Name:   input.TestRule.Tests[0].Name,
+				Passed: true,
+				Functions: models.TestRuleRecordFunctions{
+					Rule: &models.TestDetectionSubRecord{
+						Output: aws.String("true"),
+					},
+					Dedup: &models.TestDetectionSubRecord{
+						Output: aws.String("defaultDedupString:RuleAPITestRule"),
+					},
+				},
 			}, {
-				DedupOutput: "defaultDedupString:RuleAPITestRule",
-				Passed:      true,
-				Errored:     false,
-				ID:          "1",
-				RuleOutput:  true,
-				RuleID:      "RuleAPITestRule",
-				TestName:    policy.Tests[1].Name,
+				ID:     "1",
+				Name:   input.TestRule.Tests[1].Name,
+				Passed: true,
+				Functions: models.TestRuleRecordFunctions{
+					Rule: &models.TestDetectionSubRecord{
+						Output: aws.String("true"),
+					},
+					Dedup: &models.TestDetectionSubRecord{
+						Output: aws.String("defaultDedupString:RuleAPITestRule"),
+					},
+				},
 			},
 		},
 	}
 
 	var result models.TestRuleOutput
-	statusCode, err := apiClient.Invoke(&testRule, &result)
+	statusCode, err := apiClient.Invoke(&input, &result)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
 	assert.Equal(t, expected, result)
@@ -360,7 +385,7 @@ func testRulePass(t *testing.T) {
 
 func testPolicyPassAllResourceTypes(t *testing.T) {
 	t.Parallel()
-	testPolicy := models.LambdaInput{
+	input := models.LambdaInput{
 		TestPolicy: &models.TestPolicyInput{
 			Body:          "def policy(resource): return True",
 			ResourceTypes: []string{},   // means applicable to all resource types
@@ -368,14 +393,32 @@ func testPolicyPassAllResourceTypes(t *testing.T) {
 		},
 	}
 	expected := models.TestPolicyOutput{
-		TestSummary:  true,
-		TestsErrored: []models.TestError{},
-		TestsFailed:  []string{},
-		TestsPassed:  []string{policy.Tests[0].Name, policy.Tests[1].Name},
+		Results: []models.TestPolicyRecord{
+			{
+				ID:     "passed-0",
+				Name:   input.TestPolicy.Tests[0].Name,
+				Passed: true,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: models.TestDetectionSubRecord{
+						Output: aws.String("true"),
+					},
+				},
+			},
+			{
+				ID:     "passed-1",
+				Name:   input.TestPolicy.Tests[1].Name,
+				Passed: true,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: models.TestDetectionSubRecord{
+						Output: aws.String("true"),
+					},
+				},
+			},
+		},
 	}
 
 	var result models.TestPolicyOutput
-	statusCode, err := apiClient.Invoke(&testPolicy, &result)
+	statusCode, err := apiClient.Invoke(&input, &result)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
 	assert.Equal(t, expected, result)
@@ -383,7 +426,7 @@ func testPolicyPassAllResourceTypes(t *testing.T) {
 
 func testRulePassAllLogTypes(t *testing.T) {
 	t.Parallel()
-	testRule := models.LambdaInput{
+	input := models.LambdaInput{
 		TestRule: &models.TestRuleInput{
 			Body:     "def rule(e): return True",
 			LogTypes: []string{}, // means applicable to all log types
@@ -397,22 +440,25 @@ func testRulePassAllLogTypes(t *testing.T) {
 		},
 	}
 	expected := models.TestRuleOutput{
-		TestSummary: true,
-		Results: []models.RuleTestResult{
+		Results: []models.TestRuleRecord{
 			{
-				DedupOutput: "defaultDedupString:RuleAPITestRule",
-				Passed:      true,
-				Errored:     false,
-				ID:          "0",
-				RuleOutput:  true,
-				RuleID:      "RuleAPITestRule",
-				TestName:    policy.Tests[0].Name,
+				ID:     "0",
+				Name:   input.TestRule.Tests[0].Name,
+				Passed: true,
+				Functions: models.TestRuleRecordFunctions{
+					Rule: &models.TestDetectionSubRecord{
+						Output: aws.String("true"),
+					},
+					Dedup: &models.TestDetectionSubRecord{
+						Output: aws.String("defaultDedupString:RuleAPITestRule"),
+					},
+				},
 			},
 		},
 	}
 
 	var result models.TestRuleOutput
-	statusCode, err := apiClient.Invoke(&testRule, &result)
+	statusCode, err := apiClient.Invoke(&input, &result)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
 	assert.Equal(t, expected, result)
@@ -428,10 +474,28 @@ func testPolicyFail(t *testing.T) {
 		},
 	}
 	expected := models.TestPolicyOutput{
-		TestSummary:  false,
-		TestsErrored: []models.TestError{},
-		TestsFailed:  []string{policy.Tests[0].Name, policy.Tests[1].Name},
-		TestsPassed:  []string{},
+		Results: []models.TestPolicyRecord{
+			{
+				ID:     "failed-0",
+				Name:   input.TestPolicy.Tests[0].Name,
+				Passed: false,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: models.TestDetectionSubRecord{
+						Output: aws.String("true"), // expected result
+					},
+				},
+			},
+			{
+				ID:     "failed-1",
+				Name:   input.TestPolicy.Tests[1].Name,
+				Passed: false,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: models.TestDetectionSubRecord{
+						Output: aws.String("true"),
+					},
+				},
+			},
+		},
 	}
 
 	var result models.TestPolicyOutput
@@ -443,7 +507,7 @@ func testPolicyFail(t *testing.T) {
 
 func testRuleFail(t *testing.T) {
 	t.Parallel()
-	testRule := models.LambdaInput{
+	input := models.LambdaInput{
 		TestRule: &models.TestRuleInput{
 			Body:     "def rule(e): return False",
 			LogTypes: policy.ResourceTypes,
@@ -457,22 +521,25 @@ func testRuleFail(t *testing.T) {
 		},
 	}
 	expected := models.TestRuleOutput{
-		TestSummary: false,
-		Results: []models.RuleTestResult{
+		Results: []models.TestRuleRecord{
 			{
-				DedupOutput: "defaultDedupString:RuleAPITestRule",
-				Passed:      false,
-				Errored:     false,
-				ID:          "0",
-				RuleOutput:  false,
-				RuleID:      "RuleAPITestRule",
-				TestName:    policy.Tests[0].Name,
+				ID:     "0",
+				Name:   input.TestRule.Tests[0].Name,
+				Passed: false,
+				Functions: models.TestRuleRecordFunctions{
+					Rule: &models.TestDetectionSubRecord{
+						Output: aws.String("false"),
+					},
+					Dedup: &models.TestDetectionSubRecord{
+						Output: aws.String("defaultDedupString:RuleAPITestRule"),
+					},
+				},
 			},
 		},
 	}
 
 	var result models.TestRuleOutput
-	statusCode, err := apiClient.Invoke(&testRule, &result)
+	statusCode, err := apiClient.Invoke(&input, &result)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
 	assert.Equal(t, expected, result)
@@ -488,19 +555,34 @@ func testPolicyError(t *testing.T) {
 		},
 	}
 	expected := models.TestPolicyOutput{
-		TestSummary: false,
-		TestsErrored: []models.TestError{
+		Results: []models.TestPolicyRecord{
 			{
-				ErrorMessage: "SyntaxError: invalid syntax (PolicyApiTestingPolicy.py, line 1)",
-				Name:         policy.Tests[0].Name,
+				ID:     "errored-0",
+				Name:   input.TestPolicy.Tests[0].Name,
+				Passed: false,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: models.TestDetectionSubRecord{
+						Output: aws.String("true"), // expected result
+						Error: &models.TestError{
+							Message: "SyntaxError: invalid syntax (PolicyApiTestingPolicy.py, line 1)",
+						},
+					},
+				},
 			},
 			{
-				ErrorMessage: "SyntaxError: invalid syntax (PolicyApiTestingPolicy.py, line 1)",
-				Name:         policy.Tests[1].Name,
+				ID:     "errored-1",
+				Name:   input.TestPolicy.Tests[1].Name,
+				Passed: false,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: models.TestDetectionSubRecord{
+						Output: aws.String("true"),
+						Error: &models.TestError{
+							Message: "SyntaxError: invalid syntax (PolicyApiTestingPolicy.py, line 1)",
+						},
+					},
+				},
 			},
 		},
-		TestsFailed: []string{},
-		TestsPassed: []string{},
 	}
 
 	var result models.TestPolicyOutput
@@ -519,37 +601,71 @@ func testPolicyMixed(t *testing.T) {
 			Tests: []models.UnitTest{
 				{
 					ExpectedResult: true,
-					Name:           "test-1",
+					Name:           "test-0",
 					Resource:       `{"Hello": true}`,
 				},
 				{
 					ExpectedResult: false,
+					Name:           "test-1",
+					Resource:       `{"Hello": false}`,
+				},
+				{
+					ExpectedResult: true,
 					Name:           "test-2",
 					Resource:       `{"Hello": false}`,
 				},
 				{
 					ExpectedResult: true,
 					Name:           "test-3",
-					Resource:       `{"Hello": false}`,
-				},
-				{
-					ExpectedResult: true,
-					Name:           "test-4",
 					Resource:       `{"Goodbye": false}`,
 				},
 			},
 		},
 	}
 	expected := models.TestPolicyOutput{
-		TestSummary: false,
-		TestsErrored: []models.TestError{
+		Results: []models.TestPolicyRecord{
 			{
-				ErrorMessage: "KeyError: 'Hello'",
-				Name:         "test-4",
+				ID:     "passed-0",
+				Name:   input.TestPolicy.Tests[0].Name,
+				Passed: true,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: models.TestDetectionSubRecord{
+						Output: aws.String("true"),
+					},
+				},
+			},
+			{
+				ID:     "passed-1",
+				Name:   input.TestPolicy.Tests[1].Name,
+				Passed: true,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: models.TestDetectionSubRecord{
+						Output: aws.String("false"),
+					},
+				},
+			},
+			{
+				ID:     "failed-2",
+				Name:   input.TestPolicy.Tests[2].Name,
+				Passed: false,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: models.TestDetectionSubRecord{
+						Output: aws.String("true"), // expected result
+					},
+				},
+			},
+			{
+				ID:     "errored-3",
+				Name:   input.TestPolicy.Tests[3].Name,
+				Passed: false,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: models.TestDetectionSubRecord{
+						Output: aws.String("true"), // expected result
+						Error:  &models.TestError{Message: "KeyError: 'Hello'"},
+					},
+				},
 			},
 		},
-		TestsFailed: []string{"test-3"},
-		TestsPassed: []string{"test-1", "test-2"},
 	}
 
 	var result models.TestPolicyOutput

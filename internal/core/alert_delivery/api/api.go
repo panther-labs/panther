@@ -48,8 +48,6 @@ type envConfig struct {
 	AlertQueueURL          string        `required:"true" split_words:"true"`
 	AlertsAPI              string        `required:"true" split_words:"true"`
 	OutputsAPI             string        `required:"true" split_words:"true"`
-	AnalysisAPIHost        string        `required:"true" split_words:"true"`
-	AnalysisAPIPath        string        `required:"true" split_words:"true"`
 }
 
 // Globals

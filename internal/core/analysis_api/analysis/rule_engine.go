@@ -80,8 +80,7 @@ func (e *RuleEngine) TestRule(rule *models.TestRuleInput) (*models.TestRuleOutpu
 
 	// Translate rule engine output to test results.
 	testResult := &models.TestRuleOutput{
-		TestSummary: true,
-		Results:     make([]models.RuleTestResult, len(engineOutput.Results)),
+		Results: make([]models.TestRuleRecord, len(engineOutput.Results)),
 	}
 	for i, result := range engineOutput.Results {
 		// Determine which test case this result corresponds to.
@@ -91,30 +90,43 @@ func (e *RuleEngine) TestRule(rule *models.TestRuleInput) (*models.TestRuleOutpu
 		}
 		test := rule.Tests[testIndex]
 
-		passed := hasPassed(test.ExpectedResult, result)
+		record := models.TestRuleRecord{
+			ID:     result.ID,
+			Name:   test.Name,
+			Passed: hasPassed(test.ExpectedResult, result),
+			Functions: models.TestRuleRecordFunctions{
+				Rule: buildTestSubRecord(strconv.FormatBool(result.RuleOutput), result.RuleError),
+			},
+		}
+		if result.GenericError != "" {
+			record.Error = &models.TestError{Message: result.GenericError}
+		}
 
-		testResult.Results[i] = models.RuleTestResult{
-			ID:           result.ID,
-			RuleID:       result.RuleID,
-			TestName:     test.Name,
-			Passed:       passed,
-			Errored:      result.Errored,
-			GenericError: result.GenericError,
-			RuleOutput:   result.RuleOutput,
-			RuleError:    result.RuleError,
-		}
+		// The remaining functions are only included if the user expects rule() to match the event
 		if test.ExpectedResult {
-			// Show the output of other functions only if user expects rule() to match the event (ie return True).
-			testResult.Results[i].DedupOutput = result.DedupOutput
-			testResult.Results[i].DedupError = result.DedupError
-			testResult.Results[i].TitleOutput = result.TitleOutput
-			testResult.Results[i].TitleError = result.TitleError
-			testResult.Results[i].AlertContextOutput = truncate(result.AlertContextOutput) // truncate, can be huge json
-			testResult.Results[i].AlertContextError = result.AlertContextError
+			record.Functions.Title = buildTestSubRecord(result.TitleOutput, result.TitleError)
+			record.Functions.Dedup = buildTestSubRecord(result.DedupOutput, result.DedupError)
+			record.Functions.AlertContext = buildTestSubRecord(truncate(result.AlertContextOutput), result.AlertContextError)
 		}
-		testResult.TestSummary = testResult.TestSummary && passed
+
+		testResult.Results[i] = record
 	}
 	return testResult, nil
+}
+
+func buildTestSubRecord(output, error string) *models.TestDetectionSubRecord {
+	if output == "" && error == "" {
+		return nil
+	}
+
+	result := &models.TestDetectionSubRecord{}
+	if output != "" {
+		result.Output = &output
+	}
+	if error != "" {
+		result.Error = &models.TestError{Message: error}
+	}
+	return result
 }
 
 func truncate(s string) string {

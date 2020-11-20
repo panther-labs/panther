@@ -77,31 +77,52 @@ func (e *PolicyEngine) TestPolicy(policy *models.TestPolicyInput) (*models.TestP
 }
 
 func makeTestSummary(policy *models.TestPolicyInput, engineOutput enginemodels.PolicyEngineOutput) (*models.TestPolicyOutput, error) {
-	var testResults models.TestPolicyOutput
-	for _, result := range engineOutput.Resources {
+	testResult := models.TestPolicyOutput{
+		Results: make([]models.TestPolicyRecord, len(engineOutput.Resources)),
+	}
+
+	for i, result := range engineOutput.Resources {
 		// Determine which test case this result corresponds to. We constructed resourceID with the
 		// format Panther:Test:Resource:TestNumber (see testResourceID),
 		testIndex, err := strconv.Atoi(strings.Split(result.ID, ":")[3])
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to extract test number from test result resourceID %s", result.ID)
 		}
-
 		test := policy.Tests[testIndex]
+
 		switch {
 		case len(result.Errored) > 0:
 			// There was an error running this test, store the error message
-			testResults.TestsErrored = append(testResults.TestsErrored, models.TestError{
-				ErrorMessage: result.Errored[0].Message,
-				Name:         test.Name,
-			})
+			testResult.Results[i] = models.TestPolicyRecord{
+				ID:     "errored-" + strconv.Itoa(i),
+				Name:   test.Name,
+				Passed: false,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: *buildTestSubRecord(strconv.FormatBool(test.ExpectedResult), result.Errored[0].Message),
+				},
+			}
 
 		case len(result.Failed) > 0 && test.ExpectedResult, len(result.Passed) > 0 && !test.ExpectedResult:
 			// The test result was not expected, so this test failed
-			testResults.TestsFailed = append(testResults.TestsFailed, test.Name)
+			testResult.Results[i] = models.TestPolicyRecord{
+				ID:     "failed-" + strconv.Itoa(i),
+				Name:   test.Name,
+				Passed: false,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: *buildTestSubRecord(strconv.FormatBool(test.ExpectedResult), ""),
+				},
+			}
 
 		case len(result.Failed) > 0 && !test.ExpectedResult, len(result.Passed) > 0 && test.ExpectedResult:
 			// The test result was as expected
-			testResults.TestsPassed = append(testResults.TestsPassed, test.Name)
+			testResult.Results[i] = models.TestPolicyRecord{
+				ID:     "passed-" + strconv.Itoa(i),
+				Name:   test.Name,
+				Passed: true,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: *buildTestSubRecord(strconv.FormatBool(test.ExpectedResult), ""),
+				},
+			}
 
 		default:
 			// This test didn't run (result.{Errored, Passed, Failed} are all empty). This must not happen absent a bug.
@@ -109,9 +130,7 @@ func makeTestSummary(policy *models.TestPolicyInput, engineOutput enginemodels.P
 		}
 	}
 
-	testResults.TestSummary = len(testResults.TestsFailed) == 0 && len(testResults.TestsErrored) == 0
-
-	return &testResults, nil
+	return &testResult, nil
 }
 
 type TestInputError struct {

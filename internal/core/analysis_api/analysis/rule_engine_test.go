@@ -94,19 +94,25 @@ def dedup(e):
 	lambdaClient.AssertExpectations(t)
 
 	expected := &models.TestRuleOutput{
-		TestSummary: true,
-		Results: []models.RuleTestResult{
+		Results: []models.TestRuleRecord{
 			{
-				ID:                 "0",
-				RuleID:             testRuleID,
-				TestName:           "This will be True",
-				Passed:             true,
-				Errored:            false,
-				RuleOutput:         true,
-				TitleOutput:        "alert-title",
-				DedupOutput:        "alert-dedup",
-				AlertContextOutput: `{"key":"value"}`,
-				GenericError:       "",
+				ID:     "0",
+				Name:   "This will be True",
+				Passed: true,
+				Functions: models.TestRuleRecordFunctions{
+					Rule: &models.TestDetectionSubRecord{
+						Output: aws.String("true"),
+					},
+					Title: &models.TestDetectionSubRecord{
+						Output: aws.String("alert-title"),
+					},
+					Dedup: &models.TestDetectionSubRecord{
+						Output: aws.String("alert-dedup"),
+					},
+					AlertContext: &models.TestDetectionSubRecord{
+						Output: aws.String(`{"key":"value"}`),
+					},
+				},
 			},
 		},
 	}

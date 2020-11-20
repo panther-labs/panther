@@ -101,22 +101,29 @@ type TestPolicyInput struct {
 }
 
 type TestPolicyOutput struct {
-	// True if all tests passed
-	TestSummary bool `json:"testSummary"`
+	Results []TestPolicyRecord `json:"results"`
+}
 
-	// List of test names that passed
-	TestsPassed []string `json:"testsPassed"`
+type TestPolicyRecord struct {
+	ID        string                    `json:"id"`
+	Name      string                    `json:"name"`
+	Passed    bool                      `json:"passed"`
+	Functions TestPolicyRecordFunctions `json:"functions"`
+	Error     *TestError                `json:"error"`
+}
 
-	// List of test names that failed
-	TestsFailed []string `json:"testsFailed"`
+type TestPolicyRecordFunctions struct {
+	Policy TestDetectionSubRecord `json:"policyFunction"`
+}
 
-	// List of test names that raised an error, along with their error message
-	TestsErrored []TestError `json:"testsErrored"`
+type TestDetectionSubRecord struct {
+	Output *string    `json:"output"`
+	Error  *TestError `json:"error"`
 }
 
 type TestError struct {
-	Name         string `json:"name"`
-	ErrorMessage string `json:"errorMessage"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }
 
 type UpdatePolicyInput struct {

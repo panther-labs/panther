@@ -125,5 +125,11 @@ func enabledRuleTestsPass(rule *models.UpdateRuleInput) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return testResults.TestSummary, nil
+
+	for _, result := range testResults.Results {
+		if !result.Passed {
+			return false, nil
+		}
+	}
+	return true, nil
 }

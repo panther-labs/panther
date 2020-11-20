@@ -120,6 +120,7 @@ func enabledPolicyTestsPass(policy *models.UpdatePolicyInput) (bool, error) {
 	if !policy.Enabled || len(policy.Tests) == 0 {
 		return true, nil
 	}
+
 	testResults, err := policyEngine.TestPolicy(&models.TestPolicyInput{
 		Body:          policy.Body,
 		ResourceTypes: policy.ResourceTypes,
@@ -128,5 +129,11 @@ func enabledPolicyTestsPass(policy *models.UpdatePolicyInput) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return testResults.TestSummary, nil
+
+	for _, result := range testResults.Results {
+		if !result.Passed {
+			return false, nil
+		}
+	}
+	return true, nil
 }

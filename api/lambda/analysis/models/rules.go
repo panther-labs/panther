@@ -75,28 +75,24 @@ type TestRuleInput struct {
 }
 
 type TestRuleOutput struct {
-	TestSummary bool             `json:"testSummary"`
-	Results     []RuleTestResult `json:"results"`
+	Results []TestRuleRecord `json:"results"`
 }
 
-type RuleTestResult struct {
-	Errored    bool `json:"errored"`
-	Passed     bool `json:"passed"`
-	RuleOutput bool `json:"ruleOutput"`
-
-	AlertContextError  string `json:"alertContextError"`
-	AlertContextOutput string `json:"alertContextOutput"`
-	ID                 string `json:"id"`
-	RuleID             string `json:"ruleId"`
-	RuleError          string `json:"ruleError"`
-	TestName           string `json:"testName"`
-	TitleError         string `json:"titleError"`
-	TitleOutput        string `json:"titleOutput"`
-	DedupError         string `json:"dedupError"`
-	DedupOutput        string `json:"dedupOutput"`
+type TestRuleRecord struct {
+	ID        string                  `json:"id"`
+	Name      string                  `json:"name"`
+	Passed    bool                    `json:"passed"`
+	Functions TestRuleRecordFunctions `json:"functions"`
 
 	// An error produced before running any of the rule functions, like import or syntax error.
-	GenericError string `json:"genericError"`
+	Error *TestError `json:"error"`
+}
+
+type TestRuleRecordFunctions struct {
+	Rule         *TestDetectionSubRecord `json:"ruleFunction"`
+	Title        *TestDetectionSubRecord `json:"titleFunction"`
+	Dedup        *TestDetectionSubRecord `json:"dedupFunction"`
+	AlertContext *TestDetectionSubRecord `json:"alertContextFunction"`
 }
 
 type UpdateRuleInput struct {
