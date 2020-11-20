@@ -121,18 +121,18 @@ func inferStructColumns(typ reflect.Type, path []string, names collisions) ([]Co
 	for i := range fields {
 		field := &fields[i]
 		fieldPath := append(path, field.Name)
-		col := Column{}
-		if err := inferColumn(&col, field, fieldPath, names); err != nil {
+		col, err := inferColumn(field, fieldPath, names)
+		if err != nil {
 			return nil, err
 		}
-		if col.Name == "" {
+		if col == nil {
 			continue
 		}
 		if _, duplicate := uniqueNames[col.Name]; duplicate {
 			return nil, newSchemaError(path, "duplicate column name")
 		}
 		uniqueNames[col.Name] = col.Name
-		columns = append(columns, col)
+		columns = append(columns, *col)
 	}
 	return columns, nil
 }
@@ -160,15 +160,14 @@ func appendStructFieldsJSON(fields []reflect.StructField, typ reflect.Type) []re
 	return fields
 }
 
-func inferColumn(col *Column, field *reflect.StructField, path []string, names collisions) error {
+func inferColumn(field *reflect.StructField, path []string, names collisions) (*Column, error) {
 	colName, err := fieldColumnName(field)
 	if err != nil {
 		// We do not want stack in a recursive function
-		return errors.WithMessagef(err, "failed to infer column name at %q", strings.Join(path, "."))
+		return nil, newSchemaError(path, "failed to infer column name")
 	}
 	if colName == "" {
-		*col = Column{}
-		return nil
+		return nil, nil
 	}
 
 	// We register a unique field name
@@ -176,16 +175,14 @@ func inferColumn(col *Column, field *reflect.StructField, path []string, names c
 
 	colType, err := inferColumnType(field.Type, path, names)
 	if err != nil {
-		// We do not want stack in a recursive function
-		return errors.WithMessagef(err, "failed to infer column type at %q", strings.Join(path, "."))
+		return nil, err
 	}
-	*col = Column{
+	return &Column{
 		Name:     colName,
 		Type:     colType,
 		Required: isFieldRequired(field),
 		Comment:  fieldComment(field),
-	}
-	return nil
+	}, nil
 }
 
 func fieldComment(field *reflect.StructField) string {
@@ -205,14 +202,17 @@ func fieldColumnName(field *reflect.StructField) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	name := field.Name
-	if jsonTag, err := tags.Get("json"); err == nil {
-		if jsonTag.Name == "-" {
-			return "", nil
-		}
-		name = jsonTag.Name
+	switch tag, err := tags.Get("json"); {
+	case err != nil:
+		// Field has no JSON struct tag, it uses the same name in JSON
+		return ColumnName(field.Name), nil
+	case tag.Name == "-":
+		// Field is explicitly omitted for JSON
+		return "", nil
+	default:
+		// Use JSON field name for deriving column name
+		return ColumnName(tag.Name), nil
 	}
-	return ColumnName(name), nil
 }
 
 // isFieldRequired checks whether a field is required or not.
@@ -256,7 +256,7 @@ func inferColumnType(typ reflect.Type, path []string, names collisions) (Type, e
 		// Make sure we fail if map key is something exotic
 		if key != TypeString {
 			// We do not want stack for errors
-			return "", newSchemaError(path, "invalid map key %q", key)
+			return "", newSchemaError(path, "invalid map key type %q (only %q supported)", key, TypeString)
 		}
 		// Distinguish map values in path
 		path = append(path, "[]")
