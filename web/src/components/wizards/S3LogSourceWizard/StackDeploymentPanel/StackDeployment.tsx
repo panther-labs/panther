@@ -49,7 +49,7 @@ const StackDeployment: React.FC = () => {
   const { stackName, body } = data?.getS3LogIntegrationTemplate ?? {};
   const cfnConsoleLink =
     `https://${pantherConfig.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${pantherConfig.AWS_REGION}#/stacks/create/review` +
-    '?templateURL=https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-log-analysis-iam/v1.0.0/template.yml' +
+    '?templateURL=https://panther-public-cloudformation-templates.s3-us-west-2.amazonaws.com/panther-log-analysis-iam/v1.12.1/template.yml' +
     `&stackName=${stackName}` +
     `&param_MasterAccountId=${pantherConfig.AWS_ACCOUNT_ID}` +
     `&param_RoleSuffix=${toStackNameFormat(values.integrationLabel)}` +
