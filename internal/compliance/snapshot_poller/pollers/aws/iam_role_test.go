@@ -122,7 +122,6 @@ func TestIAMRolesGetPolicesAWSError(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Nil(t, inlinePolicies)
 	assert.Nil(t, managedPolicies)
-
 }
 
 func TestIAMRolesGetPoliciesErrors(t *testing.T) {
