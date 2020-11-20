@@ -73,12 +73,9 @@ func pollEvents(
 
 	streamChan := make(chan *common.DataStream, 2*sqsMaxBatchSize) // use small buffer to pipeline events
 	var accumulatedMessageReceipts []*string                       // accumulate message receipts for delete at the end
-
-	readEventErrorChan := make(chan error, 1) // below go routine closes over this for errors, 1 deep buffer
 	go func() {
 		defer func() {
-			close(streamChan)         // done reading messages, this will cause processFunc() to return
-			close(readEventErrorChan) // no more writes on err chan
+			close(streamChan) // done reading messages, this will cause processFunc() to return
 		}()
 
 		// continue to read until either there are no sqs messages or we have exceeded the processing time/file limit
@@ -106,18 +103,18 @@ func pollEvents(
 			// keep reading from SQS to maximize output aggregation
 			messages, err := receiveFromSqs(ctx, sqsClient)
 			if err != nil {
-				readEventErrorChan <- err
+				zap.L().Warn("Encountered issue while polling sqs messages. Stopping polling", zap.Error(err))
 				return
 			}
 
 			if len(messages) == 0 { // no work to do but maybe more later OR reached the max sqs messages allowed in flight, either way need to break
-				break
+				return
 			}
 
 			for _, msg := range messages {
 				dataStreams, err := generateDataStreamsFunc(aws.StringValue(msg.Body))
 				if err != nil {
-					readEventErrorChan <- err
+					zap.L().Warn("Unable to process event", zap.Error(err))
 					return
 				}
 				for _, dataStream := range dataStreams {
@@ -135,10 +132,6 @@ func pollEvents(
 	dest := destinations.CreateS3Destination(jsonAPI)
 	if err := processFunc(streamChan, dest); err != nil {
 		return 0, err
-	}
-	readEventError := <-readEventErrorChan
-	if readEventError != nil {
-		return 0, readEventError
 	}
 
 	// delete messages from sqs q on success (best effort)

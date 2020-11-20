@@ -69,11 +69,10 @@ func TestStreamEvents(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	sqsMessageCount, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopReadSnsMessagesFunc)
+	sqsMessageCount, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopGenerateDataStream)
 	require.NoError(t, err)
 	assert.Equal(t, len(streamTestReceiveMessageOutput.Messages), sqsMessageCount)
 
-	time.Sleep(time.Second / 2) // allow time for all go routines to terminate
 	sqsMock.AssertExpectations(t)
 }
 
@@ -83,7 +82,7 @@ func TestStreamEventsProcessingTimeLimitExceeded(t *testing.T) {
 
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now()) // set to current time so code exits immediately
 	defer cancel()
-	sqsMessageCount, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopReadSnsMessagesFunc)
+	sqsMessageCount, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopGenerateDataStream)
 	require.NoError(t, err)
 	assert.Equal(t, 0, sqsMessageCount)
 	sqsMock.AssertExpectations(t)
@@ -97,9 +96,10 @@ func TestStreamEventsReadEventError(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	_, err := pollEvents(ctx, sqsMock, noopProcessorFunc, failReadSnsMessagesFunc)
-	require.Error(t, err)
-	assert.Equal(t, "readEventError", err.Error())
+	_, err := pollEvents(ctx, sqsMock, noopProcessorFunc, failGenerateDataStream)
+	// Failure in the generateDataStreamsFunc should no cause the function invocation to fail
+	// but we shouldn't invoke the DeleteBatch operation
+	require.NoError(t, err)
 
 	sqsMock.AssertExpectations(t)
 }
@@ -114,7 +114,7 @@ func TestStreamEventsProcessError(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	_, err := pollEvents(ctx, sqsMock, failProcessorFunc, noopReadSnsMessagesFunc)
+	_, err := pollEvents(ctx, sqsMock, failProcessorFunc, noopGenerateDataStream)
 	require.Error(t, err)
 	assert.Equal(t, "processError", err.Error())
 
@@ -129,7 +129,7 @@ func TestStreamEventsProcessErrorAndReadEventError(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	_, err := pollEvents(ctx, sqsMock, failProcessorFunc, failReadSnsMessagesFunc)
+	_, err := pollEvents(ctx, sqsMock, failProcessorFunc, failGenerateDataStream)
 	require.Error(t, err)
 	assert.Equal(t, "processError", err.Error()) // expect the processError NOT readEventError
 
@@ -139,16 +139,22 @@ func TestStreamEventsProcessErrorAndReadEventError(t *testing.T) {
 func TestStreamEventsReceiveSQSError(t *testing.T) {
 	t.Parallel()
 	sqsMock := &testutils.SqsMock{}
+	// this one succeeds
+	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(streamTestReceiveMessageOutput, nil).Once()
 	// this one fails
 	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
 		Return(&sqs.ReceiveMessageOutput{}, fmt.Errorf("receiveError")).Once()
 
+	// Should invoce delete on the first batch
+	sqsMock.On("DeleteMessageBatch", mock.Anything).
+		Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	sqsMessageCount, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopReadSnsMessagesFunc)
-	assert.Error(t, err)
-	assert.Equal(t, 0, sqsMessageCount)
-	assert.Equal(t, "failure receiving messages from https://fakesqsurl: receiveError", err.Error())
+	sqsMessageCount, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopGenerateDataStream)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, sqsMessageCount)
 
 	sqsMock.AssertExpectations(t)
 }
@@ -172,7 +178,7 @@ func TestStreamEventsDeleteSQSError(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	sqsMessageCount, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopReadSnsMessagesFunc)
+	sqsMessageCount, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopGenerateDataStream)
 
 	// keep sure we get error logging
 	actualLogs := logs.AllUntimed()
@@ -216,11 +222,11 @@ func failProcessorFunc(streamChan <-chan *common.DataStream, _ destinations.Dest
 	return fmt.Errorf("processError")
 }
 
-func noopReadSnsMessagesFunc(_ string) ([]*common.DataStream, error) {
+func noopGenerateDataStream(_ string) ([]*common.DataStream, error) {
 	return make([]*common.DataStream, 1), nil
 }
 
 // simulated error parsing sqs message or reading s3 object
-func failReadSnsMessagesFunc(_ string) ([]*common.DataStream, error) {
+func failGenerateDataStream(_ string) ([]*common.DataStream, error) {
 	return nil, fmt.Errorf("readEventError")
 }
