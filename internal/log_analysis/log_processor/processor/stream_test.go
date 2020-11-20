@@ -133,12 +133,14 @@ func TestStreamEventsProcessErrorAndReadEventError(t *testing.T) {
 	sqsMock := &testutils.SqsMock{}
 	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
 		Return(streamTestReceiveMessageOutput, nil).Once() // Should be called only once because operation fails
+	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(&sqs.ReceiveMessageOutput{}, nil).Once() // this one return 0 messages, which breaks the loop
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	count, err := pollEvents(ctx, sqsMock, failProcessorFunc, failGenerateDataStream)
 	require.Error(t, err)
-	assert.Equal(t, "processError", err.Error()) // expect the processError NOT readEventError
+	assert.Equal(t, "processError", err.Error())
 	require.Equal(t, 0, count)
 
 	sqsMock.AssertExpectations(t)

@@ -22,7 +22,6 @@ import (
 	"context"
 	"runtime"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -74,12 +73,10 @@ func pollEvents(
 
 	streamChan := make(chan *common.DataStream, 2*sqsMaxBatchSize) // use small buffer to pipeline events
 	var accumulatedMessageReceipts []*string                       // accumulate message receipts for delete at the end
-	var wg sync.WaitGroup
-	wg.Add(1)
+
 	go func() {
 		defer func() {
 			close(streamChan) // done reading messages, this will cause processFunc() to return
-			wg.Done()
 		}()
 
 		// continue to read until either there are no sqs messages or we have exceeded the processing time/file limit
@@ -138,8 +135,6 @@ func pollEvents(
 	if err := processFunc(streamChan, dest); err != nil {
 		return 0, err
 	}
-
-	wg.Wait()
 
 	// delete messages from sqs q on success (best effort)
 	sqsbatch.DeleteMessageBatch(sqsClient, common.Config.SqsQueueURL, accumulatedMessageReceipts)
