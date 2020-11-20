@@ -107,7 +107,7 @@ func pollEvents(
 			// keep reading from SQS to maximize output aggregation
 			messages, err := receiveFromSqs(ctx, sqsClient)
 			if err != nil {
-				zap.L().Warn("Encountered issue while polling sqs messages. Stopping polling", zap.Error(err))
+				zap.L().Error("Encountered issue while polling sqs messages. Stopping polling", zap.Error(err))
 				return
 			}
 
@@ -118,13 +118,17 @@ func pollEvents(
 			for _, msg := range messages {
 				dataStreams, err := generateDataStreamsFunc(aws.StringValue(msg.Body))
 				if err != nil {
+					// No need for error here. This issue can happen due to
+					// 1. Persistent AWS issues while accessing S3 object
+					// 2. Misconfiguration from user side (e.g. not configured IAM role permissions properly
+					// In both cases no need to log an error - the message will reappear in the queue after the Visibility Timeout has expired
+					// If the message fails repeatedly, it will end up in the DLQ and an alarm will fire
 					zap.L().Warn("Skipping event due to error", zap.Error(err))
 					continue
 				}
 				for _, dataStream := range dataStreams {
 					streamChan <- dataStream
 				}
-
 				accumulatedMessageReceipts = append(accumulatedMessageReceipts, msg.ReceiptHandle)
 			}
 		}
