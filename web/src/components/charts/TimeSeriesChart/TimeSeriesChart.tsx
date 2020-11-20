@@ -25,8 +25,8 @@ import { EChartOption, ECharts } from 'echarts';
 import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { stringToPaleColor } from 'Helpers/colors';
-import { getLegend } from 'Components/charts/TimeSeriesChart/options';
-import SeriesTooltip from 'Components/charts/TimeSeriesChart/SeriesTooltip';
+import { getLegend } from './options';
+import SeriesTooltip from './SeriesTooltip';
 
 import ResetButton from '../ResetButton';
 import ScaleControls from '../ScaleControls';
@@ -143,6 +143,11 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         smooth: true,
         itemStyle: {
           color: theme.colors[color || severityColors[label]] || stringToPaleColor(label),
+        },
+        label: {
+          show: true,
+          position: 'top',
+          color: '#fff',
         },
         data: values
           .map((v, i) => {
