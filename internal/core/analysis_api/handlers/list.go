@@ -29,11 +29,9 @@ import (
 )
 
 const (
-	// defaultSortBy        = "displayName"
-	// defaultSortAscending = "ascending"
 	defaultSortDir  = "ascending"
-	defaultPage          = 1
-	defaultPageSize      = 25
+	defaultPage     = 1
+	defaultPageSize = 25
 )
 
 var (

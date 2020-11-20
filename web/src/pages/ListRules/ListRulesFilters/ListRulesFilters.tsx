@@ -45,7 +45,7 @@ const defaultValues = {
 
 const sortingOpts: SortingOptions = [
   {
-    opt: 'Name Ascending', // TODO: rename this "Alphabetical order" for clarity? Also, add name descending?
+    opt: 'Name Ascending',
     resolution: {
       sortBy: 'displayName' as ListRulesSortFieldsEnum,
       sortDir: 'ascending' as SortDirEnum,
