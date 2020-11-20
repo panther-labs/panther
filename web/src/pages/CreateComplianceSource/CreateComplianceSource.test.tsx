@@ -85,7 +85,6 @@ describe('CreateComplianceSource', () => {
 
     // Expect to see a loading animation while the resource is being validated ...
     expect(getByAltText('Validating source health...')).toBeInTheDocument();
-    expect(getByText('Cancel')).toBeInTheDocument();
 
     // ... replaced by a success screen
     expect(await findByText('Everything looks good!')).toBeInTheDocument();
@@ -143,7 +142,6 @@ describe('CreateComplianceSource', () => {
 
     // Expect to see a loading animation while the resource is being validated ...
     expect(getByAltText('Validating source health...')).toBeInTheDocument();
-    expect(getByText('Cancel')).toBeInTheDocument();
 
     // ... replaced by a failure screen
     expect(await findByText("Something didn't go as planned")).toBeInTheDocument();

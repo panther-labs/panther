@@ -72,12 +72,7 @@ const ValidationPanel: React.FC = () => {
                 title="Configure Notifications For New Data"
                 subtitle={[
                   'You can now follow the ',
-                  <Link
-                    key={0}
-                    external
-                    title="SNS Notification Setup"
-                    href={LOG_ONBOARDING_SNS_DOC_URL}
-                  >
+                  <Link key={0} external href={LOG_ONBOARDING_SNS_DOC_URL}>
                     steps found here
                   </Link>,
                   ' to notify Panther when new data becomes available for analysis.',
