@@ -26,16 +26,23 @@ import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { stringToPaleColor } from 'Helpers/colors';
 import { getLegend } from 'Components/charts/TimeSeriesChart/options';
+import MultiSeriesTooltip from 'Components/charts/TimeSeriesChart/MultiSeriesTooltip';
+import SeriesTooltip from 'Components/charts/TimeSeriesChart/SeriesTooltip';
+
 import ResetButton from '../ResetButton';
 import ScaleControls from '../ScaleControls';
 
 type SeriesMetadata = {
-  color: keyof typeof Theme['colors'];
+  color?: keyof typeof Theme['colors'];
 };
 
-interface TimeSeriesLinesProps {
+type SeriesDataMetadata = {
+  metadata?: { [key: string]: string };
+};
+
+interface TimeSeriesChartProps {
   /** The data for the time series */
-  data: LongSeriesData | FloatSeriesData;
+  data: (LongSeriesData | FloatSeriesData) & SeriesDataMetadata;
 
   /**
    * The number of segments that the X-axis is split into
@@ -96,7 +103,7 @@ function formatDateString(timestamp) {
   return `${hourFormat(timestamp)}\n${dateFormat(timestamp).toUpperCase()}`;
 }
 
-const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
+const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   data,
   zoomable = false,
   scaleControls = true,
@@ -142,7 +149,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
           .map((v, i) => {
             return {
               name: label,
-              value: [data.timestamps[i], v],
+              value: [data.timestamps[i], v, data.metadata ? data.metadata[i] : null],
             };
           })
           /* This reverse is needed cause data provided by API are coming by descending timestamp.
@@ -205,20 +212,11 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
               <Text fontSize="small-medium" mb={3}>
                 {formatDatetime(params[0].value[0], true)}
               </Text>
-              <Flex as="dl" direction="column" spacing={2} fontSize="x-small">
-                {params.map(seriesTooltip => (
-                  <Flex key={seriesTooltip.seriesName} justify="space-between">
-                    <Box as="dt">
-                      <span dangerouslySetInnerHTML={{ __html: seriesTooltip.marker }} />
-                      {seriesTooltip.seriesName}
-                    </Box>
-                    <Box as="dd" font="mono" fontWeight="bold">
-                      {seriesTooltip.value[1].toLocaleString('en')}
-                      {units ? ` ${units}` : ''}
-                    </Box>
-                  </Flex>
-                ))}
-              </Flex>
+              {params.length === 1 ? (
+                <SeriesTooltip seriesInfo={params[0]} units={units} />
+              ) : (
+                <MultiSeriesTooltip params={params} units={units} />
+              )}
             </Box>
           );
 
@@ -331,7 +329,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       // eslint-disable-next-line func-names
       newChart.on('restore', function () {
         const options = chartOptions;
-        if (options.legend.selected) {
+        if (options.legend?.selected) {
           options.legend.selected = Object.keys(options.legend.selected).reduce((acc, cur) => {
             acc[cur] = true;
             return acc;
@@ -358,8 +356,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       <Box position="absolute" width="200px" ml={1} fontWeight="bold">
         {title}
       </Box>
-
-      <Box position="absolute" pl="210px" pr="50px" width={1}>
+      <Box position="absolute" pl={hideLegend ? '50px' : '210px'} pr="50px" width={1}>
         <Flex align="center" justify="space-between">
           {scaleControls && <ScaleControls scaleType={scaleType} onSelect={setScaleType} />}
           <Box zIndex={5}>
