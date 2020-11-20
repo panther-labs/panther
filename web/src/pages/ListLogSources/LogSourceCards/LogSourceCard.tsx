@@ -24,6 +24,7 @@ import { LogIntegration } from 'Generated/schema';
 import { PANTHER_USER_ID } from 'Source/constants';
 import urls from 'Source/urls';
 import SourceHealthBadge from 'Components/badges/SourceHealthBadge';
+import { getElapsedTime } from 'Helpers/utils';
 import LogSourceCardOptions from './LogSourceCardOptions';
 
 interface LogSourceCardProps {
@@ -62,10 +63,20 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
     }
   }, [sourceHealth]);
 
+  const lastReceivedMessage = React.useMemo(() => {
+    return `Last Received Data ${getElapsedTime(
+      new Date(source.lastEventReceived).getTime() / 1000
+    )}`;
+  }, [source.lastEventReceived]);
+
   return (
     <GenericItemCard>
       <GenericItemCard.Logo src={logo} />
-      {!isCreatedByPanther && <LogSourceCardOptions source={source} />}
+
+      <GenericItemCard.Options>
+        <GenericItemCard.Date date={lastReceivedMessage} />
+        {!isCreatedByPanther && <LogSourceCardOptions source={source} />}
+      </GenericItemCard.Options>
       <GenericItemCard.Body>
         {!isCreatedByPanther ? (
           <GenericItemCard.Heading>

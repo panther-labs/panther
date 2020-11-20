@@ -286,9 +286,8 @@ describe('RuleDetails', () => {
     expect(loadingListingInterfaceElement).toBeTruthy();
     await waitForElementToBeRemoved(loadingListingInterfaceElement);
     expect(getByText('Alert 1')).toBeInTheDocument();
-
-    expect(getByText('Alert Type')).toBeInTheDocument();
     expect(getByText('Rule Match')).toBeInTheDocument();
+
     expect(getAllByText('Destinations').length).toEqual(2);
     expect(getByText('Log Types')).toBeInTheDocument();
     expect(getByText('Events')).toBeInTheDocument();
@@ -354,8 +353,6 @@ describe('RuleDetails', () => {
     expect(loadingListingInterfaceElement).toBeTruthy();
     await waitForElementToBeRemoved(loadingListingInterfaceElement);
     expect(getByText('Error 1')).toBeInTheDocument();
-
-    expect(getByText('Alert Type')).toBeInTheDocument();
     expect(getByText('Rule Error')).toBeInTheDocument();
 
     expect(getAllByText('Destinations').length).toEqual(2);

@@ -31,14 +31,15 @@ import (
 
 // Example Eks API return values
 var (
-	ExampleEksClusterName     = aws.String("example-cluster")
-	ExampleEksClusterArn      = aws.String("arn:aws:eks:us-west-2:123456789012:cluster/example-cluster")
-	ExampleFargateProfileName = aws.String("example-fargate-profile")
-	ExampleNodegroupName      = aws.String("example-nodegroup-name")
-	ExampleNodegroupArn       = aws.String("arn:aws:eks:us-west-2:123456789012:service/example-service")
-	ExampleTags               = map[string]*string{*aws.String("test-tag-key"): aws.String("test-tag-value")}
-	ExampleLabels             = map[string]*string{*aws.String("test-label-key"): aws.String("test-label-value")}
-	ExampleCreatedAt          = aws.Time(time.Unix(1579896067, 0))
+	ExampleEksClusterName      = aws.String("example-cluster")
+	ExampleEksClusterNameMulti = aws.String("example-cluster-multi-profile")
+	ExampleEksClusterArn       = aws.String("arn:aws:eks:us-west-2:123456789012:cluster/example-cluster")
+	ExampleFargateProfileName  = aws.String("example-fargate-profile")
+	ExampleNodegroupName       = aws.String("example-nodegroup-name")
+	ExampleNodegroupArn        = aws.String("arn:aws:eks:us-west-2:123456789012:service/example-service")
+	ExampleTags                = map[string]*string{*aws.String("test-tag-key"): aws.String("test-tag-value")}
+	ExampleLabels              = map[string]*string{*aws.String("test-label-key"): aws.String("test-label-value")}
+	ExampleCreatedAt           = aws.Time(time.Unix(1579896067, 0))
 
 	ExampleEksListClusters = &eks.ListClustersOutput{
 		Clusters: []*string{
@@ -309,7 +310,11 @@ func (m *MockEks) ListFargateProfilesPages(
 	if args.Error(0) != nil {
 		return args.Error(0)
 	}
-	paginationFunction(ExampleListFargateProfile, true)
+	if *in.ClusterName == *ExampleEksClusterNameMulti {
+		paginationFunction(ExampleListFargateProfilesMulti, true)
+	} else {
+		paginationFunction(ExampleListFargateProfile, true)
+	}
 	return args.Error(0)
 }
 

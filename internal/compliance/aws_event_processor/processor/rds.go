@@ -57,6 +57,7 @@ func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		resourceARN, err := arn.Parse(detail.Get("requestParameters.resourceName").Str)
 		if err != nil {
 			zap.L().Error("rds: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Error(err))
+			return nil
 		}
 		if strings.HasPrefix(resourceARN.Resource, "db:") {
 			rdsARN = resourceARN
