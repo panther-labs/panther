@@ -35,8 +35,12 @@ type SeriesMetadata = {
   color?: keyof typeof Theme['colors'];
 };
 
-type SeriesDataMetadata = {
-  metadata?: { [key: string]: string };
+export type Metadata = {
+  tooltip: any;
+};
+
+export type SeriesDataMetadata = {
+  metadata?: Metadata[];
 };
 
 interface TimeSeriesChartProps {
@@ -126,7 +130,6 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   const timeSeriesChart = React.useRef<ECharts>(null);
   const container = React.useRef<HTMLDivElement>(null);
   const tooltip = React.useRef<HTMLDivElement>(document.createElement('div'));
-
   /*
    * Defining ChartOptions
    */

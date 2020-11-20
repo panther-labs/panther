@@ -16,40 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import React from 'react';
-import { Box, Flex, SimpleGrid } from 'pouncejs';
-import { stringToPaleColor } from 'Helpers/colors';
+import { Box, Flex } from 'pouncejs';
+import { Metadata } from './TimeSeriesChart';
 
 const SeriesTooltip: React.FC<{ seriesInfo: any; units: string }> = ({ seriesInfo, units }) => {
-  const [, value, metadata] = seriesInfo.value;
+  const [, value, metadata]: [any, number, Metadata] = seriesInfo.value;
   return (
     <Flex direction="column" spacing={2} fontSize="x-small">
       <Flex key={seriesInfo.seriesName} justify="space-between">
-        {metadata ? (
-          <SimpleGrid columns={2} spacing={3}>
-            {Object.keys(metadata).map(logType => (
-              <Flex key={logType} justify="space-between" spacing={2}>
-                <Flex spacing={2} align="center">
-                  <Box
-                    as="span"
-                    width={12}
-                    height={12}
-                    backgroundColor={stringToPaleColor(logType) as any}
-                    // @ts-ignore The pounce property is not transformed for unknown reasons
-                    borderRadius="10px"
-                  />
-                  <Box as="span" fontSize="x-small" fontWeight="normal" lineHeight="typical">
-                    {logType}
-                  </Box>
-                </Flex>
-                <Box font="mono" fontWeight="bold">
-                  {metadata[logType].toLocaleString('en')}
-                  {units ? ` ${units}` : ''}
-                </Box>
-              </Flex>
-            ))}
-          </SimpleGrid>
+        {metadata?.tooltip ? (
+          metadata.tooltip
         ) : (
-          <>
+          <React.Fragment>
             <Box as="dt">
               <span dangerouslySetInnerHTML={{ __html: seriesInfo.marker }} />
               {seriesInfo.seriesName}
@@ -58,7 +36,7 @@ const SeriesTooltip: React.FC<{ seriesInfo: any; units: string }> = ({ seriesInf
               {value.toLocaleString('en')}
               {units ? ` ${units}` : ''}
             </Box>
-          </>
+          </React.Fragment>
         )}
       </Flex>
     </Flex>
