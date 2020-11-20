@@ -116,7 +116,7 @@ func pollEvents(
 			for _, msg := range messages {
 				dataStreams, err := generateDataStreamsFunc(aws.StringValue(msg.Body))
 				if err != nil {
-					zap.L().Warn("Unable to process event", zap.Error(err))
+					zap.L().Warn("Skipping event due to error", zap.Error(err))
 					continue
 				}
 				for _, dataStream := range dataStreams {
