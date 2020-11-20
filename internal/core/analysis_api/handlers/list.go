@@ -171,51 +171,51 @@ func sortByDisplayName(items []tableItem, ascending bool) {
 }
 
 func sortByStatus(items []tableItem, ascending bool, compliance map[string]complianceStatus) {
-		sort.Slice(items, func(i, j int) bool {
-			left, right := items[i], items[j]
+	sort.Slice(items, func(i, j int) bool {
+		left, right := items[i], items[j]
 
-			// Group all disabled policies together at the end.
-			// Technically, disabled policies still have a pass/fail status,
-			// we just don't show it yet in the web app.
-			// The "disabled" status overrides the "pass/fail" status
-			// TODO - remove this block once enabled/disabled status is shown separately (ETA v1.9)
-			//
-			// So the sort order is essentially:
-			//     PASS < FAIL < ERROR < PASS/DISABLED < FAIL/DISABLED < ERROR/DISABLED
-			// Which will appear to the user as:
-			//     PASS < FAIL < ERROR < DISABLED
-			if left.Enabled != right.Enabled {
-				// Same logic as sortByEnabled()
-				if left.Enabled && !right.Enabled {
-					return ascending
-				}
-				return !ascending
+		// Group all disabled policies together at the end.
+		// Technically, disabled policies still have a pass/fail status,
+		// we just don't show it yet in the web app.
+		// The "disabled" status overrides the "pass/fail" status
+		// TODO - remove this block once enabled/disabled status is shown separately (ETA v1.9)
+		//
+		// So the sort order is essentially:
+		//     PASS < FAIL < ERROR < PASS/DISABLED < FAIL/DISABLED < ERROR/DISABLED
+		// Which will appear to the user as:
+		//     PASS < FAIL < ERROR < DISABLED
+		if left.Enabled != right.Enabled {
+			// Same logic as sortByEnabled()
+			if left.Enabled && !right.Enabled {
+				return ascending
 			}
+			return !ascending
+		}
 
-			leftStatus, rightStatus := compliance[left.ID], compliance[right.ID]
+		leftStatus, rightStatus := compliance[left.ID], compliance[right.ID]
 
-			// Group by compliance status (pass/fail/error)
-			if leftStatus != rightStatus {
-				if ascending {
-					return statusSortPriority[leftStatus.Status] < statusSortPriority[rightStatus.Status]
-				}
-				return statusSortPriority[leftStatus.Status] > statusSortPriority[rightStatus.Status]
+		// Group by compliance status (pass/fail/error)
+		if leftStatus != rightStatus {
+			if ascending {
+				return statusSortPriority[leftStatus.Status] < statusSortPriority[rightStatus.Status]
 			}
+			return statusSortPriority[leftStatus.Status] > statusSortPriority[rightStatus.Status]
+		}
 
-			// Same pass/fail and enabled status: use sort index for ERROR and FAIL
-			// This will sort by "top failing": the most failures in order of severity
-			if leftStatus.Status == compliancemodels.StatusError || leftStatus.Status == compliancemodels.StatusFail {
-				leftIndex := compliance[left.ID].SortIndex
-				rightIndex := compliance[right.ID].SortIndex
-				if ascending {
-					return leftIndex > rightIndex
-				}
-				return leftIndex < rightIndex
+		// Same pass/fail and enabled status: use sort index for ERROR and FAIL
+		// This will sort by "top failing": the most failures in order of severity
+		if leftStatus.Status == compliancemodels.StatusError || leftStatus.Status == compliancemodels.StatusFail {
+			leftIndex := compliance[left.ID].SortIndex
+			rightIndex := compliance[right.ID].SortIndex
+			if ascending {
+				return leftIndex > rightIndex
 			}
+			return leftIndex < rightIndex
+		}
 
-			// Default: sort by ID
-			return left.ID < right.ID
-		})
+		// Default: sort by ID
+		return left.ID < right.ID
+	})
 }
 
 func sortByEnabled(items []tableItem, ascending bool) {
