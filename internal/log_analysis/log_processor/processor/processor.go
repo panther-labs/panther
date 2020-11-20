@@ -72,6 +72,18 @@ func Process(
 		// Process streams serially to keep memory requirements low
 		processStreams = func() error {
 			defer close(resultsChannel)
+			// ensure we close the streams before returning to free resources
+			defer func() {
+				for dataStream := range dataStreams {
+					err = dataStream.Closer.Close()
+					if err != nil {
+						zap.L().Warn("failed to close data stream",
+							zap.String("sourceId", dataStream.Source.IntegrationID),
+							zap.String("sourceLabel", dataStream.Source.IntegrationLabel),
+							zap.Error(err))
+					}
+				}
+			}()
 			// it is important to process the streams serially to manage memory!
 			for dataStream := range dataStreams {
 				processor, err := newProcessor(dataStream)
@@ -84,14 +96,6 @@ func Process(
 				}
 				if err := processor.run(resultsChannel); err != nil {
 					return err
-				}
-				// at this point the file has been processed
-				err = dataStream.Closer.Close()
-				if err != nil {
-					zap.L().Warn("failed to close data stream",
-						zap.String("sourceId", dataStream.Source.IntegrationID),
-						zap.String("sourceLabel", dataStream.Source.IntegrationLabel),
-						zap.Error(err))
 				}
 			}
 			return nil

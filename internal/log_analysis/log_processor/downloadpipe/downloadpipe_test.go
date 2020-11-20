@@ -23,9 +23,13 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func TestDownloadPipe(t *testing.T) {
@@ -50,7 +54,12 @@ func doPipe(t *testing.T, downloader *s3manager.Downloader, dataWritten []byte, 
 	var dataRead bytes.Buffer
 	var wg sync.WaitGroup
 
-	downloadPipe := NewDownloadPipe(downloader)
+	getObjectInput := &s3.GetObjectInput{
+		Bucket: aws.String("bucket"),
+		Key:    aws.String("key"),
+	}
+
+	downloadPipe := NewDownloadPipe(&testutils.S3Mock{}, getObjectInput)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()

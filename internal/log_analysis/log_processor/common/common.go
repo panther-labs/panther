@@ -40,9 +40,9 @@ import (
 )
 
 const (
-	// NOTE: max buffer size in ram is 50M
-	UploaderConcurrency = 5
-	UploaderPartSize    = 10 * 1024 * 1024
+	MaxS3BufferSizeBytes = 50 * 1024 * 1024
+	UploaderPartSize     = 18 * 1024 * 1024 // the size of this affects performance
+	UploaderConcurrency  = MaxS3BufferSizeBytes / UploaderPartSize
 
 	MaxRetries     = 13 // ~7'
 	EventDelimiter = '\n'

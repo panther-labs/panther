@@ -147,7 +147,7 @@ func (m *mockSns) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
 
 func initTest() {
 	common.Config.AwsLambdaFunctionMemorySize = 1024
-	maxS3BufferSizeBytes = defaultMaxS3BufferSizeBytes
+	maxS3BufferSizeBytes = common.MaxS3BufferSizeBytes
 }
 
 type testS3Destination struct {

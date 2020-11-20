@@ -53,12 +53,11 @@ const (
 	// maximum number of buffers in memory (if exceeded buffers are flushed)
 	maxBuffers = 256
 
-	bytesPerMB                  = 1024 * 1024
-	defaultMaxS3BufferSizeBytes = 50 * bytesPerMB
+	bytesPerMB = 1024 * 1024
 )
 
 var (
-	maxS3BufferSizeBytes = defaultMaxS3BufferSizeBytes // the largest we let any single buffer get (var so we can set in tests)
+	maxS3BufferSizeBytes = common.MaxS3BufferSizeBytes // the largest we let any single buffer get (var so we can set in tests)
 
 	newLineDelimiter = []byte("\n")
 

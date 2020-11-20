@@ -31,7 +31,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/sns"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
@@ -152,34 +151,15 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 		return nil, nil
 	}
 
-	downloader := s3manager.NewDownloaderWithClient(s3Client)
-
 	getObjectInput := &s3.GetObjectInput{
 		Bucket: &s3Object.S3Bucket,
 		Key:    &s3Object.S3ObjectKey,
 	}
 
-	downloadPipe := downloadpipe.NewDownloadPipe(downloader)
+	downloadPipe := downloadpipe.NewDownloadPipe(s3Client, getObjectInput)
 
 	// run the downloader in the background writing into the pipe
-	go func() {
-		// while not important to processing, errors on close could indicate other issues
-		var closeErr error
-		defer func() {
-			if closeErr != nil {
-				zap.L().Error("s3 download pipe close failed", zap.Error(closeErr))
-			}
-		}()
-
-		_, err = downloader.Download(downloadPipe, getObjectInput)
-		if err != nil {
-			err = errors.Wrapf(err, "Download() failed for s3://%s/%s", s3Object.S3Bucket, s3Object.S3ObjectKey)
-			zap.L().Error("s3 download failed", zap.Error(err))
-			closeErr = downloadPipe.CloseWriterWithError(err) // this will cause the reader to fail
-		} else {
-			closeErr = downloadPipe.CloseWriter()
-		}
-	}()
+	go downloadPipe.Run()
 
 	bufferedReader := bufio.NewReader(downloadPipe)
 
