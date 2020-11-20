@@ -43,6 +43,7 @@ type snsMessage struct {
 
 // Tests can replace this with a mock implementation
 var getSnsClient = buildSnsClient
+
 // SNS subject size limit
 const maxTitleSize = 100
 
@@ -78,7 +79,7 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 			Success:    false,
 		}
 	}
-	
+
 	title := generateAlertTitle(alert)
 
 	snsMessageInput := &sns.PublishInput{
@@ -88,7 +89,7 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 		Subject:          aws.String(title),
 		MessageStructure: aws.String("json"),
 	}
-	
+
 	snsClient, err := getSnsClient(client.session, config.TopicArn)
 	if err != nil {
 		errorMsg := "Failed to create SNS client for topic"
@@ -104,28 +105,28 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 	// Remove newlines in title
 	tmp := strings.Replace(*snsMessageInput.Subject, "\n", "", maxTitleSize)
 	// Trim title to the AWS SNS 100 char limit
-	if len(tmp) > maxTitleSize{
+	if len(tmp) > maxTitleSize {
 		*snsMessageInput.Subject = tmp[0:maxTitleSize]
 	}
 	response, err := snsClient.Publish(snsMessageInput)
-	
-		if err != nil {
-			if reqErr, ok := err.(awserr.RequestFailure); ok {
-				// Catch title edge cases and make SNS API call with generic title
-				if reqErr.StatusCode() == 400 {
-					*snsMessageInput.Subject = "New Panther Alert"
-					response, err = snsClient.Publish(snsMessageInput)
-					if err != nil {
-						zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
-						return getAlertResponseFromSNSError(err)
-					}
+
+	if err != nil {
+		if reqErr, ok := err.(awserr.RequestFailure); ok {
+			// Catch title edge cases and make SNS API call with generic title
+			if reqErr.StatusCode() == 400 {
+				*snsMessageInput.Subject = "New Panther Alert"
+				response, err = snsClient.Publish(snsMessageInput)
+				if err != nil {
+					zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
+					return getAlertResponseFromSNSError(err)
 				}
-			} else {
-				zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
-				return getAlertResponseFromSNSError(err)
 			}
+		} else {
+			zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
+			return getAlertResponseFromSNSError(err)
 		}
-		
+	}
+
 	if response == nil {
 		return &AlertDeliveryResponse{
 			StatusCode: 500,

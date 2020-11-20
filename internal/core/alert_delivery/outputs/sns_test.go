@@ -88,7 +88,7 @@ func TestSendSns(t *testing.T) {
 	}
 	expectedSerializedSnsMessage, err := jsoniter.MarshalToString(expectedSnsMessage)
 	require.NoError(t, err)
-	
+
 	// Corrected input after validation
 	expectedSnsPublishInput := &sns.PublishInput{
 		TopicArn:         &snsOutputConfig.TopicArn,
