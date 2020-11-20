@@ -122,6 +122,9 @@ func TestProcess(t *testing.T) {
 	err = Process(streamChan, destination, newProcessorFunc)
 	require.NoError(t, err)
 	require.Equal(t, testLogEvents, destination.nEvents)
+
+	// ensure the closer was called
+	assert.True(t, dataStream.Closer.(*dummyCloser).closed)
 }
 
 func TestProcessDataStreamError(t *testing.T) {
@@ -176,6 +179,9 @@ func TestProcessDataStreamError(t *testing.T) {
 	// the error will be different due to annotation, so check each field, just compare strings for error
 	actualLog := logs.FilterMessage(expectedLogMesg).AllUntimed()[0]
 	assertLogEqual(t, expectedLog, actualLog)
+
+	// ensure the closer was called
+	assert.True(t, dataStream.Closer.(*dummyCloser).closed)
 }
 
 func TestProcessDataStreamErrorNoChannelBuffers(t *testing.T) {
@@ -420,6 +426,9 @@ func TestProcessClassifyFailure(t *testing.T) {
 		}
 		assertLogEqual(t, expected[i], actual[i])
 	}
+
+	// ensure the closer was called
+	assert.True(t, dataStream.Closer.(*dummyCloser).closed)
 }
 
 // deals with the error package inserting line numbers into errors
@@ -506,9 +515,11 @@ func makeDataStream() (dataStream *common.DataStream) {
 }
 
 type dummyCloser struct {
+	closed bool
 }
 
-func (*dummyCloser) Close() error {
+func (dc *dummyCloser) Close() error {
+	dc.closed = true
 	return nil
 }
 
@@ -533,6 +544,7 @@ var testSource = &models.SourceIntegration{
 // returns a dataStream that will cause the parse to fail
 func makeBadDataStream() (dataStream *common.DataStream) {
 	dataStream = &common.DataStream{
+		Closer: &dummyCloser{},
 		Reader: &failingReader{},
 		Source: testSource,
 	}

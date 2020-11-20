@@ -82,6 +82,7 @@ func (dp *DownloadPipe) Run() {
 	if err != nil {
 		err = errors.Wrapf(err, "Download() failed for s3://%s/%s",
 			*dp.getObjectInput.Bucket, *dp.getObjectInput.Key)
+		// FIXME: logging here _should_ not be needed as the reader will fail and log. Since this is new code keeping for now
 		zap.L().Error("s3 download failed", zap.Error(err))
 		closeErr = dp.closeWriterWithError(err) // this will cause the reader to fail
 	} else {
