@@ -98,7 +98,7 @@ const ValidationPanel: React.FC = () => {
   if (shouldShowRealTimeScreen) {
     return (
       <WizardPanel>
-        <Flex align="center" direction="column" mx="auto" width={400}>
+        <Flex align="center" direction="column" mx="auto" width={600}>
           <WizardPanel.Heading
             title="Configuring Real-Time Monitoring"
             subtitle={[
@@ -106,7 +106,9 @@ const ValidationPanel: React.FC = () => {
               <Link key={0} external href={CLOUD_SECURITY_REAL_TIME_DOC_URL}>
                 steps found here
               </Link>,
-              ' to notify Panther when new data becomes available for analysis',
+              ' to let Panther',
+              <br key={1} />,
+              'monitor your AWS Account in real-time',
             ]}
           />
           <Img nativeWidth={120} nativeHeight={120} alt="Bell" src={RealTimeNotication} />
@@ -115,11 +117,12 @@ const ValidationPanel: React.FC = () => {
               I have Setup Notifications
             </Button>
           </WizardPanel.Actions>
+          <Text fontSize="medium" color="gray-300" textAlign="center" mb={4}>
+            Panther does not validate if you{"'"}ve configured Real-Time monitoring in your AWS
+            Account. Failing to do this, will not allow Panther to receive real-time Cloudwatch
+            Events
+          </Text>
         </Flex>
-        <Text color="gray-300">
-          Panther does not validate if you{"'"}ve configured Real-Time monitoring in your AWS
-          Account. Failing to do this, will not allow Panther to receive real-time Cloudwatch Events
-        </Text>
       </WizardPanel>
     );
   }
