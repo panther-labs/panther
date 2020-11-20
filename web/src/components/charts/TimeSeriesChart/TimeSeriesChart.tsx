@@ -18,16 +18,15 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Box, Flex, Text, theme as Theme, useTheme } from 'pouncejs';
-import { formatTime, formatDatetime, remToPx, capitalize } from 'Helpers/utils';
+import { Box, Flex, theme as Theme, useTheme } from 'pouncejs';
+import { formatTime, remToPx, capitalize } from 'Helpers/utils';
 import { FloatSeriesData, LongSeriesData, FloatSeries, LongSeries } from 'Generated/schema';
 import { EChartOption, ECharts } from 'echarts';
 import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { stringToPaleColor } from 'Helpers/colors';
+import ChartTooltip, { ChartTooltipProps } from './ChartTooltip';
 import useChartOptions from './useChartOptions';
-import SeriesTooltip from './SeriesTooltip';
-
 import ResetButton from '../ResetButton';
 import ScaleControls from '../ScaleControls';
 
@@ -101,6 +100,12 @@ interface TimeSeriesChartProps {
    * This is an optional parameter that will render the text provided above legend if defined
    */
   title?: string;
+
+  /**
+   *
+   * @default ChartTooltip
+   */
+  tooltipComponent?: React.FC<ChartTooltipProps>;
 }
 
 const severityColors = mapKeys(SEVERITY_COLOR_MAP, (val, key) => capitalize(key.toLowerCase()));
@@ -123,6 +128,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   hideSeriesLabels = true,
   units,
   title,
+  tooltipComponent = ChartTooltip,
 }) => {
   const [scaleType, setScaleType] = React.useState('value');
   const theme = useTheme();
@@ -223,20 +229,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
             return '';
           }
 
-          const component = (
-            <Box font="primary" minWidth={200} boxShadow="dark250" p={2} borderRadius="medium">
-              <Text fontSize="small-medium" mb={3}>
-                {formatDatetime(params[0].value[0], true)}
-              </Text>
-              <Flex direction="column" spacing={2} fontSize="x-small">
-                {params.map((seriesInfo, i) => {
-                  return <SeriesTooltip key={i} seriesInfo={seriesInfo} units={units} />;
-                })}
-              </Flex>
-            </Box>
-          );
-
-          ReactDOM.render(component, tooltip.current);
+          ReactDOM.render(tooltipComponent({ params, units }), tooltip.current);
           return tooltip.current.innerHTML;
         },
       },
