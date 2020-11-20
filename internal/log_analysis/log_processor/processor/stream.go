@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/pkg/errors"
@@ -35,6 +36,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
+	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 const (
@@ -74,15 +76,14 @@ func pollEvents(
 	streamChan := make(chan *common.DataStream, 2*sqsMaxBatchSize) // use small buffer to pipeline events
 	var accumulatedMessageReceipts []*string                       // accumulate message receipts for delete at the end
 
-	readEventErrorChan := make(chan error, 1) // below go routine closes over this for errors, 1 deep buffer
 	go func() {
 		defer func() {
-			close(streamChan)         // done reading messages, this will cause processFunc() to return
-			close(readEventErrorChan) // no more writes on err chan
+			close(streamChan) // done reading messages, this will cause processFunc() to return
 		}()
 
 		// continue to read until either there are no sqs messages or we have exceeded the processing time/file limit
 		highMemoryCounter := 0
+
 		for len(accumulatedMessageReceipts) < processingMaxFilesLimit {
 			select {
 			case <-ctx.Done():
@@ -106,24 +107,28 @@ func pollEvents(
 			// keep reading from SQS to maximize output aggregation
 			messages, err := receiveFromSqs(ctx, sqsClient)
 			if err != nil {
-				readEventErrorChan <- err
+				zap.L().Error("Encountered issue while polling sqs messages. Stopping polling", zap.Error(err))
 				return
 			}
 
 			if len(messages) == 0 { // no work to do but maybe more later OR reached the max sqs messages allowed in flight, either way need to break
-				break
+				return
 			}
 
 			for _, msg := range messages {
 				dataStreams, err := generateDataStreamsFunc(aws.StringValue(msg.Body))
 				if err != nil {
-					readEventErrorChan <- err
-					return
+					// No need for error here. This issue can happen due to
+					// 1. Persistent AWS issues while accessing S3 object
+					// 2. Misconfiguration from user side (e.g. not configured IAM role permissions properly
+					// In both cases no need to log an error - the message will reappear in the queue after the Visibility Timeout has expired
+					// If the message fails repeatedly, it will end up in the DLQ and an alarm will fire
+					zap.L().Warn("Skipping event due to error", zap.Error(err))
+					continue
 				}
 				for _, dataStream := range dataStreams {
 					streamChan <- dataStream
 				}
-
 				accumulatedMessageReceipts = append(accumulatedMessageReceipts, msg.ReceiptHandle)
 			}
 		}
@@ -135,10 +140,6 @@ func pollEvents(
 	dest := destinations.CreateS3Destination(jsonAPI)
 	if err := processFunc(streamChan, dest); err != nil {
 		return 0, err
-	}
-	readEventError := <-readEventErrorChan
-	if readEventError != nil {
-		return 0, readEventError
 	}
 
 	// delete messages from sqs q on success (best effort)
@@ -174,17 +175,17 @@ func highMemoryUsage() (heapUsedMB, memAvailableMB float32, isHigh bool) {
 }
 
 func receiveFromSqs(ctx context.Context, sqsClient sqsiface.SQSAPI) ([]*sqs.Message, error) {
-	request := &sqs.ReceiveMessageInput{
+	input := &sqs.ReceiveMessageInput{
 		WaitTimeSeconds:     aws.Int64(0),
 		MaxNumberOfMessages: aws.Int64(sqsMaxBatchSize),
 		QueueUrl:            &common.Config.SqsQueueURL,
 	}
-	receiveMessageOutput, err := sqsClient.ReceiveMessageWithContext(ctx, request)
+	output, err := sqsClient.ReceiveMessageWithContext(ctx, input)
 
-	if err != nil && err != context.DeadlineExceeded && err != context.Canceled {
+	if err != nil && !awsutils.IsAnyError(err, request.CanceledErrorCode) {
 		err = errors.Wrapf(err, "failure receiving messages from %s", common.Config.SqsQueueURL)
 		return nil, err
 	}
 
-	return receiveMessageOutput.Messages, nil
+	return output.Messages, nil
 }
