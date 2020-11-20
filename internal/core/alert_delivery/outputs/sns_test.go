@@ -56,14 +56,14 @@ func TestSendSns(t *testing.T) {
 			"key": "value",
 		},
 	}
-
-	analysisName := "policyName"
+	// Newline in analysis name is used for SNS subject restriction input validation
+	analysisName := "\npolicyName"
 	for i := 0; i < 100; i++ {
 		analysisName += "a"
 	}
 	alert.AnalysisName = aws.String(analysisName)
 
-	defaultMessage := Notification{
+	expectedDefaultMessage := Notification{
 		ID:          "policyId",
 		Type:        alertModels.PolicyType,
 		Name:        aws.String(analysisName),
@@ -78,22 +78,23 @@ func TestSendSns(t *testing.T) {
 			"key": "value",
 		},
 	}
-
-	defaultSerializedMessage, err := jsoniter.MarshalToString(defaultMessage)
+	expectedDefaultSerializedMessage, err := jsoniter.MarshalToString(expectedDefaultMessage)
 	require.NoError(t, err)
 
 	expectedSnsMessage := &snsMessage{
-		DefaultMessage: defaultSerializedMessage,
+		DefaultMessage: expectedDefaultSerializedMessage,
 		EmailMessage: analysisName + " failed on new resources\nFor more details please visit: https://panther.io/policies/policyId\n" +
 			"Severity: severity\nRunbook: runbook\nDescription: policyDescription\nAlertContext: {\"key\":\"value\"}",
 	}
 	expectedSerializedSnsMessage, err := jsoniter.MarshalToString(expectedSnsMessage)
 	require.NoError(t, err)
+	
+	// Corrected input after validation
 	expectedSnsPublishInput := &sns.PublishInput{
 		TopicArn:         &snsOutputConfig.TopicArn,
 		Message:          &expectedSerializedSnsMessage,
 		MessageStructure: aws.String("json"),
-		Subject:          aws.String("Policy Failure: " + analysisName[0:84]),
+		Subject:          aws.String("Policy Failure: " + analysisName[1:85]),
 	}
 
 	client.On("Publish", expectedSnsPublishInput).Return(&sns.PublishOutput{MessageId: aws.String("messageId")}, nil)

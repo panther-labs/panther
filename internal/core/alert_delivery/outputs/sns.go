@@ -19,11 +19,11 @@ package outputs
  */
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
@@ -43,26 +43,8 @@ type snsMessage struct {
 
 // Tests can replace this with a mock implementation
 var getSnsClient = buildSnsClient
-
-// Helper Function handles title input validation and makes SNS API Call
-func snsPublishHelper(snsClient snsiface.SNSAPI, snsMessageInput *sns.PublishInput) (*sns.PublishOutput, error) {
-	fmt.Println("Function Here")
-	tmp := *snsMessageInput.Subject
-	// Replace line breaks to preserve original title
-	title := strings.Replace(tmp, "\n", "", 100)
-	// Restrict title length to 100 Chars
-	if len(title) > 100 {
-		*snsMessageInput.Subject = title[0:100]
-	}
-	result, err := snsClient.Publish(snsMessageInput)
-	if err != nil {
-		// If error is returned assign new title and make an additional SNS API Call
-		*snsMessageInput.Subject = "New Panther Alert"
-		result, err := snsClient.Publish(snsMessageInput)
-		return result, err
-	}
-	return result, err
-}
+// SNS subject size limit
+const maxTitleSize = 100
 
 // Sns sends an alert to an SNS Topic.
 // nolint: dupl
@@ -96,12 +78,8 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 			Success:    false,
 		}
 	}
-
+	
 	title := generateAlertTitle(alert)
-	// Relocated to snsPublishHelper Function
-	// if len(title) > 100 {
-	// 	title = title[0:100]
-	// }
 
 	snsMessageInput := &sns.PublishInput{
 		TopicArn: aws.String(config.TopicArn),
@@ -110,7 +88,7 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 		Subject:          aws.String(title),
 		MessageStructure: aws.String("json"),
 	}
-
+	
 	snsClient, err := getSnsClient(client.session, config.TopicArn)
 	if err != nil {
 		errorMsg := "Failed to create SNS client for topic"
@@ -122,14 +100,32 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 			Success:    false,
 		}
 	}
-	// Relocated to snsPublishHelper Function
-	// response, err := snsClient.Publish(snsMessageInput)
-	response, err := snsPublishHelper(snsClient, snsMessageInput)
-	if err != nil {
-		zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
-		return getAlertResponseFromSNSError(err)
-	}
 
+	// Remove newlines in title
+	tmp := strings.Replace(*snsMessageInput.Subject, "\n", "", maxTitleSize)
+	// Trim title to the AWS SNS 100 char limit
+	if len(tmp) > maxTitleSize{
+		*snsMessageInput.Subject = tmp[0:maxTitleSize]
+	}
+	response, err := snsClient.Publish(snsMessageInput)
+	
+		if err != nil {
+			if reqErr, ok := err.(awserr.RequestFailure); ok {
+				// Catch title edge cases and make SNS API call with generic title
+				if reqErr.StatusCode() == 400 {
+					*snsMessageInput.Subject = "New Panther Alert"
+					response, err = snsClient.Publish(snsMessageInput)
+					if err != nil {
+						zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
+						return getAlertResponseFromSNSError(err)
+					}
+				}
+			} else {
+				zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
+				return getAlertResponseFromSNSError(err)
+			}
+		}
+		
 	if response == nil {
 		return &AlertDeliveryResponse{
 			StatusCode: 500,
