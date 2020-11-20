@@ -34,12 +34,8 @@ type SeriesMetadata = {
   color?: keyof typeof Theme['colors'];
 };
 
-export type Metadata = {
-  tooltip: React.ReactNode;
-};
-
 export type SeriesDataMetadata = {
-  metadata?: Metadata[];
+  metadata?: any[];
 };
 
 interface TimeSeriesChartProps {
