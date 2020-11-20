@@ -80,6 +80,9 @@ func TestStreamEventsProcessingTimeLimitExceeded(t *testing.T) {
 	t.Parallel()
 	sqsMock := &testutils.SqsMock{}
 
+	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(&sqs.ReceiveMessageOutput{}, nil).Maybe()
+
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now()) // set to current time so code exits immediately
 	defer cancel()
 	sqsMessageCount, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopGenerateDataStream)
