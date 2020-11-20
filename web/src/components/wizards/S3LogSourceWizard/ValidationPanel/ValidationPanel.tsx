@@ -33,7 +33,7 @@ import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
 
 const ValidationPanel: React.FC = () => {
   const [errorMessage, setErrorMessage] = React.useState('');
-  const { goToPrevStep, reset: resetWizard, currentStepStatus, setCurrentStepStatus } = useWizardContext(); // prettier-ignore
+  const { reset: resetWizard, currentStepStatus, setCurrentStepStatus } = useWizardContext();
   const { initialValues, submitForm, resetForm } = useFormikContext<S3LogSourceWizardValues>();
   const [shouldShowNotificationsScreen, setNotificationScreenVisibility] = React.useState(
     !initialValues.integrationId
@@ -66,11 +66,6 @@ const ValidationPanel: React.FC = () => {
             alt="Validating source health..."
             src={WaitingStatus}
           />
-          <WizardPanel.Actions>
-            <Button variantColor="darkgray" onClick={goToPrevStep}>
-              Cancel
-            </Button>
-          </WizardPanel.Actions>
         </Flex>
       </WizardPanel>
     );
