@@ -25,7 +25,7 @@ import { EChartOption, ECharts } from 'echarts';
 import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { stringToPaleColor } from 'Helpers/colors';
-import { getLegend } from './options';
+import useChartOptions from './useChartOptions';
 import SeriesTooltip from './SeriesTooltip';
 
 import ResetButton from '../ResetButton';
@@ -78,9 +78,9 @@ interface TimeSeriesChartProps {
 
   /**
    * Whether to show label for series
-   * @default false
+   * @default true
    */
-  showSeriesLabel?: boolean;
+  hideSeriesLabels?: boolean;
 
   /**
    * Whether to hide legend
@@ -116,12 +116,13 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   maxZoomPeriod = 3600 * 1000 * 24,
   seriesType = 'line',
   hideLegend = false,
-  showSeriesLabel = false,
+  hideSeriesLabels = true,
   units,
   title,
 }) => {
   const [scaleType, setScaleType] = React.useState('value');
   const theme = useTheme();
+  const { getLegend } = useChartOptions();
   const timeSeriesChart = React.useRef<ECharts>(null);
   const container = React.useRef<HTMLDivElement>(null);
   const tooltip = React.useRef<HTMLDivElement>(document.createElement('div'));
@@ -148,11 +149,12 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         type: seriesType,
         symbol: 'none',
         smooth: true,
+        barMaxWidth: 24,
         itemStyle: {
           color: theme.colors[color || severityColors[label]] || stringToPaleColor(label),
         },
         label: {
-          show: showSeriesLabel,
+          show: !hideSeriesLabels,
           position: 'top',
           color: '#fff',
         },
@@ -235,7 +237,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           return tooltip.current.innerHTML;
         },
       },
-      ...(!hideLegend && { legend: getLegend({ theme, series, title }) }),
+      ...(!hideLegend && { legend: getLegend({ series, title }) }),
       xAxis: {
         type: 'time' as const,
         splitNumber: segments,

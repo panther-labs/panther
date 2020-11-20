@@ -18,16 +18,17 @@
 
 import { remToPx } from 'Helpers/utils';
 import { FloatSeries, LongSeries } from 'Generated/schema';
+import { useTheme } from 'pouncejs';
 
 type GetLegendProps = {
-  theme: any;
   series: (LongSeries | FloatSeries)[];
   title?: string;
 };
 
 type GetLegendFunc = (props: GetLegendProps) => any;
 
-export const getLegend: GetLegendFunc = ({ theme, series, title }) => {
+const getLegend: GetLegendFunc = ({ series, title }) => {
+  const theme = useTheme();
   /*
    * 'legendData' must be an array of values that matches 'series.name' in order
    * to display them in correct order and color
@@ -64,3 +65,9 @@ export const getLegend: GetLegendFunc = ({ theme, series, title }) => {
     pageButtonGap: theme.space[3] as number,
   };
 };
+
+const useChartOptions = () => ({
+  getLegend,
+});
+
+export default useChartOptions;
