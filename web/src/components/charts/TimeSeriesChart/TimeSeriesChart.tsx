@@ -74,7 +74,7 @@ interface TimeSeriesChartProps {
    * Whether to render chart as lines or bars
    * @default line
    */
-  seriesType?: 'line' | 'bar';
+  chartType?: 'line' | 'bar';
 
   /**
    * Whether to show label for series
@@ -114,7 +114,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   scaleControls = true,
   segments = 12,
   maxZoomPeriod = 3600 * 1000 * 24,
-  seriesType = 'line',
+  chartType = 'line',
   hideLegend = false,
   hideSeriesLabels = true,
   units,
@@ -146,7 +146,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     const seriesData = series.map(({ label, values, color }) => {
       return {
         name: label,
-        type: seriesType,
+        type: chartType,
         symbol: 'none',
         smooth: true,
         barMaxWidth: 24,
@@ -212,7 +212,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       tooltip: {
         trigger: 'axis' as const,
         axisPointer: {
-          type: seriesType === 'line' ? 'line' : 'none',
+          type: chartType === 'line' ? 'line' : 'none',
         },
         backgroundColor: theme.colors['navyblue-300'],
         formatter: (params: EChartOption.Tooltip.Format[]) => {
@@ -295,7 +295,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       const [echarts] = await Promise.all(
         [
           import(/* webpackChunkName: "echarts" */ 'echarts/lib/echarts'),
-          import(/* webpackChunkName: "echarts" */ `echarts/lib/chart/${seriesType}`),
+          import(/* webpackChunkName: "echarts" */ `echarts/lib/chart/${chartType}`),
           import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/tooltip'),
           zoomable && import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/dataZoom'),
           // This is needed for reset functionality
