@@ -77,6 +77,12 @@ interface TimeSeriesChartProps {
   seriesType?: 'line' | 'bar';
 
   /**
+   * Whether to show label for series
+   * @default false
+   */
+  showSeriesLabel?: boolean;
+
+  /**
    * Whether to hide legend
    * @default false
    */
@@ -110,6 +116,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   maxZoomPeriod = 3600 * 1000 * 24,
   seriesType = 'line',
   hideLegend = false,
+  showSeriesLabel = false,
   units,
   title,
 }) => {
@@ -145,7 +152,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           color: theme.colors[color || severityColors[label]] || stringToPaleColor(label),
         },
         label: {
-          show: true,
+          show: showSeriesLabel,
           position: 'top',
           color: '#fff',
         },
