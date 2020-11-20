@@ -19,10 +19,10 @@
 import React from 'react';
 import { Flex } from 'pouncejs';
 import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
-import { SeriesData } from 'Generated/schema';
+import { FloatSeriesData } from 'Generated/schema';
 
 interface EventsByLatencyProps {
-  events: SeriesData;
+  events: FloatSeriesData;
 }
 
 const EventsByLatency: React.FC<EventsByLatencyProps> = ({ events: { timestamps, series } }) => {

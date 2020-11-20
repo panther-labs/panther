@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 )
 
 func TestLowerSet(t *testing.T) {
@@ -61,9 +61,9 @@ func TestPoliciesEqual(t *testing.T) {
 		Body:          "def policy(resource): return True",
 		ID:            "My:Favorite:Policy",
 		ResourceTypes: nil,
-		OutputIds:     []string{"My Slack Channel", "Custom Webhook"},
+		OutputIDs:     []string{"My Slack Channel", "Custom Webhook"},
 		Tags:          []string{"AWS", "pci", "S3"},
-		Tests: []*models.UnitTest{
+		Tests: []models.UnitTest{
 			{
 				ExpectedResult: true,
 				Resource:       `{"first": "a", "second": "b", "third": "c"}`,
@@ -71,7 +71,7 @@ func TestPoliciesEqual(t *testing.T) {
 		},
 
 		// These fields shouldn't matter for equality testing
-		CreatedAt: models.ModifyTime(time.Now()),
+		CreatedAt: time.Now(),
 		CreatedBy: "austin",
 		VersionID: "version-the-first",
 		LowerID:   "my:favorite:policy",
@@ -81,9 +81,9 @@ func TestPoliciesEqual(t *testing.T) {
 		Body:          first.Body,
 		ID:            first.ID,
 		ResourceTypes: []string{},
-		OutputIds:     []string{"Custom Webhook", "My Slack Channel"}, // same destinations, different order
+		OutputIDs:     []string{"Custom Webhook", "My Slack Channel"}, // same destinations, different order
 		Tags:          []string{"pci", "S3", "AWS"},                   // same tags, different order
-		Tests: []*models.UnitTest{
+		Tests: []models.UnitTest{
 			{
 				ExpectedResult: true,
 				Resource:       `{"second":"b","first":"a","third":"c"}`, // same resource, different order

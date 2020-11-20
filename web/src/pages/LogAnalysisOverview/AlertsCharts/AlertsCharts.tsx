@@ -19,14 +19,14 @@
 import React from 'react';
 import { Box, Card, Flex, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
-import { SeriesData, SingleValue } from 'Generated/schema';
+import { LongSeriesData, SingleValue } from 'Generated/schema';
 import AlertSummary from 'Pages/LogAnalysisOverview/AlertSummary';
 import AlertsBySeverity from 'Pages/LogAnalysisOverview/AlertsBySeverity/AlertsBySeverity';
 import MostActiveRules from 'Pages/LogAnalysisOverview/MostActiveRules/MostActiveRules';
 
 interface LogTypeChartsProps {
   totalAlertsDelta: SingleValue[];
-  alertsBySeverity: SeriesData;
+  alertsBySeverity: LongSeriesData;
   alertsByRuleID: SingleValue[];
 }
 

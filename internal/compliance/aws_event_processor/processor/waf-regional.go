@@ -73,6 +73,7 @@ func classifyWAFRegional(detail gjson.Result, metadata *CloudTrailMetadata) []*r
 		resourceARN, err := arn.Parse(detail.Get("requestParameters.resourceArn").Str)
 		if err != nil {
 			zap.L().Error("waf-regional: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Error(err))
+			return nil
 		}
 		var changes []*resourceChange
 		if strings.HasPrefix(resourceARN.Resource, "loadbalancer/") {
@@ -106,6 +107,7 @@ func classifyWAFRegional(detail gjson.Result, metadata *CloudTrailMetadata) []*r
 		resourceARN, err := arn.Parse(detail.Get("requestParameters.resourceArn").Str)
 		if err != nil {
 			zap.L().Error("waf-regional: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Error(err))
+			return nil
 		}
 		var changes []*resourceChange
 		if strings.HasPrefix(resourceARN.Resource, "loadbalancer/") {

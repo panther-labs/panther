@@ -23,7 +23,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 )
 
@@ -33,12 +33,12 @@ const complianceCacheDuration = 3 * time.Second
 
 type complianceCacheEntry struct {
 	ExpiresAt time.Time
-	Policies  map[models.ID]*complianceStatus
+	Policies  map[string]*complianceStatus
 }
 
 type complianceStatus struct {
-	SortIndex int                     // 0 is the top failing resource, 1 the next most failing, etc
-	Status    models.ComplianceStatus // PASS, FAIL, ERROR, UNKNOWN
+	SortIndex int                               // 0 is the top failing resource, 1 the next most failing, etc
+	Status    compliancemodels.ComplianceStatus // PASS, FAIL, ERROR, UNKNOWN
 }
 
 // Compliance-api queries are not very efficient right now.
@@ -49,7 +49,7 @@ var complianceCache *complianceCacheEntry
 // Get the pass/fail compliance status for a particular policy.
 //
 // Each org's pass/fail information for all policies is cached for a very short time.
-func getComplianceStatus(policyID models.ID) (*complianceStatus, error) {
+func getComplianceStatus(policyID string) (*complianceStatus, error) {
 	entry, err := getOrgCompliance()
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func getComplianceStatus(policyID models.ID) (*complianceStatus, error) {
 	}
 
 	// A policy with no compliance entries is passing (it didn't evaluate anything)
-	return &complianceStatus{SortIndex: -1, Status: models.ComplianceStatusPASS}, nil
+	return &complianceStatus{SortIndex: -1, Status: compliancemodels.StatusPass}, nil
 }
 
 func getOrgCompliance() (*complianceCacheEntry, error) {
@@ -80,12 +80,12 @@ func getOrgCompliance() (*complianceCacheEntry, error) {
 
 	entry := &complianceCacheEntry{
 		ExpiresAt: time.Now().Add(complianceCacheDuration),
-		Policies:  make(map[models.ID]*complianceStatus, len(result.Policies)),
+		Policies:  make(map[string]*complianceStatus, len(result.Policies)),
 	}
 	for i, policy := range result.Policies {
-		entry.Policies[models.ID(policy.ID)] = &complianceStatus{
+		entry.Policies[policy.ID] = &complianceStatus{
 			SortIndex: i,
-			Status:    models.ComplianceStatus(policy.Status),
+			Status:    policy.Status,
 		}
 	}
 	complianceCache = entry
@@ -93,12 +93,12 @@ func getOrgCompliance() (*complianceCacheEntry, error) {
 }
 
 // Delete compliance status for entire policies or just some resource types within each policy.
-func complianceBatchDelete(policies []*models.DeleteEntry, resourceTypes []string) error {
+func complianceBatchDelete(policies []models.DeleteEntry, resourceTypes []string) error {
 	entries := make([]compliancemodels.DeleteStatusEntry, len(policies))
 	for i, policy := range policies {
 		entries[i] = compliancemodels.DeleteStatusEntry{
 			Policy: &compliancemodels.DeletePolicy{
-				ID:            string(policy.ID),
+				ID:            policy.ID,
 				ResourceTypes: resourceTypes,
 			},
 		}
@@ -114,11 +114,12 @@ func complianceBatchDelete(policies []*models.DeleteEntry, resourceTypes []strin
 	}
 
 	// Remove the cached status as well
-	for _, policy := range policies {
-		if complianceCache != nil {
+	if complianceCache != nil {
+		for _, policy := range policies {
 			delete(complianceCache.Policies, policy.ID)
 		}
 	}
+
 	return nil
 }
 
@@ -131,9 +132,9 @@ func updateComplianceStatus(oldItem, newItem *tableItem) error {
 	if !newItem.Enabled {
 		if oldItem != nil && oldItem.Enabled {
 			zap.L().Info("policy is now disabled - deleting compliance status",
-				zap.String("policyId", string(newItem.ID)))
+				zap.String("policyId", newItem.ID))
 			return complianceBatchDelete(
-				[]*models.DeleteEntry{{ID: newItem.ID}}, []string{})
+				[]models.DeleteEntry{{ID: newItem.ID}}, []string{})
 		}
 
 		zap.L().Debug("policy remains disabled - no compliance updates required")
@@ -144,9 +145,9 @@ func updateComplianceStatus(oldItem, newItem *tableItem) error {
 	if oldItem != nil && len(newItem.ResourceTypes) > 0 {
 		if deletedTypes := setDifference(oldItem.ResourceTypes, newItem.ResourceTypes); len(deletedTypes) > 0 {
 			zap.L().Info("policy no longer applies to some resource types - deleting compliance status",
-				zap.String("policyId", string(newItem.ID)),
+				zap.String("policyId", newItem.ID),
 				zap.Strings("deletedTypes", deletedTypes))
-			entries := []*models.DeleteEntry{{ID: newItem.ID}}
+			entries := []models.DeleteEntry{{ID: newItem.ID}}
 			if err := complianceBatchDelete(entries, deletedTypes); err != nil {
 				return err
 			}
@@ -180,13 +181,13 @@ func updateComplianceStatus(oldItem, newItem *tableItem) error {
 // all affected resources in this case.
 func updateComplianceMetadata(policy *tableItem) error {
 	zap.L().Info("updating compliance status entry",
-		zap.String("policyId", string(policy.ID)),
+		zap.String("policyId", policy.ID),
 	)
 
 	input := compliancemodels.LambdaInput{
 		UpdateMetadata: &compliancemodels.UpdateMetadataInput{
-			PolicyID:     string(policy.ID),
-			Severity:     compliancemodels.PolicySeverity(policy.Severity),
+			PolicyID:     policy.ID,
+			Severity:     policy.Severity,
 			Suppressions: policy.Suppressions,
 		},
 	}

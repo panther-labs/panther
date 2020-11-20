@@ -113,7 +113,7 @@ class Engine:
 
             import_count = import_count + 1
             # update lookup table from log type to rule
-            for log_type in raw_rule['resourceTypes']:
+            for log_type in raw_rule['logTypes']:
                 self.log_type_to_rules[log_type].append(rule)
 
         end = default_timer()
@@ -142,7 +142,7 @@ class Engine:
             import_count = import_count + 1
             # update lookup table from log type to data model
             # there should only be one data model per log type
-            for log_type in raw_data_model['resourceTypes']:
+            for log_type in raw_data_model['logTypes']:
                 self.log_type_to_data_models[log_type] = data_model
 
         end = default_timer()

@@ -27,7 +27,7 @@ class TestEngine(TestCase):
         analysis_api.get_enabled_data_models.return_value = [
             {
                 'id': 'data_model_id',
-                'resourceTypes': ['log'],
+                'logTypes': ['log'],
                 'body': 'def get_source_ip(event):\n\treturn "source_ip"',
                 'versionId': 'version',
                 'mappings': [{
@@ -49,7 +49,7 @@ class TestEngine(TestCase):
         analysis_api.get_enabled_rules.return_value = [
             {
                 'id': 'rule_id',
-                'resourceTypes': ['log'],
+                'logTypes': ['log'],
                 'body': 'def rule(event):\n\treturn True',
                 'versionId': 'version'
             }
@@ -64,7 +64,7 @@ class TestEngine(TestCase):
         analysis_api.get_enabled_rules.return_value = [
             {
                 'id': 'rule_id',
-                'resourceTypes': ['log'],
+                'logTypes': ['log'],
                 'body': 'def rule(event):\n\tif event.udm("destination"):\n\t\treturn True\n\treturn False',
                 'versionId': 'version'
             }
@@ -72,7 +72,7 @@ class TestEngine(TestCase):
         analysis_api.get_enabled_data_models.return_value = [
             {
                 'id': 'data_model_id',
-                'resourceTypes': ['log'],
+                'logTypes': ['log'],
                 'versionId': 'version',
                 'mappings': [{
                     'name': 'destination',
@@ -100,7 +100,7 @@ class TestEngine(TestCase):
         analysis_api.get_enabled_rules.return_value = [
             {
                 'id': 'rule_id_1',
-                'resourceTypes': ['log'],
+                'logTypes': ['log'],
                 'body': 'def rule(event):\n\treturn True',
                 'versionId': 'version',
                 'dedupPeriodMinutes': 120,
@@ -111,7 +111,7 @@ class TestEngine(TestCase):
             },  # This rule should match the event
             {
                 'id': 'rule_id_2',
-                'resourceTypes': ['log'],
+                'logTypes': ['log'],
                 'body': 'def rule(event):\n\treturn False',
                 'versionId': 'version'
             }  # This rule shouldn't match the event
@@ -138,17 +138,17 @@ class TestEngine(TestCase):
         analysis_api.get_enabled_rules.return_value = [
             {
                 'id': 'rule_id_1',
-                'resourceTypes': ['log'],
+                'logTypes': ['log'],
                 'body': 'def rule(event):\n\treturn True',
                 'versionId': 'version'
             }, {
                 'id': 'rule_id_2',
-                'resourceTypes': ['log'],
+                'logTypes': ['log'],
                 'body': 'def rule(event):\n\traise Exception("Found an issue")',
                 'versionId': 'version'
             }, {
                 'id': 'rule_id_3',
-                'resourceTypes': ['log'],
+                'logTypes': ['log'],
                 'body': 'def rule(event):\n\treturn True',
                 'versionId': 'version'
             }

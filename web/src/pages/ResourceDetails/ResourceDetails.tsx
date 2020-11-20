@@ -24,7 +24,6 @@ import NoResultsFound from 'Components/NoResultsFound';
 import Panel from 'Components/Panel';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import {
-  convertObjArrayValuesToCsv,
   extendResourceWithIntegrationLabel,
   getComplianceItemsTotalCount,
   extractErrorMessage,
@@ -62,11 +61,11 @@ const ResourceDetailsPage = () => {
       resourceDetailsInput: {
         resourceId: match.params.id,
       },
-      policiesForResourceInput: convertObjArrayValuesToCsv({
+      policiesForResourceInput: {
         ...pick(requestParams, acceptedRequestParams),
         resourceId: match.params.id,
         pageSize: DEFAULT_SMALL_PAGE_SIZE,
-      }),
+      },
     },
   });
 

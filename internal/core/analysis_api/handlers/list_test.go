@@ -21,75 +21,51 @@ package handlers
 import (
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 )
 
 func TestPagePoliciesPageSize1(t *testing.T) {
-	policies := []*models.PolicySummary{
-		{ID: "a", OutputIds: []string{"output-1", "output-2"}},
-		{ID: "b", OutputIds: []string{"output-3", "output-4"}},
-		{ID: "c", OutputIds: []string{"output-5", "output-6"}},
-		{ID: "d", OutputIds: []string{"output-7", "output-8"}}}
-	result := pagePolicies(policies, 1, 1)
-	expected := &models.PolicyList{
-		Paging: &models.Paging{
-			ThisPage:   aws.Int64(1),
-			TotalItems: aws.Int64(4),
-			TotalPages: aws.Int64(4),
-		},
-		Policies: []*models.PolicySummary{{ID: "a", OutputIds: []string{"output-1", "output-2"}}},
-	}
-	assert.Equal(t, expected, result)
+	items := []tableItem{
+		{ID: "a", OutputIDs: []string{"output-1", "output-2"}},
+		{ID: "b", OutputIDs: []string{"output-3", "output-4"}},
+		{ID: "c", OutputIDs: []string{"output-5", "output-6"}},
+		{ID: "d", OutputIDs: []string{"output-7", "output-8"}}}
+	paging, truncation := pageItems(items, 1, 1)
 
-	result = pagePolicies(policies, 1, 2)
-	expected.Paging.ThisPage = aws.Int64(2)
-	expected.Policies = []*models.PolicySummary{{ID: "b", OutputIds: []string{"output-3", "output-4"}}}
-	assert.Equal(t, expected, result)
+	assert.Equal(t, models.Paging{ThisPage: 1, TotalItems: 4, TotalPages: 4}, paging)
+	assert.Equal(t, []tableItem{items[0]}, truncation)
 
-	result = pagePolicies(policies, 1, 3)
-	expected.Paging.ThisPage = aws.Int64(3)
-	expected.Policies = []*models.PolicySummary{{ID: "c", OutputIds: []string{"output-5", "output-6"}}}
-	assert.Equal(t, expected, result)
+	paging, truncation = pageItems(items, 2, 1)
+	assert.Equal(t, models.Paging{ThisPage: 2, TotalItems: 4, TotalPages: 4}, paging)
+	assert.Equal(t, []tableItem{items[1]}, truncation)
 
-	result = pagePolicies(policies, 1, 4)
-	expected.Paging.ThisPage = aws.Int64(4)
-	expected.Policies = []*models.PolicySummary{{ID: "d", OutputIds: []string{"output-7", "output-8"}}}
-	assert.Equal(t, expected, result)
+	paging, truncation = pageItems(items, 3, 1)
+	assert.Equal(t, models.Paging{ThisPage: 3, TotalItems: 4, TotalPages: 4}, paging)
+	assert.Equal(t, []tableItem{items[2]}, truncation)
+
+	paging, truncation = pageItems(items, 4, 1)
+	assert.Equal(t, models.Paging{ThisPage: 4, TotalItems: 4, TotalPages: 4}, paging)
+	assert.Equal(t, []tableItem{items[3]}, truncation)
 }
 
 func TestPagePoliciesSinglePage(t *testing.T) {
-	policies := []*models.PolicySummary{{ID: "a"}, {ID: "b"}, {ID: "c"}, {ID: "d"}}
-	result := pagePolicies(policies, 25, 1)
-	expected := &models.PolicyList{
-		Paging: &models.Paging{
-			ThisPage:   aws.Int64(1),
-			TotalItems: aws.Int64(4),
-			TotalPages: aws.Int64(1),
-		},
-		Policies: policies,
-	}
-	assert.Equal(t, expected, result)
+	items := []tableItem{{ID: "a"}, {ID: "b"}, {ID: "c"}, {ID: "d"}}
+	paging, truncation := pageItems(items, 1, 25)
+	assert.Equal(t, models.Paging{ThisPage: 1, TotalItems: 4, TotalPages: 1}, paging)
+	assert.Equal(t, truncation, items)
 }
 
 func TestPagePoliciesPageOutOfBounds(t *testing.T) {
-	policies := []*models.PolicySummary{{ID: "a"}, {ID: "b"}, {ID: "c"}, {ID: "d"}}
-	result := pagePolicies(policies, 1, 10)
-	expected := &models.PolicyList{
-		Paging: &models.Paging{
-			ThisPage:   aws.Int64(10),
-			TotalItems: aws.Int64(4),
-			TotalPages: aws.Int64(4),
-		},
-		Policies: []*models.PolicySummary{}, // empty list - page out of bounds
-	}
-	assert.Equal(t, expected, result)
+	items := []tableItem{{ID: "a"}, {ID: "b"}, {ID: "c"}, {ID: "d"}}
+	paging, truncation := pageItems(items, 10, 1)
+	assert.Equal(t, models.Paging{ThisPage: 10, TotalItems: 4, TotalPages: 4}, paging)
+	assert.Equal(t, truncation, []tableItem{}) // empty list - page out of bounds
 }
 
 func TestPagePoliciesDisplayNameSort(t *testing.T) {
-	policies := []*models.PolicySummary{
+	items := []tableItem {
 		{ID: "a", DisplayName: "z"},
 		{ID: "h", DisplayName: "b"},
 		{ID: "c", DisplayName: "y"},
@@ -98,84 +74,61 @@ func TestPagePoliciesDisplayNameSort(t *testing.T) {
 		{ID: "b", DisplayName: ""},
 	}
 
-	sortByDisplayName(policies, true)
+	sortByDisplayName(items, true)
 
-	result := pagePolicies(policies, 1, 1)
-	expected := &models.PolicyList{
-		Paging: &models.Paging{
-			ThisPage:   aws.Int64(1),
-			TotalItems: aws.Int64(6),
-			TotalPages: aws.Int64(6),
-		},
-		Policies: []*models.PolicySummary{{ID: "e", DisplayName: "a"}},
-	}
-	assert.Equal(t, expected, result)
+	paging, truncation := pageItems(items, 1, 1)
+	assert.Equal(t, models.Paging{ThisPage: 1, TotalItems: 6, TotalPages: 6}, paging)
+	assert.Equal(t, []tableItem{items[0]}, truncation)
 
-	result = pagePolicies(policies, 1, 2)
-	expected.Paging.ThisPage = aws.Int64(2)
-	expected.Policies = []*models.PolicySummary{{ID: "b", DisplayName: ""}}
-	assert.Equal(t, expected, result)
+	paging, truncation = pageItems(items, 2, 1)
+	assert.Equal(t, models.Paging{ThisPage: 2, TotalItems: 6, TotalPages: 6}, paging)
+	assert.Equal(t, []tableItem{items[1]}, truncation)
 
-	result = pagePolicies(policies, 1, 3)
-	expected.Paging.ThisPage = aws.Int64(3)
-	expected.Policies = []*models.PolicySummary{{ID: "g", DisplayName: "b"}}
-	assert.Equal(t, expected, result)
+	paging, truncation = pageItems(items, 3, 1)
+	assert.Equal(t, models.Paging{ThisPage: 3, TotalItems: 6, TotalPages: 6}, paging)
+	assert.Equal(t, []tableItem{items[2]}, truncation)
 
-	result = pagePolicies(policies, 1, 4)
-	expected.Paging.ThisPage = aws.Int64(4)
-	expected.Policies = []*models.PolicySummary{{ID: "h", DisplayName: "b"}}
-	assert.Equal(t, expected, result)
+	paging, truncation = pageItems(items, 4, 1)
+	assert.Equal(t, models.Paging{ThisPage: 4, TotalItems: 6, TotalPages: 6}, paging)
+	assert.Equal(t, []tableItem{items[3]}, truncation)
 
-	result = pagePolicies(policies, 1, 5)
-	expected.Paging.ThisPage = aws.Int64(5)
-	expected.Policies = []*models.PolicySummary{{ID: "c", DisplayName: "y"}}
-	assert.Equal(t, expected, result)
+	paging, truncation = pageItems(items, 5, 1)
+	assert.Equal(t, models.Paging{ThisPage: 5, TotalItems: 6, TotalPages: 6}, paging)
+	assert.Equal(t, []tableItem{items[4]}, truncation)
 
-	result = pagePolicies(policies, 1, 6)
-	expected.Paging.ThisPage = aws.Int64(6)
-	expected.Policies = []*models.PolicySummary{{ID: "a", DisplayName: "z"}}
-	assert.Equal(t, expected, result)
+	paging, truncation = pageItems(items, 6, 1)
+	assert.Equal(t, models.Paging{ThisPage: 6, TotalItems: 6, TotalPages: 6}, paging)
+	assert.Equal(t, []tableItem{items[5]}, truncation)
 }
 
 func TestPagePoliciesDisplayNameSortReverse(t *testing.T) {
-	policies := []*models.PolicySummary{
+	items := []tableItem{
 		{ID: "e", DisplayName: "a"},
 		{ID: "a", DisplayName: "z"},
 		{ID: "c", DisplayName: "y"},
 		{ID: "g", DisplayName: "b"},
 		{ID: "d", DisplayName: "y"},
 	}
-	sortByDisplayName(policies, false)
+	sortByDisplayName(items, false)
 
-	result := pagePolicies(policies, 1, 1)
-	expected := &models.PolicyList{
-		Paging: &models.Paging{
-			ThisPage:   aws.Int64(1),
-			TotalItems: aws.Int64(5),
-			TotalPages: aws.Int64(5),
-		},
-		Policies: []*models.PolicySummary{{ID: "a", DisplayName: "z"}},
-	}
-	assert.Equal(t, expected, result)
+	paging, truncation := pageItems(items, 1, 1)
+	assert.Equal(t, models.Paging{ThisPage: 1, TotalItems: 5, TotalPages: 5}, paging)
+	assert.Equal(t, []tableItem{items[0]}, truncation)
 
-	result = pagePolicies(policies, 1, 2)
-	expected.Paging.ThisPage = aws.Int64(2)
-	expected.Policies = []*models.PolicySummary{{ID: "d", DisplayName: "y"}}
-	assert.Equal(t, expected, result)
+	paging, truncation = pageItems(items, 2, 1)
+	assert.Equal(t, models.Paging{ThisPage: 2, TotalItems: 5, TotalPages: 5}, paging)
+	assert.Equal(t, []tableItem{items[1]}, truncation)
 
-	result = pagePolicies(policies, 1, 3)
-	expected.Paging.ThisPage = aws.Int64(3)
-	expected.Policies = []*models.PolicySummary{{ID: "c", DisplayName: "y"}}
-	assert.Equal(t, expected, result)
+	paging, truncation = pageItems(items, 3, 1)
+	assert.Equal(t, models.Paging{ThisPage: 3, TotalItems: 5, TotalPages: 5}, paging)
+	assert.Equal(t, []tableItem{items[2]}, truncation)
 
-	result = pagePolicies(policies, 1, 4)
-	expected.Paging.ThisPage = aws.Int64(4)
-	expected.Policies = []*models.PolicySummary{{ID: "g", DisplayName: "b"}}
-	assert.Equal(t, expected, result)
+	paging, truncation = pageItems(items, 4, 1)
+	assert.Equal(t, models.Paging{ThisPage: 4, TotalItems: 5, TotalPages: 5}, paging)
+	assert.Equal(t, []tableItem{items[3]}, truncation)
 
-	result = pagePolicies(policies, 1, 5)
-	expected.Paging.ThisPage = aws.Int64(5)
-	expected.Policies = []*models.PolicySummary{{ID: "e", DisplayName: "a"}}
-	assert.Equal(t, expected, result)
+	paging, truncation = pageItems(items, 5, 1)
+	assert.Equal(t, models.Paging{ThisPage: 5, TotalItems: 5, TotalPages: 5}, paging)
+	assert.Equal(t, []tableItem{items[4]}, truncation)
 
 }

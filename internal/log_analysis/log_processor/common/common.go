@@ -67,9 +67,12 @@ func Setup() {
 	clientsSession := Session.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(MaxRetries),
 		awsretry.NewConnectionErrRetryer(MaxRetries)))
 	LambdaClient = lambda.New(clientsSession)
-	S3Uploader = s3manager.NewUploader(clientsSession)
 	SqsClient = sqs.New(clientsSession)
 	SnsClient = sns.New(clientsSession)
+
+	s3UploaderSession := Session.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(MaxRetries),
+		awsretry.NewAccessDeniedRetryer(MaxRetries)))
+	S3Uploader = s3manager.NewUploader(s3UploaderSession)
 
 	err := envconfig.Process("", &Config)
 	if err != nil {

@@ -27,16 +27,16 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 )
 
 // Delete one or more policies from S3.
 //
 // It is the caller's responsibility to ensure there are not more than 1000 policies in the request.
-func s3BatchDelete(input *models.DeletePolicies) error {
-	objects := make([]*s3.ObjectIdentifier, len(input.Policies))
-	for i, entry := range input.Policies {
-		objects[i] = &s3.ObjectIdentifier{Key: aws.String(string(entry.ID))}
+func s3BatchDelete(input *models.DeletePoliciesInput) error {
+	objects := make([]*s3.ObjectIdentifier, len(input.Entries))
+	for i, entry := range input.Entries {
+		objects[i] = &s3.ObjectIdentifier{Key: aws.String(entry.ID)}
 	}
 
 	_, err := s3Client.DeleteObjects(&s3.DeleteObjectsInput{
@@ -52,11 +52,11 @@ func s3BatchDelete(input *models.DeletePolicies) error {
 }
 
 // Load a policy from the S3 bucket.
-func s3Get(policyID models.ID, versionID models.VersionID) (*tableItem, error) {
+func s3Get(policyID, versionID string) (*tableItem, error) {
 	result, err := s3Client.GetObject(&s3.GetObjectInput{
 		Bucket:    &env.Bucket,
-		Key:       aws.String(string(policyID)),
-		VersionId: aws.String(string(versionID)),
+		Key:       &policyID,
+		VersionId: &versionID,
 	})
 	if err != nil {
 		zap.L().Error("s3Client.GetObject failed", zap.Error(err))
@@ -96,13 +96,13 @@ func s3Upload(policy *tableItem) error {
 	result, err := s3Client.PutObject(&s3.PutObjectInput{
 		Body:   bytes.NewReader(body),
 		Bucket: &env.Bucket,
-		Key:    aws.String(string(policy.ID)),
+		Key:    &policy.ID,
 	})
 	if err != nil {
 		zap.L().Error("s3Client.PutObject failed", zap.Error(err))
 		return err
 	}
 
-	policy.VersionID = models.VersionID(*result.VersionId)
+	policy.VersionID = *result.VersionId
 	return nil
 }

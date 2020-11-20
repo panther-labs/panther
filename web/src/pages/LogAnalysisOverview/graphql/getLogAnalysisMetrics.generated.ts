@@ -29,14 +29,14 @@ export type GetLogAnalysisMetricsVariables = {
 
 export type GetLogAnalysisMetrics = {
   getLogAnalysisMetrics: Pick<Types.LogAnalysisMetricsResponse, 'intervalMinutes'> & {
-    eventsProcessed: Pick<Types.SeriesData, 'timestamps'> & {
-      series?: Types.Maybe<Array<Types.Maybe<Pick<Types.Series, 'label' | 'values'>>>>;
+    eventsProcessed: Pick<Types.LongSeriesData, 'timestamps'> & {
+      series: Array<Pick<Types.LongSeries, 'label' | 'values'>>;
     };
     eventsLatency: Pick<Types.FloatSeriesData, 'timestamps'> & {
       series: Array<Pick<Types.FloatSeries, 'label' | 'values'>>;
     };
-    alertsBySeverity: Pick<Types.SeriesData, 'timestamps'> & {
-      series?: Types.Maybe<Array<Types.Maybe<Pick<Types.Series, 'label' | 'values'>>>>;
+    alertsBySeverity: Pick<Types.LongSeriesData, 'timestamps'> & {
+      series: Array<Pick<Types.LongSeries, 'label' | 'values'>>;
     };
     totalAlertsDelta: Array<Pick<Types.SingleValue, 'label' | 'value'>>;
     alertsByRuleID: Array<Pick<Types.SingleValue, 'label' | 'value'>>;
