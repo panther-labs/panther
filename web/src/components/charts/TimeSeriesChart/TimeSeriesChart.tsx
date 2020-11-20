@@ -26,7 +26,6 @@ import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { stringToPaleColor } from 'Helpers/colors';
 import { getLegend } from 'Components/charts/TimeSeriesChart/options';
-import MultiSeriesTooltip from 'Components/charts/TimeSeriesChart/MultiSeriesTooltip';
 import SeriesTooltip from 'Components/charts/TimeSeriesChart/SeriesTooltip';
 
 import ResetButton from '../ResetButton';
@@ -212,11 +211,11 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
               <Text fontSize="small-medium" mb={3}>
                 {formatDatetime(params[0].value[0], true)}
               </Text>
-              {params.length === 1 ? (
-                <SeriesTooltip seriesInfo={params[0]} units={units} />
-              ) : (
-                <MultiSeriesTooltip params={params} units={units} />
-              )}
+              <Flex direction="column" spacing={2} fontSize="x-small">
+                {params.map((seriesInfo, i) => {
+                  return <SeriesTooltip key={i} seriesInfo={seriesInfo} units={units} />;
+                })}
+              </Flex>
             </Box>
           );
 
