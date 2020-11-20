@@ -36,7 +36,7 @@ type SeriesMetadata = {
 };
 
 export type Metadata = {
-  tooltip: any;
+  tooltip: React.ReactNode;
 };
 
 export type SeriesDataMetadata = {

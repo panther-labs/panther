@@ -25,7 +25,7 @@ const SeriesTooltip: React.FC<{ seriesInfo: any; units: string }> = ({ seriesInf
     <Flex direction="column" spacing={2} fontSize="x-small">
       <Flex key={seriesInfo.seriesName} justify="space-between">
         {metadata?.tooltip ? (
-          metadata.tooltip
+          <React.Fragment>{metadata.tooltip}</React.Fragment>
         ) : (
           <React.Fragment>
             <Box as="dt">
