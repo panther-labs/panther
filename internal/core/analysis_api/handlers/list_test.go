@@ -130,5 +130,4 @@ func TestPagePoliciesDisplayNameSortReverse(t *testing.T) {
 	paging, truncation = pageItems(items, 5, 1)
 	assert.Equal(t, models.Paging{ThisPage: 5, TotalItems: 5, TotalPages: 5}, paging)
 	assert.Equal(t, []tableItem{items[4]}, truncation)
-
 }
