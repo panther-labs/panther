@@ -39,8 +39,8 @@ import (
 )
 
 const (
-	defaultSortBy        = "severity"
-	defaultSortAscending = false
+	defaultSortBy        = "displayName"
+	defaultSortAscending = true
 	defaultPage          = 1
 	defaultPageSize      = 25
 )
@@ -408,10 +408,12 @@ func sortPolicies(policies []*models.PolicySummary, sortBy string, ascending boo
 	}
 
 	switch sortBy {
-	case "complianceStatus":
-		sortByStatus(policies, ascending, complianceCache.Policies)
 	case "displayName":
 		sortByDisplayName(policies, ascending)
+	case "complianceStatus":
+		sortByStatus(policies, ascending, complianceCache.Policies)
+	case "id":
+		sortByID(policies, ascending)
 	case "enabled":
 		sortByEnabled(policies, ascending)
 	case "lastModified":
@@ -421,18 +423,15 @@ func sortPolicies(policies []*models.PolicySummary, sortBy string, ascending boo
 	case "severity":
 		sortBySeverity(policies, ascending)
 	default:
-		sortByID(policies, ascending)
+		panic("Unexpected sortBy: " + sortBy)
 	}
 }
 
-// TODO - add unit tests (list_test.go) for examples
-// - displayName is optional
 func sortByDisplayName(policies []*models.PolicySummary, ascending bool) {
 	sort.Slice(policies, func(i, j int) bool {
 		left, right := policies[i], policies[j]
 
 		var leftName, rightName string
-		// TODO: search lower case
 		leftName, rightName = string(left.DisplayName), string(right.DisplayName)
 		if leftName == "" {
 			leftName = string(left.ID)
@@ -443,16 +442,16 @@ func sortByDisplayName(policies []*models.PolicySummary, ascending bool) {
 
 		if leftName != rightName {
 			if ascending {
-				return leftName < rightName
+				return strings.ToLower(leftName) < strings.ToLower(rightName)
 			}
-			return leftName > rightName
+			return strings.ToLower(leftName) > strings.ToLower(rightName)
 		}
 
 		// Same display name: sort by ID
 		if ascending {
 			return left.ID < right.ID
 		}
-		return left.ID > right.ID
+		return strings.ToLower(string(left.ID)) > strings.ToLower(string(right.ID))
 	})
 }
 

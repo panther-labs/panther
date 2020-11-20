@@ -87,3 +87,95 @@ func TestPagePoliciesPageOutOfBounds(t *testing.T) {
 	}
 	assert.Equal(t, expected, result)
 }
+
+func TestPagePoliciesDisplayNameSort(t *testing.T) {
+	policies := []*models.PolicySummary{
+		{ID: "a", DisplayName: "z"},
+		{ID: "h", DisplayName: "b"},
+		{ID: "c", DisplayName: "y"},
+		{ID: "e", DisplayName: "a"},
+		{ID: "g", DisplayName: "b"},
+		{ID: "b", DisplayName: ""},
+	}
+
+	sortByDisplayName(policies, true)
+
+	result := pagePolicies(policies, 1, 1)
+	expected := &models.PolicyList{
+		Paging: &models.Paging{
+			ThisPage:   aws.Int64(1),
+			TotalItems: aws.Int64(6),
+			TotalPages: aws.Int64(6),
+		},
+		Policies: []*models.PolicySummary{{ID: "e", DisplayName: "a"}},
+	}
+	assert.Equal(t, expected, result)
+
+	result = pagePolicies(policies, 1, 2)
+	expected.Paging.ThisPage = aws.Int64(2)
+	expected.Policies = []*models.PolicySummary{{ID: "b", DisplayName: ""}}
+	assert.Equal(t, expected, result)
+
+	result = pagePolicies(policies, 1, 3)
+	expected.Paging.ThisPage = aws.Int64(3)
+	expected.Policies = []*models.PolicySummary{{ID: "g", DisplayName: "b"}}
+	assert.Equal(t, expected, result)
+
+	result = pagePolicies(policies, 1, 4)
+	expected.Paging.ThisPage = aws.Int64(4)
+	expected.Policies = []*models.PolicySummary{{ID: "h", DisplayName: "b"}}
+	assert.Equal(t, expected, result)
+
+	result = pagePolicies(policies, 1, 5)
+	expected.Paging.ThisPage = aws.Int64(5)
+	expected.Policies = []*models.PolicySummary{{ID: "c", DisplayName: "y"}}
+	assert.Equal(t, expected, result)
+
+	result = pagePolicies(policies, 1, 6)
+	expected.Paging.ThisPage = aws.Int64(6)
+	expected.Policies = []*models.PolicySummary{{ID: "a", DisplayName: "z"}}
+	assert.Equal(t, expected, result)
+}
+
+func TestPagePoliciesDisplayNameSortReverse(t *testing.T) {
+	policies := []*models.PolicySummary{
+		{ID: "e", DisplayName: "a"},
+		{ID: "a", DisplayName: "z"},
+		{ID: "c", DisplayName: "y"},
+		{ID: "g", DisplayName: "b"},
+		{ID: "d", DisplayName: "y"},
+	}
+	sortByDisplayName(policies, false)
+
+	result := pagePolicies(policies, 1, 1)
+	expected := &models.PolicyList{
+		Paging: &models.Paging{
+			ThisPage:   aws.Int64(1),
+			TotalItems: aws.Int64(5),
+			TotalPages: aws.Int64(5),
+		},
+		Policies: []*models.PolicySummary{{ID: "a", DisplayName: "z"}},
+	}
+	assert.Equal(t, expected, result)
+
+	result = pagePolicies(policies, 1, 2)
+	expected.Paging.ThisPage = aws.Int64(2)
+	expected.Policies = []*models.PolicySummary{{ID: "d", DisplayName: "y"}}
+	assert.Equal(t, expected, result)
+
+	result = pagePolicies(policies, 1, 3)
+	expected.Paging.ThisPage = aws.Int64(3)
+	expected.Policies = []*models.PolicySummary{{ID: "c", DisplayName: "y"}}
+	assert.Equal(t, expected, result)
+
+	result = pagePolicies(policies, 1, 4)
+	expected.Paging.ThisPage = aws.Int64(4)
+	expected.Policies = []*models.PolicySummary{{ID: "g", DisplayName: "b"}}
+	assert.Equal(t, expected, result)
+
+	result = pagePolicies(policies, 1, 5)
+	expected.Paging.ThisPage = aws.Int64(5)
+	expected.Policies = []*models.PolicySummary{{ID: "e", DisplayName: "a"}}
+	assert.Equal(t, expected, result)
+
+}
