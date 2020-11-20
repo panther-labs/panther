@@ -146,7 +146,7 @@ describe('CreateComplianceSource', () => {
     expect(getByText('steps found here')).toHaveAttribute('href', CLOUD_SECURITY_REAL_TIME_DOC_URL);
 
     // ... and then by a success screen
-    fireEvent.click(getByText('I have Setup Notifications'));
+    fireEvent.click(getByText('I Have Setup Real-Time'));
     expect(getByText('Everything looks good!')).toBeInTheDocument();
     expect(getByText('Finish Setup')).toBeInTheDocument();
     expect(getByText('Add Another')).toBeInTheDocument();

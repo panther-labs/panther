@@ -114,7 +114,7 @@ const ValidationPanel: React.FC = () => {
           <Img nativeWidth={120} nativeHeight={120} alt="Bell" src={RealTimeNotication} />
           <WizardPanel.Actions>
             <Button onClick={() => setRealTimeScreenVisibility(false)}>
-              I have Setup Notifications
+              I Have Setup Real-Time
             </Button>
           </WizardPanel.Actions>
           <Text fontSize="medium" color="gray-300" textAlign="center" mb={4}>
