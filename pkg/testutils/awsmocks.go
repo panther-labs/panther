@@ -62,6 +62,7 @@ type S3Mock struct {
 	Retries int
 	mock.Mock
 }
+
 func (m *S3Mock) MaxRetries() int {
 	return m.Retries
 }

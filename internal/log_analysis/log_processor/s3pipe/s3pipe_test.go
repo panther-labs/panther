@@ -129,7 +129,7 @@ func doPipe(t *testing.T, s3Mock *testutils.S3Mock, pipeReader io.ReadCloser,
 	s3Mock.AssertExpectations(t)
 }
 
-type networkFailReader struct {}
+type networkFailReader struct{}
 
 func (*networkFailReader) Read(_ []byte) (n int, err error) {
 	netErr := net.OpError{
