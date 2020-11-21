@@ -22,6 +22,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"io/ioutil"
 	"testing"
 
@@ -160,7 +161,7 @@ func TestHandleUnsupportedFileType(t *testing.T) {
 	}
 	s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return(getObjectOutput, nil)
 
-	dataStreams, err := ReadSnsMessage(marshaledNotification)
+	dataStreams, err := ReadSnsMessage(context.TODO(), marshaledNotification)
 	// Method shouldn't return error
 	require.NoError(t, err)
 	// Method should not return data stream
@@ -186,7 +187,7 @@ func TestHandleS3Folder(t *testing.T) {
 	marshaledNotification, err := jsoniter.MarshalToString(notification)
 	require.NoError(t, err)
 
-	dataStreams, err := ReadSnsMessage(marshaledNotification)
+	dataStreams, err := ReadSnsMessage(context.TODO(), marshaledNotification)
 	// Method shouldn't return error
 	require.NoError(t, err)
 	// Method should not return data stream
@@ -224,7 +225,7 @@ func TestHandleUnregisteredSource(t *testing.T) {
 	// Getting the list of available sources
 	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil).Once()
 
-	dataStreams, err := ReadSnsMessage(marshaledNotification)
+	dataStreams, err := ReadSnsMessage(context.TODO(), marshaledNotification)
 	// Method shouldn't return error
 	require.NoError(t, err)
 	// Method should not return data stream

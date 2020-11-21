@@ -22,6 +22,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"io"
 	"net/http"
 	"net/url"
@@ -48,7 +49,7 @@ const (
 )
 
 // ReadSnsMessage reads incoming messages containing SNS notifications and returns a slice of DataStream items
-func ReadSnsMessage(message string) (result []*common.DataStream, err error) {
+func ReadSnsMessage(ctx context.Context, message string) (result []*common.DataStream, err error) {
 	snsNotificationMessage := &SnsNotification{}
 	if err := jsoniter.UnmarshalFromString(message, snsNotificationMessage); err != nil {
 		return nil, err
@@ -56,7 +57,7 @@ func ReadSnsMessage(message string) (result []*common.DataStream, err error) {
 
 	switch snsNotificationMessage.Type {
 	case "Notification":
-		streams, err := handleNotificationMessage(snsNotificationMessage)
+		streams, err := handleNotificationMessage(ctx, snsNotificationMessage)
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +99,7 @@ func ConfirmSubscription(notification *SnsNotification) (err error) {
 	return nil
 }
 
-func handleNotificationMessage(notification *SnsNotification) (result []*common.DataStream, err error) {
+func handleNotificationMessage(ctx context.Context, notification *SnsNotification) (result []*common.DataStream, err error) {
 	s3Objects, err := ParseNotification(notification.Message)
 	if err != nil {
 		return nil, err
@@ -108,7 +109,7 @@ func handleNotificationMessage(notification *SnsNotification) (result []*common.
 			continue
 		}
 		var dataStream *common.DataStream
-		dataStream, err = readS3Object(s3Object)
+		dataStream, err = readS3Object(ctx, s3Object)
 		if err != nil {
 			if _, ok := err.(*ErrUnsupportedFileType); ok {
 				// If the incoming message is not of a supported type, just skip it
@@ -130,7 +131,7 @@ func shouldIgnoreS3Object(s3Object *S3ObjectInfo) bool {
 	return strings.HasSuffix(s3Object.S3ObjectKey, "/")
 }
 
-func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err error) {
+func readS3Object(ctx context.Context, s3Object *S3ObjectInfo) (dataStream *common.DataStream, err error) {
 	operation := common.OpLogManager.Start("readS3Object", common.OpLogS3ServiceDim)
 	defer func() {
 		operation.Stop()
@@ -158,8 +159,9 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 		Key:    &s3Object.S3ObjectKey,
 	}
 
-	downloadPipe := downloadpipe.NewDownloadPipe(s3Client, getObjectInput)
+	// downloadPipe := s3pipe.NewReader(ctx, getObjectInput, s3Client, DownloadPartSize)
 
+	downloadPipe := downloadpipe.NewDownloadPipe(s3Client, getObjectInput)
 	// run the downloader in the background writing into the pipe
 	go downloadPipe.Run()
 

@@ -20,6 +20,7 @@ package processor
 
 import (
 	"context"
+	"log"
 	"runtime"
 	"time"
 
@@ -40,7 +41,7 @@ import (
 
 const (
 	// Limit the max data read to be processed to avoid timeouts created by taking on too much work
-	processingMaxBytesRead = 100 * 1024 * 104
+	processingMaxBytesRead = 100 * 1024 * 1024
 
 	// Limit this so there is time to delete from the queue at the end.
 	processingMaxFilesLimit = 5000
@@ -76,7 +77,7 @@ func pollEvents(
 	ctx context.Context,
 	sqsClient sqsiface.SQSAPI,
 	processFunc ProcessFunc,
-	generateDataStreamsFunc func(string) ([]*common.DataStream, error)) (int, error) {
+	generateDataStreamsFunc func(context.Context, string) ([]*common.DataStream, error)) (int, error) {
 
 	streamChan := make(chan *common.DataStream, 2*sqsMaxBatchSize) // use small buffer to pipeline events
 	var accumulatedMessageReceipts []*string                       // accumulate message receipts for delete at the end
@@ -122,8 +123,9 @@ func pollEvents(
 			}
 
 			for _, msg := range messages {
-				dataStreams, err := generateDataStreamsFunc(aws.StringValue(msg.Body))
+				dataStreams, err := generateDataStreamsFunc(ctx, aws.StringValue(msg.Body))
 				if err != nil {
+					log.Println("generate streams error!")
 					// No need for error here. This issue can happen due to
 					// 1. Persistent AWS issues while accessing S3 object
 					// 2. Misconfiguration from user side (e.g. not configured IAM role permissions properly

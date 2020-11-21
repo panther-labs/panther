@@ -47,7 +47,7 @@ import (
 
 const (
 	uploaderBufferMaxSizeBytes = 50 * 1024 * 1024
-	uploaderPartSize           = 5 * 1024 * 1024
+	uploaderPartSize           = 10 * 1024 * 1024
 
 	numberConcurrentUploads = 4 // how many uploaders are run concurrently
 
@@ -94,22 +94,11 @@ func CreateS3Destination(jsonAPI jsoniter.API) Destination {
 }
 
 // the largest we let total size of compressed output buffers get before calling sendData() to write to S3 in bytes
-// NOTE: this presumes processing 1 file at a time
 func maxS3BufferMemUsageBytes(lambdaSizeMB int) uint64 {
 	const (
-		/*
-					NOTE:
-					  "More specifically CloudTrail will collect logs for 5 mins or until the max file size of 45MB has been reached.
-					  An important thing worth noting is that these logs get compressed before being sent to S3, once the file size
-					  limit is met or the time limit has been exceeded"
-				    Because CT files are "document" JSON and all on 1 line we currently need to read ALL the uncompressed data into memory.
-			        FIXME: we should switch to streaming JSON reader
-					Below we set the lower bound on memory to be 45MB * 4 (because we convert all the records and parse) plus some for overhead
-		*/
-		maxAllInMemFilesMB        = (numberConcurrentUploads * uploaderBufferMaxSizeBytes) / (1024 * 1024)
-		processingExpansionFactor = 4
-		memoryFootprint           = maxAllInMemFilesMB * processingExpansionFactor
-		minimumScratchMemMB       = 5 // how much overhead is needed to process
+		memoryFootprint = (numberConcurrentUploads * uploaderBufferMaxSizeBytes) / (1024 * 1024)
+		// FIXME: the below number is picked to allow reading in a full 50MB CloudTrail file into ram, when we fix this the number can be lower
+		minimumScratchMemMB = 50 // how much overhead is needed to process
 	)
 	maxBufferUsageMB := lambdaSizeMB - memUsedAtStartupMB - memoryFootprint - minimumScratchMemMB
 	if maxBufferUsageMB < 5 {

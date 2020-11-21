@@ -29,8 +29,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-// downloadPipe := s3pipe.NewReader(context.TODO(), getObjectInput, s3Client, 8 * 1024 * 1024)
-
 // These values are very conservative defaults.
 const (
 	DefaultReadBufferSize = 32 * 1024
