@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -43,7 +44,9 @@ func TestDownloadPipe(t *testing.T) {
 
 	MinPartSize = 1 // so we can force scenarios
 
-	mockS3Client := &testutils.S3Mock{}
+	mockS3Client := &testutils.S3Mock{
+		Retries: 3,
+	}
 	getObjectInput := &s3.GetObjectInput{
 		Bucket: aws.String("bucket"),
 		Key:    aws.String("key"),
@@ -66,11 +69,12 @@ func TestDownloadPipe(t *testing.T) {
 	partSize = (len(dataWritten) / 3) + 1
 	pipeReader = NewReader(context.TODO(), getObjectInput, mockS3Client, partSize)
 	// FIXME: this does not work, read failures are supposed to be retried
-	// doPipe(t, mockS3Client, pipeReader, dataWritten, partSize, true, "fail")
+	doPipe(t, mockS3Client, pipeReader, dataWritten, partSize, true, "fail")
 }
 
 func doPipe(t *testing.T, s3Mock *testutils.S3Mock, pipeReader io.ReadCloser,
 	dataWritten []byte, partSize int, fail bool, testName string) {
+	defer pipeReader.Close()
 
 	fullPartsToWrite := len(dataWritten) / partSize
 	for i := 0; i < fullPartsToWrite; i++ {
@@ -125,9 +129,15 @@ func doPipe(t *testing.T, s3Mock *testutils.S3Mock, pipeReader io.ReadCloser,
 	s3Mock.AssertExpectations(t)
 }
 
-type networkFailReader struct {
-}
+type networkFailReader struct {}
 
-func (*networkFailReader) Read(p []byte) (n int, err error) {
-	return 0, errors.New("connection reset by peer")
+func (*networkFailReader) Read(_ []byte) (n int, err error) {
+	netErr := net.OpError{
+		Op:     "read",
+		Net:    "foo",
+		Source: nil,
+		Addr:   nil,
+		Err:    errors.New("connection reset by peer"),
+	}
+	return 0, &netErr
 }
