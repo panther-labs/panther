@@ -66,8 +66,9 @@ func TestParseS3Notification(t *testing.T) {
 		"\"eTag\":\"d41d8cd98f00b204e9800998ecf8427e\",\"versionId\":\"096fKKXTRTtl3on89fVO.nfljtsv6qko\",\"sequencer\":\"0055AED6DCD90281E5\"}}}]}"
 	expectedOutput := []*S3ObjectInfo{
 		{
-			S3Bucket:    "mybucket",
-			S3ObjectKey: "year=2020/key1",
+			S3Bucket:     "mybucket",
+			S3ObjectKey:  "year=2020/key1",
+			S3ObjectSize: 1024,
 		},
 	}
 	s3Objects, err := ParseNotification(notification)

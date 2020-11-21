@@ -39,11 +39,17 @@ import (
 )
 
 const (
+	// Limit the max data read to be processed to avoid timeouts created by taking on too much work
+	processingMaxBytesRead = 100 * 1024 * 104
+
 	// Limit this so there is time to delete from the queue at the end.
 	processingMaxFilesLimit = 5000
 
 	// The max messages per read for SQS (can't find an sqs constant to refer to).
 	sqsMaxBatchSize = 10
+
+	// How many objects to read per sqs read, limit to avoid timeouts
+	sqsReadBatchSize = 1
 )
 
 /*
@@ -74,6 +80,7 @@ func pollEvents(
 
 	streamChan := make(chan *common.DataStream, 2*sqsMaxBatchSize) // use small buffer to pipeline events
 	var accumulatedMessageReceipts []*string                       // accumulate message receipts for delete at the end
+	var totalBytesRead int64                                       // accumulate the sizes of files read
 
 	go func() {
 		defer func() {
@@ -83,7 +90,7 @@ func pollEvents(
 		// continue to read until either there are no sqs messages or we have exceeded the processing time/file limit
 		highMemoryCounter := 0
 
-		for len(accumulatedMessageReceipts) < processingMaxFilesLimit {
+		for len(accumulatedMessageReceipts) < processingMaxFilesLimit && totalBytesRead < processingMaxBytesRead {
 			select {
 			case <-ctx.Done():
 				return
@@ -126,6 +133,7 @@ func pollEvents(
 					continue
 				}
 				for _, dataStream := range dataStreams {
+					totalBytesRead += dataStream.S3ObjectSize
 					streamChan <- dataStream
 				}
 				accumulatedMessageReceipts = append(accumulatedMessageReceipts, msg.ReceiptHandle)
@@ -162,7 +170,7 @@ func highMemoryUsage() (heapUsedMB, memAvailableMB float32, isHigh bool) {
 func receiveFromSqs(ctx context.Context, sqsClient sqsiface.SQSAPI) ([]*sqs.Message, error) {
 	input := &sqs.ReceiveMessageInput{
 		WaitTimeSeconds:     aws.Int64(0),
-		MaxNumberOfMessages: aws.Int64(sqsMaxBatchSize),
+		MaxNumberOfMessages: aws.Int64(sqsReadBatchSize),
 		QueueUrl:            &common.Config.SqsQueueURL,
 	}
 	output, err := sqsClient.ReceiveMessageWithContext(ctx, input)

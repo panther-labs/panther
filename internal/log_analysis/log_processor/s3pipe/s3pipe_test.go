@@ -68,12 +68,12 @@ func TestDownloadPipe(t *testing.T) {
 	dataWritten = []byte("three writes")
 	partSize = (len(dataWritten) / 3) + 1
 	pipeReader = NewReader(context.TODO(), getObjectInput, mockS3Client, partSize)
-	// FIXME: this does not work, read failures are supposed to be retried
 	doPipe(t, mockS3Client, pipeReader, dataWritten, partSize, true, "fail")
 }
 
 func doPipe(t *testing.T, s3Mock *testutils.S3Mock, pipeReader io.ReadCloser,
 	dataWritten []byte, partSize int, fail bool, testName string) {
+
 	defer pipeReader.Close()
 
 	fullPartsToWrite := len(dataWritten) / partSize

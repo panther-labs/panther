@@ -41,6 +41,8 @@ import (
 )
 
 const (
+	DownloadPartSize = 5 * 1024 * 1024 // the buffer size use for downloader
+
 	s3TestEvent                 = "s3:TestEvent"
 	cloudTrailValidationMessage = "CloudTrail validation message."
 )
@@ -190,11 +192,12 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 	}
 
 	dataStream = &common.DataStream{
-		Closer:      downloadPipe, // when file is done processing, the Close() method will be called
-		Reader:      streamReader,
-		Source:      sourceInfo,
-		S3Bucket:    s3Object.S3Bucket,
-		S3ObjectKey: s3Object.S3ObjectKey,
+		Closer:       downloadPipe, // when file is done processing, the Close() method will be called
+		Reader:       streamReader,
+		Source:       sourceInfo,
+		S3Bucket:     s3Object.S3Bucket,
+		S3ObjectKey:  s3Object.S3ObjectKey,
+		S3ObjectSize: s3Object.S3ObjectSize,
 	}
 	return dataStream, err
 }
@@ -283,8 +286,9 @@ func parseS3Event(message string) (result []*S3ObjectInfo) {
 			return nil
 		}
 		info := &S3ObjectInfo{
-			S3Bucket:    record.S3.Bucket.Name,
-			S3ObjectKey: urlDecodedKey,
+			S3Bucket:     record.S3.Bucket.Name,
+			S3ObjectKey:  urlDecodedKey,
+			S3ObjectSize: record.S3.Object.Size,
 		}
 		result = append(result, info)
 	}
@@ -314,8 +318,9 @@ type cloudTrailNotification struct {
 
 // S3ObjectInfo contains information about the S3 object
 type S3ObjectInfo struct {
-	S3Bucket    string
-	S3ObjectKey string
+	S3Bucket     string
+	S3ObjectKey  string
+	S3ObjectSize int64
 }
 
 // SnsNotification struct represents an SNS message arriving to Panther SQS from a customer account.

@@ -231,7 +231,9 @@ func failProcessorFunc(streamChan <-chan *common.DataStream, _ destinations.Dest
 }
 
 func noopGenerateDataStream(_ string) ([]*common.DataStream, error) {
-	return make([]*common.DataStream, 1), nil
+	return []*common.DataStream{
+		{}, // empty is fine
+	}, nil
 }
 
 // simulated error parsing sqs message or reading s3 object

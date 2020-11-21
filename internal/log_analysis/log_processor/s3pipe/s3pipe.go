@@ -22,7 +22,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"log"
 	"sync"
 
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -175,7 +174,6 @@ func (p *prefetchProvider) push(part *bytes.Buffer) {
 
 // GetReadFrom implements s3manager.WriterReadFromProvider interface
 func (p *prefetchProvider) GetReadFrom(_ io.Writer) (w s3manager.WriterReadFrom, cleanup func()) {
-	log.Println("GetReadFrom")
 	buf := bufferPool.Get().(*bytes.Buffer)
 	buf.Grow(p.partSize)
 	return &chunkBuffer{
@@ -204,11 +202,8 @@ type chunkBuffer struct {
 func (b *chunkBuffer) ReadFrom(r io.Reader) (int64, error) {
 	n, err := b.Buffer.ReadFrom(r)
 	if err != nil {
-		log.Print(err)
 		// Reset the buffer so errors while reading a chunk don't lead to partial reads through the pipe.
 		b.Buffer.Reset()
-	} else {
-		log.Print("good read")
 	}
 	return n, err
 }

@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	DownloadPartSize = 8 * 1024 * 1024 // the buffer size use for downloader
+	DownloadPartSize = 5 * 1024 * 1024 // the buffer size use for downloader
 )
 
 // Implements a pipe with the writer having the WriteAt() interface

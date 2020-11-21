@@ -27,8 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -40,10 +39,6 @@ import (
 )
 
 const (
-	MaxS3BufferSizeBytes = 50 * 1024 * 1024
-	UploaderPartSize     = 5 * 1024 * 1024 // the size of this affects performance
-	UploaderConcurrency  = MaxS3BufferSizeBytes / UploaderPartSize
-
 	MaxRetries     = 13 // ~7'
 	EventDelimiter = '\n'
 )
@@ -53,7 +48,7 @@ var (
 	// FIXME: these should be removed as globals
 	Session      *session.Session
 	LambdaClient lambdaiface.LambdaAPI
-	S3Uploader   s3manageriface.UploaderAPI
+	S3Client     s3iface.S3API
 	SqsClient    sqsiface.SQSAPI
 	SnsClient    snsiface.SNSAPI
 
@@ -77,10 +72,7 @@ func Setup() {
 
 	s3UploaderSession := Session.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(MaxRetries),
 		awsretry.NewAccessDeniedRetryer(MaxRetries)))
-	S3Uploader = s3manager.NewUploaderWithClient(s3.New(s3UploaderSession), func(u *s3manager.Uploader) {
-		u.Concurrency = UploaderConcurrency
-		u.PartSize = UploaderPartSize
-	})
+	S3Client = s3.New(s3UploaderSession)
 
 	err := envconfig.Process("", &Config)
 	if err != nil {
@@ -90,9 +82,10 @@ func Setup() {
 
 // DataStream represents a data stream that read by the processor
 type DataStream struct {
-	Closer      io.Closer // cleans up resources
-	Reader      io.Reader
-	Source      *models.SourceIntegration
-	S3ObjectKey string
-	S3Bucket    string
+	Closer       io.Closer // cleans up resources
+	Reader       io.Reader
+	Source       *models.SourceIntegration
+	S3ObjectKey  string
+	S3Bucket     string
+	S3ObjectSize int64
 }
