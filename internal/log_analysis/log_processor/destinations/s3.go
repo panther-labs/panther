@@ -79,6 +79,7 @@ func CreateS3Destination(jsonAPI jsoniter.API) Destination {
 		s3Bucket:            common.Config.ProcessedDataBucket,
 		snsTopicArn:         common.Config.SnsTopicARN,
 		maxBufferedMemBytes: maxS3BufferMemUsageBytes(common.Config.AwsLambdaFunctionMemorySize),
+		maxBufferSize:       defaultMaxS3BufferSizeBytes,
 		maxDuration:         maxDuration,
 		maxBuffers:          maxBuffers,
 		jsonAPI:             jsonAPI,
