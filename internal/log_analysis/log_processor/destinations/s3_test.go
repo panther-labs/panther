@@ -184,7 +184,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Once()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
-	runDestination(t, destination, eventChannel, false)
+	assert.NoError(t, runDestination(destination, eventChannel))
 
 	destination.mockS3Uploader.AssertExpectations(t)
 	destination.mockSns.AssertExpectations(t)
@@ -241,7 +241,7 @@ func TestSendDataIfTotalMemSizeLimitHasBeenReached(t *testing.T) {
 	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
 
-	runDestination(t, destination, eventChannel, false)
+	assert.NoError(t, runDestination(destination, eventChannel))
 
 	destination.mockS3Uploader.AssertExpectations(t)
 	destination.mockSns.AssertExpectations(t)
@@ -269,7 +269,7 @@ func TestSendDataIfBufferSizeLimitHasBeenReached(t *testing.T) {
 	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
 
-	runDestination(t, destination, eventChannel, false)
+	assert.NoError(t, runDestination(destination, eventChannel))
 
 	destination.mockS3Uploader.AssertExpectations(t)
 	destination.mockSns.AssertExpectations(t)
@@ -294,7 +294,7 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Times(nevents)
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Times(nevents)
 
-	runDestination(t, destination, eventChannel, false)
+	assert.NoError(t, runDestination(destination, eventChannel))
 
 	destination.mockS3Uploader.AssertExpectations(t)
 	destination.mockSns.AssertExpectations(t)
@@ -313,7 +313,7 @@ func TestSendDataToS3FromMultipleLogTypesBeforeTerminating(t *testing.T) {
 	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
 
-	runDestination(t, destination, eventChannel, false)
+	assert.NoError(t, runDestination(destination, eventChannel))
 
 	destination.mockS3Uploader.AssertExpectations(t)
 	destination.mockSns.AssertExpectations(t)
@@ -333,7 +333,7 @@ func TestSendDataToS3FromSameHourBeforeTerminating(t *testing.T) {
 	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Once()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
-	runDestination(t, destination, eventChannel, false)
+	assert.NoError(t, runDestination(destination, eventChannel))
 
 	destination.mockS3Uploader.AssertExpectations(t)
 	destination.mockSns.AssertExpectations(t)
@@ -353,7 +353,7 @@ func TestSendDataToS3FromMultipleHoursBeforeTerminating(t *testing.T) {
 	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
 
-	runDestination(t, destination, eventChannel, false)
+	assert.NoError(t, runDestination(destination, eventChannel))
 
 	uploadInput := destination.mockS3Uploader.Calls[0].Arguments.Get(0).(*s3manager.UploadInput)
 	assert.Equal(t, aws.String("testbucket"), uploadInput.Bucket)
@@ -383,7 +383,7 @@ func TestSendDataWhenExceedMaxBuffers(t *testing.T) {
 	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Once()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
-	runDestination(t, destination, eventChannel, false)
+	assert.NoError(t, runDestination(destination, eventChannel))
 
 	destination.mockS3Uploader.AssertExpectations(t)
 	destination.mockSns.AssertExpectations(t)
@@ -400,7 +400,7 @@ func TestSendDataFailsIfS3Fails(t *testing.T) {
 
 	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, errors.New("")).Once()
 
-	runDestination(t, destination, eventChannel, true)
+	assert.Error(t, runDestination(destination, eventChannel))
 
 	destination.mockS3Uploader.AssertExpectations(t)
 }
@@ -417,7 +417,7 @@ func TestSendDataFailsIfSnsFails(t *testing.T) {
 	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil)
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, errors.New("test"))
 
-	runDestination(t, destination, eventChannel, true)
+	assert.Error(t, runDestination(destination, eventChannel))
 
 	destination.mockS3Uploader.AssertExpectations(t)
 	destination.mockSns.AssertExpectations(t)
@@ -444,22 +444,16 @@ func TestBufferSetLargest(t *testing.T) {
 	require.Same(t, bs.largestBuffer(), expectedLargest)
 }
 
-func runDestination(t *testing.T, destination Destination, eventChannel chan *parsers.Result,
-	expectErr bool) {
-
+func runDestination(destination Destination, events chan *parsers.Result) error {
 	errChan := make(chan error, 1)
 	go func() {
 		defer close(errChan)
-		destination.SendEvents(eventChannel, errChan)
+		destination.SendEvents(events, errChan)
 	}()
 
 	var foundErr error
 	for err := range errChan {
 		foundErr = multierr.Append(foundErr, err)
 	}
-	if expectErr {
-		assert.Error(t, foundErr)
-	} else {
-		assert.NoError(t, foundErr)
-	}
+	return foundErr
 }
