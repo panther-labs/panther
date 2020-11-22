@@ -281,12 +281,15 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 	destination := mockDestination()
 	destination.maxDuration = 100 * time.Millisecond
 
-	const nevents = 4
-	eventChannel := make(chan *parsers.Result, 1)
+	const nevents = 5
+	eventChannel := make(chan *parsers.Result, nevents)
 	go func() {
 		defer close(eventChannel)
 		for i := 0; i < nevents; i++ {
 			eventChannel <- newSimpleTestEvent().Result()
+			// The destination should flush events every 'maxDuration' time.
+			// While sleeping here, the destination should write to S3
+			// the event we just wrote to the eventChannel
 			time.Sleep(2 * destination.maxDuration)
 		}
 	}()
