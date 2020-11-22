@@ -447,6 +447,8 @@ func TestBufferSetLargest(t *testing.T) {
 	require.Same(t, bs.largestBuffer(), expectedLargest)
 }
 
+// Runs the destination "SendEvents" function in a goroutine and returns the errors
+// reported by it
 func runDestination(destination Destination, events chan *parsers.Result) error {
 	errChan := make(chan error, 1)
 	go func() {
