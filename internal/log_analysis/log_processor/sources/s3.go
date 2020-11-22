@@ -166,7 +166,8 @@ func readS3Object(ctx context.Context, s3Object *S3ObjectInfo) (dataStream *comm
 
 	downloadPipe := downloader.Download(ctx, getObjectInput)
 
-	bufferedReader := bufio.NewReader(downloadPipe)
+	// Set the buffer size to PartSize to avoid multiple fill() calls
+	bufferedReader := bufio.NewReaderSize(downloadPipe, DownloadPartSize)
 
 	contentType, err := detectContentType(bufferedReader)
 	if err != nil {
