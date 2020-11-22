@@ -157,6 +157,7 @@ func mockDestination() *testS3Destination {
 
 func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	t.Parallel()
+
 	destination := mockDestination()
 
 	testResult := newTestResult(nil)
@@ -226,6 +227,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 
 func TestSendDataIfTotalMemSizeLimitHasBeenReached(t *testing.T) {
 	t.Parallel()
+
 	destination := mockDestination()
 	destination.maxBufferedMemBytes = 0 // this will cause each event to trigger a send
 
@@ -255,6 +257,7 @@ func TestSendDataIfTotalMemSizeLimitHasBeenReached(t *testing.T) {
 
 func TestSendDataIfBufferSizeLimitHasBeenReached(t *testing.T) {
 	t.Parallel()
+
 	destination := mockDestination()
 	destination.maxBufferSize = 0 // this will cause each event to trigger a send
 
@@ -287,8 +290,8 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 		defer close(eventChannel)
 		for i := 0; i < nevents; i++ {
 			eventChannel <- newSimpleTestEvent().Result()
-			// The destination should flush events every 'maxDuration' time.
-			// While sleeping here, the destination should write to S3
+			// The destination writes events to S3 every 'maxDuration' time.
+			// While we sleep here, the destination should write to S3
 			// the event we just wrote to the eventChannel
 			time.Sleep(2 * destination.maxDuration)
 		}
@@ -328,7 +331,7 @@ func TestSendDataToS3FromSameHourBeforeTerminating(t *testing.T) {
 	destination := mockDestination()
 
 	eventChannel := make(chan *parsers.Result, 2)
-	// should write 1 file
+	// should write both events in 1 file
 	eventChannel <- newSimpleTestEvent().Result()
 	eventChannel <- newSimpleTestEvent().Result()
 	close(eventChannel)
@@ -376,15 +379,18 @@ func TestSendDataWhenExceedMaxBuffers(t *testing.T) {
 	t.Parallel()
 
 	destination := mockDestination()
-	destination.maxBuffers = 0 // this will cause all events to be written immediately
+	destination.maxBuffers = 1
 
-	// sending 1 event to buffered channel and the max buffers is 0, so it will immediately send the buffer to s3
-	eventChannel := make(chan *parsers.Result, 1)
-	eventChannel <- newSimpleTestEvent().Result()
+	eventChannel := make(chan *parsers.Result, 3)
+	// Each event will end up in a different buffer,
+	// but since the allowed maxBuffer is 1, it means
+	eventChannel <- newTestEvent(testLogType, refTime).Result()
+	eventChannel <- newTestEvent(testLogType, refTimePlusHour).Result()
+	eventChannel <- newTestEvent(testLogType+"another", refTimePlusHour).Result()
 	close(eventChannel)
 
-	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Once()
-	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
+	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Times(3)
+	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Times(3)
 
 	assert.NoError(t, runDestination(destination, eventChannel))
 

@@ -310,6 +310,7 @@ func getS3ObjectKey(logType string, timestamp time.Time) string {
 type s3EventBufferSet struct {
 	totalBufferedMemBytes uint64 // managed by addEvent() and removeBuffer()
 	set                   map[time.Time]map[string]*s3EventBuffer
+	numBuffers            int
 	stream                *jsoniter.Stream
 	maxBuffers            int
 	maxBufferSize         int
@@ -353,18 +354,21 @@ func (bs *s3EventBufferSet) writeEvent(event *parsers.Result) (sendBuffers []*s3
 		return nil, err
 	}
 	// Check if bufferSet has too many entries
-	if len(bs.set) > bs.maxBuffers {
-		// The hope is most of the flushed buffers were done updating (as events often come roughly in time order)
-		bufferReduction := bs.maxBuffers / 2
+	if bs.numBuffers > bs.maxBuffers {
+		buffersToRemove := (bs.maxBuffers + 1) / 2
 		removeBuffers := func(buffer *s3EventBuffer) (bool, error) {
-			if len(sendBuffers) >= bufferReduction {
+			if len(sendBuffers) >= buffersToRemove {
 				return true, nil // stop the apply() function
 			}
 			bs.removeBuffer(buffer) // bufferSet is not thread safe, do this here
 			sendBuffers = append(sendBuffers, buffer)
 			return false, nil
 		}
-		_ = bs.apply(removeBuffers) // ignore error, not used in removeBuffers()
+		if err := bs.apply(removeBuffers); err != nil {
+			// We should never reach this branch, since the apply function
+			// can never return error
+			return nil, errors.Wrap(err, "failed to remove buffers")
+		}
 	}
 	// Check if buffer is bigger than threshold for a single buffer
 	if buf.bytes >= bs.maxBufferSize {
@@ -408,6 +412,7 @@ func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 	if !ok {
 		buffer = newS3EventBuffer(logType, hour)
 		logTypeToBuffer[logType] = buffer
+		bs.numBuffers++
 	}
 
 	return buffer
@@ -423,6 +428,7 @@ func (bs *s3EventBufferSet) removeBuffer(buffer *s3EventBuffer) {
 	if len(logTypeToBuffer) == 0 {
 		delete(bs.set, buffer.hour)
 	}
+	bs.numBuffers--
 }
 
 func (bs *s3EventBufferSet) largestBuffer() (largestBuffer *s3EventBuffer) {
