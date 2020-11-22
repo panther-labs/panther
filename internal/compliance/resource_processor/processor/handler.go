@@ -35,8 +35,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	enginemodels "github.com/panther-labs/panther/api/gateway/analysis"
-	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
+	enginemodels "github.com/panther-labs/panther/api/lambda/analysis"
+	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 	resourcemodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	alertmodels "github.com/panther-labs/panther/internal/compliance/alert_processor/models"
@@ -49,7 +49,7 @@ import (
 const defaultDelaySeconds = 30
 
 // Map policy/resource ID to the instance of the object
-type policyMap map[string]*analysismodels.EnabledPolicy
+type policyMap map[string]analysismodels.Policy
 type resourceMap map[string]resourcemodels.Resource
 
 // Every batch of sqs messages results in compliance updates and alert/remediation deliveries
@@ -74,7 +74,7 @@ func Handle(ctx context.Context, batch *events.SQSEvent) (err error) {
 
 		if policy != nil {
 			// Policy updated - analyze applicable resources now
-			if err = results.analyzeUpdatedPolicy(policy); err != nil {
+			if err = results.analyzeUpdatedPolicy(*policy); err != nil {
 				return err
 			}
 		} else if resource != nil {
@@ -118,7 +118,7 @@ func parseQueueMsg(body string) (*resourcemodels.Resource, *analysismodels.Polic
 	err = jsoniter.UnmarshalFromString(body, &policy)
 	if err == nil && policy.Body != "" {
 		zap.L().Debug("found new/updated policy",
-			zap.String("policyId", string(policy.ID)))
+			zap.String("policyId", policy.ID))
 		return nil, &policy, nil
 	}
 
@@ -135,19 +135,9 @@ func parseQueueMsg(body string) (*resourcemodels.Resource, *analysismodels.Polic
 }
 
 // Analyze all resources related to a single policy (may require several policy-engine invocations).
-func (r *batchResults) analyzeUpdatedPolicy(policy *analysismodels.Policy) error {
+func (r *batchResults) analyzeUpdatedPolicy(policy analysismodels.Policy) error {
 	// convert policy to policy map
-	policies := policyMap{
-		string(policy.ID): &analysismodels.EnabledPolicy{
-			Body:          policy.Body,
-			ID:            policy.ID,
-			OutputIds:     policy.OutputIds,
-			ResourceTypes: policy.ResourceTypes,
-			Severity:      policy.Severity,
-			Suppressions:  policy.Suppressions,
-			VersionID:     policy.VersionID,
-		},
-	}
+	policies := policyMap{policy.ID: policy}
 
 	// Analyze each page of resources
 	// TODO - check for duplicates here
@@ -242,10 +232,10 @@ func (r *batchResults) analyze(resources resourceMap, policies policyMap) error 
 
 			// Every failed policy, if not suppressed, will trigger the remediation flow
 			complianceNotification := &alertmodels.ComplianceNotification{
-				OutputIds:       policy.OutputIds,
+				OutputIds:       policy.OutputIDs,
 				ResourceID:      resource.ID,
-				PolicyID:        string(policy.ID),
-				PolicyVersionID: string(policy.VersionID),
+				PolicyID:        policy.ID,
+				PolicyVersionID: policy.VersionID,
 				Timestamp:       time.Now(),
 
 				// We only need to send an alert to the user if the status is newly FAILing
@@ -281,8 +271,8 @@ func evaluatePolicies(policies policyMap, resources resourceMap) (*enginemodels.
 	}
 	for _, policy := range policies {
 		input.Policies = append(input.Policies, enginemodels.Policy{
-			Body:          string(policy.Body),
-			ID:            string(policy.ID),
+			Body:          policy.Body,
+			ID:            policy.ID,
 			ResourceTypes: policy.ResourceTypes,
 		})
 	}
@@ -331,14 +321,14 @@ func evaluatePolicies(policies policyMap, resources resourceMap) (*enginemodels.
 
 // Convert a policy/resource pair into the compliance status struct
 func buildStatus(
-	policy *analysismodels.EnabledPolicy,
+	policy analysismodels.Policy,
 	resource resourcemodels.Resource,
 	status compliancemodels.ComplianceStatus,
 ) compliancemodels.SetStatusEntry {
 
 	return compliancemodels.SetStatusEntry{
-		PolicyID:       string(policy.ID),
-		PolicySeverity: compliancemodels.PolicySeverity(policy.Severity),
+		PolicyID:       policy.ID,
+		PolicySeverity: policy.Severity,
 		ResourceID:     resource.ID,
 		ResourceType:   resource.Type,
 		Suppressed:     isSuppressed(resource.ID, policy),
@@ -349,7 +339,7 @@ func buildStatus(
 }
 
 // Returns true if the resource is suppressed by the given policy
-func isSuppressed(resourceID string, policy *analysismodels.EnabledPolicy) bool {
+func isSuppressed(resourceID string, policy analysismodels.Policy) bool {
 	for _, pattern := range policy.Suppressions {
 		// Convert the glob pattern (e.g "prod.*.bucket") to regex ("prod\..*\.bucket")
 

@@ -492,7 +492,6 @@ func deployBootstrapGatewayStack(
 func deployAppsyncStack(outputs map[string]string) error {
 	_, err := deployTemplate(cfnstacks.AppsyncTemplate, outputs["SourceBucket"], cfnstacks.Appsync, map[string]string{
 		"AlarmTopicArn":         outputs["AlarmTopicArn"],
-		"AnalysisApi":           "https://" + outputs["AnalysisApiEndpoint"],
 		"ApiId":                 outputs["GraphQLApiId"],
 		"CustomResourceVersion": customResourceVersion(),
 		"ServiceRole":           outputs["AppsyncServiceRoleArn"],
@@ -503,7 +502,6 @@ func deployAppsyncStack(outputs map[string]string) error {
 func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string) error {
 	_, err := deployTemplate(cfnstacks.CloudsecTemplate, outputs["SourceBucket"], cfnstacks.Cloudsec, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
-		"AnalysisApiId":              outputs["AnalysisApiId"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomResourceVersion":      customResourceVersion(),
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
@@ -520,7 +518,6 @@ func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string
 func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
 	_, err := deployTemplate(cfnstacks.CoreTemplate, outputs["SourceBucket"], cfnstacks.Core, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
-		"AnalysisApiId":              outputs["AnalysisApiId"],
 		"AnalysisVersionsBucket":     outputs["AnalysisVersionsBucket"],
 		"AppDomainURL":               outputs["LoadBalancerUrl"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
@@ -554,7 +551,6 @@ func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) 
 
 	_, err = deployTemplate(cfnstacks.LogAnalysisTemplate, outputs["SourceBucket"], cfnstacks.LogAnalysis, map[string]string{
 		"AlarmTopicArn":                outputs["AlarmTopicArn"],
-		"AnalysisApiId":                outputs["AnalysisApiId"],
 		"AthenaResultsBucket":          outputs["AthenaResultsBucket"],
 		"AthenaWorkGroup":              outputs["AthenaWorkGroup"],
 		"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),

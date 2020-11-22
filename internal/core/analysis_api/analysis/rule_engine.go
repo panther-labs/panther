@@ -26,8 +26,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
-	enginemodels "github.com/panther-labs/panther/api/gateway/analysis"
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	enginemodels "github.com/panther-labs/panther/api/lambda/analysis"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -44,12 +44,12 @@ func NewRuleEngine(lambdaClient lambdaiface.LambdaAPI, lambdaName string) RuleEn
 	}
 }
 
-func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, error) {
+func (e *RuleEngine) TestRule(rule *models.TestRuleInput) (*models.TestRuleOutput, error) {
 	// Build the list of events to run the rule against
 	inputEvents := make([]enginemodels.Event, len(rule.Tests))
 	for i, test := range rule.Tests {
 		var attrs map[string]interface{}
-		if err := jsoniter.UnmarshalFromString(string(test.Resource), &attrs); err != nil {
+		if err := jsoniter.UnmarshalFromString(test.Resource, &attrs); err != nil {
 			//nolint // Error is capitalized because will be returned to the UI
 			return nil, &TestInputError{fmt.Errorf(`Event for test "%s" is not valid json: %w`, test.Name, err)}
 		}
@@ -63,9 +63,9 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 	input := enginemodels.RulesEngineInput{
 		Rules: []enginemodels.Rule{
 			{
-				Body:     string(rule.Body),
+				Body:     rule.Body,
 				ID:       testRuleID, // doesn't matter as we're only running one rule
-				LogTypes: rule.ResourceTypes,
+				LogTypes: rule.LogTypes,
 			},
 		},
 		Events: inputEvents,
@@ -79,9 +79,8 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 	}
 
 	// Translate rule engine output to test results.
-	testResult := &models.TestRuleResult{
-		TestSummary: true,
-		Results:     make([]*models.RuleResult, len(engineOutput.Results)),
+	testResult := &models.TestRuleOutput{
+		Results: make([]models.TestRuleRecord, len(engineOutput.Results)),
 	}
 	for i, result := range engineOutput.Results {
 		// Determine which test case this result corresponds to.
@@ -91,30 +90,43 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (*models.TestRuleResult, 
 		}
 		test := rule.Tests[testIndex]
 
-		passed := hasPassed(bool(test.ExpectedResult), result)
+		record := models.TestRuleRecord{
+			ID:     result.ID,
+			Name:   test.Name,
+			Passed: hasPassed(test.ExpectedResult, result),
+			Functions: models.TestRuleRecordFunctions{
+				Rule: buildTestSubRecord(strconv.FormatBool(result.RuleOutput), result.RuleError),
+			},
+		}
+		if result.GenericError != "" {
+			record.Error = &models.TestError{Message: result.GenericError}
+		}
 
-		testResult.Results[i] = &models.RuleResult{
-			ID:           result.ID,
-			RuleID:       result.RuleID,
-			TestName:     string(test.Name),
-			Passed:       passed,
-			Errored:      result.Errored,
-			GenericError: result.GenericError,
-			RuleOutput:   result.RuleOutput,
-			RuleError:    result.RuleError,
-		}
+		// The remaining functions are only included if the user expects rule() to match the event
 		if test.ExpectedResult {
-			// Show the output of other functions only if user expects rule() to match the event (ie return True).
-			testResult.Results[i].DedupOutput = result.DedupOutput
-			testResult.Results[i].DedupError = result.DedupError
-			testResult.Results[i].TitleOutput = result.TitleOutput
-			testResult.Results[i].TitleError = result.TitleError
-			testResult.Results[i].AlertContextOutput = truncate(result.AlertContextOutput) // truncate, can be huge json
-			testResult.Results[i].AlertContextError = result.AlertContextError
+			record.Functions.Title = buildTestSubRecord(result.TitleOutput, result.TitleError)
+			record.Functions.Dedup = buildTestSubRecord(result.DedupOutput, result.DedupError)
+			record.Functions.AlertContext = buildTestSubRecord(truncate(result.AlertContextOutput), result.AlertContextError)
 		}
-		testResult.TestSummary = testResult.TestSummary && passed
+
+		testResult.Results[i] = record
 	}
 	return testResult, nil
+}
+
+func buildTestSubRecord(output, error string) *models.TestDetectionSubRecord {
+	if output == "" && error == "" {
+		return nil
+	}
+
+	result := &models.TestDetectionSubRecord{}
+	if output != "" {
+		result.Output = &output
+	}
+	if error != "" {
+		result.Error = &models.TestError{Message: error}
+	}
+	return result
 }
 
 func truncate(s string) string {

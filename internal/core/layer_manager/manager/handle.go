@@ -29,8 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"go.uber.org/zap"
 
-	analysisoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 )
 
 const (
@@ -48,7 +47,7 @@ var (
 // UpdateLayer rebuilds and publishes the layer for the given analysis type.
 // Currently global is the only supported analysis type.
 func UpdateLayer(analysisType string) error {
-	if analysisType != string(models.AnalysisTypeGLOBAL) {
+	if analysisType != string(models.TypeGlobal) {
 		zap.L().Warn("unsupported analysis type", zap.String("type", analysisType))
 		// When we add support for policies/rules, we can use this variable to control which layers are re-created
 		// and from which sources. We can either have entirely separate paths for these, or have some sort of config
@@ -105,14 +104,16 @@ func buildLayer() ([]byte, error) {
 	// Iterate through each global and retrieve its body
 	for _, globalName := range globals {
 		zap.L().Debug("getting global", zap.String("id", globalName))
-		global, err := analysisClient.Operations.GetGlobal(&analysisoperations.GetGlobalParams{
-			GlobalID:   globalName,
-			HTTPClient: httpClient,
-		})
-		if err != nil {
+		input := models.LambdaInput{
+			GetGlobal: &models.GetGlobalInput{ID: globalName},
+		}
+		var global models.Global
+
+		if _, err := analysisClient.Invoke(&input, &global); err != nil {
 			return nil, err
 		}
-		nameBodyMap[globalName] = string(global.Payload.Body)
+
+		nameBodyMap[globalName] = global.Body
 	}
 
 	return packageLayer(nameBodyMap)
@@ -120,21 +121,22 @@ func buildLayer() ([]byte, error) {
 
 func listAllGlobals() ([]string, error) {
 	var names []string
-	var page = int64(1)
+	page := 1
 
 	zap.L().Debug("listing all globals")
 	for {
-		globals, err := analysisClient.Operations.ListGlobals(&analysisoperations.ListGlobalsParams{
-			Page:       aws.Int64(page),
-			HTTPClient: httpClient,
-		})
-		if err != nil {
+		input := models.LambdaInput{
+			ListGlobals: &models.ListGlobalsInput{Page: page},
+		}
+		var globals models.ListGlobalsOutput
+		if _, err := analysisClient.Invoke(&input, &globals); err != nil {
 			return nil, err
 		}
-		for _, global := range globals.Payload.Globals {
-			names = append(names, string(global.ID))
+
+		for _, global := range globals.Globals {
+			names = append(names, global.ID)
 		}
-		if aws.Int64Value(globals.Payload.Paging.ThisPage) < aws.Int64Value(globals.Payload.Paging.TotalPages) {
+		if globals.Paging.ThisPage < globals.Paging.TotalPages {
 			page++
 		} else {
 			break

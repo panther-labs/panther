@@ -240,11 +240,11 @@ Resources:
 
   Appsync:
     Type: AWS::CloudFormation::Stack
+    DependsOn: BootstrapGateway # custom resources lambda function
     Properties:
       TemplateURL: ../../deployments/appsync.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
-        AnalysisApi: !Sub https://${BootstrapGateway.Outputs.AnalysisApiEndpoint}
         ApiId: !GetAtt Bootstrap.Outputs.GraphQLApiId
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         ServiceRole: !GetAtt Bootstrap.Outputs.AppsyncServiceRoleArn
@@ -264,7 +264,6 @@ Resources:
       TemplateURL: ../../deployments/cloud_security.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
-        AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CustomResourceVersion: !FindInMap [Constants, Panther, Version]
         Debug: !Ref Debug
@@ -286,11 +285,11 @@ Resources:
 
   Core:
     Type: AWS::CloudFormation::Stack
+    DependsOn: BootstrapGateway # custom resources Lambda function
     Properties:
       TemplateURL: ../../deployments/core.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
-        AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         AnalysisVersionsBucket: !GetAtt Bootstrap.Outputs.AnalysisVersionsBucket
         AppDomainURL: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
@@ -337,7 +336,6 @@ Resources:
       TemplateURL: ../../deployments/log_analysis.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
-        AnalysisApiId: !GetAtt BootstrapGateway.Outputs.AnalysisApiId
         AthenaWorkGroup: !GetAtt BootstrapGateway.Outputs.AthenaWorkGroup
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
@@ -397,7 +395,6 @@ Resources:
       TimeoutInMinutes: 20 # if something goes wrong, the ECS service will get stuck in a retry loop for 4 hours
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
-        AnalysisApiEndpoint: !GetAtt BootstrapGateway.Outputs.AnalysisApiEndpoint
         AppClientId: !GetAtt BootstrapGateway.Outputs.AppClientId
         CertificateArn: !Ref CertificateArn
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
