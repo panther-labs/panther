@@ -119,5 +119,6 @@ func (*networkFailReader) Read(p []byte) (int, error) {
 		Addr:   nil,
 		Err:    errors.New("connection reset by peer"),
 	}
-	return copy(p, "foo"), &netErr
+	// Make sure to returned some partial data.
+	return copy(p, "FAIL"), &netErr
 }
