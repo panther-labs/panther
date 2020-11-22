@@ -178,6 +178,10 @@ type chunkBuffer struct {
 	*bytes.Buffer
 }
 
+// ReadFrom implements io.ReaderFrom.
+// It is called by s3manager.Downloader to read each chunk.
+// If reading the chunk fails, it will be retried. To avoid partial reads escalating to corrupt data,
+// we clear the buffer if an error occurs while reading.
 func (b *chunkBuffer) ReadFrom(r io.Reader) (int64, error) {
 	n, err := b.Buffer.ReadFrom(r)
 	if err != nil {
@@ -185,4 +189,10 @@ func (b *chunkBuffer) ReadFrom(r io.Reader) (int64, error) {
 		b.Buffer.Reset()
 	}
 	return n, err
+}
+
+// Write implements io.Writer.
+// We panic to assert that s3manager.Downloader does not write to the buffer directly.
+func (b *chunkBuffer) Write(_ []byte) (int, error) {
+	panic("the Write() method should not have been used directly")
 }
