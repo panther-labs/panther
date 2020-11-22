@@ -111,7 +111,7 @@ func (tc testCase) numParts() int {
 
 type networkFailReader struct{}
 
-func (*networkFailReader) Read(_ []byte) (n int, err error) {
+func (*networkFailReader) Read(p []byte) (int, error) {
 	netErr := net.OpError{
 		Op:     "read",
 		Net:    "foo",
@@ -119,5 +119,5 @@ func (*networkFailReader) Read(_ []byte) (n int, err error) {
 		Addr:   nil,
 		Err:    errors.New("connection reset by peer"),
 	}
-	return 0, &netErr
+	return copy(p, "foo"), &netErr
 }
