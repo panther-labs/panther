@@ -378,21 +378,51 @@ func TestSendDataToS3FromMultipleHoursBeforeTerminating(t *testing.T) {
 func TestSendDataWhenExceedMaxBuffers(t *testing.T) {
 	t.Parallel()
 
+	maxTestDuration := 5 * time.Second
+
 	destination := mockDestination()
 	destination.maxBuffers = 1
+	destination.maxDuration = maxTestDuration // make sure that the events are not flushed due to time
 
 	eventChannel := make(chan *parsers.Result, 3)
-	// Each event will end up in a different buffer,
-	// but since the allowed maxBuffer is 1, it means
+	// Write the first event to the channel
 	eventChannel <- newTestEvent(testLogType, refTime).Result()
+	// The next event will be stored in a different buffer than the previous one.
+	// Since the max allowed number of buffers in memory is 1, it should trigger writing to S3
+	// and sending SNS notification
 	eventChannel <- newTestEvent(testLogType, refTimePlusHour).Result()
-	eventChannel <- newTestEvent(testLogType+"another", refTimePlusHour).Result()
-	close(eventChannel)
+	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).
+		Run(func(args mock.Arguments) {
+			// When we have written a buffer to S3 and sent notification
+			// write another event. The new event should be stored in a different buffer
+			// so it should also trigger flushing of the buffers since max allowed buffers is 1
+			eventChannel <- newTestEvent(testLogType+"another", refTimePlusHour).Result()
+		}).Once()
+
+	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).
+		Run(func(args mock.Arguments) {
+			// same as above but this time just close the events channel
+			close(eventChannel)
+		}).Once()
+	// Once the channel is closed, the destination will flush to S3 the last buffer
+	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
 	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Times(3)
-	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Times(3)
 
-	assert.NoError(t, runDestination(destination, eventChannel))
+	// Make sure
+	timeout := time.After(maxTestDuration)
+	done := make(chan bool)
+	defer close(done)
+	go func() {
+		assert.NoError(t, runDestination(destination, eventChannel))
+		done <- true
+	}()
+
+	select {
+	case <-timeout:
+		t.Fatal("Test didn't finish in time")
+	case <-done:
+	}
 
 	destination.mockS3Uploader.AssertExpectations(t)
 	destination.mockSns.AssertExpectations(t)
