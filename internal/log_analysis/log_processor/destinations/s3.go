@@ -58,8 +58,6 @@ const (
 )
 
 var (
-	maxS3BufferSizeBytes = defaultMaxS3BufferSizeBytes // the largest we let any single buffer get (var so we can set in tests)
-
 	newLineDelimiter = []byte("\n")
 
 	memUsedAtStartupMB int // set in init(), used to size memory buffers for S3 write
@@ -124,6 +122,7 @@ type S3Destination struct {
 	snsTopicArn string
 	// thresholds for ejection
 	maxBufferedMemBytes uint64 // max will hold in buffers before ejection
+	maxBufferSize       int
 	maxDuration         time.Duration
 	maxBuffers          int
 	jsonAPI             jsoniter.API
@@ -134,9 +133,9 @@ type S3Destination struct {
 // and stores them in the appropriate S3 path. If the method encounters an error
 // it writes an error to the errorChannel and continues until channel is closed (skipping events).
 // The sendData() method is called as go routine to allow processing to continue and hide network latency.
-func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Result, errChan chan error) {
+func (d *S3Destination) SendEvents(parsedEventChannel chan *parsers.Result, errChan chan error) {
 	// used to flush expired buffers
-	flushExpired := time.NewTicker(destination.maxDuration)
+	flushExpired := time.NewTicker(d.maxDuration)
 	defer flushExpired.Stop()
 
 	// use a single go routine for safety/back pressure when writing to s3 concurrently with buffer accumulation
@@ -149,13 +148,13 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Re
 		// Make sure a panic does not prevent SendEvents from exiting
 		defer sendWaitGroup.Done()
 		for buffer := range sendChan {
-			destination.sendData(buffer, errChan)
+			d.sendData(buffer, errChan)
 		}
 	}()
 
 	// accumulate results gzip'd in a buffer
 	failed := false // set to true on error and loop will drain channel
-	bufferSet := newS3EventBufferSet(destination, maxS3BufferSizeBytes)
+	bufferSet := d.newS3EventBufferSet()
 	eventsProcessed := 0
 	zap.L().Debug("starting to read events from channel")
 	for event := range parsedEventChannel {
@@ -168,7 +167,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Re
 		case <-flushExpired.C:
 			now := time.Now()                                          // NOTE: not the same as the tick time which can be older
 			_ = bufferSet.apply(func(b *s3EventBuffer) (bool, error) { // does not return an error
-				if now.Sub(b.createTime) >= destination.maxDuration {
+				if now.Sub(b.createTime) >= d.maxDuration {
 					bufferSet.removeBuffer(b) // bufferSet is not thread safe, do this here
 					sendChan <- b
 				}
@@ -214,7 +213,7 @@ func (destination *S3Destination) SendEvents(parsedEventChannel chan *parsers.Re
 }
 
 // sendData puts data in S3 and sends notification to SNS
-func (destination *S3Destination) sendData(buffer *s3EventBuffer, errChan chan error) {
+func (d *S3Destination) sendData(buffer *s3EventBuffer, errChan chan error) {
 	if buffer.events == 0 { // skip empty buffers
 		return
 	}
@@ -231,7 +230,7 @@ func (destination *S3Destination) sendData(buffer *s3EventBuffer, errChan chan e
 		operation.Log(err,
 			// s3 dim info
 			zap.Int64("contentLength", contentLength),
-			zap.String("bucket", destination.s3Bucket),
+			zap.String("bucket", d.s3Bucket),
 			zap.String("key", key))
 	}()
 
@@ -249,8 +248,8 @@ func (destination *S3Destination) sendData(buffer *s3EventBuffer, errChan chan e
 
 	contentLength = int64(len(payload)) // for logging above
 
-	if _, err := destination.s3Uploader.Upload(&s3manager.UploadInput{
-		Bucket: &destination.s3Bucket,
+	if _, err := d.s3Uploader.Upload(&s3manager.UploadInput{
+		Bucket: &d.s3Bucket,
 		Key:    &key,
 		Body:   bytes.NewReader(payload),
 	}); err != nil {
@@ -258,22 +257,22 @@ func (destination *S3Destination) sendData(buffer *s3EventBuffer, errChan chan e
 		return
 	}
 
-	err = destination.sendSNSNotification(key, buffer) // if send fails we fail whole operation
+	err = d.sendSNSNotification(key, buffer) // if send fails we fail whole operation
 	if err != nil {
 		errChan <- err
 	}
 }
 
-func (destination *S3Destination) sendSNSNotification(key string, buffer *s3EventBuffer) error {
+func (d *S3Destination) sendSNSNotification(key string, buffer *s3EventBuffer) error {
 	var err error
 	operation := common.OpLogManager.Start("sendSNSNotification", common.OpLogSNSServiceDim)
 	defer func() {
 		operation.Stop()
 		operation.Log(err,
-			zap.String("topicArn", destination.snsTopicArn))
+			zap.String("topicArn", d.snsTopicArn))
 	}()
 
-	s3Notification := notify.NewS3ObjectPutNotification(destination.s3Bucket, key, buffer.bytes)
+	s3Notification := notify.NewS3ObjectPutNotification(d.s3Bucket, key, buffer.bytes)
 
 	marshalledNotification, err := jsoniter.MarshalToString(s3Notification)
 	if err != nil {
@@ -282,11 +281,11 @@ func (destination *S3Destination) sendSNSNotification(key string, buffer *s3Even
 	}
 
 	input := &sns.PublishInput{
-		TopicArn:          &destination.snsTopicArn,
+		TopicArn:          &d.snsTopicArn,
 		Message:           &marshalledNotification,
 		MessageAttributes: notify.NewLogAnalysisSNSMessageAttributes(models.LogData, buffer.logType),
 	}
-	if _, err = destination.snsClient.Publish(input); err != nil {
+	if _, err = d.snsClient.Publish(input); err != nil {
 		err = errors.Wrap(err, "failed to send notification to topic")
 		return err
 	}
@@ -316,16 +315,16 @@ type s3EventBufferSet struct {
 	maxTotalSize          uint64
 }
 
-func newS3EventBufferSet(destination *S3Destination, maxTotalSize int) *s3EventBufferSet {
+func (d *S3Destination) newS3EventBufferSet() *s3EventBufferSet {
 	const initialBufferSize = 8192
 	// Stream will be a buffered stream
-	stream := jsoniter.NewStream(destination.jsonAPI, nil, initialBufferSize)
+	stream := jsoniter.NewStream(d.jsonAPI, nil, initialBufferSize)
 	return &s3EventBufferSet{
 		stream:        stream,
 		set:           make(map[time.Time]map[string]*s3EventBuffer),
-		maxBuffers:    destination.maxBuffers,
-		maxBufferSize: maxTotalSize,
-		maxTotalSize:  destination.maxBufferedMemBytes,
+		maxBuffers:    d.maxBuffers,
+		maxBufferSize: d.maxBufferSize,
+		maxTotalSize:  d.maxBufferedMemBytes,
 	}
 }
 
