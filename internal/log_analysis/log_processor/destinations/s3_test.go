@@ -378,7 +378,7 @@ func TestSendDataToS3FromMultipleHoursBeforeTerminating(t *testing.T) {
 func TestSendDataWhenExceedMaxBuffers(t *testing.T) {
 	t.Parallel()
 
-	maxTestDuration := 5 * time.Second
+	maxTestDuration := 10 * time.Second
 
 	destination := mockDestination()
 	destination.maxBuffers = 1
@@ -390,7 +390,7 @@ func TestSendDataWhenExceedMaxBuffers(t *testing.T) {
 	// The next event will be stored in a different buffer than the previous one.
 	// Since the max allowed number of buffers in memory is 1, it should trigger writing to S3
 	// and sending SNS notification
-	eventChannel <- newTestEvent(testLogType, refTimePlusHour).Result()
+	eventChannel <- newTestEvent(testLogType+"anothertype", refTime).Result()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).
 		Run(func(args mock.Arguments) {
 			// When we have written a buffer to S3 and sent notification
