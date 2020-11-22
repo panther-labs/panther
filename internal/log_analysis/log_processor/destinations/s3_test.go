@@ -382,7 +382,7 @@ func TestSendDataWhenExceedMaxBuffers(t *testing.T) {
 
 	destination := mockDestination()
 	destination.maxBuffers = 1
-	destination.maxDuration = maxTestDuration // make sure that the events are not flushed due to time
+	destination.maxDuration = 2 * maxTestDuration // make sure that the buffers are not flushed due to time
 
 	eventChannel := make(chan *parsers.Result, 2)
 	// Write the first event to the channel
