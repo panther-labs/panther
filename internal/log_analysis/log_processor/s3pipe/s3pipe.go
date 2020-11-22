@@ -37,28 +37,33 @@ type Downloader s3manager.Downloader
 // It uses a downloader to fetch the file in chunks to avoid connection resets.
 // It prefetches the next chunk while the previous one is being processed.
 func (dl Downloader) Download(ctx context.Context, input *s3.GetObjectInput) io.ReadCloser {
-	if size := dl.PartSize; size <= 0 {
-		dl.PartSize = s3manager.DefaultDownloadPartSize
-	}
-	// It is important to have a concurrency of 1. This forces the downloader to get the chunks in sequence.
-	dl.Concurrency = 1
-	parts := make(chan *bytes.Buffer, 1)
-	r, w := io.Pipe()
 	// Create a cancelable sub context so that the reader can abort the download
 	ctx, cancel := context.WithCancel(ctx)
-	dl.BufferProvider = newPrefetchProvider(ctx, w, int(dl.PartSize), parts)
-	dpr := downloadReader{
-		cancel:     cancel,
-		pipeReader: r,
+
+	// All chunks will be written to this pipe.
+	r, w := io.Pipe()
+	// This channel will queue chunks.
+	// Size is set to 1 so that the next chunk is being prefetched while the previous one is being processed.
+	parts := make(chan *bytes.Buffer, 1)
+	// We reset our copy of Downloader to read chunks in sequence and queue them into parts.
+	dl.reset(ctx, w, parts)
+	// We return a reader that will start downloading on first call to Read().
+	// Chunks will be queued and written to the write part of the pipe.
+	return &downloadReader{
+		cancel: cancel,
+		r:      r,
 		// defer the downloading until the first call to Read
 		download: func() {
-			// We set channel size to 1 so that we prefetch the next chunk while the previous one is being processed
-			// Close the parts channel once download finishes
+			// Close the parts channel once download finishes. This will signal copyBuffers goroutine to finish.
+			// It is safe to close the channel when DownloadWithContext has returned since there won't be any more
+			// calls to `push` after that.
 			defer close(parts)
-			// Start the copying of buffers to the io.PipeWriter
+			// Start the copying of buffers to the io.PipeWriter. Closes the io.PipeWriter once finished.
 			go copyBuffers(w, parts)
 			// We pass a dummy WriterAt value so that we get a panic if the downloader uses the WriteAt method directly.
-			_, err := s3manager.Downloader(dl).DownloadWithContext(ctx, &nopWriterAt{}, input)
+			dummyWriter := nopWriterAt{}
+			// We cast our copy of the Downloader to s3manager.Downloader and start fetching chunks.
+			_, err := s3manager.Downloader(dl).DownloadWithContext(ctx, &dummyWriter, input)
 			// If an error occurs it will show up in the io.PipeReader side.
 			// Otherwise an io.EOF will be shown to the io.PipeReader side.
 			if err != nil {
@@ -66,30 +71,43 @@ func (dl Downloader) Download(ctx context.Context, input *s3.GetObjectInput) io.
 			}
 		},
 	}
-
-	return &dpr
+}
+func (dl *Downloader) reset(ctx context.Context, w *io.PipeWriter, parts chan<- *bytes.Buffer) {
+	// Ensure that dl.PartSize is set to a valid size
+	if size := dl.PartSize; size <= 0 {
+		dl.PartSize = s3manager.DefaultDownloadPartSize
+	}
+	// It is important to have a concurrency of 1. This forces the downloader to get the chunks in sequence.
+	dl.Concurrency = 1
+	// We override the BufferProvider to push parts to the io.PipeWriter directly.
+	dl.BufferProvider = newPrefetchProvider(ctx, w, int(dl.PartSize), parts)
 }
 
 func copyBuffers(w *io.PipeWriter, parts <-chan *bytes.Buffer) {
-	var err error
-	defer func() {
-		_ = w.CloseWithError(err) // pushes errors thru to reader
-	}()
+	// It is safe to call this multiple times.
+	// No reason to call CloseWithError as the only error here can only be that the pipe was already closed.
+	defer w.Close()
 	for part := range parts {
 		_, err := part.WriteTo(w)
+		// We recycle the buffer even if the write failed.
+		part.Reset()
+		bufferPool.Put(part)
+		// An error means that the pipe was closed.
 		if err != nil {
 			return
 		}
-		part.Reset()
-		bufferPool.Put(part)
 	}
 }
 
 type downloadReader struct {
+	// r is the underlying pipe reader where data from being downloaded will be read from.
+	r *io.PipeReader
+	// cancel will abort the whole pipeline and clean up any resources
 	cancel     context.CancelFunc
+	// once guards the download closure so it is only spawned one time on first Read()
 	once       sync.Once
+	// download is a closure that will start downloading and pushing chunks to the pipe.
 	download   func()
-	pipeReader *io.PipeReader
 }
 
 var _ io.ReadCloser = (*downloadReader)(nil)
@@ -99,7 +117,7 @@ var _ io.ReadCloser = (*downloadReader)(nil)
 func (dr *downloadReader) Read(p []byte) (n int, err error) {
 	// This starts the downloading on first read
 	dr.once.Do(dr.startDownloading)
-	return dr.pipeReader.Read(p)
+	return dr.r.Read(p)
 }
 
 func (dr *downloadReader) startDownloading() {
@@ -115,9 +133,11 @@ func (dr *downloadReader) Close() error {
 	var cancel context.CancelFunc
 	cancel, dr.cancel = dr.cancel, nil
 	if cancel != nil {
-		cancel()
+		// We cancel the context *AFTER* we close the pipe.
+		// This way context errors from the Download do not override the pipe closed error on Read().
+		defer cancel()
 	}
-	return dr.pipeReader.Close()
+	return dr.r.Close()
 }
 
 var bufferPool = &sync.Pool{
