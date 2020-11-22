@@ -384,7 +384,7 @@ func TestSendDataWhenExceedMaxBuffers(t *testing.T) {
 	destination.maxBuffers = 1
 	destination.maxDuration = maxTestDuration // make sure that the events are not flushed due to time
 
-	eventChannel := make(chan *parsers.Result, 3)
+	eventChannel := make(chan *parsers.Result, 2)
 	// Write the first event to the channel
 	eventChannel <- newTestEvent(testLogType, refTime).Result()
 	// The next event will be stored in a different buffer than the previous one.
@@ -394,22 +394,16 @@ func TestSendDataWhenExceedMaxBuffers(t *testing.T) {
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).
 		Run(func(args mock.Arguments) {
 			// When we have written a buffer to S3 and sent notification
-			// write another event. The new event should be stored in a different buffer
-			// so it should also trigger flushing of the buffers since max allowed buffers is 1
-			eventChannel <- newTestEvent(testLogType+"another", refTimePlusHour).Result()
-		}).Once()
-
-	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).
-		Run(func(args mock.Arguments) {
-			// same as above but this time just close the events channel
+			// close the event channel
 			close(eventChannel)
 		}).Once()
+
 	// Once the channel is closed, the destination will flush to S3 the last buffer
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
-	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Times(3)
+	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
 
-	// Make sure
+	// Make sure the test doesn't run for more than expected
 	timeout := time.After(maxTestDuration)
 	done := make(chan bool)
 	defer close(done)
