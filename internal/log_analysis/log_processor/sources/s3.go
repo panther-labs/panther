@@ -42,7 +42,7 @@ import (
 )
 
 const (
-	DownloadPartSize = 5 * 1024 * 1024 // the buffer size use for downloader
+	DownloadPartSize = 5 * 1024 * 1024
 
 	s3TestEvent                 = "s3:TestEvent"
 	cloudTrailValidationMessage = "CloudTrail validation message."

@@ -34,7 +34,7 @@ const DefaultReadBufferSize = 32 * 1024
 type Downloader s3manager.Downloader
 
 // Download creates a new reader that reads the contents of an S3 object.
-// It uses a downloader to fetch the file in chunks to avoid connection resets.
+// It uses a downloader to fetch the file in chunks to enable recovery from read errors (e.g., connection resets).
 // It prefetches the next chunk while the previous one is being processed.
 func (dl Downloader) Download(ctx context.Context, input *s3.GetObjectInput) io.ReadCloser {
 	// Create a cancelable sub context so that the reader can abort the download
@@ -72,6 +72,7 @@ func (dl Downloader) Download(ctx context.Context, input *s3.GetObjectInput) io.
 		},
 	}
 }
+
 func (dl *Downloader) reset(ctx context.Context, w *io.PipeWriter, parts chan<- *bytes.Buffer) {
 	// Ensure that dl.PartSize is set to a valid size
 	if size := dl.PartSize; size <= 0 {
@@ -212,6 +213,7 @@ func (b *chunkBuffer) ReadFrom(r io.Reader) (int64, error) {
 }
 
 // Write implements io.Writer.
+// The implementation is a stub.
 // We panic to assert that s3manager.Downloader does not write to the buffer directly.
 func (b *chunkBuffer) Write(_ []byte) (int, error) {
 	panic("the Write() method should not have been used directly")

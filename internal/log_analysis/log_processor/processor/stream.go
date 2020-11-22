@@ -79,6 +79,15 @@ func pollEvents(
 	processFunc ProcessFunc,
 	generateDataStreamsFunc func(context.Context, string) ([]*common.DataStream, error)) (int, error) {
 
+	// We should poll events for 1/4 the Lambda's duration, leaving the balance for processing and flushing data
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		panic("lambda context doesn't have a deadline!")
+	}
+	pollingTimeout := time.Until(deadline) / 4
+	pollCtx, cancel := context.WithTimeout(ctx, pollingTimeout)
+	defer cancel()
+
 	streamChan := make(chan *common.DataStream, 2*sqsMaxBatchSize) // use small buffer to pipeline events
 	var accumulatedMessageReceipts []*string                       // accumulate message receipts for delete at the end
 	var totalBytesRead int64                                       // accumulate the sizes of files read
@@ -93,7 +102,7 @@ func pollEvents(
 
 		for len(accumulatedMessageReceipts) < processingMaxFilesLimit && totalBytesRead < processingMaxBytesRead {
 			select {
-			case <-ctx.Done():
+			case <-pollCtx.Done():
 				return
 			default:
 				// Makes select non blocking
@@ -112,7 +121,7 @@ func pollEvents(
 				continue
 			}
 			// keep reading from SQS to maximize output aggregation
-			messages, err := receiveFromSqs(ctx, sqsClient)
+			messages, err := receiveFromSqs(pollCtx, sqsClient)
 			if err != nil {
 				zap.L().Error("Encountered issue while polling sqs messages. Stopping polling", zap.Error(err))
 				return
@@ -123,6 +132,7 @@ func pollEvents(
 			}
 
 			for _, msg := range messages {
+				// pass lambda context to set FULL deadline to process which is pushed down into downloader
 				dataStreams, err := generateDataStreamsFunc(ctx, aws.StringValue(msg.Body))
 				if err != nil {
 					log.Println("generate streams error!")

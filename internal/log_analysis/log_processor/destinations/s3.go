@@ -47,9 +47,9 @@ import (
 
 const (
 	uploaderBufferMaxSizeBytes = 50 * 1024 * 1024
-	uploaderPartSize           = 10 * 1024 * 1024
+	uploaderPartSize           = 5 * 1024 * 1024
 
-	numberConcurrentUploads = 4 // how many uploaders are run concurrently
+	numberConcurrentUploads = 8 // how many uploaders are run concurrently
 
 	// The timestamp layout used in the S3 object key filename part with second precision: yyyyMMddTHHmmssZ
 	S3ObjectTimestampLayout = "20060102T150405Z"
@@ -59,8 +59,6 @@ const (
 
 	// maximum number of buffers in memory (if exceeded buffers are flushed)
 	maxBuffers = 256
-
-	bytesPerMB = 1024 * 1024
 )
 
 var (
@@ -74,7 +72,7 @@ var (
 func init() {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-	memUsedAtStartupMB = (int)(memStats.Sys/(bytesPerMB)) + 1
+	memUsedAtStartupMB = (int)(memStats.Sys/(1024*1024)) + 1
 }
 
 func CreateS3Destination(jsonAPI jsoniter.API) Destination {
@@ -105,7 +103,7 @@ func maxS3BufferMemUsageBytes(lambdaSizeMB int) uint64 {
 		panic(fmt.Sprintf("available memory too small for log processing, increase lambda size from %dMB", lambdaSizeMB))
 	}
 
-	return (uint64)(maxBufferUsageMB) * bytesPerMB // to bytes
+	return (uint64)(maxBufferUsageMB) * 1024 * 1024 // to bytes
 }
 
 // S3Destination sends normalized events to S3
