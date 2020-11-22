@@ -25,59 +25,40 @@ import (
 	"sync"
 
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 // These values are very conservative defaults.
-const (
-	DefaultReadBufferSize = 32 * 1024
-)
+const DefaultReadBufferSize = 32 * 1024
 
-var (
-	// MinPartSize is var so we can set in tests
-	MinPartSize = 1024 * 1024 // Minimum partition size should be set to 1Mb to minimize fragmentation of HTTP requests
-)
+type Downloader s3manager.Downloader
 
-// NewReader creates a new reader that reads the contents of an S3 object.
+// Download creates a new reader that reads the contents of an S3 object.
 // It uses a downloader to fetch the file in chunks to avoid connection resets.
 // It prefetches the next chunk while the previous one is being processed.
-func NewReader(ctx context.Context, input *s3.GetObjectInput, s3Client s3iface.S3API, partSize int) io.ReadCloser {
-	switch {
-	case partSize <= 0:
-		// Use the default suggested by the S3 library
-		partSize = s3manager.DefaultDownloadPartSize
-	case partSize < MinPartSize:
-		// Use some minimum to avoid fragmentation of HTTP requests
-		partSize = MinPartSize
+func (dl Downloader) Download(ctx context.Context, input *s3.GetObjectInput) io.ReadCloser {
+	if size := dl.PartSize; size <= 0 {
+		dl.PartSize = s3manager.DefaultDownloadPartSize
 	}
-
+	// It is important to have a concurrency of 1. This forces the downloader to get the chunks in sequence.
+	dl.Concurrency = 1
+	parts := make(chan *bytes.Buffer, 1)
 	r, w := io.Pipe()
 	// Create a cancelable sub context so that the reader can abort the download
 	ctx, cancel := context.WithCancel(ctx)
-
+	dl.BufferProvider = newPrefetchProvider(ctx, w, int(dl.PartSize), parts)
 	dpr := downloadReader{
 		cancel:     cancel,
 		pipeReader: r,
 		// defer the downloading until the first call to Read
 		download: func() {
 			// We set channel size to 1 so that we prefetch the next chunk while the previous one is being processed
-			parts := make(chan *bytes.Buffer, 1)
 			// Close the parts channel once download finishes
 			defer close(parts)
-
 			// Start the copying of buffers to the io.PipeWriter
 			go copyBuffers(w, parts)
-
-			downloader := s3manager.Downloader{
-				S3:       s3Client,
-				PartSize: int64(partSize),
-				// It is important to have a concurrency of 1. This forces the downloader to get the chunks in sequence.
-				Concurrency: 1,
-				// This intercepts each chunk, pushing it to the queue to be written it to the io.PipeWriter to avoid duplicate buffering.
-				BufferProvider: newPrefetchProvider(ctx, w, partSize, parts),
-			}
-			_, err := downloader.DownloadWithContext(ctx, &nopWriterAt{}, input)
+			// We pass a dummy WriterAt value so that we get a panic if the downloader uses the WriteAt method directly.
+			_, err := s3manager.Downloader(dl).DownloadWithContext(ctx, &nopWriterAt{}, input)
 			// If an error occurs it will show up in the io.PipeReader side.
 			// Otherwise an io.EOF will be shown to the io.PipeReader side.
 			if err != nil {

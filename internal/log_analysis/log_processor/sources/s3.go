@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/s3pipe"
 	"io"
 	"net/http"
 	"net/url"
@@ -38,7 +39,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/downloadpipe"
 )
 
 const (
@@ -160,10 +160,12 @@ func readS3Object(ctx context.Context, s3Object *S3ObjectInfo) (dataStream *comm
 	}
 
 	// downloadPipe := s3pipe.NewReader(ctx, getObjectInput, s3Client, DownloadPartSize)
+	downloader := s3pipe.Downloader{
+		S3: s3Client,
+		PartSize: DownloadPartSize,
+	}
 
-	downloadPipe := downloadpipe.NewDownloadPipe(s3Client, getObjectInput)
-	// run the downloader in the background writing into the pipe
-	go downloadPipe.Run()
+	downloadPipe := downloader.Download(ctx, getObjectInput)
 
 	bufferedReader := bufio.NewReader(downloadPipe)
 

@@ -23,14 +23,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -38,95 +36,77 @@ import (
 )
 
 func TestDownloadPipe(t *testing.T) {
-	var pipeReader io.ReadCloser
-	var partSize int
-	var dataWritten []byte
+	for _, tc := range []testCase{
+		{"data shorter than part size", 12, []byte("small"), false},
+		{"data longer than part size", 4, []byte("foo bar baz qux"), false},
+		{"data longer than part size, fail", 4, []byte("foo bar baz qux"), true},
+	} {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			s3Mock := tc.mockS3()
+			dl := Downloader{
+				S3:       s3Mock,
+				PartSize: int64(tc.PartSize),
+			}
+			input := &s3.GetObjectInput{
+				Bucket: aws.String("bucket"),
+				Key:    aws.String("key"),
+			}
+			rc := dl.Download(context.Background(), input)
+			defer rc.Close()
 
-	MinPartSize = 1 // so we can force scenarios
-
-	mockS3Client := &testutils.S3Mock{
-		Retries: 3,
+			assert := require.New(t)
+			var body bytes.Buffer
+			n, err := body.ReadFrom(rc)
+			assert.NoError(err)
+			assert.Equal(n, int64(len(tc.Data)))
+			assert.Equal(tc.Data, body.Bytes())
+			s3Mock.AssertExpectations(t)
+		})
 	}
-	getObjectInput := &s3.GetObjectInput{
-		Bucket: aws.String("bucket"),
-		Key:    aws.String("key"),
-	}
-
-	// case: data smaller than partSize
-	dataWritten = []byte("small")
-	partSize = len(dataWritten) * 2
-	pipeReader = NewReader(context.TODO(), getObjectInput, mockS3Client, partSize)
-	doPipe(t, mockS3Client, pipeReader, dataWritten, partSize, false, "smaller")
-
-	// case: data larger than partSize
-	dataWritten = []byte("three writes")
-	partSize = (len(dataWritten) / 3) + 1
-	pipeReader = NewReader(context.TODO(), getObjectInput, mockS3Client, partSize)
-	doPipe(t, mockS3Client, pipeReader, dataWritten, partSize, false, "larger")
-
-	// same as above but fail once for each GetObject
-	dataWritten = []byte("three writes")
-	partSize = (len(dataWritten) / 3) + 1
-	pipeReader = NewReader(context.TODO(), getObjectInput, mockS3Client, partSize)
-	doPipe(t, mockS3Client, pipeReader, dataWritten, partSize, true, "fail")
 }
 
-func doPipe(t *testing.T, s3Mock *testutils.S3Mock, pipeReader io.ReadCloser,
-	dataWritten []byte, partSize int, fail bool, testName string) {
+type testCase struct {
+	Name     string
+	PartSize int
+	Data     []byte
+	Fail     bool
+}
 
-	defer pipeReader.Close()
-
-	fullPartsToWrite := len(dataWritten) / partSize
-	for i := 0; i < fullPartsToWrite; i++ {
-		objectData := dataWritten[i*partSize : (i+1)*partSize]
-		contentRange := fmt.Sprintf("bytes %d-%d/%d", i*partSize, ((i+1)*partSize)-1, len(dataWritten))
-		getObjectOutput := &s3.GetObjectOutput{
+func (tc testCase) mockS3() *testutils.S3Mock {
+	s3Mock := testutils.S3Mock{
+		Retries: 3,
+	}
+	for i := 0; i <= tc.numParts(); i++ {
+		data, contentRange := tc.bodyPart(i)
+		output := s3.GetObjectOutput{
 			ContentRange:  aws.String(contentRange),
-			ContentLength: aws.Int64(int64(len(objectData))),
-			Body:          ioutil.NopCloser(bytes.NewReader(objectData)),
+			ContentLength: aws.Int64(int64(len(data))),
+			Body:          ioutil.NopCloser(bytes.NewReader(data)),
 		}
-		if fail {
-			failedGetObjectOutput := &s3.GetObjectOutput{
-				ContentRange:  aws.String(contentRange),
-				ContentLength: aws.Int64(int64(len(objectData))),
-				Body:          ioutil.NopCloser(&networkFailReader{}),
-			}
-			s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return(failedGetObjectOutput,
-				nil).Once()
+		if tc.Fail {
+			// Copy output
+			output := output
+			// Set body to failing reader
+			output.Body = ioutil.NopCloser(&networkFailReader{})
+			s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&output, nil).Once()
 		}
-		s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return(getObjectOutput, nil).Once()
+		s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&output, nil).Once()
 	}
-	if len(dataWritten) != (fullPartsToWrite * partSize) {
-		objectData := dataWritten[fullPartsToWrite*partSize:]
-		contentRange := fmt.Sprintf("bytes %d-%d/%d", fullPartsToWrite*partSize, len(dataWritten)-1, len(dataWritten))
-		getObjectOutput := &s3.GetObjectOutput{
-			ContentRange:  aws.String(contentRange),
-			ContentLength: aws.Int64(int64(len(objectData))),
-			Body:          ioutil.NopCloser(bytes.NewReader(objectData)),
-		}
-		if fail {
-			failedGetObjectOutput := &s3.GetObjectOutput{
-				ContentRange:  aws.String(contentRange),
-				ContentLength: aws.Int64(int64(len(objectData))),
-				Body:          ioutil.NopCloser(&networkFailReader{}),
-			}
-			s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return(failedGetObjectOutput,
-				nil).Once()
-		}
-		s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return(getObjectOutput, nil).Once()
+	return &s3Mock
+}
+func (tc testCase) bodyPart(i int) ([]byte, string) {
+	start := i * tc.PartSize
+	end := start + tc.PartSize
+	total := len(tc.Data)
+	if end > total {
+		end = total
 	}
+	return tc.Data[start:end], fmt.Sprintf("bytes %d-%d/%d", start, end, total)
+}
 
-	var dataRead bytes.Buffer
-	for {
-		n, err := dataRead.ReadFrom(pipeReader)
-		require.NoError(t, err)
-		if n == 0 {
-			break
-		}
-	}
-
-	assert.Equal(t, string(dataWritten), dataRead.String(), testName)
-	s3Mock.AssertExpectations(t)
+func (tc testCase) numParts() int {
+	return len(tc.Data) / tc.PartSize
 }
 
 type networkFailReader struct{}
