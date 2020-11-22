@@ -103,11 +103,11 @@ type downloadReader struct {
 	// r is the underlying pipe reader where data from being downloaded will be read from.
 	r *io.PipeReader
 	// cancel will abort the whole pipeline and clean up any resources
-	cancel     context.CancelFunc
+	cancel context.CancelFunc
 	// once guards the download closure so it is only spawned one time on first Read()
-	once       sync.Once
+	once sync.Once
 	// download is a closure that will start downloading and pushing chunks to the pipe.
-	download   func()
+	download func()
 }
 
 var _ io.ReadCloser = (*downloadReader)(nil)
