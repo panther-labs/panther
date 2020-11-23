@@ -76,24 +76,6 @@ func TestStreamEvents(t *testing.T) {
 	sqsMock.AssertExpectations(t)
 }
 
-func TestStreamEventsProcessingSizeLimitExceeded(t *testing.T) {
-	t.Parallel()
-	sqsMock := &testutils.SqsMock{}
-	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
-		Return(streamTestReceiveMessageOutput, nil).Once()
-	// the size of the read message from tooBigGenerateDataStream  will break the loop
-	sqsMock.On("DeleteMessageBatch", mock.Anything).
-		Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
-
-	ctx, cancel := testContext()
-	defer cancel()
-	count, err := pollEvents(ctx, sqsMock, noopProcessorFunc, tooBigGenerateDataStream)
-	require.NoError(t, err)
-	assert.Equal(t, 1, count)
-
-	sqsMock.AssertExpectations(t)
-}
-
 func TestStreamEventsProcessingTimeLimitExceeded(t *testing.T) {
 	t.Parallel()
 	sqsMock := &testutils.SqsMock{}
@@ -256,14 +238,6 @@ func failProcessorFunc(streamChan <-chan *common.DataStream, _ destinations.Dest
 func noopGenerateDataStream(_ context.Context, _ string) ([]*common.DataStream, error) {
 	return []*common.DataStream{
 		{}, // empty is fine
-	}, nil
-}
-
-func tooBigGenerateDataStream(_ context.Context, _ string) ([]*common.DataStream, error) {
-	return []*common.DataStream{
-		{
-			S3ObjectSize: processingMaxBytesRead * 2, /// too big!
-		},
 	}, nil
 }
 

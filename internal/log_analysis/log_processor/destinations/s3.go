@@ -55,7 +55,7 @@ const (
 	S3ObjectTimestampLayout = "20060102T150405Z"
 
 	//  maximum time to hold an s3 buffer in memory (controls latency of rules engine which processes this output)
-	maxDuration = 2 * time.Minute
+	maxDuration = 1 * time.Minute
 
 	// maximum number of buffers in memory (if exceeded buffers are flushed)
 	maxBuffers = 256

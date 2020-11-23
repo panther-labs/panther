@@ -39,17 +39,11 @@ import (
 )
 
 const (
-	// Limit the max data read to be processed to avoid timeouts and memory pressure created by taking on too much work
-	processingMaxBytesRead = 250 * 1024 * 1024
-
 	// Limit this so there is time to delete from the queue at the end.
 	processingMaxFilesLimit = 5000
 
-	// The max messages per read for SQS (can't find an sqs constant to refer to).
-	sqsMaxBatchSize = 10
-
 	// How many objects to read per sqs read, the larger value, the the bigger impact on failures
-	sqsReadBatchSize = 1 // keeping this conservative right now
+	sqsReadBatchSize = 1 // keeping this conservative right now, must be smaller than 10
 )
 
 /*
@@ -87,9 +81,8 @@ func pollEvents(
 	pollCtx, cancel := context.WithTimeout(ctx, pollingTimeout)
 	defer cancel()
 
-	streamChan := make(chan *common.DataStream, 2*sqsMaxBatchSize) // use small buffer to pipeline events
-	var accumulatedMessageReceipts []*string                       // accumulate message receipts for delete at the end
-	var totalBytesRead int64                                       // accumulate the sizes of files read
+	streamChan := make(chan *common.DataStream) // must be unbuffered to apply back pressure!
+	var accumulatedMessageReceipts []*string    // accumulate message receipts for delete at the end
 
 	go func() {
 		defer func() {
@@ -99,7 +92,7 @@ func pollEvents(
 		// continue to read until either there are no sqs messages or we have exceeded the processing time/file limit
 		highMemoryCounter := 0
 
-		for len(accumulatedMessageReceipts) < processingMaxFilesLimit && totalBytesRead < processingMaxBytesRead {
+		for len(accumulatedMessageReceipts) < processingMaxFilesLimit {
 			select {
 			case <-pollCtx.Done():
 				return
@@ -143,7 +136,6 @@ func pollEvents(
 					continue
 				}
 				for _, dataStream := range dataStreams {
-					totalBytesRead += dataStream.S3ObjectSize
 					streamChan <- dataStream
 				}
 				accumulatedMessageReceipts = append(accumulatedMessageReceipts, msg.ReceiptHandle)
