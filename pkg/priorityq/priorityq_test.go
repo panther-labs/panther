@@ -32,12 +32,20 @@ func TestPriorityQueue(t *testing.T) {
 
 	sort.Float64s(elements)
 	for _, e := range elements {
-		item, err := pq.Pop()
+		peekItem, err := pq.Peek()
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+		popItem, err := pq.Pop()
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
 
-		i := item.(float64)
+		if peekItem != popItem {
+			t.Fatalf("peek != pop ")
+		}
+
+		i := popItem.(float64)
 		if e != i {
 			t.Fatalf("expected %v, got %v", e, i)
 		}

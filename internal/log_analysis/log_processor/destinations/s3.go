@@ -444,16 +444,15 @@ func (bs *s3EventBufferSet) removeLargestBuffer() (largestBuffer *s3EventBuffer)
 }
 
 func (bs *s3EventBufferSet) removeTooOldBuffer(now time.Time, maxDuration time.Duration) (oldestBuffer *s3EventBuffer) {
-	oldest, err := bs.createTimePriorityQueue.Pop() // this takes buffer out of priority queue
-	if err != nil {                                 // if q is empty then err is returned
+	oldest, err := bs.createTimePriorityQueue.Peek()
+	if err != nil { // if q is empty then err is returned
 		return nil
 	}
 	oldestBuffer = oldest.(*s3EventBuffer)
 	// too old?
 	if now.Sub(oldestBuffer.createTime) >= maxDuration {
 		bs.removeBuffer(oldestBuffer)
-	} else { // put it back, negative so oldest is on top!
-		bs.createTimePriorityQueue.Insert(oldestBuffer, float64(-oldestBuffer.createTime.Unix()))
+	} else {
 		return nil
 	}
 	return oldestBuffer

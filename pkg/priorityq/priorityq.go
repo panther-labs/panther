@@ -71,6 +71,16 @@ func (p *PriorityQueue) Pop() (interface{}, error) {
 	return item.value, nil
 }
 
+// Peek returns the item that is on top of the heap but does not remove.
+// In case of an empty queue, an error is returned.
+func (p *PriorityQueue) Peek() (interface{}, error) {
+	if len(*p.itemHeap) == 0 {
+		return nil, errors.New("empty queue")
+	}
+
+	return (*p.itemHeap)[0].value, nil
+}
+
 // UpdatePriority changes the priority of a given item.
 // If the specified item is not present in the queue, no action is performed.
 func (p *PriorityQueue) UpdatePriority(x interface{}, newPriority float64) {
