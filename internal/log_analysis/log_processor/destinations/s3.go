@@ -423,12 +423,15 @@ func (bs *s3EventBufferSet) removeBuffer(buffer *s3EventBuffer) {
 	if !ok {
 		return
 	}
-	bs.totalBufferedMemBytes -= (uint64)(buffer.bytes)
+	if _, ok := logTypeToBuffer[buffer.logType]; !ok {
+		return
+	}
 	delete(logTypeToBuffer, buffer.logType)
+	bs.totalBufferedMemBytes -= (uint64)(buffer.bytes)
+	bs.numBuffers--
 	if len(logTypeToBuffer) == 0 {
 		delete(bs.set, buffer.hour)
 	}
-	bs.numBuffers--
 }
 
 func (bs *s3EventBufferSet) largestBuffer() (largestBuffer *s3EventBuffer) {
