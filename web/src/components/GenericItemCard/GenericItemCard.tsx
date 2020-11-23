@@ -66,7 +66,7 @@ const GenericItemCard: React.FC & GenericItemCardComposition = ({ children }) =>
 
 const GenericItemCardHeader: React.FC = ({ children }) => {
   return (
-    <Flex as="header" align="start" mb={2}>
+    <Flex as="header" align="flex-start" mb={2}>
       {children}
     </Flex>
   );
@@ -121,7 +121,7 @@ const GenericItemCardOptionsButton = React.forwardRef<HTMLButtonElement>(functio
 
 const GenericItemCardDate: React.FC<GenericItemCardDate> = ({ date, ...rest }) => {
   return (
-    <Text fontSize="small" as="time" color="gray-500" {...rest}>
+    <Text fontSize="small" as="span" color="gray-500" {...rest}>
       {date}
     </Text>
   );
