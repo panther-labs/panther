@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	TemplateBucket           = "panther-public-cloudformation-templates"
+	TemplateBucket = "panther-public-cloudformation-templates"
 
 	LogAnalysisStackNameTemplate = "panther-log-analysis-setup-%s"
 	CloudSecStackName            = "panther-cloudsec-setup"
