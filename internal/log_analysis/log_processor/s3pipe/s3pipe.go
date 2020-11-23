@@ -61,7 +61,8 @@ func (dl Downloader) Download(ctx context.Context, input *s3.GetObjectInput) io.
 		download: func() {
 			// Instrument downloads. The time will include time to parse the file as we do not close until final read.
 			var err error
-			operation := common.OpLogManager.Start("downloadData", common.OpLogS3ServiceDim)
+			// NOTE: dashboards depend on the operation name below! Do not change w/out updating dashboard
+			operation := common.OpLogManager.Start("readS3Object", common.OpLogS3ServiceDim)
 			defer func() {
 				operation.Stop()
 				operation.Log(err,
