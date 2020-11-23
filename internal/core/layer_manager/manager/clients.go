@@ -19,27 +19,15 @@ package manager
  */
 
 import (
-	"os"
-
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 
-	analysisapi "github.com/panther-labs/panther/api/gateway/analysis/client"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 var (
-	analysisServiceHost = os.Getenv("ANALYSIS_API_HOST")
-	analysisServicePath = os.Getenv("ANALYSIS_API_PATH")
-
-	awsSession     = session.Must(session.NewSession())
-	httpClient     = gatewayapi.GatewayClient(awsSession)
-	analysisConfig = analysisapi.DefaultTransportConfig().
-			WithHost(analysisServiceHost).
-			WithBasePath(analysisServicePath)
-
-	// We will always need the Lambda client (to get output details)
+	awsSession                           = session.Must(session.NewSession())
 	lambdaClient   lambdaiface.LambdaAPI = lambda.New(awsSession)
-	analysisClient                       = analysisapi.NewHTTPClientWithConfig(nil, analysisConfig)
+	analysisClient gatewayapi.API        = gatewayapi.NewClient(lambdaClient, "panther-analysis-api")
 )

@@ -17,7 +17,8 @@
  */
 
 import React from 'react';
-import { Flex, Tooltip } from 'pouncejs';
+import { Flex, Tooltip, Box } from 'pouncejs';
+import NotificationJewel from 'Components/NotificationJewel';
 
 interface LimitItemDisplayProps {
   /**
@@ -51,19 +52,9 @@ const LimitItemDisplay: React.FC<LimitItemDisplayProps> = ({ limit, children }) 
           </Flex>
         }
       >
-        <Flex
-          justify="center"
-          align="center"
-          width={18}
-          height={18}
-          backgroundColor="navyblue-200"
-          borderRadius="circle"
-          fontSize="2x-small"
-          fontWeight="medium"
-          cursor="default"
-        >
-          +{childrenCount - limit}
-        </Flex>
+        <Box>
+          <NotificationJewel badge={`+${childrenCount - limit}`} />
+        </Box>
       </Tooltip>
     </React.Fragment>
   );

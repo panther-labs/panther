@@ -26,7 +26,7 @@ import (
 )
 
 // Severity priority when sorting failed policies
-var severityPriority = map[models.PolicySeverity]int{
+var severityPriority = map[models.Severity]int{
 	models.SeverityInfo:     0,
 	models.SeverityLow:      1,
 	models.SeverityMedium:   2,
@@ -61,7 +61,7 @@ func countToStatus(count models.StatusCount) models.ComplianceStatus {
 
 // Update StatsCountBySeverity totals with a pass/fail status of a given severity
 func updateStatusCountBySeverity(
-	count *models.StatusCountBySeverity, severity models.PolicySeverity, status models.ComplianceStatus) {
+	count *models.StatusCountBySeverity, severity models.Severity, status models.ComplianceStatus) {
 
 	switch severity {
 	case models.SeverityInfo:

@@ -34,7 +34,7 @@ const RuleCardOptions: React.FC<RuleCardOptionsProps> = ({ rule }) => {
 
   return (
     <Dropdown>
-      <DropdownButton as={GenericItemCard.Dropdown} />
+      <DropdownButton as={GenericItemCard.OptionsButton} />
       <DropdownMenu>
         <DropdownLink as={RRLink} to={urls.logAnalysis.rules.edit(rule.id)}>
           Edit

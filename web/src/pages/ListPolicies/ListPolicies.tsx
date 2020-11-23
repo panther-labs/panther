@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
-import { convertObjArrayValuesToCsv, encodeParams, extractErrorMessage } from 'Helpers/utils';
+import { extractErrorMessage } from 'Helpers/utils';
 import { ListPoliciesInput, SortDirEnum, ListPoliciesSortFieldsEnum } from 'Generated/schema';
 import { TableControlsPagination } from 'Components/utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
@@ -46,7 +46,7 @@ const ListPolicies = () => {
   const { loading, error, data } = useListPolicies({
     fetchPolicy: 'cache-and-network',
     variables: {
-      input: encodeParams(convertObjArrayValuesToCsv(requestParams), ['nameContains']),
+      input: requestParams,
     },
   });
 

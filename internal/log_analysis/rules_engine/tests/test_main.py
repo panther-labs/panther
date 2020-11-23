@@ -14,29 +14,51 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import io
+import json
 import os
+from typing import Any, Dict
 from unittest import TestCase, mock
 
 import boto3
-import requests
-from botocore.auth import SigV4Auth
 
-from . import mock_to_return
+from . import mock_to_return, LAMBDA_MOCK
 
-_RESPONSE_MOCK = mock.MagicMock()
-_RESPONSE_MOCK.json.return_value = {'policies': []}
+
+def _mock_invoke(**unused_kwargs: Any) -> Dict[str, Any]:
+    return {
+        'Payload':
+            io.BytesIO(
+                json.dumps(
+                    {
+                        'body':
+                            json.dumps(
+                                {
+                                    'paging': {
+                                        'thisPage': 1,
+                                        'totalItems': 0,
+                                        'totalPages': 1
+                                    },
+                                    'models': [],  # for listModels
+                                    'rules': [],  # for listRules
+                                }
+                            ),
+                        'statusCode': 200,
+                    }
+                ).encode('utf-8')
+            )
+    }
+
+
+LAMBDA_MOCK.invoke.side_effect = _mock_invoke
 
 _ENV_VARIABLES_MOCK = {
     'ALERTS_DEDUP_TABLE': 'table_name',
-    'ANALYSIS_API_FQDN': 'analysis_fqdn',
     'S3_BUCKET': 's3_bucket',
     'NOTIFICATIONS_TOPIC': 'sns_topic',
-    'ANALYSIS_API_PATH': 'path'
 }
 with mock.patch.dict(os.environ, _ENV_VARIABLES_MOCK), \
-     mock.patch.object(boto3, 'client', side_effect=mock_to_return), \
-     mock.patch.object(SigV4Auth, 'add_auth'), \
-     mock.patch.object(requests, 'get', return_value=_RESPONSE_MOCK):
+     mock.patch.object(boto3, 'client', side_effect=mock_to_return):
     from ..src.main import lambda_handler, _load_s3_notifications
 
 
