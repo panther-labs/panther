@@ -178,6 +178,23 @@ exports[`DestinationTestPanel should trigger test for alert that is failing 1`] 
   color: #dedede;
 }
 
+
+
+.panther-32>span {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
 .panther-29 {
   background-color: #87374b;
   border-radius: 4px;
@@ -206,23 +223,6 @@ exports[`DestinationTestPanel should trigger test for alert that is failing 1`] 
 
 .panther-8 {
   font-weight: 700;
-}
-
-
-
-.panther-32>span {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-pack: center;
-  -ms-flex-pack: center;
-  -webkit-justify-content: center;
-  justify-content: center;
-  -webkit-align-items: center;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
 }
 
 <div>
