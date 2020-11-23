@@ -20,7 +20,6 @@ package processor
 
 import (
 	"context"
-	"log"
 	"runtime"
 	"time"
 
@@ -40,8 +39,8 @@ import (
 )
 
 const (
-	// Limit the max data read to be processed to avoid timeouts and memory pressure  created by taking on too much work
-	processingMaxBytesRead = 100 * 1024 * 1024
+	// Limit the max data read to be processed to avoid timeouts and memory pressure created by taking on too much work
+	processingMaxBytesRead = 250 * 1024 * 1024
 
 	// Limit this so there is time to delete from the queue at the end.
 	processingMaxFilesLimit = 5000
@@ -135,7 +134,6 @@ func pollEvents(
 				// pass lambda context to set FULL deadline to process which is pushed down into downloader
 				dataStreams, err := generateDataStreamsFunc(ctx, aws.StringValue(msg.Body))
 				if err != nil {
-					log.Println("generate streams error!")
 					// No need for error here. This issue can happen due to
 					// 1. Persistent AWS issues while accessing S3 object
 					// 2. Misconfiguration from user side (e.g. not configured IAM role permissions properly
