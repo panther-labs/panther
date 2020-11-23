@@ -282,9 +282,9 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 	t.Parallel()
 
 	destination := mockDestination()
-	destination.maxDuration = 100 * time.Millisecond
+	destination.maxDuration = 200 * time.Millisecond
 
-	const nevents = 5
+	const nevents = 4
 	eventChannel := make(chan *parsers.Result, nevents)
 	go func() {
 		defer close(eventChannel)
