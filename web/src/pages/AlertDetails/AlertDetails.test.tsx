@@ -59,7 +59,7 @@ describe('AlertDetails', () => {
       mockRuleTeaser({
         variables: {
           input: {
-            ruleId: alert.ruleId,
+            id: alert.ruleId,
           },
         },
         data: { rule },
@@ -113,7 +113,7 @@ describe('AlertDetails', () => {
       mockRuleTeaser({
         variables: {
           input: {
-            ruleId: alert.ruleId,
+            id: alert.ruleId,
           },
         },
         data: { rule },
@@ -165,7 +165,7 @@ describe('AlertDetails', () => {
       mockRuleTeaser({
         variables: {
           input: {
-            ruleId: alert.ruleId,
+            id: alert.ruleId,
           },
         },
         data: { rule },
@@ -222,7 +222,7 @@ describe('AlertDetails', () => {
       mockRuleTeaser({
         variables: {
           input: {
-            ruleId: alert.ruleId,
+            id: alert.ruleId,
           },
         },
         data: { rule },

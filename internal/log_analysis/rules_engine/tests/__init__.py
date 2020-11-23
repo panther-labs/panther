@@ -19,6 +19,7 @@ from unittest import mock
 S3_MOCK = mock.MagicMock()
 DDB_MOCK = mock.MagicMock()
 SNS_MOCK = mock.MagicMock()
+LAMBDA_MOCK = mock.MagicMock()
 
 
 # pylint: disable=unused-argument
@@ -31,5 +32,8 @@ def mock_to_return(value: str, **kwargs: int) -> mock.MagicMock:
 
     if value == 'dynamodb':
         return DDB_MOCK
+
+    if value == 'lambda':
+        return LAMBDA_MOCK
 
     raise Exception('Unexpected value {}'.format(value))

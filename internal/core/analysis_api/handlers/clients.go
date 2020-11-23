@@ -55,6 +55,9 @@ type envConfig struct {
 	Table                string `required:"true" split_words:"true"`
 }
 
+// API defines all of the handlers as receiver functions.
+type API struct{}
+
 // Setup parses the environment and constructs AWS and http clients on a cold Lambda start.
 // All required environment variables must be present or this function will panic.
 func Setup() {
