@@ -32,6 +32,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/sns"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
@@ -42,7 +43,7 @@ import (
 )
 
 const (
-	DownloadMaxPartSize = 100 * 1024 * 1024 // the max size of in memory buffers will be 3X as this due to multiple buffers
+	DownloadMaxPartSize = 50 * 1024 * 1024 // the max size of in memory buffers will be 3X as this due to multiple buffers
 
 	s3TestEvent                 = "s3:TestEvent"
 	cloudTrailValidationMessage = "CloudTrail validation message."
@@ -154,6 +155,8 @@ func readS3Object(ctx context.Context, s3Object *S3ObjectInfo) (dataStream *comm
 	downloadPartSize := s3Object.S3ObjectSize / 2 // use 1/2 to allow processing first half while reading second half on small files
 	if downloadPartSize > DownloadMaxPartSize {
 		downloadPartSize = DownloadMaxPartSize
+	} else if downloadPartSize < s3manager.DefaultDownloadPartSize { // min part size for efficiency
+		downloadPartSize = s3manager.DefaultDownloadPartSize
 	}
 
 	downloader := s3pipe.Downloader{
