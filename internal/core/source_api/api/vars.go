@@ -63,7 +63,7 @@ type envConfig struct {
 	InputDataTopicArn          string `required:"true" split_words:"true"`
 	SnapshotPollersQueueURL    string `required:"true" split_words:"true"`
 	TableName                  string `required:"true" split_words:"true"`
-	Version string `required:"true" split_words:"true"`
+	Version                    string `required:"true" split_words:"true"`
 }
 
 // Setup parses the environment and constructs AWS and http clients on a cold Lambda start.
