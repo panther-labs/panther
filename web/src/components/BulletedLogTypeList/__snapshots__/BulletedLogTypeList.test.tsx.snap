@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`BulletedLogTypeList matches snapshots 1`] = `
-.panther-7 {
+.panther-8 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -16,7 +16,7 @@ exports[`BulletedLogTypeList matches snapshots 1`] = `
   flex-wrap: wrap;
 }
 
-.panther-7>*:not(:last-child) {
+.panther-8>*:not(:last-child) {
   margin-right: 8px;
 }
 
@@ -55,6 +55,8 @@ exports[`BulletedLogTypeList matches snapshots 1`] = `
   border-radius: 99999px;
 }
 
+
+
 .panther-6 {
   display: -webkit-box;
   display: -webkit-flex;
@@ -82,7 +84,7 @@ exports[`BulletedLogTypeList matches snapshots 1`] = `
     id="main-header"
   />
   <div
-    class="panther-7"
+    class="panther-8"
   >
     <div
       class="panther-2"
@@ -109,11 +111,14 @@ exports[`BulletedLogTypeList matches snapshots 1`] = `
       </span>
     </div>
     <div
-      class="panther-6"
+      class="panther-7"
       data-reach-tooltip-trigger=""
     >
-      +
-      2
+      <div
+        class="panther-6"
+      >
+        +2
+      </div>
     </div>
   </div>
   <footer
@@ -123,7 +128,7 @@ exports[`BulletedLogTypeList matches snapshots 1`] = `
 `;
 
 exports[`BulletedLogTypeList matches snapshots 2`] = `
-.panther-7 {
+.panther-8 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -138,7 +143,7 @@ exports[`BulletedLogTypeList matches snapshots 2`] = `
   flex-wrap: wrap;
 }
 
-.panther-7>*:not(:last-child) {
+.panther-8>*:not(:last-child) {
   margin-right: 8px;
 }
 
@@ -177,6 +182,8 @@ exports[`BulletedLogTypeList matches snapshots 2`] = `
   border-radius: 99999px;
 }
 
+
+
 .panther-6 {
   display: -webkit-box;
   display: -webkit-flex;
@@ -204,7 +211,7 @@ exports[`BulletedLogTypeList matches snapshots 2`] = `
     id="main-header"
   />
   <div
-    class="panther-7"
+    class="panther-8"
   >
     <div
       class="panther-2"
@@ -231,11 +238,14 @@ exports[`BulletedLogTypeList matches snapshots 2`] = `
       </span>
     </div>
     <div
-      class="panther-6"
+      class="panther-7"
       data-reach-tooltip-trigger=""
     >
-      +
-      2
+      <div
+        class="panther-6"
+      >
+        +2
+      </div>
     </div>
   </div>
   <footer

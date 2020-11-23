@@ -58,7 +58,6 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig)
 
 	params := map[string]string{
 		"AlarmTopicArn":              bootstrapOutputs["AlarmTopicArn"],
-		"AnalysisApiEndpoint":        bootstrapOutputs["AnalysisApiEndpoint"],
 		"AppClientId":                bootstrapOutputs["AppClientId"],
 		"CertificateArn":             settings.Web.CertificateArn,
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),

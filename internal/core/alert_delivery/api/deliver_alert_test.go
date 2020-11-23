@@ -20,9 +20,7 @@ package api
 
 import (
 	"errors"
-	"io/ioutil"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -35,12 +33,13 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	analysisApiClient "github.com/panther-labs/panther/api/gateway/analysis/client"
-	analysisModels "github.com/panther-labs/panther/api/gateway/analysis/models"
 	alertModels "github.com/panther-labs/panther/api/lambda/alerts/models"
+	analysisModels "github.com/panther-labs/panther/api/lambda/analysis/models"
+	complianceModels "github.com/panther-labs/panther/api/lambda/compliance/models"
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertTable "github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -106,23 +105,9 @@ func TestGetAlert(t *testing.T) {
 	mockDdbClient.AssertExpectations(t)
 }
 
-type mockRoundTripper struct {
-	http.RoundTripper
-	mock.Mock
-}
-
-func (m *mockRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
-	args := m.Called(request)
-	return args.Get(0).(*http.Response), args.Error(1)
-}
-
 func TestPopulateAlert(t *testing.T) {
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient = &http.Client{Transport: mockRoundTripper}
-	analysisConfig := analysisApiClient.DefaultTransportConfig().
-		WithHost("host").
-		WithBasePath("path")
-	analysisClient = analysisApiClient.NewHTTPClientWithConfig(nil, analysisConfig)
+	mockAnalysisClient := &gatewayapi.MockClient{}
+	analysisClient = mockAnalysisClient
 
 	alertID := aws.String("alert-id")
 	timeNow := time.Now().UTC()
@@ -131,7 +116,7 @@ func TestPopulateAlert(t *testing.T) {
 	description := "A test aler"
 	analysisID := "Test.Analysis.ID"
 	runbook := "A runbook link"
-	severity := "INFO"
+	severity := complianceModels.SeverityInfo
 	tags := []string{"test", "alert"}
 
 	alert := &deliveryModels.Alert{
@@ -145,7 +130,7 @@ func TestPopulateAlert(t *testing.T) {
 		Tags:                tags,
 		Type:                deliveryModels.RuleType,
 		OutputIds:           []string{},
-		Severity:            severity,
+		Severity:            string(severity),
 		CreatedAt:           timeNow,
 		Version:             aws.String(versionID),
 		IsResent:            true,
@@ -165,34 +150,36 @@ func TestPopulateAlert(t *testing.T) {
 	}
 
 	rule := &analysisModels.Rule{
-		Body:               "",
-		CreatedAt:          analysisModels.ModifyTime(timeNow),
+		CreatedAt:          timeNow,
 		CreatedBy:          "user-id",
 		DedupPeriodMinutes: 15,
-		Description:        analysisModels.Description(description),
-		DisplayName:        analysisModels.DisplayName(*analysisDisplayName),
+		Description:        description,
+		DisplayName:        *analysisDisplayName,
 		Enabled:            true,
-		ID:                 analysisModels.ID(analysisID),
-		LastModified:       analysisModels.ModifyTime(timeNow),
+		ID:                 analysisID,
+		LastModified:       timeNow,
 		LastModifiedBy:     "user-id",
 		LogTypes:           []string{"log-type"},
-		OutputIds:          []string{},
-		Runbook:            analysisModels.Runbook(runbook),
-		Severity:           analysisModels.Severity(severity),
+		OutputIDs:          []string{},
+		Runbook:            runbook,
+		Severity:           severity,
 		Tags:               tags,
 		VersionID:          "version",
 	}
 
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(rule, http.StatusOK), nil).Once()
+	getRuleInput := &analysisModels.LambdaInput{
+		GetRule: &analysisModels.GetRuleInput{
+			ID:        analysisID,
+			VersionID: "version",
+		},
+	}
+	mockAnalysisClient.On("Invoke", getRuleInput, &analysisModels.Rule{}).Return(
+		http.StatusOK, nil, rule).Once()
+
 	expectedAlert, err := populateAlertData(alertItem)
 	require.NoError(t, err)
 	require.Equal(t, alert, expectedAlert)
-	mockRoundTripper.AssertExpectations(t)
-}
-
-func generateResponse(body interface{}, httpCode int) *http.Response {
-	serializedBody, _ := jsoniter.MarshalToString(body)
-	return &http.Response{StatusCode: httpCode, Body: ioutil.NopCloser(strings.NewReader(serializedBody))}
+	mockAnalysisClient.AssertExpectations(t)
 }
 
 func TestGetAlertOutputMapping(t *testing.T) {
