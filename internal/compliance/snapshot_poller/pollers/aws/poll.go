@@ -26,6 +26,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -41,7 +42,10 @@ type resourcePoller struct {
 	resourcePoller awsmodels.ResourcePoller
 }
 
-const integrationType = "aws"
+const (
+	integrationType = "aws"
+	rateLimitDelay  = time.Minute * 5
+)
 
 var (
 	// Default region to use when building clients for the individual resource poller
@@ -285,41 +289,73 @@ func singleResourceScan(
 	var resource interface{}
 	var err error
 
+	// First, check if we've been recently rate limited while attempting to scan this resource. If so,
+	// discard it.
+	if timestamp, ok := rateLimitCache.Get(*scanRequest.ResourceID); ok {
+		if timestamp.(time.Time).After(time.Now()) {
+			// We were recently rate limited while scanning this resource, ignore it
+			zap.L().Debug("rate limit encountered, skipping resource scan")
+			return nil, nil
+		}
+	}
+
 	// I don't know why this comment is here and I'm too scared to remove it
 	// TODO: does this accept short names?
 	if pollFunction, ok := IndividualResourcePollers[*scanRequest.ResourceType]; ok {
 		// Handle cases where the ResourceID is not an ARN
 		parsedResourceID := utils.ParseResourceID(*scanRequest.ResourceID)
 		resource, err = pollFunction(pollerInput, parsedResourceID, scanRequest)
-		if err != nil {
-			return nil, errors.Wrapf(
-				err,
-				"could not scan aws resource: %s, in account: %s",
-				aws.StringValue(scanRequest.ResourceID),
-				aws.StringValue(scanRequest.AWSAccountID),
-			)
-		}
 	} else if pollFunction, ok := IndividualARNResourcePollers[*scanRequest.ResourceType]; ok {
 		// Handle cases where the ResourceID is an ARN
-		resourceARN, err := arn.Parse(*scanRequest.ResourceID)
+		var resourceARN arn.ARN
+		resourceARN, err = arn.Parse(*scanRequest.ResourceID)
 		if err != nil {
 			zap.L().Error("unable to parse resourceID", zap.Error(err), zap.String("resourceID", *scanRequest.ResourceID))
 			// Don't return an error here because the scan request is not retryable
 			return nil, nil
 		}
 		resource, err = pollFunction(pollerInput, resourceARN, scanRequest)
-		if err != nil {
-			return nil, errors.Wrapf(
-				err,
-				"could not scan aws resource: %s, in account: %s",
-				aws.StringValue(scanRequest.ResourceID),
-				aws.StringValue(scanRequest.AWSAccountID),
-			)
-		}
 	} else {
 		zap.L().Error("unable to perform scan of specified resource type", zap.String("resourceType", *scanRequest.ResourceType))
 		// This error is not retryable
 		return nil, nil
+	}
+
+	if err != nil {
+		var awsErr awserr.Error
+		// Check for rate limit errors. We don't want to blindly retry rate limit errors as then will
+		// cause more rate limit errors, so we re-schedule one new scan several minutes in the future
+		// and suppress all other scans for this resource until that time.
+		if ok := errors.As(err, &awsErr); ok && awsErr.Code() == "ThrottlingException" && awsErr.Message() == "Rate exceeded" {
+			// We've already been rate limited while scanning this resource ID, see how recently that happened
+			if timestamp, ok := rateLimitCache.Get(*scanRequest.ResourceID); ok {
+				// Check if the cache entry is valid
+				if timestamp.(time.Time).After(time.Now()) {
+					// We were recently rate limited while scanning this resource, ignore it
+					zap.L().Debug("rate limit encountered, not returning error")
+					return nil, nil
+				}
+			}
+			// If this resource was not in the cache, or is old, re-initiate a scan and update the
+			// cache (only update the cache if we successfully initiated a scan!)
+			err = utils.Requeue(pollermodels.ScanMsg{
+				Entries: []*pollermodels.ScanEntry{scanRequest},
+			}, int64(rateLimitDelay.Seconds())+int64(pageRequeueDelayer.Intn(60)+5))
+			// If the requeue failed, give up and just let lambda retrying handle it
+			if err != nil {
+				return nil, err
+			}
+			rateLimitCache.Add(*scanRequest.ResourceID, time.Now().Add(rateLimitDelay))
+			return nil, nil
+		}
+
+		// If this was not a rate limit error, return the error
+		return nil, errors.Wrapf(
+			err,
+			"could not scan aws resource: %s, in account: %s",
+			aws.StringValue(scanRequest.ResourceID),
+			aws.StringValue(scanRequest.AWSAccountID),
+		)
 	}
 
 	// This can happen for a number of reasons, most commonly that the resource no longer exists

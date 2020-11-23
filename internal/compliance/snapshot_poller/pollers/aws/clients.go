@@ -19,6 +19,8 @@ package aws
  */
 
 import (
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -49,6 +51,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sdk-go/service/waf"
 	"github.com/aws/aws-sdk-go/service/wafregional"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -121,6 +124,9 @@ var (
 		awsmodels.PasswordPolicySchema: {}, // Global service
 		awsmodels.WafWebAclSchema:      {}, // Global service
 	}
+
+	clientCache    = make(map[clientKey]cachedClient)
+	rateLimitCache *lru.ARCCache
 )
 
 // Key used for the client cache to neatly encapsulate an integration, service, and region
@@ -135,12 +141,19 @@ type cachedClient struct {
 	Credentials *credentials.Credentials
 }
 
-var clientCache = make(map[clientKey]cachedClient)
-
 func Setup() {
 	awsSession := session.Must(session.NewSession()) // use default retries for fetching creds, avoids hangs!
 	snapshotPollerSession = awsSession.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
 		awsretry.NewConnectionErrRetryer(maxRetries)))
+
+	maxMem, err := strconv.Atoi(os.Getenv("AWS_LAMBDA_FUNCTION_MEMORY_SIZE"))
+	if err != nil {
+		panic(err)
+	}
+	rateLimitCache, err = lru.NewARC(maxMem / 4)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // GetRegionsToScan determines what regions need to be scanned in order to perform a full account
