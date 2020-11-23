@@ -42,7 +42,7 @@ import (
 )
 
 const (
-	DownloadPartSize = 5 * 1024 * 1024
+	DownloadMaxPartSize = 100 * 1024 * 1024 // the max size of in memory buffers will be 3X as this due to multiple buffers
 
 	s3TestEvent                 = "s3:TestEvent"
 	cloudTrailValidationMessage = "CloudTrail validation message."
@@ -132,15 +132,6 @@ func shouldIgnoreS3Object(s3Object *S3ObjectInfo) bool {
 }
 
 func readS3Object(ctx context.Context, s3Object *S3ObjectInfo) (dataStream *common.DataStream, err error) {
-	operation := common.OpLogManager.Start("readS3Object", common.OpLogS3ServiceDim)
-	defer func() {
-		operation.Stop()
-		operation.Log(err,
-			// s3 dim info
-			zap.String("bucket", s3Object.S3Bucket),
-			zap.String("key", s3Object.S3ObjectKey))
-	}()
-
 	s3Client, sourceInfo, err := getS3Client(s3Object.S3Bucket, s3Object.S3ObjectKey)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to get S3 client for s3://%s/%s",
@@ -159,15 +150,21 @@ func readS3Object(ctx context.Context, s3Object *S3ObjectInfo) (dataStream *comm
 		Key:    &s3Object.S3ObjectKey,
 	}
 
+	// we want this as large as possible to minimize S3 api calls, not more than DownloadMaxPartSize to control memory use
+	downloadPartSize := s3Object.S3ObjectSize / 2 // use 1/2 to allow processing first half while reading second half on small files
+	if downloadPartSize > DownloadMaxPartSize {
+		downloadPartSize = DownloadMaxPartSize
+	}
+
 	downloader := s3pipe.Downloader{
 		S3:       s3Client,
-		PartSize: DownloadPartSize,
+		PartSize: downloadPartSize,
 	}
 
 	downloadPipe := downloader.Download(ctx, getObjectInput)
 
 	// Set the buffer size to PartSize to avoid multiple fill() calls
-	bufferedReader := bufio.NewReaderSize(downloadPipe, DownloadPartSize)
+	bufferedReader := bufio.NewReaderSize(downloadPipe, int(downloader.PartSize))
 
 	contentType, err := detectContentType(bufferedReader)
 	if err != nil {

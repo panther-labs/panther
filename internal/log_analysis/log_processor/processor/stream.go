@@ -40,7 +40,7 @@ import (
 )
 
 const (
-	// Limit the max data read to be processed to avoid timeouts created by taking on too much work
+	// Limit the max data read to be processed to avoid timeouts and memory pressure  created by taking on too much work
 	processingMaxBytesRead = 100 * 1024 * 1024
 
 	// Limit this so there is time to delete from the queue at the end.
@@ -49,8 +49,8 @@ const (
 	// The max messages per read for SQS (can't find an sqs constant to refer to).
 	sqsMaxBatchSize = 10
 
-	// How many objects to read per sqs read, limit to avoid timeouts
-	sqsReadBatchSize = 1
+	// How many objects to read per sqs read, the larger value, the the bigger impact on failures
+	sqsReadBatchSize = 1 // keeping this conservative right now
 )
 
 /*

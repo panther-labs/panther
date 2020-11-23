@@ -42,6 +42,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/internal/log_analysis/notify"
 )
 
@@ -94,11 +95,12 @@ func CreateS3Destination(jsonAPI jsoniter.API) Destination {
 // the largest we let total size of compressed output buffers get before calling sendData() to write to S3 in bytes
 func maxS3BufferMemUsageBytes(lambdaSizeMB int) uint64 {
 	const (
-		memoryFootprint = (numberConcurrentUploads * uploaderBufferMaxSizeBytes) / (1024 * 1024)
+		memoryFootprint      = (numberConcurrentUploads * uploaderBufferMaxSizeBytes) / (1024 * 1024)
+		downloadBufferSizeMB = (sources.DownloadMaxPartSize * 3) / (1024 * 1024) // 3X due to double buffer in downloader + 1 for reader
 		// FIXME: the below number is picked to allow reading in a full 50MB CloudTrail file into ram, when we fix this the number can be lower
 		minimumScratchMemMB = 50 // how much overhead is needed to process
 	)
-	maxBufferUsageMB := lambdaSizeMB - memUsedAtStartupMB - memoryFootprint - minimumScratchMemMB
+	maxBufferUsageMB := lambdaSizeMB - memUsedAtStartupMB - memoryFootprint - downloadBufferSizeMB - minimumScratchMemMB
 	if maxBufferUsageMB < 5 {
 		panic(fmt.Sprintf("available memory too small for log processing, increase lambda size from %dMB", lambdaSizeMB))
 	}

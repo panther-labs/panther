@@ -26,6 +26,9 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"go.uber.org/zap"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 )
 
 // These values are very conservative defaults.
@@ -36,6 +39,8 @@ type Downloader s3manager.Downloader
 // Download creates a new reader that reads the contents of an S3 object.
 // It uses a downloader to fetch the file in chunks to enable recovery from read errors (e.g., connection resets).
 // It prefetches the next chunk while the previous one is being processed.
+// The chunk size is controlled by dl.PartSize and cost is 2 times dl.PartSize due to double buffer.
+// Making the chunk size large reduces S3 API calls at the expense of memory.
 func (dl Downloader) Download(ctx context.Context, input *s3.GetObjectInput) io.ReadCloser {
 	// Create a cancelable sub context so that the reader can abort the download
 	ctx, cancel := context.WithCancel(ctx)
@@ -54,6 +59,17 @@ func (dl Downloader) Download(ctx context.Context, input *s3.GetObjectInput) io.
 		r:      r,
 		// defer the downloading until the first call to Read
 		download: func() {
+			// Instrument downloads. The time will include time to parse the file as we do not close until final read.
+			var err error
+			operation := common.OpLogManager.Start("downloadData", common.OpLogS3ServiceDim)
+			defer func() {
+				operation.Stop()
+				operation.Log(err,
+					// s3 dim info
+					zap.String("bucket", *input.Bucket),
+					zap.String("key", *input.Key),
+					zap.Int64("partSize", dl.PartSize))
+			}()
 			// Close the parts channel once download finishes. This will signal copyBuffers goroutine to finish.
 			// It is safe to close the channel when DownloadWithContext has returned since there won't be any more
 			// calls to `push` after that.
@@ -63,7 +79,7 @@ func (dl Downloader) Download(ctx context.Context, input *s3.GetObjectInput) io.
 			// We pass a dummy WriterAt value so that we get a panic if the downloader uses the WriteAt method directly.
 			dummyWriter := nopWriterAt{}
 			// We cast our copy of the Downloader to s3manager.Downloader and start fetching chunks.
-			_, err := s3manager.Downloader(dl).DownloadWithContext(ctx, &dummyWriter, input)
+			_, err = s3manager.Downloader(dl).DownloadWithContext(ctx, &dummyWriter, input)
 			// If an error occurs it will show up in the io.PipeReader side.
 			// Otherwise an io.EOF will be shown to the io.PipeReader side.
 			if err != nil {
