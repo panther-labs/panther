@@ -26,7 +26,6 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-	"github.com/go-openapi/strfmt"
 	"go.uber.org/zap"
 
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
@@ -228,14 +227,12 @@ func sortResources(resources []models.Resource, sortBy string, ascending bool) {
 	case "lastModified":
 		sort.Slice(resources, func(i, j int) bool {
 			left, right := resources[i], resources[j]
-			leftTime := strfmt.DateTime(left.LastModified).String()
-			rightTime := strfmt.DateTime(right.LastModified).String()
 
-			if leftTime != rightTime {
+			if left.LastModified != right.LastModified {
 				if ascending {
-					return leftTime < rightTime
+					return left.LastModified.Before(right.LastModified)
 				}
-				return leftTime > rightTime
+				return left.LastModified.After(right.LastModified)
 			}
 
 			// Same timestamp: sort by ID

@@ -19,127 +19,57 @@ package handlers
  */
 
 import (
-	"errors"
 	"net/http"
-	"sort"
-	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-// ListGlobals pages through globals from a single organization.
-func ListGlobals(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	var err error
-
-	// Parse the input
-	ascending := defaultSortAscending
-	if sortDir := request.QueryStringParameters["sortDir"]; sortDir != "" {
-		ascending = sortDir == "ascending"
+func (API) ListGlobals(input *models.ListGlobalsInput) *events.APIGatewayProxyResponse {
+	// Set defaults
+	if input.Page == 0 {
+		input.Page = defaultPage
 	}
-
-	page := defaultPage
-	if requestPage := request.QueryStringParameters["page"]; requestPage != "" {
-		page, err = strconv.Atoi(requestPage)
-		if err != nil {
-			zap.L().Error("unable to parse page query parameter", zap.String("page", requestPage))
-			return badRequest(errors.New("invalid page: " + err.Error()))
-		}
+	if input.PageSize == 0 {
+		input.PageSize = defaultPageSize
 	}
-
-	pageSize := defaultPageSize
-	if requestPageSize := request.QueryStringParameters["pageSize"]; requestPageSize != "" {
-		pageSize, err = strconv.Atoi(requestPageSize)
-		if err != nil {
-			zap.L().Error("unable to parse pageSize query parameter", zap.String("pageSize", requestPageSize))
-			return badRequest(errors.New("invalid page: " + err.Error()))
-		}
-	}
-
-	// Build the dynamodb scan expression
-	projection := expression.NamesList(
-		// only fields needed for frontend global list
-		expression.Name("id"),
-		expression.Name("lastModified"),
-		expression.Name("tags"),
-	)
-	filter := expression.Equal(expression.Name("type"), expression.Value(typeGlobal))
-
-	expr, err := expression.NewBuilder().
-		WithFilter(filter).
-		WithProjection(projection).
-		Build()
-
-	if err != nil {
-		zap.L().Error("unable to build dynamodb scan expression", zap.Error(err))
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
-	}
-
-	scanInput := &dynamodb.ScanInput{
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		FilterExpression:          expr.Filter(),
-		ProjectionExpression:      expr.Projection(),
-		TableName:                 &env.Table,
+	if input.SortDir == "" {
+		input.SortDir = defaultSortDir
 	}
 
 	// Scan dynamo
-	var globals []*models.GlobalSummary
-	err = scanPages(scanInput, func(item *tableItem) error {
-		globals = append(globals, &models.GlobalSummary{
-			ID:           item.ID,
-			LastModified: item.LastModified,
-			Tags:         item.Tags,
-		})
+	scanInput, err := buildScanInput(models.TypeGlobal, input.Fields)
+	if err != nil {
+		return &events.APIGatewayProxyResponse{
+			Body: err.Error(), StatusCode: http.StatusInternalServerError}
+	}
+
+	var items []tableItem
+	err = scanPages(scanInput, func(item tableItem) error {
+		items = append(items, item)
 		return nil
 	})
-
 	if err != nil {
 		zap.L().Error("failed to scan globals", zap.Error(err))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
-	// Handle the 0 globals case
-	if len(globals) == 0 {
-		paging := &models.Paging{
-			ThisPage:   aws.Int64(0),
-			TotalItems: aws.Int64(0),
-			TotalPages: aws.Int64(0),
-		}
-		return gatewayapi.MarshalResponse(
-			&models.GlobalList{Paging: paging, Globals: []*models.GlobalSummary{}}, http.StatusOK)
+	// Sort and page
+	sortItems(items, "id", input.SortDir, nil)
+	var paging models.Paging
+	paging, items = pageItems(items, input.Page, input.PageSize)
+
+	// Convert to output struct
+	result := models.ListGlobalsOutput{
+		Globals: make([]models.Global, 0, len(items)),
+		Paging:  paging,
+	}
+	for _, item := range items {
+		result.Globals = append(result.Globals, *item.Global())
 	}
 
-	// Sort the globals
-	sort.Slice(globals, func(i, j int) bool {
-		left, right := globals[i], globals[j]
-		if ascending {
-			return left.ID < right.ID
-		}
-		return left.ID > right.ID
-	})
-
-	// Page the globals
-	totalPages := len(globals) / pageSize
-	if len(globals)%pageSize > 0 {
-		totalPages++ // Add one more to page count if there is an incomplete page at the end
-	}
-
-	paging := &models.Paging{
-		ThisPage:   aws.Int64(int64(page)),
-		TotalItems: aws.Int64(int64(len(globals))),
-		TotalPages: aws.Int64(int64(totalPages)),
-	}
-
-	// Truncate globals to just the requested page
-	lowerBound := intMin((page-1)*pageSize, len(globals))
-	upperBound := intMin(page*pageSize, len(globals))
-
-	return gatewayapi.MarshalResponse(&models.GlobalList{Paging: paging, Globals: globals[lowerBound:upperBound]}, http.StatusOK)
+	return gatewayapi.MarshalResponse(&result, http.StatusOK)
 }

@@ -28,9 +28,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	analysisclient "github.com/panther-labs/panther/api/gateway/analysis/client"
-	analysisoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
-	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
+	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	remediationmodels "github.com/panther-labs/panther/api/lambda/remediation/models"
 	resourcemodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
@@ -40,18 +38,13 @@ const remediationAction = "remediate"
 const listRemediationsAction = "listRemediations"
 
 var (
-	remediationLambdaArn    = os.Getenv("REMEDIATION_LAMBDA_ARN")
-	policiesServiceHostname = os.Getenv("POLICIES_SERVICE_HOSTNAME")
-	policiesServicePath     = os.Getenv("POLICIES_SERVICE_PATH")
+	remediationLambdaArn = os.Getenv("REMEDIATION_LAMBDA_ARN")
 
-	awsSession     = session.Must(session.NewSession())
-	httpClient     = gatewayapi.GatewayClient(awsSession)
-	policiesConfig = analysisclient.DefaultTransportConfig().
-			WithBasePath(policiesServicePath).
-			WithHost(policiesServiceHostname)
-	policiesClient = analysisclient.NewHTTPClientWithConfig(nil, policiesConfig)
+	awsSession   = session.Must(session.NewSession())
+	lambdaClient = lambda.New(awsSession)
 
-	resourcesClient gatewayapi.API = gatewayapi.NewClient(lambda.New(awsSession), "panther-resources-api")
+	analysisClient  gatewayapi.API = gatewayapi.NewClient(lambdaClient, "panther-analysis-api")
+	resourcesClient gatewayapi.API = gatewayapi.NewClient(lambdaClient, "panther-resources-api")
 
 	ErrNotFound = errors.New("Remediation not associated with policy")
 )
@@ -76,7 +69,7 @@ func (remediator *Invoker) Remediate(remediation *remediationmodels.RemediateRes
 		return errors.Wrap(err, "Encountered issue when getting resource")
 	}
 	remediationPayload := &Payload{
-		RemediationID: string(policy.AutoRemediationID),
+		RemediationID: policy.AutoRemediationID,
 		Resource:      resource.Attributes,
 		Parameters:    policy.AutoRemediationParameters,
 	}
@@ -118,15 +111,16 @@ func (remediator *Invoker) GetRemediations() (*remediationmodels.ListRemediation
 }
 
 func getPolicy(policyID string) (*analysismodels.Policy, error) {
-	policy, err := policiesClient.Operations.GetPolicy(&analysisoperations.GetPolicyParams{
-		PolicyID:   policyID,
-		HTTPClient: httpClient,
-	})
+	input := analysismodels.LambdaInput{
+		GetPolicy: &analysismodels.GetPolicyInput{ID: policyID},
+	}
+	var policy analysismodels.Policy
 
-	if err != nil {
+	if _, err := analysisClient.Invoke(&input, &policy); err != nil {
 		return nil, err
 	}
-	return policy.Payload, nil
+
+	return &policy, nil
 }
 
 func getResource(resourceID string) (*resourcemodels.Resource, error) {

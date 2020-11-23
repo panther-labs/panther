@@ -26,14 +26,14 @@ const (
 	DefaultLimitTopFailing = 10 // GetOrgOverview
 )
 
-type PolicySeverity string
+type Severity string
 
 const (
-	SeverityInfo     PolicySeverity = "INFO"
-	SeverityLow      PolicySeverity = "LOW"
-	SeverityMedium   PolicySeverity = "MEDIUM"
-	SeverityHigh     PolicySeverity = "HIGH"
-	SeverityCritical PolicySeverity = "CRITICAL"
+	SeverityInfo     Severity = "INFO"
+	SeverityLow      Severity = "LOW"
+	SeverityMedium   Severity = "MEDIUM"
+	SeverityHigh     Severity = "HIGH"
+	SeverityCritical Severity = "CRITICAL"
 )
 
 type ComplianceStatus string
@@ -173,7 +173,7 @@ type DescribeResourceInput struct {
 	PageSize int `json:"pageSize" validate:"omitempty,min=1,max=1000"`
 
 	// Include only policies with this severity
-	Severity PolicySeverity `json:"severity" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Severity Severity `json:"severity" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 
 	// Include only policies which match the given compliance status
 	Status ComplianceStatus `json:"status" validate:"omitempty,oneof=ERROR FAIL PASS"`
@@ -203,10 +203,10 @@ type ComplianceEntry struct {
 	// When the compliance state was last updated in the Panther database
 	LastUpdated time.Time `json:"lastUpdated"`
 
-	PolicyID       string         `json:"policyId"`
-	PolicySeverity PolicySeverity `json:"policySeverity"` // INFO, LOW, MEDIUM, HIGH, or CRITICAL
-	ResourceID     string         `json:"resourceId"`
-	ResourceType   string         `json:"resourceType"`
+	PolicyID       string   `json:"policyId"`
+	PolicySeverity Severity `json:"policySeverity"` // INFO, LOW, MEDIUM, HIGH, or CRITICAL
+	ResourceID     string   `json:"resourceId"`
+	ResourceType   string   `json:"resourceType"`
 
 	Status ComplianceStatus `json:"status"`
 
@@ -319,9 +319,9 @@ type ResourceOfType struct {
 
 // Summary of a single policy compliance status
 type PolicySummary struct {
-	Count    StatusCount    `json:"count"`
-	ID       string         `json:"id"`
-	Severity PolicySeverity `json:"severity"`
+	Count    StatusCount `json:"count"`
+	ID       string      `json:"id"`
+	Severity Severity    `json:"severity"`
 }
 
 // Summary of a single resource compliance status
@@ -376,7 +376,7 @@ type SetStatusEntry struct {
 	ErrorMessage   string           `json:"errorMessage"`
 	IntegrationID  string           `json:"integrationId" validate:"required"`
 	PolicyID       string           `json:"policyId" validate:"required"`
-	PolicySeverity PolicySeverity   `json:"policySeverity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	PolicySeverity Severity         `json:"policySeverity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	ResourceID     string           `json:"resourceId" validate:"required"`
 	ResourceType   string           `json:"resourceType" validate:"required"`
 	Status         ComplianceStatus `json:"status" validate:"oneof=ERROR PASS FAIL"`
@@ -386,7 +386,7 @@ type SetStatusEntry struct {
 // The policy-api updates the relevant policy attributes here when they change (severity/suppressions).
 // For these updates, we don't need to re-scan the resources and can instead directly modify the compliance state.
 type UpdateMetadataInput struct {
-	PolicyID     string         `json:"policyId" validate:"required"`
-	Severity     PolicySeverity `json:"severity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
-	Suppressions []string       `json:"suppressions"`
+	PolicyID     string   `json:"policyId" validate:"required"`
+	Severity     Severity `json:"severity" validate:"oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Suppressions []string `json:"suppressions"`
 }

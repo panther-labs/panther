@@ -38,7 +38,7 @@ var handler *forwarder.Handler
 func init() {
 	// Required only once per Lambda container
 	Setup()
-	// TODO: revisit this. Not sure why we neeed Dimension sets and why just an array of dimensions is not enough
+	// TODO: revisit this. Not sure why we need Dimension sets and why just an array of dimensions is not enough
 	metricsLogger := metrics.MustLogger([]metrics.DimensionSet{
 		{
 			"AnalysisType",
@@ -48,7 +48,7 @@ func init() {
 			"AnalysisType",
 		},
 	})
-	cache := forwarder.NewCache(httpClient, policyClient)
+	cache := forwarder.NewCache(policyClient)
 	handler = &forwarder.Handler{
 		SqsClient:        sqsClient,
 		DdbClient:        ddbClient,

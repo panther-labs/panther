@@ -31,15 +31,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/client"
-	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
-	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
+	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 type AnalysisSetProperties struct {
-	AnalysisAPIEndpoint string `validate:"required"`
-	PackURLs            []string
+	PackURLs []string
 }
 
 func customAnalysisSet(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
@@ -71,7 +68,7 @@ func customAnalysisSet(_ context.Context, event cfn.Event) (string, map[string]i
 			return resourceID, nil, nil
 		}
 
-		if err := initializeAnalysisSets(props.PackURLs, props.AnalysisAPIEndpoint); err != nil {
+		if err := initializeAnalysisSets(props.PackURLs); err != nil {
 			zap.L().Error("failed to bulk upload python analysis set", zap.Error(err))
 		}
 		return resourceID, nil, nil
@@ -83,12 +80,10 @@ func customAnalysisSet(_ context.Context, event cfn.Event) (string, map[string]i
 }
 
 // Install Python rules/policies for a fresh deployment.
-func initializeAnalysisSets(sets []string, endpoint string) error {
-	httpClient := gatewayapi.GatewayClient(awsSession)
-	apiClient := client.NewHTTPClientWithConfig(nil, client.DefaultTransportConfig().
-		WithBasePath("/v1").WithHost(endpoint))
+func initializeAnalysisSets(sets []string) error {
+	apiClient := gatewayapi.NewClient(lambdaClient, "panther-analysis-api")
 
-	var newRules, newPolicies int64
+	var newRules, newPolicies int
 	for _, url := range sets {
 		url = strings.TrimSpace(url)
 		if url == "" {
@@ -105,24 +100,25 @@ func initializeAnalysisSets(sets []string, endpoint string) error {
 
 		zap.L().Info("BulkUpload analysis pack to analysis-api", zap.String("url", url))
 		encoded := base64.StdEncoding.EncodeToString(contents)
-		response, err := apiClient.Operations.BulkUpload(&operations.BulkUploadParams{
-			Body: &analysismodels.BulkUpload{
-				Data:   analysismodels.Base64zipfile(encoded),
+
+		input := analysismodels.LambdaInput{
+			BulkUpload: &analysismodels.BulkUploadInput{
+				Data:   encoded,
 				UserID: systemUserID,
 			},
-			HTTPClient: httpClient,
-		})
-		if err != nil {
+		}
+		var response analysismodels.BulkUploadOutput
+		if _, err := apiClient.Invoke(&input, &response); err != nil {
 			return fmt.Errorf("failed to upload %s: %v", url, err)
 		}
 
-		newRules += *response.Payload.NewRules
-		newPolicies += *response.Payload.NewPolicies
+		newRules += response.NewRules
+		newPolicies += response.NewPolicies
 	}
 
 	zap.L().Info("successfully initialized analysis sets",
-		zap.Strings("sets", sets), zap.Int64("newRules", newRules),
-		zap.Int64("newPolicies", newPolicies))
+		zap.Strings("sets", sets), zap.Int("newRules", newRules),
+		zap.Int("newPolicies", newPolicies))
 	return nil
 }
 

@@ -35,7 +35,6 @@ import {
   CHECK_IF_HASH_REGEX,
   SOURCE_LABEL_REGEX,
 } from 'Source/constants';
-import mapValues from 'lodash/mapValues';
 import sum from 'lodash/sum';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
@@ -147,13 +146,6 @@ export const getElapsedTime = (unixTimestamp: number) => {
   return dayjs.unix(unixTimestamp).fromNow();
 };
 
-/** Converts any value of the object that is an array to a comma-separated string */
-export const convertObjArrayValuesToCsv = (obj: { [key: string]: any }) =>
-  mapValues(obj, v => (Array.isArray(v) ? v.join(',') : v));
-
-/** URI encoding for specified fields in object */
-export const encodeParams = (obj: { [key: string]: any }, fields: [string]) =>
-  mapValues(obj, (v, key) => (fields.includes(key) ? encodeURIComponent(v) : v));
 /**
  * makes sure that it properly formats a JSON struct in order to be properly displayed within the
  * editor
