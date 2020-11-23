@@ -82,8 +82,14 @@ func installGoModules() error {
 		return err
 	}
 
-	// goimports is needed for formatting but isn't importable (won't be in go.mod)
-	return sh.Run("go", "get", "golang.org/x/tools/cmd/goimports@"+goimportsVersion)
+	// goimports is needed for formatting but isn't importable
+	if err := sh.Run("go", "get", "golang.org/x/tools/cmd/goimports@"+goimportsVersion); err != nil {
+		return err
+	}
+
+	// prevent dirty repo state - run the same tidy command we use during formatting to
+	// standardize the final go.mod file
+	return sh.Run("go", "mod", "tidy")
 }
 
 // Download golangci-lint if it hasn't been already
