@@ -22,12 +22,12 @@ import { Button, Text, Link, Img, Flex, Box, AbstractButton, useSnackbar } from 
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import SuccessStatus from 'Assets/statuses/success.svg';
-import FailureStatus from 'Assets/statuses/failure.svg';
 import NotificationStatus from 'Assets/statuses/notification.svg';
 import LinkButton from 'Components/buttons/LinkButton';
 import { extractErrorMessage } from 'Helpers/utils';
 import { DeliveryResponseFull } from 'Source/graphql/fragments/DeliveryResponseFull.generated';
 import { useSendTestAlertLazyQuery } from 'Source/graphql/queries';
+import DestinationTestError from 'Components/wizards/common/DestinationTestPanel/DestinationTestError';
 import { WizardData as CreateWizardData } from '../../CreateDestinationWizard';
 import { WizardData as EditWizardData } from '../../EditDestinationWizard';
 
@@ -66,7 +66,8 @@ const DestinationTestPanel: React.FC = () => {
     sendTestAlert();
   }, []);
 
-  if (testResponses.length && testResponses.some(response => response.success === false)) {
+  // We are not expecting more than one response since we are sending one ID
+  if (testResponses.length && testResponses[0].success === false) {
     return (
       <Box maxWidth={700} mx="auto">
         <WizardPanel.Heading
@@ -74,12 +75,7 @@ const DestinationTestPanel: React.FC = () => {
           subtitle="Something went wrong and the destination you have configured did not receive the test alert. Please update your destination settings and try again."
         />
         <Flex direction="column" align="center" spacing={6} my={6}>
-          <Img
-            nativeWidth={120}
-            nativeHeight={120}
-            alt="Test Alert failed to receive"
-            src={FailureStatus}
-          />
+          <DestinationTestError response={testResponses[0]} />
           <Text>
             If you don{"'"}t feel like it right now, you can always change the configuration later
           </Text>

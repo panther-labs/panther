@@ -24,6 +24,7 @@ import {
   DropdownMenu,
   DropdownLink,
   useSnackbar,
+  Text,
 } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import useModal from 'Hooks/useModal';
@@ -51,18 +52,25 @@ const DestinationCardOptions: React.FC<DestinationCardOptionsProps> = ({ destina
     },
     // Failed deliveries will also trigger onCompleted as we don't return exceptions
     onCompleted: data => {
-      const success = data.sendTestAlert.every(delivery => delivery.success === true);
-      if (success === true) {
-        pushSnackbar({
-          variant: 'success',
-          title: `Successfully sent test alert for: ${destination.displayName}`,
-        });
-      } else {
-        pushSnackbar({
-          variant: 'error',
-          title: `Failed to send a test alert to: ${destination.displayName}`,
-        });
-      }
+      data.sendTestAlert.forEach(sendTestAlertResp => {
+        const { success, statusCode, message } = sendTestAlertResp;
+        if (success === true) {
+          pushSnackbar({
+            variant: 'success',
+            title: `Successfully sent test alert for: ${destination.displayName}`,
+          });
+        } else {
+          pushSnackbar({
+            variant: 'error',
+            title: `Failed to send a test alert with status ${statusCode}: ${destination.displayName}`,
+            description: [
+              <Text key={destination.outputId} maxWidth={540} wordBreak="break-word">
+                {message}
+              </Text>,
+            ],
+          });
+        }
+      });
     },
     // This will be fired if there was a network issue or other unknown internal exception
     onError: error => {
