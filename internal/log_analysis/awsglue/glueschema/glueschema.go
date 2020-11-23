@@ -21,8 +21,6 @@ package glueschema
 import (
 	"fmt"
 	"reflect"
-	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/fatih/structtag"
@@ -96,7 +94,11 @@ func InferColumnsWithMappings(schema interface{}) ([]Column, map[string]string, 
 	if err != nil {
 		return nil, nil, err
 	}
-	mappings := names.caseSensitiveMappings()
+	// This is a hack that only works because we check for column name collisions on each level.
+	mappings := make(map[string]string)
+	for name, names := range names {
+		mappings[name] = names[0]
+	}
 	return columns, mappings, nil
 }
 
@@ -117,7 +119,8 @@ func inferStructColumns(typ reflect.Type, path []string, names collisions) ([]Co
 	}
 	fields := appendStructFieldsJSON(nil, typ)
 	columns := make([]Column, 0, len(fields))
-	uniqueNames := make(map[string]string, len(fields))
+	// This collects column names at this depth.
+	uniqueNames := collisions{}
 	for i := range fields {
 		field := &fields[i]
 		fieldPath := append(path, field.Name)
@@ -128,11 +131,21 @@ func inferStructColumns(typ reflect.Type, path []string, names collisions) ([]Co
 		if col == nil {
 			continue
 		}
-		if _, duplicate := uniqueNames[col.Name]; duplicate {
-			return nil, newSchemaError(path, "duplicate column name")
-		}
-		uniqueNames[col.Name] = col.Name
+		uniqueNames.observeColumnName(col.Name)
 		columns = append(columns, *col)
+	}
+	// Check for name collisions at this level
+	if err := uniqueNames.check(path); err != nil {
+		return nil, err
+	}
+	if names == nil {
+		return columns, nil
+	}
+	// This ensures that the struct-level mappings are ordered first in the string set.
+	// Without this, field mappings nested in a struct would shadow a case sensitive field name in the parent.
+	// To put this in other words, this sorts the collision names for each column by depth.
+	for key, values := range uniqueNames {
+		names[key] = stringset.Append(values, names[key]...)
 	}
 	return columns, nil
 }
@@ -171,6 +184,7 @@ func inferColumn(field *reflect.StructField, path []string, names collisions) (*
 	}
 
 	// We register a unique field name
+	// It is important to do this here so fields are added in the order they appear in the tree.
 	names.observeColumnName(colName)
 
 	colType, err := inferColumnType(field.Type, path, names)
@@ -332,25 +346,37 @@ func (c collisions) observeColumnName(name string) {
 	c[key] = stringset.Append(c[key], name)
 }
 
-func (c collisions) caseSensitiveMappings() map[string]string {
-	out := make(map[string]string, len(c))
-	for caseInsensitiveName, caseSensitiveNames := range c {
-		sort.Strings(caseSensitiveNames)
-		for i, caseSensitiveName := range caseSensitiveNames {
-			var mapping string
-			// We need to make sure adding a suffix won't conflict with existing key names
-			for suffix := i; ; suffix++ {
-				mapping = caseInsensitiveName
-				if suffix > 0 {
-					mapping += strconv.Itoa(suffix)
-				}
-				_, exists := out[mapping]
-				if !exists {
-					break
-				}
-			}
-			out[mapping] = caseSensitiveName
+func (c collisions) check(path []string) error {
+	for col, names := range c {
+		if len(names) <= 1 {
+			continue
 		}
+		return newSchemaError(path, "column name collision %q: %v", col, names)
 	}
-	return out
+	return nil
 }
+
+// This function is unused until we figure out a method to support case sensitive columns properly.
+// It is left here for reference in the future
+//func (c collisions) caseSensitiveMappings() map[string]string {
+//	out := make(map[string]string, len(c))
+//	for caseInsensitiveName, caseSensitiveNames := range c {
+//		sort.Strings(caseSensitiveNames)
+//		for i, caseSensitiveName := range caseSensitiveNames {
+//			var mapping string
+//			// We need to make sure adding a suffix won't conflict with existing key names
+//			for suffix := i; ; suffix++ {
+//				mapping = caseInsensitiveName
+//				if suffix > 0 {
+//					mapping += strconv.Itoa(suffix)
+//				}
+//				_, exists := out[mapping]
+//				if !exists {
+//					break
+//				}
+//			}
+//			out[mapping] = caseSensitiveName
+//		}
+//	}
+//	return out
+//}

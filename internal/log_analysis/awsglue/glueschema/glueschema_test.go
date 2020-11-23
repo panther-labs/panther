@@ -348,3 +348,28 @@ func TestInferJSONColumns_MapToRawMessage(t *testing.T) {
 	require.Equal(t, expectedColumns, cols)
 	require.Equal(t, expectedStructFieldNames, mappings)
 }
+
+// Tests that the order of field mappings is correct so that queries on top-level fields work as expected.
+func TestInferColumnsWithMappingsOrder(t *testing.T) {
+	type U struct {
+		BarBaz string
+		FooBar string
+	}
+	type T struct {
+		FooBar U      `json:"fooBar"`
+		BarBaz string `json:"barBaz"`
+	}
+	cols, mappings, err := InferColumnsWithMappings(T{})
+	require.NoError(t, err)
+
+	expectedColumns := []Column{
+		{Name: "fooBar", Type: `struct<BarBaz:string,FooBar:string>`, Comment: ""},
+		{Name: "barBaz", Type: `string`, Comment: ""},
+	}
+	expectedStructFieldNames := map[string]string{
+		"foobar": "fooBar",
+		"barbaz": "barBaz",
+	}
+	require.Equal(t, expectedColumns, cols)
+	require.Equal(t, expectedStructFieldNames, mappings)
+}
