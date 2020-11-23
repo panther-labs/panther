@@ -203,31 +203,7 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 		}
 
 		// Map the Config struct fields over to the fields we need to store in Dynamo
-		analysisItem := tableItem{
-			AutoRemediationID:         config.AutoRemediationID,
-			AutoRemediationParameters: config.AutoRemediationParameters,
-
-			// Use filename as placeholder for the body which we lookup later
-			Body: config.Filename,
-
-			Description:   config.Description,
-			DisplayName:   config.DisplayName,
-			Enabled:       config.Enabled,
-			ID:            config.PolicyID,
-			OutputIDs:     config.OutputIds,
-			Reference:     config.Reference,
-			ResourceTypes: config.ResourceTypes,
-			Runbook:       config.Runbook,
-			Severity:      compliancemodels.Severity(strings.ToUpper(config.Severity)),
-			Suppressions:  config.Suppressions,
-			Tags:          config.Tags,
-			Tests:         make([]models.UnitTest, len(config.Tests)),
-			Type:          models.DetectionType(strings.ToUpper(config.AnalysisType)),
-			Reports:       config.Reports,
-			Threshold:     config.Threshold,
-		}
-
-		typeNormalizeTableItem(&analysisItem, config)
+		analysisItem := tableItemFromConfig(config)
 
 		// ensure Mappings are nil rather than an empty slice
 		if len(config.Mappings) > 0 {
@@ -256,7 +232,7 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 		if _, exists := result[analysisItem.ID]; exists {
 			return nil, fmt.Errorf("multiple analysis specs with ID %s", analysisItem.ID)
 		}
-		result[analysisItem.ID] = &analysisItem
+		result[analysisItem.ID] = analysisItem
 	}
 
 	// Finish each policy by adding its body and then validate it
@@ -275,8 +251,31 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 	return result, nil
 }
 
-// typeNormalizeTableItem handles special cases that depend on a table item's analysis type
-func typeNormalizeTableItem(item *tableItem, config analysis.Config) {
+func tableItemFromConfig(config analysis.Config) *tableItem {
+	item := tableItem{
+		AutoRemediationID:         config.AutoRemediationID,
+		AutoRemediationParameters: config.AutoRemediationParameters,
+
+		// Use filename as placeholder for the body which we lookup later
+		Body: config.Filename,
+
+		Description:   config.Description,
+		DisplayName:   config.DisplayName,
+		Enabled:       config.Enabled,
+		ID:            config.PolicyID,
+		OutputIDs:     config.OutputIds,
+		Reference:     config.Reference,
+		ResourceTypes: config.ResourceTypes,
+		Runbook:       config.Runbook,
+		Severity:      compliancemodels.Severity(strings.ToUpper(config.Severity)),
+		Suppressions:  config.Suppressions,
+		Tags:          config.Tags,
+		Tests:         make([]models.UnitTest, len(config.Tests)),
+		Type:          models.DetectionType(strings.ToUpper(config.AnalysisType)),
+		Reports:       config.Reports,
+		Threshold:     config.Threshold,
+	}
+
 	switch item.Type {
 	case models.TypeRule:
 		// If there is no value set, default to 60 minutes
@@ -314,6 +313,8 @@ func typeNormalizeTableItem(item *tableItem, config analysis.Config) {
 			item.ResourceTypes = config.LogTypes
 		}
 	}
+
+	return &item
 }
 
 func buildRuleTest(test analysis.Test) (models.UnitTest, error) {

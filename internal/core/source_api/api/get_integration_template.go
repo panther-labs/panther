@@ -32,9 +32,7 @@ import (
 )
 
 const (
-	TemplateBucket           = "panther-public-cloudformation-templates"
-	CloudSecurityTemplateKey = "panther-cloudsec-iam/v1.0.1/template.yml"
-	LogAnalysisTemplateKey   = "panther-log-analysis-iam/v1.0.0/template.yml"
+	TemplateBucket = "panther-public-cloudformation-templates"
 
 	LogAnalysisStackNameTemplate = "panther-log-analysis-setup-%s"
 	CloudSecStackName            = "panther-cloudsec-setup"
@@ -134,11 +132,13 @@ func getTemplate(integrationType string) (string, error) {
 	templateRequest := &s3.GetObjectInput{
 		Bucket: aws.String(TemplateBucket),
 	}
+
 	if integrationType == models.IntegrationTypeAWSScan {
-		templateRequest.Key = aws.String(CloudSecurityTemplateKey)
+		templateRequest.Key = aws.String("panther-cloudsec-iam/" + env.Version + "/template.yml")
 	} else {
-		templateRequest.Key = aws.String(LogAnalysisTemplateKey)
+		templateRequest.Key = aws.String("panther-log-analysis-iam/" + env.Version + "/template.yml")
 	}
+	zap.L().Debug("requesting template", zap.String("key", *templateRequest.Key), zap.String("bucket", *templateRequest.Bucket))
 	s3Object, err := templateS3Client.GetObject(templateRequest)
 	if err != nil {
 		return "", err
