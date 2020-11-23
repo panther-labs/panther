@@ -33,8 +33,6 @@ import (
 
 const (
 	TemplateBucket           = "panther-public-cloudformation-templates"
-	CloudSecurityTemplateKey = "panther-cloudsec-iam/v1.12.1/template.yml"
-	LogAnalysisTemplateKey   = "panther-log-analysis-iam/v1.12.1/template.yml"
 
 	LogAnalysisStackNameTemplate = "panther-log-analysis-setup-%s"
 	CloudSecStackName            = "panther-cloudsec-setup"
@@ -62,6 +60,11 @@ const (
 	s3PrefixReplace   = "Value: '%s' # S3Prefix"
 	kmsKeyFind        = "Value: '' # KmsKey"
 	kmsKeyReplace     = "Value: '%s' # KmsKey"
+)
+
+var (
+	CloudSecurityTemplateKey = "panther-cloudsec-iam/" + env.Version + "/template.yml"
+	LogAnalysisTemplateKey   = "panther-log-analysis-iam/" + env.Version + "/template.yml"
 )
 
 var (
