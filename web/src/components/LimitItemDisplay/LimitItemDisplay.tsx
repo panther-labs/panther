@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Flex, Tooltip, Box } from 'pouncejs';
-import GenericItemCard from 'Components/GenericItemCard';
+import NotificationJewel from 'Components/NotificationJewel';
 
 interface LimitItemDisplayProps {
   /**
@@ -53,7 +53,7 @@ const LimitItemDisplay: React.FC<LimitItemDisplayProps> = ({ limit, children }) 
         }
       >
         <Box>
-          <GenericItemCard.ExtraBadge badge={`+${childrenCount - limit}`} />
+          <NotificationJewel badge={`+${childrenCount - limit}`} />
         </Box>
       </Tooltip>
     </React.Fragment>

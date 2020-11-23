@@ -48,7 +48,6 @@ interface GenericItemCardComposition {
   Value: React.FC<GenericItemCardValueProps>;
   ValuesGroup: React.FC;
   Date: React.FC<GenericItemCardDate>;
-  ExtraBadge: React.FC<{ badge: string | React.ReactNode }>;
   LineBreak: React.FC;
 }
 
@@ -177,24 +176,6 @@ const GenericItemCardLink: React.FC<GenericItemCardLinkProps> = ({ to, ...rest }
   );
 };
 
-const GenericItemCardExtraBadge: React.FC<{ badge: string | React.ReactNode }> = ({ badge }) => {
-  return (
-    <Flex
-      justify="center"
-      align="center"
-      width={18}
-      height={18}
-      backgroundColor="navyblue-200"
-      borderRadius="circle"
-      fontSize="2x-small"
-      fontWeight="medium"
-      cursor="default"
-    >
-      {badge}
-    </Flex>
-  );
-};
-
 const GenericItemCardLineBreak: React.FC = () => <Box flexBasis="100%" height={0} />;
 
 GenericItemCard.Body = GenericItemCardBody;
@@ -206,7 +187,6 @@ GenericItemCard.OptionsButton = GenericItemCardOptionsButton;
 GenericItemCard.Value = GenericItemCardValue;
 GenericItemCard.ValuesGroup = GenericItemCardValuesGroup;
 GenericItemCard.Date = GenericItemCardDate;
-GenericItemCard.ExtraBadge = GenericItemCardExtraBadge;
 GenericItemCard.LineBreak = GenericItemCardLineBreak;
 
 export default GenericItemCard;
