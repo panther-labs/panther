@@ -22,7 +22,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"math"
 	"path"
 	"runtime"
 	"sync"
@@ -34,7 +33,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
-	pq "github.com/jupp0r/go-priority-queue"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -44,6 +42,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/internal/log_analysis/notify"
+	pq "github.com/panther-labs/panther/pkg/priorityq"
 )
 
 const (
@@ -430,10 +429,8 @@ func (bs *s3EventBufferSet) removeBuffer(buffer *s3EventBuffer) {
 	if len(logTypeToBuffer) == 0 {
 		delete(bs.set, buffer.hour)
 	}
-	// because the priority queue library has no Delete() we set priority to be negative and mark buffer deleted
-	buffer.deleted = true
-	bs.sizePriorityQueue.UpdatePriority(buffer, -1.0)                   // negative number puts it last since valid are positive
-	bs.createTimePriorityQueue.UpdatePriority(buffer, -math.MaxFloat64) // negative max float puts it last since valid are negative
+	bs.sizePriorityQueue.Remove(buffer)
+	bs.createTimePriorityQueue.Remove(buffer)
 }
 
 func (bs *s3EventBufferSet) removeLargestBuffer() (largestBuffer *s3EventBuffer) {
@@ -442,11 +439,6 @@ func (bs *s3EventBufferSet) removeLargestBuffer() (largestBuffer *s3EventBuffer)
 		return nil
 	}
 	largestBuffer = largest.(*s3EventBuffer)
-	// because the priority queue library has no Delete(), it is possible to get
-	// a buffer we "removed" by setting the priority to -1.0, check for this
-	if largestBuffer.deleted {
-		return nil
-	}
 	bs.removeBuffer(largestBuffer)
 	return largestBuffer
 }
@@ -457,11 +449,6 @@ func (bs *s3EventBufferSet) removeTooOldBuffer(now time.Time, maxDuration time.D
 		return nil
 	}
 	oldestBuffer = oldest.(*s3EventBuffer)
-	// because the priority queue library has no Delete(), it is possible to get
-	// a buffer we "removed" by setting the priority to -math.MaxFloat64, check for this
-	if oldestBuffer.deleted {
-		return nil
-	}
 	// too old?
 	if now.Sub(oldestBuffer.createTime) >= maxDuration {
 		bs.removeBuffer(oldestBuffer)
@@ -494,7 +481,6 @@ type s3EventBuffer struct {
 	events     int
 	hour       time.Time // the event time bin
 	createTime time.Time // used to expire buffer
-	deleted    bool      // used to mark as deleted
 }
 
 func newS3EventBuffer(logType string, hour time.Time) *s3EventBuffer {
