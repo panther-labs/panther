@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -94,14 +95,13 @@ func TestSendSns(t *testing.T) {
 		TopicArn:         &snsOutputConfig.TopicArn,
 		Message:          &expectedSerializedSnsMessage,
 		MessageStructure: aws.String("json"),
-		Subject:          aws.String("Policy Failure: " + analysisName[1:85]),
+		Subject:          aws.String("Policy Failure: " + analysisName[1:82] + "..."),
 	}
 
 	client.On("Publish", expectedSnsPublishInput).Return(&sns.PublishOutput{MessageId: aws.String("messageId")}, nil)
 	getSnsClient = func(*session.Session, string) (snsiface.SNSAPI, error) {
 		return client, nil
 	}
-
 	result := outputClient.Sns(alert, snsOutputConfig)
 	assert.NotNil(t, result)
 	assert.Equal(t, &AlertDeliveryResponse{
@@ -110,5 +110,8 @@ func TestSendSns(t *testing.T) {
 		Success:    true,
 		Permanent:  false,
 	}, result)
+	client.AssertExpectations(t)
+	
+	client.On("Publish", expectedSnsPublishInput).Return(&sns.PublishOutput{}, errors.New("InvalidParameter"))
 	client.AssertExpectations(t)
 }

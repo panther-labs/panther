@@ -21,7 +21,6 @@ package testutils
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -375,8 +374,8 @@ type SnsMock struct {
 
 func (m *SnsMock) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
 	args := m.Called(input)
-	if len(aws.StringValue(input.Subject)) > 100 || strings.Contains(aws.StringValue(input.Subject), "\n") {
-		return nil, errors.New("invalid subject")
+	if len(aws.StringValue(input.Subject)) > 100 {
+		return nil, errors.New("InvalidParameter")
 	}
 	return args.Get(0).(*sns.PublishOutput), args.Error(1)
 }

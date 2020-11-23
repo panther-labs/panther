@@ -79,8 +79,12 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 			Success:    false,
 		}
 	}
-
-	title := generateAlertTitle(alert)
+	// Remove newlines in title
+	title := strings.ReplaceAll(generateAlertTitle(alert), "\n", "")
+	// Trim title to the AWS SNS 100 char limit
+	if len(title) > maxTitleSize{
+		title = title[:maxTitleSize-3] + "..." 
+	}
 
 	snsMessageInput := &sns.PublishInput{
 		TopicArn: aws.String(config.TopicArn),
@@ -102,18 +106,11 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 		}
 	}
 
-	// Remove newlines in title
-	tmp := strings.Replace(*snsMessageInput.Subject, "\n", "", maxTitleSize)
-	// Trim title to the AWS SNS 100 char limit
-	if len(tmp) > maxTitleSize {
-		*snsMessageInput.Subject = tmp[0:maxTitleSize]
-	}
 	response, err := snsClient.Publish(snsMessageInput)
-
 	if err != nil {
-		if reqErr, ok := err.(awserr.RequestFailure); ok {
-			// Catch title edge cases and make SNS API call with generic title
-			if reqErr.StatusCode() == 400 {
+		// Catch title edge cases and make SNS API call with generic title
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() == "InvalidParameter" {
 				*snsMessageInput.Subject = "New Panther Alert"
 				response, err = snsClient.Publish(snsMessageInput)
 				if err != nil {
@@ -121,9 +118,6 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 					return getAlertResponseFromSNSError(err)
 				}
 			}
-		} else {
-			zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
-			return getAlertResponseFromSNSError(err)
 		}
 	}
 
