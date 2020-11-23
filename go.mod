@@ -16,7 +16,6 @@ require (
 	github.com/itchyny/timefmt-go v0.1.1
 	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.10
-	github.com/jupp0r/go-priority-queue v0.0.0-20160601094913-ab1073853bde
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kr/text v0.2.0 // indirect
 	github.com/leodido/go-urn v1.2.0 // indirect
