@@ -62,7 +62,7 @@ const ComplianceSourceCard: React.FC<ComplianceSourceCardProps> = ({ source }) =
               </Tooltip>
             )}
           </GenericItemCard.Heading>
-          {!false && <ComplianceSourceCardOptions source={source} />}
+          {!isCreatedByPanther && <ComplianceSourceCardOptions source={source} />}
         </GenericItemCard.Header>
         <GenericItemCard.ValuesGroup>
           <GenericItemCard.Value label="AWS Account ID" value={source.awsAccountId} />
