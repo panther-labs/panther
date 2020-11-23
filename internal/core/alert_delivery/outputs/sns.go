@@ -82,8 +82,8 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 	// Remove newlines in title
 	title := strings.ReplaceAll(generateAlertTitle(alert), "\n", "")
 	// Trim title to the AWS SNS 100 char limit
-	if len(title) > maxTitleSize{
-		title = title[:maxTitleSize-3] + "..." 
+	if len(title) > maxTitleSize {
+		title = title[:maxTitleSize-3] + "..."
 	}
 
 	snsMessageInput := &sns.PublishInput{

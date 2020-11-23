@@ -111,7 +111,7 @@ func TestSendSns(t *testing.T) {
 		Permanent:  false,
 	}, result)
 	client.AssertExpectations(t)
-	
+
 	client.On("Publish", expectedSnsPublishInput).Return(&sns.PublishOutput{}, errors.New("InvalidParameter"))
 	client.AssertExpectations(t)
 }
