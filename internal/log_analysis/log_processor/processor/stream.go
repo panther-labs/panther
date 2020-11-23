@@ -21,7 +21,6 @@ package processor
 import (
 	"context"
 	"runtime"
-	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -43,8 +42,8 @@ const (
 	// Limit this so there is time to delete from the queue at the end.
 	processingMaxFilesLimit = 5000
 
-	// The max messages per read for SQS (can't find an sqs constant to refer to).
-	sqsMaxBatchSize = 10
+	// How many objects to read per sqs read, the larger value, the the bigger impact on failures
+	sqsReadBatchSize = 1 // keeping this conservative right now, must be smaller than 10
 )
 
 /*
@@ -71,10 +70,19 @@ func pollEvents(
 	ctx context.Context,
 	sqsClient sqsiface.SQSAPI,
 	processFunc ProcessFunc,
-	generateDataStreamsFunc func(string) ([]*common.DataStream, error)) (int, error) {
+	generateDataStreamsFunc func(context.Context, string) ([]*common.DataStream, error)) (int, error) {
 
-	streamChan := make(chan *common.DataStream, 2*sqsMaxBatchSize) // use small buffer to pipeline events
-	var accumulatedMessageReceipts []*string                       // accumulate message receipts for delete at the end
+	// We should poll events for 1/4 the Lambda's duration, leaving the balance for processing and flushing data
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		panic("lambda context doesn't have a deadline!")
+	}
+	pollingTimeout := time.Until(deadline) / 4
+	pollCtx, cancel := context.WithTimeout(ctx, pollingTimeout)
+	defer cancel()
+
+	streamChan := make(chan *common.DataStream) // must be unbuffered to apply back pressure!
+	var accumulatedMessageReceipts []*string    // accumulate message receipts for delete at the end
 
 	go func() {
 		defer func() {
@@ -86,7 +94,7 @@ func pollEvents(
 
 		for len(accumulatedMessageReceipts) < processingMaxFilesLimit {
 			select {
-			case <-ctx.Done():
+			case <-pollCtx.Done():
 				return
 			default:
 				// Makes select non blocking
@@ -105,7 +113,7 @@ func pollEvents(
 				continue
 			}
 			// keep reading from SQS to maximize output aggregation
-			messages, err := receiveFromSqs(ctx, sqsClient)
+			messages, err := receiveFromSqs(pollCtx, sqsClient)
 			if err != nil {
 				zap.L().Error("Encountered issue while polling sqs messages. Stopping polling", zap.Error(err))
 				return
@@ -116,7 +124,8 @@ func pollEvents(
 			}
 
 			for _, msg := range messages {
-				dataStreams, err := generateDataStreamsFunc(aws.StringValue(msg.Body))
+				// pass lambda context to set FULL deadline to process which is pushed down into downloader
+				dataStreams, err := generateDataStreamsFunc(ctx, aws.StringValue(msg.Body))
 				if err != nil {
 					// No need for error here. This issue can happen due to
 					// 1. Persistent AWS issues while accessing S3 object
@@ -147,20 +156,6 @@ func pollEvents(
 	return len(accumulatedMessageReceipts), nil
 }
 
-func getQueueIntegerAttribute(attrs map[string]*string, attr string) (count int, err error) {
-	intAsStringPtr := attrs[attr]
-	if intAsStringPtr == nil {
-		err = errors.Errorf("failure getting %s count from %s", attr, common.Config.SqsQueueURL)
-		return 0, err
-	}
-	count, err = strconv.Atoi(*intAsStringPtr)
-	if err != nil {
-		err = errors.Wrapf(err, "failure reading %s (%s) count from %s", attr, *intAsStringPtr, common.Config.SqsQueueURL)
-		return 0, err
-	}
-	return count, err
-}
-
 func highMemoryUsage() (heapUsedMB, memAvailableMB float32, isHigh bool) {
 	const (
 		threshold  = 0.8
@@ -177,7 +172,7 @@ func highMemoryUsage() (heapUsedMB, memAvailableMB float32, isHigh bool) {
 func receiveFromSqs(ctx context.Context, sqsClient sqsiface.SQSAPI) ([]*sqs.Message, error) {
 	input := &sqs.ReceiveMessageInput{
 		WaitTimeSeconds:     aws.Int64(0),
-		MaxNumberOfMessages: aws.Int64(sqsMaxBatchSize),
+		MaxNumberOfMessages: aws.Int64(sqsReadBatchSize),
 		QueueUrl:            &common.Config.SqsQueueURL,
 	}
 	output, err := sqsClient.ReceiveMessageWithContext(ctx, input)
