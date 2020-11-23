@@ -138,6 +138,9 @@ func sortItems(items []tableItem, sortBy, sortDir string, compliance map[string]
 	case "severity":
 		sortBySeverity(items, ascending)
 	default:
+		// Input validation for the caller already happens in the struct validate tags.
+		// If we reach this code, it means there is a sortBy allowed in the input validation,
+		// but not supported in the backend, which should never happen
 		panic("Unexpected sortBy: " + sortBy)
 	}
 }
@@ -148,6 +151,9 @@ func sortByDisplayName(items []tableItem, ascending bool) {
 
 		var leftName, rightName string
 		leftName, rightName = left.DisplayName, right.DisplayName
+
+		// The frontend shows display name *or* ID (when there is no display name)
+		// So we sort the same way it is shown to the user - displayName if available, otherwise ID
 		if leftName == "" {
 			leftName = left.ID
 		}

@@ -74,12 +74,13 @@ func stdRuleListInput(input *models.ListRulesInput) {
 	if input.PageSize == 0 {
 		input.PageSize = defaultPageSize
 	}
-	if input.SortDir == "" {
-		input.SortDir = defaultSortDir
-	}
 	if input.SortBy == "" {
 		input.SortBy = defaultSortBy
 	}
+	if input.SortDir == "" {
+		input.SortDir = defaultSortDir
+	}
+
 }
 
 func ruleScanInput(input *models.ListRulesInput) (*dynamodb.ScanInput, error) {

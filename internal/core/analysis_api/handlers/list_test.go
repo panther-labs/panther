@@ -71,34 +71,20 @@ func TestPagePoliciesDisplayNameSort(t *testing.T) {
 		{ID: "c", DisplayName: "y"},
 		{ID: "e", DisplayName: "a"},
 		{ID: "g", DisplayName: "b"},
-		{ID: "b", DisplayName: ""},
+		{ID: "d", DisplayName: ""},
 	}
 
 	sortByDisplayName(items, true)
 
-	paging, truncation := pageItems(items, 1, 1)
-	assert.Equal(t, models.Paging{ThisPage: 1, TotalItems: 6, TotalPages: 6}, paging)
-	assert.Equal(t, []tableItem{items[0]}, truncation)
-
-	paging, truncation = pageItems(items, 2, 1)
-	assert.Equal(t, models.Paging{ThisPage: 2, TotalItems: 6, TotalPages: 6}, paging)
-	assert.Equal(t, []tableItem{items[1]}, truncation)
-
-	paging, truncation = pageItems(items, 3, 1)
-	assert.Equal(t, models.Paging{ThisPage: 3, TotalItems: 6, TotalPages: 6}, paging)
-	assert.Equal(t, []tableItem{items[2]}, truncation)
-
-	paging, truncation = pageItems(items, 4, 1)
-	assert.Equal(t, models.Paging{ThisPage: 4, TotalItems: 6, TotalPages: 6}, paging)
-	assert.Equal(t, []tableItem{items[3]}, truncation)
-
-	paging, truncation = pageItems(items, 5, 1)
-	assert.Equal(t, models.Paging{ThisPage: 5, TotalItems: 6, TotalPages: 6}, paging)
-	assert.Equal(t, []tableItem{items[4]}, truncation)
-
-	paging, truncation = pageItems(items, 6, 1)
-	assert.Equal(t, models.Paging{ThisPage: 6, TotalItems: 6, TotalPages: 6}, paging)
-	assert.Equal(t, []tableItem{items[5]}, truncation)
+	expected := []tableItem{
+		{ID: "e", DisplayName: "a"},
+		{ID: "g", DisplayName: "b"},
+		{ID: "h", DisplayName: "b"},
+		{ID: "d", DisplayName: ""},
+		{ID: "c", DisplayName: "y"},
+		{ID: "a", DisplayName: "z"},
+	}
+	assert.Equal(t, expected, items)
 }
 
 func TestPagePoliciesDisplayNameSortReverse(t *testing.T) {
@@ -111,23 +97,12 @@ func TestPagePoliciesDisplayNameSortReverse(t *testing.T) {
 	}
 	sortByDisplayName(items, false)
 
-	paging, truncation := pageItems(items, 1, 1)
-	assert.Equal(t, models.Paging{ThisPage: 1, TotalItems: 5, TotalPages: 5}, paging)
-	assert.Equal(t, []tableItem{items[0]}, truncation)
-
-	paging, truncation = pageItems(items, 2, 1)
-	assert.Equal(t, models.Paging{ThisPage: 2, TotalItems: 5, TotalPages: 5}, paging)
-	assert.Equal(t, []tableItem{items[1]}, truncation)
-
-	paging, truncation = pageItems(items, 3, 1)
-	assert.Equal(t, models.Paging{ThisPage: 3, TotalItems: 5, TotalPages: 5}, paging)
-	assert.Equal(t, []tableItem{items[2]}, truncation)
-
-	paging, truncation = pageItems(items, 4, 1)
-	assert.Equal(t, models.Paging{ThisPage: 4, TotalItems: 5, TotalPages: 5}, paging)
-	assert.Equal(t, []tableItem{items[3]}, truncation)
-
-	paging, truncation = pageItems(items, 5, 1)
-	assert.Equal(t, models.Paging{ThisPage: 5, TotalItems: 5, TotalPages: 5}, paging)
-	assert.Equal(t, []tableItem{items[4]}, truncation)
+	expected := []tableItem{
+		{ID: "a", DisplayName: "z"},
+		{ID: "d", DisplayName: "y"},
+		{ID: "c", DisplayName: "y"},
+		{ID: "g", DisplayName: "b"},
+		{ID: "e", DisplayName: "a"},
+	}
+	assert.Equal(t, expected, items)
 }
