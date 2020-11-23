@@ -76,10 +76,10 @@ exports[`AlertCard should match snapshot 1`] = `
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-align-items: start;
-  -webkit-box-align: start;
-  -ms-flex-align: start;
-  align-items: start;
+  -webkit-align-items: flex-start;
+  -webkit-box-align: flex-start;
+  -ms-flex-align: flex-start;
+  align-items: flex-start;
   margin-bottom: 8px;
 }
 
@@ -481,12 +481,12 @@ exports[`AlertCard should match snapshot 1`] = `
                 indexing
               </a>
             </h4>
-            <time
+            <span
               aria-label="Creation time for f67b8f04-5fac-404a-93a4-38db29f258ba"
               class="panther-3"
             >
               2020-08-08 12:15 GMT
-            </time>
+            </span>
           </header>
           <span
             class="panther-5"
