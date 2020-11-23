@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
-import { Button, Text, Link, Img, Flex, Box, AbstractButton, useSnackbar } from 'pouncejs';
+import { AbstractButton, Box, Button, Flex, Img, Link, Text, useSnackbar } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import SuccessStatus from 'Assets/statuses/success.svg';
@@ -28,6 +28,7 @@ import { extractErrorMessage } from 'Helpers/utils';
 import { DeliveryResponseFull } from 'Source/graphql/fragments/DeliveryResponseFull.generated';
 import { useSendTestAlertLazyQuery } from 'Source/graphql/queries';
 import DestinationTestError from 'Components/wizards/common/DestinationTestPanel/DestinationTestError';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { WizardData as CreateWizardData } from '../../CreateDestinationWizard';
 import { WizardData as EditWizardData } from '../../EditDestinationWizard';
 
@@ -54,6 +55,7 @@ const DestinationTestPanel: React.FC = () => {
     onCompleted: data => setTestResponses(data.sendTestAlert),
     // This will be fired if there was a network issue or other unknown internal exception
     onError: error => {
+      trackError({ event: TrackErrorEnum.FailedDestinationTest, src: SrcEnum.Destinations, ctx: destination.outputType}) // prettier-ignore
       pushSnackbar({
         variant: 'error',
         title:
@@ -63,11 +65,13 @@ const DestinationTestPanel: React.FC = () => {
   });
 
   const handleTestAlertClick = React.useCallback(() => {
+    trackEvent({ event: EventEnum.TestedDestination, src: SrcEnum.Destinations, ctx: destination.outputType }) // prettier-ignore
     sendTestAlert();
-  }, []);
+  }, [destination]);
 
   // We are not expecting more than one response since we are sending one ID
   if (testResponses.length && testResponses[0].success === false) {
+    trackEvent({ event: EventEnum.TestedDestinationFailure, src: SrcEnum.Destinations, ctx: destination.outputType }) // prettier-ignore
     return (
       <Box maxWidth={700} mx="auto">
         <WizardPanel.Heading
@@ -94,6 +98,7 @@ const DestinationTestPanel: React.FC = () => {
   }
 
   if (testResponses.length && testResponses.every(response => response.success === true)) {
+    trackEvent({ event: EventEnum.TestedDestinationSuccessfully, src: SrcEnum.Destinations, ctx: destination.outputType }) // prettier-ignore
     return (
       <Box maxWidth={700} mx="auto">
         <WizardPanel.Heading

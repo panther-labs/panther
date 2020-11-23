@@ -34,6 +34,7 @@ import GenericItemCard from 'Components/GenericItemCard';
 import urls from 'Source/urls';
 import { useSendTestAlertLazyQuery } from 'Source/graphql/queries';
 import { extractErrorMessage } from 'Helpers/utils';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 
 interface DestinationCardOptionsProps {
   destination: DestinationFull;
@@ -55,11 +56,13 @@ const DestinationCardOptions: React.FC<DestinationCardOptionsProps> = ({ destina
       data.sendTestAlert.forEach(sendTestAlertResp => {
         const { success, statusCode, message } = sendTestAlertResp;
         if (success === true) {
+          trackEvent({ event: EventEnum.TestedDestinationSuccessfully, src: SrcEnum.Destinations, ctx: destination.outputType }) // prettier-ignore
           pushSnackbar({
             variant: 'success',
             title: `Successfully sent test alert for: ${destination.displayName}`,
           });
         } else {
+          trackEvent({ event: EventEnum.TestedDestinationFailure, src: SrcEnum.Destinations, ctx: destination.outputType }) // prettier-ignore
           pushSnackbar({
             variant: 'error',
             title: `Failed to send a test alert with status ${statusCode}: ${destination.displayName}`,
@@ -74,6 +77,7 @@ const DestinationCardOptions: React.FC<DestinationCardOptionsProps> = ({ destina
     },
     // This will be fired if there was a network issue or other unknown internal exception
     onError: error => {
+      trackError({ event: TrackErrorEnum.FailedDestinationTest, src: SrcEnum.Destinations, ctx: destination.outputType}) // prettier-ignore
       pushSnackbar({
         variant: 'error',
         title: extractErrorMessage(error) || `Failed to attempt sending a test alert.`,
