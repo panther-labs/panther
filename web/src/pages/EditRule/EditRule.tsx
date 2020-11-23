@@ -37,7 +37,7 @@ const EditRulePage: React.FC = () => {
   const { error: fetchRuleError, data: queryData, loading: isFetchingRule } = useRuleDetails({
     variables: {
       input: {
-        ruleId: match.params.id,
+        id: match.params.id,
       },
     },
   });

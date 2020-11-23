@@ -36,7 +36,7 @@ const EditPolicyPage: React.FC = () => {
   const { error: fetchPolicyError, data: queryData, loading: isFetchingPolicy } = usePolicyDetails({
     variables: {
       input: {
-        policyId: match.params.id,
+        id: match.params.id,
       },
     },
   });

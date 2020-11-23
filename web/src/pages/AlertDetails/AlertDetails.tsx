@@ -73,7 +73,7 @@ const AlertDetailsPage = () => {
     skip: !alertData,
     variables: {
       input: {
-        ruleId: alertData?.alert?.ruleId,
+        id: alertData?.alert?.ruleId,
       },
     },
   });

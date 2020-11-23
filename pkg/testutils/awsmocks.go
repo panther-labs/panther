@@ -19,6 +19,7 @@ package testutils
  */
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -60,6 +61,11 @@ func (m *S3UploaderMock) Upload(input *s3manager.UploadInput, f ...func(*s3manag
 type S3Mock struct {
 	s3iface.S3API
 	mock.Mock
+}
+
+func (m *S3Mock) DeleteObjects(input *s3.DeleteObjectsInput) (*s3.DeleteObjectsOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*s3.DeleteObjectsOutput), args.Error(1)
 }
 
 func (m *S3Mock) GetObject(input *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
@@ -154,6 +160,11 @@ func (m *DynamoDBMock) DeleteItem(input *dynamodb.DeleteItemInput) (*dynamodb.De
 	return args.Get(0).(*dynamodb.DeleteItemOutput), args.Error(1)
 }
 
+func (m *DynamoDBMock) Query(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*dynamodb.QueryOutput), args.Error(1)
+}
+
 func (m *DynamoDBMock) Scan(input *dynamodb.ScanInput) (*dynamodb.ScanOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*dynamodb.ScanOutput), args.Error(1)
@@ -166,6 +177,16 @@ type SqsMock struct {
 
 func (m *SqsMock) SendMessage(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
 	args := m.Called(input)
+	return args.Get(0).(*sqs.SendMessageOutput), args.Error(1)
+}
+
+func (m *SqsMock) SendMessageWithContext(
+	ctx context.Context,
+	input *sqs.SendMessageInput,
+	_ ...request.Option,
+) (*sqs.SendMessageOutput, error) {
+
+	args := m.Called(ctx, input)
 	return args.Get(0).(*sqs.SendMessageOutput), args.Error(1)
 }
 
@@ -256,6 +277,25 @@ type GlueMock struct {
 	glueiface.GlueAPI
 	mock.Mock
 	LogTables []*glue.TableData
+}
+
+func (m *GlueMock) CreateDatabase(input *glue.CreateDatabaseInput) (*glue.CreateDatabaseOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.CreateDatabaseOutput), args.Error(1)
+}
+
+func (m *GlueMock) CreateDatabaseWithContext(
+	ctx context.Context,
+	input *glue.CreateDatabaseInput,
+	options ...request.Option,
+) (*glue.CreateDatabaseOutput, error) {
+
+	arguments := []interface{}{ctx, input}
+	for _, option := range options {
+		arguments = append(arguments, option)
+	}
+	results := m.Called(arguments...)
+	return results.Get(0).(*glue.CreateDatabaseOutput), results.Error(1)
 }
 
 func (m *GlueMock) CreateTable(input *glue.CreateTableInput) (*glue.CreateTableOutput, error) {

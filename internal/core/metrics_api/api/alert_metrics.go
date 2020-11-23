@@ -27,7 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"go.uber.org/zap"
 
-	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
+	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 	"github.com/panther-labs/panther/api/lambda/metrics/models"
 	"github.com/panther-labs/panther/pkg/metrics"
 )
@@ -42,11 +42,11 @@ const (
 func getAlertsBySeverity(input *models.GetMetricsInput, output *models.GetMetricsOutput) error {
 	// Build the query based on the applicable metric dimensions
 	analysisSeverities := []*string{
-		aws.String(string(analysismodels.SeverityCRITICAL)),
-		aws.String(string(analysismodels.SeverityHIGH)),
-		aws.String(string(analysismodels.SeverityMEDIUM)),
-		aws.String(string(analysismodels.SeverityLOW)),
-		aws.String(string(analysismodels.SeverityINFO)),
+		aws.String(string(compliancemodels.SeverityCritical)),
+		aws.String(string(compliancemodels.SeverityHigh)),
+		aws.String(string(compliancemodels.SeverityMedium)),
+		aws.String(string(compliancemodels.SeverityLow)),
+		aws.String(string(compliancemodels.SeverityInfo)),
 	}
 
 	queries := make([]*cloudwatch.MetricDataQuery, 0, len(analysisSeverities))

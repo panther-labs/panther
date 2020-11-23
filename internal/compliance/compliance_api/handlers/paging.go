@@ -28,7 +28,7 @@ import (
 func policyResourceDetail(
 	input *dynamodb.QueryInput,
 	page, pageSize int,
-	severity models.PolicySeverity,
+	severity models.Severity,
 	status models.ComplianceStatus,
 	suppressed *bool,
 ) (*models.PolicyResourceDetail, error) {
@@ -73,7 +73,7 @@ func addItemToResult(
 	item *models.ComplianceEntry,
 	result *models.PolicyResourceDetail,
 	page, pageSize int,
-	severity models.PolicySeverity,
+	severity models.Severity,
 	status models.ComplianceStatus,
 	suppressed *bool,
 ) {
@@ -125,7 +125,7 @@ func addItemToResult(
 
 func itemMatchesFilter(
 	item *models.ComplianceEntry,
-	severity models.PolicySeverity,
+	severity models.Severity,
 	status models.ComplianceStatus,
 	suppressed *bool,
 ) bool {

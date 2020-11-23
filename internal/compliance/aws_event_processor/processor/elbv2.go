@@ -71,7 +71,7 @@ func classifyELBV2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourc
 			resourceARN, err := arn.Parse(resource.Str)
 			if err != nil {
 				zap.L().Error("elbv2: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Error(err))
-				return changes
+				return nil
 			}
 			if strings.HasPrefix(resourceARN.Resource, "targetgroup/") {
 				continue
@@ -93,7 +93,7 @@ func classifyELBV2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourc
 			lbARN, err := arn.Parse(lb.Get("loadBalancerArn").Str)
 			if err != nil {
 				zap.L().Error("elbv2: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Error(err))
-				return changes
+				return nil
 			}
 			changes = append(changes, &resourceChange{
 				AwsAccountID: metadata.accountID,
@@ -130,7 +130,8 @@ func classifyELBV2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourc
 	}
 
 	if parseErr != nil {
-		zap.L().Warn("elbv2: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Error(parseErr))
+		zap.L().Error("elbv2: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Any("event", metadata), zap.Error(parseErr))
+		return nil
 	}
 	return []*resourceChange{{
 		AwsAccountID: metadata.accountID,

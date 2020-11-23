@@ -17,12 +17,8 @@
  */
 
 import React from 'react';
-import { Box, Card, Flex, IconButton, Img, Text, TextProps, Theme } from 'pouncejs';
+import { Box, Card, Flex, IconButton, Img, Text, TextProps } from 'pouncejs';
 import { slugify } from 'Helpers/utils';
-
-interface GenericItemCardProps {
-  borderColor?: keyof Theme['colors'];
-}
 
 interface GenericItemCardLogoProps {
   src: string;
@@ -34,28 +30,26 @@ interface GenericItemCardValueProps {
   value: string | number | React.ReactElement;
 }
 
+interface GenericItemCardDate {
+  date: string;
+}
+
 interface GenericItemCardComposition {
   Logo: React.FC<GenericItemCardLogoProps>;
   Heading: React.FC<TextProps>;
   Body: React.FC;
-  Options: React.ForwardRefExoticComponent<React.RefAttributes<HTMLButtonElement>>;
+  Dropdown: React.ForwardRefExoticComponent<React.RefAttributes<HTMLButtonElement>>;
+  Options: React.FC;
   Value: React.FC<GenericItemCardValueProps>;
   ValuesGroup: React.FC;
+  Date: React.FC<GenericItemCardDate>;
+  ExtraBadge: React.FC<{ badge: string | React.ReactNode }>;
   LineBreak: React.FC;
 }
 
-const GenericItemCard: React.FC<GenericItemCardProps> & GenericItemCardComposition = ({
-  children,
-  borderColor,
-}) => {
-  const statusProps = borderColor
-    ? {
-        borderLeft: '4px solid',
-        borderColor,
-      }
-    : {};
+const GenericItemCard: React.FC & GenericItemCardComposition = ({ children }) => {
   return (
-    <Card as="section" variant="dark" p={5} {...statusProps} overflow="hidden">
+    <Card as="section" variant="dark" p={4} overflow="hidden">
       <Box>
         <Flex position="relative" height="100%">
           {children}
@@ -67,9 +61,9 @@ const GenericItemCard: React.FC<GenericItemCardProps> & GenericItemCardCompositi
 
 const GenericItemCardHeading: React.FC<TextProps> = ({ children, ...rest }) => {
   return (
-    <Text fontWeight="medium" wordBreak="break-word" as="h4" {...rest}>
+    <Flex justify="space-between" fontWeight="medium" width={0.7} wordBreak="break-word" {...rest}>
       {children}
-    </Text>
+    </Flex>
   );
 };
 
@@ -93,16 +87,17 @@ const GenericItemCardLogo: React.FC<GenericItemCardLogoProps> = ({ src }) => {
   return <Img nativeWidth={20} nativeHeight={20} mr={5} alt="Logo" src={src} />;
 };
 
-const GenericItemCardOptions = React.forwardRef<HTMLButtonElement>(function GenericItemCardOptions(
+const GenericItemCardDropdown = React.forwardRef<HTMLButtonElement>(function GenericItemCardOptions(
   props,
   ref
 ) {
   return (
-    <Box m={-4} position="absolute" top={0} right={0} transform="rotate(90deg)">
+    <Box mt={-1}>
       <IconButton
         variant="ghost"
         variantColor="navyblue"
         icon="more"
+        size="small"
         aria-label="Toggle Options"
         {...props}
         ref={ref}
@@ -111,18 +106,33 @@ const GenericItemCardOptions = React.forwardRef<HTMLButtonElement>(function Gene
   );
 });
 
+const GenericItemCardDate: React.FC<GenericItemCardDate> = ({ date, ...rest }) => {
+  return (
+    <Text fontSize="small" as="span" color="gray-500" {...rest}>
+      {date}
+    </Text>
+  );
+};
+
+const GenericItemCardOptions: React.FC = ({ children }) => {
+  return (
+    <Flex position="absolute" spacing={2} align="start" right={0}>
+      {children}
+    </Flex>
+  );
+};
+
 const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, value, id }) => {
   const cardId = id || slugify(`${label}${value}`);
 
   return (
-    <Box as="dl" mt={4}>
+    <Box as="dl" my={2}>
       {label && (
         <Box
           as="dt"
           aria-labelledby={cardId}
           color="gray-300"
           fontSize="2x-small"
-          mb="6px"
           fontWeight="medium"
         >
           {label}
@@ -134,10 +144,31 @@ const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, valu
         fontSize="medium"
         fontWeight="medium"
         opacity={value ? 1 : 0.3}
+        display="inline-flex"
+        alignItems="center"
+        minHeight={24}
       >
         {value || 'Not Set'}
       </Box>
     </Box>
+  );
+};
+
+const GenericItemCardExtraBadge: React.FC<{ badge: string | React.ReactNode }> = ({ badge }) => {
+  return (
+    <Flex
+      justify="center"
+      align="center"
+      width={18}
+      height={18}
+      backgroundColor="navyblue-200"
+      borderRadius="circle"
+      fontSize="2x-small"
+      fontWeight="medium"
+      cursor="default"
+    >
+      {badge}
+    </Flex>
   );
 };
 
@@ -146,9 +177,12 @@ const GenericItemCardLineBreak: React.FC = () => <Box flexBasis="100%" height={0
 GenericItemCard.Body = GenericItemCardBody;
 GenericItemCard.Heading = GenericItemCardHeading;
 GenericItemCard.Logo = GenericItemCardLogo;
+GenericItemCard.Dropdown = GenericItemCardDropdown;
 GenericItemCard.Options = GenericItemCardOptions;
 GenericItemCard.Value = GenericItemCardValue;
 GenericItemCard.ValuesGroup = GenericItemCardValuesGroup;
+GenericItemCard.Date = GenericItemCardDate;
+GenericItemCard.ExtraBadge = GenericItemCardExtraBadge;
 GenericItemCard.LineBreak = GenericItemCardLineBreak;
 
 export default GenericItemCard;
