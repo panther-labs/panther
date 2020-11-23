@@ -1,6 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`LimitItemDisplay matches snapshot 1`] = `
+
+
 .panther-0 {
   display: -webkit-box;
   display: -webkit-flex;
@@ -34,11 +36,14 @@ exports[`LimitItemDisplay matches snapshot 1`] = `
     Two
   </div>
   <div
-    class="panther-0"
+    class="panther-1"
     data-reach-tooltip-trigger=""
   >
-    +
-    2
+    <div
+      class="panther-0"
+    >
+      +2
+    </div>
   </div>
   <footer
     id="footer"
@@ -47,6 +52,8 @@ exports[`LimitItemDisplay matches snapshot 1`] = `
 `;
 
 exports[`LimitItemDisplay matches snapshot 2`] = `
+
+
 .panther-0 {
   display: -webkit-box;
   display: -webkit-flex;
@@ -81,11 +88,14 @@ exports[`LimitItemDisplay matches snapshot 2`] = `
   </div>
   <div
     aria-describedby="tooltip--7"
-    class="panther-0"
+    class="panther-1"
     data-reach-tooltip-trigger=""
   >
-    +
-    2
+    <div
+      class="panther-0"
+    >
+      +2
+    </div>
   </div>
   <footer
     id="footer"

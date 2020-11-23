@@ -24,68 +24,6 @@ exports[`Generic Destination Card should match snapshot 1`] = `
   margin-right: 20px;
 }
 
-.panther-4 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-align-items: start;
-  -webkit-box-align: start;
-  -ms-flex-align: start;
-  align-items: start;
-  position: absolute;
-  right: 0;
-}
-
-.panther-4>*:not(:last-child) {
-  margin-right: 8px;
-}
-
-.panther-3 {
-  margin-top: -4px;
-}
-
-.panther-2 {
-  outline: none;
-  line-height: 1;
-  height: 24px;
-  width: 24px;
-  -webkit-transition: background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
-  transition: background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
-  border-radius: 99999px;
-  border: 1px solid;
-  border-color: transparent;
-  background-color: transparent;
-  cursor: pointer;
-  color: #f6f6f6;
-  -webkit-text-decoration: none;
-  text-decoration: none;
-}
-
-.panther-2:hover {
-  background-color: rgba(62,81,107,0.3);
-}
-
-.panther-2:focus {
-  background-color: rgba(62,81,107,0.3);
-}
-
-.panther-2:active,
-.panther-2[data-active=true] {
-  background-color: #3e516b;
-}
-
-.panther-1 {
-  display: inline-block;
-  vertical-align: sub;
-  -webkit-flex-shrink: 0;
-  -ms-flex-negative: 0;
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  color: currentColor;
-}
-
 .panther-10 {
   display: -webkit-box;
   display: -webkit-flex;
@@ -105,15 +43,21 @@ exports[`Generic Destination Card should match snapshot 1`] = `
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-box-pack: justify;
-  -webkit-justify-content: space-between;
-  justify-content: space-between;
+  -webkit-align-items: flex-start;
+  -webkit-box-align: flex-start;
+  -ms-flex-align: flex-start;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.panther-2 {
   font-weight: 500;
-  width: 70%;
+  margin-right: auto;
+  max-width: 70%;
   word-break: break-word;
 }
 
-.panther-5 {
+.panther-1 {
   -webkit-transition: color 0.1s ease-out;
   transition: color 0.1s ease-out;
   font-weight: 500;
@@ -122,17 +66,63 @@ exports[`Generic Destination Card should match snapshot 1`] = `
   color: #7fd3ff;
 }
 
-.panther-5:hover {
+.panther-1:hover {
   color: #ace2ff;
 }
 
-.panther-5:focus {
+.panther-1:focus {
   color: #ace2ff;
 }
 
-.panther-5:active,
-.panther-5[data-active=true] {
+.panther-1:active,
+.panther-1[data-active=true] {
   color: #11a5f3;
+}
+
+.panther-5 {
+  margin-left: 4px;
+  margin-top: -4px;
+}
+
+.panther-4 {
+  outline: none;
+  line-height: 1;
+  height: 24px;
+  width: 24px;
+  -webkit-transition: background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-radius: 99999px;
+  border: 1px solid;
+  border-color: transparent;
+  background-color: transparent;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.panther-4:hover {
+  background-color: rgba(62,81,107,0.3);
+}
+
+.panther-4:focus {
+  background-color: rgba(62,81,107,0.3);
+}
+
+.panther-4:active,
+.panther-4[data-active=true] {
+  background-color: #3e516b;
+}
+
+.panther-3 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: currentColor;
 }
 
 .panther-9 {
@@ -220,46 +210,46 @@ exports[`Generic Destination Card should match snapshot 1`] = `
           width="20"
         />
         <div
-          class="panther-4"
-        >
-          <div
-            class="panther-3"
-          >
-            <button
-              aria-controls="menu--1"
-              aria-haspopup="true"
-              aria-label="Toggle Options"
-              aria-pressed="false"
-              class="panther-2"
-              data-reach-menu-button=""
-              id="menu-button--menu--1"
-              type="button"
-            >
-              <svg
-                class="panther-1"
-                role="presentation"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M6 10C4.9 10 4 10.9 4 12C4 13.1 4.9 14 6 14C7.1 14 8 13.1 8 12C8 10.9 7.1 10 6 10ZM18 10C16.9 10 16 10.9 16 12C16 13.1 16.9 14 18 14C19.1 14 20 13.1 20 12C20 10.9 19.1 10 18 10ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10Z"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div
           class="panther-10"
         >
-          <div
+          <header
             class="panther-6"
           >
-            <a
-              class="panther-5"
-              href="/settings/destinations/8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7/edit/"
+            <h4
+              class="panther-2"
             >
-              Accountability
-            </a>
-          </div>
+              <a
+                class="panther-1"
+                href="/settings/destinations/8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7/edit/"
+              >
+                Accountability
+              </a>
+            </h4>
+            <div
+              class="panther-5"
+            >
+              <button
+                aria-controls="menu--1"
+                aria-haspopup="true"
+                aria-label="Toggle Options"
+                aria-pressed="false"
+                class="panther-4"
+                data-reach-menu-button=""
+                id="menu-button--menu--1"
+                type="button"
+              >
+                <svg
+                  class="panther-3"
+                  role="presentation"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M6 10C4.9 10 4 10.9 4 12C4 13.1 4.9 14 6 14C7.1 14 8 13.1 8 12C8 10.9 7.1 10 6 10ZM18 10C16.9 10 16 10.9 16 12C16 13.1 16.9 14 18 14C19.1 14 20 13.1 20 12C20 10.9 19.1 10 18 10ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10Z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </header>
           <div
             class="panther-9"
           >
