@@ -11,7 +11,7 @@
 # pip3 install -r requirements-top-level.txt
 # pip3 freeze --all > requirements.txt
 # deactivate
-aws-sam-cli==1.6.2
+aws-sam-cli
 bandit
 boto3~=1.14.40  # Matches version in Lambda: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
 cfn-lint
