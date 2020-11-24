@@ -81,7 +81,7 @@ func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		instanceID := detail.Get("responseElements.dBSnapshot.dBInstanceIdentifier")
 		// This can happen when a snapshot for a DB that no longer exists is changed
 		if !instanceID.Exists() {
-			return  nil
+			return nil
 		}
 		rdsARN.Resource += instanceID.Str
 	case "CreateDBInstanceReadReplica":
