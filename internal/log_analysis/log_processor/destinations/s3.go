@@ -368,6 +368,7 @@ func (bs *s3EventBufferSet) writeEvent(event *parsers.Result) (sendBuffers []*s3
 		// The hope is most of the flushed buffers were done updating (as events often come roughly in time order)
 		bufferReduction := bs.maxBuffers / 2
 		for i := 0; i < bufferReduction; i++ {
+			// FIXME: a better implementation would be to sort the current buffers by size and remove top N
 			if largestBuffer := bs.removeLargestBuffer(); largestBuffer != nil {
 				sendBuffers = append(sendBuffers, largestBuffer)
 			} else {
