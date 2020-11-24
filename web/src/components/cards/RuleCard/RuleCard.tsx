@@ -41,12 +41,8 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
   } = useDetectionDestinations({ rule });
   return (
     <GenericItemCard>
-      <GenericItemCard.Options>
-        <GenericItemCard.Date date={formatDatetime(rule.lastModified)} />
-        <RuleCardOptions rule={rule} />
-      </GenericItemCard.Options>
       <GenericItemCard.Body>
-        <Flex align="center">
+        <GenericItemCard.Header>
           <GenericItemCard.Heading>
             <Link
               as={RRLink}
@@ -56,7 +52,9 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
               {rule.displayName || rule.id}
             </Link>
           </GenericItemCard.Heading>
-        </Flex>
+          <GenericItemCard.Date date={formatDatetime(rule.lastModified)} />
+          <RuleCardOptions rule={rule} />
+        </GenericItemCard.Header>
 
         <SimpleGrid gap={2} columns={2}>
           <GenericItemCard.ValuesGroup>
