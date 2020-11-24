@@ -35,14 +35,15 @@ func (p *PriorityQueue) Len() int {
 }
 
 // Insert inserts a new element into the queue. No action is performed on duplicate elements.
-func (p *PriorityQueue) Insert(v interface{}, priority float64) {
-	if _, ok := p.heap.lookup[v]; ok {
-		return
+func (p *PriorityQueue) Insert(v interface{}, priority float64) (duplicate bool) {
+	if _, duplicate = p.heap.lookup[v]; duplicate {
+		return duplicate
 	}
 	heap.Push(&p.heap, heapEntry{
 		value:    v,
 		priority: priority,
 	})
+	return duplicate
 }
 
 // Pop removes the element with the highest priority from the queue and returns it.
