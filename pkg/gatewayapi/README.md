@@ -1,71 +1,37 @@
-# genericapi
+# gatewayapi (deprecated)
 
-Provides common logic for Lambda functions which serve as a Lambda-proxy backend to API Gateway:
+This pkg used to provide the handler for Lambda functions which served as a Lambda-proxy backend to API gateway.
 
-- `LambdaProxy` to generate the main Lambda handler
-- `GatewayClient` for building an HTTP client that can sign requests for AWS_IAM authentication
-- `MarshalResponse` for serializing an API response model
-  - `ReplaceMapSliceNils` for recursively replacing nil slices and maps with initialized versions
+Those internal gateways have all been removed, so this pkg now just contains a `Client` that makes
+it easy to talk to those old Lambda handlers directly:
 
-## Example API Handler
-
-```go
-package main
-
-import (
-	"context"
-
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
-)
-
-var methodHandlers = map[string]gatewayapi.RequestHandler {
-	"GET /orgs/{orgId}": getOrganization,
-}
-
-func getOrganization(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	// The request contains the http method, path, path parameters, query parameters, body, etc.
-	orgId := models.OrgID(request.PathParameters["orgId"])
-	sortAscending := request.QueryStringParameters["asc"]
-
-	// models is the auto-generated package from swagger
-	result := &models.ListOrganizationsResponse{}
-	return gatewayapi.MarshalResponse(result)
-}
-
-func main() {
-	lambda.Start(gatewayapi.LambdaProxy(methodHandlers))
-}
-```
-
-## Example Invocation
+- `panther-analysis-api`
+- `panther-compliance-api`
+- `panther-remediation-api`
+- `panther-resources-api`
 
 ```go
 package main
 
 import (
-	"github.com/aws/aws-sdk-go/aws/session"
+    "github.com/aws/aws-sdk-go/aws/session"
+    "github.com/aws/aws-sdk-go/service/lambda"
 
+    "github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-var (
-	awsSession = session.Must(session.NewSession())
-	httpClient = gatewayapi.GatewayClient(awsSession)
-)
-
+// Example usage
 func main() {
-	// client is the auto-generated package from swagger
-	config := client.DefaultTransportConfig().
-		WithBasePath("/v1").
-		WithHost("l4ekvgdy92.execute-api.us-west-2.amazonaws.com")  // replace with your endpoint
-	apiclient := client.NewHTTPClientWithConfig(nil, config)
+    awsSession := session.Must(session.NewSession())
+    client := gatewayapi.NewClient(lambda.New(awsSession), "panther-analysis-api")
 
-	result, err := apiclient.Operations.ListOrganizations(
-		&operations.AddResourceParams{
-			// ...
-			HTTPClient: httpClient,
-		})
+    input := models.LambdaInput{ListRules: &models.ListRulesInput{}}
+    var output models.ListRulesOutput
+    statusCode, err := client.Invoke(&input, &output)
 }
 ```
+
+Once the internal API has been consolidated, this package will no longer be necessary.
+
+Do not use this pkg for any new code.

@@ -29,6 +29,7 @@ import (
 )
 
 const (
+	defaultSortBy   = "displayName"
 	defaultSortDir  = "ascending"
 	defaultPage     = 1
 	defaultPageSize = 25
@@ -122,8 +123,12 @@ func sortItems(items []tableItem, sortBy, sortDir string, compliance map[string]
 	ascending := sortDir != "descending"
 
 	switch sortBy {
+	case "displayName":
+		sortByDisplayName(items, ascending)
 	case "complianceStatus":
 		sortByStatus(items, ascending, compliance)
+	case "id":
+		sortByID(items, ascending)
 	case "enabled":
 		sortByEnabled(items, ascending)
 	case "lastModified":
@@ -133,8 +138,42 @@ func sortItems(items []tableItem, sortBy, sortDir string, compliance map[string]
 	case "severity":
 		sortBySeverity(items, ascending)
 	default:
-		sortByID(items, ascending)
+		// Input validation for the caller already happens in the struct validate tags.
+		// If we reach this code, it means there is a sortBy allowed in the input validation,
+		// but not supported in the backend, which should never happen
+		panic("Unexpected sortBy: " + sortBy)
 	}
+}
+
+func sortByDisplayName(items []tableItem, ascending bool) {
+	sort.Slice(items, func(i, j int) bool {
+		left, right := items[i], items[j]
+
+		var leftName, rightName string
+		leftName, rightName = left.DisplayName, right.DisplayName
+
+		// The frontend shows display name *or* ID (when there is no display name)
+		// So we sort the same way it is shown to the user - displayName if available, otherwise ID
+		if leftName == "" {
+			leftName = left.ID
+		}
+		if rightName == "" {
+			rightName = right.ID
+		}
+
+		if leftName != rightName {
+			if ascending {
+				return strings.ToLower(leftName) < strings.ToLower(rightName)
+			}
+			return strings.ToLower(leftName) > strings.ToLower(rightName)
+		}
+
+		// Same display name: sort by ID
+		if ascending {
+			return strings.ToLower(left.ID) < strings.ToLower(right.ID)
+		}
+		return strings.ToLower(left.ID) > strings.ToLower(right.ID)
+	})
 }
 
 func sortByStatus(items []tableItem, ascending bool, compliance map[string]complianceStatus) {

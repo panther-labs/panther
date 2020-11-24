@@ -32,7 +32,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/dynamodbbatch"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
@@ -123,7 +123,7 @@ func (r *tableItem) Policy(status compliancemodels.ComplianceStatus) *models.Pol
 		Tests:                     r.Tests,
 		VersionID:                 r.VersionID,
 	}
-	gatewayapi.ReplaceMapSliceNils(result)
+	genericapi.ReplaceMapSliceNils(result)
 	return result
 }
 
@@ -152,7 +152,7 @@ func (r *tableItem) Rule() *models.Rule {
 		Threshold:          r.Threshold,
 		VersionID:          r.VersionID,
 	}
-	gatewayapi.ReplaceMapSliceNils(result)
+	genericapi.ReplaceMapSliceNils(result)
 	return result
 }
 
@@ -170,7 +170,7 @@ func (r *tableItem) Global() *models.Global {
 		Tags:           r.Tags,
 		VersionID:      r.VersionID,
 	}
-	gatewayapi.ReplaceMapSliceNils(result)
+	genericapi.ReplaceMapSliceNils(result)
 	return result
 }
 
@@ -191,7 +191,7 @@ func (r *tableItem) DataModel() *models.DataModel {
 		Mappings:       r.Mappings,
 		VersionID:      r.VersionID,
 	}
-	gatewayapi.ReplaceMapSliceNils(result)
+	genericapi.ReplaceMapSliceNils(result)
 	return result
 }
 

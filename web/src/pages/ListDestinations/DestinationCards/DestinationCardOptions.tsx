@@ -79,7 +79,7 @@ const DestinationCardOptions: React.FC<DestinationCardOptionsProps> = ({ destina
 
   return (
     <Dropdown>
-      <DropdownButton as={GenericItemCard.Dropdown} />
+      <DropdownButton as={GenericItemCard.OptionsButton} />
       <DropdownMenu>
         <DropdownItem onSelect={handleTestAlertClick}>Send Test Alert</DropdownItem>
         <DropdownLink as={RRLink} to={urls.settings.destinations.edit(destination.outputId)}>

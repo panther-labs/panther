@@ -570,6 +570,15 @@ var (
 			svc.On("ListAttachedRolePoliciesPages", mock.Anything).
 				Return(errors.New("IAM.ListAttachedRolePoliciesPages error"))
 		},
+		"ListAttachedRolePoliciesPagesAWSErr": func(svc *MockIAM) {
+			svc.On("ListAttachedRolePoliciesPages", mock.Anything).
+				Return(
+					awserr.New(
+						iam.ErrCodeNoSuchEntityException,
+						"The role policy with name MYNAME cannot be found",
+						errors.New("fake GetRolePolicy error"),
+					))
+		},
 		"ListRolesPages": func(svc *MockIAM) {
 			svc.On("ListRolesPages", mock.Anything).
 				Return(errors.New("IAM.ListRolesPages error"))
@@ -577,6 +586,15 @@ var (
 		"ListRolePoliciesPages": func(svc *MockIAM) {
 			svc.On("ListRolePoliciesPages", mock.Anything).
 				Return(errors.New("IAM.ListRolePoliciesPages error"))
+		},
+		"ListRolePoliciesPagesAWSErr": func(svc *MockIAM) {
+			svc.On("ListRolePoliciesPages", mock.Anything).
+				Return(
+					awserr.New(
+						iam.ErrCodeNoSuchEntityException,
+						"The role policy with name MYNAME cannot be found",
+						errors.New("fake GetRolePolicy error"),
+					))
 		},
 		"GetRolePolicy": func(svc *MockIAM) {
 			svc.On("GetRolePolicy", mock.Anything).
