@@ -33,10 +33,10 @@ import (
 
 const (
 	// Use the commit from the latest tagged release of https://github.com/golang/tools/releases
-	goimportsVersion = "c9b80dc" // gopls/v0.5.0
+	goimportsVersion = "ae6603b" // gopls/v0.5.3
 
-	golangciVersion  = "1.31.0"
-	terraformVersion = "0.13.4"
+	golangciVersion  = "1.33.0"
+	terraformVersion = "0.13.5"
 )
 
 var log = logger.Build("[setup]")
@@ -82,8 +82,14 @@ func installGoModules() error {
 		return err
 	}
 
-	// goimports is needed for formatting but isn't importable (won't be in go.mod)
-	return sh.Run("go", "get", "golang.org/x/tools/cmd/goimports@"+goimportsVersion)
+	// goimports is needed for formatting but isn't importable
+	if err := sh.Run("go", "get", "golang.org/x/tools/cmd/goimports@"+goimportsVersion); err != nil {
+		return err
+	}
+
+	// prevent dirty repo state - run the same tidy command we use during formatting to
+	// standardize the final go.mod file
+	return sh.Run("go", "mod", "tidy")
 }
 
 // Download golangci-lint if it hasn't been already
