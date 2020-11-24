@@ -182,5 +182,5 @@ func EnsureDatabase(ctx context.Context, client glueiface.GlueAPI, name, descrip
 	if err != nil && !awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
 		return err
 	}
-	return err
+	return nil
 }
