@@ -322,13 +322,11 @@ func newS3EventBufferSet(destination *S3Destination, maxTotalSize int) *s3EventB
 	// Stream will be a buffered stream
 	stream := jsoniter.NewStream(destination.jsonAPI, nil, initialBufferSize)
 	return &s3EventBufferSet{
-		stream:                  stream,
-		set:                     make(map[time.Time]map[string]*s3EventBuffer),
-		sizePriorityQueue:       pq.New(),
-		createTimePriorityQueue: pq.New(),
-		maxBuffers:              destination.maxBuffers,
-		maxBufferSize:           maxTotalSize,
-		maxTotalSize:            destination.maxBufferedMemBytes,
+		stream:        stream,
+		set:           make(map[time.Time]map[string]*s3EventBuffer),
+		maxBuffers:    destination.maxBuffers,
+		maxBufferSize: maxTotalSize,
+		maxTotalSize:  destination.maxBufferedMemBytes,
 	}
 }
 
@@ -355,7 +353,9 @@ func (bs *s3EventBufferSet) writeEvent(event *parsers.Result) (sendBuffers []*s3
 		return nil, err
 	}
 	bs.totalBufferedMemBytes += uint64(n)
-	bs.sizePriorityQueue.UpdatePriority(buf, float64(buf.bytes)) // update the rank so we can find largest quickly
+
+	// update the rank so we can find largest quickly
+	bs.sizePriorityQueue.UpdatePriority(buf, float64(buf.bytes/1024*1024*1024)) // in MB to reduce cost of update
 
 	// Check if buffer is bigger than threshold for a single buffer
 	if buf.bytes >= bs.maxBufferSize {
@@ -413,7 +413,9 @@ func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 		buffer = newS3EventBuffer(logType, hour)
 		logTypeToBuffer[logType] = buffer
 		bs.sizePriorityQueue.Insert(buffer, 0.0)
-		bs.createTimePriorityQueue.Insert(buffer, float64(-buffer.createTime.Unix())) // negative so oldest is on top!
+		// Use nanoseconds so we have a better ordering
+		since := time.Duration(buffer.createTime.UnixNano()).Seconds()
+		bs.createTimePriorityQueue.Insert(buffer, -since) // negative so oldest is on top!
 	}
 
 	return buffer
@@ -434,8 +436,8 @@ func (bs *s3EventBufferSet) removeBuffer(buffer *s3EventBuffer) {
 }
 
 func (bs *s3EventBufferSet) removeLargestBuffer() (largestBuffer *s3EventBuffer) {
-	largest, err := bs.sizePriorityQueue.Pop() // this takes buffer out of priority queue
-	if err != nil {                            // if q is empty then err is returned
+	largest := bs.sizePriorityQueue.Pop() // this takes buffer out of priority queue
+	if largest == nil {                   // if q is empty
 		return nil
 	}
 	largestBuffer = largest.(*s3EventBuffer)
@@ -444,8 +446,8 @@ func (bs *s3EventBufferSet) removeLargestBuffer() (largestBuffer *s3EventBuffer)
 }
 
 func (bs *s3EventBufferSet) removeTooOldBuffer(now time.Time, maxDuration time.Duration) (oldestBuffer *s3EventBuffer) {
-	oldest, err := bs.createTimePriorityQueue.Peek()
-	if err != nil { // if q is empty then err is returned
+	oldest, found := bs.createTimePriorityQueue.Peek()
+	if !found { // if q is empty
 		return nil
 	}
 	oldestBuffer = oldest.(*s3EventBuffer)
