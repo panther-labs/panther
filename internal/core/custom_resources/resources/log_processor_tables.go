@@ -21,6 +21,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
 
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/service/glue"
@@ -38,13 +39,20 @@ type UpdateLogProcessorTablesProperties struct {
 }
 
 func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
+	logger := lambdalogger.FromContext(ctx).With(
+		zap.String("requestID", event.RequestID),
+		zap.String("requestType", string(event.RequestType)),
+		zap.String("stackID", event.StackID),
+		zap.String("eventPhysicalResourceID", event.PhysicalResourceID),
+	)
+	logger.Debug("received UpdateLogProcessorTables event", zap.String("requestType", string(event.RequestType)))
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
 		// It's important to always return this physicalResourceID
 		const physicalResourceID = "custom:glue:update-log-processor-tables"
 		var props UpdateLogProcessorTablesProperties
 		if err := parseProperties(event.ResourceProperties, &props); err != nil {
-			zap.L().Error("failed to parse resource properties", zap.Error(err))
+			logger.Error("failed to parse resource properties", zap.Error(err))
 			return physicalResourceID, nil, err
 		}
 		requiredLogTypes, err := apifunctions.ListLogTypes(ctx, lambdaClient)
@@ -56,23 +64,26 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 			QueueURL: props.DataCatalogUpdaterQueueURL,
 		}
 		if err := client.SendSyncDatabase(ctx, "", requiredLogTypes); err != nil {
-			zap.L().Error("failed to update glue tables", zap.Error(err))
+			logger.Error("failed to update glue tables", zap.Error(err))
 			return physicalResourceID, nil, err
 		}
+		logger.Info("started database sync", zap.Strings("logTypes", requiredLogTypes))
 		return physicalResourceID, nil, nil
 	case cfn.RequestDelete:
 		for pantherDatabase := range awsglue.PantherDatabases {
-			zap.L().Info("deleting database", zap.String("database", pantherDatabase))
+			logger.Info("deleting database", zap.String("database", pantherDatabase))
 			if _, err := awsglue.DeleteDatabase(glueClient, pantherDatabase); err != nil {
 				if awsutils.IsAnyError(err, glue.ErrCodeEntityNotFoundException) {
-					zap.L().Info("already deleted", zap.String("database", pantherDatabase))
+					logger.Info("already deleted", zap.String("database", pantherDatabase))
 				} else {
+					logger.Error("failed to delete", zap.String("database", pantherDatabase))
 					return "", nil, errors.Wrapf(err, "failed deleting %s", pantherDatabase)
 				}
 			}
 		}
 		return event.PhysicalResourceID, nil, nil
 	default:
+		logger.Error("unknown request type")
 		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
 	}
 }
