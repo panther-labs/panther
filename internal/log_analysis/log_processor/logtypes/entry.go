@@ -258,7 +258,10 @@ func checkGlue(schema interface{}) (err error) {
 			}
 		}
 	}()
-	cols, _, _ := glueschema.InferColumnsWithMappings(schema)
+	cols, err := glueschema.InferColumns(schema)
+	if err != nil {
+		return
+	}
 	if len(cols) == 0 {
 		err = errors.New("empty columns")
 	}
