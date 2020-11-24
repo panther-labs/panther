@@ -39,6 +39,7 @@ func TestColumnName(t *testing.T) {
 		{".foo", "_foo"},
 		{"foo-bar", "foo_bar"},
 		{"$foo", "dollar_sign_foo"},
+		{"συνθηματικό", "synthimatiko"},
 	} {
 		colName := ColumnName(tc.FieldName)
 		assert.Equal(tc.ColumnName, colName)
