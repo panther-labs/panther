@@ -23,7 +23,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
@@ -33,6 +32,7 @@ import (
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 type snsMessage struct {
@@ -109,14 +109,13 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 	response, err := snsClient.Publish(snsMessageInput)
 	if err != nil {
 		// Catch title edge cases and make SNS API call with generic title
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == "InvalidParameter" {
-				*snsMessageInput.Subject = "New Panther Alert"
-				response, err = snsClient.Publish(snsMessageInput)
-				if err != nil {
-					zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
-					return getAlertResponseFromSNSError(err)
-				}
+		if awsutils.IsAnyError(err, sns.ErrCodeInvalidParameterException) {
+			const defaultTitle = "New Panther Alert"
+			snsMessageInput.Subject = aws.String(defaultTitle)
+			response, err = snsClient.Publish(snsMessageInput)
+			if err != nil {
+				zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
+				return getAlertResponseFromSNSError(err)
 			}
 		}
 	}
@@ -150,8 +149,7 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 func buildSnsClient(awsSession *session.Session, topicArn string) (snsiface.SNSAPI, error) {
 	parsedArn, err := arn.Parse(topicArn)
 	if err != nil {
-		zap.L().Error("failed to parse topic ARN", zap.Error(err))
-		return nil, err
+		return nil, errors.Wrap(err, "failed to parse SNS topic ARN")
 	}
 	return sns.New(awsSession, aws.NewConfig().WithRegion(parsedArn.Region)), nil
 }
