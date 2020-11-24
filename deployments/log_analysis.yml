@@ -116,8 +116,7 @@ Conditions:
 Resources:
   ###### Update Glue Table Schemas for Deployed Tables #####
   UpdateLogProcessorGlueTables:
-    DependsOn:
-      - UpdaterFunction
+    DependsOn: UpdaterFunction
     Type: Custom::UpdateLogProcessorTables
     Properties:
       # Update in case TablesSignature or CustomResourceVersion has changed
@@ -196,11 +195,11 @@ Resources:
       # * Failure of this lambda will impact the Panther user interface.
       # </cfndoc>
       Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !FindInMap [Functions, AlertsApi, Memory]
       Runtime: go1.x
       Timeout: !FindInMap [Functions, AlertsApi, Timeout]
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: ManageAlerts
           Version: 2012-10-17
@@ -332,11 +331,11 @@ Resources:
       # to duplicate notifications for some alerts.
       # </cfndoc>
       Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !FindInMap [Functions, AlertsForwarder, Memory]
       Runtime: go1.x
       Timeout: !FindInMap [Functions, AlertsForwarder, Timeout]
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: SQS
           Version: 2012-10-17
@@ -415,7 +414,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
   LogProcessorDLQAlarms:
     Type: Custom::SQSAlarms
@@ -463,7 +462,7 @@ Resources:
       Description: Downloads security logs from S3 for Panther analysis
       CodeUri: ../out/bin/internal/log_analysis/log_processor/main
       Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !Ref LogProcessorLambdaMemorySize
       Runtime: go1.x
       Timeout: !FindInMap [Functions, LogProcessor, Timeout]
@@ -480,7 +479,7 @@ Resources:
           Properties:
             Schedule: rate(1 minute) # NOTE: CloudWatch does not support sub-minute timers. We might want to get around this with Step Functions.
             Input: '{"tick": true}'
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: ConfirmSubscriptions
           Version: 2012-10-17
@@ -619,7 +618,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-datacatalog-updater-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
   UpdaterDLQAlarms:
     Type: Custom::SQSAlarms
@@ -659,7 +658,7 @@ Resources:
       Description: Updates the glue data catalog
       CodeUri: ../out/bin/internal/log_analysis/datacatalog_updater/main
       Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !FindInMap [Functions, Updater, Memory]
       Runtime: go1.x
       Timeout: !FindInMap [Functions, Updater, Timeout]
@@ -667,7 +666,7 @@ Resources:
         Variables:
           ATHENA_WORKGROUP: !Ref AthenaWorkGroup
           DEBUG: !Ref Debug
-          QUEUE_URL: !Ref UpdaterQueue
+          QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-datacatalog-updater-queue
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
       Events:
         Queue:
@@ -675,7 +674,7 @@ Resources:
           Properties:
             Queue: !GetAtt UpdaterQueue.Arn
             BatchSize: 10
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: AccessSqsKms
           Version: 2012-10-17
@@ -704,45 +703,38 @@ Resources:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
-        - Id: SQSPermissions # allow writing
+        - Id: SQSPermissions
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sqs:SendMessage
-              Resource:
-                - !GetAtt UpdaterQueue.Arn # send messages to updater queue (defer tasks)
+              # send messages to updater queue (defer tasks)
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-datacatalog-updater-queue
         - Id: AthenaPermissions # to create views over Glue tables
           Version: 2012-10-17
           Statement:
-            - Effect: Allow
+            - Effect: Allow # to create views over Glue tables
               Action:
                 - athena:StartQueryExecution
                 - athena:StopQueryExecution
                 - athena:GetQuery*
               Resource: '*'
-        - Id: AthenaResultsPermissions # athena writes results to S3
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
+            - Effect: Allow # athena writes results to S3
               Action:
                 - s3:GetBucketLocation
                 - s3:List*
                 - s3:GetObject
                 - s3:PutObject
               Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
-        - Id: ProbeS3 # used in sync
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: s3:List*
-              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
-        - Id: CallLambda # used in sync
+        - Id: SyncPermissions # used in sync
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource:
-                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-logtypes-api
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-logtypes-api
+            - Effect: Allow
+              Action: s3:List*
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
 
   UpdaterAlarms:
     Type: Custom::LambdaAlarms
@@ -822,7 +814,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-rules-engine-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
   RulesEngineDLQAlarms:
     Type: Custom::SQSAlarms
@@ -911,7 +903,7 @@ Resources:
             BatchSize: 10
       Runtime: python3.7
       Timeout: !FindInMap [Functions, RulesEngine, Timeout]
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: SendToNotificationsTopic
           Version: 2012-10-17
@@ -948,15 +940,12 @@ Resources:
                 - kms:Encrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
-        - Id: InvokeAnalysisApi
+        - Id: PantherLookup
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
-        - Id: ResourceLookup
-          Version: 2012-10-17
-          Statement:
             - Effect: Allow
               Action: dynamodb:GetItem
               Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-resources
@@ -1079,7 +1068,7 @@ Resources:
       Description: Pulls logs from external sources
       CodeUri: ../out/bin/internal/log_analysis/message_forwarder/main
       Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !FindInMap [Functions, MessageForwarder, Memory]
       Runtime: go1.x
       Timeout: !FindInMap [Functions, MessageForwarder, Timeout]
@@ -1087,7 +1076,7 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           STREAM_NAME: panther-forwarder-firehose
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: ConfirmSnsSubscriptions
           Version: 2012-10-17

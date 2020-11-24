@@ -133,7 +133,7 @@ Resources:
       # * Failure of this sqs queue will impact delivery of alerts to output destinations.
       # * Failed events will go into the `panther-alert-processor-queue-dlq`. When the system has recovered they should be re-queued to the `panther-alert-processor-queue` using the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
       KmsMasterKeyId: !Ref SqsKeyId
       VisibilityTimeout: !FindInMap [Functions, AlertProcessor, Timeout]
       RedrivePolicy:
@@ -158,7 +158,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-alert-processor-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
       VisibilityTimeout: 60
 
   AlertProcessorDLQAlarms:
@@ -209,11 +209,11 @@ Resources:
       # * Failed events will go into the `panther-alert-processor-queue-dlq`. When the system has recovered they should be re-queued to the `panther-alert-processor-queue` using the Panther tool `requeue`.
       # </cfndoc>
       Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !FindInMap [Functions, AlertProcessor, Memory]
       Runtime: go1.x
       Timeout: !FindInMap [Functions, AlertProcessor, Timeout]
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: DecryptFromSQS
           Version: 2012-10-17
@@ -325,7 +325,7 @@ Resources:
       Handler: main
       MemorySize: !FindInMap [Functions, AlertForwarder, Memory]
       Runtime: go1.x
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       Timeout: !FindInMap [Functions, AlertForwarder, Timeout]
       Policies:
         - Id: PublishToAlertQueue
@@ -356,7 +356,7 @@ Resources:
   EventQueue:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: '86400' # 24 hours
+      MessageRetentionPeriod: 86400 # 24 hours
       QueueName: panther-aws-events-queue
       # <cfndoc>
       # This sqs q receives CloudTrail events delivered by CloudWatch events
@@ -386,7 +386,7 @@ Resources:
   EventDLQ:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
       QueueName: panther-aws-events-queue-dlq
       # <cfndoc>
       # This is the dead letter queue for the `panther-aws-events-queue`.
@@ -481,11 +481,11 @@ Resources:
       # * Failed events will go into the `panther-aws-events-queue-dlq`. When the system has recovered they should be re-queued to the `panther-aws-events-queue` using the Panther tool `requeue`.
       # </cfndoc>
       Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !FindInMap [Functions, EventProcessor, Memory]
       Runtime: go1.x
       Timeout: !FindInMap [Functions, EventProcessor, Timeout]
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: SendAndReceiveSqsMessages
           Version: 2012-10-17
@@ -554,9 +554,9 @@ Resources:
       Handler: main
       MemorySize: !FindInMap [Functions, ComplianceApi, Memory]
       Runtime: go1.x
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       Timeout: !FindInMap [Functions, ComplianceApi, Timeout]
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: DynamoManageItems
           Version: 2012-10-17
@@ -657,11 +657,11 @@ Resources:
       # * Failure of this lambda will impact performing remediations and infrastructure will remain in violation of policy.
       # </cfndoc>
       Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !FindInMap [Functions, RemediationApi, Memory]
       Runtime: go1.x
       Timeout: !FindInMap [Functions, RemediationApi, Timeout]
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: SendSqsMessages
           Version: 2012-10-17
@@ -722,7 +722,7 @@ Resources:
       # * Failure of this sqs queue will impact the remediation of policy violations.
       # * Failed events will go into the `panther-remediation-queue`. When the system has recovered they should be re-queued to the `panther-remediation-queue-dlq` using the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
       KmsMasterKeyId: !Ref SqsKeyId
       VisibilityTimeout: !FindInMap [Functions, RemediationProcessor, Timeout]
       RedrivePolicy:
@@ -747,7 +747,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-remediation-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
       VisibilityTimeout: 60
 
   RemediationDLQAlarms:
@@ -780,7 +780,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          REMEDIATION_LAMBDA_ARN: !GetAtt RemediationFunction.Arn
+          REMEDIATION_LAMBDA_ARN: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-aws-remediation
       Events:
         Queue:
           Type: SQS
@@ -797,12 +797,12 @@ Resources:
       # * Failed events will go into the `panther-remediation-queue`. When the system has recovered they should be re-queued to the `panther-remediation-queue-dlq` using the Panther tool `requeue`.
       # </cfndoc>
       Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !FindInMap [Functions, RemediationProcessor, Memory]
       Runtime: go1.x
       Timeout: !FindInMap [Functions, RemediationProcessor, Timeout]
       Policies:
-        - Id: ReceiveAndDeleteSQSMessages
+        - Id: ReceiveMessagesAndInvokeAPIs
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -869,7 +869,7 @@ Resources:
       MemorySize: !FindInMap [Functions, Remediation, Memory]
       Runtime: python3.7
       Timeout: !FindInMap [Functions, Remediation, Timeout]
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: AssumeRemediationRole
           Version: 2012-10-17
@@ -908,11 +908,11 @@ Resources:
       # * The Panther user interface for display of resources.
       # </cfndoc>
       Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !FindInMap [Functions, ResourcesApi, Memory]
       Runtime: go1.x
       Timeout: !FindInMap [Functions, ResourcesApi, Timeout]
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: AccessComplianceApi
           Version: 2012-10-17
@@ -1006,7 +1006,7 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       KmsMasterKeyId: !Ref SqsKeyId
-      MessageRetentionPeriod: '86400' # 24 hours
+      MessageRetentionPeriod: 86400 # 24 hours
       QueueName: panther-resources-queue
       # <cfndoc>
       # This sqs queue has events from recently changed infrastructure.
@@ -1032,7 +1032,7 @@ Resources:
   ResourcesDLQ:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
       QueueName: panther-resources-queue-dlq
       # <cfndoc>
       # The dead letter queue for the `panther-resources-queue`.
@@ -1091,11 +1091,11 @@ Resources:
       # * Failed events will go into the `panther-resources-queue-dlq`. When the system has recovered they should be re-queued to the `panther-resources-queue` using the Panther tool `requeue`.
       # </cfndoc>
       Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !FindInMap [Functions, ResourceProcessor, Memory]
       Runtime: go1.x
       Timeout: !FindInMap [Functions, ResourceProcessor, Timeout]
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: SendAndReceiveSqsMessages
           Version: 2012-10-17
@@ -1148,33 +1148,23 @@ Resources:
       MemorySize: !FindInMap [Functions, PolicyEngine, Memory]
       Runtime: python3.7
       Timeout: !FindInMap [Functions, PolicyEngine, Timeout]
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Layers: !GetAtt PolicyEngineLayers.LayerArns
       Policies:
-        - Id: ResourceLookup
+        - Id: PantherLookups
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: dynamodb:GetItem
               Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-resources
-        - Id: KeyValueStore
-          Version: 2012-10-17
-          Statement:
             - Effect: Allow
               Action: dynamodb:*Item
               Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-kv-store
-        - Id: GetPantherPolicySecrets
-          Version: 2012-10-17
-          Statement:
             - Effect: Allow
               Action: secretsmanager:GetSecretValue
-              Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:panther-policies/*
-        - Id: GetPantherAnalysisSecrets
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: secretsmanager:GetSecretValue
-              Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:panther-analysis/*
+              Resource:
+                - !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:panther-analysis/*
+                - !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:panther-policies/*
 
   PolicyEngineLayers:
     Type: Custom::LayerAttachment
@@ -1251,7 +1241,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-snapshot-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
       VisibilityTimeout: 60
 
   SnapshotDLQAlarms:
@@ -1272,7 +1262,7 @@ Resources:
         Variables:
           AUDIT_ROLE_NAME: !Sub PantherAuditRole-${AWS::Region}
           DEBUG: !Ref Debug
-          SNAPSHOT_QUEUE_URL: !Ref SnapshotQueue
+          SNAPSHOT_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-snapshot-queue
       Events:
         SQS:
           Type: SQS
@@ -1289,11 +1279,11 @@ Resources:
       # * Failed events will go into the `panther-snapshot-queue-dlq`. When the system has recovered they should be re-queued to the `panther-snapshot-queue` using the Panther tool `requeue`.
       # </cfndoc>
       Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !FindInMap [Functions, Poller, Memory]
       Runtime: go1.x
       Timeout: !FindInMap [Functions, Poller, Timeout]
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: ManageSQSMessages
           Version: 2012-10-17
@@ -1311,7 +1301,7 @@ Resources:
                 - kms:Decrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
-        - Id: LookupActiveregions
+        - Id: LookupActiveRegions
           Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -1377,11 +1367,11 @@ Resources:
       # * Failure of this lambda will prevent daily infrastructure scans from running.
       # </cfndoc>
       Handler: main
-      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !FindInMap [Functions, SnapshotScheduler, Memory]
       Runtime: go1.x
       Timeout: !FindInMap [Functions, SnapshotScheduler, Timeout]
-      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
+      Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: InvokeSourceAPI
           Version: 2012-10-17
