@@ -36,7 +36,6 @@ const (
 	goimportsVersion = "c9b80dc" // gopls/v0.5.0
 
 	golangciVersion  = "1.31.0"
-	swaggerVersion   = "0.25.0"
 	terraformVersion = "0.13.4"
 )
 
@@ -52,9 +51,6 @@ func Setup() error {
 		return fmt.Errorf("failed to create setup directory %s: %v", util.SetupDir, err)
 	}
 
-	if err := installSwagger(env); err != nil {
-		return err
-	}
 	if err := installGolangCiLint(env); err != nil {
 		return err
 	}
@@ -88,27 +84,6 @@ func installGoModules() error {
 
 	// goimports is needed for formatting but isn't importable (won't be in go.mod)
 	return sh.Run("go", "get", "golang.org/x/tools/cmd/goimports@"+goimportsVersion)
-}
-
-// Download go-swagger if it hasn't been already
-func installSwagger(uname string) error {
-	if output, err := sh.Output(util.Swagger, "version"); err == nil && strings.Contains(output, swaggerVersion) {
-		log.Infof("%s v%s is already installed", util.Swagger, swaggerVersion)
-		return nil
-	}
-
-	log.Infof("downloading go-swagger v%s...", swaggerVersion)
-	url := fmt.Sprintf("https://github.com/go-swagger/go-swagger/releases/download/v%s/swagger_%s_amd64",
-		swaggerVersion, strings.ToLower(uname))
-	if err := sh.Run("curl", "-s", "-o", util.Swagger, "-fL", url); err != nil {
-		return fmt.Errorf("failed to download %s: %v", url, err)
-	}
-
-	if err := sh.Run("chmod", "+x", util.Swagger); err != nil {
-		return fmt.Errorf("failed to make %s executable: %v", util.Swagger, err)
-	}
-
-	return nil
 }
 
 // Download golangci-lint if it hasn't been already

@@ -137,11 +137,6 @@ func PreCheck() error {
 		return fmt.Errorf("docker is not available: %v", err)
 	}
 
-	// Ensure swagger is available
-	if _, err = sh.Output(util.Swagger, "version"); err != nil {
-		return fmt.Errorf("swagger is not available (%v): try 'mage setup'", err)
-	}
-
 	return nil
 }
 
@@ -197,7 +192,7 @@ func deploySingleLambda(function string) error {
 		cfnstacks.LogAnalysisTemplate,
 		cfnstacks.CloudsecTemplate,
 		cfnstacks.CoreTemplate,
-		cfnstacks.APITemplate,
+		cfnstacks.GatewayTemplate,
 	} {
 		var template cfnTemplate
 		if err := util.ParseTemplate(path, &template); err != nil {
@@ -463,10 +458,6 @@ func deployBootstrapGatewayStack(
 	settings *PantherConfig,
 	outputs map[string]string, // from bootstrap stack
 ) (map[string]string, error) {
-
-	if err := build.EmbedAPISpec(); err != nil {
-		return nil, err
-	}
 
 	if err := build.Layer(log, settings.Infra.PipLayer); err != nil {
 		return nil, err

@@ -27,13 +27,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 )
 
-type LogEntryAuditLog struct {
-	LogEntry
-	Payload AuditLog `json:"protoPayload" validate:"required" description:"The AuditLog payload"`
-
-	parsers.PantherLog
-}
-
 const (
 	AuditLogActivityLogID = "cloudaudit.googleapis.com%2Factivity"
 	AuditLogDataLogID     = "cloudaudit.googleapis.com%2Fdata_access"
@@ -89,6 +82,13 @@ func (p *AuditLogParser) Parse(log string) ([]*parsers.PantherLog, error) {
 		return nil, err
 	}
 	return entry.Logs(), nil
+}
+
+type LogEntryAuditLog struct {
+	LogEntry
+	Payload AuditLog `json:"protoPayload" validate:"required" description:"The AuditLog payload"`
+
+	parsers.PantherLog
 }
 
 // nolint:lll

@@ -63,3 +63,46 @@ func TestPagePoliciesPageOutOfBounds(t *testing.T) {
 	assert.Equal(t, models.Paging{ThisPage: 10, TotalItems: 4, TotalPages: 4}, paging)
 	assert.Equal(t, truncation, []tableItem{}) // empty list - page out of bounds
 }
+
+func TestPagePoliciesDisplayNameSort(t *testing.T) {
+	items := []tableItem{
+		{ID: "a", DisplayName: "z"},
+		{ID: "h", DisplayName: "b"},
+		{ID: "c", DisplayName: "y"},
+		{ID: "e", DisplayName: "a"},
+		{ID: "g", DisplayName: "b"},
+		{ID: "d", DisplayName: ""},
+	}
+
+	sortByDisplayName(items, true)
+
+	expected := []tableItem{
+		{ID: "e", DisplayName: "a"},
+		{ID: "g", DisplayName: "b"},
+		{ID: "h", DisplayName: "b"},
+		{ID: "d", DisplayName: ""},
+		{ID: "c", DisplayName: "y"},
+		{ID: "a", DisplayName: "z"},
+	}
+	assert.Equal(t, expected, items)
+}
+
+func TestPagePoliciesDisplayNameSortReverse(t *testing.T) {
+	items := []tableItem{
+		{ID: "e", DisplayName: "a"},
+		{ID: "a", DisplayName: "z"},
+		{ID: "c", DisplayName: "y"},
+		{ID: "g", DisplayName: "b"},
+		{ID: "d", DisplayName: "y"},
+	}
+	sortByDisplayName(items, false)
+
+	expected := []tableItem{
+		{ID: "a", DisplayName: "z"},
+		{ID: "d", DisplayName: "y"},
+		{ID: "c", DisplayName: "y"},
+		{ID: "g", DisplayName: "b"},
+		{ID: "e", DisplayName: "a"},
+	}
+	assert.Equal(t, expected, items)
+}

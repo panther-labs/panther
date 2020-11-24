@@ -17,6 +17,7 @@
  */
 
 import { Text, Box, Flex, SimpleGrid, Card, Img, Heading, Button, useSnackbar } from 'pouncejs';
+import { STABLE_PANTHER_VERSION } from 'Source/constants';
 import React from 'react';
 import { downloadData } from 'Helpers/utils';
 import { useFormikContext } from 'formik';
@@ -47,7 +48,7 @@ const StackDeployment: React.FC = () => {
   const { stackName, body } = data?.getComplianceIntegrationTemplate ?? {};
   const cfnConsoleLink =
     `https://${pantherConfig.AWS_REGION}.console.aws.amazon.com/cloudformation/home?region=${pantherConfig.AWS_REGION}#/stacks/create/review` +
-    `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudsec-iam/v1.0.0/template.yml` +
+    `?templateURL=https://s3-us-west-2.amazonaws.com/panther-public-cloudformation-templates/panther-cloudsec-iam/${STABLE_PANTHER_VERSION}/template.yml` +
     `&stackName=${stackName}` +
     `&param_MasterAccountRegion=${pantherConfig.AWS_REGION}` +
     `&param_MasterAccountId=${pantherConfig.AWS_ACCOUNT_ID}` +

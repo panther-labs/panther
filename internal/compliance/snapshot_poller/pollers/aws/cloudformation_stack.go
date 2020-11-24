@@ -361,7 +361,7 @@ func PollCloudFormationStacks(pollerInput *awsmodels.ResourcePollerInput) ([]api
 	resources := make([]apimodels.AddResourceEntry, 0, len(stacks))
 	for _, stack := range stacks {
 		// Check if this stack failed an earlier part of the scan
-		if ignoredIds[*stack.StackId] {
+		if stack == nil || ignoredIds[aws.StringValue(stack.StackId)] {
 			continue
 		}
 
