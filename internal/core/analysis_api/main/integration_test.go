@@ -1697,7 +1697,7 @@ func listFiltered(t *testing.T) {
 			HasRemediation: aws.Bool(true),
 			NameContains:   "json", // policyFromBulkJSON only
 			ResourceTypes:  []string{"AWS.S3.Bucket"},
-			Severity:       compliancemodels.SeverityMedium,
+			Severity:       []compliancemodels.Severity{compliancemodels.SeverityMedium},
 		},
 	}
 	var result models.ListPoliciesOutput

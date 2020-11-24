@@ -75,7 +75,7 @@ var (
 // like lastModified.
 
 // Dynamo filters common to both ListPolicies and ListRules
-func pythonListFilters(enabled *bool, nameContains, severity string, types, tags []string) []expression.ConditionBuilder {
+func pythonListFilters(enabled *bool, nameContains string, severity []compliancemodels.Severity, types, tags []string) []expression.ConditionBuilder {
 	var filters []expression.ConditionBuilder
 
 	if enabled != nil {
@@ -98,9 +98,15 @@ func pythonListFilters(enabled *bool, nameContains, severity string, types, tags
 		filters = append(filters, typeFilter)
 	}
 
-	if severity != "" {
-		filters = append(filters, expression.Equal(
-			expression.Name("severity"), expression.Value(severity)))
+	if len(severity) > 0 {
+		// filters = append(filters, expression.Equal(
+		// expression.Name("severity"), expression.Value(severity)))
+		typeFilter := expression.AttributeExists(expression.Name("severity"))
+		for _, typeName := range types {
+			// the item in Dynamo calls this "resourceTypes" for both policies and rules
+			typeFilter = typeFilter.Or(expression.Contains(expression.Name("severity"), typeName))
+		}
+		filters = append(filters, typeFilter)
 	}
 
 	if len(tags) > 0 {
