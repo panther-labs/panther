@@ -39,7 +39,7 @@ func classifyDynamoDB(detail gjson.Result, metadata *CloudTrailMetadata) []*reso
 	// If a table is being created, most API calls to describe it will fail with a
 	// ValidationException. This failure will be retried, but waiting 30 seconds can avoid the
 	// failed API call and usually result in a quicker successful scan.
-	delay := int64(0)
+	var delay int64
 
 	switch metadata.eventName {
 	case "CreateTable":

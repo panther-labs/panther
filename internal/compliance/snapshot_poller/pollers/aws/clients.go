@@ -19,8 +19,6 @@ package aws
  */
 
 import (
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -64,6 +62,8 @@ const (
 	assumeRoleDuration = time.Hour
 	// retries on default session
 	maxRetries = 6
+	// Maximum number of rate limited resources to remember
+	rateLimitCacheSize = 5000
 )
 
 var (
@@ -125,8 +125,11 @@ var (
 		awsmodels.WafWebAclSchema:      {}, // Global service
 	}
 
-	clientCache    = make(map[clientKey]cachedClient)
-	rateLimitCache *lru.ARCCache
+	// Used to cache region & account specific AWS clients
+	clientCache = make(map[clientKey]cachedClient)
+
+	// Used to remember resource IDs that have recently been rate limited so we avoid re-scanning them
+	RateLimitTracker *lru.ARCCache
 )
 
 // Key used for the client cache to neatly encapsulate an integration, service, and region
@@ -146,11 +149,8 @@ func Setup() {
 	snapshotPollerSession = awsSession.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
 		awsretry.NewConnectionErrRetryer(maxRetries)))
 
-	maxMem, err := strconv.Atoi(os.Getenv("AWS_LAMBDA_FUNCTION_MEMORY_SIZE"))
-	if err != nil {
-		panic(err)
-	}
-	rateLimitCache, err = lru.NewARC(maxMem / 4)
+	var err error
+	RateLimitTracker, err = lru.NewARC(rateLimitCacheSize)
 	if err != nil {
 		panic(err)
 	}

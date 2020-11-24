@@ -26,7 +26,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -34,6 +33,7 @@ import (
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
+	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 // resourcePoller is a simple struct to be used only for invoking the ResourcePollers in order.
@@ -44,7 +44,8 @@ type resourcePoller struct {
 
 const (
 	integrationType = "aws"
-	rateLimitDelay  = time.Minute * 5
+	// How long to wait before re-scanning a resource that was rate limited during scanning
+	rateLimitDelay = time.Minute * 5
 )
 
 var (
@@ -291,7 +292,7 @@ func singleResourceScan(
 
 	// First, check if we've been rate limited recently while attempting to scan this resource. If
 	// so, discard the scan request. There is already one in the ether waiting to be picked up.
-	if timestamp, ok := rateLimitCache.Get(*scanRequest.ResourceID); ok {
+	if timestamp, ok := RateLimitTracker.Get(*scanRequest.ResourceID); ok {
 		if timestamp.(time.Time).After(time.Now()) {
 			// We were recently rate limited while scanning this resource, ignore it
 			zap.L().Debug("rate limit encountered, skipping resource scan")
@@ -322,11 +323,10 @@ func singleResourceScan(
 	}
 
 	if err != nil {
-		var awsErr awserr.Error
 		// Check for rate limit errors. We don't want to blindly retry rate limit errors as this will
 		// cause more rate limit errors, so we re-schedule one new scan several minutes in the future
 		// and suppress all other scans for this resource until that time.
-		if ok := errors.As(err, &awsErr); ok && awsErr.Code() == "ThrottlingException" && awsErr.Message() == "Rate exceeded" {
+		if awsutils.IsAnyError(err, "ThrottlingException") {
 			// If we parallelize this function, we will need to see if this is already cached before
 			// re-queueing. For now, this is not necessary.
 			err = utils.Requeue(pollermodels.ScanMsg{
@@ -336,7 +336,7 @@ func singleResourceScan(
 			if err != nil {
 				return nil, err
 			}
-			rateLimitCache.Add(*scanRequest.ResourceID, time.Now().Add(rateLimitDelay))
+			RateLimitTracker.Add(*scanRequest.ResourceID, time.Now().Add(rateLimitDelay))
 			return nil, nil
 		}
 
