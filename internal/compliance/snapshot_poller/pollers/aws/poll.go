@@ -297,6 +297,8 @@ func singleResourceScan(
 			// We were recently rate limited while scanning this resource, ignore it
 			zap.L().Debug("rate limit encountered, skipping resource scan")
 			return nil, nil
+		} else {
+			RateLimitTracker.Remove(*scanRequest.ResourceID)
 		}
 	}
 
