@@ -27,6 +27,7 @@ import {
   buildListAvailableLogTypesResponse,
   buildAddS3LogIntegrationInput,
 } from 'test-utils';
+import { LOG_ONBOARDING_SNS_DOC_URL } from 'Source/constants';
 import { mockListAvailableLogTypes } from 'Source/graphql/queries';
 import { mockAddS3LogSource } from './graphql/addS3LogSource.generated';
 import CreateS3LogSource from './CreateS3LogSource';
@@ -91,9 +92,13 @@ describe('CreateS3LogSource', () => {
 
     // Expect to see a loading animation while the resource is being validated ...
     expect(getByAltText('Validating source health...')).toBeInTheDocument();
-    expect(getByText('Cancel')).toBeInTheDocument();
+
+    // ... followed by a "setup notifications" screen
+    expect(await findByText('Adding Notifications for New Data')).toBeInTheDocument();
+    expect(getByText('steps found here')).toHaveAttribute('href', LOG_ONBOARDING_SNS_DOC_URL);
 
     // ... replaced by a success screen
+    fireEvent.click(getByText('I Have Setup Notifications'));
     expect(await findByText('Everything looks good!')).toBeInTheDocument();
     expect(getByText('Finish Setup')).toBeInTheDocument();
     expect(getByText('Add Another')).toBeInTheDocument();
@@ -154,7 +159,6 @@ describe('CreateS3LogSource', () => {
 
     // Expect to see a loading animation while the resource is being validated ...
     expect(getByAltText('Validating source health...')).toBeInTheDocument();
-    expect(getByText('Cancel')).toBeInTheDocument();
 
     // ... replaced by a failure screen
     expect(await findByText("Something didn't go as planned")).toBeInTheDocument();
