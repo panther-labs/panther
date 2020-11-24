@@ -211,7 +211,7 @@ func inferColumn(field *reflect.StructField, path []string, names collisions) (*
 func fieldComment(field *reflect.StructField) string {
 	comment := field.Tag.Get("description")
 	comment = strings.TrimSpace(comment)
-	if TruncateComments {
+	if !TruncateComments {
 		return comment
 	}
 	if len(comment) < MaxCommentLength {
