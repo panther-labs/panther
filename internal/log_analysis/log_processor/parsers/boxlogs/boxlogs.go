@@ -1,3 +1,5 @@
+package boxlogs
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,5 +18,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './TimeSeriesChart';
-export type { TimeSeries, TimeSeriesData } from './TimeSeriesChart';
+import (
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+)
+
+func LogTypes() logtypes.Group {
+	return logTypes
+}
+
+var logTypes = logtypes.Must("Box", logtypes.Config{
+	Name:         TypeEvent,
+	Description:  `Contains events for the entire enterprise`,
+	ReferenceURL: `https://developer.box.com/reference/get-events`,
+	NewParser:    parsers.AdapterFactory(NewEventParser()),
+	Schema:       Event{},
+})
