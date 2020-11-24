@@ -21,7 +21,6 @@ package resources
 import (
 	"context"
 	"fmt"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
 
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/service/glue"
@@ -32,6 +31,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 	"github.com/panther-labs/panther/pkg/awsutils"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
 type UpdateLogProcessorTablesProperties struct {
