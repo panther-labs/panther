@@ -102,6 +102,8 @@ func InferColumnsWithMappings(schema interface{}) ([]Column, map[string]string, 
 	return columns, mappings, nil
 }
 
+// entrypoint for schema recursion.
+// names is optional and will not collect mappings if nil.
 func inferTypeColumns(typ reflect.Type, names map[string][]string) ([]Column, error) {
 	cols, err := inferStructColumns(typ, nil, names)
 	if err != nil {
@@ -110,6 +112,9 @@ func inferTypeColumns(typ reflect.Type, names map[string][]string) ([]Column, er
 	return cols, nil
 }
 
+// gets the columns for a sturct
+// path is used to help with recursive error messages (see newSchemaError)
+// names is optional and will not collect mappings if nil.
 func inferStructColumns(typ reflect.Type, path []string, names collisions) ([]Column, error) {
 	for typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
@@ -173,6 +178,10 @@ func appendStructFieldsJSON(fields []reflect.StructField, typ reflect.Type) []re
 	return fields
 }
 
+// maps a struct field to a column.
+// can return nil, nil if the field is not visible in JSON
+// path is used to help with recursive error messages (see newSchemaError)
+// names is optional and will not collect mappings if nil.
 func inferColumn(field *reflect.StructField, path []string, names collisions) (*Column, error) {
 	colName, err := fieldColumnName(field)
 	if err != nil {
@@ -240,6 +249,9 @@ func isFieldRequired(field *reflect.StructField) bool {
 	return !strings.Contains(tag, "omitempty")
 }
 
+// main typeswitch for mapping reflect.Type to glueschema.Type
+// path is used to help with recursive error messages (see newSchemaError)
+// names is optional and will not collect mappings if nil.
 func inferColumnType(typ reflect.Type, path []string, names collisions) (Type, error) {
 	for typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
@@ -287,6 +299,7 @@ func inferColumnType(typ reflect.Type, path []string, names collisions) (Type, e
 	}
 }
 
+// typeswitch for non-composite types
 func inferScalarType(typ reflect.Type) Type {
 	switch kind := typ.Kind(); kind {
 	case reflect.String:
@@ -346,6 +359,7 @@ func (c collisions) observeColumnName(name string) {
 	c[key] = stringset.Append(c[key], name)
 }
 
+// check checks for collitions and if it finds one, it returns a schema error at this path.
 func (c collisions) check(path []string) error {
 	for col, names := range c {
 		if len(names) <= 1 {
