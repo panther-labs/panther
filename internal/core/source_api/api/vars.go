@@ -54,15 +54,16 @@ var (
 )
 
 type envConfig struct {
+	AccountID                  string `required:"true" split_words:"true"`
 	DataCatalogUpdaterQueueURL string `required:"true" split_words:"true"`
-	SnapshotPollersQueueURL    string `required:"true" split_words:"true"`
 	LogProcessorQueueURL       string `required:"true" split_words:"true"`
 	LogProcessorQueueArn       string `required:"true" split_words:"true"`
-	TableName                  string `required:"true" split_words:"true"`
-	AccountID                  string `required:"true" split_words:"true"`
 	InputDataRoleArn           string `required:"true" split_words:"true"`
 	InputDataBucketName        string `required:"true" split_words:"true"`
 	InputDataTopicArn          string `required:"true" split_words:"true"`
+	SnapshotPollersQueueURL    string `required:"true" split_words:"true"`
+	TableName                  string `required:"true" split_words:"true"`
+	Version                    string `required:"true" split_words:"true"`
 }
 
 // Setup parses the environment and constructs AWS and http clients on a cold Lambda start.
