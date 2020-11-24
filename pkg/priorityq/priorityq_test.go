@@ -56,7 +56,6 @@ func TestPriorityQueueUpdate(t *testing.T) {
 	pq.UpdatePriority("bar", 2)
 
 	item := pq.Pop()
-
 	if item.(string) != "bar" {
 		t.Fatal("priority update failed")
 	}
@@ -69,7 +68,6 @@ func TestPriorityQueueRemove(t *testing.T) {
 	pq.Remove("foo") // next highest one is bar
 
 	item := pq.Pop()
-
 	if item.(string) != "bar" {
 		t.Fatal("priority remove failed")
 	}
@@ -126,7 +124,6 @@ func TestPopEmptyQueue(t *testing.T) {
 
 func TestUpdateNonExistingItem(t *testing.T) {
 	pq := PriorityQueue{}
-
 	pq.Insert("foo", 4)
 	pq.UpdatePriority("bar", 5)
 

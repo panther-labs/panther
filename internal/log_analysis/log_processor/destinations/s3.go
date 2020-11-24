@@ -413,6 +413,7 @@ func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 		buffer = newS3EventBuffer(logType, hour)
 		logTypeToBuffer[logType] = buffer
 		bs.sizePriorityQueue.Insert(buffer, 0.0)
+
 		// Use nanoseconds so we have a better ordering
 		since := time.Duration(buffer.createTime.UnixNano()).Seconds()
 		bs.createTimePriorityQueue.Insert(buffer, -since) // negative so oldest is on top!
