@@ -147,7 +147,7 @@ func (m *mockSns) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
 
 func initTest() {
 	common.Config.AwsLambdaFunctionMemorySize = 1024
-	maxS3BufferSizeBytes = defaultMaxS3BufferSizeBytes
+	maxS3BufferSizeBytes = uploaderBufferMaxSizeBytes
 }
 
 type testS3Destination struct {
@@ -509,7 +509,7 @@ func TestBufferSetLargest(t *testing.T) {
 		buffer.bytes = i
 	}
 	assert.Equal(t, size, len(bs.set))
-	require.Same(t, bs.largestBuffer(), expectedLargest)
+	require.Same(t, bs.removeLargestBuffer(), expectedLargest)
 }
 
 func runSendEvents(t *testing.T, destination Destination, eventChannel chan *parsers.Result, expectErr bool) {
