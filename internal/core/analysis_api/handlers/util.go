@@ -20,19 +20,15 @@ package handlers
 
 import (
 	"errors"
-	"net/http"
 	"reflect"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 )
 
 const (
@@ -48,16 +44,6 @@ var (
 	errExists    = errors.New("analysis type instance already exists")
 	errWrongType = errors.New("trying to replace a rule with a policy (or vice versa)")
 )
-
-// Convert a validation error into a 400 proxy response.
-func badRequest(err error) *events.APIGatewayProxyResponse {
-	return failedRequest(err.Error(), http.StatusBadRequest)
-}
-
-func failedRequest(message string, status int) *events.APIGatewayProxyResponse {
-	errModel := &models.Error{Message: aws.String(message)}
-	return gatewayapi.MarshalResponse(errModel, status)
-}
 
 // Convert a set of strings to a set of unique lowercased strings
 func lowerSet(set []string) []string {
@@ -128,16 +114,16 @@ func setEquality(first, second []string) bool {
 func standardizeTests(p *models.Policy) error {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 
-	for _, test := range p.Tests {
+	for i, test := range p.Tests {
 		var data map[string]interface{}
-		if err := json.UnmarshalFromString(string(test.Resource), &data); err != nil {
+		if err := json.UnmarshalFromString(test.Resource, &data); err != nil {
 			return err
 		}
 		normalized, err := json.MarshalToString(&data)
 		if err != nil {
 			return err
 		}
-		test.Resource = models.TestResource(normalized)
+		p.Tests[i].Resource = normalized
 	}
 
 	return nil
@@ -179,7 +165,7 @@ func policiesEqual(first, second *tableItem) (bool, error) {
 // Note: BulkUpload doesn't have this check and always overwrites the existing policies.
 //
 // The first return value indicates what kind of change took place (none, new item, updated item).
-func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, error) {
+func writeItem(item *tableItem, userID string, mustExist *bool) (int, error) {
 	oldItem, err := dynamoGet(item.ID, true)
 	changeType := noChange
 	if err != nil {
@@ -196,7 +182,7 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 	}
 
 	if oldItem == nil {
-		item.CreatedAt = models.ModifyTime(time.Now())
+		item.CreatedAt = time.Now()
 		item.CreatedBy = userID
 		changeType = newItem
 	} else {
@@ -205,8 +191,7 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 		}
 
 		if equal, err := policiesEqual(oldItem, item); equal && err != nil {
-			zap.L().Info("no changes necessary",
-				zap.String("policyId", string(item.ID)))
+			zap.L().Info("no changes necessary", zap.String("policyId", item.ID))
 			return changeType, nil
 		}
 		// If there was an error evaluating equality, just assume they are not equal and continue
@@ -219,7 +204,7 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 		}
 	}
 
-	item.LastModified = models.ModifyTime(time.Now())
+	item.LastModified = time.Now()
 	item.LastModifiedBy = userID
 
 	// Write to S3 first so we can get the versionID
@@ -232,11 +217,11 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 		return changeType, err
 	}
 
-	if item.Type == typeRule || item.Type == typeDataModel {
+	if item.Type == models.TypeRule || item.Type == models.TypeDataModel {
 		return changeType, nil
 	}
 
-	if item.Type == typeGlobal {
+	if item.Type == models.TypeGlobal {
 		// When policies and rules are also managed by globals, this can be moved out of the if statement,
 		// although at that point it may be desirable to move this to the caller function so as to only make the call
 		// once for BulkUpload.
@@ -261,7 +246,7 @@ func writeItem(item *tableItem, userID models.UserID, mustExist *bool) (int, err
 func itemUpdated(oldItem, newItem *tableItem) bool {
 	itemsEqual := oldItem.AutoRemediationID == newItem.AutoRemediationID && oldItem.Body == newItem.Body &&
 		oldItem.Description == newItem.Description &&
-		setEquality(oldItem.OutputIds, newItem.OutputIds) &&
+		setEquality(oldItem.OutputIDs, newItem.OutputIDs) &&
 		oldItem.DisplayName == newItem.DisplayName &&
 		oldItem.Enabled == newItem.Enabled && oldItem.Reference == newItem.Reference &&
 		oldItem.Runbook == newItem.Runbook && oldItem.Severity == newItem.Severity &&
@@ -285,7 +270,7 @@ func itemUpdated(oldItem, newItem *tableItem) bool {
 		}
 	}
 	// Check Tests for equality
-	oldTests := make(map[models.TestName]*models.UnitTest)
+	oldTests := make(map[string]models.UnitTest)
 	for _, test := range oldItem.Tests {
 		oldTests[test.Name] = test
 	}
@@ -303,7 +288,7 @@ func itemUpdated(oldItem, newItem *tableItem) bool {
 		// representations of the same JSON object. In order to compare them then, we have to unmarshal them into a
 		// consistent format.
 		var oldResource, newResource map[string]interface{}
-		if err := jsoniter.UnmarshalFromString(string(oldTest.Resource), &oldResource); err != nil {
+		if err := jsoniter.UnmarshalFromString(oldTest.Resource, &oldResource); err != nil {
 			// It is possible someone uploaded bad JSON in this test, it is not the responsibility of this test to
 			// report that. Just do a raw string comparison.
 			if oldTest.Resource != newTest.Resource {
@@ -311,7 +296,7 @@ func itemUpdated(oldItem, newItem *tableItem) bool {
 			}
 			continue
 		}
-		if err := jsoniter.UnmarshalFromString(string(newTest.Resource), &newResource); err != nil {
+		if err := jsoniter.UnmarshalFromString(newTest.Resource, &newResource); err != nil {
 			if oldTest.Resource != newTest.Resource {
 				return true
 			}
@@ -331,7 +316,7 @@ func itemUpdated(oldItem, newItem *tableItem) bool {
 }
 
 func mappingEquality(oldItem, newItem *tableItem) bool {
-	oldMappings := make(map[models.DataModelName]*models.DataModelMapping)
+	oldMappings := make(map[string]models.DataModelMapping)
 	for _, mapping := range oldItem.Mappings {
 		oldMappings[mapping.Name] = mapping
 	}

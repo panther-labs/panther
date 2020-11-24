@@ -36,7 +36,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
@@ -101,7 +101,7 @@ func (api *API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOu
 		EventsLastEvaluatedKey: &encodedToken,
 	}
 
-	gatewayapi.ReplaceMapSliceNils(result)
+	genericapi.ReplaceMapSliceNils(result)
 	return result, nil
 }
 

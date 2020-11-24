@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Alert, Box, Card, Flex } from 'pouncejs';
-import { extractErrorMessage, encodeParams } from 'Helpers/utils';
+import { extractErrorMessage } from 'Helpers/utils';
 import { ListRulesInput } from 'Generated/schema';
 import { TableControlsPagination } from 'Components/utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
@@ -43,7 +43,7 @@ const ListRules = () => {
   const { loading, error, data } = useListRules({
     fetchPolicy: 'cache-and-network',
     variables: {
-      input: encodeParams(requestParams, ['nameContains']),
+      input: requestParams,
     },
   });
 

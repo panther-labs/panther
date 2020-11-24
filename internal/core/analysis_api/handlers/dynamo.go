@@ -29,16 +29,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
+	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/dynamodbbatch"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
-	typePolicy       = string(models.AnalysisTypePOLICY)
-	typeGlobal       = string(models.AnalysisTypeGLOBAL)
-	typeRule         = string(models.AnalysisTypeRULE)
-	typeDataModel    = string(models.AnalysisTypeDATAMODEL)
 	maxDynamoBackoff = 30 * time.Second
 )
 
@@ -48,65 +45,65 @@ const (
 // optional values can be omitted from the table if they are empty,
 // and extra fields are added for more efficient filtering.
 type tableItem struct {
-	AutoRemediationID         models.AutoRemediationID         `json:"autoRemediationId,omitempty"`
-	AutoRemediationParameters models.AutoRemediationParameters `json:"autoRemediationParameters,omitempty"`
-	Body                      models.Body                      `json:"body"`
-	CreatedAt                 models.ModifyTime                `json:"createdAt"`
-	CreatedBy                 models.UserID                    `json:"createdBy"`
-	DedupPeriodMinutes        models.DedupPeriodMinutes        `json:"dedupPeriodMinutes,omitempty"`
-	Threshold                 models.Threshold                 `json:"threshold,omitempty"`
-	Description               models.Description               `json:"description,omitempty"`
-	DisplayName               models.DisplayName               `json:"displayName,omitempty"`
-	Enabled                   models.Enabled                   `json:"enabled"`
-	ID                        models.ID                        `json:"id"`
-	LastModified              models.ModifyTime                `json:"lastModified"`
-	LastModifiedBy            models.UserID                    `json:"lastModifiedBy"`
+	AutoRemediationID         string            `json:"autoRemediationId,omitempty"`
+	AutoRemediationParameters map[string]string `json:"autoRemediationParameters,omitempty"`
+	Body                      string            `json:"body"`
+	CreatedAt                 time.Time         `json:"createdAt"`
+	CreatedBy                 string            `json:"createdBy"`
+	DedupPeriodMinutes        int               `json:"dedupPeriodMinutes,omitempty"`
+	Threshold                 int               `json:"threshold,omitempty"`
+	Description               string            `json:"description,omitempty"`
+	DisplayName               string            `json:"displayName,omitempty"`
+	Enabled                   bool              `json:"enabled"`
+	ID                        string            `json:"id"`
+	LastModified              time.Time         `json:"lastModified"`
+	LastModifiedBy            string            `json:"lastModifiedBy"`
 
 	// Lowercase versions of string fields for easy filtering
 	LowerDisplayName string   `json:"lowerDisplayName,omitempty"`
 	LowerID          string   `json:"lowerId,omitempty"`
 	LowerTags        []string `json:"lowerTags,omitempty" dynamodbav:"lowerTags,stringset,omitempty"`
 
-	Mappings      []*models.DataModelMapping `json:"mappings,omitempty"`
-	OutputIds     models.OutputIds           `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
-	Reference     models.Reference           `json:"reference,omitempty"`
-	Reports       models.Reports             `json:"reports,omitempty"`
-	ResourceTypes models.TypeSet             `json:"resourceTypes,omitempty" dynamodbav:"resourceTypes,stringset,omitempty"`
-	Runbook       models.Runbook             `json:"runbook,omitempty"`
-	Severity      models.Severity            `json:"severity"`
-	Suppressions  models.Suppressions        `json:"suppressions,omitempty" dynamodbav:"suppressions,stringset,omitempty"`
-	Tags          models.Tags                `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
-	Tests         []*models.UnitTest         `json:"tests,omitempty"`
+	// For log analysis rules, these are actually log types
+	ResourceTypes []string `json:"resourceTypes,omitempty" dynamodbav:"resourceTypes,stringset,omitempty"`
 
-	// Logic type (policy or rule)
-	Type string `json:"type"`
+	Mappings     []models.DataModelMapping `json:"mappings,omitempty"`
+	OutputIDs    []string                  `json:"outputIds,omitempty" dynamodbav:"outputIds,stringset,omitempty"`
+	Reference    string                    `json:"reference,omitempty"`
+	Reports      map[string][]string       `json:"reports,omitempty"`
+	Runbook      string                    `json:"runbook,omitempty"`
+	Severity     compliancemodels.Severity `json:"severity"`
+	Suppressions []string                  `json:"suppressions,omitempty" dynamodbav:"suppressions,stringset,omitempty"`
+	Tags         []string                  `json:"tags,omitempty" dynamodbav:"tags,stringset,omitempty"`
+	Tests        []models.UnitTest         `json:"tests,omitempty"`
 
-	VersionID models.VersionID `json:"versionId,omitempty"`
+	Type      models.DetectionType `json:"type"`
+	VersionID string               `json:"versionId,omitempty"`
 }
 
 // Add extra internal filtering fields before serializing to Dynamo
 func (r *tableItem) addExtraFields() {
-	r.LowerDisplayName = strings.ToLower(string(r.DisplayName))
-	r.LowerID = strings.ToLower(string(r.ID))
+	r.LowerDisplayName = strings.ToLower(r.DisplayName)
+	r.LowerID = strings.ToLower(r.ID)
 	r.LowerTags = lowerSet(r.Tags)
 }
 
 // Sort string sets before converting to an external Rule/Policy model.
 func (r *tableItem) normalize() {
-	sortCaseInsensitive(r.OutputIds)
+	sortCaseInsensitive(r.OutputIDs)
 	sortCaseInsensitive(r.ResourceTypes)
 	sortCaseInsensitive(r.Suppressions)
 	sortCaseInsensitive(r.Tags)
 }
 
 // Policy converts a Dynamo row into a Policy external model.
-func (r *tableItem) Policy(status models.ComplianceStatus) *models.Policy {
+func (r *tableItem) Policy(status compliancemodels.ComplianceStatus) *models.Policy {
 	r.normalize()
 	result := &models.Policy{
 		AutoRemediationID:         r.AutoRemediationID,
 		AutoRemediationParameters: r.AutoRemediationParameters,
-		Body:                      r.Body,
 		ComplianceStatus:          status,
+		Body:                      r.Body,
 		CreatedAt:                 r.CreatedAt,
 		CreatedBy:                 r.CreatedBy,
 		Description:               r.Description,
@@ -115,8 +112,9 @@ func (r *tableItem) Policy(status models.ComplianceStatus) *models.Policy {
 		ID:                        r.ID,
 		LastModified:              r.LastModified,
 		LastModifiedBy:            r.LastModifiedBy,
-		OutputIds:                 r.OutputIds,
+		OutputIDs:                 r.OutputIDs,
 		Reference:                 r.Reference,
+		Reports:                   r.Reports,
 		ResourceTypes:             r.ResourceTypes,
 		Runbook:                   r.Runbook,
 		Severity:                  r.Severity,
@@ -125,29 +123,7 @@ func (r *tableItem) Policy(status models.ComplianceStatus) *models.Policy {
 		Tests:                     r.Tests,
 		VersionID:                 r.VersionID,
 	}
-	gatewayapi.ReplaceMapSliceNils(result)
-	return result
-}
-
-// PolicySummary converts a Dynamo row into a PolicySummary external model.
-func (r *tableItem) PolicySummary(status models.ComplianceStatus) *models.PolicySummary {
-	r.normalize()
-	result := &models.PolicySummary{
-		AutoRemediationID:         r.AutoRemediationID,
-		AutoRemediationParameters: r.AutoRemediationParameters,
-		ComplianceStatus:          status,
-		DisplayName:               r.DisplayName,
-		Enabled:                   r.Enabled,
-		ID:                        r.ID,
-		LastModified:              r.LastModified,
-		OutputIds:                 r.OutputIds,
-		ResourceTypes:             r.ResourceTypes,
-		Severity:                  r.Severity,
-		Suppressions:              r.Suppressions,
-		Tags:                      r.Tags,
-		Threshold:                 r.Threshold,
-	}
-	gatewayapi.ReplaceMapSliceNils(result)
+	genericapi.ReplaceMapSliceNils(result)
 	return result
 }
 
@@ -158,6 +134,7 @@ func (r *tableItem) Rule() *models.Rule {
 		Body:               r.Body,
 		CreatedAt:          r.CreatedAt,
 		CreatedBy:          r.CreatedBy,
+		DedupPeriodMinutes: r.DedupPeriodMinutes,
 		Description:        r.Description,
 		DisplayName:        r.DisplayName,
 		Enabled:            r.Enabled,
@@ -165,17 +142,17 @@ func (r *tableItem) Rule() *models.Rule {
 		LastModified:       r.LastModified,
 		LastModifiedBy:     r.LastModifiedBy,
 		LogTypes:           r.ResourceTypes,
-		OutputIds:          r.OutputIds,
+		OutputIDs:          r.OutputIDs,
 		Reference:          r.Reference,
+		Reports:            r.Reports,
 		Runbook:            r.Runbook,
 		Severity:           r.Severity,
 		Tags:               r.Tags,
 		Tests:              r.Tests,
-		VersionID:          r.VersionID,
-		DedupPeriodMinutes: r.DedupPeriodMinutes,
 		Threshold:          r.Threshold,
+		VersionID:          r.VersionID,
 	}
-	gatewayapi.ReplaceMapSliceNils(result)
+	genericapi.ReplaceMapSliceNils(result)
 	return result
 }
 
@@ -193,7 +170,7 @@ func (r *tableItem) Global() *models.Global {
 		Tags:           r.Tags,
 		VersionID:      r.VersionID,
 	}
-	gatewayapi.ReplaceMapSliceNils(result)
+	genericapi.ReplaceMapSliceNils(result)
 	return result
 }
 
@@ -204,8 +181,8 @@ func (r *tableItem) DataModel() *models.DataModel {
 		Body:           r.Body,
 		CreatedAt:      r.CreatedAt,
 		CreatedBy:      r.CreatedBy,
-		DisplayName:    r.DisplayName,
 		Description:    r.Description,
+		DisplayName:    r.DisplayName,
 		Enabled:        r.Enabled,
 		ID:             r.ID,
 		LastModified:   r.LastModified,
@@ -214,20 +191,20 @@ func (r *tableItem) DataModel() *models.DataModel {
 		Mappings:       r.Mappings,
 		VersionID:      r.VersionID,
 	}
-	gatewayapi.ReplaceMapSliceNils(result)
+	genericapi.ReplaceMapSliceNils(result)
 	return result
 }
 
-func tableKey(policyID models.ID) map[string]*dynamodb.AttributeValue {
+func tableKey(policyID string) map[string]*dynamodb.AttributeValue {
 	return map[string]*dynamodb.AttributeValue{
-		"id": {S: aws.String(string(policyID))},
+		"id": {S: &policyID},
 	}
 }
 
-// Batch delete multiple policies from the Dynamo table.
-func dynamoBatchDelete(input *models.DeletePolicies) error {
-	deleteRequests := make([]*dynamodb.WriteRequest, len(input.Policies))
-	for i, entry := range input.Policies {
+// Batch delete multiple entries from the Dynamo table.
+func dynamoBatchDelete(input *models.DeletePoliciesInput) error {
+	deleteRequests := make([]*dynamodb.WriteRequest, len(input.Entries))
+	for i, entry := range input.Entries {
 		deleteRequests[i] = &dynamodb.WriteRequest{
 			DeleteRequest: &dynamodb.DeleteRequest{Key: tableKey(entry.ID)},
 		}
@@ -247,7 +224,7 @@ func dynamoBatchDelete(input *models.DeletePolicies) error {
 // Load a policy/rule from the Dynamo table.
 //
 // Returns (nil, nil) if the item doesn't exist.
-func dynamoGet(policyID models.ID, consistentRead bool) (*tableItem, error) {
+func dynamoGet(policyID string, consistentRead bool) (*tableItem, error) {
 	response, err := dynamoClient.GetItem(&dynamodb.GetItemInput{
 		ConsistentRead: &consistentRead,
 		Key:            tableKey(policyID),
@@ -271,10 +248,10 @@ func dynamoGet(policyID models.ID, consistentRead bool) (*tableItem, error) {
 	return &policy, nil
 }
 
-type suppressSet models.Suppressions
+type stringSet []string
 
 // Marshal string slice as a Dynamo StringSet instead of a List
-func (s suppressSet) MarshalDynamoDBAttributeValue(av *dynamodb.AttributeValue) error {
+func (s stringSet) MarshalDynamoDBAttributeValue(av *dynamodb.AttributeValue) error {
 	av.SS = make([]*string, 0, len(s))
 	for _, pattern := range s {
 		av.SS = append(av.SS, aws.String(pattern))
@@ -283,8 +260,8 @@ func (s suppressSet) MarshalDynamoDBAttributeValue(av *dynamodb.AttributeValue) 
 }
 
 // Add suppressions to an existing policy, returning the updated list of policies.
-func addSuppressions(policyIDs []models.ID, patterns models.Suppressions) ([]*tableItem, error) {
-	update := expression.Add(expression.Name("suppressions"), expression.Value(suppressSet(patterns)))
+func addSuppressions(policyIDs []string, patterns []string) ([]*tableItem, error) {
+	update := expression.Add(expression.Name("suppressions"), expression.Value(stringSet(patterns)))
 	condition := expression.AttributeExists(expression.Name("id"))
 	expr, err := expression.NewBuilder().WithUpdate(update).WithCondition(condition).Build()
 	if err != nil {
@@ -295,8 +272,7 @@ func addSuppressions(policyIDs []models.ID, patterns models.Suppressions) ([]*ta
 
 	// Dynamo does not support batch update - proceed sequentially
 	for _, policyID := range policyIDs {
-		zap.L().Info("updating policy suppressions",
-			zap.String("policyId", string(policyID)))
+		zap.L().Info("updating policy suppressions", zap.String("policyId", policyID))
 		response, err := dynamoClient.UpdateItem(&dynamodb.UpdateItemInput{
 			ConditionExpression:       expr.Condition(),
 			ExpressionAttributeNames:  expr.Names(),
@@ -310,20 +286,19 @@ func addSuppressions(policyIDs []models.ID, patterns models.Suppressions) ([]*ta
 		if err != nil {
 			aerr, ok := err.(awserr.Error)
 			if ok && aerr.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
-				zap.L().Warn("policy not found",
-					zap.String("policyId", string(policyID)))
+				zap.L().Warn("policy not found", zap.String("policyId", policyID))
 				continue
 			}
 			zap.L().Error("dynamoClient.UpdateItem failed", zap.Error(err))
 			return nil, err
 		}
 
-		item := new(tableItem)
-		if err := dynamodbattribute.UnmarshalMap(response.Attributes, item); err != nil {
+		var item tableItem
+		if err := dynamodbattribute.UnmarshalMap(response.Attributes, &item); err != nil {
 			zap.L().Error("failed to unmarshal updated policy", zap.Error(err))
 			return nil, err
 		}
-		result = append(result, item)
+		result = append(result, &item)
 	}
 
 	return result, nil
@@ -347,11 +322,11 @@ func dynamoPut(policy *tableItem) error {
 }
 
 // Wrapper around dynamoClient.ScanPages that accepts a handler function to process each item.
-func scanPages(input *dynamodb.ScanInput, handler func(*tableItem) error) error {
+func scanPages(input *dynamodb.ScanInput, handler func(tableItem) error) error {
 	var handlerErr, unmarshalErr error
 
 	err := dynamoClient.ScanPages(input, func(page *dynamodb.ScanOutput, lastPage bool) bool {
-		var items []*tableItem
+		var items []tableItem
 		if unmarshalErr = dynamodbattribute.UnmarshalListOfMaps(page.Items, &items); unmarshalErr != nil {
 			return false // stop paginating
 		}
@@ -381,4 +356,46 @@ func scanPages(input *dynamodb.ScanInput, handler func(*tableItem) error) error 
 	}
 
 	return nil
+}
+
+// Build dynamo scan input for list operations
+func buildScanInput(itemType models.DetectionType, fields []string, filters ...expression.ConditionBuilder) (*dynamodb.ScanInput, error) {
+	masterFilter := expression.Equal(expression.Name("type"), expression.Value(itemType))
+	for _, filter := range filters {
+		masterFilter = masterFilter.And(filter)
+	}
+	builder := expression.NewBuilder().WithFilter(masterFilter)
+
+	if len(fields) > 0 {
+		projection := expression.NamesList(expression.Name(dynamoColumn(fields[0])))
+		for _, field := range fields[1:] {
+			projection = projection.AddNames(expression.Name(dynamoColumn(field)))
+		}
+		builder = builder.WithProjection(projection)
+	}
+
+	expr, err := builder.Build()
+	if err != nil {
+		zap.L().Error("unable to build dynamodb scan expression", zap.Error(err))
+		return nil, err
+	}
+
+	result := dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		ProjectionExpression:      expr.Projection(),
+		TableName:                 &env.Table,
+	}
+	zap.L().Debug("built dynamo scan input", zap.Any("scanInput", result))
+	return &result, nil
+}
+
+// When the caller selects a list of fields to return in the response,
+// they may not exactly match the Dynamo column name.
+func dynamoColumn(field string) string {
+	if field == "logTypes" {
+		return "resourceTypes"
+	}
+	return field
 }

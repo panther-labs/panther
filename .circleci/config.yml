@@ -51,7 +51,6 @@ commands:
           key: *bin_cache_key
           paths:
             - .setup/golangci-lint
-            - .setup/swagger
             - .setup/terraform
       - save_cache:
           name: 'Save cache: go modules'

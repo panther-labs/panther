@@ -44,7 +44,7 @@ const EditGlobalPythonModulePage: React.FC = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        globalId: match.params.id,
+        id: match.params.id,
       },
     },
   });

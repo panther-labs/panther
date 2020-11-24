@@ -19,25 +19,21 @@ package forwarder
  */
 
 import (
-	"net/http"
-
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	policiesclient "github.com/panther-labs/panther/api/gateway/analysis/client"
-	policiesoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // s3ClientCacheKey -> S3 client
 type RuleCache struct {
 	cache        *lru.ARCCache
-	httpClient   *http.Client
-	policyClient *policiesclient.PantherAnalysisAPI
+	policyClient gatewayapi.API
 }
 
-func NewCache(httpClient *http.Client, policyClient *policiesclient.PantherAnalysisAPI) *RuleCache {
+func NewCache(policyClient gatewayapi.API) *RuleCache {
 	cache, err := lru.NewARC(1000)
 	if err != nil {
 		panic("failed to create cache")
@@ -45,7 +41,6 @@ func NewCache(httpClient *http.Client, policyClient *policiesclient.PantherAnaly
 	return &RuleCache{
 		cache:        cache,
 		policyClient: policyClient,
-		httpClient:   httpClient,
 	}
 }
 
@@ -68,14 +63,13 @@ func cacheKey(id, version string) string {
 
 func (c *RuleCache) getRule(id, version string) (*models.Rule, error) {
 	zap.L().Debug("calling analysis API to retrieve information for rule", zap.String("ruleId", id), zap.String("ruleVersion", version))
-	rule, err := c.policyClient.Operations.GetRule(&policiesoperations.GetRuleParams{
-		RuleID:     id,
-		VersionID:  &version,
-		HTTPClient: c.httpClient,
-	})
+	input := models.LambdaInput{
+		GetRule: &models.GetRuleInput{ID: id, VersionID: version},
+	}
+	var rule models.Rule
 
-	if err != nil {
+	if _, err := c.policyClient.Invoke(&input, &rule); err != nil {
 		return nil, errors.Wrapf(err, "failed to fetch information for ruleID [%s], version [%s]", id, version)
 	}
-	return rule.Payload, nil
+	return &rule, nil
 }

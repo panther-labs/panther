@@ -39,6 +39,8 @@ const (
 
 	suricataTimestampLayout = `"2006-01-02T15:04:05.999999999Z0700"`
 
+	oneLoginTimestampLayout = `"2006-01-02 15:04:05 MST"`
+
 	//08 Jul 2020 09:00 GMT
 	laceworkTimestampLayout = `"02 Jan 2006 15:04 MST"`
 )
@@ -51,6 +53,7 @@ func init() {
 	typSuricata := reflect.TypeOf(SuricataTimestamp{})
 	typUnixFloat := reflect.TypeOf(UnixFloat{})
 	typUnixMillis := reflect.TypeOf(UnixMillisecond{})
+	typOneLogin := reflect.TypeOf(OneLoginTimestamp{})
 	typLacework := reflect.TypeOf(LaceworkTimestamp{})
 	// Add glue table mappings
 	awsglue.MustRegisterMapping(typANSICwithTZ, awsglue.GlueTimestampType)
@@ -60,6 +63,7 @@ func init() {
 	awsglue.MustRegisterMapping(typUnixFloat, awsglue.GlueTimestampType)
 	awsglue.MustRegisterMapping(typUnixMillis, awsglue.GlueTimestampType)
 	awsglue.MustRegisterMapping(typLacework, awsglue.GlueTimestampType)
+	awsglue.MustRegisterMapping(typOneLogin, awsglue.GlueTimestampType)
 }
 
 // use these functions to parse all incoming dates to ensure UTC consistency
@@ -187,6 +191,25 @@ func (ts *UnixFloat) UnmarshalJSON(jsonBytes []byte) (err error) {
 	t := time.Unix(int64(intPart), int64(fracPart*1e9))
 	*ts = (UnixFloat)(t.UTC())
 	return nil
+}
+
+type OneLoginTimestamp time.Time
+
+func (ts *OneLoginTimestamp) String() string {
+	return (*time.Time)(ts).UTC().String() // ensure UTC
+}
+
+func (ts *OneLoginTimestamp) MarshalJSON() ([]byte, error) {
+	return []byte((*time.Time)(ts).UTC().Format(awsglue.TimestampLayoutJSON)), nil // ensure UTC
+}
+
+func (ts *OneLoginTimestamp) UnmarshalJSON(jsonBytes []byte) (err error) {
+	t, err := time.Parse(oneLoginTimestampLayout, string(jsonBytes))
+	if err != nil {
+		return
+	}
+	*ts = (OneLoginTimestamp)(t.UTC())
+	return
 }
 
 type LaceworkTimestamp time.Time

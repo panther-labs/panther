@@ -633,7 +633,7 @@ export const buildGetGlobalPythonModuleInput = (
   overrides: Partial<GetGlobalPythonModuleInput> = {}
 ): GetGlobalPythonModuleInput => {
   return {
-    globalId: 'globalId' in overrides ? overrides.globalId : '0f341f61-9f20-4e1f-b8e0-5854a50dc594',
+    id: 'id' in overrides ? overrides.id : 'e675af0e-1ceb-4036-bd7a-00301fac3e48',
     versionId:
       'versionId' in overrides ? overrides.versionId : '9fe39f4b-d18f-4a21-99a0-eeef9b77cb11',
   };
@@ -641,7 +641,7 @@ export const buildGetGlobalPythonModuleInput = (
 
 export const buildGetPolicyInput = (overrides: Partial<GetPolicyInput> = {}): GetPolicyInput => {
   return {
-    policyId: 'policyId' in overrides ? overrides.policyId : 'f6a78c98-6d80-46bf-89e7-3df8975184a0',
+    id: 'id' in overrides ? overrides.id : '4abd6317-f970-4f92-a670-e7d0b9e3ec8d',
     versionId:
       'versionId' in overrides ? overrides.versionId : 'd394a64d-9476-44de-a8ab-7f8666cd4c8c',
   };
@@ -658,7 +658,7 @@ export const buildGetResourceInput = (
 
 export const buildGetRuleInput = (overrides: Partial<GetRuleInput> = {}): GetRuleInput => {
   return {
-    ruleId: 'ruleId' in overrides ? overrides.ruleId : '3b255df9-8276-4060-8f0c-cca418b158d6',
+    id: 'id' in overrides ? overrides.id : 'c191c85f-bb80-4a6a-baf2-1c466abe0031',
     versionId:
       'versionId' in overrides ? overrides.versionId : '1b6ea7a4-7775-4b65-8315-89b764428571',
   };
@@ -846,9 +846,9 @@ export const buildListPoliciesInput = (
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'parse',
     enabled: 'enabled' in overrides ? overrides.enabled : false,
     hasRemediation: 'hasRemediation' in overrides ? overrides.hasRemediation : false,
-    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : 'software',
+    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['software'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.High,
-    tags: 'tags' in overrides ? overrides.tags : 'Fish',
+    tags: 'tags' in overrides ? overrides.tags : ['Fish'],
     sortBy: 'sortBy' in overrides ? overrides.sortBy : ListPoliciesSortFieldsEnum.ResourceTypes,
     sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
     pageSize: 'pageSize' in overrides ? overrides.pageSize : 50,
@@ -903,7 +903,7 @@ export const buildListRulesInput = (overrides: Partial<ListRulesInput> = {}): Li
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Drive'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Low,
     tags: 'tags' in overrides ? overrides.tags : ['channels'],
-    sortBy: 'sortBy' in overrides ? overrides.sortBy : ListRulesSortFieldsEnum.Enabled,
+    sortBy: 'sortBy' in overrides ? overrides.sortBy : ListRulesSortFieldsEnum.DisplayName,
     sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
     pageSize: 'pageSize' in overrides ? overrides.pageSize : 19,
     page: 'page' in overrides ? overrides.page : 323,

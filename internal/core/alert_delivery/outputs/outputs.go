@@ -30,7 +30,7 @@ import (
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 var (
@@ -157,7 +157,7 @@ func generateNotificationFromAlert(alert *alertModels.Alert) Notification {
 		AlertContext: alert.Context,
 	}
 
-	gatewayapi.ReplaceMapSliceNils(&notification)
+	genericapi.ReplaceMapSliceNils(&notification)
 	return notification
 }
 

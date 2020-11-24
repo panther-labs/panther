@@ -20,8 +20,6 @@ package clients
  */
 
 import (
-	"net/http"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
@@ -34,7 +32,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 
 	"github.com/panther-labs/panther/pkg/awsutils"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/tools/mage/logger"
 )
 
@@ -48,9 +45,8 @@ var (
 	log = logger.Build("")
 
 	// Cache all of these privately to force lazy evaluation.
-	awsSession        *session.Session
-	accountID         string
-	httpGatewayClient *http.Client
+	awsSession *session.Session
+	accountID  string
 
 	cfnClient    *cloudformation.CloudFormation
 	ecrClient    *ecr.ECR
@@ -131,14 +127,6 @@ func AccountID() string {
 	}
 
 	return accountID
-}
-
-// HTTP client which can sign requests to Panther's API gateways
-func HTTPGateway() *http.Client {
-	if httpGatewayClient == nil {
-		httpGatewayClient = gatewayapi.GatewayClient(getSession(""))
-	}
-	return httpGatewayClient
 }
 
 func Cfn() *cloudformation.CloudFormation {
