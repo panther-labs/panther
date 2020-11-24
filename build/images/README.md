@@ -11,7 +11,7 @@ without a need to develop or deploy it to their AWS accounts
 
 - [panther-development-pack](https://hub.docker.com/repository/docker/pantherlabs/panther-development-pack)
 
-Containing all of tha above, including Docker Engine, Swagger & AWS SDK. This mainly used by actors who want
+Containing all of the above, including Docker Engine & AWS SDK. This mainly used by actors who want
 to deploy Panther & contribute to its development.
 
 ## Updating Panther Images

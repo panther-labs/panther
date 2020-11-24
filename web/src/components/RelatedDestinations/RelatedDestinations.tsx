@@ -24,7 +24,7 @@ import { DESTINATIONS } from 'Source/constants';
 import { Destination } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
-import GenericItemCard from 'Components/GenericItemCard';
+import NotificationJewel from 'Components/NotificationJewel';
 
 const size = 18;
 
@@ -92,7 +92,7 @@ const RelatedDestinations: React.FC<RelatedDestinationsSectionProps> = ({
     return (
       <Flex align="center" minWidth={85} spacing={2}>
         {renderedDestinations.map(getLogo)}
-        <GenericItemCard.ExtraBadge badge={`+${numberOfExtraDestinations}`} />
+        <NotificationJewel badge={`+${numberOfExtraDestinations}`} />
       </Flex>
     );
   }
