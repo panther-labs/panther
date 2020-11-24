@@ -16,53 +16,48 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import React from 'react';
-import { Card, Table, Text } from 'pouncejs';
+import { Box, Card, Grid, Text } from 'pouncejs';
 import { DeliveryResponseFull } from 'Source/graphql/fragments/DeliveryResponseFull.generated';
 
 interface DestinationTestErrorProps {
   response: DeliveryResponseFull;
 }
+
+type RowProps = { field: string; value: string | number };
+
+const Row: React.FC<RowProps> = ({ field, value }) => {
+  return (
+    <React.Fragment>
+      <Box as="dt" my="auto">
+        {field}
+      </Box>
+      <Text as="dd" fontWeight="bold">
+        {value}
+      </Text>
+    </React.Fragment>
+  );
+};
+
 const DestinationTestError: React.FC<DestinationTestErrorProps> = ({
   response: { outputId, dispatchedAt, success, statusCode, message },
 }) => {
   return (
     <Card backgroundColor="pink-700" p={6}>
-      <Table aria-label="Destination failure information" rowSeparationStrategy="none" size="small">
-        <Table.Body>
-          <Table.Row>
-            <Table.Cell wrapText="nowrap" align="left">
-              Dispatched at
-            </Table.Cell>
-            <Table.Cell align="left">
-              <Text fontWeight="bold">{dispatchedAt}</Text>
-            </Table.Cell>
-          </Table.Row>
-          <Table.Row>
-            <Table.Cell align="left">Message</Table.Cell>
-            <Table.Cell align="left">
-              <Text fontWeight="bold">{message}</Text>
-            </Table.Cell>
-          </Table.Row>
-          <Table.Row>
-            <Table.Cell align="left">Output ID</Table.Cell>
-            <Table.Cell align="left">
-              <Text fontWeight="bold">{outputId}</Text>
-            </Table.Cell>
-          </Table.Row>
-          <Table.Row>
-            <Table.Cell align="left">Status Code</Table.Cell>
-            <Table.Cell align="left">
-              <Text fontWeight="bold">{statusCode}</Text>
-            </Table.Cell>
-          </Table.Row>
-          <Table.Row>
-            <Table.Cell align="left">Success</Table.Cell>
-            <Table.Cell align="left">
-              <Text fontWeight="bold">{success.toString()}</Text>
-            </Table.Cell>
-          </Table.Row>
-        </Table.Body>
-      </Table>
+      <Grid
+        as="dl"
+        wordBreak="break-word"
+        templateColumns="max-content 1fr"
+        fontSize="medium"
+        fontWeight="medium"
+        columnGap={4}
+        rowGap={4}
+      >
+        <Row field="Dispatched at" value={dispatchedAt} />
+        <Row field="Message" value={message} />
+        <Row field="Output ID" value={outputId} />
+        <Row field="Status Code" value={statusCode} />
+        <Row field="Success" value={success.toString()} />
+      </Grid>
     </Card>
   );
 };
