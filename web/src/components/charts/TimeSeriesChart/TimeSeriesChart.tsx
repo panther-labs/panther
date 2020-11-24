@@ -157,9 +157,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         smooth: true,
         barMaxWidth: 24,
         itemStyle: {
-          color: color
-            ? theme.colors[color]
-            : theme.colors[severityColors[label]] || stringToPaleColor(label),
+          color: theme.colors[color || severityColors[label]] || stringToPaleColor(label),
         },
         label: {
           show: false,
