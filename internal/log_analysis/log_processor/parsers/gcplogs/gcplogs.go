@@ -43,8 +43,6 @@ var logTypes = logtypes.Must(LogTypePrefix, logtypes.Config{
 	Name: TypeAuditLog,
 	Description: `Cloud Audit Logs maintains three audit logs for each Google Cloud project, folder, and organization: Admin Activity, Data Access, and System Event.
 Google Cloud services write audit log entries to these logs to help you answer the questions of "who did what, where, and when?" within your Google Cloud resources.
-
-Panther Enterprise Only
 `,
 	ReferenceURL: `https://cloud.google.com/logging/docs/audit`,
 	Schema:       AuditLog{},
