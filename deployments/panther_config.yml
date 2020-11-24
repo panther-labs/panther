@@ -59,13 +59,7 @@ Infra:
   # Natively compiled libraries (e.g. numpy) must be deployed from linux to work correctly, or
   # you can provide your own custom layer via PythonLayerVersionArn.
   #
-  # Be sure to remove "out/layer.zip" or run "mage clean" to force a new build of the layer if you
-  # change this setting.
-  #
   # This setting has no effect if PythonLayerVersionArn is set below.
-  #
-  # Contributors, take note: the default layer (packaged with Panther releases) bundled in the
-  # bootstrap-gateway stack must fit within the ~50MB SAR package limit. boto3, for example, is too big
   PipLayer:
     - jsonpath-ng==1.5.2
     - policyuniverse==1.3.2.2
