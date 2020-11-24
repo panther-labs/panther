@@ -359,7 +359,7 @@ func (c collisions) observeColumnName(name string) {
 	c[key] = stringset.Append(c[key], name)
 }
 
-// check checks for collitions and if it finds one, it returns a schema error at this path.
+// check checks for collisions and if it finds one, it returns a schema error at this path.
 func (c collisions) check(path []string) error {
 	for col, names := range c {
 		if len(names) <= 1 {
