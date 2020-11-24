@@ -57,13 +57,14 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 		}
 		requiredLogTypes, err := apifunctions.ListLogTypes(ctx, lambdaClient)
 		if err != nil {
+			logger.Error("failed to fetch required log types", zap.Error(err))
 			return physicalResourceID, nil, errors.Wrap(err, "failed to fetch required log types from Sources API")
 		}
 		client := datacatalog.Client{
 			SQSAPI:   sqsClient,
 			QueueURL: props.DataCatalogUpdaterQueueURL,
 		}
-		if err := client.SendSyncDatabase(ctx, "", requiredLogTypes); err != nil {
+		if err := client.SendSyncDatabase(ctx, event.RequestID, requiredLogTypes); err != nil {
 			logger.Error("failed to update glue tables", zap.Error(err))
 			return physicalResourceID, nil, err
 		}
