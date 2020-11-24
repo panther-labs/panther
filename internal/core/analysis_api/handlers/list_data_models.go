@@ -36,6 +36,9 @@ func (API) ListDataModels(input *models.ListDataModelsInput) *events.APIGatewayP
 	if input.PageSize == 0 {
 		input.PageSize = defaultPageSize
 	}
+	if input.SortBy == "" {
+		input.SortBy = "id"
+	}
 	if input.SortDir == "" {
 		input.SortDir = defaultSortDir
 	}
