@@ -340,10 +340,6 @@ func cfnValidateMaster(parsed map[string]cfnTemplate) []string {
 // Given a stack resource, return the templateURL relative to the repo root
 func resolvedTemplatePath(stackResource cfnResource) string {
 	templateURL := filepath.Base(stackResource.Properties["TemplateURL"].(string))
-	if filepath.Base(templateURL) == "embedded.bootstrap_gateway.yml" {
-		// For the purposes of the tests, read the original template, not the one with embedded swagger
-		templateURL = "bootstrap_gateway.yml"
-	}
 	return filepath.Join("deployments", templateURL)
 }
 

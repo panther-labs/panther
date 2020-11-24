@@ -27,7 +27,6 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
@@ -129,7 +128,7 @@ func (r *Router) Handle(input interface{}) (output interface{}, err error) {
 	}
 
 	if payload != nil {
-		gatewayapi.ReplaceMapSliceNils(&payload)
+		ReplaceMapSliceNils(&payload)
 	}
 	return payload, err
 }

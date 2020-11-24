@@ -1051,6 +1051,7 @@ enum ListPoliciesSortFieldsEnum {
 }
 
 enum ListRulesSortFieldsEnum {
+  displayName
   enabled
   id
   lastModified

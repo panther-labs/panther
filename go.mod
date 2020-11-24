@@ -30,7 +30,9 @@ require (
 	github.com/valyala/fasttemplate v1.2.1
 	go.uber.org/multierr v1.5.0
 	go.uber.org/zap v1.16.0
+	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b // indirect
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
+	golang.org/x/text v0.3.4 // indirect
 	golang.org/x/tools v0.0.0-20200914175622-c9b80dc7fda4
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
