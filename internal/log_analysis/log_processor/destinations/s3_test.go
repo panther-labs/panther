@@ -39,12 +39,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
-	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/panther-labs/panther/internal/log_analysis/notify"
 )
 
 const (
@@ -169,7 +169,7 @@ func newS3Destination() *testS3Destination {
 			maxBufferedMemBytes: 10 * 1024 * 1024, // an arbitrary amount enough to hold default test data
 			maxDuration:         maxDuration,
 			maxBuffers:          maxBuffers,
-			jsonAPI:             common.BuildJSON(),
+			jsonAPI:             common.ConfigForDataLakeWriters(),
 		},
 		mockSns:        mockSns,
 		mockS3Uploader: mockS3Uploader,
@@ -191,7 +191,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	{
 		var buffer bytes.Buffer
 		writer := gzip.NewWriter(&buffer)
-		stream := common.BuildJSON().BorrowStream(writer)
+		stream := common.ConfigForDataLakeWriters().BorrowStream(writer)
 		stream.WriteVal(testResult)
 		require.NoError(t, stream.Flush())
 		_, _ = writer.Write([]byte("\n"))
@@ -223,7 +223,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 
 	// Verifying Sns Publish payload
 	publishInput := destination.mockSns.Calls[0].Arguments.Get(0).(*sns.PublishInput)
-	expectedS3Notification := process.NewS3ObjectPutNotification(destination.s3Bucket, *uploadInput.Key,
+	expectedS3Notification := notify.NewS3ObjectPutNotification(destination.s3Bucket, *uploadInput.Key,
 		len(expectedBytes))
 
 	marshaledExpectedS3Notification, _ := jsoniter.MarshalToString(expectedS3Notification)
@@ -498,7 +498,7 @@ func TestSendDataFailsIfSnsFails(t *testing.T) {
 func TestBufferSetLargest(t *testing.T) {
 	const size = 100
 	event := newTestEvent(testLogType, refTime)
-	bs := newS3EventBufferSet(&S3Destination{jsonAPI: common.BuildJSON()}, 128)
+	bs := newS3EventBufferSet(&S3Destination{jsonAPI: common.ConfigForDataLakeWriters()}, 128)
 	result := event.Result()
 	expectedLargest := bs.getBuffer(result)
 	expectedLargest.bytes = size

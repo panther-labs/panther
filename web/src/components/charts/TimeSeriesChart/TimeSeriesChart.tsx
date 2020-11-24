@@ -18,19 +18,29 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Box, Flex, Text, useTheme } from 'pouncejs';
-import { formatTime, formatDatetime, remToPx, capitalize } from 'Helpers/utils';
-import { SeriesData } from 'Generated/schema';
+import { Box, Flex, theme as Theme, ThemeProvider, useTheme } from 'pouncejs';
+import { formatTime, remToPx, capitalize } from 'Helpers/utils';
+import { FloatSeries, LongSeries } from 'Generated/schema';
 import { EChartOption, ECharts } from 'echarts';
 import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { stringToPaleColor } from 'Helpers/colors';
+import ChartTooltip, { ChartTooltipProps } from './ChartTooltip';
+import useChartOptions from './useChartOptions';
+import ResetButton from '../ResetButton';
 import ScaleControls from '../ScaleControls';
-import ZoomControls from '../ZoomControls';
 
-interface TimeSeriesLinesProps {
+export type TimeSeries = (LongSeries | FloatSeries) & { color?: keyof typeof Theme['colors'] };
+
+export type TimeSeriesData = {
+  timestamps: string[];
+  series: TimeSeries[];
+  metadata?: any[];
+};
+
+interface TimeSeriesChartProps {
   /** The data for the time series */
-  data: SeriesData;
+  data: TimeSeriesData;
 
   /**
    * The number of segments that the X-axis is split into
@@ -51,12 +61,6 @@ interface TimeSeriesLinesProps {
   scaleControls?: boolean;
 
   /**
-   * Whether the chart will display zoom controls toolbox
-   * @default true
-   */
-  zoomControls?: boolean;
-
-  /**
    * If defined, the chart will be zoomable and will zoom up to a range specified in `ms` by this
    * value. This range will occupy the entirety of the X-axis (end-to-end).
    * For example, a value of 3600 * 1000 * 24 would allow the chart to zoom until the entirety
@@ -64,6 +68,24 @@ interface TimeSeriesLinesProps {
    * @default 3600 * 1000 * 24
    */
   maxZoomPeriod?: number;
+
+  /**
+   * Whether to render chart as lines or bars
+   * @default line
+   */
+  chartType?: 'line' | 'bar';
+
+  /**
+   * Whether to show label for series
+   * @default true
+   */
+  hideSeriesLabels?: boolean;
+
+  /**
+   * Whether to hide legend
+   * @default false
+   */
+  hideLegend?: boolean;
 
   /**
    * This is parameter determines if we need to display the values with an appropriate suffix
@@ -74,6 +96,12 @@ interface TimeSeriesLinesProps {
    * This is an optional parameter that will render the text provided above legend if defined
    */
   title?: string;
+
+  /**
+   *
+   * @default ChartTooltip
+   */
+  tooltipComponent?: React.FC<ChartTooltipProps>;
 }
 
 const severityColors = mapKeys(SEVERITY_COLOR_MAP, (val, key) => capitalize(key.toLowerCase()));
@@ -85,18 +113,22 @@ function formatDateString(timestamp) {
   return `${hourFormat(timestamp)}\n${dateFormat(timestamp).toUpperCase()}`;
 }
 
-const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
+const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   data,
   zoomable = false,
   scaleControls = true,
-  zoomControls = true,
   segments = 12,
   maxZoomPeriod = 3600 * 1000 * 24,
+  chartType = 'line',
+  hideLegend = false,
+  hideSeriesLabels = true,
   units,
   title,
+  tooltipComponent = ChartTooltip,
 }) => {
   const [scaleType, setScaleType] = React.useState('value');
   const theme = useTheme();
+  const { getLegend } = useChartOptions();
   const timeSeriesChart = React.useRef<ECharts>(null);
   const container = React.useRef<HTMLDivElement>(null);
   const tooltip = React.useRef<HTMLDivElement>(document.createElement('div'));
@@ -106,16 +138,10 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
    */
   const chartOptions = React.useMemo(() => {
     /*
-     *  Timestamps are common for all series since everything has the same interval
+     *  Timestamps & Series are common for all series since everything has the same interval
      *  and the same time frame
      */
-    const { timestamps, series } = data;
-    /*
-     * 'legendData' must be an array of values that matches 'series.name'in order
-     * to display them in correct order and color
-     * e.g. [AWS.ALB, AWS.S3, ...etc]
-     */
-    const legendData = series.map(({ label }) => label);
+    const { series } = data;
 
     /*
      * 'series' must be an array of objects that includes some graph options
@@ -123,42 +149,51 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
      * is an array of values for all datapoints
      * Must be ordered
      */
-    const seriesData = series.map(({ label, values }) => {
+    const seriesData = series.map(({ label, values, color }) => {
       return {
         name: label,
-        type: 'line',
+        type: chartType,
         symbol: 'none',
         smooth: true,
+        barMaxWidth: 24,
         itemStyle: {
-          color: theme.colors[severityColors[label]] || stringToPaleColor(label),
+          color: theme.colors[color || severityColors[label]] || stringToPaleColor(label),
         },
-        data: values.map((v, i) => {
-          return {
-            name: label,
-            value: [timestamps[i], v],
-          };
-        }),
+        label: {
+          show: false,
+          formatter: ({ value }) => value[1].toLocaleString(),
+          position: 'top',
+          fontSize: 11,
+          fontWeight: 'bold',
+          fontFamily: theme.fonts.primary,
+          color: '#fff',
+          emphasis: {
+            show: !hideSeriesLabels,
+          },
+        },
+        data: values
+          .map((v, i) => {
+            return {
+              name: label,
+              value: [data.timestamps[i], v, data.metadata ? data.metadata[i] : null],
+            };
+          })
+          /* This reverse is needed cause data provided by API are coming by descending timestamp.
+           * Although data are displayed correctly on the graph because are ordered by timestamp,
+           * echarts dont seem to apply the same logic when displaying the mini-chart, this reverse only
+           * affects that feature
+           */
+          .reverse(),
       };
     });
 
     const options: EChartOption = {
       grid: {
-        left: 180,
+        left: hideLegend ? 0 : 180,
         right: 50,
         bottom: 50,
         containLabel: true,
       },
-      ...(zoomControls && {
-        toolbox: {
-          show: true,
-          right: 50,
-          feature: {
-            dataZoom: {
-              yAxisIndex: 'none',
-            },
-          },
-        },
-      }),
       ...(zoomable && {
         dataZoom: [
           {
@@ -189,66 +224,26 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       }),
       tooltip: {
         trigger: 'axis' as const,
-        backgroundColor: theme.colors['navyblue-300'],
+        axisPointer: {
+          type: chartType === 'line' ? 'line' : 'none',
+        },
+        backgroundColor: 'transparent',
         formatter: (params: EChartOption.Tooltip.Format[]) => {
           if (!params || !params.length) {
             return '';
           }
 
-          const component = (
-            <Box font="primary" minWidth={200} boxShadow="dark250" p={2} borderRadius="medium">
-              <Text fontSize="small-medium" mb={3}>
-                {formatDatetime(params[0].value[0], true)}
-              </Text>
-              <Flex as="dl" direction="column" spacing={2} fontSize="x-small">
-                {params.map(seriesTooltip => (
-                  <Flex key={seriesTooltip.seriesName} justify="space-between">
-                    <Box as="dt">
-                      <span dangerouslySetInnerHTML={{ __html: seriesTooltip.marker }} />
-                      {seriesTooltip.seriesName}
-                    </Box>
-                    <Box as="dd" font="mono" fontWeight="bold">
-                      {seriesTooltip.value[1].toLocaleString('en')}
-                      {units ? ` ${units}` : ''}
-                    </Box>
-                  </Flex>
-                ))}
-              </Flex>
-            </Box>
+          const TooltipComponent = tooltipComponent;
+          ReactDOM.render(
+            <ThemeProvider>
+              <TooltipComponent params={params} units={units} />
+            </ThemeProvider>,
+            tooltip.current
           );
-
-          ReactDOM.render(component, tooltip.current);
           return tooltip.current.innerHTML;
         },
       },
-      legend: {
-        type: 'scroll' as const,
-        orient: 'vertical' as const,
-        left: 'auto',
-        right: 'auto',
-        // Pushing down legend to fit title
-        top: title ? 30 : 'auto',
-        icon: 'circle',
-        data: legendData,
-        textStyle: {
-          color: theme.colors['gray-50'],
-          fontFamily: theme.fonts.primary,
-          fontSize: remToPx(theme.fontSizes['x-small']),
-        },
-        pageIcons: {
-          vertical: ['M7 10L12 15L17 10H7Z', 'M7 14L12 9L17 14H7Z'],
-        },
-        pageIconColor: theme.colors['gray-50'],
-        pageIconInactiveColor: theme.colors['navyblue-300'],
-        pageIconSize: 12,
-        pageTextStyle: {
-          fontFamily: theme.fonts.primary,
-          color: theme.colors['gray-50'],
-          fontWeight: theme.fontWeights.bold as any,
-          fontSize: remToPx(theme.fontSizes['x-small']),
-        },
-        pageButtonGap: theme.space[3] as number,
-      },
+      ...(!hideLegend && { legend: getLegend({ series, title }) }),
       xAxis: {
         type: 'time' as const,
         splitNumber: segments,
@@ -306,10 +301,11 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       const [echarts] = await Promise.all(
         [
           import(/* webpackChunkName: "echarts" */ 'echarts/lib/echarts'),
-          import(/* webpackChunkName: "echarts" */ 'echarts/lib/chart/line'),
+          import(/* webpackChunkName: "echarts" */ `echarts/lib/chart/${chartType}`),
           import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/tooltip'),
           zoomable && import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/dataZoom'),
-          zoomControls && import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/toolbox'),
+          // This is needed for reset functionality
+          import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/toolbox'),
           import(/* webpackChunkName: "echarts" */ 'echarts/lib/component/legendScroll'),
         ].filter(Boolean)
       );
@@ -352,7 +348,7 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       // eslint-disable-next-line func-names
       newChart.on('restore', function () {
         const options = chartOptions;
-        if (options.legend.selected) {
+        if (options.legend?.selected) {
           options.legend.selected = Object.keys(options.legend.selected).reduce((acc, cur) => {
             acc[cur] = true;
             return acc;
@@ -379,26 +375,18 @@ const TimeSeriesChart: React.FC<TimeSeriesLinesProps> = ({
       <Box position="absolute" width="200px" ml={1} fontWeight="bold">
         {title}
       </Box>
-
-      <Box position="absolute" pl="210px" pr="50px" width={1}>
+      <Box position="absolute" left={0} pl={hideLegend ? '50px' : '210px'} pr="50px" width={1}>
         <Flex align="center" justify="space-between">
           {scaleControls && <ScaleControls scaleType={scaleType} onSelect={setScaleType} />}
-          {zoomControls && (
-            <ZoomControls
-              onZoom={zoomEnabled =>
-                timeSeriesChart.current.dispatchAction({
-                  type: 'takeGlobalCursor',
-                  key: 'dataZoomSelect',
-                  dataZoomSelectActive: !zoomEnabled,
-                })
-              }
+          <Box zIndex={5} ml="auto">
+            <ResetButton
               onReset={() =>
                 timeSeriesChart.current.dispatchAction({
                   type: 'restore',
                 })
               }
             />
-          )}
+          </Box>
         </Flex>
       </Box>
       <Box ref={container} width="100%" height="100%" />

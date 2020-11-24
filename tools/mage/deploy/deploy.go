@@ -137,11 +137,6 @@ func PreCheck() error {
 		return fmt.Errorf("docker is not available: %v", err)
 	}
 
-	// Ensure swagger is available
-	if _, err = sh.Output(util.Swagger, "version"); err != nil {
-		return fmt.Errorf("swagger is not available (%v): try 'mage setup'", err)
-	}
-
 	return nil
 }
 
@@ -197,7 +192,7 @@ func deploySingleLambda(function string) error {
 		cfnstacks.LogAnalysisTemplate,
 		cfnstacks.CloudsecTemplate,
 		cfnstacks.CoreTemplate,
-		cfnstacks.APITemplate,
+		cfnstacks.GatewayTemplate,
 	} {
 		var template cfnTemplate
 		if err := util.ParseTemplate(path, &template); err != nil {
@@ -374,6 +369,7 @@ func bootstrap(settings *PantherConfig) (map[string]string, error) {
 // Deploy main stacks (everything after bootstrap and bootstrap-gateway)
 func deployMainStacks(settings *PantherConfig, outputs map[string]string) error {
 	results := make(chan util.TaskResult)
+	completedStackCount := 3 // There are two stacks before this function call
 	count := 0
 
 	// Appsync
@@ -400,31 +396,42 @@ func deployMainStacks(settings *PantherConfig, outputs map[string]string) error 
 		c <- util.TaskResult{Summary: cfnstacks.Dashboard, Err: deployDashboardStack(outputs["SourceBucket"])}
 	}(results)
 
-	// Log analysis
+	// Wait for above stacks to finish.
+	if err := util.WaitForTasks(log, results, completedStackCount, count+completedStackCount-1, cfnstacks.NumStacks); err != nil {
+		return err
+	}
+
+	// next set of stacks
+	completedStackCount += count
+	count = 0 // reset
+
+	// Log analysis (requires core stack to exist first)
 	count++
 	go func(c chan util.TaskResult) {
 		c <- util.TaskResult{Summary: cfnstacks.LogAnalysis, Err: deployLogAnalysisStack(settings, outputs)}
 	}(results)
 
-	// Wait for stacks to finish.
-	// There are two stacks before and two stacks after.
-	if err := util.WaitForTasks(log, results, 3, count+2, cfnstacks.NumStacks); err != nil {
-		return err
-	}
-
+	// Web stack (requires core stack to exist first)
+	count++
 	go func(c chan util.TaskResult) {
-		// Web stack requires core stack to exist first
 		c <- util.TaskResult{Summary: cfnstacks.Frontend, Err: deployFrontend(outputs, settings)}
 	}(results)
 
-	// Onboard Panther to scan itself
+	// Wait,  counting where the last parallel group left off to give the illusion of one continuous deploy progress tracker.
+	if err := util.WaitForTasks(log, results, completedStackCount, count+completedStackCount-1, cfnstacks.NumStacks); err != nil {
+		return err
+	}
+
+	// next set of stacks (last)
+	completedStackCount += count
+
+	// Onboard Panther to scan itself (requires all stacks deployed)
 	go func(c chan util.TaskResult) {
 		c <- util.TaskResult{Summary: cfnstacks.Onboard, Err: deployOnboardStack(settings, outputs)}
 	}(results)
 
-	// Log stack results, counting where the last parallel group left off to give the illusion of
-	// one continuous deploy progress tracker.
-	return util.WaitForTasks(log, results, count+3, cfnstacks.NumStacks, cfnstacks.NumStacks)
+	// Wait,  counting where the last parallel group left off to give the illusion of one continuous deploy progress tracker.
+	return util.WaitForTasks(log, results, completedStackCount, cfnstacks.NumStacks, cfnstacks.NumStacks)
 }
 
 func deployBootstrapStack(settings *PantherConfig) (map[string]string, error) {
@@ -452,10 +459,6 @@ func deployBootstrapGatewayStack(
 	outputs map[string]string, // from bootstrap stack
 ) (map[string]string, error) {
 
-	if err := build.EmbedAPISpec(); err != nil {
-		return nil, err
-	}
-
 	if err := build.Layer(log, settings.Infra.PipLayer); err != nil {
 		return nil, err
 	}
@@ -471,6 +474,7 @@ func deployBootstrapGatewayStack(
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
 		"PythonLayerVersionArn":      settings.Infra.PythonLayerVersionArn,
+		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],
 	})
@@ -479,11 +483,8 @@ func deployBootstrapGatewayStack(
 func deployAppsyncStack(outputs map[string]string) error {
 	_, err := deployTemplate(cfnstacks.AppsyncTemplate, outputs["SourceBucket"], cfnstacks.Appsync, map[string]string{
 		"AlarmTopicArn":         outputs["AlarmTopicArn"],
-		"AnalysisApi":           "https://" + outputs["AnalysisApiEndpoint"],
 		"ApiId":                 outputs["GraphQLApiId"],
 		"CustomResourceVersion": customResourceVersion(),
-		"RemediationApi":        "https://" + outputs["RemediationApiEndpoint"],
-		"ResourcesApi":          "https://" + outputs["ResourcesApiEndpoint"],
 		"ServiceRole":           outputs["AppsyncServiceRoleArn"],
 	})
 	return err
@@ -492,7 +493,6 @@ func deployAppsyncStack(outputs map[string]string) error {
 func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string) error {
 	_, err := deployTemplate(cfnstacks.CloudsecTemplate, outputs["SourceBucket"], cfnstacks.Cloudsec, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
-		"AnalysisApiId":              outputs["AnalysisApiId"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomResourceVersion":      customResourceVersion(),
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
@@ -500,8 +500,6 @@ func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string
 		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
 		"ProcessedDataTopicArn":      outputs["ProcessedDataTopicArn"],
 		"PythonLayerVersionArn":      outputs["PythonLayerVersionArn"],
-		"RemediationApiId":           outputs["RemediationApiId"],
-		"ResourcesApiId":             outputs["ResourcesApiId"],
 		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 	})
@@ -511,7 +509,6 @@ func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string
 func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
 	_, err := deployTemplate(cfnstacks.CoreTemplate, outputs["SourceBucket"], cfnstacks.Core, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
-		"AnalysisApiId":              outputs["AnalysisApiId"],
 		"AnalysisVersionsBucket":     outputs["AnalysisVersionsBucket"],
 		"AppDomainURL":               outputs["LoadBalancerUrl"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
@@ -545,8 +542,8 @@ func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) 
 
 	_, err = deployTemplate(cfnstacks.LogAnalysisTemplate, outputs["SourceBucket"], cfnstacks.LogAnalysis, map[string]string{
 		"AlarmTopicArn":                outputs["AlarmTopicArn"],
-		"AnalysisApiId":                outputs["AnalysisApiId"],
 		"AthenaResultsBucket":          outputs["AthenaResultsBucket"],
+		"AthenaWorkGroup":              outputs["AthenaWorkGroup"],
 		"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomResourceVersion":        customResourceVersion(),
 		"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
@@ -554,7 +551,6 @@ func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) 
 		"InputDataTopicArn":            outputs["InputDataTopicArn"],
 		"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
 		"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
-		"LogProcessorSQSDelaySeconds":  strconv.Itoa(settings.Infra.LogProcessorSQSDelaySeconds),
 		"ProcessedDataBucket":          outputs["ProcessedDataBucket"],
 		"ProcessedDataTopicArn":        outputs["ProcessedDataTopicArn"],
 		"PythonLayerVersionArn":        outputs["PythonLayerVersionArn"],

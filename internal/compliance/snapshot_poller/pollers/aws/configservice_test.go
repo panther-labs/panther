@@ -105,11 +105,11 @@ func TestPollConfigServices(t *testing.T) {
 
 	assert.IsType(t, &awsmodels.ConfigService{}, resources[0].Attributes)
 	assert.Regexp(
-		t, regexp.MustCompile(`123456789012\:.*\:AWS.Config.Recorder`), string(resources[0].ID),
+		t, regexp.MustCompile(`123456789012:.*:AWS.Config.Recorder`), resources[0].ID,
 	)
 
 	assert.IsType(t, &awsmodels.ConfigServiceMeta{}, resources[len(resources)-1].Attributes)
-	assert.Equal(t, "123456789012::AWS.Config.Recorder.Meta", string(resources[len(resources)-1].ID))
+	assert.Equal(t, "123456789012::AWS.Config.Recorder.Meta", resources[len(resources)-1].ID)
 }
 
 func TestPollConfigServicesError(t *testing.T) {

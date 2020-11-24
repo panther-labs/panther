@@ -34,6 +34,7 @@ func (API) GetOutput(input *models.GetOutputInput) (*models.GetOutputOutput, err
 		return nil, err
 	}
 	redactOutput(alertOutput.OutputConfig)
+	configureOutputFallbacks(alertOutput.OutputConfig)
 
 	return alertOutput, nil
 }

@@ -17,3 +17,4 @@
  */
 
 export { default } from './TimeSeriesChart';
+export type { TimeSeries, TimeSeriesData } from './TimeSeriesChart';

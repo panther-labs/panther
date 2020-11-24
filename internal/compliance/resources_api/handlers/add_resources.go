@@ -19,7 +19,6 @@ package handlers
  */
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -33,7 +32,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/resources/models"
+	"github.com/panther-labs/panther/api/lambda/resources/models"
 	proccessormodels "github.com/panther-labs/panther/internal/compliance/resource_processor/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/dynamodbbatch"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
@@ -48,13 +47,8 @@ const (
 )
 
 // AddResources batch writes a group of resources to the Dynamo table.
-func AddResources(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	input, err := parseAddResources(request)
-	if err != nil {
-		return badRequest(err)
-	}
-
-	now := models.LastModified(time.Now())
+func (API) AddResources(input *models.AddResourcesInput) *events.APIGatewayProxyResponse {
+	now := time.Now()
 	writeRequests := make([]*dynamodb.WriteRequest, 0, len(input.Resources))
 	sqsEntries := make([]*sqs.SendMessageBatchRequestEntry, 0, len(input.Resources))
 	for i, r := range input.Resources {
@@ -66,7 +60,7 @@ func AddResources(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 			IntegrationType: r.IntegrationType,
 			LastModified:    now,
 			Type:            r.Type,
-			LowerID:         strings.ToLower(string(r.ID)),
+			LowerID:         strings.ToLower(r.ID),
 			ExpiresAt:       time.Now().Unix() + deleteMissWindow,
 		}
 
@@ -78,8 +72,8 @@ func AddResources(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 		itemSize := dynamodbbatch.GetDynamoItemSize(marshalled)
 		if itemSize > maxDynamoItemSize {
 			zap.L().Warn("item too large to send to dynamo",
-				zap.String("id", string(r.ID)),
-				zap.String("type", string(r.Type)),
+				zap.String("id", r.ID),
+				zap.String("type", r.Type),
 				zap.Int("size", itemSize))
 			continue
 		}
@@ -125,7 +119,7 @@ func AddResources(request *events.APIGatewayProxyRequest) *events.APIGatewayProx
 	return &events.APIGatewayProxyResponse{StatusCode: http.StatusCreated}
 }
 
-func handleBigMessages(bigMessages []*sqs.SendMessageBatchRequestEntry, input *models.AddResources) *events.APIGatewayProxyResponse {
+func handleBigMessages(bigMessages []*sqs.SendMessageBatchRequestEntry, input *models.AddResourcesInput) *events.APIGatewayProxyResponse {
 	sqsRetries := make([]*sqs.SendMessageBatchRequestEntry, len(bigMessages))
 	for i, message := range bigMessages {
 		// The SQS message ID of each message is it's index in the original request, so we can find the corresponding
@@ -137,7 +131,7 @@ func handleBigMessages(bigMessages []*sqs.SendMessageBatchRequestEntry, input *m
 		}
 
 		// Lookup the ID of the resource based on the original input and wrap it in a struct to pass along
-		lookupRequest := proccessormodels.ResourceLookup{ID: string(input.Resources[inputIndex].ID)}
+		lookupRequest := proccessormodels.ResourceLookup{ID: input.Resources[inputIndex].ID}
 		body, err := jsoniter.MarshalToString(lookupRequest)
 		if err != nil {
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
@@ -158,21 +152,4 @@ func handleBigMessages(bigMessages []*sqs.SendMessageBatchRequestEntry, input *m
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 	return &events.APIGatewayProxyResponse{StatusCode: http.StatusCreated}
-}
-
-// Parse the request body into the input model.
-func parseAddResources(request *events.APIGatewayProxyRequest) (*models.AddResources, error) {
-	var result models.AddResources
-	if err := jsoniter.UnmarshalFromString(request.Body, &result); err != nil {
-		return nil, err
-	}
-
-	// Swagger doesn't validate plain objects
-	for i, resource := range result.Resources {
-		if len(resource.Attributes.(map[string]interface{})) == 0 {
-			return nil, fmt.Errorf("resources[%d].attributes cannot be empty", i)
-		}
-	}
-
-	return &result, result.Validate(nil)
 }

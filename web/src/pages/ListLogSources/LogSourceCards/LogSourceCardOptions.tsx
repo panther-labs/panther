@@ -51,7 +51,7 @@ const LogSourceCardOptions: React.FC<LogSourceCardOptionsProps> = ({ source }) =
 
   return (
     <Dropdown>
-      <DropdownButton as={GenericItemCard.Options} />
+      <DropdownButton as={GenericItemCard.OptionsButton} />
       <DropdownMenu>
         <DropdownLink as={RRLink} to={logSourceEditUrl}>
           Edit

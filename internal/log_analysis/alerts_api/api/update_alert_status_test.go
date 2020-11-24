@@ -67,6 +67,7 @@ func TestUpdateAlert(t *testing.T) {
 		})
 		expectedSummaries = append(expectedSummaries, &models.AlertSummary{
 			AlertID:           alertID,
+			Type:              "RULE",
 			RuleID:            aws.String(""),
 			RuleVersion:       aws.String(""),
 			RuleDisplayName:   nil,

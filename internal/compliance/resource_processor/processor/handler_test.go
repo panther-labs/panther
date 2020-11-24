@@ -24,8 +24,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 
-	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
-	resourcemodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
+	resourcemodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	"github.com/panther-labs/panther/internal/compliance/resource_processor/models"
 )
 
@@ -82,23 +82,23 @@ func TestParseQueueMsgMissingFields(t *testing.T) {
 func TestIsSuppressed(t *testing.T) {
 	resourceID := "prod.panther.us-west-2/device"
 
-	assert.False(t, isSuppressed(resourceID, &analysismodels.EnabledPolicy{
+	assert.False(t, isSuppressed(resourceID, analysismodels.Policy{
 		Suppressions: []string{},
 	}))
-	assert.False(t, isSuppressed(resourceID, &analysismodels.EnabledPolicy{
+	assert.False(t, isSuppressed(resourceID, analysismodels.Policy{
 		Suppressions: []string{"prod", "prod.panther.us-west-2/device.*"},
 	}))
 
-	assert.True(t, isSuppressed(resourceID, &analysismodels.EnabledPolicy{
+	assert.True(t, isSuppressed(resourceID, analysismodels.Policy{
 		Suppressions: []string{"*"},
 	}))
-	assert.True(t, isSuppressed(resourceID, &analysismodels.EnabledPolicy{
+	assert.True(t, isSuppressed(resourceID, analysismodels.Policy{
 		Suppressions: []string{"prod.panther.*/device"},
 	}))
-	assert.True(t, isSuppressed(resourceID, &analysismodels.EnabledPolicy{
+	assert.True(t, isSuppressed(resourceID, analysismodels.Policy{
 		Suppressions: []string{"*prod.panther.us-west-2/device*"},
 	}))
-	assert.True(t, isSuppressed(resourceID, &analysismodels.EnabledPolicy{
+	assert.True(t, isSuppressed(resourceID, analysismodels.Policy{
 		Suppressions: []string{"not", "this", "one", "but", "here:", "*.us-west-2/*"},
 	}))
 }

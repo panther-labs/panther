@@ -17,13 +17,14 @@
  */
 
 import React from 'react';
-import { Flex, Link } from 'pouncejs';
+import { Flex, Link, Text, Tooltip } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import GenericItemCard from 'Components/GenericItemCard';
 import { LogIntegration } from 'Generated/schema';
 import { PANTHER_USER_ID } from 'Source/constants';
 import urls from 'Source/urls';
 import SourceHealthBadge from 'Components/badges/SourceHealthBadge';
+import { getElapsedTime } from 'Helpers/utils';
 import LogSourceCardOptions from './LogSourceCardOptions';
 
 interface LogSourceCardProps {
@@ -62,18 +63,38 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
     }
   }, [sourceHealth]);
 
+  const lastReceivedMessage = React.useMemo(() => {
+    return source.lastEventReceived
+      ? `
+  Last Received Data ${getElapsedTime(new Date(source.lastEventReceived).getTime() / 1000)}`
+      : 'No Data Received yet';
+  }, [source.lastEventReceived]);
+
   return (
     <GenericItemCard>
       <GenericItemCard.Logo src={logo} />
-      {!isCreatedByPanther && <LogSourceCardOptions source={source} />}
+
       <GenericItemCard.Body>
-        <Link
-          as={RRLink}
-          to={urls.logAnalysis.sources.edit(source.integrationId, sourceType)}
-          cursor="pointer"
-        >
-          <GenericItemCard.Heading>{source.integrationLabel}</GenericItemCard.Heading>
-        </Link>
+        <GenericItemCard.Header>
+          <GenericItemCard.Heading>
+            {!isCreatedByPanther ? (
+              <Link
+                as={RRLink}
+                to={urls.logAnalysis.sources.edit(source.integrationId, sourceType)}
+              >
+                {source.integrationLabel}
+              </Link>
+            ) : (
+              <Tooltip content="This is a log source we created for you.">
+                <Text color="teal-300" as="span">
+                  {source.integrationLabel}
+                </Text>
+              </Tooltip>
+            )}
+          </GenericItemCard.Heading>
+          <GenericItemCard.Date date={lastReceivedMessage} />
+          {!isCreatedByPanther && <LogSourceCardOptions source={source} />}
+        </GenericItemCard.Header>
         <GenericItemCard.ValuesGroup>
           {children}
           <Flex ml="auto" mr={0} align="flex-end">

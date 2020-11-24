@@ -20,10 +20,10 @@ import React from 'react';
 import { Box, Flex } from 'pouncejs';
 import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
 import { capitalize } from 'Helpers/utils';
-import { SeriesData } from 'Generated/schema';
+import { LongSeriesData } from 'Generated/schema';
 
 interface AlertsBySeverityProps {
-  alerts: SeriesData;
+  alerts: LongSeriesData;
 }
 
 const AlertsBySeverity: React.FC<AlertsBySeverityProps> = ({ alerts: { series, timestamps } }) => {

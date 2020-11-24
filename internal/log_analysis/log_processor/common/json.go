@@ -27,8 +27,12 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
 
-// BuildJSON returns a jsoniter.API instance that is configured to be used for decoding/encoding JSON log events.
-func BuildJSON() jsoniter.API {
+// ConfigForDataLakeWriters returns a jsoniter.API configured to be used for JSON log events written to the data-lake.
+//
+// WARNING: This is meant to be used for encoding ONLY FOR WRITING TO S3 Processed logs.
+//          For all other uses please use pantherlog.ConfigJSON()
+//          You should probably not use it.
+func ConfigForDataLakeWriters() jsoniter.API {
 	api := jsoniter.Config{
 		EscapeHTML: true,
 		// We don't need to validate JSON raw messages.

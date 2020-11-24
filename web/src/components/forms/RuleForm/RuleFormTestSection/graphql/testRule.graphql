@@ -1,0 +1,26 @@
+mutation TestRule($input: TestRuleInput!) {
+  testRule(input: $input) {
+    results {
+      id
+      name
+      passed
+      error {
+        message
+      }
+      functions {
+        ruleFunction {
+          ...TestFunctionResult
+        }
+        titleFunction {
+          ...TestFunctionResult
+        }
+        dedupFunction {
+          ...TestFunctionResult
+        }
+        alertContextFunction {
+          ...TestFunctionResult
+        }
+      }
+    }
+  }
+}

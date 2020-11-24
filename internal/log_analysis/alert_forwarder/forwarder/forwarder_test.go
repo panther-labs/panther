@@ -20,9 +20,7 @@ package forwarder
 
 import (
 	"errors"
-	"io/ioutil"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -36,27 +34,19 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	policiesclient "github.com/panther-labs/panther/api/gateway/analysis/client"
-	ruleModel "github.com/panther-labs/panther/api/gateway/analysis/models"
+	ruleModel "github.com/panther-labs/panther/api/lambda/analysis/models"
 	alertModel "github.com/panther-labs/panther/api/lambda/delivery/models"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
-
-type mockRoundTripper struct {
-	http.RoundTripper
-	mock.Mock
-}
-
-func (m *mockRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
-	args := m.Called(request)
-	return args.Get(0).(*http.Response), args.Error(1)
-}
 
 var (
 	oldAlertDedupEvent = &AlertDedupEvent{
 		RuleID:              "ruleId",
 		RuleVersion:         "ruleVersion",
 		DeduplicationString: "dedupString",
+		Type:                alertModel.RuleType,
 		AlertCount:          10,
 		CreationTime:        time.Now().UTC(),
 		UpdateTime:          time.Now().UTC().Add(1 * time.Minute),
@@ -69,6 +59,7 @@ var (
 		RuleID:              oldAlertDedupEvent.RuleID,
 		RuleVersion:         oldAlertDedupEvent.RuleVersion,
 		DeduplicationString: oldAlertDedupEvent.DeduplicationString,
+		Type:                oldAlertDedupEvent.Type,
 		AlertCount:          oldAlertDedupEvent.AlertCount + 1,
 		CreationTime:        time.Now().UTC(),
 		UpdateTime:          time.Now().UTC().Add(1 * time.Minute),
@@ -78,40 +69,50 @@ var (
 	}
 
 	testRuleResponse = &ruleModel.Rule{
-		ID:          "ruleId",
 		Description: "Description",
 		DisplayName: "DisplayName",
-		Severity:    "INFO",
+		ID:          "ruleId",
 		Runbook:     "Runbook",
+		Severity:    "INFO",
 		Tags:        []string{"Tag"},
 	}
+
+	expectedGetRuleInput = &ruleModel.LambdaInput{
+		GetRule: &ruleModel.GetRuleInput{
+			ID:        oldAlertDedupEvent.RuleID,
+			VersionID: oldAlertDedupEvent.RuleVersion,
+		},
+	}
+	expectedMetric     = []metrics.Metric{{Name: "AlertsCreated", Value: 1, Unit: metrics.UnitCount}}
+	expectedDimensions = []metrics.Dimension{
+		{Name: "Severity", Value: "INFO"},
+		{Name: "AnalysisType", Value: "Rule"},
+		{Name: "AnalysisID", Value: "ruleId"}}
 )
 
 func TestHandleStoreAndSendNotification(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient := &http.Client{Transport: mockRoundTripper}
-	policyConfig := policiesclient.DefaultTransportConfig().
-		WithHost("host").
-		WithBasePath("path")
-	policyClient := policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
+	metricsMock := &testutils.LoggerMock{}
+	analysisMock := &gatewayapi.MockClient{}
+
 	handler := &Handler{
 		AlertTable:       "alertsTable",
 		AlertingQueueURL: "queueUrl",
-		Cache:            NewCache(httpClient, policyClient),
+		Cache:            NewCache(analysisMock),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
 
 	expectedAlertNotification := &alertModel.Alert{
 		CreatedAt:           newAlertDedupEvent.UpdateTime,
-		AnalysisDescription: aws.String(string(testRuleResponse.Description)),
+		AnalysisDescription: &testRuleResponse.Description,
 		AnalysisID:          newAlertDedupEvent.RuleID,
-		Version:             aws.String(newAlertDedupEvent.RuleVersion),
-		AnalysisName:        aws.String(string(testRuleResponse.DisplayName)),
-		Runbook:             aws.String(string(testRuleResponse.Runbook)),
+		Version:             &newAlertDedupEvent.RuleVersion,
+		AnalysisName:        &testRuleResponse.DisplayName,
+		Runbook:             &testRuleResponse.Runbook,
 		Severity:            string(testRuleResponse.Severity),
 		Tags:                []string{"Tag"},
 		Type:                alertModel.RuleType,
@@ -125,19 +126,22 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		QueueUrl:    aws.String("queueUrl"),
 	}
 
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
+	analysisMock.On("Invoke", expectedGetRuleInput, &ruleModel.Rule{}).Return(
+		http.StatusOK, nil, testRuleResponse).Once()
+
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 
 	expectedAlert := &Alert{
 		ID:                  "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:       "defaultPartition",
 		Severity:            string(testRuleResponse.Severity),
-		RuleDisplayName:     aws.String(string(testRuleResponse.DisplayName)),
+		RuleDisplayName:     &testRuleResponse.DisplayName,
 		Title:               aws.StringValue(newAlertDedupEvent.GeneratedTitle),
 		FirstEventMatchTime: newAlertDedupEvent.CreationTime,
 		LogTypes:            newAlertDedupEvent.LogTypes,
 		AlertDedupEvent: AlertDedupEvent{
 			RuleID:              newAlertDedupEvent.RuleID,
+			Type:                newAlertDedupEvent.Type,
 			RuleVersion:         newAlertDedupEvent.RuleVersion,
 			LogTypes:            newAlertDedupEvent.LogTypes,
 			EventCount:          newAlertDedupEvent.EventCount,
@@ -158,29 +162,29 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 	}
 
 	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
+	metricsMock.On("Log", expectedDimensions, expectedMetric).Once()
 	assert.NoError(t, handler.Do(oldAlertDedupEvent, newAlertDedupEvent))
 
 	ddbMock.AssertExpectations(t)
 	sqsMock.AssertExpectations(t)
-	mockRoundTripper.AssertExpectations(t)
+	analysisMock.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
 func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient := &http.Client{Transport: mockRoundTripper}
-	policyConfig := policiesclient.DefaultTransportConfig().
-		WithHost("host").
-		WithBasePath("path")
-	policyClient := policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
+	metricsMock := &testutils.LoggerMock{}
+	analysisMock := &gatewayapi.MockClient{}
+
 	handler := &Handler{
 		AlertTable:       "alertsTable",
 		AlertingQueueURL: "queueUrl",
-		Cache:            NewCache(httpClient, policyClient),
+		Cache:            NewCache(analysisMock),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
 
 	newAlertDedupEventWithoutTitle := &AlertDedupEvent{
@@ -192,14 +196,15 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 		UpdateTime:          time.Now().UTC().Add(1 * time.Minute),
 		EventCount:          oldAlertDedupEvent.EventCount,
 		LogTypes:            oldAlertDedupEvent.LogTypes,
+		Type:                oldAlertDedupEvent.Type,
 	}
 
 	expectedAlertNotification := &alertModel.Alert{
 		CreatedAt:           newAlertDedupEventWithoutTitle.UpdateTime,
-		AnalysisDescription: aws.String(string(testRuleResponse.Description)),
+		AnalysisDescription: &testRuleResponse.Description,
 		AnalysisID:          newAlertDedupEventWithoutTitle.RuleID,
-		Version:             aws.String(newAlertDedupEventWithoutTitle.RuleVersion),
-		Runbook:             aws.String(string(testRuleResponse.Runbook)),
+		Version:             &newAlertDedupEventWithoutTitle.RuleVersion,
+		Runbook:             &testRuleResponse.Runbook,
 		Severity:            string(testRuleResponse.Severity),
 		Tags:                []string{"Tag"},
 		Type:                alertModel.RuleType,
@@ -214,14 +219,16 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 	}
 
 	testRuleResponseWithoutDisplayName := &ruleModel.Rule{
-		ID:          "ruleId",
 		Description: "Description",
-		Severity:    "INFO",
+		ID:          "ruleId",
 		Runbook:     "Runbook",
+		Severity:    "INFO",
 		Tags:        []string{"Tag"},
 	}
 
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponseWithoutDisplayName, http.StatusOK), nil).Once()
+	analysisMock.On("Invoke", expectedGetRuleInput, &ruleModel.Rule{}).Return(
+		http.StatusOK, nil, testRuleResponseWithoutDisplayName).Once()
+
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 
 	expectedAlert := &Alert{
@@ -241,6 +248,7 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 			GeneratedTitle:      newAlertDedupEventWithoutTitle.GeneratedTitle,
 			UpdateTime:          newAlertDedupEventWithoutTitle.UpdateTime,
 			CreationTime:        newAlertDedupEventWithoutTitle.UpdateTime,
+			Type:                newAlertDedupEventWithoutTitle.Type,
 		},
 	}
 
@@ -253,41 +261,42 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 	}
 
 	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
+	metricsMock.On("Log", expectedDimensions, expectedMetric).Once()
+
 	assert.NoError(t, handler.Do(oldAlertDedupEvent, newAlertDedupEventWithoutTitle))
 
 	ddbMock.AssertExpectations(t)
 	sqsMock.AssertExpectations(t)
-	mockRoundTripper.AssertExpectations(t)
+	analysisMock.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
 func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient := &http.Client{Transport: mockRoundTripper}
-	policyConfig := policiesclient.DefaultTransportConfig().
-		WithHost("host").
-		WithBasePath("path")
-	policyClient := policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
+	metricsMock := &testutils.LoggerMock{}
+	analysisMock := &gatewayapi.MockClient{}
+
 	handler := &Handler{
 		AlertTable:       "alertsTable",
 		AlertingQueueURL: "queueUrl",
-		Cache:            NewCache(httpClient, policyClient),
+		Cache:            NewCache(analysisMock),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
 
 	expectedAlertNotification := &alertModel.Alert{
 		CreatedAt:           newAlertDedupEvent.UpdateTime,
-		AnalysisDescription: aws.String(string(testRuleResponse.Description)),
+		AnalysisDescription: &testRuleResponse.Description,
 		AnalysisID:          newAlertDedupEvent.RuleID,
-		Version:             aws.String(newAlertDedupEvent.RuleVersion),
-		AnalysisName:        aws.String(string(testRuleResponse.DisplayName)),
-		Runbook:             aws.String(string(testRuleResponse.Runbook)),
+		Version:             &newAlertDedupEvent.RuleVersion,
+		AnalysisName:        &testRuleResponse.DisplayName,
+		Runbook:             &testRuleResponse.Runbook,
 		Severity:            string(testRuleResponse.Severity),
 		Tags:                []string{"Tag"},
-		Type:                alertModel.RuleType,
+		Type:                newAlertDedupEvent.Type,
 		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
 		Title:               aws.String("DisplayName"),
 	}
@@ -298,14 +307,15 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		QueueUrl:    aws.String("queueUrl"),
 	}
 
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
+	analysisMock.On("Invoke", expectedGetRuleInput, &ruleModel.Rule{}).Return(
+		http.StatusOK, nil, testRuleResponse).Once()
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 
 	expectedAlert := &Alert{
 		ID:                  "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:       "defaultPartition",
 		Severity:            string(testRuleResponse.Severity),
-		RuleDisplayName:     aws.String(string(testRuleResponse.DisplayName)),
+		RuleDisplayName:     &testRuleResponse.DisplayName,
 		Title:               "DisplayName",
 		FirstEventMatchTime: newAlertDedupEvent.CreationTime,
 		LogTypes:            newAlertDedupEvent.LogTypes,
@@ -313,6 +323,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 			RuleID:              newAlertDedupEvent.RuleID,
 			RuleVersion:         newAlertDedupEvent.RuleVersion,
 			LogTypes:            newAlertDedupEvent.LogTypes,
+			Type:                newAlertDedupEvent.Type,
 			EventCount:          newAlertDedupEvent.EventCount,
 			AlertCount:          newAlertDedupEvent.AlertCount,
 			DeduplicationString: newAlertDedupEvent.DeduplicationString,
@@ -333,6 +344,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 	dedupEventWithoutTitle := &AlertDedupEvent{
 		RuleID:              newAlertDedupEvent.RuleID,
 		RuleVersion:         newAlertDedupEvent.RuleVersion,
+		Type:                newAlertDedupEvent.Type,
 		DeduplicationString: newAlertDedupEvent.DeduplicationString,
 		AlertCount:          newAlertDedupEvent.AlertCount,
 		CreationTime:        newAlertDedupEvent.CreationTime,
@@ -342,38 +354,39 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 	}
 
 	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
+	metricsMock.On("Log", expectedDimensions, expectedMetric).Once()
+
 	assert.NoError(t, handler.Do(oldAlertDedupEvent, dedupEventWithoutTitle))
 
 	ddbMock.AssertExpectations(t)
 	sqsMock.AssertExpectations(t)
-	mockRoundTripper.AssertExpectations(t)
+	analysisMock.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
 func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient := &http.Client{Transport: mockRoundTripper}
-	policyConfig := policiesclient.DefaultTransportConfig().
-		WithHost("host").
-		WithBasePath("path")
-	policyClient := policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
+	metricsMock := &testutils.LoggerMock{}
+	analysisMock := &gatewayapi.MockClient{}
+
 	handler := &Handler{
 		AlertTable:       "alertsTable",
 		AlertingQueueURL: "queueUrl",
-		Cache:            NewCache(httpClient, policyClient),
+		Cache:            NewCache(analysisMock),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
 
 	expectedAlertNotification := &alertModel.Alert{
 		CreatedAt:           newAlertDedupEvent.UpdateTime,
-		AnalysisDescription: aws.String(string(testRuleResponse.Description)),
+		AnalysisDescription: &testRuleResponse.Description,
 		AnalysisID:          newAlertDedupEvent.RuleID,
-		AnalysisName:        aws.String(string(testRuleResponse.DisplayName)),
-		Version:             aws.String(newAlertDedupEvent.RuleVersion),
-		Runbook:             aws.String(string(testRuleResponse.Runbook)),
+		AnalysisName:        &testRuleResponse.DisplayName,
+		Version:             &newAlertDedupEvent.RuleVersion,
+		Runbook:             &testRuleResponse.Runbook,
 		Severity:            string(testRuleResponse.Severity),
 		Tags:                []string{"Tag"},
 		Type:                alertModel.RuleType,
@@ -387,7 +400,9 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 		QueueUrl:    aws.String("queueUrl"),
 	}
 
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
+	analysisMock.On("Invoke", expectedGetRuleInput, &ruleModel.Rule{}).Return(
+		http.StatusOK, nil, testRuleResponse).Once()
+
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 
 	expectedAlert := &Alert{
@@ -395,11 +410,12 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 		TimePartition:       "defaultPartition",
 		Severity:            string(testRuleResponse.Severity),
 		Title:               aws.StringValue(newAlertDedupEvent.GeneratedTitle),
-		RuleDisplayName:     aws.String(string(testRuleResponse.DisplayName)),
+		RuleDisplayName:     &testRuleResponse.DisplayName,
 		FirstEventMatchTime: newAlertDedupEvent.CreationTime,
 		LogTypes:            newAlertDedupEvent.LogTypes,
 		AlertDedupEvent: AlertDedupEvent{
 			RuleID:              newAlertDedupEvent.RuleID,
+			Type:                newAlertDedupEvent.Type,
 			RuleVersion:         newAlertDedupEvent.RuleVersion,
 			LogTypes:            newAlertDedupEvent.LogTypes,
 			EventCount:          newAlertDedupEvent.EventCount,
@@ -420,31 +436,33 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 	}
 
 	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
+	metricsMock.On("Log", expectedDimensions, expectedMetric).Once()
+
 	require.NoError(t, handler.Do(nil, newAlertDedupEvent))
 
 	ddbMock.AssertExpectations(t)
 	sqsMock.AssertExpectations(t)
-	mockRoundTripper.AssertExpectations(t)
+	analysisMock.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
 func TestHandleUpdateAlert(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient := &http.Client{Transport: mockRoundTripper}
-	policyConfig := policiesclient.DefaultTransportConfig().
-		WithHost("host").
-		WithBasePath("path")
-	policyClient := policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
+	metricsMock := &testutils.LoggerMock{}
+	analysisMock := &gatewayapi.MockClient{}
+
 	handler := &Handler{
 		AlertTable:       "alertsTable",
 		AlertingQueueURL: "queueUrl",
-		Cache:            NewCache(httpClient, policyClient),
+		Cache:            NewCache(analysisMock),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
+	analysisMock.On("Invoke", expectedGetRuleInput, &ruleModel.Rule{}).Return(
+		http.StatusOK, nil, testRuleResponse).Once()
 
 	dedupEventWithUpdatedFields := &AlertDedupEvent{
 		RuleID:              newAlertDedupEvent.RuleID,
@@ -476,29 +494,33 @@ func TestHandleUpdateAlert(t *testing.T) {
 	}
 
 	ddbMock.On("UpdateItem", expectedUpdateItemInput).Return(&dynamodb.UpdateItemOutput{}, nil)
+	// We shouldn't log any metric - we are not creating a new Alert
+	metricsMock.AssertNotCalled(t, "Log")
+
 	assert.NoError(t, handler.Do(newAlertDedupEvent, dedupEventWithUpdatedFields))
 
 	ddbMock.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
+	analysisMock.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
 func TestHandleUpdateAlertDDBError(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient := &http.Client{Transport: mockRoundTripper}
-	policyConfig := policiesclient.DefaultTransportConfig().
-		WithHost("host").
-		WithBasePath("path")
-	policyClient := policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
+	metricsMock := &testutils.LoggerMock{}
+	analysisMock := &gatewayapi.MockClient{}
 	handler := &Handler{
 		AlertTable:       "alertsTable",
 		AlertingQueueURL: "queueUrl",
-		Cache:            NewCache(httpClient, policyClient),
+		Cache:            NewCache(analysisMock),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(testRuleResponse, http.StatusOK), nil).Once()
+	analysisMock.On("Invoke", expectedGetRuleInput, &ruleModel.Rule{}).Return(
+		http.StatusOK, nil, testRuleResponse).Once()
 
 	dedupEventWithUpdatedFields := &AlertDedupEvent{
 		RuleID:              newAlertDedupEvent.RuleID,
@@ -514,74 +536,76 @@ func TestHandleUpdateAlertDDBError(t *testing.T) {
 
 	ddbMock.On("UpdateItem", mock.Anything).Return(&dynamodb.UpdateItemOutput{}, errors.New("error"))
 	assert.Error(t, handler.Do(newAlertDedupEvent, dedupEventWithUpdatedFields))
+
+	ddbMock.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
+	analysisMock.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
 func TestHandleShouldNotCreateOrUpdateAlertIfThresholdNotReached(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient := &http.Client{Transport: mockRoundTripper}
-	policyConfig := policiesclient.DefaultTransportConfig().
-		WithHost("host").
-		WithBasePath("path")
-	policyClient := policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
+	metricsMock := &testutils.LoggerMock{}
+	analysisMock := &gatewayapi.MockClient{}
 	handler := &Handler{
 		AlertTable:       "alertsTable",
 		AlertingQueueURL: "queueUrl",
-		Cache:            NewCache(httpClient, policyClient),
+		Cache:            NewCache(analysisMock),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
 
 	ruleWithThreshold := &ruleModel.Rule{
 		ID:          "ruleId",
 		Description: "Description",
 		DisplayName: "DisplayName",
-		Severity:    "INFO",
 		Runbook:     "Runbook",
+		Severity:    "INFO",
 		Tags:        []string{"Tag"},
 		Threshold:   1000,
 	}
 
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(ruleWithThreshold, http.StatusOK), nil).Once()
+	analysisMock.On("Invoke", expectedGetRuleInput, &ruleModel.Rule{}).Return(
+		http.StatusOK, nil, ruleWithThreshold).Once()
 	assert.NoError(t, handler.Do(oldAlertDedupEvent, newAlertDedupEvent))
 
 	ddbMock.AssertExpectations(t)
 	sqsMock.AssertExpectations(t)
-	mockRoundTripper.AssertExpectations(t)
+	analysisMock.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
 func TestHandleShouldCreateAlertIfThresholdNowReached(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}
 	sqsMock := &testutils.SqsMock{}
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient := &http.Client{Transport: mockRoundTripper}
-	policyConfig := policiesclient.DefaultTransportConfig().
-		WithHost("host").
-		WithBasePath("path")
-	policyClient := policiesclient.NewHTTPClientWithConfig(nil, policyConfig)
+	metricsMock := &testutils.LoggerMock{}
+	analysisMock := &gatewayapi.MockClient{}
 	handler := &Handler{
 		AlertTable:       "alertsTable",
 		AlertingQueueURL: "queueUrl",
-		Cache:            NewCache(httpClient, policyClient),
+		Cache:            NewCache(analysisMock),
 		DdbClient:        ddbMock,
 		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
 
 	ruleWithThreshold := &ruleModel.Rule{
 		ID:          "ruleId",
 		Description: "Description",
 		DisplayName: "DisplayName",
-		Severity:    "INFO",
 		Runbook:     "Runbook",
+		Severity:    "INFO",
 		Tags:        []string{"Tag"},
 		Threshold:   1000,
 	}
 
 	newAlertDedup := &AlertDedupEvent{
 		RuleID:              oldAlertDedupEvent.RuleID,
+		Type:                oldAlertDedupEvent.Type,
 		RuleVersion:         oldAlertDedupEvent.RuleVersion,
 		DeduplicationString: oldAlertDedupEvent.DeduplicationString,
 		AlertCount:          oldAlertDedupEvent.AlertCount + 1,
@@ -594,16 +618,49 @@ func TestHandleShouldCreateAlertIfThresholdNowReached(t *testing.T) {
 
 	ddbMock.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil).Once()
 	sqsMock.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, nil).Once()
+	metricsMock.On("Log", expectedDimensions, expectedMetric).Once()
 
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(ruleWithThreshold, http.StatusOK), nil).Once()
+	analysisMock.On("Invoke", expectedGetRuleInput, &ruleModel.Rule{}).Return(
+		http.StatusOK, nil, ruleWithThreshold).Once()
 	assert.NoError(t, handler.Do(oldAlertDedupEvent, newAlertDedup))
 
 	ddbMock.AssertExpectations(t)
 	sqsMock.AssertExpectations(t)
-	mockRoundTripper.AssertExpectations(t)
+	analysisMock.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }
 
-func generateResponse(body interface{}, httpCode int) *http.Response {
-	serializedBody, _ := jsoniter.MarshalToString(body)
-	return &http.Response{StatusCode: httpCode, Body: ioutil.NopCloser(strings.NewReader(serializedBody))}
+func TestHandleError(t *testing.T) {
+	// In case of an RULE_ERROR alert type, behave the same
+	// but don't log Severity metric
+	t.Parallel()
+	ddbMock := &testutils.DynamoDBMock{}
+	sqsMock := &testutils.SqsMock{}
+	metricsMock := &testutils.LoggerMock{}
+	analysisMock := &gatewayapi.MockClient{}
+	handler := &Handler{
+		AlertTable:       "alertsTable",
+		AlertingQueueURL: "queueUrl",
+		Cache:            NewCache(analysisMock),
+		DdbClient:        ddbMock,
+		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
+	}
+
+	analysisMock.On("Invoke", expectedGetRuleInput, &ruleModel.Rule{}).Return(
+		http.StatusOK, nil, testRuleResponse).Once()
+	sqsMock.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
+	ddbMock.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
+	metricsMock.AssertNotCalled(t, "LogSingle")
+
+	oldErrorDedupEvent := *oldAlertDedupEvent
+	newErrorDedupEvent := *newAlertDedupEvent
+	oldErrorDedupEvent.Type = "RULE_ERROR"
+	newErrorDedupEvent.Type = "RULE_ERROR"
+	assert.NoError(t, handler.Do(&oldErrorDedupEvent, &newErrorDedupEvent))
+
+	ddbMock.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
+	analysisMock.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }

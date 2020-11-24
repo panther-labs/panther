@@ -243,12 +243,12 @@ func checkLogEntrySchema(logType string, schema interface{}) error {
 	if schema == nil {
 		return errors.Errorf("nil schema for log type %q", logType)
 	}
-	data, err := jsoniter.Marshal(schema)
+	data, err := pantherlog.ConfigJSON().Marshal(schema)
 	if err != nil {
 		return errors.Errorf("invalid schema struct for log type %q: %s", logType, err)
 	}
 	var fields map[string]interface{}
-	if err := jsoniter.Unmarshal(data, &fields); err != nil {
+	if err := pantherlog.ConfigJSON().Unmarshal(data, &fields); err != nil {
 		return errors.Errorf("invalid schema struct for log type %q: %s", logType, err)
 	}
 	// Verify we can generate glue schema from the provided struct

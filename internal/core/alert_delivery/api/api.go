@@ -19,7 +19,6 @@ package api
  */
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -30,7 +29,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/kelseyhightower/envconfig"
 
-	analysisApiClient "github.com/panther-labs/panther/api/gateway/analysis/client"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 	alertTable "github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
@@ -50,8 +48,6 @@ type envConfig struct {
 	AlertQueueURL          string        `required:"true" split_words:"true"`
 	AlertsAPI              string        `required:"true" split_words:"true"`
 	OutputsAPI             string        `required:"true" split_words:"true"`
-	AnalysisAPIHost        string        `required:"true" split_words:"true"`
-	AnalysisAPIPath        string        `required:"true" split_words:"true"`
 }
 
 // Globals
@@ -63,8 +59,7 @@ var (
 	outputClient      outputs.API
 	sqsClient         sqsiface.SQSAPI
 	outputsCache      *alertOutputsCache
-	httpClient        *http.Client
-	analysisClient    *analysisApiClient.PantherAnalysisAPI
+	analysisClient    gatewayapi.API
 )
 
 // Setup - initialize global state
@@ -83,8 +78,5 @@ func Setup() {
 		RuleIDCreationTimeIndexName:        env.RuleIndexName,
 		TimePartitionCreationTimeIndexName: env.TimeIndexName,
 	}
-	httpClient = gatewayapi.GatewayClient(awsSession)
-	analysisClient = analysisApiClient.NewHTTPClientWithConfig(
-		nil, analysisApiClient.DefaultTransportConfig().
-			WithHost(env.AnalysisAPIHost).WithBasePath("/"+env.AnalysisAPIPath))
+	analysisClient = gatewayapi.NewClient(lambdaClient, "panther-analysis-api")
 }

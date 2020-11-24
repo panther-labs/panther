@@ -45,6 +45,20 @@ const defaultValues = {
 
 const sortingOpts: SortingOptions = [
   {
+    opt: 'Name Ascending',
+    resolution: {
+      sortBy: 'displayName' as ListRulesSortFieldsEnum,
+      sortDir: 'ascending' as SortDirEnum,
+    },
+  },
+  {
+    opt: 'Name Descending',
+    resolution: {
+      sortBy: 'displayName' as ListRulesSortFieldsEnum,
+      sortDir: 'descending' as SortDirEnum,
+    },
+  },
+  {
     opt: 'Most Recently Modified',
     resolution: {
       sortBy: 'lastModified' as ListRulesSortFieldsEnum,
@@ -56,20 +70,6 @@ const sortingOpts: SortingOptions = [
     resolution: {
       sortBy: 'lastModified' as ListRulesSortFieldsEnum,
       sortDir: 'ascending' as SortDirEnum,
-    },
-  },
-  {
-    opt: 'ID Ascending',
-    resolution: {
-      sortBy: 'id' as ListRulesSortFieldsEnum,
-      sortDir: 'ascending' as SortDirEnum,
-    },
-  },
-  {
-    opt: 'ID Descending',
-    resolution: {
-      sortBy: 'id' as ListRulesSortFieldsEnum,
-      sortDir: 'descending' as SortDirEnum,
     },
   },
   {
@@ -87,16 +87,16 @@ const sortingOpts: SortingOptions = [
     },
   },
   {
-    opt: 'Status Ascending',
+    opt: 'Enabled',
     resolution: {
-      sortBy: 'status' as ListRulesSortFieldsEnum,
+      sortBy: 'enabled' as ListRulesSortFieldsEnum,
       sortDir: 'ascending' as SortDirEnum,
     },
   },
   {
-    opt: 'Status Descending',
+    opt: 'Disabled',
     resolution: {
-      sortBy: 'status' as ListRulesSortFieldsEnum,
+      sortBy: 'enabled' as ListRulesSortFieldsEnum,
       sortDir: 'descending' as SortDirEnum,
     },
   },
@@ -166,7 +166,7 @@ const ListRuleFilters: React.FC = () => {
         <Form>
           <FormikAutosave threshold={200} />
           <Flex spacing={4} align="center" pr={4}>
-            <Box width={425}>
+            <Box minWidth={425}>
               <FastField
                 name="nameContains"
                 icon="search"
@@ -176,7 +176,7 @@ const ListRuleFilters: React.FC = () => {
                 placeholder="Search for a rule..."
               />
             </Box>
-            <Box>
+            <Box minWidth={220}>
               <FastField
                 name="sorting"
                 as={FormikCombobox}

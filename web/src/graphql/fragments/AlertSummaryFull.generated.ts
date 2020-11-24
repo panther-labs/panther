@@ -28,6 +28,7 @@ export type AlertSummaryFull = Pick<
   | 'ruleId'
   | 'title'
   | 'severity'
+  | 'type'
   | 'status'
   | 'creationTime'
   | 'eventsMatched'
@@ -43,6 +44,7 @@ export const AlertSummaryFull = gql`
     ruleId
     title
     severity
+    type
     status
     creationTime
     deliveryResponses {

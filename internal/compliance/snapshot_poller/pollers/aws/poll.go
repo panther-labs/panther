@@ -24,11 +24,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	resourcesapimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	resourcesapimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -40,12 +41,15 @@ type resourcePoller struct {
 	resourcePoller awsmodels.ResourcePoller
 }
 
+const integrationType = "aws"
+
 var (
 	// Default region to use when building clients for the individual resource poller
 	// defaultRegion = endpoints.UsWest2RegionID
 	defaultRegion = os.Getenv("AWS_REGION")
 
-	auditRoleName = os.Getenv("AUDIT_ROLE_NAME")
+	// Exported for top-level unit tests to mock out
+	AuditRoleName = os.Getenv("AUDIT_ROLE_NAME")
 
 	// The default max number of resources to scan at once. We will keep paging until we scan this
 	// many resources, then do one additional page worth of resources
@@ -129,7 +133,7 @@ var (
 
 // Poll coordinates AWS generatedEvents gathering across all relevant resources for compliance monitoring.
 func Poll(scanRequest *pollermodels.ScanEntry) (
-	generatedEvents []*resourcesapimodels.AddResourceEntry, err error) {
+	generatedEvents []resourcesapimodels.AddResourceEntry, err error) {
 
 	if scanRequest.AWSAccountID == nil {
 		return nil, errors.New("no AWS AccountID provided")
@@ -137,11 +141,11 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 
 	// Build the audit role manually
 	// Format: arn:aws:iam::$(ACCOUNT_ID):role/PantherAuditRole-($REGION)
-	if len(auditRoleName) == 0 {
+	if len(AuditRoleName) == 0 {
 		return nil, errors.New("no audit role configured")
 	}
 	auditRoleARN := fmt.Sprintf("arn:aws:iam::%s:role/%s",
-		*scanRequest.AWSAccountID, auditRoleName)
+		*scanRequest.AWSAccountID, AuditRoleName)
 
 	zap.L().Debug("constructed audit role", zap.String("role", auditRoleARN))
 
@@ -159,8 +163,8 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		IntegrationID:       scanRequest.IntegrationID,
 		// This field may be nil
 		Region: scanRequest.Region,
-		// Note: The resources-api expects a strfmt.DateTime formatted string.
-		Timestamp:     utils.DateTimeFormat(utils.TimeNowFunc()),
+		// Note: The resources-api expects a time.Time formatted string.
+		Timestamp:     aws.Time(utils.TimeNowFunc()),
 		NextPageToken: scanRequest.NextPageToken,
 	}
 
@@ -184,7 +188,9 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 
 	// If a region is provided, we're good to start the scan
 	if scanRequest.Region != nil {
-		zap.L().Info("processing single region service scan")
+		zap.L().Info("processing single region service scan",
+			zap.String("region", *scanRequest.Region),
+			zap.String("resourceType", *scanRequest.ResourceType))
 		if poller, ok := ServicePollers[*scanRequest.ResourceType]; ok {
 			return serviceScan(
 				poller,
@@ -234,7 +240,7 @@ func serviceScan(
 	poller resourcePoller,
 	pollerInput *awsmodels.ResourcePollerInput,
 	scanRequest *pollermodels.ScanEntry,
-) (generatedEvents []*resourcesapimodels.AddResourceEntry, err error) {
+) (generatedEvents []resourcesapimodels.AddResourceEntry, err error) {
 
 	var marker *string
 	generatedEvents, marker, err = poller.resourcePoller(pollerInput)
@@ -274,7 +280,7 @@ func serviceScan(
 func singleResourceScan(
 	scanRequest *pollermodels.ScanEntry,
 	pollerInput *awsmodels.ResourcePollerInput,
-) ([]*resourcesapimodels.AddResourceEntry, error) {
+) ([]resourcesapimodels.AddResourceEntry, error) {
 
 	var resource interface{}
 	var err error
@@ -286,7 +292,12 @@ func singleResourceScan(
 		parsedResourceID := utils.ParseResourceID(*scanRequest.ResourceID)
 		resource, err = pollFunction(pollerInput, parsedResourceID, scanRequest)
 		if err != nil {
-			return nil, errors.Wrapf(err, "could not scan %#v", *scanRequest)
+			return nil, errors.Wrapf(
+				err,
+				"could not scan aws resource: %s, in account: %s",
+				aws.StringValue(scanRequest.ResourceID),
+				aws.StringValue(scanRequest.AWSAccountID),
+			)
 		}
 	} else if pollFunction, ok := IndividualARNResourcePollers[*scanRequest.ResourceType]; ok {
 		// Handle cases where the ResourceID is an ARN
@@ -298,7 +309,12 @@ func singleResourceScan(
 		}
 		resource, err = pollFunction(pollerInput, resourceARN, scanRequest)
 		if err != nil {
-			return nil, errors.Wrapf(err, "could not scan %#v", *scanRequest)
+			return nil, errors.Wrapf(
+				err,
+				"could not scan aws resource: %s, in account: %s",
+				aws.StringValue(scanRequest.ResourceID),
+				aws.StringValue(scanRequest.AWSAccountID),
+			)
 		}
 	} else {
 		zap.L().Error("unable to perform scan of specified resource type", zap.String("resourceType", *scanRequest.ResourceType))
@@ -312,11 +328,11 @@ func singleResourceScan(
 		return nil, nil
 	}
 
-	return []*resourcesapimodels.AddResourceEntry{{
+	return []resourcesapimodels.AddResourceEntry{{
 		Attributes:      resource,
-		ID:              resourcesapimodels.ResourceID(*scanRequest.ResourceID),
-		IntegrationID:   resourcesapimodels.IntegrationID(*scanRequest.IntegrationID),
-		IntegrationType: resourcesapimodels.IntegrationTypeAws,
-		Type:            resourcesapimodels.ResourceType(*scanRequest.ResourceType),
+		ID:              *scanRequest.ResourceID,
+		IntegrationID:   *scanRequest.IntegrationID,
+		IntegrationType: integrationType,
+		Type:            *scanRequest.ResourceType,
 	}}, nil
 }

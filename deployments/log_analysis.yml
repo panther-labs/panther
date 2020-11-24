@@ -26,15 +26,13 @@ Parameters:
     Description: SNS topic for CloudWatch alarms
     # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
-  AnalysisApiId:
-    Type: String
-    Description: API Gateway for analysis-api
-    # Example: "0jcmwnr9cj"
-    AllowedPattern: '^[0-9a-z]{10}$'
   AthenaResultsBucket:
     Type: String
     Description: Name of the S3 bucket created to hold Athena results
     AllowedPattern: '^[a-z0-9.-]{3,63}$'
+  AthenaWorkGroup:
+    Type: String
+    Description: The Athena workgroup for Panther queries
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
@@ -63,11 +61,6 @@ Parameters:
     Description: Log processor Lambda memory allocation
     MinValue: 256 # 128 is too small, risks OOM errors
     MaxValue: 3008
-  LogProcessorSQSDelaySeconds:
-    Type: Number
-    Description: The number of seconds to delay events into the log processor queue
-    MinValue: 0 # no delay, poor aggregation
-    MaxValue: 20 # this is the max time we can long poll sqs
   ProcessedDataBucket:
     Type: String
     Description: Name of the S3 bucket which stores processed logs
@@ -98,7 +91,7 @@ Parameters:
 Mappings:
   Functions:
     AlertsApi:
-      Memory: 256
+      Memory: 512
       Timeout: 60
     AlertsForwarder:
       Memory: 128
@@ -121,25 +114,16 @@ Conditions:
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
-  ##### Configure Athena #####
-  AthenaConfigure:
-    Type: Custom::AthenaInit # this will associate the bucket as the default location for results
-    Properties:
-      AthenaResultsBucket: !Ref AthenaResultsBucket
-      CustomResourceVersion: !Ref CustomResourceVersion
-      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
-
   ###### Update Glue Table Schemas for Deployed Tables #####
-  UpdateGlueTables:
+  UpdateLogProcessorGlueTables:
     DependsOn:
-      - AthenaConfigure
       - UpdaterFunction
-    Type: Custom::UpdateGlueTables
+    Type: Custom::UpdateLogProcessorTables
     Properties:
       # Update in case TablesSignature or CustomResourceVersion has changed
       TablesSignature: !Ref TablesSignature
       CustomResourceVersion: !Ref CustomResourceVersion
-      ProcessedDataBucket: !Ref ProcessedDataBucket
+      DataCatalogUpdaterQueueURL: !Ref UpdaterQueue
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   InputDataSnsSubscription:
@@ -203,8 +187,6 @@ Resources:
           ALERTS_TABLE_NAME: panther-log-alert-info
           ALERTS_RULE_INDEX_NAME: ruleId-creationTime-index
           ALERTS_TIME_INDEX_NAME: timePartition-creationTime-index
-          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          ANALYSIS_API_PATH: v1
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
       FunctionName: panther-alerts-api
       # <cfndoc>
@@ -330,8 +312,6 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           ALERTS_TABLE: panther-log-alert-info
-          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          ANALYSIS_API_PATH: v1
           ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts-queue
       Events:
         DynamoDBEvent:
@@ -373,8 +353,8 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action: execute-api:Invoke
-              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/rule
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
         - Id: ManageAlerts
           Version: 2012-10-17
           Statement:
@@ -410,7 +390,6 @@ Resources:
       KmsMasterKeyId: !Ref SqsKeyId
       # Reference on KeyReuse: https://amzn.to/2ngIsFB
       KmsDataKeyReusePeriodSeconds: 3600 # 1 hour
-      DelaySeconds: !Ref LogProcessorSQSDelaySeconds # Allows log processor to see into the future!
       VisibilityTimeout: !FindInMap [Functions, LogProcessor, Timeout]
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt LogProcessorDLQ.Arn
@@ -494,14 +473,13 @@ Resources:
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
           SNS_TOPIC_ARN: !Ref ProcessedDataTopicArn
           SQS_QUEUE_URL: !Ref LogProcessorQueue
-          SQS_DELAY_SEC: !Ref LogProcessorSQSDelaySeconds
           INPUT_DATA_BUCKET: !Ref InputDataBucket
       Events:
-        Queue:
-          Type: SQS
+        Tick: # This drives polling by the log processor
+          Type: Schedule
           Properties:
-            Queue: !GetAtt LogProcessorQueue.Arn
-            BatchSize: 10
+            Schedule: rate(1 minute) # NOTE: CloudWatch does not support sub-minute timers. We might want to get around this with Step Functions.
+            Input: '{"tick": true}'
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref 'AWS::NoValue']
       Policies:
         - Id: ConfirmSubscriptions
@@ -514,6 +492,15 @@ Resources:
               # This account will be whitelisted and SNS topic from it can subscribe to the SQS queue.
               Action: sns:ConfirmSubscription
               Resource: '*'
+        - Id: SQS
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sqs:GetQueueAttributes
+                - sqs:DeleteMessage*
+                - sqs:ReceiveMessage
+              Resource: !GetAtt LogProcessorQueue.Arn
         - Id: OutputToS3
           Version: 2012-10-17
           Statement:
@@ -537,12 +524,14 @@ Resources:
               Condition:
                 Bool:
                   aws:SecureTransport: true
-        - Id: InvokeSnapshotAPI
+        - Id: InvokeLambdas
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-log-processor
         - Id: AccessSqsKms
           Version: 2012-10-17
           Statement:
@@ -571,6 +560,12 @@ Resources:
       Region: !Ref AWS::Region
       TopicArn: !Ref ProcessedDataTopicArn
       RawMessageDelivery: true
+      # Receive notifications only for Panther log processor events (ignore all others!)
+      FilterPolicy:
+        type:
+          - LogData
+          - RuleMatches
+          - RuleErrors
 
   UpdaterQueuePolicy:
     Type: AWS::SQS::QueuePolicy
@@ -670,7 +665,9 @@ Resources:
       Timeout: !FindInMap [Functions, Updater, Timeout]
       Environment:
         Variables:
+          ATHENA_WORKGROUP: !Ref AthenaWorkGroup
           DEBUG: !Ref Debug
+          QUEUE_URL: !Ref UpdaterQueue
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
       Events:
         Queue:
@@ -697,6 +694,7 @@ Resources:
                 - glue:GetTable
                 - glue:GetTables
                 - glue:CreateTable
+                - glue:CreateDatabase
                 - glue:UpdateTable
                 - glue:CreatePartition
                 - glue:GetPartition
@@ -706,6 +704,13 @@ Resources:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+        - Id: SQSPermissions # allow writing
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sqs:SendMessage
+              Resource:
+                - !GetAtt UpdaterQueue.Arn # send messages to updater queue (defer tasks)
         - Id: AthenaPermissions # to create views over Glue tables
           Version: 2012-10-17
           Statement:
@@ -736,7 +741,8 @@ Resources:
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-datacatalog-updater
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-logtypes-api
 
   UpdaterAlarms:
     Type: Custom::LambdaAlarms
@@ -890,8 +896,6 @@ Resources:
       Handler: src.main.lambda_handler
       Environment:
         Variables:
-          ANALYSIS_API_FQDN: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          ANALYSIS_API_PATH: v1
           DEBUG: !Ref Debug
           ALERTS_QUEUE: panther-log-alert-notifications-queue
           S3_BUCKET: !Ref ProcessedDataBucket
@@ -944,13 +948,13 @@ Resources:
                 - kms:Encrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
-        - Id: InvokeGatewayApi
+        - Id: InvokeAnalysisApi
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action: execute-api:Invoke
-              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/enabled
-        - Id: OptionalExtraLookup
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
+        - Id: ResourceLookup
           Version: 2012-10-17
           Statement:
             - Effect: Allow

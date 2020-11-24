@@ -29,6 +29,7 @@ export type Scalars = {
   Float: number;
   AWSDateTime: string;
   AWSJSON: string;
+  Long: number;
   AWSEmail: string;
   AWSTimestamp: number;
 };
@@ -64,14 +65,14 @@ export type AddPolicyInput = {
   displayName?: Maybe<Scalars['String']>;
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   runbook?: Maybe<Scalars['String']>;
   severity: SeverityEnum;
   suppressions?: Maybe<Array<Maybe<Scalars['String']>>>;
   tags?: Maybe<Array<Maybe<Scalars['String']>>>;
-  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
+  tests?: Maybe<Array<Maybe<DetectionTestDefinitionInput>>>;
 };
 
 export type AddRuleInput = {
@@ -83,12 +84,12 @@ export type AddRuleInput = {
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   runbook?: Maybe<Scalars['String']>;
   severity: SeverityEnum;
   tags?: Maybe<Array<Maybe<Scalars['String']>>>;
-  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
+  tests?: Maybe<Array<Maybe<DetectionTestDefinitionInput>>>;
 };
 
 export type AddS3LogIntegrationInput = {
@@ -130,6 +131,7 @@ export type AlertDetails = Alert & {
   severity: SeverityEnum;
   status: AlertStatusesEnum;
   title: Scalars['String'];
+  type: AlertTypesEnum;
   logTypes: Array<Scalars['String']>;
   lastUpdatedBy?: Maybe<Scalars['ID']>;
   lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
@@ -153,6 +155,7 @@ export type AlertSummary = Alert & {
   deliveryResponses: Array<Maybe<DeliveryResponse>>;
   eventsMatched: Scalars['Int'];
   ruleId?: Maybe<Scalars['ID']>;
+  type: AlertTypesEnum;
   severity: SeverityEnum;
   status: AlertStatusesEnum;
   title: Scalars['String'];
@@ -162,9 +165,9 @@ export type AlertSummary = Alert & {
   updateTime: Scalars['AWSDateTime'];
 };
 
-export enum AnalysisTypeEnum {
+export enum AlertTypesEnum {
   Rule = 'RULE',
-  Policy = 'POLICY',
+  RuleError = 'RULE_ERROR',
 }
 
 export type AsanaConfig = {
@@ -333,6 +336,25 @@ export enum DestinationTypeEnum {
   Customwebhook = 'customwebhook',
 }
 
+export type DetectionTestDefinition = {
+  __typename?: 'DetectionTestDefinition';
+  expectedResult?: Maybe<Scalars['Boolean']>;
+  name?: Maybe<Scalars['String']>;
+  resource?: Maybe<Scalars['String']>;
+};
+
+export type DetectionTestDefinitionInput = {
+  expectedResult?: Maybe<Scalars['Boolean']>;
+  name?: Maybe<Scalars['String']>;
+  resource?: Maybe<Scalars['String']>;
+};
+
+export type Error = {
+  __typename?: 'Error';
+  code?: Maybe<Scalars['String']>;
+  message: Scalars['String'];
+};
+
 export type FloatSeries = {
   __typename?: 'FloatSeries';
   label: Scalars['String'];
@@ -367,12 +389,12 @@ export type GetComplianceIntegrationTemplateInput = {
 };
 
 export type GetGlobalPythonModuleInput = {
-  globalId: Scalars['ID'];
+  id: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
 };
 
 export type GetPolicyInput = {
-  policyId: Scalars['ID'];
+  id: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
 };
 
@@ -381,7 +403,7 @@ export type GetResourceInput = {
 };
 
 export type GetRuleInput = {
-  ruleId: Scalars['ID'];
+  id: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
 };
 
@@ -458,6 +480,7 @@ export type ListAlertsInput = {
   exclusiveStartKey?: Maybe<Scalars['String']>;
   severity?: Maybe<Array<Maybe<SeverityEnum>>>;
   logTypes?: Maybe<Array<Scalars['String']>>;
+  type?: Maybe<AlertTypesEnum>;
   nameContains?: Maybe<Scalars['String']>;
   createdAtBefore?: Maybe<Scalars['AWSDateTime']>;
   createdAtAfter?: Maybe<Scalars['AWSDateTime']>;
@@ -512,9 +535,9 @@ export type ListPoliciesInput = {
   nameContains?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
   hasRemediation?: Maybe<Scalars['Boolean']>;
-  resourceTypes?: Maybe<Scalars['String']>;
+  resourceTypes?: Maybe<Array<Scalars['String']>>;
   severity?: Maybe<SeverityEnum>;
-  tags?: Maybe<Scalars['String']>;
+  tags?: Maybe<Array<Scalars['String']>>;
   sortBy?: Maybe<ListPoliciesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
   pageSize?: Maybe<Scalars['Int']>;
@@ -541,7 +564,7 @@ export type ListResourcesInput = {
   deleted?: Maybe<Scalars['Boolean']>;
   idContains?: Maybe<Scalars['String']>;
   integrationId?: Maybe<Scalars['ID']>;
-  types?: Maybe<Scalars['String']>;
+  types?: Maybe<Array<Scalars['String']>>;
   sortBy?: Maybe<ListResourcesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
   pageSize?: Maybe<Scalars['Int']>;
@@ -580,6 +603,7 @@ export type ListRulesResponse = {
 };
 
 export enum ListRulesSortFieldsEnum {
+  DisplayName = 'displayName',
   Enabled = 'enabled',
   Id = 'id',
   LastModified = 'lastModified',
@@ -596,8 +620,8 @@ export type LogAnalysisMetricsInput = {
 
 export type LogAnalysisMetricsResponse = {
   __typename?: 'LogAnalysisMetricsResponse';
-  eventsProcessed: SeriesData;
-  alertsBySeverity: SeriesData;
+  eventsProcessed: LongSeriesData;
+  alertsBySeverity: LongSeriesData;
   eventsLatency: FloatSeriesData;
   totalAlertsDelta: Array<SingleValue>;
   alertsByRuleID: Array<SingleValue>;
@@ -607,6 +631,18 @@ export type LogAnalysisMetricsResponse = {
 };
 
 export type LogIntegration = S3LogIntegration | SqsLogSourceIntegration;
+
+export type LongSeries = {
+  __typename?: 'LongSeries';
+  label: Scalars['String'];
+  values: Array<Scalars['Long']>;
+};
+
+export type LongSeriesData = {
+  __typename?: 'LongSeriesData';
+  timestamps: Array<Scalars['AWSDateTime']>;
+  series: Array<LongSeries>;
+};
 
 export type ModifyGlobalPythonModuleInput = {
   description: Scalars['String'];
@@ -644,7 +680,8 @@ export type Mutation = {
   deliverAlert: AlertSummary;
   resetUserPassword: User;
   suppressPolicies?: Maybe<Scalars['Boolean']>;
-  testPolicy?: Maybe<TestPolicyResponse>;
+  testPolicy: TestPolicyResponse;
+  testRule: TestRuleResponse;
   updateAlertStatus: Array<AlertSummary>;
   updateDestination?: Maybe<Destination>;
   updateComplianceIntegration: ComplianceIntegration;
@@ -735,7 +772,11 @@ export type MutationSuppressPoliciesArgs = {
 };
 
 export type MutationTestPolicyArgs = {
-  input?: Maybe<TestPolicyInput>;
+  input: TestPolicyInput;
+};
+
+export type MutationTestRuleArgs = {
+  input: TestRuleInput;
 };
 
 export type MutationUpdateAlertStatusArgs = {
@@ -785,11 +826,18 @@ export type MutationUpdateGlobalPythonlModuleArgs = {
 export type OpsgenieConfig = {
   __typename?: 'OpsgenieConfig';
   apiKey: Scalars['String'];
+  serviceRegion: OpsgenieServiceRegionEnum;
 };
 
 export type OpsgenieConfigInput = {
   apiKey: Scalars['String'];
+  serviceRegion: OpsgenieServiceRegionEnum;
 };
+
+export enum OpsgenieServiceRegionEnum {
+  Eu = 'EU',
+  Us = 'US',
+}
 
 export type OrganizationReportBySeverity = {
   __typename?: 'OrganizationReportBySeverity';
@@ -851,14 +899,14 @@ export type PolicyDetails = {
   id: Scalars['ID'];
   lastModified?: Maybe<Scalars['AWSDateTime']>;
   lastModifiedBy?: Maybe<Scalars['ID']>;
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds: Array<Scalars['ID']>;
   reference?: Maybe<Scalars['String']>;
   resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   runbook?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
   suppressions?: Maybe<Array<Maybe<Scalars['String']>>>;
   tags?: Maybe<Array<Maybe<Scalars['String']>>>;
-  tests?: Maybe<Array<Maybe<PolicyUnitTest>>>;
+  tests?: Maybe<Array<Maybe<DetectionTestDefinition>>>;
   versionId?: Maybe<Scalars['ID']>;
 };
 
@@ -872,28 +920,10 @@ export type PolicySummary = {
   enabled?: Maybe<Scalars['Boolean']>;
   id: Scalars['ID'];
   lastModified?: Maybe<Scalars['AWSDateTime']>;
+  outputIds: Array<Scalars['ID']>;
   resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   severity?: Maybe<SeverityEnum>;
   tags?: Maybe<Array<Maybe<Scalars['String']>>>;
-};
-
-export type PolicyUnitTest = {
-  __typename?: 'PolicyUnitTest';
-  expectedResult?: Maybe<Scalars['Boolean']>;
-  name?: Maybe<Scalars['String']>;
-  resource?: Maybe<Scalars['String']>;
-};
-
-export type PolicyUnitTestError = {
-  __typename?: 'PolicyUnitTestError';
-  name?: Maybe<Scalars['String']>;
-  errorMessage?: Maybe<Scalars['String']>;
-};
-
-export type PolicyUnitTestInput = {
-  expectedResult?: Maybe<Scalars['Boolean']>;
-  name?: Maybe<Scalars['String']>;
-  resource?: Maybe<Scalars['String']>;
 };
 
 export type Query = {
@@ -1061,12 +1091,12 @@ export type RuleDetails = {
   lastModified?: Maybe<Scalars['AWSDateTime']>;
   lastModifiedBy?: Maybe<Scalars['ID']>;
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds: Array<Scalars['ID']>;
   reference?: Maybe<Scalars['String']>;
   runbook?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
   tags?: Maybe<Array<Maybe<Scalars['String']>>>;
-  tests?: Maybe<Array<Maybe<PolicyUnitTest>>>;
+  tests?: Maybe<Array<Maybe<DetectionTestDefinition>>>;
   versionId?: Maybe<Scalars['ID']>;
 };
 
@@ -1080,6 +1110,7 @@ export type RuleSummary = {
   createdAt?: Maybe<Scalars['AWSDateTime']>;
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   severity?: Maybe<SeverityEnum>;
+  outputIds: Array<Scalars['ID']>;
   tags?: Maybe<Array<Scalars['String']>>;
 };
 
@@ -1120,18 +1151,6 @@ export type ScannedResourceStats = {
 
 export type SendTestAlertInput = {
   outputIds: Array<Scalars['ID']>;
-};
-
-export type Series = {
-  __typename?: 'Series';
-  label?: Maybe<Scalars['String']>;
-  values?: Maybe<Array<Maybe<Scalars['Int']>>>;
-};
-
-export type SeriesData = {
-  __typename?: 'SeriesData';
-  timestamps?: Maybe<Array<Maybe<Scalars['AWSDateTime']>>>;
-  series?: Maybe<Array<Maybe<Series>>>;
 };
 
 export enum SeverityEnum {
@@ -1216,19 +1235,70 @@ export type SuppressPoliciesInput = {
   resourcePatterns: Array<Maybe<Scalars['String']>>;
 };
 
+export type TestDetectionSubRecord = {
+  __typename?: 'TestDetectionSubRecord';
+  output?: Maybe<Scalars['String']>;
+  error?: Maybe<Error>;
+};
+
 export type TestPolicyInput = {
-  body?: Maybe<Scalars['String']>;
-  resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  analysisType?: Maybe<AnalysisTypeEnum>;
-  tests?: Maybe<Array<PolicyUnitTestInput>>;
+  body: Scalars['String'];
+  resourceTypes: Array<Scalars['String']>;
+  tests: Array<DetectionTestDefinitionInput>;
+};
+
+export type TestPolicyRecord = TestRecord & {
+  __typename?: 'TestPolicyRecord';
+  id: Scalars['String'];
+  name: Scalars['String'];
+  passed: Scalars['Boolean'];
+  functions: TestPolicyRecordFunctions;
+  error?: Maybe<Error>;
+};
+
+export type TestPolicyRecordFunctions = {
+  __typename?: 'TestPolicyRecordFunctions';
+  policyFunction: TestDetectionSubRecord;
 };
 
 export type TestPolicyResponse = {
   __typename?: 'TestPolicyResponse';
-  testSummary?: Maybe<Scalars['Boolean']>;
-  testsPassed?: Maybe<Array<Maybe<Scalars['String']>>>;
-  testsFailed?: Maybe<Array<Maybe<Scalars['String']>>>;
-  testsErrored?: Maybe<Array<Maybe<PolicyUnitTestError>>>;
+  results: Array<TestPolicyRecord>;
+};
+
+export type TestRecord = {
+  id: Scalars['String'];
+  name: Scalars['String'];
+  passed: Scalars['Boolean'];
+  error?: Maybe<Error>;
+};
+
+export type TestRuleInput = {
+  body: Scalars['String'];
+  logTypes: Array<Scalars['String']>;
+  tests: Array<DetectionTestDefinitionInput>;
+};
+
+export type TestRuleRecord = TestRecord & {
+  __typename?: 'TestRuleRecord';
+  id: Scalars['String'];
+  name: Scalars['String'];
+  passed: Scalars['Boolean'];
+  functions: TestRuleRecordFunctions;
+  error?: Maybe<Error>;
+};
+
+export type TestRuleRecordFunctions = {
+  __typename?: 'TestRuleRecordFunctions';
+  ruleFunction: TestDetectionSubRecord;
+  titleFunction?: Maybe<TestDetectionSubRecord>;
+  dedupFunction?: Maybe<TestDetectionSubRecord>;
+  alertContextFunction?: Maybe<TestDetectionSubRecord>;
+};
+
+export type TestRuleResponse = {
+  __typename?: 'TestRuleResponse';
+  results: Array<TestRuleRecord>;
 };
 
 export type UpdateAlertStatusInput = {
@@ -1258,14 +1328,14 @@ export type UpdatePolicyInput = {
   displayName?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
   id: Scalars['ID'];
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   runbook?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
   suppressions?: Maybe<Array<Maybe<Scalars['String']>>>;
   tags?: Maybe<Array<Maybe<Scalars['String']>>>;
-  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
+  tests?: Maybe<Array<Maybe<DetectionTestDefinitionInput>>>;
 };
 
 export type UpdateRuleInput = {
@@ -1277,12 +1347,12 @@ export type UpdateRuleInput = {
   enabled?: Maybe<Scalars['Boolean']>;
   id: Scalars['ID'];
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   runbook?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
   tags?: Maybe<Array<Maybe<Scalars['String']>>>;
-  tests?: Maybe<Array<Maybe<PolicyUnitTestInput>>>;
+  tests?: Maybe<Array<Maybe<DetectionTestDefinitionInput>>>;
 };
 
 export type UpdateS3LogIntegrationInput = {
@@ -1438,6 +1508,7 @@ export type ResolversTypes = {
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   SeverityEnum: SeverityEnum;
   AlertStatusesEnum: AlertStatusesEnum;
+  AlertTypesEnum: AlertTypesEnum;
   AWSJSON: ResolverTypeWrapper<Scalars['AWSJSON']>;
   ListAlertsInput: ListAlertsInput;
   ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
@@ -1455,6 +1526,7 @@ export type ResolversTypes = {
   GithubConfig: ResolverTypeWrapper<GithubConfig>;
   JiraConfig: ResolverTypeWrapper<JiraConfig>;
   OpsgenieConfig: ResolverTypeWrapper<OpsgenieConfig>;
+  OpsgenieServiceRegionEnum: OpsgenieServiceRegionEnum;
   MsTeamsConfig: ResolverTypeWrapper<MsTeamsConfig>;
   AsanaConfig: ResolverTypeWrapper<AsanaConfig>;
   CustomWebhookConfig: ResolverTypeWrapper<CustomWebhookConfig>;
@@ -1487,7 +1559,7 @@ export type ResolversTypes = {
   GlobalPythonModule: ResolverTypeWrapper<GlobalPythonModule>;
   GetPolicyInput: GetPolicyInput;
   PolicyDetails: ResolverTypeWrapper<PolicyDetails>;
-  PolicyUnitTest: ResolverTypeWrapper<PolicyUnitTest>;
+  DetectionTestDefinition: ResolverTypeWrapper<DetectionTestDefinition>;
   ListPoliciesInput: ListPoliciesInput;
   ListPoliciesSortFieldsEnum: ListPoliciesSortFieldsEnum;
   ListPoliciesResponse: ResolverTypeWrapper<ListPoliciesResponse>;
@@ -1502,8 +1574,9 @@ export type ResolversTypes = {
   ScannedResourceStats: ResolverTypeWrapper<ScannedResourceStats>;
   LogAnalysisMetricsInput: LogAnalysisMetricsInput;
   LogAnalysisMetricsResponse: ResolverTypeWrapper<LogAnalysisMetricsResponse>;
-  SeriesData: ResolverTypeWrapper<SeriesData>;
-  Series: ResolverTypeWrapper<Series>;
+  LongSeriesData: ResolverTypeWrapper<LongSeriesData>;
+  LongSeries: ResolverTypeWrapper<LongSeries>;
+  Long: ResolverTypeWrapper<Scalars['Long']>;
   FloatSeriesData: ResolverTypeWrapper<FloatSeriesData>;
   FloatSeries: ResolverTypeWrapper<FloatSeries>;
   Float: ResolverTypeWrapper<Scalars['Float']>;
@@ -1537,7 +1610,7 @@ export type ResolversTypes = {
   AddSqsLogIntegrationInput: AddSqsLogIntegrationInput;
   SqsLogConfigInput: SqsLogConfigInput;
   AddPolicyInput: AddPolicyInput;
-  PolicyUnitTestInput: PolicyUnitTestInput;
+  DetectionTestDefinitionInput: DetectionTestDefinitionInput;
   AddRuleInput: AddRuleInput;
   AddGlobalPythonModuleInput: AddGlobalPythonModuleInput;
   DeletePolicyInput: DeletePolicyInput;
@@ -1551,9 +1624,16 @@ export type ResolversTypes = {
   DeliverAlertInput: DeliverAlertInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
   TestPolicyInput: TestPolicyInput;
-  AnalysisTypeEnum: AnalysisTypeEnum;
   TestPolicyResponse: ResolverTypeWrapper<TestPolicyResponse>;
-  PolicyUnitTestError: ResolverTypeWrapper<PolicyUnitTestError>;
+  TestPolicyRecord: ResolverTypeWrapper<TestPolicyRecord>;
+  TestRecord: ResolversTypes['TestPolicyRecord'] | ResolversTypes['TestRuleRecord'];
+  Error: ResolverTypeWrapper<Error>;
+  TestPolicyRecordFunctions: ResolverTypeWrapper<TestPolicyRecordFunctions>;
+  TestDetectionSubRecord: ResolverTypeWrapper<TestDetectionSubRecord>;
+  TestRuleInput: TestRuleInput;
+  TestRuleResponse: ResolverTypeWrapper<TestRuleResponse>;
+  TestRuleRecord: ResolverTypeWrapper<TestRuleRecord>;
+  TestRuleRecordFunctions: ResolverTypeWrapper<TestRuleRecordFunctions>;
   UpdateAlertStatusInput: UpdateAlertStatusInput;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
@@ -1582,6 +1662,7 @@ export type ResolversParentTypes = {
   Boolean: Scalars['Boolean'];
   SeverityEnum: SeverityEnum;
   AlertStatusesEnum: AlertStatusesEnum;
+  AlertTypesEnum: AlertTypesEnum;
   AWSJSON: Scalars['AWSJSON'];
   ListAlertsInput: ListAlertsInput;
   ListAlertsSortFieldsEnum: ListAlertsSortFieldsEnum;
@@ -1599,6 +1680,7 @@ export type ResolversParentTypes = {
   GithubConfig: GithubConfig;
   JiraConfig: JiraConfig;
   OpsgenieConfig: OpsgenieConfig;
+  OpsgenieServiceRegionEnum: OpsgenieServiceRegionEnum;
   MsTeamsConfig: MsTeamsConfig;
   AsanaConfig: AsanaConfig;
   CustomWebhookConfig: CustomWebhookConfig;
@@ -1631,7 +1713,7 @@ export type ResolversParentTypes = {
   GlobalPythonModule: GlobalPythonModule;
   GetPolicyInput: GetPolicyInput;
   PolicyDetails: PolicyDetails;
-  PolicyUnitTest: PolicyUnitTest;
+  DetectionTestDefinition: DetectionTestDefinition;
   ListPoliciesInput: ListPoliciesInput;
   ListPoliciesSortFieldsEnum: ListPoliciesSortFieldsEnum;
   ListPoliciesResponse: ListPoliciesResponse;
@@ -1648,8 +1730,9 @@ export type ResolversParentTypes = {
   ScannedResourceStats: ScannedResourceStats;
   LogAnalysisMetricsInput: LogAnalysisMetricsInput;
   LogAnalysisMetricsResponse: LogAnalysisMetricsResponse;
-  SeriesData: SeriesData;
-  Series: Series;
+  LongSeriesData: LongSeriesData;
+  LongSeries: LongSeries;
+  Long: Scalars['Long'];
   FloatSeriesData: FloatSeriesData;
   FloatSeries: FloatSeries;
   Float: Scalars['Float'];
@@ -1683,7 +1766,7 @@ export type ResolversParentTypes = {
   AddSqsLogIntegrationInput: AddSqsLogIntegrationInput;
   SqsLogConfigInput: SqsLogConfigInput;
   AddPolicyInput: AddPolicyInput;
-  PolicyUnitTestInput: PolicyUnitTestInput;
+  DetectionTestDefinitionInput: DetectionTestDefinitionInput;
   AddRuleInput: AddRuleInput;
   AddGlobalPythonModuleInput: AddGlobalPythonModuleInput;
   DeletePolicyInput: DeletePolicyInput;
@@ -1697,9 +1780,16 @@ export type ResolversParentTypes = {
   DeliverAlertInput: DeliverAlertInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
   TestPolicyInput: TestPolicyInput;
-  AnalysisTypeEnum: AnalysisTypeEnum;
   TestPolicyResponse: TestPolicyResponse;
-  PolicyUnitTestError: PolicyUnitTestError;
+  TestPolicyRecord: TestPolicyRecord;
+  TestRecord: ResolversParentTypes['TestPolicyRecord'] | ResolversParentTypes['TestRuleRecord'];
+  Error: Error;
+  TestPolicyRecordFunctions: TestPolicyRecordFunctions;
+  TestDetectionSubRecord: TestDetectionSubRecord;
+  TestRuleInput: TestRuleInput;
+  TestRuleResponse: TestRuleResponse;
+  TestRuleRecord: TestRuleRecord;
+  TestRuleRecordFunctions: TestRuleRecordFunctions;
   UpdateAlertStatusInput: UpdateAlertStatusInput;
   UpdateComplianceIntegrationInput: UpdateComplianceIntegrationInput;
   UpdateS3LogIntegrationInput: UpdateS3LogIntegrationInput;
@@ -1762,6 +1852,7 @@ export type AlertDetailsResolvers<
   severity?: Resolver<ResolversTypes['SeverityEnum'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['AlertStatusesEnum'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['AlertTypesEnum'], ParentType, ContextType>;
   logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   lastUpdatedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
@@ -1785,6 +1876,7 @@ export type AlertSummaryResolvers<
   >;
   eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['AlertTypesEnum'], ParentType, ContextType>;
   severity?: Resolver<ResolversTypes['SeverityEnum'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['AlertStatusesEnum'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -1939,6 +2031,25 @@ export type DestinationConfigResolvers<
   msTeams?: Resolver<Maybe<ResolversTypes['MsTeamsConfig']>, ParentType, ContextType>;
   asana?: Resolver<Maybe<ResolversTypes['AsanaConfig']>, ParentType, ContextType>;
   customWebhook?: Resolver<Maybe<ResolversTypes['CustomWebhookConfig']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type DetectionTestDefinitionResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['DetectionTestDefinition'] = ResolversParentTypes['DetectionTestDefinition']
+> = {
+  expectedResult?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  resource?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type ErrorResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['Error'] = ResolversParentTypes['Error']
+> = {
+  code?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2104,8 +2215,8 @@ export type LogAnalysisMetricsResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['LogAnalysisMetricsResponse'] = ResolversParentTypes['LogAnalysisMetricsResponse']
 > = {
-  eventsProcessed?: Resolver<ResolversTypes['SeriesData'], ParentType, ContextType>;
-  alertsBySeverity?: Resolver<ResolversTypes['SeriesData'], ParentType, ContextType>;
+  eventsProcessed?: Resolver<ResolversTypes['LongSeriesData'], ParentType, ContextType>;
+  alertsBySeverity?: Resolver<ResolversTypes['LongSeriesData'], ParentType, ContextType>;
   eventsLatency?: Resolver<ResolversTypes['FloatSeriesData'], ParentType, ContextType>;
   totalAlertsDelta?: Resolver<Array<ResolversTypes['SingleValue']>, ParentType, ContextType>;
   alertsByRuleID?: Resolver<Array<ResolversTypes['SingleValue']>, ParentType, ContextType>;
@@ -2124,6 +2235,28 @@ export type LogIntegrationResolvers<
     ParentType,
     ContextType
   >;
+};
+
+export interface LongScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Long'], any> {
+  name: 'Long';
+}
+
+export type LongSeriesResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['LongSeries'] = ResolversParentTypes['LongSeries']
+> = {
+  label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  values?: Resolver<Array<ResolversTypes['Long']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type LongSeriesDataResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['LongSeriesData'] = ResolversParentTypes['LongSeriesData']
+> = {
+  timestamps?: Resolver<Array<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  series?: Resolver<Array<ResolversTypes['LongSeries']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
 export type MsTeamsConfigResolvers<
@@ -2253,10 +2386,16 @@ export type MutationResolvers<
     RequireFields<MutationSuppressPoliciesArgs, 'input'>
   >;
   testPolicy?: Resolver<
-    Maybe<ResolversTypes['TestPolicyResponse']>,
+    ResolversTypes['TestPolicyResponse'],
     ParentType,
     ContextType,
-    RequireFields<MutationTestPolicyArgs, never>
+    RequireFields<MutationTestPolicyArgs, 'input'>
+  >;
+  testRule?: Resolver<
+    ResolversTypes['TestRuleResponse'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationTestRuleArgs, 'input'>
   >;
   updateAlertStatus?: Resolver<
     Array<ResolversTypes['AlertSummary']>,
@@ -2331,6 +2470,7 @@ export type OpsgenieConfigResolvers<
   ParentType extends ResolversParentTypes['OpsgenieConfig'] = ResolversParentTypes['OpsgenieConfig']
 > = {
   apiKey?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  serviceRegion?: Resolver<ResolversTypes['OpsgenieServiceRegionEnum'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2407,14 +2547,18 @@ export type PolicyDetailsResolvers<
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   lastModifiedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  outputIds?: Resolver<Maybe<Array<Maybe<ResolversTypes['ID']>>>, ParentType, ContextType>;
+  outputIds?: Resolver<Array<ResolversTypes['ID']>, ParentType, ContextType>;
   reference?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   resourceTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   runbook?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
   suppressions?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   tags?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  tests?: Resolver<Maybe<Array<Maybe<ResolversTypes['PolicyUnitTest']>>>, ParentType, ContextType>;
+  tests?: Resolver<
+    Maybe<Array<Maybe<ResolversTypes['DetectionTestDefinition']>>>,
+    ParentType,
+    ContextType
+  >;
   versionId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
@@ -2435,28 +2579,10 @@ export type PolicySummaryResolvers<
   enabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  outputIds?: Resolver<Array<ResolversTypes['ID']>, ParentType, ContextType>;
   resourceTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
   tags?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type PolicyUnitTestResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['PolicyUnitTest'] = ResolversParentTypes['PolicyUnitTest']
-> = {
-  expectedResult?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  resource?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type PolicyUnitTestErrorResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['PolicyUnitTestError'] = ResolversParentTypes['PolicyUnitTestError']
-> = {
-  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  errorMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2663,12 +2789,16 @@ export type RuleDetailsResolvers<
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   lastModifiedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   logTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  outputIds?: Resolver<Maybe<Array<Maybe<ResolversTypes['ID']>>>, ParentType, ContextType>;
+  outputIds?: Resolver<Array<ResolversTypes['ID']>, ParentType, ContextType>;
   reference?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   runbook?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
   tags?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  tests?: Resolver<Maybe<Array<Maybe<ResolversTypes['PolicyUnitTest']>>>, ParentType, ContextType>;
+  tests?: Resolver<
+    Maybe<Array<Maybe<ResolversTypes['DetectionTestDefinition']>>>,
+    ParentType,
+    ContextType
+  >;
   versionId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
@@ -2685,6 +2815,7 @@ export type RuleSummaryResolvers<
   createdAt?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   logTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
+  outputIds?: Resolver<Array<ResolversTypes['ID']>, ParentType, ContextType>;
   tags?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
@@ -2741,28 +2872,6 @@ export type ScannedResourceStatsResolvers<
 > = {
   count?: Resolver<Maybe<ResolversTypes['ComplianceStatusCounts']>, ParentType, ContextType>;
   type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type SeriesResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Series'] = ResolversParentTypes['Series']
-> = {
-  label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  values?: Resolver<Maybe<Array<Maybe<ResolversTypes['Int']>>>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type SeriesDataResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['SeriesData'] = ResolversParentTypes['SeriesData']
-> = {
-  timestamps?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['AWSDateTime']>>>,
-    ParentType,
-    ContextType
-  >;
-  series?: Resolver<Maybe<Array<Maybe<ResolversTypes['Series']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2845,18 +2954,94 @@ export type SqsLogSourceIntegrationResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
+export type TestDetectionSubRecordResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['TestDetectionSubRecord'] = ResolversParentTypes['TestDetectionSubRecord']
+> = {
+  output?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type TestPolicyRecordResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['TestPolicyRecord'] = ResolversParentTypes['TestPolicyRecord']
+> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  passed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  functions?: Resolver<ResolversTypes['TestPolicyRecordFunctions'], ParentType, ContextType>;
+  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type TestPolicyRecordFunctionsResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['TestPolicyRecordFunctions'] = ResolversParentTypes['TestPolicyRecordFunctions']
+> = {
+  policyFunction?: Resolver<ResolversTypes['TestDetectionSubRecord'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
 export type TestPolicyResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['TestPolicyResponse'] = ResolversParentTypes['TestPolicyResponse']
 > = {
-  testSummary?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  testsPassed?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  testsFailed?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  testsErrored?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['PolicyUnitTestError']>>>,
+  results?: Resolver<Array<ResolversTypes['TestPolicyRecord']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type TestRecordResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['TestRecord'] = ResolversParentTypes['TestRecord']
+> = {
+  __resolveType: TypeResolveFn<'TestPolicyRecord' | 'TestRuleRecord', ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  passed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
+};
+
+export type TestRuleRecordResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['TestRuleRecord'] = ResolversParentTypes['TestRuleRecord']
+> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  passed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  functions?: Resolver<ResolversTypes['TestRuleRecordFunctions'], ParentType, ContextType>;
+  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type TestRuleRecordFunctionsResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['TestRuleRecordFunctions'] = ResolversParentTypes['TestRuleRecordFunctions']
+> = {
+  ruleFunction?: Resolver<ResolversTypes['TestDetectionSubRecord'], ParentType, ContextType>;
+  titleFunction?: Resolver<
+    Maybe<ResolversTypes['TestDetectionSubRecord']>,
     ParentType,
     ContextType
   >;
+  dedupFunction?: Resolver<
+    Maybe<ResolversTypes['TestDetectionSubRecord']>,
+    ParentType,
+    ContextType
+  >;
+  alertContextFunction?: Resolver<
+    Maybe<ResolversTypes['TestDetectionSubRecord']>,
+    ParentType,
+    ContextType
+  >;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type TestRuleResponseResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['TestRuleResponse'] = ResolversParentTypes['TestRuleResponse']
+> = {
+  results?: Resolver<Array<ResolversTypes['TestRuleRecord']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2907,6 +3092,8 @@ export type Resolvers<ContextType = any> = {
   DeliveryResponse?: DeliveryResponseResolvers<ContextType>;
   Destination?: DestinationResolvers<ContextType>;
   DestinationConfig?: DestinationConfigResolvers<ContextType>;
+  DetectionTestDefinition?: DetectionTestDefinitionResolvers<ContextType>;
+  Error?: ErrorResolvers<ContextType>;
   FloatSeries?: FloatSeriesResolvers<ContextType>;
   FloatSeriesData?: FloatSeriesDataResolvers<ContextType>;
   GeneralSettings?: GeneralSettingsResolvers<ContextType>;
@@ -2924,6 +3111,9 @@ export type Resolvers<ContextType = any> = {
   ListRulesResponse?: ListRulesResponseResolvers<ContextType>;
   LogAnalysisMetricsResponse?: LogAnalysisMetricsResponseResolvers<ContextType>;
   LogIntegration?: LogIntegrationResolvers;
+  Long?: GraphQLScalarType;
+  LongSeries?: LongSeriesResolvers<ContextType>;
+  LongSeriesData?: LongSeriesDataResolvers<ContextType>;
   MsTeamsConfig?: MsTeamsConfigResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   OpsgenieConfig?: OpsgenieConfigResolvers<ContextType>;
@@ -2933,8 +3123,6 @@ export type Resolvers<ContextType = any> = {
   PagingData?: PagingDataResolvers<ContextType>;
   PolicyDetails?: PolicyDetailsResolvers<ContextType>;
   PolicySummary?: PolicySummaryResolvers<ContextType>;
-  PolicyUnitTest?: PolicyUnitTestResolvers<ContextType>;
-  PolicyUnitTestError?: PolicyUnitTestErrorResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   ResourceDetails?: ResourceDetailsResolvers<ContextType>;
   ResourceSummary?: ResourceSummaryResolvers<ContextType>;
@@ -2944,8 +3132,6 @@ export type Resolvers<ContextType = any> = {
   S3LogIntegrationHealth?: S3LogIntegrationHealthResolvers<ContextType>;
   ScannedResources?: ScannedResourcesResolvers<ContextType>;
   ScannedResourceStats?: ScannedResourceStatsResolvers<ContextType>;
-  Series?: SeriesResolvers<ContextType>;
-  SeriesData?: SeriesDataResolvers<ContextType>;
   SingleValue?: SingleValueResolvers<ContextType>;
   SlackConfig?: SlackConfigResolvers<ContextType>;
   SnsConfig?: SnsConfigResolvers<ContextType>;
@@ -2953,7 +3139,14 @@ export type Resolvers<ContextType = any> = {
   SqsDestinationConfig?: SqsDestinationConfigResolvers<ContextType>;
   SqsLogIntegrationHealth?: SqsLogIntegrationHealthResolvers<ContextType>;
   SqsLogSourceIntegration?: SqsLogSourceIntegrationResolvers<ContextType>;
+  TestDetectionSubRecord?: TestDetectionSubRecordResolvers<ContextType>;
+  TestPolicyRecord?: TestPolicyRecordResolvers<ContextType>;
+  TestPolicyRecordFunctions?: TestPolicyRecordFunctionsResolvers<ContextType>;
   TestPolicyResponse?: TestPolicyResponseResolvers<ContextType>;
+  TestRecord?: TestRecordResolvers;
+  TestRuleRecord?: TestRuleRecordResolvers<ContextType>;
+  TestRuleRecordFunctions?: TestRuleRecordFunctionsResolvers<ContextType>;
+  TestRuleResponse?: TestRuleResponseResolvers<ContextType>;
   UploadPoliciesResponse?: UploadPoliciesResponseResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
 };

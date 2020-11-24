@@ -17,79 +17,93 @@
  */
 
 import React from 'react';
-import * as utils from 'Helpers/utils';
+import MockDate from 'mockdate';
 import { AlertStatusesEnum, SeverityEnum } from 'Generated/schema';
 import {
   buildAlertSummary,
   buildListAlertsResponse,
-  buildLogAnalysisMetricsInput,
   buildLogAnalysisMetricsResponse,
   buildSingleValue,
   fireEvent,
   render,
   waitForElementToBeRemoved,
 } from 'test-utils';
+import { MockedResponse } from '@apollo/client/testing';
+import { getGraphqlSafeDateRange } from 'Helpers/utils';
 import { mockGetOverviewAlerts } from 'Pages/LogAnalysisOverview/graphql/getOverviewAlerts.generated';
 import LogAnalysisOverview, { DEFAULT_PAST_DAYS, DEFAULT_INTERVAL } from './LogAnalysisOverview';
 import { mockGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
 
-const mockedToDate = '2020-07-22T19:04:33Z';
-const mockedFromDate = utils.subtractDays(mockedToDate, DEFAULT_PAST_DAYS);
-const getLogAnalysisMetrics = buildLogAnalysisMetricsResponse();
-const getLogAnalysisMetricsInput = buildLogAnalysisMetricsInput({
-  metricNames: [
-    'eventsProcessed',
-    'totalAlertsDelta',
-    'alertsBySeverity',
-    'eventsLatency',
-    'alertsByRuleID',
-  ],
-  fromDate: mockedFromDate,
-  toDate: mockedToDate,
-  intervalMinutes: DEFAULT_INTERVAL,
-});
+let defaultMocks: MockedResponse[];
 
-// Mocking getCurrentDate in order to have a common date for the query
-const mockedGetCurrentDate = jest.spyOn(utils, 'getCurrentDate');
-mockedGetCurrentDate.mockImplementation(() => mockedToDate);
+const recentAlerts = [buildAlertSummary({ alertId: '1', ruleId: 'rule_1' })];
 
-const recentAlerts = buildListAlertsResponse();
-const topAlerts = buildListAlertsResponse({
-  alertSummaries: [
-    buildAlertSummary({ alertId: '1', severity: SeverityEnum.Critical }),
-    buildAlertSummary({ alertId: '2', severity: SeverityEnum.High }),
-  ],
-});
-
-const defaultMocks = [
-  mockGetLogAnalysisMetrics({
-    data: {
-      getLogAnalysisMetrics: {
-        ...getLogAnalysisMetrics,
-        totalAlertsDelta: [
-          buildSingleValue({ label: 'Previous Period' }),
-          buildSingleValue({ label: 'Current Period' }),
-        ],
-      },
-    },
-    variables: { input: getLogAnalysisMetricsInput },
-  }),
-  mockGetOverviewAlerts({
-    data: { recentAlerts, topAlerts },
-    variables: {
-      recentAlertsInput: {
-        pageSize: 10,
-        status: [AlertStatusesEnum.Open, AlertStatusesEnum.Triaged],
-      },
-    },
-  }),
+const highSeverityAlerts = [
+  buildAlertSummary({ alertId: '2', ruleId: 'rule_2', severity: SeverityEnum.Critical }),
+  buildAlertSummary({ alertId: '3', ruleId: 'rule_3', severity: SeverityEnum.High }),
 ];
 
 describe('Log Analysis Overview', () => {
+  beforeAll(() => {
+    // https://github.com/boblauer/MockDate#example
+    // Forces a fixed resolution on `Date.now()`
+    MockDate.set('1/30/2000');
+  });
+
+  afterAll(() => {
+    MockDate.reset();
+  });
+
+  beforeEach(() => {
+    const [mockedFromDate, mockedToDate] = getGraphqlSafeDateRange({ days: DEFAULT_PAST_DAYS });
+
+    defaultMocks = [
+      mockGetLogAnalysisMetrics({
+        data: {
+          getLogAnalysisMetrics: buildLogAnalysisMetricsResponse({
+            totalAlertsDelta: [
+              buildSingleValue({ label: 'Previous Period' }),
+              buildSingleValue({ label: 'Current Period' }),
+            ],
+          }),
+        },
+        variables: {
+          input: {
+            metricNames: [
+              'eventsProcessed',
+              'totalAlertsDelta',
+              'alertsBySeverity',
+              'eventsLatency',
+              'alertsByRuleID',
+            ],
+            fromDate: mockedFromDate,
+            toDate: mockedToDate,
+            intervalMinutes: DEFAULT_INTERVAL,
+          },
+        },
+      }),
+      mockGetOverviewAlerts({
+        data: {
+          recentAlerts: buildListAlertsResponse({
+            alertSummaries: recentAlerts,
+          }),
+          topAlerts: buildListAlertsResponse({
+            alertSummaries: highSeverityAlerts,
+          }),
+        },
+        variables: {
+          recentAlertsInput: {
+            pageSize: 10,
+            status: [AlertStatusesEnum.Open, AlertStatusesEnum.Triaged],
+          },
+        },
+      }),
+    ];
+  });
+
   it('should render 2 canvas, click on tab button and render latency chart', async () => {
     const { getByTestId, getAllByTitle, getByText } = render(<LogAnalysisOverview />, {
       mocks: defaultMocks,
-      initialRoute: `/?fromDate=${mockedFromDate}&toDate=${mockedToDate}`,
     });
 
     // Expect to see 3 loading interfaces
@@ -118,9 +132,8 @@ describe('Log Analysis Overview', () => {
   });
 
   it('should display Alerts Cards for Top Alerts and Recent Alerts', async () => {
-    const { getAllByTitle, getByText, getAllByText } = render(<LogAnalysisOverview />, {
+    const { getAllByTitle, getByText, getByAriaLabel } = render(<LogAnalysisOverview />, {
       mocks: defaultMocks,
-      initialRoute: `/?fromDate=${mockedFromDate}&toDate=${mockedToDate}`,
     });
     // Expect to see 3 loading interfaces
     const loadingInterfaceElements = getAllByTitle('Loading interface...');
@@ -129,12 +142,13 @@ describe('Log Analysis Overview', () => {
     // Waiting for all loading interfaces to be removed;
     await Promise.all(loadingInterfaceElements.map(ele => waitForElementToBeRemoved(ele)));
 
-    const recentAlertCards = getAllByText('View Rule');
-    expect(recentAlertCards.length).toEqual(1);
+    recentAlerts.forEach(alert => {
+      expect(getByAriaLabel(`Link to rule ${alert.ruleId}`));
+    });
     const topAlertsTabButton = getByText('High Severity Alerts (2)');
     fireEvent.click(topAlertsTabButton);
-    const alertCards = getAllByText('View Rule');
-    // There are 3 alerts cards because previous Alerts cards are not unmounted
-    expect(alertCards.length).toEqual(3);
+    highSeverityAlerts.forEach(alert => {
+      expect(getByAriaLabel(`Link to rule ${alert.ruleId}`));
+    });
   });
 });

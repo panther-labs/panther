@@ -44,7 +44,7 @@ export type DestinationFull = { __typename: 'Destination' } & Pick<
           'orgDomain' | 'projectKey' | 'userName' | 'apiKey' | 'assigneeId' | 'issueType'
         >
       >;
-      opsgenie?: Types.Maybe<Pick<Types.OpsgenieConfig, 'apiKey'>>;
+      opsgenie?: Types.Maybe<Pick<Types.OpsgenieConfig, 'apiKey' | 'serviceRegion'>>;
       msTeams?: Types.Maybe<Pick<Types.MsTeamsConfig, 'webhookURL'>>;
       sqs?: Types.Maybe<Pick<Types.SqsDestinationConfig, 'queueUrl'>>;
       asana?: Types.Maybe<Pick<Types.AsanaConfig, 'personalAccessToken' | 'projectGids'>>;
@@ -85,6 +85,7 @@ export const DestinationFull = gql`
       }
       opsgenie {
         apiKey
+        serviceRegion
       }
       msTeams {
         webhookURL

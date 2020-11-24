@@ -21,8 +21,6 @@ Description: Bootstrap resources that require the source S3 bucket to exist firs
 # This stack contains resources that need to exist before any other main stack,
 # but require S3 buckets to exist first. This is deployed right after bootstrap.yml
 #
-# - API gateways: 'mage build:cfn' embeds swagger definitions directly into this template,
-#     making the template too large to deploy without an S3 bucket
 # - Python layer: the layer source has to be uploaded to S3 before the cfn resource can be created
 # - Custom resource: the Lambda function which handles custom CFN resources
 #      - Alarms for SNS topics in the bootstrap stack
@@ -70,6 +68,11 @@ Parameters:
     Description: Optional versioned custom Python layer for analysis and remediation
     # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
     AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+)?$'
+  SqsKeyId:
+    Type: String
+    Description: KMS key ID for SQS encryption
+    # Example: "484fb80c-4ae5-40d0-b22a-bdd5d0953b3e"
+    AllowedPattern: '^[0-9a-f-]{36}$'
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
@@ -81,6 +84,9 @@ Parameters:
     AllowedPattern: '^[a-zA-Z0-9_-]{15,}$'
 
 Mappings:
+  AthenaDataSources:
+    Dynamodb:
+      Name: ddb
   Functions:
     CustomResource:
       Memory: 1024 # use a larger size to run faster, since this is used rarely the small cost difference is not a concern
@@ -100,7 +106,7 @@ Resources:
         - python3.6
         - python3.7
         - python3.8
-      Content: ../layer.zip # relative to out/deployments since this template will first be swagger-embedded
+      Content: ../out/layer.zip
       Description: Pip libraries available to the Python analysis/remediation functions
       LayerName: panther-analysis
 
@@ -109,7 +115,7 @@ Resources:
   CustomResourceFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../bin/internal/core/custom_resources/main
+      CodeUri: ../out/bin/internal/core/custom_resources/main
       Description: Custom CloudFormation resources when deploying Panther
       Environment:
         Variables:
@@ -142,7 +148,6 @@ Resources:
                 - athena:GetQuery*
                 - athena:StartQueryExecution
                 - athena:StopQueryExecution
-                - athena:UpdateWorkGroup
                 - guardduty:Create*
                 - guardduty:DeletePublishingDestination
                 - guardduty:Get*
@@ -184,9 +189,6 @@ Resources:
               Action: ecr:DeleteRepository
               Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ImageRegistryName}
             - Effect: Allow
-              Action: execute-api:Invoke
-              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApi}/v1/POST/upload
-            - Effect: Allow
               Action:
                 - glue:CreateDatabase
                 - glue:DeleteDatabase
@@ -221,6 +223,7 @@ Resources:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-organization-api
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-users-api
@@ -248,6 +251,14 @@ Resources:
             - Effect: Allow
               Action: s3:Get*
               Resource: arn:aws:s3:::panther-public-cloudformation-templates*
+            - Effect: Allow
+              Action: sqs:SendMessage # this is for sending a message to datacatalog_updater to update/sync Glue tables
+              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-datacatalog-updater-queue
+            - Effect: Allow
+              Action: # this is for sending a message to datacatalog_updater to update/sync Glue tables
+                - kms:Decrypt
+                - kms:GenerateDataKey
+              Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
 
   # The PantherTeardown resource adds an IAM permission boundary to the custom resource role
   # which blocks future logs.
@@ -276,7 +287,7 @@ Resources:
       FunctionMemoryMB: !FindInMap [Functions, CustomResource, Memory]
       FunctionName: !Ref CustomResourceFunction
       FunctionTimeoutSec: !FindInMap [Functions, CustomResource, Timeout]
-      LoggedWarnThreshold: 1
+      LoggedWarnThreshold: 10
       ThrottleThreshold: 0
       ServiceToken: !GetAtt CustomResourceFunction.Arn
 
@@ -346,74 +357,49 @@ Resources:
         - given_name
         - family_name
 
-  AnalysisApi:
-    Type: AWS::Serverless::Api
+  # https://docs.aws.amazon.com/athena/latest/ug/athena-prebuilt-data-connectors-dynamodb.html
+  AthenaDDBConnector:
+    Type: AWS::Serverless::Application
     Properties:
-      DefinitionBody: api/gateway/analysis/api.yml
-      EndpointConfiguration: REGIONAL
-      Name: panther-analysis-api
-      # <cfndoc>
-      # The `panther-analysis-api` API Gateway calls the `panther-analysis-api` lambda.
-      # </cfndoc>
-      StageName: v1
-      TracingEnabled: !If [TracingEnabled, true, false]
+      Location:
+        # FIXME: this is currently a FIXED arn but the connector is not GA. Once GA it might be regional or different
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:292517598671:applications/AthenaDynamoDBConnector
+        SemanticVersion: 2020.33.1
+      Parameters:
+        AthenaCatalogName: !FindInMap [AthenaDataSources, Dynamodb, Name] # this is now called the "DataSource"
+        SpillBucket: !Ref AthenaResultsBucket
 
-  AnalysisApiAlarms:
-    Type: Custom::ApiGatewayAlarms
-    DependsOn: CustomTeardown
+  AnthenaDDBDataSource: # this binds the lambda created in AthenaDDBConnector resource to Athena
+    DependsOn: AthenaDDBConnector
+    Type: AWS::Athena::DataCatalog
     Properties:
-      ApiName: panther-analysis-api
-      AlarmTopicArn: !Ref AlarmTopicArn
-      CustomResourceVersion: !Ref CustomResourceVersion
-      ServiceToken: !GetAtt CustomResourceFunction.Arn
-      # Listing rules/policies requires scanning the DDB table
-      LatencyThresholdMs: 3000
+      Name: !FindInMap [AthenaDataSources, Dynamodb, Name]
+      Description: Dynamodb data source
+      Type: LAMBDA
+      Parameters:
+        function: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:ddb
 
-  RemediationApi:
-    Type: AWS::Serverless::Api
+  # FIXME: remove when DDB connector is GA https://docs.aws.amazon.com/athena/latest/ug/connect-to-a-data-source.html
+  AthenaPreviewWorkGroup: # this is used for the ddb tables until out of preview, only available to query via the Athena console!
+    Type: AWS::Athena::WorkGroup
     Properties:
-      DefinitionBody: api/gateway/remediation/api.yml
-      EndpointConfiguration: REGIONAL
-      Name: panther-remediation-api
-      # <cfndoc>
-      # The `panther-remediation-api` API Gateway calls the `panther-remediation-api` lambda.
-      # </cfndoc>
-      StageName: v1
-      TracingEnabled: !If [TracingEnabled, true, false]
+      Name: AmazonAthenaPreviewFunctionality
+      Description: Preview Workgroup
+      RecursiveDeleteOption: true
+      WorkGroupConfiguration:
+        ResultConfiguration:
+          OutputLocation: !Sub s3://${AthenaResultsBucket}/panther/preview/
 
-  RemediationApiAlarms:
-    Type: Custom::ApiGatewayAlarms
-    DependsOn: CustomTeardown
+  AthenaWorkGroup:
+    Type: AWS::Athena::WorkGroup
     Properties:
-      ApiName: panther-remediation-api
-      AlarmTopicArn: !Ref AlarmTopicArn
-      CustomResourceVersion: !Ref CustomResourceVersion
-      ServiceToken: !GetAtt CustomResourceFunction.Arn
-
-  ResourcesApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      DefinitionBody: api/gateway/resources/api.yml
-      EndpointConfiguration: REGIONAL
-      Name: panther-resources-api
-      # <cfndoc>
-      # The `panther-resources-api` API Gateway calls the `panther-resources-api` lambda.
-      # </cfndoc>
-      StageName: v1
-      TracingEnabled: !If [TracingEnabled, true, false]
-
-  ResourcesApiAlarms:
-    Type: Custom::ApiGatewayAlarms
-    DependsOn: CustomTeardown
-    Properties:
-      ApiName: panther-resources-api
-      AlarmTopicArn: !Ref AlarmTopicArn
-      CustomResourceVersion: !Ref CustomResourceVersion
-      ServiceToken: !GetAtt CustomResourceFunction.Arn
-      # The `get resource` operation invokes the `describe-org` operation of the compliance-api in order
-      # to see if a resource is compliant or not. Setting the same threshold
-      # here as for the compliance-api
-      LatencyThresholdMs: 3000
+      Name: Panther
+      Description: The Panther workgroup
+      RecursiveDeleteOption: true
+      WorkGroupConfiguration:
+        EnforceWorkGroupConfiguration: false # we want client side overrides
+        ResultConfiguration:
+          OutputLocation: !Sub s3://${AthenaResultsBucket}/panther/
 
 Outputs:
   AppClientId:
@@ -423,21 +409,6 @@ Outputs:
     Description: Python layer version
     Value: !If [CreatePythonLayer, !Ref PythonLayer, !Ref PythonLayerVersionArn]
 
-  AnalysisApiId:
-    Description: Analysis API Gateway ID
-    Value: !Ref AnalysisApi
-  AnalysisApiEndpoint:
-    Description: HTTPS endpoint for the analysis api
-    Value: !Sub ${AnalysisApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
-  RemediationApiId:
-    Description: Remediation API Gateway ID
-    Value: !Ref RemediationApi
-  RemediationApiEndpoint:
-    Description: HTTPS endpoint for the remediation api
-    Value: !Sub ${RemediationApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
-  ResourcesApiId:
-    Description: Resources API Gateway ID
-    Value: !Ref ResourcesApi
-  ResourcesApiEndpoint:
-    Description: HTTPS endpoint for the resources api
-    Value: !Sub ${ResourcesApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}
+  AthenaWorkGroup:
+    Description: The Athena workgroup for Panther queries
+    Value: !Ref AthenaWorkGroup

@@ -33,7 +33,6 @@ const (
 var (
 	PyEnv     = filepath.Join(SetupDir, "venv")
 	GoLinter  = filepath.Join(SetupDir, "golangci-lint")
-	Swagger   = filepath.Join(SetupDir, "swagger")
 	Terraform = filepath.Join(SetupDir, "terraform")
 
 	PyTargets = []string{

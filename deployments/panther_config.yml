@@ -46,24 +46,15 @@ Infra:
   # https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html
   LogProcessorLambdaMemorySize: 1024 # 256 - 3008, in 64MB increments
 
-  # Adding a small queue delay can improve the ability of the log processor
-  # to aggregate processed log files. The value must be between 0 and 20 seconds.
-  LogProcessorSQSDelaySeconds: 0
-
   # Create a Python layer with these pip library versions for analysis and remediation.
   #
   # "mage deploy" will download and package these libraries, generating the "out/layer.zip" file.
   # Natively compiled libraries (e.g. numpy) must be deployed from linux to work correctly, or
   # you can provide your own custom layer via PythonLayerVersionArn.
   #
-  # Be sure to remove "out/layer.zip" or run "mage clean" to force a new build of the layer if you
-  # change this setting.
-  #
   # This setting has no effect if PythonLayerVersionArn is set below.
-  #
-  # Contributors, take note: the default layer (packaged with Panther releases) bundled in the
-  # bootstrap-gateway stack must fit within the ~50MB SAR package limit. boto3, for example, is too big
   PipLayer:
+    - jsonpath-ng==1.5.2
     - policyuniverse==1.3.2.2
     - requests==2.23.0
 

@@ -19,6 +19,7 @@ package awsglue
  */
 
 import (
+	"context"
 	"net/url"
 	"strings"
 
@@ -26,6 +27,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
+	"go.uber.org/multierr"
+
+	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 // Wrapper functions to reduce boiler-plate code in callers
@@ -156,4 +160,27 @@ func ParseS3URL(s3URL string) (bucket, key string, err error) {
 	}
 
 	return bucket, key, err
+}
+
+func EnsureDatabases(ctx context.Context, client glueiface.GlueAPI) (err error) {
+	for name, desc := range PantherDatabases {
+		if e := EnsureDatabase(ctx, client, name, desc); e != nil {
+			err = multierr.Append(err, e)
+		}
+	}
+	return
+}
+
+func EnsureDatabase(ctx context.Context, client glueiface.GlueAPI, name, description string) error {
+	createDatabaseInput := &glue.CreateDatabaseInput{
+		DatabaseInput: &glue.DatabaseInput{
+			Name:        aws.String(name),
+			Description: aws.String(description),
+		},
+	}
+	_, err := client.CreateDatabaseWithContext(ctx, createDatabaseInput)
+	if err != nil && !awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
+		return err
+	}
+	return nil
 }

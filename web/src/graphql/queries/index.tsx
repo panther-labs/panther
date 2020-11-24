@@ -18,3 +18,5 @@
 
 export * from './listDestinations.generated';
 export * from './listAvailableLogTypes.generated';
+export * from './sendTestAlert.generated';
+export * from './updateAlertStatus.generated';

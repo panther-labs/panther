@@ -3,5 +3,6 @@ query ListDestinations {
     outputId
     outputType
     displayName
+    defaultForSeverity
   }
 }

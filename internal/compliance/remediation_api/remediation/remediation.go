@@ -23,14 +23,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 
-	"github.com/panther-labs/panther/api/gateway/remediation/models"
+	"github.com/panther-labs/panther/api/lambda/remediation/models"
 )
 
 //InvokerAPI is the interface for the Invoker,
 // the component that is responsible for invoking Remediation Lambda
 type InvokerAPI interface {
-	Remediate(*models.RemediateResource) error
-	GetRemediations() (*models.Remediations, error)
+	Remediate(*models.RemediateResourceInput) error
+	GetRemediations() (*models.ListRemediationsOutput, error)
 }
 
 //Invoker is responsible for invoking Remediation Lambda

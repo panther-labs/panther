@@ -26,11 +26,6 @@ Parameters:
     Description: SNS topic for CloudWatch alarms
     # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
-  AnalysisApiId:
-    Type: String
-    Description: API Gateway for analysis-api
-    # Example: "0jcmwnr9cj"
-    AllowedPattern: '^[0-9a-z]{10}$'
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
@@ -59,14 +54,6 @@ Parameters:
     Description: Versioned lambda layer with pip libraries for python analysis and remediation
     # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+$'
-  RemediationApiId:
-    Type: String
-    Description: API Gateway for remediation-api
-    AllowedPattern: '^[0-9a-z]{10}$'
-  ResourcesApiId:
-    Type: String
-    Description: API Gateway for resources-api
-    AllowedPattern: '^[0-9a-z]{10}$'
   SqsKeyId:
     Type: String
     Description: KMS key ID for SQS encryption
@@ -122,6 +109,16 @@ Conditions:
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
+  ###### Update Glue Table Schemas for Deployed Tables #####
+  UpdateGlueTables:
+    Type: Custom::UpdateCloudSecurityTables
+    Properties:
+      # Update in case CustomResourceVersion has changed
+      CustomResourceVersion: !Ref CustomResourceVersion
+      ResourcesTableARN: !GetAtt ResourcesTable.Arn
+      ComplianceTableARN: !GetAtt ComplianceTable.Arn
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ##### Alert Processor #####
   AlertProcessorQueue:
     Type: AWS::SQS::Queue
@@ -194,10 +191,6 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          REMEDIATION_SERVICE_HOST: !Sub '${RemediationApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          REMEDIATION_SERVICE_PATH: v1
-          POLICY_SERVICE_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          POLICY_SERVICE_PATH: v1
           TABLE_NAME: panther-alert-forwarder
       Events:
         Queue:
@@ -239,12 +232,10 @@ Resources:
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api
-            - Effect: Allow
-              Action: execute-api:Invoke
               Resource:
-                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${RemediationApiId}/v1/POST/remediateasync
-                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-remediation-api
 
   AlertProcessorAlarms:
     Type: Custom::LambdaAlarms
@@ -472,8 +463,6 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          RESOURCES_API_FQDN: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          RESOURCES_API_PATH: v1
           SNAPSHOT_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-snapshot-queue
       Events:
         Queue:
@@ -517,18 +506,14 @@ Resources:
             - Effect: Allow
               Action: sns:ConfirmSubscription
               Resource: !Sub arn:${AWS::Partition}:sns:*:*:*-PantherEventsTopic-*
-        - Id: DeleteResources
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: execute-api:Invoke
-              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/POST/delete
-        - Id: InvokeSourceAPI
+        - Id: InvokeAPIs
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-resources-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
         - Id: ReadFromS3
           Version: 2012-10-17
           Statement:
@@ -654,14 +639,6 @@ Resources:
       TableName: panther-compliance
 
   ##### Remediation API #####
-  RemediationGatewayInvocation:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref RemediationApiFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${RemediationApiId}/*
-
   RemediationApiFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -672,10 +649,6 @@ Resources:
           DEBUG: !Ref Debug
           SQS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-remediation-queue
           REMEDIATION_LAMBDA_ARN: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-aws-remediation
-          POLICIES_SERVICE_HOSTNAME: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          POLICIES_SERVICE_PATH: v1
-          RESOURCES_SERVICE_HOSTNAME: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          RESOURCES_SERVICE_PATH: v1
       FunctionName: panther-remediation-api
       # <cfndoc>
       # The `panther-remediation-api` lambda triggers AWS remediations.
@@ -707,13 +680,11 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action: execute-api:Invoke
-              Resource:
-                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
-                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/resource
-            - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-aws-remediation
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-aws-remediation
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-resources-api
 
   RemediationApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -810,10 +781,6 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           REMEDIATION_LAMBDA_ARN: !GetAtt RemediationFunction.Arn
-          POLICIES_SERVICE_HOSTNAME: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          POLICIES_SERVICE_PATH: v1
-          RESOURCES_SERVICE_HOSTNAME: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          RESOURCES_SERVICE_PATH: v1
       Events:
         Queue:
           Type: SQS
@@ -842,13 +809,11 @@ Resources:
               Action: kms:Decrypt
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
             - Effect: Allow
-              Action: execute-api:Invoke
-              Resource:
-                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
-                - !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/resource
-            - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-aws-remediation
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-aws-remediation
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-resources-api
 
   RemediationProcessorAlarms:
     Type: Custom::LambdaAlarms
@@ -924,14 +889,6 @@ Resources:
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Resources API #####
-  GatewayInvocationPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref ResourcesApiFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/*
-
   ResourcesApiFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -1116,11 +1073,7 @@ Resources:
         Variables:
           ALERT_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alert-processor-queue
           DEBUG: !Ref Debug
-          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          ANALYSIS_API_PATH: v1
           POLICY_ENGINE: panther-policy-engine
-          RESOURCE_API_HOST: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          RESOURCE_API_PATH: v1
       Events:
         Queue:
           Type: SQS
@@ -1163,20 +1116,10 @@ Resources:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
-            - Effect: Allow
-              Action: execute-api:Invoke
-              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/list
-            - Effect: Allow
-              Action: execute-api:Invoke
-              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/GET/resource
-            - Effect: Allow
-              Action: execute-api:Invoke
-              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/enabled
-            - Effect: Allow
-              Action: execute-api:Invoke
-              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/policy
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-resources-api
 
   ResourceProcessorAlarms:
     Type: Custom::LambdaAlarms
@@ -1329,9 +1272,7 @@ Resources:
         Variables:
           AUDIT_ROLE_NAME: !Sub PantherAuditRole-${AWS::Region}
           DEBUG: !Ref Debug
-          RESOURCES_API_FQDN: !Sub '${ResourcesApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          RESOURCES_API_PATH: v1
-          SNAPSHOT_QUEUE_URL: !Ref SnapshotQueue # queue is an event source; needs to exist first
+          SNAPSHOT_QUEUE_URL: !Ref SnapshotQueue
       Events:
         SQS:
           Type: SQS
@@ -1380,8 +1321,8 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action: execute-api:Invoke
-              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ResourcesApiId}/v1/POST/resource
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-resources-api
         - Id: AssumePantherAuditRoles
           Version: 2012-10-17
           Statement:

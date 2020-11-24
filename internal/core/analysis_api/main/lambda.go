@@ -19,41 +19,24 @@ package main
  */
 
 import (
+	"context"
+
 	"github.com/aws/aws-lambda-go/lambda"
 
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/internal/core/analysis_api/handlers"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-var methodHandlers = map[string]gatewayapi.RequestHandler{
-	// Policies only
-	"GET /list":      handlers.ListPolicies,
-	"GET /policy":    handlers.GetPolicy,
-	"POST /policy":   handlers.CreatePolicy,
-	"POST /suppress": handlers.Suppress,
-	"POST /update":   handlers.ModifyPolicy,
-	"POST /upload":   handlers.BulkUpload,
+var router = genericapi.NewRouter("api", "analysis", nil, handlers.API{})
 
-	// Rules only
-	"GET /rule":         handlers.GetRule,
-	"POST /rule":        handlers.CreateRule,
-	"GET /rule/list":    handlers.ListRules,
-	"POST /rule/update": handlers.ModifyRule,
-
-	// Globals only
-	"GET /global":         handlers.GetGlobal,
-	"POST /global":        handlers.CreateGlobal,
-	"GET /global/list":    handlers.ListGlobals,
-	"POST /global/update": handlers.ModifyGlobal,
-	"POST /global/delete": handlers.DeleteGlobal,
-
-	// Rules and Policies
-	"POST /delete": handlers.DeletePolicies,
-	"GET /enabled": handlers.GetEnabledAnalyses,
-	"POST /test":   handlers.TestPolicy,
+func lambdaHandler(ctx context.Context, input *models.LambdaInput) (interface{}, error) {
+	lambdalogger.ConfigureGlobal(ctx, nil)
+	return router.Handle(input)
 }
 
 func main() {
 	handlers.Setup()
-	lambda.Start(gatewayapi.LambdaProxy(methodHandlers))
+	lambda.Start(lambdaHandler)
 }

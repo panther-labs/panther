@@ -33,7 +33,7 @@ import (
 )
 
 // CreateOrReplaceViews will update Athena with all views for the tables provided
-func CreateOrReplaceViews(athenaClient athenaiface.AthenaAPI, deployedLogTables []*awsglue.GlueTableMetadata) error {
+func CreateOrReplaceViews(athenaClient athenaiface.AthenaAPI, workgroup string, deployedLogTables []*awsglue.GlueTableMetadata) error {
 	if len(deployedLogTables) == 0 { // nothing to do
 		return nil
 	}
@@ -43,7 +43,7 @@ func CreateOrReplaceViews(athenaClient athenaiface.AthenaAPI, deployedLogTables 
 		return err
 	}
 	for _, sql := range sqlStatements {
-		_, err := awsathena.RunQuery(athenaClient, awsglue.ViewsDatabaseName, sql, nil) // use default bucket
+		_, err := awsathena.RunQuery(athenaClient, workgroup, awsglue.ViewsDatabaseName, sql)
 		if err != nil {
 			return errors.Wrap(err, "CreateOrReplaceViews() failed")
 		}
