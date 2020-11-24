@@ -3,6 +3,7 @@ module github.com/panther-labs/panther
 go 1.15
 
 require (
+	github.com/anyascii/go v0.1.7
 	github.com/aws/aws-lambda-go v1.19.1
 	github.com/aws/aws-sdk-go v1.35.2
 	github.com/cenkalti/backoff/v4 v4.0.2

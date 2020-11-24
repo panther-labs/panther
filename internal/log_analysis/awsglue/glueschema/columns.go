@@ -18,7 +18,12 @@ package glueschema
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "strings"
+import (
+	"strings"
+	"unicode"
+
+	anyascii "github.com/anyascii/go"
+)
 
 // Column is a table column in AWS Glue.
 // We are using a separate struct from glue.Column to be able to mark the column as required
@@ -39,22 +44,60 @@ type Column struct {
 
 // ColumnName normalizes names to be used for Glue table columns
 func ColumnName(name string) string {
-	result := columnNamesReplacer.Replace(name)
-	if result == name {
-		return name
+	out := strings.Builder{}
+	characters := []rune(name)
+	last := len(characters) - 1
+	for i, r := range characters {
+		switch {
+		case 'a' <= r && r <= 'z':
+			out.WriteRune(r)
+		case 'A' <= r && r <= 'Z':
+			out.WriteRune(r)
+		case '0' <= r && r <= '9':
+			out.WriteRune(r)
+		default:
+			if s, ok := transliterateChars[r]; ok {
+				// prepend '_' if not at the start of the string
+				if i > 0 {
+					out.WriteByte('_')
+				}
+				out.WriteString(s)
+				// append '_' if not at the end of the string
+				if i < last {
+					out.WriteByte('_')
+				}
+				continue
+			}
+			if unicode.IsLetter(r) {
+				// Try to handle non-ASCII letters gracefully
+				if s := anyascii.TransliterateRune(r); s != "" {
+					out.WriteString(s)
+					continue
+				}
+			}
+			out.WriteRune('_')
+		}
 	}
-	return strings.Trim(result, "_")
+	return out.String()
 }
 
 // TODO: [glueschema] Add more mappings of invalid Athena field name characters here
 // NOTE: The mapping should be easy to remember (so no ASCII code etc) and complex enough
 // to avoid possible conflicts with other fields.
-var columnNamesReplacer = strings.NewReplacer(
-	"@", "_at_sign_",
-	",", "_comma_",
-	"`", "_backtick_",
-	"'", "_apostrophe_",
-	".", "_",
-	"-", "_",
-	"$", "_dollar_sign_",
-)
+var transliterateChars = map[rune]string{
+	'@':  "at_sign",
+	',':  "comma",
+	'`':  "backtick",
+	'\'': "apostrophe",
+	'$':  "dollar_sign",
+	'*':  "asterisk",
+	'&':  "ampersand",
+	'!':  "exclamation",
+	'%':  "percent",
+	'+':  "plus",
+	'/':  "slash",
+	'\\': "backslash",
+	'#':  "hash",
+	'~':  "tilde",
+	'=':  "eq",
+}
