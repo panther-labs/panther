@@ -45,11 +45,14 @@ func (h *LambdaHandler) HandleCreateTablesEvent(ctx context.Context, event *Crea
 }
 
 func (h *LambdaHandler) createOrUpdateTablesForLogTypes(ctx context.Context, logTypes []string) error {
-	tables, err := resolveTables(ctx, h.Resolver, logTypes...)
+	// We map the log types to their 'base' log tables.
+	tables, err := resolveLogTables(ctx, h.Resolver, logTypes...)
 	if err != nil {
 		return err
 	}
 	for i, table := range tables {
+		// CreateOrUpdateGlueTables creates or updates *all* glue tables based on log tables.
+		// FIXME: this is confusing, the gluetables package should not be expanding table metadata based on hard-wired logic
 		if _, err := gluetables.CreateOrUpdateGlueTables(h.GlueClient, h.ProcessedDataBucket, table); err != nil {
 			return errors.Wrapf(err, "failed to update tables for log type %q", logTypes[i])
 		}
@@ -63,11 +66,13 @@ func (h *LambdaHandler) createOrReplaceViewsForAllDeployedTables(ctx context.Con
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch deployed log types")
 	}
-	deployedLogTables, err := resolveTables(ctx, h.Resolver, deployedLogTypes...)
+	// We map the deployed log types to their 'base' log tables.
+	deployedLogTables, err := resolveLogTables(ctx, h.Resolver, deployedLogTypes...)
 	if err != nil {
 		return errors.Wrap(err, "failed to resolve tables for logtypes")
 	}
-	// update the views
+	// update the views for *all* tables based on the log tables.
+	// FIXME: this is confusing, the athenaviews package should not be creating views by expanding table metadata based on hard-wired logic
 	if err := athenaviews.CreateOrReplaceViews(h.AthenaClient, h.AthenaWorkgroup, deployedLogTables); err != nil {
 		return errors.Wrap(err, "failed to update athena views")
 	}
@@ -82,7 +87,7 @@ func (h *LambdaHandler) fetchAllDeployedLogTypes(ctx context.Context) ([]string,
 	return gluetables.DeployedLogTypes(ctx, h.GlueClient, available)
 }
 
-func resolveTables(ctx context.Context, r logtypes.Resolver, names ...string) ([]*awsglue.GlueTableMetadata, error) {
+func resolveLogTables(ctx context.Context, r logtypes.Resolver, names ...string) ([]*awsglue.GlueTableMetadata, error) {
 	var out []*awsglue.GlueTableMetadata
 	for _, name := range names {
 		entry, err := r.Resolve(ctx, name)
