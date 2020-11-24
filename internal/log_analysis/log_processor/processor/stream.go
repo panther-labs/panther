@@ -43,7 +43,7 @@ const (
 	processingMaxFilesLimit = 5000
 
 	// How many objects to read per sqs read, the larger value, the the bigger impact on failures
-	sqsReadBatchSize = 1 // keeping this conservative right now, must be smaller than 10
+	sqsReadBatchSize = 10 //  must be no larger than 10
 )
 
 /*
@@ -136,7 +136,12 @@ func pollEvents(
 					continue
 				}
 				for _, dataStream := range dataStreams {
-					streamChan <- dataStream
+					// since streamChan is unbuffered it will block, exit early if deadline is past to delete messages
+					select {
+					case streamChan <- dataStream:
+					case <-pollCtx.Done():
+						return
+					}
 				}
 				accumulatedMessageReceipts = append(accumulatedMessageReceipts, msg.ReceiptHandle)
 			}
