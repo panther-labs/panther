@@ -260,7 +260,8 @@ func TestResendEmailSubject(t *testing.T) {
 		TopicArn:         &snsOutputConfig.TopicArn,
 		Message:          &expectedSerializedSnsMessage,
 		MessageStructure: aws.String("json"),
-		// This is the default email title we
+		// This is the default email title we are going to use
+		// after the SNS client has returned an 'InvalidParameter' error
 		Subject: aws.String("New Panther Alert"),
 	}
 
