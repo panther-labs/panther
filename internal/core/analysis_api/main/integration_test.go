@@ -256,6 +256,7 @@ func TestIntegrationAPI(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		t.Run("ListPolicies", listPolicies)
 		t.Run("ListFiltered", listFiltered)
+		t.Run("ListFilteredMultiple", listFilteredMultiple)
 		t.Run("ListPaging", listPaging)
 		t.Run("ListProjection", listProjection)
 		t.Run("ListRules", listRules)
@@ -1698,6 +1699,33 @@ func listFiltered(t *testing.T) {
 			NameContains:   "json", // policyFromBulkJSON only
 			ResourceTypes:  []string{"AWS.S3.Bucket"},
 			Severity:       []compliancemodels.Severity{compliancemodels.SeverityMedium},
+		},
+	}
+	var result models.ListPoliciesOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListPoliciesOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 1,
+			TotalPages: 1,
+		},
+		Policies: []models.Policy{*policyFromBulkJSON},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listFilteredMultiple(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListPolicies: &models.ListPoliciesInput{
+			Enabled:        aws.Bool(true),
+			HasRemediation: aws.Bool(true),
+			NameContains:   "json", // policyFromBulkJSON only
+			ResourceTypes:  []string{"AWS.S3.Bucket"},
+			Severity:       []compliancemodels.Severity{compliancemodels.SeverityLow, compliancemodels.SeverityMedium},
 		},
 	}
 	var result models.ListPoliciesOutput
