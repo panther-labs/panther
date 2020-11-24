@@ -21,12 +21,19 @@ import { formatDatetime } from 'Helpers/utils';
 
 export interface ChartTooltipProps {
   params: any[];
-  units: string;
+  units?: string;
 }
 
 const ChartTooltip: React.FC<ChartTooltipProps> = ({ params, units }) => {
   return (
-    <Box font="primary" minWidth={200} boxShadow="dark250" p={2} borderRadius="medium">
+    <Box
+      font="primary"
+      backgroundColor="navyblue-300"
+      minWidth={200}
+      boxShadow="dark250"
+      p={4}
+      borderRadius="medium"
+    >
       <Text fontSize="small-medium" mb={3}>
         {formatDatetime(params[0].value[0], true)}
       </Text>

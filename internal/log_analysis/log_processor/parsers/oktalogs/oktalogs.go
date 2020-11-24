@@ -1,3 +1,5 @@
+package oktalogs
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,5 +18,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './TimeSeriesChart';
-export type { TimeSeries, TimeSeriesData } from './TimeSeriesChart';
+import (
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+)
+
+func LogTypes() logtypes.Group {
+	return logTypes
+}
+
+// nolint: lll
+var logTypes = logtypes.Must("Okta", logtypes.Config{
+	Name: TypeSystemLog,
+	Description: `The Okta System Log records system events related to your organization in order to provide an audit trail that can be used to understand platform activity and to diagnose problems.
+
+Panther Enterprise Only
+`,
+	ReferenceURL: `https://developer.okta.com/docs/reference/api/system-log/`,
+	Schema:       LogEvent{},
+	NewParser:    parsers.AdapterFactory(&SystemLogParser{}),
+})
