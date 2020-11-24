@@ -124,7 +124,10 @@ func generateViewAllHelper(viewName string, tables []*awsglue.GlueTableMetadata,
 	}
 
 	// collect the Panther fields, add "NULL" for fields not present in some tables but present in others
-	pantherViewColumns := newPantherViewColumns(tables, extraColumns)
+	pantherViewColumns, err := newPantherViewColumns(tables, extraColumns)
+	if err != nil {
+		return "", err
+	}
 
 	var sqlLines []string
 	sqlLines = append(sqlLines, fmt.Sprintf("create or replace view %s.%s as", awsglue.ViewsDatabaseName, viewName))
@@ -149,14 +152,16 @@ type pantherViewColumns struct {
 	columnsByTable map[string]map[string]struct{} // table -> map of column names in that table
 }
 
-func newPantherViewColumns(tables []*awsglue.GlueTableMetadata, extraColumns []awsglue.Column) *pantherViewColumns {
+func newPantherViewColumns(tables []*awsglue.GlueTableMetadata, extraColumns []awsglue.Column) (*pantherViewColumns, error) {
 	pvc := &pantherViewColumns{
 		allColumnsSet:  make(map[string]struct{}),
 		columnsByTable: make(map[string]map[string]struct{}),
 	}
 
 	for _, table := range tables {
-		pvc.inferViewColumns(table, extraColumns)
+		if err := pvc.inferViewColumns(table, extraColumns); err != nil {
+			return nil, err
+		}
 	}
 
 	// convert set to sorted slice
@@ -166,11 +171,14 @@ func newPantherViewColumns(tables []*awsglue.GlueTableMetadata, extraColumns []a
 	}
 	sort.Strings(pvc.allColumns) // order needs to be preserved
 
-	return pvc
+	return pvc, nil
 }
-func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueTableMetadata, extraColumns []awsglue.Column) {
+func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueTableMetadata, extraColumns []awsglue.Column) error {
 	// NOTE: in the future when we tag columns for views, the mapping  would be resolved here
-	columns, _ := glueschema.InferColumns(table.EventStruct())
+	columns, err := glueschema.InferColumns(table.EventStruct())
+	if err != nil {
+		return err
+	}
 	columns = append(columns, extraColumns...)
 	var selectColumns []string
 	for _, col := range columns {
@@ -192,6 +200,7 @@ func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueTableMetadata
 			pvc.allColumnsSet[column] = struct{}{}
 		}
 	}
+	return nil
 }
 
 func (pvc *pantherViewColumns) viewColumns(table *awsglue.GlueTableMetadata) string {
