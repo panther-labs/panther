@@ -16,5 +16,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './TimeSeriesChart';
-export type { TimeSeries, TimeSeriesData } from './TimeSeriesChart';
+import React from 'react';
+
+const useHover = () => {
+  const [isHovering, setHovering] = React.useState(false);
+
+  const handleMouseEnter = React.useCallback(() => {
+    setHovering(true);
+  }, [setHovering]);
+
+  const handleMouseLeave = React.useCallback(() => {
+    setHovering(false);
+  }, [setHovering]);
+
+  return React.useMemo(
+    () => ({
+      isHovering,
+      handlers: {
+        onMouseEnter: handleMouseEnter,
+        onMouseLeave: handleMouseLeave,
+      },
+    }),
+    [isHovering, handleMouseEnter, handleMouseLeave]
+  );
+};
+
+export default useHover;
