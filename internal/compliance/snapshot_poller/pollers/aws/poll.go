@@ -289,8 +289,8 @@ func singleResourceScan(
 	var resource interface{}
 	var err error
 
-	// First, check if we've been recently rate limited while attempting to scan this resource. If so,
-	// discard it.
+	// First, check if we've been rate limited recently while attempting to scan this resource. If
+	// so, discard the scan request. There is already one in the ether waiting to be picked up.
 	if timestamp, ok := rateLimitCache.Get(*scanRequest.ResourceID); ok {
 		if timestamp.(time.Time).After(time.Now()) {
 			// We were recently rate limited while scanning this resource, ignore it
@@ -323,25 +323,16 @@ func singleResourceScan(
 
 	if err != nil {
 		var awsErr awserr.Error
-		// Check for rate limit errors. We don't want to blindly retry rate limit errors as then will
+		// Check for rate limit errors. We don't want to blindly retry rate limit errors as this will
 		// cause more rate limit errors, so we re-schedule one new scan several minutes in the future
 		// and suppress all other scans for this resource until that time.
 		if ok := errors.As(err, &awsErr); ok && awsErr.Code() == "ThrottlingException" && awsErr.Message() == "Rate exceeded" {
-			// We've already been rate limited while scanning this resource ID, see how recently that happened
-			if timestamp, ok := rateLimitCache.Get(*scanRequest.ResourceID); ok {
-				// Check if the cache entry is valid
-				if timestamp.(time.Time).After(time.Now()) {
-					// We were recently rate limited while scanning this resource, ignore it
-					zap.L().Debug("rate limit encountered, not returning error")
-					return nil, nil
-				}
-			}
-			// If this resource was not in the cache, or is old, re-initiate a scan and update the
-			// cache (only update the cache if we successfully initiated a scan!)
+			// If we parallelize this function, we will need to see if this is already cached before
+			// re-queueing. For now, this is not necessary.
 			err = utils.Requeue(pollermodels.ScanMsg{
 				Entries: []*pollermodels.ScanEntry{scanRequest},
 			}, int64(rateLimitDelay.Seconds())+int64(pageRequeueDelayer.Intn(60)+5))
-			// If the requeue failed, give up and just let lambda retrying handle it
+			// If the requeue failed, give up and just let lambda error retrying handle it
 			if err != nil {
 				return nil, err
 			}
