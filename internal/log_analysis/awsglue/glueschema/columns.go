@@ -51,9 +51,11 @@ func ColumnName(name string) string {
 		switch {
 		case 'a' <= r && r <= 'z':
 			out.WriteRune(r)
-		case 'A' <= r && r <= 'Z':
+		case 'A' <= r && r <= 'Z': // we keep the case
 			out.WriteRune(r)
 		case '0' <= r && r <= '9':
+			out.WriteRune(r)
+		case r == '_' || r == '-': // Apparently '-' is allowed but needs to be quoted in queries.
 			out.WriteRune(r)
 		default:
 			if s, ok := transliterateChars[r]; ok {

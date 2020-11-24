@@ -37,7 +37,7 @@ func TestColumnName(t *testing.T) {
 		{"'foo'", "apostrophe_foo_apostrophe"},
 		{"foo.bar", "foo_bar"},
 		{".foo", "_foo"},
-		{"foo-bar", "foo_bar"},
+		{"foo-bar", "foo-bar"},
 		{"$foo", "dollar_sign_foo"},
 		{"συνθηματικό", "synthimatiko"},
 		{"foo\\bar", "foo_backslash_bar"},
