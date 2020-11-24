@@ -75,7 +75,7 @@ func stdRuleListInput(input *models.ListRulesInput) {
 		input.PageSize = defaultPageSize
 	}
 	if input.SortBy == "" {
-		input.SortBy = defaultSortBy
+		input.SortBy = "displayName"
 	}
 	if input.SortDir == "" {
 		input.SortDir = defaultSortDir
