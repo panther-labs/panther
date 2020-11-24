@@ -355,7 +355,7 @@ func (bs *s3EventBufferSet) writeEvent(event *parsers.Result) (sendBuffers []*s3
 	bs.totalBufferedMemBytes += uint64(n)
 
 	// update the rank so we can find largest quickly
-	bs.sizePriorityQueue.UpdatePriority(buf, float64(buf.bytes/1024*1024*1024)) // in MB to reduce cost of update
+	bs.sizePriorityQueue.UpdatePriority(buf, float64(buf.bytes/uploaderPartSize)) // in # parts to reduce cost of update
 
 	// Check if buffer is bigger than threshold for a single buffer
 	if buf.bytes >= bs.maxBufferSize {
