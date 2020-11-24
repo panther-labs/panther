@@ -18,123 +18,121 @@ package priorityq
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// inspired by https://github.com/jupp0r/go-priority-queue , but that package had no Remove(). This one adds Remove().
+// Inspired by https://github.com/jupp0r/go-priority-queue . That package had  no Remove() or Peek().
 
 import (
 	"container/heap"
-	"errors"
 )
 
 // PriorityQueue represents the queue
 type PriorityQueue struct {
-	itemHeap *itemHeap
-	lookup   map[interface{}]*item
-}
-
-// New initializes an empty priority queue.
-func New() PriorityQueue {
-	return PriorityQueue{
-		itemHeap: &itemHeap{},
-		lookup:   make(map[interface{}]*item),
-	}
+	heap queue
 }
 
 // Len returns the number of elements in the queue.
 func (p *PriorityQueue) Len() int {
-	return p.itemHeap.Len()
+	return p.heap.Len()
 }
 
 // Insert inserts a new element into the queue. No action is performed on duplicate elements.
 func (p *PriorityQueue) Insert(v interface{}, priority float64) {
-	_, ok := p.lookup[v]
-	if ok {
+	if _, ok := p.heap.lookup[v]; ok {
 		return
 	}
-
-	newItem := &item{
+	heap.Push(&p.heap, heapEntry{
 		value:    v,
 		priority: priority,
-	}
-	heap.Push(p.itemHeap, newItem)
-	p.lookup[v] = newItem
+	})
 }
 
 // Pop removes the element with the highest priority from the queue and returns it.
-// In case of an empty queue, an error is returned.
-func (p *PriorityQueue) Pop() (interface{}, error) {
-	if len(*p.itemHeap) == 0 {
-		return nil, errors.New("empty queue")
+// In case of an empty queue, nil is returned.
+func (p *PriorityQueue) Pop() interface{} {
+	if p.heap.Len() == 0 {
+		return nil
 	}
-
-	item := heap.Pop(p.itemHeap).(*item)
-	delete(p.lookup, item.value)
-	return item.value, nil
+	return heap.Pop(&p.heap)
 }
 
 // Peek returns the item that is on top of the heap but does not remove.
-// In case of an empty queue, an error is returned.
-func (p *PriorityQueue) Peek() (interface{}, error) {
-	if len(*p.itemHeap) == 0 {
-		return nil, errors.New("empty queue")
+// In case of an empty queue, false is returned.
+func (p *PriorityQueue) Peek() (interface{}, bool) {
+	if len(p.heap.entries) > 0 {
+		return p.heap.entries[0].value, true
 	}
-
-	return (*p.itemHeap)[0].value, nil
+	return nil, false
 }
 
 // UpdatePriority changes the priority of a given item.
 // If the specified item is not present in the queue, no action is performed.
 func (p *PriorityQueue) UpdatePriority(x interface{}, newPriority float64) {
-	item, ok := p.lookup[x]
+	index, ok := p.heap.lookup[x]
 	if !ok {
+		return
+	}
+	item := &p.heap.entries[index]
+
+	// no change?
+	if item.priority == newPriority {
 		return
 	}
 
 	item.priority = newPriority
-	heap.Fix(p.itemHeap, item.index)
+	heap.Fix(&p.heap, index)
 }
 
 // Remove removes the element.
 func (p *PriorityQueue) Remove(x interface{}) {
-	item, ok := p.lookup[x]
+	index, ok := p.heap.lookup[x]
 	if !ok {
 		return
 	}
-
-	heap.Remove(p.itemHeap, item.index)
-	delete(p.lookup, item.value)
+	heap.Remove(&p.heap, index)
 }
 
-type itemHeap []*item
+var _ heap.Interface = (*queue)(nil)
 
-type item struct {
+type heapEntry struct {
 	value    interface{}
 	priority float64
-	index    int
 }
 
-func (ih *itemHeap) Len() int {
-	return len(*ih)
+type queue struct {
+	entries []heapEntry
+	lookup  map[interface{}]int
 }
 
-func (ih *itemHeap) Less(i, j int) bool {
-	return (*ih)[i].priority < (*ih)[j].priority
+func (q *queue) Len() int {
+	return len(q.entries)
 }
 
-func (ih *itemHeap) Swap(i, j int) {
-	(*ih)[i], (*ih)[j] = (*ih)[j], (*ih)[i]
-	(*ih)[i].index = i
-	(*ih)[j].index = j
+func (q *queue) Less(i, j int) bool {
+	a, b := &q.entries[i], &q.entries[j]
+	return a.priority < b.priority
 }
 
-func (ih *itemHeap) Push(x interface{}) {
-	it := x.(*item)
-	it.index = len(*ih)
-	*ih = append(*ih, it)
+func (q *queue) Swap(i, j int) {
+	a, b := q.entries[i], q.entries[j]
+	q.entries[i], q.entries[j] = b, a
+	q.lookup[a.value], q.lookup[b.value] = j, i
 }
 
-func (ih *itemHeap) Pop() interface{} {
-	old := *ih
-	item := old[len(old)-1]
-	*ih = old[0 : len(old)-1]
-	return item
+func (q *queue) Push(x interface{}) {
+	if q.lookup == nil {
+		q.lookup = make(map[interface{}]int)
+	}
+	entry := x.(heapEntry)
+	q.lookup[entry.value] = len(q.entries)
+	q.entries = append(q.entries, entry)
+}
+
+func (q *queue) Pop() interface{} {
+	last := len(q.entries) - 1
+	var item heapEntry
+	if 0 <= last && last < len(q.entries) {
+		item, q.entries = q.entries[last], q.entries[:last]
+		delete(q.lookup, item.value)
+		return item.value
+	}
+	return nil
 }
