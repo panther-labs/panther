@@ -41,9 +41,6 @@ import (
 const (
 	// Limit this so there is time to delete from the queue at the end.
 	processingMaxFilesLimit = 5000
-
-	// How many objects to read per sqs read, the larger value, the the bigger impact on failures
-	sqsReadBatchSize = 10 //  must be no larger than 10
 )
 
 /*
@@ -138,17 +135,6 @@ func pollEvents(
 				for _, dataStream := range dataStreams {
 					// Since streamChan is unbuffered it will block
 					streamChan <- dataStream
-					// Check poll deadline AFTER finishing processing
-					select {
-					case <-pollCtx.Done():
-						/*
-								NOTE: If past poll deadline, we stop here, this means that if there are remaining messages
-							    we will not delete them. They will be re-tried after the visibility timeout.
-						*/
-						return
-					default:
-						// Makes select non blocking
-					}
 				}
 				accumulatedMessageReceipts = append(accumulatedMessageReceipts, msg.ReceiptHandle)
 			}
@@ -184,7 +170,7 @@ func highMemoryUsage() (heapUsedMB, memAvailableMB float32, isHigh bool) {
 func receiveFromSqs(ctx context.Context, sqsClient sqsiface.SQSAPI) ([]*sqs.Message, error) {
 	input := &sqs.ReceiveMessageInput{
 		WaitTimeSeconds:     aws.Int64(0),
-		MaxNumberOfMessages: aws.Int64(sqsReadBatchSize),
+		MaxNumberOfMessages: aws.Int64(common.Config.SqsBatchSize),
 		QueueUrl:            &common.Config.SqsQueueURL,
 	}
 	output, err := sqsClient.ReceiveMessageWithContext(ctx, input)

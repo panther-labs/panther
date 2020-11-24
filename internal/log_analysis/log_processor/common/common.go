@@ -59,6 +59,7 @@ type EnvConfig struct {
 	AwsLambdaFunctionMemorySize int    `required:"true" split_words:"true"`
 	ProcessedDataBucket         string `required:"true" split_words:"true"`
 	SqsQueueURL                 string `required:"true" split_words:"true"`
+	SqsBatchSize                int64  `required:"true" split_words:"true"`
 	SnsTopicARN                 string `required:"true" split_words:"true"`
 }
 
