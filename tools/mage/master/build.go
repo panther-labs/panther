@@ -28,6 +28,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/build"
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/gen"
+	"github.com/panther-labs/panther/tools/mage/srcfmt"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
@@ -38,6 +39,10 @@ func Build(log *zap.SugaredLogger) error {
 	if err := gen.Gen(); err != nil {
 		return err
 	}
+	if err := srcfmt.Fmt(); err != nil {
+		return err
+	}
+
 	if err := build.Lambda(); err != nil {
 		return err
 	}
