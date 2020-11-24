@@ -136,11 +136,18 @@ func pollEvents(
 					continue
 				}
 				for _, dataStream := range dataStreams {
-					// since streamChan is unbuffered it will block, exit early if deadline is past to delete messages
+					// Since streamChan is unbuffered it will block
+					streamChan <- dataStream
+					// Check poll deadline AFTER finishing processing
 					select {
-					case streamChan <- dataStream:
 					case <-pollCtx.Done():
+						/*
+								NOTE: If past poll deadline, we stop here, this means that if there are remaining messages
+							    we will not delete them. They will be re-tried after the visibility timeout.
+						*/
 						return
+					default:
+						// Makes select non blocking
 					}
 				}
 				accumulatedMessageReceipts = append(accumulatedMessageReceipts, msg.ReceiptHandle)
