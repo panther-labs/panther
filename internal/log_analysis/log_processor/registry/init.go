@@ -100,6 +100,4 @@ func init() {
 
 		zeeklogs.LogTypes(),
 	)
-	// Register all log types in the group with the availableLogTypes
-	availableLogTypes.MustRegister(nativeLogTypes)
 }

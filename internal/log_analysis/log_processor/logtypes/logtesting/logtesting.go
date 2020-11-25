@@ -135,6 +135,7 @@ func JSON() jsoniter.API {
 func TestResult(t *testing.T, expect string, actual *pantherlog.Result, indicators ...pantherlog.FieldID) {
 	t.Helper()
 	logType := jsoniter.Get([]byte(expect), pantherlog.FieldLogTypeJSON).ToString()
+
 	require.Equal(t, logType, actual.PantherLogType)
 	expectResult := pantherlog.Result{}
 	if indicators == nil {
