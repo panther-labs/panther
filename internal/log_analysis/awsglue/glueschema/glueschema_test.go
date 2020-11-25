@@ -373,3 +373,24 @@ func TestInferColumnsWithMappingsOrder(t *testing.T) {
 	require.Equal(t, expectedColumns, cols)
 	require.Equal(t, expectedStructFieldNames, mappings)
 }
+
+func TestInferColumnsCustom(t *testing.T) {
+	type T struct {
+		Foo jsoniter.RawMessage
+		Bar *jsoniter.RawMessage
+		Baz string
+	}
+	cols, err := InferColumnsCustom(T{}, func(t reflect.Type) Type {
+		if t == reflect.TypeOf(jsoniter.RawMessage{}) {
+			return "object"
+		}
+		return ""
+	})
+	assert := require.New(t)
+	assert.NoError(err)
+	assert.Equal([]Column{
+		{Name: "Foo", Type: "object"},
+		{Name: "Bar", Type: "object"},
+		{Name: "Baz", Type: "string"},
+	}, cols)
+}
