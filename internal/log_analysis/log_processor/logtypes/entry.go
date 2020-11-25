@@ -19,6 +19,7 @@ package logtypes
  */
 
 import (
+	"fmt"
 	"net/url"
 	"time"
 
@@ -88,6 +89,15 @@ func (desc *Desc) Validate() error {
 		}
 	}
 	return nil
+}
+
+func (desc *Desc) Fill() {
+	if desc.ReferenceURL == "" {
+		desc.ReferenceURL = "-"
+	}
+	if desc.Description == "" {
+		desc.Description = fmt.Sprintf("%s log type", desc.Name)
+	}
 }
 
 // ConfigJSON is a configuration that creates a log type entry for a JSON log.
