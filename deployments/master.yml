@@ -124,6 +124,12 @@ Parameters:
     MinValue: 256 # 128 is too small, risks OOM errors
     MaxValue: 3008
     Default: 2048
+  LogProcessorLambdaSQSReadBatchSize:
+    Type: Number
+    Description: How many SQS messsage the log processor reads per SQS read. If the log processor is timing out, reduce this number.
+    MinValue: 1
+    MaxValue: 10
+    Default: 10
   LogSubscriptionPrincipals:
     Type: CommaDelimitedList
     Description: Comma-separated list of AWS principal ARNs which will be authorized to subscribe to processed log data S3 notifications
@@ -347,6 +353,7 @@ Resources:
         InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         LogProcessorLambdaMemorySize: !Ref LogProcessorLambdaMemorySize
+        LogProcessorLambdaSQSReadBatchSize: !Ref LogProcessorLambdaSQSReadBatchSize
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
         PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn

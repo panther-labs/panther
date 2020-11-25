@@ -67,7 +67,7 @@ func TestStreamEvents(t *testing.T) {
 	sqsMock.On("DeleteMessageBatch", mock.Anything).
 		Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := testContext()
 	defer cancel()
 	count, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopGenerateDataStream)
 	require.NoError(t, err)
@@ -97,7 +97,7 @@ func TestStreamEventsReadEventError(t *testing.T) {
 	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
 		Return(&sqs.ReceiveMessageOutput{}, nil).Once()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := testContext()
 	defer cancel()
 	count, err := pollEvents(ctx, sqsMock, noopProcessorFunc, failGenerateDataStream)
 	// Failure in the generateDataStreamsFunc should no cause the function invocation to fail
@@ -116,7 +116,7 @@ func TestStreamEventsProcessError(t *testing.T) {
 	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
 		Return(&sqs.ReceiveMessageOutput{}, nil).Once() // this one return 0 messages, which breaks the loop
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := testContext()
 	defer cancel()
 	count, err := pollEvents(ctx, sqsMock, failProcessorFunc, noopGenerateDataStream)
 	require.Error(t, err)
@@ -134,7 +134,7 @@ func TestStreamEventsProcessErrorAndReadEventError(t *testing.T) {
 	sqsMock.On("ReceiveMessageWithContext", mock.Anything, mock.Anything, mock.Anything).
 		Return(&sqs.ReceiveMessageOutput{}, nil).Once() // this one return 0 messages, which breaks the loop
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := testContext()
 	defer cancel()
 	count, err := pollEvents(ctx, sqsMock, failProcessorFunc, failGenerateDataStream)
 	require.Error(t, err)
@@ -158,7 +158,7 @@ func TestStreamEventsReceiveSQSError(t *testing.T) {
 	sqsMock.On("DeleteMessageBatch", mock.Anything).
 		Return(&sqs.DeleteMessageBatchOutput{}, nil).Once()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := testContext()
 	defer cancel()
 	count, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopGenerateDataStream)
 	assert.NoError(t, err)
@@ -184,7 +184,7 @@ func TestStreamEventsDeleteSQSError(t *testing.T) {
 		Successful: []*sqs.DeleteMessageBatchResultEntry{},
 	}, fmt.Errorf("deleteError")).Once()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := testContext()
 	defer cancel()
 	count, err := pollEvents(ctx, sqsMock, noopProcessorFunc, noopGenerateDataStream)
 
@@ -216,6 +216,11 @@ func TestStreamEventsDeleteSQSError(t *testing.T) {
 	sqsMock.AssertExpectations(t)
 }
 
+func testContext() (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	return ctx, cancel
+}
+
 func noopProcessorFunc(streamChan <-chan *common.DataStream, _ destinations.Destination) error {
 	// drain channel
 	for range streamChan {
@@ -230,11 +235,13 @@ func failProcessorFunc(streamChan <-chan *common.DataStream, _ destinations.Dest
 	return fmt.Errorf("processError")
 }
 
-func noopGenerateDataStream(_ string) ([]*common.DataStream, error) {
-	return make([]*common.DataStream, 1), nil
+func noopGenerateDataStream(_ context.Context, _ string) ([]*common.DataStream, error) {
+	return []*common.DataStream{
+		{}, // empty is fine
+	}, nil
 }
 
 // simulated error parsing sqs message or reading s3 object
-func failGenerateDataStream(_ string) ([]*common.DataStream, error) {
+func failGenerateDataStream(_ context.Context, _ string) ([]*common.DataStream, error) {
 	return nil, fmt.Errorf("readEventError")
 }

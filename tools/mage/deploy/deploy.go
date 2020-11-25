@@ -546,6 +546,7 @@ func deployDashboardStack(bucket string) error {
 }
 
 func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) error {
+<<<<<<< HEAD
 	// this computes a signature of the deployed glue tables used for change detection, for CF use the Panther version
 	tablesSignature, err := gluetables.DeployedTablesSignature(clients.Glue())
 	if err != nil {
@@ -570,6 +571,25 @@ func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) 
 		"SqsKeyId":                     outputs["QueueEncryptionKeyId"],
 		"TablesSignature":              tablesSignature,
 		"TracingMode":                  settings.Monitoring.TracingMode,
+=======
+	_, err := deployTemplate(cfnstacks.LogAnalysisTemplate, outputs["SourceBucket"], cfnstacks.LogAnalysis, map[string]string{
+		"AlarmTopicArn":                      outputs["AlarmTopicArn"],
+		"AthenaResultsBucket":                outputs["AthenaResultsBucket"],
+		"AthenaWorkGroup":                    outputs["AthenaWorkGroup"],
+		"CloudWatchLogRetentionDays":         strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"CustomResourceVersion":              customResourceVersion(),
+		"Debug":                              strconv.FormatBool(settings.Monitoring.Debug),
+		"InputDataBucket":                    outputs["InputDataBucket"],
+		"InputDataTopicArn":                  outputs["InputDataTopicArn"],
+		"LayerVersionArns":                   settings.Infra.BaseLayerVersionArns,
+		"LogProcessorLambdaMemorySize":       strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
+		"LogProcessorLambdaSQSReadBatchSize": settings.Infra.LogProcessorLambdaSQSReadBatchSize,
+		"ProcessedDataBucket":                outputs["ProcessedDataBucket"],
+		"ProcessedDataTopicArn":              outputs["ProcessedDataTopicArn"],
+		"PythonLayerVersionArn":              outputs["PythonLayerVersionArn"],
+		"SqsKeyId":                           outputs["QueueEncryptionKeyId"],
+		"TracingMode":                        settings.Monitoring.TracingMode,
+>>>>>>> 22d63c5d (Fix connection reset by peer errors in log processor (#2071))
 	})
 	return err
 }
