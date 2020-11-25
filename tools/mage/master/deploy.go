@@ -21,6 +21,7 @@ package master
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -36,13 +37,10 @@ import (
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
-const (
-	// The region will be interpolated in these names
-	publicImageRepository = "349240696275.dkr.ecr.%s.amazonaws.com/panther-community"
-	defaultStackName      = "panther"
-)
+const defaultStackName = "panther"
 
-var publishRegions = []string{"us-east-1", "us-east-2", "us-west-2", "eu-central-1", "eu-west-1"}
+// Path to master stack with embedded version information
+var embedPath = filepath.Join("out", "deployments", "embedded.master.yml")
 
 // Deploy single master template nesting all other stacks.
 //
@@ -63,7 +61,8 @@ func Deploy() error {
 	log.Infof("deploying %s %s to %s (%s) as stack '%s'", masterTemplate, version, clients.AccountID(), clients.Region(), stack)
 	email := prompt.Read("First user email: ", prompt.EmailValidator)
 
-	if err := Build(log); err != nil {
+	dockerImageID, err := buildAssets(log, version)
+	if err != nil {
 		return err
 	}
 
@@ -112,7 +111,7 @@ func Deploy() error {
 	}
 	var registryURI = fmt.Sprintf("%s.dkr.ecr.%s.amazonaws.com/%s", clients.AccountID(), clients.Region(), repoName)
 
-	pkg, err := Package(log, clients.Region(), bucket, version, registryURI)
+	pkg, err := pkgAssets(log, clients.Region(), bucket, version, registryURI, dockerImageID)
 	if err != nil {
 		return err
 	}
