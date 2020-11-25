@@ -183,7 +183,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          ALERTS_TABLE_NAME: panther-log-alert-info
+          ALERTS_TABLE_NAME: !Ref LogAlertsTable
           ALERTS_RULE_INDEX_NAME: ruleId-creationTime-index
           ALERTS_TIME_INDEX_NAME: timePartition-creationTime-index
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
@@ -211,8 +211,8 @@ Resources:
                 - dynamodb:Query
                 - dynamodb:Scan
               Resource:
-                - !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-log-alert-info
-                - !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-log-alert-info/index/*
+                - !GetAtt LogAlertsTable.Arn
+                - !Sub '${LogAlertsTable.Arn}/index/*'
         - Id: S3Permissions
           Version: 2012-10-17
           Statement:
@@ -310,7 +310,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          ALERTS_TABLE: panther-log-alert-info
+          ALERTS_TABLE: !Ref LogAlertsTable
           ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts-queue
       Events:
         DynamoDBEvent:
@@ -361,7 +361,7 @@ Resources:
               Action:
                 - dynamodb:PutItem
                 - dynamodb:UpdateItem
-              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-log-alert-info
+              Resource: !GetAtt LogAlertsTable.Arn
 
   AlertsForwarderAlarms:
     Type: Custom::LambdaAlarms
@@ -666,7 +666,7 @@ Resources:
         Variables:
           ATHENA_WORKGROUP: !Ref AthenaWorkGroup
           DEBUG: !Ref Debug
-          QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-datacatalog-updater-queue
+          QUEUE_URL: !Ref UpdaterQueue
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
       Events:
         Queue:
@@ -709,7 +709,7 @@ Resources:
             - Effect: Allow
               Action: sqs:SendMessage
               # send messages to updater queue (defer tasks)
-              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-datacatalog-updater-queue
+              Resource: !GetAtt UpdaterQueue.Arn
         - Id: AthenaPermissions # to create views over Glue tables
           Version: 2012-10-17
           Statement:
@@ -892,7 +892,7 @@ Resources:
           ALERTS_QUEUE: panther-log-alert-notifications-queue
           S3_BUCKET: !Ref ProcessedDataBucket
           NOTIFICATIONS_TOPIC: !Ref ProcessedDataTopicArn
-          ALERTS_DEDUP_TABLE: panther-log-alert-dedup
+          ALERTS_DEDUP_TABLE: !Ref AlertsDedup
       Layers: !GetAtt RulesEngineLayers.LayerArns
       MemorySize: !Ref LogProcessorLambdaMemorySize # keep this the same as log processor since it has to read the output files
       Events:
@@ -930,7 +930,7 @@ Resources:
           Statement:
             - Effect: Allow
               Action: dynamodb:UpdateItem
-              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-log-alert-dedup
+              Resource: !GetAtt AlertsDedup.Arn
         - Id: AccessKms
           Version: 2012-10-17
           Statement:
@@ -1075,7 +1075,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          STREAM_NAME: panther-forwarder-firehose
+          STREAM_NAME: !Ref MessageForwarderFirehose
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: ConfirmSnsSubscriptions
@@ -1101,7 +1101,7 @@ Resources:
           Statement:
             - Effect: Allow
               Action: firehose:PutRecordBatch
-              Resource: !Sub arn:${AWS::Partition}:firehose:${AWS::Region}:${AWS::AccountId}:deliverystream/panther-forwarder-firehose
+              Resource: !GetAtt MessageForwarderFirehose.Arn
         - Id: InvokeSourceAPI
           Version: 2012-10-17
           Statement:

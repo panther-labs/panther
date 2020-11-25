@@ -191,7 +191,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          TABLE_NAME: panther-alert-forwarder
+          TABLE_NAME: !Ref AlertForwarderTable
       Events:
         Queue:
           Type: SQS
@@ -226,7 +226,7 @@ Resources:
           Statement:
             - Effect: Allow
               Action: dynamodb:UpdateItem
-              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-alert-forwarder
+              Resource: !GetAtt AlertForwarderTable.Arn
         - Id: InvokeApis
           Version: 2012-10-17
           Statement:
@@ -539,7 +539,7 @@ Resources:
       Description: Compliance API
       Environment:
         Variables:
-          COMPLIANCE_TABLE: panther-compliance
+          COMPLIANCE_TABLE: !Ref ComplianceTable
           DEBUG: !Ref Debug
           INDEX_NAME: policy-index
       FunctionName: panther-compliance-api
@@ -567,8 +567,8 @@ Resources:
                 - dynamodb:*Item
                 - dynamodb:Scan
               Resource:
-                - !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-compliance
-                - !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-compliance/index/*
+                - !GetAtt ComplianceTable.Arn
+                - !Sub '${ComplianceTable.Arn}/index/*'
 
   ComplianceApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -647,8 +647,8 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          SQS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-remediation-queue
-          REMEDIATION_LAMBDA_ARN: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-aws-remediation
+          SQS_QUEUE_URL: !Ref RemediationQueue
+          REMEDIATION_LAMBDA_ARN: !GetAtt RemediationFunction.Arn
       FunctionName: panther-remediation-api
       # <cfndoc>
       # The `panther-remediation-api` lambda triggers AWS remediations.
@@ -675,14 +675,14 @@ Resources:
               Action:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
-              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-remediation-queue
+              Resource: !GetAtt RemediationQueue.Arn
         - Id: InvokeAPIs
           Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource:
-                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-aws-remediation
+                - !GetAtt RemediationFunction.Arn
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-resources-api
 
@@ -780,7 +780,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          REMEDIATION_LAMBDA_ARN: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-aws-remediation
+          REMEDIATION_LAMBDA_ARN: !GetAtt RemediationFunction.Arn
       Events:
         Queue:
           Type: SQS
@@ -811,7 +811,7 @@ Resources:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource:
-                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-aws-remediation
+                - !GetAtt RemediationFunction.Arn
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-resources-api
 
@@ -897,8 +897,8 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          RESOURCES_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-resources-queue
-          RESOURCES_TABLE: panther-resources
+          RESOURCES_QUEUE_URL: !Ref ResourcesQueue
+          RESOURCES_TABLE: !Ref ResourcesTable
       FunctionName: panther-resources-api
       # <cfndoc>
       # The `panther-resources-api` lambda implements the resources API.
@@ -928,7 +928,7 @@ Resources:
                 - dynamodb:Query
                 - dynamodb:Scan
                 - dynamodb:*Item
-              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-resources
+              Resource: !GetAtt ResourcesTable.Arn
         - Id: PublishToResourceQueue
           Version: 2012-10-17
           Statement:
@@ -936,7 +936,7 @@ Resources:
               Action:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
-              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-resources-queue
+              Resource: !GetAtt ResourcesQueue.Arn
             - Effect: Allow
               Action:
                 - kms:Decrypt
@@ -1156,7 +1156,7 @@ Resources:
           Statement:
             - Effect: Allow
               Action: dynamodb:GetItem
-              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-resources
+              Resource: !GetAtt ResourcesTable.Arn
             - Effect: Allow
               Action: dynamodb:*Item
               Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-kv-store
@@ -1262,7 +1262,7 @@ Resources:
         Variables:
           AUDIT_ROLE_NAME: !Sub PantherAuditRole-${AWS::Region}
           DEBUG: !Ref Debug
-          SNAPSHOT_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-snapshot-queue
+          SNAPSHOT_QUEUE_URL: !Ref SnapshotQueue
       Events:
         SQS:
           Type: SQS
@@ -1352,7 +1352,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          SNAPSHOT_POLLERS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-snapshot-queue
+          SNAPSHOT_POLLERS_QUEUE_URL: !Ref SnapshotQueue
       Events:
         ScheduleScans:
           Type: Schedule
@@ -1386,7 +1386,7 @@ Resources:
               Action:
                 - sqs:SendMessage
                 - sqs:SendMessageBatch
-              Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-snapshot-queue
+              Resource: !GetAtt SnapshotQueue.Arn
             - Effect: Allow
               Action:
                 - kms:Decrypt

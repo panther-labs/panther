@@ -264,7 +264,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          ORG_TABLE_NAME: panther-organization
+          ORG_TABLE_NAME: !Ref OrganizationTable
       FunctionName: panther-organization-api
       # <cfndoc>
       # This lambda implements organization API to manage settings.
@@ -283,7 +283,7 @@ Resources:
               Action:
                 - dynamodb:*Item
                 - dynamodb:Scan
-              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-organization
+              Resource: !GetAtt OrganizationTable.Arn
 
   OrganizationAPIAlarms:
     Type: Custom::LambdaAlarms
@@ -319,7 +319,7 @@ Resources:
           POLICY_ENGINE: panther-policy-engine
           RULES_ENGINE: panther-rules-engine
           RESOURCE_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-resources-queue
-          TABLE: panther-analysis
+          TABLE: !Ref AnalysisTable
       FunctionName: panther-analysis-api
       # <cfndoc>
       # This lambda implements the analysis API which is responsible for
@@ -352,7 +352,7 @@ Resources:
                 - dynamodb:*Item
                 - dynamodb:Query
                 - dynamodb:Scan
-              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-analysis
+              Resource: !GetAtt AnalysisTable.Arn
             - Effect: Allow
               Action:
                 - s3:DeleteObject # Does NOT grant permission to permanently delete versions
@@ -485,7 +485,7 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           KEY_ID: !Ref OutputsKeyId
-          OUTPUTS_TABLE_NAME: panther-outputs
+          OUTPUTS_TABLE_NAME: !Ref OutputsTable
           OUTPUTS_DISPLAY_NAME_INDEX_NAME: displayName-index
       FunctionName: panther-outputs-api
       # <cfndoc>
@@ -513,8 +513,8 @@ Resources:
                 - dynamodb:Scan
                 - dynamodb:UpdateItem
               Resource:
-                - !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-outputs
-                - !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-outputs/index/*
+                - !GetAtt OutputsTable.Arn
+                - !Sub '${OutputsTable.Arn}/index/*'
         - Id: CredentialEncryption
           Version: 2012-10-17
           Statement:
@@ -605,7 +605,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          ALERT_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts-queue
+          ALERT_QUEUE_URL: !Ref AlertQueue
           ALERT_RETRY_COUNT: !FindInMap [Alerts, RetryCount, Max]
           ALERT_URL_PREFIX: !Sub https://${AppDomainURL}/log-analysis/alerts/
           ALERTS_API: panther-alerts-api
@@ -746,7 +746,7 @@ Resources:
           LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-input-data-notifications-queue
           LOG_PROCESSOR_QUEUE_ARN: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-input-data-notifications-queue
           SNAPSHOT_POLLERS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-snapshot-queue
-          TABLE_NAME: panther-source-integrations
+          TABLE_NAME: !Ref IntegrationsTable
           VERSION: !Ref CustomResourceVersion
       FunctionName: panther-source-api
       # <cfndoc>
@@ -771,7 +771,7 @@ Resources:
                 - dynamodb:*Item
                 - dynamodb:Query
                 - dynamodb:Scan
-              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-source-integrations
+              Resource: !GetAtt IntegrationsTable.Arn
         - Id: SendSQSMessages
           Version: 2012-10-17
           Statement:
@@ -1202,7 +1202,7 @@ Resources:
       Environment:
         Variables:
           DEBUG: !Ref Debug
-          LOG_TYPES_TABLE_NAME: panther-logtypes
+          LOG_TYPES_TABLE_NAME: !Ref LogTypesTable
       FunctionName: panther-logtypes-api
       # <cfndoc>
       # This lambda implements logtypes API to manage logtypes.
@@ -1221,4 +1221,4 @@ Resources:
               Action:
                 - dynamodb:*Item
                 - dynamodb:Scan
-              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-logtypes
+              Resource: !GetAtt LogTypesTable.Arn
