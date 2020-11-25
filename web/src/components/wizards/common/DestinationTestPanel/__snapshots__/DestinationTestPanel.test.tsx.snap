@@ -784,8 +784,7 @@ exports[`DestinationTestPanel should show error details for a failing test-alert
 
 .panther-17 {
   display: grid;
-  grid-row-gap: 16px;
-  grid-column-gap: 16px;
+  grid-gap: 16px;
   grid-template-columns: max-content 1fr;
   word-break: break-word;
   font-size: 0.875rem;
