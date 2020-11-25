@@ -39,7 +39,7 @@ func TestColumnName(t *testing.T) {
 		{".foo", "_foo"},
 		{"foo-bar", "foo-bar"},
 		{"$foo", "dollar_sign_foo"},
-		{"συνθηματικό", "synthimatiko"},
+		{"Μύκονοοοος", "Mykonoooos"},
 		{"foo\\bar", "foo_backslash_bar"},
 		{"<foo>bar", "_foo_bar"},
 	} {
