@@ -174,7 +174,7 @@ func TestResult(t *testing.T, expect string, actual *pantherlog.Result, indicato
 // EqualTimestamp is a helper that checks timestamps for equality with human readable message
 func EqualTimestamp(t *testing.T, expect, actual time.Time, msgAndArgs ...interface{}) {
 	t.Helper()
-	require.False(t, actual.IsZero(), "zero timestamp")
+	require.NotZero(t, actual, msgAndArgs...)
 	require.Equal(t, expect.UTC().Format(time.RFC3339Nano), actual.UTC().Format(time.RFC3339Nano), msgAndArgs...)
 }
 
