@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`DestinationTestPanel should trigger test for alert that is failing 1`] = `
+exports[`DestinationTestPanel should show a success message for successful test-alert delivery 1`] = `
 @keyframes animation-0 {
   0% {
     opacity: 0;
@@ -11,7 +11,7 @@ exports[`DestinationTestPanel should trigger test for alert that is failing 1`] 
   }
 }
 
-.panther-39 {
+.panther-17 {
   background-color: #23344e;
   border-radius: 4px;
   padding: 24px;
@@ -79,19 +79,19 @@ exports[`DestinationTestPanel should trigger test for alert that is failing 1`] 
   margin-left: 8px;
 }
 
-.panther-38 {
+.panther-16 {
   padding-top: 12px;
 }
 
 
 
-.panther-36 {
+.panther-14 {
   will-change: opacity;
   -webkit-animation: animation-0 300ms 0ms ease-in-out both;
   animation: animation-0 300ms 0ms ease-in-out both;
 }
 
-.panther-35 {
+.panther-13 {
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
@@ -113,7 +113,7 @@ exports[`DestinationTestPanel should trigger test for alert that is failing 1`] 
   color: #bdbdbd;
 }
 
-.panther-34 {
+.panther-12 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -129,11 +129,19 @@ exports[`DestinationTestPanel should trigger test for alert that is failing 1`] 
   margin-bottom: 24px;
 }
 
-.panther-34>*:not(:last-child) {
+.panther-12>*:not(:last-child) {
   margin-bottom: 24px;
 }
 
-.panther-31 {
+.panther-7 {
+  max-width: 100%;
+}
+
+.panther-8 {
+  margin-bottom: 20px;
+}
+
+.panther-9 {
   width: auto;
   outline: none;
   padding-left: 20px;
@@ -152,23 +160,23 @@ exports[`DestinationTestPanel should trigger test for alert that is failing 1`] 
   text-decoration: none;
 }
 
-.panther-31:hover {
+.panther-9:hover {
   background-color: #0a8bcf;
   border-color: #0a8bcf;
 }
 
-.panther-31:focus {
+.panther-9:focus {
   background-color: #0a8bcf;
   border-color: #55d6ff;
 }
 
-.panther-31:active,
-.panther-31[data-active=true] {
+.panther-9:active,
+.panther-9[data-active=true] {
   background-color: #0077bb;
   border-color: #0077bb;
 }
 
-.panther-33 {
+.panther-11 {
   font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 1.5px;
@@ -178,59 +186,12 @@ exports[`DestinationTestPanel should trigger test for alert that is failing 1`] 
   color: #dedede;
 }
 
-
-
-.panther-32>span {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-pack: center;
-  -ms-flex-pack: center;
-  -webkit-justify-content: center;
-  justify-content: center;
-  -webkit-align-items: center;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-}
-
-.panther-29 {
-  background-color: #87374b;
-  border-radius: 4px;
-  padding: 24px;
-}
-
-.panther-28 {
-  table-layout: auto;
-  width: 100%;
-}
-
-.panther-7 {
-  padding: 8px;
-  font-size: 0.875rem;
-  text-align: left;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-
-.panther-9 {
-  padding: 8px;
-  font-size: 0.875rem;
-  text-align: left;
-  vertical-align: middle;
-}
-
-.panther-8 {
-  font-weight: 700;
-}
-
 <div>
   <header
     id="main-header"
   />
   <article
-    class="panther-39"
+    class="panther-17"
   >
     <ul
       class="panther-3"
@@ -251,16 +212,16 @@ exports[`DestinationTestPanel should trigger test for alert that is failing 1`] 
       </li>
     </ul>
     <div
-      class="panther-38"
+      class="panther-16"
     >
       <section
         class="panther-10"
       >
         <div
-          class="panther-36"
+          class="panther-14"
         >
           <div
-            class="panther-35"
+            class="panther-13"
           >
             <header
               class="panther-6"
@@ -268,158 +229,44 @@ exports[`DestinationTestPanel should trigger test for alert that is failing 1`] 
               <h1
                 class="panther-4"
               >
-                Testing your Destination
+                Everything looks good!
               </h1>
               <p
                 class="panther-5"
               >
-                Something went wrong and the destination you have configured did not receive the test alert. Please update your destination settings and try again.
+                Your destination was successfully added and you will receive alerts based on your configuration. You can always edit or delete this destination from the destinations page
               </p>
             </header>
             <div
-              class="panther-34"
+              class="panther-12"
             >
-              <div
-                class="panther-29"
-              >
-                <table
-                  aria-label="Destination failure information"
-                  class="panther-28"
-                >
-                  <tbody
-                    class="panther-10"
-                  >
-                    <tr
-                      class="panther-10"
-                      role="row"
-                    >
-                      <td
-                        class="panther-7"
-                        role="cell"
-                      >
-                        Dispatched at
-                      </td>
-                      <td
-                        class="panther-9"
-                        role="cell"
-                      >
-                        <p
-                          class="panther-8"
-                        >
-                          2020-09-25T00:14:42.514Z
-                        </p>
-                      </td>
-                    </tr>
-                    <tr
-                      class="panther-10"
-                      role="row"
-                    >
-                      <td
-                        class="panther-9"
-                        role="cell"
-                      >
-                        Message
-                      </td>
-                      <td
-                        class="panther-9"
-                        role="cell"
-                      >
-                        <p
-                          class="panther-8"
-                        >
-                          This destination failed to pass the test
-                        </p>
-                      </td>
-                    </tr>
-                    <tr
-                      class="panther-10"
-                      role="row"
-                    >
-                      <td
-                        class="panther-9"
-                        role="cell"
-                      >
-                        Output ID
-                      </td>
-                      <td
-                        class="panther-9"
-                        role="cell"
-                      >
-                        <p
-                          class="panther-8"
-                        >
-                          bb9f4174-594c-4dc0-9308-f4c28c0e29eb
-                        </p>
-                      </td>
-                    </tr>
-                    <tr
-                      class="panther-10"
-                      role="row"
-                    >
-                      <td
-                        class="panther-9"
-                        role="cell"
-                      >
-                        Status Code
-                      </td>
-                      <td
-                        class="panther-9"
-                        role="cell"
-                      >
-                        <p
-                          class="panther-8"
-                        >
-                          400
-                        </p>
-                      </td>
-                    </tr>
-                    <tr
-                      class="panther-10"
-                      role="row"
-                    >
-                      <td
-                        class="panther-9"
-                        role="cell"
-                      >
-                        Success
-                      </td>
-                      <td
-                        class="panther-9"
-                        role="cell"
-                      >
-                        <p
-                          class="panther-8"
-                        >
-                          false
-                        </p>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <img
+                alt="Success"
+                class="panther-7"
+                height="120"
+                src="test-file-stub"
+                width="120"
+              />
               <p
+                class="panther-8"
+              >
+                Do you want to try it out by sending a test Alert?
+              </p>
+              <div
                 class="panther-10"
               >
-                If you don
-                '
-                t feel like it right now, you can always change the configuration later
-              </p>
-              <a
-                class="panther-32"
-                href="/settings/destinations/8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7/edit/"
-              >
-                <span
-                  class="panther-31"
+                <button
+                  class="panther-9"
                   type="button"
                 >
-                  Back to Configuration
-                </span>
-              </a>
+                  Send Test Alert
+                </button>
+              </div>
               <a
-                class="panther-33"
+                class="panther-11"
                 href="/settings/destinations/"
               >
-                Skip Testing
+                Finish Setup
               </a>
             </div>
           </div>
@@ -433,7 +280,7 @@ exports[`DestinationTestPanel should trigger test for alert that is failing 1`] 
 </div>
 `;
 
-exports[`DestinationTestPanel should trigger test for alert that is successful 1`] = `
+exports[`DestinationTestPanel should show a success message for successful test-alert delivery 2`] = `
 @keyframes animation-0 {
   0% {
     opacity: 0;
@@ -734,7 +581,7 @@ exports[`DestinationTestPanel should trigger test for alert that is successful 1
 </div>
 `;
 
-exports[`DestinationTestPanel show that destination was created successfully 1`] = `
+exports[`DestinationTestPanel should show error details for a failing test-alert 1`] = `
 @keyframes animation-0 {
   0% {
     opacity: 0;
@@ -745,7 +592,7 @@ exports[`DestinationTestPanel show that destination was created successfully 1`]
   }
 }
 
-.panther-17 {
+.panther-28 {
   background-color: #23344e;
   border-radius: 4px;
   padding: 24px;
@@ -813,19 +660,19 @@ exports[`DestinationTestPanel show that destination was created successfully 1`]
   margin-left: 8px;
 }
 
-.panther-16 {
+.panther-27 {
   padding-top: 12px;
 }
 
 
 
-.panther-14 {
+.panther-25 {
   will-change: opacity;
   -webkit-animation: animation-0 300ms 0ms ease-in-out both;
   animation: animation-0 300ms 0ms ease-in-out both;
 }
 
-.panther-13 {
+.panther-24 {
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
@@ -847,7 +694,7 @@ exports[`DestinationTestPanel show that destination was created successfully 1`]
   color: #bdbdbd;
 }
 
-.panther-12 {
+.panther-23 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -863,19 +710,11 @@ exports[`DestinationTestPanel show that destination was created successfully 1`]
   margin-bottom: 24px;
 }
 
-.panther-12>*:not(:last-child) {
+.panther-23>*:not(:last-child) {
   margin-bottom: 24px;
 }
 
-.panther-7 {
-  max-width: 100%;
-}
-
-.panther-8 {
-  margin-bottom: 20px;
-}
-
-.panther-9 {
+.panther-20 {
   width: auto;
   outline: none;
   padding-left: 20px;
@@ -894,23 +733,23 @@ exports[`DestinationTestPanel show that destination was created successfully 1`]
   text-decoration: none;
 }
 
-.panther-9:hover {
+.panther-20:hover {
   background-color: #0a8bcf;
   border-color: #0a8bcf;
 }
 
-.panther-9:focus {
+.panther-20:focus {
   background-color: #0a8bcf;
   border-color: #55d6ff;
 }
 
-.panther-9:active,
-.panther-9[data-active=true] {
+.panther-20:active,
+.panther-20[data-active=true] {
   background-color: #0077bb;
   border-color: #0077bb;
 }
 
-.panther-11 {
+.panther-22 {
   font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 1.5px;
@@ -920,12 +759,54 @@ exports[`DestinationTestPanel show that destination was created successfully 1`]
   color: #dedede;
 }
 
+
+
+.panther-21>span {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-18 {
+  background-color: #87374b;
+  border-radius: 4px;
+  padding: 24px;
+}
+
+.panther-17 {
+  display: grid;
+  grid-row-gap: 16px;
+  grid-column-gap: 16px;
+  grid-template-columns: max-content 1fr;
+  word-break: break-word;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.panther-7 {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.panther-8 {
+  font-weight: 700;
+}
+
 <div>
   <header
     id="main-header"
   />
   <article
-    class="panther-17"
+    class="panther-28"
   >
     <ul
       class="panther-3"
@@ -946,16 +827,16 @@ exports[`DestinationTestPanel show that destination was created successfully 1`]
       </li>
     </ul>
     <div
-      class="panther-16"
+      class="panther-27"
     >
       <section
-        class="panther-10"
+        class="panther-19"
       >
         <div
-          class="panther-14"
+          class="panther-25"
         >
           <div
-            class="panther-13"
+            class="panther-24"
           >
             <header
               class="panther-6"
@@ -963,44 +844,98 @@ exports[`DestinationTestPanel show that destination was created successfully 1`]
               <h1
                 class="panther-4"
               >
-                Everything looks good!
+                Testing your Destination
               </h1>
               <p
                 class="panther-5"
               >
-                Your destination was successfully added and you will receive alerts based on your configuration. You can always edit or delete this destination from the destinations page
+                Something went wrong and the destination you have configured did not receive the test alert. Please update your destination settings and try again.
               </p>
             </header>
             <div
-              class="panther-12"
+              class="panther-23"
             >
-              <img
-                alt="Success"
-                class="panther-7"
-                height="120"
-                src="test-file-stub"
-                width="120"
-              />
-              <p
-                class="panther-8"
-              >
-                Do you want to try it out by sending a test Alert?
-              </p>
               <div
-                class="panther-10"
+                class="panther-18"
               >
-                <button
-                  class="panther-9"
+                <dl
+                  class="panther-17"
+                >
+                  <dt
+                    class="panther-7"
+                  >
+                    Dispatched at
+                  </dt>
+                  <dd
+                    class="panther-8"
+                  >
+                    2020-09-25T00:14:42.514Z
+                  </dd>
+                  <dt
+                    class="panther-7"
+                  >
+                    Message
+                  </dt>
+                  <dd
+                    class="panther-8"
+                  >
+                    This destination failed to pass the test
+                  </dd>
+                  <dt
+                    class="panther-7"
+                  >
+                    Output ID
+                  </dt>
+                  <dd
+                    class="panther-8"
+                  >
+                    bb9f4174-594c-4dc0-9308-f4c28c0e29eb
+                  </dd>
+                  <dt
+                    class="panther-7"
+                  >
+                    Status Code
+                  </dt>
+                  <dd
+                    class="panther-8"
+                  >
+                    400
+                  </dd>
+                  <dt
+                    class="panther-7"
+                  >
+                    Success
+                  </dt>
+                  <dd
+                    class="panther-8"
+                  >
+                    false
+                  </dd>
+                </dl>
+              </div>
+              <p
+                class="panther-19"
+              >
+                If you don
+                '
+                t feel like it right now, you can always change the configuration later
+              </p>
+              <a
+                class="panther-21"
+                href="/settings/destinations/8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7/edit/"
+              >
+                <span
+                  class="panther-20"
                   type="button"
                 >
-                  Send Test Alert
-                </button>
-              </div>
+                  Back to Configuration
+                </span>
+              </a>
               <a
-                class="panther-11"
+                class="panther-22"
                 href="/settings/destinations/"
               >
-                Finish Setup
+                Skip Testing
               </a>
             </div>
           </div>

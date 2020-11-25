@@ -18,7 +18,18 @@
 
 import React from 'react';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
-import { AbstractButton, Box, Button, Flex, Img, Link, Text, useSnackbar } from 'pouncejs';
+import {
+  AbstractButton,
+  Box,
+  Button,
+  Card,
+  Flex,
+  Grid,
+  Img,
+  Link,
+  Text,
+  useSnackbar,
+} from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import SuccessStatus from 'Assets/statuses/success.svg';
@@ -27,12 +38,25 @@ import LinkButton from 'Components/buttons/LinkButton';
 import { extractErrorMessage } from 'Helpers/utils';
 import { DeliveryResponseFull } from 'Source/graphql/fragments/DeliveryResponseFull.generated';
 import { useSendTestAlertLazyQuery } from 'Source/graphql/queries';
-import DestinationTestError from 'Components/wizards/common/DestinationTestPanel/DestinationTestError';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { WizardData as CreateWizardData } from '../../CreateDestinationWizard';
 import { WizardData as EditWizardData } from '../../EditDestinationWizard';
 
 type DeliveryResponses = Array<DeliveryResponseFull>;
+type RowProps = { field: string; value: string | number };
+
+const Row: React.FC<RowProps> = ({ field, value }) => {
+  return (
+    <React.Fragment>
+      <Box as="dt" my="auto">
+        {field}
+      </Box>
+      <Text as="dd" fontWeight="bold">
+        {value}
+      </Text>
+    </React.Fragment>
+  );
+};
 
 const DestinationTestPanel: React.FC = () => {
   const [testResponses, setTestResponses] = React.useState<DeliveryResponses>([]);
@@ -72,6 +96,7 @@ const DestinationTestPanel: React.FC = () => {
   // We are not expecting more than one response since we are sending one ID
   if (testResponses.length && testResponses[0].success === false) {
     trackEvent({ event: EventEnum.TestedDestinationFailure, src: SrcEnum.Destinations, ctx: destination.outputType }) // prettier-ignore
+    const { dispatchedAt, message, outputId, statusCode, success } = testResponses[0];
     return (
       <Box maxWidth={700} mx="auto">
         <WizardPanel.Heading
@@ -79,7 +104,23 @@ const DestinationTestPanel: React.FC = () => {
           subtitle="Something went wrong and the destination you have configured did not receive the test alert. Please update your destination settings and try again."
         />
         <Flex direction="column" align="center" spacing={6} my={6}>
-          <DestinationTestError response={testResponses[0]} />
+          <Card backgroundColor="pink-700" p={6}>
+            <Grid
+              as="dl"
+              wordBreak="break-word"
+              templateColumns="max-content 1fr"
+              fontSize="medium"
+              fontWeight="medium"
+              columnGap={4}
+              rowGap={4}
+            >
+              <Row field="Dispatched at" value={dispatchedAt} />
+              <Row field="Message" value={message} />
+              <Row field="Output ID" value={outputId} />
+              <Row field="Status Code" value={statusCode} />
+              <Row field="Success" value={success.toString()} />
+            </Grid>
+          </Card>
           <Text>
             If you don{"'"}t feel like it right now, you can always change the configuration later
           </Text>

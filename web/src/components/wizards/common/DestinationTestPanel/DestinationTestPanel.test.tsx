@@ -31,24 +31,7 @@ import DestinationTestPanel from './index';
 
 const destination = buildDestination();
 describe('DestinationTestPanel', () => {
-  it('show that destination was created successfully', () => {
-    const { getByText, container } = render(
-      <Wizard initialData={{ destination }}>
-        <Wizard.Step title="title">
-          <WizardPanel>
-            <DestinationTestPanel />
-          </WizardPanel>
-        </Wizard.Step>
-      </Wizard>
-    );
-
-    expect(getByText('Everything looks good!')).toBeInTheDocument();
-    expect(getByText('Send Test Alert')).toBeInTheDocument();
-
-    expect(container).toMatchSnapshot();
-  });
-
-  it('should trigger test for alert that is successful', async () => {
+  it('should show a success message for successful test-alert delivery', async () => {
     const deliveryResponse = buildDeliveryResponse({ statusCode: 200, success: true });
     const mocks = [
       mockSendTestAlert({
@@ -71,6 +54,7 @@ describe('DestinationTestPanel', () => {
 
     expect(getByText('Everything looks good!')).toBeInTheDocument();
     const sendTestBtn = getByText('Send Test Alert');
+    expect(container).toMatchSnapshot();
     await fireClickAndMouseEvents(sendTestBtn);
     await waitFor(() => {
       expect(getByAltText('Test Alert received')).toBeInTheDocument();
@@ -79,7 +63,7 @@ describe('DestinationTestPanel', () => {
     expect(container).toMatchSnapshot();
   });
 
-  it('should trigger test for alert that is failing', async () => {
+  it('should show error details for a failing test-alert', async () => {
     const deliveryResponseMsg = 'This destination failed to pass the test';
     const deliveryResponse = buildDeliveryResponse({
       message: deliveryResponseMsg,
