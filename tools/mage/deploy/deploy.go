@@ -31,7 +31,6 @@ import (
 	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/prompt"
@@ -534,13 +533,7 @@ func deployDashboardStack(bucket string) error {
 }
 
 func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) error {
-	// this computes a signature of the deployed glue tables used for change detection, for CF use the Panther version
-	tablesSignature, err := gluetables.DeployedTablesSignature(clients.Glue())
-	if err != nil {
-		return err
-	}
-
-	_, err = deployTemplate(cfnstacks.LogAnalysisTemplate, outputs["SourceBucket"], cfnstacks.LogAnalysis, map[string]string{
+	_, err := deployTemplate(cfnstacks.LogAnalysisTemplate, outputs["SourceBucket"], cfnstacks.LogAnalysis, map[string]string{
 		"AlarmTopicArn":                outputs["AlarmTopicArn"],
 		"AthenaResultsBucket":          outputs["AthenaResultsBucket"],
 		"AthenaWorkGroup":              outputs["AthenaWorkGroup"],
@@ -555,7 +548,6 @@ func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) 
 		"ProcessedDataTopicArn":        outputs["ProcessedDataTopicArn"],
 		"PythonLayerVersionArn":        outputs["PythonLayerVersionArn"],
 		"SqsKeyId":                     outputs["QueueEncryptionKeyId"],
-		"TablesSignature":              tablesSignature,
 		"TracingMode":                  settings.Monitoring.TracingMode,
 	})
 	return err

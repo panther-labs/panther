@@ -50,8 +50,8 @@ func TestSQSClassifier(t *testing.T) {
 			},
 		},
 	}
-	testRegistry := logtypes.Registry{}
-	testRegistry.MustRegister(logtypes.MustBuild(logtypes.Config{
+
+	testGroup := logtypes.Must("test", logtypes.Config{
 		Name:         testLogType,
 		Description:  "Test log type",
 		ReferenceURL: "-",
@@ -59,12 +59,12 @@ func TestSQSClassifier(t *testing.T) {
 			LogLine string `json:"logLine" description:"log line"`
 		}{},
 		NewParser: parsers.AdapterFactory(&gitlablogs.APIParser{}),
-	}))
+	})
 	// nolint:lll
 	logData := `{"payload":"{\"severity\":\"INFO\",\"duration_s\":0.01524,\"db_duration_s\":0.00314,\"view_duration_s\":0.0121,\"status\":200,\"method\":\"POST\",\"path\":\"/api/v4/internal/post_receive\",\"params\":[{\"key\":\"gl_repository\",\"value\":\"project-9\"},{\"key\":\"identifier\",\"value\":\"user-2\"},{\"key\":\"changes\",\"value\":\"557fb80351047f0f65b4a4d8dd5d5ef07b95dcc9 7e4aac7b6bf60c74d0571d30b0ac6a19c76a9be4 refs/heads/master\\n\"},{\"key\":\"secret_token\",\"value\":\"[FILTERED]\"}],\"host\":\"127.0.0.1\",\"remote_ip\":\"127.0.0.1\",\"ua\":\"Ruby\",\"route\":\"/api/:version/internal/post_receive\",\"redis_calls\":10,\"redis_duration_s\":0.000738,\"correlation_id\":\"895c51dc-96c8-4f18-8be4-65252b17a324\",\"meta.user\":\"testuser\",\"meta.project\":\"testuser/jumbotron\",\"meta.root_namespace\":\"testuser\",\"meta.caller_id\":\"/api/:version/internal/post_receive\",\"tag\":\"gitlab.poc.api\",\"time\":\"2018-10-29T12:49:42.123Z\"}","sourceId":"testSource"}
 `
 	c := SQSClassifier{
-		Resolver: &testRegistry,
+		Resolver: logtypes.LocalResolver(testGroup),
 		LoadSource: func(id string) (*models.SourceIntegration, error) {
 			if id == testSourceID {
 				return testSource, nil

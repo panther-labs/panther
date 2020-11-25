@@ -1,4 +1,4 @@
-package awsglue
+package glueschema_test
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -24,9 +24,11 @@ import (
 	"strconv"
 	"testing"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	. "github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
@@ -77,10 +79,11 @@ func TestInferJsonColumnsRemap(t *testing.T) {
 	expectedCols := []Column{
 		{Name: "Payload", Type: "struct<Field1:string,Field2:int,at_sign_remap:string>", Comment: "payload"}, // nolint
 	}
-	expectedStructFieldNames := []string{"Field1", "Field2", "at_sign_remap"}
-	actualCols, structFieldNames := InferJSONColumns(obj)
+	expectedColumnMappings := map[string]string{"field1": "Field1", "field2": "Field2", "at_sign_remap": "at_sign_remap", "payload": "Payload"}
+	actualCols, actualMappings, err := InferColumnsWithMappings(obj)
+	require.NoError(t, err)
 	require.Equal(t, expectedCols, actualCols)
-	require.Equal(t, expectedStructFieldNames, structFieldNames)
+	require.Equal(t, expectedColumnMappings, actualMappings)
 }
 
 func TestInferJsonColumns(t *testing.T) {
@@ -121,10 +124,10 @@ func TestInferJsonColumns(t *testing.T) {
 
 		MapSlice []map[string]string `description:"test field"`
 
-		MapStringToInterface map[string]interface{}       `description:"test field"`
-		MapStringToString    map[string]string            `description:"test field"`
-		MapStringToStruct    map[string]TestStruct        `description:"test field"`
-		MapStringToMap       map[string]map[string]string `description:"test field"`
+		MapStringToInterface map[string]jsoniter.RawMessage `description:"test field"`
+		MapStringToString    map[string]string              `description:"test field"`
+		MapStringToStruct    map[string]TestStruct          `description:"test field"`
+		MapStringToMap       map[string]map[string]string   `description:"test field"`
 
 		StructField       TestStruct   `description:"test field"`
 		NestedStructField NestedStruct `description:"test field"`
@@ -166,7 +169,7 @@ func TestInferJsonColumns(t *testing.T) {
 			make(map[string]string),
 		},
 
-		MapStringToInterface: make(map[string]interface{}),
+		MapStringToInterface: make(map[string]jsoniter.RawMessage),
 		MapStringToString:    make(map[string]string),
 		MapStringToStruct:    make(map[string]TestStruct),
 		MapStringToMap:       make(map[string]map[string]string),
@@ -179,7 +182,7 @@ func TestInferJsonColumns(t *testing.T) {
 	}
 
 	// adjust for native int expected results
-	nativeIntMapping := func() string {
+	nativeIntMapping := func() Type {
 		switch strconv.IntSize {
 		case 32:
 			return "int"
@@ -190,18 +193,9 @@ func TestInferJsonColumns(t *testing.T) {
 		}
 	}
 
-	customSimpleTypeMapping := CustomMapping{
-		From: reflect.TypeOf(simpleTestType),
-		To:   "foo",
-	}
-	customSliceTypeMapping := CustomMapping{
-		From: reflect.TypeOf(TestCustomSliceType{}),
-		To:   "baz",
-	}
-	customStructTypeMapping := CustomMapping{
-		From: reflect.TypeOf(TestCustomStructType{}),
-		To:   "bar",
-	}
+	MustRegisterMapping(reflect.TypeOf(simpleTestType), "foo")
+	MustRegisterMapping(reflect.TypeOf(TestCustomSliceType{}), "baz")
+	MustRegisterMapping(reflect.TypeOf(TestCustomStructType{}), "bar")
 
 	expectedCols := []Column{
 		{Name: "BoolField", Type: "boolean", Comment: "test field", Required: true}, // test finding required tag
@@ -218,7 +212,7 @@ func TestInferJsonColumns(t *testing.T) {
 		{Name: "Float64Field", Type: "double", Comment: "test field"},
 		{Name: "Float32PtrField", Type: "float", Comment: "test field"},
 		{Name: "StringSlice", Type: "array<string>", Comment: "test field"},
-		{Name: "IntSlice", Type: "array<" + nativeIntMapping() + ">", Comment: "test field"},
+		{Name: "IntSlice", Type: ArrayOf(nativeIntMapping()), Comment: "test field"},
 		{Name: "Int32Slice", Type: "array<int>", Comment: "test field"},
 		{Name: "Int64Slice", Type: "array<bigint>", Comment: "test field"},
 		{Name: "Float32Slice", Type: "array<float>", Comment: "test field"},
@@ -236,27 +230,71 @@ func TestInferJsonColumns(t *testing.T) {
 		{Name: "CustomSliceField", Type: "baz", Comment: "test field"},
 		{Name: "CustomStructField", Type: "bar", Comment: "test field"},
 	}
-	expectedStructFieldNames := []string{"A", "B", "C", "Field1", "Field2", "InheritedField", "at_sign_remap"}
+	expectedStructFieldNames := map[string]string{
+		"a":                      "A",
+		"at_sign_remap":          "at_sign_remap",
+		"b":                      "B",
+		"boolfield":              "BoolField",
+		"c":                      "C",
+		"customslicefield":       "CustomSliceField",
+		"customstructfield":      "CustomStructField",
+		"customtypefield":        "CustomTypeField",
+		"field1":                 "Field1",
+		"field2":                 "Field2",
+		"float32field":           "Float32Field",
+		"float32ptrfield":        "Float32PtrField",
+		"float32slice":           "Float32Slice",
+		"float64field":           "Float64Field",
+		"float64slice":           "Float64Slice",
+		"inheritedfield":         "InheritedField",
+		"int16field":             "Int16Field",
+		"int32field":             "Int32Field",
+		"int32slice":             "Int32Slice",
+		"int64field":             "Int64Field",
+		"int64slice":             "Int64Slice",
+		"int8field":              "Int8Field",
+		"intfield":               "IntField",
+		"intptrfield":            "IntPtrField",
+		"intslice":               "IntSlice",
+		"mapslice":               "MapSlice",
+		"mapstringtointerface":   "MapStringToInterface",
+		"mapstringtomap":         "MapStringToMap",
+		"mapstringtostring":      "MapStringToString",
+		"mapstringtostruct":      "MapStringToStruct",
+		"nestedstructfield":      "NestedStructField",
+		"sliceofcustomtypefield": "SliceOfCustomTypeField",
+		"stringfield":            "stringField",
+		"stringptrfield":         "stringPtrField",
+		"stringslice":            "StringSlice",
+		"structfield":            "StructField",
+		"structslice":            "StructSlice",
+	}
 
-	cols, structFieldNames := InferJSONColumns(obj, customSimpleTypeMapping, customSliceTypeMapping, customStructTypeMapping)
+	cols, mappings, err := InferColumnsWithMappings(obj)
+	assert.NoError(t, err)
 
 	// uncomment to see results
 	// for _, col := range cols {
 	// 	fmt.Printf(`{Name: \"%s\", Type: \"%s\",Comment: "test field"},\n`, col.Name, col.Type)
 	// }
 	assert.Equal(t, expectedCols, cols, "Expected columns not found")
-	assert.Equal(t, expectedStructFieldNames, structFieldNames)
+	assert.Equal(t, expectedStructFieldNames, mappings)
 
 	// Test using interface
 	var testInterface TestInterface = &TestStruct{}
-	cols, structFieldNames = InferJSONColumns(testInterface)
+	cols, mappings, err = InferColumnsWithMappings(testInterface)
+	assert.NoError(t, err)
 	assert.Equal(t, []Column{
 		{Name: "Field1", Type: "string", Comment: "test field"},
 		{Name: "Field2", Type: "int", Comment: "test field"},
 		{Name: "at_sign_remap", Type: "string", Comment: "remap field"},
 	}, cols, "Interface test failed")
 
-	assert.Equal(t, []string{}, structFieldNames)
+	assert.Equal(t, map[string]string{
+		"at_sign_remap": "at_sign_remap",
+		"field1":        "Field1",
+		"field2":        "Field2",
+	}, mappings)
 }
 
 type composedStruct struct {
@@ -277,15 +315,20 @@ func TestComposeStructs(t *testing.T) {
 		},
 		Bar: "bar",
 	}
-	cols, structFieldNames := InferJSONColumns(&composition)
+	cols, mappings, err := InferColumnsWithMappings(composition)
+	require.NoError(t, err)
 	expectedColumns := []Column{
 		{Name: "Foo", Type: "string", Comment: "this is Foo field and it is awesome"},
 		{Name: "at_sign_remap", Type: "string", Comment: "this is Remap field and it's naughty"},
 		{Name: "Bar", Type: "string", Comment: "test field"},
 	}
-	expectedStructFieldNames := []string{}
+	expectedStructFieldNames := map[string]string{
+		"at_sign_remap": "at_sign_remap",
+		"bar":           "Bar",
+		"foo":           "Foo",
+	}
 	require.Equal(t, expectedColumns, cols)
-	require.Equal(t, expectedStructFieldNames, structFieldNames)
+	require.Equal(t, expectedStructFieldNames, mappings)
 }
 
 func TestInferJSONColumns_MapToRawMessage(t *testing.T) {
@@ -293,12 +336,40 @@ func TestInferJSONColumns_MapToRawMessage(t *testing.T) {
 		Map map[string]pantherlog.RawMessage `description:"some description"`
 	}
 
-	cols, structFieldNames := InferJSONColumns(Struct{}, GlueMappings...)
+	cols, mappings, err := InferColumnsWithMappings(Struct{})
+	require.NoError(t, err)
 
 	expectedColumns := []Column{
 		{Name: "Map", Type: MapOf("string", "string"), Comment: "some description"},
 	}
-	expectedStructFieldNames := []string{}
+	expectedStructFieldNames := map[string]string{
+		"map": "Map",
+	}
 	require.Equal(t, expectedColumns, cols)
-	require.Equal(t, expectedStructFieldNames, structFieldNames)
+	require.Equal(t, expectedStructFieldNames, mappings)
+}
+
+// Tests that the order of field mappings is correct so that queries on top-level fields work as expected.
+func TestInferColumnsWithMappingsOrder(t *testing.T) {
+	type U struct {
+		BarBaz string
+		FooBar string
+	}
+	type T struct {
+		FooBar U      `json:"fooBar"`
+		BarBaz string `json:"barBaz"`
+	}
+	cols, mappings, err := InferColumnsWithMappings(T{})
+	require.NoError(t, err)
+
+	expectedColumns := []Column{
+		{Name: "fooBar", Type: `struct<BarBaz:string,FooBar:string>`, Comment: ""},
+		{Name: "barBaz", Type: `string`, Comment: ""},
+	}
+	expectedStructFieldNames := map[string]string{
+		"foobar": "fooBar",
+		"barbaz": "barBaz",
+	}
+	require.Equal(t, expectedColumns, cols)
+	require.Equal(t, expectedStructFieldNames, mappings)
 }

@@ -45,7 +45,7 @@ var logTypes = logtypes.Must(LogTypePrefix, logtypes.Config{
 Google Cloud services write audit log entries to these logs to help you answer the questions of "who did what, where, and when?" within your Google Cloud resources.
 `,
 	ReferenceURL: `https://cloud.google.com/logging/docs/audit`,
-	Schema:       AuditLog{},
+	Schema:       LogEntryAuditLog{},
 	NewParser:    parsers.AdapterFactory(&AuditLogParser{}),
 })
 

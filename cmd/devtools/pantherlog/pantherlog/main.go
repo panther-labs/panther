@@ -34,8 +34,11 @@ import (
 	"log"
 	"os"
 
+	"github.com/pkg/errors"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
@@ -66,7 +69,7 @@ func main() {
 
 	jsonAPI := common.ConfigForDataLakeWriters()
 
-	parsers := registry.AvailableParsers()
+	parsers := availableParsers()
 
 	classifier := classification.NewClassifier(parsers)
 	lines := bufio.NewScanner(stdin)
@@ -110,4 +113,20 @@ func main() {
 	}
 	debugLog.Printf("Scanned %d lines\n", numLines)
 	debugLog.Printf("Parsed %d events\n", numEvents)
+}
+
+// availableParsers returns log parsers for all native log types with nil parameters.
+// Panics if a parser factory in the default registry fails with nil params.
+func availableParsers() map[string]parsers.Interface {
+	entries := registry.NativeLogTypes().Entries()
+	available := make(map[string]parsers.Interface, len(entries))
+	for _, entry := range entries {
+		logType := entry.String()
+		parser, err := entry.NewParser(nil)
+		if err != nil {
+			panic(errors.Errorf("failed to create %q parser with nil params", logType))
+		}
+		available[logType] = parser
+	}
+	return available
 }

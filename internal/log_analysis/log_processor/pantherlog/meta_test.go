@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -34,8 +35,11 @@ import (
 func TestMetaEventStruct(t *testing.T) {
 	eventStruct := pantherlog.MustBuildEventSchema(&testEventMeta{}, pantherlog.FieldIPAddress)
 
-	columns, names := awsglue.InferJSONColumns(eventStruct, awsglue.GlueMappings...)
-	require.Equal(t, []string{}, names)
+	columns, mappings, err := glueschema.InferColumnsWithMappings(eventStruct)
+	require.NoError(t, err)
+	// nolint:lll
+	expectMappings := map[string]string{"addr": "addr", "foo": "foo", "p_any_ip_addresses": "p_any_ip_addresses", "p_event_time": "p_event_time", "p_log_type": "p_log_type", "p_parse_time": "p_parse_time", "p_row_id": "p_row_id", "p_source_id": "p_source_id", "p_source_label": "p_source_label", "ts": "ts"}
+	require.Equal(t, expectMappings, mappings)
 	// nolint: lll,govet
 	require.Equal(t, []awsglue.Column{
 		{"foo", "string", "foo", false},

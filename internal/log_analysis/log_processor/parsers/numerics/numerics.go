@@ -19,10 +19,18 @@ package numerics
  */
 
 import (
+	"reflect"
 	"strconv"
 
 	"github.com/pkg/errors"
+
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 )
+
+func init() {
+	glueschema.MustRegisterMapping(reflect.TypeOf(Integer(0)), glueschema.TypeBigInt)
+	glueschema.MustRegisterMapping(reflect.TypeOf(Int64(0)), glueschema.TypeBigInt)
+}
 
 // this is an int that is read from JSON as either a string or int
 type Integer int

@@ -1,4 +1,4 @@
-package genericapi
+package glueschema
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,25 +19,33 @@ package genericapi
  */
 
 import (
-	"errors"
-	"strings"
+	"encoding/json"
+	"fmt"
+	"math/big"
+	"reflect"
+	"time"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
-// HTMLCharacterSet is the same set of characters replaced by the built-in html.EscapeString.
-const HTMLCharacterSet = `'<>&"`
+var defaultMappings = map[reflect.Type]Type{
+	reflect.TypeOf(time.Time{}):           TypeTimestamp,
+	reflect.TypeOf(big.Int{}):             TypeBigInt,
+	reflect.TypeOf(json.RawMessage{}):     TypeString,
+	reflect.TypeOf(jsoniter.RawMessage{}): TypeString,
+}
 
-// ErrContainsHTML defines a standard error message if a field contains HTML characters.
-var ErrContainsHTML = func() error {
-	var chars []string
-	for _, x := range HTMLCharacterSet {
-		chars = append(chars, string(x))
+func MustRegisterMapping(from reflect.Type, to Type) {
+	if err := RegisterMapping(from, to); err != nil {
+		panic(err)
 	}
-	return errors.New("cannot contain any of: " + strings.Join(chars, " "))
-}()
+}
 
-// ContainsHTML is true if the string contains any of HTMLCharacterSet
-//
-// Such strings should be rejected for user-defined names and labels to prevent injection attacks.
-func ContainsHTML(s string) bool {
-	return strings.ContainsAny(s, HTMLCharacterSet)
+func RegisterMapping(from reflect.Type, to Type) error {
+	if typ, duplicate := defaultMappings[from]; duplicate {
+		// This is an original error, stack should be added at the caller
+		return fmt.Errorf("duplicate mapping %q", typ)
+	}
+	defaultMappings[from] = to
+	return nil
 }

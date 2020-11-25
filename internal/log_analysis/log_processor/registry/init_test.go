@@ -21,9 +21,11 @@ package registry
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestPanic(t *testing.T) {
-	assert.Panics(t, func() { Lookup("doesnotexist") }, "Failed to panic, this is very dangerous!")
+// TestInit tests that some native log types is not empty and that their registration was successful
+func TestInit(t *testing.T) {
+	logTypes := NativeLogTypes()
+	require.NotEmpty(t, logTypes.Entries())
 }

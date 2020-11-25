@@ -19,6 +19,8 @@ package aws
  */
 
 import (
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -32,6 +34,19 @@ import (
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
 )
+
+// RDS scanning regularly gets rate limited on the following API calls (in order of most to least
+// likely to be rate limited):
+//
+//  - DescribeDBSnapshotAttributes
+//  - DescribeDBSnapshots
+//  - ListTagsForResource
+//  - DescribeDBInstances
+//
+// By default though, RDS has a limit of 40 instances per region. For this reason, setting the batch
+// size very low should not adversely affecting scanning times much and will hopefully avoid rate
+// limits in most cases.
+const rdsMaxBatchSize = 20
 
 // Set as variables to be overridden in testing
 var (
@@ -63,6 +78,21 @@ func PollRDSInstance(
 		return nil, err
 	}
 
+	// If a snapshot was updated, the aws-event-processor is unable to determine which instance was
+	// updated. In this case, the aws-event-processor forwards the snapshot ID instead of the instance
+	// ID. So if we have received a snapshot ID, we must lookup the corresponding instance ID.
+	//
+	// Remember we must overwrite scanRequest.ResourceID, as this field is referenced in the calling
+	// function when forwarding the resource snapshot.
+	if strings.HasPrefix(resourceARN.Resource, "snapshot:") {
+		zap.L().Debug("received snapshot ID, looking up corresponding instance", zap.String("snapshotID", resourceARN.String()))
+		scanRequest.ResourceID, err = getRDSInstanceFromSnapshotID(rdsClient, resourceARN)
+		if err != nil {
+			return nil, err
+		}
+		zap.L().Debug("looked up instance ID for snapshot", zap.String("instanceID", aws.StringValue(scanRequest.ResourceID)))
+	}
+
 	rdsInstance, err := getRDSInstance(rdsClient, scanRequest.ResourceID)
 	if err != nil || rdsInstance == nil {
 		return nil, err
@@ -75,6 +105,17 @@ func PollRDSInstance(
 	snapshot.AccountID = aws.String(resourceARN.AccountID)
 	snapshot.Region = aws.String(resourceARN.Region)
 	return snapshot, nil
+}
+
+func getRDSInstanceFromSnapshotID(svc rdsiface.RDSAPI, snapshotARN arn.ARN) (*string, error) {
+	snapshot, err := svc.DescribeDBSnapshots(&rds.DescribeDBSnapshotsInput{
+		DBSnapshotIdentifier: aws.String(snapshotARN.String()),
+	})
+	if err != nil {
+		return nil, err
+	}
+	snapshotARN.Resource = "db:" + aws.StringValue(snapshot.DBSnapshots[0].DBInstanceIdentifier)
+	return aws.String(snapshotARN.String()), nil
 }
 
 // getRDSInstance returns a specific RDS instance
@@ -112,7 +153,7 @@ func getRDSInstance(svc rdsiface.RDSAPI, instanceARN *string) (*rds.DBInstance, 
 func describeDBInstances(rdsSvc rdsiface.RDSAPI, nextMarker *string) (instances []*rds.DBInstance, marker *string, err error) {
 	err = rdsSvc.DescribeDBInstancesPages(&rds.DescribeDBInstancesInput{
 		Marker:     nextMarker,
-		MaxRecords: aws.Int64(int64(defaultBatchSize)),
+		MaxRecords: aws.Int64(int64(rdsMaxBatchSize)),
 	},
 		func(page *rds.DescribeDBInstancesOutput, lastPage bool) bool {
 			return rdsInstanceIterator(page, &instances, &marker)
@@ -126,7 +167,7 @@ func describeDBInstances(rdsSvc rdsiface.RDSAPI, nextMarker *string) (instances 
 func rdsInstanceIterator(page *rds.DescribeDBInstancesOutput, instances *[]*rds.DBInstance, marker **string) bool {
 	*instances = append(*instances, page.DBInstances...)
 	*marker = page.Marker
-	return len(*instances) < defaultBatchSize
+	return len(*instances) < rdsMaxBatchSize
 }
 
 // describeDBSnapshots provides information about the snapshots of an RDS instance
