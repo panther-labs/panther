@@ -32,6 +32,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
@@ -96,7 +97,7 @@ func main() {
 		logTypes = append(logTypes, *LOGTYPE)
 	} else {
 		// Use all available log types
-		logTypes = registry.AvailableLogTypes()
+		logTypes = logtypes.CollectNames(registry.NativeLogTypes())
 	}
 
 	dataStream := &common.DataStream{

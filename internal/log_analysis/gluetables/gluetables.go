@@ -20,19 +20,16 @@ package gluetables
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"sort"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	cloudsecglue "github.com/panther-labs/panther/internal/compliance/awsglue"
 	loganalysisglue "github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
-	"github.com/panther-labs/panther/pkg/awsutils"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 )
 
 // DeployedLogTypes scans glue API to filter log types with deployed tables
@@ -73,65 +70,6 @@ func DeployedLogTypes(ctx context.Context, glueClient glueiface.GlueAPI, logType
 	return deployed, nil
 }
 
-// DeployedTablesSignature returns a string "signature" for the schema of the deployed native tables used to detect change
-func DeployedTablesSignature(glueClient glueiface.GlueAPI) (deployedLogTablesSignature string, err error) {
-	deployedLogTables, err := deployedNativeLogTables(glueClient)
-	if err != nil {
-		return "", err
-	}
-
-	allTables := ExpandLogTables(deployedLogTables...)
-
-	return BuildSignature(allTables...)
-}
-
-// deployedNativeLogTables returns the glue tables from the registry that have been deployed (possibly with schema updates)
-func deployedNativeLogTables(glueClient glueiface.GlueAPI) (deployedLogTables []*loganalysisglue.GlueTableMetadata, err error) {
-	for _, gm := range registry.AvailableTables() {
-		_, err := loganalysisglue.GetTable(glueClient, gm.DatabaseName(), gm.TableName())
-		if err != nil {
-			if awsutils.IsAnyError(err, glue.ErrCodeEntityNotFoundException) {
-				continue
-			} else {
-				return nil, errors.Wrapf(err, "failure checking existence of %s.%s",
-					gm.DatabaseName(), gm.TableName())
-			}
-		}
-		deployedLogTables = append(deployedLogTables, gm)
-	}
-
-	return deployedLogTables, nil
-}
-
-// Expand log tables expands tables from the log processing database to include additional tables (rules, ruleErrors)
-func ExpandLogTables(tables ...*loganalysisglue.GlueTableMetadata) (expanded []*loganalysisglue.GlueTableMetadata) {
-	expanded = make([]*loganalysisglue.GlueTableMetadata, 0, 3*len(tables))
-	for _, table := range tables {
-		if table.DatabaseName() != loganalysisglue.LogProcessingDatabaseName {
-			continue
-		}
-		expanded = append(expanded, table, table.RuleTable(), table.RuleErrorTable())
-	}
-	return
-}
-
-func BuildSignature(tables ...*loganalysisglue.GlueTableMetadata) (string, error) {
-	tableSignatures := make([]string, 0, len(tables))
-	for _, table := range tables {
-		sig, err := table.Signature()
-		if err != nil {
-			return "", err
-		}
-		tableSignatures = append(tableSignatures, sig)
-	}
-	sort.Strings(tableSignatures) // need consistent order
-	hash := sha256.New()
-	for i := range tableSignatures {
-		_, _ = hash.Write([]byte(tableSignatures[i]))
-	}
-	return hex.EncodeToString(hash.Sum(nil)), nil
-}
-
 type TablesForLogType struct {
 	LogTable       *loganalysisglue.GlueTableMetadata
 	RuleTable      *loganalysisglue.GlueTableMetadata
@@ -170,4 +108,26 @@ func CreateOrUpdateGlueTables(glueClient glueiface.GlueAPI, bucket string,
 		RuleTable:      ruleTable,
 		RuleErrorTable: ruleErrorTable,
 	}, nil
+}
+
+// ResolveTables is a helper to resolve all glue table metadata for all log types
+func ResolveTables(ctx context.Context, resolver logtypes.Resolver, logTypes ...string) ([]*loganalysisglue.GlueTableMetadata, error) {
+	tables := make([]*loganalysisglue.GlueTableMetadata, len(logTypes))
+	for i, logType := range logTypes {
+		entry, err := resolver.Resolve(ctx, logType)
+		if err != nil {
+			return nil, err
+		}
+		if entry == nil {
+			return nil, errors.Errorf("unresolved log type %q", logType)
+		}
+		tables[i] = LogTypeTableMeta(entry)
+	}
+	return tables, nil
+}
+
+func LogTypeTableMeta(entry logtypes.Entry) *loganalysisglue.GlueTableMetadata {
+	desc := entry.Describe()
+	schema := entry.Schema()
+	return loganalysisglue.NewGlueTableMetadata(models.LogData, desc.Name, desc.Description, loganalysisglue.GlueTableHourly, schema)
 }

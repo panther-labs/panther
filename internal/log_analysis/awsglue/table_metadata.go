@@ -23,7 +23,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -35,6 +34,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/box"
 )
@@ -155,7 +155,10 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 	}
 
 	// columns -> []*glue.Column
-	columns, structFieldNames := InferJSONColumns(gm.eventStruct, GlueMappings...)
+	columns, mappings, err := glueschema.InferColumnsWithMappings(gm.EventStruct())
+	if err != nil {
+		panic(err)
+	}
 	if gm.dataType == models.RuleData { // append the columns added by the rule engine
 		columns = append(columns, RuleMatchColumns...)
 	} else if gm.dataType == models.RuleErrors {
@@ -166,24 +169,22 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 	for i := range columns {
 		glueColumns[i] = &glue.Column{
 			Name:    &columns[i].Name,
-			Type:    &columns[i].Type,
+			Type:    (*string)(&columns[i].Type),
 			Comment: &columns[i].Comment,
 		}
 	}
 
 	// Need to be case sensitive to deal with columns that have same name but different casing
+	// https://github.com/rcongiu/Hive-JSON-Serde#case-sensitivity-in-mappings
 	descriptorParameters := map[string]*string{
 		"serialization.format": aws.String("1"),
 		"case.insensitive":     aws.String("false"),
 	}
 
-	// Add mapping for column names. This is required when columns are case sensitive
-	for _, column := range glueColumns {
-		descriptorParameters[fmt.Sprintf("mapping.%s", strings.ToLower(*column.Name))] = column.Name
-	}
-	// Add mapping for field names inside columns names. This is required when columns are case sensitive
-	for _, name := range structFieldNames {
-		descriptorParameters[fmt.Sprintf("mapping.%s", strings.ToLower(name))] = box.String(name)
+	// Add mapping for all field names. This is required when columns are case sensitive
+	for from, to := range mappings {
+		to := to
+		descriptorParameters[fmt.Sprintf("mapping.%s", from)] = &to
 	}
 
 	return &glue.TableInput{

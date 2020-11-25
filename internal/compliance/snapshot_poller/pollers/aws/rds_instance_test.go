@@ -49,7 +49,7 @@ func TestRdsInstanceListIterator(t *testing.T) {
 	assert.Nil(t, marker)
 	assert.Len(t, instances, 1)
 
-	for i := 1; i < 50; i++ {
+	for i := 1; i < 10; i++ {
 		cont = rdsInstanceIterator(awstest.ExampleDescribeDBInstancesOutputContinue, &instances, &marker)
 		assert.True(t, cont)
 		assert.NotNil(t, marker)
@@ -59,7 +59,7 @@ func TestRdsInstanceListIterator(t *testing.T) {
 	cont = rdsInstanceIterator(awstest.ExampleDescribeDBInstancesOutputContinue, &instances, &marker)
 	assert.False(t, cont)
 	assert.NotNil(t, marker)
-	assert.Len(t, instances, 101)
+	assert.Len(t, instances, 21)
 }
 
 func TestRDSInstanceDescribeError(t *testing.T) {
