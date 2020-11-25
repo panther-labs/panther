@@ -35,8 +35,17 @@ func classifyDynamoDB(detail gjson.Result, metadata *CloudTrailMetadata) []*reso
 		AccountID: metadata.accountID,
 		Resource:  "table/",
 	}
+
+	// If a table is being created, most API calls to describe it will fail with a
+	// ValidationException. This failure will be retried, but waiting 30 seconds can avoid the
+	// failed API call and usually result in a quicker successful scan.
+	var delay int64
+
 	switch metadata.eventName {
-	case "CreateBackup", "CreateTable", "DeleteTable", "UpdateContinuousBackups", "UpdateTable", "UpdateTimeToLive":
+	case "CreateTable":
+		dynamoARN.Resource += detail.Get("requestParameters.tableName").Str
+		delay = int64(30)
+	case "CreateBackup", "DeleteTable", "UpdateContinuousBackups", "UpdateTable", "UpdateTimeToLive":
 		dynamoARN.Resource += detail.Get("requestParameters.tableName").Str
 	case "CreateGlobalTable":
 		var tables []*resourceChange
@@ -45,6 +54,7 @@ func classifyDynamoDB(detail gjson.Result, metadata *CloudTrailMetadata) []*reso
 			dynamoARN.Region = repl.Get("regionName").Str
 			tables = append(tables, &resourceChange{
 				AwsAccountID: metadata.accountID,
+				Delay:        int64(30),
 				EventName:    metadata.eventName,
 				ResourceID:   dynamoARN.String(),
 				ResourceType: schemas.DynamoDBTableSchema,
@@ -105,9 +115,9 @@ func classifyDynamoDB(detail gjson.Result, metadata *CloudTrailMetadata) []*reso
 		zap.L().Info("dynamodb: encountered unknown event name", zap.String("eventName", metadata.eventName))
 		return nil
 	}
-
 	return []*resourceChange{{
 		AwsAccountID: metadata.accountID,
+		Delay:        delay,
 		Delete:       metadata.eventName == "DeleteTable",
 		EventName:    metadata.eventName,
 		ResourceID:   dynamoARN.String(),
