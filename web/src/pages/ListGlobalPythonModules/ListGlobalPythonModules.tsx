@@ -20,7 +20,7 @@ import React from 'react';
 import { Alert, SimpleGrid } from 'pouncejs';
 import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import { convertObjArrayValuesToCsv, encodeParams, extractErrorMessage } from 'Helpers/utils';
+import { extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
 import Panel from 'Components/Panel';
 import LinkButton from 'Components/buttons/LinkButton';
@@ -33,7 +33,7 @@ const ListGlobalPythonModules = () => {
   const { loading, error, data } = useListGlobalPythonModules({
     fetchPolicy: 'cache-and-network',
     variables: {
-      input: encodeParams(convertObjArrayValuesToCsv({}), ['nameContains']),
+      input: {},
     },
   });
 

@@ -45,7 +45,6 @@ const maxDDBPageSize = 10
 
 type envConfig struct {
 	table.AlertsTableEnvConfig
-	AnalysisAPIHost     string `required:"true" split_words:"true"`
 	ProcessedDataBucket string `required:"true" split_words:"true"`
 }
 
@@ -56,14 +55,12 @@ func Setup() *API {
 
 	awsSession := session.Must(session.NewSession())
 
-	api := &API{
+	return &API{
 		awsSession: awsSession,
 		alertsDB:   env.NewAlertsTable(dynamodb.New(awsSession)),
 		s3Client:   s3.New(awsSession),
 		env:        env,
 	}
-
-	return api
 }
 
 // EventPaginationToken - token used for paginating through the events in an alert

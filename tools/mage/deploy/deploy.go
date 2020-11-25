@@ -31,7 +31,6 @@ import (
 	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
-	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/prompt"
@@ -137,11 +136,6 @@ func PreCheck() error {
 		return fmt.Errorf("docker is not available: %v", err)
 	}
 
-	// Ensure swagger is available
-	if _, err = sh.Output(util.Swagger, "version"); err != nil {
-		return fmt.Errorf("swagger is not available (%v): try 'mage setup'", err)
-	}
-
 	return nil
 }
 
@@ -197,7 +191,7 @@ func deploySingleLambda(function string) error {
 		cfnstacks.LogAnalysisTemplate,
 		cfnstacks.CloudsecTemplate,
 		cfnstacks.CoreTemplate,
-		cfnstacks.APITemplate,
+		cfnstacks.GatewayTemplate,
 	} {
 		var template cfnTemplate
 		if err := util.ParseTemplate(path, &template); err != nil {
@@ -464,10 +458,6 @@ func deployBootstrapGatewayStack(
 	outputs map[string]string, // from bootstrap stack
 ) (map[string]string, error) {
 
-	if err := build.EmbedAPISpec(); err != nil {
-		return nil, err
-	}
-
 	if err := build.Layer(log, settings.Infra.PipLayer); err != nil {
 		return nil, err
 	}
@@ -492,7 +482,6 @@ func deployBootstrapGatewayStack(
 func deployAppsyncStack(outputs map[string]string) error {
 	_, err := deployTemplate(cfnstacks.AppsyncTemplate, outputs["SourceBucket"], cfnstacks.Appsync, map[string]string{
 		"AlarmTopicArn":         outputs["AlarmTopicArn"],
-		"AnalysisApi":           "https://" + outputs["AnalysisApiEndpoint"],
 		"ApiId":                 outputs["GraphQLApiId"],
 		"CustomResourceVersion": customResourceVersion(),
 		"ServiceRole":           outputs["AppsyncServiceRoleArn"],
@@ -503,7 +492,6 @@ func deployAppsyncStack(outputs map[string]string) error {
 func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string) error {
 	_, err := deployTemplate(cfnstacks.CloudsecTemplate, outputs["SourceBucket"], cfnstacks.Cloudsec, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
-		"AnalysisApiId":              outputs["AnalysisApiId"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomResourceVersion":      customResourceVersion(),
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
@@ -520,7 +508,6 @@ func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string
 func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
 	_, err := deployTemplate(cfnstacks.CoreTemplate, outputs["SourceBucket"], cfnstacks.Core, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
-		"AnalysisApiId":              outputs["AnalysisApiId"],
 		"AnalysisVersionsBucket":     outputs["AnalysisVersionsBucket"],
 		"AppDomainURL":               outputs["LoadBalancerUrl"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
@@ -546,30 +533,23 @@ func deployDashboardStack(bucket string) error {
 }
 
 func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) error {
-	// this computes a signature of the deployed glue tables used for change detection, for CF use the Panther version
-	tablesSignature, err := gluetables.DeployedTablesSignature(clients.Glue())
-	if err != nil {
-		return err
-	}
-
-	_, err = deployTemplate(cfnstacks.LogAnalysisTemplate, outputs["SourceBucket"], cfnstacks.LogAnalysis, map[string]string{
-		"AlarmTopicArn":                outputs["AlarmTopicArn"],
-		"AnalysisApiId":                outputs["AnalysisApiId"],
-		"AthenaResultsBucket":          outputs["AthenaResultsBucket"],
-		"AthenaWorkGroup":              outputs["AthenaWorkGroup"],
-		"CloudWatchLogRetentionDays":   strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
-		"CustomResourceVersion":        customResourceVersion(),
-		"Debug":                        strconv.FormatBool(settings.Monitoring.Debug),
-		"InputDataBucket":              outputs["InputDataBucket"],
-		"InputDataTopicArn":            outputs["InputDataTopicArn"],
-		"LayerVersionArns":             settings.Infra.BaseLayerVersionArns,
-		"LogProcessorLambdaMemorySize": strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
-		"ProcessedDataBucket":          outputs["ProcessedDataBucket"],
-		"ProcessedDataTopicArn":        outputs["ProcessedDataTopicArn"],
-		"PythonLayerVersionArn":        outputs["PythonLayerVersionArn"],
-		"SqsKeyId":                     outputs["QueueEncryptionKeyId"],
-		"TablesSignature":              tablesSignature,
-		"TracingMode":                  settings.Monitoring.TracingMode,
+	_, err := deployTemplate(cfnstacks.LogAnalysisTemplate, outputs["SourceBucket"], cfnstacks.LogAnalysis, map[string]string{
+		"AlarmTopicArn":                      outputs["AlarmTopicArn"],
+		"AthenaResultsBucket":                outputs["AthenaResultsBucket"],
+		"AthenaWorkGroup":                    outputs["AthenaWorkGroup"],
+		"CloudWatchLogRetentionDays":         strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
+		"CustomResourceVersion":              customResourceVersion(),
+		"Debug":                              strconv.FormatBool(settings.Monitoring.Debug),
+		"InputDataBucket":                    outputs["InputDataBucket"],
+		"InputDataTopicArn":                  outputs["InputDataTopicArn"],
+		"LayerVersionArns":                   settings.Infra.BaseLayerVersionArns,
+		"LogProcessorLambdaMemorySize":       strconv.Itoa(settings.Infra.LogProcessorLambdaMemorySize),
+		"LogProcessorLambdaSQSReadBatchSize": settings.Infra.LogProcessorLambdaSQSReadBatchSize,
+		"ProcessedDataBucket":                outputs["ProcessedDataBucket"],
+		"ProcessedDataTopicArn":              outputs["ProcessedDataTopicArn"],
+		"PythonLayerVersionArn":              outputs["PythonLayerVersionArn"],
+		"SqsKeyId":                           outputs["QueueEncryptionKeyId"],
+		"TracingMode":                        settings.Monitoring.TracingMode,
 	})
 	return err
 }

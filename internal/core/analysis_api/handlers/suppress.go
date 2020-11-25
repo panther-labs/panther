@@ -19,24 +19,17 @@ package handlers
  */
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
-	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 )
 
 // Suppress adds suppressions for one or more policies in the same organization.
-func Suppress(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	input, err := parseSuppress(request)
-	if err != nil {
-		return badRequest(err)
-	}
-
-	updates, err := addSuppressions(input.PolicyIds, input.ResourcePatterns)
+func (API) Suppress(input *models.SuppressInput) *events.APIGatewayProxyResponse {
+	updates, err := addSuppressions(input.PolicyIDs, input.ResourcePatterns)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
@@ -50,21 +43,4 @@ func Suppress(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyRes
 	}
 
 	return &events.APIGatewayProxyResponse{StatusCode: http.StatusOK}
-}
-
-func parseSuppress(request *events.APIGatewayProxyRequest) (*models.Suppress, error) {
-	var result models.Suppress
-	if err := jsoniter.UnmarshalFromString(request.Body, &result); err != nil {
-		return nil, err
-	}
-
-	if err := result.Validate(nil); err != nil {
-		return nil, err
-	}
-
-	if len(result.ResourcePatterns) == 0 {
-		return nil, errors.New("invalid resourcePatterns: at least one is required")
-	}
-
-	return &result, nil
 }

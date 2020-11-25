@@ -28,8 +28,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/api/gateway/analysis"
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 )
 
 type mockLambdaClient struct {
@@ -68,8 +68,7 @@ func TestRuleEngine_TestRule(t *testing.T) {
 		lambdaClient: &lambdaClient,
 	}
 
-	testRuleInput := &models.TestPolicy{
-		AnalysisType: models.AnalysisTypeRULE,
+	testRuleInput := &models.TestRuleInput{
 		Body: `
 def rule(e): 
 	return True
@@ -80,8 +79,8 @@ def title(e):
 def dedup(e):
 	return 'alert-dedup'
 `,
-		ResourceTypes: []string{"Resource.Type"},
-		Tests: []*models.UnitTest{
+		LogTypes: []string{"Resource.Type"},
+		Tests: []models.UnitTest{
 			{
 				Name:           "This will be True",
 				ExpectedResult: true,
@@ -94,20 +93,26 @@ def dedup(e):
 	require.NoError(t, err)
 	lambdaClient.AssertExpectations(t)
 
-	expected := &models.TestRuleResult{
-		TestSummary: true,
-		Results: []*models.RuleResult{
+	expected := &models.TestRuleOutput{
+		Results: []models.TestRuleRecord{
 			{
-				ID:                 "0",
-				RuleID:             testRuleID,
-				TestName:           "This will be True",
-				Passed:             true,
-				Errored:            false,
-				RuleOutput:         true,
-				TitleOutput:        "alert-title",
-				DedupOutput:        "alert-dedup",
-				AlertContextOutput: `{"key":"value"}`,
-				GenericError:       "",
+				ID:     "0",
+				Name:   "This will be True",
+				Passed: true,
+				Functions: models.TestRuleRecordFunctions{
+					Rule: &models.TestDetectionSubRecord{
+						Output: aws.String("true"),
+					},
+					Title: &models.TestDetectionSubRecord{
+						Output: aws.String("alert-title"),
+					},
+					Dedup: &models.TestDetectionSubRecord{
+						Output: aws.String("alert-dedup"),
+					},
+					AlertContext: &models.TestDetectionSubRecord{
+						Output: aws.String(`{"key":"value"}`),
+					},
+				},
 			},
 		},
 	}

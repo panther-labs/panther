@@ -22,15 +22,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/client/operations"
+	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertTable "github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -67,7 +65,7 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 	zap.L().Debug("Finished updating alert delivery statuses")
 
 	alertSummary := alertSummaries[0]
-	gatewayapi.ReplaceMapSliceNils(alertSummary)
+	genericapi.ReplaceMapSliceNils(alertSummary)
 	return alertSummary, nil
 }
 
@@ -94,37 +92,28 @@ func populateAlertData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, 
 		zap.String("ruleVersion", alertItem.RuleVersion),
 	}
 
-	response, err := analysisClient.Operations.GetRule(&operations.GetRuleParams{
-		RuleID:     alertItem.RuleID,
-		VersionID:  &alertItem.RuleVersion,
-		HTTPClient: httpClient,
-	})
-	if err != nil {
+	getRuleInput := analysismodels.LambdaInput{
+		GetRule: &analysismodels.GetRuleInput{
+			ID:        alertItem.RuleID,
+			VersionID: alertItem.RuleVersion,
+		},
+	}
+	var rule analysismodels.Rule
+	if _, err := analysisClient.Invoke(&getRuleInput, &rule); err != nil {
 		zap.L().Error("Error retrieving rule", append(commonFields, zap.Error(err))...)
 		return nil, &genericapi.InternalError{Message: genericErrorMessage}
 	}
 
-	if response == nil {
-		zap.L().Error("Rule response was nil", commonFields...)
-		return nil, &genericapi.InternalError{Message: genericErrorMessage}
-	}
-
-	rule := response.GetPayload()
-	if rule == nil {
-		zap.L().Error("Rule response payload was nil", commonFields...)
-		return nil, &genericapi.InvalidInputError{Message: genericErrorMessage}
-	}
-
 	return &deliveryModels.Alert{
-		AnalysisID:          string(rule.ID),
+		AnalysisID:          rule.ID,
 		Type:                deliveryModels.RuleType,
 		CreatedAt:           alertItem.CreationTime,
 		Severity:            alertItem.Severity,
 		OutputIds:           []string{}, // We do not pay attention to this field
-		AnalysisDescription: aws.String(string(rule.Description)),
-		AnalysisName:        aws.String(string(rule.DisplayName)),
+		AnalysisDescription: &rule.Description,
+		AnalysisName:        &rule.DisplayName,
 		Version:             &alertItem.RuleVersion,
-		Runbook:             aws.String(string(rule.Runbook)),
+		Runbook:             &rule.Runbook,
 		Tags:                rule.Tags,
 		AlertID:             &alertItem.AlertID,
 		Title:               alertItem.Title,
@@ -171,7 +160,7 @@ func intersection(inputs []string, outputs []*outputModels.AlertOutput) []*outpu
 		m[item] = struct{}{}
 	}
 
-	valid := []*outputModels.AlertOutput{}
+	valid := make([]*outputModels.AlertOutput, 0, len(outputs))
 	for _, item := range outputs {
 		if _, ok := m[*item.OutputID]; ok {
 			valid = append(valid, item)

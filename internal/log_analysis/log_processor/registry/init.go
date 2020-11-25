@@ -24,20 +24,27 @@ import (
 	// Packages that export log types
 	apachelogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/apachelogs"
 	awslogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
+	boxlogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/boxlogs"
 	cloudflarelogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/cloudflarelogs"
+	crowdstrikelogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/crowdstrikelogs"
 	fastlylogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fastlylogs"
 	fluentdsyslogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fluentdsyslogs"
 	gcplogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gcplogs"
 	gitlablogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gitlablogs"
 	gravitationallogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gravitationallogs"
+	gsuitelogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gsuitelogs"
 	juniperlogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/juniperlogs"
 	laceworklogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/laceworklogs"
 	nginxlogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/nginxlogs"
+	oktalogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/oktalogs"
+	oneloginlogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/oneloginlogs"
 	osquerylogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osquerylogs"
 	osseclogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/osseclogs"
+	slacklogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/slacklogs"
 	sophoslogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sophoslogs"
 	suricatalogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/suricatalogs"
 	sysloglogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/sysloglogs"
+	umbrellalogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/umbrellalogs"
 	zeeklogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/zeeklogs"
 )
 
@@ -49,7 +56,11 @@ func init() {
 
 		awslogs.LogTypes(),
 
+		boxlogs.LogTypes(),
+
 		cloudflarelogs.LogTypes(),
+
+		crowdstrikelogs.LogTypes(),
 
 		fastlylogs.LogTypes(),
 
@@ -61,15 +72,23 @@ func init() {
 
 		gravitationallogs.LogTypes(),
 
+		gsuitelogs.LogTypes(),
+
 		juniperlogs.LogTypes(),
 
 		laceworklogs.LogTypes(),
 
 		nginxlogs.LogTypes(),
 
+		oktalogs.LogTypes(),
+
+		oneloginlogs.LogTypes(),
+
 		osquerylogs.LogTypes(),
 
 		osseclogs.LogTypes(),
+
+		slacklogs.LogTypes(),
 
 		sophoslogs.LogTypes(),
 
@@ -77,8 +96,8 @@ func init() {
 
 		sysloglogs.LogTypes(),
 
+		umbrellalogs.LogTypes(),
+
 		zeeklogs.LogTypes(),
 	)
-	// Register all log types in the group with the availableLogTypes
-	availableLogTypes.MustRegister(nativeLogTypes)
 }

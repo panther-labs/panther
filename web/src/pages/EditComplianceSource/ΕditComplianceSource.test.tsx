@@ -25,14 +25,16 @@ import {
   waitMs,
   buildUpdateComplianceIntegrationInput,
 } from 'test-utils';
+import { CLOUD_SECURITY_REAL_TIME_DOC_URL } from 'Source/constants';
 import EditComplianceSource from './EditComplianceSource';
 import { mockGetComplianceSource } from './graphql/getComplianceSource.generated';
 import { mockUpdateComplianceSource } from './graphql/updateComplianceSource.generated';
 
 describe('EditComplianceSource', () => {
-  it('can successfully update a compliance source', async () => {
+  it('can successfully update a compliance source without real-time', async () => {
     const complianceSource = buildComplianceIntegration({
       awsAccountId: '123123123123',
+      cweEnabled: false,
     });
 
     const updatedComplianceSource = buildComplianceIntegration({
@@ -89,10 +91,76 @@ describe('EditComplianceSource', () => {
 
     // Expect to see a loading animation while the resource is being validated ...
     expect(getByAltText('Validating source health...')).toBeInTheDocument();
-    expect(getByText('Cancel')).toBeInTheDocument();
 
     // ... replaced by a success screen
     expect(await findByText('Everything looks good!')).toBeInTheDocument();
     expect(getByText('Finish Setup')).toBeInTheDocument();
+  });
+
+  it('can successfully update a compliance source & enable real-time', async () => {
+    const complianceSource = buildComplianceIntegration({
+      awsAccountId: '123123123123',
+      cweEnabled: false,
+    });
+
+    const updatedComplianceSource = buildComplianceIntegration({
+      ...complianceSource,
+      cweEnabled: true,
+    });
+
+    const mocks = [
+      mockGetComplianceSource({
+        data: {
+          getComplianceIntegration: complianceSource,
+        },
+      }),
+      mockUpdateComplianceSource({
+        variables: {
+          input: buildUpdateComplianceIntegrationInput({
+            integrationId: complianceSource.integrationId,
+            integrationLabel: updatedComplianceSource.integrationLabel,
+            cweEnabled: updatedComplianceSource.cweEnabled,
+            remediationEnabled: updatedComplianceSource.remediationEnabled,
+          }),
+        },
+        data: {
+          updateComplianceIntegration: updatedComplianceSource,
+        },
+      }),
+    ];
+    const {
+      getByText,
+      getByLabelText,
+      getByAltText,
+      findByText,
+      queryByText,
+    } = render(<EditComplianceSource />, { mocks });
+
+    const nameField = getByLabelText('Name') as HTMLInputElement;
+
+    //  Wait for GET api request to populate the form
+    await waitFor(() => expect(nameField).toHaveValue(complianceSource.integrationLabel));
+
+    fireEvent.click(getByLabelText('Real-Time AWS Resource Scans'));
+
+    // Wait for form validation to kick in and move on to the next screen
+    await waitMs(50);
+    fireEvent.click(getByText('Continue Setup'));
+
+    // We move on to the final screen
+    fireEvent.click(getByText('Continue'));
+
+    // Expect to see a loading animation while the resource is being validated ...
+    expect(getByAltText('Validating source health...')).toBeInTheDocument();
+
+    // ... replaced by a "configure real-time" screen
+    expect(await findByText('Configuring Real-Time Monitoring')).toBeInTheDocument();
+    expect(getByText('steps found here')).toHaveAttribute('href', CLOUD_SECURITY_REAL_TIME_DOC_URL);
+
+    // ... and then by a success screen
+    fireEvent.click(getByText('I Have Setup Real-Time'));
+    expect(getByText('Everything looks good!')).toBeInTheDocument();
+    expect(getByText('Finish Setup')).toBeInTheDocument();
+    expect(queryByText('Add Another')).not.toBeInTheDocument();
   });
 });

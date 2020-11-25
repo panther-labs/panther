@@ -20,16 +20,9 @@ package logtypes
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/pkg/errors"
 )
-
-// Finder can find a log entry by name.
-// It should return nil if the entry is not found.
-type Finder interface {
-	Find(logType string) Entry
-}
 
 // Group is a named collection of log type entries.
 // The purpose of Group is to provide read-only access to a set of log types
@@ -42,30 +35,12 @@ type Group interface {
 // Collection is a collection of log type entries
 type Collection interface {
 	Entries() []Entry
-	Len() int
 }
 
-// FilterPrefix is a helper that filters log type entries in a collection based on a prefix
-func FilterPrefix(col Collection, prefix string) (entries []Entry) {
-	if col == nil {
-		return
-	}
-	for _, entry := range col.Entries() {
-		if strings.HasPrefix(entry.Name(), prefix) {
-			entries = append(entries, entry)
-		}
-	}
-	return
-}
-
-// AppendFind is a low allocation helper to find multiple entries
-func AppendFind(entries []Entry, finder Finder, names ...string) []Entry {
-	for _, name := range names {
-		if entry := finder.Find(name); entry != nil {
-			entries = append(entries, entry)
-		}
-	}
-	return entries
+// Finder can find a log entry by name.
+// It should return nil if the entry is not found.
+type Finder interface {
+	Find(logType string) Entry
 }
 
 type group struct {
@@ -144,19 +119,31 @@ func (g *group) Find(name string) Entry {
 }
 
 // Entries implements Group
-func (g *group) Entries() (entries []Entry) {
+func (g *group) Entries() []Entry {
+	entries := make([]Entry, 0, len(g.entries))
 	for _, entry := range g.entries {
 		entries = append(entries, entry)
 	}
 	return entries
 }
 
-// Len implements Group
-func (g *group) Len() int {
-	return len(g.entries)
-}
-
 // Name implements Group
 func (g *group) Name() string {
 	return g.name
+}
+
+// CollectNames is a helper to get the names of all log type entries in a Collection
+func CollectNames(c Collection) []string {
+	if c == nil {
+		return nil
+	}
+	entries := c.Entries()
+	if entries == nil {
+		return nil
+	}
+	names := make([]string, 0, len(entries))
+	for _, entry := range c.Entries() {
+		names = append(names, entry.Name())
+	}
+	return names
 }

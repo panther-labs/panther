@@ -27,7 +27,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/rowid"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -73,7 +73,7 @@ type PantherAnyString struct { // needed to declare as struct (rather than map) 
 
 func init() {
 	// Register glue mapping for PantherAnyString
-	awsglue.MustRegisterMapping(reflect.TypeOf(PantherAnyString{}), awsglue.ArrayOf(awsglue.GlueStringType))
+	glueschema.MustRegisterMapping(reflect.TypeOf(PantherAnyString{}), glueschema.ArrayOf(glueschema.TypeString))
 }
 
 func NewPantherAnyString() *PantherAnyString {
