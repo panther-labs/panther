@@ -79,7 +79,7 @@ func RepoVersion() string {
 //
 // This provides an alternative to checking the git tags in the repo.
 func LatestPublishedVersion() (string, error) {
-	bucket := PublicAssetsBucket()
+	bucket := PublicAssetsBucket(clients.Region())
 	input := &s3.ListObjectsV2Input{
 		Bucket: &bucket,
 		// Packaged assets are hex and will not start with 'v'.
