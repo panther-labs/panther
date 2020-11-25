@@ -48,7 +48,7 @@ func TestDynamodbTableListIterator(t *testing.T) {
 	assert.Nil(t, marker)
 	assert.Len(t, tables, 1)
 
-	for i := 1; i < 50; i++ {
+	for i := 1; i < 10; i++ {
 		cont = dynamoTableIterator(awstest.ExampleListTablesOutputContinue, &tables, &marker)
 		assert.True(t, cont)
 		assert.NotNil(t, marker)
@@ -58,7 +58,7 @@ func TestDynamodbTableListIterator(t *testing.T) {
 	cont = dynamoTableIterator(awstest.ExampleListTablesOutputContinue, &tables, &marker)
 	assert.False(t, cont)
 	assert.NotNil(t, marker)
-	assert.Len(t, tables, 101)
+	assert.Len(t, tables, 21)
 }
 
 func TestDynamoDBListError(t *testing.T) {

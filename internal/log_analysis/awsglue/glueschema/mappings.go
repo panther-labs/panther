@@ -1,4 +1,4 @@
-package registry
+package glueschema
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,23 +19,33 @@ package registry
  */
 
 import (
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"encoding/json"
+	"fmt"
+	"math/big"
+	"reflect"
+	"time"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
-// Generates an init() function that populates the registry with all log types exported by
-// packages inside "internal/log_analysis/log_processor/parsers/..."
-//go:generate go run ./generate_init.go ../parsers/...
-
-// These will be populated by the generated init() code
-var (
-	nativeLogTypes logtypes.Group
-)
-
-// NativeLogTypesResolver returns a resolver for native log types.
-// Use this instead of registry.Default()
-func NativeLogTypesResolver() logtypes.Resolver {
-	return logtypes.LocalResolver(nativeLogTypes)
+var defaultMappings = map[reflect.Type]Type{
+	reflect.TypeOf(time.Time{}):           TypeTimestamp,
+	reflect.TypeOf(big.Int{}):             TypeBigInt,
+	reflect.TypeOf(json.RawMessage{}):     TypeString,
+	reflect.TypeOf(jsoniter.RawMessage{}): TypeString,
 }
-func NativeLogTypes() logtypes.Group {
-	return nativeLogTypes
+
+func MustRegisterMapping(from reflect.Type, to Type) {
+	if err := RegisterMapping(from, to); err != nil {
+		panic(err)
+	}
+}
+
+func RegisterMapping(from reflect.Type, to Type) error {
+	if typ, duplicate := defaultMappings[from]; duplicate {
+		// This is an original error, stack should be added at the caller
+		return fmt.Errorf("duplicate mapping %q", typ)
+	}
+	defaultMappings[from] = to
+	return nil
 }

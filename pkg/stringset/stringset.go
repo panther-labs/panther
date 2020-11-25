@@ -63,3 +63,13 @@ loopValues:
 	}
 	return dst
 }
+
+// Contains checks if a string set contains a value
+func Contains(values []string, seek string) bool {
+	for _, v := range values {
+		if v == seek {
+			return true
+		}
+	}
+	return false
+}

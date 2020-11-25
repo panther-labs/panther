@@ -20,10 +20,6 @@ package logtypes
 
 import (
 	"context"
-
-	"github.com/pkg/errors"
-
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 )
 
 // Resolver resolves a log type name to it's entry.
@@ -73,20 +69,4 @@ func (c chainResolver) Resolve(ctx context.Context, name string) (Entry, error) 
 		}
 	}
 	return nil, nil
-}
-
-// ResolveTables is a helper to resolve all glue table metadata for all log types
-func ResolveTables(ctx context.Context, resolver Resolver, logTypes ...string) ([]*awsglue.GlueTableMetadata, error) {
-	tables := make([]*awsglue.GlueTableMetadata, len(logTypes))
-	for i, logType := range logTypes {
-		entry, err := resolver.Resolve(ctx, logType)
-		if err != nil {
-			return nil, err
-		}
-		if entry == nil {
-			return nil, errors.Errorf("unresolved log type %q", logType)
-		}
-		tables[i] = entry.GlueTableMeta()
-	}
-	return tables, nil
 }
