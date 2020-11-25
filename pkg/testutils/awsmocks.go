@@ -62,8 +62,6 @@ type S3Mock struct {
 	mock.Mock
 }
 
-<<<<<<< HEAD
-=======
 func (m *S3Mock) MaxRetries() int {
 	return m.Retries
 }
@@ -73,7 +71,6 @@ func (m *S3Mock) DeleteObjects(input *s3.DeleteObjectsInput) (*s3.DeleteObjectsO
 	return args.Get(0).(*s3.DeleteObjectsOutput), args.Error(1)
 }
 
->>>>>>> 22d63c5d (Fix connection reset by peer errors in log processor (#2071))
 func (m *S3Mock) GetObject(input *s3.GetObjectInput) (*s3.GetObjectOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*s3.GetObjectOutput), args.Error(1)
