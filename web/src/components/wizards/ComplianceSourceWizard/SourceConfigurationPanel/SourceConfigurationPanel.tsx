@@ -22,7 +22,7 @@ import FormikTextInput from 'Components/fields/TextInput';
 import React from 'react';
 import FormikCheckbox from 'Components/fields/Checkbox';
 import logo from 'Assets/aws-minimal-logo.svg';
-import { CLOUD_SECURITY_REAL_TIME_DOC_URL, REMEDIATION_DOC_URL } from 'Source/constants';
+import { REMEDIATION_DOC_URL } from 'Source/constants';
 import { ComplianceSourceWizardValues } from 'Components/wizards/ComplianceSourceWizard/ComplianceSourceWizard';
 import { WizardPanel } from 'Components/Wizard';
 
@@ -72,10 +72,7 @@ const SourceConfigurationPanel: React.FC = () => {
             />
             <FormHelperText id="cweEnabled-description" ml={45}>
               Configure Panther to monitor all AWS resource changes in real-time through CloudWatch
-              Events.{' '}
-              <Link external href={CLOUD_SECURITY_REAL_TIME_DOC_URL}>
-                Read more
-              </Link>
+              Events.
             </FormHelperText>
           </Box>
           <Box as="fieldset">
