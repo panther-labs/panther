@@ -147,7 +147,7 @@ func mockDestination() *testS3Destination {
 			maxBufferedMemBytes: 10 * 1024 * 1024, // an arbitrary amount enough to hold default test data
 			maxDuration:         maxDuration,
 			maxBuffers:          maxBuffers,
-			maxBufferSize:       defaultMaxS3BufferSizeBytes,
+			maxBufferSize:       uploaderBufferMaxSizeBytes,
 			jsonAPI:             common.ConfigForDataLakeWriters(),
 		},
 		mockSns:        mockSns,
@@ -474,7 +474,7 @@ func TestBufferSetLargest(t *testing.T) {
 		buffer.bytes = i
 	}
 	assert.Equal(t, size, len(bs.set))
-	require.Same(t, bs.largestBuffer(), expectedLargest)
+	require.Same(t, bs.removeLargestBuffer(), expectedLargest)
 }
 
 // Runs the destination "SendEvents" function in a goroutine and returns the errors

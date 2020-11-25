@@ -38,7 +38,13 @@ import (
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
 )
 
-const dynamoDBServiceNameSpace = "dynamodb"
+const (
+	dynamoDBServiceNameSpace = "dynamodb"
+	// Several DynamoDB API calls (most noticeably the DescribeTimeToLive API call) have very low
+	// rate limits, so we set the max batch size lower than for most resource types to avoid getting
+	// rate limited.
+	dynamodbBatchSize = 20
+)
 
 // Set as variables to be overridden in testing
 var (
@@ -108,7 +114,7 @@ func PollDynamoDBTable(
 func listTables(dynamoDBSvc dynamodbiface.DynamoDBAPI, nextMarker *string) (tables []*string, marker *string, err error) {
 	err = dynamoDBSvc.ListTablesPages(&dynamodb.ListTablesInput{
 		ExclusiveStartTableName: nextMarker,
-		Limit:                   aws.Int64(int64(defaultBatchSize)),
+		Limit:                   aws.Int64(int64(dynamodbBatchSize)),
 	},
 		func(page *dynamodb.ListTablesOutput, lastPage bool) bool {
 			return dynamoTableIterator(page, &tables, &marker)
@@ -123,7 +129,7 @@ func dynamoTableIterator(page *dynamodb.ListTablesOutput, tables *[]*string, mar
 	*tables = append(*tables, page.TableNames...)
 	// DynamoDB uses the name of the last table evaluated as the pagination marker
 	*marker = page.LastEvaluatedTableName
-	return len(*tables) < defaultBatchSize
+	return len(*tables) < dynamodbBatchSize
 }
 
 // describeTable provides detailed information about a given DynamoDB table

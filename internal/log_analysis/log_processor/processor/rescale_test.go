@@ -41,7 +41,7 @@ func TestScaleup(t *testing.T) {
 	// we want to wait for 2 executions of the scale up go routine
 	wg.Add(2)
 	// this is what we return showing a queue size big enough to scale
-	spikeCount := processingMaxFilesLimit * 2
+	spikeCount := processingQueueIncreaseThreshold * 2
 	streamTestSpikeInEventsQueue := &sqs.GetQueueAttributesOutput{
 		Attributes: map[string]*string{
 			sqs.QueueAttributeNameApproximateNumberOfMessages: aws.String(strconv.Itoa(spikeCount)),
@@ -60,7 +60,7 @@ func TestScaleup(t *testing.T) {
 		Run(func(args mock.Arguments) {
 			wg.Done()
 		})
-	lambdaClient.On("InvokeWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&lambda.InvokeOutput{}, nil).Once()
+	lambdaClient.On("InvokeWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&lambda.InvokeOutput{}, nil).Times(1)
 
 	// this will return a number for the queue size smaller than needed to scale, so no lambda calls
 	sqsClient.On("GetQueueAttributesWithContext", mock.Anything, mock.Anything, mock.Anything).

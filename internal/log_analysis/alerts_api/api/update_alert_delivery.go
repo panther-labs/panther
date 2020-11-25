@@ -21,7 +21,7 @@ package api
 import (
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 // UpdateAlertDelivery modifies an alert's attributes.
@@ -40,6 +40,6 @@ func (api *API) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) (res
 	// Marshal to an alert summary
 	result = utils.AlertItemToSummary(alertItem)
 
-	gatewayapi.ReplaceMapSliceNils(result)
+	genericapi.ReplaceMapSliceNils(result)
 	return result, nil
 }

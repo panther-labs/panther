@@ -29,7 +29,6 @@ import (
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertTable "github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -66,7 +65,7 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 	zap.L().Debug("Finished updating alert delivery statuses")
 
 	alertSummary := alertSummaries[0]
-	gatewayapi.ReplaceMapSliceNils(alertSummary)
+	genericapi.ReplaceMapSliceNils(alertSummary)
 	return alertSummary, nil
 }
 

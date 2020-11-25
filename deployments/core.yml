@@ -750,16 +750,17 @@ Resources:
       Description: Manages database of source integrations
       Environment:
         Variables:
-          DEBUG: !Ref Debug
-          DATA_CATALOG_UPDATER_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-datacatalog-updater-queue
-          SNAPSHOT_POLLERS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-snapshot-queue
-          LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-input-data-notifications-queue
-          LOG_PROCESSOR_QUEUE_ARN: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-input-data-notifications-queue
-          TABLE_NAME: !Ref IntegrationsTable
           ACCOUNT_ID: !Ref AWS::AccountId
+          DATA_CATALOG_UPDATER_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-datacatalog-updater-queue
+          DEBUG: !Ref Debug
           INPUT_DATA_ROLE_ARN: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/PantherInputDataLogProcessingRole-${AWS::Region}
           INPUT_DATA_BUCKET_NAME: !Ref InputDataBucket
           INPUT_DATA_TOPIC_ARN: !Ref InputDataTopicArn
+          LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-input-data-notifications-queue
+          LOG_PROCESSOR_QUEUE_ARN: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-input-data-notifications-queue
+          SNAPSHOT_POLLERS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-snapshot-queue
+          TABLE_NAME: !Ref IntegrationsTable
+          VERSION: !Ref CustomResourceVersion
       FunctionName: panther-source-api
       # <cfndoc>
       # The `panther-source-api` lambda manages Cloud Security and Log Analysis sources. This includes

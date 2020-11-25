@@ -18,9 +18,9 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Box, Flex, theme as Theme, useTheme } from 'pouncejs';
+import { Box, Flex, theme as Theme, ThemeProvider, useTheme } from 'pouncejs';
 import { formatTime, remToPx, capitalize } from 'Helpers/utils';
-import { FloatSeriesData, LongSeriesData, FloatSeries, LongSeries } from 'Generated/schema';
+import { FloatSeries, LongSeries } from 'Generated/schema';
 import { EChartOption, ECharts } from 'echarts';
 import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
@@ -30,17 +30,17 @@ import useChartOptions from './useChartOptions';
 import ResetButton from '../ResetButton';
 import ScaleControls from '../ScaleControls';
 
-type SeriesMetadata = {
-  color?: keyof typeof Theme['colors'];
-};
+export type TimeSeries = (LongSeries | FloatSeries) & { color?: keyof typeof Theme['colors'] };
 
-export type SeriesDataMetadata = {
+export type TimeSeriesData = {
+  timestamps: string[];
+  series: TimeSeries[];
   metadata?: any[];
 };
 
 interface TimeSeriesChartProps {
   /** The data for the time series */
-  data: (LongSeriesData | FloatSeriesData) & SeriesDataMetadata;
+  data: TimeSeriesData;
 
   /**
    * The number of segments that the X-axis is split into
@@ -132,6 +132,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   const timeSeriesChart = React.useRef<ECharts>(null);
   const container = React.useRef<HTMLDivElement>(null);
   const tooltip = React.useRef<HTMLDivElement>(document.createElement('div'));
+
   /*
    * Defining ChartOptions
    */
@@ -140,7 +141,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
      *  Timestamps & Series are common for all series since everything has the same interval
      *  and the same time frame
      */
-    const series = data.series as ((LongSeries | FloatSeries) & SeriesMetadata)[];
+    const { series } = data;
 
     /*
      * 'series' must be an array of objects that includes some graph options
@@ -159,9 +160,16 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           color: theme.colors[color || severityColors[label]] || stringToPaleColor(label),
         },
         label: {
-          show: !hideSeriesLabels,
+          show: false,
+          formatter: ({ value }) => value[1].toLocaleString(),
           position: 'top',
+          fontSize: 11,
+          fontWeight: 'bold',
+          fontFamily: theme.fonts.primary,
           color: '#fff',
+          emphasis: {
+            show: !hideSeriesLabels,
+          },
         },
         data: values
           .map((v, i) => {
@@ -219,13 +227,19 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         axisPointer: {
           type: chartType === 'line' ? 'line' : 'none',
         },
-        backgroundColor: theme.colors['navyblue-300'],
+        backgroundColor: 'transparent',
         formatter: (params: EChartOption.Tooltip.Format[]) => {
           if (!params || !params.length) {
             return '';
           }
 
-          ReactDOM.render(tooltipComponent({ params, units }), tooltip.current);
+          const TooltipComponent = tooltipComponent;
+          ReactDOM.render(
+            <ThemeProvider>
+              <TooltipComponent params={params} units={units} />
+            </ThemeProvider>,
+            tooltip.current
+          );
           return tooltip.current.innerHTML;
         },
       },
@@ -361,10 +375,10 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
       <Box position="absolute" width="200px" ml={1} fontWeight="bold">
         {title}
       </Box>
-      <Box position="absolute" pl={hideLegend ? '50px' : '210px'} pr="50px" width={1}>
+      <Box position="absolute" left={0} pl={hideLegend ? '50px' : '210px'} pr="50px" width={1}>
         <Flex align="center" justify="space-between">
           {scaleControls && <ScaleControls scaleType={scaleType} onSelect={setScaleType} />}
-          <Box zIndex={5}>
+          <Box zIndex={5} ml="auto">
             <ResetButton
               onReset={() =>
                 timeSeriesChart.current.dispatchAction({
