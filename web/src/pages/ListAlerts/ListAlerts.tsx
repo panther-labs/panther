@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Box, Card, Flex } from 'pouncejs';
+import { Alert, Box, Card, Flex, Text } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
 import { ListAlertsInput } from 'Generated/schema';
@@ -31,17 +31,18 @@ import withSEO from 'Hoc/withSEO';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import { PageViewEnum } from 'Helpers/analytics';
 import AlertCard from 'Components/cards/AlertCard/AlertCard';
+import { SelectAllCheckbox, withSelectContext } from 'Components/utils/SelectContext';
+import { compose } from 'Helpers/compose';
+import ListAlertsActions from 'Pages/ListAlerts/ListAlertsActions';
 import Panel from 'Components/Panel';
 import { useListAlerts } from './graphql/listAlerts.generated';
-import ListAlertsActions from './ListAlertBreadcrumbFilters';
-import ListAlertFilters from './ListAlertFilters';
+import ListAlertBreadcrumbFilters from './ListAlertBreadcrumbFilters';
 import ListAlertsPageSkeleton from './Skeleton';
 import ListAlertsPageEmptyDataFallback from './EmptyDataFallback';
 
 const ListAlerts = () => {
   useTrackPageView(PageViewEnum.ListAlerts);
   const { requestParams } = useRequestParamsWithoutPagination<ListAlertsInput>();
-
   const { loading, error, data, fetchMore } = useListAlerts({
     fetchPolicy: 'cache-and-network',
     variables: {
@@ -55,6 +56,8 @@ const ListAlerts = () => {
   const alertItems = data?.alerts.alertSummaries || [];
   const lastEvaluatedKey = data?.alerts.lastEvaluatedKey || null;
   const hasNextPage = !!data?.alerts?.lastEvaluatedKey;
+
+  const alertIds = React.useMemo(() => alertItems.map(a => a.alertId), [alertItems.length]);
 
   const { sentinelRef } = useInfiniteScroll<HTMLDivElement>({
     loading,
@@ -124,22 +127,23 @@ const ListAlerts = () => {
           />
         </Box>
       )}
-      <ListAlertsActions />
+      <ListAlertBreadcrumbFilters />
       <Panel
-        title="Alerts"
-        actions={
-          // Using a Box to add some spacing as
-          // ListAlertFilters tends to cover the whole space available
-          <Box>
-            <ListAlertFilters />
-          </Box>
+        title={
+          <Flex align="center" spacing={2} ml={4}>
+            <SelectAllCheckbox selectionIds={alertIds} />
+            <Text>Alerts</Text>
+          </Flex>
         }
+        actions={<ListAlertsActions />}
       >
         <Card as="section" position="relative">
           <Box position="relative">
             <Flex direction="column" spacing={2}>
               {alertItems.length ? (
-                alertItems.map(alert => <AlertCard key={alert.alertId} alert={alert} />)
+                alertItems.map(alert => (
+                  <AlertCard key={alert.alertId} alert={alert} selectionEnabled />
+                ))
               ) : (
                 <Box my={8}>
                   <NoResultsFound />
@@ -158,4 +162,4 @@ const ListAlerts = () => {
   );
 };
 
-export default withSEO({ title: 'Alerts' })(ListAlerts);
+export default compose(withSEO({ title: 'Alerts' }), withSelectContext, React.memo)(ListAlerts);

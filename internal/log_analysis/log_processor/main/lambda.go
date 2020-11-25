@@ -27,7 +27,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
@@ -61,20 +60,8 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", sqsMessageCount))
 	}()
 
-	logTypesResolver := logtypes.ChainResolvers(
-		registry.NativeLogTypesResolver(),
-		// Also make internal log types available to the log processor
-		registry.InternalLogTypesResolver(),
-	)
+	logTypesResolver := registry.NativeLogTypesResolver()
 
-	deadline, ok := ctx.Deadline()
-	if !ok {
-		panic("Lambda context doesn't have a deadline!")
-	}
-	// We should poll events for half the Lambda's duration
-	pollingTimeout := time.Until(deadline) / 2
-	ctx, cancel := context.WithTimeout(ctx, pollingTimeout)
-	defer cancel()
 	sqsMessageCount, err = processor.PollEvents(ctx, common.SqsClient, logTypesResolver)
 
 	return err

@@ -57,6 +57,7 @@ func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		resourceARN, err := arn.Parse(detail.Get("requestParameters.resourceName").Str)
 		if err != nil {
 			zap.L().Error("rds: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Error(err))
+			return nil
 		}
 		if strings.HasPrefix(resourceARN.Resource, "db:") {
 			rdsARN = resourceARN
@@ -77,7 +78,12 @@ func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		return nil
 	case "CopyDBSnapshot", "DeleteDBSnapshot", "ModifyDBSnapshot":
 		// Similar to the common case, but looking at the responseElements
-		rdsARN.Resource += detail.Get("responseElements.dBSnapshot.dBInstanceIdentifier").Str
+		instanceID := detail.Get("responseElements.dBSnapshot.dBInstanceIdentifier")
+		// This can happen when a snapshot for a DB that no longer exists is changed
+		if !instanceID.Exists() {
+			return nil
+		}
+		rdsARN.Resource += instanceID.Str
 	case "CreateDBInstanceReadReplica":
 		return []*resourceChange{{
 			AwsAccountID: metadata.accountID,
@@ -107,13 +113,20 @@ func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 	case "DeleteDBInstanceAutomatedBackup":
 		rdsARN.Resource += detail.Get("responseElements.dBInstanceAutomatedBackup.dBInstanceIdentifier").Str
 	case "ModifyDBSnapshotAttribute":
-		// Since we can't link this back to the corresponding RDS Instance, we need to do a full
-		// RDS instance scan for now. With a linking table or resource lookups + snapshot resource
-		// we could avoid this.
+		// Since we can't tie this back to the corresponding RDS Instance with just the context of
+		// this event, we send the panther-snapshot-poller the ID of the db snapshot and let the
+		// poller make the appropriate API call to tie this snapshot back to a particular instance.
+		snapshotID := detail.Get("requestParameters.dBSnapshotIdentifier").Str
 		return []*resourceChange{{
 			AwsAccountID: metadata.accountID,
 			EventName:    metadata.eventName,
-			Region:       metadata.region,
+			ResourceID: arn.ARN{
+				Partition: "aws",
+				Service:   "rds",
+				Region:    metadata.region,
+				AccountID: metadata.accountID,
+				Resource:  "snapshot:" + snapshotID,
+			}.String(),
 			ResourceType: schemas.RDSInstanceSchema,
 		}}
 	case "RestoreDBInstanceToPointInTime":

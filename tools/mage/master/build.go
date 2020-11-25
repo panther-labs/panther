@@ -28,6 +28,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/build"
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/gen"
+	"github.com/panther-labs/panther/tools/mage/srcfmt"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
@@ -38,6 +39,10 @@ func Build(log *zap.SugaredLogger) error {
 	if err := gen.Gen(); err != nil {
 		return err
 	}
+	if err := srcfmt.Fmt(); err != nil {
+		return err
+	}
+
 	if err := build.Lambda(); err != nil {
 		return err
 	}
@@ -55,10 +60,6 @@ func Build(log *zap.SugaredLogger) error {
 //
 // Returns the path to the final generated template.
 func Package(log *zap.SugaredLogger, region, bucket, pantherVersion, imgRegistry string) (string, error) {
-	if err := build.EmbedAPISpec(); err != nil {
-		return "", err
-	}
-
 	// Embed version directly into template - we don't want this to be a configurable parameter.
 	template := util.MustReadFile(masterTemplate)
 	template = bytes.Replace(template, []byte("${{PANTHER_VERSION}}"), []byte(pantherVersion), 1)

@@ -30,15 +30,11 @@ import (
  */
 
 const (
-	// API stacks and templates
-	APITemplate         = "deployments/bootstrap_gateway.yml"
-	APIEmbeddedTemplate = "out/deployments/embedded.bootstrap_gateway.yml"
-
 	// Bootstrap stacks and templates
 	Bootstrap         = "panther-bootstrap"
 	BootstrapTemplate = "deployments/bootstrap.yml"
 	Gateway           = "panther-bootstrap-gateway"
-	GatewayTemplate   = APIEmbeddedTemplate
+	GatewayTemplate   = "deployments/bootstrap_gateway.yml"
 
 	// Main stacks and templates
 	Appsync             = "panther-appsync"

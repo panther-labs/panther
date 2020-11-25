@@ -41,6 +41,7 @@ export type ListRules = {
             | 'displayName'
             | 'threshold'
             | 'enabled'
+            | 'outputIds'
           >
         >
       >
@@ -60,6 +61,7 @@ export const ListRulesDocument = gql`
         displayName
         threshold
         enabled
+        outputIds
       }
       paging {
         totalPages

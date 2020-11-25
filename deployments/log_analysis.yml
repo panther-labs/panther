@@ -26,11 +26,6 @@ Parameters:
     Description: SNS topic for CloudWatch alarms
     # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
-  AnalysisApiId:
-    Type: String
-    Description: API Gateway for analysis-api
-    # Example: "0jcmwnr9cj"
-    AllowedPattern: '^[0-9a-z]{10}$'
   AthenaResultsBucket:
     Type: String
     Description: Name of the S3 bucket created to hold Athena results
@@ -66,6 +61,11 @@ Parameters:
     Description: Log processor Lambda memory allocation
     MinValue: 256 # 128 is too small, risks OOM errors
     MaxValue: 3008
+  LogProcessorLambdaSQSReadBatchSize:
+    Type: Number
+    Description: How many SQS messsage the log processor reads per SQS read. If the log processor is timing out, reduce this number.
+    MinValue: 1
+    MaxValue: 10
   ProcessedDataBucket:
     Type: String
     Description: Name of the S3 bucket which stores processed logs
@@ -84,10 +84,6 @@ Parameters:
     Description: KMS key ID for SQS encryption
     # Example: "484fb80c-4ae5-40d0-b22a-bdd5d0953b3e"
     AllowedPattern: '^[0-9a-f-]{36}$'
-  TablesSignature:
-    Type: String
-    Description: Value from gluetable.DeployedTablesSignature() or the Panther version if using CF
-    MinLength: 1
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
@@ -125,8 +121,6 @@ Resources:
       - UpdaterFunction
     Type: Custom::UpdateLogProcessorTables
     Properties:
-      # Update in case TablesSignature or CustomResourceVersion has changed
-      TablesSignature: !Ref TablesSignature
       CustomResourceVersion: !Ref CustomResourceVersion
       DataCatalogUpdaterQueueURL: !Ref UpdaterQueue
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
@@ -192,8 +186,6 @@ Resources:
           ALERTS_TABLE_NAME: !Ref LogAlertsTable
           ALERTS_RULE_INDEX_NAME: ruleId-creationTime-index
           ALERTS_TIME_INDEX_NAME: timePartition-creationTime-index
-          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          ANALYSIS_API_PATH: v1
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
       FunctionName: panther-alerts-api
       # <cfndoc>
@@ -320,8 +312,6 @@ Resources:
         Variables:
           DEBUG: !Ref Debug
           ALERTS_TABLE: !Ref LogAlertsTable
-          ANALYSIS_API_HOST: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          ANALYSIS_API_PATH: v1
           ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts-queue
       Events:
         DynamoDBEvent:
@@ -363,8 +353,8 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action: execute-api:Invoke
-              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/rule
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
         - Id: ManageAlerts
           Version: 2012-10-17
           Statement:
@@ -483,6 +473,7 @@ Resources:
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
           SNS_TOPIC_ARN: !Ref ProcessedDataTopicArn
           SQS_QUEUE_URL: !Ref LogProcessorQueue
+          SQS_BATCH_SIZE: !Ref LogProcessorLambdaSQSReadBatchSize
           INPUT_DATA_BUCKET: !Ref InputDataBucket
       Events:
         Tick: # This drives polling by the log processor
@@ -684,6 +675,7 @@ Resources:
         Variables:
           ATHENA_WORKGROUP: !Ref AthenaWorkGroup
           DEBUG: !Ref Debug
+          QUEUE_URL: !Ref UpdaterQueue
           PROCESSED_DATA_BUCKET: !Ref ProcessedDataBucket
       Events:
         Queue:
@@ -710,6 +702,7 @@ Resources:
                 - glue:GetTable
                 - glue:GetTables
                 - glue:CreateTable
+                - glue:CreateDatabase
                 - glue:UpdateTable
                 - glue:CreatePartition
                 - glue:GetPartition
@@ -719,6 +712,13 @@ Resources:
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/panther*
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/panther*
+        - Id: SQSPermissions # allow writing
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sqs:SendMessage
+              Resource:
+                - !GetAtt UpdaterQueue.Arn # send messages to updater queue (defer tasks)
         - Id: AthenaPermissions # to create views over Glue tables
           Version: 2012-10-17
           Statement:
@@ -749,7 +749,8 @@ Resources:
           Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-datacatalog-updater
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-logtypes-api
 
   UpdaterAlarms:
     Type: Custom::LambdaAlarms
@@ -903,8 +904,6 @@ Resources:
       Handler: src.main.lambda_handler
       Environment:
         Variables:
-          ANALYSIS_API_FQDN: !Sub '${AnalysisApiId}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
-          ANALYSIS_API_PATH: v1
           DEBUG: !Ref Debug
           ALERTS_QUEUE: panther-log-alert-notifications-queue
           S3_BUCKET: !Ref ProcessedDataBucket
@@ -966,12 +965,12 @@ Resources:
                 - kms:Encrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
-        - Id: InvokeGatewayApi
+        - Id: InvokeAnalysisApi
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action: execute-api:Invoke
-              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AnalysisApiId}/v1/GET/enabled
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
         - Id: ResourceLookup
           Version: 2012-10-17
           Statement:

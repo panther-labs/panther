@@ -36,6 +36,13 @@ import { mockGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.gener
 
 let defaultMocks: MockedResponse[];
 
+const recentAlerts = [buildAlertSummary({ alertId: '1', ruleId: 'rule_1' })];
+
+const highSeverityAlerts = [
+  buildAlertSummary({ alertId: '2', ruleId: 'rule_2', severity: SeverityEnum.Critical }),
+  buildAlertSummary({ alertId: '3', ruleId: 'rule_3', severity: SeverityEnum.High }),
+];
+
 describe('Log Analysis Overview', () => {
   beforeAll(() => {
     // https://github.com/boblauer/MockDate#example
@@ -77,12 +84,11 @@ describe('Log Analysis Overview', () => {
       }),
       mockGetOverviewAlerts({
         data: {
-          recentAlerts: buildListAlertsResponse(),
+          recentAlerts: buildListAlertsResponse({
+            alertSummaries: recentAlerts,
+          }),
           topAlerts: buildListAlertsResponse({
-            alertSummaries: [
-              buildAlertSummary({ alertId: '1', severity: SeverityEnum.Critical }),
-              buildAlertSummary({ alertId: '2', severity: SeverityEnum.High }),
-            ],
+            alertSummaries: highSeverityAlerts,
           }),
         },
         variables: {
@@ -126,7 +132,7 @@ describe('Log Analysis Overview', () => {
   });
 
   it('should display Alerts Cards for Top Alerts and Recent Alerts', async () => {
-    const { getAllByTitle, getByText, getAllByText } = render(<LogAnalysisOverview />, {
+    const { getAllByTitle, getByText, getByAriaLabel } = render(<LogAnalysisOverview />, {
       mocks: defaultMocks,
     });
     // Expect to see 3 loading interfaces
@@ -136,12 +142,13 @@ describe('Log Analysis Overview', () => {
     // Waiting for all loading interfaces to be removed;
     await Promise.all(loadingInterfaceElements.map(ele => waitForElementToBeRemoved(ele)));
 
-    const recentAlertCards = getAllByText('View Rule');
-    expect(recentAlertCards.length).toEqual(1);
+    recentAlerts.forEach(alert => {
+      expect(getByAriaLabel(`Link to rule ${alert.ruleId}`));
+    });
     const topAlertsTabButton = getByText('High Severity Alerts (2)');
     fireEvent.click(topAlertsTabButton);
-    const alertCards = getAllByText('View Rule');
-    // There are 3 alerts cards because previous Alerts cards are not unmounted
-    expect(alertCards.length).toEqual(3);
+    highSeverityAlerts.forEach(alert => {
+      expect(getByAriaLabel(`Link to rule ${alert.ruleId}`));
+    });
   });
 });

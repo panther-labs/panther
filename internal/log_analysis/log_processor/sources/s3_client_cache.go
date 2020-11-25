@@ -42,11 +42,14 @@ import (
 )
 
 const (
-	// sessionDurationSeconds is the duration in seconds of the STS session the S3 client uses
-	sessionDurationSeconds = 3600
-	sourceAPIFunctionName  = "panther-source-api"
-	// How frequently to query the sources_api for new integrations
-	sourceCacheDuration = 5 * time.Minute
+	// sessionDuration is the duration of S3 client STS session
+	sessionDuration = time.Hour
+	// Expirty window for the STS credentials.
+	// Give plenty of time for refresh, we have seen that 1 minute refresh time can sometimes lead to InvalidAccessKeyId errors
+	sessionExpiryWindow   = 2 * time.Minute
+	sourceAPIFunctionName = "panther-source-api"
+	// How frequently to query the panther-sources-api for new integrations
+	sourceCacheDuration = 2 * time.Minute
 
 	s3BucketLocationCacheSize = 1000
 	s3ClientCacheSize         = 1000
@@ -264,8 +267,8 @@ func getAwsCredentials(roleArn string) *credentials.Credentials {
 	// Use regional STS endpoints as per AWS recommendation https://docs.aws.amazon.com/general/latest/gr/sts.html
 	credsSession := common.Session.Copy(aws.NewConfig().WithSTSRegionalEndpoint(endpoints.RegionalSTSEndpoint))
 	return stscreds.NewCredentials(credsSession, roleArn, func(p *stscreds.AssumeRoleProvider) {
-		p.Duration = time.Duration(sessionDurationSeconds) * time.Second
-		p.ExpiryWindow = time.Minute // give plenty of time to refresh
+		p.Duration = sessionDuration
+		p.ExpiryWindow = sessionExpiryWindow
 	})
 }
 

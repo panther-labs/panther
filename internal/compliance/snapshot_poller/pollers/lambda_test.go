@@ -29,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
+	lru "github.com/hashicorp/golang-lru"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -100,6 +101,8 @@ func setupTestLogger(ctx context.Context, _ map[string]interface{}) *lambdaconte
 func TestHandlerNonExistentIntegration(t *testing.T) {
 	loggerSetupFunc = setupTestLogger
 	logger := mockLogger(zapcore.InfoLevel)
+
+	pollers.RateLimitTracker, _ = lru.NewARC(10)
 	mockResourceClient := &gatewayapi.MockClient{}
 	apiClient = mockResourceClient
 	pollers.AuditRoleName = "TestAuditRole"

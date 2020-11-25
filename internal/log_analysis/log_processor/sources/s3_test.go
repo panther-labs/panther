@@ -22,6 +22,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"io/ioutil"
 	"testing"
 
@@ -66,8 +67,9 @@ func TestParseS3Notification(t *testing.T) {
 		"\"eTag\":\"d41d8cd98f00b204e9800998ecf8427e\",\"versionId\":\"096fKKXTRTtl3on89fVO.nfljtsv6qko\",\"sequencer\":\"0055AED6DCD90281E5\"}}}]}"
 	expectedOutput := []*S3ObjectInfo{
 		{
-			S3Bucket:    "mybucket",
-			S3ObjectKey: "year=2020/key1",
+			S3Bucket:     "mybucket",
+			S3ObjectKey:  "year=2020/key1",
+			S3ObjectSize: 1024,
 		},
 	}
 	s3Objects, err := ParseNotification(notification)
@@ -153,10 +155,13 @@ func TestHandleUnsupportedFileType(t *testing.T) {
 	}
 
 	objectData := []byte(`<?xml version="1.0" encoding="UTF-8" standalone="no" ?>`)
-	getObjectOutput := &s3.GetObjectOutput{Body: ioutil.NopCloser(bytes.NewReader(objectData))}
-	s3Mock.On("GetObject", mock.Anything).Return(getObjectOutput, nil)
+	getObjectOutput := &s3.GetObjectOutput{
+		ContentLength: aws.Int64(int64(len(objectData))),
+		Body:          ioutil.NopCloser(bytes.NewReader(objectData)),
+	}
+	s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return(getObjectOutput, nil)
 
-	dataStreams, err := ReadSnsMessage(marshaledNotification)
+	dataStreams, err := ReadSnsMessage(context.TODO(), marshaledNotification)
 	// Method shouldn't return error
 	require.NoError(t, err)
 	// Method should not return data stream
@@ -182,7 +187,7 @@ func TestHandleS3Folder(t *testing.T) {
 	marshaledNotification, err := jsoniter.MarshalToString(notification)
 	require.NoError(t, err)
 
-	dataStreams, err := ReadSnsMessage(marshaledNotification)
+	dataStreams, err := ReadSnsMessage(context.TODO(), marshaledNotification)
 	// Method shouldn't return error
 	require.NoError(t, err)
 	// Method should not return data stream
@@ -220,7 +225,7 @@ func TestHandleUnregisteredSource(t *testing.T) {
 	// Getting the list of available sources
 	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil).Once()
 
-	dataStreams, err := ReadSnsMessage(marshaledNotification)
+	dataStreams, err := ReadSnsMessage(context.TODO(), marshaledNotification)
 	// Method shouldn't return error
 	require.NoError(t, err)
 	// Method should not return data stream

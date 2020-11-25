@@ -74,15 +74,7 @@ func Process(
 			defer close(resultsChannel)
 			// it is important to process the streams serially to manage memory!
 			for dataStream := range dataStreams {
-				processor, err := newProcessor(dataStream)
-				if err != nil {
-					zap.L().Error("failed to build log processor for source",
-						zap.String("sourceId", dataStream.Source.IntegrationID),
-						zap.String("sourceLabel", dataStream.Source.IntegrationLabel),
-						zap.Error(err))
-					return err
-				}
-				if err := processor.run(resultsChannel); err != nil {
+				if err := processDataStream(dataStream, resultsChannel, newProcessor); err != nil {
 					return err
 				}
 			}
@@ -117,6 +109,32 @@ func Process(
 	}
 	zap.L().Debug("data processing goroutines finished")
 	return err
+}
+
+func processDataStream(dataStream *common.DataStream,
+	resultsChannel chan *parsers.Result,
+	newProcessor func(stream *common.DataStream) (*Processor, error)) error {
+
+	// ensure resources are freed
+	defer func() {
+		err := dataStream.Closer.Close()
+		if err != nil {
+			zap.L().Warn("failed to close data stream",
+				zap.String("sourceId", dataStream.Source.IntegrationID),
+				zap.String("sourceLabel", dataStream.Source.IntegrationLabel),
+				zap.Error(err))
+		}
+	}()
+
+	processor, err := newProcessor(dataStream)
+	if err != nil {
+		zap.L().Error("failed to build log processor for source",
+			zap.String("sourceId", dataStream.Source.IntegrationID),
+			zap.String("sourceLabel", dataStream.Source.IntegrationLabel),
+			zap.Error(err))
+		return err
+	}
+	return processor.run(resultsChannel)
 }
 
 type Processor struct {

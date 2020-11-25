@@ -17,20 +17,13 @@
  */
 
 import React from 'react';
-import {
-  Dropdown,
-  DropdownButton,
-  DropdownItem,
-  DropdownLink,
-  DropdownMenu,
-  IconButton,
-  Box,
-} from 'pouncejs';
+import { Dropdown, DropdownButton, DropdownItem, DropdownLink, DropdownMenu } from 'pouncejs';
 import { RuleSummary } from 'Generated/schema';
 import urls from 'Source/urls';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import { Link as RRLink } from 'react-router-dom';
+import GenericItemCard from 'Components/GenericItemCard';
 
 interface RuleCardOptionsProps {
   rule: RuleSummary;
@@ -41,15 +34,7 @@ const RuleCardOptions: React.FC<RuleCardOptionsProps> = ({ rule }) => {
 
   return (
     <Dropdown>
-      <DropdownButton as={Box}>
-        <IconButton
-          variant="ghost"
-          variantColor="navyblue"
-          icon="more"
-          size="small"
-          aria-label="Rule Options"
-        />
-      </DropdownButton>
+      <DropdownButton as={GenericItemCard.OptionsButton} />
       <DropdownMenu>
         <DropdownLink as={RRLink} to={urls.logAnalysis.rules.edit(rule.id)}>
           Edit

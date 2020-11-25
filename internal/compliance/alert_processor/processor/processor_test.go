@@ -20,43 +20,32 @@ package processor
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	analysismodels "github.com/panther-labs/panther/api/gateway/analysis/models"
+	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
+	remediationmodels "github.com/panther-labs/panther/api/lambda/remediation/models"
 	"github.com/panther-labs/panther/internal/compliance/alert_processor/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
-type mockRoundTripper struct {
-	http.RoundTripper
-	mock.Mock
-}
-
-func (m *mockRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
-	args := m.Called(request)
-	return args.Get(0).(*http.Response), args.Error(1)
-}
-
 func TestHandleEventWithAlert(t *testing.T) {
 	mockDdbClient := &testutils.DynamoDBMock{}
 	ddbClient = mockDdbClient
 
+	mockPolicyClient := &gatewayapi.MockClient{}
+	policyClient = mockPolicyClient
 	mockComplianceClient := &gatewayapi.MockClient{}
 	complianceClient = mockComplianceClient
-
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient = &http.Client{Transport: mockRoundTripper}
+	mockRemediationClient := &gatewayapi.MockClient{}
+	remediationClient = mockRemediationClient
 
 	input := &models.ComplianceNotification{
 		ResourceID:      "test-resource",
@@ -88,16 +77,29 @@ func TestHandleEventWithAlert(t *testing.T) {
 		http.StatusOK, nil, complianceResponse)
 
 	// mock call to analysis-api
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policyResponse, http.StatusOK), nil).Once()
+	getPolicyInput := &analysismodels.LambdaInput{
+		GetPolicy: &analysismodels.GetPolicyInput{ID: "test-policy"},
+	}
+	mockPolicyClient.On("Invoke", getPolicyInput, mock.Anything).Return(
+		http.StatusOK, nil, policyResponse).Once()
+
 	// mock call to remediate-api
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse("", http.StatusOK), nil).Once()
+	remediationInput := &remediationmodels.LambdaInput{
+		RemediateResourceAsync: &remediationmodels.RemediateResourceAsyncInput{
+			PolicyID:   "test-policy",
+			ResourceID: "test-resource",
+		},
+	}
+	mockRemediationClient.On("Invoke", remediationInput, nil).Return(http.StatusOK, nil, nil)
+
 	mockDdbClient.On("UpdateItem", mock.Anything).Return(&dynamodb.UpdateItemOutput{}, nil)
 
 	require.NoError(t, Handle(input))
 
 	mockComplianceClient.AssertExpectations(t)
+	mockPolicyClient.AssertExpectations(t)
+	mockRemediationClient.AssertExpectations(t)
 	mockDdbClient.AssertExpectations(t)
-	mockRoundTripper.AssertExpectations(t)
 }
 
 func TestHandleEventWithAlertButNoAutoRemediationID(t *testing.T) {
@@ -105,8 +107,8 @@ func TestHandleEventWithAlertButNoAutoRemediationID(t *testing.T) {
 	ddbClient = mockDdbClient
 	mockComplianceClient := &gatewayapi.MockClient{}
 	complianceClient = mockComplianceClient
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient = &http.Client{Transport: mockRoundTripper}
+	mockPolicyClient := &gatewayapi.MockClient{}
+	policyClient = mockPolicyClient
 
 	input := &models.ComplianceNotification{
 		ResourceID:      "test-resource",
@@ -136,7 +138,11 @@ func TestHandleEventWithAlertButNoAutoRemediationID(t *testing.T) {
 		http.StatusOK, nil, complianceResponse)
 
 	// mock call to analysis-api
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policyResponse, http.StatusOK), nil).Once()
+	getPolicyInput := &analysismodels.LambdaInput{
+		GetPolicy: &analysismodels.GetPolicyInput{ID: "test-policy"},
+	}
+	mockPolicyClient.On("Invoke", getPolicyInput, mock.Anything).Return(
+		http.StatusOK, nil, policyResponse).Once()
 	// should NOT call remediation api!
 
 	mockDdbClient.On("UpdateItem", mock.Anything).Return(&dynamodb.UpdateItemOutput{}, nil)
@@ -144,8 +150,8 @@ func TestHandleEventWithAlertButNoAutoRemediationID(t *testing.T) {
 	require.NoError(t, Handle(input))
 
 	mockComplianceClient.AssertExpectations(t)
+	mockPolicyClient.AssertExpectations(t)
 	mockDdbClient.AssertExpectations(t)
-	mockRoundTripper.AssertExpectations(t)
 }
 
 func TestHandleEventWithoutAlert(t *testing.T) {
@@ -240,9 +246,4 @@ func TestSkipActionsIfLookupFailed(t *testing.T) {
 	require.Error(t, Handle(input))
 	mockComplianceClient.AssertExpectations(t)
 	mockDdbClient.AssertExpectations(t)
-}
-
-func generateResponse(body interface{}, httpCode int) *http.Response {
-	serializedBody, _ := jsoniter.MarshalToString(body)
-	return &http.Response{StatusCode: httpCode, Body: ioutil.NopCloser(strings.NewReader(serializedBody))}
 }

@@ -89,6 +89,9 @@ result: |
       "arn:aws:kms:us-west-2:888888888888:key/72c37aae-1000-4058-93d4-86374c0fe9a0",
       "arn:aws:s3:::panther-lab-cloudtrail/AWSLogs/888888888888/CloudTrail/us-west-2/2018/08/26/888888888888_CloudTrail_us-west-2_20180826T1410Z_inUwlhwpSGtlqmIN.json.gz"
     ],
+    "p_any_domain_names": [
+      "cloudtrail.amazonaws.com"
+    ],
     "p_any_aws_account_ids": ["777777777777","888888888888"],
     "p_log_type": "AWS.CloudTrail"
   }

@@ -26,8 +26,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager/s3manageriface"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -48,7 +48,7 @@ var (
 	// FIXME: these should be removed as globals
 	Session      *session.Session
 	LambdaClient lambdaiface.LambdaAPI
-	S3Uploader   s3manageriface.UploaderAPI
+	S3Client     s3iface.S3API
 	SqsClient    sqsiface.SQSAPI
 	SnsClient    snsiface.SNSAPI
 
@@ -59,6 +59,7 @@ type EnvConfig struct {
 	AwsLambdaFunctionMemorySize int    `required:"true" split_words:"true"`
 	ProcessedDataBucket         string `required:"true" split_words:"true"`
 	SqsQueueURL                 string `required:"true" split_words:"true"`
+	SqsBatchSize                int64  `required:"true" split_words:"true"`
 	SnsTopicARN                 string `required:"true" split_words:"true"`
 }
 
@@ -67,9 +68,12 @@ func Setup() {
 	clientsSession := Session.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(MaxRetries),
 		awsretry.NewConnectionErrRetryer(MaxRetries)))
 	LambdaClient = lambda.New(clientsSession)
-	S3Uploader = s3manager.NewUploader(clientsSession)
 	SqsClient = sqs.New(clientsSession)
 	SnsClient = sns.New(clientsSession)
+
+	s3UploaderSession := Session.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(MaxRetries),
+		awsretry.NewAccessDeniedRetryer(MaxRetries)))
+	S3Client = s3.New(s3UploaderSession)
 
 	err := envconfig.Process("", &Config)
 	if err != nil {
@@ -79,8 +83,10 @@ func Setup() {
 
 // DataStream represents a data stream that read by the processor
 type DataStream struct {
-	Reader      io.Reader
-	Source      *models.SourceIntegration
-	S3ObjectKey string
-	S3Bucket    string
+	Closer       io.Closer // cleans up resources
+	Reader       io.Reader
+	Source       *models.SourceIntegration
+	S3ObjectKey  string
+	S3Bucket     string
+	S3ObjectSize int64
 }

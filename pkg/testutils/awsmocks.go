@@ -19,6 +19,7 @@ package testutils
  */
 
 import (
+	"context"
 	"errors"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -58,7 +59,12 @@ func (m *S3UploaderMock) Upload(input *s3manager.UploadInput, f ...func(*s3manag
 
 type S3Mock struct {
 	s3iface.S3API
+	Retries int
 	mock.Mock
+}
+
+func (m *S3Mock) MaxRetries() int {
+	return m.Retries
 }
 
 func (m *S3Mock) DeleteObjects(input *s3.DeleteObjectsInput) (*s3.DeleteObjectsOutput, error) {
@@ -178,6 +184,16 @@ func (m *SqsMock) SendMessage(input *sqs.SendMessageInput) (*sqs.SendMessageOutp
 	return args.Get(0).(*sqs.SendMessageOutput), args.Error(1)
 }
 
+func (m *SqsMock) SendMessageWithContext(
+	ctx context.Context,
+	input *sqs.SendMessageInput,
+	_ ...request.Option,
+) (*sqs.SendMessageOutput, error) {
+
+	args := m.Called(ctx, input)
+	return args.Get(0).(*sqs.SendMessageOutput), args.Error(1)
+}
+
 func (m *SqsMock) SendMessageBatch(input *sqs.SendMessageBatchInput) (*sqs.SendMessageBatchOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*sqs.SendMessageBatchOutput), args.Error(1)
@@ -265,6 +281,25 @@ type GlueMock struct {
 	glueiface.GlueAPI
 	mock.Mock
 	LogTables []*glue.TableData
+}
+
+func (m *GlueMock) CreateDatabase(input *glue.CreateDatabaseInput) (*glue.CreateDatabaseOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*glue.CreateDatabaseOutput), args.Error(1)
+}
+
+func (m *GlueMock) CreateDatabaseWithContext(
+	ctx context.Context,
+	input *glue.CreateDatabaseInput,
+	options ...request.Option,
+) (*glue.CreateDatabaseOutput, error) {
+
+	arguments := []interface{}{ctx, input}
+	for _, option := range options {
+		arguments = append(arguments, option)
+	}
+	results := m.Called(arguments...)
+	return results.Get(0).(*glue.CreateDatabaseOutput), results.Error(1)
 }
 
 func (m *GlueMock) CreateTable(input *glue.CreateTableInput) (*glue.CreateTableOutput, error) {

@@ -19,7 +19,6 @@ package processor
  */
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -29,7 +28,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/kelseyhightower/envconfig"
 
-	analysisapi "github.com/panther-labs/panther/api/gateway/analysis/client"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
@@ -38,10 +36,8 @@ const (
 )
 
 type envConfig struct {
-	AlertQueueURL   string `required:"true" split_words:"true"`
-	AnalysisAPIHost string `required:"true" split_words:"true"`
-	AnalysisAPIPath string `required:"true" split_words:"true"`
-	PolicyEngine    string `required:"true" split_words:"true"`
+	AlertQueueURL string `required:"true" split_words:"true"`
+	PolicyEngine  string `required:"true" split_words:"true"`
 }
 
 var (
@@ -50,11 +46,9 @@ var (
 	awsSession       *session.Session
 	lambdaClient     lambdaiface.LambdaAPI
 	sqsClient        sqsiface.SQSAPI
+	analysisClient   gatewayapi.API
 	complianceClient gatewayapi.API
 	resourceClient   gatewayapi.API
-
-	httpClient     *http.Client
-	analysisClient *analysisapi.PantherAnalysisAPI
 )
 
 // Setup parses the environment and initializes AWS and API clients.
@@ -64,11 +58,7 @@ func Setup() {
 	awsSession = session.Must(session.NewSession())
 	lambdaClient = lambda.New(awsSession)
 	sqsClient = sqs.New(awsSession)
+	analysisClient = gatewayapi.NewClient(lambdaClient, "panther-analysis-api")
 	complianceClient = gatewayapi.NewClient(lambdaClient, "panther-compliance-api")
 	resourceClient = gatewayapi.NewClient(lambdaClient, "panther-resources-api")
-
-	httpClient = gatewayapi.GatewayClient(awsSession)
-	analysisClient = analysisapi.NewHTTPClientWithConfig(
-		nil, analysisapi.DefaultTransportConfig().
-			WithHost(env.AnalysisAPIHost).WithBasePath("/"+env.AnalysisAPIPath))
 }

@@ -29,6 +29,7 @@ export type Scalars = {
   Float: number;
   AWSDateTime: string;
   AWSJSON: string;
+  Long: number;
   AWSEmail: string;
   AWSTimestamp: number;
 };
@@ -64,7 +65,7 @@ export type AddPolicyInput = {
   displayName?: Maybe<Scalars['String']>;
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   runbook?: Maybe<Scalars['String']>;
@@ -83,7 +84,7 @@ export type AddRuleInput = {
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   runbook?: Maybe<Scalars['String']>;
   severity: SeverityEnum;
@@ -388,12 +389,12 @@ export type GetComplianceIntegrationTemplateInput = {
 };
 
 export type GetGlobalPythonModuleInput = {
-  globalId: Scalars['ID'];
+  id: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
 };
 
 export type GetPolicyInput = {
-  policyId: Scalars['ID'];
+  id: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
 };
 
@@ -402,7 +403,7 @@ export type GetResourceInput = {
 };
 
 export type GetRuleInput = {
-  ruleId: Scalars['ID'];
+  id: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
 };
 
@@ -534,9 +535,9 @@ export type ListPoliciesInput = {
   nameContains?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
   hasRemediation?: Maybe<Scalars['Boolean']>;
-  resourceTypes?: Maybe<Scalars['String']>;
+  resourceTypes?: Maybe<Array<Scalars['String']>>;
   severity?: Maybe<SeverityEnum>;
-  tags?: Maybe<Scalars['String']>;
+  tags?: Maybe<Array<Scalars['String']>>;
   sortBy?: Maybe<ListPoliciesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
   pageSize?: Maybe<Scalars['Int']>;
@@ -602,6 +603,7 @@ export type ListRulesResponse = {
 };
 
 export enum ListRulesSortFieldsEnum {
+  DisplayName = 'displayName',
   Enabled = 'enabled',
   Id = 'id',
   LastModified = 'lastModified',
@@ -618,8 +620,8 @@ export type LogAnalysisMetricsInput = {
 
 export type LogAnalysisMetricsResponse = {
   __typename?: 'LogAnalysisMetricsResponse';
-  eventsProcessed: SeriesData;
-  alertsBySeverity: SeriesData;
+  eventsProcessed: LongSeriesData;
+  alertsBySeverity: LongSeriesData;
   eventsLatency: FloatSeriesData;
   totalAlertsDelta: Array<SingleValue>;
   alertsByRuleID: Array<SingleValue>;
@@ -629,6 +631,18 @@ export type LogAnalysisMetricsResponse = {
 };
 
 export type LogIntegration = S3LogIntegration | SqsLogSourceIntegration;
+
+export type LongSeries = {
+  __typename?: 'LongSeries';
+  label: Scalars['String'];
+  values: Array<Scalars['Long']>;
+};
+
+export type LongSeriesData = {
+  __typename?: 'LongSeriesData';
+  timestamps: Array<Scalars['AWSDateTime']>;
+  series: Array<LongSeries>;
+};
 
 export type ModifyGlobalPythonModuleInput = {
   description: Scalars['String'];
@@ -812,11 +826,18 @@ export type MutationUpdateGlobalPythonlModuleArgs = {
 export type OpsgenieConfig = {
   __typename?: 'OpsgenieConfig';
   apiKey: Scalars['String'];
+  serviceRegion: OpsgenieServiceRegionEnum;
 };
 
 export type OpsgenieConfigInput = {
   apiKey: Scalars['String'];
+  serviceRegion: OpsgenieServiceRegionEnum;
 };
+
+export enum OpsgenieServiceRegionEnum {
+  Eu = 'EU',
+  Us = 'US',
+}
 
 export type OrganizationReportBySeverity = {
   __typename?: 'OrganizationReportBySeverity';
@@ -878,7 +899,7 @@ export type PolicyDetails = {
   id: Scalars['ID'];
   lastModified?: Maybe<Scalars['AWSDateTime']>;
   lastModifiedBy?: Maybe<Scalars['ID']>;
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds: Array<Scalars['ID']>;
   reference?: Maybe<Scalars['String']>;
   resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   runbook?: Maybe<Scalars['String']>;
@@ -899,6 +920,7 @@ export type PolicySummary = {
   enabled?: Maybe<Scalars['Boolean']>;
   id: Scalars['ID'];
   lastModified?: Maybe<Scalars['AWSDateTime']>;
+  outputIds: Array<Scalars['ID']>;
   resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   severity?: Maybe<SeverityEnum>;
   tags?: Maybe<Array<Maybe<Scalars['String']>>>;
@@ -1069,7 +1091,7 @@ export type RuleDetails = {
   lastModified?: Maybe<Scalars['AWSDateTime']>;
   lastModifiedBy?: Maybe<Scalars['ID']>;
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds: Array<Scalars['ID']>;
   reference?: Maybe<Scalars['String']>;
   runbook?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
@@ -1088,6 +1110,7 @@ export type RuleSummary = {
   createdAt?: Maybe<Scalars['AWSDateTime']>;
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   severity?: Maybe<SeverityEnum>;
+  outputIds: Array<Scalars['ID']>;
   tags?: Maybe<Array<Scalars['String']>>;
 };
 
@@ -1128,18 +1151,6 @@ export type ScannedResourceStats = {
 
 export type SendTestAlertInput = {
   outputIds: Array<Scalars['ID']>;
-};
-
-export type Series = {
-  __typename?: 'Series';
-  label?: Maybe<Scalars['String']>;
-  values?: Maybe<Array<Maybe<Scalars['Int']>>>;
-};
-
-export type SeriesData = {
-  __typename?: 'SeriesData';
-  timestamps?: Maybe<Array<Maybe<Scalars['AWSDateTime']>>>;
-  series?: Maybe<Array<Maybe<Series>>>;
 };
 
 export enum SeverityEnum {
@@ -1317,7 +1328,7 @@ export type UpdatePolicyInput = {
   displayName?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
   id: Scalars['ID'];
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
   runbook?: Maybe<Scalars['String']>;
@@ -1336,7 +1347,7 @@ export type UpdateRuleInput = {
   enabled?: Maybe<Scalars['Boolean']>;
   id: Scalars['ID'];
   logTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  outputIds?: Maybe<Array<Maybe<Scalars['ID']>>>;
+  outputIds?: Maybe<Array<Scalars['ID']>>;
   reference?: Maybe<Scalars['String']>;
   runbook?: Maybe<Scalars['String']>;
   severity?: Maybe<SeverityEnum>;
@@ -1515,6 +1526,7 @@ export type ResolversTypes = {
   GithubConfig: ResolverTypeWrapper<GithubConfig>;
   JiraConfig: ResolverTypeWrapper<JiraConfig>;
   OpsgenieConfig: ResolverTypeWrapper<OpsgenieConfig>;
+  OpsgenieServiceRegionEnum: OpsgenieServiceRegionEnum;
   MsTeamsConfig: ResolverTypeWrapper<MsTeamsConfig>;
   AsanaConfig: ResolverTypeWrapper<AsanaConfig>;
   CustomWebhookConfig: ResolverTypeWrapper<CustomWebhookConfig>;
@@ -1562,8 +1574,9 @@ export type ResolversTypes = {
   ScannedResourceStats: ResolverTypeWrapper<ScannedResourceStats>;
   LogAnalysisMetricsInput: LogAnalysisMetricsInput;
   LogAnalysisMetricsResponse: ResolverTypeWrapper<LogAnalysisMetricsResponse>;
-  SeriesData: ResolverTypeWrapper<SeriesData>;
-  Series: ResolverTypeWrapper<Series>;
+  LongSeriesData: ResolverTypeWrapper<LongSeriesData>;
+  LongSeries: ResolverTypeWrapper<LongSeries>;
+  Long: ResolverTypeWrapper<Scalars['Long']>;
   FloatSeriesData: ResolverTypeWrapper<FloatSeriesData>;
   FloatSeries: ResolverTypeWrapper<FloatSeries>;
   Float: ResolverTypeWrapper<Scalars['Float']>;
@@ -1667,6 +1680,7 @@ export type ResolversParentTypes = {
   GithubConfig: GithubConfig;
   JiraConfig: JiraConfig;
   OpsgenieConfig: OpsgenieConfig;
+  OpsgenieServiceRegionEnum: OpsgenieServiceRegionEnum;
   MsTeamsConfig: MsTeamsConfig;
   AsanaConfig: AsanaConfig;
   CustomWebhookConfig: CustomWebhookConfig;
@@ -1716,8 +1730,9 @@ export type ResolversParentTypes = {
   ScannedResourceStats: ScannedResourceStats;
   LogAnalysisMetricsInput: LogAnalysisMetricsInput;
   LogAnalysisMetricsResponse: LogAnalysisMetricsResponse;
-  SeriesData: SeriesData;
-  Series: Series;
+  LongSeriesData: LongSeriesData;
+  LongSeries: LongSeries;
+  Long: Scalars['Long'];
   FloatSeriesData: FloatSeriesData;
   FloatSeries: FloatSeries;
   Float: Scalars['Float'];
@@ -2200,8 +2215,8 @@ export type LogAnalysisMetricsResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['LogAnalysisMetricsResponse'] = ResolversParentTypes['LogAnalysisMetricsResponse']
 > = {
-  eventsProcessed?: Resolver<ResolversTypes['SeriesData'], ParentType, ContextType>;
-  alertsBySeverity?: Resolver<ResolversTypes['SeriesData'], ParentType, ContextType>;
+  eventsProcessed?: Resolver<ResolversTypes['LongSeriesData'], ParentType, ContextType>;
+  alertsBySeverity?: Resolver<ResolversTypes['LongSeriesData'], ParentType, ContextType>;
   eventsLatency?: Resolver<ResolversTypes['FloatSeriesData'], ParentType, ContextType>;
   totalAlertsDelta?: Resolver<Array<ResolversTypes['SingleValue']>, ParentType, ContextType>;
   alertsByRuleID?: Resolver<Array<ResolversTypes['SingleValue']>, ParentType, ContextType>;
@@ -2220,6 +2235,28 @@ export type LogIntegrationResolvers<
     ParentType,
     ContextType
   >;
+};
+
+export interface LongScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Long'], any> {
+  name: 'Long';
+}
+
+export type LongSeriesResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['LongSeries'] = ResolversParentTypes['LongSeries']
+> = {
+  label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  values?: Resolver<Array<ResolversTypes['Long']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type LongSeriesDataResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['LongSeriesData'] = ResolversParentTypes['LongSeriesData']
+> = {
+  timestamps?: Resolver<Array<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  series?: Resolver<Array<ResolversTypes['LongSeries']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
 export type MsTeamsConfigResolvers<
@@ -2433,6 +2470,7 @@ export type OpsgenieConfigResolvers<
   ParentType extends ResolversParentTypes['OpsgenieConfig'] = ResolversParentTypes['OpsgenieConfig']
 > = {
   apiKey?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  serviceRegion?: Resolver<ResolversTypes['OpsgenieServiceRegionEnum'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2509,7 +2547,7 @@ export type PolicyDetailsResolvers<
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   lastModifiedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  outputIds?: Resolver<Maybe<Array<Maybe<ResolversTypes['ID']>>>, ParentType, ContextType>;
+  outputIds?: Resolver<Array<ResolversTypes['ID']>, ParentType, ContextType>;
   reference?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   resourceTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   runbook?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2541,6 +2579,7 @@ export type PolicySummaryResolvers<
   enabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
+  outputIds?: Resolver<Array<ResolversTypes['ID']>, ParentType, ContextType>;
   resourceTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
   tags?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
@@ -2750,7 +2789,7 @@ export type RuleDetailsResolvers<
   lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   lastModifiedBy?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   logTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  outputIds?: Resolver<Maybe<Array<Maybe<ResolversTypes['ID']>>>, ParentType, ContextType>;
+  outputIds?: Resolver<Array<ResolversTypes['ID']>, ParentType, ContextType>;
   reference?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   runbook?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
@@ -2776,6 +2815,7 @@ export type RuleSummaryResolvers<
   createdAt?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   logTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
+  outputIds?: Resolver<Array<ResolversTypes['ID']>, ParentType, ContextType>;
   tags?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
@@ -2832,28 +2872,6 @@ export type ScannedResourceStatsResolvers<
 > = {
   count?: Resolver<Maybe<ResolversTypes['ComplianceStatusCounts']>, ParentType, ContextType>;
   type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type SeriesResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Series'] = ResolversParentTypes['Series']
-> = {
-  label?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  values?: Resolver<Maybe<Array<Maybe<ResolversTypes['Int']>>>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type SeriesDataResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['SeriesData'] = ResolversParentTypes['SeriesData']
-> = {
-  timestamps?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['AWSDateTime']>>>,
-    ParentType,
-    ContextType
-  >;
-  series?: Resolver<Maybe<Array<Maybe<ResolversTypes['Series']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -3093,6 +3111,9 @@ export type Resolvers<ContextType = any> = {
   ListRulesResponse?: ListRulesResponseResolvers<ContextType>;
   LogAnalysisMetricsResponse?: LogAnalysisMetricsResponseResolvers<ContextType>;
   LogIntegration?: LogIntegrationResolvers;
+  Long?: GraphQLScalarType;
+  LongSeries?: LongSeriesResolvers<ContextType>;
+  LongSeriesData?: LongSeriesDataResolvers<ContextType>;
   MsTeamsConfig?: MsTeamsConfigResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   OpsgenieConfig?: OpsgenieConfigResolvers<ContextType>;
@@ -3111,8 +3132,6 @@ export type Resolvers<ContextType = any> = {
   S3LogIntegrationHealth?: S3LogIntegrationHealthResolvers<ContextType>;
   ScannedResources?: ScannedResourcesResolvers<ContextType>;
   ScannedResourceStats?: ScannedResourceStatsResolvers<ContextType>;
-  Series?: SeriesResolvers<ContextType>;
-  SeriesData?: SeriesDataResolvers<ContextType>;
   SingleValue?: SingleValueResolvers<ContextType>;
   SlackConfig?: SlackConfigResolvers<ContextType>;
   SnsConfig?: SnsConfigResolvers<ContextType>;

@@ -18,13 +18,13 @@ import json
 import os
 import re
 import tempfile
+from collections.abc import Mapping
 import traceback
 from dataclasses import dataclass
-from importlib import util as import_util
-from pathlib import Path
-from typing import Any, Dict, Optional, Callable
+from typing import Any, Optional, Callable
 
 from .logging import get_logger
+from .util import id_to_path, import_file_as_module, store_modules
 
 _RULE_FOLDER = os.path.join(tempfile.gettempdir(), 'rules')
 
@@ -83,7 +83,7 @@ class Rule:
     """Panther rule metadata and imported module."""
 
     # pylint: disable=too-many-branches
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Mapping):
         """Create new rule from a dict.
 
         Args:
@@ -149,7 +149,7 @@ class Rule:
 
         self._default_dedup_string = 'defaultDedupString:{}'.format(self.rule_id)
 
-    def run(self, event: Dict[str, Any], batch_mode: bool = True) -> RuleResult:
+    def run(self, event: Mapping, batch_mode: bool = True) -> RuleResult:
         """
         Analyze a log line with this rule and return True, False, or an error.
         :param event: The event to run the rule against
@@ -188,7 +188,7 @@ class Rule:
     # Returns the dedup string for this rule match
     # If the rule match had a custom title, use the title as a deduplication string
     # If no title and no dedup function is defined, return the default dedup string.
-    def _get_dedup(self, event: Dict[str, Any], title: Optional[str], use_default_on_exception: bool = True) -> str:
+    def _get_dedup(self, event: Mapping, title: Optional[str], use_default_on_exception: bool = True) -> str:
         if not self._has_dedup:
             if title:
                 # If no dedup function is defined but the rule had a title, use the title as dedup string
@@ -219,7 +219,7 @@ class Rule:
 
         return dedup_string
 
-    def _get_title(self, event: Dict[str, Any], use_default_on_exception: bool = True) -> Optional[str]:
+    def _get_title(self, event: Mapping, use_default_on_exception: bool = True) -> Optional[str]:
         if not self._has_title:
             return None
 
@@ -242,7 +242,7 @@ class Rule:
 
         return title_string
 
-    def _get_alert_context(self, event: Dict[str, Any], use_default_on_exception: bool = True) -> Optional[str]:
+    def _get_alert_context(self, event: Mapping, use_default_on_exception: bool = True) -> Optional[str]:
         if not self._has_alert_context:
             return None
 
@@ -265,28 +265,21 @@ class Rule:
 
     def _store_rule(self) -> None:
         """Stores rule to disk."""
-        path = _rule_id_to_path(self.rule_id)
+        path = id_to_path(_RULE_FOLDER, self.rule_id)
         self.logger.debug('storing rule in path %s', path)
-
-        # Create dir if it doesn't exist
-        Path(os.path.dirname(path)).mkdir(parents=True, exist_ok=True)
-        with open(path, 'w') as py_file:
-            py_file.write(self.rule_body)
+        store_modules(path, self.rule_body)
 
     def _import_rule_as_module(self) -> Any:
         """Dynamically import a Python module from a file.
 
         See also: https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
         """
-
-        path = _rule_id_to_path(self.rule_id)
-        spec = import_util.spec_from_file_location(self.rule_id, path)
-        mod = import_util.module_from_spec(spec)
-        spec.loader.exec_module(mod)  # type: ignore
+        path = id_to_path(_RULE_FOLDER, self.rule_id)
+        mod = import_file_as_module(path, self.rule_id)
         self.logger.debug('imported module %s from path %s', self.rule_id, path)
         return mod
 
-    def _run_command(self, function: Callable, event: Dict[str, Any], expected_type: Any) -> Any:
+    def _run_command(self, function: Callable, event: Mapping, expected_type: Any) -> Any:
         result = function(event)
         if not isinstance(result, expected_type):
             raise Exception(
@@ -296,15 +289,3 @@ class Rule:
                 )
             )
         return result
-
-
-def _rule_id_to_path(rule_id: str) -> str:
-    """Method returns the file path where the rule will be stored"""
-    safe_id = ''.join(x if _allowed_char(x) else '_' for x in rule_id)
-    path = os.path.join(_RULE_FOLDER, safe_id + '.py')
-    return path
-
-
-def _allowed_char(char: str) -> bool:
-    """Return true if the character is part of a valid rule ID."""
-    return char.isalnum() or char in {' ', '-', '.'}

@@ -19,8 +19,10 @@ package aws
  */
 
 import (
+	"errors"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/eks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -99,6 +101,36 @@ func TestEksClusterDescribeError(t *testing.T) {
 	mockSvc := awstest.BuildMockEksSvcError([]string{"DescribeCluster"})
 
 	out, err := describeEKSCluster(mockSvc, awstest.ExampleEksClusterName)
+	require.Error(t, err)
+	assert.Nil(t, out)
+}
+
+func TestEksClusterGetProfiles(t *testing.T) {
+	mockSvc := awstest.BuildMockEksSvc([]string{"ListFargateProfilesPages", "DescribeFargateProfile"})
+
+	out, err := getEKSFargateProfiles(mockSvc, awstest.ExampleEksClusterNameMulti)
+	require.NoError(t, err)
+	assert.NotNil(t, out)
+	assert.Len(t, out, 2)
+}
+
+func TestEksClusterGetProfilesPermissionsError(t *testing.T) {
+	mockSvc := &awstest.MockEks{}
+
+	mockSvc.On("ListFargateProfilesPages", mock.Anything).
+		Return(
+			awserr.New("AccessDeniedException", "status code: 403", errors.New("some error")),
+		)
+
+	out, err := getEKSFargateProfiles(mockSvc, awstest.ExampleEksClusterName)
+	require.NoError(t, err)
+	assert.Nil(t, out)
+}
+
+func TestEksClusterGetProfilesError(t *testing.T) {
+	mockSvc := awstest.BuildMockEksSvcError([]string{"ListFargateProfilesPages", "DescribeFargateProfile"})
+
+	out, err := getEKSFargateProfiles(mockSvc, awstest.ExampleEksClusterName)
 	require.Error(t, err)
 	assert.Nil(t, out)
 }

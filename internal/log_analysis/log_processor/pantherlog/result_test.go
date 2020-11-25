@@ -26,7 +26,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue/gluetimestamp"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
@@ -151,9 +151,9 @@ func TestOldResults(t *testing.T) {
 		"hostname": "2.1.1.1",
 		"p_any_ip_addresses": ["1.1.1.1","2.1.1.1"]
 	}`,
-		tm.UTC().Format(awsglue.TimestampLayout),
-		tm.UTC().Format(awsglue.TimestampLayout),
-		now.Format(awsglue.TimestampLayout),
+		tm.UTC().Format(gluetimestamp.Layout),
+		tm.UTC().Format(gluetimestamp.Layout),
+		now.Format(gluetimestamp.Layout),
 	)
 	actual, err := api.Marshal(result)
 	require.NoError(t, err)

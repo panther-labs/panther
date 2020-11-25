@@ -44,10 +44,10 @@ describe('AlertCard', () => {
     const { getByText, getByAriaLabel } = render(<AlertCard alert={alertData} />);
 
     expect(getByText(alertData.title)).toBeInTheDocument();
-    expect(getByText('View Rule')).toBeInTheDocument();
+    expect(getByAriaLabel(`Link to rule ${alertData.ruleId}`)).toBeInTheDocument();
     expect(getByText('Events')).toBeInTheDocument();
     expect(getByText('Destinations')).toBeInTheDocument();
-    expect(getByText('Time Created')).toBeInTheDocument();
+    expect(getByAriaLabel(`Creation time for ${alertData.alertId}`)).toBeInTheDocument();
     expect(getByText(SeverityEnum.Medium)).toBeInTheDocument();
     expect(getByText(AlertStatusesEnum.Triaged)).toBeInTheDocument();
     expect(getByAriaLabel('Change Alert Status')).toBeInTheDocument();
@@ -56,10 +56,12 @@ describe('AlertCard', () => {
   it('should not display link to Rule', async () => {
     const alertData = buildAlertSummary();
 
-    const { queryByText } = render(<AlertCard alert={alertData} hideRuleButton />);
+    const { queryByText, queryByAriaLabel } = render(
+      <AlertCard alert={alertData} hideRuleButton />
+    );
 
     expect(queryByText(alertData.title)).toBeInTheDocument();
-    expect(queryByText('View Rule')).not.toBeInTheDocument();
+    expect(queryByAriaLabel(`Link to rule ${alertData.ruleId}`)).not.toBeInTheDocument();
   });
 
   it('should check links are valid', async () => {
@@ -69,7 +71,10 @@ describe('AlertCard', () => {
       'href',
       urls.logAnalysis.alerts.details(alertData.alertId)
     );
-    expect(getByAriaLabel('Link to Rule')).toBeInTheDocument();
+    expect(getByAriaLabel(`Link to rule ${alertData.ruleId}`)).toHaveAttribute(
+      'href',
+      urls.logAnalysis.rules.details(alertData.ruleId)
+    );
   });
 
   it('should render alert destinations logos', async () => {

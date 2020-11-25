@@ -36,6 +36,7 @@ func (API) GetOutputs(_ *models.GetOutputsInput) (models.GetOutputsOutput, error
 			return nil, err
 		}
 		redactOutput(alertOutput.OutputConfig)
+		configureOutputFallbacks(alertOutput.OutputConfig)
 		outputs[i] = alertOutput
 	}
 
