@@ -129,7 +129,6 @@ func publishToRegion(log *zap.SugaredLogger, region, version, dockerImageID stri
 
 	// Publish S3 assets and ECR docker image
 	ecrRegistry := fmt.Sprintf("349240696275.dkr.ecr.%s.amazonaws.com/panther-community", region)
-
 	pkg, err := pkgAssets(log, region, bucket, version, ecrRegistry, dockerImageID)
 	if err != nil {
 		return err
@@ -145,7 +144,7 @@ func publishToRegion(log *zap.SugaredLogger, region, version, dockerImageID stri
 
 // Returns bucket name, s3 object key, and S3 URL for the master template in the current region.
 func s3MasterTemplate(region, version string) (string, string, string) {
-	bucket := util.PublicAssetsBucket(region) // depends on region
+	bucket := util.PublicAssetsBucket(region)
 	s3Key := strings.SplitN(version, "-", 2)[0] + "/panther.yml"
 	s3URL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, s3Key)
 	return bucket, s3Key, s3URL
