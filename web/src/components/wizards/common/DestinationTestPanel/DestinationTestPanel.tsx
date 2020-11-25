@@ -111,8 +111,7 @@ const DestinationTestPanel: React.FC = () => {
               templateColumns="max-content 1fr"
               fontSize="medium"
               fontWeight="medium"
-              columnGap={4}
-              rowGap={4}
+              gap={4}
             >
               <Row field="Dispatched at" value={dispatchedAt} />
               <Row field="Message" value={message} />
