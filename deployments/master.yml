@@ -356,7 +356,6 @@ Resources:
         ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
         PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
-        TablesSignature: !FindInMap [Constants, Panther, Version] # this changes with version, forcing table schema updates
         TracingMode: !Ref TracingMode
       Tags:
         - Key: Application

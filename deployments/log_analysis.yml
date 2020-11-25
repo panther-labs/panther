@@ -84,10 +84,6 @@ Parameters:
     Description: KMS key ID for SQS encryption
     # Example: "484fb80c-4ae5-40d0-b22a-bdd5d0953b3e"
     AllowedPattern: '^[0-9a-f-]{36}$'
-  TablesSignature:
-    Type: String
-    Description: Value from gluetable.DeployedTablesSignature() or the Panther version if using CF
-    MinLength: 1
   TracingMode:
     Type: String
     Description: Enable XRay tracing on Lambda and API Gateway
@@ -125,8 +121,6 @@ Resources:
       - UpdaterFunction
     Type: Custom::UpdateLogProcessorTables
     Properties:
-      # Update in case TablesSignature or CustomResourceVersion has changed
-      TablesSignature: !Ref TablesSignature
       CustomResourceVersion: !Ref CustomResourceVersion
       DataCatalogUpdaterQueueURL: !Ref UpdaterQueue
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources

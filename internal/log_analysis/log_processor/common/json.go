@@ -21,9 +21,11 @@ package common
 import (
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue/gluetimestamp"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/omitempty"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/renamefields"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/tcodec"
 )
 
@@ -48,8 +50,10 @@ func ConfigForDataLakeWriters() jsoniter.API {
 	api.RegisterExtension(omitempty.New("json"))
 	// Add tcodec using the default registry
 	api.RegisterExtension(&tcodec.Extension{})
-	// Register awsglue quirks
-	awsglue.RegisterExtensions(api)
+	// Rename all fields according to Glue requirements
+	api.RegisterExtension(renamefields.New(glueschema.ColumnName))
+	// Fix all timestamps to use Glue layout and UTC
+	api.RegisterExtension(tcodec.OverrideEncoders(gluetimestamp.TimeEncoder()))
 	// Register pantherlog last so event_time tags work fine
 	api.RegisterExtension(pantherlog.NewExtension())
 	return api
