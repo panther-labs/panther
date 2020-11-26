@@ -146,6 +146,14 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNone(rule_result.dedup_output)
         self.assertIsNotNone(rule_result.rule_exception)
 
+    def test_invalid_python_syntax(self) -> None:
+        rule_body = 'def rule(test):this is invalid python syntax'
+        rule = Rule({'id': 'test_invalid_python_syntax', 'body': rule_body, 'versionId': 'versionId'})
+        rule_result = rule.run({})
+        self.assertIsNone(rule_result.matched)
+        self.assertIsNone(rule_result.dedup_output)
+        self.assertIsNotNone(rule_result.rule_exception)
+
     def test_rule_invalid_rule_return(self) -> None:
         rule_body = 'def rule(event):\n\treturn "test"'
         rule = Rule({'id': 'test_rule_invalid_rule_return', 'body': rule_body, 'versionId': 'versionId'})

@@ -127,10 +127,14 @@ class Rule:
             self.rule_reports = config['reports']
 
         self._store_rule()
-        self._module = self._import_rule_as_module()
 
-        if not hasattr(self._module, 'rule'):
-            raise AssertionError("rule needs to have a method named 'rule'")
+        try:
+            self._module = self._import_rule_as_module()
+            if not hasattr(self._module, 'rule'):
+                raise AssertionError("rule needs to have a method named 'rule'")
+        except Exception as err:  # pylint: disable=broad-except
+            self._setup_error = err
+            return
 
         if hasattr(self._module, 'title'):
             self._has_title = True
@@ -158,6 +162,12 @@ class Rule:
         won't raise exceptions, so that an alert won't be missed.
         """
         rule_result = RuleResult()
+        # If there was an error setting up the rule
+        # return early
+        if self._setup_error:
+            rule_result.rule_exception = self._setup_error
+            return rule_result
+
         try:
             rule_result.matched = self._run_command(self._module.rule, event, bool)
         except Exception as err:  # pylint: disable=broad-except
