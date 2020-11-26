@@ -141,19 +141,6 @@ class TestMainDirectAnalysis(TestCase):
         }
         self.assertEqual(expected_response, lambda_handler(payload, None))
 
-    def test_direct_analysis_rule_invalid(self) -> None:
-        payload = {'rules': [{'id': 'rule_id', 'body': 'import stuff'}], 'events': [{'id': 'event_id', 'data': 'data'}]}
-        expected_response = {
-            'results':
-                [{
-                    'errored': True,
-                    'genericError': "ModuleNotFoundError: No module named 'stuff'",
-                    'id': 'event_id',
-                    'ruleId': 'rule_id'
-                }]
-        }
-        self.assertEqual(expected_response, lambda_handler(payload, None))
-
     def test_direct_analysis_dedup_exception_fails_test(self) -> None:
         """If rule dedup() raises an exception while testing a rule (not normal analysis), we should fail the test"""
         payload = {

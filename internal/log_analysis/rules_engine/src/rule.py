@@ -128,6 +128,7 @@ class Rule:
 
         self._store_rule()
 
+        self._setup_error = None
         try:
             self._module = self._import_rule_as_module()
             if not hasattr(self._module, 'rule'):
@@ -135,7 +136,6 @@ class Rule:
         except Exception as err:  # pylint: disable=broad-except
             self._setup_error = err
             return
-        self._setup_error = None
 
         if hasattr(self._module, 'title'):
             self._has_title = True
