@@ -68,7 +68,7 @@ var logTypes = logtypes.Must("AWS",
 		Name:         TypeCloudTrailDigest,
 		Description:  `AWSCloudTrailDigest contains the names of the log files that were delivered to your Amazon S3 bucket during the last hour, the hash values for those log files, and the signature of the previous digest file.`,
 		ReferenceURL: `https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-digest-file-structure.html`,
-		NewEvent:    func () interface{} {
+		NewEvent: func() interface{} {
 			return &CloudTrailDigest{}
 		},
 	},
@@ -76,8 +76,10 @@ var logTypes = logtypes.Must("AWS",
 		Name:         TypeCloudTrailInsight,
 		Description:  `AWSCloudTrailInsight represents the content of a CloudTrail Insight event record S3 object.`,
 		ReferenceURL: `https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html`,
-		Schema:       CloudTrailInsight{},
-		NewParser:    parsers.AdapterFactory(&CloudTrailInsightParser{}),
+		Schema:       mustBuildEventSchema(CloudTrailInsight{}),
+		NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
+			return &CloudTrailInsightParser{}, nil
+		}),
 	},
 	logtypes.Config{
 		Name:         TypeCloudWatchEvents,

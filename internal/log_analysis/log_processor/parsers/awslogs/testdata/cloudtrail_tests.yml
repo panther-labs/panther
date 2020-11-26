@@ -300,3 +300,127 @@ result: |
       "p_event_time": "2020-04-21T13:28:23Z",
       "p_log_type": "AWS.CloudTrailDigest"
   }
+
+---
+name: CloudTrail Insights
+logType: AWS.CloudTrailInsight
+input: |
+  {
+      "Records": [
+          {
+              "eventVersion": "1.07",
+              "eventTime": "2019-10-17T10:05:00Z",
+              "awsRegion": "us-east-1",
+              "eventID": "aab985f2-3a56-48cc-a8a5-e0af77606f5f",
+              "eventType": "AwsCloudTrailInsight",
+              "recipientAccountId": "123456789012",
+              "sharedEventID": "12edc982-3348-4794-83d3-a3db26525049",
+              "insightDetails": {
+                  "state": "Start",
+                  "eventSource": "ssm.amazonaws.com",
+                  "eventName": "UpdateInstanceAssociationStatus",
+                  "insightType": "ApiCallRateInsight",
+                  "insightContext": {
+                      "statistics": {
+                          "baseline": {
+                              "average": 1.7561507937
+                          },
+                          "insight": {
+                              "average": 50.1
+                          }
+                      }
+                  }
+              },
+              "eventCategory": "Insight"
+          },
+          {
+              "eventVersion": "1.07",
+              "eventTime": "2019-10-17T10:13:00Z",
+              "awsRegion": "us-east-1",
+              "eventID": "ce7b8ac1-3f89-4dae-8d2a-6560e32f591a",
+              "eventType": "AwsCloudTrailInsight",
+              "recipientAccountId": "123456789012",
+              "sharedEventID": "12edc982-3348-4794-83d3-a3db26525049",
+              "insightDetails": {
+                  "state": "End",
+                  "eventSource": "ssm.amazonaws.com",
+                  "eventName": "UpdateInstanceAssociationStatus",
+                  "insightType": "ApiCallRateInsight",
+                  "insightContext": {
+                      "statistics": {
+                          "baseline": {
+                              "average": 1.7561507937
+                          },
+                          "insight": {
+                              "average": 50
+                          },
+                          "insightDuration": 8
+                      }
+                  }
+              },
+              "eventCategory": "Insight"
+          }
+      ]
+  }
+results:
+  - |
+    {
+        "eventVersion": "1.07",
+        "eventTime": "2019-10-17T10:05:00Z",
+        "awsRegion": "us-east-1",
+        "eventId": "aab985f2-3a56-48cc-a8a5-e0af77606f5f",
+        "eventType": "AwsCloudTrailInsight",
+        "recipientAccountId": "123456789012",
+        "sharedEventId": "12edc982-3348-4794-83d3-a3db26525049",
+        "insightDetails": {
+            "state": "Start",
+            "eventSource": "ssm.amazonaws.com",
+            "eventName": "UpdateInstanceAssociationStatus",
+            "insightType": "ApiCallRateInsight",
+            "insightContext": {
+                "statistics": {
+                    "baseline": {
+                        "average": 1.7561507937
+                    },
+                    "insight": {
+                        "average": 50.1
+                    }
+                }
+            }
+        },
+        "eventCategory": "Insight",
+        "p_event_time": "2019-10-17T10:05:00Z",
+        "p_any_aws_account_ids": ["123456789012"],
+        "p_log_type": "AWS.CloudTrailInsight"
+    }
+  - |
+    {
+        "eventVersion": "1.07",
+        "eventTime": "2019-10-17T10:13:00Z",
+        "awsRegion": "us-east-1",
+        "eventId": "ce7b8ac1-3f89-4dae-8d2a-6560e32f591a",
+        "eventType": "AwsCloudTrailInsight",
+        "recipientAccountId": "123456789012",
+        "sharedEventId": "12edc982-3348-4794-83d3-a3db26525049",
+        "insightDetails": {
+            "state": "End",
+            "eventSource": "ssm.amazonaws.com",
+            "eventName": "UpdateInstanceAssociationStatus",
+            "insightType": "ApiCallRateInsight",
+            "insightContext": {
+                "statistics": {
+                    "baseline": {
+                        "average": 1.7561507937
+                    },
+                    "insight": {
+                        "average": 50
+                    },
+                    "insightDuration": 8
+                }
+            }
+        },
+        "eventCategory": "Insight",
+        "p_event_time": "2019-10-17T10:13:00Z",
+        "p_any_aws_account_ids": ["123456789012"],
+        "p_log_type": "AWS.CloudTrailInsight"
+    }
