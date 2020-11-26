@@ -43,7 +43,7 @@ const EditSqsLogSource: React.FC = () => {
 
   const initialValues = React.useMemo(
     () => ({
-      integrationId: data?.getSqsLogIntegration.integrationId,
+      integrationId: match.params.id,
       integrationLabel: data?.getSqsLogIntegration?.integrationLabel ?? 'Loading...',
       logTypes: data?.getSqsLogIntegration.sqsConfig.logTypes ?? [],
       allowedPrincipalArns: data?.getSqsLogIntegration.sqsConfig.allowedPrincipalArns ?? [],

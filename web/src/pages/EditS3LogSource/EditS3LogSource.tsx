@@ -43,7 +43,7 @@ const EditS3LogSource: React.FC = () => {
 
   const initialValues = React.useMemo(
     () => ({
-      integrationId: data?.getS3LogIntegration?.integrationId,
+      integrationId: match.params.id,
       initialStackName: data?.getS3LogIntegration?.stackName,
       awsAccountId: data?.getS3LogIntegration?.awsAccountId ?? 'Loading...',
       integrationLabel: data?.getS3LogIntegration?.integrationLabel ?? 'Loading...',
