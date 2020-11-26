@@ -17,13 +17,15 @@
  */
 
 import React from 'react';
-import { Box, Card, Heading, Text, SimpleGrid, Img, Flex, Link } from 'pouncejs';
+import { Box, Card, Flex, Heading, Img, Link, SimpleGrid, Text } from 'pouncejs';
 import slackLogo from 'Assets/slack-minimal-logo.svg';
 import pantherEnterpriseLogo from 'Assets/panther-enterprise-minimal-logo.svg';
 import feedbackIcon from 'Assets/illustrations/feedback.svg';
 import mailIcon from 'Assets/illustrations/mail.svg';
 import withSEO from 'Hoc/withSEO';
 import { PANTHER_DOCS_LINK } from 'Source/constants';
+import useTrackPageView from 'Hooks/useTrackPageView';
+import { PageViewEnum } from 'Helpers/analytics';
 
 type SupportItemPros = {
   title: string;
@@ -81,6 +83,7 @@ const SupportItem: React.FC<SupportItemPros> = ({ title, subtitle, imgSrc, cta }
 };
 
 const SupportPage: React.FC = () => {
+  useTrackPageView(PageViewEnum.Support);
   return (
     <Card p={9} as="article">
       <Box as="header" mb={10} textAlign="center">
