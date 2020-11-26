@@ -34,44 +34,48 @@ import (
 
 var masterTemplate = filepath.Join("deployments", "master.yml")
 
-// Compile Lambda source assets
-func Build(log *zap.SugaredLogger) error {
+// Build lambda functions, python layer, and docker image.
+//
+// Returns docker image ID.
+func buildAssets(log *zap.SugaredLogger, version string) (string, error) {
 	if err := gen.Gen(); err != nil {
-		return err
+		return "", err
 	}
 	if err := srcfmt.Fmt(); err != nil {
-		return err
+		return "", err
 	}
 
 	if err := build.Lambda(); err != nil {
-		return err
+		return "", err
 	}
 
 	// Use the pip libraries in the default settings file when building the layer.
 	defaultConfig, err := deploy.Settings()
 	if err != nil {
-		return err
+		return "", err
+	}
+	if err := build.Layer(log, defaultConfig.Infra.PipLayer); err != nil {
+		return "", err
 	}
 
-	return build.Layer(log, defaultConfig.Infra.PipLayer)
+	// Embed version directly into template - we don't want this to be a configurable parameter.
+	template := util.MustReadFile(masterTemplate)
+	template = bytes.Replace(template, []byte("${{PANTHER_VERSION}}"), []byte(version), 1)
+	util.MustWriteFile(embedPath, template)
+
+	return deploy.DockerBuild()
 }
 
 // Package assets needed for the master template.
 //
 // Returns the path to the final generated template.
-func Package(log *zap.SugaredLogger, region, bucket, pantherVersion, imgRegistry string) (string, error) {
-	// Embed version directly into template - we don't want this to be a configurable parameter.
-	template := util.MustReadFile(masterTemplate)
-	template = bytes.Replace(template, []byte("${{PANTHER_VERSION}}"), []byte(pantherVersion), 1)
-	embedPath := filepath.Join("out", "deployments", "embedded.master.yml")
-	util.MustWriteFile(embedPath, template)
-
+func pkgAssets(log *zap.SugaredLogger, region, bucket, version, imgRegistry, dockerImageID string) (string, error) {
 	pkg, err := util.SamPackage(region, embedPath, bucket)
 	if err != nil {
 		return "", err
 	}
 
-	dockerImage, err := deploy.PushWebImg(imgRegistry, strings.SplitN(pantherVersion, "-", 2)[0])
+	dockerImage, err := deploy.DockerPush(imgRegistry, dockerImageID, strings.SplitN(version, "-", 2)[0])
 	if err != nil {
 		return "", err
 	}
