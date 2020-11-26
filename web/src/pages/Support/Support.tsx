@@ -119,7 +119,7 @@ const SupportPage: React.FC = () => {
         />
         <SupportItem
           title="Send us an E-mail"
-          subtitle="If you have any questions about our product or simply want to reach out to us, you can send us an e-mail."
+          subtitle="If you have any question about our product or simply want to reach out to us, you can send us an e-mail."
           imgSrc={mailIcon}
           cta={
             <Link external href={`mailto:${supportLinks.email}`}>
