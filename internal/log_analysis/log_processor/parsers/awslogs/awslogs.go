@@ -64,12 +64,13 @@ var logTypes = logtypes.Must("AWS",
 		Schema:       mustBuildEventSchema(CloudTrail{}),
 		NewParser:    parsers.FactoryFunc(newCloudTrailParser),
 	},
-	logtypes.Config{
+	logtypes.ConfigJSON{
 		Name:         TypeCloudTrailDigest,
 		Description:  `AWSCloudTrailDigest contains the names of the log files that were delivered to your Amazon S3 bucket during the last hour, the hash values for those log files, and the signature of the previous digest file.`,
 		ReferenceURL: `https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-digest-file-structure.html`,
-		Schema:       CloudTrailDigest{},
-		NewParser:    parsers.AdapterFactory(&CloudTrailDigestParser{}),
+		NewEvent:    func () interface{} {
+			return &CloudTrailDigest{}
+		},
 	},
 	logtypes.Config{
 		Name:         TypeCloudTrailInsight,
