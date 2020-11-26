@@ -23,6 +23,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -40,7 +41,7 @@ func TestRegistry(t *testing.T) {
 		Description:  "Foo.Bar logs",
 		ReferenceURL: "-",
 		Schema:       T{},
-		NewParser: parsers.FactoryFunc(func(params interface{}) (parsers.Interface, error) {
+		NewParser: pantherlog.FactoryFunc(func(params interface{}) (parsers.Interface, error) {
 			return nil, nil
 		}),
 	}

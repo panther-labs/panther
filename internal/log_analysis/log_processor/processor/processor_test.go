@@ -37,6 +37,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -54,7 +55,7 @@ var (
 		Schema: &struct {
 			LogLine string `json:"logLine" description:"log line"`
 		}{},
-		NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
+		NewParser: pantherlog.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
 			return testutil.AlwaysFailParser(errors.New("fail parser")), nil
 		}),
 	})

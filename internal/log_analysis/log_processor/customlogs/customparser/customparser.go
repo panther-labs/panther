@@ -27,7 +27,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/preprocessors"
 )
 
@@ -43,7 +42,7 @@ type Factory struct {
 
 // NewParser implements parsers.Factory interface.
 // Since the parser accepts no parameters we use _ as the params argument name.
-func (f *Factory) NewParser(_ interface{}) (parsers.Interface, error) {
+func (f *Factory) NewParser(_ interface{}) (pantherlog.LogParser, error) {
 	decoder := newEventDecoderJSON(f.API, f.EventSchema)
 	builder := f.Builder
 	return preprocessors.Wrap(&parser{
@@ -94,7 +93,7 @@ type parser struct {
 }
 
 // Parse implements parsers.Interface
-func (p *parser) ParseLog(log string) ([]*parsers.Result, error) {
+func (p *parser) ParseLog(log string) ([]*pantherlog.Result, error) {
 	if log == "" {
 		return nil, nil
 	}
