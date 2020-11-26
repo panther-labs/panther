@@ -56,10 +56,7 @@ exports[`Support page should match snapshot 1`] = `
 .panther-12 {
   background-color: #1d2a3f;
   border-radius: 4px;
-  padding-top: 16px;
-  padding-bottom: 16px;
-  padding-left: 8px;
-  padding-right: 8px;
+  padding: 16px;
 }
 
 .panther-11 {
@@ -187,7 +184,6 @@ exports[`Support page should match snapshot 1`] = `
     >
       <div
         class="panther-12"
-        spacing="6"
       >
         <div
           class="panther-11"
@@ -233,7 +229,6 @@ exports[`Support page should match snapshot 1`] = `
       </div>
       <div
         class="panther-12"
-        spacing="6"
       >
         <div
           class="panther-11"
@@ -279,7 +274,6 @@ exports[`Support page should match snapshot 1`] = `
       </div>
       <div
         class="panther-12"
-        spacing="6"
       >
         <div
           class="panther-11"
@@ -325,7 +319,6 @@ exports[`Support page should match snapshot 1`] = `
       </div>
       <div
         class="panther-12"
-        spacing="6"
       >
         <div
           class="panther-11"

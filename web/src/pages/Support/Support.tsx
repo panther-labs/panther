@@ -41,7 +41,7 @@ export const supportLinks = {
 
 const SupportItem: React.FC<SupportItemPros> = ({ title, subtitle, imgSrc, cta }) => {
   return (
-    <Card backgroundColor="navyblue-500" py={4} px={2} spacing={6}>
+    <Card backgroundColor="navyblue-500" p={4}>
       <Flex spacing={6} mx={6}>
         <Flex justify="center" align="center">
           <Flex
