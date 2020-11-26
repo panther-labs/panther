@@ -181,3 +181,10 @@ func (m multiScanner) ScanValues(w ValueWriter, input string) {
 		scanner.ScanValues(w, input)
 	}
 }
+
+func ScanEmail(w ValueWriter, input string) {
+	if pos := strings.IndexByte(input, '@'); pos != -1 {
+		input = strings.TrimSpace(input)
+		w.WriteValues(FieldEmail, input)
+	}
+}

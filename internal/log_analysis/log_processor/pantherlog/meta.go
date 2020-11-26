@@ -70,6 +70,7 @@ const (
 	FieldAWSInstanceID
 	FieldAWSARN
 	FieldAWSTag
+	FieldEmail
 )
 
 // ScanValues implements ValueScanner interface
@@ -196,6 +197,11 @@ func init() {
 		NameJSON:    "p_any_aws_tags",
 		Description: "Panther added field with collection of AWS Tags associated with the row",
 	})
+	MustRegisterIndicator(FieldEmail, FieldMeta{
+		Name:        "PantherAnyEmails",
+		NameJSON:    "p_any_emails",
+		Description: "Panther added field with collection of email addresses associated with the row",
+	})
 	MustRegisterScanner("ip", ValueScannerFunc(ScanIPAddress), FieldIPAddress)
 	MustRegisterScanner("domain", FieldDomainName, FieldDomainName)
 	MustRegisterScanner("md5", FieldMD5Hash, FieldMD5Hash)
@@ -213,6 +219,7 @@ func init() {
 	MustRegisterScannerFunc("aws_account_id", ScanAWSAccountID, FieldAWSAccountID)
 	MustRegisterScannerFunc("aws_instance_id", ScanAWSInstanceID, FieldAWSInstanceID)
 	MustRegisterScannerFunc("aws_tag", ScanAWSTag, FieldAWSTag)
+	MustRegisterScannerFunc("email", ScanEmail, FieldEmail)
 }
 
 // MustRegisterIndicator allows modules to define their own indicator fields.
