@@ -19,9 +19,8 @@ package oneloginlogs
  */
 
 import (
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
-
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 const TypeOneLogin = "OneLogin.Events"

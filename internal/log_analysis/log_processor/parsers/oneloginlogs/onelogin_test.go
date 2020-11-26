@@ -19,8 +19,9 @@ package oneloginlogs
  */
 
 import (
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 	"testing"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 )
 
 func TestOneLoginEvents(t *testing.T) {
