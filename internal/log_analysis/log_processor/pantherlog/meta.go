@@ -76,7 +76,7 @@ const (
 
 // ScanValues implements ValueScanner interface
 func (id FieldID) ScanValues(w ValueWriter, input string) {
-	w.WriteValues(id, input)
+	w.WriteValues(id, strings.TrimSpace(input))
 }
 
 // CoreFields are the 'core' fields Panther adds to each log.
