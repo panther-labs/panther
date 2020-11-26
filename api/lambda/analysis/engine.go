@@ -97,8 +97,6 @@ type RuleResult struct {
 	DedupError         string `json:"dedupError"`
 	AlertContextOutput string `json:"alertContextOutput"`
 	AlertContextError  string `json:"alertContextError"`
-	// Indicates general error in the Python script (import error, syntax error, etc).
-	GenericError string `json:"genericError"`
 	// True if any error (generic or from rule functions) is included in the result.
 	Errored bool `json:"errored"`
 }
