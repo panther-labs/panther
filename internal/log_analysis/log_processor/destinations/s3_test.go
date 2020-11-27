@@ -36,7 +36,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/multierr"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/null"
@@ -213,7 +212,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 		TopicArn: aws.String("arn:aws:sns:us-west-2:123456789012:test"),
 		MessageAttributes: map[string]*sns.MessageAttributeValue{
 			"type": {
-				StringValue: aws.String(models.LogData.String()),
+				StringValue: aws.String("LogData"),
 				DataType:    aws.String("String"),
 			},
 			"id": {

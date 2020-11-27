@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/internal/core/pantherdb"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -55,7 +56,7 @@ func TestCreatePartitionFromS3Rule(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, RuleMatchDatabaseName, partition.GetDatabase())
+	assert.Equal(t, pantherdb.RuleMatchDatabase, partition.GetDatabase())
 	assert.Equal(t, "table", partition.GetTable())
 	assert.Equal(t, "bucket", partition.GetS3Bucket())
 	assert.Equal(t, "s3://bucket/rules/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionLocation())
@@ -86,7 +87,7 @@ func TestCreatePartitionFromS3Log(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, LogProcessingDatabaseName, partition.GetDatabase())
+	assert.Equal(t, pantherdb.LogProcessingDatabase, partition.GetDatabase())
 	assert.Equal(t, "table", partition.GetTable())
 	assert.Equal(t, "bucket", partition.GetS3Bucket())
 	assert.Equal(t, "s3://bucket/logs/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionLocation())

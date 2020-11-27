@@ -18,7 +18,11 @@ package pantherdb
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
+)
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -63,6 +67,7 @@ var Registry = map[string]string{
 	RuleErrorsDatabase:    RuleErrorsDatabaseDescription,
 	ViewsDatabase:         ViewsDatabaseDescription,
 	TempDatabase:          TempDatabaseDescription,
+	CloudSecurityDatabase: CloudSecurityDatabaseDescription,
 }
 
 // The type of data that are stored in the Panther
@@ -102,4 +107,11 @@ func GetTable(logType string) string {
 	// clean table name to make sql friendly
 	tableName := strings.Replace(logType, ".", "_", -1) // no '.'
 	return strings.ToLower(tableName)
+}
+
+func GetDataType(logtype string) DataType {
+	if snapshotlogs.LogTypes().Find(logtype) != nil {
+		return CloudSecurity
+	}
+	return LogData
 }

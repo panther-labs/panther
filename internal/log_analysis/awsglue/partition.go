@@ -74,15 +74,6 @@ func (gp *GluePartition) GetPartitionLocation() string {
 	return "s3://" + gp.s3Bucket + "/" + gp.gm.GetPartitionPrefix(gp.time)
 }
 
-// GetPartitionLocation takes an S3 path for an object and returns just the part of the patch associated with the partition
-func GetPartitionLocation(s3Path string) (string, error) {
-	gluePartition, err := GetPartitionFromS3Path(s3Path)
-	if err != nil {
-		return "", errors.Wrapf(err, "cannot parse partition path %s", s3Path)
-	}
-	return gluePartition.GetPartitionLocation(), nil
-}
-
 // Contains information about partition columns
 type PartitionColumnInfo struct {
 	Key   string
@@ -170,14 +161,6 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 	partition.gm = NewGlueTableMetadata(partition.databaseName, partition.tableName, "", GlueTableHourly, nil)
 
 	return partition, nil
-}
-
-func GetPartitionFromS3Path(s3Path string) (*GluePartition, error) {
-	bucketName, key, err := ParseS3URL(s3Path)
-	if err != nil {
-		return nil, err
-	}
-	return GetPartitionFromS3(bucketName, key)
 }
 
 func inferPartitionColumnInfo(input string, partitionName string) (PartitionColumnInfo, error) {

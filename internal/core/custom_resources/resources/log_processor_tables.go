@@ -27,6 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/internal/core/pantherdb"
 	"github.com/panther-labs/panther/internal/core/source_api/apifunctions"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
@@ -71,14 +72,20 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 		logger.Info("started database sync", zap.Strings("logTypes", requiredLogTypes))
 		return physicalResourceID, nil, nil
 	case cfn.RequestDelete:
-		for pantherDatabase := range awsglue.PantherDatabases {
-			logger.Info("deleting database", zap.String("database", pantherDatabase))
-			if _, err := awsglue.DeleteDatabase(glueClient, pantherDatabase); err != nil {
+		logDatabases := []string{
+			pantherdb.LogProcessingDatabase,
+			pantherdb.RuleErrorsDatabase,
+			pantherdb.RuleMatchDatabase,
+			pantherdb.TempDatabase,
+		}
+		for _, db := range logDatabases {
+			logger.Info("deleting database", zap.String("database", db))
+			if _, err := awsglue.DeleteDatabase(glueClient, db); err != nil {
 				if awsutils.IsAnyError(err, glue.ErrCodeEntityNotFoundException) {
-					logger.Info("already deleted", zap.String("database", pantherDatabase))
+					logger.Info("already deleted", zap.String("database", db))
 				} else {
-					logger.Error("failed to delete", zap.String("database", pantherDatabase))
-					return "", nil, errors.Wrapf(err, "failed deleting %s", pantherDatabase)
+					logger.Error("failed to delete", zap.String("database", db))
+					return "", nil, errors.Wrapf(err, "failed deleting %s", db)
 				}
 			}
 		}

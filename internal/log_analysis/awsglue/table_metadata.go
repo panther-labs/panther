@@ -19,9 +19,6 @@ package awsglue
  */
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -202,18 +199,6 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 		},
 		TableType: aws.String("EXTERNAL_TABLE"),
 	}
-}
-
-func (gm *GlueTableMetadata) Signature() (string, error) {
-	tableInput := gm.glueTableInput("")
-	tableInputJSON, err := json.MarshalIndent(tableInput, "", "") // Indent forces sorting for consistency
-	if err != nil {
-		return "", errors.Wrapf(err, "cannot marshal table for signature: %s.%s",
-			gm.databaseName, gm.tableName)
-	}
-	hash := sha256.New()
-	_, _ = hash.Write(tableInputJSON)
-	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
 func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, bucketName string) error {

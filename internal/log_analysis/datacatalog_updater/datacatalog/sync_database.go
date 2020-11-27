@@ -23,6 +23,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/internal/core/pantherdb"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/pkg/stringset"
 )
@@ -67,9 +68,9 @@ func (h *LambdaHandler) sendPartitionSync(ctx context.Context, syncTraceID strin
 			TraceID:  traceIDFromContext(ctx, syncTraceID),
 			LogTypes: logTypes,
 			DatabaseNames: []string{
-				awsglue.LogProcessingDatabaseName,
-				awsglue.RuleMatchDatabaseName,
-				awsglue.RuleErrorsDatabaseName,
+				pantherdb.LogProcessingDatabase,
+				pantherdb.RuleMatchDatabase,
+				pantherdb.RuleErrorsDatabase,
 			},
 		},
 	})
