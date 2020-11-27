@@ -189,7 +189,6 @@ result: |
     "db_duration_s":0.0,
     "view_duration_s":0.0,
     "duration_s":0.00341,
-    "tag":"test",
     "p_event_time": "2020-07-05T19:35:32.337Z",
     "p_any_ip_addresses": ["195.54.254.254"],
     "p_any_trace_ids": ["DScuWzVUYA5"],
@@ -229,7 +228,6 @@ input: |
     "db_duration_s": 0.0,
     "view_duration_s": 0.0,
     "duration_s": 9.0e-05,
-    "tag": "test",
     "time": "2019-11-14T13:12:46.156Z"
   }
 result: |
@@ -255,7 +253,6 @@ result: |
     "db_duration_s": 0.0,
     "view_duration_s": 0.0,
     "duration_s": 9.0e-05,
-    "tag": "test",
     "time": "2019-11-14T13:12:46.156Z",
     "p_event_time": "2019-11-14T13:12:46.156Z",
     "p_log_type": "GitLab.Production"
