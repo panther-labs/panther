@@ -76,7 +76,7 @@ func (sh *StreamHandler) Run(ctx context.Context, event *events.DynamoDBEvent) (
 			continue
 		}
 		if changes == nil {
-			logger.Warn("Skipping record record",
+			logger.Warn("Skipping record",
 				zap.Error(err),
 				zap.String("eventID", record.EventID),
 				zap.String("eventName", record.EventName),
