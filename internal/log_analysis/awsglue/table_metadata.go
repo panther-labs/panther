@@ -43,7 +43,6 @@ type PartitionKey struct {
 
 // Metadata about Glue table
 type GlueTableMetadata struct {
-	dataType     pantherdb.DataType
 	databaseName string
 	tableName    string
 	description  string
@@ -91,10 +90,6 @@ func (gm *GlueTableMetadata) Timebin() GlueTableTimebin {
 	return gm.timebin
 }
 
-func (gm *GlueTableMetadata) DataType() pantherdb.DataType {
-	return gm.dataType
-}
-
 func (gm *GlueTableMetadata) LogType() string {
 	return gm.logType
 }
@@ -124,7 +119,7 @@ func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
 }
 
 func (gm *GlueTableMetadata) RuleTable() *GlueTableMetadata {
-	if gm.dataType == pantherdb.RuleData {
+	if gm.databaseName == pantherdb.RuleMatchDatabase {
 		return gm
 	}
 	// the corresponding rule table shares the same structure as the log table + some columns
@@ -132,7 +127,7 @@ func (gm *GlueTableMetadata) RuleTable() *GlueTableMetadata {
 }
 
 func (gm *GlueTableMetadata) RuleErrorTable() *GlueTableMetadata {
-	if gm.dataType == pantherdb.RuleErrors {
+	if gm.databaseName == pantherdb.RuleMatchDatabase {
 		return gm
 	}
 	// the corresponding rule table shares the same structure as the log table + some columns
@@ -155,10 +150,12 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 	if err != nil {
 		panic(err)
 	}
-	if gm.dataType == pantherdb.RuleData { // append the columns added by the rule engine
+	switch gm.databaseName {
+	case pantherdb.RuleMatchDatabase:
+		// append the columns added by the rule engine
 		columns = append(columns, RuleMatchColumns...)
-	} else if gm.dataType == pantherdb.RuleErrors {
-		// append the rule match & and rule error columns
+	case pantherdb.RuleErrorsDatabase:
+		// append the rule error columns
 		columns = append(columns, RuleErrorColumns...)
 	}
 	glueColumns := make([]*glue.Column, len(columns))
