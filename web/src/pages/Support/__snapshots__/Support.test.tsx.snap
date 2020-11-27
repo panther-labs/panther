@@ -49,8 +49,8 @@ exports[`Support page should match snapshot 1`] = `
   display: grid;
   grid-gap: 24px;
   grid-template-columns: repeat(2, 1fr);
-  width: 90%;
-  margin: auto;
+  padding-left: 40px;
+  padding-right: 40px;
 }
 
 .panther-12 {

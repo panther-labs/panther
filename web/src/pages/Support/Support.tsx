@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Card, Flex, Heading, Img, Link, SimpleGrid, Text } from 'pouncejs';
+import { Box, Card, Heading, Link, SimpleGrid, Text } from 'pouncejs';
 import slackLogo from 'Assets/slack-minimal-logo.svg';
 import pantherEnterpriseLogo from 'Assets/panther-enterprise-minimal-logo.svg';
 import feedbackIcon from 'Assets/illustrations/feedback.svg';
@@ -26,60 +26,13 @@ import withSEO from 'Hoc/withSEO';
 import { PANTHER_DOCS_LINK } from 'Source/constants';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import { PageViewEnum } from 'Helpers/analytics';
-
-type SupportItemPros = {
-  title: string;
-  subtitle: string;
-  imgSrc: string;
-  cta: React.ReactNode;
-};
+import SupportItemCard from './SupportItemCard';
 
 export const supportLinks = {
   slack: 'https://slack.runpanther.io',
   email: 'support@runpanther.io',
   productBoard: 'https://portal.productboard.com/runpanther/1-product-portal/tabs/2-in-progress',
   demo: 'https://runpanther.io/request-a-demo/',
-};
-
-const SupportItem: React.FC<SupportItemPros> = ({ title, subtitle, imgSrc, cta }) => {
-  return (
-    <Card backgroundColor="navyblue-500" p={4}>
-      <Flex spacing={6} mx={6}>
-        <Flex justify="center" align="center">
-          <Flex
-            justify="center"
-            align="center"
-            width={75}
-            height={75}
-            backgroundColor="navyblue-350"
-            borderRadius="circle"
-            fontSize="2x-small"
-            fontWeight="medium"
-          >
-            <Img
-              src={imgSrc}
-              alt="Panther Enterprise logo"
-              objectFit="contain"
-              nativeHeight={40}
-              nativeWidth={40}
-            />
-          </Flex>
-        </Flex>
-        <Flex direction="column" spacing={2} justify="space-between" align="space-between">
-          <Heading size="small" color="white-100">
-            {title}
-          </Heading>
-
-          {subtitle && (
-            <Text fontSize="small-medium" color="navyblue-100" mt={1}>
-              {subtitle}
-            </Text>
-          )}
-          {cta}
-        </Flex>
-      </Flex>
-    </Card>
-  );
 };
 
 const SupportPage: React.FC = () => {
@@ -99,8 +52,8 @@ const SupportPage: React.FC = () => {
           if you are facing any problems
         </Text>
       </Box>
-      <SimpleGrid columns={2} spacing={6} width={0.9} m="auto">
-        <SupportItem
+      <SimpleGrid columns={2} spacing={6} px={10}>
+        <SupportItemCard
           title="Join our Community Slack"
           subtitle="We’re proud of our growing community in Slack. Join us in supporting each other!"
           imgSrc={slackLogo}
@@ -110,7 +63,7 @@ const SupportPage: React.FC = () => {
             </Link>
           }
         />
-        <SupportItem
+        <SupportItemCard
           title="Send us Product Feedback"
           subtitle="If you found a bug, have an idea for a new feature or simply want to send us your thoughts, don’t hesitate!"
           imgSrc={feedbackIcon}
@@ -120,7 +73,7 @@ const SupportPage: React.FC = () => {
             </Link>
           }
         />
-        <SupportItem
+        <SupportItemCard
           title="Send us an E-mail"
           subtitle="If you have any question about our product or simply want to reach out to us, you can send us an e-mail."
           imgSrc={mailIcon}
@@ -130,7 +83,7 @@ const SupportPage: React.FC = () => {
             </Link>
           }
         />
-        <SupportItem
+        <SupportItemCard
           title="Panther Enterprise"
           subtitle="Get a demo of our enterprise functionality. We'll answer your questions and prepare you for a trial."
           imgSrc={pantherEnterpriseLogo}
