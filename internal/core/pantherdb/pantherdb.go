@@ -67,23 +67,11 @@ const (
 	CloudSecurity DataType = "CloudSecurity"
 )
 
-func (d *DataType) String() string {
-	return string(*d)
-}
-
-func (d DataType) Database() string {
-	switch d {
-	case LogData:
-		return LogProcessingDatabase
-	case RuleData:
-		return RuleMatchDatabase
-	case RuleErrors:
-		return RuleErrorsDatabase
-	case CloudSecurity:
-		return CloudSecurityDatabase
-	default:
-		panic("Invalid DataType provided " + d.String())
+func GetDataType(logtype string) DataType {
+	if snapshotlogs.LogTypes().Find(logtype) != nil {
+		return CloudSecurity
 	}
+	return LogData
 }
 
 func GetTable(logType string) string {
@@ -92,9 +80,9 @@ func GetTable(logType string) string {
 	return strings.ToLower(tableName)
 }
 
-func GetDataType(logtype string) DataType {
+func GetDatabase(logtype string) string {
 	if snapshotlogs.LogTypes().Find(logtype) != nil {
-		return CloudSecurity
+		return CloudSecurityDatabase
 	}
-	return LogData
+	return LogProcessingDatabase
 }
