@@ -391,28 +391,11 @@ type FirehoseMock struct {
 	mock.Mock
 }
 
-const (
-	// https://docs.aws.amazon.com/firehose/latest/dev/limits.html
-	firehoseMaxBatchSize = 4190000
-	firehoseMaxMessages  = 500
-)
-
 func (m *FirehoseMock) PutRecordBatchWithContext(
 	ctx aws.Context,
 	input *firehose.PutRecordBatchInput,
 	options ...request.Option) (*firehose.PutRecordBatchOutput, error) {
 
 	args := m.Called(ctx, input, options)
-	// Enforce firehose limits
-	if len(input.Records) > firehoseMaxMessages {
-		return nil, errors.New("too many messages sent")
-	}
-	size := 0
-	for _, record := range input.Records {
-		size += len(record.Data)
-	}
-	if size > firehoseMaxBatchSize {
-		return nil, errors.New("messages size too big")
-	}
 	return args.Get(0).(*firehose.PutRecordBatchOutput), args.Error(1)
 }
