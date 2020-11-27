@@ -98,8 +98,12 @@ var logTypes = logtypes.Must(LogTypePrefix,
 			return &Production{}
 		},
 		// This custom validation checks that the event is gitlab.Production not gitlab.API
+		// These two are almost identical because they are Rails logs.
+		// There is probably a bug in validator.v9 where 'required_without' does not work well with custom validators
 		Validate: func(x interface{}) error {
 			event := x.(*Production)
+			// Production logs most of the time have an 'action' field to differentiate them from API logs.
+			// Unless they are redirects, in which case they have an 'etag_route' field instead.
 			if event.Action.Exists || event.EtagRoute.Exists {
 				return pantherlog.ValidateStruct(x)
 			}
