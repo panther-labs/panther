@@ -255,8 +255,10 @@ result: |
     "risk_score": 30,
     "ipaddr": "70.39.110.83",
     "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36",
+    "user_id": 73503145,
     "event_timestamp": "2020-08-21 00:32:38 UTC",
     "p_event_time": "2020-08-21T00:32:38Z",
     "p_any_usernames": ["Somebody"],
+    "p_any_ip_addresses":["70.39.110.83"],
     "p_log_type": "OneLogin.Events"
   }
