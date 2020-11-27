@@ -128,5 +128,6 @@ func ResolveTables(ctx context.Context, resolver logtypes.Resolver, logTypes ...
 func LogTypeTableMeta(entry logtypes.Entry) *awsglue.GlueTableMetadata {
 	desc := entry.Describe()
 	schema := entry.Schema()
-	return awsglue.NewGlueTableMetadata(pantherdb.LogProcessingDatabase, desc.Name, desc.Description, awsglue.GlueTableHourly, schema)
+	tableName := pantherdb.GetTable(desc.Name)
+	return awsglue.NewGlueTableMetadata(pantherdb.LogProcessingDatabase, tableName, desc.Description, awsglue.GlueTableHourly, schema)
 }

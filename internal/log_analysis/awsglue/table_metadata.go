@@ -46,7 +46,6 @@ type GlueTableMetadata struct {
 	databaseName string
 	tableName    string
 	description  string
-	logType      string
 	prefix       string
 	timebin      GlueTableTimebin // at what time resolution is this table partitioned
 	eventStruct  interface{}
@@ -54,16 +53,14 @@ type GlueTableMetadata struct {
 
 // Creates a new GlueTableMetadata object for Panther log sources
 func NewGlueTableMetadata(
-	database, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
+	database, table, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
 
-	tableName := pantherdb.GetTable(logType)
-	tablePrefix := GetTablePrefix(database, tableName)
+	tablePrefix := GetTablePrefix(database, table)
 	return &GlueTableMetadata{
 		databaseName: database,
-		tableName:    tableName,
+		tableName:    table,
 		description:  logDescription,
 		timebin:      timebin,
-		logType:      logType,
 		prefix:       tablePrefix,
 		eventStruct:  eventStruct,
 	}
@@ -88,10 +85,6 @@ func (gm *GlueTableMetadata) Prefix() string {
 
 func (gm *GlueTableMetadata) Timebin() GlueTableTimebin {
 	return gm.timebin
-}
-
-func (gm *GlueTableMetadata) LogType() string {
-	return gm.logType
 }
 
 func (gm *GlueTableMetadata) EventStruct() interface{} {
@@ -123,7 +116,7 @@ func (gm *GlueTableMetadata) RuleTable() *GlueTableMetadata {
 		return gm
 	}
 	// the corresponding rule table shares the same structure as the log table + some columns
-	return NewGlueTableMetadata(pantherdb.RuleMatchDatabase, gm.LogType(), gm.Description(), GlueTableHourly, gm.EventStruct())
+	return NewGlueTableMetadata(pantherdb.RuleMatchDatabase, gm.tableName, gm.Description(), GlueTableHourly, gm.EventStruct())
 }
 
 func (gm *GlueTableMetadata) RuleErrorTable() *GlueTableMetadata {
@@ -131,7 +124,7 @@ func (gm *GlueTableMetadata) RuleErrorTable() *GlueTableMetadata {
 		return gm
 	}
 	// the corresponding rule table shares the same structure as the log table + some columns
-	return NewGlueTableMetadata(pantherdb.RuleErrorsDatabase, gm.LogType(), gm.Description(), GlueTableHourly, gm.EventStruct())
+	return NewGlueTableMetadata(pantherdb.RuleErrorsDatabase, gm.tableName, gm.Description(), GlueTableHourly, gm.EventStruct())
 }
 
 func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput {

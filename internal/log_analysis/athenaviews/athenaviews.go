@@ -87,7 +87,7 @@ func generateViewAllRuleMatches(tables []*awsglue.GlueTableMetadata) (sql string
 	var ruleTables []*awsglue.GlueTableMetadata
 	for _, table := range tables {
 		ruleTable := awsglue.NewGlueTableMetadata(
-			pantherdb.RuleMatchDatabase, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+			pantherdb.RuleMatchDatabase, table.TableName(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
 		ruleTables = append(ruleTables, ruleTable)
 	}
 	return generateViewAllHelper("all_rule_matches", ruleTables, awsglue.RuleMatchColumns)
@@ -99,7 +99,7 @@ func generateViewAllRuleErrors(tables []*awsglue.GlueTableMetadata) (sql string,
 	var ruleErrorTables []*awsglue.GlueTableMetadata
 	for _, table := range tables {
 		ruleTable := awsglue.NewGlueTableMetadata(
-			pantherdb.RuleErrorsDatabase, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+			pantherdb.RuleErrorsDatabase, table.TableName(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
 		ruleErrorTables = append(ruleErrorTables, ruleTable)
 	}
 	return generateViewAllHelper("all_rule_errors", ruleErrorTables, awsglue.RuleErrorColumns)
