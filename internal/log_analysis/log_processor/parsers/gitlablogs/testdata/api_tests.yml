@@ -1,0 +1,80 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+name: TestGitLabAPI
+logType: GitLab.API
+input: |
+  {
+    "time":"2018-10-29T12:49:42.123Z",
+    "severity":"INFO",
+    "duration_s":709.08,
+    "db_duration_s":14.59,
+    "view_duration_s":694.49,
+    "status":200,
+    "method":"GET",
+    "path":"/api/v4/projects",
+    "params":[{"key":"action","value":"git-upload-pack"},{"key":"changes","value":"_any"},{"key":"key_id","value":"secret"},{"key":"secret_token","value":"[FILTERED]"}],
+    "host":"localhost",
+    "remote_ip":"::1",
+    "ua":"Ruby",
+    "route":"/api/:version/projects",
+    "user_id":1,
+    "username":"root",
+    "queue_duration_s":100.31,
+    "gitaly_calls":30,
+    "gitaly_duration_s":5.36,
+    "redis_calls": 10,
+    "redis_duration_s": 5.1,
+    "correlation_id": "895c51dc-96c8-4f18-8be4-65252b17a324",
+    "meta.user":"testuser",
+    "meta.project":"testuser/jumbotron",
+    "meta.root_namespace":"testnamespace",
+    "meta.caller_id":"/api/:version/internal/post_receive"
+  }
+result: |
+  {
+    "time":"2018-10-29T12:49:42.123Z",
+    "severity":"INFO",
+    "duration_s":709.08,
+    "db_duration_s":14.59,
+    "view_duration_s":694.49,
+    "status":200,
+    "method":"GET",
+    "path":"/api/v4/projects",
+    "params":[{"key":"action","value":"git-upload-pack"},{"key":"changes","value":"_any"},{"key":"key_id","value":"secret"},{"key":"secret_token","value":"[FILTERED]"}],
+    "host":"localhost",
+    "remote_ip":"::1",
+    "ua":"Ruby",
+    "route":"/api/:version/projects",
+    "user_id":1,
+    "username":"root",
+    "queue_duration_s":100.31,
+    "gitaly_calls":30,
+    "gitaly_duration_s":5.36,
+    "redis_calls": 10,
+    "redis_duration_s": 5.1,
+    "correlation_id": "895c51dc-96c8-4f18-8be4-65252b17a324",
+    "meta.user":"testuser",
+    "meta.project":"testuser/jumbotron",
+    "meta.root_namespace":"testnamespace",
+    "meta.caller_id":"/api/:version/internal/post_receive",
+    "p_event_time": "2018-10-29T12:49:42.123Z",
+    "p_any_ip_addresses": ["::1"],
+    "p_any_trace_ids": ["895c51dc-96c8-4f18-8be4-65252b17a324"],
+    "p_any_usernames": ["root", "testuser"],
+    "p_any_domain_names": ["localhost"],
+    "p_log_type": "GitLab.API"
+  }
