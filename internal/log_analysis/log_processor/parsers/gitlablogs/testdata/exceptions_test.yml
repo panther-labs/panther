@@ -1,0 +1,73 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+name: TestExceptions
+logType: GitLab.Exceptions
+input: |
+  {
+  		"severity": "ERROR",
+  		"time": "2019-12-17T11:49:29.485Z",
+  		"correlation_id": "AbDVUrrTvM1",
+  		"extra.server": {
+  			"os": {
+  				"name": "Darwin",
+  				"version": "Darwin Kernel Version 19.2.0",
+  				"build": "19.2.0"
+  			},
+  			"runtime": {
+  				"name": "ruby",
+  				"version": "ruby 2.6.5p114 (2019-10-01 revision 67812) [x86_64-darwin18]"
+  			}
+  		},
+  		"extra.project_id": 55,
+  		"extra.relation_key": "milestones",
+  		"extra.relation_index": 1,
+  		"exception.class": "NoMethodError",
+  		"exception.message": "undefined method 'strong_memoize' for #<Gitlab::ImportExport::RelationFactory:0x00007fb5d917c4b0>",
+  		"exception.backtrace": [
+  			"lib/gitlab/import_export/relation_factory.rb:329:in 'unique_relation?'",
+  			"lib/gitlab/import_export/relation_factory.rb:345:in 'find_or_create_object!'"
+  		]
+  	}
+result: |
+  {
+      "severity": "ERROR",
+      "time": "2019-12-17T11:49:29.485Z",
+      "correlation_id": "AbDVUrrTvM1",
+      "extra.server": {
+          "os": {
+              "name": "Darwin",
+              "version": "Darwin Kernel Version 19.2.0",
+              "build": "19.2.0"
+          },
+          "runtime": {
+              "name": "ruby",
+              "version": "ruby 2.6.5p114 (2019-10-01 revision 67812) [x86_64-darwin18]"
+          }
+      },
+      "extra.project_id": 55,
+      "extra.relation_key": "milestones",
+      "extra.relation_index": 1,
+      "exception.class": "NoMethodError",
+      "exception.message": "undefined method 'strong_memoize' for #<Gitlab::ImportExport::RelationFactory:0x00007fb5d917c4b0>",
+      "exception.backtrace": [
+          "lib/gitlab/import_export/relation_factory.rb:329:in 'unique_relation?'",
+          "lib/gitlab/import_export/relation_factory.rb:345:in 'find_or_create_object!'"
+      ],
+      "p_event_time":"2019-12-17T11:49:29.485Z",
+      "p_any_trace_ids": ["AbDVUrrTvM1"],
+      "p_log_type": "GitLab.Exceptions"
+  }
