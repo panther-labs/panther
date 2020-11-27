@@ -66,8 +66,8 @@ func (gp *GluePartition) GetGlueTableMetadata() *GlueTableMetadata {
 	return gp.gm
 }
 
-func GetPartitionPrefix(database, logType string, timebin GlueTableTimebin, time time.Time) string {
-	return GetTablePrefix(database, pantherdb.GetTable(logType)) + timebin.PartitionPathS3(time)
+func GetPartitionPrefix(database, table string, timebin GlueTableTimebin, time time.Time) string {
+	return GetTablePrefix(database, table) + timebin.PartitionPathS3(time)
 }
 
 func (gp *GluePartition) GetPartitionLocation() string {

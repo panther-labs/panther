@@ -147,7 +147,8 @@ func (api *API) getEventsForLogType(
 		if alert.Type == alertmodels.RuleErrorType {
 			database = pantherdb.RuleErrorsDatabase
 		}
-		partitionPrefix := awsglue.GetPartitionPrefix(database, logType, awsglue.GlueTableHourly, nextTime)
+		tableName := pantherdb.GetTable(logType)
+		partitionPrefix := awsglue.GetPartitionPrefix(database, tableName, awsglue.GlueTableHourly, nextTime)
 		partitionPrefix += fmt.Sprintf(ruleSuffixFormat, alert.RuleID) // JSON data has more specific paths based on ruleID
 
 		listRequest := &s3.ListObjectsV2Input{
