@@ -71,6 +71,7 @@ func (h *LambdaHandler) sendPartitionSync(ctx context.Context, syncTraceID strin
 				pantherdb.LogProcessingDatabase,
 				pantherdb.RuleMatchDatabase,
 				pantherdb.RuleErrorsDatabase,
+				pantherdb.CloudSecurityDatabase,
 			},
 		},
 	})

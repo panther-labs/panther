@@ -280,10 +280,11 @@ func (d *S3Destination) sendSNSNotification(key string, buffer *s3EventBuffer) e
 		return err
 	}
 
+	dataType := pantherdb.GetDataType(buffer.logType)
 	input := &sns.PublishInput{
 		TopicArn:          &d.snsTopicArn,
 		Message:           &marshalledNotification,
-		MessageAttributes: notify.NewLogAnalysisSNSMessageAttributes(pantherdb.GetDataType(buffer.logType), buffer.logType),
+		MessageAttributes: notify.NewLogAnalysisSNSMessageAttributes(dataType, buffer.logType),
 	}
 	if _, err = d.snsClient.Publish(input); err != nil {
 		err = errors.Wrap(err, "failed to send notification to topic")

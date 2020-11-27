@@ -30,11 +30,11 @@ const (
 	logS3Prefix           = "logs"
 	ruleMatchS3Prefix     = "rules"
 	ruleErrorsS3Prefix    = "rule_errors"
-	cloudsecurityS3Prefix = "cloud_security"
+	cloudSecurityS3Prefix = "cloud_security"
 )
 
 // Returns the prefix of the table in S3 or error if it failed to generate it
-func getTablePrefix(database, tableName string) string {
+func GetTablePrefix(database, tableName string) string {
 	switch database {
 	case pantherdb.LogProcessingDatabase:
 		return logS3Prefix + "/" + tableName + "/"
@@ -43,7 +43,7 @@ func getTablePrefix(database, tableName string) string {
 	case pantherdb.RuleErrorsDatabase:
 		return ruleErrorsS3Prefix + "/" + tableName + "/"
 	case pantherdb.CloudSecurityDatabase:
-		return cloudsecurityS3Prefix + "/" + tableName + "/"
+		return cloudSecurityS3Prefix + "/" + tableName + "/"
 	default:
 		panic("Unknown database provided " + database)
 	}
@@ -58,7 +58,7 @@ func GetDataPrefix(databaseName string) string {
 	case pantherdb.RuleErrorsDatabase:
 		return ruleErrorsS3Prefix
 	case pantherdb.CloudSecurityDatabase:
-		return cloudsecurityS3Prefix
+		return cloudSecurityS3Prefix
 	default:
 		if strings.Contains(databaseName, "test") {
 			return logS3Prefix // assume logs, used for integration tests

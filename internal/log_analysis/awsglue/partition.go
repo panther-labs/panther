@@ -67,7 +67,7 @@ func (gp *GluePartition) GetGlueTableMetadata() *GlueTableMetadata {
 }
 
 func GetPartitionPrefix(database, logType string, timebin GlueTableTimebin, time time.Time) string {
-	return getTablePrefix(database, pantherdb.GetTable(logType)) + timebin.PartitionPathS3(time)
+	return GetTablePrefix(database, pantherdb.GetTable(logType)) + timebin.PartitionPathS3(time)
 }
 
 func (gp *GluePartition) GetPartitionLocation() string {
@@ -98,7 +98,7 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 		partition.databaseName = pantherdb.RuleMatchDatabase
 	case ruleErrorsS3Prefix:
 		partition.databaseName = pantherdb.RuleErrorsDatabase
-	case cloudsecurityS3Prefix:
+	case cloudSecurityS3Prefix:
 		partition.databaseName = pantherdb.CloudSecurityDatabase
 	default:
 		return nil, errors.Errorf("unsupported S3 object prefix %s from %s", s3Keys[0], s3ObjectKey)

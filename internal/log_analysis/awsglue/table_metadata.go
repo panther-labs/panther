@@ -57,7 +57,7 @@ func NewGlueTableMetadata(
 	database, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
 
 	tableName := pantherdb.GetTable(logType)
-	tablePrefix := getTablePrefix(database, tableName)
+	tablePrefix := GetTablePrefix(database, tableName)
 	return &GlueTableMetadata{
 		databaseName: database,
 		tableName:    tableName,
