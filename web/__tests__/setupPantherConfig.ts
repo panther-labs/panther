@@ -16,12 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import path from 'path';
-import { overrideDotEnvVars, getAppTemplateParams } from '../scripts/utils';
+import { getAppTemplateParams } from '../scripts/utils';
 
-process.env.TZ = 'UTC';
-
-overrideDotEnvVars(path.resolve(__dirname, '.env.test'));
 /**
  * Mock the server-side EJS-injected AWS configuration.
  * See `web/public/index.ejs`
