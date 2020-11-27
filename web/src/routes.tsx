@@ -48,6 +48,7 @@ import GuardedRoute from 'Components/GuardedRoute';
 import ForgotPasswordPage from 'Pages/ForgotPassword';
 import ForgotPasswordConfirmPage from 'Pages/ForgotPasswordConfirm';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import SupportPage from 'Pages/Support';
 import Page404 from 'Pages/404';
 import APIErrorFallback from 'Components/utils/ApiErrorFallback';
 import LogAnalysisOverview from 'Pages/LogAnalysisOverview';
@@ -221,6 +222,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   path={urls.settings.destinations.list()}
                   component={ListDestinationsPage}
                 />
+                <Route exact path={urls.account.support()} component={SupportPage} />
                 <Route component={Page404} />
               </Switch>
             </APIErrorFallback>
