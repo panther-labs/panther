@@ -52,7 +52,7 @@ RUN npm run build
 FROM node:13.2-alpine
 
 # Default to exposing `8080`
-ENV SERVER_PORT 8080
+ENV SERVER_PORT=8080
 
 # Make sure we add a folder to not pollute our root
 RUN mkdir /code
