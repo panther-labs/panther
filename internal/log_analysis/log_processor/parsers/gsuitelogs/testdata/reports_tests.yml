@@ -1,0 +1,154 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+name: TestParseGSuiteReports
+logType: GSuite.Reports
+input: |
+  {
+    "actor": {
+      "email": "test@runpanther.io",
+      "profileId": "108239653464319429999"
+    },
+    "etag": "\"JDMC8884sebSczDxOtZ17CIssbQ/THl9MimlCz5ymMYEzJ_WI1bmC50\"",
+    "events": [
+      {
+        "name": "revoke",
+        "parameters": [
+          {
+            "name": "client_id",
+            "value": "77185425430.apps.googleusercontent.com"
+          },
+          {
+            "name": "video_send_seconds",
+            "intValue": "1487"
+          },
+          {
+            "name": "video_send_seconds",
+            "multiIntValue": ["1487","123"]
+          },
+          {
+            "name": "app_name",
+            "value": "Google Chrome"
+          },
+          {
+            "name": "client_type",
+            "value": "NATIVE_APPLICATION"
+          },
+          {
+            "multiMessageValue": [
+              {
+                "parameter": [
+                  {
+                    "name": "scope_name",
+                    "value": "https://www.google.com/accounts/OAuthLogin"
+                  },
+                  {
+                    "multiValue": [
+                        "IDENTITY"
+                    ],
+                    "name": "product_bucket"
+                  }
+                ]
+              }
+            ],
+            "name": "scope_data"
+          },
+          {
+            "multiValue": [
+                "https://www.google.com/accounts/OAuthLogin"
+            ],
+            "name": "scope"
+          }
+        ]
+      }
+    ],
+    "id": {
+      "applicationName": "token",
+      "customerId": "C045p8dnk",
+      "time": "2020-06-10T04:11:42.949Z",
+      "uniqueQualifier": "5153173006988512167"
+    },
+    "kind": "admin#reports#activity"
+  }
+result: |
+  {
+   "actor": {
+     "email": "test@runpanther.io",
+     "profileId": "108239653464319429999"
+   },
+   "events": [
+     {
+       "name": "revoke",
+       "parameters": [
+         {
+           "name": "client_id",
+           "value": "77185425430.apps.googleusercontent.com"
+         },
+  	{
+           "name": "video_send_seconds",
+  	  "intValue": 1487
+  	},
+  	{
+  	  "name": "video_send_seconds",
+  	  "multiIntValue": [1487,123]
+  	},
+         {
+           "name": "app_name",
+           "value": "Google Chrome"
+         },
+         {
+           "name": "client_type",
+           "value": "NATIVE_APPLICATION"
+         },
+         {
+           "multiMessageValue": [
+             {
+               "parameter": [
+                 {
+                   "name": "scope_name",
+                   "value": "https://www.google.com/accounts/OAuthLogin"
+                 },
+                 {
+                   "multiValue": [
+                     "IDENTITY"
+                   ],
+                   "name": "product_bucket"
+                 }
+               ]
+             }
+           ],
+           "name": "scope_data"
+         },
+         {
+           "multiValue": [
+             "https://www.google.com/accounts/OAuthLogin"
+           ],
+           "name": "scope"
+         }
+       ]
+     }
+   ],
+   "id": {
+     "applicationName": "token",
+     "customerId": "C045p8dnk",
+     "time": "2020-06-10T04:11:42.949Z",
+     "uniqueQualifier": "5153173006988512167"
+   },
+   "kind": "admin#reports#activity",
+   "p_event_time": "2020-06-10T04:11:42.949Z",
+   "p_any_emails": ["test@runpanther.io"],
+   "p_log_type": "GSuite.Reports"
+  }
