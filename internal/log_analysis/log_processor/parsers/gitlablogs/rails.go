@@ -30,7 +30,7 @@ type Production struct {
 	Format                pantherlog.String  `json:"format" description:"The response output format"`
 	Controller            pantherlog.String  `json:"controller" description:"The Production controller class name"`
 	Action                pantherlog.String  `json:"action" description:"The Production controller action"`
-	Status                pantherlog.Int32   `json:"status" validate:"required" description:"The HTTP response status code"`
+	Status                pantherlog.Int64   `json:"status" validate:"required" description:"The HTTP response status code"`
 	Time                  pantherlog.Time    `json:"time" tcodec:"rfc3339" event_time:"true" validate:"required" description:"The request timestamp"`
 	Params                []QueryParam       `json:"params" description:"The URL query parameters"`
 	RemoteIP              pantherlog.String  `json:"remote_ip" panther:"ip" description:"The remote IP address of the HTTP request"`
@@ -38,9 +38,9 @@ type Production struct {
 	UserName              pantherlog.String  `json:"username" panther:"username" description:"The username of the request"`
 	UserAgent             pantherlog.String  `json:"ua" description:"The User-Agent of the requester"`
 	QueueDurationSeconds  pantherlog.Float32 `json:"queue_duration_s" description:"Total time that the request was queued inside GitLab Workhorse"`
-	GitalyCalls           pantherlog.Int32   `json:"gitaly_calls" description:"Total number of calls made to Gitaly"`
+	GitalyCalls           pantherlog.Int64   `json:"gitaly_calls" description:"Total number of calls made to Gitaly"`
 	GitalyDurationSeconds pantherlog.Float32 `json:"gitaly_duration_s" description:"Total time taken by Gitaly calls"`
-	RedisCalls            pantherlog.Int32   `json:"redis_calls" description:"Total number of calls made to Redis"`
+	RedisCalls            pantherlog.Int64   `json:"redis_calls" description:"Total number of calls made to Redis"`
 	RedisDurationSeconds  pantherlog.Float32 `json:"redis_duration_s" description:"Total time to retrieve data from Redis"`
 	RedisReadBytes        pantherlog.Int64   `json:"redis_read_bytes" description:"Total bytes read from Redis"`
 	RedisWriteBytes       pantherlog.Int64   `json:"redis_write_bytes" description:"Total bytes written to Redis"`

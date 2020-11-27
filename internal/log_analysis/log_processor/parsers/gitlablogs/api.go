@@ -40,9 +40,9 @@ type API struct {
 	RemoteIP              pantherlog.String  `json:"remote_ip" panther:"ip" description:"The remote IP address of the HTTP request"`
 	UserID                pantherlog.Int64   `json:"user_id" description:"The user id of the request"`
 	UserName              pantherlog.String  `json:"username" panther:"username" description:"The username of the request"`
-	GitalyCalls           pantherlog.Int32   `json:"gitaly_calls" description:"Total number of calls made to Gitaly"`
+	GitalyCalls           pantherlog.Int64   `json:"gitaly_calls" description:"Total number of calls made to Gitaly"`
 	GitalyDurationSeconds pantherlog.Float32 `json:"gitaly_duration_s" description:"Total time taken by Gitaly calls"`
-	RedisCalls            pantherlog.Int32   `json:"redis_calls" description:"Total number of calls made to Redis"`
+	RedisCalls            pantherlog.Int64   `json:"redis_calls" description:"Total number of calls made to Redis"`
 	RedisDurationSeconds  pantherlog.Float32 `json:"redis_duration_s" description:"Total time to retrieve data from Redis"`
 	CorrelationID         pantherlog.String  `json:"correlation_id" panther:"trace_id" description:"Request unique id across logs"`
 	QueueDuration         pantherlog.Float32 `json:"queue_duration_s" description:"Total time that the request was queued inside GitLab Workhorse"`
