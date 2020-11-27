@@ -1,4 +1,4 @@
-package gsuitelogs
+package snapshotlogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -20,20 +20,14 @@ package gsuitelogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	// FIXME: remove this once synced with master
+	_ "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 )
 
-const TypeReports = `GSuite.Reports`
-
+// LogTypes exports the available log type entries
 func LogTypes() logtypes.Group {
 	return logTypes
 }
 
-// nolint: lll
-var logTypes = logtypes.Must("GSuite", logtypes.ConfigJSON{
-	Name:         TypeReports,
-	Description:  `Contains the activity events for a specific account and application such as the Admin console application or the Google Drive application.`,
-	ReferenceURL: `https://developers.google.com/admin-sdk/reports/v1/reference/activities/list#response`,
-	NewEvent: func() interface{} {
-		return &Reports{}
-	},
-})
+// nolint:lll
+var logTypes = logtypes.Must("SnapshotHistory", logTypeCompliance, logTypeResource)
