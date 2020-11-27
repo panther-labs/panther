@@ -30,8 +30,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
-	logprocessormodels "github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	"github.com/panther-labs/panther/internal/core/pantherdb"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
@@ -143,13 +143,11 @@ func (api *API) getEventsForLogType(
 			break
 		}
 
-		var dataType logprocessormodels.DataType
+		database := pantherdb.RuleMatchDatabase
 		if alert.Type == alertmodels.RuleErrorType {
-			dataType = logprocessormodels.RuleErrors
-		} else {
-			dataType = logprocessormodels.RuleData
+			database = pantherdb.RuleErrorsDatabase
 		}
-		partitionPrefix := awsglue.GetPartitionPrefix(dataType, logType, awsglue.GlueTableHourly, nextTime)
+		partitionPrefix := awsglue.GetPartitionPrefix(database, logType, awsglue.GlueTableHourly, nextTime)
 		partitionPrefix += fmt.Sprintf(ruleSuffixFormat, alert.RuleID) // JSON data has more specific paths based on ruleID
 
 		listRequest := &s3.ListObjectsV2Input{

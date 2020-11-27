@@ -25,7 +25,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/core/pantherdb"
 )
 
 // Meta data about GlueTableMetadata table over parser data written to S3
@@ -34,7 +34,6 @@ import (
 
 // A partition in Glue containing Panther data
 type GluePartition struct {
-	datatype         models.DataType
 	databaseName     string
 	tableName        string
 	s3Bucket         string
@@ -67,8 +66,8 @@ func (gp *GluePartition) GetGlueTableMetadata() *GlueTableMetadata {
 	return gp.gm
 }
 
-func GetPartitionPrefix(datatype models.DataType, logType string, timebin GlueTableTimebin, time time.Time) string {
-	return getTablePrefix(datatype, GetTableName(logType)) + timebin.PartitionPathS3(time)
+func GetPartitionPrefix(database, logType string, timebin GlueTableTimebin, time time.Time) string {
+	return getTablePrefix(database, pantherdb.GetTable(logType)) + timebin.PartitionPathS3(time)
 }
 
 func (gp *GluePartition) GetPartitionLocation() string {
@@ -103,14 +102,13 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 
 	switch s3Keys[0] {
 	case logS3Prefix:
-		partition.databaseName = LogProcessingDatabaseName
-		partition.datatype = models.LogData
+		partition.databaseName = pantherdb.LogProcessingDatabase
 	case ruleMatchS3Prefix:
-		partition.databaseName = RuleMatchDatabaseName
-		partition.datatype = models.RuleData
+		partition.databaseName = pantherdb.RuleMatchDatabase
 	case ruleErrorsS3Prefix:
-		partition.databaseName = RuleErrorsDatabaseName
-		partition.datatype = models.RuleErrors
+		partition.databaseName = pantherdb.RuleErrorsDatabase
+	case cloudsecurityS3Prefix:
+		partition.databaseName = pantherdb.CloudSecurityDatabase
 	default:
 		return nil, errors.Errorf("unsupported S3 object prefix %s from %s", s3Keys[0], s3ObjectKey)
 	}
@@ -169,7 +167,7 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 	}
 	partition.time = time.Date(year, time.Month(month), day, hour, 0, 0, 0, time.UTC)
 
-	partition.gm = NewGlueTableMetadata(partition.datatype, partition.tableName, "", GlueTableHourly, nil)
+	partition.gm = NewGlueTableMetadata(partition.databaseName, partition.tableName, "", GlueTableHourly, nil)
 
 	return partition, nil
 }

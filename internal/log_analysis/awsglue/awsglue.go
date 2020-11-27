@@ -21,85 +21,44 @@ package awsglue
 import (
 	"strings"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/core/pantherdb"
 )
 
 // This file registers the Panther specific assumptions about tables and partition formats with associated functions.
 
 const (
-	logS3Prefix        = "logs"
-	ruleMatchS3Prefix  = "rules"
-	ruleErrorsS3Prefix = "rule_errors"
-
-	LogProcessingDatabaseName        = "panther_logs"
-	LogProcessingDatabaseDescription = "Holds tables with data from Panther log processing"
-
-	RuleMatchDatabaseName        = "panther_rule_matches"
-	RuleMatchDatabaseDescription = "Holds tables with data from Panther rule matching (same table structure as panther_logs)"
-
-	ViewsDatabaseName        = "panther_views"
-	ViewsDatabaseDescription = "Holds views useful for querying Panther data"
-
-	RuleErrorsDatabaseName        = "panther_rule_errors"
-	RuleErrorsDatabaseDescription = "Holds tables with data that failed Panther rule matching (same table structure as panther_logs)"
-
-	TempDatabaseName        = "panther_temp"
-	TempDatabaseDescription = "Holds temporary tables used for processing tasks"
-)
-
-var (
-	// PantherDatabases is exposed as public var to allow code to get/lookup the Panther databases
-	PantherDatabases = map[string]string{
-		LogProcessingDatabaseName: LogProcessingDatabaseDescription,
-		RuleMatchDatabaseName:     RuleMatchDatabaseDescription,
-		RuleErrorsDatabaseName:    RuleErrorsDatabaseDescription,
-		ViewsDatabaseName:         ViewsDatabaseDescription,
-		TempDatabaseName:          TempDatabaseDescription,
-	}
+	logS3Prefix           = "logs"
+	ruleMatchS3Prefix     = "rules"
+	ruleErrorsS3Prefix    = "rule_errors"
+	cloudsecurityS3Prefix = "cloud_security"
 )
 
 // Returns the prefix of the table in S3 or error if it failed to generate it
-func getDatabase(dataType models.DataType) string {
-	switch dataType {
-	case models.LogData:
-		return LogProcessingDatabaseName
-	case models.RuleData:
-		return RuleMatchDatabaseName
-	case models.RuleErrors:
-		return RuleErrorsDatabaseName
-	default:
-		panic("Invalid DataType provided " + dataType)
-	}
-}
-
-// Returns the prefix of the table in S3 or error if it failed to generate it
-func getTablePrefix(dataType models.DataType, tableName string) string {
-	switch dataType {
-	case models.LogData:
+func getTablePrefix(database, tableName string) string {
+	switch database {
+	case pantherdb.LogProcessingDatabase:
 		return logS3Prefix + "/" + tableName + "/"
-	case models.RuleData:
+	case pantherdb.RuleMatchDatabase:
 		return ruleMatchS3Prefix + "/" + tableName + "/"
-	case models.RuleErrors:
+	case pantherdb.RuleErrorsDatabase:
 		return ruleErrorsS3Prefix + "/" + tableName + "/"
+	case pantherdb.CloudSecurityDatabase:
+		return cloudsecurityS3Prefix + "/" + tableName + "/"
 	default:
-		panic("Invalid DataType provided " + dataType)
+		panic("Unknown database provided " + database)
 	}
-}
-
-func GetTableName(logType string) string {
-	// clean table name to make sql friendly
-	tableName := strings.Replace(logType, ".", "_", -1) // no '.'
-	return strings.ToLower(tableName)
 }
 
 func GetDataPrefix(databaseName string) string {
 	switch databaseName {
-	case LogProcessingDatabaseName:
+	case pantherdb.LogProcessingDatabase:
 		return logS3Prefix
-	case RuleMatchDatabaseName:
+	case pantherdb.RuleMatchDatabase:
 		return ruleMatchS3Prefix
-	case RuleErrorsDatabaseName:
+	case pantherdb.RuleErrorsDatabase:
 		return ruleErrorsS3Prefix
+	case pantherdb.CloudSecurityDatabase:
+		return cloudsecurityS3Prefix
 	default:
 		if strings.Contains(databaseName, "test") {
 			return logS3Prefix // assume logs, used for integration tests

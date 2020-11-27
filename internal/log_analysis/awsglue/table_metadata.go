@@ -33,7 +33,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/core/pantherdb"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/box"
@@ -46,7 +46,7 @@ type PartitionKey struct {
 
 // Metadata about Glue table
 type GlueTableMetadata struct {
-	dataType     models.DataType
+	dataType     pantherdb.DataType
 	databaseName string
 	tableName    string
 	description  string
@@ -58,13 +58,12 @@ type GlueTableMetadata struct {
 
 // Creates a new GlueTableMetadata object for Panther log sources
 func NewGlueTableMetadata(
-	dataType models.DataType, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
+	database, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
 
-	tableName := GetTableName(logType)
-	tablePrefix := getTablePrefix(dataType, tableName)
+	tableName := pantherdb.GetTable(logType)
+	tablePrefix := getTablePrefix(database, tableName)
 	return &GlueTableMetadata{
-		dataType:     dataType,
-		databaseName: getDatabase(dataType),
+		databaseName: database,
 		tableName:    tableName,
 		description:  logDescription,
 		timebin:      timebin,
@@ -95,7 +94,7 @@ func (gm *GlueTableMetadata) Timebin() GlueTableTimebin {
 	return gm.timebin
 }
 
-func (gm *GlueTableMetadata) DataType() models.DataType {
+func (gm *GlueTableMetadata) DataType() pantherdb.DataType {
 	return gm.dataType
 }
 
@@ -128,19 +127,19 @@ func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
 }
 
 func (gm *GlueTableMetadata) RuleTable() *GlueTableMetadata {
-	if gm.dataType == models.RuleData {
+	if gm.dataType == pantherdb.RuleData {
 		return gm
 	}
 	// the corresponding rule table shares the same structure as the log table + some columns
-	return NewGlueTableMetadata(models.RuleData, gm.LogType(), gm.Description(), GlueTableHourly, gm.EventStruct())
+	return NewGlueTableMetadata(pantherdb.RuleMatchDatabase, gm.LogType(), gm.Description(), GlueTableHourly, gm.EventStruct())
 }
 
 func (gm *GlueTableMetadata) RuleErrorTable() *GlueTableMetadata {
-	if gm.dataType == models.RuleErrors {
+	if gm.dataType == pantherdb.RuleErrors {
 		return gm
 	}
 	// the corresponding rule table shares the same structure as the log table + some columns
-	return NewGlueTableMetadata(models.RuleErrors, gm.LogType(), gm.Description(), GlueTableHourly, gm.EventStruct())
+	return NewGlueTableMetadata(pantherdb.RuleErrorsDatabase, gm.LogType(), gm.Description(), GlueTableHourly, gm.EventStruct())
 }
 
 func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput {
@@ -159,9 +158,9 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 	if err != nil {
 		panic(err)
 	}
-	if gm.dataType == models.RuleData { // append the columns added by the rule engine
+	if gm.dataType == pantherdb.RuleData { // append the columns added by the rule engine
 		columns = append(columns, RuleMatchColumns...)
-	} else if gm.dataType == models.RuleErrors {
+	} else if gm.dataType == pantherdb.RuleErrors {
 		// append the rule match & and rule error columns
 		columns = append(columns, RuleErrorColumns...)
 	}

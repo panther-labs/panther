@@ -26,7 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/core/pantherdb"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
@@ -44,7 +44,7 @@ func CreateOrReplaceViews(athenaClient athenaiface.AthenaAPI, workgroup string, 
 		return err
 	}
 	for _, sql := range sqlStatements {
-		_, err := awsathena.RunQuery(athenaClient, workgroup, awsglue.ViewsDatabaseName, sql)
+		_, err := awsathena.RunQuery(athenaClient, workgroup, pantherdb.ViewsDatabase, sql)
 		if err != nil {
 			return errors.Wrap(err, "CreateOrReplaceViews() failed")
 		}
@@ -87,7 +87,7 @@ func generateViewAllRuleMatches(tables []*awsglue.GlueTableMetadata) (sql string
 	var ruleTables []*awsglue.GlueTableMetadata
 	for _, table := range tables {
 		ruleTable := awsglue.NewGlueTableMetadata(
-			models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+			pantherdb.RuleData.Database(), table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
 		ruleTables = append(ruleTables, ruleTable)
 	}
 	return generateViewAllHelper("all_rule_matches", ruleTables, awsglue.RuleMatchColumns)
@@ -99,7 +99,7 @@ func generateViewAllRuleErrors(tables []*awsglue.GlueTableMetadata) (sql string,
 	var ruleErrorTables []*awsglue.GlueTableMetadata
 	for _, table := range tables {
 		ruleTable := awsglue.NewGlueTableMetadata(
-			models.RuleErrors, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+			pantherdb.RuleErrors.Database(), table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
 		ruleErrorTables = append(ruleErrorTables, ruleTable)
 	}
 	return generateViewAllHelper("all_rule_errors", ruleErrorTables, awsglue.RuleErrorColumns)
@@ -130,7 +130,7 @@ func generateViewAllHelper(viewName string, tables []*awsglue.GlueTableMetadata,
 	}
 
 	var sqlLines []string
-	sqlLines = append(sqlLines, fmt.Sprintf("create or replace view %s.%s as", awsglue.ViewsDatabaseName, viewName))
+	sqlLines = append(sqlLines, fmt.Sprintf("create or replace view %s.%s as", pantherdb.ViewsDatabase, viewName))
 
 	for i, table := range tables {
 		sqlLines = append(sqlLines, fmt.Sprintf("select %s from %s.%s",
