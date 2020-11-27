@@ -19,7 +19,6 @@ package forwarder
  */
 
 import (
-	"errors"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -34,23 +33,21 @@ var (
 )
 
 const (
-	mappingAgeOut         = time.Minute * 5
+	mappingAgeOut         = 2 * time.Minute
 	sourceAPIFunctionName = "panther-source-api"
 )
 
+// Returns the label for an integration
+// It will return an empty string if the integration doesn't exist
 func (sh *StreamHandler) getIntegrationLabel(integrationID string) (string, error) {
-	label, ok := integrationIDMappings[integrationID]
+	_, ok := integrationIDMappings[integrationID]
 	if !ok || time.Since(lastUpdated) > mappingAgeOut {
 		err := sh.updateIntegrationMapping()
 		if err != nil {
 			return "", err
 		}
-		label, ok = integrationIDMappings[integrationID]
-		if !ok {
-			return "", errors.New("unable to map integrationId " + integrationID + " to an integrationLabel")
-		}
 	}
-	return label, nil
+	return integrationIDMappings[integrationID], nil
 }
 
 func (sh StreamHandler) updateIntegrationMapping() error {
@@ -60,7 +57,7 @@ func (sh StreamHandler) updateIntegrationMapping() error {
 		},
 	}
 	var output []*sourceAPIModels.SourceIntegration
-	if err := genericapi.Invoke(sh.lambdaClient, sourceAPIFunctionName, input, &output); err != nil {
+	if err := genericapi.Invoke(sh.LambdaClient, sourceAPIFunctionName, input, &output); err != nil {
 		return err
 	}
 

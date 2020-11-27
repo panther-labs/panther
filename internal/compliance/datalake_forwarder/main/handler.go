@@ -20,11 +20,37 @@ package main
 
 import (
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/firehose"
+	lambdaservice "github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/kelseyhightower/envconfig"
 
 	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder"
+	"github.com/panther-labs/panther/pkg/awsretry"
 )
 
 func main() {
-	sh := forwarder.NewStreamHandler()
-	lambda.Start(sh.Run)
+	lambda.Start(NewHandler().Run)
+}
+
+type EnvConfig struct {
+	StreamName string `required:"true" split_words:"true"`
+}
+
+func NewHandler() *forwarder.StreamHandler {
+	var config EnvConfig
+	envconfig.MustProcess("", &config)
+
+	const maxRetries = 10
+	awsSession := session.Must(session.NewSession(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
+		awsretry.NewConnectionErrRetryer(maxRetries))))
+	firehoseClient := firehose.New(awsSession)
+	lambdaClient := lambdaservice.New(awsSession)
+	return &forwarder.StreamHandler{
+		LambdaClient:   lambdaClient,
+		FirehoseClient: firehoseClient,
+		StreamName:     config.StreamName,
+	}
 }
