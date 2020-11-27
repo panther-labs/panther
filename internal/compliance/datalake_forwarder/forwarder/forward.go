@@ -23,22 +23,16 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/firehose"
 	"github.com/aws/aws-sdk-go/service/firehose/firehoseiface"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/kelseyhightower/envconfig"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/internal/events"
 	"github.com/panther-labs/panther/pkg/awsbatch/firehosebatch"
-	"github.com/panther-labs/panther/pkg/awsretry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
@@ -49,30 +43,14 @@ const (
 	ChangeTypeModify = "modified"
 	// TODO add daily syncs
 	// ChangeTypeSync   = "sync"
-
-	maxRetries      = 10
 	recordDelimiter = '\n'
+	maxRetries      = 10
 )
 
-type EnvConfig struct {
-	StreamName string `required:"true" split_words:"true"`
-}
-
 type StreamHandler struct {
-	firehoseClient firehoseiface.FirehoseAPI
-	lambdaClient   lambdaiface.LambdaAPI
-	config         EnvConfig
-}
-
-func NewStreamHandler() *StreamHandler {
-	var sh StreamHandler
-
-	envconfig.MustProcess("", &sh.config)
-	awsSession := session.Must(session.NewSession(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
-		awsretry.NewConnectionErrRetryer(maxRetries))))
-	sh.firehoseClient = firehose.New(awsSession)
-	sh.lambdaClient = lambda.New(awsSession)
-	return &sh
+	FirehoseClient firehoseiface.FirehoseAPI
+	LambdaClient   lambdaiface.LambdaAPI
+	StreamName     string
 }
 
 // Run is the entry point for the datalake-forwarder lambda
@@ -90,6 +68,15 @@ func (sh *StreamHandler) Run(ctx context.Context, event *events.DynamoDBEvent) (
 		changes, err := sh.getChanges(record)
 		if err != nil {
 			logger.Error("failed to process record",
+				zap.Error(err),
+				zap.String("eventID", record.EventID),
+				zap.String("eventName", record.EventName),
+				zap.String("eventSourceARN", record.EventSourceArn),
+			)
+			continue
+		}
+		if changes == nil {
+			logger.Warn("Skipping record",
 				zap.Error(err),
 				zap.String("eventID", record.EventID),
 				zap.String("eventName", record.EventName),
@@ -115,9 +102,9 @@ func (sh *StreamHandler) Run(ctx context.Context, event *events.DynamoDBEvent) (
 	// that so we have to send in batches
 	firehoseInput := firehose.PutRecordBatchInput{
 		Records:            firehoseRecords,
-		DeliveryStreamName: &sh.config.StreamName,
+		DeliveryStreamName: &sh.StreamName,
 	}
-	bigMessages, err := firehosebatch.BatchSend(ctx, sh.firehoseClient, firehoseInput, maxRetries)
+	bigMessages, err := firehosebatch.BatchSend(ctx, sh.FirehoseClient, firehoseInput, maxRetries)
 	if len(bigMessages) > 0 {
 		logger.Error("unable to send some records as they are too large", zap.Int("numRecords", len(bigMessages)))
 	}

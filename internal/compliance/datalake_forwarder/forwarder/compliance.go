@@ -77,6 +77,9 @@ func (sh *StreamHandler) processComplianceSnapshot(record *events.DynamoDBEventR
 	if err != nil {
 		return nil, err
 	}
+	if len(label) == 0 {
+		return nil, nil
+	}
 	change.IntegrationLabel = label
 	return change, nil
 }

@@ -82,7 +82,14 @@ func InferColumns(schema interface{}) ([]Column, error) {
 	if schema == nil {
 		return nil, errors.New("nil schema value")
 	}
-	return inferTypeColumns(reflect.TypeOf(schema), nil)
+	return inferTypeColumns(reflect.TypeOf(schema), nil, nil)
+}
+
+func InferColumnsCustom(schema interface{}, custom func(reflect.Type) Type) ([]Column, error) {
+	if schema == nil {
+		return nil, errors.New("nil schema value")
+	}
+	return inferTypeColumns(reflect.TypeOf(schema), nil, custom)
 }
 
 func InferColumnsWithMappings(schema interface{}) ([]Column, map[string]string, error) {
@@ -90,7 +97,7 @@ func InferColumnsWithMappings(schema interface{}) ([]Column, map[string]string, 
 		return nil, nil, errors.New("nil schema value")
 	}
 	names := collisions{}
-	columns, err := inferTypeColumns(reflect.TypeOf(schema), names)
+	columns, err := inferTypeColumns(reflect.TypeOf(schema), names, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -104,8 +111,9 @@ func InferColumnsWithMappings(schema interface{}) ([]Column, map[string]string, 
 
 // entrypoint for schema recursion.
 // names is optional and will not collect mappings if nil.
-func inferTypeColumns(typ reflect.Type, names map[string][]string) ([]Column, error) {
-	cols, err := inferStructColumns(typ, nil, names)
+// custom is optional and overrides type mappings
+func inferTypeColumns(typ reflect.Type, names map[string][]string, custom func(reflect.Type) Type) ([]Column, error) {
+	cols, err := inferStructColumns(typ, nil, names, custom)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -115,7 +123,8 @@ func inferTypeColumns(typ reflect.Type, names map[string][]string) ([]Column, er
 // gets the columns for a sturct
 // path is used to help with recursive error messages (see newSchemaError)
 // names is optional and will not collect mappings if nil.
-func inferStructColumns(typ reflect.Type, path []string, names collisions) ([]Column, error) {
+// custom is optional and overrides type mappings
+func inferStructColumns(typ reflect.Type, path []string, names collisions, custom func(reflect.Type) Type) ([]Column, error) {
 	for typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}
@@ -129,7 +138,7 @@ func inferStructColumns(typ reflect.Type, path []string, names collisions) ([]Co
 	for i := range fields {
 		field := &fields[i]
 		fieldPath := append(path, field.Name)
-		col, err := inferColumn(field, fieldPath, names)
+		col, err := inferColumn(field, fieldPath, names, custom)
 		if err != nil {
 			return nil, err
 		}
@@ -182,7 +191,8 @@ func appendStructFieldsJSON(fields []reflect.StructField, typ reflect.Type) []re
 // can return nil, nil if the field is not visible in JSON
 // path is used to help with recursive error messages (see newSchemaError)
 // names is optional and will not collect mappings if nil.
-func inferColumn(field *reflect.StructField, path []string, names collisions) (*Column, error) {
+// custom is optional and overrides type mappings
+func inferColumn(field *reflect.StructField, path []string, names collisions, custom func(reflect.Type) Type) (*Column, error) {
 	colName, err := fieldColumnName(field)
 	if err != nil {
 		// We do not want stack in a recursive function
@@ -196,7 +206,7 @@ func inferColumn(field *reflect.StructField, path []string, names collisions) (*
 	// It is important to do this here so fields are added in the order they appear in the tree.
 	names.observeColumnName(colName)
 
-	colType, err := inferColumnType(field.Type, path, names)
+	colType, err := inferColumnType(field.Type, path, names, custom)
 	if err != nil {
 		return nil, err
 	}
@@ -252,16 +262,22 @@ func isFieldRequired(field *reflect.StructField) bool {
 // main typeswitch for mapping reflect.Type to glueschema.Type
 // path is used to help with recursive error messages (see newSchemaError)
 // names is optional and will not collect mappings if nil.
-func inferColumnType(typ reflect.Type, path []string, names collisions) (Type, error) {
+// custom is optional and overrides type mappings
+func inferColumnType(typ reflect.Type, path []string, names collisions, custom func(reflect.Type) Type) (Type, error) {
 	for typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
+	}
+	if custom != nil {
+		if customType := custom(typ); customType != "" {
+			return customType, nil
+		}
 	}
 	if custom, ok := defaultMappings[typ]; ok {
 		return custom, nil
 	}
 	switch typ.Kind() {
 	case reflect.Struct:
-		cols, err := inferStructColumns(typ, path, names)
+		cols, err := inferStructColumns(typ, path, names, custom)
 		if err != nil {
 			return "", err
 		}
@@ -269,13 +285,13 @@ func inferColumnType(typ reflect.Type, path []string, names collisions) (Type, e
 	case reflect.Slice:
 		// Distinguish array element in path
 		path = append(path, "[]")
-		elem, err := inferColumnType(typ.Elem(), path, names)
+		elem, err := inferColumnType(typ.Elem(), path, names, custom)
 		if err != nil {
 			return "", err
 		}
 		return ArrayOf(elem), nil
 	case reflect.Map:
-		key, err := inferColumnType(typ.Key(), path, nil)
+		key, err := inferColumnType(typ.Key(), path, nil, custom)
 		if err != nil {
 			return "", err
 		}
@@ -286,7 +302,7 @@ func inferColumnType(typ reflect.Type, path []string, names collisions) (Type, e
 		}
 		// Distinguish map values in path
 		path = append(path, "[]")
-		val, err := inferColumnType(typ.Elem(), path, names)
+		val, err := inferColumnType(typ.Elem(), path, names, custom)
 		if err != nil {
 			return "", err
 		}

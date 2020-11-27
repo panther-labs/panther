@@ -25,6 +25,8 @@ import (
 
 // The DynamoDBEvent stream event handled to Lambda
 // http://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-ddb-update
+// THIS IS AN EXACT COPY OF "github.com/aws/aws-lambda-go/events#DynamoDBEvent"
+// The difference lays in the 'DynamoDBStreamRecord' (see below)
 type DynamoDBEvent struct {
 	Records []DynamoDBEventRecord `json:"Records"`
 }
@@ -80,6 +82,8 @@ type DynamoDBEventRecord struct {
 
 // DynamoDBStreamRecord represents a description of a single data modification that was performed on an item
 // in a DynamoDB table.
+// THIS IS AN ALMOST EXACT COPY OF "github.com/aws/aws-lambda-go/events#DynamoDBStreamRecord"
+// with the only difference being the values of 'Keys', 'NewImage', 'OldImage' fields
 type DynamoDBStreamRecord struct {
 	// The approximate date and time when the stream record was created, in UNIX
 	// epoch time (http://www.epochconverter.com/) format.

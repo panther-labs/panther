@@ -46,11 +46,8 @@ class EnrichedEvent(Mapping):
 
     def udm(self, key: str) -> Any:
         """Converts standard data model field to logtype field"""
-        # access values via normal logType fields
-        if key in self._data.keys():
-            return self.get(key)
         # access values via standardized fields
-        if key in self.data_model.paths.keys():
+        if key in self.data_model.paths:
             # we are dealing with a jsonpath
             json_path = self.data_model.paths.get(key)
             if json_path:
@@ -61,7 +58,7 @@ class EnrichedEvent(Mapping):
                     raise Exception(
                         'JSONPath [{}] in DataModel [{}], matched multiple fields.'.format(json_path, self.data_model.data_model_id)
                     )
-        if key in self.data_model.methods.keys():
+        if key in self.data_model.methods:
             # we are dealing with method
             method = self.data_model.methods.get(key)
             if callable(method):

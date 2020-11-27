@@ -36,7 +36,7 @@ import (
 func TestSourceApiCache(t *testing.T) {
 	mockClient := &testutils.LambdaMock{}
 	testStreamHandler := StreamHandler{
-		lambdaClient: mockClient,
+		LambdaClient: mockClient,
 	}
 
 	testInput := &sourceAPIModels.LambdaInput{
@@ -136,11 +136,11 @@ func TestSourceApiLabelNotFound(t *testing.T) {
 		Return(expectedInvokeOutput, nil).Times(1)
 
 	testStreamHandler := StreamHandler{
-		lambdaClient: mockClient,
+		LambdaClient: mockClient,
 	}
 
 	label, err := testStreamHandler.getIntegrationLabel(invokeResponesPayload[0].IntegrationID + " slightly different")
-	assert.Error(t, err)
-	assert.Equal(t, "", label)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(label))
 	mockClient.AssertExpectations(t)
 }

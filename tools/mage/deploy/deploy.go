@@ -44,11 +44,10 @@ import (
 
 var log = logger.Build("[deploy]")
 
-// Not all AWS services are available in every region. In particular, Panther will currently NOT work in:
-//     n. california, us-gov, china, paris, stockholm, brazil, osaka, or bahrain
-// These regions are missing combinations of AppSync, Cognito, Athena, and/or Glue.
+// SupportedRegions is a set of region names where Panther can be deployed.
+// Not all AWS services are available in every region.
 // https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services
-var supportedRegions = map[string]bool{
+var SupportedRegions = map[string]bool{
 	"ap-northeast-1": true, // tokyo
 	"ap-northeast-2": true, // seoul
 	"ap-south-1":     true, // mumbai
@@ -56,10 +55,14 @@ var supportedRegions = map[string]bool{
 	"ap-southeast-2": true, // sydney
 	"ca-central-1":   true, // canada
 	"eu-central-1":   true, // frankfurt
+	"eu-north-1":     true, // stockholm
 	"eu-west-1":      true, // ireland
 	"eu-west-2":      true, // london
+	"eu-west-3":      true, // paris
+	"sa-east-1":      true, // são paulo
 	"us-east-1":      true, // n. virginia
 	"us-east-2":      true, // ohio
+	"us-west-1":      true, // n. california
 	"us-west-2":      true, // oregon
 }
 
@@ -113,7 +116,7 @@ func Deploy() error {
 // Fail the deploy early if there is a known issue with the user's environment.
 func PreCheck() error {
 	// Ensure the AWS region is supported
-	if region := clients.Region(); !supportedRegions[region] {
+	if region := clients.Region(); !SupportedRegions[region] {
 		return fmt.Errorf("panther is not supported in %s region", region)
 	}
 

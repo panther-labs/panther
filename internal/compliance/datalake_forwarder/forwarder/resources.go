@@ -115,6 +115,11 @@ func (sh *StreamHandler) processResourceSnapshotDiff(eventName string,
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to retrieve integration label for %q", newSnapshot.IntegrationID)
 	}
+	// If the integration doesn't exist
+	// nothing left to do
+	if len(integrationLabel) == 0 {
+		return nil, nil
+	}
 
 	return &CloudSecuritySnapshotChange{
 		LastUpdated:      newSnapshot.LastModified,
@@ -136,6 +141,11 @@ func (sh *StreamHandler) processResourceSnapshot(changeType string,
 	integrationLabel, err := sh.getIntegrationLabel(change.IntegrationID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to retrieve integration label for %q", change.IntegrationID)
+	}
+	// If we the integration doesn't exist
+	// no more work to do
+	if len(integrationLabel) == 0 {
+		return nil, nil
 	}
 	rawResource, err := jsoniter.Marshal(change.Attributes)
 	if err != nil {
