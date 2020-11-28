@@ -19,20 +19,19 @@ package s3pipe
  */
 
 import (
+	"bufio"
 	"bytes"
+	"compress/gzip"
 	"context"
 	"io"
 	"sync"
 
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"go.uber.org/zap"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 )
 
 // These values are very conservative defaults.
-const DefaultReadBufferSize = 32 * 1024
+const DefaultReadBufferSize = 64 * 1024
 
 type Downloader s3manager.Downloader
 
@@ -52,42 +51,38 @@ func (dl Downloader) Download(ctx context.Context, input *s3.GetObjectInput) io.
 	parts := make(chan *bytes.Buffer, 1)
 	// We reset our copy of Downloader to read chunks in sequence and queue them into parts.
 	dl.reset(ctx, w, parts)
+
+	dr := downloadReader{
+		cancel: cancel,
+		// Set both pipe and out to the piped reader.
+		pipe: r,
+		// If a gzip stream is detected on the first chunk, out will be replaced with an *gzip.Reader
+		out:      r,
+		partSize: int(dl.PartSize),
+	}
+	// defer the downloading until the first call to Read
+	dr.download = func() {
+		// Instrument downloads. The time will include time to parse the file as we do not close until final read.
+		var err error
+		// Close the parts channel once download finishes. This will signal copyBuffers goroutine to finish.
+		// It is safe to close the channel when DownloadWithContext has returned since there won't be any more
+		// calls to `push` after that.
+		defer close(parts)
+		// Start the copying of buffers to the io.PipeWriter. Closes the io.PipeWriter once finished.
+		go copyBuffers(w, parts, &dr.isGzip)
+		// We pass a dummy WriterAt value so that we get a panic if the downloader uses the WriteAt method directly.
+		dummyWriter := nopWriterAt{}
+		// We cast our copy of the Downloader to s3manager.Downloader and start fetching chunks.
+		_, err = s3manager.Downloader(dl).DownloadWithContext(ctx, &dummyWriter, input)
+		// If an error occurs it will show up in the io.PipeReader side.
+		// Otherwise an io.EOF will be shown to the io.PipeReader side.
+		if err != nil {
+			_ = w.CloseWithError(err)
+		}
+	}
 	// We return a reader that will start downloading on first call to Read().
 	// Chunks will be queued and written to the write part of the pipe.
-	return &downloadReader{
-		cancel: cancel,
-		r:      r,
-		// defer the downloading until the first call to Read
-		download: func() {
-			// Instrument downloads. The time will include time to parse the file as we do not close until final read.
-			var err error
-			// NOTE: dashboards depend on the operation name below! Do not change w/out updating dashboard
-			operation := common.OpLogManager.Start("readS3Object", common.OpLogS3ServiceDim)
-			defer func() {
-				operation.Stop()
-				operation.Log(err,
-					// s3 dim info
-					zap.String("bucket", *input.Bucket),
-					zap.String("key", *input.Key),
-					zap.Int64("partSize", dl.PartSize))
-			}()
-			// Close the parts channel once download finishes. This will signal copyBuffers goroutine to finish.
-			// It is safe to close the channel when DownloadWithContext has returned since there won't be any more
-			// calls to `push` after that.
-			defer close(parts)
-			// Start the copying of buffers to the io.PipeWriter. Closes the io.PipeWriter once finished.
-			go copyBuffers(w, parts)
-			// We pass a dummy WriterAt value so that we get a panic if the downloader uses the WriteAt method directly.
-			dummyWriter := nopWriterAt{}
-			// We cast our copy of the Downloader to s3manager.Downloader and start fetching chunks.
-			_, err = s3manager.Downloader(dl).DownloadWithContext(ctx, &dummyWriter, input)
-			// If an error occurs it will show up in the io.PipeReader side.
-			// Otherwise an io.EOF will be shown to the io.PipeReader side.
-			if err != nil {
-				_ = w.CloseWithError(err)
-			}
-		},
-	}
+	return &dr
 }
 
 func (dl *Downloader) reset(ctx context.Context, w *io.PipeWriter, parts chan<- *bytes.Buffer) {
@@ -101,11 +96,15 @@ func (dl *Downloader) reset(ctx context.Context, w *io.PipeWriter, parts chan<- 
 	dl.BufferProvider = newPrefetchProvider(ctx, w, int(dl.PartSize), parts)
 }
 
-func copyBuffers(w *io.PipeWriter, parts <-chan *bytes.Buffer) {
+func copyBuffers(w *io.PipeWriter, parts <-chan *bytes.Buffer, isGzip *bool) {
 	// It is safe to call this multiple times.
 	// No reason to call CloseWithError as the only error here can only be that the pipe was already closed.
 	defer w.Close()
 	for part := range parts {
+		// detect Gzip stream on first chunk
+		if isGzip != nil {
+			*isGzip, isGzip = isGzipped(part), nil
+		}
 		_, err := part.WriteTo(w)
 		// We recycle the buffer even if the write failed.
 		part.Reset()
@@ -116,16 +115,28 @@ func copyBuffers(w *io.PipeWriter, parts <-chan *bytes.Buffer) {
 		}
 	}
 }
+func isGzipped(part *bytes.Buffer) bool {
+	unread := part.Bytes()
+	r := bytes.NewReader(unread)
+	_, err := gzip.NewReader(r)
+	return err == nil
+}
 
 type downloadReader struct {
-	// r is the underlying pipe reader where data from being downloaded will be read from.
-	r *io.PipeReader
+	// pipe is the underlying pipe reader where data from being downloaded will be read from.
+	pipe *io.PipeReader
 	// cancel will abort the whole pipeline and clean up any resources
 	cancel context.CancelFunc
 	// once guards the download closure so it is only spawned one time on first Read()
 	once sync.Once
 	// download is a closure that will start downloading and pushing chunks to the pipe.
 	download func()
+	// out is the transparently uncompressed reader to read data from
+	out      io.Reader
+	partSize int
+
+	// Flag to read **ONLY AFTER FIRST READ**
+	isGzip bool
 }
 
 var _ io.ReadCloser = (*downloadReader)(nil)
@@ -135,7 +146,7 @@ var _ io.ReadCloser = (*downloadReader)(nil)
 func (dr *downloadReader) Read(p []byte) (n int, err error) {
 	// This starts the downloading on first read
 	dr.once.Do(dr.startDownloading)
-	return dr.r.Read(p)
+	return dr.out.Read(p)
 }
 
 func (dr *downloadReader) startDownloading() {
@@ -143,6 +154,24 @@ func (dr *downloadReader) startDownloading() {
 	// Avoid memory leaks if the reader is kept longer by 'freeing' the download closure
 	download, dr.download = dr.download, nil
 	go download()
+	// do an empty read to detect gzip stream
+	empty := make([]byte, 0)
+	_, err := dr.pipe.Read(empty)
+	if err != nil {
+		_ = dr.pipe.CloseWithError(err)
+		return
+	}
+	// It is important to only read dr.isGzip only after the empty read to avoid concurrency errors
+	if dr.isGzip {
+		// Wrap the pipe reader in a buffered reader
+		// 64K should provide smooth decompression without raising the overall memory requirements.
+		br := bufio.NewReaderSize(dr.pipe, DefaultReadBufferSize)
+		if dr.out, err = gzip.NewReader(br); err != nil {
+			// we already know it is gzipped, but the pipe might have been closed in between then and now
+			_ = dr.pipe.CloseWithError(err)
+			return
+		}
+	}
 }
 
 // Close implements io.ReadCloser
@@ -155,7 +184,7 @@ func (dr *downloadReader) Close() error {
 		// This way context errors from the Download do not override the pipe closed error on Read().
 		defer cancel()
 	}
-	return dr.r.Close()
+	return dr.pipe.Close()
 }
 
 var bufferPool = &sync.Pool{

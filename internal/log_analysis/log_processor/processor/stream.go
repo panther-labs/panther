@@ -57,7 +57,7 @@ func PollEvents(
 
 	newProcessor := NewFactory(resolver)
 	process := func(streams <-chan *common.DataStream, dest destinations.Destination) error {
-		return Process(streams, dest, newProcessor)
+		return Process(ctx, streams, dest, newProcessor)
 	}
 	return pollEvents(ctx, sqsClient, process, sources.ReadSnsMessage)
 }

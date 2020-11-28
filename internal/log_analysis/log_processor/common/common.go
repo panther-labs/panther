@@ -19,8 +19,6 @@ package common
  */
 
 import (
-	"io"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -35,6 +33,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor/logstream"
 	"github.com/panther-labs/panther/pkg/awsretry"
 )
 
@@ -83,8 +82,7 @@ func Setup() {
 
 // DataStream represents a data stream that read by the processor
 type DataStream struct {
-	Closer       io.Closer // cleans up resources
-	Reader       io.Reader
+	Stream       logstream.Stream
 	Source       *models.SourceIntegration
 	S3ObjectKey  string
 	S3Bucket     string

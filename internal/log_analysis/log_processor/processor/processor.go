@@ -19,7 +19,7 @@ package processor
  */
 
 import (
-	"bufio"
+	"context"
 	"io"
 	"sync"
 
@@ -33,6 +33,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor/logstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
@@ -59,6 +60,7 @@ type ProcessFunc func(streamCh <-chan *common.DataStream, dest destinations.Dest
 // Process orchestrates the tasks of parsing logs, classification, normalization
 // and forwarding the logs to the appropriate destination. Any errors will cause Lambda invocation to fail
 func Process(
+	ctx context.Context,
 	dataStreams <-chan *common.DataStream,
 	destination destinations.Destination,
 	newProcessor func(stream *common.DataStream) (*Processor, error),
@@ -73,12 +75,19 @@ func Process(
 		processStreams = func() error {
 			defer close(resultsChannel)
 			// it is important to process the streams serially to manage memory!
-			for dataStream := range dataStreams {
-				if err := processDataStream(dataStream, resultsChannel, newProcessor); err != nil {
-					return err
+			for {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case stream, ok := <-dataStreams:
+					if !ok {
+						return nil
+					}
+					if err := processDataStream(ctx, stream, resultsChannel, newProcessor); err != nil {
+						return err
+					}
 				}
 			}
-			return nil
 		}
 	)
 
@@ -111,14 +120,16 @@ func Process(
 	return err
 }
 
-func processDataStream(dataStream *common.DataStream,
+func processDataStream(
+	ctx context.Context,
+	dataStream *common.DataStream,
 	resultsChannel chan *parsers.Result,
 	newProcessor func(stream *common.DataStream) (*Processor, error)) error {
 
 	// ensure resources are freed
 	defer func() {
-		err := dataStream.Closer.Close()
-		if err != nil {
+		err := dataStream.Stream.Close()
+		if err != nil && err != logstream.ErrClosed {
 			zap.L().Warn("failed to close data stream",
 				zap.String("sourceId", dataStream.Source.IntegrationID),
 				zap.String("sourceLabel", dataStream.Source.IntegrationLabel),
@@ -134,7 +145,7 @@ func processDataStream(dataStream *common.DataStream,
 			zap.Error(err))
 		return err
 	}
-	return processor.run(resultsChannel)
+	return processor.run(ctx, resultsChannel)
 }
 
 type Processor struct {
@@ -174,31 +185,44 @@ func NewFactory(resolver logtypes.Resolver) Factory {
 }
 
 // processStream reads the data from an S3 the dataStream, parses it and writes events to the output channel
-func (p *Processor) run(outputChan chan<- *parsers.Result) error {
-	var err error
-	// DO NOT use bufio.NewScanner
-	// bufio.NewScanner has a max buffer size which we might hit as we read bigger log lines
-	stream := bufio.NewReader(p.input.Reader)
+func (p *Processor) run(ctx context.Context, outputChan chan<- *parsers.Result) (err error) {
+	stream := p.input.Stream
+	// Instrument downloads. The time will include time to parse the file.
+	// NOTE: dashboards depend on the operation name below! Do not change w/out updating dashboard
+	operation := common.OpLogManager.Start("readS3Object", common.OpLogS3ServiceDim)
+	defer func() {
+		if closeErr := stream.Close(); closeErr != logstream.ErrClosed {
+			err = multierr.Append(err, closeErr)
+		}
+		p.logStats(err) // emit log line describing the processing of the file and any errors
+		operation.Stop()
+		operation.Log(err,
+			// s3 dim info
+			zap.String("bucket", p.input.S3Bucket),
+			zap.String("key", p.input.S3ObjectKey),
+			zap.Int64("size", p.input.S3ObjectSize),
+			zap.String("sourceID", p.input.Source.IntegrationID),
+		)
+	}()
+	var line []byte
 	for {
-		var line string
-		line, err = stream.ReadString(common.EventDelimiter)
+		line, err = stream.Next()
 		if err != nil {
 			if err == io.EOF {
 				err = nil
-				p.processLogLine(line, outputChan)
+				return
 			}
-			break
+			err = errors.Wrap(err, "failed to read log line")
+			return
 		}
-		p.processLogLine(line, outputChan)
+		if line == nil {
+			continue
+		}
+		p.processLogLine(ctx, string(line), outputChan)
 	}
-	if err != nil {
-		err = errors.Wrap(err, "failed to read log line")
-	}
-	p.logStats(err) // emit log line describing the processing of the file and any errors
-	return err
 }
 
-func (p *Processor) processLogLine(line string, outputChan chan<- *parsers.Result) {
+func (p *Processor) processLogLine(ctx context.Context, line string, outputChan chan<- *parsers.Result) {
 	result, err := p.classifier.Classify(line)
 	// A classifier returns an error when it cannot classify a non-empty log line
 	if err != nil {
@@ -216,7 +240,11 @@ func (p *Processor) processLogLine(line string, outputChan chan<- *parsers.Resul
 		return
 	}
 	for _, event := range result.Events {
-		outputChan <- event
+		select {
+		case outputChan <- event:
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
