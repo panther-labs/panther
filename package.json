@@ -147,7 +147,7 @@
     "build:analysis": "cross-env PERFORMANCE_ANALYSIS=true node web/scripts/build.js",
     "start": "node web/scripts/start.js",
     "serve": "node web/scripts/serve.js",
-    "test": "jest --config web/__tests__/jest.config.js --runInBand",
+    "test": "jest --config web/__tests__/jest.config.js",
     "test:watch": "npm run test -- --watch",
     "build-graphql-codegen-plugins": "tsc -p web/codegen",
     "graphql-codegen": "graphql-codegen --config web/codegen.yml",
