@@ -21,10 +21,13 @@ import { useSnackbar } from 'pouncejs';
 import Page404 from 'Pages/404';
 import useRouter from 'Hooks/useRouter';
 import withSEO from 'Hoc/withSEO';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { extractErrorMessage } from 'Helpers/utils';
 import SqsSourceWizard from 'Components/wizards/SqsSourceWizard';
 import { useGetSqsLogSource } from './graphql/getSqsLogSource.generated';
 import { useUpdateSqsLogSource } from './graphql/updateSqsLogSource.generated';
+
+jest.mock('Helpers/analytics');
 
 const EditSqsLogSource: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
@@ -39,7 +42,21 @@ const EditSqsLogSource: React.FC = () => {
     },
   });
 
-  const [updateSqsLogSource] = useUpdateSqsLogSource();
+  const [updateSqsLogSource] = useUpdateSqsLogSource({
+    onCompleted: () =>
+      trackEvent({ event: EventEnum.UpdatedLogSource, src: SrcEnum.LogSources, ctx: 'SQS' }),
+    onError: err => {
+      trackError({
+        event: TrackErrorEnum.FailedToUpdateLogSource,
+        src: SrcEnum.LogSources,
+        ctx: 'SQS',
+      });
+
+      // Defining an `onError` catches the API exception. We need to re-throw it so that it
+      // can be caught by `ValidationPanel` which checks for API errors
+      throw err;
+    },
+  });
 
   const initialValues = React.useMemo(
     () => ({

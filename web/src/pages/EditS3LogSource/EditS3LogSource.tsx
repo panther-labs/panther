@@ -22,6 +22,7 @@ import Page404 from 'Pages/404';
 import useRouter from 'Hooks/useRouter';
 import withSEO from 'Hoc/withSEO';
 import S3LogSourceWizard from 'Components/wizards/S3LogSourceWizard';
+import { EventEnum, SrcEnum, trackError, trackEvent, TrackErrorEnum } from 'Helpers/analytics';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useGetS3LogSource } from './graphql/getS3LogSource.generated';
 import { useUpdateS3LogSource } from './graphql/updateS3LogSource.generated';
@@ -39,7 +40,21 @@ const EditS3LogSource: React.FC = () => {
     },
   });
 
-  const [updateLogSource] = useUpdateS3LogSource();
+  const [updateLogSource] = useUpdateS3LogSource({
+    onCompleted: () =>
+      trackEvent({ event: EventEnum.UpdatedLogSource, src: SrcEnum.LogSources, ctx: 'S3' }),
+    onError: err => {
+      trackError({
+        event: TrackErrorEnum.FailedToUpdateLogSource,
+        src: SrcEnum.LogSources,
+        ctx: 'S3',
+      });
+
+      // Defining an `onError` catches the API exception. We need to re-throw it so that it
+      // can be caught by `ValidationPanel` which checks for API errors
+      throw err;
+    },
+  });
 
   const initialValues = React.useMemo(
     () => ({
