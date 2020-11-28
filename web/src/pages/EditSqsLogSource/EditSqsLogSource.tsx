@@ -27,8 +27,6 @@ import SqsSourceWizard from 'Components/wizards/SqsSourceWizard';
 import { useGetSqsLogSource } from './graphql/getSqsLogSource.generated';
 import { useUpdateSqsLogSource } from './graphql/updateSqsLogSource.generated';
 
-jest.mock('Helpers/analytics');
-
 const EditSqsLogSource: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
   const { match } = useRouter<{ id: string }>();
