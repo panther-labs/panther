@@ -140,6 +140,11 @@ const Navigation = () => {
               <NavIconButton active={false} icon="docs" tooltipLabel="Documentation" />
             </Link>
           </Box>
+          <Box as="li">
+            <Link as={RRLink} to={urls.account.support()} tabIndex={-1}>
+              <NavIconButton active={false} icon="help" tooltipLabel="Support" />
+            </Link>
+          </Box>
         </Flex>
       </Flex>
       {transitions.map(
