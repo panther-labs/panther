@@ -19,6 +19,7 @@
 import React from 'react';
 import withSEO from 'Hoc/withSEO';
 import ComplianceSourceWizard from 'Components/wizards/ComplianceSourceWizard';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { useAddComplianceSource } from './graphql/addComplianceSource.generated';
 
 const initialValues = {
@@ -37,6 +38,18 @@ const CreateComplianceSource: React.FC = () => {
           return queryData ? [addedIntegrationCacheRef, ...queryData] : [addedIntegrationCacheRef];
         },
       });
+    },
+    onCompleted: () =>
+      trackEvent({ event: EventEnum.AddedComplianceSource, src: SrcEnum.ComplianceSources }),
+    onError: err => {
+      trackError({
+        event: TrackErrorEnum.FailedToAddComplianceSource,
+        src: SrcEnum.ComplianceSources,
+      });
+
+      // Defining an `onError` catches the API exception. We need to re-throw it so that it
+      // can be caught by `ValidationPanel` which checks for API errors
+      throw err;
     },
   });
 
