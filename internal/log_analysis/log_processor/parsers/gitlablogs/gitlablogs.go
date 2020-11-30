@@ -2,8 +2,10 @@
 package gitlablogs
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 /**
@@ -47,47 +49,65 @@ func LogTypes() logtypes.Group {
 }
 
 var logTypes = logtypes.Must(LogTypePrefix,
-	logtypes.Config{
+	logtypes.ConfigJSON{
 		Name: TypeAPI,
 		Description: `GitLab log for API requests received from GitLab.
 		NOTE: We are using the latest version of GitLab API logs. Some fields differ from the official documentation`,
 		ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#api_jsonlog`,
-		Schema:       API{},
-		NewParser:    parsers.AdapterFactory(&APIParser{}),
+		NewEvent: func() interface{} {
+			return &API{}
+		},
 	},
-	logtypes.Config{
+	logtypes.ConfigJSON{
 		Name:         TypeAudit,
 		Description:  `GitLab log file containing changes to group or project settings`,
 		ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#audit_jsonlog`,
-		Schema:       Audit{},
-		NewParser:    parsers.AdapterFactory(&AuditParser{}),
+		NewEvent: func() interface{} {
+			return &Audit{}
+		},
 	},
-	logtypes.Config{
+	logtypes.ConfigJSON{
 		Name:         TypeExceptions,
 		Description:  `GitLab log file containing changes to group or project settings`,
 		ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#exceptions_jsonlog`,
-		Schema:       Exceptions{},
-		NewParser:    parsers.AdapterFactory(&ExceptionsParser{}),
+		NewEvent: func() interface{} {
+			return &Exceptions{}
+		},
 	},
-	logtypes.Config{
+	logtypes.ConfigJSON{
 		Name:         TypeGit,
 		Description:  `GitLab log file containing all failed requests from GitLab to Git repositories.`,
 		ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#git_jsonlog`,
-		Schema:       Git{},
-		NewParser:    parsers.AdapterFactory(&GitParser{}),
+		NewEvent: func() interface{} {
+			return &Git{}
+		},
 	},
-	logtypes.Config{
+	logtypes.ConfigJSON{
 		Name:         TypeIntegrations,
 		Description:  `GitLab log with information about integrations activities such as Jira, Asana, and Irker services.`,
 		ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#integrations_jsonlog`,
-		Schema:       Integrations{},
-		NewParser:    parsers.AdapterFactory(&IntegrationsParser{}),
+		NewEvent: func() interface{} {
+			return &Integrations{}
+		},
 	},
-	logtypes.Config{
+	logtypes.ConfigJSON{
 		Name:         TypeProduction,
 		Description:  `GitLab log for Production controller requests received from GitLab`,
 		ReferenceURL: `https://docs.gitlab.com/ee/administration/logs.html#production_jsonlog`,
-		Schema:       Production{},
-		NewParser:    parsers.AdapterFactory(&ProductionParser{}),
+		NewEvent: func() interface{} {
+			return &Production{}
+		},
+		// This custom validation checks that the event is gitlab.Production not gitlab.API
+		// These two are almost identical because they are Rails logs.
+		// There is probably a bug in validator.v9 where 'required_without' does not work well with custom validators
+		Validate: func(x interface{}) error {
+			event := x.(*Production)
+			// Production logs most of the time have an 'action' field to differentiate them from API logs.
+			// Unless they are redirects, in which case they have an 'etag_route' field instead.
+			if event.Action.Exists || event.EtagRoute.Exists {
+				return pantherlog.ValidateStruct(x)
+			}
+			return errors.New("log entry is probably GitLab.API not GitLab.Production")
+		},
 	},
 )

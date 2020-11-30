@@ -1,3 +1,5 @@
+package snapshotlogs
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,20 +18,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import path from 'path';
-import { overrideDotEnvVars, getAppTemplateParams } from '../scripts/utils';
+import (
+	"testing"
 
-process.env.TZ = 'UTC';
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
+)
 
-overrideDotEnvVars(path.resolve(__dirname, '.env.test'));
-/**
- * Mock the server-side EJS-injected AWS configuration.
- * See `web/public/index.ejs`
- */
-const { PANTHER_CONFIG } = getAppTemplateParams();
-
-const scriptTag = document.createElement('script');
-scriptTag.id = '__PANTHER_CONFIG__';
-scriptTag.type = 'application/json';
-scriptTag.innerHTML = JSON.stringify(PANTHER_CONFIG);
-document.body.appendChild(scriptTag);
+func TestSnapshotsLogs(t *testing.T) {
+	logtesting.RunTestsFromYAML(t, LogTypes(), "./testdata/snapshot_tests.yml")
+}

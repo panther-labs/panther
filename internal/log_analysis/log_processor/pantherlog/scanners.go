@@ -118,6 +118,7 @@ func LookupScanner(name string) (scanner ValueScanner, fields []FieldID) {
 
 // ScanURL scans a URL string for domain or ip address
 func ScanURL(dest ValueWriter, input string) {
+	input = strings.TrimSpace(input)
 	if input == "" {
 		return
 	}
@@ -130,6 +131,7 @@ func ScanURL(dest ValueWriter, input string) {
 
 // ScanHostname scans `input` for either an ip address or a domain name value.
 func ScanHostname(w ValueWriter, input string) {
+	input = strings.TrimSpace(input)
 	if checkIPAddress(input) {
 		w.WriteValues(FieldIPAddress, input)
 	} else {
@@ -179,5 +181,12 @@ type multiScanner []ValueScanner
 func (m multiScanner) ScanValues(w ValueWriter, input string) {
 	for _, scanner := range m {
 		scanner.ScanValues(w, input)
+	}
+}
+
+func ScanEmail(w ValueWriter, input string) {
+	if pos := strings.IndexByte(input, '@'); pos != -1 {
+		input = strings.TrimSpace(input)
+		w.WriteValues(FieldEmail, input)
 	}
 }
