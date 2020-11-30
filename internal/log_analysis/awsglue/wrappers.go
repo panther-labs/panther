@@ -27,9 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
-	"go.uber.org/multierr"
 
-	"github.com/panther-labs/panther/internal/core/pantherdb"
 	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
@@ -161,15 +159,6 @@ func ParseS3URL(s3URL string) (bucket, key string, err error) {
 	}
 
 	return bucket, key, err
-}
-
-func EnsureDatabases(ctx context.Context, client glueiface.GlueAPI) (err error) {
-	for name, desc := range pantherdb.Registry {
-		if e := EnsureDatabase(ctx, client, name, desc); e != nil {
-			err = multierr.Append(err, e)
-		}
-	}
-	return
 }
 
 func EnsureDatabase(ctx context.Context, client glueiface.GlueAPI, name, description string) error {

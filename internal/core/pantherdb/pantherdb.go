@@ -44,13 +44,12 @@ const (
 	TempDatabaseDescription = "Holds temporary tables used for processing tasks"
 )
 
-var Registry = map[string]string{
+var LogDatabases = map[string]string{
 	LogProcessingDatabase: LogProcessingDatabaseDescription,
 	RuleMatchDatabase:     RuleMatchDatabaseDescription,
 	RuleErrorsDatabase:    RuleErrorsDatabaseDescription,
 	ViewsDatabase:         ViewsDatabaseDescription,
 	TempDatabase:          TempDatabaseDescription,
-	CloudSecurityDatabase: CloudSecurityDatabaseDescription,
 }
 
 // The type of data that are stored in the Panther
