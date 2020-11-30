@@ -77,13 +77,9 @@ func main() {
 	numLines := 0
 	numEvents := 0
 	for {
-		next, err := stream.Next()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			debugLog.Printf("Read failed at line %d: %s", numLines, err)
-			os.Exit(1)
+		next := stream.Next()
+		if next == nil {
+			break
 		}
 		line := string(next)
 		if len(line) == 0 {
@@ -116,8 +112,8 @@ func main() {
 			numEvents++
 		}
 	}
-	if err := stream.Close(); err != nil {
-		debugLog.Printf("Scan failed %s\n", err)
+	if err := stream.Err(); err != nil {
+		debugLog.Printf("Read failed at line %d: %s", numLines, err)
 		os.Exit(1)
 	}
 	debugLog.Printf("Scanned %d lines\n", numLines)

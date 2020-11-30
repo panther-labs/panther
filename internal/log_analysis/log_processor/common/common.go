@@ -83,6 +83,7 @@ func Setup() {
 // DataStream represents a data stream that read by the processor
 type DataStream struct {
 	Stream       logstream.Stream
+	Close        func() error
 	Source       *models.SourceIntegration
 	S3ObjectKey  string
 	S3Bucket     string

@@ -508,12 +508,11 @@ func makeDataStream() (dataStream *common.DataStream, closer *dummyCloser) {
 	for i := uint64(0); i < testLogLines; i++ {
 		testData[i] = testLogLine
 	}
-	closer = &dummyCloser{
-		Reader: strings.NewReader(strings.Join(testData, "\n")),
-	}
-
+	reader := strings.NewReader(strings.Join(testData, "\n"))
+	closer = &dummyCloser{}
 	dataStream = &common.DataStream{
-		Stream:      logstream.NewLineStream(closer, 4096),
+		Stream:      logstream.NewLineStream(reader, 4096),
+		Close:       closer.Close,
 		Source:      testSource,
 		S3ObjectKey: testKey,
 		S3Bucket:    testBucket,
@@ -554,11 +553,10 @@ var testSource = &models.SourceIntegration{
 
 // returns a dataStream that will cause the parse to fail
 func makeBadDataStream() (dataStream *common.DataStream, closer *dummyCloser) {
-	closer = &dummyCloser{
-		Reader: &failingReader{},
-	}
+	closer = &dummyCloser{}
 	dataStream = &common.DataStream{
-		Stream: logstream.NewLineStream(closer, 4096),
+		Stream: logstream.NewLineStream(&failingReader{}, 4096),
+		Close:  closer.Close,
 		Source: testSource,
 	}
 	return

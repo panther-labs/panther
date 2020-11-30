@@ -20,11 +20,9 @@ package logstream
 
 import (
 	"bufio"
-	"errors"
+	goerrors "errors"
 	"io"
-	"io/ioutil"
-
-	"go.uber.org/multierr"
+	"unicode/utf8"
 )
 
 const (
@@ -33,15 +31,15 @@ const (
 )
 
 type Stream interface {
-	Next() ([]byte, error)
-	Close() error
+	Next() []byte
+	Err() error
 }
 
 type LineStream struct {
-	r       *bufio.Reader
-	err     error
-	rc      io.ReadCloser
-	scratch []byte
+	r        *bufio.Reader
+	err      error
+	numLines int64
+	scratch  []byte
 }
 
 func NewLineStream(r io.Reader, size int) *LineStream {
@@ -52,24 +50,45 @@ func NewLineStream(r io.Reader, size int) *LineStream {
 	}
 
 	return &LineStream{
-		r:  bufio.NewReaderSize(r, size),
-		rc: asReadCloser(r),
+		r: bufio.NewReaderSize(r, size),
 	}
-}
-func asReadCloser(r io.Reader) io.ReadCloser {
-	if rc, ok := r.(io.ReadCloser); ok {
-		return rc
-	}
-	return ioutil.NopCloser(r)
 }
 
-func (s *LineStream) Next() ([]byte, error) {
-	if s.rc == nil {
-		return nil, io.EOF
+// Err returns the first non-EOF error that was encountered by the Scanner.
+func (s *LineStream) Err() error {
+	if s.err == io.EOF {
+		return nil
 	}
-	line, isPrefix, err := s.r.ReadLine()
+	return s.err
+}
+
+func (s *LineStream) Next() []byte {
+	if err := s.err; err != nil {
+		return nil
+	}
+	line, err := s.readLine()
+	if line != nil {
+		s.numLines++
+	}
 	if err != nil {
-		return s.readError(line, err)
+		s.err = err
+	}
+	return line
+}
+
+var ErrInvalidUTF8 = goerrors.New("invalid UTF8 encoding")
+
+func (s *LineStream) readLine() ([]byte, error) {
+	line, isPrefix, err := s.r.ReadLine()
+	// NOTE: ReadLine either returns a non-nil line or it returns an error, never both.
+	if err != nil {
+		return nil, err
+	}
+	if s.numLines == 0 {
+		// Check for valid UTF8 stream on first read.
+		if !isValidUTF8(line, isPrefix) {
+			return nil, ErrInvalidUTF8
+		}
 	}
 	if !isPrefix {
 		return line, nil
@@ -78,38 +97,35 @@ func (s *LineStream) Next() ([]byte, error) {
 	s.scratch = append(s.scratch[:0], line...)
 	for isPrefix {
 		line, isPrefix, err = s.r.ReadLine()
-		s.scratch = append(s.scratch, line...)
 		if err != nil {
-			return s.readError(s.scratch, err)
+			if err == io.EOF {
+				return line, nil
+			}
+			break
 		}
+		s.scratch = append(s.scratch, line...)
 	}
-	return s.scratch, nil
+	if err != nil && err != io.EOF {
+		return nil, err
+	}
+	return s.scratch, err
 }
 
-func (s *LineStream) readError(p []byte, err error) ([]byte, error) {
-	if err != io.EOF {
-		s.err = err
+func isValidUTF8(p []byte, partial bool) bool {
+	totalSize := len(p)
+	validSize := 0
+	for len(p) > 0 {
+		r, n := utf8.DecodeRune(p)
+		if r == utf8.RuneError {
+			break
+		}
+		p = p[n:]
+		validSize += n
 	}
-	closeErr := s.Close()
-	// Store read error along with close error
-	if closeErr != nil && closeErr != ErrClosed {
-		s.err = multierr.Append(s.err, closeErr)
+	if partial {
+		diff := totalSize - validSize
+		// Ensure that the invalid bytes remaining are a partially read UTF8 rune
+		return diff < utf8.UTFMax
 	}
-	return p, err
-}
-
-var ErrClosed = errors.New("stream closed")
-
-func (s *LineStream) Close() error {
-	var rc io.ReadCloser
-	rc, s.rc = s.rc, nil
-	if rc == nil {
-		return s.err
-	}
-	if err := rc.Close(); err != nil {
-		s.err = err
-		return err
-	}
-	s.err = ErrClosed
-	return nil
+	return validSize == totalSize
 }

@@ -20,7 +20,6 @@ package processor
 
 import (
 	"context"
-	"io"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -33,7 +32,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor/logstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
@@ -127,15 +125,17 @@ func processDataStream(
 	newProcessor func(stream *common.DataStream) (*Processor, error)) error {
 
 	// ensure resources are freed
-	defer func() {
-		err := dataStream.Stream.Close()
-		if err != nil && err != logstream.ErrClosed {
-			zap.L().Warn("failed to close data stream",
-				zap.String("sourceId", dataStream.Source.IntegrationID),
-				zap.String("sourceLabel", dataStream.Source.IntegrationLabel),
-				zap.Error(err))
-		}
-	}()
+	if dataStream.Close != nil {
+		defer func() {
+			err := dataStream.Close()
+			if err != nil {
+				zap.L().Warn("failed to close data stream",
+					zap.String("sourceId", dataStream.Source.IntegrationID),
+					zap.String("sourceLabel", dataStream.Source.IntegrationLabel),
+					zap.Error(err))
+			}
+		}()
+	}
 
 	processor, err := newProcessor(dataStream)
 	if err != nil {
@@ -186,14 +186,10 @@ func NewFactory(resolver logtypes.Resolver) Factory {
 
 // processStream reads the data from an S3 the dataStream, parses it and writes events to the output channel
 func (p *Processor) run(ctx context.Context, outputChan chan<- *parsers.Result) (err error) {
-	stream := p.input.Stream
 	// Instrument downloads. The time will include time to parse the file.
 	// NOTE: dashboards depend on the operation name below! Do not change w/out updating dashboard
 	operation := common.OpLogManager.Start("readS3Object", common.OpLogS3ServiceDim)
 	defer func() {
-		if closeErr := stream.Close(); closeErr != logstream.ErrClosed {
-			err = multierr.Append(err, closeErr)
-		}
 		p.logStats(err) // emit log line describing the processing of the file and any errors
 		operation.Stop()
 		operation.Log(err,
@@ -204,22 +200,18 @@ func (p *Processor) run(ctx context.Context, outputChan chan<- *parsers.Result) 
 			zap.String("sourceID", p.input.Source.IntegrationID),
 		)
 	}()
-	var line []byte
+	stream := p.input.Stream
 	for {
-		line, err = stream.Next()
-		if err != nil {
-			if err == io.EOF {
-				err = nil
-				return
-			}
-			err = errors.Wrap(err, "failed to read log line")
-			return
-		}
+		line := stream.Next()
 		if line == nil {
-			continue
+			break
 		}
 		p.processLogLine(ctx, string(line), outputChan)
 	}
+	if err = stream.Err(); err != nil {
+		err = errors.Wrap(err, "failed to read log line")
+	}
+	return
 }
 
 func (p *Processor) processLogLine(ctx context.Context, line string, outputChan chan<- *parsers.Result) {
