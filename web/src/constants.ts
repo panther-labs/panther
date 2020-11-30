@@ -110,8 +110,8 @@ const PANTHER_DOCS_BASE = 'https://docs.runpanther.io';
 const PANTHER_VERSION_MATCH = pantherConfig.PANTHER_VERSION.match(
   /(v(\d+)\.(\d+)\.(\d+))(?:(-RC)?)/
 );
-export const FULL_PANTHER_VERSION = PANTHER_VERSION_MATCH[0]; // e.g. could be "v1.13.0" or "v1.13.0-RC"
-export const STABLE_PANTHER_VERSION = PANTHER_VERSION_MATCH[1]; // e.g. "v1.13.0"
+export const QUALIFIED_PANTHER_PATCH_VERSION = PANTHER_VERSION_MATCH[0]; // e.g. could be "v1.13.0" or "v1.13.0-RC"
+export const PANTHER_PATCH_VERSION = PANTHER_VERSION_MATCH[1]; // e.g. "v1.13.0"
 const MINOR_PANTHER_VERSION = `${PANTHER_VERSION_MATCH[2]}.${PANTHER_VERSION_MATCH[3]}`; // e.g. "1.13"
 export const PANTHER_DOCS_LINK = `${PANTHER_DOCS_BASE}/v/release-${MINOR_PANTHER_VERSION}`;
 
