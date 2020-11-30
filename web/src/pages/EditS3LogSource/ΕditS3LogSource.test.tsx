@@ -26,10 +26,15 @@ import {
   buildListAvailableLogTypesResponse,
   buildUpdateS3LogIntegrationInput,
 } from 'test-utils';
+import { Route } from 'react-router';
+import urls from 'Source/urls';
 import { mockListAvailableLogTypes } from 'Source/graphql/queries';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
 import EditS3LogSource from './EditS3LogSource';
 import { mockGetS3LogSource } from './graphql/getS3LogSource.generated';
 import { mockUpdateS3LogSource } from './graphql/updateS3LogSource.generated';
+
+jest.mock('Helpers/analytics');
 
 describe('EditS3LogSource', () => {
   it('can successfully update an S3 log source', async () => {
@@ -44,6 +49,9 @@ describe('EditS3LogSource', () => {
 
     const mocks = [
       mockGetS3LogSource({
+        variables: {
+          id: logSource.integrationId,
+        },
         data: {
           getS3LogIntegration: logSource,
         },
@@ -69,9 +77,15 @@ describe('EditS3LogSource', () => {
         },
       }),
     ];
-    const { getByText, getByLabelText, getByAltText, findByText } = render(<EditS3LogSource />, {
-      mocks,
-    });
+    const { getByText, getByLabelText, getByAltText, findByText } = render(
+      <Route path={urls.logAnalysis.sources.edit(':id', ':type')}>
+        <EditS3LogSource />
+      </Route>,
+      {
+        mocks,
+        initialRoute: urls.logAnalysis.sources.edit(logSource.integrationId, 's3'),
+      }
+    );
 
     const nameField = getByLabelText('Name') as HTMLInputElement;
 
@@ -101,5 +115,12 @@ describe('EditS3LogSource', () => {
     // ... replaced by a success screen
     expect(await findByText('Everything looks good!')).toBeInTheDocument();
     expect(getByText('Finish Setup')).toBeInTheDocument();
+
+    // Expect analytics to have been called
+    expect(trackEvent).toHaveBeenCalledWith({
+      event: EventEnum.UpdatedLogSource,
+      src: SrcEnum.LogSources,
+      ctx: 'S3',
+    });
   });
 });
