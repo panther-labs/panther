@@ -274,6 +274,7 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ListRules", listRules)
 		t.Run("ListGlobals", listGlobals)
 		t.Run("ListDataModels", listDataModels)
+		t.Run("ListEnabledDataModels", listEnabledDataModels)
 	})
 
 	t.Run("Modify", func(t *testing.T) {
@@ -1905,7 +1906,7 @@ func listEnabledDataModels(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
 		ListDataModels: &models.ListDataModelsInput{
-			Enabled: aws.Bool(false),
+			Enabled: aws.Bool(true),
 		},
 	}
 	var result models.ListDataModelsOutput
