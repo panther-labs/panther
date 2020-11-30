@@ -42,7 +42,11 @@ const LogAnalysisNavigation: React.FC = () => {
       <Flex direction="column" as="ul">
         <FadeInTrail as="li">
           <NavLink icon="dashboard-alt" to={urls.logAnalysis.overview()} label="Overview" />
-          <NavLink icon="rule" to={urls.logAnalysis.rules.list()} label="Rules" />
+          <NavLink
+            icon="rule"
+            to={`${urls.logAnalysis.rules.list()}?page=1&sortBy=lastModified&sortDir=descending`}
+            label="Rules"
+          />
           <NavLink
             icon="alert"
             to={`${urls.logAnalysis.alerts.list()}?status[]=${AlertStatusesEnum.Open}&status[]=${
