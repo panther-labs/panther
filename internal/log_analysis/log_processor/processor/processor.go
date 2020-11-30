@@ -125,10 +125,9 @@ func processDataStream(
 	newProcessor func(stream *common.DataStream) (*Processor, error)) error {
 
 	// ensure resources are freed
-	if dataStream.Close != nil {
+	if c := dataStream.Closer; c != nil {
 		defer func() {
-			err := dataStream.Close()
-			if err != nil {
+			if err := c.Close(); err != nil {
 				zap.L().Warn("failed to close data stream",
 					zap.String("sourceId", dataStream.Source.IntegrationID),
 					zap.String("sourceLabel", dataStream.Source.IntegrationLabel),

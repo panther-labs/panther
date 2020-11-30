@@ -159,7 +159,7 @@ func buildStream(ctx context.Context, s3Object *S3ObjectInfo) (*common.DataStrea
 
 	return &common.DataStream{
 		Stream:       stream,
-		Close:        r.Close,
+		Closer:       r,
 		Source:       sourceInfo,
 		S3Bucket:     s3Object.S3Bucket,
 		S3ObjectKey:  s3Object.S3ObjectKey,

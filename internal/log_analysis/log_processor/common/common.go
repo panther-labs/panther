@@ -19,6 +19,8 @@ package common
  */
 
 import (
+	"io"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -83,7 +85,7 @@ func Setup() {
 // DataStream represents a data stream that read by the processor
 type DataStream struct {
 	Stream       logstream.Stream
-	Close        func() error
+	Closer       io.Closer
 	Source       *models.SourceIntegration
 	S3ObjectKey  string
 	S3Bucket     string

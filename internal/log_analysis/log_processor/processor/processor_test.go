@@ -91,7 +91,7 @@ func newTestLog() *parsers.Result {
 func TestProcess(t *testing.T) {
 	destination := (&testDestination{}).standardMock()
 
-	dataStream, closer := makeDataStream()
+	dataStream := makeDataStream()
 	f := NewFactory(testResolver)
 	p, err := f(dataStream)
 	require.NoError(t, err)
@@ -127,14 +127,14 @@ func TestProcess(t *testing.T) {
 	require.Equal(t, testLogEvents, destination.nEvents, "wrong number of events %d != %d", testLogEvents, destination.nEvents)
 
 	// ensure the closer was called
-	assert.True(t, closer.closed)
+	assert.True(t, dataStream.Closer.(*dummyCloser).closed)
 }
 
 func TestProcessDataStreamError(t *testing.T) {
 	logs := mockLogger()
 
 	destination := (&testDestination{}).standardMock()
-	dataStream, closer := makeBadDataStream() // failure to read data, never hits classifier
+	dataStream := makeBadDataStream() // failure to read data, never hits classifier
 	f := NewFactory(testResolver)
 	p, err := f(dataStream)
 	require.NoError(t, err)
@@ -184,7 +184,7 @@ func TestProcessDataStreamError(t *testing.T) {
 	assertLogEqual(t, expectedLog, actualLog)
 
 	// ensure the closer was called
-	assert.True(t, closer.closed)
+	assert.True(t, dataStream.Closer.(*dummyCloser).closed)
 }
 
 func TestProcessDataStreamErrorNoChannelBuffers(t *testing.T) {
@@ -203,7 +203,7 @@ func TestProcessDestinationError(t *testing.T) {
 		} // must drain q
 	})
 
-	dataStream, _ := makeDataStream()
+	dataStream := makeDataStream()
 	f := NewFactory(testResolver)
 	p, err := f(dataStream)
 	require.NoError(t, err)
@@ -248,7 +248,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 	logs := mockLogger()
 
 	destination := (&testDestination{}).standardMock()
-	dataStream, closer := makeDataStream()
+	dataStream := makeDataStream()
 	f := NewFactory(testResolver)
 	p, err := f(dataStream)
 	require.NoError(t, err)
@@ -433,7 +433,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 	}
 
 	// ensure the closer was called
-	assert.True(t, closer.closed)
+	assert.True(t, dataStream.Closer.(*dummyCloser).closed)
 }
 
 // deals with the error package inserting line numbers into errors
@@ -503,21 +503,19 @@ func (c *testClassifier) standardMocks(cStats *classification.ClassifierStats, p
 	c.On("ParserStats", mock.Anything).Return(pStats)
 }
 
-func makeDataStream() (dataStream *common.DataStream, closer *dummyCloser) {
+func makeDataStream() *common.DataStream {
 	testData := make([]string, testLogLines)
 	for i := uint64(0); i < testLogLines; i++ {
 		testData[i] = testLogLine
 	}
 	reader := strings.NewReader(strings.Join(testData, "\n"))
-	closer = &dummyCloser{}
-	dataStream = &common.DataStream{
+	return &common.DataStream{
 		Stream:      logstream.NewLineStream(reader, 4096),
-		Close:       closer.Close,
+		Closer:      &dummyCloser{},
 		Source:      testSource,
 		S3ObjectKey: testKey,
 		S3Bucket:    testBucket,
 	}
-	return
 }
 
 type dummyCloser struct {
@@ -552,14 +550,12 @@ var testSource = &models.SourceIntegration{
 }
 
 // returns a dataStream that will cause the parse to fail
-func makeBadDataStream() (dataStream *common.DataStream, closer *dummyCloser) {
-	closer = &dummyCloser{}
-	dataStream = &common.DataStream{
+func makeBadDataStream() *common.DataStream {
+	return &common.DataStream{
 		Stream: logstream.NewLineStream(&failingReader{}, 4096),
-		Close:  closer.Close,
+		Closer: &dummyCloser{},
 		Source: testSource,
 	}
-	return
 }
 
 // replace global logger with an in-memory observer for tests.
