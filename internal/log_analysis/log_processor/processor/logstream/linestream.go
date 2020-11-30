@@ -21,9 +21,10 @@ package logstream
 import (
 	"bufio"
 	"errors"
-	"go.uber.org/multierr"
 	"io"
 	"io/ioutil"
+
+	"go.uber.org/multierr"
 )
 
 const (

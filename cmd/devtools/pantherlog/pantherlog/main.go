@@ -80,7 +80,7 @@ func main() {
 		next, err := stream.Next()
 		if err != nil {
 			if err == io.EOF {
-				return
+				break
 			}
 			debugLog.Printf("Read failed at line %d: %s", numLines, err)
 			os.Exit(1)

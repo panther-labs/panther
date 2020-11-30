@@ -101,6 +101,7 @@ func TestParseUnknownMessage(t *testing.T) {
 }
 
 func TestHandleUnsupportedFileType(t *testing.T) {
+	t.Skip("test not relevant anymore")
 	resetCaches()
 	// if we encounter an unsupported file type, we should just skip the object
 	lambdaMock := &testutils.LambdaMock{}

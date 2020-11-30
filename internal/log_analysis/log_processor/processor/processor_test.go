@@ -311,7 +311,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 				},
 			},
 		},
-		Timestamp: p.operation.EndTime.UnixNano() / metrics.NanosecondsPerMillisecond,
+		Timestamp: time.Duration(p.operation.EndTime.UnixNano()).Milliseconds(),
 	}
 
 	expected := []observer.LoggedEntry{
@@ -384,60 +384,34 @@ func TestProcessClassifyFailure(t *testing.T) {
 				Message: "metric",
 			},
 			Context: []zapcore.Field{
-				{
-					Key:    "LogType",
-					String: testLogType,
-				},
-				{
-					Key:     "BytesProcessed",
-					Integer: 7996,
-				},
-				{
-					Key:     "EventsProcessed",
-					Integer: 1999,
-				},
-				{
-					Key:     "CombinedLatency",
-					Integer: 0,
-				},
-				{
-					Key:       "_aws",
-					Interface: embeddedMetric,
-				},
+				zap.String("LogType", testLogType),
+				zap.Uint64("BytesProcessed", 7996),
+				zap.Uint64("EventsProcessed", 1999),
+				zap.Uint64("CombinedLatency", 0),
+				zap.Any("_aws", embeddedMetric),
 			},
 		},
 		{
 			Entry: zapcore.Entry{
 				Level:   zapcore.InfoLevel,
-				Message: "readS3Object",
+				Message: common.OpLogNamespace + ":" + common.OpLogComponent + ":" + "readS3Object",
 			},
 			Context: []zapcore.Field{
-				{
-					Key:    "LogType",
-					String: testLogType,
-				},
-				{
-					Key:     "BytesProcessed",
-					Integer: 7996,
-				},
-				{
-					Key:     "EventsProcessed",
-					Integer: 1999,
-				},
-				{
-					Key:     "CombinedLatency",
-					Integer: 0,
-				},
-				{
-					Key:       "_aws",
-					Interface: embeddedMetric,
-				},
+				zap.String("namespace", common.OpLogNamespace),
+				zap.String("component", common.OpLogComponent),
+				zap.String("operation", "readS3Object"),
+				zap.String("bucket", testBucket),
+				zap.String("key", testKey),
+				zap.Int64("size", 0),
+				zap.String("sourceID", testSourceID),
 			},
 		},
 	}
 	require.Equal(t, len(expected), len(actual))
+
 	for i := range expected {
-		if i == len(expected)-1 {
+		// This thing checks metrics logs...
+		if i == len(expected)-2 {
 			assert.Equal(t, expected[i].Entry.Level, actual[i].Entry.Level)
 			assert.Equal(t, expected[i].Entry.Message, actual[i].Entry.Message)
 			require.Equal(t, len(expected[i].Context), len(actual[i].Context))
@@ -473,7 +447,7 @@ func assertLogEqual(t *testing.T, expected, actual observer.LoggedEntry) {
 			assert.Equal(t, expectedError, actualError)
 		} else {
 			assert.Equal(t, v, actual.ContextMap()[k],
-				fmt.Sprintf("%s for\n\texpected:%#v\n\tactual:%#v", k, expected, actual))
+				"%s for\n\texpected:%#v\n\tactual:%#v", k, expected.ContextMap(), actual.ContextMap())
 		}
 	}
 }
