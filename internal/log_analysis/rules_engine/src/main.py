@@ -53,24 +53,17 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
     raw_rule = request['rules'][0]
     # The rule during direct invocation doesn't have a version
     raw_rule['versionId'] = 'default'
-    init_exception: Optional[Exception] = None
-    try:
-        test_rule = Rule(raw_rule)
-    except Exception as err:  # pylint: disable=broad-except
-        init_exception = err
+    test_rule = Rule(raw_rule)
 
     format_exception = lambda exc: '{}: {}'.format(type(exc).__name__, exc) if exc else exc
     results = []
     for event in request['events']:
-        if init_exception:
-            results.append({'id': event['id'], 'ruleId': raw_rule['id'], 'errored': True, 'genericError': format_exception(init_exception)})
-            continue
-
         rule_result = test_rule.run(event['data'], batch_mode=False)
         results.append(
             {
                 'id': event['id'],
                 'ruleId': raw_rule['id'],
+                'genericError': format_exception(rule_result.setup_exception),
                 'errored': rule_result.errored,
                 'ruleOutput': rule_result.matched,
                 'ruleError': format_exception(rule_result.rule_exception),
