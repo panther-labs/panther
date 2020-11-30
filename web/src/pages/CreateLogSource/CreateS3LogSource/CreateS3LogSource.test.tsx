@@ -27,10 +27,13 @@ import {
   buildListAvailableLogTypesResponse,
   buildAddS3LogIntegrationInput,
 } from 'test-utils';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { LOG_ONBOARDING_SNS_DOC_URL } from 'Source/constants';
 import { mockListAvailableLogTypes } from 'Source/graphql/queries';
 import { mockAddS3LogSource } from './graphql/addS3LogSource.generated';
 import CreateS3LogSource from './CreateS3LogSource';
+
+jest.mock('Helpers/analytics');
 
 describe('CreateS3LogSource', () => {
   it('can successfully onboard an S3 log source', async () => {
@@ -102,6 +105,13 @@ describe('CreateS3LogSource', () => {
     expect(await findByText('Everything looks good!')).toBeInTheDocument();
     expect(getByText('Finish Setup')).toBeInTheDocument();
     expect(getByText('Add Another')).toBeInTheDocument();
+
+    // Expect analytics to have been called
+    expect(trackEvent).toHaveBeenCalledWith({
+      event: EventEnum.AddedLogSource,
+      src: SrcEnum.LogSources,
+      ctx: 'S3',
+    });
   });
 
   it('shows a proper fail message when source validation fails', async () => {
@@ -164,5 +174,12 @@ describe('CreateS3LogSource', () => {
     expect(await findByText("Something didn't go as planned")).toBeInTheDocument();
     expect(getByText('Start over')).toBeInTheDocument();
     expect(getByText(errorMessage)).toBeInTheDocument();
+
+    // Expect analytics to have been called
+    expect(trackError).toHaveBeenCalledWith({
+      event: TrackErrorEnum.FailedToAddLogSource,
+      src: SrcEnum.LogSources,
+      ctx: 'S3',
+    });
   });
 });
