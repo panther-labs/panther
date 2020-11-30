@@ -52,6 +52,7 @@ export enum PageViewEnum {
   ListAlerts = 'List Alerts',
   ListLogSources = 'List Log Sources',
   Home = 'Home',
+  Support = 'Support',
 }
 
 interface TrackPageViewProps {

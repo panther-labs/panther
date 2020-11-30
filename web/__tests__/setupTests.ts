@@ -90,6 +90,7 @@ if (window.URL.revokeObjectURL === undefined) {
  * Make sure that mock style tags exist to help with emotion bugs + mock console.error to "hide"
  * act  warnings
  */
+
 const originalError = global.console.error;
 beforeAll(() => {
   // Add a dummy emotion style tag to prevent testing snapshot serializer from failing
