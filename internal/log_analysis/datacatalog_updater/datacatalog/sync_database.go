@@ -39,7 +39,6 @@ func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *Sync
 			return errors.Wrapf(err, "failed to create database %s", db)
 		}
 	}
-
 	// We combine the deployed log types with the ones required by all active sources
 	// This way if new code for sources requires more log types on upgrade, they are added
 	var syncLogTypes []string
