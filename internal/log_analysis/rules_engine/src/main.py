@@ -63,6 +63,7 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
             {
                 'id': event['id'],
                 'ruleId': raw_rule['id'],
+                'genericError': format_exception(rule_result.setup_exception),
                 'errored': rule_result.errored,
                 'ruleOutput': rule_result.matched,
                 'ruleError': format_exception(rule_result.rule_exception),

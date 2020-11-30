@@ -71,6 +71,7 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
+                        'genericError': None,
                         'alertContextError': None,
                         'alertContextOutput': None,
                         'dedupError': None,
@@ -94,6 +95,7 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
+                        'genericError': None,
                         'alertContextError': None,
                         'alertContextOutput': None,
                         'dedupError': None,
@@ -125,6 +127,7 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
+                        'genericError': None,
                         'alertContextError': None,
                         'alertContextOutput': None,
                         'dedupError': None,
@@ -132,6 +135,29 @@ class TestMainDirectAnalysis(TestCase):
                         'errored': True,
                         'id': 'event_id',
                         'ruleError': 'Exception: Failure message',
+                        'ruleId': 'rule_id',
+                        'ruleOutput': None,
+                        'titleError': None,
+                        'titleOutput': None
+                    }
+                ]
+        }
+        self.assertEqual(expected_response, lambda_handler(payload, None))
+
+    def test_direct_analysis_rule_invalid(self) -> None:
+        payload = {'rules': [{'id': 'rule_id', 'body': 'import stuff'}], 'events': [{'id': 'event_id', 'data': 'data'}]}
+        expected_response = {
+            'results':
+                [
+                    {
+                        'genericError': "ModuleNotFoundError: No module named 'stuff'",
+                        'alertContextError': None,
+                        'alertContextOutput': None,
+                        'dedupError': None,
+                        'dedupOutput': None,
+                        'errored': True,
+                        'id': 'event_id',
+                        'ruleError': None,
                         'ruleId': 'rule_id',
                         'ruleOutput': None,
                         'titleError': None,
@@ -157,6 +183,7 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
+                        'genericError': None,
                         'alertContextError': None,
                         'alertContextOutput': None,
                         'dedupError': 'Exception: dedup error',
@@ -191,6 +218,7 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
+                        'genericError': None,
                         'alertContextError': None,
                         'alertContextOutput': None,
                         'dedupError': None,

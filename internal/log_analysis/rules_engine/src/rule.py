@@ -49,6 +49,8 @@ DEFAULT_RULE_DEDUP_PERIOD_MINS = 60
 class RuleResult:
     """Class containing the result of running a rule"""
 
+    setup_exception: Optional[Exception] = None
+
     matched: Optional[bool] = None  # rule output
     rule_exception: Optional[Exception] = None
 
@@ -61,21 +63,51 @@ class RuleResult:
     alert_context: Optional[str] = None
     alert_context_exception: Optional[Exception] = None
 
+    @property
+    def error_type(self) -> Optional[str]:
+        """Returns the type of the exception, None if there was no error"""
+        if self.setup_exception:
+            exception = self.setup_exception
+        elif self.rule_exception:
+            exception = self.rule_exception
+        else:
+            return None
+        return type(exception).__name__
+
+    @property
+    def short_error_message(self) -> Optional[str]:
+        """Returns short error message, None if there was no error"""
+        if self.setup_exception:
+            exception = self.setup_exception
+        elif self.rule_exception:
+            exception = self.rule_exception
+        else:
+            return None
+        return repr(exception)
+
+    @property
     def error_message(self) -> Optional[str]:
         """Returns formatted error message with traceback"""
-        if self.rule_exception is not None:
-            trace = traceback.format_tb(self.rule_exception.__traceback__)
-            # we only take last element of trace which will show the rule file name and line of the error, for example:
-            #    division by zero: AlwaysFail.py, line 4, in rule 1/0
-            file_trace = trace[len(trace) - 1].strip().replace("\n", "")
-            # this looks like: File "/tmp/rules/AlwaysFail.py", line 4, in rule 1/0 BUT we want just the file name
-            return str(self.rule_exception) + ": " + re.sub(r'File.*/(.*[.]py)"', r'\1', file_trace)
-        return None
+        if self.setup_exception:
+            exception = self.setup_exception
+        elif self.rule_exception:
+            exception = self.rule_exception
+        else:
+            return None
+
+        trace = traceback.format_tb(exception.__traceback__)
+        # we only take last element of trace which will show the rule file name and line of the error, for example:
+        #    division by zero: AlwaysFail.py, line 4, in rule 1/0
+        file_trace = trace[len(trace) - 1].strip().replace("\n", "")
+        # this looks like: File "/tmp/rules/AlwaysFail.py", line 4, in rule 1/0 BUT we want just the file name
+        return str(exception) + ": " + re.sub(r'File.*/(.*[.]py)"', r'\1', file_trace)
 
     @property
     def errored(self) -> bool:
         """Returns whether any of the rule functions raised an error"""
-        return bool(self.rule_exception or self.title_exception or self.dedup_exception or self.alert_context_exception)
+        return bool(
+            self.rule_exception or self.title_exception or self.dedup_exception or self.alert_context_exception or self.setup_exception
+        )
 
 
 # pylint: disable=too-many-instance-attributes
@@ -128,13 +160,13 @@ class Rule:
 
         self._store_rule()
 
-        self._setup_error = None
+        self._setup_exception = None
         try:
             self._module = self._import_rule_as_module()
             if not hasattr(self._module, 'rule'):
                 raise AssertionError("rule needs to have a method named 'rule'")
         except Exception as err:  # pylint: disable=broad-except
-            self._setup_error = err
+            self._setup_exception = err
             return
 
         if hasattr(self._module, 'title'):
@@ -165,8 +197,8 @@ class Rule:
         rule_result = RuleResult()
         # If there was an error setting up the rule
         # return early
-        if self._setup_error:
-            rule_result.rule_exception = self._setup_error
+        if self._setup_exception:
+            rule_result.setup_exception = self._setup_exception
             return rule_result
 
         try:
