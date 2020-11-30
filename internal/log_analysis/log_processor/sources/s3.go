@@ -109,11 +109,6 @@ func handleNotificationMessage(ctx context.Context, notification *SnsNotificatio
 		var dataStream *common.DataStream
 		dataStream, err = buildStream(ctx, s3Object)
 		if err != nil {
-			if _, ok := err.(*ErrUnsupportedFileType); ok {
-				// If the incoming message is not of a supported type, just skip it
-				err = nil
-				continue
-			}
 			return
 		}
 		if dataStream != nil {

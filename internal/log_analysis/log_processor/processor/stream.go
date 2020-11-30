@@ -20,6 +20,7 @@ package processor
 
 import (
 	"context"
+	"io"
 	"runtime"
 	"time"
 
@@ -123,6 +124,22 @@ func pollEvents(
 			for _, msg := range messages {
 				// pass lambda context to set FULL deadline to process which is pushed down into downloader
 				dataStreams, err := generateDataStreamsFunc(ctx, aws.StringValue(msg.Body))
+				// This is a temporary workaround to ensure all S3 streams are readable.
+				// The proper solution for this require an SQS message tracker that allows true concurrent processing.
+				// The overall behavior of the system does not change since reading was triggered
+				// when we were detecting MIME types by using `Peek()`.
+				if err == nil {
+					for _, s := range dataStreams {
+						rc, ok := s.Closer.(io.ReadCloser)
+						if !ok {
+							continue
+						}
+						if e := readZero(rc); e != nil {
+							err = e
+							break
+						}
+					}
+				}
 				if err != nil {
 					// No need for error here. This issue can happen due to
 					// 1. Persistent AWS issues while accessing S3 object
@@ -132,10 +149,7 @@ func pollEvents(
 					zap.L().Warn("Skipping event due to error", zap.Error(err))
 					continue
 				}
-				for _, dataStream := range dataStreams {
-					// Since streamChan is unbuffered it will block
-					streamChan <- dataStream
-				}
+
 				accumulatedMessageReceipts = append(accumulatedMessageReceipts, msg.ReceiptHandle)
 			}
 		}
@@ -181,4 +195,10 @@ func receiveFromSqs(ctx context.Context, sqsClient sqsiface.SQSAPI) ([]*sqs.Mess
 	}
 
 	return output.Messages, nil
+}
+
+func readZero(r io.Reader) error {
+	buf := [0]byte{}
+	_, err := r.Read(buf[:])
+	return err
 }
