@@ -93,7 +93,7 @@ func dataModelScanInput(input *models.ListDataModelsInput) (*dynamodb.ScanInput,
 	}
 
 	if len(input.LogTypes) > 0 {
-		// a policy with no resource types applies to all of them
+		// a data model with no resource types applies to all of them
 		typeFilter := expression.AttributeNotExists(expression.Name("resourceTypes"))
 		for _, typeName := range input.LogTypes {
 			// the item in Dynamo calls this "resourceTypes" for for DataModels
