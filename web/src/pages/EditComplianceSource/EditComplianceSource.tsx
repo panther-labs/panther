@@ -22,6 +22,7 @@ import Page404 from 'Pages/404';
 import useRouter from 'Hooks/useRouter';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import ComplianceSourceWizard from 'Components/wizards/ComplianceSourceWizard';
 import { useGetComplianceSource } from './graphql/getComplianceSource.generated';
 import { useUpdateComplianceSource } from './graphql/updateComplianceSource.generated';
@@ -40,11 +41,24 @@ const EditComplianceSource: React.FC = () => {
     },
   });
 
-  const [updateComplianceSource] = useUpdateComplianceSource();
+  const [updateComplianceSource] = useUpdateComplianceSource({
+    onCompleted: () =>
+      trackEvent({ event: EventEnum.UpdatedComplianceSource, src: SrcEnum.ComplianceSources }),
+    onError: err => {
+      trackError({
+        event: TrackErrorEnum.FailedToUpdateComplianceSource,
+        src: SrcEnum.ComplianceSources,
+      });
+
+      // Defining an `onError` catches the API exception. We need to re-throw it so that it
+      // can be caught by `ValidationPanel` which checks for API errors
+      throw err;
+    },
+  });
 
   const initialValues = React.useMemo(
     () => ({
-      integrationId: data?.getComplianceIntegration.integrationId,
+      integrationId: match.params.id,
       integrationLabel: data?.getComplianceIntegration.integrationLabel ?? 'Loading...',
       awsAccountId: data?.getComplianceIntegration.awsAccountId ?? 'Loading...',
       cweEnabled: data?.getComplianceIntegration.cweEnabled ?? false,
