@@ -104,9 +104,15 @@ export const RESOURCE_TYPES = [
 
 const PANTHER_DOCS_BASE = 'https://docs.runpanther.io';
 
-export const STABLE_PANTHER_VERSION = pantherConfig.PANTHER_VERSION.split('-')[0]; // e.g. "v1.7.1"
-const VERSION_PARTS = STABLE_PANTHER_VERSION.split('.'); // ["v1", "7", "1]
-const MINOR_PANTHER_VERSION = `${VERSION_PARTS[0]}.${VERSION_PARTS[1]}`.replace('v', ''); // "1.7"
+// We use a regex to capture the version string we're interested in
+// Ex1: Given a string "v1.13.0-RC-release-1.13-abc1234", we find Array ["v1.13.0-RC", "v1.13.0", "1", "13", "0", "-RC"]
+// Ex2: Given a string "v1.13.0-release-1.13-abc1234", we find Array ["v1.13.0", "v1.13.0", "1", "13", "0", undefined]
+const PANTHER_VERSION_MATCH = pantherConfig.PANTHER_VERSION.match(
+  /(v(\d+)\.(\d+)\.(\d+))(?:(-RC)?)/
+);
+export const FULL_PANTHER_VERSION = PANTHER_VERSION_MATCH[0]; // e.g. could be "v1.13.0" or "v1.13.0-RC"
+export const STABLE_PANTHER_VERSION = PANTHER_VERSION_MATCH[1]; // e.g. "v1.13.0"
+const MINOR_PANTHER_VERSION = `${PANTHER_VERSION_MATCH[2]}.${PANTHER_VERSION_MATCH[3]}`; // e.g. "1.13"
 export const PANTHER_DOCS_LINK = `${PANTHER_DOCS_BASE}/v/release-${MINOR_PANTHER_VERSION}`;
 
 export const ANALYSIS_UPLOAD_DOC_URL = `${PANTHER_DOCS_LINK}/user-guide/analysis/panther-analysis-tool#uploading-to-panther`;
