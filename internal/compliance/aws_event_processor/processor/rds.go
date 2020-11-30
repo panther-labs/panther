@@ -54,7 +54,7 @@ func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		"RestoreDBInstanceFromS3", "StartDBInstance", "StopDBInstance":
 		instanceID := detail.Get("requestParameters.dBInstanceIdentifier")
 		if !instanceID.Exists() {
-			zap.L().Warn("unable to extract dBInstanceIdentifier from event", zap.Any("requestParameters", detail.Get("requestParameters").Raw))
+			zap.L().Info("unable to extract dBInstanceIdentifier from event", zap.Any("requestParameters", detail.Get("requestParameters").Raw))
 			return nil
 		}
 		rdsARN.Resource += instanceID.Str
@@ -86,7 +86,7 @@ func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		instanceID := detail.Get("responseElements.dBSnapshot.dBInstanceIdentifier")
 		// This can happen when a snapshot for a DB that no longer exists is changed
 		if !instanceID.Exists() {
-			zap.L().Warn("unable to extract dBInstanceIdentifier from event", zap.Any("responseElements", detail.Get("responseElements").Raw))
+			zap.L().Info("unable to extract dBInstanceIdentifier from event", zap.Any("responseElements", detail.Get("responseElements").Raw))
 			return nil
 		}
 		rdsARN.Resource += instanceID.Str
@@ -119,7 +119,7 @@ func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 	case "DeleteDBInstanceAutomatedBackup":
 		instanceID := detail.Get("responseElements.dBInstanceAutomatedBackup.dBInstanceIdentifier")
 		if !instanceID.Exists() {
-			zap.L().Warn("unable to extract dBInstanceIdentifier from event", zap.Any("responseElements", detail.Get("responseElements").Raw))
+			zap.L().Info("unable to extract dBInstanceIdentifier from event", zap.Any("responseElements", detail.Get("responseElements").Raw))
 			return nil
 		}
 		rdsARN.Resource += instanceID.Str
