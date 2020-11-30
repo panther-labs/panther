@@ -364,7 +364,7 @@ exports[`AlertDetailsBanner renders 1`] = `
           aria-describedby="rule-type"
           class="panther-12"
         >
-          Rule Type
+          Alert Type
         </dd>
         <dl
           class="panther-13"
@@ -505,7 +505,7 @@ exports[`AlertDetailsBanner renders 1`] = `
           aria-describedby="rule-type"
           class="panther-12"
         >
-          Rule Type
+          Alert Type
         </dd>
         <dl
           class="panther-40"
