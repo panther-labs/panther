@@ -20,8 +20,11 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
@@ -44,7 +47,7 @@ func (API) ListDataModels(input *models.ListDataModelsInput) *events.APIGatewayP
 	}
 
 	// Scan dynamo
-	scanInput, err := buildScanInput(models.TypeDataModel, nil)
+	scanInput, err := dataModelScanInput(input)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{
 			Body: err.Error(), StatusCode: http.StatusInternalServerError}
@@ -75,4 +78,29 @@ func (API) ListDataModels(input *models.ListDataModelsInput) *events.APIGatewayP
 	}
 
 	return gatewayapi.MarshalResponse(&result, http.StatusOK)
+}
+
+func dataModelScanInput(input *models.ListDataModelsInput) (*dynamodb.ScanInput, error) {
+	var filters []expression.ConditionBuilder
+	if input.Enabled != nil {
+		filters = append(filters, expression.Equal(
+			expression.Name("enabled"), expression.Value(*input.Enabled)))
+	}
+
+	if input.NameContains != "" {
+		filters = append(filters, expression.Contains(expression.Name("lowerId"), input.NameContains).
+			Or(expression.Contains(expression.Name("lowerDisplayName"), strings.ToLower(input.NameContains))))
+	}
+
+	if len(input.LogTypes) > 0 {
+		// a data model with no resource types applies to all of them
+		typeFilter := expression.AttributeNotExists(expression.Name("resourceTypes"))
+		for _, typeName := range input.LogTypes {
+			// the item in Dynamo calls this "resourceTypes" for for DataModels
+			typeFilter = typeFilter.Or(expression.Contains(expression.Name("resourceTypes"), typeName))
+		}
+		filters = append(filters, typeFilter)
+	}
+
+	return buildScanInput(models.TypeDataModel, []string{}, filters...)
 }
