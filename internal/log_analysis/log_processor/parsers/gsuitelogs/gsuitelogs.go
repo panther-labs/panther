@@ -20,7 +20,6 @@ package gsuitelogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
 const TypeReports = `GSuite.Reports`
@@ -30,10 +29,11 @@ func LogTypes() logtypes.Group {
 }
 
 // nolint: lll
-var logTypes = logtypes.Must("GSuite", logtypes.Config{
+var logTypes = logtypes.Must("GSuite", logtypes.ConfigJSON{
 	Name:         TypeReports,
 	Description:  `Contains the activity events for a specific account and application such as the Admin console application or the Google Drive application.`,
 	ReferenceURL: `https://developers.google.com/admin-sdk/reports/v1/reference/activities/list#response`,
-	Schema:       Reports{},
-	NewParser:    parsers.AdapterFactory(&ReportsParser{}),
+	NewEvent: func() interface{} {
+		return &Reports{}
+	},
 })

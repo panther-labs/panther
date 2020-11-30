@@ -177,7 +177,7 @@ describe('RuleDetails', () => {
     expect(loadingInterfaceElement).toBeTruthy();
 
     await waitForElementToBeRemoved(loadingInterfaceElement);
-    await waitMs(500);
+    await waitMs(50);
     const matchesTab = getAllByTestId('rule-matches');
     const errorsTab = getAllByTestId('rule-errors');
 
@@ -534,7 +534,7 @@ describe('RuleDetails', () => {
       }),
     ];
 
-    const { getByText, getByTestId, findByTestId, findByLabelText, history } = render(
+    const { getByText, getByTestId, findByTestId, findByLabelText, history, findByText } = render(
       <Route exact path={urls.logAnalysis.rules.details(':id')}>
         <RuleDetails />
       </Route>,
@@ -556,44 +556,32 @@ describe('RuleDetails', () => {
 
     const input = (await findByLabelText('Filter Alerts by text')) as HTMLInputElement;
     fireEvent.focus(input);
-    await waitFor(() => {
-      fireEvent.change(input, {
-        target: {
-          value: 'foo',
-        },
-      });
+    fireEvent.change(input, {
+      target: {
+        value: 'foo',
+      },
     });
 
     // wait for autosave to kick in
-    await waitMs(210);
-    expect(getByText('Unique alert 2')).toBeInTheDocument();
+    expect(await findByText('Unique alert 2')).toBeInTheDocument();
     expect(queryStringToObj(history.location.search)).toEqual({
       nameContains: 'foo',
       section: 'matches',
     });
 
-    const sortyBy = (await findByTestId('list-alert-sorting')) as HTMLInputElement;
+    fireEvent.focus(await findByTestId('list-alert-sorting'));
+    fireEvent.click(await findByTestId('sort-by-oldest'));
 
-    await waitFor(() => {
-      fireEvent.focus(sortyBy);
-    });
+    expect(await findByText('Unique alert 3')).toBeInTheDocument();
 
-    const oldestOption = (await findByTestId('sort-by-oldest')) as HTMLInputElement;
-
-    fireEvent.click(oldestOption);
-
-    await waitMs(210);
-    expect(getByText('Unique alert 3')).toBeInTheDocument();
-
-    // once again wait for autosave to kick in
-    await waitMs(210);
-
-    expect(queryStringToObj(history.location.search)).toEqual({
-      nameContains: 'foo',
-      section: 'matches',
-      sortBy: ListAlertsSortFieldsEnum.CreatedAt,
-      sortDir: SortDirEnum.Ascending,
-    });
+    await waitFor(() =>
+      expect(queryStringToObj(history.location.search)).toEqual({
+        nameContains: 'foo',
+        section: 'matches',
+        sortBy: ListAlertsSortFieldsEnum.CreatedAt,
+        sortDir: SortDirEnum.Ascending,
+      })
+    );
   });
 
   it('can select and bulk update status for rule matches', async () => {

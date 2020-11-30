@@ -146,13 +146,30 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         self.assertIsNone(rule_result.dedup_output)
         self.assertIsNotNone(rule_result.rule_exception)
 
+    def test_invalid_python_syntax(self) -> None:
+        rule_body = 'def rule(test):this is invalid python syntax'
+        rule = Rule({'id': 'test_invalid_python_syntax', 'body': rule_body, 'versionId': 'versionId'})
+        rule_result = rule.run({})
+        self.assertIsNone(rule_result.matched)
+        self.assertIsNone(rule_result.dedup_output)
+        self.assertIsNone(rule_result.rule_exception)
+
+        self.assertTrue(rule_result.errored)
+        self.assertEqual(rule_result.error_type, "SyntaxError")
+        self.assertIsNotNone(rule_result.short_error_message)
+        self.assertIsNotNone(rule_result.error_message)
+
     def test_rule_invalid_rule_return(self) -> None:
         rule_body = 'def rule(event):\n\treturn "test"'
         rule = Rule({'id': 'test_rule_invalid_rule_return', 'body': rule_body, 'versionId': 'versionId'})
         rule_result = rule.run({})
         self.assertIsNone(rule_result.matched)
         self.assertIsNone(rule_result.dedup_output)
-        self.assertIsNotNone(rule_result.rule_exception)
+        self.assertTrue(rule_result.errored)
+
+        expected_short_msg = "Exception('rule [test_rule_invalid_rule_return] function [rule] returned [str], expected [bool]')"
+        self.assertEqual(expected_short_msg, rule_result.short_error_message)
+        self.assertEqual(rule_result.error_type, 'Exception')
 
     def test_dedup_throws_exception(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef dedup(event):\n\traise Exception("test")'
