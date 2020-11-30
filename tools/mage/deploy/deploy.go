@@ -585,5 +585,5 @@ func customResourceVersion() string {
 
 	// By default, just use the major release version so developers do not have to trigger every
 	// custom resource on every deploy.
-	return strings.Split(util.RepoVersion(), "-")[0]
+	return strings.TrimSpace(string(MustReadFile("VERSION")))
 }
