@@ -37,6 +37,16 @@ const S3SourceConfigurationPanel: React.FC = () => {
     onError: () => pushSnackbar({ title: "Couldn't fetch your available log types" }),
   });
 
+  const shouldSkipTo = React.useMemo(() => {
+    return (
+      initialValues.awsAccountId === values.awsAccountId &&
+      initialValues.initialStackName === values.initialStackName &&
+      initialValues.integrationLabel === values.integrationLabel &&
+      initialValues.logTypes === values.logTypes &&
+      initialValues.s3Bucket === values.s3Bucket &&
+      2
+    );
+  }, [initialValues, values]);
   return (
     <WizardPanel>
       <Box width={500} m="auto">
@@ -116,7 +126,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
         </ErrorBoundary>
       </Box>
       <WizardPanel.Actions>
-        <WizardPanel.ActionNext disabled={!dirty || !isValid}>
+        <WizardPanel.ActionNext disabled={!dirty || !isValid} step={shouldSkipTo}>
           Continue Setup
         </WizardPanel.ActionNext>
       </WizardPanel.Actions>

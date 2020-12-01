@@ -24,6 +24,10 @@ interface WizardPanelAction {
   disabled?: boolean;
 }
 
+type WizardPanelActionNext = WizardPanelAction & {
+  step?: number;
+};
+
 interface WizardPanelHeadingProps {
   title: string | React.ReactNode | React.ReactNode[];
   subtitle?: string | React.ReactNode | React.ReactNode[];
@@ -32,7 +36,7 @@ interface WizardPanelHeadingProps {
 
 interface WizardPanelComposition {
   Actions: React.FC;
-  ActionNext: React.FC<WizardPanelAction>;
+  ActionNext: React.FC<WizardPanelActionNext>;
   ActionStart: React.FC<WizardPanelAction>;
   ActionPrev: React.FC<WizardPanelAction>;
   Heading: React.FC<WizardPanelHeadingProps>;
@@ -92,10 +96,10 @@ const WizardPanelActionStart: React.FC<WizardPanelAction> = ({ disabled, childre
   );
 };
 
-const WizardPanelActionNext: React.FC<WizardPanelAction> = ({ disabled, children }) => {
-  const { goToNextStep } = useWizardContext();
+const WizardPanelActionNext: React.FC<WizardPanelActionNext> = ({ disabled, children, step }) => {
+  const { goToNextStep, goToStep } = useWizardContext();
   return (
-    <Button onClick={goToNextStep} disabled={disabled}>
+    <Button onClick={() => (step ? goToStep(step) : goToNextStep())} disabled={disabled}>
       {children || 'Next'}
     </Button>
   );
