@@ -56,6 +56,7 @@ var (
 type envConfig struct {
 	AccountID                  string `required:"true" split_words:"true"`
 	DataCatalogUpdaterQueueURL string `required:"true" split_words:"true"`
+	Debug                      bool   `required:"false"`
 	LogProcessorQueueURL       string `required:"true" split_words:"true"`
 	LogProcessorQueueArn       string `required:"true" split_words:"true"`
 	InputDataRoleArn           string `required:"true" split_words:"true"`

@@ -8,6 +8,7 @@ require (
 	github.com/aws/aws-sdk-go v1.35.34
 	github.com/cenkalti/backoff/v4 v4.1.0
 	github.com/fatih/structtag v1.2.0
+	github.com/go-bindata/go-bindata v3.1.2+incompatible
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/google/uuid v1.1.2
@@ -27,7 +28,9 @@ require (
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/tidwall/gjson v1.6.3
+	github.com/tidwall/sjson v1.1.2
 	github.com/valyala/fasttemplate v1.2.1
+	github.com/xeipuuv/gojsonschema v1.2.0
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9

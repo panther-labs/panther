@@ -1,4 +1,4 @@
-package oneloginlogs
+package preprocessors
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -21,9 +21,13 @@ package oneloginlogs
 import (
 	"testing"
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
+	"github.com/stretchr/testify/require"
+	"github.com/valyala/fasttemplate"
 )
 
-func TestOneLoginEvents(t *testing.T) {
-	logtesting.RunTestsFromYAML(t, LogTypes(), "./testdata/onelogin_tests.yml")
+func TestExpandFieldTempalte(t *testing.T) {
+	tpl := fasttemplate.New("%{$cost}", "%{", "}")
+	fields := []string{"$cost", "10"}
+	result := expandFieldTemplate(nil, fields, tpl)
+	require.Equal(t, "10", string(result))
 }
