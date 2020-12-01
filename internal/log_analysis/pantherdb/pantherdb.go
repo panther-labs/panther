@@ -82,9 +82,17 @@ func TableName(logType string) string {
 }
 
 // Returns the database in which exists the
-func DatabaseName(logtype string) string {
-	if snapshotlogs.LogTypes().Find(logtype) != nil {
+func DatabaseName(typ DataType) string {
+	switch typ {
+	case LogData:
+		return LogProcessingDatabase
+	case RuleData:
+		return RuleMatchDatabase
+	case RuleErrors:
+		return RuleErrorsDatabase
+	case CloudSecurity:
 		return CloudSecurityDatabase
+	default:
+		panic("Unknow DataType " + typ)
 	}
-	return LogProcessingDatabase
 }

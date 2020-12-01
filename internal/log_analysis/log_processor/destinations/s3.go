@@ -231,7 +231,7 @@ func (d *S3Destination) sendData(buffer *s3EventBuffer, errChan chan error) {
 			zap.String("key", key))
 	}()
 
-	key = getS3ObjectKey(buffer.logType, buffer.hour)
+	key = getS3ObjectKey(buffer)
 	if err != nil {
 		errChan <- err
 		return
@@ -295,12 +295,13 @@ func (d *S3Destination) sendSNSNotification(key string, buffer *s3EventBuffer) e
 }
 
 // getS3ObjectKey builds the S3 object key for storing a partition file of processed logs.
-func getS3ObjectKey(logType string, timestamp time.Time) string {
-	db := pantherdb.DatabaseName(logType)
-	table := pantherdb.TableName(logType)
-	partitionPrefix := awsglue.PartitionPrefix(db, table, awsglue.GlueTableHourly, timestamp)
+func getS3ObjectKey(buf *s3EventBuffer) string {
+	typ := pantherdb.GetDataType(buf.logType)
+	db := pantherdb.DatabaseName(typ)
+	table := pantherdb.TableName(buf.logType)
+	partitionPrefix := awsglue.PartitionPrefix(db, table, awsglue.GlueTableHourly, buf.hour)
 	filename := fmt.Sprintf("%s-%s.json.gz",
-		timestamp.Format(S3ObjectTimestampLayout),
+		buf.hour.Format(S3ObjectTimestampLayout),
 		uuid.New(),
 	)
 	return path.Join(partitionPrefix, filename)
