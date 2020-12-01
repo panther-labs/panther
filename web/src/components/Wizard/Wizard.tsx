@@ -109,6 +109,7 @@ function Wizard<WizardData = any>({
    */
   const contextValue = React.useMemo(
     () => ({
+      goToStep,
       goToPrevStep,
       goToNextStep,
       resetData: resetWizardData,
@@ -120,6 +121,7 @@ function Wizard<WizardData = any>({
       setCurrentStepStatus,
     }),
     [
+      goToStep,
       goToPrevStep,
       goToNextStep,
       wizardData,
