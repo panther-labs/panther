@@ -19,413 +19,165 @@ package handlers
  */
 
 import (
-	"errors"
-	"fmt"
-	"net/http"
-	"net/url"
 	"sort"
-	"strconv"
 	"strings"
 
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-	"github.com/go-openapi/strfmt"
-	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
+	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 )
 
 const (
-	defaultSortBy        = "severity"
-	defaultSortAscending = false
-	defaultPage          = 1
-	defaultPageSize      = 25
+	defaultSortDir  = "ascending"
+	defaultPage     = 1
+	defaultPageSize = 25
 )
 
 var (
-	statusSortPriority = map[models.ComplianceStatus]int{
-		models.ComplianceStatusPASS:  1,
-		models.ComplianceStatusFAIL:  2,
-		models.ComplianceStatusERROR: 3,
+	statusSortPriority = map[compliancemodels.ComplianceStatus]int{
+		compliancemodels.StatusPass:  1,
+		compliancemodels.StatusFail:  2,
+		compliancemodels.StatusError: 3,
 	}
-	severitySortPriority = map[models.Severity]int{
-		models.SeverityINFO:     1,
-		models.SeverityLOW:      2,
-		models.SeverityMEDIUM:   3,
-		models.SeverityHIGH:     4,
-		models.SeverityCRITICAL: 5,
+	severitySortPriority = map[compliancemodels.Severity]int{
+		compliancemodels.SeverityInfo:     1,
+		compliancemodels.SeverityLow:      2,
+		compliancemodels.SeverityMedium:   3,
+		compliancemodels.SeverityHigh:     4,
+		compliancemodels.SeverityCritical: 5,
 	}
 )
 
-type listParams struct {
-	// filtering
-	complianceStatus models.ComplianceStatus
-	nameContains     string
-	enabled          *bool
-	hasRemediation   *bool
-	resourceTypes    map[string]bool
-	severity         models.Severity
-	tags             []string
+// Here's how the list operations are currently implemented:
+//     1. Scan *all* table entries, filtering as much as possible in Dynamo itself
+//     2. Perform post-filtering when applicable (compliance status)
+//     3. Sort all results
+//     4. Truncate results to the requested page number
+//
+// This is badly inefficient:
+//     - Every list operation must scan every table entry
+//     - Policy list operations are doubly inefficient because compliance status is managed in a
+//       separate compliance-api and requires its own full table scan.
+//
+// In the worst case, if a caller asks for a page with just 3 policies, 2 full table scans are
+// triggered (analysis and compliance tables). Compliance information is cached for a few seconds,
+// but otherwise this entire process has to be repeated for every list request.
+//
+// This inefficiency should make you cringe, but in practice it hasn't mattered much.
+// There will never be more than a few hundred entries in the table, so a full scan on every list
+// is not that big a deal.
+//
+// TODO - cursor-based pagination instead of explicit page numbers (web team request)
+// This is easy to implement when sorting by ID, because Dynamo's own paging keys can be used to pick
+// up future pages where previous calls left off. But this will be harder when sorting by other columns
+// like lastModified.
 
-	// sorting
-	sortBy        string
-	sortAscending bool
+// Dynamo filters common to both ListPolicies and ListRules
+func pythonListFilters(enabled *bool, nameContains, severity string, types, tags []string) []expression.ConditionBuilder {
+	var filters []expression.ConditionBuilder
 
-	// paging
-	pageSize int
-	page     int
-}
-
-// ListPolicies pages through policies from a single organization.
-func ListPolicies(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	return handleList(request, typePolicy)
-}
-
-// ListRules pages through rules from a single organization.
-func ListRules(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	return handleList(request, typeRule)
-}
-
-// ListDataModels pages through datamodels from a single organization.
-func ListDataModels(request *events.APIGatewayProxyRequest) *events.APIGatewayProxyResponse {
-	return handleList(request, typeDataModel)
-}
-
-func handleList(request *events.APIGatewayProxyRequest, codeType string) *events.APIGatewayProxyResponse {
-	params, err := parseList(request, codeType)
-	if err != nil {
-		return badRequest(err)
+	if enabled != nil {
+		filters = append(filters, expression.Equal(
+			expression.Name("enabled"), expression.Value(*enabled)))
 	}
 
-	scanInput, err := buildListScan(params, codeType)
-	if err != nil {
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+	if nameContains != "" {
+		filters = append(filters, expression.Contains(expression.Name("lowerId"), nameContains).
+			Or(expression.Contains(expression.Name("lowerDisplayName"), strings.ToLower(nameContains))))
 	}
 
-	// Rules and Policies share filter, sort, and paging logic: PolicySummary is a superset of RuleSummary
-	policies, err := listFiltered(scanInput, params)
-	if err != nil {
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
-	}
-	if len(policies) == 0 {
-		paging := &models.Paging{
-			ThisPage:   aws.Int64(0),
-			TotalItems: aws.Int64(0),
-			TotalPages: aws.Int64(0),
-		}
-		if codeType == typePolicy {
-			return gatewayapi.MarshalResponse(
-				&models.PolicyList{Paging: paging, Policies: []*models.PolicySummary{}}, http.StatusOK)
-		} else if codeType == typeDataModel {
-			return gatewayapi.MarshalResponse(
-				&models.DataModelList{Paging: paging, DataModels: []*models.DataModelSummary{}}, http.StatusOK)
-		}
-		return gatewayapi.MarshalResponse(
-			&models.RuleList{Paging: paging, Rules: []*models.RuleSummary{}}, http.StatusOK)
-	}
-
-	// TODO - filtered policies could be cached to avoid having to query dynamo for subsequent pages
-	sortPolicies(policies, params.sortBy, params.sortAscending)
-	result := pagePolicies(policies, params.pageSize, params.page)
-	if codeType == typePolicy {
-		return gatewayapi.MarshalResponse(result, http.StatusOK)
-	} else if codeType == typeDataModel {
-		// convert to DataModelList
-		dataModelResult := &models.DataModelList{
-			Paging:     result.Paging,
-			DataModels: make([]*models.DataModelSummary, len(result.Policies)),
-		}
-		for i, policy := range result.Policies {
-			dataModelResult.DataModels[i] = &models.DataModelSummary{
-				Enabled:      policy.Enabled,
-				ID:           policy.ID,
-				LastModified: policy.LastModified,
-				LogTypes:     policy.ResourceTypes,
-			}
-		}
-		return gatewayapi.MarshalResponse(dataModelResult, http.StatusOK)
-	}
-
-	// Downgrade result to RuleSummary (excludes compliance status, remediations, suppressions)
-	ruleResult := &models.RuleList{
-		Paging: result.Paging,
-		Rules:  make([]*models.RuleSummary, len(result.Policies)),
-	}
-	for i, policy := range result.Policies {
-		ruleResult.Rules[i] = &models.RuleSummary{
-			DisplayName:  policy.DisplayName,
-			Enabled:      policy.Enabled,
-			ID:           policy.ID,
-			LastModified: policy.LastModified,
-			LogTypes:     policy.ResourceTypes,
-			OutputIds:    policy.OutputIds,
-			Severity:     policy.Severity,
-			Tags:         policy.Tags,
-			Threshold:    policy.Threshold,
-		}
-	}
-	return gatewayapi.MarshalResponse(ruleResult, http.StatusOK)
-}
-
-func parseList(request *events.APIGatewayProxyRequest, codeType string) (*listParams, error) {
-	result := listParams{
-		complianceStatus: models.ComplianceStatus(request.QueryStringParameters["complianceStatus"]),
-		resourceTypes:    make(map[string]bool),
-		severity:         models.Severity(request.QueryStringParameters["severity"]),
-		sortBy:           defaultSortBy,
-		sortAscending:    defaultSortAscending,
-		pageSize:         defaultPageSize,
-		page:             defaultPage,
-	}
-
-	var err error
-
-	if result.complianceStatus != "" {
-		if err = result.complianceStatus.Validate(nil); err != nil {
-			return nil, errors.New("invalid complianceStatus: " + err.Error())
-		}
-	}
-
-	result.nameContains, err = url.QueryUnescape(request.QueryStringParameters["nameContains"])
-	if err != nil {
-		return nil, errors.New("invalid nameContains: " + err.Error())
-	}
-	result.nameContains = strings.ToLower(result.nameContains)
-
-	if raw := request.QueryStringParameters["enabled"]; raw != "" {
-		enabled, err := strconv.ParseBool(raw)
-		if err != nil {
-			return nil, errors.New("invalid enabled: " + err.Error())
-		}
-		result.enabled = aws.Bool(enabled)
-	}
-
-	if raw := request.QueryStringParameters["hasRemediation"]; raw != "" {
-		hasRemediation, err := strconv.ParseBool(raw)
-		if err != nil {
-			return nil, errors.New("invalid hasRemediation: " + err.Error())
-		}
-		result.hasRemediation = aws.Bool(hasRemediation)
-	}
-
-	typeKey := "resourceTypes"
-	if codeType == typeRule || codeType == typeDataModel {
-		typeKey = "logTypes"
-	}
-	rawTypes := strings.Split(request.QueryStringParameters[typeKey], ",")
-	for i, rawType := range rawTypes {
-		if rawType == "" {
-			continue
-		}
-		resourceType, err := url.QueryUnescape(rawType)
-		if err != nil {
-			return nil, fmt.Errorf("invalid %s[%d]: %s", typeKey, i, err)
-		}
-		result.resourceTypes[resourceType] = true
-	}
-
-	if result.severity != "" {
-		if err = result.severity.Validate(nil); err != nil {
-			return nil, errors.New("invalid severity: " + err.Error())
-		}
-	}
-
-	rawTags := strings.Split(request.QueryStringParameters["tags"], ",")
-	for _, rawTag := range rawTags {
-		if rawTag == "" {
-			continue
-		}
-		tag, err := url.QueryUnescape(rawTag)
-		if err != nil {
-			return nil, errors.New("invalid tag: " + err.Error())
-		}
-		result.tags = append(result.tags, strings.ToLower(tag))
-	}
-
-	if err := parseSortingPaging(request, &result); err != nil {
-		return nil, err
-	}
-
-	return &result, nil
-}
-
-func parseSortingPaging(request *events.APIGatewayProxyRequest, result *listParams) error {
-	if sortBy := request.QueryStringParameters["sortBy"]; sortBy != "" {
-		result.sortBy = sortBy
-	}
-
-	if sortDir := request.QueryStringParameters["sortDir"]; sortDir != "" {
-		switch sortDir {
-		case "ascending":
-			result.sortAscending = true
-		case "descending":
-			result.sortAscending = false
-		default:
-			return errors.New("invalid sortDir: " + sortDir)
-		}
-	}
-
-	var err error
-	if raw := request.QueryStringParameters["pageSize"]; raw != "" {
-		result.pageSize, err = strconv.Atoi(raw)
-		if err != nil {
-			return errors.New("invalid pageSize: " + err.Error())
-		}
-		if result.pageSize < 1 {
-			return errors.New("invalid pageSize: must be positive")
-		}
-	}
-
-	if raw := request.QueryStringParameters["page"]; raw != "" {
-		result.page, err = strconv.Atoi(raw)
-		if err != nil {
-			return errors.New("invalid page: " + err.Error())
-		}
-		if result.page < 1 {
-			return errors.New("invalid page: must be positive")
-		}
-	}
-
-	return nil
-}
-
-func buildListScan(params *listParams, codeType string) (*dynamodb.ScanInput, error) {
-	projection := expression.NamesList(
-		// only fields needed for frontend rule/policy list
-		expression.Name("autoRemediationId"),
-		expression.Name("autoRemediationParameters"),
-		expression.Name("displayName"),
-		expression.Name("enabled"),
-		expression.Name("id"),
-		expression.Name("lastModified"),
-		expression.Name("resourceTypes"),
-		expression.Name("severity"),
-		expression.Name("suppressions"),
-		expression.Name("tags"),
-		expression.Name("type"),
-		expression.Name("threshold"),
-		expression.Name("outputIds"),
-	)
-
-	filter := expression.Equal(expression.Name("type"), expression.Value(codeType))
-	if params.nameContains != "" {
-		filter = filter.And(
-			expression.Contains(expression.Name("lowerId"), params.nameContains).
-				Or(expression.Contains(expression.Name("lowerDisplayName"), params.nameContains)))
-	}
-
-	if params.enabled != nil {
-		filter = filter.And(expression.Equal(
-			expression.Name("enabled"), expression.Value(*params.enabled)))
-	}
-
-	if params.hasRemediation != nil {
-		if *params.hasRemediation {
-			// We only want policies with a remediation specified
-			filter = filter.And(expression.AttributeExists(expression.Name("autoRemediationId")))
-		} else {
-			// We only want policies without a remediation id
-			filter = filter.And(expression.AttributeNotExists(expression.Name("autoRemediationId")))
-		}
-	}
-
-	if len(params.resourceTypes) > 0 {
+	if len(types) > 0 {
 		// a policy with no resource types applies to all of them
 		typeFilter := expression.AttributeNotExists(expression.Name("resourceTypes"))
-		for typeName := range params.resourceTypes {
+		for _, typeName := range types {
+			// the item in Dynamo calls this "resourceTypes" for both policies and rules
 			typeFilter = typeFilter.Or(expression.Contains(expression.Name("resourceTypes"), typeName))
 		}
-		filter = filter.And(typeFilter)
+		filters = append(filters, typeFilter)
 	}
 
-	// severity doesn't apply to data models
-	if params.severity != "" && codeType != typeDataModel {
-		filter = filter.And(expression.Equal(
-			expression.Name("severity"), expression.Value(params.severity)))
+	if severity != "" {
+		filters = append(filters, expression.Equal(
+			expression.Name("severity"), expression.Value(severity)))
 	}
 
-	if len(params.tags) > 0 {
+	if len(tags) > 0 {
 		tagFilter := expression.AttributeExists(expression.Name("lowerTags"))
-		for _, tag := range params.tags {
-			tagFilter = tagFilter.And(expression.Contains(expression.Name("lowerTags"), tag))
+		for _, tag := range tags {
+			tagFilter = tagFilter.And(expression.Contains(expression.Name("lowerTags"), strings.ToLower(tag)))
 		}
-		filter = filter.And(tagFilter)
+		filters = append(filters, tagFilter)
 	}
 
-	expr, err := expression.NewBuilder().
-		WithFilter(filter).
-		WithProjection(projection).
-		Build()
-
-	if err != nil {
-		zap.L().Error("failed to build list query", zap.Error(err))
-		return nil, err
-	}
-
-	return &dynamodb.ScanInput{
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		FilterExpression:          expr.Filter(),
-		ProjectionExpression:      expr.Projection(),
-		TableName:                 &env.Table,
-	}, nil
+	return filters
 }
 
-// Query the table, applying additional filters before returning the results
-func listFiltered(scanInput *dynamodb.ScanInput, params *listParams) ([]*models.PolicySummary, error) {
-	var result []*models.PolicySummary
-	err := scanPages(scanInput, func(item *tableItem) error {
-		if item.Type != typePolicy {
-			// Log analysis rules and data models do not have a compliance status
-			result = append(result, item.PolicySummary(""))
-			return nil
-		}
-
-		status, err := getComplianceStatus(item.ID)
-		if err != nil {
-			return err
-		}
-
-		// Compliance status isn't stored in the policy table, so we filter it out here
-		if params.complianceStatus != "" && status.Status != params.complianceStatus {
-			return nil
-		}
-
-		// Policy passed all of the filters - add it to the result set
-		result = append(result, item.PolicySummary(status.Status))
-		return nil
-	})
-
-	return result, err
-}
-
-func sortPolicies(policies []*models.PolicySummary, sortBy string, ascending bool) {
-	if len(policies) <= 1 {
+func sortItems(items []tableItem, sortBy, sortDir string, compliance map[string]complianceStatus) {
+	if len(items) <= 1 {
 		return
 	}
 
+	// ascending by default
+	ascending := sortDir != "descending"
+
 	switch sortBy {
+	case "displayName":
+		sortByDisplayName(items, ascending)
 	case "complianceStatus":
-		sortByStatus(policies, ascending, complianceCache.Policies)
+		sortByStatus(items, ascending, compliance)
+	case "id":
+		sortByID(items, ascending)
 	case "enabled":
-		sortByEnabled(policies, ascending)
+		sortByEnabled(items, ascending)
 	case "lastModified":
-		sortByLastModified(policies, ascending)
+		sortByLastModified(items, ascending)
 	case "logTypes", "resourceTypes":
-		sortByType(policies, ascending)
+		sortByType(items, ascending)
 	case "severity":
-		sortBySeverity(policies, ascending)
+		sortBySeverity(items, ascending)
 	default:
-		sortByID(policies, ascending)
+		// Input validation for the caller already happens in the struct validate tags.
+		// If we reach this code, it means there is a sortBy allowed in the input validation,
+		// but not supported in the backend, which should never happen
+		panic("Unexpected sortBy: " + sortBy)
 	}
 }
 
-func sortByStatus(policies []*models.PolicySummary, ascending bool, policyStatus map[models.ID]*complianceStatus) {
-	sort.Slice(policies, func(i, j int) bool {
-		left, right := policies[i], policies[j]
+func sortByDisplayName(items []tableItem, ascending bool) {
+	sort.Slice(items, func(i, j int) bool {
+		left, right := items[i], items[j]
+
+		var leftName, rightName string
+		leftName, rightName = left.DisplayName, right.DisplayName
+
+		// The frontend shows display name *or* ID (when there is no display name)
+		// So we sort the same way it is shown to the user - displayName if available, otherwise ID
+		if leftName == "" {
+			leftName = left.ID
+		}
+		if rightName == "" {
+			rightName = right.ID
+		}
+
+		if leftName != rightName {
+			if ascending {
+				return strings.ToLower(leftName) < strings.ToLower(rightName)
+			}
+			return strings.ToLower(leftName) > strings.ToLower(rightName)
+		}
+
+		// Same display name: sort by ID
+		if ascending {
+			return strings.ToLower(left.ID) < strings.ToLower(right.ID)
+		}
+		return strings.ToLower(left.ID) > strings.ToLower(right.ID)
+	})
+}
+
+func sortByStatus(items []tableItem, ascending bool, compliance map[string]complianceStatus) {
+	sort.Slice(items, func(i, j int) bool {
+		left, right := items[i], items[j]
 
 		// Group all disabled policies together at the end.
 		// Technically, disabled policies still have a pass/fail status,
@@ -445,20 +197,21 @@ func sortByStatus(policies []*models.PolicySummary, ascending bool, policyStatus
 			return !ascending
 		}
 
+		leftStatus, rightStatus := compliance[left.ID], compliance[right.ID]
+
 		// Group by compliance status (pass/fail/error)
-		if left.ComplianceStatus != right.ComplianceStatus {
+		if leftStatus != rightStatus {
 			if ascending {
-				return statusSortPriority[left.ComplianceStatus] < statusSortPriority[right.ComplianceStatus]
+				return statusSortPriority[leftStatus.Status] < statusSortPriority[rightStatus.Status]
 			}
-			return statusSortPriority[left.ComplianceStatus] > statusSortPriority[right.ComplianceStatus]
+			return statusSortPriority[leftStatus.Status] > statusSortPriority[rightStatus.Status]
 		}
 
 		// Same pass/fail and enabled status: use sort index for ERROR and FAIL
 		// This will sort by "top failing": the most failures in order of severity
-		if left.ComplianceStatus == models.ComplianceStatusERROR || left.ComplianceStatus == models.ComplianceStatusFAIL {
-			// The status cache has already been populated, we can access it directly
-			leftIndex := policyStatus[left.ID].SortIndex
-			rightIndex := policyStatus[right.ID].SortIndex
+		if leftStatus.Status == compliancemodels.StatusError || leftStatus.Status == compliancemodels.StatusFail {
+			leftIndex := compliance[left.ID].SortIndex
+			rightIndex := compliance[right.ID].SortIndex
 			if ascending {
 				return leftIndex > rightIndex
 			}
@@ -470,9 +223,9 @@ func sortByStatus(policies []*models.PolicySummary, ascending bool, policyStatus
 	})
 }
 
-func sortByEnabled(policies []*models.PolicySummary, ascending bool) {
-	sort.Slice(policies, func(i, j int) bool {
-		left, right := policies[i], policies[j]
+func sortByEnabled(items []tableItem, ascending bool) {
+	sort.Slice(items, func(i, j int) bool {
+		left, right := items[i], items[j]
 		if left.Enabled && !right.Enabled {
 			// when ascending (default): enabled < disabled
 			return ascending
@@ -488,17 +241,14 @@ func sortByEnabled(policies []*models.PolicySummary, ascending bool) {
 	})
 }
 
-func sortByLastModified(policies []*models.PolicySummary, ascending bool) {
-	sort.Slice(policies, func(i, j int) bool {
-		left, right := policies[i], policies[j]
-		leftTime := strfmt.DateTime(left.LastModified).String()
-		rightTime := strfmt.DateTime(right.LastModified).String()
-
-		if leftTime != rightTime {
+func sortByLastModified(items []tableItem, ascending bool) {
+	sort.Slice(items, func(i, j int) bool {
+		left, right := items[i], items[j]
+		if left.LastModified != right.LastModified {
 			if ascending {
-				return leftTime < rightTime
+				return left.LastModified.Before(right.LastModified)
 			}
-			return leftTime > rightTime
+			return left.LastModified.After(right.LastModified)
 		}
 
 		// Same timestamp: sort by ID ascending
@@ -506,9 +256,9 @@ func sortByLastModified(policies []*models.PolicySummary, ascending bool) {
 	})
 }
 
-func sortByType(policies []*models.PolicySummary, ascending bool) {
-	sort.Slice(policies, func(i, j int) bool {
-		left, right := policies[i], policies[j]
+func sortByType(items []tableItem, ascending bool) {
+	sort.Slice(items, func(i, j int) bool {
+		left, right := items[i], items[j]
 
 		// The resource types are already sorted:
 		// compare them pairwise, sorting by the first differing element.
@@ -527,9 +277,9 @@ func sortByType(policies []*models.PolicySummary, ascending bool) {
 	})
 }
 
-func sortBySeverity(policies []*models.PolicySummary, ascending bool) {
-	sort.Slice(policies, func(i, j int) bool {
-		left, right := policies[i], policies[j]
+func sortBySeverity(items []tableItem, ascending bool) {
+	sort.Slice(items, func(i, j int) bool {
+		left, right := items[i], items[j]
 		leftSort, rightSort := severitySortPriority[left.Severity], severitySortPriority[right.Severity]
 
 		if leftSort != rightSort {
@@ -544,9 +294,9 @@ func sortBySeverity(policies []*models.PolicySummary, ascending bool) {
 	})
 }
 
-func sortByID(policies []*models.PolicySummary, ascending bool) {
-	sort.Slice(policies, func(i, j int) bool {
-		left, right := policies[i], policies[j]
+func sortByID(items []tableItem, ascending bool) {
+	sort.Slice(items, func(i, j int) bool {
+		left, right := items[i], items[j]
 		if ascending {
 			return left.ID < right.ID
 		}
@@ -554,20 +304,25 @@ func sortByID(policies []*models.PolicySummary, ascending bool) {
 	})
 }
 
-func pagePolicies(policies []*models.PolicySummary, pageSize int, page int) *models.PolicyList {
-	totalPages := len(policies) / pageSize
-	if len(policies)%pageSize > 0 {
+// Truncate list of items to the requested page
+func pageItems(items []tableItem, page, pageSize int) (models.Paging, []tableItem) {
+	if len(items) == 0 {
+		return models.Paging{}, nil
+	}
+
+	totalPages := len(items) / pageSize
+	if len(items)%pageSize > 0 {
 		totalPages++ // Add one more to page count if there is an incomplete page at the end
 	}
 
-	paging := &models.Paging{
-		ThisPage:   aws.Int64(int64(page)),
-		TotalItems: aws.Int64(int64(len(policies))),
-		TotalPages: aws.Int64(int64(totalPages)),
+	paging := models.Paging{
+		ThisPage:   page,
+		TotalItems: len(items),
+		TotalPages: totalPages,
 	}
 
-	// Truncate policies to just the requested page
-	lowerBound := intMin((page-1)*pageSize, len(policies))
-	upperBound := intMin(page*pageSize, len(policies))
-	return &models.PolicyList{Paging: paging, Policies: policies[lowerBound:upperBound]}
+	// Truncate to just the requested page
+	lowerBound := intMin((page-1)*pageSize, len(items))
+	upperBound := intMin(page*pageSize, len(items))
+	return paging, items[lowerBound:upperBound]
 }

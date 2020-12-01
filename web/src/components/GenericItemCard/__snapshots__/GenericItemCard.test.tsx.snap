@@ -4,7 +4,7 @@ exports[`GenericItemCard renders a step 1`] = `
 .panther-20 {
   background-color: #1d2a3f;
   border-radius: 4px;
-  padding: 20px;
+  padding: 16px;
   overflow: hidden;
 }
 
@@ -54,13 +54,13 @@ exports[`GenericItemCard renders a step 1`] = `
 }
 
 .panther-3 {
-  margin-top: 16px;
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
 .panther-1 {
   color: #bdbdbd;
   font-size: 0.563rem;
-  margin-bottom: 6px;
   font-weight: 500;
 }
 
@@ -68,6 +68,15 @@ exports[`GenericItemCard renders a step 1`] = `
   font-size: 0.875rem;
   font-weight: 500;
   opacity: 1;
+  display: -webkit-inline-box;
+  display: -webkit-inline-flex;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  min-height: 24px;
 }
 
 .panther-7 {
@@ -188,215 +197,6 @@ exports[`GenericItemCard renders a step 1`] = `
                 class="panther-2"
               >
                 without label
-              </dd>
-            </dl>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-  <footer
-    id="footer"
-  />
-</div>
-`;
-
-exports[`GenericItemCard renders a step with border color 1`] = `
-
-
-.panther-9 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  position: relative;
-  height: 100%;
-}
-
-.panther-0 {
-  max-width: 100%;
-  margin-right: 20px;
-}
-
-.panther-8 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-flex-direction: column;
-  -ms-flex-direction: column;
-  flex-direction: column;
-  -webkit-box-pack: justify;
-  -webkit-justify-content: space-between;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.panther-7 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-flex-wrap: wrap;
-  -webkit-flex-wrap: wrap;
-  -ms-flex-wrap: wrap;
-  flex-wrap: wrap;
-}
-
-.panther-7>*:not(:last-child) {
-  margin-right: 32px;
-}
-
-.panther-3 {
-  margin-top: 16px;
-}
-
-.panther-1 {
-  color: #bdbdbd;
-  font-size: 0.563rem;
-  margin-bottom: 6px;
-  font-weight: 500;
-}
-
-.panther-2 {
-  font-size: 0.875rem;
-  font-weight: 500;
-  opacity: 1;
-}
-
-.panther-11 {
-  background-color: #1d2a3f;
-  border-radius: 4px;
-  padding: 20px;
-  border-left: 4px solid;
-  border-color: #032241;
-  overflow: hidden;
-}
-
-.panther-23 {
-  background-color: #1d2a3f;
-  border-radius: 4px;
-  padding: 20px;
-  border-left: 4px solid;
-  border-color: #ff7577;
-  overflow: hidden;
-}
-
-<div>
-  <header
-    id="main-header"
-  />
-  <section
-    class="panther-11"
-  >
-    <div
-      class="panther-10"
-    >
-      <div
-        class="panther-9"
-      >
-        <img
-          alt="Logo"
-          class="panther-0"
-          height="20"
-          src="test-file-stub"
-          width="20"
-        />
-        <div
-          class="panther-8"
-        >
-          <div
-            class="panther-7"
-          >
-            <dl
-              class="panther-3"
-            >
-              <dt
-                aria-labelledby="test-labelstring-value"
-                class="panther-1"
-              >
-                Test label
-              </dt>
-              <dd
-                aria-labelledby="test-labelstring-value"
-                class="panther-2"
-              >
-                String value
-              </dd>
-            </dl>
-            <dl
-              class="panther-3"
-            >
-              <dt
-                aria-labelledby="test-labelanother-value"
-                class="panther-1"
-              >
-                Test label
-              </dt>
-              <dd
-                aria-labelledby="test-labelanother-value"
-                class="panther-2"
-              >
-                Another value
-              </dd>
-            </dl>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-  <section
-    class="panther-23"
-  >
-    <div
-      class="panther-10"
-    >
-      <div
-        class="panther-9"
-      >
-        <img
-          alt="Logo"
-          class="panther-0"
-          height="20"
-          src="test-file-stub"
-          width="20"
-        />
-        <div
-          class="panther-8"
-        >
-          <div
-            class="panther-7"
-          >
-            <dl
-              class="panther-3"
-            >
-              <dt
-                aria-labelledby="test-labelstring-value"
-                class="panther-1"
-              >
-                Test label
-              </dt>
-              <dd
-                aria-labelledby="test-labelstring-value"
-                class="panther-2"
-              >
-                String value
-              </dd>
-            </dl>
-            <dl
-              class="panther-3"
-            >
-              <dt
-                aria-labelledby="test-labelanother-value"
-                class="panther-1"
-              >
-                Test label
-              </dt>
-              <dd
-                aria-labelledby="test-labelanother-value"
-                class="panther-2"
-              >
-                Another value
               </dd>
             </dl>
           </div>

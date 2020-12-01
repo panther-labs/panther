@@ -23,8 +23,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -34,7 +33,6 @@ func TestRegistry(t *testing.T) {
 		Foo string `json:"foo" description:"foo field"`
 	}
 	require.Empty(t, r.Entries())
-	require.Zero(t, r.Len())
 	require.Panics(t, func() {
 		MustFind(r, "Foo.Bar")
 	})
@@ -43,7 +41,7 @@ func TestRegistry(t *testing.T) {
 		Description:  "Foo.Bar logs",
 		ReferenceURL: "-",
 		Schema:       T{},
-		NewParser: parsers.FactoryFunc(func(params interface{}) (parsers.Interface, error) {
+		NewParser: pantherlog.FactoryFunc(func(params interface{}) (parsers.Interface, error) {
 			return nil, nil
 		}),
 	}
@@ -57,11 +55,6 @@ func TestRegistry(t *testing.T) {
 		ReferenceURL: "-",
 	}, api.Describe())
 	require.Equal(t, T{}, api.Schema())
-	require.Equal(
-		t,
-		awsglue.NewGlueTableMetadata(models.LogData, "Foo.Bar", "Foo.Bar logs", awsglue.GlueTableHourly, T{}),
-		api.GlueTableMeta(),
-	)
 
 	// Ensure invalid schemas don't pass
 	configEmpty := Config{}
@@ -90,9 +83,6 @@ func TestRegistry(t *testing.T) {
 		MustFind(r, "Foo.Bar")
 	})
 	require.Equal(t, []Entry{api}, r.Entries())
-	require.Equal(t, []Entry{api}, AppendFind(nil, r, r.LogTypes()...))
-	require.Equal(t, []Entry{api}, AppendFind(nil, r, "Foo.Bar"))
-	require.Nil(t, AppendFind(nil, r, "Foo.Baz"))
 }
 
 func TestDesc(t *testing.T) {

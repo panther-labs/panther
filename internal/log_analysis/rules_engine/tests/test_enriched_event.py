@@ -112,6 +112,28 @@ class TestEnrichedEvent(TestCase):
         enriched_event = EnrichedEvent(event, data_model)
         self.assertEqual(enriched_event.udm('destination_ip'), '1.1.1.1')
 
+    def test_udm_complex_json_path(self) -> None:
+        event = {'events': [{'parameters': [{'name': 'USER_EMAIL', 'value': 'user@example.com'}]}]}
+        data_model = DataModel(
+            {
+                'body': 'def get_source_ip(event):\n\treturn "1.2.3.4"',
+                'versionId': 'version',
+                'mappings':
+                    [
+                        {
+                            'name': 'email',
+                            'path': '$.events[*].parameters[?(@.name == "USER_EMAIL")].value'
+                        }, {
+                            'name': 'source_ip',
+                            'method': 'get_source_ip'
+                        }
+                    ],
+                'id': 'data_model_id'
+            }
+        )
+        enriched_event = EnrichedEvent(event, data_model)
+        self.assertEqual(enriched_event.udm('email'), 'user@example.com')
+
     def test_udm_multiple_matches(self) -> None:
         exception = False
         event = {'dst': {'ip': '1.1.1.1', 'port': '2222'}}

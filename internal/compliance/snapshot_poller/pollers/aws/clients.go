@@ -49,6 +49,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sdk-go/service/waf"
 	"github.com/aws/aws-sdk-go/service/wafregional"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -61,6 +62,8 @@ const (
 	assumeRoleDuration = time.Hour
 	// retries on default session
 	maxRetries = 6
+	// Maximum number of rate limited resources to remember
+	rateLimitCacheSize = 5000
 )
 
 var (
@@ -121,6 +124,12 @@ var (
 		awsmodels.PasswordPolicySchema: {}, // Global service
 		awsmodels.WafWebAclSchema:      {}, // Global service
 	}
+
+	// Used to cache region & account specific AWS clients
+	clientCache = make(map[clientKey]cachedClient)
+
+	// Used to remember resource IDs that have recently been rate limited so we avoid re-scanning them
+	RateLimitTracker *lru.ARCCache
 )
 
 // Key used for the client cache to neatly encapsulate an integration, service, and region
@@ -135,12 +144,16 @@ type cachedClient struct {
 	Credentials *credentials.Credentials
 }
 
-var clientCache = make(map[clientKey]cachedClient)
-
 func Setup() {
 	awsSession := session.Must(session.NewSession()) // use default retries for fetching creds, avoids hangs!
 	snapshotPollerSession = awsSession.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
 		awsretry.NewConnectionErrRetryer(maxRetries)))
+
+	var err error
+	RateLimitTracker, err = lru.NewARC(rateLimitCacheSize)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // GetRegionsToScan determines what regions need to be scanned in order to perform a full account

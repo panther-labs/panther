@@ -70,11 +70,13 @@ const (
 	FieldAWSInstanceID
 	FieldAWSARN
 	FieldAWSTag
+	FieldEmail
+	FieldUsername
 )
 
 // ScanValues implements ValueScanner interface
 func (id FieldID) ScanValues(w ValueWriter, input string) {
-	w.WriteValues(id, input)
+	w.WriteValues(id, strings.TrimSpace(input))
 }
 
 // CoreFields are the 'core' fields Panther adds to each log.
@@ -196,15 +198,25 @@ func init() {
 		NameJSON:    "p_any_aws_tags",
 		Description: "Panther added field with collection of AWS Tags associated with the row",
 	})
-	MustRegisterScanner("ip", ValueScannerFunc(ScanIPAddress), FieldIPAddress)
+	MustRegisterIndicator(FieldEmail, FieldMeta{
+		Name:        "PantherAnyEmails",
+		NameJSON:    "p_any_emails",
+		Description: "Panther added field with collection of email addresses associated with the row",
+	})
+	MustRegisterIndicator(FieldUsername, FieldMeta{
+		Name:        "PantherAnyUsernames",
+		NameJSON:    "p_any_usernames",
+		Description: "Panther added field with collection of usernames associated with the row",
+	})
+	MustRegisterScannerFunc("ip", ScanIPAddress, FieldIPAddress)
 	MustRegisterScanner("domain", FieldDomainName, FieldDomainName)
 	MustRegisterScanner("md5", FieldMD5Hash, FieldMD5Hash)
 	MustRegisterScanner("sha1", FieldSHA1Hash, FieldSHA1Hash)
 	MustRegisterScanner("sha256", FieldSHA256Hash, FieldSHA256Hash)
-	MustRegisterScanner("hostname", ValueScannerFunc(ScanHostname), FieldDomainName, FieldIPAddress)
-	MustRegisterScanner("url", ValueScannerFunc(ScanURL), FieldDomainName, FieldIPAddress)
+	MustRegisterScannerFunc("hostname", ScanHostname, FieldDomainName, FieldIPAddress)
+	MustRegisterScannerFunc("url", ScanURL, FieldDomainName, FieldIPAddress)
 	MustRegisterScanner("trace_id", FieldTraceID, FieldTraceID)
-	MustRegisterScanner("net_addr", ValueScannerFunc(ScanNetworkAddress), FieldIPAddress, FieldDomainName)
+	MustRegisterScannerFunc("net_addr", ScanNetworkAddress, FieldIPAddress, FieldDomainName)
 	MustRegisterScannerFunc("aws_arn", ScanARN,
 		FieldAWSARN,
 		FieldAWSInstanceID,
@@ -213,6 +225,8 @@ func init() {
 	MustRegisterScannerFunc("aws_account_id", ScanAWSAccountID, FieldAWSAccountID)
 	MustRegisterScannerFunc("aws_instance_id", ScanAWSInstanceID, FieldAWSInstanceID)
 	MustRegisterScannerFunc("aws_tag", ScanAWSTag, FieldAWSTag)
+	MustRegisterScannerFunc("email", ScanEmail, FieldEmail)
+	MustRegisterScanner("username", FieldUsername, FieldUsername)
 }
 
 // MustRegisterIndicator allows modules to define their own indicator fields.
@@ -534,45 +548,34 @@ func FieldSetFromTag(tag string) FieldSet {
 
 // FieldSetFromType produces the minimum required field set to support scanners and core fields defined in a struct.
 func FieldSetFromType(typ reflect.Type) (fields FieldSet) {
-	typ = derefType(typ)
-	if typ.Kind() != reflect.Struct {
-		return
-	}
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
-		// Anonymous struct fields can have their public fields exposed to JSON
-		if field.Anonymous || isPublicFieldName(field.Name) {
-			fields = appendFieldSet(fields, &field)
+	switch typ := derefType(typ); typ.Kind() {
+	case reflect.Struct:
+		for i := 0; i < typ.NumField(); i++ {
+			field := typ.Field(i)
+			// Anonymous struct fields can have their public fields exposed to JSON
+			if field.Anonymous || isPublicFieldName(field.Name) {
+				fields = appendFieldSet(fields, &field)
+			}
 		}
+		return fields
+	case reflect.Map:
+		return fields.Extend(FieldSetFromType(typ.Elem())...)
+	case reflect.Slice:
+		return fields.Extend(FieldSetFromType(typ.Elem())...)
+	default:
+		return fields
 	}
-	return
 }
 
 func appendFieldSet(fields FieldSet, field *reflect.StructField) FieldSet {
 	if id, ok := fieldsByName[field.Name]; ok {
 		return fields.Add(id)
 	}
-	switch fieldType := derefType(field.Type); fieldType.Kind() {
-	case reflect.Struct:
-		switch fieldType {
-		case typNullString:
-			tag := string(field.Tag)
-			return fields.Extend(FieldSetFromTag(tag)...)
-		case typTime:
-			// We know there are no field ids to be found in time.Time, avoid some needless recursion
-			return fields
-		default:
-			return fields.Extend(FieldSetFromType(fieldType)...)
-		}
-	case reflect.Slice:
-		el := derefType(fieldType.Elem())
-		return fields.Extend(FieldSetFromType(el)...)
-	case reflect.String:
-		tag := string(field.Tag)
-		return fields.Extend(FieldSetFromTag(tag)...)
-	default:
-		return fields
-	}
+
+	tag := string(field.Tag)
+	fields = fields.Extend(FieldSetFromTag(tag)...)
+	fields = fields.Extend(FieldSetFromType(field.Type)...)
+	return fields
 }
 
 // FieldSetFromJSON checks top-level field names in a JSON object and produces the field set of all panther fields.

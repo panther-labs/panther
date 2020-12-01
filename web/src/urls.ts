@@ -97,6 +97,7 @@ const urls = {
       forgotPassword: () => `/password-forgot/`,
       resetPassword: () => `/password-reset/`,
     },
+    support: () => '/support',
   },
 };
 

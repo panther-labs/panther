@@ -16,10 +16,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/**
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * Panther Enterprise is licensed under the terms of a commercial license available from
+ * Panther Labs Inc ("Panther Commercial License") by contacting contact@runpanther.com.
+ * All use, distribution, and/or modification of this software, whether commercial or non-commercial,
+ * falls under the Panther Commercial License to the extent it is permitted.
+ */
+
 import * as React from 'react';
-import { Badge, Box, Flex, Icon, Img } from 'pouncejs';
+import { Box, Flex, Icon, Img, FadeIn } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
+import PantherEnterpriseLogo from 'Assets/panther-enterprise-minimal-logo.svg';
 import { slugify } from 'Helpers/utils';
+import useHover from 'Hooks/useHover';
 
 interface ItemCardProps {
   logo: string;
@@ -29,40 +40,47 @@ interface ItemCardProps {
 }
 
 const LogSourceCard: React.FC<ItemCardProps> = ({ logo, title, to, disabled }) => {
+  const { isHovering, handlers: hoverHandlers } = useHover();
   const titleId = slugify(title);
 
   const content = (
     <Box
+      {...hoverHandlers}
       aria-disabled={disabled}
-      mb={5}
       border="1px solid"
       borderRadius="medium"
-      borderColor="navyblue-300"
       transition="all 0.15s ease-in-out"
-      _hover={{ backgroundColor: 'navyblue-500', borderColor: 'navyblue-500' }}
+      backgroundColor={isHovering ? 'navyblue-500' : 'transparent'}
+      borderColor={isHovering ? 'navyblue-500' : 'navyblue-300'}
       _focus={{ backgroundColor: 'navyblue-500', borderColor: 'navyblue-500' }}
     >
-      <Flex alignItems="center" py={3} px={6}>
+      <Flex alignItems="center" py={3} px={3}>
         <Img
           aria-labelledby={titleId}
           src={logo}
           alt={title}
           objectFit="contain"
-          nativeHeight={50}
-          nativeWidth={50}
+          nativeHeight={26}
+          nativeWidth={26}
         />
-        <Box id={titleId} px={4} py={3} textAlign="center">
+        <Box id={titleId} px={3} textAlign="left">
           {title}
         </Box>
-        <Box ml="auto">
-          {disabled ? (
-            <Badge color="violet-400" aria-labelledby={titleId}>
-              AVAILABLE IN PANTHER ENTERPRISE
-            </Badge>
-          ) : (
-            <Icon type="arrow-forward" />
+        <Flex align="center" ml="auto">
+          {disabled && (
+            <Img
+              nativeWidth={20}
+              nativeHeight={20}
+              alt="Panther Enterprise Logo"
+              src={PantherEnterpriseLogo}
+            />
           )}
-        </Box>
+          {isHovering && (
+            <FadeIn from="left" offset={3}>
+              <Icon type="arrow-forward" />
+            </FadeIn>
+          )}
+        </Flex>
       </Flex>
     </Box>
   );
@@ -74,4 +92,4 @@ const LogSourceCard: React.FC<ItemCardProps> = ({ logo, title, to, disabled }) =
   return <RRLink to={to}>{content}</RRLink>;
 };
 
-export default LogSourceCard;
+export default React.memo(LogSourceCard);

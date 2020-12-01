@@ -19,9 +19,7 @@ package remediation
  */
 
 import (
-	"io/ioutil"
 	"net/http"
-	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -32,7 +30,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	policymodels "github.com/panther-labs/panther/api/gateway/analysis/models"
+	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	remediationmodels "github.com/panther-labs/panther/api/lambda/remediation/models"
 	resourcemodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
@@ -48,16 +46,6 @@ func (m *mockLambdaClient) Invoke(input *lambda.InvokeInput) (*lambda.InvokeOutp
 	return args.Get(0).(*lambda.InvokeOutput), args.Error(1)
 }
 
-type mockRoundTripper struct {
-	http.RoundTripper
-	mock.Mock
-}
-
-func (m *mockRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
-	args := m.Called(request)
-	return args.Get(0).(*http.Response), args.Error(1)
-}
-
 var (
 	input = &remediationmodels.RemediateResourceInput{
 		PolicyID:   "policyId",
@@ -70,7 +58,7 @@ var (
 		},
 	}
 
-	policy = &policymodels.Policy{
+	policy = &analysismodels.Policy{
 		AutoRemediationID: "AWS.S3.EnableBucketEncryption",
 		AutoRemediationParameters: map[string]string{
 			"SSEAlgorithm": "AES256",
@@ -87,7 +75,6 @@ var (
 )
 
 func init() {
-	policiesServiceHostname = "policiesServiceHostname"
 	remediationLambdaArn = "arn:aws:lambda:us-west-2:123456789012:function:function"
 }
 
@@ -102,7 +89,7 @@ func TestRemediate(t *testing.T) {
 
 	// remediation lambda mock
 	expectedPayload := Payload{
-		RemediationID: string(policy.AutoRemediationID),
+		RemediationID: policy.AutoRemediationID,
 		Resource:      resourceAttributes,
 		Parameters:    policy.AutoRemediationParameters,
 	}
@@ -123,9 +110,14 @@ func TestRemediate(t *testing.T) {
 	remediator := &Invoker{lambdaClient: mockClient}
 
 	// analysis-api mock
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient = &http.Client{Transport: mockRoundTripper}
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policy, http.StatusOK), nil).Once()
+	mockAnalysisClient := &gatewayapi.MockClient{}
+	analysisClient = mockAnalysisClient
+
+	getPolicyInput := &analysismodels.LambdaInput{
+		GetPolicy: &analysismodels.GetPolicyInput{ID: input.PolicyID},
+	}
+	mockAnalysisClient.On("Invoke", getPolicyInput, &analysismodels.Policy{}).Return(
+		http.StatusOK, nil, policy).Once()
 
 	// run the function under test
 	result := remediator.Remediate(input)
@@ -134,7 +126,7 @@ func TestRemediate(t *testing.T) {
 	assert.NoError(t, result)
 	mockResourcesClient.AssertExpectations(t)
 	mockClient.AssertExpectations(t)
-	mockRoundTripper.AssertExpectations(t)
+	mockAnalysisClient.AssertExpectations(t)
 }
 
 func TestGetRemediations(t *testing.T) {
@@ -161,29 +153,28 @@ func TestGetRemediations(t *testing.T) {
 
 func TestRemediationNotFoundErrorIfNoRemediationConfigured(t *testing.T) {
 	mockClient := &mockLambdaClient{}
-	mockRoundTripper := &mockRoundTripper{}
-	httpClient = &http.Client{Transport: mockRoundTripper}
 
 	mockRemediatorLambdaClient := &mockLambdaClient{}
 	remediator := &Invoker{
 		lambdaClient: mockRemediatorLambdaClient,
 	}
 
-	policy := &policymodels.Policy{
+	policy := &analysismodels.Policy{
 		AutoRemediationID: "",
 	}
 
-	mockRoundTripper.On("RoundTrip", mock.Anything).Return(generateResponse(policy, http.StatusOK), nil).Once()
+	mockAnalysisClient := &gatewayapi.MockClient{}
+	analysisClient = mockAnalysisClient
+	getPolicyInput := &analysismodels.LambdaInput{
+		GetPolicy: &analysismodels.GetPolicyInput{ID: input.PolicyID},
+	}
+	mockAnalysisClient.On("Invoke", getPolicyInput, &analysismodels.Policy{}).Return(
+		http.StatusOK, nil, policy).Once()
 
 	result := remediator.Remediate(input)
 	assert.Error(t, result)
 	assert.Equal(t, ErrNotFound, result)
 
 	mockClient.AssertExpectations(t)
-	mockRoundTripper.AssertExpectations(t)
-}
-
-func generateResponse(body interface{}, httpCode int) *http.Response {
-	serializedBody, _ := jsoniter.MarshalToString(body)
-	return &http.Response{StatusCode: httpCode, Body: ioutil.NopCloser(strings.NewReader(serializedBody))}
+	mockAnalysisClient.AssertExpectations(t)
 }

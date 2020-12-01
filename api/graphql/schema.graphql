@@ -2,6 +2,7 @@ scalar AWSEmail
 scalar AWSDateTime
 scalar AWSTimestamp
 scalar AWSJSON
+scalar Long
 
 schema {
   query: Query
@@ -270,7 +271,7 @@ input UpdateRuleInput {
 }
 
 input GetRuleInput {
-  ruleId: ID!
+  id: ID!
   versionId: ID
 }
 
@@ -411,19 +412,19 @@ type OrganizationStatsResponse {
   topFailingResources: [ResourceSummary]
 }
 
-type Series {
-  label: String
-  values: [Int]
+type LongSeries {
+  label: String!
+  values: [Long!]!
+}
+
+type LongSeriesData {
+  timestamps: [AWSDateTime!]!
+  series: [LongSeries!]!
 }
 
 type FloatSeries {
   label: String!
   values: [Float!]!
-}
-
-type SeriesData {
-  timestamps: [AWSDateTime]
-  series: [Series]
 }
 
 type FloatSeriesData {
@@ -437,8 +438,8 @@ type SingleValue {
 }
 
 type LogAnalysisMetricsResponse {
-  eventsProcessed: SeriesData!
-  alertsBySeverity: SeriesData!
+  eventsProcessed: LongSeriesData!
+  alertsBySeverity: LongSeriesData!
   eventsLatency: FloatSeriesData!
   totalAlertsDelta: [SingleValue!]!
   alertsByRuleID: [SingleValue!]!
@@ -612,6 +613,7 @@ type SqsDestinationConfig {
 
 type OpsgenieConfig {
   apiKey: String!
+  serviceRegion: OpsgenieServiceRegionEnum!
 }
 
 type MsTeamsConfig {
@@ -680,6 +682,7 @@ input SqsConfigInput {
 
 input OpsgenieConfigInput {
   apiKey: String!
+  serviceRegion: OpsgenieServiceRegionEnum!
 }
 
 input MsTeamsConfigInput {
@@ -816,7 +819,7 @@ input UpdatePolicyInput {
 }
 
 input GetPolicyInput {
-  policyId: ID!
+  id: ID!
   versionId: ID
 }
 
@@ -832,7 +835,7 @@ input ListGlobalPythonModuleInput {
 }
 
 input GetGlobalPythonModuleInput {
-  globalId: ID!
+  id: ID!
   versionId: ID
 }
 
@@ -869,9 +872,9 @@ input ListPoliciesInput {
   nameContains: String
   enabled: Boolean
   hasRemediation: Boolean
-  resourceTypes: String # Comma-separated string
+  resourceTypes: [String!]
   severity: SeverityEnum
-  tags: String # Comma-separated string
+  tags: [String!]
   # Sorting
   sortBy: ListPoliciesSortFieldsEnum # defaults to `id`
   sortDir: SortDirEnum # defaults to `ascending`
@@ -1048,6 +1051,7 @@ enum ListPoliciesSortFieldsEnum {
 }
 
 enum ListRulesSortFieldsEnum {
+  displayName
   enabled
   id
   lastModified
@@ -1099,6 +1103,11 @@ enum DestinationTypeEnum {
   sqs
   asana
   customwebhook
+}
+
+enum OpsgenieServiceRegionEnum {
+  EU
+  US
 }
 
 type ListAvailableLogTypesResponse {

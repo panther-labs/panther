@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -26,7 +27,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
-	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
+	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -226,10 +227,11 @@ func updateTables(item *ddb.Integration, input *models.UpdateIntegrationSettings
 		return nil
 	}
 
-	m := process.CreateTablesMessage{
-		LogTypes: newLogTypes,
+	client := datacatalog.Client{
+		SQSAPI:   sqsClient,
+		QueueURL: env.DataCatalogUpdaterQueueURL,
 	}
-	err := m.Send(sqsClient, env.DataCatalogUpdaterQueueURL)
+	err := client.SendCreateTablesForLogTypes(context.TODO(), newLogTypes...)
 	if err != nil {
 		return errors.Wrap(err, "failed to create Glue tables")
 	}

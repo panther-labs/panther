@@ -21,7 +21,7 @@ import GenericItemCard from 'Components/GenericItemCard';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
 import { formatDatetime } from 'Helpers/utils';
 import { DESTINATIONS } from 'Source/constants';
-import { DestinationTypeEnum } from 'Generated/schema';
+import { DestinationTypeEnum, OpsgenieServiceRegionEnum } from 'Generated/schema';
 import DestinationCard from './DestinationCard';
 
 interface OpsGenieDestinationCardProps {
@@ -34,6 +34,15 @@ const OpsGenieDestinationCard: React.FC<OpsGenieDestinationCardProps> = ({ desti
       logo={DESTINATIONS[DestinationTypeEnum.Opsgenie].logo}
       destination={destination}
     >
+      <GenericItemCard.Value
+        label="Service Region"
+        value={
+          destination.outputConfig.opsgenie.serviceRegion === OpsgenieServiceRegionEnum.Eu
+            ? 'European'
+            : 'American (Default)'
+        }
+      />
+      <GenericItemCard.LineBreak />
       <GenericItemCard.Value
         label="Date Created"
         value={formatDatetime(destination.creationTime, true)}

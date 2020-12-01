@@ -19,14 +19,16 @@ package outputs
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
-const opsgenieEndpoint = "https://api.opsgenie.com/v2/alerts"
+const (
+	OpsgenieServiceRegionUS = "US"
+	OpsgenieServiceRegionEU = "EU"
+)
 
 var pantherToOpsGeniePriority = map[string]string{
 	"CRITICAL": "P1",
@@ -40,9 +42,9 @@ var pantherToOpsGeniePriority = map[string]string{
 func (client *OutputClient) Opsgenie(
 	alert *alertModels.Alert, config *outputModels.OpsgenieConfig) *AlertDeliveryResponse {
 
-	description := "<strong>Description:</strong> " + aws.StringValue(alert.AnalysisDescription)
+	description := "<strong>Description:</strong> " + alert.AnalysisDescription
 	link := "\n<a href=\"" + generateURL(alert) + "\">Click here to view in the Panther UI</a>"
-	runBook := "\n <strong>Runbook:</strong> " + aws.StringValue(alert.Runbook)
+	runBook := "\n <strong>Runbook:</strong> " + alert.Runbook
 	severity := "\n <strong>Severity:</strong> " + alert.Severity
 
 	// Best effort attempt to marshal Alert Context
@@ -60,8 +62,10 @@ func (client *OutputClient) Opsgenie(
 		AuthorizationHTTPHeader: authorization,
 	}
 
+	requestEndpoint := GetOpsGenieRegionalEndpoint(config.ServiceRegion)
+
 	postInput := &PostInput{
-		url:     opsgenieEndpoint,
+		url:     requestEndpoint,
 		body:    opsgenieRequest,
 		headers: requestHeader,
 	}

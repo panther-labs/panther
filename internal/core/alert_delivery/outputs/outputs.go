@@ -30,7 +30,7 @@ import (
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 var (
@@ -149,15 +149,15 @@ func generateNotificationFromAlert(alert *alertModels.Alert) Notification {
 		Type:         alert.Type,
 		Link:         generateURL(alert),
 		Title:        generateAlertTitle(alert),
-		Description:  alert.AnalysisDescription,
-		Runbook:      alert.Runbook,
+		Description:  aws.String(alert.AnalysisDescription),
+		Runbook:      aws.String(alert.Runbook),
 		Tags:         alert.Tags,
 		Version:      alert.Version,
 		CreatedAt:    alert.CreatedAt,
 		AlertContext: alert.Context,
 	}
 
-	gatewayapi.ReplaceMapSliceNils(&notification)
+	genericapi.ReplaceMapSliceNils(&notification)
 	return notification
 }
 
@@ -184,24 +184,24 @@ func generateDetailedAlertMessage(alert *alertModels.Alert) string {
 		generateAlertMessage(alert),
 		generateURL(alert),
 		alert.Severity,
-		aws.StringValue(alert.Runbook),
-		aws.StringValue(alert.AnalysisDescription),
+		alert.Runbook,
+		alert.AnalysisDescription,
 		marshaledContext,
 	)
 }
 
 func generateAlertTitle(alert *alertModels.Alert) string {
 	if alert.IsResent {
-		return "[Re-sent]: " + *alert.Title
+		return "[Re-sent]: " + alert.Title
 	}
 	switch alert.Type {
 	case alertModels.RuleType:
-		if alert.Title != nil {
-			return "New Alert: " + *alert.Title
+		if alert.Title != "" {
+			return "New Alert: " + alert.Title
 		}
 		return "New Alert: " + getDisplayName(alert)
 	case alertModels.RuleErrorType:
-		return "New rule error: " + *alert.Title
+		return "New rule error: " + alert.Title
 	case alertModels.PolicyType:
 		return "Policy Failure: " + getDisplayName(alert)
 	default:

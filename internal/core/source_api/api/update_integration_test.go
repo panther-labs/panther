@@ -38,6 +38,7 @@ import (
 func TestUpdateIntegrationSettingsAwsScanType(t *testing.T) {
 	mockClient := &testutils.DynamoDBMock{}
 	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
+	mockSQS := &testutils.SqsMock{}
 
 	// Mocking health check
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) {
@@ -51,6 +52,7 @@ func TestUpdateIntegrationSettingsAwsScanType(t *testing.T) {
 	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil).Once()
 	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil).Once()
 	mockClient.On("Scan", mock.Anything).Return(&dynamodb.ScanOutput{}, nil).Once()
+	mockSQS.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		IntegrationID:    testIntegrationID,
@@ -91,7 +93,7 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil).Once()
 	mockClient.On("Scan", mock.Anything).Return(&dynamodb.ScanOutput{}, nil).Once()
 	// Send message to create new log types
-	mockSqsClient.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
+	mockSqsClient.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		S3Bucket: "test-bucket-1",

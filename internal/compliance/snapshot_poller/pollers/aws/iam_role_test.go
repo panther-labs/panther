@@ -87,7 +87,7 @@ func TestIAMRolesGetPolicyError(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestIAMROlesGetPolicyAWSError(t *testing.T) {
+func TestIAMRolesGetPolicyAWSError(t *testing.T) {
 	mockSvc := awstest.BuildMockIAMSvcError([]string{"GetRolePolicyAWSErr"})
 
 	out, err := getRolePolicy(mockSvc, aws.String("RoleName"), aws.String("PolicyName"))
@@ -113,6 +113,15 @@ func TestIAMRolesGetPolicies(t *testing.T) {
 		[]*string{aws.String("KinesisWriteOnly"), aws.String("SQSCreateQueue")},
 		inlinePolicies,
 	)
+}
+
+func TestIAMRolesGetPolicesAWSError(t *testing.T) {
+	mockSvc := awstest.BuildMockIAMSvcError([]string{"ListRolePoliciesPagesAWSErr"})
+
+	inlinePolicies, managedPolicies, err := getRolePolicies(mockSvc, aws.String("Franklin"))
+	assert.NoError(t, err)
+	assert.Nil(t, inlinePolicies)
+	assert.Nil(t, managedPolicies)
 }
 
 func TestIAMRolesGetPoliciesErrors(t *testing.T) {

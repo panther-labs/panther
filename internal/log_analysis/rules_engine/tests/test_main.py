@@ -14,29 +14,51 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import io
+import json
 import os
+from typing import Any, Dict
 from unittest import TestCase, mock
 
 import boto3
-import requests
-from botocore.auth import SigV4Auth
 
-from . import mock_to_return
+from . import mock_to_return, LAMBDA_MOCK
 
-_RESPONSE_MOCK = mock.MagicMock()
-_RESPONSE_MOCK.json.return_value = {'policies': []}
+
+def _mock_invoke(**unused_kwargs: Any) -> Dict[str, Any]:
+    return {
+        'Payload':
+            io.BytesIO(
+                json.dumps(
+                    {
+                        'body':
+                            json.dumps(
+                                {
+                                    'paging': {
+                                        'thisPage': 1,
+                                        'totalItems': 0,
+                                        'totalPages': 1
+                                    },
+                                    'models': [],  # for listModels
+                                    'rules': [],  # for listRules
+                                }
+                            ),
+                        'statusCode': 200,
+                    }
+                ).encode('utf-8')
+            )
+    }
+
+
+LAMBDA_MOCK.invoke.side_effect = _mock_invoke
 
 _ENV_VARIABLES_MOCK = {
     'ALERTS_DEDUP_TABLE': 'table_name',
-    'ANALYSIS_API_FQDN': 'analysis_fqdn',
     'S3_BUCKET': 's3_bucket',
     'NOTIFICATIONS_TOPIC': 'sns_topic',
-    'ANALYSIS_API_PATH': 'path'
 }
 with mock.patch.dict(os.environ, _ENV_VARIABLES_MOCK), \
-     mock.patch.object(boto3, 'client', side_effect=mock_to_return), \
-     mock.patch.object(SigV4Auth, 'add_auth'), \
-     mock.patch.object(requests, 'get', return_value=_RESPONSE_MOCK):
+     mock.patch.object(boto3, 'client', side_effect=mock_to_return):
     from ..src.main import lambda_handler, _load_s3_notifications
 
 
@@ -49,17 +71,28 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'alertContextError': None,
-                        'alertContextOutput': None,
-                        'dedupError': None,
-                        'dedupOutput': 'defaultDedupString:rule_id',
-                        'errored': False,
                         'id': 'event_id',
-                        'ruleError': None,
                         'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': False,
                         'ruleOutput': True,
+                        'ruleError': None,
+                        'titleOutput': None,
                         'titleError': None,
-                        'titleOutput': None
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationOverrideOutput': None,
+                        'destinationOverride': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
                     }
                 ]
         }
@@ -72,17 +105,28 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'alertContextError': None,
-                        'alertContextOutput': None,
-                        'dedupError': None,
-                        'dedupOutput': 'defaultDedupString:rule_id',
-                        'errored': False,
                         'id': 'event_id',
-                        'ruleError': None,
                         'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': False,
                         'ruleOutput': False,
+                        'ruleError': None,
+                        'titleOutput': None,
                         'titleError': None,
-                        'titleOutput': None
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationOverrideOutput': None,
+                        'destinationOverride': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
                     }
                 ]
         }
@@ -103,17 +147,28 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'alertContextError': None,
-                        'alertContextOutput': None,
-                        'dedupError': None,
-                        'dedupOutput': 'defaultDedupString:rule_id',
-                        'errored': True,
                         'id': 'event_id',
-                        'ruleError': 'Exception: Failure message',
                         'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': True,
                         'ruleOutput': None,
+                        'ruleError': 'Exception: Failure message',
+                        'titleOutput': None,
                         'titleError': None,
-                        'titleOutput': None
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationOverrideOutput': None,
+                        'destinationOverride': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
                     }
                 ]
         }
@@ -123,12 +178,32 @@ class TestMainDirectAnalysis(TestCase):
         payload = {'rules': [{'id': 'rule_id', 'body': 'import stuff'}], 'events': [{'id': 'event_id', 'data': 'data'}]}
         expected_response = {
             'results':
-                [{
-                    'errored': True,
-                    'genericError': "ModuleNotFoundError: No module named 'stuff'",
-                    'id': 'event_id',
-                    'ruleId': 'rule_id'
-                }]
+                [
+                    {
+                        'id': 'event_id',
+                        'ruleId': 'rule_id',
+                        'genericError': "ModuleNotFoundError: No module named 'stuff'",
+                        'errored': True,
+                        'ruleOutput': None,
+                        'ruleError': None,
+                        'titleOutput': None,
+                        'titleError': None,
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationOverrideOutput': None,
+                        'destinationOverride': None,
+                        'dedupOutput': None,
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
+                    }
+                ]
         }
         self.assertEqual(expected_response, lambda_handler(payload, None))
 
@@ -148,21 +223,31 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'alertContextError': None,
-                        'alertContextOutput': None,
-                        'dedupError': 'Exception: dedup error',
-                        'dedupOutput': None,
-                        'errored': True,
                         'id': 'event_id',
-                        'ruleError': None,
                         'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': True,
                         'ruleOutput': True,
+                        'ruleError': None,
+                        'titleOutput': None,
                         'titleError': None,
-                        'titleOutput': None
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationOverrideOutput': None,
+                        'destinationOverride': None,
+                        'dedupOutput': None,
+                        'dedupError': 'Exception: dedup error',
+                        'alertContextOutput': None,
+                        'alertContextError': None
                     }
                 ]
         }
-
         self.assertEqual(expected_response, lambda_handler(payload, None))
 
     def test_direct_analysis_title_exception_fails_test(self) -> None:
@@ -182,17 +267,28 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'alertContextError': None,
-                        'alertContextOutput': None,
-                        'dedupError': None,
-                        'dedupOutput': 'defaultDedupString:rule_id',
-                        'errored': True,
                         'id': 'event_id',
-                        'ruleError': None,
                         'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': True,
                         'ruleOutput': True,
+                        'ruleError': None,
+                        'titleOutput': None,
                         'titleError': 'Exception: title error',
-                        'titleOutput': None
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationOverrideOutput': None,
+                        'destinationOverride': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
                     }
                 ]
         }

@@ -33,7 +33,6 @@ describe('S3LogSourceCard', () => {
     expect(getByText(source.s3Bucket)).toBeInTheDocument();
     expect(getByText(source.kmsKey)).toBeInTheDocument();
     expect(getByText(formatDatetime(source.createdAtTime, true))).toBeInTheDocument();
-    expect(getByText(formatDatetime(source.lastEventReceived, true))).toBeInTheDocument();
     source.logTypes.forEach(logType => {
       expect(getByText(logType)).toBeInTheDocument();
     });

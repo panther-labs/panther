@@ -23,7 +23,6 @@ import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import React from 'react';
 import urls from 'Source/urls';
-import LinkButton from 'Components/buttons/LinkButton';
 import RelatedDestinations from 'Components/RelatedDestinations';
 import BulletedLogTypeList from 'Components/BulletedLogTypeList';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
@@ -50,7 +49,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
   });
 
   return (
-    <GenericItemCard borderColor={alert.type === AlertTypesEnum.RuleError ? 'red-600' : 'teal-400'}>
+    <GenericItemCard>
       <Flex align="start" pr={2}>
         {selectionEnabled && (
           <Box transform="translate3d(0,-8px,0)">
@@ -59,38 +58,45 @@ const AlertCard: React.FC<AlertCardProps> = ({
         )}
       </Flex>
       <GenericItemCard.Body>
-        <GenericItemCard.Heading>
-          <Link
-            as={RRLink}
-            aria-label="Link to Alert"
-            to={urls.logAnalysis.alerts.details(alert.alertId)}
-          >
-            {alert.title}
-          </Link>
-        </GenericItemCard.Heading>
+        <GenericItemCard.Header>
+          <GenericItemCard.Heading>
+            <Link
+              as={RRLink}
+              aria-label="Link to Alert"
+              to={urls.logAnalysis.alerts.details(alert.alertId)}
+            >
+              {alert.title}
+            </Link>
+          </GenericItemCard.Heading>
+          <GenericItemCard.Date
+            aria-label={`Creation time for ${alert.alertId}`}
+            date={formatDatetime(alert.creationTime)}
+          />
+        </GenericItemCard.Header>
+        <Text
+          fontSize="small"
+          as="span"
+          color={alert.type === AlertTypesEnum.Rule ? 'red-300' : 'teal-500'}
+        >
+          {alert.type === AlertTypesEnum.Rule ? 'Rule Match' : 'Rule Error'}
+        </Text>
         <GenericItemCard.ValuesGroup>
           {!hideRuleButton && (
             <GenericItemCard.Value
+              label="Rule"
               value={
-                <LinkButton
-                  aria-label="Link to Rule"
-                  to={urls.logAnalysis.rules.details(alert.ruleId)}
-                  variantColor="navyblue"
-                  size="medium"
-                >
-                  View Rule
-                </LinkButton>
+                <Flex spacing={2}>
+                  <Text display="inline-flex" alignItems="center" as="span">
+                    {alert.ruleId}
+                  </Text>
+                  <GenericItemCard.Link
+                    aria-label={`Link to rule ${alert.ruleId}`}
+                    to={urls.logAnalysis.rules.details(alert.ruleId)}
+                  />
+                </Flex>
               }
             />
           )}
-          <GenericItemCard.Value
-            label="Alert Type"
-            value={
-              <Text color={alert.type === AlertTypesEnum.RuleError ? 'red-500' : 'teal-100'}>
-                {alert.type === AlertTypesEnum.RuleError ? 'Rule Error' : 'Rule Match'}
-              </Text>
-            }
-          />
           <GenericItemCard.Value
             label="Destinations"
             value={
@@ -105,7 +111,6 @@ const AlertCard: React.FC<AlertCardProps> = ({
             label="Events"
             value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
           />
-          <GenericItemCard.Value label="Time Created" value={formatDatetime(alert.creationTime)} />
           <Flex ml="auto" mr={0} align="flex-end" spacing={2}>
             <SeverityBadge severity={alert.severity} />
             <UpdateAlertDropdown alert={alert} />
@@ -115,15 +120,20 @@ const AlertCard: React.FC<AlertCardProps> = ({
           <Flex
             as="section"
             align="center"
-            spacing={2}
+            spacing={1}
             mt={2}
             aria-label="Destination delivery failure"
+            fontStyle="italic"
+            color="red-100"
+            fontSize="small"
           >
-            <Icon type="alert-circle-filled" size="medium" color="red-300" />
-            <Text fontSize="small" fontStyle="italic" color="red-300">
-              There was an issue with the delivery of this alert to a selected destination. See
-              specific Alert for details.
+            <Icon type="alert-circle-filled" size="medium" />
+            <Text>
+              There was an issue with the delivery of this alert to a selected destination.
             </Text>
+            <RRLink to={urls.logAnalysis.alerts.details(alert.alertId)}>
+              <Text textDecoration="underline">See details</Text>
+            </RRLink>
           </Flex>
         )}
       </GenericItemCard.Body>

@@ -47,23 +47,23 @@ const ComplianceSourceCard: React.FC<ComplianceSourceCardProps> = ({ source }) =
   return (
     <GenericItemCard>
       <GenericItemCard.Logo src={logo} />
-      {!isCreatedByPanther && <ComplianceSourceCardOptions source={source} />}
       <GenericItemCard.Body>
-        {!isCreatedByPanther ? (
+        <GenericItemCard.Header>
           <GenericItemCard.Heading>
-            <Link as={RRLink} to={urls.compliance.sources.edit(source.integrationId)}>
-              {source.integrationLabel}
-            </Link>
-          </GenericItemCard.Heading>
-        ) : (
-          <GenericItemCard.Heading>
-            <Tooltip content="This is a compliance source we created for you.">
-              <Text color="teal-300" as="span">
+            {!isCreatedByPanther ? (
+              <Link as={RRLink} to={urls.compliance.sources.edit(source.integrationId)}>
                 {source.integrationLabel}
-              </Text>
-            </Tooltip>
+              </Link>
+            ) : (
+              <Tooltip content="This is a compliance source we created for you.">
+                <Text color="teal-300" as="span">
+                  {source.integrationLabel}
+                </Text>
+              </Tooltip>
+            )}
           </GenericItemCard.Heading>
-        )}
+          {!isCreatedByPanther && <ComplianceSourceCardOptions source={source} />}
+        </GenericItemCard.Header>
         <GenericItemCard.ValuesGroup>
           <GenericItemCard.Value label="AWS Account ID" value={source.awsAccountId} />
           <GenericItemCard.Value

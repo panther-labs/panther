@@ -38,7 +38,6 @@ describe('SqsLogSourceCard', () => {
       expect(getByText(arn)).toBeInTheDocument();
     });
     expect(getByText(formatDatetime(source.createdAtTime, true))).toBeInTheDocument();
-    expect(getByText(formatDatetime(source.lastEventReceived, true))).toBeInTheDocument();
     source.sqsConfig.logTypes.forEach(logType => {
       expect(getByText(logType)).toBeInTheDocument();
     });

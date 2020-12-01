@@ -21,10 +21,10 @@ package processor
 import (
 	"context"
 	"runtime"
-	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/pkg/errors"
@@ -35,14 +35,12 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
+	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 const (
 	// Limit this so there is time to delete from the queue at the end.
 	processingMaxFilesLimit = 5000
-
-	// The max messages per read for SQS (can't find an sqs constant to refer to).
-	sqsMaxBatchSize = 10
 )
 
 /*
@@ -69,23 +67,31 @@ func pollEvents(
 	ctx context.Context,
 	sqsClient sqsiface.SQSAPI,
 	processFunc ProcessFunc,
-	generateDataStreamsFunc func(string) ([]*common.DataStream, error)) (int, error) {
+	generateDataStreamsFunc func(context.Context, string) ([]*common.DataStream, error)) (int, error) {
 
-	streamChan := make(chan *common.DataStream, 2*sqsMaxBatchSize) // use small buffer to pipeline events
-	var accumulatedMessageReceipts []*string                       // accumulate message receipts for delete at the end
+	// We should poll events for 1/4 the Lambda's duration, leaving the balance for processing and flushing data
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		panic("lambda context doesn't have a deadline!")
+	}
+	pollingTimeout := time.Until(deadline) / 4
+	pollCtx, cancel := context.WithTimeout(ctx, pollingTimeout)
+	defer cancel()
 
-	readEventErrorChan := make(chan error, 1) // below go routine closes over this for errors, 1 deep buffer
+	streamChan := make(chan *common.DataStream) // must be unbuffered to apply back pressure!
+	var accumulatedMessageReceipts []*string    // accumulate message receipts for delete at the end
+
 	go func() {
 		defer func() {
-			close(streamChan)         // done reading messages, this will cause processFunc() to return
-			close(readEventErrorChan) // no more writes on err chan
+			close(streamChan) // done reading messages, this will cause processFunc() to return
 		}()
 
 		// continue to read until either there are no sqs messages or we have exceeded the processing time/file limit
 		highMemoryCounter := 0
+
 		for len(accumulatedMessageReceipts) < processingMaxFilesLimit {
 			select {
-			case <-ctx.Done():
+			case <-pollCtx.Done():
 				return
 			default:
 				// Makes select non blocking
@@ -104,26 +110,32 @@ func pollEvents(
 				continue
 			}
 			// keep reading from SQS to maximize output aggregation
-			messages, err := receiveFromSqs(ctx, sqsClient)
+			messages, err := receiveFromSqs(pollCtx, sqsClient)
 			if err != nil {
-				readEventErrorChan <- err
+				zap.L().Error("Encountered issue while polling sqs messages. Stopping polling", zap.Error(err))
 				return
 			}
 
 			if len(messages) == 0 { // no work to do but maybe more later OR reached the max sqs messages allowed in flight, either way need to break
-				break
+				return
 			}
 
 			for _, msg := range messages {
-				dataStreams, err := generateDataStreamsFunc(aws.StringValue(msg.Body))
+				// pass lambda context to set FULL deadline to process which is pushed down into downloader
+				dataStreams, err := generateDataStreamsFunc(ctx, aws.StringValue(msg.Body))
 				if err != nil {
-					readEventErrorChan <- err
-					return
+					// No need for error here. This issue can happen due to
+					// 1. Persistent AWS issues while accessing S3 object
+					// 2. Misconfiguration from user side (e.g. not configured IAM role permissions properly
+					// In both cases no need to log an error - the message will reappear in the queue after the Visibility Timeout has expired
+					// If the message fails repeatedly, it will end up in the DLQ and an alarm will fire
+					zap.L().Warn("Skipping event due to error", zap.Error(err))
+					continue
 				}
 				for _, dataStream := range dataStreams {
+					// Since streamChan is unbuffered it will block
 					streamChan <- dataStream
 				}
-
 				accumulatedMessageReceipts = append(accumulatedMessageReceipts, msg.ReceiptHandle)
 			}
 		}
@@ -136,28 +148,10 @@ func pollEvents(
 	if err := processFunc(streamChan, dest); err != nil {
 		return 0, err
 	}
-	readEventError := <-readEventErrorChan
-	if readEventError != nil {
-		return 0, readEventError
-	}
 
 	// delete messages from sqs q on success (best effort)
 	sqsbatch.DeleteMessageBatch(sqsClient, common.Config.SqsQueueURL, accumulatedMessageReceipts)
 	return len(accumulatedMessageReceipts), nil
-}
-
-func getQueueIntegerAttribute(attrs map[string]*string, attr string) (count int, err error) {
-	intAsStringPtr := attrs[attr]
-	if intAsStringPtr == nil {
-		err = errors.Errorf("failure getting %s count from %s", attr, common.Config.SqsQueueURL)
-		return 0, err
-	}
-	count, err = strconv.Atoi(*intAsStringPtr)
-	if err != nil {
-		err = errors.Wrapf(err, "failure reading %s (%s) count from %s", attr, *intAsStringPtr, common.Config.SqsQueueURL)
-		return 0, err
-	}
-	return count, err
 }
 
 func highMemoryUsage() (heapUsedMB, memAvailableMB float32, isHigh bool) {
@@ -174,17 +168,17 @@ func highMemoryUsage() (heapUsedMB, memAvailableMB float32, isHigh bool) {
 }
 
 func receiveFromSqs(ctx context.Context, sqsClient sqsiface.SQSAPI) ([]*sqs.Message, error) {
-	request := &sqs.ReceiveMessageInput{
+	input := &sqs.ReceiveMessageInput{
 		WaitTimeSeconds:     aws.Int64(0),
-		MaxNumberOfMessages: aws.Int64(sqsMaxBatchSize),
+		MaxNumberOfMessages: aws.Int64(common.Config.SqsBatchSize),
 		QueueUrl:            &common.Config.SqsQueueURL,
 	}
-	receiveMessageOutput, err := sqsClient.ReceiveMessageWithContext(ctx, request)
+	output, err := sqsClient.ReceiveMessageWithContext(ctx, input)
 
-	if err != nil && err != context.DeadlineExceeded && err != context.Canceled {
+	if err != nil && !awsutils.IsAnyError(err, request.CanceledErrorCode) {
 		err = errors.Wrapf(err, "failure receiving messages from %s", common.Config.SqsQueueURL)
 		return nil, err
 	}
 
-	return receiveMessageOutput.Messages, nil
+	return output.Messages, nil
 }

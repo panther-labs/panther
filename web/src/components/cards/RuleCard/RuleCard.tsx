@@ -25,7 +25,7 @@ import StatusBadge from 'Components/badges/StatusBadge';
 import BulletedLogTypeList from 'Components/BulletedLogTypeList';
 import urls from 'Source/urls';
 import { RuleSummary, ComplianceStatusEnum } from 'Generated/schema';
-import { formatDatetime, formatNumber } from 'Helpers/utils';
+import { formatDatetime } from 'Helpers/utils';
 import useDetectionDestinations from 'Hooks/useDetectionDestinations';
 import RelatedDestinations from 'Components/RelatedDestinations';
 import RuleCardOptions from './RuleCardOptions';
@@ -42,7 +42,7 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
   return (
     <GenericItemCard>
       <GenericItemCard.Body>
-        <Flex align="center">
+        <GenericItemCard.Header>
           <GenericItemCard.Heading>
             <Link
               as={RRLink}
@@ -52,10 +52,9 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
               {rule.displayName || rule.id}
             </Link>
           </GenericItemCard.Heading>
-          <Flex ml="auto" mr={0} align="flex-end">
-            <RuleCardOptions rule={rule} />
-          </Flex>
-        </Flex>
+          <GenericItemCard.Date date={formatDatetime(rule.lastModified)} />
+          <RuleCardOptions rule={rule} />
+        </GenericItemCard.Header>
 
         <SimpleGrid gap={2} columns={2}>
           <GenericItemCard.ValuesGroup>
@@ -63,23 +62,18 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
               label="Log Types"
               value={<BulletedLogTypeList logTypes={rule.logTypes} limit={2} />}
             />
+            <GenericItemCard.Value
+              label="Destinations"
+              value={
+                <RelatedDestinations
+                  destinations={detectionDestinations}
+                  loading={loadingDetectionDestinations}
+                />
+              }
+            />
           </GenericItemCard.ValuesGroup>
           <GenericItemCard.ValuesGroup>
             <Flex ml="auto" mr={0} align="flex-end" spacing={4}>
-              <GenericItemCard.Value label="Threshold" value={formatNumber(rule.threshold)} />
-              <GenericItemCard.Value
-                label="Destinations"
-                value={
-                  <RelatedDestinations
-                    destinations={detectionDestinations}
-                    loading={loadingDetectionDestinations}
-                  />
-                }
-              />
-              <GenericItemCard.Value
-                label="Last Modified"
-                value={formatDatetime(rule.lastModified)}
-              />
               <StatusBadge
                 status={rule.enabled ? 'ENABLED' : ComplianceStatusEnum.Error}
                 disabled={!rule.enabled}

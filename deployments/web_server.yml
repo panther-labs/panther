@@ -25,11 +25,6 @@ Parameters:
     Description: SNS topic for CloudWatch alarms
     # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
-  AnalysisApiEndpoint:
-    Type: String
-    Description: Analysis API gateway FQDN
-    # Example: "o4q7r6x3y3.execute-api.us-west-2.amazonaws.com"
-    AllowedPattern: '^[0-9a-z]{10}\.execute-api\.[a-z]{2}-[a-z]{4,9}-[1-9]\.amazonaws\.com(\.cn)?$'
   AppClientId:
     Type: String
     Description: The ID of the App Client that handles sign-in for the user pool
@@ -315,6 +310,5 @@ Resources:
   InitialAnalysisSet:
     Type: Custom::AnalysisSet
     Properties:
-      AnalysisAPIEndpoint: !Ref AnalysisApiEndpoint
       PackURLs: !Ref InitialAnalysisPackUrls
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources

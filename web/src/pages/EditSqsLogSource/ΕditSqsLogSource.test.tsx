@@ -25,10 +25,15 @@ import {
   waitMs,
   buildUpdateSqsLogIntegrationInput,
 } from 'test-utils';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
 import { mockListAvailableLogTypes } from 'Source/graphql/queries';
+import { Route } from 'react-router';
+import urls from 'Source/urls';
 import EditSqsLogSource from './EditSqsLogSource';
 import { mockGetSqsLogSource } from './graphql/getSqsLogSource.generated';
 import { mockUpdateSqsLogSource } from './graphql/updateSqsLogSource.generated';
+
+jest.mock('Helpers/analytics');
 
 describe('EditSqsLogSource', () => {
   beforeAll(() => {
@@ -40,7 +45,7 @@ describe('EditSqsLogSource', () => {
   });
 
   it('can successfully update an Sqs log source', async () => {
-    const logSource = buildSqsLogSourceIntegration();
+    const logSource = buildSqsLogSourceIntegration({ integrationId: 'test' });
     const { logTypes } = logSource.sqsConfig;
 
     const updatedLogSource = buildSqsLogSourceIntegration({
@@ -50,6 +55,9 @@ describe('EditSqsLogSource', () => {
 
     const mocks = [
       mockGetSqsLogSource({
+        variables: {
+          id: logSource.integrationId,
+        },
         data: {
           getSqsLogIntegration: logSource,
         },
@@ -78,9 +86,15 @@ describe('EditSqsLogSource', () => {
         },
       }),
     ];
-    const { getByText, getByLabelText, findByText } = render(<EditSqsLogSource />, {
-      mocks,
-    });
+    const { getByText, getByLabelText, findByText } = render(
+      <Route path={urls.logAnalysis.sources.edit(':id', ':type')}>
+        <EditSqsLogSource />
+      </Route>,
+      {
+        mocks,
+        initialRoute: urls.logAnalysis.sources.edit(logSource.integrationId, 'sqs'),
+      }
+    );
 
     const nameField = getByLabelText('Name') as HTMLInputElement;
 
@@ -106,5 +120,12 @@ describe('EditSqsLogSource', () => {
     fireEvent.click(getByText('Copy SQS Queue URL'));
     expect(document.execCommand).toHaveBeenCalledWith('copy');
     expect(getByText('Copied to clipboard')).toBeInTheDocument();
+
+    // Expect analytics to have been called
+    expect(trackEvent).toHaveBeenCalledWith({
+      event: EventEnum.UpdatedLogSource,
+      src: SrcEnum.LogSources,
+      ctx: 'SQS',
+    });
   });
 });

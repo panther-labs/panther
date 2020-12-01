@@ -58,7 +58,7 @@ const RuleDetailsPage: React.FC = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        ruleId: match.params.id,
+        id: match.params.id,
       },
     },
   });

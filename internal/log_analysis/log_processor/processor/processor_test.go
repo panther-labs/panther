@@ -37,6 +37,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -54,7 +55,7 @@ var (
 		Schema: &struct {
 			LogLine string `json:"logLine" description:"log line"`
 		}{},
-		NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
+		NewParser: pantherlog.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
 			return testutil.AlwaysFailParser(errors.New("fail parser")), nil
 		}),
 	})
@@ -122,6 +123,9 @@ func TestProcess(t *testing.T) {
 	err = Process(streamChan, destination, newProcessorFunc)
 	require.NoError(t, err)
 	require.Equal(t, testLogEvents, destination.nEvents)
+
+	// ensure the closer was called
+	assert.True(t, dataStream.Closer.(*dummyCloser).closed)
 }
 
 func TestProcessDataStreamError(t *testing.T) {
@@ -176,6 +180,9 @@ func TestProcessDataStreamError(t *testing.T) {
 	// the error will be different due to annotation, so check each field, just compare strings for error
 	actualLog := logs.FilterMessage(expectedLogMesg).AllUntimed()[0]
 	assertLogEqual(t, expectedLog, actualLog)
+
+	// ensure the closer was called
+	assert.True(t, dataStream.Closer.(*dummyCloser).closed)
 }
 
 func TestProcessDataStreamErrorNoChannelBuffers(t *testing.T) {
@@ -420,6 +427,9 @@ func TestProcessClassifyFailure(t *testing.T) {
 		}
 		assertLogEqual(t, expected[i], actual[i])
 	}
+
+	// ensure the closer was called
+	assert.True(t, dataStream.Closer.(*dummyCloser).closed)
 }
 
 // deals with the error package inserting line numbers into errors
@@ -494,13 +504,24 @@ func makeDataStream() (dataStream *common.DataStream) {
 	for i := uint64(0); i < testLogLines; i++ {
 		testData[i] = testLogLine
 	}
+
 	dataStream = &common.DataStream{
+		Closer:      &dummyCloser{},
 		Reader:      strings.NewReader(strings.Join(testData, "\n")),
 		Source:      testSource,
 		S3ObjectKey: testKey,
 		S3Bucket:    testBucket,
 	}
 	return
+}
+
+type dummyCloser struct {
+	closed bool
+}
+
+func (dc *dummyCloser) Close() error {
+	dc.closed = true
+	return nil
 }
 
 var errFailingReader = errors.New("failed")
@@ -524,6 +545,7 @@ var testSource = &models.SourceIntegration{
 // returns a dataStream that will cause the parse to fail
 func makeBadDataStream() (dataStream *common.DataStream) {
 	dataStream = &common.DataStream{
+		Closer: &dummyCloser{},
 		Reader: &failingReader{},
 		Source: testSource,
 	}

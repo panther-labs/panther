@@ -83,7 +83,11 @@ type TestCase struct {
 
 // Run runs a test case
 func (c *TestCase) Run(t *testing.T) {
-	TestRegisteredParser(t, c.Resolve, c.LogType, c.Input, append([]string{c.Result}, c.Results...)...)
+	results := c.Results
+	if c.Result != "" {
+		results = append([]string{c.Result}, c.Results...)
+	}
+	TestRegisteredParser(t, c.Resolve, c.LogType, c.Input, results...)
 }
 
 // TestRegisteredParser is a helper to run a test for a registered log parser
@@ -135,6 +139,7 @@ func JSON() jsoniter.API {
 func TestResult(t *testing.T, expect string, actual *pantherlog.Result, indicators ...pantherlog.FieldID) {
 	t.Helper()
 	logType := jsoniter.Get([]byte(expect), pantherlog.FieldLogTypeJSON).ToString()
+
 	require.Equal(t, logType, actual.PantherLogType)
 	expectResult := pantherlog.Result{}
 	if indicators == nil {
@@ -173,7 +178,7 @@ func TestResult(t *testing.T, expect string, actual *pantherlog.Result, indicato
 // EqualTimestamp is a helper that checks timestamps for equality with human readable message
 func EqualTimestamp(t *testing.T, expect, actual time.Time, msgAndArgs ...interface{}) {
 	t.Helper()
-	require.False(t, actual.IsZero(), "zero timestamp")
+	require.NotZero(t, actual, msgAndArgs...)
 	require.Equal(t, expect.UTC().Format(time.RFC3339Nano), actual.UTC().Format(time.RFC3339Nano), msgAndArgs...)
 }
 

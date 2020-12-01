@@ -39,15 +39,13 @@ const SqsSourceConfigurationPanel: React.FC = () => {
 
   return (
     <WizardPanel>
-      <Box width={400} m="auto">
+      <Box width={500} m="auto">
         <WizardPanel.Heading
-          title={
-            initialValues.integrationId ? 'Update the SQS source' : "Let's start with the basics"
-          }
+          title={initialValues.integrationId ? 'Update the SQS source' : 'Configure your source'}
           subtitle={
             initialValues.integrationId
               ? 'Feel free to make any changes to your SQS log source'
-              : 'We need to know where to get your logs from'
+              : 'We need some information in order to create your queue'
           }
           logo={logo}
         />
@@ -78,9 +76,12 @@ const SqsSourceConfigurationPanel: React.FC = () => {
                 items={emptyArray}
                 placeholder="The allowed AWS Principals ARNs (separated with <Enter>)"
               />
-              <FormHelperText id="aws-principals-arn-helper" mt={2}>
-                The ARN of the AWS Principals that are allowed to send data to the queue, separated
-                with {'<'}Enter{'>'} (i.e. arn:aws:iam::{pantherConfig.AWS_ACCOUNT_ID}:root)
+              <FormHelperText id="aws-principals-arn-helper" mt={4}>
+                <i>
+                  The ARN of the AWS Principals that are allowed to send data to the queue,
+                  separated with {'<'}Enter{'>'} (i.e. arn:aws:iam::{pantherConfig.AWS_ACCOUNT_ID}
+                  :root)
+                </i>
               </FormHelperText>
             </Box>
             <Box as="fieldset">
@@ -93,11 +94,13 @@ const SqsSourceConfigurationPanel: React.FC = () => {
                 items={emptyArray}
                 placeholder="The allowed AWS resources ARNs (separated with <Enter>)"
               />
-              <FormHelperText id="aws-resources-arn-helper" mt={2}>
-                The AWS resources (SNS topics, S3 buckets, etc) that are allowed to send data to the
-                queue, separated with {'<'}Enter{'>'} (i.e. arn:aws:sns:{pantherConfig.AWS_REGION}:
-                {pantherConfig.AWS_ACCOUNT_ID}
-                :my-topic).
+              <FormHelperText id="aws-resources-arn-helper" mt={4}>
+                <i>
+                  The AWS resources (SNS topics, S3 buckets, etc) that are allowed to send data to
+                  the queue, separated with {'<'}Enter{'>'} (i.e. arn:aws:sns:
+                  {pantherConfig.AWS_REGION}:{pantherConfig.AWS_ACCOUNT_ID}
+                  :my-topic).
+                </i>
               </FormHelperText>
             </Box>
           </Flex>

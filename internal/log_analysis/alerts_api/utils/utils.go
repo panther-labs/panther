@@ -20,6 +20,8 @@ package utils
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
+
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	alertdeliverymodels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
@@ -57,7 +59,7 @@ func AlertItemToSummary(item *table.AlertItem) *models.AlertSummary {
 		RuleDisplayName:   item.RuleDisplayName,
 		RuleID:            &item.RuleID,
 		RuleVersion:       &item.RuleVersion,
-		Severity:          &item.Severity,
+		Severity:          aws.String(item.Severity),
 		Status:            alertStatus,
 		Title:             GetAlertTitle(item),
 		LogTypes:          item.LogTypes,
@@ -71,8 +73,8 @@ func AlertItemToSummary(item *table.AlertItem) *models.AlertSummary {
 // GetAlertTitle - Method required for backwards compatibility
 // In case the alert title is empty, return custom title
 func GetAlertTitle(alert *table.AlertItem) *string {
-	if alert.Title != nil {
-		return alert.Title
+	if alert.Title != "" {
+		return aws.String(alert.Title)
 	}
 	if alert.RuleDisplayName != nil {
 		return alert.RuleDisplayName
