@@ -147,7 +147,7 @@ result: |
     "user_name": "Jon Bixton",
     "notes": "Updated user",
     "p_event_time": "2020-04-09T18:37:33Z",
-    "p_any_usernames": ["Jon Bixton"],
+    "p_any_usernames": [ "G Suite", "Jon Bixton" ],
     "p_log_type": "OneLogin.Events"
   }
 
