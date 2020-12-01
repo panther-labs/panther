@@ -30,8 +30,13 @@ const (
 	DefaultBufferSize = 65536
 )
 
+// Stream is the common interface for reading log entries
 type Stream interface {
+	// Next will read the next log entry.
+	// If it returns `nil` no more log entries are available in the stream.
+	// The slice returned is stable until the next call to `Next()`
 	Next() []byte
+	// Err returns the first non-EOF error that was encountered by the Stream.
 	Err() error
 }
 
@@ -62,6 +67,7 @@ func (s *LineStream) Err() error {
 	return s.err
 }
 
+// Next reads the next line from the log.
 func (s *LineStream) Next() []byte {
 	if err := s.err; err != nil {
 		return nil
