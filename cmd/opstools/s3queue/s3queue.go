@@ -20,9 +20,6 @@ package s3queue
 
 import (
 	"fmt"
-	"log"
-	"math"
-	"net/url"
 	"strconv"
 	"sync"
 	"time"
@@ -38,29 +35,23 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/cmd/opstools/s3list"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 )
 
 const (
-	pageSize             = 1000
 	fakeTopicArnTemplate = "arn:aws:sns:us-east-1:%s:panther-fake-s3queue-topic" // account is added for sqs messages
-	progressNotify       = 5000                                                  // log a line every this many to show progress
 )
 
-type Stats struct {
-	NumFiles uint64
-	NumBytes uint64
-}
-
 func S3Queue(sess *session.Session, account, s3path, s3region, queueName string,
-	concurrency int, limit uint64, stats *Stats) (err error) {
+	concurrency int, limit uint64, stats *s3list.Stats) (err error) {
 
 	return s3Queue(s3.New(sess.Copy(&aws.Config{Region: &s3region})), sqs.New(sess),
 		account, s3path, queueName, concurrency, limit, stats)
 }
 
 func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, account, s3path, queueName string,
-	concurrency int, limit uint64, stats *Stats) (failed error) {
+	concurrency int, limit uint64, stats *s3list.Stats) (failed error) {
 
 	queueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: &queueName,
@@ -86,7 +77,7 @@ func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, account, s3path,
 
 	queueWg.Add(1)
 	go func() {
-		listPath(s3Client, s3path, limit, notifyChan, errChan, stats)
+		s3list.ListPath(s3Client, s3path, limit, notifyChan, errChan, stats)
 		queueWg.Done()
 	}()
 
@@ -104,80 +95,6 @@ func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, account, s3path,
 	errorWg.Wait()
 
 	return failed
-}
-
-// Given an s3path (e.g., s3://mybucket/myprefix) list files and send to notifyChan
-func listPath(s3Client s3iface.S3API, s3path string, limit uint64,
-	notifyChan chan *events.S3Event, errChan chan error, stats *Stats) {
-
-	if limit == 0 {
-		limit = math.MaxUint64
-	}
-
-	defer func() {
-		close(notifyChan) // signal to reader that we are done
-	}()
-
-	parsedPath, err := url.Parse(s3path)
-	if err != nil {
-		errChan <- errors.Errorf("bad s3 url: %s,", err)
-		return
-	}
-
-	if parsedPath.Scheme != "s3" {
-		errChan <- errors.Errorf("not s3 protocol (expecting s3://): %s,", s3path)
-		return
-	}
-
-	bucket := parsedPath.Host
-	if bucket == "" {
-		errChan <- errors.Errorf("missing bucket: %s,", s3path)
-		return
-	}
-	var prefix string
-	if len(parsedPath.Path) > 0 {
-		prefix = parsedPath.Path[1:] // remove leading '/'
-	}
-
-	// list files w/pagination
-	inputParams := &s3.ListObjectsV2Input{
-		Bucket:  aws.String(bucket),
-		Prefix:  aws.String(prefix),
-		MaxKeys: aws.Int64(pageSize),
-	}
-	err = s3Client.ListObjectsV2Pages(inputParams, func(page *s3.ListObjectsV2Output, morePages bool) bool {
-		for _, value := range page.Contents {
-			if *value.Size > 0 { // we only care about objects with size
-				stats.NumFiles++
-				if stats.NumFiles%progressNotify == 0 {
-					log.Printf("listed %d files ...", stats.NumFiles)
-				}
-				stats.NumBytes += (uint64)(*value.Size)
-				notifyChan <- &events.S3Event{
-					Records: []events.S3EventRecord{
-						{
-							S3: events.S3Entity{
-								Bucket: events.S3Bucket{
-									Name: bucket,
-								},
-								Object: events.S3Object{
-									Key:  *value.Key,
-									Size: *value.Size,
-								},
-							},
-						},
-					},
-				}
-				if stats.NumFiles >= limit {
-					break
-				}
-			}
-		}
-		return stats.NumFiles < limit // "To stop iterating, return false from the fn function."
-	})
-	if err != nil {
-		errChan <- err
-	}
 }
 
 // post message per file as-if it was an S3 notification

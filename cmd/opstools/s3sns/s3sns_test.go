@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/cmd/opstools/s3list"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -54,7 +55,7 @@ func TestS3Queue(t *testing.T) {
 	snsClient := &testutils.SnsMock{}
 	snsClient.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
-	stats := &Stats{}
+	stats := &s3list.Stats{}
 	err := s3sns(s3Client, snsClient, nil,
 		testAccount, testS3Path, topic, topicRegion, false, 1, 0, stats)
 	require.NoError(t, err)
@@ -82,7 +83,7 @@ func TestS3QueueLimit(t *testing.T) {
 	snsClient := &testutils.SnsMock{}
 	snsClient.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
-	stats := &Stats{}
+	stats := &s3list.Stats{}
 	err := s3sns(s3Client, snsClient, nil,
 		testAccount, testS3Path, topic, topicRegion, false, 1, 1, stats)
 	require.NoError(t, err)

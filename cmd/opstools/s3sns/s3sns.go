@@ -20,9 +20,6 @@ package s3sns
 
 import (
 	"fmt"
-	"log"
-	"math"
-	"net/url"
 	"strings"
 	"sync"
 
@@ -39,6 +36,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/cmd/opstools/s3list"
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/notify"
@@ -46,18 +44,11 @@ import (
 )
 
 const (
-	pageSize         = 1000
 	topicArnTemplate = "arn:aws:sns:%s:%s:%s"
-	progressNotify   = 5000 // log a line every this many to show progress
 )
 
-type Stats struct {
-	NumFiles uint64
-	NumBytes uint64
-}
-
 func S3Topic(sess *session.Session, account, s3path, s3region, topic string, attributes bool,
-	concurrency int, limit uint64, stats *Stats) (err error) {
+	concurrency int, limit uint64, stats *s3list.Stats) (err error) {
 
 	return s3sns(s3.New(sess.Copy(&aws.Config{Region: &s3region})), sns.New(sess), lambda.New(sess),
 		account, s3path, topic, *sess.Config.Region, attributes, concurrency, limit, stats)
@@ -65,7 +56,7 @@ func S3Topic(sess *session.Session, account, s3path, s3region, topic string, att
 
 func s3sns(s3Client s3iface.S3API, snsClient snsiface.SNSAPI, lambdaClient lambdaiface.LambdaAPI,
 	account, s3path, topic, topicRegion string, attributes bool,
-	concurrency int, limit uint64, stats *Stats) (failed error) {
+	concurrency int, limit uint64, stats *s3list.Stats) (failed error) {
 
 	topicARN := fmt.Sprintf(topicArnTemplate, topicRegion, account, topic)
 
@@ -83,7 +74,7 @@ func s3sns(s3Client s3iface.S3API, snsClient snsiface.SNSAPI, lambdaClient lambd
 
 	queueWg.Add(1)
 	go func() {
-		listPath(s3Client, s3path, limit, notifyChan, errChan, stats)
+		s3list.ListPath(s3Client, s3path, limit, notifyChan, errChan, stats)
 		queueWg.Done()
 	}()
 
@@ -101,80 +92,6 @@ func s3sns(s3Client s3iface.S3API, snsClient snsiface.SNSAPI, lambdaClient lambd
 	errorWg.Wait()
 
 	return failed
-}
-
-// Given an s3path (e.g., s3://mybucket/myprefix) list files and send to notifyChan
-func listPath(s3Client s3iface.S3API, s3path string, limit uint64,
-	notifyChan chan *events.S3Event, errChan chan error, stats *Stats) {
-
-	if limit == 0 {
-		limit = math.MaxUint64
-	}
-
-	defer func() {
-		close(notifyChan) // signal to reader that we are done
-	}()
-
-	parsedPath, err := url.Parse(s3path)
-	if err != nil {
-		errChan <- errors.Errorf("bad s3 url: %s,", err)
-		return
-	}
-
-	if parsedPath.Scheme != "s3" {
-		errChan <- errors.Errorf("not s3 protocol (expecting s3://): %s,", s3path)
-		return
-	}
-
-	bucket := parsedPath.Host
-	if bucket == "" {
-		errChan <- errors.Errorf("missing bucket: %s,", s3path)
-		return
-	}
-	var prefix string
-	if len(parsedPath.Path) > 0 {
-		prefix = parsedPath.Path[1:] // remove leading '/'
-	}
-
-	// list files w/pagination
-	inputParams := &s3.ListObjectsV2Input{
-		Bucket:  aws.String(bucket),
-		Prefix:  aws.String(prefix),
-		MaxKeys: aws.Int64(pageSize),
-	}
-	err = s3Client.ListObjectsV2Pages(inputParams, func(page *s3.ListObjectsV2Output, morePages bool) bool {
-		for _, value := range page.Contents {
-			if *value.Size > 0 { // we only care about objects with size
-				stats.NumFiles++
-				if stats.NumFiles%progressNotify == 0 {
-					log.Printf("listed %d files ...", stats.NumFiles)
-				}
-				stats.NumBytes += (uint64)(*value.Size)
-				notifyChan <- &events.S3Event{
-					Records: []events.S3EventRecord{
-						{
-							S3: events.S3Entity{
-								Bucket: events.S3Bucket{
-									Name: bucket,
-								},
-								Object: events.S3Object{
-									Key:  *value.Key,
-									Size: *value.Size,
-								},
-							},
-						},
-					},
-				}
-				if stats.NumFiles >= limit {
-					break
-				}
-			}
-		}
-		return stats.NumFiles < limit // "To stop iterating, return false from the fn function."
-	})
-	if err != nil {
-		errChan <- err
-	}
 }
 
 // post message per file as-if it was an S3 notification
@@ -206,9 +123,9 @@ func publishNotifications(snsClient snsiface.SNSAPI, lambdaClient lambdaiface.La
 			continue
 		}
 
-		// Add attributes based in type of data, this will enable
+		// Add SNS attributes based in type of data, this will enable
 		// the rules engine and datacatalog updater to receive the notifications.
-		// For back-filling subscriber like Snowflake this should likely not be enabled
+		// For back-filling a subscriber like Snowflake this should likely not be enabled.
 		var messageAttributes map[string]*sns.MessageAttributeValue
 		if attributes {
 			dataType, err := awsglue.DataTypeFromS3Key(key)
@@ -264,15 +181,18 @@ func logTypeFromS3Key(lambdaClient lambdaiface.LambdaAPI, s3key string) (logType
 		})
 		if err != nil {
 			err = errors.Wrapf(err, "failed to invoke %#v", method)
+			return
 		}
 		if resp.FunctionError != nil {
 			err = errors.Errorf("%s: failed to invoke %#v", *resp.FunctionError, method)
+			return
 		}
 
 		var availableLogTypes logtypesapi.AvailableLogTypes
 		err = jsoniter.Unmarshal(resp.Payload, &availableLogTypes)
 		if err != nil {
 			err = errors.Wrapf(err, "failed to unmarshal: %s", string(resp.Payload))
+			return
 		}
 
 		tableNameToLogType = make(map[string]string)

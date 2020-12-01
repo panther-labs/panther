@@ -31,6 +31,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/cmd/opstools/s3list"
 	"github.com/panther-labs/panther/cmd/opstools/testutils"
 )
 
@@ -83,7 +84,7 @@ func TestIntegrationS3queue(t *testing.T) {
 	err = testutils.CreateQueue(sqsClient, toq)
 	require.NoError(t, err)
 
-	stats := &Stats{}
+	stats := &s3list.Stats{}
 	err = S3Queue(awsSession, fakeAccountID, s3Path, s3Region, toq, concurrency, numberOfFiles, stats)
 	require.NoError(t, err)
 	assert.Equal(t, numberOfFiles, (int)(stats.NumFiles))

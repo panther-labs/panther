@@ -38,6 +38,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
+	"github.com/panther-labs/panther/cmd/opstools/s3list"
 	"github.com/panther-labs/panther/cmd/opstools/s3queue"
 	"github.com/panther-labs/panther/pkg/prompt"
 )
@@ -131,7 +132,7 @@ func main() {
 		}
 	}
 
-	stats := &s3queue.Stats{}
+	stats := &s3list.Stats{}
 	go func() {
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)

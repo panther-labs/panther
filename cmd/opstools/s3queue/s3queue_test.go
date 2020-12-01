@@ -29,6 +29,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/cmd/opstools/s3list"
 )
 
 const (
@@ -54,7 +56,7 @@ func TestS3Queue(t *testing.T) {
 	sqsClient.On("GetQueueUrl", mock.Anything).Return(&sqs.GetQueueUrlOutput{QueueUrl: aws.String("arn")}, nil).Once()
 	sqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Once()
 
-	stats := &Stats{}
+	stats := &s3list.Stats{}
 	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 0, stats)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
@@ -82,7 +84,7 @@ func TestS3QueueLimit(t *testing.T) {
 	sqsClient.On("GetQueueUrl", mock.Anything).Return(&sqs.GetQueueUrlOutput{QueueUrl: aws.String("arn")}, nil).Once()
 	sqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Once()
 
-	stats := &Stats{}
+	stats := &s3list.Stats{}
 	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 1, stats)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
@@ -107,7 +109,7 @@ func TestS3QueueBatch(t *testing.T) {
 	sqsClient.On("GetQueueUrl", mock.Anything).Return(&sqs.GetQueueUrlOutput{QueueUrl: aws.String("arn")}, nil).Once()
 	sqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Times(3)
 
-	stats := &Stats{}
+	stats := &s3list.Stats{}
 	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 0, stats)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)

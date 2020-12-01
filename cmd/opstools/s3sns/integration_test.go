@@ -32,6 +32,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/cmd/opstools/s3list"
 	"github.com/panther-labs/panther/cmd/opstools/testutils"
 )
 
@@ -96,7 +97,7 @@ func TestIntegrationS3SNS(t *testing.T) {
 	createTopicOutput, err := testutils.CreateTopic(snsClient, topicName)
 	require.NoError(t, err)
 
-	stats := &Stats{}
+	stats := &s3list.Stats{}
 	err = S3Topic(awsSession, account, "s3://"+s3Bucket+"/"+s3Prefix, *awsSession.Config.Region,
 		topicName, true, concurrency, 0, stats)
 	require.NoError(t, err)

@@ -37,22 +37,22 @@ func TestDataTypeFromS3Key(t *testing.T) {
 	require.Error(t, err)
 
 	// log
-	dataType, err := DataTypeFromS3Key(logS3Prefix + "/aws_cloudtrail")
+	dataType, err := DataTypeFromS3Key(logS3Prefix + "/some_table")
 	require.NoError(t, err)
 	assert.Equal(t, pantherdb.LogData, dataType)
 
 	// rule matches
-	dataType, err = DataTypeFromS3Key(ruleMatchS3Prefix + "/aws_cloudtrail")
+	dataType, err = DataTypeFromS3Key(ruleMatchS3Prefix + "/some_table")
 	require.NoError(t, err)
 	assert.Equal(t, pantherdb.RuleData, dataType)
 
 	// rule errors
-	dataType, err = DataTypeFromS3Key(ruleErrorsS3Prefix + "/aws_cloudtrail")
+	dataType, err = DataTypeFromS3Key(ruleErrorsS3Prefix + "/some_table")
 	require.NoError(t, err)
 	assert.Equal(t, pantherdb.RuleErrors, dataType)
 
 	// cloudsec
-	dataType, err = DataTypeFromS3Key(cloudSecurityS3Prefix + "/aws_cloudtrail")
+	dataType, err = DataTypeFromS3Key(cloudSecurityS3Prefix + "/some_table")
 	require.NoError(t, err)
 	assert.Equal(t, pantherdb.CloudSecurity, dataType)
 }
