@@ -36,8 +36,10 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/panther-labs/panther/internal/core/pantherdb"
+
+
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
 const (

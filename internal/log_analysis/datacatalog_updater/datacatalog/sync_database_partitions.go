@@ -24,8 +24,9 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/core/pantherdb"
+
 	"github.com/panther-labs/panther/internal/log_analysis/gluetasks"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 

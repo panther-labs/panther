@@ -25,7 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/internal/core/pantherdb"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/awsutils"
 )
 

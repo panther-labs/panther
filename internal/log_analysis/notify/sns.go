@@ -21,7 +21,7 @@ package notify
 import (
 	"github.com/aws/aws-sdk-go/service/sns"
 
-	"github.com/panther-labs/panther/internal/core/pantherdb"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
 const (

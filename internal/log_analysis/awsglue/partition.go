@@ -25,7 +25,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/internal/core/pantherdb"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
 // Meta data about GlueTableMetadata table over parser data written to S3

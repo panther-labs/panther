@@ -31,11 +31,11 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	"github.com/panther-labs/panther/internal/core/pantherdb"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 

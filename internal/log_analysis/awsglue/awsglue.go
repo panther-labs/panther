@@ -21,7 +21,7 @@ package awsglue
 import (
 	"strings"
 
-	"github.com/panther-labs/panther/internal/core/pantherdb"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
 // This file registers the Panther specific assumptions about tables and partition formats with associated functions.

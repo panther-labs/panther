@@ -33,7 +33,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/core/pantherdb"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
 const (
