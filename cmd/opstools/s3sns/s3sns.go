@@ -36,7 +36,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
+	"github.com/panther-labs/panther/internal/log_analysis/notify"
 )
 
 const (
@@ -50,14 +50,14 @@ type Stats struct {
 	NumBytes uint64
 }
 
-func S3Topic(sess *session.Session, account, s3path, s3region, topic string,
+func S3Topic(sess *session.Session, account, s3path, s3region, topic string, attributes bool,
 	concurrency int, limit uint64, stats *Stats) (err error) {
 
 	return s3sns(s3.New(sess.Copy(&aws.Config{Region: &s3region})), sns.New(sess),
-		account, s3path, topic, *sess.Config.Region, concurrency, limit, stats)
+		account, s3path, topic, *sess.Config.Region, attributes, concurrency, limit, stats)
 }
 
-func s3sns(s3Client s3iface.S3API, snsClient snsiface.SNSAPI, account, s3path, topic, topicRegion string,
+func s3sns(s3Client s3iface.S3API, snsClient snsiface.SNSAPI, account, s3path, topic, topicRegion string, attributes bool,
 	concurrency int, limit uint64, stats *Stats) (failed error) {
 
 	topicARN := fmt.Sprintf(topicArnTemplate, topicRegion, account, topic)
@@ -69,7 +69,7 @@ func s3sns(s3Client s3iface.S3API, snsClient snsiface.SNSAPI, account, s3path, t
 	for i := 0; i < concurrency; i++ {
 		queueWg.Add(1)
 		go func() {
-			publishNotifications(snsClient, topicARN, notifyChan, errChan)
+			publishNotifications(snsClient, topicARN, attributes, notifyChan, errChan)
 			queueWg.Done()
 		}()
 	}
@@ -171,7 +171,7 @@ func listPath(s3Client s3iface.S3API, s3path string, limit uint64,
 }
 
 // post message per file as-if it was an S3 notification
-func publishNotifications(snsClient snsiface.SNSAPI, topicARN string,
+func publishNotifications(snsClient snsiface.SNSAPI, topicARN string, attributes bool,
 	notifyChan chan *events.S3Event, errChan chan error) {
 
 	var failed bool
@@ -185,7 +185,7 @@ func publishNotifications(snsClient snsiface.SNSAPI, topicARN string,
 			zap.String("key", s3Event.Records[0].S3.Object.Key),
 			zap.Int64("size", s3Event.Records[0].S3.Object.Size))
 
-		s3Notification := process.NewS3ObjectPutNotification(s3Event.Records[0].S3.Bucket.Name,
+		s3Notification := notify.NewS3ObjectPutNotification(s3Event.Records[0].S3.Bucket.Name,
 			s3Event.Records[0].S3.Object.Key, int(s3Event.Records[0].S3.Object.Size))
 
 		notifyJSON, err := jsoniter.MarshalToString(s3Notification)
@@ -195,9 +195,22 @@ func publishNotifications(snsClient snsiface.SNSAPI, topicARN string,
 			continue
 		}
 
+		// Add attributes based in type of data, this will enable
+		// the rules engine and datacatalog updater to receive the notifications.
+		// For backfilling subscriber like Snowflake this should likely not be enabled
+		var messageAttributes map[string]*sns.MessageAttributeValue
+		if attributes {
+			dataType := ""
+			logType := ""
+			messageAttributes = notify.NewLogAnalysisSNSMessageAttributes(dataType, logType)
+		} else {
+			messageAttributes = make(map[string]*sns.MessageAttributeValue)
+		}
+
 		publishInput := &sns.PublishInput{
 			Message:  &notifyJSON,
 			TopicArn: &topicARN,
+			MessageAttributes: messageAttributes,
 		}
 
 		_, err = snsClient.Publish(publishInput)

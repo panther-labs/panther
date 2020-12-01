@@ -47,12 +47,18 @@ const (
 )
 
 var (
-	REGION      = flag.String("region", "", "The Panther AWS region (optional, defaults to session env vars) where the topic exists.")
-	ACCOUNT     = flag.String("account", "", "The Panther AWS account id (optional, defaults to session account)")
+	REGION      = flag.String("region", "",
+		"The Panther AWS region (optional, defaults to session env vars) where the topic exists.")
+	ACCOUNT     = flag.String("account", "",
+		"The Panther AWS account id (optional, defaults to session account)")
 	S3PATH      = flag.String("s3path", "", "The s3 path to list (e.g., s3://<bucket>/<prefix>).")
 	CONCURRENCY = flag.Int("concurrency", 50, "The number of concurrent sqs writer go routines")
-	LIMIT       = flag.Uint64("limit", 0, "If non-zero, then limit the number of files to this number.")
-	TOPIC       = flag.String("topic", "panther-processed-data-notifications", "The name of the log processor topic to send notifications.")
+	LIMIT       = flag.Uint64("limit", 0,
+		"If non-zero, then limit the number of files to this number.")
+	TOPIC       = flag.String("topic", "panther-processed-data-notifications",
+		"The name of the log processor topic to send notifications.")
+	ATTRIBUTES  = flag.Bool("attributes", false,
+		"If true, add SNS attributes that would enable the rule engine and datacatalog updater to receive events.")
 	INTERACTIVE = flag.Bool("interactive", true, "If true, prompt for required flags if not set")
 	VERBOSE     = flag.Bool("verbose", false, "Enable verbose logging")
 
@@ -140,7 +146,7 @@ func main() {
 			caught, stats.NumFiles, float32(stats.NumBytes)/(1024.0*1024.0), *TOPIC, time.Since(startTime))
 	}()
 
-	err = s3sns.S3Topic(sess, *ACCOUNT, *S3PATH, s3Region, *TOPIC, *CONCURRENCY, *LIMIT, stats)
+	err = s3sns.S3Topic(sess, *ACCOUNT, *S3PATH, s3Region, *TOPIC, *ATTRIBUTES, *CONCURRENCY, *LIMIT, stats)
 	if err != nil {
 		logger.Fatal(err)
 	} else {

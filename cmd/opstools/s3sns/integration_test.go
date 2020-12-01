@@ -36,9 +36,8 @@ import (
 
 const (
 	topicPrefix   = "panther-test-s3sns"
-	s3Path        = "s3://panther-public-cloudformation-templates/" // this is a public Panther bucket with CF files we can use
+	s3Bucket        = "panther-public-cloudformation-templates" // this is a public Panther bucket with CF files we can use
 	s3Region      = "us-west-2"                                     // region of above bucket
-	numberOfFiles = 10                                              // we expect at least this many
 	concurrency   = 10
 )
 
@@ -66,18 +65,23 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestIntegrationS3sns(t *testing.T) {
+func TestIntegrationS3SNS(t *testing.T) {
 	if !integrationTest {
 		t.Skip()
 	}
 
+	// check that the number files sent matches what was listed
+
 	topicName := topicPrefix + "-topic"
+
+	numberOfFiles, err := testutils.CountObjectsInBucket(s3Client, s3Bucket)
+	require.NoError(t, err)
 
 	createTopicOutput, err := testutils.CreateTopic(snsClient, topicName)
 	require.NoError(t, err)
 
 	stats := &Stats{}
-	err = S3Topic(awsSession, account, s3Path, s3Region, topicName, concurrency, numberOfFiles, stats)
+	err = S3Topic(awsSession, account, "s3://" + s3Bucket, s3Region, topicName, false, concurrency, 0, stats)
 	require.NoError(t, err)
 	assert.Equal(t, numberOfFiles, (int)(stats.NumFiles))
 
