@@ -108,16 +108,16 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 
 	expectedAlertNotification := &alertModel.Alert{
 		CreatedAt:           newAlertDedupEvent.UpdateTime,
-		AnalysisDescription: &testRuleResponse.Description,
+		AnalysisDescription: testRuleResponse.Description,
 		AnalysisID:          newAlertDedupEvent.RuleID,
 		Version:             &newAlertDedupEvent.RuleVersion,
 		AnalysisName:        &testRuleResponse.DisplayName,
-		Runbook:             &testRuleResponse.Runbook,
+		Runbook:             testRuleResponse.Runbook,
 		Severity:            string(testRuleResponse.Severity),
 		Tags:                []string{"Tag"},
 		Type:                alertModel.RuleType,
 		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
-		Title:               newAlertDedupEvent.GeneratedTitle,
+		Title:               *newAlertDedupEvent.GeneratedTitle,
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
 	require.NoError(t, err)
@@ -140,16 +140,19 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		FirstEventMatchTime: newAlertDedupEvent.CreationTime,
 		LogTypes:            newAlertDedupEvent.LogTypes,
 		AlertDedupEvent: AlertDedupEvent{
-			RuleID:              newAlertDedupEvent.RuleID,
-			Type:                newAlertDedupEvent.Type,
-			RuleVersion:         newAlertDedupEvent.RuleVersion,
-			LogTypes:            newAlertDedupEvent.LogTypes,
-			EventCount:          newAlertDedupEvent.EventCount,
-			AlertCount:          newAlertDedupEvent.AlertCount,
-			DeduplicationString: newAlertDedupEvent.DeduplicationString,
-			GeneratedTitle:      newAlertDedupEvent.GeneratedTitle,
-			UpdateTime:          newAlertDedupEvent.UpdateTime,
-			CreationTime:        newAlertDedupEvent.UpdateTime,
+			RuleID:                       newAlertDedupEvent.RuleID,
+			Type:                         newAlertDedupEvent.Type,
+			RuleVersion:                  newAlertDedupEvent.RuleVersion,
+			LogTypes:                     newAlertDedupEvent.LogTypes,
+			EventCount:                   newAlertDedupEvent.EventCount,
+			AlertCount:                   newAlertDedupEvent.AlertCount,
+			DeduplicationString:          newAlertDedupEvent.DeduplicationString,
+			GeneratedTitle:               newAlertDedupEvent.GeneratedTitle,
+			GeneratedDescription:         aws.String(getDescription(testRuleResponse, newAlertDedupEvent)),
+			GeneratedRunbook:             aws.String(getRunbook(testRuleResponse, newAlertDedupEvent)),
+			GeneratedDestinationOverride: newAlertDedupEvent.GeneratedDestinationOverride,
+			UpdateTime:                   newAlertDedupEvent.UpdateTime,
+			CreationTime:                 newAlertDedupEvent.UpdateTime,
 		},
 	}
 
@@ -201,15 +204,15 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 
 	expectedAlertNotification := &alertModel.Alert{
 		CreatedAt:           newAlertDedupEventWithoutTitle.UpdateTime,
-		AnalysisDescription: &testRuleResponse.Description,
+		AnalysisDescription: testRuleResponse.Description,
 		AnalysisID:          newAlertDedupEventWithoutTitle.RuleID,
 		Version:             &newAlertDedupEventWithoutTitle.RuleVersion,
-		Runbook:             &testRuleResponse.Runbook,
+		Runbook:             testRuleResponse.Runbook,
 		Severity:            string(testRuleResponse.Severity),
 		Tags:                []string{"Tag"},
 		Type:                alertModel.RuleType,
 		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
-		Title:               aws.String(newAlertDedupEventWithoutTitle.RuleID),
+		Title:               newAlertDedupEventWithoutTitle.RuleID,
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
 	require.NoError(t, err)
@@ -239,16 +242,20 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 		FirstEventMatchTime: newAlertDedupEventWithoutTitle.CreationTime,
 		LogTypes:            newAlertDedupEvent.LogTypes,
 		AlertDedupEvent: AlertDedupEvent{
-			RuleID:              newAlertDedupEventWithoutTitle.RuleID,
-			RuleVersion:         newAlertDedupEventWithoutTitle.RuleVersion,
-			LogTypes:            newAlertDedupEventWithoutTitle.LogTypes,
-			EventCount:          newAlertDedupEventWithoutTitle.EventCount,
-			AlertCount:          newAlertDedupEventWithoutTitle.AlertCount,
-			DeduplicationString: newAlertDedupEventWithoutTitle.DeduplicationString,
-			GeneratedTitle:      newAlertDedupEventWithoutTitle.GeneratedTitle,
-			UpdateTime:          newAlertDedupEventWithoutTitle.UpdateTime,
-			CreationTime:        newAlertDedupEventWithoutTitle.UpdateTime,
-			Type:                newAlertDedupEventWithoutTitle.Type,
+			RuleID:                       newAlertDedupEventWithoutTitle.RuleID,
+			RuleVersion:                  newAlertDedupEventWithoutTitle.RuleVersion,
+			LogTypes:                     newAlertDedupEventWithoutTitle.LogTypes,
+			EventCount:                   newAlertDedupEventWithoutTitle.EventCount,
+			AlertCount:                   newAlertDedupEventWithoutTitle.AlertCount,
+			DeduplicationString:          newAlertDedupEventWithoutTitle.DeduplicationString,
+			GeneratedTitle:               newAlertDedupEventWithoutTitle.GeneratedTitle,
+			GeneratedDescription:         aws.String(getDescription(testRuleResponse, newAlertDedupEvent)),
+			GeneratedReference:           aws.String(getReference(testRuleResponse, newAlertDedupEvent)),
+			GeneratedRunbook:             aws.String(getRunbook(testRuleResponse, newAlertDedupEvent)),
+			GeneratedDestinationOverride: newAlertDedupEvent.GeneratedDestinationOverride,
+			UpdateTime:                   newAlertDedupEventWithoutTitle.UpdateTime,
+			CreationTime:                 newAlertDedupEventWithoutTitle.UpdateTime,
+			Type:                         newAlertDedupEventWithoutTitle.Type,
 		},
 	}
 
@@ -289,16 +296,16 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 
 	expectedAlertNotification := &alertModel.Alert{
 		CreatedAt:           newAlertDedupEvent.UpdateTime,
-		AnalysisDescription: &testRuleResponse.Description,
+		AnalysisDescription: testRuleResponse.Description,
 		AnalysisID:          newAlertDedupEvent.RuleID,
 		Version:             &newAlertDedupEvent.RuleVersion,
 		AnalysisName:        &testRuleResponse.DisplayName,
-		Runbook:             &testRuleResponse.Runbook,
+		Runbook:             testRuleResponse.Runbook,
 		Severity:            string(testRuleResponse.Severity),
 		Tags:                []string{"Tag"},
 		Type:                newAlertDedupEvent.Type,
 		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
-		Title:               aws.String("DisplayName"),
+		Title:               "DisplayName",
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
 	require.NoError(t, err)
@@ -320,16 +327,19 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		FirstEventMatchTime: newAlertDedupEvent.CreationTime,
 		LogTypes:            newAlertDedupEvent.LogTypes,
 		AlertDedupEvent: AlertDedupEvent{
-			RuleID:              newAlertDedupEvent.RuleID,
-			RuleVersion:         newAlertDedupEvent.RuleVersion,
-			LogTypes:            newAlertDedupEvent.LogTypes,
-			Type:                newAlertDedupEvent.Type,
-			EventCount:          newAlertDedupEvent.EventCount,
-			AlertCount:          newAlertDedupEvent.AlertCount,
-			DeduplicationString: newAlertDedupEvent.DeduplicationString,
-			GeneratedTitle:      newAlertDedupEvent.GeneratedTitle,
-			UpdateTime:          newAlertDedupEvent.UpdateTime,
-			CreationTime:        newAlertDedupEvent.UpdateTime,
+			RuleID:                       newAlertDedupEvent.RuleID,
+			RuleVersion:                  newAlertDedupEvent.RuleVersion,
+			LogTypes:                     newAlertDedupEvent.LogTypes,
+			Type:                         newAlertDedupEvent.Type,
+			EventCount:                   newAlertDedupEvent.EventCount,
+			AlertCount:                   newAlertDedupEvent.AlertCount,
+			DeduplicationString:          newAlertDedupEvent.DeduplicationString,
+			GeneratedTitle:               newAlertDedupEvent.GeneratedTitle,
+			GeneratedDescription:         aws.String(getDescription(testRuleResponse, newAlertDedupEvent)),
+			GeneratedRunbook:             aws.String(getRunbook(testRuleResponse, newAlertDedupEvent)),
+			GeneratedDestinationOverride: newAlertDedupEvent.GeneratedDestinationOverride,
+			UpdateTime:                   newAlertDedupEvent.UpdateTime,
+			CreationTime:                 newAlertDedupEvent.UpdateTime,
 		},
 	}
 
@@ -382,16 +392,16 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 
 	expectedAlertNotification := &alertModel.Alert{
 		CreatedAt:           newAlertDedupEvent.UpdateTime,
-		AnalysisDescription: &testRuleResponse.Description,
+		AnalysisDescription: testRuleResponse.Description,
 		AnalysisID:          newAlertDedupEvent.RuleID,
 		AnalysisName:        &testRuleResponse.DisplayName,
 		Version:             &newAlertDedupEvent.RuleVersion,
-		Runbook:             &testRuleResponse.Runbook,
+		Runbook:             testRuleResponse.Runbook,
 		Severity:            string(testRuleResponse.Severity),
 		Tags:                []string{"Tag"},
 		Type:                alertModel.RuleType,
 		AlertID:             aws.String("b25dc23fb2a0b362da8428dbec1381a8"),
-		Title:               newAlertDedupEvent.GeneratedTitle,
+		Title:               *newAlertDedupEvent.GeneratedTitle,
 	}
 	expectedMarshaledAlertNotification, err := jsoniter.MarshalToString(expectedAlertNotification)
 	require.NoError(t, err)
@@ -414,16 +424,19 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 		FirstEventMatchTime: newAlertDedupEvent.CreationTime,
 		LogTypes:            newAlertDedupEvent.LogTypes,
 		AlertDedupEvent: AlertDedupEvent{
-			RuleID:              newAlertDedupEvent.RuleID,
-			Type:                newAlertDedupEvent.Type,
-			RuleVersion:         newAlertDedupEvent.RuleVersion,
-			LogTypes:            newAlertDedupEvent.LogTypes,
-			EventCount:          newAlertDedupEvent.EventCount,
-			AlertCount:          newAlertDedupEvent.AlertCount,
-			DeduplicationString: newAlertDedupEvent.DeduplicationString,
-			GeneratedTitle:      newAlertDedupEvent.GeneratedTitle,
-			UpdateTime:          newAlertDedupEvent.UpdateTime,
-			CreationTime:        newAlertDedupEvent.UpdateTime,
+			RuleID:                       newAlertDedupEvent.RuleID,
+			Type:                         newAlertDedupEvent.Type,
+			RuleVersion:                  newAlertDedupEvent.RuleVersion,
+			LogTypes:                     newAlertDedupEvent.LogTypes,
+			EventCount:                   newAlertDedupEvent.EventCount,
+			AlertCount:                   newAlertDedupEvent.AlertCount,
+			DeduplicationString:          newAlertDedupEvent.DeduplicationString,
+			GeneratedTitle:               newAlertDedupEvent.GeneratedTitle,
+			GeneratedDescription:         aws.String(getDescription(testRuleResponse, newAlertDedupEvent)),
+			GeneratedRunbook:             aws.String(getRunbook(testRuleResponse, newAlertDedupEvent)),
+			GeneratedDestinationOverride: newAlertDedupEvent.GeneratedDestinationOverride,
+			UpdateTime:                   newAlertDedupEvent.UpdateTime,
+			CreationTime:                 newAlertDedupEvent.UpdateTime,
 		},
 	}
 
@@ -465,15 +478,18 @@ func TestHandleUpdateAlert(t *testing.T) {
 		http.StatusOK, nil, testRuleResponse).Once()
 
 	dedupEventWithUpdatedFields := &AlertDedupEvent{
-		RuleID:              newAlertDedupEvent.RuleID,
-		RuleVersion:         newAlertDedupEvent.RuleVersion,
-		DeduplicationString: newAlertDedupEvent.DeduplicationString,
-		AlertCount:          newAlertDedupEvent.AlertCount,
-		CreationTime:        newAlertDedupEvent.CreationTime,
-		UpdateTime:          newAlertDedupEvent.UpdateTime.Add(1 * time.Minute),
-		EventCount:          newAlertDedupEvent.EventCount + 10,
-		LogTypes:            append(newAlertDedupEvent.LogTypes, "New.Log.Type"),
-		GeneratedTitle:      newAlertDedupEvent.GeneratedTitle,
+		RuleID:                       newAlertDedupEvent.RuleID,
+		RuleVersion:                  newAlertDedupEvent.RuleVersion,
+		DeduplicationString:          newAlertDedupEvent.DeduplicationString,
+		AlertCount:                   newAlertDedupEvent.AlertCount,
+		CreationTime:                 newAlertDedupEvent.CreationTime,
+		UpdateTime:                   newAlertDedupEvent.UpdateTime.Add(1 * time.Minute),
+		EventCount:                   newAlertDedupEvent.EventCount + 10,
+		LogTypes:                     append(newAlertDedupEvent.LogTypes, "New.Log.Type"),
+		GeneratedTitle:               newAlertDedupEvent.GeneratedTitle,
+		GeneratedDescription:         newAlertDedupEvent.GeneratedDescription,
+		GeneratedRunbook:             newAlertDedupEvent.GeneratedRunbook,
+		GeneratedDestinationOverride: newAlertDedupEvent.GeneratedDestinationOverride,
 	}
 
 	updateExpression := expression.
@@ -523,15 +539,18 @@ func TestHandleUpdateAlertDDBError(t *testing.T) {
 		http.StatusOK, nil, testRuleResponse).Once()
 
 	dedupEventWithUpdatedFields := &AlertDedupEvent{
-		RuleID:              newAlertDedupEvent.RuleID,
-		RuleVersion:         newAlertDedupEvent.RuleVersion,
-		DeduplicationString: newAlertDedupEvent.DeduplicationString,
-		AlertCount:          newAlertDedupEvent.AlertCount,
-		CreationTime:        newAlertDedupEvent.CreationTime,
-		UpdateTime:          newAlertDedupEvent.UpdateTime.Add(1 * time.Minute),
-		EventCount:          newAlertDedupEvent.EventCount + 10,
-		LogTypes:            append(newAlertDedupEvent.LogTypes, "New.Log.Type"),
-		GeneratedTitle:      newAlertDedupEvent.GeneratedTitle,
+		RuleID:                       newAlertDedupEvent.RuleID,
+		RuleVersion:                  newAlertDedupEvent.RuleVersion,
+		DeduplicationString:          newAlertDedupEvent.DeduplicationString,
+		AlertCount:                   newAlertDedupEvent.AlertCount,
+		CreationTime:                 newAlertDedupEvent.CreationTime,
+		UpdateTime:                   newAlertDedupEvent.UpdateTime.Add(1 * time.Minute),
+		EventCount:                   newAlertDedupEvent.EventCount + 10,
+		LogTypes:                     append(newAlertDedupEvent.LogTypes, "New.Log.Type"),
+		GeneratedTitle:               newAlertDedupEvent.GeneratedTitle,
+		GeneratedDescription:         newAlertDedupEvent.GeneratedDescription,
+		GeneratedRunbook:             newAlertDedupEvent.GeneratedRunbook,
+		GeneratedDestinationOverride: newAlertDedupEvent.GeneratedDestinationOverride,
 	}
 
 	ddbMock.On("UpdateItem", mock.Anything).Return(&dynamodb.UpdateItemOutput{}, errors.New("error"))
@@ -604,16 +623,20 @@ func TestHandleShouldCreateAlertIfThresholdNowReached(t *testing.T) {
 	}
 
 	newAlertDedup := &AlertDedupEvent{
-		RuleID:              oldAlertDedupEvent.RuleID,
-		Type:                oldAlertDedupEvent.Type,
-		RuleVersion:         oldAlertDedupEvent.RuleVersion,
-		DeduplicationString: oldAlertDedupEvent.DeduplicationString,
-		AlertCount:          oldAlertDedupEvent.AlertCount + 1,
-		CreationTime:        time.Now().UTC(),
-		UpdateTime:          time.Now().UTC(),
-		EventCount:          1001,
-		LogTypes:            oldAlertDedupEvent.LogTypes,
-		GeneratedTitle:      oldAlertDedupEvent.GeneratedTitle,
+		RuleID:                       oldAlertDedupEvent.RuleID,
+		Type:                         oldAlertDedupEvent.Type,
+		RuleVersion:                  oldAlertDedupEvent.RuleVersion,
+		DeduplicationString:          oldAlertDedupEvent.DeduplicationString,
+		AlertCount:                   oldAlertDedupEvent.AlertCount + 1,
+		CreationTime:                 time.Now().UTC(),
+		UpdateTime:                   time.Now().UTC(),
+		EventCount:                   1001,
+		LogTypes:                     oldAlertDedupEvent.LogTypes,
+		GeneratedTitle:               oldAlertDedupEvent.GeneratedTitle,
+		GeneratedDescription:         newAlertDedupEvent.GeneratedDescription,
+		GeneratedReference:           newAlertDedupEvent.GeneratedReference,
+		GeneratedRunbook:             newAlertDedupEvent.GeneratedRunbook,
+		GeneratedDestinationOverride: newAlertDedupEvent.GeneratedDestinationOverride,
 	}
 
 	ddbMock.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil).Once()

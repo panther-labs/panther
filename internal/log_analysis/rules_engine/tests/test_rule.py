@@ -17,7 +17,7 @@
 from unittest import TestCase
 import json
 
-from ..src.rule import MAX_DEDUP_STRING_SIZE, MAX_TITLE_SIZE, Rule, RuleResult, TRUNCATED_STRING_SUFFIX
+from ..src.rule import MAX_DEDUP_STRING_SIZE, MAX_GENERATED_FIELD_SIZE, Rule, RuleResult, TRUNCATED_STRING_SUFFIX
 
 
 class TestRule(TestCase):  # pylint: disable=too-many-public-methods
@@ -124,10 +124,10 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         rule_body = 'def rule(event):\n\treturn True\n' \
                     'def dedup(event):\n\treturn "test"\n' \
                     'def title(event):\n\treturn "".join("a" for i in range({}))'. \
-            format(MAX_TITLE_SIZE + 1)
+            format(MAX_GENERATED_FIELD_SIZE + 1)
         rule = Rule({'id': 'test_restrict_title_size', 'body': rule_body, 'versionId': 'versionId'})
 
-        expected_title_string_prefix = ''.join('a' for _ in range(MAX_TITLE_SIZE - len(TRUNCATED_STRING_SUFFIX)))
+        expected_title_string_prefix = ''.join('a' for _ in range(MAX_GENERATED_FIELD_SIZE - len(TRUNCATED_STRING_SUFFIX)))
         expected_rule = RuleResult(matched=True, dedup_output='test', title_output=expected_title_string_prefix + TRUNCATED_STRING_SUFFIX)
         self.assertEqual(expected_rule, rule.run({}))
 
@@ -213,14 +213,20 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\traise Exception("test")'
         rule = Rule({'id': 'test_rule_title_throws_exception', 'body': rule_body, 'versionId': 'versionId'})
 
-        expected_result = RuleResult(matched=True, dedup_output='defaultDedupString:test_rule_title_throws_exception')
+        expected_result = RuleResult(
+            matched=True,
+            dedup_output='test_rule_title_throws_exception',
+            title_output='test_rule_title_throws_exception',
+        )
         self.assertEqual(rule.run({}), expected_result)
 
     def test_rule_invalid_title_return(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\ndef title(event):\n\treturn {}'
         rule = Rule({'id': 'test_rule_invalid_title_return', 'body': rule_body, 'versionId': 'versionId'})
 
-        expected_result = RuleResult(matched=True, dedup_output='defaultDedupString:test_rule_invalid_title_return')
+        expected_result = RuleResult(
+            matched=True, dedup_output='test_rule_invalid_title_return', title_output='test_rule_invalid_title_return'
+        )
         self.assertEqual(rule.run({}), expected_result)
 
     def test_rule_title_returns_empty_string(self) -> None:

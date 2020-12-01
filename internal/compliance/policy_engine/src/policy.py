@@ -46,6 +46,7 @@ class Policy:
         except Exception as err:  # pylint: disable=broad-except
             self._import_error = err
 
+    #  pylint: disable=unsubscriptable-object
     def run(self, resource_attributes: Dict[str, Any]) -> Union[bool, Exception]:
         """Analyze a resource with this policy and return True, False, or an error."""
         if self._import_error:
