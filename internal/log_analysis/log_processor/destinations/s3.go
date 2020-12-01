@@ -36,12 +36,12 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/internal/log_analysis/notify"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	pq "github.com/panther-labs/panther/pkg/priorityq"
 )
 

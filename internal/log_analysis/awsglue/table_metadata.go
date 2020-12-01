@@ -30,8 +30,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/box"
 )

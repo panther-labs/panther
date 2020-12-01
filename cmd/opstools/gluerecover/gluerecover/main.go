@@ -31,8 +31,8 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/panther-labs/panther/cmd/opstools"
-	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetasks"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
 var (
