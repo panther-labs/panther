@@ -124,7 +124,7 @@ func (api *API) getEventsForLogType(
 		}
 		result = append(result, events...)
 		// start iterating over the partitions here
-		gluePartition, err := awsglue.PartitionFromS3Path(api.env.ProcessedDataBucket, token.S3ObjectKey)
+		gluePartition, err := awsglue.PartitionFromS3Object(api.env.ProcessedDataBucket, token.S3ObjectKey)
 		if err != nil {
 			return nil, resultToken, errors.Wrapf(err, "cannot parse token s3 path")
 		}

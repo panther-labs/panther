@@ -109,9 +109,9 @@ var (
 type partitionTestEvent struct{}
 
 func TestGetDataPrefix(t *testing.T) {
-	assert.Equal(t, logS3Prefix, GetDataPrefix(pantherdb.LogProcessingDatabase))
-	assert.Equal(t, ruleMatchS3Prefix, GetDataPrefix(pantherdb.RuleMatchDatabase))
-	assert.Equal(t, logS3Prefix, GetDataPrefix("some_test_database"))
+	assert.Equal(t, logS3Prefix, DataPrefix(pantherdb.LogProcessingDatabase))
+	assert.Equal(t, ruleMatchS3Prefix, DataPrefix(pantherdb.RuleMatchDatabase))
+	assert.Equal(t, logS3Prefix, DataPrefix("some_test_database"))
 }
 
 func TestGlueTableMetadataLogData(t *testing.T) {

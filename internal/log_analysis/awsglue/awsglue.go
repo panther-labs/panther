@@ -34,7 +34,7 @@ const (
 )
 
 // Returns the prefix of the table in S3 or error if it failed to generate it
-func GetTablePrefix(database, tableName string) string {
+func TablePrefix(database, tableName string) string {
 	switch database {
 	case pantherdb.LogProcessingDatabase:
 		return logS3Prefix + "/" + tableName + "/"
@@ -49,7 +49,7 @@ func GetTablePrefix(database, tableName string) string {
 	}
 }
 
-func GetDataPrefix(databaseName string) string {
+func DataPrefix(databaseName string) string {
 	switch databaseName {
 	case pantherdb.LogProcessingDatabase:
 		return logS3Prefix

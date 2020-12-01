@@ -55,7 +55,7 @@ type GlueTableMetadata struct {
 func NewGlueTableMetadata(
 	database, table, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
 
-	tablePrefix := GetTablePrefix(database, table)
+	tablePrefix := TablePrefix(database, table)
 	return &GlueTableMetadata{
 		databaseName: database,
 		tableName:    table,

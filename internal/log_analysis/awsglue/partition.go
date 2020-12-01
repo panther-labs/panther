@@ -67,7 +67,7 @@ func (gp *GluePartition) GetGlueTableMetadata() *GlueTableMetadata {
 }
 
 func PartitionPrefix(database, table string, timebin GlueTableTimebin, time time.Time) string {
-	return GetTablePrefix(database, table) + timebin.PartitionPathS3(time)
+	return TablePrefix(database, table) + timebin.PartitionPathS3(time)
 }
 
 func (gp *GluePartition) PartitionLocation() string {
@@ -83,7 +83,7 @@ type PartitionColumnInfo struct {
 // Gets the partition from S3bucket and S3 object key info.
 // The s3Object key is expected to be in the the format
 // `{logs,rules}/{table_name}/year=d{4}/month=d{2}/[day=d{2}/][hour=d{2}/]/{S+}.json.gz` otherwise an error is returned.
-func PartitionFromS3Path(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
+func PartitionFromS3Object(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 	partition := &GluePartition{s3Bucket: s3Bucket}
 
 	s3Keys := strings.Split(s3ObjectKey, "/")
@@ -161,6 +161,14 @@ func PartitionFromS3Path(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 	partition.gm = NewGlueTableMetadata(partition.databaseName, partition.tableName, "", GlueTableHourly, nil)
 
 	return partition, nil
+}
+
+func PartitionFromS3Path(s3Path string) (*GluePartition, error) {
+	bucketName, key, err := ParseS3URL(s3Path)
+	if err != nil {
+		return nil, err
+	}
+	return PartitionFromS3Object(bucketName, key)
 }
 
 func inferPartitionColumnInfo(input string, partitionName string) (PartitionColumnInfo, error) {
