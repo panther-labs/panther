@@ -29,6 +29,7 @@ import (
 
 	cloudsecglue "github.com/panther-labs/panther/internal/compliance/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
@@ -53,12 +54,12 @@ func customCloudSecurityTables(_ context.Context, event cfn.Event) (string, map[
 		}
 		return physicalResourceID, nil, nil
 	case cfn.RequestDelete:
-		zap.L().Info("deleting database", zap.String("database", cloudsecglue.CloudSecurityDatabase))
-		if _, err := awsglue.DeleteDatabase(glueClient, cloudsecglue.CloudSecurityDatabase); err != nil {
+		zap.L().Info("deleting database", zap.String("database", pantherdb.CloudSecurityDatabase))
+		if _, err := awsglue.DeleteDatabase(glueClient, pantherdb.CloudSecurityDatabase); err != nil {
 			if awsutils.IsAnyError(err, glue.ErrCodeEntityNotFoundException) {
-				zap.L().Info("already deleted", zap.String("database", cloudsecglue.CloudSecurityDatabase))
+				zap.L().Info("already deleted", zap.String("database", pantherdb.CloudSecurityDatabase))
 			} else {
-				return "", nil, errors.Wrapf(err, "failed deleting %s", cloudsecglue.CloudSecurityDatabase)
+				return "", nil, errors.Wrapf(err, "failed deleting %s", pantherdb.CloudSecurityDatabase)
 			}
 		}
 		return event.PhysicalResourceID, nil, nil
