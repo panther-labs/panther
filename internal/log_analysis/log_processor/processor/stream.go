@@ -150,6 +150,14 @@ func pollEvents(
 					continue
 				}
 
+				for _, s := range dataStreams {
+					select {
+					case streamChan <- s:
+					case <-ctx.Done():
+						return
+					}
+				}
+
 				accumulatedMessageReceipts = append(accumulatedMessageReceipts, msg.ReceiptHandle)
 			}
 		}
