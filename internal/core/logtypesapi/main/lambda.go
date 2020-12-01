@@ -22,6 +22,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	lambdaclient "github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/go-playground/validator.v9"
 
@@ -49,6 +50,7 @@ func main() {
 	// Syncing the zap.Logger always results in Lambda errors. Commented code kept as a reminder.
 	// defer logger.Sync()
 
+	session := session.Must(session.NewSession())
 	nativeLogTypes := logtypes.CollectNames(registry.NativeLogTypes())
 	api := &logtypesapi.LogTypesAPI{
 		// Use the default registry with all available log types
@@ -56,9 +58,10 @@ func main() {
 			return nativeLogTypes
 		},
 		Database: &logtypesapi.DynamoDBLogTypes{
-			DB:        dynamodb.New(session.Must(session.NewSession())),
+			DB:        dynamodb.New(session),
 			TableName: config.LogTypesTableName,
 		},
+		LambdaClient: lambdaclient.New(session),
 	}
 
 	validate := validator.New()
