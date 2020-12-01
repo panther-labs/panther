@@ -20,9 +20,6 @@ package gluetables
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"sort"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/glue"
@@ -30,37 +27,23 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
-	"github.com/panther-labs/panther/pkg/awsutils"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
-
-// DeployedLogTables returns the glue tables from the registry that have been deployed
-func DeployedLogTables(glueClient glueiface.GlueAPI) (deployedLogTables []*awsglue.GlueTableMetadata, err error) {
-	for _, gm := range registry.AvailableTables() {
-		_, err := awsglue.GetTable(glueClient, gm.DatabaseName(), gm.TableName())
-		if err != nil {
-			if awsutils.IsAnyError(err, glue.ErrCodeEntityNotFoundException) {
-				continue
-			} else {
-				return nil, errors.Wrapf(err, "failure checking existence of %s.%s",
-					gm.DatabaseName(), gm.TableName())
-			}
-		}
-		deployedLogTables = append(deployedLogTables, gm)
-	}
-
-	return deployedLogTables, nil
-}
 
 // DeployedLogTypes scans glue API to filter log types with deployed tables
 func DeployedLogTypes(ctx context.Context, glueClient glueiface.GlueAPI, logTypes []string) ([]string, error) {
-	dbName := awsglue.LogProcessingDatabaseName
+	dbNames := []string{pantherdb.LogProcessingDatabase, pantherdb.CloudSecurityDatabase}
 	index := make(map[string]string, len(logTypes))
 	deployed := make([]string, 0, len(logTypes))
+
+	// set up filter via map
 	for _, logType := range logTypes {
-		tableName := awsglue.GetTableName(logType)
+		tableName := pantherdb.TableName(logType)
 		index[tableName] = logType
 	}
+
+	// collects logTypes
 	scan := func(page *glue.GetTablesOutput, _ bool) bool {
 		for _, table := range page.TableList {
 			tableName := aws.StringValue(table.Name)
@@ -71,55 +54,19 @@ func DeployedLogTypes(ctx context.Context, glueClient glueiface.GlueAPI, logType
 		}
 		return true
 	}
-	input := glue.GetTablesInput{
-		DatabaseName: &dbName,
-	}
-	err := glueClient.GetTablesPagesWithContext(ctx, &input, scan)
-	if err != nil {
-		return nil, err
-	}
-	return deployed, nil
-}
 
-// DeployedTablesSignature returns a string "signature" for the schema of the deployed tables used to detect change
-func DeployedTablesSignature(glueClient glueiface.GlueAPI) (deployedLogTablesSignature string, err error) {
-	deployedLogTables, err := DeployedLogTables(glueClient)
-	if err != nil {
-		return "", err
-	}
-
-	allTables := ExpandLogTables(deployedLogTables...)
-
-	return BuildSignature(allTables...)
-}
-
-// Expand log tables expands tables from the log processing database to include additional tables (rules, ruleErrors)
-func ExpandLogTables(tables ...*awsglue.GlueTableMetadata) (expanded []*awsglue.GlueTableMetadata) {
-	expanded = make([]*awsglue.GlueTableMetadata, 0, 3*len(tables))
-	for _, table := range tables {
-		if table.DatabaseName() != awsglue.LogProcessingDatabaseName {
-			continue
+	// loop over each database, collecting the logTypes
+	for i := range dbNames {
+		input := glue.GetTablesInput{
+			DatabaseName: &dbNames[i],
 		}
-		expanded = append(expanded, table, table.RuleTable(), table.RuleErrorTable())
-	}
-	return
-}
-
-func BuildSignature(tables ...*awsglue.GlueTableMetadata) (string, error) {
-	tableSignatures := make([]string, 0, len(tables))
-	for _, table := range tables {
-		sig, err := table.Signature()
+		err := glueClient.GetTablesPagesWithContext(ctx, &input, scan)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		tableSignatures = append(tableSignatures, sig)
 	}
-	sort.Strings(tableSignatures) // need consistent order
-	hash := sha256.New()
-	for i := range tableSignatures {
-		_, _ = hash.Write([]byte(tableSignatures[i]))
-	}
-	return hex.EncodeToString(hash.Sum(nil)), nil
+
+	return deployed, nil
 }
 
 type TablesForLogType struct {
@@ -160,4 +107,27 @@ func CreateOrUpdateGlueTables(glueClient glueiface.GlueAPI, bucket string,
 		RuleTable:      ruleTable,
 		RuleErrorTable: ruleErrorTable,
 	}, nil
+}
+
+// ResolveTables is a helper to resolve all glue table metadata for all log types
+func ResolveTables(ctx context.Context, resolver logtypes.Resolver, logTypes ...string) ([]*awsglue.GlueTableMetadata, error) {
+	tables := make([]*awsglue.GlueTableMetadata, len(logTypes))
+	for i, logType := range logTypes {
+		entry, err := resolver.Resolve(ctx, logType)
+		if err != nil {
+			return nil, err
+		}
+		if entry == nil {
+			return nil, errors.Errorf("unresolved log type %q", logType)
+		}
+		tables[i] = LogTypeTableMeta(entry)
+	}
+	return tables, nil
+}
+
+func LogTypeTableMeta(entry logtypes.Entry) *awsglue.GlueTableMetadata {
+	desc := entry.Describe()
+	schema := entry.Schema()
+	tableName := pantherdb.TableName(desc.Name)
+	return awsglue.NewGlueTableMetadata(pantherdb.LogProcessingDatabase, tableName, desc.Description, awsglue.GlueTableHourly, schema)
 }

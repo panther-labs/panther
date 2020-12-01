@@ -25,8 +25,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/acm/acmiface"
-	"github.com/aws/aws-sdk-go/service/athena"
-	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
@@ -47,6 +45,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -56,7 +56,6 @@ var (
 	awsSession = session.Must(session.NewSession(aws.NewConfig().WithMaxRetries(10)))
 
 	acmClient            acmiface.ACMAPI                                         = acm.New(awsSession)
-	athenaClient         athenaiface.AthenaAPI                                   = athena.New(awsSession)
 	cloudWatchClient     cloudwatchiface.CloudWatchAPI                           = cloudwatch.New(awsSession)
 	cloudWatchLogsClient cloudwatchlogsiface.CloudWatchLogsAPI                   = cloudwatchlogs.New(awsSession)
 	cognitoClient        cognitoidentityprovideriface.CognitoIdentityProviderAPI = cognitoidentityprovider.New(awsSession)
@@ -67,6 +66,7 @@ var (
 	iamClient            iamiface.IAMAPI                                         = iam.New(awsSession)
 	lambdaClient         lambdaiface.LambdaAPI                                   = lambda.New(awsSession)
 	s3Client             s3iface.S3API                                           = s3.New(awsSession)
+	sqsClient            sqsiface.SQSAPI                                         = sqs.New(awsSession)
 
 	accountDescription string
 )

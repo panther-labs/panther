@@ -38,16 +38,18 @@ import (
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/awsretry"
-	"github.com/panther-labs/panther/pkg/box"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
-	// sessionDurationSeconds is the duration in seconds of the STS session the S3 client uses
-	sessionDurationSeconds = 3600
-	sourceAPIFunctionName  = "panther-source-api"
-	// How frequently to query the sources_api for new integrations
-	sourceCacheDuration = 5 * time.Minute
+	// sessionDuration is the duration of S3 client STS session
+	sessionDuration = time.Hour
+	// Expirty window for the STS credentials.
+	// Give plenty of time for refresh, we have seen that 1 minute refresh time can sometimes lead to InvalidAccessKeyId errors
+	sessionExpiryWindow   = 2 * time.Minute
+	sourceAPIFunctionName = "panther-source-api"
+	// How frequently to query the panther-sources-api for new integrations
+	sourceCacheDuration = 2 * time.Minute
 
 	s3BucketLocationCacheSize = 1000
 	s3ClientCacheSize         = 1000
@@ -70,16 +72,12 @@ type sourceCache struct {
 
 // LoadS3 loads the source configuration for an S3 object.
 // This will update the cache if needed.
-// It will return error if it encountered an issue retrieving the source information or if the source is not found.
+// It will return error if it encountered an issue retrieving the source information
 func (c *sourceCache) LoadS3(bucketName, objectKey string) (*models.SourceIntegration, error) {
 	if err := c.Sync(time.Now()); err != nil {
 		return nil, err
 	}
-	src := c.FindS3(bucketName, objectKey)
-	if src != nil {
-		return src, nil
-	}
-	return nil, errors.Errorf("source for s3://%s/%s not found", bucketName, objectKey)
+	return c.FindS3(bucketName, objectKey), nil
 }
 
 // Loads the source configuration for an source id.
@@ -171,7 +169,7 @@ var (
 	globalSourceCache = &sourceCache{}
 
 	//used to simplify mocking during testing
-	newCredentialsFunc = stscreds.NewCredentials
+	newCredentialsFunc = getAwsCredentials
 	newS3ClientFunc    = getNewS3Client
 
 	// Map from integrationId -> last time an event was received
@@ -203,7 +201,7 @@ func getS3Client(bucketName, objectKey string) (s3iface.S3API, *models.SourceInt
 	}
 
 	if sourceInfo == nil {
-		return nil, nil, errors.Errorf("there is no source configured for S3 object %s/%s", bucketName, objectKey)
+		return nil, nil, nil
 	}
 	var awsCreds *credentials.Credentials // lazy create below
 	roleArn := getSourceLogProcessingRole(sourceInfo)
@@ -211,7 +209,7 @@ func getS3Client(bucketName, objectKey string) (s3iface.S3API, *models.SourceInt
 	bucketRegion, ok := bucketCache.Get(bucketName)
 	if !ok {
 		zap.L().Debug("bucket region was not cached, fetching it", zap.String("bucket", bucketName))
-		awsCreds = getAwsCredentials(roleArn)
+		awsCreds = newCredentialsFunc(roleArn)
 		if awsCreds == nil {
 			return nil, nil, errors.Errorf("failed to fetch credentials for assumed role %s to read %s/%s",
 				roleArn, bucketName, objectKey)
@@ -233,13 +231,13 @@ func getS3Client(bucketName, objectKey string) (s3iface.S3API, *models.SourceInt
 	if !ok {
 		zap.L().Debug("s3 client was not cached, creating it")
 		if awsCreds == nil {
-			awsCreds = getAwsCredentials(roleArn)
+			awsCreds = newCredentialsFunc(roleArn)
 			if awsCreds == nil {
 				return nil, nil, errors.Errorf("failed to fetch credentials for assumed role %s to read %s/%s",
 					roleArn, bucketName, objectKey)
 			}
 		}
-		client = newS3ClientFunc(box.String(cacheKey.awsRegion), awsCreds)
+		client = newS3ClientFunc(&cacheKey.awsRegion, awsCreds)
 		s3ClientCache.Add(cacheKey, client)
 	}
 	return client.(s3iface.S3API), sourceInfo, nil
@@ -266,9 +264,11 @@ func getBucketRegion(s3Bucket string, awsCreds *credentials.Credentials) (string
 // getAwsCredentials fetches the AWS Credentials from STS for by assuming a role in the given account
 func getAwsCredentials(roleArn string) *credentials.Credentials {
 	zap.L().Debug("fetching new credentials from assumed role", zap.String("roleArn", roleArn))
-	return newCredentialsFunc(common.Session, roleArn, func(p *stscreds.AssumeRoleProvider) {
-		p.Duration = time.Duration(sessionDurationSeconds) * time.Second
-		p.ExpiryWindow = time.Minute // give plenty of time to refresh
+	// Use regional STS endpoints as per AWS recommendation https://docs.aws.amazon.com/general/latest/gr/sts.html
+	credsSession := common.Session.Copy(aws.NewConfig().WithSTSRegionalEndpoint(endpoints.RegionalSTSEndpoint))
+	return stscreds.NewCredentials(credsSession, roleArn, func(p *stscreds.AssumeRoleProvider) {
+		p.Duration = sessionDuration
+		p.ExpiryWindow = sessionExpiryWindow
 	})
 }
 

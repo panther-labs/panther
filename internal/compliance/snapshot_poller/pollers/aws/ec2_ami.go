@@ -29,7 +29,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -184,7 +184,7 @@ func buildEc2AmiSnapshot(image *ec2.Image) *awsmodels.Ec2Ami {
 }
 
 // PollEc2Amis gathers information on each EC2 AMI in an AWS account.
-func PollEc2Amis(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollEc2Amis(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting EC2 AMI resource poller")
 	ec2Svc, err := getEC2Client(pollerInput, *pollerInput.Region)
 	if err != nil {
@@ -199,7 +199,7 @@ func PollEc2Amis(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 
 	zap.L().Debug("building EC2 AMI snapshots", zap.String("region", *pollerInput.Region))
 	// For each image, build out a full snapshot
-	resources := make([]*apimodels.AddResourceEntry, 0, len(amis))
+	resources := make([]apimodels.AddResourceEntry, 0, len(amis))
 	for _, ami := range amis {
 		ec2Ami := buildEc2AmiSnapshot(ami)
 		if ec2Ami == nil {
@@ -231,11 +231,11 @@ func PollEc2Amis(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddRe
 		ec2Ami.Region = pollerInput.Region
 		ec2Ami.ARN = aws.String(resourceID)
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      ec2Ami,
-			ID:              apimodels.ResourceID(resourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              resourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.Ec2AmiSchema,
 		})
 	}

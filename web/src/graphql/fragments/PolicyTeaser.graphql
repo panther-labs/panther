@@ -6,4 +6,5 @@ fragment PolicyTeaser on PolicySummary {
   id
   displayName
   enabled
+  outputIds
 }

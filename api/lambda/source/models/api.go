@@ -29,6 +29,8 @@ type LambdaInput struct {
 	ListIntegrations          *ListIntegrationsInput          `json:"listIntegrations"`
 	DeleteIntegration         *DeleteIntegrationInput         `json:"deleteIntegration"`
 
+	ListLogTypes *ListLogTypesInput `json:"listLogTypes"`
+
 	GetIntegrationTemplate *GetIntegrationTemplateInput `json:"getIntegrationTemplate"`
 
 	UpdateIntegrationLastScanEnd   *UpdateIntegrationLastScanEndInput   `json:"updateIntegrationLastScanEnd"`
@@ -114,6 +116,19 @@ type UpdateIntegrationSettingsInput struct {
 // DeleteIntegrationInput is used to delete a specific item from the database.
 type DeleteIntegrationInput struct {
 	IntegrationID string `json:"integrationId" validate:"required,uuid4"`
+}
+
+//
+// ListLogTypes: used to get full list of distinct logType over all integrations
+//
+
+// ListLogTypesInput
+type ListLogTypesInput struct {
+}
+
+// ListLogTypesOutput
+type ListLogTypesOutput struct {
+	LogTypes []string `json:"logTypes" validate:"omitempty"`
 }
 
 //

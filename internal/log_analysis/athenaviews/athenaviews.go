@@ -26,9 +26,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/awsathena"
 )
 
@@ -43,7 +44,7 @@ func CreateOrReplaceViews(athenaClient athenaiface.AthenaAPI, workgroup string, 
 		return err
 	}
 	for _, sql := range sqlStatements {
-		_, err := awsathena.RunQuery(athenaClient, workgroup, awsglue.ViewsDatabaseName, sql, nil) // use default bucket
+		_, err := awsathena.RunQuery(athenaClient, workgroup, pantherdb.ViewsDatabase, sql)
 		if err != nil {
 			return errors.Wrap(err, "CreateOrReplaceViews() failed")
 		}
@@ -86,7 +87,7 @@ func generateViewAllRuleMatches(tables []*awsglue.GlueTableMetadata) (sql string
 	var ruleTables []*awsglue.GlueTableMetadata
 	for _, table := range tables {
 		ruleTable := awsglue.NewGlueTableMetadata(
-			models.RuleData, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+			pantherdb.RuleMatchDatabase, table.TableName(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
 		ruleTables = append(ruleTables, ruleTable)
 	}
 	return generateViewAllHelper("all_rule_matches", ruleTables, awsglue.RuleMatchColumns)
@@ -98,7 +99,7 @@ func generateViewAllRuleErrors(tables []*awsglue.GlueTableMetadata) (sql string,
 	var ruleErrorTables []*awsglue.GlueTableMetadata
 	for _, table := range tables {
 		ruleTable := awsglue.NewGlueTableMetadata(
-			models.RuleErrors, table.LogType(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
+			pantherdb.RuleErrorsDatabase, table.TableName(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
 		ruleErrorTables = append(ruleErrorTables, ruleTable)
 	}
 	return generateViewAllHelper("all_rule_errors", ruleErrorTables, awsglue.RuleErrorColumns)
@@ -123,10 +124,13 @@ func generateViewAllHelper(viewName string, tables []*awsglue.GlueTableMetadata,
 	}
 
 	// collect the Panther fields, add "NULL" for fields not present in some tables but present in others
-	pantherViewColumns := newPantherViewColumns(tables, extraColumns)
+	pantherViewColumns, err := newPantherViewColumns(tables, extraColumns)
+	if err != nil {
+		return "", err
+	}
 
 	var sqlLines []string
-	sqlLines = append(sqlLines, fmt.Sprintf("create or replace view %s.%s as", awsglue.ViewsDatabaseName, viewName))
+	sqlLines = append(sqlLines, fmt.Sprintf("create or replace view %s.%s as", pantherdb.ViewsDatabase, viewName))
 
 	for i, table := range tables {
 		sqlLines = append(sqlLines, fmt.Sprintf("select %s from %s.%s",
@@ -148,14 +152,16 @@ type pantherViewColumns struct {
 	columnsByTable map[string]map[string]struct{} // table -> map of column names in that table
 }
 
-func newPantherViewColumns(tables []*awsglue.GlueTableMetadata, extraColumns []awsglue.Column) *pantherViewColumns {
+func newPantherViewColumns(tables []*awsglue.GlueTableMetadata, extraColumns []awsglue.Column) (*pantherViewColumns, error) {
 	pvc := &pantherViewColumns{
 		allColumnsSet:  make(map[string]struct{}),
 		columnsByTable: make(map[string]map[string]struct{}),
 	}
 
 	for _, table := range tables {
-		pvc.inferViewColumns(table, extraColumns)
+		if err := pvc.inferViewColumns(table, extraColumns); err != nil {
+			return nil, err
+		}
 	}
 
 	// convert set to sorted slice
@@ -165,11 +171,14 @@ func newPantherViewColumns(tables []*awsglue.GlueTableMetadata, extraColumns []a
 	}
 	sort.Strings(pvc.allColumns) // order needs to be preserved
 
-	return pvc
+	return pvc, nil
 }
-func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueTableMetadata, extraColumns []awsglue.Column) {
+func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueTableMetadata, extraColumns []awsglue.Column) error {
 	// NOTE: in the future when we tag columns for views, the mapping  would be resolved here
-	columns, _ := awsglue.InferJSONColumns(table.EventStruct(), awsglue.GlueMappings...)
+	columns, err := glueschema.InferColumns(table.EventStruct())
+	if err != nil {
+		return err
+	}
 	columns = append(columns, extraColumns...)
 	var selectColumns []string
 	for _, col := range columns {
@@ -191,6 +200,7 @@ func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueTableMetadata
 			pvc.allColumnsSet[column] = struct{}{}
 		}
 	}
+	return nil
 }
 
 func (pvc *pantherViewColumns) viewColumns(table *awsglue.GlueTableMetadata) string {

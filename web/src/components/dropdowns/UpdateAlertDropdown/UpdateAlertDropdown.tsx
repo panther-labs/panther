@@ -34,7 +34,7 @@ import { extractErrorMessage, formatDatetime, getUserDisplayName, capitalize } f
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { useListUsers } from 'Pages/Users/graphql/listUsers.generated';
 import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
-import { useUpdateAlertStatus } from './graphql/updateAlertStatus.generated';
+import { useUpdateAlertStatus } from 'Source/graphql/queries';
 
 interface UpdateAlertDropdownProps {
   alert: AlertSummaryFull;

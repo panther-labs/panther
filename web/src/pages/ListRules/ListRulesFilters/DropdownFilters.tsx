@@ -73,6 +73,7 @@ const DropdownFilters: React.FC = () => {
               pb={4}
               backgroundColor="navyblue-400"
               minWidth={425}
+              data-testid="dropdown-rule-listing-filters"
             >
               <Formik<ListAlertsDropdownFiltersValues>
                 enableReinitialize

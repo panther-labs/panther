@@ -24,8 +24,9 @@ import { DESTINATIONS } from 'Source/constants';
 import { Destination } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
+import NotificationJewel from 'Components/NotificationJewel';
 
-const size = 24;
+const size = 18;
 
 const getLogo = ({ outputType, outputId }) => {
   const { logo } = DESTINATIONS[outputType];
@@ -64,14 +65,14 @@ const RelatedDestinations: React.FC<RelatedDestinationsSectionProps> = ({
   // If component is verbose, we should render all destinations as row with the name of destination displayed
   if (verbose) {
     return (
-      <Box as={RRLink} to={urls.settings.destinations.list()}>
+      <RRLink to={urls.settings.destinations.list()}>
         {destinations.map(destination => (
           <Flex key={destination.outputId} align="center" mb={2}>
             {getLogo(destination)}
             {destination.displayName}
           </Flex>
         ))}
-      </Box>
+      </RRLink>
     );
   }
 
@@ -89,16 +90,20 @@ const RelatedDestinations: React.FC<RelatedDestinationsSectionProps> = ({
     // Showcasing how many additional destinations exist for this alert
     const numberOfExtraDestinations = destinations.length - renderedDestinations.length;
     return (
-      <Flex align="center" spacing={2} mt={1}>
+      <Flex align="center" minWidth={85} spacing={2}>
         {renderedDestinations.map(getLogo)}
-        <Text textAlign="center">+ {numberOfExtraDestinations}</Text>
+        <NotificationJewel badge={`+${numberOfExtraDestinations}`} />
       </Flex>
     );
   }
 
   return (
-    <Flex align="center" spacing={2} mt={1}>
-      {destinations.map(getLogo)}
+    <Flex align="center" minWidth={85} spacing={2}>
+      {destinations.length ? (
+        destinations.map(getLogo)
+      ) : (
+        <Text fontSize="small">Not configured</Text>
+      )}
     </Flex>
   );
 };

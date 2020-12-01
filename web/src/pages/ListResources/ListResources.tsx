@@ -20,16 +20,12 @@ import React from 'react';
 import { Alert, Box, Card } from 'pouncejs';
 import { ListResourcesInput, ListResourcesSortFieldsEnum, SortDirEnum } from 'Generated/schema';
 import { TableControlsPagination } from 'Components/utils/TableControls';
-import {
-  convertObjArrayValuesToCsv,
-  encodeParams,
-  extendResourceWithIntegrationLabel,
-  extractErrorMessage,
-} from 'Helpers/utils';
+import { extendResourceWithIntegrationLabel, extractErrorMessage } from 'Helpers/utils';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash/isEmpty';
 import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
+import NoResultsFound from 'Components/NoResultsFound';
 import ListResourcesActions from './ListResourcesActions';
 import ListResourcesTable from './ListResourcesTable';
 import ListResourcesPageEmptyDataFallback from './EmptyDataFallback';
@@ -46,7 +42,7 @@ const ListResources = () => {
   const { loading, data, error } = useListResources({
     fetchPolicy: 'cache-and-network',
     variables: {
-      input: encodeParams(convertObjArrayValuesToCsv(requestParams), ['idContains']),
+      input: requestParams,
     },
   });
   if (loading && !data) {
@@ -86,12 +82,18 @@ const ListResources = () => {
       <ListResourcesActions />
       <ErrorBoundary>
         <Card as="section" px={8} py={4} position="relative">
-          <ListResourcesTable
-            items={enhancedResourceItems}
-            onSort={updateRequestParamsAndResetPaging}
-            sortBy={requestParams.sortBy || ListResourcesSortFieldsEnum.Id}
-            sortDir={requestParams.sortDir || SortDirEnum.Ascending}
-          />
+          {enhancedResourceItems.length ? (
+            <ListResourcesTable
+              items={enhancedResourceItems}
+              onSort={updateRequestParamsAndResetPaging}
+              sortBy={requestParams.sortBy || ListResourcesSortFieldsEnum.Id}
+              sortDir={requestParams.sortDir || SortDirEnum.Ascending}
+            />
+          ) : (
+            <Box my={8}>
+              <NoResultsFound />
+            </Box>
+          )}
         </Card>
       </ErrorBoundary>
       <Box my={6}>

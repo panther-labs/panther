@@ -18,13 +18,22 @@
 
 import React from 'react';
 import { buildAlertDetails, render } from 'test-utils';
+import { AlertTypesEnum } from 'Generated/schema';
 import AlertDetailsBanner from './index';
 
 describe('AlertDetailsBanner', () => {
   it('renders', () => {
     const alert = buildAlertDetails();
+    const alertWithRuleError = buildAlertDetails({
+      type: AlertTypesEnum.RuleError,
+    });
 
-    const { container } = render(<AlertDetailsBanner alert={alert} />);
+    const { container } = render(
+      <>
+        <AlertDetailsBanner alert={alert} />
+        <AlertDetailsBanner alert={alertWithRuleError} />
+      </>
+    );
     expect(container).toMatchSnapshot();
   });
 });

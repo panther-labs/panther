@@ -51,6 +51,9 @@ RUN npm run build
 #
 FROM node:13.2-alpine
 
+# Default to exposing `8080`
+ENV SERVER_PORT=8080
+
 # Make sure we add a folder to not pollute our root
 RUN mkdir /code
 
@@ -74,6 +77,6 @@ RUN npm install express express-static-gzip ejs chalk dotenv
 # Run the express server to serve the assets
 CMD npm run serve
 
-# through the port chosen during build time (defaults to 8080)
+# through the chosen port
 EXPOSE ${SERVER_PORT}
 

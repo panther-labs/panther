@@ -30,6 +30,14 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
+type envConfig struct {
+	ResourcesQueueURL string `required:"true" split_words:"true"`
+	ResourcesTable    string `required:"true" split_words:"true"`
+}
+
+// API has all of the handlers as receiver methods.
+type API struct{}
+
 var (
 	env envConfig
 
@@ -38,11 +46,6 @@ var (
 	sqsClient        sqsiface.SQSAPI
 	complianceClient gatewayapi.API
 )
-
-type envConfig struct {
-	ResourcesQueueURL string `required:"true" split_words:"true"`
-	ResourcesTable    string `required:"true" split_words:"true"`
-}
 
 // Setup parses the environment and builds the AWS and http clients.
 func Setup() {

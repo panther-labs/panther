@@ -36,7 +36,7 @@ var (
 				LoadBalancerArn:       aws.String("arn:aws:elasticloadbalancing:us-west-2:111111111111:loadbalancer/app/panther-test/aaaaaaaaaaaaa"),
 				DNSName:               aws.String("internal-panther-test-123456789.us-west-2.elb.amazonaws.com"),
 				CanonicalHostedZoneId: aws.String("AAAAA123"),
-				CreatedTime:           ExampleDate,
+				CreatedTime:           &ExampleTime,
 				LoadBalancerName:      aws.String("panther-test"),
 				Scheme:                aws.String("internal"),
 				VpcId:                 aws.String("vpc-aaaa66666"),

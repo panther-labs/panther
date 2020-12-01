@@ -35,7 +35,6 @@ import {
   CHECK_IF_HASH_REGEX,
   SOURCE_LABEL_REGEX,
 } from 'Source/constants';
-import mapValues from 'lodash/mapValues';
 import sum from 'lodash/sum';
 import { ErrorResponse } from 'apollo-link-error';
 import { ApolloError } from '@apollo/client';
@@ -147,13 +146,6 @@ export const getElapsedTime = (unixTimestamp: number) => {
   return dayjs.unix(unixTimestamp).fromNow();
 };
 
-/** Converts any value of the object that is an array to a comma-separated string */
-export const convertObjArrayValuesToCsv = (obj: { [key: string]: any }) =>
-  mapValues(obj, v => (Array.isArray(v) ? v.join(',') : v));
-
-/** URI encoding for specified fields in object */
-export const encodeParams = (obj: { [key: string]: any }, fields: [string]) =>
-  mapValues(obj, (v, key) => (fields.includes(key) ? encodeURIComponent(v) : v));
 /**
  * makes sure that it properly formats a JSON struct in order to be properly displayed within the
  * editor
@@ -362,12 +354,22 @@ export const getCurrentYear = () => {
   return dayjs().format('YYYY');
 };
 
-export const getCurrentDate = () => {
-  return `${dayjs().toISOString().split('.')[0]}Z`;
-};
+export const getGraphqlSafeDateRange = ({
+  days = 0,
+  hours = 0,
+}: {
+  days?: number;
+  hours?: number;
+}) => {
+  const utcNow = dayjs.utc();
+  const utcDaysAgo = utcNow.subtract(days, 'day').subtract(hours, 'hour');
 
-export const subtractDays = (date: string, days: number) => {
-  return `${dayjs(date).subtract(days, 'day').toISOString().split('.')[0]}Z`;
+  // the `startOf` and `endOf` help us have "constant" inputs for a few minutes, when we are using
+  // those values as inputs to a GraphQL query. Of course there are edge cases.
+  return [
+    utcDaysAgo.startOf('hour').format('YYYY-MM-DDTHH:mm:ss[Z]'),
+    utcNow.endOf('hour').format('YYYY-MM-DDTHH:mm:ss[Z]'),
+  ];
 };
 
 export const formatNumber = (num: number): string => {

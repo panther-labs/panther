@@ -30,6 +30,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/metrics"
 )
 
 var handler *forwarder.Handler
@@ -37,13 +38,24 @@ var handler *forwarder.Handler
 func init() {
 	// Required only once per Lambda container
 	Setup()
-	cache := forwarder.NewCache(httpClient, policyClient)
+	// TODO: revisit this. Not sure why we need Dimension sets and why just an array of dimensions is not enough
+	metricsLogger := metrics.MustLogger([]metrics.DimensionSet{
+		{
+			"AnalysisType",
+			"Severity",
+		},
+		{
+			"AnalysisType",
+		},
+	})
+	cache := forwarder.NewCache(policyClient)
 	handler = &forwarder.Handler{
 		SqsClient:        sqsClient,
 		DdbClient:        ddbClient,
 		Cache:            cache,
 		AlertingQueueURL: env.AlertingQueueURL,
 		AlertTable:       env.AlertsTable,
+		MetricsLogger:    metricsLogger,
 	}
 }
 

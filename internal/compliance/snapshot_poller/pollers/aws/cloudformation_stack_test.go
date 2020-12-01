@@ -142,7 +142,7 @@ func TestCloudFormationStackPoller(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Nil(t, marker)
-	assert.Equal(t, *awstest.ExampleDescribeStacks.Stacks[0].StackId, string(resources[0].ID))
+	assert.Equal(t, *awstest.ExampleDescribeStacks.Stacks[0].StackId, resources[0].ID)
 	assert.NotEmpty(t, resources)
 }
 
@@ -185,6 +185,6 @@ func TestCloudFormationStackDescribeDriftDetectionStatusInProgress(t *testing.T)
 
 	require.NoError(t, err)
 	assert.Nil(t, marker)
-	assert.Equal(t, *awstest.ExampleDescribeStacks.Stacks[0].StackId, string(resources[0].ID))
+	assert.Equal(t, *awstest.ExampleDescribeStacks.Stacks[0].StackId, resources[0].ID)
 	assert.NotEmpty(t, resources)
 }

@@ -38,6 +38,7 @@ func TestSlackAlert(t *testing.T) {
 	createdAtTime := time.Now()
 	alert := &alertModels.Alert{
 		AnalysisID:   "policyId",
+		Type:         alertModels.PolicyType,
 		CreatedAt:    createdAtTime,
 		OutputIds:    []string{"output-id"},
 		AnalysisName: aws.String("policyName"),

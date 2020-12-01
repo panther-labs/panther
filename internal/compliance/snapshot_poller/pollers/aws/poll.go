@@ -24,14 +24,16 @@ import (
 	"os"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	resourcesapimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	resourcesapimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
+	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 // resourcePoller is a simple struct to be used only for invoking the ResourcePollers in order.
@@ -40,12 +42,19 @@ type resourcePoller struct {
 	resourcePoller awsmodels.ResourcePoller
 }
 
+const (
+	integrationType = "aws"
+	// How long to wait before re-scanning a resource that was rate limited during scanning
+	rateLimitDelay = time.Minute * 5
+)
+
 var (
 	// Default region to use when building clients for the individual resource poller
 	// defaultRegion = endpoints.UsWest2RegionID
 	defaultRegion = os.Getenv("AWS_REGION")
 
-	auditRoleName = os.Getenv("AUDIT_ROLE_NAME")
+	// Exported for top-level unit tests to mock out
+	AuditRoleName = os.Getenv("AUDIT_ROLE_NAME")
 
 	// The default max number of resources to scan at once. We will keep paging until we scan this
 	// many resources, then do one additional page worth of resources
@@ -129,7 +138,7 @@ var (
 
 // Poll coordinates AWS generatedEvents gathering across all relevant resources for compliance monitoring.
 func Poll(scanRequest *pollermodels.ScanEntry) (
-	generatedEvents []*resourcesapimodels.AddResourceEntry, err error) {
+	generatedEvents []resourcesapimodels.AddResourceEntry, err error) {
 
 	if scanRequest.AWSAccountID == nil {
 		return nil, errors.New("no AWS AccountID provided")
@@ -137,11 +146,11 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 
 	// Build the audit role manually
 	// Format: arn:aws:iam::$(ACCOUNT_ID):role/PantherAuditRole-($REGION)
-	if len(auditRoleName) == 0 {
+	if len(AuditRoleName) == 0 {
 		return nil, errors.New("no audit role configured")
 	}
 	auditRoleARN := fmt.Sprintf("arn:aws:iam::%s:role/%s",
-		*scanRequest.AWSAccountID, auditRoleName)
+		*scanRequest.AWSAccountID, AuditRoleName)
 
 	zap.L().Debug("constructed audit role", zap.String("role", auditRoleARN))
 
@@ -159,8 +168,8 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		IntegrationID:       scanRequest.IntegrationID,
 		// This field may be nil
 		Region: scanRequest.Region,
-		// Note: The resources-api expects a strfmt.DateTime formatted string.
-		Timestamp:     utils.DateTimeFormat(utils.TimeNowFunc()),
+		// Note: The resources-api expects a time.Time formatted string.
+		Timestamp:     aws.Time(utils.TimeNowFunc()),
 		NextPageToken: scanRequest.NextPageToken,
 	}
 
@@ -184,7 +193,9 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 
 	// If a region is provided, we're good to start the scan
 	if scanRequest.Region != nil {
-		zap.L().Info("processing single region service scan")
+		zap.L().Info("processing single region service scan",
+			zap.String("region", *scanRequest.Region),
+			zap.String("resourceType", *scanRequest.ResourceType))
 		if poller, ok := ServicePollers[*scanRequest.ResourceType]; ok {
 			return serviceScan(
 				poller,
@@ -234,7 +245,7 @@ func serviceScan(
 	poller resourcePoller,
 	pollerInput *awsmodels.ResourcePollerInput,
 	scanRequest *pollermodels.ScanEntry,
-) (generatedEvents []*resourcesapimodels.AddResourceEntry, err error) {
+) (generatedEvents []resourcesapimodels.AddResourceEntry, err error) {
 
 	var marker *string
 	generatedEvents, marker, err = poller.resourcePoller(pollerInput)
@@ -274,10 +285,22 @@ func serviceScan(
 func singleResourceScan(
 	scanRequest *pollermodels.ScanEntry,
 	pollerInput *awsmodels.ResourcePollerInput,
-) ([]*resourcesapimodels.AddResourceEntry, error) {
+) ([]resourcesapimodels.AddResourceEntry, error) {
 
 	var resource interface{}
 	var err error
+
+	// First, check if we've been rate limited recently while attempting to scan this resource. If
+	// so, discard the scan request. There is already one in the ether waiting to be picked up.
+	if timestamp, ok := RateLimitTracker.Get(*scanRequest.ResourceID); ok {
+		if timestamp.(time.Time).After(time.Now()) {
+			// We were recently rate limited while scanning this resource, ignore it
+			zap.L().Debug("rate limit encountered, skipping resource scan")
+			return nil, nil
+		} else {
+			RateLimitTracker.Remove(*scanRequest.ResourceID)
+		}
+	}
 
 	// I don't know why this comment is here and I'm too scared to remove it
 	// TODO: does this accept short names?
@@ -285,25 +308,47 @@ func singleResourceScan(
 		// Handle cases where the ResourceID is not an ARN
 		parsedResourceID := utils.ParseResourceID(*scanRequest.ResourceID)
 		resource, err = pollFunction(pollerInput, parsedResourceID, scanRequest)
-		if err != nil {
-			return nil, errors.Wrapf(err, "could not scan %#v", *scanRequest)
-		}
 	} else if pollFunction, ok := IndividualARNResourcePollers[*scanRequest.ResourceType]; ok {
 		// Handle cases where the ResourceID is an ARN
-		resourceARN, err := arn.Parse(*scanRequest.ResourceID)
+		var resourceARN arn.ARN
+		resourceARN, err = arn.Parse(*scanRequest.ResourceID)
 		if err != nil {
 			zap.L().Error("unable to parse resourceID", zap.Error(err), zap.String("resourceID", *scanRequest.ResourceID))
 			// Don't return an error here because the scan request is not retryable
 			return nil, nil
 		}
 		resource, err = pollFunction(pollerInput, resourceARN, scanRequest)
-		if err != nil {
-			return nil, errors.Wrapf(err, "could not scan %#v", *scanRequest)
-		}
 	} else {
 		zap.L().Error("unable to perform scan of specified resource type", zap.String("resourceType", *scanRequest.ResourceType))
 		// This error is not retryable
 		return nil, nil
+	}
+
+	if err != nil {
+		// Check for rate limit errors. We don't want to blindly retry rate limit errors as this will
+		// cause more rate limit errors, so we re-schedule one new scan several minutes in the future
+		// and suppress all other scans for this resource until that time.
+		if awsutils.IsAnyError(err, "ThrottlingException") {
+			// If we parallelize this function, we will need to see if this is already cached before
+			// re-queueing. For now, this is not necessary.
+			err = utils.Requeue(pollermodels.ScanMsg{
+				Entries: []*pollermodels.ScanEntry{scanRequest},
+			}, int64(rateLimitDelay.Seconds())+int64(pageRequeueDelayer.Intn(60)+5))
+			// If the requeue failed, give up and just let lambda error retrying handle it
+			if err != nil {
+				return nil, err
+			}
+			RateLimitTracker.Add(*scanRequest.ResourceID, time.Now().Add(rateLimitDelay))
+			return nil, nil
+		}
+
+		// If this was not a rate limit error, return the error
+		return nil, errors.Wrapf(
+			err,
+			"could not scan aws resource: %s, in account: %s",
+			aws.StringValue(scanRequest.ResourceID),
+			aws.StringValue(scanRequest.AWSAccountID),
+		)
 	}
 
 	// This can happen for a number of reasons, most commonly that the resource no longer exists
@@ -312,11 +357,11 @@ func singleResourceScan(
 		return nil, nil
 	}
 
-	return []*resourcesapimodels.AddResourceEntry{{
+	return []resourcesapimodels.AddResourceEntry{{
 		Attributes:      resource,
-		ID:              resourcesapimodels.ResourceID(*scanRequest.ResourceID),
-		IntegrationID:   resourcesapimodels.IntegrationID(*scanRequest.IntegrationID),
-		IntegrationType: resourcesapimodels.IntegrationTypeAws,
-		Type:            resourcesapimodels.ResourceType(*scanRequest.ResourceType),
+		ID:              *scanRequest.ResourceID,
+		IntegrationID:   *scanRequest.IntegrationID,
+		IntegrationType: integrationType,
+		Type:            *scanRequest.ResourceType,
 	}}, nil
 }

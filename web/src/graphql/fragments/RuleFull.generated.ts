@@ -24,7 +24,7 @@ import gql from 'graphql-tag';
 
 export type RuleFull = Pick<Types.RuleDetails, 'body'> & {
   tests?: Types.Maybe<
-    Array<Types.Maybe<Pick<Types.PolicyUnitTest, 'expectedResult' | 'name' | 'resource'>>>
+    Array<Types.Maybe<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>>>
   >;
 } & RuleBasic;
 

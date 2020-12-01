@@ -17,11 +17,12 @@
  */
 
 import React from 'react';
-import { AbstractButton, Box, Button, Flex, Img, Link } from 'pouncejs';
+import { AbstractButton, Button, Flex, Img, Link, Text } from 'pouncejs';
 import { useFormikContext } from 'formik';
 import FailureStatus from 'Assets/statuses/failure.svg';
 import WaitingStatus from 'Assets/statuses/waiting.svg';
 import SuccessStatus from 'Assets/statuses/success.svg';
+import RealTimeNotication from 'Assets/statuses/real-time-notification.svg';
 import urls from 'Source/urls';
 import LinkButton from 'Components/buttons/LinkButton';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
@@ -32,8 +33,11 @@ import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
 
 const ValidationPanel: React.FC = () => {
   const [errorMessage, setErrorMessage] = React.useState('');
-  const { goToPrevStep, reset: resetWizard, currentStepStatus, setCurrentStepStatus } = useWizardContext(); // prettier-ignore
+  const { reset: resetWizard, currentStepStatus, setCurrentStepStatus } = useWizardContext();
   const { initialValues, submitForm, resetForm } = useFormikContext<S3LogSourceWizardValues>();
+  const [shouldShowNotificationsScreen, setNotificationScreenVisibility] = React.useState(
+    !initialValues.integrationId
+  );
 
   React.useEffect(() => {
     (async () => {
@@ -48,60 +52,20 @@ const ValidationPanel: React.FC = () => {
     })();
   }, []);
 
-  if (currentStepStatus === 'PASSING') {
+  if (currentStepStatus === 'PENDING') {
     return (
       <WizardPanel>
-        <Flex align="center" direction="column" mx="auto" width={375}>
+        <Flex align="center" direction="column" mx="auto">
           <WizardPanel.Heading
-            title="Everything looks good!"
-            subtitle={
-              initialValues.integrationId
-                ? 'Your stack was successfully updated'
-                : 'Your configured stack was deployed successfully and Panther now has permissions to pull data!'
-            }
+            title="Almost There!"
+            subtitle="We are just making sure that everything is setup correctly. Hold on tight..."
           />
           <Img
             nativeWidth={120}
             nativeHeight={120}
-            alt="Stack deployed successfully"
-            src={SuccessStatus}
+            alt="Validating source health..."
+            src={WaitingStatus}
           />
-          {!initialValues.integrationId && (
-            <Box mt={10} mb={-10}>
-              <WizardPanel.Heading
-                title="Configure Notifications For New Data"
-                subtitle={[
-                  'You can now follow the ',
-                  <Link
-                    key={0}
-                    external
-                    title="SNS Notification Setup"
-                    href={LOG_ONBOARDING_SNS_DOC_URL}
-                  >
-                    steps found here
-                  </Link>,
-                  ' to notify Panther when new data becomes available for analysis.',
-                ]}
-              />
-            </Box>
-          )}
-          <WizardPanel.Actions>
-            <Flex direction="column" spacing={4}>
-              <LinkButton to={urls.logAnalysis.sources.list()}>Finish Setup</LinkButton>
-              {!initialValues.integrationId && (
-                <Link
-                  as={AbstractButton}
-                  variant="discreet"
-                  onClick={() => {
-                    resetForm();
-                    resetWizard();
-                  }}
-                >
-                  Add Another
-                </Link>
-              )}
-            </Flex>
-          </WizardPanel.Actions>
         </Flex>
       </WizardPanel>
     );
@@ -126,23 +90,70 @@ const ValidationPanel: React.FC = () => {
     );
   }
 
+  if (shouldShowNotificationsScreen) {
+    return (
+      <WizardPanel>
+        <Flex align="center" direction="column" mx="auto" width={600}>
+          <WizardPanel.Heading
+            title="Adding Notifications for New Data"
+            subtitle={[
+              'You can now follow the ',
+              <Link key={0} external href={LOG_ONBOARDING_SNS_DOC_URL}>
+                steps found here
+              </Link>,
+              ' to notify Panther',
+              <br key={1} />,
+              'when new data becomes available for analysis.',
+            ]}
+          />
+          <Img nativeWidth={120} nativeHeight={120} alt="Bell" src={RealTimeNotication} />
+          <WizardPanel.Actions>
+            <Button onClick={() => setNotificationScreenVisibility(false)}>
+              I Have Setup Notifications
+            </Button>
+          </WizardPanel.Actions>
+          <Text fontSize="medium" color="gray-300" textAlign="center" mb={4}>
+            Panther does not validate if you{"'"}ve added SNS notifications to your S3 bucket.
+            Failing to do this, will not allow Panther to reach your logs
+          </Text>
+        </Flex>
+      </WizardPanel>
+    );
+  }
+
   return (
     <WizardPanel>
-      <Flex align="center" direction="column" mx="auto">
+      <Flex align="center" direction="column" mx="auto" width={375}>
         <WizardPanel.Heading
-          title="Almost There!"
-          subtitle="We are just making sure that everything is setup correctly. Hold on tight..."
+          title="Everything looks good!"
+          subtitle={
+            initialValues.integrationId
+              ? 'Your stack was successfully updated'
+              : 'Your configured stack was deployed successfully and Panther now has permissions to pull data!'
+          }
         />
         <Img
           nativeWidth={120}
           nativeHeight={120}
-          alt="Validating source health..."
-          src={WaitingStatus}
+          alt="Stack deployed successfully"
+          src={SuccessStatus}
         />
         <WizardPanel.Actions>
-          <Button variantColor="darkgray" onClick={goToPrevStep}>
-            Cancel
-          </Button>
+          <Flex direction="column" spacing={4}>
+            <LinkButton to={urls.logAnalysis.sources.list()}>Finish Setup</LinkButton>
+            {!initialValues.integrationId && (
+              <Link
+                as={AbstractButton}
+                variant="discreet"
+                onClick={() => {
+                  resetForm();
+                  resetWizard();
+                }}
+              >
+                Add Another
+              </Link>
+            )}
+          </Flex>
         </WizardPanel.Actions>
       </Flex>
     </WizardPanel>

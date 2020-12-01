@@ -66,7 +66,7 @@ export const DEFAULT_DEDUP_FUNCTION =
   "# def dedup(event):\n\t#  (Optional) Return a string which will be used to deduplicate similar alerts.\n\t# return ''";
 
 export const DEFAULT_ALERT_CONTEXT_FUNCTION =
-  "# def alert_context(event):\n\t#  (Optional) Return a dictionary with additional data you would like to be included in the alert send to SNS/SQS/Webhook destination\n\t# return {'key':'value'}";
+  "# def alert_context(event):\n\t#  (Optional) Return a dictionary with additional data to be included in the alert sent to the SNS/SQS/Webhook destination\n\t# return {'key':'value'}";
 
 export const RESOURCE_TYPES = [
   'AWS.ACM.Certificate',
@@ -113,7 +113,7 @@ export const ANALYSIS_UPLOAD_DOC_URL = `${PANTHER_DOCS_LINK}/user-guide/analysis
 export const CLOUD_SECURITY_REAL_TIME_DOC_URL = `${PANTHER_DOCS_LINK}/cloud-security/setup#configure-real-time-monitoring`;
 export const LOG_ONBOARDING_SNS_DOC_URL = `${PANTHER_DOCS_LINK}/log-analysis/setup#setup-notifications-of-new-data`;
 export const PRIVACY_DOC_URL = `${PANTHER_DOCS_LINK}/user-guide/help/security-privacy#privacy`;
-export const REMEDIATION_DOC_URL = `${PANTHER_DOCS_LINK}/cloud-security/automatic-remediation#setup`;
+export const REMEDIATION_DOC_URL = `${PANTHER_DOCS_LINK}/cloud-security/automatic-remediation#overview`;
 // End of doc URLs section
 
 export const DEFAULT_SMALL_PAGE_SIZE = 10;

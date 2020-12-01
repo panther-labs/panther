@@ -57,6 +57,7 @@ var (
 		{
 			RuleID:            aws.String("ruleId"),
 			RuleVersion:       aws.String("ruleVersion"),
+			Type:              "RULE",
 			RuleDisplayName:   aws.String("ruleDisplayName"),
 			AlertID:           "alertId",
 			Status:            "OPEN",
@@ -82,7 +83,7 @@ func TestListAlertsForRule(t *testing.T) {
 		Status:            []string{models.TriagedStatus},
 		PageSize:          aws.Int(10),
 		ExclusiveStartKey: aws.String("startKey"),
-		Severity:          []*string{aws.String("INFO")},
+		Severity:          []string{"INFO"},
 	}
 
 	tableMock.On("ListAll", input).
@@ -106,7 +107,7 @@ func TestListAllAlerts(t *testing.T) {
 		PageSize:          aws.Int(10),
 		ExclusiveStartKey: aws.String("startKey"),
 		Status:            []string{models.TriagedStatus},
-		Severity:          []*string{aws.String("INFO")},
+		Severity:          []string{"INFO"},
 		NameContains:      aws.String("title"),
 		EventCountMin:     aws.Int(0),
 		EventCountMax:     aws.Int(100),
@@ -172,6 +173,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			RuleVersion:       aws.String("ruleVersion"),
 			AlertID:           "alertId",
 			Status:            "OPEN",
+			Type:              "RULE",
 			UpdateTime:        aws.Time(timeInTest),
 			CreationTime:      aws.Time(timeInTest),
 			Severity:          aws.String("INFO"),
@@ -188,6 +190,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			RuleVersion:     aws.String("ruleVersion"),
 			AlertID:         "alertId",
 			Status:          "TRIAGED",
+			Type:            "RULE",
 			UpdateTime:      aws.Time(timeInTest),
 			CreationTime:    aws.Time(timeInTest),
 			Severity:        aws.String("INFO"),

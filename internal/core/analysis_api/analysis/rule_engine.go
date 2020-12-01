@@ -26,8 +26,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
-	enginemodels "github.com/panther-labs/panther/api/gateway/analysis"
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	enginemodels "github.com/panther-labs/panther/api/lambda/analysis"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -44,30 +44,28 @@ func NewRuleEngine(lambdaClient lambdaiface.LambdaAPI, lambdaName string) RuleEn
 	}
 }
 
-func (e *RuleEngine) TestRule(rule *models.TestPolicy) (models.TestPolicyResult, error) {
-	empty := models.TestPolicyResult{}
-
+func (e *RuleEngine) TestRule(rule *models.TestRuleInput) (*models.TestRuleOutput, error) {
 	// Build the list of events to run the rule against
 	inputEvents := make([]enginemodels.Event, len(rule.Tests))
 	for i, test := range rule.Tests {
 		var attrs map[string]interface{}
-		if err := jsoniter.UnmarshalFromString(string(test.Resource), &attrs); err != nil {
+		if err := jsoniter.UnmarshalFromString(test.Resource, &attrs); err != nil {
 			//nolint // Error is capitalized because will be returned to the UI
-			return empty, &TestInputError{fmt.Errorf(`Event for test "%s" is not valid json: %w`, test.Name, err)}
+			return nil, &TestInputError{fmt.Errorf(`Event for test "%s" is not valid json: %w`, test.Name, err)}
 		}
 
 		inputEvents[i] = enginemodels.Event{
 			Data: attrs,
-			ID:   testResourceID + strconv.Itoa(i),
+			ID:   strconv.Itoa(i),
 		}
 	}
 
 	input := enginemodels.RulesEngineInput{
 		Rules: []enginemodels.Rule{
 			{
-				Body:     string(rule.Body),
-				ID:       testPolicyID, // doesn't matter as we're only running one rule
-				LogTypes: rule.ResourceTypes,
+				Body:     rule.Body,
+				ID:       testRuleID, // doesn't matter as we're only running one rule
+				LogTypes: rule.LogTypes,
 			},
 		},
 		Events: inputEvents,
@@ -77,22 +75,82 @@ func (e *RuleEngine) TestRule(rule *models.TestPolicy) (models.TestPolicyResult,
 	var engineOutput enginemodels.RulesEngineOutput
 	err := genericapi.Invoke(e.lambdaClient, e.lambdaName, &input, &engineOutput)
 	if err != nil {
-		return empty, errors.Wrap(err, "error invoking rule engine")
+		return nil, errors.Wrap(err, "error invoking rule engine")
 	}
 
 	// Translate rule engine output to test results.
-	testResults, err := makeTestSummaryRule(rule, engineOutput)
-	return testResults, err
+	testResult := &models.TestRuleOutput{
+		Results: make([]models.TestRuleRecord, len(engineOutput.Results)),
+	}
+	for i, result := range engineOutput.Results {
+		// Determine which test case this result corresponds to.
+		testIndex, err := strconv.Atoi(result.ID)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to extract test number from test result resourceID %s", result.ID)
+		}
+		test := rule.Tests[testIndex]
+
+		record := models.TestRuleRecord{
+			ID:     result.ID,
+			Name:   test.Name,
+			Passed: hasPassed(test.ExpectedResult, result),
+			Functions: models.TestRuleRecordFunctions{
+				Rule: buildTestSubRecord(strconv.FormatBool(result.RuleOutput), result.RuleError),
+			},
+		}
+		if result.GenericError != "" {
+			record.Error = &models.TestError{Message: result.GenericError}
+		}
+
+		// The remaining functions are only included if the user expects rule() to match the event
+		if test.ExpectedResult {
+			record.Functions.Title = buildTestSubRecord(result.TitleOutput, result.TitleError)
+			record.Functions.Dedup = buildTestSubRecord(result.DedupOutput, result.DedupError)
+			record.Functions.AlertContext = buildTestSubRecord(truncate(result.AlertContextOutput), result.AlertContextError)
+		}
+
+		testResult.Results[i] = record
+	}
+	return testResult, nil
 }
 
-func makeTestSummaryRule(rule *models.TestPolicy, engineOutput enginemodels.RulesEngineOutput) (models.TestPolicyResult, error) {
-	// Normalize rule engine output to policy engine output to facilitate consistent handling
-	// in makeTestSummary().
-	output := enginemodels.PolicyEngineOutput{
-		Resources: make([]enginemodels.Result, len(engineOutput.Events)),
+func buildTestSubRecord(output, error string) *models.TestDetectionSubRecord {
+	if output == "" && error == "" {
+		return nil
 	}
-	for i, event := range engineOutput.Events {
-		output.Resources[i] = event.ToResult()
+
+	result := &models.TestDetectionSubRecord{}
+	if output != "" {
+		result.Output = &output
 	}
-	return makeTestSummary(rule, output)
+	if error != "" {
+		result.Error = &models.TestError{Message: error}
+	}
+	return result
 }
+
+func truncate(s string) string {
+	maxChars := 140
+	if len(s) > maxChars {
+		return s[:maxChars] + "..."
+	}
+	return s
+}
+
+func hasPassed(expectedRuleOutput bool, result enginemodels.RuleResult) bool {
+	if len(result.GenericError) > 0 || len(result.RuleError) > 0 {
+		// If there is an error in the script functions, like import/syntax/indentation error or rule() raised
+		// an exception, fail the test.
+		return false
+	}
+	if !expectedRuleOutput {
+		// rule() should return false (not match the event), so the other functions (title/dedup etc) should not
+		// affect the test result.
+		return result.RuleOutput == expectedRuleOutput
+	}
+
+	// rule() should return True. We also expect the other functions to not raise any exceptions.
+	return !result.Errored && (result.RuleOutput == expectedRuleOutput)
+}
+
+const testRuleID = "RuleAPITestRule"

@@ -19,14 +19,15 @@ package sources
  */
 
 import (
+	"bufio"
 	"bytes"
+	"compress/gzip"
+	"context"
 	"io/ioutil"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
@@ -66,8 +67,9 @@ func TestParseS3Notification(t *testing.T) {
 		"\"eTag\":\"d41d8cd98f00b204e9800998ecf8427e\",\"versionId\":\"096fKKXTRTtl3on89fVO.nfljtsv6qko\",\"sequencer\":\"0055AED6DCD90281E5\"}}}]}"
 	expectedOutput := []*S3ObjectInfo{
 		{
-			S3Bucket:    "mybucket",
-			S3ObjectKey: "year=2020/key1",
+			S3Bucket:     "mybucket",
+			S3ObjectKey:  "year=2020/key1",
+			S3ObjectSize: 1024,
 		},
 	}
 	s3Objects, err := ParseNotification(notification)
@@ -148,16 +150,18 @@ func TestHandleUnsupportedFileType(t *testing.T) {
 	s3Mock.On("GetBucketLocation", mock.Anything).Return(
 		&s3.GetBucketLocationOutput{LocationConstraint: aws.String("us-west-2")}, nil).Once()
 
-	newCredentialsFunc =
-		func(c client.ConfigProvider, roleARN string, options ...func(*stscreds.AssumeRoleProvider)) *credentials.Credentials {
-			return &credentials.Credentials{}
-		}
+	newCredentialsFunc = func(roleArn string) *credentials.Credentials {
+		return &credentials.Credentials{}
+	}
 
 	objectData := []byte(`<?xml version="1.0" encoding="UTF-8" standalone="no" ?>`)
-	getObjectOutput := &s3.GetObjectOutput{Body: ioutil.NopCloser(bytes.NewReader(objectData))}
-	s3Mock.On("GetObject", mock.Anything).Return(getObjectOutput, nil)
+	getObjectOutput := &s3.GetObjectOutput{
+		ContentLength: aws.Int64(int64(len(objectData))),
+		Body:          ioutil.NopCloser(bytes.NewReader(objectData)),
+	}
+	s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return(getObjectOutput, nil)
 
-	dataStreams, err := ReadSnsMessages([]string{marshaledNotification})
+	dataStreams, err := ReadSnsMessage(context.TODO(), marshaledNotification)
 	// Method shouldn't return error
 	require.NoError(t, err)
 	// Method should not return data stream
@@ -183,9 +187,68 @@ func TestHandleS3Folder(t *testing.T) {
 	marshaledNotification, err := jsoniter.MarshalToString(notification)
 	require.NoError(t, err)
 
-	dataStreams, err := ReadSnsMessages([]string{marshaledNotification})
+	dataStreams, err := ReadSnsMessage(context.TODO(), marshaledNotification)
 	// Method shouldn't return error
 	require.NoError(t, err)
 	// Method should not return data stream
 	require.Equal(t, 0, len(dataStreams))
+}
+
+func TestHandleUnregisteredSource(t *testing.T) {
+	resetCaches()
+	// if we encounter an unsupported file type, we should just skip the object
+	lambdaMock := &testutils.LambdaMock{}
+	common.LambdaClient = lambdaMock
+
+	s3Mock := &testutils.S3Mock{}
+
+	//nolint:lll
+	s3Event := "{\"Records\":[{\"eventVersion\":\"2.1\",\"eventSource\":\"aws:s3\",\"awsRegion\":\"us-west-2\",\"eventTime\":\"1970-01-01T00:00:00.000Z\"," +
+		"\"eventName\":\"ObjectCreated:Put\",\"userIdentity\":{\"principalId\":\"AIDAJDPLRKLG7UEXAMPLE\"},\"requestParameters\":{\"sourceIPAddress\":\"127.0.0.1\"}," +
+		"\"responseElements\":{\"x-amz-request-id\":\"C3D13FE58DE4C810\",\"x-amz-id-2\":\"FMyUVURIY8/IgAtTv8xRjskZQpcIZ9KG4V5Wp6S7S/JRWeUWerMUE5JgHvANOjpD\"}," +
+		"\"s3\":{\"s3SchemaVersion\":\"1.0\",\"configurationId\":\"testConfigRule\"," +
+		"\"bucket\":{\"name\":\"mybucket\",\"ownerIdentity\":{\"principalId\":\"A3NL1KOZZKExample\"},\"arn\":\"arn:aws:s3:::mybucket\"},\"object\":{\"unregistered/key\":\"test\",\"size\":1024," +
+		"\"eTag\":\"d41d8cd98f00b204e9800998ecf8427e\",\"versionId\":\"096fKKXTRTtl3on89fVO.nfljtsv6qko\",\"sequencer\":\"0055AED6DCD90281E5\"}}}]}"
+
+	notification := SnsNotification{}
+	notification.Type = "Notification"
+	notification.Message = s3Event
+	marshaledNotification, err := jsoniter.MarshalToString(notification)
+	require.NoError(t, err)
+
+	marshaledResult, err := jsoniter.Marshal([]*models.SourceIntegration{})
+	require.NoError(t, err)
+	lambdaOutput := &lambda.InvokeOutput{
+		Payload: marshaledResult,
+	}
+
+	// Getting the list of available sources
+	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil).Once()
+
+	dataStreams, err := ReadSnsMessage(context.TODO(), marshaledNotification)
+	// Method shouldn't return error
+	require.NoError(t, err)
+	// Method should not return data stream
+	require.Equal(t, 0, len(dataStreams))
+	lambdaMock.AssertExpectations(t)
+	s3Mock.AssertExpectations(t)
+}
+
+func Test_detectContentType_gzip(t *testing.T) {
+	//nolint:lll
+	data := []byte("Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.")
+	var buf []byte
+	gzippedBuf := bytes.NewBuffer(buf)
+	gzipWriter := gzip.NewWriter(gzippedBuf)
+	defer gzipWriter.Close()
+	_, err := gzipWriter.Write(data)
+	require.NoError(t, err)
+	err = gzipWriter.Flush()
+	require.NoError(t, err)
+
+	br := bufio.NewReader(gzippedBuf)
+	ct, err := detectContentType(br)
+
+	require.NoError(t, err)
+	require.Equal(t, "application/x-gzip", ct)
 }

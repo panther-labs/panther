@@ -32,7 +32,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -221,7 +221,7 @@ func buildCloudFormationStackSnapshot(
 		GenericResource: awsmodels.GenericResource{
 			ResourceID:   stack.StackId,
 			ResourceType: aws.String(awsmodels.CloudFormationStackSchema),
-			TimeCreated:  utils.DateTimeFormat(*stack.CreationTime),
+			TimeCreated:  stack.CreationTime,
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
 			ARN:  stack.StackId,
@@ -286,7 +286,7 @@ func waitForStackDriftDetection(svc cloudformationiface.CloudFormationAPI, drift
 // PollCloudFormationStacks gathers information on each CloudFormation Stack for an AWS account.
 //
 // This scanner is a beast, tread carefully.
-func PollCloudFormationStacks(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollCloudFormationStacks(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting CloudFormation Stack resource poller")
 	cloudformationSvc, err := getCloudFormationClient(pollerInput, *pollerInput.Region)
 	if err != nil {
@@ -358,10 +358,10 @@ func PollCloudFormationStacks(pollerInput *awsmodels.ResourcePollerInput) ([]*ap
 	}
 
 	// Build the stack snapshots
-	resources := make([]*apimodels.AddResourceEntry, 0, len(stacks))
+	resources := make([]apimodels.AddResourceEntry, 0, len(stacks))
 	for _, stack := range stacks {
 		// Check if this stack failed an earlier part of the scan
-		if ignoredIds[*stack.StackId] {
+		if stack == nil || ignoredIds[aws.StringValue(stack.StackId)] {
 			continue
 		}
 
@@ -384,11 +384,11 @@ func PollCloudFormationStacks(pollerInput *awsmodels.ResourcePollerInput) ([]*ap
 		cfnStackSnapshot.Region = pollerInput.Region
 		cfnStackSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      cfnStackSnapshot,
-			ID:              apimodels.ResourceID(*cfnStackSnapshot.ResourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *cfnStackSnapshot.ResourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.CloudFormationStackSchema,
 		})
 	}

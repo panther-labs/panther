@@ -1,0 +1,949 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DestinationTestPanel should show a success message for successful test-alert delivery 1`] = `
+@keyframes animation-0 {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.panther-17 {
+  background-color: #23344e;
+  border-radius: 4px;
+  padding: 24px;
+  margin-bottom: 24px;
+  width: 100%;
+  position: relative;
+}
+
+.panther-3 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  padding-top: 10px;
+  margin-bottom: 60px;
+  z-index: 2;
+}
+
+.panther-2 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  z-index: 2;
+  opacity: 1;
+}
+
+.panther-0 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  width: 25px;
+  height: 25px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 99999px;
+  border: 1px solid;
+  border-color: #bdbdbd;
+  background-color: transparent;
+}
+
+.panther-1 {
+  font-size: 0.875rem;
+  margin-left: 8px;
+}
+
+.panther-16 {
+  padding-top: 12px;
+}
+
+
+
+.panther-14 {
+  will-change: opacity;
+  -webkit-animation: animation-0 300ms 0ms ease-in-out both;
+  animation: animation-0 300ms 0ms ease-in-out both;
+}
+
+.panther-13 {
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.panther-6 {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.panther-4 {
+  font-weight: 500;
+  font-size: 1.25rem;
+}
+
+.panther-5 {
+  font-size: 0.875rem;
+  margin-top: 8px;
+  color: #bdbdbd;
+}
+
+.panther-12 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+.panther-12>*:not(:last-child) {
+  margin-bottom: 24px;
+}
+
+.panther-7 {
+  max-width: 100%;
+}
+
+.panther-8 {
+  margin-bottom: 20px;
+}
+
+.panther-9 {
+  width: auto;
+  outline: none;
+  padding-left: 20px;
+  padding-right: 20px;
+  height: 46px;
+  font-size: 0.938rem;
+  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-radius: 4px;
+  border: 1px solid;
+  border-color: #0081c5;
+  background-color: #0081c5;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.panther-9:hover {
+  background-color: #0a8bcf;
+  border-color: #0a8bcf;
+}
+
+.panther-9:focus {
+  background-color: #0a8bcf;
+  border-color: #55d6ff;
+}
+
+.panther-9:active,
+.panther-9[data-active=true] {
+  background-color: #0077bb;
+  border-color: #0077bb;
+}
+
+.panther-11 {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  color: #dedede;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <article
+    class="panther-17"
+  >
+    <ul
+      class="panther-3"
+    >
+      <li
+        class="panther-2"
+      >
+        <div
+          class="panther-0"
+        >
+          1
+        </div>
+        <p
+          class="panther-1"
+        >
+          title
+        </p>
+      </li>
+    </ul>
+    <div
+      class="panther-16"
+    >
+      <section
+        class="panther-10"
+      >
+        <div
+          class="panther-14"
+        >
+          <div
+            class="panther-13"
+          >
+            <header
+              class="panther-6"
+            >
+              <h1
+                class="panther-4"
+              >
+                Everything looks good!
+              </h1>
+              <p
+                class="panther-5"
+              >
+                Your destination was successfully added and you will receive alerts based on your configuration. You can always edit or delete this destination from the destinations page
+              </p>
+            </header>
+            <div
+              class="panther-12"
+            >
+              <img
+                alt="Success"
+                class="panther-7"
+                height="120"
+                src="test-file-stub"
+                width="120"
+              />
+              <p
+                class="panther-8"
+              >
+                Do you want to try it out by sending a test Alert?
+              </p>
+              <div
+                class="panther-10"
+              >
+                <button
+                  class="panther-9"
+                  type="button"
+                >
+                  Send Test Alert
+                </button>
+              </div>
+              <a
+                class="panther-11"
+                href="/settings/destinations/"
+              >
+                Finish Setup
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </article>
+  <footer
+    id="footer"
+  />
+</div>
+`;
+
+exports[`DestinationTestPanel should show a success message for successful test-alert delivery 2`] = `
+@keyframes animation-0 {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.panther-17 {
+  background-color: #23344e;
+  border-radius: 4px;
+  padding: 24px;
+  margin-bottom: 24px;
+  width: 100%;
+  position: relative;
+}
+
+.panther-3 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  padding-top: 10px;
+  margin-bottom: 60px;
+  z-index: 2;
+}
+
+.panther-2 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  z-index: 2;
+  opacity: 1;
+}
+
+.panther-0 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  width: 25px;
+  height: 25px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 99999px;
+  border: 1px solid;
+  border-color: #bdbdbd;
+  background-color: transparent;
+}
+
+.panther-1 {
+  font-size: 0.875rem;
+  margin-left: 8px;
+}
+
+.panther-16 {
+  padding-top: 12px;
+}
+
+
+
+.panther-14 {
+  will-change: opacity;
+  -webkit-animation: animation-0 300ms 0ms ease-in-out both;
+  animation: animation-0 300ms 0ms ease-in-out both;
+}
+
+.panther-13 {
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.panther-6 {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.panther-4 {
+  font-weight: 500;
+  font-size: 1.25rem;
+}
+
+.panther-5 {
+  font-size: 0.875rem;
+  margin-top: 8px;
+  color: #bdbdbd;
+}
+
+.panther-12 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+.panther-12>*:not(:last-child) {
+  margin-bottom: 24px;
+}
+
+.panther-7 {
+  max-width: 100%;
+}
+
+.panther-9 {
+  width: auto;
+  outline: none;
+  padding-left: 20px;
+  padding-right: 20px;
+  height: 46px;
+  font-size: 0.938rem;
+  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-radius: 4px;
+  border: 1px solid;
+  border-color: #0081c5;
+  background-color: #0081c5;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.panther-9:hover {
+  background-color: #0a8bcf;
+  border-color: #0a8bcf;
+}
+
+.panther-9:focus {
+  background-color: #0a8bcf;
+  border-color: #55d6ff;
+}
+
+.panther-9:active,
+.panther-9[data-active=true] {
+  background-color: #0077bb;
+  border-color: #0077bb;
+}
+
+
+
+.panther-10>span {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-11 {
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: transparent;
+  -webkit-transition: all 0.1s linear;
+  transition: all 0.1s linear;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  color: #dedede;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <article
+    class="panther-17"
+  >
+    <ul
+      class="panther-3"
+    >
+      <li
+        class="panther-2"
+      >
+        <div
+          class="panther-0"
+        >
+          1
+        </div>
+        <p
+          class="panther-1"
+        >
+          title
+        </p>
+      </li>
+    </ul>
+    <div
+      class="panther-16"
+    >
+      <section
+        class="panther-8"
+      >
+        <div
+          class="panther-14"
+        >
+          <div
+            class="panther-13"
+          >
+            <header
+              class="panther-6"
+            >
+              <h1
+                class="panther-4"
+              >
+                Testing your Destination
+              </h1>
+              <p
+                class="panther-5"
+              >
+                Everything worked as planned and your destination received the triggered alert. You can always send additional test alerts from the destinations page.
+              </p>
+            </header>
+            <div
+              class="panther-12"
+            >
+              <img
+                alt="Test Alert received"
+                class="panther-7"
+                height="120"
+                src="test-file-stub"
+                width="120"
+              />
+              <p
+                class="panther-8"
+              >
+                Signed, sealed, and delivered. You are good to go!
+              </p>
+              <a
+                class="panther-10"
+                href="/settings/destinations/"
+              >
+                <span
+                  class="panther-9"
+                  type="button"
+                >
+                  Finish Setup
+                </span>
+              </a>
+              <button
+                class="panther-11"
+                type="button"
+              >
+                Add Another
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </article>
+  <footer
+    id="footer"
+  />
+</div>
+`;
+
+exports[`DestinationTestPanel should show error details for a failing test-alert 1`] = `
+@keyframes animation-0 {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.panther-28 {
+  background-color: #23344e;
+  border-radius: 4px;
+  padding: 24px;
+  margin-bottom: 24px;
+  width: 100%;
+  position: relative;
+}
+
+.panther-3 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  padding-top: 10px;
+  margin-bottom: 60px;
+  z-index: 2;
+}
+
+.panther-2 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  z-index: 2;
+  opacity: 1;
+}
+
+.panther-0 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  width: 25px;
+  height: 25px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 99999px;
+  border: 1px solid;
+  border-color: #bdbdbd;
+  background-color: transparent;
+}
+
+.panther-1 {
+  font-size: 0.875rem;
+  margin-left: 8px;
+}
+
+.panther-27 {
+  padding-top: 12px;
+}
+
+
+
+.panther-25 {
+  will-change: opacity;
+  -webkit-animation: animation-0 300ms 0ms ease-in-out both;
+  animation: animation-0 300ms 0ms ease-in-out both;
+}
+
+.panther-24 {
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.panther-6 {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.panther-4 {
+  font-weight: 500;
+  font-size: 1.25rem;
+}
+
+.panther-5 {
+  font-size: 0.875rem;
+  margin-top: 8px;
+  color: #bdbdbd;
+}
+
+.panther-23 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+.panther-23>*:not(:last-child) {
+  margin-bottom: 24px;
+}
+
+.panther-20 {
+  width: auto;
+  outline: none;
+  padding-left: 20px;
+  padding-right: 20px;
+  height: 46px;
+  font-size: 0.938rem;
+  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-radius: 4px;
+  border: 1px solid;
+  border-color: #0081c5;
+  background-color: #0081c5;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.panther-20:hover {
+  background-color: #0a8bcf;
+  border-color: #0a8bcf;
+}
+
+.panther-20:focus {
+  background-color: #0a8bcf;
+  border-color: #55d6ff;
+}
+
+.panther-20:active,
+.panther-20[data-active=true] {
+  background-color: #0077bb;
+  border-color: #0077bb;
+}
+
+.panther-22 {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  color: #dedede;
+}
+
+
+
+.panther-21>span {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-18 {
+  background-color: #87374b;
+  border-radius: 4px;
+  padding: 24px;
+}
+
+.panther-17 {
+  display: grid;
+  grid-gap: 16px;
+  grid-template-columns: max-content 1fr;
+  word-break: break-word;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.panther-7 {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.panther-8 {
+  font-weight: 700;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <article
+    class="panther-28"
+  >
+    <ul
+      class="panther-3"
+    >
+      <li
+        class="panther-2"
+      >
+        <div
+          class="panther-0"
+        >
+          1
+        </div>
+        <p
+          class="panther-1"
+        >
+          title
+        </p>
+      </li>
+    </ul>
+    <div
+      class="panther-27"
+    >
+      <section
+        class="panther-19"
+      >
+        <div
+          class="panther-25"
+        >
+          <div
+            class="panther-24"
+          >
+            <header
+              class="panther-6"
+            >
+              <h1
+                class="panther-4"
+              >
+                Testing your Destination
+              </h1>
+              <p
+                class="panther-5"
+              >
+                Something went wrong and the destination you have configured did not receive the test alert. Please update your destination settings and try again.
+              </p>
+            </header>
+            <div
+              class="panther-23"
+            >
+              <div
+                class="panther-18"
+              >
+                <dl
+                  class="panther-17"
+                >
+                  <dt
+                    class="panther-7"
+                  >
+                    Dispatched at
+                  </dt>
+                  <dd
+                    class="panther-8"
+                  >
+                    2020-09-25T00:14:42.514Z
+                  </dd>
+                  <dt
+                    class="panther-7"
+                  >
+                    Message
+                  </dt>
+                  <dd
+                    class="panther-8"
+                  >
+                    This destination failed to pass the test
+                  </dd>
+                  <dt
+                    class="panther-7"
+                  >
+                    Output ID
+                  </dt>
+                  <dd
+                    class="panther-8"
+                  >
+                    bb9f4174-594c-4dc0-9308-f4c28c0e29eb
+                  </dd>
+                  <dt
+                    class="panther-7"
+                  >
+                    Status Code
+                  </dt>
+                  <dd
+                    class="panther-8"
+                  >
+                    400
+                  </dd>
+                  <dt
+                    class="panther-7"
+                  >
+                    Success
+                  </dt>
+                  <dd
+                    class="panther-8"
+                  >
+                    false
+                  </dd>
+                </dl>
+              </div>
+              <p
+                class="panther-19"
+              >
+                If you don
+                '
+                t feel like it right now, you can always change the configuration later
+              </p>
+              <a
+                class="panther-21"
+                href="/settings/destinations/8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7/edit/"
+              >
+                <span
+                  class="panther-20"
+                  type="button"
+                >
+                  Back to Configuration
+                </span>
+              </a>
+              <a
+                class="panther-22"
+                href="/settings/destinations/"
+              >
+                Skip Testing
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </article>
+  <footer
+    id="footer"
+  />
+</div>
+`;

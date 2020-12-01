@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
@@ -48,6 +49,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sdk-go/service/waf"
 	"github.com/aws/aws-sdk-go/service/wafregional"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -60,13 +62,17 @@ const (
 	assumeRoleDuration = time.Hour
 	// retries on default session
 	maxRetries = 6
+	// Maximum number of rate limited resources to remember
+	rateLimitCacheSize = 5000
 )
 
 var (
 	snapshotPollerSession *session.Session
-	// assumeRoleFunc is the function to return valid AWS credentials.
-	assumeRoleFunc         = assumeRole
-	verifyAssumedCredsFunc = verifyAssumedCreds
+
+	// These are exported so the top-level unit tests can mock them out.
+	// AssumeRoleFunc is the function to return valid AWS credentials.
+	AssumeRoleFunc         = assumeRole
+	VerifyAssumedCredsFunc = verifyAssumedCreds
 	GetServiceRegionsFunc  = GetServiceRegions
 
 	// This maps the name we have given to a type of resource to the corresponding AWS name for the
@@ -118,6 +124,12 @@ var (
 		awsmodels.PasswordPolicySchema: {}, // Global service
 		awsmodels.WafWebAclSchema:      {}, // Global service
 	}
+
+	// Used to cache region & account specific AWS clients
+	clientCache = make(map[clientKey]cachedClient)
+
+	// Used to remember resource IDs that have recently been rate limited so we avoid re-scanning them
+	RateLimitTracker *lru.ARCCache
 )
 
 // Key used for the client cache to neatly encapsulate an integration, service, and region
@@ -132,12 +144,16 @@ type cachedClient struct {
 	Credentials *credentials.Credentials
 }
 
-var clientCache = make(map[clientKey]cachedClient)
-
 func Setup() {
 	awsSession := session.Must(session.NewSession()) // use default retries for fetching creds, avoids hangs!
 	snapshotPollerSession = awsSession.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
 		awsretry.NewConnectionErrRetryer(maxRetries)))
+
+	var err error
+	RateLimitTracker, err = lru.NewARC(rateLimitCacheSize)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // GetRegionsToScan determines what regions need to be scanned in order to perform a full account
@@ -226,7 +242,7 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput,
 
 	// First we need to use our existing AWS session (in the Panther account) to create credentials
 	// for the IAM role in the account to be scanned
-	creds := assumeRoleFunc(pollerInput, snapshotPollerSession)
+	creds := AssumeRoleFunc(pollerInput, snapshotPollerSession)
 
 	// Second, we need to create a new session in the account to be scanned using the credentials
 	// we just created. This works around a situation where the account being scanned has an opt-in
@@ -240,8 +256,7 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput,
 	}
 
 	// Verify that the session is valid
-	err = verifyAssumedCredsFunc(clientSession, region)
-	if err != nil {
+	if err = VerifyAssumedCredsFunc(clientSession, region); err != nil {
 		return nil, errors.Wrapf(err, "failed to get %s client in %s region", service, region)
 	}
 
@@ -265,7 +280,7 @@ func assumeRole(pollerInput *awsmodels.ResourcePollerInput, sess *session.Sessio
 	}
 
 	creds := stscreds.NewCredentials(
-		sess,
+		sess.Copy(aws.NewConfig().WithSTSRegionalEndpoint(endpoints.RegionalSTSEndpoint)),
 		*pollerInput.AuthSource,
 		func(p *stscreds.AssumeRoleProvider) {
 			p.Duration = assumeRoleDuration
@@ -276,11 +291,7 @@ func assumeRole(pollerInput *awsmodels.ResourcePollerInput, sess *session.Sessio
 }
 
 func verifyAssumedCreds(sess *session.Session, region string) error {
-	svc := sts.New(sess,
-		&aws.Config{
-			Region: &region,
-		},
-	)
+	svc := sts.New(sess, aws.NewConfig().WithRegion(region))
 	_, err := svc.GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	return err
 }

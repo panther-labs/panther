@@ -46,6 +46,9 @@ import {
   DestinationConfig,
   DestinationConfigInput,
   DestinationInput,
+  DetectionTestDefinition,
+  DetectionTestDefinitionInput,
+  Error,
   FloatSeries,
   FloatSeriesData,
   GeneralSettings,
@@ -78,6 +81,8 @@ import {
   ListRulesResponse,
   LogAnalysisMetricsInput,
   LogAnalysisMetricsResponse,
+  LongSeries,
+  LongSeriesData,
   ModifyGlobalPythonModuleInput,
   MsTeamsConfig,
   MsTeamsConfigInput,
@@ -92,9 +97,6 @@ import {
   PoliciesForResourceInput,
   PolicyDetails,
   PolicySummary,
-  PolicyUnitTest,
-  PolicyUnitTestError,
-  PolicyUnitTestInput,
   RemediateResourceInput,
   ResourceDetails,
   ResourcesForPolicyInput,
@@ -106,8 +108,6 @@ import {
   ScannedResources,
   ScannedResourceStats,
   SendTestAlertInput,
-  Series,
-  SeriesData,
   SingleValue,
   SlackConfig,
   SlackConfigInput,
@@ -120,8 +120,15 @@ import {
   SqsLogIntegrationHealth,
   SqsLogSourceIntegration,
   SuppressPoliciesInput,
+  TestDetectionSubRecord,
   TestPolicyInput,
+  TestPolicyRecord,
+  TestPolicyRecordFunctions,
   TestPolicyResponse,
+  TestRuleInput,
+  TestRuleRecord,
+  TestRuleRecordFunctions,
+  TestRuleResponse,
   UpdateAlertStatusInput,
   UpdateComplianceIntegrationInput,
   UpdateGeneralSettingsInput,
@@ -135,7 +142,7 @@ import {
   User,
   AccountTypeEnum,
   AlertStatusesEnum,
-  AnalysisTypeEnum,
+  AlertTypesEnum,
   ComplianceStatusEnum,
   DestinationTypeEnum,
   ListAlertsSortFieldsEnum,
@@ -143,6 +150,7 @@ import {
   ListResourcesSortFieldsEnum,
   ListRulesSortFieldsEnum,
   LogIntegration,
+  OpsgenieServiceRegionEnum,
   SeverityEnum,
   SortDirEnum,
 } from '../../__generated__/schema';
@@ -200,7 +208,7 @@ export const buildAddPolicyInput = (overrides: Partial<AddPolicyInput> = {}): Ad
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.High,
     suppressions: 'suppressions' in overrides ? overrides.suppressions : ['Tunisian Dinar'],
     tags: 'tags' in overrides ? overrides.tags : ['Security'],
-    tests: 'tests' in overrides ? overrides.tests : [buildPolicyUnitTestInput()],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinitionInput()],
   };
 };
 
@@ -220,7 +228,7 @@ export const buildAddRuleInput = (overrides: Partial<AddRuleInput> = {}): AddRul
     runbook: 'runbook' in overrides ? overrides.runbook : 'Practical Granite Salad',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Medium,
     tags: 'tags' in overrides ? overrides.tags : ['Way'],
-    tests: 'tests' in overrides ? overrides.tests : [buildPolicyUnitTestInput()],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinitionInput()],
   };
 };
 
@@ -259,6 +267,7 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
     title: 'title' in overrides ? overrides.title : 'Steel',
+    type: 'type' in overrides ? overrides.type : AlertTypesEnum.Rule,
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Books'],
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
@@ -283,6 +292,7 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
       'deliveryResponses' in overrides ? overrides.deliveryResponses : [buildDeliveryResponse()],
     eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 670,
     ruleId: 'ruleId' in overrides ? overrides.ruleId : '6eb9c948-5a13-4955-bd91-b98801b55bed',
+    type: 'type' in overrides ? overrides.type : AlertTypesEnum.Rule,
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Medium,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Triaged,
     title: 'title' in overrides ? overrides.title : 'indexing',
@@ -543,6 +553,35 @@ export const buildDestinationInput = (
   };
 };
 
+export const buildDetectionTestDefinition = (
+  overrides: Partial<DetectionTestDefinition> = {}
+): DetectionTestDefinition => {
+  return {
+    __typename: 'DetectionTestDefinition',
+    expectedResult: 'expectedResult' in overrides ? overrides.expectedResult : true,
+    name: 'name' in overrides ? overrides.name : 'Investment Account',
+    resource: 'resource' in overrides ? overrides.resource : 'capacitor',
+  };
+};
+
+export const buildDetectionTestDefinitionInput = (
+  overrides: Partial<DetectionTestDefinitionInput> = {}
+): DetectionTestDefinitionInput => {
+  return {
+    expectedResult: 'expectedResult' in overrides ? overrides.expectedResult : false,
+    name: 'name' in overrides ? overrides.name : 'Direct',
+    resource: 'resource' in overrides ? overrides.resource : 'Versatile',
+  };
+};
+
+export const buildError = (overrides: Partial<Error> = {}): Error => {
+  return {
+    __typename: 'Error',
+    code: 'code' in overrides ? overrides.code : 'navigating',
+    message: 'message' in overrides ? overrides.message : 'deposit',
+  };
+};
+
 export const buildFloatSeries = (overrides: Partial<FloatSeries> = {}): FloatSeries => {
   return {
     __typename: 'FloatSeries',
@@ -594,7 +633,7 @@ export const buildGetGlobalPythonModuleInput = (
   overrides: Partial<GetGlobalPythonModuleInput> = {}
 ): GetGlobalPythonModuleInput => {
   return {
-    globalId: 'globalId' in overrides ? overrides.globalId : '0f341f61-9f20-4e1f-b8e0-5854a50dc594',
+    id: 'id' in overrides ? overrides.id : 'e675af0e-1ceb-4036-bd7a-00301fac3e48',
     versionId:
       'versionId' in overrides ? overrides.versionId : '9fe39f4b-d18f-4a21-99a0-eeef9b77cb11',
   };
@@ -602,7 +641,7 @@ export const buildGetGlobalPythonModuleInput = (
 
 export const buildGetPolicyInput = (overrides: Partial<GetPolicyInput> = {}): GetPolicyInput => {
   return {
-    policyId: 'policyId' in overrides ? overrides.policyId : 'f6a78c98-6d80-46bf-89e7-3df8975184a0',
+    id: 'id' in overrides ? overrides.id : '4abd6317-f970-4f92-a670-e7d0b9e3ec8d',
     versionId:
       'versionId' in overrides ? overrides.versionId : 'd394a64d-9476-44de-a8ab-7f8666cd4c8c',
   };
@@ -619,7 +658,7 @@ export const buildGetResourceInput = (
 
 export const buildGetRuleInput = (overrides: Partial<GetRuleInput> = {}): GetRuleInput => {
   return {
-    ruleId: 'ruleId' in overrides ? overrides.ruleId : '3b255df9-8276-4060-8f0c-cca418b158d6',
+    id: 'id' in overrides ? overrides.id : 'c191c85f-bb80-4a6a-baf2-1c466abe0031',
     versionId:
       'versionId' in overrides ? overrides.versionId : '1b6ea7a4-7775-4b65-8315-89b764428571',
   };
@@ -728,6 +767,7 @@ export const buildListAlertsInput = (overrides: Partial<ListAlertsInput> = {}): 
       'exclusiveStartKey' in overrides ? overrides.exclusiveStartKey : 'Throughway',
     severity: 'severity' in overrides ? overrides.severity : [SeverityEnum.Low],
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Awesome Wooden Mouse'],
+    type: 'type' in overrides ? overrides.type : AlertTypesEnum.Rule,
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'Island',
     createdAtBefore:
       'createdAtBefore' in overrides ? overrides.createdAtBefore : '2020-05-22T12:33:45.819Z',
@@ -806,9 +846,9 @@ export const buildListPoliciesInput = (
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'parse',
     enabled: 'enabled' in overrides ? overrides.enabled : false,
     hasRemediation: 'hasRemediation' in overrides ? overrides.hasRemediation : false,
-    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : 'software',
+    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['software'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.High,
-    tags: 'tags' in overrides ? overrides.tags : 'Fish',
+    tags: 'tags' in overrides ? overrides.tags : ['Fish'],
     sortBy: 'sortBy' in overrides ? overrides.sortBy : ListPoliciesSortFieldsEnum.ResourceTypes,
     sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
     pageSize: 'pageSize' in overrides ? overrides.pageSize : 50,
@@ -838,7 +878,7 @@ export const buildListResourcesInput = (
       'integrationId' in overrides
         ? overrides.integrationId
         : 'ccdadc7d-2460-418b-9e63-69d7110ffc5f',
-    types: 'types' in overrides ? overrides.types : 'black',
+    types: 'types' in overrides ? overrides.types : ['black'],
     sortBy: 'sortBy' in overrides ? overrides.sortBy : ListResourcesSortFieldsEnum.Type,
     sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Descending,
     pageSize: 'pageSize' in overrides ? overrides.pageSize : 228,
@@ -863,7 +903,7 @@ export const buildListRulesInput = (overrides: Partial<ListRulesInput> = {}): Li
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Drive'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Low,
     tags: 'tags' in overrides ? overrides.tags : ['channels'],
-    sortBy: 'sortBy' in overrides ? overrides.sortBy : ListRulesSortFieldsEnum.Enabled,
+    sortBy: 'sortBy' in overrides ? overrides.sortBy : ListRulesSortFieldsEnum.DisplayName,
     sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
     pageSize: 'pageSize' in overrides ? overrides.pageSize : 19,
     page: 'page' in overrides ? overrides.page : 323,
@@ -896,9 +936,10 @@ export const buildLogAnalysisMetricsResponse = (
 ): LogAnalysisMetricsResponse => {
   return {
     __typename: 'LogAnalysisMetricsResponse',
-    eventsProcessed: 'eventsProcessed' in overrides ? overrides.eventsProcessed : buildSeriesData(),
+    eventsProcessed:
+      'eventsProcessed' in overrides ? overrides.eventsProcessed : buildLongSeriesData(),
     alertsBySeverity:
-      'alertsBySeverity' in overrides ? overrides.alertsBySeverity : buildSeriesData(),
+      'alertsBySeverity' in overrides ? overrides.alertsBySeverity : buildLongSeriesData(),
     eventsLatency: 'eventsLatency' in overrides ? overrides.eventsLatency : buildFloatSeriesData(),
     totalAlertsDelta:
       'totalAlertsDelta' in overrides ? overrides.totalAlertsDelta : [buildSingleValue()],
@@ -906,6 +947,22 @@ export const buildLogAnalysisMetricsResponse = (
     fromDate: 'fromDate' in overrides ? overrides.fromDate : '2020-06-15T22:39:08.690Z',
     toDate: 'toDate' in overrides ? overrides.toDate : '2020-06-29T16:49:54.582Z',
     intervalMinutes: 'intervalMinutes' in overrides ? overrides.intervalMinutes : 670,
+  };
+};
+
+export const buildLongSeries = (overrides: Partial<LongSeries> = {}): LongSeries => {
+  return {
+    __typename: 'LongSeries',
+    label: 'label' in overrides ? overrides.label : 'envisioneer',
+    values: 'values' in overrides ? overrides.values : [95698],
+  };
+};
+
+export const buildLongSeriesData = (overrides: Partial<LongSeriesData> = {}): LongSeriesData => {
+  return {
+    __typename: 'LongSeriesData',
+    timestamps: 'timestamps' in overrides ? overrides.timestamps : ['2020-05-29T02:52:10.141Z'],
+    series: 'series' in overrides ? overrides.series : [buildLongSeries()],
   };
 };
 
@@ -938,6 +995,8 @@ export const buildOpsgenieConfig = (overrides: Partial<OpsgenieConfig> = {}): Op
   return {
     __typename: 'OpsgenieConfig',
     apiKey: 'apiKey' in overrides ? overrides.apiKey : 'IB',
+    serviceRegion:
+      'serviceRegion' in overrides ? overrides.serviceRegion : OpsgenieServiceRegionEnum.Us,
   };
 };
 
@@ -946,6 +1005,8 @@ export const buildOpsgenieConfigInput = (
 ): OpsgenieConfigInput => {
   return {
     apiKey: 'apiKey' in overrides ? overrides.apiKey : 'hacking',
+    serviceRegion:
+      'serviceRegion' in overrides ? overrides.serviceRegion : OpsgenieServiceRegionEnum.Us,
   };
 };
 
@@ -1058,7 +1119,7 @@ export const buildPolicyDetails = (overrides: Partial<PolicyDetails> = {}): Poli
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
     suppressions: 'suppressions' in overrides ? overrides.suppressions : ['Bike'],
     tags: 'tags' in overrides ? overrides.tags : ['success'],
-    tests: 'tests' in overrides ? overrides.tests : [buildPolicyUnitTest()],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinition()],
     versionId:
       'versionId' in overrides ? overrides.versionId : 'ca391fc7-f186-4bcb-b717-3e34cb330d83',
   };
@@ -1080,38 +1141,11 @@ export const buildPolicySummary = (overrides: Partial<PolicySummary> = {}): Poli
     enabled: 'enabled' in overrides ? overrides.enabled : false,
     id: 'id' in overrides ? overrides.id : '260cad31-ef71-4eb6-9ac1-1ca1d0da39c7',
     lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-09-11T01:58:47.481Z',
+    outputIds:
+      'outputIds' in overrides ? overrides.outputIds : ['94fd4ab9-7edc-4b27-8c37-bcfab0e2f825'],
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['EXE'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
     tags: 'tags' in overrides ? overrides.tags : ['navigating'],
-  };
-};
-
-export const buildPolicyUnitTest = (overrides: Partial<PolicyUnitTest> = {}): PolicyUnitTest => {
-  return {
-    __typename: 'PolicyUnitTest',
-    expectedResult: 'expectedResult' in overrides ? overrides.expectedResult : true,
-    name: 'name' in overrides ? overrides.name : 'Table',
-    resource: 'resource' in overrides ? overrides.resource : 'deposit',
-  };
-};
-
-export const buildPolicyUnitTestError = (
-  overrides: Partial<PolicyUnitTestError> = {}
-): PolicyUnitTestError => {
-  return {
-    __typename: 'PolicyUnitTestError',
-    name: 'name' in overrides ? overrides.name : 'override',
-    errorMessage: 'errorMessage' in overrides ? overrides.errorMessage : 'Frozen',
-  };
-};
-
-export const buildPolicyUnitTestInput = (
-  overrides: Partial<PolicyUnitTestInput> = {}
-): PolicyUnitTestInput => {
-  return {
-    expectedResult: 'expectedResult' in overrides ? overrides.expectedResult : false,
-    name: 'name' in overrides ? overrides.name : 'application',
-    resource: 'resource' in overrides ? overrides.resource : 'Right-sized',
   };
 };
 
@@ -1196,7 +1230,7 @@ export const buildRuleDetails = (overrides: Partial<RuleDetails> = {}): RuleDeta
     runbook: 'runbook' in overrides ? overrides.runbook : 'withdrawal',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Low,
     tags: 'tags' in overrides ? overrides.tags : ['digital'],
-    tests: 'tests' in overrides ? overrides.tests : [buildPolicyUnitTest()],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinition()],
     versionId:
       'versionId' in overrides ? overrides.versionId : 'cd730243-e772-446f-b820-ff796b83a51f',
   };
@@ -1213,6 +1247,8 @@ export const buildRuleSummary = (overrides: Partial<RuleSummary> = {}): RuleSumm
     createdAt: 'createdAt' in overrides ? overrides.createdAt : '2020-09-24T09:09:49.137Z',
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['AI'],
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Info,
+    outputIds:
+      'outputIds' in overrides ? overrides.outputIds : ['a2f89a13-3b31-4365-b40d-2495c13a6f65'],
     tags: 'tags' in overrides ? overrides.tags : ['Virginia'],
   };
 };
@@ -1285,22 +1321,6 @@ export const buildSendTestAlertInput = (
   return {
     outputIds:
       'outputIds' in overrides ? overrides.outputIds : ['900d0911-ac12-4720-a1a9-89d6f1995c9f'],
-  };
-};
-
-export const buildSeries = (overrides: Partial<Series> = {}): Series => {
-  return {
-    __typename: 'Series',
-    label: 'label' in overrides ? overrides.label : 'Idaho',
-    values: 'values' in overrides ? overrides.values : [371],
-  };
-};
-
-export const buildSeriesData = (overrides: Partial<SeriesData> = {}): SeriesData => {
-  return {
-    __typename: 'SeriesData',
-    timestamps: 'timestamps' in overrides ? overrides.timestamps : ['2020-10-18T14:12:28.273Z'],
-    series: 'series' in overrides ? overrides.series : [buildSeries()],
   };
 };
 
@@ -1423,12 +1443,44 @@ export const buildSuppressPoliciesInput = (
   };
 };
 
+export const buildTestDetectionSubRecord = (
+  overrides: Partial<TestDetectionSubRecord> = {}
+): TestDetectionSubRecord => {
+  return {
+    __typename: 'TestDetectionSubRecord',
+    output: 'output' in overrides ? overrides.output : 'Borders',
+    error: 'error' in overrides ? overrides.error : buildError(),
+  };
+};
+
 export const buildTestPolicyInput = (overrides: Partial<TestPolicyInput> = {}): TestPolicyInput => {
   return {
     body: 'body' in overrides ? overrides.body : 'Centralized',
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['Automotive'],
-    analysisType: 'analysisType' in overrides ? overrides.analysisType : AnalysisTypeEnum.Rule,
-    tests: 'tests' in overrides ? overrides.tests : [buildPolicyUnitTestInput()],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinitionInput()],
+  };
+};
+
+export const buildTestPolicyRecord = (
+  overrides: Partial<TestPolicyRecord> = {}
+): TestPolicyRecord => {
+  return {
+    __typename: 'TestPolicyRecord',
+    id: 'id' in overrides ? overrides.id : 'Soft',
+    name: 'name' in overrides ? overrides.name : 'Utah',
+    passed: 'passed' in overrides ? overrides.passed : false,
+    functions: 'functions' in overrides ? overrides.functions : buildTestPolicyRecordFunctions(),
+    error: 'error' in overrides ? overrides.error : buildError(),
+  };
+};
+
+export const buildTestPolicyRecordFunctions = (
+  overrides: Partial<TestPolicyRecordFunctions> = {}
+): TestPolicyRecordFunctions => {
+  return {
+    __typename: 'TestPolicyRecordFunctions',
+    policyFunction:
+      'policyFunction' in overrides ? overrides.policyFunction : buildTestDetectionSubRecord(),
   };
 };
 
@@ -1437,11 +1489,53 @@ export const buildTestPolicyResponse = (
 ): TestPolicyResponse => {
   return {
     __typename: 'TestPolicyResponse',
-    testSummary: 'testSummary' in overrides ? overrides.testSummary : false,
-    testsPassed: 'testsPassed' in overrides ? overrides.testsPassed : ['Producer'],
-    testsFailed: 'testsFailed' in overrides ? overrides.testsFailed : ['Granite'],
-    testsErrored:
-      'testsErrored' in overrides ? overrides.testsErrored : [buildPolicyUnitTestError()],
+    results: 'results' in overrides ? overrides.results : [buildTestPolicyRecord()],
+  };
+};
+
+export const buildTestRuleInput = (overrides: Partial<TestRuleInput> = {}): TestRuleInput => {
+  return {
+    body: 'body' in overrides ? overrides.body : 'Steel',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['project'],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinitionInput()],
+  };
+};
+
+export const buildTestRuleRecord = (overrides: Partial<TestRuleRecord> = {}): TestRuleRecord => {
+  return {
+    __typename: 'TestRuleRecord',
+    id: 'id' in overrides ? overrides.id : 'Oklahoma',
+    name: 'name' in overrides ? overrides.name : 'Pants',
+    passed: 'passed' in overrides ? overrides.passed : true,
+    functions: 'functions' in overrides ? overrides.functions : buildTestRuleRecordFunctions(),
+    error: 'error' in overrides ? overrides.error : buildError(),
+  };
+};
+
+export const buildTestRuleRecordFunctions = (
+  overrides: Partial<TestRuleRecordFunctions> = {}
+): TestRuleRecordFunctions => {
+  return {
+    __typename: 'TestRuleRecordFunctions',
+    ruleFunction:
+      'ruleFunction' in overrides ? overrides.ruleFunction : buildTestDetectionSubRecord(),
+    titleFunction:
+      'titleFunction' in overrides ? overrides.titleFunction : buildTestDetectionSubRecord(),
+    dedupFunction:
+      'dedupFunction' in overrides ? overrides.dedupFunction : buildTestDetectionSubRecord(),
+    alertContextFunction:
+      'alertContextFunction' in overrides
+        ? overrides.alertContextFunction
+        : buildTestDetectionSubRecord(),
+  };
+};
+
+export const buildTestRuleResponse = (
+  overrides: Partial<TestRuleResponse> = {}
+): TestRuleResponse => {
+  return {
+    __typename: 'TestRuleResponse',
+    results: 'results' in overrides ? overrides.results : [buildTestRuleRecord()],
   };
 };
 
@@ -1501,7 +1595,7 @@ export const buildUpdatePolicyInput = (
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Info,
     suppressions: 'suppressions' in overrides ? overrides.suppressions : ['green'],
     tags: 'tags' in overrides ? overrides.tags : ['transmit'],
-    tests: 'tests' in overrides ? overrides.tests : [buildPolicyUnitTestInput()],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinitionInput()],
   };
 };
 
@@ -1521,7 +1615,7 @@ export const buildUpdateRuleInput = (overrides: Partial<UpdateRuleInput> = {}): 
     runbook: 'runbook' in overrides ? overrides.runbook : 'Fresh',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.High,
     tags: 'tags' in overrides ? overrides.tags : ['Senior'],
-    tests: 'tests' in overrides ? overrides.tests : [buildPolicyUnitTestInput()],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinitionInput()],
   };
 };
 

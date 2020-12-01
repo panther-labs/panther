@@ -34,16 +34,16 @@ type PantherConfig struct {
 }
 
 type Infra struct {
-	BaseLayerVersionArns          string   `yaml:"BaseLayerVersionArns"`
-	LoadBalancerSecurityGroupCidr string   `yaml:"LoadBalancerSecurityGroupCidr"`
-	LogProcessorLambdaMemorySize  int      `yaml:"LogProcessorLambdaMemorySize"`
-	LogProcessorSQSDelaySeconds   int      `yaml:"LogProcessorSQSDelaySeconds"`
-	PipLayer                      []string `yaml:"PipLayer"`
-	PythonLayerVersionArn         string   `yaml:"PythonLayerVersionArn"`
-	SecurityGroupID               string   `yaml:"SecurityGroupID"`
-	SubnetOneIPRange              string   `yaml:"SubnetOneIPRange"`
-	SubnetTwoIPRange              string   `yaml:"SubnetTwoIPRange"`
-	VpcID                         string   `yaml:"VpcID"`
+	BaseLayerVersionArns               string   `yaml:"BaseLayerVersionArns"`
+	LoadBalancerSecurityGroupCidr      string   `yaml:"LoadBalancerSecurityGroupCidr"`
+	LogProcessorLambdaMemorySize       int      `yaml:"LogProcessorLambdaMemorySize"`
+	LogProcessorLambdaSQSReadBatchSize string   `yaml:"LogProcessorLambdaSQSReadBatchSize"`
+	PipLayer                           []string `yaml:"PipLayer"`
+	PythonLayerVersionArn              string   `yaml:"PythonLayerVersionArn"`
+	SecurityGroupID                    string   `yaml:"SecurityGroupID"`
+	SubnetOneIPRange                   string   `yaml:"SubnetOneIPRange"`
+	SubnetTwoIPRange                   string   `yaml:"SubnetTwoIPRange"`
+	VpcID                              string   `yaml:"VpcID"`
 }
 
 type Monitoring struct {

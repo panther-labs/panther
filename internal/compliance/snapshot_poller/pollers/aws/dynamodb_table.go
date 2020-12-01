@@ -32,13 +32,19 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	apimodels "github.com/panther-labs/panther/api/gateway/resources/models"
+	apimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
 )
 
-const dynamoDBServiceNameSpace = "dynamodb"
+const (
+	dynamoDBServiceNameSpace = "dynamodb"
+	// Several DynamoDB API calls (most noticeably the DescribeTimeToLive API call) have very low
+	// rate limits, so we set the max batch size lower than for most resource types to avoid getting
+	// rate limited.
+	dynamodbBatchSize = 20
+)
 
 // Set as variables to be overridden in testing
 var (
@@ -108,7 +114,7 @@ func PollDynamoDBTable(
 func listTables(dynamoDBSvc dynamodbiface.DynamoDBAPI, nextMarker *string) (tables []*string, marker *string, err error) {
 	err = dynamoDBSvc.ListTablesPages(&dynamodb.ListTablesInput{
 		ExclusiveStartTableName: nextMarker,
-		Limit:                   aws.Int64(int64(defaultBatchSize)),
+		Limit:                   aws.Int64(int64(dynamodbBatchSize)),
 	},
 		func(page *dynamodb.ListTablesOutput, lastPage bool) bool {
 			return dynamoTableIterator(page, &tables, &marker)
@@ -123,7 +129,7 @@ func dynamoTableIterator(page *dynamodb.ListTablesOutput, tables *[]*string, mar
 	*tables = append(*tables, page.TableNames...)
 	// DynamoDB uses the name of the last table evaluated as the pagination marker
 	*marker = page.LastEvaluatedTableName
-	return len(*tables) < defaultBatchSize
+	return len(*tables) < dynamodbBatchSize
 }
 
 // describeTable provides detailed information about a given DynamoDB table
@@ -206,7 +212,7 @@ func buildDynamoDBTableSnapshot(
 		GenericResource: awsmodels.GenericResource{
 			ResourceType: aws.String(awsmodels.DynamoDBTableSchema),
 			ResourceID:   description.TableArn,
-			TimeCreated:  utils.DateTimeFormat(*description.CreationDateTime),
+			TimeCreated:  description.CreationDateTime,
 		},
 		GenericAWSResource: awsmodels.GenericAWSResource{
 			Name: tableName,
@@ -257,7 +263,7 @@ func buildDynamoDBTableSnapshot(
 }
 
 // PollDynamoDBTables gathers information on each Dynamo DB Table for an AWS account.
-func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodels.AddResourceEntry, *string, error) {
+func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting DynamoDB Table resource poller")
 	dynamoDBSvc, err := getDynamoDBClient(pollerInput, *pollerInput.Region)
 	if err != nil {
@@ -275,7 +281,7 @@ func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 		return nil, nil, errors.WithMessagef(err, "region: %s", *pollerInput.Region)
 	}
 
-	resources := make([]*apimodels.AddResourceEntry, 0, len(tables))
+	resources := make([]apimodels.AddResourceEntry, 0, len(tables))
 	for i, table := range tables {
 		dynamoDBTable, err := buildDynamoDBTableSnapshot(dynamoDBSvc, applicationAutoScalingSvc, table)
 		if err != nil {
@@ -288,11 +294,11 @@ func PollDynamoDBTables(pollerInput *awsmodels.ResourcePollerInput) ([]*apimodel
 		dynamoDBTable.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		dynamoDBTable.Region = pollerInput.Region
 
-		resources = append(resources, &apimodels.AddResourceEntry{
+		resources = append(resources, apimodels.AddResourceEntry{
 			Attributes:      dynamoDBTable,
-			ID:              apimodels.ResourceID(*dynamoDBTable.ResourceID),
-			IntegrationID:   apimodels.IntegrationID(*pollerInput.IntegrationID),
-			IntegrationType: apimodels.IntegrationTypeAws,
+			ID:              *dynamoDBTable.ResourceID,
+			IntegrationID:   *pollerInput.IntegrationID,
+			IntegrationType: integrationType,
 			Type:            awsmodels.DynamoDBTableSchema,
 		})
 	}

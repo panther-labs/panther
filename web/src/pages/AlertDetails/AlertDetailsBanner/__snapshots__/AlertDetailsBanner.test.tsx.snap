@@ -1,24 +1,27 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`AlertDetailsBanner renders 1`] = `
-.panther-13 {
+.panther-26 {
   background-color: #23344e;
   border-radius: 4px;
   padding: 24px;
+  overflow: hidden;
+  border-left: 4px solid;
+  border-color: #14b597;
 }
 
-.panther-12 {
+.panther-11 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-align-items: top;
-  -webkit-box-align: top;
-  -ms-flex-align: top;
-  align-items: top;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
 }
 
-.panther-1 {
+.panther-0 {
   font-weight: 700;
   font-size: 1.5rem;
   word-break: break-word;
@@ -28,19 +31,7 @@ exports[`AlertDetailsBanner renders 1`] = `
   margin-right: 100px;
 }
 
-.panther-0 {
-  display: inline-block;
-  vertical-align: unset;
-  -webkit-flex-shrink: 0;
-  -ms-flex-negative: 0;
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  color: currentColor;
-  margin-left: 8px;
-}
-
-.panther-11 {
+.panther-10 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -51,13 +42,13 @@ exports[`AlertDetailsBanner renders 1`] = `
   margin-left: auto;
 }
 
-.panther-11>*:not(:last-child) {
+.panther-10>*:not(:last-child) {
   margin-right: 8px;
 }
 
 
 
-.panther-2 {
+.panther-1 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -88,7 +79,7 @@ exports[`AlertDetailsBanner renders 1`] = `
   background-color: transparent;
 }
 
-.panther-9 {
+.panther-8 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -103,11 +94,11 @@ exports[`AlertDetailsBanner renders 1`] = `
   align-items: center;
 }
 
-.panther-9>*:not(:last-child) {
+.panther-8>*:not(:last-child) {
   margin-right: 4px;
 }
 
-.panther-5 {
+.panther-4 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -115,7 +106,7 @@ exports[`AlertDetailsBanner renders 1`] = `
   width: 85px;
 }
 
-.panther-4 {
+.panther-3 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -144,14 +135,14 @@ exports[`AlertDetailsBanner renders 1`] = `
   background-color: #3e516b;
 }
 
-.panther-8 {
+.panther-7 {
   display: -webkit-inline-box;
   display: -webkit-inline-flex;
   display: -ms-inline-flexbox;
   display: inline-flex;
 }
 
-.panther-7 {
+.panther-6 {
   outline: none;
   line-height: 1;
   height: 24px;
@@ -168,23 +159,23 @@ exports[`AlertDetailsBanner renders 1`] = `
   text-decoration: none;
 }
 
-.panther-7:hover {
+.panther-6:hover {
   background-color: #465973;
   border-color: #465973;
 }
 
-.panther-7:focus {
+.panther-6:focus {
   background-color: #465973;
   border-color: #93a6c0;
 }
 
-.panther-7:active,
-.panther-7[data-active=true] {
+.panther-6:active,
+.panther-6[data-active=true] {
   background-color: #253852;
   border-color: #253852;
 }
 
-.panther-6 {
+.panther-5 {
   display: inline-block;
   vertical-align: sub;
   -webkit-flex-shrink: 0;
@@ -195,42 +186,122 @@ exports[`AlertDetailsBanner renders 1`] = `
   color: currentColor;
 }
 
+.panther-25 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  font-size: 0.813rem;
+  padding-top: 20px;
+}
+
+.panther-25>*:not(:last-child) {
+  margin-right: 32px;
+}
+
+.panther-14 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+.panther-12 {
+  color: #86a3c3;
+  padding-right: 8px;
+}
+
+.panther-13 {
+  font-weight: 700;
+  color: #91eddc;
+}
+
+.panther-16 {
+  font-weight: 700;
+}
+
+.panther-22 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-22>*:not(:last-child) {
+  margin-right: 24px;
+}
+
+.panther-21 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-21>*:not(:last-child) {
+  margin-right: 8px;
+}
+
+.panther-19 {
+  width: 12px;
+  height: 12px;
+  background-color: hsl(210, 20%, 70%);
+  border-radius: 99999px;
+}
+
+.panther-20 {
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.panther-53 {
+  background-color: #23344e;
+  border-radius: 4px;
+  padding: 24px;
+  overflow: hidden;
+  border-left: 4px solid;
+  border-color: #850003;
+}
+
+.panther-40 {
+  font-weight: 700;
+  color: #af0003;
+}
+
 <div>
   <header
     id="main-header"
   />
   <article
-    class="panther-13"
+    class="panther-26"
   >
     <header
-      class="panther-12"
+      class="panther-11"
     >
       <h1
-        class="panther-1"
+        class="panther-0"
       >
         Steel
-        <svg
-          class="panther-0"
-          data-reach-tooltip-trigger=""
-          role="presentation"
-          viewBox="0 0 24 24"
-        >
-          <path
-            d="M12,2 C17.5228475,2 22,6.4771525 22,12 C22,17.5228475 17.5228475,22 12,22 C6.4771525,22 2,17.5228475 2,12 C2,6.4771525 6.4771525,2 12,2 Z M13,15.5 L11,15.5 L11,17.5 L13,17.5 L13,15.5 Z M13,7 L11,7 L11,14 L13,14 L13,7 Z"
-            transform="translate(12.000000, 12.000000) rotate(-180.000000) translate(-12.000000, -12.000000) "
-          />
-        </svg>
       </h1>
       <ul
-        class="panther-11"
+        class="panther-10"
       >
         <li
           aria-describedby="alert-severity-description"
-          class="panther-3"
+          class="panther-2"
         >
           <div
             aria-atomic="true"
-            class="panther-2"
+            class="panther-1"
             role="status"
           >
             CRITICAL
@@ -238,38 +309,38 @@ exports[`AlertDetailsBanner renders 1`] = `
         </li>
         <li
           aria-describedby="alert-status-description"
-          class="panther-3"
+          class="panther-2"
         >
           <div
-            class="panther-9"
+            class="panther-8"
           >
             <div
-              class="panther-5"
+              class="panther-4"
             >
               <div
                 aria-atomic="true"
-                class="panther-4"
+                class="panther-3"
                 role="status"
               >
                 INVALID
               </div>
             </div>
             <div
-              aria-controls="menu--2"
+              aria-controls="menu--1"
               aria-haspopup="true"
-              class="panther-8"
+              class="panther-7"
               data-reach-menu-button=""
-              id="menu-button--menu--2"
+              id="menu-button--menu--1"
               type="button"
             >
               <button
                 aria-label="Change Alert Status"
                 aria-pressed="false"
-                class="panther-7"
+                class="panther-6"
                 type="button"
               >
                 <svg
-                  class="panther-6"
+                  class="panther-5"
                   role="presentation"
                   viewBox="0 0 24 24"
                 >
@@ -283,6 +354,214 @@ exports[`AlertDetailsBanner renders 1`] = `
         </li>
       </ul>
     </header>
+    <div
+      class="panther-25"
+    >
+      <div
+        class="panther-14"
+      >
+        <dd
+          aria-describedby="rule-type"
+          class="panther-12"
+        >
+          Alert Type
+        </dd>
+        <dl
+          class="panther-13"
+          id="rule-type"
+        >
+          Rule Match
+        </dl>
+      </div>
+      <div
+        class="panther-14"
+      >
+        <dd
+          aria-describedby="alert-id"
+          class="panther-12"
+        >
+          Alert ID
+        </dd>
+        <dl
+          class="panther-16"
+          id="alert-id"
+        >
+          2c5aa76d-eb43-49f0-a65c-50e4daa756a4
+        </dl>
+      </div>
+      <div
+        class="panther-14"
+      >
+        <dd
+          aria-describedby="alert-log-types"
+          class="panther-12"
+        >
+          Log Types
+        </dd>
+        <dl
+          class="panther-2"
+          id="alert-log-types"
+        >
+          <div
+            class="panther-22"
+          >
+            <div
+              class="panther-21"
+            >
+              <span
+                class="panther-19"
+              />
+              <span
+                class="panther-20"
+              >
+                Books
+              </span>
+            </div>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </article>
+  <article
+    class="panther-53"
+  >
+    <header
+      class="panther-11"
+    >
+      <h1
+        class="panther-0"
+      >
+        Steel
+      </h1>
+      <ul
+        class="panther-10"
+      >
+        <li
+          aria-describedby="alert-severity-description"
+          class="panther-2"
+        >
+          <div
+            aria-atomic="true"
+            class="panther-1"
+            role="status"
+          >
+            CRITICAL
+          </div>
+        </li>
+        <li
+          aria-describedby="alert-status-description"
+          class="panther-2"
+        >
+          <div
+            class="panther-8"
+          >
+            <div
+              class="panther-4"
+            >
+              <div
+                aria-atomic="true"
+                class="panther-3"
+                role="status"
+              >
+                INVALID
+              </div>
+            </div>
+            <div
+              aria-controls="menu--2"
+              aria-haspopup="true"
+              class="panther-7"
+              data-reach-menu-button=""
+              id="menu-button--menu--2"
+              type="button"
+            >
+              <button
+                aria-label="Change Alert Status"
+                aria-pressed="false"
+                class="panther-6"
+                type="button"
+              >
+                <svg
+                  class="panther-5"
+                  role="presentation"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M7 10L12 15L17 10H7Z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </header>
+    <div
+      class="panther-25"
+    >
+      <div
+        class="panther-14"
+      >
+        <dd
+          aria-describedby="rule-type"
+          class="panther-12"
+        >
+          Alert Type
+        </dd>
+        <dl
+          class="panther-40"
+          id="rule-type"
+        >
+          Rule Error
+        </dl>
+      </div>
+      <div
+        class="panther-14"
+      >
+        <dd
+          aria-describedby="alert-id"
+          class="panther-12"
+        >
+          Alert ID
+        </dd>
+        <dl
+          class="panther-16"
+          id="alert-id"
+        >
+          2c5aa76d-eb43-49f0-a65c-50e4daa756a4
+        </dl>
+      </div>
+      <div
+        class="panther-14"
+      >
+        <dd
+          aria-describedby="alert-log-types"
+          class="panther-12"
+        >
+          Log Types
+        </dd>
+        <dl
+          class="panther-2"
+          id="alert-log-types"
+        >
+          <div
+            class="panther-22"
+          >
+            <div
+              class="panther-21"
+            >
+              <span
+                class="panther-19"
+              />
+              <span
+                class="panther-20"
+              >
+                Books
+              </span>
+            </div>
+          </div>
+        </dl>
+      </div>
+    </div>
   </article>
   <footer
     id="footer"

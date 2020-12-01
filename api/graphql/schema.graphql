@@ -2,6 +2,7 @@ scalar AWSEmail
 scalar AWSDateTime
 scalar AWSTimestamp
 scalar AWSJSON
+scalar Long
 
 schema {
   query: Query
@@ -28,7 +29,8 @@ type Mutation {
   deliverAlert(input: DeliverAlertInput!): AlertSummary!
   resetUserPassword(id: ID!): User!
   suppressPolicies(input: SuppressPoliciesInput!): Boolean
-  testPolicy(input: TestPolicyInput): TestPolicyResponse
+  testPolicy(input: TestPolicyInput!): TestPolicyResponse!
+  testRule(input: TestRuleInput!): TestRuleResponse!
   updateAlertStatus(input: UpdateAlertStatusInput!): [AlertSummary!]!
   updateDestination(input: DestinationInput!): Destination
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
@@ -97,6 +99,7 @@ input ListAlertsInput {
   exclusiveStartKey: String
   severity: [SeverityEnum]
   logTypes: [String!]
+  type: AlertTypesEnum
   nameContains: String
   createdAtBefore: AWSDateTime
   createdAtAfter: AWSDateTime
@@ -166,6 +169,7 @@ type AlertDetails implements Alert {
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
+  type: AlertTypesEnum!
   logTypes: [String!]!
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
@@ -181,6 +185,7 @@ type AlertSummary implements Alert {
   deliveryResponses: [DeliveryResponse]!
   eventsMatched: Int!
   ruleId: ID
+  type: AlertTypesEnum!
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
@@ -240,12 +245,12 @@ input AddRuleInput {
   enabled: Boolean!
   id: ID!
   logTypes: [String]
-  outputIds: [ID]
+  outputIds: [ID!]
   reference: String
   runbook: String
   severity: SeverityEnum!
   tags: [String]
-  tests: [PolicyUnitTestInput] # Rule and Policy share the same tests structure
+  tests: [DetectionTestDefinitionInput] # Rule and Policy share the same tests structure
 }
 
 input UpdateRuleInput {
@@ -257,16 +262,16 @@ input UpdateRuleInput {
   enabled: Boolean
   id: ID!
   logTypes: [String]
-  outputIds: [ID]
+  outputIds: [ID!]
   reference: String
   runbook: String
   severity: SeverityEnum
   tags: [String]
-  tests: [PolicyUnitTestInput] # Rule and Policy share the same tests structure
+  tests: [DetectionTestDefinitionInput] # Rule and Policy share the same tests structure
 }
 
 input GetRuleInput {
-  ruleId: ID!
+  id: ID!
   versionId: ID
 }
 
@@ -287,6 +292,7 @@ type RuleSummary {
   createdAt: AWSDateTime
   logTypes: [String]
   severity: SeverityEnum
+  outputIds: [ID!]!
   tags: [String!]
 }
 
@@ -308,12 +314,12 @@ type RuleDetails {
   lastModified: AWSDateTime
   lastModifiedBy: ID
   logTypes: [String]
-  outputIds: [ID]
+  outputIds: [ID!]!
   reference: String
   runbook: String
   severity: SeverityEnum
   tags: [String]
-  tests: [PolicyUnitTest] # Policy and Rule have the same tests structure so we reuse the struct here
+  tests: [DetectionTestDefinition] # Policy and Rule have the same tests structure so we reuse the struct here
   versionId: ID
 }
 
@@ -406,19 +412,19 @@ type OrganizationStatsResponse {
   topFailingResources: [ResourceSummary]
 }
 
-type Series {
-  label: String
-  values: [Int]
+type LongSeries {
+  label: String!
+  values: [Long!]!
+}
+
+type LongSeriesData {
+  timestamps: [AWSDateTime!]!
+  series: [LongSeries!]!
 }
 
 type FloatSeries {
   label: String!
   values: [Float!]!
-}
-
-type SeriesData {
-  timestamps: [AWSDateTime]
-  series: [Series]
 }
 
 type FloatSeriesData {
@@ -432,8 +438,8 @@ type SingleValue {
 }
 
 type LogAnalysisMetricsResponse {
-  eventsProcessed: SeriesData!
-  alertsBySeverity: SeriesData!
+  eventsProcessed: LongSeriesData!
+  alertsBySeverity: LongSeriesData!
   eventsLatency: FloatSeriesData!
   totalAlertsDelta: [SingleValue!]!
   alertsByRuleID: [SingleValue!]!
@@ -457,10 +463,15 @@ type GeneralSettings {
 }
 
 input TestPolicyInput {
-  body: String
-  resourceTypes: [String]
-  analysisType: AnalysisTypeEnum
-  tests: [PolicyUnitTestInput!]
+  body: String!
+  resourceTypes: [String!]!
+  tests: [DetectionTestDefinitionInput!]!
+}
+
+input TestRuleInput {
+  body: String!
+  logTypes: [String!]!
+  tests: [DetectionTestDefinitionInput!]!
 }
 
 type SqsConfig {
@@ -602,6 +613,7 @@ type SqsDestinationConfig {
 
 type OpsgenieConfig {
   apiKey: String!
+  serviceRegion: OpsgenieServiceRegionEnum!
 }
 
 type MsTeamsConfig {
@@ -670,6 +682,7 @@ input SqsConfigInput {
 
 input OpsgenieConfigInput {
   apiKey: String!
+  serviceRegion: OpsgenieServiceRegionEnum!
 }
 
 input MsTeamsConfigInput {
@@ -724,14 +737,14 @@ type PolicyDetails {
   id: ID!
   lastModified: AWSDateTime
   lastModifiedBy: ID
-  outputIds: [ID]
+  outputIds: [ID!]!
   reference: String
   resourceTypes: [String]
   runbook: String
   severity: SeverityEnum
   suppressions: [String]
   tags: [String]
-  tests: [PolicyUnitTest]
+  tests: [DetectionTestDefinition]
   versionId: ID
 }
 
@@ -763,6 +776,7 @@ type PolicySummary {
   enabled: Boolean
   id: ID!
   lastModified: AWSDateTime
+  outputIds: [ID!]!
   resourceTypes: [String]
   severity: SeverityEnum
   tags: [String]
@@ -776,14 +790,14 @@ input AddPolicyInput {
   displayName: String
   enabled: Boolean!
   id: ID!
-  outputIds: [ID]
+  outputIds: [ID!]
   reference: String
   resourceTypes: [String]
   runbook: String
   severity: SeverityEnum!
   suppressions: [String]
   tags: [String]
-  tests: [PolicyUnitTestInput]
+  tests: [DetectionTestDefinitionInput]
 }
 
 input UpdatePolicyInput {
@@ -794,18 +808,18 @@ input UpdatePolicyInput {
   displayName: String
   enabled: Boolean
   id: ID!
-  outputIds: [ID]
+  outputIds: [ID!]
   reference: String
   resourceTypes: [String]
   runbook: String
   severity: SeverityEnum
   suppressions: [String]
   tags: [String]
-  tests: [PolicyUnitTestInput]
+  tests: [DetectionTestDefinitionInput]
 }
 
 input GetPolicyInput {
-  policyId: ID!
+  id: ID!
   versionId: ID
 }
 
@@ -821,7 +835,7 @@ input ListGlobalPythonModuleInput {
 }
 
 input GetGlobalPythonModuleInput {
-  globalId: ID!
+  id: ID!
   versionId: ID
 }
 
@@ -858,9 +872,9 @@ input ListPoliciesInput {
   nameContains: String
   enabled: Boolean
   hasRemediation: Boolean
-  resourceTypes: String # Comma-separated string
+  resourceTypes: [String!]
   severity: SeverityEnum
-  tags: String # Comma-separated string
+  tags: [String!]
   # Sorting
   sortBy: ListPoliciesSortFieldsEnum # defaults to `id`
   sortDir: SortDirEnum # defaults to `ascending`
@@ -882,7 +896,7 @@ input ListResourcesInput {
   deleted: Boolean
   idContains: String
   integrationId: ID
-  types: String # comma separated string
+  types: [String!]
   # Sorting
   sortBy: ListResourcesSortFieldsEnum # defaults to `id`
   sortDir: SortDirEnum # defaults to `ascending`
@@ -896,13 +910,13 @@ input RemediateResourceInput {
   resourceId: ID!
 }
 
-type PolicyUnitTest {
+type DetectionTestDefinition {
   expectedResult: Boolean
   name: String
   resource: String # The `attributes` field of the Resource in stringified JSON format
 }
 
-input PolicyUnitTestInput {
+input DetectionTestDefinitionInput {
   expectedResult: Boolean
   name: String
   resource: String # The `attributes` field of the Resource in stringified JSON format
@@ -927,16 +941,56 @@ type UploadPoliciesResponse {
   modifiedGlobals: Int
 }
 
-type PolicyUnitTestError {
-  name: String
-  errorMessage: String
+type Error {
+  code: String
+  message: String!
+}
+
+type TestDetectionSubRecord {
+  output: String
+  error: Error
+}
+
+interface TestRecord {
+  id: String!
+  name: String!
+  passed: Boolean!
+  error: Error
+}
+
+type TestPolicyRecordFunctions {
+  policyFunction: TestDetectionSubRecord!
+}
+
+type TestPolicyRecord implements TestRecord {
+  id: String!
+  name: String!
+  passed: Boolean!
+  functions: TestPolicyRecordFunctions!
+  error: Error
 }
 
 type TestPolicyResponse {
-  testSummary: Boolean # True if all tests passed
-  testsPassed: [String] # List of test names that passed
-  testsFailed: [String] # List of test names that failed
-  testsErrored: [PolicyUnitTestError] # List of test names that raised an error along with the message
+  results: [TestPolicyRecord!]!
+}
+
+type TestRuleRecordFunctions {
+  ruleFunction: TestDetectionSubRecord!
+  titleFunction: TestDetectionSubRecord
+  dedupFunction: TestDetectionSubRecord
+  alertContextFunction: TestDetectionSubRecord
+}
+
+type TestRuleRecord implements TestRecord {
+  id: String!
+  name: String!
+  passed: Boolean!
+  functions: TestRuleRecordFunctions!
+  error: Error
+}
+
+type TestRuleResponse {
+  results: [TestRuleRecord!]!
 }
 
 type ResourceSummary {
@@ -997,6 +1051,7 @@ enum ListPoliciesSortFieldsEnum {
 }
 
 enum ListRulesSortFieldsEnum {
+  displayName
   enabled
   id
   lastModified
@@ -1013,6 +1068,11 @@ enum AlertStatusesEnum {
   TRIAGED
   CLOSED
   RESOLVED
+}
+
+enum AlertTypesEnum {
+  RULE
+  RULE_ERROR
 }
 
 enum SortDirEnum {
@@ -1045,9 +1105,9 @@ enum DestinationTypeEnum {
   customwebhook
 }
 
-enum AnalysisTypeEnum {
-  RULE
-  POLICY
+enum OpsgenieServiceRegionEnum {
+  EU
+  US
 }
 
 type ListAvailableLogTypesResponse {

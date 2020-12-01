@@ -30,17 +30,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	analysisclient "github.com/panther-labs/panther/api/gateway/analysis/client"
-	analysisoperations "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
-	remediationclient "github.com/panther-labs/panther/api/gateway/remediation/client"
-	remediationoperations "github.com/panther-labs/panther/api/gateway/remediation/client/operations"
-	remediationmodels "github.com/panther-labs/panther/api/gateway/remediation/models"
+	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 	alertmodel "github.com/panther-labs/panther/api/lambda/delivery/models"
+	remediationmodels "github.com/panther-labs/panther/api/lambda/remediation/models"
 	"github.com/panther-labs/panther/internal/compliance/alert_processor/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
@@ -48,28 +46,15 @@ import (
 const alertSuppressPeriod = 3600 // 1 hour
 
 var (
-	remediationServiceHost = os.Getenv("REMEDIATION_SERVICE_HOST")
-	remediationServicePath = os.Getenv("REMEDIATION_SERVICE_PATH")
-	policyServiceHost      = os.Getenv("POLICY_SERVICE_HOST")
-	policyServicePath      = os.Getenv("POLICY_SERVICE_PATH")
-
 	ddbTable = os.Getenv("TABLE_NAME")
 
-	awsSession                           = session.Must(session.NewSession())
-	ddbClient  dynamodbiface.DynamoDBAPI = dynamodb.New(awsSession)
-	httpClient                           = gatewayapi.GatewayClient(awsSession)
+	awsSession                             = session.Must(session.NewSession())
+	ddbClient    dynamodbiface.DynamoDBAPI = dynamodb.New(awsSession)
+	lambdaClient lambdaiface.LambdaAPI     = lambda.New(awsSession)
 
-	complianceClient gatewayapi.API = gatewayapi.NewClient(lambda.New(awsSession), "panther-compliance-api")
-
-	remediationconfig = remediationclient.DefaultTransportConfig().
-				WithHost(remediationServiceHost).
-				WithBasePath(remediationServicePath)
-	remediationClient = remediationclient.NewHTTPClientWithConfig(nil, remediationconfig)
-
-	policyConfig = analysisclient.DefaultTransportConfig().
-			WithHost(policyServiceHost).
-			WithBasePath(policyServicePath)
-	policyClient = analysisclient.NewHTTPClientWithConfig(nil, policyConfig)
+	policyClient      gatewayapi.API = gatewayapi.NewClient(lambdaClient, "panther-analysis-api")
+	complianceClient  gatewayapi.API = gatewayapi.NewClient(lambdaClient, "panther-compliance-api")
+	remediationClient gatewayapi.API = gatewayapi.NewClient(lambdaClient, "panther-remediation-api")
 )
 
 //Handle method checks if a resource is compliant for a rule or not.
@@ -200,16 +185,13 @@ func triggerRemediation(event *models.ComplianceNotification) error {
 		zap.String("resourceId", event.ResourceID),
 	)
 
-	_, err := remediationClient.Operations.RemediateResourceAsync(
-		&remediationoperations.RemediateResourceAsyncParams{
-			Body: &remediationmodels.RemediateResource{
-				PolicyID:   remediationmodels.PolicyID(event.PolicyID),
-				ResourceID: remediationmodels.ResourceID(event.ResourceID),
-			},
-			HTTPClient: httpClient,
-		})
-
-	if err != nil {
+	input := remediationmodels.LambdaInput{
+		RemediateResourceAsync: &remediationmodels.RemediateResourceAsyncInput{
+			PolicyID:   event.PolicyID,
+			ResourceID: event.ResourceID,
+		},
+	}
+	if _, err := remediationClient.Invoke(&input, nil); err != nil {
 		return errors.Wrapf(err, "failed to trigger remediation on policy %s for resource %s",
 			event.PolicyID, event.ResourceID)
 	}
@@ -219,27 +201,27 @@ func triggerRemediation(event *models.ComplianceNotification) error {
 }
 
 func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Alert, bool, error) {
-	policy, err := policyClient.Operations.GetPolicy(&analysisoperations.GetPolicyParams{
-		PolicyID:   event.PolicyID,
-		HTTPClient: httpClient,
-	})
+	input := analysismodels.LambdaInput{
+		GetPolicy: &analysismodels.GetPolicyInput{ID: event.PolicyID},
+	}
 
-	if err != nil {
+	var policy analysismodels.Policy
+	if _, err := policyClient.Invoke(&input, &policy); err != nil {
 		return nil, false, errors.Wrapf(err, "encountered issue when getting policy: %s", event.PolicyID)
 	}
 
 	return &alertmodel.Alert{
-			AnalysisDescription: aws.String(string(policy.Payload.Description)),
+			AnalysisDescription: &policy.Description,
 			AnalysisID:          event.PolicyID,
-			AnalysisName:        aws.String(string(policy.Payload.DisplayName)),
+			AnalysisName:        &policy.DisplayName,
 			CreatedAt:           event.Timestamp,
 			OutputIds:           event.OutputIds,
-			Runbook:             aws.String(string(policy.Payload.Runbook)),
-			Severity:            string(policy.Payload.Severity),
-			Tags:                policy.Payload.Tags,
+			Runbook:             &policy.Runbook,
+			Severity:            string(policy.Severity),
+			Tags:                policy.Tags,
 			Type:                alertmodel.PolicyType,
 			Version:             &event.PolicyVersionID,
 		},
-		policy.Payload.AutoRemediationID != "", // means we can remediate
+		policy.AutoRemediationID != "", // means we can remediate
 		nil
 }

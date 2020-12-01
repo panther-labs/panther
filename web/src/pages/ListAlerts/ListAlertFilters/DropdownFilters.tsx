@@ -31,7 +31,6 @@ import {
 import { ListAlertsInput, SeverityEnum, AlertStatusesEnum } from 'Generated/schema';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import { capitalize } from 'Helpers/utils';
-import isEmpty from 'lodash/isEmpty';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import TextButton from 'Components/buttons/TextButton';
 import FormikNumberInput from 'Components/fields/NumberInput';
@@ -69,9 +68,8 @@ const DropdownFilters: React.FC = () => {
       } as ListAlertsDropdownFiltersValues),
     [requestParams]
   );
-  const filtersCount = Object.keys(defaultValues).filter(key => !isEmpty(requestParams[key]))
-    .length;
 
+  const filtersCount = Object.keys(defaultValues).filter(key => key in requestParams).length;
   return (
     <Popover>
       {({ close: closePopover }) => (
@@ -85,7 +83,14 @@ const DropdownFilters: React.FC = () => {
             Filters {filtersCount ? `(${filtersCount})` : ''}
           </PopoverTrigger>
           <PopoverContent alignment="bottom-left">
-            <Card shadow="dark300" my={14} p={6} pb={4} minWidth={425}>
+            <Card
+              shadow="dark300"
+              my={14}
+              p={6}
+              pb={4}
+              minWidth={425}
+              data-testid="dropdown-alert-listing-filters"
+            >
               <Formik<ListAlertsDropdownFiltersValues>
                 enableReinitialize
                 onSubmit={updateRequestParams}
@@ -100,6 +105,7 @@ const DropdownFilters: React.FC = () => {
                         items={statusOptions}
                         itemToString={filterItemToString}
                         label="Status"
+                        data-testid="alert-listing-status-filtering"
                         placeholder="Select statuses"
                       />
                     </Box>
@@ -110,6 +116,7 @@ const DropdownFilters: React.FC = () => {
                         items={severityOptions}
                         itemToString={filterItemToString}
                         label="Severity"
+                        data-testid="alert-listing-severity-filtering"
                         placeholder="Select severities"
                       />
                     </Box>
@@ -119,6 +126,7 @@ const DropdownFilters: React.FC = () => {
                         as={FormikNumberInput}
                         min={0}
                         label="Min Events"
+                        data-testid="alert-listing-min-event"
                         placeholder="Minimum number of events"
                       />
                       <FastField
@@ -126,6 +134,7 @@ const DropdownFilters: React.FC = () => {
                         as={FormikNumberInput}
                         min={0}
                         label="Max Events"
+                        data-testid="alert-listing-max-event"
                         placeholder="Maximum number of events"
                       />
                     </SimpleGrid>

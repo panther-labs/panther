@@ -1,0 +1,6 @@
+fragment TestFunctionResult on TestDetectionSubRecord {
+  output
+  error {
+    message
+  }
+}

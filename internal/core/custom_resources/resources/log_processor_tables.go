@@ -23,112 +23,77 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-lambda-go/cfn"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
+	"github.com/panther-labs/panther/internal/core/source_api/apifunctions"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/process"
-	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
+	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/awsutils"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
 type UpdateLogProcessorTablesProperties struct {
-	// TablesSignature should change every time the tables change (for CF master.yml this can be the Panther version)
-	TablesSignature     string `validate:"required"`
-	AthenaWorkGroup     string `validate:"required"`
-	ProcessedDataBucket string `validate:"required"`
+	DataCatalogUpdaterQueueURL string `validate:"required"`
 }
 
 func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
+	logger := lambdalogger.FromContext(ctx).With(
+		zap.String("requestID", event.RequestID),
+		zap.String("requestType", string(event.RequestType)),
+		zap.String("stackID", event.StackID),
+		zap.String("eventPhysicalResourceID", event.PhysicalResourceID),
+	)
+	logger.Debug("received UpdateLogProcessorTables event", zap.String("requestType", string(event.RequestType)))
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
 		// It's important to always return this physicalResourceID
-		const physicalResourceID = "custom:glue:update-tables" // NOTE: this can NEVER be changed!
+		const physicalResourceID = "custom:glue:update-log-processor-tables"
 		var props UpdateLogProcessorTablesProperties
 		if err := parseProperties(event.ResourceProperties, &props); err != nil {
-			zap.L().Error("failed to parse resource properties", zap.Error(err))
+			logger.Error("failed to parse resource properties", zap.Error(err))
 			return physicalResourceID, nil, err
 		}
-		if err := updateLogProcessorTables(ctx, &props); err != nil {
-			zap.L().Error("failed to update glue tables", zap.Error(err))
+		// Verify that all log processing databases are present
+		for db, desc := range pantherdb.LogDatabases {
+			if err := awsglue.EnsureDatabase(ctx, glueClient, db, desc); err != nil {
+				return physicalResourceID, nil, errors.Wrapf(err, "failed to create database %s", db)
+			}
+		}
+
+		requiredLogTypes, err := apifunctions.ListLogTypes(ctx, lambdaClient)
+		if err != nil {
+			logger.Error("failed to fetch required log types", zap.Error(err))
+			return physicalResourceID, nil, errors.Wrap(err, "failed to fetch required log types from Sources API")
+		}
+		client := datacatalog.Client{
+			SQSAPI:   sqsClient,
+			QueueURL: props.DataCatalogUpdaterQueueURL,
+		}
+		if err := client.SendSyncDatabase(ctx, event.RequestID, requiredLogTypes); err != nil {
+			logger.Error("failed to update glue tables", zap.Error(err))
 			return physicalResourceID, nil, err
 		}
+		logger.Info("started database sync", zap.Strings("logTypes", requiredLogTypes))
 		return physicalResourceID, nil, nil
 	case cfn.RequestDelete:
-		for pantherDatabase := range awsglue.PantherDatabases {
-			zap.L().Info("deleting database", zap.String("database", pantherDatabase))
-			if _, err := awsglue.DeleteDatabase(glueClient, pantherDatabase); err != nil {
-				var awsErr awserr.Error
-				if errors.As(err, &awsErr) && awsErr.Code() == glue.ErrCodeEntityNotFoundException {
-					zap.L().Info("already deleted", zap.String("database", pantherDatabase))
+		// Deleting all log processing databases
+		for db := range pantherdb.LogDatabases {
+			logger.Info("deleting database", zap.String("database", db))
+			if _, err := awsglue.DeleteDatabase(glueClient, db); err != nil {
+				if awsutils.IsAnyError(err, glue.ErrCodeEntityNotFoundException) {
+					logger.Info("already deleted", zap.String("database", db))
 				} else {
-					return "", nil, errors.Wrapf(err, "failed deleting %s", pantherDatabase)
+					logger.Error("failed to delete", zap.String("database", db))
+					return "", nil, errors.Wrapf(err, "failed deleting %s", db)
 				}
 			}
 		}
 		return event.PhysicalResourceID, nil, nil
 	default:
+		logger.Error("unknown request type")
 		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
 	}
-}
-
-func updateLogProcessorTables(ctx context.Context, props *UpdateLogProcessorTablesProperties) error {
-	// ensure databases are all there
-	for pantherDatabase, pantherDatabaseDescription := range awsglue.PantherDatabases {
-		zap.L().Info("creating database", zap.String("database", pantherDatabase))
-		if _, err := awsglue.CreateDatabase(glueClient, pantherDatabase, pantherDatabaseDescription); err != nil {
-			if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
-				zap.L().Info("database exists", zap.String("database", pantherDatabase))
-			} else {
-				return errors.Wrapf(err, "failed creating database %s", pantherDatabase)
-			}
-		}
-	}
-
-	// update schemas for tables that are deployed
-	deployedLogTables, err := gluetables.DeployedLogTables(glueClient)
-	if err != nil {
-		return err
-	}
-	logTypes := make([]string, len(deployedLogTables))
-	for i, logTable := range deployedLogTables {
-		zap.L().Info("updating table", zap.String("database", logTable.DatabaseName()), zap.String("table", logTable.TableName()))
-
-		// update catalog
-		// NOTE: This function updates all tables, not only the log tables
-		_, err := gluetables.CreateOrUpdateGlueTables(glueClient, props.ProcessedDataBucket, logTable)
-		if err != nil {
-			return err
-		}
-
-		// collect the log types
-		logTypes[i] = logTable.LogType()
-	}
-
-	// update the views with the new tables
-	err = athenaviews.CreateOrReplaceViews(athenaClient, props.AthenaWorkGroup, deployedLogTables)
-	if err != nil {
-		return errors.Wrap(err, "failed creating views")
-	}
-
-	// sync partitions via recursive lambda to avoid blocking the deployment
-	if len(logTypes) > 0 {
-		err = process.InvokeBackgroundSync(ctx, lambdaClient, &process.SyncEvent{
-			DatabaseNames: []string{
-				awsglue.LogProcessingDatabaseName,
-				awsglue.RuleMatchDatabaseName,
-				awsglue.RuleErrorsDatabaseName,
-			},
-			LogTypes: logTypes,
-			DryRun:   false,
-		})
-		if err != nil {
-			return errors.Wrap(err, "failed invoking sync")
-		}
-	}
-
-	return nil
 }

@@ -15,12 +15,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import collections
+from collections.abc import Mapping
 from datetime import datetime, timedelta
 from timeit import default_timer
 from typing import Any, Dict, List
 
 from . import EngineResult
 from .analysis_api import AnalysisAPIClient
+from .data_model import DataModel
+from .enriched_event import EnrichedEvent
 from .logging import get_logger
 from .rule import Rule
 
@@ -33,36 +36,41 @@ class Engine:
     def __init__(self, analysis_api: AnalysisAPIClient) -> None:
         self.logger = get_logger()
         self._last_update = datetime.utcfromtimestamp(0)
+        self.log_type_to_data_models: Dict[str, DataModel] = collections.defaultdict()
         self.log_type_to_rules: Dict[str, List[Rule]] = collections.defaultdict(list)
         self._analysis_client = analysis_api
         self._populate_rules()
+        self._populate_data_models()
 
-    def analyze(self, log_type: str, event: Dict[str, Any]) -> List[EngineResult]:
+    def analyze(self, log_type: str, event: Mapping) -> List[EngineResult]:
         """Analyze an event by running all the rules that apply to the log type.
         """
         if datetime.utcnow() - self._last_update > _RULES_CACHE_DURATION:
             self._populate_rules()
+            self._populate_data_models()
 
         engine_results: List[EngineResult] = []
 
+        # enrich the event to have access to field by standard field name
+        #  via the `udm` method
+        if log_type in self.log_type_to_data_models:
+            event = EnrichedEvent(event, self.log_type_to_data_models[log_type])
+
         for rule in self.log_type_to_rules[log_type]:
             self.logger.debug('running rule [%s]', rule.rule_id)
-            result = rule.run(event)
-            if result.exception:
-                # TODO(kostaspap): remove error logging once error reporting notification system is in place
-                self.logger.error('failed to run rule %s %s %s', rule.rule_id, type(result).__name__, repr(result.exception))
-                error_type = type(result.exception).__name__
+            result = rule.run(event, batch_mode=True)
+            if result.errored:
                 rule_error = EngineResult(
                     rule_id=rule.rule_id,
                     rule_version=rule.rule_version,
                     rule_tags=rule.rule_tags,
                     rule_reports=rule.rule_reports,
                     log_type=log_type,
-                    dedup=error_type,
+                    dedup=result.error_type,  # type: ignore
                     dedup_period_mins=1440,  # one day
                     event=event,
-                    title=repr(result.exception),
-                    error_message=repr(result.exception)
+                    title=result.short_error_message,
+                    error_message=result.error_message
                 )
                 engine_results.append(rule_error)
             elif result.matched:
@@ -72,10 +80,10 @@ class Engine:
                     rule_tags=rule.rule_tags,
                     rule_reports=rule.rule_reports,
                     log_type=log_type,
-                    dedup=result.dedup_string,  # type: ignore
+                    dedup=result.dedup_output,  # type: ignore
                     dedup_period_mins=rule.rule_dedup_period_mins,
                     event=event,
-                    title=result.title,
+                    title=result.title_output,
                     alert_context=result.alert_context
                 )
                 engine_results.append(match)
@@ -103,11 +111,40 @@ class Engine:
 
             import_count = import_count + 1
             # update lookup table from log type to rule
-            for log_type in raw_rule['resourceTypes']:
+            for log_type in raw_rule['logTypes']:
                 self.log_type_to_rules[log_type].append(rule)
 
         end = default_timer()
         self.logger.info('Imported %d rules in %d seconds', import_count, end - start)
+        self._last_update = datetime.utcnow()
+
+    def _populate_data_models(self) -> None:
+        """Import all data models."""
+        import_count = 0
+        start = default_timer()
+        data_models = self._get_data_models()
+        end = default_timer()
+        self.logger.info('Retrieved %d data models in %s seconds', len(data_models), end - start)
+        start = default_timer()
+
+        # Clear old data models
+        self.log_type_to_data_models.clear()
+
+        for raw_data_model in data_models:
+            try:
+                data_model = DataModel(raw_data_model)
+            except Exception as err:  # pylint: disable=broad-except
+                self.logger.error('Failed to import data model %s. Error: [%s]', raw_data_model.get('id'), err)
+                continue
+
+            import_count = import_count + 1
+            # update lookup table from log type to data model
+            # there should only be one data model per log type
+            for log_type in raw_data_model['logTypes']:
+                self.log_type_to_data_models[log_type] = data_model
+
+        end = default_timer()
+        self.logger.info('Imported %d data models in %d seconds', import_count, end - start)
         self._last_update = datetime.utcnow()
 
     def _get_rules(self) -> List[Dict[str, Any]]:
@@ -117,3 +154,11 @@ class Engine:
             An array of Dict['id': rule_id, 'body': rule_body, ...] that contain all fields of a rule.
         """
         return self._analysis_client.get_enabled_rules()
+
+    def _get_data_models(self) -> List[Dict[str, Any]]:
+        """Retrieves all enabled data models.
+
+        Returns:
+            An array of Dict['id': data_model_id, 'body': body, 'mappings': [...] ...] that contain all fields of a data model.
+        """
+        return self._analysis_client.get_enabled_data_models()

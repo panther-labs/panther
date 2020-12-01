@@ -30,7 +30,7 @@ import (
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
+	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 var (
@@ -157,15 +157,21 @@ func generateNotificationFromAlert(alert *alertModels.Alert) Notification {
 		AlertContext: alert.Context,
 	}
 
-	gatewayapi.ReplaceMapSliceNils(&notification)
+	genericapi.ReplaceMapSliceNils(&notification)
 	return notification
 }
 
 func generateAlertMessage(alert *alertModels.Alert) string {
-	if alert.Type == alertModels.RuleType {
+	switch alert.Type {
+	case alertModels.RuleType:
 		return getDisplayName(alert) + " triggered"
+	case alertModels.RuleErrorType:
+		return getDisplayName(alert) + " encountered an error"
+	case alertModels.PolicyType:
+		return getDisplayName(alert) + " failed on new resources"
+	default:
+		panic("uknown alert type " + alert.Type)
 	}
-	return getDisplayName(alert) + " failed on new resources"
 }
 
 func generateDetailedAlertMessage(alert *alertModels.Alert) string {
@@ -188,13 +194,19 @@ func generateAlertTitle(alert *alertModels.Alert) string {
 	if alert.IsResent {
 		return "[Re-sent]: " + *alert.Title
 	}
-	if alert.Title != nil {
-		return "New Alert: " + *alert.Title
-	}
-	if alert.Type == alertModels.RuleType {
+	switch alert.Type {
+	case alertModels.RuleType:
+		if alert.Title != nil {
+			return "New Alert: " + *alert.Title
+		}
 		return "New Alert: " + getDisplayName(alert)
+	case alertModels.RuleErrorType:
+		return "New rule error: " + *alert.Title
+	case alertModels.PolicyType:
+		return "Policy Failure: " + getDisplayName(alert)
+	default:
+		panic("uknown alert type " + alert.Type)
 	}
-	return "Policy Failure: " + getDisplayName(alert)
 }
 
 func getDisplayName(alert *alertModels.Alert) string {
@@ -208,8 +220,12 @@ func generateURL(alert *alertModels.Alert) string {
 	if alert.IsTest {
 		return appDomainURL
 	}
-	if alert.Type == alertModels.RuleType {
+	switch alert.Type {
+	case alertModels.RuleType, alertModels.RuleErrorType:
 		return alertURLPrefix + *alert.AlertID
+	case alertModels.PolicyType:
+		return policyURLPrefix + alert.AnalysisID
+	default:
+		panic("uknown alert type" + alert.Type)
 	}
-	return policyURLPrefix + alert.AnalysisID
 }

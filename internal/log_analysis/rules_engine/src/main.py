@@ -21,12 +21,12 @@ from io import TextIOWrapper
 from timeit import default_timer
 from typing import Any, Dict, List, Optional, Tuple
 
-from .engine import Engine
 from .analysis_api import AnalysisAPIClient
+from .aws_clients import S3_CLIENT
+from .engine import Engine
 from .logging import get_logger
 from .output import MatchedEventsBuffer
 from .rule import Rule
-from .aws_clients import S3_CLIENT
 
 _LOGGER = get_logger()
 
@@ -53,42 +53,30 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
     raw_rule = request['rules'][0]
     # The rule during direct invocation doesn't have a version
     raw_rule['versionId'] = 'default'
-    rule_exception: Optional[Exception] = None
-    try:
-        test_rule = Rule(raw_rule)
-    except Exception as err:  # pylint: disable=broad-except
-        rule_exception = err
+    test_rule = Rule(raw_rule)
 
-    response: Dict[str, Any] = {'events': []}
+    format_exception = lambda exc: '{}: {}'.format(type(exc).__name__, exc) if exc else exc
+    results = []
     for event in request['events']:
-        result = {
-            'id': event['id'],
-            'matched': [],
-            'notMatched': [],
-            'errored': [],
-        }
-        if rule_exception:
-            result['errored'] = [{
-                'id': raw_rule['id'],
-                'message': '{}: {}'.format(type(rule_exception).__name__, rule_exception),
-            }]
-            # If rule was invalid, no need to try to run it
+        rule_result = test_rule.run(event['data'], batch_mode=False)
+        results.append(
+            {
+                'id': event['id'],
+                'ruleId': raw_rule['id'],
+                'genericError': format_exception(rule_result.setup_exception),
+                'errored': rule_result.errored,
+                'ruleOutput': rule_result.matched,
+                'ruleError': format_exception(rule_result.rule_exception),
+                'titleOutput': rule_result.title_output,
+                'titleError': format_exception(rule_result.title_exception),
+                'dedupOutput': rule_result.dedup_output,
+                'dedupError': format_exception(rule_result.dedup_exception),
+                'alertContextOutput': rule_result.alert_context,
+                'alertContextError': format_exception(rule_result.alert_context_exception),
+            }
+        )
 
-        else:
-            rule_result = test_rule.run(event['data'], raise_title_dedup=True)
-            if rule_result.exception:
-                result['errored'] = [
-                    {
-                        'id': raw_rule['id'],
-                        'message': '{}: {}'.format(type(rule_result.exception).__name__, rule_result.exception),
-                    }
-                ]
-            elif rule_result.matched:
-                result['matched'] = [raw_rule['id']]
-            else:
-                result['notMatched'] = [raw_rule['id']]
-
-        response['events'].append(result)
+    response: Dict[str, Any] = {'results': results}
     return response
 
 

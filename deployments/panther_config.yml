@@ -46,9 +46,12 @@ Infra:
   # https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html
   LogProcessorLambdaMemorySize: 1024 # 256 - 3008, in 64MB increments
 
-  # Adding a small queue delay can improve the ability of the log processor
-  # to aggregate processed log files. The value must be between 0 and 20 seconds.
-  LogProcessorSQSDelaySeconds: 0
+  # The log processor reads in batches of S3 notifications from an SQS queue.
+  # In order to keep SQS API costs down we default to the largest allowed batch size. However,
+  # if there are large numbers of very large files then the lambda may not
+  # finish the work within the deadline and timeout. If this happening, reduce
+  # this value. If timeouts persist when set to 1, then the files are likely too large to be processed.
+  LogProcessorLambdaSQSReadBatchSize: 10
 
   # Create a Python layer with these pip library versions for analysis and remediation.
   #
@@ -56,14 +59,9 @@ Infra:
   # Natively compiled libraries (e.g. numpy) must be deployed from linux to work correctly, or
   # you can provide your own custom layer via PythonLayerVersionArn.
   #
-  # Be sure to remove "out/layer.zip" or run "mage clean" to force a new build of the layer if you
-  # change this setting.
-  #
   # This setting has no effect if PythonLayerVersionArn is set below.
-  #
-  # Contributors, take note: the default layer (packaged with Panther releases) bundled in the
-  # bootstrap-gateway stack must fit within the ~50MB SAR package limit. boto3, for example, is too big
   PipLayer:
+    - jsonpath-ng==1.5.2
     - policyuniverse==1.3.2.2
     - requests==2.23.0
 

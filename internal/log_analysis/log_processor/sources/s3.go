@@ -20,7 +20,9 @@ package sources
 
 import (
 	"bufio"
+	"bytes"
 	"compress/gzip"
+	"context"
 	"io"
 	"net/http"
 	"net/url"
@@ -30,43 +32,44 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/sns"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/s3pipe"
 )
 
 const (
+	DownloadMaxPartSize = 50 * 1024 * 1024 // the max size of in memory buffers will be 3X as this due to multiple buffers
+
 	s3TestEvent                 = "s3:TestEvent"
 	cloudTrailValidationMessage = "CloudTrail validation message."
 )
 
-// ReadSnsMessages reads incoming messages containing SNS notifications and returns a slice of DataStream items
-func ReadSnsMessages(messages []string) (result []*common.DataStream, err error) {
-	zap.L().Debug("reading data from messages", zap.Int("numMessages", len(messages)))
-	for _, message := range messages {
-		snsNotificationMessage := &SnsNotification{}
-		if err := jsoniter.UnmarshalFromString(message, snsNotificationMessage); err != nil {
+// ReadSnsMessage reads incoming messages containing SNS notifications and returns a slice of DataStream items
+func ReadSnsMessage(ctx context.Context, message string) (result []*common.DataStream, err error) {
+	snsNotificationMessage := &SnsNotification{}
+	if err := jsoniter.UnmarshalFromString(message, snsNotificationMessage); err != nil {
+		return nil, err
+	}
+
+	switch snsNotificationMessage.Type {
+	case "Notification":
+		streams, err := handleNotificationMessage(ctx, snsNotificationMessage)
+		if err != nil {
 			return nil, err
 		}
-
-		switch snsNotificationMessage.Type {
-		case "Notification":
-			streams, err := handleNotificationMessage(snsNotificationMessage)
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, streams...)
-		case "SubscriptionConfirmation":
-			err := ConfirmSubscription(snsNotificationMessage)
-			if err != nil {
-				return nil, err
-			}
-		default:
-			return nil, errors.New("received unexpected message in SQS queue")
+		result = append(result, streams...)
+	case "SubscriptionConfirmation":
+		err := ConfirmSubscription(snsNotificationMessage)
+		if err != nil {
+			return nil, err
 		}
+	default:
+		return nil, errors.New("received unexpected message in SQS queue")
 	}
 	return result, nil
 }
@@ -97,7 +100,7 @@ func ConfirmSubscription(notification *SnsNotification) (err error) {
 	return nil
 }
 
-func handleNotificationMessage(notification *SnsNotification) (result []*common.DataStream, err error) {
+func handleNotificationMessage(ctx context.Context, notification *SnsNotification) (result []*common.DataStream, err error) {
 	s3Objects, err := ParseNotification(notification.Message)
 	if err != nil {
 		return nil, err
@@ -107,7 +110,7 @@ func handleNotificationMessage(notification *SnsNotification) (result []*common.
 			continue
 		}
 		var dataStream *common.DataStream
-		dataStream, err = readS3Object(s3Object)
+		dataStream, err = readS3Object(ctx, s3Object)
 		if err != nil {
 			if _, ok := err.(*ErrUnsupportedFileType); ok {
 				// If the incoming message is not of a supported type, just skip it
@@ -116,7 +119,9 @@ func handleNotificationMessage(notification *SnsNotification) (result []*common.
 			}
 			return
 		}
-		result = append(result, dataStream)
+		if dataStream != nil {
+			result = append(result, dataStream)
+		}
 	}
 	return result, err
 }
@@ -127,41 +132,48 @@ func shouldIgnoreS3Object(s3Object *S3ObjectInfo) bool {
 	return strings.HasSuffix(s3Object.S3ObjectKey, "/")
 }
 
-func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err error) {
-	operation := common.OpLogManager.Start("readS3Object", common.OpLogS3ServiceDim)
-	defer func() {
-		operation.Stop()
-		operation.Log(err,
-			// s3 dim info
-			zap.String("bucket", s3Object.S3Bucket),
-			zap.String("key", s3Object.S3ObjectKey))
-	}()
-
+func readS3Object(ctx context.Context, s3Object *S3ObjectInfo) (dataStream *common.DataStream, err error) {
 	s3Client, sourceInfo, err := getS3Client(s3Object.S3Bucket, s3Object.S3ObjectKey)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to get S3 client for s3://%s/%s",
 			s3Object.S3Bucket, s3Object.S3ObjectKey)
-		return
+		return nil, err
+	}
+	if sourceInfo == nil {
+		zap.L().Warn("no source configured for S3 object",
+			zap.String("bucket", s3Object.S3Bucket),
+			zap.String("key", s3Object.S3ObjectKey))
+		return nil, nil
 	}
 
 	getObjectInput := &s3.GetObjectInput{
 		Bucket: &s3Object.S3Bucket,
 		Key:    &s3Object.S3ObjectKey,
 	}
-	output, err := s3Client.GetObject(getObjectInput)
-	if err != nil {
-		err = errors.Wrapf(err, "GetObject() failed for s3://%s/%s",
-			s3Object.S3Bucket, s3Object.S3ObjectKey)
-		return
+
+	// we want this as large as possible to minimize S3 api calls, not more than DownloadMaxPartSize to control memory use
+	downloadPartSize := s3Object.S3ObjectSize / 2 // use 1/2 to allow processing first half while reading second half on small files
+	if downloadPartSize > DownloadMaxPartSize {
+		downloadPartSize = DownloadMaxPartSize
+	} else if downloadPartSize < s3manager.DefaultDownloadPartSize { // min part size for efficiency
+		downloadPartSize = s3manager.DefaultDownloadPartSize
 	}
 
-	bufferedReader := bufio.NewReader(output.Body)
-	contentType, err := detectContentType(bufferedReader)
+	downloader := s3pipe.Downloader{
+		S3:       s3Client,
+		PartSize: downloadPartSize,
+	}
 
+	downloadPipe := downloader.Download(ctx, getObjectInput)
+
+	// Set the buffer size to PartSize to avoid multiple fill() calls
+	bufferedReader := bufio.NewReaderSize(downloadPipe, int(downloader.PartSize))
+
+	contentType, err := detectContentType(bufferedReader)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to detect content type of S3 payload for s3://%s/%s",
 			s3Object.S3Bucket, s3Object.S3ObjectKey)
-		return
+		return nil, err
 	}
 
 	var streamReader io.Reader
@@ -171,44 +183,49 @@ func readS3Object(s3Object *S3ObjectInfo) (dataStream *common.DataStream, err er
 		// if it's plain text, just return the buffered reader
 		streamReader = bufferedReader
 	} else if strings.HasPrefix(contentType, "application/x-gzip") {
-		var gzipReader *gzip.Reader
-		gzipReader, err = gzip.NewReader(bufferedReader)
+		gzipReader, err := gzip.NewReader(bufferedReader)
 		if err != nil {
 			err = errors.Wrapf(err, "failed to created gzip reader for s3://%s/%s",
 				s3Object.S3Bucket, s3Object.S3ObjectKey)
-			return
+			return nil, err
 		}
 		streamReader = gzipReader
 	} else {
 		err = &ErrUnsupportedFileType{Type: contentType}
-		return
+		return nil, err
 	}
 
 	dataStream = &common.DataStream{
-		Reader:      streamReader,
-		Source:      sourceInfo,
-		S3Bucket:    s3Object.S3Bucket,
-		S3ObjectKey: s3Object.S3ObjectKey,
-		ContentType: contentType,
+		Closer:       downloadPipe, // when file is done processing, the Close() method will be called
+		Reader:       streamReader,
+		Source:       sourceInfo,
+		S3Bucket:     s3Object.S3Bucket,
+		S3ObjectKey:  s3Object.S3ObjectKey,
+		S3ObjectSize: s3Object.S3ObjectSize,
 	}
 	return dataStream, err
 }
 
 func detectContentType(r *bufio.Reader) (string, error) {
-	// We peek into the file header to identify the content type
-	// http.DetectContentType only uses up to the first 512 bytes
-	headerBytes, err := r.Peek(512)
-	if err != nil {
-		switch err {
-		// EOF or ErrBufferFull means file is shorter than n
-		case bufio.ErrBufferFull, io.EOF:
-			// not really an error
-		default:
-			return "", err
-		}
+	const sniffLen = 512 // max byte len needed by http.DetectContentType()
+	header, err := r.Peek(sniffLen)
+	if err != nil && err != bufio.ErrBufferFull && err != io.EOF {
+		// EOF / ErrBufferFull means file is shorter than sniffLen, but not all detections need so large data.
+		return "", err
 	}
-	return http.DetectContentType(headerBytes), nil
+
+	// Try gzip first, for two reasons:
+	// 1. Performance: It the most usual file type for logs and there is an exact prefix check we can do to detect it.
+	// No need to wait for all the checks done by http.DetectContentType() before checking for gzip.
+	// 2. http.DetectContentType() has a bug which mis-detects gzip for ms-fontobject.
+	if bytes.HasPrefix(header, gzipSignature) {
+		return "application/x-gzip", nil
+	}
+
+	return http.DetectContentType(header), nil
 }
+
+var gzipSignature = []byte("\x1F\x8B\x08") // https://mimesniff.spec.whatwg.org/#matching-an-archive-type-pattern
 
 // ParseNotification parses a message received
 func ParseNotification(message string) ([]*S3ObjectInfo, error) {
@@ -273,8 +290,9 @@ func parseS3Event(message string) (result []*S3ObjectInfo) {
 			return nil
 		}
 		info := &S3ObjectInfo{
-			S3Bucket:    record.S3.Bucket.Name,
-			S3ObjectKey: urlDecodedKey,
+			S3Bucket:     record.S3.Bucket.Name,
+			S3ObjectKey:  urlDecodedKey,
+			S3ObjectSize: record.S3.Object.Size,
 		}
 		result = append(result, info)
 	}
@@ -304,8 +322,9 @@ type cloudTrailNotification struct {
 
 // S3ObjectInfo contains information about the S3 object
 type S3ObjectInfo struct {
-	S3Bucket    string
-	S3ObjectKey string
+	S3Bucket     string
+	S3ObjectKey  string
+	S3ObjectSize int64
 }
 
 // SnsNotification struct represents an SNS message arriving to Panther SQS from a customer account.

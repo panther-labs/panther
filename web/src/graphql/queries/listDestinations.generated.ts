@@ -27,7 +27,11 @@ export type ListDestinationsVariables = {};
 
 export type ListDestinations = {
   destinations?: Types.Maybe<
-    Array<Types.Maybe<Pick<Types.Destination, 'outputId' | 'outputType' | 'displayName'>>>
+    Array<
+      Types.Maybe<
+        Pick<Types.Destination, 'outputId' | 'outputType' | 'displayName' | 'defaultForSeverity'>
+      >
+    >
   >;
 };
 
@@ -37,6 +41,7 @@ export const ListDestinationsDocument = gql`
       outputId
       outputType
       displayName
+      defaultForSeverity
     }
   }
 `;

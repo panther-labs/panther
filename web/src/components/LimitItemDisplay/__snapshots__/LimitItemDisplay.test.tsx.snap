@@ -1,0 +1,104 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`LimitItemDisplay matches snapshot 1`] = `
+
+
+.panther-0 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  width: 18px;
+  height: 18px;
+  background-color: #4f627c;
+  border-radius: 99999px;
+  font-size: 0.563rem;
+  font-weight: 500;
+  cursor: default;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <div>
+    One
+  </div>
+  <div>
+    Two
+  </div>
+  <div
+    class="panther-1"
+    data-reach-tooltip-trigger=""
+  >
+    <div
+      class="panther-0"
+    >
+      +2
+    </div>
+  </div>
+  <footer
+    id="footer"
+  />
+</div>
+`;
+
+exports[`LimitItemDisplay matches snapshot 2`] = `
+
+
+.panther-0 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  width: 18px;
+  height: 18px;
+  background-color: #4f627c;
+  border-radius: 99999px;
+  font-size: 0.563rem;
+  font-weight: 500;
+  cursor: default;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <div>
+    One
+  </div>
+  <div>
+    Two
+  </div>
+  <div
+    aria-describedby="tooltip--7"
+    class="panther-1"
+    data-reach-tooltip-trigger=""
+  >
+    <div
+      class="panther-0"
+    >
+      +2
+    </div>
+  </div>
+  <footer
+    id="footer"
+  />
+</div>
+`;

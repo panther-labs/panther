@@ -19,84 +19,73 @@
 import React from 'react';
 
 import useRouter from 'Hooks/useRouter';
-import { Alert, Box, Flex } from 'pouncejs';
-import Panel from 'Components/Panel';
+import { Alert, Box, Flex, Card, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
+import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import { extractErrorMessage } from 'Helpers/utils';
+import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
+
 import withSEO from 'Hoc/withSEO';
-import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
-import useInfiniteScroll from 'Hooks/useInfiniteScroll';
+import invert from 'lodash/invert';
+import useUrlParams from 'Hooks/useUrlParams';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import TablePlaceholder from 'Components/TablePlaceholder';
-import ListAlertsPageEmptyDataFallback from 'Pages/ListAlerts/EmptyDataFallback/EmptyDataFallback';
-import AlertCard from 'Components/cards/AlertCard/AlertCard';
+import { AlertTypesEnum } from 'Generated/schema';
 import RuleDetailsPageSkeleton from './Skeleton';
+import ListRuleAlerts from './RuleAlertsListing';
+import CardDetails from './RuleCardDetails';
 import RuleDetailsInfo from './RuleDetailsInfo';
 import { useRuleDetails } from './graphql/ruleDetails.generated';
 import { useListAlertsForRule } from './graphql/listAlertsForRule.generated';
 
-const RuleDetailsPage = () => {
+export interface RuleDetailsPageUrlParams {
+  section?: 'details' | 'matches' | 'errors';
+}
+
+const sectionToTabIndex: Record<RuleDetailsPageUrlParams['section'], number> = {
+  details: 0,
+  matches: 1,
+  errors: 2,
+};
+
+const tabIndexToSection = invert(sectionToTabIndex) as Record<
+  number,
+  RuleDetailsPageUrlParams['section']
+>;
+
+const RuleDetailsPage: React.FC = () => {
   const { match } = useRouter<{ id: string }>();
-  const {
-    error: ruleDetailsError,
-    data: ruleDetailsData,
-    loading: ruleDetailsLoading,
-  } = useRuleDetails({
+  const { urlParams, setUrlParams } = useUrlParams<RuleDetailsPageUrlParams>();
+  const { error, data, loading } = useRuleDetails({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        ruleId: match.params.id,
+        id: match.params.id,
       },
     },
   });
 
-  const {
-    error: listAlertsError,
-    data: listAlertsData,
-    loading: listAlertsLoading,
-    fetchMore,
-    variables,
-  } = useListAlertsForRule({
+  // dry runs for tabs indicator
+
+  const { data: matchesData } = useListAlertsForRule({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
+        type: AlertTypesEnum.Rule,
         ruleId: match.params.id,
-        pageSize: DEFAULT_LARGE_PAGE_SIZE,
+        pageSize: DEFAULT_SMALL_PAGE_SIZE,
       },
     },
   });
 
-  const { sentinelRef } = useInfiniteScroll<HTMLDivElement>({
-    loading: listAlertsLoading,
-    threshold: 500,
-    onLoadMore: () => {
-      fetchMore({
-        variables: {
-          input: {
-            ...variables.input,
-            exclusiveStartKey: listAlertsData.alerts.lastEvaluatedKey,
-          },
-        },
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          // FIXME: Centralize this behavior for alert pagination, when apollo fixes a bug which
-          // causes wrong params to be passed to the merge function in type policies
-          // https://github.com/apollographql/apollo-client/issues/5951
-          return {
-            alerts: {
-              ...fetchMoreResult.alerts,
-              alertSummaries: [
-                ...previousResult.alerts.alertSummaries,
-                ...fetchMoreResult.alerts.alertSummaries,
-              ],
-            },
-          };
-        },
-      });
+  const { data: errorData } = useListAlertsForRule({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      input: {
+        type: AlertTypesEnum.RuleError,
+        ruleId: match.params.id,
+        pageSize: DEFAULT_SMALL_PAGE_SIZE,
+      },
     },
   });
-
-  const loading = listAlertsLoading || ruleDetailsLoading;
-  const data = !!listAlertsData && !!ruleDetailsData;
-  const error = listAlertsError || ruleDetailsError;
 
   if (loading && !data) {
     return <RuleDetailsPageSkeleton />;
@@ -104,7 +93,7 @@ const RuleDetailsPage = () => {
 
   if (error) {
     return (
-      <Box mb={6}>
+      <Box mb={6} data-testid={`rule-${match.params.id}`}>
         <Alert
           variant="error"
           title="Couldn't load rule"
@@ -117,34 +106,54 @@ const RuleDetailsPage = () => {
     );
   }
 
-  const hasAnyAlerts = listAlertsData?.alerts?.alertSummaries?.length > 0;
-  const hasMoreAlerts = !!listAlertsData.alerts.lastEvaluatedKey;
-
   return (
-    <article>
-      <ErrorBoundary>
-        <RuleDetailsInfo rule={ruleDetailsData.rule} />
-      </ErrorBoundary>
-      <Box mt={5} mb={6}>
-        <Panel title="Alerts">
-          <ErrorBoundary>
-            {hasAnyAlerts && (
-              <Flex direction="column" spacing={2}>
-                {listAlertsData.alerts.alertSummaries.map(alert => (
-                  <AlertCard key={alert.alertId} alert={alert} />
-                ))}
-              </Flex>
-            )}
-            {!hasAnyAlerts && <ListAlertsPageEmptyDataFallback />}
-            {hasMoreAlerts && hasAnyAlerts && (
-              <Box mt={8} ref={sentinelRef}>
-                <TablePlaceholder rowCount={10} rowHeight={6} />
-              </Box>
-            )}
-          </ErrorBoundary>
-        </Panel>
-      </Box>
-    </article>
+    <Box as="article">
+      <Flex direction="column" spacing={6} my={6}>
+        <ErrorBoundary>
+          <RuleDetailsInfo rule={data.rule} />
+        </ErrorBoundary>
+        <Card position="relative">
+          <Tabs
+            index={sectionToTabIndex[urlParams.section] || 0}
+            onChange={index => setUrlParams({ section: tabIndexToSection[index] })}
+          >
+            <Box px={2}>
+              <TabList>
+                <BorderedTab>Details</BorderedTab>
+                <BorderedTab>
+                  <Box
+                    data-testid="rule-matches"
+                    opacity={matchesData?.alerts?.alertSummaries.length > 0 ? 1 : 0.5}
+                  >
+                    Rule Matches
+                  </Box>
+                </BorderedTab>
+                <BorderedTab>
+                  <Box
+                    data-testid="rule-errors"
+                    opacity={errorData?.alerts?.alertSummaries.length > 0 ? 1 : 0.5}
+                  >
+                    Rule Errors
+                  </Box>
+                </BorderedTab>
+              </TabList>
+              <BorderTabDivider />
+              <TabPanels>
+                <TabPanel data-testid="rule-details-tabpanel">
+                  <CardDetails rule={data.rule} />
+                </TabPanel>
+                <TabPanel data-testid="rule-matches-tabpanel" lazy unmountWhenInactive>
+                  <ListRuleAlerts ruleId={match.params.id} type={AlertTypesEnum.Rule} />
+                </TabPanel>
+                <TabPanel data-testid="rule-errors-tabpanel" lazy unmountWhenInactive>
+                  <ListRuleAlerts ruleId={match.params.id} type={AlertTypesEnum.RuleError} />
+                </TabPanel>
+              </TabPanels>
+            </Box>
+          </Tabs>
+        </Card>
+      </Flex>
+    </Box>
   );
 };
 

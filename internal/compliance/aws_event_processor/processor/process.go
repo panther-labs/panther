@@ -199,6 +199,7 @@ var (
 
 		// lambda
 		"AddLayerVersionPermission": {},
+		"Invoke":                    {},
 		"InvokeAsync":               {},
 		"InvokeFunction":            {},
 
