@@ -39,7 +39,7 @@ func DeployedLogTypes(ctx context.Context, glueClient glueiface.GlueAPI, logType
 
 	// set up filter via map
 	for _, logType := range logTypes {
-		tableName := pantherdb.GetTable(logType)
+		tableName := pantherdb.TableName(logType)
 		index[tableName] = logType
 	}
 
@@ -128,6 +128,6 @@ func ResolveTables(ctx context.Context, resolver logtypes.Resolver, logTypes ...
 func LogTypeTableMeta(entry logtypes.Entry) *awsglue.GlueTableMetadata {
 	desc := entry.Describe()
 	schema := entry.Schema()
-	tableName := pantherdb.GetTable(desc.Name)
+	tableName := pantherdb.TableName(desc.Name)
 	return awsglue.NewGlueTableMetadata(pantherdb.LogProcessingDatabase, tableName, desc.Description, awsglue.GlueTableHourly, schema)
 }

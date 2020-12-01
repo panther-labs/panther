@@ -54,7 +54,7 @@ func (h *LambdaHandler) HandleSyncDatabasePartitionsEvent(ctx context.Context, e
 		// The rest can only have partitions in the range TableCreateTime <= PartitionTime < now
 		afterTableCreateTime := dbName != pantherdb.LogProcessingDatabase
 		for _, logType := range event.LogTypes {
-			tblName := pantherdb.GetTable(logType)
+			tblName := pantherdb.TableName(logType)
 			tableEvents = append(tableEvents, &SyncTableEvent{
 				TraceID: event.TraceID,
 				SyncTablePartitions: gluetasks.SyncTablePartitions{

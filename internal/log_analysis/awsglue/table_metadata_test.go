@@ -123,7 +123,7 @@ func TestGlueTableMetadataLogData(t *testing.T) {
 	assert.Equal(t, pantherdb.LogProcessingDatabase, gm.DatabaseName())
 	assert.Equal(t, "logs/my_logs_type/", gm.Prefix())
 	assert.Equal(t, partitionTestEvent{}, gm.eventStruct)
-	assert.Equal(t, "logs/my_logs_type/year=2020/month=01/day=03/hour=01/", gm.GetPartitionPrefix(refTime))
+	assert.Equal(t, "logs/my_logs_type/year=2020/month=01/day=03/hour=01/", gm.PartitionPrefix(refTime))
 }
 
 func TestGlueTableMetadataRuleMatches(t *testing.T) {
@@ -135,7 +135,7 @@ func TestGlueTableMetadataRuleMatches(t *testing.T) {
 	assert.Equal(t, pantherdb.RuleMatchDatabase, gm.DatabaseName())
 	assert.Equal(t, "rules/my_rule/", gm.Prefix())
 	assert.Equal(t, partitionTestEvent{}, gm.eventStruct)
-	assert.Equal(t, "rules/my_rule/year=2020/month=01/day=03/hour=01/", gm.GetPartitionPrefix(refTime))
+	assert.Equal(t, "rules/my_rule/year=2020/month=01/day=03/hour=01/", gm.PartitionPrefix(refTime))
 }
 
 func TestCreateJSONPartition(t *testing.T) {

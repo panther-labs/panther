@@ -66,12 +66,12 @@ func (gp *GluePartition) GetGlueTableMetadata() *GlueTableMetadata {
 	return gp.gm
 }
 
-func GetPartitionPrefix(database, table string, timebin GlueTableTimebin, time time.Time) string {
+func PartitionPrefix(database, table string, timebin GlueTableTimebin, time time.Time) string {
 	return GetTablePrefix(database, table) + timebin.PartitionPathS3(time)
 }
 
-func (gp *GluePartition) GetPartitionLocation() string {
-	return "s3://" + gp.s3Bucket + "/" + gp.gm.GetPartitionPrefix(gp.time)
+func (gp *GluePartition) PartitionLocation() string {
+	return "s3://" + gp.s3Bucket + "/" + gp.gm.PartitionPrefix(gp.time)
 }
 
 // Contains information about partition columns
@@ -83,7 +83,7 @@ type PartitionColumnInfo struct {
 // Gets the partition from S3bucket and S3 object key info.
 // The s3Object key is expected to be in the the format
 // `{logs,rules}/{table_name}/year=d{4}/month=d{2}/[day=d{2}/][hour=d{2}/]/{S+}.json.gz` otherwise an error is returned.
-func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
+func PartitionFromS3Path(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 	partition := &GluePartition{s3Bucket: s3Bucket}
 
 	s3Keys := strings.Split(s3ObjectKey, "/")

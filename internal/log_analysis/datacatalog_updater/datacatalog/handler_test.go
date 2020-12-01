@@ -182,7 +182,7 @@ func generateLogTablesMock(logTypes ...string) (tables []*glue.TableData) {
 	tables = make([]*glue.TableData, len(logTypes))
 	dbName := pantherdb.LogProcessingDatabase
 	for i, logType := range logTypes {
-		tableName := pantherdb.GetTable(logType)
+		tableName := pantherdb.TableName(logType)
 		tables[i] = &glue.TableData{
 			Name:         &tableName,
 			DatabaseName: &dbName,

@@ -233,7 +233,7 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 }
 
 // Based on Timebin(), return an S3 prefix for objects of this table
-func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) string {
+func (gm *GlueTableMetadata) PartitionPrefix(t time.Time) string {
 	return gm.Prefix() + gm.timebin.PartitionPathS3(t)
 }
 
@@ -364,7 +364,7 @@ func (gm *GlueTableMetadata) createPartition(client glueiface.GlueAPI, t time.Ti
 	}
 
 	storageDescriptor := *tableOutput.Table.StorageDescriptor // copy because we will mutate
-	storageDescriptor.Location = aws.String("s3://" + bucket + "/" + gm.GetPartitionPrefix(t))
+	storageDescriptor.Location = aws.String("s3://" + bucket + "/" + gm.PartitionPrefix(t))
 
 	_, err = CreatePartition(client, gm.databaseName, gm.tableName, gm.timebin.PartitionValuesFromTime(t),
 		&storageDescriptor, nil)

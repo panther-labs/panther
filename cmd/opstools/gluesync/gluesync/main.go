@@ -64,7 +64,7 @@ func main() {
 
 	var matchPrefix string
 	if optPrefix := *opts.Prefix; optPrefix != "" {
-		matchPrefix = pantherdb.GetTable(optPrefix)
+		matchPrefix = pantherdb.TableName(optPrefix)
 	}
 
 	sess, err := session.NewSession(&aws.Config{

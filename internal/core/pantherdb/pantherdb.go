@@ -75,14 +75,14 @@ func GetDataType(logtype string) DataType {
 }
 
 // Returns the name of the table for the given log type
-func GetTable(logType string) string {
+func TableName(logType string) string {
 	// clean table name to make sql friendly
 	tableName := strings.Replace(logType, ".", "_", -1) // no '.'
 	return strings.ToLower(tableName)
 }
 
 // Returns the database in which exists the
-func GetDatabase(logtype string) string {
+func DatabaseName(logtype string) string {
 	if snapshotlogs.LogTypes().Find(logtype) != nil {
 		return CloudSecurityDatabase
 	}

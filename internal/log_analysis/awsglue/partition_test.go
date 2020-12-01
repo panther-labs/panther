@@ -34,7 +34,7 @@ import (
 
 func TestCreatePartitionFromS3Rule(t *testing.T) {
 	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
-	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	partition, err := PartitionFromS3Path("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
 	expectedPartitionValues := []PartitionColumnInfo{
@@ -59,13 +59,13 @@ func TestCreatePartitionFromS3Rule(t *testing.T) {
 	assert.Equal(t, pantherdb.RuleMatchDatabase, partition.GetDatabase())
 	assert.Equal(t, "table", partition.GetTable())
 	assert.Equal(t, "bucket", partition.GetS3Bucket())
-	assert.Equal(t, "s3://bucket/rules/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionLocation())
+	assert.Equal(t, "s3://bucket/rules/table/year=2020/month=02/day=26/hour=15/", partition.PartitionLocation())
 	assert.Equal(t, expectedPartitionValues, partition.GetPartitionColumnsInfo())
 }
 
 func TestCreatePartitionFromS3Log(t *testing.T) {
 	s3ObjectKey := "logs/table/year=2020/month=02/day=26/hour=15/item.json.gz"
-	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	partition, err := PartitionFromS3Path("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
 	expectedPartitionValues := []PartitionColumnInfo{
@@ -90,31 +90,31 @@ func TestCreatePartitionFromS3Log(t *testing.T) {
 	assert.Equal(t, pantherdb.LogProcessingDatabase, partition.GetDatabase())
 	assert.Equal(t, "table", partition.GetTable())
 	assert.Equal(t, "bucket", partition.GetS3Bucket())
-	assert.Equal(t, "s3://bucket/logs/table/year=2020/month=02/day=26/hour=15/", partition.GetPartitionLocation())
+	assert.Equal(t, "s3://bucket/logs/table/year=2020/month=02/day=26/hour=15/", partition.PartitionLocation())
 	assert.Equal(t, expectedPartitionValues, partition.GetPartitionColumnsInfo())
 }
 
 func TestCreatePartitionUnknownPrefix(t *testing.T) {
 	s3ObjectKey := "wrong_prefix/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
-	_, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	_, err := PartitionFromS3Path("bucket", s3ObjectKey)
 	require.Error(t, err)
 }
 
 func TestCreatePartitionWroteYearFormat(t *testing.T) {
 	s3ObjectKey := "rules/table/year=no_year/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
-	_, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	_, err := PartitionFromS3Path("bucket", s3ObjectKey)
 	require.Error(t, err)
 }
 
 func TestCreatePartitionMisingYearPartition(t *testing.T) {
 	s3ObjectKey := "rules/table/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
-	_, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	_, err := PartitionFromS3Path("bucket", s3ObjectKey)
 	require.Error(t, err)
 }
 
 func TestCreatePartitionLog(t *testing.T) {
 	s3ObjectKey := "logs/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
-	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	partition, err := PartitionFromS3Path("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
 	mockClient := &testutils.GlueMock{}
@@ -129,7 +129,7 @@ func TestCreatePartitionLog(t *testing.T) {
 
 func TestCreateParitionRule(t *testing.T) {
 	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
-	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	partition, err := PartitionFromS3Path("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
 	mockClient := &testutils.GlueMock{}
@@ -144,7 +144,7 @@ func TestCreateParitionRule(t *testing.T) {
 
 func TestCreatePartitionPartitionAlreadExists(t *testing.T) {
 	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
-	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	partition, err := PartitionFromS3Path("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
 	mockClient := &testutils.GlueMock{}
@@ -160,7 +160,7 @@ func TestCreatePartitionPartitionAlreadExists(t *testing.T) {
 
 func TestCreatePartitionAwsError(t *testing.T) {
 	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
-	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	partition, err := PartitionFromS3Path("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
 	mockClient := &testutils.GlueMock{}
@@ -176,7 +176,7 @@ func TestCreatePartitionAwsError(t *testing.T) {
 
 func TestCreatePartitionGeneralError(t *testing.T) {
 	s3ObjectKey := "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz"
-	partition, err := GetPartitionFromS3("bucket", s3ObjectKey)
+	partition, err := PartitionFromS3Path("bucket", s3ObjectKey)
 	require.NoError(t, err)
 
 	mockClient := &testutils.GlueMock{}

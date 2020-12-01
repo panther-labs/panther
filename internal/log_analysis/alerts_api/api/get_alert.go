@@ -124,7 +124,7 @@ func (api *API) getEventsForLogType(
 		}
 		result = append(result, events...)
 		// start iterating over the partitions here
-		gluePartition, err := awsglue.GetPartitionFromS3(api.env.ProcessedDataBucket, token.S3ObjectKey)
+		gluePartition, err := awsglue.PartitionFromS3Path(api.env.ProcessedDataBucket, token.S3ObjectKey)
 		if err != nil {
 			return nil, resultToken, errors.Wrapf(err, "cannot parse token s3 path")
 		}
@@ -147,8 +147,8 @@ func (api *API) getEventsForLogType(
 		if alert.Type == alertmodels.RuleErrorType {
 			database = pantherdb.RuleErrorsDatabase
 		}
-		tableName := pantherdb.GetTable(logType)
-		partitionPrefix := awsglue.GetPartitionPrefix(database, tableName, awsglue.GlueTableHourly, nextTime)
+		tableName := pantherdb.TableName(logType)
+		partitionPrefix := awsglue.PartitionPrefix(database, tableName, awsglue.GlueTableHourly, nextTime)
 		partitionPrefix += fmt.Sprintf(ruleSuffixFormat, alert.RuleID) // JSON data has more specific paths based on ruleID
 
 		listRequest := &s3.ListObjectsV2Input{

@@ -99,7 +99,7 @@ func resolveLogTables(ctx context.Context, r logtypes.Resolver, names ...string)
 		}
 		eventSchema := entry.Schema()
 		desc := entry.Describe()
-		tableName := pantherdb.GetTable(desc.Name)
+		tableName := pantherdb.TableName(desc.Name)
 		meta := awsglue.NewGlueTableMetadata(pantherdb.LogProcessingDatabase, tableName, desc.Description, awsglue.GlueTableHourly, eventSchema)
 		out = append(out, meta)
 	}
