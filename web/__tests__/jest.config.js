@@ -40,11 +40,19 @@ module.exports = {
     'test-utils': '<rootDir>/__tests__/utils',
   },
 
-  // mocks sessionStorage & localStorage
-  setupFiles: ['jest-localstorage-mock', 'jest-canvas-mock', '<rootDir>/__tests__/env.ts'],
+  // add proper ENV vars. Gets triggered once before all test suites run
+  globalSetup: '<rootDir>/__tests__/setupEnv.ts',
 
-  // additional browser API mocks & assertions
-  setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
+  // mock sessionStorage, localStorage & adds proper `pantherConfig` to the HTML document. Runs
+  // before each test file
+  setupFiles: [
+    'jest-localstorage-mock',
+    'jest-canvas-mock',
+    '<rootDir>/__tests__/setupPantherConfig.ts',
+  ],
+
+  // additional browser API mocks & assertions that get to run before each and every test
+  setupFilesAfterEnv: ['<rootDir>/__tests__/setupTests.ts'],
 
   // report results for each file
   verbose: true,

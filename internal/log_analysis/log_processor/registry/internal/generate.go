@@ -132,7 +132,5 @@ func init() {
        {{.Name}}.LogTypes(),
 {{ end }}
 	)
-	// Register all log types in the group with the availableLogTypes
-	availableLogTypes.MustRegister(nativeLogTypes)
 }
 `))

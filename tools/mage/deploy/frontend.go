@@ -51,14 +51,18 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig)
 		return fmt.Errorf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
 	}
 
-	dockerImage, err := PushWebImg(bootstrapOutputs["ImageRegistryUri"], "")
+	localImageID, err := DockerBuild()
+	if err != nil {
+		return err
+	}
+
+	dockerImage, err := DockerPush(bootstrapOutputs["ImageRegistryUri"], localImageID, "")
 	if err != nil {
 		return err
 	}
 
 	params := map[string]string{
 		"AlarmTopicArn":              bootstrapOutputs["AlarmTopicArn"],
-		"AnalysisApiEndpoint":        bootstrapOutputs["AnalysisApiEndpoint"],
 		"AppClientId":                bootstrapOutputs["AppClientId"],
 		"CertificateArn":             settings.Web.CertificateArn,
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
@@ -82,8 +86,19 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig)
 	return err
 }
 
+// Returns local image ID
+func DockerBuild() (string, error) {
+	log.Info("docker build web server (deployments/Dockerfile)")
+	dockerBuildOutput, err := sh.Output("docker", "build", "--file", "deployments/Dockerfile", "--quiet", ".")
+	if err != nil {
+		return "", fmt.Errorf("docker build failed: %v", err)
+	}
+
+	return strings.Replace(dockerBuildOutput, "sha256:", "", 1), nil
+}
+
 // Build a personalized docker image from source and push it to the private image repo of the user
-func PushWebImg(imageRegistry, tag string) (string, error) {
+func DockerPush(imageRegistry, localImageID, tag string) (string, error) {
 	log.Debug("requesting access to remote image repo")
 	response, err := clients.ECR().GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
 	if err != nil {
@@ -103,13 +118,6 @@ func PushWebImg(imageRegistry, tag string) (string, error) {
 		return "", err
 	}
 
-	log.Info("docker build web server (deployments/Dockerfile)")
-	dockerBuildOutput, err := sh.Output("docker", "build", "--file", "deployments/Dockerfile", "--quiet", ".")
-	if err != nil {
-		return "", fmt.Errorf("docker build failed: %v", err)
-	}
-
-	localImageID := strings.Replace(dockerBuildOutput, "sha256:", "", 1)
 	if tag == "" {
 		tag = localImageID
 	}

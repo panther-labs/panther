@@ -200,3 +200,227 @@ result: |
     "p_any_ip_addresses": ["1.2.3.4"],
     "p_log_type": "AWS.CloudTrail"
   }
+
+---
+name: CloudTrail Digest logs
+logType: AWS.CloudTrailDigest
+input: |
+  {
+  		"awsAccountId": "111122223333",
+  		"digestStartTime": "2015-08-17T14:01:31Z",
+  		"digestEndTime": "2015-08-17T15:01:31Z",
+  		"digestS3Bucket": "S3-bucket-name",
+  		"digestS3Object": "AWSLogs/111122223333/CloudTrail-Digest/us-east-2/2015/08/17/111122223333_CloudTrail-Digest_us-east-2_your-trail-name_us-east-2_20150817T150131Z.json.gz",
+  		"digestPublicKeyFingerprint": "31e8b5433410dfb61a9dc45cc65b22ff",
+  		"digestSignatureAlgorithm": "SHA256withRSA",
+  		"newestEventTime": "2015-08-17T14:52:27Z",
+  		"oldestEventTime": "2015-08-17T14:42:27Z",
+  		"previousDigestS3Bucket": "S3-bucket-name",
+  		"previousDigestS3Object": "AWSLogs/111122223333/CloudTrail-Digest/us-east-2/2015/08/17/111122223333_CloudTrail-Digest_us-east-2_your-trail-name_us-east-2_20150817T140131Z.json.gz",
+  		"previousDigestHashValue": "97fb791cf91ffc440d274f8190dbdd9aa09c34432aba82739df18b6d3c13df2d",
+  		"previousDigestHashAlgorithm": "SHA-256",
+  		"previousDigestSignature": "50887ccffad4c002b97caa37cc9dc626e3c680207d41d27fa5835458e066e0d3652fc4dfc30937e4d5f4cc7f796e7a258fb50a43ac427f2237f6e505d4efaf373d156e15e3b68dea9f58111d395b62628d6bd367a9024d2183b5c5f6e19466d3a996b92df705bc997b8a0e13430f241d733cf95df4e41bb6c304c3f58363043572ea57a27085639ce187e679c0d81c7519b1184fa77fb7ab0b0e40a32dace6e1eefc3995c5ae182da49b62b26398cebb52a2201a6387b75b89c83e5570bcb9bba6c34a80f2f00a1c6ebe07d1ff149eccd812dc805bb3eeff6657db32a6cb48d2d096404eb76181877bc6ebb8cd0b23f823200155b2fd8848d428e46e8456328a",
+  		"logFiles": [
+  			{
+  				"s3Bucket": "S3-bucket-name",
+  				"s3Object": "AWSLogs/111122223333/CloudTrail/us-east-2/2015/08/17/111122223333_CloudTrail_us-east-2_20150817T1445Z_9nYN7gp2eWAJHIfT.json.gz",
+  				"hashValue": "9bb6196fc6b84d6f075a56548feca262bd99ba3c2de41b618e5b6e22c1fc71f6",
+  				"hashAlgorithm": "SHA-256",
+  				"newestEventTime": "2015-08-17T14:52:27Z",
+  				"oldestEventTime": "2015-08-17T14:42:27Z"
+  			}
+  		]
+  	}
+result: |
+  {
+  		"awsAccountId": "111122223333",
+  		"digestStartTime": "2015-08-17T14:01:31Z",
+  		"digestEndTime": "2015-08-17T15:01:31Z",
+  		"digestS3Bucket": "S3-bucket-name",
+  		"digestS3Object": "AWSLogs/111122223333/CloudTrail-Digest/us-east-2/2015/08/17/111122223333_CloudTrail-Digest_us-east-2_your-trail-name_us-east-2_20150817T150131Z.json.gz",
+  		"digestPublicKeyFingerprint": "31e8b5433410dfb61a9dc45cc65b22ff",
+  		"digestSignatureAlgorithm": "SHA256withRSA",
+  		"newestEventTime": "2015-08-17T14:52:27Z",
+  		"oldestEventTime": "2015-08-17T14:42:27Z",
+  		"previousDigestS3Bucket": "S3-bucket-name",
+  		"previousDigestS3Object": "AWSLogs/111122223333/CloudTrail-Digest/us-east-2/2015/08/17/111122223333_CloudTrail-Digest_us-east-2_your-trail-name_us-east-2_20150817T140131Z.json.gz",
+  		"previousDigestHashValue": "97fb791cf91ffc440d274f8190dbdd9aa09c34432aba82739df18b6d3c13df2d",
+  		"previousDigestHashAlgorithm": "SHA-256",
+  		"previousDigestSignature": "50887ccffad4c002b97caa37cc9dc626e3c680207d41d27fa5835458e066e0d3652fc4dfc30937e4d5f4cc7f796e7a258fb50a43ac427f2237f6e505d4efaf373d156e15e3b68dea9f58111d395b62628d6bd367a9024d2183b5c5f6e19466d3a996b92df705bc997b8a0e13430f241d733cf95df4e41bb6c304c3f58363043572ea57a27085639ce187e679c0d81c7519b1184fa77fb7ab0b0e40a32dace6e1eefc3995c5ae182da49b62b26398cebb52a2201a6387b75b89c83e5570bcb9bba6c34a80f2f00a1c6ebe07d1ff149eccd812dc805bb3eeff6657db32a6cb48d2d096404eb76181877bc6ebb8cd0b23f823200155b2fd8848d428e46e8456328a",
+  		"logFiles": [
+  			{
+  				"s3Bucket": "S3-bucket-name",
+  				"s3Object": "AWSLogs/111122223333/CloudTrail/us-east-2/2015/08/17/111122223333_CloudTrail_us-east-2_20150817T1445Z_9nYN7gp2eWAJHIfT.json.gz",
+  				"hashValue": "9bb6196fc6b84d6f075a56548feca262bd99ba3c2de41b618e5b6e22c1fc71f6",
+  				"hashAlgorithm": "SHA-256",
+  				"newestEventTime": "2015-08-17T14:52:27Z",
+  				"oldestEventTime": "2015-08-17T14:42:27Z"
+  			}
+  		],
+        "p_any_aws_account_ids": ["111122223333"],
+        "p_event_time": "2015-08-17T15:01:31Z",
+        "p_any_sha256_hashes": [
+          "97fb791cf91ffc440d274f8190dbdd9aa09c34432aba82739df18b6d3c13df2d",
+          "9bb6196fc6b84d6f075a56548feca262bd99ba3c2de41b618e5b6e22c1fc71f6"
+        ],
+        "p_log_type": "AWS.CloudTrailDigest"
+  	}
+
+---
+name: CloudTrail Digest logs first record
+logType: AWS.CloudTrailDigest
+input: |
+  {
+  		"awsAccountId": "123456789012",
+  		"digestStartTime": "2020-04-21T12:28:23Z",
+  		"digestEndTime": "2020-04-21T13:28:23Z",
+  		"digestS3Bucket": "cloudtrail-test-eu-west-1",
+  		"digestS3Object": "AWSLogs/123456789012/CloudTrail-Digest/eu-west-1/2020/04/21/123456789012_CloudTrail-Digest_eu-west-1_TestTrail_eu-west-1_20200421T132823Z.json.gz",
+  		"digestPublicKeyFingerprint": "f0249abde0f55218ac45bd3750055109",
+  		"digestSignatureAlgorithm": "SHA256withRSA",
+  		"newestEventTime": null,
+  		"oldestEventTime": null,
+  		"previousDigestS3Bucket": null,
+  		"previousDigestS3Object": null,
+  		"previousDigestHashValue": null,
+  		"previousDigestHashAlgorithm": null,
+  		"previousDigestSignature": null,
+  		"logFiles": []
+  	}
+result: |
+  {
+      "awsAccountId": "123456789012",
+      "digestStartTime": "2020-04-21T12:28:23Z",
+      "digestEndTime": "2020-04-21T13:28:23Z",
+      "digestS3Bucket": "cloudtrail-test-eu-west-1",
+      "digestS3Object": "AWSLogs/123456789012/CloudTrail-Digest/eu-west-1/2020/04/21/123456789012_CloudTrail-Digest_eu-west-1_TestTrail_eu-west-1_20200421T132823Z.json.gz",
+      "digestPublicKeyFingerprint": "f0249abde0f55218ac45bd3750055109",
+      "digestSignatureAlgorithm": "SHA256withRSA",
+      "p_any_aws_account_ids": ["123456789012"],
+      "p_event_time": "2020-04-21T13:28:23Z",
+      "p_log_type": "AWS.CloudTrailDigest"
+  }
+
+---
+name: CloudTrail Insights
+logType: AWS.CloudTrailInsight
+input: |
+  {
+      "Records": [
+          {
+              "eventVersion": "1.07",
+              "eventTime": "2019-10-17T10:05:00Z",
+              "awsRegion": "us-east-1",
+              "eventID": "aab985f2-3a56-48cc-a8a5-e0af77606f5f",
+              "eventType": "AwsCloudTrailInsight",
+              "recipientAccountId": "123456789012",
+              "sharedEventID": "12edc982-3348-4794-83d3-a3db26525049",
+              "insightDetails": {
+                  "state": "Start",
+                  "eventSource": "ssm.amazonaws.com",
+                  "eventName": "UpdateInstanceAssociationStatus",
+                  "insightType": "ApiCallRateInsight",
+                  "insightContext": {
+                      "statistics": {
+                          "baseline": {
+                              "average": 1.7561507937
+                          },
+                          "insight": {
+                              "average": 50.1
+                          }
+                      }
+                  }
+              },
+              "eventCategory": "Insight"
+          },
+          {
+              "eventVersion": "1.07",
+              "eventTime": "2019-10-17T10:13:00Z",
+              "awsRegion": "us-east-1",
+              "eventID": "ce7b8ac1-3f89-4dae-8d2a-6560e32f591a",
+              "eventType": "AwsCloudTrailInsight",
+              "recipientAccountId": "123456789012",
+              "sharedEventID": "12edc982-3348-4794-83d3-a3db26525049",
+              "insightDetails": {
+                  "state": "End",
+                  "eventSource": "ssm.amazonaws.com",
+                  "eventName": "UpdateInstanceAssociationStatus",
+                  "insightType": "ApiCallRateInsight",
+                  "insightContext": {
+                      "statistics": {
+                          "baseline": {
+                              "average": 1.7561507937
+                          },
+                          "insight": {
+                              "average": 50
+                          },
+                          "insightDuration": 8
+                      }
+                  }
+              },
+              "eventCategory": "Insight"
+          }
+      ]
+  }
+results:
+  - |
+    {
+        "eventVersion": "1.07",
+        "eventTime": "2019-10-17T10:05:00Z",
+        "awsRegion": "us-east-1",
+        "eventId": "aab985f2-3a56-48cc-a8a5-e0af77606f5f",
+        "eventType": "AwsCloudTrailInsight",
+        "recipientAccountId": "123456789012",
+        "sharedEventId": "12edc982-3348-4794-83d3-a3db26525049",
+        "insightDetails": {
+            "state": "Start",
+            "eventSource": "ssm.amazonaws.com",
+            "eventName": "UpdateInstanceAssociationStatus",
+            "insightType": "ApiCallRateInsight",
+            "insightContext": {
+                "statistics": {
+                    "baseline": {
+                        "average": 1.7561507937
+                    },
+                    "insight": {
+                        "average": 50.1
+                    }
+                }
+            }
+        },
+        "eventCategory": "Insight",
+        "p_event_time": "2019-10-17T10:05:00Z",
+        "p_any_aws_account_ids": ["123456789012"],
+        "p_log_type": "AWS.CloudTrailInsight"
+    }
+  - |
+    {
+        "eventVersion": "1.07",
+        "eventTime": "2019-10-17T10:13:00Z",
+        "awsRegion": "us-east-1",
+        "eventId": "ce7b8ac1-3f89-4dae-8d2a-6560e32f591a",
+        "eventType": "AwsCloudTrailInsight",
+        "recipientAccountId": "123456789012",
+        "sharedEventId": "12edc982-3348-4794-83d3-a3db26525049",
+        "insightDetails": {
+            "state": "End",
+            "eventSource": "ssm.amazonaws.com",
+            "eventName": "UpdateInstanceAssociationStatus",
+            "insightType": "ApiCallRateInsight",
+            "insightContext": {
+                "statistics": {
+                    "baseline": {
+                        "average": 1.7561507937
+                    },
+                    "insight": {
+                        "average": 50
+                    },
+                    "insightDuration": 8
+                }
+            }
+        },
+        "eventCategory": "Insight",
+        "p_event_time": "2019-10-17T10:13:00Z",
+        "p_any_aws_account_ids": ["123456789012"],
+        "p_log_type": "AWS.CloudTrailInsight"
+    }

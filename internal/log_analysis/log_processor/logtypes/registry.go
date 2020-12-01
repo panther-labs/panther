@@ -41,12 +41,6 @@ func (r *Registry) Find(logType string) Entry {
 	return r.group.Find(logType)
 }
 
-func (r *Registry) Len() int {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	return r.group.Len()
-}
-
 // Entries returns log type entries in a registry.
 func (r *Registry) Entries() []Entry {
 	r.mu.RLock()

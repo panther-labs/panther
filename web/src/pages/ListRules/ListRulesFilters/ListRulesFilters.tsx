@@ -45,6 +45,20 @@ const defaultValues = {
 
 const sortingOpts: SortingOptions = [
   {
+    opt: 'Name Ascending',
+    resolution: {
+      sortBy: 'displayName' as ListRulesSortFieldsEnum,
+      sortDir: 'ascending' as SortDirEnum,
+    },
+  },
+  {
+    opt: 'Name Descending',
+    resolution: {
+      sortBy: 'displayName' as ListRulesSortFieldsEnum,
+      sortDir: 'descending' as SortDirEnum,
+    },
+  },
+  {
     opt: 'Most Recently Modified',
     resolution: {
       sortBy: 'lastModified' as ListRulesSortFieldsEnum,
@@ -56,20 +70,6 @@ const sortingOpts: SortingOptions = [
     resolution: {
       sortBy: 'lastModified' as ListRulesSortFieldsEnum,
       sortDir: 'ascending' as SortDirEnum,
-    },
-  },
-  {
-    opt: 'ID Ascending',
-    resolution: {
-      sortBy: 'id' as ListRulesSortFieldsEnum,
-      sortDir: 'ascending' as SortDirEnum,
-    },
-  },
-  {
-    opt: 'ID Descending',
-    resolution: {
-      sortBy: 'id' as ListRulesSortFieldsEnum,
-      sortDir: 'descending' as SortDirEnum,
     },
   },
   {

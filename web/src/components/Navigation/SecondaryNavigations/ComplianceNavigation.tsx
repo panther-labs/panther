@@ -31,7 +31,11 @@ const ComplianceNavigation: React.FC = () => {
       <Flex direction="column" as="ul">
         <FadeInTrail as="li">
           <NavLink icon="dashboard-alt" to={urls.compliance.overview()} label="Overview" />
-          <NavLink icon="policy" to={urls.compliance.policies.list()} label="Policies" />
+          <NavLink
+            icon="policy"
+            to={`${urls.compliance.policies.list()}?page=1&sortBy=lastModified&sortDir=descending`}
+            label="Policies"
+          />
           <NavLink icon="resource" to={urls.compliance.resources.list()} label="Resources" />
           <NavLink icon="infra-source" to={urls.compliance.sources.list()} label="Sources" />
         </FadeInTrail>

@@ -389,12 +389,12 @@ export type GetComplianceIntegrationTemplateInput = {
 };
 
 export type GetGlobalPythonModuleInput = {
-  globalId: Scalars['ID'];
+  id: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
 };
 
 export type GetPolicyInput = {
-  policyId: Scalars['ID'];
+  id: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
 };
 
@@ -403,7 +403,7 @@ export type GetResourceInput = {
 };
 
 export type GetRuleInput = {
-  ruleId: Scalars['ID'];
+  id: Scalars['ID'];
   versionId?: Maybe<Scalars['ID']>;
 };
 
@@ -535,9 +535,9 @@ export type ListPoliciesInput = {
   nameContains?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
   hasRemediation?: Maybe<Scalars['Boolean']>;
-  resourceTypes?: Maybe<Scalars['String']>;
+  resourceTypes?: Maybe<Array<Scalars['String']>>;
   severity?: Maybe<SeverityEnum>;
-  tags?: Maybe<Scalars['String']>;
+  tags?: Maybe<Array<Scalars['String']>>;
   sortBy?: Maybe<ListPoliciesSortFieldsEnum>;
   sortDir?: Maybe<SortDirEnum>;
   pageSize?: Maybe<Scalars['Int']>;
@@ -603,6 +603,7 @@ export type ListRulesResponse = {
 };
 
 export enum ListRulesSortFieldsEnum {
+  DisplayName = 'displayName',
   Enabled = 'enabled',
   Id = 'id',
   LastModified = 'lastModified',

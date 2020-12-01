@@ -20,8 +20,6 @@ package clients
  */
 
 import (
-	"net/http"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
@@ -30,11 +28,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sts"
 
 	"github.com/panther-labs/panther/pkg/awsutils"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/tools/mage/logger"
 )
 
@@ -48,9 +44,8 @@ var (
 	log = logger.Build("")
 
 	// Cache all of these privately to force lazy evaluation.
-	awsSession        *session.Session
-	accountID         string
-	httpGatewayClient *http.Client
+	awsSession *session.Session
+	accountID  string
 
 	cfnClient    *cloudformation.CloudFormation
 	ecrClient    *ecr.ECR
@@ -58,22 +53,18 @@ var (
 	lambdaClient *lambda.Lambda
 	s3Client     *s3.S3
 	s3Uploader   *s3manager.Uploader
-	sqsClient    *sqs.SQS
 	stsClient    *sts.STS
 )
 
 // Build the AWS session from credentials - subsequent calls return the cached result.
-func getSession(region string) *session.Session {
-	if awsSession != nil && (region == "" || *awsSession.Config.Region == region) {
+func getSession() *session.Session {
+	if awsSession != nil {
 		return awsSession
 	}
 
 	// Build a new session if it doesn't exist yet or the region changed.
 
 	config := aws.NewConfig().WithMaxRetries(maxRetries)
-	if region != "" {
-		config = config.WithRegion(region)
-	}
 
 	var err error
 	awsSession, err = session.NewSession(config)
@@ -102,22 +93,7 @@ func getSession(region string) *session.Session {
 
 // Returns the current AWS region.
 func Region() string {
-	return *getSession("").Config.Region
-}
-
-// Rebuild sessions with a specific region, overriding the environment.
-func SetRegion(region string) {
-	getSession(region)
-
-	// Reset global cached clients so that they rebuild with correct region when needed.
-	cfnClient = nil
-	ecrClient = nil
-	glueClient = nil
-	lambdaClient = nil
-	s3Client = nil
-	s3Uploader = nil
-	sqsClient = nil
-	stsClient = nil
+	return *getSession().Config.Region
 }
 
 // Returns the current AWS account ID - subsequent calls return the cached result.
@@ -133,66 +109,51 @@ func AccountID() string {
 	return accountID
 }
 
-// HTTP client which can sign requests to Panther's API gateways
-func HTTPGateway() *http.Client {
-	if httpGatewayClient == nil {
-		httpGatewayClient = gatewayapi.GatewayClient(getSession(""))
-	}
-	return httpGatewayClient
-}
-
 func Cfn() *cloudformation.CloudFormation {
 	if cfnClient == nil {
-		cfnClient = cloudformation.New(getSession(""))
+		cfnClient = cloudformation.New(getSession())
 	}
 	return cfnClient
 }
 
 func ECR() *ecr.ECR {
 	if ecrClient == nil {
-		ecrClient = ecr.New(getSession(""))
+		ecrClient = ecr.New(getSession())
 	}
 	return ecrClient
 }
 
 func Glue() *glue.Glue {
 	if glueClient == nil {
-		glueClient = glue.New(getSession(""))
+		glueClient = glue.New(getSession())
 	}
 	return glueClient
 }
 
 func Lambda() *lambda.Lambda {
 	if lambdaClient == nil {
-		lambdaClient = lambda.New(getSession(""))
+		lambdaClient = lambda.New(getSession())
 	}
 	return lambdaClient
 }
 
 func S3() *s3.S3 {
 	if s3Client == nil {
-		s3Client = s3.New(getSession(""))
+		s3Client = s3.New(getSession())
 	}
 	return s3Client
 }
 
 func S3Uploader() *s3manager.Uploader {
 	if s3Uploader == nil {
-		s3Uploader = s3manager.NewUploader(getSession(""))
+		s3Uploader = s3manager.NewUploader(getSession())
 	}
 	return s3Uploader
 }
 
-func SQS() *sqs.SQS {
-	if sqsClient == nil {
-		sqsClient = sqs.New(getSession(""))
-	}
-	return sqsClient
-}
-
 func STS() *sts.STS {
 	if stsClient == nil {
-		stsClient = sts.New(getSession(""))
+		stsClient = sts.New(getSession())
 	}
 	return stsClient
 }

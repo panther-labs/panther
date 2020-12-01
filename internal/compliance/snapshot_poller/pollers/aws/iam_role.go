@@ -34,6 +34,7 @@ import (
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
+	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 // PollIAMRole polls a single IAM Role resource
@@ -112,9 +113,8 @@ func iamRoleIterator(page *iam.ListRolesOutput, roles *[]*iam.Role, marker **str
 func getRolePolicy(iamSvc iamiface.IAMAPI, roleName *string, policyName *string) (*string, error) {
 	policy, err := iamSvc.GetRolePolicy(&iam.GetRolePolicyInput{RoleName: roleName, PolicyName: policyName})
 	if err != nil {
-		var awsError awserr.Error
-		if errors.As(err, &awsError) && awsError.Code() == iam.ErrCodeNoSuchEntityException {
-			zap.L().Debug("role policy could not be found", zap.String("policyName", *policyName))
+		if awsutils.IsAnyError(err, iam.ErrCodeNoSuchEntityException) {
+			zap.L().Debug("role policy could not be found", zap.String("roleName", *roleName))
 			return nil, nil
 		}
 		return nil, errors.Wrapf(err, "IAM.GetRolePolicy: %s", aws.StringValue(roleName))
@@ -140,6 +140,10 @@ func getRolePolicies(iamSvc iamiface.IAMAPI, roleName *string) (
 		},
 	)
 	if err != nil {
+		if awsutils.IsAnyError(err, iam.ErrCodeNoSuchEntityException) {
+			zap.L().Debug("IAM.ListRolePolicies: role policy could not be found", zap.String("roleName", *roleName))
+			return nil, nil, nil
+		}
 		return nil, nil, errors.Wrapf(err, "IAM.ListRolePolicies: %s", aws.StringValue(roleName))
 	}
 
@@ -153,13 +157,17 @@ func getRolePolicies(iamSvc iamiface.IAMAPI, roleName *string) (
 		},
 	)
 	if err != nil {
+		if awsutils.IsAnyError(err, iam.ErrCodeNoSuchEntityException) {
+			zap.L().Debug("IAM.ListAttachedRolePolicies: role policy could not be found", zap.String("roleName", *roleName))
+			return nil, nil, nil
+		}
 		return nil, nil, errors.Wrapf(err, "IAM.ListAttachedRolePolicies: %s", aws.StringValue(roleName))
 	}
 
-	return
+	return inlinePolicies, managedPolicies, nil
 }
 
-// buildIAMRoleSnapshot builds an IAMRoleSnapshot for a given IAM Role
+// BuildIAMRoleSnapshot builds an IAMRoleSnapshot for a given IAM Role
 func BuildIAMRoleSnapshot(iamSvc iamiface.IAMAPI, role *iam.Role) (*awsmodels.IAMRole, error) {
 	iamRoleSnapshot := &awsmodels.IAMRole{
 		GenericResource: awsmodels.GenericResource{

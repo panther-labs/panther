@@ -26,11 +26,15 @@ import {
   waitMs,
   buildAddComplianceIntegrationInput,
 } from 'test-utils';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
+import { CLOUD_SECURITY_REAL_TIME_DOC_URL } from 'Source/constants';
 import { mockAddComplianceSource } from './graphql/addComplianceSource.generated';
 import CreateComplianceSource from './CreateComplianceSource';
 
+jest.mock('Helpers/analytics');
+
 describe('CreateComplianceSource', () => {
-  it('can successfully onboard a compliance source', async () => {
+  it('can successfully onboard a compliance source without real-time', async () => {
     const complianceSource = buildComplianceIntegration({
       awsAccountId: '123123123123',
       remediationEnabled: false,
@@ -85,12 +89,76 @@ describe('CreateComplianceSource', () => {
 
     // Expect to see a loading animation while the resource is being validated ...
     expect(getByAltText('Validating source health...')).toBeInTheDocument();
-    expect(getByText('Cancel')).toBeInTheDocument();
 
     // ... replaced by a success screen
     expect(await findByText('Everything looks good!')).toBeInTheDocument();
     expect(getByText('Finish Setup')).toBeInTheDocument();
     expect(getByText('Add Another')).toBeInTheDocument();
+  });
+
+  it('can successfully onboard a compliance source with real-time support', async () => {
+    const complianceSource = buildComplianceIntegration({
+      awsAccountId: '123123123123',
+      remediationEnabled: true,
+      cweEnabled: true,
+    });
+
+    const mocks = [
+      mockAddComplianceSource({
+        variables: {
+          input: buildAddComplianceIntegrationInput({
+            integrationLabel: complianceSource.integrationLabel,
+            awsAccountId: complianceSource.awsAccountId,
+            cweEnabled: complianceSource.cweEnabled,
+            remediationEnabled: complianceSource.remediationEnabled,
+          }),
+        },
+        data: {
+          addComplianceIntegration: buildComplianceIntegration() as any,
+        },
+      }),
+    ];
+
+    const {
+      getByText,
+      getByLabelText,
+      getByAltText,
+      findByText,
+    } = render(<CreateComplianceSource />, { mocks });
+
+    // Fill in  the form and press continue
+    fireEvent.change(getByLabelText('Name'), {
+      target: { value: complianceSource.integrationLabel },
+    });
+    fireEvent.change(getByLabelText('AWS Account ID'), {
+      target: { value: complianceSource.awsAccountId },
+    });
+
+    // Wait for form validation to kick in and move on to the next screen
+    await waitMs(50);
+    fireEvent.click(getByText('Continue Setup'));
+
+    // We move on to the final screen
+    fireEvent.click(getByText('Continue'));
+
+    // Expect to see a loading animation while the resource is being validated ...
+    expect(getByAltText('Validating source health...')).toBeInTheDocument();
+
+    // ... replaced by a "configure real-time" screen
+    expect(await findByText('Configuring Real-Time Monitoring')).toBeInTheDocument();
+    expect(getByText('steps found here')).toHaveAttribute('href', CLOUD_SECURITY_REAL_TIME_DOC_URL);
+
+    // ... and then by a success screen
+    fireEvent.click(getByText('I Have Setup Real-Time'));
+    expect(getByText('Everything looks good!')).toBeInTheDocument();
+    expect(getByText('Finish Setup')).toBeInTheDocument();
+    expect(getByText('Add Another')).toBeInTheDocument();
+
+    // Expect analytics to have been called
+    expect(trackEvent).toHaveBeenCalledWith({
+      event: EventEnum.AddedComplianceSource,
+      src: SrcEnum.ComplianceSources,
+    });
   });
 
   it('shows a proper fail message when source validation fails', async () => {
@@ -143,11 +211,16 @@ describe('CreateComplianceSource', () => {
 
     // Expect to see a loading animation while the resource is being validated ...
     expect(getByAltText('Validating source health...')).toBeInTheDocument();
-    expect(getByText('Cancel')).toBeInTheDocument();
 
     // ... replaced by a failure screen
     expect(await findByText("Something didn't go as planned")).toBeInTheDocument();
     expect(getByText('Start over')).toBeInTheDocument();
     expect(getByText(errorMessage)).toBeInTheDocument();
+
+    // Expect analytics to have been called
+    expect(trackError).toHaveBeenCalledWith({
+      event: TrackErrorEnum.FailedToAddComplianceSource,
+      src: SrcEnum.ComplianceSources,
+    });
   });
 });

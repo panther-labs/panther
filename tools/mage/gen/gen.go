@@ -20,9 +20,7 @@ package gen
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/magefile/mage/sh"
@@ -42,11 +40,6 @@ func Gen() error {
 
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: "swagger clients", Err: swaggerClients()}
-	}(results)
-
-	count++
-	go func(c chan util.TaskResult) {
 		c <- util.TaskResult{Summary: "go generate", Err: goGenerate()}
 	}(results)
 
@@ -61,65 +54,6 @@ func Gen() error {
 	}(results)
 
 	return util.WaitForTasks(log, results, 1, count, count)
-}
-
-func swaggerClients() error {
-	const swaggerGlob = "api/gateway/*/api.yml"
-	specs, err := filepath.Glob(swaggerGlob)
-	if err != nil {
-		return fmt.Errorf("failed to glob %s: %v", swaggerGlob, err)
-	}
-
-	log.Debugf("generating Go SDK for %d APIs (%s)", len(specs), swaggerGlob)
-
-	cmd := util.Swagger
-	if _, err = os.Stat(util.Swagger); err != nil {
-		return fmt.Errorf("%s not found (%v): run 'mage setup'", cmd, err)
-	}
-
-	// This import has to be fixed, see below
-	clientImport := regexp.MustCompile(
-		`"github\.com/panther-labs/panther/api/gateway/[a-z]+/client/operations"`)
-
-	for _, spec := range specs {
-		dir := filepath.Dir(spec)
-		client, models := filepath.Join(dir, "client"), filepath.Join(dir, "models")
-
-		args := []string{"generate", "client", "-q", "-f", spec, "-c", client, "-m", models}
-		if err := sh.Run(cmd, args...); err != nil {
-			return fmt.Errorf("%s %s failed: %v", cmd, strings.Join(args, " "), err)
-		}
-
-		// TODO - delete unused models
-		// If an API model is removed, "swagger generate" will leave the Go file in place.
-		// We tried to remove generated files based on timestamp, but that had issues in Docker.
-		// We tried removing the client/ and models/ every time, but mage itself depends on some of these.
-		// For now, developers just need to manually remove unused swagger models.
-
-		// There is a bug in "swagger generate" which can lead to incorrect import paths.
-		// To reproduce: comment out this section, clone to /tmp and "mage gen" - note the diffs.
-		// The most reliable workaround has been to just rewrite the import ourselves.
-		//
-		// For example, in api/gateway/remediation/client/panther_remediation_client.go:
-		//     import "github.com/panther-labs/panther/api/gateway/analysis/client/operations"
-		// should be
-		//     import "github.com/panther-labs/panther/api/gateway/remediation/client/operations"
-		util.MustWalk(client, func(path string, info os.FileInfo) error {
-			if info.IsDir() || filepath.Ext(path) != ".go" {
-				return nil
-			}
-
-			body := util.MustReadFile(path)
-			correctImport := fmt.Sprintf(
-				`"github.com/panther-labs/panther/api/gateway/%s/client/operations"`,
-				filepath.Base(filepath.Dir(filepath.Dir(path))))
-
-			newBody := clientImport.ReplaceAll(body, []byte(correctImport))
-			util.MustWriteFile(path, newBody)
-			return nil
-		})
-	}
-	return nil
 }
 
 func goGenerate() error {

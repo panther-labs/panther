@@ -37,7 +37,7 @@ var (
 		AnalysisName: aws.String("policyName"),
 		AnalysisID:   "policyId",
 		Severity:     "INFO",
-		Runbook:      aws.String("runbook"),
+		Runbook:      "runbook",
 		CreatedAt:    createdAtTime,
 		Type:         alertModels.PolicyType,
 	}
@@ -61,6 +61,7 @@ func TestSendPagerDutyAlert(t *testing.T) {
 				Link:         "https://panther.io/policies/policyId",
 				Title:        "Policy Failure: policyName",
 				Name:         aws.String("policyName"),
+				Description:  aws.String(""),
 				Runbook:      aws.String("runbook"),
 				Tags:         []string{},
 				AlertContext: make(map[string]interface{}),

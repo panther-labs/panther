@@ -24,6 +24,8 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/go-playground/validator.v9"
+
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 )
 
 var (
@@ -74,6 +76,20 @@ func init() {
 
 	jsoniter.RegisterTypeEncoder(typBoolean.String(), &boolCodec{})
 	jsoniter.RegisterTypeDecoder(typBoolean.String(), &boolCodec{})
+
+	glueschema.MustRegisterMapping(typFloat64, glueschema.TypeDouble)
+	glueschema.MustRegisterMapping(typFloat32, glueschema.TypeFloat)
+	glueschema.MustRegisterMapping(typInt64, glueschema.TypeBigInt)
+	glueschema.MustRegisterMapping(typInt32, glueschema.TypeInt)
+	glueschema.MustRegisterMapping(typInt16, glueschema.TypeSmallInt)
+	glueschema.MustRegisterMapping(typInt8, glueschema.TypeTinyInt)
+	glueschema.MustRegisterMapping(typUint64, glueschema.TypeBigInt)
+	glueschema.MustRegisterMapping(typUint32, glueschema.TypeBigInt)
+	glueschema.MustRegisterMapping(typUint16, glueschema.TypeInt)
+	glueschema.MustRegisterMapping(typUint8, glueschema.TypeSmallInt)
+	glueschema.MustRegisterMapping(typString, glueschema.TypeString)
+	glueschema.MustRegisterMapping(typNonEmpty, glueschema.TypeString)
+	glueschema.MustRegisterMapping(typBoolean, glueschema.TypeBool)
 }
 
 // RegisterValidators registers custom type validators for null values

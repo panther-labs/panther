@@ -33,7 +33,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
 const (
@@ -84,21 +84,14 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 	}()
 
 	// this is the table created in setupTables
-	originalTable := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEvent{})
+	originalTable := NewGlueTableMetadata(pantherdb.RuleMatchDatabase, testTable, "test table", GlueTableHourly, &testEvent{})
 	// overwriting default database
 	originalTable.databaseName = testDB
 
 	// get the meta data, note we update the schema from the one used in setupTables()
-	table := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEventModified{})
+	table := NewGlueTableMetadata(pantherdb.RuleMatchDatabase, testTable, "test table", GlueTableHourly, &testEventModified{})
 	// overwriting default database
 	table.databaseName = testDB
-
-	// confirm the signatures are different
-	originalTableSig, err := originalTable.Signature()
-	require.NoError(t, err)
-	tableSig, err := table.Signature()
-	require.NoError(t, err)
-	assert.NotEqual(t, originalTableSig, tableSig)
 
 	// this has been already created in setupTables(), this tests updating table
 	err = table.CreateOrUpdateTable(glueClient, testBucket)
@@ -147,7 +140,7 @@ func addTables(t *testing.T) {
 	_, err := CreateDatabase(glueClient, testDB, "integration test database")
 	require.NoError(t, err)
 
-	gm := NewGlueTableMetadata(models.RuleData, testTable, "test table", GlueTableHourly, &testEvent{})
+	gm := NewGlueTableMetadata(pantherdb.RuleMatchDatabase, testTable, "test table", GlueTableHourly, &testEvent{})
 	// overwriting default database
 	gm.databaseName = testDB
 	err = gm.CreateOrUpdateTable(glueClient, testBucket)

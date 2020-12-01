@@ -52,6 +52,7 @@ export enum PageViewEnum {
   ListAlerts = 'List Alerts',
   ListLogSources = 'List Log Sources',
   Home = 'Home',
+  Support = 'Support',
 }
 
 interface TrackPageViewProps {
@@ -69,13 +70,19 @@ export enum EventEnum {
   SignedIn = 'Signed in successfully',
   AddedRule = 'Added Rule',
   AddedPolicy = 'Added Policy',
+  AddedComplianceSource = 'Added Compliance Source',
   AddedLogSource = 'Added Log Source',
   AddedDestination = 'Added Destination',
   PickedDestination = 'Picked Destination to create',
   PickedLogSource = 'Picked Log Source to created',
   InvitedUser = 'Invited user',
   UpdatedAlertStatus = 'Updated Alert Status',
+  UpdatedComplianceSource = 'Updated Compliance Source',
+  UpdatedLogSource = 'Updated Log Source',
   BulkUpdatedAlertStatus = 'Bulk Updated Alert Status',
+  TestedDestination = 'Tested a destination',
+  TestedDestinationSuccessfully = 'Successfully tested Destination',
+  TestedDestinationFailure = 'Failed Destination test',
 }
 
 export enum SrcEnum {
@@ -85,6 +92,7 @@ export enum SrcEnum {
   Auth = 'auth',
   Users = 'users',
   Alerts = 'alerts',
+  ComplianceSources = 'compliance sources',
   LogSources = 'log sources',
 }
 
@@ -105,16 +113,34 @@ interface AddedPolicyEvent {
   src: SrcEnum.Policies;
 }
 
-interface AddedDestinationEvent {
-  event: EventEnum.AddedDestination;
+interface DestinationEvent {
+  event:
+    | EventEnum.AddedDestination
+    | EventEnum.PickedDestination
+    | EventEnum.TestedDestination
+    | EventEnum.TestedDestinationSuccessfully
+    | EventEnum.TestedDestinationFailure;
   src: SrcEnum.Destinations;
   ctx: DestinationTypeEnum;
 }
+interface AddedDestinationEvent extends DestinationEvent {
+  event: EventEnum.AddedDestination;
+}
 
-interface PickedDestinationEvent {
+interface PickedDestinationEvent extends DestinationEvent {
   event: EventEnum.PickedDestination;
-  src: SrcEnum.Destinations;
-  ctx: DestinationTypeEnum;
+}
+
+interface TestedDestination extends DestinationEvent {
+  event: EventEnum.TestedDestination;
+}
+
+interface TestedDestinationSuccessfully extends DestinationEvent {
+  event: EventEnum.TestedDestinationSuccessfully;
+}
+
+interface TestedDestinationFailure extends DestinationEvent {
+  event: EventEnum.TestedDestinationFailure;
 }
 
 interface PickedLogSourceEvent {
@@ -123,8 +149,24 @@ interface PickedLogSourceEvent {
   ctx: LogSources;
 }
 
+interface AddedComplianceSourceEvent {
+  event: EventEnum.AddedComplianceSource;
+  src: SrcEnum.ComplianceSources;
+}
+
+interface UpdatedComplianceSourceEvent {
+  event: EventEnum.UpdatedComplianceSource;
+  src: SrcEnum.ComplianceSources;
+}
+
 interface AddedLogSourceEvent {
   event: EventEnum.AddedLogSource;
+  src: SrcEnum.LogSources;
+  ctx: LogSources;
+}
+
+interface UpdatedLogSourceEvent {
+  event: EventEnum.UpdatedLogSource;
   src: SrcEnum.LogSources;
   ctx: LogSources;
 }
@@ -154,11 +196,17 @@ type TrackEvent =
   | AddedRuleEvent
   | AddedPolicyEvent
   | AddedLogSourceEvent
+  | AddedComplianceSourceEvent
+  | UpdatedComplianceSourceEvent
+  | UpdatedLogSourceEvent
   | PickedDestinationEvent
   | PickedLogSourceEvent
   | InvitedUserEvent
   | UpdatedAlertStatus
-  | BulkUpdatedAlertStatus;
+  | BulkUpdatedAlertStatus
+  | TestedDestination
+  | TestedDestinationSuccessfully
+  | TestedDestinationFailure;
 
 export const trackEvent = (payload: TrackEvent) => {
   evaluateTracking(payload.event, {
@@ -172,13 +220,48 @@ export const trackEvent = (payload: TrackEvent) => {
 export enum TrackErrorEnum {
   FailedToAddDestination = 'Failed to create Destination',
   FailedToAddRule = 'Failed to create Rule',
+  FailedToAddLogSource = 'Failed to add log source',
+  FailedToUpdateLogSource = 'Failed to update log source',
+  FailedToAddComplianceSource = 'Failed to add compliance source',
+  FailedToUpdateComplianceSource = 'Failed to update compliance source',
   FailedMfa = 'Failed MFA',
+  FailedDestinationTest = 'Failed to sent Destination test',
 }
 
-interface AddDestinationError {
-  event: TrackErrorEnum.FailedToAddDestination;
+interface DestinationError {
+  event: TrackErrorEnum.FailedToAddDestination | TrackErrorEnum.FailedDestinationTest;
   src: SrcEnum.Destinations;
   ctx: DestinationTypeEnum;
+}
+
+interface AddDestinationError extends DestinationError {
+  event: TrackErrorEnum.FailedToAddDestination;
+}
+
+interface TestDestinationError extends DestinationError {
+  event: TrackErrorEnum.FailedDestinationTest;
+}
+
+interface AddLogSourceError {
+  event: TrackErrorEnum.FailedToAddLogSource;
+  src: SrcEnum.LogSources;
+  ctx: LogSources;
+}
+
+interface UpdateLogSourceError {
+  event: TrackErrorEnum.FailedToUpdateLogSource;
+  src: SrcEnum.LogSources;
+  ctx: LogSources;
+}
+
+interface AddComplianceSourceError {
+  event: TrackErrorEnum.FailedToAddComplianceSource;
+  src: SrcEnum.ComplianceSources;
+}
+
+interface UpdateComplianceSourceError {
+  event: TrackErrorEnum.FailedToUpdateComplianceSource;
+  src: SrcEnum.ComplianceSources;
 }
 
 interface AddRuleError {
@@ -190,7 +273,15 @@ interface MfaError {
   src: SrcEnum.Auth;
 }
 
-type TrackError = AddDestinationError | AddRuleError | MfaError;
+type TrackError =
+  | AddDestinationError
+  | TestDestinationError
+  | AddRuleError
+  | MfaError
+  | AddLogSourceError
+  | UpdateLogSourceError
+  | AddComplianceSourceError
+  | UpdateComplianceSourceError;
 
 export const trackError = (payload: TrackError) => {
   evaluateTracking(payload.event, {

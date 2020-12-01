@@ -16,14 +16,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/**
+ * Copyright (C) 2020 Panther Labs Inc
+ *
+ * Panther Enterprise is licensed under the terms of a commercial license available from
+ * Panther Labs Inc ("Panther Commercial License") by contacting contact@runpanther.com.
+ * All use, distribution, and/or modification of this software, whether commercial or non-commercial,
+ * falls under the Panther Commercial License to the extent it is permitted.
+ */
+
 import React from 'react';
-import { Box, Card, FadeIn } from 'pouncejs';
+import { Box, Card, FadeIn, SimpleGrid } from 'pouncejs';
 import urls from 'Source/urls';
 import s3Logo from 'Assets/s3-minimal-logo.svg';
 import sqsLogo from 'Assets/sqs-minimal-logo.svg';
-import gsuiteLogo from 'Assets/gsuite-minimal-logo.svg';
 import eventBridgeLogo from 'Assets/eventbridge-minimal-logo.svg';
 import oktaLogo from 'Assets/okta-minimal-logo.svg';
+import gsuiteLogo from 'Assets/gsuite-minimal-logo.svg';
+import boxLogo from 'Assets/box-logo.svg';
+import slackLogo from 'Assets/slack-minimal-logo.svg';
+import crowdstrikeLogo from 'Assets/crowdstrike-minimal-logo.svg';
 import withSEO from 'Hoc/withSEO';
 import { WizardPanel } from 'Components/Wizard';
 import LogSourceCard from './LogSourceCard';
@@ -41,7 +53,7 @@ const logSourcesConfig = [
   },
   {
     logo: eventBridgeLogo,
-    title: 'Amazon EventBridge',
+    title: 'EventBridge',
     type: 'eventbridge',
     disabled: true,
   },
@@ -52,9 +64,27 @@ const logSourcesConfig = [
     disabled: true,
   },
   {
+    logo: crowdstrikeLogo,
+    title: 'Crowdstrike',
+    type: 'crowdstrike',
+    disabled: true,
+  },
+  {
     logo: gsuiteLogo,
     title: 'G Suite',
     type: 'gsuite',
+    disabled: true,
+  },
+  {
+    logo: slackLogo,
+    title: 'Slack',
+    type: 'slack',
+    disabled: true,
+  },
+  {
+    logo: boxLogo,
+    title: 'Box',
+    type: 'box',
     disabled: true,
   },
 ];
@@ -67,16 +97,18 @@ const LogSourceOnboarding: React.FC = () => {
             title="Select a Source Type"
             subtitle="Please select the source type you want to configure from the list below"
           />
-          <Box width={550} mx="auto">
-            {logSourcesConfig.map(config => (
-              <LogSourceCard
-                key={config.title}
-                logo={config.logo}
-                title={config.title}
-                disabled={config.disabled}
-                to={`${urls.logAnalysis.sources.create(config.type)}`}
-              />
-            ))}
+          <Box width={820} mx="auto">
+            <SimpleGrid gap={4} columns={3} pb={6}>
+              {logSourcesConfig.map(config => (
+                <LogSourceCard
+                  key={config.title}
+                  logo={config.logo}
+                  title={config.title}
+                  disabled={config.disabled}
+                  to={`${urls.logAnalysis.sources.create(config.type)}`}
+                />
+              ))}
+            </SimpleGrid>
           </Box>
         </WizardPanel>
       </Card>

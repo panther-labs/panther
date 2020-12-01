@@ -17,8 +17,9 @@
  */
 
 import React from 'react';
-import { Box, Card, Flex, IconButton, Img, Text, TextProps } from 'pouncejs';
+import { Box, Card, Flex, Icon, IconButton, Img, Text, TextProps } from 'pouncejs';
 import { slugify } from 'Helpers/utils';
+import { Link as RRLink } from 'react-router-dom';
 
 interface GenericItemCardLogoProps {
   src: string;
@@ -33,17 +34,20 @@ interface GenericItemCardValueProps {
 interface GenericItemCardDate {
   date: string;
 }
+interface GenericItemCardLinkProps {
+  to: string;
+}
 
 interface GenericItemCardComposition {
   Logo: React.FC<GenericItemCardLogoProps>;
+  Header: React.FC;
   Heading: React.FC<TextProps>;
   Body: React.FC;
-  Dropdown: React.ForwardRefExoticComponent<React.RefAttributes<HTMLButtonElement>>;
-  Options: React.FC;
+  Link: React.FC<GenericItemCardLinkProps>;
+  OptionsButton: React.ForwardRefExoticComponent<React.RefAttributes<HTMLButtonElement>>;
   Value: React.FC<GenericItemCardValueProps>;
   ValuesGroup: React.FC;
   Date: React.FC<GenericItemCardDate>;
-  ExtraBadge: React.FC<{ badge: string | React.ReactNode }>;
   LineBreak: React.FC;
 }
 
@@ -59,11 +63,19 @@ const GenericItemCard: React.FC & GenericItemCardComposition = ({ children }) =>
   );
 };
 
-const GenericItemCardHeading: React.FC<TextProps> = ({ children, ...rest }) => {
+const GenericItemCardHeader: React.FC = ({ children }) => {
   return (
-    <Flex justify="space-between" fontWeight="medium" width={0.7} wordBreak="break-word" {...rest}>
+    <Flex as="header" align="flex-start" mb={2}>
       {children}
     </Flex>
+  );
+};
+
+const GenericItemCardHeading: React.FC<TextProps> = ({ children, ...rest }) => {
+  return (
+    <Text as="h4" fontWeight="medium" mr="auto" maxWidth="70%" wordBreak="break-word" {...rest}>
+      {children}
+    </Text>
   );
 };
 
@@ -87,12 +99,12 @@ const GenericItemCardLogo: React.FC<GenericItemCardLogoProps> = ({ src }) => {
   return <Img nativeWidth={20} nativeHeight={20} mr={5} alt="Logo" src={src} />;
 };
 
-const GenericItemCardDropdown = React.forwardRef<HTMLButtonElement>(function GenericItemCardOptions(
+const GenericItemCardOptionsButton = React.forwardRef<HTMLButtonElement>(function OptionsButton(
   props,
   ref
 ) {
   return (
-    <Box mt={-1}>
+    <Box ml={2} mt={-1}>
       <IconButton
         variant="ghost"
         variantColor="navyblue"
@@ -111,14 +123,6 @@ const GenericItemCardDate: React.FC<GenericItemCardDate> = ({ date, ...rest }) =
     <Text fontSize="small" as="span" color="gray-500" {...rest}>
       {date}
     </Text>
-  );
-};
-
-const GenericItemCardOptions: React.FC = ({ children }) => {
-  return (
-    <Flex position="absolute" spacing={2} align="start" right={0}>
-      {children}
-    </Flex>
   );
 };
 
@@ -153,36 +157,36 @@ const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, valu
     </Box>
   );
 };
-
-const GenericItemCardExtraBadge: React.FC<{ badge: string | React.ReactNode }> = ({ badge }) => {
+const GenericItemCardLink: React.FC<GenericItemCardLinkProps> = ({ to, ...rest }) => {
   return (
-    <Flex
-      justify="center"
-      align="center"
-      width={18}
-      height={18}
-      backgroundColor="navyblue-200"
-      borderRadius="circle"
-      fontSize="2x-small"
-      fontWeight="medium"
-      cursor="default"
-    >
-      {badge}
-    </Flex>
+    <RRLink to={to} {...rest}>
+      <Flex
+        justify="center"
+        align="center"
+        width={24}
+        height={24}
+        backgroundColor="navyblue-200"
+        borderColor="navyblue-200"
+        _hover={{ backgroundColor: 'blue-300', borderColor: 'blue-300' }}
+        borderRadius="circle"
+      >
+        <Icon type="arrow-forward" size="x-small" />
+      </Flex>
+    </RRLink>
   );
 };
 
 const GenericItemCardLineBreak: React.FC = () => <Box flexBasis="100%" height={0} />;
 
 GenericItemCard.Body = GenericItemCardBody;
+GenericItemCard.Header = GenericItemCardHeader;
+GenericItemCard.Link = GenericItemCardLink;
 GenericItemCard.Heading = GenericItemCardHeading;
 GenericItemCard.Logo = GenericItemCardLogo;
-GenericItemCard.Dropdown = GenericItemCardDropdown;
-GenericItemCard.Options = GenericItemCardOptions;
+GenericItemCard.OptionsButton = GenericItemCardOptionsButton;
 GenericItemCard.Value = GenericItemCardValue;
 GenericItemCard.ValuesGroup = GenericItemCardValuesGroup;
 GenericItemCard.Date = GenericItemCardDate;
-GenericItemCard.ExtraBadge = GenericItemCardExtraBadge;
 GenericItemCard.LineBreak = GenericItemCardLineBreak;
 
 export default GenericItemCard;

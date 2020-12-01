@@ -27,8 +27,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
-	enginemodels "github.com/panther-labs/panther/api/gateway/analysis"
-	"github.com/panther-labs/panther/api/gateway/analysis/models"
+	enginemodels "github.com/panther-labs/panther/api/lambda/analysis"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -50,17 +50,15 @@ func NewPolicyEngine(lambdaClient lambdaiface.LambdaAPI, lambdaName string) Poli
 	}
 }
 
-func (e *PolicyEngine) TestPolicy(policy *models.TestPolicy) (models.TestPolicyResult, error) {
-	testResults := models.TestPolicyResult{}
-
+func (e *PolicyEngine) TestPolicy(policy *models.TestPolicyInput) (*models.TestPolicyOutput, error) {
 	testResources, err := makeTestResources(policy)
 	if err != nil {
-		return testResults, err
+		return nil, err
 	}
 	engineInput := enginemodels.PolicyEngineInput{
 		Policies: []enginemodels.Policy{
 			{
-				Body:          string(policy.Body),
+				Body:          policy.Body,
 				ID:            testPolicyID, // doesn't matter, we're only running one policy
 				ResourceTypes: policy.ResourceTypes,
 			},
@@ -71,53 +69,68 @@ func (e *PolicyEngine) TestPolicy(policy *models.TestPolicy) (models.TestPolicyR
 	var engineOutput enginemodels.PolicyEngineOutput
 	err = genericapi.Invoke(e.lambdaClient, e.lambdaName, &engineInput, &engineOutput)
 	if err != nil {
-		return testResults, errors.Wrap(err, "error invoking policy engine")
+		return nil, errors.Wrap(err, "error invoking policy engine")
 	}
 
 	// Translate policy engine output to test results.
 	return makeTestSummary(policy, engineOutput)
 }
 
-func makeTestSummary(policy *models.TestPolicy, engineOutput enginemodels.PolicyEngineOutput) (models.TestPolicyResult, error) {
-	testResults := models.TestPolicyResult{
-		TestsErrored: models.TestsErrored{},
-		TestsFailed:  models.TestsFailed{},
-		TestsPassed:  models.TestsPassed{},
+func makeTestSummary(policy *models.TestPolicyInput, engineOutput enginemodels.PolicyEngineOutput) (*models.TestPolicyOutput, error) {
+	testResult := models.TestPolicyOutput{
+		Results: make([]models.TestPolicyRecord, len(engineOutput.Resources)),
 	}
-	for _, result := range engineOutput.Resources {
+
+	for i, result := range engineOutput.Resources {
 		// Determine which test case this result corresponds to. We constructed resourceID with the
 		// format Panther:Test:Resource:TestNumber (see testResourceID),
 		testIndex, err := strconv.Atoi(strings.Split(result.ID, ":")[3])
 		if err != nil {
-			return testResults, errors.Wrapf(err, "unable to extract test number from test result resourceID %s", result.ID)
+			return nil, errors.Wrapf(err, "unable to extract test number from test result resourceID %s", result.ID)
 		}
-
 		test := policy.Tests[testIndex]
+
 		switch {
 		case len(result.Errored) > 0:
 			// There was an error running this test, store the error message
-			testResults.TestsErrored = append(testResults.TestsErrored, &models.TestErrorResult{
-				ErrorMessage: result.Errored[0].Message,
-				Name:         string(test.Name),
-			})
+			testResult.Results[i] = models.TestPolicyRecord{
+				ID:     "errored-" + strconv.Itoa(i),
+				Name:   test.Name,
+				Passed: false,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: *buildTestSubRecord(strconv.FormatBool(test.ExpectedResult), result.Errored[0].Message),
+				},
+			}
 
-		case len(result.Failed) > 0 && bool(test.ExpectedResult), len(result.Passed) > 0 && !bool(test.ExpectedResult):
+		case len(result.Failed) > 0 && test.ExpectedResult, len(result.Passed) > 0 && !test.ExpectedResult:
 			// The test result was not expected, so this test failed
-			testResults.TestsFailed = append(testResults.TestsFailed, string(test.Name))
+			testResult.Results[i] = models.TestPolicyRecord{
+				ID:     "failed-" + strconv.Itoa(i),
+				Name:   test.Name,
+				Passed: false,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: *buildTestSubRecord(strconv.FormatBool(test.ExpectedResult), ""),
+				},
+			}
 
-		case len(result.Failed) > 0 && !bool(test.ExpectedResult), len(result.Passed) > 0 && bool(test.ExpectedResult):
+		case len(result.Failed) > 0 && !test.ExpectedResult, len(result.Passed) > 0 && test.ExpectedResult:
 			// The test result was as expected
-			testResults.TestsPassed = append(testResults.TestsPassed, string(test.Name))
+			testResult.Results[i] = models.TestPolicyRecord{
+				ID:     "passed-" + strconv.Itoa(i),
+				Name:   test.Name,
+				Passed: true,
+				Functions: models.TestPolicyRecordFunctions{
+					Policy: *buildTestSubRecord(strconv.FormatBool(test.ExpectedResult), ""),
+				},
+			}
 
 		default:
 			// This test didn't run (result.{Errored, Passed, Failed} are all empty). This must not happen absent a bug.
-			return testResults, errors.Errorf("unable to run test for %s", result.ID)
+			return nil, errors.Errorf("unable to run test for %s", result.ID)
 		}
 	}
 
-	testResults.TestSummary = len(testResults.TestsFailed) == 0 && len(testResults.TestsErrored) == 0
-
-	return testResults, nil
+	return &testResult, nil
 }
 
 type TestInputError struct {
@@ -128,11 +141,11 @@ func (e *TestInputError) Error() string {
 	return e.err.Error()
 }
 
-func makeTestResources(policy *models.TestPolicy) ([]enginemodels.Resource, error) {
+func makeTestResources(policy *models.TestPolicyInput) ([]enginemodels.Resource, error) {
 	resources := make([]enginemodels.Resource, len(policy.Tests))
 	for i, test := range policy.Tests {
 		var attrs map[string]interface{}
-		if err := jsoniter.UnmarshalFromString(string(test.Resource), &attrs); err != nil {
+		if err := jsoniter.UnmarshalFromString(test.Resource, &attrs); err != nil {
 			//nolint // Error is capitalized because will be returned to the UI
 			return nil, &TestInputError{fmt.Errorf(`Resource for test "%s" is not valid json: %w`, test.Name, err)}
 		}
@@ -151,7 +164,7 @@ func makeTestResources(policy *models.TestPolicy) ([]enginemodels.Resource, erro
 // input policy, we just pass one of its resource types in the input resource.
 // If the policy is applicable for all resource types, a placeholder value is returned. The engine will
 // run it for any resource type input.
-func policyTestType(input *models.TestPolicy) string {
+func policyTestType(input *models.TestPolicyInput) string {
 	if len(input.ResourceTypes) > 0 {
 		return input.ResourceTypes[0]
 	}

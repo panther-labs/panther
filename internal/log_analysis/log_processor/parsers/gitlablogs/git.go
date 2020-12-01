@@ -19,55 +19,13 @@ package gitlablogs
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 // Git is a a GitLab log line from a failed interaction with git
 type Git struct {
-	Severity      *string            `json:"severity" validate:"required" description:"The log level"`
-	Time          *timestamp.RFC3339 `json:"time" validate:"required" description:"The event timestamp"`
-	CorrelationID *string            `json:"correlation_id,omitempty" description:"Unique id across logs"`
-	Message       *string            `json:"message" validate:"required" description:"The error message from git"`
-
-	parsers.PantherLog
-}
-
-// GitParser parses gitlab rails logs
-type GitParser struct{}
-
-var _ parsers.LogParser = (*GitParser)(nil)
-
-// New creates a new parser
-func (p *GitParser) New() parsers.LogParser {
-	return &GitParser{}
-}
-
-// Parse returns the parsed events or nil if parsing failed
-func (p *GitParser) Parse(log string) ([]*parsers.PantherLog, error) {
-	gitlabGit := Git{}
-
-	err := jsoniter.UnmarshalFromString(log, &gitlabGit)
-	if err != nil {
-		return nil, err
-	}
-
-	gitlabGit.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(gitlabGit); err != nil {
-		return nil, err
-	}
-
-	return gitlabGit.Logs(), nil
-}
-
-// LogType returns the log type supported by this parser
-func (p *GitParser) LogType() string {
-	return TypeGit
-}
-
-func (event *Git) updatePantherFields(p *GitParser) {
-	event.SetCoreFields(p.LogType(), event.Time, event)
+	Severity      pantherlog.String `json:"severity" validate:"required" description:"The log level"`
+	Time          pantherlog.Time   `json:"time" tcodec:"rfc3339" event_time:"true" validate:"required" description:"The event timestamp"`
+	CorrelationID pantherlog.String `json:"correlation_id" panther:"trace_id" description:"Unique id across logs"`
+	Message       pantherlog.String `json:"message" validate:"required" description:"The error message from git"`
 }

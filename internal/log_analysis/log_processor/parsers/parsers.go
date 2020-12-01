@@ -52,9 +52,7 @@ func NewValidator() *validator.Validate {
 }
 
 // Interface is the interface to be used for log parsers.
-type Interface interface {
-	ParseLog(log string) ([]*Result, error)
-}
+type Interface = pantherlog.LogParser
 
 // Result is the result of parsing a log event.
 // It is an alias of `pantherlog.Result` to help with the refactoring.
