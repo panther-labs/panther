@@ -23,11 +23,14 @@ import (
 	"log"
 	"math"
 	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sns"
@@ -36,7 +39,10 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/internal/core/logtypesapi"
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/notify"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
 const (
@@ -53,11 +59,12 @@ type Stats struct {
 func S3Topic(sess *session.Session, account, s3path, s3region, topic string, attributes bool,
 	concurrency int, limit uint64, stats *Stats) (err error) {
 
-	return s3sns(s3.New(sess.Copy(&aws.Config{Region: &s3region})), sns.New(sess),
+	return s3sns(s3.New(sess.Copy(&aws.Config{Region: &s3region})), sns.New(sess), lambda.New(sess),
 		account, s3path, topic, *sess.Config.Region, attributes, concurrency, limit, stats)
 }
 
-func s3sns(s3Client s3iface.S3API, snsClient snsiface.SNSAPI, account, s3path, topic, topicRegion string, attributes bool,
+func s3sns(s3Client s3iface.S3API, snsClient snsiface.SNSAPI, lambdaClient lambdaiface.LambdaAPI,
+	account, s3path, topic, topicRegion string, attributes bool,
 	concurrency int, limit uint64, stats *Stats) (failed error) {
 
 	topicARN := fmt.Sprintf(topicArnTemplate, topicRegion, account, topic)
@@ -69,7 +76,7 @@ func s3sns(s3Client s3iface.S3API, snsClient snsiface.SNSAPI, account, s3path, t
 	for i := 0; i < concurrency; i++ {
 		queueWg.Add(1)
 		go func() {
-			publishNotifications(snsClient, topicARN, attributes, notifyChan, errChan)
+			publishNotifications(snsClient, lambdaClient, topicARN, attributes, notifyChan, errChan)
 			queueWg.Done()
 		}()
 	}
@@ -171,7 +178,8 @@ func listPath(s3Client s3iface.S3API, s3path string, limit uint64,
 }
 
 // post message per file as-if it was an S3 notification
-func publishNotifications(snsClient snsiface.SNSAPI, topicARN string, attributes bool,
+func publishNotifications(snsClient snsiface.SNSAPI, lambdaClient lambdaiface.LambdaAPI,
+	topicARN string, attributes bool,
 	notifyChan chan *events.S3Event, errChan chan error) {
 
 	var failed bool
@@ -180,13 +188,16 @@ func publishNotifications(snsClient snsiface.SNSAPI, topicARN string, attributes
 			continue
 		}
 
-		zap.L().Debug("sending file to SNS",
-			zap.String("bucket", s3Event.Records[0].S3.Bucket.Name),
-			zap.String("key", s3Event.Records[0].S3.Object.Key),
-			zap.Int64("size", s3Event.Records[0].S3.Object.Size))
+		bucket := s3Event.Records[0].S3.Bucket.Name
+		key := s3Event.Records[0].S3.Object.Key
+		size := s3Event.Records[0].S3.Object.Size
 
-		s3Notification := notify.NewS3ObjectPutNotification(s3Event.Records[0].S3.Bucket.Name,
-			s3Event.Records[0].S3.Object.Key, int(s3Event.Records[0].S3.Object.Size))
+		zap.L().Debug("sending file to SNS",
+			zap.String("bucket", bucket),
+			zap.String("key", key),
+			zap.Int64("size", size))
+
+		s3Notification := notify.NewS3ObjectPutNotification(bucket, key, int(size))
 
 		notifyJSON, err := jsoniter.MarshalToString(s3Notification)
 		if err != nil {
@@ -197,19 +208,29 @@ func publishNotifications(snsClient snsiface.SNSAPI, topicARN string, attributes
 
 		// Add attributes based in type of data, this will enable
 		// the rules engine and datacatalog updater to receive the notifications.
-		// For backfilling subscriber like Snowflake this should likely not be enabled
+		// For back-filling subscriber like Snowflake this should likely not be enabled
 		var messageAttributes map[string]*sns.MessageAttributeValue
 		if attributes {
-			dataType := ""
-			logType := ""
+			dataType, err := awsglue.DataTypeFromS3Key(key)
+			if err != nil {
+				errChan <- errors.Wrapf(err, "failed to get data type from %s", key)
+				failed = true
+				continue
+			}
+			logType, err := logTypeFromS3Key(lambdaClient, key)
+			if err != nil {
+				errChan <- errors.Wrapf(err, "failed to get log type from %s", key)
+				failed = true
+				continue
+			}
 			messageAttributes = notify.NewLogAnalysisSNSMessageAttributes(dataType, logType)
 		} else {
 			messageAttributes = make(map[string]*sns.MessageAttributeValue)
 		}
 
 		publishInput := &sns.PublishInput{
-			Message:  &notifyJSON,
-			TopicArn: &topicARN,
+			Message:           &notifyJSON,
+			TopicArn:          &topicARN,
 			MessageAttributes: messageAttributes,
 		}
 
@@ -220,4 +241,52 @@ func publishNotifications(snsClient snsiface.SNSAPI, topicARN string, attributes
 			continue
 		}
 	}
+}
+
+// logType is not derivable from the s3 path, need to use API
+var (
+	initTablenameToLogType sync.Once
+	tableNameToLogType     map[string]string
+)
+
+func logTypeFromS3Key(lambdaClient lambdaiface.LambdaAPI, s3key string) (logType string, err error) {
+	keyParts := strings.Split(s3key, "/")
+	if len(keyParts) < 2 {
+		return "", errors.Errorf("logTypeFromS3Key failed parse on: %s", s3key)
+	}
+
+	initTablenameToLogType.Do(func() {
+		const lambdaName, method = "panther-logtypes-api", "listAvailableLogTypes"
+		var resp *lambda.InvokeOutput
+		resp, err = lambdaClient.Invoke(&lambda.InvokeInput{
+			FunctionName: aws.String(lambdaName),
+			Payload:      []byte(fmt.Sprintf(`{ "%s": {}}`, method)),
+		})
+		if err != nil {
+			err = errors.Wrapf(err, "failed to invoke %#v", method)
+		}
+		if resp.FunctionError != nil {
+			err = errors.Errorf("%s: failed to invoke %#v", *resp.FunctionError, method)
+		}
+
+		var availableLogTypes logtypesapi.AvailableLogTypes
+		err = jsoniter.Unmarshal(resp.Payload, &availableLogTypes)
+		if err != nil {
+			err = errors.Wrapf(err, "failed to unmarshal: %s", string(resp.Payload))
+		}
+
+		tableNameToLogType = make(map[string]string)
+		for _, logType := range availableLogTypes.LogTypes {
+			tableNameToLogType[pantherdb.TableName(logType)] = logType
+		}
+	})
+	// catch any error from above
+	if err != nil {
+		return "", err
+	}
+
+	if logType, found := tableNameToLogType[keyParts[1]]; found {
+		return logType, nil
+	}
+	return "", errors.Errorf("logTypeFromS3Key failed to find logType from: %s", s3key)
 }

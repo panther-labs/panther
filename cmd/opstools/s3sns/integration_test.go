@@ -25,6 +25,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sts"
@@ -35,10 +36,9 @@ import (
 )
 
 const (
-	topicPrefix   = "panther-test-s3sns"
-	s3Bucket        = "panther-public-cloudformation-templates" // this is a public Panther bucket with CF files we can use
-	s3Region      = "us-west-2"                                     // region of above bucket
-	concurrency   = 10
+	topicPrefix = "panther-test-s3sns"
+	s3Prefix    = "logs/aws_vpcflow" // we expect there to some of these for the test to succeed
+	concurrency = 10
 )
 
 var (
@@ -47,12 +47,14 @@ var (
 	awsSession      *session.Session
 	s3Client        *s3.S3
 	snsClient       *sns.SNS
+
+	s3Bucket string
 )
 
 func TestMain(m *testing.M) {
 	integrationTest = strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
 	if integrationTest {
-		awsSession = session.Must(session.NewSession(aws.NewConfig().WithRegion(s3Region)))
+		awsSession = session.Must(session.NewSession())
 		s3Client = s3.New(awsSession)
 		snsClient = sns.New(awsSession)
 
@@ -61,6 +63,19 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 		account = *identity.Account
+
+		// get processed log bucket
+		cfnClient := cloudformation.New(awsSession)
+		response, err := cfnClient.DescribeStacks(
+			&cloudformation.DescribeStacksInput{StackName: aws.String("panther-log-analysis")})
+		if err != nil {
+			panic(err.Error())
+		}
+		for _, param := range response.Stacks[0].Parameters {
+			if aws.StringValue(param.ParameterKey) == "ProcessedDataBucket" {
+				s3Bucket = *param.ParameterValue
+			}
+		}
 	}
 	os.Exit(m.Run())
 }
@@ -70,18 +85,20 @@ func TestIntegrationS3SNS(t *testing.T) {
 		t.Skip()
 	}
 
-	// check that the number files sent matches what was listed
+	// check that the number files sent matches what was listed, lookup attributes
 
 	topicName := topicPrefix + "-topic"
 
-	numberOfFiles, err := testutils.CountObjectsInBucket(s3Client, s3Bucket)
+	numberOfFiles, err := testutils.CountObjectsInBucket(s3Client, s3Bucket, s3Prefix)
 	require.NoError(t, err)
+	require.Greater(t, numberOfFiles, 0, "no data files, wait a bit a snd run again")
 
 	createTopicOutput, err := testutils.CreateTopic(snsClient, topicName)
 	require.NoError(t, err)
 
 	stats := &Stats{}
-	err = S3Topic(awsSession, account, "s3://" + s3Bucket, s3Region, topicName, false, concurrency, 0, stats)
+	err = S3Topic(awsSession, account, "s3://"+s3Bucket+"/"+s3Prefix, *awsSession.Config.Region,
+		topicName, true, concurrency, 0, stats)
 	require.NoError(t, err)
 	assert.Equal(t, numberOfFiles, (int)(stats.NumFiles))
 

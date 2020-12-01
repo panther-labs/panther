@@ -19,11 +19,11 @@ package testutils
  */
 
 import (
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -125,9 +125,10 @@ func AddMessagesToQueue(client sqsiface.SQSAPI, qname string, nBatches, messageB
 	return nil
 }
 
-func CountObjectsInBucket(client s3iface.S3API, bucket string) (count int, err error) {
+func CountObjectsInBucket(client s3iface.S3API, bucket, prefix string) (count int, err error) {
 	input := &s3.ListObjectsV2Input{
 		Bucket: &bucket,
+		Prefix: &prefix,
 	}
 	err = client.ListObjectsV2Pages(input,
 		func(page *s3.ListObjectsV2Output, lastPage bool) bool {

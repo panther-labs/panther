@@ -19,8 +19,9 @@ package awsglue
  */
 
 import (
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
@@ -68,28 +69,25 @@ func DataPrefix(databaseName string) string {
 	}
 }
 
-func TypesFromS3Key(s3key string) (dataType pantherdb.DataType, logType string, err error) {
+func DataTypeFromS3Key(s3key string) (dataType pantherdb.DataType, err error) {
 	keyParts := strings.Split(s3key, "/")
 	if len(keyParts) < 2 {
-		return "", "", errors.Errorf("TypesFromS3Key failed parse on: %s", s3key)
+		return "", errors.Errorf("DataTypeFromS3Key failed parse on: %s", s3key)
 	}
 
 	// dataType
 	switch keyParts[0] {
-	case logS3Prefix: dataType = pantherdb.LogData
-	case ruleMatchS3Prefix: dataType = pantherdb.RuleData
-	case ruleErrorsS3Prefix: dataType = pantherdb.RuleErrors
-	case cloudSecurityS3Prefix: dataType = pantherdb.CloudSecurity
+	case logS3Prefix:
+		dataType = pantherdb.LogData
+	case ruleMatchS3Prefix:
+		dataType = pantherdb.RuleData
+	case ruleErrorsS3Prefix:
+		dataType = pantherdb.RuleErrors
+	case cloudSecurityS3Prefix:
+		dataType = pantherdb.CloudSecurity
 	default:
-		return "", "", errors.Errorf("TypesFromS3Key cannot find data type from: %s", s3key)
+		return "", errors.Errorf("DataTypeFromS3Key cannot find data type from: %s", s3key)
 	}
 
-	// logType
-	logTypeParts := strings.Split(keyParts[1], "_")
-	for i, logTypePart := range logTypeParts {
-		logTypeParts[i] = strings.Title(logTypePart)
-	}
-	logType = strings.Join(logTypeParts, ".")
-
-	return dataType, logType, err
+	return dataType, err
 }

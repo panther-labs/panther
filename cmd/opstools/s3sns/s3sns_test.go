@@ -55,7 +55,8 @@ func TestS3Queue(t *testing.T) {
 	snsClient.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
 	stats := &Stats{}
-	err := s3sns(s3Client, snsClient, testAccount, testS3Path, topic, topicRegion, false, 1, 0, stats)
+	err := s3sns(s3Client, snsClient, nil,
+		testAccount, testS3Path, topic, topicRegion, false, 1, 0, stats)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	snsClient.AssertExpectations(t)
@@ -82,7 +83,8 @@ func TestS3QueueLimit(t *testing.T) {
 	snsClient.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
 	stats := &Stats{}
-	err := s3sns(s3Client, snsClient, testAccount, testS3Path, topic, topicRegion, false, 1, 1, stats)
+	err := s3sns(s3Client, snsClient, nil,
+		testAccount, testS3Path, topic, topicRegion, false, 1, 1, stats)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	snsClient.AssertExpectations(t)
