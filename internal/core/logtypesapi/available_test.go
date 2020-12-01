@@ -31,9 +31,7 @@ func TestAPI_ListAvailableLogTypes(t *testing.T) {
 	assert := require.New(t)
 	ctx := context.Background()
 	api := logtypesapi.LogTypesAPI{
-		Database: &TestCase{
-			ListLogTypesOutput: []string{"foo", "bar", "baz"},
-		},
+		Database: ListAvailableAPI{"bar", "baz", "foo"},
 	}
 
 	actual, _ := api.ListAvailableLogTypes(ctx)
@@ -49,4 +47,12 @@ func TestAPI_ListAvailableLogTypes(t *testing.T) {
 	assert.Equal(&logtypesapi.AvailableLogTypes{
 		LogTypes: []string{"aaa", "bar", "baz", "foo"},
 	}, actual)
+}
+
+type ListAvailableAPI []string
+
+var _ logtypesapi.LogTypesDatabase = (ListAvailableAPI)(nil)
+
+func (l ListAvailableAPI) IndexLogTypes(ctx context.Context) ([]string, error) {
+	return l, nil
 }

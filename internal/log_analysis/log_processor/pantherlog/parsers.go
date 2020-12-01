@@ -1,4 +1,4 @@
-package parsers
+package pantherlog
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -25,49 +25,22 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
-// Factory creates new parser instances.
-// The params argument defines parameters for a parser.
-type Factory interface {
-	NewParser(params interface{}) (Interface, error)
+type LogParserFactory interface {
+	NewParser(_ interface{}) (LogParser, error)
 }
 
-// FactoryFunc is a callback parser factory
-type FactoryFunc func(params interface{}) (Interface, error)
+var _ LogParserFactory = (FactoryFunc)(nil)
 
-// NewParser implements Factory interface
-func (ff FactoryFunc) NewParser(params interface{}) (Interface, error) {
-	return ff(params)
+type FactoryFunc func(params interface{}) (LogParser, error)
+
+func (f FactoryFunc) NewParser(params interface{}) (LogParser, error) {
+	return f(params)
 }
 
-// AdapterFactory returns a parsers.Factory from a parsers.Parser
-// This is used to ease transition to the new parsers.Interface for parsers based on parsers.PantherLog
-func AdapterFactory(parser LogParser) Factory {
-	return FactoryFunc(func(_ interface{}) (Interface, error) {
-		return NewAdapter(parser), nil
-	})
-}
-
-// NewAdapter creates a pantherlog.LogParser from a parsers.Parser
-func NewAdapter(parser LogParser) Interface {
-	return &logParserAdapter{
-		LogParser: parser.New(),
-	}
-}
-
-type logParserAdapter struct {
-	LogParser
-}
-
-func (a *logParserAdapter) ParseLog(log string) ([]*Result, error) {
-	results, err := a.LogParser.Parse(log)
-	if err != nil {
-		return nil, err
-	}
-	return ToResults(results, nil)
+type LogParser interface {
+	ParseLog(log string) ([]*Result, error)
 }
 
 type JSONParserFactory struct {
@@ -80,10 +53,10 @@ type JSONParserFactory struct {
 	Now            func() time.Time
 }
 
-func (f *JSONParserFactory) NewParser(_ interface{}) (Interface, error) {
+func (f *JSONParserFactory) NewParser(_ interface{}) (LogParser, error) {
 	validate := f.Validate
 	if validate == nil {
-		validate = pantherlog.ValidateStruct
+		validate = ValidateStruct
 	}
 
 	logReader := strings.NewReader(`null`)
@@ -95,7 +68,7 @@ func (f *JSONParserFactory) NewParser(_ interface{}) (Interface, error) {
 	}
 	api := f.JSON
 	if api == nil {
-		api = pantherlog.ConfigJSON()
+		api = ConfigJSON()
 	}
 	iter := jsoniter.Parse(api, logReader, bufferSize)
 
@@ -104,7 +77,7 @@ func (f *JSONParserFactory) NewParser(_ interface{}) (Interface, error) {
 		newEvent: f.NewEvent,
 		iter:     iter,
 		validate: validate,
-		builder: pantherlog.ResultBuilder{
+		builder: ResultBuilder{
 			Now:       f.Now,
 			NextRowID: f.NextRowID,
 		},
@@ -117,7 +90,7 @@ type simpleJSONParser struct {
 	newEvent  func() interface{}
 	iter      *jsoniter.Iterator
 	validate  func(x interface{}) error
-	builder   pantherlog.ResultBuilder
+	builder   ResultBuilder
 	logReader io.Reader
 }
 
