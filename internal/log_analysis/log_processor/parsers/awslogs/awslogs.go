@@ -78,7 +78,7 @@ var logTypes = logtypes.Must("AWS",
 		Description:  `AWSCloudTrailInsight represents the content of a CloudTrail Insight event record S3 object.`,
 		ReferenceURL: `https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html`,
 		Schema:       mustBuildEventSchema(CloudTrailInsight{}),
-		NewParser: parsers.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
+		NewParser: pantherlog.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
 			return &CloudTrailInsightParser{}, nil
 		}),
 	},
