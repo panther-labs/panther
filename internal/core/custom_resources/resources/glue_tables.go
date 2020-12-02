@@ -27,6 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	cloudsecglue "github.com/panther-labs/panther/internal/compliance/awsglue"
 	"github.com/panther-labs/panther/internal/core/source_api/apifunctions"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
@@ -56,27 +57,40 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 			logger.Error("failed to parse resource properties", zap.Error(err))
 			return physicalResourceID, nil, err
 		}
-		// Verify that all log processing databases are present
+
 		for db, desc := range pantherdb.LogDatabases {
 			if err := awsglue.EnsureDatabase(ctx, glueClient, db, desc); err != nil {
-				return physicalResourceID, nil, errors.Wrapf(err, "failed to create database %s", db)
+				return physicalResourceID, nil,errors.Wrapf(err, "failed to create database %s", db)
 			}
 		}
+		if err := cloudsecglue.CreateOrUpdateCloudSecurityDatabase(glueClient); err != nil {
+			return physicalResourceID, nil,errors.Wrapf(err, "failed to create database %s", db)
+		}
 
-		requiredLogTypes, err := apifunctions.ListLogTypes(ctx, lambdaClient)
+		err = cloudsecglue.CreateOrUpdateResourcesTable(glueClient, props.ResourcesTableARN)
 		if err != nil {
-			logger.Error("failed to fetch required log types", zap.Error(err))
+			return err
+		}
+
+		err = cloudsecglue.CreateOrUpdateComplianceTable(glueClient, props.ComplianceTableARN)
+		if err != nil {
+			return err
+		}
+
+		logTypesInUse, err := apifunctions.ListLogTypes(ctx, lambdaClient)
+		if err != nil {
+			logger.Error("failed to fetch log types in use", zap.Error(err))
 			return physicalResourceID, nil, errors.Wrap(err, "failed to fetch required log types from Sources API")
 		}
 		client := datacatalog.Client{
 			SQSAPI:   sqsClient,
 			QueueURL: props.DataCatalogUpdaterQueueURL,
 		}
-		if err := client.SendSyncDatabase(ctx, event.RequestID, requiredLogTypes); err != nil {
+		if err := client.SendSyncDatabase(ctx, event.RequestID, logTypesInUse); err != nil {
 			logger.Error("failed to update glue tables", zap.Error(err))
 			return physicalResourceID, nil, err
 		}
-		logger.Info("started database sync", zap.Strings("logTypes", requiredLogTypes))
+		logger.Info("started database sync", zap.Strings("logTypes", logTypesInUse))
 		return physicalResourceID, nil, nil
 	case cfn.RequestDelete:
 		// Deleting all log processing databases
