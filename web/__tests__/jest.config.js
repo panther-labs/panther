@@ -37,6 +37,7 @@ module.exports = {
     '^Hooks/(.*)': '<rootDir>/src/hooks/$1',
     '^Hoc/(.*)': '<rootDir>/src/hoc/$1',
     '^Source/(.*)': '<rootDir>/src/$1',
+    '^Public/(.*)': '<rootDir>/public/$1',
     'test-utils': '<rootDir>/__tests__/utils',
   },
 

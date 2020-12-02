@@ -19,6 +19,7 @@
       "Hooks/*": ["src/hooks/*"],
       "Hoc/*": ["src/hoc/*"],
       "Source/*": ["src/*"],
+      "Public/*": ["public/*"],
       "test-utils": ["__tests__/utils"]
     }
   },
