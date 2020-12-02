@@ -99,14 +99,11 @@ func pythonListFilters(enabled *bool, nameContains string, severity []compliance
 	}
 
 	if len(severity) > 0 {
-		// filters = append(filters, expression.Equal(
-		// expression.Name("severity"), expression.Value(severity)))
-		typeFilter := expression.AttributeExists(expression.Name("severity"))
-		for _, typeName := range types {
-			// the item in Dynamo calls this "resourceTypes" for both policies and rules
-			typeFilter = typeFilter.Or(expression.Contains(expression.Name("severity"), typeName))
+		severityFilter := expression.AttributeExists(expression.Name("severity"))
+		for _, severityType := range severity {
+			severityFilter = severityFilter.Or(expression.Contains(expression.Name("severity"), string(severityType)))
 		}
-		filters = append(filters, typeFilter)
+		filters = append(filters, severityFilter)
 	}
 
 	if len(tags) > 0 {
