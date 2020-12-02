@@ -20,8 +20,11 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
@@ -45,7 +48,7 @@ func (API) ListDataModels(input *models.ListDataModelsInput) *events.APIGatewayP
 	}
 
 	// Scan dynamo
-	scanInput, err := buildScanInput(models.TypeDataModel, nil)
+	scanInput, err := dataModelScanInput(input)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{
 			Body: err.Error(), StatusCode: http.StatusInternalServerError}
@@ -77,8 +80,6 @@ func (API) ListDataModels(input *models.ListDataModelsInput) *events.APIGatewayP
 
 	return gatewayapi.MarshalResponse(&result, http.StatusOK)
 }
-<<<<<<< HEAD
-=======
 
 func dataModelScanInput(input *models.ListDataModelsInput) (*dynamodb.ScanInput, error) {
 	var filters []expression.ConditionBuilder
@@ -104,4 +105,3 @@ func dataModelScanInput(input *models.ListDataModelsInput) (*dynamodb.ScanInput,
 
 	return buildScanInput(models.TypeDataModel, []string{}, filters...)
 }
->>>>>>> eb4c6945 (Fix uuid validation and case-insensitive filtering (#2167))
