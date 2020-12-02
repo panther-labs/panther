@@ -61,6 +61,9 @@ import ListGlobalPythonModulesPage from 'Pages/ListGlobalPythonModules';
 import CreateGlobalPythonModulePage from 'Pages/CreateGlobalPythonModule';
 import EditGlobalPythonModulePage from 'Pages/EditGlobalPythonModule';
 import EditSqsLogSource from 'Pages/EditSqsLogSource';
+import CreateCustomLogPage from 'Pages/CreateCustomLog';
+import ListCustomLogsPage from 'Pages/ListCustomLogs';
+import CustomLogDetailsPage from 'Pages/CustomLogDetails';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -221,6 +224,21 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   exact
                   path={urls.settings.destinations.list()}
                   component={ListDestinationsPage}
+                />
+                <Route
+                  exact
+                  path={urls.logAnalysis.customLogs.create()}
+                  component={CreateCustomLogPage}
+                />
+                <Route
+                  exact
+                  path={urls.logAnalysis.customLogs.details(':logType')}
+                  component={CustomLogDetailsPage}
+                />
+                <Route
+                  exact
+                  path={urls.logAnalysis.customLogs.list()}
+                  component={ListCustomLogsPage}
                 />
                 <Route exact path={urls.account.support()} component={SupportPage} />
                 <Route component={Page404} />
