@@ -99,7 +99,7 @@ func pythonListFilters(enabled *bool, nameContains string, severity []compliance
 	}
 
 	if len(severity) > 0 {
-		severityFilter := expression.AttributeExists(expression.Name("severity"))
+		severityFilter := expression.AttributeNotExists(expression.Name("severity"))
 		for _, severityType := range severity {
 			severityFilter = severityFilter.Or(expression.Contains(expression.Name("severity"), string(severityType)))
 		}
