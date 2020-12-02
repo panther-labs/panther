@@ -104,7 +104,7 @@ const GenericItemCardOptionsButton = React.forwardRef<HTMLButtonElement>(functio
   ref
 ) {
   return (
-    <Box ml={1} mt={-1}>
+    <Box ml={2} mt={-1}>
       <IconButton
         variant="ghost"
         variantColor="navyblue"

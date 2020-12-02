@@ -20,6 +20,9 @@ package logtypesapi
 
 import (
 	"context"
+	"fmt"
+
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 )
 
 const LambdaName = "panther-logtypes-api"
@@ -35,10 +38,71 @@ const LambdaName = "panther-logtypes-api"
 type LogTypesAPI struct {
 	NativeLogTypes func() []string
 	Database       LogTypesDatabase
+	LambdaClient   lambdaiface.LambdaAPI
 }
 
 // LogTypesDatabase handles the external actions required for LogTypesAPI to be implemented
 type LogTypesDatabase interface {
 	// Return an index of available log types
 	IndexLogTypes(ctx context.Context) ([]string, error)
+
+	// Create a new custom log record
+	CreateCustomLog(ctx context.Context, id string, params *CustomLog) (*CustomLogRecord, error)
+	// Get a single custom log record
+	GetCustomLog(ctx context.Context, id string, revision int64) (*CustomLogRecord, error)
+	// Update a custom log record
+	UpdateCustomLog(ctx context.Context, id string, currentRevision int64, params *CustomLog) (*CustomLogRecord, error)
+	// Delete a custom log record
+	DeleteCustomLog(ctx context.Context, id string, currentRevision int64) error
+	// Get multiple custom log records at their latest revision
+	BatchGetCustomLogs(ctx context.Context, ids ...string) ([]*CustomLogRecord, error)
+}
+
+const (
+	// ErrRevisionConflict is the error code to use when there is a revision conflict
+	ErrRevisionConflict = "RevisionConflict"
+	ErrAlreadyExists    = "AlreadyExists"
+	ErrNotFound         = "NotFound"
+	ErrInUse            = "InUse"
+)
+
+// APIError is an error that has a code and a message and is returned as part of the API response
+type APIError struct {
+	Code    string `json:"code" validate:"required"`
+	Message string `json:"message" validate:"required"`
+}
+
+// Error implements error interface
+func (e *APIError) Error() string {
+	return fmt.Sprintf("%s: %s", e.Code, e.Message)
+}
+
+// NewAPIError creates a new API error
+func NewAPIError(code, message string) *APIError {
+	return &APIError{
+		Code:    code,
+		Message: message,
+	}
+}
+
+// WrapAPIError wraps an error to be an API error keeping code and message if available
+func WrapAPIError(err error) *APIError {
+	if apiErr, ok := err.(*APIError); ok {
+		return apiErr
+	}
+	type errWithCode interface {
+		error
+		Code() string
+		Message() string
+	}
+	if e, ok := err.(errWithCode); ok {
+		return &APIError{
+			Code:    e.Code(),
+			Message: e.Message(),
+		}
+	}
+	return &APIError{
+		Code:    "UnknownError",
+		Message: err.Error(),
+	}
 }
