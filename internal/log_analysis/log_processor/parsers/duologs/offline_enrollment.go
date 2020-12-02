@@ -29,7 +29,7 @@ type OfflineEnrollmentLog struct {
 	ISOTimestamp pantherlog.Time   `json:"isotimestamp" validate:"required" event_time:"true" tcodec:"rfc3339" description:"ISO8601 timestamp of the event."`
 	Object       pantherlog.String `json:"object" validate:"required" description:"The Duo Windows Logon integration's name."`
 	Timestamp    pantherlog.Time   `json:"timestamp" tcodec:"unix" description:"Unix timestamp of the event."`
-	UserName     pantherlog.String `json:"username" validate:"required" description:"The Duo username."`
+	UserName     pantherlog.String `json:"username" panther:"username" validate:"required" description:"The Duo username."`
 }
 
 // nolint:lll
