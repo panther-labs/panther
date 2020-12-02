@@ -37,6 +37,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
 const (
@@ -419,7 +420,7 @@ func buildRecoverRange(tbl *glue.TableData, start, end time.Time) (time.Time, ti
 		end = maxTime
 	}
 	switch dbName {
-	case awsglue.LogProcessingDatabaseName:
+	case pantherdb.LogProcessingDatabase:
 		// Do not cap dates for log tables.
 		// Log tables are partitioned by event time and that could be in the past or future.
 	default:

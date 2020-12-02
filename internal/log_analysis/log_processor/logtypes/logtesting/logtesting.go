@@ -83,7 +83,11 @@ type TestCase struct {
 
 // Run runs a test case
 func (c *TestCase) Run(t *testing.T) {
-	TestRegisteredParser(t, c.Resolve, c.LogType, c.Input, append([]string{c.Result}, c.Results...)...)
+	results := c.Results
+	if c.Result != "" {
+		results = append([]string{c.Result}, c.Results...)
+	}
+	TestRegisteredParser(t, c.Resolve, c.LogType, c.Input, results...)
 }
 
 // TestRegisteredParser is a helper to run a test for a registered log parser

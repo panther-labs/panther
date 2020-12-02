@@ -68,13 +68,13 @@ type OneLogin struct {
 	CustomMessage                   pantherlog.String `json:"custom_message" description:"More details about the event."`
 	BrowserFingerprint              pantherlog.String `json:"browser_fingerprint" description:"The fingerprint of the browser."`
 	OtpDeviceName                   pantherlog.String `json:"otp_device_name" description:"Name of a device involved in the event."`
-	ActorUserName                   pantherlog.String `json:"actor_user_name" description:"First and last name of the user whose action triggered the event."`
+	ActorUserName                   pantherlog.String `json:"actor_user_name" panther:"username" description:"First and last name of the user whose action triggered the event."`
 	ActorSystem                     pantherlog.String `json:"actor_system" description:"Acting system that triggered the event when the actor is not a user."`
 	UserFieldName                   pantherlog.String `json:"user_field_name" description:"The name of the custom user field."`
 	UserFieldID                     pantherlog.String `json:"user_field_id" description:"The ID of the custom user field."`
 	AssumingActingUserID            pantherlog.Int64  `json:"assuming_acting_user_id" description:"ID of the user who assumed the role of the acting user to trigger the event, if applicable."`
 	APICredentialName               pantherlog.String `json:"api_credential_name" description:"The name of the API credential used."`
-	ImportedUserName                pantherlog.String `json:"imported_user_name" description:"The name of the imported user."`
+	ImportedUserName                pantherlog.String `json:"imported_user_name" panther:"username" description:"The name of the imported user."`
 	NoteTitle                       pantherlog.String `json:"note_title" description:"The title of the note."`
 	TrustedIdpName                  pantherlog.String `json:"trusted_idp_name" description:"The name of the trusted IDP."`
 	PolicyID                        pantherlog.Int64  `json:"policy_id" description:"ID of the policy involved in the event."`

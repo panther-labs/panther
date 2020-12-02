@@ -62,6 +62,17 @@ func TestStringCodec(t *testing.T) {
 		require.Equal(t, `{}`, data)
 	}
 	{
+		// Test reading json bool into string
+		a := A{}
+		err := jsoniter.UnmarshalFromString(`{"foo":true}`, &a)
+		require.NoError(t, err)
+		require.Equal(t, "true", a.Foo.Value)
+		require.True(t, a.Foo.Exists)
+		data, err := jsoniter.MarshalToString(&a)
+		require.NoError(t, err)
+		require.Equal(t, `{"foo":"true"}`, data)
+	}
+	{
 		s := null.FromString("foo")
 		data, err := jsoniter.MarshalToString(&s)
 		require.NoError(t, err)

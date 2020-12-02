@@ -33,6 +33,7 @@ _LOGGER = get_logger()
 _RULES_ENGINE = Engine(AnalysisAPIClient())
 
 
+#  pylint: disable=unsubscriptable-object
 def lambda_handler(event: Dict[str, Any], unused_context: Any) -> Optional[Dict[str, Any]]:
     """Entry point for the Lambda"""
     if 'rules' in event:
@@ -69,6 +70,16 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
                 'ruleError': format_exception(rule_result.rule_exception),
                 'titleOutput': rule_result.title_output,
                 'titleError': format_exception(rule_result.title_exception),
+                'descriptionOutput': rule_result.description_output,
+                'descriptionError': format_exception(rule_result.description_exception),
+                'referenceOutput': rule_result.reference_output,
+                'referenceError': format_exception(rule_result.reference_exception),
+                'severityOutput': rule_result.severity_output,
+                'severityError': format_exception(rule_result.severity_exception),
+                'runbookOutput': rule_result.runbook_output,
+                'runbookError': format_exception(rule_result.runbook_exception),
+                'destinationOverrideOutput': rule_result.destination_override_output,
+                'destinationOverride': format_exception(rule_result.destination_override_exception),
                 'dedupOutput': rule_result.dedup_output,
                 'dedupError': format_exception(rule_result.dedup_exception),
                 'alertContextOutput': rule_result.alert_context,

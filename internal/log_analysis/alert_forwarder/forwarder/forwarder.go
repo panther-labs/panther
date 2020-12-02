@@ -101,15 +101,15 @@ func (h *Handler) handleNewAlert(rule *ruleModel.Rule, event *AlertDedupEvent) e
 
 	err := h.sendAlertNotification(rule, event)
 	if err == nil && event.Type == alertModel.RuleType {
-		h.logStats(rule)
+		h.logStats(rule, event)
 	}
 	return err
 }
 
-func (h *Handler) logStats(rule *ruleModel.Rule) {
+func (h *Handler) logStats(rule *ruleModel.Rule, event *AlertDedupEvent) {
 	h.MetricsLogger.Log(
 		[]metrics.Dimension{
-			{Name: "Severity", Value: string(rule.Severity)},
+			{Name: "Severity", Value: getSeverity(rule, event)},
 			{Name: "AnalysisType", Value: "Rule"},
 			{Name: "AnalysisID", Value: rule.ID},
 		},
@@ -156,9 +156,9 @@ func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEven
 	alert := &Alert{
 		ID:                  generateAlertID(alertDedup),
 		TimePartition:       defaultTimePartition,
-		Severity:            string(rule.Severity),
+		Severity:            getSeverity(rule, alertDedup),
 		RuleDisplayName:     getRuleDisplayName(rule),
-		Title:               getAlertTitle(rule, alertDedup),
+		Title:               getTitle(rule, alertDedup),
 		FirstEventMatchTime: alertDedup.CreationTime,
 		LogTypes:            alertDedup.LogTypes,
 		AlertDedupEvent: AlertDedupEvent{
@@ -173,6 +173,12 @@ func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEven
 			EventCount:   alertDedup.EventCount,
 			LogTypes:     alertDedup.LogTypes,
 			Type:         alertDedup.Type,
+			// Generated Fields
+			GeneratedTitle:               aws.String(getTitle(rule, alertDedup)),
+			GeneratedDescription:         aws.String(getDescription(rule, alertDedup)),
+			GeneratedReference:           aws.String(getReference(rule, alertDedup)),
+			GeneratedRunbook:             aws.String(getRunbook(rule, alertDedup)),
+			GeneratedDestinationOverride: alertDedup.GeneratedDestinationOverride,
 		},
 	}
 
@@ -194,21 +200,23 @@ func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEven
 
 func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
 	alertNotification := &alertModel.Alert{
-		AlertID:             aws.String(generateAlertID(alertDedup)),
-		AnalysisDescription: &rule.Description,
-		AnalysisID:          alertDedup.RuleID,
+		AlertID:      aws.String(generateAlertID(alertDedup)),
+		AnalysisID:   alertDedup.RuleID,
+		AnalysisName: getRuleDisplayName(rule),
 		// In case a rule has a threshold, we want the alert creation time to be the same time
 		// as the update time -> the time that an update(new event) caused the matched events to exceed threshold
 		// In case the rule doesnt' have a threshold, the two are anyway the same
-		CreatedAt:    alertDedup.UpdateTime,
-		OutputIds:    rule.OutputIDs,
-		AnalysisName: getRuleDisplayName(rule),
-		Runbook:      &rule.Runbook,
-		Severity:     string(rule.Severity),
-		Tags:         rule.Tags,
-		Type:         alertDedup.Type,
-		Title:        aws.String(getAlertTitle(rule, alertDedup)),
-		Version:      &alertDedup.RuleVersion,
+		CreatedAt: alertDedup.UpdateTime,
+		OutputIds: getOutputIds(rule, alertDedup),
+		Tags:      rule.Tags,
+		Type:      alertDedup.Type,
+		Version:   &alertDedup.RuleVersion,
+		// Generated Fields
+		AnalysisDescription: getDescription(rule, alertDedup),
+		Reference:           getReference(rule, alertDedup),
+		Runbook:             getRunbook(rule, alertDedup),
+		Severity:            getSeverity(rule, alertDedup),
+		Title:               getTitle(rule, alertDedup),
 	}
 
 	if alertDedup.AlertContext != nil {
@@ -238,7 +246,7 @@ func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertD
 	return nil
 }
 
-func getAlertTitle(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) string {
+func getTitle(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) string {
 	if alertDedup.GeneratedTitle != nil {
 		return *alertDedup.GeneratedTitle
 	}
@@ -247,6 +255,41 @@ func getAlertTitle(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) string {
 		return *ruleDisplayName
 	}
 	return rule.ID
+}
+
+func getDescription(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) string {
+	if alertDedup.GeneratedDescription != nil {
+		return *alertDedup.GeneratedDescription
+	}
+	return rule.Description
+}
+
+func getReference(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) string {
+	if alertDedup.GeneratedReference != nil {
+		return *alertDedup.GeneratedReference
+	}
+	return rule.Reference
+}
+
+func getRunbook(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) string {
+	if alertDedup.GeneratedRunbook != nil {
+		return *alertDedup.GeneratedRunbook
+	}
+	return rule.Runbook
+}
+
+func getSeverity(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) string {
+	if alertDedup.GeneratedSeverity != nil {
+		return *alertDedup.GeneratedSeverity
+	}
+	return string(rule.Severity)
+}
+
+func getOutputIds(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) []string {
+	if alertDedup.GeneratedDestinationOverride != nil {
+		return alertDedup.GeneratedDestinationOverride
+	}
+	return rule.OutputIDs
 }
 
 func getRuleDisplayName(rule *ruleModel.Rule) *string {
