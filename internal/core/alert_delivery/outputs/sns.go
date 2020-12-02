@@ -19,6 +19,8 @@ package outputs
  */
 
 import (
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -30,6 +32,7 @@ import (
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 type snsMessage struct {
@@ -40,6 +43,9 @@ type snsMessage struct {
 
 // Tests can replace this with a mock implementation
 var getSnsClient = buildSnsClient
+
+// SNS subject size limit
+const maxTitleSize = 100
 
 // Sns sends an alert to an SNS Topic.
 // nolint: dupl
@@ -73,10 +79,11 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 			Success:    false,
 		}
 	}
-
-	title := generateAlertTitle(alert)
-	if len(title) > 100 {
-		title = title[0:100]
+	// Remove newlines in title
+	title := strings.ReplaceAll(generateAlertTitle(alert), "\n", "")
+	// Trim title to the AWS SNS 100 char limit
+	if len(title) > maxTitleSize {
+		title = title[:maxTitleSize-3] + "..."
 	}
 
 	snsMessageInput := &sns.PublishInput{
@@ -101,8 +108,16 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 
 	response, err := snsClient.Publish(snsMessageInput)
 	if err != nil {
-		zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
-		return getAlertResponseFromSNSError(err)
+		// Catch title edge cases and make SNS API call with generic title
+		if awsutils.IsAnyError(err, sns.ErrCodeInvalidParameterException) {
+			const defaultTitle = "New Panther Alert"
+			snsMessageInput.Subject = aws.String(defaultTitle)
+			response, err = snsClient.Publish(snsMessageInput)
+			if err != nil {
+				zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
+				return getAlertResponseFromSNSError(err)
+			}
+		}
 	}
 
 	if response == nil {
@@ -134,8 +149,7 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 func buildSnsClient(awsSession *session.Session, topicArn string) (snsiface.SNSAPI, error) {
 	parsedArn, err := arn.Parse(topicArn)
 	if err != nil {
-		zap.L().Error("failed to parse topic ARN", zap.Error(err))
-		return nil, err
+		return nil, errors.Wrap(err, "failed to parse SNS topic ARN")
 	}
 	return sns.New(awsSession, aws.NewConfig().WithRegion(parsedArn.Region)), nil
 }

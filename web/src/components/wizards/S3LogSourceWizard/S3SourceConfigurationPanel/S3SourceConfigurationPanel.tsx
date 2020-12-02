@@ -39,9 +39,9 @@ const S3SourceConfigurationPanel: React.FC = () => {
 
   return (
     <WizardPanel>
-      <Box width={400} m="auto">
+      <Box width={500} m="auto">
         <WizardPanel.Heading
-          title={initialValues.integrationId ? 'Update your source' : 'Configure your source below'}
+          title={initialValues.integrationId ? 'Update your source' : 'Configure your source'}
           subtitle={
             initialValues.integrationId
               ? 'Feel free to make any changes to your log source'
@@ -83,7 +83,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
               placeholder="The types of logs that are collected"
             />
           </Flex>
-          <Flex justify="center" mt={4}>
+          <Flex justify="center" mt={6}>
             <AbstractButton
               color="teal-400"
               fontSize="medium"

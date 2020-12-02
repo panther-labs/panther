@@ -20,12 +20,12 @@ variable "aws_partition" {
   default     = "aws"
 }
 
+variable "panther_region" {
+  type        = string
+  description = "The AWS region where you have deployed Panther"
+}
+
 variable "master_account_id" {
   type        = string
   description = "AWS account ID of the account running the Panther backend"
-}
-
-variable "queue_arn" {
-  type        = string
-  description = "The Panther SQS Queue Arn to forward CloudWatch Events to via SNS."
 }

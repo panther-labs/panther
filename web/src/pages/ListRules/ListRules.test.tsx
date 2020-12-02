@@ -19,12 +19,12 @@
 import React from 'react';
 import {
   buildListRulesResponse,
-  render,
-  fireEvent,
-  within,
-  fireClickAndMouseEvents,
-  waitMs,
   buildRuleSummary,
+  fireClickAndMouseEvents,
+  fireEvent,
+  render,
+  waitMs,
+  within,
 } from 'test-utils';
 import { ListRulesSortFieldsEnum, SeverityEnum, SortDirEnum } from 'Generated/schema';
 import { queryStringOptions } from 'Hooks/useUrlParams';
@@ -154,7 +154,7 @@ describe('ListRules', () => {
           input: {
             ...parsedInitialParams,
             enabled: true,
-            severity: SeverityEnum.Info,
+            severity: [SeverityEnum.Info],
           },
         },
         data: {

@@ -96,7 +96,7 @@ func uploadAsset(assetPath, bucket, stack string) (string, string, error) {
 
 	if awsutils.IsAnyError(err, "NotFound") {
 		// object does not exist yet - upload it!
-		response, err := util.UploadFileToS3(log, assetPath, bucket, s3Key)
+		response, err := util.UploadFileToS3(log, clients.S3Uploader(), assetPath, bucket, s3Key)
 		if err != nil {
 			return "", "", fmt.Errorf("package %s: failed to upload %s: %v", stack, assetPath, err)
 		}

@@ -19,59 +19,17 @@ package gitlablogs
  */
 
 import (
-	jsoniter "github.com/json-iterator/go"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 // Integrations is a a GitLab log line from an integrated gitlab activity
 type Integrations struct {
-	Severity     *string            `json:"severity" validate:"required" description:"The log level"`
-	Time         *timestamp.RFC3339 `json:"time" validate:"required" description:"The event timestamp"`
-	ServiceClass *string            `json:"service_class" validate:"required" description:"The class name of the integrated service"`
-	ProjectID    *int64             `json:"project_id" validate:"required" description:"The project id the integration was running on"`
-	ProjectPath  *string            `json:"project_path" validate:"required" description:"The project path the integration was running on"`
-	Message      *string            `json:"message" validate:"required" description:"The log message from the service"`
-	ClientURL    *string            `json:"client_url" validate:"required" description:"The client url of the service"`
-	Error        *string            `json:"error,omitempty" description:"The error name if an error has occurred"`
-
-	parsers.PantherLog
-}
-
-// IntegrationsParser parses gitlab integration logs
-type IntegrationsParser struct{}
-
-var _ parsers.LogParser = (*IntegrationsParser)(nil)
-
-// New creates a new parser
-func (p *IntegrationsParser) New() parsers.LogParser {
-	return &IntegrationsParser{}
-}
-
-// Parse returns the parsed events or nil if parsing failed
-func (p *IntegrationsParser) Parse(log string) ([]*parsers.PantherLog, error) {
-	gitlabIntegrations := Integrations{}
-
-	err := jsoniter.UnmarshalFromString(log, &gitlabIntegrations)
-	if err != nil {
-		return nil, err
-	}
-
-	gitlabIntegrations.updatePantherFields(p)
-
-	if err := parsers.Validator.Struct(gitlabIntegrations); err != nil {
-		return nil, err
-	}
-
-	return gitlabIntegrations.Logs(), nil
-}
-
-// LogType returns the log type supported by this parser
-func (p *IntegrationsParser) LogType() string {
-	return TypeIntegrations
-}
-
-func (event *Integrations) updatePantherFields(p *IntegrationsParser) {
-	event.SetCoreFields(p.LogType(), event.Time, event)
+	Severity     pantherlog.String `json:"severity" validate:"required" description:"The log level"`
+	Time         pantherlog.Time   `json:"time" tcodec:"rfc3339" event_time:"true" validate:"required" description:"The event timestamp"`
+	ServiceClass pantherlog.String `json:"service_class" validate:"required" description:"The class name of the integrated service"`
+	ProjectID    pantherlog.Int64  `json:"project_id" validate:"required" description:"The project id the integration was running on"`
+	ProjectPath  pantherlog.String `json:"project_path" validate:"required" description:"The project path the integration was running on"`
+	Message      pantherlog.String `json:"message" validate:"required" description:"The log message from the service"`
+	ClientURL    pantherlog.String `json:"client_url" panther:"url" validate:"required" description:"The client url of the service"`
+	Error        pantherlog.String `json:"error" description:"The error name if an error has occurred"`
 }

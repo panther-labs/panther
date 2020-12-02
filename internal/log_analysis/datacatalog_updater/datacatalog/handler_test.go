@@ -32,8 +32,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -163,24 +164,25 @@ func TestProcessInvalidS3Key(t *testing.T) {
 
 // initProcessTest is run at the start of each test to create new mocks and reset state
 func initProcessTest() {
+	availableLogTypes := logtypes.CollectNames(registry.NativeLogTypes())
 	handler.partitionsCreated = make(map[string]struct{})
 	mockGlueClient = &testutils.GlueMock{
-		LogTables: generateLogTablesMock(registry.AvailableLogTypes()...),
+		LogTables: generateLogTablesMock(availableLogTypes...),
 	}
 	handler.GlueClient = mockGlueClient
 	mockSqsClient = &testutils.SqsMock{}
 	handler.SQSClient = mockSqsClient
 	handler.Resolver = registry.NativeLogTypesResolver()
 	handler.ListAvailableLogTypes = func(_ context.Context) ([]string, error) {
-		return registry.AvailableLogTypes(), nil
+		return availableLogTypes, nil
 	}
 }
 
 func generateLogTablesMock(logTypes ...string) (tables []*glue.TableData) {
 	tables = make([]*glue.TableData, len(logTypes))
-	dbName := awsglue.LogProcessingDatabaseName
+	dbName := pantherdb.LogProcessingDatabase
 	for i, logType := range logTypes {
-		tableName := awsglue.GetTableName(logType)
+		tableName := pantherdb.TableName(logType)
 		tables[i] = &glue.TableData{
 			Name:         &tableName,
 			DatabaseName: &dbName,

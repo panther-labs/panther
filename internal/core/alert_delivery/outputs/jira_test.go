@@ -49,7 +49,7 @@ func TestJiraAlert(t *testing.T) {
 		Type:                alertModels.PolicyType,
 		CreatedAt:           createdAtTime,
 		OutputIds:           []string{"output-id"},
-		AnalysisDescription: aws.String("policyDescription"),
+		AnalysisDescription: "policyDescription",
 		Severity:            "INFO",
 		Context:             map[string]interface{}{"key": "value"},
 	}

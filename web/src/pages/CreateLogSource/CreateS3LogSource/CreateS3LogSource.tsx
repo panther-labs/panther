@@ -19,7 +19,7 @@
 import React from 'react';
 import withSEO from 'Hoc/withSEO';
 import S3LogSourceWizard from 'Components/wizards/S3LogSourceWizard';
-import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { useAddS3LogSource } from './graphql/addS3LogSource.generated';
 
 const initialValues = {
@@ -43,6 +43,17 @@ const CreateS3LogSource: React.FC = () => {
     },
     onCompleted: () =>
       trackEvent({ event: EventEnum.AddedLogSource, src: SrcEnum.LogSources, ctx: 'S3' }),
+    onError: err => {
+      trackError({
+        event: TrackErrorEnum.FailedToAddLogSource,
+        src: SrcEnum.LogSources,
+        ctx: 'S3',
+      });
+
+      // Defining an `onError` catches the API exception. We need to re-throw it so that it
+      // can be caught by `ValidationPanel` which checks for API errors
+      throw err;
+    },
   });
 
   return (

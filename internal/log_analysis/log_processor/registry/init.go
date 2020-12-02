@@ -14,7 +14,7 @@ import (
 	cloudflarelogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/cloudflarelogs"
 
 	crowdstrikelogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/crowdstrikelogs"
-
+	duologs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/duologs"
 	fastlylogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fastlylogs"
 
 	fluentdsyslogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fluentdsyslogs"
@@ -68,6 +68,8 @@ func init() {
 
 		crowdstrikelogs.LogTypes(),
 
+		duologs.LogTypes(),
+
 		fastlylogs.LogTypes(),
 
 		fluentdsyslogs.LogTypes(),
@@ -106,6 +108,4 @@ func init() {
 
 		zeeklogs.LogTypes(),
 	)
-	// Register all log types in the group with the availableLogTypes
-	availableLogTypes.MustRegister(nativeLogTypes)
 }

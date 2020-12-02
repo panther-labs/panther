@@ -19,27 +19,45 @@ package build
  */
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/magefile/mage/sh"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/pkg/shutil"
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 const (
 	layerSourceDir = "out/pip/analysis/python"
+	layerSigfile   = "out/layer-signature.txt" // hash of pip libraries
 	layerZipfile   = "out/layer.zip"
 )
 
 // Build standard Python analysis layer in out/layer.zip if that file doesn't already exist.
 func Layer(log *zap.SugaredLogger, libs []string) error {
-	if _, err := os.Stat(layerZipfile); err == nil {
-		log.Debugf("%s already exists, not rebuilding layer", layerZipfile)
-		return nil
+	// If the layer checksum matches, we don't need to rebuild the layer
+	sort.Strings(libs)
+	hash := sha256.New()
+	for _, lib := range libs {
+		if _, err := hash.Write([]byte(lib)); err != nil {
+			return err
+		}
+	}
+	checksum := hex.EncodeToString(hash.Sum(nil))
+
+	if sig, err := ioutil.ReadFile(layerSigfile); err == nil {
+		if _, err = os.Stat(layerZipfile); err == nil && string(sig) == checksum {
+			log.Debugf("%s already exists with matching signature, not rebuilding layer", layerZipfile)
+			return nil
+		}
 	}
 
 	log.Info("downloading python libraries " + strings.Join(libs, ","))
@@ -65,5 +83,6 @@ func Layer(log *zap.SugaredLogger, libs []string) error {
 		return fmt.Errorf("failed to zip %s into %s: %v", layerSourceDir, layerZipfile, err)
 	}
 
+	util.MustWriteFile(layerSigfile, []byte(checksum))
 	return nil
 }

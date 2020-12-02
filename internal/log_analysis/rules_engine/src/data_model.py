@@ -18,7 +18,8 @@ import os
 import tempfile
 from typing import Any, Callable, Dict, List
 
-from jsonpath_ng import Fields, parse
+from jsonpath_ng import Fields
+from jsonpath_ng.ext import parse
 
 from .logging import get_logger
 from .util import id_to_path, import_file_as_module, store_modules

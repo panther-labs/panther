@@ -58,21 +58,28 @@ func (p *Pattern) MatchString(dst []string, src string) ([]string, error) {
 	if matches == nil {
 		return dst, errors.New("No match")
 	}
-	if len(matches) > 2 {
+	if len(matches) >= 2 {
 		// Regexp always sets first match to full string
 		matches = matches[2:]
 		var start, end int
-		for i := 0; 0 <= i && i < len(p.names) && len(matches) >= 2; i++ {
-			name := p.names[i]
-			// We skip unnamed groups
-			if name == "" {
-				continue
+		for _, name := range p.names {
+			if len(matches) >= 2 {
+				start, end, matches = matches[0], matches[1], matches[2:]
+				// We skip unnamed groups
+				if name != "" {
+					dst = append(dst, name, sliceMatch(src, start, end))
+				}
 			}
-			start, end, matches = matches[0], matches[1], matches[2:]
-			dst = append(dst, name, src[start:end])
 		}
 	}
 	return dst, nil
+}
+
+func sliceMatch(src string, start, end int) string {
+	if 0 <= start && start <= len(src) && 0 <= end && end <= len(src) {
+		return src[start:end]
+	}
+	return ""
 }
 
 // Env is a collection of named patterns

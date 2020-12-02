@@ -57,22 +57,20 @@ class Engine:
             event = EnrichedEvent(event, self.log_type_to_data_models[log_type])
 
         for rule in self.log_type_to_rules[log_type]:
-            self.logger.debug('running rule [%s]', rule.rule_id)
+            self.logger.debug("running rule [%s]", rule.rule_id)
             result = rule.run(event, batch_mode=True)
             if result.errored:
-                short_error_message = repr(result.rule_exception)
-                error_type = type(result.rule_exception).__name__
                 rule_error = EngineResult(
                     rule_id=rule.rule_id,
                     rule_version=rule.rule_version,
                     rule_tags=rule.rule_tags,
                     rule_reports=rule.rule_reports,
                     log_type=log_type,
-                    dedup=error_type,
-                    dedup_period_mins=1440,  # one day
+                    dedup=result.error_type,  # type: ignore
+                    dedup_period_mins=rule.rule_dedup_period_mins,
                     event=event,
-                    title=short_error_message,
-                    error_message=result.error_message()
+                    title=result.short_error_message,
+                    error_message=result.error_message
                 )
                 engine_results.append(rule_error)
             elif result.matched:
@@ -86,7 +84,12 @@ class Engine:
                     dedup_period_mins=rule.rule_dedup_period_mins,
                     event=event,
                     title=result.title_output,
-                    alert_context=result.alert_context
+                    alert_context=result.alert_context,
+                    description=result.description_output,
+                    reference=result.reference_output,
+                    severity=result.severity_output,
+                    runbook=result.runbook_output,
+                    destination_override=result.destination_override_output,
                 )
                 engine_results.append(match)
 
