@@ -25,6 +25,7 @@ import {
   PolicyDetails,
   ResourceDetails,
   RuleDetails,
+  CustomLogRecord,
 } from 'Generated/schema';
 
 // Typical URL encoding, allowing colons (:) to be present in the URL. Colons are safe.
@@ -52,6 +53,12 @@ const urls = {
       edit: (id: ComplianceIntegration['integrationId']) =>
         `${urls.compliance.sources.list()}${id}/edit/`,
     },
+    customLogs: {
+      list: () => `${urls.logAnalysis.home()}custom-logs/`,
+      details: (logType: CustomLogRecord['logType']) =>
+        `${urls.logAnalysis.customLogs.list()}${urlEncode(logType)}/`,
+      create: () => `${urls.logAnalysis.customLogs.list()}new/`,
+    },
   },
   logAnalysis: {
     home: () => '/log-analysis/',
@@ -71,6 +78,12 @@ const urls = {
       create: (type?: string) => `${urls.logAnalysis.sources.list()}new/${type || ''}`,
       edit: (id: LogIntegration['integrationId'], type: string) =>
         `${urls.logAnalysis.sources.list()}${type}/${id}/edit/`,
+    },
+    customLogs: {
+      list: () => `${urls.logAnalysis.home()}custom-logs/`,
+      details: (logType: CustomLogRecord['logType']) =>
+        `${urls.logAnalysis.customLogs.list()}${urlEncode(logType)}/`,
+      create: () => `${urls.logAnalysis.customLogs.list()}new/`,
     },
   },
   settings: {
