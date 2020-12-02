@@ -87,8 +87,8 @@ func needToCreateNewAlert(oldRule *ruleModel.Rule, oldAlertDedupEvent, newAlertD
 		// If this is an alert deduplication entry for a new alert, create the new alert
 		return true
 	}
-	if oldAlertDedupEvent.EventCount < int64(oldRule.Threshold) {
-		// If the previous alert dedup information was not above rule threshold, we need to create a new alert
+	if shouldIgnoreChange(oldRule, oldAlertDedupEvent) {
+		// if the previous notification was ignored, we need to send a notification
 		return true
 	}
 	return false
