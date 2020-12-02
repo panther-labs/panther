@@ -41,7 +41,7 @@ func TestAsanaAlert(t *testing.T) {
 		Type:                alertModels.PolicyType,
 		CreatedAt:           createdAtTime,
 		OutputIds:           []string{"output-id"},
-		AnalysisDescription: aws.String("description"),
+		AnalysisDescription: "description",
 		AnalysisName:        aws.String("policy_name"),
 		Severity:            "INFO",
 		Context:             map[string]interface{}{"key": "value"},

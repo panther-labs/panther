@@ -47,6 +47,7 @@ const (
 )
 
 func main() {
+	// nolint: maligned
 	config := struct {
 		AthenaWorkgroup     string `required:"true" split_words:"true"`
 		SyncWorkersPerTable int    `default:"10" split_words:"true"`
@@ -82,6 +83,9 @@ func main() {
 
 	resolver := logtypes.ChainResolvers(
 		registry.NativeLogTypesResolver(),
+		&logtypesapi.Resolver{
+			LogTypesAPI: logtypesAPI,
+		},
 	)
 
 	handler := datacatalog.LambdaHandler{

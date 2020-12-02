@@ -47,12 +47,12 @@ func (h *LambdaHandler) HandleS3Event(ctx context.Context, event *events.S3Event
 func (h *LambdaHandler) HandleS3EventRecord(ctx context.Context, event *events.S3EventRecord) error {
 	bucketName := event.S3.Bucket.Name
 	objectKey := event.S3.Object.Key
-	partition, err := awsglue.GetPartitionFromS3(bucketName, objectKey)
+	partition, err := awsglue.PartitionFromS3Object(bucketName, objectKey)
 	if err != nil {
 		lambdalogger.FromContext(ctx).Warn("invalid S3 event", zap.Any("event", event))
 		return nil
 	}
-	partitionURL := partition.GetPartitionLocation()
+	partitionURL := partition.PartitionLocation()
 	if h.isPartitionAlreadyCreated(partitionURL) {
 		return nil
 	}

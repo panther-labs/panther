@@ -19,6 +19,7 @@ package logtypes
  */
 
 import (
+	"fmt"
 	"net/url"
 	"time"
 
@@ -27,14 +28,13 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
 // Entry describes a log event type.
 // It provides a method to create a new parser and a schema struct to derive tables from.
 type Entry interface {
 	Describe() Desc
-	NewParser(params interface{}) (parsers.Interface, error)
+	pantherlog.LogParserFactory
 	Schema() interface{}
 	String() string
 	// Entry should be usable as an EntryBuilder that returns itself with no error
@@ -90,6 +90,15 @@ func (desc *Desc) Validate() error {
 	return nil
 }
 
+func (desc *Desc) Fill() {
+	if desc.ReferenceURL == "" {
+		desc.ReferenceURL = "-"
+	}
+	if desc.Description == "" {
+		desc.Description = fmt.Sprintf("%s log type", desc.Name)
+	}
+}
+
 // ConfigJSON is a configuration that creates a log type entry for a JSON log.
 // The parser only handles the usual case where each JSON value produces a single pantherlog.Result.
 type ConfigJSON struct {
@@ -119,7 +128,7 @@ func (c ConfigJSON) BuildEntry() (Entry, error) {
 		Description:  c.Description,
 		ReferenceURL: c.ReferenceURL,
 		Schema:       schema,
-		NewParser: &parsers.JSONParserFactory{
+		NewParser: &pantherlog.JSONParserFactory{
 			LogType:   c.Name,
 			JSON:      c.JSON,
 			Validate:  c.Validate,
@@ -139,7 +148,7 @@ type Config struct {
 	Description  string
 	ReferenceURL string
 	Schema       interface{}
-	NewParser    parsers.Factory
+	NewParser    pantherlog.LogParserFactory
 }
 
 func (c *Config) Describe() Desc {
@@ -179,10 +188,10 @@ func (c Config) BuildEntry() (Entry, error) {
 type entry struct {
 	desc      Desc
 	schema    interface{}
-	newParser parsers.FactoryFunc
+	newParser pantherlog.FactoryFunc
 }
 
-func newEntry(desc Desc, schema interface{}, fac parsers.Factory) *entry {
+func newEntry(desc Desc, schema interface{}, fac pantherlog.LogParserFactory) *entry {
 	return &entry{
 		desc:      desc,
 		schema:    schema,
@@ -221,8 +230,8 @@ func (e *entry) Schema() interface{} {
 	return e.schema
 }
 
-// Parser returns a new parsers.Interface instance for this log type
-func (e *entry) NewParser(params interface{}) (parsers.Interface, error) {
+// Parser returns a new pantherlog.LogParser
+func (e *entry) NewParser(params interface{}) (pantherlog.LogParser, error) {
 	return e.newParser(params)
 }
 

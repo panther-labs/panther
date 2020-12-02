@@ -33,6 +33,7 @@ _LOGGER = get_logger()
 _RULES_ENGINE = Engine(AnalysisAPIClient())
 
 
+#  pylint: disable=unsubscriptable-object
 def lambda_handler(event: Dict[str, Any], unused_context: Any) -> Optional[Dict[str, Any]]:
     """Entry point for the Lambda"""
     if 'rules' in event:
@@ -53,29 +54,32 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
     raw_rule = request['rules'][0]
     # The rule during direct invocation doesn't have a version
     raw_rule['versionId'] = 'default'
-    init_exception: Optional[Exception] = None
-    try:
-        test_rule = Rule(raw_rule)
-    except Exception as err:  # pylint: disable=broad-except
-        init_exception = err
+    test_rule = Rule(raw_rule)
 
     format_exception = lambda exc: '{}: {}'.format(type(exc).__name__, exc) if exc else exc
     results = []
     for event in request['events']:
-        if init_exception:
-            results.append({'id': event['id'], 'ruleId': raw_rule['id'], 'errored': True, 'genericError': format_exception(init_exception)})
-            continue
-
         rule_result = test_rule.run(event['data'], batch_mode=False)
         results.append(
             {
                 'id': event['id'],
                 'ruleId': raw_rule['id'],
+                'genericError': format_exception(rule_result.setup_exception),
                 'errored': rule_result.errored,
                 'ruleOutput': rule_result.matched,
                 'ruleError': format_exception(rule_result.rule_exception),
                 'titleOutput': rule_result.title_output,
                 'titleError': format_exception(rule_result.title_exception),
+                'descriptionOutput': rule_result.description_output,
+                'descriptionError': format_exception(rule_result.description_exception),
+                'referenceOutput': rule_result.reference_output,
+                'referenceError': format_exception(rule_result.reference_exception),
+                'severityOutput': rule_result.severity_output,
+                'severityError': format_exception(rule_result.severity_exception),
+                'runbookOutput': rule_result.runbook_output,
+                'runbookError': format_exception(rule_result.runbook_exception),
+                'destinationOverrideOutput': rule_result.destination_override_output,
+                'destinationOverride': format_exception(rule_result.destination_override_exception),
                 'dedupOutput': rule_result.dedup_output,
                 'dedupError': format_exception(rule_result.dedup_exception),
                 'alertContextOutput': rule_result.alert_context,

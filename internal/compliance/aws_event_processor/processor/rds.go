@@ -52,7 +52,12 @@ func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 	case "AddRoleToDBInstance", "CreateDBInstance", "CreateDBSnapshot", "DeleteDBInstance", "ModifyDBInstance",
 		"PromoteReadReplica", "RebootDBInstance", "RemoveRoleFromDBInstance", "RestoreDBInstanceFromDBSnapshot",
 		"RestoreDBInstanceFromS3", "StartDBInstance", "StopDBInstance":
-		rdsARN.Resource += detail.Get("requestParameters.dBInstanceIdentifier").Str
+		instanceID := detail.Get("requestParameters.dBInstanceIdentifier")
+		if !instanceID.Exists() {
+			zap.L().Info("unable to extract dBInstanceIdentifier from event", zap.Any("requestParameters", detail.Get("requestParameters").Raw))
+			return nil
+		}
+		rdsARN.Resource += instanceID.Str
 	case "AddTagsToResource", "RemoveTagsFromResource":
 		resourceARN, err := arn.Parse(detail.Get("requestParameters.resourceName").Str)
 		if err != nil {
@@ -81,6 +86,7 @@ func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 		instanceID := detail.Get("responseElements.dBSnapshot.dBInstanceIdentifier")
 		// This can happen when a snapshot for a DB that no longer exists is changed
 		if !instanceID.Exists() {
+			zap.L().Info("unable to extract dBInstanceIdentifier from event", zap.Any("responseElements", detail.Get("responseElements").Raw))
 			return nil
 		}
 		rdsARN.Resource += instanceID.Str
@@ -111,7 +117,12 @@ func classifyRDS(detail gjson.Result, metadata *CloudTrailMetadata) []*resourceC
 			ResourceType: schemas.Ec2VpcSchema,
 		}}
 	case "DeleteDBInstanceAutomatedBackup":
-		rdsARN.Resource += detail.Get("responseElements.dBInstanceAutomatedBackup.dBInstanceIdentifier").Str
+		instanceID := detail.Get("responseElements.dBInstanceAutomatedBackup.dBInstanceIdentifier")
+		if !instanceID.Exists() {
+			zap.L().Info("unable to extract dBInstanceIdentifier from event", zap.Any("responseElements", detail.Get("responseElements").Raw))
+			return nil
+		}
+		rdsARN.Resource += instanceID.Str
 	case "ModifyDBSnapshotAttribute":
 		// Since we can't tie this back to the corresponding RDS Instance with just the context of
 		// this event, we send the panther-snapshot-poller the ID of the db snapshot and let the

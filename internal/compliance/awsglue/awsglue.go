@@ -25,13 +25,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 const (
-	CloudSecurityDatabase            = "panther_cloudsecurity"
-	CloudSecurityDatabaseDescription = "Hold tables related to Panther cloud security scanning"
-
 	// https://github.com/awslabs/aws-athena-query-federation/tree/master/athena-dynamodb
 
 	// FIXME: Update the description when the DDB connector is GA
@@ -58,9 +56,9 @@ var (
 
 func CreateOrUpdateCloudSecurityDatabase(glueClient glueiface.GlueAPI) error {
 	dbInput := &glue.DatabaseInput{
-		Description: aws.String(CloudSecurityDatabaseDescription),
+		Description: aws.String(pantherdb.CloudSecurityDatabaseDescription),
 		LocationUri: aws.String("dynamo-db-flag"),
-		Name:        aws.String(CloudSecurityDatabase),
+		Name:        aws.String(pantherdb.CloudSecurityDatabase),
 	}
 
 	_, err := glueClient.CreateDatabase(&glue.CreateDatabaseInput{
@@ -155,7 +153,7 @@ func CreateOrUpdateResourcesTable(glueClient glueiface.GlueAPI, locationARN stri
 	}
 
 	createTableInput := &glue.CreateTableInput{
-		DatabaseName: aws.String(CloudSecurityDatabase),
+		DatabaseName: aws.String(pantherdb.CloudSecurityDatabase),
 		TableInput:   tableInput,
 	}
 
@@ -164,13 +162,13 @@ func CreateOrUpdateResourcesTable(glueClient glueiface.GlueAPI, locationARN stri
 		if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
 			// need to do an update
 			updateTableInput := &glue.UpdateTableInput{
-				DatabaseName: aws.String(CloudSecurityDatabase),
+				DatabaseName: aws.String(pantherdb.CloudSecurityDatabase),
 				TableInput:   tableInput,
 			}
 			_, err := glueClient.UpdateTable(updateTableInput)
-			return errors.Wrapf(err, "failed to update table %s.%s", CloudSecurityDatabase, ResourcesTable)
+			return errors.Wrapf(err, "failed to update table %s.%s", pantherdb.CloudSecurityDatabase, ResourcesTable)
 		}
-		return errors.Wrapf(err, "failed to create table %s.%s", CloudSecurityDatabase, ResourcesTable)
+		return errors.Wrapf(err, "failed to create table %s.%s", pantherdb.CloudSecurityDatabase, ResourcesTable)
 	}
 
 	return nil
@@ -259,7 +257,7 @@ func CreateOrUpdateComplianceTable(glueClient glueiface.GlueAPI, locationARN str
 	}
 
 	createTableInput := &glue.CreateTableInput{
-		DatabaseName: aws.String(CloudSecurityDatabase),
+		DatabaseName: aws.String(pantherdb.CloudSecurityDatabase),
 		TableInput:   tableInput,
 	}
 
@@ -268,13 +266,13 @@ func CreateOrUpdateComplianceTable(glueClient glueiface.GlueAPI, locationARN str
 		if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
 			// need to do an update
 			updateTableInput := &glue.UpdateTableInput{
-				DatabaseName: aws.String(CloudSecurityDatabase),
+				DatabaseName: aws.String(pantherdb.CloudSecurityDatabase),
 				TableInput:   tableInput,
 			}
 			_, err := glueClient.UpdateTable(updateTableInput)
-			return errors.Wrapf(err, "failed to update table %s.%s", CloudSecurityDatabase, ResourcesTable)
+			return errors.Wrapf(err, "failed to update table %s.%s", pantherdb.CloudSecurityDatabase, ResourcesTable)
 		}
-		return errors.Wrapf(err, "failed to create table %s.%s", CloudSecurityDatabase, ResourcesTable)
+		return errors.Wrapf(err, "failed to create table %s.%s", pantherdb.CloudSecurityDatabase, ResourcesTable)
 	}
 
 	return nil

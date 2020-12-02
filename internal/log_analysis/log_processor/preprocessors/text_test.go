@@ -1,4 +1,4 @@
-package models
+package preprocessors
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -18,18 +18,16 @@ package models
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// The type of data that are stored in the Panther
-type DataType string
+import (
+	"testing"
 
-const (
-	// LogData represents log data processed by Panther
-	LogData DataType = "LogData"
-	// RuleData represents parsed log data that have matched some rule
-	RuleData DataType = "RuleMatches"
-	// RuleData represents parsed log data that have generated an error while running over rules
-	RuleErrors DataType = "RuleErrors"
+	"github.com/stretchr/testify/require"
+	"github.com/valyala/fasttemplate"
 )
 
-func (d DataType) String() string {
-	return string(d)
+func TestExpandFieldTempalte(t *testing.T) {
+	tpl := fasttemplate.New("%{$cost}", "%{", "}")
+	fields := []string{"$cost", "10"}
+	result := expandFieldTemplate(nil, fields, tpl)
+	require.Equal(t, "10", string(result))
 }

@@ -30,6 +30,7 @@ import (
 	"github.com/panther-labs/panther/internal/core/source_api/apifunctions"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
@@ -55,6 +56,13 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 			logger.Error("failed to parse resource properties", zap.Error(err))
 			return physicalResourceID, nil, err
 		}
+		// Verify that all log processing databases are present
+		for db, desc := range pantherdb.LogDatabases {
+			if err := awsglue.EnsureDatabase(ctx, glueClient, db, desc); err != nil {
+				return physicalResourceID, nil, errors.Wrapf(err, "failed to create database %s", db)
+			}
+		}
+
 		requiredLogTypes, err := apifunctions.ListLogTypes(ctx, lambdaClient)
 		if err != nil {
 			logger.Error("failed to fetch required log types", zap.Error(err))
@@ -71,14 +79,15 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 		logger.Info("started database sync", zap.Strings("logTypes", requiredLogTypes))
 		return physicalResourceID, nil, nil
 	case cfn.RequestDelete:
-		for pantherDatabase := range awsglue.PantherDatabases {
-			logger.Info("deleting database", zap.String("database", pantherDatabase))
-			if _, err := awsglue.DeleteDatabase(glueClient, pantherDatabase); err != nil {
+		// Deleting all log processing databases
+		for db := range pantherdb.LogDatabases {
+			logger.Info("deleting database", zap.String("database", db))
+			if _, err := awsglue.DeleteDatabase(glueClient, db); err != nil {
 				if awsutils.IsAnyError(err, glue.ErrCodeEntityNotFoundException) {
-					logger.Info("already deleted", zap.String("database", pantherDatabase))
+					logger.Info("already deleted", zap.String("database", db))
 				} else {
-					logger.Error("failed to delete", zap.String("database", pantherDatabase))
-					return "", nil, errors.Wrapf(err, "failed deleting %s", pantherDatabase)
+					logger.Error("failed to delete", zap.String("database", db))
+					return "", nil, errors.Wrapf(err, "failed deleting %s", db)
 				}
 			}
 		}

@@ -23,11 +23,11 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
 type CreateTablesEvent struct {
@@ -99,7 +99,8 @@ func resolveLogTables(ctx context.Context, r logtypes.Resolver, names ...string)
 		}
 		eventSchema := entry.Schema()
 		desc := entry.Describe()
-		meta := awsglue.NewGlueTableMetadata(models.LogData, desc.Name, desc.Description, awsglue.GlueTableHourly, eventSchema)
+		tableName := pantherdb.TableName(desc.Name)
+		meta := awsglue.NewGlueTableMetadata(pantherdb.LogProcessingDatabase, tableName, desc.Description, awsglue.GlueTableHourly, eventSchema)
 		out = append(out, meta)
 	}
 	return out, nil

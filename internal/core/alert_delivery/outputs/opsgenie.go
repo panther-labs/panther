@@ -19,7 +19,6 @@ package outputs
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
@@ -43,9 +42,9 @@ var pantherToOpsGeniePriority = map[string]string{
 func (client *OutputClient) Opsgenie(
 	alert *alertModels.Alert, config *outputModels.OpsgenieConfig) *AlertDeliveryResponse {
 
-	description := "<strong>Description:</strong> " + aws.StringValue(alert.AnalysisDescription)
+	description := "<strong>Description:</strong> " + alert.AnalysisDescription
 	link := "\n<a href=\"" + generateURL(alert) + "\">Click here to view in the Panther UI</a>"
-	runBook := "\n <strong>Runbook:</strong> " + aws.StringValue(alert.Runbook)
+	runBook := "\n <strong>Runbook:</strong> " + alert.Runbook
 	severity := "\n <strong>Severity:</strong> " + alert.Severity
 
 	// Best effort attempt to marshal Alert Context

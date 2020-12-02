@@ -36,8 +36,8 @@ func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, 
 		return nil, err
 	}
 
-	// If alert doesn't have outputs IDs specified, return the defaults for the severity
-	if len(alert.OutputIds) == 0 {
+	// If alert has neither outputs IDs or dynamic dest. override specified, return the defaults for the severity
+	if len(alert.OutputIds) == 0 && alert.DestinationOverride == nil {
 		defaultsForSeverity := []*outputModels.AlertOutput{}
 		for _, output := range outputs {
 			// If `DefaultForSeverity` is nil or empty, this loop will skip
@@ -50,16 +50,29 @@ func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, 
 		return defaultsForSeverity, nil
 	}
 
-	// Otherwise, return the specified output overrides for the alert
-	overrideOutputs := []*outputModels.AlertOutput{}
+	// If alert has a dynamically set destination override, return the specified output overrides for the alert
+	alertOutputs := []*outputModels.AlertOutput{}
 	for _, output := range outputs {
-		for _, outputID := range alert.OutputIds {
+		for _, outputID := range alert.DestinationOverride {
 			if *output.OutputID == outputID {
-				overrideOutputs = append(overrideOutputs, output)
+				alertOutputs = append(alertOutputs, output)
 			}
 		}
 	}
-	return overrideOutputs, nil
+
+	if len(alertOutputs) > 0 {
+		return alertOutputs, nil
+	}
+
+	// Otherwise, return the specified output overrides for the alert
+	for _, output := range outputs {
+		for _, outputID := range alert.OutputIds {
+			if *output.OutputID == outputID {
+				alertOutputs = append(alertOutputs, output)
+			}
+		}
+	}
+	return alertOutputs, nil
 }
 
 // getOutputs - Gets a list of outputs from panther (using a cache)

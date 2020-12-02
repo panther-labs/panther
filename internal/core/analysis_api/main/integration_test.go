@@ -136,7 +136,20 @@ var (
 			},
 		},
 	}
-	dataModels           = [2]*models.DataModel{dataModel, dataModelTwo}
+	dataModelDisabled = &models.DataModel{
+		Body:        "def get_source_ip(event): return 'source_ip'\n",
+		Description: "Example LogType Schema",
+		Enabled:     false,
+		ID:          "ThirdDataModelTypeAnalysis",
+		LogTypes:    []string{"Box.Events"},
+		Mappings: []models.DataModelMapping{
+			{
+				Name: "source_ip",
+				Path: "ipAddress",
+			},
+		},
+	}
+	dataModels           = [3]*models.DataModel{dataModel, dataModelTwo, dataModelDisabled}
 	dataModelFromBulkYML = &models.DataModel{
 		Enabled:  true,
 		ID:       "Some.Events.DataModel",
@@ -261,6 +274,7 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ListRules", listRules)
 		t.Run("ListGlobals", listGlobals)
 		t.Run("ListDataModels", listDataModels)
+		t.Run("ListEnabledDataModels", listEnabledDataModels)
 	})
 
 	t.Run("Modify", func(t *testing.T) {
@@ -1869,6 +1883,31 @@ func listDataModels(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
 		ListDataModels: &models.ListDataModelsInput{},
+	}
+	var result models.ListDataModelsOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListDataModelsOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 4,
+			TotalPages: 1,
+		},
+		Models: []models.DataModel{
+			*dataModel, *dataModelTwo, *dataModelFromBulkYML, *dataModelDisabled,
+		},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listEnabledDataModels(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListDataModels: &models.ListDataModelsInput{
+			Enabled: aws.Bool(true),
+		},
 	}
 	var result models.ListDataModelsOutput
 	statusCode, err := apiClient.Invoke(&input, &result)

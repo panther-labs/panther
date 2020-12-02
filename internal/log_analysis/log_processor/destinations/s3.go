@@ -36,12 +36,12 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/internal/log_analysis/notify"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	pq "github.com/panther-labs/panther/pkg/priorityq"
 )
 
@@ -231,7 +231,7 @@ func (d *S3Destination) sendData(buffer *s3EventBuffer, errChan chan error) {
 			zap.String("key", key))
 	}()
 
-	key = getS3ObjectKey(buffer.logType, buffer.hour)
+	key = getS3ObjectKey(buffer)
 	if err != nil {
 		errChan <- err
 		return
@@ -280,10 +280,11 @@ func (d *S3Destination) sendSNSNotification(key string, buffer *s3EventBuffer) e
 		return err
 	}
 
+	dataType := pantherdb.GetDataType(buffer.logType)
 	input := &sns.PublishInput{
 		TopicArn:          &d.snsTopicArn,
 		Message:           &marshalledNotification,
-		MessageAttributes: notify.NewLogAnalysisSNSMessageAttributes(models.LogData, buffer.logType),
+		MessageAttributes: notify.NewLogAnalysisSNSMessageAttributes(dataType, buffer.logType),
 	}
 	if _, err = d.snsClient.Publish(input); err != nil {
 		err = errors.Wrap(err, "failed to send notification to topic")
@@ -294,15 +295,16 @@ func (d *S3Destination) sendSNSNotification(key string, buffer *s3EventBuffer) e
 }
 
 // getS3ObjectKey builds the S3 object key for storing a partition file of processed logs.
-func getS3ObjectKey(logType string, timestamp time.Time) string {
-	dbPrefix := awsglue.GetDataPrefix(awsglue.LogProcessingDatabaseName)
-	tblName := awsglue.GetTableName(logType)
-	partitionPrefix := awsglue.GlueTableHourly.PartitionPathS3(timestamp)
+func getS3ObjectKey(buf *s3EventBuffer) string {
+	typ := pantherdb.GetDataType(buf.logType)
+	db := pantherdb.DatabaseName(typ)
+	table := pantherdb.TableName(buf.logType)
+	partitionPrefix := awsglue.PartitionPrefix(db, table, awsglue.GlueTableHourly, buf.hour)
 	filename := fmt.Sprintf("%s-%s.json.gz",
-		timestamp.Format(S3ObjectTimestampLayout),
+		buf.hour.Format(S3ObjectTimestampLayout),
 		uuid.New(),
 	)
-	return path.Join(dbPrefix, tblName, partitionPrefix, filename)
+	return path.Join(partitionPrefix, filename)
 }
 
 // s3BufferSet is a group of buffers associated with hour time bins, pointing to maps logtype->s3EventBuffer
