@@ -25,6 +25,7 @@ import {
   waitMs,
   buildListAvailableLogTypesResponse,
   buildUpdateS3LogIntegrationInput,
+  buildS3PrefixLogTypes,
 } from 'test-utils';
 import { Route } from 'react-router';
 import urls from 'Source/urls';
@@ -41,7 +42,7 @@ describe('EditS3LogSource', () => {
     const logTypesResponse = buildListAvailableLogTypesResponse();
     const logSource = buildS3LogIntegration({
       awsAccountId: '123123123123',
-      logTypes: logTypesResponse.logTypes,
+      s3PrefixLogTypes: [buildS3PrefixLogTypes({ logTypes: logTypesResponse.logTypes })],
       kmsKey: '',
     });
 
@@ -67,8 +68,93 @@ describe('EditS3LogSource', () => {
             integrationId: logSource.integrationId,
             integrationLabel: updatedLogSource.integrationLabel,
             s3Bucket: logSource.s3Bucket,
-            logTypes: logSource.logTypes,
-            s3Prefix: logSource.s3Prefix,
+            s3PrefixLogTypes: logSource.s3PrefixLogTypes,
+            kmsKey: null,
+          }),
+        },
+        data: {
+          updateS3LogIntegration: updatedLogSource,
+        },
+      }),
+    ];
+    const { getByText, getByLabelText, getByAltText, findByText } = render(
+      <Route path={urls.logAnalysis.sources.edit(':id', ':type')}>
+        <EditS3LogSource />
+      </Route>,
+      {
+        mocks,
+        initialRoute: urls.logAnalysis.sources.edit(logSource.integrationId, 's3'),
+      }
+    );
+
+    const nameField = getByLabelText('Name') as HTMLInputElement;
+
+    //  Wait for GET api request to populate the form
+    await waitFor(() => expect(nameField).toHaveValue('Loading...'));
+    await waitFor(() => expect(nameField).toHaveValue(logSource.integrationLabel));
+
+    // Fill in  the form and press continue
+    fireEvent.change(nameField, { target: { value: updatedLogSource.integrationLabel } });
+
+    // Wait for form validation to kick in and move on to the next screen
+    await waitMs(50);
+    fireEvent.click(getByText('Continue Setup'));
+
+    // Initially we expect a disabled button while the template is being fetched ...
+    expect(getByText('Get template file')).toHaveAttribute('disabled');
+
+    // ... replaced by an active button as soon as it's fetched
+    await waitFor(() => expect(getByText('Get template file')).not.toHaveAttribute('disabled'));
+
+    // We move on to the final screen
+    fireEvent.click(getByText('Continue'));
+
+    // Expect to see a loading animation while the resource is being validated ...
+    expect(getByAltText('Validating source health...')).toBeInTheDocument();
+
+    // ... replaced by a success screen
+    expect(await findByText('Everything looks good!')).toBeInTheDocument();
+    expect(getByText('Finish Setup')).toBeInTheDocument();
+
+    // Expect analytics to have been called
+    expect(trackEvent).toHaveBeenCalledWith({
+      event: EventEnum.UpdatedLogSource,
+      src: SrcEnum.LogSources,
+      ctx: 'S3',
+    });
+  });
+
+  it('can successfully update an S3 log source', async () => {
+    const logTypesResponse = buildListAvailableLogTypesResponse();
+    const logSource = buildS3LogIntegration({
+      awsAccountId: '123123123123',
+      s3PrefixLogTypes: [buildS3PrefixLogTypes({ logTypes: logTypesResponse.logTypes })],
+      kmsKey: '',
+    });
+
+    const updatedLogSource = buildS3LogIntegration({ ...logSource, integrationLabel: 'new-value' });
+
+    const mocks = [
+      mockGetS3LogSource({
+        variables: {
+          id: logSource.integrationId,
+        },
+        data: {
+          getS3LogIntegration: logSource,
+        },
+      }),
+      mockListAvailableLogTypes({
+        data: {
+          listAvailableLogTypes: logTypesResponse,
+        },
+      }),
+      mockUpdateS3LogSource({
+        variables: {
+          input: buildUpdateS3LogIntegrationInput({
+            integrationId: logSource.integrationId,
+            integrationLabel: updatedLogSource.integrationLabel,
+            s3Bucket: logSource.s3Bucket,
+            s3PrefixLogTypes: logSource.s3PrefixLogTypes,
             kmsKey: null,
           }),
         },

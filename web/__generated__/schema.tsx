@@ -97,8 +97,7 @@ export type AddS3LogIntegrationInput = {
   integrationLabel: Scalars['String'];
   s3Bucket: Scalars['String'];
   kmsKey?: Maybe<Scalars['String']>;
-  s3Prefix?: Maybe<Scalars['String']>;
-  logTypes: Array<Scalars['String']>;
+  s3PrefixLogTypes: Array<S3PrefixLogTypesInput>;
 };
 
 export type AddSqsLogIntegrationInput = {
@@ -411,9 +410,8 @@ export type GetS3LogIntegrationTemplateInput = {
   awsAccountId: Scalars['String'];
   integrationLabel: Scalars['String'];
   s3Bucket: Scalars['String'];
-  s3Prefix?: Maybe<Scalars['String']>;
   kmsKey?: Maybe<Scalars['String']>;
-  logTypes: Array<Scalars['String']>;
+  s3PrefixLogTypes: Array<S3PrefixLogTypesInput>;
 };
 
 export type GithubConfig = {
@@ -1126,7 +1124,7 @@ export type S3LogIntegration = {
   s3Bucket: Scalars['String'];
   s3Prefix?: Maybe<Scalars['String']>;
   kmsKey?: Maybe<Scalars['String']>;
-  logTypes: Array<Scalars['String']>;
+  s3PrefixLogTypes?: Maybe<Array<Maybe<S3PrefixLogTypes>>>;
   health: S3LogIntegrationHealth;
   stackName: Scalars['String'];
 };
@@ -1136,6 +1134,17 @@ export type S3LogIntegrationHealth = {
   processingRoleStatus: IntegrationItemHealthStatus;
   s3BucketStatus: IntegrationItemHealthStatus;
   kmsKeyStatus: IntegrationItemHealthStatus;
+};
+
+export type S3PrefixLogTypes = {
+  __typename?: 'S3PrefixLogTypes';
+  prefix: Scalars['String'];
+  logTypes: Array<Scalars['String']>;
+};
+
+export type S3PrefixLogTypesInput = {
+  prefix: Scalars['String'];
+  logTypes: Array<Scalars['String']>;
 };
 
 export type ScannedResources = {
@@ -1360,8 +1369,7 @@ export type UpdateS3LogIntegrationInput = {
   integrationLabel?: Maybe<Scalars['String']>;
   s3Bucket?: Maybe<Scalars['String']>;
   kmsKey?: Maybe<Scalars['String']>;
-  s3Prefix?: Maybe<Scalars['String']>;
-  logTypes?: Maybe<Array<Scalars['String']>>;
+  s3PrefixLogTypes?: Maybe<Array<S3PrefixLogTypesInput>>;
 };
 
 export type UpdateSqsLogIntegrationInput = {
@@ -1537,8 +1545,10 @@ export type ResolversTypes = {
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: ResolverTypeWrapper<IntegrationTemplate>;
   S3LogIntegration: ResolverTypeWrapper<S3LogIntegration>;
+  S3PrefixLogTypes: ResolverTypeWrapper<S3PrefixLogTypes>;
   S3LogIntegrationHealth: ResolverTypeWrapper<S3LogIntegrationHealth>;
   GetS3LogIntegrationTemplateInput: GetS3LogIntegrationTemplateInput;
+  S3PrefixLogTypesInput: S3PrefixLogTypesInput;
   SqsLogSourceIntegration: ResolverTypeWrapper<SqsLogSourceIntegration>;
   SqsConfig: ResolverTypeWrapper<SqsConfig>;
   SqsLogIntegrationHealth: ResolverTypeWrapper<SqsLogIntegrationHealth>;
@@ -1691,8 +1701,10 @@ export type ResolversParentTypes = {
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: IntegrationTemplate;
   S3LogIntegration: S3LogIntegration;
+  S3PrefixLogTypes: S3PrefixLogTypes;
   S3LogIntegrationHealth: S3LogIntegrationHealth;
   GetS3LogIntegrationTemplateInput: GetS3LogIntegrationTemplateInput;
+  S3PrefixLogTypesInput: S3PrefixLogTypesInput;
   SqsLogSourceIntegration: SqsLogSourceIntegration;
   SqsConfig: SqsConfig;
   SqsLogIntegrationHealth: SqsLogIntegrationHealth;
@@ -2834,7 +2846,11 @@ export type S3LogIntegrationResolvers<
   s3Bucket?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   s3Prefix?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   kmsKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  s3PrefixLogTypes?: Resolver<
+    Maybe<Array<Maybe<ResolversTypes['S3PrefixLogTypes']>>>,
+    ParentType,
+    ContextType
+  >;
   health?: Resolver<ResolversTypes['S3LogIntegrationHealth'], ParentType, ContextType>;
   stackName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
@@ -2851,6 +2867,15 @@ export type S3LogIntegrationHealthResolvers<
   >;
   s3BucketStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
   kmsKeyStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type S3PrefixLogTypesResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['S3PrefixLogTypes'] = ResolversParentTypes['S3PrefixLogTypes']
+> = {
+  prefix?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -3130,6 +3155,7 @@ export type Resolvers<ContextType = any> = {
   RuleSummary?: RuleSummaryResolvers<ContextType>;
   S3LogIntegration?: S3LogIntegrationResolvers<ContextType>;
   S3LogIntegrationHealth?: S3LogIntegrationHealthResolvers<ContextType>;
+  S3PrefixLogTypes?: S3PrefixLogTypesResolvers<ContextType>;
   ScannedResources?: ScannedResourcesResolvers<ContextType>;
   ScannedResourceStats?: ScannedResourceStatsResolvers<ContextType>;
   SingleValue?: SingleValueResolvers<ContextType>;

@@ -63,8 +63,9 @@ const EditS3LogSource: React.FC = () => {
       awsAccountId: data?.getS3LogIntegration?.awsAccountId ?? 'Loading...',
       integrationLabel: data?.getS3LogIntegration?.integrationLabel ?? 'Loading...',
       s3Bucket: data?.getS3LogIntegration?.s3Bucket ?? 'Loading...',
-      logTypes: data?.getS3LogIntegration?.logTypes ?? [],
-      s3Prefix: data?.getS3LogIntegration?.s3Prefix ?? '',
+      s3PrefixLogTypes: data?.getS3LogIntegration.s3PrefixLogTypes ?? [
+        { prefix: '', logTypes: [] },
+      ],
       kmsKey: data?.getS3LogIntegration?.kmsKey ?? '',
     }),
     [data]
@@ -85,8 +86,7 @@ const EditS3LogSource: React.FC = () => {
               integrationId: values.integrationId,
               integrationLabel: values.integrationLabel,
               s3Bucket: values.s3Bucket,
-              logTypes: values.logTypes,
-              s3Prefix: values.s3Prefix || null,
+              s3PrefixLogTypes: values.s3PrefixLogTypes,
               kmsKey: values.kmsKey || null,
             },
           },

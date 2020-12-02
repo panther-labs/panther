@@ -33,10 +33,11 @@ export type S3LogIntegrationDetails = Pick<
   | 'lastEventReceived'
   | 'kmsKey'
   | 's3Bucket'
-  | 's3Prefix'
-  | 'logTypes'
   | 'stackName'
 > & {
+  s3PrefixLogTypes?: Types.Maybe<
+    Array<Types.Maybe<Pick<Types.S3PrefixLogTypes, 'prefix' | 'logTypes'>>>
+  >;
   health: {
     processingRoleStatus: IntegrationItemHealthDetails;
     s3BucketStatus: IntegrationItemHealthDetails;
@@ -55,8 +56,10 @@ export const S3LogIntegrationDetails = gql`
     lastEventReceived
     kmsKey
     s3Bucket
-    s3Prefix
-    logTypes
+    s3PrefixLogTypes {
+      prefix
+      logTypes
+    }
     stackName
     health {
       processingRoleStatus {

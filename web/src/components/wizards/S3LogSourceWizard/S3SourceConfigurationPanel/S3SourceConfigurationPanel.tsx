@@ -16,9 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { AbstractButton, Box, Collapse, Flex, useSnackbar } from 'pouncejs';
+import { Box, Flex, IconButton, useSnackbar } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import { Field, useFormikContext } from 'formik';
+import { Field, FieldArray, useFormikContext } from 'formik';
+import flatten from 'lodash/flatten';
 import FormikTextInput from 'Components/fields/TextInput';
 import React from 'react';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
@@ -29,9 +30,6 @@ import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
 
 const S3SourceConfigurationPanel: React.FC = () => {
   const { initialValues, values, dirty, isValid } = useFormikContext<S3LogSourceWizardValues>();
-  const [isAdvancedConfigVisible, showAdvancedConfig] = React.useState(
-    Boolean(values.s3Prefix) || Boolean(values.kmsKey)
-  );
   const { pushSnackbar } = useSnackbar();
   const { data } = useListAvailableLogTypes({
     onError: () => pushSnackbar({ title: "Couldn't fetch your available log types" }),
@@ -39,10 +37,15 @@ const S3SourceConfigurationPanel: React.FC = () => {
 
   const shouldSkipTo = React.useMemo(() => {
     return (
+      /*
+       * If users dont change any of AWS accountId, stackName or Integration label
+       * then users dont really need to update their stack or template, so we can skip the next step
+       * or proceed to validation.
+       * This will apply only to editing since creation requires users to change those field to proceed
+       */
       initialValues.awsAccountId === values.awsAccountId &&
       initialValues.initialStackName === values.initialStackName &&
       initialValues.integrationLabel === values.integrationLabel &&
-      initialValues.logTypes === values.logTypes &&
       initialValues.s3Bucket === values.s3Bucket &&
       2
     );
@@ -84,45 +87,86 @@ const S3SourceConfigurationPanel: React.FC = () => {
               required
               placeholder="The name of the S3 bucket that holds the logs"
             />
+          </Flex>
+          <Flex direction="column" spacing={4} pt={6}>
+            <FieldArray
+              name="s3PrefixLogTypes"
+              render={arrayHelpers => {
+                return values.s3PrefixLogTypes.map((_, index, array) => {
+                  return (
+                    <Flex
+                      key={index}
+                      p={4}
+                      position="relative"
+                      backgroundColor="navyblue-500"
+                      spacing={4}
+                      direction="column"
+                    >
+                      <Flex
+                        position="absolute"
+                        left="100%"
+                        align="center"
+                        height="100%"
+                        spacing={2}
+                        ml={2}
+                        pb={5}
+                      >
+                        {array.length > 1 && (
+                          <IconButton
+                            size="small"
+                            icon="close-outline"
+                            variantColor="navyblue"
+                            aria-label="Remove prefix"
+                            onClick={() => arrayHelpers.remove(index)}
+                          />
+                        )}
+                        {index + 1 === array.length && (
+                          <IconButton
+                            size="small"
+                            icon="add"
+                            variantColor="navyblue"
+                            aria-label="Add prefix"
+                            onClick={() =>
+                              arrayHelpers.insert(index + 1, { prefix: '', logTypes: [] })
+                            }
+                          />
+                        )}
+                      </Flex>
+                      <Field
+                        name={`s3PrefixLogTypes.${index}.prefix`}
+                        label="S3 Prefix Filter"
+                        placeholder="Limit logs to objects that start with matching characters"
+                        as={FormikTextInput}
+                      />
+                      <Field
+                        as={FormikMultiCombobox}
+                        searchable
+                        label="Log Types"
+                        required
+                        name={`s3PrefixLogTypes.${index}.logTypes`}
+                        items={
+                          // The filtering here is used to prevent users from adding the same log type with different prefixes
+                          data?.listAvailableLogTypes.logTypes.filter(
+                            logType =>
+                              !flatten(
+                                values.s3PrefixLogTypes.map(({ logTypes }) => logTypes)
+                              ).includes(logType)
+                          ) ?? []
+                        }
+                        placeholder="The types of logs that are collected"
+                      />
+                    </Flex>
+                  );
+                });
+              }}
+            />
             <Field
-              as={FormikMultiCombobox}
-              searchable
-              label="Log Types"
-              name="logTypes"
-              items={data?.listAvailableLogTypes.logTypes ?? []}
-              placeholder="The types of logs that are collected"
+              name="kmsKey"
+              as={FormikTextInput}
+              label="KMS Key"
+              placeholder="For encrypted logs, add the KMS ARN for decryption"
             />
           </Flex>
-          <Flex justify="center" mt={6}>
-            <AbstractButton
-              color="teal-400"
-              fontSize="medium"
-              onClick={() => showAdvancedConfig(!isAdvancedConfigVisible)}
-              p={1}
-            >
-              {isAdvancedConfigVisible
-                ? 'Hide advanced configuration'
-                : 'Show advanced configuration'}
-            </AbstractButton>
-          </Flex>
-          <Collapse open={isAdvancedConfigVisible}>
-            <Flex direction="column" spacing={4} pt={6}>
-              <Field
-                name="s3Prefix"
-                as={FormikTextInput}
-                label="S3 Prefix Filter"
-                required
-                placeholder="Limit logs to objects that start with matching characters"
-              />
-              <Field
-                name="kmsKey"
-                as={FormikTextInput}
-                label="KMS Key"
-                required
-                placeholder="For encrypted logs, add the KMS ARN for decryption"
-              />
-            </Flex>
-          </Collapse>
         </ErrorBoundary>
       </Box>
       <WizardPanel.Actions>
