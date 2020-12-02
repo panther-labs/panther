@@ -29,7 +29,8 @@ import (
 )
 
 func (API) ListDataModels(input *models.ListDataModelsInput) *events.APIGatewayProxyResponse {
-	// Set defaults
+	// Standardize input
+	input.NameContains = strings.ToLower(input.NameContains)
 	if input.Page == 0 {
 		input.Page = defaultPage
 	}
@@ -76,3 +77,31 @@ func (API) ListDataModels(input *models.ListDataModelsInput) *events.APIGatewayP
 
 	return gatewayapi.MarshalResponse(&result, http.StatusOK)
 }
+<<<<<<< HEAD
+=======
+
+func dataModelScanInput(input *models.ListDataModelsInput) (*dynamodb.ScanInput, error) {
+	var filters []expression.ConditionBuilder
+	if input.Enabled != nil {
+		filters = append(filters, expression.Equal(
+			expression.Name("enabled"), expression.Value(*input.Enabled)))
+	}
+
+	if input.NameContains != "" {
+		filters = append(filters, expression.Contains(expression.Name("lowerId"), input.NameContains).
+			Or(expression.Contains(expression.Name("lowerDisplayName"), input.NameContains)))
+	}
+
+	if len(input.LogTypes) > 0 {
+		// a data model with no resource types applies to all of them
+		typeFilter := expression.AttributeNotExists(expression.Name("resourceTypes"))
+		for _, typeName := range input.LogTypes {
+			// the item in Dynamo calls this "resourceTypes" for for DataModels
+			typeFilter = typeFilter.Or(expression.Contains(expression.Name("resourceTypes"), typeName))
+		}
+		filters = append(filters, typeFilter)
+	}
+
+	return buildScanInput(models.TypeDataModel, []string{}, filters...)
+}
+>>>>>>> eb4c6945 (Fix uuid validation and case-insensitive filtering (#2167))
