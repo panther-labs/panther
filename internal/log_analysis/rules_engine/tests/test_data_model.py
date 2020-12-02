@@ -57,7 +57,7 @@ class TestDataModel(TestCase):  # pylint: disable=too-many-public-methods
         try:
             DataModel(
                 {
-                    'body': 'a data model body',
+                    'body': 'def method(event):\n    return True',
                     'id': 'data.model.id',
                     'mappings': [{
                         'name': 'destination_ip',
