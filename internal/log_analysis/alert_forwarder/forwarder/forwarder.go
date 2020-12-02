@@ -75,7 +75,7 @@ func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) (e
 
 func shouldIgnoreChange(rule *ruleModel.Rule, alertDedupEvent *AlertDedupEvent) bool {
 	// If the number of matched events hasn't crossed the threshold for the rule, don't create a new alert.
-	return alertDedupEvent.EventCount < int64(rule.Threshold)
+	return alertDedupEvent.Type == alertModel.RuleType && alertDedupEvent.EventCount < int64(rule.Threshold)
 }
 
 func needToCreateNewAlert(oldRule *ruleModel.Rule, oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) bool {
