@@ -92,7 +92,7 @@ func TestIntegrationS3SNS(t *testing.T) {
 
 	numberOfFiles, err := testutils.CountObjectsInBucket(s3Client, s3Bucket, s3Prefix)
 	require.NoError(t, err)
-	require.Greater(t, numberOfFiles, 0, "no data files, wait a bit a snd run again")
+	require.Greater(t, numberOfFiles, 0, "no data files, wait a bit then run again")
 
 	createTopicOutput, err := testutils.CreateTopic(snsClient, topicName)
 	require.NoError(t, err)

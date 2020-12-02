@@ -25,6 +25,8 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/pkg/errors"
@@ -112,4 +114,24 @@ func ListPath(s3Client s3iface.S3API, s3path string, limit uint64,
 	if err != nil {
 		errChan <- err
 	}
+}
+
+func GetS3Region(sess *session.Session, s3Path string) (string, error) {
+	parsedPath, err := url.Parse(s3Path)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to find bucket region for provided path %s: %s", s3Path, err)
+	}
+
+	input := &s3.GetBucketLocationInput{Bucket: aws.String(parsedPath.Host)}
+	location, err := s3.New(sess).GetBucketLocation(input)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to find bucket region for provided path %s: %s", s3Path, err)
+	}
+
+	// Method may return nil if region is us-east-1,https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketLocation.html
+	// and https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
+	if location.LocationConstraint == nil {
+		return endpoints.UsEast1RegionID, nil
+	}
+	return *location.LocationConstraint, nil
 }
