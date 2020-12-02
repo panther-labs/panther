@@ -32,7 +32,8 @@ import (
 )
 
 func (API) ListDataModels(input *models.ListDataModelsInput) *events.APIGatewayProxyResponse {
-	// Set defaults
+	// Standardize input
+	input.NameContains = strings.ToLower(input.NameContains)
 	if input.Page == 0 {
 		input.Page = defaultPage
 	}
@@ -89,7 +90,7 @@ func dataModelScanInput(input *models.ListDataModelsInput) (*dynamodb.ScanInput,
 
 	if input.NameContains != "" {
 		filters = append(filters, expression.Contains(expression.Name("lowerId"), input.NameContains).
-			Or(expression.Contains(expression.Name("lowerDisplayName"), strings.ToLower(input.NameContains))))
+			Or(expression.Contains(expression.Name("lowerDisplayName"), input.NameContains)))
 	}
 
 	if len(input.LogTypes) > 0 {

@@ -84,7 +84,7 @@ func pythonListFilters(enabled *bool, nameContains, severity string, types, tags
 
 	if nameContains != "" {
 		filters = append(filters, expression.Contains(expression.Name("lowerId"), nameContains).
-			Or(expression.Contains(expression.Name("lowerDisplayName"), strings.ToLower(nameContains))))
+			Or(expression.Contains(expression.Name("lowerDisplayName"), nameContains)))
 	}
 
 	if len(types) > 0 {
@@ -149,29 +149,29 @@ func sortByDisplayName(items []tableItem, ascending bool) {
 		left, right := items[i], items[j]
 
 		var leftName, rightName string
-		leftName, rightName = left.DisplayName, right.DisplayName
+		leftName, rightName = left.LowerDisplayName, right.LowerDisplayName
 
 		// The frontend shows display name *or* ID (when there is no display name)
 		// So we sort the same way it is shown to the user - displayName if available, otherwise ID
 		if leftName == "" {
-			leftName = left.ID
+			leftName = left.LowerID
 		}
 		if rightName == "" {
-			rightName = right.ID
+			rightName = right.LowerID
 		}
 
 		if leftName != rightName {
 			if ascending {
-				return strings.ToLower(leftName) < strings.ToLower(rightName)
+				return leftName < rightName
 			}
-			return strings.ToLower(leftName) > strings.ToLower(rightName)
+			return leftName > rightName
 		}
 
 		// Same display name: sort by ID
 		if ascending {
-			return strings.ToLower(left.ID) < strings.ToLower(right.ID)
+			return left.LowerID < right.LowerID
 		}
-		return strings.ToLower(left.ID) > strings.ToLower(right.ID)
+		return left.LowerID > right.LowerID
 	})
 }
 
