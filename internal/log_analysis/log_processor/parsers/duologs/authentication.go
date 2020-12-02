@@ -48,9 +48,9 @@ type AccessDevice struct {
 	Hostname       pantherlog.String `json:"hostname" panther:"hostname" description:"The hostname, if present, otherwise \"null\"."`
 	IP             pantherlog.String `json:"ip" panther:"ip" description:"The access device's IP address, if present, otherwise \"null\"."`
 	//TODO: These fields are declared bool, but their description contradicts. Fix them when we hear back from Duo.
-	IsEncryptionEnabled pantherlog.Bool     `json:"is_encryption_enabled" description:"Reports the disk encryption state as detected by the Duo Device Health app. One of \"true\", \"false\", or \"unknown\"."`
-	IsFirewallEnabled   pantherlog.Bool     `json:"is_firewall_enabled" description:"Reports the firewall state as detected by the Duo Device Health app. One of \"true\", \"false\", or \"unknown\"."`
-	IsPasswordSet       pantherlog.Bool     `json:"is_password_set" description:"Reports the system password state as detected by the Duo Device Health app. One of \"true\", \"false\", or \"unknown\"."`
+	IsEncryptionEnabled pantherlog.String     `json:"is_encryption_enabled" description:"Reports the disk encryption state as detected by the Duo Device Health app. One of \"true\", \"false\", or \"unknown\"."`
+	IsFirewallEnabled   pantherlog.String     `json:"is_firewall_enabled" description:"Reports the firewall state as detected by the Duo Device Health app. One of \"true\", \"false\", or \"unknown\"."`
+	IsPasswordSet       pantherlog.String     `json:"is_password_set" description:"Reports the system password state as detected by the Duo Device Health app. One of \"true\", \"false\", or \"unknown\"."`
 	JavaVersion         pantherlog.String   `json:"java_version" description:"The Java plugin version used, if present, otherwise \"uninstalled\"."`
 	Location            *Location           `json:"location" description:"The GeoIP location of the access device, if available. The response may not include all location parameters."`
 	OS                  pantherlog.String   `json:"os" description:"The device operating system name."`

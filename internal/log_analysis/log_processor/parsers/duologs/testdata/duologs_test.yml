@@ -77,9 +77,9 @@ result: |
       "flash_version": "uninstalled",
       "hostname": "example.com",
       "ip": "169.232.89.219",
-      "is_encryption_enabled": true,
-      "is_firewall_enabled": true,
-      "is_password_set": true,
+      "is_encryption_enabled": "true",
+      "is_firewall_enabled": "true",
+      "is_password_set": "true",
       "java_version": "uninstalled",
       "location": {
         "city": "Ann Arbor",
