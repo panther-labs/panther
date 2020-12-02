@@ -597,6 +597,47 @@ func TestHandleShouldNotCreateOrUpdateAlertIfThresholdNotReached(t *testing.T) {
 	metricsMock.AssertExpectations(t)
 }
 
+func TestHandleDontConsiderThresholdInRuleErrors(t *testing.T) {
+	t.Parallel()
+	ddbMock := &testutils.DynamoDBMock{}
+	sqsMock := &testutils.SqsMock{}
+	metricsMock := &testutils.LoggerMock{}
+	analysisMock := &gatewayapi.MockClient{}
+	handler := &Handler{
+		AlertTable:       "alertsTable",
+		AlertingQueueURL: "queueUrl",
+		Cache:            NewCache(analysisMock),
+		DdbClient:        ddbMock,
+		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
+	}
+
+	ruleWithThreshold := &ruleModel.Rule{
+		ID:          "ruleId",
+		Description: "Description",
+		DisplayName: "DisplayName",
+		Runbook:     "Runbook",
+		Severity:    "INFO",
+		Tags:        []string{"Tag"},
+		Threshold:   1000,
+	}
+
+	ruleErrorDedup := *newAlertDedupEvent
+	ruleErrorDedup.Type = RuleErrorType
+
+	analysisMock.On("Invoke", expectedGetRuleInput, &ruleModel.Rule{}).Return(
+		http.StatusOK, nil, ruleWithThreshold).Once()
+
+	ddbMock.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
+	sqsMock.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
+	assert.NoError(t, handler.Do(nil, &ruleErrorDedup))
+
+	ddbMock.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
+	analysisMock.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
+}
+
 func TestHandleShouldCreateAlertIfThresholdNowReached(t *testing.T) {
 	t.Parallel()
 	ddbMock := &testutils.DynamoDBMock{}

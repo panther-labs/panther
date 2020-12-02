@@ -26,10 +26,10 @@ const TypeOfflineEnrollment = "Duo.OfflineEnrollment"
 type OfflineEnrollmentLog struct {
 	Action       pantherlog.String `json:"action" validate:"oneof=o2fa_user_provisioned o2fa_user_deprovisioned o2fa_user_reenrolled" description:"The offline enrollment operation. One of \"o2fa_user_provisioned\", \"o2fa_user_deprovisioned\", or \"o2fa_user_reenrolled\"."`
 	Description  pantherlog.String `json:"description" description:"Information about the Duo Windows Logon client system as reported by the application."`
-	ISOTimestamp pantherlog.Time   `json:"isotimestamp" panther:"required" event_time:"true" tcodec:"rfc3339" description:"ISO8601 timestamp of the event."`
-	Object       pantherlog.String `json:"object" panther:"required" description:"The Duo Windows Logon integration's name."`
+	ISOTimestamp pantherlog.Time   `json:"isotimestamp" validate:"required" event_time:"true" tcodec:"rfc3339" description:"ISO8601 timestamp of the event."`
+	Object       pantherlog.String `json:"object" validate:"required" description:"The Duo Windows Logon integration's name."`
 	Timestamp    pantherlog.Time   `json:"timestamp" tcodec:"unix" description:"Unix timestamp of the event."`
-	UserName     pantherlog.String `json:"username" panther:"required" description:"The Duo username."`
+	UserName     pantherlog.String `json:"username" panther:"username" validate:"required" description:"The Duo username."`
 }
 
 // nolint:lll
