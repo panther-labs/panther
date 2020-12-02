@@ -68,7 +68,7 @@ const (
 
 // Returns the datatype associated to this LogType
 func GetDataType(logtype string) DataType {
-	if snapshotlogs.LogTypes().Find(logtype) != nil {
+	if cloudsecuritylogs.LogTypes().Find(logtype) != nil {
 		return CloudSecurity
 	}
 	return LogData

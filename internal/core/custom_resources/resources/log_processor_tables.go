@@ -27,6 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	cloudsecglue "github.com/panther-labs/panther/internal/compliance/awsglue"
 	"github.com/panther-labs/panther/internal/core/source_api/apifunctions"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
@@ -61,6 +62,13 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 			if err := awsglue.EnsureDatabase(ctx, glueClient, db, desc); err != nil {
 				return physicalResourceID, nil, errors.Wrapf(err, "failed to create database %s", db)
 			}
+		}
+
+		// Verify that Cloud Security database is present
+		err := cloudsecglue.CreateOrUpdateCloudSecurityDatabase(glueClient)
+		if err != nil {
+			zap.L().Error("failed to create Cloud Security database", zap.Error(err))
+			return physicalResourceID, nil, err
 		}
 
 		requiredLogTypes, err := apifunctions.ListLogTypes(ctx, lambdaClient)

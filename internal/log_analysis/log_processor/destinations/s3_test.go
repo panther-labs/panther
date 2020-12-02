@@ -482,7 +482,7 @@ func TestSendDataToCloudSecurity(t *testing.T) {
 
 	destination := mockDestination()
 
-	cloudsecEvent := newTestEvent(snapshotlogs.TypeCompliance, refTime)
+	cloudsecEvent := newTestEvent(cloudsecuritylogs.TypeCompliance, refTime)
 
 	eventChannel := make(chan *parsers.Result, 1)
 	// sending event to buffered channel
@@ -515,7 +515,7 @@ func TestSendDataToCloudSecurity(t *testing.T) {
 			DataType:    aws.String("String"),
 		},
 		"id": {
-			StringValue: aws.String(snapshotlogs.TypeCompliance),
+			StringValue: aws.String(cloudsecuritylogs.TypeCompliance),
 			DataType:    aws.String("String"),
 		},
 	}
