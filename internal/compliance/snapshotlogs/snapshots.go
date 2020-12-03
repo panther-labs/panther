@@ -28,3 +28,7 @@ func LogTypes() logtypes.Group {
 }
 
 var logTypes = logtypes.Must("SnapshotHistory", logTypeCompliance, logTypeResource)
+
+func Resolver() logtypes.Resolver {
+	return logtypes.LocalResolver(logTypes)
+}
