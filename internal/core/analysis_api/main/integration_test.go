@@ -55,7 +55,7 @@ var (
 	integrationTest bool
 	apiClient       gatewayapi.API
 
-	userID = "521a1c7b-273f-4a03-99a7-5c661de5b0e8"
+	userID = "test-panther-user" // does NOT need to be a uuid4
 
 	// NOTE: this gets changed by the bulk upload!
 	policy = &models.Policy{

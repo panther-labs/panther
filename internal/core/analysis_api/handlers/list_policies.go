@@ -100,6 +100,7 @@ func (API) ListPolicies(input *models.ListPoliciesInput) *events.APIGatewayProxy
 
 // Set defaults and standardize input request
 func stdPolicyListInput(input *models.ListPoliciesInput) {
+	input.NameContains = strings.ToLower(input.NameContains)
 	if input.Page == 0 {
 		input.Page = defaultPage
 	}

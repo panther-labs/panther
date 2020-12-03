@@ -116,7 +116,7 @@ type UpdateRuleInput struct {
 	Tags               []string            `json:"tags" validate:"max=500,dive,required,max=1000"`
 	Tests              []UnitTest          `json:"tests" validate:"max=500,dive"`
 	Threshold          int                 `json:"threshold" validate:"min=0"`
-	UserID             string              `json:"userId" validate:"uuid4"`
+	UserID             string              `json:"userId" validate:"required"`
 }
 
 type Rule struct {
