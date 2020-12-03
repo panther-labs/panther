@@ -58,7 +58,7 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 			return physicalResourceID, nil, err
 		}
 
-		for db, desc := range pantherdb.LogDatabases {
+		for db, desc := range pantherdb.Databases {
 			if err := awsglue.EnsureDatabase(ctx, glueClient, db, desc); err != nil {
 				return physicalResourceID, nil,errors.Wrapf(err, "failed to create database %s", db)
 			}
@@ -94,7 +94,7 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 		return physicalResourceID, nil, nil
 	case cfn.RequestDelete:
 		// Deleting all log processing databases
-		for db := range pantherdb.LogDatabases {
+		for db := range pantherdb.Databases {
 			logger.Info("deleting database", zap.String("database", db))
 			if _, err := awsglue.DeleteDatabase(glueClient, db); err != nil {
 				if awsutils.IsAnyError(err, glue.ErrCodeEntityNotFoundException) {

@@ -44,7 +44,8 @@ const (
 	TempDatabaseDescription = "Holds temporary tables used for processing tasks"
 )
 
-var LogDatabases = map[string]string{
+var Databases = map[string]string{
+	CloudSecurityDatabase: CloudSecurityDatabaseDescription,
 	LogProcessingDatabase: LogProcessingDatabaseDescription,
 	RuleMatchDatabase:     RuleMatchDatabaseDescription,
 	RuleErrorsDatabase:    RuleErrorsDatabaseDescription,
