@@ -39,8 +39,12 @@ type Downloader s3manager.Downloader
 // Download creates a new reader that reads the contents of an S3 object.
 // It uses a downloader to fetch the file in chunks to enable recovery from read errors (e.g., connection resets).
 // It prefetches the next chunk while the previous one is being processed.
-// The chunk size is controlled by dl.PartSize and cost is 2 times dl.PartSize due to double buffer.
-// Making the chunk size large reduces S3 API calls at the expense of memory.
+// The chunk size is controlled by dl.PartSize and at any time while reading, the total number of buffers used will
+// be 2 * dl.PartSize. One buffer being pushed through the pipe and one being prefetched.
+// Increasing the chunk size, reduces S3 API calls at the expense of memory.
+//
+// NOTE: the `dl` receiver here is *intentionally* non-pointer. We will be assigning a specialized BufferProvider,
+// wired to *this specific download*. We don't want to affect a shared instance of the Downloader.
 func (dl Downloader) Download(ctx context.Context, input *s3.GetObjectInput) io.ReadCloser {
 	// Create a cancelable sub context so that the reader can abort the download
 	ctx, cancel := context.WithCancel(ctx)
