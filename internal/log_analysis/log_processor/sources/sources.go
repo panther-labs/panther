@@ -68,7 +68,7 @@ func LoadSourceS3(bucketName, objectKey string) (*models.SourceIntegration, erro
 
 // BuildClassifier builds a classifier for a source
 func BuildClassifier(src *models.SourceIntegration, r logtypes.Resolver) (classification.ClassifierAPI, error) {
-	parserIndex := map[string]pantherlog.LogParser{}
+	parserIndex := map[string]parsers.Interface{}
 	for _, logType := range src.RequiredLogTypes() {
 		entry, err := r.Resolve(context.TODO(), logType)
 		if err != nil {
@@ -87,7 +87,7 @@ func BuildClassifier(src *models.SourceIntegration, r logtypes.Resolver) (classi
 	return classification.NewClassifier(parserIndex), nil
 }
 
-func newSourceFieldsParser(id, label string, parser pantherlog.LogParser) pantherlog.LogParser {
+func newSourceFieldsParser(id, label string, parser parsers.Interface) parsers.Interface {
 	return &sourceFieldsParser{
 		Interface:   parser,
 		SourceID:    id,
