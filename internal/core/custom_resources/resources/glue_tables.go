@@ -49,7 +49,7 @@ func customUpdateLogTables(ctx context.Context, event cfn.Event) (string, map[st
 		zap.String("stackID", event.StackID),
 		zap.String("eventPhysicalResourceID", event.PhysicalResourceID),
 	)
-	logger.Debug("received UpdateLogProcessorTables event", zap.String("requestType", string(event.RequestType)))
+	logger.Info("received UpdateLogProcessorTables event", zap.String("requestType", string(event.RequestType)))
 	switch event.RequestType {
 	case cfn.RequestCreate, cfn.RequestUpdate:
 		// It's important to always return this physicalResourceID
