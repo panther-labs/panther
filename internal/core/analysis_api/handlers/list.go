@@ -104,17 +104,18 @@ func pythonListFilters(
 	}
 
 	if len(severity) > 0 {
-		severityFilter := expression.AttributeNotExists(expression.Name("severity"))
-		for _, severityType := range severity {
-			severityFilter = severityFilter.Or(expression.Contains(expression.Name("severity"), string(severityType)))
+		severityFilter := expression.Equal(expression.Name("severity"), expression.Value(severity[0]))
+		for _, severityType := range severity[1:] {
+			severityFilter = severityFilter.Or(expression.Equal(expression.Name("severity"),
+				expression.Value(severityType)))
 		}
 		filters = append(filters, severityFilter)
 	}
 
 	if len(tags) > 0 {
-		tagFilter := expression.AttributeExists(expression.Name("lowerTags"))
-		for _, tag := range tags {
-			tagFilter = tagFilter.And(expression.Contains(expression.Name("lowerTags"), strings.ToLower(tag)))
+		tagFilter := expression.Contains(expression.Name("lowerTags"), strings.ToLower(tags[0]))
+		for _, tag := range tags[1:] {
+			tagFilter = tagFilter.Or(expression.Contains(expression.Name("lowerTags"), strings.ToLower(tag)))
 		}
 		filters = append(filters, tagFilter)
 	}
