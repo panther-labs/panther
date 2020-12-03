@@ -75,10 +75,10 @@ var (
 
 // Dynamo filters common to both ListPolicies and ListRules
 func pythonListFilters(
-    enabled *bool,
-    nameContains string,
-    severity []compliancemodels.Severity,
-    types, tags []string,
+	enabled *bool,
+	nameContains string,
+	severity []compliancemodels.Severity,
+	types, tags []string,
 ) []expression.ConditionBuilder {
 	var filters []expression.ConditionBuilder
 
