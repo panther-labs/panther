@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"strings"
@@ -175,4 +176,44 @@ func repeatedLines(line string, maxSize int) (buf []byte) {
 		buf = append(buf, line...)
 	}
 	return buf
+}
+
+// This test is here to ensure that proper handling of edge cases exists when downloading.
+// If edge cases are not handled, reading from the io.ReadCloser might block indefinitely.
+// This won't happen every time but it is quite hard to coordinate the goroutines on each run.
+// If this test starts randomly failing, someone has messed with the fine balance things in the Downloader.
+func TestEarlyClose(t *testing.T) {
+	s3Mock := testutils.S3Mock{
+		Retries: 3,
+	}
+	s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return((*s3.GetObjectOutput)(nil), errors.New("failed")).Once()
+	dl := Downloader{
+		S3:       &s3Mock,
+		PartSize: 32,
+	}
+	rc := dl.Download(context.Background(), &s3.GetObjectInput{})
+	rc.Close()
+	buf := bytes.Buffer{}
+	n, err := buf.ReadFrom(rc)
+	require.Error(t, err)
+	require.Equal(t, int64(0), n)
+	s3Mock.AssertExpectations(t)
+}
+
+func TestCopyBuffersHandlesClosedChannel(t *testing.T) {
+	ch := make(chan *bytes.Buffer)
+	close(ch)
+	r, w := io.Pipe()
+	peekCalled := false
+	peek := func(buf []byte) {
+		if buf == nil {
+			peekCalled = true
+		}
+	}
+	r.CloseWithError(errors.New("failed"))
+	copyBuffers(w, ch, peek)
+	data, err := ioutil.ReadAll(r)
+	require.True(t, peekCalled)
+	require.Error(t, err)
+	require.Equal(t, 0, len(data))
 }
