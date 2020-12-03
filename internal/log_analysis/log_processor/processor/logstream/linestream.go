@@ -69,7 +69,7 @@ func (s *LineStream) Err() error {
 
 // Next reads the next line from the log.
 func (s *LineStream) Next() []byte {
-	if err := s.err; err != nil {
+	if s.err != nil {
 		return nil
 	}
 	line, err := s.readLine()
@@ -85,28 +85,41 @@ func (s *LineStream) Next() []byte {
 var ErrInvalidUTF8 = goerrors.New("invalid UTF8 encoding")
 
 func (s *LineStream) readLine() ([]byte, error) {
-	line, isPrefix, err := s.r.ReadLine()
+	// We use ReadLine instread of ReadBytes("\n") here to avoid unnecessary copying of data.
+	// line is a 'live' slice from the bufio.Reader
+	// isPrefix is set to true if the line did not fit that read buffer, so that we know this is partial data.
+	// err is any read error that occurred.
 	// NOTE: ReadLine either returns a non-nil line or it returns an error, never both.
+	// Another reason for using ReadLine is that with it, we can detect UTF8 on the first line chunk.
+	// If we were using ReadBytes("\n"), and the file was a non-UTF8 blob, we might end up reading the whole file seatching for "\n".
+	line, isPrefix, err := s.r.ReadLine()
 	if err != nil {
 		return nil, err
 	}
+	// Check for valid UTF8 stream on first read.
+	// We want to be doing this here, before handling isPrefix.
+	// This allows us to avoid reading a whole non-UTF8 blob searching for "\n"
+	// NOTE: if we encounter 'weird' log files using UTF16 and/or BOM headers, we need to update this detection
 	if s.numLines == 0 {
-		// Check for valid UTF8 stream on first read.
 		if !isValidUTF8(line, isPrefix) {
 			return nil, ErrInvalidUTF8
 		}
 	}
 	if !isPrefix {
+		// Line was small enough to fit the bufio.Reader buffer size.
 		return line, nil
 	}
-	// line is longer than bufio.Reader size, reuse scratch
+	// Uh-oh, line is longer than bufio.Reader size.
+	// The bytes in 'line' are valid until the next call to ReadLine.
+	// We will have to copy the bytes somewhere.
+	// Reuse our scratch buffer so that we don't allocate on every long line.
 	s.scratch = append(s.scratch[:0], line...)
+	// Keep reading chunks, copying them to scratch until we find the end of the line.
 	for isPrefix {
+		// Read the next chunk
 		line, isPrefix, err = s.r.ReadLine()
+		// Remember: ReadLine either returns a non-nil line or it returns an error, never both.
 		if err != nil {
-			if err == io.EOF {
-				return line, nil
-			}
 			break
 		}
 		s.scratch = append(s.scratch, line...)
