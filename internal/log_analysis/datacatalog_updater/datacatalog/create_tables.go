@@ -72,8 +72,8 @@ func (h *LambdaHandler) createOrReplaceViewsForAllDeployedLogTables(ctx context.
 		return errors.Wrap(err, "failed to resolve tables for logtypes")
 	}
 	var tablesInView []*awsglue.GlueTableMetadata
-	for _, table := range deployedLogTables{
-		if table.DatabaseName() != pantherdb.LogProcessingDatabase{
+	for _, table := range deployedLogTables {
+		if table.DatabaseName() != pantherdb.LogProcessingDatabase {
 			continue
 		}
 		tablesInView = append(tablesInView, table)

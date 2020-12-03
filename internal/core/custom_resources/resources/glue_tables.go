@@ -23,6 +23,8 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-lambda-go/cfn"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -40,7 +42,7 @@ type UpdateLogProcessorTablesProperties struct {
 	DataCatalogUpdaterQueueURL string `validate:"required"`
 }
 
-func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
+func customUpdateLogTables(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	logger := lambdalogger.FromContext(ctx).With(
 		zap.String("requestID", event.RequestID),
 		zap.String("requestType", string(event.RequestType)),
@@ -60,21 +62,12 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 
 		for db, desc := range pantherdb.Databases {
 			if err := awsglue.EnsureDatabase(ctx, glueClient, db, desc); err != nil {
-				return physicalResourceID, nil,errors.Wrapf(err, "failed to create database %s", db)
+				return physicalResourceID, nil, errors.Wrapf(err, "failed to create database %s", db)
 			}
 		}
-		if err := cloudsecglue.CreateOrUpdateCloudSecurityDatabase(glueClient); err != nil {
-			return physicalResourceID, nil,errors.Wrapf(err, "failed to create database %s", db)
-		}
 
-		err = cloudsecglue.CreateOrUpdateResourcesTable(glueClient, props.ResourcesTableARN)
-		if err != nil {
-			return err
-		}
-
-		err = cloudsecglue.CreateOrUpdateComplianceTable(glueClient, props.ComplianceTableARN)
-		if err != nil {
-			return err
+		if err := createCloudSecurityDDBTables(ctx); err != nil {
+			return physicalResourceID, nil, err
 		}
 
 		logTypesInUse, err := apifunctions.ListLogTypes(ctx, lambdaClient)
@@ -110,4 +103,23 @@ func customUpdateLogProcessorTables(ctx context.Context, event cfn.Event) (strin
 		logger.Error("unknown request type")
 		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
 	}
+}
+
+func createCloudSecurityDDBTables(_ context.Context) error {
+	tableArn := arn.ARN{
+		Partition: "aws",
+		Region:    aws.StringValue(awsSession.Config.Region),
+		AccountID: env.AccountID,
+		Service:   "dynamodb",
+		Resource:  cloudsecglue.ResourcesTableDDB,
+	}
+	if err := cloudsecglue.CreateOrUpdateResourcesTable(glueClient, tableArn.String()); err != nil {
+		return errors.Wrap(err, "failed to create resources table")
+	}
+
+	tableArn.Resource = cloudsecglue.ComplianceTableDDB
+	if err := cloudsecglue.CreateOrUpdateComplianceTable(glueClient, tableArn.String()); err != nil {
+		return errors.Wrap(err, "failed to create compliance table")
+	}
+	return nil
 }

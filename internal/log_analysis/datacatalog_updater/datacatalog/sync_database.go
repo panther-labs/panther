@@ -23,6 +23,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/stringset"
 )
@@ -33,8 +34,11 @@ type SyncDatabaseEvent struct {
 }
 
 func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *SyncDatabaseEvent) error {
-
-
+	for db, desc := range pantherdb.Databases {
+		if err := awsglue.EnsureDatabase(ctx, h.GlueClient, db, desc); err != nil {
+			return errors.Wrapf(err, "failed to create database %s", db)
+		}
+	}
 	// We combine the deployed log types with the ones required by all active sources
 	// This way if new code for sources requires more log types on upgrade, they are added
 	var syncLogTypes []string
