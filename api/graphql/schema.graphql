@@ -873,7 +873,7 @@ input ListPoliciesInput {
   enabled: Boolean
   hasRemediation: Boolean
   resourceTypes: [String!]
-  severity: SeverityEnum
+  severity: [SeverityEnum!]
   tags: [String!]
   # Sorting
   sortBy: ListPoliciesSortFieldsEnum # defaults to `id`

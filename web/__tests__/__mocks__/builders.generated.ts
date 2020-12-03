@@ -847,7 +847,7 @@ export const buildListPoliciesInput = (
     enabled: 'enabled' in overrides ? overrides.enabled : false,
     hasRemediation: 'hasRemediation' in overrides ? overrides.hasRemediation : false,
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['software'],
-    severity: 'severity' in overrides ? overrides.severity : SeverityEnum.High,
+    severity: 'severity' in overrides ? overrides.severity : [SeverityEnum.High],
     tags: 'tags' in overrides ? overrides.tags : ['Fish'],
     sortBy: 'sortBy' in overrides ? overrides.sortBy : ListPoliciesSortFieldsEnum.ResourceTypes,
     sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
