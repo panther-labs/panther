@@ -62,7 +62,8 @@ class Engine:
         if isinstance(rule_result.rule_exception, AttributeError):
             if str(rule_result.rule_exception) == '\'dict\' object has no attribute \'udm\'':
                 rule_result.rule_exception = AttributeError(
-                    'The test specification for rules using the \'udm\' method must specify the \'p_log_type\' field'
+                    'The test specification for rules using the \'udm\' method must specify the \'p_log_type\' field,' +
+                    ' and there must be an enabled DataModel for the log type.'
                 )
         return {
             'id': test_spec['id'],
