@@ -92,12 +92,14 @@ type CoreFields struct {
 
 const (
 	// FieldPrefixJSON is the prefix for field names injected by panther to log events.
-	FieldPrefixJSON    = "p_"
-	FieldPrefix        = "Panther"
-	FieldLogTypeJSON   = FieldPrefixJSON + "log_type"
-	FieldRowIDJSON     = FieldPrefixJSON + "row_id"
-	FieldEventTimeJSON = FieldPrefixJSON + "event_time"
-	FieldParseTimeJSON = FieldPrefixJSON + "parse_time"
+	FieldPrefixJSON      = "p_"
+	FieldPrefix          = "Panther"
+	FieldLogTypeJSON     = FieldPrefixJSON + "log_type"
+	FieldRowIDJSON       = FieldPrefixJSON + "row_id"
+	FieldEventTimeJSON   = FieldPrefixJSON + "event_time"
+	FieldParseTimeJSON   = FieldPrefixJSON + "parse_time"
+	FieldSourceIDJSON    = FieldPrefixJSON + "source_id"
+	FieldSourceLabelJSON = FieldPrefixJSON + "source_label"
 )
 
 var (
