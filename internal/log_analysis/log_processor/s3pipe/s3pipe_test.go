@@ -186,7 +186,9 @@ func TestEarlyClose(t *testing.T) {
 	s3Mock := testutils.S3Mock{
 		Retries: 3,
 	}
-	s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return((*s3.GetObjectOutput)(nil), errors.New("failed")).Once()
+	s3Mock.On("GetObjectWithContext",
+		mock.Anything, mock.Anything, mock.Anything,
+	).Return((*s3.GetObjectOutput)(nil), errors.New("failed")).Once()
 	dl := Downloader{
 		S3:       &s3Mock,
 		PartSize: 32,
@@ -210,7 +212,7 @@ func TestCopyBuffersHandlesClosedChannel(t *testing.T) {
 			peekCalled = true
 		}
 	}
-	r.CloseWithError(errors.New("failed"))
+	require.NoError(t, r.CloseWithError(errors.New("failed")))
 	copyBuffers(w, ch, peek)
 	data, err := ioutil.ReadAll(r)
 	require.True(t, peekCalled)
