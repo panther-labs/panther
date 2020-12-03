@@ -80,6 +80,7 @@ func pythonListFilters(
 	severity []compliancemodels.Severity,
 	types, tags []string,
 ) []expression.ConditionBuilder {
+
 	var filters []expression.ConditionBuilder
 
 	if enabled != nil {
