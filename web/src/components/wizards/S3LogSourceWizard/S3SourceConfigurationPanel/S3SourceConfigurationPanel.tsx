@@ -87,6 +87,12 @@ const S3SourceConfigurationPanel: React.FC = () => {
               required
               placeholder="The name of the S3 bucket that holds the logs"
             />
+            <Field
+              name="kmsKey"
+              as={FormikTextInput}
+              label="KMS Key"
+              placeholder="For encrypted logs, add the KMS ARN for decryption"
+            />
           </Flex>
           <Flex direction="column" spacing={4} pt={6}>
             <FieldArray
@@ -159,12 +165,6 @@ const S3SourceConfigurationPanel: React.FC = () => {
                   );
                 });
               }}
-            />
-            <Field
-              name="kmsKey"
-              as={FormikTextInput}
-              label="KMS Key"
-              placeholder="For encrypted logs, add the KMS ARN for decryption"
             />
           </Flex>
         </ErrorBoundary>
