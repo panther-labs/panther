@@ -119,7 +119,6 @@ func TestAddToSnapshotQueue(t *testing.T) {
 }
 
 func TestPutCloudSecIntegration(t *testing.T) {
-	env.DataCatalogUpdaterQueueURL = "data-catalog-queue"
 	mockSQS := &testutils.SqsMock{}
 	sqsClient = mockSQS
 	dynamoClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}

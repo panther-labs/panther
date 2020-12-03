@@ -193,7 +193,7 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 // FullScan schedules scans for each Resource type for each integration.
 //
 // Each Resource type is sent within its own SQS message.
-func (api *API) FullScan(input *models.FullScanInput) error {
+func (api API) FullScan(input *models.FullScanInput) error {
 	var sqsEntries []*sqs.SendMessageBatchRequestEntry
 
 	// For each integration, add a ScanMsg to the queue per service
