@@ -336,7 +336,9 @@ Resources:
           Value: panther-cw-dashboards
 
   LogAnalysis:
-    DependsOn: Core
+    DependsOn:
+      - Core
+      - CloudSecurity # FIXME
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ../../deployments/log_analysis.yml
