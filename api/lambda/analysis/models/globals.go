@@ -49,7 +49,7 @@ type UpdateGlobalInput struct {
 	Description string   `json:"description" validate:"max=10000"`
 	ID          string   `json:"id" validate:"required,max=1000,excludesall='<>&\""`
 	Tags        []string `json:"tags" validate:"max=500,dive,required,max=1000"`
-	UserID      string   `json:"userId" validate:"uuid4"`
+	UserID      string   `json:"userId" validate:"required"`
 }
 
 type Global struct {
