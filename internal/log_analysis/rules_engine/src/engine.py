@@ -67,7 +67,7 @@ class Engine:
                     rule_reports=rule.rule_reports,
                     log_type=log_type,
                     dedup=result.error_type,  # type: ignore
-                    dedup_period_mins=1440,  # one day
+                    dedup_period_mins=rule.rule_dedup_period_mins,
                     event=event,
                     title=result.short_error_message,
                     error_message=result.error_message

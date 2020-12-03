@@ -200,6 +200,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
                 <RelatedDestinations
                   destinations={alertDestinations}
                   loading={loadingDestinations}
+                  limit={5}
                   verbose
                 />
               </Box>

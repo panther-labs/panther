@@ -139,6 +139,7 @@ const RuleCardDetails: React.FC<RuleCardDetailsProps> = ({ rule }) => {
                 <RelatedDestinations
                   destinations={detectionDestinations}
                   loading={loadingDetectionDestinations}
+                  limit={5}
                   verbose
                 />
               </Box>

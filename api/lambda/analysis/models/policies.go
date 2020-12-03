@@ -143,7 +143,7 @@ type UpdatePolicyInput struct {
 	Suppressions              []string            `json:"suppressions" validate:"max=500,dive,required,max=1000"`
 	Tags                      []string            `json:"tags" validate:"max=500,dive,required,max=1000"`
 	Tests                     []UnitTest          `json:"tests" validate:"max=500,dive"`
-	UserID                    string              `json:"userId" validate:"uuid4"`
+	UserID                    string              `json:"userId" validate:"required"`
 }
 
 // The validate tags here are used by BulkUpload
