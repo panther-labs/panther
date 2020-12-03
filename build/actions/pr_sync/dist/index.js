@@ -201,7 +201,7 @@ module.exports = /******/ (function (modules, runtime) {
             title: PR_TITLE_PREFIX + srcPullRequest.title,
             body: srcPullRequest.body.replace(
               / (#[0-9]+ )/g,
-              `${srcPullRequest.head.repo.full_name}$1`
+              ` ${srcPullRequest.head.repo.full_name}$1`
             ),
             maintainer_can_modify: true,
             head,
