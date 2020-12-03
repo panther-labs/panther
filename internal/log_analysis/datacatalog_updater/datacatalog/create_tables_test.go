@@ -109,8 +109,8 @@ func TestSQS_Sync(t *testing.T) {
 	}, nil)
 	mockAthenaClient.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil)
 
-	// Two sync messages, one for the Cloud Security data and another for the Log data
-	mockSqsClient.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil).Twice()
+	// Sync databases
+	mockSqsClient.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil).Once()
 
 	err = handler.HandleSQSEvent(context.Background(), &event)
 	require.NoError(t, err)

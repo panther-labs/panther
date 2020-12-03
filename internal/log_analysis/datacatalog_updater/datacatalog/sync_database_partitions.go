@@ -50,18 +50,22 @@ func (h *LambdaHandler) HandleSyncDatabasePartitionsEvent(ctx context.Context, e
 	)
 	var tableEvents []*SyncTableEvent
 	for _, dbName := range event.DatabaseNames {
-		// Tables in panther_logs database can have partitions at any point in time.
-		// The rest can only have partitions in the range TableCreateTime <= PartitionTime < now
-		afterTableCreateTime := dbName != pantherdb.LogProcessingDatabase
 		for _, logType := range event.LogTypes {
+			dataType := pantherdb.GetDataType(logType)
+			if dataType == pantherdb.CloudSecurity && dbName != pantherdb.CloudSecurityDatabase {
+				// Cloud Security log types are present only in the Cloud Security database
+				continue
+			}
 			tblName := pantherdb.TableName(logType)
 			tableEvents = append(tableEvents, &SyncTableEvent{
 				TraceID: event.TraceID,
 				SyncTablePartitions: gluetasks.SyncTablePartitions{
-					DryRun:               event.DryRun,
-					TableName:            tblName,
-					DatabaseName:         dbName,
-					AfterTableCreateTime: afterTableCreateTime,
+					DryRun:       event.DryRun,
+					TableName:    tblName,
+					DatabaseName: dbName,
+					// Tables in panther_logs database can have partitions at any point in time.
+					// The rest can only have partitions in the range TableCreateTime <= PartitionTime < now
+					AfterTableCreateTime: dbName != pantherdb.LogProcessingDatabase,
 				},
 			})
 		}

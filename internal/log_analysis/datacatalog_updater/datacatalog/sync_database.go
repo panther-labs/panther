@@ -23,7 +23,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/stringset"
@@ -66,42 +65,14 @@ func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *Sync
 // sendPartitionSync triggers a database partition sync by sending an event to the queue.
 // If no TraceID is provided this function will try to use the AWS request id.
 func (h *LambdaHandler) sendPartitionSync(ctx context.Context, syncTraceID string, logTypes []string) error {
-	var cloudSecurityLogTypes []string
-	var logAnalysisLogTypes []string
-	for _, logType := range logTypes {
-		resolvedType, err := h.Resolver.Resolve(ctx, logType)
-		if err != nil {
-			return err
-		}
-		// All log types belonging to this group are deployed in the Cloud Security database
-		if resolvedType.Name() == snapshotlogs.CloudSecurityGroup {
-			cloudSecurityLogTypes = append(cloudSecurityLogTypes, logType)
-		} else {
-			logAnalysisLogTypes = append(logAnalysisLogTypes, logType)
-		}
-	}
-
-	// Send message to sync the Log tables
-	if err := sendEvent(ctx, h.SQSClient, h.QueueURL, sqsTask{
+	return sendEvent(ctx, h.SQSClient, h.QueueURL, sqsTask{
 		SyncDatabasePartitions: &SyncDatabasePartitionsEvent{
 			TraceID:  traceIDFromContext(ctx, syncTraceID),
-			LogTypes: logAnalysisLogTypes,
+			LogTypes: logTypes,
 			DatabaseNames: []string{
 				pantherdb.LogProcessingDatabase,
 				pantherdb.RuleMatchDatabase,
 				pantherdb.RuleErrorsDatabase,
-			},
-		},
-	}); err != nil {
-		return err
-	}
-
-	// Send message to sync the Cloud Security tables
-	return sendEvent(ctx, h.SQSClient, h.QueueURL, sqsTask{
-		SyncDatabasePartitions: &SyncDatabasePartitionsEvent{
-			TraceID:  traceIDFromContext(ctx, syncTraceID),
-			LogTypes: cloudSecurityLogTypes,
-			DatabaseNames: []string{
 				pantherdb.CloudSecurityDatabase,
 			},
 		},
