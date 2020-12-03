@@ -53,7 +53,7 @@ func (h *LambdaHandler) HandleSyncDatabasePartitionsEvent(ctx context.Context, e
 		for _, logType := range event.LogTypes {
 			dataType := pantherdb.GetDataType(logType)
 			if dataType == pantherdb.CloudSecurity && dbName != pantherdb.CloudSecurityDatabase {
-				// Cloud Security log types are present only in the Cloud Security database
+				// Sync Cloud Security data types only for Cloud Security database
 				continue
 			}
 			tblName := pantherdb.TableName(logType)
