@@ -21,13 +21,11 @@ package customlogs
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"os"
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
-	"gopkg.in/yaml.v2"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 )
@@ -56,15 +54,8 @@ func Infer(logger *zap.SugaredLogger, opts *InferOpts) error {
 		if err != nil {
 			logger.Fatalf("failed to parse line as JSON")
 		}
-		schema := logschema.Schema{
-			Version: 0,
-			Fields:  inferFields([]string{}, json),
-		}
-		marshalled, err := yaml.Marshal(schema)
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(marshalled))
+		value := inferFields([]string{}, json)
+		_ = value
 	}
 	if err := scanner.Err(); err != nil {
 		logger.Fatalf("failed")
@@ -146,23 +137,33 @@ func inferValueType(value interface{}) logschema.ValueType {
 }
 
 // collisions observe column names across a schema and provide case sensitive mappings
-type collisions map[string][]*logschema.ValueSchema
+type collisions map[string]*finding
 
 var collisionsObserver = collisions{}
 
 func (c collisions) observeValueSchema(path []string, schema *logschema.ValueSchema) {
 	fullPath := strings.Join(path, ".")
-	schemas, ok := c[fullPath]
+	find, ok := c[fullPath]
 	if !ok {
-		c[fullPath] = []*logschema.ValueSchema{schema}
+		find := &finding{
+			times:   1,
+			schemas: []*logschema.ValueSchema{schema},
+		}
+		c[fullPath] = find
 		return
 	}
-	for i := range schemas {
-		if schemas[i].Type == schema.Type && schema.Type != logschema.TypeObject {
+	find.times++
+	for i := range find.schemas {
+		if find.schemas[i].Type == schema.Type && schema.Type != logschema.TypeObject {
 			// no need to add
 			// we
 			return
 		}
 	}
-	c[fullPath] = append(schemas, schema)
+	find.schemas = append(find.schemas, schema)
+}
+
+type finding struct {
+	times   int
+	schemas []*logschema.ValueSchema
 }
