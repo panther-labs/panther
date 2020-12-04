@@ -78,7 +78,9 @@ func pythonListFilters(
 	enabled *bool,
 	nameContains string,
 	severity []compliancemodels.Severity,
-	types, tags []string,
+	types,
+	tags []string,
+	initialSet *bool,
 ) []expression.ConditionBuilder {
 
 	var filters []expression.ConditionBuilder
@@ -118,6 +120,20 @@ func pythonListFilters(
 			tagFilter = tagFilter.Or(expression.Contains(expression.Name("lowerTags"), strings.ToLower(tag)))
 		}
 		filters = append(filters, tagFilter)
+	}
+
+	if *initialSet == true {
+		initialSetFilter := expression.Equal(expression.Name("createdBy"),
+			expression.Value("00000000-0000-4000-8000-000000000000"))
+
+		filters = append(filters, initialSetFilter)
+	}
+
+	if *initialSet == false {
+		initialSetFilter := expression.NotEqual(expression.Name("createdBy"),
+			expression.Value("00000000-0000-4000-8000-000000000000"))
+
+		filters = append(filters, initialSetFilter)
 	}
 
 	return filters
