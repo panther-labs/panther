@@ -84,11 +84,11 @@ Parameters:
     Description: Initial Python analysis packs
   PantherCommit:
     Type: String
-    Description: The commit of the current deployment (i.e. `5c2a8a76`)
+    Description: The commit of the current deployment (e.g. `5c2a8a76`)
     AllowedPattern: '^[0-9a-f]{8}$'
   PantherVersion:
     Type: String
-    Description: The base semantic version of the current deployment (i.e. `1.3.0`)
+    Description: The base semantic version of the current deployment (e.g. `1.3.0`)
     AllowedPattern: '^1\.\d+\.\d+(-.+)?$'
   SecurityGroup:
     Type: String

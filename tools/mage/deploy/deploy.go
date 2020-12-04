@@ -583,5 +583,8 @@ func customResourceVersion() string {
 	if v := os.Getenv("CUSTOM_RESOURCE_VERSION"); v != "" {
 		return v
 	}
-	return util.Semver() + "-" + util.CommitSha()
+
+	// This is the same format as the version shown in the general settings page,
+	// and also the same format used by the master stack.
+	return fmt.Sprintf("%s (%s)", util.Semver(), util.CommitSha())
 }

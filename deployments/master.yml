@@ -226,7 +226,10 @@ Resources:
         AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CompanyDisplayName: !Ref CompanyDisplayName
-        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
         ImageRegistryName: !GetAtt Bootstrap.Outputs.ImageRegistryName
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
@@ -252,7 +255,10 @@ Resources:
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         ApiId: !GetAtt Bootstrap.Outputs.GraphQLApiId
-        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
         ServiceRole: !GetAtt Bootstrap.Outputs.AppsyncServiceRoleArn
       Tags:
         - Key: Application
@@ -271,7 +277,10 @@ Resources:
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
-        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
         Debug: !Ref Debug
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
@@ -301,7 +310,10 @@ Resources:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CompanyDisplayName: !Ref CompanyDisplayName
         CompanyEmail: !Ref FirstUserEmail
-        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
         Debug: !Ref Debug
         DynamoScalingRoleArn: !GetAtt Bootstrap.Outputs.DynamoScalingRoleArn
         InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
@@ -346,7 +358,10 @@ Resources:
         AthenaWorkGroup: !GetAtt BootstrapGateway.Outputs.AthenaWorkGroup
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
-        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
         Debug: !Ref Debug
         InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
         InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
@@ -379,7 +394,10 @@ Resources:
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
-        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
         EnableCloudTrail: !Ref EnableCloudTrail
         EnableGuardDuty: !Ref EnableGuardDuty
         EnableS3AccessLogs: !Ref EnableS3AccessLogs
@@ -405,7 +423,10 @@ Resources:
         AppClientId: !GetAtt BootstrapGateway.Outputs.AppClientId
         CertificateArn: !Ref CertificateArn
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
-        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
         ElbArn: !GetAtt Bootstrap.Outputs.LoadBalancerArn
         ElbFullName: !GetAtt Bootstrap.Outputs.LoadBalancerFullName
         ElbTargetGroup: !GetAtt Bootstrap.Outputs.LoadBalancerTargetGroup

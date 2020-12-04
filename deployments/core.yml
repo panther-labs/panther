@@ -78,7 +78,7 @@ Parameters:
     AllowedPattern: '^[0-9a-f-]{36}$'
   PantherVersion:
     Type: String
-    Description: The base semantic version of the current deployment (i.e. `1.3.0`)
+    Description: The base semantic version of the current deployment (e.g. `1.3.0`)
     AllowedPattern: '^1\.\d+\.\d+(-.+)?$'
   SqsKeyId:
     Type: String
