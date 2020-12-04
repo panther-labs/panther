@@ -21,7 +21,7 @@ import ReactDOM from 'react-dom';
 import { Box, Flex, theme as Theme, ThemeProvider, useTheme } from 'pouncejs';
 import { formatTime, remToPx, capitalize } from 'Helpers/utils';
 import { FloatSeries, LongSeries } from 'Generated/schema';
-import { EChartOption, ECharts } from 'echarts';
+import type { EChartOption, ECharts } from 'echarts';
 import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { stringToPaleColor } from 'Helpers/colors';
@@ -126,7 +126,9 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   title,
   tooltipComponent = ChartTooltip,
 }) => {
-  const [scaleType, setScaleType] = React.useState('value');
+  const [scaleType, setScaleType] = React.useState<EChartOption.BasicComponents.CartesianAxis.Type>(
+    'value'
+  );
   const theme = useTheme();
   const { getLegend } = useChartOptions();
   const timeSeriesChart = React.useRef<ECharts>(null);
@@ -172,10 +174,14 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           },
         },
         data: values
-          .map((v, i) => {
+          .map((value, index) => {
             return {
               name: label,
-              value: [data.timestamps[i], v, data.metadata ? data.metadata[i] : null],
+              value: [
+                data.timestamps[index],
+                value === 0 && scaleType === 'log' ? 0.0001 : value,
+                data.metadata ? data.metadata[index] : null,
+              ],
             };
           })
           /* This reverse is needed cause data provided by API are coming by descending timestamp.
@@ -265,9 +271,8 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         splitArea: { show: false }, // remove the grid area
       },
       yAxis: {
-        type: scaleType as EChartOption.BasicComponents.CartesianAxis.Type,
+        type: scaleType,
         logBase: 10,
-        min: scaleType === 'log' ? 1 : 0,
         axisLine: {
           lineStyle: {
             color: 'transparent',
