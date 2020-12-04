@@ -440,8 +440,7 @@ Resources:
               - RegistryProvided
               - !Ref ImageRegistry
               - !Sub 349240696275.dkr.ecr.${AWS::Region}.amazonaws.com/panther-community
-            # use just the base version for the tag, e.g. "v1.10.0"
-            tag: !Select [0, !Split ['-', !FindInMap [Constants, Panther, Version]]]
+            tag: !FindInMap [Constants, Panther, Version]
         InitialAnalysisPackUrls: !Join [',', !Ref InitialAnalysisPackUrls]
         PantherCommit: !FindInMap [Constants, Panther, Commit]
         PantherVersion: !FindInMap [Constants, Panther, Version]
