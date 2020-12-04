@@ -21,10 +21,13 @@ package customlogs
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"os"
+	"strings"
 
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v2"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 )
@@ -33,7 +36,7 @@ type InferOpts struct {
 	File *string
 }
 
-func Upload(logger *zap.SugaredLogger, opts *InferOpts) error {
+func Infer(logger *zap.SugaredLogger, opts *InferOpts) error {
 	fd, err := os.Open(*opts.File)
 	if err != nil {
 		return err
@@ -53,7 +56,15 @@ func Upload(logger *zap.SugaredLogger, opts *InferOpts) error {
 		if err != nil {
 			logger.Fatalf("failed to parse line as JSON")
 		}
-		inferFields(json)
+		schema := logschema.Schema{
+			Version: 0,
+			Fields:  inferFields([]string{}, json),
+		}
+		marshalled, err := yaml.Marshal(schema)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(marshalled))
 	}
 	if err := scanner.Err(); err != nil {
 		logger.Fatalf("failed")
@@ -61,13 +72,15 @@ func Upload(logger *zap.SugaredLogger, opts *InferOpts) error {
 	return nil
 }
 
-func inferFields(event map[string]interface{}) []logschema.FieldSchema {
+func inferFields(path []string, event map[string]interface{}) []logschema.FieldSchema {
 	var out []logschema.FieldSchema
 	for key, value := range event {
-		valueSchema, ok := inferValueSchema(value)
+		valueSchema, ok := inferValueSchema(append(path, key), value)
 		if !ok {
 			continue
 		}
+		collisionsObserver.observeValueSchema(append(path, key), valueSchema)
+
 		field := logschema.FieldSchema{
 			Name:        key,
 			Description: "The " + key,
@@ -79,7 +92,7 @@ func inferFields(event map[string]interface{}) []logschema.FieldSchema {
 	return out
 }
 
-func inferValueSchema(value interface{}) (*logschema.ValueSchema, bool) {
+func inferValueSchema(path []string, value interface{}) (*logschema.ValueSchema, bool) {
 	typ := inferValueType(value)
 	switch typ {
 	case logschema.TypeArray:
@@ -87,7 +100,7 @@ func inferValueSchema(value interface{}) (*logschema.ValueSchema, bool) {
 		if len(array) == 0 {
 			return nil, false
 		}
-		valueSchema, ok := inferValueSchema(array[0])
+		valueSchema, ok := inferValueSchema(path, array[0])
 		if !ok {
 			return nil, false
 		}
@@ -97,9 +110,12 @@ func inferValueSchema(value interface{}) (*logschema.ValueSchema, bool) {
 		}, true
 	case logschema.TypeObject:
 		object := value.(map[string]interface{})
+		if len(object) == 0 {
+			return nil, false
+		}
 		return &logschema.ValueSchema{
 			Type:   typ,
-			Fields: inferFields(object),
+			Fields: inferFields(path, object),
 		}, true
 	default:
 		return &logschema.ValueSchema{
@@ -129,6 +145,24 @@ func inferValueType(value interface{}) logschema.ValueType {
 	}
 }
 
-type SampleEvent struct {
-	fields []*logschema.FieldSchema
+// collisions observe column names across a schema and provide case sensitive mappings
+type collisions map[string][]*logschema.ValueSchema
+
+var collisionsObserver = collisions{}
+
+func (c collisions) observeValueSchema(path []string, schema *logschema.ValueSchema) {
+	fullPath := strings.Join(path, ".")
+	schemas, ok := c[fullPath]
+	if !ok {
+		c[fullPath] = []*logschema.ValueSchema{schema}
+		return
+	}
+	for i := range schemas {
+		if schemas[i].Type == schema.Type && schema.Type != logschema.TypeObject {
+			// no need to add
+			// we
+			return
+		}
+	}
+	c[fullPath] = append(schemas, schema)
 }

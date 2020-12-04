@@ -40,6 +40,6 @@ func TestUpload(t *testing.T) {
 	opts := &InferOpts{
 		File: aws.String("/Users/kostas/Desktop/auth0_mfa_samples.txt"),
 	}
-	require.NoError(t, Upload(logger, opts))
+	require.NoError(t, Infer(logger, opts))
 
 }
