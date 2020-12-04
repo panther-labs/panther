@@ -79,7 +79,7 @@ func s3Get(policyID, versionID string) (*tableItem, error) {
 	return &policy, nil
 }
 
-// Infer a policy to S3 and set the VersionID accordingly.
+// Upload a policy to S3 and set the VersionID accordingly.
 func s3Upload(policy *tableItem) error {
 	// We don't need to store auto-generated fields - keep the S3 copy clean and minimal
 	policy.LowerDisplayName = ""

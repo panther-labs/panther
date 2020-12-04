@@ -31,7 +31,7 @@ func PublicAssetsBucket(region string) string {
 	return "panther-community-" + region
 }
 
-// Infer a local file to S3.
+// Upload a local file to S3.
 func UploadFileToS3(log *zap.SugaredLogger, uploader *s3manager.Uploader, path, bucket, key string) (*s3manager.UploadOutput, error) {
 	file, err := os.Open(path)
 	if err != nil {

@@ -182,7 +182,7 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	eventChannel <- testResult
 	close(eventChannel)
 
-	destination.mockS3Uploader.On("Infer", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Once()
+	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Once()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
 	assert.NoError(t, runDestination(destination, eventChannel))
@@ -240,7 +240,7 @@ func TestSendDataIfTotalMemSizeLimitHasBeenReached(t *testing.T) {
 	eventChannel <- newSimpleTestEvent().Result()
 	close(eventChannel)
 
-	destination.mockS3Uploader.On("Infer", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
+	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
 
 	assert.NoError(t, runDestination(destination, eventChannel))
@@ -269,7 +269,7 @@ func TestSendDataIfBufferSizeLimitHasBeenReached(t *testing.T) {
 	eventChannel <- newSimpleTestEvent().Result()
 	close(eventChannel)
 
-	destination.mockS3Uploader.On("Infer", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
+	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
 
 	assert.NoError(t, runDestination(destination, eventChannel))
@@ -297,7 +297,7 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 		}
 	}()
 
-	destination.mockS3Uploader.On("Infer", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Times(nevents)
+	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Times(nevents)
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Times(nevents)
 
 	assert.NoError(t, runDestination(destination, eventChannel))
@@ -316,7 +316,7 @@ func TestSendDataToS3FromMultipleLogTypesBeforeTerminating(t *testing.T) {
 	eventChannel <- newTestEvent("testtype2", refTime).Result()
 	close(eventChannel)
 
-	destination.mockS3Uploader.On("Infer", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
+	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
 
 	assert.NoError(t, runDestination(destination, eventChannel))
@@ -336,7 +336,7 @@ func TestSendDataToS3FromSameHourBeforeTerminating(t *testing.T) {
 	eventChannel <- newSimpleTestEvent().Result()
 	close(eventChannel)
 
-	destination.mockS3Uploader.On("Infer", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Once()
+	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Once()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
 	assert.NoError(t, runDestination(destination, eventChannel))
@@ -356,7 +356,7 @@ func TestSendDataToS3FromMultipleHoursBeforeTerminating(t *testing.T) {
 	eventChannel <- newTestEvent(testLogType, refTimePlusHour).Result()
 	close(eventChannel)
 
-	destination.mockS3Uploader.On("Infer", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
+	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Twice()
 
 	assert.NoError(t, runDestination(destination, eventChannel))
@@ -401,7 +401,7 @@ func TestSendDataWhenExceedMaxBuffers(t *testing.T) {
 	// Once the channel is closed, the destination will flush to S3 the last buffer
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
-	destination.mockS3Uploader.On("Infer", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
+	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Twice()
 
 	// Make sure the test doesn't run for more than expected
 	timeout := time.After(maxTestDuration)
@@ -431,7 +431,7 @@ func TestSendDataFailsIfS3Fails(t *testing.T) {
 	eventChannel <- newSimpleTestEvent().Result()
 	close(eventChannel)
 
-	destination.mockS3Uploader.On("Infer", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, errors.New("")).Once()
+	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, errors.New("")).Once()
 
 	assert.Error(t, runDestination(destination, eventChannel))
 
@@ -447,7 +447,7 @@ func TestSendDataFailsIfSnsFails(t *testing.T) {
 	eventChannel <- newSimpleTestEvent().Result()
 	close(eventChannel)
 
-	destination.mockS3Uploader.On("Infer", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil)
+	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil)
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, errors.New("test"))
 
 	assert.Error(t, runDestination(destination, eventChannel))
@@ -489,7 +489,7 @@ func TestSendDataToCloudSecurity(t *testing.T) {
 	eventChannel <- cloudsecEvent.Result()
 	close(eventChannel)
 
-	destination.mockS3Uploader.On("Infer", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Once()
+	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Once()
 	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
 	assert.NoError(t, runDestination(destination, eventChannel))
