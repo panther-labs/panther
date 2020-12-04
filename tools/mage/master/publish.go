@@ -59,8 +59,8 @@ func Publish() error {
 	if err != nil {
 		return fmt.Errorf("failed to get name of current branch: %s", err)
 	}
-	if !strings.HasPrefix(branch, "release-1.") {
-		return fmt.Errorf("publication is only allowed from a release-1.X branch")
+	if !strings.HasPrefix(branch, "release-") {
+		return fmt.Errorf("publication is only allowed from a release-* branch")
 	}
 
 	if err := getPublicationApproval(log); err != nil {

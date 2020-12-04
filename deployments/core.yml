@@ -79,7 +79,7 @@ Parameters:
   PantherVersion:
     Type: String
     Description: The base semantic version of the current deployment (e.g. `1.3.0`)
-    AllowedPattern: '^1\.\d+\.\d+(-.+)?$'
+    AllowedPattern: '^\d+\.\d+\.\d+(-.+)?$'
   SqsKeyId:
     Type: String
     Description: KMS key for encrypting SQS queues
