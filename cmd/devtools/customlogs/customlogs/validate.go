@@ -24,14 +24,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 
 	"go.uber.org/zap"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 
-	"github.com/panther-labs/panther/cmd/opstools"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/customlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
@@ -45,11 +43,10 @@ type ValidateOpts struct {
 }
 
 func Validate(logger *zap.SugaredLogger, opts *ValidateOpts) {
-	opstools.SetUsage(`-s SCHEMA_FILE [-o OUTPUT_FILE] [INPUT_FILES...]`)
 	schemaFile := *opts.Schema
 	if schemaFile == "" {
 		flag.Usage()
-		log.Fatal("no schema file provided")
+		logger.Fatal("no schema file provided")
 	}
 	schemaData, err := ioutil.ReadFile(schemaFile)
 	if err != nil {
@@ -68,7 +65,7 @@ func Validate(logger *zap.SugaredLogger, opts *ValidateOpts) {
 	if err != nil {
 		validationErrors := logschema.ValidationErrors(err)
 		if len(validationErrors) > 0 {
-			logger.Error("Schema validation failed:")
+			logger.Error("File validation failed:")
 			for _, e := range validationErrors {
 				logger.Errorf("  - %s", e.String())
 			}

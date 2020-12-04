@@ -19,16 +19,16 @@ package customlogs
  */
 
 import (
-	"go.uber.org/zap"
+	"flag"
 
-	"github.com/panther-labs/panther/cmd/opstools"
+	"go.uber.org/zap"
 )
 
-type UploadOpts = struct {
-	Schema *string
+type InferOpts = struct {
+	File *string
 }
 
-func Upload(logger *zap.SugaredLogger, opts *UploadOpts) {
-	opstools.SetUsage(`-s [SCHEMA_FILES...]`)
-	logger.Fatalf("Don't know what to do with file %s", *opts.Schema)
+func Upload(logger *zap.SugaredLogger, opts *InferOpts) {
+	flag.Usage()
+	logger.Fatalf("Don't know what to do with file %s", *opts.File)
 }

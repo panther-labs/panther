@@ -31,7 +31,7 @@ import (
 
 // CLI commands
 const validateCmd = "validate"
-const uploadCmd = "upload"
+const infer = "infer"
 
 func main() {
 	opstools.SetUsage(`[upload, validate]`)
@@ -52,17 +52,19 @@ func main() {
 
 	switch cmd := os.Args[1]; cmd {
 	case validateCmd:
+		opstools.SetUsage(`-s SCHEMA_FILE [-o OUTPUT_FILE] [INPUT_FILES...]`)
 		opts := &customlogs.ValidateOpts{
-			Schema: flag.String("s", "", "Schema file"),
+			Schema: flag.String("s", "", "File file"),
 			Output: flag.String("o", "", "Write parsed results to file (defaults to stdout)"),
 		}
-		flag.Parse()
+		flag.CommandLine.Parse(os.Args[2:])
 		customlogs.Validate(logger, opts)
-	case uploadCmd:
-		opts := &customlogs.UploadOpts{
-			Schema: flag.String("s", "", "Schema file"),
+	case infer:
+		opstools.SetUsage(`-i INPUT_FILE`)
+		opts := &customlogs.InferOpts{
+			File: flag.String("i", "", "Input file"),
 		}
-		flag.Parse()
+		flag.CommandLine.Parse(os.Args[2:])
 		customlogs.Upload(logger, opts)
 	default:
 		flag.Usage()
