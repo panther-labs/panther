@@ -19,40 +19,27 @@ package customlogs
  */
 
 import (
-	"bufio"
-	"os"
+	"log"
+	"testing"
 
-	jsoniter "github.com/json-iterator/go"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
-type InferOpts struct {
-	File *string
-}
-
-func Upload(logger *zap.SugaredLogger, opts *InferOpts) error {
-	fd, err := os.Open(*opts.File)
+func TestUpload(t *testing.T) {
+	loggerConfig := zap.NewDevelopmentConfig()
+	loggerConfig.DisableStacktrace = true
+	loggerConfig.DisableCaller = true
+	z, err := loggerConfig.Build()
 	if err != nil {
-		return err
+		log.Fatalln("failed to start logger: ", err.Error())
 	}
-	defer fd.Close()
+	logger := z.Sugar()
 
-	scanner := bufio.NewScanner(fd)
-
-	for scanner.Scan() {
-		line := scanner.Bytes()
-		var json map[string]interface{}
-		err := jsoniter.Unmarshal(line, json)
-		if err != nil {
-			logger.Fatalf("failed to parse line as JSON")
-		}
+	opts := &InferOpts{
+		File: aws.String("/Users/kostas/Desktop/auth0_mfa_samples.txt"),
 	}
-	if err := scanner.Err(); err != nil {
-		logger.Fatalf("failed")
-	}
+	require.NoError(t, Upload(logger, opts))
 
-	return nil
-}
-
-type sampleEvent struct {
 }

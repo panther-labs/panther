@@ -65,7 +65,9 @@ func main() {
 			File: flag.String("i", "", "Input file"),
 		}
 		flag.CommandLine.Parse(os.Args[2:])
-		customlogs.Upload(logger, opts)
+		if err := customlogs.Upload(logger, opts); err != nil {
+			logger.Fatalf("failed to infer schema %v", err)
+		}
 	default:
 		flag.Usage()
 		logger.Fatalf("Invalid command [%s]", cmd)
