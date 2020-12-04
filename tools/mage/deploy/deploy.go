@@ -89,8 +89,8 @@ func Deploy() error {
 		return deploySingleStack(stack)
 	}
 
-	log.Infof("deploying Panther %s to account %s (%s)",
-		util.RepoVersion(), clients.AccountID(), clients.Region())
+	log.Infof("deploying Panther %s (%s) to account %s (%s)",
+		util.Semver(), util.CommitSha(), clients.AccountID(), clients.Region())
 
 	settings, err := Settings()
 	if err != nil {
@@ -523,6 +523,7 @@ func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
 		"InputDataTopicArn":          outputs["InputDataTopicArn"],
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"OutputsKeyId":               outputs["OutputsEncryptionKeyId"],
+		"PantherVersion":             util.Semver(),
 		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],
@@ -582,8 +583,5 @@ func customResourceVersion() string {
 	if v := os.Getenv("CUSTOM_RESOURCE_VERSION"); v != "" {
 		return v
 	}
-
-	// By default, just use the major release version so developers do not have to trigger every
-	// custom resource on every deploy.
-	return strings.Split(util.RepoVersion(), "-")[0]
+	return util.Semver() + "-" + util.CommitSha()
 }

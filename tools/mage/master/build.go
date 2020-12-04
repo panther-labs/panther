@@ -21,7 +21,6 @@ package master
 import (
 	"bytes"
 	"path/filepath"
-	"strings"
 
 	"go.uber.org/zap"
 
@@ -37,7 +36,7 @@ var masterTemplate = filepath.Join("deployments", "master.yml")
 // Build lambda functions, python layer, and docker image.
 //
 // Returns docker image ID.
-func buildAssets(log *zap.SugaredLogger, version string) (string, error) {
+func buildAssets(log *zap.SugaredLogger) (string, error) {
 	if err := gen.Gen(); err != nil {
 		return "", err
 	}
@@ -60,7 +59,8 @@ func buildAssets(log *zap.SugaredLogger, version string) (string, error) {
 
 	// Embed version directly into template - we don't want this to be a configurable parameter.
 	template := util.MustReadFile(masterTemplate)
-	template = bytes.Replace(template, []byte("${{PANTHER_VERSION}}"), []byte(version), 1)
+	template = bytes.Replace(template, []byte("${{PANTHER_COMMIT}}"), []byte(util.CommitSha()), 1)
+	template = bytes.Replace(template, []byte("${{PANTHER_VERSION}}"), []byte(util.Semver()), 1)
 	util.MustWriteFile(embedPath, template)
 
 	return deploy.DockerBuild()
@@ -69,13 +69,13 @@ func buildAssets(log *zap.SugaredLogger, version string) (string, error) {
 // Package assets needed for the master template.
 //
 // Returns the path to the final generated template.
-func pkgAssets(log *zap.SugaredLogger, region, bucket, version, imgRegistry, dockerImageID string) (string, error) {
+func pkgAssets(log *zap.SugaredLogger, region, bucket, imgRegistry, dockerImageID string) (string, error) {
 	pkg, err := util.SamPackage(region, embedPath, bucket)
 	if err != nil {
 		return "", err
 	}
 
-	dockerImage, err := deploy.DockerPush(imgRegistry, dockerImageID, strings.SplitN(version, "-", 2)[0])
+	dockerImage, err := deploy.DockerPush(imgRegistry, dockerImageID, util.Semver())
 	if err != nil {
 		return "", err
 	}

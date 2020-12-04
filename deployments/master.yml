@@ -174,9 +174,9 @@ Parameters:
 Mappings:
   Constants:
     Panther:
-      # Mage will replace this version string during master:deploy or master:publish
-      # Example: "Version: v1.10.0-master-5c2a8a76"
-      Version: ${{PANTHER_VERSION}}
+      # Mage will replace these strings during master:deploy or master:publish
+      Commit: ${{PANTHER_COMMIT}} # E.g. "5c2a8a76"
+      Version: ${{PANTHER_VERSION}} # E.g. "1.14.0"
 
 Conditions:
   RegistryProvided: !Not [!Equals [!Ref ImageRegistry, '']]
@@ -308,6 +308,7 @@ Resources:
         InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
+        PantherVersion: !FindInMap [Constants, Panther, Version]
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TracingMode: !Ref TracingMode
         UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
@@ -421,7 +422,8 @@ Resources:
             # use just the base version for the tag, e.g. "v1.10.0"
             tag: !Select [0, !Split ['-', !FindInMap [Constants, Panther, Version]]]
         InitialAnalysisPackUrls: !Join [',', !Ref InitialAnalysisPackUrls]
-        PantherVersion: !FindInMap [Constants, Panther, Version] # has to be prefixed with 'v' for docs link in web app to work
+        PantherCommit: !FindInMap [Constants, Panther, Commit]
+        PantherVersion: !FindInMap [Constants, Panther, Version]
         SecurityGroup: !GetAtt Bootstrap.Outputs.WebSecurityGroup
         SubnetOneId: !GetAtt Bootstrap.Outputs.SubnetOneId
         SubnetTwoId: !GetAtt Bootstrap.Outputs.SubnetTwoId

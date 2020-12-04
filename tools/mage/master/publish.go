@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/magefile/mage/sh"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/pkg/awsutils"
@@ -44,15 +45,25 @@ func Publish() error {
 		return err
 	}
 
-	version := util.RepoVersion()
-	if strings.HasSuffix(version, "-dirty") {
-		return fmt.Errorf("you have local changes; commit or stash them before publishing")
+	// Don't allow publishing with a dirty repo state
+	if err := sh.Run("git", "diff", "--quiet"); err != nil {
+		if strings.HasSuffix(err.Error(), "failed with exit code 1") {
+			return fmt.Errorf("you have local changes; commit or stash them before publishing")
+		}
+		return fmt.Errorf("git diff failed: %s", err)
 	}
-	if !strings.Contains(version, "-release-1.") {
+
+	// Only allow publishing from the release branch
+	// "git branch --show-current" works only for Git 2.22+, but this is compatible with older versions:
+	branch, err := sh.Output("git", "rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
+		return fmt.Errorf("failed to get name of current branch: %s", err)
+	}
+	if !strings.HasPrefix(branch, "release-1.") {
 		return fmt.Errorf("publication is only allowed from a release-1.X branch")
 	}
 
-	if err := getPublicationApproval(log, version); err != nil {
+	if err := getPublicationApproval(log); err != nil {
 		return err
 	}
 
@@ -66,7 +77,7 @@ func Publish() error {
 		return err
 	}
 
-	dockerImageID, err := buildAssets(log, version)
+	dockerImageID, err := buildAssets(log)
 	if err != nil {
 		return err
 	}
@@ -75,24 +86,24 @@ func Publish() error {
 	results := make(chan util.TaskResult)
 	for region := range deploy.SupportedRegions {
 		go func(c chan util.TaskResult, region string) {
-			c <- util.TaskResult{Summary: region, Err: publishToRegion(log, region, version, dockerImageID)}
+			c <- util.TaskResult{Summary: region, Err: publishToRegion(log, region, dockerImageID)}
 		}(results, region)
 	}
 
 	return util.WaitForTasks(log, results, 1, len(deploy.SupportedRegions), len(deploy.SupportedRegions))
 }
 
-func getPublicationApproval(log *zap.SugaredLogger, version string) error {
-	log.Infof("Publishing panther-community %s to %d regions", version, len(deploy.SupportedRegions))
+func getPublicationApproval(log *zap.SugaredLogger) error {
+	log.Infof("Publishing panther-community %s to %d regions", util.Semver(), len(deploy.SupportedRegions))
 	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
 	if strings.ToLower(result) != "yes" {
-		return fmt.Errorf("publish %s aborted by user", version)
+		return fmt.Errorf("publish %s aborted by user", util.Semver())
 	}
 
 	// Check if the version already exists in any region - it's easy to forget to update the version
 	// in the template file and we probably don't want to overwrite a previous version.
 	for region := range deploy.SupportedRegions {
-		bucket, s3Key, s3URL := s3MasterTemplate(region, version)
+		bucket, s3Key, s3URL := s3MasterTemplate(region)
 		awsSession := session.Must(session.NewSession(aws.NewConfig().WithRegion(region)))
 
 		_, err := s3.New(awsSession).HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
@@ -101,7 +112,7 @@ func getPublicationApproval(log *zap.SugaredLogger, version string) error {
 			result := prompt.Read("Are you sure you want to overwrite the published release in each region? (yes|no) ",
 				prompt.NonemptyValidator)
 			if strings.ToLower(result) != "yes" {
-				return fmt.Errorf("publish %s aborted by user", version)
+				return fmt.Errorf("publish %s aborted by user", util.Semver())
 			}
 			return nil // override approved - don't need to keep checking each region
 		}
@@ -115,7 +126,7 @@ func getPublicationApproval(log *zap.SugaredLogger, version string) error {
 	return nil
 }
 
-func publishToRegion(log *zap.SugaredLogger, region, version, dockerImageID string) error {
+func publishToRegion(log *zap.SugaredLogger, region, dockerImageID string) error {
 	log.Debugf("publishing to %s", region)
 
 	// We can't use the global aws clients here because we need a different client for each region,
@@ -125,11 +136,11 @@ func publishToRegion(log *zap.SugaredLogger, region, version, dockerImageID stri
 		return fmt.Errorf("failed to build AWS session: %v", err)
 	}
 
-	bucket, s3Key, s3URL := s3MasterTemplate(region, version)
+	bucket, s3Key, s3URL := s3MasterTemplate(region)
 
 	// Publish S3 assets and ECR docker image
 	ecrRegistry := fmt.Sprintf("349240696275.dkr.ecr.%s.amazonaws.com/panther-community", region)
-	pkg, err := pkgAssets(log, region, bucket, version, ecrRegistry, dockerImageID)
+	pkg, err := pkgAssets(log, region, bucket, ecrRegistry, dockerImageID)
 	if err != nil {
 		return err
 	}
@@ -143,9 +154,9 @@ func publishToRegion(log *zap.SugaredLogger, region, version, dockerImageID stri
 }
 
 // Returns bucket name, s3 object key, and S3 URL for the master template in the current region.
-func s3MasterTemplate(region, version string) (string, string, string) {
+func s3MasterTemplate(region string) (string, string, string) {
 	bucket := util.PublicAssetsBucket(region)
-	s3Key := strings.SplitN(version, "-", 2)[0] + "/panther.yml"
+	s3Key := fmt.Sprintf("v%s/panther.yml", util.Semver())
 	s3URL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, s3Key)
 	return bucket, s3Key, s3URL
 }

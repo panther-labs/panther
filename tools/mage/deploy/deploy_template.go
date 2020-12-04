@@ -174,9 +174,6 @@ func createChangeSet(
 		})
 	}
 
-	// add version tag to all objects
-	pantherVersion := util.RepoVersion()
-
 	createInput := &cfn.CreateChangeSetInput{
 		Capabilities: []*string{
 			aws.String("CAPABILITY_AUTO_EXPAND"),
@@ -190,7 +187,7 @@ func createChangeSet(
 		Tags: []*cfn.Tag{ // Tags are propagated to every supported resource in the stack
 			{Key: aws.String("Application"), Value: aws.String("Panther")},
 			{Key: aws.String("PantherEdition"), Value: aws.String("Community")},
-			{Key: aws.String("PantherVersion"), Value: &pantherVersion},
+			{Key: aws.String("PantherVersion"), Value: aws.String(util.Semver())},
 			{Key: aws.String("Stack"), Value: &stack},
 		},
 	}
