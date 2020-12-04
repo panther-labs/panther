@@ -82,7 +82,7 @@ func deployTemplate(
 	return executeChangeSet(*changeID, changeSetType, stack)
 }
 
-// Upload a CloudFormation asset to S3 if it doesn't already exist, returning s3 object key and version
+// Infer a CloudFormation asset to S3 if it doesn't already exist, returning s3 object key and version
 func uploadAsset(assetPath, bucket, stack string) (string, string, error) {
 	contents := util.MustReadFile(assetPath)
 
@@ -199,7 +199,7 @@ func createChangeSet(
 	if len(template) <= maxTemplateSize {
 		createInput.SetTemplateBody(string(template))
 	} else {
-		// Upload to S3 (if it doesn't already exist)
+		// Infer to S3 (if it doesn't already exist)
 		key, _, err := uploadAsset(templatePath, bucket, stack)
 		if err != nil {
 			return nil, err

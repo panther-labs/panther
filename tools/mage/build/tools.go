@@ -38,10 +38,10 @@ func Tools() error {
 	buildEnvs := []map[string]string{
 		// darwin:arm is not compatible
 		{"GOOS": "darwin", "GOARCH": "amd64"},
-		{"GOOS": "linux", "GOARCH": "amd64"},
-		{"GOOS": "linux", "GOARCH": "arm"},
-		{"GOOS": "windows", "GOARCH": "amd64"},
-		{"GOOS": "windows", "GOARCH": "arm"},
+		//{"GOOS": "linux", "GOARCH": "amd64"},
+		//{"GOOS": "linux", "GOARCH": "arm"},
+		//{"GOOS": "windows", "GOARCH": "amd64"},
+		//{"GOOS": "windows", "GOARCH": "arm"},
 	}
 
 	var paths []string

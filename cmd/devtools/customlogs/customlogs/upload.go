@@ -1,4 +1,4 @@
-package util
+package customlogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,30 +19,16 @@ package util
  */
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"go.uber.org/zap"
+
+	"github.com/panther-labs/panther/cmd/opstools"
 )
 
-// The name of the bucket containing published Panther releases
-func PublicAssetsBucket(region string) string {
-	return "panther-community-" + region
+type UploadOpts = struct {
+	Schema *string
 }
 
-// Infer a local file to S3.
-func UploadFileToS3(log *zap.SugaredLogger, uploader *s3manager.Uploader, path, bucket, key string) (*s3manager.UploadOutput, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open %s: %v", path, err)
-	}
-	defer file.Close()
-
-	log.Debugf("uploading %s to s3://%s/%s", path, bucket, key)
-	return uploader.Upload(&s3manager.UploadInput{
-		Body:   file,
-		Bucket: &bucket,
-		Key:    &key,
-	})
+func Upload(logger *zap.SugaredLogger, opts *UploadOpts) {
+	opstools.SetUsage(`-s [SCHEMA_FILES...]`)
+	logger.Fatalf("Don't know what to do with file %s", *opts.Schema)
 }

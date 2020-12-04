@@ -1,4 +1,4 @@
-package main
+package customlogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -29,7 +29,7 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/panther-labs/panther/cmd/opstools"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/customlogs"
@@ -39,26 +39,13 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
-// CLI flags
-var opts = struct {
+type ValidateOpts struct {
 	Schema *string
 	Output *string
-}{
-	Schema: flag.String("s", "", "Schema file"),
-	Output: flag.String("o", "", "Write parsed results to file (defaults to stdout)"),
 }
 
-func main() {
+func Validate(logger *zap.SugaredLogger, opts *ValidateOpts) {
 	opstools.SetUsage(`-s SCHEMA_FILE [-o OUTPUT_FILE] [INPUT_FILES...]`)
-	flag.Parse()
-	loggerConfig := zap.NewDevelopmentConfig()
-	loggerConfig.DisableStacktrace = true
-	loggerConfig.DisableCaller = true
-	z, err := loggerConfig.Build()
-	if err != nil {
-		log.Fatalln("failed to start logger: ", err.Error())
-	}
-	logger := z.Sugar()
 	schemaFile := *opts.Schema
 	if schemaFile == "" {
 		flag.Usage()
