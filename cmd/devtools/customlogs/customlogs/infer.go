@@ -20,10 +20,13 @@ package customlogs
 
 import (
 	"bufio"
+	"encoding/json"
 	"os"
 
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 )
 
 type InferOpts struct {
@@ -39,20 +42,93 @@ func Upload(logger *zap.SugaredLogger, opts *InferOpts) error {
 
 	scanner := bufio.NewScanner(fd)
 
+	api := jsoniter.Config{
+		UseNumber: true,
+	}.Froze()
+
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		var json map[string]interface{}
-		err := jsoniter.Unmarshal(line, json)
+		err := api.Unmarshal(line, &json)
 		if err != nil {
 			logger.Fatalf("failed to parse line as JSON")
 		}
+		inferFields(json)
 	}
 	if err := scanner.Err(); err != nil {
 		logger.Fatalf("failed")
 	}
-
 	return nil
 }
 
-type sampleEvent struct {
+func inferFields(event map[string]interface{}) []logschema.FieldSchema {
+	var out []logschema.FieldSchema
+	for key, value := range event {
+		valueSchema, ok := inferValueSchema(value)
+		if !ok {
+			continue
+		}
+		field := logschema.FieldSchema{
+			Name:        key,
+			Description: "The " + key,
+			Required:    true,
+			ValueSchema: *valueSchema,
+		}
+		out = append(out, field)
+	}
+	return out
+}
+
+func inferValueSchema(value interface{}) (*logschema.ValueSchema, bool) {
+	typ := inferValueType(value)
+	switch typ {
+	case logschema.TypeArray:
+		array := value.([]interface{})
+		if len(array) == 0 {
+			return nil, false
+		}
+		valueSchema, ok := inferValueSchema(array[0])
+		if !ok {
+			return nil, false
+		}
+		return &logschema.ValueSchema{
+			Type:    typ,
+			Element: valueSchema,
+		}, true
+	case logschema.TypeObject:
+		object := value.(map[string]interface{})
+		return &logschema.ValueSchema{
+			Type:   typ,
+			Fields: inferFields(object),
+		}, true
+	default:
+		return &logschema.ValueSchema{
+			Type: typ,
+		}, true
+	}
+}
+
+func inferValueType(value interface{}) logschema.ValueType {
+	switch value.(type) {
+	case bool:
+		return logschema.TypeBoolean
+	case string:
+		return logschema.TypeString
+	case json.Number:
+		value := value.(json.Number)
+		if _, err := value.Int64(); err != nil {
+			return logschema.TypeFloat
+		}
+		return logschema.TypeBigInt
+	case map[string]interface{}:
+		return logschema.TypeObject
+	case []interface{}:
+		return logschema.TypeArray
+	default:
+		panic("Doesn't work")
+	}
+}
+
+type SampleEvent struct {
+	fields []*logschema.FieldSchema
 }
