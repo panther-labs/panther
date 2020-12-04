@@ -85,6 +85,7 @@ func stdRuleListInput(input *models.ListRulesInput) {
 }
 
 func ruleScanInput(input *models.ListRulesInput) (*dynamodb.ScanInput, error) {
-	filters := pythonListFilters(input.Enabled, input.NameContains, input.Severity, input.LogTypes, input.Tags)
+	filters := pythonListFilters(input.Enabled, input.NameContains, input.Severity, input.LogTypes, input.Tags,
+		input.InitialSet)
 	return buildScanInput(models.TypeRule, input.Fields, filters...)
 }
