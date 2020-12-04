@@ -76,10 +76,10 @@ class DataModel:
         for mapping in source_mappings:
             if NAME not in mapping:
                 raise AssertionError('DataModel [{}] is missing required field: [{}]'.format(self.data_model_id, NAME))
-            if PATH in mapping and mapping[PATH]:
+            if mapping.get(PATH):
                 # we are dealing with a string field or a jsonpath
                 self.paths[mapping[NAME]] = parse(mapping[PATH])
-            elif METHOD in mapping and mapping[METHOD]:
+            elif mapping.get(METHOD):
                 # we are dealing with a method
                 if not self._module or not hasattr(self._module, mapping[METHOD]):
                     raise AssertionError('DataModel is missing method named [{}]'.format(mapping[METHOD]))
