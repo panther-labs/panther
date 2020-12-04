@@ -58,14 +58,12 @@ func main() {
 		}
 		flag.Parse()
 		customlogs.Validate(logger, opts)
-		return
 	case uploadCmd:
 		opts := &customlogs.UploadOpts{
 			Schema: flag.String("s", "", "Schema file"),
 		}
 		flag.Parse()
 		customlogs.Upload(logger, opts)
-		return
 	default:
 		flag.Usage()
 		logger.Fatalf("Invalid command [%s]", cmd)
