@@ -107,7 +107,7 @@ func Deploy() error {
 	}
 	var registryURI = fmt.Sprintf("%s.dkr.ecr.%s.amazonaws.com/%s", clients.AccountID(), clients.Region(), repoName)
 
-	pkg, err := pkgAssets(log, clients.Region(), bucket, registryURI, dockerImageID)
+	pkg, err := pkgAssets(log, clients.ECR(), clients.Region(), bucket, registryURI, dockerImageID)
 	if err != nil {
 		return err
 	}

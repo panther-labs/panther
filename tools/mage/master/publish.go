@@ -25,6 +25,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/magefile/mage/sh"
@@ -144,8 +145,7 @@ func getPublicationApproval(log *zap.SugaredLogger, regions []string) error {
 func publishToRegion(log *zap.SugaredLogger, region, dockerImageID string) error {
 	log.Debugf("publishing to %s", region)
 
-	// We can't use the global aws clients here because we need a different client for each region,
-	// and each region is publishing in parallel.
+	// We can't use the global aws clients here because we need a different client for each region.
 	awsSession, err := session.NewSession(aws.NewConfig().WithRegion(region))
 	if err != nil {
 		return fmt.Errorf("failed to build AWS session: %v", err)
@@ -155,7 +155,7 @@ func publishToRegion(log *zap.SugaredLogger, region, dockerImageID string) error
 
 	// Publish S3 assets and ECR docker image
 	ecrRegistry := fmt.Sprintf("349240696275.dkr.ecr.%s.amazonaws.com/panther-community", region)
-	pkg, err := pkgAssets(log, region, bucket, ecrRegistry, dockerImageID)
+	pkg, err := pkgAssets(log, ecr.New(awsSession), region, bucket, ecrRegistry, dockerImageID)
 	if err != nil {
 		return err
 	}

@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"path/filepath"
 
+	"github.com/aws/aws-sdk-go/service/ecr"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/tools/mage/build"
@@ -63,7 +64,7 @@ func buildAssets(log *zap.SugaredLogger) (string, error) {
 // Package assets needed for the master template.
 //
 // Returns the path to the final generated template.
-func pkgAssets(log *zap.SugaredLogger, region, bucket, imgRegistry, dockerImageID string) (string, error) {
+func pkgAssets(log *zap.SugaredLogger, ecrClient *ecr.ECR, region, bucket, imgRegistry, dockerImageID string) (string, error) {
 	pkg, err := util.SamPackage(region, masterTemplate, bucket)
 	if err != nil {
 		return "", err
@@ -81,7 +82,7 @@ func pkgAssets(log *zap.SugaredLogger, region, bucket, imgRegistry, dockerImageI
 	template = bytes.Replace(template, []byte("${{PANTHER_VERSION}}"), []byte(`'`+util.Semver()+`'`), 1)
 	util.MustWriteFile(pkg, template)
 
-	dockerImage, err := deploy.DockerPush(imgRegistry, dockerImageID, util.Semver())
+	dockerImage, err := deploy.DockerPush(ecrClient, imgRegistry, dockerImageID, util.Semver())
 	if err != nil {
 		return "", err
 	}
