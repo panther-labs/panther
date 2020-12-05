@@ -751,11 +751,7 @@ Resources:
           LOG_PROCESSOR_QUEUE_ARN: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-input-data-notifications-queue
           SNAPSHOT_POLLERS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-snapshot-queue
           TABLE_NAME: !Ref IntegrationsTable
-<<<<<<< HEAD
-          VERSION: v1.14.0-RC # hardcoded for now, must match published aux template version
-=======
           VERSION: !Ref PantherVersion
->>>>>>> 942a6e65 (Fix version bugs (#2192))
       FunctionName: panther-source-api
       # <cfndoc>
       # The `panther-source-api` lambda manages Cloud Security and Log Analysis sources. This includes
