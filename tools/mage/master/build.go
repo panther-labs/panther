@@ -57,12 +57,6 @@ func buildAssets(log *zap.SugaredLogger) (string, error) {
 		return "", err
 	}
 
-	// Embed version directly into template - we don't want this to be a configurable parameter.
-	template := util.MustReadFile(masterTemplate)
-	template = bytes.Replace(template, []byte("${{PANTHER_COMMIT}}"), []byte(util.CommitSha()), 1)
-	template = bytes.Replace(template, []byte("${{PANTHER_VERSION}}"), []byte(util.Semver()), 1)
-	util.MustWriteFile(embedPath, template)
-
 	return deploy.DockerBuild()
 }
 
@@ -70,10 +64,22 @@ func buildAssets(log *zap.SugaredLogger) (string, error) {
 //
 // Returns the path to the final generated template.
 func pkgAssets(log *zap.SugaredLogger, region, bucket, imgRegistry, dockerImageID string) (string, error) {
-	pkg, err := util.SamPackage(region, embedPath, bucket)
+	pkg, err := util.SamPackage(region, masterTemplate, bucket)
 	if err != nil {
 		return "", err
 	}
+
+	// Embed the version directly into the final template - we don't want this to be a configurable parameter.
+	//
+	// There is roughly a 1.4% chance that the commit tag looks like scientific notation, e.g. "715623e8"
+	// Even if the value is surrounded by quotes in the original template, `sam package` will remove them!
+	// Then CloudFormation will standardize the scientific notation, e.g. "7.15623E13"
+	//
+	// So, until we implement our own packaging, we have to do the version embedding *after* sam package.
+	template := util.MustReadFile(pkg)
+	template = bytes.Replace(template, []byte("${{PANTHER_COMMIT}}"), []byte(`'`+util.CommitSha()+`'`), 1)
+	template = bytes.Replace(template, []byte("${{PANTHER_VERSION}}"), []byte(`'`+util.Semver()+`'`), 1)
+	util.MustWriteFile(pkg, template)
 
 	dockerImage, err := deploy.DockerPush(imgRegistry, dockerImageID, util.Semver())
 	if err != nil {

@@ -21,7 +21,6 @@ package master
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -38,9 +37,6 @@ import (
 )
 
 const defaultStackName = "panther"
-
-// Path to master stack with embedded version information
-var embedPath = filepath.Join("out", "deployments", "embedded.master.yml")
 
 // Deploy single master template nesting all other stacks.
 //

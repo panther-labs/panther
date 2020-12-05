@@ -186,8 +186,7 @@ Resources:
   Bootstrap:
     Type: AWS::CloudFormation::Stack
     Properties:
-      # The master template path, before packaging, will be out/deployments/embedded.master.yml
-      TemplateURL: ../../deployments/bootstrap.yml
+      TemplateURL: bootstrap.yml
       Parameters:
         AccessLogsBucket: !Ref AccessLogsBucketName
         AlarmTopicArn: !Ref AlarmTopicArn
@@ -217,7 +216,7 @@ Resources:
   BootstrapGateway:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ../../deployments/bootstrap_gateway.yml
+      TemplateURL: bootstrap_gateway.yml
       Parameters:
         # If the AlarmTopicArn parameter is blank, Bootstrap will create the topic.
         # That's why this uses the Bootstrap output instead of the parameter.
@@ -251,7 +250,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: BootstrapGateway # custom resources lambda function
     Properties:
-      TemplateURL: ../../deployments/appsync.yml
+      TemplateURL: appsync.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         ApiId: !GetAtt Bootstrap.Outputs.GraphQLApiId
@@ -273,7 +272,7 @@ Resources:
   CloudSecurity:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ../../deployments/cloud_security.yml
+      TemplateURL: cloud_security.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
@@ -302,7 +301,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: BootstrapGateway # custom resources Lambda function
     Properties:
-      TemplateURL: ../../deployments/core.yml
+      TemplateURL: core.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AnalysisVersionsBucket: !GetAtt Bootstrap.Outputs.AnalysisVersionsBucket
@@ -337,7 +336,7 @@ Resources:
   Dashboards:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ../../deployments/dashboards.yml
+      TemplateURL: dashboards.yml
       Tags:
         - Key: Application
           Value: Panther
@@ -352,7 +351,7 @@ Resources:
     DependsOn: Core
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ../../deployments/log_analysis.yml
+      TemplateURL: log_analysis.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AthenaWorkGroup: !GetAtt BootstrapGateway.Outputs.AthenaWorkGroup
@@ -390,7 +389,7 @@ Resources:
     DependsOn: [BootstrapGateway, CloudSecurity, Core, LogAnalysis]
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ../../deployments/onboard.yml
+      TemplateURL: onboard.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
@@ -416,7 +415,7 @@ Resources:
     # Custom resources in this stack require the analysis-api, users-api, and both Python engines to exist
     DependsOn: [CloudSecurity, Core, LogAnalysis]
     Properties:
-      TemplateURL: ../../deployments/web_server.yml
+      TemplateURL: web_server.yml
       TimeoutInMinutes: 20 # if something goes wrong, the ECS service will get stuck in a retry loop for 4 hours
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
