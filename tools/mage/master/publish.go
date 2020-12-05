@@ -25,6 +25,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/magefile/mage/sh"
@@ -63,7 +64,16 @@ func Publish() error {
 		return fmt.Errorf("publication is only allowed from a release-* branch")
 	}
 
-	if err := getPublicationApproval(log); err != nil {
+	var regions []string
+	if env := os.Getenv("REGION"); env == "" {
+		for region := range deploy.SupportedRegions {
+			regions = append(regions, region)
+		}
+	} else {
+		regions = strings.Split(env, ",")
+	}
+
+	if err := getPublicationApproval(log, regions); err != nil {
 		return err
 	}
 
@@ -82,19 +92,25 @@ func Publish() error {
 		return err
 	}
 
-	// Publish to each region in parallel
-	results := make(chan util.TaskResult)
-	for region := range deploy.SupportedRegions {
-		go func(c chan util.TaskResult, region string) {
-			c <- util.TaskResult{Summary: region, Err: publishToRegion(log, region, dockerImageID)}
-		}(results, region)
+	// Publish to each region.
+	//
+	// This fails if you publish multiple regions in parallel, unfortunately.
+	// However, when we implement our own packaging, each region will package its own assets in parallel.
+	for _, region := range regions {
+		if !deploy.SupportedRegions[region] {
+			return fmt.Errorf("%s is not a supported region", region)
+		}
+
+		if err := publishToRegion(log, region, dockerImageID); err != nil {
+			return err
+		}
 	}
 
-	return util.WaitForTasks(log, results, 1, len(deploy.SupportedRegions), len(deploy.SupportedRegions))
+	return nil
 }
 
-func getPublicationApproval(log *zap.SugaredLogger) error {
-	log.Infof("Publishing panther-community %s to %d regions", util.Semver(), len(deploy.SupportedRegions))
+func getPublicationApproval(log *zap.SugaredLogger, regions []string) error {
+	log.Infof("Publishing panther-community %s to %s", util.Semver(), strings.Join(regions, ", "))
 	result := prompt.Read("Are you sure you want to continue? (yes|no) ", prompt.NonemptyValidator)
 	if strings.ToLower(result) != "yes" {
 		return fmt.Errorf("publish %s aborted by user", util.Semver())
@@ -102,7 +118,7 @@ func getPublicationApproval(log *zap.SugaredLogger) error {
 
 	// Check if the version already exists in any region - it's easy to forget to update the version
 	// in the template file and we probably don't want to overwrite a previous version.
-	for region := range deploy.SupportedRegions {
+	for _, region := range regions {
 		bucket, s3Key, s3URL := s3MasterTemplate(region)
 		awsSession := session.Must(session.NewSession(aws.NewConfig().WithRegion(region)))
 
@@ -129,8 +145,7 @@ func getPublicationApproval(log *zap.SugaredLogger) error {
 func publishToRegion(log *zap.SugaredLogger, region, dockerImageID string) error {
 	log.Debugf("publishing to %s", region)
 
-	// We can't use the global aws clients here because we need a different client for each region,
-	// and each region is publishing in parallel.
+	// We can't use the global aws clients here because we need a different client for each region.
 	awsSession, err := session.NewSession(aws.NewConfig().WithRegion(region))
 	if err != nil {
 		return fmt.Errorf("failed to build AWS session: %v", err)
@@ -140,7 +155,7 @@ func publishToRegion(log *zap.SugaredLogger, region, dockerImageID string) error
 
 	// Publish S3 assets and ECR docker image
 	ecrRegistry := fmt.Sprintf("349240696275.dkr.ecr.%s.amazonaws.com/panther-community", region)
-	pkg, err := pkgAssets(log, region, bucket, ecrRegistry, dockerImageID)
+	pkg, err := pkgAssets(log, ecr.New(awsSession), region, bucket, ecrRegistry, dockerImageID)
 	if err != nil {
 		return err
 	}

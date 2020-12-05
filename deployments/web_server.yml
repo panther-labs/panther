@@ -85,7 +85,7 @@ Parameters:
   PantherCommit:
     Type: String
     Description: The commit of the current deployment (e.g. `5c2a8a76`)
-    AllowedPattern: '^[0-9a-f]{8}$'
+    AllowedPattern: '^[0-9a-f]+$'
   PantherVersion:
     Type: String
     Description: The base semantic version of the current deployment (e.g. `1.3.0`)
