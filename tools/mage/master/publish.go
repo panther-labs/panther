@@ -94,8 +94,12 @@ func Publish() error {
 	// Publish to each region.
 	//
 	// This fails if you publish multiple regions in parallel, unfortunately.
-	// However, when we implement our own packaging, each region can package its own assets in parallel.
+	// However, when we implement our own packaging, each region will package its own assets in parallel.
 	for _, region := range regions {
+		if !deploy.SupportedRegions[region] {
+			return fmt.Errorf("%s is not a supported region", region)
+		}
+
 		if err := publishToRegion(log, region, dockerImageID); err != nil {
 			return err
 		}
