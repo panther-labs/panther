@@ -20,6 +20,7 @@ package customlogs
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -32,7 +33,6 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/customlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
@@ -86,8 +86,13 @@ func inferFromFile(logger *zap.SugaredLogger, file string) (logschema.Schema, er
 	lineNum := 0
 	for scanner.Scan() {
 		lineNum++
+		line := bytes.TrimSpace(scanner.Bytes())
+		if len(line) == 0 {
+			continue
+		}
+
 		var data map[string]interface{}
-		if err = inferJsoniter.Unmarshal(scanner.Bytes(), &data); err != nil {
+		if err = inferJsoniter.Unmarshal(line, &data); err != nil {
 			return schema, errors.Wrapf(err, "failed to parse line [%d] as JSON", lineNum)
 		}
 		// inferring the log schema of that single line
@@ -117,7 +122,7 @@ func inferFields(event map[string]interface{}) []logschema.FieldSchema {
 		}
 
 		field := logschema.FieldSchema{
-			Name:        glueschema.ColumnName(key),
+			Name:        key,
 			Description: "The " + key,
 			Required:    true,
 			ValueSchema: *valueSchema,
@@ -134,7 +139,10 @@ func inferFields(event map[string]interface{}) []logschema.FieldSchema {
 // Try to infer the schema from a single value
 // Returs false if we were unable to infer it
 func inferValueSchema(value interface{}) (*logschema.ValueSchema, bool) {
-	typ := inferValueType(value)
+	typ, ok := inferValueType(value)
+	if !ok {
+		return nil, false
+	}
 	switch typ {
 	case logschema.TypeArray:
 		array := value.([]interface{})
@@ -172,24 +180,26 @@ func inferValueSchema(value interface{}) (*logschema.ValueSchema, bool) {
 	}
 }
 
-func inferValueType(value interface{}) logschema.ValueType {
+func inferValueType(value interface{}) (logschema.ValueType, bool) {
 	switch value.(type) {
 	case bool:
-		return logschema.TypeBoolean
+		return logschema.TypeBoolean, true
 	case string:
-		return logschema.TypeString
+		return logschema.TypeString, true
 	case json.Number:
 		value := value.(json.Number)
 		if _, err := value.Int64(); err != nil {
-			return logschema.TypeFloat
+			return logschema.TypeFloat, true
 		}
-		return logschema.TypeBigInt
+		return logschema.TypeBigInt, true
 	case map[string]interface{}:
-		return logschema.TypeObject
+		return logschema.TypeObject, true
 	case []interface{}:
-		return logschema.TypeArray
+		return logschema.TypeArray, true
+	case nil:
+		return logschema.TypeJSON, false
 	default:
-		panic("Doesn't work")
+		panic("This shouldn't happen")
 	}
 }
 
@@ -267,14 +277,13 @@ func mergeFields(left, right []logschema.FieldSchema) ([]logschema.FieldSchema, 
 			// If the field didn't exist in the right schema
 			// nothing else to do
 			// Just mark it as optional
-			leftValue.Required = false
-			leftMap[key] = leftValue
+			leftMap[key] = setOptional(leftValue)
 			continue
 		}
 
 		merged, err := mergeFieldSchema(&leftValue, &rightValue)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed while processing %s", key)
+			return nil, errors.Wrapf(err, "failed while processing [%s]", key)
 		}
 		leftMap[key] = *merged
 		// After we have processed this field from the rightMap, delete it
@@ -284,8 +293,7 @@ func mergeFields(left, right []logschema.FieldSchema) ([]logschema.FieldSchema, 
 	// We have already deleted from the rightMap all the fields that were also present in the leftMap
 	// Add the remaining ones, and mark them as optional.
 	for key, value := range rightMap {
-		value.Required = false
-		leftMap[key] = value
+		leftMap[key] = setOptional(value)
 	}
 
 	var out []logschema.FieldSchema
@@ -297,6 +305,16 @@ func mergeFields(left, right []logschema.FieldSchema) ([]logschema.FieldSchema, 
 		return out[i].Name < out[j].Name
 	})
 	return out, nil
+}
+
+func setOptional(schema logschema.FieldSchema) logschema.FieldSchema {
+	schema.Required = false
+	if schema.Type == logschema.TypeObject {
+		for i := range schema.Fields {
+			schema.Fields[i].Required = false
+		}
+	}
+	return schema
 }
 
 func mergeFieldSchema(left, right *logschema.FieldSchema) (*logschema.FieldSchema, error) {
@@ -366,6 +384,14 @@ func mergeType(from, to logschema.ValueType) (logschema.ValueType, bool) {
 	case logschema.TypeBigInt:
 		if to == logschema.TypeString || to == logschema.TypeFloat {
 			return to, true
+		}
+		return from, false
+	case logschema.TypeFloat:
+		if to == logschema.TypeString {
+			return logschema.TypeString, true
+		}
+		if to == logschema.TypeBigInt {
+			return logschema.TypeFloat, true
 		}
 		return from, false
 	case logschema.TypeTimestamp:

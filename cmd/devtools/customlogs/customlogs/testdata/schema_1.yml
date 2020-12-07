@@ -49,7 +49,6 @@ fields:
       - name: string
         description: The string
         type: string
-        required: true
   - name: required_string
     description: The required_string
     type: string
