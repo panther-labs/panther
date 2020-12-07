@@ -119,13 +119,13 @@ const S3SourceConfigurationPanel: React.FC = () => {
                       spacing={4}
                       direction="column"
                     >
-                      <Flex position="absolute" right="-36px" top="40%" spacing={2} ml={2}>
+                      <Flex position="absolute" left="100%" top="40%" spacing={2} ml={2}>
                         {array.length > 1 && (
                           <IconButton
                             size="small"
                             icon="close-outline"
                             variantColor="navyblue"
-                            aria-label="Remove prefix"
+                            aria-label={`Remove prefix ${index}`}
                             onClick={() => arrayHelpers.remove(index)}
                           />
                         )}
