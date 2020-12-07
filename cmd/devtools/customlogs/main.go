@@ -57,7 +57,9 @@ func main() {
 			Schema: flag.String("s", "", "File file"),
 			Output: flag.String("o", "", "Write parsed results to file (defaults to stdout)"),
 		}
-		flag.CommandLine.Parse(os.Args[2:])
+		if err := flag.CommandLine.Parse(os.Args[2:]); err != nil {
+			logger.Fatalf("failed to parse command line arguments")
+		}
 		customlogs.Validate(logger, opts)
 	case infer:
 		opstools.SetUsage(`-i INPUT_FILE`)
@@ -65,7 +67,9 @@ func main() {
 			File:     flag.String("i", "", "Input file"),
 			NoVerify: flag.Bool("no-verify", false, "Skips verifying the schema against the logs"),
 		}
-		flag.CommandLine.Parse(os.Args[2:])
+		if err := flag.CommandLine.Parse(os.Args[2:]); err != nil {
+			logger.Fatalf("failed to parse command line arguments")
+		}
 		customlogs.Infer(logger, opts)
 	default:
 		flag.Usage()

@@ -192,7 +192,7 @@ func inferValueSchema(value interface{}) (*logschema.ValueSchema, bool) {
 // Will return false, if it couldn't infer the type of this value
 // It will panic if it received an unexpected type
 func inferValueType(value interface{}) (logschema.ValueType, bool) {
-	switch value.(type) {
+	switch typ := value.(type) {
 	case bool:
 		return logschema.TypeBoolean, true
 	case string:
@@ -210,7 +210,7 @@ func inferValueType(value interface{}) (logschema.ValueType, bool) {
 	case nil:
 		return logschema.TypeJSON, false
 	default:
-		panic("Couldn't infer type")
+		panic("Couldn't infer type " + fmt.Sprintf("%s", typ))
 	}
 }
 
@@ -227,7 +227,6 @@ func guessStringValue(value string) *logschema.ValueSchema {
 		return &logschema.ValueSchema{
 			Type: logschema.TypeBigInt,
 		}
-
 	}
 
 	// If we could parse it as flat,
@@ -296,11 +295,11 @@ func mergeFields(left, right []logschema.FieldSchema) ([]logschema.FieldSchema, 
 			continue
 		}
 
-		merged, err := mergeFieldSchema(&leftValue, &rightValue)
+		merged, err := mergeFieldSchema(leftValue, rightValue)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed while processing [%s]", key)
 		}
-		leftMap[key] = *merged
+		leftMap[key] = merged
 		// After we have processed this field from the rightMap, delete it
 		delete(rightMap, key)
 	}
@@ -334,13 +333,13 @@ func markAsOptional(schema logschema.FieldSchema) logschema.FieldSchema {
 	return schema
 }
 
-func mergeFieldSchema(left, right *logschema.FieldSchema) (*logschema.FieldSchema, error) {
+func mergeFieldSchema(left, right logschema.FieldSchema) (logschema.FieldSchema, error) {
 	// If the fields are of different type,
 	// try to see if it is possible be merge the types
 	if left.Type != right.Type {
 		newType, ok := mergeType(left.Type, right.Type)
 		if !ok {
-			return nil, errors.Errorf("can't assign %s to %s", string(left.Type), string(right.Type))
+			return left, errors.Errorf("can't assign %s to %s", string(left.Type), string(right.Type))
 		}
 		left.Type = newType
 		return left, nil
@@ -351,13 +350,13 @@ func mergeFieldSchema(left, right *logschema.FieldSchema) (*logschema.FieldSchem
 		// Merges the fields of the objects
 		merged, err := mergeFields(left.Fields, right.Fields)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failure while processing field [%s]", left.Name)
+			return left, errors.Wrapf(err, "failure while processing field [%s]", left.Name)
 		}
 		left.Fields = merged
 	case logschema.TypeArray:
 		merged, err := mergeArrayElementSchema(left.Element, right.Element)
 		if err != nil {
-			return nil, err
+			return left, err
 		}
 		left.Element = merged
 	}
