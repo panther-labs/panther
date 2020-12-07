@@ -82,10 +82,14 @@ Parameters:
   InitialAnalysisPackUrls:
     Type: CommaDelimitedList
     Description: Initial Python analysis packs
+  PantherCommit:
+    Type: String
+    Description: The commit of the current deployment (e.g. `5c2a8a76`)
+    AllowedPattern: '^[0-9a-f]+$'
   PantherVersion:
     Type: String
-    Description: The semver of the current deployment (i.e. `v1.3.0`)
-    MinLength: 1
+    Description: The base semantic version of the current deployment (e.g. `1.3.0`)
+    AllowedPattern: '^\d+\.\d+\.\d+(-.+)?$'
   SecurityGroup:
     Type: String
     Description: Web app security group ID
@@ -265,6 +269,9 @@ Resources:
 
             - Name: WEB_APPLICATION_USER_POOL_CLIENT_ID
               Value: !Ref AppClientId
+
+            - Name: PANTHER_COMMIT
+              Value: !Ref PantherCommit
 
             - Name: PANTHER_VERSION
               Value: !Ref PantherVersion
