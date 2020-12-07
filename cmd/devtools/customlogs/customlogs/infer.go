@@ -125,6 +125,7 @@ func inferFields(event map[string]interface{}) []logschema.FieldSchema {
 		}
 
 		if valueSchema.Type == logschema.TypeObject && len(valueSchema.Fields) == 0 {
+			// If we couldn't infer any fields for the object, skip it
 			continue
 		}
 
@@ -187,6 +188,9 @@ func inferValueSchema(value interface{}) (*logschema.ValueSchema, bool) {
 	}
 }
 
+// Will infer the type of the value
+// Will return false, if it couldn't infer the type of this value
+// It will panic if it received an unexpected type
 func inferValueType(value interface{}) (logschema.ValueType, bool) {
 	switch value.(type) {
 	case bool:
@@ -206,7 +210,7 @@ func inferValueType(value interface{}) (logschema.ValueType, bool) {
 	case nil:
 		return logschema.TypeJSON, false
 	default:
-		panic("This shouldn't happen")
+		panic("Couldn't infer type")
 	}
 }
 
@@ -254,6 +258,8 @@ func guessStringValue(value string) *logschema.ValueSchema {
 	}
 }
 
+// merge the "right" fields to the "left" fields and return the merged result
+// Will return an error if there is an issue
 func mergeFields(left, right []logschema.FieldSchema) ([]logschema.FieldSchema, error) {
 	if len(right) == 0 {
 		return left, nil
@@ -262,6 +268,7 @@ func mergeFields(left, right []logschema.FieldSchema) ([]logschema.FieldSchema, 
 		return right, nil
 	}
 
+	// Map from field name -> Field Schema
 	leftMap := make(map[string]logschema.FieldSchema)
 	for _, schema := range left {
 		if _, ok := leftMap[schema.Name]; ok {
@@ -270,6 +277,7 @@ func mergeFields(left, right []logschema.FieldSchema) ([]logschema.FieldSchema, 
 		leftMap[schema.Name] = schema
 	}
 
+	// Map from field name -> Field Schema
 	rightMap := make(map[string]logschema.FieldSchema)
 	for _, schema := range right {
 		if _, ok := rightMap[schema.Name]; ok {
@@ -284,7 +292,7 @@ func mergeFields(left, right []logschema.FieldSchema) ([]logschema.FieldSchema, 
 			// If the field didn't exist in the right schema
 			// nothing else to do
 			// Just mark it as optional
-			leftMap[key] = setOptional(leftValue)
+			leftMap[key] = markAsOptional(leftValue)
 			continue
 		}
 
@@ -300,7 +308,7 @@ func mergeFields(left, right []logschema.FieldSchema) ([]logschema.FieldSchema, 
 	// We have already deleted from the rightMap all the fields that were also present in the leftMap
 	// Add the remaining ones, and mark them as optional.
 	for key, value := range rightMap {
-		leftMap[key] = setOptional(value)
+		leftMap[key] = markAsOptional(value)
 	}
 
 	var out []logschema.FieldSchema
@@ -314,7 +322,7 @@ func mergeFields(left, right []logschema.FieldSchema) ([]logschema.FieldSchema, 
 	return out, nil
 }
 
-func setOptional(schema logschema.FieldSchema) logschema.FieldSchema {
+func markAsOptional(schema logschema.FieldSchema) logschema.FieldSchema {
 	schema.Required = false
 	if schema.Type == logschema.TypeObject {
 		// In case the field is of type `object` set all nested fields as optional too
@@ -340,6 +348,7 @@ func mergeFieldSchema(left, right *logschema.FieldSchema) (*logschema.FieldSchem
 
 	switch left.Type {
 	case logschema.TypeObject:
+		// Merges the fields of the objects
 		merged, err := mergeFields(left.Fields, right.Fields)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failure while processing field [%s]", left.Name)
@@ -418,6 +427,8 @@ func mergeType(from, to logschema.ValueType) (logschema.ValueType, bool) {
 	}
 }
 
+// Validates the schema. It generates a parser of the provided schema
+// and tries to parse the contents of the file.
 func validateSchema(schema logschema.Schema, file string) error {
 	desc := logtypes.Desc{
 		Name:         "Custom.Test",
