@@ -131,15 +131,18 @@ func (s *LineStream) readLine() ([]byte, error) {
 }
 
 func isValidUTF8(p []byte, partial bool) bool {
+	// NUL character (0) is valid UTF8 rune but not something we want to be handling
+	const runeNUL rune = 0
 	totalSize := len(p)
 	validSize := 0
 	for len(p) > 0 {
-		r, n := utf8.DecodeRune(p)
-		if r == utf8.RuneError {
+		switch r, n := utf8.DecodeRune(p); r {
+		case utf8.RuneError, runeNUL:
 			break
+		default:
+			p = p[n:]
+			validSize += n
 		}
-		p = p[n:]
-		validSize += n
 	}
 	if partial {
 		diff := totalSize - validSize

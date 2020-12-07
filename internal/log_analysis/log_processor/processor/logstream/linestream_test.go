@@ -15,6 +15,12 @@ func TestLineStream(t *testing.T) {
 	}
 	for _, tc := range []testCase{
 		{
+			Name:    "Binary data",
+			Input:   []byte{0, 0, 0, 0, 0, 0, 0, 0},
+			Expect:  nil,
+			WantErr: true,
+		},
+		{
 			Name:  "Single line",
 			Input: []byte("foo bar baz"),
 			Expect: []string{
