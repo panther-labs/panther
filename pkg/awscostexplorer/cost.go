@@ -1,4 +1,4 @@
-package cost
+package awscostexplorer
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -63,6 +63,7 @@ func NewReporter(awsSession *session.Session) *Reporter {
 }
 
 type Reports struct {
+	Name           string
 	Start, End     time.Time
 	Granularity    string
 	AccountReports map[string][]*Report // accountid -> reports
@@ -110,6 +111,7 @@ func (r *Reporter) NewSummaryReports(startTime, endTime time.Time, granularity s
 	return &Reports{
 		reporter: r,
 
+		Name:           "Account Summary",
 		Start:          startTime,
 		End:            endTime,
 		Granularity:    granularity,
@@ -144,9 +146,8 @@ func (r *Reporter) NewServiceDetailReports(startTime, endTime time.Time, granula
 				Metrics:     Metrics,
 				Filter: &costexplorer.Expression{
 					Dimensions: &costexplorer.DimensionValues{
-						Key:          aws.String(costexplorer.DimensionService),
-						MatchOptions: nil,
-						Values:       []*string{aws.String(service)},
+						Key:    aws.String(costexplorer.DimensionService),
+						Values: []*string{aws.String(service)},
 					},
 				},
 				GroupBy: []*costexplorer.GroupDefinition{
@@ -164,6 +165,7 @@ func (r *Reporter) NewServiceDetailReports(startTime, endTime time.Time, granula
 	return &Reports{
 		reporter: r,
 
+		Name:           "Account Service Details",
 		Start:          startTime,
 		End:            endTime,
 		Granularity:    granularity,
@@ -171,10 +173,14 @@ func (r *Reporter) NewServiceDetailReports(startTime, endTime time.Time, granula
 	}, nil
 }
 
+func (r *Reporter) Run(report *Report) error {
+	return report.run(r.ceClient)
+}
+
 func (pr *Reports) Run() error {
 	for _, reports := range pr.AccountReports {
 		for _, report := range reports {
-			err := report.run(pr.reporter.ceClient)
+			err := pr.reporter.Run(report)
 			if err != nil {
 				return err
 			}
@@ -185,7 +191,7 @@ func (pr *Reports) Run() error {
 
 func (pr Reports) Print() {
 	for account, reports := range pr.AccountReports {
-		fmt.Printf("Account: %s\n", account)
+		fmt.Printf("%s for Account: %s\n", pr.Name, account)
 		fmt.Printf("Account Aliases: %v\n\n", pr.reporter.GetAccountAliases())
 		for _, report := range reports {
 			report.Print()
@@ -241,7 +247,7 @@ func (report *Report) run(ceClient costexploreriface.CostExplorerAPI) error {
 	for {
 		report.Output, err = ceClient.GetCostAndUsage(input)
 		if err != nil {
-			return errors.Wrapf(err, "run() failed for %s", report.Name)
+			return errors.Wrapf(err, "Run() failed for %s", report.Name)
 		}
 		if report.Output.NextPageToken == nil {
 			break

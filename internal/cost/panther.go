@@ -25,7 +25,12 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/costexplorer"
+
+	"github.com/panther-labs/panther/pkg/awscostexplorer"
 )
 
 // Specifically tailored reports for Panther
@@ -39,7 +44,6 @@ const (
 	ServiceAppSync              = "AWS AppSync"
 	ServiceAthena               = "Amazon Athena"
 	ServiceCognito              = "Amazon Cognito"
-	ServiceCloudTrail           = "AWS CloudTrail"
 	ServiceCloudWatch           = "AmazonCloudWatch"
 	ServiceEC2ContainerRegistry = "Amazon EC2 Container Registry (ECR)"
 	ServiceEFS                  = "Amazon Elastic File System"
@@ -62,7 +66,6 @@ var (
 		ServiceAppSync,
 		ServiceAthena,
 		ServiceCognito,
-		ServiceCloudTrail,
 		ServiceCloudWatch,
 		ServiceDDB,
 		ServiceEC2ContainerRegistry,
@@ -79,32 +82,50 @@ var (
 		ServiceStepFunctions,
 	}
 
-	pantherDetailedServices = []string{
-		ServiceLambda,
-		ServiceS3,
+	// filter all queries by Panther tags to focus
+	pantherFilter = &costexplorer.Expression{
+		Tags: &costexplorer.TagValues{
+			Key:    aws.String("Application"),
+			Values: []*string{aws.String("Panther")},
+		},
 	}
 )
 
-type PantherReports struct {
-	Start, End     time.Time
-	Granularity    string
-	AccountReports map[string]*PantherReport // accountid -> reports
+type Reporter struct {
+	awscostexplorer.Reporter
+	cloudwatchClient cloudwatchiface.CloudWatchAPI
+}
 
-	reporter *Reporter // back pointer with clients
+func NewReporter(awsSession *session.Session) *Reporter {
+	return &Reporter{
+		Reporter:         *awscostexplorer.NewReporter(awsSession),
+		cloudwatchClient: cloudwatch.New(awsSession),
+	}
+}
+
+type PantherReports struct {
+	Start, End       time.Time
+	Granularity      string
+	AccountReports   map[string]*PantherReport // accountid -> reports
+	DetailedServices []string                  // services to expand
+
+	reporter *awscostexplorer.Reporter // back pointer with clients
 }
 
 type PantherReport struct {
-	totalUsage           *Report
-	byServiceUsage       *Report
-	detailedServiceUsage map[string]*Report // service -> report
+	totalUsage           *awscostexplorer.Report
+	byServiceUsage       *awscostexplorer.Report
+	detailedServiceUsage map[string]*awscostexplorer.Report // service -> report
 }
 
-func (r *Reporter) NewPantherReports(startTime, endTime time.Time, granularity string, accounts []string) *PantherReports {
+func (r *Reporter) NewPantherReports(startTime, endTime time.Time, granularity string,
+	accounts, detailedServices []string) *PantherReports {
+
 	startTime = startTime.UTC()
 	endTime = endTime.UTC()
 	timePeriod := &costexplorer.DateInterval{
-		End:   aws.String(endTime.Format(DateFormat)),
-		Start: aws.String(startTime.Format(DateFormat)),
+		End:   aws.String(endTime.Format(awscostexplorer.DateFormat)),
+		Start: aws.String(startTime.Format(awscostexplorer.DateFormat)),
 	}
 
 	accountReports := make(map[string]*PantherReport)
@@ -116,20 +137,24 @@ func (r *Reporter) NewPantherReports(startTime, endTime time.Time, granularity s
 	}
 
 	for i, account := range accounts {
-		detailedServiceUsage := make(map[string]*Report)
+		detailedServiceUsage := make(map[string]*awscostexplorer.Report)
 		// for these run detailed reports
-		for _, service := range pantherDetailedServices {
-			detailedServiceUsage[service] = &Report{
+		for _, service := range detailedServices {
+			detailedServiceUsage[service] = &awscostexplorer.Report{
 				Name:        fmt.Sprintf("%s Cost and Usage By Usage Type", service),
 				Accounts:    []*string{&accounts[i]},
 				TimePeriod:  timePeriod,
 				Granularity: &granularity,
 				Metrics:     pantherMetrics,
 				Filter: &costexplorer.Expression{
-					Dimensions: &costexplorer.DimensionValues{
-						Key:          aws.String(costexplorer.DimensionService),
-						MatchOptions: nil,
-						Values:       []*string{aws.String(service)},
+					And: []*costexplorer.Expression{
+						pantherFilter,
+						{
+							Dimensions: &costexplorer.DimensionValues{
+								Key:    aws.String(costexplorer.DimensionService),
+								Values: []*string{aws.String(service)},
+							},
+						},
 					},
 				},
 				GroupBy: []*costexplorer.GroupDefinition{
@@ -142,19 +167,21 @@ func (r *Reporter) NewPantherReports(startTime, endTime time.Time, granularity s
 		}
 
 		pantherReport := &PantherReport{
-			totalUsage: &Report{
+			totalUsage: &awscostexplorer.Report{
 				Name:        "Total Cost and Usage",
 				Accounts:    []*string{&accounts[i]},
 				TimePeriod:  timePeriod,
 				Granularity: &granularity,
 				Metrics:     pantherMetrics,
+				Filter:      pantherFilter,
 			},
-			byServiceUsage: &Report{
+			byServiceUsage: &awscostexplorer.Report{
 				Name:        "Cost and Usage By Service",
 				Accounts:    []*string{&accounts[i]},
 				TimePeriod:  timePeriod,
 				Granularity: &granularity,
 				Metrics:     pantherMetrics,
+				Filter:      pantherFilter,
 				GroupBy: []*costexplorer.GroupDefinition{
 					{
 						Key:  aws.String(costexplorer.DimensionService),
@@ -169,27 +196,28 @@ func (r *Reporter) NewPantherReports(startTime, endTime time.Time, granularity s
 	}
 
 	return &PantherReports{
-		reporter: r,
+		reporter: &r.Reporter,
 
-		Start:          startTime,
-		End:            endTime,
-		Granularity:    granularity,
-		AccountReports: accountReports,
+		Start:            startTime,
+		End:              endTime,
+		Granularity:      granularity,
+		AccountReports:   accountReports,
+		DetailedServices: detailedServices,
 	}
 }
 
 func (pr PantherReports) Run() error {
 	for _, reports := range pr.AccountReports {
-		err := reports.totalUsage.run(pr.reporter.ceClient)
+		err := pr.reporter.Run(reports.totalUsage)
 		if err != nil {
 			return err
 		}
-		err = reports.byServiceUsage.run(pr.reporter.ceClient)
+		err = pr.reporter.Run(reports.byServiceUsage)
 		if err != nil {
 			return err
 		}
 		for _, detailedUsageReport := range reports.detailedServiceUsage {
-			err = detailedUsageReport.run(pr.reporter.ceClient)
+			err = pr.reporter.Run(detailedUsageReport)
 			if err != nil {
 				return err
 			}
@@ -201,7 +229,7 @@ func (pr PantherReports) Run() error {
 func (pr PantherReports) Print() {
 	for account, report := range pr.AccountReports {
 		// we assume a specific structure for PantherReports
-		fmt.Printf("Account: %s\n", account)
+		fmt.Printf("Panther Summmary for Account: %s\n", account)
 
 		// calc space between key and value
 		longestServiceName := 0
@@ -216,7 +244,7 @@ func (pr PantherReports) Print() {
 
 		printPantherKeyValue("Time Interval", valueSpace,
 			fmt.Sprintf("%s - %s (%s)",
-				pr.Start.Format(DateFormat), pr.End.Format(DateFormat), pr.Granularity))
+				pr.Start.Format(awscostexplorer.DateFormat), pr.End.Format(awscostexplorer.DateFormat), pr.Granularity))
 
 		totalCost, totalCostUnit := pantherTotalCost(report.totalUsage)
 		totalCostValue := fmt.Sprintf("%f %s", totalCost, totalCostUnit)
@@ -232,10 +260,12 @@ func (pr PantherReports) Print() {
 				}
 			}
 		}
+
+		fmt.Println() // trailing separator
 	}
 }
 
-func pantherTotalCost(r *Report) (cost float64, unit string) {
+func pantherTotalCost(r *awscostexplorer.Report) (cost float64, unit string) {
 	for _, byTime := range r.Output.ResultsByTime {
 		cost += readFloat(*byTime.Total[PantherCostKey].Amount)
 		unit = *byTime.Total[PantherCostKey].Unit // overwrite, they should be the same
@@ -243,14 +273,14 @@ func pantherTotalCost(r *Report) (cost float64, unit string) {
 	return cost, unit
 }
 
-func printPantherServiceCost(r *Report, service, valueSpace string) {
+func printPantherServiceCost(r *awscostexplorer.Report, service, valueSpace string) {
 	cost, unit := pantherServiceCost(r, service)
 	value := fmt.Sprintf("%f %s", cost, unit)
 	printPantherKeyValue(service, valueSpace, value)
 }
 
-func printPantherDetailServiceCosts(r *Report, valueSpace string) {
-	addDates := len(r.Output.ResultsByTime) > 1
+func printPantherDetailServiceCosts(r *awscostexplorer.Report, valueSpace string) {
+	addDates := len(r.Output.ResultsByTime) > 1 // only expand per date range if there is more than one
 	for _, byTime := range r.Output.ResultsByTime {
 		if addDates {
 			value := fmt.Sprintf("%s - %s", *byTime.TimePeriod.Start, *byTime.TimePeriod.End)
@@ -275,7 +305,7 @@ func printPantherKeyValue(key, valueSpace string, value interface{}) {
 		value)
 }
 
-func pantherServiceCost(r *Report, service string) (cost float64, unit string) {
+func pantherServiceCost(r *awscostexplorer.Report, service string) (cost float64, unit string) {
 	for _, byTime := range r.Output.ResultsByTime {
 		for _, group := range byTime.Groups {
 			if *group.Keys[0] == service {

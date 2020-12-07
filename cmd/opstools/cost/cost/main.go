@@ -27,8 +27,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/costexplorer"
 	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/cmd/opstools"
 	"github.com/panther-labs/panther/internal/cost"
+	"github.com/panther-labs/panther/pkg/awscostexplorer"
 )
 
 var (
@@ -37,28 +40,47 @@ var (
 	GRANULARITY = flag.String("granularity", costexplorer.GranularityDaily,
 		"Time aggregation granularity one of: "+costexplorer.GranularityHourly+","+
 			costexplorer.GranularityDaily+","+costexplorer.GranularityMonthly)
-	ACCOUNTS = flag.String("accounts", "", "Comma separated list of AWS linked account ids")
+	ACCOUNTS = flag.String("accounts", "", "Comma separated list of AWS linked account ids (defaults to current account)")
 
-	PANTHERREPORTS       = flag.Bool("panther", true, "Include Panther specific reports if true")
-	SUMMARYREPORTS       = flag.Bool("summary", false, "Include summary level if true")
+	PANTHERREPORTS        = flag.Bool("panther", true, "Include Panther specific reports if true")
+	PANTHERREPORTSDETAILS = flag.String("panther.details", strings.Join(defaultPantherDetailedServices, ","),
+		"Comma separated list of AWS service names to expand in the panther report")
+
+	SUMMARYREPORTS = flag.Bool("summary", false, "Include summary level if true")
+
 	SERVICEDETAILREPORTS = flag.Bool("servicedetail", false, "Include service level detail if true")
 
-	startTime, endTime time.Time
-	accounts           []string
+	VERBOSE = flag.Bool("verbose", false, "Enable verbose logging")
+
+	defaultPantherDetailedServices = []string{
+		cost.ServiceLambda,
+		cost.ServiceS3,
+		cost.ServiceCloudWatch,
+	}
+
+	startTime, endTime      time.Time
+	accounts                []string
+	pantherDetailedServices []string
 )
 
 func main() {
+	opstools.SetUsage("generates cost reports using the costexplorer api")
 	flag.Parse()
+
+	log := opstools.MustBuildLogger(*VERBOSE)
 
 	awsSession := session.Must(session.NewSession())
 
-	validateFlags(awsSession)
+	err := validateFlags(awsSession)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	reporter := cost.NewReporter(awsSession)
 
 	// focused on Panther related costs
 	if *PANTHERREPORTS {
-		reports := reporter.NewPantherReports(startTime, endTime, *GRANULARITY, accounts)
+		reports := reporter.NewPantherReports(startTime, endTime, *GRANULARITY, accounts, pantherDetailedServices)
 		err := reports.Run()
 		if err != nil {
 			log.Fatal(err)
@@ -90,24 +112,22 @@ func main() {
 	}
 }
 
-func validateFlags(awsSession *session.Session) {
-	var err error
-
+func validateFlags(awsSession *session.Session) (err error) {
 	if *END == "" {
 		endTime = time.Now().UTC()
 	} else {
-		endTime, err = time.Parse(cost.DateFormat, *END)
+		endTime, err = time.Parse(awscostexplorer.DateFormat, *END)
 		if err != nil {
-			log.Fatalf("-end is not correct format: %v", err)
+			return errors.Errorf("-end is not correct format: %v", err)
 		}
 	}
 
 	if *START == "" {
 		startTime = endTime.Add(-time.Hour * 24)
 	} else {
-		startTime, err = time.Parse(cost.DateFormat, *START)
+		startTime, err = time.Parse(awscostexplorer.DateFormat, *START)
 		if err != nil {
-			log.Fatalf("-start is not correct format: %v", err)
+			return errors.Errorf("-start is not correct format: %v", err)
 		}
 	}
 
@@ -118,10 +138,16 @@ func validateFlags(awsSession *session.Session) {
 	if *ACCOUNTS == "" {
 		identity, err := sts.New(awsSession).GetCallerIdentity(&sts.GetCallerIdentityInput{})
 		if err != nil {
-			log.Fatalf("failed to get caller identity: %v", err)
+			return errors.Errorf("failed to get caller identity: %v", err)
 		}
 		accounts = []string{*identity.Account}
 	} else {
 		accounts = strings.Split(*ACCOUNTS, ",")
 	}
+
+	if *PANTHERREPORTSDETAILS != "" {
+		pantherDetailedServices = strings.Split(*PANTHERREPORTSDETAILS, ",")
+	}
+
+	return nil
 }
