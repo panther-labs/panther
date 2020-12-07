@@ -39,7 +39,9 @@ jest.mock('Helpers/analytics');
 
 describe('CreateS3LogSource', () => {
   it('can successfully onboard an S3 log source', async () => {
-    const logTypesResponse = buildListAvailableLogTypesResponse();
+    const logTypesResponse = buildListAvailableLogTypesResponse({
+      logTypes: ['AWS.ALB', 'AWS.S3'],
+    });
     const logSource = buildS3LogIntegration({
       awsAccountId: '123123123123',
       s3PrefixLogTypes: [buildS3PrefixLogTypesInput({ logTypes: logTypesResponse.logTypes })],
@@ -79,9 +81,11 @@ describe('CreateS3LogSource', () => {
     fireEvent.change(getByLabelText('AWS Account ID'), {target: {value: logSource.awsAccountId } }); // prettier-ignore
     fireEvent.change(getByLabelText('Bucket Name'), { target: { value: logSource.s3Bucket } });
     fireEvent.change(getByLabelText('S3 Prefix Filter'), {target: {value: logSource.s3PrefixLogTypes[0].prefix } }); // prettier-ignore
+    // Adding 2 logTypes for this prefix
     fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.s3PrefixLogTypes[0].logTypes[0] } }); // prettier-ignore
     fireClickAndMouseEvents(await findByText(logSource.s3PrefixLogTypes[0].logTypes[0]));
-
+    fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.s3PrefixLogTypes[0].logTypes[1] } }); // prettier-ignore
+    fireClickAndMouseEvents(await findByText(logSource.s3PrefixLogTypes[0].logTypes[1]));
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(50);
     fireEvent.click(getByText('Continue'));
