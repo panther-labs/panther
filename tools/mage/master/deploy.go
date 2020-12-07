@@ -21,7 +21,6 @@ package master
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -39,9 +38,6 @@ import (
 
 const defaultStackName = "panther"
 
-// Path to master stack with embedded version information
-var embedPath = filepath.Join("out", "deployments", "embedded.master.yml")
-
 // Deploy single master template nesting all other stacks.
 //
 // This allows developers to simulate the customer deployment flow and test the master
@@ -57,11 +53,11 @@ func Deploy() error {
 		stack = defaultStackName
 	}
 
-	version := util.RepoVersion()
-	log.Infof("deploying %s %s to %s (%s) as stack '%s'", masterTemplate, version, clients.AccountID(), clients.Region(), stack)
+	log.Infof("deploying %s %s (%s) to %s (%s) as stack '%s'", masterTemplate,
+		util.Semver(), util.CommitSha(), clients.AccountID(), clients.Region(), stack)
 	email := prompt.Read("First user email: ", prompt.EmailValidator)
 
-	dockerImageID, err := buildAssets(log, version)
+	dockerImageID, err := buildAssets(log)
 	if err != nil {
 		return err
 	}
@@ -111,7 +107,7 @@ func Deploy() error {
 	}
 	var registryURI = fmt.Sprintf("%s.dkr.ecr.%s.amazonaws.com/%s", clients.AccountID(), clients.Region(), repoName)
 
-	pkg, err := pkgAssets(log, clients.Region(), bucket, version, registryURI, dockerImageID)
+	pkg, err := pkgAssets(log, clients.ECR(), clients.Region(), bucket, registryURI, dockerImageID)
 	if err != nil {
 		return err
 	}
