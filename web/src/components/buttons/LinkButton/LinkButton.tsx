@@ -41,7 +41,7 @@ const LinkButton: React.FC<LinkButtonProps> = ({ external, to, children, ...rest
         },
       }}
     >
-      <Button as="span" {...rest}>
+      <Button as="button" {...rest}>
         {children}
       </Button>
     </Box>
