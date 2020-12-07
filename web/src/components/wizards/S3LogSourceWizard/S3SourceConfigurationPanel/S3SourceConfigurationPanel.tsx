@@ -35,7 +35,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
     onError: () => pushSnackbar({ title: "Couldn't fetch your available log types" }),
   });
 
-  const shouldSkipTo = React.useMemo(() => {
+  const shouldSkipCFNUpload = React.useMemo(() => {
     return (
       /*
        * If users dont change any of AWS accountId, stackName or Integration label
@@ -170,8 +170,11 @@ const S3SourceConfigurationPanel: React.FC = () => {
         </ErrorBoundary>
       </Box>
       <WizardPanel.Actions>
-        {shouldSkipTo ? (
-          <WizardPanel.ActionGoToStep disabled={!dirty || !isValid} stepIndex={shouldSkipTo} />
+        {shouldSkipCFNUpload ? (
+          <WizardPanel.ActionGoToStep
+            disabled={!dirty || !isValid}
+            stepIndex={shouldSkipCFNUpload}
+          />
         ) : (
           <WizardPanel.ActionNext disabled={!dirty || !isValid}>Continue</WizardPanel.ActionNext>
         )}
