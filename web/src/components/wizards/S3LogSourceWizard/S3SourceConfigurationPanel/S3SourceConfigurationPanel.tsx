@@ -50,6 +50,17 @@ const S3SourceConfigurationPanel: React.FC = () => {
       2
     );
   }, [initialValues, values]);
+
+  // The filtering here is used to prevent users from adding the same log type with different prefixes
+  const availableLogTypes = React.useMemo(() => {
+    return (
+      data?.listAvailableLogTypes.logTypes.filter(
+        logType =>
+          !flatten(values.s3PrefixLogTypes.map(({ logTypes }) => logTypes)).includes(logType)
+      ) ?? []
+    );
+  }, [values.s3PrefixLogTypes]);
+
   return (
     <WizardPanel>
       <Box width={500} m="auto">
@@ -108,15 +119,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
                       spacing={4}
                       direction="column"
                     >
-                      <Flex
-                        position="absolute"
-                        left="100%"
-                        align="center"
-                        height="100%"
-                        spacing={2}
-                        ml={2}
-                        pb={5}
-                      >
+                      <Flex position="absolute" right="-36px" top="40%" spacing={2} ml={2}>
                         {array.length > 1 && (
                           <IconButton
                             size="small"
@@ -150,15 +153,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
                         label="Log Types"
                         required
                         name={`s3PrefixLogTypes.${index}.logTypes`}
-                        items={
-                          // The filtering here is used to prevent users from adding the same log type with different prefixes
-                          data?.listAvailableLogTypes.logTypes.filter(
-                            logType =>
-                              !flatten(
-                                values.s3PrefixLogTypes.map(({ logTypes }) => logTypes)
-                              ).includes(logType)
-                          ) ?? []
-                        }
+                        items={availableLogTypes}
                         placeholder="The types of logs that are collected"
                       />
                     </Flex>
