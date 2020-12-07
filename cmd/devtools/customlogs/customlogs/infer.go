@@ -49,13 +49,12 @@ func Infer(logger *zap.SugaredLogger, opts *InferOpts) error {
 
 	for scanner.Scan() {
 		line := scanner.Bytes()
-		var json map[string]interface{}
-		err := api.Unmarshal(line, &json)
+		var data map[string]interface{}
+		err := api.Unmarshal(line, &data)
 		if err != nil {
 			logger.Fatalf("failed to parse line as JSON")
 		}
-		value := inferFields([]string{}, json)
-		_ = value
+		inferFields([]string{}, data)
 	}
 	if err := scanner.Err(); err != nil {
 		logger.Fatalf("failed")
@@ -70,7 +69,7 @@ func inferFields(path []string, event map[string]interface{}) []logschema.FieldS
 		if !ok {
 			continue
 		}
-		collisionsObserver.observeValueSchema(append(path, key), valueSchema)
+		findings.observeValueSchema(append(path, key), valueSchema)
 
 		field := logschema.FieldSchema{
 			Name:        key,
@@ -136,12 +135,12 @@ func inferValueType(value interface{}) logschema.ValueType {
 	}
 }
 
-// collisions observe column names across a schema and provide case sensitive mappings
-type collisions map[string]*finding
+// schemaFindings observe column names across a schema and provide case sensitive mappings
+type schemaFindings map[string]*finding
 
-var collisionsObserver = collisions{}
+var findings = schemaFindings{}
 
-func (c collisions) observeValueSchema(path []string, schema *logschema.ValueSchema) {
+func (c schemaFindings) observeValueSchema(path []string, schema *logschema.ValueSchema) {
 	fullPath := strings.Join(path, ".")
 	find, ok := c[fullPath]
 	if !ok {
@@ -166,4 +165,9 @@ func (c collisions) observeValueSchema(path []string, schema *logschema.ValueSch
 type finding struct {
 	times   int
 	schemas []*logschema.ValueSchema
+}
+
+func (c schemaFindings) generateSchema(numLines int) (*logschema.Schema, error) {
+
+	return nil, nil
 }
