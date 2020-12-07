@@ -34,7 +34,7 @@ const validateCmd = "validate"
 const infer = "infer"
 
 func main() {
-	opstools.SetUsage(`[upload, validate]`)
+	opstools.SetUsage(`[infer, validate]`)
 
 	loggerConfig := zap.NewDevelopmentConfig()
 	loggerConfig.DisableStacktrace = true
@@ -65,9 +65,7 @@ func main() {
 			File: flag.String("i", "", "Input file"),
 		}
 		flag.CommandLine.Parse(os.Args[2:])
-		if err := customlogs.Infer(logger, opts); err != nil {
-			logger.Fatalf("failed to infer schema %v", err)
-		}
+		customlogs.Infer(logger, opts)
 	default:
 		flag.Usage()
 		logger.Fatalf("Invalid command [%s]", cmd)

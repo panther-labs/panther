@@ -19,26 +19,21 @@ package customlogs
  */
 
 import (
-	"log"
+	"io/ioutil"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v2"
 )
 
-func TestUpload(t *testing.T) {
-	loggerConfig := zap.NewDevelopmentConfig()
-	loggerConfig.DisableStacktrace = true
-	loggerConfig.DisableCaller = true
-	z, err := loggerConfig.Build()
-	if err != nil {
-		log.Fatalln("failed to start logger: ", err.Error())
-	}
-	logger := z.Sugar()
+func TestProcessLine(t *testing.T) {
+	schema, err := inferFromFile(zap.L().Sugar(), "./testdata/sample_1.jsonl")
+	assert.NoError(t, err)
+	fd, err := ioutil.ReadFile("./testdata/schema_1.yml")
+	assert.NoError(t, err)
 
-	opts := &InferOpts{
-		File: aws.String("/Users/kostas/Desktop/auth0_mfa_samples.txt"),
-	}
-	Infer(logger, opts)
-
+	marshalled, err := yaml.Marshal(schema)
+	assert.NoError(t, err)
+	assert.YAMLEq(t, string(fd), string(marshalled))
 }

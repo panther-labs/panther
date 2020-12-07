@@ -42,6 +42,7 @@ type ValidateOpts struct {
 	Output *string
 }
 
+// Validate validates a log schema against a sample of logs
 func Validate(logger *zap.SugaredLogger, opts *ValidateOpts) {
 	schemaFile := *opts.Schema
 	if schemaFile == "" {

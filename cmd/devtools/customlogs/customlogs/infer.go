@@ -21,6 +21,7 @@ package customlogs
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"sort"
@@ -31,7 +32,10 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 
+	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/customlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
@@ -43,44 +47,65 @@ var inferJsoniter = jsoniter.Config{
 	UseNumber: true,
 }.Froze()
 
+// Infers a schema given a sample of logs
 func Infer(logger *zap.SugaredLogger, opts *InferOpts) {
-	fd, err := os.Open(*opts.File)
+	if *opts.File == "" {
+		flag.Usage()
+		logger.Fatal("no schema file provided")
+	}
+
+	schema, err := inferFromFile(logger, *opts.File)
 	if err != nil {
-		logger.Fatal("failed to read input file", zap.Error(err))
+		logger.Fatal("failed to generate schema", zap.Error(err))
+	}
+
+	// In order to validate that the schema generated is correct,
+	// run the parser against the logs, fail in case of error
+	if err = validateSchema(schema, *opts.File); err != nil {
+		logger.Fatal("failed while testing schema with file", zap.Error(err))
+	}
+
+	marshalled, err := yaml.Marshal(schema)
+	if err != nil {
+		logger.Fatal("failed to marshal schema", zap.Error(err))
+	}
+	fmt.Println(string(marshalled))
+}
+
+func inferFromFile(logger *zap.SugaredLogger, file string) (logschema.Schema, error) {
+	schema := logschema.Schema{
+		Version: 0,
+	}
+	fd, err := os.Open(file)
+	if err != nil {
+		return schema, errors.Wrap(err, "failed to read input file")
 	}
 	defer fd.Close()
 
 	scanner := bufio.NewScanner(fd)
-	var globalSchemaFields []logschema.FieldSchema
-	counter := 0
+	lineNum := 0
 	for scanner.Scan() {
-		counter++
-		globalSchemaFields, err = processLine(scanner.Bytes(), globalSchemaFields)
+		lineNum++
+		var data map[string]interface{}
+		if err = inferJsoniter.Unmarshal(scanner.Bytes(), &data); err != nil {
+			return schema, errors.Wrapf(err, "failed to parse line [%d] as JSON", lineNum)
+		}
+		// inferring the log schema of that single line
+		lineFields := inferFields(data)
+		// merging the schema of this line with the schema that we have generated from all lines until now
+		schema.Fields, err = mergeFields(schema.Fields, lineFields)
 		if err != nil {
-			logger.Fatal("failed while inferring schema",
-				zap.Int("lineNum", counter),
-				zap.Error(err))
+			return schema, errors.Wrapf(err, "failed while inferring schema from line [%d]", lineNum)
 		}
 	}
 	if err := scanner.Err(); err != nil {
 		logger.Fatal("failed to read input file", zap.Error(err))
 	}
-	marshalled, err := yaml.Marshal(globalSchemaFields)
-	if err != nil {
-		logger.Fatal("failed to marshal result", zap.Error(err))
-	}
-	fmt.Println(string(marshalled))
+
+	return schema, nil
 }
 
-func processLine(line []byte, globalFields []logschema.FieldSchema) ([]logschema.FieldSchema, error) {
-	var data map[string]interface{}
-	err := inferJsoniter.Unmarshal(line, &data)
-	if err != nil {
-		return globalFields, errors.Wrap(err, "failed to parse line as JSON")
-	}
-	return mergeFields(globalFields, inferFields(data))
-}
-
+// Infers the schema from a single JSON event
 func inferFields(event map[string]interface{}) []logschema.FieldSchema {
 	var out []logschema.FieldSchema
 	for key, value := range event {
@@ -92,28 +117,32 @@ func inferFields(event map[string]interface{}) []logschema.FieldSchema {
 		}
 
 		field := logschema.FieldSchema{
-			Name:        key,
+			Name:        glueschema.ColumnName(key),
 			Description: "The " + key,
 			Required:    true,
 			ValueSchema: *valueSchema,
 		}
 		out = append(out, field)
 	}
-	// sorts the fields by name
+	// sorts the fields by name. Useful so that re-runs of the same tool will generate the same schema
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].Name < out[j].Name
 	})
 	return out
 }
 
+// Try to infer the schema from a single value
+// Returs false if we were unable to infer it
 func inferValueSchema(value interface{}) (*logschema.ValueSchema, bool) {
 	typ := inferValueType(value)
 	switch typ {
 	case logschema.TypeArray:
 		array := value.([]interface{})
+		// If the array has no elements, don't try to infer their type
 		if len(array) == 0 {
 			return nil, false
 		}
+		// We are trying to infer the schema of the array only by looking at the first element
 		valueSchema, ok := inferValueSchema(array[0])
 		if !ok {
 			return nil, false
@@ -124,6 +153,8 @@ func inferValueSchema(value interface{}) (*logschema.ValueSchema, bool) {
 		}, true
 	case logschema.TypeObject:
 		object := value.(map[string]interface{})
+		// If the object has no fields, don't try to infer its type.
+		// Just skip it.
 		if len(object) == 0 {
 			return nil, false
 		}
@@ -162,12 +193,11 @@ func inferValueType(value interface{}) logschema.ValueType {
 	}
 }
 
+// Many of the logs may have numbers, booleans in strings
 func guessStringValue(value string) *logschema.ValueSchema {
-	// If we could parse it as boolean,
-	// return it as boolean
-	if err := (&pantherlog.Bool{}).UnmarshalJSON([]byte(value)); err == nil {
+	if len(value) == 0 {
 		return &logschema.ValueSchema{
-			Type: logschema.TypeBoolean,
+			Type: logschema.TypeString,
 		}
 	}
 	// If we could parse it as integer,
@@ -184,6 +214,14 @@ func guessStringValue(value string) *logschema.ValueSchema {
 	if err := (&pantherlog.Float64{}).UnmarshalJSON([]byte(value)); err == nil {
 		return &logschema.ValueSchema{
 			Type: logschema.TypeFloat,
+		}
+	}
+
+	// If we could parse it as boolean,
+	// return it as boolean
+	if err := (&pantherlog.Bool{}).UnmarshalJSON([]byte(value)); err == nil {
+		return &logschema.ValueSchema{
+			Type: logschema.TypeBoolean,
 		}
 	}
 
@@ -230,19 +268,22 @@ func mergeFields(left, right []logschema.FieldSchema) ([]logschema.FieldSchema, 
 			// nothing else to do
 			// Just mark it as optional
 			leftValue.Required = false
+			leftMap[key] = leftValue
 			continue
 		}
 
 		merged, err := mergeFieldSchema(&leftValue, &rightValue)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "failed while processing %s", key)
 		}
 		leftMap[key] = *merged
+		// After we have processed this field from the rightMap, delete it
 		delete(rightMap, key)
 	}
 
+	// We have already deleted from the rightMap all the fields that were also present in the leftMap
+	// Add the remaining ones, and mark them as optional.
 	for key, value := range rightMap {
-		// Since this was not found on the left, mark it as optional
 		value.Required = false
 		leftMap[key] = value
 	}
@@ -251,10 +292,43 @@ func mergeFields(left, right []logschema.FieldSchema) ([]logschema.FieldSchema, 
 	for _, value := range leftMap {
 		out = append(out, value)
 	}
+	// sorts the fields by name
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Name < out[j].Name
+	})
 	return out, nil
 }
 
 func mergeFieldSchema(left, right *logschema.FieldSchema) (*logschema.FieldSchema, error) {
+	// If the fields are of different type,
+	// try to see if it is possible be merge the types
+	if left.Type != right.Type {
+		newType, ok := mergeType(left.Type, right.Type)
+		if !ok {
+			return nil, errors.Errorf("can't assign %s to %s", string(left.Type), string(right.Type))
+		}
+		left.Type = newType
+		return left, nil
+	}
+
+	switch left.Type {
+	case logschema.TypeObject:
+		merged, err := mergeFields(left.Fields, right.Fields)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failure while processing field [%s]", left.Name)
+		}
+		left.Fields = merged
+	case logschema.TypeArray:
+		merged, err := mergeArrayElementSchema(left.Element, right.Element)
+		if err != nil {
+			return nil, err
+		}
+		left.Element = merged
+	}
+	return left, nil
+}
+
+func mergeArrayElementSchema(left, right *logschema.ValueSchema) (*logschema.ValueSchema, error) {
 	if left.Type == right.Type {
 		switch left.Type {
 		case logschema.TypeObject:
@@ -264,57 +338,84 @@ func mergeFieldSchema(left, right *logschema.FieldSchema) (*logschema.FieldSchem
 			}
 			left.Fields = merged
 		case logschema.TypeArray:
-			merged, err := mergeValueSchema(left.Element, right.Element)
+			merged, err := mergeArrayElementSchema(left.Element, right.Element)
 			if err != nil {
 				return nil, err
 			}
 			left.Element = merged
 		}
 	} else {
-		if assignable(left.Type, right.Type) {
-			left.Type = right.Type
-		} else {
+		newType, ok := mergeType(left.Type, right.Type)
+		if !ok {
 			return nil, errors.Errorf("can't assign %s to %s", string(left.Type), string(right.Type))
 		}
+		left.Type = newType
 	}
 	return left, nil
 }
 
-func mergeValueSchema(left, right *logschema.ValueSchema) (*logschema.ValueSchema, error) {
-	if left.Type == right.Type {
-		switch left.Type {
-		case logschema.TypeObject:
-			merged, err := mergeFields(left.Fields, right.Fields)
-			if err != nil {
-				return nil, err
-			}
-			left.Fields = merged
-		case logschema.TypeArray:
-			merged, err := mergeValueSchema(left.Element, right.Element)
-			if err != nil {
-				return nil, err
-			}
-			left.Element = merged
-		}
-	} else {
-		if assignable(left.Type, right.Type) {
-			left.Type = right.Type
-		} else {
-			return nil, errors.Errorf("can't assign %s to %s", string(left.Type), string(right.Type))
-		}
-	}
-	return left, nil
-}
-
-func assignable(from, to logschema.ValueType) bool {
+// Checks if it is possible to merge the types
+// It will returns the result of the merge. It will return false if the merging is not possible
+func mergeType(from, to logschema.ValueType) (logschema.ValueType, bool) {
 	switch from {
 	case logschema.TypeBoolean:
-		return to == logschema.TypeString || to == logschema.TypeBigInt || to == logschema.TypeFloat
+		if to == logschema.TypeString || to == logschema.TypeBigInt || to == logschema.TypeFloat {
+			return to, true
+		}
+		return from, false
 	case logschema.TypeBigInt:
-		return to == logschema.TypeString || to == logschema.TypeFloat
+		if to == logschema.TypeString || to == logschema.TypeFloat {
+			return to, true
+		}
+		return from, false
 	case logschema.TypeTimestamp:
-		return to == logschema.TypeString
+		if to == logschema.TypeString {
+			return to, true
+		}
+		return from, false
+	case logschema.TypeString:
+		if to == logschema.TypeArray || to == logschema.TypeObject {
+			return from, false
+		}
+		return from, true
 	default:
-		return false
+		return from, false
 	}
+}
+
+func validateSchema(schema logschema.Schema, file string) error {
+	desc := logtypes.Desc{
+		Name:         "Custom.Test",
+		Description:  "Custom log test schema",
+		ReferenceURL: "-",
+	}
+	entry, err := customlogs.Build(desc, &schema)
+	if err != nil {
+		validationErrors := logschema.ValidationErrors(err)
+		if len(validationErrors) > 0 {
+			return errors.New(validationErrors[0].String())
+		}
+		return err
+	}
+	parser, err := entry.NewParser(nil)
+	if err != nil {
+		return err
+	}
+
+	fd, err := os.Open(file)
+	if err != nil {
+		return err
+	}
+
+	scanner := bufio.NewScanner(fd)
+	for scanner.Scan() {
+		_, err := parser.ParseLog(scanner.Text())
+		if err != nil {
+			return err
+		}
+	}
+	if scanner.Err() != nil {
+		return err
+	}
+	return nil
 }
