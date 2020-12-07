@@ -173,7 +173,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
         {shouldSkipTo ? (
           <WizardPanel.ActionGoToStep stepIndex={shouldSkipTo} />
         ) : (
-          <WizardPanel.ActionNext disabled={!dirty || !isValid} />
+          <WizardPanel.ActionNext disabled={!dirty || !isValid}>Continue</WizardPanel.ActionNext>
         )}
       </WizardPanel.Actions>
     </WizardPanel>
