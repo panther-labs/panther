@@ -1715,14 +1715,6 @@ func listFiltered(t *testing.T) {
 			ResourceTypes:  []string{"AWS.S3.Bucket"},
 			Severity:       []compliancemodels.Severity{compliancemodels.SeverityMedium},
 			CreatedBy: 	    userID,
-			// add createdBy a userID and/or lastModifiedBy
-			// have one test that returns results (this test), one test that will not return results (different test)
-
-			// maybe have different users? --> would lead to trickle down to other tests
-
-			// add unit test for pythonListFilters?
-
-			// add negative
 		},
 	}
 	var result models.ListPoliciesOutput
