@@ -229,7 +229,7 @@ func (pr PantherReports) Run() error {
 func (pr PantherReports) Print() {
 	for account, report := range pr.AccountReports {
 		// we assume a specific structure for PantherReports
-		fmt.Printf("Panther Summmary for Account: %s\n", account)
+		fmt.Printf("Panther Summary for Account: %s\n", account)
 
 		// calc space between key and value
 		longestServiceName := 0
