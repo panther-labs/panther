@@ -23,7 +23,6 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
@@ -40,6 +39,6 @@ func TestUpload(t *testing.T) {
 	opts := &InferOpts{
 		File: aws.String("/Users/kostas/Desktop/auth0_mfa_samples.txt"),
 	}
-	require.NoError(t, Infer(logger, opts))
+	Infer(logger, opts)
 
 }
