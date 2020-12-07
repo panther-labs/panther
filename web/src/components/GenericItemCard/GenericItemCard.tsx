@@ -120,11 +120,7 @@ const GenericItemCardOptionsButton = React.forwardRef<HTMLButtonElement>(functio
 
 const GenericItemCardDate: React.FC<GenericItemCardDate> = ({ date, ...rest }) => {
   return (
-<<<<<<< HEAD
-    <Text fontSize="small" as="span" color="gray-500" {...rest}>
-=======
     <Text fontSize="small" as="span" color="navyblue-100" {...rest}>
->>>>>>> 067184d6 (Fix: Empty charts & Buggy log scale (#2195))
       {date}
     </Text>
   );
