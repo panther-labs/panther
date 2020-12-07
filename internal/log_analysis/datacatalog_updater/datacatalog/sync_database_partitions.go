@@ -49,18 +49,21 @@ func (h *LambdaHandler) HandleSyncDatabasePartitionsEvent(ctx context.Context, e
 		zap.Bool("dryRun", event.DryRun),
 	)
 	var tableEvents []*SyncTableEvent
-	for _, dbName := range event.DatabaseNames {
-		for _, logType := range event.LogTypes {
-			dataType := pantherdb.GetDataType(logType)
+	for _, logType := range event.LogTypes {
+		dataType := pantherdb.GetDataType(logType)
+		tblName := pantherdb.TableName(logType)
+		for _, dbName := range event.DatabaseNames {
 			if dataType == pantherdb.CloudSecurity && dbName != pantherdb.CloudSecurityDatabase {
 				// If the data is Cloud Security data but the DB is not Cloud Security database, skip
+				// E.g. don't create `Snapshot.ComplianceHistory` table inside `panther_logs` or `panther_rule_matches` DB
 				continue
 			}
 			if dataType != pantherdb.CloudSecurity && dbName == pantherdb.CloudSecurityDatabase {
 				// If the data is not Cloud Security data but the DB is Cloud Security database, skip
+				// E.g. don't create `AWS.CloudTrail` table inside `panther_cloud_security` DB
 				continue
 			}
-			tblName := pantherdb.TableName(logType)
+
 			tableEvents = append(tableEvents, &SyncTableEvent{
 				TraceID: event.TraceID,
 				SyncTablePartitions: gluetasks.SyncTablePartitions{

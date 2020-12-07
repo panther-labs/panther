@@ -106,19 +106,26 @@ func customUpdateLogTables(ctx context.Context, event cfn.Event) (string, map[st
 }
 
 func createCloudSecurityDDBTables(_ context.Context) error {
-	tableArn := arn.ARN{
+	resourcesTableArn := arn.ARN{
 		Partition: "aws",
 		Region:    aws.StringValue(awsSession.Config.Region),
 		AccountID: env.AccountID,
 		Service:   "dynamodb",
 		Resource:  cloudsecglue.ResourcesTableDDB,
 	}
-	if err := cloudsecglue.CreateOrUpdateResourcesTable(glueClient, tableArn.String()); err != nil {
+	if err := cloudsecglue.CreateOrUpdateResourcesTable(glueClient, resourcesTableArn.String()); err != nil {
 		return errors.Wrap(err, "failed to create resources table")
 	}
 
-	tableArn.Resource = cloudsecglue.ComplianceTableDDB
-	if err := cloudsecglue.CreateOrUpdateComplianceTable(glueClient, tableArn.String()); err != nil {
+	complianceTableArn := arn.ARN{
+		Partition: "aws",
+		Region:    aws.StringValue(awsSession.Config.Region),
+		AccountID: env.AccountID,
+		Service:   "dynamodb",
+		Resource:  cloudsecglue.ComplianceTableDDB,
+	}
+
+	if err := cloudsecglue.CreateOrUpdateComplianceTable(glueClient, complianceTableArn.String()); err != nil {
 		return errors.Wrap(err, "failed to create compliance table")
 	}
 	return nil
