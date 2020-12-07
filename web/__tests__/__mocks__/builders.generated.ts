@@ -841,6 +841,9 @@ export const buildListPoliciesInput = (
   overrides: Partial<ListPoliciesInput> = {}
 ): ListPoliciesInput => {
   return {
+    createdBy: 'createdBy' in overrides ? overrides.createdBy : 'Sports',
+    lastModifiedBy: 'lastModifiedBy' in overrides ? overrides.lastModifiedBy : 'incubate',
+    initialSet: 'initialSet' in overrides ? overrides.initialSet : false,
     complianceStatus:
       'complianceStatus' in overrides ? overrides.complianceStatus : ComplianceStatusEnum.Pass,
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'parse',
@@ -898,6 +901,9 @@ export const buildListResourcesResponse = (
 
 export const buildListRulesInput = (overrides: Partial<ListRulesInput> = {}): ListRulesInput => {
   return {
+    createdBy: 'createdBy' in overrides ? overrides.createdBy : 'neural',
+    lastModifiedBy: 'lastModifiedBy' in overrides ? overrides.lastModifiedBy : 'Integration',
+    initialSet: 'initialSet' in overrides ? overrides.initialSet : true,
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'Cotton',
     enabled: 'enabled' in overrides ? overrides.enabled : false,
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Drive'],
