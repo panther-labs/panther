@@ -23,6 +23,7 @@ import * as Yup from 'yup';
 import { Wizard } from 'Components/Wizard';
 import { FetchResult } from '@apollo/client';
 import { getArnRegexForService, yupIntegrationLabelValidation } from 'Helpers/utils';
+import { S3PrefixLogTypes } from 'Generated/schema';
 import StackDeploymentPanel from './StackDeploymentPanel';
 import S3SourceConfigurationPanel from './S3SourceConfigurationPanel';
 import ValidationPanel from './ValidationPanel';
@@ -41,7 +42,7 @@ export interface S3LogSourceWizardValues {
   integrationLabel: string;
   s3Bucket: string;
   kmsKey: string;
-  s3PrefixLogTypes: any[];
+  s3PrefixLogTypes: S3PrefixLogTypes[];
 }
 
 const validationSchema = Yup.object().shape<S3LogSourceWizardValues>({
