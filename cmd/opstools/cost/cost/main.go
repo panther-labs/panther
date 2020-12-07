@@ -39,9 +39,9 @@ var (
 			costexplorer.GranularityDaily+","+costexplorer.GranularityMonthly)
 	ACCOUNTS = flag.String("accounts", "", "Comma separated list of AWS linked account ids")
 
-	PANTHERREPORTS = flag.Bool("panther", true, "Include Panther specific reports if true")
-	SUMMARYREPORTS = flag.Bool("summary", false, "Include summary level if true")
-	SERVICEREPORTS = flag.Bool("servicedetail", false, "Include service level detail if true")
+	PANTHERREPORTS       = flag.Bool("panther", true, "Include Panther specific reports if true")
+	SUMMARYREPORTS       = flag.Bool("summary", false, "Include summary level if true")
+	SERVICEDETAILREPORTS = flag.Bool("servicedetail", false, "Include service level detail if true")
 
 	startTime, endTime time.Time
 	accounts           []string
@@ -54,23 +54,38 @@ func main() {
 
 	validateFlags(awsSession)
 
-	ceClient := costexplorer.New(awsSession)
+	reporter := cost.NewReporter(awsSession)
 
+	// focused on Panther related costs
 	if *PANTHERREPORTS {
-		reports := cost.NewPantherSummaryReports(startTime, endTime, *GRANULARITY, accounts)
-		reports.Run(ceClient)
+		reports := reporter.NewPantherReports(startTime, endTime, *GRANULARITY, accounts)
+		err := reports.Run()
+		if err != nil {
+			log.Fatal(err)
+		}
 		reports.Print()
 	}
 
+	// Overall summary costs and usage
 	if *SUMMARYREPORTS {
-		reports := cost.NewSummaryReports(startTime, endTime, *GRANULARITY, accounts)
-		reports.Run(ceClient)
+		reports := reporter.NewSummaryReports(startTime, endTime, *GRANULARITY, accounts)
+		err := reports.Run()
+		if err != nil {
+			log.Fatal(err)
+		}
 		reports.Print()
 	}
 
-	if *SERVICEREPORTS {
-		reports := cost.NewServiceDetailReports(startTime, endTime, *GRANULARITY, accounts)
-		reports.Run(ceClient)
+	// Detailed costs and usage per service
+	if *SERVICEDETAILREPORTS {
+		reports, err := reporter.NewServiceDetailReports(startTime, endTime, *GRANULARITY, accounts)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = reports.Run()
+		if err != nil {
+			log.Fatal(err)
+		}
 		reports.Print()
 	}
 }

@@ -20,12 +20,14 @@ package cost
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/costexplorer"
 	"github.com/aws/aws-sdk-go/service/costexplorer/costexploreriface"
+	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/pkg/errors"
 )
 
 // Cost reporting for Panther using Cost Explorer API:
@@ -33,34 +35,9 @@ import (
 
 const (
 	DateFormat = "2006-01-02"
-
-	// use GetServices() to discover specific names required
-	ServiceAthena        = "Amazon Athena"
-	ServiceCloudWatch    = "AmazonCloudWatch"
-	ServiceDDB           = "Amazon DynamoDB"
-	ServiceGlue          = "AWS Glue"
-	ServiceKMS           = "AWS Key Management Service"
-	ServiceLambda        = "AWS Lambda"
-	ServiceS3            = "Amazon Simple Storage Service"
-	ServiceSQS           = "Amazon Simple Queue Service"
-	ServiceSNS           = "Amazon Simple Notification Service"
-	ServiceStepFunctions = "AWS Step Functions"
 )
 
 var (
-	Services = []string{
-		ServiceLambda,
-		ServiceDDB,
-		ServiceS3,
-		ServiceSQS,
-		ServiceSNS,
-		ServiceCloudWatch,
-		ServiceAthena,
-		ServiceGlue,
-		ServiceKMS,
-		ServiceStepFunctions,
-	}
-
 	Metrics = []*string{
 		aws.String(costexplorer.MetricUsageQuantity),
 		aws.String(costexplorer.MetricNormalizedUsageAmount),
@@ -73,13 +50,27 @@ var (
 	}
 )
 
+type Reporter struct {
+	awsSession *session.Session
+	ceClient   costexploreriface.CostExplorerAPI
+}
+
+func NewReporter(awsSession *session.Session) *Reporter {
+	return &Reporter{
+		awsSession: awsSession,
+		ceClient:   costexplorer.New(awsSession),
+	}
+}
+
 type Reports struct {
 	Start, End     time.Time
 	Granularity    string
 	AccountReports map[string][]*Report // accountid -> reports
+
+	reporter *Reporter // back pointer with clients
 }
 
-func NewSummaryReports(startTime, endTime time.Time, granularity string, accounts []string) *Reports {
+func (r *Reporter) NewSummaryReports(startTime, endTime time.Time, granularity string, accounts []string) *Reports {
 	startTime = startTime.UTC()
 	endTime = endTime.UTC()
 	timePeriod := &costexplorer.DateInterval{
@@ -117,6 +108,8 @@ func NewSummaryReports(startTime, endTime time.Time, granularity string, account
 	}
 
 	return &Reports{
+		reporter: r,
+
 		Start:          startTime,
 		End:            endTime,
 		Granularity:    granularity,
@@ -124,7 +117,7 @@ func NewSummaryReports(startTime, endTime time.Time, granularity string, account
 	}
 }
 
-func NewServiceDetailReports(startTime, endTime time.Time, granularity string, accounts []string) *Reports {
+func (r *Reporter) NewServiceDetailReports(startTime, endTime time.Time, granularity string, accounts []string) (*Reports, error) {
 	startTime = startTime.UTC()
 	endTime = endTime.UTC()
 	timePeriod := &costexplorer.DateInterval{
@@ -134,9 +127,15 @@ func NewServiceDetailReports(startTime, endTime time.Time, granularity string, a
 
 	accountReports := make(map[string][]*Report)
 
+	services, err := r.GetServices(timePeriod)
+	if err != nil {
+		return nil, err
+	}
+
 	for i, account := range accounts {
 		var reports []*Report
-		for _, service := range Services {
+
+		for _, service := range services {
 			reports = append(reports, &Report{
 				Name:        fmt.Sprintf("%s Cost and Usage By Usage Type", service),
 				Accounts:    []*string{&accounts[i]},
@@ -163,24 +162,31 @@ func NewServiceDetailReports(startTime, endTime time.Time, granularity string, a
 	}
 
 	return &Reports{
+		reporter: r,
+
 		Start:          startTime,
 		End:            endTime,
 		Granularity:    granularity,
 		AccountReports: accountReports,
-	}
+	}, nil
 }
 
-func (pr *Reports) Run(ceClient costexploreriface.CostExplorerAPI) {
+func (pr *Reports) Run() error {
 	for _, reports := range pr.AccountReports {
 		for _, report := range reports {
-			report.Run(ceClient)
+			err := report.run(pr.reporter.ceClient)
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 func (pr Reports) Print() {
 	for account, reports := range pr.AccountReports {
-		fmt.Printf("Account: %s\n\n", account)
+		fmt.Printf("Account: %s\n", account)
+		fmt.Printf("Account Aliases: %v\n\n", pr.reporter.GetAccountAliases())
 		for _, report := range reports {
 			report.Print()
 		}
@@ -203,7 +209,7 @@ func (report *Report) Print() {
 	fmt.Printf("%s\n%v\n\n", report.Name, *report.Output)
 }
 
-func (report *Report) Run(ceClient costexploreriface.CostExplorerAPI) {
+func (report *Report) run(ceClient costexploreriface.CostExplorerAPI) error {
 	filter := report.Filter
 	if len(report.Accounts) > 0 { // qualify by account?
 		accountFilter := &costexplorer.Expression{
@@ -235,27 +241,45 @@ func (report *Report) Run(ceClient costexploreriface.CostExplorerAPI) {
 	for {
 		report.Output, err = ceClient.GetCostAndUsage(input)
 		if err != nil {
-			log.Fatal(err)
+			return errors.Wrapf(err, "run() failed for %s", report.Name)
 		}
 		if report.Output.NextPageToken == nil {
 			break
 		}
 		input.NextPageToken = report.Output.NextPageToken
 	}
+	return nil
 }
 
-// GetServices prints the available names for services (useful to find new services)
-func GetServices(ceClient costexploreriface.CostExplorerAPI, timePeriod *costexplorer.DateInterval) {
-	input := &costexplorer.GetDimensionValuesInput{
-		Context:       nil,
-		Dimension:     aws.String(costexplorer.DimensionService),
-		NextPageToken: nil,
-		SearchString:  nil,
-		TimePeriod:    timePeriod,
+// GetServices returns the available names for services (useful to find new services)
+func (r *Reporter) GetServices(timePeriod *costexplorer.DateInterval) (services []string, err error) {
+	for {
+		input := &costexplorer.GetDimensionValuesInput{
+			Dimension:  aws.String(costexplorer.DimensionService),
+			TimePeriod: timePeriod,
+		}
+		output, err := r.ceClient.GetDimensionValues(input)
+		if err != nil {
+			return nil, errors.Wrap(err, "GetServices() failed")
+		}
+		for _, dm := range output.DimensionValues {
+			services = append(services, *dm.Value)
+		}
+		if output.NextPageToken == nil {
+			break
+		}
+		input.NextPageToken = output.NextPageToken
 	}
-	output, err := ceClient.GetDimensionValues(input)
+	return services, nil
+}
+
+// GetAccountAliases returns the available names for the account (best effort)
+func (r *Reporter) GetAccountAliases() (aliases []string) {
+	iamClient := iam.New(r.awsSession)
+	input := &iam.ListAccountAliasesInput{}
+	output, err := iamClient.ListAccountAliases(input)
 	if err != nil {
-		log.Fatal(err)
+		return aliases
 	}
-	log.Printf("%#v\n", *output)
+	return aws.StringValueSlice(output.AccountAliases)
 }
