@@ -114,11 +114,7 @@ exports[`AlertCard should match snapshot 1`] = `
 
 .panther-3 {
   font-size: 0.75rem;
-<<<<<<< HEAD
-  color: #716f6f;
-=======
   color: #86a3c3;
->>>>>>> 067184d6 (Fix: Empty charts & Buggy log scale (#2195))
 }
 
 .panther-5 {
