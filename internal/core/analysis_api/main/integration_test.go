@@ -1714,7 +1714,7 @@ func listFiltered(t *testing.T) {
 			NameContains:   "json", // policyFromBulkJSON only
 			ResourceTypes:  []string{"AWS.S3.Bucket"},
 			Severity:       []compliancemodels.Severity{compliancemodels.SeverityMedium},
-			CreatedBy: 	    userID,
+			CreatedBy:      userID,
 		},
 	}
 	var result models.ListPoliciesOutput
@@ -1722,7 +1722,7 @@ func listFiltered(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
 
-	expected := models.ListPoliciesOutput {
+	expected := models.ListPoliciesOutput{
 		Paging: models.Paging{
 			ThisPage:   1,
 			TotalItems: 1,
@@ -1742,7 +1742,7 @@ func listFilteredNoUser(t *testing.T) {
 			NameContains:   "json", // policyFromBulkJSON only
 			ResourceTypes:  []string{"AWS.S3.Bucket"},
 			Severity:       []compliancemodels.Severity{compliancemodels.SeverityMedium},
-			CreatedBy: 	    "nil",
+			CreatedBy:      "nil",
 		},
 	}
 	var result models.ListPoliciesOutput
@@ -1750,7 +1750,7 @@ func listFilteredNoUser(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
 
-	expected := models.ListPoliciesOutput {
+	expected := models.ListPoliciesOutput{
 		Paging: models.Paging{
 			ThisPage:   1,
 			TotalItems: 1,

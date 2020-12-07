@@ -137,8 +137,6 @@ func pythonListFilters(
 		}
 	}
 
-
-
 	return filters
 }
 

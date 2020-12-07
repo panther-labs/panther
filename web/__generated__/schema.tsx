@@ -531,6 +531,9 @@ export type ListGlobalPythonModulesResponse = {
 };
 
 export type ListPoliciesInput = {
+  createdBy?: Maybe<Scalars['String']>;
+  lastModifiedBy?: Maybe<Scalars['String']>;
+  initialSet?: Maybe<Scalars['Boolean']>;
   complianceStatus?: Maybe<ComplianceStatusEnum>;
   nameContains?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
@@ -585,6 +588,9 @@ export enum ListResourcesSortFieldsEnum {
 }
 
 export type ListRulesInput = {
+  createdBy?: Maybe<Scalars['String']>;
+  lastModifiedBy?: Maybe<Scalars['String']>;
+  initialSet?: Maybe<Scalars['Boolean']>;
   nameContains?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
   logTypes?: Maybe<Array<Scalars['String']>>;
