@@ -310,6 +310,8 @@ func mergeFields(left, right []logschema.FieldSchema) ([]logschema.FieldSchema, 
 func setOptional(schema logschema.FieldSchema) logschema.FieldSchema {
 	schema.Required = false
 	if schema.Type == logschema.TypeObject {
+		// In case the field is of type `object` set all nested fields as optional too
+		// This is need to handle the case of log line line this one `{"key":{}}`
 		for i := range schema.Fields {
 			schema.Fields[i].Required = false
 		}
