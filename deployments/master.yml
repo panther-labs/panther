@@ -350,12 +350,6 @@ Resources:
   LogAnalysis:
     DependsOn:
       - Core
-      - CloudSecurity # FIXME With 1.15 release, the management of `panther_cloudsecurity` database moved
-    # from a Custom resource `cloud_security.yml` to a Custom resource in `log_analysis.yml`.
-    # Upon deployment of `cloud_security.yml`, CFN will see that the resource is removed and will delete the database
-    # The database will get created again when `log_analysis.yml` is deployed.
-    # We add this dependency here to avoid a race condition where CFN would delete the database (in `cloud_security.yml`) after
-    # it was created in `log_analysis.yml`.
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: log_analysis.yml
