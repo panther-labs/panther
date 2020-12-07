@@ -556,12 +556,12 @@ exports[`DestinationTestPanel should show a success message for successful test-
                 class="panther-10"
                 href="/settings/destinations/"
               >
-                <span
+                <button
                   class="panther-9"
                   type="button"
                 >
                   Finish Setup
-                </span>
+                </button>
               </a>
               <button
                 class="panther-11"
@@ -923,12 +923,12 @@ exports[`DestinationTestPanel should show error details for a failing test-alert
                 class="panther-21"
                 href="/settings/destinations/8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7/edit/"
               >
-                <span
+                <button
                   class="panther-20"
                   type="button"
                 >
                   Back to Configuration
-                </span>
+                </button>
               </a>
               <a
                 class="panther-22"

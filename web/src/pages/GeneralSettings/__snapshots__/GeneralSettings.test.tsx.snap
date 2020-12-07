@@ -755,12 +755,12 @@ exports[`GeneralSettings it renders the general settings page along with the foo
               rel="noopener noreferrer"
               target="_blank"
             >
-              <span
+              <button
                 class="panther-42"
                 type="button"
               >
                 Get Enterprise
-              </span>
+              </button>
             </a>
           </div>
           <div
