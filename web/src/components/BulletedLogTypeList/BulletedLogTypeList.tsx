@@ -38,4 +38,4 @@ const BulletedLogTypeList: React.FC<BulletedLogTypeListProps> = ({ logTypes, lim
   );
 };
 
-export default BulletedLogTypeList;
+export default React.memo(BulletedLogTypeList);

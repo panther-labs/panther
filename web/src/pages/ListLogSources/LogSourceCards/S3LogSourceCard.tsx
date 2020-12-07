@@ -30,6 +30,10 @@ interface S3LogSourceCardProps {
 }
 
 const S3LogSourceCard: React.FC<S3LogSourceCardProps> = ({ source }) => {
+  const logTypesFlat = React.useMemo(() => {
+    return flatten(source.s3PrefixLogTypes.map(({ logTypes }) => logTypes));
+  }, [source.s3PrefixLogTypes]);
+
   return (
     <LogSourceCard logo={s3Logo} source={source}>
       <GenericItemCard.Value label="AWS Account ID" value={source.awsAccountId} />
@@ -44,12 +48,7 @@ const S3LogSourceCard: React.FC<S3LogSourceCardProps> = ({ source }) => {
       <GenericItemCard.LineBreak />
       <GenericItemCard.Value
         label="Log Types"
-        value={
-          <BulletedLogTypeList
-            logTypes={flatten(source.s3PrefixLogTypes.map(({ logTypes }) => logTypes))}
-            limit={4}
-          />
-        }
+        value={<BulletedLogTypeList logTypes={logTypesFlat} limit={4} />}
       />
     </LogSourceCard>
   );
