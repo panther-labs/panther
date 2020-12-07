@@ -123,6 +123,7 @@ func inferFields(event map[string]interface{}) []logschema.FieldSchema {
 			// don't add it
 			continue
 		}
+
 		if valueSchema.Type == logschema.TypeObject && len(valueSchema.Fields) == 0 {
 			continue
 		}
@@ -143,7 +144,7 @@ func inferFields(event map[string]interface{}) []logschema.FieldSchema {
 }
 
 // Try to infer the schema from a single value
-// Returs false if we were unable to infer it
+// Returns false if we were unable to infer it
 func inferValueSchema(value interface{}) (*logschema.ValueSchema, bool) {
 	typ, ok := inferValueType(value)
 	if !ok {
