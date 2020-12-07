@@ -74,7 +74,13 @@ var (
 // like lastModified.
 
 // Dynamo filters common to both ListPolicies and ListRules
-func pythonListFilters(enabled *bool, nameContains, severity string, types, tags []string) []expression.ConditionBuilder {
+func pythonListFilters(
+	enabled *bool,
+	nameContains string,
+	severity []compliancemodels.Severity,
+	types, tags []string,
+) []expression.ConditionBuilder {
+
 	var filters []expression.ConditionBuilder
 
 	if enabled != nil {
@@ -97,15 +103,19 @@ func pythonListFilters(enabled *bool, nameContains, severity string, types, tags
 		filters = append(filters, typeFilter)
 	}
 
-	if severity != "" {
-		filters = append(filters, expression.Equal(
-			expression.Name("severity"), expression.Value(severity)))
+	if len(severity) > 0 {
+		severityFilter := expression.Equal(expression.Name("severity"), expression.Value(severity[0]))
+		for _, severityType := range severity[1:] {
+			severityFilter = severityFilter.Or(expression.Equal(expression.Name("severity"),
+				expression.Value(severityType)))
+		}
+		filters = append(filters, severityFilter)
 	}
 
 	if len(tags) > 0 {
-		tagFilter := expression.AttributeExists(expression.Name("lowerTags"))
-		for _, tag := range tags {
-			tagFilter = tagFilter.And(expression.Contains(expression.Name("lowerTags"), strings.ToLower(tag)))
+		tagFilter := expression.Contains(expression.Name("lowerTags"), strings.ToLower(tags[0]))
+		for _, tag := range tags[1:] {
+			tagFilter = tagFilter.Or(expression.Contains(expression.Name("lowerTags"), strings.ToLower(tag)))
 		}
 		filters = append(filters, tagFilter)
 	}

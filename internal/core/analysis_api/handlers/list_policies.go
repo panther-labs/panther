@@ -131,7 +131,7 @@ func stdPolicyListInput(input *models.ListPoliciesInput) {
 }
 
 func policyScanInput(input *models.ListPoliciesInput) (*dynamodb.ScanInput, error) {
-	filters := pythonListFilters(input.Enabled, input.NameContains, string(input.Severity), input.ResourceTypes, input.Tags)
+	filters := pythonListFilters(input.Enabled, input.NameContains, input.Severity, input.ResourceTypes, input.Tags)
 
 	if input.HasRemediation != nil {
 		if *input.HasRemediation {
