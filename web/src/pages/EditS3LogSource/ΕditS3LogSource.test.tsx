@@ -129,16 +129,17 @@ describe('EditS3LogSource', () => {
     const logTypesResponse = buildListAvailableLogTypesResponse({
       logTypes: ['AWS.S3', 'AWS.ALB'],
     });
-    const existingPrefixLogType = buildS3PrefixLogTypesInput({
+    const existingPrefixLogType = {
+      prefix: '/prefix/existing',
       logTypes: [logTypesResponse.logTypes[0]],
-    });
+    };
     const logSource = buildS3LogIntegration({
       awsAccountId: '123123123123',
       s3PrefixLogTypes: [existingPrefixLogType],
       kmsKey: '',
     });
 
-    const newS3PrefixLogType = { prefix: '/prefix', logTypes: [logTypesResponse.logTypes[1]] };
+    const newS3PrefixLogType = { prefix: '/prefix/new', logTypes: [logTypesResponse.logTypes[1]] };
     const updatedLogSource = buildS3LogIntegration({
       ...logSource,
       s3PrefixLogTypes: [existingPrefixLogType, newS3PrefixLogType],
@@ -165,7 +166,7 @@ describe('EditS3LogSource', () => {
             integrationLabel: updatedLogSource.integrationLabel,
             s3Bucket: updatedLogSource.s3Bucket,
             s3PrefixLogTypes: updatedLogSource.s3PrefixLogTypes,
-            kmsKey: updatedLogSource.kmsKey,
+            kmsKey: null,
           },
         },
         data: {
@@ -199,7 +200,7 @@ describe('EditS3LogSource', () => {
 
     // Adding an extra prefix - log type
     await fireClickAndMouseEvents(getByAriaLabel('Add prefix'));
-    // Fill in the form for the second prefix - logtype item
+    // Fill in the form for the second prefix - logType item
     fireEvent.change(getAllByLabelText('S3 Prefix Filter')[1], {target: {value: updatedLogSource.s3PrefixLogTypes[1].prefix } }); // prettier-ignore
     fireEvent.change(getAllByLabelText('Log Types')[3], {target: {value: updatedLogSource.s3PrefixLogTypes[1].logTypes[0] } }); // prettier-ignore
     fireClickAndMouseEvents(await findByText(updatedLogSource.s3PrefixLogTypes[1].logTypes[0]));
