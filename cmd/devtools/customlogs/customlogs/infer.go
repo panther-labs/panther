@@ -40,7 +40,8 @@ import (
 )
 
 type InferOpts struct {
-	File *string
+	File     *string
+	NoVerify *bool
 }
 
 var inferJsoniter = jsoniter.Config{
@@ -59,10 +60,12 @@ func Infer(logger *zap.SugaredLogger, opts *InferOpts) {
 		logger.Fatal("failed to generate schema", zap.Error(err))
 	}
 
-	// In order to validate that the schema generated is correct,
-	// run the parser against the logs, fail in case of error
-	if err = validateSchema(schema, *opts.File); err != nil {
-		logger.Fatal("failed while testing schema with file", zap.Error(err))
+	if !*opts.NoVerify {
+		// In order to validate that the schema generated is correct,
+		// run the parser against the logs, fail in case of error
+		if err = validateSchema(schema, *opts.File); err != nil {
+			logger.Fatal("failed while testing schema with file", zap.Error(err))
+		}
 	}
 
 	marshalled, err := yaml.Marshal(schema)
@@ -118,6 +121,9 @@ func inferFields(event map[string]interface{}) []logschema.FieldSchema {
 		if !ok {
 			// If we couldn't infer the schema of the value because e.g. it didn't have enough information (e.g. it is `null`)
 			// don't add it
+			continue
+		}
+		if valueSchema.Type == logschema.TypeObject && len(valueSchema.Fields) == 0 {
 			continue
 		}
 

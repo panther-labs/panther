@@ -62,7 +62,8 @@ func main() {
 	case infer:
 		opstools.SetUsage(`-i INPUT_FILE`)
 		opts := &customlogs.InferOpts{
-			File: flag.String("i", "", "Input file"),
+			File:     flag.String("i", "", "Input file"),
+			NoVerify: flag.Bool("no-verify", false, "Skips verifying the schema against the logs"),
 		}
 		flag.CommandLine.Parse(os.Args[2:])
 		customlogs.Infer(logger, opts)
