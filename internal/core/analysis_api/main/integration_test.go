@@ -270,6 +270,7 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ListPolicies", listPolicies)
 		t.Run("ListFiltered", listFiltered)
 		t.Run("ListFilteredMultiple", listFilteredMultiple)
+		t.Run("ListFilteredNoUser", listFilteredNoUser)
 		t.Run("ListPaging", listPaging)
 		t.Run("ListProjection", listProjection)
 		t.Run("ListRules", listRules)
@@ -1713,6 +1714,15 @@ func listFiltered(t *testing.T) {
 			NameContains:   "json", // policyFromBulkJSON only
 			ResourceTypes:  []string{"AWS.S3.Bucket"},
 			Severity:       []compliancemodels.Severity{compliancemodels.SeverityMedium},
+			CreatedBy: 	    userID,
+			// add createdBy a userID and/or lastModifiedBy
+			// have one test that returns results (this test), one test that will not return results (different test)
+
+			// maybe have different users? --> would lead to trickle down to other tests
+
+			// add unit test for pythonListFilters?
+
+			// add negative
 		},
 	}
 	var result models.ListPoliciesOutput
@@ -1720,7 +1730,35 @@ func listFiltered(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
 
-	expected := models.ListPoliciesOutput{
+	expected := models.ListPoliciesOutput {
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 1,
+			TotalPages: 1,
+		},
+		Policies: []models.Policy{*policyFromBulkJSON},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listFilteredNoUser(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListPolicies: &models.ListPoliciesInput{
+			Enabled:        aws.Bool(true),
+			HasRemediation: aws.Bool(true),
+			NameContains:   "json", // policyFromBulkJSON only
+			ResourceTypes:  []string{"AWS.S3.Bucket"},
+			Severity:       []compliancemodels.Severity{compliancemodels.SeverityMedium},
+			CreatedBy: 	    "nil",
+		},
+	}
+	var result models.ListPoliciesOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListPoliciesOutput {
 		Paging: models.Paging{
 			ThisPage:   1,
 			TotalItems: 1,

@@ -122,19 +122,22 @@ func pythonListFilters(
 		filters = append(filters, tagFilter)
 	}
 
-	if *initialSet == true {
-		initialSetFilter := expression.Equal(expression.Name("createdBy"),
-			expression.Value("00000000-0000-4000-8000-000000000000"))
+	if initialSet != nil {
+		if *initialSet {
+			initialSetFilter := expression.Equal(expression.Name("createdBy"),
+				expression.Value("00000000-0000-4000-8000-000000000000"))
 
-		filters = append(filters, initialSetFilter)
+			filters = append(filters, initialSetFilter)
+		}
+		if !*initialSet {
+			initialSetFilter := expression.NotEqual(expression.Name("createdBy"),
+				expression.Value("00000000-0000-4000-8000-000000000000"))
+
+			filters = append(filters, initialSetFilter)
+		}
 	}
 
-	if *initialSet == false {
-		initialSetFilter := expression.NotEqual(expression.Name("createdBy"),
-			expression.Value("00000000-0000-4000-8000-000000000000"))
 
-		filters = append(filters, initialSetFilter)
-	}
 
 	return filters
 }
