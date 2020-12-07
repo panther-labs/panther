@@ -21,13 +21,14 @@ import { Box, Flex } from 'pouncejs';
 import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
 import { capitalize } from 'Helpers/utils';
 import { LongSeriesData } from 'Generated/schema';
+import NoDataFound from 'Components/NoDataFound';
 
 interface AlertsBySeverityProps {
   alerts: LongSeriesData;
 }
 
 const AlertsBySeverity: React.FC<AlertsBySeverityProps> = ({ alerts: { series, timestamps } }) => {
-  const timeSeriesData = React.useMemo(
+  const timeseriesData = React.useMemo(
     () => ({
       timestamps,
       series: series.map(serie => ({ ...serie, label: capitalize(serie.label.toLowerCase()) })),
@@ -35,10 +36,14 @@ const AlertsBySeverity: React.FC<AlertsBySeverityProps> = ({ alerts: { series, t
     [series, timestamps]
   );
 
+  if (!timeseriesData.series.length) {
+    return <NoDataFound title="No alerts are present in the system" />;
+  }
+
   return (
     <Box ml={2} py={6} pl={6} width="80%" backgroundColor="navyblue-500">
       <Flex data-testid="alert-by-severity-chart" height="100%" position="relative">
-        <TimeSeriesChart data={timeSeriesData} zoomable title="Alert Severity" />
+        <TimeSeriesChart data={timeseriesData} zoomable title="Alert Severity" />
       </Flex>
     </Box>
   );
