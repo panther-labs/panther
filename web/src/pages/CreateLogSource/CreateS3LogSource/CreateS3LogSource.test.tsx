@@ -26,7 +26,8 @@ import {
   waitMs,
   buildListAvailableLogTypesResponse,
   buildAddS3LogIntegrationInput,
-  buildS3PrefixLogTypes,
+  fireClickAndMouseEvents,
+  buildS3PrefixLogTypesInput,
 } from 'test-utils';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { LOG_ONBOARDING_SNS_DOC_URL } from 'Source/constants';
@@ -41,7 +42,7 @@ describe('CreateS3LogSource', () => {
     const logTypesResponse = buildListAvailableLogTypesResponse();
     const logSource = buildS3LogIntegration({
       awsAccountId: '123123123123',
-      s3PrefixLogTypes: [buildS3PrefixLogTypes({ logTypes: logTypesResponse.logTypes })],
+      s3PrefixLogTypes: [buildS3PrefixLogTypesInput({ logTypes: logTypesResponse.logTypes })],
       kmsKey: '',
     });
 
@@ -58,11 +59,11 @@ describe('CreateS3LogSource', () => {
             awsAccountId: logSource.awsAccountId,
             s3Bucket: logSource.s3Bucket,
             s3PrefixLogTypes: logSource.s3PrefixLogTypes,
-            kmsKey: null,
+            kmsKey: logSource.kmsKey,
           }),
         },
         data: {
-          addS3LogIntegration: logSource,
+          addS3LogIntegration: buildS3LogIntegration(),
         },
       }),
     ];
@@ -77,13 +78,13 @@ describe('CreateS3LogSource', () => {
     fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
     fireEvent.change(getByLabelText('AWS Account ID'), {target: {value: logSource.awsAccountId } }); // prettier-ignore
     fireEvent.change(getByLabelText('Bucket Name'), { target: { value: logSource.s3Bucket } });
-    fireEvent.change(getByLabelText('S3 Prefix'), {target: {value: logSource.s3PrefixLogTypes[0].prefix } }); // prettier-ignore
+    fireEvent.change(getByLabelText('S3 Prefix Filter'), {target: {value: logSource.s3PrefixLogTypes[0].prefix } }); // prettier-ignore
     fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.s3PrefixLogTypes[0].logTypes[0] } }); // prettier-ignore
-    fireEvent.click(await findByText(logSource.s3PrefixLogTypes[0].logTypes[0]));
+    fireClickAndMouseEvents(await findByText(logSource.s3PrefixLogTypes[0].logTypes[0]));
 
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(50);
-    fireEvent.click(getByText('Continue Setup'));
+    fireEvent.click(getByText('Continue'));
 
     // Initially we expect a disabled button while the template is being fetched ...
     expect(getByText('Get template file')).toHaveAttribute('disabled');
@@ -96,7 +97,6 @@ describe('CreateS3LogSource', () => {
 
     // Expect to see a loading animation while the resource is being validated ...
     expect(getByAltText('Validating source health...')).toBeInTheDocument();
-
     // ... followed by a "setup notifications" screen
     expect(await findByText('Adding Notifications for New Data')).toBeInTheDocument();
     expect(getByText('steps found here')).toHaveAttribute('href', LOG_ONBOARDING_SNS_DOC_URL);
@@ -120,7 +120,7 @@ describe('CreateS3LogSource', () => {
     const logTypesResponse = buildListAvailableLogTypesResponse();
     const logSource = buildS3LogIntegration({
       awsAccountId: '123123123123',
-      s3PrefixLogTypes: [buildS3PrefixLogTypes({ logTypes: logTypesResponse.logTypes })],
+      s3PrefixLogTypes: [buildS3PrefixLogTypesInput({ logTypes: logTypesResponse.logTypes })],
       kmsKey: '',
     });
 
@@ -135,7 +135,9 @@ describe('CreateS3LogSource', () => {
           input: buildAddS3LogIntegrationInput({
             integrationLabel: logSource.integrationLabel,
             awsAccountId: logSource.awsAccountId,
+            s3Bucket: logSource.s3Bucket,
             s3PrefixLogTypes: logSource.s3PrefixLogTypes,
+            kmsKey: logSource.kmsKey,
           }),
         },
         data: null,
@@ -154,13 +156,13 @@ describe('CreateS3LogSource', () => {
     fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
     fireEvent.change(getByLabelText('AWS Account ID'), { target: {value: logSource.awsAccountId} }); // prettier-ignore
     fireEvent.change(getByLabelText('Bucket Name'), { target: { value: logSource.s3Bucket } });
-    fireEvent.change(getByLabelText('S3 Prefix'), {target: {value: logSource.s3PrefixLogTypes[0].prefix } }); // prettier-ignore
+    fireEvent.change(getByLabelText('S3 Prefix Filter'), {target: {value: logSource.s3PrefixLogTypes[0].prefix } }); // prettier-ignore
     fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.s3PrefixLogTypes[0].logTypes[0] } }); // prettier-ignore
     fireEvent.click(await findByText(logSource.s3PrefixLogTypes[0].logTypes[0]));
 
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(50);
-    fireEvent.click(getByText('Continue Setup'));
+    fireEvent.click(getByText('Continue'));
 
     // We move on to the final screen
     fireEvent.click(getByText('Continue'));
