@@ -35,9 +35,7 @@ export type S3LogIntegrationDetails = Pick<
   | 's3Bucket'
   | 'stackName'
 > & {
-  s3PrefixLogTypes?: Types.Maybe<
-    Array<Types.Maybe<Pick<Types.S3PrefixLogTypes, 'prefix' | 'logTypes'>>>
-  >;
+  s3PrefixLogTypes: Array<Pick<Types.S3PrefixLogTypes, 'prefix' | 'logTypes'>>;
   health: {
     processingRoleStatus: IntegrationItemHealthDetails;
     s3BucketStatus: IntegrationItemHealthDetails;

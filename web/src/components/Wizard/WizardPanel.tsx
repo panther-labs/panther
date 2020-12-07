@@ -24,8 +24,8 @@ interface WizardPanelAction {
   disabled?: boolean;
 }
 
-type WizardPanelActionNext = WizardPanelAction & {
-  step?: number;
+type WizardPanelActionGoToStep = WizardPanelAction & {
+  stepIndex: number;
 };
 
 interface WizardPanelHeadingProps {
@@ -36,7 +36,8 @@ interface WizardPanelHeadingProps {
 
 interface WizardPanelComposition {
   Actions: React.FC;
-  ActionNext: React.FC<WizardPanelActionNext>;
+  ActionNext: React.FC<WizardPanelAction>;
+  ActionGoToStep: React.FC<WizardPanelActionGoToStep>;
   ActionStart: React.FC<WizardPanelAction>;
   ActionPrev: React.FC<WizardPanelAction>;
   Heading: React.FC<WizardPanelHeadingProps>;
@@ -96,11 +97,24 @@ const WizardPanelActionStart: React.FC<WizardPanelAction> = ({ disabled, childre
   );
 };
 
-const WizardPanelActionNext: React.FC<WizardPanelActionNext> = ({ disabled, children, step }) => {
-  const { goToNextStep, goToStep } = useWizardContext();
+const WizardPanelActionNext: React.FC<WizardPanelAction> = ({ disabled, children }) => {
+  const { goToNextStep } = useWizardContext();
   return (
-    <Button onClick={() => (step ? goToStep(step) : goToNextStep())} disabled={disabled}>
+    <Button onClick={goToNextStep} disabled={disabled}>
       {children || 'Next'}
+    </Button>
+  );
+};
+
+const WizardPanelActionGoToStep: React.FC<WizardPanelActionGoToStep> = ({
+  disabled,
+  children,
+  stepIndex,
+}) => {
+  const { goToStep } = useWizardContext();
+  return (
+    <Button onClick={() => goToStep(stepIndex)} disabled={disabled}>
+      {children || 'Continue'}
     </Button>
   );
 };
@@ -108,6 +122,7 @@ const WizardPanelActionNext: React.FC<WizardPanelActionNext> = ({ disabled, chil
 WizardPanel.Actions = React.memo(WizardPanelActions);
 WizardPanel.ActionPrev = React.memo(WizardPanelActionPrev);
 WizardPanel.ActionNext = React.memo(WizardPanelActionNext);
+WizardPanel.ActionGoToStep = React.memo(WizardPanelActionGoToStep);
 WizardPanel.ActionStart = React.memo(WizardPanelActionStart);
 WizardPanel.Heading = React.memo(WizardPanelHeading);
 

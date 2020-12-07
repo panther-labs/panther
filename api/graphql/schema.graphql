@@ -509,7 +509,7 @@ type S3LogIntegration {
   s3Bucket: String!
   s3Prefix: String
   kmsKey: String
-  s3PrefixLogTypes: [S3PrefixLogTypes]
+  s3PrefixLogTypes: [S3PrefixLogTypes!]!
   health: S3LogIntegrationHealth!
   stackName: String!
 }

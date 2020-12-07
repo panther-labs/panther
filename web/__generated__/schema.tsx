@@ -1124,7 +1124,7 @@ export type S3LogIntegration = {
   s3Bucket: Scalars['String'];
   s3Prefix?: Maybe<Scalars['String']>;
   kmsKey?: Maybe<Scalars['String']>;
-  s3PrefixLogTypes?: Maybe<Array<Maybe<S3PrefixLogTypes>>>;
+  s3PrefixLogTypes: Array<S3PrefixLogTypes>;
   health: S3LogIntegrationHealth;
   stackName: Scalars['String'];
 };
@@ -2846,11 +2846,7 @@ export type S3LogIntegrationResolvers<
   s3Bucket?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   s3Prefix?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   kmsKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  s3PrefixLogTypes?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['S3PrefixLogTypes']>>>,
-    ParentType,
-    ContextType
-  >;
+  s3PrefixLogTypes?: Resolver<Array<ResolversTypes['S3PrefixLogTypes']>, ParentType, ContextType>;
   health?: Resolver<ResolversTypes['S3LogIntegrationHealth'], ParentType, ContextType>;
   stackName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;

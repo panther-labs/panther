@@ -254,6 +254,53 @@ describe('Wizard', () => {
     expect(queryByText('A')).toBeInTheDocument();
   });
 
+  it('correctly go to a specific step', () => {
+    const { getByText, queryByText } = render(
+      <Wizard header={false}>
+        <Wizard.Step>
+          <WizardPanel>
+            A
+            <WizardPanel.Actions>
+              <WizardPanel.ActionGoToStep stepIndex={2} />
+            </WizardPanel.Actions>
+          </WizardPanel>
+        </Wizard.Step>
+        <Wizard.Step>
+          <WizardPanel>
+            B
+            <WizardPanel.Actions>
+              <WizardPanel.ActionPrev />
+              <WizardPanel.ActionNext />
+            </WizardPanel.Actions>
+          </WizardPanel>
+        </Wizard.Step>
+        <Wizard.Step>
+          <WizardPanel>
+            C
+            <WizardPanel.Actions>
+              <WizardPanel.ActionPrev />
+              <WizardPanel.ActionNext />
+            </WizardPanel.Actions>
+          </WizardPanel>
+        </Wizard.Step>
+        <Wizard.Step>
+          <WizardPanel>
+            D
+            <WizardPanel.Actions>
+              <WizardPanel.ActionStart />
+            </WizardPanel.Actions>
+          </WizardPanel>
+        </Wizard.Step>
+      </Wizard>
+    );
+
+    expect(getByText('A')).toBeInTheDocument();
+
+    fireEvent.click(getByText('Continue'));
+    expect(queryByText('A')).not.toBeInTheDocument();
+    expect(getByText('C')).toBeInTheDocument();
+  });
+
   it('allows updating the context data correctly', () => {
     const WizardDataConsumer = () => {
       const { data } = useWizardContext();

@@ -170,9 +170,11 @@ const S3SourceConfigurationPanel: React.FC = () => {
         </ErrorBoundary>
       </Box>
       <WizardPanel.Actions>
-        <WizardPanel.ActionNext disabled={!dirty || !isValid} step={shouldSkipTo}>
-          Continue Setup
-        </WizardPanel.ActionNext>
+        {shouldSkipTo ? (
+          <WizardPanel.ActionGoToStep stepIndex={shouldSkipTo} />
+        ) : (
+          <WizardPanel.ActionNext disabled={!dirty || !isValid} />
+        )}
       </WizardPanel.Actions>
     </WizardPanel>
   );
