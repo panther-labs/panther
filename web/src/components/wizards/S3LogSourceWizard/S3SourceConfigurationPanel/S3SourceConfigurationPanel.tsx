@@ -59,7 +59,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
           !flatten(values.s3PrefixLogTypes.map(({ logTypes }) => logTypes)).includes(logType)
       ) ?? []
     );
-  }, [values.s3PrefixLogTypes]);
+  }, [data, values.s3PrefixLogTypes]);
 
   return (
     <WizardPanel>
