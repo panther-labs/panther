@@ -273,8 +273,10 @@ func pantherTotalCost(r *awscostexplorer.Report) (cost float64, unit string) {
 
 func printPantherServiceCost(r *awscostexplorer.Report, service, valueSpace string) {
 	cost, unit := pantherServiceCost(r, service)
-	value := fmt.Sprintf("%f %s", cost, unit)
-	printPantherKeyValue(service, valueSpace, value)
+	if cost > 0.0 {
+		value := fmt.Sprintf("%f %s", cost, unit)
+		printPantherKeyValue(service, valueSpace, value)
+	}
 }
 
 func printPantherDetailServiceCosts(r *awscostexplorer.Report, valueSpace string) {
@@ -286,6 +288,9 @@ func printPantherDetailServiceCosts(r *awscostexplorer.Report, valueSpace string
 		}
 		for _, group := range byTime.Groups {
 			cost := *group.Metrics[PantherCostKey].Amount
+			if readFloat(cost) <= 0.0 {
+				continue
+			}
 			costUnit := *group.Metrics[PantherCostKey].Unit
 			usage := *group.Metrics[PantherUsageKey].Amount
 			usageUnit := *group.Metrics[PantherUsageKey].Unit
