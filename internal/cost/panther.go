@@ -240,8 +240,6 @@ func (pr PantherReports) Print() {
 		}
 		valueSpace := strings.Repeat(" ", longestServiceName) + "\t"
 
-		printPantherKeyValue("Account Aliases", valueSpace, pr.reporter.GetAccountAliases())
-
 		printPantherKeyValue("Time Interval", valueSpace,
 			fmt.Sprintf("%s - %s (%s)",
 				pr.Start.Format(awscostexplorer.DateFormat), pr.End.Format(awscostexplorer.DateFormat), pr.Granularity))

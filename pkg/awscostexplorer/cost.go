@@ -26,7 +26,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/costexplorer"
 	"github.com/aws/aws-sdk-go/service/costexplorer/costexploreriface"
-	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/pkg/errors"
 )
 
@@ -192,7 +191,6 @@ func (pr *Reports) Run() error {
 func (pr Reports) Print() {
 	for account, reports := range pr.AccountReports {
 		fmt.Printf("%s for Account: %s\n", pr.Name, account)
-		fmt.Printf("Account Aliases: %v\n\n", pr.reporter.GetAccountAliases())
 		for _, report := range reports {
 			report.Print()
 		}
@@ -277,15 +275,4 @@ func (r *Reporter) GetServices(timePeriod *costexplorer.DateInterval) (services 
 		input.NextPageToken = output.NextPageToken
 	}
 	return services, nil
-}
-
-// GetAccountAliases returns the available names for the account (best effort)
-func (r *Reporter) GetAccountAliases() (aliases []string) {
-	iamClient := iam.New(r.awsSession)
-	input := &iam.ListAccountAliasesInput{}
-	output, err := iamClient.ListAccountAliases(input)
-	if err != nil {
-		return aliases
-	}
-	return aws.StringValueSlice(output.AccountAliases)
 }
