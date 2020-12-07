@@ -275,7 +275,7 @@ input ListRulesInput {
   nameContains: String
   enabled: Boolean
   logTypes: [String!]
-  severity: SeverityEnum
+  severity: [SeverityEnum!]
   tags: [String!]
   # Sorting
   sortBy: ListRulesSortFieldsEnum # defaults to `id`
@@ -922,7 +922,7 @@ input ListPoliciesInput {
   enabled: Boolean
   hasRemediation: Boolean
   resourceTypes: [String!]
-  severity: SeverityEnum
+  severity: [SeverityEnum!]
   tags: [String!]
   # Sorting
   sortBy: ListPoliciesSortFieldsEnum # defaults to `id`
