@@ -106,8 +106,13 @@ func customUpdateLogTables(ctx context.Context, event cfn.Event) (string, map[st
 }
 
 func createCloudSecurityDDBTables(_ context.Context) error {
+	endpoint, err := endpointResolver.EndpointFor("dynamodb", *awsSession.Config.Region)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get endpoint information")
+	}
+
 	resourcesTableArn := arn.ARN{
-		Partition: "aws",
+		Partition: endpoint.PartitionID,
 		Region:    aws.StringValue(awsSession.Config.Region),
 		AccountID: env.AccountID,
 		Service:   "dynamodb",
@@ -118,7 +123,7 @@ func createCloudSecurityDDBTables(_ context.Context) error {
 	}
 
 	complianceTableArn := arn.ARN{
-		Partition: "aws",
+		Partition: endpoint.PartitionID,
 		Region:    aws.StringValue(awsSession.Config.Region),
 		AccountID: env.AccountID,
 		Service:   "dynamodb",

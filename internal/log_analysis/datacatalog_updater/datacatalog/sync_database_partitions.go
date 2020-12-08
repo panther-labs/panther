@@ -50,25 +50,16 @@ func (h *LambdaHandler) HandleSyncDatabasePartitionsEvent(ctx context.Context, e
 	)
 	var tableEvents []*SyncTableEvent
 	for _, logType := range event.LogTypes {
-		dataType := pantherdb.GetDataType(logType)
-		tblName := pantherdb.TableName(logType)
 		for _, dbName := range event.DatabaseNames {
-			if dataType == pantherdb.CloudSecurity && dbName != pantherdb.CloudSecurityDatabase {
-				// If the data is Cloud Security data but the DB is not Cloud Security database, skip
-				// E.g. don't create `Snapshot.ComplianceHistory` table inside `panther_logs` or `panther_rule_matches` DB
+			if !pantherdb.IsInDatabase(logType, dbName) {
+				// If a logtype cannot be present in the given database, skip
 				continue
 			}
-			if dataType != pantherdb.CloudSecurity && dbName == pantherdb.CloudSecurityDatabase {
-				// If the data is not Cloud Security data but the DB is Cloud Security database, skip
-				// E.g. don't create `AWS.CloudTrail` table inside `panther_cloud_security` DB
-				continue
-			}
-
 			tableEvents = append(tableEvents, &SyncTableEvent{
 				TraceID: event.TraceID,
 				SyncTablePartitions: gluetasks.SyncTablePartitions{
 					DryRun:       event.DryRun,
-					TableName:    tblName,
+					TableName:    pantherdb.TableName(logType),
 					DatabaseName: dbName,
 					// Tables in panther_logs database can have partitions at any point in time.
 					// The rest can only have partitions in the range TableCreateTime <= PartitionTime < now

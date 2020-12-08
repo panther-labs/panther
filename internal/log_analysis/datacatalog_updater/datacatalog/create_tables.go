@@ -96,6 +96,9 @@ func (h *LambdaHandler) fetchAllDeployedLogTypes(ctx context.Context) ([]string,
 	return gluetables.DeployedLogTypes(ctx, h.GlueClient, available)
 }
 
+// Resolves the tables for the provided log types.
+// Note that this will return only the BASE tables (tables in for panther_logs, panther_cloudsecurity datbases) but not any
+// downstream tables e.g. panther_rule_matches, panther_rule_errors
 func resolveTables(ctx context.Context, r logtypes.Resolver, names ...string) ([]*awsglue.GlueTableMetadata, error) {
 	var out []*awsglue.GlueTableMetadata
 	for _, name := range names {

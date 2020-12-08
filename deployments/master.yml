@@ -348,8 +348,7 @@ Resources:
           Value: panther-cw-dashboards
 
   LogAnalysis:
-    DependsOn:
-      - Core
+    DependsOn: Core
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: log_analysis.yml

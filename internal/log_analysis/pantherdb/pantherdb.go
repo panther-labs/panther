@@ -75,6 +75,19 @@ func GetDataType(logtype string) DataType {
 	return LogData
 }
 
+// Returns true if the given logtype has a corresponding table in a Database
+func IsInDatabase(logtype, db string) bool {
+	dt := GetDataType(logtype)
+	switch dt {
+	case CloudSecurity:
+		// CloudSecurity data can be found only in CloudSecurity Database or in the temporary database
+		return db == CloudSecurityDatabase || db == TempDatabase
+	default:
+		// non-cloud security data can be found in any database - apart from CloudSecurity database
+		return db != CloudSecurityDatabase
+	}
+}
+
 // Returns the name of the table for the given log type
 func TableName(logType string) string {
 	// clean table name to make sql friendly
