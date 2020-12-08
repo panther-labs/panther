@@ -181,28 +181,28 @@ type ListAlertsOutput struct {
 
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
-	AlertID             string              `json:"alertId"`
-	Type                string              `json:"type"`
-	RuleID              *string             `json:"ruleId"`
-	RuleDisplayName     *string             `json:"ruleDisplayName"`
-	RuleVersion         *string             `json:"ruleVersion"`
-	DedupString         *string             `json:"dedupString"`
-	DeliveryResponses   []*DeliveryResponse `json:"deliveryResponses"`
-	LogTypes            []string            `json:"logTypes"`
-	CreationTime        *time.Time          `json:"creationTime"`
-	UpdateTime          *time.Time          `json:"updateTime"`
-	EventsMatched       *int                `json:"eventsMatched"`
-	Severity            *string             `json:"severity"`
-	Status              string              `json:"status,omitempty"`
-	Title               *string             `json:"title"`
-	LastUpdatedBy       string              `json:"lastUpdatedBy"`
-	LastUpdatedByTime   time.Time           `json:"lastUpdatedByTime"`
-	PolicyID            string              `json:"policyId"`
-	PolicyDisplayName   string              `json:"policyDisplayName"`
-	PolicyIntegrationID string              `json:"policyIntegrationId"`
-	PolicyVersion       string              `json:"policyVersion"`
-	ResourceTypes       []string            `json:"resourceTypes"`
-	ResourceID          string              `json:"resourceId"`
+	AlertID           string              `json:"alertId"`
+	Type              string              `json:"type"`
+	RuleID            *string             `json:"ruleId"`
+	RuleDisplayName   *string             `json:"ruleDisplayName"`
+	RuleVersion       *string             `json:"ruleVersion"`
+	DedupString       *string             `json:"dedupString"`
+	DeliveryResponses []*DeliveryResponse `json:"deliveryResponses"`
+	LogTypes          []string            `json:"logTypes"`
+	CreationTime      *time.Time          `json:"creationTime"`
+	UpdateTime        *time.Time          `json:"updateTime"`
+	EventsMatched     *int                `json:"eventsMatched"`
+	Severity          *string             `json:"severity"`
+	Status            string              `json:"status,omitempty"`
+	Title             *string             `json:"title"`
+	LastUpdatedBy     string              `json:"lastUpdatedBy"`
+	LastUpdatedByTime time.Time           `json:"lastUpdatedByTime"`
+	PolicyID          string              `json:"policyId"`
+	PolicyDisplayName string              `json:"policyDisplayName"`
+	PolicySourceID    string              `json:"policySourceId"`
+	PolicyVersion     string              `json:"policyVersion"`
+	ResourceTypes     []string            `json:"resourceTypes"`
+	ResourceID        string              `json:"resourceId"`
 }
 
 // Alert contains the details of an alert

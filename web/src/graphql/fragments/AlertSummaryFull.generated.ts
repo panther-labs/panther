@@ -39,7 +39,7 @@ export type AlertSummaryFull = Pick<
     | Pick<Types.AlertSummaryRuleInfo, 'ruleId' | 'logTypes' | 'eventsMatched'>
     | Pick<
         Types.AlertSummaryPolicyInfo,
-        'policyId' | 'resourceTypes' | 'resourceId' | 'policyIntegrationId'
+        'policyId' | 'resourceTypes' | 'resourceId' | 'policySourceId'
       >;
 };
 
@@ -62,7 +62,7 @@ export const AlertSummaryFull = gql`
         policyId
         resourceTypes
         resourceId
-        policyIntegrationId
+        policySourceId
       }
       ... on AlertSummaryRuleInfo {
         ruleId

@@ -1390,12 +1390,12 @@ Resources:
 
           #foreach($item in $ctx.result.alertSummaries)
             #set($alert = $item)
-            #if ($item.policyId)
+            #if ($item.type == "POLICY")
               $util.qr($alert.put("detection", {
                 "__typename": "AlertSummaryPolicyInfo",
                 "policyId": $item.policyId,
+                "policySourceId": $item.policySourceId,
                 "resourceId": $item.resourceId,
-                "policyIntegrationId": $item.policyIntegrationId,
                 "resourceTypes": $item.resourceTypes
               }))
             #else
@@ -1449,7 +1449,7 @@ Resources:
               "__typename": "AlertSummaryPolicyInfo",
               "policyId": $ctx.result.policyId,
               "resourceId": $ctx.result.resourceId,
-              "policyIntegrationId": $ctx.result.policyIntegrationId,
+              "policySourceId": $ctx.result.policySourceId,
               "resourceTypes": $ctx.result.resourceTypes
             }))
           #end

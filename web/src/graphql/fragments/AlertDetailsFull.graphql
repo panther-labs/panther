@@ -16,7 +16,7 @@ fragment AlertDetailsFull on AlertDetails {
       policyId
       resourceTypes
       resourceId
-      policyIntegrationId
+      policySourceId
     }
     ... on AlertDetailsRuleInfo {
       ruleId

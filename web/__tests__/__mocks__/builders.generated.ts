@@ -326,8 +326,7 @@ export const buildAlertSummaryPolicyInfo = (
     __typename: 'AlertSummaryPolicyInfo',
     policyId: 'policyId' in overrides ? overrides.policyId : 'a68babd7-7c1c-4dee-a33e-b8009e6d8017',
     resourceId: 'resourceId' in overrides ? overrides.resourceId : '5th generation',
-    policyIntegrationId:
-      'policyIntegrationId' in overrides ? overrides.policyIntegrationId : 'Ergonomic',
+    policySourceId: 'policySourceId' in overrides ? overrides.policySourceId : 'program',
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['brand'],
   };
 };

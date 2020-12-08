@@ -175,7 +175,7 @@ export type AlertSummaryPolicyInfo = {
   __typename?: 'AlertSummaryPolicyInfo';
   policyId?: Maybe<Scalars['ID']>;
   resourceId?: Maybe<Scalars['String']>;
-  policyIntegrationId: Scalars['String'];
+  policySourceId: Scalars['String'];
   resourceTypes: Array<Scalars['String']>;
 };
 
@@ -1966,7 +1966,7 @@ export type AlertSummaryPolicyInfoResolvers<
 > = {
   policyId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   resourceId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  policyIntegrationId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  policySourceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   resourceTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };

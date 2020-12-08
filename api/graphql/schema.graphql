@@ -147,7 +147,7 @@ type SqsLogIntegrationHealth {
 type AlertSummaryPolicyInfo {
   policyId: ID
   resourceId: String
-  policyIntegrationId: String!
+  policySourceId: String!
   resourceTypes: [String!]!
 }
 
