@@ -34,8 +34,8 @@ MAX_DEDUP_STRING_SIZE = 1000
 # Maximum size for a generated field
 MAX_GENERATED_FIELD_SIZE = 1000
 
-# Maximum number of destination overrides
-MAX_DESTINATION_OVERRIDE_SIZE = 10
+# Maximum number of destinations
+MAX_DESTINATIONS_SIZE = 10
 
 # The limit for DDB is 400kb per item (we store this one in DDB) and the limit for SQS/SNS is 256KB.
 # The limit of 200kb is an approximation - the other fields included in the request will be less than the remaining 56kb
@@ -79,8 +79,8 @@ class RuleResult:
     runbook_output: Optional[str] = None
     runbook_exception: Optional[Exception] = None
 
-    destination_override_output: Optional[List[str]] = None
-    destination_override_exception: Optional[Exception] = None
+    destinations_output: Optional[List[str]] = None
+    destinations_exception: Optional[Exception] = None
 
     alert_context: Optional[str] = None
     alert_context_exception: Optional[Exception] = None
@@ -130,7 +130,7 @@ class RuleResult:
         return bool(
             self.rule_exception or self.title_exception or self.dedup_exception or self.alert_context_exception or
             self.description_exception or self.reference_exception or self.severity_exception or self.runbook_exception or
-            self.destination_override_exception or self.setup_exception
+            self.destinations_exception or self.setup_exception
         )
 
 
@@ -251,9 +251,9 @@ class Rule:
             rule_result.runbook_exception = err
 
         try:
-            rule_result.destination_override_output = self._get_destination_override(event, use_default_on_exception=batch_mode)
+            rule_result.destinations_output = self._get_destinations(event, use_default_on_exception=batch_mode)
         except Exception as err:  # pylint: disable=broad-except
-            rule_result.destination_override_exception = err
+            rule_result.destinations_exception = err
 
         try:
             rule_result.dedup_output = self._get_dedup(event, rule_result.title_output, use_default_on_exception=batch_mode)
@@ -304,7 +304,10 @@ class Rule:
             dedup_string = self._run_command(command, event, str)
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.warning('dedup method raised exception. Defaulting dedup string to "%s". Exception: %s', self.rule_id, err)
+                self.logger.warning(
+                    'dedup method raised exception. Defaulting dedup string to "%s". Exception: %s',
+                    self.rule_id, err
+                )
                 return self._default_dedup_string
             raise
 
@@ -352,27 +355,27 @@ class Rule:
             return description[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
         return description
 
-    def _get_destination_override(self, event: Mapping, use_default_on_exception: bool = True) -> Optional[List[str]]:
-        if not hasattr(self._module, 'destination_override'):
+    def _get_destinations(self, event: Mapping, use_default_on_exception: bool = True) -> Optional[List[str]]:
+        if not hasattr(self._module, 'destinations'):
             return None
 
         try:
-            command = getattr(self._module, 'destination_override')
-            destination_override = self._run_command(command, event, list())
+            command = getattr(self._module, 'destinations')
+            destinations = self._run_command(command, event, list())
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.warning('_get_destination_override method raised exception. Exception: %s', err)
+                self.logger.warning('_get_destinations method raised exception. Exception: %s', err)
                 return []
             raise
 
-        if len(destination_override) > MAX_DESTINATION_OVERRIDE_SIZE:
+        if len(destinations) > MAX_DESTINATIONS_SIZE:
             # If generated field exceeds max size, truncate it
             self.logger.warning(
-                'maximum len of destination override is [%d] for rule with ID [%s] is [%d] fields. Truncating.',
-                MAX_DESTINATION_OVERRIDE_SIZE, self.rule_id, len(destination_override)
+                'maximum len of destinations [%d] for rule with ID [%s] is [%d] fields. Truncating.',
+                MAX_DESTINATIONS_SIZE, self.rule_id, len(destinations)
             )
-            return destination_override[:MAX_DESTINATION_OVERRIDE_SIZE]
-        return destination_override
+            return destinations[:MAX_DESTINATIONS_SIZE]
+        return destinations
 
     def _get_reference(self, event: Mapping, use_default_on_exception: bool = True) -> Optional[str]:
         if not hasattr(self._module, 'reference'):
@@ -520,3 +523,15 @@ class Rule:
                                                                                     type(result).__name__)
                 )
         return result
+
+
+def _rule_id_to_path(rule_id: str) -> str:
+    """Method returns the file path where the rule will be stored"""
+    safe_id = ''.join(x if _allowed_char(x) else '_' for x in rule_id)
+    path = os.path.join(_RULE_FOLDER, safe_id + '.py')
+    return path
+
+
+def _allowed_char(char: str) -> bool:
+    """Return true if the character is part of a valid rule ID."""
+    return char.isalnum() or char in {' ', '-', '.'}
