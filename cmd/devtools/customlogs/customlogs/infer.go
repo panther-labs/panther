@@ -42,8 +42,8 @@ import (
 )
 
 type InferOpts struct {
-	File     *string
-	NoVerify *bool
+	File       *string
+	SkipVerify *bool
 }
 
 var inferJsoniter = jsoniter.Config{
@@ -51,7 +51,7 @@ var inferJsoniter = jsoniter.Config{
 }.Froze()
 
 // Infers a schema given a sample of logs
-func Infer(logger *zap.SugaredLogger, opts *InferOpts) {
+func Infer(logger *zap.Logger, opts *InferOpts) {
 	if *opts.File == "" {
 		flag.Usage()
 		logger.Fatal("no sample file provided")
@@ -62,11 +62,11 @@ func Infer(logger *zap.SugaredLogger, opts *InferOpts) {
 		logger.Fatal("failed to generate schema", zap.Error(err))
 	}
 
-	if !*opts.NoVerify {
+	if !*opts.SkipVerify {
 		// In order to validate that the schema generated is correct,
 		// run the parser against the logs, fail in case of error
 		if err = validateSchema(schema, *opts.File); err != nil {
-			logger.Fatal("failed while testing schema with file", zap.Error(err))
+			logger.Fatal("failed while testing schema with file. You can specify '-skip-verify' argument to skip this step", zap.Error(err))
 		}
 	}
 

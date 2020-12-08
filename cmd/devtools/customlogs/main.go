@@ -64,13 +64,13 @@ func main() {
 	case infer:
 		opstools.SetUsage(`-i INPUT_FILE`)
 		opts := &customlogs.InferOpts{
-			File:     flag.String("i", "", "Input file"),
-			NoVerify: flag.Bool("no-verify", false, "Skips verifying the schema against the logs"),
+			File:       flag.String("i", "", "Input file"),
+			SkipVerify: flag.Bool("skip-verify", false, "Skips verifying the schema against the logs"),
 		}
 		if err := flag.CommandLine.Parse(os.Args[2:]); err != nil {
 			logger.Fatalf("failed to parse command line arguments")
 		}
-		customlogs.Infer(logger, opts)
+		customlogs.Infer(logger.Desugar(), opts)
 	default:
 		flag.Usage()
 		logger.Fatalf("Invalid command [%s]", cmd)
