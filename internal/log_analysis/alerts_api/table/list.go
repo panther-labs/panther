@@ -323,7 +323,7 @@ func filterByType(filter *expression.ConditionBuilder, input *models.ListAlertsI
 		// Start with the first known key
 		var multiFilter expression.ConditionBuilder
 
-		// Rule errors don't always have the attribute specified.
+		// Rule errors don't always have the attribute specified for backwards compatibility
 		if input.Types[0] == alertdeliverymodels.RuleErrorType {
 			multiFilter = expression.
 				Or(
@@ -336,7 +336,7 @@ func filterByType(filter *expression.ConditionBuilder, input *models.ListAlertsI
 
 		// Then add or conditions starting at a new slice from the second index
 		for _, alertType := range input.Types[1:] {
-			// Rule errors don't always have the attribute specified.
+			// Rule errors don't always have the attribute specified for backwards compatibility
 			if alertType == alertdeliverymodels.RuleErrorType {
 				multiFilter = multiFilter.
 					Or(
@@ -359,10 +359,12 @@ func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *Ale
 		return alert
 	}
 
+	lowerNameContains := strings.ToLower(*input.NameContains)
+
 	// Common across all alert types, we see if it matches an alert title
 	if alert.Title != "" && strings.Contains(
 		strings.ToLower(alert.Title),
-		strings.ToLower(*input.NameContains),
+		lowerNameContains,
 	) {
 
 		return alert
@@ -372,7 +374,7 @@ func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *Ale
 	if alert.Type != alertdeliverymodels.PolicyType {
 		if alert.RuleDisplayName != nil && strings.Contains(
 			strings.ToLower(*alert.RuleDisplayName),
-			strings.ToLower(*input.NameContains),
+			lowerNameContains,
 		) {
 
 			return alert
@@ -380,7 +382,7 @@ func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *Ale
 
 		if strings.Contains(
 			strings.ToLower(alert.RuleID),
-			strings.ToLower(*input.NameContains),
+			lowerNameContains,
 		) {
 
 			return alert
@@ -390,7 +392,7 @@ func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *Ale
 	// Check for policy types in this order: ResourceID, PolicyDisplayName, PolicyID
 	if strings.Contains(
 		strings.ToLower(alert.ResourceID),
-		strings.ToLower(*input.NameContains),
+		lowerNameContains,
 	) {
 
 		return alert
@@ -398,7 +400,7 @@ func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *Ale
 
 	if strings.Contains(
 		strings.ToLower(alert.PolicyDisplayName),
-		strings.ToLower(*input.NameContains),
+		lowerNameContains,
 	) {
 
 		return alert
@@ -406,7 +408,7 @@ func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *Ale
 
 	if strings.Contains(
 		strings.ToLower(alert.PolicyID),
-		strings.ToLower(*input.NameContains),
+		lowerNameContains,
 	) {
 
 		return alert
