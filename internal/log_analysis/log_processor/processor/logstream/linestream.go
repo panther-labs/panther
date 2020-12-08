@@ -131,6 +131,9 @@ func (s *LineStream) readLine() ([]byte, error) {
 }
 
 func isValidUTF8(p []byte, partial bool) bool {
+	if len(p) == 0 {
+		return false
+	}
 	// NUL character (0) is valid UTF8 rune but not something we want to be handling
 	const runeNUL rune = 0
 	for len(p) > 0 {
