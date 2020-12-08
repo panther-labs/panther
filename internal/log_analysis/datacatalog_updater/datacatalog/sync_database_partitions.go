@@ -52,7 +52,7 @@ func (h *LambdaHandler) HandleSyncDatabasePartitionsEvent(ctx context.Context, e
 	for _, logType := range event.LogTypes {
 		for _, dbName := range event.DatabaseNames {
 			if !pantherdb.IsInDatabase(logType, dbName) {
-				// If a logtype cannot be present in the given database, skip
+				// If a logtype is notpresent in the given database, skip
 				continue
 			}
 			tableEvents = append(tableEvents, &SyncTableEvent{
