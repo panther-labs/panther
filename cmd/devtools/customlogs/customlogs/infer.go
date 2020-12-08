@@ -89,14 +89,17 @@ func inferFromFile(file string) (logschema.Schema, error) {
 
 	reader := bufio.NewReader(fd)
 	lineNum := 0
-	for {
+	run := true
+	for run {
 		lineNum++
 		line, err := reader.ReadBytes('\n')
 		if err != nil {
 			if err == io.EOF {
-				break
+				// Don't go through more lines, but make sure to process existing line
+				run = false
+			} else {
+				return schema, errors.Wrap(err, "failed while reading file")
 			}
-			return schema, errors.Wrap(err, "failed while reading file")
 		}
 		line = bytes.TrimSpace(line)
 		if len(line) == 0 {
@@ -459,13 +462,16 @@ func validateSchema(schema logschema.Schema, file string) error {
 	}
 
 	reader := bufio.NewReader(fd)
-	for {
+	run := true
+	for run {
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
-				break
+				// Don't go through more lines, but make sure to process existing line
+				run = false
+			} else {
+				return errors.Wrap(err, "failed while reading file")
 			}
-			return errors.Wrap(err, "failed while reading file")
 		}
 		line = strings.TrimSpace(line)
 		if len(line) == 0 {

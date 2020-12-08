@@ -23,12 +23,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 )
 
 func TestProcessLine(t *testing.T) {
-	schema, err := inferFromFile(zap.L().Sugar(), "./testdata/sample_1.jsonl")
+	schema, err := inferFromFile("./testdata/sample_1.jsonl")
 	assert.NoError(t, err)
 	fd, err := ioutil.ReadFile("./testdata/schema_1.yml")
 	assert.NoError(t, err)
