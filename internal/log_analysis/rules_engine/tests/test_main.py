@@ -524,8 +524,9 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'id': 'rule_id',
-                        'body': "def rule(event):\n\treturn True\n" +
-                                "def destination_override(event):\n\traise Exception('destinations error')"
+                        'body':
+                            "def rule(event):\n\treturn True\n" +
+                            "def destination_override(event):\n\traise Exception('destinations error')"
                     }
                 ],
             'events': [{
