@@ -100,6 +100,7 @@ func (API) ListPolicies(input *models.ListPoliciesInput) *events.APIGatewayProxy
 
 // Set defaults and standardize input request
 func stdPolicyListInput(input *models.ListPoliciesInput) {
+	input.NameContains = strings.ToLower(input.NameContains)
 	if input.Page == 0 {
 		input.Page = defaultPage
 	}
@@ -130,7 +131,7 @@ func stdPolicyListInput(input *models.ListPoliciesInput) {
 }
 
 func policyScanInput(input *models.ListPoliciesInput) (*dynamodb.ScanInput, error) {
-	filters := pythonListFilters(input.Enabled, input.NameContains, string(input.Severity), input.ResourceTypes, input.Tags)
+	filters := pythonListFilters(input.Enabled, input.NameContains, input.Severity, input.ResourceTypes, input.Tags)
 
 	if input.HasRemediation != nil {
 		if *input.HasRemediation {

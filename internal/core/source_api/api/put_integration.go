@@ -279,10 +279,6 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 }
 
 func createTables(integration *models.SourceIntegration) error {
-	if !integration.IsLogAnalysisIntegration() {
-		return nil
-	}
-
 	client := datacatalog.Client{
 		SQSAPI:   sqsClient,
 		QueueURL: env.DataCatalogUpdaterQueueURL,

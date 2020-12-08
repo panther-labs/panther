@@ -44,7 +44,7 @@ _SNS_TOPIC_ARN = os.environ['NOTIFICATIONS_TOPIC']
 _LOGGER = get_logger()
 
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes,unsubscriptable-object
 @dataclass
 class EventCommonFields:
     """Fields that will be added to all stored events"""
@@ -99,9 +99,9 @@ class MatchedEventsBuffer:
         self.total_events += 1
         # Check the total size of data in memory. If we exceed threshold, flush data from the biggest 'offender'
         if self.bytes_in_memory > self.max_bytes:
-            _LOGGER.debug('data reached size threshold')
+            _LOGGER.debug("data reached size threshold")
             max_size = 0
-            key_to_remove: Optional[OutputGroupingKey]
+            key_to_remove: Optional[OutputGroupingKey]  # pylint: disable=unsubscriptable-object
             for key, value in self.data.items():
                 if value.size_in_bytes > max_size:
                     max_size = value.size_in_bytes
@@ -135,10 +135,15 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
         dedup=key.dedup,
         dedup_period_mins=events[0].dedup_period_mins,
         num_matches=len(events),
-        title=events[0].title,
         processing_time=time,
-        is_rule_error=key.is_rule_error,
         alert_context=events[0].alert_context,
+        is_rule_error=key.is_rule_error,
+        title=events[0].title,
+        description=events[0].description,
+        reference=events[0].reference,
+        severity=events[0].severity,
+        runbook=events[0].runbook,
+        destinations=events[0].destinations,
     )
     alert_info = update_get_alert_info(group_info)
     data_stream = BytesIO()

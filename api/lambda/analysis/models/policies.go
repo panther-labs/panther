@@ -57,7 +57,7 @@ type ListPoliciesInput struct {
 	ResourceTypes []string `json:"resourceTypes" validate:"max=500,dive,required,max=500"`
 
 	// Only include policies with this severity
-	Severity models.Severity `json:"severity" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Severity []models.Severity `json:"severity" validate:"dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 
 	// Only include policies with all of these tags (case-insensitive)
 	Tags []string `json:"tags" validate:"max=500,dive,required,max=500"`
@@ -143,7 +143,7 @@ type UpdatePolicyInput struct {
 	Suppressions              []string            `json:"suppressions" validate:"max=500,dive,required,max=1000"`
 	Tags                      []string            `json:"tags" validate:"max=500,dive,required,max=1000"`
 	Tests                     []UnitTest          `json:"tests" validate:"max=500,dive"`
-	UserID                    string              `json:"userId" validate:"uuid4"`
+	UserID                    string              `json:"userId" validate:"required"`
 }
 
 // The validate tags here are used by BulkUpload

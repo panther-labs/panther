@@ -1,5 +1,3 @@
-package sources
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,16 +16,4 @@ package sources
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"fmt"
-)
-
-// ErrUnsupportedFileType is returned when the log processor encounters a file type
-// that is not supported and cannot process
-type ErrUnsupportedFileType struct {
-	Type string
-}
-
-func (e *ErrUnsupportedFileType) Error() string {
-	return fmt.Sprintf("unsupported file type %s", e.Type)
-}
+export { default } from './NoDataFound';

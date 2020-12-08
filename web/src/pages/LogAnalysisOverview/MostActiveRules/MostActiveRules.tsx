@@ -20,6 +20,7 @@ import React from 'react';
 import { Box, Theme } from 'pouncejs';
 import { SingleValue } from 'Generated/schema';
 import BarChart from 'Components/charts/BarChart';
+import NoDataFound from 'Components/NoDataFound';
 
 // Default color values for alertsByRuleID
 const barColors: (keyof Theme['colors'])[] = [
@@ -58,14 +59,18 @@ const MostActiveRules: React.FC<MostActiveRulesProps> = ({ alertsByRuleID }) => 
       pr={0}
       backgroundColor="navyblue-500"
     >
-      <BarChart
-        gridPosition={gridPosition}
-        barGap={barGap}
-        barWidth={barWidth}
-        data={reversedData}
-        formatSeriesLabel={params => `${params.value} Alerts`}
-        alignment="horizontal"
-      />
+      {reversedData.length ? (
+        <BarChart
+          gridPosition={gridPosition}
+          barGap={barGap}
+          barWidth={barWidth}
+          data={reversedData}
+          formatSeriesLabel={params => `${params.value} Alerts`}
+          alignment="horizontal"
+        />
+      ) : (
+        <NoDataFound title="Your logs haven't matched any rule yet" />
+      )}
     </Box>
   );
 };

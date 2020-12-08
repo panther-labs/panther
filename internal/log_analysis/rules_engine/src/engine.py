@@ -57,7 +57,7 @@ class Engine:
             event = EnrichedEvent(event, self.log_type_to_data_models[log_type])
 
         for rule in self.log_type_to_rules[log_type]:
-            self.logger.debug('running rule [%s]', rule.rule_id)
+            self.logger.debug("running rule [%s]", rule.rule_id)
             result = rule.run(event, batch_mode=True)
             if result.errored:
                 rule_error = EngineResult(
@@ -67,7 +67,7 @@ class Engine:
                     rule_reports=rule.rule_reports,
                     log_type=log_type,
                     dedup=result.error_type,  # type: ignore
-                    dedup_period_mins=1440,  # one day
+                    dedup_period_mins=rule.rule_dedup_period_mins,
                     event=event,
                     title=result.short_error_message,
                     error_message=result.error_message
@@ -84,7 +84,12 @@ class Engine:
                     dedup_period_mins=rule.rule_dedup_period_mins,
                     event=event,
                     title=result.title_output,
-                    alert_context=result.alert_context
+                    alert_context=result.alert_context,
+                    description=result.description_output,
+                    reference=result.reference_output,
+                    severity=result.severity_output,
+                    runbook=result.runbook_output,
+                    destinations=result.destinations_output,
                 )
                 engine_results.append(match)
 

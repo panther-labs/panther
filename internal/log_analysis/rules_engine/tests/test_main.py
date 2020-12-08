@@ -71,18 +71,68 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'genericError': None,
-                        'alertContextError': None,
-                        'alertContextOutput': None,
-                        'dedupError': None,
-                        'dedupOutput': 'defaultDedupString:rule_id',
-                        'errored': False,
                         'id': 'event_id',
-                        'ruleError': None,
                         'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': False,
                         'ruleOutput': True,
+                        'ruleError': None,
+                        'titleOutput': None,
                         'titleError': None,
-                        'titleOutput': None
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationsOutput': None,
+                        'destinationsError': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
+                    }
+                ]
+        }
+        self.assertEqual(expected_response, lambda_handler(payload, None))
+
+    def test_direct_analysis_event_matching_with_generated_fields(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\n' \
+                    'def title(event):\n\treturn "generated title"\n' \
+                    'def description(event):\n\treturn "generated description"\n' \
+                    'def reference(event):\n\treturn "generated reference"\n' \
+                    'def severity(event):\n\treturn "HIGH"\n' \
+                    'def runbook(event):\n\treturn "generated runbook"\n' \
+                    'def destination_override(event):\n\treturn ["destination1", "destination2"]'
+        payload = {'rules': [{'id': 'rule_id', 'body': rule_body}], 'events': [{'id': 'event_id', 'data': 'data'}]}
+        expected_response: dict = {
+            'results':
+                [
+                    {
+                        'id': 'event_id',
+                        'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': False,
+                        'ruleOutput': True,
+                        'ruleError': None,
+                        'titleOutput': 'generated title',
+                        'titleError': None,
+                        'descriptionOutput': 'generated description',
+                        'descriptionError': None,
+                        'referenceOutput': 'generated reference',
+                        'referenceError': None,
+                        'severityOutput': "HIGH",
+                        'severityError': None,
+                        'runbookOutput': 'generated runbook',
+                        'runbookError': None,
+                        'destinationsOutput': ["destination1", "destination2"],
+                        'destinationsError': None,
+                        'dedupOutput': 'generated title',
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
                     }
                 ]
         }
@@ -95,18 +145,28 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'genericError': None,
-                        'alertContextError': None,
-                        'alertContextOutput': None,
-                        'dedupError': None,
-                        'dedupOutput': 'defaultDedupString:rule_id',
-                        'errored': False,
                         'id': 'event_id',
-                        'ruleError': None,
                         'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': False,
                         'ruleOutput': False,
+                        'ruleError': None,
+                        'titleOutput': None,
                         'titleError': None,
-                        'titleOutput': None
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationsOutput': None,
+                        'destinationsError': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
                     }
                 ]
         }
@@ -127,18 +187,28 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'genericError': None,
-                        'alertContextError': None,
-                        'alertContextOutput': None,
-                        'dedupError': None,
-                        'dedupOutput': 'defaultDedupString:rule_id',
-                        'errored': True,
                         'id': 'event_id',
-                        'ruleError': 'Exception: Failure message',
                         'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': True,
                         'ruleOutput': None,
+                        'ruleError': 'Exception: Failure message',
+                        'titleOutput': None,
                         'titleError': None,
-                        'titleOutput': None
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationsOutput': None,
+                        'destinationsError': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
                     }
                 ]
         }
@@ -150,18 +220,28 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'genericError': "ModuleNotFoundError: No module named 'stuff'",
-                        'alertContextError': None,
-                        'alertContextOutput': None,
-                        'dedupError': None,
-                        'dedupOutput': None,
-                        'errored': True,
                         'id': 'event_id',
-                        'ruleError': None,
                         'ruleId': 'rule_id',
+                        'genericError': "ModuleNotFoundError: No module named 'stuff'",
+                        'errored': True,
                         'ruleOutput': None,
+                        'ruleError': None,
+                        'titleOutput': None,
                         'titleError': None,
-                        'titleOutput': None
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationsOutput': None,
+                        'destinationsError': None,
+                        'dedupOutput': None,
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
                     }
                 ]
         }
@@ -183,22 +263,31 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'genericError': None,
-                        'alertContextError': None,
-                        'alertContextOutput': None,
-                        'dedupError': 'Exception: dedup error',
-                        'dedupOutput': None,
-                        'errored': True,
                         'id': 'event_id',
-                        'ruleError': None,
                         'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': True,
                         'ruleOutput': True,
+                        'ruleError': None,
+                        'titleOutput': None,
                         'titleError': None,
-                        'titleOutput': None
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationsOutput': None,
+                        'destinationsError': None,
+                        'dedupOutput': None,
+                        'dedupError': 'Exception: dedup error',
+                        'alertContextOutput': None,
+                        'alertContextError': None
                     }
                 ]
         }
-
         self.assertEqual(expected_response, lambda_handler(payload, None))
 
     def test_direct_analysis_title_exception_fails_test(self) -> None:
@@ -218,18 +307,260 @@ class TestMainDirectAnalysis(TestCase):
             'results':
                 [
                     {
-                        'genericError': None,
-                        'alertContextError': None,
-                        'alertContextOutput': None,
-                        'dedupError': None,
-                        'dedupOutput': 'defaultDedupString:rule_id',
-                        'errored': True,
                         'id': 'event_id',
-                        'ruleError': None,
                         'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': True,
                         'ruleOutput': True,
+                        'ruleError': None,
+                        'titleOutput': None,
                         'titleError': 'Exception: title error',
-                        'titleOutput': None
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationsOutput': None,
+                        'destinationsError': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
+                    }
+                ]
+        }
+        self.assertEqual(expected_response, lambda_handler(payload, None))
+
+    def test_direct_analysis_description_exception_fails_test(self) -> None:
+        """If rule description() raises exception while testing a rule (not normal analysis), we should fail the test"""
+        payload = {
+            'rules':
+                [
+                    {
+                        'id': 'rule_id',
+                        'body': "def rule(event):\n\treturn True\n" + "def description(event):\n\traise Exception('description error')"
+                    }
+                ],
+            'events': [{
+                'id': 'event_id',
+                'data': 'data'
+            }]
+        }
+
+        expected_response = {
+            'results':
+                [
+                    {
+                        'id': 'event_id',
+                        'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': True,
+                        'ruleOutput': True,
+                        'ruleError': None,
+                        'titleOutput': None,
+                        'titleError': None,
+                        'descriptionOutput': None,
+                        'descriptionError': 'Exception: description error',
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationsOutput': None,
+                        'destinationsError': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
+                    }
+                ]
+        }
+        self.assertEqual(expected_response, lambda_handler(payload, None))
+
+    def test_direct_analysis_reference_exception_fails_test(self) -> None:
+        """If rule reference() raises exception while testing a rule (not normal analysis), we should fail the test"""
+        payload = {
+            'rules':
+                [{
+                    'id': 'rule_id',
+                    'body': "def rule(event):\n\treturn True\ndef reference(event):\n\traise Exception('reference error')"
+                }],
+            'events': [{
+                'id': 'event_id',
+                'data': 'data'
+            }]
+        }
+
+        expected_response = {
+            'results':
+                [
+                    {
+                        'id': 'event_id',
+                        'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': True,
+                        'ruleOutput': True,
+                        'ruleError': None,
+                        'titleOutput': None,
+                        'titleError': None,
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': 'Exception: reference error',
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationsOutput': None,
+                        'destinationsError': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
+                    }
+                ]
+        }
+        self.assertEqual(expected_response, lambda_handler(payload, None))
+
+    def test_direct_analysis_severity_exception_fails_test(self) -> None:
+        """If rule severity() raises an exception while testing a rule (not normal analysis), we should fail the test"""
+        payload = {
+            'rules':
+                [{
+                    'id': 'rule_id',
+                    'body': "def rule(event):\n\treturn True\ndef severity(event):\n\traise Exception('severity error')"
+                }],
+            'events': [{
+                'id': 'event_id',
+                'data': 'data'
+            }]
+        }
+
+        expected_response = {
+            'results':
+                [
+                    {
+                        'id': 'event_id',
+                        'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': True,
+                        'ruleOutput': True,
+                        'ruleError': None,
+                        'titleOutput': None,
+                        'titleError': None,
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': 'Exception: severity error',
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationsOutput': None,
+                        'destinationsError': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
+                    }
+                ]
+        }
+        self.assertEqual(expected_response, lambda_handler(payload, None))
+
+    def test_direct_analysis_runbook_exception_fails_test(self) -> None:
+        """If rule runbook() raises an exception while testing a rule (not normal analysis), we should fail the test"""
+        payload = {
+            'rules': [
+                {
+                    'id': 'rule_id',
+                    'body': "def rule(event):\n\treturn True\ndef runbook(event):\n\traise Exception('runbook error')"
+                }
+            ],
+            'events': [{
+                'id': 'event_id',
+                'data': 'data'
+            }]
+        }
+
+        expected_response = {
+            'results':
+                [
+                    {
+                        'id': 'event_id',
+                        'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': True,
+                        'ruleOutput': True,
+                        'ruleError': None,
+                        'titleOutput': None,
+                        'titleError': None,
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': 'Exception: runbook error',
+                        'destinationsOutput': None,
+                        'destinationsError': None,
+                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
+                    }
+                ]
+        }
+        self.assertEqual(expected_response, lambda_handler(payload, None))
+
+    def test_direct_analysis_destinations_exception_fails_test(self) -> None:
+        """If rule destinations() raises exception while testing a rule (not normal analysis), we should fail the test"""
+        payload = {
+            'rules':
+                [
+                    {
+                        'id': 'rule_id',
+                        'body':
+                            "def rule(event):\n\treturn True\n" +
+                            "def destination_override(event):\n\traise Exception('destinations error')"
+                    }
+                ],
+            'events': [{
+                'id': 'event_id',
+                'data': 'data'
+            }]
+        }
+
+        expected_response = {
+            'results':
+                [
+                    {
+                        'id': 'event_id',
+                        'ruleId': 'rule_id',
+                        'genericError': None,
+                        'errored': True,
+                        'ruleOutput': True,
+                        'ruleError': None,
+                        'titleOutput': None,
+                        'titleError': None,
+                        'descriptionOutput': None,
+                        'descriptionError': None,
+                        'referenceOutput': None,
+                        'referenceError': None,
+                        'severityOutput': None,
+                        'severityError': None,
+                        'runbookOutput': None,
+                        'runbookError': None,
+                        'destinationsOutput': None,
+                        'destinationsError': 'Exception: destinations error',
+                        'dedupOutput': 'defaultDedupString:rule_id',
+                        'dedupError': None,
+                        'alertContextOutput': None,
+                        'alertContextError': None
                     }
                 ]
         }

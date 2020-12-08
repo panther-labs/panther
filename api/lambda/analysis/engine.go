@@ -93,6 +93,16 @@ type RuleResult struct {
 	RuleError          string `json:"ruleError"`
 	TitleOutput        string `json:"titleOutput"`
 	TitleError         string `json:"titleError"`
+	DescriptionOutput  string `json:"descriptionOutput"`
+	DescriptionError   string `json:"descriptionError"`
+	ReferenceOutput    string `json:"referenceOutput"`
+	ReferenceError     string `json:"referenceError"`
+	SeverityOutput     string `json:"severityOutput"`
+	SeverityError      string `json:"severityError"`
+	RunbookOutput      string `json:"runbookOutput"`
+	RunbookError       string `json:"runbookError"`
+	DestinationsOutput string `json:"destinationsOutput"`
+	DestinationsError  string `json:"destinationsError"`
 	DedupOutput        string `json:"dedupOutput"`
 	DedupError         string `json:"dedupError"`
 	AlertContextOutput string `json:"alertContextOutput"`

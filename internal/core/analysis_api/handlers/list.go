@@ -74,7 +74,13 @@ var (
 // like lastModified.
 
 // Dynamo filters common to both ListPolicies and ListRules
-func pythonListFilters(enabled *bool, nameContains, severity string, types, tags []string) []expression.ConditionBuilder {
+func pythonListFilters(
+	enabled *bool,
+	nameContains string,
+	severity []compliancemodels.Severity,
+	types, tags []string,
+) []expression.ConditionBuilder {
+
 	var filters []expression.ConditionBuilder
 
 	if enabled != nil {
@@ -84,7 +90,7 @@ func pythonListFilters(enabled *bool, nameContains, severity string, types, tags
 
 	if nameContains != "" {
 		filters = append(filters, expression.Contains(expression.Name("lowerId"), nameContains).
-			Or(expression.Contains(expression.Name("lowerDisplayName"), strings.ToLower(nameContains))))
+			Or(expression.Contains(expression.Name("lowerDisplayName"), nameContains)))
 	}
 
 	if len(types) > 0 {
@@ -97,15 +103,19 @@ func pythonListFilters(enabled *bool, nameContains, severity string, types, tags
 		filters = append(filters, typeFilter)
 	}
 
-	if severity != "" {
-		filters = append(filters, expression.Equal(
-			expression.Name("severity"), expression.Value(severity)))
+	if len(severity) > 0 {
+		severityFilter := expression.Equal(expression.Name("severity"), expression.Value(severity[0]))
+		for _, severityType := range severity[1:] {
+			severityFilter = severityFilter.Or(expression.Equal(expression.Name("severity"),
+				expression.Value(severityType)))
+		}
+		filters = append(filters, severityFilter)
 	}
 
 	if len(tags) > 0 {
-		tagFilter := expression.AttributeExists(expression.Name("lowerTags"))
-		for _, tag := range tags {
-			tagFilter = tagFilter.And(expression.Contains(expression.Name("lowerTags"), strings.ToLower(tag)))
+		tagFilter := expression.Contains(expression.Name("lowerTags"), strings.ToLower(tags[0]))
+		for _, tag := range tags[1:] {
+			tagFilter = tagFilter.Or(expression.Contains(expression.Name("lowerTags"), strings.ToLower(tag)))
 		}
 		filters = append(filters, tagFilter)
 	}
@@ -149,29 +159,29 @@ func sortByDisplayName(items []tableItem, ascending bool) {
 		left, right := items[i], items[j]
 
 		var leftName, rightName string
-		leftName, rightName = left.DisplayName, right.DisplayName
+		leftName, rightName = left.LowerDisplayName, right.LowerDisplayName
 
 		// The frontend shows display name *or* ID (when there is no display name)
 		// So we sort the same way it is shown to the user - displayName if available, otherwise ID
 		if leftName == "" {
-			leftName = left.ID
+			leftName = left.LowerID
 		}
 		if rightName == "" {
-			rightName = right.ID
+			rightName = right.LowerID
 		}
 
 		if leftName != rightName {
 			if ascending {
-				return strings.ToLower(leftName) < strings.ToLower(rightName)
+				return leftName < rightName
 			}
-			return strings.ToLower(leftName) > strings.ToLower(rightName)
+			return leftName > rightName
 		}
 
 		// Same display name: sort by ID
 		if ascending {
-			return strings.ToLower(left.ID) < strings.ToLower(right.ID)
+			return left.LowerID < right.LowerID
 		}
-		return strings.ToLower(left.ID) > strings.ToLower(right.ID)
+		return left.LowerID > right.LowerID
 	})
 }
 

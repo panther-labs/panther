@@ -107,6 +107,12 @@ func (e *RuleEngine) TestRule(rule *models.TestRuleInput) (*models.TestRuleOutpu
 			record.Functions.Title = buildTestSubRecord(result.TitleOutput, result.TitleError)
 			record.Functions.Dedup = buildTestSubRecord(result.DedupOutput, result.DedupError)
 			record.Functions.AlertContext = buildTestSubRecord(truncate(result.AlertContextOutput), result.AlertContextError)
+			// Show the output of other functions only if user expects rule() to match the event (ie return True).
+			record.Functions.Description = buildTestSubRecord(result.DescriptionOutput, result.DescriptionError)
+			record.Functions.Reference = buildTestSubRecord(result.ReferenceOutput, result.ReferenceError)
+			record.Functions.Severity = buildTestSubRecord(result.SeverityOutput, result.SeverityError)
+			record.Functions.Runbook = buildTestSubRecord(result.RunbookOutput, result.RunbookError)
+			record.Functions.Destinations = buildTestSubRecord(result.DestinationsOutput, result.DestinationsError)
 		}
 
 		testResult.Results[i] = record

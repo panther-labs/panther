@@ -47,21 +47,26 @@ type AlertDedupEvent struct {
 	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
 	AlertContext        *string   `dynamodbav:"context,string"`
 	Type                string    `dynamodbav:"type"`
-	GeneratedTitle      *string   `dynamodbav:"-"` // The title that was generated dynamically using Python. Might be null.
-	AlertCount          int64     `dynamodbav:"-"` // There is no need to store this item in DDB
-
+	// Generated Fields
+	GeneratedTitle        *string  `dynamodbav:"title,string"`
+	GeneratedDescription  *string  `dynamodbav:"description,string"`
+	GeneratedReference    *string  `dynamodbav:"reference"`
+	GeneratedSeverity     *string  `dynamodbav:"severity"`
+	GeneratedRunbook      *string  `dynamodbav:"runbook"`
+	GeneratedDestinations []string `dynamodbav:"destinations,stringset"`
+	AlertCount            int64    `dynamodbav:"-"` // There is no need to store this item in DDB
 }
 
 // Alert contains all the fields associated to the alert stored in DDB
 type Alert struct {
 	ID                  string    `dynamodbav:"id,string"`
 	TimePartition       string    `dynamodbav:"timePartition,string"`
-	Severity            string    `dynamodbav:"severity,string"`
+	Severity            *string   `dynamodbav:"severity,string"`
 	RuleDisplayName     *string   `dynamodbav:"ruleDisplayName,string"`
 	FirstEventMatchTime time.Time `dynamodbav:"firstEventMatchTime,string"`
 	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
-	Title               string    `dynamodbav:"title,string"` // The alert title. It will be the Python-generated title or a default one if
-	// no Python-generated title is available.
+	// Alert Title - will be the Python-generated title or a default one if no Python-generated title is available.
+	Title string `dynamodbav:"title,string"`
 	AlertDedupEvent
 }
 
@@ -136,10 +141,38 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 		result.AlertContext = aws.String(alertContext.String())
 	}
 
+	// Generated Fields
 	generatedTitle := getOptionalAttribute("title", input)
 	if generatedTitle != nil {
 		result.GeneratedTitle = aws.String(generatedTitle.String())
 	}
+
+	generatedDescription := getOptionalAttribute("description", input)
+	if generatedDescription != nil {
+		result.GeneratedDescription = aws.String(generatedDescription.String())
+	}
+
+	generatedReference := getOptionalAttribute("reference", input)
+	if generatedReference != nil {
+		result.GeneratedReference = aws.String(generatedReference.String())
+	}
+
+	generatedSeverity := getOptionalAttribute("severity", input)
+	if generatedSeverity != nil {
+		result.GeneratedSeverity = aws.String(generatedSeverity.String())
+	}
+
+	generatedRunbook := getOptionalAttribute("runbook", input)
+	if generatedRunbook != nil {
+		result.GeneratedRunbook = aws.String(generatedRunbook.String())
+	}
+
+	generatedDestinations := getOptionalAttribute("destinations", input)
+	if generatedDestinations != nil {
+		result.GeneratedDestinations = generatedDestinations.StringSet()
+	}
+
+	// End Generated Fields
 
 	alertType := getOptionalAttribute("type", input)
 	if alertType != nil {

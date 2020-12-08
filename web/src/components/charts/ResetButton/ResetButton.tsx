@@ -29,8 +29,9 @@ const ResetButton: React.FC<ResetButtonProps> = ({ onReset }) => {
       py={1}
       px={4}
       fontSize="small"
-      color="black"
-      backgroundColor="navyblue-300"
+      color="navyblue-500"
+      fontWeight="bold"
+      backgroundColor="navyblue-200"
       _hover={{ backgroundColor: 'blue-400' }}
       onClick={onReset}
     >
@@ -39,4 +40,4 @@ const ResetButton: React.FC<ResetButtonProps> = ({ onReset }) => {
   );
 };
 
-export default ResetButton;
+export default React.memo(ResetButton);

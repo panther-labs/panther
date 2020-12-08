@@ -36,7 +36,7 @@ const main = async () => {
     const octokit = github.getOctokit(token);
     const { data: destPullRequest } = await octokit.request(`POST /repos/${repo}/pulls`, {
       title: PR_TITLE_PREFIX + srcPullRequest.title,
-      body: srcPullRequest.body,
+      body: srcPullRequest.body.replace(/ (#[0-9]+ )/g, ` ${srcPullRequest.head.repo.full_name}$1`),
       maintainer_can_modify: true,
       head,
       base,
