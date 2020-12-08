@@ -19,7 +19,6 @@
 import { Box, Flex, IconButton, useSnackbar } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { Field, FieldArray, useFormikContext } from 'formik';
-import flatten from 'lodash/flatten';
 import FormikTextInput from 'Components/fields/TextInput';
 import React from 'react';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
@@ -43,23 +42,15 @@ const S3SourceConfigurationPanel: React.FC = () => {
        * or proceed to validation.
        * This will apply only to editing since creation requires users to change those field to proceed
        */
-      initialValues.awsAccountId === values.awsAccountId &&
-      initialValues.initialStackName === values.initialStackName &&
       initialValues.integrationLabel === values.integrationLabel &&
-      initialValues.s3Bucket === values.s3Bucket &&
-      2
+      initialValues.s3Bucket === values.s3Bucket
     );
   }, [initialValues, values]);
 
   // The filtering here is used to prevent users from adding the same log type with different prefixes
   const availableLogTypes = React.useMemo(() => {
-    return (
-      data?.listAvailableLogTypes.logTypes.filter(
-        logType =>
-          !flatten(values.s3PrefixLogTypes.map(({ logTypes }) => logTypes)).includes(logType)
-      ) ?? []
-    );
-  }, [data, values.s3PrefixLogTypes]);
+    return data?.listAvailableLogTypes.logTypes ?? [];
+  }, [data]);
 
   return (
     <WizardPanel>
@@ -119,7 +110,16 @@ const S3SourceConfigurationPanel: React.FC = () => {
                       spacing={4}
                       direction="column"
                     >
-                      <Flex position="absolute" left="100%" top="40%" spacing={2} ml={2}>
+                      <Flex
+                        position="absolute"
+                        left="100%"
+                        top={0}
+                        bottom={0}
+                        align="center"
+                        my={0}
+                        spacing={2}
+                        ml={2}
+                      >
                         {array.length > 1 && (
                           <IconButton
                             size="small"
@@ -166,10 +166,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
       </Box>
       <WizardPanel.Actions>
         {shouldSkipCFNUpload ? (
-          <WizardPanel.ActionGoToStep
-            disabled={!dirty || !isValid}
-            stepIndex={shouldSkipCFNUpload}
-          />
+          <WizardPanel.ActionGoToStep disabled={!dirty || !isValid} stepIndex={2} />
         ) : (
           <WizardPanel.ActionNext disabled={!dirty || !isValid}>Continue</WizardPanel.ActionNext>
         )}
