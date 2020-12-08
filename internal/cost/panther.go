@@ -249,12 +249,12 @@ func (pr PantherReports) Print() {
 		printPantherKeyValue("Total Cost", valueSpace, totalCostValue)
 
 		for _, pantherService := range pantherServices {
-			printPantherServiceCost(report.byServiceUsage, pantherService, valueSpace)
-
-			// check for detailed reports
-			for serviceName, detailedUsageReport := range report.detailedServiceUsage {
-				if serviceName == pantherService {
-					printPantherDetailServiceCosts(detailedUsageReport, valueSpace)
+			if printPantherServiceCost(report.byServiceUsage, pantherService, valueSpace) > 0.0 {
+				// check for detailed reports
+				for serviceName, detailedUsageReport := range report.detailedServiceUsage {
+					if serviceName == pantherService {
+						printPantherDetailServiceCosts(detailedUsageReport, valueSpace)
+					}
 				}
 			}
 		}
@@ -271,12 +271,13 @@ func pantherTotalCost(r *awscostexplorer.Report) (cost float64, unit string) {
 	return cost, unit
 }
 
-func printPantherServiceCost(r *awscostexplorer.Report, service, valueSpace string) {
+func printPantherServiceCost(r *awscostexplorer.Report, service, valueSpace string) float64 {
 	cost, unit := pantherServiceCost(r, service)
 	if cost > 0.0 {
 		value := fmt.Sprintf("%f %s", cost, unit)
 		printPantherKeyValue(service, valueSpace, value)
 	}
+	return cost
 }
 
 func printPantherDetailServiceCosts(r *awscostexplorer.Report, valueSpace string) {
