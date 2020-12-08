@@ -139,6 +139,16 @@ func pythonListFilters(input *pythonFilters) []expression.ConditionBuilder {
 		}
 	}
 
+	if input.CreatedBy != "" {
+		filters = append(filters, expression.Equal(expression.Name("createdBy"),
+			expression.Value(input.CreatedBy)))
+	}
+
+	if input.LastModifiedBy != "" {
+		filters = append(filters, expression.Equal(expression.Name("lastModifiedBy"),
+			expression.Value(input.LastModifiedBy)))
+	}
+
 	return filters
 }
 
