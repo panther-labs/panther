@@ -74,14 +74,14 @@ var (
 // like lastModified.
 
 type pythonFilters struct {
-	CreatedBy string
-	Enabled *bool
-	InitialSet *bool
+	CreatedBy      string
+	Enabled        *bool
+	InitialSet     *bool
 	LastModifiedBy string
-	NameContains string
-	Severity []compliancemodels.Severity
-	ResourceTypes []string
-	Tags []string
+	NameContains   string
+	Severity       []compliancemodels.Severity
+	ResourceTypes  []string
+	Tags           []string
 }
 
 // Dynamo filters common to both ListPolicies and ListRules
