@@ -1386,10 +1386,10 @@ Resources:
         #if($ctx.error)
           $util.error($ctx.error.errorMessage, $ctx.error.errorType, $ctx.args)
         #else
-          #set($payload = [])
+          #set($alerts = [])
 
-          #foreach($item in $ctx.result)
-            $set($alert = $item)
+          #foreach($item in $ctx.result.alertSummaries)
+            #set($alert = $item)
             #if ($item.ruleId)
               $util.qr($alert.put("detection", {
                 "__typename": "AlertSummaryRuleInfo",
@@ -1406,9 +1406,12 @@ Resources:
                 "resourceTypes": $item.resourceTypes
               }))
             #end
-            $util.qr($payload.add($alert))
+            $util.qr($alerts.add($alert))
           #end
-          $util.toJson($payload)
+          $util.toJson({
+          	"alertSummaries": $alerts,
+            "lastEvaluatedKey": $ctx.result.lastEvaluatedKey
+          })
         #end
 
   GetAlertResolver:
