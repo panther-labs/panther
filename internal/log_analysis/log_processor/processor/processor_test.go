@@ -546,7 +546,7 @@ var testSource = &models.SourceIntegration{
 		IntegrationLabel: testSourceLabel,
 		IntegrationType:  models.IntegrationTypeAWS3,
 		S3Bucket:         testBucket,
-		LogTypes:         []string{testLogType},
+		S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", Logtypes: []string{testLogType}}},
 	},
 }
 

@@ -59,8 +59,6 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (newIntegration
 	// Generate the new integration from the input
 	newIntegration = generateNewIntegration(input)
 
-	item := integrationToItem(newIntegration)
-
 	// First creating table - this action is idempotent. In case we succeed here and
 	// fail at a later stage, in case of retry this will succeed again.
 	if err = createTables(newIntegration); err != nil {
@@ -75,6 +73,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (newIntegration
 	}
 
 	// Write to DynamoDB
+	item := integrationToItem(newIntegration)
 	if err = dynamoClient.PutItem(item); err != nil {
 		zap.L().Error("failed to store source integration in DDB", zap.Error(err))
 		return nil, putIntegrationInternalError
@@ -121,7 +120,7 @@ func (api API) validateIntegration(input *models.PutIntegrationInput) error {
 		EnableCWESetup:    input.CWEEnabled,
 		EnableRemediation: input.RemediationEnabled,
 		S3Bucket:          input.S3Bucket,
-		S3Prefix:          input.S3Prefix,
+		S3PrefixLogTypes:  input.S3PrefixLogTypes,
 		KmsKey:            input.KmsKey,
 		SqsConfig:         input.SqsConfig,
 	})
@@ -168,12 +167,6 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 						Message: fmt.Sprintf("Log source for account %s with label %s already onboarded",
 							input.AWSAccountID,
 							input.IntegrationLabel),
-					}
-				}
-
-				if existingIntegration.S3Bucket == input.S3Bucket && existingIntegration.RequiredS3Prefix() == input.S3Prefix {
-					return &genericapi.InvalidInputError{
-						Message: "An S3 integration with the same S3 bucket and prefix already exists.",
 					}
 				}
 			case models.IntegrationTypeSqs:
@@ -259,9 +252,9 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 	case models.IntegrationTypeAWS3:
 		metadata.AWSAccountID = input.AWSAccountID
 		metadata.S3Bucket = input.S3Bucket
-		metadata.S3Prefix = input.S3Prefix
+		metadata.S3PrefixLogTypes = input.S3PrefixLogTypes
 		metadata.KmsKey = input.KmsKey
-		metadata.LogTypes = input.LogTypes
+		metadata.S3PrefixLogTypes = input.S3PrefixLogTypes
 		metadata.StackName = getStackName(input.IntegrationType, input.IntegrationLabel)
 		metadata.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
 	case models.IntegrationTypeSqs:

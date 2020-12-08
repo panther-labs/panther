@@ -96,20 +96,18 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	mockSqsClient.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
-		S3Bucket: "test-bucket-1",
-		S3Prefix: "prefix/",
-		KmsKey:   "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
-		LogTypes: []string{"Log.TypeB"},
+		S3Bucket:         "test-bucket-1",
+		S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", Logtypes: []string{"Log.TypeB"}}},
+		KmsKey:           "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
 	})
 
 	expected := &models.SourceIntegration{
 		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-			IntegrationID:   testIntegrationID,
-			IntegrationType: models.IntegrationTypeAWS3,
-			S3Bucket:        "test-bucket-1",
-			S3Prefix:        "prefix/",
-			KmsKey:          "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
-			LogTypes:        []string{"Log.TypeB"},
+			IntegrationID:    testIntegrationID,
+			IntegrationType:  models.IntegrationTypeAWS3,
+			S3Bucket:         "test-bucket-1",
+			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", Logtypes: []string{"Log.TypeB"}}},
+			KmsKey:           "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
 		},
 	}
 	assert.NoError(t, err)
@@ -136,20 +134,18 @@ func TestUpdateIntegrationSameLogtypes(t *testing.T) {
 	mockClient.On("Scan", mock.Anything).Return(&dynamodb.ScanOutput{}, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
-		S3Bucket: "test-bucket-1",
-		S3Prefix: "prefix/",
-		KmsKey:   "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
-		LogTypes: []string{"Log.TypeA"},
+		S3Bucket:         "test-bucket-1",
+		S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", Logtypes: []string{"Log.TypeA"}}},
+		KmsKey:           "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
 	})
 
 	expected := &models.SourceIntegration{
 		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-			IntegrationID:   testIntegrationID,
-			IntegrationType: models.IntegrationTypeAWS3,
-			S3Bucket:        "test-bucket-1",
-			S3Prefix:        "prefix/",
-			KmsKey:          "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
-			LogTypes:        []string{"Log.TypeA"},
+			IntegrationID:    testIntegrationID,
+			IntegrationType:  models.IntegrationTypeAWS3,
+			S3Bucket:         "test-bucket-1",
+			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", Logtypes: []string{"Log.TypeA"}}},
+			KmsKey:           "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
 		},
 	}
 	assert.NoError(t, err)

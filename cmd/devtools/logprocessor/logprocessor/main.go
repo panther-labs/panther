@@ -109,7 +109,7 @@ func main() {
 				IntegrationID:    *flagSourceID,
 				IntegrationType:  models.IntegrationTypeAWS3,
 				IntegrationLabel: *flagSourceLabel,
-				LogTypes:         logTypes,
+				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", Logtypes: logTypes}},
 			},
 		},
 	}

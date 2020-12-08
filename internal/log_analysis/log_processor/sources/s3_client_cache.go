@@ -64,10 +64,11 @@ type s3ClientCacheKey struct {
 type sourceCache struct {
 	// last time the cache was updated
 	cacheUpdateTime time.Time
-	// sources by id
-	index map[string]*models.SourceIntegration
-	// sources by s3 bucket sorted by longest prefix first
-	byBucket map[string][]*models.SourceIntegration
+	// prefixes by s3 bucket. Each prefixes array is ordered by longest first.
+	// An s3 source may have many prefixes, that's why we can't just directly map from bucket to source.
+	prefixesByBucket map[string][]string
+	sourceByPrefix   map[string]*models.SourceIntegration
+	sourceByID       map[string]*models.SourceIntegration
 }
 
 // LoadS3 loads the source configuration for an S3 object.
@@ -112,45 +113,48 @@ func (c *sourceCache) Sync(now time.Time) error {
 
 // Update updates the cache
 func (c *sourceCache) Update(now time.Time, sources []*models.SourceIntegration) {
-	byBucket := make(map[string][]*models.SourceIntegration)
-	index := make(map[string]*models.SourceIntegration)
+	prefixesByBucket := make(map[string][]string)
+	sourceByPrefix := make(map[string]*models.SourceIntegration)
+	sourceByID := make(map[string]*models.SourceIntegration)
+
 	for _, source := range sources {
-		bucketName := source.RequiredS3Bucket()
-		bucketSources := byBucket[bucketName]
-		byBucket[bucketName] = append(bucketSources, source)
-		index[source.IntegrationID] = source
+		sourceByID[source.IntegrationID] = source
+		sourceBucket, sourcePrefixes := source.S3Info()
+		for _, prefix := range sourcePrefixes {
+			prefixesByBucket[sourceBucket] = append(prefixesByBucket[sourceBucket], prefix)
+			sourceByPrefix[prefix] = source
+		}
 	}
+
 	// Sort sources for each bucket
 	// It is important to have the sources sorted by longest prefix first.
 	// This ensures that longer prefixes (ie `/foo/bar`) have precedence over shorter ones (ie `/foo`).
 	// This is especially important for the empty prefix as it would match all objects in a bucket making
 	// other sources invalid.
-	for bucketName, sources := range byBucket {
-		sourcesSorted := sources
-		sort.Slice(sourcesSorted, func(i, j int) bool {
-			// Sort by prefix length descending
-			return len(sourcesSorted[i].RequiredS3Prefix()) > len(sourcesSorted[j].RequiredS3Prefix())
+	for _, prefixes := range prefixesByBucket {
+		prefixes := prefixes
+		sort.Slice(prefixes, func(i, j int) bool {
+			return len(prefixes[i]) > len(prefixes[j])
 		})
-		byBucket[bucketName] = sourcesSorted
 	}
 	*c = sourceCache{
-		byBucket:        byBucket,
-		index:           index,
-		cacheUpdateTime: now,
+		prefixesByBucket: prefixesByBucket,
+		sourceByPrefix:   sourceByPrefix,
+		sourceByID:       sourceByID,
+		cacheUpdateTime:  now,
 	}
 }
 
 // Find looks up a source by id without updating the cache
 func (c *sourceCache) Find(id string) *models.SourceIntegration {
-	return c.index[id]
+	return c.sourceByID[id]
 }
 
 // FindS3 looks up a source by bucket name and prefix without updating the cache
-func (c *sourceCache) FindS3(bucketName, objectKey string) *models.SourceIntegration {
-	sources := c.byBucket[bucketName]
-	for _, source := range sources {
-		if strings.HasPrefix(objectKey, source.RequiredS3Prefix()) {
-			return source
+func (c *sourceCache) FindS3(bucket, objectKey string) *models.SourceIntegration {
+	for _, prefix := range c.prefixesByBucket[bucket] {
+		if strings.HasPrefix(objectKey, prefix) {
+			return c.sourceByPrefix[prefix]
 		}
 	}
 	return nil

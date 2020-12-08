@@ -31,8 +31,8 @@ func TestAPI_ListLogTypes(t *testing.T) {
 	listOutput := []*models.SourceIntegration{
 		{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationType: models.IntegrationTypeAWS3,
-				LogTypes:        []string{"one"},
+				IntegrationType:  models.IntegrationTypeAWS3,
+				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", Logtypes: []string{"one"}}},
 			},
 		},
 		{

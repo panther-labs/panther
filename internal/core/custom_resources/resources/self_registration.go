@@ -97,7 +97,7 @@ func registerPantherAccount(props SelfRegistrationProperties) error {
 		if err := putLogProcessingIntegration(props.AccountID, props.AuditLogsBucket, logTypes); err != nil {
 			return err
 		}
-	} else if !stringSliceEqual(logSource.LogTypes, logTypes) {
+	} else if !stringSliceEqual(logSource.RequiredLogTypes(), logTypes) {
 		// log types have changed, we need to update the source integration
 		if err := updateLogProcessingIntegration(logSource, logTypes); err != nil {
 			return err
@@ -215,7 +215,7 @@ func updateLogProcessingIntegration(source *models.SourceIntegration, logTypes [
 			IntegrationID:    source.IntegrationID,
 			IntegrationLabel: source.IntegrationLabel,
 			S3Bucket:         source.S3Bucket,
-			LogTypes:         logTypes,
+			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", Logtypes: logTypes}},
 		},
 	}
 

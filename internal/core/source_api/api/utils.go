@@ -38,9 +38,8 @@ func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 	case models.IntegrationTypeAWS3:
 		item.AWSAccountID = input.AWSAccountID
 		item.S3Bucket = input.S3Bucket
-		item.S3Prefix = input.S3Prefix
+		item.S3PrefixLogTypes = input.S3PrefixLogTypes
 		item.KmsKey = input.KmsKey
-		item.LogTypes = input.LogTypes
 		item.StackName = input.StackName
 		item.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
 	case models.IntegrationTypeAWSScan:
@@ -83,9 +82,13 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 	case models.IntegrationTypeAWS3:
 		integration.AWSAccountID = item.AWSAccountID
 		integration.S3Bucket = item.S3Bucket
-		integration.S3Prefix = item.S3Prefix
+		integration.S3PrefixLogTypes = item.S3PrefixLogTypes
+		if len(integration.S3PrefixLogTypes) == 0 {
+			// Backwards compatibility: Use the old fields, maybe the info is there.
+			s3prefixLogTypes := models.S3PrefixLogtypesMapping{S3Prefix: item.S3Prefix, Logtypes: item.LogTypes}
+			integration.S3PrefixLogTypes = models.S3PrefixLogtypes{s3prefixLogTypes}
+		}
 		integration.KmsKey = item.KmsKey
-		integration.LogTypes = item.LogTypes
 		integration.StackName = item.StackName
 		integration.LogProcessingRole = item.LogProcessingRole
 	case models.IntegrationTypeAWSScan:

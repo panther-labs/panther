@@ -19,6 +19,7 @@ package models
  */
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
@@ -48,34 +49,63 @@ type SourceIntegrationScanInformation struct {
 
 // SourceIntegrationMetadata is general settings and metadata for an integration.
 type SourceIntegrationMetadata struct {
-	AWSAccountID       string     `json:"awsAccountId,omitempty"`
-	CreatedAtTime      time.Time  `json:"createdAtTime,omitempty"`
-	CreatedBy          string     `json:"createdBy,omitempty"`
-	IntegrationID      string     `json:"integrationId,omitempty"`
-	IntegrationLabel   string     `json:"integrationLabel,omitempty"`
-	IntegrationType    string     `json:"integrationType,omitempty"`
-	RemediationEnabled *bool      `json:"remediationEnabled,omitempty"`
-	CWEEnabled         *bool      `json:"cweEnabled,omitempty"`
-	ScanIntervalMins   int        `json:"scanIntervalMins,omitempty"`
-	S3Bucket           string     `json:"s3Bucket,omitempty"`
-	S3Prefix           string     `json:"s3Prefix,omitempty"`
-	KmsKey             string     `json:"kmsKey,omitempty"`
-	LogTypes           []string   `json:"logTypes,omitempty"`
-	LogProcessingRole  string     `json:"logProcessingRole,omitempty"`
-	StackName          string     `json:"stackName,omitempty"`
-	SqsConfig          *SqsConfig `json:"sqsConfig,omitempty"`
+	AWSAccountID       string    `json:"awsAccountId,omitempty"`
+	CreatedAtTime      time.Time `json:"createdAtTime,omitempty"`
+	CreatedBy          string    `json:"createdBy,omitempty"`
+	IntegrationID      string    `json:"integrationId,omitempty"`
+	IntegrationLabel   string    `json:"integrationLabel,omitempty"`
+	IntegrationType    string    `json:"integrationType,omitempty"`
+	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
+	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
+	ScanIntervalMins   int       `json:"scanIntervalMins,omitempty"`
+
+	// fields specific for an s3 integration (plus AWSAccountID, StackName)
+	S3Bucket          string           `json:"s3Bucket,omitempty"`
+	S3PrefixLogTypes  S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty"`
+	KmsKey            string           `json:"kmsKey,omitempty"`
+	LogProcessingRole string           `json:"logProcessingRole,omitempty"`
+
+	StackName string `json:"stackName,omitempty"`
+
+	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
+}
+
+// S3PrefixLogtypesMapping contains the logtypes Panther should parse for this s3 prefix.
+type S3PrefixLogtypesMapping struct {
+	S3Prefix string   `json:"s3Prefix,omitempty"`
+	Logtypes []string `json:"logtypes,omitempty" validate:"omitempty,min=1"`
+}
+
+type S3PrefixLogtypes []S3PrefixLogtypesMapping
+
+func (pl S3PrefixLogtypes) LogTypes() []string {
+	var logtypes []string
+	for _, m := range pl {
+		logtypes = append(logtypes, m.Logtypes...)
+	}
+	return logtypes
+}
+
+func (pl S3PrefixLogtypes) S3Prefixes() []string {
+	prefixes := make([]string, len(pl))
+	for i, m := range pl {
+		prefixes[i] = m.S3Prefix
+	}
+	return prefixes
 }
 
 func (s *SourceIntegration) RequiredLogTypes() (logTypes []string) {
-	switch typ := s.IntegrationType; typ {
-	case IntegrationTypeAWS3:
-		return s.LogTypes
+	switch s.IntegrationType {
 	case IntegrationTypeAWSScan:
 		return logtypes.CollectNames(snapshotlogs.LogTypes())
+	case IntegrationTypeAWS3:
+		return s.S3PrefixLogTypes.LogTypes()
 	case IntegrationTypeSqs:
 		return s.SqsConfig.LogTypes
 	default:
-		panic("Unknown type " + typ)
+		// should not be reached
+		panic(fmt.Sprintf("Could not determine logtypes for source {id:%s label:%s type:%s}",
+			s.IntegrationID, s.IntegrationLabel, s.IntegrationType))
 	}
 }
 
@@ -111,6 +141,21 @@ func (s *SourceIntegration) RequiredS3Bucket() string {
 		return s.SqsConfig.S3Bucket
 	default:
 		panic("Unknown type " + typ)
+	}
+}
+
+// Return the s3 bucket and prefixes configured for this source.
+// For an s3 source, bucket and prefixes are user inputs.
+func (s *SourceIntegration) S3Info() (bucket string, prefixes []string) {
+	switch s.IntegrationType {
+	case IntegrationTypeAWS3:
+		return s.S3Bucket, s.S3PrefixLogTypes.S3Prefixes()
+	case IntegrationTypeSqs:
+		return s.SqsConfig.S3Bucket, []string{s.SqsConfig.S3Prefix}
+	default:
+		// should not be reached
+		panic(fmt.Sprintf("Could not determine s3 info for source {id:%s label:%s type:%s}",
+			s.IntegrationID, s.IntegrationLabel, s.IntegrationType))
 	}
 }
 

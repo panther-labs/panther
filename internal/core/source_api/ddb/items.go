@@ -18,7 +18,11 @@ package ddb
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "time"
+import (
+	"time"
+
+	"github.com/panther-labs/panther/api/lambda/source/models"
+)
 
 // Integration represents an integration item as it is stored in DynamoDB.
 type Integration struct {
@@ -38,10 +42,14 @@ type Integration struct {
 	ScanIntervalMins     int        `json:"scanIntervalMins,omitempty"`
 	IntegrationStatus
 
-	S3Bucket          string   `json:"s3Bucket,omitempty"`
-	S3Prefix          string   `json:"s3Prefix,omitempty"`
+	// fields specific for an s3 integration (plus AWSAccountID, StackName)
+	S3Bucket         string                  `json:"s3Bucket,omitempty"`
+	S3PrefixLogTypes models.S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty"`
+	// Deprecated. Use S3PrefixLogTypes. Kept for backwards compatibility. Don't use omitempty to overwrite to empty during writes.
+	S3Prefix string `json:"s3Prefix"`
+	// Deprecated. Use S3PrefixLogTypes. Kept for backwards compatibility.Don't use omitempty to overwrite to empty during writes.
+	LogTypes          []string `json:"logTypes" dynamodbav:",stringset"`
 	KmsKey            string   `json:"kmsKey,omitempty"`
-	LogTypes          []string `json:"logTypes,omitempty" dynamodbav:",stringset"`
 	StackName         string   `json:"stackName,omitempty"`
 	LogProcessingRole string   `json:"logProcessingRole,omitempty"`
 
