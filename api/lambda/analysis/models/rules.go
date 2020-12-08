@@ -94,7 +94,7 @@ type TestRuleRecordFunctions struct {
 	Dedup        *TestDetectionSubRecord `json:"dedupFunction"`
 	AlertContext *TestDetectionSubRecord `json:"alertContextFunction"`
 	Description  *TestDetectionSubRecord `json:"descriptionFunction"`
-	Destinations *TestDetectionSubRecord `json:"destinationOverrideFunction"`
+	Destinations *TestDetectionSubRecord `json:"destinationsFunction"`
 	Reference    *TestDetectionSubRecord `json:"referenceFunction"`
 	Runbook      *TestDetectionSubRecord `json:"runbookFunction"`
 	Severity     *TestDetectionSubRecord `json:"severityFunction"`

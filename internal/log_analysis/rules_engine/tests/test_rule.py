@@ -323,5 +323,12 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
             ),
         )
         # TODO: Fix this to handle Exception error comparison
+        # Temporary workaround
+        result = rule.run({})
+        self.assertEqual(result.matched, expected_result.matched)
+        self.assertEqual(result.alert_context, expected_result.alert_context)
+        self.assertEqual(result.title_output, expected_result.title_output)
+        self.assertEqual(result.dedup_output, expected_result.dedup_output)
+        self.assertEqual(result.severity_output, expected_result.severity_output)
         # Context: strings are identical, the AssertionError object comparison is likely breaking this
-        self.assertNotEqual(expected_result, rule.run({}))
+        # self.assertEqual(expected_result, rule.run({}))
