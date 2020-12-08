@@ -1752,11 +1752,11 @@ func listFilteredNoUser(t *testing.T) {
 
 	expected := models.ListPoliciesOutput{
 		Paging: models.Paging{
-			ThisPage:   1,
-			TotalItems: 1,
-			TotalPages: 1,
+			ThisPage:   0,
+			TotalItems: 0,
+			TotalPages: 0,
 		},
-		Policies: []models.Policy{*policyFromBulkJSON},
+		Policies: []models.Policy{},
 	}
 	assert.Equal(t, expected, result)
 }
