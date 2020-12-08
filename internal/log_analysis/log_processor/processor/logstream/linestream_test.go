@@ -20,9 +20,8 @@ package logstream
 
 import (
 	"bytes"
-	"testing"
-
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func TestLineStream(t *testing.T) {
@@ -36,7 +35,11 @@ func TestLineStream(t *testing.T) {
 		{
 			Name:    "Binary data",
 			Input:   []byte{0, 0, 0, 0, 0, 0, 0, 0},
-			Expect:  nil,
+			WantErr: true,
+		},
+		{
+			Name:    "Empty lines followed by binary",
+			Input:   []byte{'\n', '\n', 0xF0, 0x10, 0x32},
 			WantErr: true,
 		},
 		{
@@ -95,3 +98,8 @@ const longLine = "foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz fo
 	"foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz " +
 	"foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz " +
 	"foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz foo bar baz "
+
+func TestIsValidUTF8(t *testing.T) {
+	p := []byte{'a', 'b', 'c', 0xAF, 0x10, 0x32}
+	require.False(t, isValidUTF8(p, true))
+}

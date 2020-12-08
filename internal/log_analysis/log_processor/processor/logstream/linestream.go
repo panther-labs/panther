@@ -101,7 +101,12 @@ func (s *LineStream) readLine() ([]byte, error) {
 	// This allows us to avoid reading a whole non-UTF8 blob searching for "\n"
 	// NOTE: if we encounter 'weird' log files using UTF16 and/or BOM headers, we need to update this detection
 	if s.numLines == 0 {
-		if !isValidUTF8(line, isPrefix) {
+		p := line
+		// If an empty line exists at the start of the stream, we check the full buffer.
+		if len(p) == 0 {
+			p, _ = s.r.Peek(s.r.Buffered())
+		}
+		if !isValidUTF8(p, isPrefix) {
 			return nil, ErrInvalidUTF8
 		}
 	}
@@ -140,9 +145,9 @@ func isValidUTF8(p []byte, partial bool) bool {
 		r, n := utf8.DecodeRune(p)
 		switch r {
 		case utf8.RuneError:
-			if partial {
+			if partial && 0 < len(p) && len(p) < utf8.UTFMax {
 				// Ensure that the error was due to a partially read UTF8 rune at the end of a chunk
-				return len(p) < utf8.UTFMax && utf8.RuneStart(p[0])
+				return utf8.RuneStart(p[0])
 			}
 			return false
 		case runeNUL:
