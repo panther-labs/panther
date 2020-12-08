@@ -56,6 +56,7 @@ result: |
       "dhost":              "JSmith-MBP-Remote",
       "suser":              "JSmith-MBP-Remote\\johnsmith",
 
+      "p_any_usernames": ["JSmith-MBP-Remote\\johnsmith"],
       "p_event_time":       "2020-05-19T22:17:26.033Z",
       "p_any_ip_addresses": [ "192.168.4.25" ],
       "p_log_type":         "Sophos.Central"
@@ -120,6 +121,7 @@ result: |
       "file_size":          89984,
       "file_path":          "C:\\Users\\John Smith\\Downloads\\YEARENDDATA_01012019_12312019 (4).XLS",
 
+      "p_any_usernames": ["DESKTOP-B5ADQ52\\John Smith"],
       "p_event_time":       "2020-07-28T02:21:07Z",
       "p_any_ip_addresses": [ "192.168.2.213" ],
       "p_log_type":         "Sophos.Central"
@@ -186,6 +188,7 @@ result: |
       "dhost":              "LAPTOP-O0ADB39D",
       "suser":              "LAPTOP-O0ADB39D\\John Smith",
 
+      "p_any_usernames": ["LAPTOP-O0ADB39D\\John Smith"],
       "p_event_time":       "2020-07-20T16:26:32.837Z",
       "p_any_ip_addresses": [ "10.0.0.251" ],
       "p_any_sha256_hashes": [ "c1c0160ddeeb82388aaf1b9957112a3ac9dbcfce6ef3822a9a3250dce2efec11" ],
@@ -240,6 +243,8 @@ result: |
       "suser":              "JSMITH-MAC-SJ\\jsmith",
       "detection_identity_name": "W32/Elkern-C",
       "filePath":           "/Users/jsmith/Dropbox/.dropbox.cache/new_files/eec8381bba1914aa2207f4a53c0fad1e",
+
+      "p_any_usernames": ["JSMITH-MAC-SJ\\jsmith"],
       "p_event_time":       "2020-07-03T05:50:43.000Z",
       "p_any_ip_addresses": [ "192.168.1.68" ],
       "p_log_type":         "Sophos.Central"

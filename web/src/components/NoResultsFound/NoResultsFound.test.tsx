@@ -31,4 +31,9 @@ describe('NoResultsFound', () => {
     expect(getByAltText('Document and magnifying glass')).toBeInTheDocument();
     expect(getByText('No Results')).toBeInTheDocument();
   });
+
+  it('allows a user to override the text', () => {
+    const { getByText } = render(<NoResultsFound title="Fake title" />);
+    expect(getByText('Fake title')).toBeInTheDocument();
+  });
 });

@@ -143,7 +143,7 @@ def _write_to_s3(time: datetime, key: OutputGroupingKey, events: List[EngineResu
         reference=events[0].reference,
         severity=events[0].severity,
         runbook=events[0].runbook,
-        destination_override=events[0].destination_override,
+        destinations=events[0].destinations,
     )
     alert_info = update_get_alert_info(group_info)
     data_stream = BytesIO()

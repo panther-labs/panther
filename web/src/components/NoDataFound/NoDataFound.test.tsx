@@ -1,5 +1,3 @@
-package snapshotlogs
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,19 +16,24 @@ package snapshotlogs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-)
+import React from 'react';
+import { render } from 'test-utils';
+import NoDataFound from './NoDataFound';
 
-// LogTypes exports the available log type entries
-func LogTypes() logtypes.Group {
-	return logTypes
-}
+describe('NoDataFound', () => {
+  it('matches snapshot', () => {
+    const { container } = render(<NoDataFound />);
+    expect(container).toMatchSnapshot();
+  });
 
-const CloudSecurityGroup = "cloudsecurity"
+  it('contains proper semantics', () => {
+    const { getByText, getByAltText } = render(<NoDataFound />);
+    expect(getByAltText('Charts')).toBeInTheDocument();
+    expect(getByText("You don't have any data")).toBeInTheDocument();
+  });
 
-var logTypes = logtypes.Must(CloudSecurityGroup, logTypeCompliance, logTypeResource)
-
-func Resolver() logtypes.Resolver {
-	return logtypes.LocalResolver(logTypes)
-}
+  it('allows a user to override the text', () => {
+    const { getByText } = render(<NoDataFound title="Fake title" />);
+    expect(getByText('Fake title')).toBeInTheDocument();
+  });
+});
