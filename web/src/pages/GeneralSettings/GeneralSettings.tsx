@@ -137,7 +137,7 @@ const GeneralSettingsPage: React.FC = () => {
                 Version
               </Box>
               <Box aria-labelledby="panther_version" as="dl" fontSize="medium">
-                {pantherConfig.PANTHER_VERSION || 'N/A'}
+                {pantherConfig.PANTHER_VERSION} ({pantherConfig.PANTHER_COMMIT})
               </Box>
             </Box>
             <Box as="section">

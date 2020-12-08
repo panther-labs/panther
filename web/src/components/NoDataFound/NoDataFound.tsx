@@ -15,29 +15,25 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import React from 'react';
-import { AbstractButton } from 'pouncejs';
 
-interface ResetButtonProps {
-  onReset: () => void;
+import React from 'react';
+import { Heading, Flex, Img } from 'pouncejs';
+import NoDataFoundIllustration from 'Assets/illustrations/charts.svg';
+
+interface NoDataFoundProps {
+  title?: string;
+  children?: never;
 }
 
-const ResetButton: React.FC<ResetButtonProps> = ({ onReset }) => {
+const NoDataFound: React.FC<NoDataFoundProps> = ({ title = "You don't have any data" }) => {
   return (
-    <AbstractButton
-      borderRadius="pill"
-      py={1}
-      px={4}
-      fontSize="small"
-      color="navyblue-500"
-      fontWeight="bold"
-      backgroundColor="navyblue-200"
-      _hover={{ backgroundColor: 'blue-400' }}
-      onClick={onReset}
-    >
-      RESET
-    </AbstractButton>
+    <Flex height="100%" direction="column" align="center" justify="center">
+      <Img nativeWidth={80} nativeHeight={90} alt="Charts" src={NoDataFoundIllustration} />
+      <Heading size="x-small" color="navyblue-100" mt={6}>
+        {title}
+      </Heading>
+    </Flex>
   );
 };
 
-export default React.memo(ResetButton);
+export default NoDataFound;
