@@ -20,6 +20,9 @@ package models
 
 import (
 	"time"
+
+	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 )
 
 // SourceIntegration represents a Panther integration with a source.
@@ -64,23 +67,13 @@ type SourceIntegrationMetadata struct {
 }
 
 func (info *SourceIntegration) RequiredLogTypes() (logTypes []string) {
-	// We use a switch to avoid git conflicts with enterprise
 	switch {
+	case info.IntegrationType == IntegrationTypeAWSScan:
+		return logtypes.CollectNames(snapshotlogs.LogTypes())
 	case info.SqsConfig != nil:
 		return info.SqsConfig.LogTypes
 	default:
 		return info.LogTypes
-	}
-}
-
-func (info *SourceIntegration) IsLogAnalysisIntegration() bool {
-	switch integType := info.IntegrationType; integType {
-	case IntegrationTypeAWSScan:
-		return false
-	case IntegrationTypeAWS3, IntegrationTypeSqs:
-		return true
-	default:
-		panic("Unexpected integration type " + integType)
 	}
 }
 
