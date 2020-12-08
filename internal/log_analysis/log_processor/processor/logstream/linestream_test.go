@@ -20,8 +20,9 @@ package logstream
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestLineStream(t *testing.T) {
