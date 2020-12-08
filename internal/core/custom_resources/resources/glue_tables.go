@@ -56,8 +56,7 @@ func customUpdateLogTables(ctx context.Context, event cfn.Event) (string, map[st
 		const physicalResourceID = "custom:glue:update-log-processor-tables"
 		var props UpdateLogProcessorTablesProperties
 		if err := parseProperties(event.ResourceProperties, &props); err != nil {
-			logger.Error("failed to parse resource properties", zap.Error(err))
-			return physicalResourceID, nil, err
+			return physicalResourceID, nil, errors.Wrap(err, "failed to parse resource properties")
 		}
 
 		for db, desc := range pantherdb.Databases {
@@ -72,7 +71,6 @@ func customUpdateLogTables(ctx context.Context, event cfn.Event) (string, map[st
 
 		logTypesInUse, err := apifunctions.ListLogTypes(ctx, lambdaClient)
 		if err != nil {
-			logger.Error("failed to fetch log types in use", zap.Error(err))
 			return physicalResourceID, nil, errors.Wrap(err, "failed to fetch required log types from Sources API")
 		}
 		client := datacatalog.Client{
@@ -80,8 +78,7 @@ func customUpdateLogTables(ctx context.Context, event cfn.Event) (string, map[st
 			QueueURL: props.DataCatalogUpdaterQueueURL,
 		}
 		if err := client.SendSyncDatabase(ctx, event.RequestID, logTypesInUse); err != nil {
-			logger.Error("failed to update glue tables", zap.Error(err))
-			return physicalResourceID, nil, err
+			return physicalResourceID, nil, errors.Wrap(err, "failed to update glue tables")
 		}
 		logger.Info("started database sync", zap.Strings("logTypes", logTypesInUse))
 		return physicalResourceID, nil, nil
@@ -93,14 +90,12 @@ func customUpdateLogTables(ctx context.Context, event cfn.Event) (string, map[st
 				if awsutils.IsAnyError(err, glue.ErrCodeEntityNotFoundException) {
 					logger.Info("already deleted", zap.String("database", db))
 				} else {
-					logger.Error("failed to delete", zap.String("database", db))
 					return "", nil, errors.Wrapf(err, "failed deleting %s", db)
 				}
 			}
 		}
 		return event.PhysicalResourceID, nil, nil
 	default:
-		logger.Error("unknown request type")
 		return "", nil, fmt.Errorf("unknown request type %s", event.RequestType)
 	}
 }
