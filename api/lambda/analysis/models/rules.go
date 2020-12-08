@@ -89,15 +89,15 @@ type TestRuleRecord struct {
 }
 
 type TestRuleRecordFunctions struct {
-	Rule                *TestDetectionSubRecord `json:"ruleFunction"`
-	Title               *TestDetectionSubRecord `json:"titleFunction"`
-	Dedup               *TestDetectionSubRecord `json:"dedupFunction"`
-	AlertContext        *TestDetectionSubRecord `json:"alertContextFunction"`
-	Description         *TestDetectionSubRecord `json:"descriptionFunction"`
-	DestinationOverride *TestDetectionSubRecord `json:"destinationOverrideFunction"`
-	Reference           *TestDetectionSubRecord `json:"referenceFunction"`
-	Runbook             *TestDetectionSubRecord `json:"runbookFunction"`
-	Severity            *TestDetectionSubRecord `json:"severityFunction"`
+	Rule         *TestDetectionSubRecord `json:"ruleFunction"`
+	Title        *TestDetectionSubRecord `json:"titleFunction"`
+	Dedup        *TestDetectionSubRecord `json:"dedupFunction"`
+	AlertContext *TestDetectionSubRecord `json:"alertContextFunction"`
+	Description  *TestDetectionSubRecord `json:"descriptionFunction"`
+	Destinations *TestDetectionSubRecord `json:"destinationsFunction"`
+	Reference    *TestDetectionSubRecord `json:"referenceFunction"`
+	Runbook      *TestDetectionSubRecord `json:"runbookFunction"`
+	Severity     *TestDetectionSubRecord `json:"severityFunction"`
 }
 
 type UpdateRuleInput struct {
