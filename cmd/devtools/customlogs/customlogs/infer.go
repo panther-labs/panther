@@ -24,8 +24,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -55,7 +57,7 @@ func Infer(logger *zap.SugaredLogger, opts *InferOpts) {
 		logger.Fatal("no sample file provided")
 	}
 
-	schema, err := inferFromFile(logger, *opts.File)
+	schema, err := inferFromFile(*opts.File)
 	if err != nil {
 		logger.Fatal("failed to generate schema", zap.Error(err))
 	}
@@ -75,7 +77,7 @@ func Infer(logger *zap.SugaredLogger, opts *InferOpts) {
 	fmt.Println(string(marshalled))
 }
 
-func inferFromFile(logger *zap.SugaredLogger, file string) (logschema.Schema, error) {
+func inferFromFile(file string) (logschema.Schema, error) {
 	schema := logschema.Schema{
 		Version: 0,
 	}
@@ -85,11 +87,18 @@ func inferFromFile(logger *zap.SugaredLogger, file string) (logschema.Schema, er
 	}
 	defer fd.Close()
 
-	scanner := bufio.NewScanner(fd)
+	reader := bufio.NewReader(fd)
 	lineNum := 0
-	for scanner.Scan() {
+	for {
 		lineNum++
-		line := bytes.TrimSpace(scanner.Bytes())
+		line, err := reader.ReadBytes('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return schema, errors.Wrap(err, "failed while reading file")
+		}
+		line = bytes.TrimSpace(line)
 		if len(line) == 0 {
 			continue
 		}
@@ -105,9 +114,6 @@ func inferFromFile(logger *zap.SugaredLogger, file string) (logschema.Schema, er
 		if err != nil {
 			return schema, errors.Wrapf(err, "failed while inferring schema from line [%d]", lineNum)
 		}
-	}
-	if err := scanner.Err(); err != nil {
-		logger.Fatal("failed to read input file", zap.Error(err))
 	}
 
 	return schema, nil
@@ -452,15 +458,23 @@ func validateSchema(schema logschema.Schema, file string) error {
 		return err
 	}
 
-	scanner := bufio.NewScanner(fd)
-	for scanner.Scan() {
-		_, err := parser.ParseLog(scanner.Text())
+	reader := bufio.NewReader(fd)
+	for {
+		line, err := reader.ReadString('\n')
 		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return errors.Wrap(err, "failed while reading file")
+		}
+		line = strings.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
+
+		if _, err = parser.ParseLog(line); err != nil {
 			return err
 		}
-	}
-	if scanner.Err() != nil {
-		return err
 	}
 	return nil
 }
