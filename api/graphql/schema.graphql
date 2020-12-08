@@ -238,6 +238,9 @@ input SendTestAlertInput {
 }
 
 input ListRulesInput {
+  createdBy: String
+  lastModifiedBy: String
+  initialSet: Boolean
   nameContains: String
   enabled: Boolean
   logTypes: [String!]
@@ -883,6 +886,9 @@ input DeletePolicyInputItem {
 }
 
 input ListPoliciesInput {
+  createdBy: String
+  lastModifiedBy: String
+  initialSet: Boolean
   complianceStatus: ComplianceStatusEnum
   nameContains: String
   enabled: Boolean
