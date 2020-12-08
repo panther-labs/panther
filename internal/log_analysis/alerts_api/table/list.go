@@ -309,7 +309,7 @@ func filterByResourceType(filter *expression.ConditionBuilder, input *models.Lis
 		multiFilter := expression.Name(ResourceTypesKey).Contains(input.ResourceTypes[0])
 
 		// Then add or conditions starting at a new slice from the second index
-		for _, resourceType := range input.LogTypes[1:] {
+		for _, resourceType := range input.ResourceTypes[1:] {
 			multiFilter = multiFilter.Or(expression.Name(ResourceTypesKey).Contains(resourceType))
 		}
 
