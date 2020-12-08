@@ -52,7 +52,7 @@ var inferJsoniter = jsoniter.Config{
 func Infer(logger *zap.SugaredLogger, opts *InferOpts) {
 	if *opts.File == "" {
 		flag.Usage()
-		logger.Fatal("no schema file provided")
+		logger.Fatal("no sample file provided")
 	}
 
 	schema, err := inferFromFile(logger, *opts.File)
