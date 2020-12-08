@@ -15,29 +15,5 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import React from 'react';
-import { AbstractButton } from 'pouncejs';
 
-interface ResetButtonProps {
-  onReset: () => void;
-}
-
-const ResetButton: React.FC<ResetButtonProps> = ({ onReset }) => {
-  return (
-    <AbstractButton
-      borderRadius="pill"
-      py={1}
-      px={4}
-      fontSize="small"
-      color="navyblue-500"
-      fontWeight="bold"
-      backgroundColor="navyblue-200"
-      _hover={{ backgroundColor: 'blue-400' }}
-      onClick={onReset}
-    >
-      RESET
-    </AbstractButton>
-  );
-};
-
-export default React.memo(ResetButton);
+export { default } from './NoDataFound';

@@ -120,7 +120,7 @@ const GenericItemCardOptionsButton = React.forwardRef<HTMLButtonElement>(functio
 
 const GenericItemCardDate: React.FC<GenericItemCardDate> = ({ date, ...rest }) => {
   return (
-    <Text fontSize="small" as="span" color="gray-500" {...rest}>
+    <Text fontSize="small" as="span" color="navyblue-100" {...rest}>
       {date}
     </Text>
   );
