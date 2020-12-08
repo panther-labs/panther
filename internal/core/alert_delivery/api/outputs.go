@@ -28,6 +28,8 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
+const alertOutputSkip = "SKIP"
+
 // getAlertOutputs - Get output ids for an alert via the specified destinations or the defaults in panther
 func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, error) {
 	// fetch available panther outputs
@@ -39,7 +41,7 @@ func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, 
 	// Check if the alert outputID
 	alertOutputs := []*outputModels.AlertOutput{}
 	for _, outputID := range alert.OutputIds {
-		if outputID == "SKIP" {
+		if outputID == alertOutputSkip {
 			return alertOutputs, nil
 		}
 	}
