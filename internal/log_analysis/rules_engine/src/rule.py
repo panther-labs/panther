@@ -304,10 +304,7 @@ class Rule:
             dedup_string = self._run_command(command, event, str)
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.warning(
-                    'dedup method raised exception. Defaulting dedup string to "%s". Exception: %s',
-                    self.rule_id, err
-                )
+                self.logger.warning('dedup method raised exception. Defaulting dedup string to "%s". Exception: %s', self.rule_id, err)
                 return self._default_dedup_string
             raise
 
@@ -371,8 +368,8 @@ class Rule:
         if len(destinations) > MAX_DESTINATIONS_SIZE:
             # If generated field exceeds max size, truncate it
             self.logger.warning(
-                'maximum len of destinations [%d] for rule with ID [%s] is [%d] fields. Truncating.',
-                MAX_DESTINATIONS_SIZE, self.rule_id, len(destinations)
+                'maximum len of destinations [%d] for rule with ID [%s] is [%d] fields. Truncating.', MAX_DESTINATIONS_SIZE, self.rule_id,
+                len(destinations)
             )
             return destinations[:MAX_DESTINATIONS_SIZE]
         return destinations
