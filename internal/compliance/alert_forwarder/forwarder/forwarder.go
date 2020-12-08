@@ -86,12 +86,12 @@ func (h *Handler) storeNewAlert(alert models.Alert) error {
 		Severity:      aws.String(alert.Severity),
 		Title:         alert.Title,
 		AlertPolicy: alertApiModels.AlertPolicy{
-			PolicyID:            alert.AnalysisID,
-			PolicyDisplayName:   aws.StringValue(alert.AnalysisName),
-			PolicyVersion:       aws.StringValue(alert.Version),
-			PolicyIntegrationID: alert.AnalysisIntegrationID,
-			ResourceTypes:       alert.ResourceTypes,
-			ResourceID:          alert.ResourceID,
+			PolicyID:          alert.AnalysisID,
+			PolicyDisplayName: aws.StringValue(alert.AnalysisName),
+			PolicyVersion:     aws.StringValue(alert.Version),
+			PolicySourceID:    alert.AnalysisSourceID,
+			ResourceTypes:     alert.ResourceTypes,
+			ResourceID:        alert.ResourceID,
 		},
 		// Reuse part of the struct that was intended for Rules
 		AlertDedupEvent: alertApiModels.AlertDedupEvent{

@@ -47,20 +47,20 @@ var (
 
 func genSampleAlert() models.Alert {
 	return models.Alert{
-		AlertID:               aws.String("26df596024d2e81140de028387d517da"), // This is generated dynamically
-		CreatedAt:             timeNow,
-		Severity:              "INFO",
-		Title:                 "some title",
-		AnalysisID:            "Test.Policy",
-		AnalysisName:          aws.String("A test policy to generate alerts"),
-		AnalysisDescription:   "An alert triggered from a Policy...",
-		AnalysisIntegrationID: "9d1f16f0-8bcc-11ea-afeb-efa9a81fb878",
-		Version:               aws.String("A policy version"),
-		ResourceTypes:         []string{"Resource", "Types"},
-		ResourceID:            "arn:aws:iam::xxx...",
-		Runbook:               "Check out our docs!",
-		Tags:                  []string{"Tag", "Policy", "AWS"},
-		Type:                  models.PolicyType,
+		AlertID:             aws.String("26df596024d2e81140de028387d517da"), // This is generated dynamically
+		CreatedAt:           timeNow,
+		Severity:            "INFO",
+		Title:               "some title",
+		AnalysisID:          "Test.Policy",
+		AnalysisName:        aws.String("A test policy to generate alerts"),
+		AnalysisDescription: "An alert triggered from a Policy...",
+		AnalysisSourceID:    "9d1f16f0-8bcc-11ea-afeb-efa9a81fb878",
+		Version:             aws.String("A policy version"),
+		ResourceTypes:       []string{"Resource", "Types"},
+		ResourceID:          "arn:aws:iam::xxx...",
+		Runbook:             "Check out our docs!",
+		Tags:                []string{"Tag", "Policy", "AWS"},
+		Type:                models.PolicyType,
 	}
 }
 
@@ -96,12 +96,12 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		Severity:      aws.String("INFO"),
 		Title:         expectedAlert.Title,
 		AlertPolicy: alertApiModels.AlertPolicy{
-			PolicyID:            expectedAlert.AnalysisID,
-			PolicyDisplayName:   aws.StringValue(expectedAlert.AnalysisName),
-			PolicyVersion:       aws.StringValue(expectedAlert.Version),
-			PolicyIntegrationID: expectedAlert.AnalysisIntegrationID,
-			ResourceTypes:       expectedAlert.ResourceTypes,
-			ResourceID:          expectedAlert.ResourceID,
+			PolicyID:          expectedAlert.AnalysisID,
+			PolicyDisplayName: aws.StringValue(expectedAlert.AnalysisName),
+			PolicyVersion:     aws.StringValue(expectedAlert.Version),
+			PolicySourceID:    expectedAlert.AnalysisSourceID,
+			ResourceTypes:     expectedAlert.ResourceTypes,
+			ResourceID:        expectedAlert.ResourceID,
 		},
 		// Reuse part of the struct that was intended for Rules
 		AlertDedupEvent: alertApiModels.AlertDedupEvent{

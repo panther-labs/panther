@@ -56,12 +56,12 @@ type AlertDedupEvent struct {
 
 // AlertPolicy represents the policy-specific fields for alerts genereated by policies
 type AlertPolicy struct {
-	PolicyID            string   `dynamodbav:"policyId,string"`
-	PolicyDisplayName   string   `dynamodbav:"policyDisplayName,string"`
-	PolicyVersion       string   `dynamodbav:"policyVersion,string"`
-	PolicyIntegrationID string   `dynamodbav:"policyIntegrationId,string"`
-	ResourceTypes       []string `dynamodbav:"resourceTypes,stringset"`
-	ResourceID          string   `dynamodbav:"resourceId,string"` // This is the failing resource
+	PolicyID          string   `dynamodbav:"policyId,string"`
+	PolicyDisplayName string   `dynamodbav:"policyDisplayName,string"`
+	PolicyVersion     string   `dynamodbav:"policyVersion,string"`
+	PolicySourceID    string   `dynamodbav:"policySourceId,string"`
+	ResourceTypes     []string `dynamodbav:"resourceTypes,stringset"`
+	ResourceID        string   `dynamodbav:"resourceId,string"` // This is the failing resource
 }
 
 // Alert contains all the fields associated to the alert stored in DDB
