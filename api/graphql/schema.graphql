@@ -100,7 +100,7 @@ input ListAlertsInput {
   severity: [SeverityEnum]
   logTypes: [String!]
   resourceTypes: [String!]
-  type: [AlertTypesEnum!]
+  types: [AlertTypesEnum!]
   nameContains: String
   createdAtBefore: AWSDateTime
   createdAtAfter: AWSDateTime

@@ -319,23 +319,23 @@ func filterByResourceType(filter *expression.ConditionBuilder, input *models.Lis
 
 // filterByType - filters by the type of the alert
 func filterByType(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
-	if len(input.Type) > 0 {
+	if len(input.Types) > 0 {
 		// Start with the first known key
 		var multiFilter expression.ConditionBuilder
 
 		// Rule errors don't always have the attribute specified.
-		if input.Type[0] == alertdeliverymodels.RuleErrorType {
+		if input.Types[0] == alertdeliverymodels.RuleErrorType {
 			multiFilter = expression.
 				Or(
 					expression.AttributeNotExists(expression.Name(TypeKey)),
-					expression.Equal(expression.Name(TypeKey), expression.Value(input.Type[0])),
+					expression.Equal(expression.Name(TypeKey), expression.Value(input.Types[0])),
 				)
 		} else {
-			multiFilter = expression.Name(TypeKey).Equal(expression.Value(input.Type[0]))
+			multiFilter = expression.Name(TypeKey).Equal(expression.Value(input.Types[0]))
 		}
 
 		// Then add or conditions starting at a new slice from the second index
-		for _, alertType := range input.Type[1:] {
+		for _, alertType := range input.Types[1:] {
 			// Rule errors don't always have the attribute specified.
 			if alertType == alertdeliverymodels.RuleErrorType {
 				multiFilter = multiFilter.

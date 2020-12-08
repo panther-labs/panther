@@ -503,7 +503,7 @@ export type ListAlertsInput = {
   severity?: Maybe<Array<Maybe<SeverityEnum>>>;
   logTypes?: Maybe<Array<Scalars['String']>>;
   resourceTypes?: Maybe<Array<Scalars['String']>>;
-  type?: Maybe<Array<AlertTypesEnum>>;
+  types?: Maybe<Array<AlertTypesEnum>>;
   nameContains?: Maybe<Scalars['String']>;
   createdAtBefore?: Maybe<Scalars['AWSDateTime']>;
   createdAtAfter?: Maybe<Scalars['AWSDateTime']>;

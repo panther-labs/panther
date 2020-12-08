@@ -81,7 +81,7 @@ type ListAlertsInput struct {
 	ExclusiveStartKey *string `json:"exclusiveStartKey"`
 
 	// Filtering
-	Type            []string   `json:"type" validate:"omitempty,dive,oneof=RULE RULE_ERROR POLICY"`
+	Types           []string   `json:"types" validate:"omitempty,dive,oneof=RULE RULE_ERROR POLICY"`
 	Severity        []string   `json:"severity" validate:"omitempty,dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	NameContains    *string    `json:"nameContains"`
 	Status          []string   `json:"status" validate:"omitempty,dive,oneof=OPEN TRIAGED CLOSED RESOLVED"`

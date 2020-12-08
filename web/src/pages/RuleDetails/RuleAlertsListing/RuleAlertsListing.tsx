@@ -54,7 +54,7 @@ const RuleAlertsListing: React.FC<RuleAlertsListingProps> = ({ ruleId, type }) =
     variables: {
       input: {
         ...filterParams,
-        type: [type],
+        types: [type],
         ruleId,
         pageSize: DEFAULT_LARGE_PAGE_SIZE,
       },

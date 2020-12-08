@@ -804,7 +804,7 @@ export const buildListAlertsInput = (overrides: Partial<ListAlertsInput> = {}): 
     severity: 'severity' in overrides ? overrides.severity : [SeverityEnum.Low],
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Awesome Wooden Mouse'],
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['24 hour'],
-    type: 'type' in overrides ? overrides.type : [AlertTypesEnum.Rule],
+    types: 'types' in overrides ? overrides.types : [AlertTypesEnum.Policy],
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'Island',
     createdAtBefore:
       'createdAtBefore' in overrides ? overrides.createdAtBefore : '2020-05-22T12:33:45.819Z',
