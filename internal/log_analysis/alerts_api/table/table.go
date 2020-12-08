@@ -94,7 +94,7 @@ type AlertItem struct {
 	Description         string                     `json:"description"`
 	Reference           string                     `json:"reference"`
 	Runbook             string                     `json:"runbook"`
-	DestinationOverride []string                   `json:"destinationOverride,omitempty" validate:"dive,uuid4"`
+	Destinations        []string                   `json:"destinations,omitempty" validate:"dive,uuid4"`
 	DedupString         string                     `json:"dedup"`
 	FirstEventMatchTime time.Time                  `json:"firstEventMatchTime"`
 	CreationTime        time.Time                  `json:"creationTime"`

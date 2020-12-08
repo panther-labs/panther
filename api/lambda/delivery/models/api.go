@@ -152,8 +152,8 @@ type Alert struct {
 	// Reference is the user-provided triage information
 	Reference string `json:"reference,omitempty"`
 
-	// DestinationOverride is the custom user-provided destination override
-	DestinationOverride []string `json:"destinationOverride,omitempty" validate:"dive,uuid4"`
+	// Destinations is the custom user-provided destination override
+	Destinations []string `json:"destinations,omitempty" validate:"dive,uuid4"`
 
 	// Runbook is the user-provided triage information.
 	Runbook string `json:"runbook,omitempty"`
