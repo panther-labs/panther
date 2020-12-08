@@ -1390,20 +1390,20 @@ Resources:
 
           #foreach($item in $ctx.result.alertSummaries)
             #set($alert = $item)
-            #if ($item.ruleId)
-              $util.qr($alert.put("detection", {
-                "__typename": "AlertSummaryRuleInfo",
-                "ruleId": $item.ruleId,
-                "logTypes": $item.logTypes,
-                "eventsMatched": $item.eventsMatched
-              }))
-            #else
+            #if ($item.policyId)
               $util.qr($alert.put("detection", {
                 "__typename": "AlertSummaryPolicyInfo",
                 "policyId": $item.policyId,
                 "resourceId": $item.resourceId,
                 "policyIntegrationId": $item.policyIntegrationId,
                 "resourceTypes": $item.resourceTypes
+              }))
+            #else
+              $util.qr($alert.put("detection", {
+                "__typename": "AlertSummaryRuleInfo",
+                "ruleId": $item.ruleId,
+                "logTypes": $item.logTypes,
+                "eventsMatched": $item.eventsMatched
               }))
             #end
             $util.qr($alerts.add($alert))
