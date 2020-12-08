@@ -93,7 +93,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 	expectedDynamoAlert := &alertApiModels.Alert{
 		ID:            "26df596024d2e81140de028387d517da",
 		TimePartition: "defaultPartition",
-		Severity:      "INFO",
+		Severity:      aws.String("INFO"),
 		Title:         expectedAlert.Title,
 		AlertPolicy: alertApiModels.AlertPolicy{
 			PolicyID:            expectedAlert.AnalysisID,

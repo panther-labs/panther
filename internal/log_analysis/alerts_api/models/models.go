@@ -45,13 +45,13 @@ type AlertDedupEvent struct {
 	AlertContext        *string   `dynamodbav:"context,string"`
 	Type                string    `dynamodbav:"type"`
 	// Generated Fields
-	GeneratedTitle               *string  `dynamodbav:"title,string"`
-	GeneratedDescription         *string  `dynamodbav:"description,string"`
-	GeneratedReference           *string  `dynamodbav:"reference"`
-	GeneratedSeverity            *string  `dynamodbav:"severity"`
-	GeneratedRunbook             *string  `dynamodbav:"runbook"`
-	GeneratedDestinationOverride []string `dynamodbav:"destinationOverride,stringset"`
-	AlertCount                   int64    `dynamodbav:"-"` // There is no need to store this item in DDB
+	GeneratedTitle        *string  `dynamodbav:"title,string"`
+	GeneratedDescription  *string  `dynamodbav:"description,string"`
+	GeneratedReference    *string  `dynamodbav:"reference"`
+	GeneratedSeverity     *string  `dynamodbav:"severity"`
+	GeneratedRunbook      *string  `dynamodbav:"runbook"`
+	GeneratedDestinations []string `dynamodbav:"destinations,stringset"`
+	AlertCount            int64    `dynamodbav:"-"` // There is no need to store this item in DDB
 }
 
 // AlertPolicy represents the policy-specific fields for alerts genereated by policies
@@ -68,7 +68,7 @@ type AlertPolicy struct {
 type Alert struct {
 	ID                  string    `dynamodbav:"id,string"`
 	TimePartition       string    `dynamodbav:"timePartition,string"`
-	Severity            string    `dynamodbav:"severity,string"`
+	Severity            *string   `dynamodbav:"severity,string"`
 	RuleDisplayName     *string   `dynamodbav:"ruleDisplayName,string"`
 	FirstEventMatchTime time.Time `dynamodbav:"firstEventMatchTime,string"`
 	LogTypes            []string  `dynamodbav:"logTypes,stringset"`
@@ -175,9 +175,9 @@ func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (eve
 		result.GeneratedRunbook = aws.String(generatedRunbook.String())
 	}
 
-	generatedDestinationOverride := getOptionalAttribute("destinationOverride", input)
-	if generatedDestinationOverride != nil {
-		result.GeneratedDestinationOverride = generatedDestinationOverride.StringSet()
+	generatedDestinations := getOptionalAttribute("destinations", input)
+	if generatedDestinations != nil {
+		result.GeneratedDestinations = generatedDestinations.StringSet()
 	}
 
 	// End Generated Fields

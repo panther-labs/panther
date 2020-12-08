@@ -175,7 +175,8 @@ func generateAlertMessage(alert *alertModels.Alert) string {
 }
 
 func generateDetailedAlertMessage(alert *alertModels.Alert) string {
-	const detailedMessageTemplate = "%s\nFor more details please visit: %s\nSeverity: %s\nRunbook: %s\nDescription: %s\nAlertContext: %s"
+	const detailedMessageTemplate = "%s\nFor more details please visit: %s\nSeverity: %s\nRunbook: %s\n" +
+		"Reference: %s\nDescription: %s\nAlertContext: %s"
 	// Best effort to marshal alert context
 	marshaledContext, _ := jsoniter.MarshalToString(alert.Context)
 
@@ -185,6 +186,7 @@ func generateDetailedAlertMessage(alert *alertModels.Alert) string {
 		generateURL(alert),
 		alert.Severity,
 		alert.Runbook,
+		alert.Reference,
 		alert.AnalysisDescription,
 		marshaledContext,
 	)

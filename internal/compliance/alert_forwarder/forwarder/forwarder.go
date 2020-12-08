@@ -83,7 +83,7 @@ func (h *Handler) storeNewAlert(alert models.Alert) error {
 	dynamoAlert := &alertApiModels.Alert{
 		ID:            *alert.AlertID,
 		TimePartition: defaultTimePartition,
-		Severity:      alert.Severity,
+		Severity:      aws.String(alert.Severity),
 		Title:         alert.Title,
 		AlertPolicy: alertApiModels.AlertPolicy{
 			PolicyID:            alert.AnalysisID,

@@ -42,6 +42,8 @@ import (
 
 const defaultTimePartition = "defaultPartition"
 
+var skipOutput = []string{"SKIP"}
+
 type Handler struct {
 	SqsClient        sqsiface.SQSAPI
 	Cache            *RuleCache
@@ -157,7 +159,7 @@ func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *alertApiModels
 	alert := &alertApiModels.Alert{
 		ID:                  generateAlertID(alertDedup),
 		TimePartition:       defaultTimePartition,
-		Severity:            getSeverity(rule, alertDedup),
+		Severity:            aws.String(getSeverity(rule, alertDedup)),
 		RuleDisplayName:     getRuleDisplayName(rule),
 		Title:               getTitle(rule, alertDedup),
 		FirstEventMatchTime: alertDedup.CreationTime,
@@ -175,11 +177,11 @@ func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *alertApiModels
 			LogTypes:     alertDedup.LogTypes,
 			Type:         alertDedup.Type,
 			// Generated Fields
-			GeneratedTitle:               aws.String(getTitle(rule, alertDedup)),
-			GeneratedDescription:         aws.String(getDescription(rule, alertDedup)),
-			GeneratedReference:           aws.String(getReference(rule, alertDedup)),
-			GeneratedRunbook:             aws.String(getRunbook(rule, alertDedup)),
-			GeneratedDestinationOverride: alertDedup.GeneratedDestinationOverride,
+			GeneratedTitle:        aws.String(getTitle(rule, alertDedup)),
+			GeneratedDescription:  aws.String(getDescription(rule, alertDedup)),
+			GeneratedReference:    aws.String(getReference(rule, alertDedup)),
+			GeneratedRunbook:      aws.String(getRunbook(rule, alertDedup)),
+			GeneratedDestinations: alertDedup.GeneratedDestinations,
 		},
 	}
 
@@ -287,8 +289,11 @@ func getSeverity(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEven
 }
 
 func getOutputIds(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEvent) []string {
-	if alertDedup.GeneratedDestinationOverride != nil {
-		return alertDedup.GeneratedDestinationOverride
+	if alertDedup.GeneratedDestinations != nil {
+		if len(alertDedup.GeneratedDestinations) == 0 {
+			return skipOutput
+		}
+		return alertDedup.GeneratedDestinations
 	}
 	return rule.OutputIDs
 }
