@@ -1434,7 +1434,15 @@ Resources:
           $util.error($ctx.error.errorMessage, $ctx.error.errorType, $ctx.args)
         #else
           #set($payload = $ctx.result)
-          #if ($payload.ruleId)
+          #if ($payload.type == "POLICY")
+            $util.qr($payload.put("detection", {
+              "__typename": "AlertSummaryPolicyInfo",
+              "policyId": $ctx.result.policyId,
+              "policySourceId": $ctx.result.policySourceId,
+              "resourceId": $ctx.result.resourceId,
+              "resourceTypes": $ctx.result.resourceTypes
+            }))
+          #else
             $util.qr($payload.put("detection", {
               "__typename": "AlertDetailsRuleInfo",
               "ruleId": $ctx.result.ruleId,
@@ -1443,14 +1451,6 @@ Resources:
               "dedupString": $ctx.result.dedupString,
               "events": $ctx.result.events,
               "eventsLastEvaluatedKey": $ctx.result.eventsLastEvaluatedKey
-            }))
-          #else
-            $util.qr($payload.put("detection", {
-              "__typename": "AlertSummaryPolicyInfo",
-              "policyId": $ctx.result.policyId,
-              "resourceId": $ctx.result.resourceId,
-              "policySourceId": $ctx.result.policySourceId,
-              "resourceTypes": $ctx.result.resourceTypes
             }))
           #end
           $util.toJson($payload)
