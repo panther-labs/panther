@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/preprocessors"
@@ -57,6 +58,13 @@ type Schema struct {
 	Fields       []FieldSchema           `json:"fields" yaml:"fields"`
 }
 
+func (s *Schema) Clone() *Schema {
+	data, _ := jsoniter.Marshal(s)
+	out := Schema{}
+	_ = jsoniter.Unmarshal(data, &out)
+	return &out
+}
+
 type Parser struct {
 	CSV       *preprocessors.CSVMatchConfig  `json:"csv,omitempty" yaml:"csv,omitempty"`
 	FastMatch *preprocessors.FastMatchConfig `json:"fastmatch,omitempty" yaml:"fastmatch,omitempty"`
@@ -71,6 +79,13 @@ type ValueSchema struct {
 	Indicators  []string      `json:"indicators,omitempty" yaml:"indicators,omitempty"`
 	TimeFormat  string        `json:"timeFormat,omitempty" yaml:"timeFormat,omitempty"`
 	IsEventTime bool          `json:"isEventTime,omitempty" yaml:"isEventTime,omitempty"`
+}
+
+func (v *ValueSchema) Clone() *ValueSchema {
+	data, _ := jsoniter.Marshal(v)
+	var out *ValueSchema
+	_ = jsoniter.Unmarshal(data, &out)
+	return out
 }
 
 type FieldSchema struct {

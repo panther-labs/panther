@@ -23,6 +23,8 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+
+	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 )
 
 const LambdaName = "panther-logtypes-api"
@@ -39,6 +41,7 @@ type LogTypesAPI struct {
 	NativeLogTypes func() []string
 	Database       LogTypesDatabase
 	LambdaClient   lambdaiface.LambdaAPI
+	DataCatalog    datacatalog.Client
 }
 
 // LogTypesDatabase handles the external actions required for LogTypesAPI to be implemented
@@ -64,6 +67,7 @@ const (
 	ErrAlreadyExists    = "AlreadyExists"
 	ErrNotFound         = "NotFound"
 	ErrInUse            = "InUse"
+	ErrInvalidUpdate    = "InvalidUpdate"
 )
 
 // APIError is an error that has a code and a message and is returned as part of the API response
@@ -87,6 +91,9 @@ func NewAPIError(code, message string) *APIError {
 
 // WrapAPIError wraps an error to be an API error keeping code and message if available
 func WrapAPIError(err error) *APIError {
+	if err == nil {
+		return nil
+	}
 	if apiErr, ok := err.(*APIError); ok {
 		return apiErr
 	}

@@ -67,6 +67,14 @@ func (c *Client) SendCreateTablesForLogTypes(ctx context.Context, logTypes ...st
 		},
 	})
 }
+func (c *Client) SendUpdateTableForLogType(ctx context.Context, logType string) error {
+	return sendEvent(ctx, c.SQSAPI, c.QueueURL, sqsTask{
+		UpdateTable: &UpdateTablesEvent{
+			LogType: logType,
+			TraceID: traceIDFromContext(ctx, ""),
+		},
+	})
+}
 
 func sendEvent(ctx context.Context, sqsAPI sqsiface.SQSAPI, queueURL string, event sqsTask) error {
 	body, err := jsoniter.MarshalToString(event)

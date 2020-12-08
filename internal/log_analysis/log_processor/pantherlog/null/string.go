@@ -127,6 +127,11 @@ func (*stringCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
 			Value:  strconv.FormatBool(iter.ReadBool()),
 			Exists: noError(iter.Error),
 		}
+	case jsoniter.NumberValue:
+		*((*String)(ptr)) = String{
+			Value:  iter.ReadNumber().String(),
+			Exists: noError(iter.Error),
+		}
 	default:
 		iter.Skip()
 		iter.ReportError("ReadNullString", "invalid null string value")
