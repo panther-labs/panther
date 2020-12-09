@@ -1522,9 +1522,9 @@ Resources:
             MaximumRecordAgeInSeconds: 3600
             StartingPosition: LATEST
             Stream: !GetAtt ResourcesTable.StreamArn
-      FunctionName: panther-compliance-datalake-forwarder
+      FunctionName: panther-cloudsecurity-datalake-forwarder
       # <cfndoc>
-      # The `panther-datalake-forwarder` lambda reads from the ddb stream for the `panther-resources`
+      # The `panther-cloudsecurity-datalake-forwarder` lambda reads from the ddb stream for the `panther-resources`
       # and `panther-compliance` tables, summarizes changes, and forwards them to the log analysis
       # data puller bucket.
       #

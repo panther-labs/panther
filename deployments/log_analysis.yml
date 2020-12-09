@@ -568,6 +568,7 @@ Resources:
           - LogData
           - RuleMatches
           - RuleErrors
+          - CloudSecurity
 
   UpdaterQueuePolicy:
     Type: AWS::SQS::QueuePolicy
