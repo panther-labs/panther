@@ -367,10 +367,10 @@ func TestPutSqsIntegration(t *testing.T) {
 	// Verify returned values
 	require.NoError(t, err)
 	require.NotEmpty(t, out)
-	assert.Equal(t, "forwarder", out.SqsConfig.S3Prefix)
-	assert.Equal(t, "input-data", out.SqsConfig.S3Bucket)
-	assert.Equal(t, "role-arn", out.SqsConfig.LogProcessingRole)
-	assert.Equal(t, []string{"AWS.CloudTrail"}, out.SqsConfig.LogTypes)
+	assert.Equal(t, "forwarder", out.RequiredS3Prefix())
+	assert.Equal(t, "input-data", out.RequiredS3Bucket())
+	assert.Equal(t, "role-arn", out.RequiredLogProcessingRole())
+	assert.Equal(t, []string{"AWS.CloudTrail"}, out.RequiredLogTypes())
 
 	// Verify SQS queue was created the appropriate permissions
 	createQueueRequest := mockSQS.Calls[3].Arguments.Get(0).(*sqs.CreateQueueInput)

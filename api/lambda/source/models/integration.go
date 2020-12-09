@@ -66,14 +66,45 @@ type SourceIntegrationMetadata struct {
 	SqsConfig          *SqsConfig `json:"sqsConfig,omitempty"`
 }
 
-func (info *SourceIntegration) RequiredLogTypes() (logTypes []string) {
-	switch {
-	case info.IntegrationType == IntegrationTypeAWSScan:
+func (s *SourceIntegration) RequiredLogTypes() (logTypes []string) {
+	switch s.IntegrationType {
+	case IntegrationTypeAWSScan:
 		return logtypes.CollectNames(snapshotlogs.LogTypes())
-	case info.SqsConfig != nil:
-		return info.SqsConfig.LogTypes
+	case IntegrationTypeSqs:
+		return s.SqsConfig.LogTypes
 	default:
-		return info.LogTypes
+		return s.LogTypes
+	}
+}
+
+func (s *SourceIntegration) RequiredLogProcessingRole() string {
+	switch s.IntegrationType {
+	case IntegrationTypeSqs:
+		return s.SqsConfig.LogProcessingRole
+	default:
+		return s.LogProcessingRole
+	}
+}
+
+func (s *SourceIntegration) RequiredS3Prefix() string {
+	const sqsS3Prefix = "forwarder"
+	const cloudSecurityS3Prefix = "cloudsecurity"
+	switch s.IntegrationType {
+	case IntegrationTypeSqs:
+		return sqsS3Prefix
+	case IntegrationTypeAWSScan:
+		return cloudSecurityS3Prefix
+	default:
+		return s.S3Prefix
+	}
+}
+
+func (s *SourceIntegration) RequiredS3Bucket() string {
+	switch s.IntegrationType {
+	case IntegrationTypeSqs:
+		return s.SqsConfig.S3Bucket
+	default:
+		return s.S3Bucket
 	}
 }
 
@@ -104,12 +135,6 @@ type SourceIntegrationTemplate struct {
 	Body      string `json:"body"`
 	StackName string `json:"stackName"`
 }
-
-// The S3 Prefix where the SQS data will be stored
-const (
-	SqsS3Prefix           = "forwarder"
-	CloudSecurityS3Prefix = "cloudsecurity"
-)
 
 type SqsConfig struct {
 	// The log types associated with the source. Needs to be set by UI.

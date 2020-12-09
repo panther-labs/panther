@@ -227,12 +227,10 @@ func TestSourceCacheStructFind(t *testing.T) {
 		{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				IntegrationID:   "3",
-				IntegrationType: models.IntegrationTypeSqs,
-				SqsConfig: &models.SqsConfig{
-					S3Bucket: "foo",
-					S3Prefix: "foo/bar/sqs",
-					LogTypes: []string{"Foo.Sqs"},
-				},
+				IntegrationType: models.IntegrationTypeAWS3,
+				S3Bucket:        "foo",
+				S3Prefix:        "foo/bar/sqs",
+				LogTypes:        []string{"Foo.Sqs"},
 			},
 		},
 		{

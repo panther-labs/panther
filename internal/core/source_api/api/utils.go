@@ -53,7 +53,6 @@ func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 		item.LogProcessingRole = input.LogProcessingRole
 		item.RemediationEnabled = input.RemediationEnabled
 		item.S3Bucket = input.S3Bucket
-		item.S3Prefix = input.S3Prefix
 		item.ScanIntervalMins = input.ScanIntervalMins
 		item.ScanStatus = input.ScanStatus
 		item.StackName = input.StackName
@@ -61,7 +60,6 @@ func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 		item.SqsConfig = &ddb.SqsConfig{
 			QueueURL:             input.SqsConfig.QueueURL,
 			S3Bucket:             input.SqsConfig.S3Bucket,
-			S3Prefix:             input.SqsConfig.S3Prefix,
 			LogProcessingRole:    input.SqsConfig.LogProcessingRole,
 			LogTypes:             input.SqsConfig.LogTypes,
 			AllowedPrincipalArns: input.SqsConfig.AllowedPrincipalArns,

@@ -1432,7 +1432,7 @@ Resources:
   DataLakeForwarderLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /aws/lambda/panther-datalake-forwarder
+      LogGroupName: /aws/lambda/panther-cloudsecurity-datalake-forwarder
       RetentionInDays: !Ref CloudWatchLogRetentionDays
 
   DataLakeForwarderMetricFilters:

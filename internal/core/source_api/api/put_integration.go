@@ -171,7 +171,7 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 					}
 				}
 
-				if existingIntegration.S3Bucket == input.S3Bucket && existingIntegration.S3Prefix == input.S3Prefix {
+				if existingIntegration.S3Bucket == input.S3Bucket && existingIntegration.RequiredS3Prefix() == input.S3Prefix {
 					return &genericapi.InvalidInputError{
 						Message: "An S3 integration with the same S3 bucket and prefix already exists.",
 					}
@@ -256,7 +256,6 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 		metadata.ScanIntervalMins = input.ScanIntervalMins
 		metadata.StackName = getStackName(input.IntegrationType, input.IntegrationLabel)
 		metadata.S3Bucket = env.InputDataBucketName
-		metadata.S3Prefix = models.CloudSecurityS3Prefix
 	case models.IntegrationTypeAWS3:
 		metadata.AWSAccountID = input.AWSAccountID
 		metadata.S3Bucket = input.S3Bucket
@@ -268,7 +267,6 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 	case models.IntegrationTypeSqs:
 		metadata.SqsConfig = &models.SqsConfig{
 			S3Bucket:             env.InputDataBucketName,
-			S3Prefix:             models.SqsS3Prefix,
 			LogProcessingRole:    env.InputDataRoleArn,
 			AllowedPrincipalArns: input.SqsConfig.AllowedPrincipalArns,
 			AllowedSourceArns:    input.SqsConfig.AllowedSourceArns,
