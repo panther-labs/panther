@@ -1,4 +1,4 @@
-package forwarder
+package models
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -42,7 +42,7 @@ func TestConvertAttribute(t *testing.T) {
 		GeneratedReference:   aws.String("test reference"),
 		GeneratedSeverity:    aws.String("INFO"),
 		GeneratedRunbook:     aws.String("test runbook"),
-		GeneratedDestinationOverride: []string{
+		GeneratedDestinations: []string{
 			"6c59430f-4953-42e7-a47a-64a8ad6ea645", "dde678a9-6a14-4f30-8bb2-9da6ea7b603f"},
 		Type:         "RULE_ERROR",
 		AlertContext: aws.String("{}"),
@@ -74,7 +74,7 @@ func TestConvertAttributeWithoutOptionalFields(t *testing.T) {
 		GeneratedReference:   aws.String("test reference"),
 		GeneratedSeverity:    aws.String("INFO"),
 		GeneratedRunbook:     aws.String("test runbook"),
-		GeneratedDestinationOverride: []string{
+		GeneratedDestinations: []string{
 			"6c59430f-4953-42e7-a47a-64a8ad6ea645", "dde678a9-6a14-4f30-8bb2-9da6ea7b603f",
 		},
 	}
@@ -177,7 +177,7 @@ func getNewTestCase() map[string]events.DynamoDBAttributeValue {
 		"reference":         events.NewStringAttribute("test reference"),
 		"severity":          events.NewStringAttribute("INFO"),
 		"runbook":           events.NewStringAttribute("test runbook"),
-		"destinationOverride": events.NewStringSetAttribute([]string{
+		"destinations": events.NewStringSetAttribute([]string{
 			"6c59430f-4953-42e7-a47a-64a8ad6ea645", "dde678a9-6a14-4f30-8bb2-9da6ea7b603f"}),
 	}
 }

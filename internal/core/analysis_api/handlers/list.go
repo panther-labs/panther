@@ -73,51 +73,80 @@ var (
 // up future pages where previous calls left off. But this will be harder when sorting by other columns
 // like lastModified.
 
-// Dynamo filters common to both ListPolicies and ListRules
-func pythonListFilters(
-	enabled *bool,
-	nameContains string,
-	severity []compliancemodels.Severity,
-	types, tags []string,
-) []expression.ConditionBuilder {
+type pythonFilters struct {
+	CreatedBy      string
+	Enabled        *bool
+	InitialSet     *bool
+	LastModifiedBy string
+	NameContains   string
+	Severity       []compliancemodels.Severity
+	ResourceTypes  []string
+	Tags           []string
+}
 
+// Dynamo filters common to both ListPolicies and ListRules
+func pythonListFilters(input *pythonFilters) []expression.ConditionBuilder {
 	var filters []expression.ConditionBuilder
 
-	if enabled != nil {
+	if input.Enabled != nil {
 		filters = append(filters, expression.Equal(
-			expression.Name("enabled"), expression.Value(*enabled)))
+			expression.Name("enabled"), expression.Value(*input.Enabled)))
 	}
 
-	if nameContains != "" {
-		filters = append(filters, expression.Contains(expression.Name("lowerId"), nameContains).
-			Or(expression.Contains(expression.Name("lowerDisplayName"), nameContains)))
+	if input.NameContains != "" {
+		filters = append(filters, expression.Contains(expression.Name("lowerId"), input.NameContains).
+			Or(expression.Contains(expression.Name("lowerDisplayName"), input.NameContains)))
 	}
 
-	if len(types) > 0 {
+	if len(input.ResourceTypes) > 0 {
 		// a policy with no resource types applies to all of them
 		typeFilter := expression.AttributeNotExists(expression.Name("resourceTypes"))
-		for _, typeName := range types {
+		for _, typeName := range input.ResourceTypes {
 			// the item in Dynamo calls this "resourceTypes" for both policies and rules
 			typeFilter = typeFilter.Or(expression.Contains(expression.Name("resourceTypes"), typeName))
 		}
 		filters = append(filters, typeFilter)
 	}
 
-	if len(severity) > 0 {
-		severityFilter := expression.Equal(expression.Name("severity"), expression.Value(severity[0]))
-		for _, severityType := range severity[1:] {
+	if len(input.Severity) > 0 {
+		severityFilter := expression.Equal(expression.Name("severity"), expression.Value(input.Severity[0]))
+		for _, severityType := range input.Severity[1:] {
 			severityFilter = severityFilter.Or(expression.Equal(expression.Name("severity"),
 				expression.Value(severityType)))
 		}
 		filters = append(filters, severityFilter)
 	}
 
-	if len(tags) > 0 {
-		tagFilter := expression.Contains(expression.Name("lowerTags"), strings.ToLower(tags[0]))
-		for _, tag := range tags[1:] {
+	if len(input.Tags) > 0 {
+		tagFilter := expression.Contains(expression.Name("lowerTags"), strings.ToLower(input.Tags[0]))
+		for _, tag := range input.Tags[1:] {
 			tagFilter = tagFilter.Or(expression.Contains(expression.Name("lowerTags"), strings.ToLower(tag)))
 		}
 		filters = append(filters, tagFilter)
+	}
+
+	if input.InitialSet != nil {
+		if *input.InitialSet {
+			initialSetFilter := expression.Equal(expression.Name("createdBy"),
+				expression.Value(systemUserID))
+
+			filters = append(filters, initialSetFilter)
+		} else {
+			initialSetFilter := expression.NotEqual(expression.Name("createdBy"),
+				expression.Value(systemUserID))
+
+			filters = append(filters, initialSetFilter)
+		}
+	}
+
+	if input.CreatedBy != "" {
+		filters = append(filters, expression.Equal(expression.Name("createdBy"),
+			expression.Value(input.CreatedBy)))
+	}
+
+	if input.LastModifiedBy != "" {
+		filters = append(filters, expression.Equal(expression.Name("lastModifiedBy"),
+			expression.Value(input.LastModifiedBy)))
 	}
 
 	return filters

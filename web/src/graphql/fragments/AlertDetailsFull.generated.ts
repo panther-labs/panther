@@ -25,42 +25,62 @@ import gql from 'graphql-tag';
 export type AlertDetailsFull = Pick<
   Types.AlertDetails,
   | 'alertId'
-  | 'ruleId'
   | 'type'
   | 'title'
   | 'creationTime'
-  | 'eventsMatched'
   | 'updateTime'
-  | 'eventsLastEvaluatedKey'
-  | 'events'
-  | 'dedupString'
   | 'severity'
   | 'status'
-  | 'logTypes'
   | 'lastUpdatedBy'
   | 'lastUpdatedByTime'
-> & { deliveryResponses: Array<Types.Maybe<DeliveryResponseFull>> };
+> & {
+  deliveryResponses: Array<Types.Maybe<DeliveryResponseFull>>;
+  detection:
+    | Pick<
+        Types.AlertDetailsRuleInfo,
+        | 'ruleId'
+        | 'logTypes'
+        | 'eventsMatched'
+        | 'eventsLastEvaluatedKey'
+        | 'events'
+        | 'dedupString'
+      >
+    | Pick<
+        Types.AlertSummaryPolicyInfo,
+        'policyId' | 'resourceTypes' | 'resourceId' | 'policySourceId'
+      >;
+};
 
 export const AlertDetailsFull = gql`
   fragment AlertDetailsFull on AlertDetails {
     alertId
-    ruleId
     type
     title
     creationTime
     deliveryResponses {
       ...DeliveryResponseFull
     }
-    eventsMatched
     updateTime
-    eventsLastEvaluatedKey
-    events
-    dedupString
     severity
     status
-    logTypes
     lastUpdatedBy
     lastUpdatedByTime
+    detection {
+      ... on AlertSummaryPolicyInfo {
+        policyId
+        resourceTypes
+        resourceId
+        policySourceId
+      }
+      ... on AlertDetailsRuleInfo {
+        ruleId
+        logTypes
+        eventsMatched
+        eventsLastEvaluatedKey
+        events
+        dedupString
+      }
+    }
   }
   ${DeliveryResponseFull}
 `;

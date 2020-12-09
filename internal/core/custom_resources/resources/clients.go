@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/acm/acmiface"
@@ -62,6 +63,7 @@ var (
 	dynamoClient         dynamodbiface.DynamoDBAPI                               = dynamodb.New(awsSession)
 	ecrClient            ecriface.ECRAPI                                         = ecr.New(awsSession)
 	glueClient           glueiface.GlueAPI                                       = glue.New(awsSession)
+	endpointResolver     endpoints.Resolver                                      = endpoints.DefaultResolver()
 	guardDutyClient      guarddutyiface.GuardDutyAPI                             = guardduty.New(awsSession)
 	iamClient            iamiface.IAMAPI                                         = iam.New(awsSession)
 	lambdaClient         lambdaiface.LambdaAPI                                   = lambda.New(awsSession)
