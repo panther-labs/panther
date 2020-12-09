@@ -23,7 +23,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	sourceAPIModels "github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -33,17 +33,15 @@ var (
 )
 
 const (
-	mappingAgeOut         = 2 * time.Minute
+	mappingAgeOut         = 1 * time.Minute
 	sourceAPIFunctionName = "panther-source-api"
 )
 
 // Returns the label for an integration
 // It will return an empty string if the integration doesn't exist
 func (sh *StreamHandler) getIntegrationLabel(integrationID string) (string, error) {
-	_, ok := integrationIDMappings[integrationID]
-	if !ok || time.Since(lastUpdated) > mappingAgeOut {
-		err := sh.updateIntegrationMapping()
-		if err != nil {
+	if time.Since(lastUpdated) > mappingAgeOut {
+		if err := sh.updateIntegrationMapping(); err != nil {
 			return "", err
 		}
 	}
@@ -51,12 +49,12 @@ func (sh *StreamHandler) getIntegrationLabel(integrationID string) (string, erro
 }
 
 func (sh StreamHandler) updateIntegrationMapping() error {
-	input := &sourceAPIModels.LambdaInput{
-		ListIntegrations: &sourceAPIModels.ListIntegrationsInput{
-			IntegrationType: aws.String(sourceAPIModels.IntegrationTypeAWSScan),
+	input := &models.LambdaInput{
+		ListIntegrations: &models.ListIntegrationsInput{
+			IntegrationType: aws.String(models.IntegrationTypeAWSScan),
 		},
 	}
-	var output []*sourceAPIModels.SourceIntegration
+	var output []*models.SourceIntegration
 	if err := genericapi.Invoke(sh.LambdaClient, sourceAPIFunctionName, input, &output); err != nil {
 		return err
 	}
