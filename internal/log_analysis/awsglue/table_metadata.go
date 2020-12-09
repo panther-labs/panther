@@ -107,6 +107,7 @@ func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
 	}
 	if gm.Timebin() >= GlueTableHourly {
 		partitions = append(partitions, PartitionKey{Name: "hour", Type: "int"})
+		partitions = append(partitions, PartitionKey{Name: "partition_time", Type: "bigint"})
 	}
 	return partitions
 }
@@ -213,6 +214,12 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 					aws.String("day"),
 				},
 			},
+			{
+				IndexName: aws.String("hour_idx"),
+				Keys: []*string{
+					aws.String("partition_time"),
+				},
+			},
 		},
 	}
 	_, err := glueClient.CreateTable(createTableInput)
@@ -224,7 +231,24 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 				TableInput:   tableInput,
 			}
 			_, err := glueClient.UpdateTable(updateTableInput)
-			return errors.Wrapf(err, "failed to update table %s.%s", gm.databaseName, gm.tableName)
+			if err != nil {
+				return errors.Wrapf(err, "failed to update table %s.%s", gm.databaseName, gm.tableName)
+			}
+			for _, index := range createTableInput.PartitionIndexes {
+				createPartitionIndexInput := &glue.CreatePartitionIndexInput{
+					DatabaseName:   &gm.databaseName,
+					PartitionIndex: index,
+					TableName:      &gm.tableName,
+				}
+				_, err := glueClient.CreatePartitionIndex(createPartitionIndexInput)
+				if err != nil {
+					if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
+						continue
+					}
+					return errors.Wrapf(err, "failed to create index %s for table %s.%s",
+						*index.IndexName, gm.databaseName, gm.tableName)
+				}
+			}
 		}
 		return errors.Wrapf(err, "failed to create table %s.%s", gm.databaseName, gm.tableName)
 	}
