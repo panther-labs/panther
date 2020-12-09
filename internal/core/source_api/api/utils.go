@@ -95,7 +95,6 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 		integration.ScanIntervalMins = item.ScanIntervalMins
 		integration.ScanStatus = item.ScanStatus
 		integration.S3Bucket = item.S3Bucket
-		integration.S3Prefix = item.S3Prefix
 		integration.LogProcessingRole = item.LogProcessingRole
 		integration.EventStatus = item.EventStatus
 		integration.LastScanStartTime = item.LastScanStartTime
