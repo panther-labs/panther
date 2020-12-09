@@ -39,7 +39,16 @@ func (API) ListIntegrations(
 
 	result := make([]*models.SourceIntegration, len(integrationItems))
 	for i, item := range integrationItems {
-		result[i] = itemToIntegration(item)
+		integ := itemToIntegration(item)
+		// This is required for backwards compatibility
+		if integ.IntegrationType == models.IntegrationTypeAWSScan {
+			if integ.S3Bucket == "" {
+				integ.S3Bucket = env.InputDataBucketName
+				integ.LogProcessingRole = env.InputDataRoleArn
+			}
+		}
+		result[i] = integ
+
 	}
 
 	return result, nil
