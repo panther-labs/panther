@@ -24,7 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/go-playground/validator"
 
-	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/internal/events"
+	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/events"
 )
 
 var validate = validator.New()

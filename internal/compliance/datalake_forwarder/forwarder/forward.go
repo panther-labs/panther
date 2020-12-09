@@ -22,7 +22,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/firehose"
 	"github.com/aws/aws-sdk-go/service/firehose/firehoseiface"
@@ -31,10 +30,8 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/internal/events"
+	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/events"
 	"github.com/panther-labs/panther/pkg/awsbatch/firehosebatch"
-	"github.com/panther-labs/panther/pkg/lambdalogger"
-	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 const (
@@ -54,20 +51,14 @@ type StreamHandler struct {
 }
 
 // Run is the entry point for the datalake-forwarder lambda
-func (sh *StreamHandler) Run(ctx context.Context, event *events.DynamoDBEvent) (err error) {
-	lc, logger := lambdalogger.ConfigureGlobal(ctx, nil)
-	operation := oplog.NewManager("cloudsec", "datalake_forwarder").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
-	defer func() {
-		operation.Stop().Log(err, zap.Int("numEvents", len(event.Records)))
-	}()
-
+func (sh *StreamHandler) Run(ctx context.Context, log *zap.Logger, event *events.DynamoDBEvent) (err error) {
 	firehoseRecords := make([]*firehose.Record, 0, len(event.Records))
 	for i := range event.Records {
 		// We should be passing pointers to avoid copy of the record struct
 		record := &event.Records[i]
 		changes, err := sh.getChanges(record)
 		if err != nil {
-			logger.Error("failed to process record",
+			log.Error("failed to process record",
 				zap.Error(err),
 				zap.String("eventID", record.EventID),
 				zap.String("eventName", record.EventName),
@@ -76,7 +67,7 @@ func (sh *StreamHandler) Run(ctx context.Context, event *events.DynamoDBEvent) (
 			continue
 		}
 		if changes == nil {
-			logger.Warn("Skipping record",
+			log.Warn("Skipping record",
 				zap.Error(err),
 				zap.String("eventID", record.EventID),
 				zap.String("eventName", record.EventName),
@@ -86,7 +77,7 @@ func (sh *StreamHandler) Run(ctx context.Context, event *events.DynamoDBEvent) (
 		}
 		data, err := jsoniter.Marshal(changes)
 		if err != nil {
-			logger.Error("failed to get marshal changes to JSON", zap.Error(err), zap.String("eventId", record.EventID))
+			log.Error("failed to get marshal changes to JSON", zap.Error(err), zap.String("eventId", record.EventID))
 			continue
 		}
 		// TODO: [JSONL] Adding newline here should not be required if the log processor can handle JSON streams
@@ -95,7 +86,7 @@ func (sh *StreamHandler) Run(ctx context.Context, event *events.DynamoDBEvent) (
 	}
 
 	if len(firehoseRecords) == 0 {
-		logger.Debug("no records to process")
+		log.Debug("no records to process")
 		return nil
 	}
 	// Maximum Kinesis Firehose batch put request is 4MB, but we may be processing much more than
@@ -106,7 +97,7 @@ func (sh *StreamHandler) Run(ctx context.Context, event *events.DynamoDBEvent) (
 	}
 	bigMessages, err := firehosebatch.BatchSend(ctx, sh.FirehoseClient, firehoseInput, maxRetries)
 	if len(bigMessages) > 0 {
-		logger.Error("unable to send some records as they are too large", zap.Int("numRecords", len(bigMessages)))
+		log.Error("unable to send some records as they are too large", zap.Int("numRecords", len(bigMessages)))
 	}
 	return err
 }

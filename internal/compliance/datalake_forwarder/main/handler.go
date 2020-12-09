@@ -19,20 +19,38 @@ package main
  */
 
 import (
+	"context"
+
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/firehose"
 	lambdaservice "github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/kelseyhightower/envconfig"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder"
+	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/events"
 	"github.com/panther-labs/panther/pkg/awsretry"
+	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/oplog"
 )
 
+var handler *forwarder.StreamHandler
+
 func main() {
-	lambda.Start(NewHandler().Run)
+	handler = NewHandler()
+	lambda.Start(Invoke)
+}
+
+func Invoke(ctx context.Context, event *events.DynamoDBEvent) error {
+	lc, logger := lambdalogger.ConfigureGlobal(ctx, nil)
+	operation := oplog.NewManager("cloudsec", "datalake_forwarder").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	err := handler.Run(ctx, logger, event)
+	operation.Stop().Log(err, zap.Int("numEvents", len(event.Records)))
+	return err
 }
 
 type EnvConfig struct {

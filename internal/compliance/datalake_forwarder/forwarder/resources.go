@@ -26,8 +26,8 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/internal/diff"
-	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/internal/events"
+	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/diff"
+	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/events"
 )
 
 type CloudSecuritySnapshotChange struct {
