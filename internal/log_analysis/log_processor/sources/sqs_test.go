@@ -33,7 +33,6 @@ func TestSQSClassifier(t *testing.T) {
 	const (
 		testLogType     = "testLog"
 		testBucket      = "testBucket"
-		testPrefix      = "testSQS"
 		testSourceID    = "testSource"
 		testSourceLabel = "testSourceLabel"
 	)
