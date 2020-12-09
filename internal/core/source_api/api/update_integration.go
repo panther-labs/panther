@@ -147,6 +147,9 @@ func normalizeIntegration(item *ddb.Integration, input *models.UpdateIntegration
 		item.RemediationEnabled = input.RemediationEnabled
 	case models.IntegrationTypeAWS3:
 		item.IntegrationLabel = input.IntegrationLabel
+		item.StackName = getStackName(models.IntegrationTypeAWS3, input.IntegrationLabel)
+		item.LogProcessingRole = generateLogProcessingRoleArn(item.AWSAccountID, input.IntegrationLabel)
+
 		item.S3Bucket = input.S3Bucket
 		item.S3Prefix = input.S3Prefix
 		item.KmsKey = input.KmsKey
