@@ -27,11 +27,14 @@ import {
   buildUpdateS3LogIntegrationInput,
   buildS3PrefixLogTypesInput,
   fireClickAndMouseEvents,
+  buildIntegrationTemplate,
 } from 'test-utils';
 import { Route } from 'react-router';
 import urls from 'Source/urls';
 import { mockListAvailableLogTypes } from 'Source/graphql/queries';
 import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
+import { mockGetLogCfnTemplate } from 'Components/wizards/S3LogSourceWizard';
+import { pantherConfig } from 'Source/config';
 import EditS3LogSource from './EditS3LogSource';
 import { mockGetS3LogSource } from './graphql/getS3LogSource.generated';
 import { mockUpdateS3LogSource } from './graphql/updateS3LogSource.generated';
@@ -61,6 +64,20 @@ describe('EditS3LogSource', () => {
       mockListAvailableLogTypes({
         data: {
           listAvailableLogTypes: logTypesResponse,
+        },
+      }),
+      mockGetLogCfnTemplate({
+        variables: {
+          input: {
+            awsAccountId: pantherConfig.AWS_ACCOUNT_ID,
+            integrationLabel: updatedLogSource.integrationLabel,
+            s3Bucket: updatedLogSource.s3Bucket,
+            s3PrefixLogTypes: updatedLogSource.s3PrefixLogTypes,
+            kmsKey: updatedLogSource.kmsKey || null,
+          },
+        },
+        data: {
+          getS3LogIntegrationTemplate: buildIntegrationTemplate(),
         },
       }),
       mockUpdateS3LogSource({

@@ -28,10 +28,13 @@ import {
   buildAddS3LogIntegrationInput,
   fireClickAndMouseEvents,
   buildS3PrefixLogTypesInput,
+  buildIntegrationTemplate,
 } from 'test-utils';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { LOG_ONBOARDING_SNS_DOC_URL } from 'Source/constants';
 import { mockListAvailableLogTypes } from 'Source/graphql/queries';
+import { mockGetLogCfnTemplate } from 'Components/wizards/S3LogSourceWizard';
+import { pantherConfig } from 'Source/config';
 import { mockAddS3LogSource } from './graphql/addS3LogSource.generated';
 import CreateS3LogSource from './CreateS3LogSource';
 
@@ -52,6 +55,20 @@ describe('CreateS3LogSource', () => {
       mockListAvailableLogTypes({
         data: {
           listAvailableLogTypes: logTypesResponse,
+        },
+      }),
+      mockGetLogCfnTemplate({
+        variables: {
+          input: {
+            awsAccountId: pantherConfig.AWS_ACCOUNT_ID,
+            integrationLabel: logSource.integrationLabel,
+            s3Bucket: logSource.s3Bucket,
+            s3PrefixLogTypes: logSource.s3PrefixLogTypes,
+            kmsKey: logSource.kmsKey || null,
+          },
+        },
+        data: {
+          getS3LogIntegrationTemplate: buildIntegrationTemplate(),
         },
       }),
       mockAddS3LogSource({
