@@ -82,7 +82,7 @@ const StackDeployment: React.FC = () => {
             </Text>
             <LinkButton
               loading={loading}
-              disabled={!!error}
+              disabled={!!error || loading}
               external
               to={cfnConsoleLink}
               variantColor="teal"
@@ -111,7 +111,7 @@ const StackDeployment: React.FC = () => {
               icon="download"
               variantColor="violet"
               loading={loading}
-              disabled={loading}
+              disabled={!!error || loading}
               onClick={() => downloadData(body, `${stackName}.yaml`)}
             >
               Get template file
