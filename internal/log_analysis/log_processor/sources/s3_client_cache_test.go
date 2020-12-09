@@ -42,7 +42,7 @@ var (
 		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 			AWSAccountID:      "1234567890123",
 			S3Bucket:          "test-bucket",
-			S3PrefixLogTypes:  models.S3PrefixLogtypes{{S3Prefix: "prefix", Logtypes: []string{"Log.TestType"}}},
+			S3PrefixLogTypes:  models.S3PrefixLogtypes{{S3Prefix: "prefix", LogTypes: []string{"Log.TestType"}}},
 			IntegrationType:   models.IntegrationTypeAWS3,
 			LogProcessingRole: "arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix",
 			IntegrationID:     "3e4b1734-e678-4581-b291-4b8a176219e9",
@@ -159,7 +159,7 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 			LogProcessingRole: "arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix",
 			IntegrationType:   models.IntegrationTypeAWS3,
 			IntegrationID:     "189cddfa-6fd5-419e-8b0e-668105b67dc0",
-			S3PrefixLogTypes:  models.S3PrefixLogtypes{{S3Prefix: "", Logtypes: []string{}}},
+			S3PrefixLogTypes:  models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: []string{}}},
 		},
 	}
 
@@ -212,7 +212,7 @@ func TestSourceCacheStructFind(t *testing.T) {
 				IntegrationID:    "1",
 				IntegrationType:  models.IntegrationTypeAWS3,
 				S3Bucket:         "foo",
-				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", Logtypes: []string{"Foo.Bar"}}},
+				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: []string{"Foo.Bar"}}},
 			},
 		},
 		{
@@ -220,16 +220,15 @@ func TestSourceCacheStructFind(t *testing.T) {
 				IntegrationID:    "2",
 				IntegrationType:  models.IntegrationTypeAWS3,
 				S3Bucket:         "foo",
-				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "foo", Logtypes: []string{"Foo.Baz"}}},
+				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "foo", LogTypes: []string{"Foo.Baz"}}},
 			},
 		},
 		{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationID:   "3",
-				IntegrationType: models.IntegrationTypeAWS3,
-				S3Bucket:        "foo",
-				S3Prefix:        "foo/bar/sqs",
-				LogTypes:        []string{"Foo.Sqs"},
+				IntegrationID:    "3",
+				IntegrationType:  models.IntegrationTypeAWS3,
+				S3Bucket:         "foo",
+				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "foo/bar/sqs", LogTypes: []string{"Foo.Sqs"}}},
 			},
 		},
 		{
@@ -237,7 +236,7 @@ func TestSourceCacheStructFind(t *testing.T) {
 				IntegrationID:    "4",
 				IntegrationType:  models.IntegrationTypeAWS3,
 				S3Bucket:         "foo",
-				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "foo/bar/baz", Logtypes: []string{"Foo.Qux"}}},
+				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "foo/bar/baz", LogTypes: []string{"Foo.Qux"}}},
 			},
 		},
 	}

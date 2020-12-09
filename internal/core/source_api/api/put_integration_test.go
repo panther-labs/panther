@@ -367,8 +367,9 @@ func TestPutSqsIntegration(t *testing.T) {
 	// Verify returned values
 	require.NoError(t, err)
 	require.NotEmpty(t, out)
-	assert.Equal(t, "forwarder", out.RequiredS3Prefix())
-	assert.Equal(t, "input-data", out.RequiredS3Bucket())
+	bucket, prefixes := out.S3Info()
+	assert.Equal(t, "input-data", bucket)
+	assert.Equal(t, []string{"forwarder"}, prefixes)
 	assert.Equal(t, "role-arn", out.RequiredLogProcessingRole())
 	assert.Equal(t, []string{"AWS.CloudTrail"}, out.RequiredLogTypes())
 

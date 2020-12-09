@@ -85,7 +85,7 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 		integration.S3PrefixLogTypes = item.S3PrefixLogTypes
 		if len(integration.S3PrefixLogTypes) == 0 {
 			// Backwards compatibility: Use the old fields, maybe the info is there.
-			s3prefixLogTypes := models.S3PrefixLogtypesMapping{S3Prefix: item.S3Prefix, Logtypes: item.LogTypes}
+			s3prefixLogTypes := models.S3PrefixLogtypesMapping{S3Prefix: item.S3Prefix, LogTypes: item.LogTypes}
 			integration.S3PrefixLogTypes = models.S3PrefixLogtypes{s3prefixLogTypes}
 		}
 		integration.KmsKey = item.KmsKey

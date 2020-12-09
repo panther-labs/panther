@@ -153,8 +153,11 @@ func updateIntegrationDBItem(item *ddb.Integration, input *models.UpdateIntegrat
 		}
 
 		item.S3Bucket = input.S3Bucket
-		item.S3PrefixLogTypes = input.S3PrefixLogTypes
 		item.KmsKey = input.KmsKey
+		item.S3PrefixLogTypes = input.S3PrefixLogTypes
+		// These fields are replaced by S3PrefixLogTypes, clear them to avoid confusion when checking old records.
+		item.S3Prefix = ""
+		item.LogTypes = nil
 	case models.IntegrationTypeSqs:
 		item.IntegrationLabel = input.IntegrationLabel
 		item.SqsConfig.LogTypes = input.SqsConfig.LogTypes

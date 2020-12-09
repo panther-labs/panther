@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -97,7 +98,7 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		S3Bucket:         "test-bucket-1",
-		S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", Logtypes: []string{"Log.TypeB"}}},
+		S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", LogTypes: []string{"Log.TypeB"}}},
 		KmsKey:           "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
 	})
 
@@ -106,7 +107,7 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 			IntegrationID:    testIntegrationID,
 			IntegrationType:  models.IntegrationTypeAWS3,
 			S3Bucket:         "test-bucket-1",
-			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", Logtypes: []string{"Log.TypeB"}}},
+			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", LogTypes: []string{"Log.TypeB"}}},
 			KmsKey:           "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
 		},
 	}
@@ -135,7 +136,7 @@ func TestUpdateIntegrationSameLogtypes(t *testing.T) {
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		S3Bucket:         "test-bucket-1",
-		S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", Logtypes: []string{"Log.TypeA"}}},
+		S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", LogTypes: []string{"Log.TypeA"}}},
 		KmsKey:           "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
 	})
 
@@ -144,7 +145,7 @@ func TestUpdateIntegrationSameLogtypes(t *testing.T) {
 			IntegrationID:    testIntegrationID,
 			IntegrationType:  models.IntegrationTypeAWS3,
 			S3Bucket:         "test-bucket-1",
-			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", Logtypes: []string{"Log.TypeA"}}},
+			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", LogTypes: []string{"Log.TypeA"}}},
 			KmsKey:           "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
 		},
 	}
@@ -275,4 +276,63 @@ func TestSlicesContainSameElements(t *testing.T) {
 			assert.Equal(t, tc.expect, result)
 		})
 	}
+}
+
+// Tests that an old s3 source that has the deprecated s3 prefix and logtypes fields
+// populated, can be successfully read and updated with the new s3PrefixLogTypes field.
+func TestS3PrefixLogTypes_BackwardsCompatibility(t *testing.T) {
+	t.Run("backwards compatible read", func(t *testing.T) {
+		sourceItem := &ddb.Integration{
+			IntegrationID:    uuid.New().String(),
+			IntegrationLabel: "test-label",
+			IntegrationType:  models.IntegrationTypeAWS3,
+			AWSAccountID:     "213",
+			S3Bucket:         "a-bucket",
+			S3Prefix:         "prefix/",
+			LogTypes:         []string{"A.LogType"},
+			S3PrefixLogTypes: nil, // new field
+		}
+
+		source := itemToIntegration(sourceItem)
+
+		expected := &models.SourceIntegration{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				IntegrationID:    sourceItem.IntegrationID,
+				IntegrationLabel: sourceItem.IntegrationLabel,
+				IntegrationType:  models.IntegrationTypeAWS3,
+				AWSAccountID:     sourceItem.AWSAccountID,
+				S3Bucket:         sourceItem.S3Bucket,
+				// The old s3prefix and logtypes fields must have been migrated to this field
+				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: sourceItem.S3Prefix, LogTypes: sourceItem.LogTypes}},
+			},
+		}
+
+		require.Equal(t, expected, source)
+	})
+
+	t.Run("normal read", func(t *testing.T) {
+		sourceItem := &ddb.Integration{
+			IntegrationID:    uuid.New().String(),
+			IntegrationLabel: "test-label",
+			IntegrationType:  models.IntegrationTypeAWS3,
+			AWSAccountID:     "213",
+			S3Bucket:         "a-bucket",
+			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", LogTypes: []string{"A.LogType"}}},
+		}
+
+		source := itemToIntegration(sourceItem)
+
+		expected := &models.SourceIntegration{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				IntegrationID:    sourceItem.IntegrationID,
+				IntegrationLabel: sourceItem.IntegrationLabel,
+				IntegrationType:  models.IntegrationTypeAWS3,
+				AWSAccountID:     sourceItem.AWSAccountID,
+				S3Bucket:         sourceItem.S3Bucket,
+				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", LogTypes: []string{"A.LogType"}}},
+			},
+		}
+
+		require.Equal(t, expected, source)
+	})
 }

@@ -36,7 +36,7 @@ func TestAPI_PutCustomLog(t *testing.T) {
 	integration := &models.SourceIntegration{
 		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 			IntegrationType:  models.IntegrationTypeAWS3,
-			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", Logtypes: []string{"Custom.InUse"}}},
+			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: []string{"Custom.InUse"}}},
 		},
 	}
 	marshaledResult, err := jsoniter.Marshal([]*models.SourceIntegration{integration})

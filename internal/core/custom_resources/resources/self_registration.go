@@ -215,7 +215,7 @@ func updateLogProcessingIntegration(source *models.SourceIntegration, logTypes [
 			IntegrationID:    source.IntegrationID,
 			IntegrationLabel: source.IntegrationLabel,
 			S3Bucket:         source.S3Bucket,
-			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", Logtypes: logTypes}},
+			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: logTypes}},
 		},
 	}
 

@@ -72,18 +72,18 @@ type SourceIntegrationMetadata struct {
 
 // S3PrefixLogtypesMapping contains the logtypes Panther should parse for this s3 prefix.
 type S3PrefixLogtypesMapping struct {
-	S3Prefix string   `json:"s3Prefix,omitempty"`
-	Logtypes []string `json:"logtypes,omitempty" validate:"omitempty,min=1"`
+	S3Prefix string   `json:"s3Prefix"`
+	LogTypes []string `json:"logtypes" validate:"required,min=1"`
 }
 
 type S3PrefixLogtypes []S3PrefixLogtypesMapping
 
 func (pl S3PrefixLogtypes) LogTypes() []string {
-	var logtypes []string
+	var logTypes []string
 	for _, m := range pl {
-		logtypes = append(logtypes, m.Logtypes...)
+		logTypes = append(logTypes, m.LogTypes...)
 	}
-	return logtypes
+	return logTypes
 }
 
 func (pl S3PrefixLogtypes) S3Prefixes() []string {
@@ -120,38 +120,16 @@ func (s *SourceIntegration) RequiredLogProcessingRole() string {
 	}
 }
 
-func (s *SourceIntegration) RequiredS3Prefix() string {
-	switch typ := s.IntegrationType; typ {
-	case IntegrationTypeAWS3:
-		return s.S3Prefix
-	case IntegrationTypeAWSScan:
-		return "cloudsecurity"
-	case IntegrationTypeSqs:
-		return "forwarder"
-	default:
-		panic("Unknown type " + typ)
-	}
-}
-
-func (s *SourceIntegration) RequiredS3Bucket() string {
-	switch typ := s.IntegrationType; typ {
-	case IntegrationTypeAWS3, IntegrationTypeAWSScan:
-		return s.S3Bucket
-	case IntegrationTypeSqs:
-		return s.SqsConfig.S3Bucket
-	default:
-		panic("Unknown type " + typ)
-	}
-}
-
 // Return the s3 bucket and prefixes configured for this source.
 // For an s3 source, bucket and prefixes are user inputs.
 func (s *SourceIntegration) S3Info() (bucket string, prefixes []string) {
 	switch s.IntegrationType {
+	case IntegrationTypeAWSScan:
+		return s.S3Bucket, []string{"cloudsecurity"}
 	case IntegrationTypeAWS3:
 		return s.S3Bucket, s.S3PrefixLogTypes.S3Prefixes()
 	case IntegrationTypeSqs:
-		return s.SqsConfig.S3Bucket, []string{s.SqsConfig.S3Prefix}
+		return s.SqsConfig.S3Bucket, []string{"forwarder"}
 	default:
 		// should not be reached
 		panic(fmt.Sprintf("Could not determine s3 info for source {id:%s label:%s type:%s}",
