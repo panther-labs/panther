@@ -19,6 +19,7 @@
 import React from 'react';
 import {
   buildAlertDetails,
+  buildAlertDetailsRuleInfo,
   buildAlertSummary,
   buildDeliveryResponse,
   buildDestination,
@@ -29,6 +30,7 @@ import {
 } from 'test-utils';
 import urls from 'Source/urls';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
+import { AlertDetailsRuleInfo } from 'Generated/schema';
 import { Route } from 'react-router-dom';
 import { mockListDestinations } from 'Source/graphql/queries';
 import { mockAlertDetails } from './graphql/alertDetails.generated';
@@ -40,7 +42,9 @@ describe('AlertDetails', () => {
   it('renders the correct tab based on a URL param', async () => {
     const destination = buildDestination();
     const alert = buildAlertDetails({
-      events: ['"{}"', '"{}"'],
+      detection: buildAlertDetailsRuleInfo({
+        events: ['"{}"', '"{}"'],
+      }),
       deliveryResponses: [buildDeliveryResponse({ outputId: destination.outputId })],
     });
     const rule = buildRuleDetails();
@@ -59,7 +63,7 @@ describe('AlertDetails', () => {
       mockRuleTeaser({
         variables: {
           input: {
-            id: alert.ruleId,
+            id: (alert.detection as AlertDetailsRuleInfo).ruleId,
           },
         },
         data: { rule },
@@ -94,7 +98,9 @@ describe('AlertDetails', () => {
   it('correctly lazy loads event tab', async () => {
     const destination = buildDestination();
     const alert = buildAlertDetails({
-      events: ['"{}"', '"{}"'],
+      detection: buildAlertDetailsRuleInfo({
+        events: ['"{}"', '"{}"'],
+      }),
       deliveryResponses: [buildDeliveryResponse({ outputId: destination.outputId })],
     });
     const rule = buildRuleDetails();
@@ -113,7 +119,7 @@ describe('AlertDetails', () => {
       mockRuleTeaser({
         variables: {
           input: {
-            id: alert.ruleId,
+            id: (alert.detection as AlertDetailsRuleInfo).ruleId,
           },
         },
         data: { rule },
@@ -146,7 +152,9 @@ describe('AlertDetails', () => {
   it('shows destination information in the details tab', async () => {
     const destination = buildDestination();
     const alert = buildAlertDetails({
-      events: ['"{}"', '"{}"'],
+      detection: buildAlertDetailsRuleInfo({
+        events: ['"{}"', '"{}"'],
+      }),
       deliveryResponses: [buildDeliveryResponse({ outputId: destination.outputId })],
     });
     const rule = buildRuleDetails();
@@ -165,7 +173,7 @@ describe('AlertDetails', () => {
       mockRuleTeaser({
         variables: {
           input: {
-            id: alert.ruleId,
+            id: (alert.detection as AlertDetailsRuleInfo).ruleId,
           },
         },
         data: { rule },
@@ -222,7 +230,7 @@ describe('AlertDetails', () => {
       mockRuleTeaser({
         variables: {
           input: {
-            id: alert.ruleId,
+            id: (alert.detection as AlertDetailsRuleInfo).ruleId,
           },
         },
         data: { rule },

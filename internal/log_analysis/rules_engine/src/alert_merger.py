@@ -41,7 +41,7 @@ _ALERT_DESCRIPTION = 'description'
 _ALERT_REFERENCE = 'reference'
 _ALERT_SEVERITY = 'severity'
 _ALERT_RUNBOOK = 'runbook'
-_ALERT_DESTINATION_OVERRIDE = 'destinationOverride'
+_ALERT_DESTINATIONS = 'destinations'
 # The attribute defining the type of the error
 _ALERT_TYPE = 'type'
 
@@ -65,7 +65,7 @@ class MatchingGroupInfo:
     reference: Optional[str] = None
     severity: Optional[str] = None
     runbook: Optional[str] = None
-    destination_override: Optional[List[str]] = None
+    destinations: Optional[List[str]] = None
 
 
 def _generate_dedup_key(rule_id: str, dedup: str, is_rule_error: bool) -> str:
@@ -185,10 +185,10 @@ def _update_get_conditional(group_info: MatchingGroupInfo) -> AlertInfo:
         expression_attribute_names['#17'] = _ALERT_RUNBOOK
         expression_attribute_values[':17'] = {'S': group_info.runbook}
 
-    if group_info.destination_override:
+    if group_info.destinations:
         update_expression += ', #18=:18'
-        expression_attribute_names['#18'] = _ALERT_DESTINATION_OVERRIDE
-        expression_attribute_values[':18'] = {'SS': group_info.destination_override}
+        expression_attribute_names['#18'] = _ALERT_DESTINATIONS
+        expression_attribute_values[':18'] = {'SS': group_info.destinations}
 
     response = DDB_CLIENT.update_item(
         TableName=_DDB_TABLE_NAME,

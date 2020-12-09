@@ -53,11 +53,11 @@ type LambdaHandler struct {
 var _ lambda.Handler = (*LambdaHandler)(nil)
 
 type sqsTask struct {
-	Records                []events.S3EventRecord
-	SyncDatabase           *SyncDatabaseEvent
-	CreateTables           *CreateTablesEvent
-	SyncDatabasePartitions *SyncDatabasePartitionsEvent
-	SyncTablePartitions    *SyncTableEvent
+	Records                []events.S3EventRecord       `json:",omitempty"`
+	SyncDatabase           *SyncDatabaseEvent           `json:",omitempty"`
+	CreateTables           *CreateTablesEvent           `json:",omitempty"`
+	SyncDatabasePartitions *SyncDatabasePartitionsEvent `json:",omitempty"`
+	SyncTablePartitions    *SyncTableEvent              `json:",omitempty"`
 }
 
 // Invoke implements lambda.Handler interface.

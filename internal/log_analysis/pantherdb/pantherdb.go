@@ -44,7 +44,8 @@ const (
 	TempDatabaseDescription = "Holds temporary tables used for processing tasks"
 )
 
-var LogDatabases = map[string]string{
+var Databases = map[string]string{
+	CloudSecurityDatabase: CloudSecurityDatabaseDescription,
 	LogProcessingDatabase: LogProcessingDatabaseDescription,
 	RuleMatchDatabase:     RuleMatchDatabaseDescription,
 	RuleErrorsDatabase:    RuleErrorsDatabaseDescription,
@@ -72,6 +73,19 @@ func GetDataType(logtype string) DataType {
 		return CloudSecurity
 	}
 	return LogData
+}
+
+// Returns true if the given logtype has a corresponding table in a Database
+func IsInDatabase(logtype, db string) bool {
+	dt := GetDataType(logtype)
+	switch dt {
+	case CloudSecurity:
+		// CloudSecurity data can be found only in CloudSecurity Database or in the temporary database
+		return db == CloudSecurityDatabase || db == TempDatabase
+	default:
+		// non-cloud security data can be found in any database - apart from CloudSecurity database
+		return db != CloudSecurityDatabase
+	}
 }
 
 // Returns the name of the table for the given log type
