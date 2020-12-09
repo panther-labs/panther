@@ -41,6 +41,8 @@ func (API) ListIntegrations(
 	for i, item := range integrationItems {
 		integ := itemToIntegration(item)
 		// This is required for backwards compatibility
+		// Before https://github.com/panther-labs/panther/issues/2031 , the Compliance sources
+		// didn't have the InputDataBucket and InputDataRoleArn populated
 		if integ.IntegrationType == models.IntegrationTypeAWSScan {
 			if integ.S3Bucket == "" {
 				integ.S3Bucket = env.InputDataBucketName
