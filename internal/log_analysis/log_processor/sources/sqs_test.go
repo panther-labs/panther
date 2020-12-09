@@ -45,7 +45,6 @@ func TestSQSClassifier(t *testing.T) {
 			SqsConfig: &models.SqsConfig{
 				LogTypes: []string{testLogType},
 				S3Bucket: testBucket,
-				S3Prefix: testPrefix,
 			},
 		},
 	}

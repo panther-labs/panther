@@ -105,7 +105,6 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 	case models.IntegrationTypeSqs:
 		integration.SqsConfig = &models.SqsConfig{
 			S3Bucket:             item.SqsConfig.S3Bucket,
-			S3Prefix:             item.SqsConfig.S3Prefix,
 			LogProcessingRole:    item.SqsConfig.LogProcessingRole,
 			QueueURL:             item.SqsConfig.QueueURL,
 			LogTypes:             item.SqsConfig.LogTypes,

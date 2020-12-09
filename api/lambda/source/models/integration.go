@@ -146,8 +146,6 @@ type SqsConfig struct {
 
 	// The Panther-internal S3 bucket where the data from this source will be available
 	S3Bucket string `json:"s3Bucket"`
-	// The S3 prefix where the data from this source will be available
-	S3Prefix string `json:"s3Prefix"`
 	// The Role that the log processor can use to access this data
 	LogProcessingRole string `json:"logProcessingRole"`
 	// THe URL of the SQS queue
