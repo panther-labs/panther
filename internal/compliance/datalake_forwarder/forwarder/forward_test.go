@@ -24,21 +24,26 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/firehose"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/events"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func TestComplianceEventWithoutChange(t *testing.T) {
 	t.Parallel()
-	lambda := &testutils.LambdaMock{}
-	firehose := &testutils.FirehoseMock{}
+	lambdaMock := &testutils.LambdaMock{}
+	firehoseMock := &testutils.FirehoseMock{}
 
 	sh := StreamHandler{
-		LambdaClient:   lambda,
-		FirehoseClient: firehose,
+		LambdaClient:   lambdaMock,
+		FirehoseClient: firehoseMock,
 		StreamName:     "stream-name",
 	}
 
@@ -83,16 +88,18 @@ func TestComplianceEventWithoutChange(t *testing.T) {
 	}
 
 	assert.NoError(t, sh.Run(context.Background(), zap.L(), &events.DynamoDBEvent{Records: []events.DynamoDBEventRecord{record}}))
+	lambdaMock.AssertExpectations(t)
+	firehoseMock.AssertExpectations(t)
 }
 
 func TestComplianceEventStatusChange(t *testing.T) {
 	t.Parallel()
-	lambda := &testutils.LambdaMock{}
-	firehose := &testutils.FirehoseMock{}
+	lambdaMock := &testutils.LambdaMock{}
+	firehoseMock := &testutils.FirehoseMock{}
 
 	sh := StreamHandler{
-		LambdaClient:   lambda,
-		FirehoseClient: firehose,
+		LambdaClient:   lambdaMock,
+		FirehoseClient: firehoseMock,
 		StreamName:     "stream-name",
 	}
 
@@ -136,6 +143,21 @@ func TestComplianceEventStatusChange(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, sh.Run(context.Background(), zap.L(), &events.DynamoDBEvent{Records: []events.DynamoDBEventRecord{record}}))
-}
+	// Mock fetching of integration label
+	integrations := []*models.SourceIntegrationMetadata{
+		{
+			IntegrationID:    "8349b647-f731-48c4-9d6b-eefff4010c14",
+			IntegrationLabel: "test-label",
+		},
+	}
+	marshaledIntegrations, err := jsoniter.Marshal(integrations)
+	assert.NoError(t, err)
+	lambdaMock.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{Payload: marshaledIntegrations}, nil).Once()
 
+	// Mock sending data to firehose
+	firehoseMock.On("PutRecordBatchWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&firehose.PutRecordBatchOutput{}, nil).Once()
+
+	assert.NoError(t, sh.Run(context.Background(), zap.L(), &events.DynamoDBEvent{Records: []events.DynamoDBEventRecord{record}}))
+	lambdaMock.AssertExpectations(t)
+	firehoseMock.AssertExpectations(t)
+}

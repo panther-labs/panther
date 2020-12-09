@@ -32,7 +32,7 @@ var validate = validator.New()
 type ComplianceChange struct {
 	ChangeType       string `json:"changeType" validate:"required"`
 	IntegrationID    string `json:"integrationId" validate:"required"`
-	IntegrationLabel string `json:"integrationLabel" validate:"required"`
+	IntegrationLabel string `json:"integrationLabel"`
 	LastUpdated      string `json:"lastUpdated" validate:"required"`
 	PolicyID         string `json:"policyId" validate:"required"`
 	PolicySeverity   string `json:"policySeverity" validate:"required"`
@@ -45,24 +45,24 @@ type ComplianceChange struct {
 func (sh *StreamHandler) processComplianceSnapshot(record *events.DynamoDBEventRecord) (change *ComplianceChange, err error) {
 	switch record.EventName {
 	case string(lambdaevents.DynamoDBOperationTypeInsert):
-		change, err = dynamoRecordToCompliance(record.Change.NewImage)
+		change, err = sh.dynamoRecordToCompliance(record.Change.NewImage)
 		if err != nil {
 			return nil, err
 		}
 		change.ChangeType = ChangeTypeCreate
 	case string(lambdaevents.DynamoDBOperationTypeRemove):
-		change, err = dynamoRecordToCompliance(record.Change.OldImage)
+		change, err = sh.dynamoRecordToCompliance(record.Change.OldImage)
 		if err != nil {
 			return nil, err
 		}
 		change.ChangeType = ChangeTypeDelete
 	case string(lambdaevents.DynamoDBOperationTypeModify):
-		change, err = dynamoRecordToCompliance(record.Change.NewImage)
+		change, err = sh.dynamoRecordToCompliance(record.Change.NewImage)
 		if err != nil {
 			return nil, err
 		}
 		change.ChangeType = ChangeTypeModify
-		oldStatus, err := dynamoRecordToCompliance(record.Change.OldImage)
+		oldStatus, err := sh.dynamoRecordToCompliance(record.Change.OldImage)
 		if err != nil {
 			return nil, err
 		}
@@ -73,24 +73,21 @@ func (sh *StreamHandler) processComplianceSnapshot(record *events.DynamoDBEventR
 	default:
 		return nil, nil
 	}
+
 	label, err := sh.getIntegrationLabel(change.IntegrationID)
-	if err != nil {
+	if err != nil || len(label) == 0 {
 		return nil, err
 	}
-	if len(label) == 0 {
+	change.IntegrationLabel = label
+	if err := validate.Struct(&change); err != nil {
 		return nil, nil
 	}
-	change.IntegrationLabel = label
+
 	return change, nil
 }
 
-func dynamoRecordToCompliance(image map[string]*dynamodb.AttributeValue) (*ComplianceChange, error) {
+func (sh *StreamHandler) dynamoRecordToCompliance(image map[string]*dynamodb.AttributeValue) (*ComplianceChange, error) {
 	change := ComplianceChange{}
-	if err := dynamodbattribute.UnmarshalMap(image, &change); err != nil {
-		return nil, err
-	}
-	if err := validate.Struct(&change); err != nil {
-		return nil, err
-	}
-	return &change, nil
+	err := dynamodbattribute.UnmarshalMap(image, &change)
+	return &change, err
 }
