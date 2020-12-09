@@ -84,48 +84,17 @@ export const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.sli
  * as a single digit (all of them display it either as 03:00 or as 0300) and require string
  * manipulation which is harder
  * */
-export const formatDatetime = (datetime: string, verbose = false) => {
+export const formatDatetime = (datetime: string, verbose = false, useUTC = false) => {
   // get the offset minutes and calculate the hours from them
   const utcOffset = dayjs(datetime).utcOffset() / 60;
 
-  const suffix = `G[M]T${utcOffset > 0 ? '+' : ''}${utcOffset !== 0 ? utcOffset : ''}`;
+  const suffix = useUTC
+    ? 'UTC'
+    : `G[M]T${utcOffset > 0 ? '+' : ''}${utcOffset !== 0 ? utcOffset : ''}`;
   const format = verbose ? `dddd, DD MMMM YYYY, HH:mm (${suffix})` : `YYYY-MM-DD HH:mm ${suffix}`;
 
   // properly format the date
-  return dayjs(datetime).format(format);
-};
-
-/**
- * Given a dayjs format string, create a partial that accepts a datestring that can convert
- * UTC -> Local time and from Local time -> UTC.
- *
- * This is primarily used when converting local time in a frontend form with URL parameters in UTC.
- */
-export const formatTime = (format?: string) => (
-  datetime: string,
-  utcIn?: boolean,
-  utcOut?: boolean
-) => {
-  // Set the initial date context as utc or local
-  let date = utcIn ? dayjs.utc(datetime) : dayjs(datetime);
-
-  // Calculate offset in hours for the default format string
-  const utcOffsetHours = dayjs(datetime).utcOffset() / 60;
-
-  // Perform the proper conversion of time units
-  if (!utcIn && utcOut) {
-    date = date.subtract(date.utcOffset(), 'minute');
-  }
-
-  // Use the provided partial or our default
-  const fmt =
-    format ||
-    `YYYY-MM-DD HH:mm G[M]T${utcOffsetHours > 0 ? '+' : ''}${
-      utcOffsetHours !== 0 ? utcOffsetHours : ''
-    }`;
-
-  // Finally, return the time in UTC or Local time
-  return utcOut ? date.format(fmt) : date.local().format(fmt);
+  return (useUTC ? dayjs.utc(datetime) : dayjs(datetime)).format(format);
 };
 
 /** Slice text to 7 characters, mostly used for hashIds */
