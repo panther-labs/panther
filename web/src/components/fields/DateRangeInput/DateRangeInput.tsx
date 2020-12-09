@@ -18,26 +18,33 @@
 
 import React from 'react';
 import { Box, FormError, DateRangeInput, DateRangeInputProps } from 'pouncejs';
-import { formatTime } from 'Helpers/utils';
-import isEmpty from 'lodash/isEmpty';
 import { useField } from 'formik';
+import dayjs from 'dayjs';
+
+const shiftOffset = (date: Date, operation: 'subtract' | 'add') => {
+  const d = dayjs(date);
+  const utcOffsetHours = d.utcOffset() / 60;
+  const modifiedDate =
+    operation === 'subtract' ? d.subtract(utcOffsetHours, 'hour') : d.add(utcOffsetHours, 'hour');
+
+  return modifiedDate.toDate();
+};
 
 export interface FieldDateRangeInputProps
   extends Omit<DateRangeInputProps, 'name' | 'iconAlignment' | 'iconProps' | 'value' | 'onChange'> {
   nameStart: string;
   nameEnd: string;
+  useUTC?: boolean;
 }
-
-const postFormatter = formatTime('YYYY-MM-DDTHH:mm:ss[Z]');
-const preFormatter = formatTime('YYYY-MM-DDTHH:mm:ss');
 
 const FormikDateRangeInput: React.FC<FieldDateRangeInputProps> = ({
   nameStart,
   nameEnd,
+  useUTC = false,
   ...rest
 }) => {
-  const [, metaStart, helpersStart] = useField(nameStart);
-  const [, metaEnd, helpersEnd] = useField(nameEnd);
+  const [, metaStart, helpersStart] = useField<string>(nameStart);
+  const [, metaEnd, helpersEnd] = useField<string>(nameEnd);
 
   const { touched: touchedStart, error: errorStart, value: valueStart } = metaStart;
   const { setValue: setValueStart } = helpersStart;
@@ -45,47 +52,46 @@ const FormikDateRangeInput: React.FC<FieldDateRangeInputProps> = ({
   const { touched: touchedEnd, error: errorEnd, value: valueEnd } = metaEnd;
   const { setValue: setValueEnd } = helpersEnd;
 
-  const isInvalid = (touchedStart || touchedEnd) && (!!errorStart || !!errorEnd);
+  const touched = touchedStart || touchedEnd;
+  const error = errorStart || errorEnd;
+
+  const isInvalid = touched && !!error;
 
   const errorElementId = isInvalid ? `${nameStart}-${nameEnd}-error` : undefined;
 
   const value = React.useMemo(() => {
-    return [valueStart, valueEnd].map(date => {
-      if (date) {
-        return preFormatter(date, true, false);
-      }
-      return date;
-    });
-  }, [valueStart, valueEnd]);
+    // The last `.map` is an UGLY hack that's used as a workaround, to allow the date range picker
+    // to display the same exact time that was used as an initial value (stripping the timezone).
+    return [valueStart, valueEnd]
+      .filter(Boolean)
+      .map(val => (val ? new Date(val) : null))
+      .map(date => (useUTC ? shiftOffset(date, 'subtract') : date));
+  }, [valueStart, valueEnd, useUTC]);
 
-  const onRangeChange = React.useCallback(
+  const onRangeChange = React.useCallback<DateRangeInputProps['onChange']>(
     ([start, end]) => {
-      setValueStart(postFormatter(start, false, true));
-      setValueEnd(postFormatter(end, false, true));
-    },
-    [setValueStart, setValueEnd]
-  );
+      // This is an UGLY hack that's used as a workaround, to allow the date range picker to
+      // allow the user to select values in UTC (currently the picker selects dates in the user'ss
+      // timezone and this is something not configurable through a prop)
+      const startDate = useUTC ? shiftOffset(start, 'add') : start;
+      const endDate = useUTC ? shiftOffset(end, 'add') : end;
 
-  const error = React.useMemo(() => {
-    if (!isEmpty(errorStart)) {
-      return errorStart;
-    }
-    if (!isEmpty(errorEnd)) {
-      return errorEnd;
-    }
-    return null;
-  }, [isInvalid]);
+      setValueStart(startDate.toISOString());
+      setValueEnd(endDate.toISOString());
+    },
+    [setValueStart, setValueEnd, useUTC]
+  );
 
   return (
     <Box>
       <DateRangeInput
+        {...rest}
         name={`${nameStart}-${nameEnd}`}
         invalid={isInvalid}
-        {...rest}
         value={value}
         onChange={onRangeChange}
       />
-      {isInvalid && error && (
+      {isInvalid && (
         <FormError mt={2} id={errorElementId}>
           {error}
         </FormError>
