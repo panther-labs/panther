@@ -133,53 +133,54 @@ func diffWalk(a, b *ValueSchema, walk func(c Change) bool, path []string) bool {
 }
 
 func walkObject(a, b []FieldSchema, walk func(c Change) bool, path []string) bool {
-	for _, f := range diffFields(a, b) {
-		ch := Change{
-			Type: DeleteField,
-			Path: path,
-			From: f,
-		}
-		if !walk(ch) {
-			return false
-		}
-	}
-	for _, pair := range commonFields(a, b) {
-		fieldA, fieldB := pair[0], pair[1]
-		if !diffWalk(&fieldA.ValueSchema, &fieldB.ValueSchema, walk, append(path, fieldA.Name)) {
-			return false
-		}
-		if fieldA.Required != fieldB.Required {
+	for _, d := range DiffFields(a, b) {
+		switch {
+		case d.A != nil && d.B == nil:
 			ch := Change{
-				Type: UpdateFieldMeta,
-				Path: append(path, fieldA.Name, "Required"),
-				From: fieldA.Required,
-				To:   fieldB.Required,
+				Type: DeleteField,
+				Path: path,
+				From: d.A,
 			}
 			if !walk(ch) {
 				return false
 			}
-		}
-		if fieldA.Description != fieldB.Description {
+		case d.A != nil && d.B != nil:
+			fieldA, fieldB := d.A, d.B
+			if !diffWalk(&fieldA.ValueSchema, &fieldB.ValueSchema, walk, append(path, fieldA.Name)) {
+				return false
+			}
+			if fieldA.Required != fieldB.Required {
+				ch := Change{
+					Type: UpdateFieldMeta,
+					Path: append(path, fieldA.Name, "Required"),
+					From: fieldA.Required,
+					To:   fieldB.Required,
+				}
+				if !walk(ch) {
+					return false
+				}
+			}
+			if fieldA.Description != fieldB.Description {
+				ch := Change{
+					Type: UpdateFieldMeta,
+					Path: append(path, fieldA.Name, "Description"),
+					From: fieldA.Description,
+					To:   fieldB.Description,
+				}
+				if !walk(ch) {
+					return false
+				}
+			}
+		case d.A == nil && d.B != nil:
 			ch := Change{
-				Type: UpdateFieldMeta,
-				Path: append(path, fieldA.Name, "Description"),
-				From: fieldA.Description,
-				To:   fieldB.Description,
+				Path: path,
+				Type: AddField,
+				From: nil,
+				To:   d.B,
 			}
 			if !walk(ch) {
 				return false
 			}
-		}
-	}
-	for _, f := range diffFields(b, a) {
-		ch := Change{
-			Path: path,
-			Type: AddField,
-			From: nil,
-			To:   f,
-		}
-		if !walk(ch) {
-			return false
 		}
 	}
 	return true
@@ -193,15 +194,20 @@ func diffIndicators(a, b []string) ([]string, []string, bool) {
 	return a, b, !reflect.DeepEqual(a, b)
 }
 
-func commonFields(a, b []FieldSchema) (common [][2]*FieldSchema) {
+func DiffFields(a, b []FieldSchema) (d []FieldDiff) {
+	for _, f := range diffFields(a, b) {
+		d = append(d, FieldDiff{A: f})
+	}
+	for _, f := range diffFields(b, a) {
+		d = append(d, FieldDiff{B: f})
+	}
 	for i := range a {
 		fieldA := &a[i]
 		fieldB := findField(fieldA.Name, b)
 		if fieldB == nil {
 			continue
 		}
-		pair := [2]*FieldSchema{fieldA, fieldB}
-		common = append(common, pair)
+		d = append(d, FieldDiff{A: fieldA, B: fieldB})
 	}
 	return
 }
@@ -243,4 +249,9 @@ func indexOfField(name string, fields []FieldSchema) int {
 		}
 	}
 	return -1
+}
+
+type FieldDiff struct {
+	A *FieldSchema
+	B *FieldSchema
 }
