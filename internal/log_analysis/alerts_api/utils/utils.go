@@ -33,8 +33,9 @@ import (
 )
 
 var (
-	awsSession = session.Must(session.NewSession())
+	awsSession   = session.Must(session.NewSession())
 	lambdaClient = lambda.New(awsSession)
+
 	analysisClient gatewayapi.API = gatewayapi.NewClient(lambdaClient, "panther-analysis-api")
 )
 
@@ -82,9 +83,15 @@ func AlertItemToSummary(item *table.AlertItem) *alertmodels.AlertSummary {
 
 	description, reference, runbook := item.Description, item.Reference, item.Runbook
 
-	if description == "" && alertRule != nil { description = alertRule.Description }
-	if reference == "" && alertRule != nil { reference = alertRule.Reference }
-	if runbook == "" && alertRule != nil { runbook = alertRule.Runbook }
+	if description == "" && alertRule != nil {
+		description = alertRule.Description
+	}
+	if reference == "" && alertRule != nil {
+		reference = alertRule.Reference
+	}
+	if runbook == "" && alertRule != nil {
+		runbook = alertRule.Runbook
+	}
 
 	return &alertmodels.AlertSummary{
 		AlertID:           item.AlertID,
@@ -110,9 +117,9 @@ func AlertItemToSummary(item *table.AlertItem) *alertmodels.AlertSummary {
 		ResourceTypes:     item.ResourceTypes,
 		ResourceID:        item.ResourceID,
 		// Generated Fields Support
-		Description:       description,
-		Reference:         reference,
-		Runbook:           runbook,
+		Description: description,
+		Reference:   reference,
+		Runbook:     runbook,
 	}
 }
 
