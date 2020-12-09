@@ -1127,9 +1127,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 class="panther-53"
                               />
                               <div
-                                aria-busy="false"
                                 aria-label="Su Nov 01 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1151,9 +1149,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                               class="panther-62"
                             >
                               <div
-                                aria-busy="false"
                                 aria-label="Mo Nov 02 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1171,9 +1167,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Tu Nov 03 2020"
-                                aria-selected="true"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1191,9 +1185,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="We Nov 04 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1211,9 +1203,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Th Nov 05 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1231,9 +1221,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Fr Nov 06 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1251,9 +1239,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Sa Nov 07 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1271,9 +1257,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Su Nov 08 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1295,9 +1279,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                               class="panther-62"
                             >
                               <div
-                                aria-busy="false"
                                 aria-label="Mo Nov 09 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1315,9 +1297,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Tu Nov 10 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1335,9 +1315,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="We Nov 11 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1355,9 +1333,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Th Nov 12 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1375,9 +1351,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Fr Nov 13 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1395,9 +1369,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Sa Nov 14 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1415,9 +1387,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Su Nov 15 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1439,9 +1409,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                               class="panther-62"
                             >
                               <div
-                                aria-busy="false"
                                 aria-label="Mo Nov 16 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1459,9 +1427,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Tu Nov 17 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1479,9 +1445,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="We Nov 18 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1499,9 +1463,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Th Nov 19 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1519,9 +1481,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Fr Nov 20 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1539,9 +1499,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Sa Nov 21 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1559,9 +1517,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Su Nov 22 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1583,9 +1539,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                               class="panther-62"
                             >
                               <div
-                                aria-busy="false"
                                 aria-label="Mo Nov 23 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1603,9 +1557,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Tu Nov 24 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1623,9 +1575,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="We Nov 25 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1643,9 +1593,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Th Nov 26 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1663,9 +1611,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Fr Nov 27 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1683,9 +1629,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Sa Nov 28 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1703,9 +1647,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Su Nov 29 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1727,9 +1669,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                               class="panther-62"
                             >
                               <div
-                                aria-busy="false"
                                 aria-label="Mo Nov 30 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1851,9 +1791,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 class="panther-53"
                               />
                               <div
-                                aria-busy="false"
                                 aria-label="Tu Dec 01 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1871,9 +1809,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="We Dec 02 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1891,9 +1827,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Th Dec 03 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1911,9 +1845,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Fr Dec 04 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1931,9 +1863,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Sa Dec 05 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1951,9 +1881,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Su Dec 06 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1975,9 +1903,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                               class="panther-62"
                             >
                               <div
-                                aria-busy="false"
                                 aria-label="Mo Dec 07 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -1995,9 +1921,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Tu Dec 08 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2015,9 +1939,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="We Dec 09 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2035,9 +1957,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Th Dec 10 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2055,9 +1975,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Fr Dec 11 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2075,9 +1993,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Sa Dec 12 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2095,9 +2011,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Su Dec 13 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2119,9 +2033,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                               class="panther-62"
                             >
                               <div
-                                aria-busy="false"
                                 aria-label="Mo Dec 14 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2139,9 +2051,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Tu Dec 15 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2159,9 +2069,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="We Dec 16 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2179,9 +2087,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Th Dec 17 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2199,9 +2105,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Fr Dec 18 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2219,9 +2123,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Sa Dec 19 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2239,9 +2141,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Su Dec 20 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2263,9 +2163,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                               class="panther-62"
                             >
                               <div
-                                aria-busy="false"
                                 aria-label="Mo Dec 21 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2283,9 +2181,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Tu Dec 22 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2303,9 +2199,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="We Dec 23 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2323,9 +2217,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Th Dec 24 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2343,9 +2235,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Fr Dec 25 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2363,9 +2253,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Sa Dec 26 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2383,9 +2271,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Su Dec 27 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2407,9 +2293,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                               class="panther-62"
                             >
                               <div
-                                aria-busy="false"
                                 aria-label="Mo Dec 28 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2427,9 +2311,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Tu Dec 29 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2447,9 +2329,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="We Dec 30 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2467,9 +2347,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                                 </button>
                               </div>
                               <div
-                                aria-busy="false"
                                 aria-label="Th Dec 31 2020"
-                                aria-selected="false"
                                 class="panther-53"
                                 role="gridcell"
                               >
@@ -2527,9 +2405,9 @@ exports[`FormikDateRangeInput renders 1`] = `
                               autocomplete="off"
                               class="panther-278"
                               id="from-time-hours"
-                              placeholder="15"
+                              placeholder="13"
                               type="text"
-                              value="15"
+                              value="13"
                             />
                             <label
                               class="panther-279"
@@ -2640,9 +2518,9 @@ exports[`FormikDateRangeInput renders 1`] = `
                               autocomplete="off"
                               class="panther-278"
                               id="to-time-hours"
-                              placeholder="15"
+                              placeholder="13"
                               type="text"
-                              value="15"
+                              value="13"
                             />
                             <label
                               class="panther-279"
@@ -2736,6 +2614,7 @@ exports[`FormikDateRangeInput renders 1`] = `
                       </button>
                       <button
                         class="panther-311"
+                        disabled=""
                         type="button"
                       >
                         Apply

@@ -61,86 +61,60 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-  mockDate.set(new Date('November 03, 2020 15:00:00'));
+  mockDate.set(new Date('November 03, 2020 15:00:00 GMT +2'));
 });
 
 afterEach(() => {
   mockDate.reset();
 });
 
-const month = 10;
-const year = 2020;
-const day = 1;
-const starting = dayjs().date(day).month(month).year(year).hour(1).minute(2);
-const ending = starting.add(10, 'day');
-
 describe('FormikDateRangeInput', () => {
   it('renders', async () => {
-    const onSubmit = jest.fn();
-    const { container, findByLabelText, getByAriaLabel } = render(<TestForm onSubmit={onSubmit} />);
+    const { container, getByLabelText } = render(<TestForm onSubmit={jest.fn()} />);
 
-    const inputFrom = await findByLabelText('Date End');
-    await fireEvent.click(inputFrom);
-    await waitFor(() => {
-      expect(getByAriaLabel('Last Month')).toBeTruthy();
-    });
+    fireEvent.click(getByLabelText('Date End'));
     expect(container).toMatchSnapshot();
   });
 
-  it('allows UTC formatting by default', async () => {
+  it('allows the user to select local mockDate.reset(), but still submits dates in UTC ', async () => {
     const onSubmit = jest.fn();
-    const { getByAriaLabel, findByLabelText, findByText } = render(
-      <TestForm onSubmit={onSubmit} />
-    );
-    const inputFrom = await findByLabelText('Date End');
-    await fireEvent.click(inputFrom);
+    const { getByLabelText, getByText } = render(<TestForm onSubmit={onSubmit} />);
+
+    fireEvent.click(getByLabelText('Date End'));
+    fireEvent.click(getByLabelText('Last 24 Hours'));
+    fireEvent.click(getByText('Apply'));
+    fireEvent.click(getByText('Submit'));
+
     await waitFor(() => {
-      expect(getByAriaLabel('Last 24 Hours')).toBeTruthy();
-    });
-    const preset = await findByLabelText('Last 24 Hours');
-    await waitFor(() => {
-      fireEvent.click(preset);
-    });
-    const dummyFormSubmit = await findByText('Submit');
-    const submitBtn = await findByText('Apply');
-    await waitFor(() => {
-      fireEvent.click(submitBtn);
-      fireEvent.click(dummyFormSubmit);
-    });
-    expect(onSubmit).toHaveBeenCalled();
-    expect(onSubmit).toHaveBeenCalledWith({
-      start: '2020-11-02T15:00:00Z',
-      end: '2020-11-03T15:00:00Z',
+      expect(onSubmit).toHaveBeenCalledWith({
+        start: '2020-11-02T13:00:00.000Z',
+        end: '2020-11-03T13:00:00.000Z',
+      });
     });
   });
 
-  it('parses the dates in UTC format', async () => {
+  it('correctly parses dates & displays picker in local time when `timezone` is `local`', async () => {
     const onSubmit = jest.fn();
-    const start = starting.format('YYYY-MM-DDTHH:mm:ss[Z]');
-    const end = ending.format('YYYY-MM-DDTHH:mm:ss[Z]');
-    const { getByAriaLabel, findByLabelText, findByText } = render(
-      <TestForm initialValues={{ start, end }} onSubmit={onSubmit} />
-    );
-    const inputFrom = await findByLabelText('Date End');
-    await fireEvent.click(inputFrom);
-    await waitFor(() => {
-      expect(getByAriaLabel('Last Month')).toBeTruthy();
-    });
-    const preset = await findByLabelText('Last Month');
-    const submitBtn = await findByText('Apply');
 
-    const dummyFormSubmit = await findByText('Submit');
+    const fakeDayjs = dayjs('January 01, 2020 15:00:00 GMT+2');
+    const start = fakeDayjs.toISOString();
+    const end = fakeDayjs.add(10, 'day').toISOString();
+
+    const { getByText, getByLabelText } = render(
+      <TestForm initialValues={{ start, end }} format="MM/DD/YYYY HH:mm" onSubmit={onSubmit} />
+    );
+
+    // Jest tests run in UTC timezone so we expect local timezone to be UTC
+    expect(getByLabelText('Date Start')).toHaveValue('01/01/2020 13:00');
+    expect(getByLabelText('Date End')).toHaveValue('01/11/2020 13:00');
+
+    fireEvent.click(getByText('Submit'));
+
     await waitFor(() => {
-      fireEvent.click(preset);
-    });
-    await fireEvent.click(submitBtn);
-    await waitFor(() => {
-      fireEvent.click(dummyFormSubmit);
-    });
-    expect(onSubmit).toHaveBeenCalled();
-    expect(onSubmit).toHaveBeenCalledWith({
-      start: '2020-10-03T15:00:00Z',
-      end: '2020-11-03T15:00:00Z',
+      expect(onSubmit).toHaveBeenCalledWith({
+        start: '2020-01-01T13:00:00.000Z',
+        end: '2020-01-11T13:00:00.000Z',
+      });
     });
   });
 });
