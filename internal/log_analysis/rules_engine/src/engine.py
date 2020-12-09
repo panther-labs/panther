@@ -29,6 +29,8 @@ from .rule import Rule
 
 _RULES_CACHE_DURATION = timedelta(minutes=5)
 
+MISSING_UDM_EXCEPTION = AttributeError("'dict' object has no attribute 'udm'")
+
 
 class Engine:
     """The engine that runs Python rules."""
@@ -59,12 +61,13 @@ class Engine:
         format_exception = lambda exc: '{}: {}'.format(type(exc).__name__, exc) if exc else exc
         # for tests against rules using the `udm` method, you must specify `p_log_type`
         # field in each test definition
-        if isinstance(rule_result.rule_exception, AttributeError):
-            if str(rule_result.rule_exception) == '\'dict\' object has no attribute \'udm\'':
-                rule_result.rule_exception = AttributeError(
-                    'The test specification for rules using the \'udm\' method must specify the \'p_log_type\' field,' +
-                    ' and there must be an enabled DataModel for the log type.'
-                )
+        if rule_result.rule_exception and type(
+            rule_result.rule_exception
+        ) is type(MISSING_UDM_EXCEPTION) and rule_result.rule_exception.args == MISSING_UDM_EXCEPTION.args:
+            rule_result.rule_exception = AttributeError(
+                'The test specification for rules using the \'udm\' method must specify the \'p_log_type\' field,' +
+                ' and there must be an enabled DataModel for the log type.'
+            )
         return {
             'id': test_spec['id'],
             'ruleId': rule.rule_id,
