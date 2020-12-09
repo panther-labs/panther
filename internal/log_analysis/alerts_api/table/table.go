@@ -39,6 +39,7 @@ const (
 	EventCountKey        = "eventCount"
 	StatusKey            = "status"
 	LogTypesKey          = "logTypes"
+	ResourceTypesKey     = "resourceTypes"
 	DeliveryResponsesKey = "deliveryResponses"
 	LastUpdatedByKey     = "lastUpdatedBy"
 	LastUpdatedByTimeKey = "lastUpdatedByTime"
@@ -109,4 +110,11 @@ type AlertItem struct {
 	LastUpdatedBy string `json:"lastUpdatedBy"`
 	// LastUpdatedByTime - stores the timestamp of the last person who modified the Alert
 	LastUpdatedByTime time.Time `json:"lastUpdatedByTime"`
+	// Policy related fields
+	PolicyID          string   `json:"policyId"`
+	PolicyDisplayName string   `json:"policyDisplayName"`
+	PolicySourceID    string   `json:"policySourceId"`
+	PolicyVersion     string   `json:"policyVersion"`
+	ResourceTypes     []string `json:"resourceTypes"`
+	ResourceID        string   `json:"resourceId"`
 }

@@ -73,6 +73,16 @@ type ListPoliciesInput struct {
 	// ----- Paging -----
 	PageSize int `json:"pageSize" validate:"min=0,max=1000"`
 	Page     int `json:"page" validate:"min=0"`
+
+	// Only include policies whose creator matches this user ID (which need not be a uuid)
+	CreatedBy string `json:"createdBy"`
+
+	// Only include policies which were last modified by this user ID
+	LastModifiedBy string `json:"lastModifiedBy"`
+
+	// If True, include only policies which were created by the system during the initial deployment
+	// If False, include only policies where were NOT created by the system during the initial deployment
+	InitialSet *bool `json:"initialSet"`
 }
 
 type ListPoliciesOutput struct {

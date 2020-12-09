@@ -19,42 +19,118 @@ package forwarder
  */
 
 import (
-	"os"
-
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	jsoniter "github.com/json-iterator/go"
-	"go.uber.org/zap"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/delivery/models"
+	alertApiModels "github.com/panther-labs/panther/internal/log_analysis/alerts_api/models"
+	"github.com/panther-labs/panther/pkg/metrics"
 )
 
-var (
-	alertQueueURL                 = os.Getenv("ALERTING_QUEUE_URL")
-	awsSession                    = session.Must(session.NewSession())
-	sqsClient     sqsiface.SQSAPI = sqs.New(awsSession)
-)
+const defaultTimePartition = "defaultPartition"
 
-// Handle forwards an alert to the alert delivery SQS queue
-func Handle(event *models.Alert) error {
-	zap.L().Info("received alert", zap.String("policyId", event.AnalysisID))
+type Handler struct {
+	SqsClient        sqsiface.SQSAPI
+	DdbClient        dynamodbiface.DynamoDBAPI
+	AlertTable       string
+	AlertingQueueURL string
+	MetricsLogger    metrics.Logger
+}
 
-	msgBody, err := jsoniter.Marshal(event)
-	if err != nil {
+func (h *Handler) Do(alert models.Alert) error {
+	// Persist to DDB
+	if err := h.storeNewAlert(alert); err != nil {
+		return errors.Wrap(err, "failed to store new alert (policy) in DDB")
+	}
+
+	// Send to Dispatch queue
+	if err := h.sendAlertNotification(alert); err != nil {
 		return err
 	}
+
+	// Log stats
+	if alert.Type == models.PolicyType {
+		h.logStats(alert)
+	}
+
+	return nil
+}
+
+func (h *Handler) logStats(alert models.Alert) {
+	h.MetricsLogger.Log(
+		[]metrics.Dimension{
+			{Name: "Severity", Value: alert.Severity},
+			{Name: "AnalysisType", Value: "Policy"},
+			{Name: "AnalysisID", Value: alert.AnalysisID},
+		},
+		metrics.Metric{
+			Name:  "AlertsCreated",
+			Value: 1,
+			Unit:  metrics.UnitCount,
+		},
+	)
+}
+
+func (h *Handler) storeNewAlert(alert models.Alert) error {
+	// Here we re-use the same field names for alerts that were
+	// generated from rules.
+	dynamoAlert := &alertApiModels.Alert{
+		ID:            *alert.AlertID,
+		TimePartition: defaultTimePartition,
+		Severity:      aws.String(alert.Severity),
+		Title:         alert.Title,
+		AlertPolicy: alertApiModels.AlertPolicy{
+			PolicyID:          alert.AnalysisID,
+			PolicyDisplayName: aws.StringValue(alert.AnalysisName),
+			PolicyVersion:     aws.StringValue(alert.Version),
+			PolicySourceID:    alert.AnalysisSourceID,
+			ResourceTypes:     alert.ResourceTypes,
+			ResourceID:        alert.ResourceID,
+		},
+		// Reuse part of the struct that was intended for Rules
+		AlertDedupEvent: alertApiModels.AlertDedupEvent{
+			RuleID:       alert.AnalysisID, // Not used, but needed to meet the `ruleId-creationTime-index` constraint
+			CreationTime: alert.CreatedAt,
+			UpdateTime:   alert.CreatedAt,
+			Type:         alert.Type,
+		},
+	}
+
+	marshaledAlert, err := dynamodbattribute.MarshalMap(dynamoAlert)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal alert")
+	}
+	putItemRequest := &dynamodb.PutItemInput{
+		Item:      marshaledAlert,
+		TableName: &h.AlertTable,
+	}
+	_, err = h.DdbClient.PutItem(putItemRequest)
+	if err != nil {
+		return errors.Wrap(err, "failed to store alert")
+	}
+
+	return nil
+}
+
+func (h *Handler) sendAlertNotification(alert models.Alert) error {
+	msgBody, err := jsoniter.MarshalToString(alert)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal alert notification")
+	}
+
 	input := &sqs.SendMessageInput{
-		QueueUrl:    aws.String(alertQueueURL),
-		MessageBody: aws.String(string(msgBody)),
+		QueueUrl:    &h.AlertingQueueURL,
+		MessageBody: &msgBody,
 	}
-	_, err = sqsClient.SendMessage(input)
+	_, err = h.SqsClient.SendMessage(input)
 	if err != nil {
-		zap.L().Warn("failed to send message to remediation", zap.Error(err))
-		return err
+		return errors.Wrap(err, "failed to send notification")
 	}
-	zap.L().Info("successfully triggered alert action")
-
 	return nil
 }

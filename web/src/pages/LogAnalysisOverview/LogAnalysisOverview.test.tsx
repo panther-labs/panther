@@ -18,9 +18,10 @@
 
 import React from 'react';
 import MockDate from 'mockdate';
-import { AlertStatusesEnum, SeverityEnum } from 'Generated/schema';
+import { AlertStatusesEnum, AlertSummaryRuleInfo, SeverityEnum } from 'Generated/schema';
 import {
   buildAlertSummary,
+  buildAlertSummaryRuleInfo,
   buildListAlertsResponse,
   buildLogAnalysisMetricsResponse,
   buildSingleValue,
@@ -36,11 +37,30 @@ import { mockGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.gener
 
 let defaultMocks: MockedResponse[];
 
-const recentAlerts = [buildAlertSummary({ alertId: '1', ruleId: 'rule_1' })];
+const recentAlerts = [
+  buildAlertSummary({
+    alertId: '1',
+    detection: buildAlertSummaryRuleInfo({
+      ruleId: 'rule_1',
+    }),
+  }),
+];
 
 const highSeverityAlerts = [
-  buildAlertSummary({ alertId: '2', ruleId: 'rule_2', severity: SeverityEnum.Critical }),
-  buildAlertSummary({ alertId: '3', ruleId: 'rule_3', severity: SeverityEnum.High }),
+  buildAlertSummary({
+    alertId: '2',
+    detection: buildAlertSummaryRuleInfo({
+      ruleId: 'rule_2',
+    }),
+    severity: SeverityEnum.Critical,
+  }),
+  buildAlertSummary({
+    alertId: '3',
+    detection: buildAlertSummaryRuleInfo({
+      ruleId: 'rule_3',
+    }),
+    severity: SeverityEnum.High,
+  }),
 ];
 
 describe('Log Analysis Overview', () => {
@@ -143,12 +163,12 @@ describe('Log Analysis Overview', () => {
     await Promise.all(loadingInterfaceElements.map(ele => waitForElementToBeRemoved(ele)));
 
     recentAlerts.forEach(alert => {
-      expect(getByAriaLabel(`Link to rule ${alert.ruleId}`));
+      expect(getByAriaLabel(`Link to rule ${(alert.detection as AlertSummaryRuleInfo).ruleId}`));
     });
     const topAlertsTabButton = getByText('High Severity Alerts (2)');
     fireEvent.click(topAlertsTabButton);
     highSeverityAlerts.forEach(alert => {
-      expect(getByAriaLabel(`Link to rule ${alert.ruleId}`));
+      expect(getByAriaLabel(`Link to rule ${(alert.detection as AlertSummaryRuleInfo).ruleId}`));
     });
   });
 });

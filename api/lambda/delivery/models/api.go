@@ -122,7 +122,7 @@ type DeliverAlertOutput = alertModels.AlertSummary
 
 // Alert is the schema for each row in the Dynamo alerts table.
 type Alert struct {
-	// ID is the rule that triggered the alert.
+	// ID is the rule/policy that triggered the alert.
 	AnalysisID string `json:"analysisId" validate:"required"`
 
 	// Type specifies if an alert is for a policy or a rule
@@ -140,7 +140,16 @@ type Alert struct {
 	// LogTypes is the set of logs that could trigger the alert.
 	LogTypes []string `json:"logTypes,omitempty"`
 
-	// AnalysisDescription is the description of the rule that triggered the alert.
+	// ResourceTypes is the set of resources that could trigger the alert.
+	ResourceTypes []string `json:"resourceTypes,omitempty"`
+
+	// ResourceID is the ID of the failing resource in the policy.
+	ResourceID string `json:"resourceId,omitempty"`
+
+	// AnalysisSourceID is the ID of the source integration for the rule/policy that failed.
+	AnalysisSourceID string `json:"analysisSourceId,omitempty"`
+
+	// AnalysisDescription is the description of the rule/policy that triggered the alert.
 	AnalysisDescription string `json:"analysisDescription,omitempty"`
 
 	// Name is the name of the policy at the time the alert was triggered.
