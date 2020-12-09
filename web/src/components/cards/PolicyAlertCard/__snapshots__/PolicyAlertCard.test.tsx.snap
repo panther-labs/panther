@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`RuleAlertCard should match snapshot 1`] = `
+exports[`PolicyAlertCard should match snapshot 1`] = `
 @keyframes animation-0 {
   0% {
     -webkit-transform: rotate(0);
@@ -119,7 +119,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
 
 .panther-5 {
   font-size: 0.75rem;
-  color: #09a084;
+  color: #29bac6;
 }
 
 .panther-37 {
@@ -221,11 +221,26 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   color: currentColor;
 }
 
-.panther-16 {
+.panther-14 {
+  font-size: 0.875rem;
+  font-weight: 500;
+  opacity: 0.3;
+  display: -webkit-inline-box;
+  display: -webkit-inline-flex;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  min-height: 24px;
+}
+
+.panther-19 {
   height: 18px;
 }
 
-.panther-15 {
+.panther-18 {
   display: inline-block;
   vertical-align: sub;
   -webkit-animation: animation-0 2s linear infinite;
@@ -234,7 +249,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   height: 18px;
 }
 
-.panther-14 {
+.panther-17 {
   stroke-dashoffset: 600;
   stroke-dasharray: 300;
   stroke-width: 13;
@@ -246,7 +261,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   fill: transparent;
 }
 
-.panther-23 {
+.panther-26 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -261,11 +276,11 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   flex-wrap: wrap;
 }
 
-.panther-23>*:not(:last-child) {
+.panther-26>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-22 {
+.panther-25 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -276,18 +291,18 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   align-items: center;
 }
 
-.panther-22>*:not(:last-child) {
+.panther-25>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-20 {
+.panther-23 {
   width: 12px;
   height: 12px;
-  background-color: hsl(221, 31%, 31%);
+  background-color: hsl(159, 29%, 39%);
   border-radius: 99999px;
 }
 
-.panther-21 {
+.panther-24 {
   font-size: 0.75rem;
   font-weight: 400;
   line-height: 1.5;
@@ -491,7 +506,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
           <span
             class="panther-5"
           >
-            Rule Error
+            Policy Fail
           </span>
           <div
             class="panther-37"
@@ -500,13 +515,13 @@ exports[`RuleAlertCard should match snapshot 1`] = `
               class="panther-12"
             >
               <dt
-                aria-labelledby="ruleobject-object"
+                aria-labelledby="policyobject-object"
                 class="panther-6"
               >
-                Rule
+                Policy
               </dt>
               <dd
-                aria-labelledby="ruleobject-object"
+                aria-labelledby="policyobject-object"
                 class="panther-11"
               >
                 <div
@@ -515,11 +530,11 @@ exports[`RuleAlertCard should match snapshot 1`] = `
                   <span
                     class="panther-7"
                   >
-                    8780849b-30b8-4ce2-934b-bf033369b110
+                    a68babd7-7c1c-4dee-a33e-b8009e6d8017
                   </span>
                   <a
-                    aria-label="Link to rule 8780849b-30b8-4ce2-934b-bf033369b110"
-                    href="/log-analysis/rules/8780849b-30b8-4ce2-934b-bf033369b110/"
+                    aria-label="Link to policy a68babd7-7c1c-4dee-a33e-b8009e6d8017"
+                    href="/cloud-security/policies/a68babd7-7c1c-4dee-a33e-b8009e6d8017/"
                   >
                     <div
                       class="panther-9"
@@ -542,6 +557,22 @@ exports[`RuleAlertCard should match snapshot 1`] = `
               class="panther-12"
             >
               <dt
+                aria-labelledby="sourcenull"
+                class="panther-6"
+              >
+                Source
+              </dt>
+              <dd
+                aria-labelledby="sourcenull"
+                class="panther-14"
+              >
+                Not Set
+              </dd>
+            </dl>
+            <dl
+              class="panther-12"
+            >
+              <dt
                 aria-labelledby="destinationsobject-object"
                 class="panther-6"
               >
@@ -552,15 +583,15 @@ exports[`RuleAlertCard should match snapshot 1`] = `
                 class="panther-11"
               >
                 <div
-                  class="panther-16"
+                  class="panther-19"
                 >
                   <svg
                     aria-label="Loading..."
-                    class="panther-15"
+                    class="panther-18"
                     viewBox="0 0 150 150"
                   >
                     <circle
-                      class="panther-14"
+                      class="panther-17"
                       color="current"
                       cx="75"
                       cy="75"
@@ -574,47 +605,31 @@ exports[`RuleAlertCard should match snapshot 1`] = `
               class="panther-12"
             >
               <dt
-                aria-labelledby="log-typesobject-object"
+                aria-labelledby="resource-typesobject-object"
                 class="panther-6"
               >
-                Log Types
+                Resource Types
               </dt>
               <dd
-                aria-labelledby="log-typesobject-object"
+                aria-labelledby="resource-typesobject-object"
                 class="panther-11"
               >
                 <div
-                  class="panther-23"
+                  class="panther-26"
                 >
                   <div
-                    class="panther-22"
+                    class="panther-25"
                   >
                     <span
-                      class="panther-20"
+                      class="panther-23"
                     />
                     <span
-                      class="panther-21"
+                      class="panther-24"
                     >
-                      Personal Loan Account
+                      brand
                     </span>
                   </div>
                 </div>
-              </dd>
-            </dl>
-            <dl
-              class="panther-12"
-            >
-              <dt
-                aria-labelledby="events240"
-                class="panther-6"
-              >
-                Events
-              </dt>
-              <dd
-                aria-labelledby="events240"
-                class="panther-11"
-              >
-                240
               </dd>
             </dl>
             <div

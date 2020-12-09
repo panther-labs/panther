@@ -19,6 +19,7 @@
 import {
   buildAlertSummary,
   buildAlertSummaryPolicyInfo,
+  buildComplianceIntegration,
   buildDeliveryResponse,
   buildDestination,
   render,
@@ -32,12 +33,12 @@ import {
   SeverityEnum,
 } from 'Generated/schema';
 import urls from 'Source/urls';
-import { mockListDestinations } from 'Source/graphql/queries';
+import { mockListComplianceSourceNames, mockListDestinations } from 'Source/graphql/queries';
 import PolicyAlertCard from './index';
 
 describe('PolicyAlertCard', () => {
   it('should match snapshot', async () => {
-    const alert = buildAlertSummary();
+    const alert = buildAlertSummary({ detection: buildAlertSummaryPolicyInfo() });
 
     const { container } = render(<PolicyAlertCard alert={alert} />);
 
@@ -68,8 +69,8 @@ describe('PolicyAlertCard', () => {
     });
   });
 
-  it('should not display link to Rule', async () => {
-    const alert = buildAlertSummary();
+  it('should not display link to Policy', async () => {
+    const alert = buildAlertSummary({ detection: buildAlertSummaryPolicyInfo() });
     const detectionData = alert.detection as AlertSummaryPolicyInfo;
 
     const { queryByText, queryByAriaLabel } = render(
@@ -81,7 +82,7 @@ describe('PolicyAlertCard', () => {
   });
 
   it('should check links are valid', async () => {
-    const alert = buildAlertSummary();
+    const alert = buildAlertSummary({ detection: buildAlertSummaryPolicyInfo() });
     const detectionData = alert.detection as AlertSummaryPolicyInfo;
 
     const { getByAriaLabel } = render(<PolicyAlertCard alert={alert} />);
@@ -99,6 +100,7 @@ describe('PolicyAlertCard', () => {
   it('should render alert destinations logos', async () => {
     const outputId = 'destination-of-alert';
     const alert = buildAlertSummary({
+      detection: buildAlertSummaryPolicyInfo(),
       deliveryResponses: [buildDeliveryResponse({ outputId })],
     });
     const destination = buildDestination({ outputId, outputType: DestinationTypeEnum.Slack });
@@ -113,9 +115,35 @@ describe('PolicyAlertCard', () => {
     expect(getByAltText(`${destination.outputType} logo`)).toBeInTheDocument();
   });
 
+  it("should render the source's name", async () => {
+    const sourceId = 'destination-of-alert';
+    const alert = buildAlertSummary({
+      detection: buildAlertSummaryPolicyInfo({ policySourceId: sourceId }),
+    });
+    const mocks = [
+      mockListComplianceSourceNames({
+        data: {
+          listComplianceIntegrations: [
+            buildComplianceIntegration({
+              integrationId: sourceId,
+              integrationLabel: 'fake-source-name',
+            }),
+          ],
+        },
+      }),
+    ];
+
+    const { findByText } = render(<PolicyAlertCard alert={alert} />, {
+      mocks,
+    });
+
+    expect(await findByText('fake-source-name')).toBeInTheDocument();
+  });
+
   it('should render message that destination delivery is failing', async () => {
     const outputId = 'destination-of-alert';
     const alert = buildAlertSummary({
+      detection: buildAlertSummaryPolicyInfo(),
       deliveryResponses: [buildDeliveryResponse({ outputId, success: false })],
     });
     const destination = buildDestination({ outputId, outputType: DestinationTypeEnum.Slack });
