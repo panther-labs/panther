@@ -18,7 +18,7 @@
 
 import GenericItemCard from 'Components/GenericItemCard';
 import { Flex, Icon, Link, Text, Box } from 'pouncejs';
-import {AlertSummaryRuleInfo, AlertTypesEnum } from 'Generated/schema';
+import { AlertSummaryRuleInfo, AlertTypesEnum } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import React from 'react';
