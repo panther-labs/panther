@@ -1,5 +1,3 @@
-package cloudsecuritylogs
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,19 +16,4 @@ package cloudsecuritylogs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-)
-
-// LogTypes exports the available log type entries
-func LogTypes() logtypes.Group {
-	return logTypes
-}
-
-var logTypes = logtypes.Must("cloudsecurity", logTypeCompliance, logTypeResource)
-
-// NativeLogTypesResolver returns a resolver for native log types.
-// Use this instead of registry.Default()
-func Resolver() logtypes.Resolver {
-	return logtypes.LocalResolver(logTypes)
-}
+export { default } from './NoDataFound';

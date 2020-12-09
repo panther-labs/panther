@@ -32,7 +32,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/compliance/cloudsecuritylogs"
+	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
@@ -84,7 +84,7 @@ func main() {
 
 	resolver := logtypes.ChainResolvers(
 		registry.NativeLogTypesResolver(),
-		cloudsecuritylogs.Resolver(),
+		snapshotlogs.Resolver(),
 		&logtypesapi.Resolver{
 			LogTypesAPI: logtypesAPI,
 		},

@@ -1,4 +1,4 @@
-package sources
+package snapshotlogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,15 +19,11 @@ package sources
  */
 
 import (
-	"fmt"
+	"testing"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 )
 
-// ErrUnsupportedFileType is returned when the log processor encounters a file type
-// that is not supported and cannot process
-type ErrUnsupportedFileType struct {
-	Type string
-}
-
-func (e *ErrUnsupportedFileType) Error() string {
-	return fmt.Sprintf("unsupported file type %s", e.Type)
+func TestSnapshotsLogs(t *testing.T) {
+	logtesting.RunTestsFromYAML(t, LogTypes(), "./testdata/snapshot_tests.yml")
 }

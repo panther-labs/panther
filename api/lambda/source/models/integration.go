@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 )
 
 // SourceIntegration represents a Panther integration with a source.
@@ -66,14 +67,9 @@ type SourceIntegrationMetadata struct {
 }
 
 func (info *SourceIntegration) RequiredLogTypes() (logTypes []string) {
-	// We use a switch to avoid git conflicts with enterprise
 	switch {
 	case info.IntegrationType == IntegrationTypeAWSScan:
-		var logTypes []string
-		for _, entry := range cloudsecuritylogs.LogTypes().Entries() {
-			logTypes = append(logTypes, entry.Name())
-		}
-		return logTypes
+		return logtypes.CollectNames(snapshotlogs.LogTypes())
 	case info.SqsConfig != nil:
 		return info.SqsConfig.LogTypes
 	default:

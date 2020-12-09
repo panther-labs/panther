@@ -30,6 +30,7 @@ import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import invert from 'lodash/invert';
 import useUrlParams from 'Hooks/useUrlParams';
 import { useListDestinations } from 'Source/graphql/queries';
+import { AlertDetailsRuleInfo, AlertTypesEnum } from 'Generated/schema';
 import { useAlertDetails } from './graphql/alertDetails.generated';
 import { useRuleTeaser } from './graphql/ruleTeaser.generated';
 import AlertDetailsBanner from './AlertDetailsBanner';
@@ -69,11 +70,13 @@ const AlertDetailsPage = () => {
     },
   });
 
+  const alertDetectionInfo = alertData?.alert?.detection as AlertDetailsRuleInfo;
+
   const { data: ruleData, loading: ruleLoading } = useRuleTeaser({
-    skip: !alertData,
+    skip: !alertData || alertData.alert?.type === AlertTypesEnum.Policy,
     variables: {
       input: {
-        id: alertData?.alert?.ruleId,
+        id: alertDetectionInfo?.ruleId,
       },
     },
   });
@@ -87,7 +90,7 @@ const AlertDetailsPage = () => {
       variables: {
         input: {
           ...variables.input,
-          eventsExclusiveStartKey: alertData.alert.eventsLastEvaluatedKey,
+          eventsExclusiveStartKey: alertDetectionInfo.eventsLastEvaluatedKey,
         },
       },
       updateQuery: (previousResult, { fetchMoreResult }) => {
@@ -97,7 +100,10 @@ const AlertDetailsPage = () => {
           alert: {
             ...previousResult.alert,
             ...fetchMoreResult.alert,
-            events: [...previousResult.alert.events, ...fetchMoreResult.alert.events],
+            events: [
+              ...(previousResult.alert.detection as AlertDetailsRuleInfo).events,
+              ...(fetchMoreResult.alert.detection as AlertDetailsRuleInfo).events,
+            ],
           },
         };
       },
@@ -143,7 +149,7 @@ const AlertDetailsPage = () => {
             <Box px={2}>
               <TabList>
                 <BorderedTab>Details</BorderedTab>
-                <BorderedTab>Events ({alertData.alert.eventsMatched})</BorderedTab>
+                <BorderedTab>Events ({alertDetectionInfo.eventsMatched})</BorderedTab>
               </TabList>
             </Box>
             <BorderTabDivider />

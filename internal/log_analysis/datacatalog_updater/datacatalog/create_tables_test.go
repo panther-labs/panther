@@ -109,7 +109,7 @@ func TestSQS_Sync(t *testing.T) {
 	}, nil)
 	mockAthenaClient.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil)
 
-	// Sync
+	// Sync databases
 	mockSqsClient.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil).Once()
 
 	err = handler.HandleSQSEvent(context.Background(), &event)

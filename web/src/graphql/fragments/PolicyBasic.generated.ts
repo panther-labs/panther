@@ -1,5 +1,3 @@
-package cloudsecuritylogs
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,12 +16,42 @@ package cloudsecuritylogs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"testing"
+import * as Types from '../../../__generated__/schema';
 
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
-)
+import { GraphQLError } from 'graphql';
+import gql from 'graphql-tag';
 
-func TestSnapshotsLogs(t *testing.T) {
-	logtesting.RunTestsFromYAML(t, LogTypes(), "./testdata/snapshot_tests.yml")
-}
+export type PolicyBasic = Pick<
+  Types.PolicyDetails,
+  | 'id'
+  | 'description'
+  | 'displayName'
+  | 'resourceTypes'
+  | 'complianceStatus'
+  | 'outputIds'
+  | 'runbook'
+  | 'reference'
+  | 'severity'
+  | 'tags'
+  | 'createdAt'
+  | 'lastModified'
+  | 'enabled'
+>;
+
+export const PolicyBasic = gql`
+  fragment PolicyBasic on PolicyDetails {
+    id
+    description
+    displayName
+    resourceTypes
+    complianceStatus
+    outputIds
+    runbook
+    reference
+    severity
+    tags
+    createdAt
+    lastModified
+    enabled
+  }
+`;

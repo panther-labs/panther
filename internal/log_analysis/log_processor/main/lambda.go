@@ -27,7 +27,7 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/panther-labs/panther/internal/compliance/cloudsecuritylogs"
+	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
@@ -67,14 +67,14 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 	// Chain default registry and customlogs resolver
 	logTypesResolver := logtypes.ChainResolvers(
 		registry.NativeLogTypesResolver(),
-		cloudsecuritylogs.Resolver(),
+		snapshotlogs.Resolver(),
 		&logtypesapi.Resolver{
-		LogTypesAPI: &logtypesapi.LogTypesAPILambdaClient{
-			LambdaName: logtypesapi.LambdaName,
-			LambdaAPI:  common.LambdaClient,
-			Validate:   validator.New().Struct,
-		},
-	})
+			LogTypesAPI: &logtypesapi.LogTypesAPILambdaClient{
+				LambdaName: logtypesapi.LambdaName,
+				LambdaAPI:  common.LambdaClient,
+				Validate:   validator.New().Struct,
+			},
+		})
 
 	sqsMessageCount, err = processor.PollEvents(ctx, common.SqsClient, logTypesResolver)
 	return err

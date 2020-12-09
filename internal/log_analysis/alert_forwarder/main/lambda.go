@@ -28,6 +28,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
+	alertApiModels "github.com/panther-labs/panther/internal/log_analysis/alerts_api/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 	"github.com/panther-labs/panther/pkg/metrics"
@@ -43,6 +44,10 @@ func init() {
 		{
 			"AnalysisType",
 			"Severity",
+		},
+		{
+			"AnalysisType",
+			"AnalysisID",
 		},
 		{
 			"AnalysisType",
@@ -76,14 +81,14 @@ func reporterHandler(lc *lambdacontext.LambdaContext, event events.DynamoDBEvent
 
 	// Note that if there is an error in processing any of the messages in the batch, the whole batch will be retried.
 	for _, record := range event.Records {
-		oldAlertDedupEvent, unmarshalErr := forwarder.FromDynamodDBAttribute(record.Change.OldImage)
+		oldAlertDedupEvent, unmarshalErr := alertApiModels.FromDynamodDBAttribute(record.Change.OldImage)
 		if unmarshalErr != nil {
 			operation.LogError(errors.Wrapf(err, "failed to unmarshal item"))
 			// continuing since there is nothing we can do here
 			continue
 		}
 
-		newAlertDedupEvent, unmarshalErr := forwarder.FromDynamodDBAttribute(record.Change.NewImage)
+		newAlertDedupEvent, unmarshalErr := alertApiModels.FromDynamodDBAttribute(record.Change.NewImage)
 		if unmarshalErr != nil {
 			operation.LogError(errors.Wrapf(err, "failed to unmarshal item"))
 			// continuing since there is nothing we can do here

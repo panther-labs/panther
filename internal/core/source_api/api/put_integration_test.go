@@ -124,8 +124,12 @@ func TestPutCloudSecIntegration(t *testing.T) {
 	dynamoClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
+	// Message sent to create Cloud Security tables
+	// TODO Verify payload
+	mockSQS.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
+	// This message is to start full scan
 	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
-	mockSQS.On("SendMessageWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
+
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
 			AWSAccountID:     testAccountID,
@@ -135,8 +139,8 @@ func TestPutCloudSecIntegration(t *testing.T) {
 			UserID:           testUserID,
 		},
 	})
-	require.NoError(t, err)
-	require.NotEmpty(t, out)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, out)
 	mockSQS.AssertExpectations(t)
 }
 

@@ -36,10 +36,12 @@ import { useListAlertsForRule } from '../graphql/listAlertsForRule.generated';
 import Skeleton from './Skeleton';
 import { RuleDetailsPageUrlParams } from '../RuleDetails';
 
-const RuleAlertsListing: React.FC<Required<Pick<ListAlertsInput, 'type' | 'ruleId'>>> = ({
-  ruleId,
-  type,
-}) => {
+interface RuleAlertsListingProps {
+  ruleId: string;
+  type: AlertTypesEnum;
+}
+
+const RuleAlertsListing: React.FC<RuleAlertsListingProps> = ({ ruleId, type }) => {
   const { requestParams } = useRequestParamsWithoutPagination<
     Omit<ListAlertsInput, 'ruleId' | 'type'> & RuleDetailsPageUrlParams
   >();
@@ -52,7 +54,7 @@ const RuleAlertsListing: React.FC<Required<Pick<ListAlertsInput, 'type' | 'ruleI
     variables: {
       input: {
         ...filterParams,
-        type,
+        types: [type],
         ruleId,
         pageSize: DEFAULT_LARGE_PAGE_SIZE,
       },

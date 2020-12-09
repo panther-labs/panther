@@ -1,4 +1,4 @@
-package cloudsecuritylogs
+package snapshotlogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
