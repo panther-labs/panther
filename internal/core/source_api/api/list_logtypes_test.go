@@ -41,12 +41,6 @@ func TestAPI_ListLogTypes(t *testing.T) {
 				LogTypes:        []string{"one", "two"}, // "one" is duplicate with above
 			},
 		},
-		{ // should not match
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationType: models.IntegrationTypeAWSScan,
-				LogTypes:        nil,
-			},
-		},
 	}
 	assert.Equal(t, expectedLogTypes, collectLogTypes(listOutput))
 }

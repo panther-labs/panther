@@ -19,52 +19,110 @@ package forwarder
  */
 
 import (
-	"errors"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/delivery/models"
+	alertApiModels "github.com/panther-labs/panther/internal/log_analysis/alerts_api/models"
+	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
-func init() {
-	alertQueueURL = "alertQueueURL"
+var (
+	expectedMetric     = []metrics.Metric{{Name: "AlertsCreated", Value: 1, Unit: metrics.UnitCount}}
+	expectedDimensions = []metrics.Dimension{
+		{Name: "Severity", Value: "INFO"},
+		{Name: "AnalysisType", Value: "Policy"},
+		{Name: "AnalysisID", Value: "Test.Policy"}}
+	timeNow = time.Unix(1581379785, 0).UTC() // Set a static time
+)
+
+func genSampleAlert() models.Alert {
+	return models.Alert{
+		AlertID:             aws.String("26df596024d2e81140de028387d517da"), // This is generated dynamically
+		CreatedAt:           timeNow,
+		Severity:            "INFO",
+		Title:               "some title",
+		AnalysisID:          "Test.Policy",
+		AnalysisName:        aws.String("A test policy to generate alerts"),
+		AnalysisDescription: "An alert triggered from a Policy...",
+		AnalysisSourceID:    "9d1f16f0-8bcc-11ea-afeb-efa9a81fb878",
+		Version:             aws.String("A policy version"),
+		ResourceTypes:       []string{"Resource", "Types"},
+		ResourceID:          "arn:aws:iam::xxx...",
+		Runbook:             "Check out our docs!",
+		Tags:                []string{"Tag", "Policy", "AWS"},
+		Type:                models.PolicyType,
+	}
 }
 
-func TestHandleAlert(t *testing.T) {
-	mockSqsClient := &testutils.SqsMock{}
-	sqsClient = mockSqsClient
+func TestHandleStoreAndSendNotification(t *testing.T) {
+	t.Parallel()
+	ddbMock := &testutils.DynamoDBMock{}
+	sqsMock := &testutils.SqsMock{}
+	metricsMock := &testutils.LoggerMock{}
 
-	input := &models.Alert{
-		AnalysisID: "policyId",
+	handler := &Handler{
+		AlertTable:       "alertsTable",
+		AlertingQueueURL: "queueUrl",
+		DdbClient:        ddbMock,
+		SqsClient:        sqsMock,
+		MetricsLogger:    metricsMock,
 	}
 
-	expectedMsgBody, err := jsoniter.MarshalToString(input)
+	expectedAlert := genSampleAlert()
+
+	// Next, simulate sending to SQS
+	expectedMarshaledAlert, err := jsoniter.MarshalToString(expectedAlert)
 	require.NoError(t, err)
-	expectedInput := &sqs.SendMessageInput{
-		QueueUrl:    aws.String("alertQueueURL"),
-		MessageBody: aws.String(expectedMsgBody),
+	expectedSendMessageInput := &sqs.SendMessageInput{
+		MessageBody: &expectedMarshaledAlert,
+		QueueUrl:    aws.String("queueUrl"),
+	}
+	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
+
+	// Then, simulate sending to DDB
+	expectedDynamoAlert := &alertApiModels.Alert{
+		ID:            "26df596024d2e81140de028387d517da",
+		TimePartition: "defaultPartition",
+		Severity:      aws.String("INFO"),
+		Title:         expectedAlert.Title,
+		AlertPolicy: alertApiModels.AlertPolicy{
+			PolicyID:          expectedAlert.AnalysisID,
+			PolicyDisplayName: aws.StringValue(expectedAlert.AnalysisName),
+			PolicyVersion:     aws.StringValue(expectedAlert.Version),
+			PolicySourceID:    expectedAlert.AnalysisSourceID,
+			ResourceTypes:     expectedAlert.ResourceTypes,
+			ResourceID:        expectedAlert.ResourceID,
+		},
+		// Reuse part of the struct that was intended for Rules
+		AlertDedupEvent: alertApiModels.AlertDedupEvent{
+			RuleID:       expectedAlert.AnalysisID, // Required for DDB GSI constraint
+			CreationTime: expectedAlert.CreatedAt,
+			UpdateTime:   expectedAlert.CreatedAt,
+			Type:         expectedAlert.Type,
+		},
+	}
+	expectedMarshaledDynamoAlert, err := dynamodbattribute.MarshalMap(expectedDynamoAlert)
+	assert.NoError(t, err)
+	expectedPutItemRequest := &dynamodb.PutItemInput{
+		Item:      expectedMarshaledDynamoAlert,
+		TableName: aws.String("alertsTable"),
 	}
 
-	mockSqsClient.On("SendMessage", expectedInput).Return(&sqs.SendMessageOutput{}, nil)
-	require.NoError(t, Handle(input))
-	mockSqsClient.AssertExpectations(t)
-}
+	ddbMock.On("PutItem", expectedPutItemRequest).Return(&dynamodb.PutItemOutput{}, nil)
+	metricsMock.On("Log", expectedDimensions, expectedMetric).Once()
+	assert.NoError(t, handler.Do(expectedAlert))
 
-func TestHandleAlertSqsError(t *testing.T) {
-	mockSqsClient := &testutils.SqsMock{}
-	sqsClient = mockSqsClient
-
-	input := &models.Alert{
-		AnalysisID: "policyId",
-	}
-
-	mockSqsClient.On("SendMessage", mock.Anything).Return(&sqs.SendMessageOutput{}, errors.New("error"))
-	require.Error(t, Handle(input))
-	mockSqsClient.AssertExpectations(t)
+	ddbMock.AssertExpectations(t)
+	sqsMock.AssertExpectations(t)
+	metricsMock.AssertExpectations(t)
 }

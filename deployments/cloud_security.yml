@@ -109,16 +109,6 @@ Conditions:
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
-  ###### Update Glue Table Schemas for Deployed Tables #####
-  UpdateGlueTables:
-    Type: Custom::UpdateCloudSecurityTables
-    Properties:
-      # Update in case CustomResourceVersion has changed
-      CustomResourceVersion: !Ref CustomResourceVersion
-      ResourcesTableARN: !GetAtt ResourcesTable.Arn
-      ComplianceTableARN: !GetAtt ComplianceTable.Arn
-      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
-
   ##### Alert Processor #####
   AlertProcessorQueue:
     Type: AWS::SQS::Queue
@@ -304,8 +294,9 @@ Resources:
       Description: Forwards the alerts to the alert delivery mechanism
       Environment:
         Variables:
-          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts-queue
           DEBUG: !Ref Debug
+          ALERTS_TABLE: panther-log-alert-info
+          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts-queue
       Events:
         DynamoDBEvent:
           Type: DynamoDB
@@ -315,12 +306,14 @@ Resources:
             BatchSize: 1
       FunctionName: panther-alert-forwarder
       # <cfndoc>
-      # The `panther-alert-forwarder` lambda reads from the ddb stream for the table `panther-alert-forwarder`
-      # and sends them to the `panther-alerts-queue` sqs queue.
+      # This lambda reads from a DDB stream for the `panther-alert-forwarder` table and writes alerts to the `panther-log-alert-info` ddb table.
+      # It also forwards alerts to `panther-alerts-queue` SQS queue where the appropriate Lambda picks them up for delivery.
       #
       # Failure Impact
-      # * Failure of this lambda will stop delivery of alerts to destinations.
+      # * Delivery of alerts could be slowed or stopped.
       # * There will be no data loss until events are purged from the ddb stream (24 hours).
+      # * This Lambda processes alerts in batches. In case a batch partially fails, the whole batch will be retried which might lead
+      # to duplicate notifications for some alerts.
       # </cfndoc>
       Handler: main
       MemorySize: !FindInMap [Functions, AlertForwarder, Memory]
@@ -328,6 +321,14 @@ Resources:
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       Timeout: !FindInMap [Functions, AlertForwarder, Timeout]
       Policies:
+        - Id: ManageAlerts
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-log-alert-info
         - Id: PublishToAlertQueue
           Version: 2012-10-17
           Statement:

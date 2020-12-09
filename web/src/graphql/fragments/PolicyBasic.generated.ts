@@ -1,5 +1,3 @@
-package sources
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,16 +16,42 @@ package sources
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"fmt"
-)
+import * as Types from '../../../__generated__/schema';
 
-// ErrUnsupportedFileType is returned when the log processor encounters a file type
-// that is not supported and cannot process
-type ErrUnsupportedFileType struct {
-	Type string
-}
+import { GraphQLError } from 'graphql';
+import gql from 'graphql-tag';
 
-func (e *ErrUnsupportedFileType) Error() string {
-	return fmt.Sprintf("unsupported file type %s", e.Type)
-}
+export type PolicyBasic = Pick<
+  Types.PolicyDetails,
+  | 'id'
+  | 'description'
+  | 'displayName'
+  | 'resourceTypes'
+  | 'complianceStatus'
+  | 'outputIds'
+  | 'runbook'
+  | 'reference'
+  | 'severity'
+  | 'tags'
+  | 'createdAt'
+  | 'lastModified'
+  | 'enabled'
+>;
+
+export const PolicyBasic = gql`
+  fragment PolicyBasic on PolicyDetails {
+    id
+    description
+    displayName
+    resourceTypes
+    complianceStatus
+    outputIds
+    runbook
+    reference
+    severity
+    tags
+    createdAt
+    lastModified
+    enabled
+  }
+`;

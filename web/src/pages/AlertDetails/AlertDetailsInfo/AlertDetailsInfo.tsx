@@ -21,6 +21,7 @@ import { Box, Card, Flex, Link, SimpleGrid } from 'pouncejs';
 import Linkify from 'Components/Linkify';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
+import { AlertDetailsRuleInfo } from 'Generated/schema';
 import { formatDatetime, formatNumber, minutesToString } from 'Helpers/utils';
 import { AlertDetails, RuleTeaser } from 'Pages/AlertDetails';
 import AlertDeliverySection from 'Pages/AlertDetails/AlertDetailsInfo/AlertDeliverySection';
@@ -35,6 +36,7 @@ interface AlertDetailsInfoProps {
 const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
   const { alertDestinations, loading: loadingDestinations } = useAlertDestinations({ alert });
 
+  const detectionData = alert.detection as AlertDetailsRuleInfo;
   return (
     <Flex direction="column" spacing={4}>
       {rule && (
@@ -125,7 +127,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
                   </Box>
 
                   <Box id="deduplication-string" gridColumn="3/8">
-                    {alert.dedupString}
+                    {detectionData.dedupString}
                   </Box>
 
                   <Box color="navyblue-100" gridColumn="1/3" aria-describedby="tags-list">
@@ -168,7 +170,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
                     Deduplication String
                   </Box>
                   <Box gridColumn="3/8" id="deduplication-string">
-                    {alert.dedupString}
+                    {detectionData.dedupString}
                   </Box>
                 </>
               )}

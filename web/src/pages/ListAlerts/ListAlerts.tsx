@@ -20,7 +20,7 @@ import React from 'react';
 import { Alert, Box, Card, Flex, Text } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
-import { ListAlertsInput } from 'Generated/schema';
+import { AlertTypesEnum, ListAlertsInput } from 'Generated/schema';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import TablePlaceholder from 'Components/TablePlaceholder';
@@ -48,6 +48,7 @@ const ListAlerts = () => {
     variables: {
       input: {
         ...requestParams,
+        types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
         pageSize: DEFAULT_LARGE_PAGE_SIZE,
       },
     },
@@ -67,6 +68,8 @@ const ListAlerts = () => {
         variables: {
           input: {
             ...requestParams,
+            // FIXME: remove this override when we have a multi-select
+            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
             exclusiveStartKey: lastEvaluatedKey,
           },

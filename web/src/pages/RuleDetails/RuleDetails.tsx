@@ -63,13 +63,11 @@ const RuleDetailsPage: React.FC = () => {
     },
   });
 
-  // dry runs for tabs indicator
-
   const { data: matchesData } = useListAlertsForRule({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        type: AlertTypesEnum.Rule,
+        types: [AlertTypesEnum.Rule],
         ruleId: match.params.id,
         pageSize: DEFAULT_SMALL_PAGE_SIZE,
       },
@@ -80,7 +78,7 @@ const RuleDetailsPage: React.FC = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        type: AlertTypesEnum.RuleError,
+        types: [AlertTypesEnum.RuleError],
         ruleId: match.params.id,
         pageSize: DEFAULT_SMALL_PAGE_SIZE,
       },
