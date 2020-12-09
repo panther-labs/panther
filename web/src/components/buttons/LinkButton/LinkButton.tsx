@@ -15,21 +15,27 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 import React from 'react';
-import { ButtonProps, Button, Box } from 'pouncejs';
+import { ButtonProps, Button, Box, LinkProps } from 'pouncejs';
 import { Link as RRLink, LinkProps as RRLinkProps } from 'react-router-dom';
 
 type ButtonWithoutAs = Omit<ButtonProps, 'as'>;
 type ToProp = Pick<RRLinkProps, 'to'>;
-
 export type LinkButtonProps = ButtonWithoutAs & ToProp & { external?: boolean };
-
-const LinkButton: React.FC<LinkButtonProps> = ({ external, to, children, ...rest }) => {
-  const linkProps = external
-    ? { target: '_blank', rel: 'noopener noreferrer', href: to, as: 'a' as React.ElementType }
-    : { to, as: RRLink };
-
+const LinkButton: React.FC<LinkButtonProps> = ({ disabled, external, to, children, ...rest }) => {
+  let linkProps: LinkProps;
+  if (disabled) {
+    linkProps = { as: 'span' as React.ElementType };
+  } else if (!external) {
+    linkProps = { to, as: RRLink };
+  } else {
+    linkProps = {
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      href: to as string,
+      as: 'a' as React.ElementType,
+    };
+  }
   return (
     <Box
       {...linkProps}
@@ -41,11 +47,10 @@ const LinkButton: React.FC<LinkButtonProps> = ({ external, to, children, ...rest
         },
       }}
     >
-      <Button as="span" {...rest}>
+      <Button as="span" aria-disabled={disabled} {...rest}>
         {children}
       </Button>
     </Box>
   );
 };
-
 export default LinkButton;

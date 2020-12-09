@@ -32,14 +32,13 @@ const StackDeployment: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
   const { goToNextStep } = useWizardContext();
   const { initialValues, values } = useFormikContext<S3LogSourceWizardValues>();
-  const { data, loading } = useGetLogCfnTemplate({
+  const { data, loading, error } = useGetLogCfnTemplate({
     variables: {
       input: {
         awsAccountId: pantherConfig.AWS_ACCOUNT_ID,
         integrationLabel: values.integrationLabel,
         s3Bucket: values.s3Bucket,
-        logTypes: values.logTypes,
-        s3Prefix: values.s3Prefix || null,
+        s3PrefixLogTypes: values.s3PrefixLogTypes,
         kmsKey: values.kmsKey || null,
       },
     },
@@ -54,7 +53,8 @@ const StackDeployment: React.FC = () => {
     `&param_MasterAccountId=${pantherConfig.AWS_ACCOUNT_ID}` +
     `&param_RoleSuffix=${toStackNameFormat(values.integrationLabel)}` +
     `&param_S3Bucket=${values.s3Bucket}` +
-    `&param_S3Prefix=${values.s3Prefix}` +
+    // FIXME: TBD How this will be implemented
+    // `&param_S3Prefix=${values.s3Prefix}` +
     `&param_KmsKey=${values.kmsKey}`;
 
   return (
@@ -80,7 +80,13 @@ const StackDeployment: React.FC = () => {
                 </Box>
               )}
             </Text>
-            <LinkButton external to={cfnConsoleLink} variantColor="teal">
+            <LinkButton
+              loading={loading}
+              disabled={!!error || loading}
+              external
+              to={cfnConsoleLink}
+              variantColor="teal"
+            >
               Launch Console
             </LinkButton>
           </Flex>
@@ -105,7 +111,7 @@ const StackDeployment: React.FC = () => {
               icon="download"
               variantColor="violet"
               loading={loading}
-              disabled={loading}
+              disabled={!!error || loading}
               onClick={() => downloadData(body, `${stackName}.yaml`)}
             >
               Get template file

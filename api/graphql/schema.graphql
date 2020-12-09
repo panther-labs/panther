@@ -88,9 +88,8 @@ input GetS3LogIntegrationTemplateInput {
   awsAccountId: String!
   integrationLabel: String!
   s3Bucket: String!
-  s3Prefix: String
   kmsKey: String
-  logTypes: [String!]!
+  s3PrefixLogTypes: [S3PrefixLogTypesInput!]!
 }
 
 input ListAlertsInput {
@@ -513,6 +512,10 @@ type ComplianceIntegration {
 
 union LogIntegration = S3LogIntegration | SqsLogSourceIntegration
 
+type S3PrefixLogTypes {
+  prefix: String!
+  logTypes: [String!]!
+}
 type S3LogIntegration {
   awsAccountId: String!
   createdAtTime: AWSDateTime!
@@ -524,7 +527,7 @@ type S3LogIntegration {
   s3Bucket: String!
   s3Prefix: String
   kmsKey: String
-  logTypes: [String!]!
+  s3PrefixLogTypes: [S3PrefixLogTypes!]!
   health: S3LogIntegrationHealth!
   stackName: String!
 }
@@ -547,13 +550,17 @@ input AddComplianceIntegrationInput {
   cweEnabled: Boolean
 }
 
+input S3PrefixLogTypesInput {
+  prefix: String!
+  logTypes: [String!]!
+}
+
 input AddS3LogIntegrationInput {
   awsAccountId: String!
   integrationLabel: String!
   s3Bucket: String!
   kmsKey: String
-  s3Prefix: String
-  logTypes: [String!]!
+  s3PrefixLogTypes: [S3PrefixLogTypesInput!]!
 }
 
 input SqsLogConfigInput {
@@ -579,8 +586,7 @@ input UpdateS3LogIntegrationInput {
   integrationLabel: String
   s3Bucket: String
   kmsKey: String
-  s3Prefix: String
-  logTypes: [String!]
+  s3PrefixLogTypes: [S3PrefixLogTypesInput!]
 }
 
 input UpdateSqsLogIntegrationInput {
