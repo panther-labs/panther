@@ -36,13 +36,14 @@ import (
 
 	ruleModel "github.com/panther-labs/panther/api/lambda/analysis/models"
 	alertModel "github.com/panther-labs/panther/api/lambda/delivery/models"
+	alertApiModels "github.com/panther-labs/panther/internal/log_analysis/alerts_api/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 var (
-	oldAlertDedupEvent = &AlertDedupEvent{
+	oldAlertDedupEvent = &alertApiModels.AlertDedupEvent{
 		RuleID:              "ruleId",
 		RuleVersion:         "ruleVersion",
 		DeduplicationString: "dedupString",
@@ -55,7 +56,7 @@ var (
 		GeneratedTitle:      aws.String("test title"),
 	}
 
-	newAlertDedupEvent = &AlertDedupEvent{
+	newAlertDedupEvent = &alertApiModels.AlertDedupEvent{
 		RuleID:              oldAlertDedupEvent.RuleID,
 		RuleVersion:         oldAlertDedupEvent.RuleVersion,
 		DeduplicationString: oldAlertDedupEvent.DeduplicationString,
@@ -131,7 +132,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 
-	expectedAlert := &Alert{
+	expectedAlert := &alertApiModels.Alert{
 		ID:                  "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:       "defaultPartition",
 		Severity:            aws.String(string(testRuleResponse.Severity)),
@@ -139,7 +140,7 @@ func TestHandleStoreAndSendNotification(t *testing.T) {
 		Title:               aws.StringValue(newAlertDedupEvent.GeneratedTitle),
 		FirstEventMatchTime: newAlertDedupEvent.CreationTime,
 		LogTypes:            newAlertDedupEvent.LogTypes,
-		AlertDedupEvent: AlertDedupEvent{
+		AlertDedupEvent: alertApiModels.AlertDedupEvent{
 			RuleID:                newAlertDedupEvent.RuleID,
 			Type:                  newAlertDedupEvent.Type,
 			RuleVersion:           newAlertDedupEvent.RuleVersion,
@@ -190,7 +191,7 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 		MetricsLogger:    metricsMock,
 	}
 
-	newAlertDedupEventWithoutTitle := &AlertDedupEvent{
+	newAlertDedupEventWithoutTitle := &alertApiModels.AlertDedupEvent{
 		RuleID:              oldAlertDedupEvent.RuleID,
 		RuleVersion:         oldAlertDedupEvent.RuleVersion,
 		DeduplicationString: oldAlertDedupEvent.DeduplicationString,
@@ -234,14 +235,14 @@ func TestHandleStoreAndSendNotificationNoRuleDisplayNameNoTitle(t *testing.T) {
 
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 
-	expectedAlert := &Alert{
+	expectedAlert := &alertApiModels.Alert{
 		ID:                  "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:       "defaultPartition",
 		Severity:            aws.String(string(testRuleResponse.Severity)),
 		Title:               newAlertDedupEventWithoutTitle.RuleID,
 		FirstEventMatchTime: newAlertDedupEventWithoutTitle.CreationTime,
 		LogTypes:            newAlertDedupEvent.LogTypes,
-		AlertDedupEvent: AlertDedupEvent{
+		AlertDedupEvent: alertApiModels.AlertDedupEvent{
 			RuleID:                newAlertDedupEventWithoutTitle.RuleID,
 			RuleVersion:           newAlertDedupEventWithoutTitle.RuleVersion,
 			LogTypes:              newAlertDedupEventWithoutTitle.LogTypes,
@@ -318,7 +319,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		http.StatusOK, nil, testRuleResponse).Once()
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 
-	expectedAlert := &Alert{
+	expectedAlert := &alertApiModels.Alert{
 		ID:                  "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:       "defaultPartition",
 		Severity:            aws.String(string(testRuleResponse.Severity)),
@@ -326,7 +327,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		Title:               "DisplayName",
 		FirstEventMatchTime: newAlertDedupEvent.CreationTime,
 		LogTypes:            newAlertDedupEvent.LogTypes,
-		AlertDedupEvent: AlertDedupEvent{
+		AlertDedupEvent: alertApiModels.AlertDedupEvent{
 			RuleID:                newAlertDedupEvent.RuleID,
 			RuleVersion:           newAlertDedupEvent.RuleVersion,
 			LogTypes:              newAlertDedupEvent.LogTypes,
@@ -351,7 +352,7 @@ func TestHandleStoreAndSendNotificationNoGeneratedTitle(t *testing.T) {
 		TableName: aws.String("alertsTable"),
 	}
 
-	dedupEventWithoutTitle := &AlertDedupEvent{
+	dedupEventWithoutTitle := &alertApiModels.AlertDedupEvent{
 		RuleID:              newAlertDedupEvent.RuleID,
 		RuleVersion:         newAlertDedupEvent.RuleVersion,
 		Type:                newAlertDedupEvent.Type,
@@ -415,7 +416,7 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 
 	sqsMock.On("SendMessage", expectedSendMessageInput).Return(&sqs.SendMessageOutput{}, nil)
 
-	expectedAlert := &Alert{
+	expectedAlert := &alertApiModels.Alert{
 		ID:                  "b25dc23fb2a0b362da8428dbec1381a8",
 		TimePartition:       "defaultPartition",
 		Severity:            aws.String(string(testRuleResponse.Severity)),
@@ -423,7 +424,7 @@ func TestHandleStoreAndSendNotificationNilOldDedup(t *testing.T) {
 		RuleDisplayName:     &testRuleResponse.DisplayName,
 		FirstEventMatchTime: newAlertDedupEvent.CreationTime,
 		LogTypes:            newAlertDedupEvent.LogTypes,
-		AlertDedupEvent: AlertDedupEvent{
+		AlertDedupEvent: alertApiModels.AlertDedupEvent{
 			RuleID:                newAlertDedupEvent.RuleID,
 			Type:                  newAlertDedupEvent.Type,
 			RuleVersion:           newAlertDedupEvent.RuleVersion,
@@ -477,7 +478,7 @@ func TestHandleUpdateAlert(t *testing.T) {
 	analysisMock.On("Invoke", expectedGetRuleInput, &ruleModel.Rule{}).Return(
 		http.StatusOK, nil, testRuleResponse).Once()
 
-	dedupEventWithUpdatedFields := &AlertDedupEvent{
+	dedupEventWithUpdatedFields := &alertApiModels.AlertDedupEvent{
 		RuleID:                newAlertDedupEvent.RuleID,
 		RuleVersion:           newAlertDedupEvent.RuleVersion,
 		DeduplicationString:   newAlertDedupEvent.DeduplicationString,
@@ -537,8 +538,7 @@ func TestHandleUpdateAlertDDBError(t *testing.T) {
 	}
 	analysisMock.On("Invoke", expectedGetRuleInput, &ruleModel.Rule{}).Return(
 		http.StatusOK, nil, testRuleResponse).Once()
-
-	dedupEventWithUpdatedFields := &AlertDedupEvent{
+	dedupEventWithUpdatedFields := &alertApiModels.AlertDedupEvent{
 		RuleID:                newAlertDedupEvent.RuleID,
 		RuleVersion:           newAlertDedupEvent.RuleVersion,
 		DeduplicationString:   newAlertDedupEvent.DeduplicationString,
@@ -623,7 +623,7 @@ func TestHandleDontConsiderThresholdInRuleErrors(t *testing.T) {
 	}
 
 	ruleErrorDedup := *newAlertDedupEvent
-	ruleErrorDedup.Type = RuleErrorType
+	ruleErrorDedup.Type = alertModel.RuleErrorType
 
 	analysisMock.On("Invoke", expectedGetRuleInput, &ruleModel.Rule{}).Return(
 		http.StatusOK, nil, ruleWithThreshold).Once()
@@ -663,7 +663,7 @@ func TestHandleShouldCreateAlertIfThresholdNowReached(t *testing.T) {
 		Threshold:   1000,
 	}
 
-	newAlertDedup := &AlertDedupEvent{
+	newAlertDedup := &alertApiModels.AlertDedupEvent{
 		RuleID:                oldAlertDedupEvent.RuleID,
 		Type:                  oldAlertDedupEvent.Type,
 		RuleVersion:           oldAlertDedupEvent.RuleVersion,

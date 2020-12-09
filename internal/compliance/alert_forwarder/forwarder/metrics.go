@@ -1,3 +1,5 @@
+package forwarder
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,8 +18,31 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './AlertDetails';
-export * from './AlertDetails';
-export * from './graphql/alertDetails.generated';
-export * from './graphql/ruleTeaser.generated';
-export * from './graphql/policyTeaser.generated';
+import (
+	"github.com/panther-labs/panther/pkg/metrics"
+)
+
+var (
+	StaticLogger = metrics.MustStaticLogger([]metrics.DimensionSet{
+		{
+			"AnalysisType",
+			"Severity",
+		},
+		{
+			"AnalysisType",
+			"AnalysisID",
+		},
+		{
+			"AnalysisType",
+		},
+	}, []metrics.Metric{
+		{
+			Name: "AlertsCreated",
+			Unit: metrics.UnitCount,
+		},
+	})
+	AnalysisTypeDimension = metrics.Dimension{
+		Name:  "AnalysisType",
+		Value: "Policy",
+	}
+)

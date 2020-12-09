@@ -1,6 +1,5 @@
 fragment AlertSummaryFull on AlertSummary {
   alertId
-  ruleId
   title
   severity
   type
@@ -9,9 +8,20 @@ fragment AlertSummaryFull on AlertSummary {
   deliveryResponses {
     ...DeliveryResponseFull
   }
-  eventsMatched
   updateTime
-  logTypes
   lastUpdatedBy
   lastUpdatedByTime
+  detection {
+    ... on AlertSummaryPolicyInfo {
+      policyId
+      resourceTypes
+      resourceId
+      policySourceId
+    }
+    ... on AlertSummaryRuleInfo {
+      ruleId
+      logTypes
+      eventsMatched
+    }
+  }
 }

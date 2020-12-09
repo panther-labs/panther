@@ -20,6 +20,7 @@ import React from 'react';
 import queryString from 'query-string';
 import {
   buildAlertSummary,
+  buildAlertSummaryRuleInfo,
   buildListAlertsResponse,
   buildRuleDetails,
   fireClickAndMouseEvents,
@@ -135,7 +136,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.RuleError,
+            types: [AlertTypesEnum.RuleError],
             pageSize: DEFAULT_SMALL_PAGE_SIZE,
           },
         },
@@ -146,7 +147,9 @@ describe('RuleDetails', () => {
             ...buildListAlertsResponse(),
             alertSummaries: [
               buildAlertSummary({
-                ruleId: '123',
+                detection: buildAlertSummaryRuleInfo({
+                  ruleId: '123',
+                }),
                 title: `Alert 1`,
                 alertId: `alert_1`,
                 type: AlertTypesEnum.Rule,
@@ -157,7 +160,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.Rule,
+            types: [AlertTypesEnum.Rule],
             pageSize: DEFAULT_SMALL_PAGE_SIZE,
           },
         },
@@ -249,7 +252,9 @@ describe('RuleDetails', () => {
             ...buildListAlertsResponse(),
             alertSummaries: [
               buildAlertSummary({
-                ruleId: '123',
+                detection: buildAlertSummaryRuleInfo({
+                  ruleId: '123',
+                }),
                 title: `Alert 1`,
                 alertId: `alert_1`,
                 type: AlertTypesEnum.Rule,
@@ -260,7 +265,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.Rule,
+            types: [AlertTypesEnum.Rule],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
         },
@@ -316,7 +321,9 @@ describe('RuleDetails', () => {
             ...buildListAlertsResponse(),
             alertSummaries: [
               buildAlertSummary({
-                ruleId: '123',
+                detection: buildAlertSummaryRuleInfo({
+                  ruleId: '123',
+                }),
                 title: `Error 1`,
                 alertId: `error_1`,
                 type: AlertTypesEnum.RuleError,
@@ -327,7 +334,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.RuleError,
+            types: [AlertTypesEnum.RuleError],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
         },
@@ -386,7 +393,7 @@ describe('RuleDetails', () => {
         },
         variables: {
           input: {
-            type: AlertTypesEnum.Rule,
+            types: [AlertTypesEnum.Rule],
             ruleId: rule.id,
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
@@ -439,7 +446,7 @@ describe('RuleDetails', () => {
         },
         variables: {
           input: {
-            type: AlertTypesEnum.Rule,
+            types: [AlertTypesEnum.Rule],
             ruleId: rule.id,
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
@@ -455,7 +462,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             nameContains: 'test',
-            type: AlertTypesEnum.Rule,
+            types: [AlertTypesEnum.Rule],
             ruleId: rule.id,
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
@@ -495,7 +502,9 @@ describe('RuleDetails', () => {
             ...buildListAlertsResponse(),
             alertSummaries: [
               buildAlertSummary({
-                ruleId: '123',
+                detection: buildAlertSummaryRuleInfo({
+                  ruleId: '123',
+                }),
                 title: `Unique alert ${counter}`,
                 alertId: `alert_${counter}`,
                 type: AlertTypesEnum.Rule,
@@ -506,7 +515,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.Rule,
+            types: [AlertTypesEnum.Rule],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
             ...overrides,
           },
@@ -593,13 +602,17 @@ describe('RuleDetails', () => {
     });
     const alertSummaries = [
       buildAlertSummary({
-        ruleId: '123',
+        detection: buildAlertSummaryRuleInfo({
+          ruleId: '123',
+        }),
         title: `Alert 1`,
         alertId: `alert_1`,
         type: AlertTypesEnum.Rule,
       }),
       buildAlertSummary({
-        ruleId: '123',
+        detection: buildAlertSummaryRuleInfo({
+          ruleId: '123',
+        }),
         title: `Alert 2`,
         alertId: `alert_2`,
         type: AlertTypesEnum.Rule,
@@ -624,7 +637,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.Rule,
+            types: [AlertTypesEnum.Rule],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
         },
@@ -749,13 +762,17 @@ describe('RuleDetails', () => {
     });
     const alertSummaries = [
       buildAlertSummary({
-        ruleId: '123',
+        detection: buildAlertSummaryRuleInfo({
+          ruleId: '123',
+        }),
         title: `Error 1`,
         alertId: `error_1`,
         type: AlertTypesEnum.RuleError,
       }),
       buildAlertSummary({
-        ruleId: '123',
+        detection: buildAlertSummaryRuleInfo({
+          ruleId: '123',
+        }),
         title: `Error 2`,
         alertId: `error_2`,
         type: AlertTypesEnum.RuleError,
@@ -780,7 +797,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.RuleError,
+            types: [AlertTypesEnum.RuleError],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
         },
