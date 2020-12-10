@@ -72,15 +72,16 @@ func AlertItemToSummary(item *table.AlertItem, analysisClient gatewayapi.API) *a
 		alertRule, err := getRule(item.RuleID, analysisClient)
 		if err != nil || alertRule == nil {
 			zap.L().Warn("Failed to get Rule with ID ", zap.String("RuleID", item.RuleID))
-		}
-		if aws.String(description) == nil && alertRule != nil {
-			description = alertRule.Description
-		}
-		if aws.String(reference) == nil && alertRule != nil {
-			reference = alertRule.Reference
-		}
-		if aws.String(runbook) == nil && alertRule != nil {
-			runbook = alertRule.Runbook
+		} else {
+			if aws.String(description) == nil {
+				description = alertRule.Description
+			}
+			if aws.String(reference) == nil {
+				reference = alertRule.Reference
+			}
+			if aws.String(runbook) == nil {
+				runbook = alertRule.Runbook
+			}
 		}
 	}
 
