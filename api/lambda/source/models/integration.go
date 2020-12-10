@@ -87,13 +87,11 @@ func (s *SourceIntegration) RequiredLogProcessingRole() string {
 }
 
 func (s *SourceIntegration) RequiredS3Prefix() string {
-	const sqsS3Prefix = "forwarder"
-	const cloudSecurityS3Prefix = "cloudsecurity"
 	switch s.IntegrationType {
 	case IntegrationTypeSqs:
-		return sqsS3Prefix
+		return "forwarder"
 	case IntegrationTypeAWSScan:
-		return cloudSecurityS3Prefix
+		return "cloudsecurity"
 	default:
 		return s.S3Prefix
 	}

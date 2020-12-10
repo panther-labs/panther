@@ -54,14 +54,14 @@ type StreamHandler struct {
 }
 
 // Run is the entry point for the datalake-forwarder lambda
-func (sh *StreamHandler) Run(ctx context.Context, log *zap.Logger, event *events.DynamoDBEvent) (err error) {
+func (sh *StreamHandler) Run(ctx context.Context, logger *zap.Logger, event *events.DynamoDBEvent) (err error) {
 	firehoseRecords := make([]*firehose.Record, 0, len(event.Records))
 	for i := range event.Records {
 		// We should be passing pointers to avoid copy of the record struct
 		record := &event.Records[i]
 		changes, ok, err := sh.getChanges(record)
 		if err != nil {
-			log.Error("failed to process record",
+			logger.Error("failed to process record",
 				zap.Error(err),
 				zap.String("eventID", record.EventID),
 				zap.String("eventName", record.EventName),
@@ -70,7 +70,7 @@ func (sh *StreamHandler) Run(ctx context.Context, log *zap.Logger, event *events
 			continue
 		}
 		if !ok {
-			log.Warn("Skipping record",
+			logger.Warn("Skipping record",
 				zap.Error(err),
 				zap.String("eventID", record.EventID),
 				zap.String("eventName", record.EventName),
@@ -80,7 +80,7 @@ func (sh *StreamHandler) Run(ctx context.Context, log *zap.Logger, event *events
 		}
 		data, err := jsoniter.Marshal(changes)
 		if err != nil {
-			log.Error("failed to get marshal changes to JSON", zap.Error(err), zap.String("eventId", record.EventID))
+			logger.Error("failed to get marshal changes to JSON", zap.Error(err), zap.String("eventId", record.EventID))
 			continue
 		}
 
@@ -89,7 +89,7 @@ func (sh *StreamHandler) Run(ctx context.Context, log *zap.Logger, event *events
 	}
 
 	if len(firehoseRecords) == 0 {
-		log.Debug("no records to process")
+		logger.Debug("no records to process")
 		return nil
 	}
 	// Maximum Kinesis Firehose batch put request is 4MB, but we may be processing much more than
@@ -100,7 +100,7 @@ func (sh *StreamHandler) Run(ctx context.Context, log *zap.Logger, event *events
 	}
 	bigMessages, err := firehosebatch.BatchSend(ctx, sh.FirehoseClient, firehoseInput, maxRetries)
 	if len(bigMessages) > 0 {
-		log.Error("unable to send some records as they are too large", zap.Int("numRecords", len(bigMessages)))
+		logger.Error("unable to send some records as they are too large", zap.Int("numRecords", len(bigMessages)))
 	}
 	return err
 }
