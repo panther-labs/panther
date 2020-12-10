@@ -122,7 +122,7 @@ Parameters:
     Type: Number
     Description: Log processor Lambda memory allocation. Increase to eliminate out-of-memory errors or reduce processing time (in exchange for higher cost)
     MinValue: 256 # 128 is too small, risks OOM errors
-    MaxValue: 3008
+    MaxValue: 10240
     Default: 2048
   LogProcessorLambdaSQSReadBatchSize:
     Type: Number
