@@ -57,7 +57,7 @@ func InferJSONValueSchema(x interface{}) *ValueSchema {
 		}
 	case []interface{}:
 		// This will result in an array with nil element if the array is empty.
-		// Future `Merge()` calls will fix that if the type of the element was infered.
+		// Future `Merge()` calls will fix that if the type of the element was inferred.
 		var merged *ValueSchema
 		for _, el := range v {
 			merged = Merge(merged, InferJSONValueSchema(el))
