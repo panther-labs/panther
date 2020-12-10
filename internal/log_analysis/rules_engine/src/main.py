@@ -26,7 +26,6 @@ from .aws_clients import S3_CLIENT
 from .engine import Engine
 from .logging import get_logger
 from .output import MatchedEventsBuffer
-from .rule import Rule
 
 _LOGGER = get_logger()
 
@@ -50,42 +49,11 @@ def direct_analysis(request: Dict[str, Any]) -> Dict[str, Any]:
     # Since this is used for testing single rules, it should only ever have one rule
     if len(request['rules']) != 1:
         raise RuntimeError('exactly one rule expected, found {}'.format(len(request['rules'])))
-
     raw_rule = request['rules'][0]
-    # The rule during direct invocation doesn't have a version
-    raw_rule['versionId'] = 'default'
-    test_rule = Rule(raw_rule)
-
-    format_exception = lambda exc: '{}: {}'.format(type(exc).__name__, exc) if exc else exc
     results = []
     for event in request['events']:
-        rule_result = test_rule.run(event['data'], batch_mode=False)
-        results.append(
-            {
-                'id': event['id'],
-                'ruleId': raw_rule['id'],
-                'genericError': format_exception(rule_result.setup_exception),
-                'errored': rule_result.errored,
-                'ruleOutput': rule_result.matched,
-                'ruleError': format_exception(rule_result.rule_exception),
-                'titleOutput': rule_result.title_output,
-                'titleError': format_exception(rule_result.title_exception),
-                'descriptionOutput': rule_result.description_output,
-                'descriptionError': format_exception(rule_result.description_exception),
-                'referenceOutput': rule_result.reference_output,
-                'referenceError': format_exception(rule_result.reference_exception),
-                'severityOutput': rule_result.severity_output,
-                'severityError': format_exception(rule_result.severity_exception),
-                'runbookOutput': rule_result.runbook_output,
-                'runbookError': format_exception(rule_result.runbook_exception),
-                'destinationsOutput': rule_result.destinations_output,
-                'destinationsError': format_exception(rule_result.destinations_exception),
-                'dedupOutput': rule_result.dedup_output,
-                'dedupError': format_exception(rule_result.dedup_exception),
-                'alertContextOutput': rule_result.alert_context,
-                'alertContextError': format_exception(rule_result.alert_context_exception),
-            }
-        )
+        rule_result = _RULES_ENGINE.analyze_single_rule(raw_rule, event)
+        results.append(rule_result)
 
     response: Dict[str, Any] = {'results': results}
     return response
