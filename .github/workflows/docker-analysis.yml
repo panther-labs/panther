@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-name: 'Code Analysis'
+name: 'Docker Analysis'
 on:
   pull_request:
     branches:
@@ -25,15 +25,9 @@ on:
     - cron: '0 15 * * 0'
 
 jobs:
-  code_analysis:
-    name: Scan code for vulnerabilities
+  docker_analysis:
+    name: Scan the web docker container for vulnerabilities
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ['javascript', 'go', 'python']
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -47,10 +41,10 @@ jobs:
       - run: git checkout HEAD^2
         if: ${{ github.event_name == 'pull_request' }}
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
+      - name: Run Snyk to check Docker images for vulnerabilities
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          languages: ${{ matrix.language }}
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
+          image: your/image-to-test
+          args: --severity-threshold=high
