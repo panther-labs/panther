@@ -1516,7 +1516,7 @@ Resources:
           Properties:
             # DynamoDB max is 1000, but these records can be quite large (max 400Kb enforced by DynamoDB)
             # so we batch a smaller amount to not go over the function memory
-            BatchSize: 300
+            BatchSize: 100
             BisectBatchOnFunctionError: true
             MaximumBatchingWindowInSeconds: 120
             MaximumRecordAgeInSeconds: 3600
