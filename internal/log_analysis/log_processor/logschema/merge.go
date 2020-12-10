@@ -43,14 +43,14 @@ func Merge(a, b *ValueSchema) *ValueSchema {
 				val := Merge(&A.ValueSchema, &B.ValueSchema)
 				fields = append(fields, FieldSchema{
 					Name:        A.Name,
-					Required:    A.Required && B.Required,
+					Required:    A.Required && B.Required, // A field will only be required if it was found every time.
 					ValueSchema: *val,
 				})
 			case A != nil:
-				A.Required = false
+				A.Required = false // Field was missing
 				fields = append(fields, *A)
 			case B != nil:
-				B.Required = false
+				B.Required = false // Field was missing
 				fields = append(fields, *B)
 			}
 		}

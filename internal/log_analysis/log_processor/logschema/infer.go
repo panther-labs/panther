@@ -44,7 +44,9 @@ func InferJSONValueSchema(x interface{}) *ValueSchema {
 				continue
 			}
 			fields = append(fields, FieldSchema{
-				Name:        key,
+				Name: key,
+				// The field is marked as required by default.
+				// If it is not found in future Merge() calls, it will become optional.
 				Required:    true,
 				ValueSchema: *vs,
 			})
@@ -54,7 +56,8 @@ func InferJSONValueSchema(x interface{}) *ValueSchema {
 			Fields: fields,
 		}
 	case []interface{}:
-		// This will result in an array with nil element if the array is empty
+		// This will result in an array with nil element if the array is empty.
+		// Future `Merge()` calls will fix that if the type of the element was infered.
 		var merged *ValueSchema
 		for _, el := range v {
 			merged = Merge(merged, InferJSONValueSchema(el))
@@ -121,4 +124,38 @@ func inferIndicators(s string) []string {
 		return []string{"aws_arn"}
 	}
 	return nil
+}
+
+// NonEmpty scrubs the ValueSchema from any empty object/array schemas.
+func (v *ValueSchema) NonEmpty() *ValueSchema {
+	switch v.Type {
+	case TypeObject:
+		if v.Fields == nil {
+			return nil
+		}
+		fields := make([]FieldSchema, 0, len(v.Fields))
+		for _, f := range v.Fields {
+			if v := f.ValueSchema.NonEmpty(); v != nil {
+				f.ValueSchema = *v
+				fields = append(fields, f)
+			}
+		}
+		return &ValueSchema{
+			Type:   TypeObject,
+			Fields: fields,
+		}
+	case TypeArray:
+		if v.Element == nil {
+			return nil
+		}
+		if el := v.Element.NonEmpty(); el != nil {
+			return &ValueSchema{
+				Type:    TypeArray,
+				Element: el,
+			}
+		}
+		return nil
+	default:
+		return v.Clone()
+	}
 }
