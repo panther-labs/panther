@@ -20,7 +20,7 @@ import React from 'react';
 import { Alert, Box, Card, Flex, Text } from 'pouncejs';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
-import { AlertTypesEnum, ListAlertsInput } from 'Generated/schema';
+import { ListAlertsInput } from 'Generated/schema';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import TablePlaceholder from 'Components/TablePlaceholder';
@@ -30,7 +30,7 @@ import isEmpty from 'lodash/isEmpty';
 import withSEO from 'Hoc/withSEO';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import { PageViewEnum } from 'Helpers/analytics';
-import AlertCard from 'Components/cards/AlertCard/AlertCard';
+import AlertCard from 'Components/cards/AlertCard';
 import { SelectAllCheckbox, withSelectContext } from 'Components/utils/SelectContext';
 import { compose } from 'Helpers/compose';
 import ListAlertsActions from 'Pages/ListAlerts/ListAlertsActions';
@@ -48,7 +48,6 @@ const ListAlerts = () => {
     variables: {
       input: {
         ...requestParams,
-        types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
         pageSize: DEFAULT_LARGE_PAGE_SIZE,
       },
     },
@@ -68,8 +67,6 @@ const ListAlerts = () => {
         variables: {
           input: {
             ...requestParams,
-            // FIXME: remove this override when we have a multi-select
-            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
             exclusiveStartKey: lastEvaluatedKey,
           },
@@ -115,7 +112,6 @@ const ListAlerts = () => {
   }
 
   const hasError = Boolean(error);
-
   return (
     <ErrorBoundary>
       {hasError && (

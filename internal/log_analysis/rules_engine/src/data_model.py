@@ -59,29 +59,29 @@ class DataModel:
 
         # body is optional in a data model
         self.body = ''
+        self._module = None
         if 'body' in config:
             if not isinstance(config.get('body'), str):
                 raise AssertionError('Field "body" of type str')
             self.body = config['body']
+            self._store_data_models()
+            self._module = self._import_data_model_as_module()
 
         if not isinstance(config.get('versionId'), str):
             raise AssertionError('Field "versionId" of type str is required field')
         self.version = config['versionId']
-
-        self._store_data_models()
-        self._module = self._import_data_model_as_module()
         self._extract_mappings(config['mappings'])
 
     def _extract_mappings(self, source_mappings: List[Dict[str, str]]) -> None:
         for mapping in source_mappings:
             if NAME not in mapping:
                 raise AssertionError('DataModel [{}] is missing required field: [{}]'.format(self.data_model_id, NAME))
-            if PATH in mapping:
+            if mapping.get(PATH):
                 # we are dealing with a string field or a jsonpath
                 self.paths[mapping[NAME]] = parse(mapping[PATH])
-            elif METHOD in mapping:
+            elif mapping.get(METHOD):
                 # we are dealing with a method
-                if not hasattr(self._module, mapping[METHOD]):
+                if not self._module or not hasattr(self._module, mapping[METHOD]):
                     raise AssertionError('DataModel is missing method named [{}]'.format(mapping[METHOD]))
                 self.methods[mapping[NAME]] = getattr(self._module, mapping[METHOD])
             else:
@@ -94,11 +94,11 @@ class DataModel:
         """
         path = id_to_path(_DATAMODEL_FOLDER, self.data_model_id)
         mod = import_file_as_module(path, self.data_model_id)
-        self.logger.info('imported module %s from path %s', self.data_model_id, path)
+        self.logger.debug('imported module %s from path %s', self.data_model_id, path)
         return mod
 
     def _store_data_models(self) -> None:
         """Stores data models to disk."""
         path = id_to_path(_DATAMODEL_FOLDER, self.data_model_id)
-        self.logger.info('storing data model in path %s', path)
+        self.logger.debug('storing data model in path %s', path)
         store_modules(path, self.body)

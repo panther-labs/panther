@@ -397,7 +397,7 @@ describe('ListRules', () => {
 
     // Expect the sort dropdown to be empty by default. Empty = "All Types" for this filter.
     const logTypesFilter = getAllByLabelText('Log Type')[0];
-    expect(logTypesFilter).toHaveValue('All types');
+    expect(logTypesFilter).toHaveValue('All Types');
 
     // Change its value
     fireEvent.focus(logTypesFilter);
