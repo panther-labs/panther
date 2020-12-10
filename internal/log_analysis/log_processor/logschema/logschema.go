@@ -21,7 +21,9 @@ package logschema
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/panther-labs/panther/pkg/stringset"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/preprocessors"
@@ -57,6 +59,13 @@ type Schema struct {
 	Fields       []FieldSchema           `json:"fields" yaml:"fields"`
 }
 
+func (s *Schema) Clone() *Schema {
+	data, _ := jsoniter.Marshal(s)
+	out := Schema{}
+	_ = jsoniter.Unmarshal(data, &out)
+	return &out
+}
+
 type Parser struct {
 	CSV       *preprocessors.CSVMatchConfig  `json:"csv,omitempty" yaml:"csv,omitempty"`
 	FastMatch *preprocessors.FastMatchConfig `json:"fastmatch,omitempty" yaml:"fastmatch,omitempty"`
@@ -71,6 +80,43 @@ type ValueSchema struct {
 	Indicators  []string      `json:"indicators,omitempty" yaml:"indicators,omitempty"`
 	TimeFormat  string        `json:"timeFormat,omitempty" yaml:"timeFormat,omitempty"`
 	IsEventTime bool          `json:"isEventTime,omitempty" yaml:"isEventTime,omitempty"`
+}
+
+func (v *ValueSchema) Clone() *ValueSchema {
+	if v == nil {
+		return nil
+	}
+	switch v.Type {
+	case TypeObject:
+		var fields []FieldSchema
+		for _, f := range v.Fields {
+			cp := f.ValueSchema.Clone()
+			f.ValueSchema = *cp
+			fields = append(fields, f)
+		}
+		return &ValueSchema{
+			Type: TypeObject,
+			Fields: fields,
+		}
+	case TypeArray:
+		return &ValueSchema{
+			Type:        TypeArray,
+			Element:     v.Element.Clone(),
+		}
+	case TypeTimestamp:
+		return &ValueSchema{
+			Type:        TypeTimestamp,
+			TimeFormat: v.TimeFormat,
+			IsEventTime: v.IsEventTime,
+		}
+	case TypeString:
+		return &ValueSchema{
+			Type:        TypeString,
+			Indicators: stringset.New(v.Indicators...),
+		}
+	default:
+		return &ValueSchema{Type: v.Type}
+	}
 }
 
 type FieldSchema struct {
