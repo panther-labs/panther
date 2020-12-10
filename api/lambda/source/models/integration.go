@@ -24,6 +24,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 // SourceIntegration represents a Panther integration with a source.
@@ -81,7 +82,7 @@ type S3PrefixLogtypes []S3PrefixLogtypesMapping
 func (pl S3PrefixLogtypes) LogTypes() []string {
 	var logTypes []string
 	for _, m := range pl {
-		logTypes = append(logTypes, m.LogTypes...)
+		logTypes = stringset.Append(logTypes, m.LogTypes...)
 	}
 	return logTypes
 }
