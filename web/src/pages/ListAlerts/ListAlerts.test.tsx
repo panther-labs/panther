@@ -276,7 +276,6 @@ describe('ListAlerts', () => {
       `&logTypes[]=${mockedlogType}` +
       `&nameContains=test` +
       `&severity[]=${SeverityEnum.Info}&severity[]=${SeverityEnum.Medium}` +
-      `&type[]=AlertTypesEnum.Rule&type[]=AlertTypesEnum.RuleError` +
       `&sortBy=${ListAlertsSortFieldsEnum.CreatedAt}&sortDir=${SortDirEnum.Descending}` +
       `&status[]=${AlertStatusesEnum.Open}&status[]=${AlertStatusesEnum.Triaged}` +
       `&pageSize=${DEFAULT_LARGE_PAGE_SIZE}`;
@@ -494,7 +493,6 @@ describe('ListAlerts', () => {
     const initialParams =
       `?severity[]=${SeverityEnum.Info}&severity[]=${SeverityEnum.Medium}` +
       `&status[]=${AlertStatusesEnum.Open}&status[]=${AlertStatusesEnum.Triaged}` +
-      `&type[]=AlertTypesEnum.Rule&type[]=AlertTypesEnum.RuleError` +
       `&eventCountMin=2` +
       `&eventCountMax=5` +
       `&pageSize=${DEFAULT_LARGE_PAGE_SIZE}`;
