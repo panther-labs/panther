@@ -21,6 +21,7 @@ package logschema
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/panther-labs/panther/pkg/stringset"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
@@ -82,10 +83,40 @@ type ValueSchema struct {
 }
 
 func (v *ValueSchema) Clone() *ValueSchema {
-	data, _ := jsoniter.Marshal(v)
-	var out *ValueSchema
-	_ = jsoniter.Unmarshal(data, &out)
-	return out
+	if v == nil {
+		return nil
+	}
+	switch v.Type {
+	case TypeObject:
+		var fields []FieldSchema
+		for _, f := range v.Fields {
+			cp := f.ValueSchema.Clone()
+			f.ValueSchema = *cp
+			fields = append(fields, f)
+		}
+		return &ValueSchema{
+			Type: TypeObject,
+			Fields: fields,
+		}
+	case TypeArray:
+		return &ValueSchema{
+			Type:        TypeArray,
+			Element:     v.Element.Clone(),
+		}
+	case TypeTimestamp:
+		return &ValueSchema{
+			Type:        TypeTimestamp,
+			TimeFormat: v.TimeFormat,
+			IsEventTime: v.IsEventTime,
+		}
+	case TypeString:
+		return &ValueSchema{
+			Type:        TypeString,
+			Indicators: stringset.New(v.Indicators...),
+		}
+	default:
+		return &ValueSchema{Type: v.Type}
+	}
 }
 
 type FieldSchema struct {

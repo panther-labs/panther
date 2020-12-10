@@ -20,40 +20,27 @@ package logschema
 
 import (
 	"encoding/json"
-	"io"
 	"net"
 	"net/url"
-	"reflect"
 	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
 )
 
-func ReadCommonValueSchema(r io.Reader) (*ValueSchema, error) {
-	dec := json.NewDecoder(r)
-	var out *ValueSchema
-	for dec.More() {
-		var x interface{}
-		if err := dec.Decode(&x); err != nil {
-			return nil, err
-		}
-		if v := InferValueSchema(x); v != nil {
-			out = CommonValueSchema(out, v)
-		}
-		if out != nil && out.Type == TypeJSON {
-			return out, nil
-		}
-	}
-	return out, nil
-}
-
-func InferValueSchema(x interface{}) *ValueSchema {
-	switch x := x.(type) {
+// InferJSONValueSchema infers the Value Schema for a JSON value.
+//
+// It will return `nil` if `x` is `nil` or if it is not one of the types
+// defined in https://golang.org/pkg/encoding/json/#Unmarshal
+func InferJSONValueSchema(x interface{}) *ValueSchema {
+	switch v := x.(type) {
 	case map[string]interface{}:
 		var fields []FieldSchema
-		for key, val := range x {
-			vs := InferValueSchema(val)
+		for key, val := range v {
+			vs := InferJSONValueSchema(val)
+			if vs == nil {
+				continue
+			}
 			fields = append(fields, FieldSchema{
 				Name:        key,
 				Required:    true,
@@ -67,20 +54,28 @@ func InferValueSchema(x interface{}) *ValueSchema {
 	case []interface{}:
 		// This will result in an array with nil element if the array is empty
 		var merged *ValueSchema
-		for _, el := range x {
-			merged = CommonValueSchema(merged, InferValueSchema(el))
+		for _, el := range v {
+			merged = Merge(merged, InferJSONValueSchema(el))
 		}
 		return &ValueSchema{
 			Type:    TypeArray,
 			Element: merged,
 		}
+	case float64:
+		if v != v { // NaN
+			return nil
+		}
+		if float64(int64(v)) == v {
+			return &ValueSchema{Type: TypeBigInt}
+		}
+		return &ValueSchema{Type: TypeFloat}
 	case json.Number:
-		if _, err := x.Int64(); err == nil {
+		if _, err := v.Int64(); err == nil {
 			return &ValueSchema{Type: TypeBigInt}
 		}
 		return &ValueSchema{Type: TypeFloat}
 	case string:
-		return inferString(x)
+		return inferString(v)
 	case bool:
 		return &ValueSchema{Type: TypeBoolean}
 	default:
@@ -127,82 +122,4 @@ func inferIndicators(s string) []string {
 		return []string{"aws_arn"}
 	}
 	return nil
-}
-
-func CommonValueSchema(a, b *ValueSchema) *ValueSchema {
-	if a == nil && b == nil {
-		return nil
-	}
-	if a == nil {
-		return b
-	}
-	if b == nil {
-		return a
-	}
-	if a.Type != b.Type {
-		return castValue(a, b)
-	}
-	switch a.Type {
-	case TypeObject:
-		var fields []FieldSchema
-		for _, d := range DiffFields(a.Fields, b.Fields) {
-			a, b := d.A, d.B
-			switch {
-			case a != nil && b != nil:
-				val := CommonValueSchema(&a.ValueSchema, &b.ValueSchema)
-				fields = append(fields, FieldSchema{
-					Name:        a.Name,
-					Required:    a.Required && b.Required,
-					ValueSchema: *val,
-				})
-			case a != nil:
-				a.Required = false
-				fields = append(fields, *a)
-			case b != nil:
-				b.Required = false
-				fields = append(fields, *b)
-			}
-		}
-		return &ValueSchema{
-			Type:   TypeObject,
-			Fields: fields,
-		}
-	case TypeArray:
-		return &ValueSchema{
-			Type:    TypeArray,
-			Element: CommonValueSchema(a.Element, b.Element),
-		}
-	case TypeString:
-		if reflect.DeepEqual(a.Indicators, b.Indicators) {
-			return a
-		}
-		return &ValueSchema{
-			Type: TypeString,
-		}
-	default:
-		return a
-	}
-}
-
-func castValue(a, b *ValueSchema) *ValueSchema {
-	switch a.Type {
-	case TypeString:
-		switch b.Type {
-		case TypeFloat, TypeBigInt, TypeTimestamp, TypeBoolean:
-			return &ValueSchema{Type: TypeString}
-		}
-	case TypeBigInt:
-		switch b.Type {
-		case TypeFloat:
-			return &ValueSchema{Type: TypeFloat}
-		case TypeString, TypeTimestamp, TypeBoolean:
-			return &ValueSchema{Type: TypeString}
-		}
-	case TypeBoolean:
-		switch b.Type {
-		case TypeFloat, TypeBigInt, TypeTimestamp, TypeString:
-			return &ValueSchema{Type: TypeString}
-		}
-	}
-	return &ValueSchema{Type: TypeJSON}
 }
