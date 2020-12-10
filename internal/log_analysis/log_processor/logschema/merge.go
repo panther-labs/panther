@@ -86,17 +86,17 @@ func Merge(a, b *ValueSchema) *ValueSchema {
 	case a.Type == TypeString, b.Type == TypeString:
 		return &ValueSchema{Type: TypeString}
 	case a.Type == TypeFloat:
-		return castFloat(a, b)
+		return castFloat(b)
 	case b.Type == TypeFloat:
-		return castFloat(b, a)
+		return castFloat(a)
 	case a.Type == TypeBigInt:
-		return castBigInt(a, b)
+		return castBigInt(b)
 	case b.Type == TypeBigInt:
-		return castBigInt(b, a)
+		return castBigInt(a)
 	case a.Type == TypeInt:
-		return castInt(a, b)
+		return castInt(b)
 	case b.Type == TypeInt:
-		return castInt(b, a)
+		return castInt(a)
 	default:
 		return &ValueSchema{Type: TypeString}
 	}
@@ -129,39 +129,52 @@ func castTimestamp(a, b *ValueSchema) *ValueSchema {
 	case TypeBigInt:
 		switch a.TimeFormat {
 		case "unix", "unix_ms", "unix_us", "unix_ns":
-			return a.Clone()
+			return &ValueSchema{
+				Type:        TypeTimestamp,
+				TimeFormat:  a.TimeFormat,
+				IsEventTime: a.IsEventTime,
+			}
 		}
 	case TypeFloat:
-		if a.TimeFormat == "unix" {
-			return a.Clone()
+		switch a.TimeFormat {
+		case "unix":
+			return &ValueSchema{
+				Type:        TypeTimestamp,
+				TimeFormat:  "unix",
+				IsEventTime: a.IsEventTime,
+			}
+		case "unix_ms", "unix_us", "unix_ns":
+			return &ValueSchema{
+				Type: TypeFloat,
+			}
 		}
 	}
 	// Fallback to string
 	return &ValueSchema{Type: TypeString}
 }
 
-func castBigInt(a, b *ValueSchema) *ValueSchema {
+func castBigInt(b *ValueSchema) *ValueSchema {
 	switch b.Type {
 	case TypeInt, TypeSmallInt:
-		return a.Clone()
+		return &ValueSchema{Type: TypeBigInt}
 	default:
 		return &ValueSchema{Type: TypeString}
 	}
 }
 
-func castFloat(a, b *ValueSchema) *ValueSchema {
+func castFloat(b *ValueSchema) *ValueSchema {
 	switch b.Type {
 	case TypeBigInt, TypeInt, TypeSmallInt:
-		return a.Clone()
+		return &ValueSchema{Type: TypeFloat}
 	default:
 		return &ValueSchema{Type: TypeString}
 	}
 }
 
-func castInt(a, b *ValueSchema) *ValueSchema {
+func castInt(b *ValueSchema) *ValueSchema {
 	switch b.Type {
 	case TypeSmallInt:
-		return a.Clone()
+		return &ValueSchema{Type: TypeInt}
 	default:
 		return &ValueSchema{Type: TypeString}
 	}
