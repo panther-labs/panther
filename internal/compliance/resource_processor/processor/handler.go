@@ -232,12 +232,12 @@ func (r *batchResults) analyze(resources resourceMap, policies policyMap) error 
 
 			// Every failed policy, if not suppressed, will trigger the remediation flow
 			complianceNotification := &alertmodels.ComplianceNotification{
-				OutputIds:       policy.OutputIDs,
-				ResourceID:      resource.ID,
 				PolicyID:        policy.ID,
+				PolicySourceID:  resource.IntegrationID,
 				PolicyVersionID: policy.VersionID,
-				Timestamp:       time.Now(),
-
+				ResourceID:      resource.ID,
+				OutputIds:       policy.OutputIDs,
+				Timestamp:       time.Now().UTC(),
 				// We only need to send an alert to the user if the status is newly FAILing
 				ShouldAlert: status != compliancemodels.StatusFail,
 			}

@@ -24,68 +24,76 @@ import {
   waitForElementToBeRemoved,
 } from 'test-utils';
 import React from 'react';
-import { AlertStatusesEnum, DestinationTypeEnum, SeverityEnum } from 'Generated/schema';
+import {
+  AlertStatusesEnum,
+  AlertSummaryRuleInfo,
+  DestinationTypeEnum,
+  SeverityEnum,
+} from 'Generated/schema';
 import urls from 'Source/urls';
 import { mockListDestinations } from 'Source/graphql/queries';
 import AlertCard from './index';
 
 describe('AlertCard', () => {
   it('should match snapshot', async () => {
-    const alertData = buildAlertSummary();
+    const alert = buildAlertSummary();
 
-    const { container } = render(<AlertCard alert={alertData} />);
+    const { container } = render(<AlertCard alert={alert} />);
 
     expect(container).toMatchSnapshot();
   });
 
   it('displays the correct Alert data in the card', async () => {
-    const alertData = buildAlertSummary();
+    const alert = buildAlertSummary();
+    const detectionData = alert.detection as AlertSummaryRuleInfo;
 
-    const { getByText, getByAriaLabel } = render(<AlertCard alert={alertData} />);
+    const { getByText, getByAriaLabel } = render(<AlertCard alert={alert} />);
 
-    expect(getByText(alertData.title)).toBeInTheDocument();
-    expect(getByAriaLabel(`Link to rule ${alertData.ruleId}`)).toBeInTheDocument();
+    expect(getByText(alert.title)).toBeInTheDocument();
+    expect(getByAriaLabel(`Link to rule ${detectionData.ruleId}`)).toBeInTheDocument();
     expect(getByText('Events')).toBeInTheDocument();
     expect(getByText('Destinations')).toBeInTheDocument();
-    expect(getByAriaLabel(`Creation time for ${alertData.alertId}`)).toBeInTheDocument();
+    expect(getByAriaLabel(`Creation time for ${alert.alertId}`)).toBeInTheDocument();
     expect(getByText(SeverityEnum.Medium)).toBeInTheDocument();
     expect(getByText(AlertStatusesEnum.Triaged)).toBeInTheDocument();
     expect(getByAriaLabel('Change Alert Status')).toBeInTheDocument();
   });
 
   it('should not display link to Rule', async () => {
-    const alertData = buildAlertSummary();
+    const alert = buildAlertSummary();
+    const detectionData = alert.detection as AlertSummaryRuleInfo;
 
-    const { queryByText, queryByAriaLabel } = render(
-      <AlertCard alert={alertData} hideRuleButton />
-    );
+    const { queryByText, queryByAriaLabel } = render(<AlertCard alert={alert} hideRuleButton />);
 
-    expect(queryByText(alertData.title)).toBeInTheDocument();
-    expect(queryByAriaLabel(`Link to rule ${alertData.ruleId}`)).not.toBeInTheDocument();
+    expect(queryByText(alert.title)).toBeInTheDocument();
+    expect(queryByAriaLabel(`Link to rule ${detectionData.ruleId}`)).not.toBeInTheDocument();
   });
 
   it('should check links are valid', async () => {
-    const alertData = buildAlertSummary();
-    const { getByAriaLabel } = render(<AlertCard alert={alertData} />);
+    const alert = buildAlertSummary();
+    const detectionData = alert.detection as AlertSummaryRuleInfo;
+
+    const { getByAriaLabel } = render(<AlertCard alert={alert} />);
+
     expect(getByAriaLabel('Link to Alert')).toHaveAttribute(
       'href',
-      urls.logAnalysis.alerts.details(alertData.alertId)
+      urls.logAnalysis.alerts.details(alert.alertId)
     );
-    expect(getByAriaLabel(`Link to rule ${alertData.ruleId}`)).toHaveAttribute(
+    expect(getByAriaLabel(`Link to rule ${detectionData.ruleId}`)).toHaveAttribute(
       'href',
-      urls.logAnalysis.rules.details(alertData.ruleId)
+      urls.logAnalysis.rules.details(detectionData.ruleId)
     );
   });
 
   it('should render alert destinations logos', async () => {
     const outputId = 'destination-of-alert';
-    const alertData = buildAlertSummary({
+    const alert = buildAlertSummary({
       deliveryResponses: [buildDeliveryResponse({ outputId })],
     });
     const destination = buildDestination({ outputId, outputType: DestinationTypeEnum.Slack });
     const mocks = [mockListDestinations({ data: { destinations: [destination] } })];
 
-    const { getByAriaLabel, getByAltText } = render(<AlertCard alert={alertData} />, {
+    const { getByAriaLabel, getByAltText } = render(<AlertCard alert={alert} />, {
       mocks,
     });
     const loadingInterfaceElement = getByAriaLabel('Loading...');
@@ -96,13 +104,13 @@ describe('AlertCard', () => {
 
   it('should render message that destination delivery is failing', async () => {
     const outputId = 'destination-of-alert';
-    const alertData = buildAlertSummary({
+    const alert = buildAlertSummary({
       deliveryResponses: [buildDeliveryResponse({ outputId, success: false })],
     });
     const destination = buildDestination({ outputId, outputType: DestinationTypeEnum.Slack });
     const mocks = [mockListDestinations({ data: { destinations: [destination] } })];
 
-    const { getByAriaLabel, getByAltText } = render(<AlertCard alert={alertData} />, {
+    const { getByAriaLabel, getByAltText } = render(<AlertCard alert={alert} />, {
       mocks,
     });
     const loadingInterfaceElement = getByAriaLabel('Loading...');

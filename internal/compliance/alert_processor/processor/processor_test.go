@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/go-playground/assert.v1"
 
 	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
@@ -35,6 +36,18 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
+
+var timeNow = time.Unix(1581379785, 0).UTC() // Set a static time
+
+func genSampleEvent() *models.ComplianceNotification {
+	return &models.ComplianceNotification{
+		ResourceID:      "arn:aws:iam::xxx...",
+		PolicyID:        "Test.Policy",
+		PolicyVersionID: "A policy version",
+		ShouldAlert:     true,
+		Timestamp:       timeNow,
+	}
+}
 
 func TestHandleEventWithAlert(t *testing.T) {
 	mockDdbClient := &testutils.DynamoDBMock{}
@@ -52,7 +65,7 @@ func TestHandleEventWithAlert(t *testing.T) {
 		PolicyID:        "test-policy",
 		PolicyVersionID: "test-version",
 		ShouldAlert:     true,
-		Timestamp:       time.Now(),
+		Timestamp:       time.Now().UTC(),
 	}
 
 	complianceResponse := &compliancemodels.ComplianceEntry{
@@ -115,11 +128,11 @@ func TestHandleEventWithAlertButNoAutoRemediationID(t *testing.T) {
 		PolicyID:        "test-policy",
 		PolicyVersionID: "test-version",
 		ShouldAlert:     true,
-		Timestamp:       time.Now(),
+		Timestamp:       time.Now().UTC(),
 	}
 
 	complianceResponse := &compliancemodels.ComplianceEntry{
-		LastUpdated:    time.Now(),
+		LastUpdated:    time.Now().UTC(),
 		PolicyID:       "test-policy",
 		PolicySeverity: "INFO",
 		ResourceID:     "test-resource",
@@ -168,7 +181,7 @@ func TestHandleEventWithoutAlert(t *testing.T) {
 	}
 
 	complianceResponse := &compliancemodels.ComplianceEntry{
-		LastUpdated:    time.Now(),
+		LastUpdated:    time.Now().UTC(),
 		PolicyID:       "test-policy",
 		PolicySeverity: "INFO",
 		ResourceID:     "test-resource",
@@ -203,7 +216,7 @@ func TestSkipActionsIfResourceIsNotFailing(t *testing.T) {
 	}
 
 	responseBody := &compliancemodels.ComplianceEntry{
-		LastUpdated:    time.Now(),
+		LastUpdated:    time.Now().UTC(),
 		PolicyID:       "test-policy",
 		PolicySeverity: "INFO",
 		ResourceID:     "test-resource",
@@ -246,4 +259,10 @@ func TestSkipActionsIfLookupFailed(t *testing.T) {
 	require.Error(t, Handle(input))
 	mockComplianceClient.AssertExpectations(t)
 	mockDdbClient.AssertExpectations(t)
+}
+
+func TestGenerateAlertID(t *testing.T) {
+	event := genSampleEvent()
+	eventID := GenerateAlertID(event)
+	assert.Equal(t, *eventID, "26df596024d2e81140de028387d517da")
 }

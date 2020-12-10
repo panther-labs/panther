@@ -67,6 +67,12 @@ func AlertItemToSummary(item *table.AlertItem) *models.AlertSummary {
 		LastUpdatedByTime: item.LastUpdatedByTime,
 		UpdateTime:        &item.UpdateTime,
 		DeliveryResponses: item.DeliveryResponses,
+		PolicyID:          item.PolicyID,
+		PolicyDisplayName: item.PolicyDisplayName,
+		PolicySourceID:    item.PolicySourceID,
+		PolicyVersion:     item.PolicyVersion,
+		ResourceTypes:     item.ResourceTypes,
+		ResourceID:        item.ResourceID,
 	}
 }
 
@@ -76,8 +82,17 @@ func GetAlertTitle(alert *table.AlertItem) *string {
 	if alert.Title != "" {
 		return aws.String(alert.Title)
 	}
-	if alert.RuleDisplayName != nil {
-		return alert.RuleDisplayName
+	if alert.Type != alertdeliverymodels.PolicyType {
+		if alert.RuleDisplayName != nil {
+			return alert.RuleDisplayName
+		}
+		return &alert.RuleID
 	}
-	return &alert.RuleID
+	if alert.ResourceID != "" {
+		return &alert.ResourceID
+	}
+	if alert.PolicyDisplayName != "" {
+		return &alert.PolicyDisplayName
+	}
+	return &alert.PolicyID
 }

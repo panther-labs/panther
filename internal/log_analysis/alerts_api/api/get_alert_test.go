@@ -114,7 +114,68 @@ func TestGetAlertDoesNotExist(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestGetAlert(t *testing.T) {
+func TestGetPolicyAlert(t *testing.T) {
+	api, tableMock, s3Mock := initTest()
+
+	timeNow := time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)
+
+	input := &models.GetAlertInput{
+		AlertID:        "alertId",
+		EventsPageSize: aws.Int(1),
+	}
+
+	alertItem := &table.AlertItem{
+		Type:              "POLICY",
+		AlertID:           "alertId",
+		RuleID:            "AWS.S3.Bucket.Encryption",
+		PolicyID:          "AWS.S3.Bucket.Encryption",
+		PolicyVersion:     "L.iGYcpTHTS2sQF5VUBuO9Ompm7bTLwc",
+		Status:            "",
+		CreationTime:      timeNow,
+		UpdateTime:        timeNow,
+		Severity:          "INFO",
+		ResourceTypes:     []string{"AWS.S3.Bucket"},
+		ResourceID:        "arn:aws:s3:::panther-integration-processeddata-test-20201103180759",
+		LastUpdatedBy:     "userId",
+		LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
+	}
+
+	expectedSummary := &models.AlertSummary{
+		AlertID:           "alertId",
+		RuleID:            aws.String("AWS.S3.Bucket.Encryption"),
+		PolicyID:          "AWS.S3.Bucket.Encryption",
+		Status:            "OPEN",
+		Type:              "POLICY",
+		PolicyVersion:     "L.iGYcpTHTS2sQF5VUBuO9Ompm7bTLwc",
+		RuleVersion:       aws.String(""),
+		DedupString:       aws.String(""),
+		Severity:          aws.String("INFO"),
+		Title:             aws.String("arn:aws:s3:::panther-integration-processeddata-test-20201103180759"),
+		CreationTime:      aws.Time(timeNow),
+		UpdateTime:        aws.Time(timeNow),
+		EventsMatched:     aws.Int(0),
+		LogTypes:          []string{},
+		ResourceTypes:     []string{"AWS.S3.Bucket"},
+		ResourceID:        "arn:aws:s3:::panther-integration-processeddata-test-20201103180759",
+		LastUpdatedBy:     "userId",
+		LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
+		DeliveryResponses: []*models.DeliveryResponse{},
+	}
+
+	tableMock.On("GetAlert", "alertId").Return(alertItem, nil).Once()
+
+	result, err := api.GetAlert(input)
+	require.NoError(t, err)
+	require.Equal(t, &models.GetAlertOutput{
+		AlertSummary:           *expectedSummary,
+		Events:                 []*string{},
+		EventsLastEvaluatedKey: aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6e319"),
+	}, result)
+	s3Mock.AssertExpectations(t)
+	tableMock.AssertExpectations(t)
+}
+
+func TestGetRuleAlert(t *testing.T) {
 	api, tableMock, s3Mock := initTest()
 
 	// The S3 object keys returned by S3 List objects command
@@ -155,6 +216,8 @@ func TestGetAlert(t *testing.T) {
 		UpdateTime:        aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
 		EventsMatched:     aws.Int(5),
 		LogTypes:          []string{"logtype"},
+		ResourceTypes:     []string{},
+		ResourceID:        "",
 		LastUpdatedBy:     "userId",
 		LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
 		DeliveryResponses: []*models.DeliveryResponse{},
@@ -297,6 +360,8 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 		Severity:          aws.String("INFO"),
 		DedupString:       aws.String("dedupString"),
 		LogTypes:          []string{"logtype"},
+		ResourceTypes:     []string{},
+		ResourceID:        "",
 		LastUpdatedBy:     "userId",
 		LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
 		DeliveryResponses: []*models.DeliveryResponse{},

@@ -28,6 +28,7 @@ import {
 } from 'test-utils';
 import {
   AlertStatusesEnum,
+  AlertTypesEnum,
   ListAlertsSortFieldsEnum,
   SeverityEnum,
   SortDirEnum,
@@ -91,6 +92,7 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
+            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
           },
         },
         data: {
@@ -195,6 +197,7 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
+            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
           },
         },
         data: {
@@ -273,6 +276,7 @@ describe('ListAlerts', () => {
       `&logTypes[]=${mockedlogType}` +
       `&nameContains=test` +
       `&severity[]=${SeverityEnum.Info}&severity[]=${SeverityEnum.Medium}` +
+      `&type[]=AlertTypesEnum.Rule&type[]=AlertTypesEnum.RuleError` +
       `&sortBy=${ListAlertsSortFieldsEnum.CreatedAt}&sortDir=${SortDirEnum.Descending}` +
       `&status[]=${AlertStatusesEnum.Open}&status[]=${AlertStatusesEnum.Triaged}` +
       `&pageSize=${DEFAULT_LARGE_PAGE_SIZE}`;
@@ -288,7 +292,7 @@ describe('ListAlerts', () => {
       }),
       mockListAlerts({
         variables: {
-          input: parsedInitialParams,
+          input: { ...parsedInitialParams, types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
         },
         data: {
           alerts: buildListAlertsResponse({
@@ -354,7 +358,7 @@ describe('ListAlerts', () => {
       }),
       mockListAlerts({
         variables: {
-          input: parsedInitialParams,
+          input: { ...parsedInitialParams, types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
         },
         data: {
           alerts: buildListAlertsResponse({
@@ -370,6 +374,7 @@ describe('ListAlerts', () => {
             eventCountMax: 5,
             severity: [SeverityEnum.Info, SeverityEnum.Medium],
             status: [AlertStatusesEnum.Open, AlertStatusesEnum.Triaged],
+            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
           },
         },
         data: {
@@ -380,7 +385,7 @@ describe('ListAlerts', () => {
       }),
       mockListAlerts({
         variables: {
-          input: parsedInitialParams,
+          input: { ...parsedInitialParams, types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
         },
         data: {
           alerts: buildListAlertsResponse({
@@ -489,6 +494,7 @@ describe('ListAlerts', () => {
     const initialParams =
       `?severity[]=${SeverityEnum.Info}&severity[]=${SeverityEnum.Medium}` +
       `&status[]=${AlertStatusesEnum.Open}&status[]=${AlertStatusesEnum.Triaged}` +
+      `&type[]=AlertTypesEnum.Rule&type[]=AlertTypesEnum.RuleError` +
       `&eventCountMin=2` +
       `&eventCountMax=5` +
       `&pageSize=${DEFAULT_LARGE_PAGE_SIZE}`;
@@ -504,7 +510,7 @@ describe('ListAlerts', () => {
       }),
       mockListAlerts({
         variables: {
-          input: parsedInitialParams,
+          input: { ...parsedInitialParams, types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError] },
         },
         data: {
           alerts: buildListAlertsResponse({
@@ -514,7 +520,11 @@ describe('ListAlerts', () => {
       }),
       mockListAlerts({
         variables: {
-          input: { ...parsedInitialParams, nameContains: 'test' },
+          input: {
+            ...parsedInitialParams,
+            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
+            nameContains: 'test',
+          },
         },
         data: {
           alerts: buildListAlertsResponse({
@@ -526,6 +536,7 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             ...parsedInitialParams,
+            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
             nameContains: 'test',
             sortBy: ListAlertsSortFieldsEnum.CreatedAt,
             sortDir: SortDirEnum.Descending,
@@ -541,6 +552,7 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             ...parsedInitialParams,
+            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
             nameContains: 'test',
             sortBy: ListAlertsSortFieldsEnum.CreatedAt,
             sortDir: SortDirEnum.Descending,
@@ -557,12 +569,13 @@ describe('ListAlerts', () => {
         variables: {
           input: {
             ...parsedInitialParams,
+            types: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError],
             nameContains: 'test',
             sortBy: ListAlertsSortFieldsEnum.CreatedAt,
             sortDir: SortDirEnum.Descending,
             logTypes: [mockedlogType],
-            createdAtAfter: '2000-01-29T00:00:00Z',
-            createdAtBefore: '2000-01-30T00:00:00Z',
+            createdAtAfter: '2000-01-29T00:00:00.000Z',
+            createdAtBefore: '2000-01-30T00:00:00.000Z',
           },
         },
         data: {
@@ -662,7 +675,7 @@ describe('ListAlerts', () => {
     await waitMs(1);
 
     // Expect the URL to be updated
-    const completeParams = `${paramsWithSortingAndTextFilterAndLogType}&createdAtAfter=2000-01-29T00:00:00Z&createdAtBefore=2000-01-30T00:00:00Z`;
+    const completeParams = `${paramsWithSortingAndTextFilterAndLogType}&createdAtAfter=2000-01-29T00:00:00.000Z&createdAtBefore=2000-01-30T00:00:00.000Z`;
     expect(parseParams(history.location.search)).toEqual(parseParams(completeParams));
 
     // Expect the API request to have fired and a new alert to have returned (verifies API execution)

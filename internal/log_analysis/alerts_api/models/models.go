@@ -1,4 +1,4 @@
-package forwarder
+package models
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -27,13 +27,10 @@ import (
 )
 
 const (
-	// The type of an Alert that is triggered because of a rule encountering an error
-	RuleErrorType = "RULE_ERROR"
-
-	alertTablePartitionKey        = "id"
-	alertTableLogTypesAttribute   = "logTypes"
-	alertTableEventCountAttribute = "eventCount"
-	alertTableUpdateTimeAttribute = "updateTime"
+	AlertTablePartitionKey        = "id"
+	AlertTableLogTypesAttribute   = "logTypes"
+	AlertTableEventCountAttribute = "eventCount"
+	AlertTableUpdateTimeAttribute = "updateTime"
 )
 
 // AlertDedupEvent represents the event stored in the alert dedup DDB table by the rules engine
@@ -57,6 +54,16 @@ type AlertDedupEvent struct {
 	AlertCount            int64    `dynamodbav:"-"` // There is no need to store this item in DDB
 }
 
+// AlertPolicy represents the policy-specific fields for alerts genereated by policies
+type AlertPolicy struct {
+	PolicyID          string   `dynamodbav:"policyId,string"`
+	PolicyDisplayName string   `dynamodbav:"policyDisplayName,string"`
+	PolicyVersion     string   `dynamodbav:"policyVersion,string"`
+	PolicySourceID    string   `dynamodbav:"policySourceId,string"`
+	ResourceTypes     []string `dynamodbav:"resourceTypes,stringset"`
+	ResourceID        string   `dynamodbav:"resourceId,string"` // This is the failing resource
+}
+
 // Alert contains all the fields associated to the alert stored in DDB
 type Alert struct {
 	ID                  string    `dynamodbav:"id,string"`
@@ -68,6 +75,7 @@ type Alert struct {
 	// Alert Title - will be the Python-generated title or a default one if no Python-generated title is available.
 	Title string `dynamodbav:"title,string"`
 	AlertDedupEvent
+	AlertPolicy
 }
 
 func FromDynamodDBAttribute(input map[string]events.DynamoDBAttributeValue) (event *AlertDedupEvent, err error) {

@@ -22,7 +22,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
@@ -61,7 +60,7 @@ func TestUpdateAlerts(t *testing.T) {
 		{
 			Alert: deliveryModels.Alert{
 				AlertID:   &alertID,
-				Type:      deliveryModels.RuleType,
+				Type:      deliveryModels.PolicyType,
 				OutputIds: outputIds,
 				Severity:  "INFO",
 				CreatedAt: time.Now().UTC(),
@@ -129,38 +128,6 @@ func TestUpdateAlerts(t *testing.T) {
 	require.NoError(t, err)
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Times(1)
-
-	response := updateAlerts(statuses)
-	assert.Equal(t, expectedResponse, response)
-	mockClient.AssertExpectations(t)
-}
-
-func TestUpdateAlertSkipPolicy(t *testing.T) {
-	mockClient := &testutils.LambdaMock{}
-	lambdaClient = mockClient
-
-	alertID := aws.String("alert-id")
-	outputIds := []string{"output-id-1"}
-	dispatchedAt := time.Now().UTC()
-	statuses := []DispatchStatus{
-		{
-			Alert: deliveryModels.Alert{
-				AlertID:   alertID,
-				Type:      deliveryModels.PolicyType,
-				OutputIds: outputIds,
-				Severity:  "INFO",
-				CreatedAt: time.Now().UTC(),
-			},
-			OutputID:     outputIds[0],
-			Message:      "success",
-			StatusCode:   200,
-			Success:      true,
-			NeedsRetry:   false,
-			DispatchedAt: dispatchedAt,
-		},
-	}
-
-	expectedResponse := []*alertModels.AlertSummary{}
 
 	response := updateAlerts(statuses)
 	assert.Equal(t, expectedResponse, response)

@@ -19,6 +19,7 @@
 import React from 'react';
 import JsonViewer from 'Components/JsonViewer';
 import { Box, Card, Flex, Heading, Icon, Tooltip } from 'pouncejs';
+import { AlertDetailsRuleInfo } from 'Generated/schema';
 import { TableControlsPagination as PaginationControls } from 'Components/utils/TableControls';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import toPlural from 'Helpers/utils';
@@ -41,18 +42,20 @@ const AlertDetailsEvents: React.FC<AlertDetailsEventsProps> = ({ alert, fetchMor
   // 1-based indexing in mind
   const [eventDisplayIndex, setEventDisplayIndex] = React.useState(1);
 
+  const detectionData = alert.detection as AlertDetailsRuleInfo;
   React.useEffect(() => {
-    if (eventDisplayIndex - 1 === alert.events.length - DEFAULT_LARGE_PAGE_SIZE) {
+    if (eventDisplayIndex - 1 === detectionData.events.length - DEFAULT_LARGE_PAGE_SIZE) {
       fetchMore();
     }
-  }, [eventDisplayIndex, alert.events.length]);
+  }, [eventDisplayIndex, detectionData.events.length]);
 
   return (
     <Flex direction="column" spacing={6}>
       <Flex justify="space-between" align="center">
         <Flex align="center" spacing={2}>
           <Heading size="x-small">
-            <b>{alert.eventsMatched}</b> Triggered {toPlural('Event', alert.eventsMatched)}
+            <b>{detectionData.eventsMatched}</b> Triggered{' '}
+            {toPlural('Event', detectionData.eventsMatched)}
           </Heading>
           <Tooltip
             content={
@@ -67,12 +70,12 @@ const AlertDetailsEvents: React.FC<AlertDetailsEventsProps> = ({ alert, fetchMor
         </Flex>
         <PaginationControls
           page={eventDisplayIndex}
-          totalPages={alert.eventsMatched}
+          totalPages={detectionData.eventsMatched}
           onPageChange={setEventDisplayIndex}
         />
       </Flex>
       <Card variant="dark" p={6}>
-        <JsonViewer data={parseAlertEventToJson(alert.events[eventDisplayIndex - 1])} />
+        <JsonViewer data={parseAlertEventToJson(detectionData.events[eventDisplayIndex - 1])} />
       </Card>
     </Flex>
   );

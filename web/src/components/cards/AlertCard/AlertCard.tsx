@@ -18,7 +18,7 @@
 
 import GenericItemCard from 'Components/GenericItemCard';
 import { Flex, Icon, Link, Text, Box } from 'pouncejs';
-import { AlertTypesEnum } from 'Generated/schema';
+import { AlertDetailsRuleInfo, AlertTypesEnum } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import React from 'react';
@@ -48,6 +48,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
     alert,
   });
 
+  const detectionData = alert.detection as AlertDetailsRuleInfo;
   return (
     <GenericItemCard>
       <Flex align="start" pr={2}>
@@ -87,11 +88,11 @@ const AlertCard: React.FC<AlertCardProps> = ({
               value={
                 <Flex spacing={2}>
                   <Text display="inline-flex" alignItems="center" as="span">
-                    {alert.ruleId}
+                    {detectionData.ruleId}
                   </Text>
                   <GenericItemCard.Link
-                    aria-label={`Link to rule ${alert.ruleId}`}
-                    to={urls.logAnalysis.rules.details(alert.ruleId)}
+                    aria-label={`Link to rule ${detectionData.ruleId}`}
+                    to={urls.logAnalysis.rules.details(detectionData.ruleId)}
                   />
                 </Flex>
               }
@@ -105,11 +106,13 @@ const AlertCard: React.FC<AlertCardProps> = ({
           />
           <GenericItemCard.Value
             label="Log Types"
-            value={<BulletedLogTypeList logTypes={alert.logTypes} limit={2} />}
+            value={<BulletedLogTypeList logTypes={detectionData.logTypes} limit={2} />}
           />
           <GenericItemCard.Value
             label="Events"
-            value={alert?.eventsMatched ? alert?.eventsMatched.toLocaleString() : '0'}
+            value={
+              detectionData?.eventsMatched ? detectionData?.eventsMatched.toLocaleString() : '0'
+            }
           />
           <Flex ml="auto" mr={0} align="flex-end" spacing={2}>
             <SeverityBadge severity={alert.severity} />
