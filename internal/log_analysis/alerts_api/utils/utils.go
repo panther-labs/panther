@@ -33,7 +33,8 @@ import (
 
 // Used to cache a RuleID to an analysismodels.Rule & timestamp
 var (
-	ruleCache = make(map[ruleKey]cachedRule)
+	ruleCache        = make(map[ruleKey]cachedRule)
+	ruleCacheTimeout = -2 * time.Minute
 )
 
 // Key used for the rule cache to map to a Rule
@@ -53,11 +54,13 @@ func getRule(resourceID string, analysisClient gatewayapi.API) (*analysismodels.
 
 	// Return the cached short-lived rule (2 minutes)
 	if cachedRule, exists := ruleCache[cacheKey]; exists {
-		if time.Now().Add(-2 * time.Minute).Before(cachedRule.Timestamp) {
-			zap.L().Debug("rule was cached", zap.Any("cache key", cacheKey))
+		if time.Now().Add(ruleCacheTimeout).Before(cachedRule.Timestamp) {
+			zap.L().Debug("rule was cached",
+				zap.Any("cache key", cacheKey), zap.Any("timestamp", cachedRule.Timestamp))
 			return &cachedRule.Rule, nil
 		}
-		zap.L().Debug("rule cache expired", zap.Any("cache key", cacheKey))
+		zap.L().Debug("rule cache expired",
+			zap.Any("cache key", cacheKey), zap.Any("timestamp", cachedRule.Timestamp))
 	}
 	// Get the Rule
 	input := analysismodels.LambdaInput{
