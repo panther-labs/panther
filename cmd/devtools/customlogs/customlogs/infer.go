@@ -42,8 +42,7 @@ import (
 )
 
 type InferOpts struct {
-	File       *string
-	SkipVerify *bool
+	SkipTest *bool
 }
 
 var inferJsoniter = jsoniter.Config{
@@ -52,9 +51,9 @@ var inferJsoniter = jsoniter.Config{
 
 // Infers a schema given a sample of logs
 func Infer(logger *zap.Logger, opts *InferOpts) {
-	if *opts.File == "" {
-		flag.Usage()
-		logger.Fatal("no sample file provided")
+	inputFiles := flag.Args()
+	if len(inputFiles) == 0 {
+		inputFiles = []string{"-"}
 	}
 
 	schema, err := inferFromFile(*opts.File)
@@ -62,7 +61,7 @@ func Infer(logger *zap.Logger, opts *InferOpts) {
 		logger.Fatal("failed to generate schema", zap.Error(err))
 	}
 
-	if !*opts.SkipVerify {
+	if !*opts.SkipTest {
 		// In order to validate that the schema generated is correct,
 		// run the parser against the logs, fail in case of error
 		if err = validateSchema(schema, *opts.File); err != nil {

@@ -37,13 +37,13 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
-type ValidateOpts struct {
+type TestOpts struct {
 	Schema *string
 	Output *string
 }
 
-// Validate validates a log schema against a sample of logs
-func Validate(logger *zap.SugaredLogger, opts *ValidateOpts) {
+// Test validates a log schema against a sample of logs
+func Test(logger *zap.SugaredLogger, opts *TestOpts) {
 	schemaFile := *opts.Schema
 	if schemaFile == "" {
 		flag.Usage()

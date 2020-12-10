@@ -22,6 +22,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"strings"
 
 	"go.uber.org/zap"
 
@@ -30,11 +31,11 @@ import (
 )
 
 // CLI commands
-const validateCmd = "validate"
-const infer = "infer"
+const testCmd = "test"
+const inferCmd = "infer"
 
 func main() {
-	opstools.SetUsage(`[infer, validate]`)
+	opstools.SetUsage(strings.Join([]string{testCmd, inferCmd}, ","))
 
 	loggerConfig := zap.NewDevelopmentConfig()
 	loggerConfig.DisableStacktrace = true
@@ -51,21 +52,20 @@ func main() {
 	}
 
 	switch cmd := os.Args[1]; cmd {
-	case validateCmd:
+	case testCmd:
 		opstools.SetUsage(`-s SCHEMA_FILE [-o OUTPUT_FILE] [INPUT_FILES...]`)
-		opts := &customlogs.ValidateOpts{
+		opts := &customlogs.TestOpts{
 			Schema: flag.String("s", "", "File file"),
 			Output: flag.String("o", "", "Write parsed results to file (defaults to stdout)"),
 		}
 		if err := flag.CommandLine.Parse(os.Args[2:]); err != nil {
 			logger.Fatalf("failed to parse command line arguments")
 		}
-		customlogs.Validate(logger, opts)
-	case infer:
-		opstools.SetUsage(`-i INPUT_FILE`)
+		customlogs.Test(logger, opts)
+	case inferCmd:
+		opstools.SetUsage(`[INPUT_FILES...]`)
 		opts := &customlogs.InferOpts{
-			File:       flag.String("i", "", "Input file"),
-			SkipVerify: flag.Bool("skip-verify", false, "Skips verifying the schema against the logs"),
+			SkipTest: flag.Bool("skip-test", false, "Skips testing the schema against the logs"),
 		}
 		if err := flag.CommandLine.Parse(os.Args[2:]); err != nil {
 			logger.Fatalf("failed to parse command line arguments")
