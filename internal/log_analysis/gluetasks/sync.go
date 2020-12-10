@@ -35,13 +35,12 @@ import (
 )
 
 type SyncDatabaseTables struct {
-	Start                time.Time
-	MatchPrefix          string
-	DatabaseName         string
-	NumWorkers           int
-	Stats                SyncStats
-	DryRun               bool
-	AfterTableCreateTime bool
+	Start        time.Time
+	MatchPrefix  string
+	DatabaseName string
+	NumWorkers   int
+	Stats        SyncStats
+	DryRun       bool
 }
 
 func (s *SyncDatabaseTables) Run(ctx context.Context, api glueiface.GlueAPI, log *zap.Logger) error {
@@ -86,11 +85,10 @@ func (s *SyncDatabaseTables) Run(ctx context.Context, api glueiface.GlueAPI, log
 			for i, tbl := range page {
 				i, tbl := i, tbl
 				task := &SyncTablePartitions{
-					DatabaseName:         s.DatabaseName,
-					AfterTableCreateTime: s.AfterTableCreateTime,
-					TableName:            aws.StringValue(tbl.Name),
-					NumWorkers:           s.NumWorkers,
-					DryRun:               s.DryRun,
+					DatabaseName: s.DatabaseName,
+					TableName:    aws.StringValue(tbl.Name),
+					NumWorkers:   s.NumWorkers,
+					DryRun:       s.DryRun,
 				}
 				tasks[i] = task
 				childGroup.Go(func() error {
@@ -113,13 +111,12 @@ func (s *SyncDatabaseTables) Run(ctx context.Context, api glueiface.GlueAPI, log
 }
 
 type SyncTablePartitions struct {
-	DatabaseName         string
-	TableName            string
-	NumWorkers           int
-	NextToken            string
-	Stats                SyncStats
-	AfterTableCreateTime bool
-	DryRun               bool
+	DatabaseName string
+	TableName    string
+	NumWorkers   int
+	NextToken    string
+	Stats        SyncStats
+	DryRun       bool
 }
 
 func (s *SyncTablePartitions) Run(ctx context.Context, api glueiface.GlueAPI, log *zap.Logger) error {
@@ -153,10 +150,6 @@ func (s *SyncTablePartitions) syncTable(ctx context.Context, api glueiface.GlueA
 			DatabaseName: tbl.DatabaseName,
 			CatalogId:    tbl.CatalogId,
 			TableName:    tbl.Name,
-		}
-		if s.AfterTableCreateTime && tbl.CreateTime != nil {
-			expr := daily.PartitionsAfter(*tbl.CreateTime)
-			input.Expression = &expr
 		}
 		if s.NextToken != "" {
 			input.NextToken = &s.NextToken

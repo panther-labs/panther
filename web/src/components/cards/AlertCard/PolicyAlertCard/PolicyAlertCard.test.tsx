@@ -18,6 +18,8 @@
 
 import {
   buildAlertSummary,
+  buildAlertSummaryPolicyInfo,
+  buildComplianceIntegration,
   buildDeliveryResponse,
   buildDestination,
   render,
@@ -26,74 +28,85 @@ import {
 import React from 'react';
 import {
   AlertStatusesEnum,
-  AlertSummaryRuleInfo,
+  AlertSummaryPolicyInfo,
   DestinationTypeEnum,
   SeverityEnum,
 } from 'Generated/schema';
 import urls from 'Source/urls';
-import { mockListDestinations } from 'Source/graphql/queries';
-import AlertCard from './index';
+import { mockListComplianceSourceNames, mockListDestinations } from 'Source/graphql/queries';
+import PolicyAlertCard from './index';
 
-describe('AlertCard', () => {
+describe('PolicyAlertCard', () => {
   it('should match snapshot', async () => {
-    const alert = buildAlertSummary();
+    const alert = buildAlertSummary({ detection: buildAlertSummaryPolicyInfo() });
 
-    const { container } = render(<AlertCard alert={alert} />);
+    const { container } = render(<PolicyAlertCard alert={alert} />);
 
     expect(container).toMatchSnapshot();
   });
 
   it('displays the correct Alert data in the card', async () => {
-    const alert = buildAlertSummary();
-    const detectionData = alert.detection as AlertSummaryRuleInfo;
+    const alert = buildAlertSummary({
+      detection: buildAlertSummaryPolicyInfo({
+        resourceTypes: ['alpha', 'beta'],
+      }),
+    });
 
-    const { getByText, getByAriaLabel } = render(<AlertCard alert={alert} />);
+    const detectionData = alert.detection as AlertSummaryPolicyInfo;
+
+    const { getByText, getByAriaLabel } = render(<PolicyAlertCard alert={alert} />);
 
     expect(getByText(alert.title)).toBeInTheDocument();
-    expect(getByAriaLabel(`Link to rule ${detectionData.ruleId}`)).toBeInTheDocument();
-    expect(getByText('Events')).toBeInTheDocument();
+    expect(getByAriaLabel(`Link to policy ${detectionData.policyId}`)).toBeInTheDocument();
     expect(getByText('Destinations')).toBeInTheDocument();
     expect(getByAriaLabel(`Creation time for ${alert.alertId}`)).toBeInTheDocument();
     expect(getByText(SeverityEnum.Medium)).toBeInTheDocument();
     expect(getByText(AlertStatusesEnum.Triaged)).toBeInTheDocument();
     expect(getByAriaLabel('Change Alert Status')).toBeInTheDocument();
+
+    detectionData.resourceTypes.forEach(resourceType => {
+      expect(getByText(resourceType)).toBeInTheDocument();
+    });
   });
 
-  it('should not display link to Rule', async () => {
-    const alert = buildAlertSummary();
-    const detectionData = alert.detection as AlertSummaryRuleInfo;
+  it('should not display link to Policy', async () => {
+    const alert = buildAlertSummary({ detection: buildAlertSummaryPolicyInfo() });
+    const detectionData = alert.detection as AlertSummaryPolicyInfo;
 
-    const { queryByText, queryByAriaLabel } = render(<AlertCard alert={alert} hideRuleButton />);
+    const { queryByText, queryByAriaLabel } = render(
+      <PolicyAlertCard alert={alert} hidePolicyButton />
+    );
 
     expect(queryByText(alert.title)).toBeInTheDocument();
-    expect(queryByAriaLabel(`Link to rule ${detectionData.ruleId}`)).not.toBeInTheDocument();
+    expect(queryByAriaLabel(`Link to policy ${detectionData.policyId}`)).not.toBeInTheDocument();
   });
 
   it('should check links are valid', async () => {
-    const alert = buildAlertSummary();
-    const detectionData = alert.detection as AlertSummaryRuleInfo;
+    const alert = buildAlertSummary({ detection: buildAlertSummaryPolicyInfo() });
+    const detectionData = alert.detection as AlertSummaryPolicyInfo;
 
-    const { getByAriaLabel } = render(<AlertCard alert={alert} />);
+    const { getByAriaLabel } = render(<PolicyAlertCard alert={alert} />);
 
     expect(getByAriaLabel('Link to Alert')).toHaveAttribute(
       'href',
       urls.logAnalysis.alerts.details(alert.alertId)
     );
-    expect(getByAriaLabel(`Link to rule ${detectionData.ruleId}`)).toHaveAttribute(
+    expect(getByAriaLabel(`Link to policy ${detectionData.policyId}`)).toHaveAttribute(
       'href',
-      urls.logAnalysis.rules.details(detectionData.ruleId)
+      urls.compliance.policies.details(detectionData.policyId)
     );
   });
 
   it('should render alert destinations logos', async () => {
     const outputId = 'destination-of-alert';
     const alert = buildAlertSummary({
+      detection: buildAlertSummaryPolicyInfo(),
       deliveryResponses: [buildDeliveryResponse({ outputId })],
     });
     const destination = buildDestination({ outputId, outputType: DestinationTypeEnum.Slack });
     const mocks = [mockListDestinations({ data: { destinations: [destination] } })];
 
-    const { getByAriaLabel, getByAltText } = render(<AlertCard alert={alert} />, {
+    const { getByAriaLabel, getByAltText } = render(<PolicyAlertCard alert={alert} />, {
       mocks,
     });
     const loadingInterfaceElement = getByAriaLabel('Loading...');
@@ -102,15 +115,41 @@ describe('AlertCard', () => {
     expect(getByAltText(`${destination.outputType} logo`)).toBeInTheDocument();
   });
 
+  it("should render the source's name", async () => {
+    const sourceId = 'destination-of-alert';
+    const alert = buildAlertSummary({
+      detection: buildAlertSummaryPolicyInfo({ policySourceId: sourceId }),
+    });
+    const mocks = [
+      mockListComplianceSourceNames({
+        data: {
+          listComplianceIntegrations: [
+            buildComplianceIntegration({
+              integrationId: sourceId,
+              integrationLabel: 'fake-source-name',
+            }),
+          ],
+        },
+      }),
+    ];
+
+    const { findByText } = render(<PolicyAlertCard alert={alert} />, {
+      mocks,
+    });
+
+    expect(await findByText('fake-source-name')).toBeInTheDocument();
+  });
+
   it('should render message that destination delivery is failing', async () => {
     const outputId = 'destination-of-alert';
     const alert = buildAlertSummary({
+      detection: buildAlertSummaryPolicyInfo(),
       deliveryResponses: [buildDeliveryResponse({ outputId, success: false })],
     });
     const destination = buildDestination({ outputId, outputType: DestinationTypeEnum.Slack });
     const mocks = [mockListDestinations({ data: { destinations: [destination] } })];
 
-    const { getByAriaLabel, getByAltText } = render(<AlertCard alert={alert} />, {
+    const { getByAriaLabel, getByAltText } = render(<PolicyAlertCard alert={alert} />, {
       mocks,
     });
     const loadingInterfaceElement = getByAriaLabel('Loading...');
