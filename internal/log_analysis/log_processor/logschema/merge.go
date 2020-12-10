@@ -19,16 +19,17 @@ package logschema
  */
 
 // Merge merges to value schemas to a a common schema that can handle both values.
+// The returned value is a fully independent ValueSchema (deep copy).
 // It panics if values a or b are not fully resolved via `Resolve().
 func Merge(a, b *ValueSchema) *ValueSchema {
 	if a == nil && b == nil {
 		return nil
 	}
 	if a == nil {
-		return b
+		return b.Clone()
 	}
 	if b == nil {
-		return a
+		return a.Clone()
 	}
 	if a.Type == TypeRef || b.Type == TypeRef {
 		panic("cannot merge unresolved values")
@@ -46,7 +47,8 @@ func Merge(a, b *ValueSchema) *ValueSchema {
 				Element: Merge(a.Element, b.Element),
 			}
 		case TypeString:
-			// Try to preserve indicators
+			// Try to preserve indicators.
+			// Make sure that indicators in the output value are a copy of the input slice.
 			if indicators, _, changed := diffIndicators(a.Indicators, b.Indicators); !changed {
 				return &ValueSchema{
 					Type:       TypeString,
@@ -75,9 +77,7 @@ func Merge(a, b *ValueSchema) *ValueSchema {
 	// Each castX function only handles the 'lesser' value types in the following order
 	// JSON > OBJECT,ARRAY > TIMESTAMP > STRING > FLOAT > BIGINT > INT
 	switch {
-	case a.Type == TypeJSON, b.Type == TypeJSON,
-		a.Type == TypeObject, b.Type == TypeObject,
-		a.Type == TypeArray, b.Type == TypeArray:
+	case a.Type.IsComposite(), b.Type.IsComposite():
 		return &ValueSchema{Type: TypeJSON}
 	case a.Type == TypeTimestamp:
 		return castTimestamp(b.Type, a.TimeFormat, a.IsEventTime)

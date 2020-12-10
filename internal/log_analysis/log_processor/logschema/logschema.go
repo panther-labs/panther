@@ -49,6 +49,15 @@ const (
 	TypeJSON      ValueType = "json"
 )
 
+func (t ValueType) IsComposite() bool {
+	switch t {
+	case TypeObject, TypeArray, TypeJSON:
+		return true
+	default:
+		return false
+	}
+}
+
 type Schema struct {
 	Schema       string                  `json:"schema,omitempty" yaml:"schema,omitempty"`
 	Parser       *Parser                 `json:"parser,omitempty" yaml:"parser,omitempty"`
