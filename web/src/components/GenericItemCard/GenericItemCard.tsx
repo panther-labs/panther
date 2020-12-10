@@ -180,7 +180,7 @@ const GenericItemCardLineBreak: React.FC = () => <Box flexBasis="100%" height={0
 
 GenericItemCard.Body = GenericItemCardBody;
 GenericItemCard.Header = GenericItemCardHeader;
-GenericItemCard.Link = GenericItemCardLink;
+GenericItemCard.Link = React.memo(GenericItemCardLink);
 GenericItemCard.Heading = GenericItemCardHeading;
 GenericItemCard.Logo = GenericItemCardLogo;
 GenericItemCard.OptionsButton = GenericItemCardOptionsButton;

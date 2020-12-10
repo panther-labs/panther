@@ -22,6 +22,7 @@ import { RESOURCE_TYPES } from 'Source/constants';
 import GenerateFiltersGroup from 'Components/utils/GenerateFiltersGroup';
 import { ComplianceStatusEnum, ListResourcesInput, ComplianceIntegration } from 'Generated/schema';
 import { capitalize } from 'Helpers/utils';
+import { useListComplianceSourceNames } from 'Source/graphql/queries';
 import FormikTextInput from 'Components/fields/TextInput';
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
@@ -29,7 +30,6 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import pick from 'lodash/pick';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import Breadcrumbs from 'Components/Breadcrumbs';
-import { useListAccountIds } from './graphql/listAccountIds.generated';
 
 const statusOptions = Object.values(ComplianceStatusEnum);
 
@@ -95,7 +95,7 @@ const ListResourcesActions: React.FC = () => {
     ListResourcesInput
   >();
 
-  const { error, data } = useListAccountIds();
+  const { error, data } = useListComplianceSourceNames();
 
   if (data) {
     filters.integrationId.props.items = data.listComplianceIntegrations;
