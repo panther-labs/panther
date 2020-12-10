@@ -52,8 +52,12 @@ jobs:
           # or you can signup for free at https://snyk.io/login
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          # image: node:15.2.0-alpine
-          # args: '--file=deployments/Dockerfile --severity-threshold=high'
-          # The default parameters do not work. Therefore, we inline theme here which mimics
+          image: node:15.2.0-alpine
+          args: '--file=deployments/Dockerfile --severity-threshold=high'
+          # The default parameters do not work when testing locally with 'act' (brew install act). Therefore, we inline theme here which mimics
           # how they would be interpreted if the above inputs worked.
-          args: 'snyk test --file=deployments/Dockerfile --severity-threshold=high --docker node:15.2-alpine'
+          # args: 'snyk test --file=deployments/Dockerfile --severity-threshold=high --docker node:15.2-alpine'
+          #
+          # To test locally, we need to use the image which replicates github actions. It takes a while to download the (6GB) image
+          # and to extract (18GB), be patient!
+          # > act -s SNYK_TOKEN=xxx pull_request -j docker_analysis -P ubuntu-latest=nektos/act-environments-ubuntu:18.04
