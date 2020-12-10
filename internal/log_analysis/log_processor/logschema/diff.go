@@ -25,6 +25,7 @@ import (
 	"github.com/panther-labs/panther/pkg/stringset"
 )
 
+// Change describes a change somewhere in the Tree of a ValueSchema.
 type Change struct {
 	Type string
 	Path []string
@@ -32,16 +33,25 @@ type Change struct {
 	To   interface{}
 }
 
+// nolint:lll
 const (
-	AddField        = "AddField"
-	DeleteField     = "DeleteField"
+	// AddField is the type of change when a field was added.
+	AddField = "AddField"
+	// DeleteField is the type of change when a field was removed.
+	DeleteField = "DeleteField"
+	// UpdateFieldMeta is the type of change when a field's metadata was changed (i.e. Required, Description).
 	UpdateFieldMeta = "UpdateFieldMeta"
-	UpdateValue     = "UpdateValue"
+	// UpdateValue is the type of change when a field's value type has changed.
+	UpdateValue = "UpdateValue"
+	// UpdateValueMeta is the type of change when metadata about a field's value type has changed (i.e. TimeFormat, IsEventTime, Indicators).
 	UpdateValueMeta = "UpdateValueMeta"
-	UpdateParser    = "UpdateParser"
-	UpdateMeta      = "UpdateMeta"
+	// UpdateParser is the type of change when a schema's Parser has changed.
+	UpdateParser = "UpdateParser"
+	// UpdateMeta is the type of change when a schema's metadata has changed (i.e. Schema, Description, ReferenceURL).
+	UpdateMeta = "UpdateMeta"
 )
 
+// Diff resolves a and b and returns the set of changes to go from a to b.
 func Diff(a, b *Schema) ([]Change, error) {
 	valueA, err := Resolve(a)
 	if err != nil {
@@ -73,10 +83,14 @@ func Diff(a, b *Schema) ([]Change, error) {
 	return c.changes, nil
 }
 
+// DiffWalk recursively iterates two value schemas and call `walk` when a change is found.
+// The `basePath` argument is used prepended to the path on each change.
 func DiffWalk(a, b *ValueSchema, walk func(c Change) bool, basePath ...string) {
 	diffWalk(a, b, walk, basePath)
 }
 
+// diffWalk recursively iterates two value schemas and call `walk` when a change is found.
+// The `path` argument is used to attach path information on each change.
 func diffWalk(a, b *ValueSchema, walk func(c Change) bool, path []string) bool {
 	if a.Type != b.Type {
 		ch := Change{
@@ -194,13 +208,25 @@ func diffIndicators(a, b []string) ([]string, []string, bool) {
 	return a, b, !reflect.DeepEqual(a, b)
 }
 
+// DiffFields returns the union of all fields in both sets as list of pairs.
+//
+// Fields are paired by name. Each pair contains two FieldSchema pointers `A` and `B`.
+// If a field is found in both `a` and `b`, `A` will point to the field in `a` and `B` will point to the field in `b`
+// If a field is only found in `a`, `A` will point to the field in `a` and `B` will be nil
+// If a field is only found in `b`, `A` will be nil and `B` will point to the field in `b`
+//
+// This function is useful to use when operating on a union of two field sets without losing information about
+// the origin of each field (i.e. when diffing sets of fields)
 func DiffFields(a, b []FieldSchema) (d []FieldDiff) {
+	// Add fields only found in a.
 	for _, f := range diffFields(a, b) {
 		d = append(d, FieldDiff{A: f})
 	}
+	// Add fields only found in b.
 	for _, f := range diffFields(b, a) {
 		d = append(d, FieldDiff{B: f})
 	}
+	// Add fields found in both sets.
 	for i := range a {
 		fieldA := &a[i]
 		fieldB := findField(fieldA.Name, b)
@@ -211,6 +237,8 @@ func DiffFields(a, b []FieldSchema) (d []FieldDiff) {
 	}
 	return
 }
+
+// diffFields returns the fields that exist in a but not in b.
 func diffFields(a, b []FieldSchema) (d []*FieldSchema) {
 	for i := range a {
 		fieldA := &a[i]

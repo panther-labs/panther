@@ -31,7 +31,9 @@ import (
 // InferJSONValueSchema infers the Value Schema for a JSON value.
 //
 // It will return `nil` if `x` is `nil` or if it is not one of the types
-// defined in https://golang.org/pkg/encoding/json/#Unmarshal
+// defined in https://golang.org/pkg/encoding/json/#Unmarshal.
+// If distinction between integer numbers and float numbers is required, the value should be unmarshalled
+// using `json.Number` (e.g. json.Decoder.UseNumber()).
 func InferJSONValueSchema(x interface{}) *ValueSchema {
 	switch v := x.(type) {
 	case map[string]interface{}:
@@ -64,9 +66,6 @@ func InferJSONValueSchema(x interface{}) *ValueSchema {
 	case float64:
 		if v != v { // NaN
 			return nil
-		}
-		if float64(int64(v)) == v {
-			return &ValueSchema{Type: TypeBigInt}
 		}
 		return &ValueSchema{Type: TypeFloat}
 	case json.Number:
