@@ -93,7 +93,7 @@ func (api *API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOu
 		return nil, err
 	}
 
-	alertSummary := utils.AlertItemToSummary(alertItem)
+	alertSummary := utils.AlertItemToSummary(alertItem, api.analysisClient)
 
 	result = &models.Alert{
 		AlertSummary:           *alertSummary,

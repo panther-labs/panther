@@ -21,8 +21,6 @@ package utils
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"go.uber.org/zap"
@@ -32,25 +30,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
-var (
-	awsSession   = session.Must(session.NewSession())
-	lambdaClient = lambda.New(awsSession)
-
-	analysisClient gatewayapi.API = gatewayapi.NewClient(lambdaClient, "panther-analysis-api")
-)
-
-// AlertItemsToSummaries converts a list of DDB AlertItem(s) to AlertSummary(ies)
-func AlertItemsToSummaries(items []*table.AlertItem) []*alertmodels.AlertSummary {
-	result := make([]*alertmodels.AlertSummary, len(items))
-
-	for i, item := range items {
-		result[i] = AlertItemToSummary(item)
-	}
-
-	return result
-}
-
-func getRule(resourceID string) (*analysismodels.Rule, error) {
+func getRule(resourceID string, analysisClient gatewayapi.API) (*analysismodels.Rule, error) {
 	input := analysismodels.LambdaInput{
 		GetRule: &analysismodels.GetRuleInput{ID: resourceID},
 	}
@@ -61,8 +41,19 @@ func getRule(resourceID string) (*analysismodels.Rule, error) {
 	return &result, nil
 }
 
+// AlertItemsToSummaries converts a list of DDB AlertItem(s) to AlertSummary(ies)
+func AlertItemsToSummaries(items []*table.AlertItem, analysisClient gatewayapi.API) []*alertmodels.AlertSummary {
+	result := make([]*alertmodels.AlertSummary, len(items))
+
+	for i, item := range items {
+		result[i] = AlertItemToSummary(item, analysisClient)
+	}
+
+	return result
+}
+
 // AlertItemToSummary converts a DDB AlertItem to an AlertSummary
-func AlertItemToSummary(item *table.AlertItem) *alertmodels.AlertSummary {
+func AlertItemToSummary(item *table.AlertItem, analysisClient gatewayapi.API) *alertmodels.AlertSummary {
 	// convert empty status to "OPEN" status
 	alertStatus := item.Status
 	if alertStatus == "" {
@@ -74,23 +65,23 @@ func AlertItemToSummary(item *table.AlertItem) *alertmodels.AlertSummary {
 	}
 
 	// Generated Fields - backwards compatibility support
-	// Check if we have a generated description, destination, runbook, reference, severity
-	alertRule, err := getRule(item.AlertID)
-
-	if err != nil {
-		zap.L().Warn("Failed to get Rule with ID ", zap.String("AlertID", item.AlertID))
-	}
-
 	description, reference, runbook := item.Description, item.Reference, item.Runbook
 
-	if description == "" && alertRule != nil {
-		description = alertRule.Description
-	}
-	if reference == "" && alertRule != nil {
-		reference = alertRule.Reference
-	}
-	if runbook == "" && alertRule != nil {
-		runbook = alertRule.Runbook
+	// Check if we have these fields to avoid an unnecessary API call
+	if aws.String(description) == nil || aws.String(reference) == nil || aws.String(runbook) == nil {
+		alertRule, err := getRule(item.AlertID, analysisClient)
+		if err != nil || alertRule == nil {
+			zap.L().Warn("Failed to get Rule with ID ", zap.String("AlertID", item.AlertID))
+		}
+		if aws.String(description) == nil && alertRule != nil {
+			description = alertRule.Description
+		}
+		if aws.String(reference) == nil && alertRule != nil {
+			reference = alertRule.Reference
+		}
+		if aws.String(runbook) == nil && alertRule != nil {
+			runbook = alertRule.Runbook
+		}
 	}
 
 	return &alertmodels.AlertSummary{

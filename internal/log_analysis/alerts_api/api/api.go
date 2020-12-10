@@ -21,6 +21,8 @@ package api
 
 import (
 	"encoding/base64"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -34,9 +36,10 @@ import (
 
 // API has all of the handlers as receiver methods.
 type API struct {
-	awsSession *session.Session
-	alertsDB   table.API
-	s3Client   s3iface.S3API
+	awsSession     *session.Session
+	alertsDB       table.API
+	s3Client       s3iface.S3API
+	analysisClient gatewayapi.API
 
 	env envConfig
 }
@@ -54,12 +57,16 @@ func Setup() *API {
 	envconfig.MustProcess("", &env)
 
 	awsSession := session.Must(session.NewSession())
+	lambdaClient := lambda.New(awsSession)
+
+	analysisClient := gatewayapi.NewClient(lambdaClient, "panther-analysis-api")
 
 	return &API{
-		awsSession: awsSession,
-		alertsDB:   env.NewAlertsTable(dynamodb.New(awsSession)),
-		s3Client:   s3.New(awsSession),
-		env:        env,
+		awsSession:     awsSession,
+		alertsDB:       env.NewAlertsTable(dynamodb.New(awsSession)),
+		s3Client:       s3.New(awsSession),
+		env:            env,
+		analysisClient: analysisClient,
 	}
 }
 
