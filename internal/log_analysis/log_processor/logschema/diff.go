@@ -52,30 +52,30 @@ const (
 )
 
 // Diff resolves a and b and returns the set of changes to go from a to b.
-func Diff(a, b *Schema) ([]Change, error) {
-	valueA, err := Resolve(a)
+func Diff(from, to *Schema) ([]Change, error) {
+	valueFrom, err := Resolve(from)
 	if err != nil {
 		return nil, err
 	}
 
-	valueB, err := Resolve(b)
+	valueTo, err := Resolve(to)
 	if err != nil {
 		return nil, err
 	}
 	c := changelog{}
-	if a.Schema != b.Schema {
-		c.add(UpdateMeta, a.Schema, b.Schema, "Schema")
+	if from.Schema != to.Schema {
+		c.add(UpdateMeta, from.Schema, to.Schema, "Schema")
 	}
-	if a.Description != b.Description {
-		c.add(UpdateMeta, a.Description, b.Description, "Description")
+	if from.Description != to.Description {
+		c.add(UpdateMeta, from.Description, to.Description, "Description")
 	}
-	if a.ReferenceURL != b.ReferenceURL {
-		c.add(UpdateMeta, a.ReferenceURL, b.ReferenceURL, "ReferenceURL")
+	if from.ReferenceURL != to.ReferenceURL {
+		c.add(UpdateMeta, from.ReferenceURL, to.ReferenceURL, "ReferenceURL")
 	}
-	if !reflect.DeepEqual(a.Parser, b.Parser) {
-		c.add(UpdateParser, a.Parser, b.Parser, "Parser")
+	if !reflect.DeepEqual(from.Parser, to.Parser) {
+		c.add(UpdateParser, from.Parser, to.Parser, "Parser")
 	}
-	DiffWalk(valueA, valueB, func(ch Change) bool {
+	DiffWalk(valueFrom, valueTo, func(ch Change) bool {
 		c.changes = append(c.changes, ch)
 		return true
 	}, "Fields")
@@ -83,47 +83,49 @@ func Diff(a, b *Schema) ([]Change, error) {
 	return c.changes, nil
 }
 
-// DiffWalk recursively iterates two value schemas and call `walk` when a change is found.
+// DiffWalk recursively iterates two value schemas and calls `walk` when a change is found.
 // The `basePath` argument is used prepended to the path on each change.
-func DiffWalk(a, b *ValueSchema, walk func(c Change) bool, basePath ...string) {
-	diffWalk(a, b, walk, basePath)
+// You can abort a walk by returning false from the callback.
+func DiffWalk(from, to *ValueSchema, walk func(c Change) bool, basePath ...string) {
+	diffWalk(from, to, walk, basePath)
 }
 
-// diffWalk recursively iterates two value schemas and call `walk` when a change is found.
+// diffWalk recursively iterates two value schemas and calls `walk` when a change is found.
 // The `path` argument is used to attach path information on each change.
-func diffWalk(a, b *ValueSchema, walk func(c Change) bool, path []string) bool {
-	if a.Type != b.Type {
+// It returns false if the walk needs to stop.
+func diffWalk(from, to *ValueSchema, walk func(c Change) bool, path []string) bool {
+	if from.Type != to.Type {
 		ch := Change{
 			Path: path,
 			Type: UpdateValue,
-			From: a,
-			To:   b,
+			From: from,
+			To:   to,
 		}
 		return walk(ch)
 	}
-	switch b.Type {
+	switch to.Type {
 	case TypeObject:
-		return walkObject(a.Fields, b.Fields, walk, path)
+		return walkObject(from.Fields, to.Fields, walk, path)
 	case TypeArray:
-		return diffWalk(a.Element, b.Element, walk, append(path, "*"))
+		return diffWalk(from.Element, to.Element, walk, append(path, "*"))
 	case TypeTimestamp:
-		if a.IsEventTime != b.IsEventTime {
+		if from.IsEventTime != to.IsEventTime {
 			ch := Change{
 				Path: append(path, "IsEventTime"),
 				Type: UpdateValueMeta,
-				From: a,
-				To:   b,
+				From: from,
+				To:   to,
 			}
 			if !walk(ch) {
 				return false
 			}
 		}
-		if a.TimeFormat != b.TimeFormat {
+		if from.TimeFormat != to.TimeFormat {
 			ch := Change{
 				Path: append(path, "TimeFormat"),
 				Type: UpdateValueMeta,
-				From: a,
-				To:   b,
+				From: from,
+				To:   to,
 			}
 			if !walk(ch) {
 				return false
@@ -131,12 +133,12 @@ func diffWalk(a, b *ValueSchema, walk func(c Change) bool, path []string) bool {
 		}
 		return true
 	case TypeString:
-		if a, b, changed := diffIndicators(a.Indicators, b.Indicators); changed {
+		if from, to, changed := diffIndicators(from.Indicators, to.Indicators); changed {
 			ch := Change{
 				Type: UpdateValueMeta,
 				Path: append(path, "Indicators"),
-				From: a,
-				To:   b,
+				From: from,
+				To:   to,
 			}
 			return walk(ch)
 		}
@@ -146,8 +148,8 @@ func diffWalk(a, b *ValueSchema, walk func(c Change) bool, path []string) bool {
 	}
 }
 
-func walkObject(a, b []FieldSchema, walk func(c Change) bool, path []string) bool {
-	for _, d := range DiffFields(a, b) {
+func walkObject(from, to []FieldSchema, walk func(c Change) bool, path []string) bool {
+	for _, d := range DiffFields(from, to) {
 		A, B := d.A, d.B
 		switch {
 		case A != nil && B != nil:
@@ -200,12 +202,12 @@ func walkObject(a, b []FieldSchema, walk func(c Change) bool, path []string) boo
 	return true
 }
 
-func diffIndicators(a, b []string) ([]string, []string, bool) {
-	a = stringset.New(a...)
-	b = stringset.New(b...)
-	sort.Strings(a)
-	sort.Strings(b)
-	return a, b, !reflect.DeepEqual(a, b)
+func diffIndicators(from, to []string) ([]string, []string, bool) {
+	from = stringset.New(from...)
+	to = stringset.New(to...)
+	sort.Strings(from)
+	sort.Strings(to)
+	return from, to, !reflect.DeepEqual(from, to)
 }
 
 // DiffFields returns the union of all fields in both sets as list of pairs.
