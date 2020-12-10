@@ -23,8 +23,6 @@ import { Form, Formik, Field } from 'formik';
 
 import pick from 'lodash/pick';
 
-import { ALL_TYPES } from 'Pages/ListAlerts/ListAlertBreadcrumbFilters';
-
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import FormikAutosave from 'Components/utils/Autosave';
@@ -38,6 +36,7 @@ export type ListRulesBreadcrumbFiltersValues = {
   tags: string[];
 };
 
+const ALL_TYPES = 'All Types';
 const filterKeys: (keyof Partial<ListRulesInput>)[] = ['logTypes', 'tags'];
 
 const ListRulesBreadcrumbFilters: React.FC = () => {
