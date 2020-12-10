@@ -22,47 +22,44 @@ import (
 	lambdaevents "github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/go-playground/validator"
 
 	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/events"
 )
 
-var validate = validator.New()
-
 type ComplianceChange struct {
-	ChangeType       string `json:"changeType" validate:"required"`
-	IntegrationID    string `json:"integrationId" validate:"required"`
+	ChangeType       string `json:"changeType"`
+	IntegrationID    string `json:"integrationId"`
 	IntegrationLabel string `json:"integrationLabel"`
-	LastUpdated      string `json:"lastUpdated" validate:"required"`
-	PolicyID         string `json:"policyId" validate:"required"`
-	PolicySeverity   string `json:"policySeverity" validate:"required"`
-	ResourceID       string `json:"resourceId" validate:"required"`
-	ResourceType     string `json:"resourceType" validate:"required"`
-	Status           string `json:"status" validate:"required"`
+	LastUpdated      string `json:"lastUpdated"`
+	PolicyID         string `json:"policyId"`
+	PolicySeverity   string `json:"policySeverity"`
+	ResourceID       string `json:"resourceId"`
+	ResourceType     string `json:"resourceType"`
+	Status           string `json:"status"`
 	Suppressed       bool   `json:"suppressed"`
 }
 
 func (sh *StreamHandler) processComplianceSnapshot(record *events.DynamoDBEventRecord) (change *ComplianceChange, err error) {
 	switch record.EventName {
 	case string(lambdaevents.DynamoDBOperationTypeInsert):
-		change, err = sh.dynamoRecordToCompliance(record.Change.NewImage)
+		change, err = sh.recordToCompliance(record.Change.NewImage)
 		if err != nil {
 			return nil, err
 		}
 		change.ChangeType = ChangeTypeCreate
 	case string(lambdaevents.DynamoDBOperationTypeRemove):
-		change, err = sh.dynamoRecordToCompliance(record.Change.OldImage)
+		change, err = sh.recordToCompliance(record.Change.OldImage)
 		if err != nil {
 			return nil, err
 		}
 		change.ChangeType = ChangeTypeDelete
 	case string(lambdaevents.DynamoDBOperationTypeModify):
-		change, err = sh.dynamoRecordToCompliance(record.Change.NewImage)
+		change, err = sh.recordToCompliance(record.Change.NewImage)
 		if err != nil {
 			return nil, err
 		}
 		change.ChangeType = ChangeTypeModify
-		oldStatus, err := sh.dynamoRecordToCompliance(record.Change.OldImage)
+		oldStatus, err := sh.recordToCompliance(record.Change.OldImage)
 		if err != nil {
 			return nil, err
 		}
@@ -79,14 +76,10 @@ func (sh *StreamHandler) processComplianceSnapshot(record *events.DynamoDBEventR
 		return nil, err
 	}
 	change.IntegrationLabel = label
-	if err := validate.Struct(change); err != nil {
-		return nil, err
-	}
-
 	return change, nil
 }
 
-func (sh *StreamHandler) dynamoRecordToCompliance(image map[string]*dynamodb.AttributeValue) (*ComplianceChange, error) {
+func (sh *StreamHandler) recordToCompliance(image map[string]*dynamodb.AttributeValue) (*ComplianceChange, error) {
 	change := ComplianceChange{}
 	err := dynamodbattribute.UnmarshalMap(image, &change)
 	return &change, err
