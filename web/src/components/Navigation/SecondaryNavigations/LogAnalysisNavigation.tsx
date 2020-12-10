@@ -21,7 +21,11 @@ import { Box, Flex, Heading } from 'pouncejs';
 import urls from 'Source/urls';
 import FadeInTrail from 'Components/utils/FadeInTrail';
 import { AlertStatusesEnum } from 'Generated/schema';
-import { useListDestinations, useListAvailableLogTypes } from 'Source/graphql/queries';
+import {
+  useListDestinations,
+  useListAvailableLogTypes,
+  useListComplianceSourceNames,
+} from 'Source/graphql/queries';
 import NavLink from '../NavLink';
 
 const LogAnalysisNavigation: React.FC = () => {
@@ -33,6 +37,7 @@ const LogAnalysisNavigation: React.FC = () => {
   // The same logic applies to available destinations
   useListAvailableLogTypes();
   useListDestinations();
+  useListComplianceSourceNames();
 
   return (
     <Box>

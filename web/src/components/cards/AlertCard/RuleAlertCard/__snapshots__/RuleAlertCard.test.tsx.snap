@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`AlertCard should match snapshot 1`] = `
+exports[`RuleAlertCard should match snapshot 1`] = `
 @keyframes animation-0 {
   0% {
     -webkit-transform: rotate(0);
@@ -317,7 +317,7 @@ exports[`AlertCard should match snapshot 1`] = `
   display: flex;
   cursor: default;
   width: -webkit-fit-content;
-  width: -moz-content;
+  width: -moz-fit-content;
   width: fit-content;
   min-width: 85px;
   text-align: center;
@@ -375,7 +375,7 @@ exports[`AlertCard should match snapshot 1`] = `
   display: flex;
   cursor: default;
   width: -webkit-fit-content;
-  width: -moz-content;
+  width: -moz-fit-content;
   width: fit-content;
   min-width: 85px;
   text-align: center;
