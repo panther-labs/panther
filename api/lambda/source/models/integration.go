@@ -67,42 +67,50 @@ type SourceIntegrationMetadata struct {
 }
 
 func (s *SourceIntegration) RequiredLogTypes() (logTypes []string) {
-	switch s.IntegrationType {
+	switch typ := s.IntegrationType; typ {
+	case IntegrationTypeAWS3:
+		return s.LogTypes
 	case IntegrationTypeAWSScan:
 		return logtypes.CollectNames(snapshotlogs.LogTypes())
 	case IntegrationTypeSqs:
 		return s.SqsConfig.LogTypes
 	default:
-		return s.LogTypes
+		panic("Unknown type " + typ)
 	}
 }
 
 func (s *SourceIntegration) RequiredLogProcessingRole() string {
-	switch s.IntegrationType {
+	switch typ := s.IntegrationType; typ {
+	case IntegrationTypeAWS3, IntegrationTypeAWSScan:
+		return s.S3Prefix
 	case IntegrationTypeSqs:
 		return s.SqsConfig.LogProcessingRole
 	default:
-		return s.LogProcessingRole
+		panic("Unknown type " + typ)
 	}
 }
 
 func (s *SourceIntegration) RequiredS3Prefix() string {
-	switch s.IntegrationType {
-	case IntegrationTypeSqs:
-		return "forwarder"
+	switch typ := s.IntegrationType; typ {
+	case IntegrationTypeAWS3:
+		return s.S3Prefix
 	case IntegrationTypeAWSScan:
 		return "cloudsecurity"
+	case IntegrationTypeSqs:
+		return "forwarder"
 	default:
-		return s.S3Prefix
+		panic("Unknown type " + typ)
 	}
 }
 
 func (s *SourceIntegration) RequiredS3Bucket() string {
-	switch s.IntegrationType {
+	switch typ := s.IntegrationType; typ {
+	case IntegrationTypeAWS3, IntegrationTypeAWSScan:
+		return s.S3Prefix
 	case IntegrationTypeSqs:
 		return s.SqsConfig.S3Bucket
 	default:
-		return s.S3Bucket
+		panic("Unknown type " + typ)
 	}
 }
 
