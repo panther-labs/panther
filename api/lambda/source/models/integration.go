@@ -72,8 +72,8 @@ type SourceIntegrationMetadata struct {
 
 // S3PrefixLogtypesMapping contains the logtypes Panther should parse for this s3 prefix.
 type S3PrefixLogtypesMapping struct {
-	S3Prefix string   `json:"s3Prefix"`
-	LogTypes []string `json:"logtypes" validate:"required,min=1"`
+	S3Prefix string   `json:"prefix"`
+	LogTypes []string `json:"logTypes" validate:"required,min=1"`
 }
 
 type S3PrefixLogtypes []S3PrefixLogtypesMapping
