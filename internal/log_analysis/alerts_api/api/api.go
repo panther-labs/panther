@@ -21,17 +21,17 @@ package api
 
 import (
 	"encoding/base64"
-	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // API has all of the handlers as receiver methods.

@@ -61,9 +61,6 @@ func (h *LambdaHandler) HandleSyncDatabasePartitionsEvent(ctx context.Context, e
 					DryRun:       event.DryRun,
 					TableName:    pantherdb.TableName(logType),
 					DatabaseName: dbName,
-					// Tables in panther_logs database can have partitions at any point in time.
-					// The rest can only have partitions in the range TableCreateTime <= PartitionTime < now
-					AfterTableCreateTime: dbName != pantherdb.LogProcessingDatabase,
 				},
 			})
 		}

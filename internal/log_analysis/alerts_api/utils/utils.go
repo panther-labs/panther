@@ -21,14 +21,14 @@ package utils
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"go.uber.org/zap"
 	"time"
 
 	alertmodels "github.com/panther-labs/panther/api/lambda/alerts/models"
+	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	alertdeliverymodels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // Used to cache a RuleID to an analysismodels.Rule & timestamp
