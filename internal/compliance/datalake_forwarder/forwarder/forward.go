@@ -35,11 +35,11 @@ import (
 )
 
 const (
-	ChangeTypeCreate = "created"
-	ChangeTypeDelete = "deleted"
-	ChangeTypeModify = "modified"
+	ChangeTypeCreate = "CREATED"
+	ChangeTypeDelete = "DELETED"
+	ChangeTypeModify = "MODIFIED"
 	// TODO add daily syncs
-	// ChangeTypeSync   = "sync"
+	// ChangeTypeSync   = "SYNC"
 	recordDelimiter = '\n'
 	maxRetries      = 10
 )
@@ -66,7 +66,7 @@ func (sh *StreamHandler) Run(ctx context.Context, log *zap.Logger, event *events
 			)
 			continue
 		}
-		if changes == nil {
+		if changes == interface{}(nil) {
 			log.Warn("Skipping record",
 				zap.Error(err),
 				zap.String("eventID", record.EventID),
@@ -80,7 +80,7 @@ func (sh *StreamHandler) Run(ctx context.Context, log *zap.Logger, event *events
 			log.Error("failed to get marshal changes to JSON", zap.Error(err), zap.String("eventId", record.EventID))
 			continue
 		}
-		// TODO: [JSONL] Adding newline here should not be required if the log processor can handle JSON streams
+
 		data = append(data, recordDelimiter)
 		firehoseRecords = append(firehoseRecords, &firehose.Record{Data: data})
 	}

@@ -39,7 +39,7 @@ type ComplianceChange struct {
 	ResourceID       string `json:"resourceId" validate:"required"`
 	ResourceType     string `json:"resourceType" validate:"required"`
 	Status           string `json:"status" validate:"required"`
-	Suppressed       bool   `json:"suppressed" validate:"required"`
+	Suppressed       bool   `json:"suppressed"`
 }
 
 func (sh *StreamHandler) processComplianceSnapshot(record *events.DynamoDBEventRecord) (change *ComplianceChange, err error) {
@@ -79,8 +79,8 @@ func (sh *StreamHandler) processComplianceSnapshot(record *events.DynamoDBEventR
 		return nil, err
 	}
 	change.IntegrationLabel = label
-	if err := validate.Struct(&change); err != nil {
-		return nil, nil
+	if err := validate.Struct(change); err != nil {
+		return nil, err
 	}
 
 	return change, nil

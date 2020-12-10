@@ -157,7 +157,30 @@ func TestComplianceEventStatusChange(t *testing.T) {
 	// Mock sending data to firehose
 	firehoseMock.On("PutRecordBatchWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&firehose.PutRecordBatchOutput{}, nil).Once()
 
+	// Run test & final assertions
 	assert.NoError(t, sh.Run(context.Background(), zap.L(), &events.DynamoDBEvent{Records: []events.DynamoDBEventRecord{record}}))
 	lambdaMock.AssertExpectations(t)
 	firehoseMock.AssertExpectations(t)
+
+	// Verify we send the correct data to Firehose
+	request := firehoseMock.Calls[0].Arguments[1].(*firehose.PutRecordBatchInput)
+	assert.Equal(t, "stream-name", *request.DeliveryStreamName)
+	assert.Equal(t, 1, len(request.Records))
+
+	// Expected payload
+	change := ComplianceChange{
+		ChangeType:       "MODIFIED",
+		IntegrationID:    "8349b647-f731-48c4-9d6b-eefff4010c14",
+		IntegrationLabel: "test-label",
+		LastUpdated:      "2020-12-09T15:32:32.362503673Z",
+		PolicyID:         "AWS.S3.Bucket.NameDNSCompliance",
+		PolicySeverity:   "INFO",
+		ResourceID:       "arn:aws:s3:::panther-bootstrap-auditlogs",
+		ResourceType:     "AWS.S3.Bucket",
+		Status:           "FAIL",
+		Suppressed:       false,
+	}
+	changeMarshalled, err := jsoniter.MarshalToString(change)
+	assert.NoError(t, err)
+	assert.JSONEq(t, changeMarshalled, string(request.Records[0].Data))
 }

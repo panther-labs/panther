@@ -30,7 +30,7 @@ import (
 	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/events"
 )
 
-type CloudSecuritySnapshotChange struct {
+type ResourceChange struct {
 	ChangeType       string              `json:"changeType"`
 	Changes          diff.Changelog      `json:"changes"`
 	IntegrationID    string              `json:"integrationID"`
@@ -46,7 +46,7 @@ type resourceSnapshot struct {
 }
 
 // processResourceChanges processes a record from the resources-table dynamoDB stream,
-func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventRecord) (snapshot *CloudSecuritySnapshotChange, err error) {
+func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventRecord) (snapshot *ResourceChange, err error) {
 	// For INSERT and REMOVE events, we don't need to calculate a diff
 	switch lambdaevents.DynamoDBOperationType(record.EventName) {
 	case lambdaevents.DynamoDBOperationTypeInsert:
@@ -72,7 +72,7 @@ func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventReco
 }
 
 func (sh *StreamHandler) processResourceSnapshotDiff(eventName string,
-	oldImage, newImage map[string]*dynamodb.AttributeValue) (*CloudSecuritySnapshotChange, error) {
+	oldImage, newImage map[string]*dynamodb.AttributeValue) (*ResourceChange, error) {
 
 	oldSnapshot := resourceSnapshot{}
 	if err := dynamodbattribute.UnmarshalMap(oldImage, &oldSnapshot); err != nil || oldSnapshot.Attributes == nil {
@@ -121,7 +121,7 @@ func (sh *StreamHandler) processResourceSnapshotDiff(eventName string,
 		return nil, nil
 	}
 
-	return &CloudSecuritySnapshotChange{
+	return &ResourceChange{
 		LastUpdated:      newSnapshot.LastModified,
 		IntegrationID:    newSnapshot.IntegrationID,
 		IntegrationLabel: integrationLabel,
@@ -132,7 +132,7 @@ func (sh *StreamHandler) processResourceSnapshotDiff(eventName string,
 }
 
 func (sh *StreamHandler) processResourceSnapshot(changeType string,
-	image map[string]*dynamodb.AttributeValue) (*CloudSecuritySnapshotChange, error) {
+	image map[string]*dynamodb.AttributeValue) (*ResourceChange, error) {
 
 	change := resourceSnapshot{}
 	if err := dynamodbattribute.UnmarshalMap(image, &change); err != nil || change.Attributes == nil {
@@ -151,7 +151,7 @@ func (sh *StreamHandler) processResourceSnapshot(changeType string,
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal resource")
 	}
-	return &CloudSecuritySnapshotChange{
+	return &ResourceChange{
 		IntegrationID:    change.IntegrationID,
 		IntegrationLabel: integrationLabel,
 		LastUpdated:      change.LastModified,
