@@ -261,12 +261,6 @@ interface TestDestinationError extends DestinationError {
   event: TrackErrorEnum.FailedDestinationTest;
 }
 
-interface AddLogSourceError {
-  event: TrackErrorEnum.FailedToAddLogSource;
-  src: SrcEnum.LogSources;
-  ctx: LogSources;
-}
-
 interface UpdateLogSourceError {
   event: TrackErrorEnum.FailedToUpdateLogSource;
   src: SrcEnum.LogSources;
