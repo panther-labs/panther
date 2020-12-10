@@ -82,7 +82,7 @@ func (s *SourceIntegration) RequiredLogTypes() (logTypes []string) {
 func (s *SourceIntegration) RequiredLogProcessingRole() string {
 	switch typ := s.IntegrationType; typ {
 	case IntegrationTypeAWS3, IntegrationTypeAWSScan:
-		return s.S3Prefix
+		return s.LogProcessingRole
 	case IntegrationTypeSqs:
 		return s.SqsConfig.LogProcessingRole
 	default:
@@ -106,7 +106,7 @@ func (s *SourceIntegration) RequiredS3Prefix() string {
 func (s *SourceIntegration) RequiredS3Bucket() string {
 	switch typ := s.IntegrationType; typ {
 	case IntegrationTypeAWS3, IntegrationTypeAWSScan:
-		return s.S3Prefix
+		return s.S3Bucket
 	case IntegrationTypeSqs:
 		return s.SqsConfig.S3Bucket
 	default:
