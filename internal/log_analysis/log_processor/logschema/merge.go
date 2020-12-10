@@ -80,23 +80,23 @@ func Merge(a, b *ValueSchema) *ValueSchema {
 		a.Type == TypeArray, b.Type == TypeArray:
 		return &ValueSchema{Type: TypeJSON}
 	case a.Type == TypeTimestamp:
-		return castTimestamp(a, b)
+		return castTimestamp(b.Type, a.TimeFormat, a.IsEventTime)
 	case b.Type == TypeTimestamp:
-		return castTimestamp(b, a)
+		return castTimestamp(a.Type, b.TimeFormat, b.IsEventTime)
 	case a.Type == TypeString, b.Type == TypeString:
 		return &ValueSchema{Type: TypeString}
 	case a.Type == TypeFloat:
-		return castFloat(b)
+		return castFloat(b.Type)
 	case b.Type == TypeFloat:
-		return castFloat(a)
+		return castFloat(a.Type)
 	case a.Type == TypeBigInt:
-		return castBigInt(b)
+		return castBigInt(b.Type)
 	case b.Type == TypeBigInt:
-		return castBigInt(a)
+		return castBigInt(a.Type)
 	case a.Type == TypeInt:
-		return castInt(b)
+		return castInt(b.Type)
 	case b.Type == TypeInt:
-		return castInt(a)
+		return castInt(a.Type)
 	default:
 		return &ValueSchema{Type: TypeString}
 	}
@@ -127,27 +127,27 @@ func mergeObjectFields(a, b []FieldSchema) (fields []FieldSchema) {
 // castTimestamp handles values conversion for timestamps
 // a is always type timestamp
 // b is a 'lesser' value type (string, numeric, bool)
-func castTimestamp(a, b *ValueSchema) *ValueSchema {
-	switch b.Type {
+func castTimestamp(typ ValueType, timeFormat string, isEventTime bool) *ValueSchema {
+	switch typ {
 	case TypeBigInt:
-		switch a.TimeFormat {
+		switch timeFormat {
 		case "unix", "unix_ms", "unix_us", "unix_ns":
 			// Preserve time format as this is something we cannot infer
 			return &ValueSchema{
 				Type:        TypeTimestamp,
-				TimeFormat:  a.TimeFormat,
-				IsEventTime: a.IsEventTime,
+				TimeFormat:  timeFormat,
+				IsEventTime: isEventTime,
 			}
 		}
 	case TypeFloat:
-		switch a.TimeFormat {
+		switch timeFormat {
 		case "unix":
 			// Preserve time format as this is something we cannot infer
 			// Floats can only be used for unix timestamps and fractional part is less than second
 			return &ValueSchema{
 				Type:        TypeTimestamp,
 				TimeFormat:  "unix",
-				IsEventTime: a.IsEventTime,
+				IsEventTime: isEventTime,
 			}
 		case "unix_ms", "unix_us", "unix_ns":
 			// Preserve time number format
@@ -162,8 +162,8 @@ func castTimestamp(a, b *ValueSchema) *ValueSchema {
 
 // castBigInt handles values conversion for int64 values
 // b is a 'lesser' value type (int, smallint, bool)
-func castBigInt(b *ValueSchema) *ValueSchema {
-	switch b.Type {
+func castBigInt(typ ValueType) *ValueSchema {
+	switch typ {
 	case TypeInt, TypeSmallInt:
 		return &ValueSchema{Type: TypeBigInt}
 	default:
@@ -173,8 +173,8 @@ func castBigInt(b *ValueSchema) *ValueSchema {
 
 // castFloat handles values conversion for floats
 // b is a 'lesser' value type (bigint, int, smallint, bool)
-func castFloat(b *ValueSchema) *ValueSchema {
-	switch b.Type {
+func castFloat(typ ValueType) *ValueSchema {
+	switch typ {
 	case TypeBigInt, TypeInt, TypeSmallInt:
 		return &ValueSchema{Type: TypeFloat}
 	default:
@@ -184,8 +184,8 @@ func castFloat(b *ValueSchema) *ValueSchema {
 
 // castInt handles values conversion for integers
 // b is a 'lesser' value type (smallint, bool)
-func castInt(b *ValueSchema) *ValueSchema {
-	switch b.Type {
+func castInt(typ ValueType) *ValueSchema {
+	switch typ {
 	case TypeSmallInt:
 		return &ValueSchema{Type: TypeInt}
 	default:
