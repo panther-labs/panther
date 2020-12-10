@@ -119,6 +119,6 @@ func (sh *StreamHandler) getChanges(record *events.DynamoDBEventRecord) (interfa
 		return change, change != nil, err
 	}
 	// Otherwise, it must have come from the resource-table
-	change, err := sh.processComplianceSnapshot(record)
+	change, err := sh.processResourceChanges(record)
 	return change, change != nil, err
 }

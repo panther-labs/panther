@@ -50,8 +50,6 @@ func (API) ListIntegrations(
 			}
 		}
 		result[i] = integ
-
 	}
-
 	return result, nil
 }

@@ -179,7 +179,9 @@ func TestComplianceEventStatusChange(t *testing.T) {
 			},
 		},
 	}
-	firehoseMock.On("PutRecordBatchWithContext", mock.Anything, expectedRequest, mock.Anything).Return(&firehose.PutRecordBatchOutput{}, nil).Once()
+	firehoseMock.On("PutRecordBatchWithContext", mock.Anything, expectedRequest, mock.Anything).
+		Return(&firehose.PutRecordBatchOutput{}, nil).
+		Once()
 
 	// Run test & final assertions
 	assert.NoError(t, sh.Run(context.Background(), zap.L(), &events.DynamoDBEvent{Records: []events.DynamoDBEventRecord{record}}))
