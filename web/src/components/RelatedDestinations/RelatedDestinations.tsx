@@ -27,13 +27,18 @@ import LimitItemDisplay from 'Components/LimitItemDisplay';
 
 const LOGO_SIZE = 18;
 
-const getLogo = ({ outputType, outputId }) => {
+const getLogo = ({
+  outputType,
+  outputId,
+  displayName,
+}: Pick<Destination, 'outputType' | 'outputId' | 'displayName'>) => {
   const { logo } = DESTINATIONS[outputType];
   return (
     <Img
       key={outputId}
       alt={`${outputType} logo`}
       src={logo}
+      title={displayName}
       nativeWidth={LOGO_SIZE}
       nativeHeight={LOGO_SIZE}
     />
