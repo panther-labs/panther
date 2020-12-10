@@ -155,19 +155,8 @@ func TestComplianceEventStatusChange(t *testing.T) {
 	lambdaMock.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{Payload: marshaledIntegrations}, nil).Once()
 
 	// Mock sending data to firehose
-	firehoseMock.On("PutRecordBatchWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&firehose.PutRecordBatchOutput{}, nil).Once()
 
-	// Run test & final assertions
-	assert.NoError(t, sh.Run(context.Background(), zap.L(), &events.DynamoDBEvent{Records: []events.DynamoDBEventRecord{record}}))
-	lambdaMock.AssertExpectations(t)
-	firehoseMock.AssertExpectations(t)
-
-	// Verify we send the correct data to Firehose
-	request := firehoseMock.Calls[0].Arguments[1].(*firehose.PutRecordBatchInput)
-	assert.Equal(t, "stream-name", *request.DeliveryStreamName)
-	assert.Equal(t, 1, len(request.Records))
-
-	// Expected payload
+	// Expected Firehose payload
 	change := ComplianceChange{
 		ChangeType:       "MODIFIED",
 		IntegrationID:    "8349b647-f731-48c4-9d6b-eefff4010c14",
@@ -180,7 +169,20 @@ func TestComplianceEventStatusChange(t *testing.T) {
 		Status:           "FAIL",
 		Suppressed:       false,
 	}
-	changeMarshalled, err := jsoniter.MarshalToString(change)
+	changeMarshalled, err := jsoniter.Marshal(change)
 	assert.NoError(t, err)
-	assert.JSONEq(t, changeMarshalled, string(request.Records[0].Data))
+	expectedRequest := &firehose.PutRecordBatchInput{
+		DeliveryStreamName: aws.String("stream-name"),
+		Records: []*firehose.Record{
+			{
+				Data: append(changeMarshalled, '\n'),
+			},
+		},
+	}
+	firehoseMock.On("PutRecordBatchWithContext", mock.Anything, expectedRequest, mock.Anything).Return(&firehose.PutRecordBatchOutput{}, nil).Once()
+
+	// Run test & final assertions
+	assert.NoError(t, sh.Run(context.Background(), zap.L(), &events.DynamoDBEvent{Records: []events.DynamoDBEventRecord{record}}))
+	lambdaMock.AssertExpectations(t)
+	firehoseMock.AssertExpectations(t)
 }
