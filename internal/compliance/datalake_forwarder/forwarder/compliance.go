@@ -64,7 +64,7 @@ func (sh *StreamHandler) processComplianceSnapshot(record *events.DynamoDBEventR
 			return nil, err
 		}
 		// If the status didn't change and the suppression didn't change, no need to report anything
-		if change.ChangeType == oldStatus.Status && change.Suppressed == oldStatus.Suppressed {
+		if change.Status == oldStatus.Status && change.Suppressed == oldStatus.Suppressed {
 			return nil, nil
 		}
 	default:

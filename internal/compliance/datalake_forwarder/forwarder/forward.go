@@ -56,7 +56,7 @@ func (sh *StreamHandler) Run(ctx context.Context, log *zap.Logger, event *events
 	for i := range event.Records {
 		// We should be passing pointers to avoid copy of the record struct
 		record := &event.Records[i]
-		changes, err := sh.getChanges(record)
+		changes, ok, err := sh.getChanges(record)
 		if err != nil {
 			log.Error("failed to process record",
 				zap.Error(err),
@@ -66,7 +66,7 @@ func (sh *StreamHandler) Run(ctx context.Context, log *zap.Logger, event *events
 			)
 			continue
 		}
-		if changes == interface{}(nil) {
+		if !ok {
 			log.Warn("Skipping record",
 				zap.Error(err),
 				zap.String("eventID", record.EventID),
@@ -103,17 +103,19 @@ func (sh *StreamHandler) Run(ctx context.Context, log *zap.Logger, event *events
 }
 
 // getChanges routes stream records from the compliance-table and the resources-table to the correct handler
-func (sh *StreamHandler) getChanges(record *events.DynamoDBEventRecord) (interface{}, error) {
+func (sh *StreamHandler) getChanges(record *events.DynamoDBEventRecord) (interface{}, bool, error) {
 	// Figure out where this record came from
 	parsedSource, err := arn.Parse(record.EventSourceArn)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to parse event source ARN %q", record.EventSourceArn)
+		return nil, false, errors.Wrapf(err, "unable to parse event source ARN %q", record.EventSourceArn)
 	}
 
 	// If it came from the compliance-table, it is a compliance status change
 	if strings.HasPrefix(parsedSource.Resource, "table/panther-compliance") {
-		return sh.processComplianceSnapshot(record)
+		change, err := sh.processComplianceSnapshot(record)
+		return change, change != nil, err
 	}
 	// Otherwise, it must have come from the resource-table
-	return sh.processResourceChanges(record)
+	change, err := sh.processComplianceSnapshot(record)
+	return change, change != nil, err
 }
