@@ -20,9 +20,10 @@ package utils
  */
 
 import (
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
-	"time"
 
 	alertmodels "github.com/panther-labs/panther/api/lambda/alerts/models"
 	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
