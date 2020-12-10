@@ -286,20 +286,21 @@ interface MfaError {
   src: SrcEnum.Auth;
 }
 
-interface AddCustomLogError {
-  event: TrackErrorEnum.FailedToAddCustomLog;
-  src: SrcEnum.CustomLogs;
-}
-
 interface AddLogSourceError {
   event: TrackErrorEnum.FailedToAddLogSource;
   src: SrcEnum.LogSources;
   ctx: LogSources;
 }
 
-interface DeleteCustomLogError {
-  event: TrackErrorEnum.FailedToDeleteCustomLog;
+interface CustomLogError {
+  event: TrackErrorEnum.FailedToAddCustomLog | TrackErrorEnum.FailedToDeleteCustomLog;
   src: SrcEnum.CustomLogs;
+}
+interface DeleteCustomLogError extends CustomLogError {
+  event: TrackErrorEnum.FailedToDeleteCustomLog;
+}
+interface AddCustomLogError extends CustomLogError {
+  event: TrackErrorEnum.FailedToAddCustomLog;
 }
 
 type TrackError =
