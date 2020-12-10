@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	mappingAgeOut         = 1 * time.Minute
+	mappingAgeOut         = 2 * time.Minute
 	sourceAPIFunctionName = "panther-source-api"
 )
 
