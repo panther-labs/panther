@@ -124,11 +124,15 @@ func mergeObjectFields(a, b []FieldSchema) (fields []FieldSchema) {
 	return fields
 }
 
+// castTimestamp handles values conversion for timestamps
+// a is always type timestamp
+// b is a 'lesser' value type (string, numeric, bool)
 func castTimestamp(a, b *ValueSchema) *ValueSchema {
 	switch b.Type {
 	case TypeBigInt:
 		switch a.TimeFormat {
 		case "unix", "unix_ms", "unix_us", "unix_ns":
+			// Preserve time format as this is something we cannot infer
 			return &ValueSchema{
 				Type:        TypeTimestamp,
 				TimeFormat:  a.TimeFormat,
@@ -138,12 +142,15 @@ func castTimestamp(a, b *ValueSchema) *ValueSchema {
 	case TypeFloat:
 		switch a.TimeFormat {
 		case "unix":
+			// Preserve time format as this is something we cannot infer
+			// Floats can only be used for unix timestamps and fractional part is less than second
 			return &ValueSchema{
 				Type:        TypeTimestamp,
 				TimeFormat:  "unix",
 				IsEventTime: a.IsEventTime,
 			}
 		case "unix_ms", "unix_us", "unix_ns":
+			// Preserve time number format
 			return &ValueSchema{
 				Type: TypeFloat,
 			}
@@ -153,6 +160,8 @@ func castTimestamp(a, b *ValueSchema) *ValueSchema {
 	return &ValueSchema{Type: TypeString}
 }
 
+// castBigInt handles values conversion for int64 values
+// b is a 'lesser' value type (int, smallint, bool)
 func castBigInt(b *ValueSchema) *ValueSchema {
 	switch b.Type {
 	case TypeInt, TypeSmallInt:
@@ -162,6 +171,8 @@ func castBigInt(b *ValueSchema) *ValueSchema {
 	}
 }
 
+// castFloat handles values conversion for floats
+// b is a 'lesser' value type (bigint, int, smallint, bool)
 func castFloat(b *ValueSchema) *ValueSchema {
 	switch b.Type {
 	case TypeBigInt, TypeInt, TypeSmallInt:
@@ -171,6 +182,8 @@ func castFloat(b *ValueSchema) *ValueSchema {
 	}
 }
 
+// castInt handles values conversion for integers
+// b is a 'lesser' value type (smallint, bool)
 func castInt(b *ValueSchema) *ValueSchema {
 	switch b.Type {
 	case TypeSmallInt:
