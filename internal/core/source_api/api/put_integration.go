@@ -37,6 +37,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 var (
@@ -112,6 +113,16 @@ func setupExternalResources(integration *models.SourceIntegration) error {
 }
 
 func (api API) validateIntegration(input *models.PutIntegrationInput) error {
+	// Prefixes in the same S3 source should should be unique (although we allow overlapping for now)
+	if input.IntegrationType == models.IntegrationTypeAWS3 {
+		prefixes := input.S3PrefixLogTypes.S3Prefixes()
+		if len(prefixes) != len(stringset.Dedup(prefixes)) {
+			return &genericapi.InvalidInputError{
+				Message: "Cannot have duplicate prefixes in an s3 source.",
+			}
+		}
+	}
+
 	// Validate the new integration
 	reason, passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
 		AWSAccountID:      input.AWSAccountID,
@@ -167,6 +178,19 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 						Message: fmt.Sprintf("Log source for account %s with label %s already onboarded",
 							input.AWSAccountID,
 							input.IntegrationLabel),
+					}
+				}
+
+				// A bucket/prefix combination should be unique among s3 sources.
+				if existingIntegration.S3Bucket == input.S3Bucket {
+					for _, existingPrefix := range existingIntegration.S3PrefixLogTypes.S3Prefixes() {
+						for _, prefix := range input.S3PrefixLogTypes.S3Prefixes() {
+							if strings.TrimSpace(existingPrefix) == strings.TrimSpace(prefix) {
+								return &genericapi.InvalidInputError{
+									Message: "An S3 source with the same S3 bucket and prefix already exists.",
+								}
+							}
+						}
 					}
 				}
 			case models.IntegrationTypeSqs:

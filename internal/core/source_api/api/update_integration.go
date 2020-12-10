@@ -21,6 +21,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -29,6 +30,7 @@ import (
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 var (
@@ -90,7 +92,7 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 			existingItem.IntegrationID, existingItem.SqsConfig.AllowedPrincipalArns, existingItem.SqsConfig.AllowedSourceArns)
 		if err != nil {
 			zap.L().Error("failed to update integration", zap.Error(err))
-			return nil, err
+			return nil, updateIntegrationInternalError
 		}
 	}
 
@@ -105,6 +107,16 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 }
 
 func (api API) validateUniqueConstraints(existingIntegrationItem *ddb.Integration, input *models.UpdateIntegrationSettingsInput) error {
+	// Prefixes in the same S3 source should should be unique (although we allow overlapping for now)
+	if existingIntegrationItem.IntegrationType == models.IntegrationTypeAWS3 {
+		prefixes := input.S3PrefixLogTypes.S3Prefixes()
+		if len(prefixes) != len(stringset.Dedup(prefixes)) {
+			return &genericapi.InvalidInputError{
+				Message: "Cannot have duplicate prefixes in an s3 source.",
+			}
+		}
+	}
+
 	existingIntegrations, err := api.ListIntegrations(&models.ListIntegrationsInput{})
 	if err != nil {
 		zap.L().Error("failed to fetch integrations", zap.Error(errors.WithStack(err)))
@@ -123,6 +135,18 @@ func (api API) validateUniqueConstraints(existingIntegrationItem *ddb.Integratio
 						Message: fmt.Sprintf("Log source for account %s with label %s already onboarded",
 							existingIntegrationItem.AWSAccountID,
 							input.IntegrationLabel),
+					}
+				}
+				// A bucket/prefix combination should be unique among s3 sources.
+				if existingIntegration.S3Bucket == input.S3Bucket {
+					for _, existingPrefix := range existingIntegration.S3PrefixLogTypes.S3Prefixes() {
+						for _, prefix := range input.S3PrefixLogTypes.S3Prefixes() {
+							if strings.TrimSpace(existingPrefix) == strings.TrimSpace(prefix) {
+								return &genericapi.InvalidInputError{
+									Message: "An S3 source with the same S3 bucket and prefix already exists.",
+								}
+							}
+						}
 					}
 				}
 			case models.IntegrationTypeSqs:
