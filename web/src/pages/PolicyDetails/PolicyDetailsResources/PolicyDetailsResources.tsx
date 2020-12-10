@@ -30,7 +30,6 @@ import {
 import {
   extendResourceWithIntegrationLabel,
   getComplianceItemsTotalCount,
-  convertObjArrayValuesToCsv,
   extractErrorMessage,
 } from 'Helpers/utils';
 import ErrorBoundary from 'Components/ErrorBoundary';
@@ -56,11 +55,11 @@ const PolicyDetailsResources: React.FC = () => {
   const { error, data, loading } = usePolicyResources({
     fetchPolicy: 'cache-and-network',
     variables: {
-      resourcesForPolicyInput: convertObjArrayValuesToCsv({
+      resourcesForPolicyInput: {
         ...pick(requestParams, acceptedRequestParams),
         policyId: match.params.id,
         pageSize: DEFAULT_SMALL_PAGE_SIZE,
-      }),
+      },
     },
   });
 

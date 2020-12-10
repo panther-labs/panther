@@ -24,8 +24,8 @@ describe('RuleDetailsInfo', () => {
   it('renders the correct data', async () => {
     const rule = buildRuleDetails({ displayName: 'My Rule' });
     const { getByText } = render(<RuleDetailsInfo rule={rule} />);
-    expect(getByText('Edit')).toBeInTheDocument();
-    expect(getByText('Delete')).toBeInTheDocument();
+    expect(getByText('Edit Rule')).toBeInTheDocument();
+    expect(getByText('Delete Rule')).toBeInTheDocument();
 
     expect(getByText('My Rule')).toBeInTheDocument();
     expect(getByText('DISABLED')).toBeInTheDocument();

@@ -20,12 +20,7 @@ import React from 'react';
 import useRouter from 'Hooks/useRouter';
 import { Alert, Box, Flex, Card, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
-
-import {
-  getComplianceItemsTotalCount,
-  convertObjArrayValuesToCsv,
-  extractErrorMessage,
-} from 'Helpers/utils';
+import { getComplianceItemsTotalCount, extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import PolicyCardDetails from './PolicyCardDetails';
@@ -43,9 +38,9 @@ const PolicyDetailsPage = () => {
       policyDetailsInput: {
         id: match.params.id,
       },
-      resourcesForPolicyInput: convertObjArrayValuesToCsv({
+      resourcesForPolicyInput: {
         policyId: match.params.id,
-      }),
+      },
     },
   });
 
