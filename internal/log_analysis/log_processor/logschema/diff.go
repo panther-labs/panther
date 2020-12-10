@@ -134,49 +134,49 @@ func diffWalk(a, b *ValueSchema, walk func(c Change) bool, path []string) bool {
 
 func walkObject(a, b []FieldSchema, walk func(c Change) bool, path []string) bool {
 	for _, d := range DiffFields(a, b) {
+		a, b := d.A, d.B
 		switch {
-		case d.A != nil && d.B == nil:
+		case a != nil && b != nil:
+			if !diffWalk(&a.ValueSchema, &b.ValueSchema, walk, append(path, a.Name)) {
+				return false
+			}
+			if a.Required != b.Required {
+				ch := Change{
+					Type: UpdateFieldMeta,
+					Path: append(path, a.Name, "Required"),
+					From: a.Required,
+					To:   b.Required,
+				}
+				if !walk(ch) {
+					return false
+				}
+			}
+			if a.Description != b.Description {
+				ch := Change{
+					Type: UpdateFieldMeta,
+					Path: append(path, a.Name, "Description"),
+					From: a.Description,
+					To:   b.Description,
+				}
+				if !walk(ch) {
+					return false
+				}
+			}
+		case a != nil:
 			ch := Change{
 				Type: DeleteField,
 				Path: path,
-				From: d.A,
+				From: a,
 			}
 			if !walk(ch) {
 				return false
 			}
-		case d.A != nil && d.B != nil:
-			fieldA, fieldB := d.A, d.B
-			if !diffWalk(&fieldA.ValueSchema, &fieldB.ValueSchema, walk, append(path, fieldA.Name)) {
-				return false
-			}
-			if fieldA.Required != fieldB.Required {
-				ch := Change{
-					Type: UpdateFieldMeta,
-					Path: append(path, fieldA.Name, "Required"),
-					From: fieldA.Required,
-					To:   fieldB.Required,
-				}
-				if !walk(ch) {
-					return false
-				}
-			}
-			if fieldA.Description != fieldB.Description {
-				ch := Change{
-					Type: UpdateFieldMeta,
-					Path: append(path, fieldA.Name, "Description"),
-					From: fieldA.Description,
-					To:   fieldB.Description,
-				}
-				if !walk(ch) {
-					return false
-				}
-			}
-		case d.A == nil && d.B != nil:
+		case b != nil:
 			ch := Change{
 				Path: path,
 				Type: AddField,
 				From: nil,
-				To:   d.B,
+				To:   b,
 			}
 			if !walk(ch) {
 				return false
