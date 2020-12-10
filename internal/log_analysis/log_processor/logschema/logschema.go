@@ -21,12 +21,12 @@ package logschema
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/panther-labs/panther/pkg/stringset"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/preprocessors"
+	"github.com/panther-labs/panther/pkg/stringset"
 
 	// Force dependency on go-bindata to avoid fetching during mage gen
 	_ "github.com/go-bindata/go-bindata"
@@ -49,6 +49,15 @@ const (
 	TypeJSON      ValueType = "json"
 )
 
+func (t ValueType) IsComposite() bool {
+	switch t {
+	case TypeObject, TypeArray, TypeJSON:
+		return true
+	default:
+		return false
+	}
+}
+
 type Schema struct {
 	Schema       string                  `json:"schema,omitempty" yaml:"schema,omitempty"`
 	Parser       *Parser                 `json:"parser,omitempty" yaml:"parser,omitempty"`
@@ -60,9 +69,19 @@ type Schema struct {
 }
 
 func (s *Schema) Clone() *Schema {
-	data, _ := jsoniter.Marshal(s)
+	if s == nil {
+		return nil
+	}
+	data, err := jsoniter.Marshal(s)
+	if err != nil {
+		// this should never happen
+		panic("failed to serialize Schema to JSON: " + err.Error())
+	}
 	out := Schema{}
-	_ = jsoniter.Unmarshal(data, &out)
+	if err := jsoniter.Unmarshal(data, &out); err != nil {
+		// this should never happen
+		panic("failed to deserialize Schema from JSON: " + err.Error())
+	}
 	return &out
 }
 
@@ -95,27 +114,34 @@ func (v *ValueSchema) Clone() *ValueSchema {
 			fields = append(fields, f)
 		}
 		return &ValueSchema{
-			Type: TypeObject,
+			Type:   TypeObject,
 			Fields: fields,
 		}
 	case TypeArray:
 		return &ValueSchema{
-			Type:        TypeArray,
-			Element:     v.Element.Clone(),
+			Type:    TypeArray,
+			Element: v.Element.Clone(),
 		}
 	case TypeTimestamp:
 		return &ValueSchema{
 			Type:        TypeTimestamp,
-			TimeFormat: v.TimeFormat,
+			TimeFormat:  v.TimeFormat,
 			IsEventTime: v.IsEventTime,
 		}
 	case TypeString:
 		return &ValueSchema{
-			Type:        TypeString,
+			Type:       TypeString,
 			Indicators: stringset.New(v.Indicators...),
 		}
-	default:
+	case TypeRef:
+		return &ValueSchema{
+			Type:   TypeRef,
+			Target: v.Target,
+		}
+	case TypeBigInt, TypeInt, TypeSmallInt, TypeFloat, TypeJSON, TypeBoolean:
 		return &ValueSchema{Type: v.Type}
+	default:
+		return nil
 	}
 }
 

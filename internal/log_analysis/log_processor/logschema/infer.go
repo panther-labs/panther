@@ -31,7 +31,9 @@ import (
 // InferJSONValueSchema infers the Value Schema for a JSON value.
 //
 // It will return `nil` if `x` is `nil` or if it is not one of the types
-// defined in https://golang.org/pkg/encoding/json/#Unmarshal
+// defined in https://golang.org/pkg/encoding/json/#Unmarshal.
+// If distinction between integer numbers and float numbers is required, the value should be unmarshalled
+// using `json.Number` (e.g. json.Decoder.UseNumber()).
 func InferJSONValueSchema(x interface{}) *ValueSchema {
 	switch v := x.(type) {
 	case map[string]interface{}:
@@ -42,7 +44,9 @@ func InferJSONValueSchema(x interface{}) *ValueSchema {
 				continue
 			}
 			fields = append(fields, FieldSchema{
-				Name:        key,
+				Name: key,
+				// The field is marked as required by default.
+				// If it is not found in future Merge() calls, it will become optional.
 				Required:    true,
 				ValueSchema: *vs,
 			})
@@ -52,7 +56,8 @@ func InferJSONValueSchema(x interface{}) *ValueSchema {
 			Fields: fields,
 		}
 	case []interface{}:
-		// This will result in an array with nil element if the array is empty
+		// This will result in an array with nil element if the array is empty.
+		// Future `Merge()` calls will fix that if the type of the element was inferred.
 		var merged *ValueSchema
 		for _, el := range v {
 			merged = Merge(merged, InferJSONValueSchema(el))
@@ -64,9 +69,6 @@ func InferJSONValueSchema(x interface{}) *ValueSchema {
 	case float64:
 		if v != v { // NaN
 			return nil
-		}
-		if float64(int64(v)) == v {
-			return &ValueSchema{Type: TypeBigInt}
 		}
 		return &ValueSchema{Type: TypeFloat}
 	case json.Number:
@@ -122,4 +124,40 @@ func inferIndicators(s string) []string {
 		return []string{"aws_arn"}
 	}
 	return nil
+}
+
+// NonEmpty scrubs the ValueSchema from any empty object/array schemas.
+func (v *ValueSchema) NonEmpty() *ValueSchema {
+	if v == nil {
+		return nil
+	}
+	switch v.Type {
+	case TypeObject:
+		if v.Fields == nil {
+			return nil
+		}
+		fields := make([]FieldSchema, 0, len(v.Fields))
+		for _, f := range v.Fields {
+			if v := f.ValueSchema.NonEmpty(); v != nil {
+				f.ValueSchema = *v
+				fields = append(fields, f)
+			}
+		}
+		return &ValueSchema{
+			Type:   TypeObject,
+			Fields: fields,
+		}
+	case TypeArray:
+		if el := v.Element.NonEmpty(); el != nil {
+			return &ValueSchema{
+				Type:    TypeArray,
+				Element: el,
+			}
+		}
+		return nil
+	case TypeString, TypeTimestamp, TypeBigInt, TypeInt, TypeSmallInt, TypeFloat, TypeJSON, TypeBoolean, TypeRef:
+		return v.Clone()
+	default:
+		return nil
+	}
 }
