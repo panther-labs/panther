@@ -69,9 +69,9 @@ func AlertItemToSummary(item *table.AlertItem, analysisClient gatewayapi.API) *a
 
 	// Check if we have these fields to avoid an unnecessary API call
 	if aws.String(description) == nil || aws.String(reference) == nil || aws.String(runbook) == nil {
-		alertRule, err := getRule(item.AlertID, analysisClient)
+		alertRule, err := getRule(item.RuleID, analysisClient)
 		if err != nil || alertRule == nil {
-			zap.L().Warn("Failed to get Rule with ID ", zap.String("AlertID", item.AlertID))
+			zap.L().Warn("Failed to get Rule with ID ", zap.String("RuleID", item.RuleID))
 		}
 		if aws.String(description) == nil && alertRule != nil {
 			description = alertRule.Description
