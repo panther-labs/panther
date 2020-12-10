@@ -33,7 +33,7 @@ import useAlertDestinationsDeliverySuccess from 'Hooks/useAlertDestinationsDeliv
 import { SelectCheckbox } from 'Components/utils/SelectContext';
 import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
 
-interface PolicyAlertCardProps {
+export interface PolicyAlertCardProps {
   alert: AlertSummaryFull;
   hidePolicyButton?: boolean;
   selectionEnabled?: boolean;

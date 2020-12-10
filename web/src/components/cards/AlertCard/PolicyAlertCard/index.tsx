@@ -17,3 +17,4 @@
  */
 
 export { default } from './PolicyAlertCard';
+export * from './PolicyAlertCard';

@@ -589,8 +589,9 @@ describe('ListAlerts', () => {
             nameContains: 'test',
             sortBy: ListAlertsSortFieldsEnum.CreatedAt,
             sortDir: SortDirEnum.Descending,
-            createdAtAfter: '2000-01-29T00:00:00Z',
-            createdAtBefore: '2000-01-30T00:00:00Z',
+            logTypes: [mockedLogType],
+            createdAtAfter: '2000-01-29T00:00:00.000Z',
+            createdAtBefore: '2000-01-30T00:00:00.000Z',
           },
         },
         data: {
