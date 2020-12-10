@@ -27,6 +27,14 @@ import (
 // nolint:lll
 func TestMerge(t *testing.T) {
 	type V = ValueSchema
+	var fieldsA = []FieldSchema{
+		{Name: "foo", ValueSchema: ValueSchema{Type: TypeString}},
+		{Name: "bar", ValueSchema: ValueSchema{Type: TypeString}},
+	}
+	var fieldsB = []FieldSchema{
+		{Name: "bar", ValueSchema: ValueSchema{Type: TypeInt}},
+	}
+	var S = &V{Type: TypeString}
 	type testCase struct {
 		Name   string
 		A, B   *ValueSchema
@@ -100,6 +108,22 @@ func TestMerge(t *testing.T) {
 
 		{"Int,SmallInt", &V{Type: TypeInt}, &V{Type: TypeSmallInt}, &V{Type: TypeInt}},
 		{"Int,Boolean", &V{Type: TypeInt}, &V{Type: TypeBoolean}, &V{Type: TypeString}},
+
+		{"Object,Object", &V{Type: TypeObject, Fields: fieldsA}, &V{Type: TypeObject, Fields: fieldsB}, &V{Type: TypeObject, Fields: fieldsA}},
+		{"Object,Object", &V{Type: TypeObject, Fields: fieldsB}, &V{Type: TypeObject, Fields: fieldsA}, &V{Type: TypeObject, Fields: fieldsA}},
+		{"Array,Array", &V{Type: TypeArray, Element: S}, &V{Type: TypeArray, Element: S}, &V{Type: TypeArray, Element: S}},
+		{"String,IPString", &V{Type: TypeString}, &V{Type: TypeString, Indicators: []string{"ip"}}, S},
+		{"IPString,IPString", &V{Type: TypeString, Indicators: []string{"ip"}}, &V{Type: TypeString, Indicators: []string{"ip"}}, &V{Type: TypeString, Indicators: []string{"ip"}}},
+		{"IPString,URLString", &V{Type: TypeString, Indicators: []string{"ip"}}, &V{Type: TypeString, Indicators: []string{"url"}}, S},
+		{"TimestampRFC,TimestampUNIX", &V{Type: TypeTimestamp, TimeFormat: "rfc3339"}, &V{Type: TypeTimestamp, TimeFormat: "unix"}, S},
+		{"TimestampUNIX,TimestampUNIX", &V{Type: TypeTimestamp, TimeFormat: "unix"}, &V{Type: TypeTimestamp, TimeFormat: "unix"}, &V{Type: TypeTimestamp, TimeFormat: "unix"}},
+		{"EventTimestampUNIX,TimestampUNIX", &V{Type: TypeTimestamp, TimeFormat: "unix", IsEventTime: true}, &V{Type: TypeTimestamp, TimeFormat: "unix"}, &V{Type: TypeTimestamp, TimeFormat: "unix", IsEventTime: true}},
+		{"TimestampUNIX,EventTimestampUNIX", &V{Type: TypeTimestamp, TimeFormat: "unix"}, &V{Type: TypeTimestamp, TimeFormat: "unix", IsEventTime: true}, &V{Type: TypeTimestamp, TimeFormat: "unix", IsEventTime: true}},
+		{"Int,Int", &V{Type: TypeInt}, &V{Type: TypeInt}, &V{Type: TypeInt}},
+		{"SmallInt,Bool", &V{Type: TypeSmallInt}, &V{Type: TypeBoolean}, &V{Type: TypeString}},
+		{"Int,Nil", &V{Type: TypeInt}, nil, &V{Type: TypeInt}},
+		{"Nil,Int", nil, &V{Type: TypeInt}, &V{Type: TypeInt}},
+		{"Nil,Nil", nil, nil, nil},
 	} {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
@@ -107,4 +131,7 @@ func TestMerge(t *testing.T) {
 			require.Equal(t, tc.Expect, Merge(tc.B, tc.A), "invalid B,A merge")
 		})
 	}
+	require.Panics(t, func() {
+		Merge(&ValueSchema{Type: TypeRef, Target: "foo"}, S)
+	})
 }

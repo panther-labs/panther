@@ -18,8 +18,8 @@ package logschema
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "reflect"
-
+// Merge merges to value schemas to a a common schema that can handle both values.
+// It panics if values a or b are not fully resolved via `Resolve().
 func Merge(a, b *ValueSchema) *ValueSchema {
 	if a == nil && b == nil {
 		return nil
@@ -30,58 +30,50 @@ func Merge(a, b *ValueSchema) *ValueSchema {
 	if b == nil {
 		return a
 	}
-	if a.Type != b.Type {
-		return castValue(a, b)
+	if a.Type == TypeRef || b.Type == TypeRef {
+		panic("cannot merge unresolved values")
 	}
-	switch a.Type {
-	case TypeObject:
-		var fields []FieldSchema
-		for _, d := range DiffFields(a.Fields, b.Fields) {
-			A, B := d.A, d.B
-			switch {
-			case A != nil && B != nil:
-				val := Merge(&A.ValueSchema, &B.ValueSchema)
-				fields = append(fields, FieldSchema{
-					Name:        A.Name,
-					Required:    A.Required && B.Required, // A field will only be required if it was found every time.
-					ValueSchema: *val,
-				})
-			case A != nil:
-				A.Required = false // Field was missing
-				fields = append(fields, *A)
-			case B != nil:
-				B.Required = false // Field was missing
-				fields = append(fields, *B)
+	if a.Type == b.Type {
+		switch a.Type {
+		case TypeObject:
+			return &ValueSchema{
+				Type:   TypeObject,
+				Fields: mergeObjectFields(a.Fields, b.Fields),
+			}
+		case TypeArray:
+			return &ValueSchema{
+				Type:    TypeArray,
+				Element: Merge(a.Element, b.Element),
+			}
+		case TypeString:
+			// Try to preserve indicators
+			if indicators, _, changed := diffIndicators(a.Indicators, b.Indicators); !changed {
+				return &ValueSchema{
+					Type:       TypeString,
+					Indicators: indicators,
+				}
+			}
+			return &ValueSchema{Type: TypeString}
+		case TypeTimestamp:
+			if a.TimeFormat != b.TimeFormat {
+				return &ValueSchema{Type: TypeString}
+			}
+			return &ValueSchema{
+				Type:        TypeTimestamp,
+				TimeFormat:  a.TimeFormat,
+				IsEventTime: a.IsEventTime || b.IsEventTime, // event time should be 'sticky'
+			}
+		default:
+			return &ValueSchema{
+				Type: a.Type,
 			}
 		}
-		return &ValueSchema{
-			Type:   TypeObject,
-			Fields: fields,
-		}
-	case TypeArray:
-		return &ValueSchema{
-			Type:    TypeArray,
-			Element: Merge(a.Element, b.Element),
-		}
-	case TypeString:
-		// Try to preserve indicators
-		if reflect.DeepEqual(a.Indicators, b.Indicators) {
-			return a
-		}
-		return &ValueSchema{
-			Type: TypeString,
-		}
-	default:
-		return a
 	}
-}
+	// We need to convert from one type to another.
 
-// castValue handles merging values of different types while trying to preserve value information.
-// This function assumes a.Type != b.Type
-func castValue(a, b *ValueSchema) *ValueSchema {
-	// The order of casts is important.
+	// The order of cases is important!
+	// Each castX function only handles the 'lesser' value types in the following order
 	// JSON > OBJECT,ARRAY > TIMESTAMP > STRING > FLOAT > BIGINT > INT
-	// Each case in this switch statement preserves that order.
 	switch {
 	case a.Type == TypeJSON, b.Type == TypeJSON,
 		a.Type == TypeObject, b.Type == TypeObject,
@@ -108,6 +100,28 @@ func castValue(a, b *ValueSchema) *ValueSchema {
 	default:
 		return &ValueSchema{Type: TypeString}
 	}
+}
+
+func mergeObjectFields(a, b []FieldSchema) (fields []FieldSchema) {
+	for _, d := range DiffFields(a, b) {
+		A, B := d.A, d.B
+		switch {
+		case A != nil && B != nil:
+			val := Merge(&A.ValueSchema, &B.ValueSchema)
+			fields = append(fields, FieldSchema{
+				Name:        A.Name,
+				Required:    A.Required && B.Required, // A field will only be required if it was found every time.
+				ValueSchema: *val,
+			})
+		case A != nil:
+			A.Required = false // Field was missing
+			fields = append(fields, *A)
+		case B != nil:
+			B.Required = false // Field was missing
+			fields = append(fields, *B)
+		}
+	}
+	return fields
 }
 
 func castTimestamp(a, b *ValueSchema) *ValueSchema {
