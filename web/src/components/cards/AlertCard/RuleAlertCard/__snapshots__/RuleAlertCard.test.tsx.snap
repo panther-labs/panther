@@ -317,7 +317,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   display: flex;
   cursor: default;
   width: -webkit-fit-content;
-  width: -moz-content;
+  width: -moz-fit-content;
   width: fit-content;
   min-width: 85px;
   text-align: center;
@@ -375,7 +375,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   display: flex;
   cursor: default;
   width: -webkit-fit-content;
-  width: -moz-content;
+  width: -moz-fit-content;
   width: fit-content;
   min-width: 85px;
   text-align: center;

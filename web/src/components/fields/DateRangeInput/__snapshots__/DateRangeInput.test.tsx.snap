@@ -203,11 +203,9 @@ exports[`FormikDateRangeInput renders 1`] = `
 .panther-316 {
   background-color: #23344e;
   border-radius: 4px;
-  position: absolute;
   box-shadow: 0px 0px 15px 0px rgba(21, 23, 26, 0.5);
-  right: 100%;
   margin-top: 16px;
-  top: 0;
+  margin-bottom: 16px;
   z-index: 10;
 }
 
@@ -216,10 +214,6 @@ exports[`FormikDateRangeInput renders 1`] = `
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-box-pack: columns;
-  -ms-flex-pack: columns;
-  -webkit-justify-content: columns;
-  justify-content: columns;
 }
 
 .panther-28 {
@@ -479,10 +473,9 @@ exports[`FormikDateRangeInput renders 1`] = `
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-box-pack: center;
-  -ms-flex-pack: center;
-  -webkit-justify-content: center;
-  justify-content: center;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
   -webkit-align-items: center;
   -webkit-box-align: center;
   -ms-flex-align: center;
@@ -490,10 +483,6 @@ exports[`FormikDateRangeInput renders 1`] = `
   border-top: 1px solid;
   border-color: #3e516b;
   padding: 16px;
-}
-
-.panther-309>*:not(:last-child) {
-  margin-right: 32px;
 }
 
 .panther-292 {
@@ -511,6 +500,10 @@ exports[`FormikDateRangeInput renders 1`] = `
   align-items: center;
 }
 
+.panther-292 input {
+  max-width: 75px;
+}
+
 .panther-292>*:not(:last-child) {
   margin-right: 12px;
 }
@@ -520,7 +513,7 @@ exports[`FormikDateRangeInput renders 1`] = `
   -ms-flex-negative: 0;
   flex-shrink: 0;
   font-weight: 700;
-  padding-right: 16px;
+  padding-right: 8px;
 }
 
 .panther-278 {
