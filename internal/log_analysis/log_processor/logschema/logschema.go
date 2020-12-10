@@ -124,8 +124,15 @@ func (v *ValueSchema) Clone() *ValueSchema {
 			Type:       TypeString,
 			Indicators: stringset.New(v.Indicators...),
 		}
-	default:
+	case TypeRef:
+		return &ValueSchema{
+			Type:   TypeRef,
+			Target: v.Target,
+		}
+	case TypeBigInt, TypeInt, TypeSmallInt, TypeFloat, TypeJSON, TypeBoolean:
 		return &ValueSchema{Type: v.Type}
+	default:
+		return nil
 	}
 }
 

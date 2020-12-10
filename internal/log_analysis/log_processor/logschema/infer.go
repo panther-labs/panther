@@ -128,6 +128,9 @@ func inferIndicators(s string) []string {
 
 // NonEmpty scrubs the ValueSchema from any empty object/array schemas.
 func (v *ValueSchema) NonEmpty() *ValueSchema {
+	if v == nil {
+		return nil
+	}
 	switch v.Type {
 	case TypeObject:
 		if v.Fields == nil {
@@ -145,9 +148,6 @@ func (v *ValueSchema) NonEmpty() *ValueSchema {
 			Fields: fields,
 		}
 	case TypeArray:
-		if v.Element == nil {
-			return nil
-		}
 		if el := v.Element.NonEmpty(); el != nil {
 			return &ValueSchema{
 				Type:    TypeArray,
@@ -155,7 +155,9 @@ func (v *ValueSchema) NonEmpty() *ValueSchema {
 			}
 		}
 		return nil
-	default:
+	case TypeString, TypeTimestamp, TypeBigInt, TypeInt, TypeSmallInt, TypeFloat, TypeJSON, TypeBoolean, TypeRef:
 		return v.Clone()
+	default:
+		return nil
 	}
 }
