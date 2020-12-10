@@ -24,19 +24,53 @@ import (
 	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 	"go.uber.org/zap"
+	"time"
 
 	alertmodels "github.com/panther-labs/panther/api/lambda/alerts/models"
 	alertdeliverymodels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
+// Used to cache a RuleID to an analysismodels.Rule & timestamp
+var (
+	ruleCache = make(map[ruleKey]cachedRule)
+)
+
+// Key used for the rule cache to map to a Rule
+type ruleKey struct {
+	RuleID string
+}
+type cachedRule struct {
+	Rule      analysismodels.Rule
+	Timestamp time.Time
+}
+
 func getRule(resourceID string, analysisClient gatewayapi.API) (*analysismodels.Rule, error) {
+	// Key used to retrieve cached rule
+	cacheKey := ruleKey{
+		RuleID: resourceID,
+	}
+
+	// Return the cached short-lived rule (2 minutes)
+	if cachedRule, exists := ruleCache[cacheKey]; exists {
+		if time.Now().Add(-2 * time.Minute).Before(cachedRule.Timestamp) {
+			zap.L().Debug("rule was cached", zap.Any("cache key", cacheKey))
+			return &cachedRule.Rule, nil
+		}
+		zap.L().Debug("rule cache expired", zap.Any("cache key", cacheKey))
+	}
+	// Get the Rule
 	input := analysismodels.LambdaInput{
 		GetRule: &analysismodels.GetRuleInput{ID: resourceID},
 	}
 	var result analysismodels.Rule
 	if _, err := analysisClient.Invoke(&input, &result); err != nil {
 		return nil, err
+	}
+	// Cache and return rule
+	ruleCache[cacheKey] = cachedRule{
+		Rule:      result,
+		Timestamp: time.Now(),
 	}
 	return &result, nil
 }
