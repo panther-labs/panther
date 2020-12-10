@@ -25,7 +25,7 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import NoResultsFound from 'Components/NoResultsFound';
 import { extractErrorMessage } from 'Helpers/utils';
 import EmptyBoxImg from 'Assets/illustrations/empty-box.svg';
-import RuleAlertCard from 'Components/cards/RuleAlertCard';
+import AlertCard from 'Components/cards/AlertCard';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import ListAlertFilters from 'Pages/ListAlerts/ListAlertFilters';
@@ -157,7 +157,7 @@ const RuleAlertsListing: React.FC<RuleAlertsListingProps> = ({ ruleId, type }) =
           {hasAnyAlerts ? (
             <Flex direction="column" spacing={2}>
               {alertSummaries.map(alert => (
-                <RuleAlertCard hideRuleButton key={alert.alertId} alert={alert} selectionEnabled />
+                <AlertCard hideRuleButton key={alert.alertId} alert={alert} selectionEnabled />
               ))}
             </Flex>
           ) : (

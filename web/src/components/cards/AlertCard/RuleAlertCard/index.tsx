@@ -17,3 +17,4 @@
  */
 
 export { default } from './RuleAlertCard';
+export * from './RuleAlertCard';

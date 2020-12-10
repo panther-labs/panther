@@ -30,9 +30,9 @@ import { formatDatetime } from 'Helpers/utils';
 import useAlertDestinations from 'Hooks/useAlertDestinations';
 import useAlertDestinationsDeliverySuccess from 'Hooks/useAlertDestinationsDeliverySuccess';
 import { SelectCheckbox } from 'Components/utils/SelectContext';
-import UpdateAlertDropdown from '../../dropdowns/UpdateAlertDropdown';
+import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
 
-interface RuleAlertCardProps {
+export interface RuleAlertCardProps {
   alert: AlertSummaryFull;
   hideRuleButton?: boolean;
   selectionEnabled?: boolean;
