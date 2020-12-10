@@ -63,7 +63,6 @@ describe('CreateS3LogSource', () => {
             awsAccountId: pantherConfig.AWS_ACCOUNT_ID,
             integrationLabel: logSource.integrationLabel,
             s3Bucket: logSource.s3Bucket,
-            s3PrefixLogTypes: logSource.s3PrefixLogTypes,
             kmsKey: logSource.kmsKey || null,
           },
         },

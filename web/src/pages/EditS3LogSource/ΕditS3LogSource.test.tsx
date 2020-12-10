@@ -72,7 +72,6 @@ describe('EditS3LogSource', () => {
             awsAccountId: pantherConfig.AWS_ACCOUNT_ID,
             integrationLabel: updatedLogSource.integrationLabel,
             s3Bucket: updatedLogSource.s3Bucket,
-            s3PrefixLogTypes: updatedLogSource.s3PrefixLogTypes,
             kmsKey: updatedLogSource.kmsKey || null,
           },
         },

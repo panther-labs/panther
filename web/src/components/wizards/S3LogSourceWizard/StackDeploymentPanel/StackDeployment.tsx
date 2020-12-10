@@ -38,7 +38,6 @@ const StackDeployment: React.FC = () => {
         awsAccountId: pantherConfig.AWS_ACCOUNT_ID,
         integrationLabel: values.integrationLabel,
         s3Bucket: values.s3Bucket,
-        s3PrefixLogTypes: values.s3PrefixLogTypes,
         kmsKey: values.kmsKey || null,
       },
     },

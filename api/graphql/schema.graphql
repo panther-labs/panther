@@ -89,7 +89,6 @@ input GetS3LogIntegrationTemplateInput {
   integrationLabel: String!
   s3Bucket: String!
   kmsKey: String
-  s3PrefixLogTypes: [S3PrefixLogTypesInput!]!
 }
 
 input ListAlertsInput {
