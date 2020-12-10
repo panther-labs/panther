@@ -53,7 +53,8 @@ var inferJsoniter = jsoniter.Config{
 func Infer(logger *zap.Logger, opts *InferOpts) {
 	inputFiles := flag.Args()
 	if len(inputFiles) == 0 {
-		inputFiles = []string{"-"}
+		logger.Fatal("You need to specify at least one file")
+		flag.Usage()
 	}
 
 	globalSchema := logschema.Schema{Version: 0}
@@ -69,7 +70,7 @@ func Infer(logger *zap.Logger, opts *InferOpts) {
 			// In order to validate that the schema generated is correct,
 			// run the parser against the logs, fail in case of error
 			if err = validateSchema(globalSchema, file); err != nil {
-				logger.Fatal("failed while testing schema with file. You can specify '-skip-verify' argument to skip this step", zap.Error(err))
+				logger.Fatal("failed while testing schema with file. You can specify '-skip-test' argument to skip this step", zap.Error(err))
 			}
 		}
 	}

@@ -60,6 +60,7 @@ func main() {
 		}
 		if err := flag.CommandLine.Parse(os.Args[2:]); err != nil {
 			logger.Fatalf("failed to parse command line arguments")
+			flag.Usage()
 		}
 		customlogs.Test(logger, opts)
 	case inferCmd:
@@ -69,10 +70,11 @@ func main() {
 		}
 		if err := flag.CommandLine.Parse(os.Args[2:]); err != nil {
 			logger.Fatalf("failed to parse command line arguments")
+			flag.Usage()
 		}
 		customlogs.Infer(logger.Desugar(), opts)
 	default:
-		flag.Usage()
 		logger.Fatalf("Invalid command [%s]", cmd)
+		flag.Usage()
 	}
 }
