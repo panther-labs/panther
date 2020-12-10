@@ -60,9 +60,19 @@ type Schema struct {
 }
 
 func (s *Schema) Clone() *Schema {
-	data, _ := jsoniter.Marshal(s)
+	if s == nil {
+		return nil
+	}
+	data, err := jsoniter.Marshal(s)
+	if err != nil {
+		// this should never happen
+		panic("failed to serialize Schema to JSON: " + err.Error())
+	}
 	out := Schema{}
-	_ = jsoniter.Unmarshal(data, &out)
+	if err := jsoniter.Unmarshal(data, &out); err != nil {
+		// this should never happen
+		panic("failed to deserialize Schema from JSON: " + err.Error())
+	}
 	return &out
 }
 
