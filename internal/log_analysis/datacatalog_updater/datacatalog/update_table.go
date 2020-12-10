@@ -34,7 +34,7 @@ func (h *LambdaHandler) HandleUpdateTablesEvent(ctx context.Context, event *Upda
 	if err := h.createOrUpdateTablesForLogTypes(ctx, logTypes); err != nil {
 		return errors.Wrap(err, "failed to update tables for deployed log types")
 	}
-	if err := h.createOrReplaceViewsForAllDeployedTables(ctx); err != nil {
+	if err := h.createOrReplaceViewsForAllDeployedLogTables(ctx); err != nil {
 		return errors.Wrap(err, "failed to update athena views for deployed log types")
 	}
 	if err := h.sendPartitionSync(ctx, event.TraceID, logTypes); err != nil {
