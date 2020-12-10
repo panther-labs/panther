@@ -42,9 +42,18 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
 
       - name: Run Snyk to check Docker images for vulnerabilities
+        # Snyk can be used to break the build when it detects vulnerabilities.
+        # In this case we don't want to halt development
+        continue-on-error: false
         uses: snyk/actions/docker@master
         env:
+          # In order to use the Snyk Action you will need to have a Snyk API token.
+          # More details in https://github.com/snyk/actions#getting-your-snyk-token
+          # or you can signup for free at https://snyk.io/login
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          image: your/image-to-test
-          args: --severity-threshold=high
+          # image: node:15.2.0-alpine
+          # args: '--file=deployments/Dockerfile --severity-threshold=high'
+          # The default parameters do not work. Therefore, we inline theme here which mimics
+          # how they would be interpreted if the above inputs worked.
+          args: 'snyk test --file=deployments/Dockerfile --severity-threshold=high --docker node:15.2-alpine'

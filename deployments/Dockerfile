@@ -21,7 +21,7 @@
 #
 # ****************     BUILD STAGE     *******************
 #
-FROM node:13.2-alpine AS build-env
+FROM node:15.2-alpine AS build-env
 
 LABEL description="The image that builds the web code and serves it through an express NodeJS server"
 
@@ -49,7 +49,7 @@ RUN npm run build
 #
 # ****************     DEPLOYMENT & SERVE STAGE     *******************
 #
-FROM node:13.2-alpine
+FROM node:15.2-alpine
 
 # Default to exposing `8080`
 ENV SERVER_PORT=8080
