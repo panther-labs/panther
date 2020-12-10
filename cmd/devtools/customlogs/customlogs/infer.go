@@ -56,35 +56,44 @@ func Infer(logger *zap.Logger, opts *InferOpts) {
 		inputFiles = []string{"-"}
 	}
 
-	schema, err := inferFromFile(*opts.File)
-	if err != nil {
-		logger.Fatal("failed to generate schema", zap.Error(err))
-	}
+	globalSchema := logschema.Schema{Version: 0}
 
-	if !*opts.SkipTest {
-		// In order to validate that the schema generated is correct,
-		// run the parser against the logs, fail in case of error
-		if err = validateSchema(schema, *opts.File); err != nil {
-			logger.Fatal("failed while testing schema with file. You can specify '-skip-verify' argument to skip this step", zap.Error(err))
+	var err error
+	for _, file := range inputFiles {
+		globalSchema, err = inferFromFile(globalSchema, "")
+		if err != nil {
+			logger.Fatal("failed to generate schema", zap.Error(err))
+		}
+
+		if !*opts.SkipTest {
+			// In order to validate that the schema generated is correct,
+			// run the parser against the logs, fail in case of error
+			if err = validateSchema(globalSchema, file); err != nil {
+				logger.Fatal("failed while testing schema with file. You can specify '-skip-verify' argument to skip this step", zap.Error(err))
+			}
 		}
 	}
 
-	marshalled, err := yaml.Marshal(schema)
+	marshalled, err := yaml.Marshal(globalSchema)
 	if err != nil {
 		logger.Fatal("failed to marshal schema", zap.Error(err))
 	}
+
 	fmt.Println(string(marshalled))
 }
 
-func inferFromFile(file string) (logschema.Schema, error) {
-	schema := logschema.Schema{
-		Version: 0,
+func inferFromFile(parentSchema logschema.Schema, file string) (logschema.Schema, error) {
+	var fd io.Reader
+	if file == "-" {
+		fd = os.Stdin
+	} else {
+		f, err := os.Open(file)
+		if err != nil {
+			return parentSchema, err
+		}
+		defer f.Close() // nolint: errcheck
+		fd = f
 	}
-	fd, err := os.Open(file)
-	if err != nil {
-		return schema, errors.Wrap(err, "failed to read input file")
-	}
-	defer fd.Close()
 
 	reader := bufio.NewReader(fd)
 	lineNum := 0
@@ -97,7 +106,7 @@ func inferFromFile(file string) (logschema.Schema, error) {
 				// Don't go through more lines, but make sure to process existing line
 				run = false
 			} else {
-				return schema, errors.Wrap(err, "failed while reading file")
+				return parentSchema, errors.Wrap(err, "failed while reading file")
 			}
 		}
 		line = bytes.TrimSpace(line)
@@ -107,18 +116,18 @@ func inferFromFile(file string) (logschema.Schema, error) {
 
 		var data map[string]interface{}
 		if err = inferJsoniter.Unmarshal(line, &data); err != nil {
-			return schema, errors.Wrapf(err, "failed to parse line [%d] as JSON", lineNum)
+			return parentSchema, errors.Wrapf(err, "failed to parse line [%d] as JSON", lineNum)
 		}
 		// inferring the log schema of that single line
 		lineFields := inferFields(data)
 		// merging the schema of this line with the schema that we have generated from all lines until now
-		schema.Fields, err = mergeFields(schema.Fields, lineFields)
+		parentSchema.Fields, err = mergeFields(parentSchema.Fields, lineFields)
 		if err != nil {
-			return schema, errors.Wrapf(err, "failed while inferring schema from line [%d]", lineNum)
+			return parentSchema, errors.Wrapf(err, "failed while inferring schema from line [%d]", lineNum)
 		}
 	}
 
-	return schema, nil
+	return parentSchema, nil
 }
 
 // Infers the schema from a single JSON event
