@@ -27,11 +27,6 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-var (
-	integrationIDMappings = map[string]string{}
-	lastUpdated           time.Time
-)
-
 const (
 	mappingAgeOut         = 1 * time.Minute
 	sourceAPIFunctionName = "panther-source-api"
@@ -40,15 +35,18 @@ const (
 // Returns the label for an integration
 // It will return an empty string if the integration doesn't exist
 func (sh *StreamHandler) getIntegrationLabel(integrationID string) (string, error) {
-	if time.Since(lastUpdated) > mappingAgeOut {
+	if sh.integrationIDCache == nil {
+		sh.integrationIDCache = make(map[string]string)
+	}
+	if time.Since(sh.lastUpdatedCache) > mappingAgeOut {
 		if err := sh.updateIntegrationMapping(); err != nil {
 			return "", err
 		}
 	}
-	return integrationIDMappings[integrationID], nil
+	return sh.integrationIDCache[integrationID], nil
 }
 
-func (sh StreamHandler) updateIntegrationMapping() error {
+func (sh *StreamHandler) updateIntegrationMapping() error {
 	input := &models.LambdaInput{
 		ListIntegrations: &models.ListIntegrationsInput{
 			IntegrationType: aws.String(models.IntegrationTypeAWSScan),
@@ -60,11 +58,10 @@ func (sh StreamHandler) updateIntegrationMapping() error {
 	}
 
 	// Reset the cache
-	integrationIDMappings = make(map[string]string)
+	sh.integrationIDCache = make(map[string]string)
 	for _, integration := range output {
-		integrationIDMappings[integration.IntegrationID] = integration.IntegrationLabel
+		sh.integrationIDCache[integration.IntegrationID] = integration.IntegrationLabel
 	}
-	lastUpdated = time.Now()
-
+	sh.lastUpdatedCache = time.Now()
 	return nil
 }

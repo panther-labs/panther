@@ -21,6 +21,7 @@ package forwarder
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/firehose"
@@ -45,9 +46,11 @@ const (
 )
 
 type StreamHandler struct {
-	FirehoseClient firehoseiface.FirehoseAPI
-	LambdaClient   lambdaiface.LambdaAPI
-	StreamName     string
+	FirehoseClient     firehoseiface.FirehoseAPI
+	LambdaClient       lambdaiface.LambdaAPI
+	StreamName         string
+	integrationIDCache map[string]string
+	lastUpdatedCache   time.Time
 }
 
 // Run is the entry point for the datalake-forwarder lambda
