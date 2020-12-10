@@ -61,7 +61,7 @@ func Infer(logger *zap.Logger, opts *InferOpts) {
 
 	var err error
 	for _, file := range inputFiles {
-		globalSchema, err = inferFromFile(globalSchema, "")
+		globalSchema, err = inferFromFile(globalSchema, file)
 		if err != nil {
 			logger.Fatal("failed to generate schema", zap.Error(err))
 		}
