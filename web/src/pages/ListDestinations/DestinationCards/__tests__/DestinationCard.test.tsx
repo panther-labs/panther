@@ -88,7 +88,7 @@ describe('Generic Destination Card', () => {
         },
       }),
     ];
-    const { getByText, getByAriaLabel, getByAltText } = render(
+    const { findByText, getByAriaLabel, getByAltText } = render(
       <DestinationCard destination={destination} logo={logo}>
         A required children
       </DestinationCard>,
@@ -100,11 +100,9 @@ describe('Generic Destination Card', () => {
     expect(toggleBtn).toBeInTheDocument();
 
     fireClickAndMouseEvents(toggleBtn);
-    await waitMs(50);
-    fireClickAndMouseEvents(getByText('Send Test Alert'));
-    await waitMs(50);
+    fireClickAndMouseEvents(await findByText('Send Test Alert'));
     expect(
-      getByText(`Successfully sent test alert for: ${destination.displayName}`)
+      await findByText(`Successfully sent test alert for: ${destination.displayName}`)
     ).toBeInTheDocument();
   });
 });

@@ -1,0 +1,6 @@
+query ListComplianceSourceNames {
+  listComplianceIntegrations {
+    integrationLabel
+    integrationId
+  }
+}
