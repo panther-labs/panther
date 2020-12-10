@@ -21,12 +21,12 @@ package logschema
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/panther-labs/panther/pkg/stringset"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/preprocessors"
+	"github.com/panther-labs/panther/pkg/stringset"
 
 	// Force dependency on go-bindata to avoid fetching during mage gen
 	_ "github.com/go-bindata/go-bindata"
@@ -95,23 +95,23 @@ func (v *ValueSchema) Clone() *ValueSchema {
 			fields = append(fields, f)
 		}
 		return &ValueSchema{
-			Type: TypeObject,
+			Type:   TypeObject,
 			Fields: fields,
 		}
 	case TypeArray:
 		return &ValueSchema{
-			Type:        TypeArray,
-			Element:     v.Element.Clone(),
+			Type:    TypeArray,
+			Element: v.Element.Clone(),
 		}
 	case TypeTimestamp:
 		return &ValueSchema{
 			Type:        TypeTimestamp,
-			TimeFormat: v.TimeFormat,
+			TimeFormat:  v.TimeFormat,
 			IsEventTime: v.IsEventTime,
 		}
 	case TypeString:
 		return &ValueSchema{
-			Type:        TypeString,
+			Type:       TypeString,
 			Indicators: stringset.New(v.Indicators...),
 		}
 	default:
