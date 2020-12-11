@@ -16,6 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './ListResources';
-
-export * from './graphql/listResources.generated';
+export { default } from './RuleAlertCard';
+export * from './RuleAlertCard';

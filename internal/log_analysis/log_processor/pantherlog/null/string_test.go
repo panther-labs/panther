@@ -111,7 +111,9 @@ func TestNonEmptyStringCodec(t *testing.T) {
 	{
 		a := null.String{}
 		err := jsoniter.UnmarshalFromString(`42`, &a)
-		require.Error(t, err)
+		require.NoError(t, err)
+		require.True(t, a.Exists)
+		require.Equal(t, `42`, a.Value)
 	}
 	{
 		a := A{}

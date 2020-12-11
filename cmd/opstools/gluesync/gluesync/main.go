@@ -88,18 +88,16 @@ func main() {
 			NumWorkers:   *opts.NumWorkers,
 		},
 		{
-			DatabaseName:         pantherdb.RuleErrorsDatabase,
-			AfterTableCreateTime: true,
-			DryRun:               *opts.DryRun,
-			MatchPrefix:          matchPrefix,
-			NumWorkers:           *opts.NumWorkers,
+			DatabaseName: pantherdb.RuleErrorsDatabase,
+			DryRun:       *opts.DryRun,
+			MatchPrefix:  matchPrefix,
+			NumWorkers:   *opts.NumWorkers,
 		},
 		{
-			DatabaseName:         pantherdb.RuleMatchDatabase,
-			AfterTableCreateTime: true,
-			DryRun:               *opts.DryRun,
-			MatchPrefix:          matchPrefix,
-			NumWorkers:           *opts.NumWorkers,
+			DatabaseName: pantherdb.RuleMatchDatabase,
+			DryRun:       *opts.DryRun,
+			MatchPrefix:  matchPrefix,
+			NumWorkers:   *opts.NumWorkers,
 		},
 	}
 	log.Info("sync started")
