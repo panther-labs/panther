@@ -19,22 +19,23 @@ package customlogs
  */
 
 import (
+	"fmt"
 	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 )
 
 func TestProcessLine(t *testing.T) {
-	schema, err := inferFromFile(logschema.Schema{Version: 0}, "./testdata/sample_1.jsonl")
+	schema, err := inferFromFile(nil, "./testdata/sample_1.jsonl")
+	schema = schema.NonEmpty()
 	assert.NoError(t, err)
 	fd, err := ioutil.ReadFile("./testdata/schema_1.yml")
 	assert.NoError(t, err)
 
 	marshalled, err := yaml.Marshal(schema)
 	assert.NoError(t, err)
+	fmt.Println(string(marshalled))
 	assert.YAMLEq(t, string(fd), string(marshalled))
 }

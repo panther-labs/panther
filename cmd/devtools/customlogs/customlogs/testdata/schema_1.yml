@@ -14,49 +14,36 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-version: 0
+type: object
 fields:
+  - name: boolean
+    type: boolean
+  - name: float
+    type: float
+  - name: float_as_string
+    type: float
+  - name: int_as_string
+    type: bigint
+  - name: string
+    type: string
+  - name: time
+    type: timestamp
+    timeFormat: rfc3339
   - name: array
-    description: The array
     type: array
     element:
       type: bigint
-  - name: boolean
-    description: The boolean
-    type: boolean
-  - name: boolean_as_string
-    description: The boolean_as_string
-    type: boolean
-  - name: float
-    description: The float
-    type: float
-  - name: float_as_string
-    description: The float_as_string
-    type: float
   - name: int
-    description: The int
     type: bigint
-  - name: int_as_string
-    description: The int_as_string
-    type: bigint
+  - name: boolean_as_string
+    type: boolean
   - name: not_int_as_string
-    description: The not_int_as_string
     type: string
   - name: object
-    description: The object
     type: object
     fields:
       - name: string
-        description: The string
         type: string
   - name: required_string
-    description: The required_string
     type: string
     required: true
-  - name: string
-    description: The string
-    type: string
-  - name: time
-    description: The time
-    type: timestamp
-    timeFormat: rfc3339
