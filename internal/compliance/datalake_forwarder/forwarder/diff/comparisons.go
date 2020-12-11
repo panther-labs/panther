@@ -34,8 +34,8 @@ type Changelog map[string]Diff
 
 // CompJsons compares two JSON strings, and returns a map of paths to changed fields to a tuple of
 // the old and new value of that field
-func CompJsons(left, right string) (map[string]Diff, error) {
-	return compGJsons(gjson.Parse(left), gjson.Parse(right), "")
+func CompJsons(left, right []byte) (map[string]Diff, error) {
+	return compGJsons(gjson.ParseBytes(left), gjson.ParseBytes(right), "")
 }
 
 // nolint: funlen

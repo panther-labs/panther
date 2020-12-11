@@ -40,26 +40,26 @@ type ComplianceChange struct {
 }
 
 func (sh *StreamHandler) processComplianceSnapshot(record *events.DynamoDBEventRecord) (change *ComplianceChange, err error) {
-	switch record.EventName {
-	case string(lambdaevents.DynamoDBOperationTypeInsert):
-		change, err = sh.recordToCompliance(record.Change.NewImage)
+	switch lambdaevents.DynamoDBOperationType(record.EventName) {
+	case lambdaevents.DynamoDBOperationTypeInsert:
+		change, err = recordToCompliance(record.Change.NewImage)
 		if err != nil {
 			return nil, err
 		}
 		change.ChangeType = ChangeTypeCreate
-	case string(lambdaevents.DynamoDBOperationTypeRemove):
-		change, err = sh.recordToCompliance(record.Change.OldImage)
+	case lambdaevents.DynamoDBOperationTypeRemove:
+		change, err = recordToCompliance(record.Change.OldImage)
 		if err != nil {
 			return nil, err
 		}
 		change.ChangeType = ChangeTypeDelete
-	case string(lambdaevents.DynamoDBOperationTypeModify):
-		change, err = sh.recordToCompliance(record.Change.NewImage)
+	case lambdaevents.DynamoDBOperationTypeModify:
+		change, err = recordToCompliance(record.Change.NewImage)
 		if err != nil {
 			return nil, err
 		}
 		change.ChangeType = ChangeTypeModify
-		oldStatus, err := sh.recordToCompliance(record.Change.OldImage)
+		oldStatus, err := recordToCompliance(record.Change.OldImage)
 		if err != nil {
 			return nil, err
 		}
@@ -79,7 +79,7 @@ func (sh *StreamHandler) processComplianceSnapshot(record *events.DynamoDBEventR
 	return change, nil
 }
 
-func (sh *StreamHandler) recordToCompliance(image map[string]*dynamodb.AttributeValue) (*ComplianceChange, error) {
+func recordToCompliance(image map[string]*dynamodb.AttributeValue) (*ComplianceChange, error) {
 	change := ComplianceChange{}
 	err := dynamodbattribute.UnmarshalMap(image, &change)
 	return &change, err

@@ -39,10 +39,9 @@ const (
 	ChangeTypeCreate = "CREATED"
 	ChangeTypeDelete = "DELETED"
 	ChangeTypeModify = "MODIFIED"
-	// TODO add daily syncs
-	// ChangeTypeSync   = "SYNC"
-	recordDelimiter = '\n'
-	maxRetries      = 10
+	ChangeTypeSync   = "SYNC"
+	recordDelimiter  = '\n'
+	maxRetries       = 10
 )
 
 type StreamHandler struct {
