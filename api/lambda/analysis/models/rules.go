@@ -61,6 +61,16 @@ type ListRulesInput struct {
 	// ----- Paging -----
 	PageSize int `json:"pageSize" validate:"min=0,max=1000"`
 	Page     int `json:"page" validate:"min=0"`
+
+	// Only include rules whose creator matches this user ID (which need not be a uuid)
+	CreatedBy string `json:"createdBy"`
+
+	// Only include rules which were last modified by this user ID
+	LastModifiedBy string `json:"lastModifiedBy"`
+
+	// If True, include only rules which were created by the system during the initial deployment
+	// If False, include only rules where were NOT created by the system during the initial deployment
+	InitialSet *bool `json:"initialSet"`
 }
 
 type ListRulesOutput struct {
@@ -89,15 +99,15 @@ type TestRuleRecord struct {
 }
 
 type TestRuleRecordFunctions struct {
-	Rule                *TestDetectionSubRecord `json:"ruleFunction"`
-	Title               *TestDetectionSubRecord `json:"titleFunction"`
-	Dedup               *TestDetectionSubRecord `json:"dedupFunction"`
-	AlertContext        *TestDetectionSubRecord `json:"alertContextFunction"`
-	Description         *TestDetectionSubRecord `json:"descriptionFunction"`
-	DestinationOverride *TestDetectionSubRecord `json:"destinationOverrideFunction"`
-	Reference           *TestDetectionSubRecord `json:"referenceFunction"`
-	Runbook             *TestDetectionSubRecord `json:"runbookFunction"`
-	Severity            *TestDetectionSubRecord `json:"severityFunction"`
+	Rule         *TestDetectionSubRecord `json:"ruleFunction"`
+	Title        *TestDetectionSubRecord `json:"titleFunction"`
+	Dedup        *TestDetectionSubRecord `json:"dedupFunction"`
+	AlertContext *TestDetectionSubRecord `json:"alertContextFunction"`
+	Description  *TestDetectionSubRecord `json:"descriptionFunction"`
+	Destinations *TestDetectionSubRecord `json:"destinationsFunction"`
+	Reference    *TestDetectionSubRecord `json:"referenceFunction"`
+	Runbook      *TestDetectionSubRecord `json:"runbookFunction"`
+	Severity     *TestDetectionSubRecord `json:"severityFunction"`
 }
 
 type UpdateRuleInput struct {

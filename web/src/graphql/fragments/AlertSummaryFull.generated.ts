@@ -25,23 +25,27 @@ import gql from 'graphql-tag';
 export type AlertSummaryFull = Pick<
   Types.AlertSummary,
   | 'alertId'
-  | 'ruleId'
   | 'title'
   | 'severity'
   | 'type'
   | 'status'
   | 'creationTime'
-  | 'eventsMatched'
   | 'updateTime'
-  | 'logTypes'
   | 'lastUpdatedBy'
   | 'lastUpdatedByTime'
-> & { deliveryResponses: Array<Types.Maybe<DeliveryResponseFull>> };
+> & {
+  deliveryResponses: Array<Types.Maybe<DeliveryResponseFull>>;
+  detection:
+    | Pick<Types.AlertSummaryRuleInfo, 'ruleId' | 'logTypes' | 'eventsMatched'>
+    | Pick<
+        Types.AlertSummaryPolicyInfo,
+        'policyId' | 'resourceTypes' | 'resourceId' | 'policySourceId'
+      >;
+};
 
 export const AlertSummaryFull = gql`
   fragment AlertSummaryFull on AlertSummary {
     alertId
-    ruleId
     title
     severity
     type
@@ -50,11 +54,22 @@ export const AlertSummaryFull = gql`
     deliveryResponses {
       ...DeliveryResponseFull
     }
-    eventsMatched
     updateTime
-    logTypes
     lastUpdatedBy
     lastUpdatedByTime
+    detection {
+      ... on AlertSummaryPolicyInfo {
+        policyId
+        resourceTypes
+        resourceId
+        policySourceId
+      }
+      ... on AlertSummaryRuleInfo {
+        ruleId
+        logTypes
+        eventsMatched
+      }
+    }
   }
   ${DeliveryResponseFull}
 `;

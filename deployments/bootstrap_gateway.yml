@@ -385,6 +385,9 @@ Resources:
     Properties:
       Name: Panther
       Description: The Panther workgroup
+      Tags: # NOTE: for some reason the tags from the stack are not being applied
+        - Key: Application
+          Value: Panther
       RecursiveDeleteOption: true
       WorkGroupConfiguration:
         EnforceWorkGroupConfiguration: false # we want client side overrides

@@ -53,6 +53,7 @@ func TestSendSns(t *testing.T) {
 		AnalysisDescription: "policyDescription",
 		Severity:            "severity",
 		Runbook:             "runbook",
+		Reference:           "reference",
 		CreatedAt:           createdAtTime,
 		Context: map[string]interface{}{
 			"key": "value",
@@ -81,7 +82,7 @@ func TestSendSns(t *testing.T) {
 	expectedSnsMessage := &snsMessage{
 		DefaultMessage: defaultSerializedMessage,
 		EmailMessage: "policyName failed on new resources\nFor more details please visit: https://panther.io/policies/policyId\n" +
-			"Severity: severity\nRunbook: runbook\nDescription: policyDescription\nAlertContext: {\"key\":\"value\"}",
+			"Severity: severity\nRunbook: runbook\nReference: reference\nDescription: policyDescription\nAlertContext: {\"key\":\"value\"}",
 	}
 	expectedSerializedSnsMessage, err := jsoniter.MarshalToString(expectedSnsMessage)
 	require.NoError(t, err)
@@ -142,6 +143,7 @@ func TestTruncateSnsTitle(t *testing.T) {
 		AnalysisDescription: "ruleDescription",
 		Severity:            "severity",
 		Runbook:             "runbook",
+		Reference:           "reference",
 		CreatedAt:           createdAtTime,
 		Title:               title,
 		Tags:                []string{},
@@ -173,7 +175,7 @@ func TestTruncateSnsTitle(t *testing.T) {
 	expectedSnsMessage := &snsMessage{
 		DefaultMessage: defaultSerializedMessage,
 		EmailMessage: "ruleName triggered\nFor more details please visit: https://panther.io/alerts/alertID\nSeverity: severity\n" +
-			"Runbook: runbook\nDescription: ruleDescription\nAlertContext: {\"key\":\"value\"}",
+			"Runbook: runbook\nReference: reference\nDescription: ruleDescription\nAlertContext: {\"key\":\"value\"}",
 	}
 	expectedSerializedSnsMessage, err := jsoniter.MarshalToString(expectedSnsMessage)
 	require.NoError(t, err)
@@ -220,6 +222,7 @@ func TestResendEmailSubject(t *testing.T) {
 		AnalysisDescription: "ruleDescription",
 		Severity:            "severity",
 		Runbook:             "runbook",
+		Reference:           "reference",
 		CreatedAt:           createdAtTime,
 		Title:               "title",
 		Tags:                []string{},
@@ -251,7 +254,7 @@ func TestResendEmailSubject(t *testing.T) {
 	expectedSnsMessage := &snsMessage{
 		DefaultMessage: defaultSerializedMessage,
 		EmailMessage: "ruleName triggered\nFor more details please visit: https://panther.io/alerts/alertID\nSeverity: severity\n" +
-			"Runbook: runbook\nDescription: ruleDescription\nAlertContext: {\"key\":\"value\"}",
+			"Runbook: runbook\nReference: reference\nDescription: ruleDescription\nAlertContext: {\"key\":\"value\"}",
 	}
 	expectedSerializedSnsMessage, err := jsoniter.MarshalToString(expectedSnsMessage)
 	require.NoError(t, err)

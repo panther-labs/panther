@@ -55,7 +55,7 @@ exports[`AlertDetailsBanner renders 1`] = `
   display: flex;
   cursor: default;
   width: -webkit-fit-content;
-  width: -moz-content;
+  width: -moz-fit-content;
   width: fit-content;
   min-width: 85px;
   text-align: center;
@@ -113,7 +113,7 @@ exports[`AlertDetailsBanner renders 1`] = `
   display: flex;
   cursor: default;
   width: -webkit-fit-content;
-  width: -moz-content;
+  width: -moz-fit-content;
   width: fit-content;
   min-width: 85px;
   text-align: center;
@@ -253,7 +253,7 @@ exports[`AlertDetailsBanner renders 1`] = `
 .panther-19 {
   width: 12px;
   height: 12px;
-  background-color: hsl(210, 20%, 70%);
+  background-color: hsl(323, 43%, 43%);
   border-radius: 99999px;
 }
 
@@ -414,7 +414,7 @@ exports[`AlertDetailsBanner renders 1`] = `
               <span
                 class="panther-20"
               >
-                Books
+                Baht
               </span>
             </div>
           </div>
@@ -555,7 +555,7 @@ exports[`AlertDetailsBanner renders 1`] = `
               <span
                 class="panther-20"
               >
-                Books
+                Baht
               </span>
             </div>
           </div>

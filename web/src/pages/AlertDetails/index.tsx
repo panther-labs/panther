@@ -20,3 +20,4 @@ export { default } from './AlertDetails';
 export * from './AlertDetails';
 export * from './graphql/alertDetails.generated';
 export * from './graphql/ruleTeaser.generated';
+export * from './graphql/policyTeaser.generated';

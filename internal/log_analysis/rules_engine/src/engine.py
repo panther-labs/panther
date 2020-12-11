@@ -29,6 +29,8 @@ from .rule import Rule
 
 _RULES_CACHE_DURATION = timedelta(minutes=5)
 
+MISSING_UDM_EXCEPTION = AttributeError("'dict' object has no attribute 'udm'")
+
 
 class Engine:
     """The engine that runs Python rules."""
@@ -41,6 +43,55 @@ class Engine:
         self._analysis_client = analysis_api
         self._populate_rules()
         self._populate_data_models()
+
+    def analyze_single_rule(self, raw_rule: dict, test_spec: Mapping) -> Dict[str, Any]:
+        """ Test a single rule against an event. """
+
+        # The rule during direct invocation doesn't have a version
+        raw_rule['versionId'] = 'default'
+        rule = Rule(raw_rule)
+        event = test_spec['data']
+
+        # enrich the event to have access to field by standard field name
+        #  via the `udm` method
+        if 'p_log_type' in event and event['p_log_type'] in self.log_type_to_data_models:
+            event = EnrichedEvent(event, self.log_type_to_data_models[event['p_log_type']])
+
+        rule_result = rule.run(event, batch_mode=False)
+        format_exception = lambda exc: '{}: {}'.format(type(exc).__name__, exc) if exc else exc
+        # for tests against rules using the `udm` method, you must specify `p_log_type`
+        # field in each test definition
+        if rule_result.rule_exception and type(
+            rule_result.rule_exception
+        ) is type(MISSING_UDM_EXCEPTION) and rule_result.rule_exception.args == MISSING_UDM_EXCEPTION.args:
+            rule_result.rule_exception = AttributeError(
+                'The test specification for rules using the \'udm\' method must specify the \'p_log_type\' field,' +
+                ' and there must be an enabled DataModel for the log type.'
+            )
+        return {
+            'id': test_spec['id'],
+            'ruleId': rule.rule_id,
+            'genericError': format_exception(rule_result.setup_exception),
+            'errored': rule_result.errored,
+            'ruleOutput': rule_result.matched,
+            'ruleError': format_exception(rule_result.rule_exception),
+            'titleOutput': rule_result.title_output,
+            'titleError': format_exception(rule_result.title_exception),
+            'descriptionOutput': rule_result.description_output,
+            'descriptionError': format_exception(rule_result.description_exception),
+            'referenceOutput': rule_result.reference_output,
+            'referenceError': format_exception(rule_result.reference_exception),
+            'severityOutput': rule_result.severity_output,
+            'severityError': format_exception(rule_result.severity_exception),
+            'runbookOutput': rule_result.runbook_output,
+            'runbookError': format_exception(rule_result.runbook_exception),
+            'destinationsOutput': rule_result.destinations_output,
+            'destinationsError': format_exception(rule_result.destinations_exception),
+            'dedupOutput': rule_result.dedup_output,
+            'dedupError': format_exception(rule_result.dedup_exception),
+            'alertContextOutput': rule_result.alert_context,
+            'alertContextError': format_exception(rule_result.alert_context_exception),
+        }
 
     def analyze(self, log_type: str, event: Mapping) -> List[EngineResult]:
         """Analyze an event by running all the rules that apply to the log type.
@@ -89,7 +140,7 @@ class Engine:
                     reference=result.reference_output,
                     severity=result.severity_output,
                     runbook=result.runbook_output,
-                    destination_override=result.destination_override_output,
+                    destinations=result.destinations_output,
                 )
                 engine_results.append(match)
 

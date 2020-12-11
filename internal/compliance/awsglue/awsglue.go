@@ -50,23 +50,6 @@ var (
 	}
 )
 
-func CreateOrUpdateCloudSecurityDatabase(glueClient glueiface.GlueAPI) error {
-	dbInput := &glue.DatabaseInput{
-		Description: aws.String(pantherdb.CloudSecurityDatabaseDescription),
-		LocationUri: aws.String("dynamo-db-flag"),
-		Name:        aws.String(pantherdb.CloudSecurityDatabase),
-	}
-
-	_, err := glueClient.CreateDatabase(&glue.CreateDatabaseInput{
-		CatalogId:     nil,
-		DatabaseInput: dbInput,
-	})
-	if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
-		return nil // nothing to do
-	}
-	return errors.Wrap(err, "could not create cloud security database")
-}
-
 func CreateOrUpdateResourcesTable(glueClient glueiface.GlueAPI, locationARN string) error {
 	// FIXME: Remove when the DDB connector is GA
 	parsedARN, err := arn.Parse(locationARN)

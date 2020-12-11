@@ -120,10 +120,15 @@ func TestAddToSnapshotQueue(t *testing.T) {
 
 func TestPutCloudSecIntegration(t *testing.T) {
 	mockSQS := &testutils.SqsMock{}
-	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil) // count is hard to get due to batching
 	sqsClient = mockSQS
 	dynamoClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
+
+	// Message sent to create Cloud Security tables
+	// TODO Verify payload
+	mockSQS.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
+	// This message is to start full scan
+	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
@@ -134,8 +139,8 @@ func TestPutCloudSecIntegration(t *testing.T) {
 			UserID:           testUserID,
 		},
 	})
-	require.NoError(t, err)
-	require.NotEmpty(t, out)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, out)
 	mockSQS.AssertExpectations(t)
 }
 

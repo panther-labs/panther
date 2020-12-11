@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`AlertCard should match snapshot 1`] = `
+exports[`RuleAlertCard should match snapshot 1`] = `
 @keyframes animation-0 {
   0% {
     -webkit-transform: rotate(0);
@@ -119,7 +119,7 @@ exports[`AlertCard should match snapshot 1`] = `
 
 .panther-5 {
   font-size: 0.75rem;
-  color: #d64242;
+  color: #09a084;
 }
 
 .panther-37 {
@@ -138,8 +138,14 @@ exports[`AlertCard should match snapshot 1`] = `
 }
 
 .panther-12 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
   margin-top: 8px;
-  margin-bottom: 8px;
 }
 
 .panther-6 {
@@ -149,13 +155,17 @@ exports[`AlertCard should match snapshot 1`] = `
 }
 
 .panther-11 {
-  font-size: 0.875rem;
-  font-weight: 500;
-  opacity: 1;
   display: -webkit-inline-box;
   display: -webkit-inline-flex;
   display: -ms-inline-flexbox;
   display: inline-flex;
+  -webkit-box-flex: 1;
+  -webkit-flex-grow: 1;
+  -ms-flex-positive: 1;
+  flex-grow: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  opacity: 1;
   -webkit-align-items: center;
   -webkit-box-align: center;
   -ms-flex-align: center;
@@ -283,7 +293,7 @@ exports[`AlertCard should match snapshot 1`] = `
 .panther-20 {
   width: 12px;
   height: 12px;
-  background-color: hsl(353, 43%, 63%);
+  background-color: hsl(221, 31%, 31%);
   border-radius: 99999px;
 }
 
@@ -317,7 +327,7 @@ exports[`AlertCard should match snapshot 1`] = `
   display: flex;
   cursor: default;
   width: -webkit-fit-content;
-  width: -moz-content;
+  width: -moz-fit-content;
   width: fit-content;
   min-width: 85px;
   text-align: center;
@@ -375,7 +385,7 @@ exports[`AlertCard should match snapshot 1`] = `
   display: flex;
   cursor: default;
   width: -webkit-fit-content;
-  width: -moz-content;
+  width: -moz-fit-content;
   width: fit-content;
   min-width: 85px;
   text-align: center;
@@ -491,7 +501,7 @@ exports[`AlertCard should match snapshot 1`] = `
           <span
             class="panther-5"
           >
-            Rule Match
+            Rule Error
           </span>
           <div
             class="panther-37"
@@ -515,11 +525,11 @@ exports[`AlertCard should match snapshot 1`] = `
                   <span
                     class="panther-7"
                   >
-                    6eb9c948-5a13-4955-bd91-b98801b55bed
+                    8780849b-30b8-4ce2-934b-bf033369b110
                   </span>
                   <a
-                    aria-label="Link to rule 6eb9c948-5a13-4955-bd91-b98801b55bed"
-                    href="/log-analysis/rules/6eb9c948-5a13-4955-bd91-b98801b55bed/"
+                    aria-label="Link to rule 8780849b-30b8-4ce2-934b-bf033369b110"
+                    href="/log-analysis/rules/8780849b-30b8-4ce2-934b-bf033369b110/"
                   >
                     <div
                       class="panther-9"
@@ -595,7 +605,7 @@ exports[`AlertCard should match snapshot 1`] = `
                     <span
                       class="panther-21"
                     >
-                      Costa Rica
+                      Personal Loan Account
                     </span>
                   </div>
                 </div>
@@ -605,16 +615,16 @@ exports[`AlertCard should match snapshot 1`] = `
               class="panther-12"
             >
               <dt
-                aria-labelledby="events670"
+                aria-labelledby="events240"
                 class="panther-6"
               >
                 Events
               </dt>
               <dd
-                aria-labelledby="events670"
+                aria-labelledby="events240"
                 class="panther-11"
               >
-                670
+                240
               </dd>
             </dl>
             <div

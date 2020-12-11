@@ -121,12 +121,11 @@ input ListAlertsInput {
   exclusiveStartKey: String
   severity: [SeverityEnum]
   logTypes: [String!]
-  type: AlertTypesEnum
+  resourceTypes: [String!]
+  types: [AlertTypesEnum!]
   nameContains: String
   createdAtBefore: AWSDateTime
   createdAtAfter: AWSDateTime
-  ruleIdContains: String
-  alertIdContains: String
   status: [AlertStatusesEnum]
   eventCountMin: Int
   eventCountMax: Int
@@ -194,16 +193,39 @@ type SqsLogIntegrationHealth {
   sqsStatus: IntegrationItemHealthStatus
 }
 
+type AlertSummaryPolicyInfo {
+  policyId: ID
+  resourceId: String
+  policySourceId: String!
+  resourceTypes: [String!]!
+}
+
+type AlertSummaryRuleInfo {
+  ruleId: ID
+  logTypes: [String!]!
+  eventsMatched: Int!
+}
+
+type AlertDetailsRuleInfo {
+  ruleId: ID
+  logTypes: [String!]!
+  eventsMatched: Int!
+  dedupString: String!
+  events: [AWSJSON!]!
+  eventsLastEvaluatedKey: String
+}
+
+union AlertSummaryDetectionInfo = AlertSummaryRuleInfo | AlertSummaryPolicyInfo
+union AlertDetailsDetectionInfo = AlertDetailsRuleInfo | AlertSummaryPolicyInfo
+
 interface Alert {
   alertId: ID!
   creationTime: AWSDateTime!
   deliveryResponses: [DeliveryResponse]!
-  eventsMatched: Int!
-  ruleId: ID
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
-  logTypes: [String!]!
+  type: AlertTypesEnum!
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
@@ -213,35 +235,28 @@ type AlertDetails implements Alert {
   alertId: ID!
   creationTime: AWSDateTime!
   deliveryResponses: [DeliveryResponse]!
-  eventsMatched: Int!
-  ruleId: ID
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
   type: AlertTypesEnum!
-  logTypes: [String!]!
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
-  dedupString: String!
-  events: [AWSJSON!]!
-  eventsLastEvaluatedKey: String
+  detection: AlertDetailsDetectionInfo!
 }
 
 type AlertSummary implements Alert {
   alertId: ID!
   creationTime: AWSDateTime!
   deliveryResponses: [DeliveryResponse]!
-  eventsMatched: Int!
-  ruleId: ID
   type: AlertTypesEnum!
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
-  logTypes: [String!]!
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
+  detection: AlertSummaryDetectionInfo!
 }
 
 type DeliveryResponse {
@@ -272,6 +287,9 @@ input SendTestAlertInput {
 }
 
 input ListRulesInput {
+  createdBy: String
+  lastModifiedBy: String
+  initialSet: Boolean
   nameContains: String
   enabled: Boolean
   logTypes: [String!]
@@ -917,6 +935,9 @@ input DeletePolicyInputItem {
 }
 
 input ListPoliciesInput {
+  createdBy: String
+  lastModifiedBy: String
+  initialSet: Boolean
   complianceStatus: ComplianceStatusEnum
   nameContains: String
   enabled: Boolean
@@ -1122,6 +1143,7 @@ enum AlertStatusesEnum {
 enum AlertTypesEnum {
   RULE
   RULE_ERROR
+  POLICY
 }
 
 enum SortDirEnum {

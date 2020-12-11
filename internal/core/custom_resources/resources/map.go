@@ -95,21 +95,13 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Deleting this resource has no effect on the user pool.
 	"Custom::CognitoUserPoolMfa": customCognitoUserPoolMfa,
 
-	// Updates databases and table schemas from the log processor
+	// Updates databases and table schemas in Glue
 	//
 	// Parameters:
 	//    DeploymentId:  string (required)
 	// Outputs: None
 	// PhysicalId: custom:glue:update-log-processor-tables
-	"Custom::UpdateLogProcessorTables": customUpdateLogProcessorTables,
-
-	// Updates databases and table schemas from the cloud security
-	//
-	// Parameters:
-	//    DeploymentId:  string (required)
-	// Outputs: None
-	// PhysicalId: custom:glue:update-cloud-security-tables
-	"Custom::UpdateCloudSecurityTables": customCloudSecurityTables,
+	"Custom::UpdateLogProcessorTables": customUpdateLogTables,
 
 	// Add a GuardDuty publishing destination
 	//

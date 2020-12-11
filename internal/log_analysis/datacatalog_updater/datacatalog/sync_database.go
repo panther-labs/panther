@@ -34,7 +34,7 @@ type SyncDatabaseEvent struct {
 }
 
 func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *SyncDatabaseEvent) error {
-	for db, desc := range pantherdb.LogDatabases {
+	for db, desc := range pantherdb.Databases {
 		if err := awsglue.EnsureDatabase(ctx, h.GlueClient, db, desc); err != nil {
 			return errors.Wrapf(err, "failed to create database %s", db)
 		}
@@ -53,7 +53,7 @@ func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *Sync
 	if err := h.createOrUpdateTablesForLogTypes(ctx, syncLogTypes); err != nil {
 		return errors.Wrap(err, "failed to update tables for deployed log types")
 	}
-	if err := h.createOrReplaceViewsForAllDeployedTables(ctx); err != nil {
+	if err := h.createOrReplaceViewsForAllDeployedLogTables(ctx); err != nil {
 		return errors.Wrap(err, "failed to update athena views for deployed log types")
 	}
 	if err := h.sendPartitionSync(ctx, event.TraceID, syncLogTypes); err != nil {
