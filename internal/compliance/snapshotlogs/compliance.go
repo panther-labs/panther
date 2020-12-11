@@ -37,7 +37,7 @@ var logTypeCompliance = logtypes.MustBuild(logtypes.ConfigJSON{
 
 // nolint:lll
 type Compliance struct {
-	ChangeType       pantherlog.String `json:"changeType" validate:"required,oneof=created deleted modified sync" description:"The type of change that initiated this snapshot creation."`
+	ChangeType       pantherlog.String `json:"changeType" validate:"required" description:"The type of change that initiated this snapshot creation."`
 	IntegrationID    pantherlog.String `json:"integrationId" validate:"required" description:"The unique source ID of the account this resource lives in."`
 	IntegrationLabel pantherlog.String `json:"integrationLabel" validate:"required" description:"The friendly source name of the account this resource lives in."`
 	LastUpdated      pantherlog.Time   `json:"lastUpdated" tcodec:"rfc3339" event_time:"true" validate:"required" description:"The time this snapshot occurred."`
