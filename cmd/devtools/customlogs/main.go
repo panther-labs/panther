@@ -55,7 +55,7 @@ func main() {
 	case testCmd:
 		opstools.SetUsage(`-s SCHEMA_FILE [-o OUTPUT_FILE] [INPUT_FILES...]`)
 		opts := &customlogs.TestOpts{
-			Schema: flag.String("s", "", "File file"),
+			Schema: flag.String("s", "", "Schema file"),
 			Output: flag.String("o", "", "Write parsed results to file (defaults to stdout)"),
 		}
 		if err := flag.CommandLine.Parse(os.Args[2:]); err != nil {
