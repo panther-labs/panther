@@ -54,7 +54,6 @@ func Infer(logger *zap.Logger, opts *InferOpts) {
 	}
 
 	var valueSchema *logschema.ValueSchema
-
 	var err error
 	for _, file := range inputFiles {
 		valueSchema, err = inferFromFile(valueSchema, file)
@@ -76,12 +75,11 @@ func Infer(logger *zap.Logger, opts *InferOpts) {
 		}
 	}
 
-	marshalled, err := yaml.Marshal(logschema.Schema{Version: 0, Fields: valueSchema.Fields})
+	schema, err := yaml.Marshal(logschema.Schema{Version: 0, Fields: valueSchema.Fields})
 	if err != nil {
 		logger.Fatal("failed to marshal schema", zap.Error(err))
 	}
-
-	fmt.Println(string(marshalled))
+	fmt.Println(string(schema))
 }
 
 func inferFromFile(root *logschema.ValueSchema, file string) (*logschema.ValueSchema, error) {
