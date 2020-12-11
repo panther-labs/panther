@@ -38,7 +38,7 @@ func (client *OutputClient) Jira(
 	alert *alertModels.Alert, config *outputModels.JiraConfig) *AlertDeliveryResponse {
 
 	description := "*Description:* " + alert.AnalysisDescription
-	link := "\n [Click here to view in the Panther UI](" + generateURL(alert) + ")"
+	link := "\n [Click here to view in the Panther UI|" + generateURL(alert) + "]"
 	runBook := "\n *Runbook:* " + alert.Runbook
 	severity := "\n *Severity:* " + alert.Severity
 	tags := "\n *Tags:* " + strings.Join(alert.Tags, ", ")

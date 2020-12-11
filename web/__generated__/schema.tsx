@@ -485,6 +485,7 @@ export type JiraConfig = {
   apiKey: Scalars['String'];
   assigneeId?: Maybe<Scalars['String']>;
   issueType: Scalars['String'];
+  labels?: Maybe<Array<Scalars['String']>>;
 };
 
 export type JiraConfigInput = {
@@ -2232,6 +2233,7 @@ export type JiraConfigResolvers<
   apiKey?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   assigneeId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   issueType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  labels?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

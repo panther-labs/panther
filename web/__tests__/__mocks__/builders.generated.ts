@@ -780,6 +780,7 @@ export const buildJiraConfig = (overrides: Partial<JiraConfig> = {}): JiraConfig
     apiKey: 'apiKey' in overrides ? overrides.apiKey : 'bluetooth',
     assigneeId: 'assigneeId' in overrides ? overrides.assigneeId : 'bleeding-edge',
     issueType: 'issueType' in overrides ? overrides.issueType : 'Iowa',
+    labels: 'labels' in overrides ? overrides.labels : ['Rhode Island'],
   };
 };
 
