@@ -55,6 +55,7 @@ func (client *OutputClient) Jira(
 		"issuetype": map[string]*string{
 			"name": aws.String(config.Type),
 		},
+		"labels": aws.StringSlice(config.Labels),
 	}
 
 	if config.AssigneeID != "" {
