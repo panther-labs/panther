@@ -32,7 +32,7 @@ const StackDeployment: React.FC = () => {
   const { pushSnackbar } = useSnackbar();
   const { goToNextStep } = useWizardContext();
   const { initialValues, values } = useFormikContext<S3LogSourceWizardValues>();
-  const { data, loading } = useGetLogCfnTemplate({
+  const { data, loading, error } = useGetLogCfnTemplate({
     variables: {
       input: {
         awsAccountId: pantherConfig.AWS_ACCOUNT_ID,
@@ -76,7 +76,13 @@ const StackDeployment: React.FC = () => {
                 onboarding, to generate the necessary ReadOnly IAM Roles. After deployment please
                 continue with setup completion.
               </Text>
-              <LinkButton external to={cfnConsoleLink} variantColor="teal">
+              <LinkButton
+                external
+                loading={loading}
+                disabled={!!error || loading}
+                to={cfnConsoleLink}
+                variantColor="teal"
+              >
                 Launch Console
               </LinkButton>
             </Flex>
@@ -103,7 +109,7 @@ const StackDeployment: React.FC = () => {
               icon="download"
               variantColor="violet"
               loading={loading}
-              disabled={loading}
+              disabled={!!error || loading}
               onClick={() => downloadData(body, `${stackName}.yaml`)}
             >
               Get template file
