@@ -21,6 +21,7 @@ package api
 
 import (
 	"encoding/base64"
+	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -40,6 +41,7 @@ type API struct {
 	alertsDB       table.API
 	s3Client       s3iface.S3API
 	analysisClient gatewayapi.API
+	ruleCache      forwarder.RuleCache
 
 	env envConfig
 }
@@ -58,8 +60,8 @@ func Setup() *API {
 
 	awsSession := session.Must(session.NewSession())
 	lambdaClient := lambda.New(awsSession)
-
 	analysisClient := gatewayapi.NewClient(lambdaClient, "panther-analysis-api")
+	ruleCache := *forwarder.NewCache(analysisClient)
 
 	return &API{
 		awsSession:     awsSession,
@@ -67,6 +69,7 @@ func Setup() *API {
 		s3Client:       s3.New(awsSession),
 		env:            env,
 		analysisClient: analysisClient,
+		ruleCache:      ruleCache,
 	}
 }
 

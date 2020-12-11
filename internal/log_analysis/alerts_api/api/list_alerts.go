@@ -46,7 +46,7 @@ func (api *API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAl
 		return nil, err
 	}
 
-	result.Alerts = utils.AlertItemsToSummaries(alertItems, api.analysisClient)
+	result.Alerts = utils.AlertItemsToSummaries(alertItems, api.ruleCache)
 
 	genericapi.ReplaceMapSliceNils(result)
 	return result, nil

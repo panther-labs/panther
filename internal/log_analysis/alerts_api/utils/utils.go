@@ -20,69 +20,35 @@ package utils
  */
 
 import (
-	"time"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
 	alertmodels "github.com/panther-labs/panther/api/lambda/alerts/models"
-	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	alertdeliverymodels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
-	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
-
-// Used to cache a RuleID to an analysismodels.Rule & timestamp
-var (
-	ruleCache        = make(map[string]cachedRule)
-	ruleCacheTimeout = -2 * time.Minute
-)
-
-type cachedRule struct {
-	Rule      analysismodels.Rule
-	Timestamp time.Time
-}
-
-func getRule(resourceID string, analysisClient gatewayapi.API) (*analysismodels.Rule, error) {
-	// Return the cached short-lived rule (2 minutes)
-	if cachedRule, exists := ruleCache[resourceID]; exists {
-		if time.Now().Add(ruleCacheTimeout).Before(cachedRule.Timestamp) {
-			zap.L().Debug("rule was cached",
-				zap.Any("cache key", resourceID), zap.Any("timestamp", cachedRule.Timestamp))
-			return &cachedRule.Rule, nil
-		}
-		zap.L().Debug("rule cache expired",
-			zap.Any("cache key", resourceID), zap.Any("timestamp", cachedRule.Timestamp))
-	}
-	// Get the Rule
-	input := analysismodels.LambdaInput{
-		GetRule: &analysismodels.GetRuleInput{ID: resourceID},
-	}
-	var result analysismodels.Rule
-	if _, err := analysisClient.Invoke(&input, &result); err != nil {
-		return nil, err
-	}
-	// Cache and return rule
-	ruleCache[resourceID] = cachedRule{
-		Rule:      result,
-		Timestamp: time.Now(),
-	}
-	return &result, nil
-}
 
 // AlertItemsToSummaries converts a list of DDB AlertItem(s) to AlertSummary(ies)
-func AlertItemsToSummaries(items []*table.AlertItem, analysisClient gatewayapi.API) []*alertmodels.AlertSummary {
+func AlertItemsToSummaries(items []*table.AlertItem, ruleCache forwarder.RuleCache) []*alertmodels.AlertSummary {
 	result := make([]*alertmodels.AlertSummary, len(items))
 
 	for i, item := range items {
-		result[i] = AlertItemToSummary(item, analysisClient)
+		// Use the LRU Cache
+		cachedRule, err := ruleCache.Get(item.RuleID, item.RuleVersion)
+		if err != nil {
+			zap.L().Warn("failed to get rule information",
+				zap.Any("rule id", item.RuleID), zap.Any("rule version", item.RuleVersion))
+		}
+		result[i] = AlertItemToSummary(item, cachedRule)
 	}
 
 	return result
 }
 
 // AlertItemToSummary converts a DDB AlertItem to an AlertSummary
-func AlertItemToSummary(item *table.AlertItem, analysisClient gatewayapi.API) *alertmodels.AlertSummary {
+func AlertItemToSummary(item *table.AlertItem, alertRule *models.Rule) *alertmodels.AlertSummary {
 	// convert empty status to "OPEN" status
 	alertStatus := item.Status
 	if alertStatus == "" {
@@ -98,19 +64,14 @@ func AlertItemToSummary(item *table.AlertItem, analysisClient gatewayapi.API) *a
 
 	// Check if we have these fields to avoid an unnecessary API call
 	if description == "" || reference == "" || runbook == "" {
-		alertRule, err := getRule(item.RuleID, analysisClient)
-		if err != nil || alertRule == nil {
-			zap.L().Warn("Failed to get Rule with ID ", zap.String("RuleID", item.RuleID))
-		} else {
-			if description == "" {
-				description = alertRule.Description
-			}
-			if reference == "" {
-				reference = alertRule.Reference
-			}
-			if runbook == "" {
-				runbook = alertRule.Runbook
-			}
+		if description == "" {
+			description = alertRule.Description
+		}
+		if reference == "" {
+			reference = alertRule.Reference
+		}
+		if runbook == "" {
+			runbook = alertRule.Runbook
 		}
 	}
 
