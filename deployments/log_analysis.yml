@@ -505,7 +505,9 @@ Resources:
           Statement:
             - Effect: Allow
               Action: s3:PutObject
-              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs*
+              Resource:
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs*
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/cloud_security*
         - Id: NotifySns
           Version: 2012-10-17
           Statement:
@@ -566,6 +568,7 @@ Resources:
           - LogData
           - RuleMatches
           - RuleErrors
+          - CloudSecurity
 
   UpdaterQueuePolicy:
     Type: AWS::SQS::QueuePolicy

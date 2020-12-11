@@ -120,7 +120,7 @@ func (api API) validateUniqueConstraints(existingIntegrationItem *ddb.Integratio
 					}
 				}
 
-				if existingIntegration.S3Bucket == input.S3Bucket && existingIntegration.S3Prefix == input.S3Prefix {
+				if existingIntegration.S3Bucket == input.S3Bucket && existingIntegration.RequiredS3Prefix() == input.S3Prefix {
 					return &genericapi.InvalidInputError{
 						Message: "An S3 integration with the same S3 bucket and prefix already exists.",
 					}
@@ -146,6 +146,12 @@ func normalizeIntegration(item *ddb.Integration, input *models.UpdateIntegration
 		item.CWEEnabled = input.CWEEnabled
 		item.RemediationEnabled = input.RemediationEnabled
 	case models.IntegrationTypeAWS3:
+		if input.IntegrationLabel != "" {
+			item.IntegrationLabel = input.IntegrationLabel
+			item.StackName = getStackName(models.IntegrationTypeAWS3, input.IntegrationLabel)
+			item.LogProcessingRole = generateLogProcessingRoleArn(item.AWSAccountID, input.IntegrationLabel)
+		}
+
 		item.S3Bucket = input.S3Bucket
 		item.S3Prefix = input.S3Prefix
 		item.KmsKey = input.KmsKey

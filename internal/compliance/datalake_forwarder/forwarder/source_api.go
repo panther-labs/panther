@@ -23,13 +23,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 
-	sourceAPIModels "github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
-)
-
-var (
-	integrationIDMappings = map[string]string{}
-	lastUpdated           time.Time
 )
 
 const (
@@ -40,33 +35,33 @@ const (
 // Returns the label for an integration
 // It will return an empty string if the integration doesn't exist
 func (sh *StreamHandler) getIntegrationLabel(integrationID string) (string, error) {
-	_, ok := integrationIDMappings[integrationID]
-	if !ok || time.Since(lastUpdated) > mappingAgeOut {
-		err := sh.updateIntegrationMapping()
-		if err != nil {
+	if sh.integrationIDCache == nil {
+		sh.integrationIDCache = make(map[string]string)
+	}
+	if time.Since(sh.lastUpdatedCache) > mappingAgeOut {
+		if err := sh.updateIntegrationMapping(); err != nil {
 			return "", err
 		}
 	}
-	return integrationIDMappings[integrationID], nil
+	return sh.integrationIDCache[integrationID], nil
 }
 
-func (sh StreamHandler) updateIntegrationMapping() error {
-	input := &sourceAPIModels.LambdaInput{
-		ListIntegrations: &sourceAPIModels.ListIntegrationsInput{
-			IntegrationType: aws.String(sourceAPIModels.IntegrationTypeAWSScan),
+func (sh *StreamHandler) updateIntegrationMapping() error {
+	input := &models.LambdaInput{
+		ListIntegrations: &models.ListIntegrationsInput{
+			IntegrationType: aws.String(models.IntegrationTypeAWSScan),
 		},
 	}
-	var output []*sourceAPIModels.SourceIntegration
+	var output []*models.SourceIntegration
 	if err := genericapi.Invoke(sh.LambdaClient, sourceAPIFunctionName, input, &output); err != nil {
 		return err
 	}
 
 	// Reset the cache
-	integrationIDMappings = make(map[string]string)
+	sh.integrationIDCache = make(map[string]string)
 	for _, integration := range output {
-		integrationIDMappings[integration.IntegrationID] = integration.IntegrationLabel
+		sh.integrationIDCache[integration.IntegrationID] = integration.IntegrationLabel
 	}
-	lastUpdated = time.Now()
-
+	sh.lastUpdatedCache = time.Now()
 	return nil
 }
