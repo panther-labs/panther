@@ -77,7 +77,7 @@ describe('EditS3LogSource', () => {
         },
       }),
     ];
-    const { getByText, getByLabelText, getByAltText, findByText } = render(
+    const { getByText, getByLabelText, getByAltText, findByText, queryByText } = render(
       <Route path={urls.logAnalysis.sources.edit(':id', ':type')}>
         <EditS3LogSource />
       </Route>,
@@ -105,7 +105,7 @@ describe('EditS3LogSource', () => {
 
     // ... replaced by an active button as soon as it's fetched
     await waitFor(() => expect(getByText('Get template file')).not.toHaveAttribute('disabled'));
-
+    expect(queryByText('Launch Console')).not.toBeInTheDocument();
     // We move on to the final screen
     fireEvent.click(getByText('Continue'));
 
