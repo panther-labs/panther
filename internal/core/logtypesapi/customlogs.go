@@ -115,7 +115,7 @@ func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInp
 			Error: WrapAPIError(err),
 		}, nil
 	}
-	if err := api.DataCatalog.SendCreateTablesForLogTypes(ctx, id); err != nil {
+	if err := api.DataCatalog.SendUpdateTableForLogType(ctx, id); err != nil {
 		return nil, err
 	}
 	return &PutCustomLogOutput{Result: result}, nil

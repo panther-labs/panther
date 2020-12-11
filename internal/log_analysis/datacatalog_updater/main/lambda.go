@@ -20,6 +20,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
@@ -31,10 +32,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/kelseyhightower/envconfig"
 	"go.uber.org/zap"
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsretry"
@@ -44,7 +47,8 @@ import (
 // The panther-datacatalog-updater lambda is responsible for managing Glue partitions as data is created.
 
 const (
-	maxRetries = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
+	maxRetries    = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
+	logTypeMaxAge = time.Minute
 )
 
 func main() {
@@ -82,12 +86,26 @@ func main() {
 		LambdaAPI:  lambdaClient,
 	}
 
+	cachedResolver := logtypes.CachedResolver(
+		&logtypesapi.Resolver{
+			LogTypesAPI: &logtypesapi.LogTypesAPILambdaClient{
+				LambdaName: logtypesapi.LambdaName,
+				LambdaAPI:  common.LambdaClient,
+				Validate:   validator.New().Struct,
+			},
+		},
+		logTypeMaxAge,
+	)
+	// Store the clear cache of the underlying cached resolver.
+	// We use it on custom log updates to ensure we have the latest schema.
+	clearCache := cachedResolver.(interface {
+		Forget(name string)
+	}).Forget
+
 	resolver := logtypes.ChainResolvers(
 		registry.NativeLogTypesResolver(),
 		snapshotlogs.Resolver(),
-		&logtypesapi.Resolver{
-			LogTypesAPI: logtypesAPI,
-		},
+		cachedResolver,
 	)
 
 	handler := datacatalog.LambdaHandler{
@@ -101,11 +119,12 @@ func main() {
 			}
 			return reply.LogTypes, nil
 		},
-		GlueClient:   glue.New(clientsSession),
-		Resolver:     resolver,
-		AthenaClient: athena.New(clientsSession),
-		SQSClient:    sqs.New(clientsSession),
-		Logger:       logger,
+		GlueClient:        glue.New(clientsSession),
+		Resolver:          resolver,
+		ClearLogTypeCache: clearCache,
+		AthenaClient:      athena.New(clientsSession),
+		SQSClient:         sqs.New(clientsSession),
+		Logger:            logger,
 	}
 
 	lambda.StartHandler(&handler)

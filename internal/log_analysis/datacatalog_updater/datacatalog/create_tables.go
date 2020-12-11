@@ -35,13 +35,42 @@ type CreateTablesEvent struct {
 }
 
 func (h *LambdaHandler) HandleCreateTablesEvent(ctx context.Context, event *CreateTablesEvent) error {
-	if err := h.createOrUpdateTablesForLogTypes(ctx, event.LogTypes); err != nil {
+	// This event is only coming from an update to sources API.
+	// We only need to try creating the tables once.
+	logTypes := h.notCreatedYet(event.LogTypes)
+	if len(logTypes) == 0 {
+		return nil
+	}
+	if err := h.createOrUpdateTablesForLogTypes(ctx, logTypes); err != nil {
 		return err
 	}
 	if err := h.createOrReplaceViewsForAllDeployedLogTables(ctx); err != nil {
 		return errors.Wrap(err, "failed to update views")
 	}
 	return nil
+}
+func (h *LambdaHandler) notCreatedYet(logTypes []string) []string {
+	var out []string
+	for _, logType := range logTypes {
+		if h.isTableCreated(logType) {
+			continue
+		}
+		out = append(out, logType)
+	}
+	return out
+}
+
+func (h *LambdaHandler) isTableCreated(logType string) bool {
+	_, created := h.tablesCreated[logType]
+	return created
+}
+
+func (h *LambdaHandler) observeCreatedTable(logType string) {
+	// Store partition in cache as successfully created
+	if h.tablesCreated == nil {
+		h.tablesCreated = make(map[string]struct{})
+	}
+	h.tablesCreated[logType] = struct{}{}
 }
 
 func (h *LambdaHandler) createOrUpdateTablesForLogTypes(ctx context.Context, logTypes []string) error {
@@ -51,11 +80,13 @@ func (h *LambdaHandler) createOrUpdateTablesForLogTypes(ctx context.Context, log
 		return err
 	}
 	for i, table := range tables {
+		logType := logTypes[i]
 		// CreateOrUpdateGlueTables creates or updates *all* glue tables based on log tables.
 		// FIXME: this is confusing, the gluetables package should not be expanding table metadata based on hard-wired logic
 		if _, err := gluetables.CreateOrUpdateGlueTables(h.GlueClient, h.ProcessedDataBucket, table); err != nil {
-			return errors.Wrapf(err, "failed to update tables for log type %q", logTypes[i])
+			return errors.Wrapf(err, "failed to create or update tables for log type %q", logType)
 		}
+		h.observeCreatedTable(logType)
 	}
 	return nil
 }

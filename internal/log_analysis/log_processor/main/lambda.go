@@ -36,8 +36,11 @@ import (
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
-// How often we check if we need to scale (controls responsiveness).
-const defaultScalingDecisionInterval = 30 * time.Second
+const (
+	// How often we check if we need to scale (controls responsiveness).
+	defaultScalingDecisionInterval = 30 * time.Second
+	logTypeMaxAge                  = time.Minute
+)
 
 func main() {
 	common.Setup()
@@ -68,13 +71,17 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 	logTypesResolver := logtypes.ChainResolvers(
 		registry.NativeLogTypesResolver(),
 		snapshotlogs.Resolver(),
-		&logtypesapi.Resolver{
-			LogTypesAPI: &logtypesapi.LogTypesAPILambdaClient{
-				LambdaName: logtypesapi.LambdaName,
-				LambdaAPI:  common.LambdaClient,
-				Validate:   validator.New().Struct,
+		logtypes.CachedResolver(
+			&logtypesapi.Resolver{
+				LogTypesAPI: &logtypesapi.LogTypesAPILambdaClient{
+					LambdaName: logtypesapi.LambdaName,
+					LambdaAPI:  common.LambdaClient,
+					Validate:   validator.New().Struct,
+				},
 			},
-		})
+			logTypeMaxAge,
+		),
+	)
 
 	sqsMessageCount, err = processor.PollEvents(ctx, common.SqsClient, logTypesResolver)
 	return err

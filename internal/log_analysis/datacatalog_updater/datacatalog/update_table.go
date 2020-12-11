@@ -30,6 +30,8 @@ type UpdateTablesEvent struct {
 }
 
 func (h *LambdaHandler) HandleUpdateTablesEvent(ctx context.Context, event *UpdateTablesEvent) error {
+	// We need to fetch a fresh entry for this log type
+	h.ClearLogTypeCache(event.LogType)
 	logTypes := []string{event.LogType}
 	if err := h.createOrUpdateTablesForLogTypes(ctx, logTypes); err != nil {
 		return errors.Wrap(err, "failed to update tables for deployed log types")

@@ -20,6 +20,10 @@ package logtypes
 
 import (
 	"context"
+	"sync"
+	"time"
+
+	"golang.org/x/sync/singleflight"
 )
 
 // Resolver resolves a log type name to it's entry.
@@ -69,4 +73,73 @@ func (c chainResolver) Resolve(ctx context.Context, name string) (Entry, error) 
 		}
 	}
 	return nil, nil
+}
+
+// CachedResolver
+func CachedResolver(r Resolver, maxAge time.Duration) Resolver {
+	return &cachedResolver{
+		maxAge:   maxAge,
+		upstream: r,
+		entries:  make(map[string]*cachedEntry),
+	}
+}
+
+type cachedResolver struct {
+	maxAge   time.Duration
+	upstream Resolver
+	group    singleflight.Group
+	mu       sync.RWMutex
+	entries  map[string]*cachedEntry
+}
+
+type cachedEntry struct {
+	Entry
+	resolvedAt time.Time
+}
+
+func (e *cachedEntry) IsValid(maxAge time.Duration) bool {
+	return e != nil && time.Since(e.resolvedAt) < maxAge
+}
+
+func (c *cachedResolver) Forget(name string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.entries, name)
+}
+
+func (c *cachedResolver) Resolve(ctx context.Context, name string) (Entry, error) {
+	if e := c.find(name); e.IsValid(c.maxAge) {
+		return e.Entry, nil
+	}
+	reply, err, _ := c.group.Do(name, func() (interface{}, error) {
+		entry, err := c.upstream.Resolve(ctx, name)
+		if err != nil {
+			return nil, err
+		}
+		c.set(name, entry)
+		return entry, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return reply.(Entry), nil
+}
+
+func (c *cachedResolver) find(name string) *cachedEntry {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.entries[name]
+}
+
+func (c *cachedResolver) set(name string, e Entry) {
+	now := time.Now()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.entries == nil {
+		c.entries = make(map[string]*cachedEntry)
+	}
+	c.entries[name] = &cachedEntry{
+		Entry:      e,
+		resolvedAt: now,
+	}
 }
