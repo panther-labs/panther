@@ -19,8 +19,6 @@ package utils
  */
 
 import (
-	alertmodels "github.com/panther-labs/panther/api/lambda/alerts/models"
-	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"testing"
 	"time"
 
@@ -28,9 +26,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
-	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	alertmodels "github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
+	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
 var timeInTest = time.Now()
