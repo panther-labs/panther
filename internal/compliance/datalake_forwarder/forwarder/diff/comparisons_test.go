@@ -29,14 +29,14 @@ func TestCompJsonsSimple(t *testing.T) {
 	// Test a very simple no diffs
 	left := `{"fieldA": 42, "fieldB": "hello, world!"}`
 	right := `{"fieldB": "hello, world!", "fieldA": 42}`
-	diffs, err := CompJsons(left, right)
+	diffs, err := CompJsons([]byte(left), []byte(right))
 	require.NoError(t, err)
 	assert.Nil(t, diffs)
 
 	// Test a very simple diff
 	left = `{"fieldA": 42, "fieldB": "Hello, World!"}`
 	right = `{"fieldA": 72, "fieldB": "hello, world!"}`
-	diffs, err = CompJsons(left, right)
+	diffs, err = CompJsons([]byte(left), []byte(right))
 	require.NoError(t, err)
 	expectedDiff := map[string]Diff{
 		"fieldA": {
@@ -53,7 +53,7 @@ func TestCompJsonsSimple(t *testing.T) {
 	// Test a partial diff
 	left = `{"fieldA": 42, "fieldB": "Hello, World!", "fieldC": 42.0}`
 	right = `{"fieldA": 42, "fieldB": "Hello, World!", "fieldC": 42.1}`
-	diffs, err = CompJsons(left, right)
+	diffs, err = CompJsons([]byte(left), []byte(right))
 	require.NoError(t, err)
 	expectedDiff = map[string]Diff{
 		"fieldC": {
@@ -68,14 +68,14 @@ func TestCompJsonsObjects(t *testing.T) {
 	// Test nested objects are equal
 	left := `{"fieldA": 42, "fieldB": {"nestedFieldOne": {"nestedFieldTwo": {"id": "abc123", "count": 72}, "otherNestedFieldTwo": 83.0}}}`
 	right := `{"fieldA": 42, "fieldB": {"nestedFieldOne": {"otherNestedFieldTwo": 83.0, "nestedFieldTwo": {"id": "abc123", "count": 72}}}}`
-	diffs, err := CompJsons(left, right)
+	diffs, err := CompJsons([]byte(left), []byte(right))
 	require.NoError(t, err)
 	assert.Nil(t, diffs)
 
 	// Test deeply nested objects are not equal
 	left = `{"fieldA": 42, "fieldB": {"nestedFieldOne": {"nestedFieldTwo": {"id": "abc123", "count": 72, "nestedFieldThree": {"ImDifferent": "hello"}}, "otherNestedFieldTwo": 83.0}}}`    // nolint:lll
 	right = `{"fieldA": 42, "fieldB": {"nestedFieldOne": {"otherNestedFieldTwo": 83.0, "nestedFieldTwo": {"id": "abc123", "count": 75, "nestedFieldThree": {"ImDifferent": "goodbye"}}}}}` // nolint:lll
-	diffs, err = CompJsons(left, right)
+	diffs, err = CompJsons([]byte(left), []byte(right))
 	require.NoError(t, err)
 	expectedDiff := map[string]Diff{
 		"fieldB.nestedFieldOne.nestedFieldTwo.nestedFieldThree.ImDifferent": {
@@ -92,7 +92,7 @@ func TestCompJsonsObjects(t *testing.T) {
 	// Test right missing key
 	left = `{"fieldA": 42, "fieldB": {"nestedFieldOne": {"nestedFieldTwo": {"id": "abc123", "count": 72}, "otherNestedFieldTwo": 83.0}}}`
 	right = `{"fieldA": 42, "fieldB": {"nestedFieldOne": {"otherNestedFieldTwo": 83.0, "nestedFieldTwo": {"id": "abc123"}}}}`
-	diffs, err = CompJsons(left, right)
+	diffs, err = CompJsons([]byte(left), []byte(right))
 	require.NoError(t, err)
 	expectedDiff = map[string]Diff{
 		"fieldB.nestedFieldOne.nestedFieldTwo.count": {
@@ -105,7 +105,7 @@ func TestCompJsonsObjects(t *testing.T) {
 	// Test left missing key
 	left = `{"fieldA": 42, "fieldB": {"nestedFieldOne": {"nestedFieldTwo": {"count": 72, "id": "abc123"}}}}`
 	right = `{"fieldA": 42, "fieldB": {"nestedFieldOne": {"otherNestedFieldTwo": 83.5, "nestedFieldTwo": {"count": 72, "id": "abc123"}}}}`
-	diffs, err = CompJsons(left, right)
+	diffs, err = CompJsons([]byte(left), []byte(right))
 	require.NoError(t, err)
 	expectedDiff = map[string]Diff{
 		"fieldB.nestedFieldOne.otherNestedFieldTwo": {
@@ -120,14 +120,14 @@ func TestCompJsonsArrays(t *testing.T) {
 	// Test simple arrays are equal
 	left := `{"fieldA": 42, "fieldC": ["nestedFieldOne", "nestedFieldTwo", "count"], "fieldB": 83.0}}}`
 	right := `{"fieldA": 42, "fieldB": 83.0, "fieldC": ["nestedFieldOne", "nestedFieldTwo", "count"]}}}`
-	diffs, err := CompJsons(left, right)
+	diffs, err := CompJsons([]byte(left), []byte(right))
 	require.NoError(t, err)
 	assert.Nil(t, diffs)
 
 	// Test simple arrays are not equal
 	left = `{"fieldA": 42, "fieldC": ["nestedFieldOne", "nestedFieldTwo", "counted"], "fieldB": 83.0}}}`
 	right = `{"fieldA": 42, "fieldB": 83.0, "fieldC": ["nestedFieldOne", "nestedFieldTwo", "count"]}}}`
-	diffs, err = CompJsons(left, right)
+	diffs, err = CompJsons([]byte(left), []byte(right))
 	require.NoError(t, err)
 	expectedDiff := map[string]Diff{
 		"fieldC.2": {
@@ -140,7 +140,7 @@ func TestCompJsonsArrays(t *testing.T) {
 	// Test left array is longer
 	left = `{"fieldA": 42, "fieldC": ["nestedFieldOne", "nestedFieldTwo", "count", "extra value"], "fieldB": 83.0}}}`
 	right = `{"fieldA": 42, "fieldB": 83.0, "fieldC": ["nestedFieldOne", "nestedFieldTwo", "count"]}}}`
-	diffs, err = CompJsons(left, right)
+	diffs, err = CompJsons([]byte(left), []byte(right))
 	require.NoError(t, err)
 	expectedDiff = map[string]Diff{
 		"fieldC.3": {
@@ -153,7 +153,7 @@ func TestCompJsonsArrays(t *testing.T) {
 	// Test right array is longer
 	left = `{"fieldA": 42, "fieldC": ["nestedFieldOne", "nestedFieldTwo", "count", "extra value"], "fieldB": 83.0}}}`
 	right = `{"fieldA": 42, "fieldB": 83.0, "fieldC": ["nestedFieldOne", "nestedFieldTwo", "count", "extra value", "yet another value"]}}}`
-	diffs, err = CompJsons(left, right)
+	diffs, err = CompJsons([]byte(left), []byte(right))
 	require.NoError(t, err)
 	expectedDiff = map[string]Diff{
 		"fieldC.4": {
@@ -168,7 +168,7 @@ func TestCompJsonsComplex(t *testing.T) {
 	// Test deeply nested objects are equal with arrays & objects
 	left := `{"fieldA": 42, "fieldB": {"nestedFieldOne": {"nestedFieldTwo": [{"id": "abc123"}, {"count": 72}, {"nestedFieldThree": {"ImDifferent": "hello"}}], "otherNestedFieldTwo": 83.0}}}`  // nolint:lll
 	right := `{"fieldA": 42, "fieldB": {"nestedFieldOne": {"otherNestedFieldTwo": 83.0, "nestedFieldTwo": [{"id": "abc123"}, {"count": 72}, {"nestedFieldThree": {"ImDifferent": "hello"}}]}}}` // nolint:lll
-	diffs, err := CompJsons(left, right)
+	diffs, err := CompJsons([]byte(left), []byte(right))
 	require.NoError(t, err)
 	assert.Nil(t, diffs)
 
@@ -176,13 +176,13 @@ func TestCompJsonsComplex(t *testing.T) {
 	// (I recommend https://jsoneditoronline.org/ for help constructing/editing these tests)
 	left = `{"fieldA":[1,2,3],"fieldB":true,"fieldC":"gold","fieldD":null,"fieldE":123,"fieldF":{"a":"b","c":"d"},"fieldG":"Hello World","fieldH":{"a":52,"b":41,"c":null},"fieldI":{"a":{"b":["thing1","thing2","thing3",{"a":111,"b":222,"c":["yes","no"]}]},"b":"thing","c":null},"fieldJ":[{"ip":"0.0.0.0","action":"allow","port":1024,"egress":true},{"ip":"0.0.0.0","action":"allow","port":1024,"egress":false},{"ip":"1.1.1.1","action":"deny","port":22,"egress":false}]}`  // nolint:lll
 	right = `{"fieldA":[1,2,3],"fieldI":{"a":{"b":["thing1","thing2","thing3",{"b":222,"a":111,"c":["yes","no"]}]},"b":"thing","c":null},"fieldB":true,"fieldE":123,"fieldF":{"c":"d","a":"b"},"fieldG":"Hello World","fieldH":{"a":52,"b":41,"c":null},"fieldJ":[{"ip":"0.0.0.0","action":"allow","port":1024,"egress":true},{"ip":"0.0.0.0","action":"allow","port":1024,"egress":false},{"ip":"1.1.1.1","action":"deny","port":22,"egress":false}],"fieldC":"gold","fieldD":null}` // nolint:lll
-	diffs, err = CompJsons(left, right)
+	diffs, err = CompJsons([]byte(left), []byte(right))
 	require.NoError(t, err)
 	assert.Nil(t, diffs)
 
 	left = `{"fieldA":[1,2,3],"fieldB":true,"fieldC":"gold","fieldD":null,"fieldE":123,"fieldF":{"a":"b","c":"d"},"fieldG":"Hello World","fieldH":{"a":52,"b":41,"c":null},"fieldI":{"a":{"b":["thing1","thing2","thing3",{"a":111,"b":222,"c":["yes","no"]}]},"b":"thing","c":null},"fieldJ":[{"ip":"0.0.0.0","action":"allow","port":1024,"egress":true},{"ip":"0.0.0.0","action":"allow","port":1024,"egress":false},{"ip":"1.1.1.1","action":"deny","port":22,"egress":false}]}`        // nolint:lll
 	right = `{"fieldA":[1,2],"fieldI":{"a":{"b":["thing1","thing2","thing3",{"b":222,"a":11111,"c":["yes","no","maybe so"]}]},"b":"thing","c":true},"fieldB":true,"fieldE":123,"fieldF":{"c":"d","a":"b"},"fieldG":"Hello World","fieldH":{"a":52,"c":null},"fieldJ":[{"ip":"0.0.0.0","action":"allow","port":1024,"egress":true},{"ip":"0.0.0.0","action":"allow","port":1024,"egress":false},{"ip":"1.1.1.1","action":"allow","port":22,"egress":false}],"fieldC":null,"fieldD":"green"}` // nolint:lll
-	diffs, err = CompJsons(left, right)
+	diffs, err = CompJsons([]byte(left), []byte(right))
 	require.NoError(t, err)
 	expectedDiff := map[string]Diff{
 		"fieldA.2":         {From: 3, To: nil},

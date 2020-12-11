@@ -46,19 +46,20 @@ func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 	case models.IntegrationTypeAWSScan:
 		item.AWSAccountID = input.AWSAccountID
 		item.CWEEnabled = input.CWEEnabled
-		item.RemediationEnabled = input.RemediationEnabled
-		item.ScanIntervalMins = input.ScanIntervalMins
-		item.ScanStatus = input.ScanStatus
 		item.EventStatus = input.EventStatus
 		item.LastScanErrorMessage = input.LastScanErrorMessage
-		item.LastScanStartTime = input.LastScanStartTime
 		item.LastScanEndTime = input.LastScanEndTime
+		item.LastScanStartTime = input.LastScanStartTime
+		item.LogProcessingRole = input.LogProcessingRole
+		item.RemediationEnabled = input.RemediationEnabled
+		item.S3Bucket = input.S3Bucket
+		item.ScanIntervalMins = input.ScanIntervalMins
+		item.ScanStatus = input.ScanStatus
 		item.StackName = input.StackName
 	case models.IntegrationTypeSqs:
 		item.SqsConfig = &ddb.SqsConfig{
 			QueueURL:             input.SqsConfig.QueueURL,
 			S3Bucket:             input.SqsConfig.S3Bucket,
-			S3Prefix:             input.SqsConfig.S3Prefix,
 			LogProcessingRole:    input.SqsConfig.LogProcessingRole,
 			LogTypes:             input.SqsConfig.LogTypes,
 			AllowedPrincipalArns: input.SqsConfig.AllowedPrincipalArns,
@@ -93,6 +94,8 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 		integration.RemediationEnabled = item.RemediationEnabled
 		integration.ScanIntervalMins = item.ScanIntervalMins
 		integration.ScanStatus = item.ScanStatus
+		integration.S3Bucket = item.S3Bucket
+		integration.LogProcessingRole = item.LogProcessingRole
 		integration.EventStatus = item.EventStatus
 		integration.LastScanStartTime = item.LastScanStartTime
 		integration.LastScanEndTime = item.LastScanEndTime
@@ -101,7 +104,6 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 	case models.IntegrationTypeSqs:
 		integration.SqsConfig = &models.SqsConfig{
 			S3Bucket:             item.SqsConfig.S3Bucket,
-			S3Prefix:             item.SqsConfig.S3Prefix,
 			LogProcessingRole:    item.SqsConfig.LogProcessingRole,
 			QueueURL:             item.SqsConfig.QueueURL,
 			LogTypes:             item.SqsConfig.LogTypes,

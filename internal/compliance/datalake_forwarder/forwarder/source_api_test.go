@@ -34,6 +34,7 @@ import (
 
 // Test the caching mechanism
 func TestSourceApiCache(t *testing.T) {
+	t.Parallel()
 	mockClient := &testutils.LambdaMock{}
 	testStreamHandler := StreamHandler{
 		LambdaClient: mockClient,
@@ -87,7 +88,7 @@ func TestSourceApiCache(t *testing.T) {
 	mockClient.AssertExpectations(t)
 
 	// Now manually expire the cache, and it should try to make the call again
-	lastUpdated = time.Now().Add(-2 * mappingAgeOut)
+	testStreamHandler.lastUpdatedCache = time.Now().Add(-2 * mappingAgeOut)
 	mockClient.On("Invoke", expectedInvokeInput).
 		Return(expectedInvokeOutput, nil).Times(1)
 	label, err = testStreamHandler.getIntegrationLabel(invokeResponesPayload[0].IntegrationID)
@@ -98,6 +99,7 @@ func TestSourceApiCache(t *testing.T) {
 
 // Test that missing labels work as expected
 func TestSourceApiLabelNotFound(t *testing.T) {
+	t.Parallel()
 	mockClient := &testutils.LambdaMock{}
 
 	testInput := &sourceAPIModels.LambdaInput{

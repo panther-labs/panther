@@ -120,7 +120,7 @@ func (api API) validateUniqueConstraints(existingIntegrationItem *ddb.Integratio
 					}
 				}
 
-				if existingIntegration.S3Bucket == input.S3Bucket && existingIntegration.S3Prefix == input.S3Prefix {
+				if existingIntegration.S3Bucket == input.S3Bucket && existingIntegration.RequiredS3Prefix() == input.S3Prefix {
 					return &genericapi.InvalidInputError{
 						Message: "An S3 integration with the same S3 bucket and prefix already exists.",
 					}

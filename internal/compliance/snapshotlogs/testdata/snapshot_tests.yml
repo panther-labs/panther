@@ -18,7 +18,7 @@ name: compliance_history
 logType: Snapshot.ComplianceHistory
 input: |
   {
-    "changeType":"modified",
+    "changeType":"MODIFIED",
     "integrationId":"00763118-329a-4939-9641-c1953e892c9a",
     "integrationLabel":"panther-cloudsec-setup",
     "lastUpdated":"2020-10-23T21:10:30.814384032Z",
@@ -31,7 +31,7 @@ input: |
   }
 result: |
   {
-    "changeType":"modified",
+    "changeType":"MODIFIED",
     "integrationId":"00763118-329a-4939-9641-c1953e892c9a",
     "integrationLabel":"panther-cloudsec-setup",
     "lastUpdated":"2020-10-23T21:10:30.814384032Z",
@@ -52,7 +52,7 @@ name: compliance_resource
 logType: Snapshot.ResourceHistory
 input: |
   {
-    "ChangeType": "created",
+    "ChangeType": "CREATED",
     "Changes": null,
     "IntegrationID": "d3be8d06-3e30-4908-9c07-6640b4b5b3dc",
     "IntegrationLabel": "panther-account",
@@ -77,7 +77,7 @@ input: |
   }
 result: |
   {
-    "changeType": "created",
+    "changeType": "CREATED",
     "integrationId": "d3be8d06-3e30-4908-9c07-6640b4b5b3dc",
     "integrationLabel": "panther-account",
     "lastUpdated": "2020-10-15T06:29:00.498108265Z",
