@@ -34,34 +34,25 @@ import (
 
 // Used to cache a RuleID to an analysismodels.Rule & timestamp
 var (
-	ruleCache        = make(map[ruleKey]cachedRule)
+	ruleCache        = make(map[string]cachedRule)
 	ruleCacheTimeout = -2 * time.Minute
 )
 
-// Key used for the rule cache to map to a Rule
-type ruleKey struct {
-	RuleID string
-}
 type cachedRule struct {
 	Rule      analysismodels.Rule
 	Timestamp time.Time
 }
 
 func getRule(resourceID string, analysisClient gatewayapi.API) (*analysismodels.Rule, error) {
-	// Key used to retrieve cached rule
-	cacheKey := ruleKey{
-		RuleID: resourceID,
-	}
-
 	// Return the cached short-lived rule (2 minutes)
-	if cachedRule, exists := ruleCache[cacheKey]; exists {
+	if cachedRule, exists := ruleCache[resourceID]; exists {
 		if time.Now().Add(ruleCacheTimeout).Before(cachedRule.Timestamp) {
 			zap.L().Debug("rule was cached",
-				zap.Any("cache key", cacheKey), zap.Any("timestamp", cachedRule.Timestamp))
+				zap.Any("cache key", resourceID), zap.Any("timestamp", cachedRule.Timestamp))
 			return &cachedRule.Rule, nil
 		}
 		zap.L().Debug("rule cache expired",
-			zap.Any("cache key", cacheKey), zap.Any("timestamp", cachedRule.Timestamp))
+			zap.Any("cache key", resourceID), zap.Any("timestamp", cachedRule.Timestamp))
 	}
 	// Get the Rule
 	input := analysismodels.LambdaInput{
@@ -72,7 +63,7 @@ func getRule(resourceID string, analysisClient gatewayapi.API) (*analysismodels.
 		return nil, err
 	}
 	// Cache and return rule
-	ruleCache[cacheKey] = cachedRule{
+	ruleCache[resourceID] = cachedRule{
 		Rule:      result,
 		Timestamp: time.Now(),
 	}
@@ -106,18 +97,18 @@ func AlertItemToSummary(item *table.AlertItem, analysisClient gatewayapi.API) *a
 	description, reference, runbook := item.Description, item.Reference, item.Runbook
 
 	// Check if we have these fields to avoid an unnecessary API call
-	if aws.String(description) == nil || aws.String(reference) == nil || aws.String(runbook) == nil {
+	if description == "" || reference == "" || runbook == "" {
 		alertRule, err := getRule(item.RuleID, analysisClient)
 		if err != nil || alertRule == nil {
 			zap.L().Warn("Failed to get Rule with ID ", zap.String("RuleID", item.RuleID))
 		} else {
-			if aws.String(description) == nil {
+			if description == "" {
 				description = alertRule.Description
 			}
-			if aws.String(reference) == nil {
+			if reference == "" {
 				reference = alertRule.Reference
 			}
-			if aws.String(runbook) == nil {
+			if runbook == "" {
 				runbook = alertRule.Runbook
 			}
 		}
