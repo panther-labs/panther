@@ -43,8 +43,7 @@ jobs:
 
       - name: Run Snyk to check Docker images for vulnerabilities
         # Snyk can be used to break the build when it detects vulnerabilities.
-        # In this case we don't want to halt development
-        continue-on-error: false
+        continue-on-error: true
         uses: snyk/actions/docker@master
         env:
           # In order to use the Snyk Action you will need to have a Snyk API token.
