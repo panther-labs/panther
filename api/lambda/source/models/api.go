@@ -84,7 +84,6 @@ type PutIntegrationSettings struct {
 	S3Bucket           string           `json:"s3Bucket"`
 	S3PrefixLogTypes   S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
 	KmsKey             string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
-	LogTypes           []string         `json:"logTypes" validate:"omitempty,min=1"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }

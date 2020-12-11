@@ -288,7 +288,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 			UserID:           testUserID,
 			S3Bucket:         "bucket",
 			KmsKey:           "keyarns",
-			LogTypes:         []string{"AWS.VPCFlow"},
+			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: []string{"AWS.VPCFlow"}}},
 		},
 	})
 	require.NoError(t, err)
@@ -314,7 +314,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
 			UserID:           testUserID,
 			S3Bucket:         "bucket",
 			KmsKey:           "keyarns",
-			LogTypes:         []string{"AWS.VPCFlow"},
+			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: []string{"AWS.VPCFlow"}}},
 		},
 	})
 	require.Error(t, err)
