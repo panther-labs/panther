@@ -1,4 +1,4 @@
-package main
+package customlogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -24,14 +24,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 
-	"github.com/panther-labs/panther/cmd/opstools"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/customlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
@@ -39,30 +37,17 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
-// CLI flags
-var opts = struct {
+type TestOpts struct {
 	Schema *string
 	Output *string
-}{
-	Schema: flag.String("s", "", "Schema file"),
-	Output: flag.String("o", "", "Write parsed results to file (defaults to stdout)"),
 }
 
-func main() {
-	opstools.SetUsage(`-s SCHEMA_FILE [-o OUTPUT_FILE] [INPUT_FILES...]`)
-	flag.Parse()
-	loggerConfig := zap.NewDevelopmentConfig()
-	loggerConfig.DisableStacktrace = true
-	loggerConfig.DisableCaller = true
-	z, err := loggerConfig.Build()
-	if err != nil {
-		log.Fatalln("failed to start logger: ", err.Error())
-	}
-	logger := z.Sugar()
+// Test validates a log schema against a sample of logs
+func Test(logger *zap.SugaredLogger, opts *TestOpts) {
 	schemaFile := *opts.Schema
 	if schemaFile == "" {
 		flag.Usage()
-		log.Fatal("no schema file provided")
+		logger.Fatal("no schema file provided")
 	}
 	schemaData, err := ioutil.ReadFile(schemaFile)
 	if err != nil {
@@ -81,7 +66,7 @@ func main() {
 	if err != nil {
 		validationErrors := logschema.ValidationErrors(err)
 		if len(validationErrors) > 0 {
-			logger.Error("Schema validation failed:")
+			logger.Error("File validation failed:")
 			for _, e := range validationErrors {
 				logger.Errorf("  - %s", e.String())
 			}

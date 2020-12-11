@@ -209,17 +209,6 @@ jobs:
           name: Check bundle size
           command: npm run bundlesize
 
-  # Upload dependency metadata to FOSSA, analyze offline
-  fossa_upload:
-    executor: panther-buildpack
-    resource_class: small
-    steps:
-      - checkout
-      - run: |
-          curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
-      - run:
-          command: fossa # generate config file, run dependency analysis, and upload metadata to FOSSA
-
 workflows:
   version: 2
   pipeline:
@@ -241,7 +230,3 @@ workflows:
       - bundlesize:
           requires:
             - setup
-      - fossa_upload:
-          filters:
-            branches:
-              only: master
