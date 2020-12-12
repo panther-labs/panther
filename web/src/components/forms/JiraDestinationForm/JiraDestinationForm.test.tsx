@@ -33,12 +33,14 @@ const emptyInitialValues = {
       projectKey: '',
       issueType: '',
       userName: '',
+      labels: [],
     },
   },
 };
 
 const displayName = 'Jira';
 const severity = SeverityEnum.Critical;
+const labels = ['panther', 'label'];
 
 const initialValues = {
   outputId: '123',
@@ -51,6 +53,7 @@ const initialValues = {
       projectKey: 'key',
       issueType: 'Bug',
       userName: faker.internet.email(),
+      labels: ['panther', 'label'],
     },
   },
   defaultForSeverity: [severity],
@@ -68,6 +71,7 @@ describe('JiraDestinationForm', () => {
     const apiKeyField = getByLabelText('* Jira API Key');
     const assigneeIdField = getByLabelText('Assignee ID');
     const issueTypeField = getByLabelText('* Issue Type');
+    const labelsField = getByLabelText('Labels', { selector: 'input' });
     const submitButton = getByText('Add Destination');
     expect(displayNameField).toBeInTheDocument();
     expect(orgDomainField).toBeInTheDocument();
@@ -76,6 +80,7 @@ describe('JiraDestinationForm', () => {
     expect(apiKeyField).toBeInTheDocument();
     expect(assigneeIdField).toBeInTheDocument();
     expect(issueTypeField).toBeInTheDocument();
+    expect(labelsField).toBeInTheDocument();
     Object.values(SeverityEnum).forEach(sev => {
       expect(getByText(sev)).toBeInTheDocument();
     });
@@ -94,6 +99,7 @@ describe('JiraDestinationForm', () => {
     const apiKeyField = getByLabelText('* Jira API Key');
     const assigneeIdField = getByLabelText('Assignee ID');
     const issueTypeField = getByLabelText('* Issue Type');
+    const labelsField = getByLabelText('Labels', { selector: 'input' });
     const submitButton = getByText('Add Destination');
     const criticalSeverityCheckBox = document.getElementById(severity);
     expect(criticalSeverityCheckBox).not.toBeNull();
@@ -117,6 +123,17 @@ describe('JiraDestinationForm', () => {
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(issueTypeField, { target: { value: 'Bug' } });
     await waitMs(50);
+    expect(submitButton).not.toHaveAttribute('disabled');
+    // Labels is not required
+    labels.forEach(label => {
+      fireEvent.change(labelsField, {
+        target: {
+          value: label,
+        },
+      });
+      fireEvent.blur(labelsField);
+    });
+    await waitMs(50);
     // Assignee ID is not required
     expect(submitButton).not.toHaveAttribute('disabled');
     fireEvent.change(assigneeIdField, { target: { value: 'key' } });
@@ -139,6 +156,7 @@ describe('JiraDestinationForm', () => {
     const apiKeyField = getByLabelText('* Jira API Key');
     const assigneeIdField = getByLabelText('Assignee ID');
     const issueTypeField = getByLabelText('* Issue Type');
+    const labelsField = getByLabelText('Labels', { selector: 'input' });
     const submitButton = getByText('Add Destination');
     const criticalSeverityCheckBox = document.getElementById(severity);
     expect(criticalSeverityCheckBox).not.toBeNull();
@@ -152,6 +170,14 @@ describe('JiraDestinationForm', () => {
     fireEvent.change(apiKeyField, { target: { value: jiraInput.apiKey } });
     fireEvent.change(assigneeIdField, { target: { value: jiraInput.assigneeId } });
     fireEvent.change(issueTypeField, { target: { value: jiraInput.issueType } });
+    jiraInput.labels.forEach(label => {
+      fireEvent.change(labelsField, {
+        target: {
+          value: label,
+        },
+      });
+      fireEvent.blur(labelsField);
+    });
     await waitMs(50);
     expect(submitButton).not.toHaveAttribute('disabled');
 
