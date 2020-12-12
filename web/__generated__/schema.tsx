@@ -495,6 +495,7 @@ export type JiraConfigInput = {
   apiKey: Scalars['String'];
   assigneeId?: Maybe<Scalars['String']>;
   issueType: Scalars['String'];
+  labels?: Maybe<Array<Scalars['String']>>;
 };
 
 export type ListAlertsInput = {

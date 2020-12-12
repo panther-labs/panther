@@ -715,6 +715,7 @@ input JiraConfigInput {
   apiKey: String!
   assigneeId: String
   issueType: String!
+  labels: [String!]
 }
 
 input AsanaConfigInput {

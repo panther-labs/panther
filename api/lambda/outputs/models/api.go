@@ -225,7 +225,7 @@ type JiraConfig struct {
 	APIKey     string   `json:"apiKey"`
 	AssigneeID string   `json:"assigneeId"`
 	Type       string   `json:"issueType"`
-	Labels     []string `json:"labels"`
+	Labels     []string `json:"labels" validate:"omitempty,dive,min=1"`
 }
 
 // OpsgenieConfig defines options for each Opsgenie output
