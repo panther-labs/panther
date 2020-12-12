@@ -189,6 +189,7 @@ describe('EditDestination', () => {
                 apiKey: destination.outputConfig.jira.apiKey,
                 assigneeId: destination.outputConfig.jira.assigneeId,
                 issueType: destination.outputConfig.jira.issueType,
+                labels: destination.outputConfig.jira.labels,
               },
             },
           },
