@@ -53,10 +53,6 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
     }),
   });
 
-  // const tagAdditionValidation = React.useMemo(() => (tag: string) => !values.tags.includes(tag), [
-  //   values.tags,
-  // ]);
-
   const mergedValidationSchema = defaultValidationSchema.concat(jiraFieldsValidationSchema);
 
   return (
