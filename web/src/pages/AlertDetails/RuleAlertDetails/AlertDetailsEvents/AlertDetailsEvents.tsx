@@ -23,7 +23,7 @@ import { AlertDetailsRuleInfo } from 'Generated/schema';
 import { TableControlsPagination as PaginationControls } from 'Components/utils/TableControls';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import toPlural from 'Helpers/utils';
-import { AlertDetails } from '../graphql/alertDetails.generated';
+import { AlertDetails } from '../../graphql/alertDetails.generated';
 
 // Given an event received as a string, this function converts it to JSON
 const parseAlertEventToJson = (event: string) => {

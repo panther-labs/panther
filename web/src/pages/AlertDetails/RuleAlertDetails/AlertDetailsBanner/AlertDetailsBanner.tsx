@@ -43,22 +43,21 @@ const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert }) => {
           {alert.title || alert.alertId}
         </Heading>
         <Flex spacing={2} as="ul" flexShrink={0} ml="auto">
-          <Box as="li" aria-describedby="alert-severity-description">
+          <Box as="li">
             <SeverityBadge severity={alert.severity} />
           </Box>
-          <Box as="li" aria-describedby="alert-status-description">
+          <Box as="li">
             <UpdateAlertDropdown alert={alert as AlertSummaryFull} />
           </Box>
         </Flex>
       </Flex>
-      <Flex fontSize="small-medium" pt={5} spacing={8}>
+      <Flex as="dl" fontSize="small-medium" pt={5} spacing={8}>
         <Flex>
-          <Box color="navyblue-100" aria-describedby="rule-type" as="dd" pr={2}>
+          <Box color="navyblue-100" as="dt" pr={2}>
             Alert Type
           </Box>
           <Box
-            id="rule-type"
-            as="dl"
+            as="dd"
             fontWeight="bold"
             color={alert.type === AlertTypesEnum.Rule ? 'teal-100' : 'red-500'}
           >
@@ -66,24 +65,22 @@ const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert }) => {
           </Box>
         </Flex>
         <Flex>
-          <Box color="navyblue-100" aria-describedby="alert-id" as="dd" pr={2}>
+          <Box color="navyblue-100" as="dt" pr={2}>
             Alert ID
           </Box>
-          <Box id="alert-id" as="dl" fontWeight="bold">
+          <Box as="dd" fontWeight="bold">
             {alert.alertId}
           </Box>
         </Flex>
         <Flex>
-          <Box color="navyblue-100" aria-describedby="alert-log-types" as="dd" pr={2}>
+          <Box color="navyblue-100" as="dt" pr={2}>
             Log Types
           </Box>
-          <Box id="alert-log-types" as="dl">
-            <Flex align="center" spacing={6}>
-              {(alert.detection as AlertDetailsRuleInfo).logTypes.map(logType => (
-                <BulletedLogType key={logType} logType={logType} />
-              ))}
-            </Flex>
-          </Box>
+          <Flex as="dd" align="center" spacing={6}>
+            {(alert.detection as AlertDetailsRuleInfo).logTypes.map(logType => (
+              <BulletedLogType key={logType} logType={logType} />
+            ))}
+          </Flex>
         </Flex>
       </Flex>
     </Card>

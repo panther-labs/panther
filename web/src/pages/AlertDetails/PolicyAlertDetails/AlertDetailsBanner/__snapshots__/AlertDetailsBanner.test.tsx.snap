@@ -1,13 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`AlertDetailsBanner renders 1`] = `
-.panther-26 {
+exports[`PolicyAlert - AlertDetailsBanner renders 1`] = `
+.panther-25 {
   background-color: #23344e;
   border-radius: 4px;
   padding: 24px;
   overflow: hidden;
   border-left: 4px solid;
-  border-color: #14b597;
+  border-color: #29bac6;
 }
 
 .panther-11 {
@@ -186,7 +186,7 @@ exports[`AlertDetailsBanner renders 1`] = `
   color: currentColor;
 }
 
-.panther-25 {
+.panther-24 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -195,7 +195,7 @@ exports[`AlertDetailsBanner renders 1`] = `
   padding-top: 20px;
 }
 
-.panther-25>*:not(:last-child) {
+.panther-24>*:not(:last-child) {
   margin-right: 32px;
 }
 
@@ -213,7 +213,7 @@ exports[`AlertDetailsBanner renders 1`] = `
 
 .panther-13 {
   font-weight: 700;
-  color: #91eddc;
+  color: #29bac6;
 }
 
 .panther-16 {
@@ -253,7 +253,7 @@ exports[`AlertDetailsBanner renders 1`] = `
 .panther-19 {
   width: 12px;
   height: 12px;
-  background-color: hsl(323, 43%, 43%);
+  background-color: hsl(159, 29%, 39%);
   border-radius: 99999px;
 }
 
@@ -263,26 +263,12 @@ exports[`AlertDetailsBanner renders 1`] = `
   line-height: 1.5;
 }
 
-.panther-53 {
-  background-color: #23344e;
-  border-radius: 4px;
-  padding: 24px;
-  overflow: hidden;
-  border-left: 4px solid;
-  border-color: #850003;
-}
-
-.panther-40 {
-  font-weight: 700;
-  color: #af0003;
-}
-
 <div>
   <header
     id="main-header"
   />
   <article
-    class="panther-26"
+    class="panther-25"
   >
     <header
       class="panther-11"
@@ -296,7 +282,6 @@ exports[`AlertDetailsBanner renders 1`] = `
         class="panther-10"
       >
         <li
-          aria-describedby="alert-severity-description"
           class="panther-2"
         >
           <div
@@ -308,7 +293,6 @@ exports[`AlertDetailsBanner renders 1`] = `
           </div>
         </li>
         <li
-          aria-describedby="alert-status-description"
           class="panther-2"
         >
           <div
@@ -354,214 +338,63 @@ exports[`AlertDetailsBanner renders 1`] = `
         </li>
       </ul>
     </header>
-    <div
-      class="panther-25"
+    <dl
+      class="panther-24"
     >
       <div
         class="panther-14"
       >
-        <dd
-          aria-describedby="rule-type"
+        <dt
           class="panther-12"
         >
           Alert Type
-        </dd>
-        <dl
+        </dt>
+        <dd
           class="panther-13"
-          id="rule-type"
         >
-          Rule Match
-        </dl>
+          Policy Fail
+        </dd>
       </div>
       <div
         class="panther-14"
       >
-        <dd
-          aria-describedby="alert-id"
+        <dt
           class="panther-12"
         >
           Alert ID
-        </dd>
-        <dl
+        </dt>
+        <dd
           class="panther-16"
-          id="alert-id"
         >
           2c5aa76d-eb43-49f0-a65c-50e4daa756a4
-        </dl>
+        </dd>
       </div>
       <div
         class="panther-14"
       >
-        <dd
-          aria-describedby="alert-log-types"
+        <dt
           class="panther-12"
         >
-          Log Types
-        </dd>
-        <dl
-          class="panther-2"
-          id="alert-log-types"
-        >
-          <div
-            class="panther-22"
-          >
-            <div
-              class="panther-21"
-            >
-              <span
-                class="panther-19"
-              />
-              <span
-                class="panther-20"
-              >
-                Baht
-              </span>
-            </div>
-          </div>
-        </dl>
-      </div>
-    </div>
-  </article>
-  <article
-    class="panther-53"
-  >
-    <header
-      class="panther-11"
-    >
-      <h1
-        class="panther-0"
-      >
-        Steel
-      </h1>
-      <ul
-        class="panther-10"
-      >
-        <li
-          aria-describedby="alert-severity-description"
-          class="panther-2"
-        >
-          <div
-            aria-atomic="true"
-            class="panther-1"
-            role="status"
-          >
-            CRITICAL
-          </div>
-        </li>
-        <li
-          aria-describedby="alert-status-description"
-          class="panther-2"
-        >
-          <div
-            class="panther-8"
-          >
-            <div
-              class="panther-4"
-            >
-              <div
-                aria-atomic="true"
-                class="panther-3"
-                role="status"
-              >
-                INVALID
-              </div>
-            </div>
-            <div
-              aria-controls="menu--2"
-              aria-haspopup="true"
-              class="panther-7"
-              data-reach-menu-button=""
-              id="menu-button--menu--2"
-              type="button"
-            >
-              <button
-                aria-label="Change Alert Status"
-                aria-pressed="false"
-                class="panther-6"
-                type="button"
-              >
-                <svg
-                  class="panther-5"
-                  role="presentation"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="M7 10L12 15L17 10H7Z"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </li>
-      </ul>
-    </header>
-    <div
-      class="panther-25"
-    >
-      <div
-        class="panther-14"
-      >
+          Resource Types
+        </dt>
         <dd
-          aria-describedby="rule-type"
-          class="panther-12"
-        >
-          Alert Type
-        </dd>
-        <dl
-          class="panther-40"
-          id="rule-type"
-        >
-          Rule Error
-        </dl>
-      </div>
-      <div
-        class="panther-14"
-      >
-        <dd
-          aria-describedby="alert-id"
-          class="panther-12"
-        >
-          Alert ID
-        </dd>
-        <dl
-          class="panther-16"
-          id="alert-id"
-        >
-          2c5aa76d-eb43-49f0-a65c-50e4daa756a4
-        </dl>
-      </div>
-      <div
-        class="panther-14"
-      >
-        <dd
-          aria-describedby="alert-log-types"
-          class="panther-12"
-        >
-          Log Types
-        </dd>
-        <dl
-          class="panther-2"
-          id="alert-log-types"
+          class="panther-22"
         >
           <div
-            class="panther-22"
+            class="panther-21"
           >
-            <div
-              class="panther-21"
+            <span
+              class="panther-19"
+            />
+            <span
+              class="panther-20"
             >
-              <span
-                class="panther-19"
-              />
-              <span
-                class="panther-20"
-              >
-                Baht
-              </span>
-            </div>
+              brand
+            </span>
           </div>
-        </dl>
+        </dd>
       </div>
-    </div>
+    </dl>
   </article>
   <footer
     id="footer"

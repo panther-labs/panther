@@ -21,25 +21,32 @@ import { Box, Card, Flex, Link, SimpleGrid } from 'pouncejs';
 import Linkify from 'Components/Linkify';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
-import { AlertDetailsRuleInfo } from 'Generated/schema';
-import { formatDatetime, formatNumber, minutesToString } from 'Helpers/utils';
-import { AlertDetails, RuleTeaser } from 'Pages/AlertDetails';
-import AlertDeliverySection from 'Pages/AlertDetails/AlertDetailsInfo/AlertDeliverySection';
+import { AlertSummaryPolicyInfo } from 'Generated/schema';
+import { formatDatetime } from 'Helpers/utils';
+import { AlertDetails } from 'Pages/AlertDetails';
+import AlertDeliverySection from 'Pages/AlertDetails/common/AlertDeliverySection';
 import RelatedDestinations from 'Components/RelatedDestinations';
 import useAlertDestinations from 'Hooks/useAlertDestinations';
+import { useListComplianceSourceNames } from 'Source/graphql/queries';
+import { PolicyTeaser } from '../graphql/policyTeaser.generated';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails['alert'];
-  rule: RuleTeaser['rule'];
+  policy: PolicyTeaser['policy'];
 }
 
-const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
+const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, policy }) => {
+  const { data: complianceSourceData } = useListComplianceSourceNames({ errorPolicy: 'ignore' });
   const { alertDestinations, loading: loadingDestinations } = useAlertDestinations({ alert });
 
-  const detectionData = alert.detection as AlertDetailsRuleInfo;
+  const detectionData = alert.detection as AlertSummaryPolicyInfo;
+  const source = complianceSourceData?.listComplianceIntegrations?.find(
+    s => s.integrationId === detectionData.policySourceId
+  );
+
   return (
     <Flex direction="column" spacing={4}>
-      {rule && (
+      {policy && (
         <Card variant="dark" as="section" p={4}>
           <SimpleGrid columns={2} spacing={5}>
             <Flex direction="column" spacing={2}>
@@ -50,8 +57,8 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
               >
                 Runbook
               </Box>
-              {rule.runbook ? (
-                <Linkify id="runbook-description">{rule.runbook}</Linkify>
+              {policy.runbook ? (
+                <Linkify id="runbook-description">{policy.runbook}</Linkify>
               ) : (
                 <Box fontStyle="italic" color="navyblue-100" id="runbook-description">
                   No runbook specified
@@ -66,8 +73,8 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
               >
                 Reference
               </Box>
-              {rule.reference ? (
-                <Linkify id="reference-description">{rule.reference}</Linkify>
+              {policy.reference ? (
+                <Linkify id="reference-description">{policy.reference}</Linkify>
               ) : (
                 <Box fontStyle="italic" color="navyblue-100" id="reference-description">
                   No reference specified
@@ -81,97 +88,53 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
         <SimpleGrid columns={2} spacing={5} fontSize="small-medium">
           <Box>
             <SimpleGrid gap={2} columns={8} spacing={2}>
-              {rule ? (
+              {!policy && (
                 <>
-                  <Box color="navyblue-100" gridColumn="1/3" aria-describedby="rule-link">
-                    Rule
+                  <Box color="navyblue-100" gridColumn="1/3" aria-describedby="policy-link">
+                    Policy
+                  </Box>
+                  <Box gridColumn="3/8" color="red-300">
+                    Associated policy has been deleted
+                  </Box>
+                </>
+              )}
+              {policy && (
+                <>
+                  <Box color="navyblue-100" gridColumn="1/3" aria-describedby="policy-link">
+                    Policy
                   </Box>
 
                   <Link
-                    id="rule-link"
+                    id="policy-link"
                     gridColumn="3/8"
                     as={RRLink}
-                    to={urls.logAnalysis.rules.details(rule.id)}
+                    to={urls.compliance.policies.details(policy.id)}
                   >
-                    {rule.displayName || rule.id}
+                    {policy.displayName || policy.id}
                   </Link>
-
-                  <Box color="navyblue-100" gridColumn="1/3" aria-describedby="threshold">
-                    Rule Threshold
-                  </Box>
-
-                  <Box id="threshold" gridColumn="3/8">
-                    {formatNumber(rule.threshold)}
-                  </Box>
-
-                  <Box
-                    color="navyblue-100"
-                    gridColumn="1/3"
-                    aria-describedby="deduplication-period"
-                  >
-                    Deduplication Period
-                  </Box>
-
-                  <Box id="deduplication-period" gridColumn="3/8">
-                    {rule.dedupPeriodMinutes
-                      ? minutesToString(rule.dedupPeriodMinutes)
-                      : 'Not specified'}
-                  </Box>
-
-                  <Box
-                    color="navyblue-100"
-                    gridColumn="1/3"
-                    aria-describedby="deduplication-string"
-                  >
-                    Deduplication String
-                  </Box>
-
-                  <Box id="deduplication-string" gridColumn="3/8">
-                    {detectionData.dedupString}
-                  </Box>
 
                   <Box color="navyblue-100" gridColumn="1/3" aria-describedby="tags-list">
                     Tags
                   </Box>
 
-                  {rule.tags.length > 0 ? (
+                  {policy.tags.length > 0 ? (
                     <Box id="tags-list" gridColumn="3/8">
-                      {rule.tags.map((tag, index) => (
+                      {policy.tags.map((tag, index) => (
                         <Link
                           key={tag}
                           as={RRLink}
-                          to={`${urls.logAnalysis.rules.list()}?page=1&tags[]=${tag}`}
+                          to={`${urls.compliance.policies.list()}?page=1&tags[]=${tag}`}
                         >
                           {tag}
-                          {index !== rule.tags.length - 1 ? ', ' : null}
+                          {index !== policy.tags.length - 1 ? ', ' : null}
                         </Link>
                       ))}
                     </Box>
                   ) : (
                     <Box fontStyle="italic" color="navyblue-100" id="tags-list" gridColumn="3/8">
-                      This rule has no tags
+                      This policy has no tags
                     </Box>
                   )}
-                </>
-              ) : (
-                <>
-                  <Box color="navyblue-100" gridColumn="1/3" aria-describedby="rule-link">
-                    Rule
-                  </Box>
-                  <Box gridColumn="3/8" color="red-300">
-                    Associated rule has been deleted
-                  </Box>
-
-                  <Box
-                    color="navyblue-100"
-                    gridColumn="1/3"
-                    aria-describedby="deduplication-string"
-                  >
-                    Deduplication String
-                  </Box>
-                  <Box gridColumn="3/8" id="deduplication-string">
-                    {detectionData.dedupString}
-                  </Box>
                 </>
               )}
             </SimpleGrid>
@@ -188,10 +151,10 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
               </Box>
 
               <Box color="navyblue-100" gridColumn="1/3" aria-describedby="last-matched-at">
-                Last Matched
+                Source
               </Box>
-              <Box gridColumn="3/8" id="last-matched-at">
-                {formatDatetime(alert.updateTime)}
+              <Box gridColumn="3/8" id="last-matched-at" color={!source ? 'red-200' : undefined}>
+                {source ? source.integrationLabel : 'Associated Source has been deleted'}
               </Box>
 
               <Box color="navyblue-100" gridColumn="1/3" aria-describedby="destinations">

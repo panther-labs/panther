@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Types from '../../../../__generated__/schema';
+import * as Types from '../../../../../__generated__/schema';
 
-import { RuleBasic } from '../../../graphql/fragments/RuleBasic.generated';
+import { RuleBasic } from '../../../../graphql/fragments/RuleBasic.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
