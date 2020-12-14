@@ -33,7 +33,6 @@ func TestSQSClassifier(t *testing.T) {
 	const (
 		testLogType     = "testLog"
 		testBucket      = "testBucket"
-		testPrefix      = "testSQS"
 		testSourceID    = "testSource"
 		testSourceLabel = "testSourceLabel"
 	)
@@ -45,7 +44,6 @@ func TestSQSClassifier(t *testing.T) {
 			SqsConfig: &models.SqsConfig{
 				LogTypes: []string{testLogType},
 				S3Bucket: testBucket,
-				S3Prefix: testPrefix,
 			},
 		},
 	}

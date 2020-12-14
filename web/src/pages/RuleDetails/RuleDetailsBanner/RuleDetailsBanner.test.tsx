@@ -1,5 +1,3 @@
-package api
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,31 +16,19 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"testing"
+import React from 'react';
+import { render, buildRuleDetails } from 'test-utils';
+import RuleDetailsInfo from './index';
 
-	"github.com/stretchr/testify/assert"
+describe('RuleDetailsBanner', () => {
+  it('renders the correct data', async () => {
+    const rule = buildRuleDetails({ displayName: 'My Rule' });
+    const { getByText } = render(<RuleDetailsInfo rule={rule} />);
+    expect(getByText('Edit')).toBeInTheDocument();
+    expect(getByText('Delete')).toBeInTheDocument();
 
-	"github.com/panther-labs/panther/api/lambda/source/models"
-)
-
-func TestAPI_ListLogTypes(t *testing.T) {
-	expectedLogTypes := []string{"one", "two"}
-	listOutput := []*models.SourceIntegration{
-		{
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationType: models.IntegrationTypeAWS3,
-				LogTypes:        []string{"one"},
-			},
-		},
-		{
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationType: models.IntegrationTypeSqs,
-				SqsConfig: &models.SqsConfig{
-					LogTypes: []string{"one", "two"}, // "one" is duplicate with above
-				},
-			},
-		},
-	}
-	assert.Equal(t, expectedLogTypes, collectLogTypes(listOutput))
-}
+    expect(getByText('My Rule')).toBeInTheDocument();
+    expect(getByText('DISABLED')).toBeInTheDocument();
+    expect(getByText('LOW')).toBeInTheDocument();
+  });
+});

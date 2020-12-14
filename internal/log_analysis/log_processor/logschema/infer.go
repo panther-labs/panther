@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"net"
 	"net/url"
+	"sort"
 	"strconv"
 	"time"
 
@@ -51,6 +52,9 @@ func InferJSONValueSchema(x interface{}) *ValueSchema {
 				ValueSchema: *vs,
 			})
 		}
+		sort.Slice(fields, func(i, j int) bool {
+			return fields[i].Name < fields[j].Name
+		})
 		return &ValueSchema{
 			Type:   TypeObject,
 			Fields: fields,
@@ -86,22 +90,22 @@ func InferJSONValueSchema(x interface{}) *ValueSchema {
 }
 
 func inferString(s string) *ValueSchema {
-	if _, err := json.Number(s).Int64(); err != nil {
+	if _, err := json.Number(s).Int64(); err == nil {
 		return &ValueSchema{
 			Type: TypeBigInt,
 		}
 	}
-	if _, err := json.Number(s).Float64(); err != nil {
+	if _, err := json.Number(s).Float64(); err == nil {
 		return &ValueSchema{
 			Type: TypeFloat,
 		}
 	}
-	if _, err := strconv.ParseBool(s); err != nil {
+	if _, err := strconv.ParseBool(s); err == nil {
 		return &ValueSchema{
 			Type: TypeBoolean,
 		}
 	}
-	if _, err := time.Parse(time.RFC3339, s); err != nil {
+	if _, err := time.Parse(time.RFC3339, s); err == nil {
 		return &ValueSchema{
 			Type:       TypeTimestamp,
 			TimeFormat: "rfc3339",
@@ -117,7 +121,7 @@ func inferIndicators(s string) []string {
 	if ip := net.ParseIP(s); ip != nil {
 		return []string{"ip"}
 	}
-	if _, err := url.Parse(s); err == nil {
+	if u, err := url.Parse(s); err == nil && (u.Scheme == "http" || u.Scheme == "https") {
 		return []string{"url"}
 	}
 	if _, err := arn.Parse(s); err == nil {
@@ -133,15 +137,15 @@ func (v *ValueSchema) NonEmpty() *ValueSchema {
 	}
 	switch v.Type {
 	case TypeObject:
-		if v.Fields == nil {
-			return nil
-		}
 		fields := make([]FieldSchema, 0, len(v.Fields))
 		for _, f := range v.Fields {
 			if v := f.ValueSchema.NonEmpty(); v != nil {
 				f.ValueSchema = *v
 				fields = append(fields, f)
 			}
+		}
+		if len(fields) == 0 {
+			return nil
 		}
 		return &ValueSchema{
 			Type:   TypeObject,
