@@ -20,7 +20,6 @@
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
   <a href="https://panther-labs-oss-slackin.herokuapp.com/"><img src="https://panther-labs-oss-slackin.herokuapp.com/badge.svg" alt="Slack"/></a>
   <a href="https://circleci.com/gh/panther-labs/panther"><img src="https://circleci.com/gh/panther-labs/panther.svg?style=svg" alt="CircleCI"/></a>
-  <a href="https://app.fossa.com/projects/custom%2B15287%2Fgit%40github.com%3Apanther-labs%2Fpanther.git?ref=badge_shield"><img src="https://app.fossa.com/api/projects/custom%2B15287%2Fgit%40github.com%3Apanther-labs%2Fpanther.git.svg?type=shield" alt="FOSSA License Status"/></a>
   <a href="https://cla-assistant.io/panther-labs/panther"><img src="https://cla-assistant.io/readme/badge/panther-labs/panther" alt="CLA Assistant"/></a>
   <a href="https://magefile.org"><img src="https://magefile.org/badge.svg" alt="Built with Mage"/></a>
 </p>
@@ -139,10 +138,6 @@ We welcome all contributions! Please read our contributing [guidelines](https://
 ## License
 
 Panther source code is licensed under [AGPLv3](https://github.com/panther-labs/panther/blob/master/LICENSE).
-
-### FOSSA Status
-
-[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B15287%2Fgit%40github.com%3Apanther-labs%2Fpanther.git.svg?type=large)](https://app.fossa.com/projects/custom%2B15287%2Fgit%40github.com%3Apanther-labs%2Fpanther.git?ref=badge_large)
 
 ## Contributors
 
