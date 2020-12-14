@@ -19,7 +19,6 @@ package api
  */
 
 import (
-	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	"testing"
 	"time"
 
@@ -28,6 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 

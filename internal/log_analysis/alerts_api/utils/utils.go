@@ -21,6 +21,7 @@ package utils
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
+
 	alertmodels "github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	alertdeliverymodels "github.com/panther-labs/panther/api/lambda/delivery/models"
