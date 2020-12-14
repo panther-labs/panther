@@ -50,7 +50,7 @@ const RuleDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
             aria-label="Edit Rule"
             to={urls.logAnalysis.rules.edit(rule.id)}
           >
-            Edit
+            Edit Rule
           </LinkButton>
           <Button
             icon="trash"
@@ -63,7 +63,7 @@ const RuleDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
               })
             }
           >
-            Delete
+            Delete Rule
           </Button>
         </Flex>
       </Breadcrumbs.Actions>
