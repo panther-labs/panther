@@ -23,8 +23,8 @@ import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import { getComplianceItemsTotalCount, extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import PolicyCardDetails from './PolicyCardDetails';
 import PolicyDetailsInfo from './PolicyDetailsInfo';
+import PolicyDetailsBanner from './PolicyDetailsBanner';
 import PolicyDetailsResources from './PolicyDetailsResources';
 import PolicyDetailsPageSkeleton from './Skeleton';
 import { usePolicyDetails } from './graphql/policyDetails.generated';
@@ -72,7 +72,7 @@ const PolicyDetailsPage = () => {
     <Box as="article">
       <Flex direction="column" spacing={6} my={6}>
         <ErrorBoundary>
-          <PolicyDetailsInfo policy={data.policy} />
+          <PolicyDetailsBanner policy={data.policy} />
         </ErrorBoundary>
         <Card position="relative">
           <Tabs>
@@ -84,7 +84,7 @@ const PolicyDetailsPage = () => {
               <BorderTabDivider />
               <TabPanels>
                 <TabPanel data-testid="policy-details-tabpanel" lazy unmountWhenInactive>
-                  <PolicyCardDetails policy={data.policy} />
+                  <PolicyDetailsInfo policy={data.policy} />
                 </TabPanel>
                 <TabPanel data-testid="policy-resources-tabpanel" lazy unmountWhenInactive>
                   <PolicyDetailsResources />

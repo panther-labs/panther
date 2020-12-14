@@ -16,4 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './PolicyCardDetails';
+export { default } from './PolicyDetailsBanner';
