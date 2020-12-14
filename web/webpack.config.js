@@ -174,6 +174,7 @@ module.exports = {
       Hooks: path.resolve(__dirname, 'src/hooks'),
       Hoc: path.resolve(__dirname, 'src/hoc'),
       Source: path.resolve(__dirname, 'src/'),
+      Public: path.resolve(__dirname, 'public/'),
 
       // make sure that all the packages that attempt to resolve the following packages utilise the
       // same version, so we don't end up bundling multiple versions of it.

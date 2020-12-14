@@ -1,0 +1,63 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+name: 'Docker Analysis'
+on:
+  pull_request:
+    branches:
+      - master
+  schedule:
+    # Run every Sunday at 3pm
+    # https://docs.github.com/en/free-pro-team@latest/actions/reference/events-that-trigger-workflows#schedule
+    - cron: '0 15 * * 0'
+
+jobs:
+  docker_analysis:
+    name: Scan the web docker container for vulnerabilities
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          # We must fetch at least the immediate parents so that if this is
+          # a pull request then we can checkout the head.
+          fetch-depth: 2
+
+      # If this run was triggered by a pull request event (and not a scheduled run), then checkout
+      # the head of the pull request instead of the merge commit.
+      - run: git checkout HEAD^2
+        if: ${{ github.event_name == 'pull_request' }}
+
+      - name: Run Snyk to check Docker images for vulnerabilities
+        # Snyk can be used to break the build when it detects vulnerabilities.
+        # In this case we want it to fail CI
+        continue-on-error: false
+        uses: snyk/actions/docker@master
+        env:
+          # In order to use the Snyk Action you will need to have a Snyk API token.
+          # More details in https://github.com/snyk/actions#getting-your-snyk-token
+          # or you can signup for free at https://snyk.io/login
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: node:14.15-alpine
+          args: '--file=deployments/Dockerfile --severity-threshold=high'
+          # The default parameters do not work when testing locally with 'act' (brew install act). Therefore, we inline theme here which mimics
+          # how they would be interpreted if the above inputs worked.
+          # args: 'snyk test --file=deployments/Dockerfile --severity-threshold=high --docker node:14.15-alpine'
+          #
+          # To test locally, we need to use the image which replicates github actions. It takes a while to download the (6GB) image
+          # and to extract (18GB), be patient!
+          # > act -s SNYK_TOKEN=xxx pull_request -j docker_analysis -P ubuntu-latest=nektos/act-environments-ubuntu:18.04

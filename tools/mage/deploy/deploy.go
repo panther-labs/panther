@@ -130,8 +130,8 @@ func PreCheck() error {
 	if err != nil {
 		return fmt.Errorf("failed to check node version: %v", err)
 	}
-	if !strings.HasPrefix(strings.TrimSpace(nodeVersion), "v12") {
-		return fmt.Errorf("node version must be v12.x.x, found %s", nodeVersion)
+	if !strings.HasPrefix(strings.TrimSpace(nodeVersion), "v14") {
+		return fmt.Errorf("node version must be v14.x.x, found %s", nodeVersion)
 	}
 
 	// Make sure docker is running
