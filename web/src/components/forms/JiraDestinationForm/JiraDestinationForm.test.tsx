@@ -61,7 +61,7 @@ const initialValues = {
 
 describe('JiraDestinationForm', () => {
   it('renders the correct fields', () => {
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText, getAllByLabelText, getByText } = render(
       <JiraDestinationForm onSubmit={() => {}} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
@@ -71,7 +71,7 @@ describe('JiraDestinationForm', () => {
     const apiKeyField = getByLabelText('* Jira API Key');
     const assigneeIdField = getByLabelText('Assignee ID');
     const issueTypeField = getByLabelText('* Issue Type');
-    const labelsField = getByLabelText('Labels', { selector: 'input' });
+    const labelsField = getAllByLabelText('Labels')[0];
     const submitButton = getByText('Add Destination');
     expect(displayNameField).toBeInTheDocument();
     expect(orgDomainField).toBeInTheDocument();
@@ -89,7 +89,7 @@ describe('JiraDestinationForm', () => {
   });
 
   it('has proper validation', async () => {
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText, getAllByLabelText, getByText } = render(
       <JiraDestinationForm onSubmit={() => {}} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
@@ -99,7 +99,7 @@ describe('JiraDestinationForm', () => {
     const apiKeyField = getByLabelText('* Jira API Key');
     const assigneeIdField = getByLabelText('Assignee ID');
     const issueTypeField = getByLabelText('* Issue Type');
-    const labelsField = getByLabelText('Labels', { selector: 'input' });
+    const labelsField = getAllByLabelText('Labels')[0];
     const submitButton = getByText('Add Destination');
     const criticalSeverityCheckBox = document.getElementById(severity);
     expect(criticalSeverityCheckBox).not.toBeNull();
@@ -143,7 +143,7 @@ describe('JiraDestinationForm', () => {
 
   it('should trigger submit successfully', async () => {
     const submitMockFunc = jest.fn();
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText, getAllByLabelText, getByText } = render(
       <JiraDestinationForm onSubmit={submitMockFunc} initialValues={emptyInitialValues} />
     );
     const jiraInput = buildJiraConfigInput({
@@ -156,7 +156,7 @@ describe('JiraDestinationForm', () => {
     const apiKeyField = getByLabelText('* Jira API Key');
     const assigneeIdField = getByLabelText('Assignee ID');
     const issueTypeField = getByLabelText('* Issue Type');
-    const labelsField = getByLabelText('Labels', { selector: 'input' });
+    const labelsField = getAllByLabelText('Labels')[0];
     const submitButton = getByText('Add Destination');
     const criticalSeverityCheckBox = document.getElementById(severity);
     expect(criticalSeverityCheckBox).not.toBeNull();

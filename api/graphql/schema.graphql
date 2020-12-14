@@ -694,7 +694,7 @@ type JiraConfig {
   apiKey: String!
   assigneeId: String
   issueType: String!
-  labels: [String!]
+  labels: [String!]!
 }
 
 type AsanaConfig {

@@ -28,6 +28,7 @@ import BaseDestinationForm, {
 } from 'Components/forms/BaseDestinationForm';
 import { Box, FormHelperText, SimpleGrid } from 'pouncejs';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
+import { hasNoWhitespaces } from 'Helpers/utils';
 
 type JiraFieldValues = Pick<DestinationConfigInput, 'jira'>;
 
@@ -103,12 +104,6 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         />
       </SimpleGrid>
       <SimpleGrid gap={5} columns={3}>
-        <Field
-          as={FormikTextInput}
-          name="outputConfig.jira.assigneeId"
-          label="Assignee ID"
-          placeholder="Who should we assign this to?"
-        />
         <Box as="fieldset">
           <Field
             as={FormikTextInput}
@@ -121,6 +116,12 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
             Can be Bug, Story, Task or any custom type
           </FormHelperText>
         </Box>
+        <Field
+          as={FormikTextInput}
+          name="outputConfig.jira.assigneeId"
+          label="Assignee ID"
+          placeholder="Who should we assign this to?"
+        />
         <Box as="fieldset">
           <Field
             name="outputConfig.jira.labels"
@@ -128,6 +129,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
             label="Labels"
             aria-describedby="labels-helper"
             allowAdditions
+            validateAddition={hasNoWhitespaces}
             searchable
             items={[]}
             placeholder="Add custom labels"
