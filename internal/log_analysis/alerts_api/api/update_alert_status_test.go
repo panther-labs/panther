@@ -64,6 +64,9 @@ func TestUpdateAlert(t *testing.T) {
 			DeliveryResponses: []*models.DeliveryResponse{},
 			CreationTime:      timeNow,
 			UpdateTime:        timeNow,
+			Description:       "description",
+			Reference:         "reference",
+			Runbook:           "runbook",
 		})
 		expectedSummaries = append(expectedSummaries, &models.AlertSummary{
 			AlertID:           alertID,
@@ -82,6 +85,9 @@ func TestUpdateAlert(t *testing.T) {
 			UpdateTime:        aws.Time(timeNow),
 			EventsMatched:     aws.Int(0),
 			Title:             aws.String(""),
+			Description:       "description",
+			Reference:         "reference",
+			Runbook:           "runbook",
 		})
 	}
 

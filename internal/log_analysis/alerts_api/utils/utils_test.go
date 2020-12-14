@@ -96,7 +96,7 @@ func TestAlertItemToSummary(t *testing.T) {
 	require.NoError(t, err)
 
 	mockDdbClient.On("GetItem", alertItem, nil).Return(item)
-	result := AlertItemToSummary(&alertItem, &alertRule)
+	result := AlertItemToSummary(&alertItem, aws.String(alertRule.Description), aws.String(alertRule.Reference), aws.String(alertRule.Runbook))
 	require.Equal(t, expectedAlertSummary, *result)
 }
 
@@ -166,7 +166,7 @@ func TestAlertItemToSummaryHavingGeneratedFields(t *testing.T) {
 	require.NoError(t, err)
 
 	mockDdbClient.On("GetItem", alertItem, nil).Return(item)
-	result := AlertItemToSummary(&alertItem, &alertRule)
+	result := AlertItemToSummary(&alertItem, aws.String(alertRule.Description), aws.String(alertRule.Reference), aws.String(alertRule.Runbook))
 	require.Equal(t, expectedAlertSummary, *result)
 }
 
@@ -236,7 +236,7 @@ func TestAlertItemToSummaryMissingGeneratedFields(t *testing.T) {
 	require.NoError(t, err)
 
 	mockDdbClient.On("GetItem", alertItem, nil).Return(item)
-	result := AlertItemToSummary(&alertItem, &alertRule)
+	result := AlertItemToSummary(&alertItem, aws.String(alertRule.Description), aws.String(alertRule.Reference), aws.String(alertRule.Runbook))
 	require.Equal(t, expectedAlertSummary, *result)
 }
 

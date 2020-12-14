@@ -93,13 +93,9 @@ func (api *API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOu
 		return nil, err
 	}
 
-	// Use the LRU Cache
-	cachedRule, err := api.ruleCache.Get(alertItem.RuleID, alertItem.RuleVersion)
-	if err != nil {
-		zap.L().Warn("failed to get rule information",
-			zap.Any("rule id", alertItem.RuleID), zap.Any("rule version", alertItem.RuleVersion))
-	}
-	alertSummary := utils.AlertItemToSummary(alertItem, cachedRule)
+	alertRule, err := api.getRule(alertItem.RuleID, alertItem.RuleVersion)
+	alertSummary := utils.AlertItemToSummary(
+		alertItem, aws.String(alertRule.Description), aws.String(alertRule.Reference), aws.String(alertRule.Runbook))
 
 	result = &models.Alert{
 		AlertSummary:           *alertSummary,

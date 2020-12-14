@@ -21,6 +21,8 @@ package api
 
 import (
 	"encoding/base64"
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
+	"go.uber.org/zap"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -41,7 +43,7 @@ type API struct {
 	alertsDB       table.API
 	s3Client       s3iface.S3API
 	analysisClient gatewayapi.API
-	ruleCache      forwarder.RuleCache
+	ruleCache      *forwarder.RuleCache
 
 	env envConfig
 }
@@ -61,7 +63,7 @@ func Setup() *API {
 	awsSession := session.Must(session.NewSession())
 	lambdaClient := lambda.New(awsSession)
 	analysisClient := gatewayapi.NewClient(lambdaClient, "panther-analysis-api")
-	ruleCache := *forwarder.NewCache(analysisClient)
+	ruleCache := forwarder.NewCache(analysisClient)
 
 	return &API{
 		awsSession:     awsSession,
@@ -106,4 +108,41 @@ func decodePaginationToken(token string) (*EventPaginationToken, error) {
 		return nil, err
 	}
 	return result, nil
+}
+
+func (api *API) getRule(id, version string) (*models.Rule, error) {
+	// Use the LRU Cache
+	cachedRule, err := api.ruleCache.Get(id, version)
+	if err != nil {
+		zap.L().Warn("failed to get rule information",
+			zap.Any("rule id", id), zap.Any("rule version", version))
+		return nil, err
+	}
+	return cachedRule, nil
+}
+
+func (api *API) getAlertRules(alerts []*table.AlertItem) []*models.Rule {
+	alertRules := make([]*models.Rule, 0, len(alerts))
+	for i, item := range alerts {
+		var err error
+		if item.Description == "" || item.Reference == "" || item.Runbook == "" {
+			alertRules[i], err = api.getRule(item.RuleID, item.RuleVersion)
+			if err != nil {
+				alertRule := &models.Rule{
+					Description: "",
+					Reference:   "",
+					Runbook:     "",
+				}
+				alertRules = append(alertRules, alertRule)
+			}
+		} else {
+			alertRule := &models.Rule{
+				Description: "",
+				Reference:   "",
+				Runbook:     "",
+			}
+			alertRules = append(alertRules, alertRule)
+		}
+	}
+	return alertRules
 }

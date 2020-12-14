@@ -21,34 +21,37 @@ package utils
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	"go.uber.org/zap"
-
 	alertmodels "github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	alertdeliverymodels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
 // AlertItemsToSummaries converts a list of DDB AlertItem(s) to AlertSummary(ies)
-func AlertItemsToSummaries(items []*table.AlertItem, ruleCache forwarder.RuleCache) []*alertmodels.AlertSummary {
-	result := make([]*alertmodels.AlertSummary, len(items))
+// func AlertItemsToSummaries(items []*table.AlertItem, ruleCache forwarder.RuleCache) []*alertmodels.AlertSummary {
+func AlertItemsToSummaries(alertItems []*table.AlertItem, alertRules []*models.Rule) []*alertmodels.AlertSummary {
+	result := make([]*alertmodels.AlertSummary, len(alertItems))
 
-	for i, item := range items {
-		// Use the LRU Cache
-		cachedRule, err := ruleCache.Get(item.RuleID, item.RuleVersion)
-		if err != nil {
-			zap.L().Warn("failed to get rule information",
-				zap.Any("rule id", item.RuleID), zap.Any("rule version", item.RuleVersion))
+	for i, item := range alertItems {
+		description, reference, runbook := item.Description, item.Reference, item.Runbook
+		// Backwards compatibility for alert items w/o description, reference, runbook
+		if alertRules != nil && len(alertRules) > 0 && description == "" {
+			description = alertRules[i].Description
 		}
-		result[i] = AlertItemToSummary(item, cachedRule)
+		if alertRules != nil && len(alertRules) > 0 && reference == "" {
+			reference = alertRules[i].Description
+		}
+		if alertRules != nil && len(alertRules) > 0 && runbook == "" {
+			runbook = alertRules[i].Description
+		}
+		result[i] = AlertItemToSummary(item, aws.String(description), aws.String(reference), aws.String(runbook))
 	}
 
 	return result
 }
 
 // AlertItemToSummary converts a DDB AlertItem to an AlertSummary
-func AlertItemToSummary(item *table.AlertItem, alertRule *models.Rule) *alertmodels.AlertSummary {
+func AlertItemToSummary(item *table.AlertItem, ruleDescription, ruleReference, ruleRunbook *string) *alertmodels.AlertSummary {
 	// convert empty status to "OPEN" status
 	alertStatus := item.Status
 	if alertStatus == "" {
@@ -65,13 +68,13 @@ func AlertItemToSummary(item *table.AlertItem, alertRule *models.Rule) *alertmod
 	// Check if we have these fields to avoid an unnecessary API call
 	if description == "" || reference == "" || runbook == "" {
 		if description == "" {
-			description = alertRule.Description
+			description = aws.StringValue(ruleDescription)
 		}
 		if reference == "" {
-			reference = alertRule.Reference
+			reference = aws.StringValue(ruleReference)
 		}
 		if runbook == "" {
-			runbook = alertRule.Runbook
+			runbook = aws.StringValue(ruleRunbook)
 		}
 	}
 

@@ -47,7 +47,7 @@ func NewCache(policyClient gatewayapi.API) *RuleCache {
 func (c *RuleCache) Get(id, version string) (*models.Rule, error) {
 	value, ok := c.cache.Get(cacheKey(id, version))
 	if !ok {
-		rule, err := c.getRule(id, version)
+		rule, err := c.GetRule(id, version)
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +61,7 @@ func cacheKey(id, version string) string {
 	return id + ":" + version
 }
 
-func (c *RuleCache) getRule(id, version string) (*models.Rule, error) {
+func (c *RuleCache) GetRule(id, version string) (*models.Rule, error) {
 	zap.L().Debug("calling analysis API to retrieve information for rule", zap.String("ruleId", id), zap.String("ruleVersion", version))
 	input := models.LambdaInput{
 		GetRule: &models.GetRuleInput{ID: id, VersionID: version},

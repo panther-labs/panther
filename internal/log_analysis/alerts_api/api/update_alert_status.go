@@ -46,7 +46,7 @@ func (api *API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (models.
 	}
 
 	// Marshal to an alert summary
-	return utils.AlertItemsToSummaries(alertItems, api.analysisClient), nil
+	return utils.AlertItemsToSummaries(alertItems, nil), nil
 }
 
 // dispatchUpdates - dispatches updates to alerts in in groups.

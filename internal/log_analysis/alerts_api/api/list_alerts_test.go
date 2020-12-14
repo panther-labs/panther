@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	"testing"
 	"time"
 
@@ -32,6 +33,33 @@ import (
 
 var (
 	timeInTest = time.Now()
+
+	ruleItems = []*analysismodels.Rule{
+		{
+			ID:             "ruleId",
+			LastModified:   timeInTest,
+			CreatedAt:      timeInTest,
+			Severity:       "INFO",
+			LogTypes:       []string{"AWS.CloudTrail"},
+			VersionID:      "ruleVersion",
+			LastModifiedBy: "userId",
+			Description:    "description",
+			Reference:      "reference",
+			Runbook:        "runbook",
+		},
+		{
+			ID:             "ruleId",
+			LastModified:   timeInTest,
+			CreatedAt:      timeInTest,
+			Severity:       "INFO",
+			LogTypes:       []string{"AWS.CloudTrail"},
+			VersionID:      "ruleVersion",
+			LastModifiedBy: "userId",
+			Description:    "description",
+			Reference:      "reference",
+			Runbook:        "runbook",
+		},
+	}
 
 	alertItems = []*table.AlertItem{
 		{
@@ -52,6 +80,9 @@ var (
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
 			DeliveryResponses: []*models.DeliveryResponse{},
+			Description:       "description",
+			Reference:         "reference",
+			Runbook:           "runbook",
 		},
 	}
 
@@ -75,12 +106,16 @@ var (
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
 			DeliveryResponses: []*models.DeliveryResponse{},
+			Description:       "description",
+			Reference:         "reference",
+			Runbook:           "runbook",
 		},
 	}
 )
 
 func TestListAlertsForRule(t *testing.T) {
 	tableMock := &tableMock{}
+	gatewayapiMock := &gatewayapiMock{}
 
 	input := &models.ListAlertsInput{
 		RuleID:            aws.String("ruleId"),
@@ -92,6 +127,7 @@ func TestListAlertsForRule(t *testing.T) {
 
 	tableMock.On("ListAll", input).
 		Return(alertItems, aws.String("lastKey"), nil)
+	gatewayapiMock.On("Invoke", "alertId", "alertVersion").Return(ruleItems, nil).Once()
 	api := API{
 		alertsDB: tableMock,
 	}
@@ -106,6 +142,7 @@ func TestListAlertsForRule(t *testing.T) {
 
 func TestListAllAlerts(t *testing.T) {
 	tableMock := &tableMock{}
+	gatewayapiMock := &gatewayapiMock{}
 
 	input := &models.ListAlertsInput{
 		PageSize:          aws.Int(10),
@@ -122,6 +159,7 @@ func TestListAllAlerts(t *testing.T) {
 
 	tableMock.On("ListAll", input).
 		Return(alertItems, aws.String("lastKey"), nil)
+	gatewayapiMock.On("Invoke", "alertId", "alertVersion").Return(ruleItems, nil).Once()
 	api := API{
 		alertsDB: tableMock,
 	}
@@ -138,6 +176,7 @@ func TestListAllAlerts(t *testing.T) {
 // Verifies that API returns correct results when alert title is not specified
 func TestListAllAlertsWithoutTitle(t *testing.T) {
 	tableMock := &tableMock{}
+	gatewayapiMock := &gatewayapiMock{}
 
 	alertItems := []*table.AlertItem{
 		{
@@ -155,6 +194,9 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			RuleVersion:       "ruleVersion",
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
+			Description:       "description",
+			Reference:         "reference",
+			Runbook:           "runbook",
 		},
 		{ // Alert with Display Name for rule
 			RuleID:            "ruleId",
@@ -172,6 +214,9 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			RuleDisplayName:   aws.String("ruleDisplayName"),
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
+			Description:       "description",
+			Reference:         "reference",
+			Runbook:           "runbook",
 		},
 	}
 
@@ -194,6 +239,9 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
 			DeliveryResponses: []*models.DeliveryResponse{},
+			Description:       "description",
+			Reference:         "reference",
+			Runbook:           "runbook",
 		},
 		{
 			RuleID:          aws.String("ruleId"),
@@ -216,6 +264,9 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
 			DeliveryResponses: []*models.DeliveryResponse{},
+			Description:       "description",
+			Reference:         "reference",
+			Runbook:           "runbook",
 		},
 	}
 
@@ -226,6 +277,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 
 	tableMock.On("ListAll", input).
 		Return(alertItems, aws.String("lastKey"), nil)
+	gatewayapiMock.On("Invoke", "alertId", "alertVersion").Return(alertItems, nil).Once()
 	api := API{
 		alertsDB: tableMock,
 	}

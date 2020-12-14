@@ -38,7 +38,7 @@ func (api *API) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) (res
 	}
 
 	// Marshal to an alert summary
-	result = utils.AlertItemToSummary(alertItem, api.analysisClient)
+	result = utils.AlertItemToSummary(alertItem, nil, nil, nil)
 
 	genericapi.ReplaceMapSliceNils(result)
 	return result, nil
