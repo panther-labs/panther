@@ -1,4 +1,4 @@
-package api
+package customlogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,30 +19,23 @@ package api
  */
 
 import (
+	"fmt"
+	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/panther-labs/panther/api/lambda/source/models"
+	"gopkg.in/yaml.v2"
 )
 
-func TestAPI_ListLogTypes(t *testing.T) {
-	expectedLogTypes := []string{"one", "two"}
-	listOutput := []*models.SourceIntegration{
-		{
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationType: models.IntegrationTypeAWS3,
-				LogTypes:        []string{"one"},
-			},
-		},
-		{
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationType: models.IntegrationTypeSqs,
-				SqsConfig: &models.SqsConfig{
-					LogTypes: []string{"one", "two"}, // "one" is duplicate with above
-				},
-			},
-		},
-	}
-	assert.Equal(t, expectedLogTypes, collectLogTypes(listOutput))
+func TestProcessLine(t *testing.T) {
+	schema, err := inferFromFile(nil, "./testdata/sample_1.jsonl")
+	schema = schema.NonEmpty()
+	assert.NoError(t, err)
+	fd, err := ioutil.ReadFile("./testdata/schema_1.yml")
+	assert.NoError(t, err)
+
+	marshalled, err := yaml.Marshal(schema)
+	assert.NoError(t, err)
+	fmt.Println(string(marshalled))
+	assert.YAMLEq(t, string(fd), string(marshalled))
 }

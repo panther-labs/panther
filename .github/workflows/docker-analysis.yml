@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-name: 'Code Analysis'
+name: 'Docker Analysis'
 on:
   pull_request:
     branches:
@@ -25,15 +25,9 @@ on:
     - cron: '0 15 * * 0'
 
 jobs:
-  code_analysis:
-    name: Scan code for vulnerabilities
+  docker_analysis:
+    name: Scan the web docker container for vulnerabilities
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ['javascript', 'go', 'python']
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -47,10 +41,23 @@ jobs:
       - run: git checkout HEAD^2
         if: ${{ github.event_name == 'pull_request' }}
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
+      - name: Run Snyk to check Docker images for vulnerabilities
+        # Snyk can be used to break the build when it detects vulnerabilities.
+        # In this case we want it to fail CI
+        continue-on-error: false
+        uses: snyk/actions/docker@master
+        env:
+          # In order to use the Snyk Action you will need to have a Snyk API token.
+          # More details in https://github.com/snyk/actions#getting-your-snyk-token
+          # or you can signup for free at https://snyk.io/login
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          languages: ${{ matrix.language }}
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
+          image: node:14.15-alpine
+          args: '--file=deployments/Dockerfile --severity-threshold=high'
+          # The default parameters do not work when testing locally with 'act' (brew install act). Therefore, we inline theme here which mimics
+          # how they would be interpreted if the above inputs worked.
+          # args: 'snyk test --file=deployments/Dockerfile --severity-threshold=high --docker node:14.15-alpine'
+          #
+          # To test locally, we need to use the image which replicates github actions. It takes a while to download the (6GB) image
+          # and to extract (18GB), be patient!
+          # > act -s SNYK_TOKEN=xxx pull_request -j docker_analysis -P ubuntu-latest=nektos/act-environments-ubuntu:18.04
