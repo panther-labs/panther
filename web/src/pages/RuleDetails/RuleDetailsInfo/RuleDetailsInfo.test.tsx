@@ -18,17 +18,37 @@
 
 import React from 'react';
 import { render, buildRuleDetails } from 'test-utils';
-import RuleDetailsInfo from './index';
+import RuleCardDetails from './index';
 
 describe('RuleDetailsInfo', () => {
   it('renders the correct data', async () => {
-    const rule = buildRuleDetails({ displayName: 'My Rule' });
-    const { getByText } = render(<RuleDetailsInfo rule={rule} />);
-    expect(getByText('Edit Rule')).toBeInTheDocument();
-    expect(getByText('Delete Rule')).toBeInTheDocument();
+    const rule = buildRuleDetails({
+      displayName: 'My Rule',
+      description: 'This is an amazing description',
+      runbook: 'Panther labs runbook',
+      reference: 'Panther labs reference',
+      dedupPeriodMinutes: 14,
+      threshold: 101,
+      tags: ['hello', 'world'],
+    });
+    const { getByText } = render(<RuleCardDetails rule={rule} />);
+    expect(getByText('This is an amazing description')).toBeInTheDocument();
 
-    expect(getByText('My Rule')).toBeInTheDocument();
-    expect(getByText('DISABLED')).toBeInTheDocument();
-    expect(getByText('LOW')).toBeInTheDocument();
+    expect(getByText('Runbook')).toBeInTheDocument();
+    expect(getByText('Panther labs runbook')).toBeInTheDocument();
+
+    expect(getByText('Reference')).toBeInTheDocument();
+    expect(getByText('Panther labs reference')).toBeInTheDocument();
+
+    expect(getByText('Tags')).toBeInTheDocument();
+
+    expect(getByText('Threshold')).toBeInTheDocument();
+    expect(getByText('101')).toBeInTheDocument();
+
+    expect(getByText('Deduplication Period')).toBeInTheDocument();
+    expect(getByText('14min')).toBeInTheDocument();
+
+    expect(getByText('Modified')).toBeInTheDocument();
+    expect(getByText('Created')).toBeInTheDocument();
   });
 });
