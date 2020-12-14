@@ -10,6 +10,7 @@ schema {
 }
 
 type Mutation {
+  addCustomLog(input: AddCustomLogInput!): AddCustomLogOutput!
   addDestination(input: DestinationInput!): Destination
   addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
   addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
@@ -19,6 +20,7 @@ type Mutation {
   addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
   deleteDestination(id: ID!): Boolean
   deleteComplianceIntegration(id: ID!): Boolean
+  deleteCustomLog(input: DeleteCustomLogInput): DeleteCustomLogOutput!
   deleteLogIntegration(id: ID!): Boolean
   deletePolicy(input: DeletePolicyInput!): Boolean
   deleteRule(input: DeleteRuleInput!): Boolean
@@ -75,6 +77,26 @@ type Query {
   rules(input: ListRulesInput): ListRulesResponse
   listGlobalPythonModules(input: ListGlobalPythonModuleInput!): ListGlobalPythonModulesResponse!
   users: [User!]!
+  getCustomLog(input: GetCustomLogInput!): GetCustomLogOutput!
+  listCustomLogs: [CustomLogRecord!]!
+}
+
+input DeleteCustomLogInput {
+  logType: String!
+  revision: Int!
+}
+
+input AddCustomLogInput {
+  revision: Int
+  logType: String!
+  description: String!
+  referenceURL: String!
+  logSpec: String!
+}
+
+input GetCustomLogInput {
+  logType: String!
+  revision: Int
 }
 
 input GetComplianceIntegrationTemplateInput {
@@ -115,6 +137,33 @@ input GetAlertInput {
   alertId: ID!
   eventsPageSize: Int
   eventsExclusiveStartKey: String
+}
+
+type AddCustomLogOutput {
+  error: Error
+  record: CustomLogRecord
+}
+
+type DeleteCustomLogOutput {
+  error: Error
+}
+
+type ListAvailableLogTypesResponse {
+  logTypes: [String!]!
+}
+
+type GetCustomLogOutput {
+  error: Error
+  record: CustomLogRecord
+}
+
+type CustomLogRecord {
+  logType: String!
+  revision: Int!
+  updatedAt: String!
+  description: String!
+  referenceURL: String!
+  logSpec: String!
 }
 
 type IntegrationTemplate {
@@ -1134,6 +1183,6 @@ enum OpsgenieServiceRegionEnum {
   US
 }
 
-type ListAvailableLogTypesResponse {
-  logTypes: [String!]!
+enum ErrorCodeEnum {
+  NotFound
 }

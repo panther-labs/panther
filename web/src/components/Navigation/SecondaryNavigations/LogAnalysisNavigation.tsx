@@ -60,6 +60,11 @@ const LogAnalysisNavigation: React.FC = () => {
             label="Alerts"
           />
           <NavLink icon="log-source" to={urls.logAnalysis.sources.list()} label="Sources" />
+          <NavLink
+            icon="source-code"
+            to={urls.logAnalysis.customLogs.list()}
+            label="Custom Schemas"
+          />
         </FadeInTrail>
       </Flex>
     </Box>
