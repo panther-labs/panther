@@ -37,6 +37,10 @@ type ResourceChange struct {
 	IntegrationLabel string              `json:"integrationLabel"`
 	LastUpdated      string              `json:"lastUpdated"`
 	Resource         jsoniter.RawMessage `json:"resource"`
+	ResourceID string `json:"resourceId"`
+	ResourceType string `json:"resourceType"`
+	TimeCreated string `json:"timeCreated"`
+
 }
 
 type resourceSnapshot struct {
@@ -48,6 +52,8 @@ type resourceSnapshot struct {
 // processResourceChanges processes a record from the resources-table dynamoDB stream,
 func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventRecord) (resource *ResourceChange, err error) {
 	// For INSERT and REMOVE events, we don't need to calculate a diff
+	data, _ := jsoniter.MarshalToString(record)
+	zap.L().Info("Found stuffs!", zap.String("data", data))
 	switch lambdaevents.DynamoDBOperationType(record.EventName) {
 	case lambdaevents.DynamoDBOperationTypeInsert:
 		resource, err = sh.processResourceSnapshot(ChangeTypeCreate, record.Change.NewImage)
@@ -74,11 +80,11 @@ func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventReco
 func (sh *StreamHandler) processResourceSnapshotDiff(eventName string,
 	oldImage, newImage map[string]*dynamodb.AttributeValue) (*ResourceChange, error) {
 
-	oldSnapshot := resourceSnapshot{}
+	var oldSnapshot resourceSnapshot
 	if err := dynamodbattribute.UnmarshalMap(oldImage, &oldSnapshot); err != nil || oldSnapshot.Attributes == nil {
 		return nil, errors.New("resources-table record old image did include top level key attributes")
 	}
-	newSnapshot := resourceSnapshot{}
+	var newSnapshot resourceSnapshot
 	if err := dynamodbattribute.UnmarshalMap(newImage, &newSnapshot); err != nil || newSnapshot.Attributes == nil {
 		return nil, errors.New("resources-table record new image did include top level key attributes")
 	}
@@ -137,7 +143,7 @@ func (sh *StreamHandler) processResourceSnapshotDiff(eventName string,
 func (sh *StreamHandler) processResourceSnapshot(changeType string,
 	image map[string]*dynamodb.AttributeValue) (*ResourceChange, error) {
 
-	change := resourceSnapshot{}
+	var change resourceSnapshot
 	if err := dynamodbattribute.UnmarshalMap(image, &change); err != nil || change.Attributes == nil {
 		return nil, errors.New("resources-table record image did include top level key attributes")
 	}

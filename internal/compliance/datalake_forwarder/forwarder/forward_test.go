@@ -188,3 +188,79 @@ func TestComplianceEventStatusChange(t *testing.T) {
 	lambdaMock.AssertExpectations(t)
 	firehoseMock.AssertExpectations(t)
 }
+
+func TestResourceEvent(t *testing.T) {
+	t.Parallel()
+	lambdaMock := &testutils.LambdaMock{}
+	firehoseMock := &testutils.FirehoseMock{}
+
+	sh := StreamHandler{
+		LambdaClient:   lambdaMock,
+		FirehoseClient: firehoseMock,
+		StreamName:     "stream-name",
+	}
+
+	record := events.DynamoDBEventRecord{
+		AWSRegion:      "eu-west-1",
+		EventSource:    "aws:dynamodb",
+		EventName:      "MODIFY",
+		EventID:        "a04e16d70e2520ff8a3569354b55b3f5",
+		EventVersion:   "1.1",
+		EventSourceArn: "arn:aws:dynamodb:eu-west-1:123456789012:table/panther-resources/stream/2020-12-09T13:15:55.703",
+		Change: events.DynamoDBStreamRecord{
+			Keys: map[string]*dynamodb.AttributeValue{
+				"id": {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+			},
+			NewImage: map[string]*dynamodb.AttributeValue{
+				"id":              {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+				"lowerId":         {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+				"expiresAt":       {N: aws.String("1607707952")},
+				"integrationId":   {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
+				"deleted":         {BOOL: aws.Bool(false)},
+				"integrationType": {S: aws.String("aws")},
+				"type":            {S: aws.String("AWS.Lambda.Function")},
+				"lastModified":    {S: aws.String("2020-12-09T15:32:32.362503673Z")},
+				"attributes": {M: map[string]*dynamodb.AttributeValue{
+					"MemorySize": {N: aws.String("128")},
+					"ResourceId": {S: aws.String("arn:aws:lambda:eu-west-1:415773754570:function:panther-cloudsecurity-datalake-forwarder")},
+				},
+				}},
+			OldImage: map[string]*dynamodb.AttributeValue{
+				"id":              {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+				"lowerId":         {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+				"expiresAt":       {N: aws.String("1607707952")},
+				"integrationId":   {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
+				"deleted":         {BOOL: aws.Bool(false)},
+				"integrationType": {S: aws.String("aws")},
+				"type":            {S: aws.String("AWS.Lambda.Function")},
+				"lastModified":    {S: aws.String("2020-12-09T15:32:32.362503673Z")},
+				"attributes": {M: map[string]*dynamodb.AttributeValue{
+					"MemorySize": {N: aws.String("256")},
+					"ResourceId": {S: aws.String("arn:aws:lambda:eu-west-1:415773754570:function:panther-cloudsecurity-datalake-forwarder")},
+				}},
+			},
+		},
+	}
+
+	// Mock fetching of integration label
+	integrations := []*models.SourceIntegrationMetadata{
+		{
+			IntegrationID:    "8349b647-f731-48c4-9d6b-eefff4010c14",
+			IntegrationLabel: "test-label",
+		},
+	}
+	marshaledIntegrations, err := jsoniter.Marshal(integrations)
+	assert.NoError(t, err)
+	lambdaMock.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{Payload: marshaledIntegrations}, nil).Once()
+
+
+	// Expected Firehose payload
+	firehoseMock.On("PutRecordBatchWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(&firehose.PutRecordBatchOutput{}, nil).
+		Once()
+
+	assert.NoError(t, sh.Run(context.Background(), zap.L(), &events.DynamoDBEvent{Records: []events.DynamoDBEventRecord{record}}))
+	lambdaMock.AssertExpectations(t)
+	firehoseMock.AssertExpectations(t)
+}
+
