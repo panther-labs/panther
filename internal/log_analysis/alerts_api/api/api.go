@@ -21,8 +21,6 @@ package api
 
 import (
 	"encoding/base64"
-	"github.com/panther-labs/panther/api/lambda/analysis/models"
-	"go.uber.org/zap"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -31,7 +29,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/kelseyhightower/envconfig"
+	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
