@@ -93,9 +93,14 @@ func (api *API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOu
 		return nil, err
 	}
 
-	alertRule, err := api.getRule(alertItem.RuleID, alertItem.RuleVersion)
-	alertSummary := utils.AlertItemToSummary(
-		alertItem, aws.String(alertRule.Description), aws.String(alertRule.Reference), aws.String(alertRule.Runbook))
+	alertRule, err := api.ruleCache.Get(alertItem.RuleID, alertItem.RuleVersion)
+
+	if err != nil {
+		zap.L().Warn("failed to get rule with ID", zap.Any("rule id", alertItem.RuleID),
+			zap.Any("rule version", alertItem.RuleVersion), zap.Any("error", err))
+	}
+
+	alertSummary := utils.AlertItemToSummary(alertItem, alertRule)
 
 	result = &models.Alert{
 		AlertSummary:           *alertSummary,

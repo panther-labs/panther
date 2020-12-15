@@ -21,6 +21,7 @@ package utils
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
+	"go.uber.org/zap"
 
 	alertmodels "github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
@@ -30,29 +31,27 @@ import (
 
 // AlertItemsToSummaries converts a list of DDB AlertItem(s) to AlertSummary(ies)
 // func AlertItemsToSummaries(items []*table.AlertItem, ruleCache forwarder.RuleCache) []*alertmodels.AlertSummary {
-func AlertItemsToSummaries(alertItems []*table.AlertItem, alertRules []*models.Rule) []*alertmodels.AlertSummary {
-	result := make([]*alertmodels.AlertSummary, len(alertItems))
+func AlertItemsToSummaries(alertItems []*table.AlertItem, alertRules map[string]*models.Rule) []*alertmodels.AlertSummary {
+	results := make([]*alertmodels.AlertSummary, len(alertItems))
 
 	for i, item := range alertItems {
-		description, reference, runbook := item.Description, item.Reference, item.Runbook
-		// Backwards compatibility for alert items w/o description, reference, runbook
-		if len(alertRules) > 0 && description == "" {
-			description = alertRules[i].Description
+		// Check if we were able to retrieve the rule
+		if _, ok := alertRules[item.RuleID+item.RuleVersion]; !ok {
+			if IsOldAlert(*item) {
+				zap.L().Warn("encountered an old alert with no corresponding rule", zap.Any("alert id", item.AlertID),
+					zap.Any("rule id", item.RuleID), zap.Any("rule version", item.RuleVersion))
+			}
+			results[i] = AlertItemToSummary(item, &models.Rule{Description: "", Reference: "", Runbook: ""})
+		} else {
+			results[i] = AlertItemToSummary(item, alertRules[item.RuleID+item.RuleVersion])
 		}
-		if len(alertRules) > 0 && reference == "" {
-			reference = alertRules[i].Description
-		}
-		if len(alertRules) > 0 && runbook == "" {
-			runbook = alertRules[i].Description
-		}
-		result[i] = AlertItemToSummary(item, aws.String(description), aws.String(reference), aws.String(runbook))
 	}
 
-	return result
+	return results
 }
 
 // AlertItemToSummary converts a DDB AlertItem to an AlertSummary
-func AlertItemToSummary(item *table.AlertItem, ruleDescription, ruleReference, ruleRunbook *string) *alertmodels.AlertSummary {
+func AlertItemToSummary(item *table.AlertItem, itemRule *models.Rule) *alertmodels.AlertSummary {
 	// convert empty status to "OPEN" status
 	alertStatus := item.Status
 	if alertStatus == "" {
@@ -67,15 +66,15 @@ func AlertItemToSummary(item *table.AlertItem, ruleDescription, ruleReference, r
 	description, reference, runbook := item.Description, item.Reference, item.Runbook
 
 	// Check if we have these fields to avoid an unnecessary API call
-	if description == "" || reference == "" || runbook == "" {
-		if description == "" {
-			description = aws.StringValue(ruleDescription)
+	if description == nil || reference == nil || runbook == nil {
+		if description == nil {
+			description = aws.String(itemRule.Description)
 		}
-		if reference == "" {
-			reference = aws.StringValue(ruleReference)
+		if reference == nil {
+			reference = aws.String(itemRule.Reference)
 		}
-		if runbook == "" {
-			runbook = aws.StringValue(ruleRunbook)
+		if runbook == nil {
+			runbook = aws.String(itemRule.Runbook)
 		}
 	}
 
@@ -103,9 +102,9 @@ func AlertItemToSummary(item *table.AlertItem, ruleDescription, ruleReference, r
 		ResourceTypes:     item.ResourceTypes,
 		ResourceID:        item.ResourceID,
 		// Generated Fields Support
-		Description: description,
-		Reference:   reference,
-		Runbook:     runbook,
+		Description: aws.StringValue(description),
+		Reference:   aws.StringValue(reference),
+		Runbook:     aws.StringValue(runbook),
 	}
 }
 
@@ -128,4 +127,8 @@ func GetAlertTitle(alert *table.AlertItem) *string {
 		return &alert.PolicyDisplayName
 	}
 	return &alert.PolicyID
+}
+
+func IsOldAlert(alert table.AlertItem) bool {
+	return alert.Description == nil && alert.Reference == nil && alert.Runbook == nil
 }

@@ -21,6 +21,7 @@ package api
 
 import (
 	"encoding/base64"
+	"go.uber.org/zap"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -29,8 +30,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/kelseyhightower/envconfig"
-	"go.uber.org/zap"
-
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
@@ -110,38 +109,16 @@ func decodePaginationToken(token string) (*EventPaginationToken, error) {
 	return result, nil
 }
 
-func (api *API) getRule(id, version string) (*models.Rule, error) {
-	// Use the LRU Cache
-	cachedRule, err := api.ruleCache.Get(id, version)
-	if err != nil {
-		zap.L().Warn("failed to get rule information",
-			zap.Any("rule id", id), zap.Any("rule version", version))
-		return nil, err
-	}
-	return cachedRule, nil
-}
-
-func (api *API) getAlertRules(alerts []*table.AlertItem) []*models.Rule {
-	alertRules := make([]*models.Rule, 0, len(alerts))
-	for i, item := range alerts {
+func (api *API) getAlertRules(alerts []*table.AlertItem) map[string]*models.Rule {
+	alertRules := map[string]*models.Rule{}
+	for _, item := range alerts {
 		var err error
-		if item.Description == "" || item.Reference == "" || item.Runbook == "" {
-			alertRules[i], err = api.getRule(item.RuleID, item.RuleVersion)
+		if _, ok := alertRules[item.RuleID+item.RuleVersion]; !ok {
+			alertRules[item.RuleID+item.RuleVersion], err = api.ruleCache.Get(item.RuleID, item.RuleVersion)
 			if err != nil {
-				alertRule := &models.Rule{
-					Description: "",
-					Reference:   "",
-					Runbook:     "",
-				}
-				alertRules = append(alertRules, alertRule)
+				zap.L().Info("failed to get rule with id",
+					zap.Any("rule id", item.RuleID), zap.Any("rule version", item.RuleVersion))
 			}
-		} else {
-			alertRule := &models.Rule{
-				Description: "",
-				Reference:   "",
-				Runbook:     "",
-			}
-			alertRules = append(alertRules, alertRule)
 		}
 	}
 	return alertRules

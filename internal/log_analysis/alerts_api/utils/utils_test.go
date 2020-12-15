@@ -23,21 +23,19 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	alertmodels "github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 var timeInTest = time.Now()
 
 func TestAlertItemToSummary(t *testing.T) {
-	mockDdbClient := &mockDynamoDB{}
+	mockDdbClient := &testutils.DynamoDBMock{}
 
 	alertItem := table.AlertItem{
 		RuleID:            "ruleId",
@@ -97,12 +95,12 @@ func TestAlertItemToSummary(t *testing.T) {
 	require.NoError(t, err)
 
 	mockDdbClient.On("GetItem", alertItem, nil).Return(item)
-	result := AlertItemToSummary(&alertItem, aws.String(alertRule.Description), aws.String(alertRule.Reference), aws.String(alertRule.Runbook))
+	result := AlertItemToSummary(&alertItem, &alertRule)
 	require.Equal(t, expectedAlertSummary, *result)
 }
 
 func TestAlertItemToSummaryHavingGeneratedFields(t *testing.T) {
-	mockDdbClient := &mockDynamoDB{}
+	mockDdbClient := &testutils.DynamoDBMock{}
 
 	alertItem := table.AlertItem{
 		RuleID:            "ruleId",
@@ -167,12 +165,12 @@ func TestAlertItemToSummaryHavingGeneratedFields(t *testing.T) {
 	require.NoError(t, err)
 
 	mockDdbClient.On("GetItem", alertItem, nil).Return(item)
-	result := AlertItemToSummary(&alertItem, aws.String(alertRule.Description), aws.String(alertRule.Reference), aws.String(alertRule.Runbook))
+	result := AlertItemToSummary(&alertItem, &alertRule)
 	require.Equal(t, expectedAlertSummary, *result)
 }
 
 func TestAlertItemToSummaryMissingGeneratedFields(t *testing.T) {
-	mockDdbClient := &mockDynamoDB{}
+	mockDdbClient := &testutils.DynamoDBMock{}
 
 	alertItem := table.AlertItem{
 		RuleID:            "ruleId",
@@ -237,16 +235,6 @@ func TestAlertItemToSummaryMissingGeneratedFields(t *testing.T) {
 	require.NoError(t, err)
 
 	mockDdbClient.On("GetItem", alertItem, nil).Return(item)
-	result := AlertItemToSummary(&alertItem, aws.String(alertRule.Description), aws.String(alertRule.Reference), aws.String(alertRule.Runbook))
+	result := AlertItemToSummary(&alertItem, &alertRule)
 	require.Equal(t, expectedAlertSummary, *result)
-}
-
-type mockDynamoDB struct {
-	dynamodbiface.DynamoDBAPI
-	mock.Mock
-}
-
-func (m *mockDynamoDB) GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*dynamodb.GetItemOutput), args.Error(1)
 }
