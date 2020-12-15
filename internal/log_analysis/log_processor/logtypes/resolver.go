@@ -76,7 +76,7 @@ func (c chainResolver) Resolve(ctx context.Context, name string) (Entry, error) 
 }
 
 // CachedResolver
-func CachedResolver(r Resolver, maxAge time.Duration) Resolver {
+func CachedResolver(maxAge time.Duration, r Resolver) Resolver {
 	return &cachedResolver{
 		maxAge:   maxAge,
 		upstream: r,

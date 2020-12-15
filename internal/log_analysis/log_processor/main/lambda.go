@@ -71,16 +71,13 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 	logTypesResolver := logtypes.ChainResolvers(
 		registry.NativeLogTypesResolver(),
 		snapshotlogs.Resolver(),
-		logtypes.CachedResolver(
-			&logtypesapi.Resolver{
-				LogTypesAPI: &logtypesapi.LogTypesAPILambdaClient{
-					LambdaName: logtypesapi.LambdaName,
-					LambdaAPI:  common.LambdaClient,
-					Validate:   validator.New().Struct,
-				},
+		logtypes.CachedResolver(logTypeMaxAge, &logtypesapi.Resolver{
+			LogTypesAPI: &logtypesapi.LogTypesAPILambdaClient{
+				LambdaName: logtypesapi.LambdaName,
+				LambdaAPI:  common.LambdaClient,
+				Validate:   validator.New().Struct,
 			},
-			logTypeMaxAge,
-		),
+		}),
 	)
 
 	sqsMessageCount, err = processor.PollEvents(ctx, common.SqsClient, logTypesResolver)

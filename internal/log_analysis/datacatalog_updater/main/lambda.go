@@ -86,16 +86,14 @@ func main() {
 		LambdaAPI:  lambdaClient,
 	}
 
-	cachedResolver := logtypes.CachedResolver(
-		&logtypesapi.Resolver{
-			LogTypesAPI: &logtypesapi.LogTypesAPILambdaClient{
-				LambdaName: logtypesapi.LambdaName,
-				LambdaAPI:  common.LambdaClient,
-				Validate:   validator.New().Struct,
-			},
+	cachedResolver := logtypes.CachedResolver(logTypeMaxAge, &logtypesapi.Resolver{
+		LogTypesAPI: &logtypesapi.LogTypesAPILambdaClient{
+			LambdaName: logtypesapi.LambdaName,
+			LambdaAPI:  common.LambdaClient,
+			Validate:   validator.New().Struct,
 		},
-		logTypeMaxAge,
-	)
+	})
+
 	// Store the clear cache of the underlying cached resolver.
 	// We use it on custom log updates to ensure we have the latest schema.
 	clearCache := cachedResolver.(interface {
