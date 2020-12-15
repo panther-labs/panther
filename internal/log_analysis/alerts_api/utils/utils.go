@@ -35,13 +35,13 @@ func AlertItemsToSummaries(alertItems []*table.AlertItem, alertRules []*models.R
 	for i, item := range alertItems {
 		description, reference, runbook := item.Description, item.Reference, item.Runbook
 		// Backwards compatibility for alert items w/o description, reference, runbook
-		if alertRules != nil && len(alertRules) > 0 && description == "" {
+		if len(alertRules) > 0 && description == "" {
 			description = alertRules[i].Description
 		}
-		if alertRules != nil && len(alertRules) > 0 && reference == "" {
+		if len(alertRules) > 0 && reference == "" {
 			reference = alertRules[i].Description
 		}
-		if alertRules != nil && len(alertRules) > 0 && runbook == "" {
+		if len(alertRules) > 0 && runbook == "" {
 			runbook = alertRules[i].Description
 		}
 		result[i] = AlertItemToSummary(item, aws.String(description), aws.String(reference), aws.String(runbook))
