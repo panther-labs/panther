@@ -31,17 +31,14 @@ import (
 	lambdaclient "github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/kelseyhightower/envconfig"
-	"go.uber.org/zap"
-	"gopkg.in/go-playground/validator.v9"
-
 	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsretry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"go.uber.org/zap"
 )
 
 // The panther-datacatalog-updater lambda is responsible for managing Glue partitions as data is created.
@@ -87,11 +84,7 @@ func main() {
 	}
 
 	cachedResolver := logtypes.CachedResolver(logTypeMaxAge, &logtypesapi.Resolver{
-		LogTypesAPI: &logtypesapi.LogTypesAPILambdaClient{
-			LambdaName: logtypesapi.LambdaName,
-			LambdaAPI:  common.LambdaClient,
-			Validate:   validator.New().Struct,
-		},
+		LogTypesAPI: logtypesAPI,
 	})
 
 	// Store the clear cache of the underlying cached resolver.
