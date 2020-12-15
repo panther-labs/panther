@@ -16,4 +16,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './BulletedLogTypeList';
+import React from 'react';
+import { Box, Flex } from 'pouncejs';
+import { stringToPaleColor } from 'Helpers/colors';
+
+interface BulletedValueProps {
+  value: string;
+}
+
+const BulletedValue: React.FC<BulletedValueProps> = ({ value }) => {
+  return (
+    <Flex spacing={2} align="center">
+      <Box
+        as="span"
+        width={12}
+        height={12}
+        backgroundColor={stringToPaleColor(value) as any}
+        borderRadius="circle"
+      />
+      <Box as="span" fontSize="small" fontWeight="normal" lineHeight="typical">
+        {value}
+      </Box>
+    </Flex>
+  );
+};
+
+export default BulletedValue;
