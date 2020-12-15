@@ -27,6 +27,8 @@ import BaseDestinationForm, {
   defaultValidationSchema,
 } from 'Components/forms/BaseDestinationForm';
 import { Box, FormHelperText, SimpleGrid } from 'pouncejs';
+import FormikMultiCombobox from 'Components/fields/MultiComboBox';
+import { hasNoWhitespaces } from 'Helpers/utils';
 
 type JiraFieldValues = Pick<DestinationConfigInput, 'jira'>;
 
@@ -46,6 +48,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
         projectKey: Yup.string().required(),
         assigneeId: Yup.string(),
         issueType: Yup.string().required(),
+        labels: Yup.array().of(Yup.string()),
         apiKey: existing ? Yup.string() : Yup.string().required(),
       }),
     }),
@@ -83,7 +86,7 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
           autoComplete="new-password"
         />
       </SimpleGrid>
-      <SimpleGrid gap={5} columns={2}>
+      <SimpleGrid gap={5} columns={2} mb={5}>
         <Field
           as={FormikTextInput}
           name="outputConfig.jira.userName"
@@ -99,13 +102,8 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
           required={!existing}
           autoComplete="new-password"
         />
-
-        <Field
-          as={FormikTextInput}
-          name="outputConfig.jira.assigneeId"
-          label="Assignee ID"
-          placeholder="Who should we assign this to?"
-        />
+      </SimpleGrid>
+      <SimpleGrid gap={5} columns={3}>
         <Box as="fieldset">
           <Field
             as={FormikTextInput}
@@ -116,6 +114,28 @@ const JiraDestinationForm: React.FC<JiraDestinationFormProps> = ({ onSubmit, ini
           />
           <FormHelperText id="issueType-helper" mt={2}>
             Can be Bug, Story, Task or any custom type
+          </FormHelperText>
+        </Box>
+        <Field
+          as={FormikTextInput}
+          name="outputConfig.jira.assigneeId"
+          label="Assignee ID"
+          placeholder="Who should we assign this to?"
+        />
+        <Box as="fieldset">
+          <Field
+            name="outputConfig.jira.labels"
+            as={FormikMultiCombobox}
+            label="Labels"
+            aria-describedby="labels-helper"
+            allowAdditions
+            validateAddition={hasNoWhitespaces}
+            searchable
+            items={[]}
+            placeholder="Add custom labels"
+          />
+          <FormHelperText id="labels-helper" mt={2}>
+            Add by pressing the {'<'}Enter{'>'} key
           </FormHelperText>
         </Box>
       </SimpleGrid>

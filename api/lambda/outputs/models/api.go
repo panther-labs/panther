@@ -219,12 +219,13 @@ type GithubConfig struct {
 
 // JiraConfig defines options for each Jira output
 type JiraConfig struct {
-	OrgDomain  string `json:"orgDomain"`
-	ProjectKey string `json:"projectKey"`
-	UserName   string `json:"userName"`
-	APIKey     string `json:"apiKey"`
-	AssigneeID string `json:"assigneeId"`
-	Type       string `json:"issueType"`
+	OrgDomain  string   `json:"orgDomain" validate:"url"`
+	ProjectKey string   `json:"projectKey" validate:"required"`
+	UserName   string   `json:"userName" validate:"required"`
+	APIKey     string   `json:"apiKey"`
+	AssigneeID string   `json:"assigneeId"`
+	Type       string   `json:"issueType"`
+	Labels     []string `json:"labels" validate:"required,dive,min=1"`
 }
 
 // OpsgenieConfig defines options for each Opsgenie output

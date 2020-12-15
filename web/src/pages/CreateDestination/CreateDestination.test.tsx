@@ -201,6 +201,7 @@ describe('CreateDestination', () => {
     const userNameInput = getByLabelText('* Email');
     const apiKeyInput = getByLabelText('* Jira API Key');
     const issueInput = getByLabelText('* Issue Type');
+    const labelsInput = getByLabelText('Labels', { selector: 'input' });
     const assigneeInput = getByLabelText('Assignee ID');
     const criticalSeverityCheckbox = getByLabelText(criticalSeverity);
 
@@ -212,6 +213,14 @@ describe('CreateDestination', () => {
     fireEvent.change(apiKeyInput, { target: { value: jiraConfig.apiKey } });
     fireEvent.change(issueInput, { target: { value: jiraConfig.issueType } });
     fireEvent.change(assigneeInput, { target: { value: jiraConfig.assigneeId } });
+    jiraConfig.labels.forEach(label => {
+      fireEvent.change(labelsInput, {
+        target: {
+          value: label,
+        },
+      });
+      fireEvent.blur(labelsInput);
+    });
     fireEvent.click(criticalSeverityCheckbox);
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link

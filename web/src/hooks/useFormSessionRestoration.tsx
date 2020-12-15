@@ -55,7 +55,7 @@ function useFormSessionRestoration<FormValues>({ sessionId }: UseFormSessionRest
   }, [sessionId]);
 
   // Syncs to session storage
-  React.useEffect(syncStorage, [dirty, isSubmitting, values]);
+  React.useEffect(syncStorage, [dirty, values]);
 
   React.useEffect(() => {
     if (isSubmitting) {

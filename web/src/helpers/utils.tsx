@@ -265,6 +265,12 @@ export function slugify(text: string) {
 
 export const isNumber = (value: string) => /^-{0,1}\d+$/.test(value);
 
+/**
+ * A function that returns true if the string consists of only non-whitespace characters
+ * @param {string} value A string to test
+ */
+export const hasNoWhitespaces = (value: string) => /^\S+$/.test(value);
+
 export const toStackNameFormat = (val: string) => val.replace(/ /g, '-').toLowerCase();
 
 /*

@@ -1,0 +1,7 @@
+fragment CustomLogTeaser on CustomLogRecord {
+  logType
+  description
+  referenceURL
+  updatedAt
+  revision
+}

@@ -18,18 +18,18 @@
 
 import React from 'react';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { Card, FadeIn } from 'pouncejs';
+import { Card } from 'pouncejs';
 
 const AlertDetailsPageSkeleton: React.FC = () => {
   return (
-    <FadeIn from="bottom">
+    <React.Fragment>
       <Card p={6}>
         <TablePlaceholder rowCount={2} />
       </Card>
       <Card p={6} mt={5}>
         <TablePlaceholder />
       </Card>
-    </FadeIn>
+    </React.Fragment>
   );
 };
 
