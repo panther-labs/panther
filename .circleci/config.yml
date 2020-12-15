@@ -4,7 +4,7 @@ version: 2.1
 executors:
   panther-buildpack:
     docker:
-      - image: pantherlabs/panther-buildpack:1.8.0
+      - image: pantherlabs/panther-buildpack:1.15.0
         # The images are public, but DockerHub requires authenticated pulls for
         # higher rate limits. https://circleci.com/docs/2.0/private-images/
         # TODO: Use ECS instead of DockerHub to host build images

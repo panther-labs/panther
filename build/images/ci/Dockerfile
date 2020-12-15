@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Published version:
-#     pantherlabs/panther-buildpack:1.8.0
+#     pantherlabs/panther-buildpack:1.15.0
 #
 # When updating, bump the tag to the upcoming panther release.
 
