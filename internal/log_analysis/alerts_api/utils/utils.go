@@ -64,8 +64,6 @@ func AlertItemToSummary(item *table.AlertItem, itemRule *models.Rule) *alertmode
 
 	// Generated Fields - backwards compatibility support
 	description, reference, runbook := item.Description, item.Reference, item.Runbook
-
-	// Check if we have these fields to avoid an unnecessary API call
 	if description == nil || reference == nil || runbook == nil {
 		if description == nil {
 			description = aws.String(itemRule.Description)
