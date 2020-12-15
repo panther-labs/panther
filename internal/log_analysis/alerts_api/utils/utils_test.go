@@ -120,9 +120,9 @@ func TestAlertItemToSummaryHavingGeneratedFields(t *testing.T) {
 		LastUpdatedBy:     "userId",
 		LastUpdatedByTime: timeInTest,
 		DeliveryResponses: []*alertmodels.DeliveryResponse{},
-		Description:       "description",
-		Reference:         "reference",
-		Runbook:           "runbook",
+		Description:       aws.String("description"),
+		Reference:         aws.String("reference"),
+		Runbook:           aws.String("runbook"),
 	}
 
 	alertRule := models.Rule{
