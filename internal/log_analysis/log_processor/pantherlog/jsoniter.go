@@ -129,6 +129,18 @@ func (*resultEncoder) writePantherFields(r *Result, stream *jsoniter.Stream) {
 	stream.WriteObjectField(FieldParseTimeJSON)
 	stream.WriteVal(r.PantherParseTime)
 
+	if r.PantherSourceID != "" {
+		stream.WriteMore()
+		stream.WriteObjectField(FieldSourceIDJSON)
+		stream.WriteVal(r.PantherSourceID)
+	}
+
+	if r.PantherSourceLabel != "" {
+		stream.WriteMore()
+		stream.WriteObjectField(FieldSourceLabelJSON)
+		stream.WriteVal(r.PantherSourceLabel)
+	}
+
 	for id, values := range r.values.index {
 		if len(values) == 0 || id.IsCore() {
 			continue

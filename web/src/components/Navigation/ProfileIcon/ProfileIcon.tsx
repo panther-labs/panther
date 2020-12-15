@@ -34,7 +34,7 @@ import useAuth from 'Hooks/useAuth';
 import { UserInfo } from 'Components/utils/AuthContext';
 import { getUserDisplayName } from 'Helpers/utils';
 import PantherIcon from 'Assets/panther-minimal-logo.svg';
-import { STABLE_PANTHER_VERSION } from 'Source/constants';
+import { pantherConfig } from 'Source/config';
 import { MODALS } from 'Components/utils/Modal';
 import useModal from 'Hooks/useModal';
 
@@ -132,7 +132,7 @@ const ProfileIcon: React.FC = () => {
                   nativeHeight={16}
                   mr={2}
                 />
-                Panther&nbsp;<b>{STABLE_PANTHER_VERSION}</b>
+                Panther&nbsp;<b>{pantherConfig.PANTHER_VERSION}</b>
               </Flex>
             </Card>
           </PopoverContent>

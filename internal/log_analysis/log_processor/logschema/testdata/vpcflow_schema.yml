@@ -1,0 +1,94 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# Copyright (C) 2020 Panther Labs Inc
+#
+# Panther Enterprise is licensed under the terms of a commercial license available from
+# Panther Labs Inc ("Panther Commercial License") by contacting contact@runpanther.com.
+# All use, distribution, and/or modification of this software, whether commercial or non-commercial,
+# falls under the Panther Commercial License to the extent it is permitted.
+
+version: 0
+schema: VPCFlow
+parser:
+  csv:
+    hasHeader: true
+    delimiter: ' '
+    trimSpace: true
+    emptyValues: ['-']
+    expandFields:
+      # lacking a better alternative for 'fixing' header column names, we resort to expendFields
+      accountId: '%{account-id}'
+      interfaceId: '%{interface-id}'
+      dstAddr: '%{dstaddr}'
+      srcAddr: '%{srcaddr}'
+      dstPort: '%{dstport}'
+      srcPort: '%{srcport}'
+      logStatus: '%{log-status}'
+      subnetId: '%{subnet-id}'
+      instanceId: '%{instance-id}'
+fields:
+  - name: version
+    type: int
+  - name: accountId
+    type: string
+    indicators: [aws_account_id]
+  - name: interfaceId
+    type: string
+  - name: srcAddr
+    type: string
+    indicators: [ip]
+  - name: dstAddr
+    type: string
+    indicators: [ip]
+  - name: srcPort
+    type: int
+  - name: dstPort
+    type: int
+  - name: protocol
+    type: int
+  - name: packets
+    type: int
+  - name: bytes
+    type: int
+  - name: start
+    type: timestamp
+    isEventTime: true
+    timeFormat: unix
+  - name: end
+    type: timestamp
+    timeFormat: unix
+  - name: action
+    type: string
+  - name: logStatus
+    type: string
+  - name: vpcId
+    type: string
+  - name: subnetId
+    type: string
+  - name: instanceId
+    type: string
+    indicators: [aws_instance_id]
+  - name: tcpFlags
+    type: smallint
+  - name: type
+    type: string
+  - name: pktSrcAdr
+    type: string
+    indicators: [ip]
+  - name: pktDstAdr
+    type: string
+    indicators: [ip]

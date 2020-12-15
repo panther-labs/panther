@@ -57,7 +57,7 @@ type ListPoliciesInput struct {
 	ResourceTypes []string `json:"resourceTypes" validate:"max=500,dive,required,max=500"`
 
 	// Only include policies with this severity
-	Severity models.Severity `json:"severity" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Severity []models.Severity `json:"severity" validate:"dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 
 	// Only include policies with all of these tags (case-insensitive)
 	Tags []string `json:"tags" validate:"max=500,dive,required,max=500"`
@@ -73,6 +73,16 @@ type ListPoliciesInput struct {
 	// ----- Paging -----
 	PageSize int `json:"pageSize" validate:"min=0,max=1000"`
 	Page     int `json:"page" validate:"min=0"`
+
+	// Only include policies whose creator matches this user ID (which need not be a uuid)
+	CreatedBy string `json:"createdBy"`
+
+	// Only include policies which were last modified by this user ID
+	LastModifiedBy string `json:"lastModifiedBy"`
+
+	// If True, include only policies which were created by the system during the initial deployment
+	// If False, include only policies where were NOT created by the system during the initial deployment
+	InitialSet *bool `json:"initialSet"`
 }
 
 type ListPoliciesOutput struct {
@@ -143,7 +153,7 @@ type UpdatePolicyInput struct {
 	Suppressions              []string            `json:"suppressions" validate:"max=500,dive,required,max=1000"`
 	Tags                      []string            `json:"tags" validate:"max=500,dive,required,max=1000"`
 	Tests                     []UnitTest          `json:"tests" validate:"max=500,dive"`
-	UserID                    string              `json:"userId" validate:"uuid4"`
+	UserID                    string              `json:"userId" validate:"required"`
 }
 
 // The validate tags here are used by BulkUpload

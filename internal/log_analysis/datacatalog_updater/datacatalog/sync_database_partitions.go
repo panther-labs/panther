@@ -24,8 +24,8 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetasks"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
 
@@ -49,19 +49,18 @@ func (h *LambdaHandler) HandleSyncDatabasePartitionsEvent(ctx context.Context, e
 		zap.Bool("dryRun", event.DryRun),
 	)
 	var tableEvents []*SyncTableEvent
-	for _, dbName := range event.DatabaseNames {
-		// Tables in panther_logs database can have partitions at any point in time.
-		// The rest can only have partitions in the range TableCreateTime <= PartitionTime < now
-		afterTableCreateTime := dbName != awsglue.LogProcessingDatabaseName
-		for _, logType := range event.LogTypes {
-			tblName := awsglue.GetTableName(logType)
+	for _, logType := range event.LogTypes {
+		for _, dbName := range event.DatabaseNames {
+			if !pantherdb.IsInDatabase(logType, dbName) {
+				// If a logtype is notpresent in the given database, skip
+				continue
+			}
 			tableEvents = append(tableEvents, &SyncTableEvent{
 				TraceID: event.TraceID,
 				SyncTablePartitions: gluetasks.SyncTablePartitions{
-					DryRun:               event.DryRun,
-					TableName:            tblName,
-					DatabaseName:         dbName,
-					AfterTableCreateTime: afterTableCreateTime,
+					DryRun:       event.DryRun,
+					TableName:    pantherdb.TableName(logType),
+					DatabaseName: dbName,
 				},
 			})
 		}

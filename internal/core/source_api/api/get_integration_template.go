@@ -134,9 +134,9 @@ func getTemplate(integrationType string) (string, error) {
 	}
 
 	if integrationType == models.IntegrationTypeAWSScan {
-		templateRequest.Key = aws.String("panther-cloudsec-iam/" + env.Version + "/template.yml")
+		templateRequest.Key = aws.String("panther-cloudsec-iam/v" + env.Version + "/template.yml")
 	} else {
-		templateRequest.Key = aws.String("panther-log-analysis-iam/" + env.Version + "/template.yml")
+		templateRequest.Key = aws.String("panther-log-analysis-iam/v" + env.Version + "/template.yml")
 	}
 	zap.L().Debug("requesting template", zap.String("key", *templateRequest.Key), zap.String("bucket", *templateRequest.Bucket))
 	s3Object, err := templateS3Client.GetObject(templateRequest)

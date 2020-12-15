@@ -39,6 +39,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor/logstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
@@ -72,12 +73,16 @@ func main() {
 	parsers := availableParsers()
 
 	classifier := classification.NewClassifier(parsers)
-	lines := bufio.NewScanner(stdin)
+	stream := logstream.NewLineStream(stdin, logstream.DefaultBufferSize)
 	numLines := 0
 	numEvents := 0
-	for lines.Scan() {
-		line := lines.Text()
-		if line == "" {
+	for {
+		next := stream.Next()
+		if next == nil {
+			break
+		}
+		line := string(next)
+		if len(line) == 0 {
 			debugLog.Printf("Empty line %d\n", numLines)
 			continue
 		}
@@ -107,8 +112,8 @@ func main() {
 			numEvents++
 		}
 	}
-	if err := lines.Err(); err != nil {
-		debugLog.Printf("Scan failed %s\n", err)
+	if err := stream.Err(); err != nil {
+		debugLog.Printf("Read failed at line %d: %s", numLines, err)
 		os.Exit(1)
 	}
 	debugLog.Printf("Scanned %d lines\n", numLines)

@@ -25,10 +25,15 @@ import {
   waitMs,
   buildUpdateComplianceIntegrationInput,
 } from 'test-utils';
+import urls from 'Source/urls';
+import { Route } from 'react-router';
 import { CLOUD_SECURITY_REAL_TIME_DOC_URL } from 'Source/constants';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
 import EditComplianceSource from './EditComplianceSource';
 import { mockGetComplianceSource } from './graphql/getComplianceSource.generated';
 import { mockUpdateComplianceSource } from './graphql/updateComplianceSource.generated';
+
+jest.mock('Helpers/analytics');
 
 describe('EditComplianceSource', () => {
   it('can successfully update a compliance source without real-time', async () => {
@@ -44,6 +49,9 @@ describe('EditComplianceSource', () => {
 
     const mocks = [
       mockGetComplianceSource({
+        variables: {
+          id: complianceSource.integrationId,
+        },
         data: {
           getComplianceIntegration: complianceSource,
         },
@@ -63,8 +71,10 @@ describe('EditComplianceSource', () => {
       }),
     ];
     const { getByText, getByLabelText, getByAltText, findByText } = render(
-      <EditComplianceSource />,
-      { mocks }
+      <Route path={urls.compliance.sources.edit(':id')}>
+        <EditComplianceSource />
+      </Route>,
+      { mocks, initialRoute: urls.compliance.sources.edit(complianceSource.integrationId) }
     );
 
     const nameField = getByLabelText('Name') as HTMLInputElement;
@@ -95,6 +105,12 @@ describe('EditComplianceSource', () => {
     // ... replaced by a success screen
     expect(await findByText('Everything looks good!')).toBeInTheDocument();
     expect(getByText('Finish Setup')).toBeInTheDocument();
+
+    // Expect analytics to have been called
+    expect(trackEvent).toHaveBeenCalledWith({
+      event: EventEnum.UpdatedComplianceSource,
+      src: SrcEnum.ComplianceSources,
+    });
   });
 
   it('can successfully update a compliance source & enable real-time', async () => {
@@ -110,6 +126,9 @@ describe('EditComplianceSource', () => {
 
     const mocks = [
       mockGetComplianceSource({
+        variables: {
+          id: complianceSource.integrationId,
+        },
         data: {
           getComplianceIntegration: complianceSource,
         },
@@ -128,13 +147,12 @@ describe('EditComplianceSource', () => {
         },
       }),
     ];
-    const {
-      getByText,
-      getByLabelText,
-      getByAltText,
-      findByText,
-      queryByText,
-    } = render(<EditComplianceSource />, { mocks });
+    const { getByText, getByLabelText, getByAltText, findByText, queryByText } = render(
+      <Route path={urls.compliance.sources.edit(':id')}>
+        <EditComplianceSource />
+      </Route>,
+      { mocks, initialRoute: urls.compliance.sources.edit(complianceSource.integrationId) }
+    );
 
     const nameField = getByLabelText('Name') as HTMLInputElement;
 
@@ -162,5 +180,11 @@ describe('EditComplianceSource', () => {
     expect(getByText('Everything looks good!')).toBeInTheDocument();
     expect(getByText('Finish Setup')).toBeInTheDocument();
     expect(queryByText('Add Another')).not.toBeInTheDocument();
+
+    // Expect analytics to have been called
+    expect(trackEvent).toHaveBeenCalledWith({
+      event: EventEnum.UpdatedComplianceSource,
+      src: SrcEnum.ComplianceSources,
+    });
   });
 });

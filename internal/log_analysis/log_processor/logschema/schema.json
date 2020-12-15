@@ -1,0 +1,413 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Panther log schema",
+  "$id": "https://runpanther.io/schemas/logspec/v0",
+  "$ref": "#/definitions/schemaSpec",
+  "definitions": {
+    "schemaSpec": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "const": 0
+        },
+        "schema": {
+          "type": "string",
+          "minLength": 3,
+          "pattern": "^[A-Z][A-Za-z0-9]+$"
+        },
+        "description": {
+          "type": "string"
+        },
+        "referenceURL": {
+          "type": "string",
+          "format": "uri"
+        },
+        "parser": {
+          "maxProperties": 1,
+          "minProperties": 1,
+          "properties": {
+            "csv": {
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/parserCSVWithHeader"
+                },
+                {
+                  "$ref": "#/definitions/parserCSVWithoutHeader"
+                }
+              ]
+            },
+            "fastmatch": {
+              "$ref": "#/definitions/parserFastMatch"
+            },
+            "regex": {
+              "$ref": "#/definitions/parserRegexMatch"
+            }
+          }
+        },
+        "fields": {
+          "$ref": "#/definitions/objectFields"
+        },
+        "definitions": {
+          "type": "object",
+          "patternProperties": {
+            "^[A-Z][A-Za-z0-9]+$": {
+              "$ref": "#/definitions/valueSpec"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["version", "fields"]
+    },
+    "objectFields": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/fieldSpec"
+      }
+    },
+    "fieldSpec": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "type": {
+              "$ref": "#/definitions/typeScec"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": ["name", "type"]
+        },
+        {
+          "$ref": "#/definitions/valueSpec"
+        }
+      ]
+    },
+    "valueSpec": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/stringSpec"
+        },
+        {
+          "$ref": "#/definitions/objectSpec"
+        },
+        {
+          "$ref": "#/definitions/arraySpec"
+        },
+        {
+          "$ref": "#/definitions/scalarSpec"
+        },
+        {
+          "$ref": "#/definitions/timeSpec"
+        },
+        {
+          "$ref": "#/definitions/refSpec"
+        }
+      ]
+    },
+    "typeScec": {
+      "type": "string",
+      "enum": [
+        "string",
+        "object",
+        "array",
+        "json",
+        "int",
+        "float",
+        "smallint",
+        "bigint",
+        "boolean",
+        "timestamp",
+        "ref"
+      ]
+    },
+    "objectSpec": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "object"
+        },
+        "fields": {
+          "$ref": "#/definitions/objectFields"
+        }
+      },
+      "required": ["type", "fields"]
+    },
+    "arraySpec": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "array"
+        },
+        "element": {
+          "$ref": "#/definitions/valueSpec"
+        }
+      },
+      "required": ["type", "element"]
+    },
+    "scalarSpec": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["int", "float", "bigint", "smallint", "json", "boolean"]
+        }
+      },
+      "required": ["type"]
+    },
+    "stringSpec": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "string"
+        },
+        "indicators": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/indicator"
+          }
+        }
+      },
+      "required": ["type"]
+    },
+    "indicator": {
+      "type": "string",
+      "enum": [
+        "ip",
+        "domain",
+        "hostname",
+        "url",
+        "net_addr",
+        "md5",
+        "sha1",
+        "sha256",
+        "aws_arn",
+        "aws_account_id",
+        "aws_instance_id",
+        "aws_tag",
+        "trace_id"
+      ]
+    },
+    "timeSpec": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "timestamp"
+        },
+        "isEventTime": {
+          "type": "boolean"
+        },
+        "timeFormat": {
+          "oneOf": [
+            {
+              "type": "string",
+              "title": "Built-in timestamp format",
+              "description": "Common timestamp formats",
+              "enum": ["rfc3339", "unix", "unix_ms", "unix_us", "unix_ns"]
+            },
+            {
+              "type": "string",
+              "title": "Custom timestamp format",
+              "description": "A custom time format in strftime notation",
+              "pattern": "%[aAbBcCdfHIjmMpSUwWxyYzZ]"
+            }
+          ]
+        }
+      },
+      "required": ["type", "timeFormat"]
+    },
+    "refSpec": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "ref"
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": ["target", "type"]
+    },
+    "parserCSVWithHeader": {
+      "type": "object",
+      "required": ["hasHeader"],
+      "properties": {
+        "hasHeader": {
+          "const": true
+        },
+        "delimiter": {
+          "type": "string",
+          "enum": [",", "\t", " "],
+          "default": ","
+        },
+        "columns": {
+          "type": "array",
+          "minLength": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "skipPrefix": {
+          "type": "string",
+          "minLength": 1
+        },
+        "emptyValues": {
+          "type": "array",
+          "minLength": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "trimSpace": {
+          "type": "boolean"
+        },
+        "expandFields": {
+          "$ref": "#/definitions/textParserExpandFields"
+        }
+      }
+    },
+    "parserCSVWithoutHeader": {
+      "type": "object",
+      "required": ["columns"],
+      "properties": {
+        "delimiter": {
+          "type": "string",
+          "enum": [",", "\t", " "],
+          "default": ","
+        },
+        "hasHeader": {
+          "const": false
+        },
+        "columns": {
+          "type": "array",
+          "minLength": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "skipPrefix": {
+          "type": "string",
+          "minLength": 1
+        },
+        "emptyValues": {
+          "type": "array",
+          "minLength": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "trimSpace": {
+          "type": "boolean"
+        },
+        "expandFields": {
+          "$ref": "#/definitions/textParserExpandFields"
+        }
+      }
+    },
+    "parserFastMatch": {
+      "type": "object",
+      "required": ["match"],
+      "properties": {
+        "match": {
+          "type": "array",
+          "minLength": 1,
+          "items": {
+            "$ref": "#/definitions/fastmatchPattern"
+          }
+        },
+        "skipPrefix": {
+          "type": "string",
+          "minLength": 1
+        },
+        "emptyValues": {
+          "type": "array",
+          "minLength": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "trimSpace": {
+          "type": "boolean"
+        },
+        "expandFields": {
+          "$ref": "#/definitions/textParserExpandFields"
+        }
+      }
+    },
+    "parserRegexMatch": {
+      "required": ["match"],
+      "properties": {
+        "patternDefintions": {
+          "type": "object",
+          "patternProperties": {
+            "^[A-Z][A-Z0-9_]*$": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "match": {
+          "type": "array",
+          "minLength": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "skipPrefix": {
+          "type": "string",
+          "minLength": 1
+        },
+        "emptyValues": {
+          "type": "array",
+          "minLength": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "trimSpace": {
+          "type": "boolean"
+        },
+        "expandFields": {
+          "$ref": "#/definitions/textParserExpandFields"
+        }
+      }
+    },
+    "textParserExpandFields": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "fastmatchPattern": {
+      "allOf": [
+        {
+          "type": "string",
+          "minLength": 4
+        },
+        {
+          "title": "Pattern with placeholder",
+          "$comment": "Must contain at least one placeholder",
+          "pattern": "%{\\s*[^}]+\\s*}"
+        },
+        {
+          "title": "Pattern without newlines",
+          "$comment": "Only allow newline at the end",
+          "pattern": "^[^\\n]+\\n?$"
+        }
+      ]
+    }
+  }
+}

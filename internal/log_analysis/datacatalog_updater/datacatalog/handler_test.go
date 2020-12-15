@@ -32,9 +32,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -180,9 +180,9 @@ func initProcessTest() {
 
 func generateLogTablesMock(logTypes ...string) (tables []*glue.TableData) {
 	tables = make([]*glue.TableData, len(logTypes))
-	dbName := awsglue.LogProcessingDatabaseName
+	dbName := pantherdb.LogProcessingDatabase
 	for i, logType := range logTypes {
-		tableName := awsglue.GetTableName(logType)
+		tableName := pantherdb.TableName(logType)
 		tables[i] = &glue.TableData{
 			Name:         &tableName,
 			DatabaseName: &dbName,

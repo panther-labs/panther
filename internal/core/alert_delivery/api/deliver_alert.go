@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -53,6 +54,7 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 
 	// Get our Alert -> Output mappings. We determine which destinations an alert should be sent.
 	alertOutputMap, err := getAlertOutputMapping(alert, input.OutputIds)
+
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +86,7 @@ func getAlert(input *deliveryModels.DeliverAlertInput) (*alertTable.AlertItem, e
 	return alertItem, nil
 }
 
-// populateAlertData - queries the rule or policy associated and merges in the details to the alert
+// populateAlertData - queries the rule associated and merges in the details to the alert
 func populateAlertData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, error) {
 	commonFields := []zap.Field{
 		zap.String("alertId", alertItem.AlertID),
@@ -110,10 +112,12 @@ func populateAlertData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, 
 		CreatedAt:           alertItem.CreationTime,
 		Severity:            alertItem.Severity,
 		OutputIds:           []string{}, // We do not pay attention to this field
-		AnalysisDescription: &rule.Description,
-		AnalysisName:        &rule.DisplayName,
+		AnalysisDescription: alertItem.Description,
+		AnalysisName:        aws.String(rule.DisplayName),
 		Version:             &alertItem.RuleVersion,
-		Runbook:             &rule.Runbook,
+		Reference:           alertItem.Reference,
+		Runbook:             alertItem.Runbook,
+		Destinations:        alertItem.Destinations,
 		Tags:                rule.Tags,
 		AlertID:             &alertItem.AlertID,
 		Title:               alertItem.Title,

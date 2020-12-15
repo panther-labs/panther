@@ -33,6 +33,8 @@ import Breadcrumbs from 'Components/Breadcrumbs';
 import LinkButton from 'Components/buttons/LinkButton';
 
 const severityOptions = Object.values(SeverityEnum);
+const severityToString = (severity: SeverityEnum) => capitalize(severity.toLowerCase());
+
 const statusOptions = Object.values(ComplianceStatusEnum);
 
 export const filters = {
@@ -63,13 +65,12 @@ export const filters = {
     },
   },
   severity: {
-    component: FormikCombobox,
+    component: FormikMultiCombobox,
     props: {
-      label: 'Severity',
-      items: ['', ...severityOptions],
-      itemToString: (severity: SeverityEnum | '') =>
-        severity === '' ? 'All' : capitalize(severity.toLowerCase()),
-      placeholder: 'Choose a severity...',
+      label: 'Severities',
+      items: severityOptions,
+      itemToString: severityToString,
+      placeholder: 'Filter by severities...',
     },
   },
   complianceStatus: {

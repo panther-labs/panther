@@ -32,6 +32,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
@@ -47,6 +48,7 @@ const (
 )
 
 func main() {
+	// nolint: maligned
 	config := struct {
 		AthenaWorkgroup     string `required:"true" split_words:"true"`
 		SyncWorkersPerTable int    `default:"10" split_words:"true"`
@@ -82,6 +84,10 @@ func main() {
 
 	resolver := logtypes.ChainResolvers(
 		registry.NativeLogTypesResolver(),
+		snapshotlogs.Resolver(),
+		&logtypesapi.Resolver{
+			LogTypesAPI: logtypesAPI,
+		},
 	)
 
 	handler := datacatalog.LambdaHandler{

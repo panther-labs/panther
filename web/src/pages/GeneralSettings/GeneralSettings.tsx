@@ -114,12 +114,12 @@ const GeneralSettingsPage: React.FC = () => {
               Get Enterprise
             </LinkButton>
           </Box>
-          <Flex spacing={9} align="center">
+          <Flex as="dl" spacing={9} align="center">
             <Box as="section">
               <Box id="plan" as="dt" color="navyblue-100" fontSize="small" mb={1}>
                 Plan
               </Box>
-              <Box aria-labelledby="plan" as="dl" fontSize="medium">
+              <Box aria-labelledby="plan" as="dd" fontSize="medium">
                 Community
               </Box>
             </Box>
@@ -128,7 +128,7 @@ const GeneralSettingsPage: React.FC = () => {
               <Box id="aws_account_id" as="dt" color="navyblue-100" fontSize="small" mb={1}>
                 AWS Account ID
               </Box>
-              <Box aria-labelledby="aws_account_id" as="dl" fontSize="medium">
+              <Box aria-labelledby="aws_account_id" as="dd" fontSize="medium">
                 {pantherConfig.AWS_ACCOUNT_ID}
               </Box>
             </Box>
@@ -136,15 +136,15 @@ const GeneralSettingsPage: React.FC = () => {
               <Box id="panther_version" as="dt" color="navyblue-100" fontSize="small" mb={1}>
                 Version
               </Box>
-              <Box aria-labelledby="panther_version" as="dl" fontSize="medium">
-                {pantherConfig.PANTHER_VERSION || 'N/A'}
+              <Box aria-labelledby="panther_version" as="dd" fontSize="medium">
+                {pantherConfig.PANTHER_VERSION} ({pantherConfig.PANTHER_COMMIT})
               </Box>
             </Box>
             <Box as="section">
               <Box id="aws_region" as="dt" color="navyblue-100" fontSize="small" mb={1}>
                 AWS Region
               </Box>
-              <Box aria-labelledby="aws_region" as="dl" fontSize="medium">
+              <Box aria-labelledby="aws_region" as="dd" fontSize="medium">
                 {pantherConfig.AWS_REGION}
               </Box>
             </Box>

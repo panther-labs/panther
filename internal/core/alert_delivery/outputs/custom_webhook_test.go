@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
@@ -61,8 +62,8 @@ func TestCustomWebhookAlert(t *testing.T) {
 		Type:        alert.Type,
 		Link:        "https://panther.io/policies/policyId",
 		Title:       "Policy Failure: policyId",
-		Description: alert.AnalysisDescription,
-		Runbook:     alert.Runbook,
+		Description: aws.String(alert.AnalysisDescription),
+		Runbook:     aws.String(alert.Runbook),
 		Tags:        []string{},
 		Version:     alert.Version,
 		CreatedAt:   alert.CreatedAt,

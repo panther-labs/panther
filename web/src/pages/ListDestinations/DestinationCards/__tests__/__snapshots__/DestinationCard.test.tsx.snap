@@ -80,7 +80,7 @@ exports[`Generic Destination Card should match snapshot 1`] = `
 }
 
 .panther-5 {
-  margin-left: 4px;
+  margin-left: 8px;
   margin-top: -4px;
 }
 
@@ -165,7 +165,7 @@ exports[`Generic Destination Card should match snapshot 1`] = `
   display: flex;
   cursor: default;
   width: -webkit-fit-content;
-  width: -moz-content;
+  width: -moz-fit-content;
   width: fit-content;
   min-width: 85px;
   text-align: center;

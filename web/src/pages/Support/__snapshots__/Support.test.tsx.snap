@@ -1,0 +1,371 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Support page should match snapshot 1`] = `
+.panther-41 {
+  background-color: #23344e;
+  border-radius: 4px;
+  padding: 36px;
+}
+
+.panther-3 {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.panther-0 {
+  font-weight: 500;
+  font-size: 1.75rem;
+}
+
+.panther-2 {
+  font-size: 1rem;
+  margin-top: 8px;
+  color: #bdbdbd;
+}
+
+.panther-1 {
+  -webkit-transition: color 0.1s ease-out;
+  transition: color 0.1s ease-out;
+  font-weight: 500;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  color: #7fd3ff;
+}
+
+.panther-1:hover {
+  color: #ace2ff;
+}
+
+.panther-1:focus {
+  color: #ace2ff;
+}
+
+.panther-1:active,
+.panther-1[data-active=true] {
+  color: #11a5f3;
+}
+
+.panther-40 {
+  display: grid;
+  grid-gap: 24px;
+  grid-template-columns: repeat(2, 1fr);
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+.panther-12 {
+  background-color: #1d2a3f;
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.panther-11 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  margin-left: 24px;
+  margin-right: 24px;
+}
+
+.panther-11>*:not(:last-child) {
+  margin-right: 24px;
+}
+
+.panther-6 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-5 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  width: 75px;
+  height: 75px;
+  background-color: #30415C;
+  border-radius: 99999px;
+  font-size: 0.563rem;
+  font-weight: 500;
+}
+
+.panther-4 {
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.panther-10 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-align-items: space-between;
+  -webkit-box-align: space-between;
+  -ms-flex-align: space-between;
+  align-items: space-between;
+}
+
+.panther-10>*:not(:last-child) {
+  margin-bottom: 8px;
+}
+
+.panther-7 {
+  font-weight: 400;
+  font-size: 1.25rem;
+  color: #fefefe;
+}
+
+.panther-8 {
+  font-size: 0.813rem;
+  color: #86a3c3;
+  margin-top: 4px;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <article
+    class="panther-41"
+  >
+    <header
+      class="panther-3"
+    >
+      <h1
+        class="panther-0"
+      >
+        Get the support you need
+      </h1>
+      <p
+        class="panther-2"
+      >
+        You can also visit
+         
+        <a
+          class="panther-1"
+          href="https://docs.runpanther.io/v/release-1.2"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+           
+          our documentation
+        </a>
+         
+        if you are facing any problems
+      </p>
+    </header>
+    <div
+      class="panther-40"
+    >
+      <div
+        class="panther-12"
+      >
+        <div
+          class="panther-11"
+        >
+          <div
+            class="panther-6"
+          >
+            <div
+              class="panther-5"
+            >
+              <img
+                alt="Panther Enterprise logo"
+                class="panther-4"
+                height="40"
+                src="test-file-stub"
+                width="40"
+              />
+            </div>
+          </div>
+          <div
+            class="panther-10"
+          >
+            <h1
+              class="panther-7"
+            >
+              Join our Community Slack
+            </h1>
+            <p
+              class="panther-8"
+            >
+              We’re proud of our growing community in Slack. Join us in supporting each other!
+            </p>
+            <a
+              class="panther-1"
+              href="https://slack.runpanther.io"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Join Now
+            </a>
+          </div>
+        </div>
+      </div>
+      <div
+        class="panther-12"
+      >
+        <div
+          class="panther-11"
+        >
+          <div
+            class="panther-6"
+          >
+            <div
+              class="panther-5"
+            >
+              <img
+                alt="Panther Enterprise logo"
+                class="panther-4"
+                height="40"
+                src="test-file-stub"
+                width="40"
+              />
+            </div>
+          </div>
+          <div
+            class="panther-10"
+          >
+            <h1
+              class="panther-7"
+            >
+              Send us Product Feedback
+            </h1>
+            <p
+              class="panther-8"
+            >
+              If you found a bug, have an idea for a new feature or simply want to send us your thoughts, don’t hesitate!
+            </p>
+            <a
+              class="panther-1"
+              href="https://portal.productboard.com/runpanther/1-product-portal/tabs/2-in-progress"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Send your Feedback
+            </a>
+          </div>
+        </div>
+      </div>
+      <div
+        class="panther-12"
+      >
+        <div
+          class="panther-11"
+        >
+          <div
+            class="panther-6"
+          >
+            <div
+              class="panther-5"
+            >
+              <img
+                alt="Panther Enterprise logo"
+                class="panther-4"
+                height="40"
+                src="test-file-stub"
+                width="40"
+              />
+            </div>
+          </div>
+          <div
+            class="panther-10"
+          >
+            <h1
+              class="panther-7"
+            >
+              Send us an E-mail
+            </h1>
+            <p
+              class="panther-8"
+            >
+              If you have any question about our product or simply want to reach out to us, you can send us an e-mail.
+            </p>
+            <a
+              class="panther-1"
+              href="mailto:support@runpanther.io"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              support@runpanther.io
+            </a>
+          </div>
+        </div>
+      </div>
+      <div
+        class="panther-12"
+      >
+        <div
+          class="panther-11"
+        >
+          <div
+            class="panther-6"
+          >
+            <div
+              class="panther-5"
+            >
+              <img
+                alt="Panther Enterprise logo"
+                class="panther-4"
+                height="40"
+                src="test-file-stub"
+                width="40"
+              />
+            </div>
+          </div>
+          <div
+            class="panther-10"
+          >
+            <h1
+              class="panther-7"
+            >
+              Panther Enterprise
+            </h1>
+            <p
+              class="panther-8"
+            >
+              Get a demo of our enterprise functionality. We'll answer your questions and prepare you for a trial.
+            </p>
+            <a
+              class="panther-1"
+              href="https://runpanther.io/request-a-demo/"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Request a demo
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+  <footer
+    id="footer"
+  />
+</div>
+`;

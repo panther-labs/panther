@@ -31,8 +31,8 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/panther-labs/panther/cmd/opstools"
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetasks"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
 var (
@@ -86,7 +86,7 @@ func main() {
 
 	var matchPrefix string
 	if optPrefix := *opts.Prefix; optPrefix != "" {
-		matchPrefix = awsglue.GetTableName(optPrefix)
+		matchPrefix = pantherdb.TableName(optPrefix)
 	}
 
 	sess, err := session.NewSession(&aws.Config{
@@ -105,7 +105,7 @@ func main() {
 	ctx := context.Background()
 	tasks := []gluetasks.RecoverDatabaseTables{
 		{
-			DatabaseName: awsglue.LogProcessingDatabaseName,
+			DatabaseName: pantherdb.LogProcessingDatabase,
 			Start:        start,
 			End:          end,
 			DryRun:       *opts.DryRun,
@@ -113,7 +113,7 @@ func main() {
 			NumWorkers:   *opts.NumWorkers,
 		},
 		{
-			DatabaseName: awsglue.RuleErrorsDatabaseName,
+			DatabaseName: pantherdb.RuleErrorsDatabase,
 			Start:        start,
 			End:          end,
 			DryRun:       *opts.DryRun,
@@ -121,7 +121,7 @@ func main() {
 			NumWorkers:   *opts.NumWorkers,
 		},
 		{
-			DatabaseName: awsglue.RuleMatchDatabaseName,
+			DatabaseName: pantherdb.RuleMatchDatabase,
 			Start:        start,
 			End:          end,
 			DryRun:       *opts.DryRun,

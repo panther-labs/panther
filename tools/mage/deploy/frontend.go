@@ -56,7 +56,7 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig)
 		return err
 	}
 
-	dockerImage, err := DockerPush(bootstrapOutputs["ImageRegistryUri"], localImageID, "")
+	dockerImage, err := DockerPush(clients.ECR(), bootstrapOutputs["ImageRegistryUri"], localImageID, "")
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,8 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig)
 		"GraphQLApiEndpoint":         bootstrapOutputs["GraphQLApiEndpoint"],
 		"Image":                      dockerImage,
 		"InitialAnalysisPackUrls":    strings.Join(settings.Setup.InitialAnalysisSets, ","),
-		"PantherVersion":             util.RepoVersion(),
+		"PantherCommit":              util.CommitSha(),
+		"PantherVersion":             util.Semver(),
 		"SecurityGroup":              bootstrapOutputs["WebSecurityGroup"],
 		"SubnetOneId":                bootstrapOutputs["SubnetOneId"],
 		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
@@ -98,9 +99,9 @@ func DockerBuild() (string, error) {
 }
 
 // Build a personalized docker image from source and push it to the private image repo of the user
-func DockerPush(imageRegistry, localImageID, tag string) (string, error) {
+func DockerPush(ecrClient *ecr.ECR, imageRegistry, localImageID, tag string) (string, error) {
 	log.Debug("requesting access to remote image repo")
-	response, err := clients.ECR().GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+	response, err := ecrClient.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
 	if err != nil {
 		return "", fmt.Errorf("failed to get ecr auth token: %v", err)
 	}

@@ -20,6 +20,9 @@ package models
 
 import (
 	"time"
+
+	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 )
 
 // SourceIntegration represents a Panther integration with a source.
@@ -63,24 +66,51 @@ type SourceIntegrationMetadata struct {
 	SqsConfig          *SqsConfig `json:"sqsConfig,omitempty"`
 }
 
-func (info *SourceIntegration) RequiredLogTypes() (logTypes []string) {
-	// We use a switch to avoid git conflicts with enterprise
-	switch {
-	case info.SqsConfig != nil:
-		return info.SqsConfig.LogTypes
+func (s *SourceIntegration) RequiredLogTypes() (logTypes []string) {
+	switch typ := s.IntegrationType; typ {
+	case IntegrationTypeAWS3:
+		return s.LogTypes
+	case IntegrationTypeAWSScan:
+		return logtypes.CollectNames(snapshotlogs.LogTypes())
+	case IntegrationTypeSqs:
+		return s.SqsConfig.LogTypes
 	default:
-		return info.LogTypes
+		panic("Unknown type " + typ)
 	}
 }
 
-func (info *SourceIntegration) IsLogAnalysisIntegration() bool {
-	switch integType := info.IntegrationType; integType {
-	case IntegrationTypeAWSScan:
-		return false
-	case IntegrationTypeAWS3, IntegrationTypeSqs:
-		return true
+func (s *SourceIntegration) RequiredLogProcessingRole() string {
+	switch typ := s.IntegrationType; typ {
+	case IntegrationTypeAWS3, IntegrationTypeAWSScan:
+		return s.LogProcessingRole
+	case IntegrationTypeSqs:
+		return s.SqsConfig.LogProcessingRole
 	default:
-		panic("Unexpected integration type " + integType)
+		panic("Unknown type " + typ)
+	}
+}
+
+func (s *SourceIntegration) RequiredS3Prefix() string {
+	switch typ := s.IntegrationType; typ {
+	case IntegrationTypeAWS3:
+		return s.S3Prefix
+	case IntegrationTypeAWSScan:
+		return "cloudsecurity"
+	case IntegrationTypeSqs:
+		return "forwarder"
+	default:
+		panic("Unknown type " + typ)
+	}
+}
+
+func (s *SourceIntegration) RequiredS3Bucket() string {
+	switch typ := s.IntegrationType; typ {
+	case IntegrationTypeAWS3, IntegrationTypeAWSScan:
+		return s.S3Bucket
+	case IntegrationTypeSqs:
+		return s.SqsConfig.S3Bucket
+	default:
+		panic("Unknown type " + typ)
 	}
 }
 
@@ -112,9 +142,6 @@ type SourceIntegrationTemplate struct {
 	StackName string `json:"stackName"`
 }
 
-// The S3 Prefix where the SQS data will be stored
-const SqsS3Prefix = "forwarder"
-
 type SqsConfig struct {
 	// The log types associated with the source. Needs to be set by UI.
 	LogTypes []string `json:"logTypes" validate:"required,min=1"`
@@ -125,8 +152,6 @@ type SqsConfig struct {
 
 	// The Panther-internal S3 bucket where the data from this source will be available
 	S3Bucket string `json:"s3Bucket"`
-	// The S3 prefix where the data from this source will be available
-	S3Prefix string `json:"s3Prefix"`
 	// The Role that the log processor can use to access this data
 	LogProcessingRole string `json:"logProcessingRole"`
 	// THe URL of the SQS queue

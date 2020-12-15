@@ -74,4 +74,14 @@ and visit [localhost:8080](http://localhost:8080) to view it.
 
 ### Testing
 
-TODO
+Running our front-end testing suite is as simple as running:
+
+```
+$ npm run test
+```
+
+If you want to watch for file changes & have the runner re-run the affected tests on every change, then run:
+
+```
+$ npm run test:watch
+```

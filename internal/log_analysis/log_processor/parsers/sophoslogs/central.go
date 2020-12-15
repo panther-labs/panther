@@ -30,18 +30,18 @@ type SophosCentralEvent struct {
 	// common fields belonging to all groups
 	EndpointID   pantherlog.String `json:"endpoint_id" validate:"required" description:"Endpoint ID associated with the event"`
 	EndpointType pantherlog.String `json:"endpoint_type" validate:"required" description:"Type of endpoint"`
-	CustomerID   pantherlog.String `json:"customer_id" validate:"required" description:"Customer ID"`
-	Severity     pantherlog.String `json:"severity" validate:"required" description:"Severity of the event"`
-	Source       *Source           `json:"source_info" validate:"required" description:"Source IP of the endpoint"`
-	Name         pantherlog.String `json:"name" validate:"required" description:"Name of threat, or other event details"`
+	CustomerID   pantherlog.String `json:"customer_id" description:"Customer ID"`
+	Severity     pantherlog.String `json:"severity" description:"Severity of the event"`
+	Source       *Source           `json:"source_info" description:"Source IP of the endpoint"`
+	Name         pantherlog.String `json:"name"  description:"Name of threat, or other event details"`
 	ID           pantherlog.String `json:"id" validate:"required" description:"Unique identifier for the event"`
 	Type         pantherlog.String `json:"type" validate:"required" description:"Type of event"`
 	Category     pantherlog.String `json:"group" validate:"required" description:"Category of event"`
 	Time         pantherlog.Time   `json:"end" validate:"required" event_time:"true" tcodec:"rfc3339" description:"Time the event occurred on the endpoint"`
-	UploadTime   pantherlog.Time   `json:"rt" validate:"required" description:"Time the event was uploaded to Sophos Central"`
-	Host         pantherlog.String `json:"dhost" validate:"required" description:"Source host of the event"`
-	User         pantherlog.String `json:"suser" validate:"required" description:"Logged in user"`
-	Datastream   pantherlog.String `json:"datastream" validate:"required" description:"Alert, or Event, to distinguish between event types"`
+	UploadTime   pantherlog.Time   `json:"rt" description:"Time the event was uploaded to Sophos Central"`
+	Host         pantherlog.String `json:"dhost" description:"Source host of the event"`
+	User         pantherlog.String `json:"suser" panther:"username" description:"Logged in user"`
+	Datastream   pantherlog.String `json:"datastream" description:"Alert, or Event, to distinguish between event types"`
 	DUID         pantherlog.String `json:"duid" description:"Undocumented field"`
 
 	// MALWARE group additional fields

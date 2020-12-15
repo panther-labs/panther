@@ -26,9 +26,12 @@ import {
   waitMs,
   buildAddComplianceIntegrationInput,
 } from 'test-utils';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { CLOUD_SECURITY_REAL_TIME_DOC_URL } from 'Source/constants';
 import { mockAddComplianceSource } from './graphql/addComplianceSource.generated';
 import CreateComplianceSource from './CreateComplianceSource';
+
+jest.mock('Helpers/analytics');
 
 describe('CreateComplianceSource', () => {
   it('can successfully onboard a compliance source without real-time', async () => {
@@ -150,6 +153,12 @@ describe('CreateComplianceSource', () => {
     expect(getByText('Everything looks good!')).toBeInTheDocument();
     expect(getByText('Finish Setup')).toBeInTheDocument();
     expect(getByText('Add Another')).toBeInTheDocument();
+
+    // Expect analytics to have been called
+    expect(trackEvent).toHaveBeenCalledWith({
+      event: EventEnum.AddedComplianceSource,
+      src: SrcEnum.ComplianceSources,
+    });
   });
 
   it('shows a proper fail message when source validation fails', async () => {
@@ -207,5 +216,11 @@ describe('CreateComplianceSource', () => {
     expect(await findByText("Something didn't go as planned")).toBeInTheDocument();
     expect(getByText('Start over')).toBeInTheDocument();
     expect(getByText(errorMessage)).toBeInTheDocument();
+
+    // Expect analytics to have been called
+    expect(trackError).toHaveBeenCalledWith({
+      event: TrackErrorEnum.FailedToAddComplianceSource,
+      src: SrcEnum.ComplianceSources,
+    });
   });
 });

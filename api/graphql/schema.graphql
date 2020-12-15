@@ -10,6 +10,7 @@ schema {
 }
 
 type Mutation {
+  addCustomLog(input: AddCustomLogInput!): AddCustomLogOutput!
   addDestination(input: DestinationInput!): Destination
   addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
   addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
@@ -19,6 +20,7 @@ type Mutation {
   addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
   deleteDestination(id: ID!): Boolean
   deleteComplianceIntegration(id: ID!): Boolean
+  deleteCustomLog(input: DeleteCustomLogInput): DeleteCustomLogOutput!
   deleteLogIntegration(id: ID!): Boolean
   deletePolicy(input: DeletePolicyInput!): Boolean
   deleteRule(input: DeleteRuleInput!): Boolean
@@ -75,6 +77,26 @@ type Query {
   rules(input: ListRulesInput): ListRulesResponse
   listGlobalPythonModules(input: ListGlobalPythonModuleInput!): ListGlobalPythonModulesResponse!
   users: [User!]!
+  getCustomLog(input: GetCustomLogInput!): GetCustomLogOutput!
+  listCustomLogs: [CustomLogRecord!]!
+}
+
+input DeleteCustomLogInput {
+  logType: String!
+  revision: Int!
+}
+
+input AddCustomLogInput {
+  revision: Int
+  logType: String!
+  description: String!
+  referenceURL: String!
+  logSpec: String!
+}
+
+input GetCustomLogInput {
+  logType: String!
+  revision: Int
 }
 
 input GetComplianceIntegrationTemplateInput {
@@ -99,12 +121,11 @@ input ListAlertsInput {
   exclusiveStartKey: String
   severity: [SeverityEnum]
   logTypes: [String!]
-  type: AlertTypesEnum
+  resourceTypes: [String!]
+  types: [AlertTypesEnum!]
   nameContains: String
   createdAtBefore: AWSDateTime
   createdAtAfter: AWSDateTime
-  ruleIdContains: String
-  alertIdContains: String
   status: [AlertStatusesEnum]
   eventCountMin: Int
   eventCountMax: Int
@@ -116,6 +137,33 @@ input GetAlertInput {
   alertId: ID!
   eventsPageSize: Int
   eventsExclusiveStartKey: String
+}
+
+type AddCustomLogOutput {
+  error: Error
+  record: CustomLogRecord
+}
+
+type DeleteCustomLogOutput {
+  error: Error
+}
+
+type ListAvailableLogTypesResponse {
+  logTypes: [String!]!
+}
+
+type GetCustomLogOutput {
+  error: Error
+  record: CustomLogRecord
+}
+
+type CustomLogRecord {
+  logType: String!
+  revision: Int!
+  updatedAt: String!
+  description: String!
+  referenceURL: String!
+  logSpec: String!
 }
 
 type IntegrationTemplate {
@@ -145,16 +193,39 @@ type SqsLogIntegrationHealth {
   sqsStatus: IntegrationItemHealthStatus
 }
 
+type AlertSummaryPolicyInfo {
+  policyId: ID
+  resourceId: String
+  policySourceId: String!
+  resourceTypes: [String!]!
+}
+
+type AlertSummaryRuleInfo {
+  ruleId: ID
+  logTypes: [String!]!
+  eventsMatched: Int!
+}
+
+type AlertDetailsRuleInfo {
+  ruleId: ID
+  logTypes: [String!]!
+  eventsMatched: Int!
+  dedupString: String!
+  events: [AWSJSON!]!
+  eventsLastEvaluatedKey: String
+}
+
+union AlertSummaryDetectionInfo = AlertSummaryRuleInfo | AlertSummaryPolicyInfo
+union AlertDetailsDetectionInfo = AlertDetailsRuleInfo | AlertSummaryPolicyInfo
+
 interface Alert {
   alertId: ID!
   creationTime: AWSDateTime!
   deliveryResponses: [DeliveryResponse]!
-  eventsMatched: Int!
-  ruleId: ID
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
-  logTypes: [String!]!
+  type: AlertTypesEnum!
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
@@ -164,35 +235,28 @@ type AlertDetails implements Alert {
   alertId: ID!
   creationTime: AWSDateTime!
   deliveryResponses: [DeliveryResponse]!
-  eventsMatched: Int!
-  ruleId: ID
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
   type: AlertTypesEnum!
-  logTypes: [String!]!
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
-  dedupString: String!
-  events: [AWSJSON!]!
-  eventsLastEvaluatedKey: String
+  detection: AlertDetailsDetectionInfo!
 }
 
 type AlertSummary implements Alert {
   alertId: ID!
   creationTime: AWSDateTime!
   deliveryResponses: [DeliveryResponse]!
-  eventsMatched: Int!
-  ruleId: ID
   type: AlertTypesEnum!
   severity: SeverityEnum!
   status: AlertStatusesEnum!
   title: String!
-  logTypes: [String!]!
   lastUpdatedBy: ID # gets mapped to a User in the frontend
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
+  detection: AlertSummaryDetectionInfo!
 }
 
 type DeliveryResponse {
@@ -223,10 +287,13 @@ input SendTestAlertInput {
 }
 
 input ListRulesInput {
+  createdBy: String
+  lastModifiedBy: String
+  initialSet: Boolean
   nameContains: String
   enabled: Boolean
   logTypes: [String!]
-  severity: SeverityEnum
+  severity: [SeverityEnum!]
   tags: [String!]
   # Sorting
   sortBy: ListRulesSortFieldsEnum # defaults to `id`
@@ -627,6 +694,7 @@ type JiraConfig {
   apiKey: String!
   assigneeId: String
   issueType: String!
+  labels: [String!]!
 }
 
 type AsanaConfig {
@@ -696,6 +764,7 @@ input JiraConfigInput {
   apiKey: String!
   assigneeId: String
   issueType: String!
+  labels: [String!]
 }
 
 input AsanaConfigInput {
@@ -868,12 +937,15 @@ input DeletePolicyInputItem {
 }
 
 input ListPoliciesInput {
+  createdBy: String
+  lastModifiedBy: String
+  initialSet: Boolean
   complianceStatus: ComplianceStatusEnum
   nameContains: String
   enabled: Boolean
   hasRemediation: Boolean
   resourceTypes: [String!]
-  severity: SeverityEnum
+  severity: [SeverityEnum!]
   tags: [String!]
   # Sorting
   sortBy: ListPoliciesSortFieldsEnum # defaults to `id`
@@ -1073,6 +1145,7 @@ enum AlertStatusesEnum {
 enum AlertTypesEnum {
   RULE
   RULE_ERROR
+  POLICY
 }
 
 enum SortDirEnum {
@@ -1110,6 +1183,6 @@ enum OpsgenieServiceRegionEnum {
   US
 }
 
-type ListAvailableLogTypesResponse {
-  logTypes: [String!]!
+enum ErrorCodeEnum {
+  NotFound
 }

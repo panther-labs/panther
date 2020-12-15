@@ -21,7 +21,11 @@ import { Box, Flex, Heading } from 'pouncejs';
 import urls from 'Source/urls';
 import FadeInTrail from 'Components/utils/FadeInTrail';
 import { AlertStatusesEnum } from 'Generated/schema';
-import { useListDestinations, useListAvailableLogTypes } from 'Source/graphql/queries';
+import {
+  useListDestinations,
+  useListAvailableLogTypes,
+  useListComplianceSourceNames,
+} from 'Source/graphql/queries';
 import NavLink from '../NavLink';
 
 const LogAnalysisNavigation: React.FC = () => {
@@ -33,6 +37,7 @@ const LogAnalysisNavigation: React.FC = () => {
   // The same logic applies to available destinations
   useListAvailableLogTypes();
   useListDestinations();
+  useListComplianceSourceNames();
 
   return (
     <Box>
@@ -42,7 +47,11 @@ const LogAnalysisNavigation: React.FC = () => {
       <Flex direction="column" as="ul">
         <FadeInTrail as="li">
           <NavLink icon="dashboard-alt" to={urls.logAnalysis.overview()} label="Overview" />
-          <NavLink icon="rule" to={urls.logAnalysis.rules.list()} label="Rules" />
+          <NavLink
+            icon="rule"
+            to={`${urls.logAnalysis.rules.list()}?page=1&sortBy=lastModified&sortDir=descending`}
+            label="Rules"
+          />
           <NavLink
             icon="alert"
             to={`${urls.logAnalysis.alerts.list()}?status[]=${AlertStatusesEnum.Open}&status[]=${
@@ -51,6 +60,11 @@ const LogAnalysisNavigation: React.FC = () => {
             label="Alerts"
           />
           <NavLink icon="log-source" to={urls.logAnalysis.sources.list()} label="Sources" />
+          <NavLink
+            icon="source-code"
+            to={urls.logAnalysis.customLogs.list()}
+            label="Custom Schemas"
+          />
         </FadeInTrail>
       </Flex>
     </Box>

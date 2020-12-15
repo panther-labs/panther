@@ -25,53 +25,30 @@ import (
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/pkg/errors"
 
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/awsutils"
 )
 
 const (
-	CloudSecurityDatabase            = "panther_cloudsecurity"
-	CloudSecurityDatabaseDescription = "Hold tables related to Panther cloud security scanning"
-
 	// https://github.com/awslabs/aws-athena-query-federation/tree/master/athena-dynamodb
 
-	// FIXME: Update the description when the DDB connector is GA
 	ResourcesTableDDB         = "panther-resources"
 	ResourcesTable            = "resources"
-	ResourcesTableDescription = "(ddb.panther_cloudsecurity.resources) The resources discovered by Panther scanning"
+	ResourcesTableDescription = "The resources discovered by Panther scanning"
 
 	ComplianceTableDDB         = "panther-compliance"
 	ComplianceTable            = "compliance"
-	ComplianceTableDescription = "(ddb.panther_cloudsecurity.compliance) The policies and statuses from Panther scanning"
+	ComplianceTableDescription = "The policies and statuses from Panther scanning"
 )
 
 var (
-	// FIXME: Remove when the DDB connector is GA
-	// Available Regions – The Athena federated query feature is available in preview in the US East (N. Virginia),
-	//                     Asia Pacific (Mumbai), Europe (Ireland), and US West (Oregon) Regions.
+	// FIXME: Remove when the DDB connector and Athena2 are available in all regions
 	anthenaDDBConnectorRegions = map[string]struct{}{
-		"us-east-1":  {},
-		"ap-south-1": {},
-		"eu-west-1":  {},
-		"us-west-2":  {},
+		"us-east-1": {},
+		"us-east-2": {},
+		"us-west-2": {},
 	}
 )
-
-func CreateOrUpdateCloudSecurityDatabase(glueClient glueiface.GlueAPI) error {
-	dbInput := &glue.DatabaseInput{
-		Description: aws.String(CloudSecurityDatabaseDescription),
-		LocationUri: aws.String("dynamo-db-flag"),
-		Name:        aws.String(CloudSecurityDatabase),
-	}
-
-	_, err := glueClient.CreateDatabase(&glue.CreateDatabaseInput{
-		CatalogId:     nil,
-		DatabaseInput: dbInput,
-	})
-	if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
-		return nil // nothing to do
-	}
-	return errors.Wrap(err, "could not create cloud security database")
-}
 
 func CreateOrUpdateResourcesTable(glueClient glueiface.GlueAPI, locationARN string) error {
 	// FIXME: Remove when the DDB connector is GA
@@ -155,7 +132,7 @@ func CreateOrUpdateResourcesTable(glueClient glueiface.GlueAPI, locationARN stri
 	}
 
 	createTableInput := &glue.CreateTableInput{
-		DatabaseName: aws.String(CloudSecurityDatabase),
+		DatabaseName: aws.String(pantherdb.CloudSecurityDatabase),
 		TableInput:   tableInput,
 	}
 
@@ -164,13 +141,13 @@ func CreateOrUpdateResourcesTable(glueClient glueiface.GlueAPI, locationARN stri
 		if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
 			// need to do an update
 			updateTableInput := &glue.UpdateTableInput{
-				DatabaseName: aws.String(CloudSecurityDatabase),
+				DatabaseName: aws.String(pantherdb.CloudSecurityDatabase),
 				TableInput:   tableInput,
 			}
 			_, err := glueClient.UpdateTable(updateTableInput)
-			return errors.Wrapf(err, "failed to update table %s.%s", CloudSecurityDatabase, ResourcesTable)
+			return errors.Wrapf(err, "failed to update table %s.%s", pantherdb.CloudSecurityDatabase, ResourcesTable)
 		}
-		return errors.Wrapf(err, "failed to create table %s.%s", CloudSecurityDatabase, ResourcesTable)
+		return errors.Wrapf(err, "failed to create table %s.%s", pantherdb.CloudSecurityDatabase, ResourcesTable)
 	}
 
 	return nil
@@ -259,7 +236,7 @@ func CreateOrUpdateComplianceTable(glueClient glueiface.GlueAPI, locationARN str
 	}
 
 	createTableInput := &glue.CreateTableInput{
-		DatabaseName: aws.String(CloudSecurityDatabase),
+		DatabaseName: aws.String(pantherdb.CloudSecurityDatabase),
 		TableInput:   tableInput,
 	}
 
@@ -268,13 +245,13 @@ func CreateOrUpdateComplianceTable(glueClient glueiface.GlueAPI, locationARN str
 		if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
 			// need to do an update
 			updateTableInput := &glue.UpdateTableInput{
-				DatabaseName: aws.String(CloudSecurityDatabase),
+				DatabaseName: aws.String(pantherdb.CloudSecurityDatabase),
 				TableInput:   tableInput,
 			}
 			_, err := glueClient.UpdateTable(updateTableInput)
-			return errors.Wrapf(err, "failed to update table %s.%s", CloudSecurityDatabase, ResourcesTable)
+			return errors.Wrapf(err, "failed to update table %s.%s", pantherdb.CloudSecurityDatabase, ResourcesTable)
 		}
-		return errors.Wrapf(err, "failed to create table %s.%s", CloudSecurityDatabase, ResourcesTable)
+		return errors.Wrapf(err, "failed to create table %s.%s", pantherdb.CloudSecurityDatabase, ResourcesTable)
 	}
 
 	return nil

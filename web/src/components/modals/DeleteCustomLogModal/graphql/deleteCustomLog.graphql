@@ -1,0 +1,7 @@
+mutation DeleteCustomLog($input: DeleteCustomLogInput!) {
+  deleteCustomLog(input: $input) {
+    error {
+      message
+    }
+  }
+}

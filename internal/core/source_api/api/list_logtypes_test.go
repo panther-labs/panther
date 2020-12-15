@@ -38,13 +38,9 @@ func TestAPI_ListLogTypes(t *testing.T) {
 		{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				IntegrationType: models.IntegrationTypeSqs,
-				LogTypes:        []string{"one", "two"}, // "one" is duplicate with above
-			},
-		},
-		{ // should not match
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationType: models.IntegrationTypeAWSScan,
-				LogTypes:        nil,
+				SqsConfig: &models.SqsConfig{
+					LogTypes: []string{"one", "two"}, // "one" is duplicate with above
+				},
 			},
 		},
 	}

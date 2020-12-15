@@ -25,7 +25,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
 // Meta data about GlueTableMetadata table over parser data written to S3
@@ -34,7 +34,6 @@ import (
 
 // A partition in Glue containing Panther data
 type GluePartition struct {
-	datatype         models.DataType
 	databaseName     string
 	tableName        string
 	s3Bucket         string
@@ -67,21 +66,12 @@ func (gp *GluePartition) GetGlueTableMetadata() *GlueTableMetadata {
 	return gp.gm
 }
 
-func GetPartitionPrefix(datatype models.DataType, logType string, timebin GlueTableTimebin, time time.Time) string {
-	return getTablePrefix(datatype, GetTableName(logType)) + timebin.PartitionPathS3(time)
+func PartitionPrefix(database, table string, timebin GlueTableTimebin, time time.Time) string {
+	return TablePrefix(database, table) + timebin.PartitionPathS3(time)
 }
 
-func (gp *GluePartition) GetPartitionLocation() string {
-	return "s3://" + gp.s3Bucket + "/" + gp.gm.GetPartitionPrefix(gp.time)
-}
-
-// GetPartitionLocation takes an S3 path for an object and returns just the part of the patch associated with the partition
-func GetPartitionLocation(s3Path string) (string, error) {
-	gluePartition, err := GetPartitionFromS3Path(s3Path)
-	if err != nil {
-		return "", errors.Wrapf(err, "cannot parse partition path %s", s3Path)
-	}
-	return gluePartition.GetPartitionLocation(), nil
+func (gp *GluePartition) PartitionLocation() string {
+	return "s3://" + gp.s3Bucket + "/" + gp.gm.PartitionPrefix(gp.time)
 }
 
 // Contains information about partition columns
@@ -93,7 +83,7 @@ type PartitionColumnInfo struct {
 // Gets the partition from S3bucket and S3 object key info.
 // The s3Object key is expected to be in the the format
 // `{logs,rules}/{table_name}/year=d{4}/month=d{2}/[day=d{2}/][hour=d{2}/]/{S+}.json.gz` otherwise an error is returned.
-func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
+func PartitionFromS3Object(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 	partition := &GluePartition{s3Bucket: s3Bucket}
 
 	s3Keys := strings.Split(s3ObjectKey, "/")
@@ -103,14 +93,13 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 
 	switch s3Keys[0] {
 	case logS3Prefix:
-		partition.databaseName = LogProcessingDatabaseName
-		partition.datatype = models.LogData
+		partition.databaseName = pantherdb.LogProcessingDatabase
 	case ruleMatchS3Prefix:
-		partition.databaseName = RuleMatchDatabaseName
-		partition.datatype = models.RuleData
+		partition.databaseName = pantherdb.RuleMatchDatabase
 	case ruleErrorsS3Prefix:
-		partition.databaseName = RuleErrorsDatabaseName
-		partition.datatype = models.RuleErrors
+		partition.databaseName = pantherdb.RuleErrorsDatabase
+	case cloudSecurityS3Prefix:
+		partition.databaseName = pantherdb.CloudSecurityDatabase
 	default:
 		return nil, errors.Errorf("unsupported S3 object prefix %s from %s", s3Keys[0], s3ObjectKey)
 	}
@@ -169,17 +158,17 @@ func GetPartitionFromS3(s3Bucket, s3ObjectKey string) (*GluePartition, error) {
 	}
 	partition.time = time.Date(year, time.Month(month), day, hour, 0, 0, 0, time.UTC)
 
-	partition.gm = NewGlueTableMetadata(partition.datatype, partition.tableName, "", GlueTableHourly, nil)
+	partition.gm = NewGlueTableMetadata(partition.databaseName, partition.tableName, "", GlueTableHourly, nil)
 
 	return partition, nil
 }
 
-func GetPartitionFromS3Path(s3Path string) (*GluePartition, error) {
+func PartitionFromS3Path(s3Path string) (*GluePartition, error) {
 	bucketName, key, err := ParseS3URL(s3Path)
 	if err != nil {
 		return nil, err
 	}
-	return GetPartitionFromS3(bucketName, key)
+	return PartitionFromS3Object(bucketName, key)
 }
 
 func inferPartitionColumnInfo(input string, partitionName string) (PartitionColumnInfo, error) {

@@ -24,9 +24,12 @@ import {
   waitMs,
   buildAddSqsLogIntegrationInput,
 } from 'test-utils';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
 import { mockListAvailableLogTypes } from 'Source/graphql/queries';
 import CreateSqsLogSource from './CreateSqsLogSource';
 import { mockAddSqsLogSource } from './graphql/addSqsLogSource.generated';
+
+jest.mock('Helpers/analytics');
 
 describe('CreateSqsLogSource', () => {
   beforeAll(() => {
@@ -107,5 +110,12 @@ describe('CreateSqsLogSource', () => {
     fireEvent.click(getByText('Copy SQS Queue URL'));
     expect(document.execCommand).toHaveBeenCalledWith('copy');
     expect(getByText('Copied to clipboard')).toBeInTheDocument();
+
+    // Expect analytics to have been called
+    expect(trackEvent).toHaveBeenCalledWith({
+      event: EventEnum.AddedLogSource,
+      src: SrcEnum.LogSources,
+      ctx: 'SQS',
+    });
   });
 });

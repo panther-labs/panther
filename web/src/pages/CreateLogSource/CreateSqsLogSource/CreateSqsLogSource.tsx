@@ -19,7 +19,7 @@
 import React from 'react';
 import withSEO from 'Hoc/withSEO';
 import SqsSourceWizard from 'Components/wizards/SqsSourceWizard';
-import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { useAddSqsLogSource } from './graphql/addSqsLogSource.generated';
 
 const initialValues = {
@@ -41,6 +41,17 @@ const CreateSqsLogSource: React.FC = () => {
     },
     onCompleted: () =>
       trackEvent({ event: EventEnum.AddedLogSource, src: SrcEnum.LogSources, ctx: 'SQS' }),
+    onError: err => {
+      trackError({
+        event: TrackErrorEnum.FailedToUpdateLogSource,
+        src: SrcEnum.LogSources,
+        ctx: 'SQS',
+      });
+
+      // Defining an `onError` catches the API exception. We need to re-throw it so that it
+      // can be caught by `ValidationPanel` which checks for API errors
+      throw err;
+    },
   });
 
   return (

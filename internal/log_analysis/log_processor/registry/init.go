@@ -27,6 +27,7 @@ import (
 	boxlogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/boxlogs"
 	cloudflarelogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/cloudflarelogs"
 	crowdstrikelogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/crowdstrikelogs"
+	duologs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/duologs"
 	fastlylogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fastlylogs"
 	fluentdsyslogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/fluentdsyslogs"
 	gcplogs "github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/gcplogs"
@@ -61,6 +62,8 @@ func init() {
 		cloudflarelogs.LogTypes(),
 
 		crowdstrikelogs.LogTypes(),
+
+		duologs.LogTypes(),
 
 		fastlylogs.LogTypes(),
 

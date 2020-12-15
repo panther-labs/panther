@@ -37,6 +37,7 @@ var jiraConfig = &outputModels.JiraConfig{
 	ProjectKey: "QR",
 	Type:       "Task",
 	UserName:   "username",
+	Labels:     []string{"panther", "test-label"},
 }
 
 func TestJiraAlert(t *testing.T) {
@@ -49,16 +50,15 @@ func TestJiraAlert(t *testing.T) {
 		Type:                alertModels.PolicyType,
 		CreatedAt:           createdAtTime,
 		OutputIds:           []string{"output-id"},
-		AnalysisDescription: aws.String("policyDescription"),
+		AnalysisDescription: "policyDescription",
 		Severity:            "INFO",
 		Context:             map[string]interface{}{"key": "value"},
 	}
-
 	jiraPayload := map[string]interface{}{
 		"fields": map[string]interface{}{
 			"summary": "Policy Failure: policyId",
 			"description": "*Description:* policyDescription\n " +
-				"[Click here to view in the Panther UI](https://panther.io/policies/policyId)\n" +
+				"[Click here to view in the Panther UI|https://panther.io/policies/policyId]\n" +
 				" *Runbook:* \n *Severity:* INFO\n *Tags:* \n *AlertContext:* {\"key\":\"value\"}",
 			"project": map[string]*string{
 				"key": aws.String(jiraConfig.ProjectKey),
@@ -69,6 +69,7 @@ func TestJiraAlert(t *testing.T) {
 			"assignee": map[string]*string{
 				"id": aws.String(jiraConfig.AssigneeID),
 			},
+			"labels": aws.StringSlice(jiraConfig.Labels),
 		},
 	}
 	auth := jiraConfig.UserName + ":" + jiraConfig.APIKey

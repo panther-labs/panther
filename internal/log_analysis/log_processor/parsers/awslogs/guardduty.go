@@ -48,15 +48,15 @@ type GuardDuty struct {
 }
 
 type GuardDutyService struct {
-	AdditionalInfo *jsoniter.RawMessage `json:"additionalInfo"`
-	Action         *jsoniter.RawMessage `json:"action"`
+	AdditionalInfo *jsoniter.RawMessage `json:"additionalInfo,omitempty"`
+	Action         *jsoniter.RawMessage `json:"action,omitempty"`
 	ServiceName    *string              `json:"serviceName" validate:"required"`
 	DetectorID     *string              `json:"detectorId" validate:"required"`
-	ResourceRole   *string              `json:"resourceRole"`
-	EventFirstSeen *timestamp.RFC3339   `json:"eventFirstSeen"`
-	EventLastSeen  *timestamp.RFC3339   `json:"eventLastSeen"`
-	Archived       *bool                `json:"archived"`
-	Count          *int                 `json:"count"`
+	ResourceRole   *string              `json:"resourceRole,omitempty"`
+	EventFirstSeen *timestamp.RFC3339   `json:"eventFirstSeen,omitempty"`
+	EventLastSeen  *timestamp.RFC3339   `json:"eventLastSeen,omitempty"`
+	Archived       *bool                `json:"archived,omitempty"`
+	Count          *int                 `json:"count,omitempty"`
 }
 
 // VPCFlowParser parses AWS VPC Flow Parser logs

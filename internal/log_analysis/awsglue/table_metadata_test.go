@@ -31,7 +31,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -109,46 +109,37 @@ var (
 type partitionTestEvent struct{}
 
 func TestGetDataPrefix(t *testing.T) {
-	assert.Equal(t, logS3Prefix, GetDataPrefix(LogProcessingDatabaseName))
-	assert.Equal(t, ruleMatchS3Prefix, GetDataPrefix(RuleMatchDatabaseName))
-	assert.Equal(t, logS3Prefix, GetDataPrefix("some_test_database"))
+	assert.Equal(t, logS3Prefix, DataPrefix(pantherdb.LogProcessingDatabase))
+	assert.Equal(t, ruleMatchS3Prefix, DataPrefix(pantherdb.RuleMatchDatabase))
+	assert.Equal(t, logS3Prefix, DataPrefix("some_test_database"))
 }
 
 func TestGlueTableMetadataLogData(t *testing.T) {
-	gm := NewGlueTableMetadata(models.LogData, "My.Logs.Type", "description", GlueTableHourly, partitionTestEvent{})
+	gm := NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "my_logs_type", "description", GlueTableHourly, partitionTestEvent{})
 
 	assert.Equal(t, "description", gm.Description())
-	assert.Equal(t, "My.Logs.Type", gm.LogType())
 	assert.Equal(t, GlueTableHourly, gm.Timebin())
 	assert.Equal(t, "my_logs_type", gm.TableName())
-	assert.Equal(t, LogProcessingDatabaseName, gm.DatabaseName())
+	assert.Equal(t, pantherdb.LogProcessingDatabase, gm.DatabaseName())
 	assert.Equal(t, "logs/my_logs_type/", gm.Prefix())
 	assert.Equal(t, partitionTestEvent{}, gm.eventStruct)
-	assert.Equal(t, "logs/my_logs_type/year=2020/month=01/day=03/hour=01/", gm.GetPartitionPrefix(refTime))
+	assert.Equal(t, "logs/my_logs_type/year=2020/month=01/day=03/hour=01/", gm.PartitionPrefix(refTime))
 }
 
 func TestGlueTableMetadataRuleMatches(t *testing.T) {
-	gm := NewGlueTableMetadata(models.RuleData, "My.Rule", "description", GlueTableHourly, partitionTestEvent{})
+	gm := NewGlueTableMetadata(pantherdb.RuleMatchDatabase, "my_rule", "description", GlueTableHourly, partitionTestEvent{})
 
 	assert.Equal(t, "description", gm.Description())
-	assert.Equal(t, "My.Rule", gm.LogType())
 	assert.Equal(t, GlueTableHourly, gm.Timebin())
 	assert.Equal(t, "my_rule", gm.TableName())
-	assert.Equal(t, RuleMatchDatabaseName, gm.DatabaseName())
+	assert.Equal(t, pantherdb.RuleMatchDatabase, gm.DatabaseName())
 	assert.Equal(t, "rules/my_rule/", gm.Prefix())
 	assert.Equal(t, partitionTestEvent{}, gm.eventStruct)
-	assert.Equal(t, "rules/my_rule/year=2020/month=01/day=03/hour=01/", gm.GetPartitionPrefix(refTime))
-}
-
-func TestGlueTableMetadataSignature(t *testing.T) {
-	gm := NewGlueTableMetadata(models.LogData, "My.Logs.Type", "description", GlueTableHourly, partitionTestEvent{})
-	sig, err := gm.Signature()
-	require.NoError(t, err)
-	assert.Len(t, sig, 64)
+	assert.Equal(t, "rules/my_rule/year=2020/month=01/day=03/hour=01/", gm.PartitionPrefix(refTime))
 }
 
 func TestCreateJSONPartition(t *testing.T) {
-	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+	gm := NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "test_logs", "Description", GlueTableHourly, partitionTestEvent{})
 
 	// test no errors and partition does not exist (no error)
 	glueClient := &testutils.GlueMock{}
@@ -161,7 +152,7 @@ func TestCreateJSONPartition(t *testing.T) {
 }
 
 func TestCreateJSONPartitionPartitionExists(t *testing.T) {
-	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+	gm := NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "test_logs", "Description", GlueTableHourly, partitionTestEvent{})
 
 	// test partition exists at start
 	glueClient := &testutils.GlueMock{}
@@ -174,7 +165,7 @@ func TestCreateJSONPartitionPartitionExists(t *testing.T) {
 }
 
 func TestCreateJSONPartitionErrorGettingTable(t *testing.T) {
-	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+	gm := NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "test_logs", "Description", GlueTableHourly, partitionTestEvent{})
 	// test error in GetTable
 	glueClient := &testutils.GlueMock{}
 	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nonAWSError).Once()
@@ -186,7 +177,7 @@ func TestCreateJSONPartitionErrorGettingTable(t *testing.T) {
 }
 
 func TestCreateJSONPartitionNonAWSError(t *testing.T) {
-	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+	gm := NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "test_logs", "Description", GlueTableHourly, partitionTestEvent{})
 	// test error in CreatePartition
 	glueClient := &testutils.GlueMock{}
 	glueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
@@ -200,7 +191,7 @@ func TestCreateJSONPartitionNonAWSError(t *testing.T) {
 
 func TestSyncPartitions(t *testing.T) {
 	var startDate time.Time // default unset
-	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+	gm := NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "test_logs", "Description", GlueTableHourly, partitionTestEvent{})
 
 	glueClient := &testutils.GlueMock{}
 	glueClient.On("GetTable", mock.Anything).Return(syncGetTableOutput, nil).Once()
@@ -223,7 +214,7 @@ func TestSyncPartitions(t *testing.T) {
 
 func TestSyncPartitionsPartitionDoesntExistAndNoData(t *testing.T) {
 	var startDate time.Time // default unset
-	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+	gm := NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "test_logs", "Description", GlueTableHourly, partitionTestEvent{})
 
 	// test not exists error in GetPartition (should not fail)
 	glueClient := &testutils.GlueMock{}
@@ -243,7 +234,7 @@ func TestSyncPartitionsPartitionDoesntExistAndNoData(t *testing.T) {
 }
 
 func TestSyncPartitionsPartitionDoesntExistAndHasData(t *testing.T) {
-	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+	gm := NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "test_logs", "Description", GlueTableHourly, partitionTestEvent{})
 
 	// test not exists error in GetPartition (should not fail)
 	glueClient := &testutils.GlueMock{}
@@ -280,7 +271,7 @@ func TestSyncPartitionsPartitionDoesntExistAndHasData(t *testing.T) {
 
 func TestSyncPartitionsGetPartitionAWSError(t *testing.T) {
 	var startDate time.Time // default unset
-	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+	gm := NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "test_logs", "Description", GlueTableHourly, partitionTestEvent{})
 
 	// test GetPartition fails (should fail)
 	glueClient := &testutils.GlueMock{}
@@ -297,7 +288,7 @@ func TestSyncPartitionsGetPartitionAWSError(t *testing.T) {
 
 func TestSyncPartitionsGetPartitionNonAWSError(t *testing.T) {
 	var startDate time.Time // default unset
-	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+	gm := NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "test_logs", "Description", GlueTableHourly, partitionTestEvent{})
 
 	// test GetPartition fails (should fail)
 	glueClient := &testutils.GlueMock{}
@@ -314,7 +305,7 @@ func TestSyncPartitionsGetPartitionNonAWSError(t *testing.T) {
 
 func TestSyncPartitionsDeadline(t *testing.T) {
 	var startDate time.Time // default unset
-	gm := NewGlueTableMetadata(models.LogData, "Test.Logs", "Description", GlueTableHourly, partitionTestEvent{})
+	gm := NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "test_logs", "Description", GlueTableHourly, partitionTestEvent{})
 
 	// test deadline
 	glueClient := &testutils.GlueMock{}

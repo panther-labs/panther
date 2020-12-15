@@ -62,10 +62,6 @@ const SqsLogSourceCard: React.FC<SqsLogSourceCardProps> = ({ source }) => {
         label="Date Created"
         value={formatDatetime(source.createdAtTime, true)}
       />
-      <GenericItemCard.Value
-        label="Last Received Events At"
-        value={source.lastEventReceived ? formatDatetime(source.lastEventReceived, true) : 'Never'}
-      />
       <GenericItemCard.LineBreak />
       <GenericItemCard.Value
         label="Log Types"

@@ -39,7 +39,11 @@ type LogTypesAPILambdaClient struct {
 }
 
 type LogTypesAPIPayload struct {
-	ListAvailableLogTypes *struct{} `json:"ListAvailableLogTypes,omitempty"`
+	ListAvailableLogTypes *struct{}          `json:"ListAvailableLogTypes,omitempty"`
+	GetCustomLog          *GetCustomLogInput `json:"GetCustomLog,omitempty"`
+	PutCustomLog          *PutCustomLogInput `json:"PutCustomLog,omitempty"`
+	DelCustomLog          *DelCustomLogInput `json:"DelCustomLog,omitempty"`
+	ListCustomLogs        *struct{}          `json:"ListCustomLogs,omitempty"`
 }
 
 func (c *LogTypesAPILambdaClient) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, error) {
@@ -47,6 +51,59 @@ func (c *LogTypesAPILambdaClient) ListAvailableLogTypes(ctx context.Context) (*A
 		ListAvailableLogTypes: &struct{}{},
 	}
 	reply := AvailableLogTypes{}
+	if err := c.invoke(ctx, &payload, &reply); err != nil {
+		return nil, err
+	}
+	return &reply, nil
+}
+
+func (c *LogTypesAPILambdaClient) GetCustomLog(ctx context.Context, input *GetCustomLogInput) (*GetCustomLogOutput, error) {
+	if input == nil {
+		input = &GetCustomLogInput{}
+	}
+	payload := LogTypesAPIPayload{
+		GetCustomLog: input,
+	}
+	reply := GetCustomLogOutput{}
+	if err := c.invoke(ctx, &payload, &reply); err != nil {
+		return nil, err
+	}
+	return &reply, nil
+}
+
+func (c *LogTypesAPILambdaClient) PutCustomLog(ctx context.Context, input *PutCustomLogInput) (*PutCustomLogOutput, error) {
+	if input == nil {
+		input = &PutCustomLogInput{}
+	}
+	payload := LogTypesAPIPayload{
+		PutCustomLog: input,
+	}
+	reply := PutCustomLogOutput{}
+	if err := c.invoke(ctx, &payload, &reply); err != nil {
+		return nil, err
+	}
+	return &reply, nil
+}
+
+func (c *LogTypesAPILambdaClient) DelCustomLog(ctx context.Context, input *DelCustomLogInput) (*DelCustomLogOutput, error) {
+	if input == nil {
+		input = &DelCustomLogInput{}
+	}
+	payload := LogTypesAPIPayload{
+		DelCustomLog: input,
+	}
+	reply := DelCustomLogOutput{}
+	if err := c.invoke(ctx, &payload, &reply); err != nil {
+		return nil, err
+	}
+	return &reply, nil
+}
+
+func (c *LogTypesAPILambdaClient) ListCustomLogs(ctx context.Context) (*ListCustomLogsOutput, error) {
+	payload := LogTypesAPIPayload{
+		ListCustomLogs: &struct{}{},
+	}
+	reply := ListCustomLogsOutput{}
 	if err := c.invoke(ctx, &payload, &reply); err != nil {
 		return nil, err
 	}

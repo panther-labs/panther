@@ -1,0 +1,183 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+name: authentication logs
+logType: Duo.Authentication
+input: |
+  {
+    "access_device": {
+      "browser": "Chrome",
+      "browser_version": "67.0.3396.99",
+      "flash_version": "uninstalled",
+      "hostname": "example.com",
+      "ip": "169.232.89.219",
+      "is_encryption_enabled": true,
+      "is_firewall_enabled": true,
+      "is_password_set": true,
+      "java_version": "uninstalled",
+      "location": {
+        "city": "Ann Arbor",
+        "country": "United States",
+        "state": "Michigan"
+      },
+      "os": "Mac OS X",
+      "os_version": "10.14.1",
+      "security_agents": []
+    },
+    "alias": "",
+    "application": {
+      "key": "DIY231J8BR23QK4UKBY8",
+      "name": "Microsoft Azure Active Directory"
+    },
+    "auth_device": {
+      "ip": "192.168.225.254",
+      "location": {
+        "city": "Ann Arbor",
+        "country": "United States",
+        "state": "Michigan"
+      },
+      "name": "My iPhone X (734-555-2342)"
+    },
+    "email": "narroway@example.com",
+    "event_type": "authentication",
+    "factor": "duo_push",
+    "isotimestamp": "2020-02-13T18:56:20.351346+00:00",
+    "ood_software": "null",
+    "reason": "user_approved",
+    "result": "success",
+    "timestamp": 1581620180,
+    "txid": "340a23e3-23f3-23c1-87dc-1491a23dfdbb",
+    "user": {
+      "groups": [
+        "Duo Users",
+        "CorpHQ Users"
+      ],
+      "key": "DU3KC77WJ06Y5HIV7XKQ",
+      "name": "narroway@example.com"
+    }
+  }
+result: |
+  {
+    "access_device": {
+      "browser": "Chrome",
+      "browser_version": "67.0.3396.99",
+      "flash_version": "uninstalled",
+      "hostname": "example.com",
+      "ip": "169.232.89.219",
+      "is_encryption_enabled": "true",
+      "is_firewall_enabled": "true",
+      "is_password_set": "true",
+      "java_version": "uninstalled",
+      "location": {
+        "city": "Ann Arbor",
+        "country": "United States",
+        "state": "Michigan"
+      },
+      "os": "Mac OS X",
+      "os_version": "10.14.1"
+    },
+    "alias": "",
+    "application": {
+      "key": "DIY231J8BR23QK4UKBY8",
+      "name": "Microsoft Azure Active Directory"
+    },
+    "auth_device": {
+      "ip": "192.168.225.254",
+      "location": {
+        "city": "Ann Arbor",
+        "country": "United States",
+        "state": "Michigan"
+      },
+      "name": "My iPhone X (734-555-2342)"
+    },
+    "email": "narroway@example.com",
+    "event_type": "authentication",
+    "factor": "duo_push",
+    "isotimestamp": "2020-02-13T18:56:20.351346Z",
+    "ood_software": "null",
+    "reason": "user_approved",
+    "result": "success",
+    "timestamp": 1581620180,
+    "txid": "340a23e3-23f3-23c1-87dc-1491a23dfdbb",
+    "user": {
+      "groups": [
+        "Duo Users",
+        "CorpHQ Users"
+      ],
+      "key": "DU3KC77WJ06Y5HIV7XKQ",
+      "name": "narroway@example.com"
+    },
+
+    "p_log_type": "Duo.Authentication",
+    "p_event_time":"2020-02-13T18:56:20.351346Z",
+    "p_any_domain_names":["example.com"],
+    "p_any_ip_addresses": ["169.232.89.219", "192.168.225.254"],
+    "p_any_emails":["narroway@example.com"],
+    "p_any_usernames":["narroway@example.com"],
+    "p_any_trace_ids": ["340a23e3-23f3-23c1-87dc-1491a23dfdbb"]
+  }
+
+---
+name: administrator logs
+logType: Duo.Administrator
+input: |
+  {
+        "action": "user_update",
+        "description": "{\"notes\": \"Joe asked for their nickname to be displayed instead of Joseph.\", \"realname\": \"Joe Smith\"}",
+        "isotimestamp": "2020-01-24T15:09:42+00:00",
+        "object": "jsmith",
+        "timestamp": 1579878582,
+        "username": "admin"
+    }
+result: |
+  {
+        "action": "user_update",
+        "description": "{\"notes\": \"Joe asked for their nickname to be displayed instead of Joseph.\", \"realname\": \"Joe Smith\"}",
+        "isotimestamp": "2020-01-24T15:09:42Z",
+        "object": "jsmith",
+        "timestamp": 1579878582,
+        "username": "admin",
+
+        "p_log_type": "Duo.Administrator",
+        "p_event_time": "2020-01-24T15:09:42Z",
+        "p_any_usernames":["admin"]
+  }
+
+---
+name: offline enrollment logs
+logType: Duo.OfflineEnrollment
+input: |
+  {
+    "action": "o2fa_user_provisioned",
+    "description": "{\"user_agent\": \"DuoCredProv/4.0.6.413 (Windows NT 6.3.9600; x64; Server)\", \"hostname\": \"WKSW10x64\", \"factor\": \"duo_otp\"}",
+    "isotimestamp": "2019-08-30T16:10:05+02:00",
+    "object": "Acme Laptop Windows Logon",
+    "timestamp": 1567181405,
+    "username": "narroway"
+  }
+result: |
+  {
+    "action": "o2fa_user_provisioned",
+    "description": "{\"user_agent\": \"DuoCredProv/4.0.6.413 (Windows NT 6.3.9600; x64; Server)\", \"hostname\": \"WKSW10x64\", \"factor\": \"duo_otp\"}",
+    "isotimestamp": "2019-08-30T16:10:05+02:00",
+    "object": "Acme Laptop Windows Logon",
+    "timestamp": 1567181405,
+    "username": "narroway",
+
+    "p_log_type": "Duo.OfflineEnrollment",
+    "p_event_time": "2019-08-30T14:10:05Z",
+    "p_any_usernames":["narroway"]
+  }

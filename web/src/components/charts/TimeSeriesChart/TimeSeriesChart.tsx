@@ -19,9 +19,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Box, Flex, theme as Theme, ThemeProvider, useTheme } from 'pouncejs';
-import { formatTime, remToPx, capitalize } from 'Helpers/utils';
-import { FloatSeries, LongSeries } from 'Generated/schema';
-import { EChartOption, ECharts } from 'echarts';
+import dayjs from 'dayjs';
+import { remToPx, capitalize } from 'Helpers/utils';
+import { FloatSeries, LongSeries, Scalars } from 'Generated/schema';
+import type { EChartOption, ECharts } from 'echarts';
 import mapKeys from 'lodash/mapKeys';
 import { SEVERITY_COLOR_MAP } from 'Source/constants';
 import { stringToPaleColor } from 'Helpers/colors';
@@ -102,15 +103,20 @@ interface TimeSeriesChartProps {
    * @default ChartTooltip
    */
   tooltipComponent?: React.FC<ChartTooltipProps>;
+
+  /**
+   * Boolean variable for displaying dates on charts, labels and tooltips as UTC
+   * @default false
+   */
+  useUTC?: boolean;
 }
 
 const severityColors = mapKeys(SEVERITY_COLOR_MAP, (val, key) => capitalize(key.toLowerCase()));
 
-const hourFormat = formatTime('HH:mm');
-const dateFormat = formatTime('MMM DD');
-
-function formatDateString(timestamp) {
-  return `${hourFormat(timestamp)}\n${dateFormat(timestamp).toUpperCase()}`;
+function formatDateString(timestamp: Scalars['AWSDateTime'], useUTC: boolean) {
+  return `${(useUTC ? dayjs.utc(timestamp) : dayjs(timestamp)).format('HH:mm')}\n${dayjs(timestamp)
+    .format('MMM DD')
+    .toUpperCase()}`;
 }
 
 const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
@@ -125,8 +131,11 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   units,
   title,
   tooltipComponent = ChartTooltip,
+  useUTC = false,
 }) => {
-  const [scaleType, setScaleType] = React.useState('value');
+  const [scaleType, setScaleType] = React.useState<EChartOption.BasicComponents.CartesianAxis.Type>(
+    'value'
+  );
   const theme = useTheme();
   const { getLegend } = useChartOptions();
   const timeSeriesChart = React.useRef<ECharts>(null);
@@ -172,10 +181,14 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           },
         },
         data: values
-          .map((v, i) => {
+          .map((value, index) => {
             return {
               name: label,
-              value: [data.timestamps[i], v, data.metadata ? data.metadata[i] : null],
+              value: [
+                data.timestamps[index],
+                value === 0 && scaleType === 'log' ? 0.0001 : value,
+                data.metadata ? data.metadata[index] : null,
+              ],
             };
           })
           /* This reverse is needed cause data provided by API are coming by descending timestamp.
@@ -188,6 +201,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
     });
 
     const options: EChartOption = {
+      useUTC,
       grid: {
         left: hideLegend ? 0 : 180,
         right: 50,
@@ -211,7 +225,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
                 color: theme.colors['navyblue-200'],
               },
             },
-            labelFormatter: value => formatDateString(value),
+            labelFormatter: value => formatDateString(value, useUTC),
             borderColor: theme.colors['navyblue-200'],
             // + 33 is opacity at 40%, what's the best way to do this?
             fillerColor: `${theme.colors['navyblue-200']}4D`,
@@ -256,7 +270,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           },
         },
         axisLabel: {
-          formatter: value => formatDateString(value),
+          formatter: value => formatDateString(value, useUTC),
           fontWeight: theme.fontWeights.medium as any,
           fontSize: remToPx(theme.fontSizes['x-small']),
           fontFamily: theme.fonts.primary,
@@ -265,7 +279,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
         splitArea: { show: false }, // remove the grid area
       },
       yAxis: {
-        type: scaleType as EChartOption.BasicComponents.CartesianAxis.Type,
+        type: scaleType,
         logBase: 10,
         min: scaleType === 'log' ? 1 : 0,
         axisLine: {

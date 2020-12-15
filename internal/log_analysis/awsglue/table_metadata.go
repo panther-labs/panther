@@ -19,9 +19,6 @@ package awsglue
  */
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -33,8 +30,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/box"
 )
@@ -46,11 +43,9 @@ type PartitionKey struct {
 
 // Metadata about Glue table
 type GlueTableMetadata struct {
-	dataType     models.DataType
 	databaseName string
 	tableName    string
 	description  string
-	logType      string
 	prefix       string
 	timebin      GlueTableTimebin // at what time resolution is this table partitioned
 	eventStruct  interface{}
@@ -58,17 +53,14 @@ type GlueTableMetadata struct {
 
 // Creates a new GlueTableMetadata object for Panther log sources
 func NewGlueTableMetadata(
-	dataType models.DataType, logType, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
+	database, table, logDescription string, timebin GlueTableTimebin, eventStruct interface{}) *GlueTableMetadata {
 
-	tableName := GetTableName(logType)
-	tablePrefix := getTablePrefix(dataType, tableName)
+	tablePrefix := TablePrefix(database, table)
 	return &GlueTableMetadata{
-		dataType:     dataType,
-		databaseName: getDatabase(dataType),
-		tableName:    tableName,
+		databaseName: database,
+		tableName:    table,
 		description:  logDescription,
 		timebin:      timebin,
-		logType:      logType,
 		prefix:       tablePrefix,
 		eventStruct:  eventStruct,
 	}
@@ -93,14 +85,6 @@ func (gm *GlueTableMetadata) Prefix() string {
 
 func (gm *GlueTableMetadata) Timebin() GlueTableTimebin {
 	return gm.timebin
-}
-
-func (gm *GlueTableMetadata) DataType() models.DataType {
-	return gm.dataType
-}
-
-func (gm *GlueTableMetadata) LogType() string {
-	return gm.logType
 }
 
 func (gm *GlueTableMetadata) EventStruct() interface{} {
@@ -128,19 +112,19 @@ func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
 }
 
 func (gm *GlueTableMetadata) RuleTable() *GlueTableMetadata {
-	if gm.dataType == models.RuleData {
+	if gm.databaseName == pantherdb.RuleMatchDatabase {
 		return gm
 	}
 	// the corresponding rule table shares the same structure as the log table + some columns
-	return NewGlueTableMetadata(models.RuleData, gm.LogType(), gm.Description(), GlueTableHourly, gm.EventStruct())
+	return NewGlueTableMetadata(pantherdb.RuleMatchDatabase, gm.tableName, gm.Description(), GlueTableHourly, gm.EventStruct())
 }
 
 func (gm *GlueTableMetadata) RuleErrorTable() *GlueTableMetadata {
-	if gm.dataType == models.RuleErrors {
+	if gm.databaseName == pantherdb.RuleMatchDatabase {
 		return gm
 	}
 	// the corresponding rule table shares the same structure as the log table + some columns
-	return NewGlueTableMetadata(models.RuleErrors, gm.LogType(), gm.Description(), GlueTableHourly, gm.EventStruct())
+	return NewGlueTableMetadata(pantherdb.RuleErrorsDatabase, gm.tableName, gm.Description(), GlueTableHourly, gm.EventStruct())
 }
 
 func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput {
@@ -159,10 +143,12 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 	if err != nil {
 		panic(err)
 	}
-	if gm.dataType == models.RuleData { // append the columns added by the rule engine
+	switch gm.databaseName {
+	case pantherdb.RuleMatchDatabase:
+		// append the columns added by the rule engine
 		columns = append(columns, RuleMatchColumns...)
-	} else if gm.dataType == models.RuleErrors {
-		// append the rule match & and rule error columns
+	case pantherdb.RuleErrorsDatabase:
+		// append the rule error columns
 		columns = append(columns, RuleErrorColumns...)
 	}
 	glueColumns := make([]*glue.Column, len(columns))
@@ -203,18 +189,6 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 		},
 		TableType: aws.String("EXTERNAL_TABLE"),
 	}
-}
-
-func (gm *GlueTableMetadata) Signature() (string, error) {
-	tableInput := gm.glueTableInput("")
-	tableInputJSON, err := json.MarshalIndent(tableInput, "", "") // Indent forces sorting for consistency
-	if err != nil {
-		return "", errors.Wrapf(err, "cannot marshal table for signature: %s.%s",
-			gm.databaseName, gm.tableName)
-	}
-	hash := sha256.New()
-	_, _ = hash.Write(tableInputJSON)
-	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
 func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, bucketName string) error {
@@ -259,7 +233,7 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 }
 
 // Based on Timebin(), return an S3 prefix for objects of this table
-func (gm *GlueTableMetadata) GetPartitionPrefix(t time.Time) string {
+func (gm *GlueTableMetadata) PartitionPrefix(t time.Time) string {
 	return gm.Prefix() + gm.timebin.PartitionPathS3(t)
 }
 
@@ -390,7 +364,7 @@ func (gm *GlueTableMetadata) createPartition(client glueiface.GlueAPI, t time.Ti
 	}
 
 	storageDescriptor := *tableOutput.Table.StorageDescriptor // copy because we will mutate
-	storageDescriptor.Location = aws.String("s3://" + bucket + "/" + gm.GetPartitionPrefix(t))
+	storageDescriptor.Location = aws.String("s3://" + bucket + "/" + gm.PartitionPrefix(t))
 
 	_, err = CreatePartition(client, gm.databaseName, gm.tableName, gm.timebin.PartitionValuesFromTime(t),
 		&storageDescriptor, nil)

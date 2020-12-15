@@ -1,0 +1,99 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# Copyright (C) 2020 Panther Labs Inc
+#
+# Panther Enterprise is licensed under the terms of a commercial license available from
+# Panther Labs Inc ("Panther Commercial License") by contacting contact@runpanther.com.
+# All use, distribution, and/or modification of this software, whether commercial or non-commercial,
+# falls under the Panther Commercial License to the extent it is permitted.
+
+schema: GitLabAPI
+version: 0
+fields:
+  - name: time
+    type: timestamp
+    timeFormat: rfc3339
+    required: true
+  - name: severity
+    type: string
+    required: true
+  - name: duration_s
+    required: true
+    type: float
+  - name: db_duration_s
+    type: float
+  - name: view_duration_s
+    type: float
+  - name: status
+    type: smallint
+    required: true
+  - name: method
+    type: string
+    required: true
+  - name: path
+    type: string
+    required: true
+  - name: params
+    type: array
+    element:
+      type: object
+      fields:
+        - name: key
+          type: string
+          required: true
+        - name: value
+          type: json
+  - name: host
+    type: string
+    required: true
+    indicators:
+      - hostname
+  - name: ua
+    type: string
+  - name: route
+    type: string
+    required: true
+  - name: remote_ip
+    type: string
+    indicators:
+      - ip
+  - name: user_id
+    type: string
+  - name: username
+    type: string
+  - name: gitally_calls
+    type: int
+  - name: gitally_duration_s
+    type: float
+  - name: redis_calls
+    type: int
+  - name: redis_duration_s
+    type: float
+  - name: correlation_id
+    type: string
+    indicators:
+      - trace_id
+  - name: queue_duration_s
+    type: float
+  - name: meta.user
+    type: string
+  - name: meta.project
+    type: string
+  - name: meta.root_namespace
+    type: string
+  - name: meta.caller_id
+    type: string

@@ -20,6 +20,7 @@ package null
 
 import (
 	"encoding/json"
+	"strconv"
 	"unsafe"
 
 	jsoniter "github.com/json-iterator/go"
@@ -119,6 +120,16 @@ func (*stringCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
 	case jsoniter.StringValue:
 		*((*String)(ptr)) = String{
 			Value:  iter.ReadString(),
+			Exists: noError(iter.Error),
+		}
+	case jsoniter.BoolValue:
+		*((*String)(ptr)) = String{
+			Value:  strconv.FormatBool(iter.ReadBool()),
+			Exists: noError(iter.Error),
+		}
+	case jsoniter.NumberValue:
+		*((*String)(ptr)) = String{
+			Value:  iter.ReadNumber().String(),
 			Exists: noError(iter.Error),
 		}
 	default:

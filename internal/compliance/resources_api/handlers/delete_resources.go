@@ -50,8 +50,8 @@ func (API) DeleteResources(input *models.DeleteResourcesInput) *events.APIGatewa
 		case http.StatusOK:
 			continue
 		case http.StatusNotFound:
-			// If the resource wasn't found, log a warning but we don't need to fail the operation.
-			zap.L().Warn("resource no longer exists", zap.Any("deleteEntry", entry))
+			// If the resource wasn't found, log but we don't need to fail the operation.
+			zap.L().Debug("resource no longer exists", zap.Any("deleteEntry", entry))
 		default:
 			return response // some other error condition
 		}

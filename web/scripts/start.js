@@ -21,7 +21,8 @@ const { loadDotEnvVars } = require('./utils');
 
 // Mark the Node environment as development in order to load the proper webpack configuration
 process.env.NODE_ENV = 'development';
-process.env.PANTHER_VERSION = execSync('git describe --tags').toString().trim(); // prettier-ignore
+process.env.PANTHER_COMMIT = execSync('git rev-parse --short HEAD').toString().trim(); // prettier-ignore
+process.env.PANTHER_VERSION = execSync('cat VERSION').toString().trim(); // prettier-ignore
 
 // Add all the aws-related ENV vars to process.env
 loadDotEnvVars('out/.env.aws');

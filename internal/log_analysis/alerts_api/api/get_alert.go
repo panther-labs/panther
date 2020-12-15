@@ -30,12 +30,12 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
-	logprocessormodels "github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -124,7 +124,7 @@ func (api *API) getEventsForLogType(
 		}
 		result = append(result, events...)
 		// start iterating over the partitions here
-		gluePartition, err := awsglue.GetPartitionFromS3(api.env.ProcessedDataBucket, token.S3ObjectKey)
+		gluePartition, err := awsglue.PartitionFromS3Object(api.env.ProcessedDataBucket, token.S3ObjectKey)
 		if err != nil {
 			return nil, resultToken, errors.Wrapf(err, "cannot parse token s3 path")
 		}
@@ -143,13 +143,12 @@ func (api *API) getEventsForLogType(
 			break
 		}
 
-		var dataType logprocessormodels.DataType
+		database := pantherdb.RuleMatchDatabase
 		if alert.Type == alertmodels.RuleErrorType {
-			dataType = logprocessormodels.RuleErrors
-		} else {
-			dataType = logprocessormodels.RuleData
+			database = pantherdb.RuleErrorsDatabase
 		}
-		partitionPrefix := awsglue.GetPartitionPrefix(dataType, logType, awsglue.GlueTableHourly, nextTime)
+		tableName := pantherdb.TableName(logType)
+		partitionPrefix := awsglue.PartitionPrefix(database, tableName, awsglue.GlueTableHourly, nextTime)
 		partitionPrefix += fmt.Sprintf(ruleSuffixFormat, alert.RuleID) // JSON data has more specific paths based on ruleID
 
 		listRequest := &s3.ListObjectsV2Input{

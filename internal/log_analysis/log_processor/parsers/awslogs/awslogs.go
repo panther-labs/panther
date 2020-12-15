@@ -21,6 +21,7 @@ package awslogs
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
 
@@ -62,21 +63,24 @@ var logTypes = logtypes.Must("AWS",
 		Description:  `AWSCloudTrail represents the content of a CloudTrail S3 object.`,
 		ReferenceURL: `https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html`,
 		Schema:       mustBuildEventSchema(CloudTrail{}),
-		NewParser:    parsers.FactoryFunc(newCloudTrailParser),
+		NewParser:    pantherlog.FactoryFunc(newCloudTrailParser),
 	},
-	logtypes.Config{
+	logtypes.ConfigJSON{
 		Name:         TypeCloudTrailDigest,
 		Description:  `AWSCloudTrailDigest contains the names of the log files that were delivered to your Amazon S3 bucket during the last hour, the hash values for those log files, and the signature of the previous digest file.`,
 		ReferenceURL: `https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-digest-file-structure.html`,
-		Schema:       CloudTrailDigest{},
-		NewParser:    parsers.AdapterFactory(&CloudTrailDigestParser{}),
+		NewEvent: func() interface{} {
+			return &CloudTrailDigest{}
+		},
 	},
 	logtypes.Config{
 		Name:         TypeCloudTrailInsight,
 		Description:  `AWSCloudTrailInsight represents the content of a CloudTrail Insight event record S3 object.`,
 		ReferenceURL: `https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference.html`,
-		Schema:       CloudTrailInsight{},
-		NewParser:    parsers.AdapterFactory(&CloudTrailInsightParser{}),
+		Schema:       mustBuildEventSchema(CloudTrailInsight{}),
+		NewParser: pantherlog.FactoryFunc(func(_ interface{}) (parsers.Interface, error) {
+			return &CloudTrailInsightParser{}, nil
+		}),
 	},
 	logtypes.Config{
 		Name:         TypeCloudWatchEvents,

@@ -1,0 +1,55 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# Copyright (C) 2020 Panther Labs Inc
+#
+# Panther Enterprise is licensed under the terms of a commercial license available from
+# Panther Labs Inc ("Panther Commercial License") by contacting contact@runpanther.com.
+# All use, distribution, and/or modification of this software, whether commercial or non-commercial,
+# falls under the Panther Commercial License to the extent it is permitted.
+
+version: 0
+schema: ApacheCommonLog
+parser:
+  regex:
+    patternDefinitions:
+      APACHE_COMMON_TIMESTAMP: '\d?\d/[A-Z][a-z]{2}/\d{4}:\d\d:\d\d:\d\d [+-]\d{4}'
+    match:
+      - '%{IP:remote_ip} %{NS:identity} %{NS:user} \[%{APACHE_COMMON_TIMESTAMP:timestamp}\] "%{NOTSPACE:method} %{NOTSPACE:request_uri} %{NOTSPACE:protocol}" %{NOTSPACE:status} %{NOTSPACE:bytes_sent}'
+    emptyValues: ['-']
+fields:
+  - name: remote_ip
+    type: string
+    indicators:
+      - ip
+  - name: identity
+    type: string
+  - name: user
+    type: string
+  - name: timestamp
+    type: timestamp
+    isEventTime: true
+    timeFormat: '%d/%b/%Y:%H:%M:%S %z'
+  - name: method
+    type: string
+  - name: request_uri
+    type: string
+  - name: protocol
+    type: string
+  - name: status
+    type: int
+  - name: bytes_sent
+    type: bigint

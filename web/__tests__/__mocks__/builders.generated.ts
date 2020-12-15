@@ -19,21 +19,29 @@
 import {
   ActiveSuppressCount,
   AddComplianceIntegrationInput,
+  AddCustomLogInput,
+  AddCustomLogOutput,
   AddGlobalPythonModuleInput,
   AddPolicyInput,
   AddRuleInput,
   AddS3LogIntegrationInput,
   AddSqsLogIntegrationInput,
   AlertDetails,
+  AlertDetailsRuleInfo,
   AlertSummary,
+  AlertSummaryPolicyInfo,
+  AlertSummaryRuleInfo,
   AsanaConfig,
   AsanaConfigInput,
   ComplianceIntegration,
   ComplianceIntegrationHealth,
   ComplianceItem,
   ComplianceStatusCounts,
+  CustomLogRecord,
   CustomWebhookConfig,
   CustomWebhookConfigInput,
+  DeleteCustomLogInput,
+  DeleteCustomLogOutput,
   DeleteGlobalPythonInputItem,
   DeleteGlobalPythonModuleInput,
   DeletePolicyInput,
@@ -54,6 +62,8 @@ import {
   GeneralSettings,
   GetAlertInput,
   GetComplianceIntegrationTemplateInput,
+  GetCustomLogInput,
+  GetCustomLogOutput,
   GetGlobalPythonModuleInput,
   GetPolicyInput,
   GetResourceInput,
@@ -141,10 +151,13 @@ import {
   UploadPoliciesResponse,
   User,
   AccountTypeEnum,
+  AlertDetailsDetectionInfo,
   AlertStatusesEnum,
+  AlertSummaryDetectionInfo,
   AlertTypesEnum,
   ComplianceStatusEnum,
   DestinationTypeEnum,
+  ErrorCodeEnum,
   ListAlertsSortFieldsEnum,
   ListPoliciesSortFieldsEnum,
   ListResourcesSortFieldsEnum,
@@ -174,6 +187,28 @@ export const buildAddComplianceIntegrationInput = (
     integrationLabel: 'integrationLabel' in overrides ? overrides.integrationLabel : 'withdrawal',
     remediationEnabled: 'remediationEnabled' in overrides ? overrides.remediationEnabled : false,
     cweEnabled: 'cweEnabled' in overrides ? overrides.cweEnabled : false,
+  };
+};
+
+export const buildAddCustomLogInput = (
+  overrides: Partial<AddCustomLogInput> = {}
+): AddCustomLogInput => {
+  return {
+    revision: 'revision' in overrides ? overrides.revision : 176,
+    logType: 'logType' in overrides ? overrides.logType : 'matrix',
+    description: 'description' in overrides ? overrides.description : 'Buckinghamshire',
+    referenceURL: 'referenceURL' in overrides ? overrides.referenceURL : 'enable',
+    logSpec: 'logSpec' in overrides ? overrides.logSpec : 'applications',
+  };
+};
+
+export const buildAddCustomLogOutput = (
+  overrides: Partial<AddCustomLogOutput> = {}
+): AddCustomLogOutput => {
+  return {
+    __typename: 'AddCustomLogOutput',
+    error: 'error' in overrides ? overrides.error : buildError(),
+    record: 'record' in overrides ? overrides.record : buildCustomLogRecord(),
   };
 };
 
@@ -262,13 +297,10 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     creationTime: 'creationTime' in overrides ? overrides.creationTime : '2020-10-28T02:06:29.865Z',
     deliveryResponses:
       'deliveryResponses' in overrides ? overrides.deliveryResponses : [buildDeliveryResponse()],
-    eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 516,
-    ruleId: 'ruleId' in overrides ? overrides.ruleId : '9ad2c6da-417d-414f-a3e5-7959acdeaa9e',
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
     title: 'title' in overrides ? overrides.title : 'Steel',
     type: 'type' in overrides ? overrides.type : AlertTypesEnum.Rule,
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Books'],
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
         ? overrides.lastUpdatedBy
@@ -276,10 +308,22 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
     lastUpdatedByTime:
       'lastUpdatedByTime' in overrides ? overrides.lastUpdatedByTime : '2020-07-02T20:00:23.050Z',
     updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-02-22T04:54:35.910Z',
-    dedupString: 'dedupString' in overrides ? overrides.dedupString : 'Auto Loan Account',
-    events: 'events' in overrides ? overrides.events : ['"bar"'],
+    detection: 'detection' in overrides ? overrides.detection : buildAlertDetailsRuleInfo(),
+  };
+};
+
+export const buildAlertDetailsRuleInfo = (
+  overrides: Partial<AlertDetailsRuleInfo> = {}
+): AlertDetailsRuleInfo => {
+  return {
+    __typename: 'AlertDetailsRuleInfo',
+    ruleId: 'ruleId' in overrides ? overrides.ruleId : '17db7258-2d08-4d56-b993-666b8e6db65e',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Baht'],
+    eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 545,
+    dedupString: 'dedupString' in overrides ? overrides.dedupString : 'panel',
+    events: 'events' in overrides ? overrides.events : ['"car"'],
     eventsLastEvaluatedKey:
-      'eventsLastEvaluatedKey' in overrides ? overrides.eventsLastEvaluatedKey : 'Accountability',
+      'eventsLastEvaluatedKey' in overrides ? overrides.eventsLastEvaluatedKey : 'index',
   };
 };
 
@@ -290,13 +334,10 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
     creationTime: 'creationTime' in overrides ? overrides.creationTime : '2020-08-08T12:15:31.121Z',
     deliveryResponses:
       'deliveryResponses' in overrides ? overrides.deliveryResponses : [buildDeliveryResponse()],
-    eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 670,
-    ruleId: 'ruleId' in overrides ? overrides.ruleId : '6eb9c948-5a13-4955-bd91-b98801b55bed',
-    type: 'type' in overrides ? overrides.type : AlertTypesEnum.Rule,
+    type: 'type' in overrides ? overrides.type : AlertTypesEnum.RuleError,
     severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Medium,
     status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Triaged,
     title: 'title' in overrides ? overrides.title : 'indexing',
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Costa Rica'],
     lastUpdatedBy:
       'lastUpdatedBy' in overrides
         ? overrides.lastUpdatedBy
@@ -304,6 +345,30 @@ export const buildAlertSummary = (overrides: Partial<AlertSummary> = {}): AlertS
     lastUpdatedByTime:
       'lastUpdatedByTime' in overrides ? overrides.lastUpdatedByTime : '2020-07-29T23:42:06.903Z',
     updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-09-17T19:32:46.882Z',
+    detection: 'detection' in overrides ? overrides.detection : buildAlertSummaryRuleInfo(),
+  };
+};
+
+export const buildAlertSummaryPolicyInfo = (
+  overrides: Partial<AlertSummaryPolicyInfo> = {}
+): AlertSummaryPolicyInfo => {
+  return {
+    __typename: 'AlertSummaryPolicyInfo',
+    policyId: 'policyId' in overrides ? overrides.policyId : 'a68babd7-7c1c-4dee-a33e-b8009e6d8017',
+    resourceId: 'resourceId' in overrides ? overrides.resourceId : '5th generation',
+    policySourceId: 'policySourceId' in overrides ? overrides.policySourceId : 'program',
+    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['brand'],
+  };
+};
+
+export const buildAlertSummaryRuleInfo = (
+  overrides: Partial<AlertSummaryRuleInfo> = {}
+): AlertSummaryRuleInfo => {
+  return {
+    __typename: 'AlertSummaryRuleInfo',
+    ruleId: 'ruleId' in overrides ? overrides.ruleId : '8780849b-30b8-4ce2-934b-bf033369b110',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Personal Loan Account'],
+    eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 240,
   };
 };
 
@@ -397,6 +462,18 @@ export const buildComplianceStatusCounts = (
   };
 };
 
+export const buildCustomLogRecord = (overrides: Partial<CustomLogRecord> = {}): CustomLogRecord => {
+  return {
+    __typename: 'CustomLogRecord',
+    logType: 'logType' in overrides ? overrides.logType : 'Towels',
+    revision: 'revision' in overrides ? overrides.revision : 674,
+    updatedAt: 'updatedAt' in overrides ? overrides.updatedAt : 'Automotive',
+    description: 'description' in overrides ? overrides.description : 'Rustic',
+    referenceURL: 'referenceURL' in overrides ? overrides.referenceURL : 'Savings Account',
+    logSpec: 'logSpec' in overrides ? overrides.logSpec : 'proactive',
+  };
+};
+
 export const buildCustomWebhookConfig = (
   overrides: Partial<CustomWebhookConfig> = {}
 ): CustomWebhookConfig => {
@@ -411,6 +488,24 @@ export const buildCustomWebhookConfigInput = (
 ): CustomWebhookConfigInput => {
   return {
     webhookURL: 'webhookURL' in overrides ? overrides.webhookURL : 'bypass',
+  };
+};
+
+export const buildDeleteCustomLogInput = (
+  overrides: Partial<DeleteCustomLogInput> = {}
+): DeleteCustomLogInput => {
+  return {
+    logType: 'logType' in overrides ? overrides.logType : 'deposit',
+    revision: 'revision' in overrides ? overrides.revision : 783,
+  };
+};
+
+export const buildDeleteCustomLogOutput = (
+  overrides: Partial<DeleteCustomLogOutput> = {}
+): DeleteCustomLogOutput => {
+  return {
+    __typename: 'DeleteCustomLogOutput',
+    error: 'error' in overrides ? overrides.error : buildError(),
   };
 };
 
@@ -629,6 +724,25 @@ export const buildGetComplianceIntegrationTemplateInput = (
   };
 };
 
+export const buildGetCustomLogInput = (
+  overrides: Partial<GetCustomLogInput> = {}
+): GetCustomLogInput => {
+  return {
+    logType: 'logType' in overrides ? overrides.logType : 'Director',
+    revision: 'revision' in overrides ? overrides.revision : 64,
+  };
+};
+
+export const buildGetCustomLogOutput = (
+  overrides: Partial<GetCustomLogOutput> = {}
+): GetCustomLogOutput => {
+  return {
+    __typename: 'GetCustomLogOutput',
+    error: 'error' in overrides ? overrides.error : buildError(),
+    record: 'record' in overrides ? overrides.record : buildCustomLogRecord(),
+  };
+};
+
 export const buildGetGlobalPythonModuleInput = (
   overrides: Partial<GetGlobalPythonModuleInput> = {}
 ): GetGlobalPythonModuleInput => {
@@ -745,6 +859,7 @@ export const buildJiraConfig = (overrides: Partial<JiraConfig> = {}): JiraConfig
     apiKey: 'apiKey' in overrides ? overrides.apiKey : 'bluetooth',
     assigneeId: 'assigneeId' in overrides ? overrides.assigneeId : 'bleeding-edge',
     issueType: 'issueType' in overrides ? overrides.issueType : 'Iowa',
+    labels: 'labels' in overrides ? overrides.labels : ['Rhode Island'],
   };
 };
 
@@ -756,6 +871,7 @@ export const buildJiraConfigInput = (overrides: Partial<JiraConfigInput> = {}): 
     apiKey: 'apiKey' in overrides ? overrides.apiKey : 'Sleek Cotton Car',
     assigneeId: 'assigneeId' in overrides ? overrides.assigneeId : 'Virgin Islands, British',
     issueType: 'issueType' in overrides ? overrides.issueType : 'strategic',
+    labels: 'labels' in overrides ? overrides.labels : ['magenta'],
   };
 };
 
@@ -767,14 +883,13 @@ export const buildListAlertsInput = (overrides: Partial<ListAlertsInput> = {}): 
       'exclusiveStartKey' in overrides ? overrides.exclusiveStartKey : 'Throughway',
     severity: 'severity' in overrides ? overrides.severity : [SeverityEnum.Low],
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Awesome Wooden Mouse'],
-    type: 'type' in overrides ? overrides.type : AlertTypesEnum.Rule,
+    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['24 hour'],
+    types: 'types' in overrides ? overrides.types : [AlertTypesEnum.Policy],
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'Island',
     createdAtBefore:
       'createdAtBefore' in overrides ? overrides.createdAtBefore : '2020-05-22T12:33:45.819Z',
     createdAtAfter:
       'createdAtAfter' in overrides ? overrides.createdAtAfter : '2020-04-26T13:02:02.091Z',
-    ruleIdContains: 'ruleIdContains' in overrides ? overrides.ruleIdContains : 'virtual',
-    alertIdContains: 'alertIdContains' in overrides ? overrides.alertIdContains : 'Garden',
     status: 'status' in overrides ? overrides.status : [AlertStatusesEnum.Open],
     eventCountMin: 'eventCountMin' in overrides ? overrides.eventCountMin : 694,
     eventCountMax: 'eventCountMax' in overrides ? overrides.eventCountMax : 911,
@@ -841,13 +956,16 @@ export const buildListPoliciesInput = (
   overrides: Partial<ListPoliciesInput> = {}
 ): ListPoliciesInput => {
   return {
+    createdBy: 'createdBy' in overrides ? overrides.createdBy : 'Sports',
+    lastModifiedBy: 'lastModifiedBy' in overrides ? overrides.lastModifiedBy : 'incubate',
+    initialSet: 'initialSet' in overrides ? overrides.initialSet : false,
     complianceStatus:
       'complianceStatus' in overrides ? overrides.complianceStatus : ComplianceStatusEnum.Pass,
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'parse',
     enabled: 'enabled' in overrides ? overrides.enabled : false,
     hasRemediation: 'hasRemediation' in overrides ? overrides.hasRemediation : false,
     resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['software'],
-    severity: 'severity' in overrides ? overrides.severity : SeverityEnum.High,
+    severity: 'severity' in overrides ? overrides.severity : [SeverityEnum.High],
     tags: 'tags' in overrides ? overrides.tags : ['Fish'],
     sortBy: 'sortBy' in overrides ? overrides.sortBy : ListPoliciesSortFieldsEnum.ResourceTypes,
     sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
@@ -898,10 +1016,13 @@ export const buildListResourcesResponse = (
 
 export const buildListRulesInput = (overrides: Partial<ListRulesInput> = {}): ListRulesInput => {
   return {
+    createdBy: 'createdBy' in overrides ? overrides.createdBy : 'neural',
+    lastModifiedBy: 'lastModifiedBy' in overrides ? overrides.lastModifiedBy : 'Integration',
+    initialSet: 'initialSet' in overrides ? overrides.initialSet : true,
     nameContains: 'nameContains' in overrides ? overrides.nameContains : 'Cotton',
     enabled: 'enabled' in overrides ? overrides.enabled : false,
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Drive'],
-    severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Low,
+    severity: 'severity' in overrides ? overrides.severity : [SeverityEnum.Low],
     tags: 'tags' in overrides ? overrides.tags : ['channels'],
     sortBy: 'sortBy' in overrides ? overrides.sortBy : ListRulesSortFieldsEnum.DisplayName,
     sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,

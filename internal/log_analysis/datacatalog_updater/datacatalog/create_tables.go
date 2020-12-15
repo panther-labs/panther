@@ -23,11 +23,11 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/api/lambda/core/log_analysis/log_processor/models"
 	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
 type CreateTablesEvent struct {
@@ -38,7 +38,7 @@ func (h *LambdaHandler) HandleCreateTablesEvent(ctx context.Context, event *Crea
 	if err := h.createOrUpdateTablesForLogTypes(ctx, event.LogTypes); err != nil {
 		return err
 	}
-	if err := h.createOrReplaceViewsForAllDeployedTables(ctx); err != nil {
+	if err := h.createOrReplaceViewsForAllDeployedLogTables(ctx); err != nil {
 		return errors.Wrap(err, "failed to update views")
 	}
 	return nil
@@ -46,7 +46,7 @@ func (h *LambdaHandler) HandleCreateTablesEvent(ctx context.Context, event *Crea
 
 func (h *LambdaHandler) createOrUpdateTablesForLogTypes(ctx context.Context, logTypes []string) error {
 	// We map the log types to their 'base' log tables.
-	tables, err := resolveLogTables(ctx, h.Resolver, logTypes...)
+	tables, err := resolveTables(ctx, h.Resolver, logTypes...)
 	if err != nil {
 		return err
 	}
@@ -60,20 +60,29 @@ func (h *LambdaHandler) createOrUpdateTablesForLogTypes(ctx context.Context, log
 	return nil
 }
 
-func (h *LambdaHandler) createOrReplaceViewsForAllDeployedTables(ctx context.Context) error {
+func (h *LambdaHandler) createOrReplaceViewsForAllDeployedLogTables(ctx context.Context) error {
 	// We fetch the tables again to avoid any possible race condition
 	deployedLogTypes, err := h.fetchAllDeployedLogTypes(ctx)
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch deployed log types")
 	}
 	// We map the deployed log types to their 'base' log tables.
-	deployedLogTables, err := resolveLogTables(ctx, h.Resolver, deployedLogTypes...)
+	deployedLogTables, err := resolveTables(ctx, h.Resolver, deployedLogTypes...)
 	if err != nil {
 		return errors.Wrap(err, "failed to resolve tables for logtypes")
 	}
+
+	var tablesInView []*awsglue.GlueTableMetadata
+	for _, table := range deployedLogTables {
+		if table.DatabaseName() == pantherdb.CloudSecurityDatabase {
+			// Don't create views for the Cloud Security tables
+			continue
+		}
+		tablesInView = append(tablesInView, table)
+	}
 	// update the views for *all* tables based on the log tables.
 	// FIXME: this is confusing, the athenaviews package should not be creating views by expanding table metadata based on hard-wired logic
-	if err := athenaviews.CreateOrReplaceViews(h.AthenaClient, h.AthenaWorkgroup, deployedLogTables); err != nil {
+	if err := athenaviews.CreateOrReplaceLogViews(h.AthenaClient, h.AthenaWorkgroup, tablesInView); err != nil {
 		return errors.Wrap(err, "failed to update athena views")
 	}
 	return nil
@@ -87,7 +96,10 @@ func (h *LambdaHandler) fetchAllDeployedLogTypes(ctx context.Context) ([]string,
 	return gluetables.DeployedLogTypes(ctx, h.GlueClient, available)
 }
 
-func resolveLogTables(ctx context.Context, r logtypes.Resolver, names ...string) ([]*awsglue.GlueTableMetadata, error) {
+// Resolves the tables for the provided log types.
+// Note that this will return only the BASE tables (tables in for panther_logs, panther_cloudsecurity datbases) but not any
+// downstream tables e.g. panther_rule_matches, panther_rule_errors
+func resolveTables(ctx context.Context, r logtypes.Resolver, names ...string) ([]*awsglue.GlueTableMetadata, error) {
 	var out []*awsglue.GlueTableMetadata
 	for _, name := range names {
 		entry, err := r.Resolve(ctx, name)
@@ -99,7 +111,9 @@ func resolveLogTables(ctx context.Context, r logtypes.Resolver, names ...string)
 		}
 		eventSchema := entry.Schema()
 		desc := entry.Describe()
-		meta := awsglue.NewGlueTableMetadata(models.LogData, desc.Name, desc.Description, awsglue.GlueTableHourly, eventSchema)
+		tableName := pantherdb.TableName(desc.Name)
+		db := pantherdb.DatabaseName(pantherdb.GetDataType(name))
+		meta := awsglue.NewGlueTableMetadata(db, tableName, desc.Description, awsglue.GlueTableHourly, eventSchema)
 		out = append(out, meta)
 	}
 	return out, nil

@@ -1382,7 +1382,37 @@ Resources:
             "listAlerts": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
+      ResponseMappingTemplate: |
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, $ctx.args)
+        #else
+          #set($alerts = [])
+
+          #foreach($item in $ctx.result.alertSummaries)
+            #set($alert = $item)
+            #if ($item.type == "POLICY")
+              $util.qr($alert.put("detection", {
+                "__typename": "AlertSummaryPolicyInfo",
+                "policyId": $item.policyId,
+                "policySourceId": $item.policySourceId,
+                "resourceId": $item.resourceId,
+                "resourceTypes": $item.resourceTypes
+              }))
+            #else
+              $util.qr($alert.put("detection", {
+                "__typename": "AlertSummaryRuleInfo",
+                "ruleId": $item.ruleId,
+                "logTypes": $item.logTypes,
+                "eventsMatched": $item.eventsMatched
+              }))
+            #end
+            $util.qr($alerts.add($alert))
+          #end
+          $util.toJson({
+          	"alertSummaries": $alerts,
+            "lastEvaluatedKey": $ctx.result.lastEvaluatedKey
+          })
+        #end
 
   GetAlertResolver:
     Type: AWS::AppSync::Resolver
@@ -1399,7 +1429,32 @@ Resources:
             "getAlert": $ctx.args.input
           })
         }
-      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
+      ResponseMappingTemplate: |
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, $ctx.args)
+        #else
+          #set($payload = $ctx.result)
+          #if ($payload.type == "POLICY")
+            $util.qr($payload.put("detection", {
+              "__typename": "AlertSummaryPolicyInfo",
+              "policyId": $ctx.result.policyId,
+              "policySourceId": $ctx.result.policySourceId,
+              "resourceId": $ctx.result.resourceId,
+              "resourceTypes": $ctx.result.resourceTypes
+            }))
+          #else
+            $util.qr($payload.put("detection", {
+              "__typename": "AlertDetailsRuleInfo",
+              "ruleId": $ctx.result.ruleId,
+              "logTypes": $ctx.result.logTypes,
+              "eventsMatched": $ctx.result.eventsMatched,
+              "dedupString": $ctx.result.dedupString,
+              "events": $ctx.result.events,
+              "eventsLastEvaluatedKey": $ctx.result.eventsLastEvaluatedKey
+            }))
+          #end
+          $util.toJson($payload)
+        #end
 
   UpdateAlertStatusResolver:
     Type: AWS::AppSync::Resolver
@@ -1418,7 +1473,34 @@ Resources:
             "updateAlertStatus": $input
           })
         }
-      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
+      ResponseMappingTemplate: |
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, $ctx.args)
+        #else
+          #set($alerts = [])
+
+          #foreach($item in $ctx.result)
+            #set($alert = $item)
+            #if ($item.type == "POLICY")
+              $util.qr($alert.put("detection", {
+                "__typename": "AlertSummaryPolicyInfo",
+                "policyId": $item.policyId,
+                "policySourceId": $item.policySourceId,
+                "resourceId": $item.resourceId,
+                "resourceTypes": $item.resourceTypes
+              }))
+            #else
+              $util.qr($alert.put("detection", {
+                "__typename": "AlertSummaryRuleInfo",
+                "ruleId": $item.ruleId,
+                "logTypes": $item.logTypes,
+                "eventsMatched": $item.eventsMatched
+              }))
+            #end
+            $util.qr($alerts.add($alert))
+          #end
+          $util.toJson($alerts)
+        #end
 
   TestPolicyResolver:
     Type: AWS::AppSync::Resolver
@@ -1467,6 +1549,79 @@ Resources:
           "operation": "Invoke",
           "payload": $util.toJson({
             "ListAvailableLogTypes": {}
+          })
+        }
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
+
+  AddCustomLogResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: addCustomLog
+      DataSourceName: !GetAtt LogTypesAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "PutCustomLog": $ctx.args.input
+          })
+        }
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
+
+  GetCustomLogResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: getCustomLog
+      DataSourceName: !GetAtt LogTypesAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "GetCustomLog": $ctx.args.input
+          })
+        }
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
+
+  ListCustomLogsResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: listCustomLogs
+      DataSourceName: !GetAtt LogTypesAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "ListCustomLogs": {}
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, $ctx.args)
+        #else
+          $util.toJson($ctx.result.customLogs)
+        #end
+
+  DeleteCustomLogResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: deleteCustomLog
+      DataSourceName: !GetAtt LogTypesAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "DelCustomLog": $ctx.args.input
           })
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]

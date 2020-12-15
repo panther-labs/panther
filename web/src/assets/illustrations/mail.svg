@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="34px" height="22px" viewBox="0 0 34 22" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>mail</title>
+    <g id="Support" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Support---OSS" transform="translate(-368.000000, -466.000000)" fill="#86A3C3">
+            <g id="Need-Support" transform="translate(314.000000, 404.000000)">
+                <g id="Group-4" transform="translate(32.000000, 34.000000)">
+                    <path d="M23.4782609,28 C22.6784848,28 22,28.6731633 22,29.4666667 L22,48.5333333 C22,49.3268367 22.6784848,50 23.4782609,50 L54.5217391,50 C55.3215152,50 56,49.3268367 56,48.5333333 L56,29.4666667 C56,28.6731633 55.3215152,28 54.5217391,28 L23.4782609,28 Z M25.9843565,30.2 L52.0157913,30.2 L39.0000739,41.5666667 L25.9843565,30.2 Z M24.217205,31.575 L38.2723261,43.8583333 C38.6895283,44.217839 39.310287,44.217839 39.7274891,43.8583333 L53.7824239,31.575 L53.7824239,47.8 L24.217205,47.8 L24.217205,31.575 Z" id="mail"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

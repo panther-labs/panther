@@ -25,13 +25,15 @@ import isUndefined from 'lodash/isUndefined';
 import { capitalize } from 'Helpers/utils';
 import TextButton from 'Components/buttons/TextButton';
 import FormikCombobox from 'Components/fields/ComboBox';
+import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 
 export type ListAlertsDropdownFiltersValues = Pick<ListRulesInput, 'severity' | 'enabled'>;
 
 const severityOptions = Object.values(SeverityEnum);
+const severityToString = (severity: SeverityEnum) => capitalize(severity.toLowerCase());
 
 const defaultValues = {
-  severity: null,
+  severity: [],
   enabled: null,
 };
 
@@ -87,13 +89,11 @@ const DropdownFilters: React.FC = () => {
                     <Box pb={4}>
                       <Field
                         name="severity"
-                        as={FormikCombobox}
-                        items={['', ...severityOptions]}
-                        itemToString={(severity: SeverityEnum | '') =>
-                          severity === '' ? 'All' : capitalize(severity.toLowerCase())
-                        }
-                        label="Severity"
-                        placeholder="Select a severity"
+                        as={FormikMultiCombobox}
+                        items={severityOptions}
+                        itemToString={severityToString}
+                        label="Severities"
+                        placeholder="Select severities to filter"
                       />
                     </Box>
                     <Box pb={4}>
