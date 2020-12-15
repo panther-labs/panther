@@ -20,6 +20,7 @@ package slacklogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
