@@ -20,7 +20,6 @@ package table
 
 import (
 	"errors"
-	"github.com/panther-labs/panther/pkg/testutils"
 	"testing"
 	"time"
 
@@ -29,6 +28,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func TestGetAlert(t *testing.T) {
