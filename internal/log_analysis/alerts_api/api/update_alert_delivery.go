@@ -19,10 +19,11 @@ package api
  */
 
 import (
+	"go.uber.org/zap"
+
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/pkg/genericapi"
-	"go.uber.org/zap"
 )
 
 // UpdateAlertDelivery modifies an alert's attributes.

@@ -19,7 +19,6 @@ package api
  */
 
 import (
-	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 	"testing"
 	"time"
 
@@ -28,6 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
