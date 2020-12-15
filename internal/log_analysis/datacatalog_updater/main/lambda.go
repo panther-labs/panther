@@ -31,6 +31,8 @@ import (
 	lambdaclient "github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/kelseyhightower/envconfig"
+	"go.uber.org/zap"
+
 	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
@@ -38,7 +40,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsretry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
-	"go.uber.org/zap"
 )
 
 // The panther-datacatalog-updater lambda is responsible for managing Glue partitions as data is created.

@@ -23,10 +23,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	lambdaclient "github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
+	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
@@ -34,8 +36,9 @@ import (
 )
 
 var config = struct {
-	Debug             bool
-	LogTypesTableName string `required:"true" split_words:"true"`
+	Debug               bool
+	LogTypesTableName   string `required:"true" split_words:"true"`
+	DataCatalogQueueURL string `required:"true" split_words:"true"`
 }{}
 
 func main() {
@@ -60,6 +63,10 @@ func main() {
 		Database: &logtypesapi.DynamoDBLogTypes{
 			DB:        dynamodb.New(session),
 			TableName: config.LogTypesTableName,
+		},
+		DataCatalog: datacatalog.Client{
+			QueueURL: config.DataCatalogQueueURL,
+			SQSAPI:   sqs.New(session),
 		},
 		LambdaClient: lambdaclient.New(session),
 	}
