@@ -20,37 +20,20 @@ package slacklogs
 
 import (
 	jsoniter "github.com/json-iterator/go"
-
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 const TypeAuditLogs = "Slack.AuditLogs"
 
-func LogTypes() logtypes.Group {
-	return logTypes
-}
-
-var logTypes = logtypes.Must("Slack", logtypes.Config{
-	Name:         TypeAuditLogs,
-	Description:  "Slack audit logs provide a view of the actions users perform in an Enterprise Grid organization.",
-	ReferenceURL: "https://api.slack.com/enterprise/audit-logs",
-	Schema:       AuditLog{},
-	NewParser:    parsers.AdapterFactory(AuditParser{}),
-})
-
 // nolint:lll
 type AuditLog struct {
 	ID         string               `json:"id" validate:"required" description:"The event id"`
-	DateCreate timestamp.UnixFloat  `json:"date_create" validate:"required" description:"Creation timestamp for the event"`
+	DateCreate pantherlog.Time      `json:"date_create" validate:"required" tcodec:"unix" event_time:"true" description:"Creation timestamp for the event"`
 	Action     string               `json:"action" validate:"required" description:"The action performed. See https://api.slack.com/enterprise/audit-logs#audit_logs_actions"`
 	Actor      Actor                `json:"actor" validate:"required" description:"An actor will always be a user on a workspace and will be identified by their user ID, such as W123AB456."`
 	Entity     Entity               `json:"entity" validate:"required" description:"An entity is the thing that the actor has taken the action upon and it will be the Slack ID of the thing."`
 	Context    Context              `json:"context" validate:"required" description:"Context is the location that the actor took the action on the entity. It will always be either a Workspace or an Enterprise, with the appropriate ID."`
 	Details    *jsoniter.RawMessage `json:"details" description:"Additional details about the audit log event"`
-
-	parsers.PantherLog
 }
 
 // nolint:lll
@@ -148,33 +131,4 @@ type Location struct {
 	ID     string `json:"id" validate:"required" description:"The location id"`
 	Domain string `json:"domain,omitempty" description:"The location domain"`
 	Name   string `json:"name,omitempty" description:"The location name"`
-}
-
-type AuditParser struct{}
-
-var _ parsers.LogParser = AuditParser{}
-
-func (AuditParser) LogType() string {
-	return TypeAuditLogs
-}
-func (AuditParser) New() parsers.LogParser {
-	return &AuditParser{}
-}
-func (AuditParser) Parse(log string) ([]*parsers.PantherLog, error) {
-	event := AuditLog{}
-	if err := jsoniter.UnmarshalFromString(log, &event); err != nil {
-		return nil, err
-	}
-	event.updatePantherLog(&event.PantherLog)
-	if err := parsers.Validator.Struct(&event); err != nil {
-		return nil, err
-	}
-	return event.Logs(), nil
-}
-
-func (event *AuditLog) updatePantherLog(p *parsers.PantherLog) {
-	p.SetCoreFields(TypeAuditLogs, (*timestamp.RFC3339)(&event.DateCreate), event)
-	if addr := event.Context.IPAddress; addr != "" {
-		p.AppendAnyIPAddress(addr)
-	}
 }
