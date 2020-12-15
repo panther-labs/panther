@@ -23,7 +23,7 @@ FROM buildpack-deps:buster-scm
 
 LABEL description="Panther CircleCI combined Go/Node/Python environment"
 
-ENV GO_VERSION=1.15.1 NODE_VERSION=12.18.3 PYTHON_VERSION=3.7.9
+ENV GO_VERSION=1.15.1 NODE_VERSION=14.15.1 PYTHON_VERSION=3.7.9
 
 
 # ****************     APT Packages     *******************
