@@ -43,10 +43,10 @@ In the above command:
 An example of that would be:
 
 ```
-docker build -f build/images/deployment/Dockerfile -t pantherlabs/panther-development-pack:1.1.0 .
+docker build -f build/images/deployment/Dockerfile -t pantherlabs/panther-development-pack:1.15.0 .
 ```
 
-which will produce the image `pantherlabs/panther-development-pack:1.1.0` in your local machine. Typically,
+which will produce the image `pantherlabs/panther-development-pack:1.15.0` in your local machine. Typically,
 the `IMAGE_NAME` should be `{ORGANIZATION}/${NAME}` to mimic the way it will be remotely stored in Dockerhub.
 
 ## Tagging an image
@@ -69,7 +69,7 @@ If we want to tag an existing image we use the following command:
 For example, if we want to tag a new local image as `latest`, we write:
 
 ```
-docker tag pantherlabs/panther-development-pack:1.1.0 pantherlabs/panther-development-pack:latest
+docker tag pantherlabs/panther-development-pack:1.15.0 pantherlabs/panther-development-pack:latest
 ```
 
 > We could have also done that during build by specifying multiple `-t` params. For example,
@@ -118,6 +118,6 @@ docker push pantherlabs/panther-development-pack
 In the following example, we will build a new image version, tag it as latest and push it to dockerhub:
 
 ```
-docker build -f build/images/deployment/Dockerfile -t pantherlabs/panther-development-pack:1.1.0 -t pantherlabs/panther-development-pack:latest .
+docker build -f build/images/deployment/Dockerfile -t pantherlabs/panther-development-pack:1.15.0 -t pantherlabs/panther-development-pack:latest .
 docker push pantherlabs/panther-development-pack
 ```
