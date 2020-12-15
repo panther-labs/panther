@@ -325,7 +325,7 @@ func filterByType(filter *expression.ConditionBuilder, input *models.ListAlertsI
 
 // filterByTitleContains - filters by a name that contains a string (case insensitive)
 func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
-	if alert != nil && input.NameContains != nil && alert.Title == "" && !strings.Contains(
+	if alert != nil && input.NameContains != nil && alert.Title != "" && !strings.Contains(
 		strings.ToLower(alert.Title),
 		strings.ToLower(*input.NameContains),
 	) {
