@@ -66,6 +66,15 @@ export type AddCustomLogOutput = {
   record?: Maybe<CustomLogRecord>;
 };
 
+export type AddDataModelInput = {
+  displayName: Scalars['String'];
+  id: Scalars['ID'];
+  enabled: Scalars['Boolean'];
+  logTypes: Array<Scalars['String']>;
+  mappings: Scalars['String'];
+  body?: Maybe<Scalars['String']>;
+};
+
 export type AddGlobalPythonModuleInput = {
   id: Scalars['ID'];
   description: Scalars['String'];
@@ -280,6 +289,25 @@ export type CustomWebhookConfig = {
 
 export type CustomWebhookConfigInput = {
   webhookURL: Scalars['String'];
+};
+
+export type DataModel = {
+  __typename?: 'DataModel';
+  displayName: Scalars['String'];
+  id: Scalars['ID'];
+  enabled: Scalars['Boolean'];
+  logTypes: Array<Scalars['String']>;
+  mappings: Array<DataModelMapping>;
+  body?: Maybe<Scalars['String']>;
+  createdAt: Scalars['AWSDateTime'];
+  lastModified: Scalars['AWSDateTime'];
+};
+
+export type DataModelMapping = {
+  __typename?: 'DataModelMapping';
+  name: Scalars['String'];
+  path?: Maybe<Scalars['String']>;
+  method?: Maybe<Scalars['String']>;
 };
 
 export type DeleteCustomLogInput = {
@@ -740,6 +768,7 @@ export type MsTeamsConfigInput = {
 export type Mutation = {
   __typename?: 'Mutation';
   addCustomLog: AddCustomLogOutput;
+  addDataModel: DataModel;
   addDestination?: Maybe<Destination>;
   addComplianceIntegration: ComplianceIntegration;
   addS3LogIntegration: S3LogIntegration;
@@ -777,6 +806,10 @@ export type Mutation = {
 
 export type MutationAddCustomLogArgs = {
   input: AddCustomLogInput;
+};
+
+export type MutationAddDataModelArgs = {
+  input: AddDataModelInput;
 };
 
 export type MutationAddDestinationArgs = {
@@ -1706,6 +1739,9 @@ export type ResolversTypes = {
   Mutation: ResolverTypeWrapper<{}>;
   AddCustomLogInput: AddCustomLogInput;
   AddCustomLogOutput: ResolverTypeWrapper<AddCustomLogOutput>;
+  AddDataModelInput: AddDataModelInput;
+  DataModel: ResolverTypeWrapper<DataModel>;
+  DataModelMapping: ResolverTypeWrapper<DataModelMapping>;
   DestinationInput: DestinationInput;
   DestinationConfigInput: DestinationConfigInput;
   SlackConfigInput: SlackConfigInput;
@@ -1883,6 +1919,9 @@ export type ResolversParentTypes = {
   Mutation: {};
   AddCustomLogInput: AddCustomLogInput;
   AddCustomLogOutput: AddCustomLogOutput;
+  AddDataModelInput: AddDataModelInput;
+  DataModel: DataModel;
+  DataModelMapping: DataModelMapping;
   DestinationInput: DestinationInput;
   DestinationConfigInput: DestinationConfigInput;
   SlackConfigInput: SlackConfigInput;
@@ -2186,6 +2225,31 @@ export type CustomWebhookConfigResolvers<
   ParentType extends ResolversParentTypes['CustomWebhookConfig'] = ResolversParentTypes['CustomWebhookConfig']
 > = {
   webhookURL?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type DataModelResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['DataModel'] = ResolversParentTypes['DataModel']
+> = {
+  displayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  enabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  mappings?: Resolver<Array<ResolversTypes['DataModelMapping']>, ParentType, ContextType>;
+  body?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  lastModified?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type DataModelMappingResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['DataModelMapping'] = ResolversParentTypes['DataModelMapping']
+> = {
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  path?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  method?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2499,6 +2563,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationAddCustomLogArgs, 'input'>
+  >;
+  addDataModel?: Resolver<
+    ResolversTypes['DataModel'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationAddDataModelArgs, 'input'>
   >;
   addDestination?: Resolver<
     Maybe<ResolversTypes['Destination']>,
@@ -3338,6 +3408,8 @@ export type Resolvers<ContextType = any> = {
   ComplianceStatusCounts?: ComplianceStatusCountsResolvers<ContextType>;
   CustomLogRecord?: CustomLogRecordResolvers<ContextType>;
   CustomWebhookConfig?: CustomWebhookConfigResolvers<ContextType>;
+  DataModel?: DataModelResolvers<ContextType>;
+  DataModelMapping?: DataModelMappingResolvers<ContextType>;
   DeleteCustomLogOutput?: DeleteCustomLogOutputResolvers<ContextType>;
   DeliveryResponse?: DeliveryResponseResolvers<ContextType>;
   Destination?: DestinationResolvers<ContextType>;

@@ -11,6 +11,7 @@ schema {
 
 type Mutation {
   addCustomLog(input: AddCustomLogInput!): AddCustomLogOutput!
+  addDataModel(input: AddDataModelInput!): DataModel!
   addDestination(input: DestinationInput!): Destination
   addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
   addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
@@ -81,6 +82,15 @@ type Query {
   listCustomLogs: [CustomLogRecord!]!
 }
 
+input AddDataModelInput {
+  displayName: String!
+  id: ID!
+  enabled: Boolean!
+  logTypes: [String!]!
+  mappings: String!
+  body: String
+}
+
 input DeleteCustomLogInput {
   logType: String!
   revision: Int!
@@ -137,6 +147,23 @@ input GetAlertInput {
   alertId: ID!
   eventsPageSize: Int
   eventsExclusiveStartKey: String
+}
+
+type DataModelMapping {
+  name: String!
+  path: String
+  method: String
+}
+
+type DataModel {
+  displayName: String!
+  id: ID!
+  enabled: Boolean!
+  logTypes: [String!]!
+  mappings: [DataModelMapping!]!
+  body: String
+  createdAt: AWSDateTime!
+  lastModified: AWSDateTime!
 }
 
 type AddCustomLogOutput {

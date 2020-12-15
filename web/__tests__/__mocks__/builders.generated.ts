@@ -21,6 +21,7 @@ import {
   AddComplianceIntegrationInput,
   AddCustomLogInput,
   AddCustomLogOutput,
+  AddDataModelInput,
   AddGlobalPythonModuleInput,
   AddPolicyInput,
   AddRuleInput,
@@ -40,6 +41,8 @@ import {
   CustomLogRecord,
   CustomWebhookConfig,
   CustomWebhookConfigInput,
+  DataModel,
+  DataModelMapping,
   DeleteCustomLogInput,
   DeleteCustomLogOutput,
   DeleteGlobalPythonInputItem,
@@ -209,6 +212,19 @@ export const buildAddCustomLogOutput = (
     __typename: 'AddCustomLogOutput',
     error: 'error' in overrides ? overrides.error : buildError(),
     record: 'record' in overrides ? overrides.record : buildCustomLogRecord(),
+  };
+};
+
+export const buildAddDataModelInput = (
+  overrides: Partial<AddDataModelInput> = {}
+): AddDataModelInput => {
+  return {
+    displayName: 'displayName' in overrides ? overrides.displayName : 'Games',
+    id: 'id' in overrides ? overrides.id : 'f4146cfa-6605-465d-a354-fba4dafe2370',
+    enabled: 'enabled' in overrides ? overrides.enabled : true,
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Reduced'],
+    mappings: 'mappings' in overrides ? overrides.mappings : 'Sports',
+    body: 'body' in overrides ? overrides.body : 'China',
   };
 };
 
@@ -488,6 +504,31 @@ export const buildCustomWebhookConfigInput = (
 ): CustomWebhookConfigInput => {
   return {
     webhookURL: 'webhookURL' in overrides ? overrides.webhookURL : 'bypass',
+  };
+};
+
+export const buildDataModel = (overrides: Partial<DataModel> = {}): DataModel => {
+  return {
+    __typename: 'DataModel',
+    displayName: 'displayName' in overrides ? overrides.displayName : 'collaboration',
+    id: 'id' in overrides ? overrides.id : '97c37f76-8bd8-4def-b4ab-7bfe83d62081',
+    enabled: 'enabled' in overrides ? overrides.enabled : false,
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['enterprise'],
+    mappings: 'mappings' in overrides ? overrides.mappings : [buildDataModelMapping()],
+    body: 'body' in overrides ? overrides.body : 'Pre-emptive',
+    createdAt: 'createdAt' in overrides ? overrides.createdAt : '2020-07-27T01:06:13.606Z',
+    lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-08-20T04:58:12.392Z',
+  };
+};
+
+export const buildDataModelMapping = (
+  overrides: Partial<DataModelMapping> = {}
+): DataModelMapping => {
+  return {
+    __typename: 'DataModelMapping',
+    name: 'name' in overrides ? overrides.name : 'Cotton',
+    path: 'path' in overrides ? overrides.path : 'Yemen',
+    method: 'method' in overrides ? overrides.method : 'Bacon',
   };
 };
 
