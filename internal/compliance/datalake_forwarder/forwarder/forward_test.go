@@ -24,6 +24,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/firehose"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	jsoniter "github.com/json-iterator/go"
@@ -32,6 +33,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/diff"
 	"github.com/panther-labs/panther/internal/compliance/datalake_forwarder/forwarder/events"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
@@ -221,9 +223,20 @@ func TestResourceEvent(t *testing.T) {
 				"type":            {S: aws.String("AWS.Lambda.Function")},
 				"lastModified":    {S: aws.String("2020-12-09T15:32:32.362503673Z")},
 				"attributes": {M: map[string]*dynamodb.AttributeValue{
-					"MemorySize": {N: aws.String("128")},
-					"ResourceId": {S: aws.String("arn:aws:lambda:eu-west-1:415773754570:function:panther-cloudsecurity-datalake-forwarder")},
-				},
+					"Policy":       {NULL: aws.Bool(true)},
+					"RevisionId":   {S: aws.String("433968bb-c360-4411-8f38-0ac65767f230")},
+					"LastModified": {S: aws.String("2020-12-15T11:10:32.883+0000")},
+					"MemorySize":   {N: aws.String("128")},
+					"ResourceId":   {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+					"TimeCreated":  {NULL: aws.Bool(true)},
+					"Region":       {S: aws.String("eu-west-1")},
+					"Arn":          {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+					"ResourceType": {S: aws.String("AWS.Lambda.Function")},
+					"AccountId":    {S: aws.String("123456789012")},
+					"Name":         {S: aws.String("panther-cloudsecurity-datalake-forwarder")},
+					"Tags": {M: map[string]*dynamodb.AttributeValue{
+						"key": {S: aws.String("value")},
+					}}},
 				}},
 			OldImage: map[string]*dynamodb.AttributeValue{
 				"id":              {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
@@ -235,9 +248,21 @@ func TestResourceEvent(t *testing.T) {
 				"type":            {S: aws.String("AWS.Lambda.Function")},
 				"lastModified":    {S: aws.String("2020-12-09T15:32:32.362503673Z")},
 				"attributes": {M: map[string]*dynamodb.AttributeValue{
-					"MemorySize": {N: aws.String("256")},
-					"ResourceId": {S: aws.String("arn:aws:lambda:eu-west-1:415773754570:function:panther-cloudsecurity-datalake-forwarder")},
-				}},
+					"Policy":       {NULL: aws.Bool(true)},
+					"RevisionId":   {S: aws.String("433968bb-c360-4411-8f38-0ac65767f230")},
+					"LastModified": {S: aws.String("2020-12-15T11:10:32.883+0000")},
+					"MemorySize":   {N: aws.String("256")},
+					"ResourceId":   {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+					"TimeCreated":  {NULL: aws.Bool(true)},
+					"Region":       {S: aws.String("eu-west-1")},
+					"Arn":          {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+					"ResourceType": {S: aws.String("AWS.Lambda.Function")},
+					"AccountId":    {S: aws.String("123456789012")},
+					"Name":         {S: aws.String("panther-cloudsecurity-datalake-forwarder")},
+					"Tags": {M: map[string]*dynamodb.AttributeValue{
+						"key": {S: aws.String("value")},
+					}}},
+				},
 			},
 		},
 	}
@@ -253,7 +278,6 @@ func TestResourceEvent(t *testing.T) {
 	assert.NoError(t, err)
 	lambdaMock.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{Payload: marshaledIntegrations}, nil).Once()
 
-
 	// Expected Firehose payload
 	firehoseMock.On("PutRecordBatchWithContext", mock.Anything, mock.Anything, mock.Anything).
 		Return(&firehose.PutRecordBatchOutput{}, nil).
@@ -262,5 +286,43 @@ func TestResourceEvent(t *testing.T) {
 	assert.NoError(t, sh.Run(context.Background(), zap.L(), &events.DynamoDBEvent{Records: []events.DynamoDBEventRecord{record}}))
 	lambdaMock.AssertExpectations(t)
 	firehoseMock.AssertExpectations(t)
-}
 
+	// Verify firehose payload
+	var resource map[string]interface{}
+	if err = dynamodbattribute.Unmarshal(record.Change.NewImage["attributes"], &resource); err != nil {
+		t.Error("failed to marshal attributes")
+	}
+	expectedChange := ResourceChange{
+		ChangeType:       "MODIFIED",
+		IntegrationID:    "8349b647-f731-48c4-9d6b-eefff4010c14",
+		IntegrationLabel: "test-label",
+		LastUpdated:      "2020-12-09T15:32:32.362503673Z",
+		ID:               "arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder",
+		Resource:         resource,
+		Changes: map[string]diff.Diff{
+			"MemorySize": {
+				From: float64(256),
+				To:   float64(128),
+			},
+		},
+		ResourceAttributes: ResourceAttributes{
+			TimeCreated:  nil,
+			Name:         aws.String("panther-cloudsecurity-datalake-forwarder"),
+			ResourceType: aws.String("AWS.Lambda.Function"),
+			ResourceID:   aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder"),
+			Region:       aws.String("eu-west-1"),
+			AccountID:    aws.String("123456789012"),
+			ARN:          aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder"),
+			Tags: map[string]string{
+				"key": "value",
+			},
+		},
+	}
+
+	request := firehoseMock.Calls[0].Arguments[1].(*firehose.PutRecordBatchInput)
+	var change ResourceChange
+	if err := jsoniter.Unmarshal(request.Records[0].Data, &change); err != nil {
+		t.Error("failed to unmarshal change")
+	}
+	assert.Equal(t, expectedChange, change)
+}

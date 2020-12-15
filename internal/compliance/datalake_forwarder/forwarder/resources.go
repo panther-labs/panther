@@ -31,29 +31,37 @@ import (
 )
 
 type ResourceChange struct {
-	ChangeType       string              `json:"changeType"`
-	Changes          diff.Changelog      `json:"changes"`
-	IntegrationID    string              `json:"integrationID"`
-	IntegrationLabel string              `json:"integrationLabel"`
-	LastUpdated      string              `json:"lastUpdated"`
-	Resource         jsoniter.RawMessage `json:"resource"`
-	ResourceID string `json:"resourceId"`
-	ResourceType string `json:"resourceType"`
-	TimeCreated string `json:"timeCreated"`
+	ChangeType       string                 `json:"changeType"`
+	Changes          diff.Changelog         `json:"changes"`
+	IntegrationID    string                 `json:"integrationId"`
+	IntegrationLabel string                 `json:"integrationLabel"`
+	LastUpdated      string                 `json:"lastUpdated"`
+	ID               string                 `json:"id"`
+	Resource         map[string]interface{} `json:"resource"`
+	ResourceAttributes
+}
 
+type ResourceAttributes struct {
+	ResourceID   *string           `json:"resourceId,omitempty"`
+	ResourceType *string           `json:"resourceType,omitempty"`
+	TimeCreated  *string           `json:"timeCreated,omitempty"`
+	AccountID    *string           `json:"accountId,omitempty"`
+	Region       *string           `json:"region,omitempty"`
+	ARN          *string           `json:"arn,omitempty"`
+	Name         *string           `json:"name,omitempty"`
+	Tags         map[string]string `json:"tags,omitempty"`
 }
 
 type resourceSnapshot struct {
 	LastModified  string                 `json:"lastModified"`
 	IntegrationID string                 `json:"integrationId"`
+	ID            string                 `json:"id"`
 	Attributes    map[string]interface{} `json:"attributes"`
 }
 
 // processResourceChanges processes a record from the resources-table dynamoDB stream,
 func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventRecord) (resource *ResourceChange, err error) {
 	// For INSERT and REMOVE events, we don't need to calculate a diff
-	data, _ := jsoniter.MarshalToString(record)
-	zap.L().Info("Found stuffs!", zap.String("data", data))
 	switch lambdaevents.DynamoDBOperationType(record.EventName) {
 	case lambdaevents.DynamoDBOperationTypeInsert:
 		resource, err = sh.processResourceSnapshot(ChangeTypeCreate, record.Change.NewImage)
@@ -122,12 +130,19 @@ func (sh *StreamHandler) processResourceSnapshotDiff(eventName string,
 		return nil, nil
 	}
 
+	var attributes ResourceAttributes
+	if err := jsoniter.Unmarshal(newImageJSON, &attributes); err != nil {
+		return nil, errors.Wrap(err, "failed to populate attributes")
+	}
+
 	out := &ResourceChange{
-		LastUpdated:      newSnapshot.LastModified,
-		IntegrationID:    newSnapshot.IntegrationID,
-		IntegrationLabel: integrationLabel,
-		Resource:         newImageJSON,
-		Changes:          changes,
+		LastUpdated:        newSnapshot.LastModified,
+		IntegrationID:      newSnapshot.IntegrationID,
+		ID:                 newSnapshot.ID,
+		IntegrationLabel:   integrationLabel,
+		Resource:           newSnapshot.Attributes,
+		Changes:            changes,
+		ResourceAttributes: attributes,
 	}
 
 	// If nothing changed, report it as a sync
@@ -156,15 +171,24 @@ func (sh *StreamHandler) processResourceSnapshot(changeType string,
 	if len(integrationLabel) == 0 {
 		return nil, nil
 	}
+
 	rawResource, err := jsoniter.Marshal(change.Attributes)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal resource")
 	}
+
+	var attributes ResourceAttributes
+	if err := jsoniter.Unmarshal(rawResource, &attributes); err != nil {
+		return nil, errors.Wrap(err, "failed to populate attributes")
+	}
+
 	return &ResourceChange{
-		IntegrationID:    change.IntegrationID,
-		IntegrationLabel: integrationLabel,
-		LastUpdated:      change.LastModified,
-		Resource:         rawResource,
-		ChangeType:       changeType,
+		ID:                 change.ID,
+		IntegrationID:      change.IntegrationID,
+		IntegrationLabel:   integrationLabel,
+		LastUpdated:        change.LastModified,
+		Resource:           change.Attributes,
+		ChangeType:         changeType,
+		ResourceAttributes: attributes,
 	}, nil
 }
