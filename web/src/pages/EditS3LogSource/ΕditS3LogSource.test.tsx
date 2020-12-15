@@ -25,11 +25,14 @@ import {
   waitMs,
   buildListAvailableLogTypesResponse,
   buildUpdateS3LogIntegrationInput,
+  buildIntegrationTemplate,
 } from 'test-utils';
 import { Route } from 'react-router';
 import urls from 'Source/urls';
 import { mockListAvailableLogTypes } from 'Source/graphql/queries';
 import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
+import { mockGetLogCfnTemplate } from 'Components/wizards/S3LogSourceWizard';
+import { pantherConfig } from 'Source/config';
 import EditS3LogSource from './EditS3LogSource';
 import { mockGetS3LogSource } from './graphql/getS3LogSource.generated';
 import { mockUpdateS3LogSource } from './graphql/updateS3LogSource.generated';
@@ -42,7 +45,7 @@ describe('EditS3LogSource', () => {
     const logSource = buildS3LogIntegration({
       awsAccountId: '123123123123',
       logTypes: logTypesResponse.logTypes,
-      kmsKey: '',
+      kmsKey: null,
     });
 
     const updatedLogSource = buildS3LogIntegration({ ...logSource, integrationLabel: 'new-value' });
@@ -61,14 +64,29 @@ describe('EditS3LogSource', () => {
           listAvailableLogTypes: logTypesResponse,
         },
       }),
+      mockGetLogCfnTemplate({
+        variables: {
+          input: {
+            awsAccountId: pantherConfig.AWS_ACCOUNT_ID,
+            integrationLabel: updatedLogSource.integrationLabel,
+            s3Bucket: updatedLogSource.s3Bucket,
+            logTypes: updatedLogSource.logTypes,
+            kmsKey: updatedLogSource.kmsKey,
+            s3Prefix: updatedLogSource.s3Prefix,
+          },
+        },
+        data: {
+          getS3LogIntegrationTemplate: buildIntegrationTemplate(),
+        },
+      }),
       mockUpdateS3LogSource({
         variables: {
           input: buildUpdateS3LogIntegrationInput({
-            integrationId: logSource.integrationId,
+            integrationId: updatedLogSource.integrationId,
             integrationLabel: updatedLogSource.integrationLabel,
-            s3Bucket: logSource.s3Bucket,
-            logTypes: logSource.logTypes,
-            s3Prefix: logSource.s3Prefix,
+            s3Bucket: updatedLogSource.s3Bucket,
+            logTypes: updatedLogSource.logTypes,
+            s3Prefix: updatedLogSource.s3Prefix,
             kmsKey: null,
           }),
         },
@@ -77,7 +95,7 @@ describe('EditS3LogSource', () => {
         },
       }),
     ];
-    const { getByText, getByLabelText, getByAltText, findByText } = render(
+    const { getByText, getByLabelText, getByAltText, findByText, queryByText } = render(
       <Route path={urls.logAnalysis.sources.edit(':id', ':type')}>
         <EditS3LogSource />
       </Route>,
@@ -105,6 +123,9 @@ describe('EditS3LogSource', () => {
 
     // ... replaced by an active button as soon as it's fetched
     await waitFor(() => expect(getByText('Get template file')).not.toHaveAttribute('disabled'));
+
+    // We expect not to display a link button AWS Console for editing
+    expect(queryByText('Launch Console')).not.toBeInTheDocument();
 
     // We move on to the final screen
     fireEvent.click(getByText('Continue'));

@@ -71,8 +71,9 @@ const S3SourceConfigurationPanel: React.FC = () => {
               name="s3Bucket"
               as={FormikTextInput}
               label="Bucket Name"
-              required
               placeholder="The name of the S3 bucket that holds the logs"
+              disabled={!!initialValues.integrationId}
+              required
             />
             <Field
               as={FormikMultiCombobox}

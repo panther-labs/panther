@@ -1,0 +1,4 @@
+fragment CustomLogFull on CustomLogRecord {
+  ...CustomLogTeaser
+  logSpec
+}
