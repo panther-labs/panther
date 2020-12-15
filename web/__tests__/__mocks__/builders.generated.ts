@@ -859,6 +859,7 @@ export const buildJiraConfig = (overrides: Partial<JiraConfig> = {}): JiraConfig
     apiKey: 'apiKey' in overrides ? overrides.apiKey : 'bluetooth',
     assigneeId: 'assigneeId' in overrides ? overrides.assigneeId : 'bleeding-edge',
     issueType: 'issueType' in overrides ? overrides.issueType : 'Iowa',
+    labels: 'labels' in overrides ? overrides.labels : ['Rhode Island'],
   };
 };
 
@@ -870,6 +871,7 @@ export const buildJiraConfigInput = (overrides: Partial<JiraConfigInput> = {}): 
     apiKey: 'apiKey' in overrides ? overrides.apiKey : 'Sleek Cotton Car',
     assigneeId: 'assigneeId' in overrides ? overrides.assigneeId : 'Virgin Islands, British',
     issueType: 'issueType' in overrides ? overrides.issueType : 'strategic',
+    labels: 'labels' in overrides ? overrides.labels : ['magenta'],
   };
 };
 

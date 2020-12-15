@@ -40,6 +40,7 @@ describe('JiraDestinationCard', () => {
     expect(getByText(jiraDestination.outputConfig.jira.assigneeId)).toBeInTheDocument();
     expect(getByText(jiraDestination.outputConfig.jira.issueType)).toBeInTheDocument();
     expect(getByText(jiraDestination.outputConfig.jira.orgDomain)).toBeInTheDocument();
+    expect(getByText('Labels')).toBeInTheDocument();
     expect(getByText('Date Created')).toBeInTheDocument();
     expect(getByText('Last Updated')).toBeInTheDocument();
   });

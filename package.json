@@ -143,7 +143,7 @@
   },
   "resolutions": {
     "node-fetch": "2.6.1",
-    "ua-parser-js": "0.7.22"
+    "ua-parser-js": "0.7.23"
   },
   "scripts": {
     "preinstall": "npx npm-force-resolutions",

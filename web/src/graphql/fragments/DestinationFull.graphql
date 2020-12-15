@@ -27,6 +27,7 @@ fragment DestinationFull on Destination {
       apiKey
       assigneeId
       issueType
+      labels
     }
     opsgenie {
       apiKey

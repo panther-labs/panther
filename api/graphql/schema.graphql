@@ -694,6 +694,7 @@ type JiraConfig {
   apiKey: String!
   assigneeId: String
   issueType: String!
+  labels: [String!]!
 }
 
 type AsanaConfig {
@@ -763,6 +764,7 @@ input JiraConfigInput {
   apiKey: String!
   assigneeId: String
   issueType: String!
+  labels: [String!]
 }
 
 input AsanaConfigInput {
