@@ -20,6 +20,7 @@ package api
 
 import (
 	"fmt"
+	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 	"math"
 	"sort"
 	"strconv"
@@ -37,6 +38,8 @@ import (
 
 func TestUpdateAlert(t *testing.T) {
 	tableMock := &tableMock{}
+	gatewayapiMock := &gatewayapiMock{}
+	ruleCache := forwarder.NewCache(gatewayapiMock)
 
 	status := "OPEN"
 	userID := "userId"
@@ -64,9 +67,9 @@ func TestUpdateAlert(t *testing.T) {
 			DeliveryResponses: []*models.DeliveryResponse{},
 			CreationTime:      timeNow,
 			UpdateTime:        timeNow,
-			Description:       "description",
-			Reference:         "reference",
-			Runbook:           "runbook",
+			Description:       aws.String("description"),
+			Reference:         aws.String("reference"),
+			Runbook:           aws.String("runbook"),
 		})
 		expectedSummaries = append(expectedSummaries, &models.AlertSummary{
 			AlertID:           alertID,
@@ -99,7 +102,9 @@ func TestUpdateAlert(t *testing.T) {
 	}
 
 	api := API{
-		alertsDB: tableMock,
+		alertsDB:       tableMock,
+		analysisClient: gatewayapiMock,
+		ruleCache:      ruleCache,
 	}
 	results, err := api.UpdateAlertStatus(input)
 	require.NoError(t, err)

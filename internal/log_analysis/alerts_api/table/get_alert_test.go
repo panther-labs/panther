@@ -20,19 +20,19 @@ package table
 
 import (
 	"errors"
+	"github.com/panther-labs/panther/pkg/testutils"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetAlert(t *testing.T) {
-	mockDdbClient := &mockDynamoDB{}
+	mockDdbClient := &testutils.DynamoDBMock{}
 	table := AlertsTable{
 		AlertsTableName:                    "alertsTableName",
 		RuleIDCreationTimeIndexName:        "ruleIDCreationTimeIndexName",
@@ -69,7 +69,7 @@ func TestGetAlert(t *testing.T) {
 }
 
 func TestGetAlertDoesNotExist(t *testing.T) {
-	mockDdbClient := &mockDynamoDB{}
+	mockDdbClient := &testutils.DynamoDBMock{}
 	table := AlertsTable{
 		AlertsTableName:                    "alertsTableName",
 		RuleIDCreationTimeIndexName:        "ruleIDCreationTimeIndexName",
@@ -85,7 +85,7 @@ func TestGetAlertDoesNotExist(t *testing.T) {
 }
 
 func TestGetAlertErrorQueryingDynamo(t *testing.T) {
-	mockDdbClient := &mockDynamoDB{}
+	mockDdbClient := &testutils.DynamoDBMock{}
 	table := AlertsTable{
 		AlertsTableName:                    "alertsTableName",
 		RuleIDCreationTimeIndexName:        "ruleIDCreationTimeIndexName",
@@ -97,14 +97,4 @@ func TestGetAlertErrorQueryingDynamo(t *testing.T) {
 
 	_, err := table.GetAlert("alertId")
 	require.Error(t, err)
-}
-
-type mockDynamoDB struct {
-	dynamodbiface.DynamoDBAPI
-	mock.Mock
-}
-
-func (m *mockDynamoDB) GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*dynamodb.GetItemOutput), args.Error(1)
 }
