@@ -18,8 +18,8 @@
 
 import React from 'react';
 import { AlertTypesEnum } from 'Generated/schema';
-import PolicyAlertCard, { PolicyAlertCardProps } from 'Components/cards/AlertCard/PolicyAlertCard';
-import RuleAlertCard, { RuleAlertCardProps } from 'Components/cards/AlertCard/RuleAlertCard';
+import PolicyAlertCard, { PolicyAlertCardProps } from './PolicyAlertCard';
+import RuleAlertCard, { RuleAlertCardProps } from './RuleAlertCard';
 
 type AlertCardProps = PolicyAlertCardProps | RuleAlertCardProps;
 

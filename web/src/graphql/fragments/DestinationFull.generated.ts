@@ -41,7 +41,7 @@ export type DestinationFull = { __typename: 'Destination' } & Pick<
       jira?: Types.Maybe<
         Pick<
           Types.JiraConfig,
-          'orgDomain' | 'projectKey' | 'userName' | 'apiKey' | 'assigneeId' | 'issueType'
+          'orgDomain' | 'projectKey' | 'userName' | 'apiKey' | 'assigneeId' | 'issueType' | 'labels'
         >
       >;
       opsgenie?: Types.Maybe<Pick<Types.OpsgenieConfig, 'apiKey' | 'serviceRegion'>>;
@@ -82,6 +82,7 @@ export const DestinationFull = gql`
         apiKey
         assigneeId
         issueType
+        labels
       }
       opsgenie {
         apiKey

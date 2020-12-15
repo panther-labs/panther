@@ -46,6 +46,7 @@ const initialValues: Omit<DestinationInput, 'outputType'> = {
       apiKey: '',
       assigneeId: '',
       issueType: '',
+      labels: [],
     },
     opsgenie: { apiKey: '', serviceRegion: OpsgenieServiceRegionEnum.Us },
     slack: { webhookURL: '' },

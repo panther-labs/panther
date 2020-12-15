@@ -1,0 +1,11 @@
+query GetCustomLogDetails($input: GetCustomLogInput!) {
+  getCustomLog(input: $input) {
+    error {
+      code
+      message
+    }
+    record {
+      ...CustomLogFull
+    }
+  }
+}
