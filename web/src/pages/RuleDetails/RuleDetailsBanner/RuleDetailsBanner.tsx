@@ -26,7 +26,7 @@ import SeverityBadge from 'Components/badges/SeverityBadge';
 import StatusBadge from 'Components/badges/StatusBadge';
 import LinkButton from 'Components/buttons/LinkButton';
 import Breadcrumbs from 'Components/Breadcrumbs';
-import BulletedLogType from 'Components/BulletedLogType';
+import BulletedValue from 'Components/BulletedValue';
 import RelatedDestinations from 'Components/RelatedDestinations/RelatedDestinations';
 import useDetectionDestinations from 'Hooks/useDetectionDestinations';
 
@@ -99,7 +99,7 @@ const RuleDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
             </Box>
             <Flex as="dd" align="center" spacing={6}>
               {rule.logTypes.map(logType => (
-                <BulletedLogType key={logType} logType={logType} />
+                <BulletedValue key={logType} value={logType} />
               ))}
             </Flex>
           </Flex>
