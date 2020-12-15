@@ -20,29 +20,29 @@ commands:
           name: 'Restore cache: .setup binaries'
           keys:
             # These caches are persisted for 15 days. If you need to reset the cache,
-            # just change the "x" to any other value which hasn't been used recently.
-            - &bin_cache_key setup-x-{{ checksum "tools/mage/setup/setup.go" }}
+            # just change the "y" to any other value which hasn't been used recently.
+            - &bin_cache_key setup-y-{{ checksum "tools/mage/setup/setup.go" }}
 
   restore_go_cache:
     steps:
       - restore_cache:
           name: 'Restore cache: go modules'
           keys:
-            - &go_cache_key gomod-x-{{ checksum "go.mod" }}
+            - &go_cache_key gomod-y-{{ checksum "go.mod" }}
 
   restore_npm_cache:
     steps:
       - restore_cache:
           name: 'Restore cache: npm'
           keys:
-            - &npm_cache_key npm-x-{{ checksum "package-lock.json" }}
+            - &npm_cache_key npm-y-{{ checksum "package-lock.json" }}
 
   restore_pip_cache:
     steps:
       - restore_cache:
           name: 'Restore cache: python env'
           keys:
-            - &pip_cache_key venv-x-{{ checksum "requirements.txt" }}
+            - &pip_cache_key venv-y-{{ checksum "requirements.txt" }}
 
   save_caches:
     steps:
