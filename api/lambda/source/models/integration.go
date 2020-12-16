@@ -20,6 +20,7 @@ package models
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
@@ -95,6 +96,19 @@ func (pl S3PrefixLogtypes) S3Prefixes() []string {
 	return prefixes
 }
 
+// Return the S3PrefixLogtypesMapping whose prefix is the longest one that matches the objectKey.
+func (pl S3PrefixLogtypes) LongestPrefixMatch(objectKey string) (bestMatch S3PrefixLogtypesMapping, matched bool) {
+	for _, m := range pl {
+		if strings.HasPrefix(objectKey, m.S3Prefix) && len(m.S3Prefix) >= len(bestMatch.S3Prefix) {
+			bestMatch = m
+			matched = true
+		}
+	}
+	return bestMatch, matched
+}
+
+// Note: Don't use this for classification as the S3 source has different
+// log types per prefix defined.
 func (s *SourceIntegration) RequiredLogTypes() (logTypes []string) {
 	switch s.IntegrationType {
 	case IntegrationTypeAWSScan:
@@ -121,7 +135,7 @@ func (s *SourceIntegration) RequiredLogProcessingRole() string {
 	}
 }
 
-// Return the s3 bucket and prefixes configured for this source.
+// Return the s3 bucket and prefixes configured to hold input data for this source.
 // For an s3 source, bucket and prefixes are user inputs.
 func (s *SourceIntegration) S3Info() (bucket string, prefixes []string) {
 	switch s.IntegrationType {

@@ -44,7 +44,7 @@ import (
 const (
 	// sessionDuration is the duration of S3 client STS session
 	sessionDuration = time.Hour
-	// Expirty window for the STS credentials.
+	// Expiry window for the STS credentials.
 	// Give plenty of time for refresh, we have seen that 1 minute refresh time can sometimes lead to InvalidAccessKeyId errors
 	sessionExpiryWindow   = 2 * time.Minute
 	sourceAPIFunctionName = "panther-source-api"
@@ -61,14 +61,18 @@ type s3ClientCacheKey struct {
 	awsRegion string
 }
 
+type prefixSource struct {
+	prefix string
+	source *models.SourceIntegration
+}
+
 type sourceCache struct {
 	// last time the cache was updated
 	cacheUpdateTime time.Time
-	// prefixes by s3 bucket. Each prefixes array is ordered by longest first.
-	// An s3 source may have many prefixes, that's why we can't just directly map from bucket to source.
-	prefixesByBucket map[string][]string
-	sourceByPrefix   map[string]*models.SourceIntegration
-	sourceByID       map[string]*models.SourceIntegration
+	// sources by id
+	index map[string]*models.SourceIntegration
+	// sources by s3 bucket sorted by longest prefix first
+	byBucket map[string][]prefixSource
 }
 
 // LoadS3 loads the source configuration for an S3 object.
@@ -113,48 +117,45 @@ func (c *sourceCache) Sync(now time.Time) error {
 
 // Update updates the cache
 func (c *sourceCache) Update(now time.Time, sources []*models.SourceIntegration) {
-	prefixesByBucket := make(map[string][]string)
-	sourceByPrefix := make(map[string]*models.SourceIntegration)
-	sourceByID := make(map[string]*models.SourceIntegration)
-
+	byBucket := make(map[string][]prefixSource)
+	index := make(map[string]*models.SourceIntegration)
 	for _, source := range sources {
-		sourceByID[source.IntegrationID] = source
-		sourceBucket, sourcePrefixes := source.S3Info()
-		for _, prefix := range sourcePrefixes {
-			prefixesByBucket[sourceBucket] = append(prefixesByBucket[sourceBucket], prefix)
-			sourceByPrefix[prefix] = source
+		bucket, prefixes := source.S3Info()
+		for _, prefix := range prefixes {
+			byBucket[bucket] = append(byBucket[bucket], prefixSource{prefix: prefix, source: source})
 		}
+		index[source.IntegrationID] = source
 	}
-
-	// Sort sources for each bucket
+	// Sort sources for each bucket.
 	// It is important to have the sources sorted by longest prefix first.
 	// This ensures that longer prefixes (ie `/foo/bar`) have precedence over shorter ones (ie `/foo`).
 	// This is especially important for the empty prefix as it would match all objects in a bucket making
 	// other sources invalid.
-	for _, prefixes := range prefixesByBucket {
-		prefixes := prefixes
-		sort.Slice(prefixes, func(i, j int) bool {
-			return len(prefixes[i]) > len(prefixes[j])
+	for _, sources := range byBucket {
+		sources := sources
+		sort.Slice(sources, func(i, j int) bool {
+			// Sort by prefix length descending
+			return len(sources[i].prefix) > len(sources[j].prefix)
 		})
 	}
 	*c = sourceCache{
-		prefixesByBucket: prefixesByBucket,
-		sourceByPrefix:   sourceByPrefix,
-		sourceByID:       sourceByID,
-		cacheUpdateTime:  now,
+		byBucket:        byBucket,
+		index:           index,
+		cacheUpdateTime: now,
 	}
 }
 
 // Find looks up a source by id without updating the cache
 func (c *sourceCache) Find(id string) *models.SourceIntegration {
-	return c.sourceByID[id]
+	return c.index[id]
 }
 
 // FindS3 looks up a source by bucket name and prefix without updating the cache
-func (c *sourceCache) FindS3(bucket, objectKey string) *models.SourceIntegration {
-	for _, prefix := range c.prefixesByBucket[bucket] {
-		if strings.HasPrefix(objectKey, prefix) {
-			return c.sourceByPrefix[prefix]
+func (c *sourceCache) FindS3(bucketName, objectKey string) *models.SourceIntegration {
+	prefixSourcesOrdered := c.byBucket[bucketName]
+	for _, s := range prefixSourcesOrdered {
+		if strings.HasPrefix(objectKey, s.prefix) {
+			return s.source
 		}
 	}
 	return nil
@@ -169,7 +170,7 @@ var (
 
 	globalSourceCache = &sourceCache{}
 
-	//used to simplify mocking during testing
+	// used to simplify mocking during testing
 	newCredentialsFunc = getAwsCredentials
 	newS3ClientFunc    = getNewS3Client
 
