@@ -34,9 +34,8 @@ import (
 )
 
 var (
-	policyURLPrefix = os.Getenv("POLICY_URL_PREFIX")
-	appDomainURL    = os.Getenv("APP_DOMAIN_URL")
-	alertURLPrefix  = os.Getenv("ALERT_URL_PREFIX")
+	appDomainURL   = os.Getenv("APP_DOMAIN_URL")
+	alertURLPrefix = os.Getenv("ALERT_URL_PREFIX")
 )
 
 // HTTPWrapper encapsulates the Golang's http client
