@@ -97,6 +97,7 @@ func WrapAPIError(err error) *APIError {
 	if apiErr, ok := err.(*APIError); ok {
 		return apiErr
 	}
+
 	type errWithCode interface {
 		error
 		Code() string

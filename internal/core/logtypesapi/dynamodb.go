@@ -144,7 +144,7 @@ func (d *DynamoDBLogTypes) BatchGetCustomLogs(ctx context.Context, ids ...string
 func (d *DynamoDBLogTypes) DeleteCustomLog(ctx context.Context, id string, revision int64) error {
 	tx, err := buildDeleteRecordTx(d.TableName, id, revision)
 	if err != nil {
-		return WrapAPIError(errors.Wrap(err, "cannot prepare delete transaction"))
+		return errors.WithMessage(err, "failed to prepare delete transaction")
 	}
 
 	if _, err := d.DB.TransactWriteItemsWithContext(ctx, tx); err != nil {
@@ -161,7 +161,7 @@ func (d *DynamoDBLogTypes) DeleteCustomLog(ctx context.Context, id string, revis
 				return NewAPIError(ErrRevisionConflict, fmt.Sprintf("record %q was updated", rec.RecordID))
 			}
 		}
-		return WrapAPIError(err)
+		return errors.Wrap(err, "delete transaction failed")
 	}
 
 	//for i := int64(1); i < revision; i++ {
@@ -181,14 +181,14 @@ func buildDeleteRecordTx(tbl, id string, rev int64) (*dynamodb.TransactWriteItem
 		RecordKind: recordKindCustom,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	cond := expression.Name(attrRevision).Equal(expression.Value(rev))
 	cond = cond.And(expression.Name(attrDeleted).NotEqual(expression.Value(true)))
 	upd := expression.Set(expression.Name(attrDeleted), expression.Value(true))
 	expr, err := expression.NewBuilder().WithUpdate(upd).WithCondition(cond).Build()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	delAvailable, err := expression.NewBuilder().WithUpdate(
 		expression.Delete(expression.Name(attrAvailableLogTypes), expression.Value(&dynamodb.AttributeValue{
@@ -196,9 +196,9 @@ func buildDeleteRecordTx(tbl, id string, rev int64) (*dynamodb.TransactWriteItem
 		})),
 	).Build()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
-	return &dynamodb.TransactWriteItemsInput{
+	tx := &dynamodb.TransactWriteItemsInput{
 		TransactItems: []*dynamodb.TransactWriteItem{
 			{
 				Update: &dynamodb.Update{
@@ -221,7 +221,8 @@ func buildDeleteRecordTx(tbl, id string, rev int64) (*dynamodb.TransactWriteItem
 				},
 			},
 		},
-	}, nil
+	}
+	return tx, errors.WithStack(tx.Validate())
 }
 
 func (d *DynamoDBLogTypes) CreateCustomLog(ctx context.Context, id string, params *CustomLog) (*CustomLogRecord, error) {
@@ -234,7 +235,7 @@ func (d *DynamoDBLogTypes) CreateCustomLog(ctx context.Context, id string, param
 	}
 	tx, err := buildCreateRecordTx(d.TableName, id, *params)
 	if err != nil {
-		return nil, WrapAPIError(errors.Wrap(err, "cannot prepare create transaction"))
+		return nil, errors.WithMessage(err, "failed to prepare create transaction")
 	}
 
 	if _, err := d.DB.TransactWriteItemsWithContext(ctx, tx); err != nil {
@@ -248,7 +249,7 @@ func (d *DynamoDBLogTypes) CreateCustomLog(ctx context.Context, id string, param
 				return nil, NewAPIError(ErrAlreadyExists, fmt.Sprintf("record %q already exists", id))
 			}
 		}
-		return nil, WrapAPIError(errors.Wrap(err, "transaction failed"))
+		return nil, errors.Wrap(err, "create transaction failed")
 	}
 
 	return &result, nil
@@ -301,7 +302,7 @@ func buildCreateRecordTx(tbl, id string, params CustomLog) (*dynamodb.TransactWr
 		return nil, err
 	}
 
-	return &dynamodb.TransactWriteItemsInput{
+	tx := &dynamodb.TransactWriteItemsInput{
 		TransactItems: []*dynamodb.TransactWriteItem{
 			{
 				Put: &dynamodb.Put{
@@ -333,7 +334,8 @@ func buildCreateRecordTx(tbl, id string, params CustomLog) (*dynamodb.TransactWr
 				},
 			},
 		},
-	}, nil
+	}
+	return tx, tx.Validate()
 }
 
 func (d *DynamoDBLogTypes) UpdateCustomLog(ctx context.Context, id string, revision int64, params *CustomLog) (*CustomLogRecord, error) {
@@ -346,10 +348,7 @@ func (d *DynamoDBLogTypes) UpdateCustomLog(ctx context.Context, id string, revis
 	}
 	tx, err := buildUpdateTx(d.TableName, id, revision, record)
 	if err != nil {
-		return nil, NewAPIError(dynamodb.ErrCodeInternalServerError, fmt.Sprintf("failed to prepare update transaction: %s", err))
-	}
-	if err := tx.Validate(); err != nil {
-		return nil, NewAPIError(dynamodb.ErrCodeInternalServerError, fmt.Sprintf("prepared transaction is not valid: %s", err))
+		return nil, errors.WithMessage(err, "failed to prepare update transaction")
 	}
 
 	if _, err := d.DB.TransactWriteItemsWithContext(ctx, tx); err != nil {
@@ -372,7 +371,7 @@ func (d *DynamoDBLogTypes) UpdateCustomLog(ctx context.Context, id string, revis
 				return nil, NewAPIError(ErrRevisionConflict, fmt.Sprintf("log record %s@%d already exists", id, revision))
 			}
 		}
-		return nil, WrapAPIError(err)
+		return nil, errors.Wrapf(err, "update transaction failed")
 	}
 
 	return &record, nil
@@ -416,7 +415,7 @@ func buildUpdateTx(tbl, id string, rev int64, record CustomLogRecord) (*dynamodb
 	if err != nil {
 		return nil, err
 	}
-	return &dynamodb.TransactWriteItemsInput{
+	tx := &dynamodb.TransactWriteItemsInput{
 		TransactItems: []*dynamodb.TransactWriteItem{
 			{
 				Update: &dynamodb.Update{
@@ -439,7 +438,8 @@ func buildUpdateTx(tbl, id string, rev int64, record CustomLogRecord) (*dynamodb
 				},
 			},
 		},
-	}, nil
+	}
+	return tx, tx.Validate()
 }
 
 func mustMarshalMap(val interface{}) map[string]*dynamodb.AttributeValue {
