@@ -30,7 +30,6 @@ import (
 )
 
 // AlertItemsToSummaries converts a list of DDB AlertItem(s) to AlertSummary(ies)
-// func AlertItemsToSummaries(items []*table.AlertItem, ruleCache forwarder.RuleCache) []*alertmodels.AlertSummary {
 func AlertItemsToSummaries(alertItems []*table.AlertItem, alertRules map[string]*models.Rule) []*alertmodels.AlertSummary {
 	results := make([]*alertmodels.AlertSummary, len(alertItems))
 
@@ -64,16 +63,14 @@ func AlertItemToSummary(item *table.AlertItem, itemRule *models.Rule) *alertmode
 
 	// Generated Fields - backwards compatibility support
 	description, reference, runbook := item.Description, item.Reference, item.Runbook
-	if description == nil || reference == nil || runbook == nil {
-		if description == nil {
-			description = aws.String(itemRule.Description)
-		}
-		if reference == nil {
-			reference = aws.String(itemRule.Reference)
-		}
-		if runbook == nil {
-			runbook = aws.String(itemRule.Runbook)
-		}
+	if description == nil {
+		description = aws.String(itemRule.Description)
+	}
+	if reference == nil {
+		reference = aws.String(itemRule.Reference)
+	}
+	if runbook == nil {
+		runbook = aws.String(itemRule.Runbook)
 	}
 
 	return &alertmodels.AlertSummary{
