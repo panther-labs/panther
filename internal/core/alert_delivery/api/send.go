@@ -1,15 +1,5 @@
 package api
 
-import (
-	"time"
-
-	"go.uber.org/zap"
-
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
-)
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -27,6 +17,16 @@ import (
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+import (
+	"time"
+
+	"go.uber.org/zap"
+
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
+)
 
 // AlertOutputMap is a type alias for containing the outputIds that an alert should be delivered to
 type AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
@@ -57,10 +57,27 @@ func sendAlerts(alertOutputs AlertOutputMap) []DispatchStatus {
 
 	// Wait until all outputs have finished, gathering all the statuses of each delivery
 	var deliveryStatuses []DispatchStatus
-	for _, outputIds := range alertOutputs {
-		for range outputIds {
-			status := <-statusChannel
-			deliveryStatuses = append(deliveryStatuses, status)
+	for alert, outputIds := range alertOutputs {
+		for _, outputID := range outputIds {
+			// We race against a timeout
+			select {
+			case status := <-statusChannel:
+				deliveryStatuses = append(deliveryStatuses, status)
+			case <-time.After(deliveryTimeoutDuration):
+				// Calculate the time the alert was dispatched at
+				dispatchedAt := time.Now().UTC()
+				dispatchedAt.Add(-deliveryTimeoutDuration)
+				timeoutStatus := DispatchStatus{
+					Alert:        *alert,
+					OutputID:     *outputID.OutputID,
+					Message:      "Timeout: the upstream service did not respond back in time",
+					StatusCode:   504,
+					Success:      false,
+					NeedsRetry:   true,
+					DispatchedAt: dispatchedAt,
+				}
+				deliveryStatuses = append(deliveryStatuses, timeoutStatus)
+			}
 		}
 	}
 
@@ -71,6 +88,9 @@ func sendAlerts(alertOutputs AlertOutputMap) []DispatchStatus {
 //
 // The statusChannel will be sent a message with the result of the send attempt.
 func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, dispatchedAt time.Time, statusChannel chan DispatchStatus) {
+	// Used for testing timeouts only
+	time.Sleep(goroutineTimeoutDuration)
+
 	commonFields := []zap.Field{
 		zap.Stringp("alertID", alert.AlertID),
 		zap.String("policyId", alert.AnalysisID),

@@ -23,11 +23,15 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-
+	"github.com/aws/aws-sdk-go/service/lambda"
+	jsoniter "github.com/json-iterator/go"
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
+	"github.com/panther-labs/panther/pkg/testutils"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func genAlertOutput() *outputModels.AlertOutput {
@@ -213,4 +217,121 @@ func TestSendSuccess(t *testing.T) {
 	go sendAlert(alert, alertOutput, dispatchedAt, ch)
 	assert.Equal(t, expectedResponse, <-ch)
 	mockClient.AssertExpectations(t)
+}
+
+func TestSendAlertsTimeout(t *testing.T) {
+	mockClient := &testutils.LambdaMock{}
+	lambdaClient = mockClient
+
+	alertID := aws.String("alert-id")
+	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+
+	alerts := []*deliveryModels.Alert{
+		{
+			AlertID:             alertID,
+			AnalysisDescription: "A test alert",
+			AnalysisID:          "Test.Analysis.ID",
+			AnalysisName:        aws.String("Test Analysis Name"),
+			Runbook:             "A runbook link",
+			Title:               "Test Alert",
+			RetryCount:          0,
+			Tags:                []string{"test", "alert"},
+			Type:                deliveryModels.RuleType,
+			OutputIds:           outputIds,
+			Severity:            "INFO",
+			CreatedAt:           time.Now().UTC(),
+			Version:             aws.String("abc"),
+		},
+	}
+
+	outputs := []*outputModels.AlertOutput{
+		{
+			OutputID:           aws.String(outputIds[0]),
+			OutputType:         aws.String("slack"),
+			DefaultForSeverity: []*string{aws.String("INFO")},
+		},
+		{
+			OutputID:           aws.String(outputIds[1]),
+			OutputType:         aws.String("slack"),
+			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM")},
+		},
+		{
+			OutputID:           aws.String(outputIds[2]),
+			OutputType:         aws.String("slack"),
+			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM"), aws.String("CRITICAL")},
+		},
+	}
+
+	payload, err := jsoniter.Marshal(outputs)
+	require.NoError(t, err)
+	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
+	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
+
+	// AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
+	expectedResult := AlertOutputMap{
+		alerts[0]: outputs,
+	}
+
+	// Need to expire the cache because other tests mutate this global when run in parallel
+	outputsCache = &alertOutputsCache{
+		RefreshInterval: time.Second * time.Duration(30),
+		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
+	}
+	result, err := getAlertOutputMap(alerts)
+	require.NoError(t, err)
+
+	assert.Equal(t, expectedResult, result)
+
+	expectedDispatchStatuses := []DispatchStatus{
+		{
+			Alert:      *alerts[0],
+			OutputID:   outputIds[0],
+			Message:    "Timeout: the upstream service did not respond back in time",
+			StatusCode: 504,
+			Success:    false,
+			NeedsRetry: true,
+		},
+		{
+			Alert:      *alerts[0],
+			OutputID:   outputIds[1],
+			Message:    "Timeout: the upstream service did not respond back in time",
+			StatusCode: 504,
+			Success:    false,
+			NeedsRetry: true,
+		},
+		{
+			Alert:      *alerts[0],
+			OutputID:   outputIds[2],
+			Message:    "Timeout: the upstream service did not respond back in time",
+			StatusCode: 504,
+			Success:    false,
+			NeedsRetry: true,
+		},
+	}
+
+	// Overwite the globals. We want to guarantee a timeout will occur.
+	goroutineTimeoutDuration = 60 * time.Second
+	deliveryTimeoutDuration = 1 * time.Second
+
+	// We get our results, but the DispachedAt timestamp is present so we will ignore that for now
+	dispatchStatusesResult := sendAlerts(result)
+
+	modifiedDispatchStatusesResult := []DispatchStatus{}
+	for _, dispatchStatus := range dispatchStatusesResult {
+		newStatus := DispatchStatus{
+			Alert:      dispatchStatus.Alert,
+			OutputID:   dispatchStatus.OutputID,
+			Message:    dispatchStatus.Message,
+			StatusCode: dispatchStatus.StatusCode,
+			Success:    dispatchStatus.Success,
+			NeedsRetry: dispatchStatus.NeedsRetry,
+			// This is calculated internally and is tough to predict. However, for
+			// the sake of this test, we don't need to test for timestamp equivalence.
+			// We only need to check for the other fields.
+			// DispatchedAt: dispatchStatus.DispatchedAt,
+		}
+		modifiedDispatchStatusesResult = append(modifiedDispatchStatusesResult, newStatus)
+	}
+
+	assert.Equal(t, expectedDispatchStatuses, modifiedDispatchStatusesResult)
 }
