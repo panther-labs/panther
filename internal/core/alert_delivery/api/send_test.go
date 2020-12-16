@@ -25,13 +25,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 	"github.com/panther-labs/panther/pkg/testutils"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func genAlertOutput() *outputModels.AlertOutput {
