@@ -191,7 +191,9 @@ func buildDeleteRecordTx(tbl, id string, rev int64) (*dynamodb.TransactWriteItem
 		return nil, err
 	}
 	delAvailable, err := expression.NewBuilder().WithUpdate(
-		expression.Delete(expression.Name(attrAvailableLogTypes), expression.Value(id)),
+		expression.Delete(expression.Name(attrAvailableLogTypes), expression.Value(&dynamodb.AttributeValue{
+			SS: aws.StringSlice([]string{id}),
+		})),
 	).Build()
 	if err != nil {
 		return nil, err
@@ -290,7 +292,9 @@ func buildCreateRecordTx(tbl, id string, params CustomLog) (*dynamodb.TransactWr
 		return nil, err
 	}
 	pushAvailable, err := expression.NewBuilder().WithUpdate(
-		expression.Add(expression.Name(attrAvailableLogTypes), expression.Value(id)),
+		expression.Add(expression.Name(attrAvailableLogTypes), expression.Value(&dynamodb.AttributeValue{
+			SS: aws.StringSlice([]string{id}),
+		})),
 	).Build()
 
 	if err != nil {
