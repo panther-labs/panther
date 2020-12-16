@@ -56,6 +56,7 @@ type resourceSnapshot struct {
 	LastModified  string                 `json:"lastModified"`
 	IntegrationID string                 `json:"integrationId"`
 	ID            string                 `json:"id"`
+	Deleted            bool                 `json:"deleted"`
 	Attributes    map[string]interface{} `json:"attributes"`
 }
 
@@ -67,8 +68,10 @@ func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventReco
 		resource, err = sh.processResourceSnapshot(ChangeTypeCreate, record.Change.NewImage)
 	case lambdaevents.DynamoDBOperationTypeRemove:
 		resource, err = sh.processResourceSnapshot(ChangeTypeDelete, record.Change.OldImage)
-	default:
+	case lambdaevents.DynamoDBOperationTypeModify:
 		resource, err = sh.processResourceSnapshotDiff(record.EventName, record.Change.OldImage, record.Change.NewImage)
+	default:
+		return nil, nil
 	}
 
 	if err != nil {
@@ -88,13 +91,14 @@ func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventReco
 func (sh *StreamHandler) processResourceSnapshotDiff(eventName string,
 	oldImage, newImage map[string]*dynamodb.AttributeValue) (*ResourceChange, error) {
 
-	var oldSnapshot resourceSnapshot
-	if err := dynamodbattribute.UnmarshalMap(oldImage, &oldSnapshot); err != nil || oldSnapshot.Attributes == nil {
-		return nil, errors.New("resources-table record old image did include top level key attributes")
-	}
 	var newSnapshot resourceSnapshot
 	if err := dynamodbattribute.UnmarshalMap(newImage, &newSnapshot); err != nil || newSnapshot.Attributes == nil {
 		return nil, errors.New("resources-table record new image did include top level key attributes")
+	}
+
+	var oldSnapshot resourceSnapshot
+	if err := dynamodbattribute.UnmarshalMap(oldImage, &oldSnapshot); err != nil || oldSnapshot.Attributes == nil {
+		return nil, errors.New("resources-table record old image did include top level key attributes")
 	}
 
 	// First convert the old & new image from the useless dynamodb stream format into a JSON string
