@@ -303,6 +303,8 @@ func buildCreateRecordTx(tbl, id string, params CustomLog) (*dynamodb.TransactWr
 				Put: &dynamodb.Put{
 					TableName:                           aws.String(tbl),
 					ConditionExpression:                 ifNotExists.Condition(),
+					ExpressionAttributeNames:            ifNotExists.Names(),
+					ExpressionAttributeValues:           ifNotExists.Values(),
 					Item:                                head,
 					ReturnValuesOnConditionCheckFailure: aws.String(dynamodb.ReturnValueAllOld),
 				},
@@ -311,6 +313,8 @@ func buildCreateRecordTx(tbl, id string, params CustomLog) (*dynamodb.TransactWr
 				Put: &dynamodb.Put{
 					TableName:                           aws.String(tbl),
 					ConditionExpression:                 ifNotExists.Condition(),
+					ExpressionAttributeNames:            ifNotExists.Names(),
+					ExpressionAttributeValues:           ifNotExists.Values(),
 					Item:                                item,
 					ReturnValuesOnConditionCheckFailure: aws.String(dynamodb.ReturnValueAllOld),
 				},
@@ -320,6 +324,7 @@ func buildCreateRecordTx(tbl, id string, params CustomLog) (*dynamodb.TransactWr
 					TableName:                 aws.String(tbl),
 					UpdateExpression:          pushAvailable.Update(),
 					ExpressionAttributeValues: pushAvailable.Values(),
+					ExpressionAttributeNames:  pushAvailable.Names(),
 					Key:                       statusRecordKey(),
 				},
 			},
