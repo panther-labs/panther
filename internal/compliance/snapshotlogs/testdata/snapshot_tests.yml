@@ -53,7 +53,7 @@ logType: Snapshot.ResourceHistory
 input: |
   {
       "changeType": "CREATED",
-      "changes": null,
+      "changes": {"StoredBytes":{"from":7228455,"to":7814231}, "Label":{"from":"start","to":"end"}},
       "integrationId": "d3be8d06-3e30-4908-9c07-6640b4b5b3dc",
       "integrationLabel": "panther-account",
       "lastUpdated": "2020-10-15T06:29:00.498108265Z",
@@ -91,6 +91,7 @@ result: |
     "integrationId": "d3be8d06-3e30-4908-9c07-6640b4b5b3dc",
     "integrationLabel": "panther-account",
     "lastUpdated": "2020-10-15T06:29:00.498108265Z",
+    "changes": {"StoredBytes":{"from":7228455,"to":7814231}, "Label":{"from":"start","to":"end"}},
     "resource": {
       "ResourceType":"AWS.CloudWatch.LogGroup",
       "ResourceId":"arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome",
