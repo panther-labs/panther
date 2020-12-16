@@ -353,10 +353,11 @@ func TestResourceMarkedDeleted(t *testing.T) {
 				"id": {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
 			},
 			NewImage: map[string]*dynamodb.AttributeValue{
-				"id":              {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
-				"lowerId":         {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
-				"expiresAt":       {N: aws.String("1607707952")},
-				"integrationId":   {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
+				"id":            {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"lowerId":       {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"expiresAt":     {N: aws.String("1607707952")},
+				"integrationId": {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
+				// This source is now deleted
 				"deleted":         {BOOL: aws.Bool(true)},
 				"integrationType": {S: aws.String("aws")},
 				"type":            {S: aws.String("AWS.Lambda.Function")},
@@ -375,10 +376,11 @@ func TestResourceMarkedDeleted(t *testing.T) {
 					}}}},
 			},
 			OldImage: map[string]*dynamodb.AttributeValue{
-				"id":              {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
-				"lowerId":         {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
-				"expiresAt":       {N: aws.String("1607707952")},
-				"integrationId":   {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
+				"id":            {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"lowerId":       {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"expiresAt":     {N: aws.String("1607707952")},
+				"integrationId": {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
+				// This source was not deleted before
 				"deleted":         {BOOL: aws.Bool(false)},
 				"integrationType": {S: aws.String("aws")},
 				"type":            {S: aws.String("AWS.Lambda.Function")},
@@ -480,10 +482,11 @@ func TestResourceMarkedCreated(t *testing.T) {
 				"id": {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
 			},
 			NewImage: map[string]*dynamodb.AttributeValue{
-				"id":              {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
-				"lowerId":         {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
-				"expiresAt":       {N: aws.String("1607707952")},
-				"integrationId":   {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
+				"id":            {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"lowerId":       {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"expiresAt":     {N: aws.String("1607707952")},
+				"integrationId": {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
+				// This source is no longer deleted
 				"deleted":         {BOOL: aws.Bool(false)},
 				"integrationType": {S: aws.String("aws")},
 				"type":            {S: aws.String("AWS.Lambda.Function")},
@@ -502,10 +505,11 @@ func TestResourceMarkedCreated(t *testing.T) {
 					}}}},
 			},
 			OldImage: map[string]*dynamodb.AttributeValue{
-				"id":              {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
-				"lowerId":         {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
-				"expiresAt":       {N: aws.String("1607707952")},
-				"integrationId":   {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
+				"id":            {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"lowerId":       {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"expiresAt":     {N: aws.String("1607707952")},
+				"integrationId": {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
+				// This source was deleted
 				"deleted":         {BOOL: aws.Bool(true)},
 				"integrationType": {S: aws.String("aws")},
 				"type":            {S: aws.String("AWS.Lambda.Function")},
