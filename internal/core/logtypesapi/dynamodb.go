@@ -383,7 +383,7 @@ func buildUpdateTx(tbl, id string, rev int64, record CustomLogRecord) (*dynamodb
 	if err != nil {
 		return nil, err
 	}
-	upd := expression.Set(expression.Name(attrRevision), expression.Value(rev))
+	upd := expression.Set(expression.Name(attrRevision), expression.Value(record.Revision))
 	for name, value := range updValues {
 		upd = upd.Set(expression.Name(name), expression.Value(value))
 	}
