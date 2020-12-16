@@ -90,7 +90,6 @@ func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventReco
 }
 
 func (sh *StreamHandler) processResourceSnapshotDiff(oldImage, newImage map[string]*dynamodb.AttributeValue) (*ResourceChange, error) {
-
 	var newSnapshot resourceSnapshot
 	if err := dynamodbattribute.UnmarshalMap(newImage, &newSnapshot); err != nil || newSnapshot.Attributes == nil {
 		return nil, errors.New("resources-table record new image did include top level key attributes")
