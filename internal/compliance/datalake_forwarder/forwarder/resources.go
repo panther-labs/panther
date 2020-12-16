@@ -62,14 +62,38 @@ type resourceSnapshot struct {
 
 // processResourceChanges processes a record from the resources-table dynamoDB stream,
 func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventRecord) (resource *ResourceChange, err error) {
+	var oldSnapshot, newSnapshot *resourceSnapshot
+	if r := record.Change.NewImage; r != nil {
+		newSnapshot, err = marshalSnapshot(r)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if r := record.Change.OldImage; r != nil {
+		oldSnapshot, err = marshalSnapshot(r)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// For INSERT and REMOVE events, we don't need to calculate a diff
 	switch lambdaevents.DynamoDBOperationType(record.EventName) {
 	case lambdaevents.DynamoDBOperationTypeInsert:
-		resource, err = sh.processResourceSnapshot(ChangeTypeCreate, record.Change.NewImage)
+		resource, err = sh.processResourceSnapshot(ChangeTypeCreate, newSnapshot)
 	case lambdaevents.DynamoDBOperationTypeRemove:
-		resource, err = sh.processResourceSnapshot(ChangeTypeDelete, record.Change.OldImage)
+		resource, err = sh.processResourceSnapshot(ChangeTypeDelete, oldSnapshot)
 	case lambdaevents.DynamoDBOperationTypeModify:
-		resource, err = sh.processResourceSnapshotDiff(record.Change.OldImage, record.Change.NewImage)
+		// If the new snapshot got marked as deleted  treat it as a delete
+		if newSnapshot.Deleted && !oldSnapshot.Deleted {
+			resource, err = sh.processResourceSnapshot(ChangeTypeDelete, oldSnapshot)
+			break
+		}
+		// If the old snapshot was marked as deleted and the new one is not, treat it as resource created
+		if !newSnapshot.Deleted && oldSnapshot.Deleted {
+			resource, err = sh.processResourceSnapshot(ChangeTypeCreate, newSnapshot)
+			break
+		}
+		resource, err = sh.processResourceSnapshotDiff(oldSnapshot, newSnapshot)
 	default:
 		zap.L().Error("Unknown Event Type", zap.String("record.EventName", record.EventName))
 		return nil, nil
@@ -89,23 +113,7 @@ func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventReco
 	return resource, nil
 }
 
-func (sh *StreamHandler) processResourceSnapshotDiff(oldImage, newImage map[string]*dynamodb.AttributeValue) (*ResourceChange, error) {
-	var newSnapshot resourceSnapshot
-	if err := dynamodbattribute.UnmarshalMap(newImage, &newSnapshot); err != nil {
-		return nil, errors.Wrapf(err, "could not unmarshal new image %#v", newImage)
-	}
-	if newSnapshot.Attributes == nil {
-		return nil, errors.Errorf("resources-table new image did include top level key attributes: %#v", newImage)
-	}
-
-	var oldSnapshot resourceSnapshot
-	if err := dynamodbattribute.UnmarshalMap(oldImage, &oldSnapshot); err != nil {
-		return nil, errors.Wrapf(err, "could not unmarshal old image %#v", oldImage)
-	}
-	if oldSnapshot.Attributes == nil {
-		return nil, errors.Errorf("resources-table old image did include top level key attributes: %#v", oldImage)
-	}
-
+func (sh *StreamHandler) processResourceSnapshotDiff(oldSnapshot, newSnapshot *resourceSnapshot) (*ResourceChange, error) {
 	// First convert the old & new image from the useless dynamodb stream format into a JSON string
 	newImageJSON, err := jsoniter.Marshal(newSnapshot.Attributes)
 	if err != nil {
@@ -163,18 +171,7 @@ func (sh *StreamHandler) processResourceSnapshotDiff(oldImage, newImage map[stri
 	return out, nil
 }
 
-func (sh *StreamHandler) processResourceSnapshot(changeType string,
-	image map[string]*dynamodb.AttributeValue) (*ResourceChange, error) {
-
-	var change resourceSnapshot
-	if err := dynamodbattribute.UnmarshalMap(image, &change); err != nil {
-		return nil, errors.Wrapf(err, "could not unmarshal image %#v", image)
-	}
-
-	if change.Attributes == nil {
-		return nil, errors.Errorf("resources-table image did include top level key attributes: %#v", image)
-	}
-
+func (sh *StreamHandler) processResourceSnapshot(changeType string, change *resourceSnapshot) (*ResourceChange, error) {
 	integrationLabel, err := sh.getIntegrationLabel(change.IntegrationID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to retrieve integration label for %q", change.IntegrationID)
@@ -204,4 +201,15 @@ func (sh *StreamHandler) processResourceSnapshot(changeType string,
 		ChangeType:         changeType,
 		ResourceAttributes: attributes,
 	}, nil
+}
+
+func marshalSnapshot(image map[string]*dynamodb.AttributeValue) (*resourceSnapshot, error) {
+	var snapshot resourceSnapshot
+	if err := dynamodbattribute.UnmarshalMap(image, &snapshot); err != nil {
+		return nil, errors.Wrapf(err, "could not unmarshal new image %#v", image)
+	}
+	if snapshot.Attributes == nil {
+		return nil, errors.Errorf("resources-table new image did include top level key attributes: %#v", image)
+	}
+	return &snapshot, nil
 }
