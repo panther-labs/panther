@@ -1625,3 +1625,20 @@ Resources:
           })
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
+
+  AddDataModelResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: addDataModel
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "createDataModel": $ctx.args.input
+          })
+        }
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
