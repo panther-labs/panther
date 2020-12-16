@@ -74,7 +74,7 @@ type CustomLogRecord struct {
 
 type CustomLog struct {
 	Description  string `json:"description" description:"Log type description"`
-	ReferenceURL string `json:"referenceURL" description:"A URL with reference docs for the logtype"`
+	ReferenceURL string `json:"referenceURL" description:"A URL with reference docs for the log type"`
 	LogSpec      string `json:"logSpec" validate:"required" description:"The log spec in YAML or JSON format"`
 }
 
