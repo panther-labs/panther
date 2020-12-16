@@ -122,7 +122,7 @@ func (d *DynamoDBLogTypes) BatchGetCustomLogs(ctx context.Context, ids ...string
 				},
 			},
 		}
-		output, err := d.DB.BatchGetItem(&input)
+		output, err := d.DB.BatchGetItemWithContext(ctx, &input)
 		if err != nil {
 			return nil, err
 		}
@@ -205,7 +205,7 @@ func buildDeleteRecordTx(tbl, id string, rev int64) (*dynamodb.TransactWriteItem
 					ConditionExpression:                 expr.Condition(),
 					UpdateExpression:                    expr.Update(),
 					ExpressionAttributeValues:           expr.Values(),
-					ReturnValuesOnConditionCheckFailure: aws.String(dynamodb.ReturnValueAllNew),
+					ReturnValuesOnConditionCheckFailure: aws.String(dynamodb.ReturnValueAllOld),
 				},
 			},
 			{
@@ -302,7 +302,7 @@ func buildCreateRecordTx(tbl, id string, params CustomLog) (*dynamodb.TransactWr
 					TableName:                           aws.String(tbl),
 					ConditionExpression:                 ifNotExists.Condition(),
 					Item:                                head,
-					ReturnValuesOnConditionCheckFailure: aws.String(dynamodb.ReturnValueAllNew),
+					ReturnValuesOnConditionCheckFailure: aws.String(dynamodb.ReturnValueAllOld),
 				},
 			},
 			{
@@ -310,7 +310,7 @@ func buildCreateRecordTx(tbl, id string, params CustomLog) (*dynamodb.TransactWr
 					TableName:                           aws.String(tbl),
 					ConditionExpression:                 ifNotExists.Condition(),
 					Item:                                item,
-					ReturnValuesOnConditionCheckFailure: aws.String(dynamodb.ReturnValueAllNew),
+					ReturnValuesOnConditionCheckFailure: aws.String(dynamodb.ReturnValueAllOld),
 				},
 			},
 			{
@@ -411,7 +411,7 @@ func buildUpdateTx(tbl, id string, rev int64, record CustomLogRecord) (*dynamodb
 					UpdateExpression:                    expr.Update(),
 					ExpressionAttributeValues:           expr.Values(),
 					Key:                                 key,
-					ReturnValuesOnConditionCheckFailure: aws.String(dynamodb.ReturnValueAllNew),
+					ReturnValuesOnConditionCheckFailure: aws.String(dynamodb.ReturnValueAllOld),
 				},
 				Put: &dynamodb.Put{
 					TableName:           aws.String(tbl),
