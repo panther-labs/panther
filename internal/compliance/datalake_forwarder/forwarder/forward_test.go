@@ -278,7 +278,7 @@ func TestResourceEvent(t *testing.T) {
 	assert.NoError(t, err)
 	lambdaMock.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{Payload: marshaledIntegrations}, nil).Once()
 
-	// Expected Firehose payload
+	// Mock firehose invocation
 	firehoseMock.On("PutRecordBatchWithContext", mock.Anything, mock.Anything, mock.Anything).
 		Return(&firehose.PutRecordBatchOutput{}, nil).
 		Once()
@@ -288,17 +288,14 @@ func TestResourceEvent(t *testing.T) {
 	firehoseMock.AssertExpectations(t)
 
 	// Verify firehose payload
-	var resource map[string]interface{}
-	if err = dynamodbattribute.Unmarshal(record.Change.NewImage["attributes"], &resource); err != nil {
-		t.Error("failed to marshal attributes")
-	}
+
+	// First
 	expectedChange := ResourceChange{
 		ChangeType:       "MODIFIED",
 		IntegrationID:    "8349b647-f731-48c4-9d6b-eefff4010c14",
 		IntegrationLabel: "test-label",
 		LastUpdated:      "2020-12-09T15:32:32.362503673Z",
 		ID:               "arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder",
-		Resource:         resource,
 		Changes: map[string]diff.Diff{
 			"MemorySize": {
 				From: float64(256),
@@ -319,7 +316,15 @@ func TestResourceEvent(t *testing.T) {
 		},
 	}
 
+	var expectedResource map[string]interface{}
+	if err = dynamodbattribute.Unmarshal(record.Change.NewImage["attributes"], &expectedResource); err != nil {
+		t.Error("failed to marshal attributes")
+	}
+	expectedChange.Resource = expectedResource
+
 	request := firehoseMock.Calls[0].Arguments[1].(*firehose.PutRecordBatchInput)
+	assert.Equal(t, 1, len(request.Records))
+	assert.Equal(t, "stream-name", *request.DeliveryStreamName)
 	var change ResourceChange
 	if err := jsoniter.Unmarshal(request.Records[0].Data, &change); err != nil {
 		t.Error("failed to unmarshal change")

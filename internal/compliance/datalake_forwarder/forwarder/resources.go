@@ -56,7 +56,7 @@ type resourceSnapshot struct {
 	LastModified  string                 `json:"lastModified"`
 	IntegrationID string                 `json:"integrationId"`
 	ID            string                 `json:"id"`
-	Deleted            bool                 `json:"deleted"`
+	Deleted       bool                   `json:"deleted"`
 	Attributes    map[string]interface{} `json:"attributes"`
 }
 
@@ -69,8 +69,9 @@ func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventReco
 	case lambdaevents.DynamoDBOperationTypeRemove:
 		resource, err = sh.processResourceSnapshot(ChangeTypeDelete, record.Change.OldImage)
 	case lambdaevents.DynamoDBOperationTypeModify:
-		resource, err = sh.processResourceSnapshotDiff(record.EventName, record.Change.OldImage, record.Change.NewImage)
+		resource, err = sh.processResourceSnapshotDiff(record.Change.OldImage, record.Change.NewImage)
 	default:
+		zap.L().Error("Unknown EventName", zap.String("record.EventName", record.EventName))
 		return nil, nil
 	}
 
@@ -88,8 +89,7 @@ func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventReco
 	return resource, nil
 }
 
-func (sh *StreamHandler) processResourceSnapshotDiff(eventName string,
-	oldImage, newImage map[string]*dynamodb.AttributeValue) (*ResourceChange, error) {
+func (sh *StreamHandler) processResourceSnapshotDiff(oldImage, newImage map[string]*dynamodb.AttributeValue) (*ResourceChange, error) {
 
 	var newSnapshot resourceSnapshot
 	if err := dynamodbattribute.UnmarshalMap(newImage, &newSnapshot); err != nil || newSnapshot.Attributes == nil {
@@ -118,7 +118,6 @@ func (sh *StreamHandler) processResourceSnapshotDiff(eventName string,
 	}
 	zap.L().Debug(
 		"processing resource record",
-		zap.Any("record.EventName", eventName),
 		zap.Any("newImage", newImageJSON),
 		zap.Any("changes", changes),
 		zap.Error(err),
