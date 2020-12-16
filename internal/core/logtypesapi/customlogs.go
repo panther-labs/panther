@@ -98,6 +98,9 @@ func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInp
 	if err != nil {
 		return nil, err
 	}
+	if current == nil {
+		return nil, NewAPIError(ErrRevisionConflict, fmt.Sprintf("record %s@%d does not exist", id, currentRevision))
+	}
 	currentSchema, err := buildSchema(id, &current.CustomLog)
 	if err != nil {
 		return nil, err
