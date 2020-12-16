@@ -45,7 +45,7 @@ input: |
                  "domain":"birdland"
               },
               "ua":"Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/64.0.3282.186 Safari\/537.36",
-              "ip_address":"1.23.45.678"
+              "ip_address":"12.3.45.78"
            }
       }
 result: |
@@ -77,11 +77,14 @@ result: |
                      "domain":"birdland"
                   },
                   "ua":"Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/64.0.3282.186 Safari\/537.36",
-                  "ip_address":"1.23.45.678"
+                  "ip_address":"12.3.45.78"
                },
 
     "p_log_type": "Slack.AuditLogs",
-    "p_event_time":"2018-03-16T15:32:23Z"
+    "p_event_time":"2018-03-16T15:32:23Z",
+    "p_any_usernames":["Charlie Parker"],
+    "p_any_emails":["bird@slack.com"],
+    "p_any_ip_addresses":["12.3.45.78"]
   }
 ---
 name: access logs
@@ -113,5 +116,6 @@ result: |
                "region": "CA",
     "p_log_type": "Slack.AccessLogs",
     "p_event_time":"2015-02-03T00:14:53Z",
-    "p_any_ip_addresses":["127.0.0.1"]
+    "p_any_ip_addresses":["127.0.0.1"],
+    "p_any_usernames":["white_rabbit"]
   }

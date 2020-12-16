@@ -24,6 +24,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 )
 
-func TestDuoParsers(t *testing.T) {
+func TestParsers(t *testing.T) {
+	t.Parallel()
 	logtesting.RunTestsFromYAML(t, LogTypes(), "./testdata/slacklogs_test.yml")
 }
