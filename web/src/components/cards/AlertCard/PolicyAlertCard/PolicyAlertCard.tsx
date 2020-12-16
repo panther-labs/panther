@@ -24,7 +24,7 @@ import SeverityBadge from 'Components/badges/SeverityBadge';
 import React from 'react';
 import urls from 'Source/urls';
 import RelatedDestinations from 'Components/RelatedDestinations';
-import BulletedLogTypeList from 'Components/BulletedLogTypeList';
+import BulletedValueList from 'Components/BulletedValueList';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { formatDatetime } from 'Helpers/utils';
 import { useListComplianceSourceNames } from 'Source/graphql/queries';
@@ -109,7 +109,7 @@ const PolicyAlertCard: React.FC<PolicyAlertCardProps> = ({
           />
           <GenericItemCard.Value
             label="Resource Types"
-            value={<BulletedLogTypeList logTypes={detectionData.resourceTypes} limit={2} />}
+            value={<BulletedValueList values={detectionData.resourceTypes} limit={2} />}
           />
           <Flex ml="auto" mr={0} align="flex-end" spacing={2}>
             <SeverityBadge severity={alert.severity} />

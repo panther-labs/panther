@@ -16,4 +16,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './BulletedLogType';
+import React from 'react';
+import { Flex } from 'pouncejs';
+import LimitItemDisplay from 'Components/LimitItemDisplay/LimitItemDisplay';
+import BulletedValue from 'Components/BulletedValue';
+
+interface BulletedValueListProps {
+  values: string[];
+  limit?: number;
+}
+
+const BulletedValueList: React.FC<BulletedValueListProps> = ({ values, limit = 1000 }) => {
+  return (
+    <Flex align="center" spacing={2} flexWrap="wrap">
+      <LimitItemDisplay limit={limit}>
+        {values.map(logType => (
+          <BulletedValue key={logType} value={logType} />
+        ))}
+      </LimitItemDisplay>
+    </Flex>
+  );
+};
+
+export default BulletedValueList;

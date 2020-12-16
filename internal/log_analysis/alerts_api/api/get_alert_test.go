@@ -29,7 +29,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 type s3SelectStreamReaderMock struct {
@@ -67,6 +69,15 @@ func (m *s3Mock) SelectObjectContent(input *s3.SelectObjectContentInput) (*s3.Se
 func (m *tableMock) ListObjectsV2Pages(input *string) (*table.AlertItem, error) {
 	args := m.Called(input)
 	return args.Get(0).(*table.AlertItem), args.Error(1)
+}
+
+type gatewayapiMock struct {
+	gatewayapi.API
+	mock.Mock
+}
+
+func (g *gatewayapiMock) Invoke(input, output interface{}) (int, error) {
+	return 0, nil
 }
 
 type tableMock struct {
@@ -115,7 +126,7 @@ func TestGetAlertDoesNotExist(t *testing.T) {
 }
 
 func TestGetPolicyAlert(t *testing.T) {
-	api, tableMock, s3Mock := initTest()
+	api, tableMock, s3Mock, gatewayapiMock := initTest()
 
 	timeNow := time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)
 
@@ -163,7 +174,7 @@ func TestGetPolicyAlert(t *testing.T) {
 	}
 
 	tableMock.On("GetAlert", "alertId").Return(alertItem, nil).Once()
-
+	gatewayapiMock.On("Invoke", "alertId", "alertVersion").Return(alertItem, nil).Once()
 	result, err := api.GetAlert(input)
 	require.NoError(t, err)
 	require.Equal(t, &models.GetAlertOutput{
@@ -176,7 +187,7 @@ func TestGetPolicyAlert(t *testing.T) {
 }
 
 func TestGetRuleAlert(t *testing.T) {
-	api, tableMock, s3Mock := initTest()
+	api, tableMock, s3Mock, gatewayapiMock := initTest()
 
 	// The S3 object keys returned by S3 List objects command
 	s3Mock.listObjectsOutput = &s3.ListObjectsV2Output{
@@ -256,7 +267,7 @@ func TestGetRuleAlert(t *testing.T) {
 	s3Mock.On("SelectObjectContent", expectedSelectObjectInput).Return(selectObjectOutput, nil).Once()
 	mockS3EventReader.On("Events").Return(eventChannel)
 	mockS3EventReader.On("Err").Return(nil)
-
+	gatewayapiMock.On("Invoke", "alertId", "alertVersion").Return(alertItem, nil).Once()
 	result, err := api.GetAlert(input)
 	require.NoError(t, err)
 	require.Equal(t, &models.GetAlertOutput{
@@ -271,7 +282,7 @@ func TestGetRuleAlert(t *testing.T) {
 
 	// now test paging...
 
-	api, tableMock, s3Mock = initTest() // reset mocks
+	api, tableMock, s3Mock, gatewayapiMock = initTest() // reset mocks
 
 	input.EventsExclusiveStartKey = result.EventsLastEvaluatedKey // set paginator
 
@@ -297,6 +308,7 @@ func TestGetRuleAlert(t *testing.T) {
 	tableMock.On("GetAlert", "alertId").Return(alertItem, nil).Once()
 	s3Mock.On("SelectObjectContent", expectedSelectObjectInput).Return(noopSelectObjectOutput, nil).Once()
 	s3Mock.On("ListObjectsV2Pages", expectedPagedListObjectsRequest, mock.Anything).Return(nil).Once()
+	gatewayapiMock.On("Invoke", "alertId", "alertVersion").Return(alertItem, nil).Once()
 	result, err = api.GetAlert(input)
 	require.NoError(t, err)
 	require.Equal(t, &models.GetAlertOutput{
@@ -312,7 +324,7 @@ func TestGetRuleAlert(t *testing.T) {
 }
 
 func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
-	api, tableMock, s3Mock := initTest()
+	api, tableMock, s3Mock, gatewayapiMock := initTest()
 
 	// The S3 object keys returned by S3 List objects command
 	s3Mock.listObjectsOutput = &s3.ListObjectsV2Output{
@@ -380,7 +392,7 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 	s3Mock.On("SelectObjectContent", mock.Anything).Return(selectObjectOutput, nil).Once()
 	mockS3EventReader.On("Events").Return(eventChannel)
 	mockS3EventReader.On("Err").Return(nil)
-
+	gatewayapiMock.On("Invoke", "alertId", "alertVersion").Return(alertItem, nil).Once()
 	result, err := api.GetAlert(input)
 	require.NoError(t, err)
 	require.Equal(t, &models.GetAlertOutput{
@@ -406,17 +418,20 @@ func getChannel(events ...string) <-chan s3.SelectObjectContentEventStreamEvent 
 	return channel
 }
 
-func initTest() (*API, *tableMock, *s3Mock) {
+func initTest() (*API, *tableMock, *s3Mock, *gatewayapiMock) {
 	tableMock := &tableMock{}
 	s3Mock := &s3Mock{}
+	analysisMock := &gatewayapiMock{}
 
 	api := &API{
-		alertsDB: tableMock,
-		s3Client: s3Mock,
+		alertsDB:       tableMock,
+		s3Client:       s3Mock,
+		analysisClient: analysisMock,
+		ruleCache:      forwarder.NewCache(analysisMock),
 		env: envConfig{
 			ProcessedDataBucket: "bucket",
 		},
 	}
 
-	return api, tableMock, s3Mock
+	return api, tableMock, s3Mock, analysisMock
 }
