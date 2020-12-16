@@ -17,25 +17,13 @@
  */
 
 import React from 'react';
-import { Flex } from 'pouncejs';
-import LimitItemDisplay from 'Components/LimitItemDisplay/LimitItemDisplay';
-import BulletedLogType from 'Components/BulletedLogType';
+import { render } from 'test-utils';
+import BulletedValue from './BulletedValue';
 
-interface BulletedLogTypeListProps {
-  logTypes: string[];
-  limit?: number;
-}
+describe('BulletedValue', () => {
+  it('renders the same color for the same log type', () => {
+    const { container } = render(<BulletedValue value="AWS.EC2" />);
 
-const BulletedLogTypeList: React.FC<BulletedLogTypeListProps> = ({ logTypes, limit = 1000 }) => {
-  return (
-    <Flex align="center" spacing={2} flexWrap="wrap">
-      <LimitItemDisplay limit={limit}>
-        {logTypes.map(logType => (
-          <BulletedLogType key={logType} logType={logType} />
-        ))}
-      </LimitItemDisplay>
-    </Flex>
-  );
-};
-
-export default BulletedLogTypeList;
+    expect(container).toMatchSnapshot();
+  });
+});

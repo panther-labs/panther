@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`BulletedLogType renders the same color for the same log type 1`] = `
+exports[`BulletedValue renders the same color for the same log type 1`] = `
 .panther-2 {
   display: -webkit-box;
   display: -webkit-flex;

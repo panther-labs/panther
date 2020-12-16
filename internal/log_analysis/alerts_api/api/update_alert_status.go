@@ -45,8 +45,10 @@ func (api *API) UpdateAlertStatus(input *models.UpdateAlertStatusInput) (models.
 		return nil, err
 	}
 
+	alertRules := api.getAlertRules(alertItems)
+
 	// Marshal to an alert summary
-	return utils.AlertItemsToSummaries(alertItems), nil
+	return utils.AlertItemsToSummaries(alertItems, alertRules), nil
 }
 
 // dispatchUpdates - dispatches updates to alerts in in groups.

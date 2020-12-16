@@ -138,11 +138,11 @@ func TestPopulateAlert(t *testing.T) {
 
 	alertItem := &alertTable.AlertItem{
 		AlertID:             *alertID,
-		Description:         description,
+		Description:         aws.String(description),
 		RuleID:              analysisID,
 		RuleVersion:         versionID,
 		RuleDisplayName:     analysisDisplayName,
-		Runbook:             runbook,
+		Runbook:             aws.String(runbook),
 		Title:               "Test Alert",
 		DedupString:         "dedup",
 		FirstEventMatchTime: timeNow,
