@@ -71,7 +71,7 @@ func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventReco
 	case lambdaevents.DynamoDBOperationTypeModify:
 		resource, err = sh.processResourceSnapshotDiff(record.Change.OldImage, record.Change.NewImage)
 	default:
-		zap.L().Error("Unknown EventName", zap.String("record.EventName", record.EventName))
+		zap.L().Error("Unknown Event Type", zap.String("record.EventName", record.EventName))
 		return nil, nil
 	}
 
@@ -91,13 +91,19 @@ func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventReco
 
 func (sh *StreamHandler) processResourceSnapshotDiff(oldImage, newImage map[string]*dynamodb.AttributeValue) (*ResourceChange, error) {
 	var newSnapshot resourceSnapshot
-	if err := dynamodbattribute.UnmarshalMap(newImage, &newSnapshot); err != nil || newSnapshot.Attributes == nil {
-		return nil, errors.New("resources-table record new image did include top level key attributes")
+	if err := dynamodbattribute.UnmarshalMap(newImage, &newSnapshot); err != nil {
+		return nil, errors.Wrapf(err, "could not unmarshal new image %#v", newImage)
+	}
+	if newSnapshot.Attributes == nil {
+		return nil, errors.Errorf("resources-table new image did include top level key attributes: %#v", newImage)
 	}
 
 	var oldSnapshot resourceSnapshot
-	if err := dynamodbattribute.UnmarshalMap(oldImage, &oldSnapshot); err != nil || oldSnapshot.Attributes == nil {
-		return nil, errors.New("resources-table record old image did include top level key attributes")
+	if err := dynamodbattribute.UnmarshalMap(oldImage, &oldSnapshot); err != nil {
+		return nil, errors.Wrapf(err, "could not unmarshal old image %#v", oldImage)
+	}
+	if oldSnapshot.Attributes == nil {
+		return nil, errors.Errorf("resources-table old image did include top level key attributes: %#v", oldImage)
 	}
 
 	// First convert the old & new image from the useless dynamodb stream format into a JSON string
@@ -134,7 +140,7 @@ func (sh *StreamHandler) processResourceSnapshotDiff(oldImage, newImage map[stri
 
 	var attributes ResourceAttributes
 	if err := jsoniter.Unmarshal(newImageJSON, &attributes); err != nil {
-		return nil, errors.Wrap(err, "failed to populate attributes")
+		return nil, errors.Wrapf(err, "failed to populate attributes: %s", string(newImageJSON))
 	}
 
 	out := &ResourceChange{
@@ -161,9 +167,14 @@ func (sh *StreamHandler) processResourceSnapshot(changeType string,
 	image map[string]*dynamodb.AttributeValue) (*ResourceChange, error) {
 
 	var change resourceSnapshot
-	if err := dynamodbattribute.UnmarshalMap(image, &change); err != nil || change.Attributes == nil {
-		return nil, errors.New("resources-table record image did include top level key attributes")
+	if err := dynamodbattribute.UnmarshalMap(image, &change); err != nil {
+		return nil, errors.Wrapf(err, "could not unmarshal image %#v", image)
 	}
+
+	if change.Attributes == nil {
+		return nil, errors.Errorf("resources-table image did include top level key attributes: %#v", image)
+	}
+
 	integrationLabel, err := sh.getIntegrationLabel(change.IntegrationID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to retrieve integration label for %q", change.IntegrationID)
@@ -176,12 +187,12 @@ func (sh *StreamHandler) processResourceSnapshot(changeType string,
 
 	rawResource, err := jsoniter.Marshal(change.Attributes)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to marshal resource")
+		return nil, errors.Wrapf(err, "failed to marshal attributes: %#v", rawResource)
 	}
 
 	var attributes ResourceAttributes
 	if err := jsoniter.Unmarshal(rawResource, &attributes); err != nil {
-		return nil, errors.Wrap(err, "failed to populate attributes")
+		return nil, errors.Wrapf(err, "failed to populate attributes: %s", string(rawResource))
 	}
 
 	return &ResourceChange{
