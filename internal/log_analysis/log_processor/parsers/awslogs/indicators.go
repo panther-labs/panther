@@ -80,7 +80,7 @@ func extractIndicators(w pantherlog.ValueWriter, iter *jsoniter.Iterator, key st
 	case jsoniter.StringValue:
 		value := iter.ReadString()
 		switch key {
-		case "arn", "ARN":
+		case "arn", "ARN", "aws:SourceArn":
 			pantherlog.ScanARN(w, value)
 		case "instanceId", "instance-id":
 			pantherlog.ScanAWSInstanceID(w, value)
