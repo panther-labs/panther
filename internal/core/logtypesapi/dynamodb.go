@@ -337,6 +337,9 @@ func (d *DynamoDBLogTypes) UpdateCustomLog(ctx context.Context, id string, revis
 	if err != nil {
 		return nil, NewAPIError(dynamodb.ErrCodeInternalServerError, fmt.Sprintf("failed to prepare update transaction: %s", err))
 	}
+	if err := tx.Validate(); err != nil {
+		return nil, NewAPIError(dynamodb.ErrCodeInternalServerError, fmt.Sprintf("prepared transaction is not valid: %s", err))
+	}
 
 	if _, err := d.DB.TransactWriteItemsWithContext(ctx, tx); err != nil {
 		if txErr, ok := err.(*dynamodb.TransactionCanceledException); ok {
@@ -413,6 +416,8 @@ func buildUpdateTx(tbl, id string, rev int64, record CustomLogRecord) (*dynamodb
 					Key:                                 key,
 					ReturnValuesOnConditionCheckFailure: aws.String(dynamodb.ReturnValueAllOld),
 				},
+			},
+			{
 				Put: &dynamodb.Put{
 					TableName:           aws.String(tbl),
 					Item:                item,
