@@ -31,7 +31,7 @@ import {
   ERROR_REPORTING_CONSENT_STORAGE_KEY,
 } from 'Source/constants';
 
-// 100 seconds
+// 10 seconds
 jest.setTimeout(10000);
 
 // This mocks sentry module for all tests
