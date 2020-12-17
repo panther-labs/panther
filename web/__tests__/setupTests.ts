@@ -18,7 +18,6 @@
 import { createSerializer } from 'jest-emotion';
 import { configure } from '@testing-library/dom';
 
-
 // extends the basic `expect` function, by adding additional DOM assertions such as
 // `.toHaveAttribute`, `.toHaveTextContent` etc.
 // https://github.com/testing-library/jest-dom#table-of-contents
@@ -39,7 +38,7 @@ import {
 // allowing a single test to wait for DOM updates for up to 10 seconds
 if (process.env.CI) {
   jest.setTimeout(60000);
-  
+
   configure({
     asyncUtilTimeout: 10000,
   });
