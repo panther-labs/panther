@@ -31,6 +31,13 @@ import {
   ERROR_REPORTING_CONSENT_STORAGE_KEY,
 } from 'Source/constants';
 
+// In CI where containers have lower CPU/RAM, jest's parallelization may mean that a single
+// test might take a lot of seconds to complete (since they all get fractions of resources).
+// We set a timeout of 100 seconds to protect us against false reports in CI environments
+if (process.env.CI) {
+  jest.setTimeout(100000);
+}
+
 // This mocks sentry module for all tests
 const MockedSentryScope = { setExtras: jest.fn(), setTag: jest.fn() };
 jest.mock('@sentry/browser', () => {
