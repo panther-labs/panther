@@ -164,15 +164,6 @@ func (d *DynamoDBLogTypes) DeleteCustomLog(ctx context.Context, id string, revis
 		return errors.Wrap(err, "delete transaction failed")
 	}
 
-	//for i := int64(1); i < revision; i++ {
-	//	input := dynamodb.DeleteItemInput{
-	//		TableName: aws.String(d.TableName),
-	//		Key:       customRecordKey(id, i),
-	//	}
-	//	if _, err := d.DB.DeleteItemWithContext(ctx, &input); err != nil {
-	//		return err
-	//	}
-	//}
 	return nil
 }
 func buildDeleteRecordTx(tbl, id string, rev int64) (*dynamodb.TransactWriteItemsInput, error) {
