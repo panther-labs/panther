@@ -19,6 +19,8 @@ package forwarder
  */
 
 import (
+	"net/http"
+
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -27,24 +29,28 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-// s3ClientCacheKey -> S3 client
-type RuleCache struct {
-	cache        *lru.ARCCache
-	policyClient gatewayapi.API
+type RuleCache interface {
+	Get(id, version string) (*models.Rule, error)
 }
 
-func NewCache(policyClient gatewayapi.API) *RuleCache {
+// s3ClientCacheKey -> S3 client
+type LRUCache struct {
+	cache      *lru.ARCCache
+	ruleClient gatewayapi.API
+}
+
+func NewCache(ruleClient gatewayapi.API) *LRUCache {
 	cache, err := lru.NewARC(1000)
 	if err != nil {
 		panic("failed to create cache")
 	}
-	return &RuleCache{
-		cache:        cache,
-		policyClient: policyClient,
+	return &LRUCache{
+		cache:      cache,
+		ruleClient: ruleClient,
 	}
 }
 
-func (c *RuleCache) Get(id, version string) (*models.Rule, error) {
+func (c *LRUCache) Get(id, version string) (*models.Rule, error) {
 	value, ok := c.cache.Get(cacheKey(id, version))
 	if !ok {
 		rule, err := c.getRule(id, version)
@@ -61,15 +67,19 @@ func cacheKey(id, version string) string {
 	return id + ":" + version
 }
 
-func (c *RuleCache) getRule(id, version string) (*models.Rule, error) {
+func (c *LRUCache) getRule(id, version string) (*models.Rule, error) {
 	zap.L().Debug("calling analysis API to retrieve information for rule", zap.String("ruleId", id), zap.String("ruleVersion", version))
 	input := models.LambdaInput{
 		GetRule: &models.GetRuleInput{ID: id, VersionID: version},
 	}
 	var rule models.Rule
 
-	if _, err := c.policyClient.Invoke(&input, &rule); err != nil {
+	httpStatus, err := c.ruleClient.Invoke(&input, &rule)
+	if err != nil {
 		return nil, errors.Wrapf(err, "failed to fetch information for ruleID [%s], version [%s]", id, version)
+	}
+	if httpStatus != http.StatusOK {
+		return nil, errors.Errorf("failed to fetch information for ruleID [%s], version [%s], got HTTP response [%d]", id, version, httpStatus)
 	}
 	return &rule, nil
 }
