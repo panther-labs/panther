@@ -36,7 +36,7 @@ func AlertItemsToSummaries(alertItems []*table.AlertItem, alertRules map[string]
 	for i, item := range alertItems {
 		// Check if we were able to retrieve the rule
 		if _, ok := alertRules[item.RuleID+item.RuleVersion]; !ok {
-			if IsOldAlert(*item) {
+			if IsOldAlert(item) {
 				zap.L().Warn("encountered an old alert with no corresponding rule", zap.Any("alert id", item.AlertID),
 					zap.Any("rule id", item.RuleID), zap.Any("rule version", item.RuleVersion))
 			}
@@ -50,7 +50,7 @@ func AlertItemsToSummaries(alertItems []*table.AlertItem, alertRules map[string]
 }
 
 // AlertItemToSummary converts a DDB AlertItem to an AlertSummary
-func AlertItemToSummary(item *table.AlertItem, itemRule *models.Rule) *alertmodels.AlertSummary {
+func AlertItemToSummary(item *table.AlertItem, rule *models.Rule) *alertmodels.AlertSummary {
 	// convert empty status to "OPEN" status
 	alertStatus := item.Status
 	if alertStatus == "" {
@@ -62,15 +62,10 @@ func AlertItemToSummary(item *table.AlertItem, itemRule *models.Rule) *alertmode
 	}
 
 	// Generated Fields - backwards compatibility support
-	description, reference, runbook := item.Description, item.Reference, item.Runbook
-	if description == nil {
-		description = aws.String(itemRule.Description)
-	}
-	if reference == nil {
-		reference = aws.String(itemRule.Reference)
-	}
-	if runbook == nil {
-		runbook = aws.String(itemRule.Runbook)
+	if IsOldAlert(item) {
+		item.Description = aws.String(rule.Description)
+		item.Reference = aws.String(rule.Reference)
+		item.Runbook = aws.String(rule.Runbook)
 	}
 
 	return &alertmodels.AlertSummary{
@@ -97,9 +92,9 @@ func AlertItemToSummary(item *table.AlertItem, itemRule *models.Rule) *alertmode
 		ResourceTypes:     item.ResourceTypes,
 		ResourceID:        item.ResourceID,
 		// Generated Fields Support
-		Description: aws.StringValue(description),
-		Reference:   aws.StringValue(reference),
-		Runbook:     aws.StringValue(runbook),
+		Description: aws.StringValue(item.Description),
+		Reference:   aws.StringValue(item.Reference),
+		Runbook:     aws.StringValue(item.Runbook),
 	}
 }
 
@@ -124,6 +119,6 @@ func GetAlertTitle(alert *table.AlertItem) *string {
 	return &alert.PolicyID
 }
 
-func IsOldAlert(alert table.AlertItem) bool {
+func IsOldAlert(alert *table.AlertItem) bool {
 	return alert.Description == nil && alert.Reference == nil && alert.Runbook == nil
 }
