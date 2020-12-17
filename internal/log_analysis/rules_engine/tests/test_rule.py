@@ -320,3 +320,20 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         )
         result = rule.run({})
         self.assertEqual(expected_result, result)
+
+    def test_rule_with_valid_severity_case_insensitive(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\n' \
+                    'def alert_context(event):\n\treturn {}\n' \
+                    'def title(event):\n\treturn "test_rule_with_valid_severity_case_insensitive"\n' \
+                    'def severity(event):\n\treturn "cRiTiCaL"\n'
+        rule = Rule({'id': 'test_rule_with_valid_severity_case_insensitive', 'body': rule_body, 'versionId': 'versionId'})
+
+        expected_result = RuleResult(
+            matched=True,
+            alert_context='{}',
+            title_output='test_rule_with_valid_severity_case_insensitive',
+            dedup_output='test_rule_with_valid_severity_case_insensitive',
+            severity_output="CRITICAL",
+        )
+        result = rule.run({})
+        self.assertEqual(expected_result, result)
