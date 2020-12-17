@@ -81,7 +81,11 @@ func (sh *StreamHandler) processResourceChanges(record *events.DynamoDBEventReco
 	case lambdaevents.DynamoDBOperationTypeInsert:
 		resource, err = sh.processResourceSnapshot(ChangeTypeCreate, newSnapshot)
 	case lambdaevents.DynamoDBOperationTypeRemove:
-		resource, err = sh.processResourceSnapshot(ChangeTypeDelete, oldSnapshot)
+		// If it was marked deleted earlier, it means we already did send a "DELETED" change
+		// Send a "DELETED" change only if it was no marked as deleted
+		if !oldSnapshot.Deleted {
+			resource, err = sh.processResourceSnapshot(ChangeTypeDelete, oldSnapshot)
+		}
 	case lambdaevents.DynamoDBOperationTypeModify:
 		// If the new snapshot got marked as deleted  treat it as a delete
 		if newSnapshot.Deleted && !oldSnapshot.Deleted {
