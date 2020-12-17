@@ -155,6 +155,7 @@ func buildStream(ctx context.Context, s3Object *S3ObjectInfo) (*common.DataStrea
 	switch src.IntegrationType {
 	case models.IntegrationTypeAWS3:
 		if isCloudTrailLog(key) && stringset.Contains(src.RequiredLogTypes(), "AWS.CloudTrail") {
+			zap.L().Debug("detected CloudTrail logs", zap.String("bucket", bucket), zap.String("key", key))
 			stream = logstream.NewJSONArrayStream(r, DownloadMinPartSize, "Records")
 		} else {
 			stream = logstream.NewLineStream(r, DownloadMinPartSize)
