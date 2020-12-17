@@ -235,13 +235,6 @@ class Rule:
 
         try:
             rule_result.severity_output = self._get_severity(event, use_default_on_exception=batch_mode)
-            if isinstance(rule_result.severity_output, str):
-                rule_result.severity_output = rule_result.severity_output.upper()
-                if rule_result.severity_output not in SEVERITY_TYPES:
-                    raise AssertionError(
-                        'Expected severity to be any of the following: [%s], got [%s] instead.' %
-                        (str(SEVERITY_TYPES), rule_result.severity_output)
-                    )
         except Exception as err:  # pylint: disable=broad-except
             rule_result.severity_exception = err
 
@@ -434,10 +427,14 @@ class Rule:
 
         try:
             command = getattr(self._module, 'severity')
-            severity = self._run_command(command, event, str)
+            severity = self._run_command(command, event, str).upper()
             if severity not in SEVERITY_TYPES:
                 self.logger.warning(
                     'severity method for rule with id [%s] yielded [%s], expected [%s]', self.rule_id, severity, str(SEVERITY_TYPES)
+                )
+                raise AssertionError(
+                    'Expected severity to be any of the following: [%s], got [%s] instead.' %
+                    (str(SEVERITY_TYPES), severity)
                 )
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
@@ -446,17 +443,6 @@ class Rule:
                 )
                 return 'INFO'
             raise
-
-        if len(severity) > MAX_GENERATED_FIELD_SIZE:
-            # If generated field exceeds max size, truncate it
-            self.logger.warning(
-                'maximum field [severity] length is [%d]. [%d] for rule with ID [%s] . Truncating.',
-                MAX_GENERATED_FIELD_SIZE,
-                len(severity),
-                self.rule_id,
-            )
-            num_characters_to_keep = MAX_GENERATED_FIELD_SIZE - len(TRUNCATED_STRING_SUFFIX)
-            return severity[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
         return severity
 
     def _get_title(self, event: Mapping, use_default_on_exception: bool) -> Optional[str]:
