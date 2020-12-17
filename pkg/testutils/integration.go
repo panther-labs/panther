@@ -1,4 +1,4 @@
-package api
+package testutils
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,30 +19,15 @@ package api
  */
 
 import (
+	"os"
+	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-
-	"github.com/panther-labs/panther/api/lambda/source/models"
 )
 
-func TestAPI_ListLogTypes(t *testing.T) {
-	expectedLogTypes := []string{"one", "two"}
-	listOutput := []*models.SourceIntegration{
-		{
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationType:  models.IntegrationTypeAWS3,
-				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: []string{"one"}}},
-			},
-		},
-		{
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationType: models.IntegrationTypeSqs,
-				SqsConfig: &models.SqsConfig{
-					LogTypes: []string{"one", "two"}, // "one" is duplicate with above
-				},
-			},
-		},
+// IntegrationTest skips the current test if the env variable INTEGRATION_TEST is not set to "true".
+func IntegrationTest(t *testing.T) {
+	run := strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
+	if !run {
+		t.Skip()
 	}
-	assert.Equal(t, expectedLogTypes, collectLogTypes(listOutput))
 }

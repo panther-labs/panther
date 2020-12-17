@@ -83,6 +83,7 @@ Resources:
       IsLogging: true
       IsMultiRegionTrail: false
       S3BucketName: !Ref AuditLogsBucket
+      # S3KeyPrefix: # Note: If you add a prefix here, make sure to update the log source field in self_registration.go
       TrailName: !Sub panther-cloudtrail-${AWS::Region}
 
   # Guard Duty monitoring in the Panther account
@@ -129,6 +130,7 @@ Resources:
       DetectorId: !Ref GuardDutyDetector
       DestinationType: S3
       DestinationProperties:
+        # If the prefix fr the logs is changed, make sure to update the source in self_registration.go
         DestinationArn: !Sub arn:${AWS::Partition}:s3:::${AuditLogsBucket}
         KmsKeyArn: !GetAtt GuardDutyEncryptionKey.Arn
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources

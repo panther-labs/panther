@@ -1,4 +1,4 @@
-package api
+package sources
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -21,28 +21,25 @@ package api
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
-func TestAPI_ListLogTypes(t *testing.T) {
-	expectedLogTypes := []string{"one", "two"}
-	listOutput := []*models.SourceIntegration{
-		{
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationType:  models.IntegrationTypeAWS3,
-				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: []string{"one"}}},
-			},
-		},
-		{
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationType: models.IntegrationTypeSqs,
-				SqsConfig: &models.SqsConfig{
-					LogTypes: []string{"one", "two"}, // "one" is duplicate with above
-				},
-			},
+func Test_BuildClassifier_NoLogTypes(t *testing.T) {
+	var logTypes []string
+	src := &models.SourceIntegration{
+		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+			IntegrationID:    "integration-id",
+			IntegrationLabel: "integration-label",
 		},
 	}
-	assert.Equal(t, expectedLogTypes, collectLogTypes(listOutput))
+	c, err := BuildClassifier(logTypes, src, registry.NativeLogTypesResolver())
+	require.NoError(t, err)
+
+	_, err = c.Classify(`{"key":"value}"`)
+
+	require.Error(t, err)
+	require.Equal(t, "failed to classify log line", err.Error())
 }
