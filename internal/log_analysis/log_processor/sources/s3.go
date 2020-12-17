@@ -21,6 +21,8 @@ package sources
 import (
 	"context"
 	"net/url"
+	"path"
+	"regexp"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -33,9 +35,11 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor/logstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/s3pipe"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 const (
@@ -149,8 +153,18 @@ func buildStream(ctx context.Context, s3Object *S3ObjectInfo) (*common.DataStrea
 	}
 	// gzip streams are transparently uncompressed
 	r := downloader.Download(ctx, getObjectInput)
-	// Set the buffer size to something big to avoid multiple fill() calls if possible
-	stream := logstream.NewLineStream(r, DownloadMinPartSize)
+	var stream logstream.Stream
+	switch sourceInfo.IntegrationType {
+	case models.IntegrationTypeAWS3:
+		if isCloudTrailLog(s3Object.S3ObjectKey) && stringset.Contains(sourceInfo.RequiredLogTypes(), "AWS.CloudTrail") {
+			stream = logstream.NewJSONArrayStream(r, DownloadMinPartSize, "Records")
+		} else {
+			stream = logstream.NewLineStream(r, DownloadMinPartSize)
+		}
+	default:
+		// Set the buffer size to something big to avoid multiple fill() calls if possible
+		stream = logstream.NewLineStream(r, DownloadMinPartSize)
+	}
 
 	return &common.DataStream{
 		Stream:       stream,
@@ -281,4 +295,10 @@ type S3ObjectInfo struct {
 type SnsNotification struct {
 	events.SNSEntity
 	Token *string `json:"Token"`
+}
+
+var rxCloudTrailLog = regexp.MustCompile(`^(?P<account>\d{12})_CloudTrail_(?P<region>[a-z]{2}-[a-z]+-\d+)_(?P<ts>\d{8}T\d{4}Z)_\w+.json.gz$`)
+
+func isCloudTrailLog(key string) bool {
+	return rxCloudTrailLog.MatchString(path.Base(key))
 }
