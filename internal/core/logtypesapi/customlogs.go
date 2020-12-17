@@ -87,7 +87,7 @@ func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInp
 		}, nil
 	}
 	currentRevision := input.Revision
-	if rev := currentRevision; rev == 0 {
+	if currentRevision == 0 {
 		result, err := api.Database.CreateCustomLog(ctx, id, &input.CustomLog)
 		return &PutCustomLogOutput{
 			Error:  WrapAPIError(err),
