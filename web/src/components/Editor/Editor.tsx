@@ -30,7 +30,13 @@ export type EditorProps = IAceEditorProps & {
   completions?: Completion[];
 };
 
-const Editor: React.FC<EditorProps> = ({ fallback = null, completions = [], ...rest }) => {
+const Editor: React.FC<EditorProps> = ({
+  fallback = null,
+  completions = [],
+  readOnly,
+  onLoad,
+  ...rest
+}) => {
   const theme = useTheme();
 
   // Asynchronously load (post-mount) all the mode & themes
@@ -38,6 +44,7 @@ const Editor: React.FC<EditorProps> = ({ fallback = null, completions = [], ...r
     import(/* webpackChunkName: "ace-editor" */ 'brace/mode/json');
     import(/* webpackChunkName: "ace-editor" */ 'brace/mode/sql');
     import(/* webpackChunkName: "ace-editor" */ 'brace/mode/python');
+    import(/* webpackChunkName: "ace-editor" */ 'brace/mode/yaml');
     import(/* webpackChunkName: "ace-editor" */ 'brace/ext/language_tools');
     import(/* webpackChunkName: "ace-editor" */ './theme');
   }, []);
@@ -81,9 +88,33 @@ const Editor: React.FC<EditorProps> = ({ fallback = null, completions = [], ...r
     [theme]
   );
 
+  const handleLoad = React.useCallback(
+    (editor: any) => {
+      // editor.renderer.setPadding(10);
+      editor.renderer.setScrollMargin(10);
+
+      // Do whatever it was passed originally via `onLoad`
+      if (onLoad) {
+        onLoad(editor);
+      }
+
+      // And if `readOnly` is true, disable cursors, annotations, line-selections, etc.
+      if (readOnly) {
+        // eslint-disable-next-line no-param-reassign
+        editor.renderer.$cursorLayer.element.style.display = 'none';
+        editor.setOptions({
+          readOnly: true,
+          highlightActiveLine: false,
+          highlightGutterLine: false,
+        });
+      }
+    },
+    [readOnly, onLoad]
+  );
+
   return (
     <React.Suspense fallback={fallback}>
-      <AceEditor {...baseAceEditorConfig} {...rest} />
+      <AceEditor {...baseAceEditorConfig} {...rest} onLoad={handleLoad} />
     </React.Suspense>
   );
 };
