@@ -62,7 +62,7 @@ func AlertItemToSummary(item *table.AlertItem, rule *models.Rule) *alertmodels.A
 	}
 
 	// Generated Fields - backwards compatibility support
-	if IsOldAlert(item) {
+	if IsOldAlert(item) && rule != nil {
 		item.Description = aws.String(rule.Description)
 		item.Reference = aws.String(rule.Reference)
 		item.Runbook = aws.String(rule.Runbook)
