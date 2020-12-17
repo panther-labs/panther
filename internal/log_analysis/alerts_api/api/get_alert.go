@@ -21,7 +21,10 @@ package api
 import (
 	"bytes"
 	"fmt"
+	"sort"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -40,6 +43,9 @@ import (
 )
 
 const (
+	s3SelectQueryBuffer = 1000 // how many listed events we allow in flight
+	s3SelectConcurrency = 50   // not too big or you will get throttled!
+
 	// The format of S3 object suffix that contains the
 	ruleSuffixFormat = "rule_id=%s/"
 
@@ -125,11 +131,17 @@ func (api *API) getEventsForLogType(
 	nextTime := getFirstEventTime(alert)
 
 	if token != nil {
-		events, index, err := api.queryS3Object(token.S3ObjectKey, alert.AlertID, token.EventIndex, maxResults)
-		if err != nil {
-			return nil, resultToken, err
+		s3SelectQuery := &s3SelectQuery{
+			objectKey:           token.S3ObjectKey,
+			alertID:             alert.AlertID,
+			exclusiveStartIndex: token.EventIndex,
+			maxResults:          maxResults,
 		}
-		result = append(result, events...)
+		s3SelectResult := api.queryS3Object(s3SelectQuery)
+		if s3SelectResult.err != nil {
+			return nil, resultToken, s3SelectResult.err
+		}
+		result = append(result, s3SelectResult.events...)
 		// start iterating over the partitions here
 		gluePartition, err := awsglue.PartitionFromS3Object(api.env.ProcessedDataBucket, token.S3ObjectKey)
 		if err != nil {
@@ -138,12 +150,13 @@ func (api *API) getEventsForLogType(
 		nextTime = gluePartition.GetTime()
 		// updating index in token with index of last event returned
 		resultToken.S3ObjectKey = token.S3ObjectKey
-		resultToken.EventIndex = index
+		resultToken.EventIndex = s3SelectResult.lastEventIndex
 		if len(result) >= maxResults {
 			return result, resultToken, nil
 		}
 	}
 
+	// data is stored by hour, loop over the hours
 	for ; !nextTime.After(alert.UpdateTime); nextTime = awsglue.GlueTableHourly.Next(nextTime) {
 		if len(result) >= maxResults {
 			// We don't need to return any results since we have already found the max requested
@@ -174,49 +187,133 @@ func (api *API) getEventsForLogType(
 			listRequest.StartAfter = aws.String(partitionPrefix + nextTime.Format("20060102T150405Z"))
 		}
 
-		var paginationError error
+		// list concurrently while searching for matches within this hour
+		s3Search := api.newS3Search(maxResults)
 
-		err := api.s3Client.ListObjectsV2Pages(listRequest, func(output *s3.ListObjectsV2Output, lastPage bool) bool {
-			for _, object := range output.Contents {
-				objectTime, err := timeFromJSONS3ObjectKey(*object.Key)
-				if err != nil {
-					zap.L().Error("failed to parse object time from S3 object key",
-						zap.String("key", *object.Key))
-					paginationError = err
-					return false
-				}
-				if objectTime.Before(getFirstEventTime(alert)) || objectTime.After(alert.UpdateTime) {
-					// if the time in the S3 object key was before alert creation time or after last alert update time
-					// skip the object
-					continue
-				}
-				events, EventIndex, err := api.queryS3Object(*object.Key, alert.AlertID, 0, maxResults-len(result))
-				if err != nil {
-					paginationError = err
-					return false
-				}
-				result = append(result, events...)
-				resultToken.EventIndex = EventIndex
-				resultToken.S3ObjectKey = *object.Key
-				if len(result) >= maxResults {
-					// if we have already received all the results we wanted
-					// no need to keep paginating
-					return false
-				}
-			}
-			// keep paginating
-			return true
-		})
-
+		// list objects and send to the above go routines
+		err := api.listS3AlertObject(listRequest, s3Search.s3SelectQueryChan, s3Search.s3SelectListChan, alert, maxResults)
 		if err != nil {
 			return nil, resultToken, err
 		}
 
-		if paginationError != nil {
-			return nil, resultToken, paginationError
+		// collect results for this hour
+		s3Search.wait()
+
+		for _, s3SelectResult := range s3Search.s3SelectEventsFound {
+			if s3SelectResult.err != nil {
+				return nil, resultToken, s3SelectResult.err
+			}
+			result = append(result, s3SelectResult.events...)
+			resultToken.EventIndex = s3SelectResult.lastEventIndex
+			resultToken.S3ObjectKey = s3SelectResult.objectKey
+			if len(result) >= maxResults {
+				break
+			}
 		}
 	}
 	return result, resultToken, nil
+}
+
+type s3Search struct {
+	s3SelectListChan         chan struct{} // used to signal the listing that it can stop
+	s3SelectQueryChan        chan *s3SelectQuery
+	s3SelectResultChan       chan *s3SelectResult
+	s3SelectQueryWaitGroup   sync.WaitGroup
+	s3SelectTotalEventsFound uint32
+
+	s3SelectCollectWaitGroup sync.WaitGroup
+	s3SelectEventsFound      []*s3SelectResult
+}
+
+func (api *API) newS3Search(maxResults int) (search *s3Search) {
+	search = &s3Search{
+		s3SelectListChan:   make(chan struct{}, 1),
+		s3SelectQueryChan:  make(chan *s3SelectQuery, s3SelectQueryBuffer),
+		s3SelectResultChan: make(chan *s3SelectResult, s3SelectQueryBuffer),
+	}
+
+	for i := 0; i < s3SelectConcurrency; i++ {
+		search.s3SelectQueryWaitGroup.Add(1)
+		go func() {
+			for s3SelectQuery := range search.s3SelectQueryChan {
+				s3SelectResult := api.queryS3Object(s3SelectQuery)
+				search.s3SelectResultChan <- &s3SelectResult
+				// protect tally with atomic
+				atomic.AddUint32(&search.s3SelectTotalEventsFound, uint32(len(s3SelectResult.events)))
+				if int(search.s3SelectTotalEventsFound) >= maxResults || s3SelectResult.err != nil {
+					search.s3SelectListChan <- struct{}{} // signal listing to stop
+					break
+				}
+			}
+			search.s3SelectQueryWaitGroup.Done()
+		}()
+	}
+
+	// here we collect from all the searching go routines using a single go routine
+	search.s3SelectCollectWaitGroup.Add(1)
+	go func() {
+		for s3SelectResult := range search.s3SelectResultChan {
+			search.s3SelectEventsFound = append(search.s3SelectEventsFound, s3SelectResult)
+		}
+		search.s3SelectCollectWaitGroup.Done()
+	}()
+
+	return search
+}
+
+func (search *s3Search) wait() {
+	close(search.s3SelectQueryChan)
+	search.s3SelectQueryWaitGroup.Wait()
+	close(search.s3SelectResultChan)
+	search.s3SelectCollectWaitGroup.Wait()
+
+	// object keys are ordered but they can be returned in any order in the slice, so sort
+	sort.Slice(search.s3SelectEventsFound, func(i, j int) bool {
+		return search.s3SelectEventsFound[i].objectKey > search.s3SelectEventsFound[j].objectKey
+	})
+}
+
+func (api *API) listS3AlertObject(listRequest *s3.ListObjectsV2Input,
+	s3SelectQueryChan chan *s3SelectQuery, s3SelectListChan chan struct{},
+	alert *table.AlertItem, maxResults int) (err error) {
+
+	var paginationError error
+
+	err = api.s3Client.ListObjectsV2Pages(listRequest, func(output *s3.ListObjectsV2Output, lastPage bool) bool {
+		for _, object := range output.Contents {
+			objectTime, err := timeFromJSONS3ObjectKey(*object.Key)
+			if err != nil {
+				zap.L().Error("failed to parse object time from S3 object key",
+					zap.String("key", *object.Key))
+				paginationError = err
+				return false
+			}
+			if objectTime.Before(getFirstEventTime(alert)) || objectTime.After(alert.UpdateTime) {
+				// if the time in the S3 object key was before alert creation time or after last alert update time
+				// skip the object
+				continue
+			}
+			s3SelectQuery := &s3SelectQuery{
+				objectKey:  *object.Key,
+				alertID:    alert.AlertID,
+				maxResults: maxResults,
+			}
+			s3SelectQueryChan <- s3SelectQuery
+
+			// done?
+			select {
+			case <-s3SelectListChan:
+				return false
+			default: // make non-blocking
+			}
+		}
+		// keep paginating
+		return true
+	})
+	if err == nil && paginationError != nil {
+		return paginationError
+	}
+	return err
 }
 
 // extracts time from the JSON S3 object key
@@ -227,12 +324,33 @@ func timeFromJSONS3ObjectKey(key string) (time.Time, error) {
 	return time.ParseInLocation(destinations.S3ObjectTimestampLayout, timeInString, time.UTC)
 }
 
+type s3SelectQuery struct {
+	objectKey           string
+	alertID             string
+	exclusiveStartIndex int
+	maxResults          int
+}
+
+type s3SelectResult struct {
+	objectKey      string
+	events         []string
+	lastEventIndex int
+	err            error
+}
+
 // Queries a specific S3 object events associated to `alertID`.
 // Returns :
-// 1. The events that are associated to the given alertID that are present in that S3 oject. It will return maximum `maxResults` events
+// 1. The events that are associated to the given alertID that are present in that S3 object. It will return maximum `maxResults` events
 // 2. The index of the last event returned. This will be used as a pagination token - future queries to the same S3 object can start listing
 // after that.
-func (api *API) queryS3Object(key, alertID string, exclusiveStartIndex, maxResults int) ([]string, int, error) {
+func (api *API) queryS3Object(s3SelectQuery *s3SelectQuery) (s3SelectResult s3SelectResult) {
+	key := s3SelectQuery.objectKey
+	alertID := s3SelectQuery.alertID
+	exclusiveStartIndex := s3SelectQuery.exclusiveStartIndex
+	maxResults := s3SelectQuery.maxResults
+
+	s3SelectResult.objectKey = s3SelectQuery.objectKey
+
 	// nolint:gosec
 	// The alertID is an MD5 hash. AlertsAPI is performing the appropriate validation
 	query := fmt.Sprintf("SELECT * FROM S3Object o WHERE o.p_alert_id='%s'", alertID)
@@ -257,7 +375,8 @@ func (api *API) queryS3Object(key, alertID string, exclusiveStartIndex, maxResul
 
 	output, err := api.s3Client.SelectObjectContent(input)
 	if err != nil {
-		return nil, 0, err
+		s3SelectResult.err = err
+		return s3SelectResult
 	}
 
 	// NOTE: Payloads are NOT broken on record boundaries! It is possible for rows to span ResultsEvent's so we need a buffer
@@ -272,7 +391,8 @@ func (api *API) queryS3Object(key, alertID string, exclusiveStartIndex, maxResul
 	}
 	streamError := output.EventStream.Reader.Err()
 	if streamError != nil {
-		return nil, 0, streamError
+		s3SelectResult.err = streamError
+		return s3SelectResult
 	}
 
 	currentIndex := 0
@@ -290,7 +410,9 @@ func (api *API) queryS3Object(key, alertID string, exclusiveStartIndex, maxResul
 		}
 		result = append(result, record)
 	}
-	return result, currentIndex, nil
+	s3SelectResult.events = result
+	s3SelectResult.lastEventIndex = currentIndex
+	return s3SelectResult
 }
 
 func getFirstEventTime(alert *table.AlertItem) time.Time {
