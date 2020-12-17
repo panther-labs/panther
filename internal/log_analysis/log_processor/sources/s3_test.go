@@ -232,3 +232,8 @@ func TestHandleUnregisteredSource(t *testing.T) {
 	lambdaMock.AssertExpectations(t)
 	s3Mock.AssertExpectations(t)
 }
+
+func TestIsCloudTrailLog(t *testing.T) {
+	key := "AWSLogs/342363560528/CloudTrail/eu-west-1/2020/12/17/342363560528_CloudTrail_eu-west-1_20201217T1535Z_ZUnDvAcFwNysSIsp.json.gz"
+	require.True(t, isCloudTrailLog(key))
+}
