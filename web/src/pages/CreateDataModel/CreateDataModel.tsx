@@ -31,7 +31,7 @@ const initialValues = {
   displayName: '',
   logTypes: [],
   enabled: true,
-  mappings: '',
+  mappings: [],
   body: '',
 };
 

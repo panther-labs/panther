@@ -1,25 +1,28 @@
 import React from 'react';
 import { Box, Button, Card, Flex, Heading, IconButton, Text } from 'pouncejs';
-import type { YAMLException } from 'js-yaml';
+import { parseYaml } from 'Helpers/utils';
+import isEmpty from 'lodash/isEmpty';
 import { FastField, useFormikContext } from 'formik';
 import FormikEditor from 'Components/fields/Editor';
-import { DataModelFormValues } from '../DataModelForm';
+import { _DataModelFormValues } from '../DataModelForm';
 
 const DataModelMappingsTabPanel: React.FC = () => {
-  const { initialValues, values: { mappings } } = useFormikContext<DataModelFormValues>(); // prettier-ignore
+  const { initialValues, values: { mappings } } = useFormikContext<_DataModelFormValues>(); // prettier-ignore
   const [isYamlEditorOpen, setYamlEditorVisibility] = React.useState(true);
   const [isPythonEditorOpen, setPythonEditorVisibility] = React.useState(!!initialValues.body);
-  const [yamlError, setYamlError] = React.useState<YAMLException>();
+  const [yamlErrors, setYamlErrors] = React.useState<Error[]>();
+
+  const isYamlValid = yamlErrors && isEmpty(yamlErrors);
+  const hasYamlErrors = yamlErrors && !isEmpty(yamlErrors);
+  const userHasValidatedYaml = isYamlValid || hasYamlErrors;
 
   const handleYamlValidation = React.useCallback(async () => {
-    import(/* webpackChunkName: "js-yaml" */ 'js-yaml').then(({ default: yaml }) => {
-      try {
-        yaml.load(mappings);
-      } catch (err) {
-        const castedError = err as YAMLException;
-        setYamlError({ name: castedError.name, message: castedError.message });
-      }
-    });
+    try {
+      await parseYaml(mappings);
+      setYamlErrors([]);
+    } catch (err) {
+      setYamlErrors([err]);
+    }
   }, [mappings]);
 
   return (
@@ -35,7 +38,7 @@ const DataModelMappingsTabPanel: React.FC = () => {
             size="medium"
             aria-label="Toggle YAML Editor visibility"
           />
-          <Heading size="x-small">YAML Function</Heading>
+          <Heading size="x-small">YAML Mappings</Heading>
         </Flex>
         {isYamlEditorOpen && (
           <Flex direction="column" spacing={4} mt={4}>
@@ -46,10 +49,10 @@ const DataModelMappingsTabPanel: React.FC = () => {
               width="100%"
               minLines={10}
               mode="yaml"
-              aria-describedby={yamlError ? 'yaml-errors' : undefined}
+              aria-describedby={hasYamlErrors ? 'yaml-errors' : undefined}
               required
             />
-            {yamlError && (
+            {hasYamlErrors && (
               <Flex
                 p={4}
                 borderRadius="medium"
@@ -57,20 +60,33 @@ const DataModelMappingsTabPanel: React.FC = () => {
                 fontSize="medium"
                 id="yaml-errors"
               >
-                <Box as="b">{yamlError.name}: </Box>
+                <Box as="b">{yamlErrors[0].name}: </Box>
                 <Text fontStyle="italic" ml={1}>
-                  {yamlError.message}
+                  {yamlErrors[0].message}
                 </Text>
               </Flex>
             )}
-            <Button
-              variantColor="teal"
-              icon="play"
-              disabled={!mappings}
-              onClick={handleYamlValidation}
-            >
-              Validate Syntax
-            </Button>
+            {isYamlValid && (
+              <Box
+                p={4}
+                borderRadius="medium"
+                backgroundColor="green-500"
+                fontSize="medium"
+                fontWeight="bold"
+              >
+                Everything{"'"}s looking good
+              </Box>
+            )}
+            <Box>
+              <Button
+                variantColor="teal"
+                icon="play"
+                disabled={!mappings}
+                onClick={handleYamlValidation}
+              >
+                {userHasValidatedYaml ? 'Validate Syntax' : 'Validate Again'}
+              </Button>
+            </Box>
           </Flex>
         )}
       </Card>

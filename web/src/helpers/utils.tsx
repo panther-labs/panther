@@ -351,6 +351,28 @@ export const formatNumber = (num: number): string => {
   return new Intl.NumberFormat().format(num);
 };
 
+export const convertToYaml = (input: any): Promise<string> => {
+  return import(/* webpackChunkName: "js-yaml" */ 'js-yaml').then(({ default: jsYaml }) => {
+    try {
+      const value = jsYaml.dump(input) as string;
+      return Promise.resolve(value);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  });
+};
+
+export const parseYaml = (yaml: string): Promise<any> => {
+  return import(/* webpackChunkName: "js-yaml" */ 'js-yaml').then(({ default: jsYaml }) => {
+    try {
+      const value = jsYaml.load(yaml);
+      return Promise.resolve(value);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  });
+};
+
 /**
  *
  * Downloads the data  as a file
