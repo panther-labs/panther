@@ -30,8 +30,8 @@ import (
 
 func TestUpdateAlertDelivery(t *testing.T) {
 	t.Parallel()
-	tableMock := &TableMock{}
-	ruleCacheMock := &RuleCacheMock{}
+	tableMock := &tableMock{}
+	ruleCacheMock := &ruleCacheMock{}
 	api := API{
 		alertsDB:  tableMock,
 		ruleCache: ruleCacheMock,

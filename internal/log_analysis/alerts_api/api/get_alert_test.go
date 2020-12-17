@@ -34,43 +34,43 @@ import (
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
-type RuleCacheMock struct {
+type ruleCacheMock struct {
 	forwarder.RuleCache
 	mock.Mock
 }
 
-func (r *RuleCacheMock) Get(id, version string) (*rulemodels.Rule, error) {
+func (r *ruleCacheMock) Get(id, version string) (*rulemodels.Rule, error) {
 	args := r.Called(id, version)
 	return args.Get(0).(*rulemodels.Rule), args.Error(1)
 }
 
-type TableMock struct {
+type tableMock struct {
 	table.API
 	mock.Mock
 }
 
-func (m *TableMock) GetAlert(input string) (*table.AlertItem, error) {
+func (m *tableMock) GetAlert(input string) (*table.AlertItem, error) {
 	args := m.Called(input)
 	return args.Get(0).(*table.AlertItem), args.Error(1)
 }
 
-func (m *TableMock) ListAll(input *models.ListAlertsInput) ([]*table.AlertItem, *string, error) {
+func (m *tableMock) ListAll(input *models.ListAlertsInput) ([]*table.AlertItem, *string, error) {
 	args := m.Called(input)
 	return args.Get(0).([]*table.AlertItem), args.Get(1).(*string), args.Error(2)
 }
 
-func (m *TableMock) UpdateAlertStatus(input *models.UpdateAlertStatusInput) ([]*table.AlertItem, error) {
+func (m *tableMock) UpdateAlertStatus(input *models.UpdateAlertStatusInput) ([]*table.AlertItem, error) {
 	args := m.Called(input)
 	return args.Get(0).([]*table.AlertItem), args.Error(1)
 }
 
-func (m *TableMock) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) (*table.AlertItem, error) {
+func (m *tableMock) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) (*table.AlertItem, error) {
 	args := m.Called(input)
 	return args.Get(0).(*table.AlertItem), args.Error(1)
 }
 
 func TestGetAlertDoesNotExist(t *testing.T) {
-	tableMock := &TableMock{}
+	tableMock := &tableMock{}
 
 	input := &models.GetAlertInput{
 		AlertID:        "alertId",
@@ -322,10 +322,10 @@ func getChannel(events ...string) <-chan s3.SelectObjectContentEventStreamEvent 
 	return channel
 }
 
-func initTest() (*API, *TableMock, *testutils.S3Mock, *RuleCacheMock) {
-	tableMock := &TableMock{}
+func initTest() (*API, *tableMock, *testutils.S3Mock, *ruleCacheMock) {
+	tableMock := &tableMock{}
 	s3Mock := &testutils.S3Mock{}
-	ruleCacheMock := &RuleCacheMock{}
+	ruleCacheMock := &ruleCacheMock{}
 
 	api := &API{
 		alertsDB:  tableMock,

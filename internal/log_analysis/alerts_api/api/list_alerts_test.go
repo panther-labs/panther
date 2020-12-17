@@ -86,8 +86,8 @@ var (
 
 func TestListAlertsForRule(t *testing.T) {
 	t.Parallel()
-	tableMock := &TableMock{}
-	ruleCacheMock := &RuleCacheMock{}
+	tableMock := &tableMock{}
+	ruleCacheMock := &ruleCacheMock{}
 	api := API{
 		alertsDB:  tableMock,
 		ruleCache: ruleCacheMock,
@@ -117,8 +117,8 @@ func TestListAlertsForRule(t *testing.T) {
 }
 
 func TestListAllAlerts(t *testing.T) {
-	tableMock := &TableMock{}
-	ruleCacheMock := &RuleCacheMock{}
+	tableMock := &tableMock{}
+	ruleCacheMock := &ruleCacheMock{}
 	api := API{
 		alertsDB:  tableMock,
 		ruleCache: ruleCacheMock,
@@ -154,8 +154,8 @@ func TestListAllAlerts(t *testing.T) {
 // Verifies that API returns correct results when alert title is not specified
 func TestListAllAlertsWithoutTitle(t *testing.T) {
 	t.Parallel()
-	tableMock := &TableMock{}
-	ruleCacheMock := &RuleCacheMock{}
+	tableMock := &tableMock{}
+	ruleCacheMock := &ruleCacheMock{}
 	api := API{
 		alertsDB:  tableMock,
 		ruleCache: ruleCacheMock,

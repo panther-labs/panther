@@ -37,8 +37,8 @@ import (
 
 func TestUpdateAlert(t *testing.T) {
 	t.Parallel()
-	tableMock := &TableMock{}
-	ruleCacheMock := &RuleCacheMock{}
+	tableMock := &tableMock{}
+	ruleCacheMock := &ruleCacheMock{}
 
 	status := "OPEN"
 	userID := "userId"
