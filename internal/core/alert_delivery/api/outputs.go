@@ -59,7 +59,7 @@ func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, 
 	}
 
 	// A dynamic override could be set to a destination that has been deleted.
-	// In worst case, the above loop wouldn't append any valid outputs.
+	// In worst case, the above loop wouldn't append any valid outputs and we continue.
 	if len(alertOutputs) > 0 {
 		return alertOutputs, nil
 	}
@@ -76,7 +76,7 @@ func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, 
 	}
 
 	// A destination override could be set to a destination that has been deleted.
-	// In worst case, the above loop wouldn't append any valid outputs.
+	// In worst case, the above loop wouldn't append any valid outputs and we continue.
 	if len(alertOutputs) > 0 {
 		return alertOutputs, nil
 	}
