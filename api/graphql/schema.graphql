@@ -82,12 +82,18 @@ type Query {
   listCustomLogs: [CustomLogRecord!]!
 }
 
+input DataModelMappingInput {
+  name: String!
+  path: String
+  method: String
+}
+
 input AddDataModelInput {
   displayName: String!
   id: ID!
   enabled: Boolean!
   logTypes: [String!]!
-  mappings: String!
+  mappings: [DataModelMappingInput!]!
   body: String
 }
 

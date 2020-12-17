@@ -71,7 +71,7 @@ export type AddDataModelInput = {
   id: Scalars['ID'];
   enabled: Scalars['Boolean'];
   logTypes: Array<Scalars['String']>;
-  mappings: Scalars['String'];
+  mappings: Array<DataModelMappingInput>;
   body?: Maybe<Scalars['String']>;
 };
 
@@ -305,6 +305,12 @@ export type DataModel = {
 
 export type DataModelMapping = {
   __typename?: 'DataModelMapping';
+  name: Scalars['String'];
+  path?: Maybe<Scalars['String']>;
+  method?: Maybe<Scalars['String']>;
+};
+
+export type DataModelMappingInput = {
   name: Scalars['String'];
   path?: Maybe<Scalars['String']>;
   method?: Maybe<Scalars['String']>;
@@ -1740,6 +1746,7 @@ export type ResolversTypes = {
   AddCustomLogInput: AddCustomLogInput;
   AddCustomLogOutput: ResolverTypeWrapper<AddCustomLogOutput>;
   AddDataModelInput: AddDataModelInput;
+  DataModelMappingInput: DataModelMappingInput;
   DataModel: ResolverTypeWrapper<DataModel>;
   DataModelMapping: ResolverTypeWrapper<DataModelMapping>;
   DestinationInput: DestinationInput;
@@ -1920,6 +1927,7 @@ export type ResolversParentTypes = {
   AddCustomLogInput: AddCustomLogInput;
   AddCustomLogOutput: AddCustomLogOutput;
   AddDataModelInput: AddDataModelInput;
+  DataModelMappingInput: DataModelMappingInput;
   DataModel: DataModel;
   DataModelMapping: DataModelMapping;
   DestinationInput: DestinationInput;

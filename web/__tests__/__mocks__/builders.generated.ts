@@ -43,6 +43,7 @@ import {
   CustomWebhookConfigInput,
   DataModel,
   DataModelMapping,
+  DataModelMappingInput,
   DeleteCustomLogInput,
   DeleteCustomLogOutput,
   DeleteGlobalPythonInputItem,
@@ -223,7 +224,7 @@ export const buildAddDataModelInput = (
     id: 'id' in overrides ? overrides.id : 'f4146cfa-6605-465d-a354-fba4dafe2370',
     enabled: 'enabled' in overrides ? overrides.enabled : true,
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Reduced'],
-    mappings: 'mappings' in overrides ? overrides.mappings : 'Sports',
+    mappings: 'mappings' in overrides ? overrides.mappings : [buildDataModelMappingInput()],
     body: 'body' in overrides ? overrides.body : 'China',
   };
 };
@@ -529,6 +530,16 @@ export const buildDataModelMapping = (
     name: 'name' in overrides ? overrides.name : 'Cotton',
     path: 'path' in overrides ? overrides.path : 'Yemen',
     method: 'method' in overrides ? overrides.method : 'Bacon',
+  };
+};
+
+export const buildDataModelMappingInput = (
+  overrides: Partial<DataModelMappingInput> = {}
+): DataModelMappingInput => {
+  return {
+    name: 'name' in overrides ? overrides.name : 'Personal Loan Account',
+    path: 'path' in overrides ? overrides.path : 'monetize',
+    method: 'method' in overrides ? overrides.method : 'secondary',
   };
 };
 
