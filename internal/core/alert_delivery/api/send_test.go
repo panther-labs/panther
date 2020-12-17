@@ -344,6 +344,17 @@ func TestSendAlertsTimeout(t *testing.T) {
 		}
 		modifiedDispatchStatusesResult = append(modifiedDispatchStatusesResult, newStatus)
 	}
+	assert.Equal(t, len(expectedDispatchStatuses), len(modifiedDispatchStatusesResult))
 
-	assert.Equal(t, expectedDispatchStatuses, modifiedDispatchStatusesResult)
+	// since the result could be out of order, we need check for item equivalence and not the order
+	equalDispatchCount := 0
+	for _, expStatus := range expectedDispatchStatuses {
+		for _, status := range modifiedDispatchStatusesResult {
+			if expStatus.OutputID == status.OutputID {
+				assert.Equal(t, expStatus, status)
+				equalDispatchCount++
+			}
+		}
+	}
+	assert.Equal(t, 3, equalDispatchCount)
 }
