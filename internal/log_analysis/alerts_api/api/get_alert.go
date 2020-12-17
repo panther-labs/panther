@@ -158,11 +158,6 @@ func (api *API) getEventsForLogType(
 
 	// data is stored by hour, loop over the hours
 	for ; !nextTime.After(alert.UpdateTime); nextTime = awsglue.GlueTableHourly.Next(nextTime) {
-		if len(result) >= maxResults {
-			// We don't need to return any results since we have already found the max requested
-			break
-		}
-
 		database := pantherdb.RuleMatchDatabase
 		if alert.Type == alertmodels.RuleErrorType {
 			database = pantherdb.RuleErrorsDatabase
@@ -188,14 +183,10 @@ func (api *API) getEventsForLogType(
 		}
 
 		// list concurrently while searching for matches within this hour
-		s3Search := api.newS3Search(maxResults)
-
-		// list objects and send to the above go routines
-		err := api.listS3AlertObject(listRequest, s3Search.s3SelectQueryChan, s3Search.s3SelectListChan, alert, maxResults)
+		s3Search, err := api.newS3Search(listRequest, alert, maxResults)
 		if err != nil {
 			return nil, resultToken, err
 		}
-
 		// collect results for this hour
 		s3Search.wait()
 
@@ -215,6 +206,8 @@ func (api *API) getEventsForLogType(
 }
 
 type s3Search struct {
+	api *API
+
 	s3SelectListChan         chan struct{} // used to signal the listing that it can stop
 	s3SelectQueryChan        chan *s3SelectQuery
 	s3SelectResultChan       chan *s3SelectResult
@@ -225,8 +218,9 @@ type s3Search struct {
 	s3SelectEventsFound      []*s3SelectResult
 }
 
-func (api *API) newS3Search(maxResults int) (search *s3Search) {
+func (api *API) newS3Search(listRequest *s3.ListObjectsV2Input, alert *table.AlertItem, maxResults int) (search *s3Search, err error) {
 	search = &s3Search{
+		api:                api,
 		s3SelectListChan:   make(chan struct{}, 1),
 		s3SelectQueryChan:  make(chan *s3SelectQuery, s3SelectQueryBuffer),
 		s3SelectResultChan: make(chan *s3SelectResult, s3SelectQueryBuffer),
@@ -258,7 +252,8 @@ func (api *API) newS3Search(maxResults int) (search *s3Search) {
 		search.s3SelectCollectWaitGroup.Done()
 	}()
 
-	return search
+	// list objects and send to the above go routines
+	return search, search.listS3AlertObjects(listRequest, alert, maxResults)
 }
 
 func (search *s3Search) wait() {
@@ -273,13 +268,9 @@ func (search *s3Search) wait() {
 	})
 }
 
-func (api *API) listS3AlertObject(listRequest *s3.ListObjectsV2Input,
-	s3SelectQueryChan chan *s3SelectQuery, s3SelectListChan chan struct{},
-	alert *table.AlertItem, maxResults int) (err error) {
-
+func (search *s3Search) listS3AlertObjects(listRequest *s3.ListObjectsV2Input, alert *table.AlertItem, maxResults int) (err error) {
 	var paginationError error
-
-	err = api.s3Client.ListObjectsV2Pages(listRequest, func(output *s3.ListObjectsV2Output, lastPage bool) bool {
+	err = search.api.s3Client.ListObjectsV2Pages(listRequest, func(output *s3.ListObjectsV2Output, lastPage bool) bool {
 		for _, object := range output.Contents {
 			objectTime, err := timeFromJSONS3ObjectKey(*object.Key)
 			if err != nil {
@@ -298,11 +289,11 @@ func (api *API) listS3AlertObject(listRequest *s3.ListObjectsV2Input,
 				alertID:    alert.AlertID,
 				maxResults: maxResults,
 			}
-			s3SelectQueryChan <- s3SelectQuery
+			search.s3SelectQueryChan <- s3SelectQuery
 
 			// done?
 			select {
-			case <-s3SelectListChan:
+			case <-search.s3SelectListChan:
 				return false
 			default: // make non-blocking
 			}
