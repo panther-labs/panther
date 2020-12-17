@@ -1,0 +1,49 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+type: object
+fields:
+  - name: boolean
+    type: boolean
+  - name: float
+    type: float
+  - name: float_as_string
+    type: float
+  - name: int_as_string
+    type: bigint
+  - name: string
+    type: string
+  - name: time
+    type: timestamp
+    timeFormat: rfc3339
+  - name: array
+    type: array
+    element:
+      type: bigint
+  - name: int
+    type: bigint
+  - name: boolean_as_string
+    type: boolean
+  - name: not_int_as_string
+    type: string
+  - name: object
+    type: object
+    fields:
+      - name: string
+        type: string
+  - name: required_string
+    type: string
+    required: true

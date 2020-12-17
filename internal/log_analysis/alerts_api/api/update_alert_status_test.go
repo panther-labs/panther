@@ -32,11 +32,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
 func TestUpdateAlert(t *testing.T) {
 	tableMock := &tableMock{}
+	gatewayapiMock := &gatewayapiMock{}
+	ruleCache := forwarder.NewCache(gatewayapiMock)
 
 	status := "OPEN"
 	userID := "userId"
@@ -64,6 +67,9 @@ func TestUpdateAlert(t *testing.T) {
 			DeliveryResponses: []*models.DeliveryResponse{},
 			CreationTime:      timeNow,
 			UpdateTime:        timeNow,
+			Description:       aws.String("description"),
+			Reference:         aws.String("reference"),
+			Runbook:           aws.String("runbook"),
 		})
 		expectedSummaries = append(expectedSummaries, &models.AlertSummary{
 			AlertID:           alertID,
@@ -82,6 +88,9 @@ func TestUpdateAlert(t *testing.T) {
 			UpdateTime:        aws.Time(timeNow),
 			EventsMatched:     aws.Int(0),
 			Title:             aws.String(""),
+			Description:       "description",
+			Reference:         "reference",
+			Runbook:           "runbook",
 		})
 	}
 
@@ -93,7 +102,9 @@ func TestUpdateAlert(t *testing.T) {
 	}
 
 	api := API{
-		alertsDB: tableMock,
+		alertsDB:       tableMock,
+		analysisClient: gatewayapiMock,
+		ruleCache:      ruleCache,
 	}
 	results, err := api.UpdateAlertStatus(input)
 	require.NoError(t, err)

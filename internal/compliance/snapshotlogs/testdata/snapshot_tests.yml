@@ -18,7 +18,7 @@ name: compliance_history
 logType: Snapshot.ComplianceHistory
 input: |
   {
-    "changeType":"modified",
+    "changeType":"MODIFIED",
     "integrationId":"00763118-329a-4939-9641-c1953e892c9a",
     "integrationLabel":"panther-cloudsec-setup",
     "lastUpdated":"2020-10-23T21:10:30.814384032Z",
@@ -31,7 +31,7 @@ input: |
   }
 result: |
   {
-    "changeType":"modified",
+    "changeType":"MODIFIED",
     "integrationId":"00763118-329a-4939-9641-c1953e892c9a",
     "integrationLabel":"panther-cloudsec-setup",
     "lastUpdated":"2020-10-23T21:10:30.814384032Z",
@@ -52,71 +52,76 @@ name: compliance_resource
 logType: Snapshot.ResourceHistory
 input: |
   {
-    "ChangeType": "created",
-    "Changes": null,
-    "IntegrationID": "d3be8d06-3e30-4908-9c07-6640b4b5b3dc",
-    "IntegrationLabel": "panther-account",
-    "LastUpdated": "2020-10-15T06:29:00.498108265Z",
-    "Resource": {
-      "ResourceType":"AWS.CloudWatch.LogGroup",
-      "Tags":{
+      "changeType": "CREATED",
+      "changes": {"StoredBytes":{"from":7228455,"to":7814231}, "Label":{"from":"start","to":"end"}},
+      "integrationId": "d3be8d06-3e30-4908-9c07-6640b4b5b3dc",
+      "integrationLabel": "panther-account",
+      "lastUpdated": "2020-10-15T06:29:00.498108265Z",
+      "accountId":"123456789012",
+      "resourceId":"arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome",
+      "region":"us-west-1",
+      "timeCreated":"2020-01-30T23:24:25.000Z",
+      "name":"/aws/apigateway/welcome",
+      "arn" :"arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome",
+      "tags": {
         "PantherVersion":"v1.10.1-dirty",
         "Application":"Panther",
         "Stack":"panther-log-analysis",
         "PantherEdition":"Enterprise"
       },
-      "StoredBytes":109,
-      "AccountId":"123456789012",
-      "ResourceId":"arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome:*",
-      "Region":"us-west-1","MetricFilterCount":0,
-      "RetentionInDays":null,
-      "KmsKeyId":null,"Arn":"arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome:*",
-      "TimeCreated":"2020-01-30T23:24:25.000Z",
-      "Name":"/aws/apigateway/welcome"
-    }
+      "resource": {
+        "ResourceType":"AWS.CloudWatch.LogGroup",
+        "ResourceId":"arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome",
+        "Arn": "arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome",
+        "Region":"us-west-1",
+        "TimeCreated":"2020-01-30T23:24:25.000Z",
+        "AccountId":"123456789012",
+        "Name":"/aws/apigateway/welcome",
+        "Tags":{
+          "PantherVersion":"v1.10.1-dirty",
+          "Application":"Panther",
+          "Stack":"panther-log-analysis",
+          "PantherEdition":"Enterprise"
+          }
+        }
   }
 result: |
   {
-    "changeType": "created",
+    "changeType": "CREATED",
     "integrationId": "d3be8d06-3e30-4908-9c07-6640b4b5b3dc",
     "integrationLabel": "panther-account",
     "lastUpdated": "2020-10-15T06:29:00.498108265Z",
+    "changes": {"StoredBytes":{"from":7228455,"to":7814231}, "Label":{"from":"start","to":"end"}},
     "resource": {
       "ResourceType":"AWS.CloudWatch.LogGroup",
-      "Tags":{
-        "PantherVersion":"v1.10.1-dirty",
-        "Application":"Panther",
-        "Stack":"panther-log-analysis",
-        "PantherEdition":"Enterprise"
-      },
-      "StoredBytes":109,
-      "AccountId":"123456789012",
-      "ResourceId":"arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome:*",
-      "Region":"us-west-1","MetricFilterCount":0,
-      "RetentionInDays":null,
-      "KmsKeyId":null,
-      "Arn":"arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome:*",
-      "TimeCreated":"2020-01-30T23:24:25.000Z",
-      "Name":"/aws/apigateway/welcome"
-    },
-    "normalizedFields":{
-      "ResourceId":"arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome:*",
-      "ResourceType":"AWS.CloudWatch.LogGroup",
-      "TimeCreated":"2020-01-30T23:24:25Z",
-      "AccountId":"123456789012",
+      "ResourceId":"arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome",
+      "Arn": "arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome",
       "Region":"us-west-1",
-      "Arn":"arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome:*",
+      "TimeCreated":"2020-01-30T23:24:25.000Z",
+      "AccountId":"123456789012",
       "Name":"/aws/apigateway/welcome",
       "Tags":{
         "PantherVersion":"v1.10.1-dirty",
         "Application":"Panther",
         "Stack":"panther-log-analysis",
         "PantherEdition":"Enterprise"
-      }
-    },
+        }
+      },
+    "accountId":"123456789012",
+    "resourceId":"arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome",
+    "region":"us-west-1",
+    "arn":"arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome",
+    "timeCreated":"2020-01-30T23:24:25Z",
+    "name":"/aws/apigateway/welcome",
+    "tags":{
+      "PantherVersion":"v1.10.1-dirty",
+      "Application":"Panther",
+      "Stack":"panther-log-analysis",
+      "PantherEdition":"Enterprise"
+      },
     "p_log_type": "Snapshot.ResourceHistory",
     "p_event_time":"2020-10-15T06:29:00.498108265Z",
-    "p_any_aws_arns": ["arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome:*"],
+    "p_any_aws_arns": ["arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome"],
     "p_any_aws_tags": [
         "Application:Panther",
         "PantherEdition:Enterprise",

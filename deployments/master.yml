@@ -281,6 +281,7 @@ Resources:
           - version: !FindInMap [Constants, Panther, Version]
             commit: !FindInMap [Constants, Panther, Commit]
         Debug: !Ref Debug
+        InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn

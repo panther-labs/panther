@@ -19,6 +19,8 @@
 import {
   ActiveSuppressCount,
   AddComplianceIntegrationInput,
+  AddCustomLogInput,
+  AddCustomLogOutput,
   AddGlobalPythonModuleInput,
   AddPolicyInput,
   AddRuleInput,
@@ -35,8 +37,11 @@ import {
   ComplianceIntegrationHealth,
   ComplianceItem,
   ComplianceStatusCounts,
+  CustomLogRecord,
   CustomWebhookConfig,
   CustomWebhookConfigInput,
+  DeleteCustomLogInput,
+  DeleteCustomLogOutput,
   DeleteGlobalPythonInputItem,
   DeleteGlobalPythonModuleInput,
   DeletePolicyInput,
@@ -57,6 +62,8 @@ import {
   GeneralSettings,
   GetAlertInput,
   GetComplianceIntegrationTemplateInput,
+  GetCustomLogInput,
+  GetCustomLogOutput,
   GetGlobalPythonModuleInput,
   GetPolicyInput,
   GetResourceInput,
@@ -150,6 +157,7 @@ import {
   AlertTypesEnum,
   ComplianceStatusEnum,
   DestinationTypeEnum,
+  ErrorCodeEnum,
   ListAlertsSortFieldsEnum,
   ListPoliciesSortFieldsEnum,
   ListResourcesSortFieldsEnum,
@@ -179,6 +187,28 @@ export const buildAddComplianceIntegrationInput = (
     integrationLabel: 'integrationLabel' in overrides ? overrides.integrationLabel : 'withdrawal',
     remediationEnabled: 'remediationEnabled' in overrides ? overrides.remediationEnabled : false,
     cweEnabled: 'cweEnabled' in overrides ? overrides.cweEnabled : false,
+  };
+};
+
+export const buildAddCustomLogInput = (
+  overrides: Partial<AddCustomLogInput> = {}
+): AddCustomLogInput => {
+  return {
+    revision: 'revision' in overrides ? overrides.revision : 176,
+    logType: 'logType' in overrides ? overrides.logType : 'matrix',
+    description: 'description' in overrides ? overrides.description : 'Buckinghamshire',
+    referenceURL: 'referenceURL' in overrides ? overrides.referenceURL : 'enable',
+    logSpec: 'logSpec' in overrides ? overrides.logSpec : 'applications',
+  };
+};
+
+export const buildAddCustomLogOutput = (
+  overrides: Partial<AddCustomLogOutput> = {}
+): AddCustomLogOutput => {
+  return {
+    __typename: 'AddCustomLogOutput',
+    error: 'error' in overrides ? overrides.error : buildError(),
+    record: 'record' in overrides ? overrides.record : buildCustomLogRecord(),
   };
 };
 
@@ -432,6 +462,18 @@ export const buildComplianceStatusCounts = (
   };
 };
 
+export const buildCustomLogRecord = (overrides: Partial<CustomLogRecord> = {}): CustomLogRecord => {
+  return {
+    __typename: 'CustomLogRecord',
+    logType: 'logType' in overrides ? overrides.logType : 'Towels',
+    revision: 'revision' in overrides ? overrides.revision : 674,
+    updatedAt: 'updatedAt' in overrides ? overrides.updatedAt : 'Automotive',
+    description: 'description' in overrides ? overrides.description : 'Rustic',
+    referenceURL: 'referenceURL' in overrides ? overrides.referenceURL : 'Savings Account',
+    logSpec: 'logSpec' in overrides ? overrides.logSpec : 'proactive',
+  };
+};
+
 export const buildCustomWebhookConfig = (
   overrides: Partial<CustomWebhookConfig> = {}
 ): CustomWebhookConfig => {
@@ -446,6 +488,24 @@ export const buildCustomWebhookConfigInput = (
 ): CustomWebhookConfigInput => {
   return {
     webhookURL: 'webhookURL' in overrides ? overrides.webhookURL : 'bypass',
+  };
+};
+
+export const buildDeleteCustomLogInput = (
+  overrides: Partial<DeleteCustomLogInput> = {}
+): DeleteCustomLogInput => {
+  return {
+    logType: 'logType' in overrides ? overrides.logType : 'deposit',
+    revision: 'revision' in overrides ? overrides.revision : 783,
+  };
+};
+
+export const buildDeleteCustomLogOutput = (
+  overrides: Partial<DeleteCustomLogOutput> = {}
+): DeleteCustomLogOutput => {
+  return {
+    __typename: 'DeleteCustomLogOutput',
+    error: 'error' in overrides ? overrides.error : buildError(),
   };
 };
 
@@ -664,6 +724,25 @@ export const buildGetComplianceIntegrationTemplateInput = (
   };
 };
 
+export const buildGetCustomLogInput = (
+  overrides: Partial<GetCustomLogInput> = {}
+): GetCustomLogInput => {
+  return {
+    logType: 'logType' in overrides ? overrides.logType : 'Director',
+    revision: 'revision' in overrides ? overrides.revision : 64,
+  };
+};
+
+export const buildGetCustomLogOutput = (
+  overrides: Partial<GetCustomLogOutput> = {}
+): GetCustomLogOutput => {
+  return {
+    __typename: 'GetCustomLogOutput',
+    error: 'error' in overrides ? overrides.error : buildError(),
+    record: 'record' in overrides ? overrides.record : buildCustomLogRecord(),
+  };
+};
+
 export const buildGetGlobalPythonModuleInput = (
   overrides: Partial<GetGlobalPythonModuleInput> = {}
 ): GetGlobalPythonModuleInput => {
@@ -780,6 +859,7 @@ export const buildJiraConfig = (overrides: Partial<JiraConfig> = {}): JiraConfig
     apiKey: 'apiKey' in overrides ? overrides.apiKey : 'bluetooth',
     assigneeId: 'assigneeId' in overrides ? overrides.assigneeId : 'bleeding-edge',
     issueType: 'issueType' in overrides ? overrides.issueType : 'Iowa',
+    labels: 'labels' in overrides ? overrides.labels : ['Rhode Island'],
   };
 };
 
@@ -791,6 +871,7 @@ export const buildJiraConfigInput = (overrides: Partial<JiraConfigInput> = {}): 
     apiKey: 'apiKey' in overrides ? overrides.apiKey : 'Sleek Cotton Car',
     assigneeId: 'assigneeId' in overrides ? overrides.assigneeId : 'Virgin Islands, British',
     issueType: 'issueType' in overrides ? overrides.issueType : 'strategic',
+    labels: 'labels' in overrides ? overrides.labels : ['magenta'],
   };
 };
 

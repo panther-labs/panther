@@ -25,11 +25,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
 func TestUpdateAlertDelivery(t *testing.T) {
 	tableMock := &tableMock{}
+	gatewayapiMock := &gatewayapiMock{}
+	ruleCache := forwarder.NewCache(gatewayapiMock)
 
 	alertID := "alertId"
 	input := &models.UpdateAlertDeliveryInput{
@@ -52,7 +55,9 @@ func TestUpdateAlertDelivery(t *testing.T) {
 
 	tableMock.On("UpdateAlertDelivery", input).Return(output, nil).Once()
 	api := API{
-		alertsDB: tableMock,
+		alertsDB:       tableMock,
+		analysisClient: gatewayapiMock,
+		ruleCache:      ruleCache,
 	}
 	result, err := api.UpdateAlertDelivery(input)
 	require.NoError(t, err)
