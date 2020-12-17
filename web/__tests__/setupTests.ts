@@ -16,6 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import { createSerializer } from 'jest-emotion';
+import { configure } from '@testing-library/dom';
+
 
 // extends the basic `expect` function, by adding additional DOM assertions such as
 // `.toHaveAttribute`, `.toHaveTextContent` etc.
@@ -33,9 +35,14 @@ import {
 
 // In CI where containers have lower CPU/RAM, jest's parallelization may mean that a single
 // test might take a lot of seconds to complete (since they all get fractions of resources).
-// We set a timeout of 100 seconds to protect us against false reports in CI environments
+// We set a test timeout of 60 seconds to protect us against false reports in CI, while
+// allowing a single test to wait for DOM updates for up to 10 seconds
 if (process.env.CI) {
-  jest.setTimeout(100000);
+  jest.setTimeout(60000);
+  
+  configure({
+    asyncUtilTimeout: 10000,
+  });
 }
 
 // This mocks sentry module for all tests
