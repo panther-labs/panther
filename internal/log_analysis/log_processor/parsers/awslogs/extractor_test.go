@@ -37,6 +37,7 @@ func TestAWSExtractor(t *testing.T) {
 		"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail",
 		"arn:aws:iam::123456789012:instance-profile/EC2Dev",
 		"arn:aws:ec2:region:111122223333:instance/i-0072230f74b3a798e",
+		"arn:aws:iam::123456789012:instance-profile/ArnLike",
 		"arn:aws:ec2:region:111122223333:instance/",
 	)
 	expectedEvent.AppendAnyAWSInstanceIds("i-081de1d7604b11e4a", "i-0072230f74b3a798e" /* from ARN */)

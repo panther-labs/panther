@@ -47,6 +47,7 @@ func TestSendSns(t *testing.T) {
 
 	createdAtTime := time.Now()
 	alert := &alertModels.Alert{
+		AlertID:             aws.String("alertId"),
 		AnalysisName:        aws.String("policyName"),
 		Type:                alertModels.PolicyType,
 		AnalysisID:          "policyId",
@@ -62,13 +63,14 @@ func TestSendSns(t *testing.T) {
 
 	defaultMessage := Notification{
 		ID:          "policyId",
+		AlertID:     aws.String("alertId"),
 		Type:        alertModels.PolicyType,
 		Name:        aws.String("policyName"),
 		Description: aws.String("policyDescription"),
 		Severity:    "severity",
 		Runbook:     aws.String("runbook"),
 		CreatedAt:   createdAtTime,
-		Link:        "https://panther.io/policies/policyId",
+		Link:        "https://panther.io/alerts/alertId",
 		Title:       "Policy Failure: policyName",
 		Tags:        []string{},
 		AlertContext: map[string]interface{}{
@@ -81,7 +83,7 @@ func TestSendSns(t *testing.T) {
 
 	expectedSnsMessage := &snsMessage{
 		DefaultMessage: defaultSerializedMessage,
-		EmailMessage: "policyName failed on new resources\nFor more details please visit: https://panther.io/policies/policyId\n" +
+		EmailMessage: "policyName failed on new resources\nFor more details please visit: https://panther.io/alerts/alertId\n" +
 			"Severity: severity\nRunbook: runbook\nReference: reference\nDescription: policyDescription\nAlertContext: {\"key\":\"value\"}",
 	}
 	expectedSerializedSnsMessage, err := jsoniter.MarshalToString(expectedSnsMessage)
