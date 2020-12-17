@@ -92,9 +92,9 @@ func AlertItemToSummary(item *table.AlertItem, rule *models.Rule) *alertmodels.A
 		ResourceTypes:     item.ResourceTypes,
 		ResourceID:        item.ResourceID,
 		// Generated Fields Support
-		Description: *item.Description,
-		Reference:   *item.Reference,
-		Runbook:     *item.Runbook,
+		Description: aws.StringValue(item.Description),
+		Reference:   aws.StringValue(item.Reference),
+		Runbook:     aws.StringValue(item.Runbook),
 	}
 }
 
