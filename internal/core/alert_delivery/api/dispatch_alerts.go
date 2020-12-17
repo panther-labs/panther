@@ -91,7 +91,8 @@ func getAlertOutputMap(alerts []*deliveryModels.Alert) (AlertOutputMap, error) {
 		if err != nil {
 			return alertOutputMap, errors.Wrapf(err, "Failed to fetch outputIds")
 		}
-		alertOutputMap[alert] = validOutputIds
+		uniqueOutputs := getUniqueOutputs(validOutputIds)
+		alertOutputMap[alert] = uniqueOutputs
 	}
 	return alertOutputMap, nil
 }

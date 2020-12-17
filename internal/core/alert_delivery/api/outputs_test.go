@@ -144,3 +144,49 @@ func TestGetAlertOutputsIdsError(t *testing.T) {
 	assert.Nil(t, result)
 	mockClient.AssertExpectations(t)
 }
+
+func TestGetUniqueAlertOutputs(t *testing.T) {
+	mockClient := &testutils.LambdaMock{}
+	lambdaClient = mockClient
+
+	output := &outputModels.GetOutputsOutput{
+		{
+			OutputID:           aws.String("output-id"),
+			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+		},
+		{
+			OutputID:           aws.String("output-id-2"),
+			DefaultForSeverity: aws.StringSlice([]string{"LOW"}),
+		},
+		{
+			OutputID:           aws.String("output-id-3"),
+			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
+		},
+	}
+	payload, err := jsoniter.Marshal(output)
+	require.NoError(t, err)
+	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
+
+	// Need to expire the cache because other tests mutate this global when run in parallel
+	outputsCache = &alertOutputsCache{
+		RefreshInterval: time.Second * time.Duration(30),
+		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
+	}
+	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
+	alert := sampleAlert()
+	alert.OutputIds = []string{"output-id", "output-id", "output-id"}
+
+	expectedResult := []*outputModels.AlertOutput{
+		{
+			OutputID:           aws.String("output-id"),
+			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+		},
+	}
+
+	result, err := getAlertOutputs(alert)
+	uniqueResult := getUniqueOutputs(result)
+	require.NoError(t, err)
+	assert.Equal(t, expectedResult, uniqueResult)
+
+	mockClient.AssertExpectations(t)
+}

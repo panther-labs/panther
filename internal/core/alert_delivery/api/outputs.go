@@ -30,7 +30,7 @@ import (
 
 const alertOutputSkip = "SKIP"
 
-// getAlertOutputs - Get output ids for an alert via the specified destinations or the defaults in panther
+// getAlertOutputs - Get output ids for an alert by dynmaic destinations, destination overrides, or default severity
 func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, error) {
 	// fetch available panther outputs
 	outputs, err := getOutputs()
@@ -38,36 +38,58 @@ func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, 
 		return nil, err
 	}
 
-	// Check if the alert outputID
 	alertOutputs := []*outputModels.AlertOutput{}
+
+	// First, check if we have an override to SKIP dispatching this alert
 	for _, outputID := range alert.OutputIds {
 		if outputID == alertOutputSkip {
 			return alertOutputs, nil
 		}
 	}
 
-	// If alert has neither outputs IDs or dynamic dest. override specified, return the defaults for the severity
-	if len(alert.OutputIds) == 0 {
-		defaultsForSeverity := []*outputModels.AlertOutput{}
+	// Next, prioritize dynamic destinations (set in the detection's python body)
+	if len(alert.Destinations) > 0 {
 		for _, output := range outputs {
-			// If `DefaultForSeverity` is nil or empty, this loop will skip
-			for _, outputSeverity := range output.DefaultForSeverity {
-				if alert.Severity == *outputSeverity {
-					defaultsForSeverity = append(defaultsForSeverity, output)
+			for _, outputID := range alert.Destinations {
+				if *output.OutputID == outputID {
+					alertOutputs = append(alertOutputs, output)
 				}
 			}
 		}
-		return defaultsForSeverity, nil
 	}
 
-	// Otherwise, return the specified output overrides for the alert
+	// A dynamic override could be set to a destination that has been deleted.
+	// In worst case, the above loop wouldn't append any valid outputs.
+	if len(alertOutputs) > 0 {
+		return alertOutputs, nil
+	}
+
+	// Then, destination overrides (set in the detection's form)
+	if len(alert.OutputIds) > 0 {
+		for _, output := range outputs {
+			for _, outputID := range alert.OutputIds {
+				if *output.OutputID == outputID {
+					alertOutputs = append(alertOutputs, output)
+				}
+			}
+		}
+	}
+
+	// A destination override could be set to a destination that has been deleted.
+	// In worst case, the above loop wouldn't append any valid outputs.
+	if len(alertOutputs) > 0 {
+		return alertOutputs, nil
+	}
+
+	// Finally, the use the severity rating (default)
 	for _, output := range outputs {
-		for _, outputID := range alert.OutputIds {
-			if *output.OutputID == outputID {
+		for _, outputSeverity := range output.DefaultForSeverity {
+			if alert.Severity == *outputSeverity {
 				alertOutputs = append(alertOutputs, output)
 			}
 		}
 	}
+
 	return alertOutputs, nil
 }
 
@@ -93,4 +115,19 @@ func fetchOutputs() ([]*outputModels.AlertOutput, error) {
 		return nil, err
 	}
 	return outputs, nil
+}
+
+// getUniqueOutputs - Get a list of unique output entries
+func getUniqueOutputs(outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
+	uniqMap := make(map[*outputModels.AlertOutput]struct{})
+	for _, output := range outputs {
+		uniqMap[output] = struct{}{}
+	}
+
+	// turn the map keys into a slice
+	uniqSlice := make([]*outputModels.AlertOutput, 0, len(uniqMap))
+	for output := range uniqMap {
+		uniqSlice = append(uniqSlice, output)
+	}
+	return uniqSlice
 }
