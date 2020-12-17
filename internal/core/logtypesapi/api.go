@@ -68,6 +68,9 @@ const (
 	ErrNotFound         = "NotFound"
 	ErrInUse            = "InUse"
 	ErrInvalidUpdate    = "InvalidUpdate"
+	ErrInvalidMetadata  = "InvalidMetadata"
+	ErrInvalidSyntax    = "InvalidSyntax"
+	ErrInvalidLogSchema = "InvalidLogSchema"
 )
 
 // APIError is an error that has a code and a message and is returned as part of the API response

@@ -154,14 +154,14 @@ func buildSchema(id string, c *CustomLog) (*logschema.Schema, error) {
 
 	// This is checked again in `customlogs.Build` but we check here to provide the appropriate error code
 	if err := desc.Validate(); err != nil {
-		return nil, NewAPIError("InvalidMetadata", err.Error())
+		return nil, NewAPIError(ErrInvalidMetadata, err.Error())
 	}
 	schema := logschema.Schema{}
 	if err := yaml.Unmarshal([]byte(c.LogSpec), &schema); err != nil {
-		return nil, NewAPIError("InvalidSyntax", err.Error())
+		return nil, NewAPIError(ErrInvalidSyntax, err.Error())
 	}
 	if _, err := customlogs.Build(desc, &schema); err != nil {
-		return nil, NewAPIError("InvalidLogSchema", err.Error())
+		return nil, NewAPIError(ErrInvalidLogSchema, err.Error())
 	}
 	return &schema, nil
 }
