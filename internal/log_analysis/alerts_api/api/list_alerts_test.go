@@ -261,7 +261,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 	// Mock what is returned from DDB
 	tableMock.On("ListAll", input).Return(alertItems, aws.String("lastKey"), nil)
 
-	ruleCacheMock.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Twice()
+	ruleCacheMock.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
 
 	result, err := api.ListAlerts(input)
 	assert.NoError(t, err)
