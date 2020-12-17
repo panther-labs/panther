@@ -281,7 +281,18 @@ func TestSendAlertsTimeout(t *testing.T) {
 	result, err := getAlertOutputMap(alerts)
 	require.NoError(t, err)
 
-	assert.Equal(t, expectedResult, result)
+	assert.Equal(t, len(expectedResult[alerts[0]]), len(result[alerts[0]]))
+
+	equalCount := 0
+	for _, expOutput := range expectedResult[alerts[0]] {
+		for _, output := range result[alerts[0]] {
+			if *expOutput.OutputID == *output.OutputID {
+				assert.Equal(t, expOutput, output)
+				equalCount++
+			}
+		}
+	}
+	assert.Equal(t, 3, equalCount)
 
 	expectedDispatchStatuses := []DispatchStatus{
 		{
