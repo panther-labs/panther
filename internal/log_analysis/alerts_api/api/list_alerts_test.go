@@ -112,6 +112,8 @@ func TestListAlertsForRule(t *testing.T) {
 		Alerts:           expectedAlertSummary,
 		LastEvaluatedKey: aws.String("lastKey"),
 	}, result)
+	tableMock.AssertExpectations(t)
+	ruleCacheMock.AssertExpectations(t)
 }
 
 func TestListAllAlerts(t *testing.T) {
@@ -267,4 +269,7 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 		Alerts:           expectedAlertSummary,
 		LastEvaluatedKey: aws.String("lastKey"),
 	}, result)
+
+	tableMock.AssertExpectations(t)
+	ruleCacheMock.AssertExpectations(t)
 }
