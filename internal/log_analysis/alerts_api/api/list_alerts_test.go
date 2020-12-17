@@ -24,10 +24,9 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
-	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
+	rulemodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
@@ -86,9 +85,13 @@ var (
 )
 
 func TestListAlertsForRule(t *testing.T) {
+	t.Parallel()
 	tableMock := &tableMock{}
-	gatewayapiMock := &gatewayapiMock{}
-	ruleCache := forwarder.NewCache(gatewayapiMock)
+	ruleCacheMock := &ruleCacheMock{}
+	api := API{
+		alertsDB:  tableMock,
+		ruleCache: ruleCacheMock,
+	}
 
 	input := &models.ListAlertsInput{
 		RuleID:            aws.String("ruleId"),
@@ -100,24 +103,26 @@ func TestListAlertsForRule(t *testing.T) {
 
 	tableMock.On("ListAll", input).
 		Return(alertItems, aws.String("lastKey"), nil)
-	api := API{
-		alertsDB:       tableMock,
-		analysisClient: gatewayapiMock,
-		ruleCache:      ruleCache,
-	}
+	ruleCacheMock.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
+
 	result, err := api.ListAlerts(input)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, &models.ListAlertsOutput{
 		Alerts:           expectedAlertSummary,
 		LastEvaluatedKey: aws.String("lastKey"),
 	}, result)
+	tableMock.AssertExpectations(t)
+	ruleCacheMock.AssertExpectations(t)
 }
 
 func TestListAllAlerts(t *testing.T) {
 	tableMock := &tableMock{}
-	gatewayapiMock := &gatewayapiMock{}
-	ruleCache := forwarder.NewCache(gatewayapiMock)
+	ruleCacheMock := &ruleCacheMock{}
+	api := API{
+		alertsDB:  tableMock,
+		ruleCache: ruleCacheMock,
+	}
 
 	input := &models.ListAlertsInput{
 		PageSize:          aws.Int(10),
@@ -131,29 +136,30 @@ func TestListAllAlerts(t *testing.T) {
 		CreatedAtBefore:   aws.Time(time.Now()),
 		SortDir:           aws.String("ascending"),
 	}
+	tableMock.On("ListAll", input).Return(alertItems, aws.String("lastKey"), nil)
 
-	tableMock.On("ListAll", input).
-		Return(alertItems, aws.String("lastKey"), nil)
-	api := API{
-		alertsDB:       tableMock,
-		analysisClient: gatewayapiMock,
-		ruleCache:      ruleCache,
-	}
+	ruleCacheMock.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil)
+
 	result, err := api.ListAlerts(input)
-	require.NoError(t, err)
-
+	assert.NoError(t, err)
 	assert.Equal(t, &models.ListAlertsOutput{
 		Alerts:           expectedAlertSummary,
 		LastEvaluatedKey: aws.String("lastKey"),
 	}, result)
+	tableMock.AssertExpectations(t)
+	ruleCacheMock.AssertExpectations(t)
 }
 
 // Verifies backwards compatibility
 // Verifies that API returns correct results when alert title is not specified
 func TestListAllAlertsWithoutTitle(t *testing.T) {
+	t.Parallel()
 	tableMock := &tableMock{}
-	gatewayapiMock := &gatewayapiMock{}
-	ruleCache := forwarder.NewCache(gatewayapiMock)
+	ruleCacheMock := &ruleCacheMock{}
+	api := API{
+		alertsDB:  tableMock,
+		ruleCache: ruleCacheMock,
+	}
 
 	alertItems := []*table.AlertItem{
 		{
@@ -252,18 +258,18 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 		ExclusiveStartKey: aws.String("startKey"),
 	}
 
-	tableMock.On("ListAll", input).
-		Return(alertItems, aws.String("lastKey"), nil)
-	api := API{
-		alertsDB:       tableMock,
-		analysisClient: gatewayapiMock,
-		ruleCache:      ruleCache,
-	}
-	result, err := api.ListAlerts(input)
-	require.NoError(t, err)
+	// Mock what is returned from DDB
+	tableMock.On("ListAll", input).Return(alertItems, aws.String("lastKey"), nil)
 
+	ruleCacheMock.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
+
+	result, err := api.ListAlerts(input)
+	assert.NoError(t, err)
 	assert.Equal(t, &models.ListAlertsOutput{
 		Alerts:           expectedAlertSummary,
 		LastEvaluatedKey: aws.String("lastKey"),
 	}, result)
+
+	tableMock.AssertExpectations(t)
+	ruleCacheMock.AssertExpectations(t)
 }

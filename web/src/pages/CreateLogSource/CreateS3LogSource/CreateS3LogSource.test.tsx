@@ -191,7 +191,10 @@ describe('CreateS3LogSource', () => {
     expect(getByAltText('Validating source health...')).toBeInTheDocument();
 
     // ... replaced by a failure screen
-    expect(await findByText("Something didn't go as planned")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(getByText("Something didn't go as planned")).toBeInTheDocument();
+    });
+
     expect(getByText('Start over')).toBeInTheDocument();
     expect(getByText(errorMessage)).toBeInTheDocument();
 

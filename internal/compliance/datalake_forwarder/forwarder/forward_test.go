@@ -211,11 +211,11 @@ func TestResourceEvent(t *testing.T) {
 		EventSourceArn: "arn:aws:dynamodb:eu-west-1:123456789012:table/panther-resources/stream/2020-12-09T13:15:55.703",
 		Change: events.DynamoDBStreamRecord{
 			Keys: map[string]*dynamodb.AttributeValue{
-				"id": {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+				"id": {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
 			},
 			NewImage: map[string]*dynamodb.AttributeValue{
-				"id":              {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
-				"lowerId":         {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+				"id":              {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"lowerId":         {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
 				"expiresAt":       {N: aws.String("1607707952")},
 				"integrationId":   {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
 				"deleted":         {BOOL: aws.Bool(false)},
@@ -227,20 +227,20 @@ func TestResourceEvent(t *testing.T) {
 					"RevisionId":   {S: aws.String("433968bb-c360-4411-8f38-0ac65767f230")},
 					"LastModified": {S: aws.String("2020-12-15T11:10:32.883+0000")},
 					"MemorySize":   {N: aws.String("128")},
-					"ResourceId":   {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+					"ResourceId":   {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
 					"TimeCreated":  {NULL: aws.Bool(true)},
 					"Region":       {S: aws.String("eu-west-1")},
-					"Arn":          {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+					"Arn":          {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
 					"ResourceType": {S: aws.String("AWS.Lambda.Function")},
 					"AccountId":    {S: aws.String("123456789012")},
-					"Name":         {S: aws.String("panther-cloudsecurity-datalake-forwarder")},
+					"Name":         {S: aws.String("panther")},
 					"Tags": {M: map[string]*dynamodb.AttributeValue{
 						"key": {S: aws.String("value")},
 					}}},
 				}},
 			OldImage: map[string]*dynamodb.AttributeValue{
-				"id":              {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
-				"lowerId":         {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+				"id":              {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"lowerId":         {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
 				"expiresAt":       {N: aws.String("1607707952")},
 				"integrationId":   {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
 				"deleted":         {BOOL: aws.Bool(false)},
@@ -252,13 +252,13 @@ func TestResourceEvent(t *testing.T) {
 					"RevisionId":   {S: aws.String("433968bb-c360-4411-8f38-0ac65767f230")},
 					"LastModified": {S: aws.String("2020-12-15T11:10:32.883+0000")},
 					"MemorySize":   {N: aws.String("256")},
-					"ResourceId":   {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+					"ResourceId":   {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
 					"TimeCreated":  {NULL: aws.Bool(true)},
 					"Region":       {S: aws.String("eu-west-1")},
-					"Arn":          {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder")},
+					"Arn":          {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
 					"ResourceType": {S: aws.String("AWS.Lambda.Function")},
 					"AccountId":    {S: aws.String("123456789012")},
-					"Name":         {S: aws.String("panther-cloudsecurity-datalake-forwarder")},
+					"Name":         {S: aws.String("panther")},
 					"Tags": {M: map[string]*dynamodb.AttributeValue{
 						"key": {S: aws.String("value")},
 					}}},
@@ -288,14 +288,12 @@ func TestResourceEvent(t *testing.T) {
 	firehoseMock.AssertExpectations(t)
 
 	// Verify firehose payload
-
-	// First
 	expectedChange := ResourceChange{
 		ChangeType:       "MODIFIED",
 		IntegrationID:    "8349b647-f731-48c4-9d6b-eefff4010c14",
 		IntegrationLabel: "test-label",
 		LastUpdated:      "2020-12-09T15:32:32.362503673Z",
-		ID:               "arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder",
+		ID:               "arn:aws:lambda:eu-west-1:123456789012:function:panther",
 		Changes: map[string]diff.Diff{
 			"MemorySize": {
 				From: float64(256),
@@ -304,12 +302,270 @@ func TestResourceEvent(t *testing.T) {
 		},
 		ResourceAttributes: ResourceAttributes{
 			TimeCreated:  nil,
-			Name:         aws.String("panther-cloudsecurity-datalake-forwarder"),
+			Name:         aws.String("panther"),
 			ResourceType: aws.String("AWS.Lambda.Function"),
-			ResourceID:   aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder"),
+			ResourceID:   aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther"),
 			Region:       aws.String("eu-west-1"),
 			AccountID:    aws.String("123456789012"),
-			ARN:          aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther-cloudsecurity-datalake-forwarder"),
+			ARN:          aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther"),
+			Tags: map[string]string{
+				"key": "value",
+			},
+		},
+	}
+
+	var expectedResource map[string]interface{}
+	if err = dynamodbattribute.Unmarshal(record.Change.NewImage["attributes"], &expectedResource); err != nil {
+		t.Error("failed to marshal attributes")
+	}
+	expectedChange.Resource = expectedResource
+
+	request := firehoseMock.Calls[0].Arguments[1].(*firehose.PutRecordBatchInput)
+	assert.Equal(t, 1, len(request.Records))
+	assert.Equal(t, "stream-name", *request.DeliveryStreamName)
+	var change ResourceChange
+	if err := jsoniter.Unmarshal(request.Records[0].Data, &change); err != nil {
+		t.Error("failed to unmarshal change")
+	}
+	assert.Equal(t, expectedChange, change)
+}
+
+func TestResourceMarkedDeleted(t *testing.T) {
+	t.Parallel()
+	lambdaMock := &testutils.LambdaMock{}
+	firehoseMock := &testutils.FirehoseMock{}
+
+	sh := StreamHandler{
+		LambdaClient:   lambdaMock,
+		FirehoseClient: firehoseMock,
+		StreamName:     "stream-name",
+	}
+
+	record := events.DynamoDBEventRecord{
+		AWSRegion:      "eu-west-1",
+		EventSource:    "aws:dynamodb",
+		EventName:      "MODIFY",
+		EventID:        "a04e16d70e2520ff8a3569354b55b3f5",
+		EventVersion:   "1.1",
+		EventSourceArn: "arn:aws:dynamodb:eu-west-1:123456789012:table/panther-resources/stream/2020-12-09T13:15:55.703",
+		Change: events.DynamoDBStreamRecord{
+			Keys: map[string]*dynamodb.AttributeValue{
+				"id": {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+			},
+			NewImage: map[string]*dynamodb.AttributeValue{
+				"id":            {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"lowerId":       {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"expiresAt":     {N: aws.String("1607707952")},
+				"integrationId": {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
+				// This source is now deleted
+				"deleted":         {BOOL: aws.Bool(true)},
+				"integrationType": {S: aws.String("aws")},
+				"type":            {S: aws.String("AWS.Lambda.Function")},
+				"lastModified":    {S: aws.String("2020-12-09T15:32:32.362503673Z")},
+				"attributes": {M: map[string]*dynamodb.AttributeValue{
+					"RevisionId":   {S: aws.String("433968bb-c360-4411-8f38-0ac65767f230")},
+					"LastModified": {S: aws.String("2020-12-15T11:10:32.883+0000")},
+					"ResourceId":   {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+					"Region":       {S: aws.String("eu-west-1")},
+					"Arn":          {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+					"ResourceType": {S: aws.String("AWS.Lambda.Function")},
+					"AccountId":    {S: aws.String("123456789012")},
+					"Name":         {S: aws.String("panther")},
+					"Tags": {M: map[string]*dynamodb.AttributeValue{
+						"key": {S: aws.String("value")},
+					}}}},
+			},
+			OldImage: map[string]*dynamodb.AttributeValue{
+				"id":            {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"lowerId":       {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"expiresAt":     {N: aws.String("1607707952")},
+				"integrationId": {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
+				// This source was not deleted before
+				"deleted":         {BOOL: aws.Bool(false)},
+				"integrationType": {S: aws.String("aws")},
+				"type":            {S: aws.String("AWS.Lambda.Function")},
+				"lastModified":    {S: aws.String("2020-12-09T15:32:32.362503673Z")},
+				"attributes": {M: map[string]*dynamodb.AttributeValue{
+					"RevisionId":   {S: aws.String("433968bb-c360-4411-8f38-0ac65767f230")},
+					"LastModified": {S: aws.String("2020-12-15T11:10:32.883+0000")},
+					"ResourceId":   {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+					"Region":       {S: aws.String("eu-west-1")},
+					"Arn":          {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+					"ResourceType": {S: aws.String("AWS.Lambda.Function")},
+					"AccountId":    {S: aws.String("123456789012")},
+					"Name":         {S: aws.String("panther")},
+					"Tags": {M: map[string]*dynamodb.AttributeValue{
+						"key": {S: aws.String("value")},
+					}}}},
+			},
+		},
+	}
+
+	// Mock fetching of integration label
+	integrations := []*models.SourceIntegrationMetadata{
+		{
+			IntegrationID:    "8349b647-f731-48c4-9d6b-eefff4010c14",
+			IntegrationLabel: "test-label",
+		},
+	}
+	marshaledIntegrations, err := jsoniter.Marshal(integrations)
+	assert.NoError(t, err)
+	lambdaMock.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{Payload: marshaledIntegrations}, nil).Once()
+
+	// Mock firehose invocation
+	firehoseMock.On("PutRecordBatchWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(&firehose.PutRecordBatchOutput{}, nil).
+		Once()
+
+	assert.NoError(t, sh.Run(context.Background(), zap.L(), &events.DynamoDBEvent{Records: []events.DynamoDBEventRecord{record}}))
+	lambdaMock.AssertExpectations(t)
+	firehoseMock.AssertExpectations(t)
+
+	// Verify firehose payload
+	expectedChange := ResourceChange{
+		ChangeType:       "DELETED",
+		IntegrationID:    "8349b647-f731-48c4-9d6b-eefff4010c14",
+		IntegrationLabel: "test-label",
+		LastUpdated:      "2020-12-09T15:32:32.362503673Z",
+		ID:               "arn:aws:lambda:eu-west-1:123456789012:function:panther",
+		Changes:          nil,
+		ResourceAttributes: ResourceAttributes{
+			TimeCreated:  nil,
+			Name:         aws.String("panther"),
+			ResourceType: aws.String("AWS.Lambda.Function"),
+			ResourceID:   aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther"),
+			Region:       aws.String("eu-west-1"),
+			AccountID:    aws.String("123456789012"),
+			ARN:          aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther"),
+			Tags: map[string]string{
+				"key": "value",
+			},
+		},
+	}
+
+	var expectedResource map[string]interface{}
+	if err = dynamodbattribute.Unmarshal(record.Change.NewImage["attributes"], &expectedResource); err != nil {
+		t.Error("failed to marshal attributes")
+	}
+	expectedChange.Resource = expectedResource
+
+	request := firehoseMock.Calls[0].Arguments[1].(*firehose.PutRecordBatchInput)
+	assert.Equal(t, 1, len(request.Records))
+	assert.Equal(t, "stream-name", *request.DeliveryStreamName)
+	var change ResourceChange
+	if err := jsoniter.Unmarshal(request.Records[0].Data, &change); err != nil {
+		t.Error("failed to unmarshal change")
+	}
+	assert.Equal(t, expectedChange, change)
+}
+
+func TestResourceMarkedCreated(t *testing.T) {
+	t.Parallel()
+	lambdaMock := &testutils.LambdaMock{}
+	firehoseMock := &testutils.FirehoseMock{}
+
+	sh := StreamHandler{
+		LambdaClient:   lambdaMock,
+		FirehoseClient: firehoseMock,
+		StreamName:     "stream-name",
+	}
+
+	record := events.DynamoDBEventRecord{
+		AWSRegion:      "eu-west-1",
+		EventSource:    "aws:dynamodb",
+		EventName:      "MODIFY",
+		EventID:        "a04e16d70e2520ff8a3569354b55b3f5",
+		EventVersion:   "1.1",
+		EventSourceArn: "arn:aws:dynamodb:eu-west-1:123456789012:table/panther-resources/stream/2020-12-09T13:15:55.703",
+		Change: events.DynamoDBStreamRecord{
+			Keys: map[string]*dynamodb.AttributeValue{
+				"id": {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+			},
+			NewImage: map[string]*dynamodb.AttributeValue{
+				"id":            {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"lowerId":       {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"expiresAt":     {N: aws.String("1607707952")},
+				"integrationId": {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
+				// This source is no longer deleted
+				"deleted":         {BOOL: aws.Bool(false)},
+				"integrationType": {S: aws.String("aws")},
+				"type":            {S: aws.String("AWS.Lambda.Function")},
+				"lastModified":    {S: aws.String("2020-12-09T15:32:32.362503673Z")},
+				"attributes": {M: map[string]*dynamodb.AttributeValue{
+					"RevisionId":   {S: aws.String("433968bb-c360-4411-8f38-0ac65767f230")},
+					"LastModified": {S: aws.String("2020-12-15T11:10:32.883+0000")},
+					"ResourceId":   {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+					"Region":       {S: aws.String("eu-west-1")},
+					"Arn":          {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+					"ResourceType": {S: aws.String("AWS.Lambda.Function")},
+					"AccountId":    {S: aws.String("123456789012")},
+					"Name":         {S: aws.String("panther")},
+					"Tags": {M: map[string]*dynamodb.AttributeValue{
+						"key": {S: aws.String("value")},
+					}}}},
+			},
+			OldImage: map[string]*dynamodb.AttributeValue{
+				"id":            {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"lowerId":       {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+				"expiresAt":     {N: aws.String("1607707952")},
+				"integrationId": {S: aws.String("8349b647-f731-48c4-9d6b-eefff4010c14")},
+				// This source was deleted
+				"deleted":         {BOOL: aws.Bool(true)},
+				"integrationType": {S: aws.String("aws")},
+				"type":            {S: aws.String("AWS.Lambda.Function")},
+				"lastModified":    {S: aws.String("2020-12-09T15:32:32.362503673Z")},
+				"attributes": {M: map[string]*dynamodb.AttributeValue{
+					"RevisionId":   {S: aws.String("433968bb-c360-4411-8f38-0ac65767f230")},
+					"LastModified": {S: aws.String("2020-12-15T11:10:32.883+0000")},
+					"ResourceId":   {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+					"Region":       {S: aws.String("eu-west-1")},
+					"Arn":          {S: aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther")},
+					"ResourceType": {S: aws.String("AWS.Lambda.Function")},
+					"AccountId":    {S: aws.String("123456789012")},
+					"Name":         {S: aws.String("panther")},
+					"Tags": {M: map[string]*dynamodb.AttributeValue{
+						"key": {S: aws.String("value")},
+					}}}},
+			},
+		},
+	}
+
+	// Mock fetching of integration label
+	integrations := []*models.SourceIntegrationMetadata{
+		{
+			IntegrationID:    "8349b647-f731-48c4-9d6b-eefff4010c14",
+			IntegrationLabel: "test-label",
+		},
+	}
+	marshaledIntegrations, err := jsoniter.Marshal(integrations)
+	assert.NoError(t, err)
+	lambdaMock.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{Payload: marshaledIntegrations}, nil).Once()
+
+	// Mock firehose invocation
+	firehoseMock.On("PutRecordBatchWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(&firehose.PutRecordBatchOutput{}, nil).
+		Once()
+
+	assert.NoError(t, sh.Run(context.Background(), zap.L(), &events.DynamoDBEvent{Records: []events.DynamoDBEventRecord{record}}))
+	lambdaMock.AssertExpectations(t)
+	firehoseMock.AssertExpectations(t)
+
+	// Verify firehose payload
+	expectedChange := ResourceChange{
+		ChangeType:       "CREATED",
+		IntegrationID:    "8349b647-f731-48c4-9d6b-eefff4010c14",
+		IntegrationLabel: "test-label",
+		LastUpdated:      "2020-12-09T15:32:32.362503673Z",
+		ID:               "arn:aws:lambda:eu-west-1:123456789012:function:panther",
+		Changes:          nil,
+		ResourceAttributes: ResourceAttributes{
+			TimeCreated:  nil,
+			Name:         aws.String("panther"),
+			ResourceType: aws.String("AWS.Lambda.Function"),
+			ResourceID:   aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther"),
+			Region:       aws.String("eu-west-1"),
+			AccountID:    aws.String("123456789012"),
+			ARN:          aws.String("arn:aws:lambda:eu-west-1:123456789012:function:panther"),
 			Tags: map[string]string{
 				"key": "value",
 			},
