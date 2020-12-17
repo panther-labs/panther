@@ -433,8 +433,7 @@ class Rule:
                     'severity method for rule with id [%s] yielded [%s], expected [%s]', self.rule_id, severity, str(SEVERITY_TYPES)
                 )
                 raise AssertionError(
-                    'Expected severity to be any of the following: [%s], got [%s] instead.' %
-                    (str(SEVERITY_TYPES), severity)
+                    'Expected severity to be any of the following: [%s], got [%s] instead.' % (str(SEVERITY_TYPES), severity)
                 )
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
