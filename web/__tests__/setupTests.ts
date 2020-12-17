@@ -32,7 +32,7 @@ import {
 } from 'Source/constants';
 
 // 100 seconds
-jest.setTimeout(100000);
+jest.setTimeout(10000);
 
 // This mocks sentry module for all tests
 const MockedSentryScope = { setExtras: jest.fn(), setTag: jest.fn() };
