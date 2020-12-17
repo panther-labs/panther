@@ -61,33 +61,6 @@ func AlertItemToSummary(item *table.AlertItem, rule *models.Rule) *alertmodels.A
 		alertType = alertdeliverymodels.RuleType
 	}
 
-	if alertType == alertdeliverymodels.PolicyType {
-		return &alertmodels.AlertSummary{
-			AlertID:           item.AlertID,
-			Type:              alertType,
-			CreationTime:      &item.CreationTime,
-			DedupString:       &item.DedupString,
-			EventsMatched:     &item.EventCount,
-			RuleDisplayName:   item.RuleDisplayName,
-			RuleID:            &item.RuleID,
-			RuleVersion:       &item.RuleVersion,
-			Severity:          aws.String(item.Severity),
-			Status:            alertStatus,
-			Title:             GetAlertTitle(item),
-			LogTypes:          item.LogTypes,
-			LastUpdatedBy:     item.LastUpdatedBy,
-			LastUpdatedByTime: item.LastUpdatedByTime,
-			UpdateTime:        &item.UpdateTime,
-			DeliveryResponses: item.DeliveryResponses,
-			PolicyID:          item.PolicyID,
-			PolicyDisplayName: item.PolicyDisplayName,
-			PolicySourceID:    item.PolicySourceID,
-			PolicyVersion:     item.PolicyVersion,
-			ResourceTypes:     item.ResourceTypes,
-			ResourceID:        item.ResourceID,
-		}
-	}
-
 	// Generated Fields - backwards compatibility support
 	if IsOldAlert(item) {
 		item.Description = aws.String(rule.Description)
