@@ -316,19 +316,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
             alert_context='{}',
             title_output='test_rule_with_invalid_severity',
             dedup_output='test_rule_with_invalid_severity',
-            severity_output="CRITICAL-ISH",
-            severity_exception=AssertionError(
-                "Expected severity to be any of the following: "
-                "[['INFO', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL']], got [CRITICAL-ISH] instead."
-            ),
+            severity_output="INFO",
         )
-        # TODO: Fix this to handle Exception error comparison
-        # Temporary workaround
         result = rule.run({})
-        self.assertEqual(result.matched, expected_result.matched)
-        self.assertEqual(result.alert_context, expected_result.alert_context)
-        self.assertEqual(result.title_output, expected_result.title_output)
-        self.assertEqual(result.dedup_output, expected_result.dedup_output)
-        self.assertEqual(result.severity_output, expected_result.severity_output)
-        # Context: strings are identical, the AssertionError object comparison is likely breaking this
-        # self.assertEqual(expected_result, rule.run({}))
+        self.assertEqual(expected_result, result)
