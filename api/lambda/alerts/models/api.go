@@ -212,6 +212,6 @@ type AlertSummary struct {
 // Alert contains the details of an alert
 type Alert struct {
 	AlertSummary
-	Events                 []*string `json:"events" validate:"required"`
-	EventsLastEvaluatedKey *string   `json:"eventsLastEvaluatedKey,omitempty"`
+	Events                 []string `json:"events" validate:"required"`
+	EventsLastEvaluatedKey *string  `json:"eventsLastEvaluatedKey,omitempty"`
 }
