@@ -79,7 +79,7 @@ func (api *API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOu
 	for _, logType := range alertItem.LogTypes {
 		// Each alert can contain events from multiple log types.
 		// Retrieve results from each log type.
-		if  logTypeToken, found := token.LogTypeToToken[logType]; found {
+		if logTypeToken, found := token.LogTypeToToken[logType]; found {
 			if logTypeToken.EventIndex == -1 { // if -1 then already searched this logType completely
 				continue
 			}
@@ -163,7 +163,7 @@ func (api *API) getEventsForLogType(
 		resultToken.S3ObjectKey = token.S3ObjectKey
 		resultToken.EventIndex = s3SelectResult.lastEventIndex
 		// done?
-		if len(result) + len(s3SelectResult.events) >= maxResults {
+		if len(result)+len(s3SelectResult.events) >= maxResults {
 			// clip, don't got over!
 			events := s3SelectResult.events
 			numOver := len(result) + len(events) - maxResults
@@ -172,7 +172,7 @@ func (api *API) getEventsForLogType(
 				resultToken.EventIndex = s3SelectResult.lastEventIndex - numOver
 			}
 			result = append(result, events...)
-			return result, resultToken,nil
+			return result, resultToken, nil
 		} else {
 			result = append(result, s3SelectResult.events...)
 		}
@@ -221,17 +221,17 @@ func (api *API) getEventsForLogType(
 			resultToken.S3ObjectKey = s3SelectResult.objectKey
 
 			// done?
-			if len(result) + len(s3SelectResult.events) >= maxResults {
+			if len(result)+len(s3SelectResult.events) >= maxResults {
 				// clip, don't go over!
 				events := s3SelectResult.events
 				numOver := len(result) + len(events) - maxResults
 				if numOver > 0 {
-					events = events[0:len(events)-numOver]
+					events = events[0 : len(events)-numOver]
 					resultToken.EventIndex = s3SelectResult.lastEventIndex - numOver
 				}
 				result = append(result, events...)
 
-				return result, resultToken,nil
+				return result, resultToken, nil
 			} else {
 				result = append(result, s3SelectResult.events...)
 			}
@@ -243,7 +243,7 @@ func (api *API) getEventsForLogType(
 }
 
 type s3Search struct {
-	api *API
+	api        *API
 	maxResults int
 
 	s3SelectListChan         chan struct{} // used to signal the listing that it can stop
@@ -259,7 +259,7 @@ type s3Search struct {
 func (api *API) newS3Search(listRequest *s3.ListObjectsV2Input, alert *table.AlertItem, maxResults int) (search *s3Search, err error) {
 	search = &s3Search{
 		api:                api,
-		maxResults: maxResults,
+		maxResults:         maxResults,
 		s3SelectListChan:   make(chan struct{}, s3SelectConcurrency), // one for each go routine so they can write and exit
 		s3SelectQueryChan:  make(chan *s3SelectQuery, s3SelectQueryBuffer),
 		s3SelectResultChan: make(chan *s3SelectResult, s3SelectQueryBuffer),
