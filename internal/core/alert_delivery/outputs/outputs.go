@@ -34,9 +34,8 @@ import (
 )
 
 var (
-	policyURLPrefix = os.Getenv("POLICY_URL_PREFIX")
-	appDomainURL    = os.Getenv("APP_DOMAIN_URL")
-	alertURLPrefix  = os.Getenv("ALERT_URL_PREFIX")
+	appDomainURL   = os.Getenv("APP_DOMAIN_URL")
+	alertURLPrefix = os.Getenv("ALERT_URL_PREFIX")
 )
 
 // HTTPWrapper encapsulates the Golang's http client
@@ -222,12 +221,5 @@ func generateURL(alert *alertModels.Alert) string {
 	if alert.IsTest {
 		return appDomainURL
 	}
-	switch alert.Type {
-	case alertModels.RuleType, alertModels.RuleErrorType:
-		return alertURLPrefix + *alert.AlertID
-	case alertModels.PolicyType:
-		return policyURLPrefix + alert.AnalysisID
-	default:
-		panic("uknown alert type" + alert.Type)
-	}
+	return alertURLPrefix + *alert.AlertID
 }

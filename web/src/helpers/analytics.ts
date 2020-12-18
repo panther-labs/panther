@@ -54,6 +54,7 @@ export enum PageViewEnum {
   ListLogSources = 'List Log Sources',
   Home = 'Home',
   Support = 'Support',
+  CustomLogDetails = 'Custom Log Details Screen',
 }
 
 interface TrackPageViewProps {
@@ -69,6 +70,8 @@ export const trackPageView = ({ page }: TrackPageViewProps) => {
 
 export enum EventEnum {
   SignedIn = 'Signed in successfully',
+  AddedCustomLog = 'Added Custom Log',
+  DeletedCustomLog = 'Deleted Custom Log',
   AddedRule = 'Added Rule',
   AddedPolicy = 'Added Policy',
   AddedComplianceSource = 'Added Compliance Source',
@@ -95,6 +98,7 @@ export enum SrcEnum {
   Alerts = 'alerts',
   ComplianceSources = 'compliance sources',
   LogSources = 'log sources',
+  CustomLogs = 'custom logs',
 }
 
 type LogSources = 'S3' | 'SQS';
@@ -102,6 +106,16 @@ type LogSources = 'S3' | 'SQS';
 interface SignInEvent {
   event: EventEnum.SignedIn;
   src: SrcEnum.Auth;
+}
+
+interface AddedCustomLogEvent {
+  event: EventEnum.AddedCustomLog;
+  src: SrcEnum.CustomLogs;
+}
+
+interface DeletedCustomLogEvent {
+  event: EventEnum.DeletedCustomLog;
+  src: SrcEnum.CustomLogs;
 }
 
 interface AddedRuleEvent {
@@ -205,6 +219,8 @@ type TrackEvent =
   | InvitedUserEvent
   | UpdatedAlertStatus
   | BulkUpdatedAlertStatus
+  | AddedCustomLogEvent
+  | DeletedCustomLogEvent
   | TestedDestination
   | TestedDestinationSuccessfully
   | TestedDestinationFailure;
@@ -221,6 +237,8 @@ export const trackEvent = (payload: TrackEvent) => {
 export enum TrackErrorEnum {
   FailedToAddDestination = 'Failed to create Destination',
   FailedToAddRule = 'Failed to create Rule',
+  FailedToAddCustomLog = 'Failed to create a Custom Log',
+  FailedToDeleteCustomLog = 'Failed to delete a Custom Log',
   FailedToAddLogSource = 'Failed to add log source',
   FailedToUpdateLogSource = 'Failed to update log source',
   FailedToAddComplianceSource = 'Failed to add compliance source',
@@ -241,12 +259,6 @@ interface AddDestinationError extends DestinationError {
 
 interface TestDestinationError extends DestinationError {
   event: TrackErrorEnum.FailedDestinationTest;
-}
-
-interface AddLogSourceError {
-  event: TrackErrorEnum.FailedToAddLogSource;
-  src: SrcEnum.LogSources;
-  ctx: LogSources;
 }
 
 interface UpdateLogSourceError {
@@ -274,11 +286,30 @@ interface MfaError {
   src: SrcEnum.Auth;
 }
 
+interface AddLogSourceError {
+  event: TrackErrorEnum.FailedToAddLogSource;
+  src: SrcEnum.LogSources;
+  ctx: LogSources;
+}
+
+interface CustomLogError {
+  event: TrackErrorEnum.FailedToAddCustomLog | TrackErrorEnum.FailedToDeleteCustomLog;
+  src: SrcEnum.CustomLogs;
+}
+interface DeleteCustomLogError extends CustomLogError {
+  event: TrackErrorEnum.FailedToDeleteCustomLog;
+}
+interface AddCustomLogError extends CustomLogError {
+  event: TrackErrorEnum.FailedToAddCustomLog;
+}
+
 type TrackError =
   | AddDestinationError
   | TestDestinationError
   | AddRuleError
   | MfaError
+  | AddCustomLogError
+  | DeleteCustomLogError
   | AddLogSourceError
   | UpdateLogSourceError
   | AddComplianceSourceError

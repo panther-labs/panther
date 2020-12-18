@@ -31,7 +31,7 @@ import (
 func (client *OutputClient) MsTeams(
 	alert *alertModels.Alert, config *outputModels.MsTeamsConfig) *AlertDeliveryResponse {
 
-	link := "[Click here to view in the Panther UI](" + policyURLPrefix + alert.AnalysisID + ").\n"
+	link := "[Click here to view in the Panther UI](" + generateURL(alert) + ").\n"
 
 	// Best effort attempt to marshal Alert Context
 	marshaledContext, _ := jsoniter.MarshalToString(alert.Context)

@@ -40,6 +40,7 @@ func TestOpsgenieAlert(t *testing.T) {
 	createdAtTime, err := time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
 	require.NoError(t, err)
 	alert := &alertModels.Alert{
+		AlertID:      aws.String("alertId"),
 		AnalysisID:   "policyId",
 		Type:         alertModels.PolicyType,
 		CreatedAt:    createdAtTime,
@@ -54,7 +55,7 @@ func TestOpsgenieAlert(t *testing.T) {
 		"message": "Policy Failure: policyName",
 		"description": strings.Join([]string{
 			"<strong>Description:</strong> ",
-			"<a href=\"https://panther.io/policies/policyId\">Click here to view in the Panther UI</a>",
+			"<a href=\"https://panther.io/alerts/alertId\">Click here to view in the Panther UI</a>",
 			" <strong>Runbook:</strong> ",
 			" <strong>Severity:</strong> CRITICAL",
 			" <strong>AlertContext:</strong> {\"key\":\"value\"}",

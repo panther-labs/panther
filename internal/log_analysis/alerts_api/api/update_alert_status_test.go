@@ -29,14 +29,16 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	rulemodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
 func TestUpdateAlert(t *testing.T) {
+	t.Parallel()
 	tableMock := &tableMock{}
+	ruleCacheMock := &ruleCacheMock{}
 
 	status := "OPEN"
 	userID := "userId"
@@ -57,6 +59,8 @@ func TestUpdateAlert(t *testing.T) {
 		input.AlertIDs = append(input.AlertIDs, alertID)
 		output = append(output, &table.AlertItem{
 			AlertID:           alertID,
+			RuleID:            "ruleId",
+			RuleVersion:       "ruleVersion",
 			Status:            "CLOSED",
 			Severity:          "INFO",
 			LastUpdatedBy:     userID,
@@ -64,12 +68,15 @@ func TestUpdateAlert(t *testing.T) {
 			DeliveryResponses: []*models.DeliveryResponse{},
 			CreationTime:      timeNow,
 			UpdateTime:        timeNow,
+			Description:       aws.String("description"),
+			Reference:         aws.String("reference"),
+			Runbook:           aws.String("runbook"),
 		})
 		expectedSummaries = append(expectedSummaries, &models.AlertSummary{
 			AlertID:           alertID,
 			Type:              "RULE",
-			RuleID:            aws.String(""),
-			RuleVersion:       aws.String(""),
+			RuleID:            aws.String("ruleId"),
+			RuleVersion:       aws.String("ruleVersion"),
 			RuleDisplayName:   nil,
 			DedupString:       aws.String(""),
 			LogTypes:          nil,
@@ -81,7 +88,10 @@ func TestUpdateAlert(t *testing.T) {
 			CreationTime:      aws.Time(timeNow),
 			UpdateTime:        aws.Time(timeNow),
 			EventsMatched:     aws.Int(0),
-			Title:             aws.String(""),
+			Title:             aws.String("ruleId"),
+			Description:       "description",
+			Reference:         "reference",
+			Runbook:           "runbook",
 		})
 	}
 
@@ -92,11 +102,14 @@ func TestUpdateAlert(t *testing.T) {
 		tableMock.On("UpdateAlertStatus", mock.Anything).Return(output[page*maxDDBPageSize:pageSize], nil).Once()
 	}
 
+	ruleCacheMock.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil)
+
 	api := API{
-		alertsDB: tableMock,
+		alertsDB:  tableMock,
+		ruleCache: ruleCacheMock,
 	}
 	results, err := api.UpdateAlertStatus(input)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	// The results will sometimes be out-of-order due to the concurrency
 	// We sort them here to compare against the original set
@@ -107,4 +120,7 @@ func TestUpdateAlert(t *testing.T) {
 	})
 
 	assert.Equal(t, expectedSummaries, results)
+
+	ruleCacheMock.AssertExpectations(t)
+	tableMock.AssertExpectations(t)
 }

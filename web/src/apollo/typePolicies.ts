@@ -118,6 +118,9 @@ const typePolicies: TypePolicies = {
     //   },
     // },
   },
+  CustomLogRecord: {
+    keyFields: ['logType'],
+  },
   ComplianceIntegration: {
     keyFields: ['integrationId'],
   },

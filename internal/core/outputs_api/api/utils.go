@@ -161,7 +161,7 @@ func mergeConfigs(oldConfig, newConfig *models.OutputConfig) (*models.OutputConf
 		}
 	}
 	// Turn the bytes into a map so we can work with it more easily
-	var oldMap map[string]map[string]string
+	var oldMap map[string]map[string]interface{}
 	err = jsoniter.Unmarshal(oldBytes, &oldMap)
 	if err != nil {
 		return nil, &genericapi.InternalError{
@@ -176,7 +176,7 @@ func mergeConfigs(oldConfig, newConfig *models.OutputConfig) (*models.OutputConf
 			Message: "Unable to extract the new configuration",
 		}
 	}
-	var newMap map[string]map[string]string
+	var newMap map[string]map[string]interface{}
 	err = jsoniter.Unmarshal(newBytes, &newMap)
 	if err != nil {
 		return nil, &genericapi.InternalError{

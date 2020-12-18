@@ -203,6 +203,10 @@ type AlertSummary struct {
 	PolicyVersion     string              `json:"policyVersion"`
 	ResourceTypes     []string            `json:"resourceTypes"`
 	ResourceID        string              `json:"resourceId"`
+	// Generated Fields Support
+	Description string `json:"description"`
+	Reference   string `json:"reference"`
+	Runbook     string `json:"runbook"`
 }
 
 // Alert contains the details of an alert

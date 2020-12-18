@@ -106,11 +106,13 @@ describe('CreateS3LogSource', () => {
     await waitMs(50);
     fireEvent.click(getByText('Continue'));
 
-    // Initially we expect a disabled button while the template is being fetched ...
+    // Initially we expect 2 disabled buttons while the template is being fetched ...
     expect(getByText('Get template file')).toHaveAttribute('disabled');
+    expect(getByText('Launch Console')).toHaveAttribute('aria-disabled', 'true');
 
     // ... replaced by an active button as soon as it's fetched
     await waitFor(() => expect(getByText('Get template file')).not.toHaveAttribute('disabled'));
+    expect(getByText('Launch Console')).toHaveAttribute('aria-disabled', 'false');
 
     // We move on to the final screen
     fireEvent.click(getByText('Continue'));
@@ -191,7 +193,10 @@ describe('CreateS3LogSource', () => {
     expect(getByAltText('Validating source health...')).toBeInTheDocument();
 
     // ... replaced by a failure screen
-    expect(await findByText("Something didn't go as planned")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(getByText("Something didn't go as planned")).toBeInTheDocument();
+    });
+
     expect(getByText('Start over')).toBeInTheDocument();
     expect(getByText(errorMessage)).toBeInTheDocument();
 

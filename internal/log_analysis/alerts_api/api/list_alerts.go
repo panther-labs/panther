@@ -42,11 +42,13 @@ func (api *API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAl
 	// Fetch all alerts. The results will have filters, sorting applied.
 	alertItems, result.LastEvaluatedKey, err = api.alertsDB.ListAll(input)
 
+	// Fetch all rules for alerts
+	alertRules := api.getAlertRules(alertItems)
 	if err != nil {
 		return nil, err
 	}
 
-	result.Alerts = utils.AlertItemsToSummaries(alertItems)
+	result.Alerts = utils.AlertItemsToSummaries(alertItems, alertRules)
 
 	genericapi.ReplaceMapSliceNils(result)
 	return result, nil
