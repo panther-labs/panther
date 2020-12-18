@@ -23,6 +23,7 @@ import * as Yup from 'yup';
 import { Wizard } from 'Components/Wizard';
 import { FetchResult } from '@apollo/client';
 import { getArnRegexForService, yupIntegrationLabelValidation } from 'Helpers/utils';
+import { S3PrefixLogTypes } from 'Generated/schema';
 import StackDeploymentPanel from './StackDeploymentPanel';
 import S3SourceConfigurationPanel from './S3SourceConfigurationPanel';
 import ValidationPanel from './ValidationPanel';
@@ -40,9 +41,8 @@ export interface S3LogSourceWizardValues {
   awsAccountId: string;
   integrationLabel: string;
   s3Bucket: string;
-  s3Prefix: string;
   kmsKey: string;
-  logTypes: string[];
+  s3PrefixLogTypes: S3PrefixLogTypes[];
 }
 
 const validationSchema = Yup.object().shape<S3LogSourceWizardValues>({
@@ -51,8 +51,14 @@ const validationSchema = Yup.object().shape<S3LogSourceWizardValues>({
     .matches(AWS_ACCOUNT_ID_REGEX, 'Must be a valid AWS Account ID')
     .required(),
   s3Bucket: Yup.string().matches(S3_BUCKET_NAME_REGEX, 'Must be valid S3 Bucket name').required(),
-  logTypes: Yup.array().of(Yup.string()).required(),
-  s3Prefix: Yup.string(),
+  s3PrefixLogTypes: Yup.array()
+    .of(
+      Yup.object().shape({
+        prefix: Yup.string(),
+        logTypes: Yup.array().of(Yup.string()).required(),
+      })
+    )
+    .required(),
   kmsKey: Yup.string().matches(getArnRegexForService('KMS'), 'Must be a valid KMS ARN'),
 });
 

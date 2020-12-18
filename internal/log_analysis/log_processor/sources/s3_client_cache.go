@@ -44,7 +44,7 @@ import (
 const (
 	// sessionDuration is the duration of S3 client STS session
 	sessionDuration = time.Hour
-	// Expirty window for the STS credentials.
+	// Expiry window for the STS credentials.
 	// Give plenty of time for refresh, we have seen that 1 minute refresh time can sometimes lead to InvalidAccessKeyId errors
 	sessionExpiryWindow   = 2 * time.Minute
 	sourceAPIFunctionName = "panther-source-api"
@@ -61,13 +61,18 @@ type s3ClientCacheKey struct {
 	awsRegion string
 }
 
+type prefixSource struct {
+	prefix string
+	source *models.SourceIntegration
+}
+
 type sourceCache struct {
 	// last time the cache was updated
 	cacheUpdateTime time.Time
 	// sources by id
 	index map[string]*models.SourceIntegration
 	// sources by s3 bucket sorted by longest prefix first
-	byBucket map[string][]*models.SourceIntegration
+	byBucket map[string][]prefixSource
 }
 
 // LoadS3 loads the source configuration for an S3 object.
@@ -112,26 +117,26 @@ func (c *sourceCache) Sync(now time.Time) error {
 
 // Update updates the cache
 func (c *sourceCache) Update(now time.Time, sources []*models.SourceIntegration) {
-	byBucket := make(map[string][]*models.SourceIntegration)
+	byBucket := make(map[string][]prefixSource)
 	index := make(map[string]*models.SourceIntegration)
 	for _, source := range sources {
-		bucketName := source.RequiredS3Bucket()
-		bucketSources := byBucket[bucketName]
-		byBucket[bucketName] = append(bucketSources, source)
+		bucket, prefixes := source.S3Info()
+		for _, prefix := range prefixes {
+			byBucket[bucket] = append(byBucket[bucket], prefixSource{prefix: prefix, source: source})
+		}
 		index[source.IntegrationID] = source
 	}
-	// Sort sources for each bucket
+	// Sort sources for each bucket.
 	// It is important to have the sources sorted by longest prefix first.
 	// This ensures that longer prefixes (ie `/foo/bar`) have precedence over shorter ones (ie `/foo`).
 	// This is especially important for the empty prefix as it would match all objects in a bucket making
 	// other sources invalid.
-	for bucketName, sources := range byBucket {
-		sourcesSorted := sources
-		sort.Slice(sourcesSorted, func(i, j int) bool {
+	for _, sources := range byBucket {
+		sources := sources
+		sort.Slice(sources, func(i, j int) bool {
 			// Sort by prefix length descending
-			return len(sourcesSorted[i].RequiredS3Prefix()) > len(sourcesSorted[j].RequiredS3Prefix())
+			return len(sources[i].prefix) > len(sources[j].prefix)
 		})
-		byBucket[bucketName] = sourcesSorted
 	}
 	*c = sourceCache{
 		byBucket:        byBucket,
@@ -147,10 +152,10 @@ func (c *sourceCache) Find(id string) *models.SourceIntegration {
 
 // FindS3 looks up a source by bucket name and prefix without updating the cache
 func (c *sourceCache) FindS3(bucketName, objectKey string) *models.SourceIntegration {
-	sources := c.byBucket[bucketName]
-	for _, source := range sources {
-		if strings.HasPrefix(objectKey, source.RequiredS3Prefix()) {
-			return source
+	prefixSourcesOrdered := c.byBucket[bucketName]
+	for _, s := range prefixSourcesOrdered {
+		if strings.HasPrefix(objectKey, s.prefix) {
+			return s.source
 		}
 	}
 	return nil
@@ -165,7 +170,7 @@ var (
 
 	globalSourceCache = &sourceCache{}
 
-	//used to simplify mocking during testing
+	// used to simplify mocking during testing
 	newCredentialsFunc = getAwsCredentials
 	newS3ClientFunc    = getNewS3Client
 
