@@ -93,8 +93,8 @@ func (api *API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOu
 		return nil, err
 	}
 
+	// TODO: We should hit the rule cache ONLY for "old" alerts and only for alerts related to Rules or Rules errors
 	alertRule, err := api.ruleCache.Get(alertItem.RuleID, alertItem.RuleVersion)
-
 	if err != nil {
 		zap.L().Warn("failed to get rule with ID", zap.Any("rule id", alertItem.RuleID),
 			zap.Any("rule version", alertItem.RuleVersion), zap.Any("error", err))

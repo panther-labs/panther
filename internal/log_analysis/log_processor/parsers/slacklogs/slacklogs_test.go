@@ -1,3 +1,5 @@
+package slacklogs
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,24 +18,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { StepStatus } from './Wizard';
+import (
+	"testing"
 
-interface WizardContextValue<WizardData> {
-  goToStep: (index: number) => void;
-  goToPrevStep: () => void;
-  goToNextStep: () => void;
-  setData: (data: WizardData) => void;
-  updateData: (data: WizardData) => void;
-  resetData: () => void;
-  reset: () => void;
-  data: WizardData;
-  currentStepStatus: StepStatus;
-  setCurrentStepStatus: (stepStatus: StepStatus) => void;
-}
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
+)
 
-export const WizardContext = React.createContext(null);
-
-export function useWizardContext<WizardData = any>() {
-  return React.useContext<WizardContextValue<WizardData>>(WizardContext);
+func TestParsers(t *testing.T) {
+	t.Parallel()
+	logtesting.RunTestsFromYAML(t, LogTypes(), "./testdata/slacklogs_test.yml")
 }

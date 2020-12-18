@@ -1,3 +1,5 @@
+package testutils
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,24 +18,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { StepStatus } from './Wizard';
+import (
+	"os"
+	"strings"
+	"testing"
+)
 
-interface WizardContextValue<WizardData> {
-  goToStep: (index: number) => void;
-  goToPrevStep: () => void;
-  goToNextStep: () => void;
-  setData: (data: WizardData) => void;
-  updateData: (data: WizardData) => void;
-  resetData: () => void;
-  reset: () => void;
-  data: WizardData;
-  currentStepStatus: StepStatus;
-  setCurrentStepStatus: (stepStatus: StepStatus) => void;
-}
-
-export const WizardContext = React.createContext(null);
-
-export function useWizardContext<WizardData = any>() {
-  return React.useContext<WizardContextValue<WizardData>>(WizardContext);
+// IntegrationTest skips the current test if the env variable INTEGRATION_TEST is not set to "true".
+func IntegrationTest(t *testing.T) {
+	run := strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
+	if !run {
+		t.Skip()
+	}
 }

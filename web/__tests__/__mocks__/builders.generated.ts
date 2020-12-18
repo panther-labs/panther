@@ -119,6 +119,8 @@ import {
   RuleSummary,
   S3LogIntegration,
   S3LogIntegrationHealth,
+  S3PrefixLogTypes,
+  S3PrefixLogTypesInput,
   ScannedResources,
   ScannedResourceStats,
   SendTestAlertInput,
@@ -292,8 +294,8 @@ export const buildAddS3LogIntegrationInput = (
     integrationLabel: 'integrationLabel' in overrides ? overrides.integrationLabel : 'payment',
     s3Bucket: 's3Bucket' in overrides ? overrides.s3Bucket : 'backing up',
     kmsKey: 'kmsKey' in overrides ? overrides.kmsKey : 'Personal Loan Account',
-    s3Prefix: 's3Prefix' in overrides ? overrides.s3Prefix : 'reintermediate',
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['expedite'],
+    s3PrefixLogTypes:
+      's3PrefixLogTypes' in overrides ? overrides.s3PrefixLogTypes : [buildS3PrefixLogTypesInput()],
   };
 };
 
@@ -837,9 +839,7 @@ export const buildGetS3LogIntegrationTemplateInput = (
     awsAccountId: 'awsAccountId' in overrides ? overrides.awsAccountId : 'Armenia',
     integrationLabel: 'integrationLabel' in overrides ? overrides.integrationLabel : 'Concrete',
     s3Bucket: 's3Bucket' in overrides ? overrides.s3Bucket : 'generating',
-    s3Prefix: 's3Prefix' in overrides ? overrides.s3Prefix : 'optical',
     kmsKey: 'kmsKey' in overrides ? overrides.kmsKey : 'Books',
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Borders'],
   };
 };
 
@@ -1447,7 +1447,8 @@ export const buildS3LogIntegration = (
     s3Bucket: 's3Bucket' in overrides ? overrides.s3Bucket : 'generating',
     s3Prefix: 's3Prefix' in overrides ? overrides.s3Prefix : 'IB',
     kmsKey: 'kmsKey' in overrides ? overrides.kmsKey : 'robust',
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['strategize'],
+    s3PrefixLogTypes:
+      's3PrefixLogTypes' in overrides ? overrides.s3PrefixLogTypes : [buildS3PrefixLogTypes()],
     health: 'health' in overrides ? overrides.health : buildS3LogIntegrationHealth(),
     stackName: 'stackName' in overrides ? overrides.stackName : 'River',
   };
@@ -1466,6 +1467,25 @@ export const buildS3LogIntegrationHealth = (
       's3BucketStatus' in overrides ? overrides.s3BucketStatus : buildIntegrationItemHealthStatus(),
     kmsKeyStatus:
       'kmsKeyStatus' in overrides ? overrides.kmsKeyStatus : buildIntegrationItemHealthStatus(),
+  };
+};
+
+export const buildS3PrefixLogTypes = (
+  overrides: Partial<S3PrefixLogTypes> = {}
+): S3PrefixLogTypes => {
+  return {
+    __typename: 'S3PrefixLogTypes',
+    prefix: 'prefix' in overrides ? overrides.prefix : 'synthesizing',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Markets'],
+  };
+};
+
+export const buildS3PrefixLogTypesInput = (
+  overrides: Partial<S3PrefixLogTypesInput> = {}
+): S3PrefixLogTypesInput => {
+  return {
+    prefix: 'prefix' in overrides ? overrides.prefix : 'Brand',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Circles'],
   };
 };
 
@@ -1801,8 +1821,8 @@ export const buildUpdateS3LogIntegrationInput = (
       'integrationLabel' in overrides ? overrides.integrationLabel : 'Buckinghamshire',
     s3Bucket: 's3Bucket' in overrides ? overrides.s3Bucket : 'green',
     kmsKey: 'kmsKey' in overrides ? overrides.kmsKey : 'deposit',
-    s3Prefix: 's3Prefix' in overrides ? overrides.s3Prefix : 'Keyboard',
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Dynamic'],
+    s3PrefixLogTypes:
+      's3PrefixLogTypes' in overrides ? overrides.s3PrefixLogTypes : [buildS3PrefixLogTypesInput()],
   };
 };
 

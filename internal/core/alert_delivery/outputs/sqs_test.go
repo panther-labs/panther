@@ -42,6 +42,7 @@ func TestSendSqs(t *testing.T) {
 		QueueURL: "https://sqs.us-west-2.amazonaws.com/123456789012/test-output",
 	}
 	alert := &alertModels.Alert{
+		AlertID:             aws.String("alertId"),
 		AnalysisName:        aws.String("policyName"),
 		Type:                alertModels.PolicyType,
 		AnalysisID:          "policyId",
@@ -55,12 +56,13 @@ func TestSendSqs(t *testing.T) {
 
 	expectedSqsMessage := &Notification{
 		ID:          alert.AnalysisID,
+		AlertID:     aws.String("alertId"),
 		Type:        alertModels.PolicyType,
 		Name:        alert.AnalysisName,
 		Description: aws.String(alert.AnalysisDescription),
 		Severity:    alert.Severity,
 		Runbook:     aws.String(alert.Runbook),
-		Link:        "https://panther.io/policies/policyId",
+		Link:        "https://panther.io/alerts/alertId",
 		Title:       "Policy Failure: policyName",
 		Tags:        []string{},
 		AlertContext: map[string]interface{}{

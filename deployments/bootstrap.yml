@@ -751,6 +751,7 @@ Resources:
     DependsOn: AuditLogsBucketPolicy
     Type: AWS::EC2::FlowLog
     Properties:
+      # If prefix is changed, make sure to update the prefix of the source integration in self.registration.go
       LogDestination: !Sub ${AuditLogs.Arn}/${VPC}/
       LogDestinationType: s3
       ResourceId: !Ref VPC
@@ -902,6 +903,7 @@ Resources:
           Value: '30'
         - Key: access_logs.s3.enabled
           Value: 'true'
+          # Note: If we ever add access_logs.s3.prefix, make sure to update it in the source in self_registration.go
         - Key: access_logs.s3.bucket
           Value: !Ref AuditLogs
       Subnets:

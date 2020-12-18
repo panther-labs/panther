@@ -39,11 +39,10 @@ import (
 
 // API has all of the handlers as receiver methods.
 type API struct {
-	awsSession     *session.Session
-	alertsDB       table.API
-	s3Client       s3iface.S3API
-	analysisClient gatewayapi.API
-	ruleCache      *forwarder.RuleCache
+	awsSession *session.Session
+	alertsDB   table.API
+	s3Client   s3iface.S3API
+	ruleCache  forwarder.RuleCache
 
 	env envConfig
 }
@@ -66,12 +65,11 @@ func Setup() *API {
 	ruleCache := forwarder.NewCache(analysisClient)
 
 	return &API{
-		awsSession:     awsSession,
-		alertsDB:       env.NewAlertsTable(dynamodb.New(awsSession)),
-		s3Client:       s3.New(awsSession),
-		env:            env,
-		analysisClient: analysisClient,
-		ruleCache:      ruleCache,
+		awsSession: awsSession,
+		alertsDB:   env.NewAlertsTable(dynamodb.New(awsSession)),
+		s3Client:   s3.New(awsSession),
+		env:        env,
+		ruleCache:  ruleCache,
 	}
 }
 

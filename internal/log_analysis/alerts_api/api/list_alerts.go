@@ -44,7 +44,6 @@ func (api *API) ListAlerts(input *models.ListAlertsInput) (result *models.ListAl
 
 	// Fetch all rules for alerts
 	alertRules := api.getAlertRules(alertItems)
-
 	if err != nil {
 		return nil, err
 	}
