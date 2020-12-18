@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
@@ -155,32 +156,46 @@ func TestGetRuleAlert(t *testing.T) {
 		Expression:     aws.String("SELECT * FROM S3Object o WHERE o.p_alert_id='alertId'"),
 	}
 
-	eventChannel := getChannel("testEvent")
-	mockS3EventReader := &testutils.S3SelectStreamReaderMock{}
-	selectObjectOutput := &s3.SelectObjectContentOutput{
+	api.mockTable.On("GetAlert", "alertId").Return(alertItem, nil).Once()
+	api.mockS3.On("ListObjectsV2PagesWithContext", mock.Anything, expectedListObjectsRequest, mock.Anything, mock.Anything).
+		Return(page, nil).Once()
+
+	eventChannel1 := getChannel("testEvent1")
+	mockS3EventReader1 := &testutils.S3SelectStreamReaderMock{}
+	selectObjectOutput1 := &s3.SelectObjectContentOutput{
 		EventStream: &s3.SelectObjectContentEventStream{
-			Reader: mockS3EventReader,
+			Reader: mockS3EventReader1,
 		},
 	}
+	api.mockS3.On("SelectObjectContentWithContext", mock.Anything, expectedSelectObjectInput, mock.Anything).
+		Return(selectObjectOutput1, nil).Once()
+	mockS3EventReader1.On("Events").Return(eventChannel1)
+	mockS3EventReader1.On("Err").Return(nil)
 
-	tableMock.On("GetAlert", "alertId").Return(alertItem, nil).Once()
-	s3Mock.On("ListObjectsV2Pages", expectedListObjectsRequest, mock.Anything).Return(page, nil).Once()
-	s3Mock.On("SelectObjectContent", expectedSelectObjectInput).Return(selectObjectOutput, nil).Once()
-	mockS3EventReader.On("Events").Return(eventChannel)
-	mockS3EventReader.On("Err").Return(nil)
-	ruleCacheMock.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
+	eventChannel2 := getChannel("testEvent2")
+	mockS3EventReader2:= &testutils.S3SelectStreamReaderMock{}
+	selectObjectOutput2 := &s3.SelectObjectContentOutput{
+		EventStream: &s3.SelectObjectContentEventStream{
+			Reader: mockS3EventReader2,
+		},
+	}
+	api.mockS3.On("SelectObjectContentWithContext", mock.Anything, mock.Anything, mock.Anything).
+		Return(selectObjectOutput2, nil).Once()
+	mockS3EventReader2.On("Events").Return(eventChannel2)
+	mockS3EventReader2.On("Err").Return(nil)
+
+	api.mockRuleCache.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
 	result, err := api.GetAlert(input)
 	require.NoError(t, err)
-	require.Equal(t, &models.GetAlertOutput{
+	expectedOutput :=  &models.GetAlertOutput{
 		AlertSummary: *expectedSummary,
-		Events:       aws.StringSlice([]string{"testEvent"}),
+		Events:       []string{"testEvent1"},
 		EventsLastEvaluatedKey:
 		// nolint
 		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvcnVsZV9pZD1ydWxlSWQvMjAyMDAxMDFUMDEwMTAwWi11dWlkNC5qc29uLmd6IiwiZXZlbnRJbmRleCI6MX19fQ=="),
-	}, result)
-	s3Mock.AssertExpectations(t)
-	tableMock.AssertExpectations(t)
-	ruleCacheMock.AssertExpectations(t)
+	}
+	assert.Equal(t,expectedOutput, result)
+	api.AssertExpectations(t)
 
 	// now test paging...
 
@@ -207,10 +222,12 @@ func TestGetRuleAlert(t *testing.T) {
 	// nothing comes back from the listing
 	page = &s3.ListObjectsV2Output{}
 
-	tableMock.On("GetAlert", "alertId").Return(alertItem, nil).Once()
-	s3Mock.On("SelectObjectContent", expectedSelectObjectInput).Return(noopSelectObjectOutput, nil).Once()
-	s3Mock.On("ListObjectsV2Pages", expectedPagedListObjectsRequest, mock.Anything).Return(page, nil).Once()
-	ruleCacheMock.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
+	api.mockTable.On("GetAlert", "alertId").Return(alertItem, nil).Once()
+	api.mockS3.On("SelectObjectContentWithContext", mock.Anything,  mock.Anything, mock.Anything).
+		Return(noopSelectObjectOutput, nil).Once()
+	api.mockS3.On("ListObjectsV2PagesWithContext", mock.Anything, expectedPagedListObjectsRequest, mock.Anything, mock.Anything).
+		Return(page, nil).Once()
+	api.mockRuleCache.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
 	result, err = api.GetAlert(input)
 	require.NoError(t, err)
 	require.Equal(t, &models.GetAlertOutput{
