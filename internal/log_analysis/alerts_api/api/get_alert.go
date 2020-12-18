@@ -63,10 +63,11 @@ func (api *API) GetAlert(input *models.GetAlertInput) (*models.GetAlertOutput, e
 		if err != nil {
 			return nil, err
 		}
-		zap.L().Info("GetAlert paging",
-			zap.Int("pageSize", *input.EventsPageSize),
-			zap.Any("token", *token))
 	}
+
+	zap.L().Debug("GetAlert request",
+		zap.Int("pageSize", *input.EventsPageSize),
+		zap.Any("token", token))
 
 	var events []string
 	for _, logType := range alertItem.LogTypes {
@@ -94,11 +95,17 @@ func (api *API) GetAlert(input *models.GetAlertInput) (*models.GetAlertOutput, e
 		return nil, err
 	}
 
+	zap.L().Debug("GetAlert response",
+		zap.Int("pageSize", *input.EventsPageSize),
+		zap.Any("token", token),
+		zap.Int("events", len(events)))
+
 	// TODO: We should hit the rule cache ONLY for "old" alerts and only for alerts related to Rules or Rules errors
 	alertRule, err := api.ruleCache.Get(alertItem.RuleID, alertItem.RuleVersion)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get rule with ID %s (version %s)",
-			alertItem.RuleID, alertItem.RuleVersion)
+		zap.L().Warn("failed to get details for rule",
+			zap.String("ruleId", alertItem.RuleID),
+			zap.String("ruleVersion", alertItem.RuleVersion))
 	}
 
 	alertSummary := utils.AlertItemToSummary(alertItem, alertRule)

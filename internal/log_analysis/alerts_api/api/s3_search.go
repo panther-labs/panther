@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
@@ -96,6 +97,9 @@ func (s *S3Search) Do(ctx context.Context) (*S3SearchResult, error) {
 func (s *S3Search) queryPage(ctx context.Context, objects []*s3.Object) ([]*S3SelectResult, error) {
 	queryChan := make(chan *S3Select, s.concurrency)
 	resultChan := make(chan *S3SelectResult, s.concurrency)
+
+	zap.L().Debug("starting to query page", zap.Int("objects", len(objects)))
+	defer zap.L().Debug("finished querying page", zap.Int("objects", len(objects)))
 
 	// singleton collector go routine, workers write data to here
 	var results []*S3SelectResult
