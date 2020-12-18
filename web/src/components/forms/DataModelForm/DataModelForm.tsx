@@ -39,6 +39,7 @@ const validationSchema = Yup.object<DataModelFormValues>({
         {
           name: Yup.string().required(),
           method: Yup.string()
+            // eslint-disable-next-line func-names
             .test('mutex', "You shouldn't provide both a path & method", function (method) {
               return !this.parent.path || !method;
             })
@@ -48,6 +49,7 @@ const validationSchema = Yup.object<DataModelFormValues>({
               otherwise: Yup.string(),
             }),
           path: Yup.string()
+            // eslint-disable-next-line func-names
             .test('mutex', "You shouldn't provide both a path & method", function (path) {
               return !this.parent.method || !path;
             })

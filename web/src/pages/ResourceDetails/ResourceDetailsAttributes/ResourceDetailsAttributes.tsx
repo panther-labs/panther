@@ -16,16 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/*
-<IconButton
-          variant="ghost"
-          active={open}
-          variantColor="navyblue"
-          icon={open ? 'caret-up' : 'caret-down'}
-          onClick={() => setOpen(!open)}
-          aria-label="Toggle Editor visibility"
-        />
- */
 import React from 'react';
 import { Box, Card, Flex, IconButton } from 'pouncejs';
 import JsonViewer from 'Components/JsonViewer';
