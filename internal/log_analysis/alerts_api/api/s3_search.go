@@ -97,33 +97,18 @@ func (s *S3Search) queryPage(ctx context.Context, objects []*s3.Object) ([]*S3Se
 	queryChan := make(chan *S3Select, s.concurrency)
 	resultChan := make(chan *S3SelectResult, s.concurrency)
 
-	taskGroup, taskCtx := errgroup.WithContext(ctx)
-	taskGroup.Go(func() error {
-		// Close the queryChan once finished
-		defer close(queryChan)
-		for _, object := range objects {
-			objectTime, err := timeFromJSONS3ObjectKey(*object.Key)
-			if err != nil {
-				return err
-			}
-			if objectTime.Before(getFirstEventTime(s.alert)) || objectTime.After(s.alert.UpdateTime) {
-				// if the time in the S3 object key was before alert creation time or after last alert update time
-				// skip the object
-				continue
-			}
-			s3SelectQuery := &S3Select{
-				bucket:     *s.list.Bucket,
-				client:     s.client,
-				objectKey:  *object.Key,
-				alertID:    s.alert.AlertID,
-				maxResults: s.maxResults,
-			}
-			queryChan <- s3SelectQuery
+	// singleton collector go routine, workers write data to here
+	var results []*S3SelectResult
+	collector, _ := errgroup.WithContext(ctx)
+	collector.Go(func() error {
+		for result := range resultChan {
+			results = append(results, result)
 		}
 		return nil
 	})
 
-	workerGroup, workerCtx := errgroup.WithContext(taskCtx)
+	// worker group doing concurrent queries writing to collector
+	workerGroup, workerCtx := errgroup.WithContext(ctx)
 	for i := 0; i < s.concurrency; i++ {
 		workerGroup.Go(func() error {
 			for query := range queryChan {
@@ -135,21 +120,40 @@ func (s *S3Search) queryPage(ctx context.Context, objects []*s3.Object) ([]*S3Se
 		})
 	}
 
-	taskGroup.Go(func() error {
-		// Close result chan after all workers have finished writing to it
-		defer close(resultChan)
-		return workerGroup.Wait()
-	})
-
-	if taskGroup.Wait() != nil {
-		return nil, taskGroup.Wait()
+	// drive requests thru the worker group
+	for _, object := range objects {
+		objectTime, err := timeFromJSONS3ObjectKey(*object.Key)
+		if err != nil {
+			return nil, err
+		}
+		if objectTime.Before(getFirstEventTime(s.alert)) || objectTime.After(s.alert.UpdateTime) {
+			// if the time in the S3 object key was before alert creation time or after last alert update time
+			// skip the object
+			continue
+		}
+		s3SelectQuery := &S3Select{
+			bucket:     *s.list.Bucket,
+			client:     s.client,
+			objectKey:  *object.Key,
+			alertID:    s.alert.AlertID,
+			maxResults: s.maxResults,
+		}
+		queryChan <- s3SelectQuery
 	}
 
-	var results []*S3SelectResult
-	for result := range resultChan {
-		results = append(results, result)
+	// this will signal workers to stop
+	close(queryChan)
+	if err := workerGroup.Wait(); err != nil {
+		return nil, err
 	}
 
+	// this will signal collector to stop
+	close(resultChan)
+	if err := collector.Wait(); err != nil {
+		return nil, err
+	}
+
+	// results come in arbitrary order, sort
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].objectKey < results[j].objectKey
 	})
