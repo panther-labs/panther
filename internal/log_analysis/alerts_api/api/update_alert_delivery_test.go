@@ -29,7 +29,12 @@ import (
 )
 
 func TestUpdateAlertDelivery(t *testing.T) {
+<<<<<<< HEAD
 	tableMock := &tableMock{}
+=======
+	t.Parallel()
+	api := initTestAPI()
+>>>>>>> dfdcccf5 (Parallelize alert s3select (#2307))
 
 	alertID := "alertId"
 	input := &models.UpdateAlertDeliveryInput{
@@ -45,6 +50,13 @@ func TestUpdateAlertDelivery(t *testing.T) {
 		AlertID:           alertID,
 		DeliveryResponses: []*models.DeliveryResponse{deliveryResponse},
 	}
+<<<<<<< HEAD
+=======
+	api.mockTable.On("UpdateAlertDelivery", input).Return(output, nil).Once()
+
+	api.mockRuleCache.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
+
+>>>>>>> dfdcccf5 (Parallelize alert s3select (#2307))
 	expectedSummary := &models.AlertSummary{
 		AlertID:           alertID,
 		DeliveryResponses: []*models.DeliveryResponse{deliveryResponse},
@@ -63,5 +75,9 @@ func TestUpdateAlertDelivery(t *testing.T) {
 		DeliveryResponses: result.DeliveryResponses,
 	}
 
+<<<<<<< HEAD
 	assert.Equal(t, expectedSummary, resultSummary)
+=======
+	api.AssertExpectations(t)
+>>>>>>> dfdcccf5 (Parallelize alert s3select (#2307))
 }

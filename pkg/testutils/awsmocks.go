@@ -100,6 +100,38 @@ func (m *S3Mock) ListObjectsV2PagesWithContext(ctx aws.Context, input *s3.ListOb
 	return args.Error(1)
 }
 
+<<<<<<< HEAD
+=======
+func (m *S3Mock) SelectObjectContent(input *s3.SelectObjectContentInput) (*s3.SelectObjectContentOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*s3.SelectObjectContentOutput), args.Error(1)
+}
+
+func (m *S3Mock) SelectObjectContentWithContext(
+	ctx aws.Context,
+	input *s3.SelectObjectContentInput,
+	options ...request.Option) (*s3.SelectObjectContentOutput, error) {
+
+	args := m.Called(ctx, input, options)
+	return args.Get(0).(*s3.SelectObjectContentOutput), args.Error(1)
+}
+
+type S3SelectStreamReaderMock struct {
+	s3.SelectObjectContentEventStreamReader
+	mock.Mock
+}
+
+func (m *S3SelectStreamReaderMock) Events() <-chan s3.SelectObjectContentEventStreamEvent {
+	args := m.Called()
+	return args.Get(0).(<-chan s3.SelectObjectContentEventStreamEvent)
+}
+
+func (m *S3SelectStreamReaderMock) Err() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
+>>>>>>> dfdcccf5 (Parallelize alert s3select (#2307))
 type LambdaMock struct {
 	lambdaiface.LambdaAPI
 	mock.Mock

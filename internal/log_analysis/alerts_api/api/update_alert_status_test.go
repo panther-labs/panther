@@ -36,7 +36,12 @@ import (
 )
 
 func TestUpdateAlert(t *testing.T) {
+<<<<<<< HEAD
 	tableMock := &tableMock{}
+=======
+	t.Parallel()
+	api := initTestAPI()
+>>>>>>> dfdcccf5 (Parallelize alert s3select (#2307))
 
 	status := "OPEN"
 	userID := "userId"
@@ -89,12 +94,17 @@ func TestUpdateAlert(t *testing.T) {
 	// We need to mimic the mock's true payload as it will happen in chunks
 	for page := 0; page < pages; page++ {
 		pageSize := int(math.Min(float64((page+1)*maxDDBPageSize), float64(alertCount)))
-		tableMock.On("UpdateAlertStatus", mock.Anything).Return(output[page*maxDDBPageSize:pageSize], nil).Once()
+		api.mockTable.On("UpdateAlertStatus", mock.Anything).Return(output[page*maxDDBPageSize:pageSize], nil).Once()
 	}
 
+<<<<<<< HEAD
 	api := API{
 		alertsDB: tableMock,
 	}
+=======
+	api.mockRuleCache.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil)
+
+>>>>>>> dfdcccf5 (Parallelize alert s3select (#2307))
 	results, err := api.UpdateAlertStatus(input)
 	require.NoError(t, err)
 
@@ -107,4 +117,9 @@ func TestUpdateAlert(t *testing.T) {
 	})
 
 	assert.Equal(t, expectedSummaries, results)
+<<<<<<< HEAD
+=======
+
+	api.AssertExpectations(t)
+>>>>>>> dfdcccf5 (Parallelize alert s3select (#2307))
 }

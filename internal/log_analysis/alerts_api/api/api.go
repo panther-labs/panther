@@ -22,6 +22,7 @@ package api
 import (
 	"encoding/base64"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -58,7 +59,7 @@ func Setup() *API {
 	return &API{
 		awsSession: awsSession,
 		alertsDB:   env.NewAlertsTable(dynamodb.New(awsSession)),
-		s3Client:   s3.New(awsSession),
+		s3Client:   s3.New(awsSession.Copy(aws.NewConfig().WithMaxRetries(10))),
 		env:        env,
 	}
 }
