@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flex, Tabs, Box, TabList, TabPanels, TabPanel, Card, useSnackbar } from 'pouncejs';
+import { Flex, Tabs, Box, TabList, TabPanels, TabPanel, Card } from 'pouncejs';
 import * as Yup from 'yup';
 import { Formik, Form } from 'formik';
 import { DataModelMapping } from 'Generated/schema';
@@ -7,17 +7,15 @@ import Breadcrumbs from 'Components/Breadcrumbs';
 import LinkButton from 'Components/buttons/LinkButton';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import urls from 'Source/urls';
-import { convertToYaml } from 'Helpers/utils';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import SettingsTabPanel from './SettingsTabPanel';
 import DataModelMappingsTabPanel from './DataModelMappingsTabPanel';
-import { convertYamlToDataModelMappings } from './utils';
 
 export interface DataModelFormValues {
   displayName: string;
   id: string;
   enabled: boolean;
-  logTypes: string[];
+  logType: string;
   mappings: DataModelMapping[];
   body?: string;
 }
@@ -27,57 +25,48 @@ export interface DataModelFormProps {
   onSubmit: (values: DataModelFormValues) => Promise<any>;
 }
 
-export type _DataModelFormValues = Omit<DataModelFormValues, 'mappings'> & {
-  mappings: string;
-};
-
-const validationSchema = Yup.object<_DataModelFormValues>({
+const validationSchema = Yup.object<DataModelFormValues>({
   displayName: Yup.string().required(),
   id: Yup.string().required(),
   enabled: Yup.boolean().required(),
-  logTypes: Yup.array().of(Yup.string()).required(),
-  mappings: Yup.string().required(),
+  logType: Yup.string().required(),
+  mappings: Yup.array<DataModelMapping>()
+    .of(
+      Yup.object().shape<DataModelMapping>(
+        {
+          name: Yup.string().required(),
+          method: Yup.string()
+            .test('mutex', "You shouldn't provide both a path & method", function (method) {
+              return !this.parent.path || !method;
+            })
+            .when('path', {
+              is: path => !path,
+              then: Yup.string().required('Either a path or a method must be specified'),
+              otherwise: Yup.string(),
+            }),
+          path: Yup.string()
+            .test('mutex', "You shouldn't provide both a path & method", function (path) {
+              return !this.parent.method || !path;
+            })
+            .when('method', {
+              is: method => !method,
+              then: Yup.string().required('Either a path or a method must be specified'),
+              otherwise: Yup.string(),
+            }),
+        },
+        [['method', 'path']]
+      )
+    )
+    .required(),
   body: Yup.string(),
 });
 
-const DataModelForm: React.FC<DataModelFormProps> = ({
-  initialValues: userFacingInitialValues,
-  onSubmit,
-}) => {
-  const [initialValues, setInitialValues] = React.useState<_DataModelFormValues>({
-    ...userFacingInitialValues,
-    mappings: '',
-  });
-  const { pushSnackbar } = useSnackbar();
-
-  React.useEffect(() => {
-    (async () => {
-      try {
-        const mappings = await convertToYaml(userFacingInitialValues);
-        setInitialValues({ ...initialValues, mappings });
-      } catch (err) {
-        // noop
-      }
-    })();
-  }, [initialValues, userFacingInitialValues]);
-
-  const handleSubmit = React.useCallback(
-    async (values: _DataModelFormValues) => {
-      try {
-        const structuredMappings = await convertYamlToDataModelMappings(values.mappings);
-        await onSubmit({ ...values, mappings: structuredMappings });
-      } catch (err) {
-        pushSnackbar({ variant: 'error', title: err.toString() });
-      }
-    },
-    [onSubmit]
-  );
-
+const DataModelForm: React.FC<DataModelFormProps> = ({ initialValues, onSubmit }) => {
   return (
     <Card position="relative">
-      <Formik<_DataModelFormValues>
+      <Formik<DataModelFormValues>
         initialValues={initialValues}
-        onSubmit={handleSubmit}
+        onSubmit={onSubmit}
         validationSchema={validationSchema}
       >
         <Form>

@@ -29,9 +29,9 @@ import { useCreateDataModel } from './graphql/createDataModel.generated';
 const initialValues = {
   id: '',
   displayName: '',
-  logTypes: [],
+  logType: null,
   enabled: true,
-  mappings: [],
+  mappings: [{ name: '', method: '', path: '' }],
   body: '',
 };
 
@@ -73,7 +73,7 @@ const CreateDataModel: React.FC = () => {
             input: {
               id: values.id,
               displayName: values.displayName,
-              logTypes: values.logTypes,
+              logTypes: [values.logType],
               enabled: values.enabled,
               mappings: values.mappings,
               body: values.body,

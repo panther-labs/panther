@@ -1634,11 +1634,13 @@ Resources:
       FieldName: addDataModel
       DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
+        #set ($input = $util.defaultIfNull($ctx.args.input, {}))
+        $util.qr($input.put("userId", $ctx.identity.username))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "createDataModel": $ctx.args.input
+            "createDataModel": $input
           })
         }
-      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]

@@ -3,7 +3,7 @@ import { Grid, Flex, useSnackbar } from 'pouncejs';
 import { Field } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import FormikSwitch from 'Components/fields/Switch';
-import FormikMultiCombobox from 'Components/fields/MultiComboBox';
+import FormikCombobox from 'Components/fields/ComboBox';
 import { useListAvailableLogTypes } from 'Source/graphql/queries';
 
 const SettingsTabPanel: React.FC = () => {
@@ -34,10 +34,10 @@ const SettingsTabPanel: React.FC = () => {
         </Flex>
       </Grid>
       <Field
-        as={FormikMultiCombobox}
+        as={FormikCombobox}
         searchable
-        label="Log Types"
-        name="logTypes"
+        label="Log Type"
+        name="logType"
         items={data?.listAvailableLogTypes.logTypes ?? []}
         placeholder="Where should the rule appoly?"
       />
