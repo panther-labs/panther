@@ -29,8 +29,7 @@ import (
 func TestAppendAnyAWSAccountIds(t *testing.T) {
 	event := AWSPantherLog{}
 	value := "012345678912"
-	expectedAny := parsers.NewPantherAnyString()
-	parsers.AppendAnyString(expectedAny, value)
+	expectedAny := parsers.PantherAnyString{value}
 	event.AppendAnyAWSAccountIds(value)
 	require.Equal(t, expectedAny, event.PantherAnyAWSAccountIds)
 
@@ -55,8 +54,7 @@ func TestAppendAnyAWSAccountIds(t *testing.T) {
 func TestAppendAnyAWSInstanceIds(t *testing.T) {
 	event := AWSPantherLog{}
 	value := "a"
-	expectedAny := parsers.NewPantherAnyString()
-	parsers.AppendAnyString(expectedAny, value)
+	expectedAny := parsers.PantherAnyString{value}
 	event.AppendAnyAWSInstanceIds(value)
 	require.Equal(t, expectedAny, event.PantherAnyAWSInstanceIds)
 
@@ -68,8 +66,7 @@ func TestAppendAnyAWSInstanceIds(t *testing.T) {
 func TestAppendAnyAWSARNs(t *testing.T) {
 	event := AWSPantherLog{}
 	value := "a"
-	expectedAny := parsers.NewPantherAnyString()
-	parsers.AppendAnyString(expectedAny, value)
+	expectedAny := parsers.PantherAnyString{value}
 	event.AppendAnyAWSARNs(value)
 	require.Equal(t, expectedAny, event.PantherAnyAWSARNs)
 
@@ -81,8 +78,7 @@ func TestAppendAnyAWSARNs(t *testing.T) {
 func TestAppendAnyAWSTags(t *testing.T) {
 	event := AWSPantherLog{}
 	value := "a"
-	expectedAny := parsers.NewPantherAnyString()
-	parsers.AppendAnyString(expectedAny, value)
+	expectedAny := parsers.PantherAnyString{value}
 	event.AppendAnyAWSTags(value)
 	require.Equal(t, expectedAny, event.PantherAnyAWSTags)
 
