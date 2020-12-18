@@ -74,9 +74,8 @@ type testCase struct {
 }
 
 func (tc testCase) mockS3() *testutils.S3Mock {
-	s3Mock := testutils.S3Mock{
-		Retries: 3,
-	}
+	s3Mock := &testutils.S3Mock{}
+	s3Mock.On("MaxRetries").Return(3)
 	for i := 0; i <= tc.numParts(); i++ {
 		data, contentRange := tc.bodyPart(i)
 		output := s3.GetObjectOutput{
@@ -93,7 +92,7 @@ func (tc testCase) mockS3() *testutils.S3Mock {
 		}
 		s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&output, nil).Once()
 	}
-	return &s3Mock
+	return s3Mock
 }
 func (tc testCase) bodyPart(i int) ([]byte, string) {
 	start := i * tc.PartSize

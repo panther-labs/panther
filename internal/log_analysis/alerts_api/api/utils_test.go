@@ -24,8 +24,6 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
-	rulemodels "github.com/panther-labs/panther/api/lambda/analysis/models"
-	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
@@ -33,25 +31,13 @@ import (
 type AlertAPITest struct {
 	API
 
-	mockTable     *tableMock
-	mockRuleCache *ruleCacheMock
-	mockS3        *testutils.S3Mock
+	mockTable *tableMock
+	mockS3    *testutils.S3Mock
 }
 
 func (a *AlertAPITest) AssertExpectations(t *testing.T) {
 	a.mockS3.AssertExpectations(t)
-	a.mockRuleCache.AssertExpectations(t)
 	a.mockTable.AssertExpectations(t)
-}
-
-type ruleCacheMock struct {
-	forwarder.RuleCache
-	mock.Mock
-}
-
-func (r *ruleCacheMock) Get(id, version string) (*rulemodels.Rule, error) {
-	args := r.Called(id, version)
-	return args.Get(0).(*rulemodels.Rule), args.Error(1)
 }
 
 type tableMock struct {
@@ -82,21 +68,18 @@ func (m *tableMock) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) 
 func initTestAPI() *AlertAPITest {
 	mockTable := &tableMock{}
 	mockS3 := &testutils.S3Mock{}
-	mockRuleCache := &ruleCacheMock{}
 
 	api := API{
-		alertsDB:  mockTable,
-		s3Client:  mockS3,
-		ruleCache: mockRuleCache,
+		alertsDB: mockTable,
+		s3Client: mockS3,
 		env: envConfig{
 			ProcessedDataBucket: "bucket",
 		},
 	}
 
 	return &AlertAPITest{
-		mockRuleCache: mockRuleCache,
-		mockS3:        mockS3,
-		mockTable:     mockTable,
-		API:           api,
+		mockS3:    mockS3,
+		mockTable: mockTable,
+		API:       api,
 	}
 }

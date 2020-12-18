@@ -109,6 +109,7 @@ func TestHandleUnsupportedFileType(t *testing.T) {
 	common.LambdaClient = lambdaMock
 
 	s3Mock := &testutils.S3Mock{}
+	s3Mock.On("MaxRetries").Return(3)
 	newS3ClientFunc = func(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
 		return s3Mock
 	}

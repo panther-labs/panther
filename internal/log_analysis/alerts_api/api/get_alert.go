@@ -35,12 +35,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
-<<<<<<< HEAD
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
-	"github.com/panther-labs/panther/pkg/genericapi"
-=======
-	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
->>>>>>> dfdcccf5 (Parallelize alert s3select (#2307))
 )
 
 const (
@@ -101,24 +95,12 @@ func (api *API) GetAlert(input *models.GetAlertInput) (*models.GetAlertOutput, e
 		return nil, err
 	}
 
-<<<<<<< HEAD
-	alertSummary := utils.AlertItemToSummary(alertItem)
-=======
 	zap.L().Debug("GetAlert response",
 		zap.Int("pageSize", *input.EventsPageSize),
 		zap.Any("token", token),
 		zap.Int("events", len(events)))
 
-	// TODO: We should hit the rule cache ONLY for "old" alerts and only for alerts related to Rules or Rules errors
-	alertRule, err := api.ruleCache.Get(alertItem.RuleID, alertItem.RuleVersion)
-	if err != nil {
-		zap.L().Warn("failed to get details for rule",
-			zap.String("ruleId", alertItem.RuleID),
-			zap.String("ruleVersion", alertItem.RuleVersion))
-	}
-
-	alertSummary := utils.AlertItemToSummary(alertItem, alertRule)
->>>>>>> dfdcccf5 (Parallelize alert s3select (#2307))
+	alertSummary := utils.AlertItemToSummary(alertItem)
 
 	return &models.Alert{
 		AlertSummary:           *alertSummary,
@@ -154,19 +136,11 @@ func (api *API) getEventsForLogType(
 		if err != nil {
 			return nil, nil, err
 		}
-<<<<<<< HEAD
-		result = append(result, events...)
-		// start iterating over the partitions here
-		gluePartition, err := awsglue.GetPartitionFromS3(api.env.ProcessedDataBucket, token.S3ObjectKey)
-		if err != nil {
-			return nil, resultToken, errors.Wrapf(err, "cannot parse token s3 path")
-=======
 
 		outToken.S3ObjectKey = token.S3ObjectKey
 		for _, event := range s3SelectResult.events {
 			outEvents = append(outEvents, event.payload)
 			outToken.EventIndex = event.index
->>>>>>> dfdcccf5 (Parallelize alert s3select (#2307))
 		}
 
 		// If the query returned sufficient results, just return
@@ -178,7 +152,7 @@ func (api *API) getEventsForLogType(
 	var partitionTime time.Time
 	if token != nil {
 		// Now that we already got all the results from the  first S3 object start iterating over the rest of the partitions here
-		gluePartition, err := awsglue.PartitionFromS3Object(api.env.ProcessedDataBucket, token.S3ObjectKey)
+		gluePartition, err := awsglue.GetPartitionFromS3(api.env.ProcessedDataBucket, token.S3ObjectKey)
 		if err != nil {
 			return nil, nil, errors.Wrapf(err, "cannot parse token s3 path")
 		}
@@ -189,24 +163,16 @@ func (api *API) getEventsForLogType(
 		partitionTime = getFirstEventTime(alert)
 	}
 
-<<<<<<< HEAD
-		var dataType logprocessormodels.DataType
-=======
 	// data is stored by hour, loop over the hours
 	for ; !partitionTime.After(alert.UpdateTime); partitionTime = awsglue.GlueTableHourly.Next(partitionTime) {
-		database := pantherdb.RuleMatchDatabase
->>>>>>> dfdcccf5 (Parallelize alert s3select (#2307))
+		var dataType logprocessormodels.DataType
 		if alert.Type == alertmodels.RuleErrorType {
 			dataType = logprocessormodels.RuleErrors
 		} else {
 			dataType = logprocessormodels.RuleData
 		}
-<<<<<<< HEAD
-		partitionPrefix := awsglue.GetPartitionPrefix(dataType, logType, awsglue.GlueTableHourly, nextTime)
-=======
-		tableName := pantherdb.TableName(logType)
-		partitionPrefix := awsglue.PartitionPrefix(database, tableName, awsglue.GlueTableHourly, partitionTime)
->>>>>>> dfdcccf5 (Parallelize alert s3select (#2307))
+
+		partitionPrefix := awsglue.GetPartitionPrefix(dataType, logType, awsglue.GlueTableHourly, partitionTime)
 		partitionPrefix += fmt.Sprintf(ruleSuffixFormat, alert.RuleID) // JSON data has more specific paths based on ruleID
 
 		listRequest := &s3.ListObjectsV2Input{

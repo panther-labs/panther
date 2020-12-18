@@ -29,19 +29,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
 func TestUpdateAlert(t *testing.T) {
-<<<<<<< HEAD
-	tableMock := &tableMock{}
-=======
 	t.Parallel()
 	api := initTestAPI()
->>>>>>> dfdcccf5 (Parallelize alert s3select (#2307))
 
 	status := "OPEN"
 	userID := "userId"
@@ -79,10 +74,10 @@ func TestUpdateAlert(t *testing.T) {
 			DedupString:       aws.String(""),
 			LogTypes:          nil,
 			Severity:          aws.String("INFO"),
+			DeliveryResponses: make([]*models.DeliveryResponse, 0),
 			Status:            "CLOSED",
 			LastUpdatedBy:     userID,
 			LastUpdatedByTime: timeNow,
-			DeliveryResponses: []*models.DeliveryResponse{},
 			CreationTime:      aws.Time(timeNow),
 			UpdateTime:        aws.Time(timeNow),
 			EventsMatched:     aws.Int(0),
@@ -97,16 +92,8 @@ func TestUpdateAlert(t *testing.T) {
 		api.mockTable.On("UpdateAlertStatus", mock.Anything).Return(output[page*maxDDBPageSize:pageSize], nil).Once()
 	}
 
-<<<<<<< HEAD
-	api := API{
-		alertsDB: tableMock,
-	}
-=======
-	api.mockRuleCache.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil)
-
->>>>>>> dfdcccf5 (Parallelize alert s3select (#2307))
 	results, err := api.UpdateAlertStatus(input)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	// The results will sometimes be out-of-order due to the concurrency
 	// We sort them here to compare against the original set
@@ -117,9 +104,6 @@ func TestUpdateAlert(t *testing.T) {
 	})
 
 	assert.Equal(t, expectedSummaries, results)
-<<<<<<< HEAD
-=======
 
 	api.AssertExpectations(t)
->>>>>>> dfdcccf5 (Parallelize alert s3select (#2307))
 }
