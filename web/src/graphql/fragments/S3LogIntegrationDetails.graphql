@@ -8,8 +8,10 @@ fragment S3LogIntegrationDetails on S3LogIntegration {
   lastEventReceived
   kmsKey
   s3Bucket
-  s3Prefix
-  logTypes
+  s3PrefixLogTypes {
+    prefix
+    logTypes
+  }
   stackName
   health {
     processingRoleStatus {

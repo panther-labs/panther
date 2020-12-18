@@ -26,6 +26,8 @@ import {
   waitMs,
   buildListAvailableLogTypesResponse,
   buildAddS3LogIntegrationInput,
+  fireClickAndMouseEvents,
+  buildS3PrefixLogTypesInput,
   buildIntegrationTemplate,
 } from 'test-utils';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
@@ -40,10 +42,12 @@ jest.mock('Helpers/analytics');
 
 describe('CreateS3LogSource', () => {
   it('can successfully onboard an S3 log source', async () => {
-    const logTypesResponse = buildListAvailableLogTypesResponse();
+    const logTypesResponse = buildListAvailableLogTypesResponse({
+      logTypes: ['AWS.ALB', 'AWS.S3'],
+    });
     const logSource = buildS3LogIntegration({
       awsAccountId: '123123123123',
-      logTypes: logTypesResponse.logTypes,
+      s3PrefixLogTypes: [buildS3PrefixLogTypesInput({ logTypes: logTypesResponse.logTypes })],
       kmsKey: '',
     });
 
@@ -59,9 +63,7 @@ describe('CreateS3LogSource', () => {
             awsAccountId: pantherConfig.AWS_ACCOUNT_ID,
             integrationLabel: logSource.integrationLabel,
             s3Bucket: logSource.s3Bucket,
-            logTypes: logSource.logTypes,
-            kmsKey: null,
-            s3Prefix: null,
+            kmsKey: logSource.kmsKey || null,
           },
         },
         data: {
@@ -74,13 +76,12 @@ describe('CreateS3LogSource', () => {
             integrationLabel: logSource.integrationLabel,
             awsAccountId: logSource.awsAccountId,
             s3Bucket: logSource.s3Bucket,
-            logTypes: logSource.logTypes,
-            kmsKey: null,
-            s3Prefix: null,
+            s3PrefixLogTypes: logSource.s3PrefixLogTypes,
+            kmsKey: logSource.kmsKey,
           }),
         },
         data: {
-          addS3LogIntegration: logSource,
+          addS3LogIntegration: buildS3LogIntegration(),
         },
       }),
     ];
@@ -95,12 +96,15 @@ describe('CreateS3LogSource', () => {
     fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
     fireEvent.change(getByLabelText('AWS Account ID'), {target: {value: logSource.awsAccountId } }); // prettier-ignore
     fireEvent.change(getByLabelText('Bucket Name'), { target: { value: logSource.s3Bucket } });
-    fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.logTypes[0] } }); // prettier-ignore
-    fireEvent.click(await findByText(logSource.logTypes[0]));
-
+    fireEvent.change(getByLabelText('S3 Prefix Filter'), {target: {value: logSource.s3PrefixLogTypes[0].prefix } }); // prettier-ignore
+    // Adding 2 logTypes for this prefix
+    fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.s3PrefixLogTypes[0].logTypes[0] } }); // prettier-ignore
+    fireClickAndMouseEvents(await findByText(logSource.s3PrefixLogTypes[0].logTypes[0]));
+    fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.s3PrefixLogTypes[0].logTypes[1] } }); // prettier-ignore
+    fireClickAndMouseEvents(await findByText(logSource.s3PrefixLogTypes[0].logTypes[1]));
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(50);
-    fireEvent.click(getByText('Continue Setup'));
+    fireEvent.click(getByText('Continue'));
 
     // Initially we expect 2 disabled buttons while the template is being fetched ...
     expect(getByText('Get template file')).toHaveAttribute('disabled');
@@ -115,7 +119,6 @@ describe('CreateS3LogSource', () => {
 
     // Expect to see a loading animation while the resource is being validated ...
     expect(getByAltText('Validating source health...')).toBeInTheDocument();
-
     // ... followed by a "setup notifications" screen
     expect(await findByText('Adding Notifications for New Data')).toBeInTheDocument();
     expect(getByText('steps found here')).toHaveAttribute('href', LOG_ONBOARDING_SNS_DOC_URL);
@@ -139,9 +142,8 @@ describe('CreateS3LogSource', () => {
     const logTypesResponse = buildListAvailableLogTypesResponse();
     const logSource = buildS3LogIntegration({
       awsAccountId: '123123123123',
-      logTypes: logTypesResponse.logTypes,
+      s3PrefixLogTypes: [buildS3PrefixLogTypesInput({ logTypes: logTypesResponse.logTypes })],
       kmsKey: '',
-      s3Prefix: '',
     });
 
     const mocks = [
@@ -156,9 +158,8 @@ describe('CreateS3LogSource', () => {
             integrationLabel: logSource.integrationLabel,
             awsAccountId: logSource.awsAccountId,
             s3Bucket: logSource.s3Bucket,
-            logTypes: logSource.logTypes,
-            kmsKey: null,
-            s3Prefix: null,
+            s3PrefixLogTypes: logSource.s3PrefixLogTypes,
+            kmsKey: logSource.kmsKey,
           }),
         },
         data: null,
@@ -177,12 +178,13 @@ describe('CreateS3LogSource', () => {
     fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
     fireEvent.change(getByLabelText('AWS Account ID'), { target: {value: logSource.awsAccountId} }); // prettier-ignore
     fireEvent.change(getByLabelText('Bucket Name'), { target: { value: logSource.s3Bucket } });
-    fireEvent.change(getAllByLabelText('Log Types')[0], { target: { value: logSource.logTypes[0] } }); // prettier-ignore
-    fireEvent.click(await findByText(logSource.logTypes[0]));
+    fireEvent.change(getByLabelText('S3 Prefix Filter'), {target: {value: logSource.s3PrefixLogTypes[0].prefix } }); // prettier-ignore
+    fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.s3PrefixLogTypes[0].logTypes[0] } }); // prettier-ignore
+    fireEvent.click(await findByText(logSource.s3PrefixLogTypes[0].logTypes[0]));
 
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(50);
-    fireEvent.click(getByText('Continue Setup'));
+    fireEvent.click(getByText('Continue'));
 
     // We move on to the final screen
     fireEvent.click(getByText('Continue'));
@@ -191,7 +193,10 @@ describe('CreateS3LogSource', () => {
     expect(getByAltText('Validating source health...')).toBeInTheDocument();
 
     // ... replaced by a failure screen
-    expect(await findByText("Something didn't go as planned")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(getByText("Something didn't go as planned")).toBeInTheDocument();
+    });
+
     expect(getByText('Start over')).toBeInTheDocument();
     expect(getByText(errorMessage)).toBeInTheDocument();
 

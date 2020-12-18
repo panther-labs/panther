@@ -1,3 +1,11 @@
+package testutils
+
+import (
+	"github.com/stretchr/testify/mock"
+
+	"github.com/panther-labs/panther/pkg/gatewayapi"
+)
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,24 +24,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { StepStatus } from './Wizard';
-
-interface WizardContextValue<WizardData> {
-  goToStep: (index: number) => void;
-  goToPrevStep: () => void;
-  goToNextStep: () => void;
-  setData: (data: WizardData) => void;
-  updateData: (data: WizardData) => void;
-  resetData: () => void;
-  reset: () => void;
-  data: WizardData;
-  currentStepStatus: StepStatus;
-  setCurrentStepStatus: (stepStatus: StepStatus) => void;
+type GatewayapiMock struct {
+	gatewayapi.API
+	mock.Mock
 }
 
-export const WizardContext = React.createContext(null);
-
-export function useWizardContext<WizardData = any>() {
-  return React.useContext<WizardContextValue<WizardData>>(WizardContext);
+func (g *GatewayapiMock) Invoke(input, output interface{}) (int, error) {
+	result := g.Called(input, output)
+	return result.Int(0), result.Error(1)
 }

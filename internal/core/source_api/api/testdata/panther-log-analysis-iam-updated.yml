@@ -27,8 +27,6 @@ Mappings:
       Value: 'testlabel-' # RoleSuffix
     S3Bucket:
       Value: 'test-bucket' # S3Bucket
-    S3Prefix:
-      Value: 'prefix' # S3Prefix
     KmsKey:
       Value: 'key-arn' # KmsKey
 
@@ -48,10 +46,6 @@ Parameters:
     Default: ''
 
   # Optional configuration parameters
-  S3Prefix:
-    Type: String
-    Description: DO NOT EDIT MANUALLY! Parameter is already populated with the appropriate value.
-    Default: ''
   KmsKey:
     Type: String
     Description: DO NOT EDIT MANUALLY! Parameter is already populated with the appropriate value.
@@ -113,17 +107,9 @@ Resources:
                 - Effect: Allow
                   Action: s3:GetBucketLocation
                   Resource: !Sub 'arn:aws:s3:::${S3Bucket}'
-              - !If
-                - IsGenerated
-                - Effect: Allow
-                  Action: s3:GetObject
-                  Resource: !Sub
-                    - 'arn:aws:s3:::${Bucket}/${Prefix}*'
-                    - Bucket: !FindInMap [PantherParameters, S3Bucket, Value]
-                      Prefix: !FindInMap [PantherParameters, S3Prefix, Value]
-                - Effect: Allow
-                  Action: s3:GetObject
-                  Resource: !Sub 'arn:aws:s3:::${S3Bucket}/${S3Prefix}*'
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub 'arn:aws:s3:::${S3Bucket}/*'
               - !If
                 - IncludeKmsKey
                 - !If
