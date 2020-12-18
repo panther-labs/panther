@@ -62,6 +62,8 @@ func newS3Search(client s3iface.S3API, list *s3.ListObjectsV2Input, alert *table
 	}
 }
 
+// Do runs the search for the objects specified
+// It will retrieve results by query each S3 object in parallel, using S3 Select
 func (s *S3Search) Do(ctx context.Context) (*S3SearchResult, error) {
 	var paginationErr error
 	var out S3SearchResult

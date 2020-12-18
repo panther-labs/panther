@@ -37,8 +37,7 @@ import (
 
 func TestUpdateAlert(t *testing.T) {
 	t.Parallel()
-	tableMock := &tableMock{}
-	ruleCacheMock := &ruleCacheMock{}
+	api := initTestAPI()
 
 	status := "OPEN"
 	userID := "userId"
@@ -99,15 +98,11 @@ func TestUpdateAlert(t *testing.T) {
 	// We need to mimic the mock's true payload as it will happen in chunks
 	for page := 0; page < pages; page++ {
 		pageSize := int(math.Min(float64((page+1)*maxDDBPageSize), float64(alertCount)))
-		tableMock.On("UpdateAlertStatus", mock.Anything).Return(output[page*maxDDBPageSize:pageSize], nil).Once()
+		api.mockTable.On("UpdateAlertStatus", mock.Anything).Return(output[page*maxDDBPageSize:pageSize], nil).Once()
 	}
 
-	ruleCacheMock.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil)
+	api.mockRuleCache.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil)
 
-	api := API{
-		alertsDB:  tableMock,
-		ruleCache: ruleCacheMock,
-	}
 	results, err := api.UpdateAlertStatus(input)
 	assert.NoError(t, err)
 
@@ -121,6 +116,5 @@ func TestUpdateAlert(t *testing.T) {
 
 	assert.Equal(t, expectedSummaries, results)
 
-	ruleCacheMock.AssertExpectations(t)
-	tableMock.AssertExpectations(t)
+	api.AssertExpectations(t)
 }

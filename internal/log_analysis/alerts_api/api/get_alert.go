@@ -66,7 +66,7 @@ func (api *API) GetAlert(input *models.GetAlertInput) (*models.GetAlertOutput, e
 	}
 
 	zap.L().Debug("GetAlert request",
-		zap.Int("pageSize", *input.EventsPageSize),
+		zap.Int("pageSize", aws.IntValue(input.EventsPageSize)),
 		zap.Any("token", token))
 
 	var events []string
@@ -112,7 +112,7 @@ func (api *API) GetAlert(input *models.GetAlertInput) (*models.GetAlertOutput, e
 
 	return &models.Alert{
 		AlertSummary:           *alertSummary,
-		Events:                 aws.StringSlice(events),
+		Events:                 events,
 		EventsLastEvaluatedKey: &encodedToken,
 	}, nil
 }
