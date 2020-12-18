@@ -46,27 +46,25 @@ func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, 
 	}
 
 	// Next, prioritize dynamic destinations (set in the detection's python body)
-	dynamicOutputs := getDynamicDestinations(alert, outputs)
+	alertOutputs = getDynamicDestinations(alert, outputs)
 
 	// A dynamic override could be set to a destination that has been deleted.
 	// In worst case, the above loop wouldn't append any valid outputs and we continue.
-	if len(dynamicOutputs) > 0 {
-		return dynamicOutputs, nil
+	if len(alertOutputs) > 0 {
+		return alertOutputs, nil
 	}
 
 	// Then, destination overrides (set in the detection's form)
-	destinationOverrides := getDesinationOverrides(alert, outputs)
+	alertOutputs = getDesinationOverrides(alert, outputs)
 
 	// A destination override could be set to a destination that has been deleted.
 	// In worst case, the above loop wouldn't append any valid outputs and we continue.
-	if len(destinationOverrides) > 0 {
-		return destinationOverrides, nil
+	if len(alertOutputs) > 0 {
+		return alertOutputs, nil
 	}
 
 	// Finally, the use the severity rating (default)
-	defaultOutputs := getDefaultOutputs(alert, outputs)
-
-	return defaultOutputs, nil
+	return getDefaultOutputs(alert, outputs), nil
 }
 
 // getOutputs - Gets a list of outputs from panther (using a cache)
