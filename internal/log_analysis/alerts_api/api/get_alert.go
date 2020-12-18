@@ -102,14 +102,7 @@ func (api *API) GetAlert(input *models.GetAlertInput) (*models.GetAlertOutput, e
 	}
 
 	alertSummary := utils.AlertItemToSummary(alertItem, alertRule)
-
-	// FIXME: remove when we think this is working!
-	zap.L().Info("GetAlert",
-		zap.Int("pageSize", *input.EventsPageSize),
-		zap.Any("token", *token),
-		zap.Any("events", events),
-		zap.Int("nevents", len(events)))
-
+	
 	return &models.Alert{
 		AlertSummary:           *alertSummary,
 		Events:                 aws.StringSlice(events),

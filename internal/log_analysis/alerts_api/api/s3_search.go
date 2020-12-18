@@ -121,10 +121,12 @@ func (s *S3Search) queryPage(ctx context.Context, objects []*s3.Object) ([]*S3Se
 	}
 
 	// drive requests thru the worker group
+	var driverErr error
 	for _, object := range objects {
-		objectTime, err := timeFromJSONS3ObjectKey(*object.Key)
-		if err != nil {
-			return nil, err
+		var objectTime time.Time
+		objectTime, driverErr = timeFromJSONS3ObjectKey(*object.Key)
+		if driverErr != nil {
+			break
 		}
 		if objectTime.Before(getFirstEventTime(s.alert)) || objectTime.After(s.alert.UpdateTime) {
 			// if the time in the S3 object key was before alert creation time or after last alert update time
@@ -143,12 +145,22 @@ func (s *S3Search) queryPage(ctx context.Context, objects []*s3.Object) ([]*S3Se
 
 	// this will signal workers to stop
 	close(queryChan)
+
+	// if the driver failed, close results channel to stop collector and return
+	if driverErr != nil {
+		close(resultChan)
+		return nil, driverErr
+	}
+
+	// wait for workers to write everything into resultChan
 	if err := workerGroup.Wait(); err != nil {
 		return nil, err
 	}
 
 	// this will signal collector to stop
 	close(resultChan)
+
+	// wait for collector to drain resultChan
 	if err := collector.Wait(); err != nil {
 		return nil, err
 	}
