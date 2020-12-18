@@ -44,6 +44,27 @@ func TestAnyStringMarshal(t *testing.T) {
 	actualJSON, err = jsoniter.Marshal(&any)
 	require.NoError(t, err)
 	require.Equal(t, expectedJSON, string(actualJSON))
+
+	{
+		type T struct {
+			Foo PantherAnyString `json:",omitempty"`
+		}
+		v := T{}
+		AppendAnyString(&v.Foo, "")
+		data, err := jsoniter.MarshalToString(T{})
+		require.NoError(t, err)
+		require.Equal(t, `{}`, data)
+	}
+	{
+		type T struct {
+			Foo PantherAnyString
+		}
+		v := T{}
+		AppendAnyString(&v.Foo, "")
+		data, err := jsoniter.MarshalToString(T{})
+		require.NoError(t, err)
+		require.Equal(t, `{"Foo":null}`, data)
+	}
 }
 
 func TestAnyStringUnmarshal(t *testing.T) {
