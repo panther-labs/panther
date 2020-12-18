@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -59,8 +60,9 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 		return nil, err
 	}
 
+	ctx := context.Background()
 	// Send alerts to the specified destination(s) and obtain each response status
-	dispatchStatuses := sendAlerts(alertOutputMap)
+	dispatchStatuses := sendAlerts(ctx, alertOutputMap, outputClient)
 
 	// Record the delivery statuses to ddb
 	alertSummaries := updateAlerts(dispatchStatuses)
@@ -88,6 +90,59 @@ func getAlert(input *deliveryModels.DeliverAlertInput) (*alertTable.AlertItem, e
 
 // populateAlertData - queries the rule associated and merges in the details to the alert
 func populateAlertData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, error) {
+	switch alertItem.Type {
+	case deliveryModels.PolicyType:
+		return populateAlertWithPolicyData(alertItem)
+	case deliveryModels.RuleType:
+		fallthrough
+	case deliveryModels.RuleErrorType:
+		fallthrough
+	default:
+		return populateAlertWithRuleData(alertItem)
+	}
+}
+
+func populateAlertWithPolicyData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, error) {
+	commonFields := []zap.Field{
+		zap.String("alertId", alertItem.AlertID),
+		zap.String("policyId", alertItem.PolicyID),
+		zap.String("policyVersion", alertItem.PolicyVersion),
+	}
+
+	getPolicyInput := analysismodels.LambdaInput{
+		GetPolicy: &analysismodels.GetPolicyInput{
+			ID:        alertItem.PolicyID,
+			VersionID: alertItem.PolicyVersion,
+		},
+	}
+	var policy analysismodels.Policy
+	if _, err := analysisClient.Invoke(&getPolicyInput, &policy); err != nil {
+		zap.L().Error("Error retrieving policy", append(commonFields, zap.Error(err))...)
+		return nil, &genericapi.InternalError{Message: genericErrorMessage}
+	}
+
+	return &deliveryModels.Alert{
+		AnalysisID:          policy.ID,
+		Type:                deliveryModels.PolicyType,
+		CreatedAt:           alertItem.CreationTime,
+		Severity:            alertItem.Severity,
+		OutputIds:           []string{}, // We do not pay attention to this field
+		AnalysisDescription: aws.StringValue(alertItem.Description),
+		AnalysisName:        aws.String(policy.DisplayName),
+		Version:             &alertItem.PolicyVersion,
+		Reference:           aws.StringValue(alertItem.Reference),
+		Runbook:             aws.StringValue(alertItem.Runbook),
+		Destinations:        alertItem.Destinations,
+		Tags:                policy.Tags,
+		AlertID:             &alertItem.AlertID,
+		Title:               alertItem.Title,
+		RetryCount:          0,
+		IsTest:              false,
+		IsResent:            true,
+	}, nil
+}
+
+func populateAlertWithRuleData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, error) {
 	commonFields := []zap.Field{
 		zap.String("alertId", alertItem.AlertID),
 		zap.String("ruleId", alertItem.RuleID),

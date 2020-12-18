@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"encoding/base64"
 	"strings"
 
@@ -35,7 +36,7 @@ const (
 
 // Jira alert send an issue.
 func (client *OutputClient) Jira(
-	alert *alertModels.Alert, config *outputModels.JiraConfig) *AlertDeliveryResponse {
+	ctx context.Context, alert *alertModels.Alert, config *outputModels.JiraConfig) *AlertDeliveryResponse {
 
 	description := "*Description:* " + alert.AnalysisDescription
 	link := "\n [Click here to view in the Panther UI|" + generateURL(alert) + "]"
@@ -80,5 +81,5 @@ func (client *OutputClient) Jira(
 		body:    jiraRequest,
 		headers: requestHeader,
 	}
-	return client.httpWrapper.post(postInput)
+	return client.httpWrapper.post(ctx, postInput)
 }

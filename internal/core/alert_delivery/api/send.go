@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"context"
 	"time"
 
 	"go.uber.org/zap"
@@ -43,15 +44,31 @@ type DispatchStatus struct {
 }
 
 // sendAlerts - dispatches alerts to their associated outputIds in parallel
-func sendAlerts(alertOutputs AlertOutputMap) []DispatchStatus {
+func sendAlerts(
+	ctx context.Context,
+	alertOutputs AlertOutputMap,
+	o outputs.API,
+) []DispatchStatus {
+
+	// Create a new child context with the a deadline that will exit before the lambda times out.
+	// This will be used to cancel any running goroutines
+	deadlineInFuture, _ := ctx.Deadline()
+	deadlineBuffer := deadlineInFuture.Add(-softDeadlineDuration)
+	deadlineCtx, cancel := context.WithDeadline(context.Background(), deadlineBuffer)
+
+	// Even though ctx will be expired, it is good practice to call its
+	// cancellation function in any case. Failure to do so may keep the
+	// context and its parent alive longer than necessary.
+	defer cancel()
+
 	// Initialize the channel to dispatch all outputs in parallel.
-	statusChannel := make(chan DispatchStatus)
+	statusChannel := make(chan DispatchStatus, 1)
 
 	// Extract the maps (k, v)
 	for alert, outputIds := range alertOutputs {
 		for _, output := range outputIds {
 			dispatchedAt := time.Now().UTC()
-			go sendAlert(alert, output, dispatchedAt, statusChannel)
+			go sendAlert(deadlineCtx, alert, output, dispatchedAt, statusChannel, o)
 		}
 	}
 
@@ -63,10 +80,10 @@ func sendAlerts(alertOutputs AlertOutputMap) []DispatchStatus {
 			select {
 			case status := <-statusChannel:
 				deliveryStatuses = append(deliveryStatuses, status)
-			case <-time.After(deliveryTimeoutDuration):
+			case <-deadlineCtx.Done():
 				// Calculate the time the alert was dispatched at
 				dispatchedAt := time.Now().UTC()
-				dispatchedAt.Add(-deliveryTimeoutDuration)
+				dispatchedAt.Add(-softDeadlineDuration)
 				timeoutStatus := DispatchStatus{
 					Alert:        *alert,
 					OutputID:     *outputID.OutputID,
@@ -87,9 +104,14 @@ func sendAlerts(alertOutputs AlertOutputMap) []DispatchStatus {
 // sendAlert an alert to one specific output (run as a child goroutine).
 //
 // The statusChannel will be sent a message with the result of the send attempt.
-func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, dispatchedAt time.Time, statusChannel chan DispatchStatus) {
-	// Used for testing timeouts only
-	time.Sleep(goroutineTimeoutDuration)
+func sendAlert(
+	ctx context.Context,
+	alert *deliveryModels.Alert,
+	output *outputModels.AlertOutput,
+	dispatchedAt time.Time,
+	statusChannel chan DispatchStatus,
+	o outputs.API,
+) {
 
 	commonFields := []zap.Field{
 		zap.Stringp("alertID", alert.AlertID),
@@ -117,25 +139,25 @@ func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, di
 	response := (*outputs.AlertDeliveryResponse)(nil)
 	switch *output.OutputType {
 	case "slack":
-		response = outputClient.Slack(alert, output.OutputConfig.Slack)
+		response = o.Slack(ctx, alert, output.OutputConfig.Slack)
 	case "pagerduty":
-		response = outputClient.PagerDuty(alert, output.OutputConfig.PagerDuty)
+		response = o.PagerDuty(ctx, alert, output.OutputConfig.PagerDuty)
 	case "github":
-		response = outputClient.Github(alert, output.OutputConfig.Github)
+		response = o.Github(ctx, alert, output.OutputConfig.Github)
 	case "opsgenie":
-		response = outputClient.Opsgenie(alert, output.OutputConfig.Opsgenie)
+		response = o.Opsgenie(ctx, alert, output.OutputConfig.Opsgenie)
 	case "jira":
-		response = outputClient.Jira(alert, output.OutputConfig.Jira)
+		response = o.Jira(ctx, alert, output.OutputConfig.Jira)
 	case "msteams":
-		response = outputClient.MsTeams(alert, output.OutputConfig.MsTeams)
+		response = o.MsTeams(ctx, alert, output.OutputConfig.MsTeams)
 	case "sqs":
-		response = outputClient.Sqs(alert, output.OutputConfig.Sqs)
+		response = o.Sqs(ctx, alert, output.OutputConfig.Sqs)
 	case "sns":
-		response = outputClient.Sns(alert, output.OutputConfig.Sns)
+		response = o.Sns(ctx, alert, output.OutputConfig.Sns)
 	case "asana":
-		response = outputClient.Asana(alert, output.OutputConfig.Asana)
+		response = o.Asana(ctx, alert, output.OutputConfig.Asana)
 	case "customwebhook":
-		response = outputClient.CustomWebhook(alert, output.OutputConfig.CustomWebhook)
+		response = o.CustomWebhook(ctx, alert, output.OutputConfig.CustomWebhook)
 	default:
 		zap.L().Warn("unsupported output type", commonFields...)
 		statusChannel <- DispatchStatus{

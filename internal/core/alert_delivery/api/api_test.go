@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"context"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -34,9 +35,31 @@ type mockOutputsClient struct {
 	mock.Mock
 }
 
-func (m *mockOutputsClient) Slack(alert *deliveryModels.Alert, config *outputModels.SlackConfig) *outputs.AlertDeliveryResponse {
-	args := m.Called(alert, config)
+func (m *mockOutputsClient) Slack(
+	ctx context.Context,
+	alert *deliveryModels.Alert,
+	config *outputModels.SlackConfig,
+) *outputs.AlertDeliveryResponse {
+
+	args := m.Called(ctx, alert, config)
 	return args.Get(0).(*outputs.AlertDeliveryResponse)
+}
+
+type mockSlowOutputsClient struct {
+	outputs.API
+	mock.Mock
+}
+
+func (m *mockSlowOutputsClient) Slack(
+	ctx aws.Context,
+	alert *deliveryModels.Alert,
+	config *outputModels.SlackConfig,
+) *outputs.AlertDeliveryResponse {
+
+	time.Sleep(15 * time.Second)
+	args := m.Called(ctx, alert, config)
+	response := args.Get(0).(*outputs.AlertDeliveryResponse)
+	return response
 }
 
 func sampleAlert() *deliveryModels.Alert {

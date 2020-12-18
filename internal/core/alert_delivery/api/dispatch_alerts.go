@@ -19,6 +19,8 @@ package api
  */
 
 import (
+	"context"
+
 	"github.com/go-playground/validator"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
@@ -42,8 +44,9 @@ func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (interfac
 		return nil, err
 	}
 
+	ctx := context.Background()
 	// Send alerts to the specified destination(s) and obtain each response status
-	dispatchStatuses := sendAlerts(alertOutputMap)
+	dispatchStatuses := sendAlerts(ctx, alertOutputMap, outputClient)
 
 	// Record the delivery statuses to ddb. Ignore the returned output.
 	updateAlerts(dispatchStatuses)
