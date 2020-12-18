@@ -128,11 +128,9 @@ func TestGetRuleAlert(t *testing.T) {
 		UpdateTime:        aws.Time(time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC)),
 		EventsMatched:     aws.Int(5),
 		LogTypes:          []string{"logtype"},
-		ResourceTypes:     []string{},
 		ResourceID:        "",
 		LastUpdatedBy:     "userId",
 		LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
-		DeliveryResponses: []*models.DeliveryResponse{},
 	}
 
 	expectedListObjectsRequest := &s3.ListObjectsV2Input{
@@ -152,7 +150,7 @@ func TestGetRuleAlert(t *testing.T) {
 			JSON: &s3.JSONOutput{RecordDelimiter: aws.String("\n")},
 		},
 		ExpressionType: aws.String(s3.ExpressionTypeSql),
-		Expression:     aws.String("SELECT * FROM S3Object o WHERE o.p_alert_id='alertId'"),
+		Expression:     aws.String("SELECT * FROM S3Object o WHERE o.p_alert_id='alertId' LIMIT 1"),
 	}
 
 	eventChannel := getChannel("testEvent")
@@ -164,8 +162,10 @@ func TestGetRuleAlert(t *testing.T) {
 	}
 
 	tableMock.On("GetAlert", "alertId").Return(alertItem, nil).Once()
-	s3Mock.On("ListObjectsV2Pages", expectedListObjectsRequest, mock.Anything).Return(page, nil).Once()
-	s3Mock.On("SelectObjectContent", expectedSelectObjectInput).Return(selectObjectOutput, nil).Once()
+	s3Mock.On("ListObjectsV2PagesWithContext", mock.Anything, expectedListObjectsRequest, mock.Anything, mock.Anything).
+		Return(page, nil).Once()
+
+	s3Mock.On("SelectObjectContentWithContext", mock.Anything, expectedSelectObjectInput, mock.Anything).Return(selectObjectOutput, nil).Once()
 	mockS3EventReader.On("Events").Return(eventChannel)
 	mockS3EventReader.On("Err").Return(nil)
 	ruleCacheMock.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
@@ -208,14 +208,16 @@ func TestGetRuleAlert(t *testing.T) {
 	page = &s3.ListObjectsV2Output{}
 
 	tableMock.On("GetAlert", "alertId").Return(alertItem, nil).Once()
-	s3Mock.On("SelectObjectContent", expectedSelectObjectInput).Return(noopSelectObjectOutput, nil).Once()
-	s3Mock.On("ListObjectsV2Pages", expectedPagedListObjectsRequest, mock.Anything).Return(page, nil).Once()
+	s3Mock.On("SelectObjectContentWithContext", mock.Anything, expectedSelectObjectInput, mock.Anything).
+		Return(noopSelectObjectOutput, nil).Once()
+	s3Mock.On("ListObjectsV2PagesWithContext", mock.Anything, expectedPagedListObjectsRequest, mock.Anything, mock.Anything).
+		Return(page, nil).Once()
 	ruleCacheMock.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
 	result, err = api.GetAlert(input)
 	require.NoError(t, err)
 	require.Equal(t, &models.GetAlertOutput{
 		AlertSummary: *expectedSummary,
-		Events:       aws.StringSlice([]string{}),
+		Events:       make([]*string, 0),
 		EventsLastEvaluatedKey:
 		// nolint
 		aws.String("eyJsb2dUeXBlVG9Ub2tlbiI6eyJsb2d0eXBlIjp7InMzT2JqZWN0S2V5IjoicnVsZXMvbG9ndHlwZS95ZWFyPTIwMjAvbW9udGg9MDEvZGF5PTAxL2hvdXI9MDEvcnVsZV9pZD1ydWxlSWQvMjAyMDAxMDFUMDEwMTAwWi11dWlkNC5qc29uLmd6IiwiZXZlbnRJbmRleCI6MH19fQ=="),
@@ -275,11 +277,9 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 		Severity:          aws.String("INFO"),
 		DedupString:       aws.String("dedupString"),
 		LogTypes:          []string{"logtype"},
-		ResourceTypes:     []string{},
 		ResourceID:        "",
 		LastUpdatedBy:     "userId",
 		LastUpdatedByTime: time.Date(2020, 1, 1, 1, 59, 0, 0, time.UTC),
-		DeliveryResponses: []*models.DeliveryResponse{},
 	}
 
 	eventChannel := getChannel("testEvent")
@@ -291,8 +291,8 @@ func TestGetAlertFilterOutS3KeysOutsideTheTimePeriod(t *testing.T) {
 	}
 
 	tableMock.On("GetAlert", "alertId").Return(alertItem, nil).Once()
-	s3Mock.On("ListObjectsV2Pages", mock.Anything, mock.Anything).Return(page, nil).Once()
-	s3Mock.On("SelectObjectContent", mock.Anything).Return(selectObjectOutput, nil).Once()
+	s3Mock.On("ListObjectsV2PagesWithContext", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(page, nil).Once()
+	s3Mock.On("SelectObjectContentWithContext", mock.Anything, mock.Anything, mock.Anything).Return(selectObjectOutput, nil).Once()
 	mockS3EventReader.On("Events").Return(eventChannel)
 	mockS3EventReader.On("Err").Return(nil)
 	ruleCache.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()

@@ -40,7 +40,7 @@ import (
 )
 
 /*
-Run log processor locally for profiling purposes.
+Do log processor locally for profiling purposes.
 
 Profiles can then be visualized with the pprof tool: go tool pprof cpu.prof
 */
