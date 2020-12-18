@@ -38,7 +38,7 @@ import (
 const genericErrorMessage = "Could not find the rule associated with this alert!"
 
 // DeliverAlert sends a specific alert to the specified destinations.
-func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModels.DeliverAlertOutput, error) {
+func (API) DeliverAlert(ctx context.Context, input *deliveryModels.DeliverAlertInput) (*deliveryModels.DeliverAlertOutput, error) {
 	// First, fetch the alert
 	zap.L().Debug("Fetching alert", zap.String("AlertID", input.AlertID))
 
@@ -60,7 +60,6 @@ func (API) DeliverAlert(input *deliveryModels.DeliverAlertInput) (*deliveryModel
 		return nil, err
 	}
 
-	ctx := context.Background()
 	// Send alerts to the specified destination(s) and obtain each response status
 	dispatchStatuses := sendAlerts(ctx, alertOutputMap, outputClient)
 

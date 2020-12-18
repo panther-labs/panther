@@ -29,7 +29,7 @@ import (
 )
 
 // SendTestAlert sends a dummy alert to the specified destinations.
-func (API) SendTestAlert(input *deliveryModels.SendTestAlertInput) ([]*deliveryModels.SendTestAlertOutput, error) {
+func (API) SendTestAlert(ctx context.Context, input *deliveryModels.SendTestAlertInput) ([]*deliveryModels.SendTestAlertOutput, error) {
 	// First, fetch the alert
 	zap.L().Debug("Sending test alert")
 
@@ -42,7 +42,6 @@ func (API) SendTestAlert(input *deliveryModels.SendTestAlertInput) ([]*deliveryM
 		return nil, err
 	}
 
-	ctx := context.Background()
 	// Send alerts to the specified destination(s) and obtain each response status
 	dispatchStatuses := sendAlerts(ctx, alertOutputMap, outputClient)
 

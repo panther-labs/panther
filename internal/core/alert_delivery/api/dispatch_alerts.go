@@ -30,7 +30,7 @@ import (
 )
 
 // DispatchAlerts - Sends an alert to sends a specific alert to the specified destinations.
-func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (interface{}, error) {
+func (API) DispatchAlerts(ctx context.Context, input []*deliveryModels.DispatchAlertsInput) (interface{}, error) {
 	zap.L().Debug("Dispatching alerts", zap.Int("num_alerts", len(input)))
 
 	// Extract alerts from the input payload
@@ -44,7 +44,6 @@ func (API) DispatchAlerts(input []*deliveryModels.DispatchAlertsInput) (interfac
 		return nil, err
 	}
 
-	ctx := context.Background()
 	// Send alerts to the specified destination(s) and obtain each response status
 	dispatchStatuses := sendAlerts(ctx, alertOutputMap, outputClient)
 

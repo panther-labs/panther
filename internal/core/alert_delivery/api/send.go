@@ -47,7 +47,7 @@ type DispatchStatus struct {
 func sendAlerts(
 	ctx context.Context,
 	alertOutputs AlertOutputMap,
-	o outputs.API,
+	outputClient outputs.API,
 ) []DispatchStatus {
 
 	// Create a new child context with the a deadline that will exit before the lambda times out.
@@ -68,7 +68,7 @@ func sendAlerts(
 	for alert, outputIds := range alertOutputs {
 		for _, output := range outputIds {
 			dispatchedAt := time.Now().UTC()
-			go sendAlert(deadlineCtx, alert, output, dispatchedAt, statusChannel, o)
+			go sendAlert(deadlineCtx, alert, output, dispatchedAt, statusChannel, outputClient)
 		}
 	}
 
@@ -110,7 +110,7 @@ func sendAlert(
 	output *outputModels.AlertOutput,
 	dispatchedAt time.Time,
 	statusChannel chan DispatchStatus,
-	o outputs.API,
+	outputClient outputs.API,
 ) {
 
 	commonFields := []zap.Field{
@@ -139,25 +139,25 @@ func sendAlert(
 	response := (*outputs.AlertDeliveryResponse)(nil)
 	switch *output.OutputType {
 	case "slack":
-		response = o.Slack(ctx, alert, output.OutputConfig.Slack)
+		response = outputClient.Slack(ctx, alert, output.OutputConfig.Slack)
 	case "pagerduty":
-		response = o.PagerDuty(ctx, alert, output.OutputConfig.PagerDuty)
+		response = outputClient.PagerDuty(ctx, alert, output.OutputConfig.PagerDuty)
 	case "github":
-		response = o.Github(ctx, alert, output.OutputConfig.Github)
+		response = outputClient.Github(ctx, alert, output.OutputConfig.Github)
 	case "opsgenie":
-		response = o.Opsgenie(ctx, alert, output.OutputConfig.Opsgenie)
+		response = outputClient.Opsgenie(ctx, alert, output.OutputConfig.Opsgenie)
 	case "jira":
-		response = o.Jira(ctx, alert, output.OutputConfig.Jira)
+		response = outputClient.Jira(ctx, alert, output.OutputConfig.Jira)
 	case "msteams":
-		response = o.MsTeams(ctx, alert, output.OutputConfig.MsTeams)
+		response = outputClient.MsTeams(ctx, alert, output.OutputConfig.MsTeams)
 	case "sqs":
-		response = o.Sqs(ctx, alert, output.OutputConfig.Sqs)
+		response = outputClient.Sqs(ctx, alert, output.OutputConfig.Sqs)
 	case "sns":
-		response = o.Sns(ctx, alert, output.OutputConfig.Sns)
+		response = outputClient.Sns(ctx, alert, output.OutputConfig.Sns)
 	case "asana":
-		response = o.Asana(ctx, alert, output.OutputConfig.Asana)
+		response = outputClient.Asana(ctx, alert, output.OutputConfig.Asana)
 	case "customwebhook":
-		response = o.CustomWebhook(ctx, alert, output.OutputConfig.CustomWebhook)
+		response = outputClient.CustomWebhook(ctx, alert, output.OutputConfig.CustomWebhook)
 	default:
 		zap.L().Warn("unsupported output type", commonFields...)
 		statusChannel <- DispatchStatus{
