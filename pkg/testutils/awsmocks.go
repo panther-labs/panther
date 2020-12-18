@@ -105,6 +105,15 @@ func (m *S3Mock) SelectObjectContent(input *s3.SelectObjectContentInput) (*s3.Se
 	return args.Get(0).(*s3.SelectObjectContentOutput), args.Error(1)
 }
 
+func (m *S3Mock) SelectObjectContentWithContext(
+	ctx aws.Context,
+	input *s3.SelectObjectContentInput,
+	options ...request.Option) (*s3.SelectObjectContentOutput, error) {
+
+	args := m.Called(ctx, input, options)
+	return args.Get(0).(*s3.SelectObjectContentOutput), args.Error(1)
+}
+
 type S3SelectStreamReaderMock struct {
 	s3.SelectObjectContentEventStreamReader
 	mock.Mock

@@ -1,3 +1,5 @@
+package sources
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,24 +18,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { StepStatus } from './Wizard';
+import (
+	"testing"
 
-interface WizardContextValue<WizardData> {
-  goToStep: (index: number) => void;
-  goToPrevStep: () => void;
-  goToNextStep: () => void;
-  setData: (data: WizardData) => void;
-  updateData: (data: WizardData) => void;
-  resetData: () => void;
-  reset: () => void;
-  data: WizardData;
-  currentStepStatus: StepStatus;
-  setCurrentStepStatus: (stepStatus: StepStatus) => void;
-}
+	"github.com/stretchr/testify/require"
 
-export const WizardContext = React.createContext(null);
+	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+)
 
-export function useWizardContext<WizardData = any>() {
-  return React.useContext<WizardContextValue<WizardData>>(WizardContext);
+func Test_BuildClassifier_NoLogTypes(t *testing.T) {
+	var logTypes []string
+	src := &models.SourceIntegration{
+		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+			IntegrationID:    "integration-id",
+			IntegrationLabel: "integration-label",
+		},
+	}
+	c, err := BuildClassifier(logTypes, src, registry.NativeLogTypesResolver())
+	require.NoError(t, err)
+
+	_, err = c.Classify(`{"key":"value}"`)
+
+	require.Error(t, err)
+	require.Equal(t, "failed to classify log line", err.Error())
 }

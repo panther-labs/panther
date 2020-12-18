@@ -220,6 +220,12 @@ Resources:
                 - s3:ListBucket
                 - s3:GetObject
               Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
+        - Id: GetRules
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
 
   AlertsApiAlarms:
     Type: Custom::LambdaAlarms
