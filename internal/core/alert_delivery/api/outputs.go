@@ -41,56 +41,32 @@ func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, 
 	alertOutputs := []*outputModels.AlertOutput{}
 
 	// First, check if we have an override to SKIP dispatching this alert
-	for _, outputID := range alert.OutputIds {
-		if outputID == alertOutputSkip {
-			return alertOutputs, nil
-		}
+	if shouldSkip(alert) {
+		return alertOutputs, nil
 	}
 
 	// Next, prioritize dynamic destinations (set in the detection's python body)
-	if len(alert.Destinations) > 0 {
-		for _, output := range outputs {
-			for _, outputID := range alert.Destinations {
-				if *output.OutputID == outputID {
-					alertOutputs = append(alertOutputs, output)
-				}
-			}
-		}
-	}
+	dynamicOutputs := getDynamicDestinations(alert, outputs)
 
 	// A dynamic override could be set to a destination that has been deleted.
 	// In worst case, the above loop wouldn't append any valid outputs and we continue.
-	if len(alertOutputs) > 0 {
-		return alertOutputs, nil
+	if len(dynamicOutputs) > 0 {
+		return dynamicOutputs, nil
 	}
 
 	// Then, destination overrides (set in the detection's form)
-	if len(alert.OutputIds) > 0 {
-		for _, output := range outputs {
-			for _, outputID := range alert.OutputIds {
-				if *output.OutputID == outputID {
-					alertOutputs = append(alertOutputs, output)
-				}
-			}
-		}
-	}
+	destinationOverrides := getDesinationOverrides(alert, outputs)
 
 	// A destination override could be set to a destination that has been deleted.
 	// In worst case, the above loop wouldn't append any valid outputs and we continue.
-	if len(alertOutputs) > 0 {
-		return alertOutputs, nil
+	if len(destinationOverrides) > 0 {
+		return destinationOverrides, nil
 	}
 
 	// Finally, the use the severity rating (default)
-	for _, output := range outputs {
-		for _, outputSeverity := range output.DefaultForSeverity {
-			if alert.Severity == *outputSeverity {
-				alertOutputs = append(alertOutputs, output)
-			}
-		}
-	}
+	defaultOutputs := getDefaultOutputs(alert, outputs)
 
-	return alertOutputs, nil
+	return defaultOutputs, nil
 }
 
 // getOutputs - Gets a list of outputs from panther (using a cache)
@@ -104,6 +80,55 @@ func getOutputs() ([]*outputModels.AlertOutput, error) {
 		outputsCache.setExpiry(time.Now().UTC())
 	}
 	return outputsCache.getOutputs(), nil
+}
+
+func shouldSkip(alert *deliveryModels.Alert) bool {
+	for _, outputID := range alert.OutputIds {
+		if outputID == alertOutputSkip {
+			return true
+		}
+	}
+	return false
+}
+
+func getDynamicDestinations(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
+	alertOutputs := []*outputModels.AlertOutput{}
+	if len(alert.Destinations) > 0 {
+		for _, output := range outputs {
+			for _, outputID := range alert.Destinations {
+				if *output.OutputID == outputID {
+					alertOutputs = append(alertOutputs, output)
+				}
+			}
+		}
+	}
+	return alertOutputs
+}
+
+func getDesinationOverrides(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
+	alertOutputs := []*outputModels.AlertOutput{}
+	if len(alert.OutputIds) > 0 {
+		for _, output := range outputs {
+			for _, outputID := range alert.OutputIds {
+				if *output.OutputID == outputID {
+					alertOutputs = append(alertOutputs, output)
+				}
+			}
+		}
+	}
+	return alertOutputs
+}
+
+func getDefaultOutputs(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
+	alertOutputs := []*outputModels.AlertOutput{}
+	for _, output := range outputs {
+		for _, outputSeverity := range output.DefaultForSeverity {
+			if alert.Severity == *outputSeverity {
+				alertOutputs = append(alertOutputs, output)
+			}
+		}
+	}
+	return alertOutputs
 }
 
 // fetchOutputs - performs an API query to get a list of outputs
