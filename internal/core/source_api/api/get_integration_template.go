@@ -56,8 +56,6 @@ const (
 	roleSuffixReplace = "Value: '%s' # RoleSuffix"
 	s3BucketFind      = "Value: '' # S3Bucket"
 	s3BucketReplace   = "Value: '%s' # S3Bucket"
-	s3PrefixFind      = "Value: '' # S3Prefix"
-	s3PrefixReplace   = "Value: '%s' # S3Prefix"
 	kmsKeyFind        = "Value: '' # KmsKey"
 	kmsKeyReplace     = "Value: '%s' # KmsKey"
 )
@@ -100,15 +98,6 @@ func (API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput) (*m
 
 		formattedTemplate = strings.Replace(formattedTemplate, s3BucketFind,
 			fmt.Sprintf(s3BucketReplace, input.S3Bucket), 1)
-
-		if len(input.S3Prefix) > 0 {
-			formattedTemplate = strings.Replace(formattedTemplate, s3PrefixFind,
-				fmt.Sprintf(s3PrefixReplace, input.S3Prefix), 1)
-		} else {
-			// If no S3Prefix is specified, add as default '*'
-			formattedTemplate = strings.Replace(formattedTemplate, s3PrefixFind,
-				fmt.Sprintf(s3PrefixReplace, "*"), 1)
-		}
 
 		if len(input.KmsKey) > 0 {
 			formattedTemplate = strings.Replace(formattedTemplate, kmsKeyFind,

@@ -21,7 +21,6 @@ import { Link as RRLink, LinkProps as RRLinkProps } from 'react-router-dom';
 
 type ButtonWithoutAs = Omit<ButtonProps, 'as'>;
 type ToProp = Pick<RRLinkProps, 'to'>;
-
 export type LinkButtonProps = ButtonWithoutAs & ToProp & { external?: boolean };
 
 const LinkButton: React.FC<LinkButtonProps> = ({ disabled, external, to, children, ...rest }) => {
@@ -55,5 +54,4 @@ const LinkButton: React.FC<LinkButtonProps> = ({ disabled, external, to, childre
     </Box>
   );
 };
-
 export default LinkButton;
