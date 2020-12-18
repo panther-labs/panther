@@ -71,7 +71,7 @@ func (c *SQSClassifier) buildSourceClassifier(id string) (classification.Classif
 	if err != nil {
 		return nil, err
 	}
-	return BuildClassifier(src, c.Resolver)
+	return BuildClassifier(src.SqsConfig.LogTypes, src, c.Resolver)
 }
 
 func (c *SQSClassifier) Stats() *classification.ClassifierStats {
