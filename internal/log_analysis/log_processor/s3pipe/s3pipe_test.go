@@ -80,6 +80,7 @@ func TestGunzip(t *testing.T) {
 	err := gz.Close()
 	assert.NoError(err)
 	s3Mock := &testutils.S3Mock{}
+	s3Mock.On("MaxRetries").Return(3)
 	part, contentRange := bodyPart(buf.Bytes(), 0, 512)
 	s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&s3.GetObjectOutput{
 		ContentRange: &contentRange,
@@ -110,9 +111,8 @@ type testCase struct {
 }
 
 func mockS3(body []byte, partSize int, fail bool) *testutils.S3Mock {
-	s3Mock := testutils.S3Mock{
-		Retries: 3,
-	}
+	s3Mock := &testutils.S3Mock{}
+	s3Mock.On("MaxRetries").Return(3)
 	numParts := numParts(len(body), partSize)
 	for i := 0; i < numParts; i++ {
 		part, contentRange := bodyPart(body, i, partSize)
@@ -130,7 +130,7 @@ func mockS3(body []byte, partSize int, fail bool) *testutils.S3Mock {
 		}
 		s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&output, nil).Once()
 	}
-	return &s3Mock
+	return s3Mock
 }
 
 func bodyPart(body []byte, i, partSize int) ([]byte, string) {
@@ -183,14 +183,13 @@ func repeatedLines(line string, maxSize int) (buf []byte) {
 // This won't happen every time but it is quite hard to coordinate the goroutines on each run.
 // If this test starts randomly failing, someone has messed with the fine balance things in the Downloader.
 func TestEarlyClose(t *testing.T) {
-	s3Mock := testutils.S3Mock{
-		Retries: 3,
-	}
+	s3Mock := &testutils.S3Mock{}
+	s3Mock.On("MaxRetries").Return(3)
 	s3Mock.On("GetObjectWithContext",
 		mock.Anything, mock.Anything, mock.Anything,
 	).Return((*s3.GetObjectOutput)(nil), errors.New("failed")).Once()
 	dl := Downloader{
-		S3:       &s3Mock,
+		S3:       s3Mock,
 		PartSize: 32,
 	}
 	rc := dl.Download(context.Background(), &s3.GetObjectInput{})
