@@ -102,7 +102,7 @@ func (api *API) GetAlert(input *models.GetAlertInput) (*models.GetAlertOutput, e
 	}
 
 	alertSummary := utils.AlertItemToSummary(alertItem, alertRule)
-	
+
 	return &models.Alert{
 		AlertSummary:           *alertSummary,
 		Events:                 aws.StringSlice(events),

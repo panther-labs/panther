@@ -154,6 +154,7 @@ func (s *S3Search) queryPage(ctx context.Context, objects []*s3.Object) ([]*S3Se
 
 	// wait for workers to write everything into resultChan
 	if err := workerGroup.Wait(); err != nil {
+		close(resultChan)
 		return nil, err
 	}
 
