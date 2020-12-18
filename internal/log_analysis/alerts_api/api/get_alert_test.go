@@ -187,7 +187,7 @@ func TestGetRuleAlert(t *testing.T) {
 	page = &s3.ListObjectsV2Output{}
 
 	api.mockTable.On("GetAlert", "alertId").Return(alertItem, nil).Once()
-	api.mockS3.On("SelectObjectContentWithContext", mock.Anything, mock.Anything, mock.Anything).
+	api.mockS3.On("SelectObjectContentWithContext", mock.Anything, expectedSelectObjectInput, mock.Anything).
 		Return(noopSelectObjectOutput, nil).Once()
 	api.mockS3.On("ListObjectsV2PagesWithContext", mock.Anything, expectedPagedListObjectsRequest, mock.Anything, mock.Anything).
 		Return(page, nil).Once()
