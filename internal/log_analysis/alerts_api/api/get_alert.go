@@ -206,6 +206,9 @@ func (api *API) getEventsForLogType(
 		outEvents = append(outEvents, searchResult.events...)
 		outToken.EventIndex = searchResult.lastEventIndex
 		outToken.S3ObjectKey = searchResult.lastS3ObjectKey
+		if len(outEvents) >= maxResults {
+			break
+		}
 	}
 	return outEvents, &outToken, nil
 }

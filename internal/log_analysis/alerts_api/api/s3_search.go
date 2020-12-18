@@ -66,7 +66,7 @@ func newS3Search(client s3iface.S3API, list *s3.ListObjectsV2Input, alert *table
 // It will retrieve results by query each S3 object in parallel, using S3 Select
 func (s *S3Search) Do(ctx context.Context) (*S3SearchResult, error) {
 	var paginationErr error
-	var out S3SearchResult
+	out := &S3SearchResult{}
 	out.lastS3ObjectKey = aws.StringValue(s.list.StartAfter)
 	err := s.client.ListObjectsV2PagesWithContext(ctx, s.list, func(output *s3.ListObjectsV2Output, lastPage bool) bool {
 		results, err := s.queryPage(ctx, output.Contents)
@@ -93,7 +93,7 @@ func (s *S3Search) Do(ctx context.Context) (*S3SearchResult, error) {
 	if paginationErr != nil {
 		return nil, paginationErr
 	}
-	return &out, nil
+	return out, nil
 }
 
 func (s *S3Search) queryPage(ctx context.Context, objects []*s3.Object) ([]*S3SelectResult, error) {

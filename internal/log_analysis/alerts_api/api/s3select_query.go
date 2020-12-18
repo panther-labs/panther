@@ -55,7 +55,7 @@ type Event struct {
 // 2. The index of the last event returned. This will be used as a pagination token - future queries to the same S3 object can start listing
 // after that.
 func (s *S3Select) Query(ctx context.Context) (*S3SelectResult, error) {
-	out := S3SelectResult{
+	out := &S3SelectResult{
 		objectKey: s.objectKey,
 	}
 	// nolint:gosec
@@ -113,7 +113,7 @@ func (s *S3Select) Query(ctx context.Context) (*S3SelectResult, error) {
 		result = append(result, Event{index: currentIndex, payload: record})
 	}
 	out.events = result
-	return &out, nil
+	return out, nil
 }
 
 // Same  as above, but writes the results in a channel

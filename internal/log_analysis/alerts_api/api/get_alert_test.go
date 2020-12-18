@@ -56,7 +56,10 @@ func TestGetRuleAlert(t *testing.T) {
 
 	// The S3 object keys returned by S3 List objects command
 	page := &s3.ListObjectsV2Output{
-		Contents: []*s3.Object{{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/rule_id=ruleId/20200101T010100Z-uuid4.json.gz")}}, // nolint:lll
+		Contents: []*s3.Object{
+			{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/rule_id=ruleId/20200101T010100Z-uuid4.json.gz")},
+			{Key: aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/rule_id=ruleId/20200101T010101Z-uuid4.json.gz")},
+		}, // nolint:lll
 	}
 
 	input := &models.GetAlertInput{
@@ -130,6 +133,8 @@ func TestGetRuleAlert(t *testing.T) {
 		Return(page, nil).Once()
 
 	api.mockS3.On("SelectObjectContentWithContext", mock.Anything, expectedSelectObjectInput, mock.Anything).
+		Return(selectObjectOutput, nil).Once()
+	api.mockS3.On("SelectObjectContentWithContext", mock.Anything, mock.Anything, mock.Anything).
 		Return(selectObjectOutput, nil).Once()
 	mockS3EventReader.On("Events").Return(eventChannel)
 	mockS3EventReader.On("Err").Return(nil)
