@@ -317,16 +317,16 @@ func TestSendAlertsTimeout(t *testing.T) {
 	ctx := context.Background()
 	deadline := time.Now()
 	expiredCtx, cancel := context.WithDeadline(ctx, deadline)
-	// Instead of waiting on timers, we will just cancel it immediately
-	cancel()
+	// Defer cancelling until the end of the test as best practice.
+	defer cancel()
 
-	// Overwrite the global buffer so the test can complete sooner.
+	// Overwrite the global buffer for this test.
 	// Remember, this buffer represents a soft deadline
 	// so that the lambda has enough time to exit successfully.
 	//
-	// lambda invocation   soft deadline              hard deadline
-	// |----------7 secs-----------|--------< buffer, 3 secs >---------|
-	softDeadlineDuration = 3 * time.Second
+	// lambda invocation   soft deadline         hard deadline
+	// |-------------------------|--------< buffer >---------|
+	softDeadlineDuration = 30 * time.Second
 
 	// set up our slow Slack mock
 	mockSlowOutputClient.On("Slack", mock.Anything, mock.Anything, mock.Anything).Return(slowResponse).Maybe()
@@ -462,11 +462,12 @@ func TestSendAlertsSuccess(t *testing.T) {
 	// to simulate one with a deadline attached that WILL NOT expire
 	// while running `mage test:go`
 	ctx := context.Background()
-	deadline := time.Now().Add(1 * time.Hour)
+	deadline := time.Now().Add(10 * time.Minute)
 	expiredCtx, cancel := context.WithDeadline(ctx, deadline)
+	// Defer cancelling until the end of the test as best practice.
 	defer cancel()
 
-	// Overwrite the global buffer so the test can complete sooner.
+	// Overwrite the global buffer for this test.
 	// Remember, this buffer represents a soft deadline
 	// so that the lambda has enough time to exit successfully.
 	//
