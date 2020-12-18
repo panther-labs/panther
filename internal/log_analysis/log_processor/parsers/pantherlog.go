@@ -69,8 +69,12 @@ type PantherLog struct {
 type PantherAnyString []string
 
 func (any PantherAnyString) MarshalJSON() ([]byte, error) {
-	sort.Strings(any)
-	return jsoniter.Marshal([]string(any))
+	// The safe way to do this is to clone.
+	// MarshalJSON is not supposed to be altering the value.
+	// If we used stringset.Dedup + sort.Strings we could corrupt the input slice.
+	values := stringset.New(any...)
+	sort.Strings(values)
+	return jsoniter.Marshal(values)
 }
 
 // Event returns event data, used when composed
