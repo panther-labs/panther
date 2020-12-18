@@ -39,7 +39,6 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
-	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
 const (
@@ -71,12 +70,20 @@ func (api *API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOu
 		if err != nil {
 			return nil, err
 		}
+		zap.L().Info("GetAlert paging",
+			zap.Int("pageSize", *input.EventsPageSize),
+			zap.Any("token", *token))
 	}
 
 	var events []string
 	for _, logType := range alertItem.LogTypes {
 		// Each alert can contain events from multiple log types.
 		// Retrieve results from each log type.
+		if  logTypeToken, found := token.LogTypeToToken[logType]; found {
+			if logTypeToken.EventIndex == -1 { // if -1 then already searched this logType completely
+				continue
+			}
+		}
 
 		// We only need to retrieve as many returns as to fit the EventsPageSize given by the user
 		eventsToReturn := *input.EventsPageSize - len(events)
@@ -102,8 +109,8 @@ func (api *API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOu
 	// TODO: We should hit the rule cache ONLY for "old" alerts and only for alerts related to Rules or Rules errors
 	alertRule, err := api.ruleCache.Get(alertItem.RuleID, alertItem.RuleVersion)
 	if err != nil {
-		zap.L().Warn("failed to get rule with ID", zap.Any("rule id", alertItem.RuleID),
-			zap.Any("rule version", alertItem.RuleVersion), zap.Any("error", err))
+		return nil, errors.Wrapf(err, "failed to get rule with ID %s (version %s)",
+			alertItem.RuleID, alertItem.RuleVersion)
 	}
 
 	alertSummary := utils.AlertItemToSummary(alertItem, alertRule)
@@ -114,7 +121,12 @@ func (api *API) GetAlert(input *models.GetAlertInput) (result *models.GetAlertOu
 		EventsLastEvaluatedKey: &encodedToken,
 	}
 
-	genericapi.ReplaceMapSliceNils(result)
+	zap.L().Info("GetAlert",
+		zap.Int("pageSize", *input.EventsPageSize),
+		zap.Any("token", *token),
+		zap.Any("events", events),
+		zap.Int("nevents", len(events)))
+
 	return result, nil
 }
 
@@ -141,7 +153,6 @@ func (api *API) getEventsForLogType(
 		if s3SelectResult.err != nil {
 			return nil, resultToken, s3SelectResult.err
 		}
-		result = append(result, s3SelectResult.events...)
 		// start iterating over the partitions here
 		gluePartition, err := awsglue.PartitionFromS3Object(api.env.ProcessedDataBucket, token.S3ObjectKey)
 		if err != nil {
@@ -151,8 +162,19 @@ func (api *API) getEventsForLogType(
 		// updating index in token with index of last event returned
 		resultToken.S3ObjectKey = token.S3ObjectKey
 		resultToken.EventIndex = s3SelectResult.lastEventIndex
-		if len(result) >= maxResults {
-			return result, resultToken, nil
+		// done?
+		if len(result) + len(s3SelectResult.events) >= maxResults {
+			// clip, don't got over!
+			events := s3SelectResult.events
+			numOver := len(result) + len(events) - maxResults
+			if numOver > 0 {
+				events = events[0:numOver]
+				resultToken.EventIndex = s3SelectResult.lastEventIndex - numOver
+			}
+			result = append(result, events...)
+			return result, resultToken,nil
+		} else {
+			result = append(result, s3SelectResult.events...)
 		}
 	}
 
@@ -190,23 +212,39 @@ func (api *API) getEventsForLogType(
 		// collect results for this hour
 		s3Search.wait()
 
-		for _, s3SelectResult := range s3Search.s3SelectEventsFound {
+		for _, s3SelectResult := range s3Search.s3SelectResultsFound {
 			if s3SelectResult.err != nil {
 				return nil, resultToken, s3SelectResult.err
 			}
-			result = append(result, s3SelectResult.events...)
+
 			resultToken.EventIndex = s3SelectResult.lastEventIndex
 			resultToken.S3ObjectKey = s3SelectResult.objectKey
-			if len(result) >= maxResults {
-				break
+
+			// done?
+			if len(result) + len(s3SelectResult.events) >= maxResults {
+				// clip, don't go over!
+				events := s3SelectResult.events
+				numOver := len(result) + len(events) - maxResults
+				if numOver > 0 {
+					events = events[0:len(events)-numOver]
+					resultToken.EventIndex = s3SelectResult.lastEventIndex - numOver
+				}
+				result = append(result, events...)
+
+				return result, resultToken,nil
+			} else {
+				result = append(result, s3SelectResult.events...)
 			}
 		}
 	}
+	// if we a here we have finished the log type but there is more space in the page
+	resultToken.EventIndex = -1 // mark as complete
 	return result, resultToken, nil
 }
 
 type s3Search struct {
 	api *API
+	maxResults int
 
 	s3SelectListChan         chan struct{} // used to signal the listing that it can stop
 	s3SelectQueryChan        chan *s3SelectQuery
@@ -215,13 +253,14 @@ type s3Search struct {
 	s3SelectTotalEventsFound uint32
 
 	s3SelectCollectWaitGroup sync.WaitGroup
-	s3SelectEventsFound      []*s3SelectResult
+	s3SelectResultsFound     []*s3SelectResult
 }
 
 func (api *API) newS3Search(listRequest *s3.ListObjectsV2Input, alert *table.AlertItem, maxResults int) (search *s3Search, err error) {
 	search = &s3Search{
 		api:                api,
-		s3SelectListChan:   make(chan struct{}, 1),
+		maxResults: maxResults,
+		s3SelectListChan:   make(chan struct{}, s3SelectConcurrency), // one for each go routine so they can write and exit
 		s3SelectQueryChan:  make(chan *s3SelectQuery, s3SelectQueryBuffer),
 		s3SelectResultChan: make(chan *s3SelectResult, s3SelectQueryBuffer),
 	}
@@ -247,7 +286,7 @@ func (api *API) newS3Search(listRequest *s3.ListObjectsV2Input, alert *table.Ale
 	search.s3SelectCollectWaitGroup.Add(1)
 	go func() {
 		for s3SelectResult := range search.s3SelectResultChan {
-			search.s3SelectEventsFound = append(search.s3SelectEventsFound, s3SelectResult)
+			search.s3SelectResultsFound = append(search.s3SelectResultsFound, s3SelectResult)
 		}
 		search.s3SelectCollectWaitGroup.Done()
 	}()
@@ -263,8 +302,8 @@ func (search *s3Search) wait() {
 	search.s3SelectCollectWaitGroup.Wait()
 
 	// object keys are ordered but they can be returned in any order in the slice, so sort
-	sort.Slice(search.s3SelectEventsFound, func(i, j int) bool {
-		return search.s3SelectEventsFound[i].objectKey > search.s3SelectEventsFound[j].objectKey
+	sort.Slice(search.s3SelectResultsFound, func(i, j int) bool {
+		return search.s3SelectResultsFound[i].objectKey > search.s3SelectResultsFound[j].objectKey
 	})
 }
 
@@ -335,24 +374,19 @@ type s3SelectResult struct {
 // 2. The index of the last event returned. This will be used as a pagination token - future queries to the same S3 object can start listing
 // after that.
 func (api *API) queryS3Object(s3SelectQuery *s3SelectQuery) (s3SelectResult s3SelectResult) {
-	key := s3SelectQuery.objectKey
-	alertID := s3SelectQuery.alertID
-	exclusiveStartIndex := s3SelectQuery.exclusiveStartIndex
-	maxResults := s3SelectQuery.maxResults
-
 	s3SelectResult.objectKey = s3SelectQuery.objectKey
 
 	// nolint:gosec
 	// The alertID is an MD5 hash. AlertsAPI is performing the appropriate validation
-	query := fmt.Sprintf("SELECT * FROM S3Object o WHERE o.p_alert_id='%s'", alertID)
+	query := fmt.Sprintf("SELECT * FROM S3Object o WHERE o.p_alert_id='%s'", s3SelectQuery.alertID)
 
 	zap.L().Debug("querying object using S3 Select",
-		zap.String("S3ObjectKey", key),
+		zap.String("S3ObjectKey", s3SelectQuery.objectKey),
 		zap.String("query", query),
-		zap.Int("index", exclusiveStartIndex))
+		zap.Int("index", s3SelectQuery.exclusiveStartIndex))
 	input := &s3.SelectObjectContentInput{
 		Bucket: &api.env.ProcessedDataBucket,
-		Key:    &key,
+		Key:    &s3SelectQuery.objectKey,
 		InputSerialization: &s3.InputSerialization{
 			CompressionType: aws.String(s3.CompressionTypeGzip),
 			JSON:            &s3.JSONInput{Type: aws.String(s3.JSONTypeLines)},
@@ -392,11 +426,11 @@ func (api *API) queryS3Object(s3SelectQuery *s3SelectQuery) (s3SelectResult s3Se
 		if record == "" {
 			continue
 		}
-		if len(result) >= maxResults { // if we have received max results no need to get more events
+		if len(result) >= s3SelectQuery.maxResults { // if we have received max results no need to get more events
 			break
 		}
 		currentIndex++
-		if currentIndex <= exclusiveStartIndex { // we want to skip the results prior to exclusiveStartIndex
+		if currentIndex <= s3SelectQuery.exclusiveStartIndex { // we want to skip the results prior to exclusiveStartIndex
 			continue
 		}
 		result = append(result, record)
