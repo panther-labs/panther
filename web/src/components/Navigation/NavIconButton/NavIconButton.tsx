@@ -29,6 +29,7 @@ const NavIconButton: React.FC<NavIconButtonProps> = ({ icon, active, tooltipLabe
     <IconButton
       {...rest}
       variant="ghost"
+      variantBorderStyle="circle"
       size="medium"
       icon={icon}
       active={active}
