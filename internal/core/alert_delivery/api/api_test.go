@@ -51,7 +51,7 @@ type mockSlowOutputsClient struct {
 }
 
 func (m *mockSlowOutputsClient) Slack(
-	ctx aws.Context,
+	ctx context.Context,
 	alert *deliveryModels.Alert,
 	config *outputModels.SlackConfig,
 ) *outputs.AlertDeliveryResponse {
