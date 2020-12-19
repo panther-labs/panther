@@ -21,8 +21,6 @@
 
 resource "aws_sns_topic" "panther_events" {
   name = var.sns_topic_name
-
-  tags = var.tags
 }
 
 resource "aws_sns_topic_policy" "panther_events" {
