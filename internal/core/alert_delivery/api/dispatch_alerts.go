@@ -82,7 +82,7 @@ func getAlerts(input []*deliveryModels.DispatchAlertsInput) []*deliveryModels.Al
 	return alerts
 }
 
-// getAlertOutputMap - maps a list of alerts to their specified override outputs or defaults
+// getAlertOutputMap - maps a list of alerts to their specified destinations or defaults
 func getAlertOutputMap(alerts []*deliveryModels.Alert) (AlertOutputMap, error) {
 	// Create our Alert -> Output mappings
 	alertOutputMap := make(AlertOutputMap)
@@ -112,7 +112,7 @@ func filterDispatches(dispatchStatuses []DispatchStatus) ([]DispatchStatus, []Di
 
 // getAlertsToRetry - finds failed deliveries and generates a list of alerts that need to be retried.
 //
-// Note: If a single alert had 10 outputs (overrides -or- default outputs) and
+// Note: If a single alert had 10 outputs (destinations -or- default outputs) and
 // failed to be delivered to 3 of them, this function will return a list
 // containing 3 alerts (in this case, the same alert) each with its outputIds
 // list containing only the specific failed outputId.

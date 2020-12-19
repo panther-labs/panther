@@ -20,7 +20,7 @@ from collections.abc import Mapping
 from typing import Any, Dict, Optional, List
 
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes,unsubscriptable-object
 @dataclass
 class EngineResult:
     """Represents an event that matched a rule"""
@@ -34,8 +34,14 @@ class EngineResult:
     error_message: Optional[str] = None
     rule_tags: List[str] = field(default_factory=list)
     rule_reports: Dict[str, List[str]] = field(default_factory=dict)
-    title: Optional[str] = None
     alert_context: Optional[str] = None
+    # generated fields
+    title: Optional[str] = None
+    description: Optional[str] = None
+    reference: Optional[str] = None
+    severity: Optional[str] = None
+    runbook: Optional[str] = None
+    destinations: Optional[List[str]] = None
 
 
 @dataclass

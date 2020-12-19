@@ -120,7 +120,7 @@ const GenericItemCardOptionsButton = React.forwardRef<HTMLButtonElement>(functio
 
 const GenericItemCardDate: React.FC<GenericItemCardDate> = ({ date, ...rest }) => {
   return (
-    <Text fontSize="small" as="span" color="gray-500" {...rest}>
+    <Text fontSize="small" as="span" color="navyblue-100" {...rest}>
       {date}
     </Text>
   );
@@ -130,7 +130,7 @@ const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, valu
   const cardId = id || slugify(`${label}${value}`);
 
   return (
-    <Box as="dl" my={2}>
+    <Flex direction="column" as="dl" mt={2}>
       {label && (
         <Box
           as="dt"
@@ -144,17 +144,18 @@ const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, valu
       )}
       <Box
         as="dd"
+        display="inline-flex"
+        flexGrow={1}
         aria-labelledby={cardId}
         fontSize="medium"
         fontWeight="medium"
         opacity={value ? 1 : 0.3}
-        display="inline-flex"
         alignItems="center"
         minHeight={24}
       >
         {value || 'Not Set'}
       </Box>
-    </Box>
+    </Flex>
   );
 };
 const GenericItemCardLink: React.FC<GenericItemCardLinkProps> = ({ to, ...rest }) => {
@@ -180,7 +181,7 @@ const GenericItemCardLineBreak: React.FC = () => <Box flexBasis="100%" height={0
 
 GenericItemCard.Body = GenericItemCardBody;
 GenericItemCard.Header = GenericItemCardHeader;
-GenericItemCard.Link = GenericItemCardLink;
+GenericItemCard.Link = React.memo(GenericItemCardLink);
 GenericItemCard.Heading = GenericItemCardHeading;
 GenericItemCard.Logo = GenericItemCardLogo;
 GenericItemCard.OptionsButton = GenericItemCardOptionsButton;

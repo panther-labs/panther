@@ -24,15 +24,14 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	rulemodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
 var (
 	timeInTest = time.Now()
-
 	alertItems = []*table.AlertItem{
 		{
 			RuleID:            "ruleId",
@@ -43,13 +42,18 @@ var (
 			Severity:          "INFO",
 			DedupString:       "dedupString",
 			LogTypes:          []string{"AWS.CloudTrail"},
+			ResourceTypes:     []string{"AWS.ResourceType"},
+			ResourceID:        "resourceId",
 			EventCount:        100,
 			RuleVersion:       "ruleVersion",
 			RuleDisplayName:   aws.String("ruleDisplayName"),
-			Title:             aws.String("title"),
+			Title:             "title",
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
 			DeliveryResponses: []*models.DeliveryResponse{},
+			Description:       aws.String("description"),
+			Reference:         aws.String("reference"),
+			Runbook:           aws.String("runbook"),
 		},
 	}
 
@@ -68,15 +72,20 @@ var (
 			EventsMatched:     aws.Int(100),
 			Title:             aws.String("title"),
 			LogTypes:          []string{"AWS.CloudTrail"},
+			ResourceTypes:     []string{"AWS.ResourceType"},
+			ResourceID:        "resourceId",
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
 			DeliveryResponses: []*models.DeliveryResponse{},
+			Description:       "description",
+			Reference:         "reference",
+			Runbook:           "runbook",
 		},
 	}
 )
 
 func TestListAlertsForRule(t *testing.T) {
-	tableMock := &tableMock{}
+	api := initTestAPI()
 
 	input := &models.ListAlertsInput{
 		RuleID:            aws.String("ruleId"),
@@ -86,22 +95,22 @@ func TestListAlertsForRule(t *testing.T) {
 		Severity:          []string{"INFO"},
 	}
 
-	tableMock.On("ListAll", input).
+	api.mockTable.On("ListAll", input).
 		Return(alertItems, aws.String("lastKey"), nil)
-	api := API{
-		alertsDB: tableMock,
-	}
+	api.mockRuleCache.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
+
 	result, err := api.ListAlerts(input)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, &models.ListAlertsOutput{
 		Alerts:           expectedAlertSummary,
 		LastEvaluatedKey: aws.String("lastKey"),
 	}, result)
+	api.AssertExpectations(t)
 }
 
 func TestListAllAlerts(t *testing.T) {
-	tableMock := &tableMock{}
+	api := initTestAPI()
 
 	input := &models.ListAlertsInput{
 		PageSize:          aws.Int(10),
@@ -115,25 +124,24 @@ func TestListAllAlerts(t *testing.T) {
 		CreatedAtBefore:   aws.Time(time.Now()),
 		SortDir:           aws.String("ascending"),
 	}
+	api.mockTable.On("ListAll", input).Return(alertItems, aws.String("lastKey"), nil)
 
-	tableMock.On("ListAll", input).
-		Return(alertItems, aws.String("lastKey"), nil)
-	api := API{
-		alertsDB: tableMock,
-	}
+	api.mockRuleCache.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil)
+
 	result, err := api.ListAlerts(input)
-	require.NoError(t, err)
-
+	assert.NoError(t, err)
 	assert.Equal(t, &models.ListAlertsOutput{
 		Alerts:           expectedAlertSummary,
 		LastEvaluatedKey: aws.String("lastKey"),
 	}, result)
+	api.AssertExpectations(t)
 }
 
 // Verifies backwards compatibility
 // Verifies that API returns correct results when alert title is not specified
 func TestListAllAlertsWithoutTitle(t *testing.T) {
-	tableMock := &tableMock{}
+	t.Parallel()
+	api := initTestAPI()
 
 	alertItems := []*table.AlertItem{
 		{
@@ -145,10 +153,15 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			Severity:          "INFO",
 			DedupString:       "dedupString",
 			LogTypes:          []string{"AWS.CloudTrail"},
+			ResourceTypes:     []string{"AWS.ResourceType"},
+			ResourceID:        "resourceId",
 			EventCount:        100,
 			RuleVersion:       "ruleVersion",
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
+			Description:       aws.String("description"),
+			Reference:         aws.String("reference"),
+			Runbook:           aws.String("runbook"),
 		},
 		{ // Alert with Display Name for rule
 			RuleID:            "ruleId",
@@ -159,11 +172,16 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			Severity:          "INFO",
 			DedupString:       "dedupString",
 			LogTypes:          []string{"AWS.CloudTrail"},
+			ResourceTypes:     []string{"AWS.ResourceType"},
+			ResourceID:        "resourceId",
 			EventCount:        100,
 			RuleVersion:       "ruleVersion",
 			RuleDisplayName:   aws.String("ruleDisplayName"),
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
+			Description:       aws.String("description"),
+			Reference:         aws.String("reference"),
+			Runbook:           aws.String("runbook"),
 		},
 	}
 
@@ -181,9 +199,14 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			EventsMatched:     aws.Int(100),
 			Title:             aws.String("ruleId"),
 			LogTypes:          []string{"AWS.CloudTrail"},
+			ResourceTypes:     []string{"AWS.ResourceType"},
+			ResourceID:        "resourceId",
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
 			DeliveryResponses: []*models.DeliveryResponse{},
+			Description:       "description",
+			Reference:         "reference",
+			Runbook:           "runbook",
 		},
 		{
 			RuleID:          aws.String("ruleId"),
@@ -201,9 +224,14 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 			// we return the display name
 			Title:             aws.String("ruleDisplayName"),
 			LogTypes:          []string{"AWS.CloudTrail"},
+			ResourceTypes:     []string{"AWS.ResourceType"},
+			ResourceID:        "resourceId",
 			LastUpdatedBy:     "userId",
 			LastUpdatedByTime: timeInTest,
 			DeliveryResponses: []*models.DeliveryResponse{},
+			Description:       "description",
+			Reference:         "reference",
+			Runbook:           "runbook",
 		},
 	}
 
@@ -212,16 +240,17 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 		ExclusiveStartKey: aws.String("startKey"),
 	}
 
-	tableMock.On("ListAll", input).
-		Return(alertItems, aws.String("lastKey"), nil)
-	api := API{
-		alertsDB: tableMock,
-	}
-	result, err := api.ListAlerts(input)
-	require.NoError(t, err)
+	// Mock what is returned from DDB
+	api.mockTable.On("ListAll", input).Return(alertItems, aws.String("lastKey"), nil)
 
+	api.mockRuleCache.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
+
+	result, err := api.ListAlerts(input)
+	assert.NoError(t, err)
 	assert.Equal(t, &models.ListAlertsOutput{
 		Alerts:           expectedAlertSummary,
 		LastEvaluatedKey: aws.String("lastKey"),
 	}, result)
+
+	api.AssertExpectations(t)
 }

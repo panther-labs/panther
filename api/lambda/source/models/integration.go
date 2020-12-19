@@ -19,7 +19,13 @@ package models
  */
 
 import (
+	"fmt"
+	"strings"
 	"time"
+
+	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 // SourceIntegration represents a Panther integration with a source.
@@ -45,42 +51,104 @@ type SourceIntegrationScanInformation struct {
 
 // SourceIntegrationMetadata is general settings and metadata for an integration.
 type SourceIntegrationMetadata struct {
-	AWSAccountID       string     `json:"awsAccountId,omitempty"`
-	CreatedAtTime      time.Time  `json:"createdAtTime,omitempty"`
-	CreatedBy          string     `json:"createdBy,omitempty"`
-	IntegrationID      string     `json:"integrationId,omitempty"`
-	IntegrationLabel   string     `json:"integrationLabel,omitempty"`
-	IntegrationType    string     `json:"integrationType,omitempty"`
-	RemediationEnabled *bool      `json:"remediationEnabled,omitempty"`
-	CWEEnabled         *bool      `json:"cweEnabled,omitempty"`
-	ScanIntervalMins   int        `json:"scanIntervalMins,omitempty"`
-	S3Bucket           string     `json:"s3Bucket,omitempty"`
-	S3Prefix           string     `json:"s3Prefix,omitempty"`
-	KmsKey             string     `json:"kmsKey,omitempty"`
-	LogTypes           []string   `json:"logTypes,omitempty"`
-	LogProcessingRole  string     `json:"logProcessingRole,omitempty"`
-	StackName          string     `json:"stackName,omitempty"`
-	SqsConfig          *SqsConfig `json:"sqsConfig,omitempty"`
+	AWSAccountID       string    `json:"awsAccountId,omitempty"`
+	CreatedAtTime      time.Time `json:"createdAtTime,omitempty"`
+	CreatedBy          string    `json:"createdBy,omitempty"`
+	IntegrationID      string    `json:"integrationId,omitempty"`
+	IntegrationLabel   string    `json:"integrationLabel,omitempty"`
+	IntegrationType    string    `json:"integrationType,omitempty"`
+	RemediationEnabled *bool     `json:"remediationEnabled,omitempty"`
+	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
+	ScanIntervalMins   int       `json:"scanIntervalMins,omitempty"`
+
+	// fields specific for an s3 integration (plus AWSAccountID, StackName)
+	S3Bucket          string           `json:"s3Bucket,omitempty"`
+	S3PrefixLogTypes  S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty"`
+	KmsKey            string           `json:"kmsKey,omitempty"`
+	LogProcessingRole string           `json:"logProcessingRole,omitempty"`
+
+	StackName string `json:"stackName,omitempty"`
+
+	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }
 
-func (info *SourceIntegration) RequiredLogTypes() (logTypes []string) {
-	// We use a switch to avoid git conflicts with enterprise
-	switch {
-	case info.SqsConfig != nil:
-		return info.SqsConfig.LogTypes
+// S3PrefixLogtypesMapping contains the logtypes Panther should parse for this s3 prefix.
+type S3PrefixLogtypesMapping struct {
+	S3Prefix string   `json:"prefix"`
+	LogTypes []string `json:"logTypes" validate:"required,min=1"`
+}
+
+type S3PrefixLogtypes []S3PrefixLogtypesMapping
+
+func (pl S3PrefixLogtypes) LogTypes() []string {
+	var logTypes []string
+	for _, m := range pl {
+		logTypes = stringset.Append(logTypes, m.LogTypes...)
+	}
+	return logTypes
+}
+
+func (pl S3PrefixLogtypes) S3Prefixes() []string {
+	prefixes := make([]string, len(pl))
+	for i, m := range pl {
+		prefixes[i] = m.S3Prefix
+	}
+	return prefixes
+}
+
+// Return the S3PrefixLogtypesMapping whose prefix is the longest one that matches the objectKey.
+func (pl S3PrefixLogtypes) LongestPrefixMatch(objectKey string) (bestMatch S3PrefixLogtypesMapping, matched bool) {
+	for _, m := range pl {
+		if strings.HasPrefix(objectKey, m.S3Prefix) && len(m.S3Prefix) >= len(bestMatch.S3Prefix) {
+			bestMatch = m
+			matched = true
+		}
+	}
+	return bestMatch, matched
+}
+
+// Note: Don't use this for classification as the S3 source has different
+// log types per prefix defined.
+func (s *SourceIntegration) RequiredLogTypes() (logTypes []string) {
+	switch s.IntegrationType {
+	case IntegrationTypeAWSScan:
+		return logtypes.CollectNames(snapshotlogs.LogTypes())
+	case IntegrationTypeAWS3:
+		return s.S3PrefixLogTypes.LogTypes()
+	case IntegrationTypeSqs:
+		return s.SqsConfig.LogTypes
 	default:
-		return info.LogTypes
+		// should not be reached
+		panic(fmt.Sprintf("Could not determine logtypes for source {id:%s label:%s type:%s}",
+			s.IntegrationID, s.IntegrationLabel, s.IntegrationType))
 	}
 }
 
-func (info *SourceIntegration) IsLogAnalysisIntegration() bool {
-	switch integType := info.IntegrationType; integType {
-	case IntegrationTypeAWSScan:
-		return false
-	case IntegrationTypeAWS3, IntegrationTypeSqs:
-		return true
+func (s *SourceIntegration) RequiredLogProcessingRole() string {
+	switch typ := s.IntegrationType; typ {
+	case IntegrationTypeAWS3, IntegrationTypeAWSScan:
+		return s.LogProcessingRole
+	case IntegrationTypeSqs:
+		return s.SqsConfig.LogProcessingRole
 	default:
-		panic("Unexpected integration type " + integType)
+		panic("Unknown type " + typ)
+	}
+}
+
+// Return the s3 bucket and prefixes configured to hold input data for this source.
+// For an s3 source, bucket and prefixes are user inputs.
+func (s *SourceIntegration) S3Info() (bucket string, prefixes []string) {
+	switch s.IntegrationType {
+	case IntegrationTypeAWSScan:
+		return s.S3Bucket, []string{"cloudsecurity"}
+	case IntegrationTypeAWS3:
+		return s.S3Bucket, s.S3PrefixLogTypes.S3Prefixes()
+	case IntegrationTypeSqs:
+		return s.SqsConfig.S3Bucket, []string{"forwarder"}
+	default:
+		// should not be reached
+		panic(fmt.Sprintf("Could not determine s3 info for source {id:%s label:%s type:%s}",
+			s.IntegrationID, s.IntegrationLabel, s.IntegrationType))
 	}
 }
 
@@ -112,9 +180,6 @@ type SourceIntegrationTemplate struct {
 	StackName string `json:"stackName"`
 }
 
-// The S3 Prefix where the SQS data will be stored
-const SqsS3Prefix = "forwarder"
-
 type SqsConfig struct {
 	// The log types associated with the source. Needs to be set by UI.
 	LogTypes []string `json:"logTypes" validate:"required,min=1"`
@@ -125,8 +190,6 @@ type SqsConfig struct {
 
 	// The Panther-internal S3 bucket where the data from this source will be available
 	S3Bucket string `json:"s3Bucket"`
-	// The S3 prefix where the data from this source will be available
-	S3Prefix string `json:"s3Prefix"`
 	// The Role that the log processor can use to access this data
 	LogProcessingRole string `json:"logProcessingRole"`
 	// THe URL of the SQS queue

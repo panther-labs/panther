@@ -17,27 +17,30 @@
  */
 
 import React from 'react';
-import uniqBy from 'lodash/uniqBy';
 import sortBy from 'lodash/sortBy';
 import { Flex, Img, Text, Spinner, Box } from 'pouncejs';
 import { DESTINATIONS } from 'Source/constants';
 import { Destination } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
-import NotificationJewel from 'Components/NotificationJewel';
+import LimitItemDisplay from 'Components/LimitItemDisplay';
 
-const size = 18;
+const LOGO_SIZE = 18;
 
-const getLogo = ({ outputType, outputId }) => {
+const getLogo = ({
+  outputType,
+  outputId,
+  displayName,
+}: Pick<Destination, 'outputType' | 'outputId' | 'displayName'>) => {
   const { logo } = DESTINATIONS[outputType];
   return (
     <Img
       key={outputId}
       alt={`${outputType} logo`}
       src={logo}
-      nativeWidth={size}
-      nativeHeight={size}
-      mr={2}
+      title={displayName}
+      nativeWidth={LOGO_SIZE}
+      nativeHeight={LOGO_SIZE}
     />
   );
 };
@@ -54,58 +57,45 @@ const RelatedDestinations: React.FC<RelatedDestinationsSectionProps> = ({
   verbose = false,
   limit = 3,
 }) => {
+  const sortedDestinations = React.useMemo(() => sortBy(destinations, d => d.outputType), [
+    destinations,
+  ]);
+
   if (loading) {
     return (
-      <Box height={size}>
+      <Box height={LOGO_SIZE}>
         <Spinner size="small" />
       </Box>
     );
+  }
+
+  if (!sortedDestinations.length) {
+    return <Text opacity={0.3}>Not configured</Text>;
   }
 
   // If component is verbose, we should render all destinations as row with the name of destination displayed
   if (verbose) {
     return (
       <RRLink to={urls.settings.destinations.list()}>
-        {destinations.map(destination => (
-          <Flex key={destination.outputId} align="center" mb={2}>
-            {getLogo(destination)}
-            {destination.displayName}
-          </Flex>
-        ))}
+        <Flex inline direction="column" spacing={2}>
+          <LimitItemDisplay limit={limit}>
+            {sortedDestinations.map(destination => (
+              <Flex key={destination.outputId} align="center" spacing={2}>
+                {getLogo(destination)}
+                <Box as="span">{destination.displayName}</Box>
+              </Flex>
+            ))}
+          </LimitItemDisplay>
+        </Flex>
       </RRLink>
-    );
-  }
-
-  // Else we should render destinations based if they are unique, in a column without the display name
-  // Identifying unique destinations by outputType
-  const uniqueDestinations = sortBy(uniqBy(destinations, 'outputType'), d => d.outputType);
-
-  /*
-   * Using unique destinations here so we dont render multiple logo of the same type.
-   *  i.e. If an alerts has only 2 different slack destinations will render Slack logo once
-   */
-  if (destinations.length - uniqueDestinations.length > 0) {
-    // Limiting rendered destinations logos to 3
-    const renderedDestinations = uniqueDestinations.slice(0, limit);
-    // Showcasing how many additional destinations exist for this alert
-    const numberOfExtraDestinations = destinations.length - renderedDestinations.length;
-    return (
-      <Flex align="center" minWidth={85} spacing={2}>
-        {renderedDestinations.map(getLogo)}
-        <NotificationJewel badge={`+${numberOfExtraDestinations}`} />
-      </Flex>
     );
   }
 
   return (
     <Flex align="center" minWidth={85} spacing={2}>
-      {destinations.length ? (
-        destinations.map(getLogo)
-      ) : (
-        <Text fontSize="small">Not configured</Text>
-      )}
+      <LimitItemDisplay limit={limit}>{sortedDestinations.map(getLogo)}</LimitItemDisplay>
     </Flex>
   );
 };
 
-export default RelatedDestinations;
+export default React.memo(RelatedDestinations);

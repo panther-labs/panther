@@ -37,11 +37,12 @@ func TestAsanaAlert(t *testing.T) {
 	createdAtTime, err := time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
 	require.NoError(t, err)
 	alert := &alertModels.Alert{
+		AlertID:             aws.String("alertId"),
 		AnalysisID:          "ruleId",
 		Type:                alertModels.PolicyType,
 		CreatedAt:           createdAtTime,
 		OutputIds:           []string{"output-id"},
-		AnalysisDescription: aws.String("description"),
+		AnalysisDescription: "description",
 		AnalysisName:        aws.String("policy_name"),
 		Severity:            "INFO",
 		Context:             map[string]interface{}{"key": "value"},
@@ -53,8 +54,8 @@ func TestAsanaAlert(t *testing.T) {
 		"data": map[string]interface{}{
 			"name": "Policy Failure: policy_name",
 			"notes": "policy_name failed on new resources\n" +
-				"For more details please visit: https://panther.io/policies/ruleId\nSeverity: INFO\nRunbook: " +
-				"\nDescription: description\nAlertContext: {\"key\":\"value\"}",
+				"For more details please visit: https://panther.io/alerts/alertId\nSeverity: INFO\nRunbook: \n" +
+				"Reference: \nDescription: description\nAlertContext: {\"key\":\"value\"}",
 			"projects": []string{"projectGid"},
 		},
 	}

@@ -77,9 +77,9 @@ result: |
       "flash_version": "uninstalled",
       "hostname": "example.com",
       "ip": "169.232.89.219",
-      "is_encryption_enabled": true,
-      "is_firewall_enabled": true,
-      "is_password_set": true,
+      "is_encryption_enabled": "true",
+      "is_firewall_enabled": "true",
+      "is_password_set": "true",
       "java_version": "uninstalled",
       "location": {
         "city": "Ann Arbor",
@@ -124,7 +124,10 @@ result: |
     "p_log_type": "Duo.Authentication",
     "p_event_time":"2020-02-13T18:56:20.351346Z",
     "p_any_domain_names":["example.com"],
-    "p_any_ip_addresses": ["169.232.89.219", "192.168.225.254"]
+    "p_any_ip_addresses": ["169.232.89.219", "192.168.225.254"],
+    "p_any_emails":["narroway@example.com"],
+    "p_any_usernames":["narroway@example.com"],
+    "p_any_trace_ids": ["340a23e3-23f3-23c1-87dc-1491a23dfdbb"]
   }
 
 ---
@@ -149,7 +152,8 @@ result: |
         "username": "admin",
 
         "p_log_type": "Duo.Administrator",
-        "p_event_time": "2020-01-24T15:09:42Z"
+        "p_event_time": "2020-01-24T15:09:42Z",
+        "p_any_usernames":["admin"]
   }
 
 ---
@@ -174,5 +178,6 @@ result: |
     "username": "narroway",
 
     "p_log_type": "Duo.OfflineEnrollment",
-    "p_event_time": "2019-08-30T14:10:05Z"
+    "p_event_time": "2019-08-30T14:10:05Z",
+    "p_any_usernames":["narroway"]
   }

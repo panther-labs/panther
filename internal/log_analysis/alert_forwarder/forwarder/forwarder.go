@@ -36,21 +36,24 @@ import (
 
 	ruleModel "github.com/panther-labs/panther/api/lambda/analysis/models"
 	alertModel "github.com/panther-labs/panther/api/lambda/delivery/models"
+	alertApiModels "github.com/panther-labs/panther/internal/log_analysis/alerts_api/models"
 	"github.com/panther-labs/panther/pkg/metrics"
 )
 
 const defaultTimePartition = "defaultPartition"
 
+var skipOutput = []string{"SKIP"}
+
 type Handler struct {
 	SqsClient        sqsiface.SQSAPI
-	Cache            *RuleCache
+	Cache            RuleCache
 	DdbClient        dynamodbiface.DynamoDBAPI
 	AlertTable       string
 	AlertingQueueURL string
 	MetricsLogger    metrics.Logger
 }
 
-func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) (err error) {
+func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *alertApiModels.AlertDedupEvent) (err error) {
 	var oldRule *ruleModel.Rule
 	if oldAlertDedupEvent != nil {
 		oldRule, err = h.Cache.Get(oldAlertDedupEvent.RuleID, oldAlertDedupEvent.RuleVersion)
@@ -73,12 +76,12 @@ func (h *Handler) Do(oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) (e
 	return h.updateExistingAlert(newAlertDedupEvent)
 }
 
-func shouldIgnoreChange(rule *ruleModel.Rule, alertDedupEvent *AlertDedupEvent) bool {
+func shouldIgnoreChange(rule *ruleModel.Rule, alertDedupEvent *alertApiModels.AlertDedupEvent) bool {
 	// If the number of matched events hasn't crossed the threshold for the rule, don't create a new alert.
-	return alertDedupEvent.EventCount < int64(rule.Threshold)
+	return alertDedupEvent.Type == alertModel.RuleType && alertDedupEvent.EventCount < int64(rule.Threshold)
 }
 
-func needToCreateNewAlert(oldRule *ruleModel.Rule, oldAlertDedupEvent, newAlertDedupEvent *AlertDedupEvent) bool {
+func needToCreateNewAlert(oldRule *ruleModel.Rule, oldAlertDedupEvent, newAlertDedupEvent *alertApiModels.AlertDedupEvent) bool {
 	if oldAlertDedupEvent == nil {
 		// If this is the first time we see an alert deduplication entry, create an alert
 		return true
@@ -87,29 +90,29 @@ func needToCreateNewAlert(oldRule *ruleModel.Rule, oldAlertDedupEvent, newAlertD
 		// If this is an alert deduplication entry for a new alert, create the new alert
 		return true
 	}
-	if oldAlertDedupEvent.EventCount < int64(oldRule.Threshold) {
-		// If the previous alert dedup information was not above rule threshold, we need to create a new alert
+	if shouldIgnoreChange(oldRule, oldAlertDedupEvent) {
+		// if the previous notification was ignored, we need to send a notification
 		return true
 	}
 	return false
 }
 
-func (h *Handler) handleNewAlert(rule *ruleModel.Rule, event *AlertDedupEvent) error {
+func (h *Handler) handleNewAlert(rule *ruleModel.Rule, event *alertApiModels.AlertDedupEvent) error {
 	if err := h.storeNewAlert(rule, event); err != nil {
 		return errors.Wrap(err, "failed to store new alert in DDB")
 	}
 
 	err := h.sendAlertNotification(rule, event)
 	if err == nil && event.Type == alertModel.RuleType {
-		h.logStats(rule)
+		h.logStats(rule, event)
 	}
 	return err
 }
 
-func (h *Handler) logStats(rule *ruleModel.Rule) {
+func (h *Handler) logStats(rule *ruleModel.Rule, event *alertApiModels.AlertDedupEvent) {
 	h.MetricsLogger.Log(
 		[]metrics.Dimension{
-			{Name: "Severity", Value: string(rule.Severity)},
+			{Name: "Severity", Value: getSeverity(rule, event)},
 			{Name: "AnalysisType", Value: "Rule"},
 			{Name: "AnalysisID", Value: rule.ID},
 		},
@@ -121,15 +124,15 @@ func (h *Handler) logStats(rule *ruleModel.Rule) {
 	)
 }
 
-func (h *Handler) updateExistingAlert(event *AlertDedupEvent) error {
+func (h *Handler) updateExistingAlert(event *alertApiModels.AlertDedupEvent) error {
 	// When updating alert, we need to update only 3 fields
 	// - The number of events included in the alert
 	// - The log types of the events in the alert
 	// - The alert update time
 	updateExpression := expression.
-		Set(expression.Name(alertTableEventCountAttribute), expression.Value(event.EventCount)).
-		Set(expression.Name(alertTableLogTypesAttribute), expression.Value(event.LogTypes)).
-		Set(expression.Name(alertTableUpdateTimeAttribute), expression.Value(event.UpdateTime))
+		Set(expression.Name(alertApiModels.AlertTableEventCountAttribute), expression.Value(event.EventCount)).
+		Set(expression.Name(alertApiModels.AlertTableLogTypesAttribute), expression.Value(event.LogTypes)).
+		Set(expression.Name(alertApiModels.AlertTableUpdateTimeAttribute), expression.Value(event.UpdateTime))
 	expr, err := expression.NewBuilder().WithUpdate(updateExpression).Build()
 	if err != nil {
 		return errors.Wrap(err, "failed to build update expression")
@@ -141,7 +144,7 @@ func (h *Handler) updateExistingAlert(event *AlertDedupEvent) error {
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		Key: map[string]*dynamodb.AttributeValue{
-			alertTablePartitionKey: {S: aws.String(generateAlertID(event))},
+			alertApiModels.AlertTablePartitionKey: {S: aws.String(generateAlertID(event))},
 		},
 	}
 
@@ -152,16 +155,16 @@ func (h *Handler) updateExistingAlert(event *AlertDedupEvent) error {
 	return nil
 }
 
-func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
-	alert := &Alert{
+func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEvent) error {
+	alert := &alertApiModels.Alert{
 		ID:                  generateAlertID(alertDedup),
 		TimePartition:       defaultTimePartition,
-		Severity:            string(rule.Severity),
+		Severity:            aws.String(getSeverity(rule, alertDedup)),
 		RuleDisplayName:     getRuleDisplayName(rule),
-		Title:               getAlertTitle(rule, alertDedup),
+		Title:               getTitle(rule, alertDedup),
 		FirstEventMatchTime: alertDedup.CreationTime,
 		LogTypes:            alertDedup.LogTypes,
-		AlertDedupEvent: AlertDedupEvent{
+		AlertDedupEvent: alertApiModels.AlertDedupEvent{
 			RuleID:              alertDedup.RuleID,
 			RuleVersion:         alertDedup.RuleVersion,
 			DeduplicationString: alertDedup.DeduplicationString,
@@ -173,6 +176,12 @@ func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEven
 			EventCount:   alertDedup.EventCount,
 			LogTypes:     alertDedup.LogTypes,
 			Type:         alertDedup.Type,
+			// Generated Fields
+			GeneratedTitle:        aws.String(getTitle(rule, alertDedup)),
+			GeneratedDescription:  aws.String(getDescription(rule, alertDedup)),
+			GeneratedReference:    aws.String(getReference(rule, alertDedup)),
+			GeneratedRunbook:      aws.String(getRunbook(rule, alertDedup)),
+			GeneratedDestinations: alertDedup.GeneratedDestinations,
 		},
 	}
 
@@ -192,23 +201,25 @@ func (h *Handler) storeNewAlert(rule *ruleModel.Rule, alertDedup *AlertDedupEven
 	return nil
 }
 
-func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) error {
+func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEvent) error {
 	alertNotification := &alertModel.Alert{
-		AlertID:             aws.String(generateAlertID(alertDedup)),
-		AnalysisDescription: &rule.Description,
-		AnalysisID:          alertDedup.RuleID,
+		AlertID:      aws.String(generateAlertID(alertDedup)),
+		AnalysisID:   alertDedup.RuleID,
+		AnalysisName: getRuleDisplayName(rule),
 		// In case a rule has a threshold, we want the alert creation time to be the same time
 		// as the update time -> the time that an update(new event) caused the matched events to exceed threshold
 		// In case the rule doesnt' have a threshold, the two are anyway the same
-		CreatedAt:    alertDedup.UpdateTime,
-		OutputIds:    rule.OutputIDs,
-		AnalysisName: getRuleDisplayName(rule),
-		Runbook:      &rule.Runbook,
-		Severity:     string(rule.Severity),
-		Tags:         rule.Tags,
-		Type:         alertDedup.Type,
-		Title:        aws.String(getAlertTitle(rule, alertDedup)),
-		Version:      &alertDedup.RuleVersion,
+		CreatedAt: alertDedup.UpdateTime,
+		OutputIds: getOutputIds(rule, alertDedup),
+		Tags:      rule.Tags,
+		Type:      alertDedup.Type,
+		Version:   &alertDedup.RuleVersion,
+		// Generated Fields
+		AnalysisDescription: getDescription(rule, alertDedup),
+		Reference:           getReference(rule, alertDedup),
+		Runbook:             getRunbook(rule, alertDedup),
+		Severity:            getSeverity(rule, alertDedup),
+		Title:               getTitle(rule, alertDedup),
 	}
 
 	if alertDedup.AlertContext != nil {
@@ -238,7 +249,7 @@ func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *AlertD
 	return nil
 }
 
-func getAlertTitle(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) string {
+func getTitle(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEvent) string {
 	if alertDedup.GeneratedTitle != nil {
 		return *alertDedup.GeneratedTitle
 	}
@@ -249,6 +260,44 @@ func getAlertTitle(rule *ruleModel.Rule, alertDedup *AlertDedupEvent) string {
 	return rule.ID
 }
 
+func getDescription(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEvent) string {
+	if alertDedup.GeneratedDescription != nil {
+		return *alertDedup.GeneratedDescription
+	}
+	return rule.Description
+}
+
+func getReference(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEvent) string {
+	if alertDedup.GeneratedReference != nil {
+		return *alertDedup.GeneratedReference
+	}
+	return rule.Reference
+}
+
+func getRunbook(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEvent) string {
+	if alertDedup.GeneratedRunbook != nil {
+		return *alertDedup.GeneratedRunbook
+	}
+	return rule.Runbook
+}
+
+func getSeverity(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEvent) string {
+	if alertDedup.GeneratedSeverity != nil {
+		return *alertDedup.GeneratedSeverity
+	}
+	return string(rule.Severity)
+}
+
+func getOutputIds(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEvent) []string {
+	if alertDedup.GeneratedDestinations != nil {
+		if len(alertDedup.GeneratedDestinations) == 0 {
+			return skipOutput
+		}
+		return alertDedup.GeneratedDestinations
+	}
+	return rule.OutputIDs
+}
+
 func getRuleDisplayName(rule *ruleModel.Rule) *string {
 	if len(rule.DisplayName) > 0 {
 		return &rule.DisplayName
@@ -256,7 +305,7 @@ func getRuleDisplayName(rule *ruleModel.Rule) *string {
 	return nil
 }
 
-func generateAlertID(event *AlertDedupEvent) string {
+func generateAlertID(event *alertApiModels.AlertDedupEvent) string {
 	key := event.RuleID + ":" + strconv.FormatInt(event.AlertCount, 10) + ":" + event.DeduplicationString
 	keyHash := md5.Sum([]byte(key)) // nolint(gosec)
 	return hex.EncodeToString(keyHash[:])

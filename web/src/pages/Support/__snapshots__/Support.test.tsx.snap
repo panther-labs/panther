@@ -168,7 +168,7 @@ exports[`Support page should match snapshot 1`] = `
          
         <a
           class="panther-1"
-          href="https://docs.runpanther.io/v/release-test.undefined"
+          href="https://docs.runpanther.io/v/release-1.2"
           rel="noopener noreferrer"
           target="_blank"
         >

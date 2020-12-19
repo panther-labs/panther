@@ -20,6 +20,7 @@ package main
 
 import (
 	"compress/gzip"
+	"context"
 	"flag"
 	"log"
 	"os"
@@ -34,6 +35,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor/logstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
@@ -101,13 +103,13 @@ func main() {
 	}
 
 	dataStream := &common.DataStream{
-		Reader: gzipReader,
+		Stream: logstream.NewLineStream(gzipReader, logstream.DefaultBufferSize),
 		Source: &models.SourceIntegration{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				IntegrationID:    *flagSourceID,
 				IntegrationType:  models.IntegrationTypeAWS3,
 				IntegrationLabel: *flagSourceLabel,
-				LogTypes:         logTypes,
+				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: logTypes}},
 			},
 		},
 	}
@@ -145,7 +147,7 @@ func main() {
 	dest := destinations.CreateS3Destination(jsonAPI)
 
 	newProcessor := processor.NewFactory(registry.NativeLogTypesResolver())
-	err = processor.Process(streamChan, dest, newProcessor)
+	err = processor.Process(context.Background(), streamChan, dest, newProcessor)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -34,10 +34,11 @@ import (
 var (
 	createdAtTime, _ = time.Parse(time.RFC3339, "2019-05-03T11:40:13Z")
 	pagerDutyAlert   = &alertModels.Alert{
+		AlertID:      aws.String("alertId"),
 		AnalysisName: aws.String("policyName"),
 		AnalysisID:   "policyId",
 		Severity:     "INFO",
-		Runbook:      aws.String("runbook"),
+		Runbook:      "runbook",
 		CreatedAt:    createdAtTime,
 		Type:         alertModels.PolicyType,
 	}
@@ -55,12 +56,14 @@ func TestSendPagerDutyAlert(t *testing.T) {
 		"payload": map[string]interface{}{
 			"custom_details": Notification{
 				ID:           "policyId",
+				AlertID:      aws.String("alertId"),
 				CreatedAt:    createdAtTime,
 				Severity:     "INFO",
 				Type:         alertModels.PolicyType,
-				Link:         "https://panther.io/policies/policyId",
+				Link:         "https://panther.io/alerts/alertId",
 				Title:        "Policy Failure: policyName",
 				Name:         aws.String("policyName"),
+				Description:  aws.String(""),
 				Runbook:      aws.String("runbook"),
 				Tags:         []string{},
 				AlertContext: make(map[string]interface{}),

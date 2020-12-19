@@ -220,6 +220,12 @@ Resources:
                 - s3:ListBucket
                 - s3:GetObject
               Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
+        - Id: GetRules
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
 
   AlertsApiAlarms:
     Type: Custom::LambdaAlarms
@@ -505,7 +511,9 @@ Resources:
           Statement:
             - Effect: Allow
               Action: s3:PutObject
-              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs*
+              Resource:
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs*
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/cloud_security*
         - Id: NotifySns
           Version: 2012-10-17
           Statement:
@@ -566,6 +574,7 @@ Resources:
           - LogData
           - RuleMatches
           - RuleErrors
+          - CloudSecurity
 
   UpdaterQueuePolicy:
     Type: AWS::SQS::QueuePolicy

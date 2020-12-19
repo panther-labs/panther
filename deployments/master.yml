@@ -122,7 +122,7 @@ Parameters:
     Type: Number
     Description: Log processor Lambda memory allocation. Increase to eliminate out-of-memory errors or reduce processing time (in exchange for higher cost)
     MinValue: 256 # 128 is too small, risks OOM errors
-    MaxValue: 3008
+    MaxValue: 10240
     Default: 2048
   LogProcessorLambdaSQSReadBatchSize:
     Type: Number
@@ -174,9 +174,9 @@ Parameters:
 Mappings:
   Constants:
     Panther:
-      # Mage will replace this version string during master:deploy or master:publish
-      # Example: "Version: v1.10.0-master-5c2a8a76"
-      Version: ${{PANTHER_VERSION}}
+      # Mage will replace these strings during master:deploy or master:publish
+      Commit: ${{PANTHER_COMMIT}} # E.g. "5c2a8a76"
+      Version: ${{PANTHER_VERSION}} # E.g. "1.14.0"
 
 Conditions:
   RegistryProvided: !Not [!Equals [!Ref ImageRegistry, '']]
@@ -186,8 +186,7 @@ Resources:
   Bootstrap:
     Type: AWS::CloudFormation::Stack
     Properties:
-      # The master template path, before packaging, will be out/deployments/embedded.master.yml
-      TemplateURL: ../../deployments/bootstrap.yml
+      TemplateURL: bootstrap.yml
       Parameters:
         AccessLogsBucket: !Ref AccessLogsBucketName
         AlarmTopicArn: !Ref AlarmTopicArn
@@ -217,7 +216,7 @@ Resources:
   BootstrapGateway:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ../../deployments/bootstrap_gateway.yml
+      TemplateURL: bootstrap_gateway.yml
       Parameters:
         # If the AlarmTopicArn parameter is blank, Bootstrap will create the topic.
         # That's why this uses the Bootstrap output instead of the parameter.
@@ -226,7 +225,10 @@ Resources:
         AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CompanyDisplayName: !Ref CompanyDisplayName
-        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
         ImageRegistryName: !GetAtt Bootstrap.Outputs.ImageRegistryName
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
@@ -248,11 +250,14 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: BootstrapGateway # custom resources lambda function
     Properties:
-      TemplateURL: ../../deployments/appsync.yml
+      TemplateURL: appsync.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         ApiId: !GetAtt Bootstrap.Outputs.GraphQLApiId
-        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
         ServiceRole: !GetAtt Bootstrap.Outputs.AppsyncServiceRoleArn
       Tags:
         - Key: Application
@@ -267,12 +272,16 @@ Resources:
   CloudSecurity:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ../../deployments/cloud_security.yml
+      TemplateURL: cloud_security.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
-        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
         Debug: !Ref Debug
+        InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
@@ -293,7 +302,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: BootstrapGateway # custom resources Lambda function
     Properties:
-      TemplateURL: ../../deployments/core.yml
+      TemplateURL: core.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AnalysisVersionsBucket: !GetAtt Bootstrap.Outputs.AnalysisVersionsBucket
@@ -301,13 +310,17 @@ Resources:
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CompanyDisplayName: !Ref CompanyDisplayName
         CompanyEmail: !Ref FirstUserEmail
-        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
         Debug: !Ref Debug
         DynamoScalingRoleArn: !GetAtt Bootstrap.Outputs.DynamoScalingRoleArn
         InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
         InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
+        PantherVersion: !FindInMap [Constants, Panther, Version]
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TracingMode: !Ref TracingMode
         UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
@@ -324,7 +337,7 @@ Resources:
   Dashboards:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ../../deployments/dashboards.yml
+      TemplateURL: dashboards.yml
       Tags:
         - Key: Application
           Value: Panther
@@ -339,13 +352,16 @@ Resources:
     DependsOn: Core
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ../../deployments/log_analysis.yml
+      TemplateURL: log_analysis.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AthenaWorkGroup: !GetAtt BootstrapGateway.Outputs.AthenaWorkGroup
         AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
-        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
         Debug: !Ref Debug
         InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
         InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
@@ -374,11 +390,14 @@ Resources:
     DependsOn: [BootstrapGateway, CloudSecurity, Core, LogAnalysis]
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ../../deployments/onboard.yml
+      TemplateURL: onboard.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
-        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
         EnableCloudTrail: !Ref EnableCloudTrail
         EnableGuardDuty: !Ref EnableGuardDuty
         EnableS3AccessLogs: !Ref EnableS3AccessLogs
@@ -397,14 +416,17 @@ Resources:
     # Custom resources in this stack require the analysis-api, users-api, and both Python engines to exist
     DependsOn: [CloudSecurity, Core, LogAnalysis]
     Properties:
-      TemplateURL: ../../deployments/web_server.yml
+      TemplateURL: web_server.yml
       TimeoutInMinutes: 20 # if something goes wrong, the ECS service will get stuck in a retry loop for 4 hours
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
         AppClientId: !GetAtt BootstrapGateway.Outputs.AppClientId
         CertificateArn: !Ref CertificateArn
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
-        CustomResourceVersion: !FindInMap [Constants, Panther, Version]
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
         ElbArn: !GetAtt Bootstrap.Outputs.LoadBalancerArn
         ElbFullName: !GetAtt Bootstrap.Outputs.LoadBalancerFullName
         ElbTargetGroup: !GetAtt Bootstrap.Outputs.LoadBalancerTargetGroup
@@ -418,10 +440,10 @@ Resources:
               - RegistryProvided
               - !Ref ImageRegistry
               - !Sub 349240696275.dkr.ecr.${AWS::Region}.amazonaws.com/panther-community
-            # use just the base version for the tag, e.g. "v1.10.0"
-            tag: !Select [0, !Split ['-', !FindInMap [Constants, Panther, Version]]]
+            tag: !FindInMap [Constants, Panther, Version]
         InitialAnalysisPackUrls: !Join [',', !Ref InitialAnalysisPackUrls]
-        PantherVersion: !FindInMap [Constants, Panther, Version] # has to be prefixed with 'v' for docs link in web app to work
+        PantherCommit: !FindInMap [Constants, Panther, Commit]
+        PantherVersion: !FindInMap [Constants, Panther, Version]
         SecurityGroup: !GetAtt Bootstrap.Outputs.WebSecurityGroup
         SubnetOneId: !GetAtt Bootstrap.Outputs.SubnetOneId
         SubnetTwoId: !GetAtt Bootstrap.Outputs.SubnetTwoId

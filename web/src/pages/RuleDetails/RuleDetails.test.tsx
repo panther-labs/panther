@@ -20,6 +20,7 @@ import React from 'react';
 import queryString from 'query-string';
 import {
   buildAlertSummary,
+  buildAlertSummaryRuleInfo,
   buildListAlertsResponse,
   buildRuleDetails,
   fireClickAndMouseEvents,
@@ -28,6 +29,7 @@ import {
   waitFor,
   waitForElementToBeRemoved,
   waitMs,
+  within,
 } from 'test-utils';
 import { DEFAULT_LARGE_PAGE_SIZE, DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
 import {
@@ -135,7 +137,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.RuleError,
+            types: [AlertTypesEnum.RuleError],
             pageSize: DEFAULT_SMALL_PAGE_SIZE,
           },
         },
@@ -146,7 +148,9 @@ describe('RuleDetails', () => {
             ...buildListAlertsResponse(),
             alertSummaries: [
               buildAlertSummary({
-                ruleId: '123',
+                detection: buildAlertSummaryRuleInfo({
+                  ruleId: '123',
+                }),
                 title: `Alert 1`,
                 alertId: `alert_1`,
                 type: AlertTypesEnum.Rule,
@@ -157,7 +161,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.Rule,
+            types: [AlertTypesEnum.Rule],
             pageSize: DEFAULT_SMALL_PAGE_SIZE,
           },
         },
@@ -249,7 +253,9 @@ describe('RuleDetails', () => {
             ...buildListAlertsResponse(),
             alertSummaries: [
               buildAlertSummary({
-                ruleId: '123',
+                detection: buildAlertSummaryRuleInfo({
+                  ruleId: '123',
+                }),
                 title: `Alert 1`,
                 alertId: `alert_1`,
                 type: AlertTypesEnum.Rule,
@@ -260,14 +266,14 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.Rule,
+            types: [AlertTypesEnum.Rule],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
         },
       }),
     ];
 
-    const { getByText, getByTestId, getByAriaLabel, getAllByText } = render(
+    const { getByText, getByTestId } = render(
       <Route exact path={urls.logAnalysis.rules.details(':id')}>
         <RuleDetails />
       </Route>,
@@ -283,15 +289,14 @@ describe('RuleDetails', () => {
     fireEvent.click(getByText('Rule Matches'));
 
     const loadingListingInterfaceElement = getByTestId('rule-alerts-listing-loading');
-    expect(loadingListingInterfaceElement).toBeTruthy();
     await waitForElementToBeRemoved(loadingListingInterfaceElement);
-    expect(getByText('Alert 1')).toBeInTheDocument();
-    expect(getByText('Rule Match')).toBeInTheDocument();
+    const withinTabPanel = within(getByTestId('rule-matches-tabpanel'));
+    expect(withinTabPanel.getByText('Alert 1')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Rule Match')).toBeInTheDocument();
 
-    expect(getAllByText('Destinations').length).toEqual(2);
-    expect(getByText('Log Types')).toBeInTheDocument();
-    expect(getByText('Events')).toBeInTheDocument();
-    expect(getByAriaLabel('Change Alert Status')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Destinations')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Log Types')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Events')).toBeInTheDocument();
   });
 
   it('fetches the alerts matching the rule errors', async () => {
@@ -316,7 +321,9 @@ describe('RuleDetails', () => {
             ...buildListAlertsResponse(),
             alertSummaries: [
               buildAlertSummary({
-                ruleId: '123',
+                detection: buildAlertSummaryRuleInfo({
+                  ruleId: '123',
+                }),
                 title: `Error 1`,
                 alertId: `error_1`,
                 type: AlertTypesEnum.RuleError,
@@ -327,14 +334,14 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.RuleError,
+            types: [AlertTypesEnum.RuleError],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
         },
       }),
     ];
 
-    const { getByText, getByTestId, getByAriaLabel, getAllByText } = render(
+    const { getByText, getByTestId } = render(
       <Route exact path={urls.logAnalysis.rules.details(':id')}>
         <RuleDetails />
       </Route>,
@@ -350,15 +357,13 @@ describe('RuleDetails', () => {
     fireEvent.click(getByText('Rule Errors'));
 
     const loadingListingInterfaceElement = getByTestId('rule-alerts-listing-loading');
-    expect(loadingListingInterfaceElement).toBeTruthy();
     await waitForElementToBeRemoved(loadingListingInterfaceElement);
-    expect(getByText('Error 1')).toBeInTheDocument();
-    expect(getByText('Rule Error')).toBeInTheDocument();
-
-    expect(getAllByText('Destinations').length).toEqual(2);
-    expect(getByText('Log Types')).toBeInTheDocument();
-    expect(getByText('Events')).toBeInTheDocument();
-    expect(getByAriaLabel('Change Alert Status')).toBeInTheDocument();
+    const withinTabPanel = within(getByTestId('rule-errors-tabpanel'));
+    expect(withinTabPanel.getByText('Error 1')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Rule Error')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Destinations')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Log Types')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('Events')).toBeInTheDocument();
   });
 
   it('fetches the alerts matching the rule & shows an empty fallback if no alerts exist', async () => {
@@ -386,7 +391,7 @@ describe('RuleDetails', () => {
         },
         variables: {
           input: {
-            type: AlertTypesEnum.Rule,
+            types: [AlertTypesEnum.Rule],
             ruleId: rule.id,
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
@@ -439,7 +444,7 @@ describe('RuleDetails', () => {
         },
         variables: {
           input: {
-            type: AlertTypesEnum.Rule,
+            types: [AlertTypesEnum.Rule],
             ruleId: rule.id,
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
@@ -455,7 +460,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             nameContains: 'test',
-            type: AlertTypesEnum.Rule,
+            types: [AlertTypesEnum.Rule],
             ruleId: rule.id,
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
@@ -495,7 +500,9 @@ describe('RuleDetails', () => {
             ...buildListAlertsResponse(),
             alertSummaries: [
               buildAlertSummary({
-                ruleId: '123',
+                detection: buildAlertSummaryRuleInfo({
+                  ruleId: '123',
+                }),
                 title: `Unique alert ${counter}`,
                 alertId: `alert_${counter}`,
                 type: AlertTypesEnum.Rule,
@@ -506,7 +513,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.Rule,
+            types: [AlertTypesEnum.Rule],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
             ...overrides,
           },
@@ -593,13 +600,17 @@ describe('RuleDetails', () => {
     });
     const alertSummaries = [
       buildAlertSummary({
-        ruleId: '123',
+        detection: buildAlertSummaryRuleInfo({
+          ruleId: '123',
+        }),
         title: `Alert 1`,
         alertId: `alert_1`,
         type: AlertTypesEnum.Rule,
       }),
       buildAlertSummary({
-        ruleId: '123',
+        detection: buildAlertSummaryRuleInfo({
+          ruleId: '123',
+        }),
         title: `Alert 2`,
         alertId: `alert_2`,
         type: AlertTypesEnum.Rule,
@@ -624,7 +635,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.Rule,
+            types: [AlertTypesEnum.Rule],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
         },
@@ -749,13 +760,17 @@ describe('RuleDetails', () => {
     });
     const alertSummaries = [
       buildAlertSummary({
-        ruleId: '123',
+        detection: buildAlertSummaryRuleInfo({
+          ruleId: '123',
+        }),
         title: `Error 1`,
         alertId: `error_1`,
         type: AlertTypesEnum.RuleError,
       }),
       buildAlertSummary({
-        ruleId: '123',
+        detection: buildAlertSummaryRuleInfo({
+          ruleId: '123',
+        }),
         title: `Error 2`,
         alertId: `error_2`,
         type: AlertTypesEnum.RuleError,
@@ -780,7 +795,7 @@ describe('RuleDetails', () => {
         variables: {
           input: {
             ruleId: '123',
-            type: AlertTypesEnum.RuleError,
+            types: [AlertTypesEnum.RuleError],
             pageSize: DEFAULT_LARGE_PAGE_SIZE,
           },
         },

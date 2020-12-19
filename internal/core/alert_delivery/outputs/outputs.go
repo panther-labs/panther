@@ -34,9 +34,8 @@ import (
 )
 
 var (
-	policyURLPrefix = os.Getenv("POLICY_URL_PREFIX")
-	appDomainURL    = os.Getenv("APP_DOMAIN_URL")
-	alertURLPrefix  = os.Getenv("ALERT_URL_PREFIX")
+	appDomainURL   = os.Getenv("APP_DOMAIN_URL")
+	alertURLPrefix = os.Getenv("ALERT_URL_PREFIX")
 )
 
 // HTTPWrapper encapsulates the Golang's http client
@@ -149,8 +148,8 @@ func generateNotificationFromAlert(alert *alertModels.Alert) Notification {
 		Type:         alert.Type,
 		Link:         generateURL(alert),
 		Title:        generateAlertTitle(alert),
-		Description:  alert.AnalysisDescription,
-		Runbook:      alert.Runbook,
+		Description:  aws.String(alert.AnalysisDescription),
+		Runbook:      aws.String(alert.Runbook),
 		Tags:         alert.Tags,
 		Version:      alert.Version,
 		CreatedAt:    alert.CreatedAt,
@@ -175,7 +174,8 @@ func generateAlertMessage(alert *alertModels.Alert) string {
 }
 
 func generateDetailedAlertMessage(alert *alertModels.Alert) string {
-	const detailedMessageTemplate = "%s\nFor more details please visit: %s\nSeverity: %s\nRunbook: %s\nDescription: %s\nAlertContext: %s"
+	const detailedMessageTemplate = "%s\nFor more details please visit: %s\nSeverity: %s\nRunbook: %s\n" +
+		"Reference: %s\nDescription: %s\nAlertContext: %s"
 	// Best effort to marshal alert context
 	marshaledContext, _ := jsoniter.MarshalToString(alert.Context)
 
@@ -184,24 +184,25 @@ func generateDetailedAlertMessage(alert *alertModels.Alert) string {
 		generateAlertMessage(alert),
 		generateURL(alert),
 		alert.Severity,
-		aws.StringValue(alert.Runbook),
-		aws.StringValue(alert.AnalysisDescription),
+		alert.Runbook,
+		alert.Reference,
+		alert.AnalysisDescription,
 		marshaledContext,
 	)
 }
 
 func generateAlertTitle(alert *alertModels.Alert) string {
 	if alert.IsResent {
-		return "[Re-sent]: " + *alert.Title
+		return "[Re-sent]: " + alert.Title
 	}
 	switch alert.Type {
 	case alertModels.RuleType:
-		if alert.Title != nil {
-			return "New Alert: " + *alert.Title
+		if alert.Title != "" {
+			return "New Alert: " + alert.Title
 		}
 		return "New Alert: " + getDisplayName(alert)
 	case alertModels.RuleErrorType:
-		return "New rule error: " + *alert.Title
+		return "New rule error: " + alert.Title
 	case alertModels.PolicyType:
 		return "Policy Failure: " + getDisplayName(alert)
 	default:
@@ -220,12 +221,5 @@ func generateURL(alert *alertModels.Alert) string {
 	if alert.IsTest {
 		return appDomainURL
 	}
-	switch alert.Type {
-	case alertModels.RuleType, alertModels.RuleErrorType:
-		return alertURLPrefix + *alert.AlertID
-	case alertModels.PolicyType:
-		return policyURLPrefix + alert.AnalysisID
-	default:
-		panic("uknown alert type" + alert.Type)
-	}
+	return alertURLPrefix + *alert.AlertID
 }

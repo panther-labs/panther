@@ -58,7 +58,7 @@ func Tools() error {
 		outDir := filepath.Join("out", "bin", parts[0], parts[1])
 
 		// used in tools to check/display which Panther version was compiled
-		setVersionVar := fmt.Sprintf("-X 'main.version=%s'", util.RepoVersion())
+		setVersionVar := fmt.Sprintf("-X 'main.version=%s'", util.Semver())
 
 		log.Infof("build:tools: compiling %s to %s with %d os/arch combinations",
 			path, outDir, len(buildEnvs))

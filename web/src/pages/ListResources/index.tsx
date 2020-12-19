@@ -19,4 +19,3 @@
 export { default } from './ListResources';
 
 export * from './graphql/listResources.generated';
-export * from './ListResourcesActions/graphql/listAccountIds.generated';

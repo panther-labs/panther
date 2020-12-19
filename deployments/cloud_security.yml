@@ -38,6 +38,10 @@ Parameters:
     Type: String
     Description: Toggle debug logging
     AllowedValues: [true, false]
+  InputDataBucket:
+    Type: String
+    Description: Name of the S3 bucket will contain data meant to be processed by log analysis.
+    AllowedPattern: '^[a-z0-9.-]{3,63}$'
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of base LayerVersion ARNs to attach to every Lambda function
@@ -75,6 +79,9 @@ Mappings:
     ComplianceApi:
       Memory: 512
       Timeout: 180
+    DatalakeForwarder:
+      Memory: 128
+      Timeout: 180
     EventProcessor:
       Memory: 128
       Timeout: 120
@@ -109,16 +116,6 @@ Conditions:
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
-  ###### Update Glue Table Schemas for Deployed Tables #####
-  UpdateGlueTables:
-    Type: Custom::UpdateCloudSecurityTables
-    Properties:
-      # Update in case CustomResourceVersion has changed
-      CustomResourceVersion: !Ref CustomResourceVersion
-      ResourcesTableARN: !GetAtt ResourcesTable.Arn
-      ComplianceTableARN: !GetAtt ComplianceTable.Arn
-      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
-
   ##### Alert Processor #####
   AlertProcessorQueue:
     Type: AWS::SQS::Queue
@@ -304,8 +301,9 @@ Resources:
       Description: Forwards the alerts to the alert delivery mechanism
       Environment:
         Variables:
-          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts-queue
           DEBUG: !Ref Debug
+          ALERTS_TABLE: panther-log-alert-info
+          ALERTING_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-alerts-queue
       Events:
         DynamoDBEvent:
           Type: DynamoDB
@@ -315,12 +313,14 @@ Resources:
             BatchSize: 1
       FunctionName: panther-alert-forwarder
       # <cfndoc>
-      # The `panther-alert-forwarder` lambda reads from the ddb stream for the table `panther-alert-forwarder`
-      # and sends them to the `panther-alerts-queue` sqs queue.
+      # This lambda reads from a DDB stream for the `panther-alert-forwarder` table and writes alerts to the `panther-log-alert-info` ddb table.
+      # It also forwards alerts to `panther-alerts-queue` SQS queue where the appropriate Lambda picks them up for delivery.
       #
       # Failure Impact
-      # * Failure of this lambda will stop delivery of alerts to destinations.
+      # * Delivery of alerts could be slowed or stopped.
       # * There will be no data loss until events are purged from the ddb stream (24 hours).
+      # * This Lambda processes alerts in batches. In case a batch partially fails, the whole batch will be retried which might lead
+      # to duplicate notifications for some alerts.
       # </cfndoc>
       Handler: main
       MemorySize: !FindInMap [Functions, AlertForwarder, Memory]
@@ -328,6 +328,14 @@ Resources:
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       Timeout: !FindInMap [Functions, AlertForwarder, Timeout]
       Policies:
+        - Id: ManageAlerts
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-log-alert-info
         - Id: PublishToAlertQueue
           Version: 2012-10-17
           Statement:
@@ -624,6 +632,8 @@ Resources:
           KeyType: RANGE
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: True
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
       SSESpecification:
         SSEEnabled: True
       TimeToLiveSpecification:
@@ -989,6 +999,8 @@ Resources:
         PointInTimeRecoveryEnabled: True
       SSESpecification:
         SSEEnabled: True
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
       TimeToLiveSpecification: # Deleted resources are expired after 30 days
         AttributeName: expiresAt
         Enabled: true
@@ -1414,4 +1426,137 @@ Resources:
       FunctionMemoryMB: !FindInMap [Functions, SnapshotScheduler, Memory]
       FunctionName: panther-snapshot-scheduler
       FunctionTimeoutSec: !FindInMap [Functions, SnapshotScheduler, Timeout]
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  ##### DataLake Forwarder #####
+  DataLakeForwarderLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/panther-cloudsecurity-datalake-forwarder
+      RetentionInDays: !Ref CloudWatchLogRetentionDays
+
+  DataLakeForwarderMetricFilters:
+    Type: Custom::LambdaMetricFilters
+    Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
+      LogGroupName: !Ref DataLakeForwarderLogGroup
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
+  CloudSecurityFirehose:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamName: panther-cloudsecurity-firehose
+      DeliveryStreamType: DirectPut
+      ExtendedS3DestinationConfiguration:
+        BucketARN: !Sub arn:${AWS::Partition}:s3:::${InputDataBucket}
+        Prefix: cloudsecurity/
+        BufferingHints:
+          # Data is flushed once one of the buffer hints are satisfied.
+          IntervalInSeconds: 60
+          SizeInMBs: 128
+        CompressionFormat: GZIP
+        RoleARN: !GetAtt CloudSecurityFirehoseRole.Arn
+
+  CloudSecurityFirehoseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: firehose.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId: !Ref AWS::AccountId
+      Policies:
+        - PolicyName: WriteToDataBucket
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:GetBucketLocation
+                  - s3:GetObject
+                  - s3:ListBucket
+                  - s3:ListBucketMultipartUploads
+                  - s3:PutObject
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::${InputDataBucket}
+                  - !Sub arn:${AWS::Partition}:s3:::${InputDataBucket}/cloudsecurity/*
+
+  DataLakeForwarderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../out/bin/internal/compliance/datalake_forwarder/main
+      Description: Forwards Cloud Security resource snapshots & compliance state to the Log Analysis pipeline
+      Environment:
+        Variables:
+          DEBUG: !Ref Debug
+          STREAM_NAME: !Ref CloudSecurityFirehose
+      Events:
+        ComplianceEvents:
+          Type: DynamoDB
+          Properties:
+            # The comments here also apply to the configuration below
+            # DynamoDB max is 1000
+            BatchSize: 1000
+            # Allow us to find the failing record more easily
+            BisectBatchOnFunctionError: true
+            # CloudSecurity snapshots are not super time sensitive, and will be partitioned by lastUpdated field
+            MaximumBatchingWindowInSeconds: 120
+            MaximumRecordAgeInSeconds: 3600
+            # Only relevant for the first Panther upgrade to this version.
+            StartingPosition: LATEST
+            Stream: !GetAtt ComplianceTable.StreamArn
+        ResourceEvents:
+          Type: DynamoDB
+          Properties:
+            # DynamoDB max is 1000, but these records can be quite large (max 400Kb enforced by DynamoDB)
+            # so we batch a smaller amount to not go over the function memory
+            BatchSize: 100
+            BisectBatchOnFunctionError: true
+            MaximumBatchingWindowInSeconds: 120
+            MaximumRecordAgeInSeconds: 3600
+            StartingPosition: LATEST
+            Stream: !GetAtt ResourcesTable.StreamArn
+      FunctionName: panther-cloudsecurity-datalake-forwarder
+      # <cfndoc>
+      # The `panther-cloudsecurity-datalake-forwarder` lambda reads from the ddb stream for the `panther-resources`
+      # and `panther-compliance` tables, summarizes changes, and forwards them to the log analysis
+      # data puller bucket.
+      #
+      # Failure Impact
+      # * Failure of this lambda will stop delivery of cloud security snapshots to the datalake.
+      # * There will be no data loss until events are purged from the ddb stream (24 hours).
+      # </cfndoc>
+      Handler: main
+      MemorySize: !FindInMap [Functions, DatalakeForwarder, Memory]
+      Runtime: go1.x
+      Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref 'AWS::NoValue']
+      Timeout: !FindInMap [Functions, DatalakeForwarder, Timeout]
+      Policies:
+        - Id: WriteToFirehose
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: firehose:PutRecordBatch
+              Resource: !GetAtt CloudSecurityFirehose.Arn
+        - Id: InvokeAPIs
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-source-api
+
+  DataLakeForwarderAlarms:
+    Type: Custom::LambdaAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
+      FunctionMemoryMB: !FindInMap [Functions, DatalakeForwarder, Memory]
+      FunctionName: !Ref AlertForwarderFunction
+      FunctionTimeoutSec: !FindInMap [Functions, DatalakeForwarder, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources

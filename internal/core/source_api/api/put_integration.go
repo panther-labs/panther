@@ -37,6 +37,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 var (
@@ -59,8 +60,6 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (newIntegration
 	// Generate the new integration from the input
 	newIntegration = generateNewIntegration(input)
 
-	item := integrationToItem(newIntegration)
-
 	// First creating table - this action is idempotent. In case we succeed here and
 	// fail at a later stage, in case of retry this will succeed again.
 	if err = createTables(newIntegration); err != nil {
@@ -75,6 +74,7 @@ func (api API) PutIntegration(input *models.PutIntegrationInput) (newIntegration
 	}
 
 	// Write to DynamoDB
+	item := integrationToItem(newIntegration)
 	if err = dynamoClient.PutItem(item); err != nil {
 		zap.L().Error("failed to store source integration in DDB", zap.Error(err))
 		return nil, putIntegrationInternalError
@@ -113,6 +113,16 @@ func setupExternalResources(integration *models.SourceIntegration) error {
 }
 
 func (api API) validateIntegration(input *models.PutIntegrationInput) error {
+	// Prefixes in the same S3 source should should be unique (although we allow overlapping for now)
+	if input.IntegrationType == models.IntegrationTypeAWS3 {
+		prefixes := input.S3PrefixLogTypes.S3Prefixes()
+		if len(prefixes) != len(stringset.Dedup(prefixes)) {
+			return &genericapi.InvalidInputError{
+				Message: "Cannot have duplicate prefixes in an s3 source.",
+			}
+		}
+	}
+
 	// Validate the new integration
 	reason, passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
 		AWSAccountID:      input.AWSAccountID,
@@ -121,7 +131,7 @@ func (api API) validateIntegration(input *models.PutIntegrationInput) error {
 		EnableCWESetup:    input.CWEEnabled,
 		EnableRemediation: input.RemediationEnabled,
 		S3Bucket:          input.S3Bucket,
-		S3Prefix:          input.S3Prefix,
+		S3PrefixLogTypes:  input.S3PrefixLogTypes,
 		KmsKey:            input.KmsKey,
 		SqsConfig:         input.SqsConfig,
 	})
@@ -171,9 +181,16 @@ func (api API) integrationAlreadyExists(input *models.PutIntegrationInput) error
 					}
 				}
 
-				if existingIntegration.S3Bucket == input.S3Bucket && existingIntegration.S3Prefix == input.S3Prefix {
-					return &genericapi.InvalidInputError{
-						Message: "An S3 integration with the same S3 bucket and prefix already exists.",
+				// A bucket/prefix combination should be unique among s3 sources.
+				if existingIntegration.S3Bucket == input.S3Bucket {
+					for _, existingPrefix := range existingIntegration.S3PrefixLogTypes.S3Prefixes() {
+						for _, prefix := range input.S3PrefixLogTypes.S3Prefixes() {
+							if strings.TrimSpace(existingPrefix) == strings.TrimSpace(prefix) {
+								return &genericapi.InvalidInputError{
+									Message: "An S3 source with the same S3 bucket and prefix already exists.",
+								}
+							}
+						}
 					}
 				}
 			case models.IntegrationTypeSqs:
@@ -251,21 +268,22 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 	case models.IntegrationTypeAWSScan:
 		metadata.AWSAccountID = input.AWSAccountID
 		metadata.CWEEnabled = input.CWEEnabled
+		metadata.LogProcessingRole = env.InputDataRoleArn
 		metadata.RemediationEnabled = input.RemediationEnabled
 		metadata.ScanIntervalMins = input.ScanIntervalMins
 		metadata.StackName = getStackName(input.IntegrationType, input.IntegrationLabel)
+		metadata.S3Bucket = env.InputDataBucketName
 	case models.IntegrationTypeAWS3:
 		metadata.AWSAccountID = input.AWSAccountID
 		metadata.S3Bucket = input.S3Bucket
-		metadata.S3Prefix = input.S3Prefix
+		metadata.S3PrefixLogTypes = input.S3PrefixLogTypes
 		metadata.KmsKey = input.KmsKey
-		metadata.LogTypes = input.LogTypes
+		metadata.S3PrefixLogTypes = input.S3PrefixLogTypes
 		metadata.StackName = getStackName(input.IntegrationType, input.IntegrationLabel)
 		metadata.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
 	case models.IntegrationTypeSqs:
 		metadata.SqsConfig = &models.SqsConfig{
 			S3Bucket:             env.InputDataBucketName,
-			S3Prefix:             models.SqsS3Prefix,
 			LogProcessingRole:    env.InputDataRoleArn,
 			AllowedPrincipalArns: input.SqsConfig.AllowedPrincipalArns,
 			AllowedSourceArns:    input.SqsConfig.AllowedSourceArns,
@@ -279,10 +297,6 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 }
 
 func createTables(integration *models.SourceIntegration) error {
-	if !integration.IsLogAnalysisIntegration() {
-		return nil
-	}
-
 	client := datacatalog.Client{
 		SQSAPI:   sqsClient,
 		QueueURL: env.DataCatalogUpdaterQueueURL,

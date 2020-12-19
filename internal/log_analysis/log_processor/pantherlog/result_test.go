@@ -123,15 +123,14 @@ func TestOldResults(t *testing.T) {
 		Host:      box.String("2.1.1.1"),
 		Timestamp: (*timestamp.RFC3339)(&tm),
 		PantherLog: parsers.PantherLog{
-			PantherLogType:        box.String("Foo"),
-			PantherRowID:          box.String("id"),
-			PantherEventTime:      (*timestamp.RFC3339)(&tm),
-			PantherParseTime:      (*timestamp.RFC3339)(&now),
-			PantherAnyIPAddresses: parsers.NewPantherAnyString(),
+			PantherLogType:   box.String("Foo"),
+			PantherRowID:     box.String("id"),
+			PantherEventTime: (*timestamp.RFC3339)(&tm),
+			PantherParseTime: (*timestamp.RFC3339)(&now),
 		},
 	}
 	event.SetEvent(&event)
-	parsers.AppendAnyString(event.PantherAnyIPAddresses, "1.1.1.1", "2.1.1.1")
+	parsers.AppendAnyString(&event.PantherAnyIPAddresses, "1.1.1.1", "2.1.1.1")
 
 	api := buildAPI()
 	result := event.Result()
@@ -260,4 +259,50 @@ func TestResultBuilder_BuildResult(t *testing.T) {
 		Event: event,
 	}
 	assert.Equal(expect, result)
+}
+func TestSourceFields(t *testing.T) {
+	rowID := "id"
+	now := time.Now().UTC()
+	tm := now.Add(-time.Hour)
+	b := newBuilder(rowID, now)
+	event := testEvent{
+		Name:      "event",
+		IP:        "1.1.1.1",
+		Host:      null.FromString("2.1.1.1"),
+		TraceID:   null.FromString("foo"),
+		Timestamp: tm,
+	}
+
+	api := buildAPI()
+	result, err := b.BuildResult("TestEvent", &event)
+	require.NoError(t, err)
+	require.Equal(t, "TestEvent", result.PantherLogType)
+	logtesting.EqualTimestamp(t, now, result.PantherParseTime)
+	// Ensure event time is zero time
+	require.Equal(t, time.Time{}, result.PantherEventTime)
+	require.Equal(t, rowID, result.PantherRowID)
+	result.PantherSourceLabel = "test-label"
+	result.PantherSourceID = "test_id"
+	expect := fmt.Sprintf(`{
+		"p_row_id": "id",
+		"p_log_type": "TestEvent",
+		"p_event_time": "%s",
+		"p_source_id": "test_id",
+		"p_source_label": "test-label",
+		"ts": %d,
+		"p_parse_time": "%s",
+		"@name": "event",
+		"ip": "1.1.1.1",
+		"hostname": "2.1.1.1",
+		"trace_id": "foo",
+		"p_any_trace_ids": ["foo"],
+		"p_any_ip_addresses": ["1.1.1.1","2.1.1.1"]
+	}`,
+		tm.Format(time.RFC3339Nano),
+		time.Duration(tm.UnixNano()).Milliseconds(),
+		now.Format(time.RFC3339Nano),
+	)
+	actual, err := api.Marshal(result)
+	require.NoError(t, err)
+	require.JSONEq(t, expect, string(actual))
 }

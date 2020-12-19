@@ -120,10 +120,15 @@ func TestAddToSnapshotQueue(t *testing.T) {
 
 func TestPutCloudSecIntegration(t *testing.T) {
 	mockSQS := &testutils.SqsMock{}
-	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil) // count is hard to get due to batching
 	sqsClient = mockSQS
 	dynamoClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
 	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
+
+	// Message sent to create Cloud Security tables
+	// TODO Verify payload
+	mockSQS.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
+	// This message is to start full scan
+	mockSQS.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil)
 
 	out, err := apiTest.PutIntegration(&models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
@@ -134,8 +139,8 @@ func TestPutCloudSecIntegration(t *testing.T) {
 			UserID:           testUserID,
 		},
 	})
-	require.NoError(t, err)
-	require.NotEmpty(t, out)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, out)
 	mockSQS.AssertExpectations(t)
 }
 
@@ -283,7 +288,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 			UserID:           testUserID,
 			S3Bucket:         "bucket",
 			KmsKey:           "keyarns",
-			LogTypes:         []string{"AWS.VPCFlow"},
+			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: []string{"AWS.VPCFlow"}}},
 		},
 	})
 	require.NoError(t, err)
@@ -309,7 +314,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
 			UserID:           testUserID,
 			S3Bucket:         "bucket",
 			KmsKey:           "keyarns",
-			LogTypes:         []string{"AWS.VPCFlow"},
+			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: []string{"AWS.VPCFlow"}}},
 		},
 	})
 	require.Error(t, err)
@@ -362,10 +367,11 @@ func TestPutSqsIntegration(t *testing.T) {
 	// Verify returned values
 	require.NoError(t, err)
 	require.NotEmpty(t, out)
-	assert.Equal(t, "forwarder", out.SqsConfig.S3Prefix)
-	assert.Equal(t, "input-data", out.SqsConfig.S3Bucket)
-	assert.Equal(t, "role-arn", out.SqsConfig.LogProcessingRole)
-	assert.Equal(t, []string{"AWS.CloudTrail"}, out.SqsConfig.LogTypes)
+	bucket, prefixes := out.S3Info()
+	assert.Equal(t, "input-data", bucket)
+	assert.Equal(t, []string{"forwarder"}, prefixes)
+	assert.Equal(t, "role-arn", out.RequiredLogProcessingRole())
+	assert.Equal(t, []string{"AWS.CloudTrail"}, out.RequiredLogTypes())
 
 	// Verify SQS queue was created the appropriate permissions
 	createQueueRequest := mockSQS.Calls[3].Arguments.Get(0).(*sqs.CreateQueueInput)

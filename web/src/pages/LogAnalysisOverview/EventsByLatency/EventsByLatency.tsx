@@ -20,6 +20,7 @@ import React from 'react';
 import { Flex } from 'pouncejs';
 import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
 import { FloatSeriesData } from 'Generated/schema';
+import NoDataFound from 'Components/NoDataFound';
 
 interface EventsByLatencyProps {
   events: FloatSeriesData;
@@ -34,6 +35,11 @@ const EventsByLatency: React.FC<EventsByLatencyProps> = ({ events: { timestamps,
     }),
     [timestamps, series]
   );
+
+  if (!timeseriesData.series.length) {
+    return <NoDataFound title="No logs processed yet" />;
+  }
+
   return (
     <Flex data-testid="events-by-latency" height="100%" position="relative">
       <TimeSeriesChart data={timeseriesData} units="sec" zoomable />

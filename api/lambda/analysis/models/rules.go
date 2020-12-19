@@ -45,7 +45,7 @@ type ListRulesInput struct {
 	LogTypes []string `json:"logTypes" validate:"max=500,dive,required,max=500"`
 
 	// Only include policies with this severity
-	Severity models.Severity `json:"severity" validate:"omitempty,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
+	Severity []models.Severity `json:"severity" validate:"dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 
 	// Only include policies with all of these tags (case-insensitive)
 	Tags []string `json:"tags" validate:"max=500,dive,required,max=500"`
@@ -61,6 +61,16 @@ type ListRulesInput struct {
 	// ----- Paging -----
 	PageSize int `json:"pageSize" validate:"min=0,max=1000"`
 	Page     int `json:"page" validate:"min=0"`
+
+	// Only include rules whose creator matches this user ID (which need not be a uuid)
+	CreatedBy string `json:"createdBy"`
+
+	// Only include rules which were last modified by this user ID
+	LastModifiedBy string `json:"lastModifiedBy"`
+
+	// If True, include only rules which were created by the system during the initial deployment
+	// If False, include only rules where were NOT created by the system during the initial deployment
+	InitialSet *bool `json:"initialSet"`
 }
 
 type ListRulesOutput struct {
@@ -93,6 +103,11 @@ type TestRuleRecordFunctions struct {
 	Title        *TestDetectionSubRecord `json:"titleFunction"`
 	Dedup        *TestDetectionSubRecord `json:"dedupFunction"`
 	AlertContext *TestDetectionSubRecord `json:"alertContextFunction"`
+	Description  *TestDetectionSubRecord `json:"descriptionFunction"`
+	Destinations *TestDetectionSubRecord `json:"destinationsFunction"`
+	Reference    *TestDetectionSubRecord `json:"referenceFunction"`
+	Runbook      *TestDetectionSubRecord `json:"runbookFunction"`
+	Severity     *TestDetectionSubRecord `json:"severityFunction"`
 }
 
 type UpdateRuleInput struct {
@@ -111,7 +126,7 @@ type UpdateRuleInput struct {
 	Tags               []string            `json:"tags" validate:"max=500,dive,required,max=1000"`
 	Tests              []UnitTest          `json:"tests" validate:"max=500,dive"`
 	Threshold          int                 `json:"threshold" validate:"min=0"`
-	UserID             string              `json:"userId" validate:"uuid4"`
+	UserID             string              `json:"userId" validate:"required"`
 }
 
 type Rule struct {

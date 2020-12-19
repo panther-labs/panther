@@ -20,7 +20,11 @@ import React from 'react';
 import { Text, Flex, Img } from 'pouncejs';
 import NothingFound from 'Assets/illustrations/nothing-found.svg';
 
-const NoResultsFound: React.FC = () => {
+interface NoResultsFoundProps {
+  title?: string;
+}
+
+const NoResultsFound: React.FC<NoResultsFoundProps> = ({ title = 'No Results' }) => {
   return (
     <Flex justify="center">
       <Flex
@@ -40,7 +44,7 @@ const NoResultsFound: React.FC = () => {
           src={NothingFound}
         />
         <Text color="navyblue-100" fontWeight="bold" mt={2}>
-          No Results
+          {title}
         </Text>
       </Flex>
     </Flex>

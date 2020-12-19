@@ -59,11 +59,11 @@ func TestGetAlert(t *testing.T) {
 
 	alert := &deliveryModels.Alert{
 		AlertID:             &alertID,
-		AnalysisDescription: aws.String("A test alert"),
+		AnalysisDescription: "A test alert",
 		AnalysisID:          "Test.Analysis.ID",
 		AnalysisName:        aws.String("Test Analysis Name"),
-		Runbook:             aws.String("A runbook link"),
-		Title:               aws.String("Test Alert"),
+		Runbook:             "A runbook link",
+		Title:               "Test Alert",
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
 		Type:                deliveryModels.RuleType,
@@ -78,7 +78,7 @@ func TestGetAlert(t *testing.T) {
 		RuleID:              alert.AnalysisID,
 		RuleVersion:         aws.StringValue(alert.Version),
 		RuleDisplayName:     alert.AnalysisName,
-		Title:               aws.String("Test Alert"),
+		Title:               "Test Alert",
 		DedupString:         "dedup",
 		FirstEventMatchTime: timeNow,
 		CreationTime:        timeNow,
@@ -121,11 +121,11 @@ func TestPopulateAlert(t *testing.T) {
 
 	alert := &deliveryModels.Alert{
 		AlertID:             alertID,
-		AnalysisDescription: aws.String(description),
+		AnalysisDescription: description,
 		AnalysisID:          analysisID,
 		AnalysisName:        analysisDisplayName,
-		Runbook:             aws.String(runbook),
-		Title:               aws.String("Test Alert"),
+		Runbook:             runbook,
+		Title:               "Test Alert",
 		RetryCount:          0,
 		Tags:                tags,
 		Type:                deliveryModels.RuleType,
@@ -138,10 +138,12 @@ func TestPopulateAlert(t *testing.T) {
 
 	alertItem := &alertTable.AlertItem{
 		AlertID:             *alertID,
+		Description:         aws.String(description),
 		RuleID:              analysisID,
 		RuleVersion:         versionID,
 		RuleDisplayName:     analysisDisplayName,
-		Title:               aws.String("Test Alert"),
+		Runbook:             aws.String(runbook),
+		Title:               "Test Alert",
 		DedupString:         "dedup",
 		FirstEventMatchTime: timeNow,
 		CreationTime:        timeNow,
@@ -191,11 +193,11 @@ func TestGetAlertOutputMapping(t *testing.T) {
 
 	alert := &deliveryModels.Alert{
 		AlertID:             alertID,
-		AnalysisDescription: aws.String("A test alert"),
+		AnalysisDescription: "A test alert",
 		AnalysisID:          "Test.Analysis.ID",
 		AnalysisName:        aws.String("Test Analysis Name"),
-		Runbook:             aws.String("A runbook link"),
-		Title:               aws.String("Test Alert"),
+		Runbook:             "A runbook link",
+		Title:               "Test Alert",
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
 		Type:                deliveryModels.RuleType,
@@ -258,11 +260,11 @@ func TestGetAlertOutputMappingError(t *testing.T) {
 
 	alert := &deliveryModels.Alert{
 		AlertID:             alertID,
-		AnalysisDescription: aws.String("A test alert"),
+		AnalysisDescription: "A test alert",
 		AnalysisID:          "Test.Analysis.ID",
 		AnalysisName:        aws.String("Test Analysis Name"),
-		Runbook:             aws.String("A runbook link"),
-		Title:               aws.String("Test Alert"),
+		Runbook:             "A runbook link",
+		Title:               "Test Alert",
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
 		Type:                deliveryModels.RuleType,
@@ -302,11 +304,11 @@ func TestGetAlertOutputMappingInvalidOutputIds(t *testing.T) {
 
 	alert := &deliveryModels.Alert{
 		AlertID:             alertID,
-		AnalysisDescription: aws.String("A test alert"),
+		AnalysisDescription: "A test alert",
 		AnalysisID:          "Test.Analysis.ID",
 		AnalysisName:        aws.String("Test Analysis Name"),
-		Runbook:             aws.String("A runbook link"),
-		Title:               aws.String("Test Alert"),
+		Runbook:             "A runbook link",
+		Title:               "Test Alert",
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
 		Type:                deliveryModels.RuleType,

@@ -86,7 +86,7 @@ Parameters:
 Mappings:
   AthenaDataSources:
     Dynamodb:
-      Name: ddb
+      Name: panther-ddb-tables
   Functions:
     CustomResource:
       Memory: 1024 # use a larger size to run faster, since this is used rarely the small cost difference is not a concern
@@ -357,7 +357,7 @@ Resources:
         - family_name
 
   # https://docs.aws.amazon.com/athena/latest/ug/athena-prebuilt-data-connectors-dynamodb.html
-  AthenaDDBConnector:
+  PantherAthenaDDBConnector:
     Type: AWS::Serverless::Application
     Properties:
       Location:
@@ -368,32 +368,26 @@ Resources:
         AthenaCatalogName: !FindInMap [AthenaDataSources, Dynamodb, Name] # this is now called the "DataSource"
         SpillBucket: !Ref AthenaResultsBucket
 
-  AnthenaDDBDataSource: # this binds the lambda created in AthenaDDBConnector resource to Athena
-    DependsOn: AthenaDDBConnector
+  PantherAnthenaDDBDataSource: # this binds the lambda created in AthenaDDBConnector resource to Athena
+    DependsOn: PantherAthenaDDBConnector
     Type: AWS::Athena::DataCatalog
     Properties:
       Name: !FindInMap [AthenaDataSources, Dynamodb, Name]
       Description: Dynamodb data source
       Type: LAMBDA
       Parameters:
-        function: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:ddb
-
-  # FIXME: remove when DDB connector is GA https://docs.aws.amazon.com/athena/latest/ug/connect-to-a-data-source.html
-  AthenaPreviewWorkGroup: # this is used for the ddb tables until out of preview, only available to query via the Athena console!
-    Type: AWS::Athena::WorkGroup
-    Properties:
-      Name: AmazonAthenaPreviewFunctionality
-      Description: Preview Workgroup
-      RecursiveDeleteOption: true
-      WorkGroupConfiguration:
-        ResultConfiguration:
-          OutputLocation: !Sub s3://${AthenaResultsBucket}/panther/preview/
+        function: !Sub
+          - arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${FunctionName}
+          - { FunctionName: !FindInMap [AthenaDataSources, Dynamodb, Name] }
 
   AthenaWorkGroup:
     Type: AWS::Athena::WorkGroup
     Properties:
       Name: Panther
       Description: The Panther workgroup
+      Tags: # NOTE: for some reason the tags from the stack are not being applied
+        - Key: Application
+          Value: Panther
       RecursiveDeleteOption: true
       WorkGroupConfiguration:
         EnforceWorkGroupConfiguration: false # we want client side overrides

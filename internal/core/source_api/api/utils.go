@@ -38,27 +38,27 @@ func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 	case models.IntegrationTypeAWS3:
 		item.AWSAccountID = input.AWSAccountID
 		item.S3Bucket = input.S3Bucket
-		item.S3Prefix = input.S3Prefix
+		item.S3PrefixLogTypes = input.S3PrefixLogTypes
 		item.KmsKey = input.KmsKey
-		item.LogTypes = input.LogTypes
 		item.StackName = input.StackName
 		item.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
 	case models.IntegrationTypeAWSScan:
 		item.AWSAccountID = input.AWSAccountID
 		item.CWEEnabled = input.CWEEnabled
-		item.RemediationEnabled = input.RemediationEnabled
-		item.ScanIntervalMins = input.ScanIntervalMins
-		item.ScanStatus = input.ScanStatus
 		item.EventStatus = input.EventStatus
 		item.LastScanErrorMessage = input.LastScanErrorMessage
-		item.LastScanStartTime = input.LastScanStartTime
 		item.LastScanEndTime = input.LastScanEndTime
+		item.LastScanStartTime = input.LastScanStartTime
+		item.LogProcessingRole = input.LogProcessingRole
+		item.RemediationEnabled = input.RemediationEnabled
+		item.S3Bucket = input.S3Bucket
+		item.ScanIntervalMins = input.ScanIntervalMins
+		item.ScanStatus = input.ScanStatus
 		item.StackName = input.StackName
 	case models.IntegrationTypeSqs:
 		item.SqsConfig = &ddb.SqsConfig{
 			QueueURL:             input.SqsConfig.QueueURL,
 			S3Bucket:             input.SqsConfig.S3Bucket,
-			S3Prefix:             input.SqsConfig.S3Prefix,
 			LogProcessingRole:    input.SqsConfig.LogProcessingRole,
 			LogTypes:             input.SqsConfig.LogTypes,
 			AllowedPrincipalArns: input.SqsConfig.AllowedPrincipalArns,
@@ -82,9 +82,13 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 	case models.IntegrationTypeAWS3:
 		integration.AWSAccountID = item.AWSAccountID
 		integration.S3Bucket = item.S3Bucket
-		integration.S3Prefix = item.S3Prefix
+		integration.S3PrefixLogTypes = item.S3PrefixLogTypes
+		if len(integration.S3PrefixLogTypes) == 0 {
+			// Backwards compatibility: Use the old fields, maybe the info is there.
+			s3prefixLogTypes := models.S3PrefixLogtypesMapping{S3Prefix: item.S3Prefix, LogTypes: item.LogTypes}
+			integration.S3PrefixLogTypes = models.S3PrefixLogtypes{s3prefixLogTypes}
+		}
 		integration.KmsKey = item.KmsKey
-		integration.LogTypes = item.LogTypes
 		integration.StackName = item.StackName
 		integration.LogProcessingRole = item.LogProcessingRole
 	case models.IntegrationTypeAWSScan:
@@ -93,6 +97,8 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 		integration.RemediationEnabled = item.RemediationEnabled
 		integration.ScanIntervalMins = item.ScanIntervalMins
 		integration.ScanStatus = item.ScanStatus
+		integration.S3Bucket = item.S3Bucket
+		integration.LogProcessingRole = item.LogProcessingRole
 		integration.EventStatus = item.EventStatus
 		integration.LastScanStartTime = item.LastScanStartTime
 		integration.LastScanEndTime = item.LastScanEndTime
@@ -101,7 +107,6 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 	case models.IntegrationTypeSqs:
 		integration.SqsConfig = &models.SqsConfig{
 			S3Bucket:             item.SqsConfig.S3Bucket,
-			S3Prefix:             item.SqsConfig.S3Prefix,
 			LogProcessingRole:    item.SqsConfig.LogProcessingRole,
 			QueueURL:             item.SqsConfig.QueueURL,
 			LogTypes:             item.SqsConfig.LogTypes,

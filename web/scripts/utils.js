@@ -37,13 +37,14 @@ function loadDotEnvVars(path) {
 
 function getAppTemplateParams() {
   const PANTHER_CONFIG = {
-    PANTHER_VERSION: process.env.PANTHER_VERSION,
     AWS_REGION: process.env.AWS_REGION,
     AWS_ACCOUNT_ID: process.env.AWS_ACCOUNT_ID,
+    NODE_ENV: process.env.NODE_ENV,
     WEB_APPLICATION_GRAPHQL_API_ENDPOINT: process.env.WEB_APPLICATION_GRAPHQL_API_ENDPOINT,
     WEB_APPLICATION_USER_POOL_CLIENT_ID: process.env.WEB_APPLICATION_USER_POOL_CLIENT_ID,
     WEB_APPLICATION_USER_POOL_ID: process.env.WEB_APPLICATION_USER_POOL_ID,
-    NODE_ENV: process.env.NODE_ENV,
+    PANTHER_COMMIT: process.env.PANTHER_COMMIT,
+    PANTHER_VERSION: process.env.PANTHER_VERSION,
   };
 
   const missingKeys = Object.keys(PANTHER_CONFIG).filter(key => PANTHER_CONFIG[key] === undefined);

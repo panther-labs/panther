@@ -20,11 +20,14 @@ package s3pipe
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -37,13 +40,15 @@ import (
 
 func TestDownloadPipe(t *testing.T) {
 	for _, tc := range []testCase{
-		{"data shorter than part size", 12, []byte("small"), false},
-		{"data longer than part size", 4, []byte("foo bar baz qux"), false},
-		{"data longer than part size, fail", 4, []byte("foo bar baz qux"), true},
+		{"data longer than part size", 1024, 4096, false},
+		{"data shorter than part size", 512, 256, false},
+		{"data longer than part size, fail", 1026, 4000, true},
+		{"half data", 512, 1024, true},
 	} {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
-			s3Mock := tc.mockS3()
+			expectBody := repeatedLines("foo bar baz", tc.BodySize)
+			s3Mock := mockS3(expectBody, tc.PartSize, tc.Fail)
 			dl := Downloader{
 				S3:       s3Mock,
 				PartSize: int64(tc.PartSize),
@@ -56,35 +61,67 @@ func TestDownloadPipe(t *testing.T) {
 			defer rc.Close()
 
 			assert := require.New(t)
-			var body bytes.Buffer
-			n, err := body.ReadFrom(rc)
+			var actual bytes.Buffer
+			n, err := actual.ReadFrom(rc)
 			assert.NoError(err)
-			assert.Equal(n, int64(len(tc.Data)))
-			assert.Equal(tc.Data, body.Bytes())
+			assert.Equal(int64(len(expectBody)), n)
+			assert.Equal(expectBody, actual.Bytes())
 			s3Mock.AssertExpectations(t)
 		})
 	}
 }
 
+func TestGunzip(t *testing.T) {
+	assert := require.New(t)
+	data := "foo bar baz"
+	buf := bytes.Buffer{}
+	gz := gzip.NewWriter(&buf)
+	_, _ = gz.Write([]byte(data))
+	err := gz.Close()
+	assert.NoError(err)
+	s3Mock := &testutils.S3Mock{}
+	s3Mock.On("MaxRetries").Return(3)
+	part, contentRange := bodyPart(buf.Bytes(), 0, 512)
+	s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&s3.GetObjectOutput{
+		ContentRange: &contentRange,
+		Body:         ioutil.NopCloser(bytes.NewReader(part)),
+	}, nil).Once()
+	dl := Downloader{
+		S3:       s3Mock,
+		PartSize: 512,
+	}
+	input := &s3.GetObjectInput{
+		Bucket: aws.String("bucket"),
+		Key:    aws.String("key"),
+	}
+	rc := dl.Download(context.Background(), input)
+	defer rc.Close()
+	body := bytes.Buffer{}
+	_, err = body.ReadFrom(rc)
+	assert.NoError(err)
+	assert.Equal("foo bar baz", body.String())
+	s3Mock.AssertExpectations(t)
+}
+
 type testCase struct {
 	Name     string
 	PartSize int
-	Data     []byte
+	BodySize int
 	Fail     bool
 }
 
-func (tc testCase) mockS3() *testutils.S3Mock {
-	s3Mock := testutils.S3Mock{
-		Retries: 3,
-	}
-	for i := 0; i <= tc.numParts(); i++ {
-		data, contentRange := tc.bodyPart(i)
+func mockS3(body []byte, partSize int, fail bool) *testutils.S3Mock {
+	s3Mock := &testutils.S3Mock{}
+	s3Mock.On("MaxRetries").Return(3)
+	numParts := numParts(len(body), partSize)
+	for i := 0; i < numParts; i++ {
+		part, contentRange := bodyPart(body, i, partSize)
 		output := s3.GetObjectOutput{
 			ContentRange:  aws.String(contentRange),
-			ContentLength: aws.Int64(int64(len(data))),
-			Body:          ioutil.NopCloser(bytes.NewReader(data)),
+			ContentLength: aws.Int64(int64(len(part))),
+			Body:          ioutil.NopCloser(bytes.NewReader(part)),
 		}
-		if tc.Fail {
+		if fail {
 			// Copy output
 			output := output
 			// Set body to failing reader
@@ -93,20 +130,25 @@ func (tc testCase) mockS3() *testutils.S3Mock {
 		}
 		s3Mock.On("GetObjectWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&output, nil).Once()
 	}
-	return &s3Mock
+	return s3Mock
 }
-func (tc testCase) bodyPart(i int) ([]byte, string) {
-	start := i * tc.PartSize
-	end := start + tc.PartSize
-	total := len(tc.Data)
+
+func bodyPart(body []byte, i, partSize int) ([]byte, string) {
+	start := i * partSize
+	end := start + partSize
+	total := len(body)
 	if end > total {
 		end = total
 	}
-	return tc.Data[start:end], fmt.Sprintf("bytes %d-%d/%d", start, end, total)
+	return body[start:end], fmt.Sprintf("bytes %d-%d/%d", start, end, total)
 }
 
-func (tc testCase) numParts() int {
-	return len(tc.Data) / tc.PartSize
+func numParts(total, part int) int {
+	n := total / part
+	if total%part != 0 {
+		n++
+	}
+	return n
 }
 
 type networkFailReader struct{}
@@ -121,4 +163,58 @@ func (*networkFailReader) Read(p []byte) (int, error) {
 	}
 	// Make sure to returned some partial data.
 	return copy(p, "FAIL"), &netErr
+}
+
+func repeatedLines(line string, maxSize int) (buf []byte) {
+	line = strings.TrimRightFunc(line, func(r rune) bool {
+		return r == '\n' || r == '\r'
+	})
+	for len(buf) < maxSize {
+		if len(buf) != 0 {
+			buf = append(buf, '\n')
+		}
+		buf = append(buf, line...)
+	}
+	return buf
+}
+
+// This test is here to ensure that proper handling of edge cases exists when downloading.
+// If edge cases are not handled, reading from the io.ReadCloser might block indefinitely.
+// This won't happen every time but it is quite hard to coordinate the goroutines on each run.
+// If this test starts randomly failing, someone has messed with the fine balance things in the Downloader.
+func TestEarlyClose(t *testing.T) {
+	s3Mock := &testutils.S3Mock{}
+	s3Mock.On("MaxRetries").Return(3)
+	s3Mock.On("GetObjectWithContext",
+		mock.Anything, mock.Anything, mock.Anything,
+	).Return((*s3.GetObjectOutput)(nil), errors.New("failed")).Once()
+	dl := Downloader{
+		S3:       s3Mock,
+		PartSize: 32,
+	}
+	rc := dl.Download(context.Background(), &s3.GetObjectInput{})
+	rc.Close()
+	buf := bytes.Buffer{}
+	n, err := buf.ReadFrom(rc)
+	require.Error(t, err)
+	require.Equal(t, int64(0), n)
+	s3Mock.AssertExpectations(t)
+}
+
+func TestCopyBuffersHandlesClosedChannel(t *testing.T) {
+	ch := make(chan *bytes.Buffer)
+	close(ch)
+	r, w := io.Pipe()
+	peekCalled := false
+	peek := func(buf []byte) {
+		if buf == nil {
+			peekCalled = true
+		}
+	}
+	require.NoError(t, r.CloseWithError(errors.New("failed")))
+	copyBuffers(w, ch, peek)
+	data, err := ioutil.ReadAll(r)
+	require.True(t, peekCalled)
+	require.Error(t, err)
+	require.Equal(t, 0, len(data))
 }

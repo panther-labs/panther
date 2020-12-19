@@ -32,44 +32,23 @@ import (
 const (
 	// https://github.com/awslabs/aws-athena-query-federation/tree/master/athena-dynamodb
 
-	// FIXME: Update the description when the DDB connector is GA
 	ResourcesTableDDB         = "panther-resources"
 	ResourcesTable            = "resources"
-	ResourcesTableDescription = "(ddb.panther_cloudsecurity.resources) The resources discovered by Panther scanning"
+	ResourcesTableDescription = "The resources discovered by Panther scanning"
 
 	ComplianceTableDDB         = "panther-compliance"
 	ComplianceTable            = "compliance"
-	ComplianceTableDescription = "(ddb.panther_cloudsecurity.compliance) The policies and statuses from Panther scanning"
+	ComplianceTableDescription = "The policies and statuses from Panther scanning"
 )
 
 var (
-	// FIXME: Remove when the DDB connector is GA
-	// Available Regions – The Athena federated query feature is available in preview in the US East (N. Virginia),
-	//                     Asia Pacific (Mumbai), Europe (Ireland), and US West (Oregon) Regions.
+	// FIXME: Remove when the DDB connector and Athena2 are available in all regions
 	anthenaDDBConnectorRegions = map[string]struct{}{
-		"us-east-1":  {},
-		"ap-south-1": {},
-		"eu-west-1":  {},
-		"us-west-2":  {},
+		"us-east-1": {},
+		"us-east-2": {},
+		"us-west-2": {},
 	}
 )
-
-func CreateOrUpdateCloudSecurityDatabase(glueClient glueiface.GlueAPI) error {
-	dbInput := &glue.DatabaseInput{
-		Description: aws.String(pantherdb.CloudSecurityDatabaseDescription),
-		LocationUri: aws.String("dynamo-db-flag"),
-		Name:        aws.String(pantherdb.CloudSecurityDatabase),
-	}
-
-	_, err := glueClient.CreateDatabase(&glue.CreateDatabaseInput{
-		CatalogId:     nil,
-		DatabaseInput: dbInput,
-	})
-	if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
-		return nil // nothing to do
-	}
-	return errors.Wrap(err, "could not create cloud security database")
-}
 
 func CreateOrUpdateResourcesTable(glueClient glueiface.GlueAPI, locationARN string) error {
 	// FIXME: Remove when the DDB connector is GA

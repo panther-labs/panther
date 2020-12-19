@@ -71,7 +71,7 @@ type UnitTest struct {
 
 type BulkUploadInput struct {
 	Data   string `json:"data" validate:"required"` // base64-encoded zipfile
-	UserID string `json:"userId" validate:"uuid4"`
+	UserID string `json:"userId" validate:"required"`
 }
 
 type BulkUploadOutput struct {

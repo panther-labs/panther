@@ -19,12 +19,12 @@
 import React from 'react';
 import {
   buildListRulesResponse,
-  render,
-  fireEvent,
-  within,
-  fireClickAndMouseEvents,
-  waitMs,
   buildRuleSummary,
+  fireClickAndMouseEvents,
+  fireEvent,
+  render,
+  waitMs,
+  within,
 } from 'test-utils';
 import { ListRulesSortFieldsEnum, SeverityEnum, SortDirEnum } from 'Generated/schema';
 import { queryStringOptions } from 'Hooks/useUrlParams';
@@ -63,7 +63,7 @@ describe('ListRules', () => {
       `?enabled=true` +
       `&logTypes[]=${mockedlogType}` +
       `&nameContains=test` +
-      `&severity=${SeverityEnum.Info}` +
+      `&severity[]=${SeverityEnum.Info}` +
       `&sortBy=${ListRulesSortFieldsEnum.LastModified}` +
       `&sortDir=${SortDirEnum.Descending}` +
       `&tags[]=soc&tags[]=soc-2` +
@@ -116,7 +116,7 @@ describe('ListRules', () => {
     // Verify filter value inside the Dropdown
     fireClickAndMouseEvents(getByText('Filters (2)'));
     const withinDropdown = within(await findByTestId('dropdown-rule-listing-filters'));
-    expect(withinDropdown.getAllByLabelText('Severity')[0]).toHaveValue('Info');
+    expect(withinDropdown.getByText('Info')).toBeTruthy();
     expect(withinDropdown.getAllByLabelText('Enabled')[0]).toHaveValue('Yes');
   });
 
@@ -154,7 +154,7 @@ describe('ListRules', () => {
           input: {
             ...parsedInitialParams,
             enabled: true,
-            severity: SeverityEnum.Info,
+            severity: [SeverityEnum.Info],
           },
         },
         data: {
@@ -197,7 +197,7 @@ describe('ListRules', () => {
     let withinDropdown = within(await findByTestId('dropdown-rule-listing-filters'));
 
     // Modify all the filter values
-    fireClickAndMouseEvents(withinDropdown.getAllByLabelText('Severity')[0]);
+    fireClickAndMouseEvents(withinDropdown.getAllByLabelText('Severities')[0]);
     fireEvent.click(withinDropdown.getByText('Info'));
     fireClickAndMouseEvents(withinDropdown.getAllByLabelText('Enabled')[0]);
     fireEvent.click(withinDropdown.getByText('Yes'));
@@ -212,7 +212,7 @@ describe('ListRules', () => {
     await waitMs(1);
 
     // Expect URL to have changed to mirror the filter updates
-    const updatedParams = `${initialParams}&enabled=true&severity=${SeverityEnum.Info}`;
+    const updatedParams = `${initialParams}&enabled=true&severity[]=${SeverityEnum.Info}`;
     expect(parseParams(history.location.search)).toEqual(parseParams(updatedParams));
 
     // Await for the new API request to resolve
@@ -233,7 +233,7 @@ describe('ListRules', () => {
     fireEvent.click(withinDropdown.getByText('Clear Filters'));
 
     // Verify that they are cleared
-    expect(withinDropdown.getAllByLabelText('Severity')[0]).not.toHaveValue('Info');
+    expect(withinDropdown.queryByText('Info')).toBeFalsy();
     expect(withinDropdown.getAllByLabelText('Enabled')[0]).not.toHaveValue('Yes');
 
     // Expect the URL to not have changed until "Apply Filters" is clicked
@@ -258,7 +258,7 @@ describe('ListRules', () => {
 
   it('correctly updates filters & sorts on every change outside of the dropdown', async () => {
     const mockedlogType = 'AWS.ALB';
-    const initialParams = `?enabled=true&severity=${SeverityEnum.Info}&page=1`;
+    const initialParams = `?enabled=true&severity[]=${SeverityEnum.Info}&page=1`;
 
     const parsedInitialParams = parseParams(initialParams);
     const mocks = [
@@ -397,7 +397,7 @@ describe('ListRules', () => {
 
     // Expect the sort dropdown to be empty by default. Empty = "All Types" for this filter.
     const logTypesFilter = getAllByLabelText('Log Type')[0];
-    expect(logTypesFilter).toHaveValue('All types');
+    expect(logTypesFilter).toHaveValue('All Types');
 
     // Change its value
     fireEvent.focus(logTypesFilter);
@@ -436,7 +436,7 @@ describe('ListRules', () => {
     // Verify that the filters inside the Dropdown are left intact
     fireClickAndMouseEvents(getByText('Filters (2)'));
     const withinDropdown = within(await findByTestId('dropdown-rule-listing-filters'));
-    expect(withinDropdown.getAllByLabelText('Severity')[0]).toHaveValue('Info');
+    expect(withinDropdown.getByText('Info')).toBeTruthy();
     expect(withinDropdown.getAllByLabelText('Enabled')[0]).toHaveValue('Yes');
   });
 });

@@ -37,15 +37,19 @@ import (
 
 func TestGetAlerts(t *testing.T) {
 	alertID := aws.String("alert-id")
-	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+	outputIds := []string{
+		"424ccb6b-0e43-4fd3-9c8b-3862a5f0f4c2",
+		"424ccb6b-0e43-4fd3-9c8b-3862a5f0f4c3",
+		"424ccb6b-0e43-4fd3-9c8b-3862a5f0f4c3",
+	}
 
 	alert := &deliveryModels.Alert{
 		AlertID:             alertID,
-		AnalysisDescription: aws.String("A test alert"),
+		AnalysisDescription: "A test alert",
 		AnalysisID:          "Test.Analysis.ID",
 		AnalysisName:        aws.String("Test Analysis Name"),
-		Runbook:             aws.String("A runbook link"),
-		Title:               aws.String("Test Alert"),
+		Runbook:             "A runbook link",
+		Title:               "Test Alert",
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
 		Type:                deliveryModels.RuleType,
@@ -90,11 +94,11 @@ func TestGetAlertOutputMap(t *testing.T) {
 	alerts := []*deliveryModels.Alert{
 		{
 			AlertID:             alertID,
-			AnalysisDescription: aws.String("A test alert"),
+			AnalysisDescription: "A test alert",
 			AnalysisID:          "Test.Analysis.ID",
 			AnalysisName:        aws.String("Test Analysis Name"),
-			Runbook:             aws.String("A runbook link"),
-			Title:               aws.String("Test Alert"),
+			Runbook:             "A runbook link",
+			Title:               "Test Alert",
 			RetryCount:          0,
 			Tags:                []string{"test", "alert"},
 			Type:                deliveryModels.RuleType,
@@ -154,11 +158,11 @@ func TestGetAlertOutputMapError(t *testing.T) {
 	alerts := []*deliveryModels.Alert{
 		{
 			AlertID:             alertID,
-			AnalysisDescription: aws.String("A test alert"),
+			AnalysisDescription: "A test alert",
 			AnalysisID:          "Test.Analysis.ID",
 			AnalysisName:        aws.String("Test Analysis Name"),
-			Runbook:             aws.String("A runbook link"),
-			Title:               aws.String("Test Alert"),
+			Runbook:             "A runbook link",
+			Title:               "Test Alert",
 			RetryCount:          0,
 			Tags:                []string{"test", "alert"},
 			Type:                deliveryModels.RuleType,
@@ -239,11 +243,11 @@ func TestGetAlertsToRetry(t *testing.T) {
 		// Needs to be retried
 		{
 			AlertID:             alertID,
-			AnalysisDescription: aws.String("A test alert"),
+			AnalysisDescription: "A test alert",
 			AnalysisID:          "Test.Analysis.ID",
 			AnalysisName:        aws.String("Test Analysis Name"),
-			Runbook:             aws.String("A runbook link"),
-			Title:               aws.String("Test Alert"),
+			Runbook:             "A runbook link",
+			Title:               "Test Alert",
 			RetryCount:          0,
 			Tags:                []string{"test", "alert"},
 			Type:                deliveryModels.RuleType,
@@ -255,11 +259,11 @@ func TestGetAlertsToRetry(t *testing.T) {
 		// Should be ignored because it has exceeded the max retry count
 		{
 			AlertID:             alertID,
-			AnalysisDescription: aws.String("A test alert"),
+			AnalysisDescription: "A test alert",
 			AnalysisID:          "Test.Analysis.ID",
 			AnalysisName:        aws.String("Test Analysis Name"),
-			Runbook:             aws.String("A runbook link"),
-			Title:               aws.String("Test Alert"),
+			Runbook:             "A runbook link",
+			Title:               "Test Alert",
 			RetryCount:          10,
 			Tags:                []string{"test", "alert"},
 			Type:                deliveryModels.RuleType,
@@ -338,11 +342,11 @@ func TestGetAlertsToRetry(t *testing.T) {
 	expectedResult := []*deliveryModels.Alert{
 		{
 			AlertID:             alertID,
-			AnalysisDescription: aws.String("A test alert"),
+			AnalysisDescription: "A test alert",
 			AnalysisID:          "Test.Analysis.ID",
 			AnalysisName:        aws.String("Test Analysis Name"),
-			Runbook:             aws.String("A runbook link"),
-			Title:               aws.String("Test Alert"),
+			Runbook:             "A runbook link",
+			Title:               "Test Alert",
 			RetryCount:          1,
 			Tags:                []string{"test", "alert"},
 			Type:                deliveryModels.RuleType,

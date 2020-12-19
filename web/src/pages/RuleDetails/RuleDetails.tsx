@@ -31,8 +31,8 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import { AlertTypesEnum } from 'Generated/schema';
 import RuleDetailsPageSkeleton from './Skeleton';
 import ListRuleAlerts from './RuleAlertsListing';
-import CardDetails from './RuleCardDetails';
 import RuleDetailsInfo from './RuleDetailsInfo';
+import RuleDetailsBanner from './RuleDetailsBanner';
 import { useRuleDetails } from './graphql/ruleDetails.generated';
 import { useListAlertsForRule } from './graphql/listAlertsForRule.generated';
 
@@ -63,13 +63,11 @@ const RuleDetailsPage: React.FC = () => {
     },
   });
 
-  // dry runs for tabs indicator
-
   const { data: matchesData } = useListAlertsForRule({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        type: AlertTypesEnum.Rule,
+        types: [AlertTypesEnum.Rule],
         ruleId: match.params.id,
         pageSize: DEFAULT_SMALL_PAGE_SIZE,
       },
@@ -80,7 +78,7 @@ const RuleDetailsPage: React.FC = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        type: AlertTypesEnum.RuleError,
+        types: [AlertTypesEnum.RuleError],
         ruleId: match.params.id,
         pageSize: DEFAULT_SMALL_PAGE_SIZE,
       },
@@ -107,10 +105,10 @@ const RuleDetailsPage: React.FC = () => {
   }
 
   return (
-    <Box as="article">
-      <Flex direction="column" spacing={6} my={6}>
+    <Box as="article" mb={6}>
+      <Flex direction="column" spacing={6}>
         <ErrorBoundary>
-          <RuleDetailsInfo rule={data.rule} />
+          <RuleDetailsBanner rule={data.rule} />
         </ErrorBoundary>
         <Card position="relative">
           <Tabs
@@ -140,7 +138,7 @@ const RuleDetailsPage: React.FC = () => {
               <BorderTabDivider />
               <TabPanels>
                 <TabPanel data-testid="rule-details-tabpanel">
-                  <CardDetails rule={data.rule} />
+                  <RuleDetailsInfo rule={data.rule} />
                 </TabPanel>
                 <TabPanel data-testid="rule-matches-tabpanel" lazy unmountWhenInactive>
                   <ListRuleAlerts ruleId={match.params.id} type={AlertTypesEnum.Rule} />

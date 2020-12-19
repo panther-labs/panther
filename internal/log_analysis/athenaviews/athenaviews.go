@@ -33,8 +33,8 @@ import (
 	"github.com/panther-labs/panther/pkg/awsathena"
 )
 
-// CreateOrReplaceViews will update Athena with all views for the tables provided
-func CreateOrReplaceViews(athenaClient athenaiface.AthenaAPI, workgroup string, deployedLogTables []*awsglue.GlueTableMetadata) error {
+// CreateOrReplaceLogViews will update Athena with all views for the tables provided
+func CreateOrReplaceLogViews(athenaClient athenaiface.AthenaAPI, workgroup string, deployedLogTables []*awsglue.GlueTableMetadata) error {
 	if len(deployedLogTables) == 0 { // nothing to do
 		return nil
 	}
@@ -46,7 +46,7 @@ func CreateOrReplaceViews(athenaClient athenaiface.AthenaAPI, workgroup string, 
 	for _, sql := range sqlStatements {
 		_, err := awsathena.RunQuery(athenaClient, workgroup, pantherdb.ViewsDatabase, sql)
 		if err != nil {
-			return errors.Wrap(err, "CreateOrReplaceViews() failed")
+			return errors.Wrap(err, "CreateOrReplaceLogViews() failed")
 		}
 	}
 	return err

@@ -20,18 +20,17 @@ package parsers
 
 import (
 	"net"
-	"reflect"
 	"regexp"
 	"sort"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/panther-labs/panther/internal/log_analysis/awsglue/glueschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog/rowid"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/box"
+	"github.com/panther-labs/panther/pkg/stringset"
 	"github.com/panther-labs/panther/pkg/unbox"
 )
 
@@ -60,53 +59,22 @@ type PantherLog struct {
 	PantherSourceLabel *string            `json:"p_source_label,omitempty" description:"Panther added field with the source label"`
 
 	// optional (any)
-	PantherAnyIPAddresses  *PantherAnyString `json:"p_any_ip_addresses,omitempty" description:"Panther added field with collection of ip addresses associated with the row"`
-	PantherAnyDomainNames  *PantherAnyString `json:"p_any_domain_names,omitempty" description:"Panther added field with collection of domain names associated with the row"`
-	PantherAnySHA1Hashes   *PantherAnyString `json:"p_any_sha1_hashes,omitempty" description:"Panther added field with collection of SHA1 hashes associated with the row"`
-	PantherAnyMD5Hashes    *PantherAnyString `json:"p_any_md5_hashes,omitempty" description:"Panther added field with collection of MD5 hashes associated with the row"`
-	PantherAnySHA256Hashes *PantherAnyString `json:"p_any_sha256_hashes,omitempty" description:"Panther added field with collection of SHA256 hashes of any algorithm associated with the row"`
+	PantherAnyIPAddresses  PantherAnyString `json:"p_any_ip_addresses,omitempty" description:"Panther added field with collection of ip addresses associated with the row"`
+	PantherAnyDomainNames  PantherAnyString `json:"p_any_domain_names,omitempty" description:"Panther added field with collection of domain names associated with the row"`
+	PantherAnySHA1Hashes   PantherAnyString `json:"p_any_sha1_hashes,omitempty" description:"Panther added field with collection of SHA1 hashes associated with the row"`
+	PantherAnyMD5Hashes    PantherAnyString `json:"p_any_md5_hashes,omitempty" description:"Panther added field with collection of MD5 hashes associated with the row"`
+	PantherAnySHA256Hashes PantherAnyString `json:"p_any_sha256_hashes,omitempty" description:"Panther added field with collection of SHA256 hashes of any algorithm associated with the row"`
 }
 
-type PantherAnyString struct { // needed to declare as struct (rather than map) for CF generation
-	set map[string]struct{} // map is used for uniqueness, serializes as JSON list
-}
+type PantherAnyString []string
 
-func init() {
-	// Register glue mapping for PantherAnyString
-	glueschema.MustRegisterMapping(reflect.TypeOf(PantherAnyString{}), glueschema.ArrayOf(glueschema.TypeString))
-}
-
-func NewPantherAnyString() *PantherAnyString {
-	return &PantherAnyString{
-		set: make(map[string]struct{}),
-	}
-}
-
-func (any *PantherAnyString) MarshalJSON() ([]byte, error) {
-	if any != nil { // copy to slice
-		values := make([]string, len(any.set))
-		i := 0
-		for k := range any.set {
-			values[i] = k
-			i++
-		}
-		sort.Strings(values) // sort for consistency and to improve compression when stored
-		return jsoniter.Marshal(values)
-	}
-	return []byte{}, nil
-}
-
-func (any *PantherAnyString) UnmarshalJSON(jsonBytes []byte) error {
-	var values []string
-	err := jsoniter.Unmarshal(jsonBytes, &values)
-	if err != nil {
-		return err
-	}
-	any.set = make(map[string]struct{}, len(values))
-	for _, entry := range values {
-		any.set[entry] = struct{}{}
-	}
-	return nil
+func (any PantherAnyString) MarshalJSON() ([]byte, error) {
+	// The safe way to do this is to clone.
+	// MarshalJSON is not supposed to be altering the value.
+	// If we used stringset.Dedup + sort.Strings we could corrupt the input slice.
+	values := stringset.New(any...)
+	sort.Strings(values)
+	return jsoniter.Marshal(values)
 }
 
 // Event returns event data, used when composed
@@ -188,10 +156,7 @@ func (pl *PantherLog) AppendAnyIPAddressInField(value string) bool {
 
 func (pl *PantherLog) AppendAnyIPAddress(value string) bool {
 	if net.ParseIP(value) != nil {
-		if pl.PantherAnyIPAddresses == nil { // lazy create
-			pl.PantherAnyIPAddresses = NewPantherAnyString()
-		}
-		AppendAnyString(pl.PantherAnyIPAddresses, value)
+		AppendAnyString(&pl.PantherAnyIPAddresses, value)
 		return true
 	}
 	return false
@@ -206,10 +171,7 @@ func (pl *PantherLog) AppendAnyDomainNamePtrs(values ...*string) {
 }
 
 func (pl *PantherLog) AppendAnyDomainNames(values ...string) {
-	if pl.PantherAnyDomainNames == nil { // lazy create
-		pl.PantherAnyDomainNames = NewPantherAnyString()
-	}
-	AppendAnyString(pl.PantherAnyDomainNames, values...)
+	AppendAnyString(&pl.PantherAnyDomainNames, values...)
 }
 
 func (pl *PantherLog) AppendAnySHA1HashPtrs(values ...*string) {
@@ -221,10 +183,7 @@ func (pl *PantherLog) AppendAnySHA1HashPtrs(values ...*string) {
 }
 
 func (pl *PantherLog) AppendAnySHA1Hashes(values ...string) {
-	if pl.PantherAnySHA1Hashes == nil { // lazy create
-		pl.PantherAnySHA1Hashes = NewPantherAnyString()
-	}
-	AppendAnyString(pl.PantherAnySHA1Hashes, values...)
+	AppendAnyString(&pl.PantherAnySHA1Hashes, values...)
 }
 
 func (pl *PantherLog) AppendAnyMD5HashPtrs(values ...*string) {
@@ -236,17 +195,11 @@ func (pl *PantherLog) AppendAnyMD5HashPtrs(values ...*string) {
 }
 
 func (pl *PantherLog) AppendAnyMD5Hashes(values ...string) {
-	if pl.PantherAnyMD5Hashes == nil { // lazy create
-		pl.PantherAnyMD5Hashes = NewPantherAnyString()
-	}
-	AppendAnyString(pl.PantherAnyMD5Hashes, values...)
+	AppendAnyString(&pl.PantherAnyMD5Hashes, values...)
 }
 
 func (pl *PantherLog) AppendAnySHA256Hashes(values ...string) {
-	if pl.PantherAnySHA256Hashes == nil { // lazy create
-		pl.PantherAnySHA256Hashes = NewPantherAnyString()
-	}
-	AppendAnyString(pl.PantherAnySHA256Hashes, values...)
+	AppendAnyString(&pl.PantherAnySHA256Hashes, values...)
 }
 
 func (pl *PantherLog) AppendAnySHA256HashesPtr(values ...*string) {
@@ -263,10 +216,7 @@ func AppendAnyString(any *PantherAnyString, values ...string) {
 		if v == "" { // ignore empty strings
 			continue
 		}
-		if _, exists := any.set[v]; exists {
-			continue
-		}
-		any.set[v] = struct{}{} // new
+		*any = stringset.Append(*any, v)
 	}
 }
 

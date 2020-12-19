@@ -31,20 +31,16 @@ func TestAPI_ListLogTypes(t *testing.T) {
 	listOutput := []*models.SourceIntegration{
 		{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationType: models.IntegrationTypeAWS3,
-				LogTypes:        []string{"one"},
+				IntegrationType:  models.IntegrationTypeAWS3,
+				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: []string{"one"}}},
 			},
 		},
 		{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 				IntegrationType: models.IntegrationTypeSqs,
-				LogTypes:        []string{"one", "two"}, // "one" is duplicate with above
-			},
-		},
-		{ // should not match
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationType: models.IntegrationTypeAWSScan,
-				LogTypes:        nil,
+				SqsConfig: &models.SqsConfig{
+					LogTypes: []string{"one", "two"}, // "one" is duplicate with above
+				},
 			},
 		},
 	}

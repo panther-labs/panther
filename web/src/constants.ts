@@ -102,17 +102,14 @@ export const RESOURCE_TYPES = [
   'AWS.WAF.WebACL',
 ] as const;
 
-const PANTHER_DOCS_BASE = 'https://docs.runpanther.io';
-
-export const STABLE_PANTHER_VERSION = pantherConfig.PANTHER_VERSION.split('-')[0]; // e.g. "v1.7.1"
-const VERSION_PARTS = STABLE_PANTHER_VERSION.split('.'); // ["v1", "7", "1]
-const MINOR_PANTHER_VERSION = `${VERSION_PARTS[0]}.${VERSION_PARTS[1]}`.replace('v', ''); // "1.7"
-export const PANTHER_DOCS_LINK = `${PANTHER_DOCS_BASE}/v/release-${MINOR_PANTHER_VERSION}`;
+const VERSION_PARTS = pantherConfig.PANTHER_VERSION.split('.'); // ["1", "7", "1]
+export const PANTHER_DOCS_LINK = `https://docs.runpanther.io/v/release-${VERSION_PARTS[0]}.${VERSION_PARTS[1]}`;
 
 export const ANALYSIS_UPLOAD_DOC_URL = `${PANTHER_DOCS_LINK}/user-guide/analysis/panther-analysis-tool#uploading-to-panther`;
 export const CLOUD_SECURITY_REAL_TIME_DOC_URL = `${PANTHER_DOCS_LINK}/cloud-security/setup#configure-real-time-monitoring`;
 export const LOG_ONBOARDING_SNS_DOC_URL = `${PANTHER_DOCS_LINK}/log-analysis/setup#setup-notifications-of-new-data`;
 export const PRIVACY_DOC_URL = `${PANTHER_DOCS_LINK}/user-guide/help/security-privacy#privacy`;
+export const CUSTOM_LOG_TYPES_DOC_URL = `${PANTHER_DOCS_LINK}/enterprise/custom-log-types`;
 export const REMEDIATION_DOC_URL = `${PANTHER_DOCS_LINK}/cloud-security/automatic-remediation#overview`;
 // End of doc URLs section
 

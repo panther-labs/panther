@@ -19,7 +19,9 @@ package processor
  */
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
 	"time"
@@ -41,6 +43,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor/logstream"
 	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
@@ -120,9 +123,9 @@ func TestProcess(t *testing.T) {
 	streamChan := make(chan *common.DataStream, 1)
 	streamChan <- dataStream
 	close(streamChan)
-	err = Process(streamChan, destination, newProcessorFunc)
+	err = Process(context.Background(), streamChan, destination, newProcessorFunc)
 	require.NoError(t, err)
-	require.Equal(t, testLogEvents, destination.nEvents)
+	require.Equal(t, testLogEvents, destination.nEvents, "wrong number of events %d != %d", testLogEvents, destination.nEvents)
 
 	// ensure the closer was called
 	assert.True(t, dataStream.Closer.(*dummyCloser).closed)
@@ -149,7 +152,7 @@ func TestProcessDataStreamError(t *testing.T) {
 	streamChan := make(chan *common.DataStream, 1)
 	streamChan <- dataStream
 	close(streamChan)
-	err = Process(streamChan, destination, newProcessorFunc)
+	err = Process(context.Background(), streamChan, destination, newProcessorFunc)
 	require.Error(t, err)
 
 	// confirm error log is as expected
@@ -232,7 +235,7 @@ func TestProcessDestinationError(t *testing.T) {
 	streamChan := make(chan *common.DataStream, 1)
 	streamChan <- dataStream
 	close(streamChan)
-	err = Process(streamChan, destination, newProcessorFunc)
+	err = Process(context.Background(), streamChan, destination, newProcessorFunc)
 	require.Error(t, err)
 }
 
@@ -284,7 +287,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 	streamChan := make(chan *common.DataStream, 1)
 	streamChan <- dataStream
 	close(streamChan)
-	err = Process(streamChan, destination, newProcessorFunc)
+	err = Process(context.Background(), streamChan, destination, newProcessorFunc)
 	require.NoError(t, err)
 
 	actual := logs.AllUntimed()
@@ -309,7 +312,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 				},
 			},
 		},
-		Timestamp: p.operation.EndTime.UnixNano() / metrics.NanosecondsPerMillisecond,
+		Timestamp: time.Duration(p.operation.EndTime.UnixNano()).Milliseconds(),
 	}
 
 	expected := []observer.LoggedEntry{
@@ -382,32 +385,34 @@ func TestProcessClassifyFailure(t *testing.T) {
 				Message: "metric",
 			},
 			Context: []zapcore.Field{
-				{
-					Key:    "LogType",
-					String: testLogType,
-				},
-				{
-					Key:     "BytesProcessed",
-					Integer: 7996,
-				},
-				{
-					Key:     "EventsProcessed",
-					Integer: 1999,
-				},
-				{
-					Key:     "CombinedLatency",
-					Integer: 0,
-				},
-				{
-					Key:       "_aws",
-					Interface: embeddedMetric,
-				},
+				zap.String("LogType", testLogType),
+				zap.Uint64("BytesProcessed", 7996),
+				zap.Uint64("EventsProcessed", 1999),
+				zap.Uint64("CombinedLatency", 0),
+				zap.Any("_aws", embeddedMetric),
+			},
+		},
+		{
+			Entry: zapcore.Entry{
+				Level:   zapcore.InfoLevel,
+				Message: common.OpLogNamespace + ":" + common.OpLogComponent + ":" + "readS3Object",
+			},
+			Context: []zapcore.Field{
+				zap.String("namespace", common.OpLogNamespace),
+				zap.String("component", common.OpLogComponent),
+				zap.String("operation", "readS3Object"),
+				zap.String("bucket", testBucket),
+				zap.String("key", testKey),
+				zap.Int64("size", 0),
+				zap.String("sourceID", testSourceID),
 			},
 		},
 	}
 	require.Equal(t, len(expected), len(actual))
+
 	for i := range expected {
-		if i == len(expected)-1 {
+		// This thing checks metrics logs...
+		if i == len(expected)-2 {
 			assert.Equal(t, expected[i].Entry.Level, actual[i].Entry.Level)
 			assert.Equal(t, expected[i].Entry.Message, actual[i].Entry.Message)
 			require.Equal(t, len(expected[i].Context), len(actual[i].Context))
@@ -443,7 +448,7 @@ func assertLogEqual(t *testing.T, expected, actual observer.LoggedEntry) {
 			assert.Equal(t, expectedError, actualError)
 		} else {
 			assert.Equal(t, v, actual.ContextMap()[k],
-				fmt.Sprintf("%s for\n\texpected:%#v\n\tactual:%#v", k, expected, actual))
+				"%s for\n\texpected:%#v\n\tactual:%#v", k, expected.ContextMap(), actual.ContextMap())
 		}
 	}
 }
@@ -499,28 +504,31 @@ func (c *testClassifier) standardMocks(cStats *classification.ClassifierStats, p
 	c.On("ParserStats", mock.Anything).Return(pStats)
 }
 
-func makeDataStream() (dataStream *common.DataStream) {
+func makeDataStream() *common.DataStream {
 	testData := make([]string, testLogLines)
 	for i := uint64(0); i < testLogLines; i++ {
 		testData[i] = testLogLine
 	}
-
-	dataStream = &common.DataStream{
+	reader := strings.NewReader(strings.Join(testData, "\n"))
+	return &common.DataStream{
+		Stream:      logstream.NewLineStream(reader, 4096),
 		Closer:      &dummyCloser{},
-		Reader:      strings.NewReader(strings.Join(testData, "\n")),
 		Source:      testSource,
 		S3ObjectKey: testKey,
 		S3Bucket:    testBucket,
 	}
-	return
 }
 
 type dummyCloser struct {
+	io.Reader
 	closed bool
 }
 
 func (dc *dummyCloser) Close() error {
 	dc.closed = true
+	if rc, ok := dc.Reader.(io.ReadCloser); ok {
+		return rc.Close()
+	}
 	return nil
 }
 
@@ -538,18 +546,17 @@ var testSource = &models.SourceIntegration{
 		IntegrationLabel: testSourceLabel,
 		IntegrationType:  models.IntegrationTypeAWS3,
 		S3Bucket:         testBucket,
-		LogTypes:         []string{testLogType},
+		S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: []string{testLogType}}},
 	},
 }
 
 // returns a dataStream that will cause the parse to fail
-func makeBadDataStream() (dataStream *common.DataStream) {
-	dataStream = &common.DataStream{
+func makeBadDataStream() *common.DataStream {
+	return &common.DataStream{
+		Stream: logstream.NewLineStream(&failingReader{}, 4096),
 		Closer: &dummyCloser{},
-		Reader: &failingReader{},
 		Source: testSource,
 	}
-	return
 }
 
 // replace global logger with an in-memory observer for tests.

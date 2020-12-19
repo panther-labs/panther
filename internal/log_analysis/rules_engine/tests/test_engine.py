@@ -59,6 +59,96 @@ class TestEngine(TestCase):
         self.assertEqual(len(engine.log_type_to_rules['log']), 1)
         self.assertEqual(engine.log_type_to_rules['log'][0].rule_id, 'rule_id')
 
+    def test_analyze_single_rule_with_udm(self) -> None:
+        analysis_api = mock.MagicMock()
+        analysis_api.get_enabled_data_models.return_value = [
+            {
+                'id': 'data_model_id',
+                'logTypes': ['log'],
+                'versionId': 'version',
+                'mappings': [{
+                    'name': 'destination',
+                    'path': 'is_dst'
+                }]
+            }
+        ]
+        rule_body = 'def rule(event):\n\treturn event.udm("destination")'
+        event = {'id': 'event_id', 'data': {'is_dst': True, 'p_log_type': 'log'}}
+        rule = {'id': 'rule_id', 'body': rule_body}
+        expected_response = {
+            'id': 'event_id',
+            'ruleId': 'rule_id',
+            'genericError': None,
+            'errored': False,
+            'ruleOutput': True,
+            'ruleError': None,
+            'titleOutput': None,
+            'titleError': None,
+            'descriptionOutput': None,
+            'descriptionError': None,
+            'referenceOutput': None,
+            'referenceError': None,
+            'severityOutput': None,
+            'severityError': None,
+            'runbookOutput': None,
+            'runbookError': None,
+            'destinationsOutput': None,
+            'destinationsError': None,
+            'dedupOutput': 'defaultDedupString:rule_id',
+            'dedupError': None,
+            'alertContextOutput': None,
+            'alertContextError': None
+        }
+        engine = Engine(analysis_api)
+        result = engine.analyze_single_rule(rule, event)
+        self.assertEqual(expected_response, result)
+
+    def test_analyze_single_rule_with_udm_missing_log_type(self) -> None:
+        analysis_api = mock.MagicMock()
+        analysis_api.get_enabled_data_models.return_value = [
+            {
+                'id': 'data_model_id',
+                'logTypes': ['log'],
+                'versionId': 'version',
+                'mappings': [{
+                    'name': 'destination',
+                    'path': 'is_dst'
+                }]
+            }
+        ]
+        rule_body = 'def rule(event):\n\treturn event.udm("destination")'
+        event = {'id': 'event_id', 'data': {'is_dst': True}}
+        rule = {'id': 'rule_id', 'body': rule_body}
+        expected_response = {
+            'id': 'event_id',
+            'ruleId': 'rule_id',
+            'genericError': None,
+            'errored': True,
+            'ruleOutput': None,
+            'ruleError':
+                'AttributeError: The test specification for rules using the \'udm\' method' +
+                ' must specify the \'p_log_type\' field, and there must be an enabled DataModel for the log type.',
+            'titleOutput': None,
+            'titleError': None,
+            'descriptionOutput': None,
+            'descriptionError': None,
+            'referenceOutput': None,
+            'referenceError': None,
+            'severityOutput': None,
+            'severityError': None,
+            'runbookOutput': None,
+            'runbookError': None,
+            'destinationsOutput': None,
+            'destinationsError': None,
+            'dedupOutput': 'defaultDedupString:rule_id',
+            'dedupError': None,
+            'alertContextOutput': None,
+            'alertContextError': None
+        }
+        engine = Engine(analysis_api)
+        result = engine.analyze_single_rule(rule, event)
+        self.assertEqual(expected_response, result)
+
     def test_analyze_rule_with_udm(self) -> None:
         analysis_api = mock.MagicMock()
         analysis_api.get_enabled_rules.return_value = [
@@ -171,7 +261,7 @@ class TestEngine(TestCase):
                 log_type='log',
                 dedup='Exception',
                 event={},
-                dedup_period_mins=1440,
+                dedup_period_mins=60,
                 error_message='Found an issue: rule_id_2.py, line 2, in rule    raise Exception("Found an issue")',
                 title="Exception('Found an issue')"
             ),

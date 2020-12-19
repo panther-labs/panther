@@ -28,7 +28,9 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-// getAlertOutputs - Get output ids for an alert via the specified overrides or the defaults in panther
+const alertOutputSkip = "SKIP"
+
+// getAlertOutputs - Get output ids for an alert via the specified destinations or the defaults in panther
 func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, error) {
 	// fetch available panther outputs
 	outputs, err := getOutputs()
@@ -36,7 +38,15 @@ func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, 
 		return nil, err
 	}
 
-	// If alert doesn't have outputs IDs specified, return the defaults for the severity
+	// Check if the alert outputID
+	alertOutputs := []*outputModels.AlertOutput{}
+	for _, outputID := range alert.OutputIds {
+		if outputID == alertOutputSkip {
+			return alertOutputs, nil
+		}
+	}
+
+	// If alert has neither outputs IDs or dynamic dest. override specified, return the defaults for the severity
 	if len(alert.OutputIds) == 0 {
 		defaultsForSeverity := []*outputModels.AlertOutput{}
 		for _, output := range outputs {
@@ -51,15 +61,14 @@ func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, 
 	}
 
 	// Otherwise, return the specified output overrides for the alert
-	overrideOutputs := []*outputModels.AlertOutput{}
 	for _, output := range outputs {
 		for _, outputID := range alert.OutputIds {
 			if *output.OutputID == outputID {
-				overrideOutputs = append(overrideOutputs, output)
+				alertOutputs = append(alertOutputs, output)
 			}
 		}
 	}
-	return overrideOutputs, nil
+	return alertOutputs, nil
 }
 
 // getOutputs - Gets a list of outputs from panther (using a cache)

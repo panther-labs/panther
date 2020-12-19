@@ -26,8 +26,8 @@ const TypeTelephony = "Duo.Telephony"
 type TelephonyLog struct {
 	Context      pantherlog.String `json:"context" description:"How this telephony event was initiated. One of: \"administrator login\", \"authentication\", \"enrollment\", or \"verify\"."`
 	Credits      pantherlog.Int32  `json:"credits" description:"How many telephony credits this event cost."`
-	ISOTimestamp pantherlog.Time   `json:"isotimestamp" panther:"required" event_time:"true" tcodec:"rfc3339" description:"ISO8601 timestamp of the event."`
-	Phone        pantherlog.String `json:"phone" panther:"required" description:"The phone number that initiated this event."`
+	ISOTimestamp pantherlog.Time   `json:"isotimestamp" validate:"required" event_time:"true" tcodec:"rfc3339" description:"ISO8601 timestamp of the event."`
+	Phone        pantherlog.String `json:"phone" validate:"required" description:"The phone number that initiated this event."`
 	Timestamp    pantherlog.Time   `json:"timestamp" tcodec:"unix" description:"Unix timestamp of the event."`
-	Type         pantherlog.String `json:"type" panther:"required" description:" The event type. Either \"sms\" or \"phone\"."`
+	Type         pantherlog.String `json:"type" validate:"required" description:" The event type. Either \"sms\" or \"phone\"."`
 }

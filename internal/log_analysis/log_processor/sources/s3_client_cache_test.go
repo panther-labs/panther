@@ -42,7 +42,7 @@ var (
 		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
 			AWSAccountID:      "1234567890123",
 			S3Bucket:          "test-bucket",
-			S3Prefix:          "prefix",
+			S3PrefixLogTypes:  models.S3PrefixLogtypes{{S3Prefix: "prefix", LogTypes: []string{"Log.TestType"}}},
 			IntegrationType:   models.IntegrationTypeAWS3,
 			LogProcessingRole: "arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix",
 			IntegrationID:     "3e4b1734-e678-4581-b291-4b8a176219e9",
@@ -159,6 +159,7 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 			LogProcessingRole: "arn:aws:iam::123456789012:role/PantherLogProcessingRole-suffix",
 			IntegrationType:   models.IntegrationTypeAWS3,
 			IntegrationID:     "189cddfa-6fd5-419e-8b0e-668105b67dc0",
+			S3PrefixLogTypes:  models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: []string{}}},
 		},
 	}
 
@@ -208,40 +209,59 @@ func TestSourceCacheStructFind(t *testing.T) {
 	sources := []*models.SourceIntegration{
 		{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationID:   "1",
-				IntegrationType: models.IntegrationTypeAWS3,
-				S3Bucket:        "foo",
-				S3Prefix:        "",
-				LogTypes:        []string{"Foo.Bar"},
+				IntegrationID:    "1",
+				IntegrationType:  models.IntegrationTypeAWS3,
+				S3Bucket:         "foo",
+				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: []string{"Foo.Bar"}}},
 			},
 		},
 		{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationID:   "2",
-				IntegrationType: models.IntegrationTypeAWS3,
-				S3Bucket:        "foo",
-				S3Prefix:        "foo",
-				LogTypes:        []string{"Foo.Baz"},
+				IntegrationID:    "2",
+				IntegrationType:  models.IntegrationTypeAWS3,
+				S3Bucket:         "foo",
+				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "foo", LogTypes: []string{"Foo.Baz"}}},
 			},
 		},
 		{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationID:   "3",
-				IntegrationType: models.IntegrationTypeSqs,
-				SqsConfig: &models.SqsConfig{
-					S3Bucket: "foo",
-					S3Prefix: "foo/bar/sqs",
-					LogTypes: []string{"Foo.Sqs"},
+				IntegrationID:    "3",
+				IntegrationType:  models.IntegrationTypeAWS3,
+				S3Bucket:         "foo",
+				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "foo/bar/sqs", LogTypes: []string{"Foo.Sqs"}}},
+			},
+		},
+		{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				IntegrationID:    "4",
+				IntegrationType:  models.IntegrationTypeAWS3,
+				S3Bucket:         "foo",
+				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "foo/bar/baz", LogTypes: []string{"Foo.Qux"}}},
+			},
+		},
+		{
+			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+				IntegrationID:   "5",
+				IntegrationType: models.IntegrationTypeAWS3,
+				S3Bucket:        "foo",
+				S3PrefixLogTypes: models.S3PrefixLogtypes{
+					{S3Prefix: "bar/bar/bar/bar", LogTypes: []string{"Foo.Qux"}},
+					{S3Prefix: "foo/foo/foo", LogTypes: []string{"Foo.Qux"}},
+					{S3Prefix: "foo/bar/baz/prefix", LogTypes: []string{"Foo.Qux"}},
 				},
 			},
 		},
 		{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationID:   "4",
+				IntegrationID:   "6",
 				IntegrationType: models.IntegrationTypeAWS3,
-				S3Bucket:        "foo",
-				S3Prefix:        "foo/bar/baz",
-				LogTypes:        []string{"Foo.Qux"},
+				// Different bucket with similar prefixes as some other source.
+				S3Bucket: "bar",
+				S3PrefixLogTypes: models.S3PrefixLogtypes{
+					{S3Prefix: "bar/bar/bar/bar", LogTypes: []string{"Foo.Qux"}},
+					{S3Prefix: "foo/foo/foo", LogTypes: []string{"Foo.Qux"}},
+					{S3Prefix: "foo/bar/baz/prefix", LogTypes: []string{"Foo.Qux"}},
+				},
 			},
 		},
 	}
@@ -275,5 +295,18 @@ func TestSourceCacheStructFind(t *testing.T) {
 	{
 		src := cache.FindS3("goo", "foo/bar/baz/qux.json")
 		assert.Nil(src)
+	}
+	{
+		src := cache.FindS3("foo", "foo/bar/baz/prefix/qux.json")
+		assert.NotNil(src)
+		assert.Equal("5", src.IntegrationID)
+	}
+	{
+		src := cache.FindS3("bar", "foo/bar/baz/prefix/qux.json")
+		assert.Equal("6", src.IntegrationID)
+	}
+	{
+		src := cache.FindS3("bar", "foo/foo/foo/prefix/qux.json")
+		assert.Equal("6", src.IntegrationID)
 	}
 }

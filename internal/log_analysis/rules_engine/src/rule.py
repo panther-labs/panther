@@ -21,7 +21,7 @@ import tempfile
 from collections.abc import Mapping
 import traceback
 from dataclasses import dataclass
-from typing import Any, Optional, Callable
+from typing import Any, Optional, Callable, List
 
 from .logging import get_logger
 from .util import id_to_path, import_file_as_module, store_modules
@@ -31,8 +31,12 @@ _RULE_FOLDER = os.path.join(tempfile.gettempdir(), 'rules')
 # Maximum size for a dedup string
 MAX_DEDUP_STRING_SIZE = 1000
 
-# Maximum size for a title
-MAX_TITLE_SIZE = 1000
+# Maximum size for a generated field
+MAX_GENERATED_FIELD_SIZE = 1000
+
+# Maximum number of destinations
+MAX_DESTINATIONS_SIZE = 10
+
 # The limit for DDB is 400kb per item (we store this one in DDB) and the limit for SQS/SNS is 256KB.
 # The limit of 200kb is an approximation - the other fields included in the request will be less than the remaining 56kb
 MAX_ALERT_CONTEXT_SIZE = 200 * 1024  # 200kb
@@ -43,8 +47,11 @@ TRUNCATED_STRING_SUFFIX = '... (truncated)'
 
 DEFAULT_RULE_DEDUP_PERIOD_MINS = 60
 
+# Used to check dynamic severity output
+SEVERITY_TYPES = ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
 
-# pylint: disable=too-many-instance-attributes
+
+# pylint: disable=too-many-instance-attributes,unsubscriptable-object
 @dataclass
 class RuleResult:
     """Class containing the result of running a rule"""
@@ -59,6 +66,21 @@ class RuleResult:
 
     title_output: Optional[str] = None
     title_exception: Optional[Exception] = None
+
+    description_output: Optional[str] = None
+    description_exception: Optional[Exception] = None
+
+    reference_output: Optional[str] = None
+    reference_exception: Optional[Exception] = None
+
+    severity_output: Optional[str] = None
+    severity_exception: Optional[Exception] = None
+
+    runbook_output: Optional[str] = None
+    runbook_exception: Optional[Exception] = None
+
+    destinations_output: Optional[List[str]] = None
+    destinations_exception: Optional[Exception] = None
 
     alert_context: Optional[str] = None
     alert_context_exception: Optional[Exception] = None
@@ -106,7 +128,9 @@ class RuleResult:
     def errored(self) -> bool:
         """Returns whether any of the rule functions raised an error"""
         return bool(
-            self.rule_exception or self.title_exception or self.dedup_exception or self.alert_context_exception or self.setup_exception
+            self.rule_exception or self.title_exception or self.dedup_exception or self.alert_context_exception or
+            self.description_exception or self.reference_exception or self.severity_exception or self.runbook_exception or
+            self.destinations_exception or self.setup_exception
         )
 
 
@@ -114,7 +138,7 @@ class RuleResult:
 class Rule:
     """Panther rule metadata and imported module."""
 
-    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-branches,too-many-statements
     def __init__(self, config: Mapping):
         """Create new rule from a dict.
 
@@ -126,16 +150,14 @@ class Rule:
                 (Optional) dedup_period_mins: The period during which the events will be deduplicated
         """
         self.logger = get_logger()
-        if not ('id' in config) or not isinstance(config['id'], str):
-            raise AssertionError('Field "id" of type str is required field')
+
+        # Check for required string fields
+        for each_field in ['id', 'body', 'versionId']:
+            if not (each_field in config) or not isinstance(config[each_field], str):
+                raise AssertionError('Field "%s" of type str is required field' % each_field)
+
         self.rule_id = config['id']
-
-        if not ('body' in config) or not isinstance(config['body'], str):
-            raise AssertionError('Field "body" of type str is required field')
         self.rule_body = config['body']
-
-        if not ('versionId' in config) or not isinstance(config['versionId'], str):
-            raise AssertionError('Field "versionId" of type str is required field')
         self.rule_version = config['versionId']
 
         if not ('dedupPeriodMinutes' in config) or not isinstance(config['dedupPeriodMinutes'], int):
@@ -168,21 +190,6 @@ class Rule:
         except Exception as err:  # pylint: disable=broad-except
             self._setup_exception = err
             return
-
-        if hasattr(self._module, 'title'):
-            self._has_title = True
-        else:
-            self._has_title = False
-
-        if hasattr(self._module, 'dedup'):
-            self._has_dedup = True
-        else:
-            self._has_dedup = False
-
-        if hasattr(self._module, 'alert_context'):
-            self._has_alert_context = True
-        else:
-            self._has_alert_context = False
 
         self._default_dedup_string = 'defaultDedupString:{}'.format(self.rule_id)
 
@@ -217,6 +224,38 @@ class Rule:
             rule_result.title_exception = err
 
         try:
+            rule_result.description_output = self._get_description(event, use_default_on_exception=batch_mode)
+        except Exception as err:  # pylint: disable=broad-except
+            rule_result.description_exception = err
+
+        try:
+            rule_result.reference_output = self._get_reference(event, use_default_on_exception=batch_mode)
+        except Exception as err:  # pylint: disable=broad-except
+            rule_result.reference_exception = err
+
+        try:
+            rule_result.severity_output = self._get_severity(event, use_default_on_exception=batch_mode)
+            if isinstance(rule_result.severity_output, str):
+                rule_result.severity_output = rule_result.severity_output.upper()
+                if rule_result.severity_output not in SEVERITY_TYPES:
+                    raise AssertionError(
+                        'Expected severity to be any of the following: [%s], got [%s] instead.' %
+                        (str(SEVERITY_TYPES), rule_result.severity_output)
+                    )
+        except Exception as err:  # pylint: disable=broad-except
+            rule_result.severity_exception = err
+
+        try:
+            rule_result.runbook_output = self._get_runbook(event, use_default_on_exception=batch_mode)
+        except Exception as err:  # pylint: disable=broad-except
+            rule_result.runbook_exception = err
+
+        try:
+            rule_result.destinations_output = self._get_destinations(event, use_default_on_exception=batch_mode)
+        except Exception as err:  # pylint: disable=broad-except
+            rule_result.destinations_exception = err
+
+        try:
             rule_result.dedup_output = self._get_dedup(event, rule_result.title_output, use_default_on_exception=batch_mode)
         except Exception as err:  # pylint: disable=broad-except
             rule_result.dedup_exception = err
@@ -228,11 +267,32 @@ class Rule:
 
         return rule_result
 
+    def _get_alert_context(self, event: Mapping, use_default_on_exception: bool = True) -> Optional[str]:
+        if not hasattr(self._module, 'alert_context'):
+            return None
+
+        try:
+            command = getattr(self._module, 'alert_context')
+            alert_context = self._run_command(command, event, dict)
+            serialized_alert_context = json.dumps(alert_context)
+        except Exception as err:  # pylint: disable=broad-except
+            if use_default_on_exception:
+                return json.dumps({ALERT_CONTEXT_ERROR_KEY: repr(err)})
+            raise
+
+        if len(serialized_alert_context) > MAX_ALERT_CONTEXT_SIZE:
+            # If context exceeds max size, return empty one
+            alert_context_error = 'alert_context size is [{}] characters, bigger than maximum of [{}] characters' \
+                .format(len(serialized_alert_context), MAX_ALERT_CONTEXT_SIZE)
+            return json.dumps({ALERT_CONTEXT_ERROR_KEY: alert_context_error})
+
+        return serialized_alert_context
+
     # Returns the dedup string for this rule match
     # If the rule match had a custom title, use the title as a deduplication string
     # If no title and no dedup function is defined, return the default dedup string.
     def _get_dedup(self, event: Mapping, title: Optional[str], use_default_on_exception: bool = True) -> str:
-        if not self._has_dedup:
+        if not hasattr(self._module, 'dedup'):
             if title:
                 # If no dedup function is defined but the rule had a title, use the title as dedup string
                 return title
@@ -240,7 +300,8 @@ class Rule:
             return self._default_dedup_string
 
         try:
-            dedup_string = self._run_command(self._module.dedup, event, str)
+            command = getattr(self._module, 'dedup')
+            dedup_string = self._run_command(command, event, str)
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
                 self.logger.warning('dedup method raised exception. Defaulting dedup string to "%s". Exception: %s', self.rule_id, err)
@@ -254,57 +315,174 @@ class Rule:
         if len(dedup_string) > MAX_DEDUP_STRING_SIZE:
             # If dedup_string exceeds max size, truncate it
             self.logger.warning(
-                'maximum dedup string size is [%d] characters. Dedup string for rule with ID '
-                '[%s] is [%d] characters. Truncating.', MAX_DEDUP_STRING_SIZE, self.rule_id, len(dedup_string)
+                'maximum dedup string size is [%d] characters. Dedup string for rule with ID [%s] is [%d] characters. Truncating.',
+                MAX_DEDUP_STRING_SIZE,
+                self.rule_id,
+                len(dedup_string),
             )
             num_characters_to_keep = MAX_DEDUP_STRING_SIZE - len(TRUNCATED_STRING_SUFFIX)
             return dedup_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
 
         return dedup_string
 
-    def _get_title(self, event: Mapping, use_default_on_exception: bool = True) -> Optional[str]:
-        if not self._has_title:
+    def _get_description(self, event: Mapping, use_default_on_exception: bool = True) -> Optional[str]:
+        if not hasattr(self._module, 'description'):
             return None
 
         try:
-            title_string = self._run_command(self._module.title, event, str)
+            command = getattr(self._module, 'description')
+            description = self._run_command(command, event, str)
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.warning('title method raised exception. Using default. Exception: %s', err)
-                return None
+                self.logger.warning(
+                    'description method for rule with id [%s] raised exception. Using default Exception: %s', self.rule_id, err
+                )
+                return ''
             raise
 
-        if len(title_string) > MAX_TITLE_SIZE:
-            # If title exceeds max size, truncate it
+        if len(description) > MAX_GENERATED_FIELD_SIZE:
+            # If generated field exceeds max size, truncate it
             self.logger.warning(
-                'maximum title string size is [%d] characters. Title for rule with ID '
-                '[%s] is [%d] characters. Truncating.', MAX_TITLE_SIZE, self.rule_id, len(title_string)
+                'maximum field [description] length is [%d]. [%d] for rule with ID [%s] . Truncating.',
+                MAX_GENERATED_FIELD_SIZE,
+                len(description),
+                self.rule_id,
             )
-            num_characters_to_keep = MAX_TITLE_SIZE - len(TRUNCATED_STRING_SUFFIX)
-            return title_string[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
+            num_characters_to_keep = MAX_GENERATED_FIELD_SIZE - len(TRUNCATED_STRING_SUFFIX)
+            return description[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
+        return description
 
-        return title_string
-
-    def _get_alert_context(self, event: Mapping, use_default_on_exception: bool = True) -> Optional[str]:
-        if not self._has_alert_context:
+    def _get_destinations(self, event: Mapping, use_default_on_exception: bool = True) -> Optional[List[str]]:
+        if not hasattr(self._module, 'destination_override'):
             return None
 
         try:
-            alert_context = self._run_command(self._module.alert_context, event, dict)
-            serialized_alert_context = json.dumps(alert_context)
+            command = getattr(self._module, 'destination_override')
+            destinations = self._run_command(command, event, list())
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                return json.dumps({ALERT_CONTEXT_ERROR_KEY: repr(err)})
+                self.logger.warning('_get_destinations method raised exception. Exception: %s', err)
+                return []
             raise
 
-        if len(serialized_alert_context) > MAX_ALERT_CONTEXT_SIZE:
-            # If context exceeds max size, return empty one
-            alert_context_error = 'alert_context size is [{}] characters, bigger than maximum of [{}] characters'.format(
-                len(serialized_alert_context), MAX_ALERT_CONTEXT_SIZE
+        if len(destinations) > MAX_DESTINATIONS_SIZE:
+            # If generated field exceeds max size, truncate it
+            self.logger.warning(
+                'maximum len of destinations [%d] for rule with ID [%s] is [%d] fields. Truncating.', MAX_DESTINATIONS_SIZE, self.rule_id,
+                len(destinations)
             )
-            return json.dumps({ALERT_CONTEXT_ERROR_KEY: alert_context_error})
+            return destinations[:MAX_DESTINATIONS_SIZE]
+        return destinations
 
-        return serialized_alert_context
+    def _get_reference(self, event: Mapping, use_default_on_exception: bool = True) -> Optional[str]:
+        if not hasattr(self._module, 'reference'):
+            return None
+
+        try:
+            command = getattr(self._module, 'reference')
+            reference = self._run_command(command, event, str)
+        except Exception as err:  # pylint: disable=broad-except
+            if use_default_on_exception:
+                self.logger.warning(
+                    'reference method for rule with id [%s] raised exception. Using default. Exception: %s', self.rule_id, err
+                )
+                return ''
+            raise
+
+        if len(reference) > MAX_GENERATED_FIELD_SIZE:
+            # If generated field exceeds max size, truncate it
+            self.logger.warning(
+                'maximum field [reference] length is [%d]. [%d] for rule with ID [%s] . Truncating.',
+                MAX_GENERATED_FIELD_SIZE,
+                len(reference),
+                self.rule_id,
+            )
+            num_characters_to_keep = MAX_GENERATED_FIELD_SIZE - len(TRUNCATED_STRING_SUFFIX)
+            return reference[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
+        return reference
+
+    def _get_runbook(self, event: Mapping, use_default_on_exception: bool = True) -> Optional[str]:
+        if not hasattr(self._module, 'runbook'):
+            return None
+
+        try:
+            command = getattr(self._module, 'runbook')
+            runbook = self._run_command(command, event, str)
+        except Exception as err:  # pylint: disable=broad-except
+            if use_default_on_exception:
+                self.logger.warning(
+                    'runbook method for rule with id [%s] raised exception. Using default. Exception: %s', self.rule_id, err
+                )
+                return ''
+            raise
+
+        if len(runbook) > MAX_GENERATED_FIELD_SIZE:
+            # If generated field exceeds max size, truncate it
+            self.logger.warning(
+                'maximum field [runbook] length is [%d]. [%d] for rule with ID [%s] . Truncating.',
+                MAX_GENERATED_FIELD_SIZE,
+                len(runbook),
+                self.rule_id,
+            )
+            num_characters_to_keep = MAX_GENERATED_FIELD_SIZE - len(TRUNCATED_STRING_SUFFIX)
+            return runbook[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
+        return runbook
+
+    def _get_severity(self, event: Mapping, use_default_on_exception: bool = True) -> Optional[str]:
+        if not hasattr(self._module, 'severity'):
+            return None
+
+        try:
+            command = getattr(self._module, 'severity')
+            severity = self._run_command(command, event, str)
+            if severity not in SEVERITY_TYPES:
+                self.logger.warning(
+                    'severity method for rule with id [%s] yielded [%s], expected [%s]', self.rule_id, severity, str(SEVERITY_TYPES)
+                )
+        except Exception as err:  # pylint: disable=broad-except
+            if use_default_on_exception:
+                self.logger.warning(
+                    'severity method for rule with id [%s] raised exception. Using default. Exception: %s', self.rule_id, err
+                )
+                return 'INFO'
+            raise
+
+        if len(severity) > MAX_GENERATED_FIELD_SIZE:
+            # If generated field exceeds max size, truncate it
+            self.logger.warning(
+                'maximum field [severity] length is [%d]. [%d] for rule with ID [%s] . Truncating.',
+                MAX_GENERATED_FIELD_SIZE,
+                len(severity),
+                self.rule_id,
+            )
+            num_characters_to_keep = MAX_GENERATED_FIELD_SIZE - len(TRUNCATED_STRING_SUFFIX)
+            return severity[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
+        return severity
+
+    def _get_title(self, event: Mapping, use_default_on_exception: bool) -> Optional[str]:
+        if not hasattr(self._module, 'title'):
+            return None
+
+        try:
+            command = getattr(self._module, 'title')
+            title = self._run_command(command, event, str)
+        except Exception as err:  # pylint: disable=broad-except
+            if use_default_on_exception:
+                self.logger.warning('title method for rule with id [%s] raised exception. Using default. Exception: %s', self.rule_id, err)
+                return self.rule_id
+            raise
+
+        if len(title) > MAX_GENERATED_FIELD_SIZE:
+            # If generated field exceeds max size, truncate it
+            self.logger.warning(
+                'maximum field [title] length is [%d]. [%d] for rule with ID [%s] . Truncating.',
+                MAX_GENERATED_FIELD_SIZE,
+                len(title),
+                self.rule_id,
+            )
+            num_characters_to_keep = MAX_GENERATED_FIELD_SIZE - len(TRUNCATED_STRING_SUFFIX)
+            return title[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
+        return title
 
     def _store_rule(self) -> None:
         """Stores rule to disk."""
@@ -324,11 +502,21 @@ class Rule:
 
     def _run_command(self, function: Callable, event: Mapping, expected_type: Any) -> Any:
         result = function(event)
-        if not isinstance(result, expected_type):
-            raise Exception(
-                'rule [{}] function [{}] returned [{}], expected [{}]'.format(
-                    self.rule_id, function.__name__,
-                    type(result).__name__, expected_type.__name__
+        # Branch in case of list
+        if not isinstance(expected_type, list):
+            if not isinstance(result, expected_type):
+                raise Exception(
+                    'rule [{}] function [{}] returned [{}], expected [{}]'.format(
+                        self.rule_id,
+                        function.__name__,
+                        type(result).__name__,
+                        expected_type.__name__,
+                    )
                 )
-            )
+        else:
+            if not isinstance(expected_type, list) or not all([isinstance(x, (str, bool)) for x in result]):
+                raise Exception(
+                    'rule [{}] function [{}] returned [{}], expected a list'.format(self.rule_id, function.__name__,
+                                                                                    type(result).__name__)
+                )
         return result

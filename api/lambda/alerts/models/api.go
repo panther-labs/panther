@@ -65,8 +65,6 @@ type GetAlertOutput = Alert
 //         "nameContains": "string in alert title",
 //         "createdAtAfter": "2020-06-17T15:49:40Z",
 //         "createdAtBefore": "2020-06-17T15:49:40Z",
-//         "ruleIdContains": "string in rule id",
-//         "alertIdContains": "string in alert id",
 //         "eventCountMin": "0",
 //         "eventCountMax": "500",
 //         "sortDir": "ascending",
@@ -83,17 +81,16 @@ type ListAlertsInput struct {
 	ExclusiveStartKey *string `json:"exclusiveStartKey"`
 
 	// Filtering
-	Type            string     `json:"type" validate:"omitempty,oneof=RULE RULE_ERROR"`
+	Types           []string   `json:"types" validate:"omitempty,dive,oneof=RULE RULE_ERROR POLICY"`
 	Severity        []string   `json:"severity" validate:"omitempty,dive,oneof=INFO LOW MEDIUM HIGH CRITICAL"`
 	NameContains    *string    `json:"nameContains"`
 	Status          []string   `json:"status" validate:"omitempty,dive,oneof=OPEN TRIAGED CLOSED RESOLVED"`
 	CreatedAtBefore *time.Time `json:"createdAtBefore"`
 	CreatedAtAfter  *time.Time `json:"createdAtAfter"`
-	RuleIDContains  *string    `json:"ruleIdContains"`
-	AlertIDContains *string    `json:"alertIdContains"`
 	EventCountMin   *int       `json:"eventCountMin" validate:"omitempty,min=0"`
 	EventCountMax   *int       `json:"eventCountMax" validate:"omitempty,min=1"`
 	LogTypes        []string   `json:"logTypes" validate:"omitempty,dive,required"`
+	ResourceTypes   []string   `json:"resourceTypes" validate:"omitempty,dive,required"`
 	// Sorting
 	SortDir *string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 }
@@ -184,27 +181,37 @@ type ListAlertsOutput struct {
 
 // AlertSummary contains summary information for an alert
 type AlertSummary struct {
-	AlertID           string              `json:"alertId" validate:"required"`
-	Type              string              `json:"type,omitempty"`
-	RuleID            *string             `json:"ruleId" validate:"required"`
-	RuleDisplayName   *string             `json:"ruleDisplayName,omitempty"`
-	RuleVersion       *string             `json:"ruleVersion" validate:"required"`
-	DedupString       *string             `json:"dedupString,omitempty"`
-	DeliveryResponses []*DeliveryResponse `json:"deliveryResponses" validate:"required"`
-	LogTypes          []string            `json:"logTypes" validate:"required"`
-	CreationTime      *time.Time          `json:"creationTime" validate:"required"`
-	UpdateTime        *time.Time          `json:"updateTime" validate:"required"`
-	EventsMatched     *int                `json:"eventsMatched" validate:"required"`
-	Severity          *string             `json:"severity" validate:"required"`
+	AlertID           string              `json:"alertId"`
+	Type              string              `json:"type"`
+	RuleID            *string             `json:"ruleId"`
+	RuleDisplayName   *string             `json:"ruleDisplayName"`
+	RuleVersion       *string             `json:"ruleVersion"`
+	DedupString       *string             `json:"dedupString"`
+	DeliveryResponses []*DeliveryResponse `json:"deliveryResponses"`
+	LogTypes          []string            `json:"logTypes"`
+	CreationTime      *time.Time          `json:"creationTime"`
+	UpdateTime        *time.Time          `json:"updateTime"`
+	EventsMatched     *int                `json:"eventsMatched"`
+	Severity          *string             `json:"severity"`
 	Status            string              `json:"status,omitempty"`
-	Title             *string             `json:"title" validate:"required"`
-	LastUpdatedBy     string              `json:"lastUpdatedBy,omitempty"`
-	LastUpdatedByTime time.Time           `json:"lastUpdatedByTime,omitempty"`
+	Title             *string             `json:"title"`
+	LastUpdatedBy     string              `json:"lastUpdatedBy"`
+	LastUpdatedByTime time.Time           `json:"lastUpdatedByTime"`
+	PolicyID          string              `json:"policyId"`
+	PolicyDisplayName string              `json:"policyDisplayName"`
+	PolicySourceID    string              `json:"policySourceId"`
+	PolicyVersion     string              `json:"policyVersion"`
+	ResourceTypes     []string            `json:"resourceTypes"`
+	ResourceID        string              `json:"resourceId"`
+	// Generated Fields Support
+	Description string `json:"description"`
+	Reference   string `json:"reference"`
+	Runbook     string `json:"runbook"`
 }
 
 // Alert contains the details of an alert
 type Alert struct {
 	AlertSummary
-	Events                 []*string `json:"events" validate:"required"`
-	EventsLastEvaluatedKey *string   `json:"eventsLastEvaluatedKey,omitempty"`
+	Events                 []string `json:"events" validate:"required"`
+	EventsLastEvaluatedKey *string  `json:"eventsLastEvaluatedKey,omitempty"`
 }

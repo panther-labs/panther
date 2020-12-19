@@ -50,7 +50,7 @@ resource "aws_sns_topic_policy" "panther_events" {
 }
 
 resource "aws_sns_topic_subscription" "queue" {
-  endpoint             = var.queue_arn
+  endpoint             = "arn:${var.aws_partition}:sqs:${var.panther_region}:${var.master_account_id}:panther-aws-events-queue"
   protocol             = "sqs"
   raw_message_delivery = true
   topic_arn            = aws_sns_topic.panther_events.arn

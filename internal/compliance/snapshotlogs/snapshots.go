@@ -27,4 +27,10 @@ func LogTypes() logtypes.Group {
 	return logTypes
 }
 
-var logTypes = logtypes.Must("SnapshotHistory", logTypeCompliance, logTypeResource)
+const CloudSecurityGroup = "cloudsecurity"
+
+var logTypes = logtypes.Must(CloudSecurityGroup, logTypeCompliance, logTypeResource)
+
+func Resolver() logtypes.Resolver {
+	return logtypes.LocalResolver(logTypes)
+}

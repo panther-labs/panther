@@ -32,30 +32,58 @@ import (
 	"github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/internal/compliance/alert_forwarder/forwarder"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 const alertConfigKey = "alertConfig"
 
-var validate = validator.New()
+var (
+	validate = validator.New()
+	handler  *forwarder.Handler
+)
 
 func main() {
-	lambda.Start(reporterHandler)
+	// Required only once per Lambda container
+	Setup()
+	// TODO: revisit this. Not sure why we neeed Dimension sets and why just an array of dimensions is not enough
+	metricsLogger := metrics.MustLogger([]metrics.DimensionSet{
+		{
+			"AnalysisType",
+			"Severity",
+		},
+		{
+			"AnalysisType",
+		},
+	})
+	handler = &forwarder.Handler{
+		SqsClient:        sqsClient,
+		DdbClient:        ddbClient,
+		AlertingQueueURL: env.AlertingQueueURL,
+		AlertTable:       env.AlertsTable,
+		MetricsLogger:    metricsLogger,
+	}
+	lambda.Start(handle)
 }
 
-func reporterHandler(ctx context.Context, event events.DynamoDBEvent) (err error) {
+func handle(ctx context.Context, event events.DynamoDBEvent) error {
 	lc, _ := lambdalogger.ConfigureGlobal(ctx, nil)
+	return reporterHandler(lc, event)
+}
+
+func reporterHandler(lc *lambdacontext.LambdaContext, event events.DynamoDBEvent) (err error) {
 	operation := oplog.NewManager("cloudsec", "alert_forwarder").Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
 	defer func() {
-		operation.Stop().Log(err, zap.Int("numEvents", len(event.Records)))
+		operation.Stop().Log(err, zap.Int("messageCount", len(event.Records)))
 	}()
 
 	for _, record := range event.Records {
+		// Skip events that aren't new
 		if record.Change.NewImage == nil {
 			zap.L().Debug("Skipping record", zap.Any("record", record))
 			continue
 		}
-		var alert models.Alert
+		alert := models.Alert{}
 		if err = jsoniter.Unmarshal(record.Change.NewImage[alertConfigKey].Binary(), &alert); err != nil {
 			operation.LogError(errors.Wrap(err, "Failed to unmarshal item"))
 			continue
@@ -66,8 +94,8 @@ func reporterHandler(ctx context.Context, event events.DynamoDBEvent) (err error
 			continue
 		}
 
-		if err = forwarder.Handle(&alert); err != nil {
-			err = errors.Wrap(err, "encountered issue while processing event")
+		if err = handler.Do(alert); err != nil {
+			err = errors.Wrap(err, "encountered issue while handling policy event")
 			return err
 		}
 	}

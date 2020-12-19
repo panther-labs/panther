@@ -22,9 +22,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/preprocessors"
+	"github.com/panther-labs/panther/pkg/stringset"
 
 	// Force dependency on go-bindata to avoid fetching during mage gen
 	_ "github.com/go-bindata/go-bindata"
@@ -47,6 +49,15 @@ const (
 	TypeJSON      ValueType = "json"
 )
 
+func (t ValueType) IsComposite() bool {
+	switch t {
+	case TypeObject, TypeArray, TypeJSON:
+		return true
+	default:
+		return false
+	}
+}
+
 type Schema struct {
 	Schema       string                  `json:"schema,omitempty" yaml:"schema,omitempty"`
 	Parser       *Parser                 `json:"parser,omitempty" yaml:"parser,omitempty"`
@@ -55,6 +66,23 @@ type Schema struct {
 	Version      int                     `json:"version" yaml:"version"`
 	Definitions  map[string]*ValueSchema `json:"definitions,omitempty" yaml:"definitions,omitempty"`
 	Fields       []FieldSchema           `json:"fields" yaml:"fields"`
+}
+
+func (s *Schema) Clone() *Schema {
+	if s == nil {
+		return nil
+	}
+	data, err := jsoniter.Marshal(s)
+	if err != nil {
+		// this should never happen
+		panic("failed to serialize Schema to JSON: " + err.Error())
+	}
+	out := Schema{}
+	if err := jsoniter.Unmarshal(data, &out); err != nil {
+		// this should never happen
+		panic("failed to deserialize Schema from JSON: " + err.Error())
+	}
+	return &out
 }
 
 type Parser struct {
@@ -71,6 +99,50 @@ type ValueSchema struct {
 	Indicators  []string      `json:"indicators,omitempty" yaml:"indicators,omitempty"`
 	TimeFormat  string        `json:"timeFormat,omitempty" yaml:"timeFormat,omitempty"`
 	IsEventTime bool          `json:"isEventTime,omitempty" yaml:"isEventTime,omitempty"`
+}
+
+func (v *ValueSchema) Clone() *ValueSchema {
+	if v == nil {
+		return nil
+	}
+	switch v.Type {
+	case TypeObject:
+		var fields []FieldSchema
+		for _, f := range v.Fields {
+			cp := f.ValueSchema.Clone()
+			f.ValueSchema = *cp
+			fields = append(fields, f)
+		}
+		return &ValueSchema{
+			Type:   TypeObject,
+			Fields: fields,
+		}
+	case TypeArray:
+		return &ValueSchema{
+			Type:    TypeArray,
+			Element: v.Element.Clone(),
+		}
+	case TypeTimestamp:
+		return &ValueSchema{
+			Type:        TypeTimestamp,
+			TimeFormat:  v.TimeFormat,
+			IsEventTime: v.IsEventTime,
+		}
+	case TypeString:
+		return &ValueSchema{
+			Type:       TypeString,
+			Indicators: stringset.New(v.Indicators...),
+		}
+	case TypeRef:
+		return &ValueSchema{
+			Type:   TypeRef,
+			Target: v.Target,
+		}
+	case TypeBigInt, TypeInt, TypeSmallInt, TypeFloat, TypeJSON, TypeBoolean:
+		return &ValueSchema{Type: v.Type}
+	default:
+		return nil
+	}
 }
 
 type FieldSchema struct {

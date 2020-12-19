@@ -20,12 +20,17 @@ import React from 'react';
 import { Flex } from 'pouncejs';
 import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
 import { LongSeriesData } from 'Generated/schema';
+import NoDataFound from 'Components/NoDataFound';
 
 interface EventsByLogTypesProps {
   events: LongSeriesData;
 }
 
 const EventsByLogTypes: React.FC<EventsByLogTypesProps> = ({ events }) => {
+  if (!events.series.length) {
+    return <NoDataFound title="No logs processed yet" />;
+  }
+
   return (
     <Flex data-testid="events-by-log-type-chart" height="100%" position="relative">
       <TimeSeriesChart data={events} zoomable />

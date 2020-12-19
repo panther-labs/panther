@@ -21,6 +21,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -29,6 +30,7 @@ import (
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 var (
@@ -39,28 +41,28 @@ var (
 //
 // This endpoint updates attributes such as the behavior of the integration, or display information.
 func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettingsInput) (*models.SourceIntegration, error) {
-	// First get the current existingIntegrationItem settings so that we can properly evaluate it
-	existingIntegrationItem, err := getItem(input.IntegrationID)
+	// First get the current existingItem settings so that we can properly evaluate it
+	existingItem, err := getItem(input.IntegrationID)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = api.validateUniqueConstraints(existingIntegrationItem, input); err != nil {
+	if err = api.validateUniqueConstraints(existingItem, input); err != nil {
 		return nil, err
 	}
 
-	// Validate the updated existingIntegrationItem settings
+	// Validate the updates
 	reason, passing, err := evaluateIntegrationFunc(api, &models.CheckIntegrationInput{
-		// From existing existingIntegrationItem
-		AWSAccountID:    existingIntegrationItem.AWSAccountID,
-		IntegrationType: existingIntegrationItem.IntegrationType,
+		// Same as the existing integration item
+		AWSAccountID:    existingItem.AWSAccountID,
+		IntegrationType: existingItem.IntegrationType,
 
-		// From update existingIntegrationItem request
+		// From update existingItem request
 		IntegrationLabel:  input.IntegrationLabel,
 		EnableCWESetup:    input.CWEEnabled,
 		EnableRemediation: input.RemediationEnabled,
 		S3Bucket:          input.S3Bucket,
-		S3Prefix:          input.S3Prefix,
+		S3PrefixLogTypes:  input.S3PrefixLogTypes,
 		KmsKey:            input.KmsKey,
 		SqsConfig:         input.SqsConfig,
 	})
@@ -74,31 +76,47 @@ func (api API) UpdateIntegrationSettings(input *models.UpdateIntegrationSettings
 			zap.Any("input", input))
 		return nil, &genericapi.InvalidInputError{
 			Message: fmt.Sprintf("source %s did not pass configuration check because of %s",
-				existingIntegrationItem.AWSAccountID, reason),
+				existingItem.AWSAccountID, reason),
 		}
 	}
 
-	if err := updateTables(existingIntegrationItem, input); err != nil {
+	if err := updateTables(existingItem, input); err != nil {
 		zap.L().Error("failed to update tables", zap.Error(err))
 		return nil, updateIntegrationInternalError
 	}
 
-	if err := normalizeIntegration(existingIntegrationItem, input); err != nil {
-		zap.L().Error("failed to normalize integration", zap.Error(err))
-		return nil, err
+	updateIntegrationDBItem(existingItem, input)
+
+	if existingItem.IntegrationType == models.IntegrationTypeSqs {
+		err := UpdateSourceSqsQueue(
+			existingItem.IntegrationID, existingItem.SqsConfig.AllowedPrincipalArns, existingItem.SqsConfig.AllowedSourceArns)
+		if err != nil {
+			zap.L().Error("failed to update integration", zap.Error(err))
+			return nil, updateIntegrationInternalError
+		}
 	}
 
-	if err := dynamoClient.PutItem(existingIntegrationItem); err != nil {
+	if err := dynamoClient.PutItem(existingItem); err != nil {
 		zap.L().Error("failed to put item in ddb", zap.Error(err))
 		return nil, updateIntegrationInternalError
 	}
 
-	existingIntegration := itemToIntegration(existingIntegrationItem)
+	existingIntegration := itemToIntegration(existingItem)
 
 	return existingIntegration, nil
 }
 
 func (api API) validateUniqueConstraints(existingIntegrationItem *ddb.Integration, input *models.UpdateIntegrationSettingsInput) error {
+	// Prefixes in the same S3 source should should be unique (although we allow overlapping for now)
+	if existingIntegrationItem.IntegrationType == models.IntegrationTypeAWS3 {
+		prefixes := input.S3PrefixLogTypes.S3Prefixes()
+		if len(prefixes) != len(stringset.Dedup(prefixes)) {
+			return &genericapi.InvalidInputError{
+				Message: "Cannot have duplicate prefixes in an s3 source.",
+			}
+		}
+	}
+
 	existingIntegrations, err := api.ListIntegrations(&models.ListIntegrationsInput{})
 	if err != nil {
 		zap.L().Error("failed to fetch integrations", zap.Error(errors.WithStack(err)))
@@ -119,10 +137,16 @@ func (api API) validateUniqueConstraints(existingIntegrationItem *ddb.Integratio
 							input.IntegrationLabel),
 					}
 				}
-
-				if existingIntegration.S3Bucket == input.S3Bucket && existingIntegration.S3Prefix == input.S3Prefix {
-					return &genericapi.InvalidInputError{
-						Message: "An S3 integration with the same S3 bucket and prefix already exists.",
+				// A bucket/prefix combination should be unique among s3 sources.
+				if existingIntegration.S3Bucket == input.S3Bucket {
+					for _, existingPrefix := range existingIntegration.S3PrefixLogTypes.S3Prefixes() {
+						for _, prefix := range input.S3PrefixLogTypes.S3Prefixes() {
+							if strings.TrimSpace(existingPrefix) == strings.TrimSpace(prefix) {
+								return &genericapi.InvalidInputError{
+									Message: "An S3 source with the same S3 bucket and prefix already exists.",
+								}
+							}
+						}
 					}
 				}
 			case models.IntegrationTypeSqs:
@@ -138,7 +162,7 @@ func (api API) validateUniqueConstraints(existingIntegrationItem *ddb.Integratio
 	return nil
 }
 
-func normalizeIntegration(item *ddb.Integration, input *models.UpdateIntegrationSettingsInput) error {
+func updateIntegrationDBItem(item *ddb.Integration, input *models.UpdateIntegrationSettingsInput) {
 	switch item.IntegrationType {
 	case models.IntegrationTypeAWSScan:
 		item.IntegrationLabel = input.IntegrationLabel
@@ -146,23 +170,24 @@ func normalizeIntegration(item *ddb.Integration, input *models.UpdateIntegration
 		item.CWEEnabled = input.CWEEnabled
 		item.RemediationEnabled = input.RemediationEnabled
 	case models.IntegrationTypeAWS3:
+		if input.IntegrationLabel != "" {
+			item.IntegrationLabel = input.IntegrationLabel
+			item.StackName = getStackName(models.IntegrationTypeAWS3, input.IntegrationLabel)
+			item.LogProcessingRole = generateLogProcessingRoleArn(item.AWSAccountID, input.IntegrationLabel)
+		}
+
 		item.S3Bucket = input.S3Bucket
-		item.S3Prefix = input.S3Prefix
 		item.KmsKey = input.KmsKey
-		item.LogTypes = input.LogTypes
+		item.S3PrefixLogTypes = input.S3PrefixLogTypes
+		// These fields are replaced by S3PrefixLogTypes, clear them to avoid confusion when checking old records.
+		item.S3Prefix = ""
+		item.LogTypes = nil
 	case models.IntegrationTypeSqs:
 		item.IntegrationLabel = input.IntegrationLabel
 		item.SqsConfig.LogTypes = input.SqsConfig.LogTypes
-
-		newAllowedPrincipals := input.SqsConfig.AllowedPrincipalArns
-		newAllowedSources := input.SqsConfig.AllowedSourceArns
-		item.SqsConfig.AllowedSourceArns = newAllowedSources
-		item.SqsConfig.AllowedPrincipalArns = newAllowedPrincipals
-		if err := UpdateSourceSqsQueue(item.IntegrationID, newAllowedPrincipals, newAllowedSources); err != nil {
-			return updateIntegrationInternalError
-		}
+		item.SqsConfig.AllowedSourceArns = input.SqsConfig.AllowedSourceArns
+		item.SqsConfig.AllowedPrincipalArns = input.SqsConfig.AllowedPrincipalArns
 	}
-	return nil
 }
 
 // UpdateIntegrationLastScanStart updates an integration when a new scan is started.
@@ -214,8 +239,8 @@ func updateTables(item *ddb.Integration, input *models.UpdateIntegrationSettings
 	var existingLogTypes, newLogTypes []string
 	switch item.IntegrationType {
 	case models.IntegrationTypeAWS3:
-		existingLogTypes = item.LogTypes
-		newLogTypes = input.LogTypes
+		existingLogTypes = item.S3PrefixLogTypes.LogTypes()
+		newLogTypes = input.S3PrefixLogTypes.LogTypes()
 	case models.IntegrationTypeSqs:
 		existingLogTypes = item.SqsConfig.LogTypes
 		newLogTypes = input.SqsConfig.LogTypes

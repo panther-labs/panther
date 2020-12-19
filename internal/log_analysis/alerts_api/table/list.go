@@ -100,8 +100,6 @@ func (table *AlertsTable) ListAll(input *models.ListAlertsInput) (
 
 			// Perform post-filtering data returned from ddb
 			alert = filterByTitleContains(input, alert)
-			alert = filterByRuleIDContains(input, alert)
-			alert = filterByAlertIDContains(input, alert)
 
 			if alert != nil {
 				summaries = append(summaries, alert)
@@ -232,6 +230,7 @@ func (table *AlertsTable) applyFilters(builder *expression.Builder, input *model
 	filterByStatus(&filter, input)
 	filterByEventCount(&filter, input)
 	filterByLogType(&filter, input)
+	filterByResourceType(&filter, input)
 	filterByType(&filter, input)
 
 	// Finally, overwrite the existing condition filter on the builder
@@ -303,60 +302,118 @@ func filterByLogType(filter *expression.ConditionBuilder, input *models.ListAler
 	}
 }
 
-// filterByType - filters by the type of the alert
-func filterByType(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
-	if len(input.Type) > 0 {
-		var multiFilter expression.ConditionBuilder
-		switch input.Type {
-		case alertdeliverymodels.RuleErrorType:
-			multiFilter = expression.Equal(expression.Name(TypeKey), expression.Value(input.Type))
-		case alertdeliverymodels.RuleType:
-			// Alerts for rule matches don't always have the attribute specified
-			multiFilter = expression.
-				Equal(expression.Name(TypeKey), expression.Value(input.Type)).
-				Or(expression.Name(TypeKey).AttributeNotExists())
-		default:
-			panic("Uknown type :" + input.Type)
+// filterByResourceType - filters by list of resource types
+func filterByResourceType(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	if len(input.ResourceTypes) > 0 {
+		// Start with the first known key
+		multiFilter := expression.Name(ResourceTypesKey).Contains(input.ResourceTypes[0])
+
+		// Then add or conditions starting at a new slice from the second index
+		for _, resourceType := range input.ResourceTypes[1:] {
+			multiFilter = multiFilter.Or(expression.Name(ResourceTypesKey).Contains(resourceType))
 		}
 
 		*filter = filter.And(multiFilter)
 	}
 }
 
-// filterByTitleContains - filters by a name that contains a string (case insensitive)
+// filterByType - filters by the type of the alert
+func filterByType(filter *expression.ConditionBuilder, input *models.ListAlertsInput) {
+	if len(input.Types) > 0 {
+		// Start with the first known key
+		var multiFilter expression.ConditionBuilder
+
+		// Rule errors don't always have the attribute specified for backwards compatibility
+		if input.Types[0] == alertdeliverymodels.RuleErrorType {
+			multiFilter = expression.
+				Or(
+					expression.AttributeNotExists(expression.Name(TypeKey)),
+					expression.Equal(expression.Name(TypeKey), expression.Value(input.Types[0])),
+				)
+		} else {
+			multiFilter = expression.Name(TypeKey).Equal(expression.Value(input.Types[0]))
+		}
+
+		// Then add or conditions starting at a new slice from the second index
+		for _, alertType := range input.Types[1:] {
+			// Rule errors don't always have the attribute specified for backwards compatibility
+			if alertType == alertdeliverymodels.RuleErrorType {
+				multiFilter = multiFilter.
+					Or(
+						expression.AttributeNotExists(expression.Name(TypeKey)),
+						expression.Equal(expression.Name(TypeKey), expression.Value(alertType)),
+					)
+			} else {
+				multiFilter = multiFilter.Or(expression.Name(TypeKey).Equal(expression.Value(alertType)))
+			}
+		}
+
+		*filter = filter.And(multiFilter)
+	}
+}
+
+// filterByTitleContains - filters alerts by a name that contains a string (case insensitive) against multiple fields
 func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
-	if alert != nil && input.NameContains != nil && alert.Title != nil && !strings.Contains(
-		strings.ToLower(*alert.Title),
-		strings.ToLower(*input.NameContains),
+	// If we don't have a search string, return the alert
+	if input.NameContains == nil {
+		return alert
+	}
+
+	lowerNameContains := strings.ToLower(*input.NameContains)
+
+	// Common across all alert types, we see if it matches an alert title
+	if alert.Title != "" && strings.Contains(
+		strings.ToLower(alert.Title),
+		lowerNameContains,
 	) {
 
+		return alert
+	}
+
+	// Check for non-policy types in this order: RuleDisplayName, RuleID
+	if alert.Type != alertdeliverymodels.PolicyType {
+		if alert.RuleDisplayName != nil && strings.Contains(
+			strings.ToLower(*alert.RuleDisplayName),
+			lowerNameContains,
+		) {
+
+			return alert
+		}
+
+		if strings.Contains(
+			strings.ToLower(alert.RuleID),
+			lowerNameContains,
+		) {
+
+			return alert
+		}
 		return nil
 	}
-	return alert
-}
-
-// filterByRuleIDContains - filters by a name that contains a string (case insensitive)
-func filterByRuleIDContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
-	if alert != nil && input.RuleIDContains != nil && !strings.Contains(
-		strings.ToLower(alert.RuleID),
-		strings.ToLower(*input.RuleIDContains),
+	// Check for policy types in this order: ResourceID, PolicyDisplayName, PolicyID
+	if strings.Contains(
+		strings.ToLower(alert.ResourceID),
+		lowerNameContains,
 	) {
 
-		return nil
+		return alert
 	}
-	return alert
-}
 
-// filterByAlertIDContains - filters by a name that contains a string (case insensitive)
-func filterByAlertIDContains(input *models.ListAlertsInput, alert *AlertItem) *AlertItem {
-	if alert != nil && input.AlertIDContains != nil && !strings.Contains(
-		strings.ToLower(alert.AlertID),
-		strings.ToLower(*input.AlertIDContains),
+	if strings.Contains(
+		strings.ToLower(alert.PolicyDisplayName),
+		lowerNameContains,
 	) {
 
-		return nil
+		return alert
 	}
-	return alert
+
+	if strings.Contains(
+		strings.ToLower(alert.PolicyID),
+		lowerNameContains,
+	) {
+
+		return alert
+	}
+	return nil
 }
 
 // filterByEventCount - filters by an eventCount defined by a range of two numbers

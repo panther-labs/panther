@@ -35,6 +35,7 @@ func TestExtractRawMessageIndicators(t *testing.T) {
 		"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail",
 		"arn:aws:ec2:region:111122223333:instance/",
 		"arn:aws:ec2:region:111122223333:instance/i-0072230f74b3a798e",
+		"arn:aws:iam::123456789012:instance-profile/ArnLike",
 		"arn:aws:iam::123456789012:instance-profile/EC2Dev",
 	}, values.Get(pantherlog.FieldAWSARN))
 	assert.Equal([]string{
@@ -77,6 +78,14 @@ const awsRawMessageSample = `
  "availabilityZone":"us-east-1b",
  "imageDescription":"Amazon Linux 2 AMI 2.0.20191217.0 x86_64 HVM gp2",
  "instanceId":"i-081de1d7604b11e4a","instanceType":"t2.micro",
+ "Policy": {
+  "Version": "2012-10-17",
+  "Statement": [
+   {"Condition": {
+    "ArnLike": {"aws:SourceArn": "arn:aws:iam::123456789012:instance-profile/ArnLike"}
+    }}
+  ]
+ },
  "launchTime":"2020-01-13T20:22:32Z",
   "productCodes":[],
   "iamInstanceProfile":{

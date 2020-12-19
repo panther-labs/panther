@@ -21,12 +21,12 @@
 #
 # ****************     BUILD STAGE     *******************
 #
-FROM node:13.2-alpine AS build-env
+FROM node:14.15-alpine AS build-env
 
 LABEL description="The image that builds the web code and serves it through an express NodeJS server"
 
 # Update debian distro
-RUN apk update && apk add --no-cache --update nasm libtool alpine-sdk autoconf automake
+RUN apk update && apk add --no-cache --update nasm libtool alpine-sdk autoconf automake python
 
 # Move all of our logic
 RUN mkdir /code
@@ -49,7 +49,7 @@ RUN npm run build
 #
 # ****************     DEPLOYMENT & SERVE STAGE     *******************
 #
-FROM node:13.2-alpine
+FROM node:14.15-alpine
 
 # Default to exposing `8080`
 ENV SERVER_PORT=8080

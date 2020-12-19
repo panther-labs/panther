@@ -1,0 +1,3 @@
+{"string" : "value", "required_string": "value", "boolean": true, "boolean_as_string": "true", "float": 0.0, "time": "2020-01-01T00:00:00Z", "float_as_string": "0.0", "int_as_string": "0", "not_int_as_string": "0"}
+{"required_string": "value", "boolean_as_string": "false", "int": 0, "object": {"string": ""}, "array": [1,2]}
+{"required_string": "value", "not_int_as_string": "value", "string" : null, "object": {}, "empty_object": {"empty": {"more_empty": {}}}}

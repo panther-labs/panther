@@ -39,8 +39,17 @@ func (API) ListIntegrations(
 
 	result := make([]*models.SourceIntegration, len(integrationItems))
 	for i, item := range integrationItems {
-		result[i] = itemToIntegration(item)
+		integ := itemToIntegration(item)
+		// This is required for backwards compatibility
+		// Before https://github.com/panther-labs/panther/issues/2031 , the Compliance sources
+		// didn't have the InputDataBucket and InputDataRoleArn populated
+		if integ.IntegrationType == models.IntegrationTypeAWSScan {
+			if integ.S3Bucket == "" {
+				integ.S3Bucket = env.InputDataBucketName
+				integ.LogProcessingRole = env.InputDataRoleArn
+			}
+		}
+		result[i] = integ
 	}
-
 	return result, nil
 }

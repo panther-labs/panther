@@ -35,6 +35,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor/logstream"
 	"github.com/panther-labs/panther/pkg/awsretry"
 )
 
@@ -81,10 +82,10 @@ func Setup() {
 	}
 }
 
-// DataStream represents a data stream that read by the processor
+// DataStream represents a data stream for an s3 object read by the processor
 type DataStream struct {
-	Closer       io.Closer // cleans up resources
-	Reader       io.Reader
+	Stream       logstream.Stream
+	Closer       io.Closer
 	Source       *models.SourceIntegration
 	S3ObjectKey  string
 	S3Bucket     string

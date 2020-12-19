@@ -1,0 +1,255 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`BulletedValueList matches snapshots 1`] = `
+.panther-8 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-flex-wrap: wrap;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+}
+
+.panther-8>*:not(:last-child) {
+  margin-right: 8px;
+}
+
+.panther-2 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-2>*:not(:last-child) {
+  margin-right: 8px;
+}
+
+.panther-0 {
+  width: 12px;
+  height: 12px;
+  background-color: hsl(97, 27%, 77%);
+  border-radius: 99999px;
+}
+
+.panther-1 {
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.panther-3 {
+  width: 12px;
+  height: 12px;
+  background-color: hsl(98, 28%, 78%);
+  border-radius: 99999px;
+}
+
+
+
+.panther-6 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  width: 18px;
+  height: 18px;
+  background-color: #4f627c;
+  border-radius: 99999px;
+  font-size: 0.563rem;
+  font-weight: 500;
+  cursor: default;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <div
+    class="panther-8"
+  >
+    <div
+      class="panther-2"
+    >
+      <span
+        class="panther-0"
+      />
+      <span
+        class="panther-1"
+      >
+        a
+      </span>
+    </div>
+    <div
+      class="panther-2"
+    >
+      <span
+        class="panther-3"
+      />
+      <span
+        class="panther-1"
+      >
+        b
+      </span>
+    </div>
+    <div
+      class="panther-7"
+      data-reach-tooltip-trigger=""
+    >
+      <div
+        class="panther-6"
+      >
+        +2
+      </div>
+    </div>
+  </div>
+  <footer
+    id="footer"
+  />
+</div>
+`;
+
+exports[`BulletedValueList matches snapshots 2`] = `
+.panther-8 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-flex-wrap: wrap;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+}
+
+.panther-8>*:not(:last-child) {
+  margin-right: 8px;
+}
+
+.panther-2 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-2>*:not(:last-child) {
+  margin-right: 8px;
+}
+
+.panther-0 {
+  width: 12px;
+  height: 12px;
+  background-color: hsl(97, 27%, 77%);
+  border-radius: 99999px;
+}
+
+.panther-1 {
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.panther-3 {
+  width: 12px;
+  height: 12px;
+  background-color: hsl(98, 28%, 78%);
+  border-radius: 99999px;
+}
+
+
+
+.panther-6 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  width: 18px;
+  height: 18px;
+  background-color: #4f627c;
+  border-radius: 99999px;
+  font-size: 0.563rem;
+  font-weight: 500;
+  cursor: default;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <div
+    class="panther-8"
+  >
+    <div
+      class="panther-2"
+    >
+      <span
+        class="panther-0"
+      />
+      <span
+        class="panther-1"
+      >
+        a
+      </span>
+    </div>
+    <div
+      class="panther-2"
+    >
+      <span
+        class="panther-3"
+      />
+      <span
+        class="panther-1"
+      >
+        b
+      </span>
+    </div>
+    <div
+      class="panther-7"
+      data-reach-tooltip-trigger=""
+    >
+      <div
+        class="panther-6"
+      >
+        +2
+      </div>
+    </div>
+  </div>
+  <footer
+    id="footer"
+  />
+</div>
+`;

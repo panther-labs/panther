@@ -19,12 +19,7 @@ package sources
  */
 
 import (
-	"bufio"
-	"bytes"
-	"compress/gzip"
 	"context"
-	"io"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -39,11 +34,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor/logstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/s3pipe"
 )
 
 const (
-	DownloadMaxPartSize = 50 * 1024 * 1024 // the max size of in memory buffers will be 3X as this due to multiple buffers
+	DownloadMaxPartSize = 50 * 1024 * 1024                  // the max size of in memory buffers will be 3X as this due to multiple buffers
+	DownloadMinPartSize = s3manager.DefaultDownloadPartSize // the min part size for efficiency
 
 	s3TestEvent                 = "s3:TestEvent"
 	cloudTrailValidationMessage = "CloudTrail validation message."
@@ -110,13 +107,8 @@ func handleNotificationMessage(ctx context.Context, notification *SnsNotificatio
 			continue
 		}
 		var dataStream *common.DataStream
-		dataStream, err = readS3Object(ctx, s3Object)
+		dataStream, err = buildStream(ctx, s3Object)
 		if err != nil {
-			if _, ok := err.(*ErrUnsupportedFileType); ok {
-				// If the incoming message is not of a supported type, just skip it
-				err = nil
-				continue
-			}
 			return
 		}
 		if dataStream != nil {
@@ -132,7 +124,7 @@ func shouldIgnoreS3Object(s3Object *S3ObjectInfo) bool {
 	return strings.HasSuffix(s3Object.S3ObjectKey, "/")
 }
 
-func readS3Object(ctx context.Context, s3Object *S3ObjectInfo) (dataStream *common.DataStream, err error) {
+func buildStream(ctx context.Context, s3Object *S3ObjectInfo) (*common.DataStream, error) {
 	s3Client, sourceInfo, err := getS3Client(s3Object.S3Bucket, s3Object.S3ObjectKey)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to get S3 client for s3://%s/%s",
@@ -151,81 +143,36 @@ func readS3Object(ctx context.Context, s3Object *S3ObjectInfo) (dataStream *comm
 		Key:    &s3Object.S3ObjectKey,
 	}
 
-	// we want this as large as possible to minimize S3 api calls, not more than DownloadMaxPartSize to control memory use
-	downloadPartSize := s3Object.S3ObjectSize / 2 // use 1/2 to allow processing first half while reading second half on small files
-	if downloadPartSize > DownloadMaxPartSize {
-		downloadPartSize = DownloadMaxPartSize
-	} else if downloadPartSize < s3manager.DefaultDownloadPartSize { // min part size for efficiency
-		downloadPartSize = s3manager.DefaultDownloadPartSize
-	}
-
 	downloader := s3pipe.Downloader{
 		S3:       s3Client,
-		PartSize: downloadPartSize,
+		PartSize: calculatePartSize(s3Object.S3ObjectSize),
 	}
+	// gzip streams are transparently uncompressed
+	r := downloader.Download(ctx, getObjectInput)
+	// Set the buffer size to something big to avoid multiple fill() calls if possible
+	stream := logstream.NewLineStream(r, DownloadMinPartSize)
 
-	downloadPipe := downloader.Download(ctx, getObjectInput)
-
-	// Set the buffer size to PartSize to avoid multiple fill() calls
-	bufferedReader := bufio.NewReaderSize(downloadPipe, int(downloader.PartSize))
-
-	contentType, err := detectContentType(bufferedReader)
-	if err != nil {
-		err = errors.Wrapf(err, "failed to detect content type of S3 payload for s3://%s/%s",
-			s3Object.S3Bucket, s3Object.S3ObjectKey)
-		return nil, err
-	}
-
-	var streamReader io.Reader
-
-	// Checking for prefix because the returned type can have also charset used
-	if strings.HasPrefix(contentType, "text/plain") {
-		// if it's plain text, just return the buffered reader
-		streamReader = bufferedReader
-	} else if strings.HasPrefix(contentType, "application/x-gzip") {
-		gzipReader, err := gzip.NewReader(bufferedReader)
-		if err != nil {
-			err = errors.Wrapf(err, "failed to created gzip reader for s3://%s/%s",
-				s3Object.S3Bucket, s3Object.S3ObjectKey)
-			return nil, err
-		}
-		streamReader = gzipReader
-	} else {
-		err = &ErrUnsupportedFileType{Type: contentType}
-		return nil, err
-	}
-
-	dataStream = &common.DataStream{
-		Closer:       downloadPipe, // when file is done processing, the Close() method will be called
-		Reader:       streamReader,
+	return &common.DataStream{
+		Stream:       stream,
+		Closer:       r,
 		Source:       sourceInfo,
 		S3Bucket:     s3Object.S3Bucket,
 		S3ObjectKey:  s3Object.S3ObjectKey,
 		S3ObjectSize: s3Object.S3ObjectSize,
-	}
-	return dataStream, err
+	}, nil
 }
 
-func detectContentType(r *bufio.Reader) (string, error) {
-	const sniffLen = 512 // max byte len needed by http.DetectContentType()
-	header, err := r.Peek(sniffLen)
-	if err != nil && err != bufio.ErrBufferFull && err != io.EOF {
-		// EOF / ErrBufferFull means file is shorter than sniffLen, but not all detections need so large data.
-		return "", err
+func calculatePartSize(size int64) int64 {
+	// we want this as large as possible to minimize S3 api calls, not more than DownloadMaxPartSize to control memory use
+	partSize := size / 2 // use 1/2 to allow processing first half while reading second half on small files
+	if partSize > DownloadMaxPartSize {
+		return DownloadMaxPartSize
 	}
-
-	// Try gzip first, for two reasons:
-	// 1. Performance: It the most usual file type for logs and there is an exact prefix check we can do to detect it.
-	// No need to wait for all the checks done by http.DetectContentType() before checking for gzip.
-	// 2. http.DetectContentType() has a bug which mis-detects gzip for ms-fontobject.
-	if bytes.HasPrefix(header, gzipSignature) {
-		return "application/x-gzip", nil
+	if partSize < DownloadMinPartSize { // min part size for efficiency
+		return DownloadMinPartSize
 	}
-
-	return http.DetectContentType(header), nil
+	return partSize
 }
-
-var gzipSignature = []byte("\x1F\x8B\x08") // https://mimesniff.spec.whatwg.org/#matching-an-archive-type-pattern
 
 // ParseNotification parses a message received
 func ParseNotification(message string) ([]*S3ObjectInfo, error) {

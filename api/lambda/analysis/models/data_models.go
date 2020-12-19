@@ -62,7 +62,7 @@ type UpdateDataModelInput struct {
 	ID          string             `json:"id" validate:"required,max=1000,excludesall='<>&\""`
 	LogTypes    []string           `json:"logTypes" validate:"len=1,dive,required,max=500"` // for now, only one logtype allowed
 	Mappings    []DataModelMapping `json:"mappings" validate:"min=1,max=500,dive"`
-	UserID      string             `json:"userId" validate:"uuid4"`
+	UserID      string             `json:"userId" validate:"required"`
 }
 
 type DataModel struct {
