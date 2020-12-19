@@ -29,3 +29,9 @@ variable "master_account_id" {
   type        = string
   description = "AWS account ID of the account running the Panther backend"
 }
+
+variable "sns_topic_name" {
+  type        = string
+  description = "The name of the SNS topic"
+  default     = "panther-cloudwatch-events-topic"
+}
