@@ -19,7 +19,11 @@
 # It works by creating CloudWatch Event rules which feed to Panther's SQS Queue proxied by
 # a local SNS topic in each region.
 
-resource "aws_sns_topic" "panther_events" {}
+resource "aws_sns_topic" "panther_events" {
+  name = var.sns_topic_name
+
+  tags = var.tags
+}
 
 resource "aws_sns_topic_policy" "panther_events" {
   arn = aws_sns_topic.panther_events.arn
