@@ -16,7 +16,7 @@
 
 
 #####
-# Setups an SNS topic and subscribes it to Panther log processing SQS queue.
+# Sets up an SNS topic.
 
 # This topic is used to notify the Panther master account whenever new data is written to the
 # LogProcessing bucket.
