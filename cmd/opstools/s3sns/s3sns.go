@@ -78,7 +78,6 @@ func S3SNS(ctx context.Context, input *Input) (err error) {
 func s3sns(ctx context.Context, s3Client s3iface.S3API, snsClient snsiface.SNSAPI, lambdaClient lambdaiface.LambdaAPI,
 	input *Input) (err error) {
 
-	// topicARN := fmt.Sprintf(topicArnTemplate, topicRegion, account, topic)
 	topicARN, err := getTopicArn(input.Topic, input.Account, *input.Session.Config.Region)
 	if err != nil {
 		return err
@@ -90,7 +89,7 @@ func s3sns(ctx context.Context, s3Client s3iface.S3API, snsClient snsiface.SNSAP
 	workerGroup, workerCtx := errgroup.WithContext(ctx)
 	for i := 0; i < input.Concurrency; i++ {
 		workerGroup.Go(func() error {
-			return publishNotifications(snsClient, lambdaClient, topicARN, input.Attributes, notifyChan)
+			return publishNotifications(input.Logger, snsClient, lambdaClient, topicARN, input.Attributes, notifyChan)
 		})
 	}
 
@@ -102,11 +101,11 @@ func s3sns(ctx context.Context, s3Client s3iface.S3API, snsClient snsiface.SNSAP
 		NotifyChan: notifyChan,
 		Stats:      &input.Stats,
 	})
-	if err != nil {
+	if err != nil { // ListPath() will close notifyChan() on return causing workers to exit
 		return err
 	}
 
-	return workerGroup.Wait()
+	return workerGroup.Wait() // returns any error from workers
 }
 
 func getTopicArn(topic, account, region string) (string, error) {
@@ -125,7 +124,7 @@ func getTopicArn(topic, account, region string) (string, error) {
 }
 
 // post message per file as-if it was an S3 notification
-func publishNotifications(snsClient snsiface.SNSAPI, lambdaClient lambdaiface.LambdaAPI,
+func publishNotifications(logger *zap.SugaredLogger, snsClient snsiface.SNSAPI, lambdaClient lambdaiface.LambdaAPI,
 	topicARN string, attributes bool, notifyChan chan *events.S3Event) (failed error) {
 
 	for s3Event := range notifyChan {
@@ -137,10 +136,7 @@ func publishNotifications(snsClient snsiface.SNSAPI, lambdaClient lambdaiface.La
 		key := s3Event.Records[0].S3.Object.Key
 		size := s3Event.Records[0].S3.Object.Size
 
-		zap.L().Debug("sending file to SNS",
-			zap.String("bucket", bucket),
-			zap.String("key", key),
-			zap.Int64("size", size))
+		logger.Debugf("sending s3://%s/%s (%d bytes) to SNS", bucket, key, size)
 
 		s3Notification := notify.NewS3ObjectPutNotification(bucket, key, int(size))
 

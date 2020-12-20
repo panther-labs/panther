@@ -86,7 +86,7 @@ func TestIntegrationS3queue(t *testing.T) {
 	require.NoError(t, err)
 
 	input := &Input{
-		Logger:      opstools.MustBuildLogger(false),
+		Logger:      opstools.MustBuildLogger(true),
 		Session:     awsSession,
 		Account:     fakeAccountID,
 		S3Path:      s3Path,

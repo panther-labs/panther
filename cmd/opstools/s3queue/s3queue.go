@@ -45,7 +45,8 @@ import (
 const (
 	maxRetries = 7
 
-	fakeTopicArnTemplate = "arn:aws:sns:us-east-1:%s:panther-fake-s3queue-topic" // account is added for sqs messages
+	// account is added for sqs messages because the log processor expects it but the arn itself does not need to be real
+	fakeTopicArnTemplate = "arn:aws:sns:us-east-1:%s:panther-fake-s3queue-topic"
 
 	notifyChanDepth = 1000
 )
@@ -78,7 +79,7 @@ func s3Queue(ctx context.Context, s3Client s3iface.S3API, sqsClient sqsiface.SQS
 		return errors.Wrapf(err, "could not get queue url for %s", input.QueueName)
 	}
 
-	// the account id is taken from this arn to assume role for reading in the log processor
+	// the account id is taken from this arn to assume the role for reading in the log processor
 	topicARN := fmt.Sprintf(fakeTopicArnTemplate, input.Account)
 
 	notifyChan := make(chan *events.S3Event, notifyChanDepth)
@@ -86,7 +87,7 @@ func s3Queue(ctx context.Context, s3Client s3iface.S3API, sqsClient sqsiface.SQS
 	workerGroup, workerCtx := errgroup.WithContext(ctx)
 	for i := 0; i < input.Concurrency; i++ {
 		workerGroup.Go(func() error {
-			return queueNotifications(sqsClient, topicARN, queueURL.QueueUrl, notifyChan)
+			return queueNotifications(input.Logger, sqsClient, topicARN, queueURL.QueueUrl, notifyChan)
 		})
 	}
 
@@ -98,15 +99,15 @@ func s3Queue(ctx context.Context, s3Client s3iface.S3API, sqsClient sqsiface.SQS
 		NotifyChan: notifyChan,
 		Stats:      &input.Stats,
 	})
-	if err != nil {
+	if err != nil { // ListPath() will close notifyChan() on return causing workers to exit
 		return err
 	}
 
-	return workerGroup.Wait()
+	return workerGroup.Wait() // returns any error from workers
 }
 
 // post message per file as-if it was an S3 notification
-func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *string,
+func queueNotifications(logger *zap.SugaredLogger, sqsClient sqsiface.SQSAPI, topicARN string, queueURL *string,
 	notifyChan chan *events.S3Event) (failed error) {
 
 	sendMessageBatchInput := &sqs.SendMessageBatchInput{
@@ -124,9 +125,10 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 			continue
 		}
 
-		zap.L().Debug("sending file to SQS",
-			zap.String("bucket", s3Notification.Records[0].S3.Bucket.Name),
-			zap.String("key", s3Notification.Records[0].S3.Object.Key))
+		logger.Debugf("sending s3://%s/%s (%d bytes) to SQS",
+			s3Notification.Records[0].S3.Bucket.Name,
+			s3Notification.Records[0].S3.Object.Key,
+			s3Notification.Records[0].S3.Object.Size)
 
 		ctnJSON, err := jsoniter.MarshalToString(s3Notification)
 		if err != nil {

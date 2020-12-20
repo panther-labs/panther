@@ -99,7 +99,7 @@ func TestIntegrationS3SNS(t *testing.T) {
 	require.NoError(t, err)
 
 	input := &Input{
-		Logger:      opstools.MustBuildLogger(false),
+		Logger:      opstools.MustBuildLogger(true),
 		Session:     awsSession,
 		Account:     account,
 		S3Path:      "s3://" + s3Bucket + "/" + s3Prefix,
