@@ -26,6 +26,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
@@ -38,9 +39,12 @@ import (
 
 	"github.com/panther-labs/panther/cmd/opstools/s3list"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
+	"github.com/panther-labs/panther/pkg/awsretry"
 )
 
 const (
+	maxRetries = 7
+
 	fakeTopicArnTemplate = "arn:aws:sns:us-east-1:%s:panther-fake-s3queue-topic" // account is added for sqs messages
 
 	notifyChanDepth = 1000
@@ -59,8 +63,11 @@ type Input struct {
 }
 
 func S3Queue(ctx context.Context, input *Input) (err error) {
-	s3Client := s3.New(input.Session.Copy(&aws.Config{Region: &input.S3Region}))
-	return s3Queue(ctx, s3Client, sqs.New(input.Session), input)
+	clientsSession := input.Session.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
+		awsretry.NewConnectionErrRetryer(maxRetries)))
+	s3Client := s3.New(clientsSession.Copy(&aws.Config{Region: &input.S3Region}))
+	sqsClient := sqs.New(clientsSession)
+	return s3Queue(ctx, s3Client, sqsClient, input)
 }
 
 func s3Queue(ctx context.Context, s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, input *Input) (err error) {

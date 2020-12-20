@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
@@ -44,9 +45,11 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/notify"
 	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
+	"github.com/panther-labs/panther/pkg/awsretry"
 )
 
 const (
+	maxRetries      = 7
 	notifyChanDepth = 1000
 )
 
@@ -57,15 +60,19 @@ type Input struct {
 	S3Path      string
 	S3Region    string
 	Topic       string
-	Attributes  bool
+	Attributes  bool // if true include SNS attributes which will cause the Rule nEgine and Datacatalog Updater to receive
 	Concurrency int
 	Limit       uint64
 	Stats       s3list.Stats // passed in so we can get stats if canceled
 }
 
 func S3Topic(ctx context.Context, input *Input) (err error) {
-	s3Client := s3.New(input.Session.Copy(&aws.Config{Region: &input.S3Region}))
-	return s3sns(ctx, s3Client, sns.New(input.Session), lambda.New(input.Session), input)
+	clientsSession := input.Session.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
+		awsretry.NewConnectionErrRetryer(maxRetries)))
+	s3Client := s3.New(clientsSession.Copy(&aws.Config{Region: &input.S3Region}))
+	snsClient := sns.New(clientsSession)
+	lambdaClient := lambda.New(clientsSession)
+	return s3sns(ctx, s3Client, snsClient, lambdaClient, input)
 }
 
 func s3sns(ctx context.Context, s3Client s3iface.S3API, snsClient snsiface.SNSAPI, lambdaClient lambdaiface.LambdaAPI,
