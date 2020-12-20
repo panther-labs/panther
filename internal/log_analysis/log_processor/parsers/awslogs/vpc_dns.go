@@ -31,11 +31,13 @@ type VPCDns struct {
 	QueryType      pantherlog.String `json:"query_type" validate:"required" description:"Either the DNS record type that was specified in the request, or ANY. For information about the types that Route 53 supports."`
 	QueryClass     pantherlog.String `json:"query_class" validate:"required" description:"The class of the query."`
 	Rcode          pantherlog.String `json:"rcode" validate:"required" description:"The DNS response code that Resolver returned in response to the DNS query. The response code indicates whether the query was valid or not. The most common response code is NOERROR, meaning that the query was valid. If the response is not valid, Resolver returns a response code that explains why not. For a list of possible response codes, see DNS RCODEs on the IANA website."`
-	Answers        []DNSAnswer       `json:"answers"  validate:"required" description:"Answers to the query"`
+	Answers        []DNSAnswer       `json:"answers" validate:"required" description:"Answers to the query"`
 	SrcAddr        pantherlog.String `json:"srcaddr" validate:"required" panther:"ip" description:"The IP address of the instance that the query originated from."`
 	SrcPort        pantherlog.String `json:"srcport" validate:"required"  description:"The port on the instance that the query originated from."`
 	Transport      pantherlog.String `json:"transport" validate:"required"  description:"The protocol used to submit the DNS query."`
 	SrcIDs         DNSSrcID          `json:"srcids" validate:"required"  description:"The list of IDs of the sources the DNS query originated from or passed through."`
+
+	DummyDomains pantherlog.String `json:"-" panther:"domain"` // a dummy field that is not exported but is used to ensure that `p_any_domains` column is created in the schema
 }
 
 var _ pantherlog.ValueWriterTo = (*VPCDns)(nil)
@@ -56,7 +58,6 @@ type DNSAnswer struct {
 	Class pantherlog.String `json:"Class" validate:"required" description:"The class of the Resolver response to the query."`
 }
 
-
 var _ pantherlog.ValueWriterTo = (*DNSAnswer)(nil)
 
 func (answer *DNSAnswer) WriteValuesTo(w pantherlog.ValueWriter) {
@@ -66,8 +67,8 @@ func (answer *DNSAnswer) WriteValuesTo(w pantherlog.ValueWriter) {
 			pantherlog.ScanIPAddress(w, answer.Rdata.Value)
 		}
 	case "CNAME", "PTR":
-		if answer.Rdata.Value != "" {
-			w.WriteValues(pantherlog.FieldDomainName, answer.Rdata.Value)
+		if len(answer.Rdata.Value) > 1 { // remove trailing '.'
+			w.WriteValues(pantherlog.FieldDomainName, answer.Rdata.Value[0:len(answer.Rdata.Value)-1])
 		}
 	}
 }
@@ -77,4 +78,3 @@ type DNSSrcID struct {
 	InstanceID       pantherlog.String `json:"instance"  panther:"aws_instance_id" description:"The ID of the instance that the query originated from."`
 	ResolverEndpoint pantherlog.String `json:"resolver-endpoint" description:"The ID of the resolver endpoint that passes the DNS query to on-premises DNS servers."`
 }
-

@@ -49,12 +49,12 @@ input: |
         "Class": "IN"
       },
       {
-        "Rdata": "foo@bar.com",
+        "Rdata": "foo@bar.com.",
         "Type": "CNAME",
         "Class": "IN"
       },
       {
-             "Rdata": "static-someip.rackbank.com",
+             "Rdata": "static-someip.rackbank.com.",
              "Type": "PTR",
              "Class": "IN"
        }
@@ -100,12 +100,12 @@ result: |
         "Class": "IN"
       },
       {
-          "Rdata": "foo@bar.com",
+          "Rdata": "foo@bar.com.",
           "Type": "CNAME",
           "Class": "IN"
       },
       {
-            "Rdata": "static-someip.rackbank.com",
+            "Rdata": "static-someip.rackbank.com.",
             "Type": "PTR",
             "Class": "IN"
       }
