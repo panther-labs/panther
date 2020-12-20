@@ -52,7 +52,7 @@ type Stats struct {
 	NumBytes uint64
 }
 
-// ListPath given an s3path (e.g., s3://mybucket/myprefix) list files and send to notifyChan, sending errors on errChan
+// ListPath given an s3path (e.g., s3://mybucket/myprefix) list files and send to notifyChan
 func ListPath(ctx context.Context, input *Input) (err error) {
 	defer close(input.NotifyChan) // no more on exit
 

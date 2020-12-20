@@ -56,7 +56,6 @@ var (
 	ATTRIBUTES = flag.Bool("attributes", false,
 		"If true, add SNS attributes that would enable the rule engine and datacatalog updater to receive events.")
 	INTERACTIVE = flag.Bool("interactive", true, "If true, prompt for required flags if not set")
-	VERBOSE     = flag.Bool("verbose", false, "Enable verbose logging")
 	DEBUG       = flag.Bool("debug", false, "Enable debug logging")
 
 	logger *zap.SugaredLogger
@@ -98,14 +97,12 @@ func main() {
 	}
 
 	startTime := time.Now()
-	if *VERBOSE {
-		if *LIMIT > 0 {
-			logger.Infof("sending %d files from %s in %s to %s in %s",
-				LIMIT, *S3PATH, s3Region, *TOPIC, *REGION)
-		} else {
-			logger.Infof("sending files from %s in %s to %s in %s",
-				*S3PATH, s3Region, *TOPIC, *REGION)
-		}
+	if *LIMIT > 0 {
+		logger.Infof("sending %d files from %s in %s to %s in %s",
+			LIMIT, *S3PATH, s3Region, *TOPIC, *REGION)
+	} else {
+		logger.Infof("sending files from %s in %s to %s in %s",
+			*S3PATH, s3Region, *TOPIC, *REGION)
 	}
 
 	input := &s3sns.Input{
