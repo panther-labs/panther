@@ -88,6 +88,7 @@ func ListPath(ctx context.Context, input *Input) (err error) {
 	return input.S3Client.ListObjectsV2Pages(inputParams, func(page *s3.ListObjectsV2Output, morePages bool) bool {
 		select {
 		case <-ctx.Done(): // signal from workers that they aborted
+			return false
 		default: // non blocking
 		}
 
