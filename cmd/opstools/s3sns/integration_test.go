@@ -32,7 +32,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/cmd/opstools/s3list"
+	"github.com/panther-labs/panther/cmd/opstools"
 	"github.com/panther-labs/panther/cmd/opstools/testutils"
 )
 
@@ -97,11 +97,19 @@ func TestIntegrationS3SNS(t *testing.T) {
 	createTopicOutput, err := testutils.CreateTopic(snsClient, topicName)
 	require.NoError(t, err)
 
-	stats := &s3list.Stats{}
-	err = S3Topic(awsSession, account, "s3://"+s3Bucket+"/"+s3Prefix, *awsSession.Config.Region,
-		topicName, true, concurrency, 0, stats)
+	input := &Input{
+		Logger:      opstools.MustBuildLogger(false),
+		Session:     awsSession,
+		Account:     account,
+		S3Path:      "s3://" + s3Bucket + "/" + s3Prefix,
+		S3Region:    *awsSession.Config.Region,
+		Topic:       topicName,
+		Attributes:  true,
+		Concurrency: concurrency,
+	}
+	err = S3Topic(input)
 	require.NoError(t, err)
-	assert.Equal(t, numberOfFiles, (int)(stats.NumFiles))
+	assert.Equal(t, numberOfFiles, (int)(input.Stats.NumFiles))
 
 	err = testutils.DeleteTopic(snsClient, *createTopicOutput.TopicArn)
 	assert.NoError(t, err)

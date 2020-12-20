@@ -107,21 +107,33 @@ func main() {
 		}
 	}
 
-	stats := &s3list.Stats{}
+	input := &s3sns.Input{
+		Logger:      logger,
+		Session:     sess,
+		Account:     *ACCOUNT,
+		S3Path:      *S3PATH,
+		S3Region:    s3Region,
+		Topic:       *TOPIC,
+		Attributes:  *ATTRIBUTES,
+		Concurrency: *CONCURRENCY,
+		Limit:       *LIMIT,
+	}
+
+	// catch ^C
 	go func() {
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
 		caught := <-sig // wait for it
 		logger.Fatalf("caught %v, sent %d files (%.2fMB) to %s in %v",
-			caught, stats.NumFiles, float32(stats.NumBytes)/(1024.0*1024.0), *TOPIC, time.Since(startTime))
+			caught, input.Stats.NumFiles, float32(input.Stats.NumBytes)/(1024.0*1024.0), *TOPIC, time.Since(startTime))
 	}()
 
-	err = s3sns.S3Topic(sess, *ACCOUNT, *S3PATH, s3Region, *TOPIC, *ATTRIBUTES, *CONCURRENCY, *LIMIT, stats)
+	err = s3sns.S3Topic(input)
 	if err != nil {
 		logger.Fatal(err)
 	} else {
 		logger.Infof("sent %d files (%.2fMB) to %s (%s) in %v",
-			stats.NumFiles, float32(stats.NumBytes)/(1024.0*1024.0), *TOPIC, *REGION, time.Since(startTime))
+			input.Stats.NumFiles, float32(input.Stats.NumBytes)/(1024.0*1024.0), *TOPIC, *REGION, time.Since(startTime))
 	}
 }
 

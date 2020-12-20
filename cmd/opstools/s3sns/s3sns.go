@@ -19,12 +19,14 @@ package s3sns
  */
 
 import (
-	"fmt"
+	"context"
 	"strings"
 	"sync"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
@@ -35,6 +37,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/panther-labs/panther/cmd/opstools/s3list"
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
@@ -44,64 +47,80 @@ import (
 )
 
 const (
-	topicArnTemplate = "arn:aws:sns:%s:%s:%s"
+	notifyChanDepth = 1000
 )
 
-func S3Topic(sess *session.Session, account, s3path, s3region, topic string, attributes bool,
-	concurrency int, limit uint64, stats *s3list.Stats) (err error) {
-
-	return s3sns(s3.New(sess.Copy(&aws.Config{Region: &s3region})), sns.New(sess), lambda.New(sess),
-		account, s3path, topic, *sess.Config.Region, attributes, concurrency, limit, stats)
+type Input struct {
+	Logger      *zap.SugaredLogger
+	Session     *session.Session
+	Account     string
+	S3Path      string
+	S3Region    string
+	Topic       string
+	Attributes  bool
+	Concurrency int
+	Limit       uint64
+	Stats       s3list.Stats // passed in so we can get stats if canceled
 }
 
-func s3sns(s3Client s3iface.S3API, snsClient snsiface.SNSAPI, lambdaClient lambdaiface.LambdaAPI,
-	account, s3path, topic, topicRegion string, attributes bool,
-	concurrency int, limit uint64, stats *s3list.Stats) (failed error) {
+func S3Topic(input *Input) (err error) {
+	s3Client := s3.New(input.Session.Copy(&aws.Config{Region: &input.S3Region}))
+	return s3sns(s3Client, sns.New(input.Session), lambda.New(input.Session), input)
+}
 
-	topicARN := fmt.Sprintf(topicArnTemplate, topicRegion, account, topic)
-
-	errChan := make(chan error)
-	notifyChan := make(chan *events.S3Event, 1000)
-
-	var queueWg sync.WaitGroup
-	for i := 0; i < concurrency; i++ {
-		queueWg.Add(1)
-		go func() {
-			publishNotifications(snsClient, lambdaClient, topicARN, attributes, notifyChan, errChan)
-			queueWg.Done()
-		}()
+func s3sns(s3Client s3iface.S3API, snsClient snsiface.SNSAPI, lambdaClient lambdaiface.LambdaAPI, input *Input) (err error) {
+	// topicARN := fmt.Sprintf(topicArnTemplate, topicRegion, account, topic)
+	topicARN, err := getTopicArn(input.Topic, input.Account, *input.Session.Config.Region)
+	if err != nil {
+		return err
 	}
 
-	queueWg.Add(1)
-	go func() {
-		s3list.ListPath(s3Client, s3path, limit, notifyChan, errChan, stats)
-		queueWg.Done()
-	}()
+	notifyChan := make(chan *events.S3Event, notifyChanDepth)
 
-	var errorWg sync.WaitGroup
-	errorWg.Add(1)
-	go func() {
-		for err := range errChan { // return last error
-			failed = err
-		}
-		errorWg.Done()
-	}()
+	// worker group
+	workerGroup, workerCtx := errgroup.WithContext(context.TODO())
+	for i := 0; i < input.Concurrency; i++ {
+		workerGroup.Go(func() error {
+			return publishNotifications(snsClient, lambdaClient, topicARN, input.Attributes, notifyChan)
+		})
+	}
 
-	queueWg.Wait()
-	close(errChan)
-	errorWg.Wait()
+	err = s3list.ListPath(workerCtx, &s3list.Input{
+		Logger:     input.Logger,
+		S3Client:   s3Client,
+		S3Path:     input.S3Path,
+		Limit:      input.Limit,
+		NotifyChan: notifyChan,
+		Stats:      &input.Stats,
+	})
+	if err != nil {
+		return err
+	}
 
-	return failed
+	return workerGroup.Wait()
+}
+
+func getTopicArn(topic, account, region string) (string, error) {
+	endpoint, err := endpoints.DefaultResolver().EndpointFor("sns", region)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to get endpoint information")
+	}
+
+	return arn.ARN{
+		Partition: endpoint.PartitionID,
+		Region:    region,
+		AccountID: account,
+		Service:   "sns",
+		Resource:  topic,
+	}.String(), nil
 }
 
 // post message per file as-if it was an S3 notification
 func publishNotifications(snsClient snsiface.SNSAPI, lambdaClient lambdaiface.LambdaAPI,
-	topicARN string, attributes bool,
-	notifyChan chan *events.S3Event, errChan chan error) {
+	topicARN string, attributes bool, notifyChan chan *events.S3Event) (failed error) {
 
-	var failed bool
 	for s3Event := range notifyChan {
-		if failed { // drain channel
+		if failed != nil { // drain channel
 			continue
 		}
 
@@ -118,8 +137,7 @@ func publishNotifications(snsClient snsiface.SNSAPI, lambdaClient lambdaiface.La
 
 		notifyJSON, err := jsoniter.MarshalToString(s3Notification)
 		if err != nil {
-			errChan <- errors.Wrapf(err, "failed to marshal %#v", s3Notification)
-			failed = true
+			failed = errors.Wrapf(err, "failed to marshal %#v", s3Notification)
 			continue
 		}
 
@@ -130,14 +148,12 @@ func publishNotifications(snsClient snsiface.SNSAPI, lambdaClient lambdaiface.La
 		if attributes {
 			dataType, err := awsglue.DataTypeFromS3Key(key)
 			if err != nil {
-				errChan <- errors.Wrapf(err, "failed to get data type from %s", key)
-				failed = true
+				failed = errors.Wrapf(err, "failed to get data type from %s", key)
 				continue
 			}
 			logType, err := logTypeFromS3Key(lambdaClient, key)
 			if err != nil {
-				errChan <- errors.Wrapf(err, "failed to get log type from %s", key)
-				failed = true
+				failed = errors.Wrapf(err, "failed to get log type from %s", key)
 				continue
 			}
 			messageAttributes = notify.NewLogAnalysisSNSMessageAttributes(dataType, logType)
@@ -153,11 +169,12 @@ func publishNotifications(snsClient snsiface.SNSAPI, lambdaClient lambdaiface.La
 
 		_, err = snsClient.Publish(publishInput)
 		if err != nil {
-			errChan <- errors.Wrapf(err, "failed to publish %#v", *publishInput)
-			failed = true
+			failed = errors.Wrapf(err, "failed to publish %#v", *publishInput)
 			continue
 		}
 	}
+
+	return failed
 }
 
 // logType is not derivable from the s3 path, need to use API
@@ -173,30 +190,18 @@ func logTypeFromS3Key(lambdaClient lambdaiface.LambdaAPI, s3key string) (logType
 	}
 
 	initTablenameToLogType.Do(func() {
-		const lambdaName, method = "panther-logtypes-api", "listAvailableLogTypes"
-		var resp *lambda.InvokeOutput
-		resp, err = lambdaClient.Invoke(&lambda.InvokeInput{
-			FunctionName: aws.String(lambdaName),
-			Payload:      []byte(fmt.Sprintf(`{ "%s": {}}`, method)),
-		})
+		logtypesAPI := &logtypesapi.LogTypesAPILambdaClient{
+			LambdaName: logtypesapi.LambdaName,
+			LambdaAPI:  lambdaClient,
+		}
+		var apiReply *logtypesapi.AvailableLogTypes
+		apiReply, err = logtypesAPI.ListAvailableLogTypes(context.TODO())
 		if err != nil {
-			err = errors.Wrapf(err, "failed to invoke %#v", method)
+			err = errors.Wrap(err, "failed to list logtypes")
 			return
 		}
-		if resp.FunctionError != nil {
-			err = errors.Errorf("%s: failed to invoke %#v", *resp.FunctionError, method)
-			return
-		}
-
-		var availableLogTypes logtypesapi.AvailableLogTypes
-		err = jsoniter.Unmarshal(resp.Payload, &availableLogTypes)
-		if err != nil {
-			err = errors.Wrapf(err, "failed to unmarshal: %s", string(resp.Payload))
-			return
-		}
-
 		tableNameToLogType = make(map[string]string)
-		for _, logType := range availableLogTypes.LogTypes {
+		for _, logType := range apiReply.LogTypes {
 			tableNameToLogType[pantherdb.TableName(logType)] = logType
 		}
 	})

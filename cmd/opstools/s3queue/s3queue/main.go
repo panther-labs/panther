@@ -49,7 +49,6 @@ var (
 	LIMIT       = flag.Uint64("limit", 0, "If non-zero, then limit the number of files to this number.")
 	TOQ         = flag.String("queue", "panther-input-data-notifications-queue", "The name of the log processor queue to send notifications.")
 	INTERACTIVE = flag.Bool("interactive", true, "If true, prompt for required flags if not set")
-	VERBOSE     = flag.Bool("verbose", false, "Enable verbose logging")
 	DEBUG       = flag.Bool("debug", false, "Enable debug logging")
 
 	logger *zap.SugaredLogger
@@ -91,31 +90,40 @@ func main() {
 	}
 
 	startTime := time.Now()
-	if *VERBOSE {
-		if *LIMIT > 0 {
-			logger.Infof("sending %d files from %s in %s to %s in %s",
-				LIMIT, *S3PATH, s3Region, *TOQ, *REGION)
-		} else {
-			logger.Infof("sending files from %s in %s to %s in %s",
-				*S3PATH, s3Region, *TOQ, *REGION)
-		}
+	if *LIMIT > 0 {
+		logger.Debugf("sending %d files from %s in %s to %s in %s",
+			LIMIT, *S3PATH, s3Region, *TOQ, *REGION)
+	} else {
+		logger.Debugf("sending files from %s in %s to %s in %s",
+			*S3PATH, s3Region, *TOQ, *REGION)
 	}
 
-	stats := &s3list.Stats{}
+	input := &s3queue.Input{
+		Logger:      logger,
+		Session:     sess,
+		Account:     *ACCOUNT,
+		S3Path:      *S3PATH,
+		S3Region:    s3Region,
+		QueueName:   *TOQ,
+		Concurrency: *CONCURRENCY,
+		Limit:       *LIMIT,
+	}
+
+	// catch ^C
 	go func() {
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
 		caught := <-sig // wait for it
 		logger.Fatalf("caught %v, sent %d files (%.2fMB) to %s in %v",
-			caught, stats.NumFiles, float32(stats.NumBytes)/(1024.0*1024.0), *TOQ, time.Since(startTime))
+			caught, input.Stats.NumFiles, float32(input.Stats.NumBytes)/(1024.0*1024.0), *TOQ, time.Since(startTime))
 	}()
 
-	err = s3queue.S3Queue(sess, *ACCOUNT, *S3PATH, s3Region, *TOQ, *CONCURRENCY, *LIMIT, stats)
+	err = s3queue.S3Queue(input)
 	if err != nil {
 		logger.Fatal(err)
 	} else {
 		logger.Infof("sent %d files (%.2fMB) to %s (%s) in %v",
-			stats.NumFiles, float32(stats.NumBytes)/(1024.0*1024.0), *TOQ, *REGION, time.Since(startTime))
+			input.Stats.NumFiles, float32(input.Stats.NumBytes)/(1024.0*1024.0), *TOQ, *REGION, time.Since(startTime))
 	}
 }
 

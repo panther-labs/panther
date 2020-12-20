@@ -30,7 +30,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/cmd/opstools/s3list"
+	"github.com/panther-labs/panther/cmd/opstools"
 )
 
 const (
@@ -56,12 +56,19 @@ func TestS3Queue(t *testing.T) {
 	sqsClient.On("GetQueueUrl", mock.Anything).Return(&sqs.GetQueueUrlOutput{QueueUrl: aws.String("arn")}, nil).Once()
 	sqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Once()
 
-	stats := &s3list.Stats{}
-	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 0, stats)
+	input := &Input{
+		Logger:      opstools.MustBuildLogger(false),
+		Account:     testAccount,
+		S3Path:      testS3Path,
+		S3Region:    s3Region,
+		QueueName:   testQueueName,
+		Concurrency: 1,
+	}
+	err := s3Queue(s3Client, sqsClient, input)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	sqsClient.AssertExpectations(t)
-	assert.Equal(t, uint64(1), stats.NumFiles)
+	assert.Equal(t, uint64(1), input.Stats.NumFiles)
 }
 
 func TestS3QueueLimit(t *testing.T) {
@@ -84,12 +91,20 @@ func TestS3QueueLimit(t *testing.T) {
 	sqsClient.On("GetQueueUrl", mock.Anything).Return(&sqs.GetQueueUrlOutput{QueueUrl: aws.String("arn")}, nil).Once()
 	sqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Once()
 
-	stats := &s3list.Stats{}
-	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 1, stats)
+	input := &Input{
+		Logger:      opstools.MustBuildLogger(false),
+		Account:     testAccount,
+		S3Path:      testS3Path,
+		S3Region:    s3Region,
+		QueueName:   testQueueName,
+		Concurrency: 1,
+		Limit:       1,
+	}
+	err := s3Queue(s3Client, sqsClient, input)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	sqsClient.AssertExpectations(t)
-	assert.Equal(t, uint64(1), stats.NumFiles)
+	assert.Equal(t, uint64(1), input.Stats.NumFiles)
 }
 
 func TestS3QueueBatch(t *testing.T) {
@@ -109,12 +124,19 @@ func TestS3QueueBatch(t *testing.T) {
 	sqsClient.On("GetQueueUrl", mock.Anything).Return(&sqs.GetQueueUrlOutput{QueueUrl: aws.String("arn")}, nil).Once()
 	sqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Times(3)
 
-	stats := &s3list.Stats{}
-	err := s3Queue(s3Client, sqsClient, testAccount, testS3Path, testQueueName, 1, 0, stats)
+	input := &Input{
+		Logger:      opstools.MustBuildLogger(false),
+		Account:     testAccount,
+		S3Path:      testS3Path,
+		S3Region:    s3Region,
+		QueueName:   testQueueName,
+		Concurrency: 1,
+	}
+	err := s3Queue(s3Client, sqsClient, input)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	sqsClient.AssertExpectations(t)
-	assert.Equal(t, uint64(len(contents)), stats.NumFiles)
+	assert.Equal(t, uint64(len(contents)), input.Stats.NumFiles)
 }
 
 type mockS3 struct {

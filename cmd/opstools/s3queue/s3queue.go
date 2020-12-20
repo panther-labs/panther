@@ -19,9 +19,9 @@ package s3queue
  */
 
 import (
+	"context"
 	"fmt"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -34,6 +34,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/panther-labs/panther/cmd/opstools/s3list"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
@@ -41,65 +42,65 @@ import (
 
 const (
 	fakeTopicArnTemplate = "arn:aws:sns:us-east-1:%s:panther-fake-s3queue-topic" // account is added for sqs messages
+
+	notifyChanDepth = 1000
 )
 
-func S3Queue(sess *session.Session, account, s3path, s3region, queueName string,
-	concurrency int, limit uint64, stats *s3list.Stats) (err error) {
-
-	return s3Queue(s3.New(sess.Copy(&aws.Config{Region: &s3region})), sqs.New(sess),
-		account, s3path, queueName, concurrency, limit, stats)
+type Input struct {
+	Logger      *zap.SugaredLogger
+	Session     *session.Session
+	Account     string
+	S3Path      string
+	S3Region    string
+	QueueName   string
+	Concurrency int
+	Limit       uint64
+	Stats       s3list.Stats // passed in so we can get stats if canceled
 }
 
-func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, account, s3path, queueName string,
-	concurrency int, limit uint64, stats *s3list.Stats) (failed error) {
+func S3Queue(input *Input) (err error) {
+	s3Client := s3.New(input.Session.Copy(&aws.Config{Region: &input.S3Region}))
+	return s3Queue(s3Client, sqs.New(input.Session), input)
+}
 
+func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, input *Input) (err error) {
 	queueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
-		QueueName: &queueName,
+		QueueName: &input.QueueName,
 	})
 	if err != nil {
-		return errors.Wrapf(err, "could not get queue url for %s", queueName)
+		return errors.Wrapf(err, "could not get queue url for %s", input.QueueName)
 	}
 
 	// the account id is taken from this arn to assume role for reading in the log processor
-	topicARN := fmt.Sprintf(fakeTopicArnTemplate, account)
+	topicARN := fmt.Sprintf(fakeTopicArnTemplate, input.Account)
 
-	errChan := make(chan error)
-	notifyChan := make(chan *events.S3Event, 1000)
+	notifyChan := make(chan *events.S3Event, notifyChanDepth)
 
-	var queueWg sync.WaitGroup
-	for i := 0; i < concurrency; i++ {
-		queueWg.Add(1)
-		go func() {
-			queueNotifications(sqsClient, topicARN, queueURL.QueueUrl, notifyChan, errChan)
-			queueWg.Done()
-		}()
+	workerGroup, workerCtx := errgroup.WithContext(context.TODO())
+	for i := 0; i < input.Concurrency; i++ {
+		workerGroup.Go(func() error {
+			return queueNotifications(sqsClient, topicARN, queueURL.QueueUrl, notifyChan)
+		})
 	}
 
-	queueWg.Add(1)
-	go func() {
-		s3list.ListPath(s3Client, s3path, limit, notifyChan, errChan, stats)
-		queueWg.Done()
-	}()
+	err = s3list.ListPath(workerCtx, &s3list.Input{
+		Logger:     input.Logger,
+		S3Client:   s3Client,
+		S3Path:     input.S3Path,
+		Limit:      input.Limit,
+		NotifyChan: notifyChan,
+		Stats:      &input.Stats,
+	})
+	if err != nil {
+		return err
+	}
 
-	var errorWg sync.WaitGroup
-	errorWg.Add(1)
-	go func() {
-		for err := range errChan { // return last error
-			failed = err
-		}
-		errorWg.Done()
-	}()
-
-	queueWg.Wait()
-	close(errChan)
-	errorWg.Wait()
-
-	return failed
+	return workerGroup.Wait()
 }
 
 // post message per file as-if it was an S3 notification
 func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *string,
-	notifyChan chan *events.S3Event, errChan chan error) {
+	notifyChan chan *events.S3Event) (failed error) {
 
 	sendMessageBatchInput := &sqs.SendMessageBatchInput{
 		QueueUrl: queueURL,
@@ -110,9 +111,9 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 		batchTimeout = time.Minute
 		batchSize    = 10
 	)
-	var failed bool
+
 	for s3Notification := range notifyChan {
-		if failed { // drain channel
+		if failed != nil { // drain channel
 			continue
 		}
 
@@ -122,8 +123,7 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 
 		ctnJSON, err := jsoniter.MarshalToString(s3Notification)
 		if err != nil {
-			errChan <- errors.Wrapf(err, "failed to marshal %#v", s3Notification)
-			failed = true
+			failed = errors.Wrapf(err, "failed to marshal %#v", s3Notification)
 			continue
 		}
 
@@ -135,8 +135,7 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 		}
 		message, err := jsoniter.MarshalToString(snsNotification)
 		if err != nil {
-			errChan <- errors.Wrapf(err, "failed to marshal %#v", snsNotification)
-			failed = true
+			failed = errors.Wrapf(err, "failed to marshal %#v", snsNotification)
 			continue
 		}
 
@@ -147,8 +146,7 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 		if len(sendMessageBatchInput.Entries)%batchSize == 0 {
 			_, err = sqsbatch.SendMessageBatch(sqsClient, batchTimeout, sendMessageBatchInput)
 			if err != nil {
-				errChan <- errors.Wrapf(err, "failed to send %#v", sendMessageBatchInput)
-				failed = true
+				failed = errors.Wrapf(err, "failed to send %#v", sendMessageBatchInput)
 				continue
 			}
 			sendMessageBatchInput.Entries = make([]*sqs.SendMessageBatchRequestEntry, 0, batchSize) // reset
@@ -156,10 +154,12 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 	}
 
 	// send remaining
-	if !failed && len(sendMessageBatchInput.Entries) > 0 {
+	if failed == nil && len(sendMessageBatchInput.Entries) > 0 {
 		_, err := sqsbatch.SendMessageBatch(sqsClient, batchTimeout, sendMessageBatchInput)
 		if err != nil {
-			errChan <- errors.Wrapf(err, "failed to send %#v", sendMessageBatchInput)
+			failed = errors.Wrapf(err, "failed to send %#v", sendMessageBatchInput)
 		}
 	}
+
+	return failed
 }

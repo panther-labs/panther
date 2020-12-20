@@ -22,13 +22,14 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/panther-labs/panther/cmd/opstools/s3list"
+	"github.com/panther-labs/panther/cmd/opstools"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -38,7 +39,6 @@ const (
 	testKey     = "bar"
 	testS3Path  = "s3://" + testBucket + "/" + testKey
 	topic       = "testTopic"
-	topicRegion = "us-east-1"
 )
 
 func TestS3Queue(t *testing.T) {
@@ -55,13 +55,19 @@ func TestS3Queue(t *testing.T) {
 	snsClient := &testutils.SnsMock{}
 	snsClient.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
-	stats := &s3list.Stats{}
-	err := s3sns(s3Client, snsClient, nil,
-		testAccount, testS3Path, topic, topicRegion, false, 1, 0, stats)
+	input := &Input{
+		Logger:      opstools.MustBuildLogger(false),
+		Session:     &session.Session{Config: &aws.Config{Region: aws.String("someregion")}},
+		Account:     testAccount,
+		S3Path:      testS3Path,
+		Topic:       topic,
+		Concurrency: 1,
+	}
+	err := s3sns(s3Client, snsClient, nil, input)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	snsClient.AssertExpectations(t)
-	assert.Equal(t, uint64(1), stats.NumFiles)
+	assert.Equal(t, uint64(1), input.Stats.NumFiles)
 }
 
 func TestS3QueueLimit(t *testing.T) {
@@ -83,11 +89,18 @@ func TestS3QueueLimit(t *testing.T) {
 	snsClient := &testutils.SnsMock{}
 	snsClient.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Once()
 
-	stats := &s3list.Stats{}
-	err := s3sns(s3Client, snsClient, nil,
-		testAccount, testS3Path, topic, topicRegion, false, 1, 1, stats)
+	input := &Input{
+		Logger:      opstools.MustBuildLogger(false),
+		Session:     &session.Session{Config: &aws.Config{Region: aws.String("someregion")}},
+		Account:     testAccount,
+		S3Path:      testS3Path,
+		Topic:       topic,
+		Concurrency: 1,
+		Limit:       1,
+	}
+	err := s3sns(s3Client, snsClient, nil, input)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	snsClient.AssertExpectations(t)
-	assert.Equal(t, uint64(1), stats.NumFiles)
+	assert.Equal(t, uint64(1), input.Stats.NumFiles)
 }

@@ -19,7 +19,7 @@ package s3list
  */
 
 import (
-	"log"
+	"context"
 	"math"
 	"net/url"
 
@@ -30,6 +30,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 const (
@@ -37,38 +38,41 @@ const (
 	progressNotify = 5000 // log a line every this many to show progress
 )
 
+type Input struct {
+	Logger     *zap.SugaredLogger
+	S3Client   s3iface.S3API
+	S3Path     string
+	Limit      uint64
+	NotifyChan chan *events.S3Event
+	Stats      *Stats
+}
+
 type Stats struct {
 	NumFiles uint64
 	NumBytes uint64
 }
 
 // ListPath given an s3path (e.g., s3://mybucket/myprefix) list files and send to notifyChan, sending errors on errChan
-func ListPath(s3Client s3iface.S3API, s3path string, limit uint64,
-	notifyChan chan *events.S3Event, errChan chan error, stats *Stats) {
+func ListPath(ctx context.Context, input *Input) (err error) {
+	defer close(input.NotifyChan) // no more on exit
 
+	limit := input.Limit
 	if limit == 0 {
 		limit = math.MaxUint64
 	}
 
-	defer func() {
-		close(notifyChan) // signal to reader that we are done
-	}()
-
-	parsedPath, err := url.Parse(s3path)
+	parsedPath, err := url.Parse(input.S3Path)
 	if err != nil {
-		errChan <- errors.Errorf("bad s3 url: %s,", err)
-		return
+		return errors.Wrapf(err, "bad s3 url: %s,", input.S3Path)
 	}
 
 	if parsedPath.Scheme != "s3" {
-		errChan <- errors.Errorf("not s3 protocol (expecting s3://): %s,", s3path)
-		return
+		return errors.Errorf("not s3 protocol (expecting s3://): %s,", input.S3Path)
 	}
 
 	bucket := parsedPath.Host
 	if bucket == "" {
-		errChan <- errors.Errorf("missing bucket: %s,", s3path)
-		return
+		return errors.Errorf("missing bucket: %s,", input.S3Path)
 	}
 	var prefix string
 	if len(parsedPath.Path) > 0 {
@@ -81,15 +85,20 @@ func ListPath(s3Client s3iface.S3API, s3path string, limit uint64,
 		Prefix:  aws.String(prefix),
 		MaxKeys: aws.Int64(pageSize),
 	}
-	err = s3Client.ListObjectsV2Pages(inputParams, func(page *s3.ListObjectsV2Output, morePages bool) bool {
+	return input.S3Client.ListObjectsV2Pages(inputParams, func(page *s3.ListObjectsV2Output, morePages bool) bool {
+		select {
+		case <-ctx.Done(): // signal from workers that they aborted
+		default: // non blocking
+		}
+
 		for _, value := range page.Contents {
 			if *value.Size > 0 { // we only care about objects with size
-				stats.NumFiles++
-				if stats.NumFiles%progressNotify == 0 {
-					log.Printf("listed %d files ...", stats.NumFiles)
+				input.Stats.NumFiles++
+				if input.Stats.NumFiles%progressNotify == 0 {
+					input.Logger.Infof("listed %d files ...", input.Stats.NumFiles)
 				}
-				stats.NumBytes += (uint64)(*value.Size)
-				notifyChan <- &events.S3Event{
+				input.Stats.NumBytes += (uint64)(*value.Size)
+				input.NotifyChan <- &events.S3Event{
 					Records: []events.S3EventRecord{
 						{
 							S3: events.S3Entity{
@@ -104,16 +113,13 @@ func ListPath(s3Client s3iface.S3API, s3path string, limit uint64,
 						},
 					},
 				}
-				if stats.NumFiles >= limit {
+				if input.Stats.NumFiles >= limit {
 					break
 				}
 			}
 		}
-		return stats.NumFiles < limit // "To stop iterating, return false from the fn function."
+		return input.Stats.NumFiles < limit // "To stop iterating, return false from the fn function."
 	})
-	if err != nil {
-		errChan <- err
-	}
 }
 
 func GetS3Region(sess *session.Session, s3Path string) (string, error) {
