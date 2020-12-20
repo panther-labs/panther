@@ -19,6 +19,7 @@ package main
  */
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -128,7 +129,7 @@ func main() {
 			caught, input.Stats.NumFiles, float32(input.Stats.NumBytes)/(1024.0*1024.0), *TOPIC, time.Since(startTime))
 	}()
 
-	err = s3sns.S3Topic(input)
+	err = s3sns.S3Topic(context.TODO(), input)
 	if err != nil {
 		logger.Fatal(err)
 	} else {

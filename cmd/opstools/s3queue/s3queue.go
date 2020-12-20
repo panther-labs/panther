@@ -58,12 +58,12 @@ type Input struct {
 	Stats       s3list.Stats // passed in so we can get stats if canceled
 }
 
-func S3Queue(input *Input) (err error) {
+func S3Queue(ctx context.Context, input *Input) (err error) {
 	s3Client := s3.New(input.Session.Copy(&aws.Config{Region: &input.S3Region}))
-	return s3Queue(s3Client, sqs.New(input.Session), input)
+	return s3Queue(ctx, s3Client, sqs.New(input.Session), input)
 }
 
-func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, input *Input) (err error) {
+func s3Queue(ctx context.Context, s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, input *Input) (err error) {
 	queueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: &input.QueueName,
 	})
@@ -76,7 +76,7 @@ func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, input *Input) (e
 
 	notifyChan := make(chan *events.S3Event, notifyChanDepth)
 
-	workerGroup, workerCtx := errgroup.WithContext(context.TODO())
+	workerGroup, workerCtx := errgroup.WithContext(ctx)
 	for i := 0; i < input.Concurrency; i++ {
 		workerGroup.Go(func() error {
 			return queueNotifications(sqsClient, topicARN, queueURL.QueueUrl, notifyChan)

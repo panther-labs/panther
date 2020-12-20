@@ -19,6 +19,7 @@ package s3sns
  */
 
 import (
+	"context"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -63,7 +64,7 @@ func TestS3Queue(t *testing.T) {
 		Topic:       topic,
 		Concurrency: 1,
 	}
-	err := s3sns(s3Client, snsClient, nil, input)
+	err := s3sns(context.TODO(), s3Client, snsClient, nil, input)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	snsClient.AssertExpectations(t)
@@ -98,7 +99,7 @@ func TestS3QueueLimit(t *testing.T) {
 		Concurrency: 1,
 		Limit:       1,
 	}
-	err := s3sns(s3Client, snsClient, nil, input)
+	err := s3sns(context.TODO(), s3Client, snsClient, nil, input)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	snsClient.AssertExpectations(t)

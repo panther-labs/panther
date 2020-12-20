@@ -63,12 +63,14 @@ type Input struct {
 	Stats       s3list.Stats // passed in so we can get stats if canceled
 }
 
-func S3Topic(input *Input) (err error) {
+func S3Topic(ctx context.Context, input *Input) (err error) {
 	s3Client := s3.New(input.Session.Copy(&aws.Config{Region: &input.S3Region}))
-	return s3sns(s3Client, sns.New(input.Session), lambda.New(input.Session), input)
+	return s3sns(ctx, s3Client, sns.New(input.Session), lambda.New(input.Session), input)
 }
 
-func s3sns(s3Client s3iface.S3API, snsClient snsiface.SNSAPI, lambdaClient lambdaiface.LambdaAPI, input *Input) (err error) {
+func s3sns(ctx context.Context, s3Client s3iface.S3API, snsClient snsiface.SNSAPI, lambdaClient lambdaiface.LambdaAPI,
+	input *Input) (err error) {
+
 	// topicARN := fmt.Sprintf(topicArnTemplate, topicRegion, account, topic)
 	topicARN, err := getTopicArn(input.Topic, input.Account, *input.Session.Config.Region)
 	if err != nil {
@@ -78,7 +80,7 @@ func s3sns(s3Client s3iface.S3API, snsClient snsiface.SNSAPI, lambdaClient lambd
 	notifyChan := make(chan *events.S3Event, notifyChanDepth)
 
 	// worker group
-	workerGroup, workerCtx := errgroup.WithContext(context.TODO())
+	workerGroup, workerCtx := errgroup.WithContext(ctx)
 	for i := 0; i < input.Concurrency; i++ {
 		workerGroup.Go(func() error {
 			return publishNotifications(snsClient, lambdaClient, topicARN, input.Attributes, notifyChan)

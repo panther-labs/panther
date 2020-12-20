@@ -19,6 +19,7 @@ package s3queue
  */
 
 import (
+	"context"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -64,7 +65,7 @@ func TestS3Queue(t *testing.T) {
 		QueueName:   testQueueName,
 		Concurrency: 1,
 	}
-	err := s3Queue(s3Client, sqsClient, input)
+	err := s3Queue(context.TODO(), s3Client, sqsClient, input)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	sqsClient.AssertExpectations(t)
@@ -100,7 +101,7 @@ func TestS3QueueLimit(t *testing.T) {
 		Concurrency: 1,
 		Limit:       1,
 	}
-	err := s3Queue(s3Client, sqsClient, input)
+	err := s3Queue(context.TODO(), s3Client, sqsClient, input)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	sqsClient.AssertExpectations(t)
@@ -132,7 +133,7 @@ func TestS3QueueBatch(t *testing.T) {
 		QueueName:   testQueueName,
 		Concurrency: 1,
 	}
-	err := s3Queue(s3Client, sqsClient, input)
+	err := s3Queue(context.TODO(), s3Client, sqsClient, input)
 	require.NoError(t, err)
 	s3Client.AssertExpectations(t)
 	sqsClient.AssertExpectations(t)

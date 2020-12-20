@@ -19,6 +19,7 @@ package s3queue
  */
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -94,7 +95,7 @@ func TestIntegrationS3queue(t *testing.T) {
 		Concurrency: concurrency,
 		Limit:       numberOfFiles,
 	}
-	err = S3Queue(input)
+	err = S3Queue(context.TODO(), input)
 	require.NoError(t, err)
 	assert.Equal(t, numberOfFiles, (int)(input.Stats.NumFiles))
 
