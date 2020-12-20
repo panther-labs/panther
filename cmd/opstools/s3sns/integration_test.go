@@ -108,7 +108,7 @@ func TestIntegrationS3SNS(t *testing.T) {
 		Attributes:  true,
 		Concurrency: concurrency,
 	}
-	err = S3Topic(context.TODO(), input)
+	err = S3SNS(context.TODO(), input)
 	require.NoError(t, err)
 	assert.Equal(t, numberOfFiles, (int)(input.Stats.NumFiles))
 

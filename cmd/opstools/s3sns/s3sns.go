@@ -60,13 +60,13 @@ type Input struct {
 	S3Path      string
 	S3Region    string
 	Topic       string
-	Attributes  bool // if true include SNS attributes which will cause the Rule nEgine and Datacatalog Updater to receive
+	Attributes  bool // if true, include SNS attributes which will cause the Rule Engine and Data Catalog Updater to receive
 	Concurrency int
 	Limit       uint64
 	Stats       s3list.Stats // passed in so we can get stats if canceled
 }
 
-func S3Topic(ctx context.Context, input *Input) (err error) {
+func S3SNS(ctx context.Context, input *Input) (err error) {
 	clientsSession := input.Session.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
 		awsretry.NewConnectionErrRetryer(maxRetries)))
 	s3Client := s3.New(clientsSession.Copy(&aws.Config{Region: &input.S3Region}))
