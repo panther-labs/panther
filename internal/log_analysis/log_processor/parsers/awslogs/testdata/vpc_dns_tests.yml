@@ -1,3 +1,19 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 name: vpc_dns_example
 logType: AWS.VPCDns
 input: |
@@ -36,7 +52,12 @@ input: |
         "Rdata": "foo@bar.com",
         "Type": "CNAME",
         "Class": "IN"
-      }
+      },
+      {
+             "Rdata": "static-someip.rackbank.com",
+             "Type": "PTR",
+             "Class": "IN"
+       }
     ],
     "srcaddr": "192.0.2.15",
     "srcport": "50637",
@@ -82,6 +103,11 @@ result: |
           "Rdata": "foo@bar.com",
           "Type": "CNAME",
           "Class": "IN"
+      },
+      {
+            "Rdata": "static-someip.rackbank.com",
+            "Type": "PTR",
+            "Class": "IN"
       }
     ],
     "srcaddr": "192.0.2.15",
@@ -96,5 +122,5 @@ result: |
     "p_any_aws_account_ids": ["111122223333"],
     "p_any_aws_instance_ids": ["i-0d15cd0d3example"],
     "p_any_ip_addresses": ["192.0.2.15", "192.0.2.44", "198.51.100.6", "203.0.113.8", "203.0.113.9"],
-    "p_any_domain_names": ["192.0.2.44", "198.51.100.6", "203.0.113.8", "203.0.113.9", "foo@bar.com"]
+    "p_any_domain_names": ["api.example.com", "foo@bar.com", "static-someip.rackbank.com"]
   }

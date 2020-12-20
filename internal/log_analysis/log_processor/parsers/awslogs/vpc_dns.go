@@ -38,13 +38,43 @@ type VPCDns struct {
 	SrcIDs         DNSSrcID          `json:"srcids" validate:"required"  description:"The list of IDs of the sources the DNS query originated from or passed through."`
 }
 
+var _ pantherlog.ValueWriterTo = (*VPCDns)(nil)
+
+func (vpcdns *VPCDns) WriteValuesTo(w pantherlog.ValueWriter) {
+	switch vpcdns.QueryType.Value {
+	case "A", "AAAA":
+		if len(vpcdns.QueryName.Value) > 1 { // remove trailing '.'
+			w.WriteValues(pantherlog.FieldDomainName, vpcdns.QueryName.Value[0:len(vpcdns.QueryName.Value)-1])
+		}
+	}
+}
+
+// nolint:lll
 type DNSAnswer struct {
-	Rdata pantherlog.String `json:"Rdata" validate:"required" panther:"ip,domain" description:"The value that Resolver returned in response to the query. For example, for an A record, this is an IP address in IPv4 format. For a CNAME record, this is the domain name in the CNAME record."`
+	Rdata pantherlog.String `json:"Rdata" validate:"required" description:"The value that Resolver returned in response to the query. For example, for an A record, this is an IP address in IPv4 format. For a CNAME record, this is the domain name in the CNAME record."`
 	Type  pantherlog.String `json:"Type" validate:"required" description:"The DNS record type (such as A, MX, or CNAME) of the value that Resolver is returning in response to the query."`
 	Class pantherlog.String `json:"Class" validate:"required" description:"The class of the Resolver response to the query."`
 }
 
+
+var _ pantherlog.ValueWriterTo = (*DNSAnswer)(nil)
+
+func (answer *DNSAnswer) WriteValuesTo(w pantherlog.ValueWriter) {
+	switch answer.Type.Value {
+	case "A", "AAAA":
+		if answer.Rdata.Value != "" {
+			pantherlog.ScanIPAddress(w, answer.Rdata.Value)
+		}
+	case "CNAME", "PTR":
+		if answer.Rdata.Value != "" {
+			w.WriteValues(pantherlog.FieldDomainName, answer.Rdata.Value)
+		}
+	}
+}
+
+// nolint:lll
 type DNSSrcID struct {
 	InstanceID       pantherlog.String `json:"instance"  panther:"aws_instance_id" description:"The ID of the instance that the query originated from."`
 	ResolverEndpoint pantherlog.String `json:"resolver-endpoint" description:"The ID of the resolver endpoint that passes the DNS query to on-premises DNS servers."`
 }
+
