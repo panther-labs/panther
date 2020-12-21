@@ -23,7 +23,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
-const TypeCompliance = "Snapshot.ComplianceHistory"
+const TypeCompliance = "Compliance.History"
 
 var logTypeCompliance = logtypes.MustBuild(logtypes.ConfigJSON{
 	Name:         TypeCompliance,
