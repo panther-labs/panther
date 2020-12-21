@@ -1,4 +1,6 @@
-# NOTE: this resource must be applied in the Panther master account, not in a satellite account. Each monitored account requires its own topic subscription resource. In Terraform, this can be accomplished for multiple accounts using a for_each expression.
+# NOTE: this resource must be applied in the Panther master account, not in a satellite account.
+# Each monitored account requires its own topic subscription resource. In Terraform, this can be 
+# accomplished for multiple accounts using a for_each expression.
 
 resource "aws_sns_topic_subscription" "panther_cloudwatch" {
   for_each = toset(var.satellite_accounts)
@@ -10,5 +12,6 @@ resource "aws_sns_topic_subscription" "panther_cloudwatch" {
 }
 
 variable "satellite_accounts" {
-  type = list(string)
+  description = "The account numbers of satellite accounts that will have the CloudWatch Events module applied to them"
+  type        = list(string)
 }
