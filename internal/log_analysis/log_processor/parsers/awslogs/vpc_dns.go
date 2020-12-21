@@ -37,7 +37,8 @@ type VPCDns struct {
 	Transport      pantherlog.String `json:"transport" validate:"required"  description:"The protocol used to submit the DNS query."`
 	SrcIDs         DNSSrcID          `json:"srcids" validate:"required"  description:"The list of IDs of the sources the DNS query originated from or passed through."`
 
-	DummyDomains pantherlog.String `json:"-" panther:"domain"` // a dummy field that is not exported but is used to ensure that `p_any_domains` column is created in the schema
+	// a dummy field that is not exported but is used to ensure that `p_any_domains` column is created in the schema
+	DummyDomains pantherlog.String `json:"-" panther:"domain"`
 }
 
 var _ pantherlog.ValueWriterTo = (*VPCDns)(nil)
@@ -66,7 +67,7 @@ func (answer *DNSAnswer) WriteValuesTo(w pantherlog.ValueWriter) {
 		if answer.Rdata.Value != "" {
 			pantherlog.ScanIPAddress(w, answer.Rdata.Value)
 		}
-	case "CNAME", "PTR":
+	case "CNAME", "MX", "NS", "PTR":
 		if len(answer.Rdata.Value) > 1 { // remove trailing '.'
 			w.WriteValues(pantherlog.FieldDomainName, answer.Rdata.Value[0:len(answer.Rdata.Value)-1])
 		}
