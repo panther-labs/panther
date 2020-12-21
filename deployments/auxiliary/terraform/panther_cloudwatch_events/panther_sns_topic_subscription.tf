@@ -11,9 +11,4 @@ resource "aws_sns_topic_subscription" "panther_cloudwatch" {
 
 variable "satellite_accounts" {
   type = list(string)
-
-  default = [
-    "123456789012",
-    "123456789013"
-  ]
 }
