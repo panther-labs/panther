@@ -54,9 +54,9 @@ input: |
         "Class": "IN"
       },
       {
-             "Rdata": "static-someip.rackbank.com.",
-             "Type": "PTR",
-             "Class": "IN"
+        "Rdata": "static-someip.rackbank.com.",
+        "Type": "PTR",
+        "Class": "IN"
        }
     ],
     "srcaddr": "192.0.2.15",
@@ -105,9 +105,9 @@ result: |
           "Class": "IN"
       },
       {
-            "Rdata": "static-someip.rackbank.com.",
-            "Type": "PTR",
-            "Class": "IN"
+          "Rdata": "static-someip.rackbank.com.",
+          "Type": "PTR",
+          "Class": "IN"
       }
     ],
     "srcaddr": "192.0.2.15",

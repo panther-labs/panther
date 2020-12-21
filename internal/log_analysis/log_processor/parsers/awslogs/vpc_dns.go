@@ -44,11 +44,8 @@ type VPCDns struct {
 var _ pantherlog.ValueWriterTo = (*VPCDns)(nil)
 
 func (vpcdns *VPCDns) WriteValuesTo(w pantherlog.ValueWriter) {
-	switch vpcdns.QueryType.Value {
-	case "A", "AAAA":
-		if len(vpcdns.QueryName.Value) > 1 { // remove trailing '.'
-			w.WriteValues(pantherlog.FieldDomainName, vpcdns.QueryName.Value[0:len(vpcdns.QueryName.Value)-1])
-		}
+	if len(vpcdns.QueryName.Value) > 1 { // remove trailing '.'
+		w.WriteValues(pantherlog.FieldDomainName, vpcdns.QueryName.Value[0:len(vpcdns.QueryName.Value)-1])
 	}
 }
 
