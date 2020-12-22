@@ -18,7 +18,17 @@ package awslogs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+import (
+	"strings"
+
+	"golang.org/x/net/idna"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+)
+
+var (
+	punycodeDecoder = idna.New()
+)
 
 // nolint:lll
 type VPCDns struct {
@@ -45,7 +55,7 @@ var _ pantherlog.ValueWriterTo = (*VPCDns)(nil)
 
 func (vpcdns *VPCDns) WriteValuesTo(w pantherlog.ValueWriter) {
 	if len(vpcdns.QueryName.Value) > 1 { // remove trailing '.'
-		w.WriteValues(pantherlog.FieldDomainName, vpcdns.QueryName.Value[0:len(vpcdns.QueryName.Value)-1])
+		w.WriteValues(pantherlog.FieldDomainName, decodePunycode(vpcdns.QueryName.Value[0:len(vpcdns.QueryName.Value)-1]))
 	}
 }
 
@@ -66,7 +76,7 @@ func (answer *DNSAnswer) WriteValuesTo(w pantherlog.ValueWriter) {
 		}
 	case "CNAME", "MX", "NS", "PTR":
 		if len(answer.Rdata.Value) > 1 { // remove trailing '.'
-			w.WriteValues(pantherlog.FieldDomainName, answer.Rdata.Value[0:len(answer.Rdata.Value)-1])
+			w.WriteValues(pantherlog.FieldDomainName, decodePunycode(answer.Rdata.Value[0:len(answer.Rdata.Value)-1]))
 		}
 	}
 }
@@ -75,4 +85,14 @@ func (answer *DNSAnswer) WriteValuesTo(w pantherlog.ValueWriter) {
 type DNSSrcID struct {
 	InstanceID       pantherlog.String `json:"instance"  panther:"aws_instance_id" description:"The ID of the instance that the query originated from."`
 	ResolverEndpoint pantherlog.String `json:"resolver-endpoint" description:"The ID of the resolver endpoint that passes the DNS query to on-premises DNS servers."`
+}
+
+func decodePunycode(s string) string {
+	if strings.HasPrefix(s, "xn--") { // puny code?
+		decoded, err := punycodeDecoder.ToUnicode(s)
+		if err == nil {
+			s = decoded
+		}
+	}
+	return s
 }

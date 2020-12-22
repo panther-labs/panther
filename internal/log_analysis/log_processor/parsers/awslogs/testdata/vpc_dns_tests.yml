@@ -54,6 +54,11 @@ input: |
         "Class": "IN"
       },
       {
+        "Rdata": "xn--fa-hia.com.",
+        "Type": "CNAME",
+        "Class": "IN"
+      },
+      {
         "Rdata": "static-someip.rackbank.com.",
         "Type": "PTR",
         "Class": "IN"
@@ -100,14 +105,19 @@ result: |
         "Class": "IN"
       },
       {
-          "Rdata": "foo@bar.com.",
-          "Type": "CNAME",
-          "Class": "IN"
+        "Rdata": "foo@bar.com.",
+        "Type": "CNAME",
+        "Class": "IN"
       },
       {
-          "Rdata": "static-someip.rackbank.com.",
-          "Type": "PTR",
-          "Class": "IN"
+        "Rdata": "xn--fa-hia.com.",
+        "Type": "CNAME",
+        "Class": "IN"
+      },
+      {
+        "Rdata": "static-someip.rackbank.com.",
+        "Type": "PTR",
+        "Class": "IN"
       }
     ],
     "srcaddr": "192.0.2.15",
@@ -122,5 +132,5 @@ result: |
     "p_any_aws_account_ids": ["111122223333"],
     "p_any_aws_instance_ids": ["i-0d15cd0d3example"],
     "p_any_ip_addresses": ["192.0.2.15", "192.0.2.44", "198.51.100.6", "203.0.113.8", "203.0.113.9"],
-    "p_any_domain_names": ["api.example.com", "foo@bar.com", "static-someip.rackbank.com"]
+    "p_any_domain_names": ["api.example.com", "faß.com", "foo@bar.com", "static-someip.rackbank.com"]
   }
