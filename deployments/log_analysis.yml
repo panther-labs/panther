@@ -684,7 +684,7 @@ Resources:
           Properties:
             Queue: !GetAtt UpdaterQueue.Arn
             BatchSize: 10000 # Max
-            MaximumBatchingWindowInSeconds: 15
+            MaximumBatchingWindowInSeconds: 30
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
         - Id: AccessSqsKms
