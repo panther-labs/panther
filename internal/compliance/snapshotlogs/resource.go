@@ -58,8 +58,7 @@ type Resource struct {
 	Name             pantherlog.String      `json:"name" description:"The AWS resource name of the resource."`
 	Tags             map[string]string      `json:"tags" description:"A standardized format for key/value resource tags."`
 
-	// a dummy field that is not exported but used to ensure that `p_any` columns are created in the schema for extracted fields
-	// DummyAny pantherlog.String `json:"-" panther:"aws_account_id,aws_arn,aws_instance_id,domain,ip"`
+	// a dummy fields that are not exported but used to ensure that `p_any` columns are created in the schema for extracted fields
 	DummyDomain pantherlog.String `json:"-" panther:"domain"`
 	DummyIP     pantherlog.String `json:"-" panther:"ip"`
 }
