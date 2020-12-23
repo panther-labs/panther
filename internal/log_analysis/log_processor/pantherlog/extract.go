@@ -1,4 +1,4 @@
-package snapshotlogs
+package pantherlog
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -18,19 +18,23 @@ package snapshotlogs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-)
+import jsoniter "github.com/json-iterator/go"
 
-// LogTypes exports the available log type entries
-func LogTypes() logtypes.Group {
-	return logTypes
-}
-
-const CloudSecurityGroup = "cloudsecurity"
-
-var logTypes = logtypes.Must(CloudSecurityGroup, logTypeComplianceHistory, logTypeResourceHistory)
-
-func Resolver() logtypes.Resolver {
-	return logtypes.LocalResolver(logTypes)
+func ExtractRawMessageIndicators(w ValueWriter, extractor func(ValueWriter, *jsoniter.Iterator, string), messages ...RawMessage) {
+	var iter *jsoniter.Iterator
+	for _, msg := range messages {
+		if msg == nil {
+			continue
+		}
+		if iter == nil {
+			iter = jsoniter.ConfigDefault.BorrowIterator(msg)
+		} else {
+			iter.Error = nil
+			iter.ResetBytes(msg)
+		}
+		extractor(w, iter, "")
+	}
+	if iter != nil {
+		iter.Pool().ReturnIterator(iter)
+	}
 }
