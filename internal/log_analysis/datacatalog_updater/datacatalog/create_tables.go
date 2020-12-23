@@ -65,14 +65,9 @@ func (h *LambdaHandler) createOrReplaceViewsForAllDeployedLogTables(ctx context.
 	}
 	// We map the deployed log types to their 'base' log tables.
 	deployedLogTables := resolveTables(ctx, h.Resolver, deployedLogTypes...)
-
-	var tablesInView []*awsglue.GlueTableMetadata
-	for _, table := range deployedLogTables {
-		tablesInView = append(tablesInView, table)
-	}
 	// update the views for *all* tables based on the log tables.
 	// FIXME: this is confusing, the athenaviews package should not be creating views by expanding table metadata based on hard-wired logic
-	if err := athenaviews.CreateOrReplaceLogViews(h.AthenaClient, h.AthenaWorkgroup, tablesInView); err != nil {
+	if err := athenaviews.CreateOrReplaceLogViews(h.AthenaClient, h.AthenaWorkgroup, deployedLogTables); err != nil {
 		return errors.Wrap(err, "failed to update athena views")
 	}
 	return nil
