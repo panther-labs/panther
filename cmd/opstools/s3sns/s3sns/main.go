@@ -34,21 +34,27 @@ import (
 
 	"github.com/panther-labs/panther/cmd/opstools"
 	"github.com/panther-labs/panther/cmd/opstools/s3list"
-	"github.com/panther-labs/panther/cmd/opstools/s3queue"
+	"github.com/panther-labs/panther/cmd/opstools/s3sns"
 	"github.com/panther-labs/panther/pkg/prompt"
 )
 
 const (
-	banner = "lists s3 objects and posts s3 notifications to log processor queue"
+	banner = "lists s3 objects and posts s3 notifications to log processor sns topic"
 )
 
 var (
-	REGION      = flag.String("region", "", "The Panther AWS region (optional, defaults to session env vars) where the queue exists.")
-	ACCOUNT     = flag.String("account", "", "The Panther AWS account id (optional, defaults to session account)")
+	REGION = flag.String("region", "",
+		"The Panther AWS region (optional, defaults to session env vars) where the topic exists.")
+	ACCOUNT = flag.String("account", "",
+		"The Panther AWS account id (optional, defaults to session account)")
 	S3PATH      = flag.String("s3path", "", "The s3 path to list (e.g., s3://<bucket>/<prefix>).")
 	CONCURRENCY = flag.Int("concurrency", 50, "The number of concurrent sqs writer go routines")
-	LIMIT       = flag.Uint64("limit", 0, "If non-zero, then limit the number of files to this number.")
-	TOQ         = flag.String("queue", "panther-input-data-notifications-queue", "The name of the log processor queue to send notifications.")
+	LIMIT       = flag.Uint64("limit", 0,
+		"If non-zero, then limit the number of files to this number.")
+	TOPIC = flag.String("topic", "panther-processed-data-notifications",
+		"The name of the log processor topic to send notifications.")
+	ATTRIBUTES = flag.Bool("attributes", false,
+		"If true, add SNS attributes that would enable the rule engine and datacatalog updater to receive events.")
 	INTERACTIVE = flag.Bool("interactive", true, "If true, prompt for required flags if not set")
 	DEBUG       = flag.Bool("debug", false, "Enable debug logging")
 
@@ -92,20 +98,21 @@ func main() {
 
 	startTime := time.Now()
 	if *LIMIT > 0 {
-		logger.Debugf("sending %d files from %s in %s to %s in %s",
-			LIMIT, *S3PATH, s3Region, *TOQ, *REGION)
+		logger.Infof("sending %d files from %s in %s to %s in %s",
+			LIMIT, *S3PATH, s3Region, *TOPIC, *REGION)
 	} else {
-		logger.Debugf("sending files from %s in %s to %s in %s",
-			*S3PATH, s3Region, *TOQ, *REGION)
+		logger.Infof("sending files from %s in %s to %s in %s",
+			*S3PATH, s3Region, *TOPIC, *REGION)
 	}
 
-	input := &s3queue.Input{
+	input := &s3sns.Input{
 		Logger:      logger,
 		Session:     sess,
 		Account:     *ACCOUNT,
 		S3Path:      *S3PATH,
 		S3Region:    s3Region,
-		QueueName:   *TOQ,
+		Topic:       *TOPIC,
+		Attributes:  *ATTRIBUTES,
 		Concurrency: *CONCURRENCY,
 		Limit:       *LIMIT,
 	}
@@ -116,15 +123,15 @@ func main() {
 		signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
 		caught := <-sig // wait for it
 		logger.Fatalf("caught %v, sent %d files (%.2fMB) to %s in %v",
-			caught, input.Stats.NumFiles, float32(input.Stats.NumBytes)/(1024.0*1024.0), *TOQ, time.Since(startTime))
+			caught, input.Stats.NumFiles, float32(input.Stats.NumBytes)/(1024.0*1024.0), *TOPIC, time.Since(startTime))
 	}()
 
-	err = s3queue.S3Queue(context.TODO(), input)
+	err = s3sns.S3SNS(context.TODO(), input)
 	if err != nil {
 		logger.Fatal(err)
 	} else {
 		logger.Infof("sent %d files (%.2fMB) to %s (%s) in %v",
-			input.Stats.NumFiles, float32(input.Stats.NumBytes)/(1024.0*1024.0), *TOQ, *REGION, time.Since(startTime))
+			input.Stats.NumFiles, float32(input.Stats.NumBytes)/(1024.0*1024.0), *TOPIC, *REGION, time.Since(startTime))
 	}
 }
 
@@ -137,8 +144,8 @@ func promptFlags() {
 		*S3PATH = prompt.Read("Please enter the s3 path to read from (e.g., s3://<bucket>/<prefix>): ", prompt.NonemptyValidator)
 	}
 
-	if *TOQ == "" {
-		*TOQ = prompt.Read("Please enter queue name to write to: ", prompt.NonemptyValidator)
+	if *TOPIC == "" {
+		*TOPIC = prompt.Read("Please enter topic name to write to: ", prompt.NonemptyValidator)
 	}
 }
 
@@ -156,8 +163,8 @@ func validateFlags() {
 		err = errors.New("-s3path not set")
 		return
 	}
-	if *TOQ == "" {
-		err = errors.New("-queue not set")
+	if *TOPIC == "" {
+		err = errors.New("-topic not set")
 		return
 	}
 }

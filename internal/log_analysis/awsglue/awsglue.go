@@ -21,6 +21,8 @@ package awsglue
 import (
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
@@ -65,4 +67,27 @@ func DataPrefix(databaseName string) string {
 		}
 		panic(databaseName + " is not associated with an s3 prefix")
 	}
+}
+
+func DataTypeFromS3Key(s3key string) (dataType pantherdb.DataType, err error) {
+	keyParts := strings.Split(s3key, "/")
+	if len(keyParts) < 2 {
+		return "", errors.Errorf("DataTypeFromS3Key failed parse on: %s", s3key)
+	}
+
+	// dataType
+	switch keyParts[0] {
+	case logS3Prefix:
+		dataType = pantherdb.LogData
+	case ruleMatchS3Prefix:
+		dataType = pantherdb.RuleData
+	case ruleErrorsS3Prefix:
+		dataType = pantherdb.RuleErrors
+	case cloudSecurityS3Prefix:
+		dataType = pantherdb.CloudSecurity
+	default:
+		return "", errors.Errorf("DataTypeFromS3Key cannot find data type from: %s", s3key)
+	}
+
+	return dataType, err
 }

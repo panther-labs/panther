@@ -23,7 +23,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
-const TypeResource = "Snapshot.ResourceHistory"
+const TypeResource = "Resource.History"
 
 var logTypeResource = logtypes.MustBuild(logtypes.ConfigJSON{
 	Name:         TypeResource,
