@@ -99,7 +99,7 @@ func main() {
 			if err != nil {
 				return nil, err
 			}
-			return reply.LogTypes, nil
+			return append(reply.LogTypes, logtypes.CollectNames(snapshotlogs.LogTypes())...), nil
 		},
 		GlueClient:   glue.New(clientsSession),
 		Resolver:     resolver,
