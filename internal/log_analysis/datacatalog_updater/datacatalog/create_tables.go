@@ -68,10 +68,6 @@ func (h *LambdaHandler) createOrReplaceViewsForAllDeployedLogTables(ctx context.
 
 	var tablesInView []*awsglue.GlueTableMetadata
 	for _, table := range deployedLogTables {
-		if table.DatabaseName() == pantherdb.CloudSecurityDatabase {
-			// Don't create views for the Cloud Security tables
-			continue
-		}
 		tablesInView = append(tablesInView, table)
 	}
 	// update the views for *all* tables based on the log tables.
