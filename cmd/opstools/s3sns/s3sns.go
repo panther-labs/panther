@@ -41,8 +41,10 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/panther-labs/panther/cmd/opstools/s3list"
+	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/notify"
 	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/awsretry"
@@ -206,7 +208,8 @@ func logTypeFromS3Key(lambdaClient lambdaiface.LambdaAPI, s3key string) (logType
 			return
 		}
 		tableNameToLogType = make(map[string]string)
-		for _, logType := range apiReply.LogTypes {
+		// Append CloudSecurity log types to log types
+		for _, logType := range append(apiReply.LogTypes, logtypes.CollectNames(snapshotlogs.LogTypes())...) {
 			tableNameToLogType[pantherdb.TableName(logType)] = logType
 		}
 	})

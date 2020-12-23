@@ -568,10 +568,7 @@ Resources:
                 - s3:GetObject
                 - s3:GetObjectVersion
               Resource:
-                - !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/cloud_security/*
-                - !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/logs/*
-                - !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/rules/*
-                - !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/rule_errors/*
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedData}/*
             - !Ref AWS::NoValue
 
   AthenaResults: # athena query results
