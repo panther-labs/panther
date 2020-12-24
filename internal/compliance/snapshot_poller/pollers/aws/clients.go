@@ -250,13 +250,10 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput,
 	//
 	// The region does not matter here, since we are just creating the session. When we create the
 	// client, we will need to specify the region.
-	clientSession, err := session.NewSession(&aws.Config{Credentials: creds})
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get %s client session in %s region", service, region)
-	}
+	clientSession := snapshotPollerSession.Copy(aws.NewConfig().WithCredentials(creds))
 
 	// Verify that the session is valid
-	if err = VerifyAssumedCredsFunc(clientSession, region); err != nil {
+	if err := VerifyAssumedCredsFunc(clientSession, region); err != nil {
 		return nil, errors.Wrapf(err, "failed to get %s client in %s region", service, region)
 	}
 
