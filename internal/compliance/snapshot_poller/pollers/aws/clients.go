@@ -67,7 +67,7 @@ const (
 )
 
 var (
-	snapshotPollerSession *session.Session
+	SnapshotPollerSession *session.Session
 
 	// These are exported so the top-level unit tests can mock them out.
 	// AssumeRoleFunc is the function to return valid AWS credentials.
@@ -146,7 +146,7 @@ type cachedClient struct {
 
 func Setup() {
 	awsSession := session.Must(session.NewSession()) // use default retries for fetching creds, avoids hangs!
-	snapshotPollerSession = awsSession.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
+	SnapshotPollerSession = awsSession.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
 		awsretry.NewConnectionErrRetryer(maxRetries)))
 
 	var err error
@@ -202,7 +202,7 @@ func GetServiceRegions(pollerInput *awsmodels.ResourcePollerInput, resourceType 
 	//		a painful migration
 	//	2. This information is globally the same, it doesn't matter what account you're in when you
 	//		make this particular API call the response is always the same
-	ssmSvc := ssm.New(snapshotPollerSession)
+	ssmSvc := ssm.New(SnapshotPollerSession)
 	var regions []*string
 	err = ssmSvc.GetParametersByPathPages(&ssm.GetParametersByPathInput{
 		Path: aws.String("/aws/service/global-infrastructure/services/" + serviceID + "/regions"),
@@ -242,7 +242,7 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput,
 
 	// First we need to use our existing AWS session (in the Panther account) to create credentials
 	// for the IAM role in the account to be scanned
-	creds := AssumeRoleFunc(pollerInput, snapshotPollerSession)
+	creds := AssumeRoleFunc(pollerInput, SnapshotPollerSession)
 
 	// Second, we need to create a new session in the account to be scanned using the credentials
 	// we just created. This works around a situation where the account being scanned has an opt-in
@@ -250,7 +250,7 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput,
 	//
 	// The region does not matter here, since we are just creating the session. When we create the
 	// client, we will need to specify the region.
-	clientSession := snapshotPollerSession.Copy(aws.NewConfig().WithCredentials(creds))
+	clientSession := SnapshotPollerSession.Copy(aws.NewConfig().WithCredentials(creds))
 
 	// Verify that the session is valid
 	if err := VerifyAssumedCredsFunc(clientSession, region); err != nil {
