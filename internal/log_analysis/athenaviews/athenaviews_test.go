@@ -45,12 +45,27 @@ func TestGenerateViewAllLogs(t *testing.T) {
 	table2 := awsglue.NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "table2", "test table2", awsglue.GlueTableHourly, &table2Event{})
 	// nolint (lll)
 	expectedSQL := `create or replace view panther_views.all_logs as
-select day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,year from panther_logs.table1
+select 'panther_logs' AS databaseName,day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,year from panther_logs.table1
 	union all
-select day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,year from panther_logs.table2
+select 'panther_logs' AS databaseName,day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,year from panther_logs.table2
 ;
 `
-	sql, err := generateViewAllLogs([]*awsglue.GlueTableMetadata{table1, table2})
+	sql, _, err := generateViewAllLogs([]*awsglue.GlueTableMetadata{table1, table2})
+	require.NoError(t, err)
+	require.Equal(t, expectedSQL, sql)
+}
+
+func TestGenerateViewAllCloudSecurity(t *testing.T) {
+	table1 := awsglue.NewGlueTableMetadata(pantherdb.CloudSecurityDatabase, "table1", "test table1", awsglue.GlueTableHourly, &table1Event{})
+	table2 := awsglue.NewGlueTableMetadata(pantherdb.CloudSecurityDatabase, "table2", "test table2", awsglue.GlueTableHourly, &table2Event{})
+	// nolint (lll)
+	expectedSQL := `create or replace view panther_views.all_cloudsecurity as
+select 'panther_cloudsecurity' AS databaseName,day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,year from panther_cloudsecurity.table1
+	union all
+select 'panther_cloudsecurity' AS databaseName,day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,year from panther_cloudsecurity.table2
+;
+`
+	sql, _, err := generateViewAllCloudSecurity([]*awsglue.GlueTableMetadata{table1, table2})
 	require.NoError(t, err)
 	require.Equal(t, expectedSQL, sql)
 }
@@ -59,7 +74,7 @@ func TestGenerateViewAllLogsFail(t *testing.T) {
 	// one has daily partitions and one has hourly
 	table1 := awsglue.NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "table1", "test table1", awsglue.GlueTableDaily, &table1Event{})
 	table2 := awsglue.NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "table2", "test table2", awsglue.GlueTableHourly, &table2Event{})
-	_, err := generateViewAllLogs([]*awsglue.GlueTableMetadata{table1, table2})
+	_, _, err := generateViewAllLogs([]*awsglue.GlueTableMetadata{table1, table2})
 	require.Error(t, err)
 	require.True(t, strings.Contains(err.Error(), "all tables do not share same partition keys"))
 }

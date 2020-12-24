@@ -26,6 +26,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/go-playground/validator.v9"
 
+	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
@@ -50,18 +51,19 @@ func main() {
 	// Syncing the zap.Logger always results in Lambda errors. Commented code kept as a reminder.
 	// defer logger.Sync()
 
-	session := session.Must(session.NewSession())
+	awsSession := session.Must(session.NewSession())
 	nativeLogTypes := logtypes.CollectNames(registry.NativeLogTypes())
+	nativeLogTypes = append(nativeLogTypes, logtypes.CollectNames(snapshotlogs.LogTypes())...)
 	api := &logtypesapi.LogTypesAPI{
 		// Use the default registry with all available log types
 		NativeLogTypes: func() []string {
 			return nativeLogTypes
 		},
 		Database: &logtypesapi.DynamoDBLogTypes{
-			DB:        dynamodb.New(session),
+			DB:        dynamodb.New(awsSession),
 			TableName: config.LogTypesTableName,
 		},
-		LambdaClient: lambdaclient.New(session),
+		LambdaClient: lambdaclient.New(awsSession),
 	}
 
 	validate := validator.New()
