@@ -61,7 +61,7 @@ type Resource struct {
 	// dummy fields that are not exported but used to ensure that `p_any` columns are created in the schema for extracted fields
 	DummyDomain pantherlog.String `json:"-" panther:"domain"`
 	DummyIP     pantherlog.String `json:"-" panther:"ip"`
-	DummyTags   pantherlog.String `json:"-" panther:"aws_tags"`
+	DummyTags   pantherlog.String `json:"-" panther:"aws_tag"`
 }
 
 // WriteValuesTo implements pantherlog.ValueWriterTo interface
