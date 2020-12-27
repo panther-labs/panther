@@ -175,7 +175,7 @@ func (d *Driver) Done() {
 
 func (d *Driver) Wait() error {
 	if d.deadlineCancel != nil {
-		defer d.deadlineCancel()
+		defer d.deadlineCancel() // signal ctx and parent
 	}
 	return d.workerGroup.Wait() // returns any error from workers
 }
