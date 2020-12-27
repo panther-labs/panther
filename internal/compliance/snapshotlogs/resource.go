@@ -58,9 +58,10 @@ type Resource struct {
 	Name             pantherlog.String      `json:"name" description:"The AWS resource name of the resource."`
 	Tags             map[string]string      `json:"tags" description:"A standardized format for key/value resource tags."`
 
-	// a dummy fields that are not exported but used to ensure that `p_any` columns are created in the schema for extracted fields
+	// dummy fields that are not exported but used to ensure that `p_any` columns are created in the schema for extracted fields
 	DummyDomain pantherlog.String `json:"-" panther:"domain"`
 	DummyIP     pantherlog.String `json:"-" panther:"ip"`
+	DummyTags   pantherlog.String `json:"-" panther:"aws_tags"`
 }
 
 // WriteValuesTo implements pantherlog.ValueWriterTo interface
@@ -101,9 +102,7 @@ func extractIndicators(w pantherlog.ValueWriter, iter *jsoniter.Iterator, key st
 		case "Address", "AssignPublicIp", "PrivateIpAddress", "PrivateIPAddress", "PublicIpAddress", "PublicIPAddress":
 			pantherlog.ScanIPAddress(w, value)
 		case "Domain", "DomainName", "DNSName", "FQDN", "PrivateDnsName", "PublicDnsName":
-			if value != "" {
-				w.WriteValues(pantherlog.FieldDomainName, value)
-			}
+			pantherlog.ScanHostname(w, value)
 		default:
 			switch {
 			case strings.HasSuffix(key, "ARN") || strings.HasSuffix(key, "arn") || arn.IsARN(value):

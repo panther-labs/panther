@@ -37,10 +37,6 @@ func mustBuildEventSchema(schema interface{}) interface{} {
 	)...)
 }
 
-func ExtractRawMessageIndicators(w pantherlog.ValueWriter, messages ...pantherlog.RawMessage) {
-	pantherlog.ExtractRawMessageIndicators(w, extractIndicators, messages...)
-}
-
 func extractIndicators(w pantherlog.ValueWriter, iter *jsoniter.Iterator, key string) {
 	switch iter.WhatIsNext() {
 	case jsoniter.ObjectValue:
