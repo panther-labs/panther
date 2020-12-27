@@ -49,6 +49,7 @@ var (
 	CONCURRENCY = flag.Int("concurrency", 50, "The number of concurrent sqs writer go routines")
 	LIMIT       = flag.Uint64("limit", 0, "If non-zero, then limit the number of files to this number.")
 	TOQ         = flag.String("queue", "panther-input-data-notifications-queue", "The name of the log processor queue to send notifications.")
+	RATE        = flag.Float64("files-per-second", 0.0, "If non-zero, attempt to send at this rate of files per second")
 	INTERACTIVE = flag.Bool("interactive", true, "If true, prompt for required flags if not set")
 	DEBUG       = flag.Bool("debug", false, "Enable debug logging")
 
@@ -100,14 +101,16 @@ func main() {
 	}
 
 	input := &s3queue.Input{
-		Logger:      logger,
-		Session:     sess,
-		Account:     *ACCOUNT,
-		S3Path:      *S3PATH,
-		S3Region:    s3Region,
-		QueueName:   *TOQ,
-		Concurrency: *CONCURRENCY,
-		Limit:       *LIMIT,
+		DriverInput: s3queue.DriverInput{
+			Logger:      logger,
+			Account:     *ACCOUNT,
+			QueueName:   *TOQ,
+			Concurrency: *CONCURRENCY,
+		},
+		Session:  sess,
+		S3Path:   *S3PATH,
+		S3Region: s3Region,
+		Limit:    *LIMIT,
 	}
 
 	// catch ^C
@@ -152,12 +155,22 @@ func validateFlags() {
 		}
 	}()
 
+	if *CONCURRENCY <= 0 {
+		err = errors.New("-concurrency must be > 0")
+		return
+	}
+
 	if *S3PATH == "" {
 		err = errors.New("-s3path not set")
 		return
 	}
 	if *TOQ == "" {
 		err = errors.New("-queue not set")
+		return
+	}
+
+	if *RATE < 0.0 {
+		err = errors.New("-rate must be >= 0.0")
 		return
 	}
 }

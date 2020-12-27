@@ -52,15 +52,21 @@ const (
 )
 
 type Input struct {
-	Logger      *zap.SugaredLogger
-	Session     *session.Session
-	Account     string
-	S3Path      string
-	S3Region    string
-	QueueName   string
-	Concurrency int
-	Limit       uint64
-	Stats       s3list.Stats // passed in so we can get stats if canceled
+	DriverInput
+	Session  *session.Session
+	S3Path   string
+	S3Region string
+	Limit    uint64
+	Stats    s3list.Stats // passed in so we can get stats if canceled
+}
+
+type DriverInput struct {
+	Logger               *zap.SugaredLogger
+	Account              string
+	QueueName            string
+	Concurrency          int
+	TargetFilesPerSecond float64       // if non-zero, adaptively attempt to send at this rate
+	Duration             time.Duration // if set, stop after this much elapsed time
 }
 
 func S3Queue(ctx context.Context, input *Input) (err error) {
@@ -72,11 +78,46 @@ func S3Queue(ctx context.Context, input *Input) (err error) {
 }
 
 func s3Queue(ctx context.Context, s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, input *Input) (err error) {
+	driver, err := NewDriver(ctx, sqsClient, &input.DriverInput)
+	if err != nil {
+		return err
+	}
+
+	err = s3list.ListPath(driver.workerCtx, &s3list.Input{
+		Logger:   input.Logger,
+		S3Client: s3Client,
+		S3Path:   input.S3Path,
+		Limit:    input.Limit,
+		Write:    func(event *events.S3Event) { driver.Write(event) },
+		Done:     func() { driver.Done() },
+		Stats:    &input.Stats,
+	})
+	if err != nil { // ListPath() will call Done() function which will close notifyChan() on return causing workers to exit
+		return err
+	}
+
+	return driver.Wait() // returns any error from workers
+}
+
+type Driver struct {
+	logger      *zap.SugaredLogger
+	sqsClient   sqsiface.SQSAPI
+	queueURL    *string
+	topicARN    string
+	notifyChan  chan *events.S3Event
+	workerGroup *errgroup.Group
+	workerCtx   context.Context
+
+	// used for pacing at a fixed rate
+	delay time.Duration
+}
+
+func NewDriver(ctx context.Context, sqsClient sqsiface.SQSAPI, input *DriverInput) (*Driver, error) {
 	queueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: &input.QueueName,
 	})
 	if err != nil {
-		return errors.Wrapf(err, "could not get queue url for %s", input.QueueName)
+		return nil, errors.Wrapf(err, "could not get queue url for %s", input.QueueName)
 	}
 
 	// the account id is taken from this arn to assume the role for reading in the log processor
@@ -84,34 +125,54 @@ func s3Queue(ctx context.Context, s3Client s3iface.S3API, sqsClient sqsiface.SQS
 
 	notifyChan := make(chan *events.S3Event, notifyChanDepth)
 
+	// optional deadline
+	if input.Duration > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithDeadline(ctx, time.Now().Add(input.Duration))
+		defer cancel()
+	}
+
 	workerGroup, workerCtx := errgroup.WithContext(ctx)
+
+	driver := &Driver{
+		logger:      input.Logger,
+		sqsClient:   sqsClient,
+		queueURL:    queueURL.QueueUrl,
+		topicARN:    topicARN,
+		notifyChan:  notifyChan,
+		workerGroup: workerGroup,
+		workerCtx:   workerCtx,
+	}
+
+	if input.TargetFilesPerSecond > 0.0 {
+		driver.delay = time.Duration((float64(time.Second) / input.TargetFilesPerSecond) / float64(input.Concurrency))
+	}
+
 	for i := 0; i < input.Concurrency; i++ {
 		workerGroup.Go(func() error {
-			return queueNotifications(input.Logger, sqsClient, topicARN, queueURL.QueueUrl, notifyChan)
+			return queueNotifications(driver)
 		})
 	}
 
-	err = s3list.ListPath(workerCtx, &s3list.Input{
-		Logger:     input.Logger,
-		S3Client:   s3Client,
-		S3Path:     input.S3Path,
-		Limit:      input.Limit,
-		NotifyChan: notifyChan,
-		Stats:      &input.Stats,
-	})
-	if err != nil { // ListPath() will close notifyChan() on return causing workers to exit
-		return err
-	}
+	return driver, nil
+}
 
-	return workerGroup.Wait() // returns any error from workers
+func (d *Driver) Write(event *events.S3Event) {
+	d.notifyChan <- event
+}
+
+func (d *Driver) Done() {
+	close(d.notifyChan)
+}
+
+func (d *Driver) Wait() error {
+	return d.workerGroup.Wait() // returns any error from workers
 }
 
 // post message per file as-if it was an S3 notification
-func queueNotifications(logger *zap.SugaredLogger, sqsClient sqsiface.SQSAPI, topicARN string, queueURL *string,
-	notifyChan chan *events.S3Event) (failed error) {
-
+func queueNotifications(driver *Driver) (failed error) {
 	sendMessageBatchInput := &sqs.SendMessageBatchInput{
-		QueueUrl: queueURL,
+		QueueUrl: driver.queueURL,
 	}
 
 	// we have 1 file per notification to limit blast radius in case of failure.
@@ -120,12 +181,14 @@ func queueNotifications(logger *zap.SugaredLogger, sqsClient sqsiface.SQSAPI, to
 		batchSize    = 10
 	)
 
-	for s3Notification := range notifyChan {
+	for s3Notification := range driver.notifyChan {
 		if failed != nil { // drain channel
 			continue
 		}
 
-		logger.Debugf("sending s3://%s/%s (%d bytes) to SQS",
+		time.Sleep(driver.delay) // used for pacing
+
+		driver.logger.Debugf("sending s3://%s/%s (%d bytes) to SQS",
 			s3Notification.Records[0].S3.Bucket.Name,
 			s3Notification.Records[0].S3.Object.Key,
 			s3Notification.Records[0].S3.Object.Size)
@@ -139,7 +202,7 @@ func queueNotifications(logger *zap.SugaredLogger, sqsClient sqsiface.SQSAPI, to
 		// make it look like an SNS notification
 		snsNotification := events.SNSEntity{
 			Type:     "Notification",
-			TopicArn: topicARN, // this is needed by the log processor to get account associated with the S3 object
+			TopicArn: driver.topicARN, // this is needed by the log processor to get account associated with the S3 object
 			Message:  ctnJSON,
 		}
 		message, err := jsoniter.MarshalToString(snsNotification)
@@ -153,7 +216,7 @@ func queueNotifications(logger *zap.SugaredLogger, sqsClient sqsiface.SQSAPI, to
 			MessageBody: &message,
 		})
 		if len(sendMessageBatchInput.Entries)%batchSize == 0 {
-			_, err = sqsbatch.SendMessageBatch(sqsClient, batchTimeout, sendMessageBatchInput)
+			_, err = sqsbatch.SendMessageBatch(driver.sqsClient, batchTimeout, sendMessageBatchInput)
 			if err != nil {
 				failed = errors.Wrapf(err, "failed to send %#v", sendMessageBatchInput)
 				continue
@@ -164,7 +227,7 @@ func queueNotifications(logger *zap.SugaredLogger, sqsClient sqsiface.SQSAPI, to
 
 	// send remaining
 	if failed == nil && len(sendMessageBatchInput.Entries) > 0 {
-		_, err := sqsbatch.SendMessageBatch(sqsClient, batchTimeout, sendMessageBatchInput)
+		_, err := sqsbatch.SendMessageBatch(driver.sqsClient, batchTimeout, sendMessageBatchInput)
 		if err != nil {
 			failed = errors.Wrapf(err, "failed to send %#v", sendMessageBatchInput)
 		}

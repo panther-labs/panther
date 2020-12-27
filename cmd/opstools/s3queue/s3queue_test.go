@@ -58,12 +58,14 @@ func TestS3Queue(t *testing.T) {
 	sqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Once()
 
 	input := &Input{
-		Logger:      opstools.MustBuildLogger(false),
-		Account:     testAccount,
-		S3Path:      testS3Path,
-		S3Region:    s3Region,
-		QueueName:   testQueueName,
-		Concurrency: 1,
+		DriverInput: DriverInput{
+			Logger:      opstools.MustBuildLogger(false),
+			Account:     testAccount,
+			QueueName:   testQueueName,
+			Concurrency: 1,
+		},
+		S3Path:   testS3Path,
+		S3Region: s3Region,
 	}
 	err := s3Queue(context.TODO(), s3Client, sqsClient, input)
 	require.NoError(t, err)
@@ -93,13 +95,15 @@ func TestS3QueueLimit(t *testing.T) {
 	sqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Once()
 
 	input := &Input{
-		Logger:      opstools.MustBuildLogger(false),
-		Account:     testAccount,
-		S3Path:      testS3Path,
-		S3Region:    s3Region,
-		QueueName:   testQueueName,
-		Concurrency: 1,
-		Limit:       1,
+		DriverInput: DriverInput{
+			Logger:      opstools.MustBuildLogger(false),
+			Account:     testAccount,
+			QueueName:   testQueueName,
+			Concurrency: 1,
+		},
+		S3Path:   testS3Path,
+		S3Region: s3Region,
+		Limit:    1,
 	}
 	err := s3Queue(context.TODO(), s3Client, sqsClient, input)
 	require.NoError(t, err)
@@ -126,12 +130,14 @@ func TestS3QueueBatch(t *testing.T) {
 	sqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Times(3)
 
 	input := &Input{
-		Logger:      opstools.MustBuildLogger(false),
-		Account:     testAccount,
-		S3Path:      testS3Path,
-		S3Region:    s3Region,
-		QueueName:   testQueueName,
-		Concurrency: 1,
+		DriverInput: DriverInput{
+			Logger:      opstools.MustBuildLogger(false),
+			Account:     testAccount,
+			QueueName:   testQueueName,
+			Concurrency: 1,
+		},
+		S3Path:   testS3Path,
+		S3Region: s3Region,
 	}
 	err := s3Queue(context.TODO(), s3Client, sqsClient, input)
 	require.NoError(t, err)
