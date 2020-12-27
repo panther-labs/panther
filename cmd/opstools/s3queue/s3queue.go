@@ -61,12 +61,12 @@ type Input struct {
 }
 
 type DriverInput struct {
-	Logger               *zap.SugaredLogger
-	Account              string
-	QueueName            string
-	Concurrency          int
-	TargetFilesPerSecond float64       // if non-zero, adaptively attempt to send at this rate
-	Duration             time.Duration // if set, stop after this much elapsed time
+	Logger         *zap.SugaredLogger
+	Account        string
+	QueueName      string
+	Concurrency    int
+	FilesPerSecond float64       // if non-zero,  attempt to send at this rate
+	Duration       time.Duration // if set, stop after this much elapsed time
 }
 
 func S3Queue(ctx context.Context, input *Input) (err error) {
@@ -110,9 +110,16 @@ type Driver struct {
 
 	// used for pacing at a fixed rate
 	delay time.Duration
+
+	// set if we have set a deadline
+	deadlineCancel context.CancelFunc
 }
 
 func NewDriver(ctx context.Context, sqsClient sqsiface.SQSAPI, input *DriverInput) (*Driver, error) {
+	if input.Concurrency <= 0 {
+		return nil, errors.Errorf("concurrency must be > 0: %d", input.Concurrency)
+	}
+
 	queueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: &input.QueueName,
 	})
@@ -126,26 +133,27 @@ func NewDriver(ctx context.Context, sqsClient sqsiface.SQSAPI, input *DriverInpu
 	notifyChan := make(chan *events.S3Event, notifyChanDepth)
 
 	// optional deadline
+	var deadlineCancel context.CancelFunc
 	if input.Duration > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithDeadline(ctx, time.Now().Add(input.Duration))
-		defer cancel()
+		ctx, deadlineCancel = context.WithDeadline(ctx, time.Now().Add(input.Duration))
 	}
 
 	workerGroup, workerCtx := errgroup.WithContext(ctx)
 
 	driver := &Driver{
-		logger:      input.Logger,
-		sqsClient:   sqsClient,
-		queueURL:    queueURL.QueueUrl,
-		topicARN:    topicARN,
-		notifyChan:  notifyChan,
-		workerGroup: workerGroup,
-		workerCtx:   workerCtx,
+		logger:         input.Logger,
+		sqsClient:      sqsClient,
+		queueURL:       queueURL.QueueUrl,
+		topicARN:       topicARN,
+		notifyChan:     notifyChan,
+		workerGroup:    workerGroup,
+		workerCtx:      workerCtx,
+		deadlineCancel: deadlineCancel,
 	}
 
-	if input.TargetFilesPerSecond > 0.0 {
-		driver.delay = time.Duration((float64(time.Second) / input.TargetFilesPerSecond) / float64(input.Concurrency))
+	if input.FilesPerSecond > 0.0 {
+		// FIXME: ignores the time it takes to actually send, but that is fast and batched, so we may not need to consider
+		driver.delay = time.Duration((float64(time.Second) / input.FilesPerSecond) * float64(input.Concurrency))
 	}
 
 	for i := 0; i < input.Concurrency; i++ {
@@ -166,6 +174,9 @@ func (d *Driver) Done() {
 }
 
 func (d *Driver) Wait() error {
+	if d.deadlineCancel != nil {
+		defer d.deadlineCancel()
+	}
 	return d.workerGroup.Wait() // returns any error from workers
 }
 
@@ -184,6 +195,13 @@ func queueNotifications(driver *Driver) (failed error) {
 	for s3Notification := range driver.notifyChan {
 		if failed != nil { // drain channel
 			continue
+		}
+
+		select {
+		case <-driver.workerCtx.Done(): // signal we were aborted
+			failed = driver.workerCtx.Err()
+			continue
+		default: // non blocking
 		}
 
 		time.Sleep(driver.delay) // used for pacing

@@ -50,6 +50,7 @@ var (
 	LIMIT       = flag.Uint64("limit", 0, "If non-zero, then limit the number of files to this number.")
 	TOQ         = flag.String("queue", "panther-input-data-notifications-queue", "The name of the log processor queue to send notifications.")
 	RATE        = flag.Float64("files-per-second", 0.0, "If non-zero, attempt to send at this rate of files per second")
+	DURATION    = flag.Duration("duration", 0, "If non-zero, stop after this long")
 	INTERACTIVE = flag.Bool("interactive", true, "If true, prompt for required flags if not set")
 	DEBUG       = flag.Bool("debug", false, "Enable debug logging")
 
@@ -102,10 +103,12 @@ func main() {
 
 	input := &s3queue.Input{
 		DriverInput: s3queue.DriverInput{
-			Logger:      logger,
-			Account:     *ACCOUNT,
-			QueueName:   *TOQ,
-			Concurrency: *CONCURRENCY,
+			Logger:         logger,
+			Account:        *ACCOUNT,
+			QueueName:      *TOQ,
+			Concurrency:    *CONCURRENCY,
+			FilesPerSecond: *RATE,
+			Duration:       *DURATION,
 		},
 		Session:  sess,
 		S3Path:   *S3PATH,
