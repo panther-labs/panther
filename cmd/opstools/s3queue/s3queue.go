@@ -152,7 +152,6 @@ func NewDriver(ctx context.Context, sqsClient sqsiface.SQSAPI, input *DriverInpu
 	}
 
 	if input.FilesPerSecond > 0.0 {
-		// FIXME: ignores the time it takes to actually send, but that is fast and batched, so we may not need to consider
 		driver.delay = time.Duration((float64(time.Second) / input.FilesPerSecond) * float64(input.Concurrency))
 	}
 
@@ -192,6 +191,8 @@ func queueNotifications(driver *Driver) (failed error) {
 		batchSize    = 10
 	)
 
+	var i, sendTime time.Duration = 1, 0 // used to calc avg send time
+
 	for s3Notification := range driver.notifyChan {
 		if failed != nil { // drain channel
 			continue
@@ -204,7 +205,14 @@ func queueNotifications(driver *Driver) (failed error) {
 		default: // non blocking
 		}
 
-		time.Sleep(driver.delay) // used for pacing
+		// the driver.delay is calculated as-if there was no overhead to send, need to adjust a bit
+		delay := driver.delay
+		if delay > 0 {
+			delay -= sendTime / i
+			time.Sleep(delay) // used for pacing
+		}
+
+		startSend := time.Now() // used to estimate avg time to send message
 
 		driver.logger.Debugf("sending s3://%s/%s (%d bytes) to SQS",
 			s3Notification.Records[0].S3.Bucket.Name,
@@ -241,6 +249,10 @@ func queueNotifications(driver *Driver) (failed error) {
 			}
 			sendMessageBatchInput.Entries = make([]*sqs.SendMessageBatchRequestEntry, 0, batchSize) // reset
 		}
+
+		// next
+		sendTime += time.Since(startSend)
+		i++
 	}
 
 	// send remaining
