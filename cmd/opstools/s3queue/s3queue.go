@@ -191,7 +191,7 @@ func queueNotifications(driver *Driver) (failed error) {
 		batchSize    = 10
 	)
 
-	var i, sendTime time.Duration = 1, 0 // used to calc avg send time
+	var i, sendTime, avgSendTime time.Duration = 1, 0, 0 // used to calc avg send time
 
 	for s3Notification := range driver.notifyChan {
 		if failed != nil { // drain channel
@@ -208,8 +208,7 @@ func queueNotifications(driver *Driver) (failed error) {
 		// the driver.delay is calculated as-if there was no overhead to send, need to adjust a bit
 		delay := driver.delay
 		if delay > 0 {
-			delay -= sendTime / i
-			time.Sleep(delay) // used for pacing
+			time.Sleep(delay - avgSendTime) // used for pacing
 		}
 
 		startSend := time.Now() // used to estimate avg time to send message
@@ -250,9 +249,12 @@ func queueNotifications(driver *Driver) (failed error) {
 			sendMessageBatchInput.Entries = make([]*sqs.SendMessageBatchRequestEntry, 0, batchSize) // reset
 		}
 
-		// next
+		// send time calculations
 		sendTime += time.Since(startSend)
 		i++
+		if i%batchSize == 0 { // only update avg after a full send to smooth
+			avgSendTime = sendTime / i
+		}
 	}
 
 	// send remaining
