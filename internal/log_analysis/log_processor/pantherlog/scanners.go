@@ -134,7 +134,7 @@ func ScanHostname(w ValueWriter, input string) {
 	input = strings.TrimSpace(input)
 	if checkIPAddress(input) {
 		w.WriteValues(FieldIPAddress, input)
-	} else {
+	} else if input != "" {
 		w.WriteValues(FieldDomainName, input)
 	}
 }
@@ -189,4 +189,38 @@ func ScanEmail(w ValueWriter, input string) {
 		input = strings.TrimSpace(input)
 		w.WriteValues(FieldEmail, input)
 	}
+}
+
+func ScanMD5Hash(w ValueWriter, input string) {
+	input = strings.TrimSpace(input)
+	if len(input) == 32 && isHex(input) {
+		w.WriteValues(FieldMD5Hash, input)
+	}
+}
+
+func ScanSHA1Hash(w ValueWriter, input string) {
+	input = strings.TrimSpace(input)
+	if len(input) == 40 && isHex(input) {
+		w.WriteValues(FieldSHA1Hash, input)
+	}
+}
+
+func ScanSHA256Hash(w ValueWriter, input string) {
+	input = strings.TrimSpace(input)
+	if len(input) == 64 && isHex(input) {
+		w.WriteValues(FieldSHA256Hash, input)
+	}
+}
+
+func isHex(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	for _, c := range s {
+		// not A-F or a-f or 0-9, then done
+		if !((c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f') || (c >= '0' && c <= '9')) {
+			return false
+		}
+	}
+	return true
 }
