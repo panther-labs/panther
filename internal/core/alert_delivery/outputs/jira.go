@@ -47,8 +47,10 @@ func (client *OutputClient) Jira(
 	marshaledContext, _ := jsoniter.MarshalToString(alert.Context)
 	alertContext := "\n *AlertContext:* " + marshaledContext
 
+	summary := removeNewLines(generateAlertTitle(alert))
+
 	fields := map[string]interface{}{
-		"summary":     generateAlertTitle(alert),
+		"summary":     summary,
 		"description": description + link + runBook + severity + tags + alertContext,
 		"project": map[string]*string{
 			"key": aws.String(config.ProjectKey),
