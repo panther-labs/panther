@@ -170,6 +170,13 @@ Parameters:
     Description: An existing VPC to deploy the Panther loadbalancer into. If you set this option, you must also specify SecurityGroupID, SubnetOneIPRange, and SubnetTwoIPRange.
     Default: ''
     AllowedPattern: '^(vpc-[0-9a-f]{10,})?$'
+  FullDeployment:
+    Type: String
+    Description: Flag to indicate stack initialization or full deployment.
+    Default: true
+    AllowedValues:
+    - true
+    - false
 
 Mappings:
   Constants:
@@ -179,8 +186,10 @@ Mappings:
       Version: ${{PANTHER_VERSION}} # E.g. "1.14.0"
 
 Conditions:
+  FullDeployment: !Equals [!Ref FullDeployment, 'true']
   RegistryProvided: !Not [!Equals [!Ref ImageRegistry, '']]
   OnboardSelf: !Equals [!Ref OnboardSelf, true]
+  CreateOnboard: !And [!Condition FullDeployment, !Condition OnboardSelf]
 
 Resources:
   Bootstrap:
@@ -214,6 +223,7 @@ Resources:
           Value: panther-bootstrap # friendly name, not actual stack name
 
   BootstrapGateway:
+    Condition: FullDeployment
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: bootstrap_gateway.yml
@@ -247,6 +257,7 @@ Resources:
           Value: panther-bootstrap-gateway
 
   Appsync:
+    Condition: FullDeployment
     Type: AWS::CloudFormation::Stack
     DependsOn: BootstrapGateway # custom resources lambda function
     Properties:
@@ -270,6 +281,7 @@ Resources:
           Value: panther-appsync
 
   CloudSecurity:
+    Condition: FullDeployment
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: cloud_security.yml
@@ -299,6 +311,7 @@ Resources:
           Value: panther-cloud-security
 
   Core:
+    Condition: FullDeployment
     Type: AWS::CloudFormation::Stack
     DependsOn: BootstrapGateway # custom resources Lambda function
     Properties:
@@ -335,6 +348,7 @@ Resources:
           Value: panther-core
 
   Dashboards:
+    Condition: FullDeployment
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: dashboards.yml
@@ -349,6 +363,7 @@ Resources:
           Value: panther-cw-dashboards
 
   LogAnalysis:
+    Condition: FullDeployment
     DependsOn: Core
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -384,7 +399,7 @@ Resources:
           Value: panther-log-analysis
 
   Onboard:
-    Condition: OnboardSelf
+    Condition: CreateOnboard
     # Onboard stack adds new source integrations, which requires custom resources (bootstrap-gateway),
     # source-api (core), and queues from cloud-security and log-analysis to exist.
     DependsOn: [BootstrapGateway, CloudSecurity, Core, LogAnalysis]
@@ -412,6 +427,7 @@ Resources:
           Value: panther-onboard
 
   Web:
+    Condition: FullDeployment
     Type: AWS::CloudFormation::Stack
     # Custom resources in this stack require the analysis-api, users-api, and both Python engines to exist
     DependsOn: [CloudSecurity, Core, LogAnalysis]
