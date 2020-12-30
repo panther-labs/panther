@@ -194,21 +194,21 @@ func ScanEmail(w ValueWriter, input string) {
 func ScanMD5Hash(w ValueWriter, input string) {
 	input = strings.TrimSpace(input)
 	if len(input) == 32 && isHex(input) {
-		w.WriteValues(FieldMD5Hash, input)
+		w.WriteValues(FieldMD5Hash, strings.ToLower(input)) // normalize to lowercase
 	}
 }
 
 func ScanSHA1Hash(w ValueWriter, input string) {
 	input = strings.TrimSpace(input)
 	if len(input) == 40 && isHex(input) {
-		w.WriteValues(FieldSHA1Hash, input)
+		w.WriteValues(FieldSHA1Hash, strings.ToLower(input)) // normalize to lowercase
 	}
 }
 
 func ScanSHA256Hash(w ValueWriter, input string) {
 	input = strings.TrimSpace(input)
 	if len(input) == 64 && isHex(input) {
-		w.WriteValues(FieldSHA256Hash, input)
+		w.WriteValues(FieldSHA256Hash, strings.ToLower(input)) // normalize to lowercase
 	}
 }
 
@@ -216,11 +216,16 @@ func isHex(s string) bool {
 	if len(s) == 0 {
 		return false
 	}
-	for _, c := range s {
-		// not A-F or a-f or 0-9, then done
-		if !((c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f') || (c >= '0' && c <= '9')) {
+	for i := 0; 0 <= i && i < len(s); i++ {
+		if !isHexDigit(s[i]) {
 			return false
 		}
 	}
 	return true
+}
+
+// this function gets inlined by the compiler
+// we use  a function to make the check in the loop above more readable
+func isHexDigit(c byte) bool {
+	return ('A' <= c && c <= 'F') || ('a' <= c && c <= 'f') || ('0' <= c && c <= '9')
 }
