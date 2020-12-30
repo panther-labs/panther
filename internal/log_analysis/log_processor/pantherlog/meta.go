@@ -211,7 +211,7 @@ func init() {
 		Description: "Panther added field with collection of usernames associated with the row",
 	})
 	MustRegisterScannerFunc("ip", ScanIPAddress, FieldIPAddress)
-	MustRegisterScanner("domain", FieldDomainName, FieldDomainName)
+	MustRegisterScannerFunc("domain", ScanDomainName, FieldDomainName)
 	MustRegisterScannerFunc("md5", ScanMD5Hash, FieldMD5Hash)
 	MustRegisterScannerFunc("sha1", ScanSHA1Hash, FieldSHA1Hash)
 	MustRegisterScannerFunc("sha256", ScanSHA256Hash, FieldSHA256Hash)
