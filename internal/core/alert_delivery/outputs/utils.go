@@ -113,6 +113,6 @@ func GetOpsGenieRegionalEndpoint(serviceRegion string) string {
 }
 
 func removeNewLines(input string) string {
-	re := regexp.MustCompile(`\r?\n`)
+	re := regexp.MustCompile(`\n`)
 	return re.ReplaceAllString(input, "")
 }
