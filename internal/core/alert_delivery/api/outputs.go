@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"sort"
 	"time"
 
 	"go.uber.org/zap"
@@ -46,20 +47,12 @@ func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, 
 	}
 
 	// Next, prioritize dynamic destinations (set in the detection's python body)
-	alertOutputs = getDynamicDestinations(alert, outputs)
-
-	// A dynamic override could be set to a destination that has been deleted.
-	// In worst case, the above loop wouldn't append any valid outputs and we continue.
-	if len(alertOutputs) > 0 {
+	if alertOutputs, ok := getDynamicDestinations(alert, outputs); ok {
 		return alertOutputs, nil
 	}
 
 	// Then, destination overrides (set in the detection's form)
-	alertOutputs = getDesinationOverrides(alert, outputs)
-
-	// A destination override could be set to a destination that has been deleted.
-	// In worst case, the above loop wouldn't append any valid outputs and we continue.
-	if len(alertOutputs) > 0 {
+	if alertOutputs, ok := getDesinationOverrides(alert, outputs); ok {
 		return alertOutputs, nil
 	}
 
@@ -89,32 +82,38 @@ func shouldSkip(alert *deliveryModels.Alert) bool {
 	return false
 }
 
-func getDynamicDestinations(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
+func getDynamicDestinations(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) ([]*outputModels.AlertOutput, bool) {
 	alertOutputs := []*outputModels.AlertOutput{}
-	if len(alert.Destinations) > 0 {
-		for _, output := range outputs {
-			for _, outputID := range alert.Destinations {
-				if *output.OutputID == outputID {
-					alertOutputs = append(alertOutputs, output)
-				}
+	if len(alert.Destinations) == 0 {
+		return alertOutputs, false
+	}
+
+	for _, output := range outputs {
+		for _, outputID := range alert.Destinations {
+			if *output.OutputID == outputID {
+				alertOutputs = append(alertOutputs, output)
 			}
 		}
 	}
-	return alertOutputs
+
+	return alertOutputs, len(alertOutputs) > 0
 }
 
-func getDesinationOverrides(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
+func getDesinationOverrides(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) ([]*outputModels.AlertOutput, bool) {
 	alertOutputs := []*outputModels.AlertOutput{}
-	if len(alert.OutputIds) > 0 {
-		for _, output := range outputs {
-			for _, outputID := range alert.OutputIds {
-				if *output.OutputID == outputID {
-					alertOutputs = append(alertOutputs, output)
-				}
+	if len(alert.OutputIds) == 0 {
+		return alertOutputs, false
+	}
+
+	for _, output := range outputs {
+		for _, outputID := range alert.OutputIds {
+			if *output.OutputID == outputID {
+				alertOutputs = append(alertOutputs, output)
 			}
 		}
 	}
-	return alertOutputs
+
+	return alertOutputs, len(alertOutputs) > 0
 }
 
 func getDefaultOutputs(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
@@ -142,15 +141,20 @@ func fetchOutputs() ([]*outputModels.AlertOutput, error) {
 
 // getUniqueOutputs - Get a list of unique output entries
 func getUniqueOutputs(outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
-	uniqMap := make(map[*outputModels.AlertOutput]struct{})
+	uniqMap := make(map[string]*outputModels.AlertOutput)
 	for _, output := range outputs {
-		uniqMap[output] = struct{}{}
+		uniqMap[*output.OutputID] = output
 	}
 
 	// turn the map keys into a slice
 	uniqSlice := make([]*outputModels.AlertOutput, 0, len(uniqMap))
-	for output := range uniqMap {
+	for _, output := range uniqMap {
 		uniqSlice = append(uniqSlice, output)
 	}
+	// Sort by OutputID string. This is not functionally necessary, but it makes
+	// testing easier and the overhead is relatively small.
+	sort.Slice(uniqSlice, func(i, j int) bool {
+		return *(uniqSlice[i]).OutputID < *(uniqSlice[j]).OutputID
+	})
 	return uniqSlice
 }

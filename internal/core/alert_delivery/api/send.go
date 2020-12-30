@@ -54,7 +54,7 @@ func sendAlerts(
 	// This will be used to cancel any running goroutines
 	deadlineInFuture, _ := ctx.Deadline()
 	deadlineBuffer := deadlineInFuture.Add(-softDeadlineDuration)
-	deadlineCtx, cancel := context.WithDeadline(context.Background(), deadlineBuffer)
+	ctx, cancel := context.WithDeadline(ctx, deadlineBuffer)
 
 	// Even though ctx will be expired, it is good practice to call its
 	// cancellation function in any case. Failure to do so may keep the
@@ -68,7 +68,7 @@ func sendAlerts(
 	for alert, outputIds := range alertOutputs {
 		for _, output := range outputIds {
 			dispatchedAt := time.Now().UTC()
-			go sendAlert(deadlineCtx, alert, output, dispatchedAt, statusChannel, outputClient)
+			go sendAlert(ctx, alert, output, dispatchedAt, statusChannel, outputClient)
 		}
 	}
 
@@ -78,9 +78,7 @@ func sendAlerts(
 		for _, outputID := range outputIds {
 			// We race against a timeout
 			select {
-			case status := <-statusChannel:
-				deliveryStatuses = append(deliveryStatuses, status)
-			case <-deadlineCtx.Done():
+			case <-ctx.Done():
 				// Calculate the time the alert was dispatched at
 				dispatchedAt := time.Now().UTC()
 				dispatchedAt.Add(-softDeadlineDuration)
@@ -94,6 +92,8 @@ func sendAlerts(
 					DispatchedAt: dispatchedAt,
 				}
 				deliveryStatuses = append(deliveryStatuses, timeoutStatus)
+			case status := <-statusChannel:
+				deliveryStatuses = append(deliveryStatuses, status)
 			}
 		}
 	}

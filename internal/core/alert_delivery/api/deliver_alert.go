@@ -92,12 +92,10 @@ func populateAlertData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, 
 	switch alertItem.Type {
 	case deliveryModels.PolicyType:
 		return populateAlertWithPolicyData(alertItem)
-	case deliveryModels.RuleType:
-		fallthrough
-	case deliveryModels.RuleErrorType:
-		fallthrough
-	default:
+	case deliveryModels.RuleType, deliveryModels.RuleErrorType:
 		return populateAlertWithRuleData(alertItem)
+	default:
+		return nil, errors.Errorf("unknown alert type %s", alertItem.Type)
 	}
 }
 

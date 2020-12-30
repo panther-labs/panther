@@ -45,23 +45,6 @@ func (m *mockOutputsClient) Slack(
 	return args.Get(0).(*outputs.AlertDeliveryResponse)
 }
 
-type mockSlowOutputsClient struct {
-	outputs.API
-	mock.Mock
-}
-
-func (m *mockSlowOutputsClient) Slack(
-	ctx context.Context,
-	alert *deliveryModels.Alert,
-	config *outputModels.SlackConfig,
-) *outputs.AlertDeliveryResponse {
-
-	time.Sleep(15 * time.Second)
-	args := m.Called(ctx, alert, config)
-	response := args.Get(0).(*outputs.AlertDeliveryResponse)
-	return response
-}
-
 func sampleAlert() *deliveryModels.Alert {
 	return &deliveryModels.Alert{
 		AlertID:      aws.String("alert-id"),

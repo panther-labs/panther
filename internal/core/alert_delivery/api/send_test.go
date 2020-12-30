@@ -227,8 +227,8 @@ func TestSendSuccess(t *testing.T) {
 func TestSendAlertsTimeout(t *testing.T) {
 	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
-	mockSlowOutputClient := &mockSlowOutputsClient{}
-	outputClient = mockSlowOutputClient
+	mockOutputClient := &mockOutputsClient{}
+	outputClient = mockOutputClient
 
 	alertID := aws.String("alert-id")
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
@@ -329,13 +329,15 @@ func TestSendAlertsTimeout(t *testing.T) {
 	softDeadlineDuration = 30 * time.Second
 
 	// set up our slow Slack mock
-	mockSlowOutputClient.On("Slack", mock.Anything, mock.Anything, mock.Anything).Return(slowResponse).Maybe()
+	mockOutputClient.On("Slack", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		time.Sleep(15 * time.Second)
+	}).Return(slowResponse).Maybe()
 
 	// We get our results, but the DispachedAt timestamp is present
 	// so we will ignore that for now
 	dispatchStatusesResult := sendAlerts(expiredCtx, alertOutputMap, outputClient)
 
-	mockSlowOutputClient.AssertExpectations(t)
+	mockOutputClient.AssertExpectations(t)
 
 	modifiedDispatchStatusesResult := []DispatchStatus{}
 	for _, dispatchStatus := range dispatchStatusesResult {
@@ -373,8 +375,8 @@ func TestSendAlertsTimeout(t *testing.T) {
 func TestSendAlertsSuccess(t *testing.T) {
 	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
-	mockSlowOutputClient := &mockSlowOutputsClient{}
-	outputClient = mockSlowOutputClient
+	mockOutputClient := &mockOutputsClient{}
+	outputClient = mockOutputClient
 
 	alertID := aws.String("alert-id")
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
@@ -476,13 +478,15 @@ func TestSendAlertsSuccess(t *testing.T) {
 	softDeadlineDuration = 30 * time.Second
 
 	// set up our slow Slack mock
-	mockSlowOutputClient.On("Slack", mock.Anything, mock.Anything, mock.Anything).Return(slowResponse)
+	mockOutputClient.On("Slack", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		time.Sleep(15 * time.Second)
+	}).Return(slowResponse).Maybe()
 
 	// We get our results, but the DispachedAt timestamp is present
 	// so we will ignore that for now
 	dispatchStatusesResult := sendAlerts(expiredCtx, alertOutputMap, outputClient)
 
-	mockSlowOutputClient.AssertExpectations(t)
+	mockOutputClient.AssertExpectations(t)
 
 	modifiedDispatchStatusesResult := []DispatchStatus{}
 	for _, dispatchStatus := range dispatchStatusesResult {
