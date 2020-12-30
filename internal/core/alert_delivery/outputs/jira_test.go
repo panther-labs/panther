@@ -90,8 +90,3 @@ func TestJiraAlert(t *testing.T) {
 	assert.Nil(t, client.Jira(alert, jiraConfig))
 	httpWrapper.AssertExpectations(t)
 }
-
-func TestJiraSummaryNewLines(t *testing.T) {
-	summary := removeNewLines("Policy \nFailure: \npolicyId")
-	assert.Equal(t, summary, "Policy Failure: policyId")
-}
