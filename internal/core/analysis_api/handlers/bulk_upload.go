@@ -374,13 +374,13 @@ func validateUploadedPolicy(item *tableItem) error {
 		if len(item.ResourceTypes) > 1 {
 			return errors.New("only one ResourceType may be specified per DataModel")
 		}
-		//isEnabled, err := isSingleDataModelEnabled(item.ID, item.Enabled, item.ResourceTypes)
-		//if err != nil {
-		//	return err
-		//}
-		//if !isEnabled {
-	//		return errMultipleDataModelsEnabled
-	//	}
+		isEnabled, err := isSingleDataModelEnabled(item.ID, item.Enabled, item.ResourceTypes)
+		if err != nil {
+			return err
+		}
+		if !isEnabled {
+			return errMultipleDataModelsEnabled
+		}
 	case models.TypePolicy, models.TypeRule:
 		break
 	default:
