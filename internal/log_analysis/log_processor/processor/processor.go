@@ -167,8 +167,13 @@ func NewFactory(resolver logtypes.Resolver) Factory {
 					LoadSource: sources.LoadSource,
 				},
 			}, nil
-		case models.IntegrationTypeAWS3, models.IntegrationTypeAWSScan:
-			c, err := sources.BuildClassifier(src, resolver)
+		case models.IntegrationTypeAWS3:
+			var availableLogTypes []string
+			// S3 sources has multiple prefix<>logtypes mappings specified.
+			if m, matched := src.S3PrefixLogTypes.LongestPrefixMatch(input.S3ObjectKey); matched {
+				availableLogTypes = m.LogTypes
+			}
+			c, err := sources.BuildClassifier(availableLogTypes, src, resolver)
 			if err != nil {
 				return nil, err
 			}
@@ -177,6 +182,17 @@ func NewFactory(resolver logtypes.Resolver) Factory {
 				input:      input,
 				classifier: c,
 			}, nil
+		case models.IntegrationTypeAWSScan:
+			c, err := sources.BuildClassifier(src.RequiredLogTypes(), src, resolver)
+			if err != nil {
+				return nil, err
+			}
+			return &Processor{
+				operation:  common.OpLogManager.Start(operationName),
+				input:      input,
+				classifier: c,
+			}, nil
+
 		default:
 			return nil, errors.Errorf("invalid source type %s", src.IntegrationType)
 		}

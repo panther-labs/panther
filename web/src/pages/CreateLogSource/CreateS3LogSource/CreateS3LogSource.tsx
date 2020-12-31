@@ -26,9 +26,8 @@ const initialValues = {
   integrationLabel: '',
   awsAccountId: '',
   s3Bucket: '',
-  s3Prefix: '',
   kmsKey: '',
-  logTypes: [],
+  s3PrefixLogTypes: [{ prefix: '', logTypes: [] }],
 };
 
 const CreateS3LogSource: React.FC = () => {
@@ -66,9 +65,8 @@ const CreateS3LogSource: React.FC = () => {
               integrationLabel: values.integrationLabel,
               awsAccountId: values.awsAccountId,
               s3Bucket: values.s3Bucket,
-              logTypes: values.logTypes,
-              s3Prefix: values.s3Prefix || null,
-              kmsKey: values.kmsKey || null,
+              s3PrefixLogTypes: values.s3PrefixLogTypes,
+              kmsKey: values.kmsKey,
             },
           },
         })
