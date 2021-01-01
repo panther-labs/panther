@@ -18,14 +18,20 @@ package filegen
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"time"
-)
+type JSON struct {
+	nrows int
+}
 
-const (
-	defaultRows = 1000
-)
+func NewJSON() *JSON {
+	return &JSON{
+		nrows: defaultRows,
+	}
+}
 
-type Generator interface {
-	NewFile(hour time.Time) []byte
+func (JSON *JSON) WithRows(nrows int) {
+	JSON.nrows = nrows
+}
+
+func (JSON *JSON) Rows() int {
+	return JSON.nrows
 }

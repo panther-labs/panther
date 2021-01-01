@@ -23,30 +23,34 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/panther-labs/panther/cmd/devtools/loadgen/filegen"
+	"github.com/panther-labs/panther/cmd/devtools/filegen"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/box"
+)
+
+const (
+	AWSS3ServerAccessName = awslogs.TypeS3ServerAccess
 )
 
 type AWSS3ServerAccess struct {
 	filegen.CSV
 }
 
-func NewAWSS3ServerAccess(nrows int) *AWSS3ServerAccess {
+func NewAWSS3ServerAccess() *AWSS3ServerAccess {
 	return &AWSS3ServerAccess{
-		CSV: *filegen.NewCSV().WithDelimiter(" ").WithRows(nrows),
+		CSV: *filegen.NewCSV().WithDelimiter(" "),
 	}
 }
 
-func (f *AWSS3ServerAccess) NewFile(hour time.Time) []byte {
+func (f *AWSS3ServerAccess) NewFile(hour time.Time) *filegen.File {
 	var event awslogs.S3ServerAccess
 	var buffer bytes.Buffer
 	for i := 0; i < f.Rows(); i++ {
 		f.fillEvent(&event, hour)
 		f.writeEvent(&event, &buffer)
 	}
-	return buffer.Bytes()
+	return filegen.NewFile(AWSS3ServerAccessName, hour, bytes.NewReader(buffer.Bytes()))
 }
 
 func (f *AWSS3ServerAccess) fillEvent(event *awslogs.S3ServerAccess, hour time.Time) {

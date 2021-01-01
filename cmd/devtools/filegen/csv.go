@@ -17,3 +17,36 @@ package filegen
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+const (
+	defaultCSVDelimiter = ","
+)
+
+type CSV struct {
+	delimiter string
+	nrows     int
+}
+
+func NewCSV() *CSV {
+	return &CSV{
+		delimiter: defaultCSVDelimiter,
+		nrows:     defaultRows,
+	}
+}
+
+func (csv *CSV) WithDelimiter(delimiter string) *CSV {
+	csv.delimiter = delimiter
+	return csv
+}
+
+func (csv *CSV) Delimiter() string {
+	return csv.delimiter
+}
+
+func (csv *CSV) WithRows(nrows int) {
+	csv.nrows = nrows
+}
+
+func (csv *CSV) Rows() int {
+	return csv.nrows
+}

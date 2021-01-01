@@ -24,10 +24,28 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/dchest/uniuri"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
+
+func Bool() bool {
+	return rand.Int31n(2) == 0 // nolint (gosec)
+}
 
 func String(n int) string {
 	return uniuri.NewLen(n)
+}
+
+func StringSlice(n, m int) []string {
+	slice := make([]string, m)
+	for i := 0; i < m; i++ {
+		slice[i] = uniuri.NewLen(n)
+	}
+	return slice
+}
+
+func StringChoice(choices []string) string {
+	return choices[rand.Int31n(int32(len(choices)))] // nolint (gosec)
 }
 
 func Int16() int16 {
@@ -46,7 +64,11 @@ func Int() int {
 	return int(Int32())
 }
 
-func Unt16() uint16 {
+func Intn(n int) int {
+	return int(rand.Int31n(int32(n))) // nolint (gosec)
+}
+
+func Uint16() uint16 {
 	return uint16(rand.Uint32() >> 16) // nolint (gosec)
 }
 
@@ -73,6 +95,41 @@ func ARN(n int) string {
 }
 
 func IP() string {
-	base := rand.Int31n(255) // nolint (gosec)
+	base := rand.Int31n(256) // nolint (gosec)
 	return fmt.Sprintf("%d.%d.%d.%d", base, base+1, base+2, base+3)
+}
+
+func ToPantherString(s string) pantherlog.String {
+	return pantherlog.String{
+		Value:  s,
+		Exists: true,
+	}
+}
+
+func ToPantherUint16(i uint16) pantherlog.Uint16 {
+	return pantherlog.Uint16{
+		Value:  i,
+		Exists: true,
+	}
+}
+
+func ToPantherInt32(i int32) pantherlog.Int32 {
+	return pantherlog.Int32{
+		Value:  i,
+		Exists: true,
+	}
+}
+
+func ToPantherInt64(i int64) pantherlog.Int64 {
+	return pantherlog.Int64{
+		Value:  i,
+		Exists: true,
+	}
+}
+
+func ToPantherBool(b bool) pantherlog.Bool {
+	return pantherlog.Bool{
+		Value:  b,
+		Exists: true,
+	}
 }

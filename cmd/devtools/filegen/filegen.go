@@ -1,4 +1,4 @@
-package main
+package filegen
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,32 +19,30 @@ package main
  */
 
 import (
-	"flag"
-	"log"
+	"bytes"
 	"time"
 
-	"github.com/panther-labs/panther/cmd/devtools/loadgen/filegen/logtype"
+	"github.com/google/uuid"
 )
 
-var (
-	BUCKET = flag.String("bucket", "", "The bucket to write to.")
+const (
+	DateFormat  = "2006-01-02T15"
+	defaultRows = 1000
 )
 
-func main() {
-	flag.Parse()
-
-	if *BUCKET == "" {
-		log.Fatal("-bucket not set")
-	}
-
-	numFiles := 100
-	rowsPerFile := 1000
-	s3gen := logtype.NewAWSS3ServerAccess(rowsPerFile)
-	for i := 0; i < numFiles; i++ {
-		uploadFile(s3gen.NewFile(time.Now().UTC()))
-	}
+type Generator interface {
+	WithRows(nrows int) // set rows
+	NewFile(hour time.Time) *File
 }
 
-func uploadFile(data []byte) {
+type File struct {
+	Name string
+	Data *bytes.Reader
+}
 
+func NewFile(logType string, hour time.Time, data *bytes.Reader) *File {
+	return &File{
+		Name: logType + "/" + hour.Format(DateFormat) + "/" + uuid.New().String(),
+		Data: data,
+	}
 }
