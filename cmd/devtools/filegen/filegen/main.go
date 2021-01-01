@@ -132,7 +132,7 @@ func main() {
 			enabledGenerators = append(enabledGenerators, fileGenerator)
 		}
 	}
-	
+
 	if len(enabledGenerators) == 0 {
 		log.Fatal("no log types enabled")
 	}

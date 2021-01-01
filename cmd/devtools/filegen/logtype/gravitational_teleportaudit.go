@@ -19,7 +19,7 @@ package logtype
  */
 
 import (
-	"bytes"
+	"io"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -42,14 +42,15 @@ func NewGravitationalTeleportAudit() *GravitationalTeleportAudit {
 	}
 }
 
-func (f *GravitationalTeleportAudit) NewFile(hour time.Time) *filegen.File {
+func (ga *GravitationalTeleportAudit) NewFile(hour time.Time) *filegen.File {
+	f := filegen.NewFile(GravitationalTeleportAuditName, hour)
 	var event gravitationallogs.TeleportAudit
-	var buffer bytes.Buffer
-	for i := 0; i < f.Rows(); i++ {
-		f.fillEvent(&event, hour)
-		f.writeEvent(&event, &buffer)
+	for i := 0; i < ga.Rows(); i++ {
+		ga.fillEvent(&event, hour)
+		ga.writeEvent(&event, f)
 	}
-	return filegen.NewFile(GravitationalTeleportAuditName, hour, bytes.NewReader(buffer.Bytes()))
+	f.Close()
+	return f
 }
 
 func (f *GravitationalTeleportAudit) fillEvent(event *gravitationallogs.TeleportAudit, hour time.Time) {
@@ -125,13 +126,13 @@ func (f *GravitationalTeleportAudit) fillEvent(event *gravitationallogs.Teleport
 	event.Version = filegen.ToPantherInt32(filegen.Int32())
 }
 
-func (f *GravitationalTeleportAudit) writeEvent(event *gravitationallogs.TeleportAudit, buffer *bytes.Buffer) {
+func (f *GravitationalTeleportAudit) writeEvent(event *gravitationallogs.TeleportAudit, w io.Writer) {
 	eventJSON, err := jsoniter.Marshal(event)
 	if err != nil {
 		panic(err)
 	}
-	buffer.Write(eventJSON)
-	buffer.WriteString("\n")
+	w.Write(eventJSON)
+	w.Write([]byte{'\n'})
 }
 
 var (

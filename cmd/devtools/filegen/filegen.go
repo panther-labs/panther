@@ -20,6 +20,7 @@ package filegen
 
 import (
 	"bytes"
+	"compress/gzip"
 	"time"
 
 	"github.com/google/uuid"
@@ -38,11 +39,23 @@ type Generator interface {
 type File struct {
 	Name string
 	Data *bytes.Reader
+	writer *gzip.Writer
+	buffer bytes.Buffer
 }
 
-func NewFile(logType string, hour time.Time, data *bytes.Reader) *File {
-	return &File{
-		Name: logType + "/" + hour.Format(DateFormat) + "/" + uuid.New().String(),
-		Data: data,
+func NewFile(logType string, hour time.Time) *File {
+	f :=  &File{
+		Name: logType + "/" + hour.Format(DateFormat) + "/" + uuid.New().String() + ".gz",
 	}
+	f.writer = gzip.NewWriter(&f.buffer)
+	return f
+}
+
+func (f *File) Close() {
+	f.writer.Close()
+	f.Data = bytes.NewReader(f.buffer.Bytes())
+}
+
+func (f *File) Write(b []byte) (int, error) {
+	return f.writer.Write(b)
 }

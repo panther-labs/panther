@@ -19,7 +19,7 @@ package logtype
  */
 
 import (
-	"bytes"
+	"io"
 	"strconv"
 	"time"
 
@@ -43,17 +43,18 @@ func NewAWSS3ServerAccess() *AWSS3ServerAccess {
 	}
 }
 
-func (f *AWSS3ServerAccess) NewFile(hour time.Time) *filegen.File {
+func (sa *AWSS3ServerAccess) NewFile(hour time.Time) *filegen.File {
+    f := filegen.NewFile(AWSS3ServerAccessName, hour)
 	var event awslogs.S3ServerAccess
-	var buffer bytes.Buffer
-	for i := 0; i < f.Rows(); i++ {
-		f.fillEvent(&event, hour)
-		f.writeEvent(&event, &buffer)
+	for i := 0; i < sa.Rows(); i++ {
+		sa.fillEvent(&event, hour)
+		sa.writeEvent(&event, f)
 	}
-	return filegen.NewFile(AWSS3ServerAccessName, hour, bytes.NewReader(buffer.Bytes()))
+	f.Close()
+	return f
 }
 
-func (f *AWSS3ServerAccess) fillEvent(event *awslogs.S3ServerAccess, hour time.Time) {
+func (*AWSS3ServerAccess) fillEvent(event *awslogs.S3ServerAccess, hour time.Time) {
 	event.BucketOwner = box.String(filegen.String(64))
 	event.Bucket = box.String(filegen.String(64))
 	event.Time = (*timestamp.RFC3339)(&hour)
@@ -80,72 +81,80 @@ func (f *AWSS3ServerAccess) fillEvent(event *awslogs.S3ServerAccess, hour time.T
 	event.TLSVersion = box.String(filegen.String(8))
 }
 
-func (f *AWSS3ServerAccess) writeEvent(event *awslogs.S3ServerAccess, buffer *bytes.Buffer) {
-	eventTime := (*time.Time)(event.Time).Format("[2/Jan/2006:15:04:05-0700]")
+func (sa *AWSS3ServerAccess) writeEvent(event *awslogs.S3ServerAccess, w io.Writer) {
+	eventTime := (*time.Time)(event.Time).Format("[2/Jan/2006:15:04:05 -0700]")
 
-	f.writeString(event.BucketOwner, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.Bucket, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(&eventTime, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.RemoteIP, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.Requester, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.RequestID, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.Operation, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.Key, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.RequestURI, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeInt(event.HTTPStatus, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.ErrorCode, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeInt(event.BytesSent, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeInt(event.ObjectSize, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeInt(event.TotalTime, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeInt(event.TurnAroundTime, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.Referrer, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.UserAgent, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.VersionID, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.HostID, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.SignatureVersion, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.CipherSuite, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.AuthenticationType, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.HostHeader, buffer)
-	buffer.WriteString(f.Delimiter())
-	f.writeString(event.TLSVersion, buffer)
+	sa.writeString(event.BucketOwner, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.Bucket, w)
+	sa.writeDelimiter(w)
+	sa.writeString(&eventTime, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.RemoteIP, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.Requester, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.RequestID, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.Operation, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.Key, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.RequestURI, w)
+	sa.writeDelimiter(w)
+	sa.writeInt(event.HTTPStatus, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.ErrorCode, w)
+	sa.writeDelimiter(w)
+	sa.writeInt(event.BytesSent, w)
+	sa.writeDelimiter(w)
+	sa.writeInt(event.ObjectSize, w)
+	sa.writeDelimiter(w)
+	sa.writeInt(event.TotalTime, w)
+	sa.writeDelimiter(w)
+	sa.writeInt(event.TurnAroundTime, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.Referrer, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.UserAgent, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.VersionID, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.HostID, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.SignatureVersion, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.CipherSuite, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.AuthenticationType, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.HostHeader, w)
+	sa.writeDelimiter(w)
+	sa.writeString(event.TLSVersion, w)
 
-	buffer.WriteString("\n")
+	sa.writeLineDelimiter(w)
 }
 
-func (f *AWSS3ServerAccess) writeString(s *string, buffer *bytes.Buffer) {
+func (sa *AWSS3ServerAccess) writeDelimiter(w io.Writer) {
+	w.Write([]byte(sa.Delimiter()))
+}
+
+func (sa *AWSS3ServerAccess) writeLineDelimiter(w io.Writer) {
+	w.Write([]byte("\n"))
+}
+
+func (sa *AWSS3ServerAccess) writeString(s *string, w io.Writer) {
 	if s == nil {
-		buffer.WriteString("-")
+		w.Write([]byte("-"))
 	} else {
-		buffer.WriteString(*s)
+		w.Write([]byte(*s))
 	}
 }
 
-func (f *AWSS3ServerAccess) writeInt(i *int, buffer *bytes.Buffer) {
+func (f *AWSS3ServerAccess) writeInt(i *int, w io.Writer) {
 	if i == nil {
-		buffer.WriteString("-")
+		w.Write([]byte("-"))
 	} else {
-		buffer.WriteString(strconv.Itoa(*i))
+		w.Write([]byte(strconv.Itoa(*i)))
 	}
 }
