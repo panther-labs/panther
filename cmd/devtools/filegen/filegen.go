@@ -37,18 +37,23 @@ type Generator interface {
 }
 
 type File struct {
-	Name string
-	Data *bytes.Reader
-	writer *gzip.Writer
-	buffer bytes.Buffer
+	name              string
+	Data              *bytes.Reader
+	writer            *gzip.Writer
+	buffer            bytes.Buffer
+	uncompressedBytes uint64
 }
 
 func NewFile(logType string, hour time.Time) *File {
-	f :=  &File{
-		Name: logType + "/" + hour.Format(DateFormat) + "/" + uuid.New().String() + ".gz",
+	f := &File{
+		name: logType + "/" + hour.Format(DateFormat) + "/" + uuid.New().String() + ".gz",
 	}
 	f.writer = gzip.NewWriter(&f.buffer)
 	return f
+}
+
+func (f *File) Name() string {
+	return f.name
 }
 
 func (f *File) Close() {
@@ -57,5 +62,17 @@ func (f *File) Close() {
 }
 
 func (f *File) Write(b []byte) (int, error) {
+	f.uncompressedBytes += uint64(len(b))
 	return f.writer.Write(b)
+}
+
+func (f *File) TotalUncompressedBytes() uint64 {
+	return f.uncompressedBytes
+}
+
+func (f *File) TotalBytes() uint64 {
+	if f.Data == nil {
+		panic("file not closed, cannot call Bytes()")
+	}
+	return uint64(f.Data.Len())
 }

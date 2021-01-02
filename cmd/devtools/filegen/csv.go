@@ -23,15 +23,21 @@ const (
 )
 
 type CSV struct {
+	endOfLine string
 	delimiter string
 	nrows     int
 }
 
 func NewCSV() *CSV {
 	return &CSV{
+		endOfLine: "\n",
 		delimiter: defaultCSVDelimiter,
 		nrows:     defaultRows,
 	}
+}
+
+func (csv *CSV) EndOfLine() string {
+	return csv.endOfLine
 }
 
 func (csv *CSV) WithDelimiter(delimiter string) *CSV {

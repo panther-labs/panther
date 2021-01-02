@@ -19,12 +19,14 @@ package filegen
  */
 
 type JSON struct {
-	nrows int
+	endOfLine []byte
+	nrows     int
 }
 
 func NewJSON() *JSON {
 	return &JSON{
-		nrows: defaultRows,
+		endOfLine: []byte{'\n'},
+		nrows:     defaultRows,
 	}
 }
 
@@ -34,4 +36,8 @@ func (JSON *JSON) WithRows(nrows int) {
 
 func (JSON *JSON) Rows() int {
 	return JSON.nrows
+}
+
+func (JSON *JSON) EndOfLine() []byte {
+	return JSON.endOfLine
 }

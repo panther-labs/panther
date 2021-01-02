@@ -35,16 +35,18 @@ const (
 
 type AWSS3ServerAccess struct {
 	filegen.CSV
+	null []byte // this is '-' for empty fields
 }
 
 func NewAWSS3ServerAccess() *AWSS3ServerAccess {
 	return &AWSS3ServerAccess{
-		CSV: *filegen.NewCSV().WithDelimiter(" "),
+		CSV:  *filegen.NewCSV().WithDelimiter(" "),
+		null: []byte{'-'},
 	}
 }
 
 func (sa *AWSS3ServerAccess) NewFile(hour time.Time) *filegen.File {
-    f := filegen.NewFile(AWSS3ServerAccessName, hour)
+	f := filegen.NewFile(AWSS3ServerAccessName, hour)
 	var event awslogs.S3ServerAccess
 	for i := 0; i < sa.Rows(); i++ {
 		sa.fillEvent(&event, hour)
@@ -136,25 +138,39 @@ func (sa *AWSS3ServerAccess) writeEvent(event *awslogs.S3ServerAccess, w io.Writ
 }
 
 func (sa *AWSS3ServerAccess) writeDelimiter(w io.Writer) {
-	w.Write([]byte(sa.Delimiter()))
-}
-
-func (sa *AWSS3ServerAccess) writeLineDelimiter(w io.Writer) {
-	w.Write([]byte("\n"))
-}
-
-func (sa *AWSS3ServerAccess) writeString(s *string, w io.Writer) {
-	if s == nil {
-		w.Write([]byte("-"))
-	} else {
-		w.Write([]byte(*s))
+	_, err := io.WriteString(w, sa.Delimiter())
+	if err != nil {
+		panic(err)
 	}
 }
 
-func (f *AWSS3ServerAccess) writeInt(i *int, w io.Writer) {
-	if i == nil {
-		w.Write([]byte("-"))
+func (sa *AWSS3ServerAccess) writeLineDelimiter(w io.Writer) {
+	_, err := io.WriteString(w, sa.EndOfLine())
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (sa *AWSS3ServerAccess) writeString(s *string, w io.Writer) {
+	var err error
+	if s == nil {
+		_, err = w.Write(sa.null)
 	} else {
-		w.Write([]byte(strconv.Itoa(*i)))
+		_, err = io.WriteString(w, *s)
+	}
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (sa *AWSS3ServerAccess) writeInt(i *int, w io.Writer) {
+	var err error
+	if i == nil {
+		_, err = w.Write(sa.null)
+	} else {
+		_, err = io.WriteString(w, strconv.Itoa(*i))
+	}
+	if err != nil {
+		panic(err)
 	}
 }

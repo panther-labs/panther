@@ -58,7 +58,7 @@ func NewFileGenerator(name string, generator filegen.Generator) *FileGenerator {
 		Name:                name,
 		Generator:           generator,
 		Enabled:             flag.Bool(name, false, "true if "+name+" is enabled"),
-		NumberOfFiles:       flag.Int(name+".numfiles", 100, "the number of files to generate"),
+		NumberOfFiles:       flag.Int(name+".numfiles", 100, "the number of files to generate each hour"),
 		NumberOfRowsPerFile: flag.Int(name+".file.numrows", 1000, "the number of rows per file to generate"),
 	}
 }
@@ -75,15 +75,18 @@ func main() {
 		Prefix      *string
 		Start       *string
 		End         *string
+		TBPerDay    *float64
 		Concurrency *int
 
 		Debug  *bool
 		Region *string
 	}{
-		Bucket:      flag.String("bucket", "", "S3 Bucket to write to"),
-		Prefix:      flag.String("prefix", "", "Prefix under bucket to write"),
-		Start:       flag.String("start", "", "Start date of the form YYYY-MM-DDThh"),
-		End:         flag.String("end", "", "End date of the form YYYY-MM-DDThh, if not set then default to now"),
+		Bucket: flag.String("bucket", "", "S3 Bucket to write to"),
+		Prefix: flag.String("prefix", "", "Prefix under bucket to write"),
+		Start:  flag.String("start", "", "Start date of the form YYYY-MM-DDThh"),
+		End:    flag.String("end", "", "End date of the form YYYY-MM-DDThh, if not set then default to now"),
+		TBPerDay: flag.Float64("tbPerDay", 0.0,
+			"If non zero, ignore number of files set and write until this amount of data has been reached."),
 		Concurrency: flag.Int("concurrency", 10, "The number of concurrent uploaders"),
 
 		Debug:  flag.Bool("debug", false, "Enable additional logging"),
@@ -166,24 +169,78 @@ func main() {
 		})
 	}
 
-	generate(startTime, endTime, enabledGenerators, fileChan)
+	beginRun := time.Now()
+
+	var writtenFiles, writtenBytes, writtenUncompressedBytes uint64
+
+	if *opts.TBPerDay != 0.0 {
+		durationDays := (endTime.Sub(startTime).Hours()  + 1.0)/ 24.0
+		bytesPerDay := *opts.TBPerDay * 1024 * 1024 * 1024 * 1024
+		targetUncompressedBytes := uint64(bytesPerDay * durationDays)
+
+		log.Infof("generating files by size: %f TB per day (%d bytes) spread over %v to %v (%f days)",
+			*opts.TBPerDay, targetUncompressedBytes,
+			startTime.Format(filegen.DateFormat), endTime.Format(filegen.DateFormat),
+			durationDays)
+		writtenFiles, writtenBytes, writtenUncompressedBytes = generateBySize(startTime, endTime,
+			enabledGenerators, fileChan, targetUncompressedBytes)
+	} else {
+		log.Infof("generating files over %v to %v",
+			startTime.Format(filegen.DateFormat), endTime.Format(filegen.DateFormat))
+		writtenFiles, writtenBytes, writtenUncompressedBytes = generateByHour(startTime, endTime,
+			enabledGenerators, fileChan)
+	}
 
 	err = uploaderGroup.Wait()
 	if err != nil {
 		log.Fatalf("error uploading data: %v", err)
 	}
+
+	log.Infof("wrote %d files, %d total bytes, %d total uncompressed bytes in %v",
+		writtenFiles, writtenBytes, writtenUncompressedBytes, time.Since(beginRun))
 }
 
-func generate(startHour, endHour time.Time, fileGenerators []*FileGenerator, fileChan chan *filegen.File) {
+func generateByHour(startHour, endHour time.Time, fileGenerators []*FileGenerator,
+	fileChan chan *filegen.File) (writtenFiles, writtenBytes, writtenUncompressedBytes uint64) {
+
+	defer close(fileChan) // signal uploaders we are done
+
 	afterEndHour := endHour.Add(time.Second)
 	for hour := startHour; hour.Before(afterEndHour); hour = hour.Add(time.Hour) {
 		for _, fileGenerator := range fileGenerators {
 			for i := 0; i < *fileGenerator.NumberOfFiles; i++ {
-				fileChan <- fileGenerator.Generator.NewFile(hour)
+				f := fileGenerator.Generator.NewFile(hour)
+				fileChan <- f
+				writtenFiles++
+				writtenBytes += f.TotalBytes()
+				writtenUncompressedBytes += f.TotalUncompressedBytes()
 			}
 		}
 	}
-	close(fileChan) // signal uploaders we are done
+
+	return writtenFiles, writtenBytes, writtenUncompressedBytes
+}
+
+func generateBySize(startHour, endHour time.Time, fileGenerators []*FileGenerator,
+	fileChan chan *filegen.File, targetUncompressedBytes uint64)  (writtenFiles, writtenBytes, writtenUncompressedBytes uint64) {
+
+	defer close(fileChan) // signal uploaders we are done
+
+	afterEndHour := endHour.Add(time.Second)
+	for {
+		for _, fileGenerator := range fileGenerators {
+			for hour := startHour; hour.Before(afterEndHour); hour = hour.Add(time.Hour) {
+				f := fileGenerator.Generator.NewFile(hour)
+				fileChan <- f
+				writtenFiles++
+				writtenBytes += f.TotalBytes()
+				writtenUncompressedBytes += f.TotalUncompressedBytes()
+				if writtenUncompressedBytes >= targetUncompressedBytes {
+					return writtenFiles, writtenBytes, writtenUncompressedBytes
+				}
+			}
+		}
+	}
 }
 
 func upload(ctx context.Context, bucket, prefix string, fileChan chan *filegen.File,
@@ -197,9 +254,9 @@ func upload(ctx context.Context, bucket, prefix string, fileChan chan *filegen.F
 			if !more {
 				return nil
 			}
-			path := prefix + "/" + file.Name
+			path := prefix + "/" + file.Name()
 			size := file.Data.Len()
-			log.Debugf("uploading %s/%s (%d bytes)", bucket, path, size)
+			log.Debugf("uploading %s/%s (%d bytes, %d bytes uncompressed)", bucket, path, size, file.TotalUncompressedBytes())
 			input := &s3manager.UploadInput{
 				Body:   file.Data,
 				Bucket: &bucket,

@@ -53,7 +53,7 @@ func (ga *GravitationalTeleportAudit) NewFile(hour time.Time) *filegen.File {
 	return f
 }
 
-func (f *GravitationalTeleportAudit) fillEvent(event *gravitationallogs.TeleportAudit, hour time.Time) {
+func (*GravitationalTeleportAudit) fillEvent(event *gravitationallogs.TeleportAudit, hour time.Time) {
 	event.Event = filegen.ToPantherString(filegen.StringChoice(gravitationalTeleportAuditEventTypes))
 	event.Code = filegen.ToPantherString(filegen.String(8))
 	event.Time = hour
@@ -126,13 +126,19 @@ func (f *GravitationalTeleportAudit) fillEvent(event *gravitationallogs.Teleport
 	event.Version = filegen.ToPantherInt32(filegen.Int32())
 }
 
-func (f *GravitationalTeleportAudit) writeEvent(event *gravitationallogs.TeleportAudit, w io.Writer) {
+func (ga *GravitationalTeleportAudit) writeEvent(event *gravitationallogs.TeleportAudit, w io.Writer) {
 	eventJSON, err := jsoniter.Marshal(event)
 	if err != nil {
 		panic(err)
 	}
-	w.Write(eventJSON)
-	w.Write([]byte{'\n'})
+	_, err = w.Write(eventJSON)
+	if err != nil {
+		panic(err)
+	}
+	_, err = w.Write(ga.EndOfLine())
+	if err != nil {
+		panic(err)
+	}
 }
 
 var (
