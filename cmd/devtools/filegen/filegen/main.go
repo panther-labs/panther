@@ -65,22 +65,59 @@ func NewFileGenerator(name string, generator filegen.Generator) *FileGenerator {
 
 func init() {
 	generators = append(generators, NewFileGenerator(logtype.AWSS3ServerAccessName, logtype.NewAWSS3ServerAccess()))
+	generators = append(generators, NewFileGenerator(logtype.AWSCloudTrailName, logtype.NewAWSCloudTrail()))
 	generators = append(generators, NewFileGenerator(logtype.GravitationalTeleportAuditName, logtype.NewGravitationalTeleportAudit()))
+}
+
+type flagOpts struct {
+	Bucket      *string
+	Prefix      *string
+	Start       *string
+	End         *string
+	TBPerDay    *float64
+	Concurrency *int
+
+	Debug  *bool
+	Region *string
+
+	// set by Validate()
+	startTime, endTime time.Time
+}
+
+func (opts *flagOpts) Validate() (err error) {
+	if *opts.Bucket == "" {
+		return errors.Errorf("-bucket not set")
+	}
+
+	if *opts.Start == "" {
+		return errors.Errorf("-start must be set")
+	}
+	opts.startTime, err = time.Parse(filegen.DateFormat, *opts.Start)
+	if err != nil {
+		return errors.Errorf("cannot read -start")
+	}
+	opts.startTime = opts.startTime.Truncate(time.Hour)
+
+	if *opts.End == "" {
+		opts.endTime = time.Now().UTC()
+	} else {
+		opts.endTime, err = time.Parse(filegen.DateFormat, *opts.End)
+		if err != nil {
+			return errors.Errorf("cannot read -end")
+		}
+	}
+	opts.endTime = opts.endTime.Truncate(time.Hour)
+
+	if opts.endTime.Before(opts.startTime) {
+		return errors.Errorf("-end is before -start")
+	}
+
+	return err
 }
 
 func main() {
 	opstools.SetUsage("writes synthetic log files to s3 for use in benchmarking)")
-	opts := struct {
-		Bucket      *string
-		Prefix      *string
-		Start       *string
-		End         *string
-		TBPerDay    *float64
-		Concurrency *int
-
-		Debug  *bool
-		Region *string
-	}{
+	opts := flagOpts{
 		Bucket: flag.String("bucket", "", "S3 Bucket to write to"),
 		Prefix: flag.String("prefix", "", "Prefix under bucket to write"),
 		Start:  flag.String("start", "", "Start date of the form YYYY-MM-DDThh"),
@@ -96,33 +133,8 @@ func main() {
 
 	log := opstools.MustBuildLogger(*opts.Debug)
 
-	if *opts.Bucket == "" {
-		log.Fatal("-bucket not set")
-	}
-
-	var startTime, endTime time.Time
-
-	if *opts.Start == "" {
-		log.Fatal("-start must be set")
-	}
-	startTime, err := time.Parse(filegen.DateFormat, *opts.Start)
-	if err != nil {
-		log.Fatal("cannot read -start")
-	}
-	startTime = startTime.Truncate(time.Hour)
-
-	if *opts.End == "" {
-		endTime = time.Now().UTC()
-	} else {
-		endTime, err = time.Parse(filegen.DateFormat, *opts.End)
-		if err != nil {
-			log.Fatal("cannot read -end")
-		}
-	}
-	endTime = endTime.Truncate(time.Hour)
-
-	if endTime.Before(startTime) {
-		log.Fatal("-end is before -start")
+	if err := opts.Validate(); err != nil {
+		log.Fatalf("error parsing flags: %s", err)
 	}
 
 	// configure enabled generators
@@ -174,20 +186,20 @@ func main() {
 	var writtenFiles, writtenBytes, writtenUncompressedBytes uint64
 
 	if *opts.TBPerDay != 0.0 {
-		durationDays := (endTime.Sub(startTime).Hours()  + 1.0)/ 24.0
+		durationDays := (opts.endTime.Sub(opts.startTime).Hours() + 1.0) / 24.0
 		bytesPerDay := *opts.TBPerDay * 1024 * 1024 * 1024 * 1024
 		targetUncompressedBytes := uint64(bytesPerDay * durationDays)
 
 		log.Infof("generating files by size: %f TB per day (%d bytes) spread over %v to %v (%f days)",
 			*opts.TBPerDay, targetUncompressedBytes,
-			startTime.Format(filegen.DateFormat), endTime.Format(filegen.DateFormat),
+			opts.startTime.Format(filegen.DateFormat), opts.endTime.Format(filegen.DateFormat),
 			durationDays)
-		writtenFiles, writtenBytes, writtenUncompressedBytes = generateBySize(startTime, endTime,
+		writtenFiles, writtenBytes, writtenUncompressedBytes = generateBySize(opts.startTime, opts.endTime,
 			enabledGenerators, fileChan, targetUncompressedBytes)
 	} else {
 		log.Infof("generating files over %v to %v",
-			startTime.Format(filegen.DateFormat), endTime.Format(filegen.DateFormat))
-		writtenFiles, writtenBytes, writtenUncompressedBytes = generateByHour(startTime, endTime,
+			opts.startTime.Format(filegen.DateFormat), opts.endTime.Format(filegen.DateFormat))
+		writtenFiles, writtenBytes, writtenUncompressedBytes = generateByHour(opts.startTime, opts.endTime,
 			enabledGenerators, fileChan)
 	}
 
@@ -222,7 +234,7 @@ func generateByHour(startHour, endHour time.Time, fileGenerators []*FileGenerato
 }
 
 func generateBySize(startHour, endHour time.Time, fileGenerators []*FileGenerator,
-	fileChan chan *filegen.File, targetUncompressedBytes uint64)  (writtenFiles, writtenBytes, writtenUncompressedBytes uint64) {
+	fileChan chan *filegen.File, targetUncompressedBytes uint64) (writtenFiles, writtenBytes, writtenUncompressedBytes uint64) {
 
 	defer close(fileChan) // signal uploaders we are done
 

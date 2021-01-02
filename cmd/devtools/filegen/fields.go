@@ -84,7 +84,7 @@ func AWSAccountID() string {
 	return fmt.Sprintf("%012d", Uint32())[0:12]
 }
 
-func ARN(n int) string {
+func ARN() string {
 	return arn.ARN{
 		Partition: "aws",
 		Service:   String(8),
