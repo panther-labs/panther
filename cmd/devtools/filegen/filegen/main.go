@@ -19,8 +19,8 @@ package main
  */
 
 import (
-	"context"
 	"flag"
+	"sync/atomic"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -112,6 +112,10 @@ func (opts *flagOpts) Validate() (err error) {
 		return errors.Errorf("-end is before -start")
 	}
 
+	if *opts.Concurrency < 1 {
+		return errors.Errorf("-concurrency must be >= 1")
+	}
+
 	return err
 }
 
@@ -166,15 +170,11 @@ func main() {
 
 	fileChan := make(chan *filegen.File, *opts.Concurrency)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	var uploaderGroup errgroup.Group
 	for i := 0; i < *opts.Concurrency; i++ {
 		uploaderGroup.Go(func() error {
 			uploader := s3manager.NewUploaderWithClient(s3Client)
-			if err := upload(ctx, *opts.Bucket, *opts.Prefix, fileChan, uploader, log); err != nil {
-				cancel()
+			if err := upload(*opts.Bucket, *opts.Prefix, fileChan, uploader, log); err != nil {
 				return err
 			}
 			return nil
@@ -183,24 +183,28 @@ func main() {
 
 	beginRun := time.Now()
 
-	var writtenFiles, writtenBytes, writtenUncompressedBytes uint64
+	generateBy := generateBy{
+		startHour:      opts.startTime,
+		endHour:        opts.endTime,
+		fileGenerators: enabledGenerators,
+		fileChan:       fileChan,
+		concurrency:    *opts.Concurrency,
+	}
 
 	if *opts.TBPerDay != 0.0 {
 		durationDays := (opts.endTime.Sub(opts.startTime).Hours() + 1.0) / 24.0
 		bytesPerDay := *opts.TBPerDay * 1024 * 1024 * 1024 * 1024
-		targetUncompressedBytes := uint64(bytesPerDay * durationDays)
+		generateBy.targetUncompressedBytes = uint64(bytesPerDay * durationDays)
 
 		log.Infof("generating files by size: %f TB per day (%d bytes) spread over %v to %v (%f days)",
-			*opts.TBPerDay, targetUncompressedBytes,
+			*opts.TBPerDay, generateBy.targetUncompressedBytes,
 			opts.startTime.Format(filegen.DateFormat), opts.endTime.Format(filegen.DateFormat),
 			durationDays)
-		writtenFiles, writtenBytes, writtenUncompressedBytes = generateBySize(opts.startTime, opts.endTime,
-			enabledGenerators, fileChan, targetUncompressedBytes)
+		generateBy.size()
 	} else {
 		log.Infof("generating files over %v to %v",
 			opts.startTime.Format(filegen.DateFormat), opts.endTime.Format(filegen.DateFormat))
-		writtenFiles, writtenBytes, writtenUncompressedBytes = generateByHour(opts.startTime, opts.endTime,
-			enabledGenerators, fileChan)
+		generateBy.hour()
 	}
 
 	err = uploaderGroup.Wait()
@@ -209,78 +213,127 @@ func main() {
 	}
 
 	log.Infof("wrote %d files, %d total bytes, %d total uncompressed bytes in %v",
-		writtenFiles, writtenBytes, writtenUncompressedBytes, time.Since(beginRun))
+		generateBy.writtenFiles, generateBy.writtenBytes, generateBy.writtenUncompressedBytes, time.Since(beginRun))
 }
 
-func generateByHour(startHour, endHour time.Time, fileGenerators []*FileGenerator,
-	fileChan chan *filegen.File) (writtenFiles, writtenBytes, writtenUncompressedBytes uint64) {
+type generateBy struct {
+	startHour, endHour time.Time
+	fileGenerators     []*FileGenerator
+	fileChan           chan *filegen.File
 
-	defer close(fileChan) // signal uploaders we are done
+	targetUncompressedBytes uint64 // if non-zero stop here
 
-	afterEndHour := endHour.Add(time.Second)
-	for hour := startHour; hour.Before(afterEndHour); hour = hour.Add(time.Hour) {
-		for _, fileGenerator := range fileGenerators {
-			for i := 0; i < *fileGenerator.NumberOfFiles; i++ {
-				f := fileGenerator.Generator.NewFile(hour)
-				fileChan <- f
-				writtenFiles++
-				writtenBytes += f.TotalBytes()
-				writtenUncompressedBytes += f.TotalUncompressedBytes()
+	// managing concurrency
+	generateFileChan chan *generateFile
+	workerGroup      errgroup.Group
+	concurrency      int
+
+	// tallies
+	writtenFiles, writtenBytes, writtenUncompressedBytes uint64
+}
+
+type generateFile struct {
+	fileGenerator filegen.Generator
+	hour          time.Time
+}
+
+func (gf *generateFile) newFile() *filegen.File {
+	return gf.fileGenerator.NewFile(gf.hour)
+}
+
+func (gb *generateBy) startWorkers() {
+	gb.generateFileChan = make(chan *generateFile, gb.concurrency)
+
+	for i := 0; i < gb.concurrency; i++ {
+		gb.workerGroup.Go(func() error {
+			for gf := range gb.generateFileChan {
+				// drain channel if done
+				if gb.targetUncompressedBytes != 0 && gb.writtenUncompressedBytes >= gb.targetUncompressedBytes {
+					continue
+				}
+
+				f := gf.newFile()
+				gb.fileChan <- f
+				atomic.AddUint64(&gb.writtenFiles, 1)
+				atomic.AddUint64(&gb.writtenBytes, f.TotalBytes())
+				atomic.AddUint64(&gb.writtenUncompressedBytes, f.TotalUncompressedBytes())
 			}
-		}
+			return nil
+		})
 	}
-
-	return writtenFiles, writtenBytes, writtenUncompressedBytes
 }
 
-func generateBySize(startHour, endHour time.Time, fileGenerators []*FileGenerator,
-	fileChan chan *filegen.File, targetUncompressedBytes uint64) (writtenFiles, writtenBytes, writtenUncompressedBytes uint64) {
+func (gb *generateBy) waitWorkers() {
+	// signal done, wait
+	close(gb.generateFileChan)
+	_ = gb.workerGroup.Wait()
+}
 
-	defer close(fileChan) // signal uploaders we are done
+func (gb *generateBy) hour() {
+	defer close(gb.fileChan) // signal uploaders we are done
 
-	afterEndHour := endHour.Add(time.Second)
-	for {
-		for _, fileGenerator := range fileGenerators {
-			for hour := startHour; hour.Before(afterEndHour); hour = hour.Add(time.Hour) {
-				f := fileGenerator.Generator.NewFile(hour)
-				fileChan <- f
-				writtenFiles++
-				writtenBytes += f.TotalBytes()
-				writtenUncompressedBytes += f.TotalUncompressedBytes()
-				if writtenUncompressedBytes >= targetUncompressedBytes {
-					return writtenFiles, writtenBytes, writtenUncompressedBytes
+	gb.startWorkers()
+	defer gb.waitWorkers()
+
+	afterEndHour := gb.endHour.Add(time.Second)
+	for hour := gb.startHour; hour.Before(afterEndHour); hour = hour.Add(time.Hour) {
+		for _, fileGenerator := range gb.fileGenerators {
+			for i := 0; i < *fileGenerator.NumberOfFiles; i++ {
+				// send to workers
+				gb.generateFileChan <- &generateFile{
+					fileGenerator: fileGenerator.Generator,
+					hour:          hour,
 				}
 			}
 		}
 	}
 }
 
-func upload(ctx context.Context, bucket, prefix string, fileChan chan *filegen.File,
-	uploader s3manageriface.UploaderAPI, log *zap.SugaredLogger) error {
+func (gb *generateBy) size() {
+	defer close(gb.fileChan) // signal uploaders we are done
 
+	gb.startWorkers()
+	defer gb.waitWorkers()
+
+	afterEndHour := gb.endHour.Add(time.Second)
 	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case file, more := <-fileChan:
-			if !more {
-				return nil
-			}
-			path := prefix + "/" + file.Name()
-			size := file.Data.Len()
-			log.Debugf("uploading %s/%s (%d bytes, %d bytes uncompressed)", bucket, path, size, file.TotalUncompressedBytes())
-			input := &s3manager.UploadInput{
-				Body:   file.Data,
-				Bucket: &bucket,
-				Key:    aws.String(path),
-			}
-			_, err := uploader.Upload(input, func(u *s3manager.Uploader) { // calc the concurrency based on payload
-				u.Concurrency = (size / uploaderPartSize) + 1 // if it evenly divides an extra won't matter
-				u.PartSize = uploaderPartSize
-			})
-			if err != nil {
-				return errors.Wrapf(err, "upload failed for %v", input)
+		for hour := gb.startHour; hour.Before(afterEndHour); hour = hour.Add(time.Hour) {
+			for _, fileGenerator := range gb.fileGenerators {
+				// send to workers
+				gb.generateFileChan <- &generateFile{
+					fileGenerator: fileGenerator.Generator,
+					hour:          hour,
+				}
+				// poll to see if done inside of loop, workers are updating these values
+				if gb.targetUncompressedBytes != 0 && gb.writtenUncompressedBytes >= gb.targetUncompressedBytes {
+					return
+				}
 			}
 		}
 	}
+}
+
+func upload(bucket, prefix string, fileChan chan *filegen.File, uploader s3manageriface.UploaderAPI, log *zap.SugaredLogger) (err error) {
+	for file := range fileChan {
+		if err != nil { // drain channel
+			continue
+		}
+
+		path := prefix + "/" + file.Name()
+		size := file.Data.Len()
+		log.Debugf("uploading %s/%s (%d bytes, %d bytes uncompressed)", bucket, path, size, file.TotalUncompressedBytes())
+		input := &s3manager.UploadInput{
+			Body:   file.Data,
+			Bucket: &bucket,
+			Key:    aws.String(path),
+		}
+		_, err = uploader.Upload(input, func(u *s3manager.Uploader) { // calc the concurrency based on payload
+			u.Concurrency = (size / uploaderPartSize) + 1 // if it evenly divides an extra won't matter
+			u.PartSize = uploaderPartSize
+		})
+		if err != nil {
+			err = errors.Wrapf(err, "upload failed for s3://%s/%s", *input.Bucket, *input.Key)
+		}
+	}
+	return err
 }
