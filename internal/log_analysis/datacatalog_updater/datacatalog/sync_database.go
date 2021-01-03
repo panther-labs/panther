@@ -33,10 +33,10 @@ type SyncDatabaseEvent struct {
 	RequiredLogTypes []string
 }
 
-func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *SyncDatabaseEvent) error {
+func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *SyncDatabaseEvent) (warnings []error, err error) {
 	for db, desc := range pantherdb.Databases {
 		if err := awsglue.EnsureDatabase(ctx, h.GlueClient, db, desc); err != nil {
-			return errors.Wrapf(err, "failed to create database %s", db)
+			return nil, errors.Wrapf(err, "failed to create database %s", db)
 		}
 	}
 	// We combine the deployed log types with the ones required by all active sources
@@ -45,21 +45,21 @@ func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *Sync
 	{
 		deployedLogTypes, err := h.fetchAllDeployedLogTypes(ctx)
 		if err != nil {
-			return errors.Wrap(err, "failed to fetch deployed log types")
+			return nil, errors.Wrap(err, "failed to fetch deployed log types")
 		}
 		syncLogTypes = stringset.Concat(deployedLogTypes, event.RequiredLogTypes)
 	}
 
-	if err := h.createOrUpdateTablesForLogTypes(ctx, syncLogTypes); err != nil {
-		return errors.Wrap(err, "failed to update tables for deployed log types")
+	if warnings, err = h.createOrUpdateTablesForLogTypes(ctx, syncLogTypes); err != nil {
+		return warnings, errors.Wrap(err, "failed to update tables for deployed log types")
 	}
-	if err := h.createOrReplaceViewsForAllDeployedLogTables(ctx); err != nil {
-		return errors.Wrap(err, "failed to update athena views for deployed log types")
+	if warnings, err = h.createOrReplaceViewsForAllDeployedLogTables(ctx); err != nil {
+		return warnings, errors.Wrap(err, "failed to update athena views for deployed log types")
 	}
-	if err := h.sendPartitionSync(ctx, event.TraceID, syncLogTypes); err != nil {
-		return errors.Wrap(err, "failed to send sync partitions event")
+	if err = h.sendPartitionSync(ctx, event.TraceID, syncLogTypes); err != nil {
+		return warnings, errors.Wrap(err, "failed to send sync partitions event")
 	}
-	return nil
+	return nil, nil
 }
 
 // sendPartitionSync triggers a database partition sync by sending an event to the queue.
