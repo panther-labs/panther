@@ -196,24 +196,30 @@ func main() {
 		bytesPerDay := *opts.TBPerDay * 1024 * 1024 * 1024 * 1024
 		generateBy.targetUncompressedBytes = uint64(bytesPerDay * durationDays)
 
-		log.Infof("generating files by size: %f TB per day (%d bytes) spread over %v to %v (%f days)",
+		log.Infof("generating files by size: %f TB per day (%d bytes) spread over %v to %v (%f days) to s3://%s/%s",
 			*opts.TBPerDay, generateBy.targetUncompressedBytes,
 			opts.startTime.Format(filegen.DateFormat), opts.endTime.Format(filegen.DateFormat),
-			durationDays)
+			durationDays,
+			*opts.Bucket, *opts.Prefix)
 		generateBy.size()
 	} else {
-		log.Infof("generating files over %v to %v",
-			opts.startTime.Format(filegen.DateFormat), opts.endTime.Format(filegen.DateFormat))
+		log.Infof("generating files over %v to %v to s3://%s/%s",
+			opts.startTime.Format(filegen.DateFormat), opts.endTime.Format(filegen.DateFormat),
+			*opts.Bucket, *opts.Prefix)
 		generateBy.hour()
 	}
 
 	err = uploaderGroup.Wait()
+
+	// always log this first in case of error, so progress is shown
+	log.Infof("wrote %d files, %d total bytes, %d total uncompressed bytes in %v to s3://%s/%s",
+		generateBy.writtenFiles, generateBy.writtenBytes, generateBy.writtenUncompressedBytes,
+		time.Since(beginRun),
+		*opts.Bucket, *opts.Prefix)
+
 	if err != nil {
 		log.Fatalf("error uploading data: %v", err)
 	}
-
-	log.Infof("wrote %d files, %d total bytes, %d total uncompressed bytes in %v",
-		generateBy.writtenFiles, generateBy.writtenBytes, generateBy.writtenUncompressedBytes, time.Since(beginRun))
 }
 
 type generateBy struct {
@@ -314,6 +320,7 @@ func (gb *generateBy) size() {
 }
 
 func upload(bucket, prefix string, fileChan chan *filegen.File, uploader s3manageriface.UploaderAPI, log *zap.SugaredLogger) (err error) {
+	const maxRetries = 3
 	for file := range fileChan {
 		if err != nil { // drain channel
 			continue
@@ -327,12 +334,16 @@ func upload(bucket, prefix string, fileChan chan *filegen.File, uploader s3manag
 			Bucket: &bucket,
 			Key:    aws.String(path),
 		}
-		_, err = uploader.Upload(input, func(u *s3manager.Uploader) { // calc the concurrency based on payload
-			u.Concurrency = (size / uploaderPartSize) + 1 // if it evenly divides an extra won't matter
-			u.PartSize = uploaderPartSize
-		})
-		if err != nil {
+		for i := 0; i < maxRetries; i++ {
+			_, err = uploader.Upload(input, func(u *s3manager.Uploader) { // calc the concurrency based on payload
+				u.Concurrency = (size / uploaderPartSize) + 1 // if it evenly divides an extra won't matter
+				u.PartSize = uploaderPartSize
+			})
+			if err == nil {
+				break // no error break retry loop
+			}
 			err = errors.Wrapf(err, "upload failed for s3://%s/%s", *input.Bucket, *input.Key)
+			time.Sleep(time.Second)
 		}
 	}
 	return err
