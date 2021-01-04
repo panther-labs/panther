@@ -76,7 +76,9 @@ func sendAlerts(
 	var deliveryStatuses []DispatchStatus
 	for alert, outputIds := range alertOutputs {
 		for _, outputID := range outputIds {
-			// We race against a timeout
+			// TODO: remove the select statement:
+			// https://github.com/panther-labs/panther/pull/2296#discussion_r548471507
+			// We race against a deadline
 			select {
 			case <-ctx.Done():
 				// Calculate the time the alert was dispatched at
