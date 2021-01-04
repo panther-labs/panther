@@ -19,6 +19,8 @@ package api
  */
 
 import (
+	"go.uber.org/zap"
+
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/pkg/genericapi"
@@ -37,8 +39,15 @@ func (api *API) UpdateAlertDelivery(input *models.UpdateAlertDeliveryInput) (res
 		return &models.UpdateAlertDeliveryOutput{}, nil
 	}
 
+	alertRule, err := api.ruleCache.Get(alertItem.RuleID, alertItem.RuleVersion)
+
+	if err != nil {
+		zap.L().Warn("failed to get rule with ID", zap.Any("rule id", alertItem.RuleID),
+			zap.Any("rule version", alertItem.RuleVersion), zap.Any("error", err))
+	}
+
 	// Marshal to an alert summary
-	result = utils.AlertItemToSummary(alertItem)
+	result = utils.AlertItemToSummary(alertItem, alertRule)
 
 	genericapi.ReplaceMapSliceNils(result)
 	return result, nil

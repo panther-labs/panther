@@ -1,3 +1,5 @@
+package testutils
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,4 +18,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './BulletedLogTypeList';
+import (
+	"os"
+	"strings"
+	"testing"
+)
+
+// IntegrationTest skips the current test if the env variable INTEGRATION_TEST is not set to "true".
+func IntegrationTest(t *testing.T) {
+	run := strings.ToLower(os.Getenv("INTEGRATION_TEST")) == "true"
+	if !run {
+		t.Skip()
+	}
+}

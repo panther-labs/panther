@@ -22,46 +22,53 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
+	rulemodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
 func TestUpdateAlertDelivery(t *testing.T) {
-	tableMock := &tableMock{}
+	t.Parallel()
+	api := initTestAPI()
 
 	alertID := "alertId"
-	input := &models.UpdateAlertDeliveryInput{
-		AlertID:           alertID,
-		DeliveryResponses: []*models.DeliveryResponse{},
-	}
 	deliveryResponse := &models.DeliveryResponse{
 		OutputID: "output-id",
 		Message:  "successful delivery",
 		Success:  true,
 	}
+
+	// Mocking table interactions
+	input := &models.UpdateAlertDeliveryInput{
+		AlertID:           alertID,
+		DeliveryResponses: []*models.DeliveryResponse{},
+	}
 	output := &table.AlertItem{
 		AlertID:           alertID,
+		Type:              "RULE",
+		RuleID:            "ruleId",
+		RuleVersion:       "ruleVersion",
 		DeliveryResponses: []*models.DeliveryResponse{deliveryResponse},
 	}
+	api.mockTable.On("UpdateAlertDelivery", input).Return(output, nil).Once()
+
+	api.mockRuleCache.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
+
 	expectedSummary := &models.AlertSummary{
 		AlertID:           alertID,
 		DeliveryResponses: []*models.DeliveryResponse{deliveryResponse},
 	}
 
-	tableMock.On("UpdateAlertDelivery", input).Return(output, nil).Once()
-	api := API{
-		alertsDB: tableMock,
-	}
 	result, err := api.UpdateAlertDelivery(input)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	// Marshal to convert "" to nils and focus on our properties
 	resultSummary := &models.AlertSummary{
 		AlertID:           result.AlertID,
 		DeliveryResponses: result.DeliveryResponses,
 	}
-
 	assert.Equal(t, expectedSummary, resultSummary)
+
+	api.AssertExpectations(t)
 }

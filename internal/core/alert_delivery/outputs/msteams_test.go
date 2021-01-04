@@ -39,6 +39,7 @@ func TestMsTeamsAlert(t *testing.T) {
 
 	var createdAtTime, _ = time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
 	alert := &alertModels.Alert{
+		AlertID:      aws.String("alertId"),
 		AnalysisID:   "policyId",
 		Type:         alertModels.PolicyType,
 		CreatedAt:    createdAtTime,
@@ -61,7 +62,7 @@ func TestMsTeamsAlert(t *testing.T) {
 					map[string]string{"name": "Tags", "value": ""},
 					map[string]string{"name": "AlertContext", "value": `{"key":"value"}`},
 				},
-				"text": "[Click here to view in the Panther UI](https://panther.io/policies/policyId).\n",
+				"text": "[Click here to view in the Panther UI](https://panther.io/alerts/alertId).\n",
 			},
 		},
 		"potentialAction": []interface{}{
@@ -71,7 +72,7 @@ func TestMsTeamsAlert(t *testing.T) {
 				"targets": []interface{}{
 					map[string]string{
 						"os":  "default",
-						"uri": "https://panther.io/policies/policyId",
+						"uri": "https://panther.io/alerts/alertId",
 					},
 				},
 			},

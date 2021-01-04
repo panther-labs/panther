@@ -1,3 +1,5 @@
+package outputs
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -15,27 +17,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+import (
+	"testing"
 
-import React from 'react';
-import { Flex } from 'pouncejs';
-import LimitItemDisplay from 'Components/LimitItemDisplay/LimitItemDisplay';
-import BulletedLogType from 'Components/BulletedLogType';
+	"github.com/stretchr/testify/assert"
+)
 
-interface BulletedLogTypeListProps {
-  logTypes: string[];
-  limit?: number;
+func TestJiraSummaryNewLines(t *testing.T) {
+	summary := removeNewLines("Policy \nFailure: \npolicyId")
+	assert.Equal(t, summary, "Policy Failure: policyId")
 }
-
-const BulletedLogTypeList: React.FC<BulletedLogTypeListProps> = ({ logTypes, limit = 1000 }) => {
-  return (
-    <Flex align="center" spacing={2} flexWrap="wrap">
-      <LimitItemDisplay limit={limit}>
-        {logTypes.map(logType => (
-          <BulletedLogType key={logType} logType={logType} />
-        ))}
-      </LimitItemDisplay>
-    </Flex>
-  );
-};
-
-export default BulletedLogTypeList;

@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Published version:
-#     pantherlabs/panther-buildpack:1.8.0
+#     pantherlabs/panther-buildpack:1.15.0
 #
 # When updating, bump the tag to the upcoming panther release.
 
@@ -23,7 +23,7 @@ FROM buildpack-deps:buster-scm
 
 LABEL description="Panther CircleCI combined Go/Node/Python environment"
 
-ENV GO_VERSION=1.15.1 NODE_VERSION=12.18.3 PYTHON_VERSION=3.7.9
+ENV GO_VERSION=1.15.5 NODE_VERSION=14.15.1 PYTHON_VERSION=3.7.9
 
 
 # ****************     APT Packages     *******************

@@ -17,13 +17,28 @@
  */
 
 import React from 'react';
-import { render } from 'test-utils';
-import BulletedLogType from './BulletedLogType';
+import { Box, Flex } from 'pouncejs';
+import { stringToPaleColor } from 'Helpers/colors';
 
-describe('BulletedLogType', () => {
-  it('renders the same color for the same log type', () => {
-    const { container } = render(<BulletedLogType logType="AWS.EC2" />);
+interface BulletedValueProps {
+  value: string;
+}
 
-    expect(container).toMatchSnapshot();
-  });
-});
+const BulletedValue: React.FC<BulletedValueProps> = ({ value }) => {
+  return (
+    <Flex spacing={2} align="center">
+      <Box
+        as="span"
+        width={12}
+        height={12}
+        backgroundColor={stringToPaleColor(value) as any}
+        borderRadius="circle"
+      />
+      <Box as="span" fontSize="small" fontWeight="normal" lineHeight="typical">
+        {value}
+      </Box>
+    </Flex>
+  );
+};
+
+export default BulletedValue;

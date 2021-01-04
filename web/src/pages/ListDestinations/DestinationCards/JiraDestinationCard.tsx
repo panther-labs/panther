@@ -39,6 +39,10 @@ const JiraDestinationCard: React.FC<JiraDestinationCardProps> = ({ destination }
       <GenericItemCard.Value label="Email" value={destination.outputConfig.jira.userName} />
       <GenericItemCard.Value label="Assignee ID" value={destination.outputConfig.jira.assigneeId} />
       <GenericItemCard.Value label="Issue Type" value={destination.outputConfig.jira.issueType} />
+      <GenericItemCard.Value
+        label="Labels"
+        value={destination.outputConfig.jira.labels.join(', ')}
+      />
       <GenericItemCard.LineBreak />
       <GenericItemCard.Value
         label="Date Created"
