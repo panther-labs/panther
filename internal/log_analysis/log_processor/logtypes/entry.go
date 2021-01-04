@@ -102,14 +102,15 @@ func (desc *Desc) Fill() {
 // ConfigJSON is a configuration that creates a log type entry for a JSON log.
 // The parser only handles the usual case where each JSON value produces a single pantherlog.Result.
 type ConfigJSON struct {
-	Name         string
-	Description  string
-	ReferenceURL string
-	NewEvent     func() interface{}
-	Validate     func(interface{}) error
-	JSON         jsoniter.API
-	NextRowID    func() string
-	Now          func() time.Time
+	Name            string
+	Description     string
+	ReferenceURL    string
+	NewEvent        func() interface{}
+	Validate        func(interface{}) error
+	JSON            jsoniter.API
+	NextRowID       func() string
+	Now             func() time.Time
+	ExtraIndicators pantherlog.FieldSet
 }
 
 // BuildEntry implements EntryBuilder interface
@@ -119,7 +120,7 @@ func (c ConfigJSON) BuildEntry() (Entry, error) {
 	}
 
 	event := c.NewEvent()
-	schema, err := pantherlog.BuildEventSchema(event)
+	schema, err := pantherlog.BuildEventSchema(event, c.ExtraIndicators...)
 	if err != nil {
 		return nil, err
 	}
