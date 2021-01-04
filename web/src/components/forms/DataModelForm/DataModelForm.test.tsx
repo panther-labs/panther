@@ -28,7 +28,7 @@ import {
 import { mockListAvailableLogTypes } from 'Source/graphql/queries';
 import DataModelForm from './DataModelForm';
 
-describe('CustomDataModel', () => {
+describe('DataModelForm', () => {
   it('can add & remove mappings', () => {
     const initialValues = {
       id: '',

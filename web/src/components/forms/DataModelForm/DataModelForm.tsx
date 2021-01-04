@@ -109,16 +109,16 @@ const DataModelForm: React.FC<DataModelFormProps> = ({ initialValues, onSubmit }
                   label="Log Type"
                   name="logType"
                   items={data?.listAvailableLogTypes.logTypes ?? []}
-                  placeholder="Where should the rule appoly?"
+                  placeholder="Where should the rule apply?"
                 />
-                <Flex align="center">
+                <Box mt={3}>
                   <Field
                     as={FormikSwitch}
                     name="enabled"
                     label="Enabled"
                     placeholder="Toggle Enabled"
                   />
-                </Flex>
+                </Box>
               </Grid>
             </Box>
             <Box as="section">

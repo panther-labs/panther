@@ -41,19 +41,16 @@ const CreateDataModel: React.FC = () => {
 
   const [createDataModel] = useCreateDataModel({
     update: (cache, { data: { addDataModel: dataModel } }) => {
-      // TODO: Add cache mod
-      // eslint-disable-next-line no-console
-      console.log(dataModel);
-      // cache.modify('ROOT_QUERY', {
-      //   listCustomLogs: (queryData, { toReference }) => {
-      //     const customLogRef = toReference(record);
-      //     return queryData ? [customLogRef, ...queryData] : [customLogRef];
-      //   },
-      // });
+      cache.modify('ROOT_QUERY', {
+        listDataModels: (queryData, { toReference }) => {
+          const dataModelRef = toReference(dataModel);
+          return queryData ? [dataModelRef, ...queryData] : [dataModelRef];
+        },
+      });
     },
     onCompleted: ({ addDataModel: dataModel }) => {
       trackEvent({ event: EventEnum.AddedDataModel, src: SrcEnum.DataModels });
-      history.push(urls.logAnalysis.customLogs.details(dataModel.id));
+      history.push(urls.logAnalysis.dataModels.details(dataModel.id));
     },
     onError: error => {
       trackError({ event: TrackErrorEnum.FailedToAddDataModel, src: SrcEnum.DataModels });
