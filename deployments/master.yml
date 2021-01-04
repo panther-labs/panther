@@ -175,8 +175,8 @@ Parameters:
     Description: Flag to indicate stack initialization or full deployment.
     Default: true
     AllowedValues:
-    - true
-    - false
+      - true
+      - false
 
 Mappings:
   Constants:
