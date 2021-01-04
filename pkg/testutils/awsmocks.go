@@ -207,6 +207,12 @@ type SqsMock struct {
 	mock.Mock
 }
 
+// nolint (golint)
+func (m *SqsMock) GetQueueUrl(input *sqs.GetQueueUrlInput) (*sqs.GetQueueUrlOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sqs.GetQueueUrlOutput), args.Error(1)
+}
+
 func (m *SqsMock) SendMessage(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*sqs.SendMessageOutput), args.Error(1)
