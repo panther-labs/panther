@@ -1,0 +1,590 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Navigation renders with active links 1`] = `
+.panther-42 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.05);
+  -webkit-position: sticky;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 100vh;
+  background-color: #141c2a;
+}
+
+.panther-41 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  width: 220px;
+  height: 100%;
+  padding-bottom: 8px;
+}
+
+.panther-1 {
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-bottom: 12px;
+  padding-top: 32px;
+}
+
+.panther-0 {
+  max-width: 100%;
+  display: block;
+}
+
+.panther-35 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-flex: 1 0 auto;
+  -ms-flex: 1 0 auto;
+  flex: 1 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.panther-2 {
+  border: none;
+  opacity: 0.6;
+  border-bottom: 0.0625rem solid;
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  border-color: #3e516b;
+}
+
+.panther-7 {
+  margin-bottom: 8px;
+}
+
+.panther-6 {
+  display: block;
+}
+
+.panther-5 {
+  border-radius: 2px;
+  color: #f6f6f6;
+  font-size: 0.875rem;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  background-color: #0081c5;
+  -webkit-transition: background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panther-5:hover {
+  background-color: #0081c5;
+}
+
+.panther-5:focus {
+  background-color: #0081c5;
+}
+
+.panther-3 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+  margin-right: 12px;
+}
+
+
+
+.panther-12 {
+  font-size: 0.875rem;
+  border-radius: 2px;
+  background-color: transparent;
+}
+
+.panther-11 {
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  width: 100%;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: transparent;
+  -webkit-transition: all 0.1s linear;
+  transition: all 0.1s linear;
+}
+
+.panther-11:hover {
+  color: #f6f6f6;
+  background-color: #1d2a3f;
+}
+
+.panther-10 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+  -webkit-transition: -webkit-transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 80ms;
+  transition: transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 80ms;
+  -webkit-transform: rotate(0deg);
+  -moz-transform: rotate(0deg);
+  -ms-transform: rotate(0deg);
+  transform: rotate(0deg);
+  justify-self: flex-end;
+  margin-left: auto;
+}
+
+.panther-29 {
+  margin-top: auto;
+}
+
+.panther-28 {
+  -webkit-transition: color 0.1s ease-out;
+  transition: color 0.1s ease-out;
+  font-weight: 500;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  color: #7fd3ff;
+  font-weight: 400;
+  border-radius: 2px;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  font-size: 0.875rem;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  color: #f6f6f6;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-28:hover {
+  color: #ace2ff;
+}
+
+.panther-28:focus {
+  color: #ace2ff;
+}
+
+.panther-28:active,
+.panther-28[data-active=true] {
+  color: #11a5f3;
+}
+
+.panther-28:hover {
+  color: #f6f6f6;
+  background-color: #1d2a3f;
+}
+
+.panther-32 {
+  border-radius: 2px;
+  color: #f6f6f6;
+  font-size: 0.875rem;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  background-color: transparent;
+  -webkit-transition: background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panther-32:hover {
+  background-color: #1d2a3f;
+}
+
+.panther-32:focus {
+  background-color: #1d2a3f;
+}
+
+.panther-40 {
+  padding: 16px;
+  background-color: #0f1623;
+  margin-top: 16px;
+}
+
+.panther-39 {
+  width: 100%;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: transparent;
+  -webkit-transition: all 0.1s linear;
+  transition: all 0.1s linear;
+}
+
+.panther-38 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-38>*:not(:last-child) {
+  margin-right: 8px;
+}
+
+.panther-36 {
+  width: 40px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-transition: background-color 0.1s linear;
+  transition: background-color 0.1s linear;
+  border-radius: 99999px;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  height: 40px;
+  background-color: #5a508a;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+}
+
+.panther-36:hover {
+  background-color: #7268a6;
+}
+
+.panther-37 {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <aside
+    class="panther-42"
+  >
+    <nav
+      aria-label="Main"
+      class="panther-41"
+    >
+      <a
+        class="panther-1"
+        href="/"
+      >
+        <img
+          alt="Panther logo"
+          class="panther-0"
+          height="32"
+          src="test-file-stub"
+          width="auto"
+        />
+      </a>
+      <ul
+        class="panther-35"
+      >
+        <hr
+          aria-orientation="horizontal"
+          class="panther-2"
+        />
+        <li
+          class="panther-7"
+        >
+          <a
+            aria-current="page"
+            class="panther-6"
+            href="/log-analysis/alerts/?status[]=OPEN&status[]=TRIAGED"
+          >
+            <div
+              class="panther-5"
+            >
+              <svg
+                class="panther-3"
+                role="presentation"
+                viewBox="0 0 24 24"
+              >
+                <g>
+                  <path
+                    d="M12,2 C6.4771525,2 2,6.4771525 2,12 C2,17.5228475 6.4771525,22 12,22 C17.5228475,22 22,17.5228475 22,12 C22,6.4771525 17.5228475,2 12,2 Z M12,4 C16.418278,4 20,7.581722 20,12 C20,16.418278 16.418278,20 12,20 C7.581722,20 4,16.418278 4,12 C4,7.581722 7.581722,4 12,4 Z"
+                    transform="translate(12.000000, 12.000000) rotate(-360.000000) translate(-12.000000, -12.000000) "
+                  />
+                  <rect
+                    height="2"
+                    transform="translate(12.000000, 10.500000) rotate(-270.000000) translate(-12.000000, -10.500000) "
+                    width="7"
+                    x="8.5"
+                    y="9.5"
+                  />
+                  <rect
+                    height="2"
+                    transform="translate(12.000000, 16.500000) rotate(-270.000000) translate(-12.000000, -16.500000) "
+                    width="2"
+                    x="11"
+                    y="15.5"
+                  />
+                </g>
+              </svg>
+              <div
+                class="panther-4"
+              >
+                Alerts
+              </div>
+            </div>
+          </a>
+        </li>
+        <li
+          class="panther-7"
+        >
+          <div
+            class="panther-12"
+          >
+            <button
+              class="panther-11"
+              type="button"
+            >
+              <svg
+                class="panther-3"
+                role="presentation"
+                viewBox="0 0 19 25"
+              >
+                <path
+                  d="M25,29.9487703 L25,31.9487703 L11,31.9487703 L11,29.9487703 L25,29.9487703 Z M30,24.9487703 L30,26.9487703 L11,26.9487703 L11,24.9487703 L30,24.9487703 Z M30,19.9487703 L30,21.9487703 L11,21.9487703 L11,19.9487703 L30,19.9487703 Z M12.644972,7 L17.7924998,11.8658652 L12.8536656,16.5325856 L11.4800661,15.0788923 L14.8810269,11.8647703 L11.2710817,8.45341853 L12.644972,7 Z M23.4847097,14.3571803 L23.4847097,16.3571803 L18.6954529,16.3571803 L18.6954529,14.3571803 L23.4847097,14.3571803 Z"
+                  transform="translate(-11 -7)"
+                />
+              </svg>
+              <div
+                class="panther-4"
+              >
+                Log Analysis
+              </div>
+              <svg
+                class="panther-10"
+                role="presentation"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M7.41 8.58997L12 13.17L16.59 8.58997L18 9.99997L12 16L6 9.99997L7.41 8.58997Z"
+                />
+              </svg>
+            </button>
+          </div>
+        </li>
+        <li
+          class="panther-7"
+        >
+          <div
+            class="panther-12"
+          >
+            <button
+              class="panther-11"
+              type="button"
+            >
+              <svg
+                class="panther-3"
+                role="presentation"
+                viewBox="0 0 26 19"
+              >
+                <path
+                  d="M12.6145028,14.0226513 C14.4512635,11.1657925 17.663645,9.61948092 20.9386099,10.0804984 C24.1118521,10.5271964 26.7637022,12.7768068 27.8990856,15.8871618 L27.8990856,15.8871618 L27.9769993,16.1110866 L28.1894205,16.158733 C31.0248198,16.8379094 33.0369972,19.5791148 32.9147143,22.6950183 L32.9147143,22.6950183 L32.9015205,22.9293873 C32.6436475,26.4453881 29.5491041,29.1831895 26.2456653,28.9034622 L26.2456653,28.9034622 L13.9163886,28.902049 C10.2953863,28.8279708 7.31484179,25.8577095 7.02317806,22.033654 C6.73865539,18.3032263 9.10245871,14.9393551 12.5264906,14.1379405 L12.5264906,14.1379405 L12.5449993,14.1330866 Z M20.4133426,11.950859 C17.8390439,11.6956623 15.3360376,13.0467082 13.9902679,15.4601716 L13.9902679,15.4601716 L13.7635162,15.8668212 L13.3037913,15.9405322 C10.638002,16.3679569 8.71432019,18.9599436 8.93761776,21.8876382 C9.16036661,24.8081383 11.4395387,27.0218391 14.1395803,26.9828537 L14.1395803,26.9828537 L26.3257509,26.9868045 C28.6297017,27.1795612 30.8058494,25.2542819 30.9866637,22.7889465 C31.1701567,20.2870885 29.4381915,18.1228352 27.1553404,17.9318437 L27.1553404,17.9318437 L26.4802809,17.8753658 L26.3072301,17.2204242 C25.5649923,14.4112936 23.3436146,12.3579817 20.6709699,11.9817529 L20.6709699,11.9817529 Z M19.9600473,15.9600866 L23.9599993,17.4352643 L23.9599993,19.4023252 C23.9595312,20.621648 23.5742032,21.8105823 22.8579099,22.8063272 C22.1417127,23.8016119 21.129124,24.5539525 19.9599993,24.9600866 C18.7908985,24.5539997 17.7783818,23.8016119 17.0620886,22.8063272 C16.3457953,21.8105232 15.9604685,20.621648 15.9599993,19.4023252 L15.9599993,19.4023252 L15.9599993,17.4352643 L19.9600473,15.9600866 Z"
+                  transform="translate(-7 -10)"
+                />
+              </svg>
+              <div
+                class="panther-4"
+              >
+                Cloud Security
+              </div>
+              <svg
+                class="panther-10"
+                role="presentation"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M7.41 8.58997L12 13.17L16.59 8.58997L18 9.99997L12 16L6 9.99997L7.41 8.58997Z"
+                />
+              </svg>
+            </button>
+          </div>
+        </li>
+        <li
+          class="panther-7"
+        >
+          <div
+            class="panther-12"
+          >
+            <button
+              class="panther-11"
+              type="button"
+            >
+              <svg
+                class="panther-3"
+                role="presentation"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M14.077 1c.674 0 1.253.468 1.393 1.102l.022.13.324 2.298.198.1c.149.078.295.162.44.25l.214.135.189.128 2.137-.87a1.44 1.44 0 011.604.423l.076.103.067.112 2.084 3.667a1.458 1.458 0 01-.257 1.733l-.105.092-1.795 1.427.014.192.01.219.003.217-.003.218-.01.219-.014.19 1.799 1.431c.474.38.643 1.009.458 1.583l-.05.13-.06.13-2.063 3.627a1.419 1.419 0 01-1.659.692l-.128-.045-2.112-.862-.205.14c-.143.092-.287.18-.432.263l-.219.12-.18.09-.322 2.285a1.423 1.423 0 01-1.154 1.223l-.13.019-.134.006H9.93a1.425 1.425 0 01-1.393-1.103l-.022-.129-.325-2.3-.197-.098a8.351 8.351 0 01-.44-.25l-.215-.136-.189-.129-2.136.873a1.44 1.44 0 01-1.604-.424l-.076-.103-.067-.112-2.084-3.667a1.458 1.458 0 01.257-1.733l.105-.093 1.794-1.428-.019-.302-.004-.11-.003-.215.003-.215.01-.22.013-.193L1.54 10.4a1.443 1.443 0 01-.46-1.597l.048-.12.065-.125 2.062-3.627a1.419 1.419 0 011.658-.692l.129.044 2.11.862.207-.139c.143-.092.287-.18.432-.263l.219-.12.18-.091.322-2.284a1.423 1.423 0 011.154-1.224l.13-.018L9.93 1h4.147zm-.352 1.833h-3.444l-.418 2.965L9.381 6a6.707 6.707 0 00-1.29.727l-.259.189-.417.318-2.727-1.114-1.739 3.06 2.325 1.848-.063.51a7.521 7.521 0 00-.066.921c0 .218.015.45.043.716l.086.715-2.326 1.85 1.74 3.058 2.734-1.116.42.328c.405.317.827.58 1.27.79l.269.119.482.2.418 2.965h3.444l.419-2.964.482-.201a6.707 6.707 0 001.29-.727l.259-.19.417-.317 2.726 1.113 1.74-3.059-2.325-1.849.063-.51c.044-.362.065-.642.065-.92 0-.224-.013-.448-.041-.714l-.024-.208-.063-.51 2.325-1.85-1.739-3.058-2.734 1.117-.42-.328a6.719 6.719 0 00-1.27-.79L14.626 6l-.482-.2-.419-2.966zm-1.724 5.5A3.67 3.67 0 0115.668 12 3.67 3.67 0 0112 15.667 3.67 3.67 0 018.335 12 3.67 3.67 0 0112 8.333zm0 1.834c-1.01 0-1.833.823-1.833 1.833s.823 1.833 1.833 1.833 1.834-.823 1.834-1.833-.824-1.833-1.834-1.833z"
+                />
+              </svg>
+              <div
+                class="panther-4"
+              >
+                Settings
+              </div>
+              <svg
+                class="panther-10"
+                role="presentation"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M7.41 8.58997L12 13.17L16.59 8.58997L18 9.99997L12 16L6 9.99997L7.41 8.58997Z"
+                />
+              </svg>
+            </button>
+          </div>
+        </li>
+        <li
+          class="panther-29"
+        >
+          <a
+            class="panther-28"
+            href="https://docs.runpanther.io/v/release-1.2"
+          >
+            <svg
+              class="panther-3"
+              role="presentation"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M21 5C19.89 4.65 18.67 4.5 17.5 4.5C15.55 4.5 13.45 4.9 12 6C10.55 4.9 8.45 4.5 6.5 4.5C4.55 4.5 2.45 4.9 1 6V20.65C1 20.9 1.25 21.15 1.5 21.15C1.6 21.15 1.65 21.1 1.75 21.1C3.1 20.45 5.05 20 6.5 20C8.45 20 10.55 20.4 12 21.5C13.35 20.65 15.8 20 17.5 20C19.15 20 20.85 20.3 22.25 21.05C22.35 21.1 22.4 21.1 22.5 21.1C22.75 21.1 23 20.85 23 20.6V6C22.4 5.55 21.75 5.25 21 5ZM21 18.5C19.9 18.15 18.7 18 17.5 18C15.8 18 13.35 18.65 12 19.5V8C13.35 7.15 15.8 6.5 17.5 6.5C18.7 6.5 19.9 6.65 21 7V18.5Z"
+              />
+            </svg>
+            <div
+              class="panther-4"
+            >
+              Documentation
+            </div>
+          </a>
+        </li>
+        <li
+          class="panther-4"
+        >
+          <a
+            class="panther-6"
+            href="/support"
+          >
+            <div
+              class="panther-32"
+            >
+              <svg
+                class="panther-3"
+                role="presentation"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M12,1 C9.08236,1 6.2844,2.15929 4.2219,4.2219 C2.1594,6.28451 1,9.08258 1,12 C1,14.91742 2.15929,17.7156 4.2219,19.7781 C6.28451,21.8406 9.08258,23 12,23 C14.91742,23 17.7156,21.84071 19.7781,19.7781 C21.8406,17.71549 23,14.91742 23,12 C23,9.08258 21.84071,6.2844 19.7781,4.2219 C17.71549,2.1594 14.91742,1 12,1 Z M12,17.80756 L11.8925784,17.8299032 L11.6725784,17.8299032 C11.6064068,17.8170134 11.5402352,17.8058396 11.476642,17.787793 C10.875074,17.6305282 10.488358,17.046151 10.57946,16.430833 C10.6705532,15.815515 11.209386,15.367793 11.83071,15.390981 C12.452034,15.4141844 12.956494,15.901447 13.000318,16.521913 C13.0450044,17.141521 12.616176,17.695811 12.004312,17.807549 L12,17.80756 Z M15.52,9.81958 C15.3945318,10.224336 15.17625,10.594728 14.882352,10.899824 C14.545488,11.236688 14.17767,11.539188 13.782352,11.803892 C13.562352,11.9560022 13.36642,12.114136 13.16017,12.27225 L13.1593098,12.27225 C12.9719666,12.4269364 12.8318838,12.630608 12.7528158,12.860068 C12.7089874,12.9786612 12.658284,13.09725 12.6118794,13.21671 C12.4958646,13.539846 12.1899194,13.75725 11.8461694,13.759846 C11.6562478,13.780471 11.4637434,13.7503948 11.2893054,13.6721892 C11.0211694,13.540704 10.8346974,13.2871892 10.7900154,12.9924332 C10.7195472,12.5833652 10.814937,12.1640012 11.0538394,11.8262572 C11.2446212,11.5478252 11.4775154,11.3011832 11.7447714,11.0957912 C12.0326634,10.8603252 12.3300154,10.6360352 12.6247714,10.4005472 C12.8696974,10.213204 13.0742314,9.9794452 13.2271974,9.7121892 C13.4712654,9.2481212 13.410244,8.6835132 13.073369,8.2821892 C12.8989156,8.0914074 12.667733,7.9633652 12.413369,7.9169452 C12.075625,7.8378816 11.723295,7.8438986 11.388125,7.9341338 C11.040943,8.0295236 10.751335,8.2701398 10.594057,8.5941338 C10.490932,8.787494 10.4006968,8.9859978 10.303591,9.1819518 C10.2331228,9.3297654 10.1368728,9.4646958 10.019989,9.5798438 C9.8154572,9.759454 9.545625,9.8462418 9.274057,9.8195998 C9.109057,9.8153032 8.947489,9.7714748 8.803125,9.6924134 C8.532415,9.551477 8.362267,9.2713114 8.363125,8.9662374 C8.3519534,8.4798394 8.5075,8.0054534 8.803125,7.6195954 C9.146017,7.1572434 9.599767,6.7894474 10.123125,6.5505274 C10.518443,6.3631842 10.941261,6.2411634 11.375233,6.1895954 L11.621875,6.1655318 L12.061875,6.1655318 L12.299057,6.187875 L12.299057,6.1870148 C12.887733,6.2248284 13.463517,6.3735 13.995455,6.6270148 C14.470699,6.8461546 14.876313,7.1924808 15.165921,7.6281908 C15.386779,7.9719408 15.523421,8.3620888 15.563813,8.7677248 C15.6231096,9.1174808 15.6084994,9.4758608 15.5199846,9.8195888 L15.52,9.81958 Z"
+                />
+              </svg>
+              <div
+                class="panther-4"
+              >
+                Support
+              </div>
+            </div>
+          </a>
+        </li>
+      </ul>
+      <div
+        class="panther-40"
+      >
+        <button
+          aria-describedby="1"
+          aria-label="Toggle User Menu"
+          class="panther-39"
+          type="button"
+        >
+          <div
+            class="panther-38"
+          >
+            <div
+              class="panther-36"
+            >
+              TT
+            </div>
+            <div
+              class="panther-37"
+            >
+              T. TestSurname
+            </div>
+          </div>
+        </button>
+      </div>
+    </nav>
+  </aside>
+  <footer
+    id="footer"
+  />
+</div>
+`;

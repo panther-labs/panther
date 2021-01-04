@@ -17,30 +17,41 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading } from 'pouncejs';
+import { Flex } from 'pouncejs';
 import urls from 'Source/urls';
 import FadeInTrail from 'Components/utils/FadeInTrail';
 import NavLink from '../NavLink';
 
 const ComplianceNavigation: React.FC = () => {
   return (
-    <Box>
-      <Heading size="x-small" fontWeight="bold" pt={4} pb={5} truncated>
-        CLOUD SECURITY
-      </Heading>
-      <Flex direction="column" as="ul">
-        <FadeInTrail as="li">
-          <NavLink icon="dashboard-alt" to={urls.compliance.overview()} label="Overview" />
-          <NavLink
-            icon="policy"
-            to={`${urls.compliance.policies.list()}?page=1&sortBy=lastModified&sortDir=descending`}
-            label="Policies"
-          />
-          <NavLink icon="resource" to={urls.compliance.resources.list()} label="Resources" />
-          <NavLink icon="infra-source" to={urls.compliance.sources.list()} label="Sources" />
-        </FadeInTrail>
-      </Flex>
-    </Box>
+    <Flex direction="column" as="ul">
+      <FadeInTrail as="li">
+        <NavLink
+          isSecondary
+          icon="dashboard-alt"
+          to={urls.compliance.overview()}
+          label="Overview"
+        />
+        <NavLink
+          isSecondary
+          icon="policy"
+          to={`${urls.compliance.policies.list()}?page=1&sortBy=lastModified&sortDir=descending`}
+          label="Policies"
+        />
+        <NavLink
+          isSecondary
+          icon="resource"
+          to={urls.compliance.resources.list()}
+          label="Resources"
+        />
+        <NavLink
+          isSecondary
+          icon="infra-source"
+          to={urls.compliance.sources.list()}
+          label="Sources"
+        />
+      </FadeInTrail>
+    </Flex>
   );
 };
 
