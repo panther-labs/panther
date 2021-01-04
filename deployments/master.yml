@@ -199,6 +199,8 @@ Resources:
         LoadBalancerSecurityGroupCidr: !Ref LoadBalancerSecurityGroupCidr
         VpcID: !Ref VpcID
         SecurityGroupID: !Ref SecurityGroupID
+        SubnetOneID: !Ref SubnetOneID
+        SubnetTwoID: !Ref SubnetTwoID
         SubnetOneIPRange: !Ref SubnetOneIPRange
         SubnetTwoIPRange: !Ref SubnetTwoIPRange
         LogSubscriptionPrincipals: !Join [',', !Ref LogSubscriptionPrincipals]
