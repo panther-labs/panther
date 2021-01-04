@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -65,9 +66,9 @@ func TestGithubAlert(t *testing.T) {
 		body:    githubRequest,
 		headers: requestHeader,
 	}
+	ctx := context.Background()
+	httpWrapper.On("post", ctx, expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
-
-	assert.Nil(t, client.Github(alert, githubConfig))
+	assert.Nil(t, client.Github(ctx, alert, githubConfig))
 	httpWrapper.AssertExpectations(t)
 }

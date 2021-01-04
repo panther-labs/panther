@@ -19,18 +19,28 @@ package snapshotlogs
  */
 
 import (
+	"strings"
+
+	"github.com/aws/aws-sdk-go/aws/arn"
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 const TypeResource = "Resource.History"
 
-var logTypeResource = logtypes.MustBuild(logtypes.ConfigJSON{
+var logTypeResourceHistory = logtypes.MustBuild(logtypes.ConfigJSON{
 	Name:         TypeResource,
 	Description:  `Contains Cloud Security resource snapshots`,
 	ReferenceURL: `https://docs.runpanther.io/cloud-security/resources`,
 	NewEvent: func() interface{} {
 		return &Resource{}
+	},
+	ExtraIndicators: pantherlog.FieldSet{ // these are added by extractors but not used in struct directly
+		pantherlog.FieldDomainName,
+		pantherlog.FieldIPAddress,
+		pantherlog.FieldAWSTag,
 	},
 	Validate: pantherlog.ValidateStruct,
 })
@@ -56,7 +66,50 @@ type Resource struct {
 
 // WriteValuesTo implements pantherlog.ValueWriterTo interface
 func (r *Resource) WriteValuesTo(w pantherlog.ValueWriter) {
+	pantherlog.ExtractRawMessageIndicators(w, extractIndicators, r.Resource)
 	for key, value := range r.Tags {
 		w.WriteValues(pantherlog.FieldAWSTag, key+":"+value)
+	}
+}
+
+func extractIndicators(w pantherlog.ValueWriter, iter *jsoniter.Iterator, key string) {
+	switch iter.WhatIsNext() {
+	case jsoniter.ObjectValue:
+		switch key {
+		default:
+			for key := iter.ReadObject(); key != ""; key = iter.ReadObject() {
+				extractIndicators(w, iter, key)
+			}
+		}
+	case jsoniter.ArrayValue:
+		switch key {
+		case "ManagedPolicyARNs":
+			for iter.ReadArray() {
+				pantherlog.ScanARN(w, iter.ReadString())
+			}
+		default:
+			for iter.ReadArray() {
+				extractIndicators(w, iter, key)
+			}
+		}
+	case jsoniter.StringValue:
+		value := iter.ReadString()
+		switch key {
+		case "ID":
+			pantherlog.ScanAWSInstanceID(w, value)
+		case "AccountId", "OwnerId":
+			pantherlog.ScanAWSAccountID(w, value)
+		case "Address", "AssignPublicIp", "PrivateIpAddress", "PrivateIPAddress", "PublicIpAddress", "PublicIPAddress":
+			pantherlog.ScanIPAddress(w, value)
+		case "Domain", "DomainName", "DNSName", "FQDN", "PrivateDnsName", "PublicDnsName":
+			pantherlog.ScanHostname(w, value)
+		default:
+			switch {
+			case strings.HasSuffix(key, "ARN") || strings.HasSuffix(key, "arn") || arn.IsARN(value):
+				pantherlog.ScanARN(w, value)
+			}
+		}
+	default:
+		iter.Skip()
 	}
 }

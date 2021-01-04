@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
@@ -29,7 +30,7 @@ import (
 
 // MsTeams alert send an alert.
 func (client *OutputClient) MsTeams(
-	alert *alertModels.Alert, config *outputModels.MsTeamsConfig) *AlertDeliveryResponse {
+	ctx context.Context, alert *alertModels.Alert, config *outputModels.MsTeamsConfig) *AlertDeliveryResponse {
 
 	link := "[Click here to view in the Panther UI](" + generateURL(alert) + ").\n"
 
@@ -70,5 +71,5 @@ func (client *OutputClient) MsTeams(
 		url:  config.WebhookURL,
 		body: msTeamsRequestBody,
 	}
-	return client.httpWrapper.post(postInput)
+	return client.httpWrapper.post(ctx, postInput)
 }
