@@ -18,6 +18,8 @@ package outputs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import (
+	"regexp"
+
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -108,4 +110,9 @@ func GetOpsGenieRegionalEndpoint(serviceRegion string) string {
 	default:
 		return "https://api.opsgenie.com/v2/alerts"
 	}
+}
+
+func removeNewLines(input string) string {
+	re := regexp.MustCompile(`\n`)
+	return re.ReplaceAllString(input, "")
 }

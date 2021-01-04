@@ -19,6 +19,8 @@ package outputs
  */
 
 import (
+	"context"
+
 	jsoniter "github.com/json-iterator/go"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
@@ -40,7 +42,7 @@ var pantherToOpsGeniePriority = map[string]string{
 
 // Opsgenie alert send an alert.
 func (client *OutputClient) Opsgenie(
-	alert *alertModels.Alert, config *outputModels.OpsgenieConfig) *AlertDeliveryResponse {
+	ctx context.Context, alert *alertModels.Alert, config *outputModels.OpsgenieConfig) *AlertDeliveryResponse {
 
 	description := "<strong>Description:</strong> " + alert.AnalysisDescription
 	link := "\n<a href=\"" + generateURL(alert) + "\">Click here to view in the Panther UI</a>"
@@ -69,5 +71,5 @@ func (client *OutputClient) Opsgenie(
 		body:    opsgenieRequest,
 		headers: requestHeader,
 	}
-	return client.httpWrapper.post(postInput)
+	return client.httpWrapper.post(ctx, postInput)
 }
