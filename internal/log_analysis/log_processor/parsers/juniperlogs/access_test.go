@@ -29,7 +29,7 @@ import (
 func TestAccessParser_Parse(t *testing.T) {
 	log := testutil.MustReadFileString(`testdata/access_samples.log`)
 	now := time.Now()
-	tm1 := time.Date(now.Year(), time.March, 19, 21, 11, 47, 0, time.UTC)
+	tm1 := expectedTestDate(time.Date(now.Year(), time.March, 19, 21, 11, 47, 0, time.UTC))
 	event1 := Access{
 		Timestamp:     timestamp.RFC3339(tm1),
 		Hostname:      `webappsecure`,
@@ -43,7 +43,7 @@ func TestAccessParser_Parse(t *testing.T) {
 	}
 	event1.SetCoreFields(TypeAccess, (*timestamp.RFC3339)(&tm1), &event1)
 	event1.AppendAnyIPAddress(`127.0.0.1`)
-	tm2 := time.Date(now.Year(), time.March, 19, 19, 48, 14, 0, time.UTC)
+	tm2 := expectedTestDate(time.Date(now.Year(), time.March, 19, 19, 48, 14, 0, time.UTC))
 	event2 := Access{
 		Timestamp:     timestamp.RFC3339(tm2),
 		Hostname:      `webappsecure`,
@@ -57,7 +57,7 @@ func TestAccessParser_Parse(t *testing.T) {
 	}
 	event2.SetCoreFields(TypeAccess, (*timestamp.RFC3339)(&tm2), &event2)
 	event2.AppendAnyIPAddress(`127.0.0.1`)
-	tm3 := time.Date(now.Year(), time.March, 19, 19, 48, 14, 0, time.UTC)
+	tm3 := expectedTestDate(time.Date(now.Year(), time.March, 19, 19, 48, 14, 0, time.UTC))
 	event3 := Access{
 		Timestamp:     timestamp.RFC3339(tm3),
 		Hostname:      `webappsecure`,
