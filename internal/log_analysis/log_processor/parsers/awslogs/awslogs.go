@@ -111,6 +111,9 @@ var logTypes = logtypes.Must("AWS",
 		NewEvent: func() interface{} {
 			return &VPCDns{}
 		},
+		ExtraIndicators: pantherlog.FieldSet{ // these are not present in the struct but added by the extractors
+			pantherlog.FieldDomainName,
+		},
 	},
 	logtypes.Config{
 		Name:         TypeVPCFlow,

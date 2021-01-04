@@ -38,9 +38,6 @@ type VPCDns struct {
 	SrcPort        pantherlog.String `json:"srcport" validate:"required"  description:"The port on the instance that the query originated from."`
 	Transport      pantherlog.String `json:"transport" validate:"required"  description:"The protocol used to submit the DNS query."`
 	SrcIDs         DNSSrcID          `json:"srcids" validate:"required"  description:"The list of IDs of the sources the DNS query originated from or passed through."`
-
-	// a dummy field that is not exported but is used to ensure that `p_any_domains` column is created in the schema
-	DummyDomains pantherlog.String `json:"-" panther:"domain"`
 }
 
 var _ pantherlog.ValueWriterTo = (*VPCDns)(nil)
