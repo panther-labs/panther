@@ -17,22 +17,22 @@
  */
 
 import React from 'react';
-import { Box, Flex, Img, Link, Divider } from 'pouncejs';
+import { Box, Flex, Img, Icon, Link, Divider } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
-import PantherIcon from 'Assets/panther-minimal-logo.svg';
-import { animated, useTransition } from 'react-spring';
+import PantherLogo from 'Assets/panther-plain-logo.svg';
 import { PANTHER_DOCS_LINK } from 'Source/constants';
 import useRouter from 'Hooks/useRouter';
-import NavIconButton from './NavIconButton';
-import ProfileIcon from './ProfileIcon';
+import { AlertStatusesEnum } from 'Generated/schema';
+import NavLink from './NavLink';
+import NavGroup from './NavGroup';
+import ProfileInfo from './ProfileInfo';
 import {
   SettingsNavigation,
   ComplianceNavigation,
   LogAnalysisNavigation,
 } from './SecondaryNavigations';
 
-const SECONDARY_NAV_WIDTH = 200;
 const COMPLIANCE_NAV_KEY = 'compliance';
 const LOG_ANALYSIS_NAV_KEY = 'logAnalysis';
 const SETTINGS_NAV_KEY = 'settings';
@@ -51,7 +51,9 @@ const Navigation = () => {
   // initial value of `null` which would instantly be updated from the code in `React.useEffect`
   const getSecondaryNavKey = () => {
     const isCompliancePage = pathname.includes(urls.compliance.home());
-    const isLogAnalysisPage = pathname.includes(urls.logAnalysis.home());
+    const isLogAnalysisPage =
+      pathname.includes(urls.logAnalysis.home()) &&
+      !pathname.includes(urls.logAnalysis.alerts.list());
     const isSettingsPage = pathname.includes(urls.settings.home());
 
     if (isCompliancePage) {
@@ -75,14 +77,6 @@ const Navigation = () => {
   const isComplianceNavigationActive = secondaryNav === COMPLIANCE_NAV_KEY;
   const isLogAnalysisNavigationActive = secondaryNav === LOG_ANALYSIS_NAV_KEY;
   const isSettingsNavigationActive = secondaryNav === SETTINGS_NAV_KEY;
-  const isSecondaryNavigationActive = secondaryNav !== null;
-
-  const transitions = useTransition(isSecondaryNavigationActive, null, {
-    initial: { width: SECONDARY_NAV_WIDTH, opacity: 0 },
-    from: { width: 0, opacity: 0 },
-    enter: { width: SECONDARY_NAV_WIDTH, opacity: 1 },
-    leave: { width: 0, opacity: 0 },
-  });
 
   return (
     <Flex
@@ -94,71 +88,95 @@ const Navigation = () => {
       height="100vh"
       backgroundColor="navyblue-700"
     >
-      <Flex as="nav" direction="column" width={60} height="100%" aria-label="Main" align="center">
-        <Box as={RRLink} to="/" py={3} mb={3}>
+      <Flex as="nav" direction="column" width={220} height="100%" aria-label="Main" pb={2}>
+        <Box as={RRLink} to="/" px={4} pb={3} pt={8}>
           <Img
-            src={PantherIcon}
+            src={PantherLogo}
             alt="Panther logo"
-            nativeWidth={30}
-            nativeHeight={30}
+            nativeWidth="auto"
+            nativeHeight={32}
             display="block"
           />
         </Box>
-        <ProfileIcon />
-        <Divider mt={6} mb={4} width={37} color="navyblue-300" />
-        <Flex direction="column" as="ul" flex="1 0 auto" spacing={4}>
-          <Box as="li">
-            <NavIconButton
+        <Flex direction="column" as="ul" flex="1 0 auto" px={4}>
+          <Divider width="100%" color="navyblue-300" />
+          <Box as="li" mb={2}>
+            <NavLink
+              icon="alert-circle"
+              to={`${urls.logAnalysis.alerts.list()}?status[]=${AlertStatusesEnum.Open}&status[]=${
+                AlertStatusesEnum.Triaged
+              }`}
+              label="Alerts"
+            />
+          </Box>
+
+          <Box as="li" mb={2}>
+            <NavGroup
               active={isLogAnalysisNavigationActive}
               icon="log-analysis"
-              tooltipLabel="Log Analysis"
-              onClick={() =>
+              label="Log Analysis"
+              onSelect={() =>
                 setSecondaryNav(isLogAnalysisNavigationActive ? null : LOG_ANALYSIS_NAV_KEY)
               }
-            />
+            >
+              <LogAnalysisNavigation />
+            </NavGroup>
           </Box>
-          <Box as="li">
-            <NavIconButton
+          <Box as="li" mb={2}>
+            <NavGroup
               active={isComplianceNavigationActive}
               icon="cloud-security"
-              tooltipLabel="Cloud Security"
-              onClick={() =>
+              label="Cloud Security"
+              onSelect={() =>
                 setSecondaryNav(isComplianceNavigationActive ? null : COMPLIANCE_NAV_KEY)
               }
-            />
+            >
+              <ComplianceNavigation />
+            </NavGroup>
           </Box>
-          <Box as="li" mb="auto">
-            <NavIconButton
+          <Box as="li" mb={2}>
+            <NavGroup
               active={isSettingsNavigationActive}
-              icon="settings"
-              tooltipLabel="Settings"
-              onClick={() => setSecondaryNav(isSettingsNavigationActive ? null : SETTINGS_NAV_KEY)}
-            />
+              icon="settings-alt"
+              label="Settings"
+              onSelect={() => setSecondaryNav(isSettingsNavigationActive ? null : SETTINGS_NAV_KEY)}
+            >
+              <SettingsNavigation />
+            </NavGroup>
           </Box>
+
           <Box as="li" mt="auto">
-            <Link external href={PANTHER_DOCS_LINK} tabIndex={-1}>
-              <NavIconButton active={false} icon="docs" tooltipLabel="Documentation" />
-            </Link>
+            <Box
+              as={Link}
+              external
+              href={PANTHER_DOCS_LINK}
+              fontWeight="normal"
+              borderRadius="small"
+              px={4}
+              py={3}
+              fontSize="medium"
+              display="flex"
+              color="gray-50"
+              alignItems="center"
+              _hover={{
+                color: 'gray-50',
+                backgroundColor: 'navyblue-500',
+              }}
+            >
+              <Icon type="docs" size="medium" mr={3} />
+              <Box>Documentation</Box>
+            </Box>
           </Box>
+
           <Box as="li">
-            <Link as={RRLink} to={urls.account.support()} tabIndex={-1}>
-              <NavIconButton active={false} icon="help" tooltipLabel="Support" />
-            </Link>
+            <NavLink icon="help" label="Support" to={urls.account.support()} />
           </Box>
         </Flex>
+
+        <Box p={4} backgroundColor="navyblue-800" mt={4}>
+          <ProfileInfo />
+        </Box>
       </Flex>
-      {transitions.map(
-        ({ item, key, props: styles }) =>
-          item && (
-            <animated.div key={key} style={{ width: 0, ...styles }}>
-              <Box height="100%" borderLeft="1px solid" borderColor="navyblue-400" px="14px">
-                {secondaryNav === COMPLIANCE_NAV_KEY && <ComplianceNavigation />}
-                {secondaryNav === LOG_ANALYSIS_NAV_KEY && <LogAnalysisNavigation />}
-                {secondaryNav === SETTINGS_NAV_KEY && <SettingsNavigation />}
-              </Box>
-            </animated.div>
-          )
-      )}
     </Flex>
   );
 };
