@@ -338,10 +338,8 @@ func BuildEventTypeSchema(eventType reflect.Type, indicators ...FieldID) (reflec
 	fields, _ = extendStructFields(fields, reflect.TypeOf(CoreFields{}))
 
 	// Auto-detect required field ids
-	if indicators == nil {
-		indicators = FieldSetFromType(eventType)
-	}
-	indicators = NewFieldSet(indicators...).Indicators()
+	indicators = append(indicators, FieldSetFromType(eventType)...)
+	indicators = FieldSet(indicators).Indicators()
 	// Sort field set to make sure struct fields have strict order
 	sort.Sort(FieldSet(indicators))
 
@@ -349,6 +347,7 @@ func BuildEventTypeSchema(eventType reflect.Type, indicators ...FieldID) (reflec
 	distinct := map[FieldID]bool{}
 	for _, id := range indicators {
 		if id.IsCore() {
+			// This will never happen since Indicators() above filters out Core fields
 			return nil, errors.New(`invalid field id`)
 		}
 
@@ -539,18 +538,27 @@ func FieldSetFromTag(tag string) FieldSet {
 	}
 
 	// Check the indicator tag to see if it maps to a registered scanner
-	pantherTag, err := tags.Get(TagNameIndicator)
-	if err != nil {
+	pantherTag, ok := reflect.StructTag(tag).Lookup(TagNameIndicator)
+	if !ok {
 		// No `panther` tag
 		return nil
 	}
-	_, fields := LookupScanner(pantherTag.Name)
-	return fields
+	var out FieldSet
+	for _, name := range strings.Split(pantherTag, ",") {
+		name = strings.TrimSpace(name)
+		_, fields := LookupScanner(name)
+		for _, field := range fields {
+			out = out.Add(field)
+		}
+	}
+	return out
 }
 
 // FieldSetFromType produces the minimum required field set to support scanners and core fields defined in a struct.
 func FieldSetFromType(typ reflect.Type) (fields FieldSet) {
-	switch typ := derefType(typ); typ.Kind() {
+	switch typ.Kind() {
+	case reflect.Ptr:
+		return FieldSetFromType(typ.Elem())
 	case reflect.Struct:
 		for i := 0; i < typ.NumField(); i++ {
 			field := typ.Field(i)
