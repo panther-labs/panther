@@ -37,6 +37,11 @@ var logTypeResourceHistory = logtypes.MustBuild(logtypes.ConfigJSON{
 	NewEvent: func() interface{} {
 		return &Resource{}
 	},
+	ExtraIndicators: pantherlog.FieldSet{ // these are added by extractors but not used in struct directly
+		pantherlog.FieldDomainName,
+		pantherlog.FieldIPAddress,
+		pantherlog.FieldAWSTag,
+	},
 	Validate: pantherlog.ValidateStruct,
 })
 
@@ -57,11 +62,6 @@ type Resource struct {
 	ARN              pantherlog.String      `json:"arn" panther:"aws_arn" description:"The Amazon Resource Name (ARN) of the resource."`
 	Name             pantherlog.String      `json:"name" description:"The AWS resource name of the resource."`
 	Tags             map[string]string      `json:"tags" description:"A standardized format for key/value resource tags."`
-
-	// dummy fields that are not exported but used to ensure that `p_any` columns are created in the schema for extracted fields
-	DummyDomain pantherlog.String `json:"-" panther:"domain"`
-	DummyIP     pantherlog.String `json:"-" panther:"ip"`
-	DummyTags   pantherlog.String `json:"-" panther:"aws_tag"`
 }
 
 // WriteValuesTo implements pantherlog.ValueWriterTo interface
