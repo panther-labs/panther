@@ -30,7 +30,7 @@ import (
 func TestFirewallParserTCP(t *testing.T) {
 	log := `Mar 19 18:49:32 myjwas kernel: IPTABLES Dropped: IN=eth0 OUT= MAC=00:0c:29:cf:4d:c8:2c:21:72:c6:99:08:08:00 SRC=10.10.0.117 DST=10.20.0.53 LEN=40 TOS=0x00 PREC=0x00 TTL=63 ID=51749 DF PROTO=TCP SPT=51093 DPT=5000 WINDOW=0 RES=0x00 RST URGP=0`
 	now := time.Now()
-	tm := time.Date(now.Year(), 3, 19, 18, 49, 32, 0, time.UTC)
+	tm := expectedTestDate(time.Date(now.Year(), 3, 19, 18, 49, 32, 0, time.UTC))
 	event := Firewall{
 		Timestamp: timestamp.RFC3339(tm),
 		Event:     "Dropped",

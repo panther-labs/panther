@@ -32,7 +32,7 @@ func TestSecurityParserIncident(t *testing.T) {
 	//nolint:lll
 	log := `Oct 13 16:33:13 jwas1 [INFO][mws-security-alert][traffic-info] MKS_Category="Security Incident" MKS_Type="Apache Configuration Requested" MKS_Severity="2" MKS_ProfileName="Brett 8356" MKS_SrcIP="10.10.0.117" MKS_pubkey="el4urlypSXuRHOM3IoLT" MKS_useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.101 Safari/537.36" MKS_url="http://jwas1.jsec.net:80/.htaccess" MKS_count="1" MKS_fakeresponse="true"`
 	now := time.Now()
-	tm := time.Date(now.Year(), time.October, 13, 16, 33, 13, 0, time.UTC)
+	tm := expectedTestDate(time.Date(now.Year(), time.October, 13, 16, 33, 13, 0, time.UTC))
 	event := Security{
 		Timestamp:   timestamp.RFC3339(tm),
 		Service:     "traffic-info",
@@ -59,7 +59,7 @@ func TestSecurityNewProfile(t *testing.T) {
 	//nolint:lll
 	log := `Oct 13 16:33:13 jwas1 [INFO][mws-security-alert][traffic-info] MKS_Category="New Profile" MKS_ProfileId="3811" MKS_ProfileName="Brett 8356" MKS_PubKey="el4urlypSXuRHOM3IoLT"`
 	now := time.Now()
-	tm := time.Date(now.Year(), time.October, 13, 16, 33, 13, 0, time.UTC)
+	tm := expectedTestDate(time.Date(now.Year(), time.October, 13, 16, 33, 13, 0, time.UTC))
 	event := Security{
 		Timestamp:   timestamp.RFC3339(tm),
 		Service:     "traffic-info",
@@ -78,7 +78,7 @@ func TestSecurityNewCounterResponse(t *testing.T) {
 	//nolint:lll
 	log := `Oct 13 16:33:55 jwas1 [INFO][mws-security-alert][auto-response] MKS_Category="New Counter Response" MKS_ResponseCode="BL" MKS_ResponseName="Block User" MKS_ProfileId="3811" MKS_ProfileName="Brett 8356" MKS_ResponseCreated="2014-10-13 16:33:54.0" MKS_ResponseDelayed="2014-10-13 16:33:54.0" MKS_ResponseExpires="null" MKS_ResponseConfig="<config />" MKS_SilentRunning="true"`
 	now := time.Now()
-	tm := time.Date(now.Year(), time.October, 13, 16, 33, 55, 0, time.UTC)
+	tm := expectedTestDate(time.Date(now.Year(), time.October, 13, 16, 33, 55, 0, time.UTC))
 	created := time.Date(2014, 10, 13, 16, 33, 54, 0, time.UTC)
 	delayed := time.Date(2014, 10, 13, 16, 33, 54, 0, time.UTC)
 	event := Security{
