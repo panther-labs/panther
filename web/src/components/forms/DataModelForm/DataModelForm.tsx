@@ -112,7 +112,12 @@ const DataModelForm: React.FC<DataModelFormProps> = ({ initialValues, onSubmit }
                   placeholder="Where should the rule appoly?"
                 />
                 <Flex align="center">
-                  <Field as={FormikSwitch} name="enabled" label="Enabled" />
+                  <Field
+                    as={FormikSwitch}
+                    name="enabled"
+                    label="Enabled"
+                    placeholder="Toggle Enabled"
+                  />
                 </Flex>
               </Grid>
             </Box>
@@ -147,7 +152,7 @@ const DataModelForm: React.FC<DataModelFormProps> = ({ initialValues, onSubmit }
                               placeholder="A log type method to map to"
                               name={`mappings[${index}].method`}
                             />
-                            <Flex spacing={2} align="center">
+                            <Flex spacing={2} mt={2}>
                               {index > 0 && (
                                 <IconButton
                                   size="medium"
