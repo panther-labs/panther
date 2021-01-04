@@ -22,6 +22,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"go.uber.org/multierr"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
@@ -33,10 +34,10 @@ type SyncDatabaseEvent struct {
 	RequiredLogTypes []string
 }
 
-func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *SyncDatabaseEvent) (warnings []error, err error) {
+func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *SyncDatabaseEvent) (err error) {
 	for db, desc := range pantherdb.Databases {
 		if err := awsglue.EnsureDatabase(ctx, h.GlueClient, db, desc); err != nil {
-			return nil, errors.Wrapf(err, "failed to create database %s", db)
+			return errors.Wrapf(err, "failed to create database %s", db)
 		}
 	}
 	// We combine the deployed log types with the ones required by all active sources
@@ -45,21 +46,38 @@ func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *Sync
 	{
 		deployedLogTypes, err := h.fetchAllDeployedLogTypes(ctx)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to fetch deployed log types")
+			return errors.Wrap(err, "failed to fetch deployed log types")
 		}
 		syncLogTypes = stringset.Concat(deployedLogTypes, event.RequiredLogTypes)
 	}
 
-	if warnings, err = h.createOrUpdateTablesForLogTypes(ctx, syncLogTypes); err != nil {
-		return warnings, errors.Wrap(err, "failed to update tables for deployed log types")
+	// this can return non-fatal errors we want to return to caller but but not stop
+	var createTablesErr error
+	if createTablesErr = h.createOrUpdateTablesForLogTypes(ctx, syncLogTypes); HasFatalCreateTableError(createTablesErr) {
+		err = errors.Wrap(err, "failed to update tables for deployed log types")
+		return err
 	}
-	if warnings, err = h.createOrReplaceViewsForAllDeployedLogTables(ctx); err != nil {
-		return warnings, errors.Wrap(err, "failed to update athena views for deployed log types")
+	defer func() { // add in at the end for caller
+		err = multierr.Combine(err, createTablesErr)
+	}()
+
+	// this can return non-fatal errors we want to return to caller but but not stop
+	var createViewsErr error
+	if createViewsErr = h.createOrReplaceViewsForAllDeployedLogTables(ctx); HasFatalCreateTableError(createViewsErr) {
+		err = errors.Wrap(err, "failed to update athena views for deployed log types")
+		return err
 	}
-	if err = h.sendPartitionSync(ctx, event.TraceID, syncLogTypes); err != nil {
-		return warnings, errors.Wrap(err, "failed to send sync partitions event")
+	defer func() { // add in at the end for caller
+		err = multierr.Combine(err, createViewsErr)
+	}()
+
+	var syncError error
+	if syncError = h.sendPartitionSync(ctx, event.TraceID, syncLogTypes); syncError != nil {
+		err = errors.Wrap(err, "failed to send sync partitions event")
+		return err
 	}
-	return nil, nil
+
+	return err
 }
 
 // sendPartitionSync triggers a database partition sync by sending an event to the queue.

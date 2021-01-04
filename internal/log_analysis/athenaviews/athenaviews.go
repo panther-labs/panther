@@ -254,7 +254,7 @@ func (pvc *pantherViewColumns) viewColumns(table *awsglue.GlueTableMetadata) str
 	tableColumns := pvc.columnsByTable[table.TableName()]
 	selectColumns := make([]string, 0, len(pvc.allColumns)+1)
 	// tag each with database name
-	selectColumns = append(selectColumns, fmt.Sprintf("'%s' AS databaseName", table.DatabaseName()))
+	selectColumns = append(selectColumns, fmt.Sprintf("'%s' AS p_db_name", table.DatabaseName()))
 	for _, column := range pvc.allColumns {
 		selectColumn := column
 		if _, exists := tableColumns[column]; !exists { // fill in missing columns with NULL

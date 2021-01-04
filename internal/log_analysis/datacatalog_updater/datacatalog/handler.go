@@ -96,18 +96,24 @@ func (h *LambdaHandler) HandleSQSEvent(ctx context.Context, event *events.SQSEve
 		case *events.S3Event:
 			err = h.HandleS3Event(ctx, task)
 		case *CreateTablesEvent:
-			var warnings []error
-			warnings, err = h.HandleCreateTablesEvent(ctx, task)
+			createTablesError := h.HandleCreateTablesEvent(ctx, task)
 			// log at Error level so we get paged
-			for _, warning := range warnings {
-				zap.L().Error("HandleCreateTablesEvent()", zap.Error(warning))
+			for _, multiErr := range multierr.Errors(createTablesError) {
+				if IsUnResolvedLogType(multiErr) {
+					zap.L().Error("HandleCreateTablesEvent()", zap.Error(multiErr))
+				} else { // must be fatal error
+					err = multiErr
+				}
 			}
 		case *SyncDatabaseEvent:
-			var warnings []error
-			warnings, err = h.HandleSyncDatabaseEvent(ctx, task)
+			syncDatabasesError := h.HandleSyncDatabaseEvent(ctx, task)
 			// log at Error level so we get paged
-			for _, warning := range warnings {
-				zap.L().Error("HandleSyncDatabaseEvent()", zap.Error(warning))
+			for _, multiErr := range multierr.Errors(syncDatabasesError) {
+				if IsUnResolvedLogType(multiErr) {
+					zap.L().Error("HandleSyncDatabaseEvent()", zap.Error(multiErr))
+				} else { // must be fatal error
+					err = multiErr
+				}
 			}
 		case *SyncDatabasePartitionsEvent:
 			err = h.HandleSyncDatabasePartitionsEvent(ctx, task)
