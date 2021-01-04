@@ -52,7 +52,7 @@ func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, 
 	}
 
 	// Then, destination overrides (set in the detection's form)
-	if alertOutputs, ok := getDesinationOverrides(alert, outputs); ok {
+	if alertOutputs, ok := getDestinationOverrides(alert, outputs); ok {
 		return alertOutputs, nil
 	}
 
@@ -99,7 +99,7 @@ func getDynamicDestinations(alert *deliveryModels.Alert, outputs []*outputModels
 	return alertOutputs, len(alertOutputs) > 0
 }
 
-func getDesinationOverrides(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) ([]*outputModels.AlertOutput, bool) {
+func getDestinationOverrides(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) ([]*outputModels.AlertOutput, bool) {
 	alertOutputs := []*outputModels.AlertOutput{}
 	if len(alert.OutputIds) == 0 {
 		return alertOutputs, false
