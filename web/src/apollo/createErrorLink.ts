@@ -20,7 +20,7 @@ import { History } from 'history';
 import { LocationErrorState } from 'Components/utils/ApiErrorFallback';
 import { getOperationName } from 'apollo-utilities';
 import { ListRemediationsDocument } from 'Components/forms/PolicyForm';
-import { RuleTeaserDocument } from 'Pages/AlertDetails';
+import { RuleTeaserDocument } from 'Pages/AlertDetails/RuleAlertDetails/graphql/ruleTeaser.generated';
 import { ErrorResponse, onError } from 'apollo-link-error';
 import { logError } from 'Helpers/errors';
 import { ApolloLink } from '@apollo/client';

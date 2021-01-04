@@ -1,0 +1,5 @@
+query ListCustomLogSchemas {
+  listCustomLogs {
+    ...CustomLogTeaser
+  }
+}

@@ -22,14 +22,20 @@ package api
 import (
 	"encoding/base64"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/kelseyhightower/envconfig"
+	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/lambda/analysis/models"
+	"github.com/panther-labs/panther/internal/log_analysis/alert_forwarder/forwarder"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
+	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 // API has all of the handlers as receiver methods.
@@ -37,6 +43,7 @@ type API struct {
 	awsSession *session.Session
 	alertsDB   table.API
 	s3Client   s3iface.S3API
+	ruleCache  forwarder.RuleCache
 
 	env envConfig
 }
@@ -54,12 +61,16 @@ func Setup() *API {
 	envconfig.MustProcess("", &env)
 
 	awsSession := session.Must(session.NewSession())
+	lambdaClient := lambda.New(awsSession)
+	analysisClient := gatewayapi.NewClient(lambdaClient, "panther-analysis-api")
+	ruleCache := forwarder.NewCache(analysisClient)
 
 	return &API{
 		awsSession: awsSession,
 		alertsDB:   env.NewAlertsTable(dynamodb.New(awsSession)),
-		s3Client:   s3.New(awsSession),
+		s3Client:   s3.New(awsSession.Copy(aws.NewConfig().WithMaxRetries(10))),
 		env:        env,
+		ruleCache:  ruleCache,
 	}
 }
 
@@ -96,4 +107,19 @@ func decodePaginationToken(token string) (*EventPaginationToken, error) {
 		return nil, err
 	}
 	return result, nil
+}
+
+func (api *API) getAlertRules(alerts []*table.AlertItem) map[string]*models.Rule {
+	alertRules := map[string]*models.Rule{}
+	for _, item := range alerts {
+		var err error
+		if _, ok := alertRules[item.RuleID+item.RuleVersion]; !ok {
+			alertRules[item.RuleID+item.RuleVersion], err = api.ruleCache.Get(item.RuleID, item.RuleVersion)
+			if err != nil {
+				zap.L().Info("failed to get rule with id",
+					zap.Any("rule id", item.RuleID), zap.Any("rule version", item.RuleVersion))
+			}
+		}
+	}
+	return alertRules
 }

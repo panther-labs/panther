@@ -17,11 +17,14 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading } from 'pouncejs';
+import { Flex } from 'pouncejs';
 import urls from 'Source/urls';
 import FadeInTrail from 'Components/utils/FadeInTrail';
-import { AlertStatusesEnum } from 'Generated/schema';
-import { useListDestinations, useListAvailableLogTypes } from 'Source/graphql/queries';
+import {
+  useListDestinations,
+  useListAvailableLogTypes,
+  useListComplianceSourceNames,
+} from 'Source/graphql/queries';
 import NavLink from '../NavLink';
 
 const LogAnalysisNavigation: React.FC = () => {
@@ -33,31 +36,37 @@ const LogAnalysisNavigation: React.FC = () => {
   // The same logic applies to available destinations
   useListAvailableLogTypes();
   useListDestinations();
+  useListComplianceSourceNames();
 
   return (
-    <Box>
-      <Heading size="x-small" fontWeight="bold" pt={4} pb={5} truncated>
-        LOG ANALYSIS
-      </Heading>
-      <Flex direction="column" as="ul">
-        <FadeInTrail as="li">
-          <NavLink icon="dashboard-alt" to={urls.logAnalysis.overview()} label="Overview" />
-          <NavLink
-            icon="rule"
-            to={`${urls.logAnalysis.rules.list()}?page=1&sortBy=lastModified&sortDir=descending`}
-            label="Rules"
-          />
-          <NavLink
-            icon="alert"
-            to={`${urls.logAnalysis.alerts.list()}?status[]=${AlertStatusesEnum.Open}&status[]=${
-              AlertStatusesEnum.Triaged
-            }`}
-            label="Alerts"
-          />
-          <NavLink icon="log-source" to={urls.logAnalysis.sources.list()} label="Sources" />
-        </FadeInTrail>
-      </Flex>
-    </Box>
+    <Flex direction="column" as="ul">
+      <FadeInTrail as="li">
+        <NavLink
+          isSecondary
+          icon="dashboard-alt"
+          to={urls.logAnalysis.overview()}
+          label="Overview"
+        />
+        <NavLink
+          isSecondary
+          icon="rule"
+          to={`${urls.logAnalysis.rules.list()}?page=1&sortBy=lastModified&sortDir=descending`}
+          label="Rules"
+        />
+        <NavLink
+          isSecondary
+          icon="log-source"
+          to={urls.logAnalysis.sources.list()}
+          label="Sources"
+        />
+        <NavLink
+          isSecondary
+          icon="source-code"
+          to={urls.logAnalysis.customLogs.list()}
+          label="Custom Schemas"
+        />
+      </FadeInTrail>
+    </Flex>
   );
 };
 

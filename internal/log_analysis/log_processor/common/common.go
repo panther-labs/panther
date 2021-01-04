@@ -82,7 +82,7 @@ func Setup() {
 	}
 }
 
-// DataStream represents a data stream that read by the processor
+// DataStream represents a data stream for an s3 object read by the processor
 type DataStream struct {
 	Stream       logstream.Stream
 	Closer       io.Closer

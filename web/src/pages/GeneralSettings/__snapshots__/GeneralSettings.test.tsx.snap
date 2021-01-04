@@ -763,7 +763,7 @@ exports[`GeneralSettings it renders the general settings page along with the foo
               </span>
             </a>
           </div>
-          <div
+          <dl
             class="panther-57"
           >
             <section
@@ -775,12 +775,12 @@ exports[`GeneralSettings it renders the general settings page along with the foo
               >
                 Plan
               </dt>
-              <dl
+              <dd
                 aria-labelledby="plan"
                 class="panther-46"
               >
                 Community
-              </dl>
+              </dd>
             </section>
             <section
               class="panther-5"
@@ -791,12 +791,12 @@ exports[`GeneralSettings it renders the general settings page along with the foo
               >
                 AWS Account ID
               </dt>
-              <dl
+              <dd
                 aria-labelledby="aws_account_id"
                 class="panther-46"
               >
                 111111111111
-              </dl>
+              </dd>
             </section>
             <section
               class="panther-5"
@@ -807,7 +807,7 @@ exports[`GeneralSettings it renders the general settings page along with the foo
               >
                 Version
               </dt>
-              <dl
+              <dd
                 aria-labelledby="panther_version"
                 class="panther-46"
               >
@@ -815,7 +815,7 @@ exports[`GeneralSettings it renders the general settings page along with the foo
                  (
                 12345678
                 )
-              </dl>
+              </dd>
             </section>
             <section
               class="panther-5"
@@ -826,14 +826,14 @@ exports[`GeneralSettings it renders the general settings page along with the foo
               >
                 AWS Region
               </dt>
-              <dl
+              <dd
                 aria-labelledby="aws_region"
                 class="panther-46"
               >
                 us-west-2
-              </dl>
+              </dd>
             </section>
-          </div>
+          </dl>
         </div>
       </div>
     </div>

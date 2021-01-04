@@ -19,6 +19,8 @@
 import {
   ActiveSuppressCount,
   AddComplianceIntegrationInput,
+  AddCustomLogInput,
+  AddCustomLogOutput,
   AddGlobalPythonModuleInput,
   AddPolicyInput,
   AddRuleInput,
@@ -35,8 +37,11 @@ import {
   ComplianceIntegrationHealth,
   ComplianceItem,
   ComplianceStatusCounts,
+  CustomLogRecord,
   CustomWebhookConfig,
   CustomWebhookConfigInput,
+  DeleteCustomLogInput,
+  DeleteCustomLogOutput,
   DeleteGlobalPythonInputItem,
   DeleteGlobalPythonModuleInput,
   DeletePolicyInput,
@@ -57,6 +62,8 @@ import {
   GeneralSettings,
   GetAlertInput,
   GetComplianceIntegrationTemplateInput,
+  GetCustomLogInput,
+  GetCustomLogOutput,
   GetGlobalPythonModuleInput,
   GetPolicyInput,
   GetResourceInput,
@@ -108,6 +115,8 @@ import {
   RuleSummary,
   S3LogIntegration,
   S3LogIntegrationHealth,
+  S3PrefixLogTypes,
+  S3PrefixLogTypesInput,
   ScannedResources,
   ScannedResourceStats,
   SendTestAlertInput,
@@ -150,6 +159,7 @@ import {
   AlertTypesEnum,
   ComplianceStatusEnum,
   DestinationTypeEnum,
+  ErrorCodeEnum,
   ListAlertsSortFieldsEnum,
   ListPoliciesSortFieldsEnum,
   ListResourcesSortFieldsEnum,
@@ -179,6 +189,28 @@ export const buildAddComplianceIntegrationInput = (
     integrationLabel: 'integrationLabel' in overrides ? overrides.integrationLabel : 'withdrawal',
     remediationEnabled: 'remediationEnabled' in overrides ? overrides.remediationEnabled : false,
     cweEnabled: 'cweEnabled' in overrides ? overrides.cweEnabled : false,
+  };
+};
+
+export const buildAddCustomLogInput = (
+  overrides: Partial<AddCustomLogInput> = {}
+): AddCustomLogInput => {
+  return {
+    revision: 'revision' in overrides ? overrides.revision : 176,
+    logType: 'logType' in overrides ? overrides.logType : 'matrix',
+    description: 'description' in overrides ? overrides.description : 'Buckinghamshire',
+    referenceURL: 'referenceURL' in overrides ? overrides.referenceURL : 'enable',
+    logSpec: 'logSpec' in overrides ? overrides.logSpec : 'applications',
+  };
+};
+
+export const buildAddCustomLogOutput = (
+  overrides: Partial<AddCustomLogOutput> = {}
+): AddCustomLogOutput => {
+  return {
+    __typename: 'AddCustomLogOutput',
+    error: 'error' in overrides ? overrides.error : buildError(),
+    record: 'record' in overrides ? overrides.record : buildCustomLogRecord(),
   };
 };
 
@@ -245,8 +277,8 @@ export const buildAddS3LogIntegrationInput = (
     integrationLabel: 'integrationLabel' in overrides ? overrides.integrationLabel : 'payment',
     s3Bucket: 's3Bucket' in overrides ? overrides.s3Bucket : 'backing up',
     kmsKey: 'kmsKey' in overrides ? overrides.kmsKey : 'Personal Loan Account',
-    s3Prefix: 's3Prefix' in overrides ? overrides.s3Prefix : 'reintermediate',
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['expedite'],
+    s3PrefixLogTypes:
+      's3PrefixLogTypes' in overrides ? overrides.s3PrefixLogTypes : [buildS3PrefixLogTypesInput()],
   };
 };
 
@@ -432,6 +464,18 @@ export const buildComplianceStatusCounts = (
   };
 };
 
+export const buildCustomLogRecord = (overrides: Partial<CustomLogRecord> = {}): CustomLogRecord => {
+  return {
+    __typename: 'CustomLogRecord',
+    logType: 'logType' in overrides ? overrides.logType : 'Towels',
+    revision: 'revision' in overrides ? overrides.revision : 674,
+    updatedAt: 'updatedAt' in overrides ? overrides.updatedAt : 'Automotive',
+    description: 'description' in overrides ? overrides.description : 'Rustic',
+    referenceURL: 'referenceURL' in overrides ? overrides.referenceURL : 'Savings Account',
+    logSpec: 'logSpec' in overrides ? overrides.logSpec : 'proactive',
+  };
+};
+
 export const buildCustomWebhookConfig = (
   overrides: Partial<CustomWebhookConfig> = {}
 ): CustomWebhookConfig => {
@@ -446,6 +490,24 @@ export const buildCustomWebhookConfigInput = (
 ): CustomWebhookConfigInput => {
   return {
     webhookURL: 'webhookURL' in overrides ? overrides.webhookURL : 'bypass',
+  };
+};
+
+export const buildDeleteCustomLogInput = (
+  overrides: Partial<DeleteCustomLogInput> = {}
+): DeleteCustomLogInput => {
+  return {
+    logType: 'logType' in overrides ? overrides.logType : 'deposit',
+    revision: 'revision' in overrides ? overrides.revision : 783,
+  };
+};
+
+export const buildDeleteCustomLogOutput = (
+  overrides: Partial<DeleteCustomLogOutput> = {}
+): DeleteCustomLogOutput => {
+  return {
+    __typename: 'DeleteCustomLogOutput',
+    error: 'error' in overrides ? overrides.error : buildError(),
   };
 };
 
@@ -664,6 +726,25 @@ export const buildGetComplianceIntegrationTemplateInput = (
   };
 };
 
+export const buildGetCustomLogInput = (
+  overrides: Partial<GetCustomLogInput> = {}
+): GetCustomLogInput => {
+  return {
+    logType: 'logType' in overrides ? overrides.logType : 'Director',
+    revision: 'revision' in overrides ? overrides.revision : 64,
+  };
+};
+
+export const buildGetCustomLogOutput = (
+  overrides: Partial<GetCustomLogOutput> = {}
+): GetCustomLogOutput => {
+  return {
+    __typename: 'GetCustomLogOutput',
+    error: 'error' in overrides ? overrides.error : buildError(),
+    record: 'record' in overrides ? overrides.record : buildCustomLogRecord(),
+  };
+};
+
 export const buildGetGlobalPythonModuleInput = (
   overrides: Partial<GetGlobalPythonModuleInput> = {}
 ): GetGlobalPythonModuleInput => {
@@ -706,9 +787,7 @@ export const buildGetS3LogIntegrationTemplateInput = (
     awsAccountId: 'awsAccountId' in overrides ? overrides.awsAccountId : 'Armenia',
     integrationLabel: 'integrationLabel' in overrides ? overrides.integrationLabel : 'Concrete',
     s3Bucket: 's3Bucket' in overrides ? overrides.s3Bucket : 'generating',
-    s3Prefix: 's3Prefix' in overrides ? overrides.s3Prefix : 'optical',
     kmsKey: 'kmsKey' in overrides ? overrides.kmsKey : 'Books',
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Borders'],
   };
 };
 
@@ -780,6 +859,7 @@ export const buildJiraConfig = (overrides: Partial<JiraConfig> = {}): JiraConfig
     apiKey: 'apiKey' in overrides ? overrides.apiKey : 'bluetooth',
     assigneeId: 'assigneeId' in overrides ? overrides.assigneeId : 'bleeding-edge',
     issueType: 'issueType' in overrides ? overrides.issueType : 'Iowa',
+    labels: 'labels' in overrides ? overrides.labels : ['Rhode Island'],
   };
 };
 
@@ -791,6 +871,7 @@ export const buildJiraConfigInput = (overrides: Partial<JiraConfigInput> = {}): 
     apiKey: 'apiKey' in overrides ? overrides.apiKey : 'Sleek Cotton Car',
     assigneeId: 'assigneeId' in overrides ? overrides.assigneeId : 'Virgin Islands, British',
     issueType: 'issueType' in overrides ? overrides.issueType : 'strategic',
+    labels: 'labels' in overrides ? overrides.labels : ['magenta'],
   };
 };
 
@@ -1314,7 +1395,8 @@ export const buildS3LogIntegration = (
     s3Bucket: 's3Bucket' in overrides ? overrides.s3Bucket : 'generating',
     s3Prefix: 's3Prefix' in overrides ? overrides.s3Prefix : 'IB',
     kmsKey: 'kmsKey' in overrides ? overrides.kmsKey : 'robust',
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['strategize'],
+    s3PrefixLogTypes:
+      's3PrefixLogTypes' in overrides ? overrides.s3PrefixLogTypes : [buildS3PrefixLogTypes()],
     health: 'health' in overrides ? overrides.health : buildS3LogIntegrationHealth(),
     stackName: 'stackName' in overrides ? overrides.stackName : 'River',
   };
@@ -1333,6 +1415,25 @@ export const buildS3LogIntegrationHealth = (
       's3BucketStatus' in overrides ? overrides.s3BucketStatus : buildIntegrationItemHealthStatus(),
     kmsKeyStatus:
       'kmsKeyStatus' in overrides ? overrides.kmsKeyStatus : buildIntegrationItemHealthStatus(),
+  };
+};
+
+export const buildS3PrefixLogTypes = (
+  overrides: Partial<S3PrefixLogTypes> = {}
+): S3PrefixLogTypes => {
+  return {
+    __typename: 'S3PrefixLogTypes',
+    prefix: 'prefix' in overrides ? overrides.prefix : 'synthesizing',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Markets'],
+  };
+};
+
+export const buildS3PrefixLogTypesInput = (
+  overrides: Partial<S3PrefixLogTypesInput> = {}
+): S3PrefixLogTypesInput => {
+  return {
+    prefix: 'prefix' in overrides ? overrides.prefix : 'Brand',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Circles'],
   };
 };
 
@@ -1668,8 +1769,8 @@ export const buildUpdateS3LogIntegrationInput = (
       'integrationLabel' in overrides ? overrides.integrationLabel : 'Buckinghamshire',
     s3Bucket: 's3Bucket' in overrides ? overrides.s3Bucket : 'green',
     kmsKey: 'kmsKey' in overrides ? overrides.kmsKey : 'deposit',
-    s3Prefix: 's3Prefix' in overrides ? overrides.s3Prefix : 'Keyboard',
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Dynamic'],
+    s3PrefixLogTypes:
+      's3PrefixLogTypes' in overrides ? overrides.s3PrefixLogTypes : [buildS3PrefixLogTypesInput()],
   };
 };
 

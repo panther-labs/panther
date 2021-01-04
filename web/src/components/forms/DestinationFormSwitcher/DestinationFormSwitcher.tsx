@@ -83,6 +83,7 @@ const DestinationFormSwitcher: React.FC<DestinationFormSwitcherProps> = ({
               'jira.apiKey',
               'jira.assigneeId',
               'jira.issueType',
+              'jira.labels',
             ]),
           }}
           onSubmit={onSubmit}

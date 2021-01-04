@@ -10,6 +10,7 @@ schema {
 }
 
 type Mutation {
+  addCustomLog(input: AddCustomLogInput!): AddCustomLogOutput!
   addDestination(input: DestinationInput!): Destination
   addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
   addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
@@ -19,6 +20,7 @@ type Mutation {
   addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
   deleteDestination(id: ID!): Boolean
   deleteComplianceIntegration(id: ID!): Boolean
+  deleteCustomLog(input: DeleteCustomLogInput): DeleteCustomLogOutput!
   deleteLogIntegration(id: ID!): Boolean
   deletePolicy(input: DeletePolicyInput!): Boolean
   deleteRule(input: DeleteRuleInput!): Boolean
@@ -75,6 +77,26 @@ type Query {
   rules(input: ListRulesInput): ListRulesResponse
   listGlobalPythonModules(input: ListGlobalPythonModuleInput!): ListGlobalPythonModulesResponse!
   users: [User!]!
+  getCustomLog(input: GetCustomLogInput!): GetCustomLogOutput!
+  listCustomLogs: [CustomLogRecord!]!
+}
+
+input DeleteCustomLogInput {
+  logType: String!
+  revision: Int!
+}
+
+input AddCustomLogInput {
+  revision: Int
+  logType: String!
+  description: String!
+  referenceURL: String!
+  logSpec: String!
+}
+
+input GetCustomLogInput {
+  logType: String!
+  revision: Int
 }
 
 input GetComplianceIntegrationTemplateInput {
@@ -88,9 +110,7 @@ input GetS3LogIntegrationTemplateInput {
   awsAccountId: String!
   integrationLabel: String!
   s3Bucket: String!
-  s3Prefix: String
   kmsKey: String
-  logTypes: [String!]!
 }
 
 input ListAlertsInput {
@@ -115,6 +135,33 @@ input GetAlertInput {
   alertId: ID!
   eventsPageSize: Int
   eventsExclusiveStartKey: String
+}
+
+type AddCustomLogOutput {
+  error: Error
+  record: CustomLogRecord
+}
+
+type DeleteCustomLogOutput {
+  error: Error
+}
+
+type ListAvailableLogTypesResponse {
+  logTypes: [String!]!
+}
+
+type GetCustomLogOutput {
+  error: Error
+  record: CustomLogRecord
+}
+
+type CustomLogRecord {
+  logType: String!
+  revision: Int!
+  updatedAt: String!
+  description: String!
+  referenceURL: String!
+  logSpec: String!
 }
 
 type IntegrationTemplate {
@@ -513,6 +560,10 @@ type ComplianceIntegration {
 
 union LogIntegration = S3LogIntegration | SqsLogSourceIntegration
 
+type S3PrefixLogTypes {
+  prefix: String!
+  logTypes: [String!]!
+}
 type S3LogIntegration {
   awsAccountId: String!
   createdAtTime: AWSDateTime!
@@ -524,7 +575,7 @@ type S3LogIntegration {
   s3Bucket: String!
   s3Prefix: String
   kmsKey: String
-  logTypes: [String!]!
+  s3PrefixLogTypes: [S3PrefixLogTypes!]!
   health: S3LogIntegrationHealth!
   stackName: String!
 }
@@ -547,13 +598,17 @@ input AddComplianceIntegrationInput {
   cweEnabled: Boolean
 }
 
+input S3PrefixLogTypesInput {
+  prefix: String!
+  logTypes: [String!]!
+}
+
 input AddS3LogIntegrationInput {
   awsAccountId: String!
   integrationLabel: String!
   s3Bucket: String!
   kmsKey: String
-  s3Prefix: String
-  logTypes: [String!]!
+  s3PrefixLogTypes: [S3PrefixLogTypesInput!]!
 }
 
 input SqsLogConfigInput {
@@ -579,8 +634,7 @@ input UpdateS3LogIntegrationInput {
   integrationLabel: String
   s3Bucket: String
   kmsKey: String
-  s3Prefix: String
-  logTypes: [String!]
+  s3PrefixLogTypes: [S3PrefixLogTypesInput!]
 }
 
 input UpdateSqsLogIntegrationInput {
@@ -645,6 +699,7 @@ type JiraConfig {
   apiKey: String!
   assigneeId: String
   issueType: String!
+  labels: [String!]!
 }
 
 type AsanaConfig {
@@ -714,6 +769,7 @@ input JiraConfigInput {
   apiKey: String!
   assigneeId: String
   issueType: String!
+  labels: [String!]
 }
 
 input AsanaConfigInput {
@@ -1132,6 +1188,6 @@ enum OpsgenieServiceRegionEnum {
   US
 }
 
-type ListAvailableLogTypesResponse {
-  logTypes: [String!]!
+enum ErrorCodeEnum {
+  NotFound
 }

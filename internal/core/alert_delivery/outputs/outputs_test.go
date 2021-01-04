@@ -29,7 +29,6 @@ import (
 )
 
 func init() {
-	policyURLPrefix = "https://panther.io/policies/"
 	alertURLPrefix = "https://panther.io/alerts/"
 }
 

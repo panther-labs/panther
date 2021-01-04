@@ -37,6 +37,7 @@ func TestSlackAlert(t *testing.T) {
 
 	createdAtTime := time.Now()
 	alert := &alertModels.Alert{
+		AlertID:      aws.String("alertId"),
 		AnalysisID:   "policyId",
 		Type:         alertModels.PolicyType,
 		CreatedAt:    createdAtTime,
@@ -52,7 +53,7 @@ func TestSlackAlert(t *testing.T) {
 				"fields": []map[string]interface{}{
 					{
 						"short": false,
-						"value": "<https://panther.io/policies/policyId|Click here to view in the Panther UI>",
+						"value": "<https://panther.io/alerts/alertId|Click here to view in the Panther UI>",
 					},
 					{
 						"short": false,

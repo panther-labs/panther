@@ -503,7 +503,7 @@ func TestSendDataToCloudSecurity(t *testing.T) {
 	uploadInput := destination.mockS3Uploader.Calls[0].Arguments.Get(0).(*s3manager.UploadInput)
 
 	assert.Equal(t, aws.String("testbucket"), uploadInput.Bucket)
-	expectedPrefix := "cloud_security/snapshot_compliancehistory/year=2020/month=01/day=01/hour=00/20200101T000000Z"
+	expectedPrefix := "cloud_security/compliance_history/year=2020/month=01/day=01/hour=00/20200101T000000Z"
 
 	assert.True(t, strings.HasPrefix(*uploadInput.Key, expectedPrefix))
 

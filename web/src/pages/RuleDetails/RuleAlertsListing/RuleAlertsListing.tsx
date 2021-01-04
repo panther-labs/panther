@@ -25,7 +25,7 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import NoResultsFound from 'Components/NoResultsFound';
 import { extractErrorMessage } from 'Helpers/utils';
 import EmptyBoxImg from 'Assets/illustrations/empty-box.svg';
-import AlertCard from 'Components/cards/AlertCard/AlertCard';
+import AlertCard from 'Components/cards/AlertCard';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import useInfiniteScroll from 'Hooks/useInfiniteScroll';
 import ListAlertFilters from 'Pages/ListAlerts/ListAlertFilters';
