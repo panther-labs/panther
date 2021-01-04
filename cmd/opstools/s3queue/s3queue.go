@@ -19,16 +19,14 @@ package s3queue
  */
 
 import (
+	"context"
 	"fmt"
-	"log"
-	"math"
-	"net/url"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
@@ -37,155 +35,154 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
+	"github.com/panther-labs/panther/cmd/opstools/s3list"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
+	"github.com/panther-labs/panther/pkg/awsretry"
 )
 
 const (
-	pageSize             = 1000
-	fakeTopicArnTemplate = "arn:aws:sns:us-east-1:%s:panther-fake-s3queue-topic" // account is added for sqs messages
-	progressNotify       = 5000                                                  // log a line every this many to show progress
+	maxRetries = 7
+
+	// account is added for sqs messages because the log processor expects it but the arn itself does not need to be real
+	fakeTopicArnTemplate = "arn:aws:sns:us-east-1:%s:panther-fake-s3queue-topic"
+
+	notifyChanDepth = 1000
 )
 
-type Stats struct {
-	NumFiles uint64
-	NumBytes uint64
+type Input struct {
+	DriverInput
+	Session  *session.Session
+	S3Path   string
+	S3Region string
+	Limit    uint64
+	Stats    s3list.Stats // passed in so we can get stats if canceled
 }
 
-func S3Queue(sess *session.Session, account, s3path, s3region, queueName string,
-	concurrency int, limit uint64, stats *Stats) (err error) {
-
-	return s3Queue(s3.New(sess.Copy(&aws.Config{Region: &s3region})), sqs.New(sess),
-		account, s3path, queueName, concurrency, limit, stats)
+type DriverInput struct {
+	Logger         *zap.SugaredLogger
+	Account        string
+	QueueName      string
+	Concurrency    int
+	FilesPerSecond float64       // if non-zero,  attempt to send at this rate
+	Duration       time.Duration // if set, stop after this much elapsed time
 }
 
-func s3Queue(s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, account, s3path, queueName string,
-	concurrency int, limit uint64, stats *Stats) (failed error) {
+func S3Queue(ctx context.Context, input *Input) (err error) {
+	clientsSession := input.Session.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
+		awsretry.NewConnectionErrRetryer(maxRetries)))
+	s3Client := s3.New(clientsSession.Copy(&aws.Config{Region: &input.S3Region}))
+	sqsClient := sqs.New(clientsSession)
+	return s3Queue(ctx, s3Client, sqsClient, input)
+}
+
+func s3Queue(ctx context.Context, s3Client s3iface.S3API, sqsClient sqsiface.SQSAPI, input *Input) (err error) {
+	driver, err := NewDriver(ctx, sqsClient, &input.DriverInput)
+	if err != nil {
+		return err
+	}
+
+	err = s3list.ListPath(driver.workerCtx, &s3list.Input{
+		Logger:   input.Logger,
+		S3Client: s3Client,
+		S3Path:   input.S3Path,
+		Limit:    input.Limit,
+		Write:    func(event *events.S3Event) { driver.Write(event) },
+		Done:     func() { driver.Done() },
+		Stats:    &input.Stats,
+	})
+	if err != nil { // ListPath() will call Done() function which will close notifyChan() on return causing workers to exit
+		return err
+	}
+
+	return driver.Wait() // returns any error from workers
+}
+
+type Driver struct {
+	logger      *zap.SugaredLogger
+	sqsClient   sqsiface.SQSAPI
+	queueURL    *string
+	topicARN    string
+	notifyChan  chan *events.S3Event
+	workerGroup *errgroup.Group
+	workerCtx   context.Context
+
+	// used for pacing at a fixed rate
+	delay time.Duration
+
+	// set if we have set a deadline
+	deadlineCancel context.CancelFunc
+}
+
+func NewDriver(ctx context.Context, sqsClient sqsiface.SQSAPI, input *DriverInput) (*Driver, error) {
+	if input.Concurrency <= 0 {
+		return nil, errors.Errorf("concurrency must be > 0: %d", input.Concurrency)
+	}
 
 	queueURL, err := sqsClient.GetQueueUrl(&sqs.GetQueueUrlInput{
-		QueueName: &queueName,
+		QueueName: &input.QueueName,
 	})
 	if err != nil {
-		return errors.Wrapf(err, "could not get queue url for %s", queueName)
+		return nil, errors.Wrapf(err, "could not get queue url for %s", input.QueueName)
 	}
 
-	// the account id is taken from this arn to assume role for reading in the log processor
-	topicARN := fmt.Sprintf(fakeTopicArnTemplate, account)
+	// the account id is taken from this arn to assume the role for reading in the log processor
+	topicARN := fmt.Sprintf(fakeTopicArnTemplate, input.Account)
 
-	errChan := make(chan error)
-	notifyChan := make(chan *events.S3Event, 1000)
+	notifyChan := make(chan *events.S3Event, notifyChanDepth)
 
-	var queueWg sync.WaitGroup
-	for i := 0; i < concurrency; i++ {
-		queueWg.Add(1)
-		go func() {
-			queueNotifications(sqsClient, topicARN, queueURL.QueueUrl, notifyChan, errChan)
-			queueWg.Done()
-		}()
+	// optional deadline
+	var deadlineCancel context.CancelFunc
+	if input.Duration > 0 {
+		ctx, deadlineCancel = context.WithDeadline(ctx, time.Now().Add(input.Duration))
 	}
 
-	queueWg.Add(1)
-	go func() {
-		listPath(s3Client, s3path, limit, notifyChan, errChan, stats)
-		queueWg.Done()
-	}()
+	workerGroup, workerCtx := errgroup.WithContext(ctx)
 
-	var errorWg sync.WaitGroup
-	errorWg.Add(1)
-	go func() {
-		for err := range errChan { // return last error
-			failed = err
-		}
-		errorWg.Done()
-	}()
+	driver := &Driver{
+		logger:         input.Logger,
+		sqsClient:      sqsClient,
+		queueURL:       queueURL.QueueUrl,
+		topicARN:       topicARN,
+		notifyChan:     notifyChan,
+		workerGroup:    workerGroup,
+		workerCtx:      workerCtx,
+		deadlineCancel: deadlineCancel,
+	}
 
-	queueWg.Wait()
-	close(errChan)
-	errorWg.Wait()
+	if input.FilesPerSecond > 0.0 {
+		driver.delay = time.Duration((float64(time.Second) / input.FilesPerSecond) * float64(input.Concurrency))
+	}
 
-	return failed
+	for i := 0; i < input.Concurrency; i++ {
+		workerGroup.Go(func() error {
+			return queueNotifications(driver)
+		})
+	}
+
+	return driver, nil
 }
 
-// Given an s3path (e.g., s3://mybucket/myprefix) list files and send to notifyChan
-func listPath(s3Client s3iface.S3API, s3path string, limit uint64,
-	notifyChan chan *events.S3Event, errChan chan error, stats *Stats) {
+func (d *Driver) Write(event *events.S3Event) {
+	d.notifyChan <- event
+}
 
-	if limit == 0 {
-		limit = math.MaxUint64
-	}
+func (d *Driver) Done() {
+	close(d.notifyChan)
+}
 
-	defer func() {
-		close(notifyChan) // signal to reader that we are done
-	}()
-
-	parsedPath, err := url.Parse(s3path)
-	if err != nil {
-		errChan <- errors.Errorf("bad s3 url: %s,", err)
-		return
+func (d *Driver) Wait() error {
+	if d.deadlineCancel != nil {
+		defer d.deadlineCancel() // signal ctx and parent
 	}
-
-	if parsedPath.Scheme != "s3" {
-		errChan <- errors.Errorf("not s3 protocol (expecting s3://): %s,", s3path)
-		return
-	}
-
-	bucket := parsedPath.Host
-	if bucket == "" {
-		errChan <- errors.Errorf("missing bucket: %s,", s3path)
-		return
-	}
-	var prefix string
-	if len(parsedPath.Path) > 0 {
-		prefix = parsedPath.Path[1:] // remove leading '/'
-	}
-
-	// list files w/pagination
-	inputParams := &s3.ListObjectsV2Input{
-		Bucket:  aws.String(bucket),
-		Prefix:  aws.String(prefix),
-		MaxKeys: aws.Int64(pageSize),
-	}
-	err = s3Client.ListObjectsV2Pages(inputParams, func(page *s3.ListObjectsV2Output, morePages bool) bool {
-		for _, value := range page.Contents {
-			if *value.Size > 0 { // we only care about objects with size
-				stats.NumFiles++
-				if stats.NumFiles%progressNotify == 0 {
-					log.Printf("listed %d files ...", stats.NumFiles)
-				}
-				stats.NumBytes += (uint64)(*value.Size)
-				notifyChan <- &events.S3Event{
-					Records: []events.S3EventRecord{
-						{
-							S3: events.S3Entity{
-								Bucket: events.S3Bucket{
-									Name: bucket,
-								},
-								Object: events.S3Object{
-									Key:  *value.Key,
-									Size: *value.Size,
-								},
-							},
-						},
-					},
-				}
-				if stats.NumFiles >= limit {
-					break
-				}
-			}
-		}
-		return stats.NumFiles < limit // "To stop iterating, return false from the fn function."
-	})
-	if err != nil {
-		errChan <- err
-	}
+	return d.workerGroup.Wait() // returns any error from workers
 }
 
 // post message per file as-if it was an S3 notification
-func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *string,
-	notifyChan chan *events.S3Event, errChan chan error) {
-
+func queueNotifications(driver *Driver) (failed error) {
 	sendMessageBatchInput := &sqs.SendMessageBatchInput{
-		QueueUrl: queueURL,
+		QueueUrl: driver.queueURL,
 	}
 
 	// we have 1 file per notification to limit blast radius in case of failure.
@@ -193,33 +190,49 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 		batchTimeout = time.Minute
 		batchSize    = 10
 	)
-	var failed bool
-	for s3Notification := range notifyChan {
-		if failed { // drain channel
+
+	var i, sendTime, avgSendTime time.Duration = 1, 0, 0 // used to calc avg send time
+
+	for s3Notification := range driver.notifyChan {
+		if failed != nil { // drain channel
 			continue
 		}
 
-		zap.L().Debug("sending file to SQS",
-			zap.String("bucket", s3Notification.Records[0].S3.Bucket.Name),
-			zap.String("key", s3Notification.Records[0].S3.Object.Key))
+		select {
+		case <-driver.workerCtx.Done(): // signal we were aborted
+			failed = driver.workerCtx.Err()
+			continue
+		default: // non blocking
+		}
+
+		// the driver.delay is calculated as-if there was no overhead to send, need to adjust a bit
+		delay := driver.delay
+		if delay > 0 {
+			time.Sleep(delay - avgSendTime) // used for pacing
+		}
+
+		startSend := time.Now() // used to estimate avg time to send message
+
+		driver.logger.Debugf("sending s3://%s/%s (%d bytes) to SQS",
+			s3Notification.Records[0].S3.Bucket.Name,
+			s3Notification.Records[0].S3.Object.Key,
+			s3Notification.Records[0].S3.Object.Size)
 
 		ctnJSON, err := jsoniter.MarshalToString(s3Notification)
 		if err != nil {
-			errChan <- errors.Wrapf(err, "failed to marshal %#v", s3Notification)
-			failed = true
+			failed = errors.Wrapf(err, "failed to marshal %#v", s3Notification)
 			continue
 		}
 
 		// make it look like an SNS notification
 		snsNotification := events.SNSEntity{
 			Type:     "Notification",
-			TopicArn: topicARN, // this is needed by the log processor to get account associated with the S3 object
+			TopicArn: driver.topicARN, // this is needed by the log processor to get account associated with the S3 object
 			Message:  ctnJSON,
 		}
 		message, err := jsoniter.MarshalToString(snsNotification)
 		if err != nil {
-			errChan <- errors.Wrapf(err, "failed to marshal %#v", snsNotification)
-			failed = true
+			failed = errors.Wrapf(err, "failed to marshal %#v", snsNotification)
 			continue
 		}
 
@@ -228,21 +241,29 @@ func queueNotifications(sqsClient sqsiface.SQSAPI, topicARN string, queueURL *st
 			MessageBody: &message,
 		})
 		if len(sendMessageBatchInput.Entries)%batchSize == 0 {
-			_, err = sqsbatch.SendMessageBatch(sqsClient, batchTimeout, sendMessageBatchInput)
+			_, err = sqsbatch.SendMessageBatch(driver.sqsClient, batchTimeout, sendMessageBatchInput)
 			if err != nil {
-				errChan <- errors.Wrapf(err, "failed to send %#v", sendMessageBatchInput)
-				failed = true
+				failed = errors.Wrapf(err, "failed to send %#v", sendMessageBatchInput)
 				continue
 			}
 			sendMessageBatchInput.Entries = make([]*sqs.SendMessageBatchRequestEntry, 0, batchSize) // reset
 		}
+
+		// send time calculations
+		sendTime += time.Since(startSend)
+		i++
+		if i%batchSize == 0 { // only update avg after a full send to smooth
+			avgSendTime = sendTime / i
+		}
 	}
 
 	// send remaining
-	if !failed && len(sendMessageBatchInput.Entries) > 0 {
-		_, err := sqsbatch.SendMessageBatch(sqsClient, batchTimeout, sendMessageBatchInput)
+	if failed == nil && len(sendMessageBatchInput.Entries) > 0 {
+		_, err := sqsbatch.SendMessageBatch(driver.sqsClient, batchTimeout, sendMessageBatchInput)
 		if err != nil {
-			errChan <- errors.Wrapf(err, "failed to send %#v", sendMessageBatchInput)
+			failed = errors.Wrapf(err, "failed to send %#v", sendMessageBatchInput)
 		}
 	}
+
+	return failed
 }

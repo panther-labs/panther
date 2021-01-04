@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 name: compliance_history
-logType: Snapshot.ComplianceHistory
+logType: Compliance.History
 input: |
   {
     "changeType":"MODIFIED",
@@ -41,15 +41,15 @@ result: |
     "resourceType":"AWS.IAM.User",
     "status":"FAIL",
     "suppressed":false,
-    "p_log_type": "Snapshot.ComplianceHistory",
+    "p_log_type": "Compliance.History",
     "p_event_time":"2020-10-23T21:10:30.814384032Z",
     "p_any_aws_arns": ["arn:aws:iam::123456789012:user/BobJoe"],
     "p_any_aws_account_ids": ["123456789012"]
   }
 
 ---
-name: compliance_resource
-logType: Snapshot.ResourceHistory
+name: resoure_history
+logType: Resource.History
 input: |
   {
       "changeType": "CREATED",
@@ -82,8 +82,26 @@ input: |
           "Application":"Panther",
           "Stack":"panther-log-analysis",
           "PantherEdition":"Enterprise"
-          }
-        }
+          },
+        "ManagedPolicyARNs": ["arn:aws:logs:us-west-1:123456789012:test-manage-policy-arn"],
+        "ID": "i-123456789",
+        "OwnerId":"123456789000",
+        "Address": "9.9.9.0",
+        "AssignPublicIp": "9.9.9.1",
+        "PrivateIpAddress": "9.9.9.2",
+        "PrivateIPAddress": "9.9.9.3",
+        "PublicIpAddress": "9.9.9.4",
+        "PublicIPAddress": "9.9.9.5",
+        "Domain": "testme1.com",
+        "DomainName": "testme2.com",
+        "DNSName": "testme3.com",
+        "FQDN": "testme4.com",
+        "PrivateDnsName": "testme5.com",
+        "PublicDnsName": "testme6.com",
+        "SomeARN": "arn:aws:logs:us-west-1:123456789012:test-ARN",
+        "Somearn": "arn:aws:logs:us-west-1:123456789012:test-arn",
+        "SomthingWithArnValue": "arn:aws:logs:us-west-1:123456789012:test-isarn"
+      }
   }
 result: |
   {
@@ -105,8 +123,26 @@ result: |
         "Application":"Panther",
         "Stack":"panther-log-analysis",
         "PantherEdition":"Enterprise"
-        }
-      },
+        },
+      "ManagedPolicyARNs": ["arn:aws:logs:us-west-1:123456789012:test-manage-policy-arn"],
+      "ID": "i-123456789",
+      "OwnerId":"123456789000",
+      "Address": "9.9.9.0",
+      "AssignPublicIp": "9.9.9.1",
+      "PrivateIpAddress": "9.9.9.2",
+      "PrivateIPAddress": "9.9.9.3",
+      "PublicIpAddress": "9.9.9.4",
+      "PublicIPAddress": "9.9.9.5",
+      "Domain": "testme1.com",
+      "DomainName": "testme2.com",
+      "DNSName": "testme3.com",
+      "FQDN": "testme4.com",
+      "PrivateDnsName": "testme5.com",
+      "PublicDnsName": "testme6.com",
+      "SomeARN": "arn:aws:logs:us-west-1:123456789012:test-ARN",
+      "Somearn": "arn:aws:logs:us-west-1:123456789012:test-arn",
+      "SomthingWithArnValue": "arn:aws:logs:us-west-1:123456789012:test-isarn"
+    },
     "accountId":"123456789012",
     "resourceId":"arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome",
     "region":"us-west-1",
@@ -119,14 +155,40 @@ result: |
       "Stack":"panther-log-analysis",
       "PantherEdition":"Enterprise"
       },
-    "p_log_type": "Snapshot.ResourceHistory",
+    "p_log_type": "Resource.History",
     "p_event_time":"2020-10-15T06:29:00.498108265Z",
-    "p_any_aws_arns": ["arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome"],
+    "p_any_aws_account_ids": [
+           "123456789000",
+           "123456789012"
+    ],
+    "p_any_aws_arns": [
+        "arn:aws:logs:us-west-1:123456789012:log-group:/aws/apigateway/welcome",
+        "arn:aws:logs:us-west-1:123456789012:test-ARN",
+        "arn:aws:logs:us-west-1:123456789012:test-arn",
+        "arn:aws:logs:us-west-1:123456789012:test-isarn",
+        "arn:aws:logs:us-west-1:123456789012:test-manage-policy-arn"
+    ],
+    "p_any_aws_instance_ids": [ "i-123456789" ],
     "p_any_aws_tags": [
         "Application:Panther",
         "PantherEdition:Enterprise",
         "PantherVersion:v1.10.1-dirty",
         "Stack:panther-log-analysis"
     ],
-    "p_any_aws_account_ids": ["123456789012"]
+   "p_any_domain_names": [
+      "testme1.com",
+      "testme2.com",
+      "testme3.com",
+      "testme4.com",
+      "testme5.com",
+      "testme6.com"
+    ],
+    "p_any_ip_addresses": [
+        "9.9.9.0",
+        "9.9.9.1",
+        "9.9.9.2",
+        "9.9.9.3",
+        "9.9.9.4",
+        "9.9.9.5"
+    ]
   }

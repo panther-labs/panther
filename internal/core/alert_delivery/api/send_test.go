@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -26,8 +27,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func genAlertOutput() *outputModels.AlertOutput {
@@ -60,10 +63,11 @@ func TestSendPanic(t *testing.T) {
 		NeedsRetry:   false,
 		DispatchedAt: dispatchedAt,
 	}
-	mockClient.On("Slack", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+	ctx := context.Background()
+	mockClient.On("Slack", ctx, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 		panic("panicking")
 	})
-	go sendAlert(alert, alertOutput, dispatchedAt, ch)
+	go sendAlert(ctx, alert, alertOutput, dispatchedAt, ch, outputClient)
 	assert.Equal(t, expectedResponse, <-ch)
 	mockClient.AssertExpectations(t)
 }
@@ -94,7 +98,8 @@ func TestSendUnsupportedOutput(t *testing.T) {
 		NeedsRetry:   false,
 		DispatchedAt: dispatchedAt,
 	}
-	go sendAlert(alert, unsupportedOutput, dispatchedAt, ch)
+	ctx := context.Background()
+	go sendAlert(ctx, alert, unsupportedOutput, dispatchedAt, ch, outputClient)
 	assert.Equal(t, expectedResponse, <-ch)
 	mockClient.AssertExpectations(t)
 }
@@ -119,8 +124,9 @@ func TestSendResponseNil(t *testing.T) {
 		NeedsRetry:   false,
 		DispatchedAt: dispatchedAt,
 	}
-	mockClient.On("Slack", mock.Anything, mock.Anything).Return(response)
-	sendAlert(alert, alertOutput, dispatchedAt, ch)
+	ctx := context.Background()
+	mockClient.On("Slack", ctx, mock.Anything, mock.Anything).Return(response)
+	go sendAlert(ctx, alert, alertOutput, dispatchedAt, ch, outputClient)
 	assert.Equal(t, expectedResponse, <-ch)
 	mockClient.AssertExpectations(t)
 }
@@ -149,8 +155,9 @@ func TestSendPermanentFailure(t *testing.T) {
 		NeedsRetry:   false,
 		DispatchedAt: dispatchedAt,
 	}
-	mockClient.On("Slack", mock.Anything, mock.Anything).Return(response)
-	go sendAlert(alert, alertOutput, dispatchedAt, ch)
+	ctx := context.Background()
+	mockClient.On("Slack", ctx, mock.Anything, mock.Anything).Return(response)
+	go sendAlert(ctx, alert, alertOutput, dispatchedAt, ch, outputClient)
 	assert.Equal(t, expectedResponse, <-ch)
 	mockClient.AssertExpectations(t)
 }
@@ -179,8 +186,9 @@ func TestSendTransientFailure(t *testing.T) {
 		NeedsRetry:   true,
 		DispatchedAt: dispatchedAt,
 	}
-	mockClient.On("Slack", mock.Anything, mock.Anything).Return(response)
-	go sendAlert(alert, alertOutput, dispatchedAt, ch)
+	ctx := context.Background()
+	mockClient.On("Slack", ctx, mock.Anything, mock.Anything).Return(response)
+	go sendAlert(ctx, alert, alertOutput, dispatchedAt, ch, outputClient)
 	assert.Equal(t, expectedResponse, <-ch)
 	mockClient.AssertExpectations(t)
 }
@@ -209,8 +217,306 @@ func TestSendSuccess(t *testing.T) {
 		NeedsRetry:   false,
 		DispatchedAt: dispatchedAt,
 	}
-	mockClient.On("Slack", mock.Anything, mock.Anything).Return(response)
-	go sendAlert(alert, alertOutput, dispatchedAt, ch)
+	ctx := context.Background()
+	mockClient.On("Slack", ctx, mock.Anything, mock.Anything).Return(response)
+	go sendAlert(ctx, alert, alertOutput, dispatchedAt, ch, outputClient)
 	assert.Equal(t, expectedResponse, <-ch)
 	mockClient.AssertExpectations(t)
+}
+
+func TestSendAlertsTimeout(t *testing.T) {
+	mockClient := &testutils.LambdaMock{}
+	lambdaClient = mockClient
+	mockOutputClient := &mockOutputsClient{}
+	outputClient = mockOutputClient
+
+	alertID := aws.String("alert-id")
+	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+
+	alert := &deliveryModels.Alert{
+		AlertID:             alertID,
+		AnalysisDescription: "A test alert",
+		AnalysisID:          "Test.Analysis.ID",
+		AnalysisName:        aws.String("Test Analysis Name"),
+		Runbook:             "A runbook link",
+		Title:               "Test Alert",
+		RetryCount:          0,
+		Tags:                []string{"test", "alert"},
+		Type:                deliveryModels.RuleType,
+		OutputIds:           outputIds,
+		Severity:            "INFO",
+		CreatedAt:           time.Now().UTC(),
+		Version:             aws.String("abc"),
+	}
+
+	slackConfig := &outputModels.OutputConfig{
+		Slack: &outputModels.SlackConfig{WebhookURL: "https://slack.com"},
+	}
+	alertOutputs := []*outputModels.AlertOutput{
+		{
+			OutputID:           aws.String(outputIds[0]),
+			OutputType:         aws.String("slack"),
+			OutputConfig:       slackConfig,
+			DefaultForSeverity: []*string{aws.String("INFO")},
+		},
+		{
+			OutputID:           aws.String(outputIds[1]),
+			OutputType:         aws.String("slack"),
+			OutputConfig:       slackConfig,
+			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM")},
+		},
+		{
+			OutputID:           aws.String(outputIds[2]),
+			OutputType:         aws.String("slack"),
+			OutputConfig:       slackConfig,
+			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM"), aws.String("CRITICAL")},
+		},
+	}
+
+	// AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
+	alertOutputMap := AlertOutputMap{
+		alert: alertOutputs,
+	}
+
+	expectedDispatchStatuses := []DispatchStatus{
+		{
+			Alert:      *alert,
+			OutputID:   outputIds[0],
+			Message:    "Timeout: the upstream service did not respond back in time",
+			StatusCode: 504,
+			Success:    false,
+			NeedsRetry: true,
+		},
+		{
+			Alert:      *alert,
+			OutputID:   outputIds[1],
+			Message:    "Timeout: the upstream service did not respond back in time",
+			StatusCode: 504,
+			Success:    false,
+			NeedsRetry: true,
+		},
+		{
+			Alert:      *alert,
+			OutputID:   outputIds[2],
+			Message:    "Timeout: the upstream service did not respond back in time",
+			StatusCode: 504,
+			Success:    false,
+			NeedsRetry: true,
+		},
+	}
+
+	slowResponse := &outputs.AlertDeliveryResponse{
+		StatusCode: 200,
+		Success:    true,
+		Message:    "successful response payload",
+		Permanent:  false,
+	}
+
+	// A normal aws lambda context will have a deadline, so we need
+	// to simulate one with a deadline attached that has already expired
+	ctx := context.Background()
+	deadline := time.Now()
+	expiredCtx, cancel := context.WithDeadline(ctx, deadline)
+	// Defer cancelling until the end of the test as best practice.
+	defer cancel()
+
+	// Overwrite the global buffer for this test.
+	// Remember, this buffer represents a soft deadline
+	// so that the lambda has enough time to exit successfully.
+	//
+	// lambda invocation   soft deadline         hard deadline
+	// |-------------------------|--------< buffer >---------|
+	softDeadlineDuration = 30 * time.Second
+
+	// set up our slow Slack mock
+	mockOutputClient.On("Slack", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		time.Sleep(15 * time.Second)
+	}).Return(slowResponse).Maybe()
+
+	// We get our results, but the DispachedAt timestamp is present
+	// so we will ignore that for now
+	dispatchStatusesResult := sendAlerts(expiredCtx, alertOutputMap, outputClient)
+
+	mockOutputClient.AssertExpectations(t)
+
+	modifiedDispatchStatusesResult := []DispatchStatus{}
+	for _, dispatchStatus := range dispatchStatusesResult {
+		newStatus := DispatchStatus{
+			Alert:      dispatchStatus.Alert,
+			OutputID:   dispatchStatus.OutputID,
+			Message:    dispatchStatus.Message,
+			StatusCode: dispatchStatus.StatusCode,
+			Success:    dispatchStatus.Success,
+			NeedsRetry: dispatchStatus.NeedsRetry,
+			// This is calculated internally and is tough to
+			// predict due to async threads. However, for the
+			// sake of this test, we don't need to test
+			// for timestamp equivalence. We only need to check
+			// for the other fields.
+			// DispatchedAt: dispatchStatus.DispatchedAt,
+		}
+		modifiedDispatchStatusesResult = append(modifiedDispatchStatusesResult, newStatus)
+	}
+	assert.Equal(t, len(expectedDispatchStatuses), len(modifiedDispatchStatusesResult))
+
+	// since the result could be out of order, we need check for item equivalence and not the order
+	equalDispatchCount := 0
+	for _, expStatus := range expectedDispatchStatuses {
+		for _, status := range modifiedDispatchStatusesResult {
+			if expStatus.OutputID == status.OutputID {
+				assert.Equal(t, expStatus, status)
+				equalDispatchCount++
+			}
+		}
+	}
+	assert.Equal(t, 3, equalDispatchCount)
+}
+
+func TestSendAlertsSuccess(t *testing.T) {
+	mockClient := &testutils.LambdaMock{}
+	lambdaClient = mockClient
+	mockOutputClient := &mockOutputsClient{}
+	outputClient = mockOutputClient
+
+	alertID := aws.String("alert-id")
+	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
+
+	alert := &deliveryModels.Alert{
+		AlertID:             alertID,
+		AnalysisDescription: "A test alert",
+		AnalysisID:          "Test.Analysis.ID",
+		AnalysisName:        aws.String("Test Analysis Name"),
+		Runbook:             "A runbook link",
+		Title:               "Test Alert",
+		RetryCount:          0,
+		Tags:                []string{"test", "alert"},
+		Type:                deliveryModels.RuleType,
+		OutputIds:           outputIds,
+		Severity:            "INFO",
+		CreatedAt:           time.Now().UTC(),
+		Version:             aws.String("abc"),
+	}
+
+	slackConfig := &outputModels.OutputConfig{
+		Slack: &outputModels.SlackConfig{WebhookURL: "https://slack.com"},
+	}
+	alertOutputs := []*outputModels.AlertOutput{
+		{
+			OutputID:           aws.String(outputIds[0]),
+			OutputType:         aws.String("slack"),
+			OutputConfig:       slackConfig,
+			DefaultForSeverity: []*string{aws.String("INFO")},
+		},
+		{
+			OutputID:           aws.String(outputIds[1]),
+			OutputType:         aws.String("slack"),
+			OutputConfig:       slackConfig,
+			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM")},
+		},
+		{
+			OutputID:           aws.String(outputIds[2]),
+			OutputType:         aws.String("slack"),
+			OutputConfig:       slackConfig,
+			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM"), aws.String("CRITICAL")},
+		},
+	}
+
+	// AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
+	alertOutputMap := AlertOutputMap{
+		alert: alertOutputs,
+	}
+
+	expectedDispatchStatuses := []DispatchStatus{
+		{
+			Alert:      *alert,
+			OutputID:   outputIds[0],
+			Message:    "successful response payload",
+			StatusCode: 200,
+			Success:    true,
+			NeedsRetry: false,
+		},
+		{
+			Alert:      *alert,
+			OutputID:   outputIds[1],
+			Message:    "successful response payload",
+			StatusCode: 200,
+			Success:    true,
+			NeedsRetry: false,
+		},
+		{
+			Alert:      *alert,
+			OutputID:   outputIds[2],
+			Message:    "successful response payload",
+			StatusCode: 200,
+			Success:    true,
+			NeedsRetry: false,
+		},
+	}
+
+	slowResponse := &outputs.AlertDeliveryResponse{
+		StatusCode: 200,
+		Success:    true,
+		Message:    "successful response payload",
+		Permanent:  false,
+	}
+
+	// A normal aws lambda context will have a deadline, so we need
+	// to simulate one with a deadline attached that WILL NOT expire
+	// while running `mage test:go`
+	ctx := context.Background()
+	deadline := time.Now().Add(10 * time.Minute)
+	expiredCtx, cancel := context.WithDeadline(ctx, deadline)
+	// Defer cancelling until the end of the test as best practice.
+	defer cancel()
+
+	// Overwrite the global buffer for this test.
+	// Remember, this buffer represents a soft deadline
+	// so that the lambda has enough time to exit successfully.
+	//
+	// lambda invocation   soft deadline         hard deadline
+	// |-------------------------|--------< buffer >---------|
+	softDeadlineDuration = 30 * time.Second
+
+	// set up our slow Slack mock
+	mockOutputClient.On("Slack", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		time.Sleep(15 * time.Second)
+	}).Return(slowResponse).Maybe()
+
+	// We get our results, but the DispachedAt timestamp is present
+	// so we will ignore that for now
+	dispatchStatusesResult := sendAlerts(expiredCtx, alertOutputMap, outputClient)
+
+	mockOutputClient.AssertExpectations(t)
+
+	modifiedDispatchStatusesResult := []DispatchStatus{}
+	for _, dispatchStatus := range dispatchStatusesResult {
+		newStatus := DispatchStatus{
+			Alert:      dispatchStatus.Alert,
+			OutputID:   dispatchStatus.OutputID,
+			Message:    dispatchStatus.Message,
+			StatusCode: dispatchStatus.StatusCode,
+			Success:    dispatchStatus.Success,
+			NeedsRetry: dispatchStatus.NeedsRetry,
+			// This is calculated internally and is tough to
+			// predict due to async threads. However, for the
+			// sake of this test, we don't need to test
+			// for timestamp equivalence. We only need to check
+			// for the other fields.
+			// DispatchedAt: dispatchStatus.DispatchedAt,
+		}
+		modifiedDispatchStatusesResult = append(modifiedDispatchStatusesResult, newStatus)
+	}
+	assert.Equal(t, len(expectedDispatchStatuses), len(modifiedDispatchStatusesResult))
+
+	// since the result could be out of order, we need check for item equivalence and not the order
+	equalDispatchCount := 0
+	for _, expStatus := range expectedDispatchStatuses {
+		for _, status := range modifiedDispatchStatusesResult {
+			if expStatus.OutputID == status.OutputID {
+				assert.Equal(t, expStatus, status)
+				equalDispatchCount++
+			}
+		}
+	}
+	assert.Equal(t, 3, equalDispatchCount)
 }

@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"context"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -28,7 +29,7 @@ import (
 )
 
 // SendTestAlert sends a dummy alert to the specified destinations.
-func (API) SendTestAlert(input *deliveryModels.SendTestAlertInput) ([]*deliveryModels.SendTestAlertOutput, error) {
+func (API) SendTestAlert(ctx context.Context, input *deliveryModels.SendTestAlertInput) ([]*deliveryModels.SendTestAlertOutput, error) {
 	// First, fetch the alert
 	zap.L().Debug("Sending test alert")
 
@@ -42,7 +43,7 @@ func (API) SendTestAlert(input *deliveryModels.SendTestAlertInput) ([]*deliveryM
 	}
 
 	// Send alerts to the specified destination(s) and obtain each response status
-	dispatchStatuses := sendAlerts(alertOutputMap)
+	dispatchStatuses := sendAlerts(ctx, alertOutputMap, outputClient)
 
 	// Convert the full dispatch statuses into ones that are friendly for the frontend
 	responseStatuses := []*deliveryModels.SendTestAlertOutput{}
