@@ -24,6 +24,7 @@ import { AlertDetailsFull } from 'Source/graphql/fragments/AlertDetailsFull.gene
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import { extractErrorMessage } from 'Helpers/utils';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
+import { AlertDetails } from 'Pages/AlertDetails';
 import invert from 'lodash/invert';
 import useUrlParams from 'Hooks/useUrlParams';
 import Skeleton from '../Skeleton';
@@ -69,17 +70,24 @@ const RuleAlertDetails: React.FC<RuleAlertDetailsProps> = ({ alert, fetchMore })
           eventsExclusiveStartKey: alertDetectionInfo.eventsLastEvaluatedKey,
         },
       },
-      updateQuery: (previousResult, { fetchMoreResult }) => {
+      updateQuery: (
+        previousResult: AlertDetails,
+        { fetchMoreResult }: { fetchMoreResult: AlertDetails }
+      ): AlertDetails => {
         return {
           ...previousResult,
           ...fetchMoreResult,
           alert: {
             ...previousResult.alert,
             ...fetchMoreResult.alert,
-            events: [
-              ...(previousResult.alert.detection as AlertDetailsRuleInfo).events,
-              ...(fetchMoreResult.alert.detection as AlertDetailsRuleInfo).events,
-            ],
+            detection: {
+              ...previousResult.alert.detection,
+              ...fetchMoreResult.alert.detection,
+              events: [
+                ...(previousResult.alert.detection as AlertDetailsRuleInfo).events,
+                ...(fetchMoreResult.alert.detection as AlertDetailsRuleInfo).events,
+              ],
+            },
           },
         };
       },
