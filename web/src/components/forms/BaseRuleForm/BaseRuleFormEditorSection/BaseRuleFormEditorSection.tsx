@@ -38,6 +38,7 @@ const BaseRuleFormEditorSection: React.FC<BaseRuleFormEditorSectionProps> = ({ t
         <Flex align="center" spacing={4}>
           <IconButton
             variant="ghost"
+            variantBorderStyle="circle"
             active={open}
             variantColor="navyblue"
             icon={open ? 'caret-up' : 'caret-down'}
