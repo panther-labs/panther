@@ -46,6 +46,7 @@ const PolicyDetailsTableRowOptions: React.FC<PolicyDetailsTableRowOptionsProps> 
         as={IconButton}
         icon="more"
         variant="ghost"
+        variantBorderStyle="circle"
         size="medium"
         aria-label="Resource Options"
       />
