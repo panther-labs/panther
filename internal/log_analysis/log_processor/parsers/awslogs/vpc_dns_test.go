@@ -1,4 +1,4 @@
-package aws
+package awslogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,18 +19,11 @@ package aws
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws/session"
+	"testing"
 
-	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws/awstest"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 )
 
-func init() {
-	// sets an empty session for tests
-	SnapshotPollerSession = &session.Session{}
-
-	// mocks the assume role
-	AssumeRoleFunc = awstest.AssumeRoleMock
-	VerifyAssumedCredsFunc = func(creds *session.Session, region string) error {
-		return nil
-	}
+func TestVPCDns(t *testing.T) {
+	logtesting.RunTestsFromYAML(t, LogTypes(), "./testdata/vpc_dns_tests.yml")
 }

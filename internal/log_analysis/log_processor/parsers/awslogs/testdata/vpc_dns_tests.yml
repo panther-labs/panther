@@ -1,0 +1,136 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+name: vpc_dns_example
+logType: AWS.VPCDns
+input: |
+  {
+    "version": "1.000000",
+    "account_id": "111122223333",
+    "region": "us-west-2",
+    "vpc_id": "vpc-7example",
+    "query_timestamp": "2020-07-27T16:32:20Z",
+    "query_name": "api.example.com.",
+    "query_type": "A",
+    "query_class": "IN",
+    "rcode": "NOERROR",
+    "answers": [
+      {
+        "Rdata": "192.0.2.44",
+        "Type": "A",
+        "Class": "IN"
+      },
+      {
+        "Rdata": "198.51.100.6",
+        "Type": "A",
+        "Class": "IN"
+      },
+      {
+        "Rdata": "203.0.113.8",
+        "Type": "A",
+        "Class": "IN"
+      },
+      {
+        "Rdata": "203.0.113.9",
+        "Type": "A",
+        "Class": "IN"
+      },
+      {
+        "Rdata": "foo@bar.com.",
+        "Type": "CNAME",
+        "Class": "IN"
+      },
+      {
+        "Rdata": "xn--fa-hia.com.",
+        "Type": "CNAME",
+        "Class": "IN"
+      },
+      {
+        "Rdata": "static-someip.rackbank.com.",
+        "Type": "PTR",
+        "Class": "IN"
+       }
+    ],
+    "srcaddr": "192.0.2.15",
+    "srcport": "50637",
+    "transport": "UDP",
+    "srcids": {
+      "instance": "i-0d15cd0d3example",
+      "resolver-endpoint": "rslvr-out-2345678dfghexample"
+    }
+  }
+result: |
+  {
+    "version": "1.000000",
+    "account_id": "111122223333",
+    "region": "us-west-2",
+    "vpc_id": "vpc-7example",
+    "query_timestamp": "2020-07-27T16:32:20Z",
+    "query_name": "api.example.com.",
+    "query_type": "A",
+    "query_class": "IN",
+    "rcode": "NOERROR",
+    "answers": [
+      {
+        "Rdata": "192.0.2.44",
+        "Type": "A",
+        "Class": "IN"
+      },
+      {
+        "Rdata": "198.51.100.6",
+        "Type": "A",
+        "Class": "IN"
+      },
+      {
+        "Rdata": "203.0.113.8",
+        "Type": "A",
+        "Class": "IN"
+      },
+      {
+        "Rdata": "203.0.113.9",
+        "Type": "A",
+        "Class": "IN"
+      },
+      {
+        "Rdata": "foo@bar.com.",
+        "Type": "CNAME",
+        "Class": "IN"
+      },
+      {
+        "Rdata": "xn--fa-hia.com.",
+        "Type": "CNAME",
+        "Class": "IN"
+      },
+      {
+        "Rdata": "static-someip.rackbank.com.",
+        "Type": "PTR",
+        "Class": "IN"
+      }
+    ],
+    "srcaddr": "192.0.2.15",
+    "srcport": "50637",
+    "transport": "UDP",
+    "srcids": {
+      "instance": "i-0d15cd0d3example",
+      "resolver-endpoint": "rslvr-out-2345678dfghexample"
+    },
+    "p_event_time": "2020-07-27T16:32:20Z",
+    "p_log_type": "AWS.VPCDns",
+    "p_any_aws_account_ids": ["111122223333"],
+    "p_any_aws_instance_ids": ["i-0d15cd0d3example"],
+    "p_any_ip_addresses": ["192.0.2.15", "192.0.2.44", "198.51.100.6", "203.0.113.8", "203.0.113.9"],
+    "p_any_domain_names": ["api.example.com", "faß.com", "foo@bar.com", "static-someip.rackbank.com"]
+  }

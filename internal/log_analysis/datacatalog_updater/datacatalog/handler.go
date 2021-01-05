@@ -23,6 +23,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/aws/aws-sdk-go/service/glue/glueiface"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
@@ -33,6 +34,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/oplog"
 )
 
 type LambdaHandler struct {
@@ -75,9 +77,17 @@ func (h *LambdaHandler) Invoke(ctx context.Context, payload []byte) ([]byte, err
 	return nil, nil
 }
 
+var opLogManager = oplog.NewManager("log_analysis", "datacatalog_updater")
+
 // HandleSQSEvent handles messages in an SQS event.
-func (h *LambdaHandler) HandleSQSEvent(ctx context.Context, event *events.SQSEvent) error {
-	tasks, err := tasksFromSQSMessages(event.Records...)
+func (h *LambdaHandler) HandleSQSEvent(ctx context.Context, event *events.SQSEvent) (err error) {
+	// NOTE: this logging is needed for alarming and dashboards!
+	lc, _ := lambdacontext.FromContext(ctx)
+	operation := opLogManager.Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
+	defer operation.Stop().Log(err)
+
+	var tasks []interface{}
+	tasks, err = tasksFromSQSMessages(event.Records...)
 	if err != nil {
 		return err
 	}
