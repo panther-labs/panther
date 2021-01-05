@@ -17,21 +17,13 @@ package outputs
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 import (
-	"context"
+	"testing"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/stretchr/testify/assert"
 )
 
-// CustomWebhook alert send an alert.
-func (client *OutputClient) CustomWebhook(
-	ctx context.Context, alert *alertModels.Alert, config *outputModels.CustomWebhookConfig) *AlertDeliveryResponse {
-
-	postInput := &PostInput{
-		url:  config.WebhookURL,
-		body: generateNotificationFromAlert(alert),
-	}
-	return client.httpWrapper.post(ctx, postInput)
+func TestJiraSummaryNewLines(t *testing.T) {
+	summary := removeNewLines("Policy \nFailure: \npolicyId")
+	assert.Equal(t, summary, "Policy Failure: policyId")
 }

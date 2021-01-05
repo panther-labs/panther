@@ -41,8 +41,10 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/panther-labs/panther/cmd/opstools/s3list"
+	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/notify"
 	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 	"github.com/panther-labs/panther/pkg/awsretry"
@@ -94,14 +96,15 @@ func s3sns(ctx context.Context, s3Client s3iface.S3API, snsClient snsiface.SNSAP
 	}
 
 	err = s3list.ListPath(workerCtx, &s3list.Input{
-		Logger:     input.Logger,
-		S3Client:   s3Client,
-		S3Path:     input.S3Path,
-		Limit:      input.Limit,
-		NotifyChan: notifyChan,
-		Stats:      &input.Stats,
+		Logger:   input.Logger,
+		S3Client: s3Client,
+		S3Path:   input.S3Path,
+		Limit:    input.Limit,
+		Write:    func(event *events.S3Event) { notifyChan <- event },
+		Done:     func() { close(notifyChan) },
+		Stats:    &input.Stats,
 	})
-	if err != nil { // ListPath() will close notifyChan() on return causing workers to exit
+	if err != nil { // ListPath() will call Done() function which will close notifyChan() on return causing workers to exit
 		return err
 	}
 
@@ -206,7 +209,8 @@ func logTypeFromS3Key(lambdaClient lambdaiface.LambdaAPI, s3key string) (logType
 			return
 		}
 		tableNameToLogType = make(map[string]string)
-		for _, logType := range apiReply.LogTypes {
+		// Append CloudSecurity log types to log types
+		for _, logType := range append(apiReply.LogTypes, logtypes.CollectNames(snapshotlogs.LogTypes())...) {
 			tableNameToLogType[pantherdb.TableName(logType)] = logType
 		}
 	})

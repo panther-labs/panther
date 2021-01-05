@@ -33,12 +33,24 @@ import (
 )
 
 func TestMetaEventStruct(t *testing.T) {
-	eventStruct := pantherlog.MustBuildEventSchema(&testEventMeta{}, pantherlog.FieldIPAddress)
+	eventStruct := pantherlog.MustBuildEventSchema(&testEventMeta{}, pantherlog.FieldDomainName)
 
 	columns, mappings, err := glueschema.InferColumnsWithMappings(eventStruct)
 	require.NoError(t, err)
 	// nolint:lll
-	expectMappings := map[string]string{"addr": "addr", "foo": "foo", "p_any_ip_addresses": "p_any_ip_addresses", "p_event_time": "p_event_time", "p_log_type": "p_log_type", "p_parse_time": "p_parse_time", "p_row_id": "p_row_id", "p_source_id": "p_source_id", "p_source_label": "p_source_label", "ts": "ts"}
+	expectMappings := map[string]string{
+		"addr":               "addr",
+		"foo":                "foo",
+		"p_any_domain_names": "p_any_domain_names",
+		"p_any_ip_addresses": "p_any_ip_addresses",
+		"p_event_time":       "p_event_time",
+		"p_log_type":         "p_log_type",
+		"p_parse_time":       "p_parse_time",
+		"p_row_id":           "p_row_id",
+		"p_source_id":        "p_source_id",
+		"p_source_label":     "p_source_label",
+		"ts":                 "ts",
+	}
 	require.Equal(t, expectMappings, mappings)
 	// nolint: lll,govet
 	require.Equal(t, []awsglue.Column{
@@ -52,13 +64,29 @@ func TestMetaEventStruct(t *testing.T) {
 		{"p_source_id", "string", "Panther added field with the source id", false},
 		{"p_source_label", "string", "Panther added field with the source label", false},
 		{"p_any_ip_addresses", "array<string>", "Panther added field with collection of ip addresses associated with the row", false},
+		{"p_any_domain_names", "array<string>", "Panther added field with collection of domain names associated with the row", false},
 	}, columns)
+}
+
+func TestMultipleIndicatorScanners(t *testing.T) {
+	type T struct {
+		Foo pantherlog.String `json:"foo" panther:"username,trace_id"`
+	}
+	eventStruct := pantherlog.MustBuildEventSchema(T{}, pantherlog.FieldDomainName)
+
+	assert := require.New(t)
+	_, ok := reflect.TypeOf(eventStruct).Elem().FieldByName("PantherAnyUsernames")
+	assert.True(ok, "has usernames")
+	_, ok = reflect.TypeOf(eventStruct).Elem().FieldByName("PantherAnyDomainNames")
+	assert.True(ok, "has domain names")
+	_, ok = reflect.TypeOf(eventStruct).Elem().FieldByName("PantherAnyTraceIDs")
+	assert.True(ok, "has trace ids")
 }
 
 type testEventMeta struct {
 	Name      string            `json:"foo" description:"foo"`
 	Timestamp timestamp.RFC3339 `json:"ts" description:"ts"`
-	Address   null.String       `json:"addr" description:"address" panther:"ip"`
+	Address   null.String       `json:"addr" description:"address" panther:"ip,arn"`
 }
 
 func TestRequiredFields(t *testing.T) {

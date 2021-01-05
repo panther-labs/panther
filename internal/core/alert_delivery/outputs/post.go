@@ -20,6 +20,7 @@ package outputs
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"net/http"
 
@@ -31,7 +32,7 @@ const (
 )
 
 // post sends a JSON body to an endpoint.
-func (client *HTTPWrapper) post(input *PostInput) *AlertDeliveryResponse {
+func (client *HTTPWrapper) post(ctx context.Context, input *PostInput) *AlertDeliveryResponse {
 	payload, err := jsoniter.Marshal(input.body)
 
 	// If there was an error marshaling the input
@@ -44,7 +45,7 @@ func (client *HTTPWrapper) post(input *PostInput) *AlertDeliveryResponse {
 		}
 	}
 
-	request, err := http.NewRequest("POST", input.url, bytes.NewBuffer(payload))
+	request, err := http.NewRequestWithContext(ctx, "POST", input.url, bytes.NewBuffer(payload))
 
 	// If there was an error creating the request
 	if err != nil {

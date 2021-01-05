@@ -86,14 +86,16 @@ func TestIntegrationS3queue(t *testing.T) {
 	require.NoError(t, err)
 
 	input := &Input{
-		Logger:      opstools.MustBuildLogger(true),
-		Session:     awsSession,
-		Account:     fakeAccountID,
-		S3Path:      s3Path,
-		S3Region:    s3Region,
-		QueueName:   toq,
-		Concurrency: concurrency,
-		Limit:       numberOfFiles,
+		DriverInput: DriverInput{
+			Logger:      opstools.MustBuildLogger(true),
+			Account:     fakeAccountID,
+			QueueName:   toq,
+			Concurrency: concurrency,
+		},
+		Session:  awsSession,
+		S3Path:   s3Path,
+		S3Region: s3Region,
+		Limit:    numberOfFiles,
 	}
 	err = S3Queue(context.TODO(), input)
 	require.NoError(t, err)

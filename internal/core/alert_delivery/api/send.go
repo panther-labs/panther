@@ -1,15 +1,5 @@
 package api
 
-import (
-	"time"
-
-	"go.uber.org/zap"
-
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
-	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
-)
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -28,6 +18,17 @@ import (
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import (
+	"context"
+	"time"
+
+	"go.uber.org/zap"
+
+	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
+)
+
 // AlertOutputMap is a type alias for containing the outputIds that an alert should be delivered to
 type AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
 
@@ -43,24 +44,59 @@ type DispatchStatus struct {
 }
 
 // sendAlerts - dispatches alerts to their associated outputIds in parallel
-func sendAlerts(alertOutputs AlertOutputMap) []DispatchStatus {
+func sendAlerts(
+	ctx context.Context,
+	alertOutputs AlertOutputMap,
+	outputClient outputs.API,
+) []DispatchStatus {
+
+	// Create a new child context with the a deadline that will exit before the lambda times out.
+	// This will be used to cancel any running goroutines
+	deadlineInFuture, _ := ctx.Deadline()
+	deadlineBuffer := deadlineInFuture.Add(-softDeadlineDuration)
+	ctx, cancel := context.WithDeadline(ctx, deadlineBuffer)
+
+	// Even though ctx will be expired, it is good practice to call its
+	// cancellation function in any case. Failure to do so may keep the
+	// context and its parent alive longer than necessary.
+	defer cancel()
+
 	// Initialize the channel to dispatch all outputs in parallel.
-	statusChannel := make(chan DispatchStatus)
+	statusChannel := make(chan DispatchStatus, 1)
 
 	// Extract the maps (k, v)
 	for alert, outputIds := range alertOutputs {
 		for _, output := range outputIds {
 			dispatchedAt := time.Now().UTC()
-			go sendAlert(alert, output, dispatchedAt, statusChannel)
+			go sendAlert(ctx, alert, output, dispatchedAt, statusChannel, outputClient)
 		}
 	}
 
 	// Wait until all outputs have finished, gathering all the statuses of each delivery
 	var deliveryStatuses []DispatchStatus
-	for _, outputIds := range alertOutputs {
-		for range outputIds {
-			status := <-statusChannel
-			deliveryStatuses = append(deliveryStatuses, status)
+	for alert, outputIds := range alertOutputs {
+		for _, outputID := range outputIds {
+			// TODO: remove the select statement:
+			// https://github.com/panther-labs/panther/pull/2296#discussion_r548471507
+			// We race against a deadline
+			select {
+			case <-ctx.Done():
+				// Calculate the time the alert was dispatched at
+				dispatchedAt := time.Now().UTC()
+				dispatchedAt.Add(-softDeadlineDuration)
+				timeoutStatus := DispatchStatus{
+					Alert:        *alert,
+					OutputID:     *outputID.OutputID,
+					Message:      "Timeout: the upstream service did not respond back in time",
+					StatusCode:   504,
+					Success:      false,
+					NeedsRetry:   true,
+					DispatchedAt: dispatchedAt,
+				}
+				deliveryStatuses = append(deliveryStatuses, timeoutStatus)
+			case status := <-statusChannel:
+				deliveryStatuses = append(deliveryStatuses, status)
+			}
 		}
 	}
 
@@ -70,7 +106,15 @@ func sendAlerts(alertOutputs AlertOutputMap) []DispatchStatus {
 // sendAlert an alert to one specific output (run as a child goroutine).
 //
 // The statusChannel will be sent a message with the result of the send attempt.
-func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, dispatchedAt time.Time, statusChannel chan DispatchStatus) {
+func sendAlert(
+	ctx context.Context,
+	alert *deliveryModels.Alert,
+	output *outputModels.AlertOutput,
+	dispatchedAt time.Time,
+	statusChannel chan DispatchStatus,
+	outputClient outputs.API,
+) {
+
 	commonFields := []zap.Field{
 		zap.Stringp("alertID", alert.AlertID),
 		zap.String("policyId", alert.AnalysisID),
@@ -97,25 +141,25 @@ func sendAlert(alert *deliveryModels.Alert, output *outputModels.AlertOutput, di
 	response := (*outputs.AlertDeliveryResponse)(nil)
 	switch *output.OutputType {
 	case "slack":
-		response = outputClient.Slack(alert, output.OutputConfig.Slack)
+		response = outputClient.Slack(ctx, alert, output.OutputConfig.Slack)
 	case "pagerduty":
-		response = outputClient.PagerDuty(alert, output.OutputConfig.PagerDuty)
+		response = outputClient.PagerDuty(ctx, alert, output.OutputConfig.PagerDuty)
 	case "github":
-		response = outputClient.Github(alert, output.OutputConfig.Github)
+		response = outputClient.Github(ctx, alert, output.OutputConfig.Github)
 	case "opsgenie":
-		response = outputClient.Opsgenie(alert, output.OutputConfig.Opsgenie)
+		response = outputClient.Opsgenie(ctx, alert, output.OutputConfig.Opsgenie)
 	case "jira":
-		response = outputClient.Jira(alert, output.OutputConfig.Jira)
+		response = outputClient.Jira(ctx, alert, output.OutputConfig.Jira)
 	case "msteams":
-		response = outputClient.MsTeams(alert, output.OutputConfig.MsTeams)
+		response = outputClient.MsTeams(ctx, alert, output.OutputConfig.MsTeams)
 	case "sqs":
-		response = outputClient.Sqs(alert, output.OutputConfig.Sqs)
+		response = outputClient.Sqs(ctx, alert, output.OutputConfig.Sqs)
 	case "sns":
-		response = outputClient.Sns(alert, output.OutputConfig.Sns)
+		response = outputClient.Sns(ctx, alert, output.OutputConfig.Sns)
 	case "asana":
-		response = outputClient.Asana(alert, output.OutputConfig.Asana)
+		response = outputClient.Asana(ctx, alert, output.OutputConfig.Asana)
 	case "customwebhook":
-		response = outputClient.CustomWebhook(alert, output.OutputConfig.CustomWebhook)
+		response = outputClient.CustomWebhook(ctx, alert, output.OutputConfig.CustomWebhook)
 	default:
 		zap.L().Warn("unsupported output type", commonFields...)
 		statusChannel <- DispatchStatus{
