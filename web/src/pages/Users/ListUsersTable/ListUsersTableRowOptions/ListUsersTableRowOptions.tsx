@@ -38,6 +38,7 @@ const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ use
         as={IconButton}
         icon="more"
         variant="ghost"
+        variantBorderStyle="circle"
         size="medium"
         aria-label="User Options"
       />
