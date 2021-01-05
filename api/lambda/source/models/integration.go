@@ -67,6 +67,12 @@ type SourceIntegrationMetadata struct {
 	KmsKey            string           `json:"kmsKey,omitempty"`
 	LogProcessingRole string           `json:"logProcessingRole,omitempty"`
 
+	// optional fields for snapshot-poller filtering
+	SourceEnabled      *bool    `json:"sourceEnabled,omitempty"`
+	RegionBlacklist    []string `json:"regionBlacklist,omitempty"`
+	ResourceTypeFilter []string `json:"resourceTypeFilter,omitempty"`
+	ARNRegexFilter     string   `json:"arnRegexFilter,omitempty"`
+
 	StackName string `json:"stackName,omitempty"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`

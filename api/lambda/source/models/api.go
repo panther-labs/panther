@@ -83,6 +83,10 @@ type PutIntegrationSettings struct {
 	ScanIntervalMins   int              `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
 	S3Bucket           string           `json:"s3Bucket"`
 	S3PrefixLogTypes   S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
+	SourceEnabled      *bool            `json:"sourceEnabled" validate:"omitempty"`
+	RegionBlacklist    []string         `json:"regionBlacklist" validate:"omitempty"`
+	ResourceTypeFilter []string         `json:"resourceTypeFilter" validate:"omitempty"`
+	ARNRegexFilter     string           `json:"arnRegexFilter" validate:"omitempty"`
 	KmsKey             string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
@@ -106,6 +110,10 @@ type UpdateIntegrationSettingsInput struct {
 	ScanIntervalMins   int              `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
 	S3Bucket           string           `json:"s3Bucket" validate:"omitempty,min=1"`
 	S3PrefixLogTypes   S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
+	SourceEnabled      *bool            `json:"sourceEnabled" validate:"omitempty"`
+	RegionBlacklist    []string         `json:"regionBlacklist" validate:"omitempty"`
+	ResourceTypeFilter []string         `json:"resourceTypeFilter" validate:"omitempty"`
+	ARNRegexFilter     string           `json:"arnRegexFilter" validate:"omitempty"`
 	KmsKey             string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
