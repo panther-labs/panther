@@ -24,7 +24,7 @@ resource "aws_sns_topic_subscription" "panther_cloudwatch" {
   endpoint             = "arn:${var.aws_partition}:sqs:${var.panther_region}:${var.master_account_id}:panther-aws-events-queue"
   protocol             = "sqs"
   raw_message_delivery = true
-  topic_arn            = "arn:${var.aws_partition}:sns:${var.satellite_account_region}:${each.key}:panther-cloudwatch-events-topic"
+  topic_arn            = "arn:${var.aws_partition}:sns:${var.satellite_account_region}:${each.key}:-PantherEventsTopic-"
 }
 
 variable "satellite_accounts" {
