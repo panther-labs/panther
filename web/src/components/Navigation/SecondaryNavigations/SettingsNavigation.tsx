@@ -17,31 +17,37 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading } from 'pouncejs';
+import { Flex } from 'pouncejs';
 import FadeInTrail from 'Components/utils/FadeInTrail';
 import urls from 'Source/urls';
 import NavLink from '../NavLink';
 
 const SettingsNavigation: React.FC = () => {
   return (
-    <Box>
-      <Heading size="x-small" fontWeight="bold" pt={4} pb={5}>
-        SETTINGS
-      </Heading>
-      <Flex direction="column" as="ul">
-        <FadeInTrail as="li">
-          <NavLink icon="settings-alt" to={urls.settings.general()} label="General" />
-          <NavLink icon="organization" to={urls.settings.users()} label="Users" />
-          <NavLink icon="output" to={urls.settings.destinations.list()} label="Destinations" />
-          <NavLink
-            icon="source-code"
-            to={urls.settings.globalPythonModules.list()}
-            label="Global Modules"
-          />
-          <NavLink icon="multiple-upload" to={urls.settings.bulkUploader()} label="Bulk Uploader" />
-        </FadeInTrail>
-      </Flex>
-    </Box>
+    <Flex direction="column" as="ul">
+      <FadeInTrail as="li">
+        <NavLink isSecondary icon="settings-line" to={urls.settings.general()} label="General" />
+        <NavLink isSecondary icon="organization" to={urls.settings.users()} label="Users" />
+        <NavLink
+          isSecondary
+          icon="output"
+          to={urls.settings.destinations.list()}
+          label="Destinations"
+        />
+        <NavLink
+          isSecondary
+          icon="source-code"
+          to={urls.settings.globalPythonModules.list()}
+          label="Global Modules"
+        />
+        <NavLink
+          isSecondary
+          icon="multiple-upload"
+          to={urls.settings.bulkUploader()}
+          label="Bulk Uploader"
+        />
+      </FadeInTrail>
+    </Flex>
   );
 };
 

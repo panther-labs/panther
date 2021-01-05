@@ -40,6 +40,16 @@ import useModal from 'Hooks/useModal';
 
 const DEFAULT_INITIALS = '??';
 
+const getUserName = (userInfo?: UserInfo) => {
+  if (userInfo.givenName && userInfo.familyName) {
+    return `${userInfo.givenName[0]}. ${userInfo.familyName}`;
+  }
+  if (userInfo.givenName) {
+    return userInfo.givenName;
+  }
+  return userInfo.email;
+};
+
 const getUserInitials = (userInfo?: UserInfo) => {
   if (!userInfo) {
     return DEFAULT_INITIALS;
@@ -67,22 +77,28 @@ const ProfileIcon: React.FC = () => {
     <Popover>
       {({ isOpen, close: closePopover }) => (
         <React.Fragment>
-          <PopoverTrigger
-            as={AbstractButton}
-            display="flex"
-            width={40}
-            height={40}
-            backgroundColor={isOpen ? 'violet-400' : 'violet-500'}
-            _hover={{ backgroundColor: 'violet-400' }}
-            transition="background-color 0.1s linear"
-            borderRadius="circle"
-            justifyContent="center"
-            alignItems="center"
-            fontSize="small"
-            fontWeight="bold"
-            aria-label="Toggle User Menu"
-          >
-            {getUserInitials(userInfo).toUpperCase()}
+          <PopoverTrigger as={AbstractButton} aria-label="Toggle User Menu" width="100%">
+            <Flex spacing={2} align="center">
+              <Box
+                width={40}
+                display="flex"
+                transition="background-color 0.1s linear"
+                borderRadius="circle"
+                justifyContent="center"
+                alignItems="center"
+                fontSize="small"
+                fontWeight="bold"
+                height={40}
+                backgroundColor={isOpen ? 'violet-400' : 'violet-500'}
+                flexShrink={0}
+                _hover={{ backgroundColor: 'violet-400' }}
+              >
+                {getUserInitials(userInfo).toUpperCase()}
+              </Box>
+              <Box fontWeight="bold" truncated>
+                {getUserName(userInfo)}
+              </Box>
+            </Flex>
           </PopoverTrigger>
           <PopoverContent alignment="right-bottom">
             <Card

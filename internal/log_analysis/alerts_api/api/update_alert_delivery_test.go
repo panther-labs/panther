@@ -30,12 +30,7 @@ import (
 
 func TestUpdateAlertDelivery(t *testing.T) {
 	t.Parallel()
-	tableMock := &tableMock{}
-	ruleCacheMock := &ruleCacheMock{}
-	api := API{
-		alertsDB:  tableMock,
-		ruleCache: ruleCacheMock,
-	}
+	api := initTestAPI()
 
 	alertID := "alertId"
 	deliveryResponse := &models.DeliveryResponse{
@@ -56,9 +51,9 @@ func TestUpdateAlertDelivery(t *testing.T) {
 		RuleVersion:       "ruleVersion",
 		DeliveryResponses: []*models.DeliveryResponse{deliveryResponse},
 	}
-	tableMock.On("UpdateAlertDelivery", input).Return(output, nil).Once()
+	api.mockTable.On("UpdateAlertDelivery", input).Return(output, nil).Once()
 
-	ruleCacheMock.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
+	api.mockRuleCache.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
 
 	expectedSummary := &models.AlertSummary{
 		AlertID:           alertID,
@@ -75,6 +70,5 @@ func TestUpdateAlertDelivery(t *testing.T) {
 	}
 	assert.Equal(t, expectedSummary, resultSummary)
 
-	tableMock.AssertExpectations(t)
-	ruleCacheMock.AssertExpectations(t)
+	api.AssertExpectations(t)
 }

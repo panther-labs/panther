@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -52,7 +53,7 @@ type PostInput struct {
 
 // HTTPWrapperiface is the interface for our wrapper around Golang's http client
 type HTTPWrapperiface interface {
-	post(*PostInput) *AlertDeliveryResponse
+	post(context.Context, *PostInput) *AlertDeliveryResponse
 }
 
 // HTTPiface is an interface for http.Client to simplify unit testing.
@@ -62,16 +63,16 @@ type HTTPiface interface {
 
 // API is the interface for output delivery that can be used for mocks in tests.
 type API interface {
-	Slack(*alertModels.Alert, *outputModels.SlackConfig) *AlertDeliveryResponse
-	PagerDuty(*alertModels.Alert, *outputModels.PagerDutyConfig) *AlertDeliveryResponse
-	Github(*alertModels.Alert, *outputModels.GithubConfig) *AlertDeliveryResponse
-	Jira(*alertModels.Alert, *outputModels.JiraConfig) *AlertDeliveryResponse
-	Opsgenie(*alertModels.Alert, *outputModels.OpsgenieConfig) *AlertDeliveryResponse
-	MsTeams(*alertModels.Alert, *outputModels.MsTeamsConfig) *AlertDeliveryResponse
-	Sqs(*alertModels.Alert, *outputModels.SqsConfig) *AlertDeliveryResponse
-	Sns(*alertModels.Alert, *outputModels.SnsConfig) *AlertDeliveryResponse
-	Asana(*alertModels.Alert, *outputModels.AsanaConfig) *AlertDeliveryResponse
-	CustomWebhook(*alertModels.Alert, *outputModels.CustomWebhookConfig) *AlertDeliveryResponse
+	Slack(context.Context, *alertModels.Alert, *outputModels.SlackConfig) *AlertDeliveryResponse
+	PagerDuty(context.Context, *alertModels.Alert, *outputModels.PagerDutyConfig) *AlertDeliveryResponse
+	Github(context.Context, *alertModels.Alert, *outputModels.GithubConfig) *AlertDeliveryResponse
+	Jira(context.Context, *alertModels.Alert, *outputModels.JiraConfig) *AlertDeliveryResponse
+	Opsgenie(context.Context, *alertModels.Alert, *outputModels.OpsgenieConfig) *AlertDeliveryResponse
+	MsTeams(context.Context, *alertModels.Alert, *outputModels.MsTeamsConfig) *AlertDeliveryResponse
+	Sqs(context.Context, *alertModels.Alert, *outputModels.SqsConfig) *AlertDeliveryResponse
+	Sns(context.Context, *alertModels.Alert, *outputModels.SnsConfig) *AlertDeliveryResponse
+	Asana(context.Context, *alertModels.Alert, *outputModels.AsanaConfig) *AlertDeliveryResponse
+	CustomWebhook(context.Context, *alertModels.Alert, *outputModels.CustomWebhookConfig) *AlertDeliveryResponse
 }
 
 // OutputClient encapsulates the clients that allow sending alerts to multiple outputs

@@ -30,7 +30,7 @@ func TestPostgresParser_Parse(t *testing.T) {
 	// nolint:lll
 	log := `Feb 24 14:58:08 webappsecure postgres[7694]: [10-1] 42701 530b5e00.1e0e ERROR: column "requests" of relation "sessiongroup" already exists`
 	now := time.Now()
-	tm := time.Date(now.Year(), time.February, 24, 14, 58, 8, 0, time.UTC)
+	tm := expectedTestDate(time.Date(now.Year(), time.February, 24, 14, 58, 8, 0, time.UTC))
 	event := Postgres{
 		Timestamp:    timestamp.RFC3339(tm),
 		Hostname:     "webappsecure",

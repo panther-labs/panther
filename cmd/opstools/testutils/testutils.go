@@ -22,10 +22,29 @@ import (
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
+	"github.com/aws/aws-sdk-go/service/sns"
+	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/pkg/errors"
 )
+
+func CreateTopic(client snsiface.SNSAPI, topic string) (output *sns.CreateTopicOutput, err error) {
+	output, err = client.CreateTopic(&sns.CreateTopicInput{
+		Name:       &topic,
+		Attributes: nil,
+	})
+	return output, err
+}
+
+func DeleteTopic(client snsiface.SNSAPI, topicArn string) (err error) {
+	_, err = client.DeleteTopic(&sns.DeleteTopicInput{
+		TopicArn: &topicArn,
+	})
+	return err
+}
 
 func CreateQueue(client sqsiface.SQSAPI, qname string) (err error) {
 	_, err = client.CreateQueue(&sqs.CreateQueueInput{
@@ -104,4 +123,17 @@ func AddMessagesToQueue(client sqsiface.SQSAPI, qname string, nBatches, messageB
 	}
 
 	return nil
+}
+
+func CountObjectsInBucket(client s3iface.S3API, bucket, prefix string) (count int, err error) {
+	input := &s3.ListObjectsV2Input{
+		Bucket: &bucket,
+		Prefix: &prefix,
+	}
+	err = client.ListObjectsV2Pages(input,
+		func(page *s3.ListObjectsV2Output, lastPage bool) bool {
+			count += len(page.Contents)
+			return true
+		})
+	return count, err
 }

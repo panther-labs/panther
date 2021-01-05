@@ -105,6 +105,15 @@ func (m *S3Mock) SelectObjectContent(input *s3.SelectObjectContentInput) (*s3.Se
 	return args.Get(0).(*s3.SelectObjectContentOutput), args.Error(1)
 }
 
+func (m *S3Mock) SelectObjectContentWithContext(
+	ctx aws.Context,
+	input *s3.SelectObjectContentInput,
+	options ...request.Option) (*s3.SelectObjectContentOutput, error) {
+
+	args := m.Called(ctx, input, options)
+	return args.Get(0).(*s3.SelectObjectContentOutput), args.Error(1)
+}
+
 type S3SelectStreamReaderMock struct {
 	s3.SelectObjectContentEventStreamReader
 	mock.Mock
@@ -196,6 +205,12 @@ func (m *DynamoDBMock) Scan(input *dynamodb.ScanInput) (*dynamodb.ScanOutput, er
 type SqsMock struct {
 	sqsiface.SQSAPI
 	mock.Mock
+}
+
+// nolint (golint)
+func (m *SqsMock) GetQueueUrl(input *sqs.GetQueueUrlInput) (*sqs.GetQueueUrlOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sqs.GetQueueUrlOutput), args.Error(1)
 }
 
 func (m *SqsMock) SendMessage(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
@@ -398,6 +413,11 @@ type SnsMock struct {
 
 func (m *SnsMock) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
 	args := m.Called(input)
+	return args.Get(0).(*sns.PublishOutput), args.Error(1)
+}
+
+func (m *SnsMock) PublishWithContext(ctx context.Context, input *sns.PublishInput, options ...request.Option) (*sns.PublishOutput, error) {
+	args := m.Called(ctx, input, options)
 	return args.Get(0).(*sns.PublishOutput), args.Error(1)
 }
 
