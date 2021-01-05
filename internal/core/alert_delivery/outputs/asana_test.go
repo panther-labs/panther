@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -69,9 +70,9 @@ func TestAsanaAlert(t *testing.T) {
 		body:    asanaRequest,
 		headers: requestHeader,
 	}
+	ctx := context.Background()
+	httpWrapper.On("post", ctx, expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
-
-	assert.Nil(t, client.Asana(alert, asanaConfig))
+	assert.Nil(t, client.Asana(ctx, alert, asanaConfig))
 	httpWrapper.AssertExpectations(t)
 }

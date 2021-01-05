@@ -58,12 +58,12 @@ func (m *S3UploaderMock) Upload(input *s3manager.UploadInput, f ...func(*s3manag
 
 type S3Mock struct {
 	s3iface.S3API
-	Retries int
 	mock.Mock
 }
 
 func (m *S3Mock) MaxRetries() int {
-	return m.Retries
+	args := m.Called()
+	return args.Int(0)
 }
 
 func (m *S3Mock) DeleteObjects(input *s3.DeleteObjectsInput) (*s3.DeleteObjectsOutput, error) {
@@ -98,6 +98,35 @@ func (m *S3Mock) ListObjectsV2PagesWithContext(ctx aws.Context, input *s3.ListOb
 	args := m.Called(ctx, input, f, options)
 	f(args.Get(0).(*s3.ListObjectsV2Output), false)
 	return args.Error(1)
+}
+
+func (m *S3Mock) SelectObjectContent(input *s3.SelectObjectContentInput) (*s3.SelectObjectContentOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*s3.SelectObjectContentOutput), args.Error(1)
+}
+
+func (m *S3Mock) SelectObjectContentWithContext(
+	ctx aws.Context,
+	input *s3.SelectObjectContentInput,
+	options ...request.Option) (*s3.SelectObjectContentOutput, error) {
+
+	args := m.Called(ctx, input, options)
+	return args.Get(0).(*s3.SelectObjectContentOutput), args.Error(1)
+}
+
+type S3SelectStreamReaderMock struct {
+	s3.SelectObjectContentEventStreamReader
+	mock.Mock
+}
+
+func (m *S3SelectStreamReaderMock) Events() <-chan s3.SelectObjectContentEventStreamEvent {
+	args := m.Called()
+	return args.Get(0).(<-chan s3.SelectObjectContentEventStreamEvent)
+}
+
+func (m *S3SelectStreamReaderMock) Err() error {
+	args := m.Called()
+	return args.Error(0)
 }
 
 type LambdaMock struct {
@@ -176,6 +205,12 @@ func (m *DynamoDBMock) Scan(input *dynamodb.ScanInput) (*dynamodb.ScanOutput, er
 type SqsMock struct {
 	sqsiface.SQSAPI
 	mock.Mock
+}
+
+// nolint (golint)
+func (m *SqsMock) GetQueueUrl(input *sqs.GetQueueUrlInput) (*sqs.GetQueueUrlOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*sqs.GetQueueUrlOutput), args.Error(1)
 }
 
 func (m *SqsMock) SendMessage(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
@@ -378,6 +413,11 @@ type SnsMock struct {
 
 func (m *SnsMock) Publish(input *sns.PublishInput) (*sns.PublishOutput, error) {
 	args := m.Called(input)
+	return args.Get(0).(*sns.PublishOutput), args.Error(1)
+}
+
+func (m *SnsMock) PublishWithContext(ctx context.Context, input *sns.PublishInput, options ...request.Option) (*sns.PublishOutput, error) {
+	args := m.Called(ctx, input, options)
 	return args.Get(0).(*sns.PublishOutput), args.Error(1)
 }
 

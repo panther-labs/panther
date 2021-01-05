@@ -33,21 +33,38 @@ func TestAnyStringMarshal(t *testing.T) {
 	var any PantherAnyString
 
 	// nil case
-	expectedJSON := `[]`
+	expectedJSON := `null`
 	actualJSON, err := jsoniter.Marshal(&any)
 	require.NoError(t, err)
 	require.Equal(t, expectedJSON, string(actualJSON))
 
 	// non-nil case
-	any.set = map[string]struct{}{
-		"a": {},
-		"b": {},
-		"c": {},
-	}
+	any = PantherAnyString{"b", "a", "c"}
 	expectedJSON = `["a","b","c"]` // should be sorted
 	actualJSON, err = jsoniter.Marshal(&any)
 	require.NoError(t, err)
 	require.Equal(t, expectedJSON, string(actualJSON))
+
+	{
+		type T struct {
+			Foo PantherAnyString `json:",omitempty"`
+		}
+		v := T{}
+		AppendAnyString(&v.Foo, "")
+		data, err := jsoniter.MarshalToString(T{})
+		require.NoError(t, err)
+		require.Equal(t, `{}`, data)
+	}
+	{
+		type T struct {
+			Foo PantherAnyString
+		}
+		v := T{}
+		AppendAnyString(&v.Foo, "")
+		data, err := jsoniter.MarshalToString(T{})
+		require.NoError(t, err)
+		require.Equal(t, `{"Foo":null}`, data)
+	}
 }
 
 func TestAnyStringUnmarshal(t *testing.T) {
@@ -55,20 +72,14 @@ func TestAnyStringUnmarshal(t *testing.T) {
 
 	// nil case
 	jsonString := `[]`
-	expectedAny := PantherAnyString{
-		set: make(map[string]struct{}),
-	}
+	expectedAny := PantherAnyString{}
 	err := jsoniter.Unmarshal(([]byte)(jsonString), &any)
 	require.NoError(t, err)
 	require.Equal(t, expectedAny, any)
 
 	// non-nil case
 	jsonString = `["a"]`
-	expectedAny = PantherAnyString{
-		set: map[string]struct{}{
-			"a": {},
-		},
-	}
+	expectedAny = PantherAnyString{"a"}
 	err = jsoniter.Unmarshal(([]byte)(jsonString), &any)
 	require.NoError(t, err)
 	require.Equal(t, expectedAny, any)
@@ -76,21 +87,17 @@ func TestAnyStringUnmarshal(t *testing.T) {
 
 func TestAppendAnyString(t *testing.T) {
 	value := "a"
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			value: {},
-		},
-	}
-	any := NewPantherAnyString()
-	AppendAnyString(any, value)
+	expectedAny := PantherAnyString{"a"}
+	any := PantherAnyString{}
+	AppendAnyString(&any, value)
 	require.Equal(t, expectedAny, any)
 }
 
 func TestAppendAnyStringWithEmptyString(t *testing.T) {
-	value := ""                                                  // should not be stored
-	expectedAny := &PantherAnyString{set: map[string]struct{}{}} // empty map
-	any := NewPantherAnyString()
-	AppendAnyString(any, value)
+	value := "" // should not be stored
+	expectedAny := PantherAnyString(nil)
+	var any PantherAnyString
+	AppendAnyString(&any, value)
 	require.Equal(t, expectedAny, any)
 }
 
@@ -146,11 +153,9 @@ func TestAppendAnyIPsInField(t *testing.T) {
 	require.True(t, event.AppendAnyIPAddressInField("Accepted publickey for ubuntu from 192.168.1.2 port 54717 ssh2"))
 	require.False(t, event.AppendAnyIPAddressInField("connection established"))
 
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			"192.168.1.1": {},
-			"192.168.1.2": {},
-		},
+	expectedAny := PantherAnyString{
+		"192.168.1.1",
+		"192.168.1.2",
 	}
 	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
 }
@@ -161,13 +166,11 @@ func TestAppendAnyIPsInFieldMultiple(t *testing.T) {
 	require.True(t, event.AppendAnyIPAddressInField("Accepted publickey from 221.19.216.201 to 229.12.27.176 port 54717"))
 	require.False(t, event.AppendAnyIPAddressInField("connection established"))
 
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			"206.206.199.127": {},
-			"186.28.188.20":   {},
-			"221.19.216.201":  {},
-			"229.12.27.176":   {},
-		},
+	expectedAny := PantherAnyString{
+		"206.206.199.127",
+		"186.28.188.20",
+		"221.19.216.201",
+		"229.12.27.176",
 	}
 	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
 }
@@ -178,11 +181,9 @@ func TestAppendAnyIPV4(t *testing.T) {
 	require.True(t, event.AppendAnyIPAddress("192.168.1.2"))
 	require.False(t, event.AppendAnyIPAddress("not-an-ip"))
 
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			"192.168.1.1": {},
-			"192.168.1.2": {},
-		},
+	expectedAny := PantherAnyString{
+		"192.168.1.1",
+		"192.168.1.2",
 	}
 	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
 }
@@ -193,11 +194,9 @@ func TestAppendAnyIPV6(t *testing.T) {
 	require.True(t, event.AppendAnyIPAddress("::ffff:192.0.2.128"))
 	require.False(t, event.AppendAnyIPAddress("not-an-ip"))
 
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			"2001:db8:85a3:0:0:8a2e:370:7334": {},
-			"::ffff:192.0.2.128":              {},
-		},
+	expectedAny := PantherAnyString{
+		"2001:db8:85a3:0:0:8a2e:370:7334",
+		"::ffff:192.0.2.128",
 	}
 	require.Equal(t, expectedAny, event.PantherAnyIPAddresses)
 }
@@ -205,11 +204,7 @@ func TestAppendAnyIPV6(t *testing.T) {
 func TestAppendAnyDomainNames(t *testing.T) {
 	event := PantherLog{}
 	value := "a"
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			value: {},
-		},
-	}
+	expectedAny := PantherAnyString{value}
 	event.AppendAnyDomainNames(value)
 	require.Equal(t, expectedAny, event.PantherAnyDomainNames)
 
@@ -221,11 +216,7 @@ func TestAppendAnyDomainNames(t *testing.T) {
 func TestAppendAnySHA1Hashes(t *testing.T) {
 	event := PantherLog{}
 	value := "a"
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			value: {},
-		},
-	}
+	expectedAny := PantherAnyString{value}
 	event.AppendAnySHA1Hashes(value)
 	require.Equal(t, expectedAny, event.PantherAnySHA1Hashes)
 
@@ -237,11 +228,7 @@ func TestAppendAnySHA1Hashes(t *testing.T) {
 func TestAppendAnyMD5Hashes(t *testing.T) {
 	event := PantherLog{}
 	value := "a"
-	expectedAny := &PantherAnyString{
-		set: map[string]struct{}{
-			value: {},
-		},
-	}
+	expectedAny := PantherAnyString{value}
 	event.AppendAnyMD5Hashes(value)
 	require.Equal(t, expectedAny, event.PantherAnyMD5Hashes)
 

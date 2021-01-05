@@ -19,17 +19,19 @@
 import React from 'react';
 import { render, fireEvent, within } from 'test-utils';
 import { getUserDisplayName } from 'Helpers/utils';
-import ProfileIcon from './index';
+import ProfileInfo from './index';
 
-test('renders correct initials', () => {
-  const { container, userInfo } = render(<ProfileIcon />);
+test('renders correct initials and name', () => {
+  const { container, userInfo } = render(<ProfileInfo />);
 
   const initials = userInfo.givenName[0] + userInfo.familyName[0];
+  const name = `${userInfo.givenName[0]}. ${userInfo.familyName}`;
   expect(container).toHaveTextContent(initials);
+  expect(container).toHaveTextContent(name);
 });
 
 test('opens menu on click with correct entries', () => {
-  const { getByAriaLabel, userInfo, getByRole } = render(<ProfileIcon />);
+  const { getByAriaLabel, userInfo, getByRole } = render(<ProfileInfo />);
 
   // Click on the initials button
   fireEvent.mouseDown(getByAriaLabel('Toggle User Menu'));
@@ -46,7 +48,7 @@ test('opens menu on click with correct entries', () => {
 });
 
 test('Shows profile settings on menu entry click', () => {
-  const { getByAriaLabel, getByText } = render(<ProfileIcon />);
+  const { getByAriaLabel, getByText } = render(<ProfileInfo />);
 
   // Click on the initials button
   fireEvent.mouseDown(getByAriaLabel('Toggle User Menu'));
@@ -58,7 +60,7 @@ test('Shows profile settings on menu entry click', () => {
 });
 
 test('Calls SignOut on menu entry click', () => {
-  const { getByAriaLabel, signOut, getByText } = render(<ProfileIcon />);
+  const { getByAriaLabel, signOut, getByText } = render(<ProfileInfo />);
 
   // Click on the initials button
   fireEvent.mouseDown(getByAriaLabel('Toggle User Menu'));

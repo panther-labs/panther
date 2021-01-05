@@ -58,3 +58,12 @@ func TestTimestampParser(t *testing.T) {
 		assert.Error(t, err)
 	}
 }
+
+func expectedTestDate(t time.Time) time.Time {
+	now := time.Now().UTC()
+	if now.Month() == time.January && t.Month() > now.Month() {
+		return time.Date(now.Year()-1, t.Month(), t.Day(), t.Hour(), t.Minute(),
+			t.Second(), t.Nanosecond(), t.Location())
+	}
+	return t
+}

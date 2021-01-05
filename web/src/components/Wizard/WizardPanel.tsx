@@ -24,6 +24,10 @@ interface WizardPanelAction {
   disabled?: boolean;
 }
 
+type WizardPanelActionGoToStep = WizardPanelAction & {
+  stepIndex: number;
+};
+
 interface WizardPanelHeadingProps {
   title: string | React.ReactNode | React.ReactNode[];
   subtitle?: string | React.ReactNode | React.ReactNode[];
@@ -33,6 +37,7 @@ interface WizardPanelHeadingProps {
 interface WizardPanelComposition {
   Actions: React.FC;
   ActionNext: React.FC<WizardPanelAction>;
+  ActionGoToStep: React.FC<WizardPanelActionGoToStep>;
   ActionStart: React.FC<WizardPanelAction>;
   ActionPrev: React.FC<WizardPanelAction>;
   Heading: React.FC<WizardPanelHeadingProps>;
@@ -101,9 +106,23 @@ const WizardPanelActionNext: React.FC<WizardPanelAction> = ({ disabled, children
   );
 };
 
+const WizardPanelActionGoToStep: React.FC<WizardPanelActionGoToStep> = ({
+  disabled,
+  children,
+  stepIndex,
+}) => {
+  const { goToStep } = useWizardContext();
+  return (
+    <Button onClick={() => goToStep(stepIndex)} disabled={disabled}>
+      {children || 'Continue'}
+    </Button>
+  );
+};
+
 WizardPanel.Actions = React.memo(WizardPanelActions);
 WizardPanel.ActionPrev = React.memo(WizardPanelActionPrev);
 WizardPanel.ActionNext = React.memo(WizardPanelActionNext);
+WizardPanel.ActionGoToStep = React.memo(WizardPanelActionGoToStep);
 WizardPanel.ActionStart = React.memo(WizardPanelActionStart);
 WizardPanel.Heading = React.memo(WizardPanelHeading);
 
