@@ -297,7 +297,9 @@ type SnsNotification struct {
 }
 
 // nolint:lll
-var rxCloudTrailLog = regexp.MustCompile(`^(?P<account>\d{12})_CloudTrail_(?P<region>[a-z]{2}-[a-z]+-\d+)_(?P<ts>\d{8}T\d{4}Z)_\w+.json.gz$`)
+// Match `AccountID_CloudTrail_RegionName_YYYYMMDDTHHmmZ_UniqueString.FileNameFormat` format
+// https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-examples.html
+var rxCloudTrailLog = regexp.MustCompile(`^(?P<account>\d{12})_CloudTrail_(?P<region>[^_]+)_(?P<ts>\d{8}T\d{4}Z)_\w+.json.gz$`)
 
 func isCloudTrailLog(key string) bool {
 	return rxCloudTrailLog.MatchString(path.Base(key))
