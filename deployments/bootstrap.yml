@@ -855,20 +855,14 @@ Resources:
     Condition: CreateVpc
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !If
-        - CreateSubnets
-        - !Ref PublicSubnetOne
-        - !Ref SubnetOneID
+      SubnetId: !Ref PublicSubnetOne
       RouteTableId: !Ref PublicRouteTable
 
   PublicSubnetTwoRouteTableAssociation:
     Condition: CreateVpc
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !If
-        - CreateSubnets
-        - !Ref PublicSubnetTwo
-        - !Ref SubnetTwoID
+      SubnetId: !Ref PublicSubnetTwo
       RouteTableId: !Ref PublicRouteTable
 
   # Public load balancer, hosted in public subnets that is accessible
