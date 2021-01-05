@@ -26,7 +26,7 @@ import (
 
 func init() {
 	// sets an empty session for tests
-	snapshotPollerSession = &session.Session{}
+	SnapshotPollerSession = &session.Session{}
 
 	// mocks the assume role
 	AssumeRoleFunc = awstest.AssumeRoleMock
