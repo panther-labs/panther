@@ -22,8 +22,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -33,6 +31,8 @@ const (
 
 type Generator interface {
 	WithRows(nrows int) // set rows
+	LogType() string
+	Filename() string
 	NewFile(hour time.Time) *File
 }
 
@@ -44,9 +44,9 @@ type File struct {
 	uncompressedBytes uint64
 }
 
-func NewFile(logType string, hour time.Time) *File {
+func NewFile(gen Generator, hour time.Time) *File {
 	f := &File{
-		name: logType + "/" + hour.Format(DateFormat) + "/" + uuid.New().String() + ".gz",
+		name: gen.LogType() + "/" + hour.Format(DateFormat) + "/" + gen.Filename() + ".gz",
 	}
 	f.writer = gzip.NewWriter(&f.buffer)
 	return f

@@ -22,6 +22,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/cmd/devtools/filegen"
@@ -42,8 +43,16 @@ func NewGravitationalTeleportAudit() *GravitationalTeleportAudit {
 	}
 }
 
+func (ga *GravitationalTeleportAudit) LogType() string {
+	return GravitationalTeleportAuditName
+}
+
+func (ga *GravitationalTeleportAudit) Filename() string {
+	return uuid.New().String()
+}
+
 func (ga *GravitationalTeleportAudit) NewFile(hour time.Time) *filegen.File {
-	f := filegen.NewFile(GravitationalTeleportAuditName, hour)
+	f := filegen.NewFile(ga, hour)
 	var event gravitationallogs.TeleportAudit
 	for i := 0; i < ga.Rows(); i++ {
 		ga.fillEvent(&event, hour)

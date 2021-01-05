@@ -23,6 +23,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/panther-labs/panther/cmd/devtools/filegen"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
@@ -45,8 +47,16 @@ func NewAWSS3ServerAccess() *AWSS3ServerAccess {
 	}
 }
 
+func (sa *AWSS3ServerAccess) LogType() string {
+	return AWSS3ServerAccessName
+}
+
+func (sa *AWSS3ServerAccess) Filename() string {
+	return uuid.New().String()
+}
+
 func (sa *AWSS3ServerAccess) NewFile(hour time.Time) *filegen.File {
-	f := filegen.NewFile(AWSS3ServerAccessName, hour)
+	f := filegen.NewFile(sa, hour)
 	var event awslogs.S3ServerAccess
 	for i := 0; i < sa.Rows(); i++ {
 		sa.fillEvent(&event, hour)

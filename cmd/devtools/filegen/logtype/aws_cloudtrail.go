@@ -22,6 +22,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/cmd/devtools/filegen"
@@ -31,6 +32,9 @@ import (
 
 const (
 	AWSCloudTrailName = awslogs.TypeCloudTrail
+
+	// https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-examples.html
+	filePrefix = "111122223333_CloudTrail_us-east-2_20150801T0210Z_"
 )
 
 type AWSCloudTrail struct {
@@ -43,8 +47,16 @@ func NewAWSCloudTrail() *AWSCloudTrail {
 	}
 }
 
+func (ct *AWSCloudTrail) LogType() string {
+	return AWSCloudTrailName
+}
+
+func (ct *AWSCloudTrail) Filename() string {
+	return filePrefix + uuid.New().String()
+}
+
 func (ct *AWSCloudTrail) NewFile(hour time.Time) *filegen.File {
-	f := filegen.NewFile(AWSCloudTrailName, hour)
+	f := filegen.NewFile(ct, hour)
 	_, err := io.WriteString(f, `{"Records": [`)
 	if err != nil {
 		panic(err)
