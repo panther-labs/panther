@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -49,7 +50,7 @@ const maxTitleSize = 100
 
 // Sns sends an alert to an SNS Topic.
 // nolint: dupl
-func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.SnsConfig) *AlertDeliveryResponse {
+func (client *OutputClient) Sns(ctx context.Context, alert *alertModels.Alert, config *outputModels.SnsConfig) *AlertDeliveryResponse {
 	notification := generateNotificationFromAlert(alert)
 	serializedDefaultMessage, err := jsoniter.MarshalToString(notification)
 	if err != nil {
@@ -106,13 +107,13 @@ func (client *OutputClient) Sns(alert *alertModels.Alert, config *outputModels.S
 		}
 	}
 
-	response, err := snsClient.Publish(snsMessageInput)
+	response, err := snsClient.PublishWithContext(ctx, snsMessageInput)
 	if err != nil {
 		// Catch title edge cases and make SNS API call with generic title
 		if awsutils.IsAnyError(err, sns.ErrCodeInvalidParameterException) {
 			const defaultTitle = "New Panther Alert"
 			snsMessageInput.Subject = aws.String(defaultTitle)
-			response, err = snsClient.Publish(snsMessageInput)
+			response, err = snsClient.PublishWithContext(ctx, snsMessageInput)
 			if err != nil {
 				zap.L().Error("Failed to send message to SNS topic", zap.Error(err))
 				return getAlertResponseFromSNSError(err)

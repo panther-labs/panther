@@ -96,14 +96,15 @@ func s3sns(ctx context.Context, s3Client s3iface.S3API, snsClient snsiface.SNSAP
 	}
 
 	err = s3list.ListPath(workerCtx, &s3list.Input{
-		Logger:     input.Logger,
-		S3Client:   s3Client,
-		S3Path:     input.S3Path,
-		Limit:      input.Limit,
-		NotifyChan: notifyChan,
-		Stats:      &input.Stats,
+		Logger:   input.Logger,
+		S3Client: s3Client,
+		S3Path:   input.S3Path,
+		Limit:    input.Limit,
+		Write:    func(event *events.S3Event) { notifyChan <- event },
+		Done:     func() { close(notifyChan) },
+		Stats:    &input.Stats,
 	})
-	if err != nil { // ListPath() will close notifyChan() on return causing workers to exit
+	if err != nil { // ListPath() will call Done() function which will close notifyChan() on return causing workers to exit
 		return err
 	}
 

@@ -39,12 +39,13 @@ const (
 )
 
 type Input struct {
-	Logger     *zap.SugaredLogger
-	S3Client   s3iface.S3API
-	S3Path     string
-	Limit      uint64
-	NotifyChan chan *events.S3Event
-	Stats      *Stats
+	Logger   *zap.SugaredLogger
+	S3Client s3iface.S3API
+	S3Path   string
+	Limit    uint64
+	Write    func(*events.S3Event) // called on each event
+	Done     func()                // called when complete
+	Stats    *Stats
 }
 
 type Stats struct {
@@ -54,7 +55,7 @@ type Stats struct {
 
 // ListPath given an s3path (e.g., s3://mybucket/myprefix) list files and send to notifyChan
 func ListPath(ctx context.Context, input *Input) (err error) {
-	defer close(input.NotifyChan) // no more on exit
+	defer input.Done()
 
 	limit := input.Limit
 	if limit == 0 {
@@ -99,7 +100,7 @@ func ListPath(ctx context.Context, input *Input) (err error) {
 					input.Logger.Infof("listed %d files ...", input.Stats.NumFiles)
 				}
 				input.Stats.NumBytes += (uint64)(*value.Size)
-				input.NotifyChan <- &events.S3Event{
+				input.Write(&events.S3Event{
 					Records: []events.S3EventRecord{
 						{
 							S3: events.S3Entity{
@@ -113,7 +114,7 @@ func ListPath(ctx context.Context, input *Input) (err error) {
 							},
 						},
 					},
-				}
+				})
 				if input.Stats.NumFiles >= limit {
 					break
 				}

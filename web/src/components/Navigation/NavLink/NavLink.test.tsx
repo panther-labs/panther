@@ -27,6 +27,17 @@ describe('NavLink', () => {
       return element.tagName.toLowerCase() === 'a' && element.textContent === navLinkDisplayName;
     });
 
+  it('could render a secondary navigation link', () => {
+    const { container } = render(
+      <NavLink to="/something/" label={navLinkDisplayName} icon="list" isSecondary />,
+      {
+        initialRoute: '/something/particular/',
+      }
+    );
+
+    expect(container).toMatchSnapshot();
+  });
+
   it('matches a URI regardless of hashes or query params', () => {
     render(<NavLink to="/something/" label={navLinkDisplayName} icon="list" />, {
       initialRoute: '/something/#whatever?q=anything',
