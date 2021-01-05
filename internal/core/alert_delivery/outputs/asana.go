@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -33,7 +34,7 @@ const (
 )
 
 // Asana creates a task in Asana projects
-func (client *OutputClient) Asana(alert *alertModels.Alert, config *outputModels.AsanaConfig) *AlertDeliveryResponse {
+func (client *OutputClient) Asana(ctx context.Context, alert *alertModels.Alert, config *outputModels.AsanaConfig) *AlertDeliveryResponse {
 	zap.L().Debug("sending alert to Asana")
 	payload := map[string]interface{}{
 		"data": map[string]interface{}{
@@ -50,5 +51,5 @@ func (client *OutputClient) Asana(alert *alertModels.Alert, config *outputModels
 			AuthorizationHTTPHeader: fmt.Sprintf(asanaAuthorizationHeaderFormat, config.PersonalAccessToken),
 		},
 	}
-	return client.httpWrapper.post(postInput)
+	return client.httpWrapper.post(ctx, postInput)
 }

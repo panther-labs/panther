@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -77,9 +78,9 @@ func TestCustomWebhookAlert(t *testing.T) {
 		url:  "custom-webhook-url",
 		body: expectedNotification,
 	}
+	ctx := context.Background()
+	httpWrapper.On("post", ctx, expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
-
-	require.Nil(t, client.CustomWebhook(alert, customWebhookConfig))
+	require.Nil(t, client.CustomWebhook(ctx, alert, customWebhookConfig))
 	httpWrapper.AssertExpectations(t)
 }

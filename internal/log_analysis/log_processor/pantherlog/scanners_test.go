@@ -1,11 +1,5 @@
 package pantherlog
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/require"
-)
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -23,6 +17,17 @@ import (
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+import (
+	"crypto/md5"  // nolint (gosec)
+	"crypto/sha1" // nolint (gosec)
+	"crypto/sha256"
+	"fmt"
+	"io"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
 
 func TestScanIPAddress(t *testing.T) {
 	assert := require.New(t)
@@ -94,14 +99,91 @@ func TestScanEmail(t *testing.T) {
 	assert.Equal([]string{"foo@bar.baz"}, w.Get(FieldEmail))
 }
 
-func TestScanDomain(t *testing.T) {
+func TestScanDomainName(t *testing.T) {
 	assert := require.New(t)
 	w := &ValueBuffer{}
-	FieldDomainName.ScanValues(w, "")
+	ScanDomainName(w, "")
 	assert.True(w.IsEmpty())
-	FieldDomainName.ScanValues(w, "  ")
+	ScanDomainName(w, "  ")
 	assert.True(w.IsEmpty())
-	FieldDomainName.ScanValues(w, "foo ")
+	ScanDomainName(w, "foo ")
 	assert.False(w.IsEmpty())
 	assert.Equal([]string{"foo"}, w.Get(FieldDomainName))
+
+	// test puny encoded
+	w = &ValueBuffer{}
+	ScanDomainName(w, "xn--fa-hia.com")
+	assert.False(w.IsEmpty())
+	assert.Equal([]string{"faß.com"}, w.Get(FieldDomainName))
+}
+
+func TestScanMD5Hash(t *testing.T) {
+	assert := require.New(t)
+	w := &ValueBuffer{}
+	h := md5.New() // nolint (gosec)
+	_, _ = io.WriteString(h, "The fog is getting thicker!")
+	hash := fmt.Sprintf("%x", h.Sum(nil))
+	ScanMD5Hash(w, "")
+	assert.True(w.IsEmpty())
+	ScanMD5Hash(w, "  ")
+	assert.True(w.IsEmpty())
+	ScanMD5Hash(w, "foo ")
+	assert.True(w.IsEmpty())
+	ScanMD5Hash(w, hash)
+	assert.False(w.IsEmpty())
+	assert.Equal([]string{hash}, w.Get(FieldMD5Hash))
+}
+
+func TestScanSHA1Hash(t *testing.T) {
+	assert := require.New(t)
+	w := &ValueBuffer{}
+	h := sha1.New() // nolint (gosec)
+	_, _ = io.WriteString(h, "The fog is getting thicker!")
+	hash := fmt.Sprintf("%x", h.Sum(nil))
+	ScanSHA1Hash(w, "")
+	assert.True(w.IsEmpty())
+	ScanSHA1Hash(w, "  ")
+	assert.True(w.IsEmpty())
+	ScanSHA1Hash(w, "foo ")
+	assert.True(w.IsEmpty())
+	ScanSHA1Hash(w, hash)
+	assert.False(w.IsEmpty())
+	assert.Equal([]string{hash}, w.Get(FieldSHA1Hash))
+}
+
+func TestScanSHA256Hash(t *testing.T) {
+	assert := require.New(t)
+	w := &ValueBuffer{}
+	h := sha256.New()
+	_, _ = io.WriteString(h, "The fog is getting thicker!")
+	hash := fmt.Sprintf("%x", h.Sum(nil))
+	ScanSHA256Hash(w, "")
+	assert.True(w.IsEmpty())
+	ScanSHA256Hash(w, "  ")
+	assert.True(w.IsEmpty())
+	ScanSHA256Hash(w, "foo ")
+	assert.True(w.IsEmpty())
+	ScanSHA256Hash(w, hash)
+	assert.False(w.IsEmpty())
+	assert.Equal([]string{hash}, w.Get(FieldSHA256Hash))
+}
+
+func TestIsHex(t *testing.T) {
+	assert := require.New(t)
+	var tests = []struct {
+		s     string
+		isHex bool
+	}{
+		{"", false},
+		{"abcdefghijk", false},
+		{"ABCDEFGHIJK", false},
+		{"@!#", false},
+
+		{"0123456789", true},
+		{"abcdef", true},
+		{"ABCDEF", true},
+	}
+	for _, test := range tests {
+		assert.True(test.isHex == isHex(test.s))
+	}
 }

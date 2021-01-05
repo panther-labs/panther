@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"golang.org/x/net/idna"
 )
 
 // ValueScanner parses values from a string and writes them to a ValueWriter.
@@ -134,8 +135,8 @@ func ScanHostname(w ValueWriter, input string) {
 	input = strings.TrimSpace(input)
 	if checkIPAddress(input) {
 		w.WriteValues(FieldIPAddress, input)
-	} else {
-		w.WriteValues(FieldDomainName, input)
+	} else if input != "" {
+		ScanDomainName(w, input)
 	}
 }
 
@@ -148,6 +149,26 @@ func ScanIPAddress(w ValueWriter, input string) {
 	if checkIPAddress(input) {
 		w.WriteValues(FieldIPAddress, input)
 	}
+}
+
+// ScanDomainName scans `input` domain name value, if internationalized then decodes
+func ScanDomainName(w ValueWriter, input string) {
+	input = strings.TrimSpace(input)
+	if input != "" {
+		w.WriteValues(FieldDomainName, decodePunycode(input))
+	}
+}
+
+var punycodeDecoder = idna.New()
+
+func decodePunycode(s string) string {
+	if strings.HasPrefix(s, "xn--") { // puny code?
+		decoded, err := punycodeDecoder.ToUnicode(s)
+		if err == nil {
+			s = decoded
+		}
+	}
+	return s
 }
 
 // checkIPAddress checks if an IP address is valid
@@ -189,4 +210,43 @@ func ScanEmail(w ValueWriter, input string) {
 		input = strings.TrimSpace(input)
 		w.WriteValues(FieldEmail, input)
 	}
+}
+
+func ScanMD5Hash(w ValueWriter, input string) {
+	input = strings.TrimSpace(input)
+	if len(input) == 32 && isHex(input) {
+		w.WriteValues(FieldMD5Hash, strings.ToLower(input)) // normalize to lowercase
+	}
+}
+
+func ScanSHA1Hash(w ValueWriter, input string) {
+	input = strings.TrimSpace(input)
+	if len(input) == 40 && isHex(input) {
+		w.WriteValues(FieldSHA1Hash, strings.ToLower(input)) // normalize to lowercase
+	}
+}
+
+func ScanSHA256Hash(w ValueWriter, input string) {
+	input = strings.TrimSpace(input)
+	if len(input) == 64 && isHex(input) {
+		w.WriteValues(FieldSHA256Hash, strings.ToLower(input)) // normalize to lowercase
+	}
+}
+
+func isHex(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	for i := 0; 0 <= i && i < len(s); i++ {
+		if !isHexDigit(s[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+// this function gets inlined by the compiler
+// we use  a function to make the check in the loop above more readable
+func isHexDigit(c byte) bool {
+	return ('A' <= c && c <= 'F') || ('a' <= c && c <= 'f') || ('0' <= c && c <= '9')
 }
