@@ -101,7 +101,7 @@ commands:
             # https://circleci.com/docs/2.0/env-vars/#built-in-environment-variables
             if [[ -v CIRCLE_PR_USERNAME ]]; then
                 # We cannot commit and push the differences automatically, inform the user.
-                echo "Hey there $(CIRCLE_PR_USERNAME)!"
+                echo "Hey there ${CIRCLE_PR_USERNAME}"
                 echo "Thanks for your contribution to Panther."
                 echo "We tried to auto-generate and format your code and it resulted in file differences."
                 echo "Please run 'mage gen fmt' on your local repo, commit and push the changes, so it can be processed by our CI pipeline."

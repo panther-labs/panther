@@ -60,7 +60,7 @@ Parameters:
     Type: Number
     Description: Log processor Lambda memory allocation
     MinValue: 256 # 128 is too small, risks OOM errors
-    MaxValue: 3008
+    MaxValue: 10240
   LogProcessorLambdaSQSReadBatchSize:
     Type: Number
     Description: How many SQS messsage the log processor reads per SQS read. If the log processor is timing out, reduce this number.
