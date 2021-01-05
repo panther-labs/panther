@@ -26,7 +26,6 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/panther-labs/panther/internal/compliance/snapshotlogs"
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
@@ -53,7 +52,8 @@ func main() {
 
 	awsSession := session.Must(session.NewSession())
 	nativeLogTypes := logtypes.CollectNames(registry.NativeLogTypes())
-	nativeLogTypes = append(nativeLogTypes, logtypes.CollectNames(snapshotlogs.LogTypes())...)
+	// FIXME: uncomment the below line to add the resource history to the of available logTypes and allow rules to target
+	// nativeLogTypes = append(nativeLogTypes, logtypes.CollectNames(snapshotlogs.LogTypes())...)
 	api := &logtypesapi.LogTypesAPI{
 		// Use the default registry with all available log types
 		NativeLogTypes: func() []string {

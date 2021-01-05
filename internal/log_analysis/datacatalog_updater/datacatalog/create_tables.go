@@ -65,14 +65,14 @@ func (h *LambdaHandler) createOrReplaceViewsForAllDeployedLogTables(ctx context.
 		return errors.Wrap(err, "failed to fetch deployed log types")
 	}
 	// We map the deployed log types to their 'base' log tables, errors are collected and not fatal
-	deployedLogTables, err := resolveTables(ctx, h.Resolver, deployedLogTypes...)
+	tables, err := resolveTables(ctx, h.Resolver, deployedLogTypes...)
 	if err != nil {
 		return err
 	}
 
 	// update the views for *all* tables based on the log tables.
 	// FIXME: this is confusing, the athenaviews package should not be creating views by expanding table metadata based on hard-wired logic
-	if err := athenaviews.CreateOrReplaceLogViews(h.AthenaClient, h.AthenaWorkgroup, deployedLogTables); err != nil {
+	if err := athenaviews.CreateOrReplaceLogViews(h.AthenaClient, h.AthenaWorkgroup, tables); err != nil {
 		return errors.Wrap(err, "failed to update athena views")
 	}
 	return nil
