@@ -22,7 +22,6 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	"go.uber.org/multierr"
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
@@ -34,7 +33,7 @@ type SyncDatabaseEvent struct {
 	RequiredLogTypes []string
 }
 
-func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *SyncDatabaseEvent) (err error) {
+func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *SyncDatabaseEvent) error {
 	for db, desc := range pantherdb.Databases {
 		if err := awsglue.EnsureDatabase(ctx, h.GlueClient, db, desc); err != nil {
 			return errors.Wrapf(err, "failed to create database %s", db)
@@ -51,33 +50,20 @@ func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *Sync
 		syncLogTypes = stringset.Concat(deployedLogTypes, event.RequiredLogTypes)
 	}
 
-	// this can return non-fatal errors we want to return to caller but but not stop
-	var createTablesErr error
-	if createTablesErr = h.createOrUpdateTablesForLogTypes(ctx, syncLogTypes); HasFatalCreateTableError(createTablesErr) {
-		err = errors.Wrap(err, "failed to update tables for deployed log types")
-		return err
+	if err := h.createOrUpdateTablesForLogTypes(ctx, syncLogTypes); err != nil {
+		return errors.Wrap(err, "failed to update tables for deployed log types")
 	}
-	defer func() { // add in at the end for caller
-		err = multierr.Combine(err, createTablesErr)
-	}()
 
-	// this can return non-fatal errors we want to return to caller but but not stop
-	var createViewsErr error
-	if createViewsErr = h.createOrReplaceViewsForAllDeployedLogTables(ctx); HasFatalCreateTableError(createViewsErr) {
+	if err := h.createOrReplaceViewsForAllDeployedLogTables(ctx); err != nil {
 		err = errors.Wrap(err, "failed to update athena views for deployed log types")
 		return err
 	}
-	defer func() { // add in at the end for caller
-		err = multierr.Combine(err, createViewsErr)
-	}()
 
-	var syncError error
-	if syncError = h.sendPartitionSync(ctx, event.TraceID, syncLogTypes); syncError != nil {
-		err = errors.Wrap(err, "failed to send sync partitions event")
-		return err
+	if err := h.sendPartitionSync(ctx, event.TraceID, syncLogTypes); err != nil {
+		return errors.Wrap(err, "failed to send sync partitions event")
 	}
 
-	return err
+	return nil
 }
 
 // sendPartitionSync triggers a database partition sync by sending an event to the queue.
