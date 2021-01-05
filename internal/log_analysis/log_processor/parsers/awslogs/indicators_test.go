@@ -30,7 +30,7 @@ import (
 func TestExtractRawMessageIndicators(t *testing.T) {
 	assert := assert.New(t)
 	values := pantherlog.BlankValueBuffer()
-	ExtractRawMessageIndicators(values, jsoniter.RawMessage(awsRawMessageSample))
+	pantherlog.ExtractRawMessageIndicators(values, extractIndicators, jsoniter.RawMessage(awsRawMessageSample))
 	assert.Equal([]string{
 		"arn:aws:cloudtrail:us-west-2:888888888888:trail/panther-lab-cloudtrail",
 		"arn:aws:ec2:region:111122223333:instance/",
