@@ -155,14 +155,18 @@ const DataModelForm: React.FC<DataModelFormProps> = ({ initialValues, onSubmit }
                             <Flex spacing={2} mt={2}>
                               {index > 0 && (
                                 <IconButton
+                                  variantColor="navyblue"
+                                  variantBorderStyle="circle"
                                   size="medium"
-                                  icon="close"
+                                  icon="trash"
                                   aria-label="Remove mapping"
                                   onClick={() => arrayHelpers.remove(index)}
                                 />
                               )}
                               {index === values.mappings.length - 1 && (
                                 <IconButton
+                                  variantColor="navyblue"
+                                  variantBorderStyle="circle"
                                   size="medium"
                                   icon="add"
                                   aria-label="Add a new mapping"
