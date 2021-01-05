@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"fmt"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
@@ -35,7 +36,12 @@ var severityColors = map[string]string{
 }
 
 // Slack sends an alert to a slack channel.
-func (client *OutputClient) Slack(alert *alertModels.Alert, config *outputModels.SlackConfig) *AlertDeliveryResponse {
+func (client *OutputClient) Slack(
+	ctx context.Context,
+	alert *alertModels.Alert,
+	config *outputModels.SlackConfig,
+) *AlertDeliveryResponse {
+
 	messageField := fmt.Sprintf("<%s|%s>",
 		generateURL(alert),
 		"Click here to view in the Panther UI")
@@ -71,5 +77,5 @@ func (client *OutputClient) Slack(alert *alertModels.Alert, config *outputModels
 		body: payload,
 	}
 
-	return client.httpWrapper.post(postInput)
+	return client.httpWrapper.post(ctx, postInput)
 }

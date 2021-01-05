@@ -156,16 +156,16 @@ func (p *cloudTrailParser) parseEvent(results []*parsers.Result, event *CloudTra
 var _ pantherlog.ValueWriterTo = (*CloudTrail)(nil)
 
 func (event *CloudTrail) WriteValuesTo(w pantherlog.ValueWriter) {
-	ExtractRawMessageIndicators(w, event.AdditionalEventData)
-	ExtractRawMessageIndicators(w, event.RequestParameters)
-	ExtractRawMessageIndicators(w, event.ResponseElements)
-	ExtractRawMessageIndicators(w, event.ServiceEventDetails)
+	pantherlog.ExtractRawMessageIndicators(w, extractIndicators, event.AdditionalEventData)
+	pantherlog.ExtractRawMessageIndicators(w, extractIndicators, event.RequestParameters)
+	pantherlog.ExtractRawMessageIndicators(w, extractIndicators, event.ResponseElements)
+	pantherlog.ExtractRawMessageIndicators(w, extractIndicators, event.ServiceEventDetails)
 }
 
 var _ pantherlog.ValueWriterTo = (*CloudTrailSessionContextWebIDFederationData)(nil)
 
 func (d *CloudTrailSessionContextWebIDFederationData) WriteValuesTo(w pantherlog.ValueWriter) {
 	if d != nil {
-		ExtractRawMessageIndicators(w, d.Attributes)
+		pantherlog.ExtractRawMessageIndicators(w, extractIndicators, d.Attributes)
 	}
 }

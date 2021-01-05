@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
@@ -35,7 +36,7 @@ const (
 
 // Github alert send an issue.
 func (client *OutputClient) Github(
-	alert *alertModels.Alert, config *outputModels.GithubConfig) *AlertDeliveryResponse {
+	ctx context.Context, alert *alertModels.Alert, config *outputModels.GithubConfig) *AlertDeliveryResponse {
 
 	description := "**Description:** " + alert.AnalysisDescription
 	link := "\n [Click here to view in the Panther UI](" + generateURL(alert) + ")"
@@ -62,5 +63,5 @@ func (client *OutputClient) Github(
 		body:    githubRequest,
 		headers: requestHeader,
 	}
-	return client.httpWrapper.post(postInput)
+	return client.httpWrapper.post(ctx, postInput)
 }

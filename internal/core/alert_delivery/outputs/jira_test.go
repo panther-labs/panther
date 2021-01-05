@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"encoding/base64"
 	"testing"
 	"time"
@@ -84,9 +85,9 @@ func TestJiraAlert(t *testing.T) {
 		body:    jiraPayload,
 		headers: requestHeader,
 	}
+	ctx := context.Background()
+	httpWrapper.On("post", ctx, expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
-
-	assert.Nil(t, client.Jira(alert, jiraConfig))
+	assert.Nil(t, client.Jira(ctx, alert, jiraConfig))
 	httpWrapper.AssertExpectations(t)
 }

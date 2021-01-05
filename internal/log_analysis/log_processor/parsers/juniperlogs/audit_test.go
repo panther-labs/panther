@@ -32,7 +32,7 @@ func TestAuditParserParse(t *testing.T) {
 	t.Run("Login", func(t *testing.T) {
 		log := `Jan 22 16:14:23 my-jwas [mws-audit][INFO] [mykonos] [10.10.0.117] Logged in successfully`
 		now := time.Now()
-		tm := time.Date(now.Year(), 1, 22, 16, 14, 23, 0, time.UTC)
+		tm := expectedTestDate(time.Date(now.Year(), 1, 22, 16, 14, 23, 0, time.UTC))
 		event := Audit{
 			Timestamp: timestamp.RFC3339(tm),
 			Hostname:  "my-jwas",
@@ -50,7 +50,7 @@ func TestAuditParserParse(t *testing.T) {
 		// nolint:lll
 		log := `Jan 23 19:16:22 my-jwas [mws-audit][INFO] [ea77722a8516b0d1135abb19b1982852] Deactivate response 1832840420318015488`
 		now := time.Now()
-		tm := time.Date(now.Year(), 1, 23, 19, 16, 22, 0, time.UTC)
+		tm := expectedTestDate(time.Date(now.Year(), 1, 23, 19, 16, 22, 0, time.UTC))
 		event := Audit{
 			Timestamp: timestamp.RFC3339(tm),
 			Hostname:  "my-jwas",
@@ -66,7 +66,7 @@ func TestAuditParserParse(t *testing.T) {
 		// nolint:lll
 		log := `Feb 14 19:02:54 my-jwas [mws-audit][INFO][mykonos] Changed configuration parameters: services.spotlight.enabled, services.spotlight.server_address`
 		now := time.Now()
-		tm := time.Date(now.Year(), 2, 14, 19, 2, 54, 0, time.UTC)
+		tm := expectedTestDate(time.Date(now.Year(), 2, 14, 19, 2, 54, 0, time.UTC))
 		event := Audit{
 			Timestamp: timestamp.RFC3339(tm),
 			Hostname:  "my-jwas",

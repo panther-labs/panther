@@ -32,7 +32,7 @@ func TestMWSParser_Parse(t *testing.T) {
 	t.Run("Service with component", func(t *testing.T) {
 		log := `Mar 19 18:42:38 my-jwas-instance [INFO][mws-cluster-services][db-cleanup] Database cleanup completed. Removed record count: 0`
 		now := time.Now()
-		tm := time.Date(now.Year(), time.March, 19, 18, 42, 38, 0, time.UTC)
+		tm := expectedTestDate(time.Date(now.Year(), time.March, 19, 18, 42, 38, 0, time.UTC))
 		event := MWS{
 			Timestamp:        timestamp.RFC3339(tm),
 			Hostname:         "my-jwas-instance",
@@ -47,7 +47,7 @@ func TestMWSParser_Parse(t *testing.T) {
 	t.Run("UI", func(t *testing.T) {
 		log := `Mar 19 19:42:16 my-jwas-instance [mws-ui]: spawned uWSGI worker 1 (pid: 11209, cores: 1)`
 		now := time.Now()
-		tm := time.Date(now.Year(), time.March, 19, 19, 42, 16, 0, time.UTC)
+		tm := expectedTestDate(time.Date(now.Year(), time.March, 19, 19, 42, 16, 0, time.UTC))
 		event := MWS{
 			Timestamp:   timestamp.RFC3339(tm),
 			Hostname:    "my-jwas-instance",
@@ -60,7 +60,7 @@ func TestMWSParser_Parse(t *testing.T) {
 	t.Run("Service without component", func(t *testing.T) {
 		log := `Mar 19 20:18:26 my-jwas-instance [INFO][mws-security-engine] Server startup in 3080 ms`
 		now := time.Now()
-		tm := time.Date(now.Year(), time.March, 19, 20, 18, 26, 0, time.UTC)
+		tm := expectedTestDate(time.Date(now.Year(), time.March, 19, 20, 18, 26, 0, time.UTC))
 		event := MWS{
 			Timestamp:   timestamp.RFC3339(tm),
 			Hostname:    "my-jwas-instance",

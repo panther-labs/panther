@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -94,13 +95,17 @@ func TestSendSns(t *testing.T) {
 		MessageStructure: aws.String("json"),
 		Subject:          aws.String("Policy Failure: policyName"),
 	}
-
-	client.On("Publish", expectedSnsPublishInput).Return(&sns.PublishOutput{MessageId: aws.String("messageId")}, nil).Once()
+	ctx := context.Background()
+	client.On("PublishWithContext",
+		ctx,
+		expectedSnsPublishInput,
+		mock.Anything,
+	).Return(&sns.PublishOutput{MessageId: aws.String("messageId")}, nil).Once()
 	getSnsClient = func(*session.Session, string) (snsiface.SNSAPI, error) {
 		return client, nil
 	}
 
-	result := outputClient.Sns(alert, snsOutputConfig)
+	result := outputClient.Sns(ctx, alert, snsOutputConfig)
 	assert.NotNil(t, result)
 	assert.Equal(t, &AlertDeliveryResponse{
 		Message:    "messageId",
@@ -188,12 +193,16 @@ func TestTruncateSnsTitle(t *testing.T) {
 		MessageStructure: aws.String("json"),
 		Subject:          aws.String(expectedEmailSubject),
 	}
-
-	client.On("Publish", expectedSnsPublishInput).Return(&sns.PublishOutput{MessageId: aws.String("messageId")}, nil).Once()
+	ctx := context.Background()
+	client.On("PublishWithContext",
+		ctx,
+		expectedSnsPublishInput,
+		mock.Anything,
+	).Return(&sns.PublishOutput{MessageId: aws.String("messageId")}, nil).Once()
 	getSnsClient = func(*session.Session, string) (snsiface.SNSAPI, error) {
 		return client, nil
 	}
-	result := outputClient.Sns(alert, snsOutputConfig)
+	result := outputClient.Sns(ctx, alert, snsOutputConfig)
 	assert.NotNil(t, result)
 	assert.Equal(t, &AlertDeliveryResponse{
 		Message:    "messageId",
@@ -270,12 +279,21 @@ func TestResendEmailSubject(t *testing.T) {
 		Subject: aws.String("New Panther Alert"),
 	}
 
+	ctx := context.Background()
 	// First invocation returns "InvalidParameterError"
-	client.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, awserr.New(sns.ErrCodeInvalidParameterException, "", nil)).Once()
+	client.On("PublishWithContext",
+		ctx,
+		mock.Anything,
+		mock.Anything,
+	).Return(&sns.PublishOutput{}, awserr.New(sns.ErrCodeInvalidParameterException, "", nil)).Once()
 	// We retry second time, this time with the default title
-	client.On("Publish", expectedSnsPublishInput).Return(&sns.PublishOutput{MessageId: aws.String("messageId")}, nil)
+	client.On("PublishWithContext",
+		ctx,
+		expectedSnsPublishInput,
+		mock.Anything,
+	).Return(&sns.PublishOutput{MessageId: aws.String("messageId")}, nil)
 
-	result := outputClient.Sns(alert, snsOutputConfig)
+	result := outputClient.Sns(ctx, alert, snsOutputConfig)
 	assert.NotNil(t, result)
 	assert.Equal(t, &AlertDeliveryResponse{
 		Message:    "messageId",
