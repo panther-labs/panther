@@ -1,4 +1,4 @@
-package outputs
+package pantherlog
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -18,20 +18,23 @@ package outputs
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"context"
+import jsoniter "github.com/json-iterator/go"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
-)
-
-// CustomWebhook alert send an alert.
-func (client *OutputClient) CustomWebhook(
-	ctx context.Context, alert *alertModels.Alert, config *outputModels.CustomWebhookConfig) *AlertDeliveryResponse {
-
-	postInput := &PostInput{
-		url:  config.WebhookURL,
-		body: generateNotificationFromAlert(alert),
+func ExtractRawMessageIndicators(w ValueWriter, extractor func(ValueWriter, *jsoniter.Iterator, string), messages ...RawMessage) {
+	var iter *jsoniter.Iterator
+	for _, msg := range messages {
+		if msg == nil {
+			continue
+		}
+		if iter == nil {
+			iter = jsoniter.ConfigDefault.BorrowIterator(msg)
+		} else {
+			iter.Error = nil
+			iter.ResetBytes(msg)
+		}
+		extractor(w, iter, "")
 	}
-	return client.httpWrapper.post(ctx, postInput)
+	if iter != nil {
+		iter.Pool().ReturnIterator(iter)
+	}
 }
