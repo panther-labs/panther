@@ -19,6 +19,7 @@ package s3queue
  */
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -31,6 +32,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/panther-labs/panther/cmd/opstools"
 	"github.com/panther-labs/panther/cmd/opstools/testutils"
 )
 
@@ -83,10 +85,21 @@ func TestIntegrationS3queue(t *testing.T) {
 	err = testutils.CreateQueue(sqsClient, toq)
 	require.NoError(t, err)
 
-	stats := &Stats{}
-	err = S3Queue(awsSession, fakeAccountID, s3Path, s3Region, toq, concurrency, numberOfFiles, stats)
+	input := &Input{
+		DriverInput: DriverInput{
+			Logger:      opstools.MustBuildLogger(true),
+			Account:     fakeAccountID,
+			QueueName:   toq,
+			Concurrency: concurrency,
+		},
+		Session:  awsSession,
+		S3Path:   s3Path,
+		S3Region: s3Region,
+		Limit:    numberOfFiles,
+	}
+	err = S3Queue(context.TODO(), input)
 	require.NoError(t, err)
-	assert.Equal(t, numberOfFiles, (int)(stats.NumFiles))
+	assert.Equal(t, numberOfFiles, (int)(input.Stats.NumFiles))
 
 	numberSentMessages, err := testutils.CountMessagesInQueue(sqsClient, toq, messageBatchSize, visibilityTimeoutSeconds)
 	assert.NoError(t, err)

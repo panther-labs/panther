@@ -1,3 +1,5 @@
+package pantherlog
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,4 +18,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './NavIconButton';
+import jsoniter "github.com/json-iterator/go"
+
+func ExtractRawMessageIndicators(w ValueWriter, extractor func(ValueWriter, *jsoniter.Iterator, string), messages ...RawMessage) {
+	var iter *jsoniter.Iterator
+	for _, msg := range messages {
+		if msg == nil {
+			continue
+		}
+		if iter == nil {
+			iter = jsoniter.ConfigDefault.BorrowIterator(msg)
+		} else {
+			iter.Error = nil
+			iter.ResetBytes(msg)
+		}
+		extractor(w, iter, "")
+	}
+	if iter != nil {
+		iter.Pool().ReturnIterator(iter)
+	}
+}

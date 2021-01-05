@@ -16,29 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { IconButton, IconButtonProps, Tooltip } from 'pouncejs';
-import React from 'react';
-
-type NavIconButtonProps = Omit<IconButtonProps, 'variant' | 'aria-label'> &
-  React.AnchorHTMLAttributes<HTMLButtonElement> & {
-    tooltipLabel: string;
-  };
-
-const NavIconButton: React.FC<NavIconButtonProps> = ({ icon, active, tooltipLabel, ...rest }) => (
-  <Tooltip content={tooltipLabel}>
-    <IconButton
-      {...rest}
-      variant="ghost"
-      variantBorderStyle="circle"
-      size="medium"
-      icon={icon}
-      active={active}
-      aria-label={tooltipLabel}
-      // @ts-ignore
-      width={40}
-      height={40}
-    />
-  </Tooltip>
-);
-
-export default NavIconButton;
+export { default } from './ProfileInfo';

@@ -138,6 +138,7 @@ func TestPopulateAlert(t *testing.T) {
 
 	alertItem := &alertTable.AlertItem{
 		AlertID:             *alertID,
+		Type:                deliveryModels.RuleType,
 		Description:         aws.String(description),
 		RuleID:              analysisID,
 		RuleVersion:         versionID,

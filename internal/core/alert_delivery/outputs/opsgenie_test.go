@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -77,10 +78,10 @@ func TestOpsgenieAlert(t *testing.T) {
 		body:    opsgenieRequest,
 		headers: requestHeader,
 	}
+	ctx := context.Background()
+	httpWrapper.On("post", ctx, expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
-
-	assert.Nil(t, client.Opsgenie(alert, opsgenieConfig))
+	assert.Nil(t, client.Opsgenie(ctx, alert, opsgenieConfig))
 	httpWrapper.AssertExpectations(t)
 }
 
