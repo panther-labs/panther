@@ -132,6 +132,7 @@ const AlertDeliveryTable: React.FC<AlertDeliveryTableProps> = ({
                         icon="refresh"
                         disabled={isResending}
                         variant="ghost"
+                        variantBorderStyle="circle"
                         variantColor="navyblue"
                         size="medium"
                         aria-label="Retry delivery"

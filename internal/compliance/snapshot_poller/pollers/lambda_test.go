@@ -187,6 +187,8 @@ func TestHandler(t *testing.T) {
 	pollers.VerifyAssumedCredsFunc = func(sess *session.Session, region string) error {
 		return nil
 	}
+	// Provide stub poller session
+	pollers.SnapshotPollerSession = &session.Session{}
 
 	utils.TimeNowFunc = mockTimeFunc
 
