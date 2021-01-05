@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -37,8 +38,8 @@ type mockHTTPWrapper struct {
 	mock.Mock
 }
 
-func (m *mockHTTPWrapper) post(postInput *PostInput) *AlertDeliveryResponse {
-	args := m.Called(postInput)
+func (m *mockHTTPWrapper) post(cxt context.Context, postInput *PostInput) *AlertDeliveryResponse {
+	args := m.Called(cxt, postInput)
 	return args.Get(0).(*AlertDeliveryResponse)
 }
 
