@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -85,9 +86,9 @@ func TestMsTeamsAlert(t *testing.T) {
 		url:  requestURL,
 		body: msTeamsPayload,
 	}
+	ctx := context.Background()
+	httpWrapper.On("post", ctx, expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
-
-	assert.Nil(t, client.MsTeams(alert, msTeamConfig))
+	assert.Nil(t, client.MsTeams(ctx, alert, msTeamConfig))
 	httpWrapper.AssertExpectations(t)
 }
