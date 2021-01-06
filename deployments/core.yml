@@ -80,6 +80,10 @@ Parameters:
     Type: String
     Description: The base semantic version of the current deployment (e.g. `1.3.0`)
     AllowedPattern: '^\d+\.\d+\.\d+(-.+)?$'
+  ProvisionKvTable:
+    Type: String
+    Description: If true, use PROVISIONED billing and autoscaling for panther-kv-store Dynamo table
+    AllowedValues: [true, false]
   SqsKeyId:
     Type: String
     Description: KMS key for encrypting SQS queues
@@ -145,6 +149,7 @@ Mappings:
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
+  KvProvisioningEnabled: !Equals [!Ref ProvisionKvTable, true]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
@@ -1001,8 +1006,6 @@ Resources:
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Key-Value store for Python policies/rules #####
-  # TODO: build conditionally (disabled by default) since you have to pay for provisioned capacity
-  # TODO: make capacity options configurable
   KeyValueStoreTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -1014,7 +1017,7 @@ Resources:
       # * Custom rules / policies which leverage the table may be failing
       # * Panther itself is not affected
       # </cfndoc>
-      BillingMode: PROVISIONED
+      BillingMode: !If [KvProvisioningEnabled, PROVISIONED, PAY_PER_REQUEST]
       AttributeDefinitions:
         - AttributeName: key
           AttributeType: S
@@ -1023,9 +1026,11 @@ Resources:
           KeyType: HASH
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: True
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+      ProvisionedThroughput: !If
+        - KvProvisioningEnabled
+        - ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        - !Ref AWS::NoValue
       SSESpecification:
         SSEEnabled: True
       TimeToLiveSpecification:
@@ -1041,6 +1046,7 @@ Resources:
       TableName: panther-kv-store
 
   ReadCapacityScalableTarget:
+    Condition: KvProvisioningEnabled
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
       MaxCapacity: 100
@@ -1051,6 +1057,7 @@ Resources:
       ServiceNamespace: dynamodb
 
   ReadScalingPolicy:
+    Condition: KvProvisioningEnabled
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
       PolicyName: ReadAutoScalingPolicy
@@ -1064,6 +1071,7 @@ Resources:
           PredefinedMetricType: DynamoDBReadCapacityUtilization
 
   WriteCapacityScalableTarget:
+    Condition: KvProvisioningEnabled
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
       MaxCapacity: 100
@@ -1074,6 +1082,7 @@ Resources:
       ServiceNamespace: dynamodb
 
   WriteScalingPolicy:
+    Condition: KvProvisioningEnabled
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
       PolicyName: WriteAutoScalingPolicy

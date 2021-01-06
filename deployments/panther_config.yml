@@ -66,6 +66,8 @@ Infra:
     - policyuniverse==1.3.2.2
     - requests==2.23.0
 
+  # TODO: add config option for provisioning KvStore
+
   # Custom layer attached to every Python Lambda function for analysis and remediation.
   #
   # If not specified, a layer is created for you based on the PipLayer setting above.
