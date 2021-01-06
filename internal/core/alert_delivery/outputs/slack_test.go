@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -76,8 +77,9 @@ func TestSlackAlert(t *testing.T) {
 		body: expectedPostPayload,
 	}
 
-	httpWrapper.On("post", expectedPostInput).Return((*AlertDeliveryResponse)(nil))
+	ctx := context.Background()
+	httpWrapper.On("post", ctx, expectedPostInput).Return((*AlertDeliveryResponse)(nil))
 
-	require.Nil(t, client.Slack(alert, slackConfig))
+	require.Nil(t, client.Slack(ctx, alert, slackConfig))
 	httpWrapper.AssertExpectations(t)
 }

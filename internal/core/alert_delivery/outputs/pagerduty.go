@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"time"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
@@ -31,7 +32,12 @@ const (
 )
 
 // PagerDuty sends an alert to a pager duty integration endpoint.
-func (client *OutputClient) PagerDuty(alert *alertModels.Alert, config *outputModels.PagerDutyConfig) *AlertDeliveryResponse {
+func (client *OutputClient) PagerDuty(
+	ctx context.Context,
+	alert *alertModels.Alert,
+	config *outputModels.PagerDutyConfig,
+) *AlertDeliveryResponse {
+
 	severity, err := pantherSeverityToPagerDuty(alert.Severity)
 	if err != nil {
 		return err
@@ -56,7 +62,7 @@ func (client *OutputClient) PagerDuty(alert *alertModels.Alert, config *outputMo
 		body: pagerDutyRequest,
 	}
 
-	return client.httpWrapper.post(postInput)
+	return client.httpWrapper.post(ctx, postInput)
 }
 
 func pantherSeverityToPagerDuty(severity string) (string, *AlertDeliveryResponse) {

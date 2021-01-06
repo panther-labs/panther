@@ -29,3 +29,11 @@ variable "master_account_id" {
   type        = string
   description = "AWS account ID of the account running the Panther backend"
 }
+
+# topic name is hardcoded in Panther infra; see master account panther-aws-event-processor
+# SQS queue access policy
+variable "sns_topic_name" {
+  type        = string
+  description = "The name of the SNS topic"
+  default     = "-PantherEventsTopic-"
+}

@@ -1,4 +1,4 @@
-package outputs
+package awslogs
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,19 +19,11 @@ package outputs
  */
 
 import (
-	"context"
+	"testing"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
-	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 )
 
-// CustomWebhook alert send an alert.
-func (client *OutputClient) CustomWebhook(
-	ctx context.Context, alert *alertModels.Alert, config *outputModels.CustomWebhookConfig) *AlertDeliveryResponse {
-
-	postInput := &PostInput{
-		url:  config.WebhookURL,
-		body: generateNotificationFromAlert(alert),
-	}
-	return client.httpWrapper.post(ctx, postInput)
+func TestVPCDns(t *testing.T) {
+	logtesting.RunTestsFromYAML(t, LogTypes(), "./testdata/vpc_dns_tests.yml")
 }

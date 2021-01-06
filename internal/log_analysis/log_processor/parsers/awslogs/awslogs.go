@@ -34,6 +34,7 @@ const (
 	TypeCloudWatchEvents  = "AWS.CloudWatchEvents"
 	TypeGuardDuty         = "AWS.GuardDuty"
 	TypeS3ServerAccess    = "AWS.S3ServerAccess"
+	TypeVPCDns            = "AWS.VPCDns"
 	TypeVPCFlow           = "AWS.VPCFlow"
 )
 
@@ -102,6 +103,17 @@ var logTypes = logtypes.Must("AWS",
 		ReferenceURL: `https://docs.aws.amazon.com/AmazonS3/latest/dev/LogFormat.html`,
 		Schema:       S3ServerAccess{},
 		NewParser:    parsers.AdapterFactory(&S3ServerAccessParser{}),
+	},
+	logtypes.ConfigJSON{
+		Name:         TypeVPCDns,
+		Description:  `DNS query logs of the queries that VPC DNS resolvers forward to Route 53.`,
+		ReferenceURL: `https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver-query-logs-format.html`,
+		NewEvent: func() interface{} {
+			return &VPCDns{}
+		},
+		ExtraIndicators: pantherlog.FieldSet{ // these are not present in the struct but added by the extractors
+			pantherlog.FieldDomainName,
+		},
 	},
 	logtypes.Config{
 		Name:         TypeVPCFlow,

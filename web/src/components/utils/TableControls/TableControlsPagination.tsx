@@ -37,6 +37,7 @@ const TableControlsPagination: React.FC<TableControlsPagination> = ({
           variantColor="navyblue"
           aria-label="Go to previous page"
           variant="ghost"
+          variantBorderStyle="circle"
           icon="chevron-left"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
@@ -48,6 +49,7 @@ const TableControlsPagination: React.FC<TableControlsPagination> = ({
           variantColor="navyblue"
           aria-label="Go to next page"
           variant="ghost"
+          variantBorderStyle="circle"
           icon="chevron-right"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
