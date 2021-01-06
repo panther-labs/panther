@@ -172,7 +172,7 @@ Parameters:
     AllowedPattern: '^(vpc-[0-9a-f]{10,})?$'
   BootstrapStackOnly:
     Type: String
-    Description: "If true, only the Bootstrap stack will be deployed (WARNING: ALL NON-BOOTSTRAP PANTHER INFRA WILL BE DELETED)"
+    Description: 'If true, only the Bootstrap stack will be deployed (WARNING: ALL NON-BOOTSTRAP PANTHER INFRA WILL BE DELETED)'
     Default: false
     AllowedValues:
       - true
