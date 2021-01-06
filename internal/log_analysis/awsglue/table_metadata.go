@@ -249,7 +249,7 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 						*index.IndexName, gm.databaseName, gm.tableName)
 				}
 			}
-			return errors.Wrapf(errUpdate, "failed to update table %s.%s", gm.databaseName, gm.tableName)
+			return nil
 		}
 		return errors.Wrapf(err, "failed to create table %s.%s", gm.databaseName, gm.tableName)
 	}
