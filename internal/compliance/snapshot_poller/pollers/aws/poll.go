@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -173,9 +174,61 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		NextPageToken: scanRequest.NextPageToken,
 	}
 
+	// Retrieve source integration from a short-lived cache for integration filtering options
+	sourceIntegration, err := utils.GetIntegration(*scanRequest.IntegrationID)
+	if err != nil {
+		zap.L().Warn("failed to retrieve integration from source api")
+	}
+
+	// Options for filtering and blacklisting
+	var (
+		regionBlacklist, resourceTypeFilter []string
+		regexFilter                         string
+		sourceEnabled                       *bool
+	)
+	if sourceIntegration != nil {
+		regionBlacklist, resourceTypeFilter, regexFilter, sourceEnabled = sourceIntegration.RegionBlacklist,
+			sourceIntegration.ResourceTypeFilter, sourceIntegration.ARNRegexFilter, sourceIntegration.SourceEnabled
+	}
+
+	// Check if integration is disabled
+	if sourceEnabled != nil && !*sourceEnabled {
+		zap.L().Info("source integration disabled",
+			zap.String("integration id", *scanRequest.IntegrationID), zap.Time("timestamp", time.Now()))
+		return nil, nil
+	}
+
+	// TODO: Removed testing stmts
+	zap.L().Info("Got filtering options", zap.Strings("blacklist", regionBlacklist), zap.String("regex filter", regexFilter),
+		zap.Strings("resource type filter", resourceTypeFilter))
+
 	// If this is an individual resource scan or the region is provided,
 	// we don't need to lookup the active regions.
 	if scanRequest.ResourceID != nil {
+		// Check if ResourceID matches the integration's regex filter
+		if regexFilter != "" {
+			regexFilterCompiled, err := regexp.Compile(regexFilter)
+			if err != nil {
+				zap.L().Error("failed to compile regex filter", zap.Error(err),
+					zap.String("filter regex", regexFilter))
+				return nil, err
+			}
+			if regexFilterCompiled.MatchString(*scanRequest.ResourceID) {
+				zap.L().Info("regex filter matched - skipping single resource scan",
+					zap.String("regex filter", regexFilter), zap.String("resource id", *scanRequest.ResourceID))
+			}
+			return nil, nil
+		}
+
+		// Check if resource type is filtered
+		if scanRequest.ResourceType != nil && resourceTypeFilter != nil {
+			for _, resourceType := range resourceTypeFilter {
+				if resourceType == *scanRequest.ResourceType {
+					zap.L().Info("resource type filtered", zap.String("resource type", resourceType))
+					return nil, nil
+				}
+			}
+		}
 		// Individual resource scan
 		zap.L().Debug("processing single resource scan")
 		return singleResourceScan(scanRequest, pollerResourceInput)
@@ -196,6 +249,16 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		zap.L().Info("processing single region service scan",
 			zap.String("region", *scanRequest.Region),
 			zap.String("resourceType", *scanRequest.ResourceType))
+		// Check if provided region is blacklisted
+		if regionBlacklist != nil {
+			for _, region := range regionBlacklist {
+				if region == *scanRequest.Region {
+					zap.L().Info("matched blacklisted region - skipping scan",
+						zap.String("region", region))
+				}
+				return nil, nil
+			}
+		}
 		if poller, ok := ServicePollers[*scanRequest.ResourceType]; ok {
 			return serviceScan(
 				poller,
@@ -222,6 +285,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		zap.Any("regions", regions),
 		zap.String("resourceType", *scanRequest.ResourceType),
 	)
+	// For simplicity, region blacklisting is not checked here
 	for _, region := range regions {
 		err = utils.Requeue(pollermodels.ScanMsg{
 			Entries: []*pollermodels.ScanEntry{
