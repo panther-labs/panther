@@ -56,8 +56,7 @@ var replaceRegion = regexp.MustCompile(`"region":\s*"(?:[\w\-]*)"`)
 
 // Dashboards returns all the declared dashboards
 func Dashboards() (dashboards []*Dashboard) {
-	dashboards = append(dashboards, NewDashboard("PantherLogAnalysis", logProcessingJSON))
-	return dashboards
+	return []*Dashboard{NewDashboard("PantherLogAnalysis", logProcessingJSON)}
 }
 
 func NewDashboard(name, body string) *Dashboard {
