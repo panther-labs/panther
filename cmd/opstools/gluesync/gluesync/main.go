@@ -82,6 +82,12 @@ func main() {
 	group, ctx := errgroup.WithContext(context.Background())
 	tasks := []gluetasks.SyncDatabaseTables{
 		{
+			DatabaseName: pantherdb.CloudSecurityDatabase,
+			DryRun:       *opts.DryRun,
+			MatchPrefix:  matchPrefix,
+			NumWorkers:   *opts.NumWorkers,
+		},
+		{
 			DatabaseName: pantherdb.LogProcessingDatabase,
 			DryRun:       *opts.DryRun,
 			MatchPrefix:  matchPrefix,
