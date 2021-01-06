@@ -53,6 +53,12 @@ type Integration struct {
 	StackName         string   `json:"stackName,omitempty"`
 	LogProcessingRole string   `json:"logProcessingRole,omitempty"`
 
+	// fields for configurable cloud security sources
+	SourceEnabled      *bool    `json:"sourceEnabled" validate:"omitempty"`
+	RegionBlacklist    []string `json:"regionBlacklist" validate:"omitempty"`
+	ResourceTypeFilter []string `json:"resourceTypeFilter" validate:"omitempty"`
+	ARNRegexFilter     string   `json:"arnRegexFilter" validate:"omitempty"`
+
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }
 
