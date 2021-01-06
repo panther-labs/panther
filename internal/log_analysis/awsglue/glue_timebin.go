@@ -140,7 +140,7 @@ func (tb GlueTableTimebin) PartitionValuesFromTime(t time.Time) (values []*strin
 	}
 	if tb >= GlueTableHourly {
 		values = append(values, aws.String(fmt.Sprintf("%02d", t.Hour())))
-		values = append(values, aws.String(fmt.Sprintf("%10d", t.Unix())))
+		values = append(values, aws.String(fmt.Sprintf("%10d", t.Truncate(time.Hour).Unix())))
 	}
 	return
 }

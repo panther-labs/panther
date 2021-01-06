@@ -230,9 +230,9 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 				DatabaseName: &gm.databaseName,
 				TableInput:   tableInput,
 			}
-			_, err := glueClient.UpdateTable(updateTableInput)
-			if err != nil {
-				return errors.Wrapf(err, "failed to update table %s.%s", gm.databaseName, gm.tableName)
+			_, errUpdate := glueClient.UpdateTable(updateTableInput)
+			if errUpdate != nil {
+				return errors.Wrapf(errUpdate, "failed to update table %s.%s", gm.databaseName, gm.tableName)
 			}
 			for _, index := range createTableInput.PartitionIndexes {
 				createPartitionIndexInput := &glue.CreatePartitionIndexInput{
@@ -240,19 +240,19 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 					PartitionIndex: index,
 					TableName:      &gm.tableName,
 				}
-				_, err := glueClient.CreatePartitionIndex(createPartitionIndexInput)
-				if err != nil {
-					if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
+				_, errLoop := glueClient.CreatePartitionIndex(createPartitionIndexInput)
+				if errLoop != nil {
+					if awsutils.IsAnyError(errLoop, glue.ErrCodeAlreadyExistsException) {
 						continue
 					}
-					return errors.Wrapf(err, "failed to create index %s for table %s.%s",
+					return errors.Wrapf(errLoop, "failed to create index %s for table %s.%s",
 						*index.IndexName, gm.databaseName, gm.tableName)
 				}
 			}
+			return errors.Wrapf(errUpdate, "failed to update table %s.%s", gm.databaseName, gm.tableName)
 		}
 		return errors.Wrapf(err, "failed to create table %s.%s", gm.databaseName, gm.tableName)
 	}
-
 	return nil
 }
 
