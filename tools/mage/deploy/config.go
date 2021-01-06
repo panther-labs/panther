@@ -39,6 +39,7 @@ type Infra struct {
 	LoadBalancerSecurityGroupCidr      string   `yaml:"LoadBalancerSecurityGroupCidr"`
 	LogProcessorLambdaMemorySize       int      `yaml:"LogProcessorLambdaMemorySize"`
 	LogProcessorLambdaSQSReadBatchSize string   `yaml:"LogProcessorLambdaSQSReadBatchSize"`
+	ProvisionKvTable                   bool     `yaml:"ProvisionKvTable"`
 	PipLayer                           []string `yaml:"PipLayer"`
 	PythonLayerVersionArn              string   `yaml:"PythonLayerVersionArn"`
 	SecurityGroupID                    string   `yaml:"SecurityGroupID"`

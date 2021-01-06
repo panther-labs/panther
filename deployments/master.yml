@@ -319,7 +319,8 @@ Resources:
         InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
         InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
-        ProvisionKvTable: # TODO: add top-level parameter to this stack with default value: false
+        # ProvisionKvTable: # TODO: add top-level parameter to this stack with default value: false
+        ProvisionKvTable: !Ref ProvisionKvTable
         OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
         PantherVersion: !FindInMap [Constants, Panther, Version]
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId

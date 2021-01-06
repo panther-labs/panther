@@ -67,6 +67,7 @@ Infra:
     - requests==2.23.0
 
   # TODO: add config option for provisioning KvStore
+  ProvisionKvTable: false
 
   # Custom layer attached to every Python Lambda function for analysis and remediation.
   #
