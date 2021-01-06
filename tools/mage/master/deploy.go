@@ -21,6 +21,7 @@ package master
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -112,7 +113,13 @@ func Deploy() error {
 		return err
 	}
 
-	return util.SamDeploy(defaultStackName, pkg, "FirstUserEmail="+email, "ImageRegistry="+registryURI)
+	params := []string{"FirstUserEmail=" + email, "ImageRegistry=" + registryURI}
+	if p := os.Getenv("PARAMS"); p != "" {
+		// Assume no spaces in the parameter values
+		params = append(params, strings.Split(p, " ")...)
+	}
+
+	return util.SamDeploy(defaultStackName, pkg, params...)
 }
 
 // Stop early if there is a known issue with the dev environment.
