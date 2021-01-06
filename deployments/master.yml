@@ -145,6 +145,11 @@ Parameters:
     Default: ''
     # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
     AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+)?$'
+  ProvisionKvTable:
+    Type: String
+    Description: If true, use PROVISIONED billing and autoscaling for panther-kv-store Dynamo table
+    AllowedValues: [true, false]
+    Default: true
   SecurityGroupID:
     Type: String
     Description: An existing SecurityGroup to deploy Panther into. Only takes affect if VpcID is specified.
@@ -319,7 +324,6 @@ Resources:
         InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
         InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
-        # ProvisionKvTable: # TODO: add top-level parameter to this stack with default value: false
         ProvisionKvTable: !Ref ProvisionKvTable
         OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
         PantherVersion: !FindInMap [Constants, Panther, Version]
