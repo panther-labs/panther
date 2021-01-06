@@ -139,17 +139,17 @@ Parameters:
     Description: Configure Panther to automatically onboard itself as a data source
     AllowedValues: [true, false]
     Default: true
+  ProvisionKvTable:
+    Type: String
+    Description: If true, use PROVISIONED billing and autoscaling for panther-kv-store Dynamo table
+    AllowedValues: [true, false]
+    Default: true
   PythonLayerVersionArn:
     Type: String
     Description: Custom Python layer for analysis and remediation. Defaults to a pre-built layer with 'policyuniverse' and 'requests' pip libraries
     Default: ''
     # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
     AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+)?$'
-  ProvisionKvTable:
-    Type: String
-    Description: If true, use PROVISIONED billing and autoscaling for panther-kv-store Dynamo table
-    AllowedValues: [true, false]
-    Default: true
   SecurityGroupID:
     Type: String
     Description: An existing SecurityGroup to deploy Panther into. Only takes affect if VpcID is specified.
