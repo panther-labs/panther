@@ -170,10 +170,10 @@ Parameters:
     Description: An existing VPC to deploy the Panther loadbalancer into. If you set this option, you must also specify SecurityGroupID, SubnetOneIPRange, and SubnetTwoIPRange.
     Default: ''
     AllowedPattern: '^(vpc-[0-9a-f]{10,})?$'
-  FullDeployment:
+  BootstrapStackOnly:
     Type: String
-    Description: Flag to indicate stack initialization or full deployment.
-    Default: true
+    Description: "If true, only the Bootstrap stack will be deployed (WARNING: ALL NON-BOOTSTRAP PANTHER INFRA WILL BE DELETED)"
+    Default: false
     AllowedValues:
       - true
       - false
@@ -186,10 +186,9 @@ Mappings:
       Version: ${{PANTHER_VERSION}} # E.g. "1.14.0"
 
 Conditions:
-  FullDeployment: !Equals [!Ref FullDeployment, 'true']
+  FullDeployment: !Equals [!Ref BootstrapStackOnly, 'false']
   RegistryProvided: !Not [!Equals [!Ref ImageRegistry, '']]
-  OnboardSelf: !Equals [!Ref OnboardSelf, true]
-  CreateOnboard: !And [!Condition FullDeployment, !Condition OnboardSelf]
+  CreateOnboard: !And [!Condition FullDeployment, !Equals [!Ref OnboardSelf, true]]
 
 Resources:
   Bootstrap:
