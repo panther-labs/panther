@@ -66,8 +66,14 @@ Infra:
     - policyuniverse==1.3.2.2
     - requests==2.23.0
 
-  # TODO: add config option for provisioning KvStore
-  ProvisionKvTable: false
+  # Select DynamoDB kv-table Read/Write Capacity Mode (provision vs on-demand)
+  # https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html
+  # Boolean:
+  #   true  - provision mode. Fixed Billing with static capacity bandwidth.
+  #   false - on-demand mode. Flexible billing with automatic capacity handling.
+  #
+  # You can switch read/write capacity modes once every 24 hours per aws docs.
+  ProvisionKvTable: true
 
   # Custom layer attached to every Python Lambda function for analysis and remediation.
   #

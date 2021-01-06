@@ -34,13 +34,12 @@ type PantherConfig struct {
 }
 
 type Infra struct {
-	// TODO - add new paramter here, where name matches YAML key you added to panther_config.yml
 	BaseLayerVersionArns               string   `yaml:"BaseLayerVersionArns"`
 	LoadBalancerSecurityGroupCidr      string   `yaml:"LoadBalancerSecurityGroupCidr"`
 	LogProcessorLambdaMemorySize       int      `yaml:"LogProcessorLambdaMemorySize"`
 	LogProcessorLambdaSQSReadBatchSize string   `yaml:"LogProcessorLambdaSQSReadBatchSize"`
-	ProvisionKvTable                   bool     `yaml:"ProvisionKvTable"`
 	PipLayer                           []string `yaml:"PipLayer"`
+	ProvisionKvTable                   bool     `yaml:"ProvisionKvTable"`
 	PythonLayerVersionArn              string   `yaml:"PythonLayerVersionArn"`
 	SecurityGroupID                    string   `yaml:"SecurityGroupID"`
 	SubnetOneIPRange                   string   `yaml:"SubnetOneIPRange"`
