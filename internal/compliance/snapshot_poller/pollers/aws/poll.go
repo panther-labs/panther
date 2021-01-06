@@ -250,12 +250,10 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 			zap.String("region", *scanRequest.Region),
 			zap.String("resourceType", *scanRequest.ResourceType))
 		// Check if provided region is blacklisted
-		if regionBlacklist != nil {
-			for _, region := range regionBlacklist {
-				if region == *scanRequest.Region {
-					zap.L().Info("matched blacklisted region - skipping scan",
-						zap.String("region", region))
-				}
+		for _, region := range regionBlacklist {
+			if region == *scanRequest.Region {
+				zap.L().Info("matched blacklisted region - skipping scan",
+					zap.String("region", region))
 				return nil, nil
 			}
 		}
