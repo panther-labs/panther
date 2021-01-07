@@ -226,6 +226,15 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput,
 	clientFunc func(session *session.Session, config *aws.Config) interface{},
 	service string, region string) (interface{}, error) {
 
+	// Check if provided region is blacklisted
+	for _, blacklistedRegion := range pollerInput.RegionBlacklist {
+		if region == blacklistedRegion {
+			zap.L().Info("matched blacklisted region - skipping scan",
+				zap.String("region", region))
+			return nil, nil
+		}
+	}
+
 	cacheKey := clientKey{
 		IntegrationID: *pollerInput.IntegrationID,
 		Service:       service,

@@ -206,36 +206,15 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	}
 
 	// TODO: Removed testing stmts
-	zap.L().Info("Got filtering options", zap.Strings("blacklist", regionBlacklist), zap.String("regex filter", regexFilter),
+	zap.L().Info("Got filtering options", zap.Strings("blacklist", regionBlacklist), zap.String("regex filter", *regexFilter),
 		zap.Strings("resource type filter", resourceTypeFilter))
 
 	// If this is an individual resource scan or the region is provided,
 	// we don't need to lookup the active regions.
 	// TODO: Implement region blacklisting for individual resource scans
 	if scanRequest.ResourceID != nil {
-		// Check if ResourceID matches the integration's regex filter
-		matched, err := utils.MatchRegexFilter(regexFilter, *scanRequest.ResourceID)
-		if matched {
-			zap.L().Info("resource filtered based on filter regex",
-				zap.String("regex filter", *regexFilter), zap.String("resource id", *scanRequest.ResourceID))
-			return nil, nil
-		}
-		if err != nil {
-			return nil, err
-		}
-		// Check if resource type is filtered
-		if scanRequest.ResourceType != nil && resourceTypeFilter != nil {
-			for _, resourceType := range resourceTypeFilter {
-				if resourceType == *scanRequest.ResourceType {
-					zap.L().Info("resource type filtered", zap.String("resource type", resourceType))
-					return nil, nil
-				}
-			}
-		}
 		// Individual resource scan
 		zap.L().Debug("processing single resource scan")
-		// TODO: Implement regex filtering for S3 (specifically PollS3Bucket & PollS3Buckets)
-		// TODO: Implement regional blacklisting for single resource scans and separately for the S3 poller
 		return singleResourceScan(scanRequest, pollerResourceInput)
 	}
 
@@ -367,6 +346,16 @@ func singleResourceScan(
 	var resource interface{}
 	var err error
 
+	// Check if resource type is filtered
+	if scanRequest.ResourceType != nil && pollerInput.ResourceTypeFilter != nil {
+		for _, resourceType := range pollerInput.ResourceTypeFilter {
+			if resourceType == *scanRequest.ResourceType {
+				zap.L().Info("resource type filtered", zap.String("resource type", resourceType))
+				return nil, nil
+			}
+		}
+	}
+
 	// First, check if we've been rate limited recently while attempting to scan this resource. If
 	// so, discard the scan request. There is already one in the ether waiting to be picked up.
 	if timestamp, ok := RateLimitTracker.Get(*scanRequest.ResourceID); ok {
@@ -393,6 +382,16 @@ func singleResourceScan(
 			zap.L().Error("unable to parse resourceID", zap.Error(err), zap.String("resourceID", *scanRequest.ResourceID))
 			// Don't return an error here because the scan request is not retryable
 			return nil, nil
+		}
+		// Check if ResourceID matches the integration's regex filter
+		matched, err := utils.MatchRegexFilter(pollerInput.ARNRegexFilter, *scanRequest.ResourceID)
+		if matched {
+			zap.L().Info("resource filtered based on filter regex",
+				zap.String("regex filter", *pollerInput.ARNRegexFilter), zap.String("resource id", *scanRequest.ResourceID))
+			return nil, nil
+		}
+		if err != nil {
+			return nil, err
 		}
 		resource, err = pollFunction(pollerInput, resourceARN, scanRequest)
 	} else {

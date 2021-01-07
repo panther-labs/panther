@@ -71,6 +71,7 @@ type ResourcePollerInput struct {
 	Timestamp           *time.Time
 	NextPageToken       *string
 	RegionBlacklist     []string
+	ResourceTypeFilter  []string
 	ARNRegexFilter      *string
 }
 
