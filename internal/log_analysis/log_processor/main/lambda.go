@@ -71,7 +71,7 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 	logTypesResolver := logtypes.ChainResolvers(
 		registry.NativeLogTypesResolver(),
 		snapshotlogs.Resolver(),
-		logtypes.CachedResolver(logTypeMaxAge, &logtypesapi.Resolver{
+		logtypes.NewCachedResolver(logTypeMaxAge, &logtypesapi.Resolver{
 			LogTypesAPI: &logtypesapi.LogTypesAPILambdaClient{
 				LambdaName: logtypesapi.LambdaName,
 				LambdaAPI:  common.LambdaClient,

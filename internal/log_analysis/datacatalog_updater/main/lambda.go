@@ -84,15 +84,9 @@ func main() {
 		LambdaAPI:  lambdaClient,
 	}
 
-	cachedResolver := logtypes.CachedResolver(logTypeMaxAge, &logtypesapi.Resolver{
+	cachedResolver := logtypes.NewCachedResolver(logTypeMaxAge, &logtypesapi.Resolver{
 		LogTypesAPI: logtypesAPI,
 	})
-
-	// Store the clear cache of the underlying cached resolver.
-	// We use it on custom log updates to ensure we have the latest schema.
-	clearCache := cachedResolver.(interface {
-		Forget(name string)
-	}).Forget
 
 	resolver := logtypes.ChainResolvers(
 		registry.NativeLogTypesResolver(),
@@ -111,9 +105,11 @@ func main() {
 			}
 			return reply.LogTypes, nil
 		},
-		GlueClient:        glue.New(clientsSession),
-		Resolver:          resolver,
-		ClearLogTypeCache: clearCache,
+		GlueClient: glue.New(clientsSession),
+		Resolver:   resolver,
+		// Store the clear cache of the underlying cached resolver.
+		// We use it on custom log updates to ensure we have the latest schema.
+		ClearLogTypeCache: cachedResolver.Forget,
 		AthenaClient:      athena.New(clientsSession),
 		SQSClient:         sqs.New(clientsSession),
 		Logger:            logger,

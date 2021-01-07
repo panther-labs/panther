@@ -75,16 +75,16 @@ func (c chainResolver) Resolve(ctx context.Context, name string) (Entry, error) 
 	return nil, nil
 }
 
-// CachedResolver
-func CachedResolver(maxAge time.Duration, r Resolver) Resolver {
-	return &cachedResolver{
+// NewCachedResolver creates a new resolver that caches entries for maxAge duration.
+func NewCachedResolver(maxAge time.Duration, r Resolver) *CachedResolver {
+	return &CachedResolver{
 		maxAge:   maxAge,
 		upstream: r,
 		entries:  make(map[string]*cachedEntry),
 	}
 }
 
-type cachedResolver struct {
+type CachedResolver struct {
 	maxAge   time.Duration
 	upstream Resolver
 	group    singleflight.Group
@@ -101,13 +101,13 @@ func (e *cachedEntry) IsValid(maxAge time.Duration) bool {
 	return e != nil && time.Since(e.resolvedAt) < maxAge
 }
 
-func (c *cachedResolver) Forget(name string) {
+func (c *CachedResolver) Forget(name string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	delete(c.entries, name)
 }
 
-func (c *cachedResolver) Resolve(ctx context.Context, name string) (Entry, error) {
+func (c *CachedResolver) Resolve(ctx context.Context, name string) (Entry, error) {
 	if e := c.find(name); e.IsValid(c.maxAge) {
 		return e.Entry, nil
 	}
@@ -125,13 +125,13 @@ func (c *cachedResolver) Resolve(ctx context.Context, name string) (Entry, error
 	return reply.(Entry), nil
 }
 
-func (c *cachedResolver) find(name string) *cachedEntry {
+func (c *CachedResolver) find(name string) *cachedEntry {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.entries[name]
 }
 
-func (c *cachedResolver) set(name string, e Entry) {
+func (c *CachedResolver) set(name string, e Entry) {
 	now := time.Now()
 	c.mu.Lock()
 	defer c.mu.Unlock()
