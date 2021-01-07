@@ -34,7 +34,7 @@ ace.define(
   } 
     
   .ace-panther .ace_gutter {
-    background: ${theme.colors['navyblue-500']};
+    background: #011e3a;
     color: white
   }
   
@@ -62,7 +62,7 @@ ace.define(
   }
   
   .ace-panther {
-    background-color: ${theme.colors['navyblue-500']};
+    background-color: #002240;
     color: #FFFFFF
   }
   
@@ -150,19 +150,18 @@ ace.define(
   }
   
   .ace-panther .ace_comment {
-  font-style: italic;
+    font-style: italic;
     color: ${theme.colors['blue-400']}
+  }
+  
+  .ace-panther .ace_comment.ace_placeholder {
+    margin-top: 10px;
   }
   
   .ace-panther .ace_heading,
   .ace-panther .ace_markup.ace_heading {
     color: #C8E4FD;
     background-color: #001221
-  }
-  
-  .ace-panther .ace_list,
-  .ace-panther .ace_markup.ace_list {
-    background-color: #130D26
   }
   
   .ace-panther .ace_variable {
@@ -174,7 +173,7 @@ ace.define(
   }
   
   .ace-panther .ace_meta.ace_tag {
-    color: #9EFFFF
+    color: ${theme.colors['blue-300']}
   }
   
   .ace-panther .ace_rightAlignedText {
