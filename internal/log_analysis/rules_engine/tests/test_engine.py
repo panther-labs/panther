@@ -276,3 +276,32 @@ class TestEngine(TestCase):
         ]
 
         self.assertEqual(result, expected_event_matches)
+
+    def test_modify_event(self) -> None:
+        analysis_api = mock.MagicMock()
+        analysis_api.get_enabled_rules.return_value = [
+            {
+                'id': 'rule_id_1',
+                'logTypes': ['log'],
+                'body': 'def rule(event):\n\tevent["key"] = "not_value"\n\treturn True',
+                'versionId': 'version'
+            }
+        ]
+        engine = Engine(analysis_api)
+        result = engine.analyze('log', {})
+
+        expected_event_matches = [
+            EngineResult(
+                rule_id='rule_id_1',
+                rule_version='version',
+                log_type='log',
+                dedup='TypeError',
+                error_message=
+                '\'PantherEvent\' object does not support item assignment: rule_id_1.py, line 2, in rule    event["key"] = "not_value"',
+                event={},
+                dedup_period_mins=60,
+                title='TypeError("\'PantherEvent\' object does not support item assignment")'
+            )
+        ]
+
+        self.assertEqual(result, expected_event_matches)

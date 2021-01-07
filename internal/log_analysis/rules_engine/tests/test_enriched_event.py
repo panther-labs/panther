@@ -17,7 +17,7 @@
 from unittest import TestCase
 
 from ..src.data_model import DataModel
-from ..src.enriched_event import EnrichedEvent
+from ..src.enriched_event import PantherEvent
 
 
 class TestEnrichedEvent(TestCase):
@@ -38,7 +38,7 @@ class TestEnrichedEvent(TestCase):
                 'id': 'data_model_id'
             }
         )
-        enriched_event = EnrichedEvent(event, data_model)
+        enriched_event = PantherEvent(event, data_model)
         self.assertEqual(enriched_event.udm('missing_key'), None)
 
     def test_udm_method(self) -> None:
@@ -57,7 +57,7 @@ class TestEnrichedEvent(TestCase):
                 'id': 'data_model_id'
             }
         )
-        enriched_event = EnrichedEvent(event, data_model)
+        enriched_event = PantherEvent(event, data_model)
         self.assertEqual(enriched_event.udm('source_ip'), '1.2.3.4')
 
     def test_udm_path(self) -> None:
@@ -76,7 +76,7 @@ class TestEnrichedEvent(TestCase):
                 'id': 'data_model_id'
             }
         )
-        enriched_event = EnrichedEvent(event, data_model)
+        enriched_event = PantherEvent(event, data_model)
         self.assertEqual(enriched_event.udm('destination_ip'), '1.1.1.1')
         # test path with '.' in it
         event = {'destination.ip': '1.1.1.1', 'dst_port': '2222'}
@@ -90,7 +90,7 @@ class TestEnrichedEvent(TestCase):
                 'id': 'data_model_id'
             }
         )
-        enriched_event = EnrichedEvent(event, data_model)
+        enriched_event = PantherEvent(event, data_model)
         self.assertEqual(enriched_event.udm('destination_ip'), '1.1.1.1')
 
     def test_udm_json_path(self) -> None:
@@ -109,7 +109,7 @@ class TestEnrichedEvent(TestCase):
                 'id': 'data_model_id'
             }
         )
-        enriched_event = EnrichedEvent(event, data_model)
+        enriched_event = PantherEvent(event, data_model)
         self.assertEqual(enriched_event.udm('destination_ip'), '1.1.1.1')
 
     def test_udm_complex_json_path(self) -> None:
@@ -131,7 +131,7 @@ class TestEnrichedEvent(TestCase):
                 'id': 'data_model_id'
             }
         )
-        enriched_event = EnrichedEvent(event, data_model)
+        enriched_event = PantherEvent(event, data_model)
         self.assertEqual(enriched_event.udm('email'), 'user@example.com')
 
     def test_udm_multiple_matches(self) -> None:
@@ -151,7 +151,7 @@ class TestEnrichedEvent(TestCase):
                 'id': 'data_model_id'
             }
         )
-        enriched_event = EnrichedEvent(event, data_model)
+        enriched_event = PantherEvent(event, data_model)
         try:
             enriched_event.udm('destination_ip')
         except Exception:  # pylint: disable=broad-except

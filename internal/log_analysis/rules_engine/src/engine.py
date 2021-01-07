@@ -23,7 +23,7 @@ from typing import Any, Dict, List
 from . import EngineResult
 from .analysis_api import AnalysisAPIClient
 from .data_model import DataModel
-from .enriched_event import EnrichedEvent
+from .enriched_event import PantherEvent
 from .logging import get_logger
 from .rule import Rule
 
@@ -55,7 +55,7 @@ class Engine:
         # enrich the event to have access to field by standard field name
         #  via the `udm` method
         if 'p_log_type' in event and event['p_log_type'] in self.log_type_to_data_models:
-            event = EnrichedEvent(event, self.log_type_to_data_models[event['p_log_type']])
+            event = PantherEvent(event, self.log_type_to_data_models[event['p_log_type']])
 
         rule_result = rule.run(event, batch_mode=False)
         format_exception = lambda exc: '{}: {}'.format(type(exc).__name__, exc) if exc else exc
@@ -104,8 +104,7 @@ class Engine:
 
         # enrich the event to have access to field by standard field name
         #  via the `udm` method
-        if log_type in self.log_type_to_data_models:
-            event = EnrichedEvent(event, self.log_type_to_data_models[log_type])
+        event = PantherEvent(event, self.log_type_to_data_models.get(log_type))
 
         for rule in self.log_type_to_rules[log_type]:
             self.logger.debug("running rule [%s]", rule.rule_id)
