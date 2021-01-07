@@ -54,7 +54,7 @@ const EditDataModel: React.FC = () => {
       displayName: data?.getDataModel.displayName ?? '',
       logType: data?.getDataModel.displayName ?? null,
       enabled: data?.getDataModel.enabled ?? true,
-      mappings: data?.getDataModel.mappings ?? [],
+      mappings: data?.getDataModel.mappings ?? [{ name: '', method: '', path: '' }],
       body: data?.getDataModel.body ?? '',
     }),
     [data]

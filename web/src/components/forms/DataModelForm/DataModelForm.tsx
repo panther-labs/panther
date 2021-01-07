@@ -85,16 +85,21 @@ const validationSchema = Yup.object<DataModelFormValues>({
 });
 
 const DataModelForm: React.FC<DataModelFormProps> = ({ initialValues, onSubmit }) => {
-  const [isPythonEditorOpen, setPythonEditorVisibility] = React.useState(!!initialValues.body);
+  const [isPythonEditorOpen, setPythonEditorVisibility] = React.useState(false);
 
   const { pushSnackbar } = useSnackbar();
   const { data } = useListAvailableLogTypes({
     onError: () => pushSnackbar({ title: "Couldn't fetch your available log types" }),
   });
 
+  React.useEffect(() => {
+    setPythonEditorVisibility(!!initialValues.body);
+  }, [initialValues.body]);
+
   return (
     <Panel title="New Data Model">
       <Formik<DataModelFormValues>
+        enableReinitialize
         initialValues={initialValues}
         onSubmit={onSubmit}
         validationSchema={validationSchema}
@@ -207,6 +212,7 @@ const DataModelForm: React.FC<DataModelFormProps> = ({ initialValues, onSubmit }
                     variant="ghost"
                     active={isPythonEditorOpen}
                     variantColor="navyblue"
+                    variantBorderStyle="circle"
                     icon={isPythonEditorOpen ? 'caret-up' : 'caret-down'}
                     onClick={() => setPythonEditorVisibility(v => !v)}
                     size="medium"
