@@ -855,20 +855,14 @@ Resources:
     Condition: CreateVpc
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !If
-        - CreateSubnets
-        - !Ref PublicSubnetOne
-        - !Ref SubnetOneID
+      SubnetId: !If [CreateSubnets, !Ref PublicSubnetOne, !Ref SubnetOneID]
       RouteTableId: !Ref PublicRouteTable
 
   PublicSubnetTwoRouteTableAssociation:
     Condition: CreateVpc
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !If
-        - CreateSubnets
-        - !Ref PublicSubnetTwo
-        - !Ref SubnetTwoID
+      SubnetId: !If [CreateSubnets, !Ref PublicSubnetTwo, !Ref SubnetTwoID]
       RouteTableId: !Ref PublicRouteTable
 
   # Public load balancer, hosted in public subnets that is accessible
@@ -910,10 +904,7 @@ Resources:
       # Failure Impact
       # * The Panther user interface will not be available.
       # </cfndoc>
-      Scheme: !If
-        - CreateVpc
-        - internet-facing
-        - internal
+      Scheme: !If [CreateVpc, internet-facing, internal]
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
           Value: '30'
@@ -923,19 +914,10 @@ Resources:
         - Key: access_logs.s3.bucket
           Value: !Ref AuditLogs
       Subnets:
-        - !If
-          - CreateSubnets
-          - !Ref PublicSubnetOne
-          - !Ref SubnetOneID
-        - !If
-          - CreateSubnets
-          - !Ref PublicSubnetTwo
-          - !Ref SubnetTwoID
+        - !If [CreateSubnets, !Ref PublicSubnetOne, !Ref SubnetOneID]
+        - !If [CreateSubnets, !Ref PublicSubnetTwo, !Ref SubnetTwoID]
       SecurityGroups:
-        - !If
-          - CreateVpc
-          - !Ref PublicLoadBalancerSecurityGroup
-          - !Ref SecurityGroupID
+        - !If [CreateVpc, !Ref PublicLoadBalancerSecurityGroup, !Ref SecurityGroupID]
 
   # A target group is connected to a network or application load balancer, so it can automatically
   # distribute traffic across all the targets.
