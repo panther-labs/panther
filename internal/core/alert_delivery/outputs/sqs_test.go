@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -75,13 +76,16 @@ func TestSendSqs(t *testing.T) {
 		QueueUrl:    &sqsOutputConfig.QueueURL,
 		MessageBody: &expectedSerializedSqsMessage,
 	}
-
-	client.On("SendMessage", expectedSqsSendMessageInput).Return(&sqs.SendMessageOutput{MessageId: aws.String("messageId")}, nil)
+	ctx := context.Background()
+	client.On("SendMessageWithContext",
+		ctx,
+		expectedSqsSendMessageInput,
+	).Return(&sqs.SendMessageOutput{MessageId: aws.String("messageId")}, nil)
 	getSqsClient = func(*session.Session, string) sqsiface.SQSAPI {
 		return client
 	}
 
-	result := outputClient.Sqs(alert, sqsOutputConfig)
+	result := outputClient.Sqs(ctx, alert, sqsOutputConfig)
 	assert.NotNil(t, result)
 	assert.Equal(t, &AlertDeliveryResponse{
 		Message:    "messageId",

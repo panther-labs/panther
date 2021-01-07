@@ -19,6 +19,7 @@ package outputs
  */
 
 import (
+	"context"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -37,7 +38,7 @@ var getSqsClient = buildSqsClient
 
 // Sqs sends an alert to an SQS Queue.
 // nolint: dupl
-func (client *OutputClient) Sqs(alert *alertModels.Alert, config *outputModels.SqsConfig) *AlertDeliveryResponse {
+func (client *OutputClient) Sqs(ctx context.Context, alert *alertModels.Alert, config *outputModels.SqsConfig) *AlertDeliveryResponse {
 	notification := generateNotificationFromAlert(alert)
 
 	serializedMessage, err := jsoniter.MarshalToString(notification)
@@ -58,7 +59,7 @@ func (client *OutputClient) Sqs(alert *alertModels.Alert, config *outputModels.S
 
 	sqsClient := getSqsClient(client.session, config.QueueURL)
 
-	response, err := sqsClient.SendMessage(sqsSendMessageInput)
+	response, err := sqsClient.SendMessageWithContext(ctx, sqsSendMessageInput)
 	if err != nil {
 		zap.L().Error("Failed to send message to SQS queue", zap.Error(err))
 		return getAlertResponseFromSQSError(err)

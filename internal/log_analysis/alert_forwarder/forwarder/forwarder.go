@@ -46,7 +46,7 @@ var skipOutput = []string{"SKIP"}
 
 type Handler struct {
 	SqsClient        sqsiface.SQSAPI
-	Cache            *RuleCache
+	Cache            RuleCache
 	DdbClient        dynamodbiface.DynamoDBAPI
 	AlertTable       string
 	AlertingQueueURL string

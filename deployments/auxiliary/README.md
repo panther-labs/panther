@@ -13,3 +13,5 @@ For example, [panther-cloudsec-iam](cloudformation/panther-cloudsec-iam.yml) cre
 which Panther Cloud Security can assume to scan your AWS account.
 
 Each template is provided in [CloudFormation](cloudformation) and [Terraform](terraform) formats for your convenience.
+
+**NOTE**: for both [Terraform](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) and [CloudFormation](https://docs.aws.amazon.com/sns/latest/api/API_Subscribe.html), cross-account SNS topic subscriptions (CloudWatch Events and Log Processing Notifications templates) must be created in the master Panther account. This is because the account in which the _endpoint_ exists, not the the account in which the _topic_ exists, must "confirm" the subscription. For Panther, the endpoints for the subscriptions in each affected template are SQS queues in the master account. **The SNS topic subscription resources in the modules must be moved to the master account's Terraform or CloudFormation configuration.**

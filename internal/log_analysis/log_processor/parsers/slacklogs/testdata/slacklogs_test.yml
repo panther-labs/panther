@@ -1,0 +1,121 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+name: audit logs
+logType: Slack.AuditLogs
+input: |
+  {
+           "id":"0123a45b-6c7d-8900-e12f-3456789gh0i1",
+           "date_create":1521214343,
+           "action":"user_login",
+           "actor":{
+              "type":"user",
+              "user":{
+                 "id":"W123AB456",
+                 "name":"Charlie Parker",
+                 "email":"bird@slack.com"
+              }
+           },
+           "entity":{
+              "type":"user",
+              "user":{
+                 "id":"W123AB456",
+                 "name":"Charlie Parker",
+                 "email":"bird@slack.com"
+              }
+           },
+           "context":{
+              "location":{
+                 "type":"enterprise",
+                 "id":"E1701NCCA",
+                 "name":"Birdland",
+                 "domain":"birdland"
+              },
+              "ua":"Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/64.0.3282.186 Safari\/537.36",
+              "ip_address":"12.3.45.78"
+           }
+      }
+result: |
+  {
+    "id":"0123a45b-6c7d-8900-e12f-3456789gh0i1",
+               "date_create":1521214343,
+               "action":"user_login",
+               "actor":{
+                  "type":"user",
+                  "user":{
+                     "id":"W123AB456",
+                     "name":"Charlie Parker",
+                     "email":"bird@slack.com"
+                  }
+               },
+               "entity":{
+                  "type":"user",
+                  "user":{
+                     "id":"W123AB456",
+                     "name":"Charlie Parker",
+                     "email":"bird@slack.com"
+                  }
+               },
+               "context":{
+                  "location":{
+                     "type":"enterprise",
+                     "id":"E1701NCCA",
+                     "name":"Birdland",
+                     "domain":"birdland"
+                  },
+                  "ua":"Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/64.0.3282.186 Safari\/537.36",
+                  "ip_address":"12.3.45.78"
+               },
+
+    "p_log_type": "Slack.AuditLogs",
+    "p_event_time":"2018-03-16T15:32:23Z",
+    "p_any_usernames":["Charlie Parker"],
+    "p_any_emails":["bird@slack.com"],
+    "p_any_ip_addresses":["12.3.45.78"]
+  }
+---
+name: access logs
+logType: Slack.AccessLogs
+input: |
+  {
+             "user_id": "U12345",
+             "username": "white_rabbit",
+             "date_first": 1422922493,
+             "date_last": 1422922493,
+             "count": 1,
+             "ip": "127.0.0.1",
+             "user_agent": "SlackWeb Mozilla/5.0 (iPhone; CPU iPhone OS 8_1_3 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) Version/8.0 Mobile/12B466 Safari/600.1.4",
+             "isp": "BigCo ISP",
+             "country": "US",
+             "region": "CA"
+         }
+result: |
+  {
+  "user_id": "U12345",
+               "username": "white_rabbit",
+               "date_first": 1422922493,
+               "date_last": 1422922493,
+               "count": 1,
+               "ip": "127.0.0.1",
+               "user_agent": "SlackWeb Mozilla/5.0 (iPhone; CPU iPhone OS 8_1_3 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) Version/8.0 Mobile/12B466 Safari/600.1.4",
+               "isp": "BigCo ISP",
+               "country": "US",
+               "region": "CA",
+    "p_log_type": "Slack.AccessLogs",
+    "p_event_time":"2015-02-03T00:14:53Z",
+    "p_any_ip_addresses":["127.0.0.1"],
+    "p_any_usernames":["white_rabbit"]
+  }

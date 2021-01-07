@@ -57,52 +57,99 @@ func GenerateLogViews(tables []*awsglue.GlueTableMetadata) (sqlStatements []stri
 	if len(tables) == 0 {
 		return nil, errors.New("no tables specified for GenerateLogViews()")
 	}
-	sqlStatement, err := generateViewAllLogs(tables)
+
+	var allTables []*awsglue.GlueTableMetadata
+	sqlStatement, logTables, err := generateViewAllLogs(tables)
 	if err != nil {
 		return nil, err
 	}
 	sqlStatements = append(sqlStatements, sqlStatement)
-	sqlStatement, err = generateViewAllRuleMatches(tables)
+	allTables = append(allTables, logTables...)
+
+	sqlStatement, cloudSecurityTables, err := generateViewAllCloudSecurity(tables)
 	if err != nil {
 		return nil, err
 	}
 	sqlStatements = append(sqlStatements, sqlStatement)
-	sqlStatement, err = generateViewAllRuleErrors(tables)
+	allTables = append(allTables, cloudSecurityTables...)
+
+	sqlStatement, ruleMatchTables, err := generateViewAllRuleMatches(tables)
 	if err != nil {
 		return nil, err
 	}
 	sqlStatements = append(sqlStatements, sqlStatement)
+	allTables = append(allTables, ruleMatchTables...)
+
+	sqlStatement, ruleErrorTables, err := generateViewAllRuleErrors(tables)
+	if err != nil {
+		return nil, err
+	}
+	sqlStatements = append(sqlStatements, sqlStatement)
+	allTables = append(allTables, ruleErrorTables...)
+
+	sqlStatement, err = generateViewAllDatabases(allTables)
+	if err != nil {
+		return nil, err
+	}
+	sqlStatements = append(sqlStatements, sqlStatement)
+
 	// add future views here
 	return sqlStatements, nil
 }
 
 // generateViewAllLogs creates a view over all log sources in log db using "panther" fields
-func generateViewAllLogs(tables []*awsglue.GlueTableMetadata) (sql string, err error) {
-	return generateViewAllHelper("all_logs", tables, []awsglue.Column{})
+func generateViewAllLogs(tables []*awsglue.GlueTableMetadata) (sql string, logTables []*awsglue.GlueTableMetadata, err error) {
+	// some logTypes are under different databases and we want a view per database
+	for _, table := range tables {
+		if table.DatabaseName() == pantherdb.LogProcessingDatabase {
+			logTables = append(logTables, table)
+		}
+	}
+	sql, err = generateViewAllHelper("all_logs", logTables, []awsglue.Column{})
+	return sql, logTables, err
+}
+
+// generateViewAllCloudSecurity creates a view over all log sources in cloudsecurity db using "panther" fields
+func generateViewAllCloudSecurity(tables []*awsglue.GlueTableMetadata) (sql string, cloudsecTables []*awsglue.GlueTableMetadata,
+	err error) {
+
+	// some logTypes are under different databases and we want a view per database
+	for _, table := range tables {
+		if table.DatabaseName() == pantherdb.CloudSecurityDatabase {
+			cloudsecTables = append(cloudsecTables, table)
+		}
+	}
+	sql, err = generateViewAllHelper("all_cloudsecurity", cloudsecTables, []awsglue.Column{})
+	return sql, cloudsecTables, err
 }
 
 // generateViewAllRuleMatches creates a view over all log sources in rule match db the using "panther" fields
-func generateViewAllRuleMatches(tables []*awsglue.GlueTableMetadata) (sql string, err error) {
+func generateViewAllRuleMatches(tables []*awsglue.GlueTableMetadata) (sql string, ruleTables []*awsglue.GlueTableMetadata, err error) {
 	// the rule match tables share the same structure as the logs with some extra columns
-	var ruleTables []*awsglue.GlueTableMetadata
 	for _, table := range tables {
 		ruleTable := awsglue.NewGlueTableMetadata(
 			pantherdb.RuleMatchDatabase, table.TableName(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
 		ruleTables = append(ruleTables, ruleTable)
 	}
-	return generateViewAllHelper("all_rule_matches", ruleTables, awsglue.RuleMatchColumns)
+	sql, err = generateViewAllHelper("all_rule_matches", ruleTables, awsglue.RuleMatchColumns)
+	return sql, ruleTables, err
 }
 
 // generateViewAllRuleErrors creates a view over all log sources in rule error db the using "panther" fields
-func generateViewAllRuleErrors(tables []*awsglue.GlueTableMetadata) (sql string, err error) {
+func generateViewAllRuleErrors(tables []*awsglue.GlueTableMetadata) (sql string, ruleErrorTables []*awsglue.GlueTableMetadata, err error) {
 	// the rule match tables share the same structure as the logs with some extra columns
-	var ruleErrorTables []*awsglue.GlueTableMetadata
 	for _, table := range tables {
 		ruleTable := awsglue.NewGlueTableMetadata(
 			pantherdb.RuleErrorsDatabase, table.TableName(), table.Description(), awsglue.GlueTableHourly, table.EventStruct())
 		ruleErrorTables = append(ruleErrorTables, ruleTable)
 	}
-	return generateViewAllHelper("all_rule_errors", ruleErrorTables, awsglue.RuleErrorColumns)
+	sql, err = generateViewAllHelper("all_rule_errors", ruleErrorTables, awsglue.RuleErrorColumns)
+	return sql, ruleErrorTables, err
+}
+
+// generateViewAllDatabases() creates a view over all data by taking all tables created in previous views
+func generateViewAllDatabases(tables []*awsglue.GlueTableMetadata) (sql string, err error) {
+	return generateViewAllHelper("all_databases", tables, []awsglue.Column{})
 }
 
 func generateViewAllHelper(viewName string, tables []*awsglue.GlueTableMetadata, extraColumns []awsglue.Column) (sql string, err error) {
@@ -205,7 +252,9 @@ func (pvc *pantherViewColumns) inferViewColumns(table *awsglue.GlueTableMetadata
 
 func (pvc *pantherViewColumns) viewColumns(table *awsglue.GlueTableMetadata) string {
 	tableColumns := pvc.columnsByTable[table.TableName()]
-	selectColumns := make([]string, 0, len(pvc.allColumns))
+	selectColumns := make([]string, 0, len(pvc.allColumns)+1)
+	// tag each with database name
+	selectColumns = append(selectColumns, fmt.Sprintf("'%s' AS p_db_name", table.DatabaseName()))
 	for _, column := range pvc.allColumns {
 		selectColumn := column
 		if _, exists := tableColumns[column]; !exists { // fill in missing columns with NULL
