@@ -123,15 +123,14 @@ func TestOldResults(t *testing.T) {
 		Host:      box.String("2.1.1.1"),
 		Timestamp: (*timestamp.RFC3339)(&tm),
 		PantherLog: parsers.PantherLog{
-			PantherLogType:        box.String("Foo"),
-			PantherRowID:          box.String("id"),
-			PantherEventTime:      (*timestamp.RFC3339)(&tm),
-			PantherParseTime:      (*timestamp.RFC3339)(&now),
-			PantherAnyIPAddresses: parsers.NewPantherAnyString(),
+			PantherLogType:   box.String("Foo"),
+			PantherRowID:     box.String("id"),
+			PantherEventTime: (*timestamp.RFC3339)(&tm),
+			PantherParseTime: (*timestamp.RFC3339)(&now),
 		},
 	}
 	event.SetEvent(&event)
-	parsers.AppendAnyString(event.PantherAnyIPAddresses, "1.1.1.1", "2.1.1.1")
+	parsers.AppendAnyString(&event.PantherAnyIPAddresses, "1.1.1.1", "2.1.1.1")
 
 	api := buildAPI()
 	result := event.Result()

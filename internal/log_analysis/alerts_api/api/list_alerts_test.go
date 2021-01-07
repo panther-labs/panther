@@ -85,13 +85,7 @@ var (
 )
 
 func TestListAlertsForRule(t *testing.T) {
-	t.Parallel()
-	tableMock := &tableMock{}
-	ruleCacheMock := &ruleCacheMock{}
-	api := API{
-		alertsDB:  tableMock,
-		ruleCache: ruleCacheMock,
-	}
+	api := initTestAPI()
 
 	input := &models.ListAlertsInput{
 		RuleID:            aws.String("ruleId"),
@@ -101,9 +95,9 @@ func TestListAlertsForRule(t *testing.T) {
 		Severity:          []string{"INFO"},
 	}
 
-	tableMock.On("ListAll", input).
+	api.mockTable.On("ListAll", input).
 		Return(alertItems, aws.String("lastKey"), nil)
-	ruleCacheMock.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
+	api.mockRuleCache.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
 
 	result, err := api.ListAlerts(input)
 	assert.NoError(t, err)
@@ -112,17 +106,11 @@ func TestListAlertsForRule(t *testing.T) {
 		Alerts:           expectedAlertSummary,
 		LastEvaluatedKey: aws.String("lastKey"),
 	}, result)
-	tableMock.AssertExpectations(t)
-	ruleCacheMock.AssertExpectations(t)
+	api.AssertExpectations(t)
 }
 
 func TestListAllAlerts(t *testing.T) {
-	tableMock := &tableMock{}
-	ruleCacheMock := &ruleCacheMock{}
-	api := API{
-		alertsDB:  tableMock,
-		ruleCache: ruleCacheMock,
-	}
+	api := initTestAPI()
 
 	input := &models.ListAlertsInput{
 		PageSize:          aws.Int(10),
@@ -136,9 +124,9 @@ func TestListAllAlerts(t *testing.T) {
 		CreatedAtBefore:   aws.Time(time.Now()),
 		SortDir:           aws.String("ascending"),
 	}
-	tableMock.On("ListAll", input).Return(alertItems, aws.String("lastKey"), nil)
+	api.mockTable.On("ListAll", input).Return(alertItems, aws.String("lastKey"), nil)
 
-	ruleCacheMock.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil)
+	api.mockRuleCache.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil)
 
 	result, err := api.ListAlerts(input)
 	assert.NoError(t, err)
@@ -146,20 +134,14 @@ func TestListAllAlerts(t *testing.T) {
 		Alerts:           expectedAlertSummary,
 		LastEvaluatedKey: aws.String("lastKey"),
 	}, result)
-	tableMock.AssertExpectations(t)
-	ruleCacheMock.AssertExpectations(t)
+	api.AssertExpectations(t)
 }
 
 // Verifies backwards compatibility
 // Verifies that API returns correct results when alert title is not specified
 func TestListAllAlertsWithoutTitle(t *testing.T) {
 	t.Parallel()
-	tableMock := &tableMock{}
-	ruleCacheMock := &ruleCacheMock{}
-	api := API{
-		alertsDB:  tableMock,
-		ruleCache: ruleCacheMock,
-	}
+	api := initTestAPI()
 
 	alertItems := []*table.AlertItem{
 		{
@@ -259,9 +241,9 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 	}
 
 	// Mock what is returned from DDB
-	tableMock.On("ListAll", input).Return(alertItems, aws.String("lastKey"), nil)
+	api.mockTable.On("ListAll", input).Return(alertItems, aws.String("lastKey"), nil)
 
-	ruleCacheMock.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
+	api.mockRuleCache.On("Get", "ruleId", "ruleVersion").Return(&rulemodels.Rule{}, nil).Once()
 
 	result, err := api.ListAlerts(input)
 	assert.NoError(t, err)
@@ -270,6 +252,5 @@ func TestListAllAlertsWithoutTitle(t *testing.T) {
 		LastEvaluatedKey: aws.String("lastKey"),
 	}, result)
 
-	tableMock.AssertExpectations(t)
-	ruleCacheMock.AssertExpectations(t)
+	api.AssertExpectations(t)
 }
