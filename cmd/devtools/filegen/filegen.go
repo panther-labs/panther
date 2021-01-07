@@ -32,7 +32,7 @@ const (
 type Generator interface {
 	WithRows(nrows int) // set rows
 	LogType() string
-	Filename() string
+	Filename(hour time.Time) string
 	NewFile(hour time.Time) *File
 }
 
@@ -46,7 +46,7 @@ type File struct {
 
 func NewFile(gen Generator, hour time.Time) *File {
 	f := &File{
-		name: gen.LogType() + "/" + hour.Format(DateFormat) + "/" + gen.Filename() + ".gz",
+		name: gen.LogType() + "/" + hour.Format(DateFormat) + "/" + gen.Filename(hour) + ".gz",
 	}
 	f.writer = gzip.NewWriter(&f.buffer)
 	return f
@@ -57,7 +57,7 @@ func (f *File) Name() string {
 }
 
 func (f *File) Close() {
-	f.writer.Close()
+	_ = f.writer.Close()
 	f.Data = bytes.NewReader(f.buffer.Bytes())
 }
 

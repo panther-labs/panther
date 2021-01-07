@@ -51,7 +51,7 @@ func (sa *AWSS3ServerAccess) LogType() string {
 	return AWSS3ServerAccessName
 }
 
-func (sa *AWSS3ServerAccess) Filename() string {
+func (sa *AWSS3ServerAccess) Filename(_ time.Time) string {
 	return uuid.New().String()
 }
 

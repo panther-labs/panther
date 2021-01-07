@@ -34,7 +34,8 @@ const (
 	AWSCloudTrailName = awslogs.TypeCloudTrail
 
 	// https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-examples.html
-	filePrefix = "111122223333_CloudTrail_us-east-2_20150801T0210Z_"
+	cloudTrailFilePrefix          = "111122223333_CloudTrail_us-east-2_"
+	cloudTrailFileTimestampFormat = "20060102T150Z" // e.g., 20150801T0210Z
 )
 
 type AWSCloudTrail struct {
@@ -51,8 +52,8 @@ func (ct *AWSCloudTrail) LogType() string {
 	return AWSCloudTrailName
 }
 
-func (ct *AWSCloudTrail) Filename() string {
-	return filePrefix + uuid.New().String()
+func (ct *AWSCloudTrail) Filename(hour time.Time) string {
+	return cloudTrailFilePrefix + hour.Format(cloudTrailFileTimestampFormat) + "_" + uuid.New().String()
 }
 
 func (ct *AWSCloudTrail) NewFile(hour time.Time) *filegen.File {
@@ -138,8 +139,9 @@ func (ct *AWSCloudTrail) fillEvent(event *awslogs.CloudTrail, hour time.Time) {
 }
 
 var (
-	cloudTrailEventTypes          = []string{"AwsApiCall", "AwsServiceEvent", "AwsConsoleSignIn"}
-	cloudTrailUserIdentityTypes   = []string{"AWSService", "AssumedRole"}
+	cloudTrailEventTypes        = []string{"AwsApiCall", "AwsServiceEvent", "AwsConsoleSignIn"}
+	cloudTrailUserIdentityTypes = []string{"AWSService", "AssumedRole"}
+	// FIXME: we probably want more variation in the below
 	cloudTrailAdditionalEventData = pantherlog.RawMessage(`{"additional":1234}`)
 	cloudTrailRequestParameters   = pantherlog.RawMessage(`{"request":1234}`)
 	cloudTrailResponceElements    = pantherlog.RawMessage(`{"response":1234}`)

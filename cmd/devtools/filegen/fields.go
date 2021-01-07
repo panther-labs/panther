@@ -28,6 +28,8 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
+// functions to randomly generate data
+
 func Bool() bool {
 	return rand.Int31n(2) == 0 // nolint (gosec)
 }
@@ -45,6 +47,7 @@ func StringSlice(n, m int) []string {
 }
 
 func StringChoice(choices []string) string {
+	// rand.Int31n() returns [0,n)
 	return choices[rand.Int31n(int32(len(choices)))] // nolint (gosec)
 }
 

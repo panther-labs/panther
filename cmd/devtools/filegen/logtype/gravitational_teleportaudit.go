@@ -47,7 +47,7 @@ func (ga *GravitationalTeleportAudit) LogType() string {
 	return GravitationalTeleportAuditName
 }
 
-func (ga *GravitationalTeleportAudit) Filename() string {
+func (ga *GravitationalTeleportAudit) Filename(_ time.Time) string {
 	return uuid.New().String()
 }
 
