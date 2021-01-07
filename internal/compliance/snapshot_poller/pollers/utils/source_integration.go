@@ -65,7 +65,7 @@ func GetIntegration(integrationID string) (integration *models.SourceIntegration
 	return result, nil
 }
 
-func matchRegexFilter(regexFilter *string, resourceARN string) (matched bool, err error) {
+func MatchRegexFilter(regexFilter *string, resourceARN string) (matched bool, err error) {
 	if regexFilter == nil || *regexFilter == "" {
 		return false, nil
 	}

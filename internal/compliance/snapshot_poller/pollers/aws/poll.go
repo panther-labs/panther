@@ -23,7 +23,6 @@ import (
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"math/rand"
 	"os"
-	"regexp"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -188,13 +187,14 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	// Options for filtering and blacklisting
 	var (
 		regionBlacklist, resourceTypeFilter []string
-		regexFilter                         string
+		regexFilter                         *string
 		sourceEnabled                       *bool
 	)
 	if sourceIntegration != nil {
 		regionBlacklist, resourceTypeFilter, regexFilter, sourceEnabled = sourceIntegration.RegionBlacklist,
-			sourceIntegration.ResourceTypeFilter, sourceIntegration.ARNRegexFilter, sourceIntegration.SourceEnabled
-		pollerResourceInput.ARNRegexFilter = &regexFilter
+			sourceIntegration.ResourceTypeFilter, aws.String(sourceIntegration.ARNRegexFilter), sourceIntegration.SourceEnabled
+		// Used to pass on these to downstream pollers
+		pollerResourceInput.ARNRegexFilter = regexFilter
 		pollerResourceInput.RegionBlacklist = regionBlacklist
 	}
 
@@ -214,20 +214,15 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	// TODO: Implement region blacklisting for individual resource scans
 	if scanRequest.ResourceID != nil {
 		// Check if ResourceID matches the integration's regex filter
-		if regexFilter != "" {
-			regexFilterCompiled, err := regexp.Compile(regexFilter)
-			if err != nil {
-				zap.L().Error("failed to compile regex filter", zap.Error(err),
-					zap.String("filter regex", regexFilter))
-				return nil, err
-			}
-			if regexFilterCompiled.MatchString(*scanRequest.ResourceID) {
-				zap.L().Info("regex filter matched - skipping single resource scan",
-					zap.String("regex filter", regexFilter), zap.String("resource id", *scanRequest.ResourceID))
-			}
+		matched, err := utils.MatchRegexFilter(regexFilter, *scanRequest.ResourceID)
+		if matched {
+			zap.L().Info("resource filtered based on filter regex",
+				zap.String("regex filter", *regexFilter), zap.String("resource id", *scanRequest.ResourceID))
 			return nil, nil
 		}
-
+		if err != nil {
+			return nil, err
+		}
 		// Check if resource type is filtered
 		if scanRequest.ResourceType != nil && resourceTypeFilter != nil {
 			for _, resourceType := range resourceTypeFilter {
