@@ -53,12 +53,15 @@ func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *Sync
 	if err := h.createOrUpdateTablesForLogTypes(ctx, syncLogTypes); err != nil {
 		return errors.Wrap(err, "failed to update tables for deployed log types")
 	}
+
 	if err := h.createOrReplaceViewsForAllDeployedLogTables(ctx); err != nil {
 		return errors.Wrap(err, "failed to update athena views for deployed log types")
 	}
+
 	if err := h.sendPartitionSync(ctx, event.TraceID, syncLogTypes); err != nil {
 		return errors.Wrap(err, "failed to send sync partitions event")
 	}
+
 	return nil
 }
 

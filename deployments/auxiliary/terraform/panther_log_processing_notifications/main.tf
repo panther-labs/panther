@@ -16,7 +16,7 @@
 
 
 #####
-# Setups an SNS topic and subscribes it to Panther log processing SQS queue.
+# Sets up an SNS topic.
 
 # This topic is used to notify the Panther master account whenever new data is written to the
 # LogProcessing bucket.
@@ -60,12 +60,4 @@ resource "aws_sns_topic_policy" "policy" {
       }
     ]
   })
-}
-
-# SNS topic subscription to Panther
-resource "aws_sns_topic_subscription" "subscription" {
-  endpoint             = "arn:${var.aws_partition}:sqs:${var.panther_region}:${var.master_account_id}:panther-input-data-notifications-queue"
-  protocol             = "sqs"
-  raw_message_delivery = false
-  topic_arn            = aws_sns_topic.topic.arn
 }

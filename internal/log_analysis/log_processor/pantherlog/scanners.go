@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"golang.org/x/net/idna"
 )
 
 // ValueScanner parses values from a string and writes them to a ValueWriter.
@@ -135,7 +136,7 @@ func ScanHostname(w ValueWriter, input string) {
 	if checkIPAddress(input) {
 		w.WriteValues(FieldIPAddress, input)
 	} else if input != "" {
-		w.WriteValues(FieldDomainName, input)
+		ScanDomainName(w, input)
 	}
 }
 
@@ -148,6 +149,26 @@ func ScanIPAddress(w ValueWriter, input string) {
 	if checkIPAddress(input) {
 		w.WriteValues(FieldIPAddress, input)
 	}
+}
+
+// ScanDomainName scans `input` domain name value, if internationalized then decodes
+func ScanDomainName(w ValueWriter, input string) {
+	input = strings.TrimSpace(input)
+	if input != "" {
+		w.WriteValues(FieldDomainName, decodePunycode(input))
+	}
+}
+
+var punycodeDecoder = idna.New()
+
+func decodePunycode(s string) string {
+	if strings.HasPrefix(s, "xn--") { // puny code?
+		decoded, err := punycodeDecoder.ToUnicode(s)
+		if err == nil {
+			s = decoded
+		}
+	}
+	return s
 }
 
 // checkIPAddress checks if an IP address is valid

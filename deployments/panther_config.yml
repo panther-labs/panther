@@ -29,9 +29,14 @@ Infra:
   # These optional settings will allow you to deploy the panther load balancer into a security group
   # And VPC of your choice. If you set VpcID, you must also set SecurityGroupID and ensure the
   # subnet IP ranges are valid & available.
+  #
+  # SubnetOneID and SubnetTwoID are optional. These options supersede the SubnetOneIPRange and SubnetTwoIPRange
+  # parameters, if you specify IDs then the IP ranges are ignored.
   VpcID: ''
   # These values only take affect if VpcID is specified
   SecurityGroupID: ''
+  SubnetOneID: ''
+  SubnetTwoID: ''
   SubnetOneIPRange: '172.31.250.0/26' # By default, this IP range should be available in the default VPC
   SubnetTwoIPRange: '172.31.251.0/26' # By default, this IP range should be available in the default VPC
 
