@@ -37,7 +37,7 @@ type CreateTablesEvent struct {
 func (h *LambdaHandler) HandleCreateTablesEvent(ctx context.Context, event *CreateTablesEvent) error {
 	// This event is only coming from an update to sources API.
 	// We only need to try creating the tables once.
-	logTypes := h.notCreatedYet(event.LogTypes)
+	logTypes := event.LogTypes
 	if len(logTypes) == 0 {
 		return nil
 	}
@@ -46,7 +46,7 @@ func (h *LambdaHandler) HandleCreateTablesEvent(ctx context.Context, event *Crea
 	// To achieve that we need a mapping from logType to required tables.
 	// Currently this is 'transparently' done in the gluetables package.
 	// This should be handled centrally (i.e. pantherdb)
-	if err := h.createOrUpdateTablesForLogTypes(ctx, logTypes); err != nil {
+	if err := h.createTablesForLogTypes(ctx, logTypes); err != nil {
 		return err
 	}
 	if err := h.createOrReplaceViewsForAllDeployedLogTables(ctx); err != nil {
@@ -55,21 +55,32 @@ func (h *LambdaHandler) HandleCreateTablesEvent(ctx context.Context, event *Crea
 	return nil
 }
 
-// notCreatedYet filters log types based on whether we have sent out a create table request for them.
-func (h *LambdaHandler) notCreatedYet(logTypes []string) []string {
-	var out []string
-	for _, logType := range logTypes {
-		if h.isTableCreated(logType) {
-			continue
-		}
-		out = append(out, logType)
+func (h *LambdaHandler) createTablesForLogTypes(ctx context.Context, logTypes []string) error {
+	// We map the log types to their 'base' log tables.
+	tables, err := resolveTables(ctx, h.Resolver, logTypes...)
+	if err != nil {
+		return err
 	}
-	return out
-}
-
-func (h *LambdaHandler) isTableCreated(logType string) bool {
-	_, created := h.tablesCreated[logType]
-	return created
+	for i, table := range tables {
+		logType := logTypes[i]
+		// FIXME: this is confusing, the gluetables package should NOT be expanding table metadata based on hard-wired logic
+		// This logic should be left to a 'central' module such as `pantherdb` and use 'abstract' Database/Table/Partition structs
+		// The glue-relevant actions can be abstracted to:
+		// - CreateDatabaseIfNotExists
+		// - CreateTableIfNotExists
+		// - CreateOrReplaceTable
+		// - CreatePartitionIfNotExists
+		// - CreateOrReplacePartition
+		// - ScanDatabases
+		// - ScanDatabaseTables
+		// - ScanTablePartitions
+		// These actions should be part of an interface that manages the data lake backend.
+		// We need methods that use abstract Database/Table/Partition structs that can contain info for all backends.
+		if _, err := gluetables.CreateTablesIfNotExist(ctx, h.GlueClient, h.ProcessedDataBucket, table); err != nil {
+			return errors.Wrapf(err, "failed to create or update tables for log type %q", logType)
+		}
+	}
+	return nil
 }
 
 func (h *LambdaHandler) createOrUpdateTablesForLogTypes(ctx context.Context, logTypes []string) error {
@@ -96,17 +107,8 @@ func (h *LambdaHandler) createOrUpdateTablesForLogTypes(ctx context.Context, log
 		if _, err := gluetables.CreateOrUpdateGlueTables(h.GlueClient, h.ProcessedDataBucket, table); err != nil {
 			return errors.Wrapf(err, "failed to create or update tables for log type %q", logType)
 		}
-		h.observeCreatedTable(logType)
 	}
 	return nil
-}
-
-func (h *LambdaHandler) observeCreatedTable(logType string) {
-	// Store partition in cache as successfully created
-	if h.tablesCreated == nil {
-		h.tablesCreated = make(map[string]struct{})
-	}
-	h.tablesCreated[logType] = struct{}{}
 }
 
 func (h *LambdaHandler) createOrReplaceViewsForAllDeployedLogTables(ctx context.Context) error {

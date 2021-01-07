@@ -50,9 +50,6 @@ type LambdaHandler struct {
 
 	// Glue partitions known to have been created.
 	partitionsCreated map[string]struct{}
-
-	// Glue tables known to have been created.
-	tablesCreated map[string]struct{}
 }
 
 var _ lambda.Handler = (*LambdaHandler)(nil)

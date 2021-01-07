@@ -50,7 +50,7 @@ func TestSQS_CreateTables(t *testing.T) {
 	event := events.SQSEvent{Records: []events.SQSMessage{msg}}
 
 	// Here comes the mocking
-	mockGlueClient.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil)
+	mockGlueClient.On("CreateTableWithContext", mock.Anything, mock.Anything).Return(&glue.CreateTableOutput{}, nil)
 	// below called once for each database
 	mockGlueClient.On("GetTablesPagesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
 	mockAthenaClient := &testutils.AthenaMock{}

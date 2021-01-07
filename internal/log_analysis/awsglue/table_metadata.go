@@ -19,6 +19,7 @@ package awsglue
  */
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -127,7 +128,7 @@ func (gm *GlueTableMetadata) RuleErrorTable() *GlueTableMetadata {
 	return NewGlueTableMetadata(pantherdb.RuleErrorsDatabase, gm.tableName, gm.Description(), GlueTableHourly, gm.EventStruct())
 }
 
-func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput {
+func (gm *GlueTableMetadata) glueTableInput(bucketName string) (*glue.TableInput, error) {
 	// partition keys -> []*glue.Column
 	partitionKeys := gm.PartitionKeys()
 	partitionColumns := make([]*glue.Column, len(partitionKeys))
@@ -141,7 +142,7 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 	// columns -> []*glue.Column
 	columns, mappings, err := glueschema.InferColumnsWithMappings(gm.EventStruct())
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	switch gm.databaseName {
 	case pantherdb.RuleMatchDatabase:
@@ -188,11 +189,48 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) *glue.TableInput 
 			},
 		},
 		TableType: aws.String("EXTERNAL_TABLE"),
-	}
+	}, nil
 }
 
+func (gm *GlueTableMetadata) CreateTableIfNotExists(ctx context.Context, glueAPI glueiface.GlueAPI, bucketName string) (bool, error) {
+	tableInput, err := gm.glueTableInput(bucketName)
+	if err != nil {
+		return false, err
+	}
+	createTableInput := &glue.CreateTableInput{
+		DatabaseName: &gm.databaseName,
+		TableInput:   tableInput,
+		PartitionIndexes: []*glue.PartitionIndex{
+			{
+				IndexName: aws.String("month_idx"),
+				Keys: []*string{
+					aws.String("year"),
+					aws.String("month"),
+				},
+			},
+			{
+				IndexName: aws.String("day_idx"),
+				Keys: []*string{
+					aws.String("year"),
+					aws.String("month"),
+					aws.String("day"),
+				},
+			},
+		},
+	}
+	if _, err := glueAPI.CreateTableWithContext(ctx, createTableInput); err != nil {
+		if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
 func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, bucketName string) error {
-	tableInput := gm.glueTableInput(bucketName)
+	tableInput, err := gm.glueTableInput(bucketName)
+	if err != nil {
+		return err
+	}
 
 	createTableInput := &glue.CreateTableInput{
 		DatabaseName: &gm.databaseName,
@@ -215,8 +253,7 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 			},
 		},
 	}
-	_, err := glueClient.CreateTable(createTableInput)
-	if err != nil {
+	if _, err := glueClient.CreateTable(createTableInput); err != nil {
 		if awsutils.IsAnyError(err, glue.ErrCodeAlreadyExistsException) {
 			// need to do an update
 			updateTableInput := &glue.UpdateTableInput{
