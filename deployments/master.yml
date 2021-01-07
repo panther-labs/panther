@@ -139,11 +139,14 @@ Parameters:
     Description: Configure Panther to automatically onboard itself as a data source
     AllowedValues: [true, false]
     Default: true
-  ProvisionKvTable:
+
+
+  KvTableBillingMode:
     Type: String
-    Description: If true, use PROVISIONED billing and autoscaling for panther-kv-store Dynamo table
-    AllowedValues: [true, false]
-    Default: true
+    Description: Configure how the panther-kv-store Dynamo table should be provisioned and billed
+    AllowedValues: [PROVISIONED, PAY_PER_USE]
+    Default: PAY_PER_USE
+
   PythonLayerVersionArn:
     Type: String
     Description: Custom Python layer for analysis and remediation. Defaults to a pre-built layer with 'policyuniverse' and 'requests' pip libraries
@@ -324,7 +327,7 @@ Resources:
         InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
         InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
-        ProvisionKvTable: !Ref ProvisionKvTable
+        KvTableBillingMode: !Ref KvTableBillingMode
         OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
         PantherVersion: !FindInMap [Constants, Panther, Version]
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId

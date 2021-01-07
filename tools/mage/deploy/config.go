@@ -39,7 +39,10 @@ type Infra struct {
 	LogProcessorLambdaMemorySize       int      `yaml:"LogProcessorLambdaMemorySize"`
 	LogProcessorLambdaSQSReadBatchSize string   `yaml:"LogProcessorLambdaSQSReadBatchSize"`
 	PipLayer                           []string `yaml:"PipLayer"`
-	ProvisionKvTable                   bool     `yaml:"ProvisionKvTable"`
+
+	// ProvisionKvTable                   bool     `yaml:"ProvisionKvTable"`
+	KvTableBillingMode                 string   `yaml:"KvTableBillingMode"`
+
 	PythonLayerVersionArn              string   `yaml:"PythonLayerVersionArn"`
 	SecurityGroupID                    string   `yaml:"SecurityGroupID"`
 	SubnetOneIPRange                   string   `yaml:"SubnetOneIPRange"`
