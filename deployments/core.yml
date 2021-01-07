@@ -68,6 +68,10 @@ Parameters:
     Type: String
     Description: SNS topic ARN for data that is sent as input to Log Analysis
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
+  KvTableBillingMode:
+    Type: String
+    Description: Configure billing mode for DynamoDB table panther-kv-store. This table is used by the custom python policies & rules to store state, and provisioned billing may be cheaper if this feature is used heavily.
+    AllowedValues: [PROVISIONED, PAY_PER_USE]
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each function
@@ -80,10 +84,6 @@ Parameters:
     Type: String
     Description: The base semantic version of the current deployment (e.g. `1.3.0`)
     AllowedPattern: '^\d+\.\d+\.\d+(-.+)?$'
-  KvTableBillingMode:
-    Type: String
-    Description: Configure how the panther-kv-store Dynamo table should be provisioned and billed
-    AllowedValues: [PROVISIONED, PAY_PER_USE]
   SqsKeyId:
     Type: String
     Description: KMS key for encrypting SQS queues
@@ -1019,7 +1019,6 @@ Resources:
       # * Custom rules / policies which leverage the table may be failing
       # * Panther itself is not affected
       # </cfndoc>
-      # BillingMode: !If [KvProvisioningEnabled, PROVISIONED, PAY_PER_REQUEST]
       BillingMode: !Ref KvTableBillingMode
       AttributeDefinitions:
         - AttributeName: key
