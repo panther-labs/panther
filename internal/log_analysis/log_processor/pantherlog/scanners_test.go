@@ -99,16 +99,22 @@ func TestScanEmail(t *testing.T) {
 	assert.Equal([]string{"foo@bar.baz"}, w.Get(FieldEmail))
 }
 
-func TestScanDomain(t *testing.T) {
+func TestScanDomainName(t *testing.T) {
 	assert := require.New(t)
 	w := &ValueBuffer{}
-	FieldDomainName.ScanValues(w, "")
+	ScanDomainName(w, "")
 	assert.True(w.IsEmpty())
-	FieldDomainName.ScanValues(w, "  ")
+	ScanDomainName(w, "  ")
 	assert.True(w.IsEmpty())
-	FieldDomainName.ScanValues(w, "foo ")
+	ScanDomainName(w, "foo ")
 	assert.False(w.IsEmpty())
 	assert.Equal([]string{"foo"}, w.Get(FieldDomainName))
+
+	// test puny encoded
+	w = &ValueBuffer{}
+	ScanDomainName(w, "xn--fa-hia.com")
+	assert.False(w.IsEmpty())
+	assert.Equal([]string{"faß.com"}, w.Get(FieldDomainName))
 }
 
 func TestScanMD5Hash(t *testing.T) {
