@@ -38,18 +38,16 @@ func (h *LambdaHandler) HandleCreateTablesEvent(ctx context.Context, event *Crea
 	if err := h.createOrUpdateTablesForLogTypes(ctx, event.LogTypes); err != nil {
 		return err
 	}
-	if err := h.createOrReplaceViewsForAllDeployedLogTables(ctx); err != nil {
-		return errors.Wrap(err, "failed to update views")
-	}
-	return nil
+	return h.createOrReplaceViewsForAllDeployedLogTables(ctx)
 }
 
 func (h *LambdaHandler) createOrUpdateTablesForLogTypes(ctx context.Context, logTypes []string) error {
-	// We map the log types to their 'base' log tables.
+	// We map the log types to their 'base' log tables, errors are collected and not fatal
 	tables, err := resolveTables(ctx, h.Resolver, logTypes...)
 	if err != nil {
 		return err
 	}
+
 	for i, table := range tables {
 		// CreateOrUpdateGlueTables creates or updates *all* glue tables based on log tables.
 		// FIXME: this is confusing, the gluetables package should not be expanding table metadata based on hard-wired logic
@@ -66,23 +64,15 @@ func (h *LambdaHandler) createOrReplaceViewsForAllDeployedLogTables(ctx context.
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch deployed log types")
 	}
-	// We map the deployed log types to their 'base' log tables.
-	deployedLogTables, err := resolveTables(ctx, h.Resolver, deployedLogTypes...)
+	// We map the deployed log types to their 'base' log tables, errors are collected and not fatal
+	tables, err := resolveTables(ctx, h.Resolver, deployedLogTypes...)
 	if err != nil {
-		return errors.Wrap(err, "failed to resolve tables for logtypes")
+		return err
 	}
 
-	var tablesInView []*awsglue.GlueTableMetadata
-	for _, table := range deployedLogTables {
-		if table.DatabaseName() == pantherdb.CloudSecurityDatabase {
-			// Don't create views for the Cloud Security tables
-			continue
-		}
-		tablesInView = append(tablesInView, table)
-	}
 	// update the views for *all* tables based on the log tables.
 	// FIXME: this is confusing, the athenaviews package should not be creating views by expanding table metadata based on hard-wired logic
-	if err := athenaviews.CreateOrReplaceLogViews(h.AthenaClient, h.AthenaWorkgroup, tablesInView); err != nil {
+	if err := athenaviews.CreateOrReplaceLogViews(h.AthenaClient, h.AthenaWorkgroup, tables); err != nil {
 		return errors.Wrap(err, "failed to update athena views")
 	}
 	return nil
@@ -97,17 +87,17 @@ func (h *LambdaHandler) fetchAllDeployedLogTypes(ctx context.Context) ([]string,
 }
 
 // Resolves the tables for the provided log types.
-// Note that this will return only the BASE tables (tables in for panther_logs, panther_cloudsecurity datbases) but not any
+// Note that this will return only the BASE tables (tables in for panther_logs and panther_cloudsecurity databases) but not any
 // downstream tables e.g. panther_rule_matches, panther_rule_errors
 func resolveTables(ctx context.Context, r logtypes.Resolver, names ...string) ([]*awsglue.GlueTableMetadata, error) {
 	var out []*awsglue.GlueTableMetadata
 	for _, name := range names {
 		entry, err := r.Resolve(ctx, name)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "cannot resolve logType: %s", name)
 		}
-		if entry == nil {
-			return nil, errors.Errorf("unresolved log type %q", name)
+		if entry == nil { // don't fail whole operation if missing data...
+			continue
 		}
 		eventSchema := entry.Schema()
 		desc := entry.Describe()
