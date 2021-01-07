@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/panther-labs/panther/api/lambda/source/models"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"go.uber.org/zap"
 	"time"
@@ -17,7 +19,11 @@ type cachedIntegration struct {
 }
 
 // Source integration cache with a TTL of a minute
-var integrationCache = make(map[string]cachedIntegration)
+var (
+	integrationCache                       = make(map[string]cachedIntegration)
+	sess                                   = session.Must(session.NewSession())
+	lambdaClient     lambdaiface.LambdaAPI = lambda.New(sess)
+)
 
 // TODO: If this takes a huge performance hit, update source-api to allow getting a single integration
 func GetIntegration(integrationID string) (integration *models.SourceIntegration, err error) {
@@ -35,7 +41,7 @@ func GetIntegration(integrationID string) (integration *models.SourceIntegration
 		ListIntegrations: &models.ListIntegrationsInput{},
 	}
 	var output []*models.SourceIntegration
-	if err := genericapi.Invoke(common.LambdaClient, sourceAPIFunctionName, input, &output); err != nil {
+	if err := genericapi.Invoke(lambdaClient, sourceAPIFunctionName, input, &output); err != nil {
 		zap.L().Warn("encountered an issue when trying to list integrations from source-api", zap.Error(err))
 		return nil, err
 	}

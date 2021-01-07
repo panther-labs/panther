@@ -104,6 +104,10 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 		integration.LastScanEndTime = item.LastScanEndTime
 		integration.LastScanErrorMessage = item.LastScanErrorMessage
 		integration.StackName = item.StackName
+		integration.SourceEnabled = item.SourceEnabled
+		integration.RegionBlacklist = item.RegionBlacklist
+		integration.ResourceTypeFilter = item.ResourceTypeFilter
+		integration.ARNRegexFilter = item.ARNRegexFilter
 	case models.IntegrationTypeSqs:
 		integration.SqsConfig = &models.SqsConfig{
 			S3Bucket:             item.SqsConfig.S3Bucket,
