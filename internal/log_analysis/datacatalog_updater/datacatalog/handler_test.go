@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -105,7 +106,8 @@ func TestProcessSuccess(t *testing.T) {
 	mockGlueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	mockGlueClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
 
-	assert.NoError(t, handler.HandleSQSEvent(context.Background(), getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
+	assert.NoError(t, handler.HandleSQSEvent(lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{}),
+		getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
 	mockGlueClient.AssertExpectations(t)
 }
 
@@ -119,9 +121,11 @@ func TestProcessSuccessAlreadyCreatedPartition(t *testing.T) {
 	mockSqsClient.On("SendMessageBatch", mock.Anything).Return(&sqs.SendMessageBatchOutput{}, nil).Once()
 
 	// First object should invoke Glue API
-	assert.NoError(t, handler.HandleSQSEvent(context.Background(), getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
+	assert.NoError(t, handler.HandleSQSEvent(lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{}),
+		getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
 	// Second object is in the same partition as the first one. It shouldn't invoke the Glue API since the partition is already created.
-	assert.NoError(t, handler.HandleSQSEvent(context.Background(), getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/new_item.json.gz")))
+	assert.NoError(t, handler.HandleSQSEvent(lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{}),
+		getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/new_item.json.gz")))
 	mockGlueClient.AssertExpectations(t)
 }
 
@@ -138,9 +142,11 @@ func TestProcessSuccessDontPopulateCacheOnFailure(t *testing.T) {
 	mockGlueClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, nil).Once()
 
 	// First invocation fails
-	assert.Error(t, handler.HandleSQSEvent(context.Background(), getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
+	assert.Error(t, handler.HandleSQSEvent(lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{}),
+		getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
 	// Second invocation succeeds
-	assert.NoError(t, handler.HandleSQSEvent(context.Background(), getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
+	assert.NoError(t, handler.HandleSQSEvent(lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{}),
+		getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
 	mockGlueClient.AssertExpectations(t)
 }
 
@@ -151,14 +157,16 @@ func TestProcessGlueFailure(t *testing.T) {
 	mockGlueClient.On("GetTable", mock.Anything).Return(testGetTableOutput, nil).Once()
 	mockGlueClient.On("CreatePartition", mock.Anything).Return(&glue.CreatePartitionOutput{}, errors.New("error")).Once()
 
-	assert.Error(t, handler.HandleSQSEvent(context.Background(), getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
+	assert.Error(t, handler.HandleSQSEvent(lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{}),
+		getEvent(t, "rules/table/year=2020/month=02/day=26/hour=15/rule_id=Rule.Id/item.json.gz")))
 	mockGlueClient.AssertExpectations(t)
 }
 
 func TestProcessInvalidS3Key(t *testing.T) {
 	initProcessTest()
 	//Invalid keys should just be ignored
-	err := handler.HandleSQSEvent(context.Background(), getEvent(t, "test"))
+	err := handler.HandleSQSEvent(lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{}),
+		getEvent(t, "test"))
 	assert.NoError(t, err)
 }
 

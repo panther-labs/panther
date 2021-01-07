@@ -136,6 +136,7 @@ const UpdateAlertDropdown: React.FC<UpdateAlertDropdownProps> = ({ alert }) => {
           <IconButton
             variant="outline"
             variantColor="navyblue"
+            variantBorderStyle="circle"
             icon="caret-down"
             size="small"
             aria-label="Change Alert Status"

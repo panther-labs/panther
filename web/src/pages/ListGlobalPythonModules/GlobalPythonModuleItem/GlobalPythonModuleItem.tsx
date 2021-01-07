@@ -63,6 +63,7 @@ const GlobalPythonModuleItem: React.FC<GlobalItemProps> = ({ globalPythonModule 
             as={IconButton}
             icon="more"
             variant="ghost"
+            variantBorderStyle="circle"
             size="medium"
             aria-label="Global Python Module Options"
           />

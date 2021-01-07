@@ -25,7 +25,7 @@ import (
 
 const TypeCompliance = "Compliance.History"
 
-var logTypeCompliance = logtypes.MustBuild(logtypes.ConfigJSON{
+var logTypeComplianceHistory = logtypes.MustBuild(logtypes.ConfigJSON{
 	Name:         TypeCompliance,
 	Description:  `Contains Cloud Security compliance snapshots`,
 	ReferenceURL: `https://docs.runpanther.io/cloud-security/overview`,

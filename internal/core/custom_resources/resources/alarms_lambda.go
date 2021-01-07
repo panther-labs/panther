@@ -40,7 +40,7 @@ const (
 type LambdaAlarmProperties struct {
 	AlarmTopicArn      string `validate:"required"`
 	FunctionName       string `validate:"required"`
-	FunctionMemoryMB   int    `json:",string" validate:"min=128,max=3008"`
+	FunctionMemoryMB   int    `json:",string" validate:"min=128"`
 	FunctionTimeoutSec int    `json:",string" validate:"min=1"`
 
 	// These are pointers because we have to distinguish 0 from not specified

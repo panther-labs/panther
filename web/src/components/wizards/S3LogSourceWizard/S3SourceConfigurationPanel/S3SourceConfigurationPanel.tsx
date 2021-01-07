@@ -126,6 +126,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
                             size="small"
                             icon="close-outline"
                             variantColor="navyblue"
+                            variantBorderStyle="circle"
                             aria-label={`Remove prefix ${index}`}
                             onClick={() => arrayHelpers.remove(index)}
                           />
@@ -135,6 +136,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
                             size="small"
                             icon="add"
                             variantColor="navyblue"
+                            variantBorderStyle="circle"
                             aria-label="Add prefix"
                             onClick={() =>
                               arrayHelpers.insert(index + 1, { prefix: '', logTypes: [] })

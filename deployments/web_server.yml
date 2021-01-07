@@ -99,11 +99,11 @@ Parameters:
     Type: String
     Description: The ID of a subnet in the VPC above
     # Example: "subnet-0014ecfa3c45ff9d9"
-    AllowedPattern: '^subnet-[0-9a-f]{10,}$'
+    AllowedPattern: '^subnet-[0-9a-f]{4,}$'
   SubnetTwoId:
     Type: String
     Description: The ID of another subnet in the VPC above
-    AllowedPattern: '^subnet-[0-9a-f]{10,}$'
+    AllowedPattern: '^subnet-[0-9a-f]{4,}$'
   UserPoolId:
     Type: String
     Description: The ID of the User Pool that holds all users of the Panther web app
