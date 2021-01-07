@@ -86,6 +86,7 @@ import {
   ListAvailableLogTypesResponse,
   ListComplianceItemsResponse,
   ListDataModelsInput,
+  ListDataModelsResponse,
   ListGlobalPythonModuleInput,
   ListGlobalPythonModulesResponse,
   ListPoliciesInput,
@@ -995,6 +996,16 @@ export const buildListDataModelsInput = (
     sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Descending,
     page: 'page' in overrides ? overrides.page : 267,
     pageSize: 'pageSize' in overrides ? overrides.pageSize : 470,
+  };
+};
+
+export const buildListDataModelsResponse = (
+  overrides: Partial<ListDataModelsResponse> = {}
+): ListDataModelsResponse => {
+  return {
+    __typename: 'ListDataModelsResponse',
+    models: 'models' in overrides ? overrides.models : [buildDataModel()],
+    paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
   };
 };
 

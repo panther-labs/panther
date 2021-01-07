@@ -73,7 +73,7 @@ type Query {
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
   listAvailableLogTypes: ListAvailableLogTypesResponse!
   listComplianceIntegrations: [ComplianceIntegration!]!
-  listDataModels(input: ListDataModelsInput): [DataModel!]!
+  listDataModels(input: ListDataModelsInput): ListDataModelsResponse!
   listLogIntegrations: [LogIntegration!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   getLogAnalysisMetrics(input: LogAnalysisMetricsInput!): LogAnalysisMetricsResponse!
@@ -181,6 +181,11 @@ type DataModel {
   body: String
   createdAt: AWSDateTime!
   lastModified: AWSDateTime!
+}
+
+type ListDataModelsResponse {
+  models: [DataModel!]!
+  paging: PagingData!
 }
 
 type AddCustomLogOutput {

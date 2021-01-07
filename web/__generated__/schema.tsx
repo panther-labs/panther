@@ -629,6 +629,12 @@ export type ListDataModelsInput = {
   pageSize?: Maybe<Scalars['Int']>;
 };
 
+export type ListDataModelsResponse = {
+  __typename?: 'ListDataModelsResponse';
+  models: Array<DataModel>;
+  paging: PagingData;
+};
+
 export enum ListDataModelsSortFieldsEnum {
   Enabled = 'enabled',
   Id = 'id',
@@ -1096,7 +1102,7 @@ export type Query = {
   policiesForResource?: Maybe<ListComplianceItemsResponse>;
   listAvailableLogTypes: ListAvailableLogTypesResponse;
   listComplianceIntegrations: Array<ComplianceIntegration>;
-  listDataModels: Array<DataModel>;
+  listDataModels: ListDataModelsResponse;
   listLogIntegrations: Array<LogIntegration>;
   organizationStats?: Maybe<OrganizationStatsResponse>;
   getLogAnalysisMetrics: LogAnalysisMetricsResponse;
@@ -1756,6 +1762,7 @@ export type ResolversTypes = {
   ListAvailableLogTypesResponse: ResolverTypeWrapper<ListAvailableLogTypesResponse>;
   ListDataModelsInput: ListDataModelsInput;
   ListDataModelsSortFieldsEnum: ListDataModelsSortFieldsEnum;
+  ListDataModelsResponse: ResolverTypeWrapper<ListDataModelsResponse>;
   LogIntegration: ResolversTypes['S3LogIntegration'] | ResolversTypes['SqsLogSourceIntegration'];
   OrganizationStatsInput: OrganizationStatsInput;
   OrganizationStatsResponse: ResolverTypeWrapper<OrganizationStatsResponse>;
@@ -1939,6 +1946,7 @@ export type ResolversParentTypes = {
   ListAvailableLogTypesResponse: ListAvailableLogTypesResponse;
   ListDataModelsInput: ListDataModelsInput;
   ListDataModelsSortFieldsEnum: ListDataModelsSortFieldsEnum;
+  ListDataModelsResponse: ListDataModelsResponse;
   LogIntegration:
     | ResolversParentTypes['S3LogIntegration']
     | ResolversParentTypes['SqsLogSourceIntegration'];
@@ -2502,6 +2510,15 @@ export type ListComplianceItemsResponseResolvers<
   paging?: Resolver<Maybe<ResolversTypes['PagingData']>, ParentType, ContextType>;
   status?: Resolver<Maybe<ResolversTypes['ComplianceStatusEnum']>, ParentType, ContextType>;
   totals?: Resolver<Maybe<ResolversTypes['ActiveSuppressCount']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type ListDataModelsResponseResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['ListDataModelsResponse'] = ResolversParentTypes['ListDataModelsResponse']
+> = {
+  models?: Resolver<Array<ResolversTypes['DataModel']>, ParentType, ContextType>;
+  paging?: Resolver<ResolversTypes['PagingData'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -3076,7 +3093,7 @@ export type QueryResolvers<
     ContextType
   >;
   listDataModels?: Resolver<
-    Array<ResolversTypes['DataModel']>,
+    ResolversTypes['ListDataModelsResponse'],
     ParentType,
     ContextType,
     RequireFields<QueryListDataModelsArgs, never>
@@ -3510,6 +3527,7 @@ export type Resolvers<ContextType = any> = {
   ListAlertsResponse?: ListAlertsResponseResolvers<ContextType>;
   ListAvailableLogTypesResponse?: ListAvailableLogTypesResponseResolvers<ContextType>;
   ListComplianceItemsResponse?: ListComplianceItemsResponseResolvers<ContextType>;
+  ListDataModelsResponse?: ListDataModelsResponseResolvers<ContextType>;
   ListGlobalPythonModulesResponse?: ListGlobalPythonModulesResponseResolvers<ContextType>;
   ListPoliciesResponse?: ListPoliciesResponseResolvers<ContextType>;
   ListResourcesResponse?: ListResourcesResponseResolvers<ContextType>;

@@ -1,5 +1,12 @@
 query ListDataModels($input: ListDataModelsInput) {
   listDataModels(input: $input) {
-    ...DataModelFull
+    models {
+      ...DataModelFull
+    }
+    paging {
+      totalPages
+      thisPage
+      totalItems
+    }
   }
 }

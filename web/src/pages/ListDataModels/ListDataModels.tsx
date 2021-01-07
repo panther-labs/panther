@@ -34,8 +34,9 @@ import DataModelCard from './DataModelCard';
 const ListDataModels = () => {
   useTrackPageView(PageViewEnum.ListDataModels);
 
-  const { loading, error, data } = useListDataModels();
+  const { loading, error, data } = useListDataModels({ variables: { input: {} } });
 
+  const dataModels = data?.listDataModels?.models;
   return (
     <Box mb={6}>
       <Panel
@@ -58,10 +59,10 @@ const ListDataModels = () => {
               }
             />
           )}
-          {data &&
-            (data.listDataModels.length > 0 ? (
+          {dataModels &&
+            (dataModels.length > 0 ? (
               <Flex direction="column" spacing={4}>
-                {data.listDataModels.map(dataModel => (
+                {dataModels.map(dataModel => (
                   <DataModelCard key={dataModel.id} dataModel={dataModel} />
                 ))}
               </Flex>

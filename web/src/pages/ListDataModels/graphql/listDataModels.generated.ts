@@ -28,12 +28,24 @@ export type ListDataModelsVariables = {
   input?: Types.Maybe<Types.ListDataModelsInput>;
 };
 
-export type ListDataModels = { listDataModels: Array<DataModelFull> };
+export type ListDataModels = {
+  listDataModels: {
+    models: Array<DataModelFull>;
+    paging: Pick<Types.PagingData, 'totalPages' | 'thisPage' | 'totalItems'>;
+  };
+};
 
 export const ListDataModelsDocument = gql`
   query ListDataModels($input: ListDataModelsInput) {
     listDataModels(input: $input) {
-      ...DataModelFull
+      models {
+        ...DataModelFull
+      }
+      paging {
+        totalPages
+        thisPage
+        totalItems
+      }
     }
   }
   ${DataModelFull}
