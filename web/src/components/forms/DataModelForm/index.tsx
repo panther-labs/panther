@@ -1,5 +1,3 @@
-package aws
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,19 +16,4 @@ package aws
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/aws/aws-sdk-go/aws/session"
-
-	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws/awstest"
-)
-
-func init() {
-	// sets an empty session for tests
-	SnapshotPollerSession = &session.Session{}
-
-	// mocks the assume role
-	AssumeRoleFunc = awstest.AssumeRoleMock
-	VerifyAssumedCredsFunc = func(creds *session.Session, region string) error {
-		return nil
-	}
-}
+export { default } from './DataModelForm';

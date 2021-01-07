@@ -162,10 +162,7 @@ Resources:
                 - acm:AddTagsToCertificate
                 - acm:DeleteCertificate
                 - acm:RemoveTagsFromCertificate
-              # ACM certificate IDs are random and at the time of writing, DeleteCertificate does
-              # not support using resource tags as a condition.
-              # So this is as narrow as this resource can get:
-              Resource: !Sub arn:${AWS::Partition}:acm:${AWS::Region}:${AWS::AccountId}:certificate/*
+              Resource: '*'
             - Effect: Allow
               Action:
                 - cloudwatch:PutMetricAlarm

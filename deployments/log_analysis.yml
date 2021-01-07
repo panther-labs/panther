@@ -60,7 +60,7 @@ Parameters:
     Type: Number
     Description: Log processor Lambda memory allocation
     MinValue: 256 # 128 is too small, risks OOM errors
-    MaxValue: 3008
+    MaxValue: 10240
   LogProcessorLambdaSQSReadBatchSize:
     Type: Number
     Description: How many SQS messsage the log processor reads per SQS read. If the log processor is timing out, reduce this number.
@@ -769,6 +769,7 @@ Resources:
       FilterPolicy:
         type:
           - LogData
+          - CloudSecurity
 
   RulesEngineQueuePolicy:
     Type: AWS::SQS::QueuePolicy
@@ -925,16 +926,16 @@ Resources:
           Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action: s3:GetObject
-              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs/*
+              Action: s3:GetObject # reading from
+              Resource:
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/cloud_security/*
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs/*
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rules/*
             - Effect: Allow
-              Action:
-                - s3:GetObject
-                - s3:PutObject
-              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rules/*
-            - Effect: Allow
-              Action: s3:PutObject
-              Resource: !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rule_errors/*
+              Action: s3:PutObject # writing to
+              Resource:
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rules/*
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rule_errors/*
         - Id: DDBUpdate
           Version: 2012-10-17
           Statement:
