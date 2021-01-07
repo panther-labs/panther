@@ -217,7 +217,7 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 				}
 			}
 			// ensure only one data model is enabled per LogType (ResourceType)
-			err = validateDataModelInput(analysisItem)
+			err = validateUploadedDataModel(analysisItem)
 			if err != nil {
 				return nil, err
 			}
@@ -370,7 +370,7 @@ func readZipFile(zf *zip.File) ([]byte, error) {
 	return ioutil.ReadAll(f)
 }
 
-func validateDataModelInput(item *tableItem) error {
+func validateUploadedDataModel(item *tableItem) error {
 	if len(item.ResourceTypes) > 1 {
 		return errors.New("only one ResourceType may be specified per DataModel")
 	}
