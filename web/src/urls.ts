@@ -26,6 +26,7 @@ import {
   ResourceDetails,
   RuleDetails,
   CustomLogRecord,
+  DataModel,
 } from 'Generated/schema';
 
 // Typical URL encoding, allowing colons (:) to be present in the URL. Colons are safe.
@@ -57,6 +58,12 @@ const urls = {
   logAnalysis: {
     home: () => '/log-analysis/',
     overview: () => `${urls.logAnalysis.home()}overview/`,
+    dataModels: {
+      list: () => `${urls.logAnalysis.home()}data-models/`,
+      create: () => `${urls.logAnalysis.dataModels.list()}new/`,
+      details: (id: DataModel['id']) => `${urls.logAnalysis.dataModels.list()}${urlEncode(id)}/`,
+      edit: (id: DataModel['id']) => `${urls.logAnalysis.dataModels.details(id)}edit/`,
+    },
     rules: {
       list: () => `${urls.logAnalysis.home()}rules/`,
       create: () => `${urls.logAnalysis.rules.list()}new/`,
