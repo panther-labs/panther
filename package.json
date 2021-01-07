@@ -127,7 +127,7 @@
     "linkifyjs": "^2.1.9",
     "lodash": "^4.17.20",
     "mixpanel-browser": "^2.39.0",
-    "pouncejs": "^0.77.0",
+    "pouncejs": "^0.78.0",
     "qrcode.react": "^1.0.0",
     "query-string": "^6.10.1",
     "react": "^16.12.0",
@@ -143,7 +143,8 @@
   },
   "resolutions": {
     "node-fetch": "2.6.1",
-    "ua-parser-js": "0.7.23"
+    "ua-parser-js": "0.7.23",
+    "axios": "^0.21.1"
   },
   "scripts": {
     "preinstall": "npx npm-force-resolutions",

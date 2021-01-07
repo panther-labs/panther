@@ -39,6 +39,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsretry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 // The panther-datacatalog-updater lambda is responsible for managing Glue partitions as data is created.
@@ -46,6 +47,19 @@ import (
 const (
 	maxRetries = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
 )
+
+type logTypeResolver struct {
+	resolver logtypes.Resolver
+}
+
+func (r *logTypeResolver) Resolve(ctx context.Context, name string) (logtypes.Entry, error) {
+	entry, err := r.resolver.Resolve(ctx, name)
+	if err == nil && entry == nil {
+		// if a logType is not found, this indicates bad data ... log/alarm
+		zap.L().Error("cannot resolve logType", zap.String("logType", name))
+	}
+	return entry, err
+}
 
 func main() {
 	// nolint: maligned
@@ -82,13 +96,15 @@ func main() {
 		LambdaAPI:  lambdaClient,
 	}
 
-	resolver := logtypes.ChainResolvers(
-		registry.NativeLogTypesResolver(),
-		snapshotlogs.Resolver(),
-		&logtypesapi.Resolver{
-			LogTypesAPI: logtypesAPI,
-		},
-	)
+	resolver := &logTypeResolver{
+		resolver: logtypes.ChainResolvers(
+			registry.NativeLogTypesResolver(),
+			snapshotlogs.Resolver(),
+			&logtypesapi.Resolver{
+				LogTypesAPI: logtypesAPI,
+			},
+		),
+	}
 
 	handler := datacatalog.LambdaHandler{
 		ProcessedDataBucket: config.ProcessedDataBucket,
@@ -99,7 +115,8 @@ func main() {
 			if err != nil {
 				return nil, err
 			}
-			return reply.LogTypes, nil
+			// append in snapshot logs which are always onboarded
+			return stringset.Append(reply.LogTypes, logtypes.CollectNames(snapshotlogs.LogTypes())...), nil
 		},
 		GlueClient:   glue.New(clientsSession),
 		Resolver:     resolver,

@@ -232,3 +232,9 @@ func TestHandleUnregisteredSource(t *testing.T) {
 	lambdaMock.AssertExpectations(t)
 	s3Mock.AssertExpectations(t)
 }
+
+//nolint:lll
+func TestIsCloudTrailLog(t *testing.T) {
+	require.True(t, isCloudTrailLog("AWSLogs/342363560528/CloudTrail/eu-west-1/2020/12/17/342363560528_CloudTrail_eu-west-1_20201217T1535Z_ZUnDvAcFwNysSIsp.json.gz"))
+	require.True(t, isCloudTrailLog("AWSLogs/342363560528/CloudTrail/eu-west-1/2020/12/17/342363560528_CloudTrail_us-west-2-lax-1a_20201217T1535Z_ZUnDvAcFwNysSIsp.json.gz"))
+}
