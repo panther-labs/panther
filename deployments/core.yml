@@ -71,7 +71,7 @@ Parameters:
   KvTableBillingMode:
     Type: String
     Description: Configure billing mode for DynamoDB table panther-kv-store. This table is used by the custom python policies & rules to store state, and provisioned billing may be cheaper if this feature is used heavily.
-    AllowedValues: [PROVISIONED, PAY_PER_USE]
+    AllowedValues: [PROVISIONED, PAY_PER_REQUEST]
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each function
