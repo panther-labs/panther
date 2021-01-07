@@ -353,7 +353,7 @@ class Rule:
         return description
 
     def _get_destinations(self, event: Mapping, use_default_on_exception: bool = True) -> Optional[List[str]]:
-        if not hasattr(self._module, 'destination'):
+        if not hasattr(self._module, 'destinations'):
             return None
 
         try:
