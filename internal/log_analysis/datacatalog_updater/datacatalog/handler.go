@@ -84,7 +84,9 @@ func (h *LambdaHandler) HandleSQSEvent(ctx context.Context, event *events.SQSEve
 	// NOTE: this logging is needed for alarming and dashboards!
 	lc, _ := lambdacontext.FromContext(ctx)
 	operation := opLogManager.Start(lc.InvokedFunctionArn).WithMemUsed(lambdacontext.MemoryLimitInMB)
-	defer operation.Stop().Log(err)
+	defer func() {
+		operation.Stop().Log(err)
+	}()
 
 	var tasks []interface{}
 	tasks, err = tasksFromSQSMessages(event.Records...)
