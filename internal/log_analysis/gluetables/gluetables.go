@@ -109,7 +109,7 @@ func CreateOrUpdateGlueTables(glueClient glueiface.GlueAPI, bucket string,
 	}, nil
 }
 
-// CreateTablesIfNotExist, given a log meta data table, creates all tables related to this log table in the glue catalog if they don't already exist.
+// CreateTablesIfNotExist creates all tables related to a log table in the glue catalog if they don't already exist.
 func CreateTablesIfNotExist(ctx context.Context, glueClient glueiface.GlueAPI, bucket string,
 	logTable *awsglue.GlueTableMetadata) (*TablesForLogType, error) {
 
