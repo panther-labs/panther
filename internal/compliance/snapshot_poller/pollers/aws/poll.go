@@ -234,6 +234,17 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		zap.L().Info("processing single region service scan",
 			zap.String("region", *scanRequest.Region),
 			zap.String("resourceType", *scanRequest.ResourceType))
+		// Check if ResourceID matches the integration's regex filter
+		matched, err := utils.MatchRegexFilter(regexFilter, *scanRequest.ResourceID)
+		if matched {
+			zap.L().Info("resource filtered based on filter regex",
+				zap.Any("regex filter", regexFilter), zap.String("resource id", *scanRequest.ResourceID))
+			return nil, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+
 		// Check if provided region is blacklisted
 		for _, region := range regionBlacklist {
 			if region == *scanRequest.Region {
