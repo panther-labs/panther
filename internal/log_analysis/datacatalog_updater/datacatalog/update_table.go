@@ -20,9 +20,10 @@ package datacatalog
 
 import (
 	"context"
-	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 
 	"github.com/pkg/errors"
+
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
 type UpdateTablesEvent struct {
