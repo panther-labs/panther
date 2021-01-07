@@ -85,6 +85,7 @@ import {
   ListAlertsResponse,
   ListAvailableLogTypesResponse,
   ListComplianceItemsResponse,
+  ListDataModelsInput,
   ListGlobalPythonModuleInput,
   ListGlobalPythonModulesResponse,
   ListPoliciesInput,
@@ -165,6 +166,7 @@ import {
   DestinationTypeEnum,
   ErrorCodeEnum,
   ListAlertsSortFieldsEnum,
+  ListDataModelsSortFieldsEnum,
   ListPoliciesSortFieldsEnum,
   ListResourcesSortFieldsEnum,
   ListRulesSortFieldsEnum,
@@ -979,6 +981,20 @@ export const buildListComplianceItemsResponse = (
     paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
     status: 'status' in overrides ? overrides.status : ComplianceStatusEnum.Fail,
     totals: 'totals' in overrides ? overrides.totals : buildActiveSuppressCount(),
+  };
+};
+
+export const buildListDataModelsInput = (
+  overrides: Partial<ListDataModelsInput> = {}
+): ListDataModelsInput => {
+  return {
+    enabled: 'enabled' in overrides ? overrides.enabled : true,
+    nameContains: 'nameContains' in overrides ? overrides.nameContains : 'HTTP',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Personal Loan Account'],
+    sortBy: 'sortBy' in overrides ? overrides.sortBy : ListDataModelsSortFieldsEnum.LastModified,
+    sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Descending,
+    page: 'page' in overrides ? overrides.page : 267,
+    pageSize: 'pageSize' in overrides ? overrides.pageSize : 470,
   };
 };
 

@@ -1682,3 +1682,20 @@ Resources:
           })
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
+
+  ListDataModelsResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: listDataModels
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "listDataModels": $ctx.args.input
+          })
+        }
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]

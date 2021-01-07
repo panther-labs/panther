@@ -73,6 +73,7 @@ type Query {
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
   listAvailableLogTypes: ListAvailableLogTypesResponse!
   listComplianceIntegrations: [ComplianceIntegration!]!
+  listDataModels(input: ListDataModelsInput): [DataModel!]!
   listLogIntegrations: [LogIntegration!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   getLogAnalysisMetrics(input: LogAnalysisMetricsInput!): LogAnalysisMetricsResponse!
@@ -97,6 +98,16 @@ input AddOrUpdateDataModelInput {
   logTypes: [String!]!
   mappings: [DataModelMappingInput!]!
   body: String
+}
+
+input ListDataModelsInput {
+  enabled: Boolean
+  nameContains: String
+  logTypes: [String!]
+  sortBy: ListDataModelsSortFieldsEnum
+  sortDir: SortDirEnum
+  page: Int
+  pageSize: Int
 }
 
 input DeleteCustomLogInput {
@@ -1169,6 +1180,13 @@ enum ListRulesSortFieldsEnum {
   lastModified
   logTypes
   severity
+}
+
+enum ListDataModelsSortFieldsEnum {
+  enabled
+  id
+  lastModified
+  logTypes
 }
 
 enum ListAlertsSortFieldsEnum {

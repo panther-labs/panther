@@ -52,6 +52,7 @@ export enum PageViewEnum {
   ListRules = 'List Rules',
   ListAlerts = 'List Alerts',
   ListLogSources = 'List Log Sources',
+  ListDataModels = 'List Data Models',
   Home = 'Home',
   Support = 'Support',
   CustomLogDetails = 'Custom Log Details Screen',

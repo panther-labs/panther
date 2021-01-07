@@ -619,6 +619,23 @@ export type ListComplianceItemsResponse = {
   totals?: Maybe<ActiveSuppressCount>;
 };
 
+export type ListDataModelsInput = {
+  enabled?: Maybe<Scalars['Boolean']>;
+  nameContains?: Maybe<Scalars['String']>;
+  logTypes?: Maybe<Array<Scalars['String']>>;
+  sortBy?: Maybe<ListDataModelsSortFieldsEnum>;
+  sortDir?: Maybe<SortDirEnum>;
+  page?: Maybe<Scalars['Int']>;
+  pageSize?: Maybe<Scalars['Int']>;
+};
+
+export enum ListDataModelsSortFieldsEnum {
+  Enabled = 'enabled',
+  Id = 'id',
+  LastModified = 'lastModified',
+  LogTypes = 'logTypes',
+}
+
 export type ListGlobalPythonModuleInput = {
   nameContains?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
@@ -1079,6 +1096,7 @@ export type Query = {
   policiesForResource?: Maybe<ListComplianceItemsResponse>;
   listAvailableLogTypes: ListAvailableLogTypesResponse;
   listComplianceIntegrations: Array<ComplianceIntegration>;
+  listDataModels: Array<DataModel>;
   listLogIntegrations: Array<LogIntegration>;
   organizationStats?: Maybe<OrganizationStatsResponse>;
   getLogAnalysisMetrics: LogAnalysisMetricsResponse;
@@ -1156,6 +1174,10 @@ export type QueryPoliciesArgs = {
 
 export type QueryPoliciesForResourceArgs = {
   input?: Maybe<PoliciesForResourceInput>;
+};
+
+export type QueryListDataModelsArgs = {
+  input?: Maybe<ListDataModelsInput>;
 };
 
 export type QueryOrganizationStatsArgs = {
@@ -1732,6 +1754,8 @@ export type ResolversTypes = {
   PolicySummary: ResolverTypeWrapper<PolicySummary>;
   PoliciesForResourceInput: PoliciesForResourceInput;
   ListAvailableLogTypesResponse: ResolverTypeWrapper<ListAvailableLogTypesResponse>;
+  ListDataModelsInput: ListDataModelsInput;
+  ListDataModelsSortFieldsEnum: ListDataModelsSortFieldsEnum;
   LogIntegration: ResolversTypes['S3LogIntegration'] | ResolversTypes['SqsLogSourceIntegration'];
   OrganizationStatsInput: OrganizationStatsInput;
   OrganizationStatsResponse: ResolverTypeWrapper<OrganizationStatsResponse>;
@@ -1913,6 +1937,8 @@ export type ResolversParentTypes = {
   PolicySummary: PolicySummary;
   PoliciesForResourceInput: PoliciesForResourceInput;
   ListAvailableLogTypesResponse: ListAvailableLogTypesResponse;
+  ListDataModelsInput: ListDataModelsInput;
+  ListDataModelsSortFieldsEnum: ListDataModelsSortFieldsEnum;
   LogIntegration:
     | ResolversParentTypes['S3LogIntegration']
     | ResolversParentTypes['SqsLogSourceIntegration'];
@@ -3048,6 +3074,12 @@ export type QueryResolvers<
     Array<ResolversTypes['ComplianceIntegration']>,
     ParentType,
     ContextType
+  >;
+  listDataModels?: Resolver<
+    Array<ResolversTypes['DataModel']>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryListDataModelsArgs, never>
   >;
   listLogIntegrations?: Resolver<Array<ResolversTypes['LogIntegration']>, ParentType, ContextType>;
   organizationStats?: Resolver<
