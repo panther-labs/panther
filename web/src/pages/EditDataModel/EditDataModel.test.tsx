@@ -30,6 +30,7 @@ import {
 import urls from 'Source/urls';
 import { GraphQLError } from 'graphql';
 import { Route } from 'react-router-dom';
+import omit from 'lodash/omit';
 import { mockListAvailableLogTypes } from 'Source/graphql/queries';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import EditDataModel from './EditDataModel';
@@ -42,18 +43,21 @@ describe('UpdateDataModel', () => {
   it('can create a data model successfully', async () => {
     const dataModel = buildDataModel({
       id: 'test',
+      displayName: 'test',
       logTypes: ['AWS.ALB'],
       enabled: false,
-      mappings: [buildDataModelMapping({ path: '' })],
+      mappings: [buildDataModelMapping({ name: 'test-name', method: 'test-method', path: '' })],
       body: '',
     });
 
     const updatedDataModel = buildDataModel({
       id: 'test',
+      displayName: 'Updated Name',
       logTypes: ['AWS.ECS'],
       enabled: true,
-      displayName: 'Updated Name',
-      mappings: [buildDataModelMapping({ name: 'updated-name', method: 'updated-method' })],
+      mappings: [
+        buildDataModelMapping({ name: 'updated-name', method: 'updated-method', path: '' }),
+      ],
       body: 'def path(): return ""',
     });
 
@@ -71,29 +75,61 @@ describe('UpdateDataModel', () => {
       }),
       mockUpdateDataModel({
         variables: {
-          input: updatedDataModel,
+          input: {
+            displayName: updatedDataModel.displayName,
+            id: updatedDataModel.id,
+            logTypes: updatedDataModel.logTypes,
+            enabled: updatedDataModel.enabled,
+            mappings: updatedDataModel.mappings.map(m => omit(m, '__typename')),
+            body: updatedDataModel.body,
+          },
         },
         data: { updateDataModel: updatedDataModel },
       }),
     ];
 
-    const { getByText, getByLabelText, getAllByLabelText, findByText, history } = render(
+    const {
+      getByText,
+      getByLabelText,
+      getAllByLabelText,
+      findByText,
+      history,
+      getByAriaLabel,
+      getByPlaceholderText,
+    } = render(
       <Route exact path={urls.logAnalysis.dataModels.edit(':id')}>
         <EditDataModel />
       </Route>,
       { mocks, initialRoute: urls.logAnalysis.dataModels.edit(dataModel.id) }
     );
 
-    fireEvent.change(getByLabelText('Display Name'), { target: { value: 'test-name' } });
-    fireEvent.change(getByLabelText('ID'), { target: { value: 'test-id' } });
-    fireEvent.change(getAllByLabelText('Log Type')[0], { target: { value: 'AWS.ALB' } });
-    fireClickAndMouseEvents(await findByText('AWS.ALB'));
+    // wait for API request to finish
+    await waitFor(() => expect(getByLabelText('Display Name')).toHaveValue(dataModel.displayName));
 
-    fireEvent.change(getByLabelText('Name'), { target: { value: 'test-field-name' } });
-    fireEvent.change(getByLabelText('Field Path'), { target: { value: 'test-field-path' } });
+    fireEvent.click(getByPlaceholderText('Toggle Enabled'));
+    fireEvent.change(getByLabelText('Display Name'), {
+      target: { value: updatedDataModel.displayName },
+    });
+    fireEvent.change(getAllByLabelText('Log Type')[0], {
+      target: { value: updatedDataModel.logTypes[0] },
+    });
+    fireClickAndMouseEvents(await findByText(updatedDataModel.logTypes[0]));
 
-    // wait for validation to kick in
-    await waitMs(10);
+    fireEvent.change(getByLabelText('Name'), {
+      target: { value: updatedDataModel.mappings[0].name },
+    });
+    fireEvent.change(getByLabelText('Field Method'), {
+      target: { value: updatedDataModel.mappings[0].method },
+    });
+
+    fireEvent.click(getByAriaLabel('Toggle Python Editor visibility'));
+    fireEvent.change(getByPlaceholderText('# Enter the body of this mapping...'), {
+      target: { value: updatedDataModel.body },
+    });
+
+    // wait for debounce and validations
+    await waitMs(210);
+
     fireEvent.click(getByText('Save'));
 
     await waitFor(() =>
@@ -102,7 +138,7 @@ describe('UpdateDataModel', () => {
 
     // Expect analytics to have been called
     expect(trackEvent).toHaveBeenCalledWith({
-      event: EventEnum.AddedDataModel,
+      event: EventEnum.UpdatedDataModel,
       src: SrcEnum.DataModels,
     });
   });
@@ -110,20 +146,17 @@ describe('UpdateDataModel', () => {
   it('can handle errors', async () => {
     const dataModel = buildDataModel({
       id: 'test',
+      displayName: 'test',
       logTypes: ['AWS.ALB'],
-      enabled: false,
-      mappings: [buildDataModelMapping({ path: '' })],
+      enabled: true,
+      mappings: [buildDataModelMapping({ name: 'test-name', method: 'test-method', path: '' })],
       body: '',
     });
 
-    const updatedDataModel = buildDataModel({
-      id: 'test',
-      logTypes: ['AWS.ECS'],
-      enabled: true,
+    const updatedDataModel = {
+      ...dataModel,
       displayName: 'Updated Name',
-      mappings: [buildDataModelMapping({ name: 'updated-name', method: 'updated-method' })],
-      body: 'def path(): return ""',
-    });
+    };
 
     const mocks = [
       mockListAvailableLogTypes({
@@ -139,39 +172,46 @@ describe('UpdateDataModel', () => {
       }),
       mockUpdateDataModel({
         variables: {
-          input: updatedDataModel,
+          input: {
+            displayName: updatedDataModel.displayName,
+            id: updatedDataModel.id,
+            logTypes: updatedDataModel.logTypes,
+            enabled: updatedDataModel.enabled,
+            mappings: updatedDataModel.mappings.map(m => omit(m, '__typename')),
+            body: updatedDataModel.body,
+          },
         },
         data: null,
-        errors: [new GraphQLError('An error has occurred')],
+        errors: [new GraphQLError('Fake Error Message')],
       }),
     ];
 
-    const { getByText, getByLabelText, getAllByLabelText, findByText } = render(
+    const { getByText, getByLabelText, findByText } = render(
       <Route exact path={urls.logAnalysis.dataModels.edit(':id')}>
         <EditDataModel />
       </Route>,
       {
         mocks,
+        initialRoute: urls.logAnalysis.dataModels.edit(dataModel.id),
       }
     );
 
-    fireEvent.change(getByLabelText('Display Name'), { target: { value: 'test-name' } });
-    fireEvent.change(getByLabelText('ID'), { target: { value: 'test-id' } });
-    fireEvent.change(getAllByLabelText('Log Type')[0], { target: { value: 'AWS.ALB' } });
-    fireClickAndMouseEvents(await findByText('AWS.ALB'));
+    // wait for API request to finish
+    await waitFor(() => expect(getByLabelText('Display Name')).toHaveValue(dataModel.displayName));
 
-    fireEvent.change(getByLabelText('Name'), { target: { value: 'test-field-name' } });
-    fireEvent.change(getByLabelText('Field Path'), { target: { value: 'test-field-path' } });
+    fireEvent.change(getByLabelText('Display Name'), {
+      target: { value: updatedDataModel.displayName },
+    });
 
     // wait for validation to kick in
-    await waitMs(10);
+    await waitMs(100);
     fireEvent.click(getByText('Save'));
 
     expect(await findByText('Fake Error Message')).toBeInTheDocument();
 
     // Expect analytics to have been called
     expect(trackError).toHaveBeenCalledWith({
-      event: TrackErrorEnum.FailedToAddDataModel,
+      event: TrackErrorEnum.FailedToUpdateDataModel,
       src: SrcEnum.DataModels,
     });
   });
