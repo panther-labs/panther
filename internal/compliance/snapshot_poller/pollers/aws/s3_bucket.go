@@ -72,19 +72,6 @@ func PollS3Bucket(
 		return nil, err
 	}
 
-	// TODO: remove debugging statements
-	zap.L().Info("made it to PollS3Bucket", zap.String("region", *region), zap.Any("resource arn", resourceARN),
-		zap.Any("scan request", scanRequest), zap.Any("poller input", pollerResourceInput))
-
-	// Check if provided region is blacklisted
-	for _, blacklistedRegion := range pollerResourceInput.RegionBlacklist {
-		if *region == blacklistedRegion {
-			zap.L().Info("matched blacklisted region - skipping scan",
-				zap.String("region", *region), zap.Any("resource arn", resourceARN),
-				zap.Any("scan request", scanRequest))
-			return nil, nil
-		}
-	}
 	regionalClient, err := getS3Client(pollerResourceInput, *region)
 	if err != nil {
 		return nil, err
@@ -377,6 +364,7 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddR
 		if region == nil {
 			continue
 		}
+
 		if *region == *pollerInput.Region {
 			buckets = append(buckets, bucket)
 		}
