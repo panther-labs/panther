@@ -143,3 +143,11 @@ func (c *CachedResolver) set(name string, e Entry) {
 		resolvedAt: now,
 	}
 }
+
+type ResolverFunc func(ctx context.Context, name string) (Entry, error)
+
+var _ Resolver = (ResolverFunc)(nil)
+
+func (f ResolverFunc) Resolve(ctx context.Context, name string) (Entry, error) {
+	return f(ctx, name)
+}
