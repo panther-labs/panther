@@ -33,7 +33,7 @@ import (
 var (
 	errPathOrMethodMissing       = errors.New("exactly one path or one method must be specified per mapping entry")
 	errMappingTooManyOptions     = errors.New("a path or a method, but not both, must be specified per mapping entry")
-	errMultipleDataModelsEnabled = errors.New("only one DataModel can be enabled per ResourceType")
+	errMultipleDataModelsEnabled = errors.New("only one DataModel can be enabled per LogType")
 )
 
 // CreateDataModel adds a new DataModel to the Dynamo table.
