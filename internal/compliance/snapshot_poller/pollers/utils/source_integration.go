@@ -7,6 +7,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"go.uber.org/zap"
+	"regexp"
 	"time"
 )
 
@@ -62,4 +63,22 @@ func GetIntegration(integrationID string) (integration *models.SourceIntegration
 		zap.L().Warn("target integration id not found", zap.String("target integration id", integrationID))
 	}
 	return result, nil
+}
+
+func match_regex_filter(regexFilter *string, resourceARN string) (matched bool, err error) {
+	if regexFilter == nil || *regexFilter == "" {
+		return false, nil
+	}
+	regexFilterCompiled, err := regexp.Compile(*regexFilter)
+	if err != nil {
+		zap.L().Error("failed to compile regex filter", zap.Error(err),
+			zap.String("filter regex", *regexFilter))
+		return false, err
+	}
+	if regexFilterCompiled.MatchString(resourceARN) {
+		zap.L().Info("regex filter matched - skipping single resource scan",
+			zap.String("regex filter", *regexFilter), zap.String("resource id", resourceARN))
+		return true, nil
+	}
+	return false, nil
 }
