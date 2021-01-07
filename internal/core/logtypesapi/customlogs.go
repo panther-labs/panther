@@ -94,15 +94,15 @@ func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInp
 			Result: result,
 		}, nil
 	}
-	current, err := api.Database.GetCustomLog(ctx, id, currentRevision)
+	current, err := api.Database.GetCustomLog(ctx, id, 0)
 	if err != nil {
 		return nil, err
 	}
 	if current == nil {
-		return nil, NewAPIError(ErrRevisionConflict, fmt.Sprintf("record %s@%d does not exist", id, currentRevision))
+		return nil, NewAPIError(ErrNotFound, fmt.Sprintf("record %q was not found", id))
 	}
 	if current.Revision != currentRevision {
-		return nil, NewAPIError(ErrRevisionConflict, fmt.Sprintf("record %s@%d is on a different revision", id, currentRevision))
+		return nil, NewAPIError(ErrRevisionConflict, fmt.Sprintf("record %q is not on revision %d", id, currentRevision))
 	}
 
 	currentSchema, err := buildSchema(id, &current.CustomLog)
