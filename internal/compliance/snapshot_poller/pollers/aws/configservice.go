@@ -68,7 +68,7 @@ func PollConfigService(
 	if err != nil || recorder == nil {
 		return nil, errors.WithMessagef(err, "region: %s", parsedResourceID.Region)
 	}
-	snapshot, err := buildConfigServiceSnapshot(configClient, recorder, parsedResourceID.Region)
+	snapshot, err := buildConfigServiceSnapshot(configClient, recorder, parsedResourceID.Region, pollerResourceInput)
 	if err != nil {
 		return nil, err
 	}
@@ -137,6 +137,7 @@ func buildConfigServiceSnapshot(
 	configServiceSvc configserviceiface.ConfigServiceAPI,
 	recorder *configservice.ConfigurationRecorder,
 	regionID string,
+	pollerInput *awsmodels.ResourcePollerInput,
 ) (*awsmodels.ConfigService, error) {
 
 	configSnapshot := &awsmodels.ConfigService{
@@ -149,6 +150,16 @@ func buildConfigServiceSnapshot(
 		},
 		RecordingGroup: recorder.RecordingGroup,
 		RoleARN:        recorder.RoleARN,
+	}
+	// Check if ResourceID matches the integration's regex filter
+	matched, err := utils.MatchRegexFilter(pollerInput.ARNRegexFilter, *recorder.Name)
+	if matched {
+		zap.L().Info("resource filtered based on filter regex", zap.String("regex filter", *pollerInput.ARNRegexFilter),
+			zap.String("recorder name", *recorder.Name), zap.Any("recorder", recorder))
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	status, err := describeConfigurationRecorderStatus(configServiceSvc, recorder.Name)
@@ -184,7 +195,7 @@ func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels
 		}
 
 		for _, recorder := range recorders {
-			configServiceSnapshot, err := buildConfigServiceSnapshot(configServiceSvc, recorder, *regionID)
+			configServiceSnapshot, err := buildConfigServiceSnapshot(configServiceSvc, recorder, *regionID, pollerInput)
 			if err != nil {
 				return nil, nil, err
 			}
