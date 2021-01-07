@@ -127,7 +127,12 @@ func getDetector(guardDutySvc guarddutyiface.GuardDutyAPI, detectorID *string) (
 }
 
 // buildGuardDutyDetectorSnapshot makes all the calls to build up a snapshot of a given GuardDuty detector
-func buildGuardDutyDetectorSnapshot(guardDutySvc guarddutyiface.GuardDutyAPI, detectorID *string, pollerInput *awsmodels.ResourcePollerInput) (*awsmodels.GuardDutyDetector, error) {
+func buildGuardDutyDetectorSnapshot(
+	guardDutySvc guarddutyiface.GuardDutyAPI,
+	detectorID *string,
+	pollerInput *awsmodels.ResourcePollerInput,
+) (*awsmodels.GuardDutyDetector, error) {
+
 	detectorSnapshot := &awsmodels.GuardDutyDetector{
 		GenericResource: awsmodels.GenericResource{
 			ResourceType: aws.String(awsmodels.GuardDutySchema),
@@ -141,15 +146,18 @@ func buildGuardDutyDetectorSnapshot(guardDutySvc guarddutyiface.GuardDutyAPI, de
 	if err != nil {
 		return nil, err
 	}
+
 	// Check if ResourceID matches the integration's regex filter
-	matched, err := utils.MatchRegexFilter(pollerInput.ARNRegexFilter, *detectorID)
-	if matched {
-		zap.L().Info("resource filtered based on filter regex", zap.String("regex filter", *pollerInput.ARNRegexFilter),
-			zap.String("resource id", *detectorID), zap.Any("detector details", detectorDetails))
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
+	if pollerInput != nil {
+		matched, err := utils.MatchRegexFilter(pollerInput.ARNRegexFilter, *detectorID)
+		if matched {
+			zap.L().Info("resource filtered based on filter regex", zap.String("regex filter", *pollerInput.ARNRegexFilter),
+				zap.String("resource id", *detectorID), zap.Any("detector details", detectorDetails))
+			return nil, nil
+		}
+		if err != nil {
+			return nil, err
+		}
 	}
 	detectorSnapshot.FindingPublishingFrequency = detectorDetails.FindingPublishingFrequency
 	detectorSnapshot.ServiceRole = detectorDetails.ServiceRole

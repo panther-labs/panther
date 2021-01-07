@@ -152,14 +152,16 @@ func buildConfigServiceSnapshot(
 		RoleARN:        recorder.RoleARN,
 	}
 	// Check if ResourceID matches the integration's regex filter
-	matched, err := utils.MatchRegexFilter(pollerInput.ARNRegexFilter, *recorder.Name)
-	if matched {
-		zap.L().Info("resource filtered based on filter regex", zap.String("regex filter", *pollerInput.ARNRegexFilter),
-			zap.String("recorder name", *recorder.Name), zap.Any("recorder", recorder))
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
+	if pollerInput != nil {
+		matched, err := utils.MatchRegexFilter(pollerInput.ARNRegexFilter, *recorder.Name)
+		if matched {
+			zap.L().Info("resource filtered based on filter regex", zap.String("regex filter", *pollerInput.ARNRegexFilter),
+				zap.String("recorder name", *recorder.Name), zap.Any("recorder", recorder))
+			return nil, nil
+		}
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	status, err := describeConfigurationRecorderStatus(configServiceSvc, recorder.Name)

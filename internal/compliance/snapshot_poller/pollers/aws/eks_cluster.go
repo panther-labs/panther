@@ -232,7 +232,12 @@ func getEKSNodegroups(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsmodels
 }
 
 // buildEksClusterSnapshot returns a complete snapshot of an EKS cluster
-func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string, pollerInput *awsmodels.ResourcePollerInput) (*awsmodels.EksCluster, error) {
+func buildEksClusterSnapshot(
+	eksSvc eksiface.EKSAPI,
+	clusterName *string,
+	pollerInput *awsmodels.ResourcePollerInput,
+) (*awsmodels.EksCluster, error) {
+
 	if clusterName == nil {
 		return nil, nil
 	}
@@ -244,14 +249,16 @@ func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string, poller
 	}
 
 	// Check if ResourceID matches the integration's regex filter
-	matched, err := utils.MatchRegexFilter(pollerInput.ARNRegexFilter, *details.Arn)
-	if matched {
-		zap.L().Info("resource filtered based on filter regex",
-			zap.String("regex filter", *pollerInput.ARNRegexFilter), zap.Any("cluster details", details))
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
+	if pollerInput != nil {
+		matched, err := utils.MatchRegexFilter(pollerInput.ARNRegexFilter, *details.Arn)
+		if matched {
+			zap.L().Info("resource filtered based on filter regex",
+				zap.String("regex filter", *pollerInput.ARNRegexFilter), zap.Any("cluster details", details))
+			return nil, nil
+		}
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	eksCluster := &awsmodels.EksCluster{

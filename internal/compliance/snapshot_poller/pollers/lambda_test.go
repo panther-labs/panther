@@ -144,7 +144,7 @@ func TestHandlerNonExistentIntegration(t *testing.T) {
 		},
 	}
 	logs := logger.AllUntimed()
-	require.Len(t, logs, 5)
+	require.Len(t, logs, 4)
 	assert.Equal(t, expected, logs[len(logs)-2:len(logs)-1]) // throw out last oplog msg
 }
 
@@ -288,6 +288,6 @@ func TestHandler(t *testing.T) {
 		},
 	}
 	logs := logger.AllUntimed()
-	require.Len(t, logs, 6)
-	assert.Equal(t, expected, logs[3:5]) // throw out last oplog msg
+	require.Len(t, logs, 5)
+	assert.Equal(t, expected, logs[len(logs)-3:len(logs)-1]) // throw out last oplog msg
 }

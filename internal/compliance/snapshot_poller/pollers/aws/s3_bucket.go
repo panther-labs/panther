@@ -65,6 +65,16 @@ func PollS3Bucket(
 	if err != nil {
 		return nil, err
 	}
+	// Check if ResourceID matches the integration's regex filter
+	matched, err := utils.MatchRegexFilter(pollerResourceInput.ARNRegexFilter, resourceARN.Resource)
+	if matched {
+		zap.L().Info("resource filtered based on filter regex",
+			zap.String("regex filter", *pollerResourceInput.ARNRegexFilter), zap.String("resource atn", resourceARN.Resource))
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
 
 	// May return nil, nil if bucket no longer exists
 	region, err := getBucketLocation(locationClient, aws.String(resourceARN.Resource))
@@ -354,6 +364,16 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddR
 		if bucket == nil {
 			zap.L().Debug("nil bucket returned by S3 list buckets")
 			continue
+		}
+		// Check if ResourceID matches the integration's regex filter
+		matched, err := utils.MatchRegexFilter(pollerInput.ARNRegexFilter, *bucket.Name)
+		if matched {
+			zap.L().Info("resource filtered based on filter regex",
+				zap.String("regex filter", *pollerInput.ARNRegexFilter), zap.Any("bucket", bucket))
+			continue
+		}
+		if err != nil {
+			return nil, nil, err
 		}
 		region, err := getBucketLocation(s3Svc, bucket.Name)
 		if err != nil {

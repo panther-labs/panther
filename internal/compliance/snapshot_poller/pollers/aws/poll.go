@@ -205,13 +205,8 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		return nil, nil
 	}
 
-	// TODO: Removed testing stmts
-	zap.L().Info("Got filtering options", zap.Any("blacklist", regionBlacklist), zap.Any("regex filter", regexFilter),
-		zap.Any("resource type filter", resourceTypeFilter))
-
 	// If this is an individual resource scan or the region is provided,
 	// we don't need to lookup the active regions.
-	// TODO: Implement region blacklisting for individual resource scans
 	if scanRequest.ResourceID != nil {
 		// Individual resource scan
 		zap.L().Debug("processing single resource scan")
@@ -229,7 +224,6 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	}
 
 	// If a region is provided, we're good to start the scan
-	// TODO: Implement resource id filtering for all the various resource types
 	if scanRequest.Region != nil {
 		zap.L().Info("processing single region service scan",
 			zap.String("region", *scanRequest.Region),
@@ -243,12 +237,10 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 			}
 		}
 		// Check if resource type is filtered
-		if resourceTypeFilter != nil {
-			for _, resourceType := range resourceTypeFilter {
-				if resourceType == *scanRequest.ResourceType {
-					zap.L().Info("resource type filtered", zap.String("resource type", resourceType))
-					return nil, nil
-				}
+		for _, resourceType := range resourceTypeFilter {
+			if resourceType == *scanRequest.ResourceType {
+				zap.L().Info("resource type filtered", zap.String("resource type", resourceType))
+				return nil, nil
 			}
 		}
 		if poller, ok := ServicePollers[*scanRequest.ResourceType]; ok {
@@ -261,13 +253,19 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 			return nil, errors.Errorf("invalid single region resource type '%s' scan requested", *scanRequest.ResourceType)
 		}
 	}
+	return multiRegionScan(pollerResourceInput, scanRequest)
+}
 
+func multiRegionScan(
+	pollerInput *awsmodels.ResourcePollerInput,
+	scanRequest *pollermodels.ScanEntry,
+) (generatedEvents []resourcesapimodels.AddResourceEntry, err error) {
 	// If a region is not provided, then an 'all regions' scan is being requested. We don't
 	// support scanning multiple regions in one request, so we translate this request into a single
 	// region scan in each region.
 	//
 	// Lookup the regions that are both enabled and supported by this service
-	regions, err := GetRegionsToScan(pollerResourceInput, *scanRequest.ResourceType)
+	regions, err := GetRegionsToScan(pollerInput, *scanRequest.ResourceType)
 	if err != nil {
 		return nil, err
 	}
@@ -293,7 +291,6 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 			return nil, err
 		}
 	}
-
 	return nil, nil
 }
 
@@ -384,14 +381,14 @@ func singleResourceScan(
 			return nil, nil
 		}
 		// Check if ResourceID matches the integration's regex filter
-		matched, err := utils.MatchRegexFilter(pollerInput.ARNRegexFilter, *scanRequest.ResourceID)
+		matched, matchErr := utils.MatchRegexFilter(pollerInput.ARNRegexFilter, *scanRequest.ResourceID)
 		if matched {
 			zap.L().Info("resource filtered based on filter regex",
 				zap.String("regex filter", *pollerInput.ARNRegexFilter), zap.String("resource id", *scanRequest.ResourceID))
 			return nil, nil
 		}
-		if err != nil {
-			return nil, err
+		if matchErr != nil {
+			return nil, matchErr
 		}
 		resource, err = pollFunction(pollerInput, resourceARN, scanRequest)
 	} else {
