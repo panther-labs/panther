@@ -20,7 +20,7 @@
 
 resource "aws_sns_topic_subscription" "panther_cloudwatch" {
   for_each = toset(var.satellite_accounts)
-  
+
   endpoint             = "arn:${var.aws_partition}:sqs:${var.panther_region}:${var.master_account_id}:panther-aws-events-queue"
   protocol             = "sqs"
   raw_message_delivery = true
