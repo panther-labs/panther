@@ -192,6 +192,25 @@ func (gm *GlueTableMetadata) glueTableInput(bucketName string) (*glue.TableInput
 	}, nil
 }
 
+func (gm *GlueTableMetadata) UpdateTableIfExists(ctx context.Context, glueAPI glueiface.GlueAPI, bucketName string) (bool, error) {
+	tableInput, err := gm.glueTableInput(bucketName)
+	if err != nil {
+		return false, err
+	}
+	updateTableInput := &glue.UpdateTableInput{
+		DatabaseName: &gm.databaseName,
+		TableInput:   tableInput,
+	}
+	if _, err := glueAPI.UpdateTableWithContext(ctx, updateTableInput); err != nil {
+		if awsutils.IsAnyError(err, glue.ErrCodeEntityNotFoundException) {
+			return false, nil
+		}
+		return false, errors.Wrapf(err, "failed to update table %s.%s", gm.databaseName, gm.tableName)
+	}
+
+	return true, nil
+}
+
 func (gm *GlueTableMetadata) CreateTableIfNotExists(ctx context.Context, glueAPI glueiface.GlueAPI, bucketName string) (bool, error) {
 	tableInput, err := gm.glueTableInput(bucketName)
 	if err != nil {
