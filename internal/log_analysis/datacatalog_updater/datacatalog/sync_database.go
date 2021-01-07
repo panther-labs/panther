@@ -55,8 +55,7 @@ func (h *LambdaHandler) HandleSyncDatabaseEvent(ctx context.Context, event *Sync
 	}
 
 	if err := h.createOrReplaceViewsForAllDeployedLogTables(ctx); err != nil {
-		err = errors.Wrap(err, "failed to update athena views for deployed log types")
-		return err
+		return errors.Wrap(err, "failed to update athena views for deployed log types")
 	}
 
 	if err := h.sendPartitionSync(ctx, event.TraceID, syncLogTypes); err != nil {

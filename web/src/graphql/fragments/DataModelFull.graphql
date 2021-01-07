@@ -1,0 +1,14 @@
+fragment DataModelFull on DataModel {
+  displayName
+  id
+  enabled
+  logTypes
+  mappings {
+    name
+    path
+    method
+  }
+  body
+  createdAt
+  lastModified
+}
