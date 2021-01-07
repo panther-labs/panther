@@ -34,3 +34,8 @@ variable "panther_region" {
   type        = string
   description = "The AWS region where you have deployed Panther"
 }
+
+variable "satellite_account_region" {
+  type        = string
+  description = "Account which Panther is pulling or receiving log data from"
+}

@@ -150,6 +150,16 @@ Parameters:
     Description: An existing SecurityGroup to deploy Panther into. Only takes affect if VpcID is specified.
     Default: ''
     AllowedPattern: '^(sg-[0-9a-f]{10,})?$'
+  SubnetOneID:
+    Type: String
+    Description: An existing Subnet to deploy the Panther loadbalancer into. If you set this option, you must also specify VpcID, SecurityGroupID, SubnetOneIPRange, and SubnetTwoIPRange.
+    Default: ''
+    AllowedPattern: '^(subnet-[0-9a-f]{4,})?$'
+  SubnetTwoID:
+    Type: String
+    Description: A second existing Subnet to deploy the Panther loadbalancer into. If you set this option, you must also specify VpcID, SecurityGroupID, SubnetOneIPRange, and SubnetTwoIPRange.
+    Default: ''
+    AllowedPattern: '^(subnet-[0-9a-f]{4,})?$'
   SubnetOneIPRange:
     Type: String
     Description: A valid & available IP range in the existing VPC you plan to deploy Panther into. Only takes affect if VpcID is specified.
@@ -169,7 +179,7 @@ Parameters:
     Type: String
     Description: An existing VPC to deploy the Panther loadbalancer into. If you set this option, you must also specify SecurityGroupID, SubnetOneIPRange, and SubnetTwoIPRange.
     Default: ''
-    AllowedPattern: '^(vpc-[0-9a-f]{10,})?$'
+    AllowedPattern: '^(vpc-[0-9a-f]{4,})?$'
 
 Mappings:
   Constants:
@@ -199,6 +209,8 @@ Resources:
         LoadBalancerSecurityGroupCidr: !Ref LoadBalancerSecurityGroupCidr
         VpcID: !Ref VpcID
         SecurityGroupID: !Ref SecurityGroupID
+        SubnetOneID: !Ref SubnetOneID
+        SubnetTwoID: !Ref SubnetTwoID
         SubnetOneIPRange: !Ref SubnetOneIPRange
         SubnetTwoIPRange: !Ref SubnetTwoIPRange
         LogSubscriptionPrincipals: !Join [',', !Ref LogSubscriptionPrincipals]
