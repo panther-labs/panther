@@ -372,7 +372,7 @@ func readZipFile(zf *zip.File) ([]byte, error) {
 
 func validateUploadedDataModel(item *tableItem) error {
 	if len(item.ResourceTypes) > 1 {
-		return errors.New("only one ResourceType may be specified per DataModel")
+		return errors.New("only one LogType may be specified per DataModel")
 	}
 	isEnabled, err := isSingleDataModelEnabled(item.ID, item.Enabled, item.ResourceTypes)
 	if err != nil {
