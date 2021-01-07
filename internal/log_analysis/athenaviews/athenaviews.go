@@ -46,7 +46,7 @@ func CreateOrReplaceLogViews(athenaClient athenaiface.AthenaAPI, workgroup strin
 	for _, sql := range sqlStatements {
 		_, err := awsathena.RunQuery(athenaClient, workgroup, pantherdb.ViewsDatabase, sql)
 		if err != nil {
-			return errors.Wrap(err, "CreateOrReplaceLogViews() failed")
+			return errors.Wrapf(err, "CreateOrReplaceViews() failed for WorkGroup %s for: %s", workgroup, sql)
 		}
 	}
 	return err
