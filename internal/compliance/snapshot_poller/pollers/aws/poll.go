@@ -20,7 +20,6 @@ package aws
 
 import (
 	"fmt"
-	"github.com/panther-labs/panther/api/lambda/source/models"
 	"math/rand"
 	"os"
 	"time"
@@ -31,6 +30,7 @@ import (
 	"go.uber.org/zap"
 
 	resourcesapimodels "github.com/panther-labs/panther/api/lambda/resources/models"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"

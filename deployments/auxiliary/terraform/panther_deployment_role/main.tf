@@ -247,8 +247,7 @@ resource "aws_iam_policy" "deployment" {
       "Resource": [
         "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:event-source-mapping:*",
         "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:function:panther-*",
-        "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:layer:panther-*",
-        "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:function:ddb"
+        "arn:${var.aws_partition}:lambda:*:${var.aws_account_id}:layer:panther-*"
       ]
     },
     {
