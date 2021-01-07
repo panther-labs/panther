@@ -20,6 +20,7 @@ package aws
 
 import (
 	"fmt"
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"math/rand"
 	"os"
 	"regexp"
@@ -98,7 +99,7 @@ var (
 	IndividualResourcePollers = map[string]func(
 		input *awsmodels.ResourcePollerInput, id *utils.ParsedResourceID, entry *pollermodels.ScanEntry) (interface{}, error){
 		awsmodels.ConfigServiceSchema:  PollConfigService,
-		awsmodels.EksClusterSchema:     PollEKSCluster,
+		awsmodels.EksClusterSchema:     PollEKSCluster, // This function is never entered - lacking event-processor
 		awsmodels.GuardDutySchema:      PollGuardDutyDetector,
 		awsmodels.PasswordPolicySchema: PollPasswordPolicyResource,
 	}
@@ -175,7 +176,11 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	}
 
 	// Retrieve source integration from a short-lived cache for integration filtering options
-	sourceIntegration, err := utils.GetIntegration(*scanRequest.IntegrationID)
+	var sourceIntegration *models.SourceIntegration
+	if scanRequest.IntegrationID != nil {
+		sourceIntegration, err = utils.GetIntegration(*scanRequest.IntegrationID)
+	}
+
 	if err != nil {
 		zap.L().Warn("failed to retrieve integration from source api")
 	}
@@ -189,6 +194,8 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	if sourceIntegration != nil {
 		regionBlacklist, resourceTypeFilter, regexFilter, sourceEnabled = sourceIntegration.RegionBlacklist,
 			sourceIntegration.ResourceTypeFilter, sourceIntegration.ARNRegexFilter, sourceIntegration.SourceEnabled
+		pollerResourceInput.ARNRegexFilter = &regexFilter
+		pollerResourceInput.RegionBlacklist = regionBlacklist
 	}
 
 	// Check if integration is disabled
@@ -204,6 +211,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 
 	// If this is an individual resource scan or the region is provided,
 	// we don't need to lookup the active regions.
+	// TODO: Implement region blacklisting for individual resource scans
 	if scanRequest.ResourceID != nil {
 		// Check if ResourceID matches the integration's regex filter
 		if regexFilter != "" {
@@ -231,6 +239,8 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		}
 		// Individual resource scan
 		zap.L().Debug("processing single resource scan")
+		// TODO: Implement regex filtering for S3 (specifically PollS3Bucket & PollS3Buckets)
+		// TODO: Implement regional blacklisting for single resource scans and separately for the S3 poller
 		return singleResourceScan(scanRequest, pollerResourceInput)
 	}
 
@@ -245,6 +255,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	}
 
 	// If a region is provided, we're good to start the scan
+	// TODO: Implement resource id filtering for all the various resource types
 	if scanRequest.Region != nil {
 		zap.L().Info("processing single region service scan",
 			zap.String("region", *scanRequest.Region),
@@ -255,6 +266,15 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 				zap.L().Info("matched blacklisted region - skipping scan",
 					zap.String("region", region))
 				return nil, nil
+			}
+		}
+		// Check if resource type is filtered
+		if resourceTypeFilter != nil {
+			for _, resourceType := range resourceTypeFilter {
+				if resourceType == *scanRequest.ResourceType {
+					zap.L().Info("resource type filtered", zap.String("resource type", resourceType))
+					return nil, nil
+				}
 			}
 		}
 		if poller, ok := ServicePollers[*scanRequest.ResourceType]; ok {
