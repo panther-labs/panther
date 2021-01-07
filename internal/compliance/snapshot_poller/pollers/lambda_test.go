@@ -104,6 +104,7 @@ func TestHandlerNonExistentIntegration(t *testing.T) {
 
 	pollers.RateLimitTracker, _ = lru.NewARC(10)
 	mockResourceClient := &gatewayapi.MockClient{}
+	mockSourceClient := &gatewayapi.MockClient{}
 	apiClient = mockResourceClient
 	pollers.AuditRoleName = "TestAuditRole"
 
@@ -131,7 +132,8 @@ func TestHandlerNonExistentIntegration(t *testing.T) {
 			},
 		},
 	}
-
+	mockSourceClient.On("GetIntegration", testIntegrationID).Return(nil, nil)
+	mockSourceClient.On("Invoke", nil).Return(nil, nil)
 	require.NoError(t, Handle(testContext(), sampleEvent))
 
 	mockResourceClient.AssertNumberOfCalls(t, "Invoke", 0)
@@ -142,8 +144,8 @@ func TestHandlerNonExistentIntegration(t *testing.T) {
 		},
 	}
 	logs := logger.AllUntimed()
-	require.Len(t, logs, 2)
-	assert.Equal(t, expected, logs[:1]) // throw out last oplog msg
+	require.Len(t, logs, 5)
+	assert.Equal(t, expected, logs[len(logs)-2:len(logs)-1]) // throw out last oplog msg
 }
 
 // End-to-end unit test
@@ -286,6 +288,6 @@ func TestHandler(t *testing.T) {
 		},
 	}
 	logs := logger.AllUntimed()
-	require.Len(t, logs, 3)
-	assert.Equal(t, expected, logs[:2]) // throw out last oplog msg
+	require.Len(t, logs, 6)
+	assert.Equal(t, expected, logs[3:5]) // throw out last oplog msg
 }

@@ -206,8 +206,8 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	}
 
 	// TODO: Removed testing stmts
-	zap.L().Info("Got filtering options", zap.Strings("blacklist", regionBlacklist), zap.String("regex filter", *regexFilter),
-		zap.Strings("resource type filter", resourceTypeFilter))
+	zap.L().Info("Got filtering options", zap.Any("blacklist", regionBlacklist), zap.Any("regex filter", regexFilter),
+		zap.Any("resource type filter", resourceTypeFilter))
 
 	// If this is an individual resource scan or the region is provided,
 	// we don't need to lookup the active regions.
@@ -234,17 +234,6 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		zap.L().Info("processing single region service scan",
 			zap.String("region", *scanRequest.Region),
 			zap.String("resourceType", *scanRequest.ResourceType))
-		// Check if ResourceID matches the integration's regex filter
-		matched, err := utils.MatchRegexFilter(regexFilter, *scanRequest.ResourceID)
-		if matched {
-			zap.L().Info("resource filtered based on filter regex",
-				zap.Any("regex filter", regexFilter), zap.String("resource id", *scanRequest.ResourceID))
-			return nil, nil
-		}
-		if err != nil {
-			return nil, err
-		}
-
 		// Check if provided region is blacklisted
 		for _, region := range regionBlacklist {
 			if region == *scanRequest.Region {
