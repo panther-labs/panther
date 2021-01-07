@@ -160,12 +160,15 @@ func resolveTables(ctx context.Context, r logtypes.Resolver, names ...string) ([
 		if entry == nil {
 			return nil, errors.Errorf("unresolved log type %q", name)
 		}
-		eventSchema := entry.Schema()
-		desc := entry.Describe()
-		tableName := pantherdb.TableName(desc.Name)
-		db := pantherdb.DatabaseName(pantherdb.GetDataType(name))
-		meta := awsglue.NewGlueTableMetadata(db, tableName, desc.Description, awsglue.GlueTableHourly, eventSchema)
-		out = append(out, meta)
+		out = append(out, tableForEntry(entry))
 	}
 	return out, nil
+}
+
+func tableForEntry(entry logtypes.Entry) *awsglue.GlueTableMetadata {
+	eventSchema := entry.Schema()
+	desc := entry.Describe()
+	tableName := pantherdb.TableName(desc.Name)
+	db := pantherdb.DatabaseName(pantherdb.GetDataType(desc.Name))
+	return awsglue.NewGlueTableMetadata(db, tableName, desc.Description, awsglue.GlueTableHourly, eventSchema)
 }

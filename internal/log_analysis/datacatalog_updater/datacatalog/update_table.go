@@ -20,10 +20,9 @@ package datacatalog
 
 import (
 	"context"
+	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 
 	"github.com/pkg/errors"
-
-	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 )
 
 type UpdateTablesEvent struct {
@@ -34,43 +33,32 @@ type UpdateTablesEvent struct {
 func (h *LambdaHandler) HandleUpdateTablesEvent(ctx context.Context, event *UpdateTablesEvent) error {
 	// We need to fetch a fresh entry for this log type
 	h.ClearLogTypeCache(event.LogType)
-	logTypes := []string{event.LogType}
-	if err := h.updateTablesForLogTypes(ctx, logTypes); err != nil {
-		return errors.Wrap(err, "failed to update tables for deployed log types")
+	entry, err := h.Resolver.Resolve(ctx, event.LogType)
+	if err != nil {
+		return err
+	}
+	tbl := tableForEntry(entry)
+	updated, err := tbl.UpdateTableIfExists(ctx, h.GlueClient, h.ProcessedDataBucket)
+	if err != nil {
+		return err
+	}
+	// If the table was not updated, it means that it does not exist yet.
+	if !updated {
+		return nil
+	}
+	if typ := pantherdb.DataType(event.LogType); typ != pantherdb.CloudSecurity {
+		if _, err := tbl.RuleTable().UpdateTableIfExists(ctx, h.GlueClient, h.ProcessedDataBucket); err != nil {
+			return err
+		}
+		if _, err := tbl.RuleErrorTable().UpdateTableIfExists(ctx, h.GlueClient, h.ProcessedDataBucket); err != nil {
+			return err
+		}
 	}
 	if err := h.createOrReplaceViewsForAllDeployedLogTables(ctx); err != nil {
 		return errors.Wrap(err, "failed to update athena views for deployed log types")
 	}
-	if err := h.sendPartitionSync(ctx, event.TraceID, logTypes); err != nil {
+	if err := h.sendPartitionSync(ctx, event.TraceID, []string{event.LogType}); err != nil {
 		return errors.Wrap(err, "failed to send sync partitions event")
-	}
-	return nil
-}
-
-func (h *LambdaHandler) updateTablesForLogTypes(ctx context.Context, logTypes []string) error {
-	// We map the log types to their 'base' log tables.
-	tables, err := resolveTables(ctx, h.Resolver, logTypes...)
-	if err != nil {
-		return err
-	}
-	for i, table := range tables {
-		logType := logTypes[i]
-		// FIXME: this is confusing, the gluetables package should NOT be expanding table metadata based on hard-wired logic
-		// This logic should be left to a 'central' module such as `pantherdb` and use 'abstract' Database/Table/Partition structs
-		// The glue-relevant actions can be abstracted to:
-		// - CreateDatabaseIfNotExists
-		// - CreateTableIfNotExists
-		// - CreateOrReplaceTable
-		// - CreatePartitionIfNotExists
-		// - CreateOrReplacePartition
-		// - ScanDatabases
-		// - ScanDatabaseTables
-		// - ScanTablePartitions
-		// These actions should be part of an interface that manages the data lake backend.
-		// We need methods that use abstract Database/Table/Partition structs that can contain info for all backends.
-		if _, err := gluetables.UpdateTablesIfExist(ctx, h.GlueClient, h.ProcessedDataBucket, table); err != nil {
-			return errors.Wrapf(err, "failed to create or update tables for log type %q", logType)
-		}
 	}
 	return nil
 }
