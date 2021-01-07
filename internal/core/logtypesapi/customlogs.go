@@ -123,7 +123,9 @@ func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInp
 		}, nil
 	}
 	if err := api.DataCatalog.SendUpdateTableForLogType(ctx, id); err != nil {
-		return nil, err
+		return &PutCustomLogOutput{
+			Error: NewAPIError(ErrDatabaseUpdateFailed, fmt.Sprintf("could not queue event for database update: %s", err)),
+		}, nil
 	}
 	return &PutCustomLogOutput{Result: result}, nil
 }

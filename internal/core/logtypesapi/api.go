@@ -63,14 +63,15 @@ type LogTypesDatabase interface {
 
 const (
 	// ErrRevisionConflict is the error code to use when there is a revision conflict
-	ErrRevisionConflict = "RevisionConflict"
-	ErrAlreadyExists    = "AlreadyExists"
-	ErrNotFound         = "NotFound"
-	ErrInUse            = "InUse"
-	ErrInvalidUpdate    = "InvalidUpdate"
-	ErrInvalidMetadata  = "InvalidMetadata"
-	ErrInvalidSyntax    = "InvalidSyntax"
-	ErrInvalidLogSchema = "InvalidLogSchema"
+	ErrRevisionConflict     = "RevisionConflict"
+	ErrAlreadyExists        = "AlreadyExists"
+	ErrNotFound             = "NotFound"
+	ErrInUse                = "InUse"
+	ErrInvalidUpdate        = "InvalidUpdate"
+	ErrInvalidMetadata      = "InvalidMetadata"
+	ErrInvalidSyntax        = "InvalidSyntax"
+	ErrInvalidLogSchema     = "InvalidLogSchema"
+	ErrDatabaseUpdateFailed = "DatabaseUpdateFailed"
 )
 
 // APIError is an error that has a code and a message and is returned as part of the API response
