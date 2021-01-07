@@ -106,6 +106,20 @@ const DataModelForm: React.FC<DataModelFormProps> = ({ initialValues, onSubmit }
       >
         {({ values }) => (
           <Form>
+            <Breadcrumbs.Actions>
+              <Flex justify="flex-end" spacing={4}>
+                <LinkButton
+                  icon="close-circle"
+                  variantColor="darkgray"
+                  to={urls.logAnalysis.dataModels.list()}
+                >
+                  Cancel
+                </LinkButton>
+                <SubmitButton icon="check-outline" variantColor="green">
+                  Save
+                </SubmitButton>
+              </Flex>
+            </Breadcrumbs.Actions>
             <Box as="section" mb={8}>
               <Text color="navyblue-100" mb={6}>
                 Settings
@@ -236,20 +250,6 @@ const DataModelForm: React.FC<DataModelFormProps> = ({ initialValues, onSubmit }
                 )}
               </Card>
             </Box>
-            <Breadcrumbs.Actions>
-              <Flex justify="flex-end" spacing={4}>
-                <LinkButton
-                  icon="close-circle"
-                  variantColor="darkgray"
-                  to={urls.logAnalysis.dataModels.list()}
-                >
-                  Cancel
-                </LinkButton>
-                <SubmitButton icon="check-outline" variantColor="green">
-                  Save
-                </SubmitButton>
-              </Flex>
-            </Breadcrumbs.Actions>
           </Form>
         )}
       </Formik>

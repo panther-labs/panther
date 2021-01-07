@@ -230,6 +230,13 @@ Resources:
               - !Sub arn:${AWS::Partition}:lambda:*:${AWS::AccountId}:event-source-mapping:*
               - !Sub arn:${AWS::Partition}:lambda:*:${AWS::AccountId}:function:panther-*
               - !Sub arn:${AWS::Partition}:lambda:*:${AWS::AccountId}:layer:panther-*
+
+              # Panther v1.14 unintentionally introduced a Lambda function named "ddb."
+              # v1.15 renamed the function so it has the conventional "panther-" prefix.
+              #
+              # The deployment role needs to be able to delete the "ddb" function
+              # until all accounts have migrated to v1.15+. Otherwise, the migration will fail.
+              - !Sub arn:${AWS::Partition}:lambda:*:${AWS::AccountId}:function:ddb
           - Effect: Allow
             Action: s3:*
             Resource: !Sub arn:${AWS::Partition}:s3:::panther-*
