@@ -23,6 +23,8 @@ import (
 	goerrors "errors"
 	"io"
 	"unicode/utf8"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -61,7 +63,7 @@ func NewLineStream(r io.Reader, size int) *LineStream {
 
 // Err returns the first non-EOF error that was encountered by the Scanner.
 func (s *LineStream) Err() error {
-	if s.err == io.EOF {
+	if errors.Is(s.err, io.EOF) {
 		return nil
 	}
 	return s.err
@@ -94,7 +96,7 @@ func (s *LineStream) readLine() ([]byte, error) {
 	// If we were using ReadBytes("\n"), and the file was a non-UTF8 blob, we might end up reading the whole file seatching for "\n".
 	line, isPrefix, err := s.r.ReadLine()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	// Check for valid UTF8 stream on first read.
 	// We want to be doing this here, before handling isPrefix.
@@ -107,7 +109,7 @@ func (s *LineStream) readLine() ([]byte, error) {
 			p, _ = s.r.Peek(s.r.Buffered())
 		}
 		if !isValidUTF8(p, isPrefix) {
-			return nil, ErrInvalidUTF8
+			return nil, errors.WithStack(ErrInvalidUTF8)
 		}
 	}
 	if !isPrefix {
@@ -125,6 +127,7 @@ func (s *LineStream) readLine() ([]byte, error) {
 		line, isPrefix, err = s.r.ReadLine()
 		// Remember: ReadLine either returns a non-nil line or it returns an error, never both.
 		if err != nil {
+			err = errors.WithStack(err)
 			break
 		}
 		s.scratch = append(s.scratch, line...)
