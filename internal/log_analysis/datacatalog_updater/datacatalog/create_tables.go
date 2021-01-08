@@ -41,11 +41,6 @@ func (h *LambdaHandler) HandleCreateTablesEvent(ctx context.Context, event *Crea
 	if len(logTypes) == 0 {
 		return nil
 	}
-	// TODO: This event needs to ONLY CREATE tables. Updating a table MUST include syncing the partitions.
-	// This leaves a gap where a table might get updated but no partition sync will happen.
-	// To achieve that we need a mapping from logType to required tables.
-	// Currently this is 'transparently' done in the gluetables package.
-	// This should be handled centrally (i.e. pantherdb)
 	if err := h.createTablesForLogTypes(ctx, logTypes); err != nil {
 		return err
 	}

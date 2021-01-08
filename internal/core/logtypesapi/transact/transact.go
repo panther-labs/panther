@@ -1,4 +1,5 @@
 // Package ddbextras provides a builder for DynamoDB transactions.
+// For more info on how the write transactions work see https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TransactWriteItems.html
 package transact
 
 /**

@@ -33,6 +33,8 @@ type UpdateTablesEvent struct {
 
 func (h *LambdaHandler) HandleUpdateTablesEvent(ctx context.Context, event *UpdateTablesEvent) error {
 	// We need to fetch a fresh entry for this log type
+	// This event is sent when a log type entry was updated so we need to make sure we do not use a stale entry
+	// from the cache
 	h.ClearLogTypeCache(event.LogType)
 	entry, err := h.Resolver.Resolve(ctx, event.LogType)
 	if err != nil {
@@ -44,6 +46,8 @@ func (h *LambdaHandler) HandleUpdateTablesEvent(ctx context.Context, event *Upda
 		return err
 	}
 	// If the table was not updated, it means that it does not exist yet.
+	// Tables are only created when used in sources.
+	// It is possible that a schema was updated before assigning it to a source.
 	if !updated {
 		return nil
 	}
