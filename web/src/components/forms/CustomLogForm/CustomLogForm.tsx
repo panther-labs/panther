@@ -35,6 +35,7 @@ import ValidateButton from './ValidateButton';
 export interface CustomLogFormValues {
   name: string;
   description: string;
+  revision?: number;
   referenceUrl: string;
   schema: string;
 }
@@ -66,6 +67,7 @@ const CustomLogForm: React.FC<CustomLogFormProps> = ({ onSubmit, initialValues }
   const isSchemaValid = schemaErrors && isEmpty(schemaErrors);
   const hasSchemaErrors = schemaErrors && !isEmpty(schemaErrors);
   const userHasValidatedSyntax = isSchemaValid || hasSchemaErrors;
+  const isEditing = initialValues.revision && initialValues.revision > 0;
   return (
     <Formik<CustomLogFormValues>
       initialValues={initialValues}
@@ -81,6 +83,7 @@ const CustomLogForm: React.FC<CustomLogFormProps> = ({ onSubmit, initialValues }
                 name="name"
                 label="* Name"
                 placeholder="Must start with `Custom.` followed by a capital letter"
+                disabled={isEditing}
                 required
               />
               <FastField
@@ -151,12 +154,12 @@ const CustomLogForm: React.FC<CustomLogFormProps> = ({ onSubmit, initialValues }
             </ValidateButton>
             <Breadcrumbs.Actions>
               <Flex justify="flex-end" spacing={4}>
-                <SubmitButton icon="check-circle" variantColor="green">
-                  Save log
+                <SubmitButton icon="check-outline" variantColor="green">
+                  {isEditing ? 'Update' : 'Save'} log
                 </SubmitButton>
                 <Button
                   variantColor="darkgray"
-                  icon="close-circle"
+                  icon="close-outline"
                   onClick={() => {
                     clearFormSession();
                     history.goBack();
