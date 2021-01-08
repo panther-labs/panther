@@ -294,8 +294,7 @@ class TestEngine(TestCase):
                 rule_version='version',
                 log_type='log',
                 dedup='TypeError',
-                error_message=
-                '\'PantherEvent\' object does not support item assignment: rule_id_1.py, '
+                error_message='\'PantherEvent\' object does not support item assignment: rule_id_1.py, '
                 'line 2, in rule    event["key"]["nested_key"] = "not_value"',
                 event={'key': {
                     'nested_key': 'value'
