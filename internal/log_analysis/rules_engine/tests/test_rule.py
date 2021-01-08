@@ -288,7 +288,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
                     'def severity(event):\n\treturn "HIGH"\n' \
                     'def reference(event):\n\treturn "test reference"\n' \
                     'def runbook(event):\n\treturn "test runbook"\n' \
-                    'def destination_override(event):\n\treturn []'
+                    'def destinations(event):\n\treturn []'
         rule = Rule({'id': 'test_rule_with_all_generated_fields', 'body': rule_body, 'versionId': 'versionId'})
 
         expected_result = RuleResult(
