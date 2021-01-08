@@ -150,13 +150,11 @@ func buildGuardDutyDetectorSnapshot(
 	// Check if ResourceID matches the integration's regex filter
 	if pollerInput != nil {
 		matched, err := utils.MatchRegexFilter(pollerInput.ResourceRegexFilters, *detectorID)
-		if matched {
-			zap.L().Info("resource filtered based on filter regex", zap.Any("regex filter", pollerInput.ResourceRegexFilters),
-				zap.String("resource id", *detectorID), zap.Any("detector details", detectorDetails))
-			return nil, nil
-		}
 		if err != nil {
 			return nil, err
+		}
+		if matched {
+			return nil, nil
 		}
 	}
 	detectorSnapshot.FindingPublishingFrequency = detectorDetails.FindingPublishingFrequency

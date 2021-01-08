@@ -251,13 +251,11 @@ func buildEksClusterSnapshot(
 	// Check if ResourceID matches the integration's regex filter
 	if pollerInput != nil {
 		matched, err := utils.MatchRegexFilter(pollerInput.ResourceRegexFilters, *details.Arn)
-		if matched {
-			zap.L().Info("resource filtered based on filter regex",
-				zap.Any("regex filter", pollerInput.ResourceRegexFilters), zap.Any("cluster details", details))
-			return nil, nil
-		}
 		if err != nil {
 			return nil, err
+		}
+		if matched {
+			return nil, nil
 		}
 	}
 

@@ -368,13 +368,11 @@ func singleResourceScan(
 		}
 		// Check if ResourceID matches the integration's regex filter
 		matched, matchErr := utils.MatchRegexFilter(pollerInput.ResourceRegexFilters, *scanRequest.ResourceID)
-		if matched {
-			zap.L().Info("resource filtered based on filter regex",
-				zap.Strings("regex filter", pollerInput.ResourceRegexFilters), zap.String("resource id", *scanRequest.ResourceID))
-			return nil, nil
-		}
 		if matchErr != nil {
 			return nil, matchErr
+		}
+		if matched {
+			return nil, nil
 		}
 		resource, err = pollFunction(pollerInput, resourceARN, scanRequest)
 	} else {
