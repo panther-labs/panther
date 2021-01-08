@@ -67,7 +67,7 @@ const LogAnalysisNavigation: React.FC = () => {
         />
         <NavLink
           isSecondary
-          icon="source-code"
+          icon="code-semi"
           to={urls.logAnalysis.dataModels.list()}
           label="Data Models"
         />
