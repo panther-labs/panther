@@ -29,16 +29,11 @@ class ImmutableContainerMixin(ABC):
     def mutable_type(cls) -> Any:
         """Specify the mutable type that corresponds to this immutable container class"""
 
-    @no_type_check
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        cls.register(cls.mutable_type())
-
     @classmethod
     @no_type_check
-    def register(cls, klass) -> None:
+    def register(cls) -> None:
         """Register the corresponding mutable type for this class"""
-        cls._CONVERSIONS[klass] = cls
+        cls._CONVERSIONS[cls.mutable_type()] = cls
 
     def __init__(self, container: Any):
         self._container = self._shallow_copy(container)
@@ -93,3 +88,7 @@ class ImmutableList(ImmutableContainerMixin, Sequence):  # pylint: disable=R0901
 
     def _shallow_copy(self, obj: list) -> tuple:
         return tuple(obj)
+
+
+ImmutableList.register()
+ImmutableDict.register()
