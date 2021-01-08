@@ -449,6 +449,8 @@ func deployBootstrapStack(settings *PantherConfig) (map[string]string, error) {
 		"LoadBalancerSecurityGroupCidr": settings.Infra.LoadBalancerSecurityGroupCidr,
 		"LogSubscriptionPrincipals":     strings.Join(settings.Setup.LogSubscriptions.PrincipalARNs, ","),
 		"SecurityGroupID":               settings.Infra.SecurityGroupID,
+		"SubnetOneID":                   settings.Infra.SubnetOneID,
+		"SubnetTwoID":                   settings.Infra.SubnetTwoID,
 		"SubnetOneIPRange":              settings.Infra.SubnetOneIPRange,
 		"SubnetTwoIPRange":              settings.Infra.SubnetTwoIPRange,
 		"TracingMode":                   settings.Monitoring.TracingMode,

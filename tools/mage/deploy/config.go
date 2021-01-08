@@ -42,6 +42,8 @@ type Infra struct {
 	KvTableBillingMode                 string   `yaml:"KvTableBillingMode"`
 	PythonLayerVersionArn              string   `yaml:"PythonLayerVersionArn"`
 	SecurityGroupID                    string   `yaml:"SecurityGroupID"`
+	SubnetOneID                        string   `yaml:"SubnetOneID"`
+	SubnetTwoID                        string   `yaml:"SubnetTwoID"`
 	SubnetOneIPRange                   string   `yaml:"SubnetOneIPRange"`
 	SubnetTwoIPRange                   string   `yaml:"SubnetTwoIPRange"`
 	VpcID                              string   `yaml:"VpcID"`

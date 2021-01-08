@@ -93,7 +93,15 @@ Parameters:
   VpcID:
     Type: String
     Description: An existing VPC to deploy Panther into
-    AllowedPattern: '^(vpc-[0-9a-f]{10,})?$'
+    AllowedPattern: '^(vpc-[0-9a-f]{4,})?$'
+  SubnetOneID:
+    Type: String
+    Description: An existing subnet to deploy Panther into. You must specify 'SubnetTwoID' if you specify this parameter
+    AllowedPattern: '^(subnet-[0-9a-f]{4,})?$'
+  SubnetTwoID:
+    Type: String
+    Description: An existing subnet to deploy Panther into. You must specify 'SubnetOneID' if you specify this parameter
+    AllowedPattern: '^(subnet-[0-9a-f]{4,})?$'
 
 Mappings:
   SubnetConfig:
@@ -165,6 +173,7 @@ Conditions:
   CreateAlarmSNSTopic: !Equals [!Ref AlarmTopicArn, '']
   IsDeployFromSource: !Equals [!Ref DeployFromSource, true]
   CreateVpc: !Equals [!Ref VpcID, '']
+  CreateSubnets: !Equals [!Ref SubnetOneID, '']
 
 Resources:
   ########## S3 Buckets ##########
@@ -213,7 +222,7 @@ Resources:
     # trying to set the bucket policy. An easy fix is to just delay this resource until some
     # networking setup has completed, it doesn't particularly matter which resource this depends on,
     # as long as it happens later in the stack creation.
-    DependsOn: PublicSubnetOne
+    DependsOn: TargetGroup
 
     Properties:
       Bucket: !Ref AuditLogs
@@ -768,6 +777,7 @@ Resources:
   # These subnets are labelled Public for historical reasons, but will not actually be public if a
   # private VPC is specified.
   PublicSubnetOne:
+    Condition: CreateSubnets
     Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select [0, !GetAZs '']
@@ -785,6 +795,7 @@ Resources:
           Value: panther-subnet-one
 
   PublicSubnetTwo:
+    Condition: CreateSubnets
     Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select [1, !GetAZs '']
@@ -846,14 +857,14 @@ Resources:
     Condition: CreateVpc
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref PublicSubnetOne
+      SubnetId: !If [CreateSubnets, !Ref PublicSubnetOne, !Ref SubnetOneID]
       RouteTableId: !Ref PublicRouteTable
 
   PublicSubnetTwoRouteTableAssociation:
     Condition: CreateVpc
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref PublicSubnetTwo
+      SubnetId: !If [CreateSubnets, !Ref PublicSubnetTwo, !Ref SubnetTwoID]
       RouteTableId: !Ref PublicRouteTable
 
   # Public load balancer, hosted in public subnets that is accessible
@@ -895,10 +906,7 @@ Resources:
       # Failure Impact
       # * The Panther user interface will not be available.
       # </cfndoc>
-      Scheme: !If
-        - CreateVpc
-        - internet-facing
-        - internal
+      Scheme: !If [CreateVpc, internet-facing, internal]
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
           Value: '30'
@@ -908,13 +916,10 @@ Resources:
         - Key: access_logs.s3.bucket
           Value: !Ref AuditLogs
       Subnets:
-        - !Ref PublicSubnetOne
-        - !Ref PublicSubnetTwo
+        - !If [CreateSubnets, !Ref PublicSubnetOne, !Ref SubnetOneID]
+        - !If [CreateSubnets, !Ref PublicSubnetTwo, !Ref SubnetTwoID]
       SecurityGroups:
-        - !If
-          - CreateVpc
-          - !Ref PublicLoadBalancerSecurityGroup
-          - !Ref SecurityGroupID
+        - !If [CreateVpc, !Ref PublicLoadBalancerSecurityGroup, !Ref SecurityGroupID]
 
   # A target group is connected to a network or application load balancer, so it can automatically
   # distribute traffic across all the targets.
@@ -1182,10 +1187,10 @@ Outputs:
   # Networking + elb
   SubnetOneId:
     Description: Public subnet one
-    Value: !Ref PublicSubnetOne
+    Value: !If [CreateSubnets, !Ref PublicSubnetOne, !Ref SubnetOneID]
   SubnetTwoId:
     Description: Public subnet two
-    Value: !Ref PublicSubnetTwo
+    Value: !If [CreateSubnets, !Ref PublicSubnetTwo, !Ref SubnetTwoID]
   LoadBalancerArn:
     Description: Web load balancer arn
     Value: !Ref PublicLoadBalancer

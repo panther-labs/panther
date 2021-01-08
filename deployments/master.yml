@@ -155,6 +155,16 @@ Parameters:
     Description: An existing SecurityGroup to deploy Panther into. Only takes affect if VpcID is specified.
     Default: ''
     AllowedPattern: '^(sg-[0-9a-f]{10,})?$'
+  SubnetOneID:
+    Type: String
+    Description: An existing Subnet to deploy the Panther loadbalancer into. If you set this option, you must also specify VpcID, SecurityGroupID, SubnetOneIPRange, and SubnetTwoIPRange.
+    Default: ''
+    AllowedPattern: '^(subnet-[0-9a-f]{4,})?$'
+  SubnetTwoID:
+    Type: String
+    Description: A second existing Subnet to deploy the Panther loadbalancer into. If you set this option, you must also specify VpcID, SecurityGroupID, SubnetOneIPRange, and SubnetTwoIPRange.
+    Default: ''
+    AllowedPattern: '^(subnet-[0-9a-f]{4,})?$'
   SubnetOneIPRange:
     Type: String
     Description: A valid & available IP range in the existing VPC you plan to deploy Panther into. Only takes affect if VpcID is specified.
@@ -174,7 +184,14 @@ Parameters:
     Type: String
     Description: An existing VPC to deploy the Panther loadbalancer into. If you set this option, you must also specify SecurityGroupID, SubnetOneIPRange, and SubnetTwoIPRange.
     Default: ''
-    AllowedPattern: '^(vpc-[0-9a-f]{10,})?$'
+    AllowedPattern: '^(vpc-[0-9a-f]{4,})?$'
+  BootstrapStackOnly:
+    Type: String
+    Description: 'If true, only the Bootstrap stack will be deployed (WARNING: ALL NON-BOOTSTRAP PANTHER INFRA WILL BE DELETED)'
+    Default: false
+    AllowedValues:
+      - true
+      - false
 
 Mappings:
   Constants:
@@ -184,8 +201,9 @@ Mappings:
       Version: ${{PANTHER_VERSION}} # E.g. "1.14.0"
 
 Conditions:
+  FullDeployment: !Equals [!Ref BootstrapStackOnly, 'false']
   RegistryProvided: !Not [!Equals [!Ref ImageRegistry, '']]
-  OnboardSelf: !Equals [!Ref OnboardSelf, true]
+  CreateOnboard: !And [!Condition FullDeployment, !Equals [!Ref OnboardSelf, true]]
 
 Resources:
   Bootstrap:
@@ -204,6 +222,8 @@ Resources:
         LoadBalancerSecurityGroupCidr: !Ref LoadBalancerSecurityGroupCidr
         VpcID: !Ref VpcID
         SecurityGroupID: !Ref SecurityGroupID
+        SubnetOneID: !Ref SubnetOneID
+        SubnetTwoID: !Ref SubnetTwoID
         SubnetOneIPRange: !Ref SubnetOneIPRange
         SubnetTwoIPRange: !Ref SubnetTwoIPRange
         LogSubscriptionPrincipals: !Join [',', !Ref LogSubscriptionPrincipals]
@@ -219,6 +239,7 @@ Resources:
           Value: panther-bootstrap # friendly name, not actual stack name
 
   BootstrapGateway:
+    Condition: FullDeployment
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: bootstrap_gateway.yml
@@ -252,6 +273,7 @@ Resources:
           Value: panther-bootstrap-gateway
 
   Appsync:
+    Condition: FullDeployment
     Type: AWS::CloudFormation::Stack
     DependsOn: BootstrapGateway # custom resources lambda function
     Properties:
@@ -275,6 +297,7 @@ Resources:
           Value: panther-appsync
 
   CloudSecurity:
+    Condition: FullDeployment
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: cloud_security.yml
@@ -304,6 +327,7 @@ Resources:
           Value: panther-cloud-security
 
   Core:
+    Condition: FullDeployment
     Type: AWS::CloudFormation::Stack
     DependsOn: BootstrapGateway # custom resources Lambda function
     Properties:
@@ -341,6 +365,7 @@ Resources:
           Value: panther-core
 
   Dashboards:
+    Condition: FullDeployment
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: dashboards.yml
@@ -355,6 +380,7 @@ Resources:
           Value: panther-cw-dashboards
 
   LogAnalysis:
+    Condition: FullDeployment
     DependsOn: Core
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -390,7 +416,7 @@ Resources:
           Value: panther-log-analysis
 
   Onboard:
-    Condition: OnboardSelf
+    Condition: CreateOnboard
     # Onboard stack adds new source integrations, which requires custom resources (bootstrap-gateway),
     # source-api (core), and queues from cloud-security and log-analysis to exist.
     DependsOn: [BootstrapGateway, CloudSecurity, Core, LogAnalysis]
@@ -418,6 +444,7 @@ Resources:
           Value: panther-onboard
 
   Web:
+    Condition: FullDeployment
     Type: AWS::CloudFormation::Stack
     # Custom resources in this stack require the analysis-api, users-api, and both Python engines to exist
     DependsOn: [CloudSecurity, Core, LogAnalysis]
