@@ -257,14 +257,11 @@ func (api API) FullScan(input *models.FullScanInput) error {
 
 func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceIntegration {
 	metadata := models.SourceIntegrationMetadata{
-		CreatedAtTime:         time.Now(),
-		CreatedBy:             input.UserID,
-		IntegrationID:         uuid.New().String(),
-		IntegrationLabel:      input.IntegrationLabel,
-		IntegrationType:       input.IntegrationType,
-		RegionDenylist:        input.RegionDenylist,
-		ResourceTypeDenylist:  input.ResourceTypeDenylist,
-		ResourceRegexDenylist: input.ResourceRegexDenylist,
+		CreatedAtTime:    time.Now(),
+		CreatedBy:        input.UserID,
+		IntegrationID:    uuid.New().String(),
+		IntegrationLabel: input.IntegrationLabel,
+		IntegrationType:  input.IntegrationType,
 	}
 
 	switch input.IntegrationType {
@@ -284,6 +281,10 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 		metadata.S3PrefixLogTypes = input.S3PrefixLogTypes
 		metadata.StackName = getStackName(input.IntegrationType, input.IntegrationLabel)
 		metadata.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
+		metadata.SourceEnabled = input.SourceEnabled
+		metadata.RegionDenylist = input.RegionDenylist
+		metadata.ResourceTypeDenylist = input.ResourceTypeDenylist
+		metadata.ResourceRegexDenylist = input.ResourceRegexDenylist
 	case models.IntegrationTypeSqs:
 		metadata.SqsConfig = &models.SqsConfig{
 			S3Bucket:             env.InputDataBucketName,
