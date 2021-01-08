@@ -14,14 +14,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import Any, Optional
 
 from .data_model import DataModel
 from .immutable import ImmutableDict
 
 
-class PantherEvent(ImmutableDict):
+class PantherEvent(ImmutableDict): # pylint: disable=R0901
     """Panther enriched event with unified data model (udm) access."""
 
     def __init__(self, event: Mapping, data_model: Optional[DataModel]):
@@ -31,10 +31,10 @@ class PantherEvent(ImmutableDict):
             event: Dictionary representing the event. PantherEvent will create a deep copy of the provided event
             data_model: the data model used for the LogType associated with this event
         """
-        super(PantherEvent, self).__init__(event)
+        super().__init__(event)
         self.data_model = data_model
 
-    def mutable_arguments(self):
+    def extra_constructor_arguments(self) -> dict:
         return {'data_model': self.data_model}
 
     def udm(self, key: str) -> Any:

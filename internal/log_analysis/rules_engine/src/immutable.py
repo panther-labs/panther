@@ -16,70 +16,81 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
+from typing import Any, Dict, Iterator, Type, no_type_check
 
 
 class ImmutableContainerMixin(ABC):
     """Base class for immutable collections"""
 
-    _conversions = {}
+    _CONVERSIONS: Dict[Any, Any] = {}
 
     @classmethod
     @abstractmethod
-    def mutable_type(cls):
-        pass
+    def mutable_type(cls) -> Any:
+        """Specify the mutable type that corresponds to this immutable container class"""
 
-    def mutable_arguments(cls):
-        return {}
-
+    @no_type_check
     def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
         cls.register(cls.mutable_type())
 
-    def __init__(self, container):
+    @classmethod
+    @no_type_check
+    def register(cls, klass) -> None:
+        """Register the corresponding mutable type for this class"""
+        cls._CONVERSIONS[klass] = cls
+
+    def __init__(self, container: Any):
         self._container = self._shallow_copy(container)
-        self._conversions = tuple(self.__class__._conversions.items())
-        self._registered_types = tuple(klass for klass, _ in self._conversions)
+        self._registered_conversions = tuple(self.__class__._CONVERSIONS.items())
+        self._registered_types = tuple(klass for klass, _ in self._registered_conversions)
 
     @abstractmethod
-    def _shallow_copy(self, obj):
-        pass
+    def _shallow_copy(self, obj: Any) -> Any:
+        """Creates a shallow copy of the given object"""
 
-    @classmethod
-    def register(cls, klass):
-        cls._conversions[klass] = cls
+    def extra_constructor_arguments(self) -> Dict:  # pylint: disable=R0201
+        """Define additional constructor arguments that must be
+           passed through to nested objects"""
+        return {}
 
+    @no_type_check
     def __getitem__(self, item):
         value = self._container[item]
         if isinstance(value, self._registered_types):
-            for mutable_type, immutable_type in self._conversions:
+            for mutable_type, immutable_type in self._registered_conversions:
                 if isinstance(value, mutable_type):
-                    value = immutable_type(value, **self.mutable_arguments())
+                    value = immutable_type(value,
+                                           **self.extra_constructor_arguments())
         return value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'{self.__class__.__name__}({self._container})'
 
     def __len__(self) -> int:
         return self._container.__len__()
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         return iter(self._container)
 
 
-class ImmutableDict(ImmutableContainerMixin, Mapping):
+class ImmutableDict(ImmutableContainerMixin, Mapping):  # pylint: disable=R0901
+    """Read-only dictionary data type"""
 
     @classmethod
-    def mutable_type(cls):
+    def mutable_type(cls) -> Type[dict]:
         return dict
 
-    def _shallow_copy(self, obj):
+    def _shallow_copy(self, obj: dict) -> dict:
         return obj.copy()
 
 
-class ImmutableList(ImmutableContainerMixin, Sequence):
+class ImmutableList(ImmutableContainerMixin, Sequence):  # pylint: disable=R0901
+    """Read-only sequence data type"""
 
     @classmethod
-    def mutable_type(cls):
+    def mutable_type(cls) -> Type[list]:
         return list
 
-    def _shallow_copy(self, obj):
+    def _shallow_copy(self, obj: list) -> tuple:
         return tuple(obj)
