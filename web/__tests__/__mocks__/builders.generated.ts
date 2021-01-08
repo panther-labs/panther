@@ -19,8 +19,6 @@
 import {
   ActiveSuppressCount,
   AddComplianceIntegrationInput,
-  AddCustomLogInput,
-  AddCustomLogOutput,
   AddGlobalPythonModuleInput,
   AddOrUpdateDataModelInput,
   AddPolicyInput,
@@ -38,6 +36,8 @@ import {
   ComplianceIntegrationHealth,
   ComplianceItem,
   ComplianceStatusCounts,
+  CustomLogInput,
+  CustomLogOutput,
   CustomLogRecord,
   CustomWebhookConfig,
   CustomWebhookConfigInput,
@@ -193,28 +193,6 @@ export const buildAddComplianceIntegrationInput = (
     integrationLabel: 'integrationLabel' in overrides ? overrides.integrationLabel : 'withdrawal',
     remediationEnabled: 'remediationEnabled' in overrides ? overrides.remediationEnabled : false,
     cweEnabled: 'cweEnabled' in overrides ? overrides.cweEnabled : false,
-  };
-};
-
-export const buildAddCustomLogInput = (
-  overrides: Partial<AddCustomLogInput> = {}
-): AddCustomLogInput => {
-  return {
-    revision: 'revision' in overrides ? overrides.revision : 176,
-    logType: 'logType' in overrides ? overrides.logType : 'matrix',
-    description: 'description' in overrides ? overrides.description : 'Buckinghamshire',
-    referenceURL: 'referenceURL' in overrides ? overrides.referenceURL : 'enable',
-    logSpec: 'logSpec' in overrides ? overrides.logSpec : 'applications',
-  };
-};
-
-export const buildAddCustomLogOutput = (
-  overrides: Partial<AddCustomLogOutput> = {}
-): AddCustomLogOutput => {
-  return {
-    __typename: 'AddCustomLogOutput',
-    error: 'error' in overrides ? overrides.error : buildError(),
-    record: 'record' in overrides ? overrides.record : buildCustomLogRecord(),
   };
 };
 
@@ -478,6 +456,24 @@ export const buildComplianceStatusCounts = (
     error: 'error' in overrides ? overrides.error : 71,
     fail: 'fail' in overrides ? overrides.fail : 488,
     pass: 'pass' in overrides ? overrides.pass : 154,
+  };
+};
+
+export const buildCustomLogInput = (overrides: Partial<CustomLogInput> = {}): CustomLogInput => {
+  return {
+    revision: 'revision' in overrides ? overrides.revision : 856,
+    logType: 'logType' in overrides ? overrides.logType : 'driver',
+    description: 'description' in overrides ? overrides.description : 'Avon',
+    referenceURL: 'referenceURL' in overrides ? overrides.referenceURL : 'Specialist',
+    logSpec: 'logSpec' in overrides ? overrides.logSpec : 'compelling',
+  };
+};
+
+export const buildCustomLogOutput = (overrides: Partial<CustomLogOutput> = {}): CustomLogOutput => {
+  return {
+    __typename: 'CustomLogOutput',
+    error: 'error' in overrides ? overrides.error : buildError(),
+    record: 'record' in overrides ? overrides.record : buildCustomLogRecord(),
   };
 };
 

@@ -1,4 +1,4 @@
-mutation CreateCustomLog($input: AddCustomLogInput!) {
+mutation CreateCustomLog($input: CustomLogInput!) {
   addCustomLog(input: $input) {
     error {
       message
