@@ -176,10 +176,11 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 
 	// Retrieve source integration from a short-lived cache for integration filtering options
 	var sourceIntegration *models.SourceIntegration
-	if scanRequest.IntegrationID != nil {
-		sourceIntegration, err = utils.GetIntegration(*scanRequest.IntegrationID)
+	if scanRequest.IntegrationID == nil {
+		zap.L().Error("got a malformed scan request - no integration id", zap.Any("scan request", scanRequest))
+		return nil, nil
 	}
-
+	sourceIntegration, err = utils.GetIntegration(*scanRequest.IntegrationID)
 	if err != nil {
 		zap.L().Warn("failed to retrieve integration from source api")
 	}
