@@ -40,11 +40,15 @@ const (
 )
 
 type SelfRegistrationProperties struct {
-	AccountID          string `validate:"required,len=12"`
-	AuditLogsBucket    string `validate:"required"`
-	EnableCloudTrail   bool   `json:",string"`
-	EnableGuardDuty    bool   `json:",string"`
-	EnableS3AccessLogs bool   `json:",string"`
+	AccountID            string   `validate:"required,len=12"`
+	AuditLogsBucket      string   `validate:"required"`
+	EnableCloudTrail     bool     `json:",string"`
+	EnableGuardDuty      bool     `json:",string"`
+	EnableS3AccessLogs   bool     `json:",string"`
+	SourceEnabled        *bool    `json:"sourceEnabled" validate:"omitempty"`
+	RegionBlacklist      []string `json:"regionBlacklist" validate:"omitempty"`
+	ResourceTypeFilter   []string `json:"resourceTypeFilter" validate:"omitempty"`
+	ResourceRegexFilters []string `json:"resourceRegexFilters" validate:"omitempty"`
 }
 
 func customSelfRegistration(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
@@ -76,7 +80,7 @@ func registerPantherAccount(props SelfRegistrationProperties) error {
 	}
 
 	if cloudSecSource == nil {
-		if err := putCloudSecurityIntegration(props.AccountID); err != nil {
+		if err := putCloudSecurityIntegration(props); err != nil {
 			return err
 		}
 	}
@@ -107,7 +111,7 @@ func registerPantherAccount(props SelfRegistrationProperties) error {
 	}
 
 	if logSource == nil {
-		if err := putLogProcessingIntegration(props.AccountID, props.AuditLogsBucket, prefixLogTypes); err != nil {
+		if err := putLogProcessingIntegration(props, prefixLogTypes); err != nil {
 			return err
 		}
 	} else if !stringSliceEqual(logSource.RequiredLogTypes(), prefixLogTypes.LogTypes()) {
@@ -171,17 +175,21 @@ func stringSliceEqual(left, right []string) bool {
 	return true
 }
 
-func putCloudSecurityIntegration(accountID string) error {
+func putCloudSecurityIntegration(properties SelfRegistrationProperties) error {
 	input := &models.LambdaInput{
 		PutIntegration: &models.PutIntegrationInput{
 			PutIntegrationSettings: models.PutIntegrationSettings{
-				AWSAccountID:       accountID,
-				IntegrationLabel:   cloudSecLabel,
-				IntegrationType:    models.IntegrationTypeAWSScan,
-				ScanIntervalMins:   1440,
-				UserID:             systemUserID,
-				CWEEnabled:         aws.Bool(true),
-				RemediationEnabled: aws.Bool(true),
+				AWSAccountID:         properties.AccountID,
+				IntegrationLabel:     cloudSecLabel,
+				IntegrationType:      models.IntegrationTypeAWSScan,
+				ScanIntervalMins:     1440,
+				UserID:               systemUserID,
+				CWEEnabled:           aws.Bool(true),
+				RemediationEnabled:   aws.Bool(true),
+				SourceEnabled:        properties.SourceEnabled,
+				RegionBlacklist:      properties.RegionBlacklist,
+				ResourceTypeFilter:   properties.ResourceTypeFilter,
+				ResourceRegexFilters: properties.ResourceRegexFilters,
 			},
 		},
 	}
@@ -192,20 +200,24 @@ func putCloudSecurityIntegration(accountID string) error {
 		return fmt.Errorf("error calling source-api to register account for cloud security: %v", err)
 	}
 
-	zap.L().Info("account registered for cloud security", zap.String("accountID", accountID))
+	zap.L().Info("account registered for cloud security", zap.String("accountID", properties.AccountID))
 	return nil
 }
 
-func putLogProcessingIntegration(accountID, auditBucket string, prefixLogTypes models.S3PrefixLogtypes) error {
+func putLogProcessingIntegration(properties SelfRegistrationProperties, prefixLogTypes models.S3PrefixLogtypes) error {
 	input := &models.LambdaInput{
 		PutIntegration: &models.PutIntegrationInput{
 			PutIntegrationSettings: models.PutIntegrationSettings{
-				AWSAccountID:     accountID,
-				IntegrationLabel: genLogProcessingLabel(),
-				IntegrationType:  models.IntegrationTypeAWS3,
-				UserID:           systemUserID,
-				S3Bucket:         auditBucket,
-				S3PrefixLogTypes: prefixLogTypes,
+				AWSAccountID:         properties.AccountID,
+				IntegrationLabel:     genLogProcessingLabel(),
+				IntegrationType:      models.IntegrationTypeAWS3,
+				UserID:               systemUserID,
+				S3Bucket:             properties.AuditLogsBucket,
+				S3PrefixLogTypes:     prefixLogTypes,
+				SourceEnabled:        properties.SourceEnabled,
+				RegionBlacklist:      properties.RegionBlacklist,
+				ResourceTypeFilter:   properties.ResourceTypeFilter,
+				ResourceRegexFilters: properties.ResourceRegexFilters,
 			},
 		},
 	}
@@ -217,7 +229,7 @@ func putLogProcessingIntegration(accountID, auditBucket string, prefixLogTypes m
 	}
 
 	zap.L().Info("account registered for log processing",
-		zap.String("accountID", accountID), zap.String("bucket", auditBucket),
+		zap.String("accountID", properties.AccountID), zap.String("bucket", properties.AuditLogsBucket),
 		zap.Any("logTypes", prefixLogTypes))
 	return nil
 }
