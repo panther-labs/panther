@@ -16,28 +16,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { IconButton, IconButtonProps, Tooltip } from 'pouncejs';
-import React from 'react';
+import * as Types from '../../../__generated__/schema';
 
-type NavIconButtonProps = Omit<IconButtonProps, 'variant' | 'aria-label'> &
-  React.AnchorHTMLAttributes<HTMLButtonElement> & {
-    tooltipLabel: string;
-  };
+import { GraphQLError } from 'graphql';
+import gql from 'graphql-tag';
 
-const NavIconButton: React.FC<NavIconButtonProps> = ({ icon, active, tooltipLabel, ...rest }) => (
-  <Tooltip content={tooltipLabel}>
-    <IconButton
-      {...rest}
-      variant="ghost"
-      size="medium"
-      icon={icon}
-      active={active}
-      aria-label={tooltipLabel}
-      // @ts-ignore
-      width={40}
-      height={40}
-    />
-  </Tooltip>
-);
+export type DataModelFull = Pick<
+  Types.DataModel,
+  'displayName' | 'id' | 'enabled' | 'logTypes' | 'body' | 'createdAt' | 'lastModified'
+> & { mappings: Array<Pick<Types.DataModelMapping, 'name' | 'path' | 'method'>> };
 
-export default NavIconButton;
+export const DataModelFull = gql`
+  fragment DataModelFull on DataModel {
+    displayName
+    id
+    enabled
+    logTypes
+    mappings {
+      name
+      path
+      method
+    }
+    body
+    createdAt
+    lastModified
+  }
+`;

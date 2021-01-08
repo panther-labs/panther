@@ -71,6 +71,7 @@ export const trackPageView = ({ page }: TrackPageViewProps) => {
 export enum EventEnum {
   SignedIn = 'Signed in successfully',
   AddedCustomLog = 'Added Custom Log',
+  AddedDataModel = 'Added Data Model',
   DeletedCustomLog = 'Deleted Custom Log',
   AddedRule = 'Added Rule',
   AddedPolicy = 'Added Policy',
@@ -99,6 +100,7 @@ export enum SrcEnum {
   ComplianceSources = 'compliance sources',
   LogSources = 'log sources',
   CustomLogs = 'custom logs',
+  DataModels = 'data models',
 }
 
 type LogSources = 'S3' | 'SQS';
@@ -111,6 +113,11 @@ interface SignInEvent {
 interface AddedCustomLogEvent {
   event: EventEnum.AddedCustomLog;
   src: SrcEnum.CustomLogs;
+}
+
+interface AddedDataModelEvent {
+  event: EventEnum.AddedDataModel;
+  src: SrcEnum.DataModels;
 }
 
 interface DeletedCustomLogEvent {
@@ -207,6 +214,7 @@ interface BulkUpdatedAlertStatus extends AlertStatusEvents {
 
 type TrackEvent =
   | AddedDestinationEvent
+  | AddedDataModelEvent
   | SignInEvent
   | AddedRuleEvent
   | AddedPolicyEvent
@@ -238,6 +246,7 @@ export enum TrackErrorEnum {
   FailedToAddDestination = 'Failed to create Destination',
   FailedToAddRule = 'Failed to create Rule',
   FailedToAddCustomLog = 'Failed to create a Custom Log',
+  FailedToAddDataModel = 'Failed to create a Data Model',
   FailedToDeleteCustomLog = 'Failed to delete a Custom Log',
   FailedToAddLogSource = 'Failed to add log source',
   FailedToUpdateLogSource = 'Failed to update log source',
@@ -270,6 +279,11 @@ interface UpdateLogSourceError {
 interface AddComplianceSourceError {
   event: TrackErrorEnum.FailedToAddComplianceSource;
   src: SrcEnum.ComplianceSources;
+}
+
+interface AddDataModelError {
+  event: TrackErrorEnum.FailedToAddDataModel;
+  src: SrcEnum.DataModels;
 }
 
 interface UpdateComplianceSourceError {
@@ -305,6 +319,7 @@ interface AddCustomLogError extends CustomLogError {
 
 type TrackError =
   | AddDestinationError
+  | AddDataModelError
   | TestDestinationError
   | AddRuleError
   | MfaError

@@ -48,7 +48,7 @@ var (
 	ACCOUNT = flag.String("account", "",
 		"The Panther AWS account id (optional, defaults to session account)")
 	S3PATH      = flag.String("s3path", "", "The s3 path to list (e.g., s3://<bucket>/<prefix>).")
-	CONCURRENCY = flag.Int("concurrency", 50, "The number of concurrent sqs writer go routines")
+	CONCURRENCY = flag.Int("concurrency", 50, "The number of concurrent sns writer go routines")
 	LIMIT       = flag.Uint64("limit", 0,
 		"If non-zero, then limit the number of files to this number.")
 	TOPIC = flag.String("topic", "panther-processed-data-notifications",
@@ -158,6 +158,11 @@ func validateFlags() {
 			os.Exit(-2)
 		}
 	}()
+
+	if *CONCURRENCY <= 0 {
+		err = errors.New("-concurrency must be > 0")
+		return
+	}
 
 	if *S3PATH == "" {
 		err = errors.New("-s3path not set")

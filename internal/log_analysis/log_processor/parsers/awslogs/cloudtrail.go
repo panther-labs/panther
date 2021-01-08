@@ -19,8 +19,6 @@ package awslogs
  */
 
 import (
-	"strings"
-
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
@@ -118,57 +116,56 @@ var _ parsers.Interface = (*cloudTrailParser)(nil)
 
 // Parse returns the parsed events or nil if parsing failed
 func (p *cloudTrailParser) ParseLog(log string) (results []*parsers.Result, err error) {
-	// Use strings.Reader to avoid duplicate allocation of `log` as bytes
-	const bufferSize = 8192
-	iter := jsoniter.Parse(jsoniter.ConfigDefault, strings.NewReader(log), bufferSize)
-	// CloudTrail has all events in a single line inside an array at key `Records`
-	// Seek to Records key
-	const fieldNameRecords = `Records`
-	for key := iter.ReadObject(); key != ""; key = iter.ReadObject() {
-		if key != fieldNameRecords {
-			iter.Skip()
-			continue
-		}
-		// Pre-allocate some results to avoid multiple slice expansions
-		const minResultSize = 1000
-		results = make([]*parsers.Result, 0, minResultSize)
-		// Go over all records parsing results
-		for iter.ReadArray() {
-			event := CloudTrail{}
-			iter.ReadVal(&event)
-			if err := iter.Error; err != nil {
-				return nil, errors.Wrap(err, "failed to read CloudTrail record JSON")
-			}
-			if err := pantherlog.ValidateStruct(&event); err != nil {
-				return nil, err
-			}
-			result, err := p.builder.BuildResult(TypeCloudTrail, &event)
-			if err != nil {
-				return nil, err
-			}
-			results = append(results, result)
-		}
-		return results, nil
+	// We use a 'hybrid' struct to be able to parse both event arrays and single events.
+	// This is just in case our special detections in the log processor don't work
+	hybrid := hybridCloudTrail{}
+	if err := jsoniter.UnmarshalFromString(log, &hybrid); err != nil {
+		return nil, errors.Wrap(err, "failed to read CloudTrail record JSON")
 	}
-	if err := iter.Error; err != nil {
+	if hybrid.Records == nil {
+		// The log entry was a single event
+		return p.parseEvent(results, &hybrid.CloudTrail)
+	}
+	for i := range hybrid.Records {
+		event := &hybrid.Records[i]
+		results, err = p.parseEvent(results, event)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return results, nil
+}
+
+// hybridCloudTrail 'catches' both arrays of events and individual events
+type hybridCloudTrail struct {
+	CloudTrail
+	Records []CloudTrail
+}
+
+func (p *cloudTrailParser) parseEvent(results []*parsers.Result, event *CloudTrail) ([]*parsers.Result, error) {
+	if err := pantherlog.ValidateStruct(event); err != nil {
 		return nil, err
 	}
-	return nil, errors.New(`missing 'Records' field`)
+	result, err := p.builder.BuildResult(TypeCloudTrail, event)
+	if err != nil {
+		return nil, err
+	}
+	return append(results, result), nil
 }
 
 var _ pantherlog.ValueWriterTo = (*CloudTrail)(nil)
 
 func (event *CloudTrail) WriteValuesTo(w pantherlog.ValueWriter) {
-	ExtractRawMessageIndicators(w, event.AdditionalEventData)
-	ExtractRawMessageIndicators(w, event.RequestParameters)
-	ExtractRawMessageIndicators(w, event.ResponseElements)
-	ExtractRawMessageIndicators(w, event.ServiceEventDetails)
+	pantherlog.ExtractRawMessageIndicators(w, extractIndicators, event.AdditionalEventData)
+	pantherlog.ExtractRawMessageIndicators(w, extractIndicators, event.RequestParameters)
+	pantherlog.ExtractRawMessageIndicators(w, extractIndicators, event.ResponseElements)
+	pantherlog.ExtractRawMessageIndicators(w, extractIndicators, event.ServiceEventDetails)
 }
 
 var _ pantherlog.ValueWriterTo = (*CloudTrailSessionContextWebIDFederationData)(nil)
 
 func (d *CloudTrailSessionContextWebIDFederationData) WriteValuesTo(w pantherlog.ValueWriter) {
 	if d != nil {
-		ExtractRawMessageIndicators(w, d.Attributes)
+		pantherlog.ExtractRawMessageIndicators(w, extractIndicators, d.Attributes)
 	}
 }

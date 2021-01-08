@@ -52,14 +52,15 @@ type envConfig struct {
 
 // Globals
 var (
-	env               envConfig
-	awsSession        *session.Session
-	alertsTableClient *alertTable.AlertsTable
-	lambdaClient      lambdaiface.LambdaAPI
-	outputClient      outputs.API
-	sqsClient         sqsiface.SQSAPI
-	outputsCache      *alertOutputsCache
-	analysisClient    gatewayapi.API
+	env                  envConfig
+	awsSession           *session.Session
+	alertsTableClient    *alertTable.AlertsTable
+	lambdaClient         lambdaiface.LambdaAPI
+	outputClient         outputs.API
+	sqsClient            sqsiface.SQSAPI
+	outputsCache         *alertOutputsCache
+	analysisClient       gatewayapi.API
+	softDeadlineDuration time.Duration
 )
 
 // Setup - initialize global state
@@ -79,4 +80,5 @@ func Setup() {
 		TimePartitionCreationTimeIndexName: env.TimeIndexName,
 	}
 	analysisClient = gatewayapi.NewClient(lambdaClient, "panther-analysis-api")
+	softDeadlineDuration = 10 * time.Second
 }
