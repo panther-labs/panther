@@ -247,6 +247,8 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 			return nil, errors.Errorf("invalid single region resource type '%s' scan requested", *scanRequest.ResourceType)
 		}
 	}
+
+	// If no region was specified, we need to re-queue one new scan request for each active region
 	return multiRegionScan(pollerResourceInput, scanRequest)
 }
 
