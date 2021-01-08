@@ -19,6 +19,7 @@ type Mutation {
   addPolicy(input: AddPolicyInput!): PolicyDetails
   addRule(input: AddRuleInput!): RuleDetails
   addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
+  deleteDataModel(input: DeleteDataModelInput!): Boolean
   deleteDestination(id: ID!): Boolean
   deleteComplianceIntegration(id: ID!): Boolean
   deleteCustomLog(input: DeleteCustomLogInput): DeleteCustomLogOutput!
@@ -85,6 +86,10 @@ type Query {
   listCustomLogs: [CustomLogRecord!]!
 }
 
+input DeleteEntry {
+  id: ID!
+}
+
 input DataModelMappingInput {
   name: String!
   path: String
@@ -108,6 +113,10 @@ input ListDataModelsInput {
   sortDir: SortDirEnum
   page: Int
   pageSize: Int
+}
+
+input DeleteDataModelInput {
+  dataModels: [DeleteEntry!]!
 }
 
 input DeleteCustomLogInput {
@@ -392,11 +401,7 @@ input GetRuleInput {
 }
 
 input DeleteRuleInput {
-  rules: [DeleteRuleInputItem!]!
-}
-
-input DeleteRuleInputItem {
-  id: ID!
+  rules: [DeleteEntry!]!
 }
 
 type RuleSummary {
@@ -977,19 +982,11 @@ input AddGlobalPythonModuleInput {
 }
 
 input DeleteGlobalPythonModuleInput {
-  globals: [DeleteGlobalPythonInputItem!]
-}
-
-input DeleteGlobalPythonInputItem {
-  id: ID!
+  globals: [DeleteEntry!]!
 }
 
 input DeletePolicyInput {
-  policies: [DeletePolicyInputItem]
-}
-
-input DeletePolicyInputItem {
-  id: ID!
+  policies: [DeleteEntry!]!
 }
 
 input ListPoliciesInput {
