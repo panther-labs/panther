@@ -28,7 +28,7 @@ class PantherEvent(ImmutableDict): # pylint: disable=R0901
         """Create data model lookups
 
         Args:
-            event: Dictionary representing the event. PantherEvent will create a deep copy of the provided event
+            event: Dictionary representing the event.
             data_model: the data model used for the LogType associated with this event
         """
         super().__init__(event)
