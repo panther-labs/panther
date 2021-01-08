@@ -30,6 +30,11 @@ class TestImmutableDict(TestCase):
             # pylint: disable=E1137
             self.immutable_dict['a'] = 1  # type: ignore
 
+    def test_nested_assignment_not_allowed(self) -> None:
+        with self.assertRaises(TypeError):
+            # pylint: disable=E1137
+            self.immutable_dict['d']['e']['f'] = False
+
     def test_original_dict_not_mutated(self) -> None:
         _ = self.immutable_dict['a']
         self.assertEqual(self.initial_dict, self.immutable_dict._container)
@@ -63,3 +68,22 @@ class TestImmutableList(TestCase):
 
     def test_getitem(self) -> None:
         self.assertEqual(self.immutable_list[0], self.initial_list[0])
+
+
+class TestImmutableNestedList(TestCase):
+
+    def setUp(self) -> None:
+        self.initial_dict = {'a': [1, 2]}
+        self.immutable_dict = ImmutableDict(self.initial_dict)
+
+    def test_assignment_not_allowed(self) -> None:
+        with self.assertRaises(TypeError):
+            self.immutable_dict['a'][0] = 100
+
+    def test_original_dict_not_mutated(self) -> None:
+        _ = self.immutable_dict['a'][0]
+        self.assertEqual(self.initial_dict, self.immutable_dict._container)
+
+    def test_raises_error_for_non_existent_index(self) -> None:
+        with self.assertRaises(IndexError):
+            _ = self.immutable_dict['a'][2]
