@@ -43,6 +43,7 @@ type Input struct {
 	S3Client s3iface.S3API
 	S3Path   string
 	Limit    uint64
+	Loop     bool
 	Write    func(*events.S3Event) // called on each event
 	Done     func()                // called when complete
 	Stats    *Stats
@@ -86,42 +87,61 @@ func ListPath(ctx context.Context, input *Input) (err error) {
 		Prefix:  aws.String(prefix),
 		MaxKeys: aws.Int64(pageSize),
 	}
-	return input.S3Client.ListObjectsV2Pages(inputParams, func(page *s3.ListObjectsV2Output, morePages bool) bool {
-		select {
-		case <-ctx.Done(): // signal from workers that they aborted
-			return false
-		default: // non blocking
-		}
 
-		for _, value := range page.Contents {
-			if *value.Size > 0 { // we only care about objects with size
-				input.Stats.NumFiles++
-				if input.Stats.NumFiles%progressNotify == 0 {
-					input.Logger.Infof("listed %d files ...", input.Stats.NumFiles)
-				}
-				input.Stats.NumBytes += (uint64)(*value.Size)
-				input.Write(&events.S3Event{
-					Records: []events.S3EventRecord{
-						{
-							S3: events.S3Entity{
-								Bucket: events.S3Bucket{
-									Name: bucket,
-								},
-								Object: events.S3Object{
-									Key:  *value.Key,
-									Size: *value.Size,
+	stop := false // stop will be set to true if signaled by context or limit is reached
+
+	listObjects := func() error {
+		return input.S3Client.ListObjectsV2Pages(inputParams, func(page *s3.ListObjectsV2Output, morePages bool) bool {
+			select {
+			case <-ctx.Done(): // signal from workers that they were canceled
+				stop = true
+				return false
+			default: // non blocking
+			}
+
+			for _, value := range page.Contents {
+				if *value.Size > 0 { // we only care about objects with size
+					input.Stats.NumFiles++
+					if input.Stats.NumFiles%progressNotify == 0 {
+						input.Logger.Infof("listed %d files ...", input.Stats.NumFiles)
+					}
+					input.Stats.NumBytes += (uint64)(*value.Size)
+					input.Write(&events.S3Event{
+						Records: []events.S3EventRecord{
+							{
+								S3: events.S3Entity{
+									Bucket: events.S3Bucket{
+										Name: bucket,
+									},
+									Object: events.S3Object{
+										Key:  *value.Key,
+										Size: *value.Size,
+									},
 								},
 							},
 						},
-					},
-				})
-				if input.Stats.NumFiles >= limit {
-					break
+					})
+					if input.Stats.NumFiles >= limit {
+						stop = true
+						break
+					}
 				}
 			}
+			return input.Stats.NumFiles < limit // "To stop iterating, return false from the fn function."
+		})
+	}
+
+	// infinite loop (unless error)
+	if input.Loop {
+		for !stop {
+			err = listObjects()
+			if err != nil {
+				return err
+			}
 		}
-		return input.Stats.NumFiles < limit // "To stop iterating, return false from the fn function."
-	})
+	}
+
+	return listObjects()
 }
 
 func GetS3Region(sess *session.Session, s3Path string) (string, error) {
