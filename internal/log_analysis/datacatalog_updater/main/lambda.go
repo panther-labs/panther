@@ -20,7 +20,6 @@ package main
 
 import (
 	"context"
-	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
