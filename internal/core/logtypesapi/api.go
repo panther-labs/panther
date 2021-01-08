@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 )
@@ -63,21 +64,26 @@ type LogTypesDatabase interface {
 
 const (
 	// ErrRevisionConflict is the error code to use when there is a revision conflict
-	ErrRevisionConflict     = "RevisionConflict"
-	ErrAlreadyExists        = "AlreadyExists"
-	ErrNotFound             = "NotFound"
-	ErrInUse                = "InUse"
-	ErrInvalidUpdate        = "InvalidUpdate"
-	ErrInvalidMetadata      = "InvalidMetadata"
-	ErrInvalidSyntax        = "InvalidSyntax"
-	ErrInvalidLogSchema     = "InvalidLogSchema"
-	ErrDatabaseUpdateFailed = "DatabaseUpdateFailed"
+	ErrRevisionConflict = "RevisionConflict"
+	ErrAlreadyExists    = "AlreadyExists"
+	ErrNotFound         = "NotFound"
+	ErrInUse            = "InUse"
+	ErrInvalidUpdate    = "InvalidUpdate"
+	ErrInvalidMetadata  = "InvalidMetadata"
+	ErrInvalidSyntax    = "InvalidSyntax"
+	ErrInvalidLogSchema = "InvalidLogSchema"
+	ErrServerError      = "ServerError"
 )
 
 // APIError is an error that has a code and a message and is returned as part of the API response
 type APIError struct {
 	Code    string `json:"code" validate:"required"`
 	Message string `json:"message" validate:"required"`
+	reason  error
+}
+
+func (e *APIError) Unwrap() error {
+	return e.reason
 }
 
 // Error implements error interface
@@ -93,28 +99,41 @@ func NewAPIError(code, message string) *APIError {
 	}
 }
 
-// WrapAPIError wraps an error to be an API error keeping code and message if available
+type ErrorReply struct {
+	Error *APIError `json:"error"`
+}
+
 func WrapAPIError(err error) *APIError {
 	if err == nil {
 		return nil
 	}
-	if apiErr, ok := err.(*APIError); ok {
+	if apiErr := AsAPIError(err); apiErr != nil {
 		return apiErr
 	}
-
-	type errWithCode interface {
-		error
+	// AWS errors implement this interface
+	// We use their code to help with identifying the error but we keep the input error message.
+	var errWithCode interface {
 		Code() string
-		Message() string
 	}
-	if e, ok := err.(errWithCode); ok {
+	if errors.As(err, &errWithCode) {
 		return &APIError{
-			Code:    e.Code(),
-			Message: e.Message(),
+			Code:    errWithCode.Code(),
+			Message: err.Error(),
+			reason:  err,
 		}
 	}
+	// Return all unknown errors as 'ServerError'
 	return &APIError{
-		Code:    "UnknownError",
+		Code:    ErrServerError,
 		Message: err.Error(),
+		reason:  err,
 	}
+}
+
+func AsAPIError(err error) *APIError {
+	apiErr := &APIError{}
+	if errors.As(err, &apiErr) {
+		return apiErr
+	}
+	return nil
 }

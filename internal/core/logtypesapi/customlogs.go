@@ -39,14 +39,10 @@ import (
 func (api *LogTypesAPI) GetCustomLog(ctx context.Context, input *GetCustomLogInput) (*GetCustomLogOutput, error) {
 	record, err := api.Database.GetCustomLog(ctx, input.LogType, input.Revision)
 	if err != nil {
-		return &GetCustomLogOutput{
-			Error: WrapAPIError(err),
-		}, nil
+		return nil, err
 	}
 	if record == nil {
-		return &GetCustomLogOutput{
-			Error: NewAPIError(ErrNotFound, fmt.Sprintf("custom log record %s@%d not found", input.LogType, input.Revision)),
-		}, nil
+		return nil, NewAPIError(ErrNotFound, fmt.Sprintf("custom log record %s@%d not found", input.LogType, input.Revision))
 	}
 	return &GetCustomLogOutput{
 		Result: record,
@@ -82,17 +78,15 @@ func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInp
 	id := customlogs.LogType(input.LogType)
 	schema, err := buildSchema(id, &input.CustomLog)
 	if err != nil {
-		return &PutCustomLogOutput{
-			Error: WrapAPIError(err),
-		}, nil
+		return nil, err
 	}
 	currentRevision := input.Revision
 	if currentRevision == 0 {
 		result, err := api.Database.CreateCustomLog(ctx, id, &input.CustomLog)
-		return &PutCustomLogOutput{
-			Error:  WrapAPIError(err),
-			Result: result,
-		}, nil
+		if err != nil {
+			return nil, err
+		}
+		return &PutCustomLogOutput{Result: result}, nil
 	}
 	current, err := api.Database.GetCustomLog(ctx, id, 0)
 	if err != nil {
@@ -111,21 +105,16 @@ func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInp
 	}
 
 	if err := api.checkUpdate(currentSchema, schema); err != nil {
-		return &PutCustomLogOutput{
-			Error: NewAPIError(ErrInvalidUpdate, fmt.Sprintf("schema update is not backwards compatible: %s", err)),
-		}, nil
+		return nil, NewAPIError(ErrInvalidUpdate, fmt.Sprintf("schema update is not backwards compatible: %s", err))
 	}
 
 	result, err := api.Database.UpdateCustomLog(ctx, id, currentRevision, &input.CustomLog)
 	if err != nil {
-		return &PutCustomLogOutput{
-			Error: WrapAPIError(err),
-		}, nil
+		return nil, err
 	}
 	if err := api.DataCatalog.SendUpdateTableForLogType(ctx, id); err != nil {
-		return &PutCustomLogOutput{
-			Error: NewAPIError(ErrDatabaseUpdateFailed, fmt.Sprintf("could not queue event for database update: %s", err)),
-		}, nil
+		// The error will be shown to the user as a "ServerError"
+		return nil, errors.Wrapf(err, "could not queue event for %q database update", input.LogType)
 	}
 	return &PutCustomLogOutput{Result: result}, nil
 }
@@ -186,24 +175,18 @@ type PutCustomLogOutput struct {
 func (api *LogTypesAPI) DelCustomLog(ctx context.Context, input *DelCustomLogInput) (*DelCustomLogOutput, error) {
 	inUse, err := api.getLogTypesInUse()
 	if err != nil {
-		return &DelCustomLogOutput{
-			Error: WrapAPIError(err),
-		}, nil
+		return nil, err
 	}
 
 	for _, logType := range inUse {
 		if logType == input.LogType {
-			return &DelCustomLogOutput{
-				Error: NewAPIError(ErrInUse, fmt.Sprintf("log %s in use", input.LogType)),
-			}, nil
+			return nil, NewAPIError(ErrInUse, fmt.Sprintf("log %s in use", input.LogType))
 		}
 	}
 
 	id, rev := customlogs.LogType(input.LogType), input.Revision
 	if err := api.Database.DeleteCustomLog(ctx, id, rev); err != nil {
-		return &DelCustomLogOutput{
-			Error: WrapAPIError(err),
-		}, nil
+		return nil, err
 	}
 	return &DelCustomLogOutput{}, nil
 }
@@ -232,14 +215,10 @@ func (api *LogTypesAPI) ListCustomLogs(ctx context.Context) (*ListCustomLogsOutp
 	if len(custom) > 0 {
 		records, err = api.Database.BatchGetCustomLogs(ctx, custom...)
 		if err != nil {
-			return &ListCustomLogsOutput{
-				Error: WrapAPIError(err),
-			}, nil
+			return nil, err
 		}
 	}
-	return &ListCustomLogsOutput{
-		CustomLogs: records,
-	}, nil
+	return &ListCustomLogsOutput{CustomLogs: records}, nil
 }
 
 func (api *LogTypesAPI) getLogTypesInUse() ([]string, error) {

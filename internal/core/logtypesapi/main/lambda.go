@@ -19,12 +19,16 @@ package main
  */
 
 import (
+	"context"
+
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	lambdaclient "github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/kelseyhightower/envconfig"
+	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
@@ -79,6 +83,29 @@ func main() {
 		// use case-insensitive route matching
 		RouteName: lambdamux.IgnoreCase,
 		Validate:  validate.Struct,
+		// We want the API to return errors as something to display to the user.
+		// We decorate each route handler so that all errors are properly encapsulated as APIError and logged if needed
+		// Any APIErrors returned by the routes are not logged as these were properly handled by the API
+		// All errors are return as `{"error": {"code": "ERR_CODE", "message": "ERROR_MSG"}}` in the reply.
+		Decorate: func(name string, handler lambdamux.Handler) lambdamux.Handler {
+			return lambdamux.HandlerFunc(func(ctx context.Context, payload []byte) ([]byte, error) {
+				reply, err := handler.Invoke(ctx, payload)
+				if err != nil {
+					apiErr := logtypesapi.AsAPIError(err)
+					// If the error was not an APIError we log it.
+					if apiErr == nil {
+						// Add the route name as "action" field
+						lambdalogger.FromContext(ctx).Error("action failed", zap.String("action", name), zap.Error(err))
+						// We wrap it as APIError to be serialized
+						apiErr = logtypesapi.WrapAPIError(err)
+					}
+					return jsoniter.Marshal(logtypesapi.ErrorReply{
+						Error: apiErr,
+					})
+				}
+				return reply, nil
+			})
+		},
 	}
 
 	mux.MustHandleMethods(api)
