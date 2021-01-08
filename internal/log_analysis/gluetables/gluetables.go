@@ -109,6 +109,74 @@ func CreateOrUpdateGlueTables(glueClient glueiface.GlueAPI, bucket string,
 	}, nil
 }
 
+// CreateTablesIfNotExist creates all tables related to a log table in the glue catalog if they don't already exist.
+func CreateTablesIfNotExist(ctx context.Context, glueClient glueiface.GlueAPI, bucket string,
+	logTable *awsglue.GlueTableMetadata) (*TablesForLogType, error) {
+
+	// Create the log table
+	_, err := logTable.CreateTableIfNotExists(ctx, glueClient, bucket)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not create glue log table for %s.%s",
+			logTable.DatabaseName(), logTable.TableName())
+	}
+
+	// the corresponding rule table shares the same structure as the log table + some columns
+	ruleTable := logTable.RuleTable()
+	_, err = ruleTable.CreateTableIfNotExists(ctx, glueClient, bucket)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not create glue log table for %s.%s",
+			ruleTable.DatabaseName(), ruleTable.TableName())
+	}
+
+	// the corresponding rule errors table shares the same structure as the log table + some columns
+	ruleErrorTable := logTable.RuleErrorTable()
+	_, err = ruleErrorTable.CreateTableIfNotExists(ctx, glueClient, bucket)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not create glue log table for %s.%s",
+			ruleErrorTable.DatabaseName(), ruleErrorTable.TableName())
+	}
+
+	return &TablesForLogType{
+		LogTable:       logTable,
+		RuleTable:      ruleTable,
+		RuleErrorTable: ruleErrorTable,
+	}, nil
+}
+
+// UpdateTablesIfExist updates all tables related to this log table in the glue catalog if they already exist.
+func UpdateTablesIfExist(ctx context.Context, glueAPI glueiface.GlueAPI, bucket string,
+	logTable *awsglue.GlueTableMetadata) (*TablesForLogType, error) {
+
+	// Create the log table
+	_, err := logTable.UpdateTableIfExists(ctx, glueAPI, bucket)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not update Glue log table for %s.%s",
+			logTable.DatabaseName(), logTable.TableName())
+	}
+
+	// the corresponding rule table shares the same structure as the log table + some columns
+	ruleTable := logTable.RuleTable()
+	_, err = ruleTable.UpdateTableIfExists(ctx, glueAPI, bucket)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not update glue log table for %s.%s",
+			ruleTable.DatabaseName(), ruleTable.TableName())
+	}
+
+	// the corresponding rule errors table shares the same structure as the log table + some columns
+	ruleErrorTable := logTable.RuleErrorTable()
+	_, err = ruleErrorTable.UpdateTableIfExists(ctx, glueAPI, bucket)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not update glue log table for %s.%s",
+			ruleErrorTable.DatabaseName(), ruleErrorTable.TableName())
+	}
+
+	return &TablesForLogType{
+		LogTable:       logTable,
+		RuleTable:      ruleTable,
+		RuleErrorTable: ruleErrorTable,
+	}, nil
+}
+
 // ResolveTables is a helper to resolve all glue table metadata for all log types
 func ResolveTables(ctx context.Context, resolver logtypes.Resolver, logTypes ...string) ([]*awsglue.GlueTableMetadata, error) {
 	tables := make([]*awsglue.GlueTableMetadata, len(logTypes))
