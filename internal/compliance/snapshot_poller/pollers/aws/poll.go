@@ -248,7 +248,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		}
 	}
 
-        // If no region was specified, we need to re-queue one new scan request for each active region
+	// If no region was specified, we need to re-queue one new scan request for each active region
 	return multiRegionScan(pollerResourceInput, scanRequest)
 }
 
