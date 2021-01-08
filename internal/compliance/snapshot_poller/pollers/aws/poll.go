@@ -186,20 +186,14 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	}
 
 	// Options for filtering and blacklisting
-	var (
-		regexFilters, regionBlacklist, resourceTypeFilter []string
-		sourceEnabled                                     *bool
-	)
+	// Used to pass on these to downstream pollers
 	if sourceIntegration != nil {
-		regionBlacklist, resourceTypeFilter, regexFilters, sourceEnabled = sourceIntegration.RegionBlacklist,
-			sourceIntegration.ResourceTypeFilter, sourceIntegration.ResourceRegexFilters, sourceIntegration.SourceEnabled
-		// Used to pass on these to downstream pollers
-		pollerResourceInput.ResourceRegexFilters = regexFilters
-		pollerResourceInput.RegionBlacklist = regionBlacklist
+		pollerResourceInput.ResourceRegexFilters, pollerResourceInput.ResourceTypeFilter, pollerResourceInput.RegionBlacklist =
+			sourceIntegration.ResourceRegexFilters, sourceIntegration.ResourceTypeFilter, sourceIntegration.RegionBlacklist
 	}
 
 	// Check if integration is disabled
-	if sourceEnabled != nil && !*sourceEnabled {
+	if !aws.BoolValue(sourceIntegration.SourceEnabled) {
 		zap.L().Info("source integration disabled",
 			zap.String("integration id", *scanRequest.IntegrationID), zap.Time("timestamp", time.Now()))
 		return nil, nil
@@ -229,7 +223,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 			zap.String("region", *scanRequest.Region),
 			zap.String("resourceType", *scanRequest.ResourceType))
 		// Check if provided region is blacklisted
-		for _, region := range regionBlacklist {
+		for _, region := range pollerResourceInput.RegionBlacklist {
 			if region == *scanRequest.Region {
 				zap.L().Info("matched blacklisted region - skipping scan",
 					zap.String("region", region))
@@ -237,7 +231,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 			}
 		}
 		// Check if resource type is filtered
-		for _, resourceType := range resourceTypeFilter {
+		for _, resourceType := range pollerResourceInput.ResourceTypeFilter {
 			if resourceType == *scanRequest.ResourceType {
 				zap.L().Info("resource type filtered", zap.String("resource type", resourceType))
 				return nil, nil
