@@ -51,11 +51,11 @@ class Engine:
         raw_rule['versionId'] = 'default'
         rule = Rule(raw_rule)
         event = test_spec['data']
+        log_type = event.get('p_log_type', 'default')
 
         # enrich the event to have access to field by standard field name
         #  via the `udm` method
-        if 'p_log_type' in event and event['p_log_type'] in self.log_type_to_data_models:
-            event = PantherEvent(event, self.log_type_to_data_models[event['p_log_type']])
+        event = PantherEvent(event, self.log_type_to_data_models.get(log_type))
 
         rule_result = rule.run(event, batch_mode=False)
         format_exception = lambda exc: '{}: {}'.format(type(exc).__name__, exc) if exc else exc
@@ -104,11 +104,11 @@ class Engine:
 
         # enrich the event to have access to field by standard field name
         #  via the `udm` method
-        event = PantherEvent(event, self.log_type_to_data_models.get(log_type))
+        panther_event = PantherEvent(event, self.log_type_to_data_models.get(log_type))
 
         for rule in self.log_type_to_rules[log_type]:
             self.logger.debug("running rule [%s]", rule.rule_id)
-            result = rule.run(event, batch_mode=True)
+            result = rule.run(panther_event, batch_mode=True)
             if result.errored:
                 rule_error = EngineResult(
                     rule_id=rule.rule_id,

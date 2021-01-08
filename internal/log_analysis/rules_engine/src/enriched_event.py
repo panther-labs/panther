@@ -16,6 +16,7 @@
 
 from collections.abc import Mapping
 from typing import Any, Iterator, Optional
+from copy import deepcopy
 
 from .data_model import DataModel
 from .logging import get_logger
@@ -28,11 +29,11 @@ class PantherEvent(Mapping):
         """Create data model lookups
 
         Args:
-            event: Dictionary representing the event
+            event: Dictionary representing the event. PantherEvent will create a deep copy of the provided event
             data_model: the data model used for the LogType associated with this event
         """
         self.logger = get_logger()
-        self._data = event
+        self._data = deepcopy(event)
         self.data_model = data_model
 
     def __getitem__(self, key: str) -> Any:

@@ -125,9 +125,7 @@ class TestEngine(TestCase):
             'genericError': None,
             'errored': True,
             'ruleOutput': None,
-            'ruleError':
-                'AttributeError: The test specification for rules using the \'udm\' method' +
-                ' must specify the \'p_log_type\' field, and there must be an enabled DataModel for the log type.',
+            'ruleError': 'Exception: a data model hasn\'t been specified',
             'titleOutput': None,
             'titleError': None,
             'descriptionOutput': None,

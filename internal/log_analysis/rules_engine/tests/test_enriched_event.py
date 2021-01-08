@@ -41,6 +41,12 @@ class TestEnrichedEvent(TestCase):
         enriched_event = PantherEvent(event, data_model)
         self.assertEqual(enriched_event.udm('missing_key'), None)
 
+    def test_deep_copy(self) -> None:
+        event = {'key': {'nested_key': 'value'}}
+        enriched_event = PantherEvent(event, event)
+        enriched_event['key']['nested_key'] = 'new_value'
+        self.assertEqual(event, {'key': {'nested_key': 'value'}})
+
     def test_udm_method(self) -> None:
         event = {'dst_ip': '1.1.1.1', 'dst_port': '2222'}
         data_model = DataModel(
