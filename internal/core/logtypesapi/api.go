@@ -22,10 +22,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 )
 
 const LambdaName = "panther-logtypes-api"
@@ -39,10 +38,10 @@ const LambdaName = "panther-logtypes-api"
 
 // LogTypesAPI handles the business logic of log types LogTypesAPI
 type LogTypesAPI struct {
-	NativeLogTypes func() []string
-	Database       LogTypesDatabase
-	LambdaClient   lambdaiface.LambdaAPI
-	DataCatalog    datacatalog.Client
+	NativeLogTypes    func() []string
+	Database          LogTypesDatabase
+	UpdateDataCatalog func(ctx context.Context, logType string, from, to []logschema.FieldSchema) error
+	LogTypeInUse      func(ctx context.Context) ([]string, error)
 }
 
 // LogTypesDatabase handles the external actions required for LogTypesAPI to be implemented
