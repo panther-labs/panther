@@ -20,19 +20,9 @@ from ..src.immutable import ImmutableDict, ImmutableList
 
 
 class TestImmutableDict(TestCase):
+
     def setUp(self) -> None:
-        self.initial_dict = {
-            't': 10,
-            'a': [{
-                'b': 1,
-                'c': 2
-            }],
-            'd': {
-                'e': {
-                    'f': True
-                }
-            }
-        }
+        self.initial_dict = {'t': 10, 'a': [{'b': 1, 'c': 2}], 'd': {'e': {'f': True}}}
         self.immutable_dict = ImmutableDict(self.initial_dict)
 
     def test_assignment_not_allowed(self) -> None:
@@ -57,6 +47,7 @@ class TestImmutableDict(TestCase):
 
 
 class TestImmutableList(TestCase):
+
     def setUp(self) -> None:
         self.initial_list = ['a', 'b', 'c']
         self.immutable_list = ImmutableList(self.initial_list)
