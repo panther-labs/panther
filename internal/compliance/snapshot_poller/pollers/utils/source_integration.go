@@ -32,7 +32,10 @@ import (
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
-const sourceAPIFunctionName = "panther-source-api"
+const (
+	sourceAPIFunctionName   = "panther-source-api"
+	integrationCacheTimeout = -1 * time.Minute
+)
 
 // Cached source integration
 type cachedIntegration struct {
@@ -51,7 +54,7 @@ var (
 func GetIntegration(integrationID string) (integration *models.SourceIntegration, err error) {
 	// Return the cached short-lived integration
 	if cachedIntegration, exists := integrationCache[integrationID]; exists {
-		if time.Now().Add(-1 * time.Minute).Before(cachedIntegration.Timestamp) {
+		if time.Now().Add(integrationCacheTimeout).Before(cachedIntegration.Timestamp) {
 			zap.L().Debug("integration was cached", zap.Any("integration id", integrationID))
 			return &cachedIntegration.sourceIntegration, nil
 		}
