@@ -180,7 +180,9 @@ class TestMainDirectAnalysis(TestCase):
             }],
             'events': [{
                 'id': 'event_id',
-                'data': {'key': 'value'}
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
         expected_response = {
@@ -256,7 +258,9 @@ class TestMainDirectAnalysis(TestCase):
             }],
             'events': [{
                 'id': 'event_id',
-                'data': {'key': 'value'}
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
         expected_response = {
@@ -299,7 +303,9 @@ class TestMainDirectAnalysis(TestCase):
             }],
             'events': [{
                 'id': 'event_id',
-                'data': {'key': 'value'}
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
 
@@ -346,7 +352,9 @@ class TestMainDirectAnalysis(TestCase):
                 ],
             'events': [{
                 'id': 'event_id',
-                'data': {'key': 'value'}
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
 
@@ -391,7 +399,9 @@ class TestMainDirectAnalysis(TestCase):
                 }],
             'events': [{
                 'id': 'event_id',
-                'data': {'key': 'value'}
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
 
@@ -436,7 +446,9 @@ class TestMainDirectAnalysis(TestCase):
                 }],
             'events': [{
                 'id': 'event_id',
-                'data': {'key': 'value'}
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
 
@@ -482,7 +494,9 @@ class TestMainDirectAnalysis(TestCase):
             ],
             'events': [{
                 'id': 'event_id',
-                'data': {'key': 'value'}
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
 
@@ -529,7 +543,9 @@ class TestMainDirectAnalysis(TestCase):
                 ],
             'events': [{
                 'id': 'event_id',
-                'data': {'key': 'value'}
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
 
