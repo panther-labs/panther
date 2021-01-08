@@ -122,7 +122,11 @@ func (c *CachedResolver) Resolve(ctx context.Context, name string) (Entry, error
 	if err != nil {
 		return nil, err
 	}
-	return reply.(Entry), nil
+	if entry, ok := reply.(Entry); ok {
+		return entry, nil
+
+	}
+	return nil, nil
 }
 
 func (c *CachedResolver) find(name string) *cachedEntry {
