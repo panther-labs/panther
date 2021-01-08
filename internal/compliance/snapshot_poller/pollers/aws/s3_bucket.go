@@ -66,10 +66,10 @@ func PollS3Bucket(
 		return nil, err
 	}
 	// Check if ResourceID matches the integration's regex filter
-	matched, err := utils.MatchRegexFilter(pollerResourceInput.ARNRegexFilter, resourceARN.Resource)
+	matched, err := utils.MatchRegexFilter(pollerResourceInput.ResourceRegexFilters, resourceARN.Resource)
 	if matched {
 		zap.L().Info("resource filtered based on filter regex",
-			zap.String("regex filter", *pollerResourceInput.ARNRegexFilter), zap.String("resource atn", resourceARN.Resource))
+			zap.Strings("regex filter", pollerResourceInput.ResourceRegexFilters), zap.String("resource atn", resourceARN.Resource))
 		return nil, nil
 	}
 	if err != nil {
@@ -366,10 +366,10 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddR
 			continue
 		}
 		// Check if ResourceID matches the integration's regex filter
-		matched, err := utils.MatchRegexFilter(pollerInput.ARNRegexFilter, *bucket.Name)
+		matched, err := utils.MatchRegexFilter(pollerInput.ResourceRegexFilters, *bucket.Name)
 		if matched {
 			zap.L().Info("resource filtered based on filter regex",
-				zap.String("regex filter", *pollerInput.ARNRegexFilter), zap.Any("bucket", bucket))
+				zap.Strings("regex filter", pollerInput.ResourceRegexFilters), zap.Any("bucket", bucket))
 			continue
 		}
 		if err != nil {

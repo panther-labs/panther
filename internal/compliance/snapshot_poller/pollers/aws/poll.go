@@ -186,15 +186,14 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 
 	// Options for filtering and blacklisting
 	var (
-		regionBlacklist, resourceTypeFilter []string
-		regexFilter                         *string
-		sourceEnabled                       *bool
+		regexFilters, regionBlacklist, resourceTypeFilter []string
+		sourceEnabled                                     *bool
 	)
 	if sourceIntegration != nil {
-		regionBlacklist, resourceTypeFilter, regexFilter, sourceEnabled = sourceIntegration.RegionBlacklist,
-			sourceIntegration.ResourceTypeFilter, aws.String(sourceIntegration.ARNRegexFilter), sourceIntegration.SourceEnabled
+		regionBlacklist, resourceTypeFilter, regexFilters, sourceEnabled = sourceIntegration.RegionBlacklist,
+			sourceIntegration.ResourceTypeFilter, sourceIntegration.ResourceRegexFilters, sourceIntegration.SourceEnabled
 		// Used to pass on these to downstream pollers
-		pollerResourceInput.ARNRegexFilter = regexFilter
+		pollerResourceInput.ResourceRegexFilters = regexFilters
 		pollerResourceInput.RegionBlacklist = regionBlacklist
 	}
 
@@ -381,10 +380,10 @@ func singleResourceScan(
 			return nil, nil
 		}
 		// Check if ResourceID matches the integration's regex filter
-		matched, matchErr := utils.MatchRegexFilter(pollerInput.ARNRegexFilter, *scanRequest.ResourceID)
+		matched, matchErr := utils.MatchRegexFilter(pollerInput.ResourceRegexFilters, *scanRequest.ResourceID)
 		if matched {
 			zap.L().Info("resource filtered based on filter regex",
-				zap.String("regex filter", *pollerInput.ARNRegexFilter), zap.String("resource id", *scanRequest.ResourceID))
+				zap.Strings("regex filter", pollerInput.ResourceRegexFilters), zap.String("resource id", *scanRequest.ResourceID))
 			return nil, nil
 		}
 		if matchErr != nil {

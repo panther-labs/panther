@@ -104,10 +104,10 @@ func PollPasswordPolicy(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels
 	)
 
 	// Check if ResourceID matches the integration's regex filter
-	matched, err := utils.MatchRegexFilter(pollerInput.ARNRegexFilter, resourceID)
+	matched, err := utils.MatchRegexFilter(pollerInput.ResourceRegexFilters, resourceID)
 	if matched {
 		zap.L().Info("resource filtered based on filter regex",
-			zap.String("regex filter", *pollerInput.ARNRegexFilter), zap.String("resource id", resourceID))
+			zap.Strings("regex filter", pollerInput.ResourceRegexFilters), zap.String("resource id", resourceID))
 		return nil, nil, nil
 	}
 	if err != nil {

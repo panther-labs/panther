@@ -85,20 +85,22 @@ func GetIntegration(integrationID string) (integration *models.SourceIntegration
 	return result, nil
 }
 
-func MatchRegexFilter(regexFilter *string, resourceARN string) (matched bool, err error) {
-	if regexFilter == nil || *regexFilter == "" {
-		return false, nil
-	}
-	regexFilterCompiled, err := regexp.Compile(*regexFilter)
-	if err != nil {
-		zap.L().Error("failed to compile regex filter", zap.Error(err),
-			zap.String("filter regex", *regexFilter))
-		return false, err
-	}
-	if regexFilterCompiled.MatchString(resourceARN) {
-		zap.L().Info("regex filter matched - skipping single resource scan",
-			zap.String("regex filter", *regexFilter), zap.String("resource id", resourceARN))
-		return true, nil
+func MatchRegexFilter(regexFilter []string, resourceARN string) (matched bool, err error) {
+	for _, filter := range regexFilter {
+		if filter == "" {
+			continue
+		}
+		regexFilterCompiled, err := regexp.Compile(filter)
+		if err != nil {
+			zap.L().Error("failed to compile regex filter", zap.Error(err),
+				zap.Any("filter regex", filter))
+			return false, err
+		}
+		if regexFilterCompiled.MatchString(resourceARN) {
+			zap.L().Info("regex filter matched - skipping single resource scan",
+				zap.Any("regex filter", filter), zap.Any("resource id", resourceARN))
+			return true, nil
+		}
 	}
 	return false, nil
 }

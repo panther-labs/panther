@@ -107,7 +107,7 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 		integration.SourceEnabled = item.SourceEnabled
 		integration.RegionBlacklist = item.RegionBlacklist
 		integration.ResourceTypeFilter = item.ResourceTypeFilter
-		integration.ARNRegexFilter = item.ARNRegexFilter
+		integration.ResourceRegexFilters = item.ResourceRegexFilters
 	case models.IntegrationTypeSqs:
 		integration.SqsConfig = &models.SqsConfig{
 			S3Bucket:             item.SqsConfig.S3Bucket,

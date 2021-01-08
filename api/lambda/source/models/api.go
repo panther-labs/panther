@@ -74,20 +74,20 @@ type PutIntegrationInput struct {
 
 // PutIntegrationSettings are all the settings for the new integration.
 type PutIntegrationSettings struct {
-	IntegrationLabel   string           `json:"integrationLabel" validate:"required,integrationLabel,excludesall='<>&\""`
-	IntegrationType    string           `json:"integrationType" validate:"oneof=aws-scan aws-s3 aws-sqs"`
-	UserID             string           `json:"userId" validate:"required,uuid4"`
-	AWSAccountID       string           `genericapi:"redact" json:"awsAccountId" validate:"omitempty,len=12,numeric"`
-	CWEEnabled         *bool            `json:"cweEnabled"`
-	RemediationEnabled *bool            `json:"remediationEnabled"`
-	ScanIntervalMins   int              `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
-	S3Bucket           string           `json:"s3Bucket"`
-	S3PrefixLogTypes   S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
-	SourceEnabled      *bool            `json:"sourceEnabled" validate:"omitempty"`
-	RegionBlacklist    []string         `json:"regionBlacklist" validate:"omitempty"`
-	ResourceTypeFilter []string         `json:"resourceTypeFilter" validate:"omitempty"`
-	ARNRegexFilter     string           `json:"arnRegexFilter" validate:"omitempty"`
-	KmsKey             string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
+	IntegrationLabel     string           `json:"integrationLabel" validate:"required,integrationLabel,excludesall='<>&\""`
+	IntegrationType      string           `json:"integrationType" validate:"oneof=aws-scan aws-s3 aws-sqs"`
+	UserID               string           `json:"userId" validate:"required,uuid4"`
+	AWSAccountID         string           `genericapi:"redact" json:"awsAccountId" validate:"omitempty,len=12,numeric"`
+	CWEEnabled           *bool            `json:"cweEnabled"`
+	RemediationEnabled   *bool            `json:"remediationEnabled"`
+	ScanIntervalMins     int              `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
+	S3Bucket             string           `json:"s3Bucket"`
+	S3PrefixLogTypes     S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
+	SourceEnabled        *bool            `json:"sourceEnabled" validate:"omitempty"`
+	RegionBlacklist      []string         `json:"regionBlacklist" validate:"omitempty"`
+	ResourceTypeFilter   []string         `json:"resourceTypeFilter" validate:"omitempty"`
+	ResourceRegexFilters []string         `json:"resourceRegexFilters" validate:"omitempty"`
+	KmsKey               string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }
@@ -103,18 +103,18 @@ type ListIntegrationsInput struct {
 
 // UpdateIntegrationSettingsInput is used to update integration settings.
 type UpdateIntegrationSettingsInput struct {
-	IntegrationID      string           `json:"integrationId" validate:"required,uuid4"`
-	IntegrationLabel   string           `json:"integrationLabel" validate:"required,integrationLabel,excludesall='<>&\""`
-	CWEEnabled         *bool            `json:"cweEnabled"`
-	RemediationEnabled *bool            `json:"remediationEnabled"`
-	ScanIntervalMins   int              `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
-	S3Bucket           string           `json:"s3Bucket" validate:"omitempty,min=1"`
-	S3PrefixLogTypes   S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
-	SourceEnabled      *bool            `json:"sourceEnabled" validate:"omitempty"`
-	RegionBlacklist    []string         `json:"regionBlacklist" validate:"omitempty"`
-	ResourceTypeFilter []string         `json:"resourceTypeFilter" validate:"omitempty"`
-	ARNRegexFilter     string           `json:"arnRegexFilter" validate:"omitempty"`
-	KmsKey             string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
+	IntegrationID        string           `json:"integrationId" validate:"required,uuid4"`
+	IntegrationLabel     string           `json:"integrationLabel" validate:"required,integrationLabel,excludesall='<>&\""`
+	CWEEnabled           *bool            `json:"cweEnabled"`
+	RemediationEnabled   *bool            `json:"remediationEnabled"`
+	ScanIntervalMins     int              `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
+	S3Bucket             string           `json:"s3Bucket" validate:"omitempty,min=1"`
+	S3PrefixLogTypes     S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
+	SourceEnabled        *bool            `json:"sourceEnabled" validate:"omitempty"`
+	RegionBlacklist      []string         `json:"regionBlacklist" validate:"omitempty"`
+	ResourceTypeFilter   []string         `json:"resourceTypeFilter" validate:"omitempty"`
+	ResourceRegexFilters string           `json:"resourceRegexFilters" validate:"omitempty"`
+	KmsKey               string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }
