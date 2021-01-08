@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'pouncejs';
+import { Flex, Link, Badge } from 'pouncejs';
 import { DataModel } from 'Generated/schema';
 import GenericItemCard from 'Components/GenericItemCard';
 import { Link as RRLink } from 'react-router-dom';
@@ -32,6 +32,11 @@ const DataModelCard: React.FC<DataModelCardProps> = ({ dataModel }) => {
             label="Log Type"
             value={<BulletedValue value={dataModel.logTypes[0]} />}
           />
+          <Flex ml="auto" mr={0} align="flex-end" spacing={4}>
+            <Badge color={dataModel.enabled ? 'cyan-400' : 'navyblue-300'}>
+              {dataModel.enabled ? 'ENABLED' : 'DISABLED'}
+            </Badge>
+          </Flex>
         </GenericItemCard.ValuesGroup>
       </GenericItemCard.Body>
     </GenericItemCard>

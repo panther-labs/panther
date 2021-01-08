@@ -42,8 +42,8 @@ const ListDataModels = () => {
       <Panel
         title="Data Models"
         actions={
-          <LinkButton to={urls.logAnalysis.sources.create()} icon="add">
-            Add Source
+          <LinkButton to={urls.logAnalysis.dataModels.create()} icon="add">
+            Add new
           </LinkButton>
         }
       >
@@ -61,7 +61,7 @@ const ListDataModels = () => {
           )}
           {dataModels &&
             (dataModels.length > 0 ? (
-              <Flex direction="column" spacing={4}>
+              <Flex direction="column" spacing={2}>
                 {dataModels.map(dataModel => (
                   <DataModelCard key={dataModel.id} dataModel={dataModel} />
                 ))}
