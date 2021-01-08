@@ -65,6 +65,12 @@ const LogAnalysisNavigation: React.FC = () => {
           to={urls.logAnalysis.customLogs.list()}
           label="Custom Schemas"
         />
+        <NavLink
+          isSecondary
+          icon="source-code"
+          to={urls.logAnalysis.dataModels.list()}
+          label="Data Models"
+        />
       </FadeInTrail>
     </Flex>
   );
