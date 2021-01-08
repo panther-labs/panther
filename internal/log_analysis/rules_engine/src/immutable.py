@@ -60,8 +60,7 @@ class ImmutableContainerMixin(ABC):
         if isinstance(value, self._registered_types):
             for mutable_type, immutable_type in self._registered_conversions:
                 if isinstance(value, mutable_type):
-                    value = immutable_type(value,
-                                           **self.extra_constructor_arguments())
+                    value = immutable_type(value, **self.extra_constructor_arguments())
         return value
 
     def __repr__(self) -> str:

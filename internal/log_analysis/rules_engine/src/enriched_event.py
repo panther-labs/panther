@@ -21,7 +21,7 @@ from .data_model import DataModel
 from .immutable import ImmutableDict
 
 
-class PantherEvent(ImmutableDict): # pylint: disable=R0901
+class PantherEvent(ImmutableDict):  # pylint: disable=R0901
     """Panther enriched event with unified data model (udm) access."""
 
     def __init__(self, event: Mapping, data_model: Optional[DataModel]):
