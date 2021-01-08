@@ -144,6 +144,14 @@ type cachedClient struct {
 	Credentials *credentials.Credentials
 }
 
+type RegionDenylistError struct {
+	Err error
+}
+
+func (r *RegionDenylistError) Error() string {
+	return r.Err.Error()
+}
+
 func Setup() {
 	awsSession := session.Must(session.NewSession()) // use default retries for fetching creds, avoids hangs!
 	SnapshotPollerSession = awsSession.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
@@ -226,12 +234,12 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput,
 	clientFunc func(session *session.Session, config *aws.Config) interface{},
 	service string, region string) (interface{}, error) {
 
-	// Check if provided region is blacklisted
-	for _, blacklistedRegion := range pollerInput.RegionDenylist {
-		if region == blacklistedRegion {
-			zap.L().Info("matched blacklisted region - skipping scan",
-				zap.String("region", region))
-			return nil, nil
+	// Check if provided region is in the denylist
+	for _, deniedRegion := range pollerInput.RegionDenylist {
+		if region == deniedRegion {
+			return nil, &RegionDenylistError{
+				Err: errors.New("requested region was in region denylist"),
+			}
 		}
 	}
 

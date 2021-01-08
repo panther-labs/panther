@@ -153,7 +153,7 @@ func buildConfigServiceSnapshot(
 	}
 	// Check if ResourceID matches the integration's regex filter
 	if pollerInput != nil {
-		matched, err := utils.MatchRegexBlacklist(pollerInput.ResourceRegexDenylist, *recorder.Name)
+		matched, err := utils.MatchRegexDenylist(pollerInput.ResourceRegexDenylist, *recorder.Name)
 		if err != nil {
 			return nil, err
 		}

@@ -185,7 +185,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		zap.L().Warn("failed to retrieve integration from source api")
 	}
 
-	// Options for filtering and blacklisting
+	// Options for filtering and denylists
 	// Used to pass on these to downstream pollers
 	if sourceIntegration != nil {
 		pollerResourceInput.ResourceRegexDenylist, pollerResourceInput.ResourceTypeDenylist, pollerResourceInput.RegionDenylist =
@@ -229,10 +229,10 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		zap.L().Info("processing single region service scan",
 			zap.String("region", *scanRequest.Region),
 			zap.String("resourceType", *scanRequest.ResourceType))
-		// Check if provided region is blacklisted
+		// Check if provided region is in denylist
 		for _, region := range pollerResourceInput.RegionDenylist {
 			if region == *scanRequest.Region {
-				zap.L().Info("matched blacklisted region - skipping scan",
+				zap.L().Info("matched denylist region - skipping scan",
 					zap.String("region", region))
 				return nil, nil
 			}
@@ -271,7 +271,7 @@ func multiRegionScan(
 		zap.Any("regions", regions),
 		zap.String("resourceType", *scanRequest.ResourceType),
 	)
-	// For simplicity, region blacklisting is not checked here
+	// For simplicity, region denylist is not checked here
 	for _, region := range regions {
 		err = utils.Requeue(pollermodels.ScanMsg{
 			Entries: []*pollermodels.ScanEntry{
@@ -367,7 +367,7 @@ func singleResourceScan(
 			return nil, nil
 		}
 		// Check if ResourceID matches the integration's regex filter
-		matched, matchErr := utils.MatchRegexBlacklist(pollerInput.ResourceRegexDenylist, *scanRequest.ResourceID)
+		matched, matchErr := utils.MatchRegexDenylist(pollerInput.ResourceRegexDenylist, *scanRequest.ResourceID)
 		if matchErr != nil {
 			return nil, matchErr
 		}
@@ -382,6 +382,11 @@ func singleResourceScan(
 	}
 
 	if err != nil {
+		// Check for region denylist error
+		if err == err.(*RegionDenylistError) {
+			zap.L().Info("Skipping denied region in single resource scan")
+			return nil, nil
+		}
 		// Check for rate limit errors. We don't want to blindly retry rate limit errors as this will
 		// cause more rate limit errors, so we re-schedule one new scan several minutes in the future
 		// and suppress all other scans for this resource until that time.

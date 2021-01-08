@@ -89,7 +89,7 @@ func GetIntegration(integrationID string) (integration *models.SourceIntegration
 	return result, nil
 }
 
-func MatchRegexBlacklist(globs []string, resourceARN string) (matched bool, err error) {
+func MatchRegexDenylist(globs []string, resourceARN string) (matched bool, err error) {
 	for _, glob := range globs {
 		if glob == "" {
 			continue
