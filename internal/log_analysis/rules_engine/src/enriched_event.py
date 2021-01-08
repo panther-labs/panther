@@ -46,7 +46,7 @@ class PantherEvent(ImmutableDict):
             # we are dealing with a jsonpath
             json_path = self.data_model.paths.get(key)
             if json_path:
-                matches = json_path.find(self)
+                matches = json_path.find(self._container)
                 if len(matches) == 1:
                     return matches[0].value
                 if len(matches) > 1:
