@@ -32,7 +32,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/internal/core/logtypesapi/ddbextras"
+	"github.com/panther-labs/panther/internal/core/logtypesapi/transact"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/customlogs"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 )
@@ -63,7 +63,7 @@ func (d *DynamoDBLogTypes) IndexLogTypes(ctx context.Context) ([]string, error) 
 	input := dynamodb.GetItemInput{
 		TableName:            aws.String(d.TableName),
 		ProjectionExpression: aws.String(attrAvailableLogTypes),
-		Key:                  ddbextras.MustMarshalMap(statusRecordKey()),
+		Key:                  mustMarshalMap(statusRecordKey()),
 	}
 
 	output, err := d.DB.GetItemWithContext(ctx, &input)
@@ -86,7 +86,7 @@ func (d *DynamoDBLogTypes) IndexLogTypes(ctx context.Context) ([]string, error) 
 func (d *DynamoDBLogTypes) GetCustomLog(ctx context.Context, id string, revision int64) (*CustomLogRecord, error) {
 	input := dynamodb.GetItemInput{
 		TableName: aws.String(d.TableName),
-		Key:       customRecordKey(id, revision),
+		Key:       mustMarshalMap(customRecordKey(id, revision)),
 	}
 	output, err := d.DB.GetItemWithContext(ctx, &input)
 	if err != nil {
@@ -113,7 +113,7 @@ func (d *DynamoDBLogTypes) BatchGetCustomLogs(ctx context.Context, ids ...string
 	for _, ids := range chunkStrings(ids, maxItems) {
 		keys := make([]map[string]*dynamodb.AttributeValue, len(ids))
 		for i := range keys {
-			keys[i] = customRecordKey(ids[i], 0)
+			keys[i] = mustMarshalMap(customRecordKey(ids[i], 0))
 		}
 		input := dynamodb.BatchGetItemInput{
 			RequestItems: map[string]*dynamodb.KeysAndAttributes{
@@ -143,21 +143,18 @@ func (d *DynamoDBLogTypes) BatchGetCustomLogs(ctx context.Context, ids ...string
 
 func (d *DynamoDBLogTypes) DeleteCustomLog(ctx context.Context, id string, revision int64) error {
 	tx := buildDeleteRecordTx(d.TableName, id, revision)
-	input, err := tx.Input()
+	input, err := tx.Build()
 	if err != nil {
 		return errors.WithMessage(err, "failed to build delete transaction")
 	}
 
 	if _, err := d.DB.TransactWriteItemsWithContext(ctx, input); err != nil {
-		if err := tx.Check(err); err != nil {
-			return err
-		}
-		return errors.Wrap(err, "delete transaction failed")
+		return errors.Wrap(tx.ExplainTransactionError(err), "delete transaction failed")
 	}
 	return nil
 }
 
-func buildDeleteRecordTx(tbl, id string, rev int64) *ddbextras.WriteTransaction {
+func buildDeleteRecordTx(tbl, id string, rev int64) transact.Transaction {
 	headRecordID := customRecordID(id, 0)
 	key := &recordKey{
 		RecordID:   headRecordID,
@@ -166,36 +163,36 @@ func buildDeleteRecordTx(tbl, id string, rev int64) *ddbextras.WriteTransaction 
 	ifRevEquals := expression.Name(attrRevision).Equal(expression.Value(rev))
 	ifNotDeleted := expression.Name(attrDeleted).NotEqual(expression.Value(true))
 	cancel := func(r *dynamodb.CancellationReason) error {
-		if ddbextras.IsConditionalCheckFailed(r) {
+		if transact.IsConditionalCheckFailed(r) {
 			rec := customLogRecord{}
 			if e := dynamodbattribute.UnmarshalMap(r.Item, &rec); e != nil {
 				return e
 			}
 			if rec.Deleted {
-				return NewAPIError(ErrRevisionConflict, fmt.Sprintf("record %q was updated", headRecordID))
+				return NewAPIError(ErrNotFound, fmt.Sprintf("record %q already deleted", headRecordID))
 			}
-			return NewAPIError(ErrNotFound, fmt.Sprintf("record %q already deleted", headRecordID))
+			return NewAPIError(ErrRevisionConflict, fmt.Sprintf("record %q was updated", headRecordID))
 		}
 		return nil
 	}
-	return &ddbextras.WriteTransaction{
+	return transact.Transaction{
 		// Mark the head record as deleted
-		&ddbextras.Update{
+		&transact.Update{
 			TableName: tbl,
 			Key:       key,
 			Set: map[string]interface{}{
 				attrDeleted: true,
 			},
-			Condition:    expression.And(ifRevEquals, ifNotDeleted),
-			ReturnValues: dynamodb.ReturnValueAllOld,
-			Cancel:       cancel,
+			Condition:                           expression.And(ifRevEquals, ifNotDeleted),
+			ReturnValuesOnConditionCheckFailure: dynamodb.ReturnValueAllOld,
+			Cancel:                              cancel,
 		},
 		// Remove the log type from the index of available log types
-		&ddbextras.Update{
+		&transact.Update{
 			TableName: tbl,
 			Key:       statusRecordKey(),
 			Delete: map[string]interface{}{
-				attrAvailableLogTypes: ddbextras.StringSet(id),
+				attrAvailableLogTypes: newStringSet(id),
 			},
 		},
 	}
@@ -210,76 +207,61 @@ func (d *DynamoDBLogTypes) CreateCustomLog(ctx context.Context, id string, param
 		UpdatedAt: now,
 	}
 	tx := buildCreateRecordTx(d.TableName, result)
-	input, err := tx.Input()
+	input, err := tx.Build()
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to prepare create transaction")
 	}
 	if _, err := d.DB.TransactWriteItemsWithContext(ctx, input); err != nil {
-		if err := tx.Check(err); err != nil {
-			return nil, err
-		}
-		return nil, errors.WithMessage(err, "create transaction failed")
+		return nil, errors.Wrap(tx.ExplainTransactionError(err), "create transaction failed")
 	}
 	return &result, nil
 }
 
-func buildCreateRecordTx(tbl string, record CustomLogRecord) *ddbextras.WriteTransaction {
-	// Record id for the 'head' record is special (has no rev suffix)
-	headRecordID := customRecordID(record.LogType, 0)
-	headRecord := &customLogRecord{
-		recordKey: recordKey{
-			RecordID:   headRecordID,
-			RecordKind: recordKindCustom,
-		},
-		CustomLogRecord: record,
-	}
-	revRecordID := customRecordID(record.LogType, 1)
-	revRecord := &customLogRecord{
-		recordKey: recordKey{
-			RecordID:   revRecordID,
-			RecordKind: recordKindCustom,
-		},
-		CustomLogRecord: record,
-	}
-
-	// Check that there's no record with this id
-	ifNotExists := expression.AttributeNotExists(expression.Name(attrRecordKind))
-	// The error conditions are the same for both PUT operations
-	cancel := func(r *dynamodb.CancellationReason) error {
-		if ddbextras.IsConditionalCheckFailed(r) {
-			rec := customLogRecord{}
-			if e := dynamodbattribute.UnmarshalMap(r.Item, &rec); e != nil {
-				return e
-			}
-			if rec.Deleted {
-				return NewAPIError(ErrAlreadyExists, fmt.Sprintf("log record %q used to exist and it is reserved", headRecordID))
-			}
-			return NewAPIError(ErrAlreadyExists, fmt.Sprintf("record %q already exists", headRecordID))
-		}
-		return nil
-	}
-
-	return &ddbextras.WriteTransaction{
+func buildCreateRecordTx(tbl string, record CustomLogRecord) transact.Transaction {
+	return transact.Transaction{
 		// Insert the 'head' record that tracks the latest revision
-		&ddbextras.Put{
+		&transact.Put{
 			TableName: tbl,
-			Condition: ifNotExists,
-			Item:      headRecord,
-			// We return the values so that we can differentiate between deleted and existing records
-			ReturnValues: dynamodb.ReturnValueAllOld,
-			Cancel:       cancel,
+			Item: &customLogRecord{
+				recordKey:       customRecordKey(record.LogType, 0),
+				CustomLogRecord: record,
+			},
+			// Check that there's no record with this id
+			Condition: expression.AttributeNotExists(expression.Name(attrRecordKind)),
+			// To check the exact reason of failure we need the values in the record
+			ReturnValues: true,
+			// If the condition fails, it means that either
+			// - the record already exists
+			// - or that it used to exist but was deleted (we do not allow reusing names)
+			Cancel: func(r *dynamodb.CancellationReason) error {
+				if transact.IsConditionalCheckFailed(r) {
+					rec := customLogRecord{}
+					if e := dynamodbattribute.UnmarshalMap(r.Item, &rec); e != nil {
+						return e
+					}
+					if rec.Deleted {
+						return NewAPIError(ErrAlreadyExists, fmt.Sprintf("log record %q used to exist and it is reserved", rec.RecordID))
+					}
+					if rec.Revision != 0 {
+						return NewAPIError(ErrAlreadyExists, fmt.Sprintf("record %q already exists", rec.RecordID))
+					}
+				}
+				return nil
+			},
 		},
 		// Insert a new record for the first revision
-		&ddbextras.Put{
-			TableName:    tbl,
-			Item:         revRecord,
-			ReturnValues: dynamodb.ReturnValueAllOld,
+		&transact.Put{
+			TableName: tbl,
+			Item: &customLogRecord{
+				recordKey:       customRecordKey(record.LogType, 1),
+				CustomLogRecord: record,
+			},
 		},
 		// Add the id to available log types index
-		&ddbextras.Update{
+		&transact.Update{
 			TableName: tbl,
 			Add: map[string]interface{}{
-				attrAvailableLogTypes: ddbextras.StringSet(record.LogType),
+				attrAvailableLogTypes: newStringSet(record.LogType),
 			},
 			Key: statusRecordKey(),
 		},
@@ -295,77 +277,65 @@ func (d *DynamoDBLogTypes) UpdateCustomLog(ctx context.Context, id string, revis
 		UpdatedAt: now,
 	}
 	tx := buildUpdateTx(d.TableName, record)
-	input, err := tx.Input()
+	input, err := tx.Build()
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to build update transaction")
 	}
 	if _, err := d.DB.TransactWriteItemsWithContext(ctx, input); err != nil {
-		if err := tx.Check(err); err != nil {
-			return nil, err
-		}
-		// We don't know what kind of error this is
-		return nil, err
+		return nil, errors.Wrap(tx.ExplainTransactionError(err), "update transaction failed")
 	}
 	return &record, nil
 }
 
-func buildUpdateTx(tbl string, record CustomLogRecord) *ddbextras.WriteTransaction {
-	headRecordID := customRecordID(record.LogType, 0)
-	headItemKey := &recordKey{
-		RecordID:   headRecordID,
-		RecordKind: recordKindCustom,
-	}
-	revRecordID := customRecordID(record.LogType, record.Revision)
-	itemAtRevision := &customLogRecord{
-		recordKey: recordKey{
-			RecordID:   revRecordID,
-			RecordKind: recordKindCustom,
-		},
-		CustomLogRecord: record,
-	}
+func buildUpdateTx(tableName string, record CustomLogRecord) transact.Transaction {
 	currentRevision := record.Revision - 1
-	// Check that the current revision is the previous one
-	ifRevEquals := expression.Name(attrRevision).Equal(expression.Value(currentRevision))
-	// Check that the record is not deleted
-	ifNotDeleted := expression.Name(attrDeleted).NotEqual(expression.Value(true))
-
-	// handle transaction errors here
-	cancel := func(r *dynamodb.CancellationReason) error {
-		if !ddbextras.IsConditionalCheckFailed(r) {
-			return nil
-		}
-		rec := customLogRecord{}
-		if e := dynamodbattribute.UnmarshalMap(r.Item, &rec); e != nil {
-			return e
-		}
-		if rec.Revision != currentRevision {
-			return NewAPIError(ErrRevisionConflict, fmt.Sprintf("log record %q is at revision %d", rec.RecordID, rec.Revision))
-		}
-		if rec.Deleted {
-			return NewAPIError(ErrNotFound, fmt.Sprintf("log record %q was deleted", rec.RecordID))
-		}
-		return nil
-	}
-	return &ddbextras.WriteTransaction{
+	return transact.Transaction{
 		// Update the 'head' (rev 0) record
-		&ddbextras.Update{
-			TableName: tbl,
+		&transact.Update{
+			TableName: tableName,
+			Key:       customRecordKey(record.LogType, 0),
 			Set: map[string]interface{}{
 				// Set the revision to the new one
 				attrRevision: record.Revision,
 				// Set the user-modifiable properties of the record
 				// NOTE: SetAll will set all fields of the value
-				ddbextras.SetAll: &record.CustomLog,
+				transact.SetAll: &record.CustomLog,
 			},
-			Condition:    expression.And(ifRevEquals, ifNotDeleted),
-			Key:          headItemKey,
-			ReturnValues: dynamodb.ReturnValueAllOld,
-			Cancel:       cancel,
+			Condition: expression.And(
+				// Check that the current revision is the previous one
+				expression.Name(attrRevision).Equal(expression.Value(currentRevision)),
+				// Check that the record is not deleted
+				expression.Name(attrDeleted).NotEqual(expression.Value(true)),
+			),
+			// Possible failures of the condition are
+			// - The record was already updated by someone else
+			// - The record was deleted by someone else
+			// To distinguish between the two we need to get the record values and check its revision and deleted attrs
+			ReturnValuesOnConditionCheckFailure: dynamodb.ReturnValueAllOld,
+			// We convert these failures to APIErrors here
+			Cancel: func(r *dynamodb.CancellationReason) error {
+				if transact.IsConditionalCheckFailed(r) {
+					rec := customLogRecord{}
+					if e := dynamodbattribute.UnmarshalMap(r.Item, &rec); e != nil {
+						return e
+					}
+					if rec.Revision != currentRevision {
+						return NewAPIError(ErrRevisionConflict, fmt.Sprintf("log record %q is at revision %d", rec.RecordID, rec.Revision))
+					}
+					if rec.Deleted {
+						return NewAPIError(ErrNotFound, fmt.Sprintf("log record %q was deleted", rec.RecordID))
+					}
+				}
+				return nil
+			},
 		},
 		// Insert a new record for this revision
-		&ddbextras.Put{
-			TableName: tbl,
-			Item:      itemAtRevision,
+		&transact.Put{
+			TableName: tableName,
+			Item: &customLogRecord{
+				recordKey:       customRecordKey(record.LogType, record.Revision),
+				CustomLogRecord: record,
+			},
 		},
 	}
 }
@@ -381,11 +351,18 @@ func statusRecordKey() recordKey {
 		RecordKind: recordKindStatus,
 	}
 }
-func customRecordKey(id string, rev int64) map[string]*dynamodb.AttributeValue {
-	return ddbextras.MustMarshalMap(&recordKey{
+func mustMarshalMap(val interface{}) map[string]*dynamodb.AttributeValue {
+	attr, err := dynamodbattribute.MarshalMap(val)
+	if err != nil {
+		panic(err)
+	}
+	return attr
+}
+func customRecordKey(id string, rev int64) recordKey {
+	return recordKey{
 		RecordID:   customRecordID(id, rev),
 		RecordKind: recordKindCustom,
-	})
+	}
 }
 
 func customRecordID(id string, rev int64) string {
@@ -411,5 +388,12 @@ func chunkStrings(values []string, maxSize int) (chunks [][]string) {
 			return append(chunks, values)
 		}
 		chunks, values = append(chunks, values[:maxSize]), values[maxSize:]
+	}
+}
+
+// newStringSet is inlined and helps create a dynamodb.AttributeValue of type StringSet
+func newStringSet(strings ...string) *dynamodb.AttributeValue {
+	return &dynamodb.AttributeValue{
+		SS: aws.StringSlice(strings),
 	}
 }
