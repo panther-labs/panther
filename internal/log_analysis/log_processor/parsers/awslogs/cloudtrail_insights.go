@@ -9,7 +9,7 @@ import (
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
- * Copyright (C) 2020 Panther Labs Inc
+ * Copyright (C) 2021 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as

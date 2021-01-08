@@ -1,8 +1,6 @@
-'use strict';
-Object.defineProperty(exports, '__esModule', { value: true });
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
- * Copyright (C) 2020 Panther Labs Inc
+ * Copyright (C) 2021 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -17,6 +15,9 @@ Object.defineProperty(exports, '__esModule', { value: true });
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+'use strict';
+Object.defineProperty(exports, '__esModule', { value: true });
 const graphql_1 = require('graphql');
 const visitor_plugin_common_1 = require('@graphql-codegen/visitor-plugin-common');
 /**

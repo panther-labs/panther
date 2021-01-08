@@ -1,6 +1,6 @@
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
- * Copyright (C) 2020 Panther Labs Inc
+ * Copyright (C) 2021 Panther Labs Inc
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -163,7 +163,7 @@ module.exports = /******/ (function (modules, runtime) {
     /***/ 104: /***/ function (__unusedmodule, __unusedexports, __webpack_require__) {
       /**
        * Panther is a Cloud-Native SIEM for the Modern Security Team.
-       * Copyright (C) 2020 Panther Labs Inc
+       * Copyright (C) 2021 Panther Labs Inc
        *
        * This program is free software: you can redistribute it and/or modify
        * it under the terms of the GNU Affero General Public License as

@@ -1,5 +1,5 @@
 # Panther is a Cloud-Native SIEM for the Modern Security Team.
-# Copyright (C) 2020 Panther Labs Inc
+# Copyright (C) 2021 Panther Labs Inc
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -646,7 +646,7 @@ Resources:
               <br />Yours truly,
               <br />Panther - https://runpanther.io
               <br />
-              <br /><small>Copyright © 2020 Panther Labs Inc. All rights reserved.</small>
+              <br /><small>Copyright © 2021 Panther Labs Inc. All rights reserved.</small>
             - PantherHost:
                 !If [UseCustomDomain, !Ref CustomDomain, !GetAtt PublicLoadBalancer.DNSName]
       AutoVerifiedAttributes:
