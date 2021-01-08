@@ -281,12 +281,12 @@ class TestEngine(TestCase):
             {
                 'id': 'rule_id_1',
                 'logTypes': ['log'],
-                'body': 'def rule(event):\n\tevent["key"] = "not_value"\n\treturn True',
+                'body': 'def rule(event):\n\tevent["key"]["nested_key"] = "not_value"\n\treturn True',
                 'versionId': 'version'
             }
         ]
         engine = Engine(analysis_api)
-        result = engine.analyze('log', {})
+        result = engine.analyze('log', {'key': {'nested_key': 'value'}})
 
         expected_event_matches = [
             EngineResult(
@@ -295,8 +295,10 @@ class TestEngine(TestCase):
                 log_type='log',
                 dedup='TypeError',
                 error_message=
-                '\'PantherEvent\' object does not support item assignment: rule_id_1.py, line 2, in rule    event["key"] = "not_value"',
-                event={},
+                '\'PantherEvent\' object does not support item assignment: rule_id_1.py, line 2, in rule    event["key"]["nested_key"] = "not_value"',
+                event={'key': {
+                    'nested_key': 'value'
+                }},
                 dedup_period_mins=60,
                 title='TypeError("\'PantherEvent\' object does not support item assignment")'
             )
