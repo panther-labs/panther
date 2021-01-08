@@ -21,6 +21,8 @@ package sources
 import (
 	"context"
 	"net/url"
+	"path"
+	"regexp"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -33,9 +35,11 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor/logstream"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/s3pipe"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 const (
@@ -125,22 +129,17 @@ func shouldIgnoreS3Object(s3Object *S3ObjectInfo) bool {
 }
 
 func buildStream(ctx context.Context, s3Object *S3ObjectInfo) (*common.DataStream, error) {
-	s3Client, sourceInfo, err := getS3Client(s3Object.S3Bucket, s3Object.S3ObjectKey)
+	key, bucket := s3Object.S3ObjectKey, s3Object.S3Bucket
+	s3Client, src, err := getS3Client(bucket, key)
 	if err != nil {
-		err = errors.Wrapf(err, "failed to get S3 client for s3://%s/%s",
-			s3Object.S3Bucket, s3Object.S3ObjectKey)
+		err = errors.Wrapf(err, "failed to get S3 client for s3://%s/%s", bucket, key)
 		return nil, err
 	}
-	if sourceInfo == nil {
+	if src == nil {
 		zap.L().Warn("no source configured for S3 object",
-			zap.String("bucket", s3Object.S3Bucket),
-			zap.String("key", s3Object.S3ObjectKey))
+			zap.String("bucket", bucket),
+			zap.String("key", key))
 		return nil, nil
-	}
-
-	getObjectInput := &s3.GetObjectInput{
-		Bucket: &s3Object.S3Bucket,
-		Key:    &s3Object.S3ObjectKey,
 	}
 
 	downloader := s3pipe.Downloader{
@@ -148,14 +147,28 @@ func buildStream(ctx context.Context, s3Object *S3ObjectInfo) (*common.DataStrea
 		PartSize: calculatePartSize(s3Object.S3ObjectSize),
 	}
 	// gzip streams are transparently uncompressed
-	r := downloader.Download(ctx, getObjectInput)
-	// Set the buffer size to something big to avoid multiple fill() calls if possible
-	stream := logstream.NewLineStream(r, DownloadMinPartSize)
+	r := downloader.Download(ctx, &s3.GetObjectInput{
+		Bucket: &bucket,
+		Key:    &key,
+	})
+	var stream logstream.Stream
+	switch src.IntegrationType {
+	case models.IntegrationTypeAWS3:
+		if isCloudTrailLog(key) && stringset.Contains(src.RequiredLogTypes(), "AWS.CloudTrail") {
+			zap.L().Debug("detected CloudTrail logs", zap.String("bucket", bucket), zap.String("key", key))
+			stream = logstream.NewJSONArrayStream(r, DownloadMinPartSize, "Records")
+		} else {
+			stream = logstream.NewLineStream(r, DownloadMinPartSize)
+		}
+	default:
+		// Set the buffer size to something big to avoid multiple fill() calls if possible
+		stream = logstream.NewLineStream(r, DownloadMinPartSize)
+	}
 
 	return &common.DataStream{
 		Stream:       stream,
 		Closer:       r,
-		Source:       sourceInfo,
+		Source:       src,
 		S3Bucket:     s3Object.S3Bucket,
 		S3ObjectKey:  s3Object.S3ObjectKey,
 		S3ObjectSize: s3Object.S3ObjectSize,
@@ -281,4 +294,13 @@ type S3ObjectInfo struct {
 type SnsNotification struct {
 	events.SNSEntity
 	Token *string `json:"Token"`
+}
+
+// nolint:lll
+// Match `AccountID_CloudTrail_RegionName_YYYYMMDDTHHmmZ_UniqueString.FileNameFormat` format
+// https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-examples.html
+var rxCloudTrailLog = regexp.MustCompile(`^(?P<account>\d{12})_CloudTrail_(?P<region>[^_]+)_(?P<ts>\d{8}T\d{4}Z)_\w+.json.gz$`)
+
+func isCloudTrailLog(key string) bool {
+	return rxCloudTrailLog.MatchString(path.Base(key))
 }

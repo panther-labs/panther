@@ -39,6 +39,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/awsretry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 // The panther-datacatalog-updater lambda is responsible for managing Glue partitions as data is created.
@@ -114,7 +115,8 @@ func main() {
 			if err != nil {
 				return nil, err
 			}
-			return reply.LogTypes, nil
+			// append in snapshot logs which are always onboarded
+			return stringset.Append(reply.LogTypes, logtypes.CollectNames(snapshotlogs.LogTypes())...), nil
 		},
 		GlueClient:   glue.New(clientsSession),
 		Resolver:     resolver,
