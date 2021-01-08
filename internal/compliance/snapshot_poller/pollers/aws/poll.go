@@ -190,14 +190,14 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	if sourceIntegration != nil {
 		pollerResourceInput.ResourceRegexDenylist, pollerResourceInput.ResourceTypeDenylist, pollerResourceInput.RegionDenylist =
 			sourceIntegration.ResourceRegexDenylist, sourceIntegration.ResourceTypeDenylist, sourceIntegration.RegionDenylist
+		// Check if integration is disabled
+		if !aws.BoolValue(sourceIntegration.SourceEnabled) {
+			zap.L().Info("source integration disabled",
+				zap.String("integration id", *scanRequest.IntegrationID), zap.Time("timestamp", time.Now()))
+			return nil, nil
+		}
 	}
 
-	// Check if integration is disabled
-	if !aws.BoolValue(sourceIntegration.SourceEnabled) {
-		zap.L().Info("source integration disabled",
-			zap.String("integration id", *scanRequest.IntegrationID), zap.Time("timestamp", time.Now()))
-		return nil, nil
-	}
 	// Check if resource type is filtered
 	for _, resourceType := range pollerResourceInput.ResourceTypeDenylist {
 		if resourceType == *scanRequest.ResourceType {

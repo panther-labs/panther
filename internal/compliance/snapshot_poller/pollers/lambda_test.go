@@ -132,7 +132,7 @@ func TestHandlerNonExistentIntegration(t *testing.T) {
 			},
 		},
 	}
-	mockSourceClient.On("GetIntegration", testIntegrationID).Return(nil, nil)
+	mockSourceClient.On("GetIntegration", testIntegrationID).Return(testIntegrations, nil)
 	mockSourceClient.On("Invoke", nil).Return(nil, nil)
 	require.NoError(t, Handle(testContext(), sampleEvent))
 
