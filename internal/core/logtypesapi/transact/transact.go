@@ -1,5 +1,4 @@
 // Package ddbextras provides a builder for DynamoDB transactions.
-// For more info on how the write transactions work see https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TransactWriteItems.html
 package transact
 
 /**
@@ -33,6 +32,8 @@ import (
 
 // Transaction describes a write transaction and builds a dynamodb.TransactWriteItemsInput.
 // It also allows to bind transaction cancellation reasons to errors for each dynamodb.TransactWriteItem.
+// For more info on how the write transactions work see
+// https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TransactWriteItems.html
 type Transaction []ItemBuilder
 
 type ItemBuilder interface {
@@ -40,7 +41,7 @@ type ItemBuilder interface {
 	cancelled(r *dynamodb.CancellationReason) error
 }
 
-// ExplainTransactionError maps transaction canceled errors to the error handlers specified in the batch items.
+// ExplainTransactionError maps transaction cancelled errors to the error handlers specified in the batch items.
 func (tx Transaction) ExplainTransactionError(err error) error {
 	var txErr *dynamodb.TransactionCanceledException
 	if errors.As(err, &txErr) {
