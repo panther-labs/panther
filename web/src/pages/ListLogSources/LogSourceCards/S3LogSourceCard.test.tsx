@@ -30,7 +30,6 @@ describe('S3LogSourceCard', () => {
     expect(getByAltText(/Logo/i)).toBeInTheDocument();
     expect(getByAriaLabel(/Toggle Options/i)).toBeInTheDocument();
     expect(getByText(source.integrationLabel)).toBeInTheDocument();
-    expect(getByText(source.s3Prefix)).toBeInTheDocument();
     expect(getByText(source.s3Bucket)).toBeInTheDocument();
     expect(getByText(source.kmsKey)).toBeInTheDocument();
     expect(getByText(formatDatetime(source.createdAtTime, true))).toBeInTheDocument();
