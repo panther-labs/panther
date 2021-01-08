@@ -37,6 +37,9 @@ class PantherEvent(ImmutableDict):  # pylint: disable=R0901
     def extra_constructor_arguments(self) -> dict:
         return {'data_model': self.data_model}
 
+    def conversion_overrides(self) -> dict:
+        return {dict: self.__class__}
+
     def udm(self, key: str) -> Any:
         """Converts standard data model field to logtype field"""
         if not self.data_model:

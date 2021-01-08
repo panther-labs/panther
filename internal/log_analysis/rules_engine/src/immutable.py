@@ -37,8 +37,15 @@ class ImmutableContainerMixin(ABC):
 
     def __init__(self, container: Any):
         self._container = self._shallow_copy(container)
-        self._registered_conversions = tuple(self.__class__._CONVERSIONS.items())
+        conversions = self.__class__._CONVERSIONS.copy()
+        conversions.update(self.conversion_overrides())
+        self._registered_conversions = tuple(conversions.items())
         self._registered_types = tuple(klass for klass, _ in self._registered_conversions)
+
+    def conversion_overrides(self) -> dict:  # pylint: disable=R0201
+        """Override mutable to immutable type correspondence for this class/instance"""
+        # TODO: redesign the type conversion registration process
+        return {}
 
     @abstractmethod
     def _shallow_copy(self, obj: Any) -> Any:
