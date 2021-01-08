@@ -208,16 +208,12 @@ func putLogProcessingIntegration(properties SelfRegistrationProperties, prefixLo
 	input := &models.LambdaInput{
 		PutIntegration: &models.PutIntegrationInput{
 			PutIntegrationSettings: models.PutIntegrationSettings{
-				AWSAccountID:          properties.AccountID,
-				IntegrationLabel:      genLogProcessingLabel(),
-				IntegrationType:       models.IntegrationTypeAWS3,
-				UserID:                systemUserID,
-				S3Bucket:              properties.AuditLogsBucket,
-				S3PrefixLogTypes:      prefixLogTypes,
-				SourceEnabled:         properties.SourceEnabled,
-				RegionDenylist:        properties.RegionDenylist,
-				ResourceTypeDenylist:  properties.ResourceTypeDenylist,
-				ResourceRegexDenylist: properties.ResourceRegexDenylist,
+				AWSAccountID:     properties.AccountID,
+				IntegrationLabel: genLogProcessingLabel(),
+				IntegrationType:  models.IntegrationTypeAWS3,
+				UserID:           systemUserID,
+				S3Bucket:         properties.AuditLogsBucket,
+				S3PrefixLogTypes: prefixLogTypes,
 			},
 		},
 	}
@@ -237,14 +233,10 @@ func putLogProcessingIntegration(properties SelfRegistrationProperties, prefixLo
 func updateLogProcessingIntegration(source *models.SourceIntegration, prefixLogTypes models.S3PrefixLogtypes) error {
 	input := &models.LambdaInput{
 		UpdateIntegrationSettings: &models.UpdateIntegrationSettingsInput{
-			IntegrationID:         source.IntegrationID,
-			IntegrationLabel:      source.IntegrationLabel,
-			S3Bucket:              source.S3Bucket,
-			S3PrefixLogTypes:      prefixLogTypes,
-			SourceEnabled:         source.SourceEnabled,
-			RegionDenylist:        source.RegionDenylist,
-			ResourceTypeDenylist:  source.ResourceTypeDenylist,
-			ResourceRegexDenylist: source.ResourceRegexDenylist,
+			IntegrationID:    source.IntegrationID,
+			IntegrationLabel: source.IntegrationLabel,
+			S3Bucket:         source.S3Bucket,
+			S3PrefixLogTypes: prefixLogTypes,
 		},
 	}
 
