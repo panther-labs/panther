@@ -17,17 +17,20 @@
  */
 
 import React from 'react';
-import { Dropdown, DropdownButton, DropdownLink, DropdownMenu } from 'pouncejs';
+import { Dropdown, DropdownButton, DropdownItem, DropdownLink, DropdownMenu } from 'pouncejs';
 import { DataModel } from 'Generated/schema';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import GenericItemCard from 'Components/GenericItemCard';
+import { MODALS } from 'Components/utils/Modal';
+import useModal from 'Hooks/useModal';
 
 interface DataModelCardOptionsProps {
   dataModel: DataModel;
 }
 
 const DataModelCardOptions: React.FC<DataModelCardOptionsProps> = ({ dataModel }) => {
+  const { showModal } = useModal();
   return (
     <Dropdown>
       <DropdownButton as={GenericItemCard.OptionsButton} />
@@ -35,6 +38,16 @@ const DataModelCardOptions: React.FC<DataModelCardOptionsProps> = ({ dataModel }
         <DropdownLink as={RRLink} to={urls.logAnalysis.dataModels.edit(dataModel.id)}>
           Edit
         </DropdownLink>
+        <DropdownItem
+          onSelect={() => {
+            return showModal({
+              modal: MODALS.DELETE_DATA_MODEL,
+              props: { dataModel },
+            });
+          }}
+        >
+          Delete
+        </DropdownItem>
       </DropdownMenu>
     </Dropdown>
   );

@@ -75,6 +75,7 @@ export enum EventEnum {
   AddedDataModel = 'Added Data Model',
   UpdatedDataModel = 'Updatted Data Model',
   DeletedCustomLog = 'Deleted Custom Log',
+  DeletedDataModel = 'Deleted Data Model',
   AddedRule = 'Added Rule',
   AddedPolicy = 'Added Policy',
   AddedComplianceSource = 'Added Compliance Source',
@@ -124,6 +125,11 @@ interface AddedDataModelEvent {
 
 interface UpdatedDataModelEvent {
   event: EventEnum.UpdatedDataModel;
+  src: SrcEnum.DataModels;
+}
+
+interface DeleteDataModelEvent {
+  event: EventEnum.DeletedDataModel;
   src: SrcEnum.DataModels;
 }
 
@@ -223,6 +229,7 @@ type TrackEvent =
   | AddedDestinationEvent
   | AddedDataModelEvent
   | UpdatedDataModelEvent
+  | DeleteDataModelEvent
   | SignInEvent
   | AddedRuleEvent
   | AddedPolicyEvent
@@ -257,6 +264,7 @@ export enum TrackErrorEnum {
   FailedToAddDataModel = 'Failed to create a Data Model',
   FailedToUpdateDataModel = 'Failed to update a Data Model',
   FailedToDeleteCustomLog = 'Failed to delete a Custom Log',
+  FailedToDeleteDataModel = 'Failed to delete a Data Model',
   FailedToAddLogSource = 'Failed to add log source',
   FailedToUpdateLogSource = 'Failed to update log source',
   FailedToAddComplianceSource = 'Failed to add compliance source',
@@ -300,6 +308,11 @@ interface UpdateDataModelError {
   src: SrcEnum.DataModels;
 }
 
+interface DeleteDataModelError {
+  event: TrackErrorEnum.FailedToDeleteDataModel;
+  src: SrcEnum.DataModels;
+}
+
 interface UpdateComplianceSourceError {
   event: TrackErrorEnum.FailedToUpdateComplianceSource;
   src: SrcEnum.ComplianceSources;
@@ -335,6 +348,7 @@ type TrackError =
   | AddDestinationError
   | AddDataModelError
   | UpdateDataModelError
+  | DeleteDataModelError
   | TestDestinationError
   | AddRuleError
   | MfaError
