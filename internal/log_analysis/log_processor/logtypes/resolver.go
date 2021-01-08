@@ -124,7 +124,6 @@ func (c *CachedResolver) Resolve(ctx context.Context, name string) (Entry, error
 	}
 	if entry, ok := reply.(Entry); ok {
 		return entry, nil
-
 	}
 	return nil, nil
 }
