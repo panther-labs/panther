@@ -70,9 +70,9 @@ type ResourcePollerInput struct {
 	Region                *string
 	Timestamp             *time.Time
 	NextPageToken         *string
-	RegionBlacklist       []string
-	ResourceTypeBlacklist []string
-	ResourceRegexFilters  []string
+	RegionDenylist        []string
+	ResourceTypeDenylist  []string
+	ResourceRegexDenylist []string
 }
 
 // ResourcePoller represents a function to poll a specific AWS resource.

@@ -250,7 +250,7 @@ func buildEksClusterSnapshot(
 
 	// Check if ResourceID matches the integration's regex filter
 	if pollerInput != nil {
-		matched, err := utils.MatchRegexBlacklist(pollerInput.ResourceRegexFilters, *details.Arn)
+		matched, err := utils.MatchRegexBlacklist(pollerInput.ResourceRegexDenylist, *details.Arn)
 		if err != nil {
 			return nil, err
 		}

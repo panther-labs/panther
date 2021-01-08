@@ -188,8 +188,8 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	// Options for filtering and blacklisting
 	// Used to pass on these to downstream pollers
 	if sourceIntegration != nil {
-		pollerResourceInput.ResourceRegexFilters, pollerResourceInput.ResourceTypeBlacklist, pollerResourceInput.RegionBlacklist =
-			sourceIntegration.ResourceRegexFilters, sourceIntegration.ResourceTypeBlacklist, sourceIntegration.RegionBlacklist
+		pollerResourceInput.ResourceRegexDenylist, pollerResourceInput.ResourceTypeDenylist, pollerResourceInput.RegionDenylist =
+			sourceIntegration.ResourceRegexDenylist, sourceIntegration.ResourceTypeDenylist, sourceIntegration.RegionDenylist
 	}
 
 	// Check if integration is disabled
@@ -199,7 +199,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		return nil, nil
 	}
 	// Check if resource type is filtered
-	for _, resourceType := range pollerResourceInput.ResourceTypeBlacklist {
+	for _, resourceType := range pollerResourceInput.ResourceTypeDenylist {
 		if resourceType == *scanRequest.ResourceType {
 			zap.L().Info("resource type filtered", zap.String("resource type", resourceType))
 			return nil, nil
@@ -230,7 +230,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 			zap.String("region", *scanRequest.Region),
 			zap.String("resourceType", *scanRequest.ResourceType))
 		// Check if provided region is blacklisted
-		for _, region := range pollerResourceInput.RegionBlacklist {
+		for _, region := range pollerResourceInput.RegionDenylist {
 			if region == *scanRequest.Region {
 				zap.L().Info("matched blacklisted region - skipping scan",
 					zap.String("region", region))
@@ -367,7 +367,7 @@ func singleResourceScan(
 			return nil, nil
 		}
 		// Check if ResourceID matches the integration's regex filter
-		matched, matchErr := utils.MatchRegexBlacklist(pollerInput.ResourceRegexFilters, *scanRequest.ResourceID)
+		matched, matchErr := utils.MatchRegexBlacklist(pollerInput.ResourceRegexDenylist, *scanRequest.ResourceID)
 		if matchErr != nil {
 			return nil, matchErr
 		}

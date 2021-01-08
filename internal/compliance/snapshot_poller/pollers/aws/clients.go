@@ -227,7 +227,7 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput,
 	service string, region string) (interface{}, error) {
 
 	// Check if provided region is blacklisted
-	for _, blacklistedRegion := range pollerInput.RegionBlacklist {
+	for _, blacklistedRegion := range pollerInput.RegionDenylist {
 		if region == blacklistedRegion {
 			zap.L().Info("matched blacklisted region - skipping scan",
 				zap.String("region", region))

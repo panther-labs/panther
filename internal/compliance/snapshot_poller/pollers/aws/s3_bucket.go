@@ -49,7 +49,7 @@ func getS3Client(pollerResourceInput *awsmodels.ResourcePollerInput, region stri
 	// Saves an unnecessary check
 	if resourceARN != nil {
 		// Check if ResourceID matches the integration's regex filter
-		matched, err := utils.MatchRegexBlacklist(pollerResourceInput.ResourceRegexFilters, resourceARN.String())
+		matched, err := utils.MatchRegexBlacklist(pollerResourceInput.ResourceRegexDenylist, resourceARN.String())
 		if err != nil {
 			return nil, err
 		}
@@ -367,7 +367,7 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddR
 			continue
 		}
 		// Check if ResourceID matches the integration's regex filter
-		matched, err := utils.MatchRegexBlacklist(pollerInput.ResourceRegexFilters, *bucket.Name)
+		matched, err := utils.MatchRegexBlacklist(pollerInput.ResourceRegexDenylist, *bucket.Name)
 		if err != nil {
 			return nil, nil, err
 		}

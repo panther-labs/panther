@@ -69,9 +69,9 @@ type SourceIntegrationMetadata struct {
 
 	// optional fields for snapshot-poller filtering
 	SourceEnabled         *bool    `json:"sourceEnabled,omitempty"`
-	RegionBlacklist       []string `json:"regionBlacklist,omitempty"`
-	ResourceTypeBlacklist []string `json:"resourceTypeBlacklist,omitempty"`
-	ResourceRegexFilters  []string `json:"resourceRegexFilters,omitempty"`
+	RegionDenylist        []string `json:"regionDenylist,omitempty"`
+	ResourceTypeDenylist  []string `json:"resourceTypeDenylist,omitempty"`
+	ResourceRegexDenylist []string `json:"resourceRegexDenylist,omitempty"`
 
 	StackName string `json:"stackName,omitempty"`
 

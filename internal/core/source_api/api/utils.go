@@ -78,9 +78,9 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 	integration.CreatedBy = item.CreatedBy
 	integration.LastEventReceived = item.LastEventReceived
 	integration.SourceEnabled = item.SourceEnabled
-	integration.RegionBlacklist = item.RegionBlacklist
-	integration.ResourceTypeBlacklist = item.ResourceTypeBlacklist
-	integration.ResourceRegexFilters = item.ResourceRegexFilters
+	integration.RegionDenylist = item.RegionDenylist
+	integration.ResourceTypeDenylist = item.ResourceTypeDenylist
+	integration.ResourceRegexDenylist = item.ResourceRegexDenylist
 
 	switch item.IntegrationType {
 	case models.IntegrationTypeAWS3:

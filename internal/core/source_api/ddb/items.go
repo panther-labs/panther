@@ -55,9 +55,9 @@ type Integration struct {
 
 	// fields for configurable cloud security sources
 	SourceEnabled         *bool    `json:"sourceEnabled" validate:"omitempty"`
-	RegionBlacklist       []string `json:"regionBlacklist" validate:"omitempty"`
-	ResourceTypeBlacklist []string `json:"resourceTypeBlacklist" validate:"omitempty"`
-	ResourceRegexFilters  []string `json:"resourceRegexFilters" validate:"omitempty"`
+	RegionDenylist        []string `json:"regionDenylist" validate:"omitempty"`
+	ResourceTypeDenylist  []string `json:"resourceTypeDenylist" validate:"omitempty"`
+	ResourceRegexDenylist []string `json:"resourceRegexDenylist" validate:"omitempty"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }

@@ -262,9 +262,9 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 		IntegrationID:         uuid.New().String(),
 		IntegrationLabel:      input.IntegrationLabel,
 		IntegrationType:       input.IntegrationType,
-		RegionBlacklist:       input.RegionBlacklist,
-		ResourceTypeBlacklist: input.ResourceTypeBlacklist,
-		ResourceRegexFilters:  input.ResourceRegexFilters,
+		RegionDenylist:        input.RegionDenylist,
+		ResourceTypeDenylist:  input.ResourceTypeDenylist,
+		ResourceRegexDenylist: input.ResourceRegexDenylist,
 	}
 
 	switch input.IntegrationType {

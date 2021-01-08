@@ -84,9 +84,9 @@ type PutIntegrationSettings struct {
 	S3Bucket              string           `json:"s3Bucket"`
 	S3PrefixLogTypes      S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
 	SourceEnabled         *bool            `json:"sourceEnabled" validate:"omitempty"`
-	RegionBlacklist       []string         `json:"regionBlacklist" validate:"omitempty"`
-	ResourceTypeBlacklist []string         `json:"resourceTypeBlacklist" validate:"omitempty"`
-	ResourceRegexFilters  []string         `json:"resourceRegexFilters" validate:"omitempty"`
+	RegionDenylist        []string         `json:"regionDenylist" validate:"omitempty"`
+	ResourceTypeDenylist  []string         `json:"resourceTypeDenylist" validate:"omitempty"`
+	ResourceRegexDenylist []string         `json:"resourceRegexDenylist" validate:"omitempty"`
 	KmsKey                string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
@@ -111,9 +111,9 @@ type UpdateIntegrationSettingsInput struct {
 	S3Bucket              string           `json:"s3Bucket" validate:"omitempty,min=1"`
 	S3PrefixLogTypes      S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
 	SourceEnabled         *bool            `json:"sourceEnabled" validate:"omitempty"`
-	RegionBlacklist       []string         `json:"regionBlacklist" validate:"omitempty"`
-	ResourceTypeBlacklist []string         `json:"resourceTypeBlacklist" validate:"omitempty"`
-	ResourceRegexFilters  []string         `json:"resourceRegexFilters" validate:"omitempty"`
+	RegionDenylist        []string         `json:"regionDenylist" validate:"omitempty"`
+	ResourceTypeDenylist  []string         `json:"resourceTypeDenylist" validate:"omitempty"`
+	ResourceRegexDenylist []string         `json:"resourceRegexDenylist" validate:"omitempty"`
 	KmsKey                string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
@@ -161,9 +161,9 @@ type GetIntegrationTemplateInput struct {
 	S3Prefix              string   `json:"s3Prefix" validate:"omitempty,min=1"`
 	KmsKey                string   `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 	SourceEnabled         *bool    `json:"sourceEnabled" validate:"omitempty"`
-	RegionBlacklist       []string `json:"regionBlacklist" validate:"omitempty"`
-	ResourceTypeBlacklist []string `json:"resourceTypeBlacklist" validate:"omitempty"`
-	ResourceRegexFilters  []string `json:"resourceRegexFilters" validate:"omitempty"`
+	RegionDenylist        []string `json:"regionDenylist" validate:"omitempty"`
+	ResourceTypeDenylist  []string `json:"resourceTypeDenylist" validate:"omitempty"`
+	ResourceRegexDenylist []string `json:"resourceRegexDenylist" validate:"omitempty"`
 }
 
 //

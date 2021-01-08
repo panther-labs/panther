@@ -164,9 +164,9 @@ func (api API) validateUniqueConstraints(existingIntegrationItem *ddb.Integratio
 
 func updateIntegrationDBItem(item *ddb.Integration, input *models.UpdateIntegrationSettingsInput) {
 	item.SourceEnabled = input.SourceEnabled
-	item.RegionBlacklist = input.RegionBlacklist
-	item.ResourceTypeBlacklist = input.ResourceTypeBlacklist
-	item.ResourceRegexFilters = input.ResourceRegexFilters
+	item.RegionDenylist = input.RegionDenylist
+	item.ResourceTypeDenylist = input.ResourceTypeDenylist
+	item.ResourceRegexDenylist = input.ResourceRegexDenylist
 	switch item.IntegrationType {
 	case models.IntegrationTypeAWSScan:
 		item.IntegrationLabel = input.IntegrationLabel

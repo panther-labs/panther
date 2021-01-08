@@ -46,9 +46,9 @@ type SelfRegistrationProperties struct {
 	EnableGuardDuty       bool     `json:",string"`
 	EnableS3AccessLogs    bool     `json:",string"`
 	SourceEnabled         *bool    `json:"sourceEnabled" validate:"omitempty"`
-	RegionBlacklist       []string `json:"regionBlacklist" validate:"omitempty"`
-	ResourceTypeBlacklist []string `json:"resourceTypeBlacklist" validate:"omitempty"`
-	ResourceRegexFilters  []string `json:"resourceRegexFilters" validate:"omitempty"`
+	RegionDenylist        []string `json:"regionDenylist" validate:"omitempty"`
+	ResourceTypeDenylist  []string `json:"resourceTypeDenylist" validate:"omitempty"`
+	ResourceRegexDenylist []string `json:"resourceRegexDenylist" validate:"omitempty"`
 }
 
 func customSelfRegistration(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
@@ -187,9 +187,9 @@ func putCloudSecurityIntegration(properties SelfRegistrationProperties) error {
 				CWEEnabled:            aws.Bool(true),
 				RemediationEnabled:    aws.Bool(true),
 				SourceEnabled:         properties.SourceEnabled,
-				RegionBlacklist:       properties.RegionBlacklist,
-				ResourceTypeBlacklist: properties.ResourceTypeBlacklist,
-				ResourceRegexFilters:  properties.ResourceRegexFilters,
+				RegionDenylist:        properties.RegionDenylist,
+				ResourceTypeDenylist:  properties.ResourceTypeDenylist,
+				ResourceRegexDenylist: properties.ResourceRegexDenylist,
 			},
 		},
 	}
@@ -215,9 +215,9 @@ func putLogProcessingIntegration(properties SelfRegistrationProperties, prefixLo
 				S3Bucket:              properties.AuditLogsBucket,
 				S3PrefixLogTypes:      prefixLogTypes,
 				SourceEnabled:         properties.SourceEnabled,
-				RegionBlacklist:       properties.RegionBlacklist,
-				ResourceTypeBlacklist: properties.ResourceTypeBlacklist,
-				ResourceRegexFilters:  properties.ResourceRegexFilters,
+				RegionDenylist:        properties.RegionDenylist,
+				ResourceTypeDenylist:  properties.ResourceTypeDenylist,
+				ResourceRegexDenylist: properties.ResourceRegexDenylist,
 			},
 		},
 	}
@@ -242,9 +242,9 @@ func updateLogProcessingIntegration(source *models.SourceIntegration, prefixLogT
 			S3Bucket:              source.S3Bucket,
 			S3PrefixLogTypes:      prefixLogTypes,
 			SourceEnabled:         source.SourceEnabled,
-			RegionBlacklist:       source.RegionBlacklist,
-			ResourceTypeBlacklist: source.ResourceTypeBlacklist,
-			ResourceRegexFilters:  source.ResourceRegexFilters,
+			RegionDenylist:        source.RegionDenylist,
+			ResourceTypeDenylist:  source.ResourceTypeDenylist,
+			ResourceRegexDenylist: source.ResourceRegexDenylist,
 		},
 	}
 
