@@ -74,7 +74,7 @@ type Query {
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
   listAvailableLogTypes: ListAvailableLogTypesResponse!
   listComplianceIntegrations: [ComplianceIntegration!]!
-  listDataModels(input: ListDataModelsInput): ListDataModelsResponse!
+  listDataModels(input: ListDataModelsInput!): ListDataModelsResponse!
   listLogIntegrations: [LogIntegration!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   getLogAnalysisMetrics(input: LogAnalysisMetricsInput!): LogAnalysisMetricsResponse!

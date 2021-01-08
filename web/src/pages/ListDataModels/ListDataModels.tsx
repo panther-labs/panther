@@ -52,10 +52,10 @@ const ListDataModels = () => {
           {error && (
             <Alert
               variant="error"
-              title="Couldn't load your custom schemas"
+              title="Couldn't load your data models"
               description={
                 extractErrorMessage(error) ||
-                'There was an error while attempting to list your custom schemas'
+                'There was an error while attempting to list your data models'
               }
             />
           )}

@@ -1184,7 +1184,7 @@ export type QueryPoliciesForResourceArgs = {
 };
 
 export type QueryListDataModelsArgs = {
-  input?: Maybe<ListDataModelsInput>;
+  input: ListDataModelsInput;
 };
 
 export type QueryOrganizationStatsArgs = {
@@ -3101,7 +3101,7 @@ export type QueryResolvers<
     ResolversTypes['ListDataModelsResponse'],
     ParentType,
     ContextType,
-    RequireFields<QueryListDataModelsArgs, never>
+    RequireFields<QueryListDataModelsArgs, 'input'>
   >;
   listLogIntegrations?: Resolver<Array<ResolversTypes['LogIntegration']>, ParentType, ContextType>;
   organizationStats?: Resolver<

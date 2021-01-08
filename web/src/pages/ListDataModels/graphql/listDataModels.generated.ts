@@ -25,7 +25,7 @@ import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type ListDataModelsVariables = {
-  input?: Types.Maybe<Types.ListDataModelsInput>;
+  input: Types.ListDataModelsInput;
 };
 
 export type ListDataModels = {
@@ -36,7 +36,7 @@ export type ListDataModels = {
 };
 
 export const ListDataModelsDocument = gql`
-  query ListDataModels($input: ListDataModelsInput) {
+  query ListDataModels($input: ListDataModelsInput!) {
     listDataModels(input: $input) {
       models {
         ...DataModelFull

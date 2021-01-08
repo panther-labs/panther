@@ -1,4 +1,4 @@
-query ListDataModels($input: ListDataModelsInput) {
+query ListDataModels($input: ListDataModelsInput!) {
   listDataModels(input: $input) {
     models {
       ...DataModelFull

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ModalProps, useSnackbar } from 'pouncejs';
 import { DataModel } from 'Generated/schema';
+import { extractErrorMessage } from 'Helpers/utils';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import OptimisticConfirmModal from 'Components/modals/OptimisticConfirmModal';
 import { useDeleteDataModel } from './graphql/deleteDataModel.generated';
@@ -30,10 +31,11 @@ const DeleteDataModelModal: React.FC<DeleteDataModelModalProps> = ({ dataModel, 
     onCompleted: () => {
       trackEvent({ event: EventEnum.DeletedDataModel, src: SrcEnum.DataModels });
     },
-    onError: () => {
+    onError: error => {
       pushSnackbar({
         variant: 'error',
         title: 'Failed to delete your Data Model',
+        description: extractErrorMessage(error),
       });
       trackError({ event: TrackErrorEnum.FailedToDeleteDataModel, src: SrcEnum.DataModels });
     },
