@@ -188,8 +188,8 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	// Options for filtering and blacklisting
 	// Used to pass on these to downstream pollers
 	if sourceIntegration != nil {
-		pollerResourceInput.ResourceRegexFilters, pollerResourceInput.ResourceTypeFilter, pollerResourceInput.RegionBlacklist =
-			sourceIntegration.ResourceRegexFilters, sourceIntegration.ResourceTypeFilter, sourceIntegration.RegionBlacklist
+		pollerResourceInput.ResourceRegexFilters, pollerResourceInput.ResourceTypeBlacklist, pollerResourceInput.RegionBlacklist =
+			sourceIntegration.ResourceRegexFilters, sourceIntegration.ResourceTypeBlacklist, sourceIntegration.RegionBlacklist
 	}
 
 	// Check if integration is disabled
@@ -199,7 +199,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		return nil, nil
 	}
 	// Check if resource type is filtered
-	for _, resourceType := range pollerResourceInput.ResourceTypeFilter {
+	for _, resourceType := range pollerResourceInput.ResourceTypeBlacklist {
 		if resourceType == *scanRequest.ResourceType {
 			zap.L().Info("resource type filtered", zap.String("resource type", resourceType))
 			return nil, nil
@@ -367,7 +367,7 @@ func singleResourceScan(
 			return nil, nil
 		}
 		// Check if ResourceID matches the integration's regex filter
-		matched, matchErr := utils.MatchRegexFilter(pollerInput.ResourceRegexFilters, *scanRequest.ResourceID)
+		matched, matchErr := utils.MatchRegexBlacklist(pollerInput.ResourceRegexFilters, *scanRequest.ResourceID)
 		if matchErr != nil {
 			return nil, matchErr
 		}

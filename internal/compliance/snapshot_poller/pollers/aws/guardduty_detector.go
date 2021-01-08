@@ -149,7 +149,7 @@ func buildGuardDutyDetectorSnapshot(
 
 	// Check if ResourceID matches the integration's regex filter
 	if pollerInput != nil {
-		matched, err := utils.MatchRegexFilter(pollerInput.ResourceRegexFilters, *detectorID)
+		matched, err := utils.MatchRegexBlacklist(pollerInput.ResourceRegexFilters, *detectorID)
 		if err != nil {
 			return nil, err
 		}

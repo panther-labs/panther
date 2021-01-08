@@ -20,6 +20,7 @@ package utils
 
 import (
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -85,20 +86,28 @@ func GetIntegration(integrationID string) (integration *models.SourceIntegration
 	return result, nil
 }
 
-func MatchRegexFilter(regexFilter []string, resourceARN string) (matched bool, err error) {
-	for _, filter := range regexFilter {
-		if filter == "" {
+func MatchRegexBlacklist(globs []string, resourceARN string) (matched bool, err error) {
+	for _, glob := range globs {
+		if glob == "" {
 			continue
 		}
-		regexFilterCompiled, err := regexp.Compile(filter)
+		// First,  escape any regex special characters
+		escaped := regexp.QuoteMeta(glob)
+
+		// Wildcards in the original pattern are now escaped literals - convert back
+		// NOTE: currently no way for user to specify a glob that would match a literal '*'
+		regex := "^" + strings.ReplaceAll(escaped, `\*`, `.*`) + "$"
+		matcher, err := regexp.Compile(regex)
 		if err != nil {
-			zap.L().Error("failed to compile regex filter", zap.Error(err),
-				zap.Any("filter regex", filter))
-			return false, err
+			// We are building the regex, so it should always be valid
+			zap.L().Error("invalid regex",
+				zap.String("originalPattern", glob),
+				zap.String("transformedRegex", regex),
+				zap.Error(err),
+			)
+			continue
 		}
-		if regexFilterCompiled.MatchString(resourceARN) {
-			zap.L().Info("regex filter matched - skipping single resource scan",
-				zap.Any("regex filter", filter), zap.Any("resource id", resourceARN))
+		if matcher.MatchString(resourceARN) {
 			return true, nil
 		}
 	}

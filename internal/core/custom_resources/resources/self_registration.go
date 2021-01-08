@@ -40,15 +40,15 @@ const (
 )
 
 type SelfRegistrationProperties struct {
-	AccountID            string   `validate:"required,len=12"`
-	AuditLogsBucket      string   `validate:"required"`
-	EnableCloudTrail     bool     `json:",string"`
-	EnableGuardDuty      bool     `json:",string"`
-	EnableS3AccessLogs   bool     `json:",string"`
-	SourceEnabled        *bool    `json:"sourceEnabled" validate:"omitempty"`
-	RegionBlacklist      []string `json:"regionBlacklist" validate:"omitempty"`
-	ResourceTypeFilter   []string `json:"resourceTypeFilter" validate:"omitempty"`
-	ResourceRegexFilters []string `json:"resourceRegexFilters" validate:"omitempty"`
+	AccountID             string   `validate:"required,len=12"`
+	AuditLogsBucket       string   `validate:"required"`
+	EnableCloudTrail      bool     `json:",string"`
+	EnableGuardDuty       bool     `json:",string"`
+	EnableS3AccessLogs    bool     `json:",string"`
+	SourceEnabled         *bool    `json:"sourceEnabled" validate:"omitempty"`
+	RegionBlacklist       []string `json:"regionBlacklist" validate:"omitempty"`
+	ResourceTypeBlacklist []string `json:"resourceTypeBlacklist" validate:"omitempty"`
+	ResourceRegexFilters  []string `json:"resourceRegexFilters" validate:"omitempty"`
 }
 
 func customSelfRegistration(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
@@ -179,17 +179,17 @@ func putCloudSecurityIntegration(properties SelfRegistrationProperties) error {
 	input := &models.LambdaInput{
 		PutIntegration: &models.PutIntegrationInput{
 			PutIntegrationSettings: models.PutIntegrationSettings{
-				AWSAccountID:         properties.AccountID,
-				IntegrationLabel:     cloudSecLabel,
-				IntegrationType:      models.IntegrationTypeAWSScan,
-				ScanIntervalMins:     1440,
-				UserID:               systemUserID,
-				CWEEnabled:           aws.Bool(true),
-				RemediationEnabled:   aws.Bool(true),
-				SourceEnabled:        properties.SourceEnabled,
-				RegionBlacklist:      properties.RegionBlacklist,
-				ResourceTypeFilter:   properties.ResourceTypeFilter,
-				ResourceRegexFilters: properties.ResourceRegexFilters,
+				AWSAccountID:          properties.AccountID,
+				IntegrationLabel:      cloudSecLabel,
+				IntegrationType:       models.IntegrationTypeAWSScan,
+				ScanIntervalMins:      1440,
+				UserID:                systemUserID,
+				CWEEnabled:            aws.Bool(true),
+				RemediationEnabled:    aws.Bool(true),
+				SourceEnabled:         properties.SourceEnabled,
+				RegionBlacklist:       properties.RegionBlacklist,
+				ResourceTypeBlacklist: properties.ResourceTypeBlacklist,
+				ResourceRegexFilters:  properties.ResourceRegexFilters,
 			},
 		},
 	}
@@ -208,16 +208,16 @@ func putLogProcessingIntegration(properties SelfRegistrationProperties, prefixLo
 	input := &models.LambdaInput{
 		PutIntegration: &models.PutIntegrationInput{
 			PutIntegrationSettings: models.PutIntegrationSettings{
-				AWSAccountID:         properties.AccountID,
-				IntegrationLabel:     genLogProcessingLabel(),
-				IntegrationType:      models.IntegrationTypeAWS3,
-				UserID:               systemUserID,
-				S3Bucket:             properties.AuditLogsBucket,
-				S3PrefixLogTypes:     prefixLogTypes,
-				SourceEnabled:        properties.SourceEnabled,
-				RegionBlacklist:      properties.RegionBlacklist,
-				ResourceTypeFilter:   properties.ResourceTypeFilter,
-				ResourceRegexFilters: properties.ResourceRegexFilters,
+				AWSAccountID:          properties.AccountID,
+				IntegrationLabel:      genLogProcessingLabel(),
+				IntegrationType:       models.IntegrationTypeAWS3,
+				UserID:                systemUserID,
+				S3Bucket:              properties.AuditLogsBucket,
+				S3PrefixLogTypes:      prefixLogTypes,
+				SourceEnabled:         properties.SourceEnabled,
+				RegionBlacklist:       properties.RegionBlacklist,
+				ResourceTypeBlacklist: properties.ResourceTypeBlacklist,
+				ResourceRegexFilters:  properties.ResourceRegexFilters,
 			},
 		},
 	}
@@ -237,14 +237,14 @@ func putLogProcessingIntegration(properties SelfRegistrationProperties, prefixLo
 func updateLogProcessingIntegration(source *models.SourceIntegration, prefixLogTypes models.S3PrefixLogtypes) error {
 	input := &models.LambdaInput{
 		UpdateIntegrationSettings: &models.UpdateIntegrationSettingsInput{
-			IntegrationID:        source.IntegrationID,
-			IntegrationLabel:     source.IntegrationLabel,
-			S3Bucket:             source.S3Bucket,
-			S3PrefixLogTypes:     prefixLogTypes,
-			SourceEnabled:        source.SourceEnabled,
-			RegionBlacklist:      source.RegionBlacklist,
-			ResourceTypeFilter:   source.ResourceTypeFilter,
-			ResourceRegexFilters: source.ResourceRegexFilters,
+			IntegrationID:         source.IntegrationID,
+			IntegrationLabel:      source.IntegrationLabel,
+			S3Bucket:              source.S3Bucket,
+			S3PrefixLogTypes:      prefixLogTypes,
+			SourceEnabled:         source.SourceEnabled,
+			RegionBlacklist:       source.RegionBlacklist,
+			ResourceTypeBlacklist: source.ResourceTypeBlacklist,
+			ResourceRegexFilters:  source.ResourceRegexFilters,
 		},
 	}
 

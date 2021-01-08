@@ -257,14 +257,14 @@ func (api API) FullScan(input *models.FullScanInput) error {
 
 func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceIntegration {
 	metadata := models.SourceIntegrationMetadata{
-		CreatedAtTime:        time.Now(),
-		CreatedBy:            input.UserID,
-		IntegrationID:        uuid.New().String(),
-		IntegrationLabel:     input.IntegrationLabel,
-		IntegrationType:      input.IntegrationType,
-		RegionBlacklist:      input.RegionBlacklist,
-		ResourceTypeFilter:   input.ResourceTypeFilter,
-		ResourceRegexFilters: input.ResourceRegexFilters,
+		CreatedAtTime:         time.Now(),
+		CreatedBy:             input.UserID,
+		IntegrationID:         uuid.New().String(),
+		IntegrationLabel:      input.IntegrationLabel,
+		IntegrationType:       input.IntegrationType,
+		RegionBlacklist:       input.RegionBlacklist,
+		ResourceTypeBlacklist: input.ResourceTypeBlacklist,
+		ResourceRegexFilters:  input.ResourceRegexFilters,
 	}
 
 	switch input.IntegrationType {
