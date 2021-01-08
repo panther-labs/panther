@@ -198,6 +198,13 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 			zap.String("integration id", *scanRequest.IntegrationID), zap.Time("timestamp", time.Now()))
 		return nil, nil
 	}
+	// Check if resource type is filtered
+	for _, resourceType := range pollerResourceInput.ResourceTypeFilter {
+		if resourceType == *scanRequest.ResourceType {
+			zap.L().Info("resource type filtered", zap.String("resource type", resourceType))
+			return nil, nil
+		}
+	}
 
 	// If this is an individual resource scan or the region is provided,
 	// we don't need to lookup the active regions.
@@ -227,13 +234,6 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 			if region == *scanRequest.Region {
 				zap.L().Info("matched blacklisted region - skipping scan",
 					zap.String("region", region))
-				return nil, nil
-			}
-		}
-		// Check if resource type is filtered
-		for _, resourceType := range pollerResourceInput.ResourceTypeFilter {
-			if resourceType == *scanRequest.ResourceType {
-				zap.L().Info("resource type filtered", zap.String("resource type", resourceType))
 				return nil, nil
 			}
 		}
@@ -336,16 +336,6 @@ func singleResourceScan(
 
 	var resource interface{}
 	var err error
-
-	// Check if resource type is filtered
-	if scanRequest.ResourceType != nil && pollerInput.ResourceTypeFilter != nil {
-		for _, resourceType := range pollerInput.ResourceTypeFilter {
-			if resourceType == *scanRequest.ResourceType {
-				zap.L().Info("resource type filtered", zap.String("resource type", resourceType))
-				return nil, nil
-			}
-		}
-	}
 
 	// First, check if we've been rate limited recently while attempting to scan this resource. If
 	// so, discard the scan request. There is already one in the ether waiting to be picked up.
