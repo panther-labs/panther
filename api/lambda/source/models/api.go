@@ -113,7 +113,7 @@ type UpdateIntegrationSettingsInput struct {
 	SourceEnabled        *bool            `json:"sourceEnabled" validate:"omitempty"`
 	RegionBlacklist      []string         `json:"regionBlacklist" validate:"omitempty"`
 	ResourceTypeFilter   []string         `json:"resourceTypeFilter" validate:"omitempty"`
-	ResourceRegexFilters string           `json:"resourceRegexFilters" validate:"omitempty"`
+	ResourceRegexFilters []string         `json:"resourceRegexFilters" validate:"omitempty"`
 	KmsKey               string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
@@ -152,14 +152,18 @@ type FullScanInput struct {
 
 // GetIntegrationTemplateInput allows specification of what resources should be enabled/disabled in the template
 type GetIntegrationTemplateInput struct {
-	AWSAccountID       string `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
-	IntegrationType    string `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
-	IntegrationLabel   string `json:"integrationLabel" validate:"required,integrationLabel"`
-	RemediationEnabled *bool  `json:"remediationEnabled"`
-	CWEEnabled         *bool  `json:"cweEnabled"`
-	S3Bucket           string `json:"s3Bucket" validate:"omitempty,min=1"`
-	S3Prefix           string `json:"s3Prefix" validate:"omitempty,min=1"`
-	KmsKey             string `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
+	AWSAccountID         string   `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
+	IntegrationType      string   `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
+	IntegrationLabel     string   `json:"integrationLabel" validate:"required,integrationLabel"`
+	RemediationEnabled   *bool    `json:"remediationEnabled"`
+	CWEEnabled           *bool    `json:"cweEnabled"`
+	S3Bucket             string   `json:"s3Bucket" validate:"omitempty,min=1"`
+	S3Prefix             string   `json:"s3Prefix" validate:"omitempty,min=1"`
+	KmsKey               string   `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
+	SourceEnabled        *bool    `json:"sourceEnabled" validate:"omitempty"`
+	RegionBlacklist      []string `json:"regionBlacklist" validate:"omitempty"`
+	ResourceTypeFilter   []string `json:"resourceTypeFilter" validate:"omitempty"`
+	ResourceRegexFilters []string `json:"resourceRegexFilters" validate:"omitempty"`
 }
 
 //

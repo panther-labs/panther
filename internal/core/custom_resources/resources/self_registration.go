@@ -237,10 +237,14 @@ func putLogProcessingIntegration(properties SelfRegistrationProperties, prefixLo
 func updateLogProcessingIntegration(source *models.SourceIntegration, prefixLogTypes models.S3PrefixLogtypes) error {
 	input := &models.LambdaInput{
 		UpdateIntegrationSettings: &models.UpdateIntegrationSettingsInput{
-			IntegrationID:    source.IntegrationID,
-			IntegrationLabel: source.IntegrationLabel,
-			S3Bucket:         source.S3Bucket,
-			S3PrefixLogTypes: prefixLogTypes,
+			IntegrationID:        source.IntegrationID,
+			IntegrationLabel:     source.IntegrationLabel,
+			S3Bucket:             source.S3Bucket,
+			S3PrefixLogTypes:     prefixLogTypes,
+			SourceEnabled:        source.SourceEnabled,
+			RegionBlacklist:      source.RegionBlacklist,
+			ResourceTypeFilter:   source.ResourceTypeFilter,
+			ResourceRegexFilters: source.ResourceRegexFilters,
 		},
 	}
 
