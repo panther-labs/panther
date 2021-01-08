@@ -290,14 +290,6 @@ func processPartitionUpdates(ctx context.Context, api glueiface.GlueAPI, tasks [
 }
 
 func syncPartition(ctx context.Context, api glueiface.GlueAPI, tbl *glue.TableData, p *glue.Partition) error {
-	// FIXME: remove this in the future, this is for backward compatibility (we used to have 4 partitions, we now have 5)
-	if len(p.Values) < 5 {
-		partitionTime, err := awsglue.PartitionTimeFromValues(p.Values)
-		if err != nil {
-			return err
-		}
-		p.Values = append(p.Values, aws.String(strconv.Itoa(int(partitionTime.Unix()))))
-	}
 	desc := *p.StorageDescriptor
 	desc.Columns = tbl.StorageDescriptor.Columns
 	input := glue.UpdatePartitionInput{
@@ -310,8 +302,19 @@ func syncPartition(ctx context.Context, api glueiface.GlueAPI, tbl *glue.TableDa
 			StorageDescriptor: &desc,
 			Values:            p.Values,
 		},
-		PartitionValueList: p.Values[:len(p.Values)-1],
+		PartitionValueList: p.Values,
 		TableName:          tbl.Name,
+	}
+	// FIXME: remove this in the future, this is for backward compatibility (we used to have 4 partitions, we now have 5)
+	if len(p.Values) < 5 {
+		p0 := p
+		partitionTime, err := awsglue.PartitionTimeFromValues(p0.Values)
+		if err != nil {
+			return err
+		}
+		p0.Values = append(p0.Values, aws.String(strconv.Itoa(int(partitionTime.Unix()))))
+		input.PartitionInput.Values = p0.Values
+		input.PartitionValueList = p0.Values[:len(p0.Values)-1]
 	}
 	_, err := api.UpdatePartitionWithContext(ctx, &input)
 	return err
