@@ -47,8 +47,6 @@ type LambdaHandler struct {
 	AthenaClient          athenaiface.AthenaAPI
 	SQSClient             sqsiface.SQSAPI
 	Logger                *zap.Logger
-	// Clears a specific log type from the cache
-	ClearLogTypeCache func(name string)
 
 	// Glue partitions known to have been created.
 	partitionsCreated map[string]struct{}

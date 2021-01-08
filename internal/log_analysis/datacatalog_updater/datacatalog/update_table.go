@@ -32,10 +32,6 @@ type UpdateTablesEvent struct {
 }
 
 func (h *LambdaHandler) HandleUpdateTablesEvent(ctx context.Context, event *UpdateTablesEvent) error {
-	// We need to fetch a fresh entry for this log type
-	// This event is sent when a log type entry was updated so we need to make sure we do not use a stale entry
-	// from the cache
-	h.ClearLogTypeCache(event.LogType)
 	entry, err := h.Resolver.Resolve(ctx, event.LogType)
 	if err != nil {
 		return err

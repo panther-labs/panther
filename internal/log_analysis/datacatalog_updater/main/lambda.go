@@ -46,8 +46,7 @@ import (
 // The panther-datacatalog-updater lambda is responsible for managing Glue partitions as data is created.
 
 const (
-	maxRetries    = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
-	logTypeMaxAge = time.Minute
+	maxRetries = 20 // setting Max Retries to a higher number - we'd like to retry VERY hard before failing.
 )
 
 func main() {
@@ -85,14 +84,12 @@ func main() {
 		LambdaAPI:  lambdaClient,
 	}
 
-	cachedResolver := logtypes.NewCachedResolver(logTypeMaxAge, &logtypesapi.Resolver{
-		LogTypesAPI: logtypesAPI,
-	})
-
 	chain := logtypes.ChainResolvers(
 		registry.NativeLogTypesResolver(),
 		snapshotlogs.Resolver(),
-		cachedResolver,
+		&logtypesapi.Resolver{
+			LogTypesAPI: logtypesAPI,
+		},
 	)
 
 	// Log cases where a log type failed to resolve. Almost certainly something is amiss in the DDB.
@@ -121,14 +118,11 @@ func main() {
 			// append in snapshot logs which are always onboarded
 			return stringset.Append(reply.LogTypes, logtypes.CollectNames(snapshotlogs.LogTypes())...), nil
 		},
-		GlueClient: glue.New(clientsSession),
-		Resolver:   resolver,
-		// Store the clear cache of the underlying cached resolver.
-		// We use it on custom log updates to ensure we have the latest schema.
-		ClearLogTypeCache: cachedResolver.Forget,
-		AthenaClient:      athena.New(clientsSession),
-		SQSClient:         sqs.New(clientsSession),
-		Logger:            logger,
+		GlueClient:   glue.New(clientsSession),
+		Resolver:     resolver,
+		AthenaClient: athena.New(clientsSession),
+		SQSClient:    sqs.New(clientsSession),
+		Logger:       logger,
 	}
 
 	lambda.StartHandler(&handler)
