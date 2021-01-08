@@ -80,7 +80,7 @@ describe('CreateDataModel', () => {
     fireEvent.click(getByText('Save'));
 
     await waitFor(() =>
-      expect(history.location.pathname).toEqual(urls.logAnalysis.dataModels.details(dataModel.id))
+      expect(history.location.pathname).toEqual(urls.logAnalysis.dataModels.list())
     );
 
     // Expect analytics to have been called
