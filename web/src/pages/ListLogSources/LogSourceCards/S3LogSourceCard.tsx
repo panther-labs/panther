@@ -38,7 +38,6 @@ const S3LogSourceCard: React.FC<S3LogSourceCardProps> = ({ source }) => {
     <LogSourceCard logo={s3Logo} source={source}>
       <GenericItemCard.Value label="AWS Account ID" value={source.awsAccountId} />
       <GenericItemCard.Value label="S3 Bucket" value={source.s3Bucket} />
-      <GenericItemCard.Value label="S3 Prefix" value={source.s3Prefix} />
       <GenericItemCard.Value label="KMS Key" value={source.kmsKey} />
       <GenericItemCard.LineBreak />
       <GenericItemCard.Value

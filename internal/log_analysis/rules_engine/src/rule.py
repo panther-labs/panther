@@ -346,15 +346,15 @@ class Rule:
         return description
 
     def _get_destinations(self, event: Mapping, use_default_on_exception: bool = True) -> Optional[List[str]]:
-        if not hasattr(self._module, 'destination_override'):
+        if not hasattr(self._module, 'destinations'):
             return None
 
         try:
-            command = getattr(self._module, 'destination_override')
+            command = getattr(self._module, 'destinations')
             destinations = self._run_command(command, event, list())
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.warning('_get_destinations method raised exception. Exception: %s', err)
+                self.logger.warning('destinations method raised exception. Exception: %s', err)
                 return []
             raise
 
