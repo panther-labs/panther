@@ -35,10 +35,44 @@ type CreateTablesEvent struct {
 }
 
 func (h *LambdaHandler) HandleCreateTablesEvent(ctx context.Context, event *CreateTablesEvent) error {
-	if err := h.createOrUpdateTablesForLogTypes(ctx, event.LogTypes); err != nil {
+	// This event is only coming from an update to sources API.
+	// We only need to try creating the tables once.
+	logTypes := event.LogTypes
+	if len(logTypes) == 0 {
+		return nil
+	}
+	if err := h.createTablesForLogTypes(ctx, logTypes); err != nil {
 		return err
 	}
 	return h.createOrReplaceViewsForAllDeployedLogTables(ctx)
+}
+
+func (h *LambdaHandler) createTablesForLogTypes(ctx context.Context, logTypes []string) error {
+	// We map the log types to their 'base' log tables.
+	tables, err := resolveTables(ctx, h.Resolver, logTypes...)
+	if err != nil {
+		return err
+	}
+	for i, table := range tables {
+		logType := logTypes[i]
+		// FIXME: this is confusing, the gluetables package should NOT be expanding table metadata based on hard-wired logic
+		// This logic should be left to a 'central' module such as `pantherdb` and use 'abstract' Database/Table/Partition structs
+		// The glue-relevant actions can be abstracted to:
+		// - CreateDatabaseIfNotExists
+		// - CreateTableIfNotExists
+		// - CreateOrReplaceTable
+		// - CreatePartitionIfNotExists
+		// - CreateOrReplacePartition
+		// - ScanDatabases
+		// - ScanDatabaseTables
+		// - ScanTablePartitions
+		// These actions should be part of an interface that manages the data lake backend.
+		// We need methods that use abstract Database/Table/Partition structs that can contain info for all backends.
+		if _, err := gluetables.CreateTablesIfNotExist(ctx, h.GlueClient, h.ProcessedDataBucket, table); err != nil {
+			return errors.Wrapf(err, "failed to create or update tables for log type %q", logType)
+		}
+	}
+	return nil
 }
 
 func (h *LambdaHandler) createOrUpdateTablesForLogTypes(ctx context.Context, logTypes []string) error {
@@ -49,10 +83,22 @@ func (h *LambdaHandler) createOrUpdateTablesForLogTypes(ctx context.Context, log
 	}
 
 	for i, table := range tables {
-		// CreateOrUpdateGlueTables creates or updates *all* glue tables based on log tables.
-		// FIXME: this is confusing, the gluetables package should not be expanding table metadata based on hard-wired logic
+		logType := logTypes[i]
+		// FIXME: this is confusing, the gluetables package should NOT be expanding table metadata based on hard-wired logic
+		// This logic should be left to a 'central' module such as `pantherdb` and use 'abstract' Database/Table/Partition structs
+		// The glue-relevant actions can be abstracted to:
+		// - CreateDatabaseIfNotExists
+		// - CreateTableIfNotExists
+		// - CreateOrReplaceTable
+		// - CreatePartitionIfNotExists
+		// - CreateOrReplacePartition
+		// - ScanDatabases
+		// - ScanDatabaseTables
+		// - ScanTablePartitions
+		// These actions should be part of an interface that manages the data lake backend.
+		// We need methods that use abstract Database/Table/Partition structs that can contain info for all backends.
 		if _, err := gluetables.CreateOrUpdateGlueTables(h.GlueClient, h.ProcessedDataBucket, table); err != nil {
-			return errors.Wrapf(err, "failed to update tables for log type %q", logTypes[i])
+			return errors.Wrapf(err, "failed to create or update tables for log type %q", logType)
 		}
 	}
 	return nil
@@ -99,12 +145,15 @@ func resolveTables(ctx context.Context, r logtypes.Resolver, names ...string) ([
 		if entry == nil { // don't fail whole operation if missing data...
 			continue
 		}
-		eventSchema := entry.Schema()
-		desc := entry.Describe()
-		tableName := pantherdb.TableName(desc.Name)
-		db := pantherdb.DatabaseName(pantherdb.GetDataType(name))
-		meta := awsglue.NewGlueTableMetadata(db, tableName, desc.Description, awsglue.GlueTableHourly, eventSchema)
-		out = append(out, meta)
+		out = append(out, tableForEntry(entry))
 	}
 	return out, nil
+}
+
+func tableForEntry(entry logtypes.Entry) *awsglue.GlueTableMetadata {
+	eventSchema := entry.Schema()
+	desc := entry.Describe()
+	tableName := pantherdb.TableName(desc.Name)
+	db := pantherdb.DatabaseName(pantherdb.GetDataType(desc.Name))
+	return awsglue.NewGlueTableMetadata(db, tableName, desc.Description, awsglue.GlueTableHourly, eventSchema)
 }

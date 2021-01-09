@@ -33,7 +33,7 @@ import (
 var (
 	errPathOrMethodMissing       = errors.New("exactly one path or one method must be specified per mapping entry")
 	errMappingTooManyOptions     = errors.New("a path or a method, but not both, must be specified per mapping entry")
-	errMultipleDataModelsEnabled = errors.New("only one DataModel can be enabled per ResourceType")
+	errMultipleDataModelsEnabled = errors.New("only one DataModel can be enabled per LogType")
 )
 
 // CreateDataModel adds a new DataModel to the Dynamo table.
@@ -55,7 +55,7 @@ func writeDataModel(input *models.UpdateDataModelInput, create bool) *events.API
 
 	// we only need to check for conflicting enabled DataModels if the new one is
 	// going to be enabled
-	isEnabled, err := isSingleDataModelEnabled(input)
+	isEnabled, err := isSingleDataModelEnabled(input.ID, input.Enabled, input.LogTypes)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{
 			Body:       err.Error(),
@@ -84,7 +84,10 @@ func writeDataModel(input *models.UpdateDataModelInput, create bool) *events.API
 	if create {
 		if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {
 			if err == errExists {
-				return &events.APIGatewayProxyResponse{StatusCode: http.StatusConflict}
+				return &events.APIGatewayProxyResponse{
+					Body:       err.Error(),
+					StatusCode: http.StatusConflict,
+				}
 			}
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 		}
@@ -117,16 +120,16 @@ func validateUpdateDataModel(input *models.UpdateDataModelInput) error {
 }
 
 // check that only one DataModel is enabled per ResourceType/LogType
-func isSingleDataModelEnabled(input *models.UpdateDataModelInput) (bool, error) {
+func isSingleDataModelEnabled(dataModelID string, enabled bool, logTypes []string) (bool, error) {
 	// no need to check for conflicts if we aren't enabling the new DataModel
-	if !input.Enabled {
+	if !enabled {
 		return true, nil
 	}
 
 	enabledFilter := expression.Equal(expression.Name("enabled"), expression.Value(true))
-	idFilter := expression.NotEqual(expression.Name("id"), expression.Value(input.ID))
+	idFilter := expression.NotEqual(expression.Name("id"), expression.Value(dataModelID))
 	logTypeFilter := expression.AttributeNotExists(expression.Name("resourceTypes"))
-	for _, typeName := range input.LogTypes {
+	for _, typeName := range logTypes {
 		logTypeFilter = logTypeFilter.Or(expression.Contains(expression.Name("resourceTypes"), typeName))
 	}
 
