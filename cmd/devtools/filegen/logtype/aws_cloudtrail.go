@@ -53,7 +53,7 @@ func (ct *AWSCloudTrail) LogType() string {
 }
 
 func (ct *AWSCloudTrail) Filename(hour time.Time) string {
-	return cloudTrailFilePrefix + hour.Format(cloudTrailFileTimestampFormat) + "_" + uuid.New().String()
+	return cloudTrailFilePrefix + hour.Format(cloudTrailFileTimestampFormat) + "_" + uuid.New().String() + ".json"
 }
 
 func (ct *AWSCloudTrail) NewFile(hour time.Time) *filegen.File {
