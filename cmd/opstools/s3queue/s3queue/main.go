@@ -61,9 +61,9 @@ var (
 func main() {
 	opstools.SetUsage(banner)
 
-	logger = opstools.MustBuildLogger(*DEBUG)
-
 	flag.Parse()
+
+	logger = opstools.MustBuildLogger(*DEBUG)
 
 	sess, err := session.NewSession()
 	if err != nil {
@@ -163,6 +163,9 @@ func validateFlags() {
 	if *CONCURRENCY <= 0 {
 		err = errors.New("-concurrency must be > 0")
 		return
+	}
+	if float64(*CONCURRENCY) > *RATE {
+		*CONCURRENCY = int(*RATE)
 	}
 
 	if *S3PATH == "" {
