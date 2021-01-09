@@ -19,14 +19,20 @@ package main
  */
 
 import (
+	"context"
+
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	lambdaclient "github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/sqs"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/kelseyhightower/envconfig"
+	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
+	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
@@ -34,8 +40,9 @@ import (
 )
 
 var config = struct {
-	Debug             bool
-	LogTypesTableName string `required:"true" split_words:"true"`
+	Debug               bool
+	LogTypesTableName   string `required:"true" split_words:"true"`
+	DataCatalogQueueURL string `required:"true" split_words:"true"`
 }{}
 
 func main() {
@@ -50,7 +57,7 @@ func main() {
 	// Syncing the zap.Logger always results in Lambda errors. Commented code kept as a reminder.
 	// defer logger.Sync()
 
-	awsSession := session.Must(session.NewSession())
+	session := session.Must(session.NewSession())
 	nativeLogTypes := logtypes.CollectNames(registry.NativeLogTypes())
 	// FIXME: uncomment the below line to add the resource history to the of available logTypes and allow rules to target
 	// nativeLogTypes = append(nativeLogTypes, logtypes.CollectNames(snapshotlogs.LogTypes())...)
@@ -60,10 +67,14 @@ func main() {
 			return nativeLogTypes
 		},
 		Database: &logtypesapi.DynamoDBLogTypes{
-			DB:        dynamodb.New(awsSession),
+			DB:        dynamodb.New(session),
 			TableName: config.LogTypesTableName,
 		},
-		LambdaClient: lambdaclient.New(awsSession),
+		DataCatalog: datacatalog.Client{
+			QueueURL: config.DataCatalogQueueURL,
+			SQSAPI:   sqs.New(session),
+		},
+		LambdaClient: lambdaclient.New(session),
 	}
 
 	validate := validator.New()
@@ -72,6 +83,29 @@ func main() {
 		// use case-insensitive route matching
 		RouteName: lambdamux.IgnoreCase,
 		Validate:  validate.Struct,
+		// We want the API to return errors as something to display to the user.
+		// We decorate each route handler so that all errors are properly encapsulated as APIError and logged if needed
+		// Any APIErrors returned by the routes are not logged as these were properly handled by the API
+		// All errors are return as `{"error": {"code": "ERR_CODE", "message": "ERROR_MSG"}}` in the reply.
+		Decorate: func(name string, handler lambdamux.Handler) lambdamux.Handler {
+			return lambdamux.HandlerFunc(func(ctx context.Context, payload []byte) ([]byte, error) {
+				reply, err := handler.Invoke(ctx, payload)
+				if err != nil {
+					apiErr := logtypesapi.AsAPIError(err)
+					// If the error was not an APIError we log it.
+					if apiErr == nil {
+						// Add the route name as "action" field
+						lambdalogger.FromContext(ctx).Error("action failed", zap.String("action", name), zap.Error(err))
+						// We wrap it as APIError to be serialized
+						apiErr = logtypesapi.WrapAPIError(err)
+					}
+					return jsoniter.Marshal(logtypesapi.ErrorReply{
+						Error: apiErr,
+					})
+				}
+				return reply, nil
+			})
+		},
 	}
 
 	mux.MustHandleMethods(api)
