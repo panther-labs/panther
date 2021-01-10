@@ -164,6 +164,7 @@ func validateFlags() {
 		err = errors.New("-concurrency must be > 0")
 		return
 	}
+	// This ensures more continuous average activity for small FPS
 	if float64(*CONCURRENCY) > *RATE {
 		*CONCURRENCY = int(*RATE)
 	}
