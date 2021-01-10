@@ -20,6 +20,7 @@ package logtype
 
 import (
 	"io"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -53,7 +54,9 @@ func (ct *AWSCloudTrail) LogType() string {
 }
 
 func (ct *AWSCloudTrail) Filename(hour time.Time) string {
-	return cloudTrailFilePrefix + hour.Format(cloudTrailFileTimestampFormat) + "_" + uuid.New().String() + ".json"
+	// https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-examples.html
+	fileName := strings.Replace(uuid.New().String(), "-", "", -1) + ".json" // UniqueString cannot have '-'
+	return cloudTrailFilePrefix + hour.Format(cloudTrailFileTimestampFormat) + "_" + fileName
 }
 
 func (ct *AWSCloudTrail) NewFile(hour time.Time) *filegen.File {
