@@ -35,7 +35,7 @@ const (
 
 	// https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-examples.html
 	cloudTrailFilePrefix          = "111122223333_CloudTrail_us-east-2_"
-	cloudTrailFileTimestampFormat = "20060102T150Z" // e.g., 20150801T0210Z
+	cloudTrailFileTimestampFormat = "20060102T1504Z" // e.g., 20150801T0210Z
 )
 
 type AWSCloudTrail struct {
