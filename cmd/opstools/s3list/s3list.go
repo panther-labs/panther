@@ -131,7 +131,7 @@ func ListPath(ctx context.Context, input *Input) (err error) {
 		})
 	}
 
-	// infinite loop (unless error)
+	// infinite loop (unless canceled, limit exceeded or error)
 	if input.Loop {
 		for !stop {
 			err = listObjects()
