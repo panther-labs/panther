@@ -34,12 +34,6 @@ class PantherEvent(ImmutableDict):  # pylint: disable=R0901
         super().__init__(event)
         self.data_model = data_model
 
-    def extra_constructor_arguments(self) -> dict:
-        return {'data_model': self.data_model}
-
-    def conversion_overrides(self) -> dict:
-        return {dict: self.__class__}
-
     def udm(self, key: str) -> Any:
         """Converts standard data model field to logtype field"""
         if not self.data_model:
@@ -51,7 +45,7 @@ class PantherEvent(ImmutableDict):  # pylint: disable=R0901
             if json_path:
                 matches = json_path.find(self._container)
                 if len(matches) == 1:
-                    return matches[0].value
+                    return self._ensure_immutable(matches[0].value)
                 if len(matches) > 1:
                     raise Exception(
                         'JSONPath [{}] in DataModel [{}], matched multiple fields.'.format(json_path, self.data_model.data_model_id)
@@ -60,6 +54,6 @@ class PantherEvent(ImmutableDict):  # pylint: disable=R0901
             # we are dealing with method
             method = self.data_model.methods.get(key)
             if callable(method):
-                return method(self._container)
+                return self._ensure_immutable(method(self._container))
         # no matches, return None by default
         return None

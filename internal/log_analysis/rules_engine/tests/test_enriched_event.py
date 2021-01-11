@@ -18,6 +18,7 @@ from unittest import TestCase
 
 from ..src.data_model import DataModel
 from ..src.enriched_event import PantherEvent
+from ..src.immutable import ImmutableList, ImmutableDict
 
 
 class TestEnrichedEvent(TestCase):
@@ -157,3 +158,52 @@ class TestEnrichedEvent(TestCase):
         except Exception:  # pylint: disable=broad-except
             exception = True
         self.assertTrue(exception)
+
+    def test_assignment_not_allowed_on_getitem_access(self) -> None:
+        # No DataModel given
+        event = {'dst': {'ip': '1.1.1.1', 'port': '2222'}, 'extra': [{'t': 10}]}
+        enriched_event = PantherEvent(event, None)
+        with self.assertRaises(TypeError):
+            # pylint: disable=E1137
+            enriched_event['dst'] = 1  # type: ignore
+        self.assertIsInstance(enriched_event['dst'], ImmutableDict)
+        with self.assertRaises(TypeError):
+            # pylint: disable=E1137
+            enriched_event['dst']['ip'] = 1
+        self.assertIsInstance(enriched_event['extra'], ImmutableList)
+        self.assertIsInstance(enriched_event['extra'][0], ImmutableDict)
+
+    def test_assignment_not_allowed_on_udm_access(self) -> None:
+        event = {'dst_ip': '1.1.1.1', 'dst_port': '2222',
+                 'extra': {'timestamp': 1, 'array': [1, 2]}}
+        data_model = DataModel(
+            {
+                'versionId': 'version',
+                'mappings': [{
+                    'name': 'destination_ip',
+                    'path': 'dst_ip'
+                }, {
+                    'name': 'extra_fields',
+                    'path': 'extra'
+                }],
+                'id': 'data_model_id'
+            }
+        )
+        enriched_event = PantherEvent(event, data_model)
+        self.assertEqual(ImmutableDict(event['extra']),
+                         enriched_event.udm('extra_fields'))
+        self.assertIsInstance(enriched_event.udm('extra_fields'), ImmutableDict)
+        self.assertIsInstance(enriched_event.udm('extra_fields')['array'], ImmutableList)
+        with self.assertRaises(TypeError):
+            enriched_event.udm('extra_fields')['timestamp'] = 10
+
+    def test_nested_list_immutability(self) -> None:
+        event = {
+            'headers': [{
+                'User-Agent': 'Chrome',
+                'Host': 'google.com'
+            }]
+        }
+        enriched_event = PantherEvent(event, None)
+        self.assertIsInstance(enriched_event['headers'], ImmutableList)
+        self.assertIsInstance(enriched_event['headers'][0], ImmutableDict)

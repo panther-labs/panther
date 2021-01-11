@@ -37,32 +37,24 @@ class ImmutableContainerMixin(ABC):
 
     def __init__(self, container: Any):
         self._container = self._shallow_copy(container)
-        conversions = self.__class__._CONVERSIONS.copy()
-        conversions.update(self.conversion_overrides())
-        self._registered_conversions = tuple(conversions.items())
+        self._registered_conversions = tuple(self.__class__._CONVERSIONS.items())
         self._registered_types = tuple(klass for klass, _ in self._registered_conversions)
-
-    def conversion_overrides(self) -> dict:  # pylint: disable=R0201
-        """Override mutable to immutable type correspondence for this class/instance"""
-        # TODO: redesign the type conversion registration process
-        return {}
 
     @abstractmethod
     def _shallow_copy(self, obj: Any) -> Any:
         """Creates a shallow copy of the given object"""
 
-    def extra_constructor_arguments(self) -> Dict:  # pylint: disable=R0201
-        """Define additional constructor arguments that must be
-           passed through to nested objects"""
-        return {}
-
     @no_type_check
     def __getitem__(self, item):
-        value = self._container[item]
+        value = self._ensure_immutable(self._container[item])
+        return value
+
+    def _ensure_immutable(self, value: Any) -> Any:
         if isinstance(value, self._registered_types):
             for mutable_type, immutable_type in self._registered_conversions:
                 if isinstance(value, mutable_type):
-                    value = immutable_type(value, **self.extra_constructor_arguments())
+                    value = immutable_type(value)
+                    break
         return value
 
     def __repr__(self) -> str:
@@ -95,6 +87,17 @@ class ImmutableList(ImmutableContainerMixin, Sequence):  # pylint: disable=R0901
 
     def _shallow_copy(self, obj: list) -> tuple:
         return tuple(obj)
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, self.__class__):
+            return self._container == other._container
+
+        if isinstance(other, (tuple, list)):
+            # Allow comparison with lists and tuples
+            return len(self._container) == len(other) and \
+                   self._container == tuple(other)
+
+        return False
 
 
 ImmutableList.register()

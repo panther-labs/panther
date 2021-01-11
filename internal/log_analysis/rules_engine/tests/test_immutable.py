@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from copy import deepcopy
 from unittest import TestCase
 
 from ..src.immutable import ImmutableDict, ImmutableList
@@ -50,6 +51,44 @@ class TestImmutableDict(TestCase):
         self.assertEqual(self.immutable_dict['a'][0]['b'], 1)
         self.assertEqual(self.immutable_dict['d']['e']['f'], True)
 
+    def test_equality(self) -> None:
+        # Equality with dict
+        self.assertEqual(self.immutable_dict, self.initial_dict)
+        # Equality with another instance
+        equal_dict = deepcopy(self.initial_dict)
+        other_immutable_dict = ImmutableDict(equal_dict)
+        self.assertEqual(other_immutable_dict, self.immutable_dict)
+
+    def test_shallow_copy(self) -> None:
+        self.assertEqual(self.immutable_dict._container, self.initial_dict)
+        self.assertIsNot(self.immutable_dict._container, self.initial_dict)
+
+    def test_get(self) -> None:
+        self.assertIsInstance(self.immutable_dict.get('d'), ImmutableDict)
+        self.assertIsInstance(self.immutable_dict.get('a'), ImmutableList)
+
+    def test_ensure_immutable(self) -> None:
+        initial_dict = {'a': [[1, 2], [3, 4]],
+                        'b': {'c': {'d': 1}},
+                        't': 10,
+                        'e': {'f': [{'g': 90}]}}
+        immutable_dict = ImmutableDict(initial_dict)
+        # List of lists with immutable elements
+        self.assertIsInstance(immutable_dict['a'], ImmutableList)
+        self.assertIsInstance(immutable_dict['a'][0], ImmutableList)
+        self.assertEqual(immutable_dict['a'][0][1], 2)
+        # Two-level nested dictionary
+        self.assertIsInstance(immutable_dict['b'], ImmutableDict)
+        self.assertIsInstance(immutable_dict['b']['c'], ImmutableDict)
+        self.assertEqual(immutable_dict['b']['c']['d'], 1)
+        # Plain immutable object at top-level
+        self.assertIsInstance(immutable_dict['t'], int)
+        self.assertEqual(immutable_dict['t'], 10)
+        # Two-level dictionary with nested list as value
+        self.assertIsInstance(immutable_dict['e']['f'], ImmutableList)
+        self.assertIsInstance(immutable_dict['e']['f'][0], ImmutableDict)
+        self.assertEqual(immutable_dict['e']['f'][0]['g'], 90)
+
 
 class TestImmutableList(TestCase):
 
@@ -68,6 +107,26 @@ class TestImmutableList(TestCase):
 
     def test_getitem(self) -> None:
         self.assertEqual(self.immutable_list[0], self.initial_list[0])
+
+    def test_equality(self) -> None:
+        # List
+        self.assertEqual(self.initial_list, self.immutable_list)
+        # Tuple
+        self.assertEqual(tuple(self.initial_list), self.immutable_list)
+        # Same class
+        self.assertEqual(ImmutableList(self.initial_list.copy()),
+                         self.immutable_list)
+
+    def test_shallow_copy(self) -> None:
+        self.assertEqual(list(self.immutable_list._container), self.initial_list)
+        self.assertIsNot(self.immutable_list._container, self.initial_list)
+
+    def test_ensure_immutable(self) -> None:
+        initial_list = [[1, 2], [3, 4], {'a': {'b': 1}}]
+        immutable_list = ImmutableList(initial_list)
+        self.assertIsInstance(immutable_list[0], ImmutableList)
+        self.assertIsInstance(immutable_list[2], ImmutableDict)
+        self.assertIsInstance(immutable_list[2]['a'], ImmutableDict)
 
 
 class TestImmutableNestedList(TestCase):
