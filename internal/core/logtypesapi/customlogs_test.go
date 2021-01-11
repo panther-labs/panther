@@ -98,10 +98,9 @@ func TestAPI_PutCustomLog(t *testing.T) {
 			LogType:  "Custom.Event",
 			Revision: 2,
 		})
-		assert.Nil(err)
-		assert.Nil(reply.Result)
-		assert.NotNil(reply.Error)
-		assert.Equal(logtypesapi.ErrNotFound, reply.Error.Code)
+		assert.NotNil(err)
+		assert.Nil(reply)
+		assert.Equal(logtypesapi.ErrNotFound, logtypesapi.AsAPIError(err).Code)
 	}
 
 	expect = logtypesapi.CustomLog{
@@ -114,18 +113,18 @@ func TestAPI_PutCustomLog(t *testing.T) {
 		LogType:   "Custom.Event",
 		CustomLog: expect,
 	})
-	assert.NoError(err)
-	assert.NotNil(reply)
-	assert.NotNil(reply.Error)
+	assert.Error(err)
+	assert.Nil(reply)
+	assert.Equal(logtypesapi.ErrInvalidUpdate, logtypesapi.AsAPIError(err).Code)
 
 	{
 		reply, err := api.DelCustomLog(ctx, &logtypesapi.DelCustomLogInput{
 			LogType:  "Custom.Event",
 			Revision: 2,
 		})
-		assert.NoError(err)
-		assert.NotNil(reply.Error)
-		assert.Equal(reply.Error.Code, logtypesapi.ErrRevisionConflict)
+		assert.Error(err)
+		assert.Nil(reply)
+		assert.Equal(logtypesapi.ErrRevisionConflict, logtypesapi.AsAPIError(err).Code)
 	}
 	{
 		reply, err := api.DelCustomLog(ctx, &logtypesapi.DelCustomLogInput{
@@ -140,18 +139,18 @@ func TestAPI_PutCustomLog(t *testing.T) {
 			LogType:  "Custom.Event",
 			Revision: 1,
 		})
-		assert.NoError(err)
-		assert.NotNil(reply.Error)
-		assert.Equal(reply.Error.Code, logtypesapi.ErrRevisionConflict)
+		assert.Error(err)
+		assert.Nil(reply)
+		assert.Equal(logtypesapi.ErrRevisionConflict, logtypesapi.AsAPIError(err).Code)
 	}
 	{
 		reply, err := api.DelCustomLog(ctx, &logtypesapi.DelCustomLogInput{
 			LogType:  "Custom.InUse",
 			Revision: 1,
 		})
-		assert.NoError(err)
-		assert.NotNil(reply.Error)
-		assert.Equal(reply.Error.Code, logtypesapi.ErrInUse)
+		assert.Error(err)
+		assert.Nil(reply)
+		assert.Equal(logtypesapi.ErrInUse, logtypesapi.AsAPIError(err).Code)
 	}
 	lambdaMock.AssertExpectations(t)
 }
