@@ -307,14 +307,14 @@ func syncPartition(ctx context.Context, api glueiface.GlueAPI, tbl *glue.TableDa
 	}
 	// FIXME: remove this in the future, this is for backward compatibility (we used to have 4 partitions, we now have 5)
 	if len(p.Values) < 5 {
-		p0 := p
-		partitionTime, err := awsglue.PartitionTimeFromValues(p0.Values)
+		partitionTime, err := awsglue.PartitionTimeFromValues(p.Values)
 		if err != nil {
 			return err
 		}
-		p0.Values = append(p0.Values, aws.String(strconv.Itoa(int(partitionTime.Unix()))))
-		input.PartitionInput.Values = p0.Values
-		input.PartitionValueList = p0.Values[:len(p0.Values)-1]
+		updatedPartitionValues := make([]*string, 5)
+		copy(updatedPartitionValues, p.Values)
+		updatedPartitionValues[4] = aws.String(strconv.Itoa(int(partitionTime.Unix())))
+		input.PartitionInput.Values = updatedPartitionValues
 	}
 	_, err := api.UpdatePartitionWithContext(ctx, &input)
 	return err
