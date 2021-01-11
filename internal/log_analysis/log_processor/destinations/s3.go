@@ -152,8 +152,6 @@ func (d *S3Destination) SendEvents(parsedEventChannel chan *parsers.Result, errC
 	// accumulate results gzip'd in a buffer
 	failed := false // set to true on error and loop will drain channel
 	bufferSet := d.newS3EventBufferSet()
-	eventsProcessed := 0
-
 	zap.L().Debug("starting to read events from channel")
 	run := true
 	for run {
@@ -212,7 +210,7 @@ func (d *S3Destination) SendEvents(parsedEventChannel chan *parsers.Result, errC
 	close(sendChan)
 	sendWaitGroup.Wait() // wait until all writes to s3 are done
 
-	zap.L().Debug("finished sending s3 files", zap.Int("events", eventsProcessed))
+	zap.L().Debug("finished sending s3 files")
 }
 
 // sendData puts data in S3 and sends notification to SNS
