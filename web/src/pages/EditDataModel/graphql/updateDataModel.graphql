@@ -1,0 +1,5 @@
+mutation UpdateDataModel($input: AddOrUpdateDataModelInput!) {
+  updateDataModel(input: $input) {
+    ...DataModelFull
+  }
+}

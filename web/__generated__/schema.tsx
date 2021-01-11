@@ -66,19 +66,19 @@ export type AddCustomLogOutput = {
   record?: Maybe<CustomLogRecord>;
 };
 
-export type AddDataModelInput = {
+export type AddGlobalPythonModuleInput = {
+  id: Scalars['ID'];
+  description: Scalars['String'];
+  body: Scalars['String'];
+};
+
+export type AddOrUpdateDataModelInput = {
   displayName: Scalars['String'];
   id: Scalars['ID'];
   enabled: Scalars['Boolean'];
   logTypes: Array<Scalars['String']>;
   mappings: Array<DataModelMappingInput>;
   body?: Maybe<Scalars['String']>;
-};
-
-export type AddGlobalPythonModuleInput = {
-  id: Scalars['ID'];
-  description: Scalars['String'];
-  body: Scalars['String'];
 };
 
 export type AddPolicyInput = {
@@ -795,6 +795,7 @@ export type Mutation = {
   testPolicy: TestPolicyResponse;
   testRule: TestRuleResponse;
   updateAlertStatus: Array<AlertSummary>;
+  updateDataModel: DataModel;
   updateDestination?: Maybe<Destination>;
   updateComplianceIntegration: ComplianceIntegration;
   updateS3LogIntegration: S3LogIntegration;
@@ -812,7 +813,7 @@ export type MutationAddCustomLogArgs = {
 };
 
 export type MutationAddDataModelArgs = {
-  input: AddDataModelInput;
+  input: AddOrUpdateDataModelInput;
 };
 
 export type MutationAddDestinationArgs = {
@@ -905,6 +906,10 @@ export type MutationTestRuleArgs = {
 
 export type MutationUpdateAlertStatusArgs = {
   input: UpdateAlertStatusInput;
+};
+
+export type MutationUpdateDataModelArgs = {
+  input: AddOrUpdateDataModelInput;
 };
 
 export type MutationUpdateDestinationArgs = {
@@ -1060,6 +1065,7 @@ export type Query = {
   generalSettings: GeneralSettings;
   getComplianceIntegration: ComplianceIntegration;
   getComplianceIntegrationTemplate: IntegrationTemplate;
+  getDataModel?: Maybe<DataModel>;
   getS3LogIntegration: S3LogIntegration;
   getS3LogIntegrationTemplate: IntegrationTemplate;
   getSqsLogIntegration: SqsLogSourceIntegration;
@@ -1106,6 +1112,10 @@ export type QueryGetComplianceIntegrationArgs = {
 
 export type QueryGetComplianceIntegrationTemplateArgs = {
   input: GetComplianceIntegrationTemplateInput;
+};
+
+export type QueryGetDataModelArgs = {
+  id: Scalars['ID'];
 };
 
 export type QueryGetS3LogIntegrationArgs = {
@@ -1689,6 +1699,8 @@ export type ResolversTypes = {
   IntegrationItemHealthStatus: ResolverTypeWrapper<IntegrationItemHealthStatus>;
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: ResolverTypeWrapper<IntegrationTemplate>;
+  DataModel: ResolverTypeWrapper<DataModel>;
+  DataModelMapping: ResolverTypeWrapper<DataModelMapping>;
   S3LogIntegration: ResolverTypeWrapper<S3LogIntegration>;
   S3PrefixLogTypes: ResolverTypeWrapper<S3PrefixLogTypes>;
   S3LogIntegrationHealth: ResolverTypeWrapper<S3LogIntegrationHealth>;
@@ -1753,10 +1765,8 @@ export type ResolversTypes = {
   Mutation: ResolverTypeWrapper<{}>;
   AddCustomLogInput: AddCustomLogInput;
   AddCustomLogOutput: ResolverTypeWrapper<AddCustomLogOutput>;
-  AddDataModelInput: AddDataModelInput;
+  AddOrUpdateDataModelInput: AddOrUpdateDataModelInput;
   DataModelMappingInput: DataModelMappingInput;
-  DataModel: ResolverTypeWrapper<DataModel>;
-  DataModelMapping: ResolverTypeWrapper<DataModelMapping>;
   DestinationInput: DestinationInput;
   DestinationConfigInput: DestinationConfigInput;
   SlackConfigInput: SlackConfigInput;
@@ -1870,6 +1880,8 @@ export type ResolversParentTypes = {
   IntegrationItemHealthStatus: IntegrationItemHealthStatus;
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: IntegrationTemplate;
+  DataModel: DataModel;
+  DataModelMapping: DataModelMapping;
   S3LogIntegration: S3LogIntegration;
   S3PrefixLogTypes: S3PrefixLogTypes;
   S3LogIntegrationHealth: S3LogIntegrationHealth;
@@ -1936,10 +1948,8 @@ export type ResolversParentTypes = {
   Mutation: {};
   AddCustomLogInput: AddCustomLogInput;
   AddCustomLogOutput: AddCustomLogOutput;
-  AddDataModelInput: AddDataModelInput;
+  AddOrUpdateDataModelInput: AddOrUpdateDataModelInput;
   DataModelMappingInput: DataModelMappingInput;
-  DataModel: DataModel;
-  DataModelMapping: DataModelMapping;
   DestinationInput: DestinationInput;
   DestinationConfigInput: DestinationConfigInput;
   SlackConfigInput: SlackConfigInput;
@@ -2727,6 +2737,12 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationUpdateAlertStatusArgs, 'input'>
   >;
+  updateDataModel?: Resolver<
+    ResolversTypes['DataModel'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationUpdateDataModelArgs, 'input'>
+  >;
   updateDestination?: Resolver<
     Maybe<ResolversTypes['Destination']>,
     ParentType,
@@ -2955,6 +2971,12 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryGetComplianceIntegrationTemplateArgs, 'input'>
+  >;
+  getDataModel?: Resolver<
+    Maybe<ResolversTypes['DataModel']>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryGetDataModelArgs, 'id'>
   >;
   getS3LogIntegration?: Resolver<
     ResolversTypes['S3LogIntegration'],
