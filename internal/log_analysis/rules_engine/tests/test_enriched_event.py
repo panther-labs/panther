@@ -161,17 +161,17 @@ class TestEnrichedEvent(TestCase):
         self.assertTrue(exception)
 
     def test_udm_method_cannot_mutate_event(self) -> None:
-        event = {'src_ip': '', 'extra': {'t': 10},
-                 'dst': {'ip': '1.2.3.4'}}
+        event = {'src_ip': '', 'extra': {'t': 10}, 'dst': {'ip': '1.2.3.4'}}
         event_copy = deepcopy(event)
         data_model = DataModel(
             {
-                'body': 'def get_source_ip(event):'
-                        '\n\tif event["src_ip"] == "":'
-                        '\n\t\tevent["src_ip"] = None'
-                        '\n\tif event["extra"]["t"] == 10:'
-                        '\n\t\tevent["extra"]["t"] = 11'
-                        '\n\treturn (event["src_ip"], event["extra"]["t"])',
+                'body':
+                    'def get_source_ip(event):'
+                    '\n\tif event["src_ip"] == "":'
+                    '\n\t\tevent["src_ip"] = None'
+                    '\n\tif event["extra"]["t"] == 10:'
+                    '\n\t\tevent["extra"]["t"] = 11'
+                    '\n\treturn (event["src_ip"], event["extra"]["t"])',
                 'versionId': 'version',
                 'mappings': [{
                     'name': 'destination_ip',
