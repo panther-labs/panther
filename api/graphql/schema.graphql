@@ -10,7 +10,7 @@ schema {
 }
 
 type Mutation {
-  addCustomLog(input: CustomLogInput!): GetCustomLogOutput!
+  addCustomLog(input: AddOrUpdateCustomLogInput!): GetCustomLogOutput!
   addDataModel(input: AddOrUpdateDataModelInput!): DataModel!
   addDestination(input: DestinationInput!): Destination
   addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
@@ -36,7 +36,7 @@ type Mutation {
   testRule(input: TestRuleInput!): TestRuleResponse!
   updateAlertStatus(input: UpdateAlertStatusInput!): [AlertSummary!]!
   updateDataModel(input: AddOrUpdateDataModelInput!): DataModel!
-  updateCustomLog(input: CustomLogInput!): GetCustomLogOutput!
+  updateCustomLog(input: AddOrUpdateCustomLogInput!): GetCustomLogOutput!
   updateDestination(input: DestinationInput!): Destination
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
   updateS3LogIntegration(input: UpdateS3LogIntegrationInput!): S3LogIntegration!
@@ -105,7 +105,7 @@ input DeleteCustomLogInput {
   revision: Int!
 }
 
-input CustomLogInput {
+input AddOrUpdateCustomLogInput {
   revision: Int
   logType: String!
   description: String!

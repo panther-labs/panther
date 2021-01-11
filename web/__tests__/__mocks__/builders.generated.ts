@@ -20,6 +20,7 @@ import {
   ActiveSuppressCount,
   AddComplianceIntegrationInput,
   AddGlobalPythonModuleInput,
+  AddOrUpdateCustomLogInput,
   AddOrUpdateDataModelInput,
   AddPolicyInput,
   AddRuleInput,
@@ -36,7 +37,6 @@ import {
   ComplianceIntegrationHealth,
   ComplianceItem,
   ComplianceStatusCounts,
-  CustomLogInput,
   CustomLogOutput,
   CustomLogRecord,
   CustomWebhookConfig,
@@ -203,6 +203,18 @@ export const buildAddGlobalPythonModuleInput = (
     id: 'id' in overrides ? overrides.id : '6b0f1c64-e650-48e8-abcf-37c23c6cf854',
     description: 'description' in overrides ? overrides.description : 'Dynamic',
     body: 'body' in overrides ? overrides.body : 'methodologies',
+  };
+};
+
+export const buildAddOrUpdateCustomLogInput = (
+  overrides: Partial<AddOrUpdateCustomLogInput> = {}
+): AddOrUpdateCustomLogInput => {
+  return {
+    revision: 'revision' in overrides ? overrides.revision : 114,
+    logType: 'logType' in overrides ? overrides.logType : 'Unbranded Cotton Hat',
+    description: 'description' in overrides ? overrides.description : 'synthesizing',
+    referenceURL: 'referenceURL' in overrides ? overrides.referenceURL : 'yellow',
+    logSpec: 'logSpec' in overrides ? overrides.logSpec : 'Decentralized',
   };
 };
 
@@ -456,16 +468,6 @@ export const buildComplianceStatusCounts = (
     error: 'error' in overrides ? overrides.error : 71,
     fail: 'fail' in overrides ? overrides.fail : 488,
     pass: 'pass' in overrides ? overrides.pass : 154,
-  };
-};
-
-export const buildCustomLogInput = (overrides: Partial<CustomLogInput> = {}): CustomLogInput => {
-  return {
-    revision: 'revision' in overrides ? overrides.revision : 856,
-    logType: 'logType' in overrides ? overrides.logType : 'driver',
-    description: 'description' in overrides ? overrides.description : 'Avon',
-    referenceURL: 'referenceURL' in overrides ? overrides.referenceURL : 'Specialist',
-    logSpec: 'logSpec' in overrides ? overrides.logSpec : 'compelling',
   };
 };
 

@@ -25,7 +25,7 @@ import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type UpdateCustomLogVariables = {
-  input: Types.CustomLogInput;
+  input: Types.AddOrUpdateCustomLogInput;
 };
 
 export type UpdateCustomLog = {
@@ -36,7 +36,7 @@ export type UpdateCustomLog = {
 };
 
 export const UpdateCustomLogDocument = gql`
-  mutation UpdateCustomLog($input: CustomLogInput!) {
+  mutation UpdateCustomLog($input: AddOrUpdateCustomLogInput!) {
     updateCustomLog(input: $input) {
       error {
         message

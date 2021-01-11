@@ -58,6 +58,14 @@ export type AddGlobalPythonModuleInput = {
   body: Scalars['String'];
 };
 
+export type AddOrUpdateCustomLogInput = {
+  revision?: Maybe<Scalars['Int']>;
+  logType: Scalars['String'];
+  description: Scalars['String'];
+  referenceURL: Scalars['String'];
+  logSpec: Scalars['String'];
+};
+
 export type AddOrUpdateDataModelInput = {
   displayName: Scalars['String'];
   id: Scalars['ID'];
@@ -256,14 +264,6 @@ export enum ComplianceStatusEnum {
   Fail = 'FAIL',
   Pass = 'PASS',
 }
-
-export type CustomLogInput = {
-  revision?: Maybe<Scalars['Int']>;
-  logType: Scalars['String'];
-  description: Scalars['String'];
-  referenceURL: Scalars['String'];
-  logSpec: Scalars['String'];
-};
 
 export type CustomLogOutput = {
   __typename?: 'CustomLogOutput';
@@ -810,7 +810,7 @@ export type Mutation = {
 };
 
 export type MutationAddCustomLogArgs = {
-  input: CustomLogInput;
+  input: AddOrUpdateCustomLogInput;
 };
 
 export type MutationAddDataModelArgs = {
@@ -914,7 +914,7 @@ export type MutationUpdateDataModelArgs = {
 };
 
 export type MutationUpdateCustomLogArgs = {
-  input: CustomLogInput;
+  input: AddOrUpdateCustomLogInput;
 };
 
 export type MutationUpdateDestinationArgs = {
@@ -1768,7 +1768,7 @@ export type ResolversTypes = {
   Error: ResolverTypeWrapper<Error>;
   CustomLogRecord: ResolverTypeWrapper<CustomLogRecord>;
   Mutation: ResolverTypeWrapper<{}>;
-  CustomLogInput: CustomLogInput;
+  AddOrUpdateCustomLogInput: AddOrUpdateCustomLogInput;
   AddOrUpdateDataModelInput: AddOrUpdateDataModelInput;
   DataModelMappingInput: DataModelMappingInput;
   DestinationInput: DestinationInput;
@@ -1951,7 +1951,7 @@ export type ResolversParentTypes = {
   Error: Error;
   CustomLogRecord: CustomLogRecord;
   Mutation: {};
-  CustomLogInput: CustomLogInput;
+  AddOrUpdateCustomLogInput: AddOrUpdateCustomLogInput;
   AddOrUpdateDataModelInput: AddOrUpdateDataModelInput;
   DataModelMappingInput: DataModelMappingInput;
   DestinationInput: DestinationInput;

@@ -82,11 +82,7 @@ const CustomLogDetails: React.FC = () => {
     <Card p={6} mb={6}>
       <Breadcrumbs.Actions>
         <Flex spacing={4} justify="flex-end">
-          <LinkButton
-            icon="pencil"
-            aria-label="Edit Custom Log"
-            to={urls.logAnalysis.customLogs.edit(customLog.logType)}
-          >
+          <LinkButton icon="pencil" to={urls.logAnalysis.customLogs.edit(customLog.logType)}>
             Edit Log
           </LinkButton>
           <Button
