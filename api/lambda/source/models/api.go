@@ -108,12 +108,12 @@ type UpdateIntegrationSettingsInput struct {
 	CWEEnabled              *bool            `json:"cweEnabled"`
 	RemediationEnabled      *bool            `json:"remediationEnabled"`
 	ScanIntervalMins        int              `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
+	SourceEnabled           *bool            `json:"sourceEnabled" validate:"omitempty"`
+	RegionIgnoreList        []string         `json:"regionIgnoreList"`
+	ResourceTypeIgnoreList  []string         `json:"resourceTypeIgnoreList"`
+	ResourceRegexIgnoreList []string         `json:"resourceRegexIgnoreList"`
 	S3Bucket                string           `json:"s3Bucket" validate:"omitempty,min=1"`
 	S3PrefixLogTypes        S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
-	SourceEnabled           *bool            `json:"sourceEnabled" validate:"omitempty"`
-	RegionIgnoreList        []string         `json:"regionIgnoreList" validate:"omitempty"`
-	ResourceTypeIgnoreList  []string         `json:"resourceTypeIgnoreList" validate:"omitempty"`
-	ResourceRegexIgnoreList []string         `json:"resourceRegexIgnoreList" validate:"omitempty"`
 	KmsKey                  string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
@@ -157,13 +157,13 @@ type GetIntegrationTemplateInput struct {
 	IntegrationLabel        string   `json:"integrationLabel" validate:"required,integrationLabel"`
 	RemediationEnabled      *bool    `json:"remediationEnabled"`
 	CWEEnabled              *bool    `json:"cweEnabled"`
-	S3Bucket                string   `json:"s3Bucket" validate:"omitempty,min=1"`
-	S3Prefix                string   `json:"s3Prefix" validate:"omitempty,min=1"`
-	KmsKey                  string   `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 	SourceEnabled           *bool    `json:"sourceEnabled" validate:"omitempty"`
 	RegionIgnoreList        []string `json:"regionIgnoreList" validate:"omitempty"`
 	ResourceTypeIgnoreList  []string `json:"resourceTypeIgnoreList" validate:"omitempty"`
 	ResourceRegexIgnoreList []string `json:"resourceRegexIgnoreList" validate:"omitempty"`
+	S3Bucket                string   `json:"s3Bucket" validate:"omitempty,min=1"`
+	S3Prefix                string   `json:"s3Prefix" validate:"omitempty,min=1"`
+	KmsKey                  string   `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 }
 
 //

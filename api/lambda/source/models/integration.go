@@ -61,17 +61,17 @@ type SourceIntegrationMetadata struct {
 	CWEEnabled         *bool     `json:"cweEnabled,omitempty"`
 	ScanIntervalMins   int       `json:"scanIntervalMins,omitempty"`
 
-	// fields specific for an s3 integration (plus AWSAccountID, StackName)
-	S3Bucket          string           `json:"s3Bucket,omitempty"`
-	S3PrefixLogTypes  S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty"`
-	KmsKey            string           `json:"kmsKey,omitempty"`
-	LogProcessingRole string           `json:"logProcessingRole,omitempty"`
-
 	// optional fields for snapshot-poller filtering
 	SourceEnabled           *bool    `json:"sourceEnabled,omitempty"`
 	RegionIgnoreList        []string `json:"regionIgnoreList,omitempty"`
 	ResourceTypeIgnoreList  []string `json:"resourceTypeIgnoreList,omitempty"`
 	ResourceRegexIgnoreList []string `json:"resourceRegexIgnoreList,omitempty"`
+
+	// fields specific for an s3 integration (plus AWSAccountID, StackName)
+	S3Bucket          string           `json:"s3Bucket,omitempty"`
+	S3PrefixLogTypes  S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty"`
+	KmsKey            string           `json:"kmsKey,omitempty"`
+	LogProcessingRole string           `json:"logProcessingRole,omitempty"`
 
 	StackName string `json:"stackName,omitempty"`
 
