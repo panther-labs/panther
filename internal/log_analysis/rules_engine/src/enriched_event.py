@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from collections.abc import Mapping
-from copy import deepcopy
 from typing import Any, Optional
 
 from .data_model import DataModel
@@ -55,6 +54,6 @@ class PantherEvent(ImmutableDict):  # pylint: disable=R0901
             # we are dealing with method
             method = self.data_model.methods.get(key)
             if callable(method):
-                return self._ensure_immutable(method(deepcopy(self._container)))
+                return self._ensure_immutable(method(self._ensure_immutable(self._container)))
         # no matches, return None by default
         return None

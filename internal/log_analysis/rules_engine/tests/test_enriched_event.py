@@ -184,7 +184,8 @@ class TestEnrichedEvent(TestCase):
             }
         )
         enriched_event = PantherEvent(event, data_model)
-        self.assertTupleEqual(enriched_event.udm('source_ip'), (None, 11))
+        with self.assertRaises(TypeError):
+            enriched_event.udm('source_ip')
         self.assertEqual(event_copy, event)
 
     def test_assignment_not_allowed_on_getitem_access(self) -> None:
