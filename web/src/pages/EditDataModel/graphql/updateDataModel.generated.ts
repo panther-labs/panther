@@ -24,67 +24,67 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type CreateDataModelVariables = {
+export type UpdateDataModelVariables = {
   input: Types.AddOrUpdateDataModelInput;
 };
 
-export type CreateDataModel = { addDataModel: DataModelFull };
+export type UpdateDataModel = { updateDataModel: DataModelFull };
 
-export const CreateDataModelDocument = gql`
-  mutation CreateDataModel($input: AddOrUpdateDataModelInput!) {
-    addDataModel(input: $input) {
+export const UpdateDataModelDocument = gql`
+  mutation UpdateDataModel($input: AddOrUpdateDataModelInput!) {
+    updateDataModel(input: $input) {
       ...DataModelFull
     }
   }
   ${DataModelFull}
 `;
-export type CreateDataModelMutationFn = ApolloReactCommon.MutationFunction<
-  CreateDataModel,
-  CreateDataModelVariables
+export type UpdateDataModelMutationFn = ApolloReactCommon.MutationFunction<
+  UpdateDataModel,
+  UpdateDataModelVariables
 >;
 
 /**
- * __useCreateDataModel__
+ * __useUpdateDataModel__
  *
- * To run a mutation, you first call `useCreateDataModel` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateDataModel` returns a tuple that includes:
+ * To run a mutation, you first call `useUpdateDataModel` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateDataModel` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createDataModel, { data, loading, error }] = useCreateDataModel({
+ * const [updateDataModel, { data, loading, error }] = useUpdateDataModel({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useCreateDataModel(
-  baseOptions?: ApolloReactHooks.MutationHookOptions<CreateDataModel, CreateDataModelVariables>
+export function useUpdateDataModel(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateDataModel, UpdateDataModelVariables>
 ) {
-  return ApolloReactHooks.useMutation<CreateDataModel, CreateDataModelVariables>(
-    CreateDataModelDocument,
+  return ApolloReactHooks.useMutation<UpdateDataModel, UpdateDataModelVariables>(
+    UpdateDataModelDocument,
     baseOptions
   );
 }
-export type CreateDataModelHookResult = ReturnType<typeof useCreateDataModel>;
-export type CreateDataModelMutationResult = ApolloReactCommon.MutationResult<CreateDataModel>;
-export type CreateDataModelMutationOptions = ApolloReactCommon.BaseMutationOptions<
-  CreateDataModel,
-  CreateDataModelVariables
+export type UpdateDataModelHookResult = ReturnType<typeof useUpdateDataModel>;
+export type UpdateDataModelMutationResult = ApolloReactCommon.MutationResult<UpdateDataModel>;
+export type UpdateDataModelMutationOptions = ApolloReactCommon.BaseMutationOptions<
+  UpdateDataModel,
+  UpdateDataModelVariables
 >;
-export function mockCreateDataModel({
+export function mockUpdateDataModel({
   data,
   variables,
   errors,
 }: {
-  data: CreateDataModel;
-  variables?: CreateDataModelVariables;
+  data: UpdateDataModel;
+  variables?: UpdateDataModelVariables;
   errors?: GraphQLError[];
 }) {
   return {
-    request: { query: CreateDataModelDocument, variables },
+    request: { query: UpdateDataModelDocument, variables },
     result: { data, errors },
   };
 }
