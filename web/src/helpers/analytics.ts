@@ -72,6 +72,7 @@ export enum EventEnum {
   SignedIn = 'Signed in successfully',
   AddedCustomLog = 'Added Custom Log',
   AddedDataModel = 'Added Data Model',
+  UpdatedDataModel = 'Updated Data Model',
   DeletedCustomLog = 'Deleted Custom Log',
   AddedRule = 'Added Rule',
   AddedPolicy = 'Added Policy',
@@ -117,6 +118,11 @@ interface AddedCustomLogEvent {
 
 interface AddedDataModelEvent {
   event: EventEnum.AddedDataModel;
+  src: SrcEnum.DataModels;
+}
+
+interface UpdatedDataModelEvent {
+  event: EventEnum.UpdatedDataModel;
   src: SrcEnum.DataModels;
 }
 
@@ -215,6 +221,7 @@ interface BulkUpdatedAlertStatus extends AlertStatusEvents {
 type TrackEvent =
   | AddedDestinationEvent
   | AddedDataModelEvent
+  | UpdatedDataModelEvent
   | SignInEvent
   | AddedRuleEvent
   | AddedPolicyEvent
@@ -247,6 +254,7 @@ export enum TrackErrorEnum {
   FailedToAddRule = 'Failed to create Rule',
   FailedToAddCustomLog = 'Failed to create a Custom Log',
   FailedToAddDataModel = 'Failed to create a Data Model',
+  FailedToUpdateDataModel = 'Failed to update a Data Model',
   FailedToDeleteCustomLog = 'Failed to delete a Custom Log',
   FailedToAddLogSource = 'Failed to add log source',
   FailedToUpdateLogSource = 'Failed to update log source',
@@ -286,6 +294,11 @@ interface AddDataModelError {
   src: SrcEnum.DataModels;
 }
 
+interface UpdateDataModelError {
+  event: TrackErrorEnum.FailedToUpdateDataModel;
+  src: SrcEnum.DataModels;
+}
+
 interface UpdateComplianceSourceError {
   event: TrackErrorEnum.FailedToUpdateComplianceSource;
   src: SrcEnum.ComplianceSources;
@@ -320,6 +333,7 @@ interface AddCustomLogError extends CustomLogError {
 type TrackError =
   | AddDestinationError
   | AddDataModelError
+  | UpdateDataModelError
   | TestDestinationError
   | AddRuleError
   | MfaError
