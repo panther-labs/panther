@@ -1,4 +1,4 @@
-package logtypesapi_test
+package transact
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,33 +19,26 @@ package logtypesapi_test
  */
 
 import (
-	"context"
+	"reflect"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/pkg/errors"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/stretchr/testify/require"
-
-	"github.com/panther-labs/panther/internal/core/logtypesapi"
 )
 
-// TestCase implements logtypes.ExternalAPI
-// TODO: Generate test cases with go generate
-type TestCase struct {
-	ListLogTypesOutput []string
-}
-
-func (t *TestCase) IndexLogTypes(_ context.Context) ([]string, error) {
-	return t.ListLogTypesOutput, nil
-}
-
-func TestWrapAPIError(t *testing.T) {
-	awsErr := awserr.New("foo", "error message", nil)
-	err := errors.Wrap(awsErr, "wrapped")
-	apiErr := logtypesapi.WrapAPIError(err)
+func TestDDB(t *testing.T) {
 	assert := require.New(t)
-	assert.NotNil(apiErr)
-	assert.Equal("foo", apiErr.Code)
-	assert.Equal("wrapped: foo: error message", apiErr.Message)
-	assert.Equal(err, apiErr.Unwrap())
+	e := expression.Expression{}
+	assert.Nil(e.Condition())
+	assert.Nil(e.Update())
+	assert.Nil(e.Values())
+	assert.Nil(e.Names())
+	assert.Nil(e.Filter())
+	assert.Nil(e.KeyCondition())
+	assert.Nil(e.Projection())
+
+	zeroCond := expression.ConditionBuilder{}
+	eqCond := expression.Equal(expression.Name("foo"), expression.Value("bar"))
+	assert.False(reflect.DeepEqual(zeroCond, eqCond))
+	assert.False(reflect.DeepEqual(zeroCond, zeroCond.Not()))
 }
