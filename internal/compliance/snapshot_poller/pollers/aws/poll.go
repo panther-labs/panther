@@ -369,12 +369,10 @@ func singleResourceScan(
 			return nil, nil
 		}
 		// Check if ResourceID matches the integration's regex filter
-		matched, matchErr := utils.MatchRegexIgnoreList(pollerInput.ResourceRegexIgnoreList, *scanRequest.ResourceID)
-		if matchErr != nil {
-			return nil, matchErr
-		}
-		if matched {
-			return nil, nil
+		if ignore, err := pollerInput.ShouldIgnoreResource(*scanRequest.ResourceID); ignore || err != nil {
+			if err != nil || ignore {
+				return nil, err
+			}
 		}
 		resource, err = pollFunction(pollerInput, resourceARN, scanRequest)
 	} else {

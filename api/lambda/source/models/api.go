@@ -108,7 +108,7 @@ type UpdateIntegrationSettingsInput struct {
 	CWEEnabled              *bool            `json:"cweEnabled"`
 	RemediationEnabled      *bool            `json:"remediationEnabled"`
 	ScanIntervalMins        int              `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
-	SourceEnabled           *bool            `json:"sourceEnabled" validate:"omitempty"`
+	SourceEnabled           *bool            `json:"sourceEnabled"`
 	RegionIgnoreList        []string         `json:"regionIgnoreList"`
 	ResourceTypeIgnoreList  []string         `json:"resourceTypeIgnoreList"`
 	ResourceRegexIgnoreList []string         `json:"resourceRegexIgnoreList"`

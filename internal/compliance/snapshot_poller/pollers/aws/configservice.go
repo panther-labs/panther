@@ -72,6 +72,10 @@ func PollConfigService(
 	if err != nil {
 		return nil, err
 	}
+	// Handles situation where the config service is ignored
+	if snapshot == nil {
+		return nil, nil
+	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(pollerResourceInput.AuthSourceParsedARN.AccountID)
 	return snapshot, nil
@@ -153,12 +157,10 @@ func buildConfigServiceSnapshot(
 	}
 	// Check if ResourceID matches the integration's regex filter
 	if pollerInput != nil {
-		matched, err := utils.MatchRegexIgnoreList(pollerInput.ResourceRegexIgnoreList, *recorder.Name)
-		if err != nil {
-			return nil, err
-		}
-		if matched {
-			return nil, nil
+		if ignore, err := pollerInput.ShouldIgnoreResource(*recorder.Name); ignore || err != nil {
+			if err != nil || ignore {
+				return nil, err
+			}
 		}
 	}
 
@@ -198,6 +200,10 @@ func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels
 			configServiceSnapshot, err := buildConfigServiceSnapshot(configServiceSvc, recorder, *regionID, pollerInput)
 			if err != nil {
 				return nil, nil, err
+			}
+			// Handles the situation where the resource is ignored
+			if configServiceSnapshot == nil {
+				continue
 			}
 			configServiceSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 

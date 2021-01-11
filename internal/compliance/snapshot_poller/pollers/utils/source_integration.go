@@ -19,8 +19,6 @@ package utils
  */
 
 import (
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -87,32 +85,4 @@ func GetIntegration(integrationID string) (integration *models.SourceIntegration
 		zap.L().Warn("target integration id not found", zap.String("target integration id", integrationID))
 	}
 	return result, nil
-}
-
-func MatchRegexIgnoreList(globs []string, resourceARN string) (matched bool, err error) {
-	for _, glob := range globs {
-		if glob == "" {
-			continue
-		}
-		// First,  escape any regex special characters
-		escaped := regexp.QuoteMeta(glob)
-
-		// Wildcards in the original pattern are now escaped literals - convert back
-		// NOTE: currently no way for user to specify a glob that would match a literal '*'
-		regex := "^" + strings.ReplaceAll(escaped, `\*`, `.*`) + "$"
-		matcher, err := regexp.Compile(regex)
-		if err != nil {
-			// We are building the regex, so it should always be valid
-			zap.L().Error("invalid regex",
-				zap.String("originalPattern", glob),
-				zap.String("transformedRegex", regex),
-				zap.Error(err),
-			)
-			continue
-		}
-		if matcher.MatchString(resourceARN) {
-			return true, nil
-		}
-	}
-	return false, nil
 }

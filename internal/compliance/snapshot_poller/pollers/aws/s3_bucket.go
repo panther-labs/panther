@@ -49,12 +49,10 @@ func getS3Client(pollerResourceInput *awsmodels.ResourcePollerInput, region stri
 	// Saves an unnecessary check
 	if resourceARN != nil {
 		// Check if ResourceID matches the integration's regex filter
-		matched, err := utils.MatchRegexIgnoreList(pollerResourceInput.ResourceRegexIgnoreList, resourceARN.String())
-		if err != nil {
-			return nil, err
-		}
-		if matched {
-			return nil, nil
+		if ignore, err := pollerResourceInput.ShouldIgnoreResource(resourceARN.String()); ignore || err != nil {
+			if err != nil || ignore {
+				return nil, err
+			}
 		}
 	}
 
@@ -367,12 +365,13 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddR
 			continue
 		}
 		// Check if ResourceID matches the integration's regex filter
-		matched, err := utils.MatchRegexIgnoreList(pollerInput.ResourceRegexIgnoreList, *bucket.Name)
-		if err != nil {
-			return nil, nil, err
-		}
-		if matched {
-			continue
+		if ignore, err := pollerInput.ShouldIgnoreResource(*bucket.Name); ignore || err != nil {
+			if err != nil {
+				return nil, nil, err
+			}
+			if ignore {
+				continue
+			}
 		}
 		region, err := getBucketLocation(s3Svc, bucket.Name)
 		if err != nil {

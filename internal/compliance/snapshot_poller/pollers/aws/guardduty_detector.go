@@ -72,6 +72,9 @@ func PollGuardDutyDetector(
 	if err != nil {
 		return nil, err
 	}
+	if snapshot == nil {
+		return nil, nil
+	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(parsedResourceID.AccountID)
 	snapshot.Region = aws.String(parsedResourceID.Region)
@@ -149,12 +152,10 @@ func buildGuardDutyDetectorSnapshot(
 
 	// Check if ResourceID matches the integration's regex filter
 	if pollerInput != nil {
-		matched, err := utils.MatchRegexIgnoreList(pollerInput.ResourceRegexIgnoreList, *detectorID)
-		if err != nil {
-			return nil, err
-		}
-		if matched {
-			return nil, nil
+		if ignore, err := pollerInput.ShouldIgnoreResource(*detectorSnapshot.ID); ignore || err != nil {
+			if err != nil || ignore {
+				return nil, err
+			}
 		}
 	}
 	detectorSnapshot.FindingPublishingFrequency = detectorDetails.FindingPublishingFrequency
@@ -200,6 +201,9 @@ func PollGuardDutyDetectors(pollerInput *awsmodels.ResourcePollerInput) ([]apimo
 			detectorSnapshot, err := buildGuardDutyDetectorSnapshot(guardDutySvc, detectorID, pollerInput)
 			if err != nil {
 				return nil, nil, err
+			}
+			if detectorSnapshot == nil {
+				continue
 			}
 
 			resourceID := utils.GenerateResourceID(

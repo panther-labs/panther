@@ -250,12 +250,10 @@ func buildEksClusterSnapshot(
 
 	// Check if ResourceID matches the integration's regex filter
 	if pollerInput != nil {
-		matched, err := utils.MatchRegexIgnoreList(pollerInput.ResourceRegexIgnoreList, *details.Arn)
-		if err != nil {
-			return nil, err
-		}
-		if matched {
-			return nil, nil
+		if ignore, err := pollerInput.ShouldIgnoreResource(*details.Arn); ignore || err != nil {
+			if err != nil || ignore {
+				return nil, err
+			}
 		}
 	}
 
@@ -314,6 +312,9 @@ func PollEksClusters(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.Ad
 		eksClusterSnapshot, err := buildEksClusterSnapshot(eksSvc, clusterName, pollerInput)
 		if err != nil {
 			return nil, nil, err
+		}
+		if eksClusterSnapshot == nil {
+			continue
 		}
 		eksClusterSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		eksClusterSnapshot.Region = pollerInput.Region
