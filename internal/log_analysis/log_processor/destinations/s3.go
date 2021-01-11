@@ -174,8 +174,9 @@ func (d *S3Destination) SendEvents(parsedEventChannel chan *parsers.Result, errC
 			}
 
 			if failed {
-				// If we have encountered already a failure
-				// just ignore the messages
+				// If we have encountered already a failure just ignore the messages
+				// Note that we don't stop when we encounter a failure but use this control variable
+				// since we want to make sure we drain the `parsedEventChannel`
 				break
 			}
 
