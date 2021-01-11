@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from copy import deepcopy
 from unittest import TestCase
 
 from ..src.data_model import DataModel
@@ -158,6 +159,33 @@ class TestEnrichedEvent(TestCase):
         except Exception:  # pylint: disable=broad-except
             exception = True
         self.assertTrue(exception)
+
+    def test_udm_method_cannot_mutate_event(self) -> None:
+        event = {'src_ip': '', 'extra': {'t': 10},
+                 'dst': {'ip': '1.2.3.4'}}
+        event_copy = deepcopy(event)
+        data_model = DataModel(
+            {
+                'body': 'def get_source_ip(event):'
+                        '\n\tif event["src_ip"] == "":'
+                        '\n\t\tevent["src_ip"] = None'
+                        '\n\tif event["extra"]["t"] == 10:'
+                        '\n\t\tevent["extra"]["t"] = 11'
+                        '\n\treturn (event["src_ip"], event["extra"]["t"])',
+                'versionId': 'version',
+                'mappings': [{
+                    'name': 'destination_ip',
+                    'path': '$.dst.*'
+                }, {
+                    'name': 'source_ip',
+                    'method': 'get_source_ip'
+                }],
+                'id': 'data_model_id'
+            }
+        )
+        enriched_event = PantherEvent(event, data_model)
+        self.assertTupleEqual(enriched_event.udm('source_ip'), (None, 11))
+        self.assertEqual(event_copy, event)
 
     def test_assignment_not_allowed_on_getitem_access(self) -> None:
         # No DataModel given
