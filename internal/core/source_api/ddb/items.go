@@ -42,6 +42,12 @@ type Integration struct {
 	ScanIntervalMins     int        `json:"scanIntervalMins,omitempty"`
 	IntegrationStatus
 
+	// fields for configurable cloud security sources
+	SourceEnabled           *bool    `json:"sourceEnabled"`
+	RegionIgnoreList        []string `json:"regionIgnoreList"`
+	ResourceTypeIgnoreList  []string `json:"resourceTypeIgnoreList"`
+	ResourceRegexIgnoreList []string `json:"resourceRegexIgnoreList"`
+
 	// fields specific for an s3 integration (plus AWSAccountID, StackName)
 	S3Bucket         string                  `json:"s3Bucket,omitempty"`
 	S3PrefixLogTypes models.S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty"`
@@ -52,12 +58,6 @@ type Integration struct {
 	KmsKey            string   `json:"kmsKey,omitempty"`
 	StackName         string   `json:"stackName,omitempty"`
 	LogProcessingRole string   `json:"logProcessingRole,omitempty"`
-
-	// fields for configurable cloud security sources
-	SourceEnabled           *bool    `json:"sourceEnabled" validate:"omitempty"`
-	RegionIgnoreList        []string `json:"regionIgnoreList" validate:"omitempty"`
-	ResourceTypeIgnoreList  []string `json:"resourceTypeIgnoreList" validate:"omitempty"`
-	ResourceRegexIgnoreList []string `json:"resourceRegexIgnoreList" validate:"omitempty"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }
