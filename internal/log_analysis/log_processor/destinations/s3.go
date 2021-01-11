@@ -153,13 +153,10 @@ func (d *S3Destination) SendEvents(parsedEventChannel chan *parsers.Result, errC
 	failed := false // set to true on error and loop will drain channel
 	bufferSet := d.newS3EventBufferSet()
 	eventsProcessed := 0
-	zap.L().Debug("starting to read events from channel")
-	for event := range parsedEventChannel {
-		if failed { // drain channel
-			continue
-		}
 
-		// Check if any buffer has held data for longer than maxDuration
+	zap.L().Debug("starting to read events from channel")
+	run := true
+	for run {
 		select {
 		case <-flushExpired.C:
 			now := time.Now() // NOTE: not the same as the tick time which can be older
@@ -170,34 +167,43 @@ func (d *S3Destination) SendEvents(parsedEventChannel chan *parsers.Result, errC
 				}
 				sendChan <- tooOldBuffer
 			}
-		default: // makes select non-blocking
-		}
-		sendBuffers, err := bufferSet.writeEvent(event)
-		if err != nil {
-			failed = true
-			zap.L().Debug(`aborting log processing: failed to write event`, zap.Error(err), zap.String(`logType`, event.PantherLogType))
-			errChan <- errors.Wrapf(err, "failed to write event %s", event.PantherLogType)
-			continue
-		}
-		// buffers needs flushing
-		for _, buf := range sendBuffers {
-			sendChan <- buf
-		}
+		case event, ok := <-parsedEventChannel:
+			if !ok {
+				// If channel has been closed,
+				// stop the loop
+				run = false
+				break
+			}
 
-		eventsProcessed++
+			if failed {
+				// If we have encountered already a failure
+				// just ignore the messages
+				break
+			}
+
+			sendBuffers, err := bufferSet.writeEvent(event)
+			if err != nil {
+				failed = true
+				zap.L().Debug(`aborting log processing: failed to write event`, zap.Error(err), zap.String(`logType`, event.PantherLogType))
+				errChan <- errors.Wrapf(err, "failed to write event %s", event.PantherLogType)
+				continue
+			}
+			// buffers needs flushing
+			for _, buf := range sendBuffers {
+				sendChan <- buf
+			}
+		}
 	}
 
-	if failed {
-		zap.L().Debug("failed, returning after draining parsedEventsChannel")
+	if !failed {
+		zap.L().Debug("output channel closed, sending last events")
+		// If the channel has been closed send the buffered messages before terminating
+		_ = bufferSet.apply(func(buffer *s3EventBuffer) (bool, error) {
+			bufferSet.removeBuffer(buffer) // bufferSet is not thread safe, do this here
+			sendChan <- buffer
+			return false, nil
+		})
 	}
-
-	zap.L().Debug("output channel closed, sending last events")
-	// If the channel has been closed send the buffered messages before terminating
-	_ = bufferSet.apply(func(buffer *s3EventBuffer) (bool, error) {
-		bufferSet.removeBuffer(buffer) // bufferSet is not thread safe, do this here
-		sendChan <- buffer
-		return false, nil
-	})
 
 	// FIXME: closing the channel here is appropriate but we risk a panic leaving the write goroutine open forever.
 	// causing a memory leak. To fix this we need to have the reading of results in a goroutine and keep the writing here.
