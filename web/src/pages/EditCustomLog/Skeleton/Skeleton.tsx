@@ -25,14 +25,9 @@ const EditCustomLogPageSkeleton: React.FC = () => {
   return (
     <FadeIn from="bottom">
       <Flex direction="column" spacing={5}>
-        <Panel title="CustomLog Settings">
-          <TablePlaceholder rowCount={5} />
-        </Panel>
-        <Panel title="Policy Body">
+        <Panel title="Edit Custom Schema">
+          <TablePlaceholder rowCount={1} rowHeight={10} />
           <TablePlaceholder rowCount={1} rowHeight={100} />
-        </Panel>
-        <Panel title="Test Record">
-          <TablePlaceholder rowCount={5} />
         </Panel>
       </Flex>
     </FadeIn>
