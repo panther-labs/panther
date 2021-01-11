@@ -72,7 +72,7 @@ export enum EventEnum {
   SignedIn = 'Signed in successfully',
   AddedCustomLog = 'Added Custom Log',
   AddedDataModel = 'Added Data Model',
-  UpdatedDataModel = 'Updatted Data Model',
+  UpdatedDataModel = 'Updated Data Model',
   DeletedCustomLog = 'Deleted Custom Log',
   AddedRule = 'Added Rule',
   AddedPolicy = 'Added Policy',
