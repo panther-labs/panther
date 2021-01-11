@@ -17,23 +17,36 @@
  */
 
 import React from 'react';
-import { Link, Text, useSnackbar } from 'pouncejs';
+import { Alert, Link, Text, useSnackbar } from 'pouncejs';
 import Panel from 'Components/Panel';
 import CustomLogForm from 'Components/forms/CustomLogForm';
 import { CUSTOM_LOG_TYPES_DOC_URL } from 'Source/constants';
+import { ErrorCodeEnum } from 'Generated/schema';
 import { extractErrorMessage } from 'Helpers/utils';
-import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
+import {
+  EventEnum,
+  SrcEnum,
+  trackError,
+  TrackErrorEnum,
+  trackEvent,
+  PageViewEnum,
+} from 'Helpers/analytics';
 import { compose } from 'Helpers/compose';
+import Page404 from 'Pages/404';
 import withSEO from 'Hoc/withSEO';
 import useRouter from 'Hooks/useRouter';
+
+import useTrackPageView from 'Hooks/useTrackPageView';
 import { useUpdateCustomLog } from './graphql/updateCustomLog.generated';
 import { useGetCustomLogDetails } from '../CustomLogDetails/graphql/getCustomLogDetails.generated';
 import Skeleton from './Skeleton';
 
 const EditCustomLog: React.FC = () => {
+  useTrackPageView(PageViewEnum.CustomLogEditing);
+
   const { match: { params: { logType } } } = useRouter<{ logType: string }>(); // prettier-ignore
   const { pushSnackbar } = useSnackbar();
-  const { data, loading } = useGetCustomLogDetails({
+  const { data, loading, error: uncontrolledError } = useGetCustomLogDetails({
     variables: { input: { logType } },
   });
 
@@ -62,7 +75,32 @@ const EditCustomLog: React.FC = () => {
   if (loading) {
     return <Skeleton />;
   }
-  const { record: customLog } = data.getCustomLog;
+
+  if (uncontrolledError) {
+    return (
+      <Alert
+        variant="error"
+        title="Couldn't load your custom schema"
+        description={extractErrorMessage(uncontrolledError)}
+      />
+    );
+  }
+
+  const { record: customLog, error: controlledError } = data.getCustomLog;
+
+  if (controlledError) {
+    if (controlledError.code === ErrorCodeEnum.NotFound) {
+      return <Page404 />;
+    }
+
+    return (
+      <Alert
+        variant="error"
+        title="Couldn't load your custom schema"
+        description={controlledError.message}
+      />
+    );
+  }
 
   const initialValues = {
     revision: customLog.revision,

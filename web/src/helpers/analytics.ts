@@ -55,6 +55,7 @@ export enum PageViewEnum {
   Home = 'Home',
   Support = 'Support',
   CustomLogDetails = 'Custom Log Details Screen',
+  CustomLogEditing = 'Custom Log Edit Screen',
 }
 
 interface TrackPageViewProps {
