@@ -21,6 +21,7 @@ import { Box, Card, FadeIn, SimpleGrid } from 'pouncejs';
 import urls from 'Source/urls';
 import s3Logo from 'Assets/s3-minimal-logo.svg';
 import sqsLogo from 'Assets/sqs-minimal-logo.svg';
+import duoLogo from 'Assets/duo-minimal-logo.svg';
 import eventBridgeLogo from 'Assets/eventbridge-minimal-logo.svg';
 import oktaLogo from 'Assets/okta-minimal-logo.svg';
 import gsuiteLogo from 'Assets/gsuite-minimal-logo.svg';
@@ -70,6 +71,12 @@ const logSourcesConfig = [
     logo: slackLogo,
     title: 'Slack',
     type: 'slack',
+    disabled: true,
+  },
+  {
+    logo: duoLogo,
+    title: 'Duo',
+    type: 'duo',
     disabled: true,
   },
   {
