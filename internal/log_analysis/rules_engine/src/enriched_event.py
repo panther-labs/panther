@@ -15,45 +15,37 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from collections.abc import Mapping
-from typing import Any, Iterator
+from typing import Any, Optional
 
 from .data_model import DataModel
-from .logging import get_logger
+from .immutable import ImmutableDict
 
 
-class EnrichedEvent(Mapping):
+class PantherEvent(ImmutableDict):  # pylint: disable=R0901
     """Panther enriched event with unified data model (udm) access."""
 
-    def __init__(self, event: Mapping, data_model: DataModel):
+    def __init__(self, event: Mapping, data_model: Optional[DataModel]):
         """Create data model lookups
 
         Args:
-            event: Dictionary representing the event
+            event: Dictionary representing the event.
             data_model: the data model used for the LogType associated with this event
         """
-        self.logger = get_logger()
-        self._data = event
+        super().__init__(event)
         self.data_model = data_model
-
-    def __getitem__(self, key: str) -> Any:
-        return self._data[key]
-
-    def __iter__(self) -> Iterator:
-        return iter(self._data)
-
-    def __len__(self) -> int:
-        return len(self._data)
 
     def udm(self, key: str) -> Any:
         """Converts standard data model field to logtype field"""
+        if not self.data_model:
+            raise Exception("a data model hasn't been specified")
         # access values via standardized fields
         if key in self.data_model.paths:
             # we are dealing with a jsonpath
             json_path = self.data_model.paths.get(key)
             if json_path:
-                matches = json_path.find(self._data)
+                matches = json_path.find(self._container)
                 if len(matches) == 1:
-                    return matches[0].value
+                    return self._ensure_immutable(matches[0].value)
                 if len(matches) > 1:
                     raise Exception(
                         'JSONPath [{}] in DataModel [{}], matched multiple fields.'.format(json_path, self.data_model.data_model_id)
@@ -62,6 +54,6 @@ class EnrichedEvent(Mapping):
             # we are dealing with method
             method = self.data_model.methods.get(key)
             if callable(method):
-                return method(self._data)
+                return self._ensure_immutable(method(self._ensure_immutable(self._container)))
         # no matches, return None by default
         return None
