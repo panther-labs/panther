@@ -48,7 +48,7 @@ type LambdaHandler struct {
 	SQSClient             sqsiface.SQSAPI
 	Logger                *zap.Logger
 
-	// Glue partitions known to have been created. (use map[string]string where key == value for map size)
+	// Glue partitions known to have been created.
 	partitionsCreated map[string]struct{}
 }
 
@@ -60,6 +60,7 @@ type sqsTask struct {
 	CreateTables           *CreateTablesEvent           `json:",omitempty"`
 	SyncDatabasePartitions *SyncDatabasePartitionsEvent `json:",omitempty"`
 	SyncTablePartitions    *SyncTableEvent              `json:",omitempty"`
+	UpdateTable            *UpdateTablesEvent           `json:",omitempty"`
 }
 
 // Invoke implements lambda.Handler interface.
@@ -105,6 +106,8 @@ func (h *LambdaHandler) HandleSQSEvent(ctx context.Context, event *events.SQSEve
 			err = h.HandleSyncDatabasePartitionsEvent(ctx, task)
 		case *SyncTableEvent:
 			err = h.HandleSyncTableEvent(ctx, task)
+		case *UpdateTablesEvent:
+			err = h.HandleUpdateTablesEvent(ctx, task)
 		default:
 			err = errors.New("invalid task")
 		}
@@ -142,6 +145,8 @@ func tasksFromSQSMessages(messages ...events.SQSMessage) (tasks []interface{}, e
 			tasks = append(tasks, task.SyncTablePartitions)
 		case task.CreateTables != nil:
 			tasks = append(tasks, task.CreateTables)
+		case task.UpdateTable != nil:
+			tasks = append(tasks, task.UpdateTable)
 		default:
 			err = multierr.Append(err, errors.Errorf("invalid SQS message body %q", msg.MessageId))
 		}
