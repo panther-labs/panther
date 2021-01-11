@@ -81,12 +81,12 @@ type PutIntegrationSettings struct {
 	CWEEnabled            *bool            `json:"cweEnabled"`
 	RemediationEnabled    *bool            `json:"remediationEnabled"`
 	ScanIntervalMins      int              `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
-	S3Bucket              string           `json:"s3Bucket"`
-	S3PrefixLogTypes      S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
 	SourceEnabled         *bool            `json:"sourceEnabled"`
 	RegionDenylist        []string         `json:"regionDenylist"`
 	ResourceTypeDenylist  []string         `json:"resourceTypeDenylist"`
 	ResourceRegexDenylist []string         `json:"resourceRegexDenylist"`
+	S3Bucket              string           `json:"s3Bucket"`
+	S3PrefixLogTypes      S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
 	KmsKey                string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
