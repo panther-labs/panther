@@ -125,9 +125,7 @@ class TestEngine(TestCase):
             'genericError': None,
             'errored': True,
             'ruleOutput': None,
-            'ruleError':
-                'AttributeError: The test specification for rules using the \'udm\' method' +
-                ' must specify the \'p_log_type\' field, and there must be an enabled DataModel for the log type.',
+            'ruleError': 'Exception: a data model hasn\'t been specified',
             'titleOutput': None,
             'titleError': None,
             'descriptionOutput': None,
@@ -272,6 +270,37 @@ class TestEngine(TestCase):
                 dedup='defaultDedupString:rule_id_3',
                 event={},
                 dedup_period_mins=60
+            )
+        ]
+
+        self.assertEqual(result, expected_event_matches)
+
+    def test_modify_event(self) -> None:
+        analysis_api = mock.MagicMock()
+        analysis_api.get_enabled_rules.return_value = [
+            {
+                'id': 'rule_id_1',
+                'logTypes': ['log'],
+                'body': 'def rule(event):\n\tevent["key"]["nested_key"] = "not_value"\n\treturn True',
+                'versionId': 'version'
+            }
+        ]
+        engine = Engine(analysis_api)
+        result = engine.analyze('log', {'key': {'nested_key': 'value'}})
+
+        expected_event_matches = [
+            EngineResult(
+                rule_id='rule_id_1',
+                rule_version='version',
+                log_type='log',
+                dedup='TypeError',
+                error_message='\'ImmutableDict\' object does not support item assignment: rule_id_1.py, '
+                'line 2, in rule    event["key"]["nested_key"] = "not_value"',
+                event={'key': {
+                    'nested_key': 'value'
+                }},
+                dedup_period_mins=60,
+                title='TypeError("\'ImmutableDict\' object does not support item assignment")'
             )
         ]
 

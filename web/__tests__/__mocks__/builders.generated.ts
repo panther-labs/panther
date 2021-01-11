@@ -21,8 +21,8 @@ import {
   AddComplianceIntegrationInput,
   AddCustomLogInput,
   AddCustomLogOutput,
-  AddDataModelInput,
   AddGlobalPythonModuleInput,
+  AddOrUpdateDataModelInput,
   AddPolicyInput,
   AddRuleInput,
   AddS3LogIntegrationInput,
@@ -218,19 +218,6 @@ export const buildAddCustomLogOutput = (
   };
 };
 
-export const buildAddDataModelInput = (
-  overrides: Partial<AddDataModelInput> = {}
-): AddDataModelInput => {
-  return {
-    displayName: 'displayName' in overrides ? overrides.displayName : 'Games',
-    id: 'id' in overrides ? overrides.id : 'f4146cfa-6605-465d-a354-fba4dafe2370',
-    enabled: 'enabled' in overrides ? overrides.enabled : true,
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Reduced'],
-    mappings: 'mappings' in overrides ? overrides.mappings : [buildDataModelMappingInput()],
-    body: 'body' in overrides ? overrides.body : 'China',
-  };
-};
-
 export const buildAddGlobalPythonModuleInput = (
   overrides: Partial<AddGlobalPythonModuleInput> = {}
 ): AddGlobalPythonModuleInput => {
@@ -238,6 +225,19 @@ export const buildAddGlobalPythonModuleInput = (
     id: 'id' in overrides ? overrides.id : '6b0f1c64-e650-48e8-abcf-37c23c6cf854',
     description: 'description' in overrides ? overrides.description : 'Dynamic',
     body: 'body' in overrides ? overrides.body : 'methodologies',
+  };
+};
+
+export const buildAddOrUpdateDataModelInput = (
+  overrides: Partial<AddOrUpdateDataModelInput> = {}
+): AddOrUpdateDataModelInput => {
+  return {
+    displayName: 'displayName' in overrides ? overrides.displayName : 'quantifying',
+    id: 'id' in overrides ? overrides.id : '5ab75ea6-49ff-4622-8a23-95eab2dc9768',
+    enabled: 'enabled' in overrides ? overrides.enabled : true,
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['deposit'],
+    mappings: 'mappings' in overrides ? overrides.mappings : [buildDataModelMappingInput()],
+    body: 'body' in overrides ? overrides.body : 'Assistant',
   };
 };
 
