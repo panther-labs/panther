@@ -45,10 +45,10 @@ type SelfRegistrationProperties struct {
 	EnableCloudTrail        bool     `json:",string"`
 	EnableGuardDuty         bool     `json:",string"`
 	EnableS3AccessLogs      bool     `json:",string"`
-	SourceEnabled           *bool    `json:"sourceEnabled" validate:"omitempty"`
-	RegionIgnoreList        []string `json:"regionIgnoreList" validate:"omitempty"`
-	ResourceTypeIgnoreList  []string `json:"resourceTypeIgnoreList" validate:"omitempty"`
-	ResourceRegexIgnoreList []string `json:"resourceRegexIgnoreList" validate:"omitempty"`
+	SourceEnabled           *bool    `json:",string"`
+	RegionIgnoreList        []string `json:",string"`
+	ResourceTypeIgnoreList  []string `json:",string"`
+	ResourceRegexIgnoreList []string `json:",string"`
 }
 
 func customSelfRegistration(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
