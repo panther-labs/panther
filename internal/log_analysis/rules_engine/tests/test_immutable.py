@@ -68,10 +68,7 @@ class TestImmutableDict(TestCase):
         self.assertIsInstance(self.immutable_dict.get('a'), ImmutableList)
 
     def test_ensure_immutable(self) -> None:
-        initial_dict = {'a': [[1, 2], [3, 4]],
-                        'b': {'c': {'d': 1}},
-                        't': 10,
-                        'e': {'f': [{'g': 90}]}}
+        initial_dict = {'a': [[1, 2], [3, 4]], 'b': {'c': {'d': 1}}, 't': 10, 'e': {'f': [{'g': 90}]}}
         immutable_dict = ImmutableDict(initial_dict)
         # List of lists with immutable elements
         self.assertIsInstance(immutable_dict['a'], ImmutableList)
@@ -114,8 +111,7 @@ class TestImmutableList(TestCase):
         # Tuple
         self.assertEqual(tuple(self.initial_list), self.immutable_list)
         # Same class
-        self.assertEqual(ImmutableList(self.initial_list.copy()),
-                         self.immutable_list)
+        self.assertEqual(ImmutableList(self.initial_list.copy()), self.immutable_list)
 
     def test_shallow_copy(self) -> None:
         self.assertEqual(list(self.immutable_list._container), self.initial_list)

@@ -174,8 +174,7 @@ class TestEnrichedEvent(TestCase):
         self.assertIsInstance(enriched_event['extra'][0], ImmutableDict)
 
     def test_assignment_not_allowed_on_udm_access(self) -> None:
-        event = {'dst_ip': '1.1.1.1', 'dst_port': '2222',
-                 'extra': {'timestamp': 1, 'array': [1, 2]}}
+        event = {'dst_ip': '1.1.1.1', 'dst_port': '2222', 'extra': {'timestamp': 1, 'array': [1, 2]}}
         data_model = DataModel(
             {
                 'versionId': 'version',
@@ -190,20 +189,14 @@ class TestEnrichedEvent(TestCase):
             }
         )
         enriched_event = PantherEvent(event, data_model)
-        self.assertEqual(ImmutableDict(event['extra']),
-                         enriched_event.udm('extra_fields'))
+        self.assertEqual(ImmutableDict(event['extra']), enriched_event.udm('extra_fields'))
         self.assertIsInstance(enriched_event.udm('extra_fields'), ImmutableDict)
         self.assertIsInstance(enriched_event.udm('extra_fields')['array'], ImmutableList)
         with self.assertRaises(TypeError):
             enriched_event.udm('extra_fields')['timestamp'] = 10
 
     def test_nested_list_immutability(self) -> None:
-        event = {
-            'headers': [{
-                'User-Agent': 'Chrome',
-                'Host': 'google.com'
-            }]
-        }
+        event = {'headers': [{'User-Agent': 'Chrome', 'Host': 'google.com'}]}
         enriched_event = PantherEvent(event, None)
         self.assertIsInstance(enriched_event['headers'], ImmutableList)
         self.assertIsInstance(enriched_event['headers'][0], ImmutableDict)
