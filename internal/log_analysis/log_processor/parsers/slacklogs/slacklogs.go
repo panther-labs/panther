@@ -46,5 +46,15 @@ var logTypes = func() logtypes.Group {
 				return &AccessLog{}
 			},
 		},
+
+		logtypes.ConfigJSON{
+			Name: TypeIntegrationLogs,
+			// nolint:lll
+			Description:  "Integration activity logs for a team, including when integrations are added, modified and removed.",
+			ReferenceURL: "https://api.slack.com/methods/team.integrationLogs",
+			NewEvent: func() interface{} {
+				return &IntegrationLog{}
+			},
+		},
 	)
 }()
