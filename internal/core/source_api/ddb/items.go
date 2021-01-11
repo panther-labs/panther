@@ -54,10 +54,10 @@ type Integration struct {
 	LogProcessingRole string   `json:"logProcessingRole,omitempty"`
 
 	// fields for configurable cloud security sources
-	SourceEnabled         *bool    `json:"sourceEnabled" validate:"omitempty"`
-	RegionDenylist        []string `json:"regionDenylist" validate:"omitempty"`
-	ResourceTypeDenylist  []string `json:"resourceTypeDenylist" validate:"omitempty"`
-	ResourceRegexDenylist []string `json:"resourceRegexDenylist" validate:"omitempty"`
+	SourceEnabled           *bool    `json:"sourceEnabled" validate:"omitempty"`
+	RegionIgnoreList        []string `json:"regionIgnoreList" validate:"omitempty"`
+	ResourceTypeIgnoreList  []string `json:"resourceTypeIgnoreList" validate:"omitempty"`
+	ResourceRegexIgnoreList []string `json:"resourceRegexIgnoreList" validate:"omitempty"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }

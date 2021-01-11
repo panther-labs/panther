@@ -68,10 +68,10 @@ type SourceIntegrationMetadata struct {
 	LogProcessingRole string           `json:"logProcessingRole,omitempty"`
 
 	// optional fields for snapshot-poller filtering
-	SourceEnabled         *bool    `json:"sourceEnabled,omitempty"`
-	RegionDenylist        []string `json:"regionDenylist,omitempty"`
-	ResourceTypeDenylist  []string `json:"resourceTypeDenylist,omitempty"`
-	ResourceRegexDenylist []string `json:"resourceRegexDenylist,omitempty"`
+	SourceEnabled           *bool    `json:"sourceEnabled,omitempty"`
+	RegionIgnoreList        []string `json:"regionIgnoreList,omitempty"`
+	ResourceTypeIgnoreList  []string `json:"resourceTypeIgnoreList,omitempty"`
+	ResourceRegexIgnoreList []string `json:"resourceRegexIgnoreList,omitempty"`
 
 	StackName string `json:"stackName,omitempty"`
 

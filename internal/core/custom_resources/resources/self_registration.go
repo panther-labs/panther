@@ -40,15 +40,15 @@ const (
 )
 
 type SelfRegistrationProperties struct {
-	AccountID             string   `validate:"required,len=12"`
-	AuditLogsBucket       string   `validate:"required"`
-	EnableCloudTrail      bool     `json:",string"`
-	EnableGuardDuty       bool     `json:",string"`
-	EnableS3AccessLogs    bool     `json:",string"`
-	SourceEnabled         *bool    `json:"sourceEnabled" validate:"omitempty"`
-	RegionDenylist        []string `json:"regionDenylist" validate:"omitempty"`
-	ResourceTypeDenylist  []string `json:"resourceTypeDenylist" validate:"omitempty"`
-	ResourceRegexDenylist []string `json:"resourceRegexDenylist" validate:"omitempty"`
+	AccountID               string   `validate:"required,len=12"`
+	AuditLogsBucket         string   `validate:"required"`
+	EnableCloudTrail        bool     `json:",string"`
+	EnableGuardDuty         bool     `json:",string"`
+	EnableS3AccessLogs      bool     `json:",string"`
+	SourceEnabled           *bool    `json:"sourceEnabled" validate:"omitempty"`
+	RegionIgnoreList        []string `json:"regionIgnoreList" validate:"omitempty"`
+	ResourceTypeIgnoreList  []string `json:"resourceTypeIgnoreList" validate:"omitempty"`
+	ResourceRegexIgnoreList []string `json:"resourceRegexIgnoreList" validate:"omitempty"`
 }
 
 func customSelfRegistration(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
@@ -179,17 +179,17 @@ func putCloudSecurityIntegration(properties SelfRegistrationProperties) error {
 	input := &models.LambdaInput{
 		PutIntegration: &models.PutIntegrationInput{
 			PutIntegrationSettings: models.PutIntegrationSettings{
-				AWSAccountID:          properties.AccountID,
-				IntegrationLabel:      cloudSecLabel,
-				IntegrationType:       models.IntegrationTypeAWSScan,
-				ScanIntervalMins:      1440,
-				UserID:                systemUserID,
-				CWEEnabled:            aws.Bool(true),
-				RemediationEnabled:    aws.Bool(true),
-				SourceEnabled:         properties.SourceEnabled,
-				RegionDenylist:        properties.RegionDenylist,
-				ResourceTypeDenylist:  properties.ResourceTypeDenylist,
-				ResourceRegexDenylist: properties.ResourceRegexDenylist,
+				AWSAccountID:            properties.AccountID,
+				IntegrationLabel:        cloudSecLabel,
+				IntegrationType:         models.IntegrationTypeAWSScan,
+				ScanIntervalMins:        1440,
+				UserID:                  systemUserID,
+				CWEEnabled:              aws.Bool(true),
+				RemediationEnabled:      aws.Bool(true),
+				SourceEnabled:           properties.SourceEnabled,
+				RegionIgnoreList:        properties.RegionIgnoreList,
+				ResourceTypeIgnoreList:  properties.ResourceTypeIgnoreList,
+				ResourceRegexIgnoreList: properties.ResourceRegexIgnoreList,
 			},
 		},
 	}

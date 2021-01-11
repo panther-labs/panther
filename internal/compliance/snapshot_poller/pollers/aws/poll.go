@@ -185,11 +185,11 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		zap.L().Warn("failed to retrieve integration from source api")
 	}
 
-	// Options for filtering and denylists
+	// Options for filtering and ignoreList
 	// Used to pass on these to downstream pollers
 	if sourceIntegration != nil {
-		pollerResourceInput.ResourceRegexDenylist, pollerResourceInput.ResourceTypeDenylist, pollerResourceInput.RegionDenylist =
-			sourceIntegration.ResourceRegexDenylist, sourceIntegration.ResourceTypeDenylist, sourceIntegration.RegionDenylist
+		pollerResourceInput.ResourceRegexIgnoreList, pollerResourceInput.ResourceTypeIgnoreList, pollerResourceInput.RegionIgnoreList =
+			sourceIntegration.ResourceRegexIgnoreList, sourceIntegration.ResourceTypeIgnoreList, sourceIntegration.RegionIgnoreList
 		// Check if integration is disabled
 		if !aws.BoolValue(sourceIntegration.SourceEnabled) {
 			zap.L().Info("source integration disabled",
@@ -199,7 +199,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	}
 
 	// Check if resource type is filtered
-	for _, resourceType := range pollerResourceInput.ResourceTypeDenylist {
+	for _, resourceType := range pollerResourceInput.ResourceTypeIgnoreList {
 		if resourceType == *scanRequest.ResourceType {
 			zap.L().Info("resource type filtered", zap.String("resource type", resourceType))
 			return nil, nil
@@ -229,10 +229,10 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		zap.L().Info("processing single region service scan",
 			zap.String("region", *scanRequest.Region),
 			zap.String("resourceType", *scanRequest.ResourceType))
-		// Check if provided region is in denylist
-		for _, region := range pollerResourceInput.RegionDenylist {
+		// Check if provided region is in ignoreList
+		for _, region := range pollerResourceInput.RegionIgnoreList {
 			if region == *scanRequest.Region {
-				zap.L().Info("matched denylist region - skipping scan",
+				zap.L().Info("matched ignoreList region - skipping scan",
 					zap.String("region", region))
 				return nil, nil
 			}
@@ -271,7 +271,7 @@ func multiRegionScan(
 		zap.Any("regions", regions),
 		zap.String("resourceType", *scanRequest.ResourceType),
 	)
-	// For simplicity, region denylist is not checked here
+	// For simplicity, region ignoreList is not checked here
 	for _, region := range regions {
 		err = utils.Requeue(pollermodels.ScanMsg{
 			Entries: []*pollermodels.ScanEntry{
@@ -367,7 +367,7 @@ func singleResourceScan(
 			return nil, nil
 		}
 		// Check if ResourceID matches the integration's regex filter
-		matched, matchErr := utils.MatchRegexDenylist(pollerInput.ResourceRegexDenylist, *scanRequest.ResourceID)
+		matched, matchErr := utils.MatchRegexIgnoreList(pollerInput.ResourceRegexIgnoreList, *scanRequest.ResourceID)
 		if matchErr != nil {
 			return nil, matchErr
 		}
@@ -382,8 +382,8 @@ func singleResourceScan(
 	}
 
 	if err != nil {
-		// Check for region denylist error
-		if err == err.(*RegionDenylistError) {
+		// Check for region ignoreList error
+		if err == err.(*RegionIgnoreListError) {
 			zap.L().Info("Skipping denied region in single resource scan")
 			return nil, nil
 		}

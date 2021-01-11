@@ -170,9 +170,9 @@ func updateIntegrationDBItem(item *ddb.Integration, input *models.UpdateIntegrat
 		item.CWEEnabled = input.CWEEnabled
 		item.RemediationEnabled = input.RemediationEnabled
 		item.SourceEnabled = input.SourceEnabled
-		item.RegionDenylist = input.RegionDenylist
-		item.ResourceTypeDenylist = input.ResourceTypeDenylist
-		item.ResourceRegexDenylist = input.ResourceRegexDenylist
+		item.RegionIgnoreList = input.RegionIgnoreList
+		item.ResourceTypeIgnoreList = input.ResourceTypeIgnoreList
+		item.ResourceRegexIgnoreList = input.ResourceRegexIgnoreList
 	case models.IntegrationTypeAWS3:
 		if input.IntegrationLabel != "" {
 			item.IntegrationLabel = input.IntegrationLabel

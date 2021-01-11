@@ -64,15 +64,15 @@ type GenericAWSResource struct {
 
 // ResourcePollerInput contains the metadata to request AWS resource info.
 type ResourcePollerInput struct {
-	AuthSource            *string
-	AuthSourceParsedARN   arn.ARN
-	IntegrationID         *string
-	Region                *string
-	Timestamp             *time.Time
-	NextPageToken         *string
-	RegionDenylist        []string
-	ResourceTypeDenylist  []string
-	ResourceRegexDenylist []string
+	AuthSource              *string
+	AuthSourceParsedARN     arn.ARN
+	IntegrationID           *string
+	Region                  *string
+	Timestamp               *time.Time
+	NextPageToken           *string
+	RegionIgnoreList        []string
+	ResourceTypeIgnoreList  []string
+	ResourceRegexIgnoreList []string
 }
 
 // ResourcePoller represents a function to poll a specific AWS resource.

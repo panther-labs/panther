@@ -74,20 +74,20 @@ type PutIntegrationInput struct {
 
 // PutIntegrationSettings are all the settings for the new integration.
 type PutIntegrationSettings struct {
-	IntegrationLabel      string           `json:"integrationLabel" validate:"required,integrationLabel,excludesall='<>&\""`
-	IntegrationType       string           `json:"integrationType" validate:"oneof=aws-scan aws-s3 aws-sqs"`
-	UserID                string           `json:"userId" validate:"required,uuid4"`
-	AWSAccountID          string           `genericapi:"redact" json:"awsAccountId" validate:"omitempty,len=12,numeric"`
-	CWEEnabled            *bool            `json:"cweEnabled"`
-	RemediationEnabled    *bool            `json:"remediationEnabled"`
-	ScanIntervalMins      int              `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
-	SourceEnabled         *bool            `json:"sourceEnabled"`
-	RegionDenylist        []string         `json:"regionDenylist"`
-	ResourceTypeDenylist  []string         `json:"resourceTypeDenylist"`
-	ResourceRegexDenylist []string         `json:"resourceRegexDenylist"`
-	S3Bucket              string           `json:"s3Bucket"`
-	S3PrefixLogTypes      S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
-	KmsKey                string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
+	IntegrationLabel        string           `json:"integrationLabel" validate:"required,integrationLabel,excludesall='<>&\""`
+	IntegrationType         string           `json:"integrationType" validate:"oneof=aws-scan aws-s3 aws-sqs"`
+	UserID                  string           `json:"userId" validate:"required,uuid4"`
+	AWSAccountID            string           `genericapi:"redact" json:"awsAccountId" validate:"omitempty,len=12,numeric"`
+	CWEEnabled              *bool            `json:"cweEnabled"`
+	RemediationEnabled      *bool            `json:"remediationEnabled"`
+	ScanIntervalMins        int              `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
+	SourceEnabled           *bool            `json:"sourceEnabled"`
+	RegionIgnoreList        []string         `json:"regionIgnoreList"`
+	ResourceTypeIgnoreList  []string         `json:"resourceTypeIgnoreList"`
+	ResourceRegexIgnoreList []string         `json:"resourceRegexIgnoreList"`
+	S3Bucket                string           `json:"s3Bucket"`
+	S3PrefixLogTypes        S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
+	KmsKey                  string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }
@@ -103,18 +103,18 @@ type ListIntegrationsInput struct {
 
 // UpdateIntegrationSettingsInput is used to update integration settings.
 type UpdateIntegrationSettingsInput struct {
-	IntegrationID         string           `json:"integrationId" validate:"required,uuid4"`
-	IntegrationLabel      string           `json:"integrationLabel" validate:"required,integrationLabel,excludesall='<>&\""`
-	CWEEnabled            *bool            `json:"cweEnabled"`
-	RemediationEnabled    *bool            `json:"remediationEnabled"`
-	ScanIntervalMins      int              `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
-	S3Bucket              string           `json:"s3Bucket" validate:"omitempty,min=1"`
-	S3PrefixLogTypes      S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
-	SourceEnabled         *bool            `json:"sourceEnabled" validate:"omitempty"`
-	RegionDenylist        []string         `json:"regionDenylist" validate:"omitempty"`
-	ResourceTypeDenylist  []string         `json:"resourceTypeDenylist" validate:"omitempty"`
-	ResourceRegexDenylist []string         `json:"resourceRegexDenylist" validate:"omitempty"`
-	KmsKey                string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
+	IntegrationID           string           `json:"integrationId" validate:"required,uuid4"`
+	IntegrationLabel        string           `json:"integrationLabel" validate:"required,integrationLabel,excludesall='<>&\""`
+	CWEEnabled              *bool            `json:"cweEnabled"`
+	RemediationEnabled      *bool            `json:"remediationEnabled"`
+	ScanIntervalMins        int              `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
+	S3Bucket                string           `json:"s3Bucket" validate:"omitempty,min=1"`
+	S3PrefixLogTypes        S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
+	SourceEnabled           *bool            `json:"sourceEnabled" validate:"omitempty"`
+	RegionIgnoreList        []string         `json:"regionIgnoreList" validate:"omitempty"`
+	ResourceTypeIgnoreList  []string         `json:"resourceTypeIgnoreList" validate:"omitempty"`
+	ResourceRegexIgnoreList []string         `json:"resourceRegexIgnoreList" validate:"omitempty"`
+	KmsKey                  string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }
@@ -152,18 +152,18 @@ type FullScanInput struct {
 
 // GetIntegrationTemplateInput allows specification of what resources should be enabled/disabled in the template
 type GetIntegrationTemplateInput struct {
-	AWSAccountID          string   `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
-	IntegrationType       string   `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
-	IntegrationLabel      string   `json:"integrationLabel" validate:"required,integrationLabel"`
-	RemediationEnabled    *bool    `json:"remediationEnabled"`
-	CWEEnabled            *bool    `json:"cweEnabled"`
-	S3Bucket              string   `json:"s3Bucket" validate:"omitempty,min=1"`
-	S3Prefix              string   `json:"s3Prefix" validate:"omitempty,min=1"`
-	KmsKey                string   `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
-	SourceEnabled         *bool    `json:"sourceEnabled" validate:"omitempty"`
-	RegionDenylist        []string `json:"regionDenylist" validate:"omitempty"`
-	ResourceTypeDenylist  []string `json:"resourceTypeDenylist" validate:"omitempty"`
-	ResourceRegexDenylist []string `json:"resourceRegexDenylist" validate:"omitempty"`
+	AWSAccountID            string   `genericapi:"redact" json:"awsAccountId" validate:"required,len=12,numeric"`
+	IntegrationType         string   `json:"integrationType" validate:"oneof=aws-scan aws-s3"`
+	IntegrationLabel        string   `json:"integrationLabel" validate:"required,integrationLabel"`
+	RemediationEnabled      *bool    `json:"remediationEnabled"`
+	CWEEnabled              *bool    `json:"cweEnabled"`
+	S3Bucket                string   `json:"s3Bucket" validate:"omitempty,min=1"`
+	S3Prefix                string   `json:"s3Prefix" validate:"omitempty,min=1"`
+	KmsKey                  string   `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
+	SourceEnabled           *bool    `json:"sourceEnabled" validate:"omitempty"`
+	RegionIgnoreList        []string `json:"regionIgnoreList" validate:"omitempty"`
+	ResourceTypeIgnoreList  []string `json:"resourceTypeIgnoreList" validate:"omitempty"`
+	ResourceRegexIgnoreList []string `json:"resourceRegexIgnoreList" validate:"omitempty"`
 }
 
 //

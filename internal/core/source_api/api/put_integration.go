@@ -282,9 +282,9 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 		metadata.StackName = getStackName(input.IntegrationType, input.IntegrationLabel)
 		metadata.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
 		metadata.SourceEnabled = input.SourceEnabled
-		metadata.RegionDenylist = input.RegionDenylist
-		metadata.ResourceTypeDenylist = input.ResourceTypeDenylist
-		metadata.ResourceRegexDenylist = input.ResourceRegexDenylist
+		metadata.RegionIgnoreList = input.RegionIgnoreList
+		metadata.ResourceTypeIgnoreList = input.ResourceTypeIgnoreList
+		metadata.ResourceRegexIgnoreList = input.ResourceRegexIgnoreList
 	case models.IntegrationTypeSqs:
 		metadata.SqsConfig = &models.SqsConfig{
 			S3Bucket:             env.InputDataBucketName,

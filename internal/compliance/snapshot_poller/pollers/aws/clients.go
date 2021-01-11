@@ -144,11 +144,11 @@ type cachedClient struct {
 	Credentials *credentials.Credentials
 }
 
-type RegionDenylistError struct {
+type RegionIgnoreListError struct {
 	Err error
 }
 
-func (r *RegionDenylistError) Error() string {
+func (r *RegionIgnoreListError) Error() string {
 	return r.Err.Error()
 }
 
@@ -234,11 +234,11 @@ func getClient(pollerInput *awsmodels.ResourcePollerInput,
 	clientFunc func(session *session.Session, config *aws.Config) interface{},
 	service string, region string) (interface{}, error) {
 
-	// Check if provided region is in the denylist
-	for _, deniedRegion := range pollerInput.RegionDenylist {
+	// Check if provided region is in the ignoreList
+	for _, deniedRegion := range pollerInput.RegionIgnoreList {
 		if region == deniedRegion {
-			return nil, &RegionDenylistError{
-				Err: errors.New("requested region was in region denylist"),
+			return nil, &RegionIgnoreListError{
+				Err: errors.New("requested region was in region ignoreList"),
 			}
 		}
 	}
