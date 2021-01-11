@@ -45,7 +45,7 @@ type SelfRegistrationProperties struct {
 	EnableCloudTrail        bool     `json:",string"`
 	EnableGuardDuty         bool     `json:",string"`
 	EnableS3AccessLogs      bool     `json:",string"`
-	SourceEnabled           *bool    `json:",string"`
+	Enabled                 *bool    `json:",string"`
 	RegionIgnoreList        []string `json:",string"`
 	ResourceTypeIgnoreList  []string `json:",string"`
 	ResourceRegexIgnoreList []string `json:",string"`
@@ -186,7 +186,7 @@ func putCloudSecurityIntegration(properties SelfRegistrationProperties) error {
 				UserID:                  systemUserID,
 				CWEEnabled:              aws.Bool(true),
 				RemediationEnabled:      aws.Bool(true),
-				SourceEnabled:           properties.SourceEnabled,
+				Enabled:                 properties.Enabled,
 				RegionIgnoreList:        properties.RegionIgnoreList,
 				ResourceTypeIgnoreList:  properties.ResourceTypeIgnoreList,
 				ResourceRegexIgnoreList: properties.ResourceRegexIgnoreList,

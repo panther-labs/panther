@@ -169,7 +169,7 @@ func updateIntegrationDBItem(item *ddb.Integration, input *models.UpdateIntegrat
 		item.ScanIntervalMins = input.ScanIntervalMins
 		item.CWEEnabled = input.CWEEnabled
 		item.RemediationEnabled = input.RemediationEnabled
-		item.SourceEnabled = input.SourceEnabled
+		item.Enabled = input.Enabled
 		item.RegionIgnoreList = input.RegionIgnoreList
 		item.ResourceTypeIgnoreList = input.ResourceTypeIgnoreList
 		item.ResourceRegexIgnoreList = input.ResourceRegexIgnoreList

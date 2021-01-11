@@ -43,7 +43,7 @@ type Integration struct {
 	IntegrationStatus
 
 	// fields for configurable cloud security sources
-	SourceEnabled           *bool    `json:"sourceEnabled"`
+	Enabled                 *bool    `json:"enabled"`
 	RegionIgnoreList        []string `json:"regionIgnoreList"`
 	ResourceTypeIgnoreList  []string `json:"resourceTypeIgnoreList"`
 	ResourceRegexIgnoreList []string `json:"resourceRegexIgnoreList"`

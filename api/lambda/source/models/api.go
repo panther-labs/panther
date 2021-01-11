@@ -81,7 +81,7 @@ type PutIntegrationSettings struct {
 	CWEEnabled              *bool            `json:"cweEnabled"`
 	RemediationEnabled      *bool            `json:"remediationEnabled"`
 	ScanIntervalMins        int              `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
-	SourceEnabled           *bool            `json:"sourceEnabled"`
+	Enabled                 *bool            `json:"enabled"`
 	RegionIgnoreList        []string         `json:"regionIgnoreList"`
 	ResourceTypeIgnoreList  []string         `json:"resourceTypeIgnoreList"`
 	ResourceRegexIgnoreList []string         `json:"resourceRegexIgnoreList"`
@@ -108,7 +108,7 @@ type UpdateIntegrationSettingsInput struct {
 	CWEEnabled              *bool            `json:"cweEnabled"`
 	RemediationEnabled      *bool            `json:"remediationEnabled"`
 	ScanIntervalMins        int              `json:"scanIntervalMins" validate:"omitempty,oneof=60 180 360 720 1440"`
-	SourceEnabled           *bool            `json:"sourceEnabled"`
+	Enabled                 *bool            `json:"enabled"`
 	RegionIgnoreList        []string         `json:"regionIgnoreList"`
 	ResourceTypeIgnoreList  []string         `json:"resourceTypeIgnoreList"`
 	ResourceRegexIgnoreList []string         `json:"resourceRegexIgnoreList"`
@@ -157,7 +157,7 @@ type GetIntegrationTemplateInput struct {
 	IntegrationLabel        string   `json:"integrationLabel" validate:"required,integrationLabel"`
 	RemediationEnabled      *bool    `json:"remediationEnabled"`
 	CWEEnabled              *bool    `json:"cweEnabled"`
-	SourceEnabled           *bool    `json:"sourceEnabled" validate:"omitempty"`
+	Enabled                 *bool    `json:"enabled" validate:"omitempty"`
 	RegionIgnoreList        []string `json:"regionIgnoreList" validate:"omitempty"`
 	ResourceTypeIgnoreList  []string `json:"resourceTypeIgnoreList" validate:"omitempty"`
 	ResourceRegexIgnoreList []string `json:"resourceRegexIgnoreList" validate:"omitempty"`

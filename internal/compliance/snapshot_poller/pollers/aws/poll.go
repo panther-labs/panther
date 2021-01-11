@@ -193,7 +193,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		pollerResourceInput.ResourceRegexIgnoreList, pollerResourceInput.ResourceTypeIgnoreList, pollerResourceInput.RegionIgnoreList =
 			sourceIntegration.ResourceRegexIgnoreList, sourceIntegration.ResourceTypeIgnoreList, sourceIntegration.RegionIgnoreList
 		// Check if integration is disabled
-		if !aws.BoolValue(sourceIntegration.SourceEnabled) {
+		if !aws.BoolValue(sourceIntegration.Enabled) {
 			zap.L().Info("source integration disabled",
 				zap.String("integration id", *scanRequest.IntegrationID), zap.Time("timestamp", time.Now()))
 			return nil, nil

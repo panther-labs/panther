@@ -62,7 +62,7 @@ type SourceIntegrationMetadata struct {
 	ScanIntervalMins   int       `json:"scanIntervalMins,omitempty"`
 
 	// optional fields for snapshot-poller filtering
-	SourceEnabled           *bool    `json:"sourceEnabled,omitempty"`
+	Enabled                 *bool    `json:"enabled,omitempty"`
 	RegionIgnoreList        []string `json:"regionIgnoreList,omitempty"`
 	ResourceTypeIgnoreList  []string `json:"resourceTypeIgnoreList,omitempty"`
 	ResourceRegexIgnoreList []string `json:"resourceRegexIgnoreList,omitempty"`

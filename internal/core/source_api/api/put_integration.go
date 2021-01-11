@@ -281,7 +281,7 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 		metadata.S3PrefixLogTypes = input.S3PrefixLogTypes
 		metadata.StackName = getStackName(input.IntegrationType, input.IntegrationLabel)
 		metadata.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
-		metadata.SourceEnabled = input.SourceEnabled
+		metadata.Enabled = input.Enabled
 		metadata.RegionIgnoreList = input.RegionIgnoreList
 		metadata.ResourceTypeIgnoreList = input.ResourceTypeIgnoreList
 		metadata.ResourceRegexIgnoreList = input.ResourceRegexIgnoreList

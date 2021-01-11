@@ -103,7 +103,7 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 		integration.LastScanEndTime = item.LastScanEndTime
 		integration.LastScanErrorMessage = item.LastScanErrorMessage
 		integration.StackName = item.StackName
-		integration.SourceEnabled = item.SourceEnabled
+		integration.Enabled = item.Enabled
 		integration.RegionIgnoreList = item.RegionIgnoreList
 		integration.ResourceTypeIgnoreList = item.ResourceTypeIgnoreList
 		integration.ResourceRegexIgnoreList = item.ResourceRegexIgnoreList
