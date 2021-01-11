@@ -28,9 +28,12 @@ import {
 
 import { Route } from 'react-router';
 import urls from 'Source/urls';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
 import { mockGetCustomLogDetails } from 'Pages/CustomLogDetails/graphql/getCustomLogDetails.generated';
 import EditCustomLog from './EditCustomLog';
 import { mockUpdateCustomLog } from './graphql/updateCustomLog.generated';
+
+jest.mock('Helpers/analytics');
 
 const build = (opts = {}) =>
   buildCustomLogRecord({
@@ -98,7 +101,7 @@ describe('EditCustomLog', () => {
     expect(getByLabelText('Reference URL')).toHaveValue(customLog.referenceURL);
   });
 
-  it('allows updating the schema', async () => {
+  it('allows updating the custom log schema', async () => {
     const customLog = build({ revision: 1 });
     const updatedCustomLog = build({
       revision: 1,
@@ -164,6 +167,12 @@ describe('EditCustomLog', () => {
 
     await waitFor(() => {
       expect(getByText('Successfully updated custom log schema!')).toBeInTheDocument();
+    });
+
+    // Expect analytics to have been called
+    expect(trackEvent).toHaveBeenCalledWith({
+      event: EventEnum.UpdatedCustomLog,
+      src: SrcEnum.CustomLogs,
     });
   });
 });

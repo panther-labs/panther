@@ -39,14 +39,13 @@ import useRouter from 'Hooks/useRouter';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import { useUpdateCustomLog } from './graphql/updateCustomLog.generated';
 import { useGetCustomLogDetails } from '../CustomLogDetails/graphql/getCustomLogDetails.generated';
-import Skeleton from './Skeleton';
 
 const EditCustomLog: React.FC = () => {
   useTrackPageView(PageViewEnum.CustomLogEditing);
 
   const { match: { params: { logType } } } = useRouter<{ logType: string }>(); // prettier-ignore
   const { pushSnackbar } = useSnackbar();
-  const { data, loading, error: uncontrolledError } = useGetCustomLogDetails({
+  const { data, error: uncontrolledError } = useGetCustomLogDetails({
     variables: { input: { logType } },
   });
 
@@ -72,11 +71,20 @@ const EditCustomLog: React.FC = () => {
     },
   });
 
-  if (loading) {
-    return <Skeleton />;
-  }
+  const { record: customLog, error: controlledError } = data?.getCustomLog || {};
 
-  if (uncontrolledError) {
+  const initialValues = React.useMemo(
+    () => ({
+      revision: data?.getCustomLog?.record?.revision,
+      name: data?.getCustomLog?.record?.logType ?? 'Loading...',
+      referenceUrl: data?.getCustomLog?.record?.referenceURL ?? 'Loading...',
+      schema: data?.getCustomLog?.record?.logSpec ?? 'Loading...',
+      description: data?.getCustomLog?.record?.description ?? 'Loading...',
+    }),
+    [data]
+  );
+
+  if (data?.getCustomLog?.error) {
     return (
       <Alert
         variant="error"
@@ -86,10 +94,8 @@ const EditCustomLog: React.FC = () => {
     );
   }
 
-  const { record: customLog, error: controlledError } = data.getCustomLog;
-
-  if (controlledError) {
-    if (controlledError.code === ErrorCodeEnum.NotFound) {
+  if (data?.getCustomLog?.error) {
+    if (data?.getCustomLog?.error?.code === ErrorCodeEnum.NotFound) {
       return <Page404 />;
     }
 
@@ -102,13 +108,6 @@ const EditCustomLog: React.FC = () => {
     );
   }
 
-  const initialValues = {
-    revision: customLog.revision,
-    name: customLog.logType,
-    referenceUrl: customLog.referenceURL,
-    schema: customLog.logSpec,
-    description: customLog.description,
-  };
   return (
     <React.Fragment>
       <Panel title="Edit Custom Schema">

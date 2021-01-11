@@ -70,11 +70,12 @@ const CustomLogForm: React.FC<CustomLogFormProps> = ({ onSubmit, initialValues }
   const isEditing = initialValues.revision && initialValues.revision > 0;
   return (
     <Formik<CustomLogFormValues>
+      enableReinitialize
       initialValues={initialValues}
       onSubmit={onSubmit}
       validationSchema={validationSchema}
     >
-      <FormSessionRestoration sessionId="custom-log-create">
+      <FormSessionRestoration sessionId={`custom-log-form-${initialValues.revision || 'create'}`}>
         {({ clearFormSession }) => (
           <Form>
             <SimpleGrid columns={3} spacing={5} mb={5}>

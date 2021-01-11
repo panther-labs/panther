@@ -85,7 +85,7 @@ const urls = {
       details: (logType: CustomLogRecord['logType']) =>
         `${urls.logAnalysis.customLogs.list()}${urlEncode(logType)}/`,
       edit: (logType: CustomLogRecord['logType']) =>
-        `${urls.logAnalysis.customLogs.list()}${urlEncode(logType)}/edit/`,
+        `${urls.logAnalysis.customLogs.details(logType)}/edit/`,
       create: () => `${urls.logAnalysis.customLogs.list()}new/`,
     },
   },
