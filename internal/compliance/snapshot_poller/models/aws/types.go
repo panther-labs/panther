@@ -116,9 +116,6 @@ func (r *ResourcePollerInput) ShouldIgnoreResource(resourceID string) (ignore bo
 		}
 	}
 	for _, compiledRegex := range r.CompiledRegexIgnoreList {
-		if compiledRegex == nil {
-			continue
-		}
 		if compiledRegex.MatchString(resourceID) {
 			return true, nil
 		}
