@@ -607,6 +607,9 @@ func RunSet(label string, nameset string, callFn func(string) error) int {
 	for _, entry := range PantherNames(nameset) {
 		returnCount += 1
 		log.Info(label, ": ", entry)
+		if err := callFn(entry); err != nil {
+			log.Error("\n\n ", label, ": ", entry, "\n\n ERROR: ", err.Error(), "\n")
+		}
 	}
 	return returnCount
 }
