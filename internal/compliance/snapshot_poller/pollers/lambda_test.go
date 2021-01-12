@@ -131,7 +131,6 @@ func TestHandlerNonExistentIntegration(t *testing.T) {
 			},
 		},
 	}
-
 	require.NoError(t, Handle(testContext(), sampleEvent))
 
 	mockResourceClient.AssertNumberOfCalls(t, "Invoke", 0)

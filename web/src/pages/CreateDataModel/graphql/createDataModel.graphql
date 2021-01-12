@@ -1,4 +1,4 @@
-mutation CreateDataModel($input: AddDataModelInput!) {
+mutation CreateDataModel($input: AddOrUpdateDataModelInput!) {
   addDataModel(input: $input) {
     ...DataModelFull
   }

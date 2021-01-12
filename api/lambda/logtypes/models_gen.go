@@ -69,7 +69,7 @@ type GetCustomLogResponse struct {
 		Revision     int64     `json:"revision" validate:"required,min=1" description:"Log record revision"`
 		UpdatedAt    time.Time `json:"updatedAt" description:"Last update timestamp of the record"`
 		Description  string    `json:"description" description:"Log type description"`
-		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the logtype"`
+		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the log type"`
 		LogSpec      string    `json:"logSpec" validate:"required" description:"The log spec in YAML or JSON format"`
 	} `json:"record,omitempty" validate:"required_without=Error" description:"The custom log record"`
 	Error struct {
@@ -88,7 +88,7 @@ type ListCustomLogsResponse struct {
 		Revision     int64     `json:"revision" validate:"required,min=1" description:"Log record revision"`
 		UpdatedAt    time.Time `json:"updatedAt" description:"Last update timestamp of the record"`
 		Description  string    `json:"description" description:"Log type description"`
-		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the logtype"`
+		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the log type"`
 		LogSpec      string    `json:"logSpec" validate:"required" description:"The log spec in YAML or JSON format"`
 	} `json:"customLogs" validate:"required,min=0" description:"Custom log records stored"`
 	Error struct {
@@ -101,7 +101,7 @@ type PutCustomLogInput struct {
 	LogType      string `json:"logType" validate:"required,startswith=Custom." description:"The log type id"`
 	Revision     int64  `json:"revision,omitempty" validate:"omitempty,min=1" description:"Custom log record revision to update (if omitted a new record will be created)"`
 	Description  string `json:"description" description:"Log type description"`
-	ReferenceURL string `json:"referenceURL" description:"A URL with reference docs for the logtype"`
+	ReferenceURL string `json:"referenceURL" description:"A URL with reference docs for the log type"`
 	LogSpec      string `json:"logSpec" validate:"required" description:"The log spec in YAML or JSON format"`
 }
 
@@ -111,7 +111,7 @@ type PutCustomLogResponse struct {
 		Revision     int64     `json:"revision" validate:"required,min=1" description:"Log record revision"`
 		UpdatedAt    time.Time `json:"updatedAt" description:"Last update timestamp of the record"`
 		Description  string    `json:"description" description:"Log type description"`
-		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the logtype"`
+		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the log type"`
 		LogSpec      string    `json:"logSpec" validate:"required" description:"The log spec in YAML or JSON format"`
 	} `json:"record,omitempty" validate:"required_without=Error" description:"The modified record"`
 	Error struct {

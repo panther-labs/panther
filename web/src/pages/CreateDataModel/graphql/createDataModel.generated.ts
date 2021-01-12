@@ -25,13 +25,13 @@ import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type CreateDataModelVariables = {
-  input: Types.AddDataModelInput;
+  input: Types.AddOrUpdateDataModelInput;
 };
 
 export type CreateDataModel = { addDataModel: DataModelFull };
 
 export const CreateDataModelDocument = gql`
-  mutation CreateDataModel($input: AddDataModelInput!) {
+  mutation CreateDataModel($input: AddOrUpdateDataModelInput!) {
     addDataModel(input: $input) {
       ...DataModelFull
     }

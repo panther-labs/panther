@@ -340,6 +340,12 @@ func (m *GlueMock) CreateTable(input *glue.CreateTableInput) (*glue.CreateTableO
 	args := m.Called(input)
 	return args.Get(0).(*glue.CreateTableOutput), args.Error(1)
 }
+func (m *GlueMock) CreateTableWithContext(ctx context.Context,
+	input *glue.CreateTableInput, _ ...request.Option) (*glue.CreateTableOutput, error) {
+
+	args := m.Called(ctx, input)
+	return args.Get(0).(*glue.CreateTableOutput), args.Error(1)
+}
 
 func (m *GlueMock) GetTable(input *glue.GetTableInput) (*glue.GetTableOutput, error) {
 	args := m.Called(input)
