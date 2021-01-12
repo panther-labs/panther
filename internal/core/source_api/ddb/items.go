@@ -42,6 +42,12 @@ type Integration struct {
 	ScanIntervalMins     int        `json:"scanIntervalMins,omitempty"`
 	IntegrationStatus
 
+	// fields for configurable cloud security sources
+	Enabled                 *bool    `json:"enabled"`
+	RegionIgnoreList        []string `json:"regionIgnoreList"`
+	ResourceTypeIgnoreList  []string `json:"resourceTypeIgnoreList"`
+	ResourceRegexIgnoreList []string `json:"resourceRegexIgnoreList"`
+
 	// fields specific for an s3 integration (plus AWSAccountID, StackName)
 	S3Bucket         string                  `json:"s3Bucket,omitempty"`
 	S3PrefixLogTypes models.S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty"`

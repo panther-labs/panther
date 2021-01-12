@@ -90,6 +90,7 @@ func TestBuildGuardDutyDetectorSnapshot(t *testing.T) {
 	detectorSnapshot, err := buildGuardDutyDetectorSnapshot(
 		mockSvc,
 		awstest.ExampleDetectorID,
+		nil,
 	)
 
 	assert.NoError(t, err)
@@ -103,6 +104,7 @@ func TestBuildGuardDutyDetectorSnapshotError(t *testing.T) {
 	detectorSnapshot, err := buildGuardDutyDetectorSnapshot(
 		mockSvc,
 		awstest.ExampleDetectorID,
+		nil,
 	)
 
 	assert.Nil(t, detectorSnapshot)

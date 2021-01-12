@@ -40,7 +40,7 @@ var (
 
 // PollAndIssueNewScans sends messages to the snapshot-pollers when new scans need to start.
 func PollAndIssueNewScans() error {
-	enabledIntegrations, err := getEnabledIntegrations()
+	enabledIntegrations, err := GetEnabledIntegrations()
 	if err != nil {
 		return err
 	}
@@ -71,8 +71,8 @@ func PollAndIssueNewScans() error {
 	)
 }
 
-// getEnabledIntegrations lists enabled integrations from the snapshot-api.
-func getEnabledIntegrations() (integrations []*models.SourceIntegration, err error) {
+// GetEnabledIntegrations lists enabled integrations from the snapshot-api.
+func GetEnabledIntegrations() (integrations []*models.SourceIntegration, err error) {
 	err = genericapi.Invoke(
 		lambdaClient,
 		sourceAPIFunctionName,
