@@ -1091,6 +1091,11 @@ type TestRuleRecordFunctions {
   titleFunction: TestDetectionSubRecord
   dedupFunction: TestDetectionSubRecord
   alertContextFunction: TestDetectionSubRecord
+  descriptionFunction: TestDetectionSubRecord
+  destinationsFunction: TestDetectionSubRecord
+  referenceFunction: TestDetectionSubRecord
+  runbookFunction: TestDetectionSubRecord
+  severityFunction: TestDetectionSubRecord
 }
 
 type TestRuleRecord implements TestRecord {
