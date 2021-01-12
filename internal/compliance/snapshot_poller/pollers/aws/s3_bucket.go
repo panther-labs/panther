@@ -45,7 +45,17 @@ func setupS3Client(sess *session.Session, cfg *aws.Config) interface{} {
 	return s3.New(sess, cfg)
 }
 
-func getS3Client(pollerResourceInput *awsmodels.ResourcePollerInput, region string) (s3iface.S3API, error) {
+func getS3Client(pollerResourceInput *awsmodels.ResourcePollerInput, region string, resourceARN *arn.ARN) (s3iface.S3API, error) {
+	// Saves an unnecessary check
+	if resourceARN != nil {
+		// Check if ResourceID matches the integration's regex filter
+		if ignore, err := pollerResourceInput.ShouldIgnoreResource(resourceARN.String()); ignore || err != nil {
+			if err != nil || ignore {
+				return nil, err
+			}
+		}
+	}
+
 	client, err := getClient(pollerResourceInput, S3ClientFunc, "s3", region)
 	if err != nil {
 		return nil, err
@@ -61,18 +71,17 @@ func PollS3Bucket(
 	scanRequest *pollermodels.ScanEntry,
 ) (interface{}, error) {
 
-	locationClient, err := getS3Client(pollerResourceInput, defaultRegion)
+	locationClient, err := getS3Client(pollerResourceInput, defaultRegion, &resourceARN)
 	if err != nil {
 		return nil, err
 	}
-
 	// May return nil, nil if bucket no longer exists
 	region, err := getBucketLocation(locationClient, aws.String(resourceARN.Resource))
 	if err != nil || region == nil {
 		return nil, err
 	}
 
-	regionalClient, err := getS3Client(pollerResourceInput, *region)
+	regionalClient, err := getS3Client(pollerResourceInput, *region, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +344,7 @@ func buildS3BucketSnapshot(s3Svc s3iface.S3API, bucket *s3.Bucket) (*awsmodels.S
 // PollS3Buckets gathers information on each S3 bucket for an AWS account.
 func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddResourceEntry, *string, error) {
 	zap.L().Debug("starting S3 Bucket resource poller")
-	s3Svc, err := getS3Client(pollerInput, *pollerInput.Region)
+	s3Svc, err := getS3Client(pollerInput, *pollerInput.Region, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -353,6 +362,13 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddR
 	for _, bucket := range allBuckets.Buckets {
 		if bucket == nil {
 			zap.L().Debug("nil bucket returned by S3 list buckets")
+			continue
+		}
+		// Check if ResourceID matches the integration's regex filter
+		if ignore, err := pollerInput.ShouldIgnoreResource(*bucket.Name); ignore || err != nil {
+			if err != nil {
+				return nil, nil, err
+			}
 			continue
 		}
 		region, err := getBucketLocation(s3Svc, bucket.Name)

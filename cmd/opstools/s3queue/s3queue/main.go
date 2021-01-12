@@ -51,6 +51,7 @@ var (
 	TOQ         = flag.String("queue", "panther-input-data-notifications-queue", "The name of the log processor queue to send notifications.")
 	RATE        = flag.Float64("files-per-second", 0.0, "If non-zero, attempt to send at this rate of files per second")
 	DURATION    = flag.Duration("duration", 0, "If non-zero, stop after this long")
+	LOOP        = flag.Bool("loop", false, "If true, after finishing, repeat.")
 	INTERACTIVE = flag.Bool("interactive", true, "If true, prompt for required flags if not set")
 	DEBUG       = flag.Bool("debug", false, "Enable debug logging")
 
@@ -60,9 +61,9 @@ var (
 func main() {
 	opstools.SetUsage(banner)
 
-	logger = opstools.MustBuildLogger(*DEBUG)
-
 	flag.Parse()
+
+	logger = opstools.MustBuildLogger(*DEBUG)
 
 	sess, err := session.NewSession()
 	if err != nil {
@@ -114,6 +115,7 @@ func main() {
 		S3Path:   *S3PATH,
 		S3Region: s3Region,
 		Limit:    *LIMIT,
+		Loop:     *LOOP,
 	}
 
 	// catch ^C
@@ -161,6 +163,10 @@ func validateFlags() {
 	if *CONCURRENCY <= 0 {
 		err = errors.New("-concurrency must be > 0")
 		return
+	}
+	// This ensures more continuous average activity for small FPS
+	if float64(*CONCURRENCY) > *RATE {
+		*CONCURRENCY = int(*RATE)
 	}
 
 	if *S3PATH == "" {
