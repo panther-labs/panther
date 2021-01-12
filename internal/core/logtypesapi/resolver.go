@@ -34,7 +34,6 @@ import (
 // Resolver resolves a custom log type using the API
 type Resolver struct {
 	LogTypesAPI *LogTypesAPILambdaClient
-	cache       logtypes.Registry
 }
 
 var _ logtypes.Resolver = (*Resolver)(nil)
@@ -43,10 +42,6 @@ var _ logtypes.Resolver = (*Resolver)(nil)
 func (r *Resolver) Resolve(ctx context.Context, name string) (logtypes.Entry, error) {
 	if !strings.HasPrefix(name, customlogs.LogTypePrefix) {
 		return nil, nil
-	}
-	entry := r.cache.Find(name)
-	if entry != nil {
-		return entry, nil
 	}
 	reply, err := r.LogTypesAPI.GetCustomLog(ctx, &GetCustomLogInput{
 		LogType:  name,
@@ -76,10 +71,9 @@ func (r *Resolver) Resolve(ctx context.Context, name string) (logtypes.Entry, er
 		Description:  record.Description,
 		ReferenceURL: record.ReferenceURL,
 	}
-	entry, err = customlogs.Build(desc, &schema)
+	entry, err := customlogs.Build(desc, &schema)
 	if err != nil {
 		return nil, errors.Wrap(err, "invalid schema")
 	}
-	_ = r.cache.Register(entry)
 	return entry, nil
 }

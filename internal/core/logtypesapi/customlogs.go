@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"go.uber.org/multierr"
 	"gopkg.in/yaml.v2"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -38,14 +39,10 @@ import (
 func (api *LogTypesAPI) GetCustomLog(ctx context.Context, input *GetCustomLogInput) (*GetCustomLogOutput, error) {
 	record, err := api.Database.GetCustomLog(ctx, input.LogType, input.Revision)
 	if err != nil {
-		return &GetCustomLogOutput{
-			Error: WrapAPIError(err),
-		}, nil
+		return nil, err
 	}
 	if record == nil {
-		return &GetCustomLogOutput{
-			Error: NewAPIError(ErrNotFound, fmt.Sprintf("custom log record %s@%d not found", input.LogType, input.Revision)),
-		}, nil
+		return nil, NewAPIError(ErrNotFound, fmt.Sprintf("custom log record %s@%d not found", input.LogType, input.Revision))
 	}
 	return &GetCustomLogOutput{
 		Result: record,
@@ -73,16 +70,74 @@ type CustomLogRecord struct {
 
 type CustomLog struct {
 	Description  string `json:"description" description:"Log type description"`
-	ReferenceURL string `json:"referenceURL" description:"A URL with reference docs for the logtype"`
+	ReferenceURL string `json:"referenceURL" description:"A URL with reference docs for the log type"`
 	LogSpec      string `json:"logSpec" validate:"required" description:"The log spec in YAML or JSON format"`
 }
 
 func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInput) (*PutCustomLogOutput, error) {
 	id := customlogs.LogType(input.LogType)
+	schema, err := buildSchema(id, &input.CustomLog)
+	if err != nil {
+		return nil, err
+	}
+	currentRevision := input.Revision
+	if currentRevision == 0 {
+		result, err := api.Database.CreateCustomLog(ctx, id, &input.CustomLog)
+		if err != nil {
+			return nil, err
+		}
+		return &PutCustomLogOutput{Result: result}, nil
+	}
+	current, err := api.Database.GetCustomLog(ctx, id, 0)
+	if err != nil {
+		return nil, err
+	}
+	if current == nil {
+		return nil, NewAPIError(ErrNotFound, fmt.Sprintf("record %q was not found", id))
+	}
+	if current.Revision != currentRevision {
+		return nil, NewAPIError(ErrRevisionConflict, fmt.Sprintf("record %q is not on revision %d", id, currentRevision))
+	}
+
+	currentSchema, err := buildSchema(id, &current.CustomLog)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := api.checkUpdate(currentSchema, schema); err != nil {
+		return nil, NewAPIError(ErrInvalidUpdate, fmt.Sprintf("schema update is not backwards compatible: %s", err))
+	}
+
+	result, err := api.Database.UpdateCustomLog(ctx, id, currentRevision, &input.CustomLog)
+	if err != nil {
+		return nil, err
+	}
+	if err := api.DataCatalog.SendUpdateTableForLogType(ctx, id); err != nil {
+		// The error will be shown to the user as a "ServerError"
+		return nil, errors.Wrapf(err, "could not queue event for %q database update", input.LogType)
+	}
+	return &PutCustomLogOutput{Result: result}, nil
+}
+
+func (api *LogTypesAPI) checkUpdate(a, b *logschema.Schema) error {
+	diff, err := logschema.Diff(a, b)
+	if err != nil {
+		return err
+	}
+	for i := range diff {
+		c := &diff[i]
+		if e := customlogs.CheckSchemaChange(c); e != nil {
+			err = multierr.Append(err, e)
+		}
+	}
+	return err
+}
+
+func buildSchema(id string, c *CustomLog) (*logschema.Schema, error) {
 	desc := logtypes.Desc{
 		Name:         id,
-		Description:  input.Description,
-		ReferenceURL: input.ReferenceURL,
+		Description:  c.Description,
+		ReferenceURL: c.ReferenceURL,
 	}
 
 	// Pass strict validation rules for logtype.Desc
@@ -90,33 +145,16 @@ func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInp
 
 	// This is checked again in `customlogs.Build` but we check here to provide the appropriate error code
 	if err := desc.Validate(); err != nil {
-		return &PutCustomLogOutput{
-			Error: NewAPIError("InvalidMetadata", err.Error()),
-		}, nil
+		return nil, NewAPIError(ErrInvalidMetadata, err.Error())
 	}
 	schema := logschema.Schema{}
-	if err := yaml.Unmarshal([]byte(input.LogSpec), &schema); err != nil {
-		return &PutCustomLogOutput{
-			Error: NewAPIError("InvalidSyntax", err.Error()),
-		}, nil
+	if err := yaml.Unmarshal([]byte(c.LogSpec), &schema); err != nil {
+		return nil, NewAPIError(ErrInvalidSyntax, err.Error())
 	}
 	if _, err := customlogs.Build(desc, &schema); err != nil {
-		return &PutCustomLogOutput{
-			Error: NewAPIError("InvalidLogSchema", err.Error()),
-		}, nil
+		return nil, NewAPIError(ErrInvalidLogSchema, err.Error())
 	}
-	if rev := input.Revision; rev > 0 {
-		return &PutCustomLogOutput{
-			Error: NewAPIError("Unsupported", "updates are not supported yet."),
-		}, nil
-	}
-	result, err := api.Database.CreateCustomLog(ctx, id, &input.CustomLog)
-	if err != nil {
-		return &PutCustomLogOutput{
-			Error: WrapAPIError(err),
-		}, nil
-	}
-	return &PutCustomLogOutput{Result: result}, nil
+	return &schema, nil
 }
 
 // nolint:lll
@@ -137,24 +175,18 @@ type PutCustomLogOutput struct {
 func (api *LogTypesAPI) DelCustomLog(ctx context.Context, input *DelCustomLogInput) (*DelCustomLogOutput, error) {
 	inUse, err := api.getLogTypesInUse()
 	if err != nil {
-		return &DelCustomLogOutput{
-			Error: WrapAPIError(err),
-		}, nil
+		return nil, err
 	}
 
 	for _, logType := range inUse {
 		if logType == input.LogType {
-			return &DelCustomLogOutput{
-				Error: NewAPIError(ErrInUse, fmt.Sprintf("log %s in use", input.LogType)),
-			}, nil
+			return nil, NewAPIError(ErrInUse, fmt.Sprintf("log %s in use", input.LogType))
 		}
 	}
 
 	id, rev := customlogs.LogType(input.LogType), input.Revision
 	if err := api.Database.DeleteCustomLog(ctx, id, rev); err != nil {
-		return &DelCustomLogOutput{
-			Error: WrapAPIError(err),
-		}, nil
+		return nil, err
 	}
 	return &DelCustomLogOutput{}, nil
 }
@@ -163,6 +195,7 @@ type DelCustomLogInput struct {
 	LogType  string `json:"logType" validate:"required,startswith=Custom." description:"The log type id"`
 	Revision int64  `json:"revision" validate:"min=1" description:"Log record revision"`
 }
+
 type DelCustomLogOutput struct {
 	Error *APIError `json:"error,omitempty" validate:"required_without=Result" description:"The delete record"`
 }
@@ -182,14 +215,10 @@ func (api *LogTypesAPI) ListCustomLogs(ctx context.Context) (*ListCustomLogsOutp
 	if len(custom) > 0 {
 		records, err = api.Database.BatchGetCustomLogs(ctx, custom...)
 		if err != nil {
-			return &ListCustomLogsOutput{
-				Error: WrapAPIError(err),
-			}, nil
+			return nil, err
 		}
 	}
-	return &ListCustomLogsOutput{
-		CustomLogs: records,
-	}, nil
+	return &ListCustomLogsOutput{CustomLogs: records}, nil
 }
 
 func (api *LogTypesAPI) getLogTypesInUse() ([]string, error) {

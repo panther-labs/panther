@@ -219,9 +219,13 @@ func (api API) FullScan(input *models.FullScanInput) error {
 			scanMsg := &pollermodels.ScanMsg{
 				Entries: []*pollermodels.ScanEntry{
 					{
-						AWSAccountID:  &integration.AWSAccountID,
-						IntegrationID: &integration.IntegrationID,
-						ResourceType:  aws.String(resourceType),
+						AWSAccountID:            &integration.AWSAccountID,
+						IntegrationID:           &integration.IntegrationID,
+						ResourceType:            aws.String(resourceType),
+						Enabled:                 integration.Enabled,
+						RegionIgnoreList:        integration.RegionIgnoreList,
+						ResourceTypeIgnoreList:  integration.ResourceTypeIgnoreList,
+						ResourceRegexIgnoreList: integration.ResourceRegexIgnoreList,
 					},
 				},
 			}
@@ -281,6 +285,10 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 		metadata.S3PrefixLogTypes = input.S3PrefixLogTypes
 		metadata.StackName = getStackName(input.IntegrationType, input.IntegrationLabel)
 		metadata.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
+		metadata.Enabled = input.Enabled
+		metadata.RegionIgnoreList = input.RegionIgnoreList
+		metadata.ResourceTypeIgnoreList = input.ResourceTypeIgnoreList
+		metadata.ResourceRegexIgnoreList = input.ResourceRegexIgnoreList
 	case models.IntegrationTypeSqs:
 		metadata.SqsConfig = &models.SqsConfig{
 			S3Bucket:             env.InputDataBucketName,

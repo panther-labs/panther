@@ -18,7 +18,16 @@ package logtypesapi_test
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "context"
+import (
+	"context"
+	"testing"
+
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
+
+	"github.com/panther-labs/panther/internal/core/logtypesapi"
+)
 
 // TestCase implements logtypes.ExternalAPI
 // TODO: Generate test cases with go generate
@@ -28,4 +37,15 @@ type TestCase struct {
 
 func (t *TestCase) IndexLogTypes(_ context.Context) ([]string, error) {
 	return t.ListLogTypesOutput, nil
+}
+
+func TestWrapAPIError(t *testing.T) {
+	awsErr := awserr.New("foo", "error message", nil)
+	err := errors.Wrap(awsErr, "wrapped")
+	apiErr := logtypesapi.WrapAPIError(err)
+	assert := require.New(t)
+	assert.NotNil(apiErr)
+	assert.Equal("foo", apiErr.Code)
+	assert.Equal("wrapped: foo: error message", apiErr.Message)
+	assert.Equal(err, apiErr.Unwrap())
 }
