@@ -46,9 +46,9 @@ type SelfRegistrationProperties struct {
 	EnableGuardDuty         bool     `json:",string"`
 	EnableS3AccessLogs      bool     `json:",string"`
 	Enabled                 *bool    `json:",string"`
-	RegionIgnoreList        []string `json:",string"`
-	ResourceTypeIgnoreList  []string `json:",string"`
-	ResourceRegexIgnoreList []string `json:",string"`
+	RegionIgnoreList        []string `json:","`
+	ResourceTypeIgnoreList  []string `json:","`
+	ResourceRegexIgnoreList []string `json:","`
 }
 
 func customSelfRegistration(_ context.Context, event cfn.Event) (string, map[string]interface{}, error) {
