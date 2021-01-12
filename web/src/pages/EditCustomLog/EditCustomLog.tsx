@@ -84,7 +84,7 @@ const EditCustomLog: React.FC = () => {
     [data]
   );
 
-  if (data?.getCustomLog?.error) {
+  if (controlledError) {
     return (
       <Alert
         variant="error"
@@ -94,8 +94,8 @@ const EditCustomLog: React.FC = () => {
     );
   }
 
-  if (data?.getCustomLog?.error) {
-    if (data?.getCustomLog?.error?.code === ErrorCodeEnum.NotFound) {
+  if (controlledError) {
+    if (controlledError.code === ErrorCodeEnum.NotFound) {
       return <Page404 />;
     }
 
