@@ -21,7 +21,9 @@ import useRouter from 'Hooks/useRouter';
 import { Alert, Box, Flex, Card, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import { getComplianceItemsTotalCount, extractErrorMessage } from 'Helpers/utils';
+import invert from 'lodash/invert';
 import withSEO from 'Hoc/withSEO';
+import useUrlParams from 'Hooks/useUrlParams';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import PolicyDetailsInfo from './PolicyDetailsInfo';
 import PolicyDetailsBanner from './PolicyDetailsBanner';
@@ -29,8 +31,23 @@ import PolicyDetailsResources from './PolicyDetailsResources';
 import PolicyDetailsPageSkeleton from './Skeleton';
 import { usePolicyDetails } from './graphql/policyDetails.generated';
 
+export interface PolicyDetailsPageUrlParams {
+  section?: 'details' | 'resources';
+}
+
+const sectionToTabIndex: Record<PolicyDetailsPageUrlParams['section'], number> = {
+  details: 0,
+  resources: 1,
+};
+
+const tabIndexToSection = invert(sectionToTabIndex) as Record<
+  number,
+  PolicyDetailsPageUrlParams['section']
+>;
+
 const PolicyDetailsPage = () => {
   const { match } = useRouter<{ id: string }>();
+  const { urlParams, setUrlParams } = useUrlParams<PolicyDetailsPageUrlParams>();
 
   const { error, data, loading } = usePolicyDetails({
     fetchPolicy: 'cache-and-network',
@@ -75,7 +92,10 @@ const PolicyDetailsPage = () => {
           <PolicyDetailsBanner policy={data.policy} />
         </ErrorBoundary>
         <Card position="relative">
-          <Tabs>
+          <Tabs
+            index={sectionToTabIndex[urlParams.section] || 0}
+            onChange={index => setUrlParams({ section: tabIndexToSection[index] })}
+          >
             <Box px={2}>
               <TabList>
                 <BorderedTab>Details</BorderedTab>
