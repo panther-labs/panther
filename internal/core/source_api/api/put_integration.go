@@ -219,9 +219,13 @@ func (api API) FullScan(input *models.FullScanInput) error {
 			scanMsg := &pollermodels.ScanMsg{
 				Entries: []*pollermodels.ScanEntry{
 					{
-						AWSAccountID:  &integration.AWSAccountID,
-						IntegrationID: &integration.IntegrationID,
-						ResourceType:  aws.String(resourceType),
+						AWSAccountID:            &integration.AWSAccountID,
+						IntegrationID:           &integration.IntegrationID,
+						ResourceType:            aws.String(resourceType),
+						Enabled:                 integration.Enabled,
+						RegionIgnoreList:        integration.RegionIgnoreList,
+						ResourceTypeIgnoreList:  integration.ResourceTypeIgnoreList,
+						ResourceRegexIgnoreList: integration.ResourceRegexIgnoreList,
 					},
 				},
 			}

@@ -30,7 +30,6 @@ import (
 	"go.uber.org/zap"
 
 	resourcesapimodels "github.com/panther-labs/panther/api/lambda/resources/models"
-	"github.com/panther-labs/panther/api/lambda/source/models"
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/utils"
@@ -170,34 +169,18 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		// This field may be nil
 		Region: scanRequest.Region,
 		// Note: The resources-api expects a time.Time formatted string.
-		Timestamp:     aws.Time(utils.TimeNowFunc()),
-		NextPageToken: scanRequest.NextPageToken,
+		Timestamp:               aws.Time(utils.TimeNowFunc()),
+		NextPageToken:           scanRequest.NextPageToken,
+		RegionIgnoreList:        scanRequest.RegionIgnoreList,
+		ResourceRegexIgnoreList: scanRequest.ResourceRegexIgnoreList,
+		ResourceTypeIgnoreList:  scanRequest.ResourceTypeIgnoreList,
 	}
 
-	// Retrieve source integration from a short-lived cache for integration filtering options
-	var sourceIntegration *models.SourceIntegration
-	// Checks IntegrationID nil case -- we log an error and return nil, nil as to avoid requeueing a malformed request
-	if scanRequest.IntegrationID == nil {
-		zap.L().Error("got a malformed scan request - no integration id", zap.Any("scan request", scanRequest))
+	// Check if integration is disabled
+	if scanRequest.Enabled != nil && !*scanRequest.Enabled {
+		zap.L().Info("source integration disabled",
+			zap.String("integration id", *scanRequest.IntegrationID), zap.Time("timestamp", time.Now()))
 		return nil, nil
-	}
-	sourceIntegration, err = utils.GetIntegration(*scanRequest.IntegrationID)
-	if err != nil {
-		zap.L().Warn("failed to retrieve integration from source api")
-		return nil, err
-	}
-
-	// Options for filtering and ignoreList
-	// Used to pass on these to downstream pollers
-	if sourceIntegration != nil {
-		pollerResourceInput.ResourceRegexIgnoreList, pollerResourceInput.ResourceTypeIgnoreList, pollerResourceInput.RegionIgnoreList =
-			sourceIntegration.ResourceRegexIgnoreList, sourceIntegration.ResourceTypeIgnoreList, sourceIntegration.RegionIgnoreList
-		// Check if integration is disabled
-		if sourceIntegration.Enabled != nil && !*sourceIntegration.Enabled {
-			zap.L().Info("source integration disabled",
-				zap.String("integration id", *scanRequest.IntegrationID), zap.Time("timestamp", time.Now()))
-			return nil, nil
-		}
 	}
 
 	// Check if resource type is filtered
@@ -365,7 +348,7 @@ func singleResourceScan(
 		resourceARN, err = arn.Parse(*scanRequest.ResourceID)
 		if err != nil {
 			zap.L().Error("unable to parse resourceID", zap.Error(err), zap.String("resourceID", *scanRequest.ResourceID))
-			// Don't return an error here because the scan request is not retryable
+			// This error is not retryable
 			return nil, nil
 		}
 		// Check if ResourceID matches the integration's regex filter
