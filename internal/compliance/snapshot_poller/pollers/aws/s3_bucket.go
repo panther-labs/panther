@@ -369,9 +369,7 @@ func PollS3Buckets(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddR
 			if err != nil {
 				return nil, nil, err
 			}
-			if ignore {
-				continue
-			}
+			continue
 		}
 		region, err := getBucketLocation(s3Svc, bucket.Name)
 		if err != nil {
