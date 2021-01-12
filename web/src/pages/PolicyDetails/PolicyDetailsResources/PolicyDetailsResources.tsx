@@ -35,8 +35,8 @@ import {
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
 import pick from 'lodash/pick';
-import PolicyDetailsTable from '../PolicyDetailsTable';
 import { usePolicyResources } from '../graphql/policyResources.generated';
+import PolicyDetailsTable from './PolicyDetailsTable';
 import PolicyResourcesSkeleton from './Skeleton';
 
 const acceptedRequestParams = ['page', 'status', 'pageSize', 'suppressed'] as const;

@@ -27,6 +27,9 @@ import { MODALS } from 'Components/utils/Modal';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import StatusBadge from 'Components/badges/StatusBadge';
 import LinkButton from 'Components/buttons/LinkButton';
+import useDetectionDestinations from 'Hooks/useDetectionDestinations';
+import BulletedValue from 'Components/BulletedValue';
+import RelatedDestinations from 'Components/RelatedDestinations/RelatedDestinations';
 
 interface ResourceDetailsBannerProps {
   policy?: PolicyDetails;
@@ -34,6 +37,10 @@ interface ResourceDetailsBannerProps {
 
 const PolicyDetailsBanner: React.FC<ResourceDetailsBannerProps> = ({ policy }) => {
   const { showModal } = useModal();
+  const {
+    detectionDestinations,
+    loading: loadingDetectionDestinations,
+  } = useDetectionDestinations({ detection: policy });
 
   return (
     <React.Fragment>
@@ -56,8 +63,7 @@ const PolicyDetailsBanner: React.FC<ResourceDetailsBannerProps> = ({ policy }) =
           </Button>
         </Flex>
       </Breadcrumbs.Actions>
-
-      <Card as="article" p={6}>
+      <Card as="article" p={6} borderLeft="4px solid" borderColor="cyan-500">
         <Flex as="header" align="center">
           <Heading
             fontWeight="bold"
@@ -69,29 +75,6 @@ const PolicyDetailsBanner: React.FC<ResourceDetailsBannerProps> = ({ policy }) =
             mr={100}
           >
             {policy.displayName || policy.id}
-
-            <Tooltip
-              content={
-                <Flex spacing={3}>
-                  <Flex direction="column" spacing={2}>
-                    <Box id="policy-id-label">Policy ID</Box>
-                    <Box id="resource-types-label">Resource Types</Box>
-                  </Flex>
-                  <Flex direction="column" spacing={2} fontWeight="bold">
-                    <Box aria-labelledby="policy-id-label">{policy.id}</Box>
-                    <Box aria-labelledby="resource-types-label">
-                      {policy.resourceTypes.length > 0
-                        ? policy.resourceTypes.map(resourceType => (
-                            <Box key={resourceType}>{resourceType}</Box>
-                          ))
-                        : 'All resources'}
-                    </Box>
-                  </Flex>
-                </Flex>
-              }
-            >
-              <Icon color="navyblue-200" type="info" size="medium" verticalAlign="unset" ml={2} />
-            </Tooltip>
           </Heading>
           <Flex spacing={2} as="ul" flexShrink={0} ml="auto">
             <Box as="li">
@@ -127,6 +110,42 @@ const PolicyDetailsBanner: React.FC<ResourceDetailsBannerProps> = ({ policy }) =
                 </Box>
               </Tooltip>
             )}
+          </Flex>
+        </Flex>
+        <Flex as="dl" fontSize="small-medium" pt={5} spacing={8}>
+          <Flex>
+            <Box color="navyblue-100" as="dt" pr={2}>
+              Policy ID
+            </Box>
+            <Box as="dd" fontWeight="bold">
+              {policy.id}
+            </Box>
+          </Flex>
+          <Flex>
+            <Box color="navyblue-100" as="dt" pr={2}>
+              Resource Types
+            </Box>
+            <Flex as="dd" align="center" spacing={6}>
+              {policy.resourceTypes.length ? (
+                policy.resourceTypes.map(resourceType => (
+                  <BulletedValue key={resourceType} value={resourceType} />
+                ))
+              ) : (
+                <Box as="span" fontSize="medium" value="All Resources" />
+              )}
+            </Flex>
+          </Flex>
+          <Flex>
+            <Box color="navyblue-100" as="dt" pr={2}>
+              Destinations
+            </Box>
+            <Box as="dd">
+              <RelatedDestinations
+                destinations={detectionDestinations}
+                loading={loadingDetectionDestinations}
+                limit={5}
+              />
+            </Box>
           </Flex>
         </Flex>
       </Card>

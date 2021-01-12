@@ -39,7 +39,7 @@ const RuleDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
   const {
     detectionDestinations,
     loading: loadingDetectionDestinations,
-  } = useDetectionDestinations({ rule });
+  } = useDetectionDestinations({ detection: rule });
 
   return (
     <React.Fragment>
