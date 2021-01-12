@@ -68,7 +68,6 @@ var SupportedRegions = map[string]bool{
 
 // Deploy Panther to your AWS account
 func Deploy() error {
-
 	start := time.Now()
 	if err := PreCheck(); err != nil {
 		return err
@@ -605,7 +604,7 @@ func PantherNames(setString string) []string {
 func RunSet(label string, nameset string, callFn func(string) error) int {
 	returnCount := 0
 	for _, entry := range PantherNames(nameset) {
-		returnCount += 1
+		returnCount++
 		log.Info(label, ": ", entry)
 		if err := callFn(entry); err != nil {
 			log.Error("\n\n ", label, ": ", entry, "\n\n ERROR: ", err.Error(), "\n")
