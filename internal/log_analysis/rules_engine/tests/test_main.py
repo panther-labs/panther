@@ -66,7 +66,7 @@ class TestMainDirectAnalysis(TestCase):
 
     def test_direct_analysis_event_matching(self) -> None:
         rule_body = 'def rule(event):\n\treturn True'
-        payload = {'rules': [{'id': 'rule_id', 'body': rule_body}], 'events': [{'id': 'event_id', 'data': 'data'}]}
+        payload = {'rules': [{'id': 'rule_id', 'body': rule_body}], 'events': [{'id': 'event_id', 'data': {'key': 'value'}}]}
         expected_response = {
             'results':
                 [
@@ -105,8 +105,8 @@ class TestMainDirectAnalysis(TestCase):
                     'def reference(event):\n\treturn "generated reference"\n' \
                     'def severity(event):\n\treturn "HIGH"\n' \
                     'def runbook(event):\n\treturn "generated runbook"\n' \
-                    'def destination_override(event):\n\treturn ["destination1", "destination2"]'
-        payload = {'rules': [{'id': 'rule_id', 'body': rule_body}], 'events': [{'id': 'event_id', 'data': 'data'}]}
+                    'def destinations(event):\n\treturn ["destination1", "destination2"]'
+        payload = {'rules': [{'id': 'rule_id', 'body': rule_body}], 'events': [{'id': 'event_id', 'data': {'key': 'value'}}]}
         expected_response: dict = {
             'results':
                 [
@@ -140,7 +140,7 @@ class TestMainDirectAnalysis(TestCase):
 
     def test_direct_analysis_event_not_matching(self) -> None:
         rule_body = 'def rule(event):\n\treturn False'
-        payload = {'rules': [{'id': 'rule_id', 'body': rule_body}], 'events': [{'id': 'event_id', 'data': 'data'}]}
+        payload = {'rules': [{'id': 'rule_id', 'body': rule_body}], 'events': [{'id': 'event_id', 'data': {'key': 'value'}}]}
         expected_response = {
             'results':
                 [
@@ -180,7 +180,9 @@ class TestMainDirectAnalysis(TestCase):
             }],
             'events': [{
                 'id': 'event_id',
-                'data': 'data'
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
         expected_response = {
@@ -215,7 +217,7 @@ class TestMainDirectAnalysis(TestCase):
         self.assertEqual(expected_response, lambda_handler(payload, None))
 
     def test_direct_analysis_rule_invalid(self) -> None:
-        payload = {'rules': [{'id': 'rule_id', 'body': 'import stuff'}], 'events': [{'id': 'event_id', 'data': 'data'}]}
+        payload = {'rules': [{'id': 'rule_id', 'body': 'import stuff'}], 'events': [{'id': 'event_id', 'data': {'key': 'value'}}]}
         expected_response = {
             'results':
                 [
@@ -256,7 +258,9 @@ class TestMainDirectAnalysis(TestCase):
             }],
             'events': [{
                 'id': 'event_id',
-                'data': 'data'
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
         expected_response = {
@@ -299,7 +303,9 @@ class TestMainDirectAnalysis(TestCase):
             }],
             'events': [{
                 'id': 'event_id',
-                'data': 'data'
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
 
@@ -346,7 +352,9 @@ class TestMainDirectAnalysis(TestCase):
                 ],
             'events': [{
                 'id': 'event_id',
-                'data': 'data'
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
 
@@ -391,7 +399,9 @@ class TestMainDirectAnalysis(TestCase):
                 }],
             'events': [{
                 'id': 'event_id',
-                'data': 'data'
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
 
@@ -436,7 +446,9 @@ class TestMainDirectAnalysis(TestCase):
                 }],
             'events': [{
                 'id': 'event_id',
-                'data': 'data'
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
 
@@ -482,7 +494,9 @@ class TestMainDirectAnalysis(TestCase):
             ],
             'events': [{
                 'id': 'event_id',
-                'data': 'data'
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
 
@@ -524,14 +538,14 @@ class TestMainDirectAnalysis(TestCase):
                 [
                     {
                         'id': 'rule_id',
-                        'body':
-                            "def rule(event):\n\treturn True\n" +
-                            "def destination_override(event):\n\traise Exception('destinations error')"
+                        'body': "def rule(event):\n\treturn True\n" + "def destinations(event):\n\traise Exception('destinations error')"
                     }
                 ],
             'events': [{
                 'id': 'event_id',
-                'data': 'data'
+                'data': {
+                    'key': 'value'
+                }
             }]
         }
 

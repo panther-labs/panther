@@ -205,14 +205,21 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 		// Map the Config struct fields over to the fields we need to store in Dynamo
 		analysisItem := tableItemFromConfig(config)
 
-		// ensure Mappings are nil rather than an empty slice
-		if len(config.Mappings) > 0 {
-			analysisItem.Mappings = make([]models.DataModelMapping, len(config.Mappings))
-			for i, mapping := range config.Mappings {
-				analysisItem.Mappings[i], err = buildMapping(mapping)
-				if err != nil {
-					return nil, err
+		if analysisItem.Type == models.TypeDataModel {
+			// ensure Mappings are nil rather than an empty slice
+			if len(config.Mappings) > 0 {
+				analysisItem.Mappings = make([]models.DataModelMapping, len(config.Mappings))
+				for i, mapping := range config.Mappings {
+					analysisItem.Mappings[i], err = buildMapping(mapping)
+					if err != nil {
+						return nil, err
+					}
 				}
+			}
+			// ensure only one data model is enabled per LogType (ResourceType)
+			err = validateUploadedDataModel(analysisItem)
+			if err != nil {
+				return nil, err
 			}
 		}
 
@@ -363,6 +370,20 @@ func readZipFile(zf *zip.File) ([]byte, error) {
 	return ioutil.ReadAll(f)
 }
 
+func validateUploadedDataModel(item *tableItem) error {
+	if len(item.ResourceTypes) > 1 {
+		return errors.New("only one LogType may be specified per DataModel")
+	}
+	isEnabled, err := isSingleDataModelEnabled(item.ID, item.Enabled, item.ResourceTypes)
+	if err != nil {
+		return err
+	}
+	if !isEnabled {
+		return errMultipleDataModelsEnabled
+	}
+	return nil
+}
+
 // Ensure that the uploaded policy is valid according to the API spec for a Policy
 func validateUploadedPolicy(item *tableItem) error {
 	switch item.Type {
@@ -370,10 +391,6 @@ func validateUploadedPolicy(item *tableItem) error {
 		item.Severity = compliancemodels.SeverityInfo
 	case models.TypeDataModel:
 		item.Severity = compliancemodels.SeverityInfo
-		// for now, only allow one LogType per DataModel
-		if len(item.ResourceTypes) > 1 {
-			return errors.New("only one ResourceType may be specified per DataModel")
-		}
 	case models.TypePolicy, models.TypeRule:
 		break
 	default:
