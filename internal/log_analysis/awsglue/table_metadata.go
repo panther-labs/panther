@@ -236,6 +236,12 @@ func (gm *GlueTableMetadata) CreateTableIfNotExists(ctx context.Context, glueAPI
 					aws.String("day"),
 				},
 			},
+			{
+				IndexName: aws.String("partition_time_idx"),
+				Keys: []*string{
+					aws.String("partition_time"),
+				},
+			},
 		},
 	}
 	if _, err := glueAPI.CreateTableWithContext(ctx, createTableInput); err != nil {
@@ -272,7 +278,7 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 				},
 			},
 			{
-				IndexName: aws.String("hour_idx"),
+				IndexName: aws.String("partition_time_idx"),
 				Keys: []*string{
 					aws.String("partition_time"),
 				},

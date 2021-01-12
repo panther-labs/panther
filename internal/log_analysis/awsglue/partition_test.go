@@ -94,7 +94,6 @@ func TestCreatePartitionFromS3Log(t *testing.T) {
 			Value: "1582729200",
 		},
 	}
-	//awsglue.PartitionColumnInfo{Key:"partition_time", Value:"1582729200"}
 
 	assert.Equal(t, pantherdb.LogProcessingDatabase, partition.GetDatabase())
 	assert.Equal(t, "table", partition.GetTable())
