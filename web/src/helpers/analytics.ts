@@ -55,6 +55,7 @@ export enum PageViewEnum {
   Home = 'Home',
   Support = 'Support',
   CustomLogDetails = 'Custom Log Details Screen',
+  CustomLogEditing = 'Custom Log Edit Screen',
 }
 
 interface TrackPageViewProps {
@@ -74,6 +75,7 @@ export enum EventEnum {
   AddedDataModel = 'Added Data Model',
   UpdatedDataModel = 'Updated Data Model',
   DeletedCustomLog = 'Deleted Custom Log',
+  UpdatedCustomLog = 'Update Custom Log',
   AddedRule = 'Added Rule',
   AddedPolicy = 'Added Policy',
   AddedComplianceSource = 'Added Compliance Source',
@@ -119,6 +121,10 @@ interface AddedCustomLogEvent {
 interface AddedDataModelEvent {
   event: EventEnum.AddedDataModel;
   src: SrcEnum.DataModels;
+}
+interface UpdatedCustomLogEvent {
+  event: EventEnum.UpdatedCustomLog;
+  src: SrcEnum.CustomLogs;
 }
 
 interface UpdatedDataModelEvent {
@@ -235,6 +241,7 @@ type TrackEvent =
   | UpdatedAlertStatus
   | BulkUpdatedAlertStatus
   | AddedCustomLogEvent
+  | UpdatedCustomLogEvent
   | DeletedCustomLogEvent
   | TestedDestination
   | TestedDestinationSuccessfully
@@ -255,6 +262,7 @@ export enum TrackErrorEnum {
   FailedToAddCustomLog = 'Failed to create a Custom Log',
   FailedToAddDataModel = 'Failed to create a Data Model',
   FailedToUpdateDataModel = 'Failed to update a Data Model',
+  FailedToEditCustomLog = 'Failed to edit a Custom Log',
   FailedToDeleteCustomLog = 'Failed to delete a Custom Log',
   FailedToAddLogSource = 'Failed to add log source',
   FailedToUpdateLogSource = 'Failed to update log source',
@@ -320,11 +328,18 @@ interface AddLogSourceError {
 }
 
 interface CustomLogError {
-  event: TrackErrorEnum.FailedToAddCustomLog | TrackErrorEnum.FailedToDeleteCustomLog;
+  event:
+    | TrackErrorEnum.FailedToAddCustomLog
+    | TrackErrorEnum.FailedToDeleteCustomLog
+    | TrackErrorEnum.FailedToUpdateLogSource;
   src: SrcEnum.CustomLogs;
 }
 interface DeleteCustomLogError extends CustomLogError {
   event: TrackErrorEnum.FailedToDeleteCustomLog;
+}
+
+interface UpdateCustomLogError extends CustomLogError {
+  event: TrackErrorEnum.FailedToUpdateLogSource;
 }
 interface AddCustomLogError extends CustomLogError {
   event: TrackErrorEnum.FailedToAddCustomLog;
@@ -341,6 +356,7 @@ type TrackError =
   | DeleteCustomLogError
   | AddLogSourceError
   | UpdateLogSourceError
+  | UpdateCustomLogError
   | AddComplianceSourceError
   | UpdateComplianceSourceError;
 
