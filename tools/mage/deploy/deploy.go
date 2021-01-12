@@ -73,10 +73,10 @@ func Deploy() error {
 		return err
 	}
 
-	// Deploy 1 or more stacks with STACK="name1 name2" (ws delimited)
+	// Deploy 1 or more stacks with STACK="name1 name2" (white space delimited)
 	deployed := RunSet("STACK", os.Getenv("STACK"), deploySingleStack)
 
-	// Deploy 1 or more lambdas with LAMBDA="name1 name2..." (ws delimited)
+	// Deploy 1 or more lambdas with LAMBDA="name1 name2..." (white space delimited)
 	deployed += RunSet("LAMBDA", os.Getenv("LAMBDA"), deploySingleLambda)
 	if deployed > 0 {
 		return nil
