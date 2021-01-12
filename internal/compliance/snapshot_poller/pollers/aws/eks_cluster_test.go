@@ -138,7 +138,7 @@ func TestEksClusterGetProfilesError(t *testing.T) {
 func TestEksClusterBuildSnapshot(t *testing.T) {
 	mockSvc := awstest.BuildMockEksSvcAll()
 
-	clusterSnapshot, err := buildEksClusterSnapshot(mockSvc, awstest.ExampleEksClusterName)
+	clusterSnapshot, err := buildEksClusterSnapshot(mockSvc, awstest.ExampleEksClusterName, nil)
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, clusterSnapshot.ARN)
@@ -150,6 +150,7 @@ func TestEksClusterBuildSnapshotErrors(t *testing.T) {
 	certSnapshot, err := buildEksClusterSnapshot(
 		mockSvc,
 		awstest.ExampleEksClusterName,
+		nil,
 	)
 
 	assert.Nil(t, certSnapshot)

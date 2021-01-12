@@ -52,7 +52,13 @@ export type AddComplianceIntegrationInput = {
   cweEnabled?: Maybe<Scalars['Boolean']>;
 };
 
-export type AddCustomLogInput = {
+export type AddGlobalPythonModuleInput = {
+  id: Scalars['ID'];
+  description: Scalars['String'];
+  body: Scalars['String'];
+};
+
+export type AddOrUpdateCustomLogInput = {
   revision?: Maybe<Scalars['Int']>;
   logType: Scalars['String'];
   description: Scalars['String'];
@@ -60,25 +66,13 @@ export type AddCustomLogInput = {
   logSpec: Scalars['String'];
 };
 
-export type AddCustomLogOutput = {
-  __typename?: 'AddCustomLogOutput';
-  error?: Maybe<Error>;
-  record?: Maybe<CustomLogRecord>;
-};
-
-export type AddDataModelInput = {
+export type AddOrUpdateDataModelInput = {
   displayName: Scalars['String'];
   id: Scalars['ID'];
   enabled: Scalars['Boolean'];
   logTypes: Array<Scalars['String']>;
   mappings: Array<DataModelMappingInput>;
   body?: Maybe<Scalars['String']>;
-};
-
-export type AddGlobalPythonModuleInput = {
-  id: Scalars['ID'];
-  description: Scalars['String'];
-  body: Scalars['String'];
 };
 
 export type AddPolicyInput = {
@@ -270,6 +264,12 @@ export enum ComplianceStatusEnum {
   Fail = 'FAIL',
   Pass = 'PASS',
 }
+
+export type CustomLogOutput = {
+  __typename?: 'CustomLogOutput';
+  error?: Maybe<Error>;
+  record?: Maybe<CustomLogRecord>;
+};
 
 export type CustomLogRecord = {
   __typename?: 'CustomLogRecord';
@@ -770,7 +770,7 @@ export type MsTeamsConfigInput = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  addCustomLog: AddCustomLogOutput;
+  addCustomLog: GetCustomLogOutput;
   addDataModel: DataModel;
   addDestination?: Maybe<Destination>;
   addComplianceIntegration: ComplianceIntegration;
@@ -795,6 +795,8 @@ export type Mutation = {
   testPolicy: TestPolicyResponse;
   testRule: TestRuleResponse;
   updateAlertStatus: Array<AlertSummary>;
+  updateDataModel: DataModel;
+  updateCustomLog: GetCustomLogOutput;
   updateDestination?: Maybe<Destination>;
   updateComplianceIntegration: ComplianceIntegration;
   updateS3LogIntegration: S3LogIntegration;
@@ -808,11 +810,11 @@ export type Mutation = {
 };
 
 export type MutationAddCustomLogArgs = {
-  input: AddCustomLogInput;
+  input: AddOrUpdateCustomLogInput;
 };
 
 export type MutationAddDataModelArgs = {
-  input: AddDataModelInput;
+  input: AddOrUpdateDataModelInput;
 };
 
 export type MutationAddDestinationArgs = {
@@ -905,6 +907,14 @@ export type MutationTestRuleArgs = {
 
 export type MutationUpdateAlertStatusArgs = {
   input: UpdateAlertStatusInput;
+};
+
+export type MutationUpdateDataModelArgs = {
+  input: AddOrUpdateDataModelInput;
+};
+
+export type MutationUpdateCustomLogArgs = {
+  input: AddOrUpdateCustomLogInput;
 };
 
 export type MutationUpdateDestinationArgs = {
@@ -1060,6 +1070,7 @@ export type Query = {
   generalSettings: GeneralSettings;
   getComplianceIntegration: ComplianceIntegration;
   getComplianceIntegrationTemplate: IntegrationTemplate;
+  getDataModel?: Maybe<DataModel>;
   getS3LogIntegration: S3LogIntegration;
   getS3LogIntegrationTemplate: IntegrationTemplate;
   getSqsLogIntegration: SqsLogSourceIntegration;
@@ -1106,6 +1117,10 @@ export type QueryGetComplianceIntegrationArgs = {
 
 export type QueryGetComplianceIntegrationTemplateArgs = {
   input: GetComplianceIntegrationTemplateInput;
+};
+
+export type QueryGetDataModelArgs = {
+  id: Scalars['ID'];
 };
 
 export type QueryGetS3LogIntegrationArgs = {
@@ -1689,6 +1704,8 @@ export type ResolversTypes = {
   IntegrationItemHealthStatus: ResolverTypeWrapper<IntegrationItemHealthStatus>;
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: ResolverTypeWrapper<IntegrationTemplate>;
+  DataModel: ResolverTypeWrapper<DataModel>;
+  DataModelMapping: ResolverTypeWrapper<DataModelMapping>;
   S3LogIntegration: ResolverTypeWrapper<S3LogIntegration>;
   S3PrefixLogTypes: ResolverTypeWrapper<S3PrefixLogTypes>;
   S3LogIntegrationHealth: ResolverTypeWrapper<S3LogIntegrationHealth>;
@@ -1751,12 +1768,9 @@ export type ResolversTypes = {
   Error: ResolverTypeWrapper<Error>;
   CustomLogRecord: ResolverTypeWrapper<CustomLogRecord>;
   Mutation: ResolverTypeWrapper<{}>;
-  AddCustomLogInput: AddCustomLogInput;
-  AddCustomLogOutput: ResolverTypeWrapper<AddCustomLogOutput>;
-  AddDataModelInput: AddDataModelInput;
+  AddOrUpdateCustomLogInput: AddOrUpdateCustomLogInput;
+  AddOrUpdateDataModelInput: AddOrUpdateDataModelInput;
   DataModelMappingInput: DataModelMappingInput;
-  DataModel: ResolverTypeWrapper<DataModel>;
-  DataModelMapping: ResolverTypeWrapper<DataModelMapping>;
   DestinationInput: DestinationInput;
   DestinationConfigInput: DestinationConfigInput;
   SlackConfigInput: SlackConfigInput;
@@ -1811,6 +1825,7 @@ export type ResolversTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
+  CustomLogOutput: ResolverTypeWrapper<CustomLogOutput>;
   AccountTypeEnum: AccountTypeEnum;
   ErrorCodeEnum: ErrorCodeEnum;
 };
@@ -1870,6 +1885,8 @@ export type ResolversParentTypes = {
   IntegrationItemHealthStatus: IntegrationItemHealthStatus;
   GetComplianceIntegrationTemplateInput: GetComplianceIntegrationTemplateInput;
   IntegrationTemplate: IntegrationTemplate;
+  DataModel: DataModel;
+  DataModelMapping: DataModelMapping;
   S3LogIntegration: S3LogIntegration;
   S3PrefixLogTypes: S3PrefixLogTypes;
   S3LogIntegrationHealth: S3LogIntegrationHealth;
@@ -1934,12 +1951,9 @@ export type ResolversParentTypes = {
   Error: Error;
   CustomLogRecord: CustomLogRecord;
   Mutation: {};
-  AddCustomLogInput: AddCustomLogInput;
-  AddCustomLogOutput: AddCustomLogOutput;
-  AddDataModelInput: AddDataModelInput;
+  AddOrUpdateCustomLogInput: AddOrUpdateCustomLogInput;
+  AddOrUpdateDataModelInput: AddOrUpdateDataModelInput;
   DataModelMappingInput: DataModelMappingInput;
-  DataModel: DataModel;
-  DataModelMapping: DataModelMapping;
   DestinationInput: DestinationInput;
   DestinationConfigInput: DestinationConfigInput;
   SlackConfigInput: SlackConfigInput;
@@ -1994,6 +2008,7 @@ export type ResolversParentTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
+  CustomLogOutput: CustomLogOutput;
   AccountTypeEnum: AccountTypeEnum;
   ErrorCodeEnum: ErrorCodeEnum;
 };
@@ -2004,15 +2019,6 @@ export type ActiveSuppressCountResolvers<
 > = {
   active?: Resolver<Maybe<ResolversTypes['ComplianceStatusCounts']>, ParentType, ContextType>;
   suppressed?: Resolver<Maybe<ResolversTypes['ComplianceStatusCounts']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type AddCustomLogOutputResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['AddCustomLogOutput'] = ResolversParentTypes['AddCustomLogOutput']
-> = {
-  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
-  record?: Resolver<Maybe<ResolversTypes['CustomLogRecord']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2223,6 +2229,15 @@ export type ComplianceStatusCountsResolvers<
   error?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   fail?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   pass?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type CustomLogOutputResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['CustomLogOutput'] = ResolversParentTypes['CustomLogOutput']
+> = {
+  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
+  record?: Resolver<Maybe<ResolversTypes['CustomLogRecord']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2578,7 +2593,7 @@ export type MutationResolvers<
   ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']
 > = {
   addCustomLog?: Resolver<
-    ResolversTypes['AddCustomLogOutput'],
+    ResolversTypes['GetCustomLogOutput'],
     ParentType,
     ContextType,
     RequireFields<MutationAddCustomLogArgs, 'input'>
@@ -2726,6 +2741,18 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationUpdateAlertStatusArgs, 'input'>
+  >;
+  updateDataModel?: Resolver<
+    ResolversTypes['DataModel'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationUpdateDataModelArgs, 'input'>
+  >;
+  updateCustomLog?: Resolver<
+    ResolversTypes['GetCustomLogOutput'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationUpdateCustomLogArgs, 'input'>
   >;
   updateDestination?: Resolver<
     Maybe<ResolversTypes['Destination']>,
@@ -2955,6 +2982,12 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryGetComplianceIntegrationTemplateArgs, 'input'>
+  >;
+  getDataModel?: Resolver<
+    Maybe<ResolversTypes['DataModel']>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryGetDataModelArgs, 'id'>
   >;
   getS3LogIntegration?: Resolver<
     ResolversTypes['S3LogIntegration'],
@@ -3416,7 +3449,6 @@ export type UserResolvers<
 
 export type Resolvers<ContextType = any> = {
   ActiveSuppressCount?: ActiveSuppressCountResolvers<ContextType>;
-  AddCustomLogOutput?: AddCustomLogOutputResolvers<ContextType>;
   Alert?: AlertResolvers;
   AlertDetails?: AlertDetailsResolvers<ContextType>;
   AlertDetailsDetectionInfo?: AlertDetailsDetectionInfoResolvers;
@@ -3434,6 +3466,7 @@ export type Resolvers<ContextType = any> = {
   ComplianceIntegrationHealth?: ComplianceIntegrationHealthResolvers<ContextType>;
   ComplianceItem?: ComplianceItemResolvers<ContextType>;
   ComplianceStatusCounts?: ComplianceStatusCountsResolvers<ContextType>;
+  CustomLogOutput?: CustomLogOutputResolvers<ContextType>;
   CustomLogRecord?: CustomLogRecordResolvers<ContextType>;
   CustomWebhookConfig?: CustomWebhookConfigResolvers<ContextType>;
   DataModel?: DataModelResolvers<ContextType>;

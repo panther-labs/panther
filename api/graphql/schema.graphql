@@ -10,8 +10,8 @@ schema {
 }
 
 type Mutation {
-  addCustomLog(input: AddCustomLogInput!): AddCustomLogOutput!
-  addDataModel(input: AddDataModelInput!): DataModel!
+  addCustomLog(input: AddOrUpdateCustomLogInput!): GetCustomLogOutput!
+  addDataModel(input: AddOrUpdateDataModelInput!): DataModel!
   addDestination(input: DestinationInput!): Destination
   addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
   addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
@@ -35,6 +35,8 @@ type Mutation {
   testPolicy(input: TestPolicyInput!): TestPolicyResponse!
   testRule(input: TestRuleInput!): TestRuleResponse!
   updateAlertStatus(input: UpdateAlertStatusInput!): [AlertSummary!]!
+  updateDataModel(input: AddOrUpdateDataModelInput!): DataModel!
+  updateCustomLog(input: AddOrUpdateCustomLogInput!): GetCustomLogOutput!
   updateDestination(input: DestinationInput!): Destination
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
   updateS3LogIntegration(input: UpdateS3LogIntegrationInput!): S3LogIntegration!
@@ -58,6 +60,7 @@ type Query {
   getComplianceIntegrationTemplate(
     input: GetComplianceIntegrationTemplateInput!
   ): IntegrationTemplate!
+  getDataModel(id: ID!): DataModel
   getS3LogIntegration(id: ID!): S3LogIntegration!
   getS3LogIntegrationTemplate(input: GetS3LogIntegrationTemplateInput!): IntegrationTemplate!
   getSqsLogIntegration(id: ID!): SqsLogSourceIntegration!
@@ -88,7 +91,7 @@ input DataModelMappingInput {
   method: String
 }
 
-input AddDataModelInput {
+input AddOrUpdateDataModelInput {
   displayName: String!
   id: ID!
   enabled: Boolean!
@@ -102,7 +105,7 @@ input DeleteCustomLogInput {
   revision: Int!
 }
 
-input AddCustomLogInput {
+input AddOrUpdateCustomLogInput {
   revision: Int
   logType: String!
   description: String!
@@ -170,7 +173,7 @@ type DataModel {
   lastModified: AWSDateTime!
 }
 
-type AddCustomLogOutput {
+type CustomLogOutput {
   error: Error
   record: CustomLogRecord
 }

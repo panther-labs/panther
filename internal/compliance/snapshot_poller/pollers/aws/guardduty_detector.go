@@ -68,9 +68,12 @@ func PollGuardDutyDetector(
 		return nil, errors.WithMessagef(err, "region: %s", parsedResourceID.Region)
 	}
 
-	snapshot, err := buildGuardDutyDetectorSnapshot(gdClient, detector)
+	snapshot, err := buildGuardDutyDetectorSnapshot(gdClient, detector, pollerResourceInput)
 	if err != nil {
 		return nil, err
+	}
+	if snapshot == nil {
+		return nil, nil
 	}
 	snapshot.ResourceID = scanRequest.ResourceID
 	snapshot.AccountID = aws.String(parsedResourceID.AccountID)
@@ -127,7 +130,12 @@ func getDetector(guardDutySvc guarddutyiface.GuardDutyAPI, detectorID *string) (
 }
 
 // buildGuardDutyDetectorSnapshot makes all the calls to build up a snapshot of a given GuardDuty detector
-func buildGuardDutyDetectorSnapshot(guardDutySvc guarddutyiface.GuardDutyAPI, detectorID *string) (*awsmodels.GuardDutyDetector, error) {
+func buildGuardDutyDetectorSnapshot(
+	guardDutySvc guarddutyiface.GuardDutyAPI,
+	detectorID *string,
+	pollerInput *awsmodels.ResourcePollerInput,
+) (*awsmodels.GuardDutyDetector, error) {
+
 	detectorSnapshot := &awsmodels.GuardDutyDetector{
 		GenericResource: awsmodels.GenericResource{
 			ResourceType: aws.String(awsmodels.GuardDutySchema),
@@ -140,6 +148,13 @@ func buildGuardDutyDetectorSnapshot(guardDutySvc guarddutyiface.GuardDutyAPI, de
 	detectorDetails, err := getDetector(guardDutySvc, detectorID)
 	if err != nil {
 		return nil, err
+	}
+
+	// Check if ResourceID matches the integration's regex filter
+	if pollerInput != nil {
+		if ignore, err := pollerInput.ShouldIgnoreResource(*detectorSnapshot.ID); ignore || err != nil {
+			return nil, err
+		}
 	}
 	detectorSnapshot.FindingPublishingFrequency = detectorDetails.FindingPublishingFrequency
 	detectorSnapshot.ServiceRole = detectorDetails.ServiceRole
@@ -181,9 +196,12 @@ func PollGuardDutyDetectors(pollerInput *awsmodels.ResourcePollerInput) ([]apimo
 		}
 
 		for _, detectorID := range detectors {
-			detectorSnapshot, err := buildGuardDutyDetectorSnapshot(guardDutySvc, detectorID)
+			detectorSnapshot, err := buildGuardDutyDetectorSnapshot(guardDutySvc, detectorID, pollerInput)
 			if err != nil {
 				return nil, nil, err
+			}
+			if detectorSnapshot == nil {
+				continue
 			}
 
 			resourceID := utils.GenerateResourceID(

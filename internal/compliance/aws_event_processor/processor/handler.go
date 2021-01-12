@@ -267,11 +267,15 @@ func submitChanges(changes map[string]*resourceChange) error {
 			// group together changes that happened close together in time. I imagine in cases where
 			// we set a delay it will be a fairly uniform delay.
 			requestsByDelay[change.Delay].Entries = append(requestsByDelay[change.Delay].Entries, &poller.ScanEntry{
-				AWSAccountID:  &change.AwsAccountID,
-				IntegrationID: &change.IntegrationID,
-				Region:        region,
-				ResourceID:    resourceID,
-				ResourceType:  &change.ResourceType,
+				AWSAccountID:            &change.AwsAccountID,
+				IntegrationID:           &change.IntegrationID,
+				Region:                  region,
+				ResourceID:              resourceID,
+				ResourceType:            &change.ResourceType,
+				Enabled:                 accounts[change.AwsAccountID].Enabled,
+				RegionIgnoreList:        accounts[change.AwsAccountID].RegionIgnoreList,
+				ResourceTypeIgnoreList:  accounts[change.AwsAccountID].ResourceTypeIgnoreList,
+				ResourceRegexIgnoreList: accounts[change.AwsAccountID].ResourceRegexIgnoreList,
 			})
 		}
 	}
