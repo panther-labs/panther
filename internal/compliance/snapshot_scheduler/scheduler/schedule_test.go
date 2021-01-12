@@ -247,7 +247,7 @@ func TestGetEnabledIntegrations(t *testing.T) {
 		On("Invoke", getTestInvokeInput()).
 		Return(getTestInvokeOutput(exampleIntegrations, 200), nil)
 
-	integrations, err := getEnabledIntegrations()
+	integrations, err := GetEnabledIntegrations()
 
 	mockLambda.AssertExpectations(t)
 	require.NoError(t, err)
@@ -262,7 +262,7 @@ func TestGetEnabledIntegrationsError(t *testing.T) {
 		On("Invoke", getTestInvokeInput()).
 		Return(&lambda.InvokeOutput{}, errors.New("fake error"))
 
-	_, err := getEnabledIntegrations()
+	_, err := GetEnabledIntegrations()
 
 	mockLambda.AssertExpectations(t)
 	require.Error(t, err)

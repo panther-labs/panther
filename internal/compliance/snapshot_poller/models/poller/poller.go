@@ -35,4 +35,9 @@ type ScanEntry struct {
 	ResourceID    *string `json:"resourceId"`
 	ResourceType  *string `json:"resourceType"`
 	NextPageToken *string `json:"nextPageToken"`
+	// Added for optional filtering
+	Enabled                 *bool    `json:"enabled"`
+	RegionIgnoreList        []string `json:"regionIgnoreList"`
+	ResourceTypeIgnoreList  []string `json:"resourceTypeIgnoreList"`
+	ResourceRegexIgnoreList []string `json:"resourceRegexIgnoreList"`
 }

@@ -144,6 +144,14 @@ type cachedClient struct {
 	Credentials *credentials.Credentials
 }
 
+type RegionIgnoreListError struct {
+	Err error
+}
+
+func (r *RegionIgnoreListError) Error() string {
+	return r.Err.Error()
+}
+
 func Setup() {
 	awsSession := session.Must(session.NewSession()) // use default retries for fetching creds, avoids hangs!
 	SnapshotPollerSession = awsSession.Copy(request.WithRetryer(aws.NewConfig().WithMaxRetries(maxRetries),
@@ -225,6 +233,15 @@ func GetServiceRegions(pollerInput *awsmodels.ResourcePollerInput, resourceType 
 func getClient(pollerInput *awsmodels.ResourcePollerInput,
 	clientFunc func(session *session.Session, config *aws.Config) interface{},
 	service string, region string) (interface{}, error) {
+
+	// Check if provided region is in the ignoreList
+	for _, deniedRegion := range pollerInput.RegionIgnoreList {
+		if region == deniedRegion {
+			return nil, &RegionIgnoreListError{
+				Err: errors.New("requested region was in region ignoreList"),
+			}
+		}
+	}
 
 	cacheKey := clientKey{
 		IntegrationID: *pollerInput.IntegrationID,
