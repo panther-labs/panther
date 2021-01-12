@@ -80,11 +80,11 @@ type ResourcePollerInput struct {
 }
 
 func (r *ResourcePollerInput) CompileRegex() error {
-	r.CompiledRegexIgnoreList = make([]*regexp.Regexp, len(r.ResourceRegexIgnoreList))
+	r.CompiledRegexIgnoreList = make([]*regexp.Regexp, 0, len(r.ResourceRegexIgnoreList))
 
-	for i, glob := range r.ResourceRegexIgnoreList {
+	for _, glob := range r.ResourceRegexIgnoreList {
 		if glob == "" {
-			r.CompiledRegexIgnoreList[i] = nil
+			continue
 		}
 		// First,  escape any regex special characters
 		escaped := regexp.QuoteMeta(glob)
@@ -102,7 +102,7 @@ func (r *ResourcePollerInput) CompileRegex() error {
 			)
 			return err
 		}
-		r.CompiledRegexIgnoreList[i] = compiledGlob
+		r.CompiledRegexIgnoreList = append(r.CompiledRegexIgnoreList, compiledGlob)
 	}
 	return nil
 }
