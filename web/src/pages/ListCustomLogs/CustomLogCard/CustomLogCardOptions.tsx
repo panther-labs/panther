@@ -17,10 +17,12 @@
  */
 
 import React from 'react';
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from 'pouncejs';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownLink } from 'pouncejs';
 import GenericItemCard from 'Components/GenericItemCard';
 import { MODALS } from 'Components/utils/Modal';
 import useModal from 'Hooks/useModal';
+import urls from 'Source/urls';
+import { Link as RRLink } from 'react-router-dom';
 import { ListCustomLogSchemas } from '../graphql/listCustomLogSchemas.generated';
 
 interface CustomLogCardOptionsProps {
@@ -34,6 +36,9 @@ const CustomLogCardOptions: React.FC<CustomLogCardOptionsProps> = ({ customLog }
     <Dropdown>
       <DropdownButton as={GenericItemCard.OptionsButton} />
       <DropdownMenu>
+        <DropdownLink as={RRLink} to={urls.logAnalysis.customLogs.edit(customLog.logType)}>
+          Edit
+        </DropdownLink>
         <DropdownItem
           onSelect={() =>
             showModal({
