@@ -204,7 +204,6 @@ func (s *SyncTablePartitions) syncTable(ctx context.Context, api glueiface.GlueA
 			numSynced, err := processPartitionUpdates(ctx, api, tasks, s.NumWorkers)
 			s.Stats.NumSynced += int(numSynced)
 			if err != nil {
-				log.Debug("error caused interrupt", zap.Error(err))
 				return err
 			}
 			// Only update next token if all partitions in page were processed

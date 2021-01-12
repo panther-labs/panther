@@ -157,11 +157,7 @@ func TimebinFromTable(tbl *glue.TableData) (GlueTableTimebin, error) {
 		if keyNames[0] == "year" && keyNames[1] == "month" && keyNames[2] == "day" {
 			return GlueTableDaily, nil
 		}
-	case 4:
-		if keyNames[0] == "year" && keyNames[1] == "month" && keyNames[2] == "day" && keyNames[3] == "hour" {
-			return GlueTableHourly, nil
-		}
-	case 5:
+	case 4, 5:
 		if keyNames[0] == "year" && keyNames[1] == "month" && keyNames[2] == "day" && keyNames[3] == "hour" {
 			return GlueTableHourly, nil
 		}
@@ -259,9 +255,7 @@ func PartitionTimeFromValues(values []*string) (tm time.Time, err error) {
 		tm = unpackValues(values[0], values[1], nil, nil)
 	case 3:
 		tm = unpackValues(values[0], values[1], values[2], nil)
-	case 4:
-		tm = unpackValues(values[0], values[1], values[2], values[3])
-	case 5:
+	case 4, 5:
 		tm = unpackValues(values[0], values[1], values[2], values[3])
 	}
 	if tm.IsZero() {
