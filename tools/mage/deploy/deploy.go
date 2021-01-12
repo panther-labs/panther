@@ -68,25 +68,19 @@ var SupportedRegions = map[string]bool{
 
 // Deploy Panther to your AWS account
 func Deploy() error {
+
 	start := time.Now()
 	if err := PreCheck(); err != nil {
 		return err
 	}
 
-	if function := os.Getenv("LAMBDA"); function != "" {
-		function = strings.ToLower(strings.TrimSpace(function))
-		if !strings.HasPrefix(function, "panther-") {
-			function = "panther-" + function
-		}
-		return deploySingleLambda(function)
-	}
+	// Deploy 1 or more stacks with STACK="name1 name2" (ws delimited)
+	deployed := RunSet("STACK",  os.Getenv("STACK"),  deploySingleStack)
 
-	if stack := os.Getenv("STACK"); stack != "" {
-		stack = strings.ToLower(strings.TrimSpace(stack))
-		if !strings.HasPrefix(stack, "panther-") {
-			stack = "panther-" + stack
-		}
-		return deploySingleStack(stack)
+	// Deploy 1 or more lambdas with LAMBDA="name1 name2..." (ws delimited)
+	deployed += RunSet("LAMBDA", os.Getenv("LAMBDA"), deploySingleLambda)
+	if deployed > 0 {
+		return nil
 	}
 
 	log.Infof("deploying Panther %s (%s) to account %s (%s)",
@@ -590,4 +584,29 @@ func customResourceVersion() string {
 	// This is the same format as the version shown in the general settings page,
 	// and also the same format used by the master stack.
 	return fmt.Sprintf("%s (%s)", util.Semver(), util.CommitSha())
+}
+
+// Takes a string  and returns the panther- prefixed, lowercased slice of words(strings) (separated by spaces).
+// e.g "oRg-ApI" -> []string{"panther-org-api"}
+// e.g "one two THREE" -> []string{"panther-one", "panther-two", "panther-three"}
+func PantherNames(setString string) []string {
+	set := strings.Fields(setString)
+	for index, entry := range set {
+ 		entry = strings.ToLower(strings.TrimSpace(entry))
+		if !strings.HasPrefix(entry, "panther-") {
+			entry = "panther-" + entry
+		}
+		set[index] = entry
+	}
+	return set
+}
+
+// Takes a type, set of types, and a function to call with each type
+func RunSet(label string, nameset string, callFn func(string) error) int {
+	returnCount := 0
+	for _, entry := range PantherNames(nameset) {
+		returnCount += 1
+		log.Info(label, ": ", entry)
+	}
+	return returnCount
 }
