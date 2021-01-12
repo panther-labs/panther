@@ -61,7 +61,7 @@ func PollEKSCluster(
 		return nil, err
 	}
 
-	snapshot, err := buildEksClusterSnapshot(client, scanRequest.ResourceID)
+	snapshot, err := buildEksClusterSnapshot(client, scanRequest.ResourceID, pollerInput)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +232,12 @@ func getEKSNodegroups(eksSvc eksiface.EKSAPI, clusterName *string) ([]*awsmodels
 }
 
 // buildEksClusterSnapshot returns a complete snapshot of an EKS cluster
-func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string) (*awsmodels.EksCluster, error) {
+func buildEksClusterSnapshot(
+	eksSvc eksiface.EKSAPI,
+	clusterName *string,
+	pollerInput *awsmodels.ResourcePollerInput,
+) (*awsmodels.EksCluster, error) {
+
 	if clusterName == nil {
 		return nil, nil
 	}
@@ -241,6 +246,13 @@ func buildEksClusterSnapshot(eksSvc eksiface.EKSAPI, clusterName *string) (*awsm
 
 	if err != nil {
 		return nil, err
+	}
+
+	// Check if ResourceID matches the integration's regex filter
+	if pollerInput != nil {
+		if ignore, err := pollerInput.ShouldIgnoreResource(*details.Arn); ignore || err != nil {
+			return nil, err
+		}
 	}
 
 	eksCluster := &awsmodels.EksCluster{
@@ -295,9 +307,12 @@ func PollEksClusters(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.Ad
 
 	resources := make([]apimodels.AddResourceEntry, 0, len(clusters))
 	for _, clusterName := range clusters {
-		eksClusterSnapshot, err := buildEksClusterSnapshot(eksSvc, clusterName)
+		eksClusterSnapshot, err := buildEksClusterSnapshot(eksSvc, clusterName, pollerInput)
 		if err != nil {
 			return nil, nil, err
+		}
+		if eksClusterSnapshot == nil {
+			continue
 		}
 		eksClusterSnapshot.AccountID = aws.String(pollerInput.AuthSourceParsedARN.AccountID)
 		eksClusterSnapshot.Region = pollerInput.Region

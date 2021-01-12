@@ -77,7 +77,6 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 	integration.CreatedAtTime = item.CreatedAtTime
 	integration.CreatedBy = item.CreatedBy
 	integration.LastEventReceived = item.LastEventReceived
-
 	switch item.IntegrationType {
 	case models.IntegrationTypeAWS3:
 		integration.AWSAccountID = item.AWSAccountID
@@ -104,6 +103,10 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 		integration.LastScanEndTime = item.LastScanEndTime
 		integration.LastScanErrorMessage = item.LastScanErrorMessage
 		integration.StackName = item.StackName
+		integration.Enabled = item.Enabled
+		integration.RegionIgnoreList = item.RegionIgnoreList
+		integration.ResourceTypeIgnoreList = item.ResourceTypeIgnoreList
+		integration.ResourceRegexIgnoreList = item.ResourceRegexIgnoreList
 	case models.IntegrationTypeSqs:
 		integration.SqsConfig = &models.SqsConfig{
 			S3Bucket:             item.SqsConfig.S3Bucket,

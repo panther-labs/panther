@@ -68,6 +68,7 @@ func TestBuildConfigServiceSnapshot(t *testing.T) {
 		mockSvc,
 		awstest.ExampleDescribeConfigurationRecorders.ConfigurationRecorders[0],
 		"us-west-2",
+		nil,
 	)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, out)
@@ -80,6 +81,7 @@ func TestBuildConfigServiceSnapshotError(t *testing.T) {
 		mockSvc,
 		awstest.ExampleDescribeConfigurationRecorders.ConfigurationRecorders[0],
 		"us-west-2",
+		nil,
 	)
 	assert.Error(t, err)
 	assert.Empty(t, out)
