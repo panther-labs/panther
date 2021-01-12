@@ -75,7 +75,7 @@ func Deploy() error {
 	}
 
 	// Deploy 1 or more stacks with STACK="name1 name2" (ws delimited)
-	deployed := RunSet("STACK",  os.Getenv("STACK"),  deploySingleStack)
+	deployed := RunSet("STACK", os.Getenv("STACK"), deploySingleStack)
 
 	// Deploy 1 or more lambdas with LAMBDA="name1 name2..." (ws delimited)
 	deployed += RunSet("LAMBDA", os.Getenv("LAMBDA"), deploySingleLambda)
@@ -592,7 +592,7 @@ func customResourceVersion() string {
 func PantherNames(setString string) []string {
 	set := strings.Fields(setString)
 	for index, entry := range set {
- 		entry = strings.ToLower(strings.TrimSpace(entry))
+		entry = strings.ToLower(strings.TrimSpace(entry))
 		if !strings.HasPrefix(entry, "panther-") {
 			entry = "panther-" + entry
 		}
