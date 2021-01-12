@@ -19,10 +19,9 @@
 import {
   ActiveSuppressCount,
   AddComplianceIntegrationInput,
-  AddCustomLogInput,
-  AddCustomLogOutput,
-  AddDataModelInput,
   AddGlobalPythonModuleInput,
+  AddOrUpdateCustomLogInput,
+  AddOrUpdateDataModelInput,
   AddPolicyInput,
   AddRuleInput,
   AddS3LogIntegrationInput,
@@ -38,6 +37,7 @@ import {
   ComplianceIntegrationHealth,
   ComplianceItem,
   ComplianceStatusCounts,
+  CustomLogOutput,
   CustomLogRecord,
   CustomWebhookConfig,
   CustomWebhookConfigInput,
@@ -196,41 +196,6 @@ export const buildAddComplianceIntegrationInput = (
   };
 };
 
-export const buildAddCustomLogInput = (
-  overrides: Partial<AddCustomLogInput> = {}
-): AddCustomLogInput => {
-  return {
-    revision: 'revision' in overrides ? overrides.revision : 176,
-    logType: 'logType' in overrides ? overrides.logType : 'matrix',
-    description: 'description' in overrides ? overrides.description : 'Buckinghamshire',
-    referenceURL: 'referenceURL' in overrides ? overrides.referenceURL : 'enable',
-    logSpec: 'logSpec' in overrides ? overrides.logSpec : 'applications',
-  };
-};
-
-export const buildAddCustomLogOutput = (
-  overrides: Partial<AddCustomLogOutput> = {}
-): AddCustomLogOutput => {
-  return {
-    __typename: 'AddCustomLogOutput',
-    error: 'error' in overrides ? overrides.error : buildError(),
-    record: 'record' in overrides ? overrides.record : buildCustomLogRecord(),
-  };
-};
-
-export const buildAddDataModelInput = (
-  overrides: Partial<AddDataModelInput> = {}
-): AddDataModelInput => {
-  return {
-    displayName: 'displayName' in overrides ? overrides.displayName : 'Games',
-    id: 'id' in overrides ? overrides.id : 'f4146cfa-6605-465d-a354-fba4dafe2370',
-    enabled: 'enabled' in overrides ? overrides.enabled : true,
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Reduced'],
-    mappings: 'mappings' in overrides ? overrides.mappings : [buildDataModelMappingInput()],
-    body: 'body' in overrides ? overrides.body : 'China',
-  };
-};
-
 export const buildAddGlobalPythonModuleInput = (
   overrides: Partial<AddGlobalPythonModuleInput> = {}
 ): AddGlobalPythonModuleInput => {
@@ -238,6 +203,31 @@ export const buildAddGlobalPythonModuleInput = (
     id: 'id' in overrides ? overrides.id : '6b0f1c64-e650-48e8-abcf-37c23c6cf854',
     description: 'description' in overrides ? overrides.description : 'Dynamic',
     body: 'body' in overrides ? overrides.body : 'methodologies',
+  };
+};
+
+export const buildAddOrUpdateCustomLogInput = (
+  overrides: Partial<AddOrUpdateCustomLogInput> = {}
+): AddOrUpdateCustomLogInput => {
+  return {
+    revision: 'revision' in overrides ? overrides.revision : 114,
+    logType: 'logType' in overrides ? overrides.logType : 'Unbranded Cotton Hat',
+    description: 'description' in overrides ? overrides.description : 'synthesizing',
+    referenceURL: 'referenceURL' in overrides ? overrides.referenceURL : 'yellow',
+    logSpec: 'logSpec' in overrides ? overrides.logSpec : 'Decentralized',
+  };
+};
+
+export const buildAddOrUpdateDataModelInput = (
+  overrides: Partial<AddOrUpdateDataModelInput> = {}
+): AddOrUpdateDataModelInput => {
+  return {
+    displayName: 'displayName' in overrides ? overrides.displayName : 'quantifying',
+    id: 'id' in overrides ? overrides.id : '5ab75ea6-49ff-4622-8a23-95eab2dc9768',
+    enabled: 'enabled' in overrides ? overrides.enabled : true,
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['deposit'],
+    mappings: 'mappings' in overrides ? overrides.mappings : [buildDataModelMappingInput()],
+    body: 'body' in overrides ? overrides.body : 'Assistant',
   };
 };
 
@@ -478,6 +468,14 @@ export const buildComplianceStatusCounts = (
     error: 'error' in overrides ? overrides.error : 71,
     fail: 'fail' in overrides ? overrides.fail : 488,
     pass: 'pass' in overrides ? overrides.pass : 154,
+  };
+};
+
+export const buildCustomLogOutput = (overrides: Partial<CustomLogOutput> = {}): CustomLogOutput => {
+  return {
+    __typename: 'CustomLogOutput',
+    error: 'error' in overrides ? overrides.error : buildError(),
+    record: 'record' in overrides ? overrides.record : buildCustomLogRecord(),
   };
 };
 

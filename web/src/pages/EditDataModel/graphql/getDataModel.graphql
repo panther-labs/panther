@@ -1,0 +1,5 @@
+query GetDataModel($id: ID!) {
+  getDataModel(id: $id) {
+    ...DataModelFull
+  }
+}
