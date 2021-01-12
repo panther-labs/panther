@@ -23,6 +23,7 @@ import (
 	"compress/gzip"
 	"io/ioutil"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -282,23 +283,29 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 	t.Parallel()
 
 	destination := mockDestination()
-	destination.maxDuration = 200 * time.Millisecond
+	destination.maxDuration = 50 * time.Millisecond
 
 	const nevents = 4
+	var wg sync.WaitGroup
+
 	eventChannel := make(chan *parsers.Result, nevents)
 	go func() {
 		defer close(eventChannel)
 		for i := 0; i < nevents; i++ {
+			wg.Add(1)
 			eventChannel <- newSimpleTestEvent().Result()
 			// The destination writes events to S3 every 'maxDuration' time.
-			// While we sleep here, the destination should write to S3
-			// the event we just wrote to the eventChannel
-			time.Sleep(2 * destination.maxDuration)
+			// Wait until it has published the message to SNS to send the next message
+			wg.Wait()
 		}
 	}()
 
 	destination.mockS3Uploader.On("Upload", mock.Anything, mock.Anything).Return(&s3manager.UploadOutput{}, nil).Times(nevents)
-	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Times(nevents)
+	destination.mockSns.On("Publish", mock.Anything).Return(&sns.PublishOutput{}, nil).Run(func(args mock.Arguments) {
+		// Every time we publish a message to SNS,
+		// unblock the loop that sends messages to the eventsChannel
+		wg.Done()
+	}).Times(nevents)
 
 	assert.NoError(t, runDestination(destination, eventChannel))
 

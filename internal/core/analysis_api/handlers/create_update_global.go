@@ -51,7 +51,10 @@ func writeGlobal(input *models.CreateGlobalInput, create bool) *events.APIGatewa
 	if create {
 		if _, err := writeItem(item, input.UserID, aws.Bool(false)); err != nil {
 			if err == errExists {
-				return &events.APIGatewayProxyResponse{StatusCode: http.StatusConflict}
+				return &events.APIGatewayProxyResponse{
+					Body:       err.Error(),
+					StatusCode: http.StatusConflict,
+				}
 			}
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 		}

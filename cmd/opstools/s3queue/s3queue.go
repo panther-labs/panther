@@ -57,6 +57,7 @@ type Input struct {
 	S3Path   string
 	S3Region string
 	Limit    uint64
+	Loop     bool
 	Stats    s3list.Stats // passed in so we can get stats if canceled
 }
 
@@ -88,6 +89,7 @@ func s3Queue(ctx context.Context, s3Client s3iface.S3API, sqsClient sqsiface.SQS
 		S3Client: s3Client,
 		S3Path:   input.S3Path,
 		Limit:    input.Limit,
+		Loop:     input.Loop,
 		Write:    func(event *events.S3Event) { driver.Write(event) },
 		Done:     func() { driver.Done() },
 		Stats:    &input.Stats,
