@@ -19,12 +19,12 @@ package aws
  */
 
 import (
-	"go.uber.org/zap"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"go.uber.org/zap"
 
 	resourcesapimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 )
