@@ -12,6 +12,7 @@ require (
 	github.com/go-bindata/go-bindata v3.1.2+incompatible
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator v9.31.0+incompatible
+	github.com/google/gofuzz v1.0.0
 	github.com/google/uuid v1.1.2
 	github.com/hashicorp/go-cleanhttp v0.5.1
 	github.com/hashicorp/golang-lru v0.5.4
