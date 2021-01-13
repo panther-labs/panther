@@ -6,20 +6,6 @@ query PolicyDetails(
     ...PolicyDetailsMain
   }
   resourcesForPolicy(input: $resourcesForPolicyInput) {
-    items {
-      errorMessage
-      integrationId
-      lastUpdated
-      policyId
-      resourceId
-      status
-      suppressed
-    }
-    paging {
-      totalItems
-      totalPages
-      thisPage
-    }
     totals {
       active {
         fail
@@ -32,9 +18,5 @@ query PolicyDetails(
         error
       }
     }
-  }
-  listComplianceIntegrations {
-    integrationId
-    integrationLabel
   }
 }

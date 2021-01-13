@@ -27,7 +27,7 @@ import type { ValidationError } from 'jsonschema';
 import type { YAMLException } from 'js-yaml';
 import FormikTextInput from 'Components/fields/TextInput';
 import FormikEditor from 'Components/fields/Editor';
-import SubmitButton from 'Components/buttons/SubmitButton';
+import SaveButton from 'Components/buttons/SaveButton';
 import FormSessionRestoration from 'Components/utils/FormSessionRestoration';
 import useRouter from 'Hooks/useRouter';
 import ValidateButton from './ValidateButton';
@@ -35,6 +35,7 @@ import ValidateButton from './ValidateButton';
 export interface CustomLogFormValues {
   name: string;
   description: string;
+  revision?: number;
   referenceUrl: string;
   schema: string;
 }
@@ -66,13 +67,15 @@ const CustomLogForm: React.FC<CustomLogFormProps> = ({ onSubmit, initialValues }
   const isSchemaValid = schemaErrors && isEmpty(schemaErrors);
   const hasSchemaErrors = schemaErrors && !isEmpty(schemaErrors);
   const userHasValidatedSyntax = isSchemaValid || hasSchemaErrors;
+  const isEditing = initialValues.revision && initialValues.revision > 0;
   return (
     <Formik<CustomLogFormValues>
+      enableReinitialize
       initialValues={initialValues}
       onSubmit={onSubmit}
       validationSchema={validationSchema}
     >
-      <FormSessionRestoration sessionId="custom-log-create">
+      <FormSessionRestoration sessionId={`custom-log-form-${initialValues.revision || 'create'}`}>
         {({ clearFormSession }) => (
           <Form>
             <SimpleGrid columns={3} spacing={5} mb={5}>
@@ -81,6 +84,7 @@ const CustomLogForm: React.FC<CustomLogFormProps> = ({ onSubmit, initialValues }
                 name="name"
                 label="* Name"
                 placeholder="Must start with `Custom.` followed by a capital letter"
+                disabled={isEditing}
                 required
               />
               <FastField
@@ -151,12 +155,10 @@ const CustomLogForm: React.FC<CustomLogFormProps> = ({ onSubmit, initialValues }
             </ValidateButton>
             <Breadcrumbs.Actions>
               <Flex justify="flex-end" spacing={4}>
-                <SubmitButton icon="check-circle" variantColor="green">
-                  Save log
-                </SubmitButton>
+                <SaveButton>{isEditing ? 'Update' : 'Save'} log</SaveButton>
                 <Button
                   variantColor="darkgray"
-                  icon="close-circle"
+                  icon="close-outline"
                   onClick={() => {
                     clearFormSession();
                     history.goBack();

@@ -119,3 +119,35 @@ result: |
     "p_any_ip_addresses":["127.0.0.1"],
     "p_any_usernames":["white_rabbit"]
   }
+
+---
+name: integration logs
+logType: Slack.IntegrationLogs
+input: |
+  {
+  			"service_id": "3456789012",
+  			"service_type": "Airbrake",
+  			"user_id": "U3456CDEF",
+  			"user_name": "Joey",
+  			"channel": "C1234567890",
+  			"date": "1392163202",
+  			"change_type": "disabled",
+  			"reason": "user",
+  			"scope": "incoming-webhook"
+  		}
+result: |
+  {
+  	"service_id": "3456789012",
+  	"service_type": "Airbrake",
+  	"user_id": "U3456CDEF",
+  	"user_name": "Joey",
+  	"channel": "C1234567890",
+  	"date": 1392163202,
+  	"change_type": "disabled",
+  	"reason": "user",
+  	"scope": "incoming-webhook",
+
+    "p_log_type": "Slack.IntegrationLogs",
+    "p_event_time":"2014-02-12T00:00:02Z",
+    "p_any_usernames":["Joey"]
+  }
