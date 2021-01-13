@@ -55,8 +55,8 @@ type GetCustomLogInput struct {
 	Revision int64  `json:"revision,omitempty" validate:"omitempty,min=1" description:"Log record revision (0 means latest)"`
 }
 type GetCustomLogOutput struct {
-	Result *CustomLogRecord `json:"record,omitempty" validate:"required_without=Error" description:"The custom log record"`
-	Error  *APIError        `json:"error,omitempty" validate:"required_without=Result" description:"An error that occurred"`
+	Result *CustomLogRecord `json:"record,omitempty" description:"The custom log record (field omitted if an error occurred)"`
+	Error  *APIError        `json:"error,omitempty" description:"An error that occurred while fetching the record"`
 }
 
 // CustomLogRecord is a stored record for a custom log type
@@ -171,8 +171,8 @@ type PutCustomLogInput struct {
 
 //nolint:lll
 type PutCustomLogOutput struct {
-	Result *CustomLogRecord `json:"record,omitempty" validate:"required_without=Error" description:"The modified record"`
-	Error  *APIError        `json:"error,omitempty" validate:"required_without=Result" description:"An error that occurred during the operation"`
+	Result *CustomLogRecord `json:"record,omitempty" description:"The modified record (field is omitted if an error occurred)"`
+	Error  *APIError        `json:"error,omitempty" description:"An error that occurred during the operation"`
 }
 
 func (api *LogTypesAPI) DelCustomLog(ctx context.Context, input *DelCustomLogInput) (*DelCustomLogOutput, error) {
@@ -202,7 +202,7 @@ type DelCustomLogInput struct {
 }
 
 type DelCustomLogOutput struct {
-	Error *APIError `json:"error,omitempty" validate:"required_without=Result" description:"The delete record"`
+	Error *APIError `json:"error,omitempty" description:"The delete record"`
 }
 
 func (api *LogTypesAPI) ListCustomLogs(ctx context.Context) (*ListCustomLogsOutput, error) {
@@ -228,6 +228,6 @@ func (api *LogTypesAPI) ListCustomLogs(ctx context.Context) (*ListCustomLogsOutp
 
 //nolint:lll
 type ListCustomLogsOutput struct {
-	CustomLogs []*CustomLogRecord `json:"customLogs" validate:"required,min=0" description:"Custom log records stored"`
-	Error      *APIError          `json:"error,omitempty" validate:"required_without=Result" description:"An error that occurred during the operation"`
+	CustomLogs []*CustomLogRecord `json:"customLogs" description:"Custom log records stored"`
+	Error      *APIError          `json:"error,omitempty" description:"An error that occurred during the operation"`
 }

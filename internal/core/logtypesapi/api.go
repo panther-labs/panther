@@ -48,7 +48,6 @@ type LogTypesAPI struct {
 type LogTypesDatabase interface {
 	// Return an index of available log types
 	IndexLogTypes(ctx context.Context) ([]string, error)
-
 	// Create a new custom log record
 	CreateCustomLog(ctx context.Context, id string, params *CustomLog) (*CustomLogRecord, error)
 	// Get a single custom log record
@@ -59,6 +58,8 @@ type LogTypesDatabase interface {
 	DeleteCustomLog(ctx context.Context, id string, currentRevision int64) error
 	// Get multiple custom log records at their latest revision
 	BatchGetCustomLogs(ctx context.Context, ids ...string) ([]*CustomLogRecord, error)
+	// List deleted log types
+	ListDeletedLogTypes(ctx context.Context) ([]string, error)
 }
 
 const (

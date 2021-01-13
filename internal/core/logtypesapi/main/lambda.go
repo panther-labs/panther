@@ -113,6 +113,10 @@ func main() {
 		// Any APIErrors returned by the routes are not logged as these were properly handled by the API
 		// All errors are return as `{"error": {"code": "ERR_CODE", "message": "ERROR_MSG"}}` in the reply.
 		Decorate: func(name string, handler lambdamux.Handler) lambdamux.Handler {
+			// This route is different and should not embed errors
+			if name == lambdamux.IgnoreCase("ListAvailableLogTypes") {
+				return handler
+			}
 			return lambdamux.HandlerFunc(func(ctx context.Context, payload []byte) ([]byte, error) {
 				reply, err := handler.Invoke(ctx, payload)
 				if err != nil {
