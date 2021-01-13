@@ -23,21 +23,23 @@ import { extractErrorMessage } from 'Helpers/utils';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import withSEO from 'Hoc/withSEO';
 import useRouter from 'Hooks/useRouter';
-import urls from 'Source/urls';
 import Page404 from 'Pages/404/404';
 import { useGetDataModel } from './graphql/getDataModel.generated';
 import { useUpdateDataModel } from './graphql/updateDataModel.generated';
 
 const EditDataModel: React.FC = () => {
-  const { history, match } = useRouter<{ id: string }>(); // prettier-ignore
+  const { match } = useRouter<{ id: string }>(); // prettier-ignore
   const { pushSnackbar } = useSnackbar();
 
   const { data, error: getError } = useGetDataModel({ variables: { id: match.params.id } });
 
   const [updateDataModel] = useUpdateDataModel({
-    onCompleted: ({ updateDataModel: dataModel }) => {
+    onCompleted: () => {
       trackEvent({ event: EventEnum.UpdatedDataModel, src: SrcEnum.DataModels });
-      history.push(urls.logAnalysis.dataModels.details(dataModel.id));
+      pushSnackbar({
+        variant: 'success',
+        title: 'Successfully updated your Data Model',
+      });
     },
     onError: error => {
       trackError({ event: TrackErrorEnum.FailedToUpdateDataModel, src: SrcEnum.DataModels });
