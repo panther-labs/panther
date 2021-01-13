@@ -33,7 +33,7 @@ const DeleteDataModelModal: React.FC<DeleteDataModelModalProps> = ({ dataModel, 
   const [deleteDataModel] = useDeleteDataModel({
     variables: { input: { dataModels: [{ id: dataModel.id }] } },
 
-    // issue: https://github.com/apollographql/apollo-client/issues/5790
+    // FIXME: issue: https://github.com/apollographql/apollo-client/issues/5790
     update: cache => {
       cache.modify('ROOT_QUERY', {
         listDataModels(dataModels, { toReference }) {
