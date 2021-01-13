@@ -55,40 +55,34 @@ func DestroyCfnStacks(masterStack string) error {
 		log.Infof("    √ %s deleted (%d/%d)", result.stackName, finishCount, cfnstacks.NumStacks)
 	}
 
-	// Trigger the deletion of the main stacks in parallel
-	//
-	// The bootstrap stacks have to be last because of the ECS cluster and custom resource Lambda.
-	parallelStacks := []string{
-		cfnstacks.Appsync,
-		cfnstacks.Cloudsec,
-		cfnstacks.Core,
-		cfnstacks.Dashboard,
-		cfnstacks.Frontend,
-		cfnstacks.LogAnalysis,
-		cfnstacks.Onboard,
-	}
-	log.Infof("deleting %d CloudFormation stacks", cfnstacks.NumStacks)
-
 	deleteFunc := func(stack string, r chan deleteStackResult) {
 		r <- deleteStackResult{stackName: stack, err: awscfn.DeleteStack(clients.Cfn(), log, stack, pollInterval)}
 	}
 
+	log.Infof("deleting %d CloudFormation stacks", cfnstacks.NumStacks)
+
+	// Delete stacks which don't have downstream dependencies: web, onboard, appsync, dashboard
 	results := make(chan deleteStackResult)
-	for _, stack := range parallelStacks {
+	for _, stack := range []string{cfnstacks.Frontend, cfnstacks.Onboard, cfnstacks.Appsync, cfnstacks.Dashboard} {
 		go deleteFunc(stack, results)
 	}
-
-	// Wait for all of the main stacks to finish deleting
-	for i := 0; i < len(parallelStacks); i++ {
+	for i := 0; i < 4; i++ {
 		handleResult(<-results)
 	}
 
-	// Now finish with the bootstrap stacks
-	// bootstrap-gateway must be deleted first because it will empty the ECR repo
-	go deleteFunc(cfnstacks.Gateway, results)
-	handleResult(<-results)
-	go deleteFunc(cfnstacks.Bootstrap, results)
-	handleResult(<-results)
+	// Next, delete cloud-security and log-analysis
+	for _, stack := range []string{cfnstacks.Cloudsec, cfnstacks.LogAnalysis} {
+		go deleteFunc(stack, results)
+	}
+	for i := 0; i < 2; i++ {
+		handleResult(<-results)
+	}
+
+	// Finally, in order (sequentially): core, bootstrap-gateway, bootstrap
+	for _, stack := range []string{cfnstacks.Core, cfnstacks.Gateway, cfnstacks.Bootstrap} {
+		go deleteFunc(stack, results)
+		handleResult(<-results)
+	}
 
 	if errCount > 0 {
 		return fmt.Errorf("%d stack(s) failed to delete", errCount)

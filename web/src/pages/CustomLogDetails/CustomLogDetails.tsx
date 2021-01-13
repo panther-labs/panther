@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Box, Button, Card, Heading, Link, SimpleGrid, Text } from 'pouncejs';
+import { Alert, Box, Flex, Button, Card, Heading, Link, SimpleGrid, Text } from 'pouncejs';
 import { compose } from 'Helpers/compose';
 import withSEO from 'Hoc/withSEO';
 import { ErrorCodeEnum } from 'Generated/schema';
@@ -25,6 +25,8 @@ import Page404 from 'Pages/404';
 import Editor from 'Components/Editor';
 import Breadcrumbs from 'Components/Breadcrumbs';
 import useRouter from 'Hooks/useRouter';
+import LinkButton from 'Components/buttons/LinkButton';
+import urls from 'Source/urls';
 import useModal from 'Hooks/useModal';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import { PageViewEnum } from 'Helpers/analytics';
@@ -79,18 +81,23 @@ const CustomLogDetails: React.FC = () => {
   return (
     <Card p={6} mb={6}>
       <Breadcrumbs.Actions>
-        <Button
-          variantColor="red"
-          icon="delete"
-          onClick={() => {
-            showModal({
-              modal: MODALS.DELETE_CUSTOM_LOG,
-              props: { customLog },
-            });
-          }}
-        >
-          Delete Log
-        </Button>
+        <Flex spacing={4} justify="flex-end">
+          <LinkButton icon="pencil" to={urls.logAnalysis.customLogs.edit(customLog.logType)}>
+            Edit Log
+          </LinkButton>
+          <Button
+            variantColor="red"
+            icon="trash"
+            onClick={() => {
+              showModal({
+                modal: MODALS.DELETE_CUSTOM_LOG,
+                props: { customLog },
+              });
+            }}
+          >
+            Delete Log
+          </Button>
+        </Flex>
       </Breadcrumbs.Actions>
 
       <Heading mb={6} fontWeight="bold">
