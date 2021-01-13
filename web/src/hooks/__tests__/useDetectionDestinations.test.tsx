@@ -23,7 +23,7 @@ import { DestinationTypeEnum, SeverityEnum } from 'Generated/schema';
 import React from 'react';
 
 const Component = ({ rule }) => {
-  const { loading, detectionDestinations } = useDetectionDestinations({ rule });
+  const { loading, detectionDestinations } = useDetectionDestinations({ detection: rule });
   return (
     <div>
       {loading ? (
