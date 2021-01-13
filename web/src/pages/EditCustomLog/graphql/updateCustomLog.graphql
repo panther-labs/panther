@@ -1,0 +1,10 @@
+mutation UpdateCustomLog($input: AddOrUpdateCustomLogInput!) {
+  updateCustomLog(input: $input) {
+    error {
+      message
+    }
+    record {
+      ...CustomLogFull
+    }
+  }
+}
