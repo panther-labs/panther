@@ -101,7 +101,7 @@ const RuleFormTestResult: React.FC<RuleFormTestResultProps> = ({ testResult }) =
             {dedupFunction && (
               <React.Fragment>
                 <Box as="dt" color="navyblue-100">
-                  Dedup Message
+                  Dedup String
                 </Box>
                 {!dedupFunction.error ? (
                   <Text as="dd">{dedupFunction.output}</Text>
