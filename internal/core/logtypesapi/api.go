@@ -41,8 +41,8 @@ type LogTypesAPI struct {
 	NativeLogTypes    func() []string
 	Database          LogTypesDatabase
 	UpdateDataCatalog func(ctx context.Context, logType string, from, to []logschema.FieldSchema) error
-        // FIXME: Rename to LogTypesInUse
-	LogTypeInUse      func(ctx context.Context) ([]string, error)
+	// FIXME: Rename to LogTypesInUse
+	LogTypeInUse func(ctx context.Context) ([]string, error)
 }
 
 // LogTypesDatabase handles the external actions required for LogTypesAPI to be implemented
