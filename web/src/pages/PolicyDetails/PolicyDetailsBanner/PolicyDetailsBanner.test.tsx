@@ -29,7 +29,7 @@ describe('PolicyDetailsBanner', () => {
 
     expect(getByText('My Policy')).toBeInTheDocument();
     expect(getByText('FAIL')).toBeInTheDocument();
-    expect(getByText('CRITICAL')).toBeInTheDocument();
+    expect(getByText('MEDIUM')).toBeInTheDocument();
     expect(getByText('AUTO REMEDIATIATABLE')).toBeInTheDocument();
   });
 });

@@ -102,7 +102,7 @@ describe('RuleDetails', () => {
     // Rule info
     expect(getByText('This is an amazing rule')).toBeTruthy();
     expect(getByText('DISABLED')).toBeTruthy();
-    expect(getByText('LOW')).toBeTruthy();
+    expect(getByText('HIGH')).toBeTruthy();
     expect(getByText('This is an amazing description')).toBeTruthy();
     expect(getByText('Panther labs runbook')).toBeTruthy();
     // Tabs

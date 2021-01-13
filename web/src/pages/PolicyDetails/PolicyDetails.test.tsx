@@ -65,7 +65,7 @@ describe('PolicyDetails', () => {
     // Policy info
     expect(getByText('This is an amazing policy')).toBeTruthy();
     expect(getByText('FAIL')).toBeTruthy();
-    expect(getByText('CRITICAL')).toBeTruthy();
+    expect(getByText('MEDIUM')).toBeTruthy();
     expect(getByText('This is an amazing description')).toBeTruthy();
     expect(getByText('Panther labs runbook')).toBeTruthy();
     // Tabs

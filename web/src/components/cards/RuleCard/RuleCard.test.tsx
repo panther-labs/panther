@@ -30,7 +30,7 @@ describe('RuleCard', () => {
 
     expect(getByText(ruleData.displayName)).toBeInTheDocument();
     expect(getByText('Destinations')).toBeInTheDocument();
-    expect(getByText(SeverityEnum.Info)).toBeInTheDocument();
+    expect(getByText(SeverityEnum.High)).toBeInTheDocument();
     expect(getByText('DISABLED')).toBeInTheDocument();
   });
 

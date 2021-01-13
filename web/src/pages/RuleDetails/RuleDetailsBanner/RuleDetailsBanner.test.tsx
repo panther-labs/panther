@@ -29,6 +29,6 @@ describe('RuleDetailsBanner', () => {
 
     expect(getByText('My Rule')).toBeInTheDocument();
     expect(getByText('DISABLED')).toBeInTheDocument();
-    expect(getByText('LOW')).toBeInTheDocument();
+    expect(getByText('HIGH')).toBeInTheDocument();
   });
 });
