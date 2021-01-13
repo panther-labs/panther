@@ -1,0 +1,3 @@
+mutation DeleteDataModel($input: DeleteDataModelInput!) {
+  deleteDataModel(input: $input)
+}

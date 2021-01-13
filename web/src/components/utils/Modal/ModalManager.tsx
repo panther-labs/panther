@@ -33,6 +33,7 @@ import DeleteTestModal from 'Components/modals/DeleteTestModal';
 import DeleteGlobalPythonModuleModal from 'Components/modals/DeleteGlobalPythonModuleModal';
 import ProfileSettingsModal from 'Components/modals/ProfileSettingsModal';
 import DeleteCustomLogModal from 'Components/modals/DeleteCustomLogModal';
+import DeleteDataModelModal from 'Components/modals/DeleteDataModelModal';
 
 const ModalManager: React.FC = () => {
   const { state: modalState, hideModal } = useModal();
@@ -77,6 +78,9 @@ const ModalManager: React.FC = () => {
       break;
     case MODALS.DELETE_CUSTOM_LOG:
       Component = DeleteCustomLogModal;
+      break;
+    case MODALS.DELETE_DATA_MODEL:
+      Component = DeleteDataModelModal;
       break;
     default:
       Component = null;

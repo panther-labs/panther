@@ -66,6 +66,7 @@ import ListCustomLogsPage from 'Pages/ListCustomLogs';
 import CustomLogDetailsPage from 'Pages/CustomLogDetails';
 import CreateDataModelPage from 'Pages/CreateDataModel';
 import EditDataModelPage from 'Pages/EditDataModel';
+import ListDataModelsPage from 'Pages/ListDataModels';
 import EditCustomLogPage from 'Pages/EditCustomLog';
 
 // Main page container for the web application, Navigation bar and Content body goes here
@@ -184,6 +185,11 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 />
                 <Route
                   exact
+                  path={urls.logAnalysis.dataModels.list()}
+                  component={ListDataModelsPage}
+                />
+                <Route
+                  exact
                   path={urls.logAnalysis.dataModels.create()}
                   component={CreateDataModelPage}
                 />
@@ -191,6 +197,11 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   exact
                   path={urls.logAnalysis.dataModels.edit(':id')}
                   component={EditDataModelPage}
+                />
+                <Redirect
+                  exact
+                  from={urls.logAnalysis.dataModels.details(':id')}
+                  to={urls.logAnalysis.dataModels.edit(':id')}
                 />
                 <Redirect
                   exact

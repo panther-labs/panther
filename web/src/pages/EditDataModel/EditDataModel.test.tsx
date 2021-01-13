@@ -93,7 +93,6 @@ describe('UpdateDataModel', () => {
       getByLabelText,
       getAllByLabelText,
       findByText,
-      history,
       getByAriaLabel,
       getByPlaceholderText,
     } = render(
@@ -132,9 +131,7 @@ describe('UpdateDataModel', () => {
 
     fireEvent.click(getByText('Save'));
 
-    await waitFor(() =>
-      expect(history.location.pathname).toEqual(urls.logAnalysis.dataModels.details(dataModel.id))
-    );
+    expect(await findByText('Successfully updated your Data Model')).toBeInTheDocument();
 
     // Expect analytics to have been called
     expect(trackEvent).toHaveBeenCalledWith({
