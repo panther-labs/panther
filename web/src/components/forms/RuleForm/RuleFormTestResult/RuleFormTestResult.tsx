@@ -175,7 +175,7 @@ const RuleFormTestResult: React.FC<RuleFormTestResultProps> = ({ testResult }) =
                   Destination Overrides
                 </Box>
                 {!destinationsFunction.error ? (
-                  <Text as="dd">{severityToString(destinationsFunction.output)}</Text>
+                  <Text as="dd">{destinationsFunction.output}</Text>
                 ) : (
                   <Text as="dd" color="red-200">
                     {destinationsFunction.error.message}
