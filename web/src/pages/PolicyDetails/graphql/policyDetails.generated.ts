@@ -32,31 +32,11 @@ export type PolicyDetailsVariables = {
 export type PolicyDetails = {
   policy?: Types.Maybe<PolicyDetailsMain>;
   resourcesForPolicy?: Types.Maybe<{
-    items?: Types.Maybe<
-      Array<
-        Types.Maybe<
-          Pick<
-            Types.ComplianceItem,
-            | 'errorMessage'
-            | 'integrationId'
-            | 'lastUpdated'
-            | 'policyId'
-            | 'resourceId'
-            | 'status'
-            | 'suppressed'
-          >
-        >
-      >
-    >;
-    paging?: Types.Maybe<Pick<Types.PagingData, 'totalItems' | 'totalPages' | 'thisPage'>>;
     totals?: Types.Maybe<{
       active?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
       suppressed?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
     }>;
   }>;
-  listComplianceIntegrations: Array<
-    Pick<Types.ComplianceIntegration, 'integrationId' | 'integrationLabel'>
-  >;
 };
 
 export const PolicyDetailsDocument = gql`
@@ -68,20 +48,6 @@ export const PolicyDetailsDocument = gql`
       ...PolicyDetailsMain
     }
     resourcesForPolicy(input: $resourcesForPolicyInput) {
-      items {
-        errorMessage
-        integrationId
-        lastUpdated
-        policyId
-        resourceId
-        status
-        suppressed
-      }
-      paging {
-        totalItems
-        totalPages
-        thisPage
-      }
       totals {
         active {
           fail
@@ -94,10 +60,6 @@ export const PolicyDetailsDocument = gql`
           error
         }
       }
-    }
-    listComplianceIntegrations {
-      integrationId
-      integrationLabel
     }
   }
   ${PolicyDetailsMain}

@@ -19,9 +19,8 @@
 import {
   ActiveSuppressCount,
   AddComplianceIntegrationInput,
-  AddCustomLogInput,
-  AddCustomLogOutput,
   AddGlobalPythonModuleInput,
+  AddOrUpdateCustomLogInput,
   AddOrUpdateDataModelInput,
   AddPolicyInput,
   AddRuleInput,
@@ -38,6 +37,7 @@ import {
   ComplianceIntegrationHealth,
   ComplianceItem,
   ComplianceStatusCounts,
+  CustomLogOutput,
   CustomLogRecord,
   CustomWebhookConfig,
   CustomWebhookConfigInput,
@@ -46,12 +46,11 @@ import {
   DataModelMappingInput,
   DeleteCustomLogInput,
   DeleteCustomLogOutput,
-  DeleteGlobalPythonInputItem,
+  DeleteDataModelInput,
+  DeleteEntry,
   DeleteGlobalPythonModuleInput,
   DeletePolicyInput,
-  DeletePolicyInputItem,
   DeleteRuleInput,
-  DeleteRuleInputItem,
   DeliverAlertInput,
   DeliveryResponse,
   Destination,
@@ -85,6 +84,8 @@ import {
   ListAlertsResponse,
   ListAvailableLogTypesResponse,
   ListComplianceItemsResponse,
+  ListDataModelsInput,
+  ListDataModelsResponse,
   ListGlobalPythonModuleInput,
   ListGlobalPythonModulesResponse,
   ListPoliciesInput,
@@ -165,6 +166,7 @@ import {
   DestinationTypeEnum,
   ErrorCodeEnum,
   ListAlertsSortFieldsEnum,
+  ListDataModelsSortFieldsEnum,
   ListPoliciesSortFieldsEnum,
   ListResourcesSortFieldsEnum,
   ListRulesSortFieldsEnum,
@@ -196,28 +198,6 @@ export const buildAddComplianceIntegrationInput = (
   };
 };
 
-export const buildAddCustomLogInput = (
-  overrides: Partial<AddCustomLogInput> = {}
-): AddCustomLogInput => {
-  return {
-    revision: 'revision' in overrides ? overrides.revision : 176,
-    logType: 'logType' in overrides ? overrides.logType : 'matrix',
-    description: 'description' in overrides ? overrides.description : 'Buckinghamshire',
-    referenceURL: 'referenceURL' in overrides ? overrides.referenceURL : 'enable',
-    logSpec: 'logSpec' in overrides ? overrides.logSpec : 'applications',
-  };
-};
-
-export const buildAddCustomLogOutput = (
-  overrides: Partial<AddCustomLogOutput> = {}
-): AddCustomLogOutput => {
-  return {
-    __typename: 'AddCustomLogOutput',
-    error: 'error' in overrides ? overrides.error : buildError(),
-    record: 'record' in overrides ? overrides.record : buildCustomLogRecord(),
-  };
-};
-
 export const buildAddGlobalPythonModuleInput = (
   overrides: Partial<AddGlobalPythonModuleInput> = {}
 ): AddGlobalPythonModuleInput => {
@@ -225,6 +205,18 @@ export const buildAddGlobalPythonModuleInput = (
     id: 'id' in overrides ? overrides.id : '6b0f1c64-e650-48e8-abcf-37c23c6cf854',
     description: 'description' in overrides ? overrides.description : 'Dynamic',
     body: 'body' in overrides ? overrides.body : 'methodologies',
+  };
+};
+
+export const buildAddOrUpdateCustomLogInput = (
+  overrides: Partial<AddOrUpdateCustomLogInput> = {}
+): AddOrUpdateCustomLogInput => {
+  return {
+    revision: 'revision' in overrides ? overrides.revision : 114,
+    logType: 'logType' in overrides ? overrides.logType : 'Unbranded Cotton Hat',
+    description: 'description' in overrides ? overrides.description : 'synthesizing',
+    referenceURL: 'referenceURL' in overrides ? overrides.referenceURL : 'yellow',
+    logSpec: 'logSpec' in overrides ? overrides.logSpec : 'Decentralized',
   };
 };
 
@@ -481,6 +473,14 @@ export const buildComplianceStatusCounts = (
   };
 };
 
+export const buildCustomLogOutput = (overrides: Partial<CustomLogOutput> = {}): CustomLogOutput => {
+  return {
+    __typename: 'CustomLogOutput',
+    error: 'error' in overrides ? overrides.error : buildError(),
+    record: 'record' in overrides ? overrides.record : buildCustomLogRecord(),
+  };
+};
+
 export const buildCustomLogRecord = (overrides: Partial<CustomLogRecord> = {}): CustomLogRecord => {
   return {
     __typename: 'CustomLogRecord',
@@ -563,11 +563,17 @@ export const buildDeleteCustomLogOutput = (
   };
 };
 
-export const buildDeleteGlobalPythonInputItem = (
-  overrides: Partial<DeleteGlobalPythonInputItem> = {}
-): DeleteGlobalPythonInputItem => {
+export const buildDeleteDataModelInput = (
+  overrides: Partial<DeleteDataModelInput> = {}
+): DeleteDataModelInput => {
   return {
-    id: 'id' in overrides ? overrides.id : '28c248cf-f729-4ac6-af32-da12f186a8bd',
+    dataModels: 'dataModels' in overrides ? overrides.dataModels : [buildDeleteEntry()],
+  };
+};
+
+export const buildDeleteEntry = (overrides: Partial<DeleteEntry> = {}): DeleteEntry => {
+  return {
+    id: 'id' in overrides ? overrides.id : 'c332a174-a738-4158-8e60-4fd94281e5ed',
   };
 };
 
@@ -575,7 +581,7 @@ export const buildDeleteGlobalPythonModuleInput = (
   overrides: Partial<DeleteGlobalPythonModuleInput> = {}
 ): DeleteGlobalPythonModuleInput => {
   return {
-    globals: 'globals' in overrides ? overrides.globals : [buildDeleteGlobalPythonInputItem()],
+    globals: 'globals' in overrides ? overrides.globals : [buildDeleteEntry()],
   };
 };
 
@@ -583,29 +589,13 @@ export const buildDeletePolicyInput = (
   overrides: Partial<DeletePolicyInput> = {}
 ): DeletePolicyInput => {
   return {
-    policies: 'policies' in overrides ? overrides.policies : [buildDeletePolicyInputItem()],
-  };
-};
-
-export const buildDeletePolicyInputItem = (
-  overrides: Partial<DeletePolicyInputItem> = {}
-): DeletePolicyInputItem => {
-  return {
-    id: 'id' in overrides ? overrides.id : 'a5304976-d86e-44d0-abe1-902e2565a38b',
+    policies: 'policies' in overrides ? overrides.policies : [buildDeleteEntry()],
   };
 };
 
 export const buildDeleteRuleInput = (overrides: Partial<DeleteRuleInput> = {}): DeleteRuleInput => {
   return {
-    rules: 'rules' in overrides ? overrides.rules : [buildDeleteRuleInputItem()],
-  };
-};
-
-export const buildDeleteRuleInputItem = (
-  overrides: Partial<DeleteRuleInputItem> = {}
-): DeleteRuleInputItem => {
-  return {
-    id: 'id' in overrides ? overrides.id : '9c1a40a6-8106-4f56-82b7-b71d4afc0065',
+    rules: 'rules' in overrides ? overrides.rules : [buildDeleteEntry()],
   };
 };
 
@@ -979,6 +969,30 @@ export const buildListComplianceItemsResponse = (
     paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
     status: 'status' in overrides ? overrides.status : ComplianceStatusEnum.Fail,
     totals: 'totals' in overrides ? overrides.totals : buildActiveSuppressCount(),
+  };
+};
+
+export const buildListDataModelsInput = (
+  overrides: Partial<ListDataModelsInput> = {}
+): ListDataModelsInput => {
+  return {
+    enabled: 'enabled' in overrides ? overrides.enabled : true,
+    nameContains: 'nameContains' in overrides ? overrides.nameContains : 'HTTP',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Personal Loan Account'],
+    sortBy: 'sortBy' in overrides ? overrides.sortBy : ListDataModelsSortFieldsEnum.LastModified,
+    sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Descending,
+    page: 'page' in overrides ? overrides.page : 267,
+    pageSize: 'pageSize' in overrides ? overrides.pageSize : 470,
+  };
+};
+
+export const buildListDataModelsResponse = (
+  overrides: Partial<ListDataModelsResponse> = {}
+): ListDataModelsResponse => {
+  return {
+    __typename: 'ListDataModelsResponse',
+    models: 'models' in overrides ? overrides.models : [buildDataModel()],
+    paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
   };
 };
 

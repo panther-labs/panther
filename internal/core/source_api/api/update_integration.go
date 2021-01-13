@@ -179,7 +179,6 @@ func updateIntegrationDBItem(item *ddb.Integration, input *models.UpdateIntegrat
 			item.StackName = getStackName(models.IntegrationTypeAWS3, input.IntegrationLabel)
 			item.LogProcessingRole = generateLogProcessingRoleArn(item.AWSAccountID, input.IntegrationLabel)
 		}
-
 		item.S3Bucket = input.S3Bucket
 		item.KmsKey = input.KmsKey
 		item.S3PrefixLogTypes = input.S3PrefixLogTypes
@@ -230,11 +229,11 @@ func (API) UpdateIntegrationLastScanEnd(input *models.UpdateIntegrationLastScanE
 func getItem(integrationID string) (*ddb.Integration, error) {
 	item, err := dynamoClient.GetItem(integrationID)
 	if err != nil {
-		return nil, &genericapi.InternalError{Message: "Encountered issue while updating integration"}
+		return nil, &genericapi.InternalError{Message: "Error fetching the existing integration"}
 	}
 
 	if item == nil {
-		return nil, &genericapi.DoesNotExistError{Message: "existingIntegration does not exist"}
+		return nil, &genericapi.DoesNotExistError{Message: "Integration does not exist"}
 	}
 	return item, nil
 }

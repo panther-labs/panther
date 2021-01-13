@@ -25,11 +25,13 @@ import {
   buildDataModel,
   fireClickAndMouseEvents,
   buildListAvailableLogTypesResponse,
+  buildPagingData,
 } from 'test-utils';
 import urls from 'Source/urls';
 import { GraphQLError } from 'graphql';
 import { mockListAvailableLogTypes } from 'Source/graphql/queries';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
+import { mockListDataModels } from 'Pages/ListDataModels';
 import CreateDataModel from './CreateDataModel';
 import { mockCreateDataModel } from './graphql/createDataModel.generated';
 
@@ -43,6 +45,10 @@ describe('CreateDataModel', () => {
         data: {
           listAvailableLogTypes: buildListAvailableLogTypesResponse({ logTypes: ['AWS.ALB'] }),
         },
+      }),
+      mockListDataModels({
+        variables: { input: {} },
+        data: { listDataModels: { models: [], paging: buildPagingData() } },
       }),
       mockCreateDataModel({
         variables: {
@@ -80,7 +86,7 @@ describe('CreateDataModel', () => {
     fireEvent.click(getByText('Save'));
 
     await waitFor(() =>
-      expect(history.location.pathname).toEqual(urls.logAnalysis.dataModels.details(dataModel.id))
+      expect(history.location.pathname).toEqual(urls.logAnalysis.dataModels.list())
     );
 
     // Expect analytics to have been called

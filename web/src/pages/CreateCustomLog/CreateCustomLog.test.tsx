@@ -18,7 +18,7 @@
 
 import React from 'react';
 import {
-  buildAddCustomLogOutput,
+  buildCustomLogOutput,
   buildCustomLogRecord,
   fireEvent,
   render,
@@ -52,7 +52,7 @@ describe('CreateCustomLog', () => {
             referenceURL: '',
           },
         },
-        data: { addCustomLog: buildAddCustomLogOutput({ error: null, record: customLog }) },
+        data: { addCustomLog: buildCustomLogOutput({ error: null, record: customLog }) },
       }),
     ];
 
@@ -87,7 +87,7 @@ describe('CreateCustomLog', () => {
           },
         },
         data: {
-          addCustomLog: buildAddCustomLogOutput({ error: { message: 'Test Error' }, record: null }),
+          addCustomLog: buildCustomLogOutput({ error: { message: 'Test Error' }, record: null }),
         },
       }),
     ];

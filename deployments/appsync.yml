@@ -1570,6 +1570,23 @@ Resources:
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
+  UpdateCustomLogResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: updateCustomLog
+      DataSourceName: !GetAtt LogTypesAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "PutCustomLog": $ctx.args.input
+          })
+        }
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
+
   GetCustomLogResolver:
     Type: AWS::AppSync::Resolver
     Properties:
@@ -1682,3 +1699,39 @@ Resources:
           })
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
+
+  ListDataModelsResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: listDataModels
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "listDataModels": $ctx.args.input
+          })
+        }
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
+
+  DeleteDataModelResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: deleteDataModel
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "deleteDataModels": {
+              "entries": $ctx.args.input.dataModels
+            }
+          })
+        }
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCodeNoBody, VTL]

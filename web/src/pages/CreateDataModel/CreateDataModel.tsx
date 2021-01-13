@@ -24,6 +24,7 @@ import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Help
 import withSEO from 'Hoc/withSEO';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
+import { ListDataModelsDocument } from 'Pages/ListDataModels';
 import { useCreateDataModel } from './graphql/createDataModel.generated';
 
 const initialValues = {
@@ -48,9 +49,9 @@ const CreateDataModel: React.FC = () => {
         },
       });
     },
-    onCompleted: ({ addDataModel: dataModel }) => {
+    onCompleted: () => {
       trackEvent({ event: EventEnum.AddedDataModel, src: SrcEnum.DataModels });
-      history.push(urls.logAnalysis.dataModels.details(dataModel.id));
+      history.push(urls.logAnalysis.dataModels.list());
     },
     onError: error => {
       trackError({ event: TrackErrorEnum.FailedToAddDataModel, src: SrcEnum.DataModels });
@@ -59,6 +60,8 @@ const CreateDataModel: React.FC = () => {
         title: extractErrorMessage(error),
       });
     },
+    refetchQueries: [{ query: ListDataModelsDocument, variables: { input: {} } }],
+    awaitRefetchQueries: true,
   });
 
   return (

@@ -10,7 +10,7 @@ schema {
 }
 
 type Mutation {
-  addCustomLog(input: AddCustomLogInput!): AddCustomLogOutput!
+  addCustomLog(input: AddOrUpdateCustomLogInput!): GetCustomLogOutput!
   addDataModel(input: AddOrUpdateDataModelInput!): DataModel!
   addDestination(input: DestinationInput!): Destination
   addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
@@ -19,6 +19,7 @@ type Mutation {
   addPolicy(input: AddPolicyInput!): PolicyDetails
   addRule(input: AddRuleInput!): RuleDetails
   addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
+  deleteDataModel(input: DeleteDataModelInput!): Boolean
   deleteDestination(id: ID!): Boolean
   deleteComplianceIntegration(id: ID!): Boolean
   deleteCustomLog(input: DeleteCustomLogInput): DeleteCustomLogOutput!
@@ -36,6 +37,7 @@ type Mutation {
   testRule(input: TestRuleInput!): TestRuleResponse!
   updateAlertStatus(input: UpdateAlertStatusInput!): [AlertSummary!]!
   updateDataModel(input: AddOrUpdateDataModelInput!): DataModel!
+  updateCustomLog(input: AddOrUpdateCustomLogInput!): GetCustomLogOutput!
   updateDestination(input: DestinationInput!): Destination
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
   updateS3LogIntegration(input: UpdateS3LogIntegrationInput!): S3LogIntegration!
@@ -73,6 +75,7 @@ type Query {
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
   listAvailableLogTypes: ListAvailableLogTypesResponse!
   listComplianceIntegrations: [ComplianceIntegration!]!
+  listDataModels(input: ListDataModelsInput!): ListDataModelsResponse!
   listLogIntegrations: [LogIntegration!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   getLogAnalysisMetrics(input: LogAnalysisMetricsInput!): LogAnalysisMetricsResponse!
@@ -82,6 +85,10 @@ type Query {
   users: [User!]!
   getCustomLog(input: GetCustomLogInput!): GetCustomLogOutput!
   listCustomLogs: [CustomLogRecord!]!
+}
+
+input DeleteEntry {
+  id: ID!
 }
 
 input DataModelMappingInput {
@@ -99,12 +106,26 @@ input AddOrUpdateDataModelInput {
   body: String
 }
 
+input ListDataModelsInput {
+  enabled: Boolean
+  nameContains: String
+  logTypes: [String!]
+  sortBy: ListDataModelsSortFieldsEnum
+  sortDir: SortDirEnum
+  page: Int
+  pageSize: Int
+}
+
+input DeleteDataModelInput {
+  dataModels: [DeleteEntry!]!
+}
+
 input DeleteCustomLogInput {
   logType: String!
   revision: Int!
 }
 
-input AddCustomLogInput {
+input AddOrUpdateCustomLogInput {
   revision: Int
   logType: String!
   description: String!
@@ -172,7 +193,12 @@ type DataModel {
   lastModified: AWSDateTime!
 }
 
-type AddCustomLogOutput {
+type ListDataModelsResponse {
+  models: [DataModel!]!
+  paging: PagingData!
+}
+
+type CustomLogOutput {
   error: Error
   record: CustomLogRecord
 }
@@ -376,11 +402,7 @@ input GetRuleInput {
 }
 
 input DeleteRuleInput {
-  rules: [DeleteRuleInputItem!]!
-}
-
-input DeleteRuleInputItem {
-  id: ID!
+  rules: [DeleteEntry!]!
 }
 
 type RuleSummary {
@@ -961,19 +983,11 @@ input AddGlobalPythonModuleInput {
 }
 
 input DeleteGlobalPythonModuleInput {
-  globals: [DeleteGlobalPythonInputItem!]
-}
-
-input DeleteGlobalPythonInputItem {
-  id: ID!
+  globals: [DeleteEntry!]!
 }
 
 input DeletePolicyInput {
-  policies: [DeletePolicyInputItem]
-}
-
-input DeletePolicyInputItem {
-  id: ID!
+  policies: [DeleteEntry!]!
 }
 
 input ListPoliciesInput {
@@ -1174,6 +1188,13 @@ enum ListRulesSortFieldsEnum {
   lastModified
   logTypes
   severity
+}
+
+enum ListDataModelsSortFieldsEnum {
+  enabled
+  id
+  lastModified
+  logTypes
 }
 
 enum ListAlertsSortFieldsEnum {
