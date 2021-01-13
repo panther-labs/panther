@@ -24,6 +24,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/dchest/uniuri"
+	fuzz "github.com/google/gofuzz"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
@@ -100,6 +102,20 @@ func ARN() string {
 func IP() string {
 	base := rand.Int31n(256) // nolint (gosec)
 	return fmt.Sprintf("%d.%d.%d.%d", base, base+1, base+2, base+3)
+}
+
+func RawMessage(atLeast, atMost int) pantherlog.RawMessage {
+	f := fuzz.New().NilChance(0).NumElements(atLeast, atMost)
+	message := make(map[string]string)
+	f.Fuzz(&message)
+	if len(message) == 0 {
+		return []byte("null")
+	}
+	messageJSON, err := jsoniter.Marshal(message)
+	if err != nil {
+		panic(err)
+	}
+	return messageJSON
 }
 
 func ToPantherString(s string) pantherlog.String {

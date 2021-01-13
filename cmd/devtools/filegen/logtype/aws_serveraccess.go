@@ -59,92 +59,85 @@ func (sa *AWSS3ServerAccess) NewFile(hour time.Time) *filegen.File {
 	f := filegen.NewFile(sa, hour)
 	var event awslogs.S3ServerAccess
 	for i := 0; i < sa.Rows(); i++ {
-		sa.fillEvent(&event, hour)
-		sa.writeEvent(&event, f)
+		sa.writeEvent(&event, hour, f)
 	}
 	f.Close()
 	return f
 }
 
-func (*AWSS3ServerAccess) fillEvent(event *awslogs.S3ServerAccess, hour time.Time) {
+func (sa *AWSS3ServerAccess) writeEvent(event *awslogs.S3ServerAccess, hour time.Time, w io.Writer) {
 	event.BucketOwner = box.String(filegen.String(64))
+	sa.writeString(event.BucketOwner, w, true)
+
 	event.Bucket = box.String(filegen.String(64))
+	sa.writeString(event.Bucket, w, true)
+
 	event.Time = (*timestamp.RFC3339)(&hour)
-	event.RemoteIP = box.String(filegen.IP())
-	event.Requester = box.String(filegen.String(64))
-	event.RequestID = box.String(filegen.String(64))
-	event.Operation = box.String(filegen.String(16))
-	event.Key = box.String(filegen.String(64))
-	event.RequestURI = box.String(filegen.String(64))
-	event.HTTPStatus = box.Int(200)
-	event.ErrorCode = box.String(filegen.String(8))
-	event.BytesSent = box.Int(filegen.Int())
-	event.ObjectSize = box.Int(filegen.Int())
-	event.TotalTime = box.Int(filegen.Int())
-	event.TurnAroundTime = box.Int(filegen.Int())
-	event.Referrer = box.String(filegen.String(64))
-	event.UserAgent = box.String(filegen.String(64))
-	event.VersionID = box.String(filegen.String(8))
-	event.HostID = box.String(filegen.String(64))
-	event.SignatureVersion = box.String(filegen.String(8))
-	event.CipherSuite = box.String(filegen.String(16))
-	event.AuthenticationType = box.String(filegen.String(64))
-	event.HostHeader = box.String(filegen.String(32))
-	event.TLSVersion = box.String(filegen.String(8))
-}
-
-func (sa *AWSS3ServerAccess) writeEvent(event *awslogs.S3ServerAccess, w io.Writer) {
 	eventTime := (*time.Time)(event.Time).Format("[2/Jan/2006:15:04:05 -0700]")
+	sa.writeString(&eventTime, w, true)
 
-	sa.writeString(event.BucketOwner, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.Bucket, w)
-	sa.writeDelimiter(w)
-	sa.writeString(&eventTime, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.RemoteIP, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.Requester, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.RequestID, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.Operation, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.Key, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.RequestURI, w)
-	sa.writeDelimiter(w)
+	event.RemoteIP = box.String(filegen.IP())
+	sa.writeString(event.RemoteIP, w, true)
+
+	event.Requester = box.String(filegen.String(64))
+	sa.writeString(event.Requester, w, true)
+
+	event.RequestID = box.String(filegen.String(64))
+	sa.writeString(event.RequestID, w, true)
+
+	event.Operation = box.String(filegen.String(16))
+	sa.writeString(event.Operation, w, true)
+
+	event.Key = box.String(filegen.String(64))
+	sa.writeString(event.Key, w, true)
+
+	event.RequestURI = box.String(filegen.String(64))
+	sa.writeString(event.RequestURI, w, true)
+
+	event.HTTPStatus = box.Int(200)
 	sa.writeInt(event.HTTPStatus, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.ErrorCode, w)
-	sa.writeDelimiter(w)
-	sa.writeInt(event.BytesSent, w)
-	sa.writeDelimiter(w)
-	sa.writeInt(event.ObjectSize, w)
-	sa.writeDelimiter(w)
-	sa.writeInt(event.TotalTime, w)
-	sa.writeDelimiter(w)
-	sa.writeInt(event.TurnAroundTime, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.Referrer, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.UserAgent, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.VersionID, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.HostID, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.SignatureVersion, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.CipherSuite, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.AuthenticationType, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.HostHeader, w)
-	sa.writeDelimiter(w)
-	sa.writeString(event.TLSVersion, w)
 
-	sa.writeLineDelimiter(w)
+	event.ErrorCode = box.String(filegen.String(8))
+	sa.writeString(event.ErrorCode, w, true)
+
+	event.BytesSent = box.Int(filegen.Int())
+	sa.writeInt(event.BytesSent, w)
+
+	event.ObjectSize = box.Int(filegen.Int())
+	sa.writeInt(event.ObjectSize, w)
+
+	event.TotalTime = box.Int(filegen.Int())
+	sa.writeInt(event.TotalTime, w)
+
+	event.TurnAroundTime = box.Int(filegen.Int())
+	sa.writeInt(event.TurnAroundTime, w)
+
+	event.Referrer = box.String(filegen.String(64))
+	sa.writeString(event.Referrer, w, true)
+
+	event.UserAgent = box.String(filegen.String(64))
+	sa.writeString(event.UserAgent, w, true)
+
+	event.VersionID = box.String(filegen.String(8))
+	sa.writeString(event.VersionID, w, true)
+
+	event.HostID = box.String(filegen.String(64))
+	sa.writeString(event.HostID, w, true)
+
+	event.SignatureVersion = box.String(filegen.String(8))
+	sa.writeString(event.SignatureVersion, w, true)
+
+	event.CipherSuite = box.String(filegen.String(16))
+	sa.writeString(event.CipherSuite, w, true)
+
+	event.AuthenticationType = box.String(filegen.String(64))
+	sa.writeString(event.AuthenticationType, w, true)
+
+	event.HostHeader = box.String(filegen.String(32))
+	sa.writeString(event.HostHeader, w, true)
+
+	event.TLSVersion = box.String(filegen.String(8))
+	sa.writeString(event.TLSVersion, w, false) // false! last element, write \n
 }
 
 func (sa *AWSS3ServerAccess) writeDelimiter(w io.Writer) {
@@ -161,7 +154,7 @@ func (sa *AWSS3ServerAccess) writeLineDelimiter(w io.Writer) {
 	}
 }
 
-func (sa *AWSS3ServerAccess) writeString(s *string, w io.Writer) {
+func (sa *AWSS3ServerAccess) writeString(s *string, w io.Writer, delimiter bool) {
 	var err error
 	if s == nil {
 		_, err = w.Write(sa.null)
@@ -170,6 +163,11 @@ func (sa *AWSS3ServerAccess) writeString(s *string, w io.Writer) {
 	}
 	if err != nil {
 		panic(err)
+	}
+	if delimiter {
+		sa.writeDelimiter(w)
+	} else {
+		sa.writeLineDelimiter(w)
 	}
 }
 

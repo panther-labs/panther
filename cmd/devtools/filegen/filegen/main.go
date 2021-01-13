@@ -120,7 +120,7 @@ func (opts *flagOpts) Validate() (err error) {
 }
 
 func main() {
-	opstools.SetUsage("writes synthetic log files to s3 for use in benchmarking)")
+	opstools.SetUsage("writes synthetic log files to s3 for use in benchmarking")
 	opts := flagOpts{
 		Bucket: flag.String("bucket", "", "S3 Bucket to write to"),
 		Prefix: flag.String("prefix", "", "Prefix under bucket to write"),
