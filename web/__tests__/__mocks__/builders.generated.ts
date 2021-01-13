@@ -19,6 +19,7 @@
 import {
   ActiveSuppressCount,
   AddComplianceIntegrationInput,
+  AddCustomLogOutput,
   AddGlobalPythonModuleInput,
   AddOrUpdateCustomLogInput,
   AddOrUpdateDataModelInput,
@@ -37,7 +38,6 @@ import {
   ComplianceIntegrationHealth,
   ComplianceItem,
   ComplianceStatusCounts,
-  CustomLogOutput,
   CustomLogRecord,
   CustomWebhookConfig,
   CustomWebhookConfigInput,
@@ -195,6 +195,16 @@ export const buildAddComplianceIntegrationInput = (
     integrationLabel: 'integrationLabel' in overrides ? overrides.integrationLabel : 'withdrawal',
     remediationEnabled: 'remediationEnabled' in overrides ? overrides.remediationEnabled : false,
     cweEnabled: 'cweEnabled' in overrides ? overrides.cweEnabled : false,
+  };
+};
+
+export const buildAddCustomLogOutput = (
+  overrides: Partial<AddCustomLogOutput> = {}
+): AddCustomLogOutput => {
+  return {
+    __typename: 'AddCustomLogOutput',
+    error: 'error' in overrides ? overrides.error : buildError(),
+    record: 'record' in overrides ? overrides.record : buildCustomLogRecord(),
   };
 };
 
@@ -470,14 +480,6 @@ export const buildComplianceStatusCounts = (
     error: 'error' in overrides ? overrides.error : 71,
     fail: 'fail' in overrides ? overrides.fail : 488,
     pass: 'pass' in overrides ? overrides.pass : 154,
-  };
-};
-
-export const buildCustomLogOutput = (overrides: Partial<CustomLogOutput> = {}): CustomLogOutput => {
-  return {
-    __typename: 'CustomLogOutput',
-    error: 'error' in overrides ? overrides.error : buildError(),
-    record: 'record' in overrides ? overrides.record : buildCustomLogRecord(),
   };
 };
 

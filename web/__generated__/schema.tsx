@@ -52,6 +52,12 @@ export type AddComplianceIntegrationInput = {
   cweEnabled?: Maybe<Scalars['Boolean']>;
 };
 
+export type AddCustomLogOutput = {
+  __typename?: 'AddCustomLogOutput';
+  error?: Maybe<Error>;
+  record?: Maybe<CustomLogRecord>;
+};
+
 export type AddGlobalPythonModuleInput = {
   id: Scalars['ID'];
   description: Scalars['String'];
@@ -264,12 +270,6 @@ export enum ComplianceStatusEnum {
   Fail = 'FAIL',
   Pass = 'PASS',
 }
-
-export type CustomLogOutput = {
-  __typename?: 'CustomLogOutput';
-  error?: Maybe<Error>;
-  record?: Maybe<CustomLogRecord>;
-};
 
 export type CustomLogRecord = {
   __typename?: 'CustomLogRecord';
@@ -1856,7 +1856,7 @@ export type ResolversTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
-  CustomLogOutput: ResolverTypeWrapper<CustomLogOutput>;
+  AddCustomLogOutput: ResolverTypeWrapper<AddCustomLogOutput>;
   AccountTypeEnum: AccountTypeEnum;
   ErrorCodeEnum: ErrorCodeEnum;
 };
@@ -2041,7 +2041,7 @@ export type ResolversParentTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
-  CustomLogOutput: CustomLogOutput;
+  AddCustomLogOutput: AddCustomLogOutput;
   AccountTypeEnum: AccountTypeEnum;
   ErrorCodeEnum: ErrorCodeEnum;
 };
@@ -2052,6 +2052,15 @@ export type ActiveSuppressCountResolvers<
 > = {
   active?: Resolver<Maybe<ResolversTypes['ComplianceStatusCounts']>, ParentType, ContextType>;
   suppressed?: Resolver<Maybe<ResolversTypes['ComplianceStatusCounts']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type AddCustomLogOutputResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['AddCustomLogOutput'] = ResolversParentTypes['AddCustomLogOutput']
+> = {
+  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
+  record?: Resolver<Maybe<ResolversTypes['CustomLogRecord']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2262,15 +2271,6 @@ export type ComplianceStatusCountsResolvers<
   error?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   fail?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   pass?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type CustomLogOutputResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['CustomLogOutput'] = ResolversParentTypes['CustomLogOutput']
-> = {
-  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
-  record?: Resolver<Maybe<ResolversTypes['CustomLogRecord']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -3503,6 +3503,7 @@ export type UserResolvers<
 
 export type Resolvers<ContextType = any> = {
   ActiveSuppressCount?: ActiveSuppressCountResolvers<ContextType>;
+  AddCustomLogOutput?: AddCustomLogOutputResolvers<ContextType>;
   Alert?: AlertResolvers;
   AlertDetails?: AlertDetailsResolvers<ContextType>;
   AlertDetailsDetectionInfo?: AlertDetailsDetectionInfoResolvers;
@@ -3520,7 +3521,6 @@ export type Resolvers<ContextType = any> = {
   ComplianceIntegrationHealth?: ComplianceIntegrationHealthResolvers<ContextType>;
   ComplianceItem?: ComplianceItemResolvers<ContextType>;
   ComplianceStatusCounts?: ComplianceStatusCountsResolvers<ContextType>;
-  CustomLogOutput?: CustomLogOutputResolvers<ContextType>;
   CustomLogRecord?: CustomLogRecordResolvers<ContextType>;
   CustomWebhookConfig?: CustomWebhookConfigResolvers<ContextType>;
   DataModel?: DataModelResolvers<ContextType>;
