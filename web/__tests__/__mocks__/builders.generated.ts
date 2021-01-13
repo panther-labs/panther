@@ -115,8 +115,7 @@ import {
   ResourceDetails,
   ResourcesForPolicyInput,
   ResourceSummary,
-  RuleDetails,
-  RuleSummary,
+  Rule,
   S3LogIntegration,
   S3LogIntegrationHealth,
   S3PrefixLogTypes,
@@ -1102,7 +1101,7 @@ export const buildListRulesResponse = (
   return {
     __typename: 'ListRulesResponse',
     paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
-    rules: 'rules' in overrides ? overrides.rules : [buildRuleSummary()],
+    rules: 'rules' in overrides ? overrides.rules : [buildRule()],
   };
 };
 
@@ -1367,51 +1366,34 @@ export const buildResourceSummary = (overrides: Partial<ResourceSummary> = {}): 
   };
 };
 
-export const buildRuleDetails = (overrides: Partial<RuleDetails> = {}): RuleDetails => {
+export const buildRule = (overrides: Partial<Rule> = {}): Rule => {
   return {
-    __typename: 'RuleDetails',
-    body: 'body' in overrides ? overrides.body : 'Shoes',
-    createdAt: 'createdAt' in overrides ? overrides.createdAt : '2020-08-03T05:47:47.012Z',
+    __typename: 'Rule',
+    body: 'body' in overrides ? overrides.body : 'IB',
+    createdAt: 'createdAt' in overrides ? overrides.createdAt : '2020-03-07T13:36:35.355Z',
     createdBy:
-      'createdBy' in overrides ? overrides.createdBy : '6c3e570b-c621-4e3a-aab1-8a21e9aa4d17',
-    dedupPeriodMinutes: 'dedupPeriodMinutes' in overrides ? overrides.dedupPeriodMinutes : 34,
-    threshold: 'threshold' in overrides ? overrides.threshold : 244,
-    description: 'description' in overrides ? overrides.description : 'EXE',
-    displayName: 'displayName' in overrides ? overrides.displayName : 'Advanced',
+      'createdBy' in overrides ? overrides.createdBy : '93dc7a6b-4131-418c-91d8-e6dd63643a7b',
+    dedupPeriodMinutes: 'dedupPeriodMinutes' in overrides ? overrides.dedupPeriodMinutes : 808,
+    threshold: 'threshold' in overrides ? overrides.threshold : 347,
+    description: 'description' in overrides ? overrides.description : 'Cotton',
+    displayName: 'displayName' in overrides ? overrides.displayName : 'AI',
     enabled: 'enabled' in overrides ? overrides.enabled : false,
-    id: 'id' in overrides ? overrides.id : 'Metal',
-    lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-02-01T03:09:25.999Z',
+    id: 'id' in overrides ? overrides.id : 'panel',
+    lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-06-09T20:02:02.412Z',
     lastModifiedBy:
       'lastModifiedBy' in overrides
         ? overrides.lastModifiedBy
-        : '5c381f6d-f9c9-4de8-9d6f-dc274dc6b1e0',
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Auto Loan Account'],
+        : '66e9ea4a-e1d9-4c58-bd26-ee68aa4beee1',
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Nepalese Rupee'],
     outputIds:
-      'outputIds' in overrides ? overrides.outputIds : ['1460c173-140b-433a-af75-a657c342f229'],
-    reference: 'reference' in overrides ? overrides.reference : 'wireless',
-    runbook: 'runbook' in overrides ? overrides.runbook : 'withdrawal',
-    severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Low,
-    tags: 'tags' in overrides ? overrides.tags : ['digital'],
+      'outputIds' in overrides ? overrides.outputIds : ['22dea70d-8bb5-4ebc-a55a-db166dda79cb'],
+    reference: 'reference' in overrides ? overrides.reference : 'Granite',
+    runbook: 'runbook' in overrides ? overrides.runbook : 'Credit Card Account',
+    severity: 'severity' in overrides ? overrides.severity : SeverityEnum.High,
+    tags: 'tags' in overrides ? overrides.tags : ['invoice'],
     tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinition()],
     versionId:
-      'versionId' in overrides ? overrides.versionId : 'cd730243-e772-446f-b820-ff796b83a51f',
-  };
-};
-
-export const buildRuleSummary = (overrides: Partial<RuleSummary> = {}): RuleSummary => {
-  return {
-    __typename: 'RuleSummary',
-    displayName: 'displayName' in overrides ? overrides.displayName : 'array',
-    enabled: 'enabled' in overrides ? overrides.enabled : false,
-    id: 'id' in overrides ? overrides.id : '4ce135b7-005f-4a98-8a69-9b9d3b372bdb',
-    threshold: 'threshold' in overrides ? overrides.threshold : 550,
-    lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-10-11T23:20:19.662Z',
-    createdAt: 'createdAt' in overrides ? overrides.createdAt : '2020-09-24T09:09:49.137Z',
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['AI'],
-    severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Info,
-    outputIds:
-      'outputIds' in overrides ? overrides.outputIds : ['a2f89a13-3b31-4365-b40d-2495c13a6f65'],
-    tags: 'tags' in overrides ? overrides.tags : ['Virginia'],
+      'versionId' in overrides ? overrides.versionId : '15cf3733-082e-44e1-8802-490c1064f983',
   };
 };
 

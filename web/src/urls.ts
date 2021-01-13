@@ -24,7 +24,7 @@ import {
   LogIntegration,
   Policy,
   ResourceDetails,
-  RuleDetails,
+  Rule,
   CustomLogRecord,
   DataModel,
 } from 'Generated/schema';
@@ -67,8 +67,8 @@ const urls = {
     rules: {
       list: () => `${urls.logAnalysis.home()}rules/`,
       create: () => `${urls.logAnalysis.rules.list()}new/`,
-      details: (id: RuleDetails['id']) => `${urls.logAnalysis.rules.list()}${urlEncode(id)}/`,
-      edit: (id: RuleDetails['id']) => `${urls.logAnalysis.rules.details(id)}edit/`,
+      details: (id: Rule['id']) => `${urls.logAnalysis.rules.list()}${urlEncode(id)}/`,
+      edit: (id: Rule['id']) => `${urls.logAnalysis.rules.details(id)}edit/`,
     },
     alerts: {
       list: () => `${urls.logAnalysis.home()}alerts/`,

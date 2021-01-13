@@ -18,6 +18,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { RuleSummary } from '../../../graphql/fragments/RuleSummary.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
@@ -29,23 +30,7 @@ export type ListRulesVariables = {
 
 export type ListRules = {
   rules?: Types.Maybe<{
-    rules?: Types.Maybe<
-      Array<
-        Types.Maybe<
-          Pick<
-            Types.RuleSummary,
-            | 'lastModified'
-            | 'logTypes'
-            | 'severity'
-            | 'id'
-            | 'displayName'
-            | 'threshold'
-            | 'enabled'
-            | 'outputIds'
-          >
-        >
-      >
-    >;
+    rules: Array<RuleSummary>;
     paging?: Types.Maybe<Pick<Types.PagingData, 'totalPages' | 'thisPage' | 'totalItems'>>;
   }>;
 };
@@ -54,14 +39,7 @@ export const ListRulesDocument = gql`
   query ListRules($input: ListRulesInput) {
     rules(input: $input) {
       rules {
-        lastModified
-        logTypes
-        severity
-        id
-        displayName
-        threshold
-        enabled
-        outputIds
+        ...RuleSummary
       }
       paging {
         totalPages
@@ -70,6 +48,7 @@ export const ListRulesDocument = gql`
       }
     }
   }
+  ${RuleSummary}
 `;
 
 /**

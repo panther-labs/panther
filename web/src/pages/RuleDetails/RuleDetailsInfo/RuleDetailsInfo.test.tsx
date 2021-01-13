@@ -17,12 +17,12 @@
  */
 
 import React from 'react';
-import { render, buildRuleDetails } from 'test-utils';
+import { render, buildRule } from 'test-utils';
 import RuleCardDetails from './index';
 
 describe('RuleDetailsInfo', () => {
   it('renders the correct data', async () => {
-    const rule = buildRuleDetails({
+    const rule = buildRule({
       displayName: 'My Rule',
       description: 'This is an amazing description',
       runbook: 'Panther labs runbook',

@@ -26,7 +26,7 @@ import { extractErrorMessage, formatJSON } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
 import Breadcrumbs from 'Components/Breadcrumbs';
 import Skeleton from './Skeleton';
-import { useRuleDetails } from './graphql/ruleDetails.generated';
+import { useGetRuleDetails } from './graphql/getRuleDetails.generated';
 import { useUpdateRule } from './graphql/updateRule.generated';
 
 const EditRulePage: React.FC = () => {
@@ -34,7 +34,7 @@ const EditRulePage: React.FC = () => {
   const { showModal } = useModal();
   const { pushSnackbar } = useSnackbar();
 
-  const { error: fetchRuleError, data: queryData, loading: isFetchingRule } = useRuleDetails({
+  const { error: fetchRuleError, data: queryData, loading: isFetchingRule } = useGetRuleDetails({
     variables: {
       input: {
         id: match.params.id,

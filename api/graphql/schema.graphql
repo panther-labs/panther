@@ -17,7 +17,7 @@ type Mutation {
   addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
   addSqsLogIntegration(input: AddSqsLogIntegrationInput!): SqsLogSourceIntegration!
   addPolicy(input: AddPolicyInput!): Policy!
-  addRule(input: AddRuleInput!): RuleDetails
+  addRule(input: AddRuleInput!): Rule!
   addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
   deleteDataModel(input: DeleteDataModelInput!): Boolean
   deleteDestination(id: ID!): Boolean
@@ -44,7 +44,7 @@ type Mutation {
   updateSqsLogIntegration(input: UpdateSqsLogIntegrationInput!): SqsLogSourceIntegration!
   updateGeneralSettings(input: UpdateGeneralSettingsInput!): GeneralSettings!
   updatePolicy(input: UpdatePolicyInput!): Policy!
-  updateRule(input: UpdateRuleInput!): RuleDetails
+  updateRule(input: UpdateRuleInput!): Rule!
   updateUser(input: UpdateUserInput!): User!
   uploadPolicies(input: UploadPoliciesInput!): UploadPoliciesResponse
   updateGlobalPythonlModule(input: ModifyGlobalPythonModuleInput!): GlobalPythonModule!
@@ -79,7 +79,7 @@ type Query {
   listLogIntegrations: [LogIntegration!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   getLogAnalysisMetrics(input: LogAnalysisMetricsInput!): LogAnalysisMetricsResponse!
-  rule(input: GetRuleInput!): RuleDetails
+  rule(input: GetRuleInput!): Rule
   rules(input: ListRulesInput): ListRulesResponse
   listGlobalPythonModules(input: ListGlobalPythonModuleInput!): ListGlobalPythonModulesResponse!
   users: [User!]!
@@ -405,25 +405,12 @@ input DeleteRuleInput {
   rules: [DeleteEntry!]!
 }
 
-type RuleSummary {
-  displayName: String
-  enabled: Boolean
-  id: ID!
-  threshold: Int!
-  lastModified: AWSDateTime
-  createdAt: AWSDateTime
-  logTypes: [String]
-  severity: SeverityEnum
-  outputIds: [ID!]!
-  tags: [String!]
-}
-
 type ListRulesResponse {
   paging: PagingData
-  rules: [RuleSummary]
+  rules: [Rule!]!
 }
 
-type RuleDetails {
+type Rule {
   body: String
   createdAt: AWSDateTime
   createdBy: ID

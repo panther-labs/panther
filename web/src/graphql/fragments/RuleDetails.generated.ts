@@ -18,42 +18,25 @@
 
 import * as Types from '../../../__generated__/schema';
 
+import { RuleSummary } from './RuleSummary.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
-export type RuleBasic = Pick<
-  Types.RuleDetails,
-  | 'id'
-  | 'description'
-  | 'displayName'
-  | 'logTypes'
-  | 'threshold'
-  | 'outputIds'
-  | 'runbook'
-  | 'reference'
-  | 'severity'
-  | 'tags'
-  | 'dedupPeriodMinutes'
-  | 'createdAt'
-  | 'lastModified'
-  | 'enabled'
->;
+export type RuleDetails = Pick<Types.Rule, 'body'> & {
+  tests?: Types.Maybe<
+    Array<Types.Maybe<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>>>
+  >;
+} & RuleSummary;
 
-export const RuleBasic = gql`
-  fragment RuleBasic on RuleDetails {
-    id
-    description
-    displayName
-    logTypes
-    threshold
-    outputIds
-    runbook
-    reference
-    severity
-    tags
-    dedupPeriodMinutes
-    createdAt
-    lastModified
-    enabled
+export const RuleDetails = gql`
+  fragment RuleDetails on Rule {
+    ...RuleSummary
+    body
+    tests {
+      expectedResult
+      name
+      resource
+    }
   }
+  ${RuleSummary}
 `;

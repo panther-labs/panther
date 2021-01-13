@@ -17,14 +17,14 @@
  */
 
 import React from 'react';
-import { buildRuleSummary, render } from 'test-utils';
+import { buildRule, render } from 'test-utils';
 import { SeverityEnum } from 'Generated/schema';
 import urls from 'Source/urls';
 import RuleCard from './index';
 
 describe('RuleCard', () => {
   it('displays the correct Alert data in the card', async () => {
-    const ruleData = buildRuleSummary();
+    const ruleData = buildRule();
 
     const { getByText } = render(<RuleCard rule={ruleData} />);
 
@@ -35,7 +35,7 @@ describe('RuleCard', () => {
   });
 
   it('should check links are valid', async () => {
-    const ruleData = buildRuleSummary();
+    const ruleData = buildRule();
 
     const { getByAriaLabel } = render(<RuleCard rule={ruleData} />);
     expect(getByAriaLabel('Link to Rule')).toHaveAttribute(

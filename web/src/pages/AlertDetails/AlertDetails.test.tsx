@@ -25,7 +25,7 @@ import {
   buildDeliveryResponse,
   buildDestination,
   buildPolicy,
-  buildRuleDetails,
+  buildRule,
   fireEvent,
   render,
   within,
@@ -51,7 +51,7 @@ describe('AlertDetails', () => {
         }),
         deliveryResponses: [buildDeliveryResponse({ outputId: destination.outputId })],
       });
-      const rule = buildRuleDetails();
+      const rule = buildRule();
 
       const mocks = [
         mockListDestinations({ data: { destinations: [destination] } }),
@@ -107,7 +107,7 @@ describe('AlertDetails', () => {
         }),
         deliveryResponses: [buildDeliveryResponse({ outputId: destination.outputId })],
       });
-      const rule = buildRuleDetails();
+      const rule = buildRule();
 
       const mocks = [
         mockListDestinations({ data: { destinations: [destination] } }),
@@ -161,7 +161,7 @@ describe('AlertDetails', () => {
         }),
         deliveryResponses: [buildDeliveryResponse({ outputId: destination.outputId })],
       });
-      const rule = buildRuleDetails();
+      const rule = buildRule();
 
       const mocks = [
         mockListDestinations({ data: { destinations: [destination] } }),
@@ -203,7 +203,7 @@ describe('AlertDetails', () => {
     });
 
     it('correctly updates the delivery status on a delivery retry', async () => {
-      const rule = buildRuleDetails();
+      const rule = buildRule();
       const destination = buildDestination();
 
       const previousDeliveryResponse = buildDeliveryResponse({

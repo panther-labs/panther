@@ -23,14 +23,14 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type RuleDetailsVariables = {
+export type GetRuleDetailsVariables = {
   input: Types.GetRuleInput;
 };
 
-export type RuleDetails = {
+export type GetRuleDetails = {
   rule?: Types.Maybe<
     Pick<
-      Types.RuleDetails,
+      Types.Rule,
       | 'body'
       | 'dedupPeriodMinutes'
       | 'threshold'
@@ -54,8 +54,8 @@ export type RuleDetails = {
   >;
 };
 
-export const RuleDetailsDocument = gql`
-  query RuleDetails($input: GetRuleInput!) {
+export const GetRuleDetailsDocument = gql`
+  query GetRuleDetails($input: GetRuleInput!) {
     rule(input: $input) {
       body
       dedupPeriodMinutes
@@ -80,54 +80,54 @@ export const RuleDetailsDocument = gql`
 `;
 
 /**
- * __useRuleDetails__
+ * __useGetRuleDetails__
  *
- * To run a query within a React component, call `useRuleDetails` and pass it any options that fit your needs.
- * When your component renders, `useRuleDetails` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetRuleDetails` and pass it any options that fit your needs.
+ * When your component renders, `useGetRuleDetails` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useRuleDetails({
+ * const { data, loading, error } = useGetRuleDetails({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useRuleDetails(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<RuleDetails, RuleDetailsVariables>
+export function useGetRuleDetails(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GetRuleDetails, GetRuleDetailsVariables>
 ) {
-  return ApolloReactHooks.useQuery<RuleDetails, RuleDetailsVariables>(
-    RuleDetailsDocument,
+  return ApolloReactHooks.useQuery<GetRuleDetails, GetRuleDetailsVariables>(
+    GetRuleDetailsDocument,
     baseOptions
   );
 }
-export function useRuleDetailsLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RuleDetails, RuleDetailsVariables>
+export function useGetRuleDetailsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRuleDetails, GetRuleDetailsVariables>
 ) {
-  return ApolloReactHooks.useLazyQuery<RuleDetails, RuleDetailsVariables>(
-    RuleDetailsDocument,
+  return ApolloReactHooks.useLazyQuery<GetRuleDetails, GetRuleDetailsVariables>(
+    GetRuleDetailsDocument,
     baseOptions
   );
 }
-export type RuleDetailsHookResult = ReturnType<typeof useRuleDetails>;
-export type RuleDetailsLazyQueryHookResult = ReturnType<typeof useRuleDetailsLazyQuery>;
-export type RuleDetailsQueryResult = ApolloReactCommon.QueryResult<
-  RuleDetails,
-  RuleDetailsVariables
+export type GetRuleDetailsHookResult = ReturnType<typeof useGetRuleDetails>;
+export type GetRuleDetailsLazyQueryHookResult = ReturnType<typeof useGetRuleDetailsLazyQuery>;
+export type GetRuleDetailsQueryResult = ApolloReactCommon.QueryResult<
+  GetRuleDetails,
+  GetRuleDetailsVariables
 >;
-export function mockRuleDetails({
+export function mockGetRuleDetails({
   data,
   variables,
   errors,
 }: {
-  data: RuleDetails;
-  variables?: RuleDetailsVariables;
+  data: GetRuleDetails;
+  variables?: GetRuleDetailsVariables;
   errors?: GraphQLError[];
 }) {
   return {
-    request: { query: RuleDetailsDocument, variables },
+    request: { query: GetRuleDetailsDocument, variables },
     result: { data, errors },
   };
 }

@@ -1,4 +1,4 @@
-query RuleDetails($input: GetRuleInput!) {
+query GetRuleDetails($input: GetRuleInput!) {
   rule(input: $input) {
     body
     dedupPeriodMinutes

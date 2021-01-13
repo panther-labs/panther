@@ -1,4 +1,4 @@
-query RuleTeaser($input: GetRuleInput!) {
+query GetRuleDetails($input: GetRuleInput!) {
   rule(input: $input) {
     ...RuleSummary
   }

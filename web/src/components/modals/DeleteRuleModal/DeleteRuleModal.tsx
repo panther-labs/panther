@@ -18,14 +18,14 @@
 
 import React from 'react';
 import { ModalProps, useSnackbar } from 'pouncejs';
-import { RuleSummary, RuleDetails } from 'Generated/schema';
+import { Rule } from 'Generated/schema';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import { useDeleteRule } from './graphql/deleteRule.generated';
 import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
 export interface DeleteRuleModalProps extends ModalProps {
-  rule: RuleDetails | RuleSummary;
+  rule: Rule;
 }
 
 const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule, ...rest }) => {
@@ -48,17 +48,11 @@ const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule, ...rest }) => {
     update: async cache => {
       cache.modify('ROOT_QUERY', {
         rules: (data, helpers) => {
-          const ruleRef = helpers.toReference({
-            __typename: 'RuleSummary',
-            id: rule.id,
-          });
+          const ruleRef = helpers.toReference({ __typename: 'Rule', id: rule.id });
           return { ...data, rules: data.rules.filter(r => r.__ref !== ruleRef.__ref) };
         },
         rule: (data, helpers) => {
-          const ruleRef = helpers.toReference({
-            __typename: 'RuleDetails',
-            id: rule.id,
-          });
+          const ruleRef = helpers.toReference({ __typename: 'Rule', id: rule.id });
           if (ruleRef.__ref !== data.__ref) {
             return data;
           }
