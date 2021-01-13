@@ -19,15 +19,28 @@
 import React from 'react';
 import { ComplianceStatusEnum, TestRuleRecord } from 'Generated/schema';
 import { Card, Flex, Box, Heading, Text, Grid } from 'pouncejs';
+import { capitalize } from 'Helpers/utils';
 import StatusBadge from 'Components/badges/StatusBadge';
 
 interface RuleFormTestResultProps {
   testResult: TestRuleRecord;
 }
 
+const severityToString = (severity: string) => capitalize(severity.toLowerCase());
+
 const RuleFormTestResult: React.FC<RuleFormTestResultProps> = ({ testResult }) => {
   const {
-    functions: { ruleFunction, dedupFunction, titleFunction, alertContextFunction },
+    functions: {
+      ruleFunction,
+      dedupFunction,
+      titleFunction,
+      alertContextFunction,
+      referenceFunction,
+      runbookFunction,
+      descriptionFunction,
+      severityFunction,
+      destinationsFunction,
+    },
     passed,
     name,
     error: unknownError,
@@ -95,6 +108,77 @@ const RuleFormTestResult: React.FC<RuleFormTestResultProps> = ({ testResult }) =
                 ) : (
                   <Text as="dd" color="red-200">
                     {dedupFunction.error.message}
+                  </Text>
+                )}
+              </React.Fragment>
+            )}
+
+            {referenceFunction && (
+              <React.Fragment>
+                <Box as="dt" color="navyblue-100">
+                  Reference
+                </Box>
+                {!referenceFunction.error ? (
+                  <Text as="dd">{referenceFunction.output}</Text>
+                ) : (
+                  <Text as="dd" color="red-200">
+                    {referenceFunction.error.message}
+                  </Text>
+                )}
+              </React.Fragment>
+            )}
+            {runbookFunction && (
+              <React.Fragment>
+                <Box as="dt" color="navyblue-100">
+                  Runbook
+                </Box>
+                {!runbookFunction.error ? (
+                  <Text as="dd">{runbookFunction.output}</Text>
+                ) : (
+                  <Text as="dd" color="red-200">
+                    {runbookFunction.error.message}
+                  </Text>
+                )}
+              </React.Fragment>
+            )}
+            {descriptionFunction && (
+              <React.Fragment>
+                <Box as="dt" color="navyblue-100">
+                  Description
+                </Box>
+                {!descriptionFunction.error ? (
+                  <Text as="dd">{descriptionFunction.output}</Text>
+                ) : (
+                  <Text as="dd" color="red-200">
+                    {descriptionFunction.error.message}
+                  </Text>
+                )}
+              </React.Fragment>
+            )}
+            {severityFunction && (
+              <React.Fragment>
+                <Box as="dt" color="navyblue-100">
+                  Severity
+                </Box>
+                {!severityFunction.error ? (
+                  <Text as="dd">{severityToString(severityFunction.output)}</Text>
+                ) : (
+                  <Text as="dd" color="red-200">
+                    {severityFunction.error.message}
+                  </Text>
+                )}
+              </React.Fragment>
+            )}
+            {destinationsFunction && (
+              <React.Fragment>
+                <Box as="dt" color="navyblue-100">
+                  Destination Overrides
+                </Box>
+                {!destinationsFunction.error ? (
+                  <Text as="dd">{destinationsFunction.output}</Text>
+                ) : (
+                  <Text as="dd" color="red-200">
+                    {destinationsFunction.error.message}
                   </Text>
                 )}
               </React.Fragment>

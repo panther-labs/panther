@@ -1,13 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`RuleFormTestResult matches the snapshot 1`] = `
-.panther-15 {
+.panther-25 {
   background-color: #23344e;
   border-radius: 4px;
   padding: 16px;
 }
 
-.panther-14 {
+.panther-24 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -18,7 +18,7 @@ exports[`RuleFormTestResult matches the snapshot 1`] = `
   align-items: flex-start;
 }
 
-.panther-14>*:not(:last-child) {
+.panther-24>*:not(:last-child) {
   margin-right: 16px;
 }
 
@@ -58,7 +58,7 @@ exports[`RuleFormTestResult matches the snapshot 1`] = `
   font-size: 1.125rem;
 }
 
-.panther-12 {
+.panther-22 {
   display: grid;
   grid-row-gap: 8px;
   grid-column-gap: 16px;
@@ -82,10 +82,10 @@ exports[`RuleFormTestResult matches the snapshot 1`] = `
     id="main-header"
   />
   <article
-    class="panther-15"
+    class="panther-25"
   >
     <div
-      class="panther-14"
+      class="panther-24"
     >
       <div
         aria-atomic="true"
@@ -95,7 +95,7 @@ exports[`RuleFormTestResult matches the snapshot 1`] = `
         PASS
       </div>
       <div
-        class="panther-13"
+        class="panther-23"
         spacing="2"
       >
         <h2
@@ -104,7 +104,7 @@ exports[`RuleFormTestResult matches the snapshot 1`] = `
           Pants
         </h2>
         <dl
-          class="panther-12"
+          class="panther-22"
         >
           <dt
             class="panther-2"
@@ -140,6 +140,56 @@ exports[`RuleFormTestResult matches the snapshot 1`] = `
             class="panther-2"
           >
             Dedup String
+          </dt>
+          <dd
+            class="panther-3"
+          >
+            deposit
+          </dd>
+          <dt
+            class="panther-2"
+          >
+            Reference
+          </dt>
+          <dd
+            class="panther-3"
+          >
+            deposit
+          </dd>
+          <dt
+            class="panther-2"
+          >
+            Runbook
+          </dt>
+          <dd
+            class="panther-3"
+          >
+            deposit
+          </dd>
+          <dt
+            class="panther-2"
+          >
+            Description
+          </dt>
+          <dd
+            class="panther-3"
+          >
+            deposit
+          </dd>
+          <dt
+            class="panther-2"
+          >
+            Severity
+          </dt>
+          <dd
+            class="panther-3"
+          >
+            deposit
+          </dd>
+          <dt
+            class="panther-2"
+          >
+            Destination Overrides
           </dt>
           <dd
             class="panther-3"
