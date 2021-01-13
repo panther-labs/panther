@@ -40,6 +40,8 @@ import (
 	"github.com/panther-labs/panther/tools/mage/clients"
 	"github.com/panther-labs/panther/tools/mage/logger"
 	"github.com/panther-labs/panther/tools/mage/util"
+
+	"go.uber.org/zap"
 )
 
 var log = logger.Build("[deploy]")
@@ -79,6 +81,7 @@ func Deploy() error {
 	// Deploy 1 or more lambdas with LAMBDA="name1 name2..." (white space delimited)
 	deployed += RunSet("LAMBDA", os.Getenv("LAMBDA"), deploySingleLambda)
 	if deployed > 0 {
+		// Already deployed individual STACKs or LAMBDA functions, skip the full deploy process
 		return nil
 	}
 
@@ -590,25 +593,24 @@ func customResourceVersion() string {
 // e.g "one two THREE" -> []string{"panther-one", "panther-two", "panther-three"}
 func PantherNames(setString string) []string {
 	set := strings.Fields(setString)
-	for index, entry := range set {
-		entry = strings.ToLower(strings.TrimSpace(entry))
+	for i, entry := range set {
+		entry = strings.ToLower(entry)
 		if !strings.HasPrefix(entry, "panther-") {
 			entry = "panther-" + entry
 		}
-		set[index] = entry
+		set[i] = entry
 	}
 	return set
 }
 
 // Takes a type, set of types, and a function to call with each type
 func RunSet(label string, nameset string, callFn func(string) error) int {
-	returnCount := 0
+	pantherNameSet := PantherNames(nameset)
 	for _, entry := range PantherNames(nameset) {
-		returnCount++
 		log.Info(label, ": ", entry)
 		if err := callFn(entry); err != nil {
-			log.Error("\n\n ", label, ": ", entry, "\n\n ERROR: ", err.Error(), "\n")
+			log.Error(zap.String(label, entry), zap.Error(err))
 		}
 	}
-	return returnCount
+	return len(pantherNameSet)
 }
