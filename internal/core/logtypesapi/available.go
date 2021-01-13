@@ -63,7 +63,7 @@ skip:
 	return dst
 }
 
-// ListDeletedLogTypes lists all deleted log type ids
+// ListDeletedCustomLogs lists all deleted log type ids
 func (api *LogTypesAPI) ListDeletedCustomLogs(ctx context.Context) (*DeletedCustomLogs, error) {
 	logTypes, err := api.Database.ListDeletedLogTypes(ctx)
 	if err != nil {
