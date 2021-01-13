@@ -31,7 +31,7 @@ var genericListError = &genericapi.InternalError{Message: "Failed to list integr
 func (api *API) ListIntegrations(
 	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
 
-	integrationItems, err := api.ddbClient.ScanIntegrations(input.IntegrationType)
+	integrationItems, err := api.DdbClient.ScanIntegrations(input.IntegrationType)
 	if err != nil {
 		zap.L().Error("failed to list integrations", zap.Error(err))
 		return nil, genericListError
@@ -45,8 +45,8 @@ func (api *API) ListIntegrations(
 		// didn't have the InputDataBucket and InputDataRoleArn populated
 		if integ.IntegrationType == models.IntegrationTypeAWSScan {
 			if integ.S3Bucket == "" {
-				integ.S3Bucket = api.config.InputDataBucketName
-				integ.LogProcessingRole = api.config.InputDataRoleArn
+				integ.S3Bucket = api.Config.InputDataBucketName
+				integ.LogProcessingRole = api.Config.InputDataRoleArn
 			}
 		}
 		result[i] = integ

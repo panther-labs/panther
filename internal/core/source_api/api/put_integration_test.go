@@ -91,7 +91,7 @@ func generateMockSQSBatchInputOutput(integration models.SourceIntegrationMetadat
 func TestAddToSnapshotQueue(t *testing.T) {
 	t.Parallel()
 	apiTest := NewAPITest()
-	apiTest.config.SnapshotPollersQueueURL = "test-url"
+	apiTest.Config.SnapshotPollersQueueURL = "test-url"
 	testIntegration := models.SourceIntegrationMetadata{
 		AWSAccountID:     testAccountID,
 		CreatedAtTime:    time.Now(),
@@ -119,8 +119,8 @@ func TestAddToSnapshotQueue(t *testing.T) {
 func TestPutCloudSecIntegration(t *testing.T) {
 	t.Parallel()
 	apiTest := NewAPITest()
-	apiTest.ddbClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
-	apiTest.evaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
+	apiTest.DdbClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
+	apiTest.EvaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	// Message sent to create Cloud Security tables
 	// TODO Verify payload
@@ -145,9 +145,9 @@ func TestPutCloudSecIntegration(t *testing.T) {
 func TestPutLogIntegrationExists(t *testing.T) {
 	t.Parallel()
 	apiTest := NewAPITest()
-	apiTest.evaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
+	apiTest.EvaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
-	apiTest.ddbClient = &ddb.DDB{
+	apiTest.DdbClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{
 				{
@@ -179,9 +179,9 @@ func TestPutLogIntegrationExists(t *testing.T) {
 func TestPutCloudSecIntegrationExists(t *testing.T) {
 	t.Parallel()
 	apiTest := NewAPITest()
-	apiTest.evaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
+	apiTest.EvaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
-	apiTest.ddbClient = &ddb.DDB{
+	apiTest.DdbClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{
 				{
@@ -242,7 +242,7 @@ func TestPutIntegrationInvalidInput(t *testing.T) {
 func TestPutIntegrationDatabaseError(t *testing.T) {
 	t.Parallel()
 	apiTest := NewAPITest()
-	apiTest.evaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
+	apiTest.EvaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	in := &models.PutIntegrationInput{
 		PutIntegrationSettings: models.PutIntegrationSettings{
@@ -252,7 +252,7 @@ func TestPutIntegrationDatabaseError(t *testing.T) {
 			UserID:           testUserID,
 		},
 	}
-	apiTest.ddbClient = &ddb.DDB{
+	apiTest.DdbClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			TestErr: true,
 		},
@@ -269,14 +269,14 @@ func TestPutIntegrationDatabaseError(t *testing.T) {
 func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 	t.Parallel()
 	apiTest := NewAPITest()
-	apiTest.ddbClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
+	apiTest.DdbClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
 
-	apiTest.config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
-	apiTest.evaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
+	apiTest.Config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	apiTest.EvaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: aws.StringSlice([]string{"Policy"}),
-		QueueUrl:       &apiTest.config.LogProcessorQueueURL,
+		QueueUrl:       &apiTest.Config.LogProcessorQueueURL,
 	}
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{})
 	apiTest.mockSqs.On("GetQueueAttributes", expectedGetQueueAttributesInput).
@@ -284,7 +284,7 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 	expectedAttributes := generateQueueAttributeOutput(t, []string{testAccountID})
 	expectedSetAttributes := &sqs.SetQueueAttributesInput{
 		Attributes: expectedAttributes,
-		QueueUrl:   &apiTest.config.LogProcessorQueueURL,
+		QueueUrl:   &apiTest.Config.LogProcessorQueueURL,
 	}
 	apiTest.mockSqs.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil).Once()
 	apiTest.mockSqs.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
@@ -308,9 +308,9 @@ func TestPutLogIntegrationUpdateSqsQueuePermissions(t *testing.T) {
 func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
 	t.Parallel()
 	apiTest := NewAPITest()
-	apiTest.ddbClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
-	apiTest.config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
-	apiTest.evaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
+	apiTest.DdbClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
+	apiTest.Config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	apiTest.EvaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	apiTest.mockSqs.On("GetQueueAttributes", mock.Anything).Return(&sqs.GetQueueAttributesOutput{}, errors.New("error")).Once()
 	apiTest.mockSqs.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
@@ -334,14 +334,14 @@ func TestPutLogIntegrationUpdateSqsQueuePermissionsFailure(t *testing.T) {
 func TestPutSqsIntegration(t *testing.T) {
 	t.Parallel()
 	apiTest := NewAPITest()
-	apiTest.ddbClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
+	apiTest.DdbClient = &ddb.DDB{Client: &modelstest.MockDDBClient{TestErr: false}, TableName: "test"}
 
-	apiTest.config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
-	apiTest.config.AccountID = "123456789012"
-	apiTest.config.InputDataBucketName = "input-data"
-	apiTest.config.InputDataRoleArn = "role-arn"
-	apiTest.config.Region = "eu-west-1"
-	apiTest.evaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
+	apiTest.Config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	apiTest.Config.AccountID = "123456789012"
+	apiTest.Config.InputDataBucketName = "input-data"
+	apiTest.Config.InputDataRoleArn = "role-arn"
+	apiTest.Config.Region = "eu-west-1"
+	apiTest.EvaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) { return "", true, nil }
 
 	// Configuring the Log Processor SQS queue
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{})

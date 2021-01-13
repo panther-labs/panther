@@ -52,7 +52,7 @@ func (api *API) UpdateIntegrationSettings(input *models.UpdateIntegrationSetting
 	}
 
 	// Validate the updates
-	reason, passing, err := api.evaluateIntegrationFunc(&models.CheckIntegrationInput{
+	reason, passing, err := api.EvaluateIntegrationFunc(&models.CheckIntegrationInput{
 		// Same as the existing integration item
 		AWSAccountID:    existingItem.AWSAccountID,
 		IntegrationType: existingItem.IntegrationType,
@@ -96,7 +96,7 @@ func (api *API) UpdateIntegrationSettings(input *models.UpdateIntegrationSetting
 		}
 	}
 
-	if err := api.ddbClient.PutItem(existingItem); err != nil {
+	if err := api.DdbClient.PutItem(existingItem); err != nil {
 		zap.L().Error("failed to put item in ddb", zap.Error(err))
 		return nil, updateIntegrationInternalError
 	}
@@ -201,7 +201,7 @@ func (api *API) UpdateIntegrationLastScanStart(input *models.UpdateIntegrationLa
 
 	existingIntegration.LastScanStartTime = &input.LastScanStartTime
 	existingIntegration.ScanStatus = input.ScanStatus
-	err = api.ddbClient.PutItem(existingIntegration)
+	err = api.DdbClient.PutItem(existingIntegration)
 	if err != nil {
 		return &genericapi.InternalError{Message: "Failed updating the integration last scan start"}
 	}
@@ -218,7 +218,7 @@ func (api *API) UpdateIntegrationLastScanEnd(input *models.UpdateIntegrationLast
 	existingIntegration.LastScanEndTime = &input.LastScanEndTime
 	existingIntegration.LastScanErrorMessage = input.LastScanErrorMessage
 	existingIntegration.ScanStatus = input.ScanStatus
-	err = api.ddbClient.PutItem(existingIntegration)
+	err = api.DdbClient.PutItem(existingIntegration)
 	if err != nil {
 		return &genericapi.InternalError{Message: "Failed updating the integration last scan end"}
 	}
@@ -226,7 +226,7 @@ func (api *API) UpdateIntegrationLastScanEnd(input *models.UpdateIntegrationLast
 }
 
 func (api *API) getItem(integrationID string) (*ddb.Integration, error) {
-	item, err := api.ddbClient.GetItem(integrationID)
+	item, err := api.DdbClient.GetItem(integrationID)
 	if err != nil {
 		return nil, &genericapi.InternalError{Message: "Error fetching the existing integration"}
 	}
@@ -241,7 +241,8 @@ func (api *API) updateTables(item *ddb.Integration, input *models.UpdateIntegrat
 	var existingLogTypes, newLogTypes []string
 	switch item.IntegrationType {
 	case models.IntegrationTypeAWS3:
-		existingLogTypes = item.S3PrefixLogTypes.LogTypes()
+		// Need to include `item.LogTypes` for backwards compatibility reasons
+		existingLogTypes = append(item.S3PrefixLogTypes.LogTypes(), item.LogTypes...)
 		newLogTypes = input.S3PrefixLogTypes.LogTypes()
 	case models.IntegrationTypeSqs:
 		existingLogTypes = item.SqsConfig.LogTypes
@@ -255,8 +256,8 @@ func (api *API) updateTables(item *ddb.Integration, input *models.UpdateIntegrat
 	}
 
 	client := datacatalog.Client{
-		SQSAPI:   api.sqsClient,
-		QueueURL: api.config.DataCatalogUpdaterQueueURL,
+		SQSAPI:   api.SqsClient,
+		QueueURL: api.Config.DataCatalogUpdaterQueueURL,
 	}
 	err := client.SendCreateTablesForLogTypes(context.TODO(), newLogTypes...)
 	if err != nil {

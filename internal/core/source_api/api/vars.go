@@ -64,24 +64,24 @@ func Setup() *API {
 	awsSession := session.Must(session.NewSession())
 	env.Region = aws.StringValue(awsSession.Config.Region)
 	api := &API{
-		awsSession:       awsSession,
-		ddbClient:        ddb.New(awsSession, env.TableName),
-		sqsClient:        sqs.New(awsSession),
-		templateS3Client: s3.New(awsSession, aws.NewConfig().WithRegion(templateBucketRegion)),
-		lambdaClient:     lambda.New(awsSession),
-		config:           env,
+		AwsSession:       awsSession,
+		DdbClient:        ddb.New(awsSession, env.TableName),
+		SqsClient:        sqs.New(awsSession),
+		TemplateS3Client: s3.New(awsSession, aws.NewConfig().WithRegion(templateBucketRegion)),
+		LambdaClient:     lambda.New(awsSession),
+		Config:           env,
 	}
-	api.evaluateIntegrationFunc = api.evaluateIntegration
+	api.EvaluateIntegrationFunc = api.evaluateIntegration
 	return api
 }
 
 // API provides receiver methods for each route handler.
 type API struct {
-	awsSession              *session.Session
-	ddbClient               *ddb.DDB
-	sqsClient               sqsiface.SQSAPI
-	templateS3Client        s3iface.S3API
-	lambdaClient            lambdaiface.LambdaAPI
-	config                  Config
-	evaluateIntegrationFunc func(integration *models.CheckIntegrationInput) (string, bool, error)
+	AwsSession              *session.Session
+	DdbClient               *ddb.DDB
+	SqsClient               sqsiface.SQSAPI
+	TemplateS3Client        s3iface.S3API
+	LambdaClient            lambdaiface.LambdaAPI
+	Config                  Config
+	EvaluateIntegrationFunc func(integration *models.CheckIntegrationInput) (string, bool, error)
 }

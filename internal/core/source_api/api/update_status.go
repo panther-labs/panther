@@ -35,7 +35,7 @@ func (api *API) UpdateStatus(input *models.UpdateStatusInput) error {
 	status := ddb.IntegrationStatus{
 		LastEventReceived: &input.LastEventReceived,
 	}
-	err := api.ddbClient.UpdateStatus(input.IntegrationID, status)
+	err := api.DdbClient.UpdateStatus(input.IntegrationID, status)
 	if err != nil {
 		zap.L().Error("failed to update integration status", zap.Error(err), zap.String("integrationId", input.IntegrationID))
 		return updateStatusInternalError
