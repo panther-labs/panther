@@ -17,18 +17,17 @@
  */
 
 import React from 'react';
-import { render, buildRuleDetails } from 'test-utils';
-import RuleDetailsInfo from './index';
+import TablePlaceholder from 'Components/TablePlaceholder';
+import { Box, FadeIn } from 'pouncejs';
 
-describe('RuleDetailsBanner', () => {
-  it('renders the correct data', async () => {
-    const rule = buildRuleDetails({ displayName: 'My Rule' });
-    const { getByText } = render(<RuleDetailsInfo rule={rule} />);
-    expect(getByText('Edit Rule')).toBeInTheDocument();
-    expect(getByText('Delete Rule')).toBeInTheDocument();
+const PolicyResourcesSkeleton: React.FC = () => {
+  return (
+    <FadeIn from="bottom">
+      <Box p={6}>
+        <TablePlaceholder />
+      </Box>
+    </FadeIn>
+  );
+};
 
-    expect(getByText('My Rule')).toBeInTheDocument();
-    expect(getByText('DISABLED')).toBeInTheDocument();
-    expect(getByText('LOW')).toBeInTheDocument();
-  });
-});
+export default React.memo(PolicyResourcesSkeleton);

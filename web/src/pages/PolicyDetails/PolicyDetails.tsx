@@ -18,41 +18,36 @@
 
 import React from 'react';
 import useRouter from 'Hooks/useRouter';
-import { ComplianceStatusEnum, ResourcesForPolicyInput } from 'Generated/schema';
-import { Alert, Box, Flex, Heading } from 'pouncejs';
-import Panel from 'Components/Panel';
-import NoResultsFound from 'Components/NoResultsFound';
-import {
-  TableControlsPagination,
-  TableControlsComplianceFilter,
-} from 'Components/utils/TableControls';
-import {
-  extendResourceWithIntegrationLabel,
-  getComplianceItemsTotalCount,
-  extractErrorMessage,
-} from 'Helpers/utils';
-import EmptyBoxImg from 'Assets/illustrations/empty-box.svg';
-import pick from 'lodash/pick';
-import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
-import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
+import { Alert, Box, Flex, Card, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
+import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
+import { getComplianceItemsTotalCount, extractErrorMessage } from 'Helpers/utils';
+import invert from 'lodash/invert';
 import withSEO from 'Hoc/withSEO';
+import useUrlParams from 'Hooks/useUrlParams';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import PolicyDetailsTable from './PolicyDetailsTable';
 import PolicyDetailsInfo from './PolicyDetailsInfo';
+import PolicyDetailsBanner from './PolicyDetailsBanner';
+import PolicyDetailsResources from './PolicyDetailsResources';
 import PolicyDetailsPageSkeleton from './Skeleton';
 import { usePolicyDetails } from './graphql/policyDetails.generated';
 
-const acceptedRequestParams = ['page', 'status', 'pageSize', 'suppressed'] as const;
+export interface PolicyDetailsPageUrlParams {
+  section?: 'details' | 'resources';
+}
+
+const sectionToTabIndex: Record<PolicyDetailsPageUrlParams['section'], number> = {
+  details: 0,
+  resources: 1,
+};
+
+const tabIndexToSection = invert(sectionToTabIndex) as Record<
+  number,
+  PolicyDetailsPageUrlParams['section']
+>;
 
 const PolicyDetailsPage = () => {
   const { match } = useRouter<{ id: string }>();
-  const {
-    requestParams,
-    updatePagingParams,
-    setRequestParamsAndResetPaging,
-  } = useRequestParamsWithPagination<
-    Pick<ResourcesForPolicyInput, typeof acceptedRequestParams[number]>
-  >();
+  const { urlParams, setUrlParams } = useUrlParams<PolicyDetailsPageUrlParams>();
 
   const { error, data, loading } = usePolicyDetails({
     fetchPolicy: 'cache-and-network',
@@ -61,9 +56,7 @@ const PolicyDetailsPage = () => {
         id: match.params.id,
       },
       resourcesForPolicyInput: {
-        ...pick(requestParams, acceptedRequestParams),
         policyId: match.params.id,
-        pageSize: DEFAULT_SMALL_PAGE_SIZE,
       },
     },
   });
@@ -87,106 +80,41 @@ const PolicyDetailsPage = () => {
     );
   }
 
-  const resources = data.resourcesForPolicy.items;
   const totalCounts = data.resourcesForPolicy.totals;
-  const pagingData = data.resourcesForPolicy.paging;
 
-  // add an `integrationLabel` field to each resource based on its matching integrationId
-  const enhancedResources = resources.map(r =>
-    extendResourceWithIntegrationLabel(r, data.listComplianceIntegrations)
-  );
+  const totals = getComplianceItemsTotalCount(totalCounts);
+  const policyHasResources = totals > 0;
 
-  const resourceResultsExist = enhancedResources.length > 0;
-  const areResourcesFiltered = !!requestParams.status || !!requestParams.suppressed;
-  const policyHasResources = getComplianceItemsTotalCount(totalCounts) > 0;
   return (
-    <article>
-      <ErrorBoundary>
-        <PolicyDetailsInfo policy={data.policy} />
-      </ErrorBoundary>
-      <Box mt={5} mb={6}>
-        <Panel
-          title="Resources"
-          actions={
-            policyHasResources && (
-              <Flex spacing={1}>
-                <TableControlsComplianceFilter
-                  count={getComplianceItemsTotalCount(totalCounts)}
-                  text="All"
-                  isActive={!areResourcesFiltered}
-                  onClick={() => setRequestParamsAndResetPaging({})}
-                />
-                <TableControlsComplianceFilter
-                  count={totalCounts.active.fail}
-                  countColor="red-300"
-                  text="Failing"
-                  isActive={requestParams.status === ComplianceStatusEnum.Fail}
-                  onClick={() =>
-                    setRequestParamsAndResetPaging({
-                      status: ComplianceStatusEnum.Fail,
-                      suppressed: false,
-                    })
-                  }
-                />
-                <TableControlsComplianceFilter
-                  countColor="green-400"
-                  count={totalCounts.active.pass}
-                  text="Passing"
-                  isActive={requestParams.status === ComplianceStatusEnum.Pass}
-                  onClick={() =>
-                    setRequestParamsAndResetPaging({
-                      status: ComplianceStatusEnum.Pass,
-                      suppressed: false,
-                    })
-                  }
-                />
-                <TableControlsComplianceFilter
-                  countColor="yellow-500"
-                  count={
-                    totalCounts.suppressed.fail +
-                    totalCounts.suppressed.pass +
-                    totalCounts.suppressed.error
-                  }
-                  text="Ignored"
-                  isActive={!requestParams.status && requestParams.suppressed}
-                  onClick={() =>
-                    setRequestParamsAndResetPaging({
-                      suppressed: true,
-                    })
-                  }
-                />
-              </Flex>
-            )
-          }
-        >
-          <ErrorBoundary>
-            {!resourceResultsExist && !areResourcesFiltered && (
-              <Flex justify="center" align="center" direction="column" my={8} spacing={8}>
-                <img alt="Empty Box Illustration" src={EmptyBoxImg} width="auto" height={200} />
-                <Heading size="small" color="navyblue-100">
-                  This policy isn{"'"}t applied to any resources
-                </Heading>
-              </Flex>
-            )}
-            {!resourceResultsExist && areResourcesFiltered && (
-              <Box my={6}>
-                <NoResultsFound />
-              </Box>
-            )}
-            {resourceResultsExist && (
-              <Flex direction="column" spacing={6}>
-                <PolicyDetailsTable items={enhancedResources} />
-                <TableControlsPagination
-                  page={pagingData.thisPage}
-                  totalPages={pagingData.totalPages}
-                  onPageChange={updatePagingParams}
-                />
-              </Flex>
-            )}
-          </ErrorBoundary>
-        </Panel>
-      </Box>
-    </article>
+    <Box as="article">
+      <Flex direction="column" spacing={6} my={6}>
+        <ErrorBoundary>
+          <PolicyDetailsBanner policy={data.policy} />
+        </ErrorBoundary>
+        <Card position="relative">
+          <Tabs
+            index={sectionToTabIndex[urlParams.section] || 0}
+            onChange={index => setUrlParams({ section: tabIndexToSection[index] })}
+          >
+            <Box px={2}>
+              <TabList>
+                <BorderedTab>Details</BorderedTab>
+                <BorderedTab>Resources {policyHasResources ? `(${totals})` : ''}</BorderedTab>
+              </TabList>
+              <BorderTabDivider />
+              <TabPanels>
+                <TabPanel data-testid="policy-details-tabpanel" lazy unmountWhenInactive>
+                  <PolicyDetailsInfo policy={data.policy} />
+                </TabPanel>
+                <TabPanel data-testid="policy-resources-tabpanel" lazy unmountWhenInactive>
+                  <PolicyDetailsResources />
+                </TabPanel>
+              </TabPanels>
+            </Box>
+          </Tabs>
+        </Card>
+      </Flex>
+    </Box>
   );
 };
 

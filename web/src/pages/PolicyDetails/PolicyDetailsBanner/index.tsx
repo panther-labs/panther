@@ -16,19 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { render, buildRuleDetails } from 'test-utils';
-import RuleDetailsInfo from './index';
-
-describe('RuleDetailsBanner', () => {
-  it('renders the correct data', async () => {
-    const rule = buildRuleDetails({ displayName: 'My Rule' });
-    const { getByText } = render(<RuleDetailsInfo rule={rule} />);
-    expect(getByText('Edit Rule')).toBeInTheDocument();
-    expect(getByText('Delete Rule')).toBeInTheDocument();
-
-    expect(getByText('My Rule')).toBeInTheDocument();
-    expect(getByText('DISABLED')).toBeInTheDocument();
-    expect(getByText('LOW')).toBeInTheDocument();
-  });
-});
+export { default } from './PolicyDetailsBanner';

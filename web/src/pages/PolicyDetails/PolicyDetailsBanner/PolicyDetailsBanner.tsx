@@ -17,53 +17,49 @@
  */
 
 import React from 'react';
-import { Box, Button, Flex, Card, Heading } from 'pouncejs';
-import { RuleDetails } from 'Generated/schema';
+import { Box, Button, Icon, Flex, Card, Heading, Badge, Tooltip } from 'pouncejs';
+import { PolicyDetails } from 'Generated/schema';
 import urls from 'Source/urls';
+import JsonViewer from 'Components/JsonViewer';
+import Breadcrumbs from 'Components/Breadcrumbs';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import StatusBadge from 'Components/badges/StatusBadge';
 import LinkButton from 'Components/buttons/LinkButton';
-import Breadcrumbs from 'Components/Breadcrumbs';
+import useDetectionDestinations from 'Hooks/useDetectionDestinations';
 import BulletedValue from 'Components/BulletedValue';
 import RelatedDestinations from 'Components/RelatedDestinations/RelatedDestinations';
-import useDetectionDestinations from 'Hooks/useDetectionDestinations';
 
-interface ResourceDetailsInfoProps {
-  rule?: RuleDetails;
+interface ResourceDetailsBannerProps {
+  policy?: PolicyDetails;
 }
 
-const RuleDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
+const PolicyDetailsBanner: React.FC<ResourceDetailsBannerProps> = ({ policy }) => {
   const { showModal } = useModal();
   const {
     detectionDestinations,
     loading: loadingDetectionDestinations,
-  } = useDetectionDestinations({ detection: rule });
+  } = useDetectionDestinations({ detection: policy });
 
   return (
     <React.Fragment>
       <Breadcrumbs.Actions>
         <Flex spacing={4} justify="flex-end">
-          <LinkButton
-            icon="pencil"
-            aria-label="Edit Rule"
-            to={urls.logAnalysis.rules.edit(rule.id)}
-          >
-            Edit Rule
+          <LinkButton icon="pencil" to={urls.compliance.policies.edit(policy.id)}>
+            Edit Policy
           </LinkButton>
           <Button
-            icon="trash"
             variantColor="red"
-            aria-label="Delete Rule"
+            icon="trash"
             onClick={() =>
               showModal({
-                modal: MODALS.DELETE_RULE,
-                props: { rule },
+                modal: MODALS.DELETE_POLICY,
+                props: { policy },
               })
             }
           >
-            Delete Rule
+            Delete Policy
           </Button>
         </Flex>
       </Breadcrumbs.Actions>
@@ -72,40 +68,71 @@ const RuleDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
           <Heading
             fontWeight="bold"
             wordBreak="break-word"
-            aria-describedby="rule-description"
+            aria-describedby="policy-description"
             flexShrink={1}
             display="flex"
             alignItems="center"
             mr={100}
           >
-            {rule.displayName || rule.id}
+            {policy.displayName || policy.id}
           </Heading>
           <Flex spacing={2} as="ul" flexShrink={0} ml="auto">
             <Box as="li">
-              <StatusBadge status="ENABLED" disabled={!rule.enabled} />
+              <StatusBadge status={policy.complianceStatus} disabled={!policy.enabled} />
             </Box>
             <Box as="li">
-              <SeverityBadge severity={rule.severity} />
+              <SeverityBadge severity={policy.severity} />
             </Box>
+            {policy.autoRemediationId && (
+              <Tooltip
+                content={
+                  <Flex spacing={3}>
+                    <Flex direction="column" spacing={2}>
+                      <Box id="autoremediation-id-label">Auto Remediation ID</Box>
+                      <Box id="autoremediation-parameters-label">Auto Remediation Parameters</Box>
+                    </Flex>
+                    <Flex direction="column" spacing={2} fontWeight="bold">
+                      <Box aria-labelledby="autoremediation-id-label">
+                        {policy.autoRemediationId}
+                      </Box>
+                      <Box aria-labelledby="autoremediation-parameters-label">
+                        <JsonViewer data={JSON.parse(policy.autoRemediationParameters)} />
+                      </Box>
+                    </Flex>
+                  </Flex>
+                }
+              >
+                <Box as="li">
+                  <Badge color="violet-400">
+                    AUTO REMEDIATIATABLE
+                    <Icon size="medium" type="check" my={-1} ml={2} p="2px" />
+                  </Badge>
+                </Box>
+              </Tooltip>
+            )}
           </Flex>
         </Flex>
         <Flex as="dl" fontSize="small-medium" pt={5} spacing={8}>
           <Flex>
             <Box color="navyblue-100" as="dt" pr={2}>
-              Rule ID
+              Policy ID
             </Box>
             <Box as="dd" fontWeight="bold">
-              {rule.id}
+              {policy.id}
             </Box>
           </Flex>
           <Flex>
             <Box color="navyblue-100" as="dt" pr={2}>
-              Log Types
+              Resource Types
             </Box>
             <Flex as="dd" align="center" spacing={6}>
-              {rule.logTypes.map(logType => (
-                <BulletedValue key={logType} value={logType} />
-              ))}
+              {policy.resourceTypes.length ? (
+                policy.resourceTypes.map(resourceType => (
+                  <BulletedValue key={resourceType} value={resourceType} />
+                ))
+              ) : (
+                <Box as="span" fontSize="medium" value="All Resources" />
+              )}
             </Flex>
           </Flex>
           <Flex>
@@ -126,4 +153,4 @@ const RuleDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
   );
 };
 
-export default React.memo(RuleDetailsBanner);
+export default React.memo(PolicyDetailsBanner);

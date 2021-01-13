@@ -17,18 +17,12 @@
  */
 
 import React from 'react';
-import { render, buildRuleDetails } from 'test-utils';
-import RuleDetailsInfo from './index';
+import SubmitButton, { SubmitButtonProps } from '../SubmitButton';
 
-describe('RuleDetailsBanner', () => {
-  it('renders the correct data', async () => {
-    const rule = buildRuleDetails({ displayName: 'My Rule' });
-    const { getByText } = render(<RuleDetailsInfo rule={rule} />);
-    expect(getByText('Edit Rule')).toBeInTheDocument();
-    expect(getByText('Delete Rule')).toBeInTheDocument();
+export type SaveButtonProps = Omit<SubmitButtonProps, 'variantColor' | 'icon'>;
 
-    expect(getByText('My Rule')).toBeInTheDocument();
-    expect(getByText('DISABLED')).toBeInTheDocument();
-    expect(getByText('LOW')).toBeInTheDocument();
-  });
-});
+const SaveButton: React.FC<SaveButtonProps> = ({ ...rest }) => {
+  return <SubmitButton variantColor="green" icon="check-outline" {...rest} />;
+};
+
+export default React.memo(SaveButton);

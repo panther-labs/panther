@@ -17,18 +17,19 @@
  */
 
 import React from 'react';
-import { render, buildRuleDetails } from 'test-utils';
-import RuleDetailsInfo from './index';
+import { render, buildPolicyDetails } from 'test-utils';
+import PolicyDetailsBanner from './PolicyDetailsBanner';
 
-describe('RuleDetailsBanner', () => {
+describe('PolicyDetailsBanner', () => {
   it('renders the correct data', async () => {
-    const rule = buildRuleDetails({ displayName: 'My Rule' });
-    const { getByText } = render(<RuleDetailsInfo rule={rule} />);
-    expect(getByText('Edit Rule')).toBeInTheDocument();
-    expect(getByText('Delete Rule')).toBeInTheDocument();
+    const policy = buildPolicyDetails({ displayName: 'My Policy' });
+    const { getByText } = render(<PolicyDetailsBanner policy={policy} />);
+    expect(getByText('Edit Policy')).toBeInTheDocument();
+    expect(getByText('Delete Policy')).toBeInTheDocument();
 
-    expect(getByText('My Rule')).toBeInTheDocument();
-    expect(getByText('DISABLED')).toBeInTheDocument();
-    expect(getByText('LOW')).toBeInTheDocument();
+    expect(getByText('My Policy')).toBeInTheDocument();
+    expect(getByText('FAIL')).toBeInTheDocument();
+    expect(getByText('CRITICAL')).toBeInTheDocument();
+    expect(getByText('AUTO REMEDIATIATABLE')).toBeInTheDocument();
   });
 });
