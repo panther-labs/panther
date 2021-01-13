@@ -20,16 +20,16 @@ import React from 'react';
 import { useSnackbar } from 'pouncejs';
 import { getOperationName } from 'apollo-utilities';
 import { ResourceDetailsDocument } from 'Pages/ResourceDetails';
-import { PolicyDetailsDocument } from 'Pages/PolicyDetails';
+import { GetPolicyDetailsDocument } from 'Pages/PolicyDetails';
 import { extractErrorMessage } from 'Helpers/utils';
-import { PolicyDetails, ResourceDetails } from 'Generated/schema';
+import { Policy, ResourceDetails } from 'Generated/schema';
 import {
   RemediateResourceDocument,
   useRemediateResource,
 } from './graphql/remediateResource.generated';
 
 interface UseResourceRemediationProps {
-  policyId: PolicyDetails['id'];
+  policyId: Policy['id'];
   resourceId: ResourceDetails['id'];
 }
 
@@ -42,7 +42,7 @@ const useResourceRemediation = ({ policyId, resourceId }: UseResourceRemediation
     awaitRefetchQueries: true,
     refetchQueries: [
       getOperationName(ResourceDetailsDocument),
-      getOperationName(PolicyDetailsDocument),
+      getOperationName(GetPolicyDetailsDocument),
     ],
     variables: {
       input: {

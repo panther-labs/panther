@@ -18,7 +18,7 @@
 
 import * as Types from '../../../../../__generated__/schema';
 
-import { PolicyBasic } from '../../../../graphql/fragments/PolicyBasic.generated';
+import { PolicySummary } from '../../../../graphql/fragments/PolicySummary.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
@@ -28,15 +28,15 @@ export type PolicyTeaserVariables = {
   input: Types.GetPolicyInput;
 };
 
-export type PolicyTeaser = { policy?: Types.Maybe<PolicyBasic> };
+export type PolicyTeaser = { policy?: Types.Maybe<PolicySummary> };
 
 export const PolicyTeaserDocument = gql`
   query PolicyTeaser($input: GetPolicyInput!) {
     policy(input: $input) {
-      ...PolicyBasic
+      ...PolicySummary
     }
   }
-  ${PolicyBasic}
+  ${PolicySummary}
 `;
 
 /**

@@ -16,7 +16,7 @@ type Mutation {
   addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
   addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
   addSqsLogIntegration(input: AddSqsLogIntegrationInput!): SqsLogSourceIntegration!
-  addPolicy(input: AddPolicyInput!): PolicyDetails
+  addPolicy(input: AddPolicyInput!): Policy!
   addRule(input: AddRuleInput!): RuleDetails
   addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
   deleteDataModel(input: DeleteDataModelInput!): Boolean
@@ -43,7 +43,7 @@ type Mutation {
   updateS3LogIntegration(input: UpdateS3LogIntegrationInput!): S3LogIntegration!
   updateSqsLogIntegration(input: UpdateSqsLogIntegrationInput!): SqsLogSourceIntegration!
   updateGeneralSettings(input: UpdateGeneralSettingsInput!): GeneralSettings!
-  updatePolicy(input: UpdatePolicyInput!): PolicyDetails
+  updatePolicy(input: UpdatePolicyInput!): Policy!
   updateRule(input: UpdateRuleInput!): RuleDetails
   updateUser(input: UpdateUserInput!): User!
   uploadPolicies(input: UploadPoliciesInput!): UploadPoliciesResponse
@@ -70,7 +70,7 @@ type Query {
   resources(input: ListResourcesInput): ListResourcesResponse
   resourcesForPolicy(input: ResourcesForPolicyInput!): ListComplianceItemsResponse
   getGlobalPythonModule(input: GetGlobalPythonModuleInput!): GlobalPythonModule!
-  policy(input: GetPolicyInput!): PolicyDetails
+  policy(input: GetPolicyInput!): Policy
   policies(input: ListPoliciesInput): ListPoliciesResponse
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
   listAvailableLogTypes: ListAvailableLogTypesResponse!
@@ -530,8 +530,8 @@ type ScannedResources {
 type OrganizationStatsResponse {
   appliedPolicies: OrganizationReportBySeverity
   scannedResources: ScannedResources
-  topFailingPolicies: [PolicySummary]
-  topFailingResources: [ResourceSummary]
+  topFailingPolicies: [Policy!]!
+  topFailingResources: [ResourceSummary!]!
 }
 
 type LongSeries {
@@ -702,7 +702,7 @@ input UpdateSqsLogIntegrationInput {
 
 type ListPoliciesResponse {
   paging: PagingData
-  policies: [PolicySummary]
+  policies: [Policy!]!
 }
 
 type ListResourcesResponse {
@@ -855,7 +855,7 @@ input PagerDutyConfigInput {
   integrationKey: String!
 }
 
-type PolicyDetails {
+type Policy {
   autoRemediationId: ID
   autoRemediationParameters: AWSJSON
   body: String
@@ -896,21 +896,6 @@ type PagingData {
   thisPage: Int
   totalPages: Int
   totalItems: Int
-}
-
-type PolicySummary {
-  autoRemediationId: ID
-  autoRemediationParameters: AWSJSON
-  suppressions: [String]
-  complianceStatus: ComplianceStatusEnum
-  displayName: String
-  enabled: Boolean
-  id: ID!
-  lastModified: AWSDateTime
-  outputIds: [ID!]!
-  resourceTypes: [String]
-  severity: SeverityEnum
-  tags: [String]
 }
 
 input AddPolicyInput {

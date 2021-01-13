@@ -110,8 +110,7 @@ import {
   PagerDutyConfigInput,
   PagingData,
   PoliciesForResourceInput,
-  PolicyDetails,
-  PolicySummary,
+  Policy,
   RemediateResourceInput,
   ResourceDetails,
   ResourcesForPolicyInput,
@@ -1046,7 +1045,7 @@ export const buildListPoliciesResponse = (
   return {
     __typename: 'ListPoliciesResponse',
     paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
-    policies: 'policies' in overrides ? overrides.policies : [buildPolicySummary()],
+    policies: 'policies' in overrides ? overrides.policies : [buildPolicy()],
   };
 };
 
@@ -1230,7 +1229,7 @@ export const buildOrganizationStatsResponse = (
     scannedResources:
       'scannedResources' in overrides ? overrides.scannedResources : buildScannedResources(),
     topFailingPolicies:
-      'topFailingPolicies' in overrides ? overrides.topFailingPolicies : [buildPolicySummary()],
+      'topFailingPolicies' in overrides ? overrides.topFailingPolicies : [buildPolicy()],
     topFailingResources:
       'topFailingResources' in overrides ? overrides.topFailingResources : [buildResourceSummary()],
   };
@@ -1274,65 +1273,41 @@ export const buildPoliciesForResourceInput = (
   };
 };
 
-export const buildPolicyDetails = (overrides: Partial<PolicyDetails> = {}): PolicyDetails => {
+export const buildPolicy = (overrides: Partial<Policy> = {}): Policy => {
   return {
-    __typename: 'PolicyDetails',
+    __typename: 'Policy',
     autoRemediationId:
       'autoRemediationId' in overrides
         ? overrides.autoRemediationId
-        : '63631269-b304-4865-b222-bf96d4b3162c',
+        : '4204eef0-8854-46f8-b58b-e799e3afa3e6',
     autoRemediationParameters:
-      'autoRemediationParameters' in overrides ? overrides.autoRemediationParameters : '"bar"',
-    body: 'body' in overrides ? overrides.body : 'card',
+      'autoRemediationParameters' in overrides ? overrides.autoRemediationParameters : '"car"',
+    body: 'body' in overrides ? overrides.body : 'New Jersey',
     complianceStatus:
       'complianceStatus' in overrides ? overrides.complianceStatus : ComplianceStatusEnum.Fail,
-    createdAt: 'createdAt' in overrides ? overrides.createdAt : '2020-12-25T18:48:58.096Z',
+    createdAt: 'createdAt' in overrides ? overrides.createdAt : '2020-12-16T19:22:56.648Z',
     createdBy:
-      'createdBy' in overrides ? overrides.createdBy : 'cc4acb0d-22fe-4182-a29b-832f1f6d7f85',
-    description: 'description' in overrides ? overrides.description : 'time-frame',
-    displayName: 'displayName' in overrides ? overrides.displayName : 'navigating',
+      'createdBy' in overrides ? overrides.createdBy : 'b030c4c7-34f9-487f-a7b2-479e4ffb0c3e',
+    description: 'description' in overrides ? overrides.description : 'port',
+    displayName: 'displayName' in overrides ? overrides.displayName : 'engineer',
     enabled: 'enabled' in overrides ? overrides.enabled : true,
-    id: 'id' in overrides ? overrides.id : '4193e9e6-d55b-48ad-8475-d171d8c2ea89',
-    lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-05-12T04:22:53.318Z',
+    id: 'id' in overrides ? overrides.id : '87a65792-aaf9-4fa8-95ab-e80df51973ba',
+    lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-09-15T21:52:38.651Z',
     lastModifiedBy:
       'lastModifiedBy' in overrides
         ? overrides.lastModifiedBy
-        : '8b4fcf01-c8f1-4fbf-bc94-e4f58d04c799',
+        : 'b0fe10b0-2bfc-479b-bec0-f1ac48097ba5',
     outputIds:
-      'outputIds' in overrides ? overrides.outputIds : ['213c2719-fb31-4502-9a8a-adda432a772a'],
-    reference: 'reference' in overrides ? overrides.reference : 'applications',
-    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['Specialist'],
-    runbook: 'runbook' in overrides ? overrides.runbook : 'upward-trending',
-    severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
-    suppressions: 'suppressions' in overrides ? overrides.suppressions : ['Bike'],
-    tags: 'tags' in overrides ? overrides.tags : ['success'],
+      'outputIds' in overrides ? overrides.outputIds : ['3c644cdd-81c7-4df7-89a4-74f5e8235552'],
+    reference: 'reference' in overrides ? overrides.reference : 'Liberia',
+    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['Refined'],
+    runbook: 'runbook' in overrides ? overrides.runbook : 'Falkland Islands Pound',
+    severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Medium,
+    suppressions: 'suppressions' in overrides ? overrides.suppressions : ['impactful'],
+    tags: 'tags' in overrides ? overrides.tags : ['deposit'],
     tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinition()],
     versionId:
-      'versionId' in overrides ? overrides.versionId : 'ca391fc7-f186-4bcb-b717-3e34cb330d83',
-  };
-};
-
-export const buildPolicySummary = (overrides: Partial<PolicySummary> = {}): PolicySummary => {
-  return {
-    __typename: 'PolicySummary',
-    autoRemediationId:
-      'autoRemediationId' in overrides
-        ? overrides.autoRemediationId
-        : '43a2278e-67bf-4941-91f8-7fbe8503562c',
-    autoRemediationParameters:
-      'autoRemediationParameters' in overrides ? overrides.autoRemediationParameters : '"car"',
-    suppressions: 'suppressions' in overrides ? overrides.suppressions : ['Senior'],
-    complianceStatus:
-      'complianceStatus' in overrides ? overrides.complianceStatus : ComplianceStatusEnum.Pass,
-    displayName: 'displayName' in overrides ? overrides.displayName : 'indigo',
-    enabled: 'enabled' in overrides ? overrides.enabled : false,
-    id: 'id' in overrides ? overrides.id : '260cad31-ef71-4eb6-9ac1-1ca1d0da39c7',
-    lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-09-11T01:58:47.481Z',
-    outputIds:
-      'outputIds' in overrides ? overrides.outputIds : ['94fd4ab9-7edc-4b27-8c37-bcfab0e2f825'],
-    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['EXE'],
-    severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
-    tags: 'tags' in overrides ? overrides.tags : ['navigating'],
+      'versionId' in overrides ? overrides.versionId : '84c8b64a-eb86-4a6b-87e4-af54d8e559e1',
   };
 };
 

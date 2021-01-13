@@ -24,7 +24,7 @@ import {
   buildAlertSummaryPolicyInfo,
   buildDeliveryResponse,
   buildDestination,
-  buildPolicyDetails,
+  buildPolicy,
   buildRuleDetails,
   fireEvent,
   render,
@@ -274,7 +274,7 @@ describe('AlertDetails', () => {
   describe('Policy-based', () => {
     it('renders the necessary policy information', async () => {
       const destination = buildDestination();
-      const policy = buildPolicyDetails();
+      const policy = buildPolicy();
       const alert = buildAlertDetails({
         type: AlertTypesEnum.Policy,
         detection: buildAlertSummaryPolicyInfo({ policyId: policy.id }),

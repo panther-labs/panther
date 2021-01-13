@@ -672,7 +672,7 @@ export type ListPoliciesInput = {
 export type ListPoliciesResponse = {
   __typename?: 'ListPoliciesResponse';
   paging?: Maybe<PagingData>;
-  policies?: Maybe<Array<Maybe<PolicySummary>>>;
+  policies: Array<Policy>;
 };
 
 export enum ListPoliciesSortFieldsEnum {
@@ -795,7 +795,7 @@ export type Mutation = {
   addComplianceIntegration: ComplianceIntegration;
   addS3LogIntegration: S3LogIntegration;
   addSqsLogIntegration: SqsLogSourceIntegration;
-  addPolicy?: Maybe<PolicyDetails>;
+  addPolicy: Policy;
   addRule?: Maybe<RuleDetails>;
   addGlobalPythonModule: GlobalPythonModule;
   deleteDataModel?: Maybe<Scalars['Boolean']>;
@@ -822,7 +822,7 @@ export type Mutation = {
   updateS3LogIntegration: S3LogIntegration;
   updateSqsLogIntegration: SqsLogSourceIntegration;
   updateGeneralSettings: GeneralSettings;
-  updatePolicy?: Maybe<PolicyDetails>;
+  updatePolicy: Policy;
   updateRule?: Maybe<RuleDetails>;
   updateUser: User;
   uploadPolicies?: Maybe<UploadPoliciesResponse>;
@@ -1014,8 +1014,8 @@ export type OrganizationStatsResponse = {
   __typename?: 'OrganizationStatsResponse';
   appliedPolicies?: Maybe<OrganizationReportBySeverity>;
   scannedResources?: Maybe<ScannedResources>;
-  topFailingPolicies?: Maybe<Array<Maybe<PolicySummary>>>;
-  topFailingResources?: Maybe<Array<Maybe<ResourceSummary>>>;
+  topFailingPolicies: Array<Policy>;
+  topFailingResources: Array<ResourceSummary>;
 };
 
 export type PagerDutyConfig = {
@@ -1043,8 +1043,8 @@ export type PoliciesForResourceInput = {
   page?: Maybe<Scalars['Int']>;
 };
 
-export type PolicyDetails = {
-  __typename?: 'PolicyDetails';
+export type Policy = {
+  __typename?: 'Policy';
   autoRemediationId?: Maybe<Scalars['ID']>;
   autoRemediationParameters?: Maybe<Scalars['AWSJSON']>;
   body?: Maybe<Scalars['String']>;
@@ -1068,22 +1068,6 @@ export type PolicyDetails = {
   versionId?: Maybe<Scalars['ID']>;
 };
 
-export type PolicySummary = {
-  __typename?: 'PolicySummary';
-  autoRemediationId?: Maybe<Scalars['ID']>;
-  autoRemediationParameters?: Maybe<Scalars['AWSJSON']>;
-  suppressions?: Maybe<Array<Maybe<Scalars['String']>>>;
-  complianceStatus?: Maybe<ComplianceStatusEnum>;
-  displayName?: Maybe<Scalars['String']>;
-  enabled?: Maybe<Scalars['Boolean']>;
-  id: Scalars['ID'];
-  lastModified?: Maybe<Scalars['AWSDateTime']>;
-  outputIds: Array<Scalars['ID']>;
-  resourceTypes?: Maybe<Array<Maybe<Scalars['String']>>>;
-  severity?: Maybe<SeverityEnum>;
-  tags?: Maybe<Array<Maybe<Scalars['String']>>>;
-};
-
 export type Query = {
   __typename?: 'Query';
   alert?: Maybe<AlertDetails>;
@@ -1103,7 +1087,7 @@ export type Query = {
   resources?: Maybe<ListResourcesResponse>;
   resourcesForPolicy?: Maybe<ListComplianceItemsResponse>;
   getGlobalPythonModule: GlobalPythonModule;
-  policy?: Maybe<PolicyDetails>;
+  policy?: Maybe<Policy>;
   policies?: Maybe<ListPoliciesResponse>;
   policiesForResource?: Maybe<ListComplianceItemsResponse>;
   listAvailableLogTypes: ListAvailableLogTypesResponse;
@@ -1758,12 +1742,11 @@ export type ResolversTypes = {
   GetGlobalPythonModuleInput: GetGlobalPythonModuleInput;
   GlobalPythonModule: ResolverTypeWrapper<GlobalPythonModule>;
   GetPolicyInput: GetPolicyInput;
-  PolicyDetails: ResolverTypeWrapper<PolicyDetails>;
+  Policy: ResolverTypeWrapper<Policy>;
   DetectionTestDefinition: ResolverTypeWrapper<DetectionTestDefinition>;
   ListPoliciesInput: ListPoliciesInput;
   ListPoliciesSortFieldsEnum: ListPoliciesSortFieldsEnum;
   ListPoliciesResponse: ResolverTypeWrapper<ListPoliciesResponse>;
-  PolicySummary: ResolverTypeWrapper<PolicySummary>;
   PoliciesForResourceInput: PoliciesForResourceInput;
   ListAvailableLogTypesResponse: ResolverTypeWrapper<ListAvailableLogTypesResponse>;
   ListDataModelsInput: ListDataModelsInput;
@@ -1941,12 +1924,11 @@ export type ResolversParentTypes = {
   GetGlobalPythonModuleInput: GetGlobalPythonModuleInput;
   GlobalPythonModule: GlobalPythonModule;
   GetPolicyInput: GetPolicyInput;
-  PolicyDetails: PolicyDetails;
+  Policy: Policy;
   DetectionTestDefinition: DetectionTestDefinition;
   ListPoliciesInput: ListPoliciesInput;
   ListPoliciesSortFieldsEnum: ListPoliciesSortFieldsEnum;
   ListPoliciesResponse: ListPoliciesResponse;
-  PolicySummary: PolicySummary;
   PoliciesForResourceInput: PoliciesForResourceInput;
   ListAvailableLogTypesResponse: ListAvailableLogTypesResponse;
   ListDataModelsInput: ListDataModelsInput;
@@ -2544,11 +2526,7 @@ export type ListPoliciesResponseResolvers<
   ParentType extends ResolversParentTypes['ListPoliciesResponse'] = ResolversParentTypes['ListPoliciesResponse']
 > = {
   paging?: Resolver<Maybe<ResolversTypes['PagingData']>, ParentType, ContextType>;
-  policies?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['PolicySummary']>>>,
-    ParentType,
-    ContextType
-  >;
+  policies?: Resolver<Array<ResolversTypes['Policy']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2671,7 +2649,7 @@ export type MutationResolvers<
     RequireFields<MutationAddSqsLogIntegrationArgs, 'input'>
   >;
   addPolicy?: Resolver<
-    Maybe<ResolversTypes['PolicyDetails']>,
+    ResolversTypes['Policy'],
     ParentType,
     ContextType,
     RequireFields<MutationAddPolicyArgs, 'input'>
@@ -2833,7 +2811,7 @@ export type MutationResolvers<
     RequireFields<MutationUpdateGeneralSettingsArgs, 'input'>
   >;
   updatePolicy?: Resolver<
-    Maybe<ResolversTypes['PolicyDetails']>,
+    ResolversTypes['Policy'],
     ParentType,
     ContextType,
     RequireFields<MutationUpdatePolicyArgs, 'input'>
@@ -2895,16 +2873,8 @@ export type OrganizationStatsResponseResolvers<
     ContextType
   >;
   scannedResources?: Resolver<Maybe<ResolversTypes['ScannedResources']>, ParentType, ContextType>;
-  topFailingPolicies?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['PolicySummary']>>>,
-    ParentType,
-    ContextType
-  >;
-  topFailingResources?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['ResourceSummary']>>>,
-    ParentType,
-    ContextType
-  >;
+  topFailingPolicies?: Resolver<Array<ResolversTypes['Policy']>, ParentType, ContextType>;
+  topFailingResources?: Resolver<Array<ResolversTypes['ResourceSummary']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2926,9 +2896,9 @@ export type PagingDataResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
-export type PolicyDetailsResolvers<
+export type PolicyResolvers<
   ContextType = any,
-  ParentType extends ResolversParentTypes['PolicyDetails'] = ResolversParentTypes['PolicyDetails']
+  ParentType extends ResolversParentTypes['Policy'] = ResolversParentTypes['Policy']
 > = {
   autoRemediationId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   autoRemediationParameters?: Resolver<Maybe<ResolversTypes['AWSJSON']>, ParentType, ContextType>;
@@ -2959,29 +2929,6 @@ export type PolicyDetailsResolvers<
     ContextType
   >;
   versionId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type PolicySummaryResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['PolicySummary'] = ResolversParentTypes['PolicySummary']
-> = {
-  autoRemediationId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  autoRemediationParameters?: Resolver<Maybe<ResolversTypes['AWSJSON']>, ParentType, ContextType>;
-  suppressions?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  complianceStatus?: Resolver<
-    Maybe<ResolversTypes['ComplianceStatusEnum']>,
-    ParentType,
-    ContextType
-  >;
-  displayName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  enabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  lastModified?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
-  outputIds?: Resolver<Array<ResolversTypes['ID']>, ParentType, ContextType>;
-  resourceTypes?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  severity?: Resolver<Maybe<ResolversTypes['SeverityEnum']>, ParentType, ContextType>;
-  tags?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -3081,7 +3028,7 @@ export type QueryResolvers<
     RequireFields<QueryGetGlobalPythonModuleArgs, 'input'>
   >;
   policy?: Resolver<
-    Maybe<ResolversTypes['PolicyDetails']>,
+    Maybe<ResolversTypes['Policy']>,
     ParentType,
     ContextType,
     RequireFields<QueryPolicyArgs, 'input'>
@@ -3560,8 +3507,7 @@ export type Resolvers<ContextType = any> = {
   OrganizationStatsResponse?: OrganizationStatsResponseResolvers<ContextType>;
   PagerDutyConfig?: PagerDutyConfigResolvers<ContextType>;
   PagingData?: PagingDataResolvers<ContextType>;
-  PolicyDetails?: PolicyDetailsResolvers<ContextType>;
-  PolicySummary?: PolicySummaryResolvers<ContextType>;
+  Policy?: PolicyResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   ResourceDetails?: ResourceDetailsResolvers<ContextType>;
   ResourceSummary?: ResourceSummaryResolvers<ContextType>;

@@ -45,10 +45,8 @@ export type GetOrganizationStats = {
       high?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'error' | 'pass' | 'fail'>>;
       critical?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'error' | 'pass' | 'fail'>>;
     }>;
-    topFailingPolicies?: Types.Maybe<
-      Array<Types.Maybe<Pick<Types.PolicySummary, 'id' | 'severity'>>>
-    >;
-    topFailingResources?: Types.Maybe<Array<Types.Maybe<Pick<Types.ResourceSummary, 'id'>>>>;
+    topFailingPolicies: Array<Pick<Types.Policy, 'id' | 'severity'>>;
+    topFailingResources: Array<Pick<Types.ResourceSummary, 'id'>>;
   }>;
   listComplianceIntegrations: Array<Pick<Types.ComplianceIntegration, 'integrationId'>>;
 };
