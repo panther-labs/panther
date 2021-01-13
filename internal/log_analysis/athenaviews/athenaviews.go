@@ -63,35 +63,45 @@ func GenerateLogViews(tables []*awsglue.GlueTableMetadata) (sqlStatements []stri
 	if err != nil {
 		return nil, err
 	}
-	sqlStatements = append(sqlStatements, sqlStatement)
+	if sqlStatement != "" {
+		sqlStatements = append(sqlStatements, sqlStatement)
+	}
 	allTables = append(allTables, logTables...)
 
 	sqlStatement, cloudSecurityTables, err := generateViewAllCloudSecurity(tables)
 	if err != nil {
 		return nil, err
 	}
-	sqlStatements = append(sqlStatements, sqlStatement)
+	if sqlStatement != "" {
+		sqlStatements = append(sqlStatements, sqlStatement)
+	}
 	allTables = append(allTables, cloudSecurityTables...)
 
 	sqlStatement, ruleMatchTables, err := generateViewAllRuleMatches(tables)
 	if err != nil {
 		return nil, err
 	}
-	sqlStatements = append(sqlStatements, sqlStatement)
+	if sqlStatement != "" {
+		sqlStatements = append(sqlStatements, sqlStatement)
+	}
 	allTables = append(allTables, ruleMatchTables...)
 
 	sqlStatement, ruleErrorTables, err := generateViewAllRuleErrors(tables)
 	if err != nil {
 		return nil, err
 	}
-	sqlStatements = append(sqlStatements, sqlStatement)
+	if sqlStatement != "" {
+		sqlStatements = append(sqlStatements, sqlStatement)
+	}
 	allTables = append(allTables, ruleErrorTables...)
 
 	sqlStatement, err = generateViewAllDatabases(allTables)
 	if err != nil {
 		return nil, err
 	}
-	sqlStatements = append(sqlStatements, sqlStatement)
+	if sqlStatement != "" {
+		sqlStatements = append(sqlStatements, sqlStatement)
+	}
 
 	// add future views here
 	return sqlStatements, nil
@@ -153,20 +163,21 @@ func generateViewAllDatabases(tables []*awsglue.GlueTableMetadata) (sql string, 
 }
 
 func generateViewAllHelper(viewName string, tables []*awsglue.GlueTableMetadata, extraColumns []awsglue.Column) (sql string, err error) {
+	if len(tables) == 0 {
+		return "", nil
+	}
+
 	// validate they all have the same partition keys
-	if len(tables) > 1 {
-		// create string of partition for comparison
-		genKey := func(partitions []awsglue.PartitionKey) (key string) {
-			for _, p := range partitions {
-				key += p.Name + p.Type
-			}
-			return key
+	genKey := func(partitions []awsglue.PartitionKey) (key string) { // create string of partition for comparison
+		for _, p := range partitions {
+			key += p.Name + p.Type
 		}
-		referenceKey := genKey(tables[0].PartitionKeys())
-		for _, table := range tables[1:] {
-			if referenceKey != genKey(table.PartitionKeys()) {
-				return "", errors.New("all tables do not share same partition keys for generateViewAllHelper()")
-			}
+		return key
+	}
+	referenceKey := genKey(tables[0].PartitionKeys())
+	for _, table := range tables[1:] {
+		if referenceKey != genKey(table.PartitionKeys()) {
+			return "", errors.New("all tables do not share same partition keys for generateViewAllHelper()")
 		}
 	}
 

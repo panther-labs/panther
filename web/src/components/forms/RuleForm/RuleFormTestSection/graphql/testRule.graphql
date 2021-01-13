@@ -20,6 +20,21 @@ mutation TestRule($input: TestRuleInput!) {
         alertContextFunction {
           ...TestFunctionResult
         }
+        descriptionFunction {
+          ...TestFunctionResult
+        }
+        destinationsFunction {
+          ...TestFunctionResult
+        }
+        referenceFunction {
+          ...TestFunctionResult
+        }
+        runbookFunction {
+          ...TestFunctionResult
+        }
+        severityFunction {
+          ...TestFunctionResult
+        }
       }
     }
   }

@@ -1734,6 +1734,22 @@ export const buildTestRuleRecordFunctions = (
       'alertContextFunction' in overrides
         ? overrides.alertContextFunction
         : buildTestDetectionSubRecord(),
+    descriptionFunction:
+      'descriptionFunction' in overrides
+        ? overrides.descriptionFunction
+        : buildTestDetectionSubRecord(),
+    destinationsFunction:
+      'destinationsFunction' in overrides
+        ? overrides.destinationsFunction
+        : buildTestDetectionSubRecord(),
+    referenceFunction:
+      'referenceFunction' in overrides
+        ? overrides.referenceFunction
+        : buildTestDetectionSubRecord(),
+    runbookFunction:
+      'runbookFunction' in overrides ? overrides.runbookFunction : buildTestDetectionSubRecord(),
+    severityFunction:
+      'severityFunction' in overrides ? overrides.severityFunction : buildTestDetectionSubRecord(),
   };
 };
 
