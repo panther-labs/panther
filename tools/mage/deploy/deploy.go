@@ -29,6 +29,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/magefile/mage/sh"
+	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/users/models"
 	"github.com/panther-labs/panther/pkg/awscfn"
@@ -40,8 +41,6 @@ import (
 	"github.com/panther-labs/panther/tools/mage/clients"
 	"github.com/panther-labs/panther/tools/mage/logger"
 	"github.com/panther-labs/panther/tools/mage/util"
-
-	"go.uber.org/zap"
 )
 
 var log = logger.Build("[deploy]")
