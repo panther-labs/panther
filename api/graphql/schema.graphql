@@ -198,7 +198,7 @@ type ListDataModelsResponse {
   paging: PagingData!
 }
 
-type AddCustomLogOutput {
+type CustomLogOutput {
   error: Error
   record: CustomLogRecord
 }
