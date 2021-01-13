@@ -325,28 +325,24 @@ export type DeleteCustomLogOutput = {
   error?: Maybe<Error>;
 };
 
-export type DeleteGlobalPythonInputItem = {
+export type DeleteDataModelInput = {
+  dataModels: Array<DeleteEntry>;
+};
+
+export type DeleteEntry = {
   id: Scalars['ID'];
 };
 
 export type DeleteGlobalPythonModuleInput = {
-  globals?: Maybe<Array<DeleteGlobalPythonInputItem>>;
+  globals: Array<DeleteEntry>;
 };
 
 export type DeletePolicyInput = {
-  policies?: Maybe<Array<Maybe<DeletePolicyInputItem>>>;
-};
-
-export type DeletePolicyInputItem = {
-  id: Scalars['ID'];
+  policies: Array<DeleteEntry>;
 };
 
 export type DeleteRuleInput = {
-  rules: Array<DeleteRuleInputItem>;
-};
-
-export type DeleteRuleInputItem = {
-  id: Scalars['ID'];
+  rules: Array<DeleteEntry>;
 };
 
 export type DeliverAlertInput = {
@@ -619,6 +615,29 @@ export type ListComplianceItemsResponse = {
   totals?: Maybe<ActiveSuppressCount>;
 };
 
+export type ListDataModelsInput = {
+  enabled?: Maybe<Scalars['Boolean']>;
+  nameContains?: Maybe<Scalars['String']>;
+  logTypes?: Maybe<Array<Scalars['String']>>;
+  sortBy?: Maybe<ListDataModelsSortFieldsEnum>;
+  sortDir?: Maybe<SortDirEnum>;
+  page?: Maybe<Scalars['Int']>;
+  pageSize?: Maybe<Scalars['Int']>;
+};
+
+export type ListDataModelsResponse = {
+  __typename?: 'ListDataModelsResponse';
+  models: Array<DataModel>;
+  paging: PagingData;
+};
+
+export enum ListDataModelsSortFieldsEnum {
+  Enabled = 'enabled',
+  Id = 'id',
+  LastModified = 'lastModified',
+  LogTypes = 'logTypes',
+}
+
 export type ListGlobalPythonModuleInput = {
   nameContains?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
@@ -779,6 +798,7 @@ export type Mutation = {
   addPolicy?: Maybe<PolicyDetails>;
   addRule?: Maybe<RuleDetails>;
   addGlobalPythonModule: GlobalPythonModule;
+  deleteDataModel?: Maybe<Scalars['Boolean']>;
   deleteDestination?: Maybe<Scalars['Boolean']>;
   deleteComplianceIntegration?: Maybe<Scalars['Boolean']>;
   deleteCustomLog: DeleteCustomLogOutput;
@@ -843,6 +863,10 @@ export type MutationAddRuleArgs = {
 
 export type MutationAddGlobalPythonModuleArgs = {
   input: AddGlobalPythonModuleInput;
+};
+
+export type MutationDeleteDataModelArgs = {
+  input: DeleteDataModelInput;
 };
 
 export type MutationDeleteDestinationArgs = {
@@ -1084,6 +1108,7 @@ export type Query = {
   policiesForResource?: Maybe<ListComplianceItemsResponse>;
   listAvailableLogTypes: ListAvailableLogTypesResponse;
   listComplianceIntegrations: Array<ComplianceIntegration>;
+  listDataModels: ListDataModelsResponse;
   listLogIntegrations: Array<LogIntegration>;
   organizationStats?: Maybe<OrganizationStatsResponse>;
   getLogAnalysisMetrics: LogAnalysisMetricsResponse;
@@ -1161,6 +1186,10 @@ export type QueryPoliciesArgs = {
 
 export type QueryPoliciesForResourceArgs = {
   input?: Maybe<PoliciesForResourceInput>;
+};
+
+export type QueryListDataModelsArgs = {
+  input: ListDataModelsInput;
 };
 
 export type QueryOrganizationStatsArgs = {
@@ -1737,6 +1766,9 @@ export type ResolversTypes = {
   PolicySummary: ResolverTypeWrapper<PolicySummary>;
   PoliciesForResourceInput: PoliciesForResourceInput;
   ListAvailableLogTypesResponse: ResolverTypeWrapper<ListAvailableLogTypesResponse>;
+  ListDataModelsInput: ListDataModelsInput;
+  ListDataModelsSortFieldsEnum: ListDataModelsSortFieldsEnum;
+  ListDataModelsResponse: ResolverTypeWrapper<ListDataModelsResponse>;
   LogIntegration: ResolversTypes['S3LogIntegration'] | ResolversTypes['SqsLogSourceIntegration'];
   OrganizationStatsInput: OrganizationStatsInput;
   OrganizationStatsResponse: ResolverTypeWrapper<OrganizationStatsResponse>;
@@ -1792,14 +1824,13 @@ export type ResolversTypes = {
   DetectionTestDefinitionInput: DetectionTestDefinitionInput;
   AddRuleInput: AddRuleInput;
   AddGlobalPythonModuleInput: AddGlobalPythonModuleInput;
+  DeleteDataModelInput: DeleteDataModelInput;
+  DeleteEntry: DeleteEntry;
   DeleteCustomLogInput: DeleteCustomLogInput;
   DeleteCustomLogOutput: ResolverTypeWrapper<DeleteCustomLogOutput>;
   DeletePolicyInput: DeletePolicyInput;
-  DeletePolicyInputItem: DeletePolicyInputItem;
   DeleteRuleInput: DeleteRuleInput;
-  DeleteRuleInputItem: DeleteRuleInputItem;
   DeleteGlobalPythonModuleInput: DeleteGlobalPythonModuleInput;
-  DeleteGlobalPythonInputItem: DeleteGlobalPythonInputItem;
   InviteUserInput: InviteUserInput;
   RemediateResourceInput: RemediateResourceInput;
   DeliverAlertInput: DeliverAlertInput;
@@ -1918,6 +1949,9 @@ export type ResolversParentTypes = {
   PolicySummary: PolicySummary;
   PoliciesForResourceInput: PoliciesForResourceInput;
   ListAvailableLogTypesResponse: ListAvailableLogTypesResponse;
+  ListDataModelsInput: ListDataModelsInput;
+  ListDataModelsSortFieldsEnum: ListDataModelsSortFieldsEnum;
+  ListDataModelsResponse: ListDataModelsResponse;
   LogIntegration:
     | ResolversParentTypes['S3LogIntegration']
     | ResolversParentTypes['SqsLogSourceIntegration'];
@@ -1975,14 +2009,13 @@ export type ResolversParentTypes = {
   DetectionTestDefinitionInput: DetectionTestDefinitionInput;
   AddRuleInput: AddRuleInput;
   AddGlobalPythonModuleInput: AddGlobalPythonModuleInput;
+  DeleteDataModelInput: DeleteDataModelInput;
+  DeleteEntry: DeleteEntry;
   DeleteCustomLogInput: DeleteCustomLogInput;
   DeleteCustomLogOutput: DeleteCustomLogOutput;
   DeletePolicyInput: DeletePolicyInput;
-  DeletePolicyInputItem: DeletePolicyInputItem;
   DeleteRuleInput: DeleteRuleInput;
-  DeleteRuleInputItem: DeleteRuleInputItem;
   DeleteGlobalPythonModuleInput: DeleteGlobalPythonModuleInput;
-  DeleteGlobalPythonInputItem: DeleteGlobalPythonInputItem;
   InviteUserInput: InviteUserInput;
   RemediateResourceInput: RemediateResourceInput;
   DeliverAlertInput: DeliverAlertInput;
@@ -2484,6 +2517,15 @@ export type ListComplianceItemsResponseResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
+export type ListDataModelsResponseResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['ListDataModelsResponse'] = ResolversParentTypes['ListDataModelsResponse']
+> = {
+  models?: Resolver<Array<ResolversTypes['DataModel']>, ParentType, ContextType>;
+  paging?: Resolver<ResolversTypes['PagingData'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
 export type ListGlobalPythonModulesResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['ListGlobalPythonModulesResponse'] = ResolversParentTypes['ListGlobalPythonModulesResponse']
@@ -2645,6 +2687,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationAddGlobalPythonModuleArgs, 'input'>
+  >;
+  deleteDataModel?: Resolver<
+    Maybe<ResolversTypes['Boolean']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationDeleteDataModelArgs, 'input'>
   >;
   deleteDestination?: Resolver<
     Maybe<ResolversTypes['Boolean']>,
@@ -3059,6 +3107,12 @@ export type QueryResolvers<
     Array<ResolversTypes['ComplianceIntegration']>,
     ParentType,
     ContextType
+  >;
+  listDataModels?: Resolver<
+    ResolversTypes['ListDataModelsResponse'],
+    ParentType,
+    ContextType,
+    RequireFields<QueryListDataModelsArgs, 'input'>
   >;
   listLogIntegrations?: Resolver<Array<ResolversTypes['LogIntegration']>, ParentType, ContextType>;
   organizationStats?: Resolver<
@@ -3489,6 +3543,7 @@ export type Resolvers<ContextType = any> = {
   ListAlertsResponse?: ListAlertsResponseResolvers<ContextType>;
   ListAvailableLogTypesResponse?: ListAvailableLogTypesResponseResolvers<ContextType>;
   ListComplianceItemsResponse?: ListComplianceItemsResponseResolvers<ContextType>;
+  ListDataModelsResponse?: ListDataModelsResponseResolvers<ContextType>;
   ListGlobalPythonModulesResponse?: ListGlobalPythonModulesResponseResolvers<ContextType>;
   ListPoliciesResponse?: ListPoliciesResponseResolvers<ContextType>;
   ListResourcesResponse?: ListResourcesResponseResolvers<ContextType>;

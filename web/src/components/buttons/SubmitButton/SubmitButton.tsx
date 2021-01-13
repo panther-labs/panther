@@ -20,7 +20,7 @@ import React from 'react';
 import { Button, ButtonProps } from 'pouncejs';
 import { useFormikContext } from 'formik';
 
-interface SubmitButtonProps extends Omit<ButtonProps, 'size' | 'variant' | 'disabled'> {
+export interface SubmitButtonProps extends Omit<ButtonProps, 'size' | 'disabled'> {
   allowPristineSubmission?: boolean;
 }
 

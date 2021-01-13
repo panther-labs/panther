@@ -58,6 +58,9 @@ const typePolicies: TypePolicies = {
           existing || toReference({ __typename: 'ComplianceIntegration', integrationId: args.id })
         );
       },
+      getDataModel(existing, { args, toReference }) {
+        return existing || toReference({ __typename: 'DataModel', id: args.id });
+      },
       getS3LogIntegration(existing, { args, toReference }) {
         return existing || toReference({ __typename: 'S3LogIntegration', integrationId: args.id });
       },

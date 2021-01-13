@@ -38,7 +38,7 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
   const {
     detectionDestinations,
     loading: loadingDetectionDestinations,
-  } = useDetectionDestinations({ rule });
+  } = useDetectionDestinations({ detection: rule });
   return (
     <GenericItemCard>
       <GenericItemCard.Body>
