@@ -66,11 +66,8 @@ import ListCustomLogsPage from 'Pages/ListCustomLogs';
 import CustomLogDetailsPage from 'Pages/CustomLogDetails';
 import CreateDataModelPage from 'Pages/CreateDataModel';
 import EditDataModelPage from 'Pages/EditDataModel';
-<<<<<<< HEAD
-=======
 import ListDataModelsPage from 'Pages/ListDataModels';
 import EditCustomLogPage from 'Pages/EditCustomLog';
->>>>>>> 10b68fc4 (Data Models [3/4]: Data Model Listing & Deletion (#2366))
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -261,6 +258,11 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   exact
                   path={urls.logAnalysis.customLogs.details(':logType')}
                   component={CustomLogDetailsPage}
+                />
+                <Route
+                  exact
+                  path={urls.logAnalysis.customLogs.edit(':logType')}
+                  component={EditCustomLogPage}
                 />
                 <Route
                   exact

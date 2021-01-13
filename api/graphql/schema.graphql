@@ -10,7 +10,7 @@ schema {
 }
 
 type Mutation {
-  addCustomLog(input: AddCustomLogInput!): AddCustomLogOutput!
+  addCustomLog(input: AddOrUpdateCustomLogInput!): GetCustomLogOutput!
   addDataModel(input: AddOrUpdateDataModelInput!): DataModel!
   addDestination(input: DestinationInput!): Destination
   addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
@@ -37,6 +37,7 @@ type Mutation {
   testRule(input: TestRuleInput!): TestRuleResponse!
   updateAlertStatus(input: UpdateAlertStatusInput!): [AlertSummary!]!
   updateDataModel(input: AddOrUpdateDataModelInput!): DataModel!
+  updateCustomLog(input: AddOrUpdateCustomLogInput!): GetCustomLogOutput!
   updateDestination(input: DestinationInput!): Destination
   updateComplianceIntegration(input: UpdateComplianceIntegrationInput!): ComplianceIntegration!
   updateS3LogIntegration(input: UpdateS3LogIntegrationInput!): S3LogIntegration!
@@ -124,7 +125,7 @@ input DeleteCustomLogInput {
   revision: Int!
 }
 
-input AddCustomLogInput {
+input AddOrUpdateCustomLogInput {
   revision: Int
   logType: String!
   description: String!
@@ -192,16 +193,12 @@ type DataModel {
   lastModified: AWSDateTime!
 }
 
-<<<<<<< HEAD
-type AddCustomLogOutput {
-=======
 type ListDataModelsResponse {
   models: [DataModel!]!
   paging: PagingData!
 }
 
-type CustomLogOutput {
->>>>>>> 10b68fc4 (Data Models [3/4]: Data Model Listing & Deletion (#2366))
+type AddCustomLogOutput {
   error: Error
   record: CustomLogRecord
 }

@@ -24,20 +24,20 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type CreateCustomLogVariables = {
+export type UpdateCustomLogVariables = {
   input: Types.AddOrUpdateCustomLogInput;
 };
 
-export type CreateCustomLog = {
-  addCustomLog: {
+export type UpdateCustomLog = {
+  updateCustomLog: {
     error?: Types.Maybe<Pick<Types.Error, 'message'>>;
     record?: Types.Maybe<CustomLogFull>;
   };
 };
 
-export const CreateCustomLogDocument = gql`
-  mutation CreateCustomLog($input: AddOrUpdateCustomLogInput!) {
-    addCustomLog(input: $input) {
+export const UpdateCustomLogDocument = gql`
+  mutation UpdateCustomLog($input: AddOrUpdateCustomLogInput!) {
+    updateCustomLog(input: $input) {
       error {
         message
       }
@@ -48,53 +48,53 @@ export const CreateCustomLogDocument = gql`
   }
   ${CustomLogFull}
 `;
-export type CreateCustomLogMutationFn = ApolloReactCommon.MutationFunction<
-  CreateCustomLog,
-  CreateCustomLogVariables
+export type UpdateCustomLogMutationFn = ApolloReactCommon.MutationFunction<
+  UpdateCustomLog,
+  UpdateCustomLogVariables
 >;
 
 /**
- * __useCreateCustomLog__
+ * __useUpdateCustomLog__
  *
- * To run a mutation, you first call `useCreateCustomLog` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateCustomLog` returns a tuple that includes:
+ * To run a mutation, you first call `useUpdateCustomLog` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCustomLog` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createCustomLog, { data, loading, error }] = useCreateCustomLog({
+ * const [updateCustomLog, { data, loading, error }] = useUpdateCustomLog({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useCreateCustomLog(
-  baseOptions?: ApolloReactHooks.MutationHookOptions<CreateCustomLog, CreateCustomLogVariables>
+export function useUpdateCustomLog(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<UpdateCustomLog, UpdateCustomLogVariables>
 ) {
-  return ApolloReactHooks.useMutation<CreateCustomLog, CreateCustomLogVariables>(
-    CreateCustomLogDocument,
+  return ApolloReactHooks.useMutation<UpdateCustomLog, UpdateCustomLogVariables>(
+    UpdateCustomLogDocument,
     baseOptions
   );
 }
-export type CreateCustomLogHookResult = ReturnType<typeof useCreateCustomLog>;
-export type CreateCustomLogMutationResult = ApolloReactCommon.MutationResult<CreateCustomLog>;
-export type CreateCustomLogMutationOptions = ApolloReactCommon.BaseMutationOptions<
-  CreateCustomLog,
-  CreateCustomLogVariables
+export type UpdateCustomLogHookResult = ReturnType<typeof useUpdateCustomLog>;
+export type UpdateCustomLogMutationResult = ApolloReactCommon.MutationResult<UpdateCustomLog>;
+export type UpdateCustomLogMutationOptions = ApolloReactCommon.BaseMutationOptions<
+  UpdateCustomLog,
+  UpdateCustomLogVariables
 >;
-export function mockCreateCustomLog({
+export function mockUpdateCustomLog({
   data,
   variables,
   errors,
 }: {
-  data: CreateCustomLog;
-  variables?: CreateCustomLogVariables;
+  data: UpdateCustomLog;
+  variables?: UpdateCustomLogVariables;
   errors?: GraphQLError[];
 }) {
   return {
-    request: { query: CreateCustomLogDocument, variables },
+    request: { query: UpdateCustomLogDocument, variables },
     result: { data, errors },
   };
 }

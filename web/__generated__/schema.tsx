@@ -52,24 +52,18 @@ export type AddComplianceIntegrationInput = {
   cweEnabled?: Maybe<Scalars['Boolean']>;
 };
 
-export type AddCustomLogInput = {
+export type AddGlobalPythonModuleInput = {
+  id: Scalars['ID'];
+  description: Scalars['String'];
+  body: Scalars['String'];
+};
+
+export type AddOrUpdateCustomLogInput = {
   revision?: Maybe<Scalars['Int']>;
   logType: Scalars['String'];
   description: Scalars['String'];
   referenceURL: Scalars['String'];
   logSpec: Scalars['String'];
-};
-
-export type AddCustomLogOutput = {
-  __typename?: 'AddCustomLogOutput';
-  error?: Maybe<Error>;
-  record?: Maybe<CustomLogRecord>;
-};
-
-export type AddGlobalPythonModuleInput = {
-  id: Scalars['ID'];
-  description: Scalars['String'];
-  body: Scalars['String'];
 };
 
 export type AddOrUpdateDataModelInput = {
@@ -270,6 +264,12 @@ export enum ComplianceStatusEnum {
   Fail = 'FAIL',
   Pass = 'PASS',
 }
+
+export type CustomLogOutput = {
+  __typename?: 'CustomLogOutput';
+  error?: Maybe<Error>;
+  record?: Maybe<CustomLogRecord>;
+};
 
 export type CustomLogRecord = {
   __typename?: 'CustomLogRecord';
@@ -789,7 +789,7 @@ export type MsTeamsConfigInput = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  addCustomLog: AddCustomLogOutput;
+  addCustomLog: GetCustomLogOutput;
   addDataModel: DataModel;
   addDestination?: Maybe<Destination>;
   addComplianceIntegration: ComplianceIntegration;
@@ -816,6 +816,7 @@ export type Mutation = {
   testRule: TestRuleResponse;
   updateAlertStatus: Array<AlertSummary>;
   updateDataModel: DataModel;
+  updateCustomLog: GetCustomLogOutput;
   updateDestination?: Maybe<Destination>;
   updateComplianceIntegration: ComplianceIntegration;
   updateS3LogIntegration: S3LogIntegration;
@@ -829,7 +830,7 @@ export type Mutation = {
 };
 
 export type MutationAddCustomLogArgs = {
-  input: AddCustomLogInput;
+  input: AddOrUpdateCustomLogInput;
 };
 
 export type MutationAddDataModelArgs = {
@@ -934,6 +935,10 @@ export type MutationUpdateAlertStatusArgs = {
 
 export type MutationUpdateDataModelArgs = {
   input: AddOrUpdateDataModelInput;
+};
+
+export type MutationUpdateCustomLogArgs = {
+  input: AddOrUpdateCustomLogInput;
 };
 
 export type MutationUpdateDestinationArgs = {
@@ -1795,8 +1800,7 @@ export type ResolversTypes = {
   Error: ResolverTypeWrapper<Error>;
   CustomLogRecord: ResolverTypeWrapper<CustomLogRecord>;
   Mutation: ResolverTypeWrapper<{}>;
-  AddCustomLogInput: AddCustomLogInput;
-  AddCustomLogOutput: ResolverTypeWrapper<AddCustomLogOutput>;
+  AddOrUpdateCustomLogInput: AddOrUpdateCustomLogInput;
   AddOrUpdateDataModelInput: AddOrUpdateDataModelInput;
   DataModelMappingInput: DataModelMappingInput;
   DestinationInput: DestinationInput;
@@ -1852,6 +1856,7 @@ export type ResolversTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
+  CustomLogOutput: ResolverTypeWrapper<CustomLogOutput>;
   AccountTypeEnum: AccountTypeEnum;
   ErrorCodeEnum: ErrorCodeEnum;
 };
@@ -1980,8 +1985,7 @@ export type ResolversParentTypes = {
   Error: Error;
   CustomLogRecord: CustomLogRecord;
   Mutation: {};
-  AddCustomLogInput: AddCustomLogInput;
-  AddCustomLogOutput: AddCustomLogOutput;
+  AddOrUpdateCustomLogInput: AddOrUpdateCustomLogInput;
   AddOrUpdateDataModelInput: AddOrUpdateDataModelInput;
   DataModelMappingInput: DataModelMappingInput;
   DestinationInput: DestinationInput;
@@ -2037,6 +2041,7 @@ export type ResolversParentTypes = {
   UploadPoliciesInput: UploadPoliciesInput;
   UploadPoliciesResponse: UploadPoliciesResponse;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
+  CustomLogOutput: CustomLogOutput;
   AccountTypeEnum: AccountTypeEnum;
   ErrorCodeEnum: ErrorCodeEnum;
 };
@@ -2047,15 +2052,6 @@ export type ActiveSuppressCountResolvers<
 > = {
   active?: Resolver<Maybe<ResolversTypes['ComplianceStatusCounts']>, ParentType, ContextType>;
   suppressed?: Resolver<Maybe<ResolversTypes['ComplianceStatusCounts']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type AddCustomLogOutputResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['AddCustomLogOutput'] = ResolversParentTypes['AddCustomLogOutput']
-> = {
-  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
-  record?: Resolver<Maybe<ResolversTypes['CustomLogRecord']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2266,6 +2262,15 @@ export type ComplianceStatusCountsResolvers<
   error?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   fail?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   pass?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type CustomLogOutputResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['CustomLogOutput'] = ResolversParentTypes['CustomLogOutput']
+> = {
+  error?: Resolver<Maybe<ResolversTypes['Error']>, ParentType, ContextType>;
+  record?: Resolver<Maybe<ResolversTypes['CustomLogRecord']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2630,7 +2635,7 @@ export type MutationResolvers<
   ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']
 > = {
   addCustomLog?: Resolver<
-    ResolversTypes['AddCustomLogOutput'],
+    ResolversTypes['GetCustomLogOutput'],
     ParentType,
     ContextType,
     RequireFields<MutationAddCustomLogArgs, 'input'>
@@ -2790,6 +2795,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationUpdateDataModelArgs, 'input'>
+  >;
+  updateCustomLog?: Resolver<
+    ResolversTypes['GetCustomLogOutput'],
+    ParentType,
+    ContextType,
+    RequireFields<MutationUpdateCustomLogArgs, 'input'>
   >;
   updateDestination?: Resolver<
     Maybe<ResolversTypes['Destination']>,
@@ -3492,7 +3503,6 @@ export type UserResolvers<
 
 export type Resolvers<ContextType = any> = {
   ActiveSuppressCount?: ActiveSuppressCountResolvers<ContextType>;
-  AddCustomLogOutput?: AddCustomLogOutputResolvers<ContextType>;
   Alert?: AlertResolvers;
   AlertDetails?: AlertDetailsResolvers<ContextType>;
   AlertDetailsDetectionInfo?: AlertDetailsDetectionInfoResolvers;
@@ -3510,6 +3520,7 @@ export type Resolvers<ContextType = any> = {
   ComplianceIntegrationHealth?: ComplianceIntegrationHealthResolvers<ContextType>;
   ComplianceItem?: ComplianceItemResolvers<ContextType>;
   ComplianceStatusCounts?: ComplianceStatusCountsResolvers<ContextType>;
+  CustomLogOutput?: CustomLogOutputResolvers<ContextType>;
   CustomLogRecord?: CustomLogRecordResolvers<ContextType>;
   CustomWebhookConfig?: CustomWebhookConfigResolvers<ContextType>;
   DataModel?: DataModelResolvers<ContextType>;
