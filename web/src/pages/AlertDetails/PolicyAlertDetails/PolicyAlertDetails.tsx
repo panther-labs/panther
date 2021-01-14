@@ -17,10 +17,9 @@
  */
 
 import React from 'react';
-import { Alert, Box, Card, Flex } from 'pouncejs';
+import { Box, Card, Flex } from 'pouncejs';
 import Skeleton from 'Pages/AlertDetails/Skeleton';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import { extractErrorMessage } from 'Helpers/utils';
 import { AlertDetailsFull } from 'Source/graphql/fragments/AlertDetailsFull.generated';
 import { AlertSummaryPolicyInfo } from 'Generated/schema';
 import { usePolicyTeaser } from './graphql/policyTeaser.generated';
@@ -33,27 +32,16 @@ interface PolicyAlertDetailsProps {
 
 const PolicyAlertDetails: React.FC<PolicyAlertDetailsProps> = ({ alert }) => {
   const alertDetectionInfo = alert.detection as AlertSummaryPolicyInfo;
+<<<<<<< HEAD
   const { data, loading, error } = usePolicyTeaser({
+=======
+  const { data, loading } = useGetPolicySummary({
+>>>>>>> 2dc79ada (fix: issue where alert wouldn't render if rule got deleted (#2410))
     variables: { input: { id: alertDetectionInfo.policyId } },
   });
 
   if (loading && !data) {
     return <Skeleton />;
-  }
-
-  if (error) {
-    return (
-      <Box mb={6}>
-        <Alert
-          variant="error"
-          title="Couldn't load alert"
-          description={
-            extractErrorMessage(error) ||
-            "An unknown error occurred and we couldn't load the alert details from the server"
-          }
-        />
-      </Box>
-    );
   }
 
   return (

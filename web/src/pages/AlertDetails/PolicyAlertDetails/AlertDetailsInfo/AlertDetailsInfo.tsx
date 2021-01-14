@@ -32,7 +32,11 @@ import { PolicyTeaser } from '../graphql/policyTeaser.generated';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails['alert'];
+<<<<<<< HEAD
   policy: PolicyTeaser['policy'];
+=======
+  policy?: GetPolicySummary['policy'];
+>>>>>>> 2dc79ada (fix: issue where alert wouldn't render if rule got deleted (#2410))
 }
 
 const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, policy }) => {
