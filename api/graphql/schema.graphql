@@ -19,6 +19,7 @@ type Mutation {
   addPolicy(input: AddPolicyInput!): PolicyDetails
   addRule(input: AddRuleInput!): RuleDetails
   addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
+  deleteDataModel(input: DeleteDataModelInput!): Boolean
   deleteDestination(id: ID!): Boolean
   deleteComplianceIntegration(id: ID!): Boolean
   deleteCustomLog(input: DeleteCustomLogInput): DeleteCustomLogOutput!
@@ -74,6 +75,7 @@ type Query {
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
   listAvailableLogTypes: ListAvailableLogTypesResponse!
   listComplianceIntegrations: [ComplianceIntegration!]!
+  listDataModels(input: ListDataModelsInput!): ListDataModelsResponse!
   listLogIntegrations: [LogIntegration!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   getLogAnalysisMetrics(input: LogAnalysisMetricsInput!): LogAnalysisMetricsResponse!
@@ -83,6 +85,10 @@ type Query {
   users: [User!]!
   getCustomLog(input: GetCustomLogInput!): GetCustomLogOutput!
   listCustomLogs: [CustomLogRecord!]!
+}
+
+input DeleteEntry {
+  id: ID!
 }
 
 input DataModelMappingInput {
@@ -98,6 +104,20 @@ input AddOrUpdateDataModelInput {
   logTypes: [String!]!
   mappings: [DataModelMappingInput!]!
   body: String
+}
+
+input ListDataModelsInput {
+  enabled: Boolean
+  nameContains: String
+  logTypes: [String!]
+  sortBy: ListDataModelsSortFieldsEnum
+  sortDir: SortDirEnum
+  page: Int
+  pageSize: Int
+}
+
+input DeleteDataModelInput {
+  dataModels: [DeleteEntry!]!
 }
 
 input DeleteCustomLogInput {
@@ -171,6 +191,11 @@ type DataModel {
   body: String
   createdAt: AWSDateTime!
   lastModified: AWSDateTime!
+}
+
+type ListDataModelsResponse {
+  models: [DataModel!]!
+  paging: PagingData!
 }
 
 type CustomLogOutput {
@@ -377,11 +402,7 @@ input GetRuleInput {
 }
 
 input DeleteRuleInput {
-  rules: [DeleteRuleInputItem!]!
-}
-
-input DeleteRuleInputItem {
-  id: ID!
+  rules: [DeleteEntry!]!
 }
 
 type RuleSummary {
@@ -962,19 +983,11 @@ input AddGlobalPythonModuleInput {
 }
 
 input DeleteGlobalPythonModuleInput {
-  globals: [DeleteGlobalPythonInputItem!]
-}
-
-input DeleteGlobalPythonInputItem {
-  id: ID!
+  globals: [DeleteEntry!]!
 }
 
 input DeletePolicyInput {
-  policies: [DeletePolicyInputItem]
-}
-
-input DeletePolicyInputItem {
-  id: ID!
+  policies: [DeleteEntry!]!
 }
 
 input ListPoliciesInput {
@@ -1092,6 +1105,11 @@ type TestRuleRecordFunctions {
   titleFunction: TestDetectionSubRecord
   dedupFunction: TestDetectionSubRecord
   alertContextFunction: TestDetectionSubRecord
+  descriptionFunction: TestDetectionSubRecord
+  destinationsFunction: TestDetectionSubRecord
+  referenceFunction: TestDetectionSubRecord
+  runbookFunction: TestDetectionSubRecord
+  severityFunction: TestDetectionSubRecord
 }
 
 type TestRuleRecord implements TestRecord {
@@ -1170,6 +1188,13 @@ enum ListRulesSortFieldsEnum {
   lastModified
   logTypes
   severity
+}
+
+enum ListDataModelsSortFieldsEnum {
+  enabled
+  id
+  lastModified
+  logTypes
 }
 
 enum ListAlertsSortFieldsEnum {

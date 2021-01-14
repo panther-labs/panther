@@ -31,45 +31,36 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"go.uber.org/zap/zaptest/observer"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
-	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/pkg/awssqs"
 	"github.com/panther-labs/panther/pkg/genericapi"
-	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func TestDeleteIntegrationItem(t *testing.T) {
-	mockClient := &testutils.DynamoDBMock{}
-	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
+	t.Parallel()
+	apiTest := NewAPITest()
 
-	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
-	mockClient.On("GetItem", mock.Anything).
-		Return(generateGetItemOutput(models.IntegrationTypeAWSScan), nil)
+	apiTest.mockDdb.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
+	apiTest.mockDdb.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWSScan), nil)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
 		IntegrationID: testIntegrationID,
 	})
 
 	assert.NoError(t, result)
-	mockClient.AssertExpectations(t)
+	apiTest.AssertExpectations(t)
 }
 
 func TestDeleteLogIntegration(t *testing.T) {
-	mockClient := &testutils.DynamoDBMock{}
-	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
+	t.Parallel()
+	apiTest := NewAPITest()
 
-	mockSqs := &testutils.SqsMock{}
-	sqsClient = mockSqs
-
-	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	apiTest.Config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: aws.StringSlice([]string{"Policy"}),
-		QueueUrl:       aws.String(env.LogProcessorQueueURL),
+		QueueUrl:       aws.String(apiTest.Config.LogProcessorQueueURL),
 	}
 
 	scanResult := &dynamodb.ScanOutput{
@@ -78,38 +69,36 @@ func TestDeleteLogIntegration(t *testing.T) {
 		},
 	}
 
-	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
-	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
-	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
+	apiTest.mockDdb.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
+	apiTest.mockDdb.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
+	apiTest.mockDdb.On("Scan", mock.Anything).Return(scanResult, nil)
 
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{testAccountID})
-	mockSqs.On("GetQueueAttributes", expectedGetQueueAttributesInput).
+	apiTest.mockSqs.On("GetQueueAttributes", expectedGetQueueAttributesInput).
 		Return(&sqs.GetQueueAttributesOutput{Attributes: alreadyExistingAttributes}, nil)
 	expectedAttributes := generateQueueAttributeOutput(t, []string{})
 	expectedSetAttributes := &sqs.SetQueueAttributesInput{
 		Attributes: expectedAttributes,
-		QueueUrl:   aws.String(env.LogProcessorQueueURL),
+		QueueUrl:   aws.String(apiTest.Config.LogProcessorQueueURL),
 	}
-	mockSqs.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil)
+	apiTest.mockSqs.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
 		IntegrationID: testIntegrationID,
 	})
 
 	assert.NoError(t, result)
-	mockClient.AssertExpectations(t)
+	apiTest.AssertExpectations(t)
 }
 
 func TestDeleteLogIntegrationKeepSqsQueuePermissions(t *testing.T) {
 	// This scenario tests the case where we delete a source
 	// but another source for that account exists. In that case we
 	// should remove the SQS permissions for that account
-	mockClient := &testutils.DynamoDBMock{}
-	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
+	t.Parallel()
+	apiTest := NewAPITest()
 
-	mockSqs := &testutils.SqsMock{}
-	sqsClient = mockSqs
-	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	apiTest.Config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	additionLogSourceEntry := generateDDBAttributes(models.IntegrationTypeAWS3)
 	additionLogSourceEntry["integrationId"] = &dynamodb.AttributeValue{
@@ -123,50 +112,46 @@ func TestDeleteLogIntegrationKeepSqsQueuePermissions(t *testing.T) {
 		},
 	}
 
-	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
-	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
-	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
+	apiTest.mockDdb.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
+	apiTest.mockDdb.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
+	apiTest.mockDdb.On("Scan", mock.Anything).Return(scanResult, nil)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
 		IntegrationID: testIntegrationID,
 	})
 
 	assert.NoError(t, result)
-	mockClient.AssertExpectations(t)
-	// We should have no interactions with SQS
-	mockSqs.AssertExpectations(t)
+	apiTest.AssertExpectations(t)
 }
 
 func TestDeleteIntegrationItemError(t *testing.T) {
-	mockClient := &testutils.DynamoDBMock{}
-	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
+	t.Parallel()
+	apiTest := NewAPITest()
 
 	mockErr := awserr.New(
 		"ErrCodeInternalServerError",
 		"An error occurred on the server side.",
 		errors.New("fake error"),
 	)
-	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWSScan), nil)
-	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, mockErr)
+	apiTest.mockDdb.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWSScan), nil)
+	apiTest.mockDdb.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, mockErr)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
 		IntegrationID: testIntegrationID,
 	})
 
 	assert.Error(t, result)
-	mockClient.AssertExpectations(t)
+	apiTest.AssertExpectations(t)
 }
 func TestDeleteIntegrationPolicyNotFound(t *testing.T) {
-	mockClient := &testutils.DynamoDBMock{}
-	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
+	t.Parallel()
+	apiTest := NewAPITest()
 
-	mockSqs := &testutils.SqsMock{}
-	sqsClient = mockSqs
-	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	apiTest.Config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: aws.StringSlice([]string{"Policy"}),
-		QueueUrl:       aws.String(env.LogProcessorQueueURL),
+		QueueUrl:       aws.String(apiTest.Config.LogProcessorQueueURL),
 	}
 
 	scanResult := &dynamodb.ScanOutput{
@@ -174,33 +159,27 @@ func TestDeleteIntegrationPolicyNotFound(t *testing.T) {
 			generateDDBAttributes(models.IntegrationTypeAWS3),
 		},
 	}
-	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
-	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
-	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
+	apiTest.mockDdb.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
+	apiTest.mockDdb.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
+	apiTest.mockDdb.On("Scan", mock.Anything).Return(scanResult, nil)
 
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{"111111111111"}) // Wrong accountID
-	mockSqs.On("GetQueueAttributes", expectedGetQueueAttributesInput).
+	apiTest.mockSqs.On("GetQueueAttributes", expectedGetQueueAttributesInput).
 		Return(&sqs.GetQueueAttributesOutput{Attributes: alreadyExistingAttributes}, nil)
-	expectedAttributes := generateQueueAttributeOutput(t, []string{})
-	expectedSetAttributes := &sqs.SetQueueAttributesInput{
-		Attributes: expectedAttributes,
-		QueueUrl:   aws.String(env.LogProcessorQueueURL),
-	}
-	mockSqs.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
 		IntegrationID: testIntegrationID,
 	})
 
 	assert.NoError(t, result)
-	mockClient.AssertExpectations(t)
+	apiTest.AssertExpectations(t)
 }
 
 func TestDeleteIntegrationItemDoesNotExist(t *testing.T) {
-	mockClient := &testutils.DynamoDBMock{}
-	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
+	t.Parallel()
+	apiTest := NewAPITest()
 
-	mockClient.On("GetItem", mock.Anything).Return(&dynamodb.GetItemOutput{}, nil)
+	apiTest.mockDdb.On("GetItem", mock.Anything).Return(&dynamodb.GetItemOutput{}, nil)
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
 		IntegrationID: testIntegrationID,
@@ -208,16 +187,14 @@ func TestDeleteIntegrationItemDoesNotExist(t *testing.T) {
 
 	assert.Error(t, result)
 	assert.IsType(t, &genericapi.DoesNotExistError{}, result)
-	mockClient.AssertExpectations(t)
+	apiTest.AssertExpectations(t)
 }
 
 func TestDeleteIntegrationDeleteOfItemFails(t *testing.T) {
-	mockClient := &testutils.DynamoDBMock{}
-	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
+	t.Parallel()
+	apiTest := NewAPITest()
 
-	mockSqs := &testutils.SqsMock{}
-	sqsClient = mockSqs
-	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	apiTest.Config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	scanResult := &dynamodb.ScanOutput{
 		Items: []map[string]*dynamodb.AttributeValue{
@@ -225,58 +202,21 @@ func TestDeleteIntegrationDeleteOfItemFails(t *testing.T) {
 		},
 	}
 
-	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, errors.New("error"))
-	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
-	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
+	apiTest.mockDdb.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, errors.New("error"))
+	apiTest.mockDdb.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
+	apiTest.mockDdb.On("Scan", mock.Anything).Return(scanResult, nil)
 
 	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{testAccountID})
-	mockSqs.On("GetQueueAttributes", mock.Anything).Return(&sqs.GetQueueAttributesOutput{Attributes: alreadyExistingAttributes}, nil).Twice()
-	mockSqs.On("SetQueueAttributes", mock.Anything).Return(&sqs.SetQueueAttributesOutput{}, nil).Twice()
+	apiTest.mockSqs.On("GetQueueAttributes", mock.Anything).
+		Return(&sqs.GetQueueAttributesOutput{Attributes: alreadyExistingAttributes}, nil).Once()
+	apiTest.mockSqs.On("SetQueueAttributes", mock.Anything).Return(&sqs.SetQueueAttributesOutput{}, nil).Once()
 
 	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
 		IntegrationID: testIntegrationID,
 	})
 
 	assert.Error(t, result)
-	mockClient.AssertExpectations(t)
-}
-
-func TestDeleteIntegrationDeleteRecoveryFails(t *testing.T) {
-	// Used to capture logs for unit testing purposes
-	core, recordedLogs := observer.New(zapcore.ErrorLevel)
-	zap.ReplaceGlobals(zap.New(core))
-
-	mockClient := &testutils.DynamoDBMock{}
-	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
-
-	mockSqs := &testutils.SqsMock{}
-	sqsClient = mockSqs
-	env.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
-
-	scanResult := &dynamodb.ScanOutput{
-		Items: []map[string]*dynamodb.AttributeValue{
-			generateDDBAttributes(models.IntegrationTypeAWS3),
-		},
-	}
-	mockClient.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, errors.New("error"))
-	mockClient.On("GetItem", mock.Anything).Return(generateGetItemOutput(models.IntegrationTypeAWS3), nil)
-	mockClient.On("Scan", mock.Anything).Return(scanResult, nil)
-
-	alreadyExistingAttributes := generateQueueAttributeOutput(t, []string{testAccountID})
-	mockSqs.On("GetQueueAttributes", mock.Anything).Return(&sqs.GetQueueAttributesOutput{Attributes: alreadyExistingAttributes}, nil).Twice()
-	mockSqs.On("SetQueueAttributes", mock.Anything).Return(&sqs.SetQueueAttributesOutput{}, nil).Once()
-	mockSqs.On("SetQueueAttributes", mock.Anything).Return(&sqs.SetQueueAttributesOutput{}, errors.New("error")).Once()
-
-	result := apiTest.DeleteIntegration(&models.DeleteIntegrationInput{
-		IntegrationID: testIntegrationID,
-	})
-
-	require.Error(t, result)
-	// verifying we log appropriate message
-	errorLog := recordedLogs.FilterMessage("failed to re-add SQS permission for integration. " +
-		"SQS is missing permissions that have to be added manually")
-	require.NotNil(t, errorLog)
-	mockClient.AssertExpectations(t)
+	apiTest.AssertExpectations(t)
 }
 
 func generateGetItemOutput(integrationType string) *dynamodb.GetItemOutput {

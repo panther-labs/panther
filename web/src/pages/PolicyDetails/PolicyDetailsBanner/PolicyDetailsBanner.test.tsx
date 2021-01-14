@@ -1,5 +1,3 @@
-package main
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,14 +16,20 @@ package main
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"testing"
+import React from 'react';
+import { render, buildPolicyDetails } from 'test-utils';
+import PolicyDetailsBanner from './PolicyDetailsBanner';
 
-	"github.com/stretchr/testify/assert"
+describe('PolicyDetailsBanner', () => {
+  it('renders the correct data', async () => {
+    const policy = buildPolicyDetails({ displayName: 'My Policy' });
+    const { getByText } = render(<PolicyDetailsBanner policy={policy} />);
+    expect(getByText('Edit Policy')).toBeInTheDocument();
+    expect(getByText('Delete Policy')).toBeInTheDocument();
 
-	"github.com/panther-labs/panther/api/lambda/source/models"
-)
-
-func TestRouter(t *testing.T) {
-	assert.Nil(t, router.VerifyHandlers(&models.LambdaInput{}))
-}
+    expect(getByText('My Policy')).toBeInTheDocument();
+    expect(getByText('FAIL')).toBeInTheDocument();
+    expect(getByText('CRITICAL')).toBeInTheDocument();
+    expect(getByText('AUTO REMEDIATIATABLE')).toBeInTheDocument();
+  });
+});

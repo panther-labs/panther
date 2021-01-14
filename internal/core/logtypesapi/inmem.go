@@ -23,12 +23,15 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 // InMemDB is an in-memory implementation of the LogTypesDatabase.
 // It is useful for tests and for caching results of another implementation.
 type InMemDB struct {
 	mu      sync.RWMutex
+	deleted []string
 	records map[inMemKey]*CustomLogRecord
 }
 
@@ -73,8 +76,11 @@ func (db *InMemDB) CreateCustomLog(_ context.Context, id string, params *CustomL
 		LogType:  id,
 		Revision: 0,
 	}
+	if stringset.Contains(db.deleted, id) {
+		return nil, NewAPIError(ErrAlreadyExists, "record used to exist but was deleted")
+	}
 	if _, exists := db.records[key]; exists {
-		return nil, NewAPIError("Conflict", "record revision mismatch")
+		return nil, NewAPIError(ErrRevisionConflict, "record revision mismatch")
 	}
 	record := &CustomLogRecord{
 		CustomLog: *params,
@@ -126,6 +132,7 @@ func (db *InMemDB) DeleteCustomLog(_ context.Context, id string, revision int64)
 			Revision: rev,
 		})
 	}
+	db.deleted = append(db.deleted, id)
 	return nil
 }
 
@@ -143,4 +150,12 @@ func (db *InMemDB) BatchGetCustomLogs(ctx context.Context, ids ...string) ([]*Cu
 		records = append(records, record)
 	}
 	return records, nil
+}
+
+func (db *InMemDB) ListDeletedLogTypes(ctx context.Context) ([]string, error) {
+	var out []string
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	out = append(out, db.deleted...)
+	return out, nil
 }
