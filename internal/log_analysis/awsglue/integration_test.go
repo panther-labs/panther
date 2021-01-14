@@ -20,6 +20,7 @@ package awsglue
 
 import (
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -110,7 +111,8 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 	created, err := table.CreateJSONPartition(glueClient, refTime)
 	require.NoError(t, err)
 	assert.True(t, created)
-	partitionLocation := getPartitionLocation(t, []string{"2020", "01", "03", "01"})
+	partitionLocation := getPartitionLocation(t, []string{"2020", "01", "03", "01",
+		strconv.Itoa(int(time.Date(2020, 1, 3, 1, 0, 0, 0, time.UTC).Unix()))})
 	require.Equal(t, expectedPath, *partitionLocation)
 
 	getPartitionOutput, err = table.GetPartition(glueClient, refTime)
@@ -122,12 +124,14 @@ func TestIntegrationGlueMetadataPartitions(t *testing.T) {
 	_, err = table.SyncPartitions(glueClient, s3Client, startDate, nil)
 	require.NoError(t, err)
 
-	partitionLocation = getPartitionLocation(t, []string{"2020", "01", "03", "01"})
+	partitionLocation = getPartitionLocation(t, []string{"2020", "01", "03", "01",
+		strconv.Itoa(int(time.Date(2020, 1, 3, 1, 0, 0, 0, time.UTC).Unix()))})
 	require.Equal(t, expectedPath, *partitionLocation)
 
 	_, err = table.deletePartition(glueClient, refTime)
 	require.NoError(t, err)
-	partitionLocation = getPartitionLocation(t, []string{"2020", "01", "03", "01"})
+	partitionLocation = getPartitionLocation(t, []string{"2020", "01", "03", "01",
+		strconv.Itoa(int(time.Date(2020, 1, 3, 1, 0, 0, 0, time.UTC).Unix()))})
 	require.Nil(t, partitionLocation)
 }
 

@@ -158,6 +158,10 @@ func PartitionFromS3Object(s3Bucket, s3ObjectKey string) (*GluePartition, error)
 	}
 	partition.time = time.Date(year, time.Month(month), day, hour, 0, 0, 0, time.UTC)
 
+	// now put all elements into a partition time for easier queries
+	datePartitionKeyValue := PartitionColumnInfo{Key: "partition_time", Value: strconv.FormatInt(partition.time.Unix(), 10)}
+	partition.partitionColumns = append(partition.partitionColumns, datePartitionKeyValue)
+
 	partition.gm = NewGlueTableMetadata(partition.databaseName, partition.tableName, "", GlueTableHourly, nil)
 
 	return partition, nil

@@ -108,6 +108,7 @@ func (gm *GlueTableMetadata) PartitionKeys() (partitions []PartitionKey) {
 	}
 	if gm.Timebin() >= GlueTableHourly {
 		partitions = append(partitions, PartitionKey{Name: "hour", Type: "int"})
+		partitions = append(partitions, PartitionKey{Name: "partition_time", Type: "bigint"})
 	}
 	return partitions
 }
@@ -235,6 +236,12 @@ func (gm *GlueTableMetadata) CreateTableIfNotExists(ctx context.Context, glueAPI
 					aws.String("day"),
 				},
 			},
+			{
+				IndexName: aws.String("partition_time_idx"),
+				Keys: []*string{
+					aws.String("partition_time"),
+				},
+			},
 		},
 	}
 	if _, err := glueAPI.CreateTableWithContext(ctx, createTableInput); err != nil {
@@ -270,6 +277,12 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 					aws.String("day"),
 				},
 			},
+			{
+				IndexName: aws.String("partition_time_idx"),
+				Keys: []*string{
+					aws.String("partition_time"),
+				},
+			},
 		},
 	}
 	if _, err := glueClient.CreateTable(createTableInput); err != nil {
@@ -279,12 +292,29 @@ func (gm *GlueTableMetadata) CreateOrUpdateTable(glueClient glueiface.GlueAPI, b
 				DatabaseName: &gm.databaseName,
 				TableInput:   tableInput,
 			}
-			_, err := glueClient.UpdateTable(updateTableInput)
-			return errors.Wrapf(err, "failed to update table %s.%s", gm.databaseName, gm.tableName)
+			_, errUpdate := glueClient.UpdateTable(updateTableInput)
+			if errUpdate != nil {
+				return errors.Wrapf(errUpdate, "failed to update table %s.%s", gm.databaseName, gm.tableName)
+			}
+			for _, index := range createTableInput.PartitionIndexes {
+				createPartitionIndexInput := &glue.CreatePartitionIndexInput{
+					DatabaseName:   &gm.databaseName,
+					PartitionIndex: index,
+					TableName:      &gm.tableName,
+				}
+				_, errLoop := glueClient.CreatePartitionIndex(createPartitionIndexInput)
+				if errLoop != nil {
+					if awsutils.IsAnyError(errLoop, glue.ErrCodeAlreadyExistsException) {
+						continue
+					}
+					return errors.Wrapf(errLoop, "failed to create index %s for table %s.%s",
+						*index.IndexName, gm.databaseName, gm.tableName)
+				}
+			}
+			return nil
 		}
 		return errors.Wrapf(err, "failed to create table %s.%s", gm.databaseName, gm.tableName)
 	}
-
 	return nil
 }
 
