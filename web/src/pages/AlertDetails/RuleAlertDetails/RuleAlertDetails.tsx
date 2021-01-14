@@ -56,11 +56,7 @@ const RuleAlertDetails: React.FC<RuleAlertDetailsProps> = ({ alert, fetchMore })
 
   const alertDetectionInfo = alert.detection as AlertDetailsRuleInfo;
 
-<<<<<<< HEAD
-  const { data, loading, error } = useRuleTeaser({
-=======
-  const { data, loading } = useGetRuleSummary({
->>>>>>> 2dc79ada (fix: issue where alert wouldn't render if rule got deleted (#2410))
+  const { data, loading } = useRuleTeaser({
     variables: { input: { id: alertDetectionInfo.ruleId } },
   });
 

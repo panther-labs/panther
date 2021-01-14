@@ -32,11 +32,7 @@ interface PolicyAlertDetailsProps {
 
 const PolicyAlertDetails: React.FC<PolicyAlertDetailsProps> = ({ alert }) => {
   const alertDetectionInfo = alert.detection as AlertSummaryPolicyInfo;
-<<<<<<< HEAD
-  const { data, loading, error } = usePolicyTeaser({
-=======
-  const { data, loading } = useGetPolicySummary({
->>>>>>> 2dc79ada (fix: issue where alert wouldn't render if rule got deleted (#2410))
+  const { data, loading } = usePolicyTeaser({
     variables: { input: { id: alertDetectionInfo.policyId } },
   });
 
