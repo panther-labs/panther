@@ -40,6 +40,7 @@ type LogTypesAPILambdaClient struct {
 
 type LogTypesAPIPayload struct {
 	ListAvailableLogTypes *struct{}          `json:"ListAvailableLogTypes,omitempty"`
+	ListDeletedCustomLogs *struct{}          `json:"ListDeletedCustomLogs,omitempty"`
 	GetCustomLog          *GetCustomLogInput `json:"GetCustomLog,omitempty"`
 	PutCustomLog          *PutCustomLogInput `json:"PutCustomLog,omitempty"`
 	DelCustomLog          *DelCustomLogInput `json:"DelCustomLog,omitempty"`
@@ -51,6 +52,17 @@ func (c *LogTypesAPILambdaClient) ListAvailableLogTypes(ctx context.Context) (*A
 		ListAvailableLogTypes: &struct{}{},
 	}
 	reply := AvailableLogTypes{}
+	if err := c.invoke(ctx, &payload, &reply); err != nil {
+		return nil, err
+	}
+	return &reply, nil
+}
+
+func (c *LogTypesAPILambdaClient) ListDeletedCustomLogs(ctx context.Context) (*DeletedCustomLogs, error) {
+	payload := LogTypesAPIPayload{
+		ListDeletedCustomLogs: &struct{}{},
+	}
+	reply := DeletedCustomLogs{}
 	if err := c.invoke(ctx, &payload, &reply); err != nil {
 		return nil, err
 	}

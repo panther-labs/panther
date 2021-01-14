@@ -28,13 +28,17 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 
+	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
+	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 	"github.com/panther-labs/panther/pkg/x/lambdamux"
 )
@@ -58,6 +62,7 @@ func main() {
 	// defer logger.Sync()
 
 	session := session.Must(session.NewSession())
+	lambdaClient := lambdaclient.New(session)
 	nativeLogTypes := logtypes.CollectNames(registry.NativeLogTypes())
 	// FIXME: uncomment the below line to add the resource history to the of available logTypes and allow rules to target
 	// nativeLogTypes = append(nativeLogTypes, logtypes.CollectNames(snapshotlogs.LogTypes())...)
@@ -70,11 +75,31 @@ func main() {
 			DB:        dynamodb.New(session),
 			TableName: config.LogTypesTableName,
 		},
-		DataCatalog: datacatalog.Client{
-			QueueURL: config.DataCatalogQueueURL,
-			SQSAPI:   sqs.New(session),
+		UpdateDataCatalog: func(ctx context.Context, logType string, from, to []logschema.FieldSchema) error {
+			if from == nil || to == nil {
+				return nil
+			}
+			client := datacatalog.Client{
+				QueueURL: config.DataCatalogQueueURL,
+				SQSAPI:   sqs.New(session),
+			}
+			return client.SendUpdateTableForLogType(ctx, logType)
 		},
-		LambdaClient: lambdaclient.New(session),
+		LogTypeInUse: func(ctx context.Context) ([]string, error) {
+			input := &models.LambdaInput{
+				ListIntegrations: &models.ListIntegrationsInput{},
+			}
+			var integrations []*models.SourceIntegration
+			const sourcesAPILambda = "panther-source-api"
+			if err := genericapi.Invoke(lambdaClient, sourcesAPILambda, input, &integrations); err != nil {
+				return nil, errors.Wrap(err, "failed to retrieve existing integrations")
+			}
+			var logTypes []string
+			for _, output := range integrations {
+				logTypes = append(logTypes, output.RequiredLogTypes()...)
+			}
+			return logTypes, nil
+		},
 	}
 
 	validate := validator.New()
@@ -88,6 +113,10 @@ func main() {
 		// Any APIErrors returned by the routes are not logged as these were properly handled by the API
 		// All errors are return as `{"error": {"code": "ERR_CODE", "message": "ERROR_MSG"}}` in the reply.
 		Decorate: func(name string, handler lambdamux.Handler) lambdamux.Handler {
+			// This route is different and should not embed errors
+			if name == lambdamux.IgnoreCase("ListAvailableLogTypes") {
+				return handler
+			}
 			return lambdamux.HandlerFunc(func(ctx context.Context, payload []byte) ([]byte, error) {
 				reply, err := handler.Invoke(ctx, payload)
 				if err != nil {

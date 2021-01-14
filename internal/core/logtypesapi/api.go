@@ -22,10 +22,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 )
 
 const LambdaName = "panther-logtypes-api"
@@ -39,17 +38,17 @@ const LambdaName = "panther-logtypes-api"
 
 // LogTypesAPI handles the business logic of log types LogTypesAPI
 type LogTypesAPI struct {
-	NativeLogTypes func() []string
-	Database       LogTypesDatabase
-	LambdaClient   lambdaiface.LambdaAPI
-	DataCatalog    datacatalog.Client
+	NativeLogTypes    func() []string
+	Database          LogTypesDatabase
+	UpdateDataCatalog func(ctx context.Context, logType string, from, to []logschema.FieldSchema) error
+	// FIXME: Rename to LogTypesInUse
+	LogTypeInUse func(ctx context.Context) ([]string, error)
 }
 
 // LogTypesDatabase handles the external actions required for LogTypesAPI to be implemented
 type LogTypesDatabase interface {
 	// Return an index of available log types
 	IndexLogTypes(ctx context.Context) ([]string, error)
-
 	// Create a new custom log record
 	CreateCustomLog(ctx context.Context, id string, params *CustomLog) (*CustomLogRecord, error)
 	// Get a single custom log record
@@ -60,6 +59,8 @@ type LogTypesDatabase interface {
 	DeleteCustomLog(ctx context.Context, id string, currentRevision int64) error
 	// Get multiple custom log records at their latest revision
 	BatchGetCustomLogs(ctx context.Context, ids ...string) ([]*CustomLogRecord, error)
+	// List deleted log types
+	ListDeletedLogTypes(ctx context.Context) ([]string, error)
 }
 
 const (
