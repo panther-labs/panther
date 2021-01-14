@@ -602,9 +602,8 @@ func PantherNames(setString string) []string {
 	return set
 }
 
-// Call a method for each string in the passed callOnSet.
-// Returns a slice of errors where the index of the error is the index of the callFn argument from
-// the callOnSet slice
+// Call a method for every string in the callOnSet string slice. Return a slice of errors where the
+// index of the error is the index of the callOnSet string used as the argument in the function call.
 func CallForEachString(label string, callOnSet []string, callFn func(string) error) (callErrors []error) {
 	for _, setEntry := range callOnSet {
 		log.Infof("%s: %v", label, setEntry)
