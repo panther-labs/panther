@@ -146,18 +146,13 @@ class TestImmutableNestedList(TestCase):
 
 
 class TestJSONSerialization(TestCase):
+
     def test_immutable_list(self) -> None:
         initial_list = [1, 2, 3]
         immutable_list = ImmutableList(initial_list)
-        self.assertEqual(
-            json.dumps(initial_list),
-            json.dumps(immutable_list, default=json_encoder)
-        )
+        self.assertEqual(json.dumps(initial_list), json.dumps(immutable_list, default=json_encoder))
 
     def test_immutable_dict(self) -> None:
         initial_dict = {'a': [1, 2, 3], 'b': {'c': True}}
         immutable_dict = ImmutableDict(initial_dict)
-        self.assertEqual(
-            json.dumps(initial_dict),
-            json.dumps(immutable_dict, default=json_encoder)
-        )
+        self.assertEqual(json.dumps(initial_dict), json.dumps(immutable_dict, default=json_encoder))
