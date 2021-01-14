@@ -243,7 +243,8 @@ func updateTables(item *ddb.Integration, input *models.UpdateIntegrationSettings
 	var existingLogTypes, newLogTypes []string
 	switch item.IntegrationType {
 	case models.IntegrationTypeAWS3:
-		existingLogTypes = item.S3PrefixLogTypes.LogTypes()
+		// Need to include `item.LogTypes` for backwards compatibility reasons
+		existingLogTypes = append(item.S3PrefixLogTypes.LogTypes(), item.LogTypes...)
 		newLogTypes = input.S3PrefixLogTypes.LogTypes()
 	case models.IntegrationTypeSqs:
 		existingLogTypes = item.SqsConfig.LogTypes
