@@ -17,17 +17,17 @@
  */
 
 import React from 'react';
-import { PolicyDetails, ResourceDetails } from 'Generated/schema';
+import { Policy, ResourceDetails } from 'Generated/schema';
 import { useSnackbar } from 'pouncejs';
 import { ResourceDetailsDocument } from 'Pages/ResourceDetails';
-import { PolicyDetailsDocument } from 'Pages/PolicyDetails';
+import { GetPolicyDetailsDocument } from 'Pages/PolicyDetails';
 import { getOperationName } from 'apollo-utilities';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useSuppressPolicy } from './graphql/suppressPolicy.generated';
 
 interface UsePolicySuppressionProps {
   /** A list of IDs whose corresponding policies should receive the suppression */
-  policyIds: PolicyDetails['id'][];
+  policyIds: Policy['id'][];
 
   /** A list of resource patterns (globs) whose matching resources should neglect the above policies
    * during their checks. In other words the resource patterns that should be suppressed for the
@@ -42,7 +42,7 @@ const usePolicySuppression = ({ policyIds, resourcePatterns }: UsePolicySuppress
     awaitRefetchQueries: true,
     refetchQueries: [
       getOperationName(ResourceDetailsDocument),
-      getOperationName(PolicyDetailsDocument),
+      getOperationName(GetPolicyDetailsDocument),
     ],
     variables: {
       input: { policyIds, resourcePatterns },

@@ -17,25 +17,25 @@
  */
 
 import React from 'react';
-import { buildRuleSummary, render } from 'test-utils';
+import { buildRule, render } from 'test-utils';
 import { SeverityEnum } from 'Generated/schema';
 import urls from 'Source/urls';
 import RuleCard from './index';
 
 describe('RuleCard', () => {
   it('displays the correct Alert data in the card', async () => {
-    const ruleData = buildRuleSummary();
+    const ruleData = buildRule();
 
     const { getByText } = render(<RuleCard rule={ruleData} />);
 
     expect(getByText(ruleData.displayName)).toBeInTheDocument();
     expect(getByText('Destinations')).toBeInTheDocument();
-    expect(getByText(SeverityEnum.Info)).toBeInTheDocument();
+    expect(getByText(SeverityEnum.High)).toBeInTheDocument();
     expect(getByText('DISABLED')).toBeInTheDocument();
   });
 
   it('should check links are valid', async () => {
-    const ruleData = buildRuleSummary();
+    const ruleData = buildRule();
 
     const { getByAriaLabel } = render(<RuleCard rule={ruleData} />);
     expect(getByAriaLabel('Link to Rule')).toHaveAttribute(

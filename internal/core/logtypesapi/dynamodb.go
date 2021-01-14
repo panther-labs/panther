@@ -35,6 +35,7 @@ import (
 	"github.com/panther-labs/panther/internal/core/logtypesapi/transact"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/customlogs"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 // DynamoDBLogTypes provides logtypes api actions for DDB
@@ -54,6 +55,7 @@ const (
 	attrRecordKind = "RecordKind"
 	attrDeleted    = "IsDeleted"
 	attrRevision   = "revision"
+	attrLogType    = "logType"
 
 	recordKindStatus      = "status"
 	attrAvailableLogTypes = "AvailableLogTypes"
@@ -396,4 +398,45 @@ func newStringSet(strings ...string) *dynamodb.AttributeValue {
 	return &dynamodb.AttributeValue{
 		SS: aws.StringSlice(strings),
 	}
+}
+
+func (d *DynamoDBLogTypes) ListDeletedLogTypes(ctx context.Context) ([]string, error) {
+	// Filter deleted
+	cond := expression.Name(attrDeleted).Equal(expression.Value(true))
+	cond = cond.And(expression.Name(attrRecordKind).Equal(expression.Value(recordKindCustom)))
+	// Only fetch 'logType' attr
+	proj := expression.NamesList(expression.Name(attrLogType))
+	expr, err := expression.NewBuilder().WithFilter(cond).WithProjection(proj).Build()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to build DynamoDB expression for listing deleted log types")
+	}
+	input := dynamodb.ScanInput{
+		TableName:                 aws.String(d.TableName),
+		ProjectionExpression:      expr.Projection(),
+		FilterExpression:          expr.Filter(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+	}
+	var out []string
+	var itemErr error
+	scan := func(p *dynamodb.ScanOutput, _ bool) bool {
+		for _, item := range p.Items {
+			row := struct {
+				LogType string `json:"logType"`
+			}{}
+			if err := dynamodbattribute.UnmarshalMap(item, &row); err != nil {
+				itemErr = errors.Wrap(err, "failed to unmarshal DynamoDB item while scanning for deleted log types")
+				return false
+			}
+			out = stringset.Append(out, row.LogType)
+		}
+		return true
+	}
+	if err := d.DB.ScanPagesWithContext(ctx, &input, scan); err != nil {
+		return nil, errors.Wrap(err, "failed to scan DynamoDB for deleted log types")
+	}
+	if itemErr != nil {
+		return nil, itemErr
+	}
+	return out, nil
 }

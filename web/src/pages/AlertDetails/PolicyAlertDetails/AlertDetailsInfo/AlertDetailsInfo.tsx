@@ -28,11 +28,11 @@ import AlertDeliverySection from 'Pages/AlertDetails/common/AlertDeliverySection
 import RelatedDestinations from 'Components/RelatedDestinations';
 import useAlertDestinations from 'Hooks/useAlertDestinations';
 import { useListComplianceSourceNames } from 'Source/graphql/queries';
-import { PolicyTeaser } from '../graphql/policyTeaser.generated';
+import { GetPolicySummary } from '../graphql/getPolicySummary.generated';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails['alert'];
-  policy: PolicyTeaser['policy'];
+  policy?: GetPolicySummary['policy'];
 }
 
 const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, policy }) => {

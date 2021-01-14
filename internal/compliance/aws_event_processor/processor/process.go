@@ -381,7 +381,7 @@ func processCloudTrailLog(detail gjson.Result, metadata *CloudTrailMetadata, cha
 	if len(newChanges) > 0 {
 		readOnly := detail.Get("readOnly")
 		if readOnly.Exists() && readOnly.Bool() {
-			zap.L().Warn(
+			zap.L().Debug(
 				"processing newChanges from event marked readOnly",
 				zap.String("eventSource", metadata.eventSource),
 				zap.String("eventName", metadata.eventName),

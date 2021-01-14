@@ -44,37 +44,105 @@ func TestGenerateViewAllLogs(t *testing.T) {
 	table1 := awsglue.NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "table1", "test table1", awsglue.GlueTableHourly, &table1Event{})
 	table2 := awsglue.NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "table2", "test table2", awsglue.GlueTableHourly, &table2Event{})
 	// nolint (lll)
-	expectedSQL := `create or replace view panther_views.all_logs as
-select 'panther_logs' AS p_db_name,day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,year from panther_logs.table1
+	expectedAllLogsSQL := `create or replace view panther_views.all_logs as
+select 'panther_logs' AS p_db_name,day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_logs.table1
 	union all
-select 'panther_logs' AS p_db_name,day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,year from panther_logs.table2
+select 'panther_logs' AS p_db_name,day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_logs.table2
 ;
 `
-	sql, _, err := generateViewAllLogs([]*awsglue.GlueTableMetadata{table1, table2})
+	// nolint (lll)
+	expectedAllRuleMatchesSQL := `create or replace view panther_views.all_rule_matches as
+select 'panther_rule_matches' AS p_db_name,day,hour,month,p_alert_context,p_alert_creation_time,p_alert_id,p_alert_update_time,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_rule_id,p_rule_reports,p_rule_tags,p_source_id,p_source_label,partition_time,year from panther_rule_matches.table1
+	union all
+select 'panther_rule_matches' AS p_db_name,day,hour,month,p_alert_context,p_alert_creation_time,p_alert_id,p_alert_update_time,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_rule_id,p_rule_reports,p_rule_tags,p_source_id,p_source_label,partition_time,year from panther_rule_matches.table2
+;
+`
+	// nolint (lll)
+	expectedAllRuleErrorsSQL := `create or replace view panther_views.all_rule_errors as
+select 'panther_rule_errors' AS p_db_name,day,hour,month,p_alert_context,p_alert_creation_time,p_alert_id,p_alert_update_time,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_rule_error,p_rule_id,p_rule_reports,p_rule_tags,p_source_id,p_source_label,partition_time,year from panther_rule_errors.table1
+	union all
+select 'panther_rule_errors' AS p_db_name,day,hour,month,p_alert_context,p_alert_creation_time,p_alert_id,p_alert_update_time,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_rule_error,p_rule_id,p_rule_reports,p_rule_tags,p_source_id,p_source_label,partition_time,year from panther_rule_errors.table2
+;
+`
+	// nolint (lll)
+	expectedAllDatabasesSQL := `create or replace view panther_views.all_databases as
+select 'panther_logs' AS p_db_name,day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_logs.table1
+	union all
+select 'panther_logs' AS p_db_name,day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_logs.table2
+	union all
+select 'panther_rule_matches' AS p_db_name,day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_rule_matches.table1
+	union all
+select 'panther_rule_matches' AS p_db_name,day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_rule_matches.table2
+	union all
+select 'panther_rule_errors' AS p_db_name,day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_rule_errors.table1
+	union all
+select 'panther_rule_errors' AS p_db_name,day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_rule_errors.table2
+;
+`
+
+	sqlStatements, err := GenerateLogViews([]*awsglue.GlueTableMetadata{table1, table2})
 	require.NoError(t, err)
-	require.Equal(t, expectedSQL, sql)
+	require.Len(t, sqlStatements, 4)
+	require.Equal(t, expectedAllLogsSQL, sqlStatements[0])
+	require.Equal(t, expectedAllRuleMatchesSQL, sqlStatements[1])
+	require.Equal(t, expectedAllRuleErrorsSQL, sqlStatements[2])
+	require.Equal(t, expectedAllDatabasesSQL, sqlStatements[3])
 }
 
 func TestGenerateViewAllCloudSecurity(t *testing.T) {
 	table1 := awsglue.NewGlueTableMetadata(pantherdb.CloudSecurityDatabase, "table1", "test table1", awsglue.GlueTableHourly, &table1Event{})
 	table2 := awsglue.NewGlueTableMetadata(pantherdb.CloudSecurityDatabase, "table2", "test table2", awsglue.GlueTableHourly, &table2Event{})
 	// nolint (lll)
-	expectedSQL := `create or replace view panther_views.all_cloudsecurity as
-select 'panther_cloudsecurity' AS p_db_name,day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,year from panther_cloudsecurity.table1
+	expectedAllCloudsecSQL := `create or replace view panther_views.all_cloudsecurity as
+select 'panther_cloudsecurity' AS p_db_name,day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_cloudsecurity.table1
 	union all
-select 'panther_cloudsecurity' AS p_db_name,day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,year from panther_cloudsecurity.table2
+select 'panther_cloudsecurity' AS p_db_name,day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_cloudsecurity.table2
 ;
 `
-	sql, _, err := generateViewAllCloudSecurity([]*awsglue.GlueTableMetadata{table1, table2})
+	// nolint (lll)
+	expectedAllRuleMatchesSQL := `create or replace view panther_views.all_rule_matches as
+select 'panther_rule_matches' AS p_db_name,day,hour,month,p_alert_context,p_alert_creation_time,p_alert_id,p_alert_update_time,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_rule_id,p_rule_reports,p_rule_tags,p_source_id,p_source_label,partition_time,year from panther_rule_matches.table1
+	union all
+select 'panther_rule_matches' AS p_db_name,day,hour,month,p_alert_context,p_alert_creation_time,p_alert_id,p_alert_update_time,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_rule_id,p_rule_reports,p_rule_tags,p_source_id,p_source_label,partition_time,year from panther_rule_matches.table2
+;
+`
+	// nolint (lll)
+	expectedAllRuleErrorsSQL := `create or replace view panther_views.all_rule_errors as
+select 'panther_rule_errors' AS p_db_name,day,hour,month,p_alert_context,p_alert_creation_time,p_alert_id,p_alert_update_time,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_rule_error,p_rule_id,p_rule_reports,p_rule_tags,p_source_id,p_source_label,partition_time,year from panther_rule_errors.table1
+	union all
+select 'panther_rule_errors' AS p_db_name,day,hour,month,p_alert_context,p_alert_creation_time,p_alert_id,p_alert_update_time,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_rule_error,p_rule_id,p_rule_reports,p_rule_tags,p_source_id,p_source_label,partition_time,year from panther_rule_errors.table2
+;
+`
+	// nolint (lll)
+	expectedAllDatabasesSQL := `create or replace view panther_views.all_databases as
+select 'panther_cloudsecurity' AS p_db_name,day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_cloudsecurity.table1
+	union all
+select 'panther_cloudsecurity' AS p_db_name,day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_cloudsecurity.table2
+	union all
+select 'panther_rule_matches' AS p_db_name,day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_rule_matches.table1
+	union all
+select 'panther_rule_matches' AS p_db_name,day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_rule_matches.table2
+	union all
+select 'panther_rule_errors' AS p_db_name,day,hour,month,NULL AS p_any_aws_account_ids,NULL AS p_any_aws_arns,NULL AS p_any_aws_instance_ids,NULL AS p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_rule_errors.table1
+	union all
+select 'panther_rule_errors' AS p_db_name,day,hour,month,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label,partition_time,year from panther_rule_errors.table2
+;
+`
+
+	sqlStatements, err := GenerateLogViews([]*awsglue.GlueTableMetadata{table1, table2})
 	require.NoError(t, err)
-	require.Equal(t, expectedSQL, sql)
+	require.Len(t, sqlStatements, 4)
+	require.Equal(t, expectedAllCloudsecSQL, sqlStatements[0])
+	require.Equal(t, expectedAllRuleMatchesSQL, sqlStatements[1])
+	require.Equal(t, expectedAllRuleErrorsSQL, sqlStatements[2])
+	require.Equal(t, expectedAllDatabasesSQL, sqlStatements[3])
 }
 
 func TestGenerateViewAllLogsFail(t *testing.T) {
 	// one has daily partitions and one has hourly
 	table1 := awsglue.NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "table1", "test table1", awsglue.GlueTableDaily, &table1Event{})
 	table2 := awsglue.NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "table2", "test table2", awsglue.GlueTableHourly, &table2Event{})
-	_, _, err := generateViewAllLogs([]*awsglue.GlueTableMetadata{table1, table2})
+	_, err := GenerateLogViews([]*awsglue.GlueTableMetadata{table1, table2})
 	require.Error(t, err)
 	require.True(t, strings.Contains(err.Error(), "all tables do not share same partition keys"))
 }

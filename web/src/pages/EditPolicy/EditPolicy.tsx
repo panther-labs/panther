@@ -17,23 +17,24 @@
  */
 
 import React from 'react';
-import { Alert, Button, Box, useSnackbar, Flex } from 'pouncejs';
+import { Alert, Box, useSnackbar } from 'pouncejs';
 import PolicyForm from 'Components/forms/PolicyForm';
-import useModal from 'Hooks/useModal';
 import useRouter from 'Hooks/useRouter';
-import { MODALS } from 'Components/utils/Modal';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage, formatJSON } from 'Helpers/utils';
-import { usePolicyDetails } from './graphql/policyDetails.generated';
+import { useGetPolicyDetails } from './graphql/getPolicyDetails.generated';
 import { useUpdatePolicy } from './graphql/updatePolicy.generated';
 import Skeleton from './Skeleton';
 
 const EditPolicyPage: React.FC = () => {
   const { match } = useRouter<{ id: string }>();
-  const { showModal } = useModal();
   const { pushSnackbar } = useSnackbar();
 
-  const { error: fetchPolicyError, data: queryData, loading: isFetchingPolicy } = usePolicyDetails({
+  const {
+    error: fetchPolicyError,
+    data: queryData,
+    loading: isFetchingPolicy,
+  } = useGetPolicyDetails({
     variables: {
       input: {
         id: match.params.id,
@@ -102,19 +103,6 @@ const EditPolicyPage: React.FC = () => {
 
   return (
     <Box mb={6}>
-      <Flex justify="flex-end" mb={5}>
-        <Button
-          variantColor="red"
-          onClick={() =>
-            showModal({
-              modal: MODALS.DELETE_POLICY,
-              props: { policy: queryData.policy },
-            })
-          }
-        >
-          Delete
-        </Button>
-      </Flex>
       <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
       {updateError && (
         <Box mt={2} mb={6}>

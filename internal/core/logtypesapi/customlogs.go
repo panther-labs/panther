@@ -28,11 +28,10 @@ import (
 	"go.uber.org/multierr"
 	"gopkg.in/yaml.v2"
 
-	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/customlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 // GetCustomLog gets a custom log record for the specified id and revision
@@ -56,8 +55,8 @@ type GetCustomLogInput struct {
 	Revision int64  `json:"revision,omitempty" validate:"omitempty,min=1" description:"Log record revision (0 means latest)"`
 }
 type GetCustomLogOutput struct {
-	Result *CustomLogRecord `json:"record,omitempty" validate:"required_without=Error" description:"The custom log record"`
-	Error  *APIError        `json:"error,omitempty" validate:"required_without=Result" description:"An error that occurred"`
+	Result *CustomLogRecord `json:"record,omitempty" description:"The custom log record (field omitted if an error occurred)"`
+	Error  *APIError        `json:"error,omitempty" description:"An error that occurred while fetching the record"`
 }
 
 // CustomLogRecord is a stored record for a custom log type
@@ -80,43 +79,47 @@ func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInp
 	if err != nil {
 		return nil, err
 	}
-	currentRevision := input.Revision
-	if currentRevision == 0 {
+	switch currentRevision := input.Revision; currentRevision {
+	case 0:
 		result, err := api.Database.CreateCustomLog(ctx, id, &input.CustomLog)
 		if err != nil {
 			return nil, err
 		}
+		if err := api.UpdateDataCatalog(ctx, input.LogType, nil, schema.Fields); err != nil {
+			// The error will be shown to the user as a "ServerError"
+			return nil, errors.Wrapf(err, "could not queue event for %q database update", input.LogType)
+		}
+		return &PutCustomLogOutput{Result: result}, nil
+	default:
+		current, err := api.Database.GetCustomLog(ctx, id, 0)
+		if err != nil {
+			return nil, err
+		}
+		if current == nil {
+			return nil, NewAPIError(ErrNotFound, fmt.Sprintf("record %q was not found", id))
+		}
+		if current.Revision != currentRevision {
+			return nil, NewAPIError(ErrRevisionConflict, fmt.Sprintf("record %q is not on revision %d", id, currentRevision))
+		}
+
+		currentSchema, err := buildSchema(id, &current.CustomLog)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := api.checkUpdate(currentSchema, schema); err != nil {
+			return nil, NewAPIError(ErrInvalidUpdate, fmt.Sprintf("schema update is not backwards compatible: %s", err))
+		}
+		result, err := api.Database.UpdateCustomLog(ctx, id, currentRevision, &input.CustomLog)
+		if err != nil {
+			return nil, err
+		}
+		if err := api.UpdateDataCatalog(ctx, input.LogType, currentSchema.Fields, schema.Fields); err != nil {
+			// The error will be shown to the user as a "ServerError"
+			return nil, errors.Wrapf(err, "could not queue event for %q database update", input.LogType)
+		}
 		return &PutCustomLogOutput{Result: result}, nil
 	}
-	current, err := api.Database.GetCustomLog(ctx, id, 0)
-	if err != nil {
-		return nil, err
-	}
-	if current == nil {
-		return nil, NewAPIError(ErrNotFound, fmt.Sprintf("record %q was not found", id))
-	}
-	if current.Revision != currentRevision {
-		return nil, NewAPIError(ErrRevisionConflict, fmt.Sprintf("record %q is not on revision %d", id, currentRevision))
-	}
-
-	currentSchema, err := buildSchema(id, &current.CustomLog)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := api.checkUpdate(currentSchema, schema); err != nil {
-		return nil, NewAPIError(ErrInvalidUpdate, fmt.Sprintf("schema update is not backwards compatible: %s", err))
-	}
-
-	result, err := api.Database.UpdateCustomLog(ctx, id, currentRevision, &input.CustomLog)
-	if err != nil {
-		return nil, err
-	}
-	if err := api.DataCatalog.SendUpdateTableForLogType(ctx, id); err != nil {
-		// The error will be shown to the user as a "ServerError"
-		return nil, errors.Wrapf(err, "could not queue event for %q database update", input.LogType)
-	}
-	return &PutCustomLogOutput{Result: result}, nil
 }
 
 func (api *LogTypesAPI) checkUpdate(a, b *logschema.Schema) error {
@@ -168,25 +171,27 @@ type PutCustomLogInput struct {
 
 //nolint:lll
 type PutCustomLogOutput struct {
-	Result *CustomLogRecord `json:"record,omitempty" validate:"required_without=Error" description:"The modified record"`
-	Error  *APIError        `json:"error,omitempty" validate:"required_without=Result" description:"An error that occurred during the operation"`
+	Result *CustomLogRecord `json:"record,omitempty" description:"The modified record (field is omitted if an error occurred)"`
+	Error  *APIError        `json:"error,omitempty" description:"An error that occurred during the operation"`
 }
 
 func (api *LogTypesAPI) DelCustomLog(ctx context.Context, input *DelCustomLogInput) (*DelCustomLogOutput, error) {
-	inUse, err := api.getLogTypesInUse()
+	inUse, err := api.LogTypeInUse(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, logType := range inUse {
-		if logType == input.LogType {
-			return nil, NewAPIError(ErrInUse, fmt.Sprintf("log %s in use", input.LogType))
-		}
+	if stringset.Contains(inUse, input.LogType) {
+		return nil, NewAPIError(ErrInUse, fmt.Sprintf("log %s in use", input.LogType))
 	}
 
 	id, rev := customlogs.LogType(input.LogType), input.Revision
 	if err := api.Database.DeleteCustomLog(ctx, id, rev); err != nil {
 		return nil, err
+	}
+	if err := api.UpdateDataCatalog(ctx, input.LogType, nil, nil); err != nil {
+		// The error will be shown to the user as a "ServerError"
+		return nil, errors.Wrapf(err, "could not queue event for %q database update", input.LogType)
 	}
 	return &DelCustomLogOutput{}, nil
 }
@@ -197,7 +202,7 @@ type DelCustomLogInput struct {
 }
 
 type DelCustomLogOutput struct {
-	Error *APIError `json:"error,omitempty" validate:"required_without=Result" description:"The delete record"`
+	Error *APIError `json:"error,omitempty" description:"The delete record"`
 }
 
 func (api *LogTypesAPI) ListCustomLogs(ctx context.Context) (*ListCustomLogsOutput, error) {
@@ -221,25 +226,8 @@ func (api *LogTypesAPI) ListCustomLogs(ctx context.Context) (*ListCustomLogsOutp
 	return &ListCustomLogsOutput{CustomLogs: records}, nil
 }
 
-func (api *LogTypesAPI) getLogTypesInUse() ([]string, error) {
-	// we need to update the cache
-	input := &models.LambdaInput{
-		ListIntegrations: &models.ListIntegrationsInput{},
-	}
-	var integrations []*models.SourceIntegration
-	const sourcesAPILambda = "panther-source-api"
-	if err := genericapi.Invoke(api.LambdaClient, sourcesAPILambda, input, &integrations); err != nil {
-		return nil, errors.Wrap(err, "failed to retrieve existing integrations")
-	}
-	var logTypes []string
-	for _, output := range integrations {
-		logTypes = append(logTypes, output.RequiredLogTypes()...)
-	}
-	return logTypes, nil
-}
-
 //nolint:lll
 type ListCustomLogsOutput struct {
-	CustomLogs []*CustomLogRecord `json:"customLogs" validate:"required,min=0" description:"Custom log records stored"`
-	Error      *APIError          `json:"error,omitempty" validate:"required_without=Result" description:"An error that occurred during the operation"`
+	CustomLogs []*CustomLogRecord `json:"customLogs" description:"Custom log records stored"`
+	Error      *APIError          `json:"error,omitempty" description:"An error that occurred during the operation"`
 }

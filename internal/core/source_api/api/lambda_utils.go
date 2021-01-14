@@ -29,26 +29,26 @@ const (
 	messageForwarderLambda = "panther-message-forwarder"
 )
 
-func AddSourceAsLambdaTrigger(integrationID string) error {
+func (api *API) AddSourceAsLambdaTrigger(integrationID string) error {
 	input := &lambda.CreateEventSourceMappingInput{
-		EventSourceArn: aws.String(SourceSqsQueueArn(integrationID)),
+		EventSourceArn: aws.String(api.SourceSqsQueueArn(integrationID)),
 		FunctionName:   aws.String(messageForwarderLambda),
 		Enabled:        aws.Bool(true),
 	}
-	_, err := lambdaClient.CreateEventSourceMapping(input)
+	_, err := api.LambdaClient.CreateEventSourceMapping(input)
 	if err != nil {
 		return errors.Wrap(err, "failed to configure new trigger for message forwarder lambda")
 	}
 	return nil
 }
 
-func RemoveSourceFromLambdaTrigger(integrationID string) error {
+func (api *API) RemoveSourceFromLambdaTrigger(integrationID string) error {
 	listInput := &lambda.ListEventSourceMappingsInput{
 		FunctionName:   aws.String(messageForwarderLambda),
-		EventSourceArn: aws.String(SourceSqsQueueArn(integrationID)),
+		EventSourceArn: aws.String(api.SourceSqsQueueArn(integrationID)),
 		MaxItems:       aws.Int64(1),
 	}
-	listOutput, err := lambdaClient.ListEventSourceMappings(listInput)
+	listOutput, err := api.LambdaClient.ListEventSourceMappings(listInput)
 	if err != nil {
 		return errors.Wrap(err, "failed to list lambda event mappings")
 	}
@@ -63,7 +63,7 @@ func RemoveSourceFromLambdaTrigger(integrationID string) error {
 	deleteInput := &lambda.DeleteEventSourceMappingInput{
 		UUID: eventSourceUUID,
 	}
-	_, err = lambdaClient.DeleteEventSourceMapping(deleteInput)
+	_, err = api.LambdaClient.DeleteEventSourceMapping(deleteInput)
 	if err != nil {
 		return errors.Wrap(err, "failed to delete source mapping")
 	}

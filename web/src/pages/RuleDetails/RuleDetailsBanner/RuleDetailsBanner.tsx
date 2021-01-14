@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Box, Button, Flex, Card, Heading } from 'pouncejs';
-import { RuleDetails } from 'Generated/schema';
+import { Rule } from 'Generated/schema';
 import urls from 'Source/urls';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
@@ -31,7 +31,7 @@ import RelatedDestinations from 'Components/RelatedDestinations/RelatedDestinati
 import useDetectionDestinations from 'Hooks/useDetectionDestinations';
 
 interface ResourceDetailsInfoProps {
-  rule?: RuleDetails;
+  rule?: Rule;
 }
 
 const RuleDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
@@ -39,16 +39,21 @@ const RuleDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
   const {
     detectionDestinations,
     loading: loadingDetectionDestinations,
-  } = useDetectionDestinations({ rule });
+  } = useDetectionDestinations({ detection: rule });
 
   return (
     <React.Fragment>
       <Breadcrumbs.Actions>
         <Flex spacing={4} justify="flex-end">
-          <LinkButton aria-label="Edit Rule" to={urls.logAnalysis.rules.edit(rule.id)}>
-            Edit
+          <LinkButton
+            icon="pencil"
+            aria-label="Edit Rule"
+            to={urls.logAnalysis.rules.edit(rule.id)}
+          >
+            Edit Rule
           </LinkButton>
           <Button
+            icon="trash"
             variantColor="red"
             aria-label="Delete Rule"
             onClick={() =>
@@ -58,7 +63,7 @@ const RuleDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
               })
             }
           >
-            Delete
+            Delete Rule
           </Button>
         </Flex>
       </Breadcrumbs.Actions>

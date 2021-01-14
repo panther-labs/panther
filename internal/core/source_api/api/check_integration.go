@@ -44,60 +44,59 @@ const (
 )
 
 var (
-	evaluateIntegrationFunc       = evaluateIntegration
 	checkIntegrationInternalError = &genericapi.InternalError{Message: "Failed to validate source. Please try again later"}
 )
 
 // CheckIntegration adds a set of new integrations in a batch.
-func (api API) CheckIntegration(input *models.CheckIntegrationInput) (*models.SourceIntegrationHealth, error) {
+func (api *API) CheckIntegration(input *models.CheckIntegrationInput) (*models.SourceIntegrationHealth, error) {
 	zap.L().Debug("beginning source configuration check")
 	switch input.IntegrationType {
 	case models.IntegrationTypeAWSScan:
-		return checkAwsScanIntegration(input), nil
+		return api.checkAwsScanIntegration(input), nil
 	case models.IntegrationTypeAWS3:
-		return checkAwsS3Integration(input), nil
+		return api.checkAwsS3Integration(input), nil
 	case models.IntegrationTypeSqs:
-		return checkSqsQueueHealth(input), nil
+		return api.checkSqsQueueHealth(input), nil
 	default:
 		return nil, checkIntegrationInternalError
 	}
 }
 
-func checkAwsScanIntegration(input *models.CheckIntegrationInput) *models.SourceIntegrationHealth {
+func (api *API) checkAwsScanIntegration(input *models.CheckIntegrationInput) *models.SourceIntegrationHealth {
 	out := &models.SourceIntegrationHealth{
 		IntegrationType: input.IntegrationType,
 		// Default to true, if these need to be checked and they are not healthy they will be overwritten
 		CWERoleStatus:         models.SourceIntegrationItemStatus{Healthy: true, Message: "Real time event setup is not enabled."},
 		RemediationRoleStatus: models.SourceIntegrationItemStatus{Healthy: true, Message: "Automatic remediation is not enabled."},
 	}
-	_, out.AuditRoleStatus = getCredentialsWithStatus(fmt.Sprintf(auditRoleFormat,
-		input.AWSAccountID, *awsSession.Config.Region))
+	_, out.AuditRoleStatus = api.getCredentialsWithStatus(fmt.Sprintf(auditRoleFormat,
+		input.AWSAccountID, api.Config.Region))
 	if aws.BoolValue(input.EnableCWESetup) {
-		_, out.CWERoleStatus = getCredentialsWithStatus(fmt.Sprintf(cweRoleFormat,
-			input.AWSAccountID, *awsSession.Config.Region))
+		_, out.CWERoleStatus = api.getCredentialsWithStatus(fmt.Sprintf(cweRoleFormat,
+			input.AWSAccountID, api.Config.Region))
 	}
 	if aws.BoolValue(input.EnableRemediation) {
-		_, out.RemediationRoleStatus = getCredentialsWithStatus(fmt.Sprintf(remediationRoleFormat,
-			input.AWSAccountID, *awsSession.Config.Region))
+		_, out.RemediationRoleStatus = api.getCredentialsWithStatus(fmt.Sprintf(remediationRoleFormat,
+			input.AWSAccountID, api.Config.Region))
 	}
 	return out
 }
 
-func checkAwsS3Integration(input *models.CheckIntegrationInput) *models.SourceIntegrationHealth {
+func (api *API) checkAwsS3Integration(input *models.CheckIntegrationInput) *models.SourceIntegrationHealth {
 	out := &models.SourceIntegrationHealth{
 		IntegrationType: input.IntegrationType,
 	}
 	var roleCreds *credentials.Credentials
 	logProcessingRole := generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
-	roleCreds, out.ProcessingRoleStatus = getCredentialsWithStatus(logProcessingRole)
+	roleCreds, out.ProcessingRoleStatus = api.getCredentialsWithStatus(logProcessingRole)
 	if out.ProcessingRoleStatus.Healthy {
-		out.S3BucketStatus = checkBucket(roleCreds, input.S3Bucket)
-		out.KMSKeyStatus = checkKey(roleCreds, input.KmsKey)
+		out.S3BucketStatus = api.checkBucket(roleCreds, input.S3Bucket)
+		out.KMSKeyStatus = api.checkKey(roleCreds, input.KmsKey)
 	}
 	return out
 }
 
-func checkKey(roleCredentials *credentials.Credentials, key string) models.SourceIntegrationItemStatus {
+func (api *API) checkKey(roleCredentials *credentials.Credentials, key string) models.SourceIntegrationItemStatus {
 	if len(key) == 0 {
 		// KMS key is optional
 		return models.SourceIntegrationItemStatus{
@@ -119,7 +118,7 @@ func checkKey(roleCredentials *credentials.Credentials, key string) models.Sourc
 		Credentials: roleCredentials,
 		Region:      &keyARN.Region, // KMS key could be in another region
 	}
-	kmsClient := kms.New(awsSession, conf)
+	kmsClient := kms.New(api.AwsSession, conf)
 	info, err := kmsClient.DescribeKey(&kms.DescribeKeyInput{KeyId: &key})
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
@@ -144,8 +143,8 @@ func checkKey(roleCredentials *credentials.Credentials, key string) models.Sourc
 	}
 }
 
-func checkBucket(roleCredentials *credentials.Credentials, bucket string) models.SourceIntegrationItemStatus {
-	s3Client := s3.New(awsSession, &aws.Config{Credentials: roleCredentials})
+func (api *API) checkBucket(roleCredentials *credentials.Credentials, bucket string) models.SourceIntegrationItemStatus {
+	s3Client := s3.New(api.AwsSession, &aws.Config{Credentials: roleCredentials})
 
 	_, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: &bucket})
 	if err != nil {
@@ -162,16 +161,16 @@ func checkBucket(roleCredentials *credentials.Credentials, bucket string) models
 	}
 }
 
-func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.SourceIntegrationItemStatus) {
+func (api *API) getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.SourceIntegrationItemStatus) {
 	zap.L().Debug("checking role", zap.String("roleArn", roleARN))
 	// Setup new credentials with the role
 	roleCredentials := stscreds.NewCredentials(
-		awsSession,
+		api.AwsSession,
 		roleARN,
 	)
 
 	// Use the role to make sure it's good
-	stsClient := sts.New(awsSession, aws.NewConfig().WithCredentials(roleCredentials))
+	stsClient := sts.New(api.AwsSession, aws.NewConfig().WithCredentials(roleCredentials))
 	_, err := stsClient.GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil {
 		return roleCredentials, models.SourceIntegrationItemStatus{
@@ -187,7 +186,7 @@ func getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.
 	}
 }
 
-func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (string, bool, error) {
+func (api *API) evaluateIntegration(integration *models.CheckIntegrationInput) (string, bool, error) {
 	status, err := api.CheckIntegration(integration)
 	if err != nil {
 		zap.L().Error("integration failed configuration check",
@@ -236,7 +235,7 @@ func evaluateIntegration(api API, integration *models.CheckIntegrationInput) (st
 }
 
 // Check the health of the SQS source
-func checkSqsQueueHealth(input *models.CheckIntegrationInput) *models.SourceIntegrationHealth {
+func (api *API) checkSqsQueueHealth(input *models.CheckIntegrationInput) *models.SourceIntegrationHealth {
 	health := &models.SourceIntegrationHealth{
 		IntegrationType: input.IntegrationType,
 	}
@@ -254,7 +253,7 @@ func checkSqsQueueHealth(input *models.CheckIntegrationInput) *models.SourceInte
 	getAttributesInput := &sqs.GetQueueAttributesInput{
 		QueueUrl: &input.SqsConfig.QueueURL,
 	}
-	_, err := sqsClient.GetQueueAttributes(getAttributesInput)
+	_, err := api.SqsClient.GetQueueAttributes(getAttributesInput)
 	if err != nil {
 		health.SqsStatus.Healthy = false
 		health.SqsStatus.Message = "An error occurred while trying to get the attributes of the specified SQS queue."
