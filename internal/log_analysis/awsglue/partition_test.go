@@ -54,6 +54,10 @@ func TestCreatePartitionFromS3Rule(t *testing.T) {
 			Key:   "hour",
 			Value: "15",
 		},
+		{
+			Key:   "partition_time",
+			Value: "1582729200",
+		},
 	}
 
 	assert.Equal(t, pantherdb.RuleMatchDatabase, partition.GetDatabase())
@@ -84,6 +88,10 @@ func TestCreatePartitionFromS3Log(t *testing.T) {
 		{
 			Key:   "hour",
 			Value: "15",
+		},
+		{
+			Key:   "partition_time",
+			Value: "1582729200",
 		},
 	}
 

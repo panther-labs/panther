@@ -1,0 +1,9 @@
+fragment RuleDetails on Rule {
+  ...RuleSummary
+  body
+  tests {
+    expectedResult
+    name
+    resource
+  }
+}

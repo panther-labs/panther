@@ -28,10 +28,10 @@ import (
 var genericListError = &genericapi.InternalError{Message: "Failed to list integrations"}
 
 // ListIntegrations returns all enabled integrations.
-func (API) ListIntegrations(
+func (api *API) ListIntegrations(
 	input *models.ListIntegrationsInput) ([]*models.SourceIntegration, error) {
 
-	integrationItems, err := dynamoClient.ScanIntegrations(input.IntegrationType)
+	integrationItems, err := api.DdbClient.ScanIntegrations(input.IntegrationType)
 	if err != nil {
 		zap.L().Error("failed to list integrations", zap.Error(err))
 		return nil, genericListError
@@ -45,8 +45,8 @@ func (API) ListIntegrations(
 		// didn't have the InputDataBucket and InputDataRoleArn populated
 		if integ.IntegrationType == models.IntegrationTypeAWSScan {
 			if integ.S3Bucket == "" {
-				integ.S3Bucket = env.InputDataBucketName
-				integ.LogProcessingRole = env.InputDataRoleArn
+				integ.S3Bucket = api.Config.InputDataBucketName
+				integ.LogProcessingRole = api.Config.InputDataRoleArn
 			}
 		}
 		result[i] = integ

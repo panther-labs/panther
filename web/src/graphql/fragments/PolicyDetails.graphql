@@ -1,0 +1,12 @@
+fragment PolicyDetails on Policy {
+  ...PolicySummary
+  autoRemediationId
+  autoRemediationParameters
+  suppressions
+  body
+  tests {
+    expectedResult
+    name
+    resource
+  }
+}

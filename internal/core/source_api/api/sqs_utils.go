@@ -45,18 +45,18 @@ const (
 )
 
 // Returns the URL of an SQS queue source
-func SourceSqsQueueURL(integrationID string) string {
-	return fmt.Sprintf(sqsQueueURLFormat, *awsSession.Config.Region, env.AccountID, getSourceSqsName(integrationID))
+func (api *API) SourceSqsQueueURL(integrationID string) string {
+	return fmt.Sprintf(sqsQueueURLFormat, api.Config.Region, api.Config.AccountID, getSourceSqsName(integrationID))
 }
 
 // Returns the URL of an SQS queue source
-func SourceSqsQueueArn(integrationID string) string {
-	return fmt.Sprintf(sqsQueueArnFormat, *awsSession.Config.Region, env.AccountID, getSourceSqsName(integrationID))
+func (api *API) SourceSqsQueueArn(integrationID string) string {
+	return fmt.Sprintf(sqsQueueArnFormat, api.Config.Region, api.Config.AccountID, getSourceSqsName(integrationID))
 }
 
 // Creates a source SQS queue
 // The new queue will allow the provided AWS principals and Source ARNs to send data to it
-func CreateSourceSqsQueue(integrationID string, allowedPrincipalArns []string, allowedSourceArns []string) error {
+func (api *API) CreateSourceSqsQueue(integrationID string, allowedPrincipalArns []string, allowedSourceArns []string) error {
 	queueName := getSourceSqsName(integrationID)
 	policy := createSourceSqsQueuePolicy(allowedPrincipalArns, allowedSourceArns)
 
@@ -76,7 +76,7 @@ func CreateSourceSqsQueue(integrationID string, allowedPrincipalArns []string, a
 
 	zap.L().Debug("creating SQS queue", zap.String("name", queueName), zap.Any("policy", policy))
 
-	_, err := sqsClient.CreateQueue(createQueueInput)
+	_, err := api.SqsClient.CreateQueue(createQueueInput)
 	if err != nil {
 		return errors.Wrap(err, "failed to create SQS queue")
 	}
@@ -84,22 +84,22 @@ func CreateSourceSqsQueue(integrationID string, allowedPrincipalArns []string, a
 }
 
 // Updates Source SQS queue with new permissions
-func UpdateSourceSqsQueue(integrationID string, allowedPrincipalArns []string, allowedSourceArns []string) error {
-	queueName := SourceSqsQueueURL(integrationID)
+func (api *API) UpdateSourceSqsQueue(integrationID string, allowedPrincipalArns []string, allowedSourceArns []string) error {
+	queueName := api.SourceSqsQueueURL(integrationID)
 	policy := createSourceSqsQueuePolicy(allowedPrincipalArns, allowedSourceArns)
-	if err := awssqs.SetQueuePolicy(sqsClient, queueName, policy); err != nil {
+	if err := awssqs.SetQueuePolicy(api.SqsClient, queueName, policy); err != nil {
 		return errors.Wrap(err, "failed to update queue policy")
 	}
 	return nil
 }
 
 // Deletes a source SQS queue
-func DeleteSourceSqsQueue(integrationID string) error {
-	queueURL := SourceSqsQueueURL(integrationID)
+func (api *API) DeleteSourceSqsQueue(integrationID string) error {
+	queueURL := api.SourceSqsQueueURL(integrationID)
 	input := &sqs.DeleteQueueInput{
 		QueueUrl: &queueURL,
 	}
-	if _, err := sqsClient.DeleteQueue(input); err != nil {
+	if _, err := api.SqsClient.DeleteQueue(input); err != nil {
 		awsErr, ok := err.(awserr.Error)
 		if ok && awsErr.Code() == sqs.ErrCodeQueueDoesNotExist {
 			zap.L().Debug("tried to delete queue but queue doesn't exist",
@@ -114,8 +114,8 @@ func DeleteSourceSqsQueue(integrationID string) error {
 
 // AllowExternalSnsTopicSubscription modifies the SQS Queue policy of the Log Processor
 // to allow SNS topic from new account to subscribe to it
-func AllowExternalSnsTopicSubscription(accountID string) error {
-	existingPolicy, err := awssqs.GetQueuePolicy(sqsClient, env.LogProcessorQueueURL)
+func (api *API) AllowExternalSnsTopicSubscription(accountID string) error {
+	existingPolicy, err := awssqs.GetQueuePolicy(api.SqsClient, api.Config.LogProcessorQueueURL)
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func AllowExternalSnsTopicSubscription(accountID string) error {
 	}
 
 	existingPolicy.Statements = append(existingPolicy.Statements, getStatementForAccount(accountID))
-	err = awssqs.SetQueuePolicy(sqsClient, env.LogProcessorQueueURL, existingPolicy)
+	err = awssqs.SetQueuePolicy(api.SqsClient, api.Config.LogProcessorQueueURL, existingPolicy)
 	if err != nil {
 		zap.L().Error("failed to set policy", zap.Error(errors.Wrap(err, "failed to set policy")))
 		return err
@@ -137,8 +137,8 @@ func AllowExternalSnsTopicSubscription(accountID string) error {
 
 // DisableExternalSnsTopicSubscription modifies the SQS Queue policy of the Log Processor
 // so that SNS topics from that account cannot subscribe to the queue
-func DisableExternalSnsTopicSubscription(accountID string) error {
-	existingPolicy, err := awssqs.GetQueuePolicy(sqsClient, env.LogProcessorQueueURL)
+func (api *API) DisableExternalSnsTopicSubscription(accountID string) error {
+	existingPolicy, err := awssqs.GetQueuePolicy(api.SqsClient, api.Config.LogProcessorQueueURL)
 	if err != nil {
 		return err
 	}
@@ -158,15 +158,15 @@ func DisableExternalSnsTopicSubscription(accountID string) error {
 	existingPolicy.Statements[statementToRemoveIndex] = existingPolicy.Statements[len(existingPolicy.Statements)-1]
 	existingPolicy.Statements = existingPolicy.Statements[:len(existingPolicy.Statements)-1]
 
-	return awssqs.SetQueuePolicy(sqsClient, env.LogProcessorQueueURL, existingPolicy)
+	return awssqs.SetQueuePolicy(api.SqsClient, api.Config.LogProcessorQueueURL, existingPolicy)
 }
 
 // Some of the integrations send data to an S3 bucket managed by Panther.
 // This bucket is a staging bucket where data are stored temporarily until Log Processor
 // picks them up. This function updates the log processor SQS queue permissions to allow it to
 // receive event notifications from that bucket.
-func AllowInputDataBucketSubscription() error {
-	existingPolicy, err := awssqs.GetQueuePolicy(sqsClient, env.LogProcessorQueueURL)
+func (api *API) AllowInputDataBucketSubscription() error {
+	existingPolicy, err := awssqs.GetQueuePolicy(api.SqsClient, api.Config.LogProcessorQueueURL)
 	if err != nil {
 		return err
 	}
@@ -187,13 +187,13 @@ func AllowInputDataBucketSubscription() error {
 		Resource:  "*",
 		Condition: map[string]interface{}{
 			"ArnLike": map[string]string{
-				"aws:SourceArn": env.InputDataTopicArn,
+				"aws:SourceArn": api.Config.InputDataTopicArn,
 			},
 		},
 	}
 
 	existingPolicy.Statements = append(existingPolicy.Statements, statement)
-	return awssqs.SetQueuePolicy(sqsClient, env.LogProcessorQueueURL, existingPolicy)
+	return awssqs.SetQueuePolicy(api.SqsClient, api.Config.LogProcessorQueueURL, existingPolicy)
 }
 
 // Generates the Policy for the Source SQS queue that allows the following list of AWS AccountIDs and sourceARNS to send

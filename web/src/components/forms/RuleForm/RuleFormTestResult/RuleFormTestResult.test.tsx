@@ -24,7 +24,7 @@ import {
   buildTestDetectionSubRecord,
   render,
 } from 'test-utils';
-import { ComplianceStatusEnum } from 'Generated/schema';
+import { ComplianceStatusEnum, SeverityEnum } from 'Generated/schema';
 import RuleFormTestResult from './RuleFormTestResult';
 
 describe('RuleFormTestResult', () => {
@@ -65,18 +65,76 @@ describe('RuleFormTestResult', () => {
     expect(getByText(testResult.functions.dedupFunction.error.message)).toBeInTheDocument();
   });
 
-  it("shows title & dedup outputs when errors don't exist", () => {
+  it('shows a list of all the non-generic errors for all function outputs', () => {
+    const testResult = buildTestRuleRecord({
+      error: null,
+      functions: buildTestRuleRecordFunctions({
+        ruleFunction: buildTestDetectionSubRecord({ error: buildError({ message: 'Rule' }) }),
+        titleFunction: buildTestDetectionSubRecord({ error: buildError({ message: 'Title' }) }),
+        dedupFunction: buildTestDetectionSubRecord({
+          error: buildError({ message: 'Dedup Error' }),
+        }),
+        referenceFunction: buildTestDetectionSubRecord({
+          error: buildError({ message: 'Ref Error' }),
+        }),
+        runbookFunction: buildTestDetectionSubRecord({
+          error: buildError({ message: 'Runbook Error' }),
+        }),
+        destinationsFunction: buildTestDetectionSubRecord({
+          error: buildError({ message: 'Dest Error' }),
+        }),
+        descriptionFunction: buildTestDetectionSubRecord({
+          error: buildError({ message: 'Desc Error' }),
+        }),
+        severityFunction: buildTestDetectionSubRecord({
+          error: buildError({ message: 'Severity Error' }),
+        }),
+      }),
+    });
+
+    const { getByText } = render(<RuleFormTestResult testResult={testResult} />);
+    expect(getByText(testResult.functions.ruleFunction.error.message)).toBeInTheDocument();
+    expect(getByText(testResult.functions.titleFunction.error.message)).toBeInTheDocument();
+    expect(getByText(testResult.functions.dedupFunction.error.message)).toBeInTheDocument();
+    expect(getByText(testResult.functions.referenceFunction.error.message)).toBeInTheDocument();
+    expect(getByText(testResult.functions.runbookFunction.error.message)).toBeInTheDocument();
+    expect(getByText(testResult.functions.destinationsFunction.error.message)).toBeInTheDocument();
+    expect(getByText(testResult.functions.descriptionFunction.error.message)).toBeInTheDocument();
+    expect(getByText(testResult.functions.severityFunction.error.message)).toBeInTheDocument();
+  });
+
+  it("shows functional outputs when errors don't exist", () => {
     const testResult = buildTestRuleRecord({
       error: null,
       functions: buildTestRuleRecordFunctions({
         titleFunction: buildTestDetectionSubRecord({ output: 'Title', error: null }),
         dedupFunction: buildTestDetectionSubRecord({ output: 'Dedup', error: null }),
+        referenceFunction: buildTestDetectionSubRecord({ output: 'Reference output', error: null }),
+        runbookFunction: buildTestDetectionSubRecord({ output: 'This is a runbook', error: null }),
+        descriptionFunction: buildTestDetectionSubRecord({
+          output: 'This is a really big description with lots of metadata',
+          error: null,
+        }),
+        // Severity can be one of SeverityEnum but we capitalize the output
+        severityFunction: buildTestDetectionSubRecord({
+          output: SeverityEnum.Low,
+          error: null,
+        }),
+        destinationsFunction: buildTestDetectionSubRecord({
+          output: 'Slack Destination',
+          error: null,
+        }),
       }),
     });
 
     const { getByText } = render(<RuleFormTestResult testResult={testResult} />);
     expect(getByText(testResult.functions.titleFunction.output)).toBeInTheDocument();
     expect(getByText(testResult.functions.dedupFunction.output)).toBeInTheDocument();
+    expect(getByText(testResult.functions.runbookFunction.output)).toBeInTheDocument();
+    expect(getByText(testResult.functions.descriptionFunction.output)).toBeInTheDocument();
+    expect(getByText('Low')).toBeInTheDocument();
+    expect(getByText(testResult.functions.referenceFunction.output)).toBeInTheDocument();
+    expect(getByText(testResult.functions.destinationsFunction.output)).toBeInTheDocument();
   });
 
   it('matches the snapshot', () => {

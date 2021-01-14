@@ -62,3 +62,21 @@ skip:
 	}
 	return dst
 }
+
+// ListDeletedCustomLogs lists all deleted log type ids
+func (api *LogTypesAPI) ListDeletedCustomLogs(ctx context.Context) (*DeletedCustomLogs, error) {
+	logTypes, err := api.Database.ListDeletedLogTypes(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Sort deleted log types by name
+	sort.Strings(logTypes)
+	return &DeletedCustomLogs{
+		LogTypes: logTypes,
+	}, nil
+}
+
+type DeletedCustomLogs struct {
+	LogTypes []string  `json:"logTypes,omitempty" description:"A list of ids of deleted log types (omitted if an error occurred)"`
+	Error    *APIError `json:"error,omitempty" description:"An error that occurred while fetching the list"`
+}

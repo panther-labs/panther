@@ -16,11 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import React from 'react';
-import { Destination, RuleDetails, RuleSummary } from 'Generated/schema';
+import { Destination, Policy, Rule } from 'Generated/schema';
 import { useListDestinations } from 'Source/graphql/queries';
 
 interface UseDetectionDestinationsProps {
-  rule: RuleSummary | RuleDetails;
+  detection: Rule | Policy;
 }
 
 interface UseDetectionDestinationsResponse {
@@ -32,24 +32,24 @@ interface UseDetectionDestinationsResponse {
 }
 
 const useDetectionDestinations = ({
-  rule,
+  detection,
 }: UseDetectionDestinationsProps): UseDetectionDestinationsResponse => {
   const { data: destinations, loading } = useListDestinations();
 
   const detectionDestinations = React.useMemo(() => {
-    if (!rule || !destinations?.destinations) {
+    if (!detection || !destinations?.destinations) {
       return [];
     }
 
-    if (rule.outputIds.length) {
-      return rule.outputIds.map(outputId => {
+    if (detection.outputIds.length) {
+      return detection.outputIds.map(outputId => {
         return destinations.destinations.find(dest => dest.outputId === outputId);
       });
     }
     return destinations.destinations.filter(dest => {
-      return dest.defaultForSeverity.some(sev => sev === rule.severity);
+      return dest.defaultForSeverity.some(sev => sev === detection.severity);
     });
-  }, [rule, destinations]);
+  }, [detection, destinations]);
 
   return React.useMemo(
     () => ({

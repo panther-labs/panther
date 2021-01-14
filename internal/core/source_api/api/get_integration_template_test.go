@@ -25,23 +25,16 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
-	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func TestCloudSecTemplate(t *testing.T) {
-	s3Mock := &testutils.S3Mock{}
-	templateS3Client = s3Mock
-	awsSession = &session.Session{
-		Config: &aws.Config{
-			Region: aws.String(endpoints.UsEast1RegionID),
-		},
-	}
+	apiTest := NewAPITest()
+	apiTest.Config.Region = endpoints.UsEast1RegionID
 	input := &models.GetIntegrationTemplateInput{
 		AWSAccountID:       "123456789012",
 		IntegrationType:    models.IntegrationTypeAWSScan,
@@ -52,9 +45,9 @@ func TestCloudSecTemplate(t *testing.T) {
 
 	template, err := ioutil.ReadFile("../../../../deployments/auxiliary/cloudformation/panther-cloudsec-iam.yml")
 	require.NoError(t, err)
-	s3Mock.On("GetObject", mock.Anything).Return(&s3.GetObjectOutput{Body: ioutil.NopCloser(bytes.NewReader(template))}, nil)
+	apiTest.mockS3.On("GetObject", mock.Anything).Return(&s3.GetObjectOutput{Body: ioutil.NopCloser(bytes.NewReader(template))}, nil)
 
-	result, err := API{}.GetIntegrationTemplate(input)
+	result, err := apiTest.GetIntegrationTemplate(input)
 	require.NoError(t, err)
 	expectedTemplate, err := ioutil.ReadFile("./testdata/panther-cloudsec-iam-updated.yml")
 	require.NoError(t, err)
@@ -63,8 +56,7 @@ func TestCloudSecTemplate(t *testing.T) {
 }
 
 func TestLogAnalysisTemplate(t *testing.T) {
-	s3Mock := &testutils.S3Mock{}
-	templateS3Client = s3Mock
+	apiTest := NewAPITest()
 	input := &models.GetIntegrationTemplateInput{
 		AWSAccountID:     "123456789012",
 		IntegrationType:  models.IntegrationTypeAWS3,
@@ -76,9 +68,9 @@ func TestLogAnalysisTemplate(t *testing.T) {
 
 	template, err := ioutil.ReadFile("../../../../deployments/auxiliary/cloudformation/panther-log-analysis-iam.yml")
 	require.NoError(t, err)
-	s3Mock.On("GetObject", mock.Anything).Return(&s3.GetObjectOutput{Body: ioutil.NopCloser(bytes.NewReader(template))}, nil)
+	apiTest.mockS3.On("GetObject", mock.Anything).Return(&s3.GetObjectOutput{Body: ioutil.NopCloser(bytes.NewReader(template))}, nil)
 
-	result, err := API{}.GetIntegrationTemplate(input)
+	result, err := apiTest.GetIntegrationTemplate(input)
 	require.NoError(t, err)
 	expectedTemplate, err := ioutil.ReadFile("./testdata/panther-log-analysis-iam-updated.yml")
 	require.NoError(t, err)

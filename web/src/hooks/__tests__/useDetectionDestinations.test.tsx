@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { buildDestination, buildRuleSummary, render, waitForElementToBeRemoved } from 'test-utils';
+import { buildDestination, buildRule, render, waitForElementToBeRemoved } from 'test-utils';
 import useDetectionDestinations from 'Hooks/useDetectionDestinations';
 import { mockListDestinations } from 'Source/graphql/queries';
 import { DestinationTypeEnum, SeverityEnum } from 'Generated/schema';
 import React from 'react';
 
 const Component = ({ rule }) => {
-  const { loading, detectionDestinations } = useDetectionDestinations({ rule });
+  const { loading, detectionDestinations } = useDetectionDestinations({ detection: rule });
   return (
     <div>
       {loading ? (
@@ -41,7 +41,7 @@ describe('useDetectionDestinations hook tests', () => {
   it('should display loading & display destination name when rules has destination override', async () => {
     const outputId = 'destination-of-alert';
     const displayName = 'Slack Destination';
-    const rule = buildRuleSummary({
+    const rule = buildRule({
       outputIds: [outputId],
     });
     const destination = buildDestination({
@@ -61,7 +61,7 @@ describe('useDetectionDestinations hook tests', () => {
   it('should display loading & display destination for severity when rules has no destination override', async () => {
     const outputId = 'destination-of-alert';
     const displayName = 'Slack Destination';
-    const rule = buildRuleSummary({
+    const rule = buildRule({
       outputIds: [],
       severity: SeverityEnum.High,
     });
@@ -83,7 +83,7 @@ describe('useDetectionDestinations hook tests', () => {
   it("should display loading but no destination if there isn't a default destination for rule severity", async () => {
     const outputId = 'destination-of-alert';
     const displayName = 'Slack Destination';
-    const rule = buildRuleSummary({
+    const rule = buildRule({
       outputIds: [],
       severity: SeverityEnum.Info,
     });
