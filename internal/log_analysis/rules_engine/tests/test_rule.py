@@ -285,12 +285,24 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
                                  '\treturn {"headers": event["headers"],\n' \
                                  '\t\t"get_params": event["query_string_args"]}'
         rule_body = 'def rule(event):\n\treturn True\n{}'.format(alert_context_function)
-        rule = Rule({'id': 'test_alert_context_immutable_event', 'body': rule_body, 'versionId': 'versionId'})
-        event = {'headers': {'User-Agent': 'Chrome'}, 'query_string_args': [{'a': '1'}, {'b': '2'}]}
+        rule = Rule({'id': 'test_alert_context_immutable_event',
+                     'body': rule_body,
+                     'versionId': 'versionId'})
+        event = {
+            'headers': {
+                'User-Agent': 'Chrome'
+            },
+            'query_string_args': [{'a': '1'}, {'b': '2'}]
+        }
 
-        expected_alert_context = json.dumps({'headers': event['headers'], 'get_params': event['query_string_args']})
+        expected_alert_context = json.dumps({
+            'headers': event['headers'],
+            'get_params': event['query_string_args']
+        })
         expected_result = RuleResult(
-            matched=True, dedup_output='defaultDedupString:test_alert_context_immutable_event', alert_context=expected_alert_context
+            matched=True,
+            dedup_output='defaultDedupString:test_alert_context_immutable_event',
+            alert_context=expected_alert_context
         )
         self.assertEqual(expected_result, rule.run(PantherEvent(event, None)))
 
