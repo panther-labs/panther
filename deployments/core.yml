@@ -149,9 +149,7 @@ Mappings:
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
-  KvProvisioningEnabled: !Equals
-    - !Ref KvTableBillingMode
-    - PROVISIONED
+  KvProvisioningEnabled: !Equals [!Ref KvTableBillingMode, PROVISIONED]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
