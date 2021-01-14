@@ -20,10 +20,10 @@ package analysis
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
 	"strconv"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
