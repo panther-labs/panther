@@ -42,7 +42,9 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
       }}
       loading={isSubmitting}
       disabled={
-        isSubmitting || (!isValid && allowInvalidSubmission) || (!dirty && !allowPristineSubmission)
+        isSubmitting ||
+        (!isValid && !allowInvalidSubmission) ||
+        (!dirty && !allowPristineSubmission)
       }
       {...rest}
     />
