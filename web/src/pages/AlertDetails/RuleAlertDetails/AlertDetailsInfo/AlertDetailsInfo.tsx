@@ -31,7 +31,7 @@ import { GetRuleSummary } from '../graphql/getRuleSummary.generated';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails['alert'];
-  rule: GetRuleSummary['rule'];
+  rule?: GetRuleSummary['rule'];
 }
 
 const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {
