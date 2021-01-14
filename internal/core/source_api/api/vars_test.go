@@ -51,10 +51,10 @@ func NewAPITest() *APITest {
 		mockS3:     mockS3,
 		mockLambda: mockLambda,
 		API: API{
-			sqsClient:        mockSqs,
-			lambdaClient:     mockLambda,
-			templateS3Client: mockS3,
-			ddbClient:        &ddb.DDB{TableName: "test", Client: mockDdb},
+			SqsClient:        mockSqs,
+			LambdaClient:     mockLambda,
+			TemplateS3Client: mockS3,
+			DdbClient:        &ddb.DDB{TableName: "test", Client: mockDdb},
 		},
 	}
 }

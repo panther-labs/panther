@@ -33,7 +33,7 @@ var (
 
 // DeleteIntegration deletes a specific integration.
 func (api *API) DeleteIntegration(input *models.DeleteIntegrationInput) error {
-	integrationItem, err := api.ddbClient.GetItem(input.IntegrationID)
+	integrationItem, err := api.DdbClient.GetItem(input.IntegrationID)
 	if err != nil {
 		errMsg := "failed to get integrationItem"
 		err = errors.Wrap(err, errMsg)
@@ -50,7 +50,7 @@ func (api *API) DeleteIntegration(input *models.DeleteIntegrationInput) error {
 
 	switch integrationItem.IntegrationType {
 	case models.IntegrationTypeAWS3:
-		existingIntegrations, err := api.ddbClient.ScanIntegrations(aws.String(models.IntegrationTypeAWS3))
+		existingIntegrations, err := api.DdbClient.ScanIntegrations(aws.String(models.IntegrationTypeAWS3))
 		if err != nil {
 			zap.L().Error("failed to scan integration", zap.Error(err))
 			return deleteIntegrationInternalError
@@ -91,7 +91,7 @@ func (api *API) DeleteIntegration(input *models.DeleteIntegrationInput) error {
 		}
 	}
 
-	err = api.ddbClient.DeleteItem(input.IntegrationID)
+	err = api.DdbClient.DeleteItem(input.IntegrationID)
 	if err != nil {
 		zap.L().Error("failed to delete item", zap.Error(err))
 		return deleteIntegrationInternalError

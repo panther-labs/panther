@@ -34,7 +34,7 @@ import (
 
 func TestCloudSecTemplate(t *testing.T) {
 	apiTest := NewAPITest()
-	apiTest.config.Region = endpoints.UsEast1RegionID
+	apiTest.Config.Region = endpoints.UsEast1RegionID
 	input := &models.GetIntegrationTemplateInput{
 		AWSAccountID:       "123456789012",
 		IntegrationType:    models.IntegrationTypeAWSScan,

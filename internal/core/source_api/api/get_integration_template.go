@@ -86,7 +86,7 @@ func (api *API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput
 	// Cloud Security replacements
 	if input.IntegrationType == models.IntegrationTypeAWSScan {
 		formattedTemplate = strings.Replace(formattedTemplate, regionFind,
-			fmt.Sprintf(regionReplace, api.config.Region), 1)
+			fmt.Sprintf(regionReplace, api.Config.Region), 1)
 		formattedTemplate = strings.Replace(formattedTemplate, cweFind,
 			fmt.Sprintf(cweReplace, aws.BoolValue(input.CWEEnabled)), 1)
 		formattedTemplate = strings.Replace(formattedTemplate, remediationFind,
@@ -123,12 +123,12 @@ func (api *API) getTemplate(integrationType string) (string, error) {
 	}
 
 	if integrationType == models.IntegrationTypeAWSScan {
-		templateRequest.Key = aws.String("panther-cloudsec-iam/v" + api.config.Version + "/template.yml")
+		templateRequest.Key = aws.String("panther-cloudsec-iam/v" + api.Config.Version + "/template.yml")
 	} else {
-		templateRequest.Key = aws.String("panther-log-analysis-iam/v" + api.config.Version + "/template.yml")
+		templateRequest.Key = aws.String("panther-log-analysis-iam/v" + api.Config.Version + "/template.yml")
 	}
 	zap.L().Debug("requesting template", zap.String("key", *templateRequest.Key), zap.String("bucket", *templateRequest.Bucket))
-	s3Object, err := api.templateS3Client.GetObject(templateRequest)
+	s3Object, err := api.TemplateS3Client.GetObject(templateRequest)
 	if err != nil {
 		return "", err
 	}

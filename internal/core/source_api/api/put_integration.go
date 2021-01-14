@@ -75,7 +75,7 @@ func (api *API) PutIntegration(input *models.PutIntegrationInput) (newIntegratio
 
 	// Write to DynamoDB
 	item := integrationToItem(newIntegration)
-	if err = api.ddbClient.PutItem(item); err != nil {
+	if err = api.DdbClient.PutItem(item); err != nil {
 		zap.L().Error("failed to store source integration in DDB", zap.Error(err))
 		return nil, putIntegrationInternalError
 	}
@@ -124,7 +124,7 @@ func (api *API) validateIntegration(input *models.PutIntegrationInput) error {
 	}
 
 	// Validate the new integration
-	reason, passing, err := api.evaluateIntegrationFunc(&models.CheckIntegrationInput{
+	reason, passing, err := api.EvaluateIntegrationFunc(&models.CheckIntegrationInput{
 		AWSAccountID:      input.AWSAccountID,
 		IntegrationType:   input.IntegrationType,
 		IntegrationLabel:  input.IntegrationLabel,
@@ -247,14 +247,14 @@ func (api *API) FullScan(input *models.FullScanInput) error {
 
 	zap.L().Info(
 		"scheduling new scans",
-		zap.String("queueUrl", api.config.SnapshotPollersQueueURL),
+		zap.String("queueUrl", api.Config.SnapshotPollersQueueURL),
 		zap.Int("count", len(sqsEntries)),
 	)
 
 	// Batch send all the messages to SQS
-	_, err := sqsbatch.SendMessageBatch(api.sqsClient, 5*time.Second, &sqs.SendMessageBatchInput{
+	_, err := sqsbatch.SendMessageBatch(api.SqsClient, 5*time.Second, &sqs.SendMessageBatchInput{
 		Entries:  sqsEntries,
-		QueueUrl: &api.config.SnapshotPollersQueueURL,
+		QueueUrl: &api.Config.SnapshotPollersQueueURL,
 	})
 	return err
 }
@@ -272,11 +272,11 @@ func (api *API) generateNewIntegration(input *models.PutIntegrationInput) *model
 	case models.IntegrationTypeAWSScan:
 		metadata.AWSAccountID = input.AWSAccountID
 		metadata.CWEEnabled = input.CWEEnabled
-		metadata.LogProcessingRole = api.config.InputDataRoleArn
+		metadata.LogProcessingRole = api.Config.InputDataRoleArn
 		metadata.RemediationEnabled = input.RemediationEnabled
 		metadata.ScanIntervalMins = input.ScanIntervalMins
 		metadata.StackName = getStackName(input.IntegrationType, input.IntegrationLabel)
-		metadata.S3Bucket = api.config.InputDataBucketName
+		metadata.S3Bucket = api.Config.InputDataBucketName
 	case models.IntegrationTypeAWS3:
 		metadata.AWSAccountID = input.AWSAccountID
 		metadata.S3Bucket = input.S3Bucket
@@ -291,8 +291,8 @@ func (api *API) generateNewIntegration(input *models.PutIntegrationInput) *model
 		metadata.ResourceRegexIgnoreList = input.ResourceRegexIgnoreList
 	case models.IntegrationTypeSqs:
 		metadata.SqsConfig = &models.SqsConfig{
-			S3Bucket:             api.config.InputDataBucketName,
-			LogProcessingRole:    api.config.InputDataRoleArn,
+			S3Bucket:             api.Config.InputDataBucketName,
+			LogProcessingRole:    api.Config.InputDataRoleArn,
 			AllowedPrincipalArns: input.SqsConfig.AllowedPrincipalArns,
 			AllowedSourceArns:    input.SqsConfig.AllowedSourceArns,
 			LogTypes:             input.SqsConfig.LogTypes,
@@ -306,8 +306,8 @@ func (api *API) generateNewIntegration(input *models.PutIntegrationInput) *model
 
 func (api *API) createTables(integration *models.SourceIntegration) error {
 	client := datacatalog.Client{
-		SQSAPI:   api.sqsClient,
-		QueueURL: api.config.DataCatalogUpdaterQueueURL,
+		SQSAPI:   api.SqsClient,
+		QueueURL: api.Config.DataCatalogUpdaterQueueURL,
 	}
 	logTypes := integration.RequiredLogTypes()
 	err := client.SendCreateTablesForLogTypes(context.TODO(), logTypes...)

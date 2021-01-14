@@ -42,7 +42,7 @@ func TestListIntegrations(t *testing.T) {
 	lastScanStartTime, err := time.Parse(time.RFC3339, "2019-04-10T22:59:00Z")
 	require.NoError(t, err)
 
-	apiTest.ddbClient = &ddb.DDB{
+	apiTest.DdbClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{
 				{
@@ -93,7 +93,7 @@ func TestListIntegrations(t *testing.T) {
 func TestListIntegrationsEmpty(t *testing.T) {
 	t.Parallel()
 	apiTest := NewAPITest()
-	apiTest.ddbClient = &ddb.DDB{
+	apiTest.DdbClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{},
 			TestErr:            false,
@@ -110,7 +110,7 @@ func TestListIntegrationsEmpty(t *testing.T) {
 func TestHandleListIntegrationsScanError(t *testing.T) {
 	t.Parallel()
 	apiTest := NewAPITest()
-	apiTest.ddbClient = &ddb.DDB{
+	apiTest.DdbClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{},
 			TestErr:            true,
