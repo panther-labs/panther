@@ -145,7 +145,7 @@ func buildTestSubRecordList(output []string, error string) *models.TestDetection
 	result := &models.TestDetectionSubRecord{}
 
 	if len(output) != 0 {
-		result.Output = aws.String(strings.Join(output, ","))
+		result.Output = aws.String(strings.Join(output, ", "))
 	}
 	if error != "" {
 		result.Error = &models.TestError{Message: error}
