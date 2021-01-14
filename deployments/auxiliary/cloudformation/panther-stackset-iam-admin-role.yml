@@ -22,13 +22,19 @@ Description: >
 Parameters:
   MasterAccountRegion:
     Type: String
-    Default: !Ref ${AWS::Region}
+    Default: ''
+
+Conditions:
+  UseCurrentRegion: !Equals ['', !Ref MasterAccountRegion]
 
 Resources:
   CloudFormationStackSetAdminRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub PantherCloudFormationStackSetAdminRole-${MasterAccountRegion} # DO NOT CHANGE! set in mage deploy
+      RoleName: !If
+        - UseCurrentRegion
+        - !Sub PantherCloudFormationStackSetAdminRole-${AWS::Region}
+        - !Sub PantherCloudFormationStackSetAdminRole-${MasterAccountRegion}
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -43,7 +49,10 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: sts:AssumeRole
-                Resource: !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole-${MasterAccountRegion}
+                Resource: !If
+                  - UseCurrentRegion
+                  - !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole-${AWS::Region}
+                  - !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole-${MasterAccountRegion}
 
 Outputs:
   CloudFormationStackSetAdminRoleArn:
