@@ -70,7 +70,7 @@ Parameters:
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
   KvTableBillingMode:
     Type: String
-    Description: Configure billing mode for DynamoDB table panther-kv-store. This table is used by the custom python policies & rules to store state, and provisioned billing may be cheaper if this feature is used heavily.
+    Description: Configure billing mode for DynamoDB table panther-kv-store. This table is used by python policies & rules to store state, and provisioned billing may be cheaper if this feature is used heavily.
     AllowedValues: [PROVISIONED, PAY_PER_REQUEST]
   LayerVersionArns:
     Type: CommaDelimitedList
