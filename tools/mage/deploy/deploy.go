@@ -608,7 +608,7 @@ func PantherNames(setString string) []string {
 func CallForEachString(label string, callOnSet []string, callFn func(string) error) (callErrors []error) {
 	for _, setEntry := range callOnSet {
 		log.Infof("%s: %v", label, setEntry)
-		err := callFn(setEntry);
+		err := callFn(setEntry)
 		if err != nil {
 			log.Errorf("%s: %s %v", label, setEntry, err)
 		}
