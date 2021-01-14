@@ -21,7 +21,7 @@ import {
   buildDetectionTestDefinition,
   buildDetectionTestDefinitionInput,
   buildError,
-  buildPolicyDetails,
+  buildPolicy,
   buildTestPolicyRecord,
   render,
   fireEvent,
@@ -36,7 +36,7 @@ import { mockTestPolicy } from './graphql/testPolicy.generated';
 
 describe('PolicyFormTestSection', () => {
   it('correctly renders the test results', async () => {
-    const policy = buildPolicyDetails({
+    const policy = buildPolicy({
       tests: [
         buildDetectionTestDefinition({
           expectedResult: true,

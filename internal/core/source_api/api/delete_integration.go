@@ -32,8 +32,8 @@ var (
 )
 
 // DeleteIntegration deletes a specific integration.
-func (API) DeleteIntegration(input *models.DeleteIntegrationInput) error {
-	integrationItem, err := dynamoClient.GetItem(input.IntegrationID)
+func (api *API) DeleteIntegration(input *models.DeleteIntegrationInput) error {
+	integrationItem, err := api.DdbClient.GetItem(input.IntegrationID)
 	if err != nil {
 		errMsg := "failed to get integrationItem"
 		err = errors.Wrap(err, errMsg)
@@ -50,7 +50,7 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) error {
 
 	switch integrationItem.IntegrationType {
 	case models.IntegrationTypeAWS3:
-		existingIntegrations, err := dynamoClient.ScanIntegrations(aws.String(models.IntegrationTypeAWS3))
+		existingIntegrations, err := api.DdbClient.ScanIntegrations(aws.String(models.IntegrationTypeAWS3))
 		if err != nil {
 			zap.L().Error("failed to scan integration", zap.Error(err))
 			return deleteIntegrationInternalError
@@ -69,7 +69,7 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) error {
 		}
 
 		if shouldRemovePermissions {
-			if err = DisableExternalSnsTopicSubscription(integrationItem.AWSAccountID); err != nil {
+			if err = api.DisableExternalSnsTopicSubscription(integrationItem.AWSAccountID); err != nil {
 				zap.L().Error("failed to remove permission from SQS queue for integrationItem",
 					zap.String("integrationId", input.IntegrationID),
 					zap.Error(err))
@@ -77,13 +77,13 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) error {
 			}
 		}
 	case models.IntegrationTypeSqs:
-		if err := RemoveSourceFromLambdaTrigger(input.IntegrationID); err != nil {
+		if err := api.RemoveSourceFromLambdaTrigger(input.IntegrationID); err != nil {
 			zap.L().Error("failed to remove sqs queue from source",
 				zap.String("integrationId", input.IntegrationID),
 				zap.Error(err))
 			return deleteIntegrationInternalError
 		}
-		if err := DeleteSourceSqsQueue(input.IntegrationID); err != nil {
+		if err := api.DeleteSourceSqsQueue(input.IntegrationID); err != nil {
 			zap.L().Error("failed to delete source queue",
 				zap.String("integrationId", input.IntegrationID),
 				zap.Error(err))
@@ -91,7 +91,7 @@ func (API) DeleteIntegration(input *models.DeleteIntegrationInput) error {
 		}
 	}
 
-	err = dynamoClient.DeleteItem(input.IntegrationID)
+	err = api.DdbClient.DeleteItem(input.IntegrationID)
 	if err != nil {
 		zap.L().Error("failed to delete item", zap.Error(err))
 		return deleteIntegrationInternalError

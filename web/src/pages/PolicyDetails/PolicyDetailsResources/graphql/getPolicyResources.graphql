@@ -1,0 +1,34 @@
+query GetPolicyResources($resourcesForPolicyInput: ResourcesForPolicyInput!) {
+  resourcesForPolicy(input: $resourcesForPolicyInput) {
+    items {
+      errorMessage
+      integrationId
+      lastUpdated
+      policyId
+      resourceId
+      status
+      suppressed
+    }
+    paging {
+      totalItems
+      totalPages
+      thisPage
+    }
+    totals {
+      active {
+        fail
+        pass
+        error
+      }
+      suppressed {
+        fail
+        pass
+        error
+      }
+    }
+  }
+  listComplianceIntegrations {
+    integrationId
+    integrationLabel
+  }
+}

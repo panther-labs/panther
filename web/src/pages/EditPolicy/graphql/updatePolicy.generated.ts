@@ -28,31 +28,29 @@ export type UpdatePolicyVariables = {
 };
 
 export type UpdatePolicy = {
-  updatePolicy?: Types.Maybe<
-    Pick<
-      Types.PolicyDetails,
-      | 'autoRemediationId'
-      | 'autoRemediationParameters'
-      | 'body'
-      | 'description'
-      | 'displayName'
-      | 'enabled'
-      | 'id'
-      | 'outputIds'
-      | 'reference'
-      | 'resourceTypes'
-      | 'runbook'
-      | 'severity'
-      | 'suppressions'
-      | 'tags'
-    > & {
-      tests?: Types.Maybe<
-        Array<
-          Types.Maybe<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>>
-        >
-      >;
-    }
-  >;
+  updatePolicy: Pick<
+    Types.Policy,
+    | 'autoRemediationId'
+    | 'autoRemediationParameters'
+    | 'body'
+    | 'description'
+    | 'displayName'
+    | 'enabled'
+    | 'id'
+    | 'outputIds'
+    | 'reference'
+    | 'resourceTypes'
+    | 'runbook'
+    | 'severity'
+    | 'suppressions'
+    | 'tags'
+  > & {
+    tests?: Types.Maybe<
+      Array<
+        Types.Maybe<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>>
+      >
+    >;
+  };
 };
 
 export const UpdatePolicyDocument = gql`

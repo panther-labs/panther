@@ -38,6 +38,11 @@ export type TestRule = {
           titleFunction?: Types.Maybe<TestFunctionResult>;
           dedupFunction?: Types.Maybe<TestFunctionResult>;
           alertContextFunction?: Types.Maybe<TestFunctionResult>;
+          descriptionFunction?: Types.Maybe<TestFunctionResult>;
+          destinationsFunction?: Types.Maybe<TestFunctionResult>;
+          referenceFunction?: Types.Maybe<TestFunctionResult>;
+          runbookFunction?: Types.Maybe<TestFunctionResult>;
+          severityFunction?: Types.Maybe<TestFunctionResult>;
         };
       }
     >;
@@ -65,6 +70,21 @@ export const TestRuleDocument = gql`
             ...TestFunctionResult
           }
           alertContextFunction {
+            ...TestFunctionResult
+          }
+          descriptionFunction {
+            ...TestFunctionResult
+          }
+          destinationsFunction {
+            ...TestFunctionResult
+          }
+          referenceFunction {
+            ...TestFunctionResult
+          }
+          runbookFunction {
+            ...TestFunctionResult
+          }
+          severityFunction {
             ...TestFunctionResult
           }
         }

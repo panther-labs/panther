@@ -34,13 +34,15 @@ import (
 )
 
 func TestListIntegrations(t *testing.T) {
+	t.Parallel()
+	apiTest := NewAPITest()
 	lastScanEndTime, err := time.Parse(time.RFC3339, "2019-04-10T23:00:00Z")
 	require.NoError(t, err)
 
 	lastScanStartTime, err := time.Parse(time.RFC3339, "2019-04-10T22:59:00Z")
 	require.NoError(t, err)
 
-	dynamoClient = &ddb.DDB{
+	apiTest.DdbClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{
 				{
@@ -84,11 +86,14 @@ func TestListIntegrations(t *testing.T) {
 	require.NotEmpty(t, out)
 	assert.Len(t, out, 1)
 	assert.Equal(t, expected, out[0])
+	apiTest.AssertExpectations(t)
 }
 
 // An empty list of integrations is returned instead of null
 func TestListIntegrationsEmpty(t *testing.T) {
-	dynamoClient = &ddb.DDB{
+	t.Parallel()
+	apiTest := NewAPITest()
+	apiTest.DdbClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{},
 			TestErr:            false,
@@ -103,7 +108,9 @@ func TestListIntegrationsEmpty(t *testing.T) {
 }
 
 func TestHandleListIntegrationsScanError(t *testing.T) {
-	dynamoClient = &ddb.DDB{
+	t.Parallel()
+	apiTest := NewAPITest()
+	apiTest.DdbClient = &ddb.DDB{
 		Client: &modelstest.MockDDBClient{
 			MockScanAttributes: []map[string]*dynamodb.AttributeValue{},
 			TestErr:            true,

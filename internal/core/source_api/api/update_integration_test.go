@@ -33,16 +33,14 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
-	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 func TestUpdateIntegrationSettingsAwsScanType(t *testing.T) {
-	mockClient := &testutils.DynamoDBMock{}
-	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
-	mockSQS := &testutils.SqsMock{}
+	t.Parallel()
+	apiTest := NewAPITest()
 
 	// Mocking health check
-	evaluateIntegrationFunc = func(_ API, _ *models.CheckIntegrationInput) (string, bool, error) {
+	apiTest.EvaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) {
 		return "", true, nil
 	}
 
@@ -50,10 +48,9 @@ func TestUpdateIntegrationSettingsAwsScanType(t *testing.T) {
 		"integrationId":   {S: aws.String(testIntegrationID)},
 		"integrationType": {S: aws.String(models.IntegrationTypeAWSScan)},
 	}}
-	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil).Once()
-	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil).Once()
-	mockClient.On("Scan", mock.Anything).Return(&dynamodb.ScanOutput{}, nil).Once()
-	mockSQS.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
+	apiTest.mockDdb.On("GetItem", mock.Anything).Return(getResponse, nil).Once()
+	apiTest.mockDdb.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil).Once()
+	apiTest.mockDdb.On("Scan", mock.Anything).Return(&dynamodb.ScanOutput{}, nil).Once()
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		IntegrationID:    testIntegrationID,
@@ -71,17 +68,15 @@ func TestUpdateIntegrationSettingsAwsScanType(t *testing.T) {
 	}
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)
-	mockClient.AssertExpectations(t)
+	apiTest.AssertExpectations(t)
 }
 
 func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
-	mockClient := &testutils.DynamoDBMock{}
-	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
-	mockSqsClient := &testutils.SqsMock{}
-	sqsClient = mockSqsClient
+	t.Parallel()
+	apiTest := NewAPITest()
 
 	// Mocking health check
-	evaluateIntegrationFunc = func(api API, integration *models.CheckIntegrationInput) (string, bool, error) {
+	apiTest.EvaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) {
 		return "", true, nil
 	}
 
@@ -90,11 +85,11 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 		"integrationType": {S: aws.String(models.IntegrationTypeAWS3)},
 		"logTypes":        {SS: aws.StringSlice([]string{"Log.TypeA"})},
 	}}
-	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil).Once()
-	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil).Once()
-	mockClient.On("Scan", mock.Anything).Return(&dynamodb.ScanOutput{}, nil).Once()
+	apiTest.mockDdb.On("GetItem", mock.Anything).Return(getResponse, nil).Once()
+	apiTest.mockDdb.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil).Once()
+	apiTest.mockDdb.On("Scan", mock.Anything).Return(&dynamodb.ScanOutput{}, nil).Once()
 	// Send message to create new log types
-	mockSqsClient.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
+	apiTest.mockSqs.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		S3Bucket:         "test-bucket-1",
@@ -113,15 +108,14 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	}
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)
-	mockClient.AssertExpectations(t)
-	mockSqsClient.AssertExpectations(t)
+	apiTest.AssertExpectations(t)
 }
 
-func TestUpdateIntegrationSameLogtypes(t *testing.T) {
-	mockClient := &testutils.DynamoDBMock{}
-	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
+func TestUpdateIntegrationSameLogTypes(t *testing.T) {
+	t.Parallel()
+	apiTest := NewAPITest()
 	// Mocking health check
-	evaluateIntegrationFunc = func(api API, integration *models.CheckIntegrationInput) (string, bool, error) {
+	apiTest.EvaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) {
 		return "", true, nil
 	}
 
@@ -130,9 +124,9 @@ func TestUpdateIntegrationSameLogtypes(t *testing.T) {
 		"integrationType": {S: aws.String(models.IntegrationTypeAWS3)},
 		"logTypes":        {SS: aws.StringSlice([]string{"Log.TypeA"})},
 	}}
-	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
-	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
-	mockClient.On("Scan", mock.Anything).Return(&dynamodb.ScanOutput{}, nil)
+	apiTest.mockDdb.On("GetItem", mock.Anything).Return(getResponse, nil)
+	apiTest.mockDdb.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
+	apiTest.mockDdb.On("Scan", mock.Anything).Return(&dynamodb.ScanOutput{}, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
 		S3Bucket:         "test-bucket-1",
@@ -151,10 +145,11 @@ func TestUpdateIntegrationSameLogtypes(t *testing.T) {
 	}
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)
-	mockClient.AssertExpectations(t)
+	apiTest.AssertExpectations(t)
 }
 
 func TestUpdateIntegrationValidTime(t *testing.T) {
+	t.Parallel()
 	now := time.Now()
 	validator, err := models.Validator()
 	require.NoError(t, err)
@@ -166,14 +161,14 @@ func TestUpdateIntegrationValidTime(t *testing.T) {
 }
 
 func TestUpdateIntegrationLastScanStart(t *testing.T) {
-	mockClient := &testutils.DynamoDBMock{}
-	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
+	t.Parallel()
+	apiTest := NewAPITest()
 
 	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
 		"integrationId": {S: aws.String(testIntegrationID)},
 	}}
-	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
-	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
+	apiTest.mockDdb.On("GetItem", mock.Anything).Return(getResponse, nil)
+	apiTest.mockDdb.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
 
 	lastScanEndTime, err := time.Parse(time.RFC3339, "2009-11-10T23:00:00Z")
 	require.NoError(t, err)
@@ -185,18 +180,18 @@ func TestUpdateIntegrationLastScanStart(t *testing.T) {
 	})
 
 	assert.NoError(t, err)
-	mockClient.AssertExpectations(t)
+	apiTest.AssertExpectations(t)
 }
 
 func TestUpdateIntegrationLastScanEnd(t *testing.T) {
-	mockClient := &testutils.DynamoDBMock{}
-	dynamoClient = &ddb.DDB{Client: mockClient, TableName: "test"}
+	t.Parallel()
+	apiTest := NewAPITest()
 
 	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
 		"integrationId": {S: aws.String(testIntegrationID)},
 	}}
-	mockClient.On("GetItem", mock.Anything).Return(getResponse, nil)
-	mockClient.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
+	apiTest.mockDdb.On("GetItem", mock.Anything).Return(getResponse, nil)
+	apiTest.mockDdb.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
 
 	lastScanEndTime, err := time.Parse(time.RFC3339, "2009-11-10T23:00:00Z")
 	require.NoError(t, err)
@@ -209,10 +204,11 @@ func TestUpdateIntegrationLastScanEnd(t *testing.T) {
 	})
 
 	assert.NoError(t, err)
-	mockClient.AssertExpectations(t)
+	apiTest.AssertExpectations(t)
 }
 
 func TestSlicesContainSameElements(t *testing.T) {
+	t.Parallel()
 	type testCase struct {
 		old, new []string
 		expect   bool
@@ -281,6 +277,7 @@ func TestSlicesContainSameElements(t *testing.T) {
 // Tests that an old s3 source that has the deprecated s3 prefix and logtypes fields
 // populated, can be successfully read and updated with the new s3PrefixLogTypes field.
 func TestS3PrefixLogTypes_BackwardsCompatibility(t *testing.T) {
+	t.Parallel()
 	t.Run("backwards compatible read", func(t *testing.T) {
 		sourceItem := &ddb.Integration{
 			IntegrationID:    uuid.New().String(),

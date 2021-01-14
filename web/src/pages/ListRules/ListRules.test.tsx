@@ -19,7 +19,7 @@
 import React from 'react';
 import {
   buildListRulesResponse,
-  buildRuleSummary,
+  buildRule,
   fireClickAndMouseEvents,
   fireEvent,
   render,
@@ -84,7 +84,7 @@ describe('ListRules', () => {
         },
         data: {
           rules: buildListRulesResponse({
-            rules: [buildRuleSummary({ displayName: 'Test Rule' })],
+            rules: [buildRule({ displayName: 'Test Rule' })],
           }),
         },
       }),
@@ -145,7 +145,7 @@ describe('ListRules', () => {
         },
         data: {
           rules: buildListRulesResponse({
-            rules: [buildRuleSummary({ displayName: 'Initial Rule' })],
+            rules: [buildRule({ displayName: 'Initial Rule' })],
           }),
         },
       }),
@@ -159,7 +159,7 @@ describe('ListRules', () => {
         },
         data: {
           rules: buildListRulesResponse({
-            rules: [buildRuleSummary({ displayName: 'Filtered Rule' })],
+            rules: [buildRule({ displayName: 'Filtered Rule' })],
           }),
         },
       }),
@@ -169,7 +169,7 @@ describe('ListRules', () => {
         },
         data: {
           rules: buildListRulesResponse({
-            rules: [buildRuleSummary({ displayName: 'Initial Rule' })],
+            rules: [buildRule({ displayName: 'Initial Rule' })],
           }),
         },
       }),
@@ -275,7 +275,7 @@ describe('ListRules', () => {
         },
         data: {
           rules: buildListRulesResponse({
-            rules: [buildRuleSummary({ displayName: 'Initial Rule' })],
+            rules: [buildRule({ displayName: 'Initial Rule' })],
           }),
         },
       }),
@@ -285,7 +285,7 @@ describe('ListRules', () => {
         },
         data: {
           rules: buildListRulesResponse({
-            rules: [buildRuleSummary({ displayName: 'Text Filtered Rule' })],
+            rules: [buildRule({ displayName: 'Text Filtered Rule' })],
           }),
         },
       }),
@@ -300,7 +300,7 @@ describe('ListRules', () => {
         },
         data: {
           rules: buildListRulesResponse({
-            rules: [buildRuleSummary({ displayName: 'Sorted Rule' })],
+            rules: [buildRule({ displayName: 'Sorted Rule' })],
           }),
         },
       }),
@@ -316,7 +316,7 @@ describe('ListRules', () => {
         },
         data: {
           rules: buildListRulesResponse({
-            rules: [buildRuleSummary({ displayName: 'Log Filtered Rule' })],
+            rules: [buildRule({ displayName: 'Log Filtered Rule' })],
           }),
         },
       }),
@@ -333,7 +333,7 @@ describe('ListRules', () => {
         },
         data: {
           rules: buildListRulesResponse({
-            rules: [buildRuleSummary({ displayName: 'Tag Filtered Rule' })],
+            rules: [buildRule({ displayName: 'Tag Filtered Rule' })],
           }),
         },
       }),

@@ -1,0 +1,25 @@
+query GetPolicyDetails(
+  $policyDetailsInput: GetPolicyInput!
+  $resourcesForPolicyInput: ResourcesForPolicyInput!
+) {
+  policy(input: $policyDetailsInput) {
+    ...PolicySummary
+    autoRemediationId
+    autoRemediationParameters
+    suppressions
+  }
+  resourcesForPolicy(input: $resourcesForPolicyInput) {
+    totals {
+      active {
+        fail
+        pass
+        error
+      }
+      suppressed {
+        fail
+        pass
+        error
+      }
+    }
+  }
+}

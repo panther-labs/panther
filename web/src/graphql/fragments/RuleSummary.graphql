@@ -1,0 +1,16 @@
+fragment RuleSummary on Rule {
+  id
+  description
+  displayName
+  logTypes
+  threshold
+  outputIds
+  runbook
+  reference
+  severity
+  tags
+  dedupPeriodMinutes
+  createdAt
+  lastModified
+  enabled
+}
