@@ -32,7 +32,7 @@ import { GetPolicySummary } from '../graphql/getPolicySummary.generated';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails['alert'];
-  policy: GetPolicySummary['policy'];
+  policy?: GetPolicySummary['policy'];
 }
 
 const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, policy }) => {
