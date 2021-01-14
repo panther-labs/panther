@@ -127,7 +127,7 @@ var logTypes = logtypes.Must("AWS",
 		Name:         TypeWAFWebACL,
 		Description:  `WAF Web ACL traffic information logs.`,
 		ReferenceURL: `https://docs.aws.amazon.com/waf/latest/developerguide/logging.html`,
-		NewEvent: func () interface{} {
+		NewEvent: func() interface{} {
 			return &WAFWebACL{}
 		},
 	},
