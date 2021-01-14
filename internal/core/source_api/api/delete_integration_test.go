@@ -56,11 +56,11 @@ func TestDeleteLogIntegration(t *testing.T) {
 	t.Parallel()
 	apiTest := NewAPITest()
 
-	apiTest.config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	apiTest.Config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: aws.StringSlice([]string{"Policy"}),
-		QueueUrl:       aws.String(apiTest.config.LogProcessorQueueURL),
+		QueueUrl:       aws.String(apiTest.Config.LogProcessorQueueURL),
 	}
 
 	scanResult := &dynamodb.ScanOutput{
@@ -79,7 +79,7 @@ func TestDeleteLogIntegration(t *testing.T) {
 	expectedAttributes := generateQueueAttributeOutput(t, []string{})
 	expectedSetAttributes := &sqs.SetQueueAttributesInput{
 		Attributes: expectedAttributes,
-		QueueUrl:   aws.String(apiTest.config.LogProcessorQueueURL),
+		QueueUrl:   aws.String(apiTest.Config.LogProcessorQueueURL),
 	}
 	apiTest.mockSqs.On("SetQueueAttributes", expectedSetAttributes).Return(&sqs.SetQueueAttributesOutput{}, nil)
 
@@ -98,7 +98,7 @@ func TestDeleteLogIntegrationKeepSqsQueuePermissions(t *testing.T) {
 	t.Parallel()
 	apiTest := NewAPITest()
 
-	apiTest.config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	apiTest.Config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	additionLogSourceEntry := generateDDBAttributes(models.IntegrationTypeAWS3)
 	additionLogSourceEntry["integrationId"] = &dynamodb.AttributeValue{
@@ -147,11 +147,11 @@ func TestDeleteIntegrationPolicyNotFound(t *testing.T) {
 	t.Parallel()
 	apiTest := NewAPITest()
 
-	apiTest.config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	apiTest.Config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	expectedGetQueueAttributesInput := &sqs.GetQueueAttributesInput{
 		AttributeNames: aws.StringSlice([]string{"Policy"}),
-		QueueUrl:       aws.String(apiTest.config.LogProcessorQueueURL),
+		QueueUrl:       aws.String(apiTest.Config.LogProcessorQueueURL),
 	}
 
 	scanResult := &dynamodb.ScanOutput{
@@ -194,7 +194,7 @@ func TestDeleteIntegrationDeleteOfItemFails(t *testing.T) {
 	t.Parallel()
 	apiTest := NewAPITest()
 
-	apiTest.config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
+	apiTest.Config.LogProcessorQueueURL = "https://sqs.eu-west-1.amazonaws.com/123456789012/testqueue"
 
 	scanResult := &dynamodb.ScanOutput{
 		Items: []map[string]*dynamodb.AttributeValue{

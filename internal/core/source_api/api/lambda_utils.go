@@ -35,7 +35,7 @@ func (api *API) AddSourceAsLambdaTrigger(integrationID string) error {
 		FunctionName:   aws.String(messageForwarderLambda),
 		Enabled:        aws.Bool(true),
 	}
-	_, err := api.lambdaClient.CreateEventSourceMapping(input)
+	_, err := api.LambdaClient.CreateEventSourceMapping(input)
 	if err != nil {
 		return errors.Wrap(err, "failed to configure new trigger for message forwarder lambda")
 	}
@@ -48,7 +48,7 @@ func (api *API) RemoveSourceFromLambdaTrigger(integrationID string) error {
 		EventSourceArn: aws.String(api.SourceSqsQueueArn(integrationID)),
 		MaxItems:       aws.Int64(1),
 	}
-	listOutput, err := api.lambdaClient.ListEventSourceMappings(listInput)
+	listOutput, err := api.LambdaClient.ListEventSourceMappings(listInput)
 	if err != nil {
 		return errors.Wrap(err, "failed to list lambda event mappings")
 	}
@@ -63,7 +63,7 @@ func (api *API) RemoveSourceFromLambdaTrigger(integrationID string) error {
 	deleteInput := &lambda.DeleteEventSourceMappingInput{
 		UUID: eventSourceUUID,
 	}
-	_, err = api.lambdaClient.DeleteEventSourceMapping(deleteInput)
+	_, err = api.LambdaClient.DeleteEventSourceMapping(deleteInput)
 	if err != nil {
 		return errors.Wrap(err, "failed to delete source mapping")
 	}

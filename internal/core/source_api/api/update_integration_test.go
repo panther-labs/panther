@@ -40,7 +40,7 @@ func TestUpdateIntegrationSettingsAwsScanType(t *testing.T) {
 	apiTest := NewAPITest()
 
 	// Mocking health check
-	apiTest.evaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) {
+	apiTest.EvaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) {
 		return "", true, nil
 	}
 
@@ -76,7 +76,7 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	apiTest := NewAPITest()
 
 	// Mocking health check
-	apiTest.evaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) {
+	apiTest.EvaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) {
 		return "", true, nil
 	}
 
@@ -111,43 +111,42 @@ func TestUpdateIntegrationSettingsAwsS3Type(t *testing.T) {
 	apiTest.AssertExpectations(t)
 }
 
-//TODO: fix test
-//func TestUpdateIntegrationSameLogTypes(t *testing.T) {
-//	t.Parallel()
-//	apiTest := NewAPITest()
-//	// Mocking health check
-//	apiTest.evaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) {
-//		return "", true, nil
-//	}
-//
-//	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
-//		"integrationId":   {S: aws.String(testIntegrationID)},
-//		"integrationType": {S: aws.String(models.IntegrationTypeAWS3)},
-//		"logTypes":        {SS: aws.StringSlice([]string{"Log.TypeA"})},
-//	}}
-//	apiTest.mockDdb.On("GetItem", mock.Anything).Return(getResponse, nil)
-//	apiTest.mockDdb.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
-//	apiTest.mockDdb.On("Scan", mock.Anything).Return(&dynamodb.ScanOutput{}, nil)
-//
-//	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
-//		S3Bucket:         "test-bucket-1",
-//		S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", LogTypes: []string{"Log.TypeA"}}},
-//		KmsKey:           "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
-//	})
-//
-//	expected := &models.SourceIntegration{
-//		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-//			IntegrationID:    testIntegrationID,
-//			IntegrationType:  models.IntegrationTypeAWS3,
-//			S3Bucket:         "test-bucket-1",
-//			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", LogTypes: []string{"Log.TypeA"}}},
-//			KmsKey:           "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
-//		},
-//	}
-//	assert.NoError(t, err)
-//	assert.Equal(t, expected, result)
-//	apiTest.AssertExpectations(t)
-//}
+func TestUpdateIntegrationSameLogTypes(t *testing.T) {
+	t.Parallel()
+	apiTest := NewAPITest()
+	// Mocking health check
+	apiTest.EvaluateIntegrationFunc = func(_ *models.CheckIntegrationInput) (string, bool, error) {
+		return "", true, nil
+	}
+
+	getResponse := &dynamodb.GetItemOutput{Item: map[string]*dynamodb.AttributeValue{
+		"integrationId":   {S: aws.String(testIntegrationID)},
+		"integrationType": {S: aws.String(models.IntegrationTypeAWS3)},
+		"logTypes":        {SS: aws.StringSlice([]string{"Log.TypeA"})},
+	}}
+	apiTest.mockDdb.On("GetItem", mock.Anything).Return(getResponse, nil)
+	apiTest.mockDdb.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
+	apiTest.mockDdb.On("Scan", mock.Anything).Return(&dynamodb.ScanOutput{}, nil)
+
+	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
+		S3Bucket:         "test-bucket-1",
+		S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", LogTypes: []string{"Log.TypeA"}}},
+		KmsKey:           "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
+	})
+
+	expected := &models.SourceIntegration{
+		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
+			IntegrationID:    testIntegrationID,
+			IntegrationType:  models.IntegrationTypeAWS3,
+			S3Bucket:         "test-bucket-1",
+			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", LogTypes: []string{"Log.TypeA"}}},
+			KmsKey:           "arn:aws:kms:us-west-2:111111111111:key/27803c7e-9fa5-4fcb-9525-ee11c953d329",
+		},
+	}
+	assert.NoError(t, err)
+	assert.Equal(t, expected, result)
+	apiTest.AssertExpectations(t)
+}
 
 func TestUpdateIntegrationValidTime(t *testing.T) {
 	t.Parallel()
