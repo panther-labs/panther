@@ -24,14 +24,14 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type RuleTeaserVariables = {
+export type GetRuleSummaryVariables = {
   input: Types.GetRuleInput;
 };
 
-export type RuleTeaser = { rule?: Types.Maybe<RuleSummary> };
+export type GetRuleSummary = { rule?: Types.Maybe<RuleSummary> };
 
-export const RuleTeaserDocument = gql`
-  query RuleTeaser($input: GetRuleInput!) {
+export const GetRuleSummaryDocument = gql`
+  query GetRuleSummary($input: GetRuleInput!) {
     rule(input: $input) {
       ...RuleSummary
     }
@@ -40,51 +40,54 @@ export const RuleTeaserDocument = gql`
 `;
 
 /**
- * __useRuleTeaser__
+ * __useGetRuleSummary__
  *
- * To run a query within a React component, call `useRuleTeaser` and pass it any options that fit your needs.
- * When your component renders, `useRuleTeaser` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetRuleSummary` and pass it any options that fit your needs.
+ * When your component renders, `useGetRuleSummary` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useRuleTeaser({
+ * const { data, loading, error } = useGetRuleSummary({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useRuleTeaser(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<RuleTeaser, RuleTeaserVariables>
+export function useGetRuleSummary(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GetRuleSummary, GetRuleSummaryVariables>
 ) {
-  return ApolloReactHooks.useQuery<RuleTeaser, RuleTeaserVariables>(
-    RuleTeaserDocument,
+  return ApolloReactHooks.useQuery<GetRuleSummary, GetRuleSummaryVariables>(
+    GetRuleSummaryDocument,
     baseOptions
   );
 }
-export function useRuleTeaserLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<RuleTeaser, RuleTeaserVariables>
+export function useGetRuleSummaryLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRuleSummary, GetRuleSummaryVariables>
 ) {
-  return ApolloReactHooks.useLazyQuery<RuleTeaser, RuleTeaserVariables>(
-    RuleTeaserDocument,
+  return ApolloReactHooks.useLazyQuery<GetRuleSummary, GetRuleSummaryVariables>(
+    GetRuleSummaryDocument,
     baseOptions
   );
 }
-export type RuleTeaserHookResult = ReturnType<typeof useRuleTeaser>;
-export type RuleTeaserLazyQueryHookResult = ReturnType<typeof useRuleTeaserLazyQuery>;
-export type RuleTeaserQueryResult = ApolloReactCommon.QueryResult<RuleTeaser, RuleTeaserVariables>;
-export function mockRuleTeaser({
+export type GetRuleSummaryHookResult = ReturnType<typeof useGetRuleSummary>;
+export type GetRuleSummaryLazyQueryHookResult = ReturnType<typeof useGetRuleSummaryLazyQuery>;
+export type GetRuleSummaryQueryResult = ApolloReactCommon.QueryResult<
+  GetRuleSummary,
+  GetRuleSummaryVariables
+>;
+export function mockGetRuleSummary({
   data,
   variables,
   errors,
 }: {
-  data: RuleTeaser;
-  variables?: RuleTeaserVariables;
+  data: GetRuleSummary;
+  variables?: GetRuleSummaryVariables;
   errors?: GraphQLError[];
 }) {
   return {
-    request: { query: RuleTeaserDocument, variables },
+    request: { query: GetRuleSummaryDocument, variables },
     result: { data, errors },
   };
 }

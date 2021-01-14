@@ -1,5 +1,5 @@
 query GetRuleDetails($input: GetRuleInput!) {
   rule(input: $input) {
-    ...RuleSummary
+    ...RuleDetails
   }
 }

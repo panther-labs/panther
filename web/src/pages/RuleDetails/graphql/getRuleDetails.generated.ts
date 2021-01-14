@@ -18,7 +18,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { RuleSummary } from '../../../graphql/fragments/RuleSummary.generated';
+import { RuleDetails } from '../../../graphql/fragments/RuleDetails.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
@@ -28,15 +28,15 @@ export type GetRuleDetailsVariables = {
   input: Types.GetRuleInput;
 };
 
-export type GetRuleDetails = { rule?: Types.Maybe<RuleSummary> };
+export type GetRuleDetails = { rule?: Types.Maybe<RuleDetails> };
 
 export const GetRuleDetailsDocument = gql`
   query GetRuleDetails($input: GetRuleInput!) {
     rule(input: $input) {
-      ...RuleSummary
+      ...RuleDetails
     }
   }
-  ${RuleSummary}
+  ${RuleDetails}
 `;
 
 /**

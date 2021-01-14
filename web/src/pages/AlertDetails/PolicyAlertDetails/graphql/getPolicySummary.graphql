@@ -1,4 +1,4 @@
-query PolicyTeaser($input: GetPolicyInput!) {
+query GetPolicySummary($input: GetPolicyInput!) {
   policy(input: $input) {
     ...PolicySummary
   }

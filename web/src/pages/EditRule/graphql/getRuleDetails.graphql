@@ -1,22 +1,5 @@
 query GetRuleDetails($input: GetRuleInput!) {
   rule(input: $input) {
-    body
-    dedupPeriodMinutes
-    threshold
-    description
-    displayName
-    enabled
-    id
-    logTypes
-    outputIds
-    reference
-    runbook
-    severity
-    tags
-    tests {
-      expectedResult
-      name
-      resource
-    }
+    ...RuleDetails
   }
 }

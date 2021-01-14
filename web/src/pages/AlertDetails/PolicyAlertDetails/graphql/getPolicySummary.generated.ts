@@ -24,14 +24,14 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type PolicyTeaserVariables = {
+export type GetPolicySummaryVariables = {
   input: Types.GetPolicyInput;
 };
 
-export type PolicyTeaser = { policy?: Types.Maybe<PolicySummary> };
+export type GetPolicySummary = { policy?: Types.Maybe<PolicySummary> };
 
-export const PolicyTeaserDocument = gql`
-  query PolicyTeaser($input: GetPolicyInput!) {
+export const GetPolicySummaryDocument = gql`
+  query GetPolicySummary($input: GetPolicyInput!) {
     policy(input: $input) {
       ...PolicySummary
     }
@@ -40,54 +40,54 @@ export const PolicyTeaserDocument = gql`
 `;
 
 /**
- * __usePolicyTeaser__
+ * __useGetPolicySummary__
  *
- * To run a query within a React component, call `usePolicyTeaser` and pass it any options that fit your needs.
- * When your component renders, `usePolicyTeaser` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetPolicySummary` and pass it any options that fit your needs.
+ * When your component renders, `useGetPolicySummary` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = usePolicyTeaser({
+ * const { data, loading, error } = useGetPolicySummary({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function usePolicyTeaser(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<PolicyTeaser, PolicyTeaserVariables>
+export function useGetPolicySummary(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GetPolicySummary, GetPolicySummaryVariables>
 ) {
-  return ApolloReactHooks.useQuery<PolicyTeaser, PolicyTeaserVariables>(
-    PolicyTeaserDocument,
+  return ApolloReactHooks.useQuery<GetPolicySummary, GetPolicySummaryVariables>(
+    GetPolicySummaryDocument,
     baseOptions
   );
 }
-export function usePolicyTeaserLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PolicyTeaser, PolicyTeaserVariables>
+export function useGetPolicySummaryLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetPolicySummary, GetPolicySummaryVariables>
 ) {
-  return ApolloReactHooks.useLazyQuery<PolicyTeaser, PolicyTeaserVariables>(
-    PolicyTeaserDocument,
+  return ApolloReactHooks.useLazyQuery<GetPolicySummary, GetPolicySummaryVariables>(
+    GetPolicySummaryDocument,
     baseOptions
   );
 }
-export type PolicyTeaserHookResult = ReturnType<typeof usePolicyTeaser>;
-export type PolicyTeaserLazyQueryHookResult = ReturnType<typeof usePolicyTeaserLazyQuery>;
-export type PolicyTeaserQueryResult = ApolloReactCommon.QueryResult<
-  PolicyTeaser,
-  PolicyTeaserVariables
+export type GetPolicySummaryHookResult = ReturnType<typeof useGetPolicySummary>;
+export type GetPolicySummaryLazyQueryHookResult = ReturnType<typeof useGetPolicySummaryLazyQuery>;
+export type GetPolicySummaryQueryResult = ApolloReactCommon.QueryResult<
+  GetPolicySummary,
+  GetPolicySummaryVariables
 >;
-export function mockPolicyTeaser({
+export function mockGetPolicySummary({
   data,
   variables,
   errors,
 }: {
-  data: PolicyTeaser;
-  variables?: PolicyTeaserVariables;
+  data: GetPolicySummary;
+  variables?: GetPolicySummaryVariables;
   errors?: GraphQLError[];
 }) {
   return {
-    request: { query: PolicyTeaserDocument, variables },
+    request: { query: GetPolicySummaryDocument, variables },
     result: { data, errors },
   };
 }

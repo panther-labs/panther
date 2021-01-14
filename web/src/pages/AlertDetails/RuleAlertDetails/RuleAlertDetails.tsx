@@ -28,7 +28,7 @@ import { AlertDetails } from 'Pages/AlertDetails';
 import invert from 'lodash/invert';
 import useUrlParams from 'Hooks/useUrlParams';
 import Skeleton from '../Skeleton';
-import { useRuleTeaser } from './graphql/ruleTeaser.generated';
+import { useGetRuleSummary } from './graphql/getRuleSummary.generated';
 import AlertDetailsBanner from './AlertDetailsBanner';
 import AlertEvents from './AlertDetailsEvents';
 import AlertDetailsInfo from './AlertDetailsInfo';
@@ -57,7 +57,7 @@ const RuleAlertDetails: React.FC<RuleAlertDetailsProps> = ({ alert, fetchMore })
 
   const alertDetectionInfo = alert.detection as AlertDetailsRuleInfo;
 
-  const { data, loading, error } = useRuleTeaser({
+  const { data, loading, error } = useGetRuleSummary({
     variables: { input: { id: alertDetectionInfo.ruleId } },
   });
 

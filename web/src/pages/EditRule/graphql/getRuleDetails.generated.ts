@@ -18,6 +18,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
+import { RuleDetails } from '../../../graphql/fragments/RuleDetails.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
@@ -27,56 +28,15 @@ export type GetRuleDetailsVariables = {
   input: Types.GetRuleInput;
 };
 
-export type GetRuleDetails = {
-  rule?: Types.Maybe<
-    Pick<
-      Types.Rule,
-      | 'body'
-      | 'dedupPeriodMinutes'
-      | 'threshold'
-      | 'description'
-      | 'displayName'
-      | 'enabled'
-      | 'id'
-      | 'logTypes'
-      | 'outputIds'
-      | 'reference'
-      | 'runbook'
-      | 'severity'
-      | 'tags'
-    > & {
-      tests?: Types.Maybe<
-        Array<
-          Types.Maybe<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>>
-        >
-      >;
-    }
-  >;
-};
+export type GetRuleDetails = { rule?: Types.Maybe<RuleDetails> };
 
 export const GetRuleDetailsDocument = gql`
   query GetRuleDetails($input: GetRuleInput!) {
     rule(input: $input) {
-      body
-      dedupPeriodMinutes
-      threshold
-      description
-      displayName
-      enabled
-      id
-      logTypes
-      outputIds
-      reference
-      runbook
-      severity
-      tags
-      tests {
-        expectedResult
-        name
-        resource
-      }
+      ...RuleDetails
     }
   }
+  ${RuleDetails}
 `;
 
 /**

@@ -36,8 +36,8 @@ import { AlertDetailsRuleInfo, AlertSummaryPolicyInfo, AlertTypesEnum } from 'Ge
 import { Route } from 'react-router-dom';
 import { mockListComplianceSourceNames, mockListDestinations } from 'Source/graphql/queries';
 import { mockAlertDetails } from './graphql/alertDetails.generated';
-import { mockRuleTeaser } from './RuleAlertDetails/graphql/ruleTeaser.generated';
-import { mockPolicyTeaser } from './PolicyAlertDetails/graphql/policyTeaser.generated';
+import { mockGetRuleSummary } from './RuleAlertDetails/graphql/getRuleSummary.generated';
+import { mockGetPolicySummary } from './PolicyAlertDetails/graphql/getPolicySummary.generated';
 import { mockRetryAlertDelivery } from './common/AlertDeliverySection/graphql/retryAlertDelivery.generated';
 import AlertDetails from './AlertDetails';
 
@@ -64,7 +64,7 @@ describe('AlertDetails', () => {
           },
           data: { alert },
         }),
-        mockRuleTeaser({
+        mockGetRuleSummary({
           variables: {
             input: {
               id: (alert.detection as AlertDetailsRuleInfo).ruleId,
@@ -120,7 +120,7 @@ describe('AlertDetails', () => {
           },
           data: { alert },
         }),
-        mockRuleTeaser({
+        mockGetRuleSummary({
           variables: {
             input: {
               id: (alert.detection as AlertDetailsRuleInfo).ruleId,
@@ -174,7 +174,7 @@ describe('AlertDetails', () => {
           },
           data: { alert },
         }),
-        mockRuleTeaser({
+        mockGetRuleSummary({
           variables: {
             input: {
               id: (alert.detection as AlertDetailsRuleInfo).ruleId,
@@ -231,7 +231,7 @@ describe('AlertDetails', () => {
           },
           data: { alert },
         }),
-        mockRuleTeaser({
+        mockGetRuleSummary({
           variables: {
             input: {
               id: (alert.detection as AlertDetailsRuleInfo).ruleId,
@@ -303,7 +303,7 @@ describe('AlertDetails', () => {
           },
           data: { alert },
         }),
-        mockPolicyTeaser({
+        mockGetPolicySummary({
           variables: {
             input: {
               id: policy.id,
