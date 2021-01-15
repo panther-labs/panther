@@ -522,6 +522,7 @@ func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"OutputsKeyId":               outputs["OutputsEncryptionKeyId"],
 		"PantherVersion":             util.Semver(),
+		"KvTableBillingMode":         settings.Infra.KvTableBillingMode,
 		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 		"UserPoolId":                 outputs["UserPoolId"],

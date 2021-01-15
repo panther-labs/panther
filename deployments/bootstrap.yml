@@ -688,6 +688,8 @@ Resources:
       UserPoolName: panther-users
 
   ########## Dynamo ##########
+  # Used only for Dynamo tables that have provisioned capacity / auto-scaling.
+  # Today, this is only the kv-store in the core stack if explicitly enabled.
   DynamoScalingRole:
     Type: AWS::IAM::Role
     Properties:
