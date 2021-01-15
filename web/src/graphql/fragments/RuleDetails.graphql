@@ -1,4 +1,5 @@
-fragment PolicyDetailsExtra on PolicyDetails {
+fragment RuleDetails on Rule {
+  ...RuleSummary
   body
   tests {
     expectedResult

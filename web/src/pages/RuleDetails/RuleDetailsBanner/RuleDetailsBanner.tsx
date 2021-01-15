@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Box, Button, Flex, Card, Heading } from 'pouncejs';
-import { RuleDetails } from 'Generated/schema';
+import { Rule } from 'Generated/schema';
 import urls from 'Source/urls';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
@@ -31,7 +31,7 @@ import RelatedDestinations from 'Components/RelatedDestinations/RelatedDestinati
 import useDetectionDestinations from 'Hooks/useDetectionDestinations';
 
 interface ResourceDetailsInfoProps {
-  rule?: RuleDetails;
+  rule?: Rule;
 }
 
 const RuleDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {

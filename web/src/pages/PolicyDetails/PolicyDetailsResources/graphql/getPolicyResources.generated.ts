@@ -16,18 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Types from '../../../../__generated__/schema';
+import * as Types from '../../../../../__generated__/schema';
 
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type PolicyResourcesVariables = {
+export type GetPolicyResourcesVariables = {
   resourcesForPolicyInput: Types.ResourcesForPolicyInput;
 };
 
-export type PolicyResources = {
+export type GetPolicyResources = {
   resourcesForPolicy?: Types.Maybe<{
     items?: Types.Maybe<
       Array<
@@ -56,8 +56,8 @@ export type PolicyResources = {
   >;
 };
 
-export const PolicyResourcesDocument = gql`
-  query PolicyResources($resourcesForPolicyInput: ResourcesForPolicyInput!) {
+export const GetPolicyResourcesDocument = gql`
+  query GetPolicyResources($resourcesForPolicyInput: ResourcesForPolicyInput!) {
     resourcesForPolicy(input: $resourcesForPolicyInput) {
       items {
         errorMessage
@@ -94,54 +94,59 @@ export const PolicyResourcesDocument = gql`
 `;
 
 /**
- * __usePolicyResources__
+ * __useGetPolicyResources__
  *
- * To run a query within a React component, call `usePolicyResources` and pass it any options that fit your needs.
- * When your component renders, `usePolicyResources` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetPolicyResources` and pass it any options that fit your needs.
+ * When your component renders, `useGetPolicyResources` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = usePolicyResources({
+ * const { data, loading, error } = useGetPolicyResources({
  *   variables: {
  *      resourcesForPolicyInput: // value for 'resourcesForPolicyInput'
  *   },
  * });
  */
-export function usePolicyResources(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<PolicyResources, PolicyResourcesVariables>
+export function useGetPolicyResources(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GetPolicyResources, GetPolicyResourcesVariables>
 ) {
-  return ApolloReactHooks.useQuery<PolicyResources, PolicyResourcesVariables>(
-    PolicyResourcesDocument,
+  return ApolloReactHooks.useQuery<GetPolicyResources, GetPolicyResourcesVariables>(
+    GetPolicyResourcesDocument,
     baseOptions
   );
 }
-export function usePolicyResourcesLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PolicyResources, PolicyResourcesVariables>
+export function useGetPolicyResourcesLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<
+    GetPolicyResources,
+    GetPolicyResourcesVariables
+  >
 ) {
-  return ApolloReactHooks.useLazyQuery<PolicyResources, PolicyResourcesVariables>(
-    PolicyResourcesDocument,
+  return ApolloReactHooks.useLazyQuery<GetPolicyResources, GetPolicyResourcesVariables>(
+    GetPolicyResourcesDocument,
     baseOptions
   );
 }
-export type PolicyResourcesHookResult = ReturnType<typeof usePolicyResources>;
-export type PolicyResourcesLazyQueryHookResult = ReturnType<typeof usePolicyResourcesLazyQuery>;
-export type PolicyResourcesQueryResult = ApolloReactCommon.QueryResult<
-  PolicyResources,
-  PolicyResourcesVariables
+export type GetPolicyResourcesHookResult = ReturnType<typeof useGetPolicyResources>;
+export type GetPolicyResourcesLazyQueryHookResult = ReturnType<
+  typeof useGetPolicyResourcesLazyQuery
 >;
-export function mockPolicyResources({
+export type GetPolicyResourcesQueryResult = ApolloReactCommon.QueryResult<
+  GetPolicyResources,
+  GetPolicyResourcesVariables
+>;
+export function mockGetPolicyResources({
   data,
   variables,
   errors,
 }: {
-  data: PolicyResources;
-  variables?: PolicyResourcesVariables;
+  data: GetPolicyResources;
+  variables?: GetPolicyResourcesVariables;
   errors?: GraphQLError[];
 }) {
   return {
-    request: { query: PolicyResourcesDocument, variables },
+    request: { query: GetPolicyResourcesDocument, variables },
     result: { data, errors },
   };
 }

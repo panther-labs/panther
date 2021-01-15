@@ -17,19 +17,19 @@
  */
 
 import React from 'react';
-import { render, buildPolicyDetails } from 'test-utils';
+import { render, buildPolicy } from 'test-utils';
 import PolicyDetailsBanner from './PolicyDetailsBanner';
 
 describe('PolicyDetailsBanner', () => {
   it('renders the correct data', async () => {
-    const policy = buildPolicyDetails({ displayName: 'My Policy' });
+    const policy = buildPolicy({ displayName: 'My Policy' });
     const { getByText } = render(<PolicyDetailsBanner policy={policy} />);
     expect(getByText('Edit Policy')).toBeInTheDocument();
     expect(getByText('Delete Policy')).toBeInTheDocument();
 
     expect(getByText('My Policy')).toBeInTheDocument();
     expect(getByText('FAIL')).toBeInTheDocument();
-    expect(getByText('CRITICAL')).toBeInTheDocument();
+    expect(getByText('MEDIUM')).toBeInTheDocument();
     expect(getByText('AUTO REMEDIATIATABLE')).toBeInTheDocument();
   });
 });

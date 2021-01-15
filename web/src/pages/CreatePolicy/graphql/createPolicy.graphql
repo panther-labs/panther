@@ -1,6 +1,5 @@
 mutation CreatePolicy($input: AddPolicyInput!) {
   addPolicy(input: $input) {
-    ...PolicyDetailsMain
-    ...PolicyDetailsExtra
+    ...PolicyDetails
   }
 }
