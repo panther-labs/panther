@@ -102,3 +102,15 @@ class ImmutableList(ImmutableContainerMixin, Sequence):  # pylint: disable=R0901
 
 ImmutableList.register()
 ImmutableDict.register()
+
+
+def json_encoder(obj: Any) -> Any:
+    """
+    Custom encoder for immutable objects
+
+    :param obj: the object for JSON serialization
+    :return: a JSON-serializable object
+    """
+    if isinstance(obj, ImmutableContainerMixin):
+        return obj._container  # pylint: disable=W0212
+    raise TypeError

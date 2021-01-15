@@ -68,6 +68,10 @@ Parameters:
     Type: String
     Description: SNS topic ARN for data that is sent as input to Log Analysis
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
+  KvTableBillingMode:
+    Type: String
+    Description: Configure billing mode for DynamoDB table panther-kv-store. This table is used by python policies & rules to store state, and provisioned billing may be cheaper if this feature is used heavily.
+    AllowedValues: [PROVISIONED, PAY_PER_REQUEST]
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: List of LayerVersion ARNs to attach to each function
@@ -145,6 +149,7 @@ Mappings:
 
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
+  KvProvisioningEnabled: !Equals [!Ref KvTableBillingMode, PROVISIONED]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
@@ -1001,8 +1006,6 @@ Resources:
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
 
   ##### Key-Value store for Python policies/rules #####
-  # TODO: build conditionally (disabled by default) since you have to pay for provisioned capacity
-  # TODO: make capacity options configurable
   KeyValueStoreTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -1014,7 +1017,7 @@ Resources:
       # * Custom rules / policies which leverage the table may be failing
       # * Panther itself is not affected
       # </cfndoc>
-      BillingMode: PROVISIONED
+      BillingMode: !Ref KvTableBillingMode
       AttributeDefinitions:
         - AttributeName: key
           AttributeType: S
@@ -1023,9 +1026,11 @@ Resources:
           KeyType: HASH
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: True
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+      ProvisionedThroughput: !If
+        - KvProvisioningEnabled
+        - ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        - !Ref AWS::NoValue
       SSESpecification:
         SSEEnabled: True
       TimeToLiveSpecification:
@@ -1041,6 +1046,7 @@ Resources:
       TableName: panther-kv-store
 
   ReadCapacityScalableTarget:
+    Condition: KvProvisioningEnabled
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
       MaxCapacity: 100
@@ -1051,6 +1057,7 @@ Resources:
       ServiceNamespace: dynamodb
 
   ReadScalingPolicy:
+    Condition: KvProvisioningEnabled
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
       PolicyName: ReadAutoScalingPolicy
@@ -1064,6 +1071,7 @@ Resources:
           PredefinedMetricType: DynamoDBReadCapacityUtilization
 
   WriteCapacityScalableTarget:
+    Condition: KvProvisioningEnabled
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
       MaxCapacity: 100
@@ -1074,6 +1082,7 @@ Resources:
       ServiceNamespace: dynamodb
 
   WriteScalingPolicy:
+    Condition: KvProvisioningEnabled
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
       PolicyName: WriteAutoScalingPolicy

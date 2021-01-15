@@ -15,9 +15,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from copy import deepcopy
+import json
 from unittest import TestCase
 
-from ..src.immutable import ImmutableDict, ImmutableList
+from ..src.immutable import ImmutableDict, ImmutableList, json_encoder
 
 
 class TestImmutableDict(TestCase):
@@ -142,3 +143,20 @@ class TestImmutableNestedList(TestCase):
     def test_raises_error_for_non_existent_index(self) -> None:
         with self.assertRaises(IndexError):
             _ = self.immutable_dict['a'][2]
+
+
+class TestJSONSerialization(TestCase):
+
+    def test_immutable_list(self) -> None:
+        initial_list = [1, 2, 3]
+        immutable_list = ImmutableList(initial_list)
+        self.assertEqual(json.dumps(initial_list), json.dumps(immutable_list, default=json_encoder))
+
+    def test_immutable_dict(self) -> None:
+        initial_dict = {'a': [1, 2, 3], 'b': {'c': True}}
+        immutable_dict = ImmutableDict(initial_dict)
+        self.assertEqual(json.dumps(initial_dict), json.dumps(immutable_dict, default=json_encoder))
+
+    def test_raises_type_error_for_nonserializable_object(self) -> None:
+        with self.assertRaises(TypeError):
+            json.dumps({'test_case': TestCase}, default=json_encoder)

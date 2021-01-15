@@ -240,7 +240,7 @@ const BaseRuleFormCoreSection: React.FC<BaseRuleFormCoreSectionProps> = ({ type 
               label="* Log Types"
               name="logTypes"
               items={data?.listAvailableLogTypes.logTypes ?? []}
-              placeholder="Where should the rule appoly?"
+              placeholder="Where should the rule apply?"
             />
             <FastField
               as={FormikCombobox}

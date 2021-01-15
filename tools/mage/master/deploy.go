@@ -119,7 +119,7 @@ func Deploy() error {
 		params = append(params, strings.Split(p, " ")...)
 	}
 
-	return util.SamDeploy(defaultStackName, pkg, params...)
+	return util.SamDeploy(stack, pkg, params...)
 }
 
 // Stop early if there is a known issue with the dev environment.
