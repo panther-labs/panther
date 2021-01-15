@@ -17,3 +17,4 @@
  */
 
 export { default } from './RuleAlertDetails';
+export * from './graphql/getRuleSummary.generated';

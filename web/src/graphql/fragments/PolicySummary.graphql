@@ -1,4 +1,4 @@
-fragment PolicyBasic on PolicyDetails {
+fragment PolicySummary on Policy {
   id
   description
   displayName

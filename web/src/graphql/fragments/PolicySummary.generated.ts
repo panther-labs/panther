@@ -21,8 +21,8 @@ import * as Types from '../../../__generated__/schema';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
-export type PolicyBasic = Pick<
-  Types.PolicyDetails,
+export type PolicySummary = Pick<
+  Types.Policy,
   | 'id'
   | 'description'
   | 'displayName'
@@ -38,8 +38,8 @@ export type PolicyBasic = Pick<
   | 'enabled'
 >;
 
-export const PolicyBasic = gql`
-  fragment PolicyBasic on PolicyDetails {
+export const PolicySummary = gql`
+  fragment PolicySummary on Policy {
     id
     description
     displayName

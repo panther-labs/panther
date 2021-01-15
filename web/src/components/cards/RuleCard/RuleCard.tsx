@@ -24,14 +24,14 @@ import SeverityBadge from 'Components/badges/SeverityBadge';
 import StatusBadge from 'Components/badges/StatusBadge';
 import BulletedValueList from 'Components/BulletedValueList';
 import urls from 'Source/urls';
-import { RuleSummary, ComplianceStatusEnum } from 'Generated/schema';
+import { Rule, ComplianceStatusEnum } from 'Generated/schema';
 import { formatDatetime } from 'Helpers/utils';
 import useDetectionDestinations from 'Hooks/useDetectionDestinations';
 import RelatedDestinations from 'Components/RelatedDestinations';
 import RuleCardOptions from './RuleCardOptions';
 
 interface RuleCardProps {
-  rule: RuleSummary;
+  rule: Rule;
 }
 
 const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {

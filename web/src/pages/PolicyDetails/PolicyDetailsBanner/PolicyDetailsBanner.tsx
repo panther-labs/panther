@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Box, Button, Icon, Flex, Card, Heading, Badge, Tooltip } from 'pouncejs';
-import { PolicyDetails } from 'Generated/schema';
+import { Policy } from 'Generated/schema';
 import urls from 'Source/urls';
 import JsonViewer from 'Components/JsonViewer';
 import Breadcrumbs from 'Components/Breadcrumbs';
@@ -32,7 +32,7 @@ import BulletedValue from 'Components/BulletedValue';
 import RelatedDestinations from 'Components/RelatedDestinations/RelatedDestinations';
 
 interface ResourceDetailsBannerProps {
-  policy?: PolicyDetails;
+  policy?: Policy;
 }
 
 const PolicyDetailsBanner: React.FC<ResourceDetailsBannerProps> = ({ policy }) => {

@@ -22,9 +22,9 @@ import {
   Destination,
   GlobalPythonModule,
   LogIntegration,
-  PolicyDetails,
+  Policy,
   ResourceDetails,
-  RuleDetails,
+  Rule,
   CustomLogRecord,
   DataModel,
 } from 'Generated/schema';
@@ -40,8 +40,8 @@ const urls = {
     policies: {
       list: () => `${urls.compliance.home()}policies/`,
       create: () => `${urls.compliance.policies.list()}new/`,
-      details: (id: PolicyDetails['id']) => `${urls.compliance.policies.list()}${urlEncode(id)}/`,
-      edit: (id: PolicyDetails['id']) => `${urls.compliance.policies.details(id)}edit/`,
+      details: (id: Policy['id']) => `${urls.compliance.policies.list()}${urlEncode(id)}/`,
+      edit: (id: Policy['id']) => `${urls.compliance.policies.details(id)}edit/`,
     },
     resources: {
       list: () => `${urls.compliance.home()}resources/`,
@@ -67,8 +67,8 @@ const urls = {
     rules: {
       list: () => `${urls.logAnalysis.home()}rules/`,
       create: () => `${urls.logAnalysis.rules.list()}new/`,
-      details: (id: RuleDetails['id']) => `${urls.logAnalysis.rules.list()}${urlEncode(id)}/`,
-      edit: (id: RuleDetails['id']) => `${urls.logAnalysis.rules.details(id)}edit/`,
+      details: (id: Rule['id']) => `${urls.logAnalysis.rules.list()}${urlEncode(id)}/`,
+      edit: (id: Rule['id']) => `${urls.logAnalysis.rules.details(id)}edit/`,
     },
     alerts: {
       list: () => `${urls.logAnalysis.home()}alerts/`,

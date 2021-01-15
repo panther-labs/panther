@@ -15,46 +15,46 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 AWSTemplateFormatVersion: 2010-09-09
-Description: >
-  Panther IAM Role for creating and managing StackSets. The purpose of this role is to assume
-  the execution IAM roles in each target account for configuring various Panther infrastructure.
+Description: IAM roles for an account being scanned by Panther.
 
 Parameters:
+  MasterAccountId:
+    Type: String
+    Default: ''
   MasterAccountRegion:
     Type: String
     Default: ''
 
-Conditions:
-  UseCurrentRegion: !Equals ['', !Ref MasterAccountRegion]
-
 Resources:
-  CloudFormationStackSetAdminRole:
+  CloudFormationStackSetExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !If
-        - UseCurrentRegion
-        - !Sub PantherCloudFormationStackSetAdminRole-${AWS::Region}
-        - !Sub PantherCloudFormationStackSetAdminRole-${MasterAccountRegion}
+      RoleName: !Sub PantherCloudFormationStackSetExecutionRole-${MasterAccountRegion}
+      Description: CloudFormation assumes this role to execute a stack set
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
             Principal:
-              Service: cloudformation.amazonaws.com
+              AWS: !Sub arn:${AWS::Partition}:iam::${MasterAccountId}:root
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: AssumeRolesInTargetAccounts
+        - PolicyName: ManageCloudFormationStack
           PolicyDocument:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
-                Action: sts:AssumeRole
-                Resource: !If
-                  - UseCurrentRegion
-                  - !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole-${AWS::Region}
-                  - !Sub arn:${AWS::Partition}:iam::*:role/PantherCloudFormationStackSetExecutionRole-${MasterAccountRegion}
-
-Outputs:
-  CloudFormationStackSetAdminRoleArn:
-    Description: The Arn of the CloudFormation StackSet IAM Role for sending data to Panther.
-    Value: !GetAtt CloudFormationStackSetAdminRole.Arn
+                Action: cloudformation:*
+                Resource: '*'
+        - PolicyName: PantherSetupRealTimeEvents
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - events:*
+                  - sns:*
+                Resource: '*'
+      Tags:
+        - Key: Application
+          Value: Panther

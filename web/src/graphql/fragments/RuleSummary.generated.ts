@@ -21,8 +21,8 @@ import * as Types from '../../../__generated__/schema';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
-export type RuleBasic = Pick<
-  Types.RuleDetails,
+export type RuleSummary = Pick<
+  Types.Rule,
   | 'id'
   | 'description'
   | 'displayName'
@@ -39,8 +39,8 @@ export type RuleBasic = Pick<
   | 'enabled'
 >;
 
-export const RuleBasic = gql`
-  fragment RuleBasic on RuleDetails {
+export const RuleSummary = gql`
+  fragment RuleSummary on Rule {
     id
     description
     displayName

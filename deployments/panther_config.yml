@@ -71,6 +71,12 @@ Infra:
     - policyuniverse==1.3.2.2
     - requests==2.23.0
 
+  # Enable provisioned capacity and autoscaling for the key-value Dynamo store available to the Python engines.
+  # You may want to enable this if you make a high volume of requests to the key-value store, but otherwise
+  # the default (pay-per-request) billing is typically cheaper for small-to-medium workloads
+  # This setting can only be changed once every 24 hours
+  KvTableBillingMode: PAY_PER_REQUEST # PROVISIONED or PAY_PER_REQUEST
+
   # Custom layer attached to every Python Lambda function for analysis and remediation.
   #
   # If not specified, a layer is created for you based on the PipLayer setting above.

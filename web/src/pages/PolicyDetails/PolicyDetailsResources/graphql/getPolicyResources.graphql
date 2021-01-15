@@ -1,4 +1,4 @@
-query PolicyResources($resourcesForPolicyInput: ResourcesForPolicyInput!) {
+query GetPolicyResources($resourcesForPolicyInput: ResourcesForPolicyInput!) {
   resourcesForPolicy(input: $resourcesForPolicyInput) {
     items {
       errorMessage

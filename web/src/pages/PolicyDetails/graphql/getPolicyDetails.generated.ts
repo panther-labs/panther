@@ -18,19 +18,22 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { PolicyDetailsMain } from '../../../graphql/fragments/PolicyDetailsMain.generated';
+import { PolicySummary } from '../../../graphql/fragments/PolicySummary.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type PolicyDetailsVariables = {
+export type GetPolicyDetailsVariables = {
   policyDetailsInput: Types.GetPolicyInput;
   resourcesForPolicyInput: Types.ResourcesForPolicyInput;
 };
 
-export type PolicyDetails = {
-  policy?: Types.Maybe<PolicyDetailsMain>;
+export type GetPolicyDetails = {
+  policy?: Types.Maybe<
+    Pick<Types.Policy, 'autoRemediationId' | 'autoRemediationParameters' | 'suppressions'> &
+      PolicySummary
+  >;
   resourcesForPolicy?: Types.Maybe<{
     totals?: Types.Maybe<{
       active?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
@@ -39,13 +42,16 @@ export type PolicyDetails = {
   }>;
 };
 
-export const PolicyDetailsDocument = gql`
-  query PolicyDetails(
+export const GetPolicyDetailsDocument = gql`
+  query GetPolicyDetails(
     $policyDetailsInput: GetPolicyInput!
     $resourcesForPolicyInput: ResourcesForPolicyInput!
   ) {
     policy(input: $policyDetailsInput) {
-      ...PolicyDetailsMain
+      ...PolicySummary
+      autoRemediationId
+      autoRemediationParameters
+      suppressions
     }
     resourcesForPolicy(input: $resourcesForPolicyInput) {
       totals {
@@ -62,59 +68,59 @@ export const PolicyDetailsDocument = gql`
       }
     }
   }
-  ${PolicyDetailsMain}
+  ${PolicySummary}
 `;
 
 /**
- * __usePolicyDetails__
+ * __useGetPolicyDetails__
  *
- * To run a query within a React component, call `usePolicyDetails` and pass it any options that fit your needs.
- * When your component renders, `usePolicyDetails` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetPolicyDetails` and pass it any options that fit your needs.
+ * When your component renders, `useGetPolicyDetails` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = usePolicyDetails({
+ * const { data, loading, error } = useGetPolicyDetails({
  *   variables: {
  *      policyDetailsInput: // value for 'policyDetailsInput'
  *      resourcesForPolicyInput: // value for 'resourcesForPolicyInput'
  *   },
  * });
  */
-export function usePolicyDetails(
-  baseOptions?: ApolloReactHooks.QueryHookOptions<PolicyDetails, PolicyDetailsVariables>
+export function useGetPolicyDetails(
+  baseOptions?: ApolloReactHooks.QueryHookOptions<GetPolicyDetails, GetPolicyDetailsVariables>
 ) {
-  return ApolloReactHooks.useQuery<PolicyDetails, PolicyDetailsVariables>(
-    PolicyDetailsDocument,
+  return ApolloReactHooks.useQuery<GetPolicyDetails, GetPolicyDetailsVariables>(
+    GetPolicyDetailsDocument,
     baseOptions
   );
 }
-export function usePolicyDetailsLazyQuery(
-  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<PolicyDetails, PolicyDetailsVariables>
+export function useGetPolicyDetailsLazyQuery(
+  baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetPolicyDetails, GetPolicyDetailsVariables>
 ) {
-  return ApolloReactHooks.useLazyQuery<PolicyDetails, PolicyDetailsVariables>(
-    PolicyDetailsDocument,
+  return ApolloReactHooks.useLazyQuery<GetPolicyDetails, GetPolicyDetailsVariables>(
+    GetPolicyDetailsDocument,
     baseOptions
   );
 }
-export type PolicyDetailsHookResult = ReturnType<typeof usePolicyDetails>;
-export type PolicyDetailsLazyQueryHookResult = ReturnType<typeof usePolicyDetailsLazyQuery>;
-export type PolicyDetailsQueryResult = ApolloReactCommon.QueryResult<
-  PolicyDetails,
-  PolicyDetailsVariables
+export type GetPolicyDetailsHookResult = ReturnType<typeof useGetPolicyDetails>;
+export type GetPolicyDetailsLazyQueryHookResult = ReturnType<typeof useGetPolicyDetailsLazyQuery>;
+export type GetPolicyDetailsQueryResult = ApolloReactCommon.QueryResult<
+  GetPolicyDetails,
+  GetPolicyDetailsVariables
 >;
-export function mockPolicyDetails({
+export function mockGetPolicyDetails({
   data,
   variables,
   errors,
 }: {
-  data: PolicyDetails;
-  variables?: PolicyDetailsVariables;
+  data: GetPolicyDetails;
+  variables?: GetPolicyDetailsVariables;
   errors?: GraphQLError[];
 }) {
   return {
-    request: { query: PolicyDetailsDocument, variables },
+    request: { query: GetPolicyDetailsDocument, variables },
     result: { data, errors },
   };
 }

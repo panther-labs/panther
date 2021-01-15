@@ -24,8 +24,8 @@ import {
   buildAlertSummaryPolicyInfo,
   buildDeliveryResponse,
   buildDestination,
-  buildPolicyDetails,
-  buildRuleDetails,
+  buildPolicy,
+  buildRule,
   fireEvent,
   render,
   within,
@@ -36,8 +36,8 @@ import { AlertDetailsRuleInfo, AlertSummaryPolicyInfo, AlertTypesEnum } from 'Ge
 import { Route } from 'react-router-dom';
 import { mockListComplianceSourceNames, mockListDestinations } from 'Source/graphql/queries';
 import { mockAlertDetails } from './graphql/alertDetails.generated';
-import { mockRuleTeaser } from './RuleAlertDetails/graphql/ruleTeaser.generated';
-import { mockPolicyTeaser } from './PolicyAlertDetails/graphql/policyTeaser.generated';
+import { mockGetRuleSummary } from './RuleAlertDetails/graphql/getRuleSummary.generated';
+import { mockGetPolicySummary } from './PolicyAlertDetails/graphql/getPolicySummary.generated';
 import { mockRetryAlertDelivery } from './common/AlertDeliverySection/graphql/retryAlertDelivery.generated';
 import AlertDetails from './AlertDetails';
 
@@ -51,7 +51,7 @@ describe('AlertDetails', () => {
         }),
         deliveryResponses: [buildDeliveryResponse({ outputId: destination.outputId })],
       });
-      const rule = buildRuleDetails();
+      const rule = buildRule();
 
       const mocks = [
         mockListDestinations({ data: { destinations: [destination] } }),
@@ -64,7 +64,7 @@ describe('AlertDetails', () => {
           },
           data: { alert },
         }),
-        mockRuleTeaser({
+        mockGetRuleSummary({
           variables: {
             input: {
               id: (alert.detection as AlertDetailsRuleInfo).ruleId,
@@ -107,7 +107,7 @@ describe('AlertDetails', () => {
         }),
         deliveryResponses: [buildDeliveryResponse({ outputId: destination.outputId })],
       });
-      const rule = buildRuleDetails();
+      const rule = buildRule();
 
       const mocks = [
         mockListDestinations({ data: { destinations: [destination] } }),
@@ -120,7 +120,7 @@ describe('AlertDetails', () => {
           },
           data: { alert },
         }),
-        mockRuleTeaser({
+        mockGetRuleSummary({
           variables: {
             input: {
               id: (alert.detection as AlertDetailsRuleInfo).ruleId,
@@ -161,7 +161,7 @@ describe('AlertDetails', () => {
         }),
         deliveryResponses: [buildDeliveryResponse({ outputId: destination.outputId })],
       });
-      const rule = buildRuleDetails();
+      const rule = buildRule();
 
       const mocks = [
         mockListDestinations({ data: { destinations: [destination] } }),
@@ -174,7 +174,7 @@ describe('AlertDetails', () => {
           },
           data: { alert },
         }),
-        mockRuleTeaser({
+        mockGetRuleSummary({
           variables: {
             input: {
               id: (alert.detection as AlertDetailsRuleInfo).ruleId,
@@ -203,7 +203,7 @@ describe('AlertDetails', () => {
     });
 
     it('correctly updates the delivery status on a delivery retry', async () => {
-      const rule = buildRuleDetails();
+      const rule = buildRule();
       const destination = buildDestination();
 
       const previousDeliveryResponse = buildDeliveryResponse({
@@ -231,7 +231,7 @@ describe('AlertDetails', () => {
           },
           data: { alert },
         }),
-        mockRuleTeaser({
+        mockGetRuleSummary({
           variables: {
             input: {
               id: (alert.detection as AlertDetailsRuleInfo).ruleId,
@@ -274,7 +274,7 @@ describe('AlertDetails', () => {
   describe('Policy-based', () => {
     it('renders the necessary policy information', async () => {
       const destination = buildDestination();
-      const policy = buildPolicyDetails();
+      const policy = buildPolicy();
       const alert = buildAlertDetails({
         type: AlertTypesEnum.Policy,
         detection: buildAlertSummaryPolicyInfo({ policyId: policy.id }),
@@ -303,7 +303,7 @@ describe('AlertDetails', () => {
           },
           data: { alert },
         }),
-        mockPolicyTeaser({
+        mockGetPolicySummary({
           variables: {
             input: {
               id: policy.id,

@@ -1,14 +1,7 @@
 query ListRules($input: ListRulesInput) {
   rules(input: $input) {
     rules {
-      lastModified
-      logTypes
-      severity
-      id
-      displayName
-      threshold
-      enabled
-      outputIds
+      ...RuleSummary
     }
     paging {
       totalPages

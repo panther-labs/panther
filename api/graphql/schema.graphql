@@ -16,8 +16,8 @@ type Mutation {
   addComplianceIntegration(input: AddComplianceIntegrationInput!): ComplianceIntegration!
   addS3LogIntegration(input: AddS3LogIntegrationInput!): S3LogIntegration!
   addSqsLogIntegration(input: AddSqsLogIntegrationInput!): SqsLogSourceIntegration!
-  addPolicy(input: AddPolicyInput!): PolicyDetails
-  addRule(input: AddRuleInput!): RuleDetails
+  addPolicy(input: AddPolicyInput!): Policy!
+  addRule(input: AddRuleInput!): Rule!
   addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
   deleteDataModel(input: DeleteDataModelInput!): Boolean
   deleteDestination(id: ID!): Boolean
@@ -43,8 +43,8 @@ type Mutation {
   updateS3LogIntegration(input: UpdateS3LogIntegrationInput!): S3LogIntegration!
   updateSqsLogIntegration(input: UpdateSqsLogIntegrationInput!): SqsLogSourceIntegration!
   updateGeneralSettings(input: UpdateGeneralSettingsInput!): GeneralSettings!
-  updatePolicy(input: UpdatePolicyInput!): PolicyDetails
-  updateRule(input: UpdateRuleInput!): RuleDetails
+  updatePolicy(input: UpdatePolicyInput!): Policy!
+  updateRule(input: UpdateRuleInput!): Rule!
   updateUser(input: UpdateUserInput!): User!
   uploadPolicies(input: UploadPoliciesInput!): UploadPoliciesResponse
   updateGlobalPythonlModule(input: ModifyGlobalPythonModuleInput!): GlobalPythonModule!
@@ -70,7 +70,7 @@ type Query {
   resources(input: ListResourcesInput): ListResourcesResponse
   resourcesForPolicy(input: ResourcesForPolicyInput!): ListComplianceItemsResponse
   getGlobalPythonModule(input: GetGlobalPythonModuleInput!): GlobalPythonModule!
-  policy(input: GetPolicyInput!): PolicyDetails
+  policy(input: GetPolicyInput!): Policy
   policies(input: ListPoliciesInput): ListPoliciesResponse
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
   listAvailableLogTypes: ListAvailableLogTypesResponse!
@@ -79,7 +79,7 @@ type Query {
   listLogIntegrations: [LogIntegration!]!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   getLogAnalysisMetrics(input: LogAnalysisMetricsInput!): LogAnalysisMetricsResponse!
-  rule(input: GetRuleInput!): RuleDetails
+  rule(input: GetRuleInput!): Rule
   rules(input: ListRulesInput): ListRulesResponse
   listGlobalPythonModules(input: ListGlobalPythonModuleInput!): ListGlobalPythonModulesResponse!
   users: [User!]!
@@ -405,25 +405,12 @@ input DeleteRuleInput {
   rules: [DeleteEntry!]!
 }
 
-type RuleSummary {
-  displayName: String
-  enabled: Boolean
-  id: ID!
-  threshold: Int!
-  lastModified: AWSDateTime
-  createdAt: AWSDateTime
-  logTypes: [String]
-  severity: SeverityEnum
-  outputIds: [ID!]!
-  tags: [String!]
-}
-
 type ListRulesResponse {
   paging: PagingData
-  rules: [RuleSummary]
+  rules: [Rule!]!
 }
 
-type RuleDetails {
+type Rule {
   body: String
   createdAt: AWSDateTime
   createdBy: ID
@@ -530,8 +517,8 @@ type ScannedResources {
 type OrganizationStatsResponse {
   appliedPolicies: OrganizationReportBySeverity
   scannedResources: ScannedResources
-  topFailingPolicies: [PolicySummary]
-  topFailingResources: [ResourceSummary]
+  topFailingPolicies: [Policy!]!
+  topFailingResources: [ResourceSummary!]!
 }
 
 type LongSeries {
@@ -702,7 +689,7 @@ input UpdateSqsLogIntegrationInput {
 
 type ListPoliciesResponse {
   paging: PagingData
-  policies: [PolicySummary]
+  policies: [Policy!]!
 }
 
 type ListResourcesResponse {
@@ -855,7 +842,7 @@ input PagerDutyConfigInput {
   integrationKey: String!
 }
 
-type PolicyDetails {
+type Policy {
   autoRemediationId: ID
   autoRemediationParameters: AWSJSON
   body: String
@@ -896,21 +883,6 @@ type PagingData {
   thisPage: Int
   totalPages: Int
   totalItems: Int
-}
-
-type PolicySummary {
-  autoRemediationId: ID
-  autoRemediationParameters: AWSJSON
-  suppressions: [String]
-  complianceStatus: ComplianceStatusEnum
-  displayName: String
-  enabled: Boolean
-  id: ID!
-  lastModified: AWSDateTime
-  outputIds: [ID!]!
-  resourceTypes: [String]
-  severity: SeverityEnum
-  tags: [String]
 }
 
 input AddPolicyInput {
