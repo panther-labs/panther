@@ -30,25 +30,25 @@ import (
 type WAFWebACL struct {
 	Action                      pantherlog.String         `json:"action" validate:"required" description:"The action applied by WAF. Possible values for a terminating rule: ALLOW and BLOCK. COUNT is not a valid value for a terminating rule."`
 	FormatVersion               pantherlog.Uint8          `json:"formatVersion" description:"The format version for the log."`
-	HTTPRequest                 HTTPRequest               `json:"httpRequest" description:"The metadata about the request."`
-	HTTPSourceID                pantherlog.String         `json:"httpSourceId" description:"The source ID. This field shows the ID of the associated resource."`
+	HTTPRequest                 HTTPRequest               `json:"httpRequest" validate:"required" description:"The metadata about the request."`
+	HTTPSourceID                pantherlog.String         `json:"httpSourceId" validate:"required" description:"The source ID. This field shows the ID of the associated resource."`
 	HTTPSourceName              pantherlog.String         `json:"httpSourceName" description:"The source of the request. Possible values: CF for Amazon CloudFront, APIGW for Amazon API Gateway, ALB for Application Load Balancer, and APPSYNC for AWS AppSync."`
 	NonTerminatingMatchingRules []RuleDetail              `json:"nonTerminatingMatchingRules" description:"The list of non-terminating rules in the rule group that match the request. These are always COUNT rules (non-terminating rules that match)."`
 	RateBasedRuleList           []RateBasedRuleListDetail `json:"rateBasedRuleList" description:"The list of rate-based rules that acted on the request."`
 	RuleGroupList               []RuleGroupListDetail     `json:"ruleGroupList" description:"The list of rule groups that acted on this request. In the preceding code example, there is only one."`
-	TerminatingRuleID           pantherlog.String         `json:"terminatingRuleId"`
+	TerminatingRuleID           pantherlog.String         `json:"terminatingRuleId" description:"The ID of the rule that terminated the request. If nothing terminates the request, the value is Default_Action."`
 	TerminatingRuleMatchDetails []RuleMatchDetail         `json:"terminatingRuleMatchDetails" description:"Detailed information about the terminating rule that matched the request. A terminating rule has an action that ends the inspection process against a web request. Possible actions for a terminating rule are ALLOW and BLOCK. This is only populated for SQL injection and cross-site scripting (XSS) match rule statements. As with all rule statements that inspect for more than one thing, AWS WAF applies the action on the first match and stops inspecting the web request. A web request with a terminating action could contain other threats, in addition to the one reported in the log."`
 	TerminatingRuleType         pantherlog.String         `json:"terminatingRuleType" description:"The type of rule that terminated the request. Possible values: RATE_BASED, REGULAR, GROUP, and MANAGED_RULE_GROUP."`
-	Timestamp                   pantherlog.Time           `json:"timestamp" tcodec:"unix_ms" event_time:"true" description:"The timestamp in milliseconds."`
-	WebACLID                    pantherlog.String         `json:"webaclId" description:"The GUID of the web ACL."`
+	Timestamp                   pantherlog.Time           `json:"timestamp" validate:"required" tcodec:"unix_ms" event_time:"true" description:"The timestamp in milliseconds."`
+	WebACLID                    pantherlog.String         `json:"webaclId" validate:"required" description:"The GUID of the web ACL."`
 }
 
 // nolint:lll,maligned
 type RuleGroupListDetail struct {
 	ExcludedRules               []ExcludedRule    `json:"excludedRules" description:"The list of rules in the rule group that you have excluded. The action for these rules is set to COUNT."`
-	NonTerminatingMatchingRules []RuleDetail      `json:"nonTerminatingMatchingRules"`
-	RuleGroupID                 pantherlog.String `json:"ruleGroupId"`
-	TerminatingRule             *RuleDetail       `json:"terminatingRule"`
+	NonTerminatingMatchingRules []RuleDetail      `json:"nonTerminatingMatchingRules" description:"The list of non-terminating rules in the rule group that match the request. These are always COUNT rules (non-terminating rules that match). "`
+	RuleGroupID                 pantherlog.String `json:"ruleGroupId" description:"The ID of the rule group. If the rule blocked the request, the ID for ruleGroupID is the same as the ID for terminatingRuleId."`
+	TerminatingRule             *RuleDetail       `json:"terminatingRule" description:"The rule within the rule group that terminated the request. If this is a non-null value, it also contains a ruleid and action. In this case, the action is always BLOCK."`
 }
 
 // nolint:lll,maligned
@@ -73,11 +73,11 @@ type RuleMatchDetail struct {
 
 // nolint:lll,maligned
 type RateBasedRuleListDetail struct {
-	LimitKey          pantherlog.String `json:"limitKey"`
-	LimitValue        pantherlog.String `json:"limitValue"`
-	MaxRateAllowed    pantherlog.Uint32 `json:"maxRateAllowed"`
-	RateBasedRuleID   pantherlog.String `json:"rateBasedRuleId"`
-	RateBasedRuleName pantherlog.String `json:"rateBasedRuleName"`
+	LimitKey          pantherlog.String `json:"limitKey" description:"The field that AWS WAF uses to determine if requests are likely arriving from a single source and thus subject to rate monitoring. Possible value: IP."`
+	LimitValue        pantherlog.String `json:"limitValue" description:"The IP address used by a rate-based rule to aggregate requests for rate limiting. If a request contains an IP address that isn't valid, the limitvalue is INVALID."`
+	MaxRateAllowed    pantherlog.Uint32 `json:"maxRateAllowed" description:"The maximum number of requests, which have an identical value in the field that is specified by limitKey, allowed in a five-minute period. If the number of requests exceeds the maxRateAllowed and the other predicates specified in the rule are also met, AWS WAF triggers the action that is specified for this rule."`
+	RateBasedRuleID   pantherlog.String `json:"rateBasedRuleId" description:"The ID of the rate-based rule that acted on the request. If this has terminated the request, the ID for rateBasedRuleId is the same as the ID for terminatingRuleId."`
+	RateBasedRuleName pantherlog.String `json:"rateBasedRuleName" description:"The name of the rate-based rule that acted on the request."`
 }
 
 // nolint:lll,maligned
@@ -94,7 +94,7 @@ type HTTPRequest struct {
 
 // nolint:lll,maligned
 type HTTPHeader struct {
-	// Maybe we should apply some normalization here, e.g. always convert to lowercase?
+	// TODO: Maybe we should apply some normalization here, e.g. always convert to lowercase?
 	Name  pantherlog.String `json:"name" description:"The header name."`
 	Value pantherlog.String `json:"value" description:"The header value."`
 }
