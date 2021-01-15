@@ -25,7 +25,7 @@ import FormikTextInput from 'Components/fields/TextInput';
 import SubmitButton from './index';
 
 const validationSchema = Yup.object().shape({
-  text: Yup.string().min(10),
+  text: Yup.string().min(10).required(),
 });
 
 const TestForm = ({ onSubmit, initialValues = { text: '' }, ...rest }) => (
@@ -60,6 +60,7 @@ describe('SubmitButton', () => {
     const saveButton = getByText('Save');
     const textField = getByLabelText('Text');
 
+    expect(saveButton).toHaveAttribute('disabled');
     // Type an invalid value to the input (less than 10 characters)
     fireEvent.change(textField, { target: { value: 'invalid' } });
     await waitFor(() => expect(saveButton).toHaveAttribute('disabled'));
@@ -101,5 +102,14 @@ describe('SubmitButton', () => {
     );
 
     expect(getByText('Save')).toHaveAttribute('disabled');
+  });
+
+  it('should be enabled if form is invalid and invalid submission is allowed', async () => {
+    const { getByText, getByLabelText } = render(
+      <TestForm onSubmit={jest.fn()} allowInvalidSubmission />
+    );
+
+    fireEvent.change(getByLabelText('Text'), { target: { value: 'invalid' } });
+    await waitFor(() => expect(getByText('Save')).not.toHaveAttribute('disabled'));
   });
 });
