@@ -59,8 +59,8 @@ type ExcludedRule struct {
 
 // nolint:lll,maligned
 type RuleDetail struct {
-	RuleID           pantherlog.String  `json:"ruleId" description:"The Rule ID."`
-	Action           pantherlog.String  `json:"action" description:"The configured rule action. For non-terminating rules the value is always COUNT."`
+	RuleID           pantherlog.String `json:"ruleId" description:"The Rule ID."`
+	Action           pantherlog.String `json:"action" description:"The configured rule action. For non-terminating rules the value is always COUNT."`
 	RuleMatchDetails []RuleMatchDetail `json:"ruleMatchDetails" description:"Detailed information about the rule that matched the request. This field is only populated for SQL injection and cross-site scripting (XSS) match rule statements."`
 }
 
