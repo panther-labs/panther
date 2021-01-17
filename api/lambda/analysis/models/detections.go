@@ -33,6 +33,12 @@ type ListDetectionsInput struct {
 	// Only include policies with or without auto-remediation enabled. Only applies to policies.
 	HasRemediation *bool `json:"hasRemediation"`
 
+	// Only include policies which apply to one of these resource types. Only applies to policies.
+	ResourceTypes[]string `json:"resourceTypes" validate:"max=500,dive,required,max=500"`
+
+	// Only include rules which apply to one of these log types. Only applies to rules.
+	LogTypes[]string `json:"logTypes" validate:"max=500,dive,required,max=500"`
+
 	// Only include detections which apply to one of these resource or log types
 	Types []string `json:"types" validate:"max=500,dive,required,max=500"`
 
