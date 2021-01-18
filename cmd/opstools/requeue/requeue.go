@@ -78,6 +78,7 @@ func Requeue(sqsClient sqsiface.SQSAPI, region, fromQueueName, toQueueName strin
 			sendMessageBatchRequestEntries = append(sendMessageBatchRequestEntries, &sqs.SendMessageBatchRequestEntry{
 				Id:          aws.String(strconv.Itoa(index)),
 				MessageBody: element.Body,
+				MessageAttributes: element.MessageAttributes,
 			})
 		}
 
