@@ -19,6 +19,9 @@ package api
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -35,7 +38,13 @@ func (api *API) UpdateStatus(input *models.UpdateStatusInput) error {
 	status := ddb.IntegrationStatus{
 		LastEventReceived: &input.LastEventReceived,
 	}
+
 	err := api.DdbClient.UpdateStatus(input.IntegrationID, status)
+
+	var awsErr awserr.Error
+	if errors.As(err, &awsErr) && awsErr.Code() == dynamodb.ErrCodeConditionalCheckFailedException{
+		return &genericapi.DoesNotExistError{Message: "The source integration does not exist"}
+	}
 	if err != nil {
 		zap.L().Error("failed to update integration status", zap.Error(err), zap.String("integrationId", input.IntegrationID))
 		return updateStatusInternalError

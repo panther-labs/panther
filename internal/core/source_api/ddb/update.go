@@ -26,7 +26,11 @@ import (
 
 func (ddb *DDB) UpdateStatus(integrationID string, status IntegrationStatus) error {
 	updateExpression := expression.Set(expression.Name("lastEventReceived"), expression.Value(status.LastEventReceived))
-	expr, err := expression.NewBuilder().WithUpdate(updateExpression).Build()
+	cond := expression.AttributeExists(expression.Name("integrationId"))
+	expr, err := expression.NewBuilder().
+		WithCondition(cond).
+		WithUpdate(updateExpression).
+		Build()
 	if err != nil {
 		return errors.Wrap(err, "failed to generate update expression")
 	}
@@ -38,6 +42,7 @@ func (ddb *DDB) UpdateStatus(integrationID string, status IntegrationStatus) err
 		UpdateExpression:          expr.Update(),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
+		ConditionExpression:       expr.Condition(),
 	}
 
 	_, err = ddb.Client.UpdateItem(updateRequest)
