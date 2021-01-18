@@ -90,7 +90,9 @@ const PolicyForm: React.FC<PolicyFormProps> = ({ initialValues, onSubmit }) => {
               >
                 Cancel
               </Button>
-              <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
+              <SubmitButton allowInvalidSubmission allowPristineSubmission={!initialValues.id}>
+                {initialValues.id ? 'Update' : 'Create'}
+              </SubmitButton>
             </Flex>
           </Form>
         )}
