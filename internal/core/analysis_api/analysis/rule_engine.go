@@ -21,7 +21,9 @@ package analysis
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
@@ -112,7 +114,7 @@ func (e *RuleEngine) TestRule(rule *models.TestRuleInput) (*models.TestRuleOutpu
 			record.Functions.Reference = buildTestSubRecord(result.ReferenceOutput, result.ReferenceError)
 			record.Functions.Severity = buildTestSubRecord(result.SeverityOutput, result.SeverityError)
 			record.Functions.Runbook = buildTestSubRecord(result.RunbookOutput, result.RunbookError)
-			record.Functions.Destinations = buildTestSubRecord(result.DestinationsOutput, result.DestinationsError)
+			record.Functions.Destinations = buildTestSubRecordList(result.DestinationsOutput, result.DestinationsError)
 		}
 
 		testResult.Results[i] = record
@@ -128,6 +130,22 @@ func buildTestSubRecord(output, error string) *models.TestDetectionSubRecord {
 	result := &models.TestDetectionSubRecord{}
 	if output != "" {
 		result.Output = &output
+	}
+	if error != "" {
+		result.Error = &models.TestError{Message: error}
+	}
+	return result
+}
+
+func buildTestSubRecordList(output []string, error string) *models.TestDetectionSubRecord {
+	if len(output) == 0 && error == "" {
+		return nil
+	}
+
+	result := &models.TestDetectionSubRecord{}
+
+	if len(output) != 0 {
+		result.Output = aws.String(strings.Join(output, ", "))
 	}
 	if error != "" {
 		result.Error = &models.TestError{Message: error}
