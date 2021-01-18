@@ -36,21 +36,21 @@ const ApiErrorFallback: React.FC = ({ children }) => {
 
   const errorCode = location.state?.errorType;
 
-  const showNetworkErroModal = React.useCallback(() => {
+  const showNetworkErrorModal = React.useCallback(() => {
     showModal({ modal: MODALS.NETWORK_ERROR });
   }, []);
 
-  const hideNetworkErroModal = React.useCallback(() => {
+  const hideNetworkErrorModal = React.useCallback(() => {
     hideModal();
   }, []);
 
   React.useEffect(() => {
-    window.addEventListener('offline', showNetworkErroModal);
-    window.addEventListener('online', hideNetworkErroModal);
+    window.addEventListener('offline', showNetworkErrorModal);
+    window.addEventListener('online', hideNetworkErrorModal);
 
     return () => {
-      window.removeEventListener('offline', showNetworkErroModal);
-      window.removeEventListener('online', hideNetworkErroModal);
+      window.removeEventListener('offline', showNetworkErrorModal);
+      window.removeEventListener('online', hideNetworkErrorModal);
     };
   }, []);
 
