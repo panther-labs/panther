@@ -27,11 +27,11 @@ import { AlertDetails } from 'Pages/AlertDetails';
 import AlertDeliverySection from 'Pages/AlertDetails/common/AlertDeliverySection';
 import RelatedDestinations from 'Components/RelatedDestinations';
 import useAlertDestinations from 'Hooks/useAlertDestinations';
-import { GetRuleSummary } from '../graphql/getRuleSummary.generated';
+import { RuleTeaser } from '../graphql/ruleTeaser.generated';
 
 interface AlertDetailsInfoProps {
   alert: AlertDetails['alert'];
-  rule?: GetRuleSummary['rule'];
+  rule?: RuleTeaser['rule'];
 }
 
 const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, rule }) => {

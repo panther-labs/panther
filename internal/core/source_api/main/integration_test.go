@@ -27,12 +27,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
-	"github.com/panther-labs/panther/internal/core/source_api/api"
-	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
@@ -62,9 +61,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegration(t *testing.T) {
-	//if !integrationTest {
+	// if !integrationTest {
 	//	t.Skip()
-	//}
+	// }
 	// TODO This integration test currently fails since it tries to do healthcheck when adding integration.
 	// This causes all subsequent tests to fail
 	// See https://github.com/panther-labs/panther/issues/394
@@ -331,19 +330,18 @@ func updateIntegrationLastScanEndWithError(t *testing.T) {
 }
 
 func TestIntegration_TestAPI_UpdateStatus_FailsIfIntegrationNotExists(t *testing.T) {
-	testutils.IntegrationTest(t) // test runs the API handler locally but hits a real DynamoDB
+	testutils.IntegrationTest(t)
 
-	awsSession := session.Must(session.NewSession())
-	testAPI := &api.API{
-		AwsSession: awsSession,
-		DdbClient:  ddb.New(awsSession, "panther-source-integrations"),
+	input := &models.LambdaInput{
+		UpdateStatus: &models.UpdateStatusInput{
+			IntegrationID:     uuid.New().String(), // Must not exist in DB
+			LastEventReceived: time.Now(),
+		},
 	}
 
-	input := models.UpdateStatusInput{
-		IntegrationID:     "abcdefgh-abcd-abcd-abcd-abcdefghijkl",
-		LastEventReceived: time.Now(),
-	}
-	err := testAPI.UpdateStatus(&input)
+	lambdaClient := lambda.New(session.Must(session.NewSession()))
+	lambdaErr := genericapi.Invoke(lambdaClient, functionName, &input, nil)
 
-	require.Error(t, err)
+	err := lambdaErr.(*genericapi.LambdaError)
+	require.Equal(t, "The source integration does not exist", *err.ErrorMessage)
 }

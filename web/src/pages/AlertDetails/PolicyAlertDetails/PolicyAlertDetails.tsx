@@ -22,7 +22,7 @@ import Skeleton from 'Pages/AlertDetails/Skeleton';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { AlertDetailsFull } from 'Source/graphql/fragments/AlertDetailsFull.generated';
 import { AlertSummaryPolicyInfo } from 'Generated/schema';
-import { useGetPolicySummary } from './graphql/getPolicySummary.generated';
+import { usePolicyTeaser } from './graphql/policyTeaser.generated';
 import AlertDetailsBanner from './AlertDetailsBanner';
 import AlertDetailsInfo from './AlertDetailsInfo';
 
@@ -32,7 +32,7 @@ interface PolicyAlertDetailsProps {
 
 const PolicyAlertDetails: React.FC<PolicyAlertDetailsProps> = ({ alert }) => {
   const alertDetectionInfo = alert.detection as AlertSummaryPolicyInfo;
-  const { data, loading } = useGetPolicySummary({
+  const { data, loading } = usePolicyTeaser({
     variables: { input: { id: alertDetectionInfo.policyId } },
   });
 

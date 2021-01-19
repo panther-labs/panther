@@ -33,12 +33,12 @@ var (
 )
 
 // It updates the status of an integration
-func (api *API) UpdateStatus(input *models.UpdateStatusInput) error {
+func (api API) UpdateStatus(input *models.UpdateStatusInput) error {
 	status := ddb.IntegrationStatus{
 		LastEventReceived: &input.LastEventReceived,
 	}
 
-	err := api.DdbClient.UpdateStatus(input.IntegrationID, status)
+	err := dynamoClient.UpdateStatus(input.IntegrationID, status)
 
 	if awsutils.IsAnyError(err, dynamodb.ErrCodeConditionalCheckFailedException) {
 		return &genericapi.DoesNotExistError{Message: "The source integration does not exist"}

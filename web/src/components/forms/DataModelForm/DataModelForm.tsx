@@ -23,7 +23,7 @@ import { Formik, Form, Field, FieldArray, FastField } from 'formik';
 import { DataModelMapping } from 'Generated/schema';
 import Breadcrumbs from 'Components/Breadcrumbs';
 import LinkButton from 'Components/buttons/LinkButton';
-import SaveButton from 'Components/buttons/SaveButton';
+import SubmitButton from 'Components/buttons/SubmitButton';
 import urls from 'Source/urls';
 import Panel from 'Components/Panel';
 import FormikTextInput from 'Components/fields/TextInput';
@@ -115,7 +115,9 @@ const DataModelForm: React.FC<DataModelFormProps> = ({ initialValues, onSubmit }
                 >
                   Cancel
                 </LinkButton>
-                <SaveButton>Save</SaveButton>
+                <SubmitButton icon="check-outline" variantColor="green">
+                  Save
+                </SubmitButton>
               </Flex>
             </Breadcrumbs.Actions>
             <Box as="section" mb={8}>

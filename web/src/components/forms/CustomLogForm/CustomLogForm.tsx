@@ -27,7 +27,7 @@ import type { ValidationError } from 'jsonschema';
 import type { YAMLException } from 'js-yaml';
 import FormikTextInput from 'Components/fields/TextInput';
 import FormikEditor from 'Components/fields/Editor';
-import SaveButton from 'Components/buttons/SaveButton';
+import SubmitButton from 'Components/buttons/SubmitButton';
 import FormSessionRestoration from 'Components/utils/FormSessionRestoration';
 import useRouter from 'Hooks/useRouter';
 import ValidateButton from './ValidateButton';
@@ -155,7 +155,9 @@ const CustomLogForm: React.FC<CustomLogFormProps> = ({ onSubmit, initialValues }
             </ValidateButton>
             <Breadcrumbs.Actions>
               <Flex justify="flex-end" spacing={4}>
-                <SaveButton>{isEditing ? 'Update' : 'Save'} log</SaveButton>
+                <SubmitButton icon="check-outline" variantColor="green">
+                  {isEditing ? 'Update' : 'Save'} log
+                </SubmitButton>
                 <Button
                   variantColor="darkgray"
                   icon="close-outline"
