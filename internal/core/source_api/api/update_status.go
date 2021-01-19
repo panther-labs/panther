@@ -20,11 +20,11 @@ package api
 
 import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/panther-labs/panther/pkg/awsutils"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
+	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 

@@ -19,6 +19,8 @@ package main
  */
 
 import (
+	"github.com/panther-labs/panther/internal/core/source_api/api"
+	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"os"
 	"strings"
 	"testing"
@@ -326,4 +328,22 @@ func updateIntegrationLastScanEndWithError(t *testing.T) {
 		assert.Equal(t, status, integration.SourceIntegrationStatus.ScanStatus)
 		assert.Equal(t, scanEndTime, integration.SourceIntegrationScanInformation.LastScanEndTime)
 	}
+}
+
+func TestIntegration_TestAPI_UpdateStatus_FailsIfIntegrationNotExists(t *testing.T) {
+	testutils.IntegrationTest(t) // test runs the API handler locally but hits a real DynamoDB
+
+	awsSession := session.Must(session.NewSession())
+	testAPI := &api.API{
+		AwsSession: awsSession,
+		DdbClient:  ddb.New(awsSession, "panther-source-integrations"),
+	}
+
+	input := models.UpdateStatusInput{
+		IntegrationID:     "abcdefgh-abcd-abcd-abcd-abcdefghijkl",
+		LastEventReceived: time.Now(),
+	}
+	err := testAPI.UpdateStatus(&input)
+
+	require.Error(t, err)
 }
