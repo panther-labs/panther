@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -60,9 +61,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegration(t *testing.T) {
-	//if !integrationTest {
+	// if !integrationTest {
 	//	t.Skip()
-	//}
+	// }
 	// TODO This integration test currently fails since it tries to do healthcheck when adding integration.
 	// This causes all subsequent tests to fail
 	// See https://github.com/panther-labs/panther/issues/394
@@ -326,4 +327,21 @@ func updateIntegrationLastScanEndWithError(t *testing.T) {
 		assert.Equal(t, status, integration.SourceIntegrationStatus.ScanStatus)
 		assert.Equal(t, scanEndTime, integration.SourceIntegrationScanInformation.LastScanEndTime)
 	}
+}
+
+func TestIntegration_TestAPI_UpdateStatus_FailsIfIntegrationNotExists(t *testing.T) {
+	testutils.IntegrationTest(t)
+
+	input := &models.LambdaInput{
+		UpdateStatus: &models.UpdateStatusInput{
+			IntegrationID:     uuid.New().String(), // Must not exist in DB
+			LastEventReceived: time.Now(),
+		},
+	}
+
+	lambdaClient := lambda.New(session.Must(session.NewSession()))
+	lambdaErr := genericapi.Invoke(lambdaClient, functionName, &input, nil)
+
+	err := lambdaErr.(*genericapi.LambdaError)
+	require.Equal(t, "The source integration does not exist", *err.ErrorMessage)
 }

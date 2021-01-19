@@ -90,23 +90,23 @@ type RuleResult struct {
 	RuleID     string `json:"ruleId"`
 	RuleOutput bool   `json:"ruleOutput"`
 	// Rule function outputs
-	RuleError          string `json:"ruleError"`
-	TitleOutput        string `json:"titleOutput"`
-	TitleError         string `json:"titleError"`
-	DescriptionOutput  string `json:"descriptionOutput"`
-	DescriptionError   string `json:"descriptionError"`
-	ReferenceOutput    string `json:"referenceOutput"`
-	ReferenceError     string `json:"referenceError"`
-	SeverityOutput     string `json:"severityOutput"`
-	SeverityError      string `json:"severityError"`
-	RunbookOutput      string `json:"runbookOutput"`
-	RunbookError       string `json:"runbookError"`
-	DestinationsOutput string `json:"destinationsOutput"`
-	DestinationsError  string `json:"destinationsError"`
-	DedupOutput        string `json:"dedupOutput"`
-	DedupError         string `json:"dedupError"`
-	AlertContextOutput string `json:"alertContextOutput"`
-	AlertContextError  string `json:"alertContextError"`
+	RuleError          string   `json:"ruleError"`
+	TitleOutput        string   `json:"titleOutput"`
+	TitleError         string   `json:"titleError"`
+	DescriptionOutput  string   `json:"descriptionOutput"`
+	DescriptionError   string   `json:"descriptionError"`
+	ReferenceOutput    string   `json:"referenceOutput"`
+	ReferenceError     string   `json:"referenceError"`
+	SeverityOutput     string   `json:"severityOutput"`
+	SeverityError      string   `json:"severityError"`
+	RunbookOutput      string   `json:"runbookOutput"`
+	RunbookError       string   `json:"runbookError"`
+	DestinationsOutput []string `json:"destinationsOutput"`
+	DestinationsError  string   `json:"destinationsError"`
+	DedupOutput        string   `json:"dedupOutput"`
+	DedupError         string   `json:"dedupError"`
+	AlertContextOutput string   `json:"alertContextOutput"`
+	AlertContextError  string   `json:"alertContextError"`
 	// Indicates general error in the Python script (import error, syntax error, etc).
 	GenericError string `json:"genericError"`
 	// True if any error (generic or from rule functions) is included in the result.
