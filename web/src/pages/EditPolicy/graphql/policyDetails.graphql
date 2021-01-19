@@ -1,6 +1,0 @@
-query PolicyDetails($input: GetPolicyInput!) {
-  policy(input: $input) {
-    ...PolicyDetailsMain
-    ...PolicyDetailsExtra
-  }
-}

@@ -1,5 +1,3 @@
-package main
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,14 +16,27 @@ package main
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"testing"
+import * as Types from '../../../__generated__/schema';
 
-	"github.com/stretchr/testify/assert"
+import { RuleSummary } from './RuleSummary.generated';
+import { GraphQLError } from 'graphql';
+import gql from 'graphql-tag';
 
-	"github.com/panther-labs/panther/api/lambda/source/models"
-)
+export type RuleDetails = Pick<Types.Rule, 'body'> & {
+  tests?: Types.Maybe<
+    Array<Types.Maybe<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>>>
+  >;
+} & RuleSummary;
 
-func TestRouter(t *testing.T) {
-	assert.Nil(t, router.VerifyHandlers(&models.LambdaInput{}))
-}
+export const RuleDetails = gql`
+  fragment RuleDetails on Rule {
+    ...RuleSummary
+    body
+    tests {
+      expectedResult
+      name
+      resource
+    }
+  }
+  ${RuleSummary}
+`;

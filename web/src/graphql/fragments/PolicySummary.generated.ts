@@ -21,27 +21,37 @@ import * as Types from '../../../__generated__/schema';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
-export type PolicyTeaser = Pick<
-  Types.PolicySummary,
-  | 'complianceStatus'
-  | 'lastModified'
-  | 'resourceTypes'
-  | 'severity'
+export type PolicySummary = Pick<
+  Types.Policy,
   | 'id'
+  | 'description'
   | 'displayName'
-  | 'enabled'
+  | 'resourceTypes'
+  | 'complianceStatus'
   | 'outputIds'
+  | 'runbook'
+  | 'reference'
+  | 'severity'
+  | 'tags'
+  | 'createdAt'
+  | 'lastModified'
+  | 'enabled'
 >;
 
-export const PolicyTeaser = gql`
-  fragment PolicyTeaser on PolicySummary {
-    complianceStatus
-    lastModified
-    resourceTypes
-    severity
+export const PolicySummary = gql`
+  fragment PolicySummary on Policy {
     id
+    description
     displayName
-    enabled
+    resourceTypes
+    complianceStatus
     outputIds
+    runbook
+    reference
+    severity
+    tags
+    createdAt
+    lastModified
+    enabled
   }
 `;

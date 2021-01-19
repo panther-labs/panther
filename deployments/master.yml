@@ -108,6 +108,11 @@ Parameters:
     Type: CommaDelimitedList
     Description: Comma-separated list of Python analysis pack URLs installed on the first deployment
     Default: https://github.com/panther-labs/panther-analysis/releases/latest/download/panther-analysis-all.zip
+  KvTableBillingMode:
+    Type: String
+    Description: Configure billing mode for DynamoDB table panther-kv-store. This table is used by the custom python policies & rules to store state, and provisioned billing may be cheaper if this feature is used heavily.
+    AllowedValues: [PROVISIONED, PAY_PER_REQUEST]
+    Default: PAY_PER_REQUEST
   LayerVersionArns:
     Type: CommaDelimitedList
     Description: Comma-separated list of at most 3 LayerVersion ARNs to attach to each Lambda function (e.g. if you have a serverless monitoring service)
@@ -342,6 +347,7 @@ Resources:
         DynamoScalingRoleArn: !GetAtt Bootstrap.Outputs.DynamoScalingRoleArn
         InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
         InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
+        KvTableBillingMode: !Ref KvTableBillingMode
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
         PantherVersion: !FindInMap [Constants, Panther, Version]

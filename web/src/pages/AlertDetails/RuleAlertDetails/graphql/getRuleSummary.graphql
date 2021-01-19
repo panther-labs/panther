@@ -1,0 +1,5 @@
+query GetRuleSummary($input: GetRuleInput!) {
+  rule(input: $input) {
+    ...RuleSummary
+  }
+}

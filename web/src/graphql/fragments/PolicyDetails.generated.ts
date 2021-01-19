@@ -18,40 +18,31 @@
 
 import * as Types from '../../../__generated__/schema';
 
+import { PolicySummary } from './PolicySummary.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
-export type PolicyBasic = Pick<
-  Types.PolicyDetails,
-  | 'id'
-  | 'description'
-  | 'displayName'
-  | 'resourceTypes'
-  | 'complianceStatus'
-  | 'outputIds'
-  | 'runbook'
-  | 'reference'
-  | 'severity'
-  | 'tags'
-  | 'createdAt'
-  | 'lastModified'
-  | 'enabled'
->;
+export type PolicyDetails = Pick<
+  Types.Policy,
+  'autoRemediationId' | 'autoRemediationParameters' | 'suppressions' | 'body'
+> & {
+  tests?: Types.Maybe<
+    Array<Types.Maybe<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>>>
+  >;
+} & PolicySummary;
 
-export const PolicyBasic = gql`
-  fragment PolicyBasic on PolicyDetails {
-    id
-    description
-    displayName
-    resourceTypes
-    complianceStatus
-    outputIds
-    runbook
-    reference
-    severity
-    tags
-    createdAt
-    lastModified
-    enabled
+export const PolicyDetails = gql`
+  fragment PolicyDetails on Policy {
+    ...PolicySummary
+    autoRemediationId
+    autoRemediationParameters
+    suppressions
+    body
+    tests {
+      expectedResult
+      name
+      resource
+    }
   }
+  ${PolicySummary}
 `;

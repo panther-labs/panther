@@ -1,9 +1,0 @@
-fragment RuleFull on RuleDetails {
-  ...RuleBasic
-  body
-  tests {
-    expectedResult
-    name
-    resource
-  }
-}

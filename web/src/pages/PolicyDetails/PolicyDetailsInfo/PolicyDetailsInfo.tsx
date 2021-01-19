@@ -21,11 +21,11 @@ import { Link as RRLink } from 'react-router-dom';
 import { Box, SimpleGrid, Text, Link, Flex, Card } from 'pouncejs';
 import { formatDatetime } from 'Helpers/utils';
 import Linkify from 'Components/Linkify';
-import { PolicyDetails } from 'Generated/schema';
+import { Policy } from 'Generated/schema';
 import urls from 'Source/urls';
 
 interface ResourceDetailsInfoProps {
-  policy?: PolicyDetails;
+  policy?: Policy;
 }
 
 const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {

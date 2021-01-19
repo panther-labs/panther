@@ -18,7 +18,7 @@ from collections.abc import Mapping
 from typing import Any, Optional
 
 from .data_model import DataModel
-from .immutable import ImmutableDict
+from .immutable import ImmutableDict, json_encoder
 
 
 class PantherEvent(ImmutableDict):  # pylint: disable=R0901
@@ -57,3 +57,5 @@ class PantherEvent(ImmutableDict):  # pylint: disable=R0901
                 return self._ensure_immutable(method(self._ensure_immutable(self._container)))
         # no matches, return None by default
         return None
+
+    json_encoder = json_encoder

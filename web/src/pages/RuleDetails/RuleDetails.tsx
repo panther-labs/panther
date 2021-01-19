@@ -33,7 +33,7 @@ import RuleDetailsPageSkeleton from './Skeleton';
 import ListRuleAlerts from './RuleAlertsListing';
 import RuleDetailsInfo from './RuleDetailsInfo';
 import RuleDetailsBanner from './RuleDetailsBanner';
-import { useRuleDetails } from './graphql/ruleDetails.generated';
+import { useGetRuleDetails } from './graphql/getRuleDetails.generated';
 import { useListAlertsForRule } from './graphql/listAlertsForRule.generated';
 
 export interface RuleDetailsPageUrlParams {
@@ -54,7 +54,7 @@ const tabIndexToSection = invert(sectionToTabIndex) as Record<
 const RuleDetailsPage: React.FC = () => {
   const { match } = useRouter<{ id: string }>();
   const { urlParams, setUrlParams } = useUrlParams<RuleDetailsPageUrlParams>();
-  const { error, data, loading } = useRuleDetails({
+  const { error, data, loading } = useGetRuleDetails({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {

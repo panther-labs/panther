@@ -1,0 +1,5 @@
+query GetPolicySummary($input: GetPolicyInput!) {
+  policy(input: $input) {
+    ...PolicySummary
+  }
+}

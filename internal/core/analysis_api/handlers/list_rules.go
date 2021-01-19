@@ -92,6 +92,7 @@ func ruleScanInput(input *models.ListRulesInput) (*dynamodb.ScanInput, error) {
 		LastModifiedBy: input.LastModifiedBy,
 		NameContains:   input.NameContains,
 		Severity:       input.Severity,
+		ResourceTypes:  input.LogTypes,
 		Tags:           input.Tags,
 	}
 

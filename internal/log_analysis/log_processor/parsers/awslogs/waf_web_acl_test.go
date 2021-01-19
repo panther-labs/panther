@@ -1,3 +1,5 @@
+package awslogs
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,44 +18,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Types from '../../../__generated__/schema';
+import (
+	"testing"
 
-import { GraphQLError } from 'graphql';
-import gql from 'graphql-tag';
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
+)
 
-export type RuleBasic = Pick<
-  Types.RuleDetails,
-  | 'id'
-  | 'description'
-  | 'displayName'
-  | 'logTypes'
-  | 'threshold'
-  | 'outputIds'
-  | 'runbook'
-  | 'reference'
-  | 'severity'
-  | 'tags'
-  | 'dedupPeriodMinutes'
-  | 'createdAt'
-  | 'lastModified'
-  | 'enabled'
->;
-
-export const RuleBasic = gql`
-  fragment RuleBasic on RuleDetails {
-    id
-    description
-    displayName
-    logTypes
-    threshold
-    outputIds
-    runbook
-    reference
-    severity
-    tags
-    dedupPeriodMinutes
-    createdAt
-    lastModified
-    enabled
-  }
-`;
+func TestWAFWebACL(t *testing.T) {
+	logtesting.RunTestsFromYAML(t, LogTypes(), "./testdata/waf_web_acl_tests.yml")
+}

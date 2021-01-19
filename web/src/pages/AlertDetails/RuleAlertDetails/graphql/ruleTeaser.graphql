@@ -1,5 +1,0 @@
-query RuleTeaser($input: GetRuleInput!) {
-  rule(input: $input) {
-    ...RuleBasic
-  }
-}

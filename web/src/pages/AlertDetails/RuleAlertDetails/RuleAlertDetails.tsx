@@ -17,18 +17,17 @@
  */
 
 import React from 'react';
-import { Alert, Box, Card, Flex, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
+import { Box, Card, Flex, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import { AlertDetailsRuleInfo } from 'Generated/schema';
 import { AlertDetailsFull } from 'Source/graphql/fragments/AlertDetailsFull.generated';
 import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
-import { extractErrorMessage } from 'Helpers/utils';
 import { DEFAULT_LARGE_PAGE_SIZE } from 'Source/constants';
 import { AlertDetails } from 'Pages/AlertDetails';
 import invert from 'lodash/invert';
 import useUrlParams from 'Hooks/useUrlParams';
 import Skeleton from '../Skeleton';
-import { useRuleTeaser } from './graphql/ruleTeaser.generated';
+import { useGetRuleSummary } from './graphql/getRuleSummary.generated';
 import AlertDetailsBanner from './AlertDetailsBanner';
 import AlertEvents from './AlertDetailsEvents';
 import AlertDetailsInfo from './AlertDetailsInfo';
@@ -57,7 +56,7 @@ const RuleAlertDetails: React.FC<RuleAlertDetailsProps> = ({ alert, fetchMore })
 
   const alertDetectionInfo = alert.detection as AlertDetailsRuleInfo;
 
-  const { data, loading, error } = useRuleTeaser({
+  const { data, loading } = useGetRuleSummary({
     variables: { input: { id: alertDetectionInfo.ruleId } },
   });
 
@@ -96,21 +95,6 @@ const RuleAlertDetails: React.FC<RuleAlertDetailsProps> = ({ alert, fetchMore })
 
   if (loading && !data) {
     return <Skeleton />;
-  }
-
-  if (error) {
-    return (
-      <Box mb={6}>
-        <Alert
-          variant="error"
-          title="Couldn't load alert"
-          description={
-            extractErrorMessage(error) ||
-            "An unknown error occurred and we couldn't load the alert details from the server"
-          }
-        />
-      </Box>
-    );
   }
 
   return (

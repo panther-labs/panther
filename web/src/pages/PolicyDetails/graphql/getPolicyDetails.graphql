@@ -1,9 +1,12 @@
-query PolicyDetails(
+query GetPolicyDetails(
   $policyDetailsInput: GetPolicyInput!
   $resourcesForPolicyInput: ResourcesForPolicyInput!
 ) {
   policy(input: $policyDetailsInput) {
-    ...PolicyDetailsMain
+    ...PolicySummary
+    autoRemediationId
+    autoRemediationParameters
+    suppressions
   }
   resourcesForPolicy(input: $resourcesForPolicyInput) {
     totals {

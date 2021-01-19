@@ -22,7 +22,7 @@ import PolicyForm from 'Components/forms/PolicyForm';
 import useRouter from 'Hooks/useRouter';
 import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage, formatJSON } from 'Helpers/utils';
-import { usePolicyDetails } from './graphql/policyDetails.generated';
+import { useGetPolicyDetails } from './graphql/getPolicyDetails.generated';
 import { useUpdatePolicy } from './graphql/updatePolicy.generated';
 import Skeleton from './Skeleton';
 
@@ -30,7 +30,11 @@ const EditPolicyPage: React.FC = () => {
   const { match } = useRouter<{ id: string }>();
   const { pushSnackbar } = useSnackbar();
 
-  const { error: fetchPolicyError, data: queryData, loading: isFetchingPolicy } = usePolicyDetails({
+  const {
+    error: fetchPolicyError,
+    data: queryData,
+    loading: isFetchingPolicy,
+  } = useGetPolicyDetails({
     variables: {
       input: {
         id: match.params.id,

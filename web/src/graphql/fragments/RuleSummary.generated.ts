@@ -21,43 +21,39 @@ import * as Types from '../../../__generated__/schema';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
-export type PolicyDetailsMain = Pick<
-  Types.PolicyDetails,
-  | 'autoRemediationId'
-  | 'autoRemediationParameters'
-  | 'complianceStatus'
-  | 'createdAt'
+export type RuleSummary = Pick<
+  Types.Rule,
+  | 'id'
   | 'description'
   | 'displayName'
-  | 'enabled'
-  | 'id'
-  | 'lastModified'
+  | 'logTypes'
+  | 'threshold'
   | 'outputIds'
-  | 'reference'
-  | 'resourceTypes'
   | 'runbook'
+  | 'reference'
   | 'severity'
-  | 'suppressions'
   | 'tags'
+  | 'dedupPeriodMinutes'
+  | 'createdAt'
+  | 'lastModified'
+  | 'enabled'
 >;
 
-export const PolicyDetailsMain = gql`
-  fragment PolicyDetailsMain on PolicyDetails {
-    autoRemediationId
-    autoRemediationParameters
-    complianceStatus
-    createdAt
+export const RuleSummary = gql`
+  fragment RuleSummary on Rule {
+    id
     description
     displayName
-    enabled
-    id
-    lastModified
+    logTypes
+    threshold
     outputIds
-    reference
-    resourceTypes
     runbook
+    reference
     severity
-    suppressions
     tags
+    dedupPeriodMinutes
+    createdAt
+    lastModified
+    enabled
   }
 `;

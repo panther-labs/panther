@@ -293,6 +293,16 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "tatehanawalt",
+      "name": "Tate Hanawalt",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/6126815?v=4",
+      "profile": "https://www.tatehanawalt.com",
+      "contributions": [
+        "code",
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
