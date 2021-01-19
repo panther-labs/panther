@@ -334,6 +334,7 @@ func upload(bucket, prefix string, fileChan chan *filegen.File, uploader s3manag
 			Bucket: &bucket,
 			Key:    aws.String(path),
 		}
+		// NOTE: the retry look here was needed to recover at high loads and concurrency the failure of the creds refresh
 		for i := 0; i < maxRetries; i++ {
 			_, err = uploader.Upload(input, func(u *s3manager.Uploader) { // calc the concurrency based on payload
 				u.Concurrency = (size / uploaderPartSize) + 1 // if it evenly divides an extra won't matter

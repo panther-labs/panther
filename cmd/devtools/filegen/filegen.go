@@ -48,7 +48,7 @@ func NewFile(gen Generator, hour time.Time) *File {
 	f := &File{
 		name: gen.LogType() + "/" + hour.Format(DateFormat) + "/" + gen.Filename(hour) + ".gz",
 	}
-	f.writer = gzip.NewWriter(&f.buffer)
+	f.writer, _ = gzip.NewWriterLevel(&f.buffer, gzip.BestSpeed)
 	return f
 }
 

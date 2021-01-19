@@ -43,14 +43,14 @@ func String(n int) string {
 func StringSlice(n, m int) []string {
 	slice := make([]string, m)
 	for i := 0; i < m; i++ {
-		slice[i] = uniuri.NewLen(n)
+		slice[i] = String(n)
 	}
 	return slice
 }
 
 func StringChoice(choices []string) string {
-	// rand.Int31n() returns [0,n)
-	return choices[rand.Int31n(int32(len(choices)))] // nolint (gosec)
+	// Intn() returns [0,n)
+	return choices[Intn(len(choices))] // nolint (gosec)
 }
 
 func Int16() int16 {
@@ -101,7 +101,7 @@ func ARN() string {
 
 func IP() string {
 	base := rand.Int31n(256) // nolint (gosec)
-	return fmt.Sprintf("%d.%d.%d.%d", base, base+1, base+2, base+3)
+	return fmt.Sprintf("%d.%d.%d.%d", base, base, base, base)
 }
 
 func RawMessage(atLeast, atMost int) pantherlog.RawMessage {

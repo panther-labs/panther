@@ -60,6 +60,7 @@ func (ct *AWSCloudTrail) Filename(hour time.Time) string {
 
 func (ct *AWSCloudTrail) NewFile(hour time.Time) *filegen.File {
 	f := filegen.NewFile(ct, hour)
+	defer f.Close()
 	_, err := io.WriteString(f, `{"Records": [`)
 	if err != nil {
 		panic(err)
@@ -88,7 +89,6 @@ func (ct *AWSCloudTrail) NewFile(hour time.Time) *filegen.File {
 	if err != nil {
 		panic(err)
 	}
-	f.Close()
 	return f
 }
 
