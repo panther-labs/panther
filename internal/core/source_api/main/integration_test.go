@@ -19,7 +19,6 @@ package main
  */
 
 import (
-	"github.com/google/uuid"
 	"os"
 	"strings"
 	"testing"
@@ -28,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -343,5 +343,5 @@ func TestIntegration_TestAPI_UpdateStatus_FailsIfIntegrationNotExists(t *testing
 	lambdaErr := genericapi.Invoke(lambdaClient, functionName, &input, nil)
 
 	err := lambdaErr.(*genericapi.LambdaError)
-	require.Equal(t,"The source integration does not exist", *err.ErrorMessage )
+	require.Equal(t, "The source integration does not exist", *err.ErrorMessage)
 }
