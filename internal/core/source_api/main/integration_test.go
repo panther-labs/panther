@@ -19,8 +19,6 @@ package main
  */
 
 import (
-	"github.com/panther-labs/panther/internal/core/source_api/api"
-	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"os"
 	"strings"
 	"testing"
@@ -33,6 +31,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/core/source_api/api"
+	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
