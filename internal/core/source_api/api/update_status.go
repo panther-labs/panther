@@ -37,16 +37,12 @@ func (api API) UpdateStatus(input *models.UpdateStatusInput) error {
 	status := ddb.IntegrationStatus{
 		LastEventReceived: &input.LastEventReceived,
 	}
-<<<<<<< HEAD
-	err := dynamoClient.UpdateStatus(input.IntegrationID, status)
-=======
 
-	err := api.DdbClient.UpdateStatus(input.IntegrationID, status)
+	err := dynamoClient.UpdateStatus(input.IntegrationID, status)
 
 	if awsutils.IsAnyError(err, dynamodb.ErrCodeConditionalCheckFailedException) {
 		return &genericapi.DoesNotExistError{Message: "The source integration does not exist"}
 	}
->>>>>>> f67320af (source-api: make UpdateStatus return error if source doesn't exist (#2444))
 	if err != nil {
 		zap.L().Error("failed to update integration status", zap.Error(err), zap.String("integrationId", input.IntegrationID))
 		return updateStatusInternalError
