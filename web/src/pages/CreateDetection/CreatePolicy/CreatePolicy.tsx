@@ -19,65 +19,60 @@
 import React from 'react';
 import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
-import RuleForm from 'Components/forms/RuleForm';
-import { ListRulesDocument } from 'Pages/ListRules';
-import { AddRuleInput } from 'Generated/schema';
-import withSEO from 'Hoc/withSEO';
-import {
-  DEFAULT_DEDUP_FUNCTION,
-  DEFAULT_RULE_FUNCTION,
-  DEFAULT_TITLE_FUNCTION,
-  DEFAULT_ALERT_CONTEXT_FUNCTION,
-} from 'Source/constants';
+import PolicyForm from 'Components/forms/PolicyForm';
+import { ListPoliciesDocument } from 'Pages/ListPolicies';
+import { AddPolicyInput } from 'Generated/schema';
+import { DEFAULT_POLICY_FUNCTION } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
-import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
-import { useCreateRule } from './graphql/createRule.generated';
+import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
+import { useCreatePolicy } from './graphql/createPolicy.generated';
 
-const initialValues: Required<AddRuleInput> = {
-  body: `${DEFAULT_RULE_FUNCTION}\n\n${DEFAULT_TITLE_FUNCTION}\n\n${DEFAULT_DEDUP_FUNCTION}\n\n${DEFAULT_ALERT_CONTEXT_FUNCTION}`,
-  dedupPeriodMinutes: 60,
-  threshold: 1,
+const initialValues: Required<AddPolicyInput> = {
+  body: DEFAULT_POLICY_FUNCTION,
+  autoRemediationId: '',
+  autoRemediationParameters: '{}',
   description: '',
   displayName: '',
   enabled: true,
   id: '',
-  logTypes: [],
   outputIds: [],
   reference: '',
+  resourceTypes: [],
   runbook: '',
   severity: null,
+  suppressions: [],
   tags: [],
   tests: [],
 };
 
-const CreateRulePage: React.FC = () => {
+const CreatePolicy: React.FC = () => {
   const { history } = useRouter();
-  const [createRule, { error }] = useCreateRule({
-    refetchQueries: [{ query: ListRulesDocument, variables: { input: {} } }],
+  const [createPolicy, { error }] = useCreatePolicy({
+    refetchQueries: [{ query: ListPoliciesDocument, variables: { input: {} } }],
     onCompleted: data => {
-      trackEvent({ event: EventEnum.AddedRule, src: SrcEnum.Rules });
-      history.push(urls.logAnalysis.rules.details(data.addRule.id));
+      trackEvent({ event: EventEnum.AddedPolicy, src: SrcEnum.Policies });
+      history.push(urls.compliance.policies.details(data.addPolicy.id));
     },
-    onError: () => trackError({ event: TrackErrorEnum.FailedToAddRule, src: SrcEnum.Rules }),
   });
 
   const handleSubmit = React.useCallback(
-    values => createRule({ variables: { input: values } }),
+    values => createPolicy({ variables: { input: values } }),
     []
   );
 
   return (
     <Box mb={6}>
-      <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
+      <PolicyForm initialValues={initialValues} onSubmit={handleSubmit} />
       {error && (
         <Box mt={2} mb={6}>
           <Alert
             variant="error"
+            title="Couldn't create your policy"
             discardable
-            title={
+            description={
               extractErrorMessage(error) ||
-              'An unknown error occured as we were trying to create your rule'
+              'An unknown error occured as we were trying to create your policy'
             }
           />
         </Box>
@@ -86,4 +81,4 @@ const CreateRulePage: React.FC = () => {
   );
 };
 
-export default withSEO({ title: 'New Rule' })(CreateRulePage);
+export default CreatePolicy;
