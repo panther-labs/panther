@@ -19,7 +19,6 @@ package sources
  */
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -121,18 +120,11 @@ func (c *sourceCache) Update(now time.Time, sources []*models.SourceIntegration)
 	byBucket := make(map[string][]prefixSource)
 	index := make(map[string]*models.SourceIntegration)
 	for _, source := range sources {
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					zap.L().Error(fmt.Sprintf("recovered from panic: %s", r))
-				}
-			}()
-			bucket, prefixes := source.S3Info()
-			for _, prefix := range prefixes {
-				byBucket[bucket] = append(byBucket[bucket], prefixSource{prefix: prefix, source: source})
-			}
-			index[source.IntegrationID] = source
-		}()
+		bucket, prefixes := source.S3Info()
+		for _, prefix := range prefixes {
+			byBucket[bucket] = append(byBucket[bucket], prefixSource{prefix: prefix, source: source})
+		}
+		index[source.IntegrationID] = source
 	}
 	// Sort sources for each bucket.
 	// It is important to have the sources sorted by longest prefix first.
