@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor } from 'test-utils';
-import { mockUploadPolicies } from './UploadPanel/graphql/uploadPolicies.generated';
+import { mockUploadDetections } from './UploadPanel/graphql/uploadDetections.generated';
 import BulkUploaderWizard from './BulkUploaderWizard';
 
 describe('BulkUploaderWizard', () => {
@@ -70,9 +70,9 @@ describe('BulkUploaderWizard', () => {
 
   it('allows selecting and uploading file', async () => {
     const mocks = [
-      mockUploadPolicies({
+      mockUploadDetections({
         data: {
-          uploadPolicies: {
+          uploadDetections: {
             totalPolicies: 113,
             modifiedPolicies: 0,
             newPolicies: 0,
@@ -82,6 +82,9 @@ describe('BulkUploaderWizard', () => {
             totalGlobals: 4,
             newGlobals: 0,
             modifiedGlobals: 0,
+            totalDataModels: 5,
+            newDataModels: 1,
+            modifiedDataModels: 1,
           },
         },
         variables: { input: { data: 'eyJwaW5nIjp0cnVlfQ==' } },
