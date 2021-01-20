@@ -70,7 +70,7 @@ type ListDetectionsInput struct {
 	Fields []string `json:"fields" validate:"max=20,dive,required,max=100"`
 
 	// ----- Sorting -----
-	SortBy  string `json:"sortBy" validate:"omitempty,oneof=displayName enabled id lastModified types severity"`
+	SortBy  string `json:"sortBy" validate:"omitempty,oneof=displayName enabled id lastModified severity"`
 	SortDir string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
 
 	// ----- Paging -----
