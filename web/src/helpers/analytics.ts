@@ -267,6 +267,7 @@ export const trackEvent = (payload: TrackEvent) => {
 export enum TrackErrorEnum {
   FailedToAddDestination = 'Failed to create Destination',
   FailedToAddRule = 'Failed to create Rule',
+  FailedToAddPolicy = 'Failed to create Policy',
   FailedToAddCustomLog = 'Failed to create a Custom Log',
   FailedToAddDataModel = 'Failed to create a Data Model',
   FailedToUpdateDataModel = 'Failed to update a Data Model',
@@ -330,6 +331,12 @@ interface AddRuleError {
   event: TrackErrorEnum.FailedToAddRule;
   src: SrcEnum.Rules;
 }
+
+interface AddPolicyError {
+  event: TrackErrorEnum.FailedToAddPolicy;
+  src: SrcEnum.Policies;
+}
+
 interface MfaError {
   event: TrackErrorEnum.FailedMfa;
   src: SrcEnum.Auth;
@@ -366,6 +373,7 @@ type TrackError =
   | DeleteDataModelError
   | TestDestinationError
   | AddRuleError
+  | AddPolicyError
   | MfaError
   | AddCustomLogError
   | DeleteCustomLogError

@@ -25,7 +25,7 @@ import { AddPolicyInput } from 'Generated/schema';
 import { DEFAULT_POLICY_FUNCTION } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
-import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { useCreatePolicy } from './graphql/createPolicy.generated';
 
 const initialValues: Required<AddPolicyInput> = {
@@ -54,6 +54,7 @@ const CreatePolicy: React.FC = () => {
       trackEvent({ event: EventEnum.AddedPolicy, src: SrcEnum.Policies });
       history.push(urls.compliance.policies.details(data.addPolicy.id));
     },
+    onError: () => trackError({ event: TrackErrorEnum.FailedToAddPolicy, src: SrcEnum.Policies }),
   });
 
   const handleSubmit = React.useCallback(
