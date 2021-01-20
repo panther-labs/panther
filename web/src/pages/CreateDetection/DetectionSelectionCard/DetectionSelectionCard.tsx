@@ -82,7 +82,11 @@ const DetectionSelectionCard: React.FC<DetectionSelectionCardProps> = ({
     return content;
   }
 
-  return <AbstractButton onClick={() => setUrlParams({ type })}>{content}</AbstractButton>;
+  return (
+    <AbstractButton aria-label={`Create ${title}`} onClick={() => setUrlParams({ type })}>
+      {content}
+    </AbstractButton>
+  );
 };
 
 export default DetectionSelectionCard;

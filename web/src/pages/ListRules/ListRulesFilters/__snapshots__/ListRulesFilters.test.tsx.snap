@@ -517,7 +517,7 @@ exports[`ListRulesFilters renders 1`] = `
     </div>
     <a
       class="panther-21"
-      href="/log-analysis/rules/new/"
+      href="/detections/new/?type=rule"
     >
       <span
         class="panther-18"
