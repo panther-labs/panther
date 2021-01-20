@@ -88,7 +88,7 @@ describe('FormikDateRangeInput', () => {
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith({
         start: '2020-11-02T13:00:00.000Z',
-        end: '2020-11-03T13:00:00.000Z',
+        end: '2020-11-03T13:00:59.999Z',
       });
     });
   });
