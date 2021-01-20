@@ -114,7 +114,7 @@ describe('EditS3LogSource', () => {
     fireEvent.change(nameField, { target: { value: updatedLogSource.integrationLabel } });
 
     // Wait for form validation to kick in and move on to the next screen
-    await waitMs(50);
+    await waitMs(1);
     fireEvent.click(getByText('Continue'));
 
     // Initially we expect a disabled button while the template is being fetched ...
@@ -224,7 +224,7 @@ describe('EditS3LogSource', () => {
     fireEvent.change(getAllByLabelText('Log Types')[3], {target: {value: updatedLogSource.s3PrefixLogTypes[1].logTypes[0] } }); // prettier-ignore
     fireClickAndMouseEvents(await findByText(updatedLogSource.s3PrefixLogTypes[1].logTypes[0]));
     // Wait for form validation to kick in and move on to the next screen
-    await waitMs(50);
+    await waitMs(1);
     fireEvent.click(getByText('Continue'));
 
     // We expect to skip the template step cause user only changed the s3PrefixLogTypes
@@ -316,7 +316,7 @@ describe('EditS3LogSource', () => {
     // Removing the first prefix
     await fireClickAndMouseEvents(getByAriaLabel('Remove prefix 0'));
     // Wait for form validation to kick in and move on to the next screen
-    await waitMs(50);
+    await waitMs(1);
     fireEvent.click(getByText('Continue'));
 
     // We expect to skip the template step cause user only changed the s3PrefixLogTypes

@@ -77,14 +77,14 @@ describe('SnsDestinationForm', () => {
 
     fireEvent.change(displayNameField, { target: { value: displayName } });
     fireEvent.click(criticalSeverityCheckBox);
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(topicArnField, { target: { value: 'notValidTopicArn' } });
-    await waitMs(50);
+    await waitMs(1);
     // Topic ARN has specific form
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(topicArnField, { target: { value: validTopicArn } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
   });
 
@@ -103,7 +103,7 @@ describe('SnsDestinationForm', () => {
     fireEvent.change(displayNameField, { target: { value: displayName } });
     fireEvent.click(criticalSeverityCheckBox);
     fireEvent.change(topicArnField, { target: { value: validTopicArn } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);
@@ -128,7 +128,7 @@ describe('SnsDestinationForm', () => {
 
     const newDisplayName = 'New SNS Name';
     fireEvent.change(displayNameField, { target: { value: newDisplayName } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);

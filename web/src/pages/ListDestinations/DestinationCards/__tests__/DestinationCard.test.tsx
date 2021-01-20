@@ -65,7 +65,7 @@ describe('Generic Destination Card', () => {
     expect(toggleBtn).toBeInTheDocument();
 
     fireEvent.mouseDown(toggleBtn);
-    await waitMs(50);
+    await waitMs(1);
     expect(getByText('Send Test Alert')).toBeInTheDocument();
     expect(getByText('Delete')).toBeInTheDocument();
     expect(getByText('Edit')).toBeInTheDocument();

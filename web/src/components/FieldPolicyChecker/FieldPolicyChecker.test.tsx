@@ -31,7 +31,7 @@ test('it renders the failing checks based on the schema', async () => {
   );
 
   // wait for yup to run validations
-  await waitMs(10);
+  await waitMs(1);
 
   // required should never be displayed as per spec
   expect(queryByText(REQUIRED_VALIDATION_MESSAGE)).toBeFalsy();
@@ -45,7 +45,7 @@ test('it renders the passing checks based on the schema', async () => {
   );
 
   // wait for yup to run validations
-  await waitMs(10);
+  await waitMs(1);
 
   expect(queryByAriaLabel('Check is failing')).toBeFalsy();
   expect(getByAriaLabel('Check is passing')).toBeTruthy();

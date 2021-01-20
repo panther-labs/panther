@@ -75,7 +75,7 @@ describe('CreateComplianceSource', () => {
     fireEvent.click(getByLabelText('AWS Automatic Remediations'));
 
     // Wait for form validation to kick in and move on to the next screen
-    await waitMs(50);
+    await waitMs(1);
     fireEvent.click(getByText('Continue Setup'));
 
     // Initially we expect a disabled button while the template is being fetched ...
@@ -135,7 +135,7 @@ describe('CreateComplianceSource', () => {
     });
 
     // Wait for form validation to kick in and move on to the next screen
-    await waitMs(50);
+    await waitMs(1);
     fireEvent.click(getByText('Continue Setup'));
 
     // We move on to the final screen
@@ -203,7 +203,7 @@ describe('CreateComplianceSource', () => {
     fireEvent.click(getByLabelText('AWS Automatic Remediations'));
 
     // Wait for form validation to kick in and move on to the next screen
-    await waitMs(50);
+    await waitMs(1);
     fireEvent.click(getByText('Continue Setup'));
 
     // We move on to the final screen
