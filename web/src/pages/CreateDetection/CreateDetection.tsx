@@ -52,7 +52,6 @@ const CreateDetection: React.FC = () => {
         <ErrorBoundary>
           {type === 'rule' && <CreateRule />}
           {type === 'policy' && <CreatePolicy />}
-          {type === 'scheduledRule' && <CreateRule />}
         </ErrorBoundary>
       </Box>
     </React.Fragment>
