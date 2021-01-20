@@ -70,7 +70,7 @@ const SuccessfulUpload: React.FC = () => {
           </BoxColumn>
           <BoxColumn>
             <Flex mb={5} width={220} align="center">
-              <Icon type="policy" mr={4} />
+              <Icon type="data-models" mr={4} />
               <Text fontWeight="bold">Data Models</Text>
             </Flex>
             <Rows

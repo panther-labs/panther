@@ -112,6 +112,7 @@ describe('BulkUploaderWizard', () => {
     expect(getByText('Python Modules')).toBeInTheDocument();
     expect(getByText('Rules')).toBeInTheDocument();
     expect(getByText('Policies')).toBeInTheDocument();
+    expect(getByText('Data Models')).toBeInTheDocument();
     expect(getByText('Upload another')).toBeInTheDocument();
   });
 });
