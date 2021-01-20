@@ -20,7 +20,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Box, Flex, theme as Theme, ThemeProvider, useTheme } from 'pouncejs';
 import dayjs from 'dayjs';
-import { remToPx, capitalize } from 'Helpers/utils';
+import { remToPx, capitalize, secondsToString } from 'Helpers/utils';
 import { FloatSeries, LongSeries, Scalars } from 'Generated/schema';
 import type { EChartOption, ECharts } from 'echarts';
 import mapKeys from 'lodash/mapKeys';
@@ -89,7 +89,7 @@ interface TimeSeriesChartProps {
   hideLegend?: boolean;
 
   /**
-   * This is parameter determines if we need to display the values with an appropriate suffix
+   * This parameter determines if we need to display the values with an appropriate suffix
    */
   units?: string;
 
@@ -293,7 +293,8 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
           fontWeight: theme.fontWeights.medium as any,
           fontFamily: theme.fonts.primary,
           color: theme.colors['gray-50'],
-          formatter: `{value}${units ? ` ${units}` : ''}`,
+          formatter: value =>
+            units === 'sec' ? secondsToString(value) : `${value}${units ? ` ${units}` : ''}`,
         },
         splitLine: {
           lineStyle: {

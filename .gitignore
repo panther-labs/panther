@@ -7,6 +7,9 @@ __pycache__/
 .vscode
 .history/
 
+# Temporary files
+tmp/
+
 # Dependencies
 node_modules/
 npm-debug.log*

@@ -1,3 +1,5 @@
+package filegen
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,4 +18,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './BaseRuleFormEditorSection';
+type JSON struct {
+	endOfLine []byte
+	nrows     int
+}
+
+func NewJSON() *JSON {
+	return &JSON{
+		endOfLine: []byte{'\n'},
+		nrows:     defaultRows,
+	}
+}
+
+func (JSON *JSON) WithRows(nrows int) {
+	JSON.nrows = nrows
+}
+
+func (JSON *JSON) Rows() int {
+	return JSON.nrows
+}
+
+func (JSON *JSON) EndOfLine() []byte {
+	return JSON.endOfLine
+}

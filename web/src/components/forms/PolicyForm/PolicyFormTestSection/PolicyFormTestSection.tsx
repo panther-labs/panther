@@ -21,7 +21,7 @@ import { Alert, Flex, Card } from 'pouncejs';
 import { DetectionTestDefinition } from 'Generated/schema';
 import { useFormikContext } from 'formik';
 import { PolicyFormValues } from 'Components/forms/PolicyForm';
-import { BaseRuleFormTestSection } from 'Components/forms/BaseRuleForm';
+import { BaseDetectionFormTestSection } from 'Components/forms/BaseDetectionForm';
 import { extractErrorMessage } from 'Helpers/utils';
 import { useTestPolicy } from './graphql/testPolicy.generated';
 import RuleFormTestResult from '../PolicyFormTestResult';
@@ -56,7 +56,7 @@ const PolicyFormTestSection: React.FC = () => {
     [body, resourceTypes]
   );
   return (
-    <BaseRuleFormTestSection
+    <BaseDetectionFormTestSection
       type="policy"
       runTests={runTests}
       renderTestResults={

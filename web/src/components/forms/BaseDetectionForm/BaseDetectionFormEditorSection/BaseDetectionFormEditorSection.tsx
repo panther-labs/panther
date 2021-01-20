@@ -18,29 +18,30 @@
 
 import React from 'react';
 import { FastField } from 'formik';
-import { Link, IconButton, FormHelperText, Card, Flex, Heading, Box } from 'pouncejs';
+import { Link, IconButton, FormHelperText, Card, Box, Flex, Heading } from 'pouncejs';
 import FormikEditor from 'Components/fields/Editor';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
-import Panel from 'Components/Panel';
 
-interface BaseRuleFormEditorSectionProps {
+interface BaseDetectionFormEditorSectionProps {
   type: 'rule' | 'policy';
 }
 
-const BaseRuleFormEditorSection: React.FC<BaseRuleFormEditorSectionProps> = ({ type }) => {
+const BaseDetectionFormEditorSection: React.FC<BaseDetectionFormEditorSectionProps> = ({
+  type,
+}) => {
   const [open, setOpen] = React.useState(true);
   const isPolicy = type === 'policy';
 
   return (
-    <Panel title={isPolicy ? 'Policy Body' : 'Rule Body'}>
+    <Box>
       <Card variant="dark" p={4}>
         <Flex align="center" spacing={4}>
           <IconButton
             variant="ghost"
             variantBorderStyle="circle"
             active={open}
-            variantColor="navyblue"
+            variantColor="darkblue"
             icon={open ? 'caret-up' : 'caret-down'}
             onClick={() => setOpen(!open)}
             size="medium"
@@ -69,8 +70,8 @@ const BaseRuleFormEditorSection: React.FC<BaseRuleFormEditorSectionProps> = ({ t
           global module
         </Link>
       </FormHelperText>
-    </Panel>
+    </Box>
   );
 };
 
-export default React.memo(BaseRuleFormEditorSection);
+export default React.memo(BaseDetectionFormEditorSection);

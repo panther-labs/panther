@@ -1,3 +1,5 @@
+package filegen
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,5 +18,41 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default } from './BaseRuleFormCoreSection';
-export * from './BaseRuleFormCoreSection';
+const (
+	defaultCSVDelimiter = ","
+)
+
+type CSV struct {
+	endOfLine string
+	delimiter string
+	nrows     int
+}
+
+func NewCSV() *CSV {
+	return &CSV{
+		endOfLine: "\n",
+		delimiter: defaultCSVDelimiter,
+		nrows:     defaultRows,
+	}
+}
+
+func (csv *CSV) EndOfLine() string {
+	return csv.endOfLine
+}
+
+func (csv *CSV) WithDelimiter(delimiter string) *CSV {
+	csv.delimiter = delimiter
+	return csv
+}
+
+func (csv *CSV) Delimiter() string {
+	return csv.delimiter
+}
+
+func (csv *CSV) WithRows(nrows int) {
+	csv.nrows = nrows
+}
+
+func (csv *CSV) Rows() int {
+	return csv.nrows
+}

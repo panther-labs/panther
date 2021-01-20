@@ -19,7 +19,7 @@
 import React, { MouseEvent } from 'react';
 import { DetectionTestDefinition, DetectionTestDefinitionInput } from 'Generated/schema';
 import { FieldArray, FastField as Field, useFormikContext } from 'formik';
-import { Button, Flex, Icon, Grid, Box, AbstractButton, Card } from 'pouncejs';
+import { Heading, Button, Flex, Icon, Grid, Box, AbstractButton, Card, IconButton } from 'pouncejs';
 import { formatJSON, generateRandomColor } from 'Helpers/utils';
 import FormikTextInput from 'Components/fields/TextInput';
 import FormikEditor from 'Components/fields/Editor';
@@ -27,16 +27,15 @@ import FormikRadio from 'Components/fields/Radio';
 import { PolicyFormValues } from 'Components/forms/PolicyForm';
 import { RuleFormValues } from 'Components/forms/RuleForm';
 import { MODALS } from 'Components/utils/Modal';
-import Panel from 'Components/Panel';
 import useModal from 'Hooks/useModal';
 
-interface BaseRuleFormTestSectionProps {
+interface BaseDetectionFormTestSectionProps {
   type: 'rule' | 'policy';
   runTests: (testsToRun: DetectionTestDefinition[]) => any;
   renderTestResults: React.ReactElement;
 }
 
-const BaseRuleFormTestSection: React.FC<BaseRuleFormTestSectionProps> = ({
+const BaseDetectionFormTestSection: React.FC<BaseDetectionFormTestSectionProps> = ({
   type,
   runTests,
   renderTestResults,
@@ -47,14 +46,18 @@ const BaseRuleFormTestSection: React.FC<BaseRuleFormTestSectionProps> = ({
     values: { tests },
     validateForm,
   } = useFormikContext<RuleFormValues | PolicyFormValues>();
-
   const { showModal } = useModal();
-
-  // Controls which test is the active test at the moment through a simple index variable
+  const [open, setOpen] = React.useState(false);
   const [activeTabIndex, setActiveTabIndex] = React.useState(0);
 
-  // The field array below gets registered to the upper formik
   const testsCount = tests.length;
+  const testsExist = testsCount > 0;
+
+  React.useLayoutEffect(() => {
+    setOpen(testsExist);
+  }, [testsExist]);
+
+  // The field array below gets registered to the upper formik
   return (
     <FieldArray
       name="tests"
@@ -112,17 +115,30 @@ const BaseRuleFormTestSection: React.FC<BaseRuleFormTestSectionProps> = ({
         };
 
         return (
-          <Panel
-            title="Test Record"
-            actions={
-              <Button icon="add" onClick={handleTestAddition}>
-                Create {!testsCount ? 'your first' : ''} test
-              </Button>
-            }
-          >
-            {testsCount > 0 && (
-              <Card variant="dark" p={4}>
-                <Flex as="ul" wrap="wrap" spacing={4}>
+          <Card variant="dark" p={4}>
+            <Flex spacing={4}>
+              <Box mt={2}>
+                <IconButton
+                  variant="ghost"
+                  variantColor="darkblue"
+                  variantBorderStyle="circle"
+                  active={open}
+                  icon={open ? 'caret-up' : 'caret-down'}
+                  onClick={() => setOpen(prev => !prev)}
+                  size="medium"
+                  aria-label="Toggle Tests visibility"
+                />
+              </Box>
+              {testsExist ? (
+                <Flex
+                  as="ul"
+                  wrap="wrap"
+                  spacing={4}
+                  flexGrow={1}
+                  flexBasis={0}
+                  mt={1}
+                  mb={open ? 0 : -4}
+                >
                   {tests.map((test, index) => (
                     <Box as="li" mb={4} key={test.name}>
                       <AbstractButton
@@ -145,6 +161,17 @@ const BaseRuleFormTestSection: React.FC<BaseRuleFormTestSectionProps> = ({
                     </Box>
                   ))}
                 </Flex>
+              ) : (
+                <Heading as="h2" size="x-small" alignSelf="center" flexGrow={1} ml={0}>
+                  Test
+                </Heading>
+              )}
+              <Button icon="brackets" aria-label="Create test" onClick={handleTestAddition}>
+                Create {!testsExist ? 'your first' : ''} test
+              </Button>
+            </Flex>
+            {open && testsExist && (
+              <React.Fragment>
                 <Grid columnGap={5} templateColumns="1fr 2fr" mt={2} mb={6}>
                   <Field
                     as={FormikTextInput}
@@ -172,6 +199,7 @@ const BaseRuleFormTestSection: React.FC<BaseRuleFormTestSectionProps> = ({
                     />
                   </Flex>
                 </Grid>
+
                 <Box mb={5}>
                   <Field
                     as={FormikEditor}
@@ -195,13 +223,13 @@ const BaseRuleFormTestSection: React.FC<BaseRuleFormTestSectionProps> = ({
                     Run All
                   </Button>
                 </Flex>
-              </Card>
+              </React.Fragment>
             )}
-          </Panel>
+          </Card>
         );
       }}
     />
   );
 };
 
-export default React.memo(BaseRuleFormTestSection);
+export default React.memo(BaseDetectionFormTestSection);

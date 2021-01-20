@@ -16,6 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default as BaseRuleFormCoreSection } from './BaseRuleFormCoreSection';
-export { default as BaseRuleFormTestSection } from './BaseRuleFormTestSection';
-export { default as BaseRuleFormEditorSection } from './BaseRuleFormEditorSection';
+export { default } from './BaseDetectionFormEditorSection';

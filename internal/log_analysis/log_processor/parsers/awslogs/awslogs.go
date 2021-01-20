@@ -36,6 +36,7 @@ const (
 	TypeS3ServerAccess    = "AWS.S3ServerAccess"
 	TypeVPCDns            = "AWS.VPCDns"
 	TypeVPCFlow           = "AWS.VPCFlow"
+	TypeWAFWebACL         = "AWS.WAFWebACL"
 )
 
 // LogTypes exports the available log type entries
@@ -121,5 +122,13 @@ var logTypes = logtypes.Must("AWS",
 		ReferenceURL: `https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-records-examples.html`,
 		Schema:       VPCFlow{},
 		NewParser:    parsers.AdapterFactory(&VPCFlowParser{}),
+	},
+	logtypes.ConfigJSON{
+		Name:         TypeWAFWebACL,
+		Description:  `WAF Web ACL traffic information logs.`,
+		ReferenceURL: `https://docs.aws.amazon.com/waf/latest/developerguide/logging.html`,
+		NewEvent: func() interface{} {
+			return &WAFWebACL{}
+		},
 	},
 )
