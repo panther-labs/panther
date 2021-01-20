@@ -42,6 +42,8 @@ var logTypes = logtypes.Must(TypePrefix,
 	TypeNetworkListen,
 	TypeProcessRollup2,
 	TypeSyntheticProcessRollup2,
+	TypeUserIdentity,
+	TypeGroupIdentity,
 	// Falcon Insight Special Raw Events
 	TypeAIDMaster,
 	TypeManagedAssets,
@@ -49,12 +51,13 @@ var logTypes = logtypes.Must(TypePrefix,
 	// Falcon Discover Processed Events
 	TypeUserInfo,
 	TypeAppInfo,
+	// All other event types
 	TypeUnknownEvent,
 )
 
-// WARNING: Remember to use mustRegisterCrowdstrikeEvent to add new events so known event names are up-to-date
+// WARNING: Remember to use mustBuild to add new events so known event names are up-to-date.
 
-// mustRegisterCrowdstrikeEvent validates that the event has an EventSimpleName field with a proper `validate` tag and
+// mustBuild validates that the event has an EventSimpleName field with a proper `validate` tag and
 // updates the knownEventNames index so that the parsers for UnknownEvent can distinguish which events to pick.
 func mustBuild(config logtypes.ConfigJSON) logtypes.Entry {
 	event := config.NewEvent()
@@ -98,7 +101,7 @@ func getEventSimpleName(typ reflect.Type) ([]string, error) {
 	return nil, fmt.Errorf(`invalid validate tag %q`, validateTag)
 }
 
-// Common fields for all croudstrike events
+// Common fields for all Crowdstrike events
 // nolint:lll
 type BaseEvent struct {
 	Name           null.String `json:"name" validate:"required" description:"The event name"`
