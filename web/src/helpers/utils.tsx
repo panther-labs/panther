@@ -107,6 +107,26 @@ export const isHash = (str: string) => CHECK_IF_HASH_REGEX.test(str);
 export const minutesToString = (minutes: number) =>
   minutes < 60 ? `${minutes}min` : `${minutes / 60}h`;
 
+/** Converts seconds number to representative string i.e. 15 -> 15sec,  7200 -> 2 hours */
+export const secondsToString = (seconds: number) => {
+  if (seconds > 60 * 60 * 24 * 30 * 12) {
+    return `${(seconds / (60 * 60 * 24 * 30 * 12)).toLocaleString()} years`;
+  }
+  if (seconds > 60 * 60 * 24 * 30) {
+    return `${(seconds / (60 * 60 * 24 * 30)).toLocaleString()} months`;
+  }
+  if (seconds > 60 * 60 * 24) {
+    return `${(seconds / (60 * 60 * 24)).toLocaleString()} days`;
+  }
+  if (seconds > 60 * 60) {
+    return `${(seconds / (60 * 60)).toLocaleString()} hours`;
+  }
+  if (seconds > 60) {
+    return `${(seconds / 60).toLocaleString()} min`;
+  }
+  return `${seconds.toLocaleString()} sec`;
+};
+
 /**
  * Given a server-received DateTime string, creates a proper time-ago display text for it.
  * */

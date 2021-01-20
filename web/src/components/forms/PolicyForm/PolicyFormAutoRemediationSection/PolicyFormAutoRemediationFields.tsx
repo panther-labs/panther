@@ -17,10 +17,10 @@
  */
 
 import React from 'react';
-import { Box, Combobox } from 'pouncejs';
+import { Flex, Box, Combobox, Img, Text, Card } from 'pouncejs';
 import { FastField } from 'formik';
-import Panel from 'Components/Panel';
 import FormikTextInput from 'Components/fields/TextInput';
+import MasonryIllustration from 'Assets/masonry.svg';
 import { formatJSON } from 'Helpers/utils';
 import FormikEditor from 'Components/fields/Editor';
 import { PolicyFormValues } from '../PolicyForm';
@@ -77,12 +77,13 @@ const PolicyFormAutoRemediationFields: React.FC<PolicyFormAutoRemediationFieldsP
 
   const autoRemediationSelected = !!autoRemediationSelection[0];
   return (
-    <Panel
-      title="Auto Remediation Settings"
-      actions={
-        <Box minWidth={300}>
+    <React.Fragment>
+      <Flex mb={6} direction="column" spacing={6} align="center" data-testid="auto-remediation">
+        <Text fontSize="medium">Please enter your remediation parameters below</Text>
+        <Box width={500}>
           <Combobox<RemediationTuple>
             searchable
+            data-testid="dropdown-remediation"
             label="Remediation"
             items={comboboxOptions}
             itemToString={remediationTuple => remediationTuple[0] || '(No remediation)'}
@@ -91,22 +92,31 @@ const PolicyFormAutoRemediationFields: React.FC<PolicyFormAutoRemediationFieldsP
             placeholder="Remediation"
           />
         </Box>
-      }
-    >
-      {autoRemediationSelected && (
-        <React.Fragment>
-          <FastField as={FormikTextInput} name="autoRemediationId" hidden />
-          <FastField
-            as={FormikEditor}
-            placeholder="# Enter a JSON object describing the parameters of the remediation"
-            name="autoRemediationParameters"
-            width="100%"
-            minLines={9}
-            mode="json"
-          />
-        </React.Fragment>
+      </Flex>
+      <FastField as={FormikTextInput} name="autoRemediationId" hidden />
+      {autoRemediationSelected ? (
+        <FastField
+          as={FormikEditor}
+          placeholder="# Enter a JSON object describing the parameters of the remediation"
+          name="autoRemediationParameters"
+          aria-label="Auto Remediation Parameters"
+          width="100%"
+          minLines={11}
+          mode="json"
+        />
+      ) : (
+        <Card variant="dark">
+          <Flex width="100%" height={197} justify="center" align="center">
+            <Img
+              src={MasonryIllustration}
+              nativeWidth={120}
+              nativeHeight={120}
+              alt="Masonry illustration"
+            />
+          </Flex>
+        </Card>
       )}
-    </Panel>
+    </React.Fragment>
   );
 };
 

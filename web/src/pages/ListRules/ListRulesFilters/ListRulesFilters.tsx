@@ -47,71 +47,57 @@ const sortingOpts: SortingOptions = [
   {
     opt: 'Name Ascending',
     resolution: {
-      sortBy: 'displayName' as ListRulesSortFieldsEnum,
-      sortDir: 'ascending' as SortDirEnum,
+      sortBy: ListRulesSortFieldsEnum.DisplayName,
+      sortDir: SortDirEnum.Ascending,
     },
   },
   {
     opt: 'Name Descending',
     resolution: {
-      sortBy: 'displayName' as ListRulesSortFieldsEnum,
-      sortDir: 'descending' as SortDirEnum,
+      sortBy: ListRulesSortFieldsEnum.DisplayName,
+      sortDir: SortDirEnum.Descending,
     },
   },
   {
     opt: 'Most Recently Modified',
     resolution: {
-      sortBy: 'lastModified' as ListRulesSortFieldsEnum,
-      sortDir: 'descending' as SortDirEnum,
+      sortBy: ListRulesSortFieldsEnum.LastModified,
+      sortDir: SortDirEnum.Descending,
     },
   },
   {
     opt: 'Oldest Modified',
     resolution: {
-      sortBy: 'lastModified' as ListRulesSortFieldsEnum,
-      sortDir: 'ascending' as SortDirEnum,
+      sortBy: ListRulesSortFieldsEnum.LastModified,
+      sortDir: SortDirEnum.Ascending,
     },
   },
   {
     opt: 'Severity Ascending',
     resolution: {
-      sortBy: 'severity' as ListRulesSortFieldsEnum,
-      sortDir: 'ascending' as SortDirEnum,
+      sortBy: ListRulesSortFieldsEnum.Severity,
+      sortDir: SortDirEnum.Ascending,
     },
   },
   {
     opt: 'Severity Descending',
     resolution: {
-      sortBy: 'severity' as ListRulesSortFieldsEnum,
-      sortDir: 'descending' as SortDirEnum,
-    },
-  },
-  {
-    opt: 'Enabled',
-    resolution: {
-      sortBy: 'enabled' as ListRulesSortFieldsEnum,
-      sortDir: 'ascending' as SortDirEnum,
-    },
-  },
-  {
-    opt: 'Disabled',
-    resolution: {
-      sortBy: 'enabled' as ListRulesSortFieldsEnum,
-      sortDir: 'descending' as SortDirEnum,
+      sortBy: ListRulesSortFieldsEnum.Severity,
+      sortDir: SortDirEnum.Descending,
     },
   },
   {
     opt: 'Log Types Ascending',
     resolution: {
-      sortBy: 'logTypes' as ListRulesSortFieldsEnum,
-      sortDir: 'ascending' as SortDirEnum,
+      sortBy: ListRulesSortFieldsEnum.LogTypes,
+      sortDir: SortDirEnum.Ascending,
     },
   },
   {
     opt: 'Log Types Descending',
     resolution: {
-      sortBy: 'logTypes' as ListRulesSortFieldsEnum,
-      sortDir: 'descending' as SortDirEnum,
+      sortBy: ListRulesSortFieldsEnum.LogTypes,
+      sortDir: SortDirEnum.Descending,
     },
   },
 ];

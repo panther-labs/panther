@@ -19,15 +19,20 @@
 import React from 'react';
 import { AddPolicyInput, DetectionTestDefinition, UpdatePolicyInput } from 'Generated/schema';
 import * as Yup from 'yup';
-import { Button, Flex } from 'pouncejs';
+import { Button, Flex, Box, Card, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
+import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import { Form, Formik } from 'formik';
-import SubmitButton from 'Components/buttons/SubmitButton/SubmitButton';
 import useRouter from 'Hooks/useRouter';
-import { BaseRuleFormCoreSection, BaseRuleFormEditorSection } from 'Components/forms/BaseRuleForm';
+import useUrlParams from 'Hooks/useUrlParams';
+import invert from 'lodash/invert';
+import Breadcrumbs from 'Components/Breadcrumbs';
+import SaveButton from 'Components/buttons/SaveButton';
+import { BaseDetectionFormEditorSection } from 'Components/forms/BaseDetectionForm';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import FormSessionRestoration from 'Components/utils/FormSessionRestoration';
 import PolicyFormAutoRemediationSection from './PolicyFormAutoRemediationSection';
 import PolicyFormTestSection from './PolicyFormTestSection';
+import PolicyFormCoreSection from './PolicyFormCoreSection';
 
 // The validation checks that Formik will run
 const validationSchema = Yup.object().shape({
@@ -43,6 +48,21 @@ const validationSchema = Yup.object().shape({
   ),
 });
 
+export interface PolicyFormUrlParams {
+  section?: 'settings' | 'functions' | 'remediation';
+}
+
+const sectionToTabIndex: Record<PolicyFormUrlParams['section'], number> = {
+  settings: 0,
+  functions: 1,
+  remediation: 2,
+};
+
+const tabIndexToSection = invert(sectionToTabIndex) as Record<
+  number,
+  PolicyFormUrlParams['section']
+>;
+
 export type PolicyFormValues = Required<AddPolicyInput> | Required<UpdatePolicyInput>;
 export type PolicyFormProps = {
   /** The initial values of the form */
@@ -54,48 +74,79 @@ export type PolicyFormProps = {
 
 const PolicyForm: React.FC<PolicyFormProps> = ({ initialValues, onSubmit }) => {
   const { history } = useRouter();
+  const { urlParams, updateUrlParams } = useUrlParams<PolicyFormUrlParams>();
 
   return (
-    <Formik<PolicyFormValues>
-      initialValues={initialValues}
-      onSubmit={onSubmit}
-      enableReinitialize
-      validationSchema={validationSchema}
-    >
-      <FormSessionRestoration sessionId={`policy-form-${initialValues.id || 'create'}`}>
-        {({ clearFormSession }) => (
-          <Form>
-            <Flex direction="column" as="article" spacing={5}>
-              <ErrorBoundary>
-                <BaseRuleFormCoreSection type="policy" />
-              </ErrorBoundary>
-              <ErrorBoundary>
-                <BaseRuleFormEditorSection type="policy" />
-              </ErrorBoundary>
-              <ErrorBoundary>
-                <PolicyFormTestSection />
-              </ErrorBoundary>
-              <ErrorBoundary>
-                <PolicyFormAutoRemediationSection />
-              </ErrorBoundary>
-            </Flex>
-            <Flex spacing={4} mt={5} justify="flex-end">
-              <Button
-                variant="outline"
-                variantColor="navyblue"
-                onClick={() => {
-                  clearFormSession();
-                  history.goBack();
-                }}
+    <Card position="relative">
+      <Formik<PolicyFormValues>
+        initialValues={initialValues}
+        onSubmit={onSubmit}
+        enableReinitialize
+        validationSchema={validationSchema}
+      >
+        <FormSessionRestoration sessionId={`policy-form-${initialValues.id || 'create'}`}>
+          {({ clearFormSession }) => (
+            <Form>
+              <Breadcrumbs.Actions>
+                <Flex spacing={4} justify="flex-end">
+                  <Button
+                    variantColor="darkgray"
+                    icon="close-outline"
+                    aria-label="Cancel Policy editing"
+                    onClick={() => {
+                      clearFormSession();
+                      history.goBack();
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <SaveButton>{initialValues.id ? 'Update' : 'Save'}</SaveButton>
+                </Flex>
+              </Breadcrumbs.Actions>
+
+              <Tabs
+                index={sectionToTabIndex[urlParams.section] || 0}
+                onChange={index => updateUrlParams({ section: tabIndexToSection[index] })}
               >
-                Cancel
-              </Button>
-              <SubmitButton>{initialValues.id ? 'Update' : 'Create'}</SubmitButton>
-            </Flex>
-          </Form>
-        )}
-      </FormSessionRestoration>
-    </Formik>
+                <Box px={2}>
+                  <TabList>
+                    <BorderedTab>Policy Settings</BorderedTab>
+                    <BorderedTab>Functions & Tests</BorderedTab>
+                    <BorderedTab>Auto Remediation</BorderedTab>
+                  </TabList>
+                </Box>
+
+                <BorderTabDivider />
+                <Box p={6}>
+                  <TabPanels>
+                    <TabPanel data-testid="policy-settings-tabpanel" lazy>
+                      <ErrorBoundary>
+                        <PolicyFormCoreSection />
+                      </ErrorBoundary>
+                    </TabPanel>
+                    <TabPanel data-testid="policy-functions-tabpanel" lazy>
+                      <Flex spacing="6" direction="column">
+                        <ErrorBoundary>
+                          <BaseDetectionFormEditorSection type="policy" />
+                        </ErrorBoundary>
+                        <ErrorBoundary>
+                          <PolicyFormTestSection />
+                        </ErrorBoundary>
+                      </Flex>
+                    </TabPanel>
+                    <TabPanel data-testid="policy-auto-remediation" lazy>
+                      <ErrorBoundary>
+                        <PolicyFormAutoRemediationSection />
+                      </ErrorBoundary>
+                    </TabPanel>
+                  </TabPanels>
+                </Box>
+              </Tabs>
+            </Form>
+          )}
+        </FormSessionRestoration>
+      </Formik>
+    </Card>
   );
 };
 
