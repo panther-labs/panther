@@ -161,6 +161,13 @@ var (
 		"RegisterTargets":             {},
 		"DeregisterTargets":           {},
 
+		// These are elb classic events that we don't support but can't differentiate from elbv2
+		// events
+		"RegisterInstancesWithLoadBalancer": {},
+		"ConfigureHealthCheck":              {},
+		"SetLoadBalancerPoliciesOfListener": {},
+		"CreateLoadBalancerPolicy":          {},
+
 		// guardduty
 		"ArchiveFindings":             {},
 		"CreateIPSet":                 {},
@@ -202,6 +209,7 @@ var (
 		"Invoke":                    {},
 		"InvokeAsync":               {},
 		"InvokeFunction":            {},
+		"InvokeExecution":           {},
 
 		// rds
 		// TODO get suffixes
