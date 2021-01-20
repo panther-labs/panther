@@ -78,12 +78,8 @@ func (API) ListDetections(input *models.ListDetectionsInput) *events.APIGatewayP
 		Paging:     paging,
 	}
 	for _, item := range items {
-		if projectComplianceStatus && item.Type == models.TypePolicy {
-			status := compliance[item.ID].Status
-			result.Detections = append(result.Detections, *item.Detection(status))
-			continue
-		}
-		result.Detections = append(result.Detections, *item.Detection(""))
+		status := compliance[item.ID].Status
+		result.Detections = append(result.Detections, *item.Detection(status))
 	}
 
 	return gatewayapi.MarshalResponse(&result, http.StatusOK)
@@ -165,8 +161,11 @@ func detectionScanInput(input *models.ListDetectionsInput) (*dynamodb.ScanInput,
 		LastModifiedBy: input.LastModifiedBy,
 		NameContains:   input.NameContains,
 		Severity:       input.Severity,
-		ResourceTypes:  input.Types,
+		ResourceTypes:  input.ResourceTypes,
 		Tags:           input.Tags,
+	}
+	if input.LogTypes != nil {
+		listFilters.ResourceTypes = append(listFilters.ResourceTypes, input.LogTypes...)
 	}
 
 	filters := pythonListFilters(&listFilters)

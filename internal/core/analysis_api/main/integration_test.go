@@ -1993,7 +1993,9 @@ func listEnabledDataModels(t *testing.T) {
 func listDetections(t *testing.T) {
 	t.Parallel()
 	input := models.LambdaInput{
-		ListDetections: &models.ListDetectionsInput{},
+		ListDetections: &models.ListDetectionsInput{
+			SortBy: "id",
+		},
 	}
 	var result models.ListDetectionsOutput
 	statusCode, err := apiClient.Invoke(&input, &result)
@@ -2007,6 +2009,17 @@ func listDetections(t *testing.T) {
 			TotalItems: 4,
 			TotalPages: 1,
 		},
+		// Expected:
+		// AWS.CloudTrail.Log.Validation.Enabled
+		// NonEmptyEvent
+		// Test:Policy
+		// Test:Policy:JSON
+
+		// Actual
+		// Test:Policy - AlwaysTrue
+		// Test:Policy:JSON
+		// AWS.CloudTrail.Log.Validation.Enabled
+		// NonEmptyEvent
 		Detections: []models.Detection{
 			{
 				AutoRemediationID:         policyFromBulk.AutoRemediationID,
@@ -2014,7 +2027,8 @@ func listDetections(t *testing.T) {
 				ComplianceStatus:          policyFromBulk.ComplianceStatus,
 				Suppressions:              policyFromBulk.Suppressions,
 				AnalysisType:              models.TypePolicy,
-				Types:                     policyFromBulk.ResourceTypes,
+				ResourceTypes:             policyFromBulk.ResourceTypes,
+				LogTypes:                  []string{},
 				Body:                      policyFromBulk.Body,
 				CreatedAt:                 policyFromBulk.CreatedAt,
 				CreatedBy:                 policyFromBulk.CreatedBy,
@@ -2034,12 +2048,39 @@ func listDetections(t *testing.T) {
 				VersionID:                 policyFromBulk.VersionID,
 			},
 			{
+				AutoRemediationParameters: make(map[string]string),
+				Suppressions:              []string{},
+				DedupPeriodMinutes:        rule.DedupPeriodMinutes,
+				Threshold:                 rule.Threshold,
+				AnalysisType:              models.TypeRule,
+				ResourceTypes:             []string{},
+				LogTypes:                  rule.LogTypes,
+				Body:                      rule.Body,
+				CreatedAt:                 rule.CreatedAt,
+				CreatedBy:                 rule.CreatedBy,
+				Description:               rule.Description,
+				DisplayName:               rule.DisplayName,
+				Enabled:                   rule.Enabled,
+				ID:                        rule.ID,
+				LastModified:              rule.LastModified,
+				LastModifiedBy:            rule.LastModifiedBy,
+				OutputIDs:                 rule.OutputIDs,
+				Reference:                 rule.Reference,
+				Reports:                   rule.Reports,
+				Runbook:                   rule.Runbook,
+				Severity:                  rule.Severity,
+				Tags:                      rule.Tags,
+				Tests:                     rule.Tests,
+				VersionID:                 rule.VersionID,
+			},
+			{
 				AutoRemediationID:         policy.AutoRemediationID,
 				AutoRemediationParameters: policy.AutoRemediationParameters,
 				ComplianceStatus:          policy.ComplianceStatus,
 				Suppressions:              policy.Suppressions,
 				AnalysisType:              models.TypePolicy,
-				Types:                     policy.ResourceTypes,
+				ResourceTypes:             policy.ResourceTypes,
+				LogTypes:                  []string{},
 				Body:                      policy.Body,
 				CreatedAt:                 policy.CreatedAt,
 				CreatedBy:                 policy.CreatedBy,
@@ -2064,7 +2105,8 @@ func listDetections(t *testing.T) {
 				ComplianceStatus:          policyFromBulkJSON.ComplianceStatus,
 				Suppressions:              policyFromBulkJSON.Suppressions,
 				AnalysisType:              models.TypePolicy,
-				Types:                     policyFromBulkJSON.ResourceTypes,
+				ResourceTypes:             policyFromBulkJSON.ResourceTypes,
+				LogTypes:                  []string{},
 				Body:                      policyFromBulkJSON.Body,
 				CreatedAt:                 policyFromBulkJSON.CreatedAt,
 				CreatedBy:                 policyFromBulkJSON.CreatedBy,
@@ -2083,29 +2125,6 @@ func listDetections(t *testing.T) {
 				Tests:                     policyFromBulkJSON.Tests,
 				VersionID:                 policyFromBulkJSON.VersionID,
 			},
-			{
-				DedupPeriodMinutes: rule.DedupPeriodMinutes,
-				Threshold:          rule.Threshold,
-				AnalysisType:       models.TypeRule,
-				Types:              rule.LogTypes,
-				Body:               rule.Body,
-				CreatedAt:          rule.CreatedAt,
-				CreatedBy:          rule.CreatedBy,
-				Description:        rule.Description,
-				DisplayName:        rule.DisplayName,
-				Enabled:            rule.Enabled,
-				ID:                 rule.ID,
-				LastModified:       rule.LastModified,
-				LastModifiedBy:     rule.LastModifiedBy,
-				OutputIDs:          rule.OutputIDs,
-				Reference:          rule.Reference,
-				Reports:            rule.Reports,
-				Runbook:            rule.Runbook,
-				Severity:           rule.Severity,
-				Tags:               rule.Tags,
-				Tests:              rule.Tests,
-				VersionID:          rule.VersionID,
-			},
 		},
 	}
 	assert.Equal(t, expected, result)
@@ -2118,9 +2137,10 @@ func listDetectionsFiltered(t *testing.T) {
 			Enabled:        aws.Bool(true),
 			HasRemediation: aws.Bool(true),
 			NameContains:   "json", // policyFromBulkJSON only
-			Types:          []string{"AWS.S3.Bucket"},
+			ResourceTypes:  []string{"AWS.S3.Bucket"},
 			Severity:       []compliancemodels.Severity{compliancemodels.SeverityMedium},
 			CreatedBy:      userID,
+			SortBy:         "id",
 		},
 	}
 	var result models.ListDetectionsOutput
@@ -2141,7 +2161,8 @@ func listDetectionsFiltered(t *testing.T) {
 				ComplianceStatus:          policyFromBulkJSON.ComplianceStatus,
 				Suppressions:              policyFromBulkJSON.Suppressions,
 				AnalysisType:              models.TypePolicy,
-				Types:                     policyFromBulkJSON.ResourceTypes,
+				ResourceTypes:             policyFromBulkJSON.ResourceTypes,
+				LogTypes:                  []string{},
 				Body:                      policyFromBulkJSON.Body,
 				CreatedAt:                 policyFromBulkJSON.CreatedAt,
 				CreatedBy:                 policyFromBulkJSON.CreatedBy,
@@ -2171,6 +2192,7 @@ func listDetectionsComplianceProjection(t *testing.T) {
 		ListDetections: &models.ListDetectionsInput{
 			// Select only a subset of fields
 			Fields: []string{"id", "displayName", "complianceStatus"},
+			SortBy: "id",
 		},
 	}
 	var result models.ListDetectionsOutput
@@ -2183,28 +2205,33 @@ func listDetectionsComplianceProjection(t *testing.T) {
 		AutoRemediationParameters: map[string]string{},
 		OutputIDs:                 []string{},
 		Reports:                   map[string][]string{},
-		Types:                     []string{},
+		ResourceTypes:             []string{},
+		LogTypes:                  []string{},
 		Suppressions:              []string{},
 		Tags:                      []string{},
 		Tests:                     []models.UnitTest{},
 	}
 
 	firstItem := emptyPolicy
+	firstItem.AnalysisType = models.TypePolicy
 	firstItem.ID = policyFromBulk.ID
 	firstItem.DisplayName = policyFromBulk.DisplayName
 	firstItem.ComplianceStatus = policyFromBulk.ComplianceStatus
 
 	secondItem := emptyPolicy
+	secondItem.AnalysisType = models.TypePolicy
 	secondItem.ID = policy.ID
 	secondItem.DisplayName = policy.DisplayName
 	secondItem.ComplianceStatus = policy.ComplianceStatus
 
 	thirdItem := emptyPolicy
+	thirdItem.AnalysisType = models.TypePolicy
 	thirdItem.ID = policyFromBulkJSON.ID
 	thirdItem.DisplayName = policyFromBulkJSON.DisplayName
 	thirdItem.ComplianceStatus = policyFromBulkJSON.ComplianceStatus
 
 	fourthItem := emptyPolicy
+	fourthItem.AnalysisType = models.TypeRule
 	fourthItem.ID = rule.ID
 	fourthItem.DisplayName = rule.DisplayName
 
@@ -2214,7 +2241,7 @@ func listDetectionsComplianceProjection(t *testing.T) {
 			TotalItems: 4,
 			TotalPages: 1,
 		},
-		Detections: []models.Detection{firstItem, secondItem, thirdItem, fourthItem},
+		Detections: []models.Detection{firstItem, fourthItem, secondItem, thirdItem},
 	}
 	assert.Equal(t, expected, result)
 }
@@ -2224,6 +2251,7 @@ func listDetectionsAnalysisTypeFilter(t *testing.T) {
 	input := models.LambdaInput{
 		ListDetections: &models.ListDetectionsInput{
 			AnalysisTypes: []models.DetectionType{models.TypeRule},
+			SortBy:        "id",
 		},
 	}
 	var result models.ListDetectionsOutput
@@ -2239,27 +2267,30 @@ func listDetectionsAnalysisTypeFilter(t *testing.T) {
 		},
 		Detections: []models.Detection{
 			{
-				DedupPeriodMinutes: rule.DedupPeriodMinutes,
-				Threshold:          rule.Threshold,
-				AnalysisType:       models.TypeRule,
-				Types:              rule.LogTypes,
-				Body:               rule.Body,
-				CreatedAt:          rule.CreatedAt,
-				CreatedBy:          rule.CreatedBy,
-				Description:        rule.Description,
-				DisplayName:        rule.DisplayName,
-				Enabled:            rule.Enabled,
-				ID:                 rule.ID,
-				LastModified:       rule.LastModified,
-				LastModifiedBy:     rule.LastModifiedBy,
-				OutputIDs:          rule.OutputIDs,
-				Reference:          rule.Reference,
-				Reports:            rule.Reports,
-				Runbook:            rule.Runbook,
-				Severity:           rule.Severity,
-				Tags:               rule.Tags,
-				Tests:              rule.Tests,
-				VersionID:          rule.VersionID,
+				AutoRemediationParameters: make(map[string]string),
+				Suppressions:              []string{},
+				DedupPeriodMinutes:        rule.DedupPeriodMinutes,
+				Threshold:                 rule.Threshold,
+				AnalysisType:              models.TypeRule,
+				ResourceTypes:             []string{},
+				LogTypes:                  rule.LogTypes,
+				Body:                      rule.Body,
+				CreatedAt:                 rule.CreatedAt,
+				CreatedBy:                 rule.CreatedBy,
+				Description:               rule.Description,
+				DisplayName:               rule.DisplayName,
+				Enabled:                   rule.Enabled,
+				ID:                        rule.ID,
+				LastModified:              rule.LastModified,
+				LastModifiedBy:            rule.LastModifiedBy,
+				OutputIDs:                 rule.OutputIDs,
+				Reference:                 rule.Reference,
+				Reports:                   rule.Reports,
+				Runbook:                   rule.Runbook,
+				Severity:                  rule.Severity,
+				Tags:                      rule.Tags,
+				Tests:                     rule.Tests,
+				VersionID:                 rule.VersionID,
 			},
 		},
 	}
@@ -2268,6 +2299,7 @@ func listDetectionsAnalysisTypeFilter(t *testing.T) {
 	input = models.LambdaInput{
 		ListDetections: &models.ListDetectionsInput{
 			AnalysisTypes: []models.DetectionType{models.TypePolicy},
+			SortBy:        "id",
 		},
 	}
 	statusCode, err = apiClient.Invoke(&input, &result)
@@ -2287,7 +2319,8 @@ func listDetectionsAnalysisTypeFilter(t *testing.T) {
 				ComplianceStatus:          policyFromBulk.ComplianceStatus,
 				Suppressions:              policyFromBulk.Suppressions,
 				AnalysisType:              models.TypePolicy,
-				Types:                     policyFromBulk.ResourceTypes,
+				ResourceTypes:             policyFromBulk.ResourceTypes,
+				LogTypes:                  []string{},
 				Body:                      policyFromBulk.Body,
 				CreatedAt:                 policyFromBulk.CreatedAt,
 				CreatedBy:                 policyFromBulk.CreatedBy,
@@ -2312,7 +2345,8 @@ func listDetectionsAnalysisTypeFilter(t *testing.T) {
 				ComplianceStatus:          policy.ComplianceStatus,
 				Suppressions:              policy.Suppressions,
 				AnalysisType:              models.TypePolicy,
-				Types:                     policy.ResourceTypes,
+				ResourceTypes:             policy.ResourceTypes,
+				LogTypes:                  []string{},
 				Body:                      policy.Body,
 				CreatedAt:                 policy.CreatedAt,
 				CreatedBy:                 policy.CreatedBy,
@@ -2337,7 +2371,8 @@ func listDetectionsAnalysisTypeFilter(t *testing.T) {
 				ComplianceStatus:          policyFromBulkJSON.ComplianceStatus,
 				Suppressions:              policyFromBulkJSON.Suppressions,
 				AnalysisType:              models.TypePolicy,
-				Types:                     policyFromBulkJSON.ResourceTypes,
+				ResourceTypes:             policyFromBulkJSON.ResourceTypes,
+				LogTypes:                  []string{},
 				Body:                      policyFromBulkJSON.Body,
 				CreatedAt:                 policyFromBulkJSON.CreatedAt,
 				CreatedBy:                 policyFromBulkJSON.CreatedBy,
@@ -2368,6 +2403,7 @@ func listDetectionsComplianceFilter(t *testing.T) {
 			// Select only a subset of fields
 			Fields:           []string{"id", "displayName", "complianceStatus"},
 			ComplianceStatus: compliancemodels.StatusPass,
+			SortBy:           "id",
 		},
 	}
 	var result models.ListDetectionsOutput
@@ -2380,7 +2416,8 @@ func listDetectionsComplianceFilter(t *testing.T) {
 		AutoRemediationParameters: map[string]string{},
 		OutputIDs:                 []string{},
 		Reports:                   map[string][]string{},
-		Types:                     []string{},
+		ResourceTypes:             []string{},
+		LogTypes:                  []string{},
 		Suppressions:              []string{},
 		Tags:                      []string{},
 		Tests:                     []models.UnitTest{},

@@ -107,7 +107,6 @@ func (r *tableItem) Detection(status compliancemodels.ComplianceStatus) *models.
 		DedupPeriodMinutes:        r.DedupPeriodMinutes,
 		Threshold:                 r.Threshold,
 		AnalysisType:              r.Type,
-		Types:                     r.ResourceTypes,
 		Body:                      r.Body,
 		CreatedAt:                 r.CreatedAt,
 		CreatedBy:                 r.CreatedBy,
@@ -126,6 +125,12 @@ func (r *tableItem) Detection(status compliancemodels.ComplianceStatus) *models.
 		Tests:                     r.Tests,
 		VersionID:                 r.VersionID,
 	}
+	if r.Type == models.TypePolicy {
+		result.ResourceTypes = r.ResourceTypes
+	} else if r.Type == models.TypeRule {
+		result.LogTypes = r.ResourceTypes
+	}
+
 	genericapi.ReplaceMapSliceNils(result)
 	return result
 }

@@ -34,13 +34,10 @@ type ListDetectionsInput struct {
 	HasRemediation *bool `json:"hasRemediation"`
 
 	// Only include policies which apply to one of these resource types. Only applies to policies.
-	ResourceTypes[]string `json:"resourceTypes" validate:"max=500,dive,required,max=500"`
+	ResourceTypes []string `json:"resourceTypes" validate:"max=500,dive,required,max=500"`
 
 	// Only include rules which apply to one of these log types. Only applies to rules.
-	LogTypes[]string `json:"logTypes" validate:"max=500,dive,required,max=500"`
-
-	// Only include detections which apply to one of these resource or log types
-	Types []string `json:"types" validate:"max=500,dive,required,max=500"`
+	LogTypes []string `json:"logTypes" validate:"max=500,dive,required,max=500"`
 
 	// Only include detections with the following type
 	AnalysisTypes []DetectionType `json:"analysisTypes" validate:"omitempty,dive,oneof=RULE POLICY"`
@@ -91,15 +88,16 @@ type Detection struct {
 	AutoRemediationID         string                  `json:"autoRemediationId" validate:"max=1000"`
 	AutoRemediationParameters map[string]string       `json:"autoRemediationParameters" validte:"max=500"`
 	ComplianceStatus          models.ComplianceStatus `json:"complianceStatus"`
+	ResourceTypes             []string                `json:"resourceTypes"`
 	Suppressions              []string                `json:"suppressions" validate:"max=500,dive,required,max=1000"`
 
 	// Rule only
-	DedupPeriodMinutes int `json:"dedupPeriodMinutes"`
-	Threshold          int `json:"threshold"`
+	DedupPeriodMinutes int      `json:"dedupPeriodMinutes"`
+	LogTypes           []string `json:"logTypes"`
+	Threshold          int      `json:"threshold"`
 
 	// Shared
 	AnalysisType   DetectionType       `json:"analysisType"`
-	Types          []string            `json:"logTypes"`
 	Body           string              `json:"body" validate:"required,max=100000"`
 	CreatedAt      time.Time           `json:"createdAt"`
 	CreatedBy      string              `json:"createdBy"`
