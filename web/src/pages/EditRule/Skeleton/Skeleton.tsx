@@ -18,23 +18,35 @@
 
 import React from 'react';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { FadeIn, Flex } from 'pouncejs';
-import Panel from 'Components/Panel';
+import { FadeIn, Box, Card, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
+import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 
 const EditRulePageSkeleton: React.FC = () => {
   return (
     <FadeIn from="bottom">
-      <Flex direction="column" spacing={5}>
-        <Panel title="Rule Settings">
-          <TablePlaceholder rowCount={5} />
-        </Panel>
-        <Panel title="Rule Body">
-          <TablePlaceholder rowCount={1} rowHeight={100} />
-        </Panel>
-        <Panel title="Test Record">
-          <TablePlaceholder rowCount={5} />
-        </Panel>
-      </Flex>
+      <Card position="relative" data-testid="rule-edit-loading">
+        <Tabs>
+          <Box px={2}>
+            <TabList>
+              <BorderedTab>Policy Settings</BorderedTab>
+              <BorderedTab>Functions & Tests</BorderedTab>
+            </TabList>
+          </Box>
+          <BorderTabDivider />
+          <TabPanels>
+            <TabPanel data-testid="rule-settings-tabpanel">
+              <Box p={6}>
+                <TablePlaceholder rowCount={5} />
+              </Box>
+            </TabPanel>
+            <TabPanel data-testid="rule-functions-tabpanel">
+              <Box p={6}>
+                <TablePlaceholder rowCount={5} />
+              </Box>
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
+      </Card>
     </FadeIn>
   );
 };

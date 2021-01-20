@@ -51,6 +51,10 @@ func TestAPI_ListAvailableLogTypes(t *testing.T) {
 
 type ListAvailableAPI []string
 
+func (l ListAvailableAPI) ListDeletedLogTypes(ctx context.Context) ([]string, error) {
+	return nil, nil
+}
+
 var _ logtypesapi.LogTypesDatabase = (ListAvailableAPI)(nil)
 
 func (l ListAvailableAPI) IndexLogTypes(ctx context.Context) ([]string, error) {

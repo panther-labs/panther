@@ -1,0 +1,631 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+name: waf_web_acl_no_match
+logType: AWS.WAFWebACL
+input: |
+  {
+    "timestamp": 1610452695501,
+    "formatVersion": 1,
+    "webaclId": "arn:aws:wafv2:us-west-2:123456789EXAMPLE:regional/webacl/panther_web_dev/f96fe2f4-a2f4-4c06-a4bc-afd495bd675f",
+    "terminatingRuleId": "Default_Action",
+    "terminatingRuleType": "REGULAR",
+    "action": "ALLOW",
+    "terminatingRuleMatchDetails": [],
+    "httpSourceName": "ALB",
+    "httpSourceId": "123456789EXAMPLE-app/web/768dd9170f08bb0d",
+    "ruleGroupList": [],
+    "rateBasedRuleList": [],
+    "nonTerminatingMatchingRules": [],
+    "httpRequest": {
+      "clientIp": "10.0.0.1",
+      "country": "GR",
+      "headers": [
+        {
+          "name": "Host",
+          "value": "web-123456789.us-west-2.elb.amazonaws.com"
+        },
+        {
+          "name": "user-agent",
+          "value": "curl/7.64.1"
+        },
+        {
+          "name": "accept",
+          "value": "*/*"
+        }
+      ],
+      "uri": "/",
+      "args": "o=11 AND 1=1",
+      "httpVersion": "HTTP/2.0",
+      "httpMethod": "HEAD",
+      "requestId": "1-5ffd8ed7-1c9649c448649a15241ac25a"
+    }
+  }
+result: |
+  {
+      "timestamp": 1610452695501,
+      "formatVersion": 1,
+      "webaclId": "arn:aws:wafv2:us-west-2:123456789EXAMPLE:regional/webacl/panther_web_dev/f96fe2f4-a2f4-4c06-a4bc-afd495bd675f",
+      "terminatingRuleId": "Default_Action",
+      "terminatingRuleType": "REGULAR",
+      "action": "ALLOW",
+      "httpSourceName": "ALB",
+      "httpSourceId": "123456789EXAMPLE-app/web/768dd9170f08bb0d",
+      "httpRequest": {
+        "clientIp": "10.0.0.1",
+        "country": "GR",
+        "headers": [
+          {
+            "name": "Host",
+            "value": "web-123456789.us-west-2.elb.amazonaws.com"
+          },
+          {
+            "name": "user-agent",
+            "value": "curl/7.64.1"
+          },
+          {
+            "name": "accept",
+            "value": "*/*"
+          }
+        ],
+        "uri": "/",
+        "args": "o=11 AND 1=1",
+        "httpVersion": "HTTP/2.0",
+        "httpMethod": "HEAD",
+        "requestId": "1-5ffd8ed7-1c9649c448649a15241ac25a"
+      },
+      "p_event_time": "2021-01-12T11:58:15.501Z",
+      "p_any_ip_addresses": ["10.0.0.1"],
+      "p_any_trace_ids": ["1-5ffd8ed7-1c9649c448649a15241ac25a"],
+      "p_log_type": "AWS.WAFWebACL"
+    }
+---
+name: waf_web_acl_rule_exclusion
+logType: AWS.WAFWebACL
+input: |
+  {
+    "timestamp": 1610450198436,
+    "formatVersion": 1,
+    "webaclId": "arn:aws:wafv2:us-west-2:123456789EXAMPLE:regional/webacl/panther_web_dev/f96fe2f4-a2f4-4c06-a4bc-afd495bd675f",
+    "terminatingRuleId": "Default_Action",
+    "terminatingRuleType": "REGULAR",
+    "action": "ALLOW",
+    "terminatingRuleMatchDetails": [],
+    "httpSourceName": "ALB",
+    "httpSourceId": "123456789EXAMPLE-app/web/768dd9170f08bb0d",
+    "ruleGroupList": [
+      {
+        "ruleGroupId": "AWS#AWSManagedRulesSQLiRuleSet",
+        "terminatingRule": null,
+        "nonTerminatingMatchingRules": [],
+        "excludedRules": [
+          {
+            "exclusionType": "EXCLUDED_AS_COUNT",
+            "ruleId": "SQLi_QUERYARGUMENTS"
+          }
+        ]
+      }
+    ],
+    "rateBasedRuleList": [],
+    "nonTerminatingMatchingRules": [],
+    "httpRequest": {
+      "clientIp": "10.0.0.1",
+      "country": "GR",
+      "headers": [
+        {
+          "name": "Host",
+          "value": "web-123456789.us-west-2.elb.amazonaws.com"
+        },
+        {
+          "name": "user-agent",
+          "value": "curl/7.64.1"
+        },
+        {
+          "name": "accept",
+          "value": "*/*"
+        }
+      ],
+      "uri": "/",
+      "args": "o=10 AND 1=1",
+      "httpVersion": "HTTP/2.0",
+      "httpMethod": "HEAD",
+      "requestId": "1-5ffd8516-7f16578f3b0262c41c10f7a9"
+    }
+  }
+result: |
+  {
+    "timestamp": 1610450198436,
+    "formatVersion": 1,
+    "webaclId": "arn:aws:wafv2:us-west-2:123456789EXAMPLE:regional/webacl/panther_web_dev/f96fe2f4-a2f4-4c06-a4bc-afd495bd675f",
+    "terminatingRuleId": "Default_Action",
+    "terminatingRuleType": "REGULAR",
+    "action": "ALLOW",
+    "httpSourceName": "ALB",
+    "httpSourceId": "123456789EXAMPLE-app/web/768dd9170f08bb0d",
+    "ruleGroupList": [
+      {
+        "ruleGroupId": "AWS#AWSManagedRulesSQLiRuleSet",
+        "excludedRules": [
+          {
+            "exclusionType": "EXCLUDED_AS_COUNT",
+            "ruleId": "SQLi_QUERYARGUMENTS"
+          }
+        ]
+      }
+    ],
+    "httpRequest": {
+      "clientIp": "10.0.0.1",
+      "country": "GR",
+      "headers": [
+        {
+          "name": "Host",
+          "value": "web-123456789.us-west-2.elb.amazonaws.com"
+        },
+        {
+          "name": "user-agent",
+          "value": "curl/7.64.1"
+        },
+        {
+          "name": "accept",
+          "value": "*/*"
+        }
+      ],
+      "uri": "/",
+      "args": "o=10 AND 1=1",
+      "httpVersion": "HTTP/2.0",
+      "httpMethod": "HEAD",
+      "requestId": "1-5ffd8516-7f16578f3b0262c41c10f7a9"
+    },
+    "p_event_time": "2021-01-12T11:16:38.436Z",
+    "p_any_ip_addresses": ["10.0.0.1"],
+    "p_any_trace_ids": ["1-5ffd8516-7f16578f3b0262c41c10f7a9"],
+    "p_log_type": "AWS.WAFWebACL"
+  }
+---
+name: waf_web_acl_non_terminating_rule
+logType: AWS.WAFWebACL
+input: |
+  {
+      "timestamp": 1610451138169,
+      "formatVersion": 1,
+      "webaclId": "arn:aws:wafv2:us-west-2:123456789EXAMPLE:regional/webacl/panther_web_dev/f96fe2f4-a2f4-4c06-a4bc-afd495bd675f",
+      "terminatingRuleId": "Default_Action",
+      "terminatingRuleType": "REGULAR",
+      "action": "ALLOW",
+      "terminatingRuleMatchDetails": [],
+      "httpSourceName": "ALB",
+      "httpSourceId": "123456789EXAMPLE-app/web/768dd9170f08bb0d",
+      "ruleGroupList": [
+          {
+              "ruleGroupId": "AWS#AWSManagedRulesSQLiRuleSet",
+              "terminatingRule": {
+                  "ruleId": "SQLi_QUERYARGUMENTS",
+                  "action": "BLOCK",
+                  "ruleMatchDetails": null
+              },
+              "nonTerminatingMatchingRules": [],
+              "excludedRules": null
+          }
+      ],
+      "rateBasedRuleList": [],
+      "nonTerminatingMatchingRules": [
+          {
+              "ruleId": "AWS-AWSManagedRulesSQLiRuleSet",
+              "action": "COUNT",
+              "ruleMatchDetails": [
+                  {
+                      "conditionType": "SQL_INJECTION",
+                      "location": "ALL_QUERY_ARGS",
+                      "matchedData": [
+                          "10",
+                          "AND",
+                          "1"
+                      ]
+                  }
+              ]
+          }
+      ],
+      "httpRequest": {
+          "clientIp": "10.0.0.1",
+          "country": "GR",
+          "headers": [
+              {
+                  "name": "Host",
+                  "value": "web-123456789.us-west-2.elb.amazonaws.com"
+              },
+              {
+                  "name": "user-agent",
+                  "value": "curl/7.64.1"
+              },
+              {
+                  "name": "accept",
+                  "value": "*/*"
+              }
+          ],
+          "uri": "/",
+          "args": "o=10 AND 1=1",
+          "httpVersion": "HTTP/2.0",
+          "httpMethod": "HEAD",
+          "requestId": "1-5ffd88c2-174f31437530757342a794dd"
+      }
+  }
+result: |
+  {
+      "timestamp": 1610451138169,
+      "formatVersion": 1,
+      "webaclId": "arn:aws:wafv2:us-west-2:123456789EXAMPLE:regional/webacl/panther_web_dev/f96fe2f4-a2f4-4c06-a4bc-afd495bd675f",
+      "terminatingRuleId": "Default_Action",
+      "terminatingRuleType": "REGULAR",
+      "action": "ALLOW",
+      "httpSourceName": "ALB",
+      "httpSourceId": "123456789EXAMPLE-app/web/768dd9170f08bb0d",
+      "ruleGroupList": [
+          {
+              "ruleGroupId": "AWS#AWSManagedRulesSQLiRuleSet",
+              "terminatingRule": {
+                  "ruleId": "SQLi_QUERYARGUMENTS",
+                  "action": "BLOCK"
+              }
+          }
+      ],
+      "nonTerminatingMatchingRules": [
+          {
+              "ruleId": "AWS-AWSManagedRulesSQLiRuleSet",
+              "action": "COUNT",
+              "ruleMatchDetails": [
+                  {
+                      "conditionType": "SQL_INJECTION",
+                      "location": "ALL_QUERY_ARGS",
+                      "matchedData": [
+                          "10",
+                          "AND",
+                          "1"
+                      ]
+                  }
+              ]
+          }
+      ],
+      "httpRequest": {
+          "clientIp": "10.0.0.1",
+          "country": "GR",
+          "headers": [
+              {
+                  "name": "Host",
+                  "value": "web-123456789.us-west-2.elb.amazonaws.com"
+              },
+              {
+                  "name": "user-agent",
+                  "value": "curl/7.64.1"
+              },
+              {
+                  "name": "accept",
+                  "value": "*/*"
+              }
+          ],
+          "uri": "/",
+          "args": "o=10 AND 1=1",
+          "httpVersion": "HTTP/2.0",
+          "httpMethod": "HEAD",
+          "requestId": "1-5ffd88c2-174f31437530757342a794dd"
+      },
+      "p_event_time": "2021-01-12T11:32:18.169Z",
+      "p_any_ip_addresses": ["10.0.0.1"],
+      "p_any_trace_ids": ["1-5ffd88c2-174f31437530757342a794dd"],
+      "p_log_type": "AWS.WAFWebACL"
+  }
+---
+name: waf_web_acl_regular_rule_block_action
+logType: AWS.WAFWebACL
+input: |
+  {
+      "timestamp": 1610442057134,
+      "formatVersion": 1,
+      "webaclId": "arn:aws:wafv2:us-west-2:123456789EXAMPLE:regional/webacl/panther_web_dev/f96fe2f4-a2f4-4c06-a4bc-afd495bd675f",
+      "terminatingRuleId": "block_badbot_by_user_agent",
+      "terminatingRuleType": "REGULAR",
+      "action": "BLOCK",
+      "terminatingRuleMatchDetails": [],
+      "httpSourceName": "ALB",
+      "httpSourceId": "123456789EXAMPLE-app/web/768dd9170f08bb0d",
+      "ruleGroupList": [],
+      "rateBasedRuleList": [],
+      "nonTerminatingMatchingRules": [],
+      "httpRequest": {
+          "clientIp": "10.0.0.1",
+          "country": "GR",
+          "headers": [
+              {
+                  "name": "Host",
+                  "value": "web-123456789.us-west-2.elb.amazonaws.com"
+              },
+              {
+                  "name": "accept",
+                  "value": "*/*"
+              },
+              {
+                  "name": "user-agent",
+                  "value": "Badbot"
+              },
+              {
+                  "name": "x-redacted-header",
+                  "value": "REDACTED"
+              }
+          ],
+          "uri": "/",
+          "args": "",
+          "httpVersion": "HTTP/2.0",
+          "httpMethod": "HEAD",
+          "requestId": "1-5ffd6549-297a96021598ace405676378"
+      }
+  }
+result: |
+  {
+      "timestamp": 1610442057134,
+      "formatVersion": 1,
+      "webaclId": "arn:aws:wafv2:us-west-2:123456789EXAMPLE:regional/webacl/panther_web_dev/f96fe2f4-a2f4-4c06-a4bc-afd495bd675f",
+      "terminatingRuleId": "block_badbot_by_user_agent",
+      "terminatingRuleType": "REGULAR",
+      "action": "BLOCK",
+      "httpSourceName": "ALB",
+      "httpSourceId": "123456789EXAMPLE-app/web/768dd9170f08bb0d",
+      "httpRequest": {
+          "clientIp": "10.0.0.1",
+          "country": "GR",
+          "headers": [
+              {
+                  "name": "Host",
+                  "value": "web-123456789.us-west-2.elb.amazonaws.com"
+              },
+              {
+                  "name": "accept",
+                  "value": "*/*"
+              },
+              {
+                  "name": "user-agent",
+                  "value": "Badbot"
+              },
+              {
+                  "name": "x-redacted-header",
+                  "value": "REDACTED"
+              }
+          ],
+          "uri": "/",
+          "args": "",
+          "httpVersion": "HTTP/2.0",
+          "httpMethod": "HEAD",
+          "requestId": "1-5ffd6549-297a96021598ace405676378"
+      },
+     "p_event_time": "2021-01-12T09:00:57.134Z",
+     "p_any_ip_addresses": ["10.0.0.1"],
+     "p_any_trace_ids": ["1-5ffd6549-297a96021598ace405676378"],
+     "p_log_type": "AWS.WAFWebACL"
+  }
+---
+name: waf_web_acl_rate_based_rule_block_action
+logType: AWS.WAFWebACL
+input: |
+  {
+      "timestamp": 1610380059751,
+      "formatVersion": 1,
+      "webaclId": "arn:aws:wafv2:us-west-2:123456789EXAMPLE:regional/webacl/panther_web_dev/f96fe2f4-a2f4-4c06-a4bc-afd495bd675f",
+      "terminatingRuleId": "sign_in_rate_limiting",
+      "terminatingRuleType": "RATE_BASED",
+      "action": "BLOCK",
+      "terminatingRuleMatchDetails": [],
+      "httpSourceName": "ALB",
+      "httpSourceId": "123456789EXAMPLE-app/web/768dd9170f08bb0d",
+      "ruleGroupList": [],
+      "rateBasedRuleList": [
+          {
+              "rateBasedRuleId": "arn:aws:wafv2:us-west-2:123456789EXAMPLE_MANAGED:regional/ipset/f96fe2f4-a2f4-4c06-a4bc-afd495bd675f_89ddcf0e-dac0-41af-a40a-a198e316aa04_IPV4/89ddcf0e-dac0-41af-a40a-a198e316aa04",
+              "rateBasedRuleName": "sign_in_rate_limiting",
+              "limitKey": "IP",
+              "maxRateAllowed": 100,
+              "limitValue": "10.0.0.1"
+          }
+      ],
+      "nonTerminatingMatchingRules": [],
+      "httpRequest": {
+          "clientIp": "10.0.0.1",
+          "country": "GR",
+          "headers": [
+              {
+                  "name": "Host",
+                  "value": "web-123456789.us-west-2.elb.amazonaws.com"
+              },
+              {
+                  "name": "user-agent",
+                  "value": "curl/7.64.1"
+              },
+              {
+                  "name": "accept",
+                  "value": "*/*"
+              }
+          ],
+          "uri": "/sign-in",
+          "args": "",
+          "httpVersion": "HTTP/2.0",
+          "httpMethod": "HEAD",
+          "requestId": "1-5ffc731b-3b2ebfc665f7de91566b9199"
+      }
+  }
+result: |
+  {
+      "timestamp": 1610380059751,
+      "formatVersion": 1,
+      "webaclId": "arn:aws:wafv2:us-west-2:123456789EXAMPLE:regional/webacl/panther_web_dev/f96fe2f4-a2f4-4c06-a4bc-afd495bd675f",
+      "terminatingRuleId": "sign_in_rate_limiting",
+      "terminatingRuleType": "RATE_BASED",
+      "action": "BLOCK",
+      "httpSourceName": "ALB",
+      "httpSourceId": "123456789EXAMPLE-app/web/768dd9170f08bb0d",
+      "rateBasedRuleList": [
+          {
+              "rateBasedRuleId": "arn:aws:wafv2:us-west-2:123456789EXAMPLE_MANAGED:regional/ipset/f96fe2f4-a2f4-4c06-a4bc-afd495bd675f_89ddcf0e-dac0-41af-a40a-a198e316aa04_IPV4/89ddcf0e-dac0-41af-a40a-a198e316aa04",
+              "rateBasedRuleName": "sign_in_rate_limiting",
+              "limitKey": "IP",
+              "maxRateAllowed": 100,
+              "limitValue": "10.0.0.1"
+          }
+      ],
+      "httpRequest": {
+          "clientIp": "10.0.0.1",
+          "country": "GR",
+          "headers": [
+              {
+                  "name": "Host",
+                  "value": "web-123456789.us-west-2.elb.amazonaws.com"
+              },
+              {
+                  "name": "user-agent",
+                  "value": "curl/7.64.1"
+              },
+              {
+                  "name": "accept",
+                  "value": "*/*"
+              }
+          ],
+          "uri": "/sign-in",
+          "args": "",
+          "httpVersion": "HTTP/2.0",
+          "httpMethod": "HEAD",
+          "requestId": "1-5ffc731b-3b2ebfc665f7de91566b9199"
+      },
+      "p_event_time": "2021-01-11T15:47:39.751Z",
+      "p_any_ip_addresses": ["10.0.0.1"],
+      "p_any_trace_ids": ["1-5ffc731b-3b2ebfc665f7de91566b9199"],
+      "p_log_type": "AWS.WAFWebACL"
+  }
+---
+name: waf_web_rule_group_block_action
+logType: AWS.WAFWebACL
+input: |
+  {
+    "timestamp": 1610380267298,
+    "formatVersion": 1,
+    "webaclId": "arn:aws:wafv2:us-west-2:123456789EXAMPLE:regional/webacl/panther_web_dev/f96fe2f4-a2f4-4c06-a4bc-afd495bd675f",
+    "terminatingRuleId": "AWS-AWSManagedRulesSQLiRuleSet",
+    "terminatingRuleType": "MANAGED_RULE_GROUP",
+    "action": "BLOCK",
+    "terminatingRuleMatchDetails": [
+      {
+        "conditionType": "SQL_INJECTION",
+        "location": "ALL_QUERY_ARGS",
+        "matchedData": [
+          "10",
+          "AND",
+          "1"
+        ]
+      }
+    ],
+    "httpSourceName": "ALB",
+    "httpSourceId": "123456789EXAMPLE-app/web/768dd9170f08bb0d",
+    "ruleGroupList": [
+      {
+        "ruleGroupId": "AWS#AWSManagedRulesSQLiRuleSet",
+        "terminatingRule": {
+          "ruleId": "SQLi_QUERYARGUMENTS",
+          "action": "BLOCK",
+          "ruleMatchDetails": null
+        },
+        "nonTerminatingMatchingRules": [],
+        "excludedRules": null
+      }
+    ],
+    "rateBasedRuleList": [],
+    "nonTerminatingMatchingRules": [],
+    "httpRequest": {
+      "clientIp": "10.0.0.1",
+      "country": "GR",
+      "headers": [
+        {
+          "name": "Host",
+          "value": "web-123456789.us-west-2.elb.amazonaws.com"
+        },
+        {
+          "name": "user-agent",
+          "value": "curl/7.64.1"
+        },
+        {
+          "name": "accept",
+          "value": "*/*"
+        }
+      ],
+      "uri": "/",
+      "args": "o=10 AND 1=1",
+      "httpVersion": "HTTP/2.0",
+      "httpMethod": "HEAD",
+      "requestId": "1-5ffc73eb-280dd24d31bf31450ebdb518"
+    }
+  }
+result: |
+  {
+    "timestamp": 1610380267298,
+    "formatVersion": 1,
+    "webaclId": "arn:aws:wafv2:us-west-2:123456789EXAMPLE:regional/webacl/panther_web_dev/f96fe2f4-a2f4-4c06-a4bc-afd495bd675f",
+    "terminatingRuleId": "AWS-AWSManagedRulesSQLiRuleSet",
+    "terminatingRuleType": "MANAGED_RULE_GROUP",
+    "action": "BLOCK",
+    "terminatingRuleMatchDetails": [
+      {
+        "conditionType": "SQL_INJECTION",
+        "location": "ALL_QUERY_ARGS",
+        "matchedData": [
+          "10",
+          "AND",
+          "1"
+        ]
+      }
+    ],
+    "httpSourceName": "ALB",
+    "httpSourceId": "123456789EXAMPLE-app/web/768dd9170f08bb0d",
+    "ruleGroupList": [
+      {
+        "ruleGroupId": "AWS#AWSManagedRulesSQLiRuleSet",
+        "terminatingRule": {
+          "ruleId": "SQLi_QUERYARGUMENTS",
+          "action": "BLOCK"
+        }
+      }
+    ],
+    "httpRequest": {
+      "clientIp": "10.0.0.1",
+      "country": "GR",
+      "headers": [
+        {
+          "name": "Host",
+          "value": "web-123456789.us-west-2.elb.amazonaws.com"
+        },
+        {
+          "name": "user-agent",
+          "value": "curl/7.64.1"
+        },
+        {
+          "name": "accept",
+          "value": "*/*"
+        }
+      ],
+      "uri": "/",
+      "args": "o=10 AND 1=1",
+      "httpVersion": "HTTP/2.0",
+      "httpMethod": "HEAD",
+      "requestId": "1-5ffc73eb-280dd24d31bf31450ebdb518"
+    },
+    "p_event_time": "2021-01-11T15:51:07.298Z",
+    "p_any_ip_addresses": ["10.0.0.1"],
+    "p_any_trace_ids": ["1-5ffc73eb-280dd24d31bf31450ebdb518"],
+    "p_log_type": "AWS.WAFWebACL"
+  }

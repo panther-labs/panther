@@ -1,5 +1,0 @@
-query PolicyTeaser($input: GetPolicyInput!) {
-  policy(input: $input) {
-    ...PolicyBasic
-  }
-}

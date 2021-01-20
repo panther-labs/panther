@@ -1,5 +1,12 @@
 package api
 
+import (
+	"testing"
+
+	"github.com/panther-labs/panther/internal/core/source_api/ddb"
+	"github.com/panther-labs/panther/pkg/testutils"
+)
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -25,4 +32,36 @@ const (
 	testUserID           = "97c4db4e-61d5-40a7-82de-6dd63b199bd2"
 )
 
-var apiTest = API{}
+type APITest struct {
+	API
+	mockDdb    *testutils.DynamoDBMock
+	mockSqs    *testutils.SqsMock
+	mockS3     *testutils.S3Mock
+	mockLambda *testutils.LambdaMock
+}
+
+func NewAPITest() *APITest {
+	mockDdb := &testutils.DynamoDBMock{}
+	mockSqs := &testutils.SqsMock{}
+	mockS3 := &testutils.S3Mock{}
+	mockLambda := &testutils.LambdaMock{}
+	return &APITest{
+		mockDdb:    mockDdb,
+		mockSqs:    mockSqs,
+		mockS3:     mockS3,
+		mockLambda: mockLambda,
+		API: API{
+			SqsClient:        mockSqs,
+			LambdaClient:     mockLambda,
+			TemplateS3Client: mockS3,
+			DdbClient:        &ddb.DDB{TableName: "test", Client: mockDdb},
+		},
+	}
+}
+
+func (a *APITest) AssertExpectations(t *testing.T) {
+	a.mockDdb.AssertExpectations(t)
+	a.mockS3.AssertExpectations(t)
+	a.mockSqs.AssertExpectations(t)
+	a.mockLambda.AssertExpectations(t)
+}

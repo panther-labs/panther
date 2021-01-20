@@ -1,0 +1,15 @@
+fragment PolicySummary on Policy {
+  id
+  description
+  displayName
+  resourceTypes
+  complianceStatus
+  outputIds
+  runbook
+  reference
+  severity
+  tags
+  createdAt
+  lastModified
+  enabled
+}

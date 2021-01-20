@@ -21,7 +21,7 @@ import {
   buildDetectionTestDefinition,
   buildDetectionTestDefinitionInput,
   buildError,
-  buildRuleDetails,
+  buildRule,
   buildTestRuleRecord,
   render,
   fireEvent,
@@ -36,7 +36,7 @@ import { mockTestRule } from './graphql/testRule.generated';
 
 describe('RuleFormTestSection', () => {
   it('correctly renders the test results', async () => {
-    const rule = buildRuleDetails({
+    const rule = buildRule({
       tests: [
         buildDetectionTestDefinition({
           expectedResult: true,

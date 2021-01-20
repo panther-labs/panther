@@ -1,8 +1,0 @@
-fragment PolicyDetailsExtra on PolicyDetails {
-  body
-  tests {
-    expectedResult
-    name
-    resource
-  }
-}

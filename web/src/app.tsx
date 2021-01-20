@@ -21,6 +21,7 @@ import { Router } from 'react-router-dom';
 import Routes from 'Source/routes';
 import { History } from 'history';
 import { ApolloProvider } from '@apollo/client';
+import useHiddenOutline from 'Hooks/useHiddenOutline';
 import { AuthProvider } from 'Components/utils/AuthContext';
 import UIProviders from 'Components/utils/UIProviders';
 import ErrorBoundary from 'Components/ErrorBoundary';
@@ -31,6 +32,8 @@ interface AppProps {
 }
 
 const App: React.FC<AppProps> = ({ history }) => {
+  useHiddenOutline();
+
   const client = React.useMemo(() => createApolloClient(history), [history]);
   return (
     <ErrorBoundary fallbackStrategy="passthrough">

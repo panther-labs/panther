@@ -18,8 +18,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { PolicyDetailsMain } from '../../../graphql/fragments/PolicyDetailsMain.generated';
-import { PolicyDetailsExtra } from '../../../graphql/fragments/PolicyDetailsExtra.generated';
+import { PolicyDetails } from '../../../graphql/fragments/PolicyDetails.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
@@ -29,17 +28,15 @@ export type CreatePolicyVariables = {
   input: Types.AddPolicyInput;
 };
 
-export type CreatePolicy = { addPolicy?: Types.Maybe<PolicyDetailsMain & PolicyDetailsExtra> };
+export type CreatePolicy = { addPolicy: PolicyDetails };
 
 export const CreatePolicyDocument = gql`
   mutation CreatePolicy($input: AddPolicyInput!) {
     addPolicy(input: $input) {
-      ...PolicyDetailsMain
-      ...PolicyDetailsExtra
+      ...PolicyDetails
     }
   }
-  ${PolicyDetailsMain}
-  ${PolicyDetailsExtra}
+  ${PolicyDetails}
 `;
 export type CreatePolicyMutationFn = ApolloReactCommon.MutationFunction<
   CreatePolicy,

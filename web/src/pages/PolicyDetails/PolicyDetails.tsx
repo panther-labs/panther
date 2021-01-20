@@ -29,7 +29,7 @@ import PolicyDetailsInfo from './PolicyDetailsInfo';
 import PolicyDetailsBanner from './PolicyDetailsBanner';
 import PolicyDetailsResources from './PolicyDetailsResources';
 import PolicyDetailsPageSkeleton from './Skeleton';
-import { usePolicyDetails } from './graphql/policyDetails.generated';
+import { useGetPolicyDetails } from './graphql/getPolicyDetails.generated';
 
 export interface PolicyDetailsPageUrlParams {
   section?: 'details' | 'resources';
@@ -49,7 +49,7 @@ const PolicyDetailsPage = () => {
   const { match } = useRouter<{ id: string }>();
   const { urlParams, setUrlParams } = useUrlParams<PolicyDetailsPageUrlParams>();
 
-  const { error, data, loading } = usePolicyDetails({
+  const { error, data, loading } = useGetPolicyDetails({
     fetchPolicy: 'cache-and-network',
     variables: {
       policyDetailsInput: {

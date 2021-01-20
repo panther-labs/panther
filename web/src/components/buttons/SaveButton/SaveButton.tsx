@@ -22,7 +22,7 @@ import SubmitButton, { SubmitButtonProps } from '../SubmitButton';
 export type SaveButtonProps = Omit<SubmitButtonProps, 'variantColor' | 'icon'>;
 
 const SaveButton: React.FC<SaveButtonProps> = ({ ...rest }) => {
-  return <SubmitButton variantColor="green" icon="check-outline" {...rest} />;
+  return <SubmitButton variantColor="green" icon="save" {...rest} />;
 };
 
 export default React.memo(SaveButton);

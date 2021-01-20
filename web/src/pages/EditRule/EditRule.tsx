@@ -17,24 +17,20 @@
  */
 
 import React from 'react';
-import { Alert, Button, Box, useSnackbar } from 'pouncejs';
+import { Alert, Box, useSnackbar } from 'pouncejs';
 import RuleForm from 'Components/forms/RuleForm';
-import useModal from 'Hooks/useModal';
 import useRouter from 'Hooks/useRouter';
-import { MODALS } from 'Components/utils/Modal';
 import { extractErrorMessage, formatJSON } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
-import Breadcrumbs from 'Components/Breadcrumbs';
 import Skeleton from './Skeleton';
-import { useRuleDetails } from './graphql/ruleDetails.generated';
+import { useGetRuleDetails } from './graphql/getRuleDetails.generated';
 import { useUpdateRule } from './graphql/updateRule.generated';
 
 const EditRulePage: React.FC = () => {
   const { match } = useRouter<{ id: string }>();
-  const { showModal } = useModal();
   const { pushSnackbar } = useSnackbar();
 
-  const { error: fetchRuleError, data: queryData, loading: isFetchingRule } = useRuleDetails({
+  const { error: fetchRuleError, data: queryData, loading: isFetchingRule } = useGetRuleDetails({
     variables: {
       input: {
         id: match.params.id,
@@ -101,20 +97,6 @@ const EditRulePage: React.FC = () => {
 
   return (
     <Box mb={6}>
-      <Breadcrumbs.Actions>
-        <Button
-          aria-label="Delete Rule"
-          variantColor="red"
-          onClick={() =>
-            showModal({
-              modal: MODALS.DELETE_RULE,
-              props: { rule: queryData.rule },
-            })
-          }
-        >
-          Delete
-        </Button>
-      </Breadcrumbs.Actions>
       <RuleForm initialValues={initialValues} onSubmit={handleSubmit} />
       {updateError && (
         <Box mt={2} mb={6}>

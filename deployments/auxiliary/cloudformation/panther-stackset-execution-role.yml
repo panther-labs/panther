@@ -1,0 +1,60 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: IAM roles for an account being scanned by Panther.
+
+Parameters:
+  MasterAccountId:
+    Type: String
+    Default: ''
+  MasterAccountRegion:
+    Type: String
+    Default: ''
+
+Resources:
+  CloudFormationStackSetExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub PantherCloudFormationStackSetExecutionRole-${MasterAccountRegion}
+      Description: CloudFormation assumes this role to execute a stack set
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${MasterAccountId}:root
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ManageCloudFormationStack
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: cloudformation:*
+                Resource: '*'
+        - PolicyName: PantherSetupRealTimeEvents
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - events:*
+                  - sns:*
+                Resource: '*'
+      Tags:
+        - Key: Application
+          Value: Panther

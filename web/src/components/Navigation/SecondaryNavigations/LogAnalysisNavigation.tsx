@@ -39,7 +39,7 @@ const LogAnalysisNavigation: React.FC = () => {
   useListComplianceSourceNames();
 
   return (
-    <Flex direction="column" as="ul">
+    <Flex direction="column" as="ul" spacing={1}>
       <FadeInTrail as="li">
         <NavLink
           isSecondary
