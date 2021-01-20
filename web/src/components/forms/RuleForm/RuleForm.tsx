@@ -107,7 +107,7 @@ const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
               >
                 <Box px={2}>
                   <TabList>
-                    <BorderedTab>Policy Settings</BorderedTab>
+                    <BorderedTab>Rule Settings</BorderedTab>
                     <BorderedTab>Functions & Tests</BorderedTab>
                   </TabList>
                 </Box>
