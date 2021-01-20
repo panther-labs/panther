@@ -18,23 +18,41 @@
 
 import React from 'react';
 import TablePlaceholder from 'Components/TablePlaceholder';
-import { FadeIn, Flex } from 'pouncejs';
-import Panel from 'Components/Panel';
+import { FadeIn, Box, Card, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
+import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 
 const EditPolicyPageSkeleton: React.FC = () => {
   return (
     <FadeIn from="bottom">
-      <Flex direction="column" spacing={5}>
-        <Panel title="Policy Settings">
-          <TablePlaceholder rowCount={5} />
-        </Panel>
-        <Panel title="Policy Body">
-          <TablePlaceholder rowCount={1} rowHeight={100} />
-        </Panel>
-        <Panel title="Test Record">
-          <TablePlaceholder rowCount={5} />
-        </Panel>
-      </Flex>
+      <Card position="relative" data-testid="policy-edit-loading">
+        <Tabs>
+          <Box px={2}>
+            <TabList>
+              <BorderedTab>Policy Settings</BorderedTab>
+              <BorderedTab>Functions & Tests</BorderedTab>
+              <BorderedTab>Auto Remediation</BorderedTab>
+            </TabList>
+          </Box>
+          <BorderTabDivider />
+          <TabPanels>
+            <TabPanel data-testid="policy-settings-tabpanel">
+              <Box p={6}>
+                <TablePlaceholder rowCount={5} />
+              </Box>
+            </TabPanel>
+            <TabPanel data-testid="policy-functions-tabpanel">
+              <Box p={6}>
+                <TablePlaceholder rowCount={5} />
+              </Box>
+            </TabPanel>
+            <TabPanel data-testid="policy-auto-remediation">
+              <Box p={6}>
+                <TablePlaceholder rowCount={5} />
+              </Box>
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
+      </Card>
     </FadeIn>
   );
 };
