@@ -41,7 +41,7 @@ const CreateDetection: React.FC = () => {
           iconColor="violet-300"
         />
         <DetectionSelectionCard
-          type="scheduledRule"
+          availableInEnterprise
           title="Scheduled Rule"
           description="Python3 functions used to identify suspicious activity that run on a schedule"
           icon="schedule"
