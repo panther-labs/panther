@@ -28,7 +28,7 @@ import useRouter from 'Hooks/useRouter';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { useCreatePolicy } from './graphql/createPolicy.generated';
 
-const initialValues: Required<AddPolicyInput> = {
+export const initialValues: Required<AddPolicyInput> = {
   body: DEFAULT_POLICY_FUNCTION,
   autoRemediationId: '',
   autoRemediationParameters: '{}',

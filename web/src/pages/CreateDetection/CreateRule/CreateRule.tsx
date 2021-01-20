@@ -33,7 +33,7 @@ import useRouter from 'Hooks/useRouter';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { useCreateRule } from './graphql/createRule.generated';
 
-const initialValues: Required<AddRuleInput> = {
+export const initialValues: Required<AddRuleInput> = {
   body: `${DEFAULT_RULE_FUNCTION}\n\n${DEFAULT_TITLE_FUNCTION}\n\n${DEFAULT_DEDUP_FUNCTION}\n\n${DEFAULT_ALERT_CONTEXT_FUNCTION}`,
   dedupPeriodMinutes: 60,
   threshold: 1,
