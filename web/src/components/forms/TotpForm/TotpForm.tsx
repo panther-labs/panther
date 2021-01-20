@@ -68,8 +68,10 @@ export const TotpForm: React.FC = () => {
         <Flex justify="center" mb={6} width={1} aria-describedby="totp-helper-text">
           <QRCode
             value={formatSecretCode(code, userInfo.email)}
-            fgColor={theme.colors['gray-50']}
-            bgColor={theme.colors['navyblue-600']}
+            includeMargin
+            size={150}
+            fgColor={theme.colors['navyblue-600']}
+            bgColor={theme.colors['gray-50']}
           />
         </Flex>
         <Text color="gray-300" textAlign="center" my={2}>
@@ -77,7 +79,7 @@ export const TotpForm: React.FC = () => {
         </Text>
         <Box justify="center" textAlign="center" mb={6}>
           {showCode ? (
-            <Text color="gray-300" my={2}>
+            <Text color="gray-300" wordBreak="break-word" my={2}>
               {code}
             </Text>
           ) : (

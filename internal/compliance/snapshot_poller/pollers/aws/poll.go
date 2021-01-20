@@ -175,6 +175,12 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 		ResourceRegexIgnoreList: scanRequest.ResourceRegexIgnoreList,
 		ResourceTypeIgnoreList:  scanRequest.ResourceTypeIgnoreList,
 	}
+	err = pollerResourceInput.CompileRegex()
+	if err != nil {
+		zap.L().Error("unable to compile passed regex",
+			zap.Any("resource regex ignore list", scanRequest.ResourceRegexIgnoreList))
+		return nil, err
+	}
 
 	// Check if integration is disabled
 	if scanRequest.Enabled != nil && !*scanRequest.Enabled {
@@ -352,8 +358,8 @@ func singleResourceScan(
 			return nil, nil
 		}
 		// Check if ResourceID matches the integration's regex filter
-		if ignore, err := pollerInput.ShouldIgnoreResource(*scanRequest.ResourceID); ignore || err != nil {
-			return nil, err
+		if pollerInput.ShouldIgnoreResource(*scanRequest.ResourceID) {
+			return nil, nil
 		}
 		resource, err = pollFunction(pollerInput, resourceARN, scanRequest)
 	} else {

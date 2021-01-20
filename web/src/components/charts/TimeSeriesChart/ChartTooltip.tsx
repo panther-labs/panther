@@ -17,7 +17,7 @@
  */
 import React from 'react';
 import { Box, Flex, Text } from 'pouncejs';
-import { formatDatetime } from 'Helpers/utils';
+import { formatDatetime, secondsToString } from 'Helpers/utils';
 
 export interface ChartTooltipProps {
   params: any[];
@@ -47,8 +47,9 @@ const ChartTooltip: React.FC<ChartTooltipProps> = ({ params, units }) => {
                   {seriesInfo.seriesName}
                 </Box>
                 <Box as="dd" font="mono" fontWeight="bold">
-                  {seriesInfo.value[1].toLocaleString('en')}
-                  {units ? ` ${units}` : ''}
+                  {units === 'sec'
+                    ? secondsToString(seriesInfo.value[1])
+                    : `${seriesInfo.value[1].toLocaleString('en')}${units ? ` ${units}` : ''}`}
                 </Box>
               </Flex>
             </Flex>
