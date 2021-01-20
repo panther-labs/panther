@@ -34,12 +34,16 @@ import {
 const urlEncode = (str: string) => encodeURIComponent(str).replace(/%3A/g, unescape);
 
 const urls = {
+  detections: {
+    home: () => '/detections/',
+    create: () => `${urls.detections.home()}new/`,
+  },
   compliance: {
     home: () => '/cloud-security/',
     overview: () => `${urls.compliance.home()}overview/`,
     policies: {
       list: () => `${urls.compliance.home()}policies/`,
-      create: () => `${urls.compliance.policies.list()}new/`,
+      create: () => `${urls.detections.create()}?type=policy`,
       details: (id: Policy['id']) => `${urls.compliance.policies.list()}${urlEncode(id)}/`,
       edit: (id: Policy['id']) => `${urls.compliance.policies.details(id)}edit/`,
     },
@@ -66,7 +70,7 @@ const urls = {
     },
     rules: {
       list: () => `${urls.logAnalysis.home()}rules/`,
-      create: () => `${urls.logAnalysis.rules.list()}new/`,
+      create: () => `${urls.detections.create()}?type=rule`,
       details: (id: Rule['id']) => `${urls.logAnalysis.rules.list()}${urlEncode(id)}/`,
       edit: (id: Rule['id']) => `${urls.logAnalysis.rules.details(id)}edit/`,
     },

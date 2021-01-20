@@ -33,10 +33,9 @@ import RuleDetailsPage from 'Pages/RuleDetails';
 import LandingPage from 'Pages/Landing';
 import ListRulesPage from 'Pages/ListRules';
 import EditRulePage from 'Pages/EditRule';
-import CreateRulePage from 'Pages/CreateRule';
+import CreateDetectionPage from 'Pages/CreateDetection';
 import AlertDetailsPage from 'Pages/AlertDetails';
 import EditPolicyPage from 'Pages/EditPolicy';
-import CreatePolicyPage from 'Pages/CreatePolicy';
 import ListAlertsPage from 'Pages/ListAlerts';
 import Layout from 'Components/Layout';
 import CreateComplianceSourcePage from 'Pages/CreateComplianceSource';
@@ -101,11 +100,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 <Redirect exact from={urls.compliance.home()} to={urls.compliance.overview()} />
                 <Route exact path={urls.compliance.overview()} component={OverviewPage} />
                 <Route exact path={urls.compliance.policies.list()} component={ListPoliciesPage} />
-                <Route
-                  exact
-                  path={urls.compliance.policies.create()}
-                  component={CreatePolicyPage}
-                />
+                <Route exact path={urls.detections.create()} component={CreateDetectionPage} />
                 <Route
                   exact
                   path={urls.compliance.policies.details(':id')}
@@ -145,7 +140,6 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 <Redirect exact from={urls.logAnalysis.home()} to={urls.logAnalysis.overview()} />
                 <Route exact path={urls.logAnalysis.overview()} component={LogAnalysisOverview} />
                 <Route exact path={urls.logAnalysis.rules.list()} component={ListRulesPage} />
-                <Route exact path={urls.logAnalysis.rules.create()} component={CreateRulePage} />
                 <Route
                   exact
                   path={urls.logAnalysis.rules.details(':id')}

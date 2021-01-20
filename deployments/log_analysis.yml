@@ -912,6 +912,7 @@ Resources:
           Properties:
             Queue: !GetAtt RulesEngineQueue.Arn
             BatchSize: 10
+            MaximumBatchingWindowInSeconds: 30
       Runtime: python3.7
       Timeout: !FindInMap [Functions, RulesEngine, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]

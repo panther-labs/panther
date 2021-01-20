@@ -72,7 +72,7 @@ export type RuleFormProps = {
 
 const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
   const { history } = useRouter();
-  const { urlParams, setUrlParams } = useUrlParams<RuleFormUrlParams>();
+  const { urlParams, updateUrlParams } = useUrlParams<RuleFormUrlParams>();
 
   return (
     <Card position="relative">
@@ -103,11 +103,11 @@ const RuleForm: React.FC<RuleFormProps> = ({ initialValues, onSubmit }) => {
               </Breadcrumbs.Actions>
               <Tabs
                 index={sectionToTabIndex[urlParams.section] || 0}
-                onChange={index => setUrlParams({ section: tabIndexToSection[index] })}
+                onChange={index => updateUrlParams({ section: tabIndexToSection[index] })}
               >
                 <Box px={2}>
                   <TabList>
-                    <BorderedTab>Policy Settings</BorderedTab>
+                    <BorderedTab>Rule Settings</BorderedTab>
                     <BorderedTab>Functions & Tests</BorderedTab>
                   </TabList>
                 </Box>
