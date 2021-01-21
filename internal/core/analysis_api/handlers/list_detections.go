@@ -28,16 +28,14 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
-	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-// ListPolicies is being deprecated. Use ListDetections and specify AnalysisType POLICY instead
-func (API) ListPolicies(input *models.ListPoliciesInput) *events.APIGatewayProxyResponse {
-	stdPolicyListInput(input)
+func (API) ListDetections(input *models.ListDetectionsInput) *events.APIGatewayProxyResponse {
+	projectComplianceStatus := stdDetectionListInput(input)
 
 	// Scan dynamo
-	scanInput, err := policyScanInput(input)
+	scanInput, err := detectionScanInput(input)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{
 			Body: err.Error(), StatusCode: http.StatusInternalServerError}
@@ -46,26 +44,17 @@ func (API) ListPolicies(input *models.ListPoliciesInput) *events.APIGatewayProxy
 	var items []tableItem
 	compliance := make(map[string]complianceStatus)
 
-	// We need to include compliance status in the response if the user asked for it
-	// (or if they left the input.Fields blank, which defaults to all fields)
-	statusProjection := len(input.Fields) == 0
-	for _, field := range input.Fields {
-		if field == "complianceStatus" {
-			statusProjection = true
-			break
-		}
-	}
-
 	err = scanPages(scanInput, func(item tableItem) error {
 		// Fetch the compliance status if we need it for the filter or projection
-		if statusProjection || input.ComplianceStatus != "" {
-			status, err := getComplianceStatus(item.ID) // compliance-api
+		if item.Type == models.TypePolicy && (projectComplianceStatus || input.ComplianceStatus != "") {
+			status, err := getComplianceStatus(item.ID)
 			if err != nil {
 				return err
 			}
 			compliance[item.ID] = *status
 		}
 
+		// If the ComplianceStatus filter is set, we know we already filtered to just policies
 		if input.ComplianceStatus != "" && input.ComplianceStatus != compliance[item.ID].Status {
 			return nil // compliance status does not match filter: skip
 		}
@@ -74,33 +63,30 @@ func (API) ListPolicies(input *models.ListPoliciesInput) *events.APIGatewayProxy
 		return nil
 	})
 	if err != nil {
-		zap.L().Error("failed to scan policies", zap.Error(err))
+		zap.L().Error("failed to scan detections", zap.Error(err))
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
 	// Sort and page
-	sortItems(items, input.SortBy, input.SortDir, compliance)
+	sortItems(items, input.SortBy, input.SortDir, nil)
 	var paging models.Paging
 	paging, items = pageItems(items, input.Page, input.PageSize)
 
 	// Convert to output struct
-	result := models.ListPoliciesOutput{
-		Policies: make([]models.Policy, 0, len(items)),
-		Paging:   paging,
+	result := models.ListDetectionsOutput{
+		Detections: make([]models.Detection, 0, len(items)),
+		Paging:     paging,
 	}
 	for _, item := range items {
-		var status compliancemodels.ComplianceStatus
-		if statusProjection {
-			status = compliance[item.ID].Status
-		}
-		result.Policies = append(result.Policies, *item.Policy(status))
+		status := compliance[item.ID].Status
+		result.Detections = append(result.Detections, *item.Detection(status))
 	}
 
 	return gatewayapi.MarshalResponse(&result, http.StatusOK)
 }
 
 // Set defaults and standardize input request
-func stdPolicyListInput(input *models.ListPoliciesInput) {
+func stdDetectionListInput(input *models.ListDetectionsInput) bool {
 	input.NameContains = strings.ToLower(input.NameContains)
 	if input.Page == 0 {
 		input.Page = defaultPage
@@ -109,29 +95,65 @@ func stdPolicyListInput(input *models.ListPoliciesInput) {
 		input.PageSize = defaultPageSize
 	}
 	if input.SortBy == "" {
-		input.SortBy = "id"
+		input.SortBy = "displayName"
+	}
+	// If we are going to sort by displayName, we must include lowerId and lowerDisplayName in the
+	// projection. If Fields is empty they're included already.
+	if input.SortBy == "displayName" && len(input.Fields) > 0 {
+		input.Fields = append(input.Fields, "lowerId", "lowerDisplayName")
+	}
+	// Similar idea as displayName
+	if input.SortBy == "id" && len(input.Fields) > 0 {
+		input.Fields = append(input.Fields, "lowerId")
 	}
 	if input.SortDir == "" {
 		input.SortDir = defaultSortDir
 	}
+	if len(input.AnalysisTypes) == 0 {
+		input.AnalysisTypes = []models.DetectionType{models.TypePolicy, models.TypeRule}
+	}
+	// If a compliance status was specified, we can only query policies.
+	// This is a unique field because we look it up from another table. For other fields (such as
+	// suppressions for policies or dedup period for rules) we don't need this logic because if the
+	// user filters on this field it will automatically exclude everything of the wrong type.
+	if input.ComplianceStatus != "" || input.HasRemediation != nil {
+		input.AnalysisTypes = []models.DetectionType{models.TypePolicy}
+	}
 
-	// TODO - fix frontend to send array inputs instead of CSV strings
-	// Right now, the incoming request from a user looks like this:
-	// {
-	//     "resourceTypes": ["AWS.S3.Bucket,AWS.CloudFormation.Stack"],
-	//     "tags": ["my,tag,filters"]
-	// }
-	//
-	// So we split the strings here as a workaround
-	if len(input.ResourceTypes) == 1 {
-		input.ResourceTypes = strings.Split(input.ResourceTypes[0], ",")
+	// If we need to filter or project based on complianceStatus, we must ensure that id and type are
+	// also within the projection. If fields is empty they're already included and we can just return.
+	if len(input.Fields) == 0 {
+		return true
 	}
-	if len(input.Tags) == 1 {
-		input.Tags = strings.Split(input.Tags[0], ",")
+
+	idPresent, typePresent, statusProjection := false, false, false
+	for _, field := range input.Fields {
+		if field == "complianceStatus" {
+			statusProjection = true
+		}
+		if field == "id" {
+			idPresent = true
+		}
+		if field == "type" {
+			typePresent = true
+		}
+		if idPresent && typePresent && statusProjection {
+			break
+		}
 	}
+	if statusProjection || input.ComplianceStatus != "" {
+		if !idPresent {
+			input.Fields = append(input.Fields, "id")
+		}
+		if !typePresent {
+			input.Fields = append(input.Fields, "type")
+		}
+	}
+
+	return statusProjection
 }
 
-func policyScanInput(input *models.ListPoliciesInput) (*dynamodb.ScanInput, error) {
+func detectionScanInput(input *models.ListDetectionsInput) (*dynamodb.ScanInput, error) {
 	listFilters := pythonFilters{
 		CreatedBy:      input.CreatedBy,
 		Enabled:        input.Enabled,
@@ -142,9 +164,11 @@ func policyScanInput(input *models.ListPoliciesInput) (*dynamodb.ScanInput, erro
 		ResourceTypes:  input.ResourceTypes,
 		Tags:           input.Tags,
 	}
+	if input.LogTypes != nil {
+		listFilters.ResourceTypes = append(listFilters.ResourceTypes, input.LogTypes...)
+	}
 
 	filters := pythonListFilters(&listFilters)
-
 	if input.HasRemediation != nil {
 		if *input.HasRemediation {
 			// We only want policies with a remediation specified
@@ -155,5 +179,5 @@ func policyScanInput(input *models.ListPoliciesInput) (*dynamodb.ScanInput, erro
 		}
 	}
 
-	return buildScanInput([]models.DetectionType{models.TypePolicy}, input.Fields, filters...)
+	return buildScanInput(input.AnalysisTypes, input.Fields, filters...)
 }
