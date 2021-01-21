@@ -152,8 +152,8 @@ import {
   UpdateS3LogIntegrationInput,
   UpdateSqsLogIntegrationInput,
   UpdateUserInput,
-  UploadPoliciesInput,
-  UploadPoliciesResponse,
+  UploadDetectionsInput,
+  UploadDetectionsResponse,
   User,
   AccountTypeEnum,
   AlertDetailsDetectionInfo,
@@ -1832,28 +1832,31 @@ export const buildUpdateUserInput = (overrides: Partial<UpdateUserInput> = {}): 
   };
 };
 
-export const buildUploadPoliciesInput = (
-  overrides: Partial<UploadPoliciesInput> = {}
-): UploadPoliciesInput => {
+export const buildUploadDetectionsInput = (
+  overrides: Partial<UploadDetectionsInput> = {}
+): UploadDetectionsInput => {
   return {
-    data: 'data' in overrides ? overrides.data : 'back-end',
+    data: 'data' in overrides ? overrides.data : 'Fantastic',
   };
 };
 
-export const buildUploadPoliciesResponse = (
-  overrides: Partial<UploadPoliciesResponse> = {}
-): UploadPoliciesResponse => {
+export const buildUploadDetectionsResponse = (
+  overrides: Partial<UploadDetectionsResponse> = {}
+): UploadDetectionsResponse => {
   return {
-    __typename: 'UploadPoliciesResponse',
-    totalPolicies: 'totalPolicies' in overrides ? overrides.totalPolicies : 102,
-    newPolicies: 'newPolicies' in overrides ? overrides.newPolicies : 971,
-    modifiedPolicies: 'modifiedPolicies' in overrides ? overrides.modifiedPolicies : 829,
-    totalRules: 'totalRules' in overrides ? overrides.totalRules : 916,
-    newRules: 'newRules' in overrides ? overrides.newRules : 898,
-    modifiedRules: 'modifiedRules' in overrides ? overrides.modifiedRules : 463,
-    totalGlobals: 'totalGlobals' in overrides ? overrides.totalGlobals : 491,
-    newGlobals: 'newGlobals' in overrides ? overrides.newGlobals : 544,
-    modifiedGlobals: 'modifiedGlobals' in overrides ? overrides.modifiedGlobals : 197,
+    __typename: 'UploadDetectionsResponse',
+    totalPolicies: 'totalPolicies' in overrides ? overrides.totalPolicies : 771,
+    newPolicies: 'newPolicies' in overrides ? overrides.newPolicies : 395,
+    modifiedPolicies: 'modifiedPolicies' in overrides ? overrides.modifiedPolicies : 923,
+    totalRules: 'totalRules' in overrides ? overrides.totalRules : 871,
+    newRules: 'newRules' in overrides ? overrides.newRules : 545,
+    modifiedRules: 'modifiedRules' in overrides ? overrides.modifiedRules : 347,
+    totalGlobals: 'totalGlobals' in overrides ? overrides.totalGlobals : 945,
+    newGlobals: 'newGlobals' in overrides ? overrides.newGlobals : 117,
+    modifiedGlobals: 'modifiedGlobals' in overrides ? overrides.modifiedGlobals : 780,
+    totalDataModels: 'totalDataModels' in overrides ? overrides.totalDataModels : 495,
+    newDataModels: 'newDataModels' in overrides ? overrides.newDataModels : 383,
+    modifiedDataModels: 'modifiedDataModels' in overrides ? overrides.modifiedDataModels : 293,
   };
 };
 

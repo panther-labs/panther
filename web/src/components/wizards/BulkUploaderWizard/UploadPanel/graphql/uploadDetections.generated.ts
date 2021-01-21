@@ -23,14 +23,14 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type UploadPoliciesVariables = {
-  input: Types.UploadPoliciesInput;
+export type UploadDetectionsVariables = {
+  input: Types.UploadDetectionsInput;
 };
 
-export type UploadPolicies = {
-  uploadPolicies?: Types.Maybe<
+export type UploadDetections = {
+  uploadDetections?: Types.Maybe<
     Pick<
-      Types.UploadPoliciesResponse,
+      Types.UploadDetectionsResponse,
       | 'totalPolicies'
       | 'modifiedPolicies'
       | 'newPolicies'
@@ -40,13 +40,16 @@ export type UploadPolicies = {
       | 'totalGlobals'
       | 'newGlobals'
       | 'modifiedGlobals'
+      | 'totalDataModels'
+      | 'modifiedDataModels'
+      | 'newDataModels'
     >
   >;
 };
 
-export const UploadPoliciesDocument = gql`
-  mutation UploadPolicies($input: UploadPoliciesInput!) {
-    uploadPolicies(input: $input) {
+export const UploadDetectionsDocument = gql`
+  mutation UploadDetections($input: UploadDetectionsInput!) {
+    uploadDetections(input: $input) {
       totalPolicies
       modifiedPolicies
       newPolicies
@@ -56,56 +59,59 @@ export const UploadPoliciesDocument = gql`
       totalGlobals
       newGlobals
       modifiedGlobals
+      totalDataModels
+      modifiedDataModels
+      newDataModels
     }
   }
 `;
-export type UploadPoliciesMutationFn = ApolloReactCommon.MutationFunction<
-  UploadPolicies,
-  UploadPoliciesVariables
+export type UploadDetectionsMutationFn = ApolloReactCommon.MutationFunction<
+  UploadDetections,
+  UploadDetectionsVariables
 >;
 
 /**
- * __useUploadPolicies__
+ * __useUploadDetections__
  *
- * To run a mutation, you first call `useUploadPolicies` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUploadPolicies` returns a tuple that includes:
+ * To run a mutation, you first call `useUploadDetections` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUploadDetections` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [uploadPolicies, { data, loading, error }] = useUploadPolicies({
+ * const [uploadDetections, { data, loading, error }] = useUploadDetections({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useUploadPolicies(
-  baseOptions?: ApolloReactHooks.MutationHookOptions<UploadPolicies, UploadPoliciesVariables>
+export function useUploadDetections(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<UploadDetections, UploadDetectionsVariables>
 ) {
-  return ApolloReactHooks.useMutation<UploadPolicies, UploadPoliciesVariables>(
-    UploadPoliciesDocument,
+  return ApolloReactHooks.useMutation<UploadDetections, UploadDetectionsVariables>(
+    UploadDetectionsDocument,
     baseOptions
   );
 }
-export type UploadPoliciesHookResult = ReturnType<typeof useUploadPolicies>;
-export type UploadPoliciesMutationResult = ApolloReactCommon.MutationResult<UploadPolicies>;
-export type UploadPoliciesMutationOptions = ApolloReactCommon.BaseMutationOptions<
-  UploadPolicies,
-  UploadPoliciesVariables
+export type UploadDetectionsHookResult = ReturnType<typeof useUploadDetections>;
+export type UploadDetectionsMutationResult = ApolloReactCommon.MutationResult<UploadDetections>;
+export type UploadDetectionsMutationOptions = ApolloReactCommon.BaseMutationOptions<
+  UploadDetections,
+  UploadDetectionsVariables
 >;
-export function mockUploadPolicies({
+export function mockUploadDetections({
   data,
   variables,
   errors,
 }: {
-  data: UploadPolicies;
-  variables?: UploadPoliciesVariables;
+  data: UploadDetections;
+  variables?: UploadDetectionsVariables;
   errors?: GraphQLError[];
 }) {
   return {
-    request: { query: UploadPoliciesDocument, variables },
+    request: { query: UploadDetectionsDocument, variables },
     result: { data, errors },
   };
 }
