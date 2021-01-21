@@ -23,13 +23,12 @@ import PolicyForm from 'Components/forms/PolicyForm';
 import { ListPoliciesDocument } from 'Pages/ListPolicies';
 import { AddPolicyInput } from 'Generated/schema';
 import { DEFAULT_POLICY_FUNCTION } from 'Source/constants';
-import withSEO from 'Hoc/withSEO';
 import { extractErrorMessage } from 'Helpers/utils';
 import useRouter from 'Hooks/useRouter';
-import { EventEnum, SrcEnum, trackEvent } from 'Helpers/analytics';
+import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { useCreatePolicy } from './graphql/createPolicy.generated';
 
-const initialValues: Required<AddPolicyInput> = {
+export const initialValues: Required<AddPolicyInput> = {
   body: DEFAULT_POLICY_FUNCTION,
   autoRemediationId: '',
   autoRemediationParameters: '{}',
@@ -47,7 +46,7 @@ const initialValues: Required<AddPolicyInput> = {
   tests: [],
 };
 
-const CreatePolicyPage: React.FC = () => {
+const CreatePolicy: React.FC = () => {
   const { history } = useRouter();
   const [createPolicy, { error }] = useCreatePolicy({
     refetchQueries: [{ query: ListPoliciesDocument, variables: { input: {} } }],
@@ -55,6 +54,7 @@ const CreatePolicyPage: React.FC = () => {
       trackEvent({ event: EventEnum.AddedPolicy, src: SrcEnum.Policies });
       history.push(urls.compliance.policies.details(data.addPolicy.id));
     },
+    onError: () => trackError({ event: TrackErrorEnum.FailedToAddPolicy, src: SrcEnum.Policies }),
   });
 
   const handleSubmit = React.useCallback(
@@ -82,4 +82,4 @@ const CreatePolicyPage: React.FC = () => {
   );
 };
 
-export default withSEO({ title: 'New Policy' })(CreatePolicyPage);
+export default CreatePolicy;

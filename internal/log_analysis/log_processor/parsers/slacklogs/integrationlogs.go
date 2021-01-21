@@ -33,7 +33,7 @@ type IntegrationLog struct {
 	Date              pantherlog.Time   `json:"date" validate:"required" tcodec:"unix" event_time:"true" description:"The date when the action happened."`
 	ChangeType        pantherlog.String `json:"change_type" validate:"required" description:"The type of this action (added, removed, enabled, disabled, updated)."`
 	Scope             pantherlog.String `json:"scope" validate:"required" description:"The scope used for this action."`
-	Channel           pantherlog.String `json:"channel" validate:"required" description:"The related channel."`
+	Channel           pantherlog.String `json:"channel" description:"The related channel."`
 	Reason            pantherlog.String `json:"reason" description:"The reason of the disable action, populated if this event refers to such an action."`
 	RSSFeed           pantherlog.Bool   `json:"rss_feed" description:"True if this log entry is an RSS feed. If true, more RSS feed related fields will be present."`
 	RSSFeedChangeType pantherlog.Bool   `json:"rss_feed_change_type" description:"The change type for the RSS feed."`

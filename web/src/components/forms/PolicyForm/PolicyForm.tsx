@@ -74,7 +74,7 @@ export type PolicyFormProps = {
 
 const PolicyForm: React.FC<PolicyFormProps> = ({ initialValues, onSubmit }) => {
   const { history } = useRouter();
-  const { urlParams, setUrlParams } = useUrlParams<PolicyFormUrlParams>();
+  const { urlParams, updateUrlParams } = useUrlParams<PolicyFormUrlParams>();
 
   return (
     <Card position="relative">
@@ -106,7 +106,7 @@ const PolicyForm: React.FC<PolicyFormProps> = ({ initialValues, onSubmit }) => {
 
               <Tabs
                 index={sectionToTabIndex[urlParams.section] || 0}
-                onChange={index => setUrlParams({ section: tabIndexToSection[index] })}
+                onChange={index => updateUrlParams({ section: tabIndexToSection[index] })}
               >
                 <Box px={2}>
                   <TabList>
