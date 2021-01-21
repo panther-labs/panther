@@ -22,9 +22,14 @@ import { useFormikContext } from 'formik';
 
 export interface SubmitButtonProps extends Omit<ButtonProps, 'size' | 'disabled'> {
   allowPristineSubmission?: boolean;
+  allowInvalidSubmission?: boolean;
 }
 
-const SubmitButton: React.FC<SubmitButtonProps> = ({ allowPristineSubmission, ...rest }) => {
+const SubmitButton: React.FC<SubmitButtonProps> = ({
+  allowPristineSubmission,
+  allowInvalidSubmission,
+  ...rest
+}) => {
   const { isSubmitting, isValid, dirty, submitForm } = useFormikContext<any>();
   return (
     <Button
@@ -36,7 +41,11 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({ allowPristineSubmission, ..
         submitForm();
       }}
       loading={isSubmitting}
-      disabled={isSubmitting || !isValid || (!dirty && !allowPristineSubmission)}
+      disabled={
+        isSubmitting ||
+        (!isValid && !allowInvalidSubmission) ||
+        (!dirty && !allowPristineSubmission)
+      }
       {...rest}
     />
   );

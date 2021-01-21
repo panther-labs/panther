@@ -732,7 +732,6 @@ export type ListRulesResponse = {
 
 export enum ListRulesSortFieldsEnum {
   DisplayName = 'displayName',
-  Enabled = 'enabled',
   Id = 'id',
   LastModified = 'lastModified',
   LogTypes = 'logTypes',

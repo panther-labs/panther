@@ -17,11 +17,10 @@
  */
 
 import React from 'react';
-import { Alert, Link } from 'pouncejs';
+import { Flex, Alert, Link, Spinner } from 'pouncejs';
 import { useFormikContext } from 'formik';
 import { extractErrorMessage } from 'Helpers/utils';
 import { REMEDIATION_DOC_URL } from 'Source/constants';
-import TablePlaceholder from 'Components/TablePlaceholder';
 import { PolicyFormValues } from '../PolicyForm';
 import { useListRemediations } from './graphql/listRemediations.generated';
 import PolicyFormAutoRemediationFields, {
@@ -44,7 +43,11 @@ const PolicyFormAutoRemediationSection: React.FC = () => {
   );
 
   if (loading) {
-    return <TablePlaceholder rowCount={2} />;
+    return (
+      <Flex w="100%" justify="center" my={10}>
+        <Spinner />
+      </Flex>
+    );
   }
 
   if (error) {

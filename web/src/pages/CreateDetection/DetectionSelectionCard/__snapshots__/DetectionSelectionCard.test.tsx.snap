@@ -1,0 +1,306 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DetectionSelectionCard matches snapshot 1`] = `
+.panther-11 {
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: transparent;
+  -webkit-transition: all 0.1s linear;
+  transition: all 0.1s linear;
+}
+
+.panther-10 {
+  background-color: #23344e;
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.panther-9 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+.panther-1 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  border-radius: 99999px;
+  height: 32px;
+  width: 32px;
+  background-color: #ff7577;
+  margin-right: 16px;
+}
+
+.panther-0 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: currentColor;
+}
+
+
+
+.panther-6 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  margin-top: -4px;
+  margin-right: -4px;
+}
+
+.panther-2 {
+  font-weight: 400;
+  font-size: 1.125rem;
+}
+
+.panther-5 {
+  display: -webkit-inline-box;
+  display: -webkit-inline-flex;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  vertical-align: top;
+}
+
+.panther-4 {
+  position: relative;
+  border-radius: 99999px;
+  padding: 8px;
+  -webkit-transition: background-color 0.15s linear;
+  transition: background-color 0.15s linear;
+}
+
+.panther-4:hover {
+  background-color: rgba(62,81,107,0.2);
+}
+
+.panther-4:hover:after {
+  border-color: #0081c5;
+}
+
+.panther-4:focus-within {
+  background-color: rgba(62,81,107,0.2);
+}
+
+.panther-4:focus-within:after {
+  border-color: #0081c5;
+}
+
+.panther-4::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 1;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+  width: 12px;
+  height: 12px;
+  background-color: #ffffff;
+  border-radius: 99999px;
+}
+
+.panther-4::after {
+  content: "";
+  display: block;
+  width: 26px;
+  height: 26px;
+  border: 1px solid;
+  border-radius: 99999px;
+  -webkit-transition: border-color 125ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 125ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-color: #0081c5;
+}
+
+.panther-3 {
+  position: absolute;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.panther-7 {
+  font-size: 0.75rem;
+  color: #bdbdbd;
+  text-align: left;
+}
+
+.panther-13 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  border-radius: 99999px;
+  height: 32px;
+  width: 32px;
+  background-color: #c9e3a1;
+  margin-right: 16px;
+}
+
+.panther-15 {
+  max-width: 100%;
+  padding: 12px;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <button
+    aria-label="Create Rule"
+    class="panther-11"
+    type="button"
+  >
+    <div
+      class="panther-10"
+    >
+      <div
+        class="panther-9"
+      >
+        <div
+          class="panther-1"
+        >
+          <svg
+            class="panther-0"
+            role="presentation"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M20 13.1429H13.1429V20H10.8571V13.1429H4V10.8571H10.8571V4H13.1429V10.8571H20V13.1429Z"
+            />
+          </svg>
+        </div>
+        <div
+          class="panther-8"
+        >
+          <div
+            class="panther-6"
+          >
+            <h2
+              class="panther-2"
+            >
+              Rule
+            </h2>
+            <label
+              class="panther-5"
+            >
+              <div
+                class="panther-4"
+              >
+                <input
+                  aria-checked="true"
+                  checked=""
+                  class="panther-3"
+                  type="radio"
+                />
+              </div>
+            </label>
+          </div>
+          <p
+            class="panther-7"
+          >
+            Fake Description
+          </p>
+        </div>
+      </div>
+    </div>
+  </button>
+  <div
+    class="panther-10"
+  >
+    <div
+      class="panther-9"
+    >
+      <div
+        class="panther-13"
+      >
+        <svg
+          class="panther-0"
+          role="presentation"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M16.5802939,12.8399543 C18.102083,12.8399543 19.2509145,14.0032 19.2509145,15.5461676 L19.2509145,15.5461676 L19.2509145,15.5672617 L19.8432827,19.8634087 C19.8495237,19.9086716 19.8526552,19.9543089 19.8526552,20 C19.8526552,20.5522847 19.40494,21 18.8526552,21 L18.8526552,21 L5.1469584,21 C5.10137867,21 5.05585227,20.9968837 5.01069767,20.990673 C4.46356407,20.9154183 4.08103067,20.4108729 4.15628539,19.8637393 L4.15628539,19.8637393 L4.74444458,15.5875738 L4.74827376,15.5461676 C4.74827376,14.00324 5.89551719,12.8399543 7.4173259,12.8399543 L7.4173259,12.8399543 Z M12.0011627,3 C14.2221442,3 16.0250338,4.83900903 16.0250338,7.10542016 C16.0250338,9.3725713 14.2229873,11.2116403 12.0011627,11.2116403 C9.77861259,11.2116403 7.97572306,9.3726313 7.97572306,7.10542016 C7.97572306,4.83906903 9.7777695,3 12.0011627,3 Z"
+          />
+        </svg>
+      </div>
+      <div
+        class="panther-8"
+      >
+        <div
+          class="panther-6"
+        >
+          <h2
+            class="panther-2"
+          >
+            Scheduled Rule
+          </h2>
+          <img
+            alt="Panther Enterprise Logo"
+            class="panther-15"
+            height="44"
+            src="test-file-stub"
+            width="44"
+          />
+        </div>
+        <p
+          class="panther-7"
+        >
+          Fake Description
+        </p>
+      </div>
+    </div>
+  </div>
+  <footer
+    id="footer"
+  />
+</div>
+`;

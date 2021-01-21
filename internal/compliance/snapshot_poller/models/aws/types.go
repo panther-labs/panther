@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
-	"go.uber.org/zap"
 
 	resourcesapimodels "github.com/panther-labs/panther/api/lambda/resources/models"
 )
@@ -94,12 +93,6 @@ func (r *ResourcePollerInput) CompileRegex() error {
 		regex := "^" + strings.ReplaceAll(escaped, `\*`, `.*`) + "$"
 		compiledGlob, err := regexp.Compile(regex)
 		if err != nil {
-			// We are building the regex, so it should always be valid
-			zap.L().Error("invalid regex",
-				zap.String("originalPattern", glob),
-				zap.String("transformedRegex", regex),
-				zap.Error(err),
-			)
 			return err
 		}
 		r.CompiledRegexIgnoreList = append(r.CompiledRegexIgnoreList, compiledGlob)
@@ -107,20 +100,13 @@ func (r *ResourcePollerInput) CompileRegex() error {
 	return nil
 }
 
-func (r *ResourcePollerInput) ShouldIgnoreResource(resourceID string) (ignore bool, err error) {
-	// Check if the regexs have been compiled
-	if r.CompiledRegexIgnoreList == nil {
-		err := r.CompileRegex()
-		if err != nil {
-			return false, err
-		}
-	}
+func (r *ResourcePollerInput) ShouldIgnoreResource(resourceID string) (ignore bool) {
 	for _, compiledRegex := range r.CompiledRegexIgnoreList {
 		if compiledRegex.MatchString(resourceID) {
-			return true, nil
+			return true
 		}
 	}
-	return false, nil
+	return false
 }
 
 // ResourcePoller represents a function to poll a specific AWS resource.
