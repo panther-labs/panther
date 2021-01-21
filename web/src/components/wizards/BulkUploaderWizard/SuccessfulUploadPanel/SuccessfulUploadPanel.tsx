@@ -20,13 +20,12 @@ import React from 'react';
 import { SimpleGrid, Flex, Box, Text, Icon } from 'pouncejs';
 import { WizardPanel, useWizardContext } from 'Components/Wizard';
 import Rows from './Rows';
-import { UploadPolicies } from '../UploadPanel/graphql/uploadPolicies.generated';
+import { UploadDetections } from '../UploadPanel/graphql/uploadDetections.generated';
 
 const BoxColumn: React.FC = props => <Box p={6} backgroundColor="navyblue-500" {...props} />;
 
 const SuccessfulUpload: React.FC = () => {
-  const { data = {} } = useWizardContext<UploadPolicies>();
-  const { uploadPolicies = {} } = data;
+  const { data } = useWizardContext<UploadDetections>();
 
   return (
     <WizardPanel>
@@ -35,16 +34,16 @@ const SuccessfulUpload: React.FC = () => {
         subtitle="You can visit the corresponding pages to view or edit your modules, rules or policies"
       />
       <Flex justify="center" data-testid="success-indicator">
-        <SimpleGrid gap={5} columns={3} mb={5}>
+        <SimpleGrid gap={5} columns={4} mb={5}>
           <BoxColumn>
             <Flex mb={5} width={220} align="center">
               <Icon type="source-code" mr={4} />
               <Text fontWeight="bold">Python Modules</Text>
             </Flex>
             <Rows
-              newItems={uploadPolicies.newGlobals}
-              modifiedItems={uploadPolicies.modifiedGlobals}
-              totalItems={uploadPolicies.totalGlobals}
+              newItems={data?.uploadDetections?.newGlobals}
+              modifiedItems={data?.uploadDetections?.modifiedGlobals}
+              totalItems={data?.uploadDetections?.totalGlobals}
             />
           </BoxColumn>
           <BoxColumn>
@@ -53,9 +52,9 @@ const SuccessfulUpload: React.FC = () => {
               <Text fontWeight="bold">Rules</Text>
             </Flex>
             <Rows
-              newItems={uploadPolicies.newPolicies}
-              modifiedItems={uploadPolicies.modifiedRules}
-              totalItems={uploadPolicies.totalRules}
+              newItems={data?.uploadDetections?.newRules}
+              modifiedItems={data?.uploadDetections?.modifiedRules}
+              totalItems={data?.uploadDetections?.totalRules}
             />
           </BoxColumn>
           <BoxColumn>
@@ -64,9 +63,20 @@ const SuccessfulUpload: React.FC = () => {
               <Text fontWeight="bold">Policies</Text>
             </Flex>
             <Rows
-              newItems={uploadPolicies.newRules}
-              modifiedItems={uploadPolicies.modifiedPolicies}
-              totalItems={uploadPolicies.totalPolicies}
+              newItems={data?.uploadDetections?.newPolicies}
+              modifiedItems={data?.uploadDetections?.modifiedPolicies}
+              totalItems={data?.uploadDetections?.totalPolicies}
+            />
+          </BoxColumn>
+          <BoxColumn>
+            <Flex mb={5} width={220} align="center">
+              <Icon type="data-models" mr={4} />
+              <Text fontWeight="bold">Data Models</Text>
+            </Flex>
+            <Rows
+              newItems={data?.uploadDetections?.newDataModels}
+              modifiedItems={data?.uploadDetections?.modifiedDataModels}
+              totalItems={data?.uploadDetections?.totalDataModels}
             />
           </BoxColumn>
         </SimpleGrid>
