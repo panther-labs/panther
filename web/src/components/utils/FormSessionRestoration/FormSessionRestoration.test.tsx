@@ -29,6 +29,7 @@ interface TestFormValues {
   text: string;
 }
 
+jest.mock('lodash/debounce', () => jest.fn(fn => fn));
 // A dummy test form
 const TestForm: React.FC = () => (
   <Formik<TestFormValues> initialValues={{ text: '' }} onSubmit={() => {}}>
@@ -55,7 +56,7 @@ test('correctly stores form values to session', async () => {
   expect(textInput).toHaveValue(testValue);
 
   // wait for debounce to kick in
-  await waitMs(250);
+  await waitMs(1);
 
   // remove the form
   unmount();
@@ -78,7 +79,7 @@ test('correctly clears the session when `clearFormSession` is called', async () 
   expect(textInput).toHaveValue(testValue);
 
   // wait for debounce to kick in
-  await waitMs(250);
+  await waitMs(1);
   expect(sessionStorage.setItem).toHaveBeenCalledWith(
     sessionId,
     JSON.stringify({ text: testValue })
