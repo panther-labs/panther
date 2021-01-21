@@ -54,7 +54,7 @@ const alertTypeToString = (item: AlertTypesEnum) => {
       return 'Rule Errors';
     case AlertTypesEnum.Policy:
     default:
-      return 'Policy Fails';
+      return 'Policy Failures';
   }
 };
 
