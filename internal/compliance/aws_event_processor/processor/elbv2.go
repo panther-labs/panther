@@ -87,6 +87,16 @@ func classifyELBV2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourc
 		return changes
 	case "CreateListener", "DeleteLoadBalancer", "ModifyLoadBalancerAttributes", "SetIpAddressType", "SetSecurityGroups", "SetSubnets":
 		lbARN, parseErr = arn.Parse(detail.Get("requestParameters.loadBalancerArn").Str)
+		// If no LB ARN is present, this may be a classic load balancer. We don't support classic
+		// load balancers. We can tell the difference based on the structure of the request parameters
+		if parseErr != nil {
+			lbName := detail.Get("requestParameters.loadBalancerName")
+			if lbName.Exists() {
+				return nil
+			}
+			zap.L().Error("elbv2: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Any("event", metadata), zap.Error(parseErr))
+			return nil
+		}
 	case "CreateLoadBalancer":
 		var changes []*resourceChange
 		for _, lb := range detail.Get("responseElements.loadBalancers").Array() {
@@ -129,10 +139,6 @@ func classifyELBV2(detail gjson.Result, metadata *CloudTrailMetadata) []*resourc
 		return nil
 	}
 
-	if parseErr != nil {
-		zap.L().Error("elbv2: error parsing ARN", zap.String("eventName", metadata.eventName), zap.Any("event", metadata), zap.Error(parseErr))
-		return nil
-	}
 	return []*resourceChange{{
 		AwsAccountID: metadata.accountID,
 		Delete:       metadata.eventName == "DeleteLoadBalancer",

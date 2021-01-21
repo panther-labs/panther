@@ -103,5 +103,5 @@ func dataModelScanInput(input *models.ListDataModelsInput) (*dynamodb.ScanInput,
 		filters = append(filters, typeFilter)
 	}
 
-	return buildScanInput(models.TypeDataModel, []string{}, filters...)
+	return buildScanInput([]models.DetectionType{models.TypeDataModel}, []string{}, filters...)
 }

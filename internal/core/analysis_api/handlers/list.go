@@ -171,7 +171,7 @@ func sortItems(items []tableItem, sortBy, sortDir string, compliance map[string]
 		sortByEnabled(items, ascending)
 	case "lastModified":
 		sortByLastModified(items, ascending)
-	case "logTypes", "resourceTypes":
+	case "logTypes", "resourceTypes", "types":
 		sortByType(items, ascending)
 	case "severity":
 		sortBySeverity(items, ascending)
