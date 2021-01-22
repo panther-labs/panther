@@ -81,13 +81,13 @@ describe('GithubDestinationForm', () => {
 
     fireEvent.change(displayNameField, { target: { value: displayName } });
     fireEvent.click(criticalSeverityCheckBox);
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(repoNameField, { target: { value: 'repo' } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(tokenField, { target: { value: 'someToken' } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
   });
 
@@ -109,7 +109,7 @@ describe('GithubDestinationForm', () => {
     fireEvent.click(criticalSeverityCheckBox);
     fireEvent.change(repoNameField, { target: { value: githubInput.repoName } });
     fireEvent.change(tokenField, { target: { value: githubInput.token } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);
@@ -138,7 +138,7 @@ describe('GithubDestinationForm', () => {
 
     const newDisplayName = 'New Github Name';
     fireEvent.change(displayNameField, { target: { value: newDisplayName } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);

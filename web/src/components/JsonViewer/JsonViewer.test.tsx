@@ -45,7 +45,7 @@ describe('JsonViewer', () => {
     await waitFor(() => expect(getByText('TestingReactLazy')).toBeInTheDocument());
     expect(container).toMatchSnapshot();
     fireEvent.click(getByTestId('toggle-json'));
-    waitMs(60);
+    await waitMs(1);
     expect(container).toMatchSnapshot();
   });
 });
