@@ -54,7 +54,7 @@ const alertTypeToString = (item: AlertTypesEnum) => {
       return 'Rule Errors';
     case AlertTypesEnum.Policy:
     default:
-      return 'Policy Fails';
+      return 'Policy Failures';
   }
 };
 
@@ -151,6 +151,14 @@ const DropdownFilters: React.FC = () => {
                         items={logTypeData?.listAvailableLogTypes?.logTypes ?? []}
                         searchable
                       />
+                      <Field
+                        as={FormikMultiCombobox}
+                        label="Resource Types"
+                        name="resourceTypes"
+                        placeholder="Select resource types"
+                        items={RESOURCE_TYPES}
+                        searchable
+                      />
                       <FastField
                         name="status"
                         as={FormikMultiCombobox}
@@ -178,14 +186,6 @@ const DropdownFilters: React.FC = () => {
                           placeholder="Maximum number of events"
                         />
                       </SimpleGrid>
-                      <Field
-                        as={FormikMultiCombobox}
-                        label="Resource Types"
-                        name="resourceTypes"
-                        placeholder="Select resource types"
-                        items={RESOURCE_TYPES}
-                        searchable
-                      />
                     </Flex>
                     <Flex direction="column" justify="center" align="center" mt={8} spacing={4}>
                       <Box>

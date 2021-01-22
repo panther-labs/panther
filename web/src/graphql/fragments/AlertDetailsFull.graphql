@@ -3,6 +3,9 @@ fragment AlertDetailsFull on AlertDetails {
   type
   title
   creationTime
+  description
+  reference
+  runbook
   deliveryResponses {
     ...DeliveryResponseFull
   }
