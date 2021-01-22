@@ -220,7 +220,7 @@ describe('EditS3LogSource', () => {
     // Adding an extra prefix - log type
     await fireClickAndMouseEvents(getByAriaLabel('Add prefix'));
     // Fill in the form for the second prefix - logType item
-    fireEvent.change(getAllByLabelText('S3 Prefix Filter')[1], {target: {value: updatedLogSource.s3PrefixLogTypes[1].prefix } }); // prettier-ignore
+    fireEvent.change(getAllByLabelText('S3 Prefix Filter (leave empty to allow all)')[1], {target: {value: updatedLogSource.s3PrefixLogTypes[1].prefix } }); // prettier-ignore
     fireEvent.change(getAllByLabelText('Log Types')[3], {target: {value: updatedLogSource.s3PrefixLogTypes[1].logTypes[0] } }); // prettier-ignore
     fireClickAndMouseEvents(await findByText(updatedLogSource.s3PrefixLogTypes[1].logTypes[0]));
     // Wait for form validation to kick in and move on to the next screen

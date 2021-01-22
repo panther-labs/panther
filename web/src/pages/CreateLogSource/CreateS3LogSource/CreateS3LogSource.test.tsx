@@ -96,7 +96,7 @@ describe('CreateS3LogSource', () => {
     fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
     fireEvent.change(getByLabelText('AWS Account ID'), {target: {value: logSource.awsAccountId } }); // prettier-ignore
     fireEvent.change(getByLabelText('Bucket Name'), { target: { value: logSource.s3Bucket } });
-    fireEvent.change(getByLabelText('S3 Prefix Filter'), {target: {value: logSource.s3PrefixLogTypes[0].prefix } }); // prettier-ignore
+    fireEvent.change(getByLabelText('S3 Prefix Filter (leave empty to allow all)'), {target: {value: logSource.s3PrefixLogTypes[0].prefix } }); // prettier-ignore
     // Adding 2 logTypes for this prefix
     fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.s3PrefixLogTypes[0].logTypes[0] } }); // prettier-ignore
     fireClickAndMouseEvents(await findByText(logSource.s3PrefixLogTypes[0].logTypes[0]));
@@ -178,7 +178,7 @@ describe('CreateS3LogSource', () => {
     fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
     fireEvent.change(getByLabelText('AWS Account ID'), { target: {value: logSource.awsAccountId} }); // prettier-ignore
     fireEvent.change(getByLabelText('Bucket Name'), { target: { value: logSource.s3Bucket } });
-    fireEvent.change(getByLabelText('S3 Prefix Filter'), {target: {value: logSource.s3PrefixLogTypes[0].prefix } }); // prettier-ignore
+    fireEvent.change(getByLabelText('S3 Prefix Filter (leave empty to allow all)'), {target: {value: logSource.s3PrefixLogTypes[0].prefix } }); // prettier-ignore
     fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.s3PrefixLogTypes[0].logTypes[0] } }); // prettier-ignore
     fireEvent.click(await findByText(logSource.s3PrefixLogTypes[0].logTypes[0]));
 
