@@ -1,5 +1,5 @@
-mutation UploadPolicies($input: UploadPoliciesInput!) {
-  uploadPolicies(input: $input) {
+mutation UploadDetections($input: UploadDetectionsInput!) {
+  uploadDetections(input: $input) {
     totalPolicies
     modifiedPolicies
     newPolicies
@@ -9,5 +9,8 @@ mutation UploadPolicies($input: UploadPoliciesInput!) {
     totalGlobals
     newGlobals
     modifiedGlobals
+    totalDataModels
+    modifiedDataModels
+    newDataModels
   }
 }

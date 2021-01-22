@@ -325,7 +325,7 @@ describe('ListAlerts', () => {
     const withinDropdown = within(await findByTestId('dropdown-alert-listing-filters'));
     expect(withinDropdown.getByText('Rule Matches')).toBeInTheDocument();
     expect(withinDropdown.getByText('Rule Errors')).toBeInTheDocument();
-    expect(withinDropdown.queryByText('Policy Fails')).not.toBeInTheDocument();
+    expect(withinDropdown.queryByText('Policy Failures')).not.toBeInTheDocument();
     expect(withinDropdown.getByText(mockedLogType)).toBeInTheDocument();
     expect(withinDropdown.getByText(mockedLogType)).toBeInTheDocument();
     expect(withinDropdown.getByText(mockedResourceType)).toBeInTheDocument();
@@ -480,7 +480,7 @@ describe('ListAlerts', () => {
     expect(withinDropdown.queryByText('Triaged')).not.toBeInTheDocument();
     expect(withinDropdown.queryByText('Rule Matches')).not.toBeInTheDocument();
     expect(withinDropdown.queryByText('Rule Errors')).not.toBeInTheDocument();
-    expect(withinDropdown.queryByText('Policy Fails')).not.toBeInTheDocument();
+    expect(withinDropdown.queryByText('Policy Failures')).not.toBeInTheDocument();
     expect(withinDropdown.queryByText('Info')).not.toBeInTheDocument();
     expect(withinDropdown.queryByText('Medium')).not.toBeInTheDocument();
     expect(withinDropdown.getByLabelText('Min Events')).toHaveValue(null);
