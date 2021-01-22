@@ -320,6 +320,9 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
       'lastUpdatedByTime' in overrides ? overrides.lastUpdatedByTime : '2020-07-02T20:00:23.050Z',
     updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-02-22T04:54:35.910Z',
     detection: 'detection' in overrides ? overrides.detection : buildAlertDetailsRuleInfo(),
+    description: 'description' in overrides ? overrides.description : 'Music',
+    reference: 'reference' in overrides ? overrides.reference : 'input',
+    runbook: 'runbook' in overrides ? overrides.runbook : 'Granite',
   };
 };
 

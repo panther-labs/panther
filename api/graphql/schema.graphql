@@ -302,6 +302,9 @@ type AlertDetails implements Alert {
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
   detection: AlertDetailsDetectionInfo!
+  description: String
+  reference: String
+  runbook: String
 }
 
 type AlertSummary implements Alert {
