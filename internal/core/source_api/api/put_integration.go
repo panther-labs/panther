@@ -276,7 +276,15 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 		metadata.RemediationEnabled = input.RemediationEnabled
 		metadata.ScanIntervalMins = input.ScanIntervalMins
 		metadata.StackName = getStackName(input.IntegrationType, input.IntegrationLabel)
+<<<<<<< HEAD
 		metadata.S3Bucket = env.InputDataBucketName
+=======
+		metadata.S3Bucket = api.Config.InputDataBucketName
+		metadata.Enabled = input.Enabled
+		metadata.RegionIgnoreList = input.RegionIgnoreList
+		metadata.ResourceTypeIgnoreList = input.ResourceTypeIgnoreList
+		metadata.ResourceRegexIgnoreList = input.ResourceRegexIgnoreList
+>>>>>>> f1e3cbf3 (Moved source options to AWSScan in put_integration (#2495))
 	case models.IntegrationTypeAWS3:
 		metadata.AWSAccountID = input.AWSAccountID
 		metadata.S3Bucket = input.S3Bucket
@@ -285,10 +293,6 @@ func generateNewIntegration(input *models.PutIntegrationInput) *models.SourceInt
 		metadata.S3PrefixLogTypes = input.S3PrefixLogTypes
 		metadata.StackName = getStackName(input.IntegrationType, input.IntegrationLabel)
 		metadata.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
-		metadata.Enabled = input.Enabled
-		metadata.RegionIgnoreList = input.RegionIgnoreList
-		metadata.ResourceTypeIgnoreList = input.ResourceTypeIgnoreList
-		metadata.ResourceRegexIgnoreList = input.ResourceRegexIgnoreList
 	case models.IntegrationTypeSqs:
 		metadata.SqsConfig = &models.SqsConfig{
 			S3Bucket:             env.InputDataBucketName,
