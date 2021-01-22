@@ -17,13 +17,13 @@
  */
 
 import React from 'react';
-import { buildAlertDetails, buildRule, render } from 'test-utils';
+import { buildAlertDetails, buildRuleDetails, render } from 'test-utils';
 import AlertDetailsInfo from './AlertDetailsInfo';
 
 describe('AlertDetailsInfo', () => {
   it('matches snapshot', () => {
     const { container } = render(
-      <AlertDetailsInfo alert={buildAlertDetails()} rule={buildRule()} />
+      <AlertDetailsInfo alert={buildAlertDetails()} rule={buildRuleDetails()} />
     );
 
     expect(container).toMatchSnapshot();
