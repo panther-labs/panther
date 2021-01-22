@@ -37,7 +37,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/aws/aws-sdk-go/service/eks"
-	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/aws/aws-sdk-go/service/guardduty"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/kms"
@@ -92,21 +91,23 @@ var (
 		awsmodels.Ec2VpcSchema:              ec2.ServiceName,
 		awsmodels.EcsClusterSchema:          ecs.ServiceName,
 		awsmodels.EksClusterSchema:          eks.ServiceName,
-		awsmodels.Elbv2LoadBalancerSchema:   elbv2.ServiceName,
-		awsmodels.GuardDutySchema:           guardduty.ServiceName,
-		awsmodels.IAMGroupSchema:            iam.ServiceName,
-		awsmodels.IAMPolicySchema:           iam.ServiceName,
-		awsmodels.IAMRoleSchema:             iam.ServiceName,
-		awsmodels.IAMRootUserSchema:         iam.ServiceName,
-		awsmodels.IAMUserSchema:             iam.ServiceName,
-		awsmodels.KmsKeySchema:              kms.ServiceName,
-		awsmodels.LambdaFunctionSchema:      lambda.ServiceName,
-		awsmodels.PasswordPolicySchema:      iam.ServiceName,
-		awsmodels.RDSInstanceSchema:         rds.ServiceName,
-		awsmodels.RedshiftClusterSchema:     redshift.ServiceName,
-		awsmodels.S3BucketSchema:            s3.ServiceName,
-		awsmodels.WafRegionalWebAclSchema:   waf.ServiceName,
-		awsmodels.WafWebAclSchema:           wafregional.ServiceName,
+		// For every other service, the service name aligns with how SSM refers to the service. For
+		// just the elb and elbv2 service, this is not the case. AWS just had to do it to 'em.
+		awsmodels.Elbv2LoadBalancerSchema: "elb",
+		awsmodels.GuardDutySchema:         guardduty.ServiceName,
+		awsmodels.IAMGroupSchema:          iam.ServiceName,
+		awsmodels.IAMPolicySchema:         iam.ServiceName,
+		awsmodels.IAMRoleSchema:           iam.ServiceName,
+		awsmodels.IAMRootUserSchema:       iam.ServiceName,
+		awsmodels.IAMUserSchema:           iam.ServiceName,
+		awsmodels.KmsKeySchema:            kms.ServiceName,
+		awsmodels.LambdaFunctionSchema:    lambda.ServiceName,
+		awsmodels.PasswordPolicySchema:    iam.ServiceName,
+		awsmodels.RDSInstanceSchema:       rds.ServiceName,
+		awsmodels.RedshiftClusterSchema:   redshift.ServiceName,
+		awsmodels.S3BucketSchema:          s3.ServiceName,
+		awsmodels.WafRegionalWebAclSchema: waf.ServiceName,
+		awsmodels.WafWebAclSchema:         wafregional.ServiceName,
 	}
 
 	// These services do not support regional scans, either because the resource itself is not

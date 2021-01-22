@@ -134,7 +134,7 @@ func isSingleDataModelEnabled(dataModelID string, enabled bool, logTypes []strin
 	}
 
 	scanInput, err := buildScanInput(
-		models.TypeDataModel, []string{"id"}, expression.And(enabledFilter, idFilter, logTypeFilter))
+		[]models.DetectionType{models.TypeDataModel}, []string{"id"}, expression.And(enabledFilter, idFilter, logTypeFilter))
 
 	if err != nil {
 		return false, err
