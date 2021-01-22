@@ -266,10 +266,10 @@ exports[`AlertDetailsInfo matches snapshot 1`] = `
             </div>
             <a
               class="panther-8"
-              href="/log-analysis/rules/panel/"
+              href="/log-analysis/rules/Metal/"
               id="rule-link"
             >
-              AI
+              Advanced
             </a>
             <div
               aria-describedby="threshold"
@@ -281,7 +281,7 @@ exports[`AlertDetailsInfo matches snapshot 1`] = `
               class="panther-10"
               id="threshold"
             >
-              347
+              244
             </div>
             <div
               aria-describedby="deduplication-period"
@@ -293,7 +293,7 @@ exports[`AlertDetailsInfo matches snapshot 1`] = `
               class="panther-10"
               id="deduplication-period"
             >
-              13.466666666666667h
+              34min
             </div>
             <div
               aria-describedby="deduplication-string"
@@ -319,9 +319,9 @@ exports[`AlertDetailsInfo matches snapshot 1`] = `
             >
               <a
                 class="panther-16"
-                href="/log-analysis/rules/?page=1&tags[]=invoice"
+                href="/log-analysis/rules/?page=1&tags[]=digital"
               >
-                invoice
+                digital
               </a>
             </div>
           </div>
