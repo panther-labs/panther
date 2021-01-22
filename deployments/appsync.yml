@@ -961,12 +961,12 @@ Resources:
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCodeNoBody, VTL]
 
-  UploadPoliciesResolver:
+  UploadDetectionsResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
-      FieldName: uploadPolicies
+      FieldName: uploadDetections
       DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $ctx.args.input)
