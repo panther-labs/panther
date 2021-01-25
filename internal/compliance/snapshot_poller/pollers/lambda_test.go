@@ -145,6 +145,159 @@ func TestHandlerNonExistentIntegration(t *testing.T) {
 	assert.Equal(t, expected, logs[:1]) // throw out last oplog msg
 }
 
+func TestPollSourceNotEnabled(t *testing.T) {
+	loggerSetupFunc = setupTestLogger
+	logger := mockLogger(zapcore.InfoLevel)
+	mockResourceClient := &gatewayapi.MockClient{}
+	apiClient = mockResourceClient
+	pollers.AuditRoleName = "TestAuditRole"
+
+	testIntegrations := &pollermodels.ScanMsg{
+		Entries: []*pollermodels.ScanEntry{
+			{
+				AWSAccountID:  aws.String("123456789012"),
+				IntegrationID: &testIntegrationID,
+				Region:        aws.String("us-west-2"),
+				ResourceType:  aws.String(awsmodels.KmsKeySchema),
+				Enabled:       aws.Bool(false),
+			},
+		},
+	}
+	testIntegrationStr, err := jsoniter.MarshalToString(testIntegrations)
+	require.NoError(t, err)
+
+	sampleEvent := events.SQSEvent{
+		Records: []events.SQSMessage{
+			{
+				AWSRegion:     "us-west-2",
+				MessageId:     "702a0aba-ab1f-11e8-b09c-f218981400a1",
+				ReceiptHandle: "AQEBCki01vLygW9L6Xq1hcSNR90swZdtgZHP1N5hEU1Dt22p66gQFxKEsVo7ObxpC+b/",
+				Body:          testIntegrationStr,
+				Md5OfBody:     "d3673b20e6c009a81c73961b798f838a",
+			},
+		},
+	}
+	require.NoError(t, Handle(testContext(), sampleEvent))
+
+	mockResourceClient.AssertExpectations(t)
+	expected := []observer.LoggedEntry{
+		{
+			Entry: zapcore.Entry{Level: zapcore.InfoLevel, Message: "source integration disabled"},
+			Context: []zapcore.Field{
+				zap.String("integration id", "0aab70c6-da66-4bb9-a83c-bbe8f5717fde"),
+			},
+		},
+	}
+	logs := logger.AllUntimed()
+	require.Len(t, logs, 2)
+	assert.Equal(t, expected, logs[:1])
+}
+
+func TestPollRegionIgnored(t *testing.T) {
+	loggerSetupFunc = setupTestLogger
+	logger := mockLogger(zapcore.InfoLevel)
+	mockResourceClient := &gatewayapi.MockClient{}
+	apiClient = mockResourceClient
+	pollers.AuditRoleName = "TestAuditRole"
+
+	testIntegrations := &pollermodels.ScanMsg{
+		Entries: []*pollermodels.ScanEntry{
+			{
+				AWSAccountID:     aws.String("123456789012"),
+				IntegrationID:    &testIntegrationID,
+				Region:           aws.String("us-west-2"),
+				ResourceType:     aws.String(awsmodels.KmsKeySchema),
+				RegionIgnoreList: []string{"us-west-2"},
+			},
+		},
+	}
+	testIntegrationStr, err := jsoniter.MarshalToString(testIntegrations)
+	require.NoError(t, err)
+
+	sampleEvent := events.SQSEvent{
+		Records: []events.SQSMessage{
+			{
+				AWSRegion:     "us-west-2",
+				MessageId:     "702a0aba-ab1f-11e8-b09c-f218981400a1",
+				ReceiptHandle: "AQEBCki01vLygW9L6Xq1hcSNR90swZdtgZHP1N5hEU1Dt22p66gQFxKEsVo7ObxpC+b/",
+				Body:          testIntegrationStr,
+				Md5OfBody:     "d3673b20e6c009a81c73961b798f838a",
+			},
+		},
+	}
+
+	require.NoError(t, Handle(testContext(), sampleEvent))
+
+	mockResourceClient.AssertExpectations(t)
+	expected := []observer.LoggedEntry{
+		{
+			Entry: zapcore.Entry{Level: zapcore.InfoLevel, Message: "processing single region service scan"},
+			Context: []zapcore.Field{
+				zap.String("region", "us-west-2"),
+				zap.String("resourceType", "AWS.KMS.Key"),
+			},
+		},
+		{
+			Entry: zapcore.Entry{Level: zapcore.InfoLevel, Message: "matched ignoreList region - skipping scan"},
+			Context: []zapcore.Field{
+				zap.String("region", "us-west-2"),
+			},
+		},
+	}
+	logs := logger.AllUntimed()
+	require.Len(t, logs, 3)
+	assert.Equal(t, expected, logs[:2]) // throw out last oplog msg
+}
+
+func TestPollResourceTypeIgnored(t *testing.T) {
+	loggerSetupFunc = setupTestLogger
+	logger := mockLogger(zapcore.InfoLevel)
+	mockResourceClient := &gatewayapi.MockClient{}
+	apiClient = mockResourceClient
+	pollers.AuditRoleName = "TestAuditRole"
+
+	testIntegrations := &pollermodels.ScanMsg{
+		Entries: []*pollermodels.ScanEntry{
+			{
+				AWSAccountID:           aws.String("123456789012"),
+				IntegrationID:          &testIntegrationID,
+				Region:                 aws.String("us-west-2"),
+				ResourceType:           aws.String(awsmodels.KmsKeySchema),
+				ResourceTypeIgnoreList: []string{"AWS.KMS.Key"},
+			},
+		},
+	}
+	testIntegrationStr, err := jsoniter.MarshalToString(testIntegrations)
+	require.NoError(t, err)
+
+	sampleEvent := events.SQSEvent{
+		Records: []events.SQSMessage{
+			{
+				AWSRegion:     "us-west-2",
+				MessageId:     "702a0aba-ab1f-11e8-b09c-f218981400a1",
+				ReceiptHandle: "AQEBCki01vLygW9L6Xq1hcSNR90swZdtgZHP1N5hEU1Dt22p66gQFxKEsVo7ObxpC+b/",
+				Body:          testIntegrationStr,
+				Md5OfBody:     "d3673b20e6c009a81c73961b798f838a",
+			},
+		},
+	}
+
+	require.NoError(t, Handle(testContext(), sampleEvent))
+
+	mockResourceClient.AssertExpectations(t)
+	expected := []observer.LoggedEntry{
+		{
+			Entry: zapcore.Entry{Level: zapcore.InfoLevel, Message: "resource type filtered"},
+			Context: []zapcore.Field{
+				zap.String("resource type", "AWS.KMS.Key"),
+			},
+		},
+	}
+	logs := logger.AllUntimed()
+	require.Len(t, logs, 2)
+	assert.Equal(t, expected, logs[:1]) // throw out last oplog msg
+}
+
 // End-to-end unit test
 func TestHandler(t *testing.T) {
 	loggerSetupFunc = setupTestLogger
