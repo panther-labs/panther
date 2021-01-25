@@ -397,6 +397,15 @@ export const downloadData = (data: string, filename: string) => {
 };
 
 /**
+ * Helper function that return key from Enumaration value
+ * @param object
+ * @param value
+ */
+export function getEnumKeyByValue(object: { [key: string]: string }, value: string) {
+  return Object.keys(object).find(key => object[key] === value);
+}
+
+/**
  * Converts a word to its plural form
  *
  * @returns {String} pluralized word
@@ -419,5 +428,4 @@ function toPlural(word: string, pluralFormOrCount?: number | string, count?: num
 
   return cnt === 1 ? word : pluralForm;
 }
-
-export default toPlural;
+export { toPlural };
