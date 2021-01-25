@@ -340,10 +340,13 @@ func PollCloudFormationStacks(pollerInput *awsmodels.ResourcePollerInput) ([]api
 		scanRequest := pollermodels.ScanMsg{}
 		for _, stackId := range requeueIds {
 			scanRequest.Entries = append(scanRequest.Entries, &pollermodels.ScanEntry{
-				AWSAccountID:  &pollerInput.AuthSourceParsedARN.AccountID,
-				IntegrationID: pollerInput.IntegrationID,
-				ResourceID:    stackId,
-				ResourceType:  aws.String(awsmodels.CloudFormationStackSchema),
+				AWSAccountID:            &pollerInput.AuthSourceParsedARN.AccountID,
+				IntegrationID:           pollerInput.IntegrationID,
+				ResourceID:              stackId,
+				ResourceType:            aws.String(awsmodels.CloudFormationStackSchema),
+				RegionIgnoreList:        pollerInput.RegionIgnoreList,
+				ResourceRegexIgnoreList: pollerInput.ResourceRegexIgnoreList,
+				ResourceTypeIgnoreList:  pollerInput.ResourceTypeIgnoreList,
 			})
 		}
 		if err = utils.Requeue(scanRequest, driftDetectionRequeueDelaySeconds); err != nil {

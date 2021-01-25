@@ -56,17 +56,25 @@ func TestUpdateIntegrationSettingsAwsScanType(t *testing.T) {
 	mockSQS.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil)
 
 	result, err := apiTest.UpdateIntegrationSettings(&models.UpdateIntegrationSettingsInput{
-		IntegrationID:    testIntegrationID,
-		IntegrationLabel: "new-label",
-		ScanIntervalMins: 1440,
+		IntegrationID:           testIntegrationID,
+		IntegrationLabel:        "new-label",
+		ScanIntervalMins:        1440,
+		Enabled:                 aws.Bool(true),
+		ResourceRegexIgnoreList: []string{"*test*", "*ignore*"},
+		ResourceTypeIgnoreList:  []string{"AWS.KMS.Key", "AWS.S3.Bucket"},
+		RegionIgnoreList:        []string{"us-east-1", "us-east-2"},
 	})
 
 	expected := &models.SourceIntegration{
 		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-			IntegrationID:    testIntegrationID,
-			IntegrationType:  models.IntegrationTypeAWSScan,
-			IntegrationLabel: "new-label",
-			ScanIntervalMins: 1440,
+			IntegrationID:           testIntegrationID,
+			IntegrationType:         models.IntegrationTypeAWSScan,
+			IntegrationLabel:        "new-label",
+			ScanIntervalMins:        1440,
+			Enabled:                 aws.Bool(true),
+			ResourceRegexIgnoreList: []string{"*test*", "*ignore*"},
+			ResourceTypeIgnoreList:  []string{"AWS.KMS.Key", "AWS.S3.Bucket"},
+			RegionIgnoreList:        []string{"us-east-1", "us-east-2"},
 		},
 	}
 	assert.NoError(t, err)
