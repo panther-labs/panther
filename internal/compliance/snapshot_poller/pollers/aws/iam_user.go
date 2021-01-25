@@ -532,9 +532,12 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddRe
 				zap.String("accountId", pollerInput.AuthSourceParsedARN.AccountID))
 			err = utils.Requeue(pollermodels.ScanMsg{
 				Entries: []*pollermodels.ScanEntry{{
-					AWSAccountID:  aws.String(pollerInput.AuthSourceParsedARN.AccountID),
-					IntegrationID: pollerInput.IntegrationID,
-					ResourceType:  aws.String(awsmodels.IAMUserSchema),
+					AWSAccountID:            aws.String(pollerInput.AuthSourceParsedARN.AccountID),
+					IntegrationID:           pollerInput.IntegrationID,
+					ResourceType:            aws.String(awsmodels.IAMUserSchema),
+					RegionIgnoreList:        pollerInput.RegionIgnoreList,
+					ResourceRegexIgnoreList: pollerInput.ResourceRegexIgnoreList,
+					ResourceTypeIgnoreList:  pollerInput.ResourceTypeIgnoreList,
 				}},
 			}, credentialReportRequeueDelaySeconds)
 			if err != nil {
@@ -579,10 +582,13 @@ func PollIAMUsers(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels.AddRe
 			err = utils.Requeue(pollermodels.ScanMsg{
 				Entries: []*pollermodels.ScanEntry{
 					{
-						AWSAccountID:  iamUserSnapshot.AccountID,
-						IntegrationID: pollerInput.IntegrationID,
-						ResourceID:    iamUserSnapshot.ResourceID,
-						ResourceType:  iamUserSnapshot.ResourceType,
+						AWSAccountID:            iamUserSnapshot.AccountID,
+						IntegrationID:           pollerInput.IntegrationID,
+						ResourceID:              iamUserSnapshot.ResourceID,
+						ResourceType:            iamUserSnapshot.ResourceType,
+						RegionIgnoreList:        pollerInput.RegionIgnoreList,
+						ResourceRegexIgnoreList: pollerInput.ResourceRegexIgnoreList,
+						ResourceTypeIgnoreList:  pollerInput.ResourceTypeIgnoreList,
 					},
 				},
 			}, utils.MaxRequeueDelaySeconds)
