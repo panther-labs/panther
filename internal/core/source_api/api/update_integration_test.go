@@ -216,6 +216,7 @@ func TestUpdateIntegrationLastScanEnd(t *testing.T) {
 }
 
 func TestSlicesContainSameElements(t *testing.T) {
+	t.Parallel()
 	type testCase struct {
 		old, new []string
 		expect   bool
@@ -284,6 +285,7 @@ func TestSlicesContainSameElements(t *testing.T) {
 // Tests that an old s3 source that has the deprecated s3 prefix and logtypes fields
 // populated, can be successfully read and updated with the new s3PrefixLogTypes field.
 func TestS3PrefixLogTypes_BackwardsCompatibility(t *testing.T) {
+	t.Parallel()
 	t.Run("backwards compatible read", func(t *testing.T) {
 		sourceItem := &ddb.Integration{
 			IntegrationID:    uuid.New().String(),
