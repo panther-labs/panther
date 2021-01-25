@@ -41,11 +41,10 @@ var (
 
 // nolint:lll
 type AppInfo struct {
-	// NOTE: this the host local time, which could be unreliable (?)
 	Time            pantherlog.Time   `json:"_time" validate:"required" tcodec:"unix" event_time:"true" description:"The host's local time in epoch format."`
 	CID             pantherlog.String `json:"cid" validate:"required" description:"The customer ID."`
 	CompanyName     pantherlog.String `json:"CompanyName" validate:"required" description:"The name of the company."`
-	DetectionCount  pantherlog.Uint32 `json:"detectioncount" validate:"required" description:"The number of detections."`
+	DetectionCount  pantherlog.Int32  `json:"detectioncount" validate:"required" description:"The number of detections."`
 	FileName        pantherlog.String `json:"FileName" validate:"required" description:"The name of the file."`
 	SHA256HashData  pantherlog.String `json:"SHA256HashData" validate:"required" panther:"sha256" description:"The file hash bashed on SHA-256."`
 	FileDescription pantherlog.String `json:"FileDescription" description:"The description of the file, if any."`
@@ -56,22 +55,21 @@ type AppInfo struct {
 
 // nolint:lll
 type UserInfo struct {
-	// NOTE: this the host local time, which could be unreliable (?)
 	Time                  pantherlog.Time   `json:"_time" validate:"required" tcodec:"unix" event_time:"true" description:"The host's local time in epoch format."`
 	CID                   pantherlog.String `json:"cid" validate:"required" description:"The customer ID."`
 	AccountType           pantherlog.String `json:"AccountType" validate:"required" description:"The type of account set for the user: 'Domain User', 'Domain Administrator', 'Local User'."`
 	DomainUser            pantherlog.String `json:"DomainUser" validate:"required" description:"Indicates if the user's credentials are part of a domain controller: 'Yes', 'No'."`
-	UserName              pantherlog.String `json:"UserName" validate:"required" description:"The username of the system."`
-	UserSidReadable       pantherlog.String `json:"UserSid_readable" validate:"required" panther:"trace_id" description:"The user SID associated with this process."`
+	UserName              pantherlog.String `json:"UserName" validate:"required" panther:"username" description:"The username of the system."`
+	UserSidReadable       pantherlog.String `json:"UserSid_readable" validate:"required" description:"The user SID associated with this process."`
 	LastLoggedOnHost      pantherlog.String `json:"LastLoggedOnHost" description:"The host that was last logged into the system."`
 	LocalAdminAccess      pantherlog.String `json:"LocalAdminAccess" description:"Indicates whether a local user is an admin: 'Yes', 'No'."`
-	LoggedOnHostCount     pantherlog.Uint32 `json:"LoggedOnHostCount" description:"The number of hosts logged in at _time."`
+	LoggedOnHostCount     pantherlog.Int32  `json:"LoggedOnHostCount" description:"The number of hosts logged in at _time."`
 	LogonInfo             pantherlog.String `json:"LogonInfo" description:"The login information."`
 	LogonTime             pantherlog.Time   `json:"LogonTime" tcodec:"unix" description:"The last login time by this user in epoch format."`
 	LogonType             pantherlog.String `json:"LogonType" description:"Values defined as follows, INTERACTIVE: The security principal is logging on interactively, NETWORK: The security principal is logging on using a network, TERMINAL SERVER: The security principal has logged in via a terminal server."`
-	MonthSinceReset       pantherlog.Uint32 `json:"monthsincereset" description:"The number of months since this user's password was last reset."`
+	MonthSinceReset       pantherlog.Int32  `json:"monthsincereset" description:"The number of months since this user's password was last reset."`
 	PasswordLastSet       pantherlog.Time   `json:"PasswordLastSet" tcodec:"unix" description:"The last time in epoch format that this user's password in the system was set."`
 	User                  pantherlog.String `json:"User" description:"A system username with domain."`
-	UserIsAdmin           pantherlog.Uint8  `json:"UserIsAdmin" description:"Indicates whether the user account has administrator privileges."`
-	UserLogonFlagsDecimal pantherlog.String `json:"UserLogonFlags_decimal" description:"A bitfield for various bits of a UserLogon, or failed user logon."`
+	UserIsAdmin           pantherlog.Int8   `json:"UserIsAdmin" description:"Indicates whether the user account has administrator privileges."`
+	UserLogonFlagsDecimal pantherlog.Int32  `json:"UserLogonFlags_decimal" description:"A bitfield for various bits of a UserLogon, or failed user logon."`
 }

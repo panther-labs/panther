@@ -50,11 +50,11 @@ var (
 // nolint:lll
 type AIDMaster struct {
 	Time               pantherlog.Time    `json:"Time" validate:"required" tcodec:"unix" event_time:"true" description:"Timestamp of when the event was received by the CrowdStrike cloud. This is not to be confused with the time the event was generated locally on the system (the _timeevent). This is the timestamp of the event from the cloud's point of view. This value can be converted to any time format and can be used for calculations."`
-	AgentLoadFlags     pantherlog.Uint8   `json:"AgentLoadFlags" validate:"required" description:"Whether the sensor loaded during or after the Windows host's boot process. Example values: 0, 1"`
+	AgentLoadFlags     pantherlog.Int8    `json:"AgentLoadFlags" validate:"required" description:"Whether the sensor loaded during or after the Windows host's boot process. Example values: 0, 1"`
 	AgentLocalTime     pantherlog.Time    `json:"AgentLocalTime" tcodec:"unix" validate:"required" description:"The local time for the sensor in epoch format."`
 	AgentTimeOffset    pantherlog.Float64 `json:"AgentTimeOffset" validate:"required" description:"The time since the last reboot in epoch format."`
 	AgentVersion       pantherlog.String  `json:"AgentVersion" validate:"required" description:"The version of the sensor running on a host."`
-	AID                pantherlog.String  `json:"aid" validate:"required" panther:"trace_id" description:"The sensor ID. This value is unique to each installation of a Falcon sensor. When a sensor is updated or reinstalled, the host gets a new aid. In those situations, a single host could have multiple aid values over time."`
+	AID                pantherlog.String  `json:"aid" validate:"required" description:"The sensor ID. This value is unique to each installation of a Falcon sensor. When a sensor is updated or reinstalled, the host gets a new aid. In those situations, a single host could have multiple aid values over time."`
 	CID                pantherlog.String  `json:"cid" validate:"required" description:"The customer ID."`
 	AIP                pantherlog.String  `json:"aip" validate:"required" panther:"ip" description:"The sensor’s IP, as seen from the CrowdStrike cloud. This is typically the public IP of the sensor. This helps determine the location of a computer, depending on your network."`
 	BiosManufacturer   pantherlog.String  `json:"BiosManufacturer" description:"The manufacturer of the host's BIOS."`
@@ -81,9 +81,8 @@ type AIDMaster struct {
 
 // nolint:lll
 type ManagedAssets struct {
-	// NOTE: this the host local time, which could be unreliable (?)
 	Time                 pantherlog.Time   `json:"_time" tcodec:"unix" validate:"required" event_time:"true" description:"The host's local time in epoch format."`
-	AID                  pantherlog.String `json:"aid" validate:"required" panther:"trace_id" description:"The sensor ID. This value is unique to each installation of a Falcon sensor. When a sensor is updated or reinstalled, the host gets a new aid. In those situations, a single host could have multiple aid values over time."`
+	AID                  pantherlog.String `json:"aid" validate:"required" description:"The sensor ID. This value is unique to each installation of a Falcon sensor. When a sensor is updated or reinstalled, the host gets a new aid. In those situations, a single host could have multiple aid values over time."`
 	CID                  pantherlog.String `json:"cid" validate:"required" description:"The customer ID."`
 	GatewayIP            pantherlog.String `json:"GatewayIP" validate:"required" description:"The gateway of the system where the sensor is installed."`
 	GatewayMAC           pantherlog.String `json:"GatewayMAC" validate:"required" description:"The MAC address of the gateway."`
@@ -96,18 +95,17 @@ type ManagedAssets struct {
 
 // nolint:lll
 type NotManagedAssets struct {
-	// NOTE: this the host local time, which could be unreliable (?)
 	Time                 pantherlog.Time     `json:"_time" validate:"required" tcodec:"unix" event_time:"true" description:"The host's local time in epoch format."`
 	AIP                  pantherlog.String   `json:"aip" validate:"required" panther:"ip" description:"The sensor’s IP, as seen from the CrowdStrike cloud. This is typically the public IP of the sensor. This helps determine the location of a computer, depending on your network."`
-	AIPCount             pantherlog.Uint8    `json:"aipcount" validate:"required" description:"The number of public-facing IP addresses."`
-	LocalIPCount         pantherlog.Uint8    `json:"localipCount" validate:"required" description:"The number of local IP addresses."`
+	AIPCount             pantherlog.Int32    `json:"aipcount" validate:"required" description:"The number of public-facing IP addresses."`
+	LocalIPCount         pantherlog.Int32    `json:"localipCount" validate:"required" description:"The number of local IP addresses."`
 	CID                  pantherlog.String   `json:"cid" validate:"required" description:"The customer ID."`
 	CurrentLocalIP       pantherlog.String   `json:"CurrentLocalIP" validate:"required" panther:"ip" description:"The current local IP address of the machine, found via the IPv4 network discovery protocol."`
 	Subnet               pantherlog.String   `json:"subnet" description:"The subnet of the system."`
 	MAC                  pantherlog.String   `json:"MAC" validate:"required" description:"The MAC address of the system."`
 	MacPrefix            pantherlog.String   `json:"MacPrefix" validate:"required" description:"An identifier unique to the organization."`
 	DiscovererCount      pantherlog.Int32    `json:"discovererCount" validate:"required" description:"The number of aid's that have discovered this system."`
-	DiscovererAID        []pantherlog.String `json:"discoverer_aid" panther:"trace_id" description:"The agent IDs that have discovered this system."`
+	DiscovererAID        []pantherlog.String `json:"discoverer_aid" description:"The agent IDs that have discovered this system."`
 	DiscovererDeviceType pantherlog.String   `json:"discoverer_devicetype" description:"The type of device that discovered this system ('VM' or 'Server')."`
 	FirstDiscoveredDate  pantherlog.Time     `json:"FirstDiscoveredDate" tcodec:"unix" description:"The first time the system was discovered in epoch format."`
 	LastDiscoveredBy     pantherlog.Time     `json:"LastDiscoveredBy" tcodec:"unix" description:"The most recent time the system was discovered in epoch format."`
