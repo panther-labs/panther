@@ -116,3 +116,28 @@ func TestHandleListIntegrationsScanError(t *testing.T) {
 	require.NotNil(t, err)
 	assert.Nil(t, out)
 }
+
+func TestListIntegrations_ExcludeSourcesWithoutType(t *testing.T) {
+	dynamoClient = &ddb.DDB{
+		Client: &modelstest.MockDDBClient{
+			MockScanAttributes: []map[string]*dynamodb.AttributeValue{
+				{
+					"integrationId":    {S: aws.String("123")},
+					"integrationLabel": {S: aws.String("with-type")},
+					"integrationType":  {S: aws.String(models.IntegrationTypeAWS3)},
+				}, {
+					"integrationId":    {S: aws.String("456")},
+					"integrationLabel": {S: aws.String("without-type")},
+				},
+			},
+			TestErr: false,
+		},
+		TableName: "test",
+	}
+
+	out, err := apiTest.ListIntegrations(&models.ListIntegrationsInput{})
+
+	require.NoError(t, err)
+	require.Equal(t, len(out), 1)
+	require.Equal(t, out[0].IntegrationID, "123")
+}
