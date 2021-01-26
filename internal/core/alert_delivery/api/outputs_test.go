@@ -77,6 +77,8 @@ func TestGetAlertOutputsFromDynamicDestinations(t *testing.T) {
 		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
 	}
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
+
+	// The combination of 'INFO' and 'RuleType' and dynamic overrides should yield one result
 	alert := &deliverymodel.Alert{
 		AlertID:      aws.String("alert-id"),
 		Type:         deliverymodel.RuleType,
@@ -87,7 +89,6 @@ func TestGetAlertOutputsFromDynamicDestinations(t *testing.T) {
 		AnalysisName: aws.String("test_rule_name"),
 		CreatedAt:    time.Now().UTC(),
 	}
-
 	expectedResult := []*outputModels.AlertOutput{
 		{
 			OutputID:           aws.String("output-id-1"),
@@ -122,6 +123,8 @@ func TestGetAlertOutputsFromDestinationOverrides(t *testing.T) {
 		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
 	}
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
+
+	// The combination of 'INFO' and 'RuleType' and destination overrides should yield one result
 	alert := &deliverymodel.Alert{
 		AlertID:      aws.String("alert-id"),
 		Type:         deliverymodel.RuleType,
@@ -132,7 +135,6 @@ func TestGetAlertOutputsFromDestinationOverrides(t *testing.T) {
 		AnalysisName: aws.String("test_rule_name"),
 		CreatedAt:    time.Now().UTC(),
 	}
-
 	expectedResult := []*outputModels.AlertOutput{
 		{
 			OutputID:           aws.String("output-id-1"),
@@ -165,6 +167,8 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
 	}
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
+
+	// The combination of 'INFO' and 'RuleType' should yield one result
 	alert := &deliverymodel.Alert{
 		AlertID:      aws.String("alert-id"),
 		Type:         deliverymodel.RuleType,
@@ -175,7 +179,6 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 		AnalysisName: aws.String("test_rule_name"),
 		CreatedAt:    time.Now().UTC(),
 	}
-
 	expectedResult := []*outputModels.AlertOutput{
 		{
 			OutputID:           aws.String("output-id-1"),
