@@ -66,7 +66,6 @@ func Build(desc logtypes.Desc, schema *logschema.Schema) (logtypes.Entry, error)
 	if err != nil {
 		return nil, err
 	}
-
 	logType := LogType(desc.Name)
 	preProcessor, err := buildPreprocessor(schema.Parser)
 	if err != nil {

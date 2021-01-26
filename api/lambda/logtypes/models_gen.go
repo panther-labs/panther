@@ -35,6 +35,8 @@ type LogTypesAPI interface {
 	DelCustomLog(input DelCustomLogInput) (DelCustomLogResponse, error)
 
 	ListCustomLogs() (ListCustomLogsResponse, error)
+
+	GetSchema(input GetSchemaInput) (GetSchemaResponse, error)
 }
 
 // Models for LogTypesAPI
@@ -47,6 +49,7 @@ type LogTypesAPIPayload struct {
 	PutCustomLog          *PutCustomLogInput
 	DelCustomLog          *DelCustomLogInput
 	ListCustomLogs        *struct{}
+	GetSchema             *GetSchemaInput
 }
 
 type DelCustomLogInput struct {
@@ -68,13 +71,41 @@ type GetCustomLogInput struct {
 
 type GetCustomLogResponse struct {
 	Result struct {
-		LogType      string    `json:"logType" validate:"required,startswith=Custom." description:"The log type id"`
-		Revision     int64     `json:"revision" validate:"required,min=1" description:"Log record revision"`
+		Name         string    `json:"logType" dynamodbav:"logType" validate:"required" description:"The schema id"`
+		Revision     int64     `json:"revision" validate:"required,min=1" description:"Schema record revision"`
+		Release      string    `json:"release,omitempty" description:"Managed schema release version"`
 		UpdatedAt    time.Time `json:"updatedAt" description:"Last update timestamp of the record"`
+		CreatedAt    time.Time `json:"createdAt" description:"Creation timestamp of the record"`
+		Managed      bool      `json:"managed,omitempty" description:"Schema is managed by Panther"`
+		Disabled     bool      `json:"disabled,omitempty" dynamodbav:"IsDeleted"  description:"Log record is deleted"`
 		Description  string    `json:"description" description:"Log type description"`
-		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the log type"`
-		LogSpec      string    `json:"logSpec" validate:"required" description:"The log spec in YAML or JSON format"`
+		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the schema"`
+		Spec         string    `json:"logSpec" dynamodbav:"logSpec" validate:"required" description:"The schema spec in YAML or JSON format"`
 	} `json:"record,omitempty" description:"The custom log record (field omitted if an error occurred)"`
+	Error struct {
+		Code    string `json:"code" validate:"required"`
+		Message string `json:"message" validate:"required"`
+	} `json:"error,omitempty" description:"An error that occurred while fetching the record"`
+}
+
+type GetSchemaInput struct {
+	Name     string `json:"name" validate:"required" description:"The schema id"`
+	Revision int64  `json:"revision,omitempty" validate:"omitempty,min=1" description:"Schema record revision (0 means latest)"`
+}
+
+type GetSchemaResponse struct {
+	Record struct {
+		Name         string    `json:"logType" dynamodbav:"logType" validate:"required" description:"The schema id"`
+		Revision     int64     `json:"revision" validate:"required,min=1" description:"Schema record revision"`
+		Release      string    `json:"release,omitempty" description:"Managed schema release version"`
+		UpdatedAt    time.Time `json:"updatedAt" description:"Last update timestamp of the record"`
+		CreatedAt    time.Time `json:"createdAt" description:"Creation timestamp of the record"`
+		Managed      bool      `json:"managed,omitempty" description:"Schema is managed by Panther"`
+		Disabled     bool      `json:"disabled,omitempty" dynamodbav:"IsDeleted"  description:"Log record is deleted"`
+		Description  string    `json:"description" description:"Log type description"`
+		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the schema"`
+		Spec         string    `json:"logSpec" dynamodbav:"logSpec" validate:"required" description:"The schema spec in YAML or JSON format"`
+	} `json:"record,omitempty" description:"The schema record (field omitted if an error occurred)"`
 	Error struct {
 		Code    string `json:"code" validate:"required"`
 		Message string `json:"message" validate:"required"`
@@ -86,13 +117,17 @@ type ListAvailableLogTypesResponse struct {
 }
 
 type ListCustomLogsResponse struct {
-	CustomLogs []struct {
-		LogType      string    `json:"logType" validate:"required,startswith=Custom." description:"The log type id"`
-		Revision     int64     `json:"revision" validate:"required,min=1" description:"Log record revision"`
+	Records []struct {
+		Name         string    `json:"logType" dynamodbav:"logType" validate:"required" description:"The schema id"`
+		Revision     int64     `json:"revision" validate:"required,min=1" description:"Schema record revision"`
+		Release      string    `json:"release,omitempty" description:"Managed schema release version"`
 		UpdatedAt    time.Time `json:"updatedAt" description:"Last update timestamp of the record"`
+		CreatedAt    time.Time `json:"createdAt" description:"Creation timestamp of the record"`
+		Managed      bool      `json:"managed,omitempty" description:"Schema is managed by Panther"`
+		Disabled     bool      `json:"disabled,omitempty" dynamodbav:"IsDeleted"  description:"Log record is deleted"`
 		Description  string    `json:"description" description:"Log type description"`
-		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the log type"`
-		LogSpec      string    `json:"logSpec" validate:"required" description:"The log spec in YAML or JSON format"`
+		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the schema"`
+		Spec         string    `json:"logSpec" dynamodbav:"logSpec" validate:"required" description:"The schema spec in YAML or JSON format"`
 	} `json:"customLogs" description:"Custom log records stored"`
 	Error struct {
 		Code    string `json:"code" validate:"required"`
@@ -112,18 +147,22 @@ type PutCustomLogInput struct {
 	LogType      string `json:"logType" validate:"required,startswith=Custom." description:"The log type id"`
 	Revision     int64  `json:"revision,omitempty" validate:"omitempty,min=1" description:"Custom log record revision to update (if omitted a new record will be created)"`
 	Description  string `json:"description" description:"Log type description"`
-	ReferenceURL string `json:"referenceURL" description:"A URL with reference docs for the log type"`
-	LogSpec      string `json:"logSpec" validate:"required" description:"The log spec in YAML or JSON format"`
+	ReferenceURL string `json:"referenceURL" description:"A URL with reference docs for the schema"`
+	Spec         string `json:"logSpec" dynamodbav:"logSpec" validate:"required" description:"The schema spec in YAML or JSON format"`
 }
 
 type PutCustomLogResponse struct {
 	Result struct {
-		LogType      string    `json:"logType" validate:"required,startswith=Custom." description:"The log type id"`
-		Revision     int64     `json:"revision" validate:"required,min=1" description:"Log record revision"`
+		Name         string    `json:"logType" dynamodbav:"logType" validate:"required" description:"The schema id"`
+		Revision     int64     `json:"revision" validate:"required,min=1" description:"Schema record revision"`
+		Release      string    `json:"release,omitempty" description:"Managed schema release version"`
 		UpdatedAt    time.Time `json:"updatedAt" description:"Last update timestamp of the record"`
+		CreatedAt    time.Time `json:"createdAt" description:"Creation timestamp of the record"`
+		Managed      bool      `json:"managed,omitempty" description:"Schema is managed by Panther"`
+		Disabled     bool      `json:"disabled,omitempty" dynamodbav:"IsDeleted"  description:"Log record is deleted"`
 		Description  string    `json:"description" description:"Log type description"`
-		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the log type"`
-		LogSpec      string    `json:"logSpec" validate:"required" description:"The log spec in YAML or JSON format"`
+		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the schema"`
+		Spec         string    `json:"logSpec" dynamodbav:"logSpec" validate:"required" description:"The schema spec in YAML or JSON format"`
 	} `json:"record,omitempty" description:"The modified record (field is omitted if an error occurred)"`
 	Error struct {
 		Code    string `json:"code" validate:"required"`

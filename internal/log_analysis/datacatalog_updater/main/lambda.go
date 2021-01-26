@@ -83,17 +83,14 @@ func main() {
 		LambdaAPI:  lambdaClient,
 	}
 
-	chain := logtypes.ChainResolvers(
-		registry.NativeLogTypesResolver(),
-		snapshotlogs.Resolver(),
-		&logtypesapi.Resolver{
-			LogTypesAPI: logtypesAPI,
-		},
-	)
+	apiResolver := &logtypesapi.Resolver{
+		LogTypesAPI:    logtypesAPI,
+		NativeLogTypes: logtypes.MustMerge("native", registry.NativeLogTypes(), snapshotlogs.LogTypes()),
+	}
 
 	// Log cases where a log type failed to resolve. Almost certainly something is amiss in the DDB.
 	resolver := logtypes.ResolverFunc(func(ctx context.Context, name string) (logtypes.Entry, error) {
-		entry, err := chain.Resolve(ctx, name)
+		entry, err := apiResolver.Resolve(ctx, name)
 		if err != nil {
 			return nil, err
 		}

@@ -38,30 +38,35 @@ const LambdaName = "panther-logtypes-api"
 
 // LogTypesAPI handles the business logic of log types LogTypesAPI
 type LogTypesAPI struct {
-	NativeLogTypes    func() []string
-	Database          LogTypesDatabase
+	Database          SchemaDatabase
 	UpdateDataCatalog func(ctx context.Context, logType string, from, to []logschema.FieldSchema) error
 	// FIXME: Rename to LogTypesInUse
 	LogTypeInUse func(ctx context.Context) ([]string, error)
 }
 
-// LogTypesDatabase handles the external actions required for LogTypesAPI to be implemented
-type LogTypesDatabase interface {
-	// Return an index of available log types
-	IndexLogTypes(ctx context.Context) ([]string, error)
-	// Create a new custom log record
-	CreateCustomLog(ctx context.Context, id string, params *CustomLog) (*CustomLogRecord, error)
-	// Get a single custom log record
-	GetCustomLog(ctx context.Context, id string, revision int64) (*CustomLogRecord, error)
-	// Update a custom log record
-	UpdateCustomLog(ctx context.Context, id string, currentRevision int64, params *CustomLog) (*CustomLogRecord, error)
-	// Delete a custom log record
-	DeleteCustomLog(ctx context.Context, id string, currentRevision int64) error
+// SchemaDatabase handles the external actions required for LogTypesAPI to be implemented
+type SchemaDatabase interface {
+	// Create a new user schema record
+	CreateUserSchema(ctx context.Context, id string, upd SchemaUpdate) (*SchemaRecord, error)
+
+	// GetSchema gets a single schema record
+	GetSchema(ctx context.Context, id string, revision int64) (*SchemaRecord, error)
+
+	// UpdateSchema updates a managed schema to the release version provided
+	UpdateUserSchema(ctx context.Context, id string, rev int64, upd SchemaUpdate) (*SchemaRecord, error)
+
+	// UpdateManagedSchema updates a managed schema to the release version provided
+	UpdateManagedSchema(ctx context.Context, id string, release string, upd SchemaUpdate) (*SchemaRecord, error)
+
+	ToggleSchema(ctx context.Context, id string, enabled bool) error
+
 	// Get multiple custom log records at their latest revision
-	BatchGetCustomLogs(ctx context.Context, ids ...string) ([]*CustomLogRecord, error)
-	// List deleted log types
-	ListDeletedLogTypes(ctx context.Context) ([]string, error)
+	BatchGetSchemas(ctx context.Context, ids ...string) ([]*SchemaRecord, error)
+
+	ScanSchemas(ctx context.Context, scan ScanSchemaFunc) error
 }
+
+type ScanSchemaFunc func(r *SchemaRecord) bool
 
 const (
 	// ErrRevisionConflict is the error code to use when there is a revision conflict

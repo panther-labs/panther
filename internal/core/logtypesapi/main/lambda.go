@@ -36,8 +36,6 @@ import (
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 	"github.com/panther-labs/panther/pkg/x/lambdamux"
@@ -63,15 +61,10 @@ func main() {
 
 	session := session.Must(session.NewSession())
 	lambdaClient := lambdaclient.New(session)
-	nativeLogTypes := logtypes.CollectNames(registry.NativeLogTypes())
 	// FIXME: uncomment the below line to add the resource history to the of available logTypes and allow rules to target
 	// nativeLogTypes = append(nativeLogTypes, logtypes.CollectNames(snapshotlogs.LogTypes())...)
 	api := &logtypesapi.LogTypesAPI{
-		// Use the default registry with all available log types
-		NativeLogTypes: func() []string {
-			return nativeLogTypes
-		},
-		Database: &logtypesapi.DynamoDBLogTypes{
+		Database: &logtypesapi.DynamoDBSchemas{
 			DB:        dynamodb.New(session),
 			TableName: config.LogTypesTableName,
 		},

@@ -45,6 +45,7 @@ type LogTypesAPIPayload struct {
 	PutCustomLog          *PutCustomLogInput `json:"PutCustomLog,omitempty"`
 	DelCustomLog          *DelCustomLogInput `json:"DelCustomLog,omitempty"`
 	ListCustomLogs        *struct{}          `json:"ListCustomLogs,omitempty"`
+	GetSchema             *GetSchemaInput    `json:"GetSchema,omitempty"`
 }
 
 func (c *LogTypesAPILambdaClient) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, error) {
@@ -116,6 +117,20 @@ func (c *LogTypesAPILambdaClient) ListCustomLogs(ctx context.Context) (*ListCust
 		ListCustomLogs: &struct{}{},
 	}
 	reply := ListCustomLogsOutput{}
+	if err := c.invoke(ctx, &payload, &reply); err != nil {
+		return nil, err
+	}
+	return &reply, nil
+}
+
+func (c *LogTypesAPILambdaClient) GetSchema(ctx context.Context, input *GetSchemaInput) (*GetSchemaOutput, error) {
+	if input == nil {
+		input = &GetSchemaInput{}
+	}
+	payload := LogTypesAPIPayload{
+		GetSchema: input,
+	}
+	reply := GetSchemaOutput{}
 	if err := c.invoke(ctx, &payload, &reply); err != nil {
 		return nil, err
 	}
