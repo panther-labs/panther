@@ -16,6 +16,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/hashicorp/go-cleanhttp v0.5.1
 	github.com/hashicorp/golang-lru v0.5.4
+	github.com/iancoleman/strcase v0.1.3
 	github.com/influxdata/go-syslog/v3 v3.0.0
 	github.com/itchyny/timefmt-go v0.1.1
 	github.com/joho/godotenv v1.3.0

@@ -22,11 +22,16 @@ import (
 	"encoding/json"
 	"net"
 	"net/url"
+	"reflect"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/pkg/errors"
+
+	"github.com/panther-labs/panther/pkg/x/structfields"
 )
 
 // InferJSONValueSchema infers the Value Schema for a JSON value.
@@ -164,4 +169,92 @@ func (v *ValueSchema) NonEmpty() *ValueSchema {
 	default:
 		return nil
 	}
+}
+
+func InferTypeValueSchema(typ reflect.Type) (*ValueSchema, error) {
+	// Lift pointer indirections
+	for typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+	// Handle 'special types'
+	if valueType, ok := inverseMappings[typ]; ok {
+		return &ValueSchema{
+			Type: valueType,
+		}, nil
+	}
+	switch typ.Kind() {
+	case reflect.Struct:
+		// We check with ConvertibleTo for timestamp types defined as `type T time.Time`
+		if typ.ConvertibleTo(reflect.TypeOf(time.Time{})) {
+			return &ValueSchema{
+				Type: TypeTimestamp,
+			}, nil
+		}
+		fields := structfields.Flatten(typ)
+		out := &ValueSchema{
+			Type:   TypeObject,
+			Fields: make([]FieldSchema, len(fields)),
+		}
+		for i, field := range fields {
+			if err := inferFieldSchema(&out.Fields[i], field); err != nil {
+				return nil, err
+			}
+		}
+		return out, nil
+	case reflect.Slice:
+		el, err := InferTypeValueSchema(typ.Elem())
+		if err != nil {
+			return nil, err
+		}
+		return &ValueSchema{
+			Type:    TypeArray,
+			Element: el,
+		}, nil
+	case reflect.String:
+		return &ValueSchema{Type: TypeString}, nil
+	case reflect.Float64, reflect.Float32:
+		return &ValueSchema{Type: TypeFloat}, nil
+	case reflect.Bool:
+		return &ValueSchema{Type: TypeBoolean}, nil
+	case reflect.Uint, reflect.Uint64, reflect.Int64, reflect.Uint32:
+		return &ValueSchema{Type: TypeBigInt}, nil
+	case reflect.Int32, reflect.Uint16, reflect.Int:
+		return &ValueSchema{Type: TypeInt}, nil
+	case reflect.Int8, reflect.Uint8, reflect.Int16:
+		return &ValueSchema{Type: TypeSmallInt}, nil
+	case reflect.Map:
+		return &ValueSchema{Type: TypeJSON}, nil
+	default:
+		return nil, errors.Errorf("cannot produce schema for %s", typ)
+	}
+}
+
+func inferFieldSchema(s *FieldSchema, field reflect.StructField) error {
+	name, err := structfields.FieldNameJSON(field)
+	if err != nil {
+		return err
+	}
+	s.Name = name
+	if structfields.IsRequired(field) {
+		s.Required = true
+	}
+	s.Description = structfields.Describe(field)
+	value, err := InferTypeValueSchema(field.Type)
+	if err != nil {
+		return err
+	}
+	if isEventTime, err := strconv.ParseBool(field.Tag.Get("event_time")); err == nil && isEventTime {
+		value.IsEventTime = isEventTime
+	}
+	value.TimeFormat = field.Tag.Get("tcodec")
+	if pantherTag := field.Tag.Get("panther"); pantherTag != "" {
+		scanners := strings.Split(pantherTag, ",")
+		for _, name := range scanners {
+			if name = strings.TrimSpace(name); name != "" {
+				value.Indicators = append(value.Indicators, name)
+			}
+		}
+	}
+	s.ValueSchema = *value
+	return nil
 }

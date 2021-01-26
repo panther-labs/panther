@@ -1,4 +1,4 @@
-package sources
+package logschema_test
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,27 +19,24 @@ package sources
  */
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 
-	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
-func Test_BuildClassifier_NoLogTypes(t *testing.T) {
-	var logTypes []string
-	src := &models.SourceIntegration{
-		SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-			IntegrationID:    "integration-id",
-			IntegrationLabel: "integration-label",
-		},
+func TestExport(t *testing.T) {
+	assert := require.New(t)
+	for _, entry := range registry.NativeLogTypes().Entries() {
+		typ := reflect.TypeOf(entry.Schema())
+		schema, err := logschema.InferTypeValueSchema(typ)
+		assert.NoError(err, "schema export for %q should work", entry)
+		data, err := yaml.Marshal(schema)
+		assert.NoError(err, "schema export for %q YAML", entry)
+		println(string(data))
 	}
-	c, err := BuildClassifier(logTypes, src, registry.NativeParsersResolver())
-	require.NoError(t, err)
-
-	_, err = c.Classify(`{"key":"value}"`)
-
-	require.Error(t, err)
-	require.Equal(t, "failed to classify log line", err.Error())
 }
