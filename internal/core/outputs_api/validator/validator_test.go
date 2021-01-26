@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
@@ -43,7 +43,7 @@ func TestAddOutputNoName(t *testing.T) {
 	err = validator.Struct(&models.AddOutputInput{
 		UserID:       aws.String("3601990c-b566-404b-b367-3c6eacd6fe60"),
 		DisplayName:  aws.String(""),
-		AlertTypes:   []string{deliveryModels.RuleType},
+		AlertTypes:   []string{deliverymodel.RuleType},
 		OutputConfig: &models.OutputConfig{Slack: &models.SlackConfig{WebhookURL: "https://hooks.slack.com"}},
 	})
 	require.Error(t, err)
@@ -56,7 +56,7 @@ func TestAddOutputValid(t *testing.T) {
 	assert.NoError(t, validator.Struct(&models.AddOutputInput{
 		UserID:      aws.String("3601990c-b566-404b-b367-3c6eacd6fe60"),
 		DisplayName: aws.String("mychannel"),
-		AlertTypes:  []string{deliveryModels.RuleType},
+		AlertTypes:  []string{deliverymodel.RuleType},
 		OutputConfig: &models.OutputConfig{
 			Slack: &models.SlackConfig{WebhookURL: "https://hooks.slack.com"},
 		},
@@ -69,7 +69,7 @@ func TestAddInvalidArn(t *testing.T) {
 	err = validator.Struct(&models.AddOutputInput{
 		UserID:      aws.String("3601990c-b566-404b-b367-3c6eacd6fe60"),
 		DisplayName: aws.String("mytopic"),
-		AlertTypes:  []string{deliveryModels.RuleType},
+		AlertTypes:  []string{deliverymodel.RuleType},
 		OutputConfig: &models.OutputConfig{
 			Sns: &models.SnsConfig{TopicArn: "arn:aws:sns:invalidarn:MyTopic"},
 		},
@@ -84,7 +84,7 @@ func TestAddNonSnsArn(t *testing.T) {
 	err = validator.Struct(&models.AddOutputInput{
 		UserID:      aws.String("3601990c-b566-404b-b367-3c6eacd6fe60"),
 		DisplayName: aws.String("mytopic"),
-		AlertTypes:  []string{deliveryModels.RuleType},
+		AlertTypes:  []string{deliverymodel.RuleType},
 		OutputConfig: &models.OutputConfig{
 			Sns: &models.SnsConfig{TopicArn: "arn:aws:s3:::test-s3-bucket"},
 		},

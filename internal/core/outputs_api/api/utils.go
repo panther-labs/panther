@@ -24,7 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
@@ -109,11 +109,12 @@ func redactOutput(outputConfig *models.OutputConfig) {
 	}
 }
 
+// TODO: remove this function when proper migrations are in place
 // configureOutputFallbacks - function used to ensure backwards compatibility by backfilling previously missing fields
 func configureOutputFallbacks(alertOutput *models.AlertOutput) {
 	// Backfill an empty list to contain all the supported types.
 	if len(alertOutput.AlertTypes) == 0 {
-		alertOutput.AlertTypes = []string{deliveryModels.RuleType, deliveryModels.RuleErrorType, deliveryModels.PolicyType}
+		alertOutput.AlertTypes = []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType}
 	}
 
 	// Backfill an empty Opsgenie service region

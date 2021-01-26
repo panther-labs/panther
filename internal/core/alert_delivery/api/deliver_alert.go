@@ -29,7 +29,7 @@ import (
 	"go.uber.org/zap"
 
 	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertTable "github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/pkg/genericapi"
@@ -39,7 +39,7 @@ import (
 const genericErrorMessage = "Could not find the rule associated with this alert!"
 
 // DeliverAlert sends a specific alert to the specified destinations.
-func (API) DeliverAlert(ctx context.Context, input *deliveryModels.DeliverAlertInput) (*deliveryModels.DeliverAlertOutput, error) {
+func (API) DeliverAlert(ctx context.Context, input *deliverymodel.DeliverAlertInput) (*deliverymodel.DeliverAlertOutput, error) {
 	// First, fetch the alert
 	zap.L().Debug("Fetching alert", zap.String("AlertID", input.AlertID))
 
@@ -73,7 +73,7 @@ func (API) DeliverAlert(ctx context.Context, input *deliveryModels.DeliverAlertI
 }
 
 // getAlert - extracts the alert from the input payload and handles corner cases
-func getAlert(input *deliveryModels.DeliverAlertInput) (*alertTable.AlertItem, error) {
+func getAlert(input *deliverymodel.DeliverAlertInput) (*alertTable.AlertItem, error) {
 	alertItem, err := alertsTableClient.GetAlert(input.AlertID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to fetch alert %s from ddb", input.AlertID)
@@ -88,18 +88,18 @@ func getAlert(input *deliveryModels.DeliverAlertInput) (*alertTable.AlertItem, e
 }
 
 // populateAlertData - queries the rule associated and merges in the details to the alert
-func populateAlertData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, error) {
+func populateAlertData(alertItem *alertTable.AlertItem) (*deliverymodel.Alert, error) {
 	switch alertItem.Type {
-	case deliveryModels.PolicyType:
+	case deliverymodel.PolicyType:
 		return populateAlertWithPolicyData(alertItem)
-	case deliveryModels.RuleType, deliveryModels.RuleErrorType:
+	case deliverymodel.RuleType, deliverymodel.RuleErrorType:
 		return populateAlertWithRuleData(alertItem)
 	default:
 		return nil, errors.Errorf("unknown alert type %s", alertItem.Type)
 	}
 }
 
-func populateAlertWithPolicyData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, error) {
+func populateAlertWithPolicyData(alertItem *alertTable.AlertItem) (*deliverymodel.Alert, error) {
 	commonFields := []zap.Field{
 		zap.String("alertId", alertItem.AlertID),
 		zap.String("policyId", alertItem.PolicyID),
@@ -118,9 +118,9 @@ func populateAlertWithPolicyData(alertItem *alertTable.AlertItem) (*deliveryMode
 		return nil, &genericapi.InternalError{Message: genericErrorMessage}
 	}
 
-	return &deliveryModels.Alert{
+	return &deliverymodel.Alert{
 		AnalysisID:          policy.ID,
-		Type:                deliveryModels.PolicyType,
+		Type:                deliverymodel.PolicyType,
 		CreatedAt:           alertItem.CreationTime,
 		Severity:            alertItem.Severity,
 		OutputIds:           []string{}, // We do not pay attention to this field
@@ -139,7 +139,7 @@ func populateAlertWithPolicyData(alertItem *alertTable.AlertItem) (*deliveryMode
 	}, nil
 }
 
-func populateAlertWithRuleData(alertItem *alertTable.AlertItem) (*deliveryModels.Alert, error) {
+func populateAlertWithRuleData(alertItem *alertTable.AlertItem) (*deliverymodel.Alert, error) {
 	commonFields := []zap.Field{
 		zap.String("alertId", alertItem.AlertID),
 		zap.String("ruleId", alertItem.RuleID),
@@ -158,9 +158,9 @@ func populateAlertWithRuleData(alertItem *alertTable.AlertItem) (*deliveryModels
 		return nil, &genericapi.InternalError{Message: genericErrorMessage}
 	}
 
-	return &deliveryModels.Alert{
+	return &deliverymodel.Alert{
 		AnalysisID:          rule.ID,
-		Type:                deliveryModels.RuleType,
+		Type:                deliverymodel.RuleType,
 		CreatedAt:           alertItem.CreationTime,
 		Severity:            alertItem.Severity,
 		OutputIds:           []string{}, // We do not pay attention to this field
@@ -180,7 +180,7 @@ func populateAlertWithRuleData(alertItem *alertTable.AlertItem) (*deliveryModels
 }
 
 // getAlertOutputMapping - gets a map for a given alert to it's outputIds
-func getAlertOutputMapping(alert *deliveryModels.Alert, outputIds []string) (AlertOutputMap, error) {
+func getAlertOutputMapping(alert *deliverymodel.Alert, outputIds []string) (AlertOutputMap, error) {
 	// Initialize our Alert -> Output map
 	alertOutputMap := make(AlertOutputMap)
 
@@ -196,7 +196,7 @@ func getAlertOutputMapping(alert *deliveryModels.Alert, outputIds []string) (Ale
 		return alertOutputMap, errors.Wrapf(err, "Failed to fetch outputIds")
 	}
 
-	// Check the provided the input outputIds and generate a list of valid outputs. Ends up getting a unique list as well!
+	// Check the provided the input outputIds and generate a list of valid outputs.
 	validOutputIds := intersection(outputIds, outputs)
 	if len(validOutputIds) == 0 {
 		return alertOutputMap, &genericapi.InvalidInputError{
@@ -215,7 +215,7 @@ func getAlertOutputMapping(alert *deliveryModels.Alert, outputIds []string) (Ale
 		}
 
 		return alertOutputMap, &genericapi.InvalidInputError{
-			Message: fmt.Sprintf("The destination(s) specified do not accept this Alert's Type: [%v])", strings.Join(diffOutputIds, ", "))}
+			Message: fmt.Sprintf("The destination(s) specified do not accept this Alert's Type: [%s])", strings.Join(diffOutputIds, ", "))}
 	}
 
 	// Map the outputs

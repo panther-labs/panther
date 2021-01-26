@@ -26,7 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	jsoniter "github.com/json-iterator/go"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
@@ -36,7 +36,7 @@ const (
 
 // Jira alert send an issue.
 func (client *OutputClient) Jira(
-	ctx context.Context, alert *alertModels.Alert, config *outputModels.JiraConfig) *AlertDeliveryResponse {
+	ctx context.Context, alert *deliverymodel.Alert, config *outputModels.JiraConfig) *AlertDeliveryResponse {
 
 	description := "*Description:* " + alert.AnalysisDescription
 	link := "\n [Click here to view in the Panther UI|" + generateURL(alert) + "]"

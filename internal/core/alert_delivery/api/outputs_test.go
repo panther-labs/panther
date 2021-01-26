@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
@@ -41,14 +42,17 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 		{
 			OutputID:           aws.String("default-info-1"),
 			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+			AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
 		},
 		{
 			OutputID:           aws.String("default-info-2"),
 			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+			AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
 		},
 		{
 			OutputID:           aws.String("default-medium"),
 			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
+			AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
 		},
 	}
 	payload, err := jsoniter.Marshal(output)
@@ -66,9 +70,11 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 	expectedResult := []*outputModels.AlertOutput{{
 		OutputID:           aws.String("default-info-1"),
 		DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+		AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
 	}, {
 		OutputID:           aws.String("default-info-2"),
 		DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+		AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
 	}}
 
 	result, err := getAlertOutputs(alert)

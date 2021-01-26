@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
 )
@@ -65,7 +65,7 @@ func TestGetOutput(t *testing.T) {
 		LastModifiedTime:   aws.String("lastModifiedTime"),
 		OutputConfig:       &models.OutputConfig{Slack: &models.SlackConfig{WebhookURL: redacted}},
 		DefaultForSeverity: aws.StringSlice([]string{"HIGH", "CRITICAL"}),
-		AlertTypes:         []string{deliveryModels.RuleType, deliveryModels.RuleErrorType, deliveryModels.PolicyType},
+		AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
 	}
 
 	result, err := (API{}).GetOutput(mockGetOutputInput)

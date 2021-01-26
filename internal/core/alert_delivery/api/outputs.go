@@ -24,7 +24,7 @@ import (
 
 	"go.uber.org/zap"
 
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
@@ -32,7 +32,7 @@ import (
 const alertOutputSkip = "SKIP"
 
 // getAlertOutputs - Get output ids for an alert by dynmaic destinations, destination overrides, or default severity
-func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, error) {
+func getAlertOutputs(alert *deliverymodel.Alert) ([]*outputModels.AlertOutput, error) {
 	// fetch all available panther outputs
 	outputs, err := getOutputs()
 	if err != nil {
@@ -57,7 +57,13 @@ func getAlertOutputs(alert *deliveryModels.Alert) ([]*outputModels.AlertOutput, 
 	}
 
 	// If no other dynamic/overrides were set, we calculate based on the severity rating (default)
-	return getOutputsBySeverity(alert, outputs), nil
+	alertOutputs = getOutputsBySeverity(alert, outputs)
+
+	// Next, we filter out any outputs that don't match the Alert Type setting
+	alertOutputs = filterOutputsByAlertType(alert, alertOutputs)
+
+	// Then, we obtain a list of unique outputs
+	return getUniqueOutputs(alertOutputs), nil
 }
 
 // getOutputs - Gets a list of outputs from panther (using a cache)
@@ -73,7 +79,7 @@ func getOutputs() ([]*outputModels.AlertOutput, error) {
 	return outputsCache.getOutputs(), nil
 }
 
-func shouldSkip(alert *deliveryModels.Alert) bool {
+func shouldSkip(alert *deliverymodel.Alert) bool {
 	for _, outputID := range alert.OutputIds {
 		if outputID == alertOutputSkip {
 			return true
@@ -82,7 +88,7 @@ func shouldSkip(alert *deliveryModels.Alert) bool {
 	return false
 }
 
-func getOutputsByDynamicDestinations(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) ([]*outputModels.AlertOutput, bool) {
+func getOutputsByDynamicDestinations(alert *deliverymodel.Alert, outputs []*outputModels.AlertOutput) ([]*outputModels.AlertOutput, bool) {
 	alertOutputs := []*outputModels.AlertOutput{}
 	if len(alert.Destinations) == 0 {
 		return alertOutputs, false
@@ -100,7 +106,7 @@ func getOutputsByDynamicDestinations(alert *deliveryModels.Alert, outputs []*out
 }
 
 func getOutputsByDestinationOverrides(
-	alert *deliveryModels.Alert,
+	alert *deliverymodel.Alert,
 	outputs []*outputModels.AlertOutput,
 ) ([]*outputModels.AlertOutput, bool) {
 
@@ -120,7 +126,7 @@ func getOutputsByDestinationOverrides(
 	return alertOutputs, len(alertOutputs) > 0
 }
 
-func getOutputsBySeverity(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
+func getOutputsBySeverity(alert *deliverymodel.Alert, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
 	alertOutputs := []*outputModels.AlertOutput{}
 	for _, output := range outputs {
 		for _, outputSeverity := range output.DefaultForSeverity {
@@ -133,11 +139,11 @@ func getOutputsBySeverity(alert *deliveryModels.Alert, outputs []*outputModels.A
 }
 
 // filterOutputsByAlertType - returns a list of outputs that match the type specified in the alert.
-// Note: the output.AlertTypes field will always contain a list of at least 1 type as it is backfilled in
-// the outputs API.
-func filterOutputsByAlertType(alert *deliveryModels.Alert, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
+func filterOutputsByAlertType(alert *deliverymodel.Alert, outputs []*outputModels.AlertOutput) []*outputModels.AlertOutput {
 	alertOutputs := []*outputModels.AlertOutput{}
 	for _, output := range outputs {
+		// Note: the output.AlertTypes field below will always contain
+		// a list of at least 1 type as it is backfilled in the outputs API.
 		for _, alertType := range output.AlertTypes {
 			if alert.Type == alertType {
 				alertOutputs = append(alertOutputs, output)

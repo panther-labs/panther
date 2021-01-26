@@ -22,7 +22,7 @@ import (
 	"context"
 	"time"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
@@ -34,7 +34,7 @@ const (
 // PagerDuty sends an alert to a pager duty integration endpoint.
 func (client *OutputClient) PagerDuty(
 	ctx context.Context,
-	alert *alertModels.Alert,
+	alert *deliverymodel.Alert,
 	config *outputModels.PagerDutyConfig,
 ) *AlertDeliveryResponse {
 

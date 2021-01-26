@@ -36,7 +36,7 @@ import (
 	alertModels "github.com/panther-labs/panther/api/lambda/alerts/models"
 	analysisModels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	complianceModels "github.com/panther-labs/panther/api/lambda/compliance/models"
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	alertTable "github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
@@ -57,7 +57,7 @@ func TestGetAlert(t *testing.T) {
 	timeNow := time.Now().UTC()
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
 
-	alert := &deliveryModels.Alert{
+	alert := &deliverymodel.Alert{
 		AlertID:             alertID,
 		AnalysisDescription: "A test alert",
 		AnalysisID:          "Test.Analysis.ID",
@@ -66,7 +66,7 @@ func TestGetAlert(t *testing.T) {
 		Title:               "Test Alert",
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
-		Type:                deliveryModels.RuleType,
+		Type:                deliverymodel.RuleType,
 		OutputIds:           outputIds,
 		Severity:            "INFO",
 		CreatedAt:           timeNow,
@@ -119,7 +119,7 @@ func TestPopulateAlert(t *testing.T) {
 	severity := complianceModels.SeverityInfo
 	tags := []string{"test", "alert"}
 
-	alert := &deliveryModels.Alert{
+	alert := &deliverymodel.Alert{
 		AlertID:             alertID,
 		AnalysisDescription: description,
 		AnalysisID:          analysisID,
@@ -128,7 +128,7 @@ func TestPopulateAlert(t *testing.T) {
 		Title:               "Test Alert",
 		RetryCount:          0,
 		Tags:                tags,
-		Type:                deliveryModels.RuleType,
+		Type:                deliverymodel.RuleType,
 		OutputIds:           []string{},
 		Severity:            string(severity),
 		CreatedAt:           timeNow,
@@ -138,7 +138,7 @@ func TestPopulateAlert(t *testing.T) {
 
 	alertItem := &alertTable.AlertItem{
 		AlertID:             *alertID,
-		Type:                deliveryModels.RuleType,
+		Type:                deliverymodel.RuleType,
 		Description:         aws.String(description),
 		RuleID:              analysisID,
 		RuleVersion:         versionID,
@@ -192,7 +192,7 @@ func TestGetAlertOutputMapping(t *testing.T) {
 	alertID := aws.String("alert-id")
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
 
-	alert := &deliveryModels.Alert{
+	alert := &deliverymodel.Alert{
 		AlertID:             alertID,
 		AnalysisDescription: "A test alert",
 		AnalysisID:          "Test.Analysis.ID",
@@ -201,14 +201,14 @@ func TestGetAlertOutputMapping(t *testing.T) {
 		Title:               "Test Alert",
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
-		Type:                deliveryModels.RuleType,
+		Type:                deliverymodel.RuleType,
 		OutputIds:           []string{},
 		Severity:            "INFO",
 		CreatedAt:           time.Now().UTC(),
 		Version:             aws.String("abc"),
 	}
 
-	input := &deliveryModels.DeliverAlertInput{
+	input := &deliverymodel.DeliverAlertInput{
 		AlertID:   aws.StringValue(alertID),
 		OutputIds: outputIds,
 	}
@@ -218,19 +218,19 @@ func TestGetAlertOutputMapping(t *testing.T) {
 			OutputID:           aws.String(outputIds[0]),
 			OutputType:         aws.String("slack"),
 			DefaultForSeverity: []*string{aws.String("INFO")},
-			AlertTypes:         []string{deliveryModels.RuleType, deliveryModels.RuleErrorType, deliveryModels.PolicyType},
+			AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
 		},
 		{
 			OutputID:           aws.String(outputIds[1]),
 			OutputType:         aws.String("customwebhook"),
 			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM")},
-			AlertTypes:         []string{deliveryModels.RuleType, deliveryModels.RuleErrorType, deliveryModels.PolicyType},
+			AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
 		},
 		{
 			OutputID:           aws.String(outputIds[2]),
 			OutputType:         aws.String("asana"),
 			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM"), aws.String("CRITICAL")},
-			AlertTypes:         []string{deliveryModels.RuleType, deliveryModels.RuleErrorType, deliveryModels.PolicyType},
+			AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
 		},
 	}
 
@@ -239,7 +239,7 @@ func TestGetAlertOutputMapping(t *testing.T) {
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
 
-	// AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
+	// AlertOutputMap map[*deliverymodel.Alert][]*outputModels.AlertOutput
 	expectedResult := AlertOutputMap{
 		alert: outputs,
 	}
@@ -262,7 +262,7 @@ func TestGetAlertOutputMappingError(t *testing.T) {
 	alertID := aws.String("alert-id")
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
 
-	alert := &deliveryModels.Alert{
+	alert := &deliverymodel.Alert{
 		AlertID:             alertID,
 		AnalysisDescription: "A test alert",
 		AnalysisID:          "Test.Analysis.ID",
@@ -271,21 +271,21 @@ func TestGetAlertOutputMappingError(t *testing.T) {
 		Title:               "Test Alert",
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
-		Type:                deliveryModels.RuleType,
+		Type:                deliverymodel.RuleType,
 		OutputIds:           []string{},
 		Severity:            "INFO",
 		CreatedAt:           time.Now().UTC(),
 		Version:             aws.String("abc"),
 	}
 
-	input := &deliveryModels.DeliverAlertInput{
+	input := &deliverymodel.DeliverAlertInput{
 		AlertID:   aws.StringValue(alertID),
 		OutputIds: outputIds,
 	}
 
 	mockClient.On("Invoke", mock.Anything).Return((*lambda.InvokeOutput)(nil), errors.New("error")).Once()
 
-	// AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
+	// AlertOutputMap map[*deliverymodel.Alert][]*outputModels.AlertOutput
 	expectedResult := AlertOutputMap{}
 
 	// Need to expire the cache because other tests mutate this global when run in parallel
@@ -306,7 +306,7 @@ func TestGetAlertOutputMappingInvalidOutputIds(t *testing.T) {
 	alertID := aws.String("alert-id")
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
 
-	alert := &deliveryModels.Alert{
+	alert := &deliverymodel.Alert{
 		AlertID:             alertID,
 		AnalysisDescription: "A test alert",
 		AnalysisID:          "Test.Analysis.ID",
@@ -315,14 +315,14 @@ func TestGetAlertOutputMappingInvalidOutputIds(t *testing.T) {
 		Title:               "Test Alert",
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
-		Type:                deliveryModels.RuleType,
+		Type:                deliverymodel.RuleType,
 		OutputIds:           []string{},
 		Severity:            "INFO",
 		CreatedAt:           time.Now().UTC(),
 		Version:             aws.String("abc"),
 	}
 
-	input := &deliveryModels.DeliverAlertInput{
+	input := &deliverymodel.DeliverAlertInput{
 		AlertID:   aws.StringValue(alertID),
 		OutputIds: outputIds,
 	}
@@ -350,7 +350,7 @@ func TestGetAlertOutputMappingInvalidOutputIds(t *testing.T) {
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
 
-	// AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
+	// AlertOutputMap map[*deliverymodel.Alert][]*outputModels.AlertOutput
 	expectedResult := AlertOutputMap{}
 
 	// Need to expire the cache because other tests mutate this global when run in parallel

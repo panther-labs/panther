@@ -23,7 +23,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
@@ -42,7 +42,7 @@ var pantherToOpsGeniePriority = map[string]string{
 
 // Opsgenie alert send an alert.
 func (client *OutputClient) Opsgenie(
-	ctx context.Context, alert *alertModels.Alert, config *outputModels.OpsgenieConfig) *AlertDeliveryResponse {
+	ctx context.Context, alert *deliverymodel.Alert, config *outputModels.OpsgenieConfig) *AlertDeliveryResponse {
 
 	description := "<strong>Description:</strong> " + alert.AnalysisDescription
 	link := "\n<a href=\"" + generateURL(alert) + "\">Click here to view in the Panther UI</a>"

@@ -26,11 +26,11 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 )
 
 // DispatchAlerts - Sends an alert to sends a specific alert to the specified destinations.
-func (API) DispatchAlerts(ctx context.Context, input []*deliveryModels.DispatchAlertsInput) (interface{}, error) {
+func (API) DispatchAlerts(ctx context.Context, input []*deliverymodel.DispatchAlertsInput) (interface{}, error) {
 	zap.L().Debug("Dispatching alerts", zap.Int("num_alerts", len(input)))
 
 	// Extract alerts from the input payload
@@ -65,12 +65,12 @@ func (API) DispatchAlerts(ctx context.Context, input []*deliveryModels.DispatchA
 }
 
 // getAlerts - extracts the alerts from an DispatchAlertsInput (SQSMessage)
-func getAlerts(input []*deliveryModels.DispatchAlertsInput) []*deliveryModels.Alert {
-	alerts := []*deliveryModels.Alert{}
+func getAlerts(input []*deliverymodel.DispatchAlertsInput) []*deliverymodel.Alert {
+	alerts := []*deliverymodel.Alert{}
 	validate := validator.New()
 
 	for _, record := range input {
-		alert := &deliveryModels.Alert{}
+		alert := &deliverymodel.Alert{}
 		if err := jsoniter.UnmarshalFromString(record.Body, alert); err != nil {
 			zap.L().Error("Failed to unmarshal item", zap.Error(err))
 			continue
@@ -85,7 +85,7 @@ func getAlerts(input []*deliveryModels.DispatchAlertsInput) []*deliveryModels.Al
 }
 
 // getAlertOutputMap - maps a list of alerts to their specified destinations or defaults
-func getAlertOutputMap(alerts []*deliveryModels.Alert) (AlertOutputMap, error) {
+func getAlertOutputMap(alerts []*deliverymodel.Alert) (AlertOutputMap, error) {
 	// Create our Alert -> Output mappings
 	alertOutputMap := make(AlertOutputMap)
 	for _, alert := range alerts {
@@ -95,14 +95,8 @@ func getAlertOutputMap(alerts []*deliveryModels.Alert) (AlertOutputMap, error) {
 			return alertOutputMap, errors.Wrapf(err, "Failed to fetch outputIds")
 		}
 
-		// Next, we filter out any outputs that don't match the Alert Type setting
-		filteredOutputs := filterOutputsByAlertType(alert, outputs)
-
-		// Then, we obtain a list of unique outputs
-		uniqueOutputs := getUniqueOutputs(filteredOutputs)
-
 		// Finally, assign the alert to the set of unique outputs
-		alertOutputMap[alert] = uniqueOutputs
+		alertOutputMap[alert] = outputs
 	}
 	return alertOutputMap, nil
 }
@@ -133,7 +127,7 @@ func filterDispatches(dispatchStatuses []DispatchStatus) ([]DispatchStatus, []Di
 // retried to track which destinations are failing.
 //
 // Ex:
-// A list of alerts ([]*deliveryModels.Alert)
+// A list of alerts ([]*deliverymodel.Alert)
 //   [
 //   	{
 //   		"alertID": "abc",
@@ -152,8 +146,8 @@ func filterDispatches(dispatchStatuses []DispatchStatus) ([]DispatchStatus, []Di
 //   	},
 //   ]
 //
-func getAlertsToRetry(failedDispatchStatuses []DispatchStatus, maximumRetryCount int) []*deliveryModels.Alert {
-	alertsToRetry := []*deliveryModels.Alert{}
+func getAlertsToRetry(failedDispatchStatuses []DispatchStatus, maximumRetryCount int) []*deliverymodel.Alert {
+	alertsToRetry := []*deliverymodel.Alert{}
 	for _, failed := range failedDispatchStatuses {
 		// If we've reached the max retry count for a specific alert, log and continue
 		//
