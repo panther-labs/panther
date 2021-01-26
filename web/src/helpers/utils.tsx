@@ -22,6 +22,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import * as Yup from 'yup';
 import {
   ActiveSuppressCount,
+  AlertTypesEnum,
   ComplianceIntegration,
   ComplianceStatusCounts,
   OrganizationReportBySeverity,
@@ -404,6 +405,22 @@ export const downloadData = (data: string, filename: string) => {
 export function getEnumKeyByValue(object: { [key: string]: string }, value: string) {
   return Object.keys(object).find(key => object[key] === value);
 }
+
+/**
+ * Helper function that returns proper text for Alert Type
+ * @param item AlertTypesEnum
+ */
+export const alertTypeToString = (item: AlertTypesEnum) => {
+  switch (item) {
+    case AlertTypesEnum.Rule:
+      return 'Rule Matches';
+    case AlertTypesEnum.RuleError:
+      return 'Rule Errors';
+    case AlertTypesEnum.Policy:
+    default:
+      return 'Policy Failures';
+  }
+};
 
 /**
  * Converts a word to its plural form

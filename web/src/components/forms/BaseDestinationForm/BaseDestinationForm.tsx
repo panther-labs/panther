@@ -27,7 +27,7 @@ import SaveButton from 'Components/buttons/SaveButton';
 import LinkButton from 'Components/buttons/LinkButton';
 import SubmitButton from 'Components/buttons/SubmitButton';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
-import { getEnumKeyByValue } from 'Helpers/utils';
+import { alertTypeToString, getEnumKeyByValue } from 'Helpers/utils';
 
 export interface BaseDestinationFormValues<
   AdditionalValues extends Partial<DestinationConfigInput>
@@ -118,7 +118,7 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
             name="alertTypes"
             as={FormikMultiCombobox}
             items={Object.values(AlertTypesEnum)}
-            itemToString={value => getEnumKeyByValue(AlertTypesEnum, value)}
+            itemToString={alertTypeToString}
             label="Alert Types"
             placeholder="Select Alert Types"
             aria-describedby="alert-type-disclaimer"
