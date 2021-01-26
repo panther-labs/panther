@@ -269,40 +269,32 @@ func TestUniqueAlertOutputs(t *testing.T) {
 	// We put items out of order on purpose to test for sorting
 	alertOutputs := []*outputModels.AlertOutput{
 		{
-			OutputID:           aws.String("output-id-2"),
-			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+			OutputID: aws.String("output-id-2"),
 		},
 		{
-			OutputID:           aws.String("output-id"),
-			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+			OutputID: aws.String("output-id"),
 		},
 		{
-			OutputID:           aws.String("output-id"),
-			DefaultForSeverity: aws.StringSlice([]string{"LOW"}),
+			OutputID: aws.String("output-id"),
 		},
 		{
-			OutputID:           aws.String("output-id-2"),
-			DefaultForSeverity: aws.StringSlice([]string{"LOW"}),
+			OutputID: aws.String("output-id-2"),
 		},
 		{
-			OutputID:           aws.String("output-id-2"),
-			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
+			OutputID: aws.String("output-id-2"),
 		},
 		{
-			OutputID:           aws.String("output-id"),
-			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
+			OutputID: aws.String("output-id"),
 		},
 	}
 
 	// The expected results should be the last seen entry for a given outputID
 	expectedAlertOutputs := []*outputModels.AlertOutput{
 		{
-			OutputID:           aws.String("output-id"),
-			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
+			OutputID: aws.String("output-id"),
 		},
 		{
-			OutputID:           aws.String("output-id-2"),
-			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
+			OutputID: aws.String("output-id-2"),
 		},
 	}
 
