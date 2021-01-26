@@ -27,6 +27,9 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 )
 
+// ExportSchemas converts all native log types as schema specs.
+// It is used to export the log types defined in go to the log-analysis repository
+// It omits fields whose name has a `p_` prefix
 func ExportSchemas() (map[string]*logschema.Schema, error) {
 	native := NativeLogTypes()
 	out := make(map[string]*logschema.Schema)
@@ -53,6 +56,7 @@ func ExportSchemas() (map[string]*logschema.Schema, error) {
 			Fields:       make([]logschema.FieldSchema, 0, len(valueSchema.Fields)),
 		}
 		for _, f := range valueSchema.Fields {
+			// skip `p_` fields added by Panther
 			if strings.HasPrefix(f.Name, `p_`) {
 				continue
 			}

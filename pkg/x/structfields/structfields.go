@@ -26,10 +26,39 @@ import (
 	"github.com/fatih/structtag"
 )
 
+// Flatten resolves the exported fields of a struct
+//
+// Fields in embedded structs are recursively resolved and promoted to 'top-level'
 func Flatten(typ reflect.Type) []reflect.StructField {
 	return appendStructFields(nil, typ)
 }
 
+// appendStructFields appends a struct's exported fields to a slice
+func appendStructFields(fields []reflect.StructField, typ reflect.Type) []reflect.StructField {
+	for typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+	if typ.Kind() != reflect.Struct {
+		// No fields in non-struct types
+		return fields
+	}
+	for i := 0; i < typ.NumField(); i++ {
+		field := typ.Field(i)
+		if field.Anonymous {
+			// Possible embedded struct, extend the fields
+			fields = appendStructFields(fields, field.Type)
+			continue
+		}
+		// Skip unexported field
+		if field.PkgPath != "" {
+			continue
+		}
+		fields = append(fields, field)
+	}
+	return fields
+}
+
+// FieldNameJSON resolves the name a field will have in JSON
 func FieldNameJSON(field reflect.StructField) (string, error) {
 	tags, err := structtag.Parse(string(field.Tag))
 	if err != nil {
@@ -59,29 +88,9 @@ func IsRequired(field reflect.StructField) bool {
 	return !strings.Contains(tag, "omitempty")
 }
 
-func appendStructFields(fields []reflect.StructField, typ reflect.Type) []reflect.StructField {
-	for typ.Kind() == reflect.Ptr {
-		typ = typ.Elem()
-	}
-	if typ.Kind() != reflect.Struct {
-		return fields
-	}
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
-		if field.Anonymous {
-			// Possible embedded struct, extend the fields
-			fields = appendStructFields(fields, field.Type)
-			continue
-		}
-		// Unexported field
-		if field.PkgPath != "" {
-			continue
-		}
-		fields = append(fields, field)
-	}
-	return fields
-}
-
+// Describe returns a description for a field
+// It looks for a 'description' tag.
+// If it is not found it returns a generic description.
 func Describe(field reflect.StructField) string {
 	desc := field.Tag.Get("description")
 	desc = strings.TrimSpace(desc)
