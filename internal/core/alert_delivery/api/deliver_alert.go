@@ -231,7 +231,7 @@ func intersection(a []string, b []*outputModels.AlertOutput) []*outputModels.Ale
 		m[item] = struct{}{}
 	}
 
-	res := make([]*outputModels.AlertOutput, 0, len(b))
+	res := make([]*outputModels.AlertOutput, 0)
 	for _, item := range b {
 		if _, ok := m[*item.OutputID]; ok {
 			res = append(res, item)
@@ -249,7 +249,7 @@ func difference(a, b []*outputModels.AlertOutput) []*outputModels.AlertOutput {
 		m[*item.OutputID] = struct{}{}
 	}
 
-	res := make([]*outputModels.AlertOutput, 0, len(b))
+	res := make([]*outputModels.AlertOutput, 0)
 	for _, item := range b {
 		if _, ok := m[*item.OutputID]; !ok {
 			res = append(res, item)
