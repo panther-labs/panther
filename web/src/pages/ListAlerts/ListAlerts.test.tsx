@@ -325,7 +325,7 @@ describe('ListAlerts', () => {
     const withinDropdown = within(await findByTestId('dropdown-alert-listing-filters'));
     expect(withinDropdown.getByText('Rule Matches')).toBeInTheDocument();
     expect(withinDropdown.getByText('Rule Errors')).toBeInTheDocument();
-    expect(withinDropdown.queryByText('Policy Fails')).not.toBeInTheDocument();
+    expect(withinDropdown.queryByText('Policy Failures')).not.toBeInTheDocument();
     expect(withinDropdown.getByText(mockedLogType)).toBeInTheDocument();
     expect(withinDropdown.getByText(mockedLogType)).toBeInTheDocument();
     expect(withinDropdown.getByText(mockedResourceType)).toBeInTheDocument();
@@ -480,7 +480,7 @@ describe('ListAlerts', () => {
     expect(withinDropdown.queryByText('Triaged')).not.toBeInTheDocument();
     expect(withinDropdown.queryByText('Rule Matches')).not.toBeInTheDocument();
     expect(withinDropdown.queryByText('Rule Errors')).not.toBeInTheDocument();
-    expect(withinDropdown.queryByText('Policy Fails')).not.toBeInTheDocument();
+    expect(withinDropdown.queryByText('Policy Failures')).not.toBeInTheDocument();
     expect(withinDropdown.queryByText('Info')).not.toBeInTheDocument();
     expect(withinDropdown.queryByText('Medium')).not.toBeInTheDocument();
     expect(withinDropdown.getByLabelText('Min Events')).toHaveValue(null);
@@ -591,7 +591,7 @@ describe('ListAlerts', () => {
             sortDir: SortDirEnum.Descending,
             logTypes: [mockedLogType],
             createdAtAfter: '2000-01-29T00:00:00.000Z',
-            createdAtBefore: '2000-01-30T00:00:00.000Z',
+            createdAtBefore: '2000-01-30T00:00:59.999Z',
           },
         },
         data: {
@@ -669,7 +669,7 @@ describe('ListAlerts', () => {
     await waitMs(1);
 
     // Expect the URL to be updated
-    const completeParams = `${paramsWithSortingAndTextFilter}&createdAtAfter=2000-01-29T00:00:00.000Z&createdAtBefore=2000-01-30T00:00:00.000Z`;
+    const completeParams = `${paramsWithSortingAndTextFilter}&createdAtAfter=2000-01-29T00:00:00.000Z&createdAtBefore=2000-01-30T00:00:59.999Z`;
     expect(parseParams(history.location.search)).toEqual(parseParams(completeParams));
 
     // Expect the API request to have fired and a new alert to have returned (verifies API execution)

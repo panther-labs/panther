@@ -22,7 +22,6 @@ import urls from 'Source/urls';
 import RuleForm from 'Components/forms/RuleForm';
 import { ListRulesDocument } from 'Pages/ListRules';
 import { AddRuleInput } from 'Generated/schema';
-import withSEO from 'Hoc/withSEO';
 import {
   DEFAULT_DEDUP_FUNCTION,
   DEFAULT_RULE_FUNCTION,
@@ -34,7 +33,7 @@ import useRouter from 'Hooks/useRouter';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { useCreateRule } from './graphql/createRule.generated';
 
-const initialValues: Required<AddRuleInput> = {
+export const initialValues: Required<AddRuleInput> = {
   body: `${DEFAULT_RULE_FUNCTION}\n\n${DEFAULT_TITLE_FUNCTION}\n\n${DEFAULT_DEDUP_FUNCTION}\n\n${DEFAULT_ALERT_CONTEXT_FUNCTION}`,
   dedupPeriodMinutes: 60,
   threshold: 1,
@@ -51,7 +50,7 @@ const initialValues: Required<AddRuleInput> = {
   tests: [],
 };
 
-const CreateRulePage: React.FC = () => {
+const CreateRule: React.FC = () => {
   const { history } = useRouter();
   const [createRule, { error }] = useCreateRule({
     refetchQueries: [{ query: ListRulesDocument, variables: { input: {} } }],
@@ -86,4 +85,4 @@ const CreateRulePage: React.FC = () => {
   );
 };
 
-export default withSEO({ title: 'New Rule' })(CreateRulePage);
+export default CreateRule;

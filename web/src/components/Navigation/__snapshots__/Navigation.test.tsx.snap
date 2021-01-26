@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Navigation renders with active links 1`] = `
-.panther-42 {
+.panther-43 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -15,7 +15,7 @@ exports[`Navigation renders with active links 1`] = `
   background-color: #141c2a;
 }
 
-.panther-41 {
+.panther-42 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -40,7 +40,7 @@ exports[`Navigation renders with active links 1`] = `
   display: block;
 }
 
-.panther-35 {
+.panther-36 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -172,46 +172,49 @@ exports[`Navigation renders with active links 1`] = `
   margin-left: auto;
 }
 
-.panther-29 {
+.panther-30 {
   margin-top: auto;
 }
 
-.panther-28 {
+.panther-29 {
   -webkit-transition: color 0.1s ease-out;
   transition: color 0.1s ease-out;
   font-weight: 500;
   -webkit-text-decoration: none;
   text-decoration: none;
   color: #7fd3ff;
+}
+
+.panther-29:hover {
+  color: #ace2ff;
+}
+
+.panther-29:focus {
+  color: #ace2ff;
+}
+
+.panther-29:active,
+.panther-29[data-active=true] {
+  color: #11a5f3;
+}
+
+.panther-28 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  font-size: 0.875rem;
   font-weight: 400;
   border-radius: 2px;
   padding-left: 16px;
   padding-right: 16px;
   padding-top: 12px;
   padding-bottom: 12px;
-  font-size: 0.875rem;
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
   color: #f6f6f6;
-  -webkit-align-items: center;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-}
-
-.panther-28:hover {
-  color: #ace2ff;
-}
-
-.panther-28:focus {
-  color: #ace2ff;
-}
-
-.panther-28:active,
-.panther-28[data-active=true] {
-  color: #11a5f3;
 }
 
 .panther-28:hover {
@@ -219,7 +222,7 @@ exports[`Navigation renders with active links 1`] = `
   background-color: #1d2a3f;
 }
 
-.panther-32 {
+.panther-33 {
   border-radius: 2px;
   color: #f6f6f6;
   font-size: 0.875rem;
@@ -243,21 +246,21 @@ exports[`Navigation renders with active links 1`] = `
   white-space: nowrap;
 }
 
-.panther-32:hover {
+.panther-33:hover {
   background-color: #1d2a3f;
 }
 
-.panther-32:focus {
+.panther-33:focus {
   background-color: #1d2a3f;
 }
 
-.panther-40 {
+.panther-41 {
   padding: 16px;
   background-color: #0f1623;
   margin-top: 16px;
 }
 
-.panther-39 {
+.panther-40 {
   width: 100%;
   cursor: pointer;
   color: #f6f6f6;
@@ -268,7 +271,7 @@ exports[`Navigation renders with active links 1`] = `
   transition: all 0.1s linear;
 }
 
-.panther-38 {
+.panther-39 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -279,11 +282,11 @@ exports[`Navigation renders with active links 1`] = `
   align-items: center;
 }
 
-.panther-38>*:not(:last-child) {
+.panther-39>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-36 {
+.panther-37 {
   width: 40px;
   display: -webkit-box;
   display: -webkit-flex;
@@ -309,11 +312,11 @@ exports[`Navigation renders with active links 1`] = `
   flex-shrink: 0;
 }
 
-.panther-36:hover {
+.panther-37:hover {
   background-color: #7268a6;
 }
 
-.panther-37 {
+.panther-38 {
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -325,11 +328,11 @@ exports[`Navigation renders with active links 1`] = `
     id="main-header"
   />
   <aside
-    class="panther-42"
+    class="panther-43"
   >
     <nav
       aria-label="Main"
-      class="panther-41"
+      class="panther-42"
     >
       <a
         class="panther-1"
@@ -344,7 +347,7 @@ exports[`Navigation renders with active links 1`] = `
         />
       </a>
       <ul
-        class="panther-35"
+        class="panther-36"
       >
         <hr
           aria-orientation="horizontal"
@@ -506,25 +509,31 @@ exports[`Navigation renders with active links 1`] = `
           </div>
         </li>
         <li
-          class="panther-29"
+          class="panther-30"
         >
           <a
-            class="panther-28"
+            class="panther-29"
             href="https://docs.runpanther.io/v/release-1.2"
+            rel="noopener noreferrer"
+            target="_blank"
           >
-            <svg
-              class="panther-3"
-              role="presentation"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M21 5C19.89 4.65 18.67 4.5 17.5 4.5C15.55 4.5 13.45 4.9 12 6C10.55 4.9 8.45 4.5 6.5 4.5C4.55 4.5 2.45 4.9 1 6V20.65C1 20.9 1.25 21.15 1.5 21.15C1.6 21.15 1.65 21.1 1.75 21.1C3.1 20.45 5.05 20 6.5 20C8.45 20 10.55 20.4 12 21.5C13.35 20.65 15.8 20 17.5 20C19.15 20 20.85 20.3 22.25 21.05C22.35 21.1 22.4 21.1 22.5 21.1C22.75 21.1 23 20.85 23 20.6V6C22.4 5.55 21.75 5.25 21 5ZM21 18.5C19.9 18.15 18.7 18 17.5 18C15.8 18 13.35 18.65 12 19.5V8C13.35 7.15 15.8 6.5 17.5 6.5C18.7 6.5 19.9 6.65 21 7V18.5Z"
-              />
-            </svg>
             <div
-              class="panther-4"
+              class="panther-28"
             >
-              Documentation
+              <svg
+                class="panther-3"
+                role="presentation"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M21 5C19.89 4.65 18.67 4.5 17.5 4.5C15.55 4.5 13.45 4.9 12 6C10.55 4.9 8.45 4.5 6.5 4.5C4.55 4.5 2.45 4.9 1 6V20.65C1 20.9 1.25 21.15 1.5 21.15C1.6 21.15 1.65 21.1 1.75 21.1C3.1 20.45 5.05 20 6.5 20C8.45 20 10.55 20.4 12 21.5C13.35 20.65 15.8 20 17.5 20C19.15 20 20.85 20.3 22.25 21.05C22.35 21.1 22.4 21.1 22.5 21.1C22.75 21.1 23 20.85 23 20.6V6C22.4 5.55 21.75 5.25 21 5ZM21 18.5C19.9 18.15 18.7 18 17.5 18C15.8 18 13.35 18.65 12 19.5V8C13.35 7.15 15.8 6.5 17.5 6.5C18.7 6.5 19.9 6.65 21 7V18.5Z"
+                />
+              </svg>
+              <div
+                class="panther-4"
+              >
+                Documentation
+              </div>
             </div>
           </a>
         </li>
@@ -536,7 +545,7 @@ exports[`Navigation renders with active links 1`] = `
             href="/support"
           >
             <div
-              class="panther-32"
+              class="panther-33"
             >
               <svg
                 class="panther-3"
@@ -557,24 +566,24 @@ exports[`Navigation renders with active links 1`] = `
         </li>
       </ul>
       <div
-        class="panther-40"
+        class="panther-41"
       >
         <button
           aria-describedby="1"
           aria-label="Toggle User Menu"
-          class="panther-39"
+          class="panther-40"
           type="button"
         >
           <div
-            class="panther-38"
+            class="panther-39"
           >
             <div
-              class="panther-36"
+              class="panther-37"
             >
               TT
             </div>
             <div
-              class="panther-37"
+              class="panther-38"
             >
               T. TestSurname
             </div>

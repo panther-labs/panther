@@ -29,7 +29,8 @@ const (
 
 type LambdaInput struct {
 	// Shared
-	BulkUpload *BulkUploadInput `json:"bulkUpload,omitempty"`
+	BulkUpload     *BulkUploadInput     `json:"bulkUpload,omitempty"`
+	ListDetections *ListDetectionsInput `json:"listDetections,omitempty"`
 
 	// Globals
 	CreateGlobal  *CreateGlobalInput  `json:"createGlobal,omitempty"`
@@ -42,18 +43,20 @@ type LambdaInput struct {
 	CreatePolicy   *CreatePolicyInput   `json:"createPolicy,omitempty"`
 	DeletePolicies *DeletePoliciesInput `json:"deletePolicies,omitempty"`
 	GetPolicy      *GetPolicyInput      `json:"getPolicy,omitempty"`
-	ListPolicies   *ListPoliciesInput   `json:"listPolicies,omitempty"`
-	Suppress       *SuppressInput       `json:"suppress,omitempty"`
-	TestPolicy     *TestPolicyInput     `json:"testPolicy,omitempty"`
-	UpdatePolicy   *UpdatePolicyInput   `json:"updatePolicy,omitempty"`
+	// TODO deprecate this endpoint in favor of ListDetections
+	ListPolicies *ListPoliciesInput `json:"listPolicies,omitempty"`
+	Suppress     *SuppressInput     `json:"suppress,omitempty"`
+	TestPolicy   *TestPolicyInput   `json:"testPolicy,omitempty"`
+	UpdatePolicy *UpdatePolicyInput `json:"updatePolicy,omitempty"`
 
 	// Rules (log analysis)
 	CreateRule  *CreateRuleInput  `json:"createRule,omitempty"`
 	DeleteRules *DeleteRulesInput `json:"deleteRules,omitempty"`
 	GetRule     *GetRuleInput     `json:"getRule,omitempty"`
-	ListRules   *ListRulesInput   `json:"listRules,omitempty"`
-	TestRule    *TestRuleInput    `json:"testRule,omitempty"`
-	UpdateRule  *UpdateRuleInput  `json:"updateRule,omitempty"`
+	// TODO deprecate this endpoint in favor of ListDetections
+	ListRules  *ListRulesInput  `json:"listRules,omitempty"`
+	TestRule   *TestRuleInput   `json:"testRule,omitempty"`
+	UpdateRule *UpdateRuleInput `json:"updateRule,omitempty"`
 
 	// Data models (log analysis)
 	CreateDataModel  *CreateDataModelInput  `json:"createDataModel,omitempty"`

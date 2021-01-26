@@ -41,7 +41,7 @@ func (API) ListGlobals(input *models.ListGlobalsInput) *events.APIGatewayProxyRe
 	}
 
 	// Scan dynamo
-	scanInput, err := buildScanInput(models.TypeGlobal, input.Fields)
+	scanInput, err := buildScanInput([]models.DetectionType{models.TypeGlobal}, input.Fields)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{
 			Body: err.Error(), StatusCode: http.StatusInternalServerError}

@@ -277,6 +277,11 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ListGlobals", listGlobals)
 		t.Run("ListDataModels", listDataModels)
 		t.Run("ListEnabledDataModels", listEnabledDataModels)
+		t.Run("ListDetections", listDetections)
+		t.Run("ListDetectionsFiltered", listDetectionsFiltered)
+		t.Run("ListDetectionsComplianceProjection", listDetectionsComplianceProjection)
+		t.Run("ListDetectionsAnalysisTypeFilter", listDetectionsAnalysisTypeFilter)
+		t.Run("ListDetectionsComplianceFilter", listDetectionsComplianceFilter)
 	})
 
 	t.Run("Modify", func(t *testing.T) {
@@ -1981,6 +1986,468 @@ func listEnabledDataModels(t *testing.T) {
 		Models: []models.DataModel{
 			*dataModel, *dataModelTwo, *dataModelFromBulkYML,
 		},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listDetections(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListDetections: &models.ListDetectionsInput{
+			SortBy: "id",
+		},
+	}
+	var result models.ListDetectionsOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListDetectionsOutput{
+		Paging: models.Paging{
+			ThisPage: 1,
+			// 3 policies, 1 rule
+			TotalItems: 4,
+			TotalPages: 1,
+		},
+		// Expected:
+		// AWS.CloudTrail.Log.Validation.Enabled
+		// NonEmptyEvent
+		// Test:Policy
+		// Test:Policy:JSON
+
+		// Actual
+		// Test:Policy - AlwaysTrue
+		// Test:Policy:JSON
+		// AWS.CloudTrail.Log.Validation.Enabled
+		// NonEmptyEvent
+		Detections: []models.Detection{
+			{
+				AutoRemediationID:         policyFromBulk.AutoRemediationID,
+				AutoRemediationParameters: policyFromBulk.AutoRemediationParameters,
+				ComplianceStatus:          policyFromBulk.ComplianceStatus,
+				Suppressions:              policyFromBulk.Suppressions,
+				AnalysisType:              models.TypePolicy,
+				ResourceTypes:             policyFromBulk.ResourceTypes,
+				LogTypes:                  []string{},
+				Body:                      policyFromBulk.Body,
+				CreatedAt:                 policyFromBulk.CreatedAt,
+				CreatedBy:                 policyFromBulk.CreatedBy,
+				Description:               policyFromBulk.Description,
+				DisplayName:               policyFromBulk.DisplayName,
+				Enabled:                   policyFromBulk.Enabled,
+				ID:                        policyFromBulk.ID,
+				LastModified:              policyFromBulk.LastModified,
+				LastModifiedBy:            policyFromBulk.LastModifiedBy,
+				OutputIDs:                 policyFromBulk.OutputIDs,
+				Reference:                 policyFromBulk.Reference,
+				Reports:                   policyFromBulk.Reports,
+				Runbook:                   policyFromBulk.Runbook,
+				Severity:                  policyFromBulk.Severity,
+				Tags:                      policyFromBulk.Tags,
+				Tests:                     policyFromBulk.Tests,
+				VersionID:                 policyFromBulk.VersionID,
+			},
+			{
+				AutoRemediationParameters: make(map[string]string),
+				Suppressions:              []string{},
+				DedupPeriodMinutes:        rule.DedupPeriodMinutes,
+				Threshold:                 rule.Threshold,
+				AnalysisType:              models.TypeRule,
+				ResourceTypes:             []string{},
+				LogTypes:                  rule.LogTypes,
+				Body:                      rule.Body,
+				CreatedAt:                 rule.CreatedAt,
+				CreatedBy:                 rule.CreatedBy,
+				Description:               rule.Description,
+				DisplayName:               rule.DisplayName,
+				Enabled:                   rule.Enabled,
+				ID:                        rule.ID,
+				LastModified:              rule.LastModified,
+				LastModifiedBy:            rule.LastModifiedBy,
+				OutputIDs:                 rule.OutputIDs,
+				Reference:                 rule.Reference,
+				Reports:                   rule.Reports,
+				Runbook:                   rule.Runbook,
+				Severity:                  rule.Severity,
+				Tags:                      rule.Tags,
+				Tests:                     rule.Tests,
+				VersionID:                 rule.VersionID,
+			},
+			{
+				AutoRemediationID:         policy.AutoRemediationID,
+				AutoRemediationParameters: policy.AutoRemediationParameters,
+				ComplianceStatus:          policy.ComplianceStatus,
+				Suppressions:              policy.Suppressions,
+				AnalysisType:              models.TypePolicy,
+				ResourceTypes:             policy.ResourceTypes,
+				LogTypes:                  []string{},
+				Body:                      policy.Body,
+				CreatedAt:                 policy.CreatedAt,
+				CreatedBy:                 policy.CreatedBy,
+				Description:               policy.Description,
+				DisplayName:               policy.DisplayName,
+				Enabled:                   policy.Enabled,
+				ID:                        policy.ID,
+				LastModified:              policy.LastModified,
+				LastModifiedBy:            policy.LastModifiedBy,
+				OutputIDs:                 policy.OutputIDs,
+				Reference:                 policy.Reference,
+				Reports:                   policy.Reports,
+				Runbook:                   policy.Runbook,
+				Severity:                  policy.Severity,
+				Tags:                      policy.Tags,
+				Tests:                     policy.Tests,
+				VersionID:                 policy.VersionID,
+			},
+			{
+				AutoRemediationID:         policyFromBulkJSON.AutoRemediationID,
+				AutoRemediationParameters: policyFromBulkJSON.AutoRemediationParameters,
+				ComplianceStatus:          policyFromBulkJSON.ComplianceStatus,
+				Suppressions:              policyFromBulkJSON.Suppressions,
+				AnalysisType:              models.TypePolicy,
+				ResourceTypes:             policyFromBulkJSON.ResourceTypes,
+				LogTypes:                  []string{},
+				Body:                      policyFromBulkJSON.Body,
+				CreatedAt:                 policyFromBulkJSON.CreatedAt,
+				CreatedBy:                 policyFromBulkJSON.CreatedBy,
+				Description:               policyFromBulkJSON.Description,
+				DisplayName:               policyFromBulkJSON.DisplayName,
+				Enabled:                   policyFromBulkJSON.Enabled,
+				ID:                        policyFromBulkJSON.ID,
+				LastModified:              policyFromBulkJSON.LastModified,
+				LastModifiedBy:            policyFromBulkJSON.LastModifiedBy,
+				OutputIDs:                 policyFromBulkJSON.OutputIDs,
+				Reference:                 policyFromBulkJSON.Reference,
+				Reports:                   policyFromBulkJSON.Reports,
+				Runbook:                   policyFromBulkJSON.Runbook,
+				Severity:                  policyFromBulkJSON.Severity,
+				Tags:                      policyFromBulkJSON.Tags,
+				Tests:                     policyFromBulkJSON.Tests,
+				VersionID:                 policyFromBulkJSON.VersionID,
+			},
+		},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listDetectionsFiltered(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListDetections: &models.ListDetectionsInput{
+			Enabled:        aws.Bool(true),
+			HasRemediation: aws.Bool(true),
+			NameContains:   "json", // policyFromBulkJSON only
+			ResourceTypes:  []string{"AWS.S3.Bucket"},
+			Severity:       []compliancemodels.Severity{compliancemodels.SeverityMedium},
+			CreatedBy:      userID,
+			SortBy:         "id",
+		},
+	}
+	var result models.ListDetectionsOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListDetectionsOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 1,
+			TotalPages: 1,
+		},
+		Detections: []models.Detection{
+			{
+				AutoRemediationID:         policyFromBulkJSON.AutoRemediationID,
+				AutoRemediationParameters: policyFromBulkJSON.AutoRemediationParameters,
+				ComplianceStatus:          policyFromBulkJSON.ComplianceStatus,
+				Suppressions:              policyFromBulkJSON.Suppressions,
+				AnalysisType:              models.TypePolicy,
+				ResourceTypes:             policyFromBulkJSON.ResourceTypes,
+				LogTypes:                  []string{},
+				Body:                      policyFromBulkJSON.Body,
+				CreatedAt:                 policyFromBulkJSON.CreatedAt,
+				CreatedBy:                 policyFromBulkJSON.CreatedBy,
+				Description:               policyFromBulkJSON.Description,
+				DisplayName:               policyFromBulkJSON.DisplayName,
+				Enabled:                   policyFromBulkJSON.Enabled,
+				ID:                        policyFromBulkJSON.ID,
+				LastModified:              policyFromBulkJSON.LastModified,
+				LastModifiedBy:            policyFromBulkJSON.LastModifiedBy,
+				OutputIDs:                 policyFromBulkJSON.OutputIDs,
+				Reference:                 policyFromBulkJSON.Reference,
+				Reports:                   policyFromBulkJSON.Reports,
+				Runbook:                   policyFromBulkJSON.Runbook,
+				Severity:                  policyFromBulkJSON.Severity,
+				Tags:                      policyFromBulkJSON.Tags,
+				Tests:                     policyFromBulkJSON.Tests,
+				VersionID:                 policyFromBulkJSON.VersionID,
+			},
+		},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listDetectionsComplianceProjection(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListDetections: &models.ListDetectionsInput{
+			// Select only a subset of fields
+			Fields: []string{"id", "displayName", "complianceStatus"},
+			SortBy: "id",
+		},
+	}
+	var result models.ListDetectionsOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	// Empty lists/maps will always be initialized in the response
+	emptyPolicy := models.Detection{
+		AutoRemediationParameters: map[string]string{},
+		OutputIDs:                 []string{},
+		Reports:                   map[string][]string{},
+		ResourceTypes:             []string{},
+		LogTypes:                  []string{},
+		Suppressions:              []string{},
+		Tags:                      []string{},
+		Tests:                     []models.UnitTest{},
+	}
+
+	firstItem := emptyPolicy
+	firstItem.AnalysisType = models.TypePolicy
+	firstItem.ID = policyFromBulk.ID
+	firstItem.DisplayName = policyFromBulk.DisplayName
+	firstItem.ComplianceStatus = policyFromBulk.ComplianceStatus
+
+	secondItem := emptyPolicy
+	secondItem.AnalysisType = models.TypePolicy
+	secondItem.ID = policy.ID
+	secondItem.DisplayName = policy.DisplayName
+	secondItem.ComplianceStatus = policy.ComplianceStatus
+
+	thirdItem := emptyPolicy
+	thirdItem.AnalysisType = models.TypePolicy
+	thirdItem.ID = policyFromBulkJSON.ID
+	thirdItem.DisplayName = policyFromBulkJSON.DisplayName
+	thirdItem.ComplianceStatus = policyFromBulkJSON.ComplianceStatus
+
+	fourthItem := emptyPolicy
+	fourthItem.AnalysisType = models.TypeRule
+	fourthItem.ID = rule.ID
+	fourthItem.DisplayName = rule.DisplayName
+
+	expected := models.ListDetectionsOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 4,
+			TotalPages: 1,
+		},
+		Detections: []models.Detection{firstItem, fourthItem, secondItem, thirdItem},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listDetectionsAnalysisTypeFilter(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListDetections: &models.ListDetectionsInput{
+			AnalysisTypes: []models.DetectionType{models.TypeRule},
+			SortBy:        "id",
+		},
+	}
+	var result models.ListDetectionsOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListDetectionsOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 1,
+			TotalPages: 1,
+		},
+		Detections: []models.Detection{
+			{
+				AutoRemediationParameters: make(map[string]string),
+				Suppressions:              []string{},
+				DedupPeriodMinutes:        rule.DedupPeriodMinutes,
+				Threshold:                 rule.Threshold,
+				AnalysisType:              models.TypeRule,
+				ResourceTypes:             []string{},
+				LogTypes:                  rule.LogTypes,
+				Body:                      rule.Body,
+				CreatedAt:                 rule.CreatedAt,
+				CreatedBy:                 rule.CreatedBy,
+				Description:               rule.Description,
+				DisplayName:               rule.DisplayName,
+				Enabled:                   rule.Enabled,
+				ID:                        rule.ID,
+				LastModified:              rule.LastModified,
+				LastModifiedBy:            rule.LastModifiedBy,
+				OutputIDs:                 rule.OutputIDs,
+				Reference:                 rule.Reference,
+				Reports:                   rule.Reports,
+				Runbook:                   rule.Runbook,
+				Severity:                  rule.Severity,
+				Tags:                      rule.Tags,
+				Tests:                     rule.Tests,
+				VersionID:                 rule.VersionID,
+			},
+		},
+	}
+	assert.Equal(t, expected, result)
+
+	input = models.LambdaInput{
+		ListDetections: &models.ListDetectionsInput{
+			AnalysisTypes: []models.DetectionType{models.TypePolicy},
+			SortBy:        "id",
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected = models.ListDetectionsOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 3,
+			TotalPages: 1,
+		},
+		Detections: []models.Detection{
+			{
+				AutoRemediationID:         policyFromBulk.AutoRemediationID,
+				AutoRemediationParameters: policyFromBulk.AutoRemediationParameters,
+				ComplianceStatus:          policyFromBulk.ComplianceStatus,
+				Suppressions:              policyFromBulk.Suppressions,
+				AnalysisType:              models.TypePolicy,
+				ResourceTypes:             policyFromBulk.ResourceTypes,
+				LogTypes:                  []string{},
+				Body:                      policyFromBulk.Body,
+				CreatedAt:                 policyFromBulk.CreatedAt,
+				CreatedBy:                 policyFromBulk.CreatedBy,
+				Description:               policyFromBulk.Description,
+				DisplayName:               policyFromBulk.DisplayName,
+				Enabled:                   policyFromBulk.Enabled,
+				ID:                        policyFromBulk.ID,
+				LastModified:              policyFromBulk.LastModified,
+				LastModifiedBy:            policyFromBulk.LastModifiedBy,
+				OutputIDs:                 policyFromBulk.OutputIDs,
+				Reference:                 policyFromBulk.Reference,
+				Reports:                   policyFromBulk.Reports,
+				Runbook:                   policyFromBulk.Runbook,
+				Severity:                  policyFromBulk.Severity,
+				Tags:                      policyFromBulk.Tags,
+				Tests:                     policyFromBulk.Tests,
+				VersionID:                 policyFromBulk.VersionID,
+			},
+			{
+				AutoRemediationID:         policy.AutoRemediationID,
+				AutoRemediationParameters: policy.AutoRemediationParameters,
+				ComplianceStatus:          policy.ComplianceStatus,
+				Suppressions:              policy.Suppressions,
+				AnalysisType:              models.TypePolicy,
+				ResourceTypes:             policy.ResourceTypes,
+				LogTypes:                  []string{},
+				Body:                      policy.Body,
+				CreatedAt:                 policy.CreatedAt,
+				CreatedBy:                 policy.CreatedBy,
+				Description:               policy.Description,
+				DisplayName:               policy.DisplayName,
+				Enabled:                   policy.Enabled,
+				ID:                        policy.ID,
+				LastModified:              policy.LastModified,
+				LastModifiedBy:            policy.LastModifiedBy,
+				OutputIDs:                 policy.OutputIDs,
+				Reference:                 policy.Reference,
+				Reports:                   policy.Reports,
+				Runbook:                   policy.Runbook,
+				Severity:                  policy.Severity,
+				Tags:                      policy.Tags,
+				Tests:                     policy.Tests,
+				VersionID:                 policy.VersionID,
+			},
+			{
+				AutoRemediationID:         policyFromBulkJSON.AutoRemediationID,
+				AutoRemediationParameters: policyFromBulkJSON.AutoRemediationParameters,
+				ComplianceStatus:          policyFromBulkJSON.ComplianceStatus,
+				Suppressions:              policyFromBulkJSON.Suppressions,
+				AnalysisType:              models.TypePolicy,
+				ResourceTypes:             policyFromBulkJSON.ResourceTypes,
+				LogTypes:                  []string{},
+				Body:                      policyFromBulkJSON.Body,
+				CreatedAt:                 policyFromBulkJSON.CreatedAt,
+				CreatedBy:                 policyFromBulkJSON.CreatedBy,
+				Description:               policyFromBulkJSON.Description,
+				DisplayName:               policyFromBulkJSON.DisplayName,
+				Enabled:                   policyFromBulkJSON.Enabled,
+				ID:                        policyFromBulkJSON.ID,
+				LastModified:              policyFromBulkJSON.LastModified,
+				LastModifiedBy:            policyFromBulkJSON.LastModifiedBy,
+				OutputIDs:                 policyFromBulkJSON.OutputIDs,
+				Reference:                 policyFromBulkJSON.Reference,
+				Reports:                   policyFromBulkJSON.Reports,
+				Runbook:                   policyFromBulkJSON.Runbook,
+				Severity:                  policyFromBulkJSON.Severity,
+				Tags:                      policyFromBulkJSON.Tags,
+				Tests:                     policyFromBulkJSON.Tests,
+				VersionID:                 policyFromBulkJSON.VersionID,
+			},
+		},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listDetectionsComplianceFilter(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListDetections: &models.ListDetectionsInput{
+			// Select only a subset of fields
+			Fields:           []string{"id", "displayName", "complianceStatus"},
+			ComplianceStatus: compliancemodels.StatusPass,
+			SortBy:           "id",
+		},
+	}
+	var result models.ListDetectionsOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	// Empty lists/maps will always be initialized in the response
+	emptyDetection := models.Detection{
+		AutoRemediationParameters: map[string]string{},
+		OutputIDs:                 []string{},
+		Reports:                   map[string][]string{},
+		ResourceTypes:             []string{},
+		LogTypes:                  []string{},
+		Suppressions:              []string{},
+		Tags:                      []string{},
+		Tests:                     []models.UnitTest{},
+	}
+
+	firstItem := emptyDetection
+	firstItem.AnalysisType = models.TypePolicy
+	firstItem.ID = policyFromBulk.ID
+	firstItem.DisplayName = policyFromBulk.DisplayName
+	firstItem.ComplianceStatus = policyFromBulk.ComplianceStatus
+
+	secondItem := emptyDetection
+	secondItem.AnalysisType = models.TypePolicy
+	secondItem.ID = policy.ID
+	secondItem.DisplayName = policy.DisplayName
+	secondItem.ComplianceStatus = policy.ComplianceStatus
+
+	thirdItem := emptyDetection
+	thirdItem.AnalysisType = models.TypePolicy
+	thirdItem.ID = policyFromBulkJSON.ID
+	thirdItem.DisplayName = policyFromBulkJSON.DisplayName
+	thirdItem.ComplianceStatus = policyFromBulkJSON.ComplianceStatus
+
+	expected := models.ListDetectionsOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 3,
+			TotalPages: 1,
+		},
+		Detections: []models.Detection{firstItem, secondItem, thirdItem},
 	}
 	assert.Equal(t, expected, result)
 }

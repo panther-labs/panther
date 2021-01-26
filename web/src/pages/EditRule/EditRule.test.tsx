@@ -83,7 +83,7 @@ describe('EditRule', () => {
     expect(getByText('Optional')).toBeInTheDocument();
 
     // Tabs
-    expect(getByText('Policy Settings')).toBeInTheDocument();
+    expect(getByText('Rule Settings')).toBeInTheDocument();
     expect(getByText('Functions & Tests')).toBeInTheDocument();
   });
 

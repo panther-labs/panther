@@ -16,75 +16,75 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as Types from '../../../../__generated__/schema';
+import * as Types from '../../../../../__generated__/schema';
 
-import { PolicyDetails } from '../../../graphql/fragments/PolicyDetails.generated';
+import { RuleDetails } from '../../../../graphql/fragments/RuleDetails.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type CreatePolicyVariables = {
-  input: Types.AddPolicyInput;
+export type CreateRuleVariables = {
+  input: Types.AddRuleInput;
 };
 
-export type CreatePolicy = { addPolicy: PolicyDetails };
+export type CreateRule = { addRule: RuleDetails };
 
-export const CreatePolicyDocument = gql`
-  mutation CreatePolicy($input: AddPolicyInput!) {
-    addPolicy(input: $input) {
-      ...PolicyDetails
+export const CreateRuleDocument = gql`
+  mutation CreateRule($input: AddRuleInput!) {
+    addRule(input: $input) {
+      ...RuleDetails
     }
   }
-  ${PolicyDetails}
+  ${RuleDetails}
 `;
-export type CreatePolicyMutationFn = ApolloReactCommon.MutationFunction<
-  CreatePolicy,
-  CreatePolicyVariables
+export type CreateRuleMutationFn = ApolloReactCommon.MutationFunction<
+  CreateRule,
+  CreateRuleVariables
 >;
 
 /**
- * __useCreatePolicy__
+ * __useCreateRule__
  *
- * To run a mutation, you first call `useCreatePolicy` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreatePolicy` returns a tuple that includes:
+ * To run a mutation, you first call `useCreateRule` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateRule` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [createPolicy, { data, loading, error }] = useCreatePolicy({
+ * const [createRule, { data, loading, error }] = useCreateRule({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useCreatePolicy(
-  baseOptions?: ApolloReactHooks.MutationHookOptions<CreatePolicy, CreatePolicyVariables>
+export function useCreateRule(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<CreateRule, CreateRuleVariables>
 ) {
-  return ApolloReactHooks.useMutation<CreatePolicy, CreatePolicyVariables>(
-    CreatePolicyDocument,
+  return ApolloReactHooks.useMutation<CreateRule, CreateRuleVariables>(
+    CreateRuleDocument,
     baseOptions
   );
 }
-export type CreatePolicyHookResult = ReturnType<typeof useCreatePolicy>;
-export type CreatePolicyMutationResult = ApolloReactCommon.MutationResult<CreatePolicy>;
-export type CreatePolicyMutationOptions = ApolloReactCommon.BaseMutationOptions<
-  CreatePolicy,
-  CreatePolicyVariables
+export type CreateRuleHookResult = ReturnType<typeof useCreateRule>;
+export type CreateRuleMutationResult = ApolloReactCommon.MutationResult<CreateRule>;
+export type CreateRuleMutationOptions = ApolloReactCommon.BaseMutationOptions<
+  CreateRule,
+  CreateRuleVariables
 >;
-export function mockCreatePolicy({
+export function mockCreateRule({
   data,
   variables,
   errors,
 }: {
-  data: CreatePolicy;
-  variables?: CreatePolicyVariables;
+  data: CreateRule;
+  variables?: CreateRuleVariables;
   errors?: GraphQLError[];
 }) {
   return {
-    request: { query: CreatePolicyDocument, variables },
+    request: { query: CreateRuleDocument, variables },
     result: { data, errors },
   };
 }

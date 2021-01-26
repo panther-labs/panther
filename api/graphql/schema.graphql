@@ -46,7 +46,7 @@ type Mutation {
   updatePolicy(input: UpdatePolicyInput!): Policy!
   updateRule(input: UpdateRuleInput!): Rule!
   updateUser(input: UpdateUserInput!): User!
-  uploadPolicies(input: UploadPoliciesInput!): UploadPoliciesResponse
+  uploadDetections(input: UploadDetectionsInput!): UploadDetectionsResponse
   updateGlobalPythonlModule(input: ModifyGlobalPythonModuleInput!): GlobalPythonModule!
 }
 
@@ -302,6 +302,9 @@ type AlertDetails implements Alert {
   lastUpdatedByTime: AWSDateTime # stores the timestamp of the last person who modified the Alert
   updateTime: AWSDateTime! # stores the timestamp from an update from a dedup event
   detection: AlertDetailsDetectionInfo!
+  description: String
+  reference: String
+  runbook: String
 }
 
 type AlertSummary implements Alert {
@@ -981,7 +984,7 @@ input ListPoliciesInput {
   page: Int # defaults to `1`
 }
 
-input UploadPoliciesInput {
+input UploadDetectionsInput {
   data: String! # Base64-encoded zipfile with a policy bundle
 }
 
@@ -1027,16 +1030,22 @@ input UpdateUserInput {
   email: AWSEmail
 }
 
-type UploadPoliciesResponse {
-  totalPolicies: Int
-  newPolicies: Int
-  modifiedPolicies: Int
-  totalRules: Int
-  newRules: Int
-  modifiedRules: Int
-  totalGlobals: Int
-  newGlobals: Int
-  modifiedGlobals: Int
+type UploadDetectionsResponse {
+  totalPolicies: Int!
+  newPolicies: Int!
+  modifiedPolicies: Int!
+
+  totalRules: Int!
+  newRules: Int!
+  modifiedRules: Int!
+
+  totalGlobals: Int!
+  newGlobals: Int!
+  modifiedGlobals: Int!
+
+  totalDataModels: Int!
+  newDataModels: Int!
+  modifiedDataModels: Int!
 }
 
 type Error {

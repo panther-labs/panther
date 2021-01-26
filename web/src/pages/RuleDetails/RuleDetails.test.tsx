@@ -181,7 +181,7 @@ describe('RuleDetails', () => {
     expect(loadingInterfaceElement).toBeTruthy();
 
     await waitForElementToBeRemoved(loadingInterfaceElement);
-    await waitMs(50);
+    await waitMs(1);
     const matchesTab = getAllByTestId('rule-matches');
     const errorsTab = getAllByTestId('rule-errors');
 

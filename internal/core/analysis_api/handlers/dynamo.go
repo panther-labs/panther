@@ -88,12 +88,51 @@ func (r *tableItem) addExtraFields() {
 	r.LowerTags = lowerSet(r.Tags)
 }
 
-// Sort string sets before converting to an external Rule/Policy model.
+// Sort string sets before converting to an external Rule/Policy/Detection model.
 func (r *tableItem) normalize() {
 	sortCaseInsensitive(r.OutputIDs)
 	sortCaseInsensitive(r.ResourceTypes)
 	sortCaseInsensitive(r.Suppressions)
 	sortCaseInsensitive(r.Tags)
+}
+
+// Detection converts a Dynamo row into a Detection external model.
+func (r *tableItem) Detection(status compliancemodels.ComplianceStatus) *models.Detection {
+	r.normalize()
+	result := &models.Detection{
+		AutoRemediationID:         r.AutoRemediationID,
+		AutoRemediationParameters: r.AutoRemediationParameters,
+		ComplianceStatus:          status,
+		Suppressions:              r.Suppressions,
+		DedupPeriodMinutes:        r.DedupPeriodMinutes,
+		Threshold:                 r.Threshold,
+		AnalysisType:              r.Type,
+		Body:                      r.Body,
+		CreatedAt:                 r.CreatedAt,
+		CreatedBy:                 r.CreatedBy,
+		Description:               r.Description,
+		DisplayName:               r.DisplayName,
+		Enabled:                   r.Enabled,
+		ID:                        r.ID,
+		LastModified:              r.LastModified,
+		LastModifiedBy:            r.LastModifiedBy,
+		OutputIDs:                 r.OutputIDs,
+		Reference:                 r.Reference,
+		Reports:                   r.Reports,
+		Runbook:                   r.Runbook,
+		Severity:                  r.Severity,
+		Tags:                      r.Tags,
+		Tests:                     r.Tests,
+		VersionID:                 r.VersionID,
+	}
+	if r.Type == models.TypePolicy {
+		result.ResourceTypes = r.ResourceTypes
+	} else if r.Type == models.TypeRule {
+		result.LogTypes = r.ResourceTypes
+	}
+
+	genericapi.ReplaceMapSliceNils(result)
+	return result
 }
 
 // Policy converts a Dynamo row into a Policy external model.
@@ -359,8 +398,18 @@ func scanPages(input *dynamodb.ScanInput, handler func(tableItem) error) error {
 }
 
 // Build dynamo scan input for list operations
-func buildScanInput(itemType models.DetectionType, fields []string, filters ...expression.ConditionBuilder) (*dynamodb.ScanInput, error) {
-	masterFilter := expression.Equal(expression.Name("type"), expression.Value(itemType))
+func buildScanInput(itemTypes []models.DetectionType, fields []string, filters ...expression.ConditionBuilder) (
+	*dynamodb.ScanInput, error) {
+
+	var masterFilter expression.ConditionBuilder
+	for i, itemType := range itemTypes {
+		if i == 0 {
+			masterFilter = expression.Equal(expression.Name("type"), expression.Value(itemType))
+			continue
+		}
+		masterFilter = expression.Or(masterFilter, expression.Equal(expression.Name("type"), expression.Value(itemType)))
+	}
+
 	for _, filter := range filters {
 		masterFilter = masterFilter.And(filter)
 	}

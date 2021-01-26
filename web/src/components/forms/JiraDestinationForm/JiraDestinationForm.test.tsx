@@ -107,22 +107,22 @@ describe('JiraDestinationForm', () => {
 
     fireEvent.change(displayNameField, { target: { value: displayName } });
     fireEvent.click(criticalSeverityCheckBox);
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(orgDomainField, { target: { value: faker.internet.url() } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(projectKeyField, { target: { value: 'key' } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(emailField, { target: { value: faker.internet.email() } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(apiKeyField, { target: { value: 'api-key' } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(issueTypeField, { target: { value: 'Bug' } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
     // Labels is not required
     labels.forEach(label => {
@@ -133,11 +133,11 @@ describe('JiraDestinationForm', () => {
       });
       fireEvent.blur(labelsField);
     });
-    await waitMs(50);
+    await waitMs(1);
     // Assignee ID is not required
     expect(submitButton).not.toHaveAttribute('disabled');
     fireEvent.change(assigneeIdField, { target: { value: 'key' } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
   });
 
@@ -178,7 +178,7 @@ describe('JiraDestinationForm', () => {
       });
       fireEvent.blur(labelsField);
     });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);
@@ -215,7 +215,7 @@ describe('JiraDestinationForm', () => {
 
     const newDisplayName = 'New Jira Name';
     fireEvent.change(displayNameField, { target: { value: newDisplayName } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);

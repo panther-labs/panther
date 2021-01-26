@@ -149,6 +149,9 @@ export type AlertDetails = Alert & {
   lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
   updateTime: Scalars['AWSDateTime'];
   detection: AlertDetailsDetectionInfo;
+  description?: Maybe<Scalars['String']>;
+  reference?: Maybe<Scalars['String']>;
+  runbook?: Maybe<Scalars['String']>;
 };
 
 export type AlertDetailsDetectionInfo = AlertDetailsRuleInfo | AlertSummaryPolicyInfo;
@@ -824,7 +827,7 @@ export type Mutation = {
   updatePolicy: Policy;
   updateRule: Rule;
   updateUser: User;
-  uploadPolicies?: Maybe<UploadPoliciesResponse>;
+  uploadDetections?: Maybe<UploadDetectionsResponse>;
   updateGlobalPythonlModule: GlobalPythonModule;
 };
 
@@ -972,8 +975,8 @@ export type MutationUpdateUserArgs = {
   input: UpdateUserInput;
 };
 
-export type MutationUploadPoliciesArgs = {
-  input: UploadPoliciesInput;
+export type MutationUploadDetectionsArgs = {
+  input: UploadDetectionsInput;
 };
 
 export type MutationUpdateGlobalPythonlModuleArgs = {
@@ -1535,21 +1538,24 @@ export type UpdateUserInput = {
   email?: Maybe<Scalars['AWSEmail']>;
 };
 
-export type UploadPoliciesInput = {
+export type UploadDetectionsInput = {
   data: Scalars['String'];
 };
 
-export type UploadPoliciesResponse = {
-  __typename?: 'UploadPoliciesResponse';
-  totalPolicies?: Maybe<Scalars['Int']>;
-  newPolicies?: Maybe<Scalars['Int']>;
-  modifiedPolicies?: Maybe<Scalars['Int']>;
-  totalRules?: Maybe<Scalars['Int']>;
-  newRules?: Maybe<Scalars['Int']>;
-  modifiedRules?: Maybe<Scalars['Int']>;
-  totalGlobals?: Maybe<Scalars['Int']>;
-  newGlobals?: Maybe<Scalars['Int']>;
-  modifiedGlobals?: Maybe<Scalars['Int']>;
+export type UploadDetectionsResponse = {
+  __typename?: 'UploadDetectionsResponse';
+  totalPolicies: Scalars['Int'];
+  newPolicies: Scalars['Int'];
+  modifiedPolicies: Scalars['Int'];
+  totalRules: Scalars['Int'];
+  newRules: Scalars['Int'];
+  modifiedRules: Scalars['Int'];
+  totalGlobals: Scalars['Int'];
+  newGlobals: Scalars['Int'];
+  modifiedGlobals: Scalars['Int'];
+  totalDataModels: Scalars['Int'];
+  newDataModels: Scalars['Int'];
+  modifiedDataModels: Scalars['Int'];
 };
 
 export type User = {
@@ -1825,8 +1831,8 @@ export type ResolversTypes = {
   UpdatePolicyInput: UpdatePolicyInput;
   UpdateRuleInput: UpdateRuleInput;
   UpdateUserInput: UpdateUserInput;
-  UploadPoliciesInput: UploadPoliciesInput;
-  UploadPoliciesResponse: ResolverTypeWrapper<UploadPoliciesResponse>;
+  UploadDetectionsInput: UploadDetectionsInput;
+  UploadDetectionsResponse: ResolverTypeWrapper<UploadDetectionsResponse>;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
   CustomLogOutput: ResolverTypeWrapper<CustomLogOutput>;
   AccountTypeEnum: AccountTypeEnum;
@@ -2008,8 +2014,8 @@ export type ResolversParentTypes = {
   UpdatePolicyInput: UpdatePolicyInput;
   UpdateRuleInput: UpdateRuleInput;
   UpdateUserInput: UpdateUserInput;
-  UploadPoliciesInput: UploadPoliciesInput;
-  UploadPoliciesResponse: UploadPoliciesResponse;
+  UploadDetectionsInput: UploadDetectionsInput;
+  UploadDetectionsResponse: UploadDetectionsResponse;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
   CustomLogOutput: CustomLogOutput;
   AccountTypeEnum: AccountTypeEnum;
@@ -2065,6 +2071,9 @@ export type AlertDetailsResolvers<
   lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   detection?: Resolver<ResolversTypes['AlertDetailsDetectionInfo'], ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  reference?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  runbook?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2816,11 +2825,11 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationUpdateUserArgs, 'input'>
   >;
-  uploadPolicies?: Resolver<
-    Maybe<ResolversTypes['UploadPoliciesResponse']>,
+  uploadDetections?: Resolver<
+    Maybe<ResolversTypes['UploadDetectionsResponse']>,
     ParentType,
     ContextType,
-    RequireFields<MutationUploadPoliciesArgs, 'input'>
+    RequireFields<MutationUploadDetectionsArgs, 'input'>
   >;
   updateGlobalPythonlModule?: Resolver<
     ResolversTypes['GlobalPythonModule'],
@@ -3415,19 +3424,22 @@ export type TestRuleResponseResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
-export type UploadPoliciesResponseResolvers<
+export type UploadDetectionsResponseResolvers<
   ContextType = any,
-  ParentType extends ResolversParentTypes['UploadPoliciesResponse'] = ResolversParentTypes['UploadPoliciesResponse']
+  ParentType extends ResolversParentTypes['UploadDetectionsResponse'] = ResolversParentTypes['UploadDetectionsResponse']
 > = {
-  totalPolicies?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  newPolicies?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  modifiedPolicies?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  totalRules?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  newRules?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  modifiedRules?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  totalGlobals?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  newGlobals?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  modifiedGlobals?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  totalPolicies?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  newPolicies?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  modifiedPolicies?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalRules?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  newRules?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  modifiedRules?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalGlobals?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  newGlobals?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  modifiedGlobals?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalDataModels?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  newDataModels?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  modifiedDataModels?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -3528,7 +3540,7 @@ export type Resolvers<ContextType = any> = {
   TestRuleRecord?: TestRuleRecordResolvers<ContextType>;
   TestRuleRecordFunctions?: TestRuleRecordFunctionsResolvers<ContextType>;
   TestRuleResponse?: TestRuleResponseResolvers<ContextType>;
-  UploadPoliciesResponse?: UploadPoliciesResponseResolvers<ContextType>;
+  UploadDetectionsResponse?: UploadDetectionsResponseResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
 };
 

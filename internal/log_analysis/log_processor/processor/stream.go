@@ -34,7 +34,7 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 	"github.com/panther-labs/panther/pkg/awsutils"
@@ -54,7 +54,7 @@ Fewer, bigger files makes Athena queries much faster.
 func PollEvents(
 	ctx context.Context,
 	sqsClient sqsiface.SQSAPI,
-	resolver logtypes.Resolver,
+	resolver pantherlog.ParserResolver,
 ) (sqsMessageCount int, err error) {
 
 	newProcessor := NewFactory(resolver)

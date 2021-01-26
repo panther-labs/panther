@@ -83,10 +83,10 @@ describe('AsanaDestinationForm', () => {
 
     fireEvent.change(displayNameField, { target: { value: displayName } });
     fireEvent.click(criticalSeverityCheckBox);
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(tokenField, { target: { value: '123' } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     gids.forEach(gid => {
       fireEvent.change(projectGidsField, {
@@ -96,7 +96,7 @@ describe('AsanaDestinationForm', () => {
       });
       fireEvent.blur(projectGidsField);
     });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
   });
 
@@ -117,7 +117,7 @@ describe('AsanaDestinationForm', () => {
     fireEvent.click(criticalSeverityCheckBox);
     const token = '123';
     fireEvent.change(tokenField, { target: { value: token } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     gids.forEach(gid => {
       fireEvent.change(projectGidsField, {
@@ -127,7 +127,7 @@ describe('AsanaDestinationForm', () => {
       });
       fireEvent.blur(projectGidsField);
     });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);
@@ -152,7 +152,7 @@ describe('AsanaDestinationForm', () => {
 
     const newDisplayName = 'New Asana Name';
     fireEvent.change(displayNameField, { target: { value: newDisplayName } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);

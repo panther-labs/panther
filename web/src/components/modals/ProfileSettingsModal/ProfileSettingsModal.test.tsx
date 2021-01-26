@@ -122,7 +122,7 @@ describe('ProfileSettingsModal', () => {
     fireEvent.click(submitButton);
 
     // wait for callbacks
-    await waitMs(100);
+    await waitMs(1);
 
     expect(changePassword).toHaveBeenCalled();
     expect(signOut).toHaveBeenCalled();

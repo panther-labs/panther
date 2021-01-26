@@ -21,7 +21,7 @@ import { FadeIn } from 'pouncejs';
 
 import { WizardPanel, useWizardContext } from 'Components/Wizard';
 import { extractErrorMessage } from 'Helpers/utils';
-import { useUploadPolicies, UploadPolicies } from './graphql/uploadPolicies.generated';
+import { useUploadDetections, UploadDetections } from './graphql/uploadDetections.generated';
 
 import UploadError from './Error';
 import UploadForm from './Upload';
@@ -37,9 +37,9 @@ const UploadPanel: React.FC = () => {
   const controller = new window.AbortController();
   const [uploadingState, setUploadingState] = React.useState<UploadState>(PENDING);
   const [errorMsg, setErrorMsg] = React.useState('');
-  const { goToNextStep, resetData, setData } = useWizardContext<UploadPolicies>();
+  const { goToNextStep, resetData, setData } = useWizardContext<UploadDetections>();
 
-  const [bulkUploadPolicies] = useUploadPolicies({
+  const [bulkUploadDetections] = useUploadDetections({
     context: {
       fetchOptions: { signal: controller.signal },
     },
@@ -84,7 +84,7 @@ const UploadPanel: React.FC = () => {
       reader.addEventListener('load', async () => {
         setUploadingState(PROCESSING);
         try {
-          await bulkUploadPolicies({
+          await bulkUploadDetections({
             awaitRefetchQueries: true,
             variables: {
               input: {
