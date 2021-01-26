@@ -184,6 +184,7 @@ func InferTypeValueSchema(typ reflect.Type) (*ValueSchema, error) {
 	}
 	switch typ.Kind() {
 	case reflect.Struct:
+		// We check with ConvertibleTo for timestamp types defined as `type T time.Time`
 		if typ.ConvertibleTo(reflect.TypeOf(time.Time{})) {
 			return &ValueSchema{
 				Type: TypeTimestamp,
