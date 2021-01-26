@@ -368,35 +368,60 @@ func TestIntersection(t *testing.T) {
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
 	outputs := []*outputModels.AlertOutput{
 		{
-			OutputID:           aws.String("output-id-1"),
-			OutputType:         aws.String("slack"),
-			DefaultForSeverity: []*string{aws.String("INFO")},
+			OutputID: aws.String("output-id-1"),
 		},
 		{
-			OutputID:           aws.String("output-id-b"),
-			OutputType:         aws.String("customwebhook"),
-			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM")},
+			OutputID: aws.String("output-id-b"),
 		},
 		{
-			OutputID:           aws.String("output-id-3"),
-			OutputType:         aws.String("asana"),
-			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM"), aws.String("CRITICAL")},
+			OutputID: aws.String("output-id-3"),
 		},
 	}
 
 	expectedResult := []*outputModels.AlertOutput{
 		{
-			OutputID:           aws.String("output-id-1"),
-			OutputType:         aws.String("slack"),
-			DefaultForSeverity: []*string{aws.String("INFO")},
+			OutputID: aws.String("output-id-1"),
 		},
 		{
-			OutputID:           aws.String("output-id-3"),
-			OutputType:         aws.String("asana"),
-			DefaultForSeverity: []*string{aws.String("INFO"), aws.String("MEDIUM"), aws.String("CRITICAL")},
+			OutputID: aws.String("output-id-3"),
 		},
 	}
 
 	result := intersection(outputIds, outputs)
+	assert.Equal(t, expectedResult, result)
+}
+
+func TestDifference(t *testing.T) {
+	outputsA := []*outputModels.AlertOutput{
+		{
+			OutputID: aws.String("output-id-1"),
+		},
+		{
+			OutputID: aws.String("output-id-2"),
+		},
+		{
+			OutputID: aws.String("output-id-3"),
+		},
+	}
+
+	outputsB := []*outputModels.AlertOutput{
+		{
+			OutputID: aws.String("output-id-1"),
+		},
+		{
+			OutputID: aws.String("output-id-b"),
+		},
+		{
+			OutputID: aws.String("output-id-3"),
+		},
+	}
+
+	expectedResult := []*outputModels.AlertOutput{
+		{
+			OutputID: aws.String("output-id-b"),
+		},
+	}
+
+	result := difference(outputsA, outputsB)
 	assert.Equal(t, expectedResult, result)
 }
