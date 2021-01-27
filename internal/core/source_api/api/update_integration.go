@@ -56,7 +56,7 @@ func (api *API) UpdateIntegrationSettings(input *models.UpdateIntegrationSetting
 	if existingItem.IntegrationType != models.IntegrationTypeAWS3 {
 		// For s3 sources, allow saving regardless of the healthcheck result. This allows
 		// users to manage the log processing role and other infra asynchronously.
-		if err:= api.checkSource(existingItem, input); err != nil {
+		if err := api.checkSource(existingItem, input); err != nil {
 			return nil, err
 		}
 	}
@@ -86,7 +86,7 @@ func (api *API) UpdateIntegrationSettings(input *models.UpdateIntegrationSetting
 	return existingIntegration, nil
 }
 
-func (api *API) checkSource(existingItem *ddb.Integration,input *models.UpdateIntegrationSettingsInput) error {
+func (api *API) checkSource(existingItem *ddb.Integration, input *models.UpdateIntegrationSettingsInput) error {
 	reason, passing, err := api.EvaluateIntegrationFunc(&models.CheckIntegrationInput{
 		// Same as the existing integration item
 		AWSAccountID:    existingItem.AWSAccountID,
@@ -102,7 +102,7 @@ func (api *API) checkSource(existingItem *ddb.Integration,input *models.UpdateIn
 		SqsConfig:         input.SqsConfig,
 	})
 	if err != nil {
-		return  err
+		return err
 	}
 	if !passing {
 		zap.L().Warn("UpdateIntegration: resource has a misconfiguration",
