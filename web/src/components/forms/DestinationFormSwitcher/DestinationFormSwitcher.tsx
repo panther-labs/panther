@@ -48,6 +48,7 @@ const DestinationFormSwitcher: React.FC<DestinationFormSwitcherProps> = ({
     'outputId',
     'displayName',
     'defaultForSeverity',
+    'alertTypes',
   ]);
 
   switch (initialValues.outputType) {

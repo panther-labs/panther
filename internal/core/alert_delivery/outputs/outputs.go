@@ -29,7 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	jsoniter "github.com/json-iterator/go"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
@@ -63,16 +63,16 @@ type HTTPiface interface {
 
 // API is the interface for output delivery that can be used for mocks in tests.
 type API interface {
-	Slack(context.Context, *alertModels.Alert, *outputModels.SlackConfig) *AlertDeliveryResponse
-	PagerDuty(context.Context, *alertModels.Alert, *outputModels.PagerDutyConfig) *AlertDeliveryResponse
-	Github(context.Context, *alertModels.Alert, *outputModels.GithubConfig) *AlertDeliveryResponse
-	Jira(context.Context, *alertModels.Alert, *outputModels.JiraConfig) *AlertDeliveryResponse
-	Opsgenie(context.Context, *alertModels.Alert, *outputModels.OpsgenieConfig) *AlertDeliveryResponse
-	MsTeams(context.Context, *alertModels.Alert, *outputModels.MsTeamsConfig) *AlertDeliveryResponse
-	Sqs(context.Context, *alertModels.Alert, *outputModels.SqsConfig) *AlertDeliveryResponse
-	Sns(context.Context, *alertModels.Alert, *outputModels.SnsConfig) *AlertDeliveryResponse
-	Asana(context.Context, *alertModels.Alert, *outputModels.AsanaConfig) *AlertDeliveryResponse
-	CustomWebhook(context.Context, *alertModels.Alert, *outputModels.CustomWebhookConfig) *AlertDeliveryResponse
+	Slack(context.Context, *deliverymodel.Alert, *outputModels.SlackConfig) *AlertDeliveryResponse
+	PagerDuty(context.Context, *deliverymodel.Alert, *outputModels.PagerDutyConfig) *AlertDeliveryResponse
+	Github(context.Context, *deliverymodel.Alert, *outputModels.GithubConfig) *AlertDeliveryResponse
+	Jira(context.Context, *deliverymodel.Alert, *outputModels.JiraConfig) *AlertDeliveryResponse
+	Opsgenie(context.Context, *deliverymodel.Alert, *outputModels.OpsgenieConfig) *AlertDeliveryResponse
+	MsTeams(context.Context, *deliverymodel.Alert, *outputModels.MsTeamsConfig) *AlertDeliveryResponse
+	Sqs(context.Context, *deliverymodel.Alert, *outputModels.SqsConfig) *AlertDeliveryResponse
+	Sns(context.Context, *deliverymodel.Alert, *outputModels.SnsConfig) *AlertDeliveryResponse
+	Asana(context.Context, *deliverymodel.Alert, *outputModels.AsanaConfig) *AlertDeliveryResponse
+	CustomWebhook(context.Context, *deliverymodel.Alert, *outputModels.CustomWebhookConfig) *AlertDeliveryResponse
 }
 
 // OutputClient encapsulates the clients that allow sending alerts to multiple outputs
@@ -140,7 +140,7 @@ type Notification struct {
 	Version *string `json:"version"`
 }
 
-func generateNotificationFromAlert(alert *alertModels.Alert) Notification {
+func generateNotificationFromAlert(alert *deliverymodel.Alert) Notification {
 	notification := Notification{
 		ID:           alert.AnalysisID,
 		AlertID:      alert.AlertID,
@@ -161,20 +161,20 @@ func generateNotificationFromAlert(alert *alertModels.Alert) Notification {
 	return notification
 }
 
-func generateAlertMessage(alert *alertModels.Alert) string {
+func generateAlertMessage(alert *deliverymodel.Alert) string {
 	switch alert.Type {
-	case alertModels.RuleType:
+	case deliverymodel.RuleType:
 		return getDisplayName(alert) + " triggered"
-	case alertModels.RuleErrorType:
+	case deliverymodel.RuleErrorType:
 		return getDisplayName(alert) + " encountered an error"
-	case alertModels.PolicyType:
+	case deliverymodel.PolicyType:
 		return getDisplayName(alert) + " failed on new resources"
 	default:
 		panic("uknown alert type " + alert.Type)
 	}
 }
 
-func generateDetailedAlertMessage(alert *alertModels.Alert) string {
+func generateDetailedAlertMessage(alert *deliverymodel.Alert) string {
 	const detailedMessageTemplate = "%s\nFor more details please visit: %s\nSeverity: %s\nRunbook: %s\n" +
 		"Reference: %s\nDescription: %s\nAlertContext: %s"
 	// Best effort to marshal alert context
@@ -192,33 +192,33 @@ func generateDetailedAlertMessage(alert *alertModels.Alert) string {
 	)
 }
 
-func generateAlertTitle(alert *alertModels.Alert) string {
+func generateAlertTitle(alert *deliverymodel.Alert) string {
 	if alert.IsResent {
 		return "[Re-sent]: " + alert.Title
 	}
 	switch alert.Type {
-	case alertModels.RuleType:
+	case deliverymodel.RuleType:
 		if alert.Title != "" {
 			return "New Alert: " + alert.Title
 		}
 		return "New Alert: " + getDisplayName(alert)
-	case alertModels.RuleErrorType:
+	case deliverymodel.RuleErrorType:
 		return "New rule error: " + alert.Title
-	case alertModels.PolicyType:
+	case deliverymodel.PolicyType:
 		return "Policy Failure: " + getDisplayName(alert)
 	default:
 		panic("uknown alert type " + alert.Type)
 	}
 }
 
-func getDisplayName(alert *alertModels.Alert) string {
+func getDisplayName(alert *deliverymodel.Alert) string {
 	if aws.StringValue(alert.AnalysisName) != "" {
 		return *alert.AnalysisName
 	}
 	return alert.AnalysisID
 }
 
-func generateURL(alert *alertModels.Alert) string {
+func generateURL(alert *deliverymodel.Alert) string {
 	if alert.IsTest {
 		return appDomainURL
 	}

@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/outputs_api/table"
 )
@@ -92,6 +93,7 @@ func TestAddOutputSlack(t *testing.T) {
 		DisplayName:        aws.String("my-channel"),
 		OutputConfig:       &models.OutputConfig{Slack: &models.SlackConfig{WebhookURL: "hooks.slack.com"}},
 		DefaultForSeverity: aws.StringSlice([]string{"CRITICAL", "HIGH"}),
+		AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
 	}
 
 	result, err := (API{}).AddOutput(input)
@@ -107,6 +109,7 @@ func TestAddOutputSlack(t *testing.T) {
 		CreationTime:       result.CreationTime,
 		LastModifiedTime:   result.LastModifiedTime,
 		DefaultForSeverity: aws.StringSlice([]string{"CRITICAL", "HIGH"}),
+		AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
 	}
 	assert.Equal(t, expected, result)
 
@@ -130,6 +133,7 @@ func TestAddOutputSns(t *testing.T) {
 	input := &models.AddOutputInput{
 		UserID:       aws.String("userId"),
 		DisplayName:  aws.String("my-topic"),
+		AlertTypes:   []string{deliverymodel.RuleType},
 		OutputConfig: &models.OutputConfig{Sns: &models.SnsConfig{TopicArn: "arn:aws:sns:us-west-2:123456789012:MyTopic"}},
 	}
 
@@ -141,6 +145,7 @@ func TestAddOutputSns(t *testing.T) {
 		OutputType:       aws.String("sns"),
 		LastModifiedBy:   aws.String("userId"),
 		CreatedBy:        aws.String("userId"),
+		AlertTypes:       []string{deliverymodel.RuleType},
 		OutputConfig:     &models.OutputConfig{Sns: &models.SnsConfig{TopicArn: "arn:aws:sns:us-west-2:123456789012:MyTopic"}},
 		OutputID:         result.OutputID,
 		CreationTime:     result.CreationTime,
@@ -165,6 +170,7 @@ func TestAddOutputPagerDuty(t *testing.T) {
 	input := &models.AddOutputInput{
 		UserID:       aws.String("userId"),
 		DisplayName:  aws.String("my-pagerduty-integration"),
+		AlertTypes:   []string{deliverymodel.RuleErrorType},
 		OutputConfig: &models.OutputConfig{PagerDuty: &models.PagerDutyConfig{IntegrationKey: "93ee508cbfea4604afe1c77c2d9b5bbd"}},
 	}
 
@@ -176,6 +182,7 @@ func TestAddOutputPagerDuty(t *testing.T) {
 		OutputType:     aws.String("pagerduty"),
 		LastModifiedBy: aws.String("userId"),
 		CreatedBy:      aws.String("userId"),
+		AlertTypes:     []string{deliverymodel.RuleErrorType},
 		OutputConfig: &models.OutputConfig{
 			PagerDuty: &models.PagerDutyConfig{
 				IntegrationKey: "",
@@ -204,6 +211,7 @@ func TestAddOutputSqs(t *testing.T) {
 	input := &models.AddOutputInput{
 		UserID:      aws.String("userId"),
 		DisplayName: aws.String("my-queue"),
+		AlertTypes:  []string{deliverymodel.PolicyType},
 		OutputConfig: &models.OutputConfig{
 			Sqs: &models.SqsConfig{
 				QueueURL: "https://sqs.us-west-2.amazonaws.com/123456789012/test-output",
@@ -219,6 +227,7 @@ func TestAddOutputSqs(t *testing.T) {
 		OutputType:     aws.String("sqs"),
 		LastModifiedBy: aws.String("userId"),
 		CreatedBy:      aws.String("userId"),
+		AlertTypes:     []string{deliverymodel.PolicyType},
 		OutputConfig: &models.OutputConfig{
 			Sqs: &models.SqsConfig{
 				QueueURL: "https://sqs.us-west-2.amazonaws.com/123456789012/test-output",
@@ -247,6 +256,7 @@ func TestAddOutputAsana(t *testing.T) {
 	input := &models.AddOutputInput{
 		UserID:      aws.String("userId"),
 		DisplayName: aws.String("my-asana-destination"),
+		AlertTypes:  []string{deliverymodel.PolicyType},
 		OutputConfig: &models.OutputConfig{
 			Asana: &models.AsanaConfig{
 				PersonalAccessToken: "0/8c26ac5222d539ca0ad7000000000000",
@@ -263,6 +273,7 @@ func TestAddOutputAsana(t *testing.T) {
 		OutputType:     aws.String("asana"),
 		LastModifiedBy: aws.String("userId"),
 		CreatedBy:      aws.String("userId"),
+		AlertTypes:     []string{deliverymodel.PolicyType},
 		OutputConfig: &models.OutputConfig{
 			Asana: &models.AsanaConfig{
 				PersonalAccessToken: "",

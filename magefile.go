@@ -49,6 +49,11 @@ func (Build) Tools() error {
 	return build.Tools()
 }
 
+// Export native schemas as YAML
+func (Build) Schemas() error {
+	return build.Schemas()
+}
+
 // Remove dev libraries and build/test artifacts
 func Clean() error {
 	return clean.Clean()

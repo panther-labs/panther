@@ -24,17 +24,17 @@ import (
 
 	"go.uber.org/zap"
 
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 )
 
 // AlertOutputMap is a type alias for containing the outputIds that an alert should be delivered to
-type AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
+type AlertOutputMap map[*deliverymodel.Alert][]*outputModels.AlertOutput
 
 // DispatchStatus holds info about which alert was sent to a given destination with its response status
 type DispatchStatus struct {
-	Alert        deliveryModels.Alert
+	Alert        deliverymodel.Alert
 	OutputID     string
 	Message      string
 	StatusCode   int
@@ -108,7 +108,7 @@ func sendAlerts(
 // The statusChannel will be sent a message with the result of the send attempt.
 func sendAlert(
 	ctx context.Context,
-	alert *deliveryModels.Alert,
+	alert *deliverymodel.Alert,
 	output *outputModels.AlertOutput,
 	dispatchedAt time.Time,
 	statusChannel chan DispatchStatus,

@@ -20,6 +20,7 @@ package registry
 
 import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 // Generates an init() function that populates the registry with all log types exported by
@@ -32,9 +33,13 @@ var (
 )
 
 // NativeLogTypesResolver returns a resolver for native log types.
-// Use this instead of registry.Default()
 func NativeLogTypesResolver() logtypes.Resolver {
 	return logtypes.LocalResolver(nativeLogTypes)
+}
+
+// NativeParsersResolver returns a resolver for native parsers.
+func NativeParsersResolver() pantherlog.ParserResolver {
+	return logtypes.ParserResolver(NativeLogTypesResolver())
 }
 func NativeLogTypes() logtypes.Group {
 	return nativeLogTypes

@@ -20,6 +20,7 @@ package common
 
 import (
 	"io"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -37,11 +38,12 @@ import (
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor/logstream"
 	"github.com/panther-labs/panther/pkg/awsretry"
+	"github.com/panther-labs/panther/pkg/metrics"
 )
 
 const (
-	MaxRetries     = 13 // ~7'
-	EventDelimiter = '\n'
+	MaxRetries = 13 // ~7'
+
 )
 
 var (
@@ -53,7 +55,10 @@ var (
 	SqsClient    sqsiface.SQSAPI
 	SnsClient    snsiface.SNSAPI
 
-	Config EnvConfig
+	Config    EnvConfig
+	CWMetrics metrics.Manager
+
+	GetObject metrics.Counter
 )
 
 type EnvConfig struct {
@@ -80,6 +85,7 @@ func Setup() {
 	if err != nil {
 		panic(err)
 	}
+	setupMetrics()
 }
 
 // DataStream represents a data stream for an s3 object read by the processor
@@ -90,4 +96,15 @@ type DataStream struct {
 	S3ObjectKey  string
 	S3Bucket     string
 	S3ObjectSize int64
+}
+
+const (
+	SubsystemLogProcessor       = "LogProcessor"
+	MetricLogProcessorGetObject = "GetObject"
+)
+
+func setupMetrics() {
+	CWMetrics = metrics.NewCWEmbeddedMetrics(os.Stdout)
+	GetObject = CWMetrics.NewCounter(MetricLogProcessorGetObject).
+		With(metrics.SubsystemDimension, SubsystemLogProcessor)
 }

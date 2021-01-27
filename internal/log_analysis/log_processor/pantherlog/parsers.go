@@ -19,6 +19,7 @@ package pantherlog
  */
 
 import (
+	"context"
 	"io"
 	"strings"
 	"time"
@@ -37,6 +38,10 @@ type FactoryFunc func(params interface{}) (LogParser, error)
 
 func (f FactoryFunc) NewParser(params interface{}) (LogParser, error) {
 	return f(params)
+}
+
+type ParserResolver interface {
+	ResolveParser(ctx context.Context, name string) (LogParser, error)
 }
 
 type LogParser interface {

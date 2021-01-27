@@ -18,13 +18,14 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs, faker } from 'test-utils';
-import { SeverityEnum } from 'Generated/schema';
+import { AlertTypesEnum, SeverityEnum } from 'Generated/schema';
 import CustomWebhookDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
+  alertTypes: [],
   outputConfig: {
     customWebhook: {
       webhookURL: '',
@@ -45,6 +46,7 @@ const initialValues = {
     },
   },
   defaultForSeverity: [severity],
+  alertTypes: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError, AlertTypesEnum.Policy],
 };
 
 describe('CustomWebhookDestinationForm', () => {
@@ -112,6 +114,7 @@ describe('CustomWebhookDestinationForm', () => {
       displayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: [severity],
+      alertTypes: [],
     });
   });
 
@@ -137,6 +140,7 @@ describe('CustomWebhookDestinationForm', () => {
       displayName: newDisplayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: initialValues.defaultForSeverity,
+      alertTypes: initialValues.alertTypes,
     });
   });
 });

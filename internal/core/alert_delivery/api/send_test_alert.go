@@ -25,11 +25,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 )
 
 // SendTestAlert sends a dummy alert to the specified destinations.
-func (API) SendTestAlert(ctx context.Context, input *deliveryModels.SendTestAlertInput) ([]*deliveryModels.SendTestAlertOutput, error) {
+func (API) SendTestAlert(ctx context.Context, input *deliverymodel.SendTestAlertInput) ([]*deliverymodel.SendTestAlertOutput, error) {
 	// First, fetch the alert
 	zap.L().Debug("Sending test alert")
 
@@ -46,9 +46,9 @@ func (API) SendTestAlert(ctx context.Context, input *deliveryModels.SendTestAler
 	dispatchStatuses := sendAlerts(ctx, alertOutputMap, outputClient)
 
 	// Convert the full dispatch statuses into ones that are friendly for the frontend
-	responseStatuses := []*deliveryModels.SendTestAlertOutput{}
+	responseStatuses := []*deliverymodel.SendTestAlertOutput{}
 	for _, status := range dispatchStatuses {
-		responseStatuses = append(responseStatuses, &deliveryModels.SendTestAlertOutput{
+		responseStatuses = append(responseStatuses, &deliverymodel.SendTestAlertOutput{
 			OutputID:     status.OutputID,
 			Message:      status.Message,
 			StatusCode:   status.StatusCode,
@@ -61,10 +61,10 @@ func (API) SendTestAlert(ctx context.Context, input *deliveryModels.SendTestAler
 }
 
 // generateTestAlert - genreates an alert with dummy values
-func generateTestAlert() *deliveryModels.Alert {
-	return &deliveryModels.Alert{
+func generateTestAlert() *deliverymodel.Alert {
+	return &deliverymodel.Alert{
 		AnalysisID:          "Test.Alert",
-		Type:                deliveryModels.RuleType,
+		Type:                deliverymodel.RuleType,
 		CreatedAt:           time.Now().UTC(),
 		Severity:            "INFO",
 		OutputIds:           []string{},

@@ -35,7 +35,7 @@ func Test_BuildClassifier_NoLogTypes(t *testing.T) {
 			IntegrationLabel: "integration-label",
 		},
 	}
-	c, err := BuildClassifier(logTypes, src, registry.NativeLogTypesResolver())
+	c, err := BuildClassifier(logTypes, src, registry.NativeParsersResolver())
 	require.NoError(t, err)
 
 	_, err = c.Classify(`{"key":"value}"`)

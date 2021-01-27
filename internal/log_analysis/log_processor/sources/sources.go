@@ -27,7 +27,6 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
@@ -67,20 +66,21 @@ func LoadSourceS3(bucketName, objectKey string) (*models.SourceIntegration, erro
 }
 
 // BuildClassifier builds a classifier for a source
-func BuildClassifier(availableLogTypes []string, src *models.SourceIntegration, r logtypes.Resolver) (classification.ClassifierAPI, error) {
+func BuildClassifier(
+	availableLogTypes []string,
+	src *models.SourceIntegration,
+	r pantherlog.ParserResolver,
+) (classification.ClassifierAPI, error) {
+
 	parserIndex := map[string]pantherlog.LogParser{}
 	for _, logType := range availableLogTypes {
-		entry, err := r.Resolve(context.TODO(), logType)
+		parser, err := r.ResolveParser(context.TODO(), logType)
 		if err != nil {
-			return nil, errors.Wrapf(err, "could not resolve source log type %q", logType)
+			return nil, errors.Wrapf(err, "could not resolve log type parser %q", logType)
 		}
-		if entry == nil {
-			zap.L().Warn("unresolved log type", zap.String("logType", logType), zap.String("sourceId", src.IntegrationID))
+		if parser == nil {
+			zap.L().Warn("unresolved log type parser", zap.String("logType", logType), zap.String("sourceId", src.IntegrationID))
 			continue
-		}
-		parser, err := entry.NewParser(nil)
-		if err != nil {
-			return nil, errors.WithMessagef(err, "failed to create %q parser", logType)
 		}
 		parserIndex[logType] = newSourceFieldsParser(src.IntegrationID, src.IntegrationLabel, parser)
 	}

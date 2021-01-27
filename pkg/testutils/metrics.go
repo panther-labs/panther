@@ -19,6 +19,9 @@ package testutils
  */
 
 import (
+	"context"
+	"time"
+
 	"github.com/stretchr/testify/mock"
 
 	"github.com/panther-labs/panther/pkg/metrics"
@@ -31,4 +34,34 @@ type LoggerMock struct {
 
 func (m *LoggerMock) Log(dimensions []metrics.Dimension, metrics ...metrics.Metric) {
 	m.Called(dimensions, metrics)
+}
+
+type CounterMock struct {
+	metrics.Counter
+	mock.Mock
+}
+
+func (m *CounterMock) With(dimensionValues ...string) metrics.Counter {
+	args := m.Called(dimensionValues)
+	return args.Get(0).(metrics.Counter)
+}
+func (m *CounterMock) Add(delta float64) {
+	m.Called(delta)
+}
+
+type MetricsManagerMock struct {
+	metrics.Manager
+	mock.Mock
+}
+
+func (m *MetricsManagerMock) Run(ctx context.Context, interval time.Duration) {
+	m.Called(ctx, interval)
+}
+func (m *MetricsManagerMock) NewCounter(name string) metrics.Counter {
+	args := m.Called(name)
+	return args.Get(0).(metrics.Counter)
+}
+
+func (m *MetricsManagerMock) Sync() error {
+	return m.Called().Error(0)
 }
