@@ -89,20 +89,17 @@ func NewGithubConfig(owner string, repository string, assets []string) GithubCon
 func downloadValidatePackData(config GithubConfig, version models.Version) (map[string]*packTableItem, map[string]*tableItem, error) {
 	assets, err := githubClient.DownloadGithubReleaseAssets(config.Owner, config.Repository, version.ID, config.Assets)
 	if err != nil || len(assets) != len(pantherPackAssets) {
-		zap.L().Error("error downloadeing assets", zap.Error(err))
 		return nil, nil, err
 	}
 	/*// First validate the public key and its signature (signed by the pather root cert)
 	err = validateSignature([]byte(pantherRootPublicKey), assets[pantherPublicKey], assets[pantherPublicKeySignature])
 	if err != nil {
-		zap.L().Error("signature failed", zap.String("file", pantherPublicKey))
 		return nil, nil, err
 	}
 	// Then validate the source file and signature
 	err = validateSignature(assets[pantherPublicKey], assets[pantherSourceFilename], assets[pantherSignatureFilename])*/
 	err = validateSignatureKMS(assets[pantherSourceFilename], assets[pantherSignatureFilename])
 	if err != nil {
-		zap.L().Error("signature failed", zap.String("file", pantherSourceFilename))
 		return nil, nil, err
 	}
 	packs, detections, err := extractZipFileBytes(assets[pantherSourceFilename])
@@ -170,7 +167,6 @@ func validateSignatureKMS(rawData []byte, signature []byte) error {
 	// The signature is base64 encoded in the file, decode it
 	decodedSignature, err := base64.StdEncoding.DecodeString(string(signature))
 	if err != nil {
-		zap.L().Error("error base64 decoding item", zap.Error(err))
 		return err
 	}
 	signatureVerifyInput := &kms.VerifyInput{
