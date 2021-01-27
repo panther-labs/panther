@@ -302,7 +302,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
 
         expected_alert_context = json.dumps(event)
         expected_result = RuleResult(
-            matched=True, dedup_output='defaultDedupString:test_alert_context_immutable_event', alert_context=expected_alert_context
+            matched=True, dedup_output='defaultDedupString:test_alert_context_returns_full_event', alert_context=expected_alert_context
         )
         self.assertEqual(expected_result, rule.run(PantherEvent(event, None)))
 
