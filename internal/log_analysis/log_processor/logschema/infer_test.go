@@ -1,4 +1,4 @@
-package api
+package logschema_test
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,22 +19,24 @@ package api
  */
 
 import (
-	"github.com/panther-labs/panther/api/lambda/outputs/models"
+	"reflect"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 )
 
-// GetOutput retrieves a single alert output
-func (API) GetOutput(input *models.GetOutputInput) (*models.GetOutputOutput, error) {
-	item, err := outputsTable.GetOutput(input.OutputID)
-	if err != nil {
-		return nil, err
+func TestExport(t *testing.T) {
+	assert := require.New(t)
+	for _, entry := range registry.NativeLogTypes().Entries() {
+		typ := reflect.TypeOf(entry.Schema())
+		schema, err := logschema.InferTypeValueSchema(typ)
+		assert.NoError(err, "schema export for %q should work", entry)
+		data, err := yaml.Marshal(schema)
+		assert.NoError(err, "schema export for %q YAML", entry)
+		println(string(data))
 	}
-
-	alertOutput, err := ItemToAlertOutput(item)
-	if err != nil {
-		return nil, err
-	}
-	redactOutput(alertOutput.OutputConfig)
-	configureOutputFallbacks(alertOutput)
-
-	return alertOutput, nil
 }

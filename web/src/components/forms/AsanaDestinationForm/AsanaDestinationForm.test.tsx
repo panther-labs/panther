@@ -18,13 +18,14 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs } from 'test-utils';
-import { AsanaConfig, SeverityEnum } from 'Generated/schema';
+import { AlertTypesEnum, AsanaConfig, SeverityEnum } from 'Generated/schema';
 import AsanaDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
+  alertTypes: [],
   outputConfig: {
     asana: {
       personalAccessToken: '',
@@ -48,6 +49,7 @@ const initialValues = {
     },
   },
   defaultForSeverity: [severity],
+  alertTypes: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError, AlertTypesEnum.Policy],
 };
 
 describe('AsanaDestinationForm', () => {
@@ -137,6 +139,7 @@ describe('AsanaDestinationForm', () => {
       displayName,
       outputConfig: { asana: { personalAccessToken: token, projectGids: gids } as AsanaConfig },
       defaultForSeverity: [severity],
+      alertTypes: [],
     });
   });
 
@@ -162,6 +165,7 @@ describe('AsanaDestinationForm', () => {
       displayName: newDisplayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: initialValues.defaultForSeverity,
+      alertTypes: initialValues.alertTypes,
     });
   });
 });

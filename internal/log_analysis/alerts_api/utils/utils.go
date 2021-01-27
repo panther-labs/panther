@@ -25,7 +25,7 @@ import (
 
 	alertmodels "github.com/panther-labs/panther/api/lambda/alerts/models"
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
-	alertdeliverymodels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 )
 
@@ -58,7 +58,7 @@ func AlertItemToSummary(item *table.AlertItem, rule *models.Rule) *alertmodels.A
 	}
 	alertType := item.Type
 	if len(alertType) == 0 {
-		alertType = alertdeliverymodels.RuleType
+		alertType = deliverymodel.RuleType
 	}
 
 	// Generated Fields - backwards compatibility support
@@ -104,7 +104,7 @@ func GetAlertTitle(alert *table.AlertItem) *string {
 	if alert.Title != "" {
 		return aws.String(alert.Title)
 	}
-	if alert.Type != alertdeliverymodels.PolicyType {
+	if alert.Type != deliverymodel.PolicyType {
 		if alert.RuleDisplayName != nil {
 			return alert.RuleDisplayName
 		}

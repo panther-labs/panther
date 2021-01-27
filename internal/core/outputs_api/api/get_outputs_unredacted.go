@@ -37,6 +37,7 @@ func (API) GetOutputsWithSecrets(_ *models.GetOutputsWithSecretsInput) (models.G
 		if err != nil {
 			return nil, err
 		}
+		configureOutputFallbacks(alertOutput)
 		outputs[i] = alertOutput
 	}
 
