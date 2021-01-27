@@ -83,7 +83,7 @@ func NewGithubConfig(owner string, repository string, assets []string) GithubCon
 }
 
 func downloadValidatePackData(config GithubConfig, version models.Version) (map[string]*packTableItem, map[string]*tableItem, error) {
-	assets, err := githubClient.DownloadGithubReleaseAssets(config.Owner, config.Repository, version, config.Assets)
+	assets, err := githubClient.DownloadGithubReleaseAssets(config.Owner, config.Repository, version.ID, config.Assets)
 	if err != nil || len(assets) != len(pantherPackAssets) {
 		zap.L().Error("error downloadeing assets", zap.Error(err))
 		return nil, nil, err

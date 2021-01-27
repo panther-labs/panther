@@ -30,7 +30,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/google/go-github/github"
 
-	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/stringset"
 )
 
@@ -58,12 +57,12 @@ func NewGithubClient() *GithubClient {
 }
 
 func (c *GithubClient) DownloadGithubReleaseAssets(owner string, repository string,
-	version models.Version, assets []string) (assetData map[string][]byte, err error) {
+	version int64, assets []string) (assetData map[string][]byte, err error) {
 
 	// setup var to return, a map of asset name to asset raw data
 	assetData = make(map[string][]byte)
 	// First, get all of the release data
-	release, _, err := c.Github.Repositories.GetRelease(context.Background(), owner, repository, version.ID)
+	release, _, err := c.Github.Repositories.GetRelease(context.Background(), owner, repository, version)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download release from repo %s", repository)
 	}
