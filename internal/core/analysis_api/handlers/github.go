@@ -34,10 +34,10 @@ import (
 
 const (
 	// github org and repo containing detection packs
-	pantherGithubOwner = "panther-labs"
+	pantherGithubOwner = "lindsey-w"
 	pantherGithubRepo  = "panther-analysis"
 	// signing keys information
-	pantherFirstSigningKeyID = "2f555f7a-636a-41ed-9a6b-c6192bf55810"
+	pantherFirstSigningKeyID = "2f555f7a-636a-41ed-9a6b-c6192bf55810" //TODO: update keys
 	/*pantherRootPublicKey     = "-----BEGIN PUBLIC KEY-----" +
 	"MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAxWU9pnn5A2mdms7yyvTn" +
 	"g1OYALdimf0bLuClivmLFtw4SzWOSbkN+89+4ptyLBrARmfrzsQ1Fswsgm5W+4jk" +
@@ -54,8 +54,10 @@ const (
 	"-----END PUBLIC KEY-----"*/
 	signingAlgorithm = kms.SigningAlgorithmSpecRsassaPkcs1V15Sha512
 	// source filenames
-	pantherSourceFilename    = "panther-analysis-all.zip"
-	pantherSignatureFilename = "panther-analysis-all.sig"
+	pantherSourceFilename     = "panther-analysis-all.zip"
+	pantherSignatureFilename  = "panther-analysis-all.sig"
+	pantherPublicKey          = "panther-signing-key.pem"
+	pantherPublicKeySignature = "panther-signing-key.sig"
 	// minimum version that supports packs
 	minimumVersionName = "v1.15.0"
 )
@@ -64,6 +66,8 @@ var (
 	pantherPackAssets = []string{
 		pantherSourceFilename,
 		pantherSignatureFilename,
+		pantherPublicKey,
+		pantherPublicKeySignature,
 	}
 	pantherGithubConfig = NewGithubConfig(pantherGithubOwner, pantherGithubRepo, pantherPackAssets)
 )
@@ -88,8 +92,17 @@ func downloadValidatePackData(config GithubConfig, version models.Version) (map[
 		zap.L().Error("error downloadeing assets", zap.Error(err))
 		return nil, nil, err
 	}
-	err = validateSignature(assets[pantherSourceFilename], assets[pantherSignatureFilename])
+	/*// First validate the public key and its signature (signed by the pather root cert)
+	err = validateSignature([]byte(pantherRootPublicKey), assets[pantherPublicKey], assets[pantherPublicKeySignature])
 	if err != nil {
+		zap.L().Error("signature failed", zap.String("file", pantherPublicKey))
+		return nil, nil, err
+	}
+	// Then validate the source file and signature
+	err = validateSignature(assets[pantherPublicKey], assets[pantherSourceFilename], assets[pantherSignatureFilename])*/
+	err = validateSignatureKMS(assets[pantherSourceFilename], assets[pantherSignatureFilename])
+	if err != nil {
+		zap.L().Error("signature failed", zap.String("file", pantherSourceFilename))
 		return nil, nil, err
 	}
 	packs, detections, err := extractZipFileBytes(assets[pantherSourceFilename])
@@ -125,7 +138,32 @@ func listAvailableGithubReleases(config GithubConfig) ([]models.Version, error) 
 	return availableVersions, nil
 }
 
-func validateSignature(rawData []byte, signature []byte) error {
+/*func validateSignature(publicKey []byte, rawData []byte, signature []byte) error {
+	// use hash of body in validation
+	intermediateHash := sha512.Sum512(rawData)
+	var computedHash []byte = intermediateHash[:]
+	// The signature is base64 encoded in the file, decode it
+	decodedSignature, err := base64.StdEncoding.DecodeString(string(signature))
+	if err != nil {
+		zap.L().Error("error base64 decoding item", zap.Error(err))
+		return err
+	}
+	// load in the pubkey
+	block, _ := pem.Decode(publicKey)
+	if block == nil {
+		return fmt.Errorf("error decoding public key")
+	}
+	key, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return err
+	}
+	// TODO: only support rsa keys?
+	pubKey := key.(*rsa.PublicKey)
+	err = rsa.VerifyPKCS1v15(pubKey, crypto.SHA512, computedHash[:], decodedSignature)
+	return err
+}*/
+
+func validateSignatureKMS(rawData []byte, signature []byte) error {
 	// use hash of body in validation
 	intermediateHash := sha512.Sum512(rawData)
 	var computedHash []byte = intermediateHash[:]
