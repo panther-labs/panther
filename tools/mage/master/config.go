@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"strings"
 
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
@@ -31,12 +32,15 @@ import (
 	"github.com/panther-labs/panther/pkg/prompt"
 )
 
-const defaultRootStackName = "panther"
+const (
+	defaultRootStackName = "panther"
+	rootConfigHeader     = "# Root stack configuration - edit to configure your own parameter overrides\n\n"
+)
 
-const rootConfigHeader = "# Root stack configuration - edit to configure your own parameter overrides\n\n"
-
-var defaultPipLayer = []string{"jsonpath-ng==1.5.2", "policyuniverse==1.3.2.2", "requests==2.23.0"}
-var rootConfigPath = filepath.Join("deployments", "root_config.yml")
+var (
+	defaultPipLayer = []string{"jsonpath-ng==1.5.2", "policyuniverse==1.3.2.2", "requests==2.23.0"}
+	rootConfigPath  = filepath.Join("deployments", "root_config.yml")
+)
 
 // Developer configuration for the root stack
 type RootConfig struct {
@@ -68,7 +72,7 @@ func (c *RootConfig) Gen() error {
 		"CloudWatchLogRetentionDays": "14",
 		"CompanyDisplayName":         "PantherDev",
 		"FirstUserEmail":             email,
-		"FirstUserGivenName":         dev.Username,
+		"FirstUserGivenName":         strings.Title(dev.Username),
 	}
 
 	return nil

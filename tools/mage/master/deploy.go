@@ -32,6 +32,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/clients"
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/logger"
+	"github.com/panther-labs/panther/tools/mage/pkg"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
@@ -61,18 +62,17 @@ func Deploy() error {
 		return err
 	}
 
-	pkg := packager{
-		log:            log,
-		region:         clients.Region(),
-		bucket:         devOutputs["SourceBucket"],
-		ecrRegistry:    devOutputs["ImageRegistryUri"],
-		ecrTagWithHash: true,
-		pipLibs:        config.PipLayer,
-		numWorkers:     4,
+	packager := pkg.Packager{
+		Log:            log,
+		AwsSession:     clients.GetSession(),
+		Bucket:         devOutputs["SourceBucket"],
+		EcrRegistry:    devOutputs["ImageRegistryUri"],
+		EcrTagWithHash: true,
+		PipLibs:        config.PipLayer,
 	}
 	log.Infof("packaging %s to s3 bucket %s and ecr registry %s",
-		rootTemplate, pkg.bucket, pkg.ecrRegistry)
-	pkgPath, err := pkg.template(rootTemplate)
+		rootTemplate, packager.Bucket, packager.EcrRegistry)
+	pkgPath, err := packager.Template(rootTemplate)
 	if err != nil {
 		return err
 	}
@@ -83,6 +83,8 @@ func Deploy() error {
 
 	// TODO - cfn waiters need better progress updates and error extraction for nested stacks
 	// TODO - support updating nested stacks directly
+	// TODO - use deployment IAM role
+	// TODO - expose 'mage pkg' target
 	log.Infof("deploying %s %s (%s) to account %s (%s) as stack '%s'", rootTemplate,
 		util.Semver(), util.CommitSha(), clients.AccountID(), clients.Region(), config.RootStackName)
 	rootOutputs, err := deploy.Stack(log, pkgPath, "", config.RootStackName, config.ParameterOverrides)

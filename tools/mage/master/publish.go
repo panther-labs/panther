@@ -25,7 +25,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/magefile/mage/sh"
@@ -35,6 +34,7 @@ import (
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/logger"
+	"github.com/panther-labs/panther/tools/mage/pkg"
 	"github.com/panther-labs/panther/tools/mage/setup"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
@@ -87,11 +87,6 @@ func Publish() error {
 		return err
 	}
 
-	dockerImageID, err := buildAssets(log, nil) // TODO
-	if err != nil {
-		return err
-	}
-
 	// Publish to each region.
 	//
 	// This fails if you publish multiple regions in parallel, unfortunately.
@@ -101,7 +96,7 @@ func Publish() error {
 			return fmt.Errorf("%s is not a supported region", region)
 		}
 
-		if err := publishToRegion(log, region, dockerImageID); err != nil {
+		if err := publishToRegion(log, region); err != nil {
 			return err
 		}
 	}
@@ -142,10 +137,10 @@ func getPublicationApproval(log *zap.SugaredLogger, regions []string) error {
 	return nil
 }
 
-func publishToRegion(log *zap.SugaredLogger, region, dockerImageID string) error {
-	log.Debugf("publishing to %s", region)
+func publishToRegion(log *zap.SugaredLogger, region string) error {
+	log.Infof("publishing to %s", region)
 
-	// We can't use the global aws clients here because we need a different client for each region.
+	// We need a different session for each region.
 	awsSession, err := session.NewSession(aws.NewConfig().WithRegion(region))
 	if err != nil {
 		return fmt.Errorf("failed to build AWS session: %v", err)
@@ -153,14 +148,24 @@ func publishToRegion(log *zap.SugaredLogger, region, dockerImageID string) error
 
 	bucket, s3Key, s3URL := s3MasterTemplate(region)
 
-	// Publish S3 assets and ECR docker image
-	ecrRegistry := fmt.Sprintf("349240696275.dkr.ecr.%s.amazonaws.com/panther-community", region)
-	pkg, err := pkgAssets(log, ecr.New(awsSession), region, bucket, ecrRegistry, dockerImageID)
+	packager := pkg.Packager{
+		Log:            log,
+		AwsSession:     awsSession,
+		Bucket:         bucket,
+		EcrRegistry:    fmt.Sprintf("349240696275.dkr.ecr.%s.amazonaws.com/panther-community", region),
+		EcrTagWithHash: false,
+		PipLibs:        defaultPipLayer,
+	}
+	pkgTemplate, err := packager.Template(rootTemplate)
 	if err != nil {
 		return err
 	}
 
-	f, err := os.Open(pkg)
+	if err = embedVersion(pkgTemplate); err != nil {
+		return err
+	}
+
+	f, err := os.Open(pkgTemplate)
 	if err != nil {
 		return err
 	}

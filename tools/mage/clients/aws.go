@@ -57,7 +57,7 @@ var (
 )
 
 // Build the AWS session from credentials - subsequent calls return the cached result.
-func getSession() *session.Session {
+func GetSession() *session.Session {
 	if awsSession != nil {
 		return awsSession
 	}
@@ -93,7 +93,7 @@ func getSession() *session.Session {
 
 // Returns the current AWS region.
 func Region() string {
-	return *getSession().Config.Region
+	return *GetSession().Config.Region
 }
 
 // Returns the current AWS account ID - subsequent calls return the cached result.
@@ -111,49 +111,49 @@ func AccountID() string {
 
 func Cfn() *cloudformation.CloudFormation {
 	if cfnClient == nil {
-		cfnClient = cloudformation.New(getSession())
+		cfnClient = cloudformation.New(GetSession())
 	}
 	return cfnClient
 }
 
 func ECR() *ecr.ECR {
 	if ecrClient == nil {
-		ecrClient = ecr.New(getSession())
+		ecrClient = ecr.New(GetSession())
 	}
 	return ecrClient
 }
 
 func Glue() *glue.Glue {
 	if glueClient == nil {
-		glueClient = glue.New(getSession())
+		glueClient = glue.New(GetSession())
 	}
 	return glueClient
 }
 
 func Lambda() *lambda.Lambda {
 	if lambdaClient == nil {
-		lambdaClient = lambda.New(getSession())
+		lambdaClient = lambda.New(GetSession())
 	}
 	return lambdaClient
 }
 
 func S3() *s3.S3 {
 	if s3Client == nil {
-		s3Client = s3.New(getSession())
+		s3Client = s3.New(GetSession())
 	}
 	return s3Client
 }
 
 func S3Uploader() *s3manager.Uploader {
 	if s3Uploader == nil {
-		s3Uploader = s3manager.NewUploader(getSession())
+		s3Uploader = s3manager.NewUploader(GetSession())
 	}
 	return s3Uploader
 }
 
 func STS() *sts.STS {
 	if stsClient == nil {
-		stsClient = sts.New(getSession())
+		stsClient = sts.New(GetSession())
 	}
 	return stsClient
 }
