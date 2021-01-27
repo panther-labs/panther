@@ -42,7 +42,18 @@ const DeleteCustomLogModal: React.FC<DeleteCustomLogModalProps> = ({ customLog, 
     },
     // FIXME: We removed optimistic response from this request until we upgrade apollo-client
     // issue: https://github.com/apollographql/apollo-client/issues/5790
-    update: (cache, { data: { deleteCustomLog: deletionResponse } }) => {
+    update: (
+      cache,
+      {
+        data: {
+          deleteCustomLog: { error },
+        },
+      }
+    ) => {
+      if (error) {
+        return;
+      }
+
       cache.modify('ROOT_QUERY', {
         listCustomLogs(customLogs, { toReference }) {
           const deletedCustomLog = toReference({
@@ -54,9 +65,7 @@ const DeleteCustomLogModal: React.FC<DeleteCustomLogModalProps> = ({ customLog, 
         listAvailableLogTypes: queryData => {
           return {
             ...queryData,
-            logTypes: deletionResponse.error
-              ? queryData.logTypes
-              : queryData.logTypes.filter(logType => logType !== customLog.logType),
+            logTypes: queryData.logTypes.filter(logType => logType !== customLog.logType),
           };
         },
       });

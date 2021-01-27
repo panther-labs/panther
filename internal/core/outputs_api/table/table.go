@@ -84,4 +84,8 @@ type AlertOutputItem struct {
 	OutputType *string `json:"outputType"`
 
 	DefaultForSeverity []*string `json:"defaultForSeverity" dynamodbav:"defaultForSeverity,stringset"`
+
+	// AlertTypes is a whitelist of alert types to send to this destination.
+	// To be backwards compatible, we cannot have a `min=1` and an empty list == all types.
+	AlertTypes []string `json:"alertTypes" dynamodbav:"alertTypes,stringset"`
 }

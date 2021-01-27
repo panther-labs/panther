@@ -46,6 +46,14 @@ var (
 		TypeBoolean:   reflect.TypeOf(pantherlog.Bool{}),
 		TypeTimestamp: reflect.TypeOf(pantherlog.Time{}),
 	}
+	// used in InferGoTypeValueSchema
+	inverseMappings = func() map[reflect.Type]ValueType {
+		m := make(map[reflect.Type]ValueType)
+		for valueType, goType := range typeMappings {
+			m[goType] = valueType
+		}
+		return m
+	}()
 )
 
 func (v *ValueSchema) GoType() (reflect.Type, error) {

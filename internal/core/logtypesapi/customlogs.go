@@ -154,6 +154,11 @@ func buildSchema(id string, c *CustomLog) (*logschema.Schema, error) {
 	if err := yaml.Unmarshal([]byte(c.LogSpec), &schema); err != nil {
 		return nil, NewAPIError(ErrInvalidSyntax, err.Error())
 	}
+	// Schemas requiring native parsers don't need further checks
+	if p := schema.Parser; p != nil && p.Native != nil {
+		return &schema, nil
+	}
+	// Build non-native parser entries
 	if _, err := customlogs.Build(desc, &schema); err != nil {
 		return nil, NewAPIError(ErrInvalidLogSchema, err.Error())
 	}

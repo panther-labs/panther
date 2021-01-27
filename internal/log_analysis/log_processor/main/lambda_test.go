@@ -48,6 +48,12 @@ func mockLogger() *observer.ObservedLogs {
 func TestProcessOpLog(t *testing.T) {
 	common.Config.AwsLambdaFunctionMemorySize = 1024
 
+	mockMetricsManager := &testutils.MetricsManagerMock{}
+	common.CWMetrics = mockMetricsManager
+
+	mockMetricsManager.On("Run", mock.Anything, mock.Anything).Once()
+	mockMetricsManager.On("Sync").Return(nil).Once()
+
 	sqsMock := &testutils.SqsMock{}
 	common.SqsClient = sqsMock
 	emptyQueue := &sqs.GetQueueAttributesOutput{
@@ -91,4 +97,5 @@ func TestProcessOpLog(t *testing.T) {
 	serviceDim := logs.FilterMessage(message).All()[0].ContextMap()[common.OpLogLambdaServiceDim.Key]
 	assert.Equal(t, common.OpLogLambdaServiceDim.String, serviceDim)
 	sqsMock.AssertExpectations(t)
+	mockMetricsManager.AssertExpectations(t)
 }
