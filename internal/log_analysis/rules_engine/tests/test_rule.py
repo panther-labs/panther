@@ -294,6 +294,18 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         )
         self.assertEqual(expected_result, rule.run(PantherEvent(event, None)))
 
+    def test_alert_context_returns_full_event(self) -> None:
+        alert_context_function = 'def alert_context(event):\n\treturn event'
+        rule_body = 'def rule(event):\n\treturn True\n{}'.format(alert_context_function)
+        rule = Rule({'id': 'test_alert_context_returns_full_event', 'body': rule_body, 'versionId': 'versionId'})
+        event = {'test': 'event'}
+
+        expected_alert_context = json.dumps(event)
+        expected_result = RuleResult(
+            matched=True, dedup_output='defaultDedupString:test_alert_context_immutable_event', alert_context=expected_alert_context
+        )
+        self.assertEqual(expected_result, rule.run(PantherEvent(event, None)))
+
     # Generated Fields Tests
     def test_rule_with_all_generated_fields(self) -> None:
         rule_body = 'def rule(event):\n\treturn True\n' \
