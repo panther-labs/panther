@@ -1,5 +1,3 @@
-package api
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,23 +16,5 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/api/lambda/outputs/models"
-)
-
-// GetOutput retrieves a single alert output
-func (API) GetOutput(input *models.GetOutputInput) (*models.GetOutputOutput, error) {
-	item, err := outputsTable.GetOutput(input.OutputID)
-	if err != nil {
-		return nil, err
-	}
-
-	alertOutput, err := ItemToAlertOutput(item)
-	if err != nil {
-		return nil, err
-	}
-	redactOutput(alertOutput.OutputConfig)
-	configureOutputFallbacks(alertOutput)
-
-	return alertOutput, nil
-}
+export { default } from './GenericModal';
+export * from './GenericModal';

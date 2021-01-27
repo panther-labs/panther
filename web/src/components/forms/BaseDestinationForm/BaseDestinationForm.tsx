@@ -17,7 +17,7 @@
  */
 
 import * as Yup from 'yup';
-import { SeverityEnum, DestinationConfigInput } from 'Generated/schema';
+import { SeverityEnum, DestinationConfigInput, AlertTypesEnum } from 'Generated/schema';
 import { Box, Flex, Text } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import urls from 'Source/urls';
@@ -36,6 +36,7 @@ export interface BaseDestinationFormValues<
   displayName: string;
   outputConfig: AdditionalValues;
   defaultForSeverity: SeverityEnum[];
+  alertTypes: AlertTypesEnum[];
 }
 
 // Converts the `defaultForSeverity` from an array to an object in order to handle it properly

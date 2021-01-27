@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	alertModels "github.com/panther-labs/panther/api/lambda/alerts/models"
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -43,9 +43,9 @@ func TestUpdateAlerts(t *testing.T) {
 
 	statuses := []DispatchStatus{
 		{
-			Alert: deliveryModels.Alert{
+			Alert: deliverymodel.Alert{
 				AlertID:   &alertID,
-				Type:      deliveryModels.RuleType,
+				Type:      deliverymodel.RuleType,
 				OutputIds: outputIds,
 				Severity:  "INFO",
 				CreatedAt: time.Now().UTC(),
@@ -58,9 +58,9 @@ func TestUpdateAlerts(t *testing.T) {
 			DispatchedAt: dispatchedAt,
 		},
 		{
-			Alert: deliveryModels.Alert{
+			Alert: deliverymodel.Alert{
 				AlertID:   &alertID,
-				Type:      deliveryModels.PolicyType,
+				Type:      deliverymodel.PolicyType,
 				OutputIds: outputIds,
 				Severity:  "INFO",
 				CreatedAt: time.Now().UTC(),
@@ -73,9 +73,9 @@ func TestUpdateAlerts(t *testing.T) {
 			DispatchedAt: dispatchedAt,
 		},
 		{
-			Alert: deliveryModels.Alert{
+			Alert: deliverymodel.Alert{
 				AlertID:   &alertID,
-				Type:      deliveryModels.RuleType,
+				Type:      deliverymodel.RuleType,
 				OutputIds: outputIds,
 				Severity:  "INFO",
 				CreatedAt: time.Now().UTC(),

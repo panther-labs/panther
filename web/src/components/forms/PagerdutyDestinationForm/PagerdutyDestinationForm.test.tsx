@@ -18,13 +18,14 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs } from 'test-utils';
-import { SeverityEnum } from 'Generated/schema';
+import { AlertTypesEnum, SeverityEnum } from 'Generated/schema';
 import PagerdutyDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
+  alertTypes: [],
   outputConfig: {
     pagerDuty: {
       integrationKey: '',
@@ -46,6 +47,7 @@ const initialValues = {
     },
   },
   defaultForSeverity: [severity],
+  alertTypes: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError, AlertTypesEnum.Policy],
 };
 
 describe('PagerdutyDestinationForm', () => {
@@ -114,6 +116,7 @@ describe('PagerdutyDestinationForm', () => {
       displayName,
       outputConfig: { pagerDuty: { integrationKey: pagerDutyIntegrationKey } },
       defaultForSeverity: [severity],
+      alertTypes: [],
     });
   });
 
@@ -139,6 +142,7 @@ describe('PagerdutyDestinationForm', () => {
       displayName: newDisplayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: initialValues.defaultForSeverity,
+      alertTypes: initialValues.alertTypes,
     });
   });
 });

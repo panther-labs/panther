@@ -1,5 +1,3 @@
-package api
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,23 +16,20 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/api/lambda/outputs/models"
-)
+import React from 'react';
+import { render } from 'test-utils';
+import GenericModal from './GenericModal';
 
-// GetOutput retrieves a single alert output
-func (API) GetOutput(input *models.GetOutputInput) (*models.GetOutputOutput, error) {
-	item, err := outputsTable.GetOutput(input.OutputID)
-	if err != nil {
-		return nil, err
-	}
+const Body = () => <div>This is a body</div>;
 
-	alertOutput, err := ItemToAlertOutput(item)
-	if err != nil {
-		return nil, err
-	}
-	redactOutput(alertOutput.OutputConfig)
-	configureOutputFallbacks(alertOutput)
-
-	return alertOutput, nil
-}
+describe('Generic modal component', () => {
+  it('renders', async () => {
+    const onClose = jest.fn();
+    const { getByText, findByText, getByAriaLabel } = render(
+      <GenericModal title={'Hello world'} body={<Body />} open onClose={onClose} />
+    );
+    await findByText('Hello world');
+    expect(getByText('This is a body')).toBeTruthy();
+    expect(getByAriaLabel('Dismiss Dialog')).toBeTruthy();
+  });
+});

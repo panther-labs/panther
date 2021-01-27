@@ -18,13 +18,14 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs, faker } from 'test-utils';
-import { SeverityEnum } from 'Generated/schema';
+import { AlertTypesEnum, SeverityEnum } from 'Generated/schema';
 import SlackDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
+  alertTypes: [],
   outputConfig: {
     slack: {
       webhookURL: '',
@@ -40,6 +41,7 @@ const initialValues = {
   outputId: '123',
   displayName,
   defaultForSeverity: [severity],
+  alertTypes: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError, AlertTypesEnum.Policy],
   outputConfig: {
     slack: {
       webhookURL: '',
@@ -112,6 +114,7 @@ describe('SlackDestinationForm', () => {
       displayName,
       outputConfig: { slack: { webhookURL: validUrl } },
       defaultForSeverity: [severity],
+      alertTypes: [],
     });
   });
 
@@ -137,6 +140,7 @@ describe('SlackDestinationForm', () => {
       displayName: newDisplayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: initialValues.defaultForSeverity,
+      alertTypes: initialValues.alertTypes,
     });
   });
 });

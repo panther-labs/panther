@@ -38,6 +38,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 	"github.com/panther-labs/panther/pkg/awsutils"
+	"github.com/panther-labs/panther/pkg/metrics"
 )
 
 const (
@@ -200,12 +201,18 @@ func receiveFromSqs(ctx context.Context, sqsClient sqsiface.SQSAPI) ([]*sqs.Mess
 func kickOffReaders(ctx context.Context, streams []*common.DataStream) error {
 	grp, _ := errgroup.WithContext(ctx)
 	for _, s := range streams {
+		s := s
 		r, ok := s.Closer.(io.ReadCloser)
 		if !ok {
 			continue
 		}
 		grp.Go(func() error {
-			return readZero(r)
+			err := readZero(r)
+			common.GetObject.With(
+				metrics.SourceIDDimension, s.Source.IntegrationID,
+				metrics.StatusDimension, statusFromErr(err),
+			).Add(1)
+			return err
 		})
 	}
 	return grp.Wait()
@@ -215,4 +222,15 @@ func readZero(r io.Reader) error {
 	buf := [0]byte{}
 	_, err := r.Read(buf[:])
 	return err
+}
+
+// Returns the correct Status dimension from the provided error
+func statusFromErr(err error) string {
+	if err == nil {
+		return metrics.StatusOk
+	}
+	if awsutils.IsAnyError(err, "AccessDenied") {
+		return metrics.StatusAuthErr
+	}
+	return metrics.StatusErr
 }

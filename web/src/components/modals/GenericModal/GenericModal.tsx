@@ -1,5 +1,3 @@
-package api
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,23 +16,20 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/api/lambda/outputs/models"
-)
+import React from 'react';
+import { Modal, ModalProps } from 'pouncejs';
 
-// GetOutput retrieves a single alert output
-func (API) GetOutput(input *models.GetOutputInput) (*models.GetOutputOutput, error) {
-	item, err := outputsTable.GetOutput(input.OutputID)
-	if err != nil {
-		return nil, err
-	}
-
-	alertOutput, err := ItemToAlertOutput(item)
-	if err != nil {
-		return nil, err
-	}
-	redactOutput(alertOutput.OutputConfig)
-	configureOutputFallbacks(alertOutput)
-
-	return alertOutput, nil
+export interface GenericModalProps extends ModalProps {
+  title: string;
+  body: React.ReactNode;
 }
+
+const GenericModal: React.FC<GenericModalProps> = ({ body, ...rest }) => {
+  return (
+    <Modal showCloseButton {...rest}>
+      {body}
+    </Modal>
+  );
+};
+
+export default GenericModal;

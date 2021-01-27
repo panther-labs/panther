@@ -1,4 +1,4 @@
-package api
+package metrics
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -18,23 +18,20 @@ package api
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/api/lambda/outputs/models"
+const (
+
+	// SubsystemDimension dimension
+	SubsystemDimension = "Subsystem"
+
+	// StatusDimension dimension
+	StatusDimension = "Status"
+	// StatusDimension indicating that a subsystem operation is well
+	StatusOk = "Ok"
+	// StatusDimension indicating that a subsystem is experiencing authZ/N errors
+	StatusAuthErr = "AuthErr"
+	// StatusDimension indicating some general error with the subsystem
+	StatusErr = "Err"
+
+	// SourceIDDimension dimensions
+	SourceIDDimension = "ID"
 )
-
-// GetOutput retrieves a single alert output
-func (API) GetOutput(input *models.GetOutputInput) (*models.GetOutputOutput, error) {
-	item, err := outputsTable.GetOutput(input.OutputID)
-	if err != nil {
-		return nil, err
-	}
-
-	alertOutput, err := ItemToAlertOutput(item)
-	if err != nil {
-		return nil, err
-	}
-	redactOutput(alertOutput.OutputConfig)
-	configureOutputFallbacks(alertOutput)
-
-	return alertOutput, nil
-}
