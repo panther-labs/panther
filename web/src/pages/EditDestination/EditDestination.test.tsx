@@ -44,7 +44,9 @@ describe('EditDestination', () => {
 
     const mocks = [mockGetDestinationDetails({ data: { destination } })];
 
-    const { findByLabelText, getByAriaLabel } = render(<EditDestination />, { mocks });
+    const { findByLabelText, getByAriaLabel, getAllByLabelText } = render(<EditDestination />, {
+      mocks,
+    });
 
     // Expect loading
     expect(getByAriaLabel('Loading...')).toBeInTheDocument();
@@ -52,15 +54,12 @@ describe('EditDestination', () => {
     // Expect a form
     const displayInput = (await findByLabelText('* Display Name')) as HTMLInputElement;
     const webhookUrlInput = (await findByLabelText('Slack Webhook URL')) as HTMLInputElement;
-    const criticalSeverityCheckbox = (await findByLabelText(
-      SeverityEnum.Critical
-    )) as HTMLInputElement;
+    expect(getAllByLabelText('Severity')[0]).toBeInTheDocument();
+    expect(getAllByLabelText('Alert Types')[0]).toBeInTheDocument();
 
     // With correct pre-populated values
     expect(displayInput.value).toEqual(destination.displayName);
     expect(webhookUrlInput.value).toEqual(destination.outputConfig.slack.webhookURL);
-    expect(criticalSeverityCheckbox.checked).toBeTruthy();
-    expect(criticalSeverityCheckbox.value).toBeTruthy();
   });
 
   it('can successfully edit Slack destination', async () => {
