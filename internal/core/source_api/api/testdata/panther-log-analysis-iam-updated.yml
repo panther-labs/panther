@@ -97,19 +97,26 @@ Resources:
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              - !If
-                - IsGenerated
-                - Effect: Allow
-                  Action: s3:GetBucketLocation
-                  Resource: !Sub
-                    - 'arn:aws:s3:::${Bucket}'
-                    - Bucket: !FindInMap [PantherParameters, S3Bucket, Value]
-                - Effect: Allow
-                  Action: s3:GetBucketLocation
-                  Resource: !Sub 'arn:aws:s3:::${S3Bucket}'
+              - Effect: Allow
+                Action: s3:GetBucketLocation
+                Resource: !Sub
+                  - 'arn:aws:s3:::${Bucket}'
+                  - Bucket:
+                      !If [
+                        IsGenerated,
+                        !FindInMap [PantherParameters, S3Bucket, Value],
+                        !Ref S3Bucket,
+                      ]
               - Effect: Allow
                 Action: s3:GetObject
-                Resource: !Sub 'arn:aws:s3:::${S3Bucket}/*'
+                Resource: !Sub
+                  - 'arn:aws:s3:::${Bucket}/*'
+                  - Bucket:
+                      !If [
+                        IsGenerated,
+                        !FindInMap [PantherParameters, S3Bucket, Value],
+                        !Ref S3Bucket,
+                      ]
               - !If
                 - IncludeKmsKey
                 - !If

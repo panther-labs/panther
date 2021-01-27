@@ -34,7 +34,6 @@ func TestHTTPLog(t *testing.T) {
 		"10.0.0.1:80 0.000 0.001 0.000 200 200 34 366 \"GET http://www.example.com:80/ HTTP/1.1\" " +
 		"\"curl/7.46.0\" - - arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067 " +
 		"\"Root=1-58337262-36d228ad5d99923122bbe354\" \"-\" \"-\" 0 2018-08-26T14:17:23.186641Z \"forward\" \"-\" \"-\""
-
 	expectedTime := time.Unix(1535293043, 186641000).UTC()
 
 	expectedEvent := &ALB{
@@ -189,8 +188,7 @@ func TestHTTPSNoTarget(t *testing.T) {
 	//nolint:lll
 	log := `https 2018-08-26T14:17:23.186641Z app/web/09603e7dbbd08802 138.246.253.5:57185 - -1 -1 -1 400 - 25 150` +
 		` "HEAD https://web-1241004567.us-east-1.elb.amazonaws.com:443/ HTTP/1.1" "-" ECDHE-RSA-AES128-GCM-SHA256` +
-		` TLSv1.2 - "-" "-" "arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c" - 2018-08-26T14:17:23.186641Z "-" "-" "-" "-" "-"
-`
+		` TLSv1.2 - "-" "-" "arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c" - 2018-08-26T14:17:23.186641Z "-" "-" "-" "-" "-"`
 
 	expectedTime := time.Unix(1535293043, 186641000).UTC()
 
@@ -233,6 +231,64 @@ func TestHTTPSNoTarget(t *testing.T) {
 	expectedEvent.AppendAnyAWSARNs("arn:aws:acm:us-east-1:111111111111:certificate/bedab50c-9007-4ee9-89a5-d1929edb364c")
 
 	checkALBLog(t, log, expectedEvent)
+}
+
+func TestHTTPSpaceInURI(t *testing.T) {
+	log := `http 2018-08-26T14:17:23.186641Z app/web/abcdef123 10.0.0.1:11223 - -1 -1 -1 301 ` +
+		`- 234 391 "GET http://example.com:80/hello world HTTP/1.1" "Hello world" - - - ` +
+		`"Root=1-123456-abcdef1234567" "-" "-" 0 2018-08-26T14:17:23.186641Z "redirect" ` +
+		`"https://example.com/hello world" "-" "-" "-" "Acceptable" "SpaceInUri"`
+
+	expectedTime := time.Unix(1535293043, 186641000).UTC()
+	expectedEvent := &ALB{
+		Type:                   aws.String("http"),
+		Timestamp:              (*timestamp.RFC3339)(&expectedTime),
+		ELB:                    aws.String("app/web/abcdef123"),
+		ClientIP:               aws.String("10.0.0.1"),
+		ClientPort:             aws.Int(11223),
+		TargetIP:               nil,
+		TargetPort:             nil,
+		RequestProcessingTime:  aws.Float64(-1),
+		TargetProcessingTime:   aws.Float64(-1),
+		ResponseProcessingTime: aws.Float64(-1),
+		ELBStatusCode:          aws.Int(301),
+		TargetStatusCode:       nil,
+		ReceivedBytes:          aws.Int(234),
+		SentBytes:              aws.Int(391),
+		RequestHTTPMethod:      aws.String("GET"),
+		RequestHTTPVersion:     aws.String("HTTP/1.1"),
+		RequestURL:             aws.String("http://example.com:80/hello world"),
+		UserAgent:              aws.String("Hello world"),
+		SSLCipher:              nil,
+		SSLProtocol:            nil,
+		TargetGroupARN:         nil,
+		TraceID:                aws.String("Root=1-123456-abcdef1234567"),
+		DomainName:             nil,
+		ChosenCertARN:          nil,
+		MatchedRulePriority:    aws.Int(0),
+		RequestCreationTime:    (*timestamp.RFC3339)(&expectedTime),
+		ActionsExecuted:        []string{"redirect"},
+		RedirectURL:            aws.String("https://example.com/hello world"),
+		ErrorReason:            nil,
+	}
+
+	// panther fields
+	expectedEvent.PantherLogType = aws.String("AWS.ALB")
+	expectedEvent.PantherEventTime = (*timestamp.RFC3339)(&expectedTime)
+	expectedEvent.AppendAnyIPAddress("10.0.0.1")
+
+	checkALBLog(t, log, expectedEvent)
+}
+
+func TestHTTPInvalidRequestParameters(t *testing.T) {
+	log := `http 2018-08-26T14:17:23.186641Z app/web/abcdef123 10.0.0.1:11223 - -1 -1 -1 301 ` +
+		`- 234 391 "GET http://example.com:80/hello" "Hello world" - - - ` +
+		`"Root=1-123456-abcdef1234567" "-" "-" 0 2018-08-26T14:17:23.186641Z "redirect" ` +
+		`"https://example.com/hello world" "-" "-" "-" "-" "-"`
+
+	parser := (&ALBParser{}).New()
+	_, err := parser.Parse(log)
+	require.EqualError(t, err, "expected 3 or more request parameter segments, found: 2")
 }
 
 func TestAlbLogType(t *testing.T) {

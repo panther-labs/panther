@@ -80,8 +80,20 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 		}),
 	)
 
-	parsersResolver := logtypes.ParserResolver(logTypesResolver)
+	// Configure metrics
+	cwCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	// Sync metrics every minute
+	go common.CWMetrics.Run(cwCtx, time.Minute)
+	defer func() {
+		// Force syncing metrics at the end of the invocation
+		if err := common.CWMetrics.Sync(); err != nil {
+			zap.L().Warn("failed to sync metrics", zap.Error(err))
+		}
+	}()
 
+	parsersResolver := logtypes.ParserResolver(logTypesResolver)
 	sqsMessageCount, err = processor.PollEvents(ctx, common.SqsClient, parsersResolver)
+
 	return err
 }
