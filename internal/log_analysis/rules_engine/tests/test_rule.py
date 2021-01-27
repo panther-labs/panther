@@ -255,7 +255,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         expected_alert_context = json.dumps(
             {
                 '_error':
-                    'Exception(\'rule [test_alert_context_invalid_return_value] function [alert_context] returned [str], expected [Mapping]\')'
+                    'Exception(\'rule [test_alert_context_invalid_return_value] function [alert_context] returned [str], expected [Mapping]\')'  # pylint: disable=C0301
             }
         )
         expected_result = RuleResult(
