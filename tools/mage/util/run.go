@@ -22,7 +22,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
@@ -55,18 +54,4 @@ func RunWithCapturedOutput(cmd string, args ...string) error {
 	}
 
 	return nil
-}
-
-// Package resources in S3 and return the path to the modified CloudFormation template.
-//
-// This uses "sam package" to be compatible with SAR, which is also more complete and robust than
-// "aws cloudformation package"
-func SamPackage(region, templatePath, bucket string) (string, error) {
-	outFile := filepath.Join("out", "deployments", "package."+filepath.Base(templatePath))
-	if err := os.MkdirAll(filepath.Dir(outFile), 0700); err != nil {
-		return "", fmt.Errorf("failed to create out/deployments: %v", err)
-	}
-
-	return outFile, sh.Run(PipPath("sam"),
-		"package", "--s3-bucket", bucket, "-t", templatePath, "--output-template-file", outFile, "--region", region)
 }

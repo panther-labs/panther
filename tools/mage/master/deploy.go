@@ -52,7 +52,12 @@ func Deploy() error {
 	}
 
 	// Deploy panther-dev stack to initialize S3 bucket and ECR repo
-	devOutputs, err := deploy.Stack(log, devTemplate, "", devStackName, nil)
+	packager := pkg.Packager{
+		Log:            log,
+		AwsSession:     clients.GetSession(),
+		EcrTagWithHash: true,
+	}
+	devOutputs, err := deploy.Stack(packager, devTemplate, devStackName, nil)
 	if err != nil {
 		return err
 	}
@@ -62,14 +67,11 @@ func Deploy() error {
 		return err
 	}
 
-	packager := pkg.Packager{
-		Log:            log,
-		AwsSession:     clients.GetSession(),
-		Bucket:         devOutputs["SourceBucket"],
-		EcrRegistry:    devOutputs["ImageRegistryUri"],
-		EcrTagWithHash: true,
-		PipLibs:        config.PipLayer,
-	}
+	// Update packager with the S3/ECR information we have now
+	packager.Bucket = devOutputs["SourceBucket"]
+	packager.EcrRegistry = devOutputs["ImageRegistryUri"]
+	packager.PipLibs = config.PipLayer
+
 	log.Infof("packaging %s to s3 bucket %s and ecr registry %s",
 		rootTemplate, packager.Bucket, packager.EcrRegistry)
 	pkgPath, err := packager.Template(rootTemplate)
@@ -87,7 +89,7 @@ func Deploy() error {
 	// TODO - expose 'mage pkg' target
 	log.Infof("deploying %s %s (%s) to account %s (%s) as stack '%s'", rootTemplate,
 		util.Semver(), util.CommitSha(), clients.AccountID(), clients.Region(), config.RootStackName)
-	rootOutputs, err := deploy.Stack(log, pkgPath, "", config.RootStackName, config.ParameterOverrides)
+	rootOutputs, err := deploy.Stack(packager, pkgPath, config.RootStackName, config.ParameterOverrides)
 	if err != nil {
 		return err
 	}

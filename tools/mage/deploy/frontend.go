@@ -34,7 +34,7 @@ import (
 
 const awsEnvFile = "out/.env.aws"
 
-func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig) error {
+func deployFrontend(settings *PantherConfig, packager pkg.Packager, bootstrapOutputs map[string]string) error {
 	// Save .env file (only used when running web server locally)
 	if err := godotenv.Write(
 		map[string]string{
@@ -47,14 +47,6 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig)
 		awsEnvFile,
 	); err != nil {
 		return fmt.Errorf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
-	}
-
-	// TODO - this won't be needed soon
-	packager := pkg.Packager{
-		Log:            log,
-		AwsSession:     clients.GetSession(),
-		EcrRegistry:    bootstrapOutputs["ImageRegistryUri"],
-		EcrTagWithHash: true,
 	}
 
 	localImageID, err := packager.DockerBuild(filepath.Join("deployments", "Dockerfile"))
@@ -89,6 +81,6 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig)
 		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
 		"UserPoolId":                 bootstrapOutputs["UserPoolId"],
 	}
-	_, err = Stack(log, cfnstacks.FrontendTemplate, bootstrapOutputs["SourceBucket"], cfnstacks.Frontend, params)
+	_, err = Stack(packager, cfnstacks.FrontendTemplate, cfnstacks.Frontend, params)
 	return err
 }

@@ -45,16 +45,16 @@ const (
 //
 // The bucket parameter can be empty to skip S3 packaging.
 func Stack(
-	log *zap.SugaredLogger,
-	templatePath, bucket, stack string,
+	packager pkg.Packager,
+	templatePath, stack string,
 	params map[string]string,
 ) (map[string]string, error) {
 
-	// 1) Generate final template, with large assets packaged in S3.
+	// 1) Generate final template, packaging assets in S3 and ECR
 	packagedTemplate := templatePath
-	if bucket != "" {
+	if packager.Bucket != "" {
 		var err error
-		packagedTemplate, err = util.SamPackage(clients.Region(), templatePath, bucket)
+		packagedTemplate, err = packager.Template(templatePath)
 		if err != nil {
 			return nil, err
 		}
@@ -73,7 +73,7 @@ func Stack(
 		changeSetType = "UPDATE"
 	}
 
-	changeID, err := createChangeSet(log, bucket, stack, changeSetType, packagedTemplate, params)
+	changeID, err := createChangeSet(packager.Log, packager.Bucket, stack, changeSetType, packagedTemplate, params)
 	if err != nil {
 		return nil, err
 	}
