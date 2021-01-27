@@ -23,7 +23,6 @@ import traceback
 from dataclasses import dataclass
 from typing import Any, Optional, Callable, List
 
-from .immutable import ImmutableDict
 from .logging import get_logger
 from .util import id_to_path, import_file_as_module, store_modules
 from .enriched_event import PantherEvent
@@ -268,7 +267,7 @@ class Rule:
 
         try:
             command = getattr(self._module, 'alert_context')
-            alert_context = self._run_command(command, event, (ImmutableDict, dict))
+            alert_context = self._run_command(command, event, Mapping)
             serialized_alert_context = json.dumps(alert_context, default=PantherEvent.json_encoder)
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
@@ -490,7 +489,7 @@ class Rule:
     def _run_command(self, function: Callable, event: PantherEvent, expected_type: Any) -> Any:
         result = function(event)
         # Branch in case of list
-        if expected_type is not list:
+        if not isinstance(expected_type, list):
             if not isinstance(result, expected_type):
                 raise Exception(
                     'rule [{}] function [{}] returned [{}], expected [{}]'.format(
@@ -501,7 +500,7 @@ class Rule:
                     )
                 )
         else:
-            if expected_type is not list or not all([isinstance(x, (str, bool)) for x in result]):
+            if not isinstance(expected_type, list) or not all([isinstance(x, (str, bool)) for x in result]):
                 raise Exception(
                     'rule [{}] function [{}] returned [{}], expected a list'.format(self.rule_id, function.__name__,
                                                                                     type(result).__name__)
