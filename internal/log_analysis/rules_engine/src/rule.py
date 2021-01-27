@@ -23,6 +23,7 @@ import traceback
 from dataclasses import dataclass
 from typing import Any, Optional, Callable, List
 
+from .immutable import ImmutableDict
 from .logging import get_logger
 from .util import id_to_path, import_file_as_module, store_modules
 from .enriched_event import PantherEvent
@@ -267,7 +268,7 @@ class Rule:
 
         try:
             command = getattr(self._module, 'alert_context')
-            alert_context = self._run_command(command, event, dict)
+            alert_context = self._run_command(command, event, (ImmutableDict, dict))
             serialized_alert_context = json.dumps(alert_context, default=PantherEvent.json_encoder)
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
