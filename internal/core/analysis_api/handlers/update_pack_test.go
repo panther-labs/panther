@@ -20,7 +20,6 @@ package handlers
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -49,27 +48,22 @@ func TestSetupUpdatePacksVersions(t *testing.T) {
 		ID:                "pack.id.3",
 		AvailableVersions: availableVersions,
 	}
-	packCache = map[string]*packTableItem{
+	packsAtVersion := map[string]*packTableItem{
 		"pack.id.1": packOne,
 		"pack.id.2": packTwo,
 		"pack.id.3": packThree,
 	}
-	cacheLastUpdated = time.Now()
-	cacheVersion = newVersion
 	// Test: no changed needed
 	oldPacks := []*packTableItem{
 		packOne,
 		packTwo,
 		packThree,
 	}
-	newPackItems, err := setupUpdatePacksVersions(newVersion, oldPacks)
-	assert.NoError(t, err)
+	newPackItems := setupUpdatePacksVersions(newVersion, oldPacks, packsAtVersion)
 	assert.Equal(t, 0, len(newPackItems))
 	// Test: no packs added/removed, releases updated
 	newVersion = models.Version{ID: 3333, Name: "v1.3.0"}
-	cacheVersion = newVersion
-	newPackItems, err = setupUpdatePacksVersions(newVersion, oldPacks)
-	assert.NoError(t, err)
+	newPackItems = setupUpdatePacksVersions(newVersion, oldPacks, packsAtVersion)
 	for _, newPackItem := range newPackItems {
 		assert.True(t, newPackItem.UpdateAvailable)
 		assert.Equal(t, 3, len(newPackItem.AvailableVersions))
@@ -102,15 +96,12 @@ func TestSetupPacksVersionsAddPack(t *testing.T) {
 		packOne,
 		packTwo, // removed packThree from oldPacks
 	}
-	packCache = map[string]*packTableItem{
+	packsAtVersion := map[string]*packTableItem{
 		"pack.id.1": packOne,
 		"pack.id.2": packTwo,
 		"pack.id.3": packThree, // pack cache of "new" packs has all three items
 	}
-	cacheLastUpdated = time.Now()
-	cacheVersion = newVersion
-	newPackItems, err := setupUpdatePacksVersions(newVersion, oldPacks)
-	assert.NoError(t, err)
+	newPackItems := setupUpdatePacksVersions(newVersion, oldPacks, packsAtVersion)
 	assert.Equal(t, 3, len(newPackItems)) // ensure all three items have updates
 	for _, newPackItem := range newPackItems {
 		assert.True(t, newPackItem.UpdateAvailable)
@@ -119,8 +110,8 @@ func TestSetupPacksVersionsAddPack(t *testing.T) {
 		if newPackItem.ID == "pack.id.3" {
 			assert.False(t, newPackItem.Enabled)
 			assert.Equal(t, 1, len(newPackItem.AvailableVersions))
-			assert.Equal(t, newVersion.ID, newPackItem.EnabledVersion.ID)
-			assert.Equal(t, newVersion.Name, newPackItem.EnabledVersion.Name)
+			assert.Equal(t, newVersion.ID, newPackItem.PackVersion.ID)
+			assert.Equal(t, newVersion.Name, newPackItem.PackVersion.Name)
 		} else {
 			// the existing packs should have 3 available versions
 			assert.Equal(t, 3, len(newPackItem.AvailableVersions))
@@ -156,14 +147,11 @@ func TestSetupPacksVersionsRemovePack(t *testing.T) {
 		packTwo,
 		packThree,
 	}
-	packCache = map[string]*packTableItem{
+	packsAtVersion := map[string]*packTableItem{
 		"pack.id.1": packOne,
 		"pack.id.2": packTwo, // packThree "removed" from latest release
 	}
-	cacheLastUpdated = time.Now()
-	cacheVersion = newVersion
-	newPackItems, err := setupUpdatePacksVersions(newVersion, oldPacks)
-	assert.NoError(t, err)
+	newPackItems := setupUpdatePacksVersions(newVersion, oldPacks, packsAtVersion)
 	assert.Equal(t, 2, len(newPackItems)) // only two packs should be updated
 	for _, newPackItem := range newPackItems {
 		assert.True(t, newPackItem.UpdateAvailable)
@@ -191,32 +179,20 @@ func TestSetupUpdateToVersion(t *testing.T) {
 		Description:       "original description",
 	}
 	input := &models.PatchPackInput{
-		EnabledVersion: newVersion,
-		ID:             "pack.id.1",
-		Enabled:        false,
+		PackVersion: newVersion,
+		ID:          "pack.id.1",
+		Enabled:     false,
 	}
 	packOne := oldPackOne
-	packTwo := &packTableItem{
-		ID:                "pack.id.2",
-		AvailableVersions: availableVersions,
-		Enabled:           false,
-	}
-	packCache = map[string]*packTableItem{
-		"pack.id.1": packOne,
-		"pack.id.2": packTwo,
-	}
-	cacheLastUpdated = time.Now()
-	cacheVersion = newVersion
 	// Test: success, no update to enabled status
-	item, err := setupUpdatePackToVersion(input, packOne)
-	assert.NoError(t, err)
-	assert.Equal(t, newVersion, item.EnabledVersion)
+	item := setupUpdatePackToVersion(input, oldPackOne, packOne)
+	assert.Equal(t, newVersion, item.PackVersion)
 	assert.False(t, item.Enabled)
 	// Test: success, update enabled status
 	input = &models.PatchPackInput{
-		EnabledVersion: newVersion,
-		ID:             "pack.id.1",
-		Enabled:        true,
+		PackVersion: newVersion,
+		ID:          "pack.id.1",
+		Enabled:     true,
 	}
 	packOne = &packTableItem{
 		ID:                "pack.id.1",
@@ -224,35 +200,11 @@ func TestSetupUpdateToVersion(t *testing.T) {
 		Enabled:           false,
 		Description:       "new description",
 	}
-	packTwo = &packTableItem{
-		ID:                "pack.id.2",
-		AvailableVersions: availableVersions,
-		Enabled:           false,
-	}
-	packCache = map[string]*packTableItem{
-		"pack.id.1": packOne,
-		"pack.id.2": packTwo,
-	}
-	item, err = setupUpdatePackToVersion(input, oldPackOne)
-	assert.NoError(t, err)
-	assert.Equal(t, newVersion, item.EnabledVersion)
+	item = setupUpdatePackToVersion(input, oldPackOne, packOne)
+	assert.Equal(t, newVersion, item.PackVersion)
 	assert.True(t, item.Enabled)
 
-	// Test: update a pack that doesn't exist in this version
-	input = &models.PatchPackInput{
-		EnabledVersion: newVersion,
-		ID:             "pack.id.3",
-		Enabled:        true,
-	}
-	packThree := &packTableItem{
-		ID: "pack.id.3",
-		AvailableVersions: []models.Version{
-			{ID: 1111, Name: "v1.1.0"}},
-		Enabled: false,
-	}
-	item, err = setupUpdatePackToVersion(input, packThree)
-	assert.NoError(t, err)
-	assert.Nil(t, item)
+	// TODO: Test: update a pack that doesn't exist in this version
 }
 func TestSetupUpdateToVersionOnDowngrade(t *testing.T) {
 	// This tests setting up new pack table items
@@ -264,9 +216,9 @@ func TestSetupUpdateToVersionOnDowngrade(t *testing.T) {
 		{ID: 2222, Name: "v1.2.0"},
 	}
 	input := &models.PatchPackInput{
-		EnabledVersion: newVersion,
-		ID:             "pack.id.1",
-		Enabled:        true,
+		PackVersion: newVersion,
+		ID:          "pack.id.1",
+		Enabled:     true,
 	}
 	oldPackOne := &packTableItem{
 		ID:                "pack.id.1",
@@ -280,20 +232,8 @@ func TestSetupUpdateToVersionOnDowngrade(t *testing.T) {
 		Enabled:           false,
 		Description:       "original description",
 	}
-	packTwo := &packTableItem{
-		ID:                "pack.id.2",
-		AvailableVersions: availableVersions,
-		Enabled:           false,
-	}
-	packCache = map[string]*packTableItem{
-		"pack.id.1": packOne,
-		"pack.id.2": packTwo,
-	}
-	cacheLastUpdated = time.Now()
-	cacheVersion = newVersion // setup cache to hold relevant version
-	item, err := setupUpdatePackToVersion(input, oldPackOne)
-	assert.NoError(t, err)
-	assert.Equal(t, newVersion, item.EnabledVersion)
+	item := setupUpdatePackToVersion(input, oldPackOne, packOne)
+	assert.Equal(t, newVersion, item.PackVersion)
 	assert.True(t, item.Enabled)
 	assert.Equal(t, 2, len(item.AvailableVersions)) // ensure even though we are downgrading, the available versions stays the same
 	assert.True(t, item.UpdateAvailable)            // since we are downgrading, the update available flag should still be set
@@ -310,7 +250,7 @@ func TestDetectionCacheLookup(t *testing.T) {
 		ID: "id.3",
 	}
 	// only ids that exist
-	detectionCache = map[string]*tableItem{
+	detectionsAtVersion := map[string]*tableItem{
 		"id.1": detectionOne,
 		"id.2": detectionTwo,
 		"id.3": detectionThree,
@@ -322,14 +262,14 @@ func TestDetectionCacheLookup(t *testing.T) {
 		"id.1": detectionOne,
 		"id.3": detectionThree,
 	}
-	items := detectionCacheLookup(detectionPattern)
+	items := detectionSetLookup(detectionsAtVersion, detectionPattern)
 	assert.Equal(t, items, expectedOutput)
 	// only ids that do not exist
 	detectionPattern = models.DetectionPattern{
 		IDs: []string{"id.4", "id.6"},
 	}
 	expectedOutput = map[string]*tableItem{}
-	items = detectionCacheLookup(detectionPattern)
+	items = detectionSetLookup(detectionsAtVersion, detectionPattern)
 	assert.Equal(t, items, expectedOutput)
 	// mix of ids that exist and do not exist
 	detectionPattern = models.DetectionPattern{
@@ -338,6 +278,6 @@ func TestDetectionCacheLookup(t *testing.T) {
 	expectedOutput = map[string]*tableItem{
 		"id.1": detectionOne,
 	}
-	items = detectionCacheLookup(detectionPattern)
+	items = detectionSetLookup(detectionsAtVersion, detectionPattern)
 	assert.Equal(t, items, expectedOutput)
 }

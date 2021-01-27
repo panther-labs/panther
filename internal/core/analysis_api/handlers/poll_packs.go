@@ -31,7 +31,7 @@ import (
 
 func (API) PollPacks(input *models.PollPacksInput) *events.APIGatewayProxyResponse {
 	// First, check for a new release in the github repo by listing all releases
-	releases, err := listAvailableGithubReleases()
+	releases, err := listAvailableGithubReleases(pantherGithubConfig)
 	if err != nil {
 		// error looking up the github releases
 		zap.L().Error("failed to list github releases", zap.Error(err))

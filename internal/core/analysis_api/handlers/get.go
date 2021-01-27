@@ -46,23 +46,18 @@ func (API) GetDataModel(input *models.GetDataModelInput) *events.APIGatewayProxy
 }
 
 func (API) GetPack(input *models.GetPackInput) *events.APIGatewayProxyResponse {
-	itemID, err := url.QueryUnescape(input.ID)
-	if err != nil {
-		return &events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: http.StatusBadRequest}
-	}
-
 	var item *packTableItem
-	item, err = dynamoGetPack(itemID, false)
+	item, err := dynamoGetPack(input.ID, false)
 
 	if err != nil {
 		return &events.APIGatewayProxyResponse{
-			Body:       fmt.Sprintf("Internal error finding %s (%s)", itemID, models.TypePack),
+			Body:       fmt.Sprintf("Internal error finding %s (%s)", input.ID, models.TypePack),
 			StatusCode: http.StatusInternalServerError,
 		}
 	}
 	if item == nil {
 		return &events.APIGatewayProxyResponse{
-			Body:       fmt.Sprintf("Cannot find %s (%s)", itemID, models.TypePack),
+			Body:       fmt.Sprintf("Cannot find %s (%s)", input.ID, models.TypePack),
 			StatusCode: http.StatusNotFound,
 		}
 	}

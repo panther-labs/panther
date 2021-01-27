@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
@@ -90,7 +91,7 @@ type packTableItem struct {
 	Description       string                  `json:"description,omitempty"`
 	DetectionPattern  models.DetectionPattern `json:"detectionPattern,omitempty"`
 	DisplayName       string                  `json:"displayName,omitempty"`
-	EnabledVersion    models.Version          `json:"enabledVersion,omitempty"`
+	PackVersion       models.Version          `json:"packVersion,omitempty"`
 	ID                string                  `json:"id"`
 	LastModified      time.Time               `json:"lastModified"`
 	LastModifiedBy    string                  `json:"lastModifiedBy"`
@@ -266,14 +267,13 @@ func (r *packTableItem) Pack() *models.Pack {
 		Description:       r.Description,
 		DetectionPattern:  r.DetectionPattern,
 		DisplayName:       r.DisplayName,
-		EnabledVersion:    r.EnabledVersion,
+		PackVersion:       r.PackVersion,
 		Enabled:           r.Enabled,
 		ID:                r.ID,
 		LastModified:      r.LastModified,
 		LastModifiedBy:    r.LastModifiedBy,
 		UpdateAvailable:   r.UpdateAvailable,
 	}
-	genericapi.ReplaceMapSliceNils(result)
 	return result
 }
 
@@ -338,8 +338,7 @@ func dynamoGetPack(packID string, consistentRead bool) (*packTableItem, error) {
 	}
 	var pack packTableItem
 	if err = dynamodbattribute.UnmarshalMap(response.Item, &pack); err != nil {
-		zap.L().Error("dynamodbattribute.UnmarshalMap failed", zap.Error(err))
-		return nil, err
+		return nil, errors.Wrap(err, "dynamodbattribute.UnmarshalMap failed")
 	}
 
 	return &pack, nil
@@ -352,9 +351,7 @@ func dynamoGetItemFromTable(table string, id string, consistentRead bool) (*dyna
 		TableName:      &table,
 	})
 	if err != nil {
-		zap.L().Error("dynamoClient.GetItem failed", zap.Error(err))
-		zap.L().Error("table", zap.Any("table", &table), zap.Any("key", tableKey(id)))
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to get item %s from table %s", table, id)
 	}
 	return response, nil
 }
@@ -543,6 +540,7 @@ func buildTableScanInput(table string, itemTypes []models.DetectionType, fields 
 	for _, filter := range filters {
 		masterFilter = masterFilter.And(filter)
 	}
+
 	builder := expression.NewBuilder().WithFilter(masterFilter)
 
 	if len(fields) > 0 {

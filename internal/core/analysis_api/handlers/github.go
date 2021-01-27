@@ -19,20 +19,12 @@ package handlers
  */
 
 import (
-	"context"
 	"crypto/sha512"
-	"crypto/tls"
 	"encoding/base64"
 	"errors"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/kms"
-	"github.com/google/go-github/github"
 	"github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 
@@ -42,132 +34,75 @@ import (
 
 const (
 	// github org and repo containing detection packs
-	pantherGithubOwner = "panther-labs"
+	pantherGithubOwner = "lindsey-w"
 	pantherGithubRepo  = "panther-analysis"
 	// signing keys information
-	pantherFirstSigningKeyID = "2f555f7a-636a-41ed-9a6b-c6192bf55810" // TODO: update: this is a test key
-	signingAlgorithm         = kms.SigningAlgorithmSpecRsassaPkcs1V15Sha512
+	pantherFirstSigningKeyID = "2f555f7a-636a-41ed-9a6b-c6192bf55810"
+	/*pantherRootPublicKey     = "-----BEGIN PUBLIC KEY-----" +
+	"MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAxWU9pnn5A2mdms7yyvTn" +
+	"g1OYALdimf0bLuClivmLFtw4SzWOSbkN+89+4ptyLBrARmfrzsQ1Fswsgm5W+4jk" +
+	"KZ7gqBY2cRtITkMIaESb2CeqaKIl2UsfjcglILFKzJVEC8qsooM4xG+/pnGxIYYj" +
+	"uMTnokyg9TdQHORWyRaTFDI9qcvavJxRF8eaibk49CDY5bvUeij46mJhVjIZcyyu" +
+	"d/qmDtduMfhm4UuYLD7toDmMx6YQW82/nxTo7J7OkANyYWASNFriCeCb2aIb2Gtv" +
+	"7u00Fv2jdNTexQYZhJ+M4OpsG71PK6JTrSSt4nVMoiFRUb0oZhrN4odl5mEJiSDq" +
+	"nHBgsJ6RiwkClN3i8F2yZ8C4tujR8BGUMoXA4z7uG7C7hDtSVcZ7eB8IY2wDBMbZ" +
+	"b2cnbG1jfCnbmHaDbJfcVzDJ1RDjs89Y/MhuSz+22B5eIXdFHp4GbfUc1e/2AT4e" +
+	"Ei1SaRqYj8e+6Cl0WWJjA5V2UxSJ8W9ZePCebUruAphVmf7gdSXD3Xen1uzc4Lv1" +
+	"YkP0zSV5EVsV4KANVF2CzuTdHsRm05n01As7DicN1zrD01vcDdsEgmgSFELy/zvV" +
+	"G4tMQJyl0P0HJMKASQ1vqMYBI8hLD1ZJCCRbRvy1U64kxeE6829MZxTeLP4g919B" +
+	"w8I0Lv118RyYEBOBXLByVEcCAwEAAQ==" +
+	"-----END PUBLIC KEY-----"*/
+	signingAlgorithm = kms.SigningAlgorithmSpecRsassaPkcs1V15Sha512
 	// source filenames
 	pantherSourceFilename    = "panther-analysis-all.zip"
 	pantherSignatureFilename = "panther-analysis-all.sig"
-	// cache the detection packs to prevent downloading them multiple times
-	// when updating packs (potentially one at a time) via the UI
-	cacheTimeout = 15 * time.Minute
 	// minimum version that supports packs
 	minimumVersionName = "v1.15.0"
 )
 
 var (
-	// cache packs and detections
-	cacheLastUpdated time.Time
-	cacheVersion     models.Version
-	detectionCache   = make(map[string]*tableItem)
-	packCache        = make(map[string]*packTableItem)
+	pantherPackAssets = []string{
+		pantherSourceFilename,
+		pantherSignatureFilename,
+	}
+	pantherGithubConfig = NewGithubConfig(pantherGithubOwner, pantherGithubRepo, pantherPackAssets)
 )
 
-func downloadGithubAsset(id int64) ([]byte, error) {
-	rawAsset, url, err := githubClient.Repositories.DownloadReleaseAsset(context.Background(), pantherGithubOwner, pantherGithubRepo, id)
-	// download the raw data
-	var body []byte
-	if rawAsset != nil {
-		body, err = ioutil.ReadAll(rawAsset)
-		rawAsset.Close()
-	} else if url != "" {
-		body, err = downloadURL(url)
-	}
-	return body, err
+type GithubConfig struct {
+	Owner      string
+	Repository string
+	Assets     []string
 }
 
-func downloadGithubRelease(version models.Version) (sourceData []byte, signatureData []byte, err error) {
-	// Setup options and client
-	// First, get all of the release data
-	release, _, err := githubClient.Repositories.GetRelease(context.Background(), pantherGithubOwner, pantherGithubRepo, version.ID)
+func NewGithubConfig(owner string, repository string, assets []string) GithubConfig {
+	return GithubConfig{
+		Owner:      owner,
+		Repository: repository,
+		Assets:     assets,
+	}
+}
+
+func downloadValidatePackData(config GithubConfig, version models.Version) (map[string]*packTableItem, map[string]*tableItem, error) {
+	assets, err := githubClient.DownloadGithubReleaseAssets(config.Owner, config.Repository, version, config.Assets)
+	if err != nil || len(assets) != len(pantherPackAssets) {
+		zap.L().Error("error downloadeing assets", zap.Error(err))
+		return nil, nil, err
+	}
+	err = validateSignature(assets[pantherSourceFilename], assets[pantherSignatureFilename])
 	if err != nil {
 		return nil, nil, err
 	}
-	// retrieve the signature file and entire analysis zip
-	for _, asset := range release.Assets {
-		if *asset.Name == pantherSignatureFilename {
-			signatureData, err = downloadGithubAsset(*asset.ID)
-		} else if *asset.Name == pantherSourceFilename {
-			sourceData, err = downloadGithubAsset(*asset.ID)
-		}
-		if err != nil {
-			// If we failed to download an asset, report and return the error
-			zap.L().Error("Failed to download release asset file from repo",
-				zap.String("sourceFile", *asset.Name),
-				zap.String("repository", pantherGithubRepo))
-			return nil, nil, err
-		}
+	packs, detections, err := extractZipFileBytes(assets[pantherSourceFilename])
+	if err != nil {
+		return nil, nil, err
 	}
-	return sourceData, signatureData, nil
+	return packs, detections, nil
 }
 
-func downloadURL(url string) ([]byte, error) {
-	if !strings.HasPrefix(url, "https://") {
-		return nil, fmt.Errorf("url is not https: %v", url)
-	}
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: false,
-			MinVersion:         tls.VersionTLS12,
-		},
-	}
-	client := &http.Client{
-		Timeout:   10 * time.Second,
-		Transport: transport,
-	}
-	response, err := client.Get(url)
+func listAvailableGithubReleases(config GithubConfig) ([]models.Version, error) {
+	allReleases, err := githubClient.ListAvailableGithubReleases(config.Owner, config.Repository)
 	if err != nil {
-		return nil, fmt.Errorf("failed to GET %s: %v", url, err)
-	}
-	defer response.Body.Close()
-
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to download %s: %v", url, err)
-	}
-	return body, nil
-}
-
-func downloadValidatePackData(version models.Version) error {
-	sourceData, signatureData, err := downloadGithubRelease(version)
-	if err != nil || sourceData == nil || signatureData == nil {
-		zap.L().Error("GitHub release version download failed",
-			zap.Error(err),
-			zap.Bool("sourceData nil", sourceData == nil),
-			zap.Bool("signatureData nil", signatureData == nil))
-		return err
-	}
-	err = validateSignature(sourceData, signatureData)
-	if err != nil {
-		return err
-	}
-	packCache, detectionCache, err = extractZipFileBytes(sourceData)
-	if err != nil {
-		zap.L().Error("error extracting pack data", zap.Error(err))
-		return err
-	}
-	cacheLastUpdated = time.Now()
-	cacheVersion = version
-	return nil
-}
-
-func listAvailableGithubReleases() ([]models.Version, error) {
-	// Setup options
-	// By default returns all releases, paged at 100 releases at a time
-	opt := &github.ListOptions{}
-	var allReleases []*github.RepositoryRelease
-	for {
-		releases, response, err := githubClient.Repositories.ListReleases(context.Background(), pantherGithubOwner, pantherGithubRepo, opt)
-		if err != nil {
-			return nil, err
-		}
-		allReleases = append(allReleases, releases...)
-		if response.NextPage == 0 {
-			break
-		}
-		opt.Page = response.NextPage
+		return nil, err
 	}
 	var availableVersions []models.Version
 	// earliest version of panther managed detections that supports packs
@@ -216,7 +151,7 @@ func validateSignature(rawData []byte, signature []byte) error {
 		zap.L().Warn("error validating signature", zap.Error(err))
 		return err
 	}
-	if *result.SignatureValid {
+	if aws.BoolValue(result.SignatureValid) {
 		zap.L().Debug("signature validation successful")
 		return nil
 	}

@@ -31,8 +31,8 @@ type ListPacksInput struct {
 	// Only include packs which are enabled or disabled
 	Enabled *bool `json:"enabled"`
 
-	// Only include packs which have this enabledRelease
-	EnabledVersion Version `json:"enabledVersion"`
+	// Only include packs which have this packVersion
+	PackVersion Version `json:"packVersion"`
 
 	// Only include packs whose ID or display name contains this case-insensitive substring
 	NameContains string `json:"nameContains" validate:"max=1000"`
@@ -58,16 +58,16 @@ type ListPacksOutput struct {
 
 type PatchPackInput struct {
 	// This is a partial update
-	Enabled        bool    `json:"enabled"`
-	EnabledVersion Version `json:"enabledVersion"`
-	ID             string  `json:"id" validate:"required,max=1000,excludesall='<>&\""`
-	UserID         string  `json:"userId" validate:"required"`
+	Enabled     bool    `json:"enabled"`
+	PackVersion Version `json:"packVersion"`
+	ID          string  `json:"id" validate:"required,max=1000,excludesall='<>&\""`
+	UserID      string  `json:"userId" validate:"required"`
 }
 
 // PollPacksInput will also update the pack metadata: "availableReleases" and "updateAvailable"
 type PollPacksInput struct {
-	// PollPacksInput allows for specifying a specific relase to poll or not
-	ReleaseVersion Version `json:"releaseVersion"`
+	// PollPacksInput allows for specifying specific source inputs
+	//GithubSource GithubSource `json:"githubSource"`
 }
 
 type Pack struct {
@@ -76,7 +76,7 @@ type Pack struct {
 	CreatedBy         string           `json:"createdBy"`
 	Description       string           `json:"description"`
 	DisplayName       string           `json:"displayName"`
-	EnabledVersion    Version          `json:"enabledVersion"`
+	PackVersion       Version          `json:"packVersion"`
 	ID                string           `json:"id" validate:"required,max=1000,excludesall='<>&\""`
 	LastModifiedBy    string           `json:"lastModifiedBy"`
 	Type              string           `json:"type"`

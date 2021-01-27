@@ -171,7 +171,6 @@ func extractZipFileBytes(content []byte) (map[string]*packTableItem, map[string]
 	packs := make(map[string]*packTableItem)
 	detections := make(map[string]*tableItem)
 	detectionBodies := make(map[string]string) // map base file name to contents
-
 	// Process the zip file and extract each file
 	for _, zipFile := range zipReader.File {
 		if strings.HasSuffix(zipFile.Name, "/") {
@@ -207,6 +206,7 @@ func extractZipFileBytes(content []byte) (map[string]*packTableItem, map[string]
 			}
 			packs[analysisPackItem.ID] = analysisPackItem
 		} else {
+			// all other directories, containing detections of all types (policy, rule, global, data model, etc.)
 			var config analysis.Config
 
 			switch strings.ToLower(filepath.Ext(zipFile.Name)) {
@@ -228,14 +228,18 @@ func extractZipFileBytes(content []byte) (map[string]*packTableItem, map[string]
 
 			// Map the Config struct fields over to the fields we need to store in Dynamo
 			analysisItem := tableItemFromConfig(config)
-			if analysisItem.Type == models.TypeDataModel && len(config.Mappings) > 0 {
-				// ensure Mappings are nil rather than an empty slice
-				analysisItem.Mappings = make([]models.DataModelMapping, len(config.Mappings))
-				for i, mapping := range config.Mappings {
-					analysisItem.Mappings[i], err = buildMapping(mapping)
-					if err != nil {
-						return nil, nil, err
+			if analysisItem.Type == models.TypeDataModel {
+				if len(config.Mappings) > 0 {
+					// ensure Mappings are nil rather than an empty slice
+					analysisItem.Mappings = make([]models.DataModelMapping, len(config.Mappings))
+					for i, mapping := range config.Mappings {
+						analysisItem.Mappings[i], err = buildMapping(mapping)
+						if err != nil {
+							return nil, nil, err
+						}
 					}
+				} else {
+					return nil, nil, fmt.Errorf("data model (%s) is missing mappings", analysisItem.ID)
 				}
 				// ensure only one data model is enabled per LogType (ResourceType)
 				err = validateUploadedDataModel(analysisItem)
@@ -269,12 +273,12 @@ func extractZipFileBytes(content []byte) (map[string]*packTableItem, map[string]
 	for _, detection := range detections {
 		if body, ok := detectionBodies[detection.Body]; ok {
 			detection.Body = body
-			if err := validateUploadedPolicy(detection); err != nil {
+			if err := validateUploadedDetection(detection); err != nil {
 				return nil, nil, err
 			}
 		} else if detection.Type != models.TypeDataModel {
 			// it is ok for DataModels to be missing python body
-			return nil, nil, fmt.Errorf("policy %s is missing a body", detection.ID)
+			return nil, nil, fmt.Errorf("detection %s is missing a body", detection.ID)
 		}
 	}
 
@@ -422,8 +426,8 @@ func validateUploadedDataModel(item *tableItem) error {
 	return nil
 }
 
-// Ensure that the uploaded policy is valid according to the API spec for a Policy
-func validateUploadedPolicy(item *tableItem) error {
+// Ensure that the uploaded detection is valid according to the API spec for detections
+func validateUploadedDetection(item *tableItem) error {
 	switch item.Type {
 	case models.TypeGlobal:
 		item.Severity = compliancemodels.SeverityInfo
@@ -432,12 +436,12 @@ func validateUploadedPolicy(item *tableItem) error {
 	case models.TypePolicy, models.TypeRule:
 		break
 	default:
-		return fmt.Errorf("policy ID %s is invalid: unknown analysis type %s", item.ID, item.Type)
+		return fmt.Errorf("detection ID %s is invalid: unknown analysis type %s", item.ID, item.Type)
 	}
 
-	policy := item.Policy(compliancemodels.StatusPass) // Convert to the external Policy model for validation
-	if err := validate.New().Struct(policy); err != nil {
-		return fmt.Errorf("policy ID %s is invalid: %s", policy.ID, err)
+	detection := item.Policy(compliancemodels.StatusPass) // Convert to the external Policy model for validation
+	if err := validate.New().Struct(detection); err != nil {
+		return fmt.Errorf("detection ID %s is invalid: %s", detection.ID, err)
 	}
 	return nil
 }

@@ -35,7 +35,7 @@ func TestIsNewReleaseAvailable(t *testing.T) {
 	}
 	currentPacks := []*packTableItem{
 		{
-			EnabledVersion: enabledVersion,
+			PackVersion: enabledVersion,
 			AvailableVersions: []models.Version{
 				enabledVersion,
 			},
@@ -50,7 +50,7 @@ func TestIsNewReleaseAvailable(t *testing.T) {
 	}
 	currentPacks = []*packTableItem{
 		{
-			EnabledVersion: enabledVersion,
+			PackVersion: enabledVersion,
 			AvailableVersions: []models.Version{
 				enabledVersion,
 				newVersion,
@@ -65,7 +65,7 @@ func TestIsNewReleaseAvailable(t *testing.T) {
 	}
 	currentPacks = []*packTableItem{
 		{
-			EnabledVersion: enabledVersion,
+			PackVersion: enabledVersion,
 			AvailableVersions: []models.Version{
 				enabledVersion,
 				newVersion,

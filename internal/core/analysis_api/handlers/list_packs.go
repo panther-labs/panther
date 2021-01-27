@@ -79,9 +79,9 @@ func scanPackInput(input *models.ListPacksInput) (*dynamodb.ScanInput, error) {
 			expression.Name("enabled"), expression.Value(*input.Enabled)))
 	}
 
-	if input.EnabledVersion.Name != "" {
-		filters = append(filters, expression.Equal(expression.Name("enabledRelease"),
-			expression.Value(input.EnabledVersion)))
+	if input.PackVersion.Name != "" {
+		filters = append(filters, expression.Equal(expression.Name("packVersion"),
+			expression.Value(input.PackVersion)))
 	}
 
 	if input.NameContains != "" {

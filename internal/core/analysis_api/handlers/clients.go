@@ -23,16 +23,17 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/aws/aws-sdk-go/service/kms"
+	"github.com/aws/aws-sdk-go/service/kms/kmsiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
-	"github.com/google/go-github/github"
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
+	githubwrapper "github.com/panther-labs/panther/pkg/github"
 )
 
 const systemUserID = "00000000-0000-4000-8000-000000000000"
@@ -42,8 +43,8 @@ var (
 
 	awsSession       *session.Session
 	dynamoClient     dynamodbiface.DynamoDBAPI
-	githubClient     *github.Client
-	kmsClient        *kms.KMS
+	githubClient     *githubwrapper.GithubClient
+	kmsClient        kmsiface.KMSAPI
 	s3Client         s3iface.S3API
 	sqsClient        sqsiface.SQSAPI
 	complianceClient gatewayapi.API
@@ -72,7 +73,7 @@ func Setup() {
 
 	awsSession = session.Must(session.NewSession())
 	dynamoClient = dynamodb.New(awsSession)
-	githubClient = github.NewClient(nil)
+	githubClient = githubwrapper.NewGithubClient()
 	kmsClient = kms.New(awsSession)
 	s3Client = s3.New(awsSession)
 	sqsClient = sqs.New(awsSession)
