@@ -62,7 +62,9 @@ interface BaseDestinationFormProps<AdditionalValues extends Partial<DestinationC
 export const defaultValidationSchema = Yup.object().shape({
   displayName: Yup.string().required(),
   defaultForSeverity: Yup.array().of(Yup.mixed().oneOf(Object.values(SeverityEnum)).required()),
-  alertTypes: Yup.array().of(Yup.mixed().oneOf(Object.values(AlertTypesEnum)).required()),
+  alertTypes: Yup.array()
+    .min(1)
+    .of(Yup.mixed().oneOf(Object.values(AlertTypesEnum)).required()),
 });
 
 function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigInput>>({
@@ -121,6 +123,7 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
             itemToString={alertTypeToString}
             label="Alert Types"
             placeholder="Select Alert Types"
+            required
             aria-describedby="alert-type-disclaimer"
           />
         </SimpleGrid>
