@@ -22,7 +22,6 @@ import (
 	"context"
 	"io"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -230,7 +229,7 @@ func statusFromErr(err error) string {
 	if err == nil {
 		return metrics.StatusOk
 	}
-	if strings.Contains(err.Error(), "AccessDenied") {
+	if awsutils.IsAnyError(err, "AccessDenied") {
 		return metrics.StatusAuthErr
 	}
 	return metrics.StatusErr
