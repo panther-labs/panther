@@ -490,7 +490,7 @@ class Rule:
     def _run_command(self, function: Callable, event: PantherEvent, expected_type: Any) -> Any:
         result = function(event)
         # Branch in case of list
-        if not isinstance(expected_type, list):
+        if expected_type is not list:
             if not isinstance(result, expected_type):
                 raise Exception(
                     'rule [{}] function [{}] returned [{}], expected [{}]'.format(
@@ -501,7 +501,7 @@ class Rule:
                     )
                 )
         else:
-            if not isinstance(expected_type, list) or not all([isinstance(x, (str, bool)) for x in result]):
+            if expected_type is not list or not all([isinstance(x, (str, bool)) for x in result]):
                 raise Exception(
                     'rule [{}] function [{}] returned [{}], expected a list'.format(self.rule_id, function.__name__,
                                                                                     type(result).__name__)
