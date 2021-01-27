@@ -61,6 +61,7 @@ func (API) AddOutput(input *models.AddOutputInput) (*models.AddOutputOutput, err
 		OutputType:         outputType,
 		OutputConfig:       input.OutputConfig,
 		DefaultForSeverity: input.DefaultForSeverity,
+		AlertTypes:         input.AlertTypes,
 	}
 
 	alertOutputItem, err := AlertOutputToItem(alertOutput)

@@ -29,7 +29,10 @@ export type ListDestinations = {
   destinations?: Types.Maybe<
     Array<
       Types.Maybe<
-        Pick<Types.Destination, 'outputId' | 'outputType' | 'displayName' | 'defaultForSeverity'>
+        Pick<
+          Types.Destination,
+          'outputId' | 'outputType' | 'displayName' | 'defaultForSeverity' | 'alertTypes'
+        >
       >
     >
   >;
@@ -42,6 +45,7 @@ export const ListDestinationsDocument = gql`
       outputType
       displayName
       defaultForSeverity
+      alertTypes
     }
   }
 `;

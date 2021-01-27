@@ -30,7 +30,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
-	alertmodels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/table"
 	"github.com/panther-labs/panther/internal/log_analysis/alerts_api/utils"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
@@ -174,7 +174,7 @@ func (api *API) getEventsForLogType(
 	// data is stored by hour, loop over the hours
 	for ; !partitionTime.After(alert.UpdateTime); partitionTime = awsglue.GlueTableHourly.Next(partitionTime) {
 		database := pantherdb.RuleMatchDatabase
-		if alert.Type == alertmodels.RuleErrorType {
+		if alert.Type == deliverymodel.RuleErrorType {
 			database = pantherdb.RuleErrorsDatabase
 		}
 		tableName := pantherdb.TableName(logType)

@@ -25,7 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/mock"
 
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 )
@@ -37,7 +37,7 @@ type mockOutputsClient struct {
 
 func (m *mockOutputsClient) Slack(
 	ctx context.Context,
-	alert *deliveryModels.Alert,
+	alert *deliverymodel.Alert,
 	config *outputModels.SlackConfig,
 ) *outputs.AlertDeliveryResponse {
 
@@ -45,9 +45,10 @@ func (m *mockOutputsClient) Slack(
 	return args.Get(0).(*outputs.AlertDeliveryResponse)
 }
 
-func sampleAlert() *deliveryModels.Alert {
-	return &deliveryModels.Alert{
+func sampleAlert() *deliverymodel.Alert {
+	return &deliverymodel.Alert{
 		AlertID:      aws.String("alert-id"),
+		Type:         deliverymodel.RuleType,
 		OutputIds:    []string{"output-id"},
 		Severity:     "INFO",
 		AnalysisID:   "test-rule-id",

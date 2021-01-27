@@ -28,14 +28,14 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/pkg/awsbatch/sqsbatch"
 )
 
 const maxSQSBackoff = 30 * time.Second
 
 // retry - sends a list of alerts back to the queue with random delays.
-func retry(alerts []*deliveryModels.Alert, queueURL string, minDelaySecs int, maxDelaySecs int) {
+func retry(alerts []*deliverymodel.Alert, queueURL string, minDelaySecs int, maxDelaySecs int) {
 	if len(alerts) == 0 {
 		return
 	}
@@ -47,14 +47,14 @@ func retry(alerts []*deliveryModels.Alert, queueURL string, minDelaySecs int, ma
 	sendToSQS(input)
 }
 
-func createInput(alerts []*deliveryModels.Alert, queueURL string, minDelaySecs int, maxDelaySecs int) *sqs.SendMessageBatchInput {
+func createInput(alerts []*deliverymodel.Alert, queueURL string, minDelaySecs int, maxDelaySecs int) *sqs.SendMessageBatchInput {
 	return &sqs.SendMessageBatchInput{
 		Entries:  createEntries(alerts, minDelaySecs, maxDelaySecs),
 		QueueUrl: aws.String(queueURL),
 	}
 }
 
-func createEntries(alerts []*deliveryModels.Alert, minRetryDelay int, maxRetryDelay int) []*sqs.SendMessageBatchRequestEntry {
+func createEntries(alerts []*deliverymodel.Alert, minRetryDelay int, maxRetryDelay int) []*sqs.SendMessageBatchRequestEntry {
 	entries := []*sqs.SendMessageBatchRequestEntry{}
 	for i, alert := range alerts {
 		body, err := jsoniter.MarshalToString(alert)

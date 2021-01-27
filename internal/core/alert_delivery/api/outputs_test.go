@@ -30,27 +30,134 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
+var output = &outputModels.GetOutputsOutput{
+	{
+		OutputID:           aws.String("output-id-1"),
+		DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+		AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
+	},
+	{
+		OutputID:           aws.String("output-id-2"),
+		DefaultForSeverity: aws.StringSlice([]string{"LOW"}),
+		AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
+	},
+	{
+		OutputID:           aws.String("output-id-3"),
+		DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
+		AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
+	},
+	{
+		OutputID:           aws.String("output-id-4"),
+		DefaultForSeverity: aws.StringSlice([]string{"HIGH"}),
+		AlertTypes:         []string{deliverymodel.PolicyType},
+	},
+	{
+		OutputID:           aws.String("output-id-5"),
+		DefaultForSeverity: aws.StringSlice([]string{"CRITICAL"}),
+		AlertTypes:         []string{deliverymodel.PolicyType},
+	},
+}
+
+func TestGetAlertOutputsFromDynamicDestinations(t *testing.T) {
+	mockClient := &testutils.LambdaMock{}
+	lambdaClient = mockClient
+
+	payload, err := jsoniter.Marshal(output)
+	require.NoError(t, err)
+	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
+
+	// Need to expire the cache because other tests mutate this global when run in parallel
+	outputsCache = &alertOutputsCache{
+		RefreshInterval: time.Second * time.Duration(30),
+		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
+	}
+	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
+
+	// The combination of 'INFO' and 'RuleType' and dynamic overrides should yield one result
+	alert := &deliverymodel.Alert{
+		AlertID:      aws.String("alert-id"),
+		Type:         deliverymodel.RuleType,
+		Destinations: []string{"output-id-1", "output-id-3", "output-id-not"},              // Dynamic overrides
+		OutputIds:    []string{"output-id-1", "output-id-2", "output-id-3", "output-id-4"}, // Destination overrides
+		Severity:     "INFO",
+		AnalysisID:   "test-rule-id",
+		AnalysisName: aws.String("test_rule_name"),
+		CreatedAt:    time.Now().UTC(),
+	}
+	expectedResult := []*outputModels.AlertOutput{
+		{
+			OutputID:           aws.String("output-id-1"),
+			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+			AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
+		},
+		{
+			OutputID:           aws.String("output-id-3"),
+			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
+			AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
+		},
+	}
+
+	result, err := getAlertOutputs(alert)
+	uniqueResult := getUniqueOutputs(result)
+	require.NoError(t, err)
+	assert.Equal(t, expectedResult, uniqueResult)
+
+	mockClient.AssertExpectations(t)
+}
+func TestGetAlertOutputsFromDestinationOverrides(t *testing.T) {
+	mockClient := &testutils.LambdaMock{}
+	lambdaClient = mockClient
+
+	payload, err := jsoniter.Marshal(output)
+	require.NoError(t, err)
+	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
+
+	// Need to expire the cache because other tests mutate this global when run in parallel
+	outputsCache = &alertOutputsCache{
+		RefreshInterval: time.Second * time.Duration(30),
+		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
+	}
+	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
+
+	// The combination of 'INFO' and 'RuleType' and destination overrides should yield one result
+	alert := &deliverymodel.Alert{
+		AlertID:      aws.String("alert-id"),
+		Type:         deliverymodel.RuleType,
+		Destinations: nil,                                                     // Dynamic overrides
+		OutputIds:    []string{"output-id-1", "output-id-3", "output-id-not"}, // Destination overrides
+		Severity:     "INFO",
+		AnalysisID:   "test-rule-id",
+		AnalysisName: aws.String("test_rule_name"),
+		CreatedAt:    time.Now().UTC(),
+	}
+	expectedResult := []*outputModels.AlertOutput{
+		{
+			OutputID:           aws.String("output-id-1"),
+			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+			AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
+		},
+		{
+			OutputID:           aws.String("output-id-3"),
+			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
+			AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
+		},
+	}
+
+	result, err := getAlertOutputs(alert)
+	require.NoError(t, err)
+	assert.Equal(t, expectedResult, result)
+
+	mockClient.AssertExpectations(t)
+}
+
 func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
-	output := &outputModels.GetOutputsOutput{
-		{
-			OutputID:           aws.String("default-info-1"),
-			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
-		},
-		{
-			OutputID:           aws.String("default-info-2"),
-			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
-		},
-		{
-			OutputID:           aws.String("default-medium"),
-			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
-		},
-	}
 	payload, err := jsoniter.Marshal(output)
 	require.NoError(t, err)
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
@@ -60,16 +167,25 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
 	}
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
-	alert := sampleAlert()
-	alert.OutputIds = nil
 
-	expectedResult := []*outputModels.AlertOutput{{
-		OutputID:           aws.String("default-info-1"),
-		DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
-	}, {
-		OutputID:           aws.String("default-info-2"),
-		DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
-	}}
+	// The combination of 'INFO' and 'RuleType' should yield one result
+	alert := &deliverymodel.Alert{
+		AlertID:      aws.String("alert-id"),
+		Type:         deliverymodel.RuleType,
+		Destinations: nil, // Dynamic overrides
+		OutputIds:    nil, // Destination overrides
+		Severity:     "INFO",
+		AnalysisID:   "test-rule-id",
+		AnalysisName: aws.String("test_rule_name"),
+		CreatedAt:    time.Now().UTC(),
+	}
+	expectedResult := []*outputModels.AlertOutput{
+		{
+			OutputID:           aws.String("output-id-1"),
+			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+			AlertTypes:         []string{deliverymodel.RuleType, deliverymodel.RuleErrorType, deliverymodel.PolicyType},
+		},
+	}
 
 	result, err := getAlertOutputs(alert)
 
@@ -82,49 +198,47 @@ func TestGetAlertOutputsFromDefaultSeverity(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
-func TestGetAlertOutputsFromOutputIds(t *testing.T) {
+func TestGetAlertOutputsFromAlertType(t *testing.T) {
 	mockClient := &testutils.LambdaMock{}
 	lambdaClient = mockClient
-
-	output := &outputModels.GetOutputsOutput{
-		{
-			OutputID:           aws.String("output-id"),
-			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
-		},
-		{
-			OutputID:           aws.String("output-id-2"),
-			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
-		},
-		{
-			OutputID:           aws.String("output-id-3"),
-			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
-		},
-	}
 	payload, err := jsoniter.Marshal(output)
 	require.NoError(t, err)
 	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
-
 	// Need to expire the cache because other tests mutate this global when run in parallel
 	outputsCache = &alertOutputsCache{
 		RefreshInterval: time.Second * time.Duration(30),
 		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
 	}
 	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
-	alert := sampleAlert()
-	alert.OutputIds = []string{"output-id", "output-id-3", "output-id-not"}
 
-	expectedResult := []*outputModels.AlertOutput{{
-		OutputID:           aws.String("output-id"),
-		DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
-	}, {
-		OutputID:           aws.String("output-id-3"),
-		DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
-	}}
+	// The combination of 'HIGH' and 'PolicyType' should yield one result
+	alert := &deliverymodel.Alert{
+		AlertID:      aws.String("alert-id"),
+		Type:         deliverymodel.PolicyType,
+		Destinations: nil, // Dynamic overrides
+		OutputIds:    nil, // Destination overrides
+		Severity:     "HIGH",
+		AnalysisID:   "test-rule-id",
+		AnalysisName: aws.String("test_rule_name"),
+		CreatedAt:    time.Now().UTC(),
+	}
+
+	expectedResult := []*outputModels.AlertOutput{
+		{
+			OutputID:           aws.String("output-id-4"),
+			DefaultForSeverity: aws.StringSlice([]string{"HIGH"}),
+			AlertTypes:         []string{deliverymodel.PolicyType},
+		},
+	}
 
 	result, err := getAlertOutputs(alert)
+
 	require.NoError(t, err)
 	assert.Equal(t, expectedResult, result)
 
+	result, err = getAlertOutputs(alert)
+	require.NoError(t, err)
+	assert.Equal(t, expectedResult, result)
 	mockClient.AssertExpectations(t)
 }
 
@@ -133,7 +247,15 @@ func TestGetAlertOutputsIdsError(t *testing.T) {
 	lambdaClient = mockClient
 	mockClient.On("Invoke", mock.Anything).Return((*lambda.InvokeOutput)(nil), errors.New("error"))
 
-	alert := sampleAlert()
+	alert := &deliverymodel.Alert{
+		AlertID:      aws.String("alert-id"),
+		Type:         deliverymodel.RuleType,
+		OutputIds:    nil,
+		Severity:     "INFO",
+		AnalysisID:   "test-rule-id",
+		AnalysisName: aws.String("test_rule_name"),
+		CreatedAt:    time.Now().UTC(),
+	}
 	// Need to expire the cache because other tests mutate this global when run in parallel
 	outputsCache = &alertOutputsCache{
 		RefreshInterval: time.Second * time.Duration(30),
@@ -145,91 +267,37 @@ func TestGetAlertOutputsIdsError(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
-func TestGetUniqueAlertOutputs(t *testing.T) {
-	mockClient := &testutils.LambdaMock{}
-	lambdaClient = mockClient
-
-	output := &outputModels.GetOutputsOutput{
-		{
-			OutputID:           aws.String("output-id"),
-			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
-		},
-		{
-			OutputID:           aws.String("output-id-2"),
-			DefaultForSeverity: aws.StringSlice([]string{"LOW"}),
-		},
-		{
-			OutputID:           aws.String("output-id-3"),
-			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
-		},
-	}
-	payload, err := jsoniter.Marshal(output)
-	require.NoError(t, err)
-	mockLambdaResponse := &lambda.InvokeOutput{Payload: payload}
-
-	// Need to expire the cache because other tests mutate this global when run in parallel
-	outputsCache = &alertOutputsCache{
-		RefreshInterval: time.Second * time.Duration(30),
-		Expiry:          time.Now().Add(time.Minute * time.Duration(-5)),
-	}
-	mockClient.On("Invoke", mock.Anything).Return(mockLambdaResponse, nil).Once()
-	alert := sampleAlert()
-	alert.OutputIds = []string{"output-id", "output-id", "output-id"}
-
-	expectedResult := []*outputModels.AlertOutput{
-		{
-			OutputID:           aws.String("output-id"),
-			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
-		},
-	}
-
-	result, err := getAlertOutputs(alert)
-	uniqueResult := getUniqueOutputs(result)
-	require.NoError(t, err)
-	assert.Equal(t, expectedResult, uniqueResult)
-
-	mockClient.AssertExpectations(t)
-}
-
 func TestUniqueAlertOutputs(t *testing.T) {
 	// Construct a list of outputs to test for uniqueness
 	// We put items out of order on purpose to test for sorting
 	alertOutputs := []*outputModels.AlertOutput{
 		{
-			OutputID:           aws.String("output-id-2"),
-			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+			OutputID: aws.String("output-id-2"),
 		},
 		{
-			OutputID:           aws.String("output-id"),
-			DefaultForSeverity: aws.StringSlice([]string{"INFO"}),
+			OutputID: aws.String("output-id"),
 		},
 		{
-			OutputID:           aws.String("output-id"),
-			DefaultForSeverity: aws.StringSlice([]string{"LOW"}),
+			OutputID: aws.String("output-id"),
 		},
 		{
-			OutputID:           aws.String("output-id-2"),
-			DefaultForSeverity: aws.StringSlice([]string{"LOW"}),
+			OutputID: aws.String("output-id-2"),
 		},
 		{
-			OutputID:           aws.String("output-id-2"),
-			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
+			OutputID: aws.String("output-id-2"),
 		},
 		{
-			OutputID:           aws.String("output-id"),
-			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
+			OutputID: aws.String("output-id"),
 		},
 	}
 
 	// The expected results should be the last seen entry for a given outputID
 	expectedAlertOutputs := []*outputModels.AlertOutput{
 		{
-			OutputID:           aws.String("output-id"),
-			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
+			OutputID: aws.String("output-id"),
 		},
 		{
-			OutputID:           aws.String("output-id-2"),
-			DefaultForSeverity: aws.StringSlice([]string{"MEDIUM"}),
+			OutputID: aws.String("output-id-2"),
 		},
 	}
 

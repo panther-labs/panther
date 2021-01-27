@@ -31,7 +31,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/awsutils"
 )
@@ -50,7 +50,7 @@ const maxTitleSize = 100
 
 // Sns sends an alert to an SNS Topic.
 // nolint: dupl
-func (client *OutputClient) Sns(ctx context.Context, alert *alertModels.Alert, config *outputModels.SnsConfig) *AlertDeliveryResponse {
+func (client *OutputClient) Sns(ctx context.Context, alert *deliverymodel.Alert, config *outputModels.SnsConfig) *AlertDeliveryResponse {
 	notification := generateNotificationFromAlert(alert)
 	serializedDefaultMessage, err := jsoniter.MarshalToString(notification)
 	if err != nil {

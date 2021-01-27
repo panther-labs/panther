@@ -83,6 +83,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               slack: {
                 webhookURL: destination.outputConfig.slack.webhookURL,
@@ -131,6 +132,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               github: {
                 token: destination.outputConfig.github.token,
@@ -181,6 +183,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               jira: {
                 orgDomain: destination.outputConfig.jira.orgDomain,
@@ -237,6 +240,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               pagerDuty: {
                 integrationKey: destination.outputConfig.pagerDuty.integrationKey,
@@ -286,6 +290,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               sqs: {
                 queueUrl: destination.outputConfig.sqs.queueUrl,
@@ -336,6 +341,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               sns: {
                 topicArn: destination.outputConfig.sns.topicArn,
@@ -385,6 +391,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               customWebhook: {
                 webhookURL: destination.outputConfig.customWebhook.webhookURL,
@@ -434,6 +441,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               msTeams: {
                 webhookURL: destination.outputConfig.msTeams.webhookURL,
@@ -488,6 +496,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               opsgenie: {
                 apiKey: destination.outputConfig.opsgenie.apiKey,
@@ -538,6 +547,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               asana: {
                 projectGids: destination.outputConfig.asana.projectGids,

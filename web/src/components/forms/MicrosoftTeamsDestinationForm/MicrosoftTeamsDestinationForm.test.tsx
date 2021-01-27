@@ -18,13 +18,14 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, waitMs, faker } from 'test-utils';
-import { SeverityEnum } from 'Generated/schema';
+import { AlertTypesEnum, SeverityEnum } from 'Generated/schema';
 import MicrosoftTeamsDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
+  alertTypes: [],
   outputConfig: {
     msTeams: {
       webhookURL: '',
@@ -45,6 +46,7 @@ const initialValues = {
     },
   },
   defaultForSeverity: [severity],
+  alertTypes: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError, AlertTypesEnum.Policy],
 };
 
 describe('MicrosoftTeamsDestinationForm', () => {
@@ -114,6 +116,7 @@ describe('MicrosoftTeamsDestinationForm', () => {
       displayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: [severity],
+      alertTypes: [],
     });
   });
 
@@ -139,6 +142,7 @@ describe('MicrosoftTeamsDestinationForm', () => {
       displayName: newDisplayName,
       outputConfig: initialValues.outputConfig,
       defaultForSeverity: initialValues.defaultForSeverity,
+      alertTypes: initialValues.alertTypes,
     });
   });
 });

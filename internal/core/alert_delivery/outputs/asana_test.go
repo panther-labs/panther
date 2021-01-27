@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
@@ -37,10 +37,10 @@ func TestAsanaAlert(t *testing.T) {
 
 	createdAtTime, err := time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
 	require.NoError(t, err)
-	alert := &alertModels.Alert{
+	alert := &deliverymodel.Alert{
 		AlertID:             aws.String("alertId"),
 		AnalysisID:          "ruleId",
-		Type:                alertModels.PolicyType,
+		Type:                deliverymodel.PolicyType,
 		CreatedAt:           createdAtTime,
 		OutputIds:           []string{"output-id"},
 		AnalysisDescription: "description",
