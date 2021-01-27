@@ -24,7 +24,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"go.uber.org/zap"
 
@@ -49,16 +48,7 @@ func (API) PatchPack(input *models.PatchPackInput) *events.APIGatewayProxyRespon
 	}
 	// Update the enabled status and enabledRelease if it has changed
 	// Note: currently only support `enabled` and `enabledRelease` updates from the `patch` operation
-	if input.PackVersion.Name != "" && input.PackVersion.Name != oldItem.PackVersion.Name {
-		// updating the enabled version
-		return updatePackVersion(input, oldItem)
-	} else if input.Enabled != oldItem.Enabled {
-		// Otherwise, we are simply updating the enablement status of the pack and the
-		// detections in this pack.
-		return updatePackEnablement(input, oldItem)
-	}
-	// Nothing to update, report success
-	return gatewayapi.MarshalResponse(oldItem.Pack(), http.StatusOK)
+	return updatePackVersion(input, oldItem)
 }
 
 // updatePackVersion updates the version of pack enabled in dynamo, and updates the version of the detections in the pack in dynamo
@@ -67,7 +57,7 @@ func (API) PatchPack(input *models.PatchPackInput) *events.APIGatewayProxyRespon
 // (2) updating the pack version in the `panther-analysis-packs` ddb
 // (3) updating the detections in the pack in the `panther-analysis` ddb
 func updatePackVersion(input *models.PatchPackInput, oldPackItem *packTableItem) *events.APIGatewayProxyResponse {
-	// First, look up the relevate pack and detection data for this release
+	// First, look up the relevant pack and detection data for this release
 	packVersionSet, detectionVersionSet, err := downloadValidatePackData(pantherGithubConfig, input.PackVersion)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{
@@ -200,37 +190,6 @@ func setupUpdateDetectionsToVersion(pack *packTableItem, newDetectionItems map[s
 	return newItems, nil
 }
 
-// updatePackEnablement updates the `Enabled` status of a pack enabled in dynamo, including the enabled status of
-// the detections in the pack in dynamo. It accomplishes this by:
-// (1) updaing the enabled status of this pack's detections in the `panther-analysis` ddb
-// (2) updating the enabled status of thte pack itself in the `panther-analysis-packs` ddb
-func updatePackEnablement(input *models.PatchPackInput, item *packTableItem) *events.APIGatewayProxyResponse {
-	// The detection list has not changed, get the current list
-	detections, err := detectionDdbLookup(item.DetectionPattern)
-	if err != nil {
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
-	}
-	// Update the enabled status for the detections in this pack
-	for i, detection := range detections {
-		if detection.Enabled != input.Enabled {
-			detection.Enabled = input.Enabled
-			_, err = writeItem(detections[i], input.UserID, aws.Bool(true))
-			if err != nil {
-				return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
-			}
-		}
-	}
-	// Then, Update the enablement status of the pack itself
-	item.Enabled = input.Enabled
-	err = updatePack(item, input.UserID)
-	if err != nil {
-		zap.L().Error("Error updating pack enabled status", zap.Error(err))
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
-	}
-	// return success
-	return gatewayapi.MarshalResponse(item.Pack(), http.StatusOK)
-}
-
 // updatePackVersions update the `AvailableVersions` and `UpdateAvailable` metadata fields in the
 // `panther-analysis-packs` ddb table
 func updatePackVersions(newVersion models.Version, oldPackItems []*packTableItem) error {
@@ -244,8 +203,6 @@ func updatePackVersions(newVersion models.Version, oldPackItems []*packTableItem
 		return err
 	}
 	for _, newPack := range newPacks {
-		// TODO: Is it ok to keep the previous user id of the person that modified it?
-		// or should this be the "system" userid?
 		if err = updatePack(newPack, newPack.LastModifiedBy); err != nil {
 			return err
 		}
@@ -303,29 +260,25 @@ func updatePack(item *packTableItem, userID string) error {
 	return nil
 }
 
-func detectionDdbLookup(input models.DetectionPattern) (map[string]*tableItem, error) {
+func detectionDdbLookup(detectionPattern models.DetectionPattern) (map[string]*tableItem, error) {
 	items := make(map[string]*tableItem)
 
 	var filters []expression.ConditionBuilder
 
 	// Currently only support specifying IDs
-	if len(input.IDs) > 0 {
+	if len(detectionPattern.IDs) > 0 {
 		idFilter := expression.AttributeNotExists(expression.Name("lowerId"))
-		for _, id := range input.IDs {
+		for _, id := range detectionPattern.IDs {
 			idFilter = idFilter.Or(expression.Contains(expression.Name("lowerId"), strings.ToLower(id)))
 		}
 		filters = append(filters, idFilter)
 	}
 
+	zap.L().Error("overall filters", zap.Int("overallFilterSize", len(filters)))
 	// Build the scan input
 	// include all detection types
 	scanInput, err := buildScanInput(
-		[]models.DetectionType{
-			models.TypeRule,
-			models.TypePolicy,
-			models.TypeDataModel,
-			models.TypeGlobal,
-		},
+		[]models.DetectionType{},
 		[]string{},
 		filters...)
 	if err != nil {
@@ -338,7 +291,6 @@ func detectionDdbLookup(input models.DetectionPattern) (map[string]*tableItem, e
 		return nil
 	})
 	if err != nil {
-		zap.L().Error("failed to scan detections", zap.Error(err))
 		return nil, err
 	}
 

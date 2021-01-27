@@ -529,12 +529,17 @@ func buildTableScanInput(table string, itemTypes []models.DetectionType, fields 
 	filters ...expression.ConditionBuilder) (*dynamodb.ScanInput, error) {
 
 	var masterFilter expression.ConditionBuilder
-	for i, itemType := range itemTypes {
-		if i == 0 {
-			masterFilter = expression.Equal(expression.Name("type"), expression.Value(itemType))
-			continue
+	if len(itemTypes) > 0 {
+		for i, itemType := range itemTypes {
+			if i == 0 {
+				masterFilter = expression.Equal(expression.Name("type"), expression.Value(itemType))
+				continue
+			}
+			masterFilter = expression.Or(masterFilter, expression.Equal(expression.Name("type"), expression.Value(itemType)))
 		}
-		masterFilter = expression.Or(masterFilter, expression.Equal(expression.Name("type"), expression.Value(itemType)))
+	} else {
+		// if no types are passed in, search all of them
+		masterFilter = expression.AttributeExists(expression.Name("type"))
 	}
 
 	for _, filter := range filters {
