@@ -89,6 +89,11 @@ type Parser struct {
 	CSV       *preprocessors.CSVMatchConfig  `json:"csv,omitempty" yaml:"csv,omitempty"`
 	FastMatch *preprocessors.FastMatchConfig `json:"fastmatch,omitempty" yaml:"fastmatch,omitempty"`
 	Regex     *preprocessors.RegexConfig     `json:"regex,omitempty" yaml:"regex,omitempty"`
+	Native    *NativeParser                  `json:"native,omitempty" taml:"native,omitempty"`
+}
+
+type NativeParser struct {
+	Name string `json:"name" yaml:"name"`
 }
 
 type ValueSchema struct {

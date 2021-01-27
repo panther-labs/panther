@@ -45,6 +45,7 @@ var mockUpdateItemAlertOutput = &AlertOutputItem{
 	LastModifiedTime:   aws.String("lastModifiedTime"),
 	OutputType:         aws.String("outputType"),
 	DefaultForSeverity: aws.StringSlice([]string{"INFO", "WARN"}),
+	AlertTypes:         []string{"RULE", "RULE_ERROR", "POLICY"},
 	EncryptedConfig:    make([]byte, 1),
 }
 
@@ -57,7 +58,8 @@ func TestUpdateOutput(t *testing.T) {
 		Set(expression.Name("lastModifiedTime"), expression.Value(mockUpdateItemAlertOutput.LastModifiedTime)).
 		Set(expression.Name("displayName"), expression.Value(mockUpdateItemAlertOutput.DisplayName)).
 		Set(expression.Name("encryptedConfig"), expression.Value(mockUpdateItemAlertOutput.EncryptedConfig)).
-		Set(expression.Name("defaultForSeverity"), expression.Value(mockUpdateItemAlertOutput.DefaultForSeverity))
+		Set(expression.Name("defaultForSeverity"), expression.Value(mockUpdateItemAlertOutput.DefaultForSeverity)).
+		Set(expression.Name("alertTypes"), expression.Value(mockUpdateItemAlertOutput.AlertTypes))
 
 	expectedConditionExpression := expression.Name("outputId").Equal(expression.Value(mockUpdateItemAlertOutput.OutputID))
 

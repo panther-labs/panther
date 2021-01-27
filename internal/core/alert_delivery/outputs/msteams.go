@@ -24,13 +24,13 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
 // MsTeams alert send an alert.
 func (client *OutputClient) MsTeams(
-	ctx context.Context, alert *alertModels.Alert, config *outputModels.MsTeamsConfig) *AlertDeliveryResponse {
+	ctx context.Context, alert *deliverymodel.Alert, config *outputModels.MsTeamsConfig) *AlertDeliveryResponse {
 
 	link := "[Click here to view in the Panther UI](" + generateURL(alert) + ").\n"
 

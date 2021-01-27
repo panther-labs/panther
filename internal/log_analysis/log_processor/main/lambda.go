@@ -92,6 +92,8 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 		}
 	}()
 
-	sqsMessageCount, err = processor.PollEvents(ctx, common.SqsClient, logTypesResolver)
+	parsersResolver := logtypes.ParserResolver(logTypesResolver)
+	sqsMessageCount, err = processor.PollEvents(ctx, common.SqsClient, parsersResolver)
+
 	return err
 }

@@ -711,6 +711,7 @@ type Destination {
   outputConfig: DestinationConfig!
   verificationStatus: String
   defaultForSeverity: [SeverityEnum]!
+  alertTypes: [AlertTypesEnum!]!
 }
 
 type DestinationConfig {
@@ -781,6 +782,7 @@ input DestinationInput {
   outputConfig: DestinationConfigInput!
   outputType: String!
   defaultForSeverity: [SeverityEnum]!
+  alertTypes: [AlertTypesEnum]!
 }
 
 input DestinationConfigInput {
