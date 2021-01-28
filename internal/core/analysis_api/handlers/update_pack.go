@@ -274,7 +274,6 @@ func detectionDdbLookup(detectionPattern models.DetectionPattern) (map[string]*t
 		filters = append(filters, idFilter)
 	}
 
-	zap.L().Error("overall filters", zap.Int("overallFilterSize", len(filters)))
 	// Build the scan input
 	// include all detection types
 	scanInput, err := buildScanInput(
