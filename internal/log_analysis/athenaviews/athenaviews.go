@@ -144,45 +144,42 @@ func NewViewMaker(tableLister TableLister) *ViewMaker {
 
 // GenerateLogViews creates useful Athena views in the panther views database
 func (vm *ViewMaker) GenerateLogViews() (sqlStatements []string, err error) {
-	var allTables []Table
-	sqlStatement, logTables, err := vm.generateViewAllLogs()
-	if err != nil {
-		return nil, err
-	}
-	if sqlStatement != "" {
-		sqlStatements = append(sqlStatements, sqlStatement)
-	}
-	allTables = append(allTables, logTables...)
+	var allTables []Table // collect so that at the end we can make 1 view over all tables
 
-	sqlStatement, cloudSecurityTables, err := vm.generateViewAllCloudSecurity()
-	if err != nil {
-		return nil, err
+	createView := func(databaseName, viewName string) error {
+		sqlStatement, tables, err := vm.createView(databaseName, viewName)
+		if err != nil {
+			return err
+		}
+		if sqlStatement != "" {
+			sqlStatements = append(sqlStatements, sqlStatement)
+		}
+		allTables = append(allTables, tables...)
+		return nil
 	}
-	if sqlStatement != "" {
-		sqlStatements = append(sqlStatements, sqlStatement)
-	}
-	allTables = append(allTables, cloudSecurityTables...)
 
-	sqlStatement, ruleMatchesTables, err := vm.generateViewAllRuleMatches()
+	err = createView(pantherdb.LogProcessingDatabase, "all_logs")
 	if err != nil {
 		return nil, err
 	}
-	if sqlStatement != "" {
-		sqlStatements = append(sqlStatements, sqlStatement)
-	}
-	allTables = append(allTables, ruleMatchesTables...)
 
-	sqlStatement, ruleErrorTables, err := vm.generateViewAllRuleErrors()
+	err = createView(pantherdb.CloudSecurityDatabase, "all_cloudsecurity")
 	if err != nil {
 		return nil, err
 	}
-	if sqlStatement != "" {
-		sqlStatements = append(sqlStatements, sqlStatement)
+
+	err = createView(pantherdb.RuleMatchDatabase, "all_rule_matches")
+	if err != nil {
+		return nil, err
 	}
-	allTables = append(allTables, ruleErrorTables...)
+
+	err = createView(pantherdb.RuleErrorsDatabase, "all_rule_errors")
+	if err != nil {
+		return nil, err
+	}
 
 	// always last, create one view over everything
-	sqlStatement, err = generateViewAllDatabases(allTables)
+	sqlStatement, err := generateViewAllDatabases(allTables)
 	if err != nil {
 		return nil, err
 	}
@@ -193,13 +190,14 @@ func (vm *ViewMaker) GenerateLogViews() (sqlStatements []string, err error) {
 	return sqlStatements, nil
 }
 
+/*
 // generateViewAllLogs creates a view over all log sources in log db using "panther" fields
 func (vm *ViewMaker) generateViewAllLogs() (sql string, tables []Table, err error) {
 	tables, err = vm.tableLister.ListTables(pantherdb.LogProcessingDatabase)
 	if err != nil {
 		return "", tables, err
 	}
-	sql, err = generateViewAllHelper("all_logs", tables)
+	sql, err = generateView("all_logs", tables)
 	return sql, tables, err
 }
 
@@ -209,7 +207,7 @@ func (vm *ViewMaker) generateViewAllCloudSecurity() (sql string, tables []Table,
 	if err != nil {
 		return "", tables, err
 	}
-	sql, err = generateViewAllHelper("all_cloudsecurity", tables)
+	sql, err = generateView("all_cloudsecurity", tables)
 	return sql, tables, err
 }
 
@@ -219,7 +217,7 @@ func (vm *ViewMaker) generateViewAllRuleMatches() (sql string, tables []Table, e
 	if err != nil {
 		return "", tables, err
 	}
-	sql, err = generateViewAllHelper("all_rule_matches", tables)
+	sql, err = generateView("all_rule_matches", tables)
 	return sql, tables, err
 }
 
@@ -229,16 +227,28 @@ func (vm *ViewMaker) generateViewAllRuleErrors() (sql string, tables []Table, er
 	if err != nil {
 		return "", tables, err
 	}
-	sql, err = generateViewAllHelper("all_rule_errors", tables)
+	sql, err = generateView("all_rule_errors", tables)
+	return sql, tables, err
+}
+*/
+
+// createView creates a view over all tables in the db the using "panther" fields
+func (vm *ViewMaker) createView(databaseName, viewName string) (sql string, tables []Table, err error) {
+	tables, err = vm.tableLister.ListTables(databaseName)
+	if err != nil {
+		return "", tables, err
+	}
+	sql, err = generateView(viewName, tables)
 	return sql, tables, err
 }
 
 // generateViewAllDatabases() creates a view over all data by taking all tables created in previous views
 func generateViewAllDatabases(tables []Table) (sql string, err error) {
-	return generateViewAllHelper("all_databases", tables)
+	return generateView("all_databases", tables)
 }
 
-func generateViewAllHelper(viewName string, tables []Table) (sql string, err error) {
+// generateView merges all the tables into a single view
+func generateView(viewName string, tables []Table) (sql string, err error) {
 	if len(tables) == 0 {
 		return "", nil
 	}
