@@ -106,7 +106,7 @@ func (h *LambdaHandler) createOrUpdateTablesForLogTypes(ctx context.Context, log
 
 func (h *LambdaHandler) createOrReplaceViewsForAllDeployedLogTables(ctx context.Context) error {
 	// update the views for *all* tables
-	if err := athenaviews.NewMaker(h.AthenaClient, h.AthenaWorkgroup).CreateOrReplaceLogViews(); err != nil {
+	if err := athenaviews.NewViewMaker(ctx, h.AthenaClient, h.AthenaWorkgroup).CreateOrReplaceLogViews(); err != nil {
 		return errors.Wrap(err, "failed to update athena views")
 	}
 	return nil
