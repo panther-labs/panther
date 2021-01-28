@@ -50,9 +50,11 @@ func Stack(
 	params map[string]string,
 ) (map[string]string, error) {
 
-	// 1) Generate final template, packaging assets in S3 and ECR
+	// 1) Generate packaged template, packaging assets in S3 and ECR
 	packagedTemplate := templatePath
 	if packager.Bucket != "" {
+		packager.Log.Debugf("packaging %s to s3 bucket %s and ecr registry %s",
+			templatePath, packager.Bucket, packager.EcrRegistry)
 		var err error
 		packagedTemplate, err = packager.Template(templatePath)
 		if err != nil {

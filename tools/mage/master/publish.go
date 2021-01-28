@@ -155,13 +155,10 @@ func publishToRegion(log *zap.SugaredLogger, region string) error {
 		EcrRegistry:    fmt.Sprintf("349240696275.dkr.ecr.%s.amazonaws.com/panther-community", region),
 		EcrTagWithHash: false,
 		PipLibs:        defaultPipLayer,
+		PostProcess:    embedVersion,
 	}
 	pkgTemplate, err := packager.Template(rootTemplate)
 	if err != nil {
-		return err
-	}
-
-	if err = embedVersion(pkgTemplate); err != nil {
 		return err
 	}
 

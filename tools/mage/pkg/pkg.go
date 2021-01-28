@@ -72,6 +72,12 @@ type Packager struct {
 
 	// Pip library versions to install for the shared python layer
 	PipLibs []string
+
+	// Optional additional processing after the packaging and yaml marshal but before writing
+	// the final template to disk.
+	//
+	// The function should return the modified template body.
+	PostProcess func(originalPath string, packagedBody []byte) []byte
 }
 
 // Key-Value information for each CloudFormation resource passed to the workers
@@ -149,6 +155,10 @@ func (p Packager) Template(path string) (string, error) {
 	newBody, err := yaml.Marshal(body)
 	if err != nil {
 		return "", err
+	}
+
+	if p.PostProcess != nil {
+		newBody = p.PostProcess(path, newBody)
 	}
 
 	pkgPath := filepath.Join("out", "deployments", "pkg."+filepath.Base(path))

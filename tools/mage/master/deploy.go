@@ -21,7 +21,6 @@ package master
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 	"time"
 
@@ -71,17 +70,7 @@ func Deploy() error {
 	packager.Bucket = devOutputs["SourceBucket"]
 	packager.EcrRegistry = devOutputs["ImageRegistryUri"]
 	packager.PipLibs = config.PipLayer
-
-	log.Infof("packaging %s to s3 bucket %s and ecr registry %s",
-		rootTemplate, packager.Bucket, packager.EcrRegistry)
-	pkgPath, err := packager.Template(rootTemplate)
-	if err != nil {
-		return err
-	}
-
-	if err = embedVersion(pkgPath); err != nil {
-		return err
-	}
+	packager.PostProcess = embedVersion
 
 	// TODO - cfn waiters need better progress updates and error extraction for nested stacks
 	// TODO - support updating nested stacks directly
@@ -89,7 +78,9 @@ func Deploy() error {
 	// TODO - expose 'mage pkg' target
 	log.Infof("deploying %s %s (%s) to account %s (%s) as stack '%s'", rootTemplate,
 		util.Semver(), util.CommitSha(), clients.AccountID(), clients.Region(), config.RootStackName)
-	rootOutputs, err := deploy.Stack(packager, pkgPath, config.RootStackName, config.ParameterOverrides)
+	// TODO - don't want to pkg twice - the doubly packaged template has no quotes around the commit,
+	// which could cause problems
+	rootOutputs, err := deploy.Stack(packager, rootTemplate, config.RootStackName, config.ParameterOverrides)
 	if err != nil {
 		return err
 	}
@@ -118,14 +109,20 @@ func deployPreCheck() error {
 }
 
 // Embed version information into the packaged root stack.
-// We don't want it to be a user-configurable parameter.
-func embedVersion(pkgPath string) error {
-	body, err := ioutil.ReadFile(pkgPath)
-	if err != nil {
-		return err
+//
+// We don't want it to be a user-configurable parameter; it's a hardcoded mapping.
+//
+// There is roughly a 1.4% chance that the commit tag looks like scientific notation, e.g. "715623e8"
+// Even if the value is surrounded by quotes in the original template, yaml.Marshal will remove them!
+// Then CloudFormation will standardize the scientific notation, e.g. "7.15623E13"
+//
+// This is why we have to embed the version *after* the packaging and yaml marshal - so we can ensure
+// it is surrounded by quotes and interpreted as a proper string
+func embedVersion(originalPath string, packagedBody []byte) []byte {
+	if originalPath != rootTemplate {
+		return packagedBody // no changes to other templates
 	}
 
-	body = bytes.Replace(body, []byte("${{PANTHER_COMMIT}}"), []byte(`'`+util.CommitSha()+`'`), 1)
-	body = bytes.Replace(body, []byte("${{PANTHER_VERSION}}"), []byte(`'`+util.Semver()+`'`), 1)
-	return ioutil.WriteFile(pkgPath, body, 0600)
+	body := bytes.Replace(packagedBody, []byte("${{PANTHER_COMMIT}}"), []byte(`'`+util.CommitSha()+`'`), 1)
+	return bytes.Replace(body, []byte("${{PANTHER_VERSION}}"), []byte(`'`+util.Semver()+`'`), 1)
 }

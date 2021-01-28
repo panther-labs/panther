@@ -20,7 +20,6 @@ package deploy
 
 import (
 	"fmt"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -49,16 +48,6 @@ func deployFrontend(settings *PantherConfig, packager pkg.Packager, bootstrapOut
 		return fmt.Errorf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
 	}
 
-	localImageID, err := packager.DockerBuild(filepath.Join("deployments", "Dockerfile"))
-	if err != nil {
-		return err
-	}
-
-	dockerImage, err := packager.DockerPush(localImageID, "")
-	if err != nil {
-		return err
-	}
-
 	params := map[string]string{
 		"AlarmTopicArn":              bootstrapOutputs["AlarmTopicArn"],
 		"AppClientId":                bootstrapOutputs["AppClientId"],
@@ -72,7 +61,6 @@ func deployFrontend(settings *PantherConfig, packager pkg.Packager, bootstrapOut
 		"FirstUserFamilyName":        settings.Setup.FirstUser.FamilyName,
 		"FirstUserGivenName":         settings.Setup.FirstUser.GivenName,
 		"GraphQLApiEndpoint":         bootstrapOutputs["GraphQLApiEndpoint"],
-		"Image":                      dockerImage,
 		"InitialAnalysisPackUrls":    strings.Join(settings.Setup.InitialAnalysisSets, ","),
 		"PantherCommit":              util.CommitSha(),
 		"PantherVersion":             util.Semver(),
@@ -81,6 +69,6 @@ func deployFrontend(settings *PantherConfig, packager pkg.Packager, bootstrapOut
 		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
 		"UserPoolId":                 bootstrapOutputs["UserPoolId"],
 	}
-	_, err = Stack(packager, cfnstacks.FrontendTemplate, cfnstacks.Frontend, params)
+	_, err := Stack(packager, cfnstacks.FrontendTemplate, cfnstacks.Frontend, params)
 	return err
 }
