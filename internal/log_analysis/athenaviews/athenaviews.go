@@ -146,36 +146,24 @@ func NewViewMaker(tableLister TableLister) *ViewMaker {
 func (vm *ViewMaker) GenerateLogViews() (sqlStatements []string, err error) {
 	var allTables []Table // collect so that at the end we can make 1 view over all tables
 
-	createView := func(databaseName, viewName string) error {
-		sqlStatement, tables, err := vm.createView(databaseName, viewName)
+	var views = []struct {
+		databaseName string
+		viewName string
+	}{
+		{pantherdb.LogProcessingDatabase, "all_logs"},
+		{pantherdb.CloudSecurityDatabase, "all_cloudsecurity"},
+		{pantherdb.RuleMatchDatabase, "all_rule_matches"},
+		{pantherdb.RuleErrorsDatabase, "all_rule_errors"},
+	}
+	for _, view := range views {
+		sqlStatement, tables, err := vm.createView(view.databaseName, view.viewName)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if sqlStatement != "" {
 			sqlStatements = append(sqlStatements, sqlStatement)
 		}
 		allTables = append(allTables, tables...)
-		return nil
-	}
-
-	err = createView(pantherdb.LogProcessingDatabase, "all_logs")
-	if err != nil {
-		return nil, err
-	}
-
-	err = createView(pantherdb.CloudSecurityDatabase, "all_cloudsecurity")
-	if err != nil {
-		return nil, err
-	}
-
-	err = createView(pantherdb.RuleMatchDatabase, "all_rule_matches")
-	if err != nil {
-		return nil, err
-	}
-
-	err = createView(pantherdb.RuleErrorsDatabase, "all_rule_errors")
-	if err != nil {
-		return nil, err
 	}
 
 	// always last, create one view over everything
@@ -189,48 +177,6 @@ func (vm *ViewMaker) GenerateLogViews() (sqlStatements []string, err error) {
 
 	return sqlStatements, nil
 }
-
-/*
-// generateViewAllLogs creates a view over all log sources in log db using "panther" fields
-func (vm *ViewMaker) generateViewAllLogs() (sql string, tables []Table, err error) {
-	tables, err = vm.tableLister.ListTables(pantherdb.LogProcessingDatabase)
-	if err != nil {
-		return "", tables, err
-	}
-	sql, err = generateView("all_logs", tables)
-	return sql, tables, err
-}
-
-// generateViewAllCloudSecurity creates a view over all log sources in cloudsecurity db using "panther" fields
-func (vm *ViewMaker) generateViewAllCloudSecurity() (sql string, tables []Table, err error) {
-	tables, err = vm.tableLister.ListTables(pantherdb.CloudSecurityDatabase)
-	if err != nil {
-		return "", tables, err
-	}
-	sql, err = generateView("all_cloudsecurity", tables)
-	return sql, tables, err
-}
-
-// generateViewAllRuleMatches creates a view over all log sources in rule match db the using "panther" fields
-func (vm *ViewMaker) generateViewAllRuleMatches() (sql string, tables []Table, err error) {
-	tables, err = vm.tableLister.ListTables(pantherdb.RuleMatchDatabase)
-	if err != nil {
-		return "", tables, err
-	}
-	sql, err = generateView("all_rule_matches", tables)
-	return sql, tables, err
-}
-
-// generateViewAllRuleErrors creates a view over all log sources in rule error db the using "panther" fields
-func (vm *ViewMaker) generateViewAllRuleErrors() (sql string, tables []Table, err error) {
-	tables, err = vm.tableLister.ListTables(pantherdb.RuleErrorsDatabase)
-	if err != nil {
-		return "", tables, err
-	}
-	sql, err = generateView("all_rule_errors", tables)
-	return sql, tables, err
-}
-*/
 
 // createView creates a view over all tables in the db the using "panther" fields
 func (vm *ViewMaker) createView(databaseName, viewName string) (sql string, tables []Table, err error) {
@@ -312,7 +258,7 @@ func (pvc *pantherViewColumns) collectViewColumns(table Table) error {
 	}
 
 	tableColumns := make(map[string]struct{})
-	pvc.columnsByTable[table.Name()] = tableColumns
+	pvc.columnsByTable[table.DatabaseName()+table.Name()] = tableColumns
 
 	for _, column := range selectColumns {
 		tableColumns[column] = struct{}{}
