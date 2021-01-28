@@ -25,7 +25,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
-	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/pkg/awscfn"
 	"github.com/panther-labs/panther/tools/cfnstacks"
@@ -75,7 +74,7 @@ func Stack(
 		changeSetType = "UPDATE"
 	}
 
-	changeID, err := createChangeSet(packager.Log, packager.Bucket, stack, changeSetType, packagedTemplate, params)
+	changeID, err := createChangeSet(packager, stack, changeSetType, packagedTemplate, params)
 	if err != nil {
 		return nil, err
 	}
@@ -141,8 +140,8 @@ func prepareStack(stackName string) (map[string]string, error) {
 //
 // If there are no changes, the change set is deleted and (nil, nil) is returned.
 func createChangeSet(
-	log *zap.SugaredLogger,
-	bucket, stack string,
+	packager pkg.Packager,
+	stack string,
 	changeSetType string, // "CREATE" or "UPDATE"
 	templatePath string,
 	params map[string]string,
@@ -179,20 +178,14 @@ func createChangeSet(
 		createInput.SetTemplateBody(string(template))
 	} else {
 		// Upload to S3 (if it doesn't already exist)
-		packager := pkg.Packager{
-			Log:        log,
-			AwsSession: clients.GetSession(),
-			Bucket:     bucket,
-		}
-
 		key, _, err := packager.UploadAsset(templatePath)
 		if err != nil {
 			return nil, err
 		}
-		createInput.SetTemplateURL(fmt.Sprintf("https://s3.amazonaws.com/%s/%s", bucket, key))
+		createInput.SetTemplateURL(fmt.Sprintf("https://s3.amazonaws.com/%s/%s", packager.Bucket, key))
 	}
 
-	log.Infof("%s CloudFormation stack %s", strings.ToLower(changeSetType), stack)
+	packager.Log.Infof("%s CloudFormation stack %s", strings.ToLower(changeSetType), stack)
 	if _, err := clients.Cfn().CreateChangeSet(createInput); err != nil {
 		return nil, fmt.Errorf("failed to create change set for stack %s: %v", stack, err)
 	}
