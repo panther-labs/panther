@@ -27,7 +27,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
-// Abstract code to create SQL `p_any` views given a TableLister from a specific database
+// Abstract code to create SQL views over the `p_` fields given a TableLister from a specific database
 
 type Column interface {
 	Name() string
@@ -79,11 +79,7 @@ func (vm *ViewMaker) GenerateLogViews() (sqlStatements []string, err error) {
 	}
 
 	// always last, create one view over everything
-	sqlStatement, err := generateViewAllDatabases(allTables)
-	if err != nil {
-		return nil, err
-	}
-	if sqlStatement != "" {
+	if sqlStatement := generateView("all_databases", allTables); sqlStatement != "" {
 		sqlStatements = append(sqlStatements, sqlStatement)
 	}
 
@@ -96,19 +92,13 @@ func (vm *ViewMaker) createView(databaseName, viewName string) (sql string, tabl
 	if err != nil {
 		return "", tables, err
 	}
-	sql, err = generateView(viewName, tables)
-	return sql, tables, err
-}
-
-// generateViewAllDatabases() creates a view over all data by taking all tables created in previous views
-func generateViewAllDatabases(tables []Table) (sql string, err error) {
-	return generateView("all_databases", tables)
+	return generateView(viewName, tables), tables, err
 }
 
 // generateView merges all the tables into a single view
-func generateView(viewName string, tables []Table) (sql string, err error) {
+func generateView(viewName string, tables []Table) (sql string) {
 	if len(tables) == 0 {
-		return "", nil
+		return ""
 	}
 
 	// collect the Panther fields, add "NULL" for fields not present in some tables but present in others
@@ -127,7 +117,7 @@ func generateView(viewName string, tables []Table) (sql string, err error) {
 
 	sqlLines = append(sqlLines, ";\n")
 
-	return strings.Join(sqlLines, "\n"), nil
+	return strings.Join(sqlLines, "\n")
 }
 
 // used to collect the UNION of all Panther "p_" fields for the view for each table
@@ -156,6 +146,7 @@ func newPantherViewColumns(tables []Table) *pantherViewColumns {
 
 	return pvc
 }
+
 func (pvc *pantherViewColumns) collectViewColumns(table Table) {
 	var selectColumns []string
 	for _, col := range table.Columns() {
