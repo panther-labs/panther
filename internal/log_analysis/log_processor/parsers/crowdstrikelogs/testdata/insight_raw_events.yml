@@ -68,7 +68,7 @@ result: |
     "FirstSeen": 1590364206,
     "MachineDomain": "XYZ.CORP",
     "OU": "TEST-ORGANIZATIONAL-UNIT",
-    "PointerSize": "8",
+    "PointerSize": 8,
     "ProductType": "1",
     "ServicePackMajor": "1",
     "SiteName": "Test-Office",
@@ -111,7 +111,7 @@ result: |
     "LocalAddressIP4": "10.0.0.190",
     "p_event_time": "2020-05-24T23:50:06.99Z",
     "p_log_type": "Crowdstrike.ManagedAssets",
-    "p_any_ip_addresses": ["10.0.0.190"]
+    "p_any_ip_addresses": ["10.0.0.1", "10.0.0.190"]
   }
 ---
 name: crowdstrike_not_managed_assets_event

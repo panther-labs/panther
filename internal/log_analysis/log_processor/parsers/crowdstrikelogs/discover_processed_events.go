@@ -44,7 +44,7 @@ type AppInfo struct {
 	Time            pantherlog.Time   `json:"_time" validate:"required" tcodec:"unix" event_time:"true" description:"The host's local time in epoch format."`
 	CID             pantherlog.String `json:"cid" validate:"required" description:"The customer ID."`
 	CompanyName     pantherlog.String `json:"CompanyName" validate:"required" description:"The name of the company."`
-	DetectionCount  pantherlog.Int32  `json:"detectioncount" validate:"required" description:"The number of detections."`
+	DetectionCount  pantherlog.Int64  `json:"detectioncount" validate:"required" description:"The number of detections."`
 	FileName        pantherlog.String `json:"FileName" validate:"required" description:"The name of the file."`
 	SHA256HashData  pantherlog.String `json:"SHA256HashData" validate:"required" panther:"sha256" description:"The file hash bashed on SHA-256."`
 	FileDescription pantherlog.String `json:"FileDescription" description:"The description of the file, if any."`
