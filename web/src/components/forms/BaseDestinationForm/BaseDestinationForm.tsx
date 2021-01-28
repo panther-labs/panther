@@ -20,7 +20,7 @@ import React from 'react';
 import * as Yup from 'yup';
 import { SeverityEnum, DestinationConfigInput, AlertTypesEnum } from 'Generated/schema';
 import { Box, SimpleGrid, Flex, Text } from 'pouncejs';
-import { Field, Form, Formik } from 'formik';
+import { FastField, Form, Formik } from 'formik';
 import urls from 'Source/urls';
 import Breadcrumbs from 'Components/Breadcrumbs';
 import SaveButton from 'Components/buttons/SaveButton';
@@ -58,6 +58,10 @@ interface BaseDestinationFormProps<AdditionalValues extends Partial<DestinationC
   onSubmit: (values: BaseDestinationFormValues<AdditionalValues>) => void;
 }
 
+const AlertTypeValues = Object.values(AlertTypesEnum);
+const SeverityValues = Object.values(SeverityEnum);
+const severityToString = value => getEnumKeyByValue(SeverityEnum, value);
+
 // The validation checks that Formik will run
 export const defaultValidationSchema = Yup.object().shape({
   displayName: Yup.string().required(),
@@ -94,11 +98,11 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
               We will only notify you on issues related to these severity types
             </Text>
           </Box>
-          <Field
+          <FastField
             name="defaultForSeverity"
             as={FormikMultiCombobox}
-            items={Object.values(SeverityEnum)}
-            itemToString={value => getEnumKeyByValue(SeverityEnum, value)}
+            items={SeverityValues}
+            itemToString={severityToString}
             label="Severity"
             placeholder="Select severities"
             aria-describedby="severity-disclaimer"
@@ -116,10 +120,10 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
               The selected alert types will be default for this destination
             </Text>
           </Box>
-          <Field
+          <FastField
             name="alertTypes"
             as={FormikMultiCombobox}
-            items={Object.values(AlertTypesEnum)}
+            items={AlertTypeValues}
             itemToString={alertTypeToString}
             label="Alert Types"
             placeholder="Select Alert Types"
