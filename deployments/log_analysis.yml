@@ -726,9 +726,6 @@ Resources:
           Statement:
             - Effect: Allow # to create views over Glue tables
               Action:
-                - athena:StartQueryExecution
-                - athena:StopQueryExecution
-                - athena:GetQuery*
                 - athena:ListTableMetadata
               Resource: '*'
             - Effect: Allow # athena writes results to S3
