@@ -48,32 +48,23 @@ func (tc *testColumn) Name() string {
 	return tc.Column.Name
 }
 
+func (tc *testColumn) IsPartition() bool {
+	return false
+}
+
 type testTable struct {
 	awsglue.GlueTableMetadata
 }
-
-/*
-func (at *testTable) DatabaseName() string {
-	return at.GlueTableMetadata.DatabaseName()
-}
-
-*/
 
 func (at *testTable) Name() string {
 	return at.GlueTableMetadata.TableName()
 }
 
-/*
-func (at *testTable) EventStruct() interface{} {
-	return at.GlueTableMetadata.EventStruct()
-}
-*/
-
 func (at *testTable) Columns() (cols []Column) {
 	columns, _ := glueschema.InferColumns(at.EventStruct())
 	cols = make([]Column, len(columns))
 	for i, col := range columns {
-		cols[i] = &testColumn{col}
+		cols[i] = &testColumn{Column: col}
 	}
 	return cols
 }

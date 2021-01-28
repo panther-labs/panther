@@ -51,10 +51,15 @@ func NewViewMaker(ctx context.Context, athenaClient athenaiface.AthenaAPI, workg
 
 type athenaColumn struct {
 	athena.Column
+	isPartition bool
 }
 
 func (col *athenaColumn) Name() string {
 	return *col.Column.Name
+}
+
+func (col *athenaColumn) IsPartition() bool {
+	return col.isPartition
 }
 
 type athenaTable struct {
@@ -73,10 +78,10 @@ func (at *athenaTable) Name() string {
 func (at *athenaTable) Columns() (cols []views.Column) {
 	cols = make([]views.Column, len(at.tableData.Columns)+len(at.tableData.PartitionKeys))
 	for i, col := range at.tableData.Columns {
-		cols[i] = &athenaColumn{*col}
+		cols[i] = &athenaColumn{Column: *col, isPartition: false}
 	}
 	for i, col := range at.tableData.PartitionKeys {
-		cols[i+len(at.tableData.Columns)] = &athenaColumn{*col}
+		cols[i+len(at.tableData.Columns)] = &athenaColumn{Column: *col, isPartition: true}
 	}
 	return cols
 }

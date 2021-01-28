@@ -27,10 +27,11 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
 )
 
-// Abstract code to create SQL views given a TableLister from a specific database
+// Abstract code to create SQL `p_any` views given a TableLister from a specific database
 
 type Column interface {
 	Name() string
+	IsPartition() bool
 }
 
 type Table interface {
@@ -158,7 +159,7 @@ func newPantherViewColumns(tables []Table) *pantherViewColumns {
 func (pvc *pantherViewColumns) collectViewColumns(table Table) {
 	var selectColumns []string
 	for _, col := range table.Columns() {
-		if strings.HasPrefix(col.Name(), parsers.PantherFieldPrefix) { // only Panther columns
+		if strings.HasPrefix(col.Name(), parsers.PantherFieldPrefix) || col.IsPartition() { // only Panther columns or partitions
 			selectColumns = append(selectColumns, col.Name())
 		}
 	}
