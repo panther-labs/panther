@@ -47,6 +47,7 @@ import (
 
 const (
 	tableName           = "panther-analysis"
+	packTableName       = "panther-analysis-packs"
 	analysesRoot        = "./test_analyses"
 	analysesZipLocation = "./bulk_upload.zip"
 )
@@ -208,6 +209,7 @@ func TestIntegrationAPI(t *testing.T) {
 	// Reset data stores: S3 bucket and Dynamo table
 	require.NoError(t, testutils.ClearS3Bucket(awsSession, bucketName))
 	require.NoError(t, testutils.ClearDynamoTable(awsSession, tableName))
+	require.NoError(t, testutils.ClearDynamoTable(awsSession, packTableName))
 
 	// ORDER MATTERS!
 
