@@ -85,8 +85,7 @@ func TestSQS_Sync(t *testing.T) {
 	mockAthenaClient := &testutils.AthenaMock{}
 	handler.AthenaClient = mockAthenaClient
 	// is called once for each Panther database
-	mockAthenaClient.On("ListTableMetadataPagesWithContext",
-		mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(4)
+	mockAthenaClient.On("ListTableMetadataPagesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(4)
 
 	// Sync databases
 	mockSqsClient.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil).Once()
