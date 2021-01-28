@@ -49,8 +49,8 @@ func getPolicies() (policyMap, error) {
 	// Load from analysis-api
 	listInput := analysismodels.LambdaInput{
 		ListPolicies: &analysismodels.ListPoliciesInput{
-			// Project out compliance status, because it takes a long time to calculate and we don't
-			// need it
+			// Exclude compliance status from projection, because it takes a long time to calculate
+			// and we don't need it
 			Fields: []string{
 				// Needed for identifying this policy
 				"id",
