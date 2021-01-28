@@ -16,23 +16,5 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
-import { DESTINATIONS } from 'Source/constants';
-import { DestinationTypeEnum } from 'Generated/schema';
-import DestinationCard from './DestinationCard';
-
-interface PagerDutyDestinationCardProps {
-  destination: DestinationFull;
-}
-
-const PagerDutyDestinationCard: React.FC<PagerDutyDestinationCardProps> = ({ destination }) => {
-  return (
-    <DestinationCard
-      logo={DESTINATIONS[DestinationTypeEnum.Pagerduty].logo}
-      destination={destination}
-    />
-  );
-};
-
-export default React.memo(PagerDutyDestinationCard);
+export { default } from './GenericModal';
+export * from './GenericModal';

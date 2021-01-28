@@ -17,22 +17,19 @@
  */
 
 import React from 'react';
-import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
-import { DESTINATIONS } from 'Source/constants';
-import { DestinationTypeEnum } from 'Generated/schema';
-import DestinationCard from './DestinationCard';
+import { Modal, ModalProps } from 'pouncejs';
 
-interface PagerDutyDestinationCardProps {
-  destination: DestinationFull;
+export interface GenericModalProps extends ModalProps {
+  title: string;
+  body: React.ReactNode;
 }
 
-const PagerDutyDestinationCard: React.FC<PagerDutyDestinationCardProps> = ({ destination }) => {
+const GenericModal: React.FC<GenericModalProps> = ({ body, ...rest }) => {
   return (
-    <DestinationCard
-      logo={DESTINATIONS[DestinationTypeEnum.Pagerduty].logo}
-      destination={destination}
-    />
+    <Modal showCloseButton {...rest}>
+      {body}
+    </Modal>
   );
 };
 
-export default React.memo(PagerDutyDestinationCard);
+export default GenericModal;

@@ -52,31 +52,12 @@ func (api *API) UpdateIntegrationSettings(input *models.UpdateIntegrationSetting
 	}
 
 	// Validate the updates
-	reason, passing, err := api.EvaluateIntegrationFunc(&models.CheckIntegrationInput{
-		// Same as the existing integration item
-		AWSAccountID:    existingItem.AWSAccountID,
-		IntegrationType: existingItem.IntegrationType,
-
-		// From update existingItem request
-		IntegrationLabel:  input.IntegrationLabel,
-		EnableCWESetup:    input.CWEEnabled,
-		EnableRemediation: input.RemediationEnabled,
-		S3Bucket:          input.S3Bucket,
-		S3PrefixLogTypes:  input.S3PrefixLogTypes,
-		KmsKey:            input.KmsKey,
-		SqsConfig:         input.SqsConfig,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !passing {
-		zap.L().Warn("UpdateIntegration: resource has a misconfiguration",
-			zap.Error(err),
-			zap.String("reason", reason),
-			zap.Any("input", input))
-		return nil, &genericapi.InvalidInputError{
-			Message: fmt.Sprintf("source %s did not pass configuration check because of %s",
-				existingItem.AWSAccountID, reason),
+	// Validate the new integration (healthcheck).
+	if existingItem.IntegrationType != models.IntegrationTypeAWS3 {
+		// For s3 sources, allow saving regardless of the healthcheck result. This allows
+		// users to manage the log processing role and other infra asynchronously.
+		if err := api.checkSource(existingItem, input); err != nil {
+			return nil, err
 		}
 	}
 
@@ -103,6 +84,37 @@ func (api *API) UpdateIntegrationSettings(input *models.UpdateIntegrationSetting
 
 	existingIntegration := itemToIntegration(existingItem)
 	return existingIntegration, nil
+}
+
+func (api *API) checkSource(existingItem *ddb.Integration, input *models.UpdateIntegrationSettingsInput) error {
+	reason, passing, err := api.EvaluateIntegrationFunc(&models.CheckIntegrationInput{
+		// Same as the existing integration item
+		AWSAccountID:    existingItem.AWSAccountID,
+		IntegrationType: existingItem.IntegrationType,
+
+		// From update existingItem request
+		IntegrationLabel:  input.IntegrationLabel,
+		EnableCWESetup:    input.CWEEnabled,
+		EnableRemediation: input.RemediationEnabled,
+		S3Bucket:          input.S3Bucket,
+		S3PrefixLogTypes:  input.S3PrefixLogTypes,
+		KmsKey:            input.KmsKey,
+		SqsConfig:         input.SqsConfig,
+	})
+	if err != nil {
+		return err
+	}
+	if !passing {
+		zap.L().Warn("UpdateIntegration: resource has a misconfiguration",
+			zap.Error(err),
+			zap.String("reason", reason),
+			zap.Any("input", input))
+		return &genericapi.InvalidInputError{
+			Message: fmt.Sprintf("source %s did not pass configuration check because of %s",
+				existingItem.AWSAccountID, reason),
+		}
+	}
+	return nil
 }
 
 func (api *API) validateUniqueConstraints(existingIntegrationItem *ddb.Integration, input *models.UpdateIntegrationSettingsInput) error {

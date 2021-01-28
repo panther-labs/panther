@@ -42,7 +42,7 @@ describe('Generic Destination Card', () => {
     }) as DestinationFull;
     const { container } = render(
       <DestinationCard destination={destination} logo={logo}>
-        A required children
+        A children
       </DestinationCard>
     );
 

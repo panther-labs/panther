@@ -255,7 +255,7 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         expected_alert_context = json.dumps(
             {
                 '_error':
-                    'Exception(\'rule [test_alert_context_invalid_return_value] function [alert_context] returned [str], expected [dict]\')'
+                    'Exception(\'rule [test_alert_context_invalid_return_value] function [alert_context] returned [str], expected [Mapping]\')'  # pylint: disable=C0301
             }
         )
         expected_result = RuleResult(
@@ -291,6 +291,18 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         expected_alert_context = json.dumps({'headers': event['headers'], 'get_params': event['query_string_args']})
         expected_result = RuleResult(
             matched=True, dedup_output='defaultDedupString:test_alert_context_immutable_event', alert_context=expected_alert_context
+        )
+        self.assertEqual(expected_result, rule.run(PantherEvent(event, None)))
+
+    def test_alert_context_returns_full_event(self) -> None:
+        alert_context_function = 'def alert_context(event):\n\treturn event'
+        rule_body = 'def rule(event):\n\treturn True\n{}'.format(alert_context_function)
+        rule = Rule({'id': 'test_alert_context_returns_full_event', 'body': rule_body, 'versionId': 'versionId'})
+        event = {'test': 'event'}
+
+        expected_alert_context = json.dumps(event)
+        expected_result = RuleResult(
+            matched=True, dedup_output='defaultDedupString:test_alert_context_returns_full_event', alert_context=expected_alert_context
         )
         self.assertEqual(expected_result, rule.run(PantherEvent(event, None)))
 

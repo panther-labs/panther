@@ -20,6 +20,7 @@ import { buildDestination, buildSnsConfig, render } from 'test-utils';
 import React from 'react';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
 import { DestinationTypeEnum } from 'Generated/schema';
+import { alertTypeToString } from 'Helpers/utils';
 import { SnsDestinationCard } from '../index';
 
 describe('SnsDestinationCard', () => {
@@ -36,7 +37,8 @@ describe('SnsDestinationCard', () => {
     expect(getByAriaLabel(/Toggle Options/i)).toBeInTheDocument();
     expect(getByText(snsDestination.displayName)).toBeInTheDocument();
     expect(getByText(snsDestination.outputConfig.sns.topicArn)).toBeInTheDocument();
-    expect(getByText('Date Created')).toBeInTheDocument();
-    expect(getByText('Last Updated')).toBeInTheDocument();
+    expect(
+      getByText(snsDestination.alertTypes.map(alertTypeToString).join(' ,'))
+    ).toBeInTheDocument();
   });
 });

@@ -17,22 +17,19 @@
  */
 
 import React from 'react';
-import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
-import { DESTINATIONS } from 'Source/constants';
-import { DestinationTypeEnum } from 'Generated/schema';
-import DestinationCard from './DestinationCard';
+import { render } from 'test-utils';
+import GenericModal from './GenericModal';
 
-interface PagerDutyDestinationCardProps {
-  destination: DestinationFull;
-}
+const Body = () => <div>This is a body</div>;
 
-const PagerDutyDestinationCard: React.FC<PagerDutyDestinationCardProps> = ({ destination }) => {
-  return (
-    <DestinationCard
-      logo={DESTINATIONS[DestinationTypeEnum.Pagerduty].logo}
-      destination={destination}
-    />
-  );
-};
-
-export default React.memo(PagerDutyDestinationCard);
+describe('Generic modal component', () => {
+  it('renders', async () => {
+    const onClose = jest.fn();
+    const { getByText, findByText, getByAriaLabel } = render(
+      <GenericModal title={'Hello world'} body={<Body />} open onClose={onClose} />
+    );
+    await findByText('Hello world');
+    expect(getByText('This is a body')).toBeTruthy();
+    expect(getByAriaLabel('Dismiss Dialog')).toBeTruthy();
+  });
+});
