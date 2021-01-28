@@ -49,6 +49,18 @@ func getPolicies() (policyMap, error) {
 	// Load from analysis-api
 	listInput := analysismodels.LambdaInput{
 		ListPolicies: &analysismodels.ListPoliciesInput{
+			// Exclude compliance status from projection, because it takes a long time to calculate
+			// and we don't need it
+			Fields: []string{
+				// Needed for identifying this policy
+				"id",
+				// Need by the policy engine to execute the policy
+				"body",
+				"resourceTypes",
+				// Needed by resource processor to determine the results of the policy evaluation
+				"severity",
+				"suppressions",
+			},
 			Enabled:  aws.Bool(true),
 			Page:     1,
 			PageSize: 250,
