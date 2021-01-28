@@ -93,7 +93,7 @@ describe('Log Analysis Overview', () => {
               'eventsProcessed',
               'totalAlertsDelta',
               'alertsBySeverity',
-              'eventsLatency',
+              // 'eventsLatency',
               'alertsByRuleID',
             ],
             fromDate: mockedFromDate,
