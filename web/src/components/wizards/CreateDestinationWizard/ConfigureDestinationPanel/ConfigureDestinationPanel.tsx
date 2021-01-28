@@ -128,7 +128,7 @@ const ConfigureDestinationPanel: React.FC = () => {
       : selectedDestinationType
   );
   return (
-    <Box maxWidth={700} mx="auto">
+    <Box maxWidth={800} mx="auto">
       <WizardPanel.Heading
         title={`Configure Your ${destinationDisplayName} Destination`}
         subtitle="Fill out the form below to configure your Destination"
