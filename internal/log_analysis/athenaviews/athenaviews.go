@@ -20,11 +20,11 @@ package athenaviews
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/athena"
 	"sort"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/athena/athenaiface"
 	"github.com/pkg/errors"
 
@@ -39,7 +39,7 @@ var (
 
 type Maker struct {
 	athenaClient athenaiface.AthenaAPI
-	workgroup string
+	workgroup    string
 }
 
 func NewMaker(athenaClient athenaiface.AthenaAPI, workgroup string) *Maker {
@@ -59,7 +59,7 @@ func (col *athenaColumn) Name() string {
 
 type athenaTable struct {
 	databaseName string
-	tableData *athena.TableMetadata
+	tableData    *athena.TableMetadata
 }
 
 func (at *athenaTable) DatabaseName() string {
@@ -96,11 +96,15 @@ func (m *Maker) CreateOrReplaceLogViews() error {
 
 func (m *Maker) ListTables(databaseName string) (tables []Table, err error) {
 	input := &athena.ListTableMetadataInput{
-		CatalogName: &catalogName,
+		CatalogName:  &catalogName,
 		DatabaseName: aws.String(databaseName),
 	}
 	err = m.athenaClient.ListTableMetadataPages(input, func(page *athena.ListTableMetadataOutput, lastPage bool) bool {
 		for _, table := range page.TableMetadataList {
+			// skip ddb tables!
+			if table.Parameters != nil && table.Parameters["sourceTable"] != nil {
+				continue
+			}
 			tables = append(tables, &athenaTable{
 				databaseName: databaseName,
 				tableData:    table,
@@ -112,7 +116,7 @@ func (m *Maker) ListTables(databaseName string) (tables []Table, err error) {
 	return tables, err
 }
 
-// Abstract code ...
+// Abstract code to create SQL views given a TableLister from a specific database
 
 type Column interface {
 	Name() string
@@ -128,7 +132,7 @@ type TableLister interface {
 	ListTables(databaseName string) (tables []Table, err error)
 }
 
-type  ViewMaker struct {
+type ViewMaker struct {
 	tableLister TableLister
 }
 
@@ -148,7 +152,7 @@ func (vm *ViewMaker) GenerateLogViews() (sqlStatements []string, err error) {
 	if sqlStatement != "" {
 		sqlStatements = append(sqlStatements, sqlStatement)
 	}
-	allTables = append(allTables,  logTables...)
+	allTables = append(allTables, logTables...)
 
 	sqlStatement, cloudSecurityTables, err := vm.generateViewAllCloudSecurity()
 	if err != nil {
@@ -157,7 +161,7 @@ func (vm *ViewMaker) GenerateLogViews() (sqlStatements []string, err error) {
 	if sqlStatement != "" {
 		sqlStatements = append(sqlStatements, sqlStatement)
 	}
-	allTables = append(allTables,  cloudSecurityTables...)
+	allTables = append(allTables, cloudSecurityTables...)
 
 	sqlStatement, ruleMatchesTables, err := vm.generateViewAllRuleMatches()
 	if err != nil {
@@ -166,7 +170,7 @@ func (vm *ViewMaker) GenerateLogViews() (sqlStatements []string, err error) {
 	if sqlStatement != "" {
 		sqlStatements = append(sqlStatements, sqlStatement)
 	}
-	allTables = append(allTables,  ruleMatchesTables...)
+	allTables = append(allTables, ruleMatchesTables...)
 
 	sqlStatement, ruleErrorTables, err := vm.generateViewAllRuleErrors()
 	if err != nil {
@@ -177,6 +181,7 @@ func (vm *ViewMaker) GenerateLogViews() (sqlStatements []string, err error) {
 	}
 	allTables = append(allTables, ruleErrorTables...)
 
+	// always last, create one view over everything
 	sqlStatement, err = generateViewAllDatabases(allTables)
 	if err != nil {
 		return nil, err
@@ -185,15 +190,14 @@ func (vm *ViewMaker) GenerateLogViews() (sqlStatements []string, err error) {
 		sqlStatements = append(sqlStatements, sqlStatement)
 	}
 
-	// add future views here
 	return sqlStatements, nil
 }
 
 // generateViewAllLogs creates a view over all log sources in log db using "panther" fields
 func (vm *ViewMaker) generateViewAllLogs() (sql string, tables []Table, err error) {
-	tables, err = vm.tableLister.ListTables(pantherdb.CloudSecurityDatabase)
+	tables, err = vm.tableLister.ListTables(pantherdb.LogProcessingDatabase)
 	if err != nil {
-		return "", tables,  err
+		return "", tables, err
 	}
 	sql, err = generateViewAllHelper("all_logs", tables)
 	return sql, tables, err
@@ -203,7 +207,7 @@ func (vm *ViewMaker) generateViewAllLogs() (sql string, tables []Table, err erro
 func (vm *ViewMaker) generateViewAllCloudSecurity() (sql string, tables []Table, err error) {
 	tables, err = vm.tableLister.ListTables(pantherdb.CloudSecurityDatabase)
 	if err != nil {
-		return "", tables,  err
+		return "", tables, err
 	}
 	sql, err = generateViewAllHelper("all_cloudsecurity", tables)
 	return sql, tables, err
@@ -213,7 +217,7 @@ func (vm *ViewMaker) generateViewAllCloudSecurity() (sql string, tables []Table,
 func (vm *ViewMaker) generateViewAllRuleMatches() (sql string, tables []Table, err error) {
 	tables, err = vm.tableLister.ListTables(pantherdb.RuleMatchDatabase)
 	if err != nil {
-		return "", tables,  err
+		return "", tables, err
 	}
 	sql, err = generateViewAllHelper("all_rule_matches", tables)
 	return sql, tables, err
@@ -223,7 +227,7 @@ func (vm *ViewMaker) generateViewAllRuleMatches() (sql string, tables []Table, e
 func (vm *ViewMaker) generateViewAllRuleErrors() (sql string, tables []Table, err error) {
 	tables, err = vm.tableLister.ListTables(pantherdb.RuleErrorsDatabase)
 	if err != nil {
-		return "", tables,  err
+		return "", tables, err
 	}
 	sql, err = generateViewAllHelper("all_rule_errors", tables)
 	return sql, tables, err
@@ -250,7 +254,7 @@ func generateViewAllHelper(viewName string, tables []Table) (sql string, err err
 
 	for i, table := range tables {
 		sqlLines = append(sqlLines, fmt.Sprintf("select %s from %s.%s",
-			pantherViewColumns.viewColumns(table), table.DatabaseName() , table.Name()))
+			pantherViewColumns.viewColumns(table), table.DatabaseName(), table.Name()))
 		if i < len(tables)-1 {
 			sqlLines = append(sqlLines, "\tunion all")
 		}
