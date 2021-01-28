@@ -19,6 +19,7 @@ package awslogs
  */
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -119,10 +120,9 @@ func (p *ALBParser) Parse(log string) ([]*parsers.PantherLog, error) {
 		targetIPPort = []string{record[4], "-"}
 	}
 
-	requestItems := strings.Split(record[12], " ")
-
-	if len(requestItems) != 3 {
-		return nil, errors.New("invalid record")
+	requestParams, err := extractRequestParams(record[12])
+	if err != nil {
+		return nil, err
 	}
 
 	event := &ALB{
@@ -140,9 +140,9 @@ func (p *ALBParser) Parse(log string) ([]*parsers.PantherLog, error) {
 		TargetStatusCode:       parsers.CsvStringToIntPointer(record[9]),
 		ReceivedBytes:          parsers.CsvStringToIntPointer(record[10]),
 		SentBytes:              parsers.CsvStringToIntPointer(record[11]),
-		RequestHTTPMethod:      parsers.CsvStringToPointer(requestItems[0]),
-		RequestURL:             parsers.CsvStringToPointer(requestItems[1]),
-		RequestHTTPVersion:     parsers.CsvStringToPointer(requestItems[2]),
+		RequestHTTPMethod:      parsers.CsvStringToPointer(requestParams[0]),
+		RequestURL:             parsers.CsvStringToPointer(requestParams[1]),
+		RequestHTTPVersion:     parsers.CsvStringToPointer(requestParams[2]),
 		UserAgent:              parsers.CsvStringToPointer(record[13]),
 		SSLCipher:              parsers.CsvStringToPointer(record[14]),
 		SSLProtocol:            parsers.CsvStringToPointer(record[15]),
@@ -177,4 +177,31 @@ func (event *ALB) updatePantherFields(p *ALBParser) {
 	event.AppendAnyIPAddressPtr(event.TargetIP)
 	event.AppendAnyDomainNamePtrs(event.DomainName)
 	event.AppendAnyAWSARNPtrs(event.ChosenCertARN, event.TargetGroupARN)
+}
+
+// TODO(optimization): https://github.com/panther-labs/panther/pull/2498#discussion_r563635847
+func extractRequestParams(requestInfo string) ([3]string, error) {
+	separator := " "
+	segments := strings.Split(requestInfo, separator)
+	segmentCount := len(segments)
+
+	var requestParams [3]string
+	if segmentCount < 3 {
+		return requestParams,
+			fmt.Errorf("expected 3 or more request parameter segments, found: %d", segmentCount)
+	}
+
+	// The HTTP method of the request
+	requestParams[0] = segments[0]
+	// Version is the last element: HTTP/1.1 or HTTP/2.0
+	requestParams[2] = segments[segmentCount-1]
+
+	if segmentCount == 3 {
+		requestParams[1] = segments[1]
+		return requestParams, nil
+	}
+
+	// Reconstruct the original URL since it contains unescaped space characters
+	requestParams[1] = strings.Join(segments[1:(segmentCount-1)], separator)
+	return requestParams, nil
 }

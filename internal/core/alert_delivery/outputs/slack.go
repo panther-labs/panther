@@ -22,7 +22,7 @@ import (
 	"context"
 	"fmt"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
@@ -38,7 +38,7 @@ var severityColors = map[string]string{
 // Slack sends an alert to a slack channel.
 func (client *OutputClient) Slack(
 	ctx context.Context,
-	alert *alertModels.Alert,
+	alert *deliverymodel.Alert,
 	config *outputModels.SlackConfig,
 ) *AlertDeliveryResponse {
 

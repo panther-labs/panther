@@ -23,10 +23,10 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/fatih/structtag"
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/pkg/stringset"
+	"github.com/panther-labs/panther/pkg/x/structfields"
 )
 
 // Type is a string representing a type in Glue schema
@@ -131,7 +131,7 @@ func inferStructColumns(typ reflect.Type, path []string, names collisions, custo
 	if typ.Kind() != reflect.Struct {
 		return nil, errors.Errorf("non struct type %v at %q", typ, strings.Join(path, ","))
 	}
-	fields := appendStructFieldsJSON(nil, typ)
+	fields := structfields.Flatten(typ)
 	columns := make([]Column, 0, len(fields))
 	// This collects column names at this depth.
 	uniqueNames := collisions{}
@@ -164,29 +164,6 @@ func inferStructColumns(typ reflect.Type, path []string, names collisions, custo
 	return columns, nil
 }
 
-func appendStructFieldsJSON(fields []reflect.StructField, typ reflect.Type) []reflect.StructField {
-	for typ.Kind() == reflect.Ptr {
-		typ = typ.Elem()
-	}
-	if typ.Kind() != reflect.Struct {
-		return fields
-	}
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
-		if field.Anonymous {
-			// Possible embedded struct, extend the fields
-			fields = appendStructFieldsJSON(fields, field.Type)
-			continue
-		}
-		// Unexported field
-		if field.PkgPath != "" {
-			continue
-		}
-		fields = append(fields, field)
-	}
-	return fields
-}
-
 // maps a struct field to a column.
 // can return nil, nil if the field is not visible in JSON
 // path is used to help with recursive error messages (see newSchemaError)
@@ -213,7 +190,7 @@ func inferColumn(field *reflect.StructField, path []string, names collisions, cu
 	return &Column{
 		Name:     colName,
 		Type:     colType,
-		Required: isFieldRequired(field),
+		Required: structfields.IsRequired(*field),
 		Comment:  fieldComment(field),
 	}, nil
 }
@@ -231,32 +208,14 @@ func fieldComment(field *reflect.StructField) string {
 }
 
 func fieldColumnName(field *reflect.StructField) (string, error) {
-	tags, err := structtag.Parse(string(field.Tag))
+	name, err := structfields.FieldNameJSON(*field)
 	if err != nil {
 		return "", err
 	}
-	switch tag, err := tags.Get("json"); {
-	case err != nil:
-		// Field has no JSON struct tag, it uses the same name in JSON
-		return ColumnName(field.Name), nil
-	case tag.Name == "-":
-		// Field is explicitly omitted for JSON
+	if name == "" {
 		return "", nil
-	default:
-		// Use JSON field name for deriving column name
-		return ColumnName(tag.Name), nil
 	}
-}
-
-// isFieldRequired checks whether a field is required or not.
-func isFieldRequired(field *reflect.StructField) bool {
-	tag, hasValidate := field.Tag.Lookup("validate")
-	if !hasValidate {
-		// If the field does not have a 'validate' tag, it is not required
-		return false
-	}
-	// Otherwise, if the 'validate' tag contains 'omitempty' it is not a required field.
-	return !strings.Contains(tag, "omitempty")
+	return ColumnName(name), nil
 }
 
 // main typeswitch for mapping reflect.Type to glueschema.Type

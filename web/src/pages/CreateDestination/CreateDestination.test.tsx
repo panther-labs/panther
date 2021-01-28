@@ -35,10 +35,12 @@ import {
 import urls from 'Source/urls';
 import { mockAddDestination } from 'Components/wizards/CreateDestinationWizard';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
-import { DestinationTypeEnum, SeverityEnum } from 'Generated/schema';
+import { AlertTypesEnum, DestinationTypeEnum, SeverityEnum } from 'Generated/schema';
 import CreateDestination from './index';
 
 const criticalSeverity = SeverityEnum.Critical;
+const allAlertTypes = [AlertTypesEnum.Rule, AlertTypesEnum.RuleError, AlertTypesEnum.Policy];
+
 const validUrl = faker.internet.url();
 
 describe('CreateDestination', () => {
@@ -97,6 +99,7 @@ describe('CreateDestination', () => {
             displayName: slackDisplayName,
             outputType: DestinationTypeEnum.Slack,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: {
               slack: {
                 webhookURL: validUrl,
@@ -140,6 +143,7 @@ describe('CreateDestination', () => {
             displayName: githubDisplayName,
             outputType: DestinationTypeEnum.Github,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: {
               github: githubConfig,
             },
@@ -182,6 +186,7 @@ describe('CreateDestination', () => {
             displayName: jiraDisplayName,
             outputType: DestinationTypeEnum.Jira,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { jira: jiraConfig },
           },
         },
@@ -240,6 +245,7 @@ describe('CreateDestination', () => {
             displayName: pageDutyDisplayName,
             outputType: DestinationTypeEnum.Pagerduty,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { pagerDuty: pagerDutyConfig },
           },
         },
@@ -279,6 +285,7 @@ describe('CreateDestination', () => {
             displayName: sqsDisplayName,
             outputType: DestinationTypeEnum.Sqs,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { sqs: sqsConfig },
           },
         },
@@ -320,6 +327,7 @@ describe('CreateDestination', () => {
             displayName: snsDisplayName,
             outputType: DestinationTypeEnum.Sns,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { sns: snsConfig },
           },
         },
@@ -359,6 +367,7 @@ describe('CreateDestination', () => {
             displayName: webhookDisplayName,
             outputType: DestinationTypeEnum.Customwebhook,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { customWebhook: webhookConfig },
           },
         },
@@ -398,6 +407,7 @@ describe('CreateDestination', () => {
             displayName: teamsDisplayName,
             outputType: DestinationTypeEnum.Msteams,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { msTeams: teamsConfig },
           },
         },
@@ -437,6 +447,7 @@ describe('CreateDestination', () => {
             displayName: opsgenieDisplayName,
             outputType: DestinationTypeEnum.Opsgenie,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { opsgenie: opsgenieConfig },
           },
         },
@@ -476,6 +487,7 @@ describe('CreateDestination', () => {
             displayName: asanaDisplayName,
             outputType: DestinationTypeEnum.Asana,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { asana: asanaConfig },
           },
         },

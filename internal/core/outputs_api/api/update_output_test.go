@@ -51,6 +51,7 @@ func TestUpdateOutput(t *testing.T) {
 		CreationTime:    aws.String("createdTime"),
 		LastModifiedBy:  aws.String("userId"),
 		OutputType:      aws.String("sns"),
+		AlertTypes:      []string{"RULE", "RULE_ERROR", "POLICY"},
 		EncryptedConfig: make([]byte, 1),
 	}
 
@@ -69,6 +70,7 @@ func TestUpdateOutput(t *testing.T) {
 	assert.Equal(t, aws.String("createdBy"), result.CreatedBy)
 	assert.Equal(t, aws.String("userId"), result.LastModifiedBy)
 	assert.Equal(t, aws.String("sns"), result.OutputType)
+	assert.Equal(t, []string{"RULE", "RULE_ERROR", "POLICY"}, result.AlertTypes)
 
 	mockOutputsTable.AssertExpectations(t)
 }

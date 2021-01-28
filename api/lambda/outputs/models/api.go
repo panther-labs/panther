@@ -47,6 +47,7 @@ type AddOutputInput struct {
 	DisplayName        *string       `json:"displayName" validate:"required,min=1,excludesall='<>&\""`
 	OutputConfig       *OutputConfig `json:"outputConfig" validate:"required"`
 	DefaultForSeverity []*string     `json:"defaultForSeverity"`
+	AlertTypes         []string      `json:"alertTypes" validate:"omitempty,dive,oneof=RULE RULE_ERROR POLICY"`
 }
 
 // AddOutputOutput returns a randomly generated UUID for the output.
@@ -55,7 +56,8 @@ type AddOutputInput struct {
 // {
 //     "displayName": "alert-channel",
 //     "outputId": "7d1c5854-f3ea-491c-8a52-0aa0d58cb456",
-//     "outputType": "slack"
+//     "outputType": "slack",
+//	   "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
 // }
 type AddOutputOutput = AlertOutput
 
@@ -77,7 +79,8 @@ type DeleteOutputInput struct {
 // {
 //     "updateOutput": {
 //         "userId": "9d1c5854-f3ea-491c-8a52-0aa0d58cb456",
-//         "outputId": "7d1c5854-f3ea-491c-8a52-0aa0d58cb456"
+//         "outputId": "7d1c5854-f3ea-491c-8a52-0aa0d58cb456",
+//	       "alertTypes": ["RULE", "RULE_ERROR", "POLICY"]
 //     }
 // }
 type UpdateOutputInput struct {
@@ -86,6 +89,7 @@ type UpdateOutputInput struct {
 	OutputID           *string       `json:"outputId" validate:"required,uuid4"`
 	OutputConfig       *OutputConfig `json:"outputConfig"`
 	DefaultForSeverity []*string     `json:"defaultForSeverity"`
+	AlertTypes         []string      `json:"alertTypes" validate:"omitempty,dive,oneof=RULE RULE_ERROR POLICY"`
 }
 
 // UpdateOutputOutput returns the new updated output
@@ -133,6 +137,9 @@ type GetOutputsOutput = []*AlertOutput
 
 // AlertOutput contains the information for alert output configuration
 type AlertOutput struct {
+	// AlertTypes is a whitelist of alert types to send to this destination.
+	// To be backwards compatible, we cannot have a `min=1` and an empty list == all types.
+	AlertTypes []string `json:"alertTypes" validate:"omitempty,dive,oneof=RULE RULE_ERROR POLICY"`
 
 	// The user ID of the user that created the alert output
 	CreatedBy *string `json:"createdBy"`

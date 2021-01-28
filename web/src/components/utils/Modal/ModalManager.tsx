@@ -26,6 +26,7 @@ import ResetUserPasswordModal from 'Components/modals/ResetUserPasswordModal';
 import DeleteComplianceSourceModal from 'Components/modals/DeleteComplianceSourceModal';
 import DeleteLogSourceModal from 'Components/modals/DeleteLogSourceModal';
 import DeleteDestinationModal from 'Components/modals/DeleteDestinationModal';
+import GenericModal from 'Components/modals/GenericModal';
 import DeleteRuleModal from 'Components/modals/DeleteRuleModal';
 import NetworkErrorModal from 'Components/modals/NetworkErrorModal';
 import AnalyticsConsentModal from 'Components/modals/AnalyticsConsentModal';
@@ -48,6 +49,9 @@ const ModalManager: React.FC = () => {
       break;
     case MODALS.DELETE_USER:
       Component = DeleteUserModal;
+      break;
+    case MODALS.GENERIC_MODAL:
+      Component = GenericModal;
       break;
     case MODALS.EDIT_PROFILE_SETTINGS:
       Component = ProfileSettingsModal;

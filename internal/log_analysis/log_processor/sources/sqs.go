@@ -25,13 +25,12 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/message_forwarder/forwarder"
 )
 
 type SQSClassifier struct {
-	Resolver    logtypes.Resolver
+	Resolver    pantherlog.ParserResolver
 	LoadSource  func(id string) (*models.SourceIntegration, error)
 	stats       classification.ClassifierStats
 	classifiers map[string]classification.ClassifierAPI

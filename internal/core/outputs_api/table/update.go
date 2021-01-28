@@ -44,6 +44,9 @@ func (table *OutputsTable) UpdateOutput(alertOutput *AlertOutputItem) (*AlertOut
 	if alertOutput.DefaultForSeverity != nil {
 		updateExpression.Set(expression.Name("defaultForSeverity"), expression.Value(alertOutput.DefaultForSeverity))
 	}
+	if alertOutput.AlertTypes != nil {
+		updateExpression.Set(expression.Name("alertTypes"), expression.Value(alertOutput.AlertTypes))
+	}
 
 	conditionExpression := expression.Name("outputId").Equal(expression.Value(alertOutput.OutputID))
 	combinedExpression, err := expression.NewBuilder().

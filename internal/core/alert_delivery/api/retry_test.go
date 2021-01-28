@@ -26,7 +26,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -35,7 +35,7 @@ func TestRetry(t *testing.T) {
 	sqsClient = mockSQS
 
 	alert := sampleAlert()
-	alerts := []*deliveryModels.Alert{alert, alert, alert}
+	alerts := []*deliverymodel.Alert{alert, alert, alert}
 	queueURL := "sqs-url"
 
 	body, err := jsoniter.MarshalToString(alert)
