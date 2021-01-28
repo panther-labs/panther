@@ -80,7 +80,7 @@ select 'panther_rule_errors' AS p_db_name,day,hour,month,p_any_aws_account_ids,p
 ;
 `
 
-	sqlStatements, err := GenerateLogViews([]*awsglue.GlueTableMetadata{table1, table2})
+	sqlStatements, err := NewMaker().GenerateLogViews()
 	require.NoError(t, err)
 	require.Len(t, sqlStatements, 4)
 	require.Equal(t, expectedAllLogsSQL, sqlStatements[0])
@@ -129,7 +129,7 @@ select 'panther_rule_errors' AS p_db_name,day,hour,month,p_any_aws_account_ids,p
 ;
 `
 
-	sqlStatements, err := GenerateLogViews([]*awsglue.GlueTableMetadata{table1, table2})
+	sqlStatements, err := NewMaker().GenerateLogViews()
 	require.NoError(t, err)
 	require.Len(t, sqlStatements, 4)
 	require.Equal(t, expectedAllCloudsecSQL, sqlStatements[0])
@@ -142,14 +142,14 @@ func TestGenerateViewAllLogsFail(t *testing.T) {
 	// one has daily partitions and one has hourly
 	table1 := awsglue.NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "table1", "test table1", awsglue.GlueTableDaily, &table1Event{})
 	table2 := awsglue.NewGlueTableMetadata(pantherdb.LogProcessingDatabase, "table2", "test table2", awsglue.GlueTableHourly, &table2Event{})
-	_, err := GenerateLogViews([]*awsglue.GlueTableMetadata{table1, table2})
+	_, err := NewMaker().GenerateLogViews()
 	require.Error(t, err)
 	require.True(t, strings.Contains(err.Error(), "all tables do not share same partition keys"))
 }
 
 func TestGenerateLogsViewsFail(t *testing.T) {
 	// no tables
-	_, err := GenerateLogViews([]*awsglue.GlueTableMetadata{})
+	_, err := NewMaker().GenerateLogViews()
 	require.Error(t, err)
 	require.True(t, strings.Contains(err.Error(), "no tables"))
 }
