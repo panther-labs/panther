@@ -20,6 +20,7 @@ import { buildDestination, buildJiraConfig, render } from 'test-utils';
 import React from 'react';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
 import { DestinationTypeEnum } from 'Generated/schema';
+import { alertTypeToString } from 'Helpers/utils';
 import { JiraDestinationCard } from '../index';
 
 describe('JiraDestinationCard', () => {
@@ -35,13 +36,11 @@ describe('JiraDestinationCard', () => {
     expect(getByAltText(/Logo/i)).toBeInTheDocument();
     expect(getByAriaLabel(/Toggle Options/i)).toBeInTheDocument();
     expect(getByText(jiraDestination.displayName)).toBeInTheDocument();
-    expect(getByText(jiraDestination.outputConfig.jira.projectKey)).toBeInTheDocument();
-    expect(getByText(jiraDestination.outputConfig.jira.userName)).toBeInTheDocument();
     expect(getByText(jiraDestination.outputConfig.jira.assigneeId)).toBeInTheDocument();
     expect(getByText(jiraDestination.outputConfig.jira.issueType)).toBeInTheDocument();
     expect(getByText(jiraDestination.outputConfig.jira.orgDomain)).toBeInTheDocument();
-    expect(getByText('Labels')).toBeInTheDocument();
-    expect(getByText('Date Created')).toBeInTheDocument();
-    expect(getByText('Last Updated')).toBeInTheDocument();
+    expect(
+      getByText(jiraDestination.alertTypes.map(alertTypeToString).join(' ,'))
+    ).toBeInTheDocument();
   });
 });

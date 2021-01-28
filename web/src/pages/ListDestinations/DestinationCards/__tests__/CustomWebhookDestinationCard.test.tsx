@@ -20,6 +20,7 @@ import { buildCustomWebhookConfigInput, buildDestination, render } from 'test-ut
 import React from 'react';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
 import { DestinationTypeEnum } from 'Generated/schema';
+import { alertTypeToString } from 'Helpers/utils';
 import { CustomWebhookDestinationCard } from '../index';
 
 describe('CustomWebhookDestinationCard', () => {
@@ -35,7 +36,8 @@ describe('CustomWebhookDestinationCard', () => {
     expect(getByAltText(/Logo/i)).toBeInTheDocument();
     expect(getByAriaLabel(/Toggle Options/i)).toBeInTheDocument();
     expect(getByText(customWebhookDestination.displayName)).toBeInTheDocument();
-    expect(getByText('Date Created')).toBeInTheDocument();
-    expect(getByText('Last Updated')).toBeInTheDocument();
+    expect(
+      getByText(customWebhookDestination.alertTypes.map(alertTypeToString).join(' ,'))
+    ).toBeInTheDocument();
   });
 });

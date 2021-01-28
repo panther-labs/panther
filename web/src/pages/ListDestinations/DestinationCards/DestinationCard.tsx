@@ -24,11 +24,12 @@ import React from 'react';
 import DestinationCardOptions from 'Pages/ListDestinations/DestinationCards/DestinationCardOptions';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
 import urls from 'Source/urls';
+import { alertTypeToString, formatDatetime } from 'Helpers/utils';
 
 interface DestinationCardProps {
   destination: DestinationFull;
   logo: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 const DestinationCard: React.FC<DestinationCardProps> = ({ destination, logo, children }) => {
@@ -42,9 +43,15 @@ const DestinationCard: React.FC<DestinationCardProps> = ({ destination, logo, ch
               {destination.displayName}
             </Link>
           </GenericItemCard.Heading>
+          <GenericItemCard.Date date={formatDatetime(destination.lastModifiedTime)} />
           <DestinationCardOptions destination={destination} />
         </GenericItemCard.Header>
+
         <GenericItemCard.ValuesGroup>
+          <GenericItemCard.Value
+            label="Alert Types"
+            value={destination.alertTypes.map(alertTypeToString).join(', ')}
+          />
           {children}
           <Flex ml="auto" mr={0} mt={4} align="flex-end" spacing={2}>
             {destination.defaultForSeverity.map(severity => (

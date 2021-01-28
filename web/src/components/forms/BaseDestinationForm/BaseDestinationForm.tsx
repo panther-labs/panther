@@ -16,18 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import React from 'react';
 import * as Yup from 'yup';
 import { SeverityEnum, DestinationConfigInput, AlertTypesEnum } from 'Generated/schema';
-import { Box, Flex, Text } from 'pouncejs';
+import { Box, SimpleGrid, Flex, Text } from 'pouncejs';
 import { Field, Form, Formik } from 'formik';
 import urls from 'Source/urls';
-import React from 'react';
-import FormikCheckbox from 'Components/fields/Checkbox';
-import SeverityBadge from 'Components/badges/SeverityBadge';
 import Breadcrumbs from 'Components/Breadcrumbs';
 import SaveButton from 'Components/buttons/SaveButton';
 import LinkButton from 'Components/buttons/LinkButton';
 import SubmitButton from 'Components/buttons/SubmitButton';
+import FormikMultiCombobox from 'Components/fields/MultiComboBox';
+import { alertTypeToString, getEnumKeyByValue } from 'Helpers/utils';
 
 export interface BaseDestinationFormValues<
   AdditionalValues extends Partial<DestinationConfigInput>
@@ -37,15 +37,6 @@ export interface BaseDestinationFormValues<
   outputConfig: AdditionalValues;
   defaultForSeverity: SeverityEnum[];
   alertTypes: AlertTypesEnum[];
-}
-
-// Converts the `defaultForSeverity` from an array to an object in order to handle it properly
-// internally within the form. Essentially converts ['CRITICAL', 'LOW'] to
-// { CRITICAL: true, LOW: true }
-interface PrivateBaseDestinationFormValues<
-  AdditionalValues extends Partial<DestinationConfigInput>
-> extends Omit<BaseDestinationFormValues<AdditionalValues>, 'defaultForSeverity'> {
-  defaultForSeverity: { [key in SeverityEnum]: boolean };
 }
 
 interface BaseDestinationFormProps<AdditionalValues extends Partial<DestinationConfigInput>> {
@@ -60,7 +51,7 @@ interface BaseDestinationFormProps<AdditionalValues extends Partial<DestinationC
    * The validation schema for the form
    */
   validationSchema?: Yup.ObjectSchema<
-    Yup.Shape<Record<string, unknown>, Partial<PrivateBaseDestinationFormValues<AdditionalValues>>>
+    Yup.Shape<Record<string, unknown>, Partial<BaseDestinationFormValues<AdditionalValues>>>
   >;
 
   /** callback for the submission of the form */
@@ -70,7 +61,10 @@ interface BaseDestinationFormProps<AdditionalValues extends Partial<DestinationC
 // The validation checks that Formik will run
 export const defaultValidationSchema = Yup.object().shape({
   displayName: Yup.string().required(),
-  defaultForSeverity: Yup.object<{ [key in SeverityEnum]: boolean }>(),
+  defaultForSeverity: Yup.array().of(Yup.mixed().oneOf(Object.values(SeverityEnum)).required()),
+  alertTypes: Yup.array()
+    .min(1)
+    .of(Yup.mixed().oneOf(Object.values(AlertTypesEnum)).required()),
 });
 
 function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigInput>>({
@@ -79,72 +73,60 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
   onSubmit,
   children,
 }: React.PropsWithChildren<BaseDestinationFormProps<AdditionalValues>>): React.ReactElement {
-  // Converts the `defaultForSeverity` from an array to an object in order to handle it properly
-  // internally within the form. Essentially converts ['CRITICAL', 'LOW'] to
-  // { CRITICAL: true, LOW: true }
-  const convertedInitialValues = React.useMemo(() => {
-    const { defaultForSeverity, ...otherInitialValues } = initialValues;
-    return {
-      ...otherInitialValues,
-      defaultForSeverity: Object.values(SeverityEnum).reduce(
-        (acc, severity) => ({ ...acc, [severity]: defaultForSeverity.includes(severity) }),
-        {}
-      ) as PrivateBaseDestinationFormValues<AdditionalValues>['defaultForSeverity'],
-    };
-  }, [initialValues]);
-
-  // makes sure that the internal representation of `defaultForSeverity` doesn't leak outside to
-  // the components. For this reason, we revert the value of it back to an array of Severities, the
-  // same way it was passed in as a prop.
-  const onSubmitWithConvertedValues = React.useCallback(
-    ({ defaultForSeverity, ...rest }: PrivateBaseDestinationFormValues<AdditionalValues>) =>
-      onSubmit({
-        ...rest,
-        defaultForSeverity: Object.values(SeverityEnum).filter(
-          (severity: SeverityEnum) => defaultForSeverity[severity]
-        ),
-      }),
-    [onSubmit]
-  );
-
   return (
-    <Formik<PrivateBaseDestinationFormValues<AdditionalValues>>
-      initialValues={convertedInitialValues}
+    <Formik<BaseDestinationFormValues<AdditionalValues>>
+      initialValues={initialValues}
       validationSchema={validationSchema}
-      onSubmit={onSubmitWithConvertedValues}
+      onSubmit={onSubmit}
     >
       <Form autoComplete="off">
         {children}
-        <Box my={8} aria-describedby="severity-disclaimer" textAlign="center">
-          Severity Levels
-          <Text
-            color="gray-300"
-            fontSize="small-medium"
-            id="severity-disclaimer"
-            mt={1}
-            mb={4}
-            fontWeight="medium"
-          >
-            We will only notify you on issues related to the severity types chosen above
-          </Text>
-          <Flex spacing={5} cursor="pointer">
-            {Object.values(SeverityEnum)
-              .reverse()
-              .map(severity => (
-                <Field name="defaultForSeverity" key={severity}>
-                  {() => (
-                    <Field
-                      as={FormikCheckbox}
-                      name={`defaultForSeverity.${severity}`}
-                      id={severity}
-                      label={<SeverityBadge severity={severity} />}
-                    />
-                  )}
-                </Field>
-              ))}
-          </Flex>
-        </Box>
+        <SimpleGrid columns={2} gap={5} my={4} textAlign="left">
+          <Box width={1}>
+            Severity Levels
+            <Text
+              color="gray-300"
+              fontSize="small-medium"
+              id="severity-disclaimer"
+              mt={1}
+              fontWeight="medium"
+            >
+              We will only notify you on issues related to these severity types
+            </Text>
+          </Box>
+          <Field
+            name="defaultForSeverity"
+            as={FormikMultiCombobox}
+            items={Object.values(SeverityEnum)}
+            itemToString={value => getEnumKeyByValue(SeverityEnum, value)}
+            label="Severity"
+            placeholder="Select severities"
+            aria-describedby="severity-disclaimer"
+          />
 
+          <Box>
+            Default Alert Types
+            <Text
+              color="gray-300"
+              fontSize="small-medium"
+              id="alert-type-disclaimer"
+              mt={1}
+              fontWeight="medium"
+            >
+              The selected alert types will be default for this destination
+            </Text>
+          </Box>
+          <Field
+            name="alertTypes"
+            as={FormikMultiCombobox}
+            items={Object.values(AlertTypesEnum)}
+            itemToString={alertTypeToString}
+            label="Alert Types"
+            placeholder="Select Alert Types"
+            required
+            aria-describedby="alert-type-disclaimer"
+          />
+        </SimpleGrid>
         {initialValues.outputId ? (
           <Breadcrumbs.Actions>
             <Flex spacing={4} justify="flex-end">

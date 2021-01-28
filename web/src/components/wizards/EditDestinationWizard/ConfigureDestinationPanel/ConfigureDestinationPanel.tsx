@@ -103,7 +103,7 @@ const ConfigureDestinationPanel: React.FC = () => {
   );
 
   return (
-    <Box maxWidth={700} mx="auto">
+    <Box maxWidth={800} mx="auto">
       <WizardPanel.Heading
         title={`Update Your ${destinationDisplayName} Destination`}
         subtitle="Make changes to the form below in order to update your Destination"
