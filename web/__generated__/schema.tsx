@@ -752,6 +752,7 @@ export type LogAnalysisMetricsResponse = {
   __typename?: 'LogAnalysisMetricsResponse';
   eventsProcessed: LongSeriesData;
   alertsBySeverity: LongSeriesData;
+  /** eventsLatency: FloatSeriesData! */
   totalAlertsDelta: Array<SingleValue>;
   alertsByRuleID: Array<SingleValue>;
   fromDate: Scalars['AWSDateTime'];
