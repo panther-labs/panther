@@ -26,7 +26,7 @@ import urls from 'Source/urls';
 import RelatedDestinations from 'Components/RelatedDestinations';
 import BulletedValueList from 'Components/BulletedValueList';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
-import { formatDatetime, alertTypeToString } from 'Helpers/utils';
+import { formatDatetime } from 'Helpers/utils';
 import useAlertDestinations from 'Hooks/useAlertDestinations';
 import useAlertDestinationsDeliverySuccess from 'Hooks/useAlertDestinationsDeliverySuccess';
 import { SelectCheckbox } from 'Components/utils/SelectContext';
@@ -79,7 +79,7 @@ const RuleAlertCard: React.FC<RuleAlertCardProps> = ({
           as="span"
           color={alert.type === AlertTypesEnum.Rule ? 'red-300' : 'teal-500'}
         >
-          {alertTypeToString(alert.type)}
+          {alert.type === AlertTypesEnum.Rule ? 'Rule Match' : 'Rule Error'}
         </Text>
         <GenericItemCard.ValuesGroup>
           {!hideRuleButton && (
