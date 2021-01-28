@@ -139,6 +139,7 @@ func (r *tableItem) Detection(status compliancemodels.ComplianceStatus) *models.
 func (r *tableItem) Policy(status compliancemodels.ComplianceStatus) *models.Policy {
 	r.normalize()
 	result := &models.Policy{
+		AnalysisType:              models.TypePolicy,
 		AutoRemediationID:         r.AutoRemediationID,
 		AutoRemediationParameters: r.AutoRemediationParameters,
 		ComplianceStatus:          status,

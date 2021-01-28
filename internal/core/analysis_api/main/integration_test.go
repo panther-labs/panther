@@ -59,6 +59,7 @@ var (
 
 	// NOTE: this gets changed by the bulk upload!
 	policy = &models.Policy{
+		AnalysisType:              models.TypePolicy,
 		AutoRemediationParameters: map[string]string{},
 		Description:               "Matches every resource",
 		DisplayName:               "AlwaysTrue",
@@ -1870,6 +1871,7 @@ func listProjection(t *testing.T) {
 
 	// Empty lists/maps will always be initialized in the response
 	emptyPolicy := models.Policy{
+		AnalysisType:              models.TypePolicy,
 		AutoRemediationParameters: map[string]string{},
 		OutputIDs:                 []string{},
 		Reports:                   map[string][]string{},
