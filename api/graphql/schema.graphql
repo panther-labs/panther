@@ -552,7 +552,9 @@ type SingleValue {
 type LogAnalysisMetricsResponse {
   eventsProcessed: LongSeriesData!
   alertsBySeverity: LongSeriesData!
+  """
   eventsLatency: FloatSeriesData!
+  """
   totalAlertsDelta: [SingleValue!]!
   alertsByRuleID: [SingleValue!]!
   fromDate: AWSDateTime!

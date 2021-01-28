@@ -7,13 +7,13 @@ query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput!) {
       }
       timestamps
     }
-    eventsLatency {
-      series {
-        label
-        values
-      }
-      timestamps
-    }
+    # eventsLatency {
+    #   series {
+    #     label
+    #     values
+    #   }
+    #   timestamps
+    # }
     alertsBySeverity {
       series {
         label
