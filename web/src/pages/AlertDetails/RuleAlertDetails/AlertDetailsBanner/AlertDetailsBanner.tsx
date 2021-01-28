@@ -24,6 +24,7 @@ import BulletedValue from 'Components/BulletedValue';
 import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
 import { AlertSummaryFull } from 'Source/graphql/fragments/AlertSummaryFull.generated';
 import { AlertDetails } from 'Pages/AlertDetails';
+import { alertTypeToString } from 'Helpers/utils';
 
 interface AlertDetailsBannerProps {
   alert: AlertDetails['alert'];
@@ -61,7 +62,7 @@ const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert }) => {
             fontWeight="bold"
             color={alert.type === AlertTypesEnum.Rule ? 'teal-100' : 'red-500'}
           >
-            {alert.type === AlertTypesEnum.Rule ? 'Rule Match' : 'Rule Error'}
+            {alertTypeToString(alert.type)}
           </Box>
         </Flex>
         <Flex>
