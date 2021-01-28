@@ -170,6 +170,7 @@ func (r *tableItem) Policy(status compliancemodels.ComplianceStatus) *models.Pol
 func (r *tableItem) Rule() *models.Rule {
 	r.normalize()
 	result := &models.Rule{
+		AnalysisType:       models.TypeRule,
 		Body:               r.Body,
 		CreatedAt:          r.CreatedAt,
 		CreatedBy:          r.CreatedBy,
