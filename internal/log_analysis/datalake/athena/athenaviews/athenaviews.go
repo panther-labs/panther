@@ -71,9 +71,12 @@ func (at *athenaTable) Name() string {
 }
 
 func (at *athenaTable) Columns() (cols []Column) {
-	cols = make([]Column, len(at.tableData.Columns))
+	cols = make([]Column, len(at.tableData.Columns)+len(at.tableData.PartitionKeys))
 	for i, col := range at.tableData.Columns {
 		cols[i] = &athenaColumn{*col}
+	}
+	for i, col := range at.tableData.PartitionKeys {
+		cols[i+len(at.tableData.Columns)] = &athenaColumn{*col}
 	}
 	return cols
 }
@@ -270,7 +273,7 @@ func (pvc *pantherViewColumns) collectViewColumns(table Table) error {
 }
 
 func (pvc *pantherViewColumns) viewColumns(table Table) string {
-	tableColumns := pvc.columnsByTable[table.Name()]
+	tableColumns := pvc.columnsByTable[table.DatabaseName()+table.Name()]
 	selectColumns := make([]string, 0, len(pvc.allColumns)+1)
 	// tag each with database name
 	selectColumns = append(selectColumns, fmt.Sprintf("'%s' AS p_db_name", table.DatabaseName()))
@@ -281,6 +284,5 @@ func (pvc *pantherViewColumns) viewColumns(table Table) string {
 		}
 		selectColumns = append(selectColumns, selectColumn)
 	}
-
 	return strings.Join(selectColumns, ",")
 }
