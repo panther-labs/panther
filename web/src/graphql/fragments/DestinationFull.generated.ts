@@ -32,6 +32,7 @@ export type DestinationFull = { __typename: 'Destination' } & Pick<
   | 'outputType'
   | 'verificationStatus'
   | 'defaultForSeverity'
+  | 'alertTypes'
 > & {
     outputConfig: {
       slack?: Types.Maybe<Pick<Types.SlackConfig, 'webhookURL'>>;
@@ -104,6 +105,7 @@ export const DestinationFull = gql`
     }
     verificationStatus
     defaultForSeverity
+    alertTypes
     __typename
   }
 `;

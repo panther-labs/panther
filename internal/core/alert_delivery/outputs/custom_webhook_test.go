@@ -26,7 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
@@ -45,10 +45,10 @@ func TestCustomWebhookAlert(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	alert := &alertModels.Alert{
+	alert := &deliverymodel.Alert{
 		AlertID:    aws.String("alertId"),
 		AnalysisID: "policyId",
-		Type:       alertModels.PolicyType,
+		Type:       deliverymodel.PolicyType,
 		CreatedAt:  createdAtTime,
 		Severity:   "INFO",
 		Context: map[string]interface{}{

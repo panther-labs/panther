@@ -39,7 +39,7 @@ import (
 
 	analysismodels "github.com/panther-labs/panther/api/lambda/analysis/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
-	alertmodel "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	remediationmodels "github.com/panther-labs/panther/api/lambda/remediation/models"
 	"github.com/panther-labs/panther/internal/compliance/alert_processor/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
@@ -128,7 +128,7 @@ func triggerAlert(event *models.ComplianceNotification) (canRemediate bool, err 
 	timeNow := time.Now().Unix()
 	expiresAt := int64(alertSuppressPeriod) + timeNow
 
-	var alertConfig *alertmodel.Alert
+	var alertConfig *deliverymodel.Alert
 	alertConfig, canRemediate, err = getAlertConfigPolicy(event)
 	if err != nil {
 		return false, errors.Wrapf(err, "encountered issue when getting policy: %s", event.PolicyID)
@@ -202,7 +202,7 @@ func triggerRemediation(event *models.ComplianceNotification) error {
 	return nil
 }
 
-func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Alert, bool, error) {
+func getAlertConfigPolicy(event *models.ComplianceNotification) (*deliverymodel.Alert, bool, error) {
 	input := analysismodels.LambdaInput{
 		GetPolicy: &analysismodels.GetPolicyInput{ID: event.PolicyID},
 	}
@@ -212,7 +212,7 @@ func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Ale
 		return nil, false, errors.Wrapf(err, "encountered issue when getting policy: %s", event.PolicyID)
 	}
 
-	return &alertmodel.Alert{
+	return &deliverymodel.Alert{
 			AlertID:             GenerateAlertID(event),
 			AnalysisDescription: policy.Description,
 			AnalysisID:          event.PolicyID,
@@ -225,7 +225,7 @@ func getAlertConfigPolicy(event *models.ComplianceNotification) (*alertmodel.Ale
 			Runbook:             policy.Runbook,
 			Severity:            string(policy.Severity),
 			Tags:                policy.Tags,
-			Type:                alertmodel.PolicyType,
+			Type:                deliverymodel.PolicyType,
 			Version:             &event.PolicyVersionID,
 		},
 		policy.AutoRemediationID != "", // means we can remediate

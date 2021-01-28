@@ -26,7 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/require"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
@@ -37,10 +37,10 @@ func TestSlackAlert(t *testing.T) {
 	client := &OutputClient{httpWrapper: httpWrapper}
 
 	createdAtTime := time.Now()
-	alert := &alertModels.Alert{
+	alert := &deliverymodel.Alert{
 		AlertID:      aws.String("alertId"),
 		AnalysisID:   "policyId",
-		Type:         alertModels.PolicyType,
+		Type:         deliverymodel.PolicyType,
 		CreatedAt:    createdAtTime,
 		OutputIds:    []string{"output-id"},
 		AnalysisName: aws.String("policyName"),

@@ -30,7 +30,7 @@ import {
 } from 'pouncejs';
 import { AlertStatusesEnum, AlertTypesEnum, ListAlertsInput, SeverityEnum } from 'Generated/schema';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
-import { capitalize } from 'Helpers/utils';
+import { capitalize, alertTypeToString } from 'Helpers/utils';
 import pick from 'lodash/pick';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 import TextButton from 'Components/buttons/TextButton';
@@ -45,18 +45,6 @@ export type ListAlertsDropdownFiltersValues = Pick<
 
 const filterItemToString = (item: SeverityEnum | AlertStatusesEnum) =>
   capitalize(item.toLowerCase());
-
-const alertTypeToString = (item: AlertTypesEnum) => {
-  switch (item) {
-    case AlertTypesEnum.Rule:
-      return 'Rule Matches';
-    case AlertTypesEnum.RuleError:
-      return 'Rule Errors';
-    case AlertTypesEnum.Policy:
-    default:
-      return 'Policy Failures';
-  }
-};
 
 const statusOptions = Object.values(AlertStatusesEnum);
 const severityOptions = Object.values(SeverityEnum);

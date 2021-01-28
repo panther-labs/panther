@@ -93,7 +93,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
             <Field
               name="kmsKey"
               as={FormikTextInput}
-              label="KMS Key"
+              label="KMS Key (optional)"
               placeholder="For encrypted logs, add the KMS ARN for decryption"
             />
           </Flex>
@@ -146,7 +146,7 @@ const S3SourceConfigurationPanel: React.FC = () => {
                       </Flex>
                       <Field
                         name={`s3PrefixLogTypes.${index}.prefix`}
-                        label="S3 Prefix Filter"
+                        label="S3 Prefix Filter (leave empty to allow all)"
                         placeholder="Limit logs to objects that start with matching characters"
                         as={FormikTextInput}
                       />

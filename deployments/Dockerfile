@@ -72,7 +72,7 @@ ADD web/scripts web/scripts
 ## WARNING: Be careful not to add the package.json, since it will install all of your dependencies
 ## even when you explicitly try to install a single one
 #
-RUN npm install express express-static-gzip ejs chalk dotenv
+RUN npm install express express-static-gzip ejs chalk dotenv helmet
 
 # Run the express server to serve the assets
 CMD npm run serve

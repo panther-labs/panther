@@ -53,7 +53,7 @@ describe('Mixpanel Reporting', () => {
         trackError({ event: TrackErrorEnum.FailedMfa, src: SrcEnum.Auth });
       };
       const { getByText } = render(<TestComponent onClick={() => onClick()} />);
-      await waitMs(50);
+      await waitMs(1);
       expect(mixpanel.track).toHaveBeenCalledWith(PageViewEnum.LogAnalysisOverview, {
         type: 'pageview',
         version: pantherConfig.PANTHER_VERSION,
@@ -61,7 +61,7 @@ describe('Mixpanel Reporting', () => {
       const btn = getByText('Button click');
 
       fireEvent.click(btn);
-      await waitMs(50);
+      await waitMs(1);
       expect(localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY)).toBeTruthy();
       expect(mixpanel.init).toHaveBeenCalledTimes(3);
 
@@ -85,7 +85,7 @@ describe('Mixpanel Reporting', () => {
       });
       render(<TestComponent onClick={() => null} />);
 
-      await waitMs(50);
+      await waitMs(1);
       expect(localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY)).toBeTruthy();
       expect(localStorage.getItem(ERROR_REPORTING_CONSENT_STORAGE_KEY)).toBeTruthy();
       expect(mixpanel.track).not.toBeCalled();
@@ -101,7 +101,7 @@ describe('Mixpanel Reporting', () => {
       });
       render(<TestComponent onClick={() => null} />);
 
-      await waitMs(50);
+      await waitMs(1);
       expect(localStorage.getItem(ERROR_REPORTING_CONSENT_STORAGE_KEY)).toBeTruthy();
       expect(mixpanel.track).not.toBeCalled();
       expect(Sentry.captureException).not.toBeCalled();
@@ -120,7 +120,7 @@ describe('Mixpanel Reporting', () => {
       const btn = getByText('Button click');
 
       fireEvent.click(btn);
-      await waitMs(50);
+      await waitMs(1);
       expect(localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY)).toBeTruthy();
       expect(mixpanel.init).not.toBeCalled();
       expect(mixpanel.track).not.toBeCalled();

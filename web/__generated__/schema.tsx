@@ -149,6 +149,9 @@ export type AlertDetails = Alert & {
   lastUpdatedByTime?: Maybe<Scalars['AWSDateTime']>;
   updateTime: Scalars['AWSDateTime'];
   detection: AlertDetailsDetectionInfo;
+  description?: Maybe<Scalars['String']>;
+  reference?: Maybe<Scalars['String']>;
+  runbook?: Maybe<Scalars['String']>;
 };
 
 export type AlertDetailsDetectionInfo = AlertDetailsRuleInfo | AlertSummaryPolicyInfo;
@@ -371,6 +374,7 @@ export type Destination = {
   outputConfig: DestinationConfig;
   verificationStatus?: Maybe<Scalars['String']>;
   defaultForSeverity: Array<Maybe<SeverityEnum>>;
+  alertTypes: Array<AlertTypesEnum>;
 };
 
 export type DestinationConfig = {
@@ -406,6 +410,7 @@ export type DestinationInput = {
   outputConfig: DestinationConfigInput;
   outputType: Scalars['String'];
   defaultForSeverity: Array<Maybe<SeverityEnum>>;
+  alertTypes: Array<Maybe<AlertTypesEnum>>;
 };
 
 export enum DestinationTypeEnum {
@@ -2068,6 +2073,9 @@ export type AlertDetailsResolvers<
   lastUpdatedByTime?: Resolver<Maybe<ResolversTypes['AWSDateTime']>, ParentType, ContextType>;
   updateTime?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   detection?: Resolver<ResolversTypes['AlertDetailsDetectionInfo'], ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  reference?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  runbook?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2331,6 +2339,7 @@ export type DestinationResolvers<
     ParentType,
     ContextType
   >;
+  alertTypes?: Resolver<Array<ResolversTypes['AlertTypesEnum']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

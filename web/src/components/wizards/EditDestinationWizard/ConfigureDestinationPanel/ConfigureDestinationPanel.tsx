@@ -69,7 +69,7 @@ const ConfigureDestinationPanel: React.FC = () => {
   const destination = destinationData?.destination;
   const handleSubmit = React.useCallback(
     async (values: BaseDestinationFormValues<Partial<DestinationConfigInput>>) => {
-      const { displayName, defaultForSeverity, outputConfig } = values;
+      const { displayName, defaultForSeverity, alertTypes, outputConfig } = values;
 
       await updateDestination({
         variables: {
@@ -77,6 +77,7 @@ const ConfigureDestinationPanel: React.FC = () => {
             // static form values that are present on all Destinations
             displayName,
             defaultForSeverity,
+            alertTypes,
 
             // needed fields from the server in order to update the selected destination
             outputId: destination.outputId,
@@ -102,7 +103,7 @@ const ConfigureDestinationPanel: React.FC = () => {
   );
 
   return (
-    <Box maxWidth={700} mx="auto">
+    <Box maxWidth={800} mx="auto">
       <WizardPanel.Heading
         title={`Update Your ${destinationDisplayName} Destination`}
         subtitle="Make changes to the form below in order to update your Destination"

@@ -20,6 +20,8 @@ import React from 'react';
 import { render, fireEvent, waitMs } from 'test-utils';
 import CustomLogForm from './CustomLogForm';
 
+jest.mock('lodash/debounce', () => jest.fn(fn => fn));
+
 const emptyInitialValues = {
   name: '',
   description: '',
@@ -42,24 +44,24 @@ describe('CustomLogForm', () => {
     const schemaField = getByPlaceholderText('# Write your schema in YAML here...');
 
     fireEvent.change(nameField, { target: { value: 'test' } });
-    await waitMs(10);
+    await waitMs(1);
     expect(submitBtn).toHaveAttribute('disabled');
 
     fireEvent.change(schemaField, { target: { value: 'test' } });
-    await waitMs(210); // wait for debounce to apply the value to <Formik>
+    await waitMs(1);
     expect(submitBtn).toHaveAttribute('disabled');
 
     fireEvent.change(nameField, { target: { value: 'Custom.Test' } });
-    await waitMs(10);
+    await waitMs(1);
     expect(submitBtn).not.toHaveAttribute('disabled');
 
     fireEvent.change(descriptionField, { target: { value: 'test' } });
     fireEvent.change(referenceUrlField, { target: { value: 'test' } });
-    await waitMs(10);
+    await waitMs(1);
     expect(submitBtn).toHaveAttribute('disabled');
 
     fireEvent.change(referenceUrlField, { target: { value: 'https://test.com' } });
-    await waitMs(10);
+    await waitMs(1);
     expect(submitBtn).not.toHaveAttribute('disabled');
   });
 
@@ -100,12 +102,12 @@ describe('CustomLogForm', () => {
       target: { value: 'test-schema' },
     });
 
-    await waitMs(210); // wait for debounce to apply the value to <Formik> + perform validation
+    await waitMs(1);
 
     expect(getByText('Save log')).not.toHaveAttribute('disabled');
 
     fireEvent.click(getByText('Save log'));
-    await waitMs(10); // wait for debounce + validation
+    await waitMs(1); // wait for debounce + validation
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
     expect(onSubmit).toHaveBeenCalledWith(
@@ -128,7 +130,7 @@ describe('CustomLogForm', () => {
       target: { value: '{}' },
     });
 
-    await waitMs(210); // wait for debounce to apply the value to <Formik>
+    await waitMs(1); // wait for debounce to apply the value to <Formik>
 
     fireEvent.click(getByText('Validate Syntax'));
 

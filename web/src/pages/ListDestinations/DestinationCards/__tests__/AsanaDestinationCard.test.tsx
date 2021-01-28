@@ -20,6 +20,7 @@ import { buildAsanaConfig, buildDestination, render } from 'test-utils';
 import React from 'react';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
 import { DestinationTypeEnum } from 'Generated/schema';
+import { alertTypeToString } from 'Helpers/utils';
 import { AsanaDestinationCard } from '../index';
 
 describe('AsanaDestinationCard', () => {
@@ -36,7 +37,8 @@ describe('AsanaDestinationCard', () => {
     expect(getByAriaLabel(/Toggle Options/i)).toBeInTheDocument();
     expect(getByText(asanaDestination.displayName)).toBeInTheDocument();
     expect(getByText('Project GIDs')).toBeInTheDocument();
-    expect(getByText('Date Created')).toBeInTheDocument();
-    expect(getByText('Last Updated')).toBeInTheDocument();
+    expect(
+      getByText(asanaDestination.alertTypes.map(alertTypeToString).join(' ,'))
+    ).toBeInTheDocument();
   });
 });

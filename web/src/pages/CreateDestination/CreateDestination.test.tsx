@@ -31,14 +31,17 @@ import {
   buildMsTeamsConfigInput,
   buildOpsgenieConfigInput,
   buildAsanaConfigInput,
+  fireClickAndMouseEvents,
 } from 'test-utils';
 import urls from 'Source/urls';
 import { mockAddDestination } from 'Components/wizards/CreateDestinationWizard';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
-import { DestinationTypeEnum, SeverityEnum } from 'Generated/schema';
+import { AlertTypesEnum, DestinationTypeEnum, SeverityEnum } from 'Generated/schema';
 import CreateDestination from './index';
 
 const criticalSeverity = SeverityEnum.Critical;
+const allAlertTypes = [AlertTypesEnum.Rule, AlertTypesEnum.RuleError, AlertTypesEnum.Policy];
+
 const validUrl = faker.internet.url();
 
 describe('CreateDestination', () => {
@@ -97,6 +100,7 @@ describe('CreateDestination', () => {
             displayName: slackDisplayName,
             outputType: DestinationTypeEnum.Slack,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: {
               slack: {
                 webhookURL: validUrl,
@@ -107,21 +111,28 @@ describe('CreateDestination', () => {
         data: { addDestination: createdDestination },
       }),
     ];
-    const { getByText, findByText, getByLabelText } = render(<CreateDestination />, {
-      mocks,
-    });
+    const { getByText, findByText, getByLabelText, getAllByLabelText } = render(
+      <CreateDestination />,
+      {
+        mocks,
+      }
+    );
 
     // Select Slack
     fireEvent.click(getByText('Slack'));
 
     const displayInput = getByLabelText('* Display Name');
     const webhookUrlInput = getByLabelText('Slack Webhook URL');
-    const criticalSeverityCheckbox = getByLabelText(criticalSeverity);
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
 
     // Fill in the correct data + submit
     fireEvent.change(displayInput, { target: { value: slackDisplayName } });
     fireEvent.change(webhookUrlInput, { target: { value: validUrl } });
-    fireEvent.click(criticalSeverityCheckbox);
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
     fireEvent.click(getByText('Add Destination'));
 
     // Expect success screen with proper redirect link
@@ -140,6 +151,7 @@ describe('CreateDestination', () => {
             displayName: githubDisplayName,
             outputType: DestinationTypeEnum.Github,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: {
               github: githubConfig,
             },
@@ -148,9 +160,12 @@ describe('CreateDestination', () => {
         data: { addDestination: createdDestination },
       }),
     ];
-    const { getByText, findByText, getByLabelText } = render(<CreateDestination />, {
-      mocks,
-    });
+    const { getByText, findByText, getByLabelText, getAllByLabelText } = render(
+      <CreateDestination />,
+      {
+        mocks,
+      }
+    );
 
     // Select Github
     fireEvent.click(getByText('Github'));
@@ -158,13 +173,17 @@ describe('CreateDestination', () => {
     const displayInput = getByLabelText('* Display Name');
     const repositoryInput = getByLabelText('Repository name');
     const tokenInput = getByLabelText('Token');
-    const criticalSeverityCheckbox = getByLabelText(criticalSeverity);
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
 
     // Fill in the correct data + submit
     fireEvent.change(displayInput, { target: { value: githubDisplayName } });
     fireEvent.change(repositoryInput, { target: { value: githubConfig.repoName } });
     fireEvent.change(tokenInput, { target: { value: githubConfig.token } });
-    fireEvent.click(criticalSeverityCheckbox);
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
@@ -182,15 +201,19 @@ describe('CreateDestination', () => {
             displayName: jiraDisplayName,
             outputType: DestinationTypeEnum.Jira,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { jira: jiraConfig },
           },
         },
         data: { addDestination: createdDestination },
       }),
     ];
-    const { getByText, findByText, getByLabelText } = render(<CreateDestination />, {
-      mocks,
-    });
+    const { getByText, findByText, getByLabelText, getAllByLabelText } = render(
+      <CreateDestination />,
+      {
+        mocks,
+      }
+    );
 
     // Select Jira
     fireEvent.click(getByText('Jira'));
@@ -203,7 +226,8 @@ describe('CreateDestination', () => {
     const issueInput = getByLabelText('* Issue Type');
     const labelsInput = getByLabelText('Labels', { selector: 'input' });
     const assigneeInput = getByLabelText('Assignee ID');
-    const criticalSeverityCheckbox = getByLabelText(criticalSeverity);
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
 
     // Fill in the correct data + submit
     fireEvent.change(displayInput, { target: { value: jiraDisplayName } });
@@ -221,7 +245,11 @@ describe('CreateDestination', () => {
       });
       fireEvent.blur(labelsInput);
     });
-    fireEvent.click(criticalSeverityCheckbox);
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
+
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
@@ -240,28 +268,37 @@ describe('CreateDestination', () => {
             displayName: pageDutyDisplayName,
             outputType: DestinationTypeEnum.Pagerduty,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { pagerDuty: pagerDutyConfig },
           },
         },
         data: { addDestination: createdDestination },
       }),
     ];
-    const { getByText, findByText, getByLabelText } = render(<CreateDestination />, {
-      mocks,
-    });
+    const { getByText, findByText, getByLabelText, getAllByLabelText } = render(
+      <CreateDestination />,
+      {
+        mocks,
+      }
+    );
 
     // Select PagerDuty
     fireEvent.click(getByText('PagerDuty'));
 
     const displayInput = getByLabelText('* Display Name');
     const integrationKeyInput = getByLabelText('Integration Key');
-    const criticalSeverityCheckbox = getByLabelText(criticalSeverity);
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
 
     // Fill in the correct data + submit
     fireEvent.change(displayInput, { target: { value: pageDutyDisplayName } });
     fireEvent.change(integrationKeyInput, { target: { value: pagerDutyConfig.integrationKey } });
 
-    fireEvent.click(criticalSeverityCheckbox);
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
+
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
@@ -279,28 +316,37 @@ describe('CreateDestination', () => {
             displayName: sqsDisplayName,
             outputType: DestinationTypeEnum.Sqs,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { sqs: sqsConfig },
           },
         },
         data: { addDestination: createdDestination },
       }),
     ];
-    const { getByText, findByText, getByLabelText } = render(<CreateDestination />, {
-      mocks,
-    });
+    const { getByText, findByText, getByLabelText, getAllByLabelText } = render(
+      <CreateDestination />,
+      {
+        mocks,
+      }
+    );
 
     // Select SQS
     fireEvent.click(getByText('AWS SQS'));
 
     const displayInput = getByLabelText('* Display Name');
     const queueUrlInput = getByLabelText('Queue URL');
-    const criticalSeverityCheckbox = getByLabelText(criticalSeverity);
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
 
     // Fill in the correct data + submit
     fireEvent.change(displayInput, { target: { value: sqsDisplayName } });
     fireEvent.change(queueUrlInput, { target: { value: sqsConfig.queueUrl } });
 
-    fireEvent.click(criticalSeverityCheckbox);
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
+
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
@@ -320,28 +366,37 @@ describe('CreateDestination', () => {
             displayName: snsDisplayName,
             outputType: DestinationTypeEnum.Sns,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { sns: snsConfig },
           },
         },
         data: { addDestination: createdDestination },
       }),
     ];
-    const { getByText, findByText, getByLabelText } = render(<CreateDestination />, {
-      mocks,
-    });
+    const { getByText, findByText, getByLabelText, getAllByLabelText } = render(
+      <CreateDestination />,
+      {
+        mocks,
+      }
+    );
 
     // Select SNS
     fireEvent.click(getByText('AWS SNS'));
 
     const displayInput = getByLabelText('* Display Name');
     const topicArnInput = getByLabelText('Topic ARN');
-    const criticalSeverityCheckbox = getByLabelText(criticalSeverity);
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
 
     // Fill in the correct data + submit
     fireEvent.change(displayInput, { target: { value: snsDisplayName } });
     fireEvent.change(topicArnInput, { target: { value: snsConfig.topicArn } });
 
-    fireEvent.click(criticalSeverityCheckbox);
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
+
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
@@ -359,28 +414,37 @@ describe('CreateDestination', () => {
             displayName: webhookDisplayName,
             outputType: DestinationTypeEnum.Customwebhook,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { customWebhook: webhookConfig },
           },
         },
         data: { addDestination: createdDestination },
       }),
     ];
-    const { getByText, findByText, getByLabelText } = render(<CreateDestination />, {
-      mocks,
-    });
+    const { getByText, findByText, getByLabelText, getAllByLabelText } = render(
+      <CreateDestination />,
+      {
+        mocks,
+      }
+    );
 
     // Select Custom Webhook
     fireEvent.click(getByText('Custom Webhook'));
 
     const displayInput = getByLabelText('* Display Name');
     const webhookUrlInput = getByLabelText('Custom Webhook URL');
-    const criticalSeverityCheckbox = getByLabelText(criticalSeverity);
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
 
     // Fill in the correct data + submit
     fireEvent.change(displayInput, { target: { value: webhookDisplayName } });
     fireEvent.change(webhookUrlInput, { target: { value: webhookConfig.webhookURL } });
 
-    fireEvent.click(criticalSeverityCheckbox);
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
+
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
@@ -398,28 +462,37 @@ describe('CreateDestination', () => {
             displayName: teamsDisplayName,
             outputType: DestinationTypeEnum.Msteams,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { msTeams: teamsConfig },
           },
         },
         data: { addDestination: createdDestination },
       }),
     ];
-    const { getByText, findByText, getByLabelText } = render(<CreateDestination />, {
-      mocks,
-    });
+    const { getByText, findByText, getByLabelText, getAllByLabelText } = render(
+      <CreateDestination />,
+      {
+        mocks,
+      }
+    );
 
     // Select Microsoft Teams
     fireEvent.click(getByText('Microsoft Teams'));
 
     const displayInput = getByLabelText('* Display Name');
     const webhookUrlInput = getByLabelText('Microsoft Teams Webhook URL');
-    const criticalSeverityCheckbox = getByLabelText(criticalSeverity);
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
 
     // Fill in the correct data + submit
     fireEvent.change(displayInput, { target: { value: teamsDisplayName } });
     fireEvent.change(webhookUrlInput, { target: { value: teamsConfig.webhookURL } });
 
-    fireEvent.click(criticalSeverityCheckbox);
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
+
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
@@ -437,28 +510,37 @@ describe('CreateDestination', () => {
             displayName: opsgenieDisplayName,
             outputType: DestinationTypeEnum.Opsgenie,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { opsgenie: opsgenieConfig },
           },
         },
         data: { addDestination: createdDestination },
       }),
     ];
-    const { getByText, findByText, getByLabelText } = render(<CreateDestination />, {
-      mocks,
-    });
+    const { getByText, findByText, getByLabelText, getAllByLabelText } = render(
+      <CreateDestination />,
+      {
+        mocks,
+      }
+    );
 
     // Select Opsgenie
     fireEvent.click(getByText('Opsgenie'));
 
     const displayInput = getByLabelText('* Display Name');
     const opsgenieApiKey = getByLabelText('Opsgenie API key');
-    const criticalSeverityCheckbox = getByLabelText(criticalSeverity);
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
 
     // Fill in the correct data + submit
     fireEvent.change(displayInput, { target: { value: opsgenieDisplayName } });
     fireEvent.change(opsgenieApiKey, { target: { value: opsgenieConfig.apiKey } });
 
-    fireEvent.click(criticalSeverityCheckbox);
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
+
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
@@ -476,15 +558,19 @@ describe('CreateDestination', () => {
             displayName: asanaDisplayName,
             outputType: DestinationTypeEnum.Asana,
             defaultForSeverity: [criticalSeverity],
+            alertTypes: allAlertTypes,
             outputConfig: { asana: asanaConfig },
           },
         },
         data: { addDestination: createdDestination },
       }),
     ];
-    const { getByText, findByText, getByLabelText } = render(<CreateDestination />, {
-      mocks,
-    });
+    const { getByText, findByText, getByLabelText, getAllByLabelText } = render(
+      <CreateDestination />,
+      {
+        mocks,
+      }
+    );
 
     // Select Asana
     fireEvent.click(getByText('Asana'));
@@ -492,7 +578,8 @@ describe('CreateDestination', () => {
     const displayInput = getByLabelText('* Display Name');
     const tokenInput = getByLabelText('Access Token');
     const projectGidsInput = getByLabelText('Project GIDs', { selector: 'input' });
-    const criticalSeverityCheckbox = getByLabelText(criticalSeverity);
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
 
     // Fill in the correct data + submit
     fireEvent.change(displayInput, { target: { value: asanaDisplayName } });
@@ -506,7 +593,11 @@ describe('CreateDestination', () => {
       fireEvent.blur(projectGidsInput);
     });
 
-    fireEvent.click(criticalSeverityCheckbox);
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
+
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));

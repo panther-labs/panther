@@ -28,6 +28,9 @@ export type AlertDetailsFull = Pick<
   | 'type'
   | 'title'
   | 'creationTime'
+  | 'description'
+  | 'reference'
+  | 'runbook'
   | 'updateTime'
   | 'severity'
   | 'status'
@@ -57,6 +60,9 @@ export const AlertDetailsFull = gql`
     type
     title
     creationTime
+    description
+    reference
+    runbook
     deliveryResponses {
       ...DeliveryResponseFull
     }
