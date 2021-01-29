@@ -55,15 +55,15 @@ func (API) DeleteRules(input *models.DeleteRulesInput) *events.APIGatewayProxyRe
 }
 
 func (API) DeleteDetections(input *models.DeletePoliciesInput) *events.APIGatewayProxyResponse {
-	if err := dynamoBatchDelete(input); err != nil {
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
-	}
-
 	if err := s3BatchDelete(input); err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
 	if err := complianceBatchDelete(input.Entries, []string{}); err != nil {
+		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+	}
+
+	if err := dynamoBatchDelete(input); err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
 
