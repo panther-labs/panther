@@ -22,13 +22,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/panther-labs/panther/pkg/awskms"
-
 	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
+	"github.com/panther-labs/panther/pkg/awskms"
 	githubwrapper "github.com/panther-labs/panther/pkg/github"
 )
 
