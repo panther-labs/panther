@@ -66,6 +66,7 @@ func updatePackVersion(input *models.PatchPackInput, oldPackItem *packTableItem)
 	// First, look up the relevant pack and detection data for this release
 	packVersionSet, detectionVersionSet, err := downloadValidatePackData(pantherGithubConfig, input.PackVersion)
 	if err != nil {
+		zap.L().Error("error downloading and validating pack data", zap.Error(err))
 		return &events.APIGatewayProxyResponse{
 			Body:       fmt.Sprintf("Internal error downloading pack version (%s)", input.PackVersion.Name),
 			StatusCode: http.StatusInternalServerError,

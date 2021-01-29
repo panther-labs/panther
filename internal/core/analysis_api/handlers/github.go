@@ -20,6 +20,12 @@ package handlers
 
 import (
 	"context"
+	"crypto"
+	"crypto/rsa"
+	"crypto/sha512"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/service/kms"
@@ -27,7 +33,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
-	"github.com/panther-labs/panther/pkg/awskms"
 	githubwrapper "github.com/panther-labs/panther/pkg/github"
 )
 
@@ -36,8 +41,21 @@ const (
 	pantherGithubOwner = "panther-labs"
 	pantherGithubRepo  = "panther-analysis"
 	// signing key information
-	pantherFirstSigningKeyID = "2f555f7a-636a-41ed-9a6b-c6192bf55810" //TODO: update keys
-	signingAlgorithm         = kms.SigningAlgorithmSpecRsassaPkcs1V15Sha512
+	pantherPublicKey = "-----BEGIN PUBLIC KEY-----\n" + // TODO: update keys
+		"MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAtfz6a2sbfwNk+4NG8RTr\n" +
+		"Gwict6eO7Nd7r2snHyeqElt0xv0LVqG0ynqMHGxvhXKI6wk6qv8rpFNlDU0Ha7/v\n" +
+		"G9QHrkPuXvy5XU6g1jR6DCqo2Fqed3QBdwTg+JVz6ojMorwRut1DbFFh+MNuCKF2\n" +
+		"k5vbsRdNnz/+Eh+JAgkfqxLxG64hjzzjqVmfnLTgy1sZGR5UGBytBpGRZys4sJ2v\n" +
+		"m9/JTc3fU0lhp5xmWfJcgbADAPQuYI2TD9aNpZlD5y7XST3fY6NV+GI/dwe9G/ln\n" +
+		"s8Rz+s9vKHXk6U6S/OO9aW3Ct+Erh/MDhlnqaoegWA7YiL3YR3X4bo/TtmD4miNF\n" +
+		"QPxfbsw8UTi7CA0it/Dvpzw3C00+klnmOiMr76GqXKda3U5QrEpnYXEgzUifnUM6\n" +
+		"COGWY+LJwbxiFfYPg+D1MD8AggRIH+LCXOF3PocnK2ra1xnGEcuArQ2qFJEX3szL\n" +
+		"Z2HT9hKpgkX/9UvSwkfCdY8n3MRDn3o3HDJ43whpJblNMEIePhOZAyqd6XzVqwPr\n" +
+		"9f33GImZOznkcxB4jJEIRdDnDmDI+jpOZfqZpmudS8zhHERP2Nm1DZ4ar/nVCRps\n" +
+		"k1jSCMM9mPFWxFDJbdGjDzTtjyqHxBkR3ovJcP///pYhndZw6kIIprALfr1658Fa\n" +
+		"ex+7VGQN6Ptf1P9m6OIACLcCAwEAAQ==\n" +
+		"-----END PUBLIC KEY-----"
+	signingAlgorithm = kms.SigningAlgorithmSpecRsassaPkcs1V15Sha512
 	// source filenames
 	//pantherSourceFilename = "panther-analysis-all.zip"
 	pantherTestSourceFilename = "test-panther-analysis-packs.zip"
@@ -59,11 +77,6 @@ var (
 		pantherGithubRepo,
 		pantherPackAssets,
 	)
-	signatureConfig = awskms.NewSignatureConfig(
-		signingAlgorithm,
-		pantherFirstSigningKeyID,
-		kms.MessageTypeDigest,
-	)
 )
 
 func downloadValidatePackData(config githubwrapper.Config,
@@ -75,8 +88,8 @@ func downloadValidatePackData(config githubwrapper.Config,
 	} else if len(assets) != len(pantherPackAssets) {
 		return nil, nil, fmt.Errorf("missing assets in release")
 	}
-	//err = awskms.ValidateSignature(kmsClient, signatureConfig, assets[pantherSourceFilename], assets[pantherSignatureFilename])
-	err = awskms.ValidateSignature(kmsClient, signatureConfig, assets[pantherTestSourceFilename], assets[pantherTestSignatureFilename])
+	//err = validateSignature([]byte(pantherPublicKey), assets[pantherSourceFilename], assets[pantherSignatureFilename])
+	err = validateSignature([]byte(pantherPublicKey), assets[pantherTestSourceFilename], assets[pantherTestSignatureFilename])
 	if err != nil {
 		return nil, nil, err
 	}
@@ -112,4 +125,29 @@ func listAvailableGithubReleases(config githubwrapper.Config) ([]models.Version,
 		}
 	}
 	return availableVersions, nil
+}
+
+func validateSignature(publicKey []byte, rawData []byte, signature []byte) error {
+	// use hash of body in validation
+	intermediateHash := sha512.Sum512(rawData)
+	var computedHash []byte = intermediateHash[:]
+	// The signature is base64 encoded in the file, decode it
+	decodedSignature, err := base64.StdEncoding.DecodeString(string(signature))
+	if err != nil {
+		zap.L().Error("error base64 decoding item", zap.Error(err))
+		return err
+	}
+	// load in the pubkey
+	block, _ := pem.Decode(publicKey)
+	if block == nil {
+		return fmt.Errorf("error decoding public key")
+	}
+	key, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return err
+	}
+	// TODO: only support rsa keys?
+	pubKey := key.(*rsa.PublicKey)
+	err = rsa.VerifyPKCS1v15(pubKey, crypto.SHA512, computedHash[:], decodedSignature)
+	return err
 }
