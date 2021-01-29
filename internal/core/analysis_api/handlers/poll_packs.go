@@ -30,12 +30,19 @@ import (
 )
 
 func (API) PollPacks(input *models.PollPacksInput) *events.APIGatewayProxyResponse {
-	// First, check for a new release in the github repo by listing all releases
-	releases, err := listAvailableGithubReleases(pantherGithubConfig)
-	if err != nil {
-		// error looking up the github releases
-		zap.L().Error("failed to list github releases", zap.Error(err))
-		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+	var releases []models.Version
+	var err error
+	// determine if polling for a particular release or the latest version
+	if input.ReleaseVersion != (models.Version{}) {
+		releases = []models.Version{input.ReleaseVersion}
+	} else {
+		// First, check for a new release in the github repo by listing all releases
+		releases, err = listAvailableGithubReleases(pantherGithubConfig)
+		if err != nil {
+			// error looking up the github releases
+			zap.L().Error("failed to list github releases", zap.Error(err))
+			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+		}
 	}
 	if len(releases) == 0 {
 		// there aren't any releases, just return

@@ -66,8 +66,8 @@ type PatchPackInput struct {
 
 // PollPacksInput will also update the pack metadata: "availableReleases" and "updateAvailable"
 type PollPacksInput struct {
-	// PollPacksInput allows for specifying specific source inputs
-	//GithubSource GithubSource `json:"githubSource"`
+	// allow to poll for a particular release
+	ReleaseVersion Version `json:"ReleaseVersion"`
 }
 
 type Pack struct {

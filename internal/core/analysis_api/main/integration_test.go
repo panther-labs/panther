@@ -2674,7 +2674,12 @@ func pollPacks(t *testing.T) {
 	assert.NoError(t, err)
 	// poll for packs from well known release version
 	input = models.LambdaInput{
-		PollPacks: &models.PollPacksInput{}, // TODO: add well known version to poll
+		PollPacks: &models.PollPacksInput{
+			ReleaseVersion: models.Version{
+				ID:   35328828,
+				Name: "v1.14.0",
+			},
+		},
 	}
 	statusCode, err = apiClient.Invoke(&input, nil)
 	require.NoError(t, err)
