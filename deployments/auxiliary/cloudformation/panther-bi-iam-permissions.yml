@@ -1,0 +1,96 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: IAM permissions needed to connect to Athena through third party tools.
+
+Resources:
+  Athena:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: Athena_analytics_readonly
+
+  AthenaGroupMembership:
+    Type: AWS::IAM::UserToGroupAddition
+    Properties:
+      GroupName: !Ref AthenaGroup
+      Users:
+        - !Ref Athena
+
+  AthenaGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: AthenaAnalytics
+
+  AthenaGroupPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ReadPantherProcessedData
+      Groups:
+        - !Ref AthenaGroup
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - athena:BatchGetQueryExecution
+              - athena:CancelQueryExecution
+              - athena:Get*
+              - athena:List*
+              - athena:RunQuery
+              - athena:StartQueryExecution
+              - athena:StopQueryExecution
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - glue:BatchGetPartition
+              - glue:Get*
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - s3:AbortMultipartUpload
+              - s3:GetBucketLocation
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:ListBucketMultipartUploads
+              - s3:ListMultipartUploadParts
+              - s3:PutObject
+            Resource: arn:aws:s3:::panther-bootstrap-athenaresults-*
+          - Effect: Allow
+            Action:
+              - s3:AbortMultipartUpload
+              - s3:GetBucketLocation
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:ListBucketMultipartUploads
+              - s3:ListMultipartUploadParts
+              - s3:PutObject
+            Resource: arn:aws:s3:::panther-bootstrap-processeddata-*
+          - Effect: Allow
+            Action:
+              - s3:AbortMultipartUpload
+              - s3:GetBucketLocation
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:ListBucketMultipartUploads
+              - s3:ListMultipartUploadParts
+              - s3:PutObject
+            Resource: arn:aws:s3:::panther-bootstrap-historicaldata-*
+          - Effect: Allow
+            Action:
+              - s3:GetBucketLocation
+              - s3:ListAllMyBuckets
+              - s3:ListBucket
+            Resource: '*'
+          - Effect: Allow
+            Action: lakeformation:GetDataAccess
+            Resource: '*'
+
+  AthenaAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      Status: Active
+      UserName: !Ref Athena
+
+Outputs:
+  AccessKey:
+    Value: !Ref AthenaAccessKey
+  SecretKey:
+    Value: !GetAtt AthenaAccessKey.SecretAccessKey
