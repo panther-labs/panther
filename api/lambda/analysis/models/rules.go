@@ -111,6 +111,7 @@ type TestRuleRecordFunctions struct {
 }
 
 type UpdateRuleInput struct {
+	AnalysisType       DetectionType       `json:"analysisType"`
 	Body               string              `json:"body" validate:"required,max=100000"`
 	DedupPeriodMinutes int                 `json:"dedupPeriodMinutes" validate:"min=0"`
 	Description        string              `json:"description" validate:"max=10000"`
@@ -130,6 +131,7 @@ type UpdateRuleInput struct {
 }
 
 type Rule struct {
+	AnalysisType       DetectionType       `json:"analysisType"`
 	Body               string              `json:"body"`
 	CreatedAt          time.Time           `json:"createdAt"`
 	CreatedBy          string              `json:"createdBy"`

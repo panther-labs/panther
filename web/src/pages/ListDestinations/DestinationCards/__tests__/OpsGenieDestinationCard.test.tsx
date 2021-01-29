@@ -20,6 +20,7 @@ import { buildDestination, buildOpsgenieConfig, render } from 'test-utils';
 import React from 'react';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
 import { DestinationTypeEnum, OpsgenieServiceRegionEnum } from 'Generated/schema';
+import { alertTypeToString } from 'Helpers/utils';
 import { OpsGenieDestinationCard } from '../index';
 
 describe('OpsGenieDestinationCard', () => {
@@ -40,8 +41,9 @@ describe('OpsGenieDestinationCard', () => {
     expect(getByAltText(/Logo/i)).toBeInTheDocument();
     expect(getByAriaLabel(/Toggle Options/i)).toBeInTheDocument();
     expect(getByText(opsGenieDestination.displayName)).toBeInTheDocument();
-    expect(getByText('Date Created')).toBeInTheDocument();
-    expect(getByText('Last Updated')).toBeInTheDocument();
+    expect(
+      getByText(opsGenieDestination.alertTypes.map(alertTypeToString).join(' ,'))
+    ).toBeInTheDocument();
     expect(getByText('European')).toBeInTheDocument();
   });
 });
