@@ -19,22 +19,22 @@ package handlers
  */
 
 import (
-	"crypto/sha512"
-	"encoding/base64"
-	"errors"
+	"context"
+	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
+	"github.com/panther-labs/panther/pkg/awskms"
+
 	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
-	"github.com/panther-labs/panther/pkg/awsutils"
+	githubwrapper "github.com/panther-labs/panther/pkg/github"
 )
 
 const (
 	// github org and repo containing detection packs
-	pantherGithubOwner = "lindsey-w"
+	pantherGithubOwner = "panther-labs"
 	pantherGithubRepo  = "panther-analysis"
 	// signing keys information
 	pantherFirstSigningKeyID = "2f555f7a-636a-41ed-9a6b-c6192bf55810" //TODO: update keys
@@ -54,42 +54,47 @@ const (
 	"-----END PUBLIC KEY-----"*/
 	signingAlgorithm = kms.SigningAlgorithmSpecRsassaPkcs1V15Sha512
 	// source filenames
-	pantherSourceFilename     = "panther-analysis-all.zip"
-	pantherSignatureFilename  = "panther-analysis-all.sig"
-	pantherPublicKey          = "panther-signing-key.pem"
-	pantherPublicKeySignature = "panther-signing-key.sig"
+	//pantherSourceFilename = "panther-analysis-all.zip"
+	pantherTestSourceFilename = "test-panther-analysis-packs.zip"
+	//pantherSignatureFilename = "panther-analysis-all.sig"
+	pantherTestSignatureFilename = "test-panther-analysis-packs.sig"
+	//pantherPublicKey             = "panther-signing-key.pem"
+	//pantherPublicKeySignature    = "panther-signing-key.sig"
 	// minimum version that supports packs
-	minimumVersionName = "v1.15.0"
+	minimumVersionName = "v1.14.0"
 )
 
 var (
 	pantherPackAssets = []string{
-		pantherSourceFilename,
-		pantherSignatureFilename,
-		pantherPublicKey,
-		pantherPublicKeySignature,
+		//pantherSourceFilename,
+		//pantherSignatureFilename,
+		pantherTestSourceFilename,
+		pantherTestSignatureFilename,
+		//pantherPublicKey,
+		//pantherPublicKeySignature,
 	}
-	pantherGithubConfig = NewGithubConfig(pantherGithubOwner, pantherGithubRepo, pantherPackAssets)
+	pantherGithubConfig = githubwrapper.NewConfig(
+		pantherGithubOwner,
+		pantherGithubRepo,
+		pantherPackAssets,
+	)
+	signatureConfig = awskms.NewSignatureConfig(
+		signingAlgorithm,
+		//pantherSignatureFilename,
+		pantherTestSignatureFilename,
+		pantherFirstSigningKeyID,
+		kms.MessageTypeDigest,
+	)
 )
 
-type GithubConfig struct {
-	Owner      string
-	Repository string
-	Assets     []string
-}
+func downloadValidatePackData(config githubwrapper.Config,
+	version models.Version) (map[string]*packTableItem, map[string]*tableItem, error) {
 
-func NewGithubConfig(owner string, repository string, assets []string) GithubConfig {
-	return GithubConfig{
-		Owner:      owner,
-		Repository: repository,
-		Assets:     assets,
-	}
-}
-
-func downloadValidatePackData(config GithubConfig, version models.Version) (map[string]*packTableItem, map[string]*tableItem, error) {
-	assets, err := githubClient.DownloadGithubReleaseAssets(config.Owner, config.Repository, version.ID, config.Assets)
-	if err != nil || len(assets) != len(pantherPackAssets) {
+	assets, err := githubClient.DownloadGithubReleaseAssets(context.TODO(), config, version.ID)
+	if err != nil {
 		return nil, nil, err
+	} else if len(assets) != len(pantherPackAssets) {
+		return nil, nil, fmt.Errorf("missing assets in release")
 	}
 	/*// First validate the public key and its signature (signed by the pather root cert)
 	err = validateSignature([]byte(pantherRootPublicKey), assets[pantherPublicKey], assets[pantherPublicKeySignature])
@@ -98,19 +103,21 @@ func downloadValidatePackData(config GithubConfig, version models.Version) (map[
 	}
 	// Then validate the source file and signature
 	err = validateSignature(assets[pantherPublicKey], assets[pantherSourceFilename], assets[pantherSignatureFilename])*/
-	err = validateSignatureKMS(assets[pantherSourceFilename], assets[pantherSignatureFilename])
+	//err = awskms.ValidateSignature(kmsClient, signatureConfig, assets[pantherSourceFilename], assets[pantherSignatureFilename])
+	err = awskms.ValidateSignature(kmsClient, signatureConfig, assets[pantherTestSourceFilename], assets[pantherTestSignatureFilename])
 	if err != nil {
 		return nil, nil, err
 	}
-	packs, detections, err := extractZipFileBytes(assets[pantherSourceFilename])
+	//packs, detections, err := extractZipFileBytes(assets[pantherSourceFilename])
+	packs, detections, err := extractZipFileBytes(assets[pantherTestSourceFilename])
 	if err != nil {
 		return nil, nil, err
 	}
 	return packs, detections, nil
 }
 
-func listAvailableGithubReleases(config GithubConfig) ([]models.Version, error) {
-	allReleases, err := githubClient.ListAvailableGithubReleases(config.Owner, config.Repository)
+func listAvailableGithubReleases(config githubwrapper.Config) ([]models.Version, error) {
+	allReleases, err := githubClient.ListAvailableGithubReleases(context.TODO(), config.Owner, config.Repository)
 	if err != nil {
 		return nil, err
 	}
@@ -118,16 +125,16 @@ func listAvailableGithubReleases(config GithubConfig) ([]models.Version, error) 
 	// earliest version of panther managed detections that supports packs
 	minimumVersion, _ := version.NewVersion(minimumVersionName)
 	for _, release := range allReleases {
-		version, err := version.NewVersion(*release.Name)
+		version, err := version.NewVersion(*release.TagName)
 		if err != nil {
 			// if we can't parse the version, just throw it away
-			zap.L().Warn("can't parse version", zap.String("version", *release.Name))
+			zap.L().Warn("can't parse version", zap.String("version", *release.TagName))
 			continue
 		}
-		if version.GreaterThan(minimumVersion) {
+		if version.GreaterThanOrEqual(minimumVersion) {
 			newVersion := models.Version{
 				ID:   *release.ID,
-				Name: *release.Name,
+				Name: *release.TagName,
 			}
 			availableVersions = append(availableVersions, newVersion)
 		}
@@ -159,35 +166,3 @@ func listAvailableGithubReleases(config GithubConfig) ([]models.Version, error) 
 	err = rsa.VerifyPKCS1v15(pubKey, crypto.SHA512, computedHash[:], decodedSignature)
 	return err
 }*/
-
-func validateSignatureKMS(rawData []byte, signature []byte) error {
-	// use hash of body in validation
-	intermediateHash := sha512.Sum512(rawData)
-	var computedHash []byte = intermediateHash[:]
-	// The signature is base64 encoded in the file, decode it
-	decodedSignature, err := base64.StdEncoding.DecodeString(string(signature))
-	if err != nil {
-		return err
-	}
-	signatureVerifyInput := &kms.VerifyInput{
-		KeyId:            aws.String(pantherFirstSigningKeyID),
-		Message:          computedHash,
-		MessageType:      aws.String(kms.MessageTypeDigest),
-		Signature:        decodedSignature,
-		SigningAlgorithm: aws.String(signingAlgorithm),
-	}
-	result, err := kmsClient.Verify(signatureVerifyInput)
-	if err != nil {
-		if awsutils.IsAnyError(err, kms.ErrCodeKMSInvalidSignatureException) {
-			zap.L().Error("signature verification failed", zap.Error(err))
-			return err
-		}
-		zap.L().Warn("error validating signature", zap.Error(err))
-		return err
-	}
-	if aws.BoolValue(result.SignatureValid) {
-		zap.L().Debug("signature validation successful")
-		return nil
-	}
-	return errors.New("error validating signature")
-}

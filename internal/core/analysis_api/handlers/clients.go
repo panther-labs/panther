@@ -43,7 +43,7 @@ var (
 
 	awsSession       *session.Session
 	dynamoClient     dynamodbiface.DynamoDBAPI
-	githubClient     *githubwrapper.GithubClient
+	githubClient     *githubwrapper.Client
 	kmsClient        kmsiface.KMSAPI
 	s3Client         s3iface.S3API
 	sqsClient        sqsiface.SQSAPI
@@ -73,7 +73,7 @@ func Setup() {
 
 	awsSession = session.Must(session.NewSession())
 	dynamoClient = dynamodb.New(awsSession)
-	githubClient = githubwrapper.NewGithubClient()
+	githubClient = githubwrapper.NewClient(nil)
 	kmsClient = kms.New(awsSession)
 	s3Client = s3.New(awsSession)
 	sqsClient = sqs.New(awsSession)
