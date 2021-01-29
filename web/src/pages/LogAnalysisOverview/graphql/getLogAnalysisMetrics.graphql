@@ -7,6 +7,7 @@ query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput!) {
       }
       timestamps
     }
+    # TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
     # eventsLatency {
     #   series {
     #     label

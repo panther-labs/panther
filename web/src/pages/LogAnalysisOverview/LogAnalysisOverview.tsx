@@ -60,6 +60,7 @@ const LogAnalysisOverview: React.FC = () => {
           'eventsProcessed',
           'totalAlertsDelta',
           'alertsBySeverity',
+          // TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
           // 'eventsLatency',
           'alertsByRuleID',
         ],
@@ -91,7 +92,7 @@ const LogAnalysisOverview: React.FC = () => {
       />
     );
   }
-
+  // TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
   const { alertsBySeverity, totalAlertsDelta, eventsProcessed,/* eventsLatency, */ alertsByRuleID } = data.getLogAnalysisMetrics; // prettier-ignore
   const topAlertSummaries = alertsData?.topAlerts?.alertSummaries || [];
   const recentAlertSummaries = alertsData?.recentAlerts?.alertSummaries || [];

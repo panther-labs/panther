@@ -93,6 +93,7 @@ describe('Log Analysis Overview', () => {
               'eventsProcessed',
               'totalAlertsDelta',
               'alertsBySeverity',
+              // TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
               // 'eventsLatency',
               'alertsByRuleID',
             ],
@@ -121,6 +122,7 @@ describe('Log Analysis Overview', () => {
     ];
   });
 
+  // TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
   // Skip this test until we re-enable data latency graph
   it.skip('should render 2 canvas, click on tab button and render latency chart', async () => {
     const { getByTestId, getAllByTitle, getByText } = render(<LogAnalysisOverview />, {

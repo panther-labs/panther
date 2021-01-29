@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-// Temporarily hide the Latency panel until we have a fix for the wrong data
+// TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
 import { Box, Card /* TabList, TabPanel, TabPanels, Tabs */ } from 'pouncejs';
 // import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType/EventsByLogType';
@@ -39,6 +39,7 @@ const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed /* events
         </Box>
       </Panel>
       {/*
+      // TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
       <Tabs>
         <Box position="relative" pl={2} pr={4}>
           <TabList>
