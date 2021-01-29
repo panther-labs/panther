@@ -89,7 +89,15 @@ const RuleDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
             </Box>
           </Flex>
         </Flex>
-        <Flex as="dl" fontSize="small-medium" pt={5} spacing={8}>
+        <Flex as="dl" fontSize="small-medium" pt={5} spacing={8} wrap="wrap">
+          <Flex>
+            <Box color="navyblue-100" as="dt" pr={2}>
+              Detection Type
+            </Box>
+            <Box as="dd" fontWeight="bold" color="cyan-400">
+              Rule
+            </Box>
+          </Flex>
           <Flex>
             <Box color="navyblue-100" as="dt" pr={2}>
               Rule ID

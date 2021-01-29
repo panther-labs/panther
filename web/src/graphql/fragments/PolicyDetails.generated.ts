@@ -26,9 +26,7 @@ export type PolicyDetails = Pick<
   Types.Policy,
   'autoRemediationId' | 'autoRemediationParameters' | 'suppressions' | 'body'
 > & {
-  tests?: Types.Maybe<
-    Array<Types.Maybe<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>>>
-  >;
+  tests: Array<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>>;
 } & PolicySummary;
 
 export const PolicyDetails = gql`
