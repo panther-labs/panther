@@ -26,11 +26,42 @@ import (
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 )
 
+var (
+	ruleDetectionID      = "detection.rule"
+	policyDetectionID    = "detection.policy"
+	globalDetectionID    = "detection.global"
+	dataModelDetectionID = "detection.datamodel"
+
+	ruleDetection = &tableItem{
+		ID:   ruleDetectionID,
+		Type: models.TypeRule,
+	}
+	policyDetection = &tableItem{
+		ID:   policyDetectionID,
+		Type: models.TypePolicy,
+	}
+	globalDetection = &tableItem{
+		ID:   globalDetectionID,
+		Type: models.TypeGlobal,
+	}
+	dataModelDetection = &tableItem{
+		ID:   dataModelDetectionID,
+		Type: models.TypeDataModel,
+	}
+	allDetections = map[string]*tableItem{
+		policyDetectionID:    policyDetection,
+		ruleDetectionID:      ruleDetection,
+		globalDetectionID:    globalDetection,
+		dataModelDetectionID: dataModelDetection,
+	}
+)
+
 func TestSetupUpdatePacksVersions(t *testing.T) {
 	// This tests setting up pack items when there is
 	// no change needed (packs already have knowledge of all releases)
 	// as well as when a new release is available, but there aren't any
 	// new or removed packs
+	detectionsAtVersion := allDetections
 	newVersion := models.Version{ID: 2222, Name: "v1.2.0"}
 	availableVersions := []models.Version{
 		{ID: 1111, Name: "v1.1.0"},
@@ -39,14 +70,26 @@ func TestSetupUpdatePacksVersions(t *testing.T) {
 	packOne := &packTableItem{
 		ID:                "pack.id.1",
 		AvailableVersions: availableVersions,
+		DetectionPattern: models.DetectionPattern{
+			IDs: []string{ruleDetectionID},
+		},
+		DetectionTypes: []models.DetectionType{models.TypeRule},
 	}
 	packTwo := &packTableItem{
 		ID:                "pack.id.2",
 		AvailableVersions: availableVersions,
+		DetectionPattern: models.DetectionPattern{
+			IDs: []string{ruleDetectionID},
+		},
+		DetectionTypes: []models.DetectionType{models.TypeRule},
 	}
 	packThree := &packTableItem{
 		ID:                "pack.id.3",
 		AvailableVersions: availableVersions,
+		DetectionPattern: models.DetectionPattern{
+			IDs: []string{ruleDetectionID},
+		},
+		DetectionTypes: []models.DetectionType{models.TypeRule},
 	}
 	packsAtVersion := map[string]*packTableItem{
 		"pack.id.1": packOne,
@@ -59,11 +102,11 @@ func TestSetupUpdatePacksVersions(t *testing.T) {
 		packTwo,
 		packThree,
 	}
-	newPackItems := setupUpdatePacksVersions(newVersion, oldPacks, packsAtVersion)
+	newPackItems := setupUpdatePacksVersions(newVersion, oldPacks, packsAtVersion, detectionsAtVersion)
 	assert.Equal(t, 0, len(newPackItems))
 	// Test: no packs added/removed, releases updated
 	newVersion = models.Version{ID: 3333, Name: "v1.3.0"}
-	newPackItems = setupUpdatePacksVersions(newVersion, oldPacks, packsAtVersion)
+	newPackItems = setupUpdatePacksVersions(newVersion, oldPacks, packsAtVersion, detectionsAtVersion)
 	for _, newPackItem := range newPackItems {
 		assert.True(t, newPackItem.UpdateAvailable)
 		assert.Equal(t, 3, len(newPackItem.AvailableVersions))
@@ -75,6 +118,7 @@ func TestSetupPacksVersionsAddPack(t *testing.T) {
 	// a new pack is added in a release. It should be auto-disable
 	// and the AvailableReleases should only include the
 	// new release version
+	detectionsAtVersion := allDetections
 	newVersion := models.Version{ID: 3333, Name: "v1.3.0"}
 	availableVersions := []models.Version{
 		{ID: 1111, Name: "v1.1.0"},
@@ -84,37 +128,54 @@ func TestSetupPacksVersionsAddPack(t *testing.T) {
 	packOne := &packTableItem{
 		ID:                "pack.id.1",
 		AvailableVersions: availableVersions,
+		DetectionPattern: models.DetectionPattern{
+			IDs: []string{ruleDetectionID},
+		},
+		DetectionTypes: []models.DetectionType{models.TypeRule},
 	}
 	packTwo := &packTableItem{
 		ID:                "pack.id.2",
 		AvailableVersions: availableVersions,
+		DetectionPattern: models.DetectionPattern{
+			IDs: []string{ruleDetectionID},
+		},
+		DetectionTypes: []models.DetectionType{models.TypeRule},
 	}
+	// packThree is the "new" pack added
 	packThree := &packTableItem{
-		ID: "pack.id.3", // removed available versions from "new" pack
+		ID: "pack.id.3",
+		DetectionPattern: models.DetectionPattern{
+			IDs: []string{ruleDetectionID, policyDetectionID},
+		},
+		DetectionTypes: []models.DetectionType{models.TypeRule, models.TypePolicy},
 	}
 	oldPacks := []*packTableItem{
 		packOne,
-		packTwo, // removed packThree from oldPacks
+		packTwo, // no packThree in the oldPacks
 	}
 	packsAtVersion := map[string]*packTableItem{
 		"pack.id.1": packOne,
 		"pack.id.2": packTwo,
-		"pack.id.3": packThree, // pack cache of "new" packs has all three items
+		"pack.id.3": packThree, // "new" packs has all three items
 	}
-	newPackItems := setupUpdatePacksVersions(newVersion, oldPacks, packsAtVersion)
+	newPackItems := setupUpdatePacksVersions(newVersion, oldPacks, packsAtVersion, detectionsAtVersion)
 	assert.Equal(t, 3, len(newPackItems)) // ensure all three items have updates
 	for _, newPackItem := range newPackItems {
-		assert.True(t, newPackItem.UpdateAvailable)
 		// validate the newly added pack is disabled and
 		// has the current field values
 		if newPackItem.ID == "pack.id.3" {
+			assert.False(t, newPackItem.UpdateAvailable) // while this is a new pack, the newest version has been installed (but disabled)
 			assert.False(t, newPackItem.Enabled)
 			assert.Equal(t, 1, len(newPackItem.AvailableVersions))
 			assert.Equal(t, newVersion.ID, newPackItem.PackVersion.ID)
 			assert.Equal(t, newVersion.Name, newPackItem.PackVersion.Name)
+			assert.Equal(t, packThree.DetectionTypes, newPackItem.DetectionTypes) // ensure the detection types are reflected
 		} else {
+			assert.True(t, newPackItem.UpdateAvailable)
 			// the existing packs should have 3 available versions
 			assert.Equal(t, 3, len(newPackItem.AvailableVersions))
+			assert.Equal(t, 1, len(newPackItem.DetectionTypes)) // ensure the detection types haven't changed for these packs
+			assert.Equal(t, packOne.DetectionTypes, newPackItem.DetectionTypes)
 		}
 	}
 }
@@ -124,6 +185,7 @@ func TestSetupPacksVersionsRemovePack(t *testing.T) {
 	// when a pack is removed from a release, in which case
 	// the removed pack does not get the new release in its
 	// AvailableRelease
+	detectionsAtVersion := allDetections
 	newVersion := models.Version{ID: 3333, Name: "v1.3.0"}
 	availableVersions := []models.Version{
 		{ID: 1111, Name: "v1.1.0"},
@@ -151,7 +213,7 @@ func TestSetupPacksVersionsRemovePack(t *testing.T) {
 		"pack.id.1": packOne,
 		"pack.id.2": packTwo, // packThree "removed" from latest release
 	}
-	newPackItems := setupUpdatePacksVersions(newVersion, oldPacks, packsAtVersion)
+	newPackItems := setupUpdatePacksVersions(newVersion, oldPacks, packsAtVersion, detectionsAtVersion)
 	assert.Equal(t, 2, len(newPackItems)) // only two packs should be updated
 	for _, newPackItem := range newPackItems {
 		assert.True(t, newPackItem.UpdateAvailable)
@@ -161,11 +223,12 @@ func TestSetupPacksVersionsRemovePack(t *testing.T) {
 	}
 }
 
-func TestSetupUpdateToVersion(t *testing.T) {
+func TestSetupUpdatePackToVersion(t *testing.T) {
 	// This tests setting up the updated items for
 	// updating a pack to a speicific version
 	// as well as testing updating to a speicfic version and enabling
 	// it at the same time
+	detectionsAtVersion := allDetections
 	newVersion := models.Version{ID: 3333, Name: "v1.3.0"}
 	availableVersions := []models.Version{
 		{ID: 1111, Name: "v1.1.0"},
@@ -177,6 +240,10 @@ func TestSetupUpdateToVersion(t *testing.T) {
 		AvailableVersions: availableVersions,
 		Enabled:           false,
 		Description:       "original description",
+		DetectionPattern: models.DetectionPattern{
+			IDs: []string{ruleDetectionID},
+		},
+		DetectionTypes: []models.DetectionType{models.TypeRule},
 	}
 	input := &models.PatchPackInput{
 		PackVersion: newVersion,
@@ -185,7 +252,7 @@ func TestSetupUpdateToVersion(t *testing.T) {
 	}
 	packOne := oldPackOne
 	// Test: success, no update to enabled status
-	item := setupUpdatePackToVersion(input, oldPackOne, packOne)
+	item := setupUpdatePackToVersion(input, oldPackOne, packOne, detectionsAtVersion)
 	assert.Equal(t, newVersion, item.PackVersion)
 	assert.False(t, item.Enabled)
 	// Test: success, update enabled status
@@ -200,16 +267,37 @@ func TestSetupUpdateToVersion(t *testing.T) {
 		Enabled:           false,
 		Description:       "new description",
 	}
-	item = setupUpdatePackToVersion(input, oldPackOne, packOne)
+	item = setupUpdatePackToVersion(input, oldPackOne, packOne, detectionsAtVersion)
 	assert.Equal(t, newVersion, item.PackVersion)
 	assert.True(t, item.Enabled)
-
-	// TODO: Test: update a pack that doesn't exist in this version
+	// Test: success, update detection type in pack
+	input = &models.PatchPackInput{
+		PackVersion: newVersion,
+		ID:          "pack.id.1",
+		Enabled:     true,
+	}
+	packOne = &packTableItem{
+		ID:                "pack.id.1",
+		AvailableVersions: availableVersions,
+		Enabled:           false,
+		Description:       "new description",
+		DetectionPattern: models.DetectionPattern{
+			IDs: []string{policyDetectionID},
+		},
+		DetectionTypes: []models.DetectionType{models.TypePolicy},
+	}
+	item = setupUpdatePackToVersion(input, oldPackOne, packOne, detectionsAtVersion)
+	assert.Equal(t, newVersion, item.PackVersion)
+	assert.True(t, item.Enabled)
+	assert.Equal(t, packOne.DetectionPattern, item.DetectionPattern)
+	assert.Equal(t, packOne.DetectionTypes, item.DetectionTypes)
 }
-func TestSetupUpdateToVersionOnDowngrade(t *testing.T) {
+
+func TestSetupUpdatePackToVersionOnDowngrade(t *testing.T) {
 	// This tests setting up new pack table items
 	// for when we need to revert / downgrade to an 'older' version
 	// Test: revert to "older" version
+	detectionsAtVersion := allDetections
 	newVersion := models.Version{ID: 1111, Name: "v1.1.0"}
 	availableVersions := []models.Version{
 		newVersion,
@@ -232,14 +320,14 @@ func TestSetupUpdateToVersionOnDowngrade(t *testing.T) {
 		Enabled:           false,
 		Description:       "original description",
 	}
-	item := setupUpdatePackToVersion(input, oldPackOne, packOne)
+	item := setupUpdatePackToVersion(input, oldPackOne, packOne, detectionsAtVersion)
 	assert.Equal(t, newVersion, item.PackVersion)
 	assert.True(t, item.Enabled)
 	assert.Equal(t, 2, len(item.AvailableVersions)) // ensure even though we are downgrading, the available versions stays the same
 	assert.True(t, item.UpdateAvailable)            // since we are downgrading, the update available flag should still be set
 }
 
-func TestDetectionCacheLookup(t *testing.T) {
+func TestDetectionSetLookup(t *testing.T) {
 	detectionOne := &tableItem{
 		ID: "id.1",
 	}
@@ -280,4 +368,34 @@ func TestDetectionCacheLookup(t *testing.T) {
 	}
 	items = detectionSetLookup(detectionsAtVersion, detectionPattern)
 	assert.Equal(t, items, expectedOutput)
+}
+
+func TestDetectionTypeSet(t *testing.T) {
+	// contains single type
+	detections := map[string]*tableItem{
+		ruleDetectionID: allDetections[ruleDetectionID],
+	}
+	expectedOutput := []models.DetectionType{models.TypeRule}
+	types := getDetectionTypeSet(detections)
+	assert.Equal(t, 1, len(types))
+	assert.Equal(t, expectedOutput, types)
+	// contains two types
+	detections = map[string]*tableItem{
+		ruleDetectionID:   allDetections[ruleDetectionID],
+		policyDetectionID: allDetections[policyDetectionID],
+	}
+	types = getDetectionTypeSet(detections)
+	assert.Equal(t, 2, len(types))
+	// contains two of the same types
+	detections = map[string]*tableItem{
+		ruleDetectionID: allDetections[ruleDetectionID],
+		"rule.id.2":     allDetections[ruleDetectionID],
+	}
+	expectedOutput = []models.DetectionType{models.TypeRule}
+	types = getDetectionTypeSet(detections)
+	assert.Equal(t, expectedOutput, types)
+	assert.Equal(t, 1, len(types))
+	// contains four types
+	types = getDetectionTypeSet(allDetections)
+	assert.Equal(t, 4, len(types))
 }

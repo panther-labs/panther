@@ -50,6 +50,7 @@ const (
 	packTableName       = "panther-analysis-packs"
 	analysesRoot        = "./test_analyses"
 	analysesZipLocation = "./bulk_upload.zip"
+	systemUserID        = "00000000-0000-4000-8000-000000000000"
 )
 
 var (
@@ -168,6 +169,29 @@ var (
 			},
 		},
 	}
+	packOriginalRelease = &models.Pack{
+		AvailableVersions: []models.Version{
+			{ID: 35328828, Name: "v1.14.0"},
+		},
+		CreatedBy:   systemUserID,
+		Description: "This pack is an example",
+		DetectionPattern: models.DetectionPattern{
+			IDs: []string{
+				"AWS.CloudTrail.Created",
+				"AWS.Console.LoginFailed",
+				"AWS.Console.LoginWithoutMFA"},
+		},
+		DisplayName:    "A Sample Pack",
+		Enabled:        false,
+		ID:             "Sample.Pack.ID",
+		LastModifiedBy: systemUserID,
+		PackVersion: models.Version{
+			ID:   35328828,
+			Name: "v1.14.0",
+		},
+		UpdateAvailable: false,
+		DetectionTypes:  []models.DetectionType{models.TypeRule},
+	}
 )
 
 func TestMain(m *testing.M) {
@@ -246,6 +270,8 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("SaveDisabledRuleFailingTests", saveDisabledRuleFailingTests)
 		t.Run("SaveEnabledRulePassingTests", saveEnabledRulePassingTests)
 		t.Run("SaveRuleInvalidTestInputJson", saveRuleInvalidTestInputJSON)
+
+		t.Run("PollAnalysisPacks", pollPacks)
 	})
 	if t.Failed() {
 		return
@@ -259,6 +285,7 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("GetRuleWrongType", getRuleWrongType)
 		t.Run("GetGlobal", getGlobal)
 		t.Run("GetDataModel", getDataModel)
+		t.Run("GetPack", getPack)
 	})
 
 	// NOTE! This will mutate the original policy above!
@@ -286,6 +313,7 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ListDetectionsComplianceProjection", listDetectionsComplianceProjection)
 		t.Run("ListDetectionsAnalysisTypeFilter", listDetectionsAnalysisTypeFilter)
 		t.Run("ListDetectionsComplianceFilter", listDetectionsComplianceFilter)
+		t.Run("ListPacks", listPacks)
 	})
 
 	t.Run("Modify", func(t *testing.T) {
@@ -295,7 +323,6 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ModifyGlobal", modifyGlobal)
 		t.Run("ModifyDataModel", modifyDataModel)
 	})
-
 	t.Run("Suppress", func(t *testing.T) {
 		t.Run("SuppressNotFound", suppressNotFound)
 		t.Run("SuppressSuccess", suppressSuccess)
@@ -307,6 +334,12 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("DeleteRules", deleteRules)
 		t.Run("DeleteDataModels", deleteDataModels)
 		t.Run("DeleteGlobals", deleteGlobals)
+	})
+
+	// This ahs to run after the other detection changes since it will
+	// add/remove/update detections
+	t.Run("Patch", func(t *testing.T) {
+		t.Run("PatchPack", patchPack)
 	})
 }
 
@@ -2618,7 +2651,6 @@ func batchDeleteRules(t *testing.T, ruleID ...string) {
 	assert.Equal(t, http.StatusOK, statusCode)
 }
 
-/*
 func pollPacks(t *testing.T) {
 	// test success
 	// no packs exist yet
@@ -2634,7 +2666,7 @@ func pollPacks(t *testing.T) {
 		Paging: models.Paging{
 			ThisPage:   0,
 			TotalItems: 0,
-			TotalPages: 1,
+			TotalPages: 0,
 		},
 		Packs: []models.Pack{},
 	}
@@ -2642,12 +2674,7 @@ func pollPacks(t *testing.T) {
 	assert.NoError(t, err)
 	// poll for packs from well known release version
 	input = models.LambdaInput{
-		PollPacks: &models.PollPacksInput{
-			ReleaseVersion: models.Version{
-				ID:   123456, // TODO: Fill this in
-				Name: "v1.14.0",
-			},
-		},
+		PollPacks: &models.PollPacksInput{}, // TODO: add well known version to poll
 	}
 	statusCode, err = apiClient.Invoke(&input, nil)
 	require.NoError(t, err)
@@ -2659,14 +2686,17 @@ func pollPacks(t *testing.T) {
 	statusCode, err = apiClient.Invoke(&input, &result)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
-	// TODO: fill this in with well known data from release above
+	packOriginalRelease.CreatedAt = result.Packs[0].CreatedAt
+	packOriginalRelease.LastModified = result.Packs[0].LastModified
 	expected = models.ListPacksOutput{
 		Paging: models.Paging{
-			ThisPage:   0,
-			TotalItems: 0,
+			ThisPage:   1,
+			TotalItems: 1,
 			TotalPages: 1,
 		},
-		Packs: []models.Pack{},
+		Packs: []models.Pack{
+			*packOriginalRelease,
+		},
 	}
 	assert.Equal(t, expected, result)
 	assert.NoError(t, err)
@@ -2679,25 +2709,25 @@ func pollPacks(t *testing.T) {
 func getPack(t *testing.T) {
 	// success
 	input := models.LambdaInput{
-		GetPack: &models.GetPackInput{ID: "id"}, // TODO: fill in with from well known release (v1.14.0) id
+		GetPack: &models.GetPackInput{ID: packOriginalRelease.ID},
 	}
 	var result models.Pack
 	statusCode, err := apiClient.Invoke(&input, &result)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
-	//assert.Equal(t, *pack, result) // TODO: fill in with pack data
+	assert.Equal(t, *packOriginalRelease, result)
 
 	// does not exist
 	input = models.LambdaInput{
 		GetPack: &models.GetPackInput{ID: "id.does.not.exist"},
 	}
 	statusCode, err = apiClient.Invoke(&input, &result)
-	require.NoError(t, err)
+	require.Error(t, err)
 	assert.Equal(t, http.StatusNotFound, statusCode)
 }
 
 func listPacks(t *testing.T) {
-	// success
+	// success: no filter
 	input := models.LambdaInput{
 		ListPacks: &models.ListPacksInput{},
 	}
@@ -2706,42 +2736,65 @@ func listPacks(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
 
-	// TODO: fill in packs info from well known release (v1.14.0)
 	expected := models.ListPacksOutput{
 		Paging: models.Paging{
-			ThisPage:   0,
-			TotalItems: 0,
+			ThisPage:   1,
+			TotalItems: 1,
 			TotalPages: 1,
 		},
-		Packs: []models.Pack{},
+		Packs: []models.Pack{
+			*packOriginalRelease,
+		},
 	}
 	assert.Equal(t, expected, result)
+	// success: with PackVersion
+
+	// success: with updateAvailable
+
+	// success: with enabled
 }
 
 func patchPack(t *testing.T) {
-	// enabled pack
-	input := models.PatchPackInput{
-		Enabled: true,
-	}
-	var result models.Pack
-	statusCode, err := apiClient.Invoke(&input, &result)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, statusCode)
-	//assert.Equal(t, *pack, result)  // TODO: fill in with pack data; but enabled: true
-	// TODO: lookup detection in pack and ensure enabled:true
 	// disable pack
-	input = models.PatchPackInput{
-		Enabled: true,
+	var result models.Pack
+	input := models.LambdaInput{
+		PatchPack: &models.PatchPackInput{
+			ID:          packOriginalRelease.ID,
+			Enabled:     false,
+			PackVersion: packOriginalRelease.PackVersion,
+			UserID:      userID,
+		},
 	}
-	statusCode, err = apiClient.Invoke(&input, &result)
+	packOriginalRelease.LastModifiedBy = userID
+	packOriginalRelease.Enabled = false
+	statusCode, err := apiClient.Invoke(&input, &result)
+	packOriginalRelease.LastModified = result.LastModified
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
-	//assert.Equal(t, *pack, result) // TODO: fill in with pack data; but enabled: false
+	assert.Equal(t, *packOriginalRelease, result)
 	// TODO: lookup detection in pack and ensure enabled: false
 
-	// upgrade to newer well known version (v1.15.0)
+	// enable pack
+	input = models.LambdaInput{
+		PatchPack: &models.PatchPackInput{
+			ID:          packOriginalRelease.ID,
+			Enabled:     true,
+			PackVersion: packOriginalRelease.PackVersion,
+			UserID:      userID,
+		},
+	}
+	packOriginalRelease.Enabled = true
+	statusCode, err = apiClient.Invoke(&input, &result)
+	packOriginalRelease.LastModified = result.LastModified
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	assert.Equal(t, *packOriginalRelease, result)
+	// TODO: lookup detection in pack and ensure enabled:true
+
+	/*TODO
+	// upgrade to newer well known version (v1.15.0) TODO
 	input = models.PatchPackInput{
-		EnabledVersion: models.Version{
+		PackVersion: models.Version{
 			ID:   12345,
 			Name: "v1.15.0", // TODO: fill in this info
 		},
@@ -2752,7 +2805,7 @@ func patchPack(t *testing.T) {
 	//assert.Equal(t, *pack, result) // TODO: fill in with pack data; but EnabledVersion: upgraded version
 	// downgrade to older version (v1.14.0)
 	input = models.PatchPackInput{
-		EnabledVersion: models.Version{
+		PackVersion: models.Version{
 			ID:   12345,
 			Name: "v1.14.0", // TODO: fill in this info
 		},
@@ -2761,5 +2814,5 @@ func patchPack(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
 	//assert.Equal(t, *pack, result) // TODO: fill in with pack data; but EnabledVersion: downgraded version
+	*/
 }
-*/
