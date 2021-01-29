@@ -46,6 +46,12 @@ func (API) PatchPack(input *models.PatchPackInput) *events.APIGatewayProxyRespon
 			StatusCode: http.StatusNotFound,
 		}
 	}
+	if !input.Enabled && input.PackVersion.ID != oldItem.PackVersion.ID {
+		return &events.APIGatewayProxyResponse{
+			Body:       fmt.Sprintf("Cannot update a disabled pack (%s)", input.ID),
+			StatusCode: http.StatusBadRequest,
+		}
+	}
 	// Update the enabled status and enabledRelease if it has changed
 	// Note: currently only support `enabled` and `enabledRelease` updates from the `patch` operation
 	return updatePackVersion(input, oldItem)
@@ -66,23 +72,17 @@ func updatePackVersion(input *models.PatchPackInput, oldPackItem *packTableItem)
 		}
 	}
 	if newPackItem, ok := packVersionSet[input.ID]; ok {
-		// Then, update the pack metadata in case the detection pattern has been updated
-		err = updatePackToVersion(input, oldPackItem, newPackItem)
+		// Update the detections in the pack
+		err = updateDetectionsToVersion(input.UserID, newPackItem, detectionVersionSet)
 		if err != nil {
-			zap.L().Error("Error updating pack metadata", zap.Error(err))
+			zap.L().Error("Error updating pack detections", zap.Error(err))
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 		}
-		// get new version of the pack
-		newPack, err := dynamoGetPack(input.ID, true)
-		if err != nil {
-			zap.L().Error("Error getting pack", zap.Error(err))
-			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
-		}
-		// Then, update the detections in the pack
-		err = updateDetectionsToVersion(input.UserID, newPack, detectionVersionSet)
+		// Then, update the pack metadata and detection types
+		newPack, err := updatePackToVersion(input, oldPackItem, newPackItem, detectionVersionSet)
 		if err != nil {
 			// TODO: do we need to attempt to rollback the update if the pack detection update fails?
-			zap.L().Error("Error updating pack detections", zap.Error(err))
+			zap.L().Error("Error updating pack metadata", zap.Error(err))
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 		}
 		// return success
@@ -101,27 +101,34 @@ func updatePackVersion(input *models.PatchPackInput, oldPackItem *packTableItem)
 // (1) ensuring the new version is in the pack's list of available versions
 // (2) setting up the new `panther-anlaysis-packs` table item
 // (3) calling the update using the new table item
-func updatePackToVersion(input *models.PatchPackInput, oldPackItem *packTableItem, newPackItem *packTableItem) error {
+func updatePackToVersion(input *models.PatchPackInput, oldPackItem *packTableItem,
+	newPackItem *packTableItem, newDetections map[string]*tableItem) (*packTableItem, error) {
+
 	// check that the new version is in the list of available versions
 	if !containsRelease(oldPackItem.AvailableVersions, input.PackVersion) {
-		return fmt.Errorf("attempting to enable a version (%s) that does not exist for pack (%s)", input.PackVersion.Name, oldPackItem.ID)
+		return nil, fmt.Errorf("attempting to enable a version (%s) that does not exist for pack (%s)", input.PackVersion.Name, oldPackItem.ID)
 	}
-	newPack := setupUpdatePackToVersion(input, oldPackItem, newPackItem)
-	return updatePack(newPack, input.UserID)
+	newPack := setupUpdatePackToVersion(input, oldPackItem, newPackItem, newDetections)
+	err := updatePack(newPack, input.UserID)
+	return newPack, err
 }
 
 // setupUpdatePackToVersion will return the new `panther-analysis-packs` ddb table item by
 // updating the metadata fields to the new version values
 func setupUpdatePackToVersion(input *models.PatchPackInput, oldPackItem *packTableItem,
-	newPackItem *packTableItem) *packTableItem {
+	newPackItem *packTableItem, detectionVersionSet map[string]*tableItem) *packTableItem {
 
 	version := input.PackVersion
+	// get the new detections in the pack
+	newPackDetections := detectionSetLookup(detectionVersionSet, newPackItem.DetectionPattern)
+	packDetectionTypes := getDetectionTypeSet(newPackDetections)
 	updateAvailable := isNewReleaseAvailable(version, []*packTableItem{oldPackItem})
 	pack := &packTableItem{
 		Enabled:           input.Enabled, // update the item enablement status if it has been updated
 		UpdateAvailable:   updateAvailable,
 		Description:       newPackItem.Description,
 		DetectionPattern:  newPackItem.DetectionPattern,
+		DetectionTypes:    packDetectionTypes,
 		DisplayName:       newPackItem.DisplayName,
 		PackVersion:       version,
 		ID:                input.ID,
@@ -194,11 +201,11 @@ func setupUpdateDetectionsToVersion(pack *packTableItem, newDetectionItems map[s
 // `panther-analysis-packs` ddb table
 func updatePackVersions(newVersion models.Version, oldPackItems []*packTableItem) error {
 	// First, look up the relevate pack and detection data for this release
-	packVersionSet, _, err := downloadValidatePackData(pantherGithubConfig, newVersion)
+	packVersionSet, detectionVersionSet, err := downloadValidatePackData(pantherGithubConfig, newVersion)
 	if err != nil {
 		return err
 	}
-	newPacks := setupUpdatePacksVersions(newVersion, oldPackItems, packVersionSet)
+	newPacks := setupUpdatePacksVersions(newVersion, oldPackItems, packVersionSet, detectionVersionSet)
 	if err != nil {
 		return err
 	}
@@ -213,7 +220,7 @@ func updatePackVersions(newVersion models.Version, oldPackItems []*packTableItem
 // setupUpdatePacksVersions will create the new table items to write to the `panther-analysis-packs` ddb table
 // it ensures a new version is added to `AvailableVersions` and the `UpdateAvailable` is set appropriately
 func setupUpdatePacksVersions(newVersion models.Version, oldPackItems []*packTableItem,
-	newPackItems map[string]*packTableItem) []*packTableItem {
+	newPackItems map[string]*packTableItem, newPackDetections map[string]*tableItem) []*packTableItem {
 
 	// setup var to return slice of updated pack items
 	var newPacks []*packTableItem
@@ -240,10 +247,15 @@ func setupUpdatePacksVersions(newVersion models.Version, oldPackItems []*packTab
 			// contain the version where it was added
 			newPack.Enabled = false
 			newPack.AvailableVersions = []models.Version{newVersion}
-			newPack.UpdateAvailable = true
+			// this is a new pack, adding the only version applicable to it so no update is available
+			// lookup detections that will be in this pack
+			packDetectionTypes := getDetectionTypeSet(detectionSetLookup(newPackDetections, newPack.DetectionPattern))
+			newPack.DetectionTypes = packDetectionTypes
+			newPack.UpdateAvailable = false
 			newPack.PackVersion = newVersion
 			newPack.LastModifiedBy = systemUserID
 			newPack.CreatedBy = systemUserID
+			newPack.Type = models.TypePack
 			newPacks = append(newPacks, newPack)
 		}
 	}
@@ -311,4 +323,23 @@ func detectionSetLookup(newDetections map[string]*tableItem, input models.Detect
 	}
 
 	return items
+}
+
+func getDetectionTypeSet(detections map[string]*tableItem) []models.DetectionType {
+	var detectionTypes []models.DetectionType
+	for _, detection := range detections {
+		if !containsDetectionType(detectionTypes, detection.Type) {
+			detectionTypes = append(detectionTypes, detection.Type)
+		}
+	}
+	return detectionTypes
+}
+
+func containsDetectionType(types []models.DetectionType, element models.DetectionType) bool {
+	for _, typ := range types {
+		if typ == element {
+			return true
+		}
+	}
+	return false
 }

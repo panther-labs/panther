@@ -79,12 +79,11 @@ type Pack struct {
 	PackVersion       Version          `json:"packVersion"`
 	ID                string           `json:"id" validate:"required,max=1000,excludesall='<>&\""`
 	LastModifiedBy    string           `json:"lastModifiedBy"`
-	Type              string           `json:"type"`
-	UserID            string           `json:"userId"`
 	CreatedAt         time.Time        `json:"createdAt"`
 	LastModified      time.Time        `json:"lastModified"`
 	AvailableVersions []Version        `json:"availableVersions"`
 	DetectionPattern  DetectionPattern `json:"detectionPatterns"`
+	DetectionTypes    []DetectionType  `json:"detectionTypes"`
 }
 
 type DetectionPattern struct {

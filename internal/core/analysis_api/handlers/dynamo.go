@@ -90,6 +90,7 @@ type packTableItem struct {
 	CreatedBy         string                  `json:"createdBy"`
 	Description       string                  `json:"description,omitempty"`
 	DetectionPattern  models.DetectionPattern `json:"detectionPattern,omitempty"`
+	DetectionTypes    []models.DetectionType  `json:"detectionTypes,omitempty"`
 	DisplayName       string                  `json:"displayName,omitempty"`
 	PackVersion       models.Version          `json:"packVersion,omitempty"`
 	ID                string                  `json:"id"`
@@ -268,6 +269,7 @@ func (r *packTableItem) Pack() *models.Pack {
 		CreatedBy:         r.CreatedBy,
 		Description:       r.Description,
 		DetectionPattern:  r.DetectionPattern,
+		DetectionTypes:    r.DetectionTypes,
 		DisplayName:       r.DisplayName,
 		PackVersion:       r.PackVersion,
 		Enabled:           r.Enabled,
