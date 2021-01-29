@@ -374,7 +374,7 @@ func singleResourceScan(
 
 	if err != nil {
 		// Check for region ignoreList error
-		var e *RegionIgnoreListError
+		var e RegionIgnoreListError
 		if errors.As(err, &e) {
 			zap.L().Info("Skipping denied region in single resource scan")
 			return nil, nil
