@@ -38,10 +38,9 @@ type SignatureConfig struct {
 	MessageType      string
 }
 
-func NewSignatureConfig(algorithm string, signatureFilename string, keyID string, messageType string) SignatureConfig {
+func NewSignatureConfig(algorithm string, keyID string, messageType string) SignatureConfig {
 	return SignatureConfig{
 		SigningAlgorithm: algorithm,
-		Filename:         signatureFilename,
 		KeyID:            keyID,
 		MessageType:      messageType,
 	}

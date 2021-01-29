@@ -35,30 +35,14 @@ const (
 	// github org and repo containing detection packs
 	pantherGithubOwner = "panther-labs"
 	pantherGithubRepo  = "panther-analysis"
-	// signing keys information
+	// signing key information
 	pantherFirstSigningKeyID = "2f555f7a-636a-41ed-9a6b-c6192bf55810" //TODO: update keys
-	/*pantherRootPublicKey     = "-----BEGIN PUBLIC KEY-----" +
-	"MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAxWU9pnn5A2mdms7yyvTn" +
-	"g1OYALdimf0bLuClivmLFtw4SzWOSbkN+89+4ptyLBrARmfrzsQ1Fswsgm5W+4jk" +
-	"KZ7gqBY2cRtITkMIaESb2CeqaKIl2UsfjcglILFKzJVEC8qsooM4xG+/pnGxIYYj" +
-	"uMTnokyg9TdQHORWyRaTFDI9qcvavJxRF8eaibk49CDY5bvUeij46mJhVjIZcyyu" +
-	"d/qmDtduMfhm4UuYLD7toDmMx6YQW82/nxTo7J7OkANyYWASNFriCeCb2aIb2Gtv" +
-	"7u00Fv2jdNTexQYZhJ+M4OpsG71PK6JTrSSt4nVMoiFRUb0oZhrN4odl5mEJiSDq" +
-	"nHBgsJ6RiwkClN3i8F2yZ8C4tujR8BGUMoXA4z7uG7C7hDtSVcZ7eB8IY2wDBMbZ" +
-	"b2cnbG1jfCnbmHaDbJfcVzDJ1RDjs89Y/MhuSz+22B5eIXdFHp4GbfUc1e/2AT4e" +
-	"Ei1SaRqYj8e+6Cl0WWJjA5V2UxSJ8W9ZePCebUruAphVmf7gdSXD3Xen1uzc4Lv1" +
-	"YkP0zSV5EVsV4KANVF2CzuTdHsRm05n01As7DicN1zrD01vcDdsEgmgSFELy/zvV" +
-	"G4tMQJyl0P0HJMKASQ1vqMYBI8hLD1ZJCCRbRvy1U64kxeE6829MZxTeLP4g919B" +
-	"w8I0Lv118RyYEBOBXLByVEcCAwEAAQ==" +
-	"-----END PUBLIC KEY-----"*/
-	signingAlgorithm = kms.SigningAlgorithmSpecRsassaPkcs1V15Sha512
+	signingAlgorithm         = kms.SigningAlgorithmSpecRsassaPkcs1V15Sha512
 	// source filenames
 	//pantherSourceFilename = "panther-analysis-all.zip"
 	pantherTestSourceFilename = "test-panther-analysis-packs.zip"
 	//pantherSignatureFilename = "panther-analysis-all.sig"
 	pantherTestSignatureFilename = "test-panther-analysis-packs.sig"
-	//pantherPublicKey             = "panther-signing-key.pem"
-	//pantherPublicKeySignature    = "panther-signing-key.sig"
 	// minimum version that supports packs
 	minimumVersionName = "v1.14.0"
 )
@@ -69,8 +53,6 @@ var (
 		//pantherSignatureFilename,
 		pantherTestSourceFilename,
 		pantherTestSignatureFilename,
-		//pantherPublicKey,
-		//pantherPublicKeySignature,
 	}
 	pantherGithubConfig = githubwrapper.NewConfig(
 		pantherGithubOwner,
@@ -79,8 +61,6 @@ var (
 	)
 	signatureConfig = awskms.NewSignatureConfig(
 		signingAlgorithm,
-		//pantherSignatureFilename,
-		pantherTestSignatureFilename,
 		pantherFirstSigningKeyID,
 		kms.MessageTypeDigest,
 	)
@@ -95,13 +75,6 @@ func downloadValidatePackData(config githubwrapper.Config,
 	} else if len(assets) != len(pantherPackAssets) {
 		return nil, nil, fmt.Errorf("missing assets in release")
 	}
-	/*// First validate the public key and its signature (signed by the pather root cert)
-	err = validateSignature([]byte(pantherRootPublicKey), assets[pantherPublicKey], assets[pantherPublicKeySignature])
-	if err != nil {
-		return nil, nil, err
-	}
-	// Then validate the source file and signature
-	err = validateSignature(assets[pantherPublicKey], assets[pantherSourceFilename], assets[pantherSignatureFilename])*/
 	//err = awskms.ValidateSignature(kmsClient, signatureConfig, assets[pantherSourceFilename], assets[pantherSignatureFilename])
 	err = awskms.ValidateSignature(kmsClient, signatureConfig, assets[pantherTestSourceFilename], assets[pantherTestSignatureFilename])
 	if err != nil {
@@ -116,7 +89,7 @@ func downloadValidatePackData(config githubwrapper.Config,
 }
 
 func listAvailableGithubReleases(config githubwrapper.Config) ([]models.Version, error) {
-	allReleases, err := githubClient.ListAvailableGithubReleases(context.TODO(), config.Owner, config.Repository)
+	allReleases, err := githubClient.ListAvailableGithubReleases(context.TODO(), config)
 	if err != nil {
 		return nil, err
 	}
@@ -140,28 +113,3 @@ func listAvailableGithubReleases(config githubwrapper.Config) ([]models.Version,
 	}
 	return availableVersions, nil
 }
-
-/*func validateSignature(publicKey []byte, rawData []byte, signature []byte) error {
-	// use hash of body in validation
-	intermediateHash := sha512.Sum512(rawData)
-	var computedHash []byte = intermediateHash[:]
-	// The signature is base64 encoded in the file, decode it
-	decodedSignature, err := base64.StdEncoding.DecodeString(string(signature))
-	if err != nil {
-		zap.L().Error("error base64 decoding item", zap.Error(err))
-		return err
-	}
-	// load in the pubkey
-	block, _ := pem.Decode(publicKey)
-	if block == nil {
-		return fmt.Errorf("error decoding public key")
-	}
-	key, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		return err
-	}
-	// TODO: only support rsa keys?
-	pubKey := key.(*rsa.PublicKey)
-	err = rsa.VerifyPKCS1v15(pubKey, crypto.SHA512, computedHash[:], decodedSignature)
-	return err
-}*/
