@@ -28,7 +28,6 @@ import (
 	"encoding/pem"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 
@@ -55,7 +54,6 @@ const (
 		"k1jSCMM9mPFWxFDJbdGjDzTtjyqHxBkR3ovJcP///pYhndZw6kIIprALfr1658Fa\n" +
 		"ex+7VGQN6Ptf1P9m6OIACLcCAwEAAQ==\n" +
 		"-----END PUBLIC KEY-----"
-	signingAlgorithm = kms.SigningAlgorithmSpecRsassaPkcs1V15Sha512
 	// source filenames
 	//pantherSourceFilename = "panther-analysis-all.zip"
 	pantherTestSourceFilename = "test-panther-analysis-packs.zip"
