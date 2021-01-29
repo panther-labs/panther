@@ -24,15 +24,19 @@ import React from 'react';
 
 const Component = ({ rule }) => {
   const { loading, detectionDestinations } = useDetectionDestinations({ detection: rule });
+  if (loading) {
+    return <div aria-label="Loading">Loading...</div>;
+  }
+
+  if (!detectionDestinations.length) {
+    return <div>Not Configured</div>;
+  }
+
   return (
     <div>
-      {loading ? (
-        <div aria-label="Loading">Loading...</div>
-      ) : (
-        detectionDestinations.map(dest => {
-          return <div key={dest.outputId}>{dest.displayName}</div>;
-        })
-      )}
+      {detectionDestinations.map(dest => (
+        <div key={dest.outputId}>{dest.displayName}</div>
+      ))}
     </div>
   );
 };
@@ -100,5 +104,23 @@ describe('useDetectionDestinations hook tests', () => {
     expect(loadingElement).toBeInTheDocument();
     await waitForElementToBeRemoved(loadingElement);
     expect(queryByText(displayName)).not.toBeInTheDocument();
+  });
+
+  it('returns `Not Configured` if a destination override points to a non-existent destination', async () => {
+    const rule = buildRule({
+      outputIds: ['NOT_EXISTENT'],
+      severity: SeverityEnum.Info,
+    });
+
+    const destination = buildDestination({
+      outputType: DestinationTypeEnum.Slack,
+      defaultForSeverity: [SeverityEnum.Critical, SeverityEnum.High],
+    });
+
+    const mocks = [mockListDestinations({ data: { destinations: [destination] } })];
+
+    const { findByText } = render(<Component rule={rule} />, { mocks });
+
+    expect(await findByText('Not Configured')).toBeInTheDocument();
   });
 });

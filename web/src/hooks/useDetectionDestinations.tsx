@@ -42,9 +42,11 @@ const useDetectionDestinations = ({
     }
 
     if (detection.outputIds.length) {
-      return detection.outputIds.map(outputId => {
-        return destinations.destinations.find(dest => dest.outputId === outputId);
-      });
+      return detection.outputIds
+        .map(outputId => {
+          return destinations.destinations.find(dest => dest.outputId === outputId);
+        })
+        .filter(Boolean);
     }
     return destinations.destinations.filter(dest => {
       return dest.defaultForSeverity.some(sev => sev === detection.severity);
