@@ -109,7 +109,6 @@ func (c *Client) DownloadGithubReleaseAssets(cxt context.Context, githubConfig C
 }
 
 func (c *Client) ListAvailableGithubReleases(cxt context.Context, githubConfig Config) ([]*github.RepositoryRelease, error) {
-
 	// Note: github rate limits at 60 requests per hour. Use this function wisely and do not trigger by user page accesses
 	// Setup options
 	// By default returns all releases, paged at 100 releases at a time
