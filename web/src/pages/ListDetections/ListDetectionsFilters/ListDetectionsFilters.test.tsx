@@ -108,6 +108,13 @@ describe('ListDetectionsFilters', () => {
     fireClickAndMouseEvents(dropdownTrigger);
     fireClickAndMouseEvents(getByText('Clear Filters'));
     fireClickAndMouseEvents(withinDropdown.getByText('Apply Filters'));
-    await waitFor(() => expect(parseParams(history.location.search)).toEqual('/'));
+    await waitFor(() =>
+      expect(parseParams(history.location.search)).toEqual({
+        nameContains: 'AWS',
+        page: 1,
+        sortBy: ListDetectionsSortFieldsEnum.Severity,
+        sortDir: SortDirEnum.Ascending,
+      })
+    );
   });
 });
