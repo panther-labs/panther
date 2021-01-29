@@ -123,7 +123,12 @@ func (api *API) validateIntegration(input *models.PutIntegrationInput) error {
 		}
 	}
 
-	// Validate the new integration
+	// Validate the new integration (healthcheck).
+	if input.IntegrationType == models.IntegrationTypeAWS3 {
+		// For s3 sources, allow creation regardless of the healthcheck result. This allows
+		// users to manage the log processing role and other infra asynchronously.
+		return nil
+	}
 	reason, passing, err := api.EvaluateIntegrationFunc(&models.CheckIntegrationInput{
 		AWSAccountID:      input.AWSAccountID,
 		IntegrationType:   input.IntegrationType,

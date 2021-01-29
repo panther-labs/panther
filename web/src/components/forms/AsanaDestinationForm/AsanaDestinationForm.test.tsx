@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent, waitFor, waitMs } from 'test-utils';
+import { render, fireEvent, waitFor, waitMs, fireClickAndMouseEvents } from 'test-utils';
 import { AlertTypesEnum, AsanaConfig, SeverityEnum } from 'Generated/schema';
 import AsanaDestinationForm from './index';
 
@@ -54,7 +54,7 @@ const initialValues = {
 
 describe('AsanaDestinationForm', () => {
   it('renders the correct fields', () => {
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText, getByText, getAllByLabelText } = render(
       <AsanaDestinationForm onSubmit={() => {}} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
@@ -64,27 +64,24 @@ describe('AsanaDestinationForm', () => {
     expect(displayNameField).toBeInTheDocument();
     expect(tokenField).toBeInTheDocument();
     expect(projectGidsField).toBeInTheDocument();
-    Object.values(SeverityEnum).forEach(sev => {
-      expect(getByText(sev)).toBeInTheDocument();
-    });
-
+    expect(getAllByLabelText('Severity')[0]).toBeInTheDocument();
+    expect(getAllByLabelText('Alert Types')[0]).toBeInTheDocument();
     expect(submitButton).toHaveAttribute('disabled');
   });
 
   it('has proper validation', async () => {
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText, getByText, getAllByLabelText } = render(
       <AsanaDestinationForm onSubmit={() => {}} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
     const tokenField = getByLabelText('Access Token');
     const projectGidsField = getByLabelText('Project GIDs', { selector: 'input' });
     const submitButton = getByText('Add Destination');
-    const criticalSeverityCheckBox = document.getElementById(severity);
-    expect(criticalSeverityCheckBox).not.toBeNull();
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
     expect(submitButton).toHaveAttribute('disabled');
 
     fireEvent.change(displayNameField, { target: { value: displayName } });
-    fireEvent.click(criticalSeverityCheckBox);
     await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(tokenField, { target: { value: '123' } });
@@ -98,25 +95,28 @@ describe('AsanaDestinationForm', () => {
       });
       fireEvent.blur(projectGidsField);
     });
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
     await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
   });
 
   it('should trigger submit successfully', async () => {
     const submitMockFunc = jest.fn();
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText, getByText, getAllByLabelText } = render(
       <AsanaDestinationForm onSubmit={submitMockFunc} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
     const tokenField = getByLabelText('Access Token');
     const projectGidsField = getByLabelText('Project GIDs', { selector: 'input' });
     const submitButton = getByText('Add Destination');
-    const criticalSeverityCheckBox = document.getElementById(severity);
-    expect(criticalSeverityCheckBox).not.toBeNull();
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
     expect(submitButton).toHaveAttribute('disabled');
 
     fireEvent.change(displayNameField, { target: { value: displayName } });
-    fireEvent.click(criticalSeverityCheckBox);
     const token = '123';
     fireEvent.change(tokenField, { target: { value: token } });
     await waitMs(1);
@@ -129,18 +129,25 @@ describe('AsanaDestinationForm', () => {
       });
       fireEvent.blur(projectGidsField);
     });
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
     await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);
     await waitFor(() => expect(submitMockFunc).toHaveBeenCalledTimes(1));
-    expect(submitMockFunc).toHaveBeenCalledWith({
-      outputId: null,
-      displayName,
-      outputConfig: { asana: { personalAccessToken: token, projectGids: gids } as AsanaConfig },
-      defaultForSeverity: [severity],
-      alertTypes: [],
-    });
+    expect(submitMockFunc).toHaveBeenCalledWith(
+      {
+        outputId: null,
+        displayName,
+        outputConfig: { asana: { personalAccessToken: token, projectGids: gids } as AsanaConfig },
+        defaultForSeverity: [severity],
+        alertTypes: [AlertTypesEnum.Rule],
+      },
+      expect.toBeObject()
+    );
   });
 
   it('should edit Asana Destination successfully', async () => {
@@ -160,12 +167,15 @@ describe('AsanaDestinationForm', () => {
 
     fireEvent.click(submitButton);
     await waitFor(() => expect(submitMockFunc).toHaveBeenCalledTimes(1));
-    expect(submitMockFunc).toHaveBeenCalledWith({
-      outputId: initialValues.outputId,
-      displayName: newDisplayName,
-      outputConfig: initialValues.outputConfig,
-      defaultForSeverity: initialValues.defaultForSeverity,
-      alertTypes: initialValues.alertTypes,
-    });
+    expect(submitMockFunc).toHaveBeenCalledWith(
+      {
+        outputId: initialValues.outputId,
+        displayName: newDisplayName,
+        outputConfig: initialValues.outputConfig,
+        defaultForSeverity: initialValues.defaultForSeverity,
+        alertTypes: initialValues.alertTypes,
+      },
+      expect.toBeObject()
+    );
   });
 });
