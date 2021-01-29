@@ -36,14 +36,12 @@ var (
 )
 
 type ViewMaker struct {
-	ctx          context.Context
 	athenaClient athenaiface.AthenaAPI
 	workgroup    string
 }
 
-func NewViewMaker(ctx context.Context, athenaClient athenaiface.AthenaAPI, workgroup string) *ViewMaker {
+func NewViewMaker(athenaClient athenaiface.AthenaAPI, workgroup string) *ViewMaker {
 	return &ViewMaker{
-		ctx:          ctx,
 		athenaClient: athenaClient,
 		workgroup:    workgroup,
 	}
@@ -87,9 +85,9 @@ func (at *athenaTable) Columns() (cols []views.Column) {
 }
 
 // CreateOrReplaceLogViews will update Athena with all views for the tables provided
-func (m *ViewMaker) CreateOrReplaceLogViews() error {
+func (m *ViewMaker) CreateOrReplaceLogViews(ctx context.Context) error {
 	// loop over available tables, generate view over all Panther tables in glue catalog
-	sqlStatements, err := views.NewViewMaker(m).GenerateLogViews()
+	sqlStatements, err := views.NewViewMaker(m).GenerateLogViews(ctx)
 	if err != nil {
 		return err
 	}
@@ -102,12 +100,12 @@ func (m *ViewMaker) CreateOrReplaceLogViews() error {
 	return err
 }
 
-func (m *ViewMaker) ListTables(databaseName string) (tables []views.Table, err error) {
+func (m *ViewMaker) ListTables(ctx context.Context, databaseName string) (tables []views.Table, err error) {
 	input := &athena.ListTableMetadataInput{
 		CatalogName:  &catalogName,
 		DatabaseName: aws.String(databaseName),
 	}
-	err = m.athenaClient.ListTableMetadataPagesWithContext(m.ctx, input,
+	err = m.athenaClient.ListTableMetadataPagesWithContext(ctx, input,
 		func(page *athena.ListTableMetadataOutput, lastPage bool) bool {
 			for _, table := range page.TableMetadataList {
 				// skip ddb tables!

@@ -19,6 +19,7 @@ package views
  */
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -73,7 +74,7 @@ type testTableLister struct {
 	tables []Table
 }
 
-func (l *testTableLister) ListTables(databaseName string) (tables []Table, err error) {
+func (l *testTableLister) ListTables(_ context.Context, databaseName string) (tables []Table, err error) {
 	if databaseName == pantherdb.LogProcessingDatabase {
 		return l.tables, nil
 	}
@@ -103,7 +104,7 @@ select 'panther_logs' AS p_db_name,NULL AS p_any_aws_account_ids,NULL AS p_any_a
 select 'panther_logs' AS p_db_name,p_any_aws_account_ids,p_any_aws_arns,p_any_aws_instance_ids,p_any_aws_tags,p_any_domain_names,p_any_ip_addresses,p_any_md5_hashes,p_any_sha1_hashes,p_any_sha256_hashes,p_event_time,p_log_type,p_parse_time,p_row_id,p_source_id,p_source_label from panther_logs.table2
 ;
 `
-	sqlStatements, err := NewViewMaker(&lister).GenerateLogViews()
+	sqlStatements, err := NewViewMaker(&lister).GenerateLogViews(context.Background())
 	require.NoError(t, err)
 	require.Len(t, sqlStatements, 2)
 	require.Equal(t, expectedAllLogsSQL, sqlStatements[0])

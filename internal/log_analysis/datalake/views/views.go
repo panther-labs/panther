@@ -19,6 +19,7 @@ package views
  */
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -41,7 +42,7 @@ type Table interface {
 }
 
 type TableLister interface {
-	ListTables(databaseName string) (tables []Table, err error)
+	ListTables(ctx context.Context, databaseName string) (tables []Table, err error)
 }
 
 type ViewMaker struct {
@@ -55,7 +56,7 @@ func NewViewMaker(tableLister TableLister) *ViewMaker {
 }
 
 // GenerateLogViews creates useful Athena views in the panther views database
-func (vm *ViewMaker) GenerateLogViews() (sqlStatements []string, err error) {
+func (vm *ViewMaker) GenerateLogViews(ctx context.Context) (sqlStatements []string, err error) {
 	var allTables []Table // collect so that at the end we can make 1 view over all tables
 
 	var views = []struct {
@@ -68,7 +69,7 @@ func (vm *ViewMaker) GenerateLogViews() (sqlStatements []string, err error) {
 		{pantherdb.RuleErrorsDatabase, "all_rule_errors"},
 	}
 	for _, view := range views {
-		sqlStatement, tables, err := vm.createView(view.databaseName, view.viewName)
+		sqlStatement, tables, err := vm.createView(ctx, view.databaseName, view.viewName)
 		if err != nil {
 			return nil, err
 		}
@@ -87,8 +88,8 @@ func (vm *ViewMaker) GenerateLogViews() (sqlStatements []string, err error) {
 }
 
 // createView creates a view over all tables in the db the using "panther" fields
-func (vm *ViewMaker) createView(databaseName, viewName string) (sql string, tables []Table, err error) {
-	tables, err = vm.tableLister.ListTables(databaseName)
+func (vm *ViewMaker) createView(ctx context.Context, databaseName, viewName string) (sql string, tables []Table, err error) {
+	tables, err = vm.tableLister.ListTables(ctx, databaseName)
 	if err != nil {
 		return "", tables, err
 	}
