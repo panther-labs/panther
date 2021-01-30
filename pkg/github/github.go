@@ -121,6 +121,14 @@ func (c *Client) ListAvailableGithubReleases(cxt context.Context, githubConfig C
 	return releases, nil
 }
 
+func (c *Client) GetReleaseTagName(cxt context.Context, githubConfig Config, version int64) (string, error) {
+	release, _, err := c.Github.Repositories.GetRelease(cxt, githubConfig.Owner, githubConfig.Repository, version)
+	if err != nil {
+		return "", err
+	}
+	return *release.TagName, nil
+}
+
 func downloadGithubAsset(cxt context.Context, client *Client, owner string,
 	repository string, id int64) ([]byte, error) {
 
