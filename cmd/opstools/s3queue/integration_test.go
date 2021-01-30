@@ -101,7 +101,7 @@ func TestIntegrationS3queue(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, numberOfFiles, (int)(input.Stats.NumFiles))
 
-	numberSentMessages, err := testutils.CountMessagesInQueue(sqsClient, toq, messageBatchSize, visibilityTimeoutSeconds)
+	numberSentMessages, _, err := testutils.CountMessagesInQueue(sqsClient, toq, messageBatchSize, visibilityTimeoutSeconds)
 	assert.NoError(t, err)
 	assert.Equal(t, numberOfFiles, numberSentMessages)
 
