@@ -34,6 +34,14 @@ func (API) PollPacks(input *models.PollPacksInput) *events.APIGatewayProxyRespon
 	var err error
 	// determine if polling for a particular release or the latest version
 	if input.ReleaseVersion != (models.Version{}) {
+		// first, validate the version information
+		err := validateGithubVersion(pantherGithubConfig, input.ReleaseVersion)
+		if err != nil {
+			return &events.APIGatewayProxyResponse{
+				StatusCode: http.StatusInternalServerError,
+				Body:       err.Error(),
+			}
+		}
 		releases = []models.Version{input.ReleaseVersion}
 	} else {
 		// First, check for a new release in the github repo by listing all releases

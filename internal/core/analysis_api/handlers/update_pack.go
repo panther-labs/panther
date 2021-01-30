@@ -68,7 +68,7 @@ func updatePackVersion(input *models.PatchPackInput, oldPackItem *packTableItem)
 	if err != nil {
 		zap.L().Error("error downloading and validating pack data", zap.Error(err))
 		return &events.APIGatewayProxyResponse{
-			Body:       fmt.Sprintf("Internal error downloading pack version (%s)", input.PackVersion.Name),
+			Body:       err.Error(),
 			StatusCode: http.StatusInternalServerError,
 		}
 	}
