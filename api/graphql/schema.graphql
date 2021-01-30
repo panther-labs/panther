@@ -373,13 +373,13 @@ input AddRuleInput {
   displayName: String
   enabled: Boolean!
   id: ID!
-  logTypes: [String]
+  logTypes: [String!]
   outputIds: [ID!]
   reference: String
   runbook: String
   severity: SeverityEnum!
-  tags: [String]
-  tests: [DetectionTestDefinitionInput] # Rule and Policy share the same tests structure
+  tags: [String!]
+  tests: [DetectionTestDefinitionInput!]
 }
 
 input UpdateRuleInput {
@@ -390,13 +390,13 @@ input UpdateRuleInput {
   displayName: String
   enabled: Boolean
   id: ID!
-  logTypes: [String]
+  logTypes: [String!]
   outputIds: [ID!]
   reference: String
   runbook: String
   severity: SeverityEnum
-  tags: [String]
-  tests: [DetectionTestDefinitionInput] # Rule and Policy share the same tests structure
+  tags: [String!]
+  tests: [DetectionTestDefinitionInput!]
 }
 
 input GetRuleInput {
@@ -414,24 +414,24 @@ type ListRulesResponse {
 }
 
 type Rule {
-  body: String
-  createdAt: AWSDateTime
+  body: String!
+  createdAt: AWSDateTime!
   createdBy: ID
   dedupPeriodMinutes: Int!
   threshold: Int!
   description: String
   displayName: String
-  enabled: Boolean
+  enabled: Boolean!
   id: String!
   lastModified: AWSDateTime
   lastModifiedBy: ID
-  logTypes: [String]
+  logTypes: [String!]
   outputIds: [ID!]!
   reference: String
   runbook: String
-  severity: SeverityEnum
-  tags: [String]
-  tests: [DetectionTestDefinition] # Policy and Rule have the same tests structure so we reuse the struct here
+  severity: SeverityEnum!
+  tags: [String!]!
+  tests: [DetectionTestDefinition!]!
   versionId: ID
 }
 
@@ -850,13 +850,13 @@ input PagerDutyConfigInput {
 type Policy {
   autoRemediationId: ID
   autoRemediationParameters: AWSJSON
-  body: String
+  body: String!
   complianceStatus: ComplianceStatusEnum
-  createdAt: AWSDateTime
+  createdAt: AWSDateTime!
   createdBy: ID
   description: String
   displayName: String
-  enabled: Boolean
+  enabled: Boolean!
   id: ID!
   lastModified: AWSDateTime
   lastModifiedBy: ID
@@ -864,10 +864,10 @@ type Policy {
   reference: String
   resourceTypes: [String]
   runbook: String
-  severity: SeverityEnum
-  suppressions: [String]
-  tags: [String]
-  tests: [DetectionTestDefinition]
+  severity: SeverityEnum!
+  suppressions: [String!]
+  tags: [String!]!
+  tests: [DetectionTestDefinition!]!
   versionId: ID
 }
 
