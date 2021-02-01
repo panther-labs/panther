@@ -18,14 +18,15 @@
 
 import React from 'react';
 import { ModalProps, useSnackbar } from 'pouncejs';
-import { Rule } from 'Generated/schema';
+import { RuleSummary } from 'Source/graphql/fragments/RuleSummary.generated';
+import { RuleDetails } from 'Source/graphql/fragments/RuleDetails.generated';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import { useDeleteRule } from './graphql/deleteRule.generated';
 import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
 export interface DeleteRuleModalProps extends ModalProps {
-  rule: Rule;
+  rule: RuleSummary | RuleDetails;
 }
 
 const DeleteRuleModal: React.FC<DeleteRuleModalProps> = ({ rule, ...rest }) => {

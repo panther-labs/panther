@@ -45,7 +45,7 @@ const AlertDetailsBanner: React.FC<AlertDetailsBannerProps> = ({ alert }) => {
           </Box>
         </Flex>
       </Flex>
-      <Flex as="dl" fontSize="small-medium" pt={5} spacing={8}>
+      <Flex as="dl" fontSize="small-medium" pt={5} spacing={8} wrap="wrap">
         <Flex>
           <Box color="navyblue-100" as="dt" pr={2}>
             Alert Type

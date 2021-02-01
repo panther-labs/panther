@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Box, Button, Icon, Flex, Card, Heading, Badge, Tooltip } from 'pouncejs';
-import { Policy } from 'Generated/schema';
+import { PolicyDetails } from 'Source/graphql/fragments/PolicyDetails.generated';
 import urls from 'Source/urls';
 import JsonViewer from 'Components/JsonViewer';
 import Breadcrumbs from 'Components/Breadcrumbs';
@@ -32,7 +32,7 @@ import BulletedValue from 'Components/BulletedValue';
 import RelatedDestinations from 'Components/RelatedDestinations/RelatedDestinations';
 
 interface ResourceDetailsBannerProps {
-  policy?: Policy;
+  policy?: PolicyDetails;
 }
 
 const PolicyDetailsBanner: React.FC<ResourceDetailsBannerProps> = ({ policy }) => {
@@ -112,7 +112,15 @@ const PolicyDetailsBanner: React.FC<ResourceDetailsBannerProps> = ({ policy }) =
             )}
           </Flex>
         </Flex>
-        <Flex as="dl" fontSize="small-medium" pt={5} spacing={8}>
+        <Flex as="dl" fontSize="small-medium" pt={5} spacing={8} wrap="wrap">
+          <Flex>
+            <Box color="navyblue-100" as="dt" pr={2}>
+              Detection Type
+            </Box>
+            <Box as="dd" fontWeight="bold" color="indigo-300">
+              Policy
+            </Box>
+          </Flex>
           <Flex>
             <Box color="navyblue-100" as="dt" pr={2}>
               Policy ID
