@@ -26,6 +26,7 @@ import {
   buildListAvailableLogTypesResponse,
   buildUpdateS3LogIntegrationInput,
   buildS3PrefixLogTypesInput,
+  fireClickAndMouseEvents,
   buildIntegrationTemplate,
 } from 'test-utils';
 import { Route } from 'react-router';
@@ -124,7 +125,7 @@ describe('EditS3LogSource', () => {
     // ... replaced by an active button as soon as it's fetched
     await waitFor(() => expect(getByText('Get template file')).not.toHaveAttribute('disabled'));
 
-    // We expect users to only have the option of downloading the template
+    // We expect not to display a link button AWS Console for editing
     expect(queryByText('Launch Console')).not.toBeInTheDocument();
 
     // We move on to the final screen
@@ -137,6 +138,198 @@ describe('EditS3LogSource', () => {
     expect(await findByText('Everything looks good!')).toBeInTheDocument();
     expect(getByText('Finish Setup')).toBeInTheDocument();
 
+    // Expect analytics to have been called
+    expect(trackEvent).toHaveBeenCalledWith({
+      event: EventEnum.UpdatedLogSource,
+      src: SrcEnum.LogSources,
+      ctx: 'S3',
+    });
+  });
+
+  it('can add a new prefix & update an S3 log source with skipping the template step', async () => {
+    const logTypesResponse = buildListAvailableLogTypesResponse({
+      logTypes: ['AWS.S3', 'AWS.ALB'],
+    });
+    const existingPrefixLogType = {
+      prefix: '/prefix/existing',
+      logTypes: [logTypesResponse.logTypes[0]],
+    };
+    const logSource = buildS3LogIntegration({
+      awsAccountId: '123123123123',
+      s3PrefixLogTypes: [existingPrefixLogType],
+      kmsKey: '',
+    });
+
+    const newS3PrefixLogType = { prefix: '/prefix/new', logTypes: [logTypesResponse.logTypes[1]] };
+    const updatedLogSource = buildS3LogIntegration({
+      ...logSource,
+      s3PrefixLogTypes: [existingPrefixLogType, newS3PrefixLogType],
+    });
+
+    const mocks = [
+      mockGetS3LogSource({
+        variables: {
+          id: logSource.integrationId,
+        },
+        data: {
+          getS3LogIntegration: logSource,
+        },
+      }),
+      mockListAvailableLogTypes({
+        data: {
+          listAvailableLogTypes: logTypesResponse,
+        },
+      }),
+      mockUpdateS3LogSource({
+        variables: {
+          input: {
+            integrationId: updatedLogSource.integrationId,
+            integrationLabel: updatedLogSource.integrationLabel,
+            s3Bucket: updatedLogSource.s3Bucket,
+            s3PrefixLogTypes: updatedLogSource.s3PrefixLogTypes,
+            kmsKey: null,
+          },
+        },
+        data: {
+          updateS3LogIntegration: updatedLogSource,
+        },
+      }),
+    ];
+    const {
+      getByText,
+      getByLabelText,
+      getByAltText,
+      findByText,
+      getByAriaLabel,
+      getAllByLabelText,
+      queryByText,
+    } = render(
+      <Route path={urls.logAnalysis.sources.edit(':id', ':type')}>
+        <EditS3LogSource />
+      </Route>,
+      {
+        mocks,
+        initialRoute: urls.logAnalysis.sources.edit(logSource.integrationId, 's3'),
+      }
+    );
+
+    const nameField = getByLabelText('Name') as HTMLInputElement;
+
+    //  Wait for GET api request to populate the form
+    await waitFor(() => expect(nameField).toHaveValue('Loading...'));
+    await waitFor(() => expect(nameField).toHaveValue(logSource.integrationLabel));
+
+    // Adding an extra prefix - log type
+    await fireClickAndMouseEvents(getByAriaLabel('Add prefix'));
+    // Fill in the form for the second prefix - logType item
+    fireEvent.change(getAllByLabelText('S3 Prefix Filter (leave empty to allow all)')[1], {target: {value: updatedLogSource.s3PrefixLogTypes[1].prefix } }); // prettier-ignore
+    fireEvent.change(getAllByLabelText('Log Types')[3], {target: {value: updatedLogSource.s3PrefixLogTypes[1].logTypes[0] } }); // prettier-ignore
+    fireClickAndMouseEvents(await findByText(updatedLogSource.s3PrefixLogTypes[1].logTypes[0]));
+    // Wait for form validation to kick in and move on to the next screen
+    await waitMs(1);
+    fireEvent.click(getByText('Continue'));
+
+    // We expect to skip the template step cause user only changed the s3PrefixLogTypes
+    expect(queryByText('Get template file')).toBeInTheDocument();
+    fireEvent.click(getByText('Continue'));
+    // Expect to see a loading animation while the source is being validated ...
+    expect(getByAltText('Validating source health...')).toBeInTheDocument();
+
+    // ... replaced by a success screen
+    expect(await findByText('Everything looks good!')).toBeInTheDocument();
+    expect(getByText('Finish Setup')).toBeInTheDocument();
+    // Expect analytics to have been called
+    expect(trackEvent).toHaveBeenCalledWith({
+      event: EventEnum.UpdatedLogSource,
+      src: SrcEnum.LogSources,
+      ctx: 'S3',
+    });
+  });
+
+  it('can remove a prefix & update an S3 log source with skipping the template step', async () => {
+    const logTypesResponse = buildListAvailableLogTypesResponse({
+      logTypes: ['AWS.S3', 'AWS.ALB'],
+    });
+    const prefixLogType1 = { prefix: '/prefix/1', logTypes: [logTypesResponse.logTypes[1]] };
+    const prefixLogType2 = { prefix: '/prefix/2', logTypes: [logTypesResponse.logTypes[1]] };
+    const logSource = buildS3LogIntegration({
+      awsAccountId: '123123123123',
+      s3PrefixLogTypes: [prefixLogType1, prefixLogType2],
+      kmsKey: '',
+    });
+
+    const updatedLogSource = buildS3LogIntegration({
+      ...logSource,
+      s3PrefixLogTypes: [prefixLogType2],
+    });
+
+    const mocks = [
+      mockGetS3LogSource({
+        variables: {
+          id: logSource.integrationId,
+        },
+        data: {
+          getS3LogIntegration: logSource,
+        },
+      }),
+      mockListAvailableLogTypes({
+        data: {
+          listAvailableLogTypes: logTypesResponse,
+        },
+      }),
+      mockUpdateS3LogSource({
+        variables: {
+          input: {
+            integrationId: updatedLogSource.integrationId,
+            integrationLabel: updatedLogSource.integrationLabel,
+            s3Bucket: updatedLogSource.s3Bucket,
+            s3PrefixLogTypes: updatedLogSource.s3PrefixLogTypes,
+            kmsKey: null,
+          },
+        },
+        data: {
+          updateS3LogIntegration: updatedLogSource,
+        },
+      }),
+    ];
+    const {
+      getByText,
+      getByLabelText,
+      getByAltText,
+      findByText,
+      getByAriaLabel,
+      queryByText,
+    } = render(
+      <Route path={urls.logAnalysis.sources.edit(':id', ':type')}>
+        <EditS3LogSource />
+      </Route>,
+      {
+        mocks,
+        initialRoute: urls.logAnalysis.sources.edit(logSource.integrationId, 's3'),
+      }
+    );
+
+    const nameField = getByLabelText('Name') as HTMLInputElement;
+
+    //  Wait for GET api request to populate the form
+    await waitFor(() => expect(nameField).toHaveValue('Loading...'));
+    await waitFor(() => expect(nameField).toHaveValue(logSource.integrationLabel));
+
+    // Removing the first prefix
+    await fireClickAndMouseEvents(getByAriaLabel('Remove prefix 0'));
+    // Wait for form validation to kick in and move on to the next screen
+    await waitMs(1);
+    fireEvent.click(getByText('Continue'));
+
+    // We expect to skip the template step cause user only changed the s3PrefixLogTypes
+    expect(queryByText('Get template file')).toBeInTheDocument();
+    fireEvent.click(getByText('Continue'));
+    // Expect to see a loading animation while the source is being validated ...
+    expect(getByAltText('Validating source health...')).toBeInTheDocument();
+
+    // ... replaced by a success screen
+    expect(await findByText('Everything looks good!')).toBeInTheDocument();
+    expect(getByText('Finish Setup')).toBeInTheDocument();
     // Expect analytics to have been called
     expect(trackEvent).toHaveBeenCalledWith({
       event: EventEnum.UpdatedLogSource,

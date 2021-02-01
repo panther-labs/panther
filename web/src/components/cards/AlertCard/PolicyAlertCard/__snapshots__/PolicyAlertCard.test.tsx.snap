@@ -548,7 +548,7 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
                   </span>
                   <a
                     aria-label="Link to policy a68babd7-7c1c-4dee-a33e-b8009e6d8017"
-                    href="/cloud-security/policies/a68babd7-7c1c-4dee-a33e-b8009e6d8017/"
+                    href="/detections/policies/a68babd7-7c1c-4dee-a33e-b8009e6d8017/"
                   >
                     <div
                       class="panther-9"

@@ -191,6 +191,10 @@ exports[`RuleAlert - AlertDetailsBanner renders 1`] = `
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
+  -webkit-box-flex-wrap: wrap;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
   font-size: 0.813rem;
   padding-top: 20px;
 }

@@ -49,5 +49,6 @@ fragment DestinationFull on Destination {
   }
   verificationStatus
   defaultForSeverity
+  alertTypes
   __typename
 }

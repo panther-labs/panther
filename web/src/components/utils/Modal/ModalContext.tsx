@@ -23,6 +23,7 @@ import { ResetUserPasswordProps } from 'Components/modals/ResetUserPasswordModal
 import { DeleteComplianceSourceModalProps } from 'Components/modals/DeleteComplianceSourceModal';
 import { DeleteLogSourceModalProps } from 'Components/modals/DeleteLogSourceModal';
 import { DeleteDestinationModalProps } from 'Components/modals/DeleteDestinationModal';
+import { GenericModalProps } from 'Components/modals/GenericModal';
 import { DeleteRuleModalProps } from 'Components/modals/DeleteRuleModal';
 import { DeleteTestModalProps } from 'Components/modals/DeleteTestModal';
 import { DeleteGlobalPythonModuleModalProps } from 'Components/modals/DeleteGlobalPythonModuleModal';
@@ -42,6 +43,7 @@ export enum MODALS {
   DELETE_GLOBAL_PYTHON_MODULE = 'DELETE_GLOBAL_PYTHON_MODULE',
   DELETE_USER = 'DELETE_USER',
   DELETE_TEST = 'DELETE_TEST',
+  GENERIC_MODAL = 'GENERIC_MODAL',
   EDIT_PROFILE_SETTINGS = 'EDIT_PROFILE_SETTINGS',
   RESET_USER_PASS = 'RESET_USER_PASS',
   DELETE_COMPLIANCE_SOURCE = 'DELETE_COMPLIANCE_SOURCE',
@@ -73,6 +75,14 @@ interface ShowCustomLogModalAction {
   payload: {
     modal: MODALS.DELETE_CUSTOM_LOG;
     props: OmitControlledProps<DeleteCustomLogModalProps>;
+  };
+}
+
+interface ShowGenericModal {
+  type: typeof SHOW_MODAL;
+  payload: {
+    modal: MODALS.GENERIC_MODAL;
+    props: OmitControlledProps<GenericModalProps>;
   };
 }
 
@@ -185,6 +195,7 @@ interface ShowAnalyticsConsentModalAction {
 
 /* The available actions that can be dispatched */
 type ModalStateAction =
+  | ShowGenericModal
   | ShowDeleteComplianceSourceModalAction
   | ShowCustomLogModalAction
   | ShowDeleteLogSourceModalAction

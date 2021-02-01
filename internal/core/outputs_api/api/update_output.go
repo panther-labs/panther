@@ -71,6 +71,7 @@ func (API) UpdateOutput(input *models.UpdateOutputInput) (*models.UpdateOutputOu
 		OutputID:           input.OutputID,
 		OutputConfig:       newConfig,
 		DefaultForSeverity: input.DefaultForSeverity,
+		AlertTypes:         input.AlertTypes,
 	}
 
 	alertOutputItem, err := AlertOutputToItem(alertOutput)
@@ -87,6 +88,7 @@ func (API) UpdateOutput(input *models.UpdateOutputInput) (*models.UpdateOutputOu
 		return nil, err
 	}
 	redactOutput(alertOutput.OutputConfig)
+	configureOutputFallbacks(alertOutput)
 
 	return alertOutput, nil
 }

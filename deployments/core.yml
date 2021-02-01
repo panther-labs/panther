@@ -624,7 +624,6 @@ Resources:
           MIN_RETRY_DELAY_SECS: !FindInMap [Alerts, MinRetryDelay, Seconds]
           OUTPUTS_API: panther-outputs-api
           OUTPUTS_REFRESH_INTERVAL: '30s'
-          POLICY_URL_PREFIX: !Sub https://${AppDomainURL}/cloud-security/policies/
           RULE_INDEX_NAME: ruleId-creationTime-index
           TIME_INDEX_NAME: timePartition-creationTime-index
       Events:

@@ -82,7 +82,7 @@ const RuleDetailsInfo: React.FC<RuleCardDetailsProps> = ({ rule }) => {
                     <Link
                       key={tag}
                       as={RRLink}
-                      to={`${urls.logAnalysis.rules.list()}?page=1&tags[]=${tag}`}
+                      to={`${urls.detections.list()}?page=1&tags[]=${tag}`}
                     >
                       {tag}
                       {index !== rule.tags.length - 1 ? ', ' : null}

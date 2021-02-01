@@ -63,7 +63,7 @@ exports[`PolicyFormTestResult matches the snapshot 1`] = `
   padding-bottom: 4px;
   padding-left: 16px;
   padding-right: 16px;
-  background-color: #d64242;
+  background-color: #e85959;
 }
 
 <div>

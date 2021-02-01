@@ -1,0 +1,18 @@
+query ListDetections($input: ListDetectionsInput) {
+  detections(input: $input) {
+    detections {
+      ... on Rule {
+        ...RuleSummary
+      }
+
+      ... on Policy {
+        ...PolicySummary
+      }
+    }
+    paging {
+      totalPages
+      thisPage
+      totalItems
+    }
+  }
+}

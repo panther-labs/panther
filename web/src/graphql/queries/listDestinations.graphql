@@ -4,5 +4,6 @@ query ListDestinations {
     outputType
     displayName
     defaultForSeverity
+    alertTypes
   }
 }

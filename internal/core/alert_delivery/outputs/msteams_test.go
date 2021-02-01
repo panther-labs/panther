@@ -26,7 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
@@ -39,10 +39,10 @@ func TestMsTeamsAlert(t *testing.T) {
 	client := &OutputClient{httpWrapper: httpWrapper}
 
 	var createdAtTime, _ = time.Parse(time.RFC3339, "2019-08-03T11:40:13Z")
-	alert := &alertModels.Alert{
+	alert := &deliverymodel.Alert{
 		AlertID:      aws.String("alertId"),
 		AnalysisID:   "policyId",
-		Type:         alertModels.PolicyType,
+		Type:         deliverymodel.PolicyType,
 		CreatedAt:    createdAtTime,
 		OutputIds:    []string{"output-id"},
 		AnalysisName: aws.String("policyName"),

@@ -19,6 +19,7 @@
 import React from 'react';
 import { Box, useSnackbar } from 'pouncejs';
 import {
+  AlertTypesEnum,
   DestinationConfigInput,
   DestinationInput,
   DestinationTypeEnum,
@@ -36,6 +37,7 @@ import { WizardData } from '../CreateDestinationWizard';
 const initialValues: Omit<DestinationInput, 'outputType'> = {
   displayName: '',
   defaultForSeverity: [],
+  alertTypes: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError, AlertTypesEnum.Policy],
   outputConfig: {
     pagerDuty: { integrationKey: '' },
     github: { repoName: '', token: '' },
@@ -93,13 +95,14 @@ const ConfigureDestinationPanel: React.FC = () => {
   // be assigned to a const
   const handleSubmit = React.useCallback(
     async (values: BaseDestinationFormValues<Partial<DestinationConfigInput>>) => {
-      const { displayName, defaultForSeverity, outputConfig } = values;
+      const { displayName, defaultForSeverity, alertTypes, outputConfig } = values;
       await addDestination({
         variables: {
           input: {
             // form values that are present in all Destinations
             displayName,
             defaultForSeverity,
+            alertTypes,
 
             // dynamic form values that depend on the selected destination
             outputType: selectedDestinationType,
@@ -125,7 +128,7 @@ const ConfigureDestinationPanel: React.FC = () => {
       : selectedDestinationType
   );
   return (
-    <Box maxWidth={700} mx="auto">
+    <Box maxWidth={800} mx="auto">
       <WizardPanel.Heading
         title={`Configure Your ${destinationDisplayName} Destination`}
         subtitle="Fill out the form below to configure your Destination"

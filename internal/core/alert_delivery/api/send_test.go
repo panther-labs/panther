@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	deliveryModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/internal/core/alert_delivery/outputs"
 	"github.com/panther-labs/panther/pkg/testutils"
@@ -233,7 +233,7 @@ func TestSendAlertsTimeout(t *testing.T) {
 	alertID := aws.String("alert-id")
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
 
-	alert := &deliveryModels.Alert{
+	alert := &deliverymodel.Alert{
 		AlertID:             alertID,
 		AnalysisDescription: "A test alert",
 		AnalysisID:          "Test.Analysis.ID",
@@ -242,7 +242,7 @@ func TestSendAlertsTimeout(t *testing.T) {
 		Title:               "Test Alert",
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
-		Type:                deliveryModels.RuleType,
+		Type:                deliverymodel.RuleType,
 		OutputIds:           outputIds,
 		Severity:            "INFO",
 		CreatedAt:           time.Now().UTC(),
@@ -273,7 +273,7 @@ func TestSendAlertsTimeout(t *testing.T) {
 		},
 	}
 
-	// AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
+	// AlertOutputMap map[*deliverymodel.Alert][]*outputModels.AlertOutput
 	alertOutputMap := AlertOutputMap{
 		alert: alertOutputs,
 	}
@@ -381,7 +381,7 @@ func TestSendAlertsSuccess(t *testing.T) {
 	alertID := aws.String("alert-id")
 	outputIds := []string{"output-id-1", "output-id-2", "output-id-3"}
 
-	alert := &deliveryModels.Alert{
+	alert := &deliverymodel.Alert{
 		AlertID:             alertID,
 		AnalysisDescription: "A test alert",
 		AnalysisID:          "Test.Analysis.ID",
@@ -390,7 +390,7 @@ func TestSendAlertsSuccess(t *testing.T) {
 		Title:               "Test Alert",
 		RetryCount:          0,
 		Tags:                []string{"test", "alert"},
-		Type:                deliveryModels.RuleType,
+		Type:                deliverymodel.RuleType,
 		OutputIds:           outputIds,
 		Severity:            "INFO",
 		CreatedAt:           time.Now().UTC(),
@@ -421,7 +421,7 @@ func TestSendAlertsSuccess(t *testing.T) {
 		},
 	}
 
-	// AlertOutputMap map[*deliveryModels.Alert][]*outputModels.AlertOutput
+	// AlertOutputMap map[*deliverymodel.Alert][]*outputModels.AlertOutput
 	alertOutputMap := AlertOutputMap{
 		alert: alertOutputs,
 	}
