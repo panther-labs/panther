@@ -71,7 +71,7 @@ const SourceConfigurationPanel: React.FC = () => {
             </FormHelperText>
             <Field
               as={FormikSwitch}
-              aria-label="Real-Time Notifications"
+              aria-label="Real-Time AWS Resource Scans"
               name="cweEnabled"
               aria-describedby="cweEnabled-description"
             />
@@ -85,7 +85,7 @@ const SourceConfigurationPanel: React.FC = () => {
             </FormHelperText>
             <Field
               as={FormikSwitch}
-              aria-label="Enable Auto-Remediation"
+              aria-label="AWS Automatic Remediations"
               name="remediationEnabled"
               aria-describedby="remediationEnabled-description"
             />
