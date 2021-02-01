@@ -529,7 +529,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
                   </span>
                   <a
                     aria-label="Link to rule 8780849b-30b8-4ce2-934b-bf033369b110"
-                    href="/log-analysis/rules/8780849b-30b8-4ce2-934b-bf033369b110/"
+                    href="/detections/rules/8780849b-30b8-4ce2-934b-bf033369b110/"
                   >
                     <div
                       class="panther-9"

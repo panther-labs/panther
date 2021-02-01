@@ -93,7 +93,8 @@ describe('Log Analysis Overview', () => {
               'eventsProcessed',
               'totalAlertsDelta',
               'alertsBySeverity',
-              'eventsLatency',
+              // TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
+              // 'eventsLatency',
               'alertsByRuleID',
             ],
             fromDate: mockedFromDate,
@@ -121,7 +122,9 @@ describe('Log Analysis Overview', () => {
     ];
   });
 
-  it('should render 2 canvas, click on tab button and render latency chart', async () => {
+  // TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
+  // Skip this test until we re-enable data latency graph
+  it.skip('should render 2 canvas, click on tab button and render latency chart', async () => {
     const { getByTestId, getAllByTitle, getByText } = render(<LogAnalysisOverview />, {
       mocks: defaultMocks,
     });
