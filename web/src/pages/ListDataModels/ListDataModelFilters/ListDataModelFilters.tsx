@@ -52,15 +52,15 @@ const sortingOpts: SortingOptions = [
   {
     opt: 'A to Z',
     resolution: {
-      sortBy: ListDataModelsSortFieldsEnum.LastModified,
+      sortBy: ListDataModelsSortFieldsEnum.Id,
       sortDir: SortDirEnum.Ascending,
     },
   },
   {
     opt: 'Z to A',
     resolution: {
-      sortBy: ListDataModelsSortFieldsEnum.LastModified,
-      sortDir: SortDirEnum.Ascending,
+      sortBy: ListDataModelsSortFieldsEnum.Id,
+      sortDir: SortDirEnum.Descending,
     },
   },
   {

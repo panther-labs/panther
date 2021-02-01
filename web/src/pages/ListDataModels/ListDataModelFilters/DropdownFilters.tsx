@@ -25,6 +25,7 @@ import isUndefined from 'lodash/isUndefined';
 import TextButton from 'Components/buttons/TextButton';
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikMultiCombobox from 'Components/fields/MultiComboBox';
+import { useListAvailableLogTypes } from 'Source/graphql/queries';
 
 export type ListDataModelsDropdownFiltersValues = Pick<ListDataModelsInput, 'logTypes' | 'enabled'>;
 
@@ -34,6 +35,7 @@ const defaultValues = {
 };
 
 const DropdownFilters: React.FC = () => {
+  const { data: logTypeData } = useListAvailableLogTypes();
   const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
     ListDataModelsInput
   >();
@@ -86,7 +88,7 @@ const DropdownFilters: React.FC = () => {
                       <Field
                         name="logTypes"
                         as={FormikMultiCombobox}
-                        items={[]}
+                        items={logTypeData?.listAvailableLogTypes?.logTypes ?? []}
                         label="Log Types"
                         placeholder="Select log types"
                       />
