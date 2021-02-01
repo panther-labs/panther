@@ -17,20 +17,29 @@
  */
 
 import React from 'react';
-import { Box, Card, TabList, TabPanel, TabPanels, Tabs } from 'pouncejs';
-import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
+// TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
+import { Box, Card /* TabList, TabPanel, TabPanels, Tabs */ } from 'pouncejs';
+// import { BorderedTab, BorderTabDivider } from 'Components/BorderedTab';
 import EventsByLogType from 'Pages/LogAnalysisOverview/EventsByLogType/EventsByLogType';
-import { LongSeriesData, FloatSeriesData } from 'Generated/schema';
-import EventsByLatency from '../EventsByLatency';
+import { LongSeriesData /* FloatSeriesData */ } from 'Generated/schema';
+import Panel from 'Components/Panel';
+// import EventsByLatency from '../EventsByLatency';
 
 interface LogTypeChartsProps {
   eventsProcessed: LongSeriesData;
-  eventsLatency: FloatSeriesData;
+  // eventsLatency: FloatSeriesData;
 }
 
-const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed, eventsLatency }) => {
+const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed /* eventsLatency */ }) => {
   return (
     <Card as="section">
+      <Panel title="Events by Log Type">
+        <Box height={289} py={5} pl={4} backgroundColor="navyblue-500">
+          <EventsByLogType events={eventsProcessed} />
+        </Box>
+      </Panel>
+      {/*
+      // TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
       <Tabs>
         <Box position="relative" pl={2} pr={4}>
           <TabList>
@@ -53,7 +62,7 @@ const LogTypeCharts: React.FC<LogTypeChartsProps> = ({ eventsProcessed, eventsLa
             </TabPanel>
           </TabPanels>
         </Box>
-      </Tabs>
+      </Tabs> */}
     </Card>
   );
 };
