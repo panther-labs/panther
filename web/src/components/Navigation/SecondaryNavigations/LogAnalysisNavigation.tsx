@@ -49,12 +49,6 @@ const LogAnalysisNavigation: React.FC = () => {
         />
         <NavLink
           isSecondary
-          icon="rule"
-          to={`${urls.logAnalysis.rules.list()}?page=1&sortBy=lastModified&sortDir=descending`}
-          label="Rules"
-        />
-        <NavLink
-          isSecondary
           icon="log-source"
           to={urls.logAnalysis.sources.list()}
           label="Sources"

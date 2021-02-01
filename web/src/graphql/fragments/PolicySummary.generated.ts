@@ -36,6 +36,7 @@ export type PolicySummary = Pick<
   | 'createdAt'
   | 'lastModified'
   | 'enabled'
+  | 'analysisType'
 >;
 
 export const PolicySummary = gql`
@@ -53,5 +54,6 @@ export const PolicySummary = gql`
     createdAt
     lastModified
     enabled
+    analysisType
   }
 `;

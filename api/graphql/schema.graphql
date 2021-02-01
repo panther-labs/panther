@@ -53,6 +53,7 @@ type Mutation {
 type Query {
   alert(input: GetAlertInput!): AlertDetails
   alerts(input: ListAlertsInput): ListAlertsResponse
+  detections(input: ListDetectionsInput): ListDetectionsResponse!
   sendTestAlert(input: SendTestAlertInput!): [DeliveryResponse]!
   destination(id: ID!): Destination
   destinations: [Destination]
@@ -71,7 +72,6 @@ type Query {
   resourcesForPolicy(input: ResourcesForPolicyInput!): ListComplianceItemsResponse
   getGlobalPythonModule(input: GetGlobalPythonModuleInput!): GlobalPythonModule!
   policy(input: GetPolicyInput!): Policy
-  policies(input: ListPoliciesInput): ListPoliciesResponse
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
   listAvailableLogTypes: ListAvailableLogTypesResponse!
   listComplianceIntegrations: [ComplianceIntegration!]!
@@ -80,11 +80,34 @@ type Query {
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   getLogAnalysisMetrics(input: LogAnalysisMetricsInput!): LogAnalysisMetricsResponse!
   rule(input: GetRuleInput!): Rule
-  rules(input: ListRulesInput): ListRulesResponse
   listGlobalPythonModules(input: ListGlobalPythonModuleInput!): ListGlobalPythonModulesResponse!
   users: [User!]!
   getCustomLog(input: GetCustomLogInput!): GetCustomLogOutput!
   listCustomLogs: [CustomLogRecord!]!
+}
+
+input ListDetectionsInput {
+  # Policy Only
+  complianceStatus: ComplianceStatusEnum
+  hasRemediation: Boolean
+  resourceTypes: [String!]
+
+  # Rule Only
+  logTypes: [String!]
+
+  # Common
+  analysisTypes: [DetectionTypeEnum!]
+  nameContains: String
+  enabled: Boolean
+  severity: [SeverityEnum!]
+  createdBy: String
+  lastModifiedBy: String
+  initialSet: Boolean
+  tags: [String!]
+  sortBy: ListDetectionsSortFieldsEnum # defaults to `id`
+  sortDir: SortDirEnum # defaults to `ascending`
+  pageSize: Int # defaults to `25`
+  page: Int # defaults to `1`
 }
 
 input DeleteEntry {
@@ -174,6 +197,11 @@ input GetAlertInput {
   alertId: ID!
   eventsPageSize: Int
   eventsExclusiveStartKey: String
+}
+
+type ListDetectionsResponse {
+  detections: [Detection!]!
+  paging: PagingData!
 }
 
 type DataModelMapping {
@@ -348,23 +376,6 @@ input SendTestAlertInput {
   outputIds: [ID!]!
 }
 
-input ListRulesInput {
-  createdBy: String
-  lastModifiedBy: String
-  initialSet: Boolean
-  nameContains: String
-  enabled: Boolean
-  logTypes: [String!]
-  severity: [SeverityEnum!]
-  tags: [String!]
-  # Sorting
-  sortBy: ListRulesSortFieldsEnum # defaults to `id`
-  sortDir: SortDirEnum # defaults to `ascending`
-  # Paging
-  pageSize: Int # defaults to `25`
-  page: Int # defaults to `1`
-}
-
 input AddRuleInput {
   body: String!
   dedupPeriodMinutes: Int!
@@ -408,12 +419,27 @@ input DeleteRuleInput {
   rules: [DeleteEntry!]!
 }
 
-type ListRulesResponse {
-  paging: PagingData
-  rules: [Rule!]!
+interface Detection {
+  body: String!
+  createdAt: AWSDateTime!
+  createdBy: ID
+  description: String
+  displayName: String
+  enabled: Boolean!
+  id: ID!
+  lastModified: AWSDateTime
+  lastModifiedBy: ID
+  outputIds: [ID!]!
+  reference: String
+  runbook: String
+  severity: SeverityEnum!
+  tags: [String!]!
+  tests: [DetectionTestDefinition!]!
+  versionId: ID
+  analysisType: DetectionTypeEnum!
 }
 
-type Rule {
+type Rule implements Detection {
   body: String!
   createdAt: AWSDateTime!
   createdBy: ID
@@ -422,7 +448,7 @@ type Rule {
   description: String
   displayName: String
   enabled: Boolean!
-  id: String!
+  id: ID!
   lastModified: AWSDateTime
   lastModifiedBy: ID
   logTypes: [String!]
@@ -433,6 +459,7 @@ type Rule {
   tags: [String!]!
   tests: [DetectionTestDefinition!]!
   versionId: ID
+  analysisType: DetectionTypeEnum!
 }
 
 input SuppressPoliciesInput {
@@ -690,11 +717,6 @@ input UpdateSqsLogIntegrationInput {
   sqsConfig: SqsLogConfigInput!
 }
 
-type ListPoliciesResponse {
-  paging: PagingData
-  policies: [Policy!]!
-}
-
 type ListResourcesResponse {
   paging: PagingData
   resources: [ResourceSummary]
@@ -847,7 +869,7 @@ input PagerDutyConfigInput {
   integrationKey: String!
 }
 
-type Policy {
+type Policy implements Detection {
   autoRemediationId: ID
   autoRemediationParameters: AWSJSON
   body: String!
@@ -862,13 +884,14 @@ type Policy {
   lastModifiedBy: ID
   outputIds: [ID!]!
   reference: String
-  resourceTypes: [String]
+  resourceTypes: [String!]
   runbook: String
   severity: SeverityEnum!
   suppressions: [String!]
   tags: [String!]!
   tests: [DetectionTestDefinition!]!
   versionId: ID
+  analysisType: DetectionTypeEnum!
 }
 
 type GlobalPythonModule {
@@ -965,25 +988,6 @@ input DeleteGlobalPythonModuleInput {
 
 input DeletePolicyInput {
   policies: [DeleteEntry!]!
-}
-
-input ListPoliciesInput {
-  createdBy: String
-  lastModifiedBy: String
-  initialSet: Boolean
-  complianceStatus: ComplianceStatusEnum
-  nameContains: String
-  enabled: Boolean
-  hasRemediation: Boolean
-  resourceTypes: [String!]
-  severity: [SeverityEnum!]
-  tags: [String!]
-  # Sorting
-  sortBy: ListPoliciesSortFieldsEnum # defaults to `id`
-  sortDir: SortDirEnum # defaults to `ascending`
-  # Paging
-  pageSize: Int # defaults to `25`
-  page: Int # defaults to `1`
 }
 
 input UploadDetectionsInput {
@@ -1172,6 +1176,14 @@ enum ListRulesSortFieldsEnum {
   severity
 }
 
+enum ListDetectionsSortFieldsEnum {
+  displayName
+  id
+  lastModified
+  enabled
+  severity
+}
+
 enum ListDataModelsSortFieldsEnum {
   enabled
   id
@@ -1233,4 +1245,9 @@ enum OpsgenieServiceRegionEnum {
 
 enum ErrorCodeEnum {
   NotFound
+}
+
+enum DetectionTypeEnum {
+  RULE
+  POLICY
 }

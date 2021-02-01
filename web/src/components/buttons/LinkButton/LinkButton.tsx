@@ -16,42 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import React from 'react';
-import { ButtonProps, Button, Box, LinkProps } from 'pouncejs';
-import { Link as RRLink, LinkProps as RRLinkProps } from 'react-router-dom';
+import { ButtonProps, Button } from 'pouncejs';
+import LinkButtonWrapper, { LinkButtonWrapperProps } from '../utils/LinkButtonWrapper';
 
-type ButtonWithoutAs = Omit<ButtonProps, 'as'>;
-type ToProp = Pick<RRLinkProps, 'to'>;
-export type LinkButtonProps = ButtonWithoutAs & ToProp & { external?: boolean };
+type LinkButtonProps = LinkButtonWrapperProps & Omit<ButtonProps, 'as'>;
 
 const LinkButton: React.FC<LinkButtonProps> = ({ disabled, external, to, children, ...rest }) => {
-  let linkProps: LinkProps;
-  if (disabled) {
-    linkProps = { as: 'span' as React.ElementType };
-  } else if (!external) {
-    linkProps = { to, as: RRLink };
-  } else {
-    linkProps = {
-      target: '_blank',
-      rel: 'noopener noreferrer',
-      href: to as string,
-      as: 'a' as React.ElementType,
-    };
-  }
   return (
-    <Box
-      {...linkProps}
-      sx={{
-        '& > span': {
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        },
-      }}
-    >
+    <LinkButtonWrapper disabled={disabled} external={external} to={to}>
       <Button as="span" aria-disabled={disabled} {...rest}>
         {children}
       </Button>
-    </Box>
+    </LinkButtonWrapper>
   );
 };
 export default LinkButton;
