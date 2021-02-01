@@ -24,10 +24,13 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"go.uber.org/zap"
@@ -90,10 +93,40 @@ func (api *API) checkAwsS3Integration(input *models.CheckIntegrationInput) *mode
 	logProcessingRole := generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
 	roleCreds, out.ProcessingRoleStatus = api.getCredentialsWithStatus(logProcessingRole)
 	if out.ProcessingRoleStatus.Healthy {
-		out.S3BucketStatus = api.checkBucket(roleCreds, input.S3Bucket)
+		bucketStatus, bucketRegion := api.checkBucket(roleCreds, input.S3Bucket)
+		out.S3BucketStatus = bucketStatus
 		out.KMSKeyStatus = api.checkKey(roleCreds, input.KmsKey)
+		s3Client := s3.New(api.AwsSession, &aws.Config{
+			Credentials: roleCreds,
+			Region:      bucketRegion,
+		})
+		out.S3GetObject = checkGetObject(s3Client, input.S3Bucket, input.AWSAccountID)
 	}
 	return out
+}
+
+func checkGetObject(s3Client s3iface.S3API, bucket, owner string) models.SourceIntegrationItemStatus {
+	// Check the error for a non-existent key. If the error is s3.ErrCodeNoSuchKey, we are good.
+	nonExistingKey := "panther-health-check"
+	_, err := s3Client.GetObject(&s3.GetObjectInput{
+		Bucket:              &bucket,
+		ExpectedBucketOwner: &owner,
+		Key:                 &nonExistingKey,
+	})
+	awsErr, ok := err.(awserr.Error)
+	if err == nil || (ok && awsErr.Code() == s3.ErrCodeNoSuchKey) {
+		return models.SourceIntegrationItemStatus{
+			Healthy: true,
+			Message: "We were able to use s3:GetObject on the specified S3 bucket.",
+		}
+	}
+
+	// Something is wrong with bucket permissions.
+	return models.SourceIntegrationItemStatus{
+		Healthy:      false,
+		Message:      "Unexpected error returned from s3.GetObject",
+		ErrorMessage: err.Error(),
+	}
 }
 
 func (api *API) checkKey(roleCredentials *credentials.Credentials, key string) models.SourceIntegrationItemStatus {
@@ -143,22 +176,26 @@ func (api *API) checkKey(roleCredentials *credentials.Credentials, key string) m
 	}
 }
 
-func (api *API) checkBucket(roleCredentials *credentials.Credentials, bucket string) models.SourceIntegrationItemStatus {
+func (api *API) checkBucket(roleCredentials *credentials.Credentials, bucket string) (models.SourceIntegrationItemStatus, *string) {
 	s3Client := s3.New(api.AwsSession, &aws.Config{Credentials: roleCredentials})
 
-	_, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: &bucket})
+	out, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: &bucket})
 	if err != nil {
 		return models.SourceIntegrationItemStatus{
 			Healthy:      false,
 			Message:      "An error occurred while trying to get the region of the specified S3 bucket.",
 			ErrorMessage: err.Error(),
-		}
+		}, nil
 	}
 
+	region := out.LocationConstraint
+	if region == nil {
+		region = aws.String(endpoints.UsEast1RegionID)
+	}
 	return models.SourceIntegrationItemStatus{
 		Healthy: true,
 		Message: "We were able to call s3:GetBucketLocation on the specified S3 bucket.",
-	}
+	}, region
 }
 
 func (api *API) getCredentialsWithStatus(roleARN string) (*credentials.Credentials, models.SourceIntegrationItemStatus) {
@@ -222,6 +259,11 @@ func (api *API) evaluateIntegration(integration *models.CheckIntegrationInput) (
 		if !status.KMSKeyStatus.Healthy {
 			return status.KMSKeyStatus.Message, false, nil
 		}
+
+		if !status.S3GetObject.Healthy {
+			return status.S3GetObject.Message, false, nil
+		}
+
 		return "", true, nil
 	case models.IntegrationTypeSqs:
 		if !status.SqsStatus.Healthy {

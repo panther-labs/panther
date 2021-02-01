@@ -42,6 +42,7 @@ export type S3LogIntegrationDetails = Pick<
     processingRoleStatus: IntegrationItemHealthDetails;
     s3BucketStatus: IntegrationItemHealthDetails;
     kmsKeyStatus: IntegrationItemHealthDetails;
+    s3GetObjectStatus: IntegrationItemHealthDetails;
   };
 };
 
@@ -71,6 +72,9 @@ export const S3LogIntegrationDetails = gql`
         ...IntegrationItemHealthDetails
       }
       kmsKeyStatus {
+        ...IntegrationItemHealthDetails
+      }
+      s3GetObjectStatus {
         ...IntegrationItemHealthDetails
       }
     }

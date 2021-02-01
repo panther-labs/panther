@@ -304,6 +304,7 @@ type S3LogIntegrationHealth {
   processingRoleStatus: IntegrationItemHealthStatus!
   s3BucketStatus: IntegrationItemHealthStatus!
   kmsKeyStatus: IntegrationItemHealthStatus!
+  s3GetObjectStatus: IntegrationItemHealthStatus!
 }
 
 type SqsLogIntegrationHealth {

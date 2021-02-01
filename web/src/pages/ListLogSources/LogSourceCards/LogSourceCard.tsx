@@ -57,6 +57,7 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
           sourceHealth.processingRoleStatus,
           sourceHealth.s3BucketStatus,
           sourceHealth.kmsKeyStatus,
+          sourceHealth.s3GetObjectStatus,
         ];
       default:
         throw new Error(`Unknown source health item`);

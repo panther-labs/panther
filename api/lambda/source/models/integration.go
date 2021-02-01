@@ -190,6 +190,7 @@ type SourceIntegrationHealth struct {
 	ProcessingRoleStatus SourceIntegrationItemStatus `json:"processingRoleStatus,omitempty"`
 	S3BucketStatus       SourceIntegrationItemStatus `json:"s3BucketStatus,omitempty"`
 	KMSKeyStatus         SourceIntegrationItemStatus `json:"kmsKeyStatus,omitempty"`
+	S3GetObject          SourceIntegrationItemStatus `json:"s3GetObjectStatus,omitempty"`
 
 	// Checks for Sqs integrations
 	SqsStatus SourceIntegrationItemStatus `json:"sqsStatus"`
