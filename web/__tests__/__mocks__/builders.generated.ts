@@ -92,12 +92,8 @@ import {
   ListDetectionsResponse,
   ListGlobalPythonModuleInput,
   ListGlobalPythonModulesResponse,
-  ListPoliciesInput,
-  ListPoliciesResponse,
   ListResourcesInput,
   ListResourcesResponse,
-  ListRulesInput,
-  ListRulesResponse,
   LogAnalysisMetricsInput,
   LogAnalysisMetricsResponse,
   LongSeries,
@@ -1111,38 +1107,6 @@ export const buildListGlobalPythonModulesResponse = (
   };
 };
 
-export const buildListPoliciesInput = (
-  overrides: Partial<ListPoliciesInput> = {}
-): ListPoliciesInput => {
-  return {
-    createdBy: 'createdBy' in overrides ? overrides.createdBy : 'Sports',
-    lastModifiedBy: 'lastModifiedBy' in overrides ? overrides.lastModifiedBy : 'incubate',
-    initialSet: 'initialSet' in overrides ? overrides.initialSet : false,
-    complianceStatus:
-      'complianceStatus' in overrides ? overrides.complianceStatus : ComplianceStatusEnum.Pass,
-    nameContains: 'nameContains' in overrides ? overrides.nameContains : 'parse',
-    enabled: 'enabled' in overrides ? overrides.enabled : false,
-    hasRemediation: 'hasRemediation' in overrides ? overrides.hasRemediation : false,
-    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['software'],
-    severity: 'severity' in overrides ? overrides.severity : [SeverityEnum.High],
-    tags: 'tags' in overrides ? overrides.tags : ['Fish'],
-    sortBy: 'sortBy' in overrides ? overrides.sortBy : ListPoliciesSortFieldsEnum.ResourceTypes,
-    sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
-    pageSize: 'pageSize' in overrides ? overrides.pageSize : 50,
-    page: 'page' in overrides ? overrides.page : 254,
-  };
-};
-
-export const buildListPoliciesResponse = (
-  overrides: Partial<ListPoliciesResponse> = {}
-): ListPoliciesResponse => {
-  return {
-    __typename: 'ListPoliciesResponse',
-    paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
-    policies: 'policies' in overrides ? overrides.policies : [buildPolicy()],
-  };
-};
-
 export const buildListResourcesInput = (
   overrides: Partial<ListResourcesInput> = {}
 ): ListResourcesInput => {
@@ -1170,33 +1134,6 @@ export const buildListResourcesResponse = (
     __typename: 'ListResourcesResponse',
     paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
     resources: 'resources' in overrides ? overrides.resources : [buildResourceSummary()],
-  };
-};
-
-export const buildListRulesInput = (overrides: Partial<ListRulesInput> = {}): ListRulesInput => {
-  return {
-    createdBy: 'createdBy' in overrides ? overrides.createdBy : 'neural',
-    lastModifiedBy: 'lastModifiedBy' in overrides ? overrides.lastModifiedBy : 'Integration',
-    initialSet: 'initialSet' in overrides ? overrides.initialSet : true,
-    nameContains: 'nameContains' in overrides ? overrides.nameContains : 'Cotton',
-    enabled: 'enabled' in overrides ? overrides.enabled : false,
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Drive'],
-    severity: 'severity' in overrides ? overrides.severity : [SeverityEnum.Low],
-    tags: 'tags' in overrides ? overrides.tags : ['channels'],
-    sortBy: 'sortBy' in overrides ? overrides.sortBy : ListRulesSortFieldsEnum.DisplayName,
-    sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
-    pageSize: 'pageSize' in overrides ? overrides.pageSize : 19,
-    page: 'page' in overrides ? overrides.page : 323,
-  };
-};
-
-export const buildListRulesResponse = (
-  overrides: Partial<ListRulesResponse> = {}
-): ListRulesResponse => {
-  return {
-    __typename: 'ListRulesResponse',
-    paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
-    rules: 'rules' in overrides ? overrides.rules : [buildRule()],
   };
 };
 

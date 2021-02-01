@@ -49,7 +49,6 @@ const evaluateTracking = (...args) => {
 export enum PageViewEnum {
   LogAnalysisOverview = 'Log Analysis Overview',
   ComplianceOverview = 'Compliance Overview',
-  ListRules = 'List Rules',
   ListAlerts = 'List Alerts',
   ListDetections = 'List Detections',
   ListLogSources = 'List Log Sources',

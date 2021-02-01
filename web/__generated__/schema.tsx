@@ -715,29 +715,6 @@ export type ListGlobalPythonModulesResponse = {
   globals?: Maybe<Array<Maybe<GlobalPythonModule>>>;
 };
 
-export type ListPoliciesInput = {
-  createdBy?: Maybe<Scalars['String']>;
-  lastModifiedBy?: Maybe<Scalars['String']>;
-  initialSet?: Maybe<Scalars['Boolean']>;
-  complianceStatus?: Maybe<ComplianceStatusEnum>;
-  nameContains?: Maybe<Scalars['String']>;
-  enabled?: Maybe<Scalars['Boolean']>;
-  hasRemediation?: Maybe<Scalars['Boolean']>;
-  resourceTypes?: Maybe<Array<Scalars['String']>>;
-  severity?: Maybe<Array<SeverityEnum>>;
-  tags?: Maybe<Array<Scalars['String']>>;
-  sortBy?: Maybe<ListPoliciesSortFieldsEnum>;
-  sortDir?: Maybe<SortDirEnum>;
-  pageSize?: Maybe<Scalars['Int']>;
-  page?: Maybe<Scalars['Int']>;
-};
-
-export type ListPoliciesResponse = {
-  __typename?: 'ListPoliciesResponse';
-  paging?: Maybe<PagingData>;
-  policies: Array<Policy>;
-};
-
 export enum ListPoliciesSortFieldsEnum {
   ComplianceStatus = 'complianceStatus',
   Enabled = 'enabled',
@@ -771,27 +748,6 @@ export enum ListResourcesSortFieldsEnum {
   LastModified = 'lastModified',
   Type = 'type',
 }
-
-export type ListRulesInput = {
-  createdBy?: Maybe<Scalars['String']>;
-  lastModifiedBy?: Maybe<Scalars['String']>;
-  initialSet?: Maybe<Scalars['Boolean']>;
-  nameContains?: Maybe<Scalars['String']>;
-  enabled?: Maybe<Scalars['Boolean']>;
-  logTypes?: Maybe<Array<Scalars['String']>>;
-  severity?: Maybe<Array<SeverityEnum>>;
-  tags?: Maybe<Array<Scalars['String']>>;
-  sortBy?: Maybe<ListRulesSortFieldsEnum>;
-  sortDir?: Maybe<SortDirEnum>;
-  pageSize?: Maybe<Scalars['Int']>;
-  page?: Maybe<Scalars['Int']>;
-};
-
-export type ListRulesResponse = {
-  __typename?: 'ListRulesResponse';
-  paging?: Maybe<PagingData>;
-  rules: Array<Rule>;
-};
 
 export enum ListRulesSortFieldsEnum {
   DisplayName = 'displayName',
@@ -1152,7 +1108,6 @@ export type Query = {
   resourcesForPolicy?: Maybe<ListComplianceItemsResponse>;
   getGlobalPythonModule: GlobalPythonModule;
   policy?: Maybe<Policy>;
-  policies?: Maybe<ListPoliciesResponse>;
   policiesForResource?: Maybe<ListComplianceItemsResponse>;
   listAvailableLogTypes: ListAvailableLogTypesResponse;
   listComplianceIntegrations: Array<ComplianceIntegration>;
@@ -1161,7 +1116,6 @@ export type Query = {
   organizationStats?: Maybe<OrganizationStatsResponse>;
   getLogAnalysisMetrics: LogAnalysisMetricsResponse;
   rule?: Maybe<Rule>;
-  rules?: Maybe<ListRulesResponse>;
   listGlobalPythonModules: ListGlobalPythonModulesResponse;
   users: Array<User>;
   getCustomLog: GetCustomLogOutput;
@@ -1232,10 +1186,6 @@ export type QueryPolicyArgs = {
   input: GetPolicyInput;
 };
 
-export type QueryPoliciesArgs = {
-  input?: Maybe<ListPoliciesInput>;
-};
-
 export type QueryPoliciesForResourceArgs = {
   input?: Maybe<PoliciesForResourceInput>;
 };
@@ -1254,10 +1204,6 @@ export type QueryGetLogAnalysisMetricsArgs = {
 
 export type QueryRuleArgs = {
   input: GetRuleInput;
-};
-
-export type QueryRulesArgs = {
-  input?: Maybe<ListRulesInput>;
 };
 
 export type QueryListGlobalPythonModulesArgs = {
@@ -1812,9 +1758,6 @@ export type ResolversTypes = {
   GlobalPythonModule: ResolverTypeWrapper<GlobalPythonModule>;
   GetPolicyInput: GetPolicyInput;
   Policy: ResolverTypeWrapper<Policy>;
-  ListPoliciesInput: ListPoliciesInput;
-  ListPoliciesSortFieldsEnum: ListPoliciesSortFieldsEnum;
-  ListPoliciesResponse: ResolverTypeWrapper<ListPoliciesResponse>;
   PoliciesForResourceInput: PoliciesForResourceInput;
   ListAvailableLogTypesResponse: ResolverTypeWrapper<ListAvailableLogTypesResponse>;
   ListDataModelsInput: ListDataModelsInput;
@@ -1837,9 +1780,6 @@ export type ResolversTypes = {
   SingleValue: ResolverTypeWrapper<SingleValue>;
   GetRuleInput: GetRuleInput;
   Rule: ResolverTypeWrapper<Rule>;
-  ListRulesInput: ListRulesInput;
-  ListRulesSortFieldsEnum: ListRulesSortFieldsEnum;
-  ListRulesResponse: ResolverTypeWrapper<ListRulesResponse>;
   ListGlobalPythonModuleInput: ListGlobalPythonModuleInput;
   ListGlobalPythonModulesResponse: ResolverTypeWrapper<ListGlobalPythonModulesResponse>;
   User: ResolverTypeWrapper<User>;
@@ -1907,6 +1847,8 @@ export type ResolversTypes = {
   UploadDetectionsResponse: ResolverTypeWrapper<UploadDetectionsResponse>;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
   CustomLogOutput: ResolverTypeWrapper<CustomLogOutput>;
+  ListPoliciesSortFieldsEnum: ListPoliciesSortFieldsEnum;
+  ListRulesSortFieldsEnum: ListRulesSortFieldsEnum;
   AccountTypeEnum: AccountTypeEnum;
   ErrorCodeEnum: ErrorCodeEnum;
 };
@@ -1998,9 +1940,6 @@ export type ResolversParentTypes = {
   GlobalPythonModule: GlobalPythonModule;
   GetPolicyInput: GetPolicyInput;
   Policy: Policy;
-  ListPoliciesInput: ListPoliciesInput;
-  ListPoliciesSortFieldsEnum: ListPoliciesSortFieldsEnum;
-  ListPoliciesResponse: ListPoliciesResponse;
   PoliciesForResourceInput: PoliciesForResourceInput;
   ListAvailableLogTypesResponse: ListAvailableLogTypesResponse;
   ListDataModelsInput: ListDataModelsInput;
@@ -2025,9 +1964,6 @@ export type ResolversParentTypes = {
   SingleValue: SingleValue;
   GetRuleInput: GetRuleInput;
   Rule: Rule;
-  ListRulesInput: ListRulesInput;
-  ListRulesSortFieldsEnum: ListRulesSortFieldsEnum;
-  ListRulesResponse: ListRulesResponse;
   ListGlobalPythonModuleInput: ListGlobalPythonModuleInput;
   ListGlobalPythonModulesResponse: ListGlobalPythonModulesResponse;
   User: User;
@@ -2095,6 +2031,8 @@ export type ResolversParentTypes = {
   UploadDetectionsResponse: UploadDetectionsResponse;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
   CustomLogOutput: CustomLogOutput;
+  ListPoliciesSortFieldsEnum: ListPoliciesSortFieldsEnum;
+  ListRulesSortFieldsEnum: ListRulesSortFieldsEnum;
   AccountTypeEnum: AccountTypeEnum;
   ErrorCodeEnum: ErrorCodeEnum;
 };
@@ -2629,15 +2567,6 @@ export type ListGlobalPythonModulesResponseResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
-export type ListPoliciesResponseResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['ListPoliciesResponse'] = ResolversParentTypes['ListPoliciesResponse']
-> = {
-  paging?: Resolver<Maybe<ResolversTypes['PagingData']>, ParentType, ContextType>;
-  policies?: Resolver<Array<ResolversTypes['Policy']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
 export type ListResourcesResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['ListResourcesResponse'] = ResolversParentTypes['ListResourcesResponse']
@@ -2648,15 +2577,6 @@ export type ListResourcesResponseResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type ListRulesResponseResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['ListRulesResponse'] = ResolversParentTypes['ListRulesResponse']
-> = {
-  paging?: Resolver<Maybe<ResolversTypes['PagingData']>, ParentType, ContextType>;
-  rules?: Resolver<Array<ResolversTypes['Rule']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -3144,12 +3064,6 @@ export type QueryResolvers<
     ContextType,
     RequireFields<QueryPolicyArgs, 'input'>
   >;
-  policies?: Resolver<
-    Maybe<ResolversTypes['ListPoliciesResponse']>,
-    ParentType,
-    ContextType,
-    RequireFields<QueryPoliciesArgs, never>
-  >;
   policiesForResource?: Resolver<
     Maybe<ResolversTypes['ListComplianceItemsResponse']>,
     ParentType,
@@ -3190,12 +3104,6 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryRuleArgs, 'input'>
-  >;
-  rules?: Resolver<
-    Maybe<ResolversTypes['ListRulesResponse']>,
-    ParentType,
-    ContextType,
-    RequireFields<QueryRulesArgs, never>
   >;
   listGlobalPythonModules?: Resolver<
     ResolversTypes['ListGlobalPythonModulesResponse'],
@@ -3613,9 +3521,7 @@ export type Resolvers<ContextType = any> = {
   ListDataModelsResponse?: ListDataModelsResponseResolvers<ContextType>;
   ListDetectionsResponse?: ListDetectionsResponseResolvers<ContextType>;
   ListGlobalPythonModulesResponse?: ListGlobalPythonModulesResponseResolvers<ContextType>;
-  ListPoliciesResponse?: ListPoliciesResponseResolvers<ContextType>;
   ListResourcesResponse?: ListResourcesResponseResolvers<ContextType>;
-  ListRulesResponse?: ListRulesResponseResolvers<ContextType>;
   LogAnalysisMetricsResponse?: LogAnalysisMetricsResponseResolvers<ContextType>;
   LogIntegration?: LogIntegrationResolvers;
   Long?: GraphQLScalarType;
