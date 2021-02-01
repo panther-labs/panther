@@ -24,8 +24,6 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	jsoniter "github.com/json-iterator/go"
@@ -52,22 +50,11 @@ func TestSQS_CreateTables(t *testing.T) {
 
 	// Here comes the mocking
 	mockGlueClient.On("CreateTableWithContext", mock.Anything, mock.Anything).Return(&glue.CreateTableOutput{}, nil)
-	// below called once for each database
-	mockGlueClient.On("GetTablesPagesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
 	mockAthenaClient := &testutils.AthenaMock{}
 	handler.AthenaClient = mockAthenaClient
-	mockAthenaClient.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
-		QueryExecutionId: aws.String("test-query-1234"),
-	}, nil)
-	mockAthenaClient.On("GetQueryExecution", mock.Anything).Return(&athena.GetQueryExecutionOutput{
-		QueryExecution: &athena.QueryExecution{
-			QueryExecutionId: aws.String("test-query-1234"),
-			Status: &athena.QueryExecutionStatus{
-				State: aws.String(athena.QueryExecutionStateSucceeded),
-			},
-		},
-	}, nil)
-	mockAthenaClient.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil)
+	// is called once for each Panther database
+	mockAthenaClient.On("ListTableMetadataPagesWithContext",
+		mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(4)
 
 	err = handler.HandleSQSEvent(lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{}), &event)
 	require.NoError(t, err)
@@ -93,22 +80,12 @@ func TestSQS_Sync(t *testing.T) {
 	// Here comes the mocking
 	mockGlueClient.On("CreateDatabaseWithContext", mock.Anything, mock.Anything).Return(&glue.CreateDatabaseOutput{}, nil)
 	mockGlueClient.On("CreateTable", mock.Anything).Return(&glue.CreateTableOutput{}, nil)
-	// below called once for each database
-	mockGlueClient.On("GetTablesPagesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(4)
+	// below called once for the log database and once for the cloudsecurity database to get the base schemas
+	mockGlueClient.On("GetTablesPagesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(2)
 	mockAthenaClient := &testutils.AthenaMock{}
 	handler.AthenaClient = mockAthenaClient
-	mockAthenaClient.On("StartQueryExecution", mock.Anything).Return(&athena.StartQueryExecutionOutput{
-		QueryExecutionId: aws.String("test-query-1234"),
-	}, nil)
-	mockAthenaClient.On("GetQueryExecution", mock.Anything).Return(&athena.GetQueryExecutionOutput{
-		QueryExecution: &athena.QueryExecution{
-			QueryExecutionId: aws.String("test-query-1234"),
-			Status: &athena.QueryExecutionStatus{
-				State: aws.String(athena.QueryExecutionStateSucceeded),
-			},
-		},
-	}, nil)
-	mockAthenaClient.On("GetQueryResults", mock.Anything).Return(&athena.GetQueryResultsOutput{}, nil)
+	// is called once for each Panther database
+	mockAthenaClient.On("ListTableMetadataPagesWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(4)
 
 	// Sync databases
 	mockSqsClient.On("SendMessageWithContext", mock.Anything, mock.Anything).Return(&sqs.SendMessageOutput{}, nil).Once()

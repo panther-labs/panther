@@ -412,6 +412,13 @@ func (m *AthenaMock) GetQueryResults(input *athena.GetQueryResultsInput) (*athen
 	return args.Get(0).(*athena.GetQueryResultsOutput), args.Error(1)
 }
 
+func (m *AthenaMock) ListTableMetadataPagesWithContext(ctx aws.Context, input *athena.ListTableMetadataInput,
+	f func(*athena.ListTableMetadataOutput, bool) bool, option ...request.Option) error {
+
+	args := m.Called(ctx, input, f)
+	return args.Error(0)
+}
+
 type SnsMock struct {
 	snsiface.SNSAPI
 	mock.Mock
