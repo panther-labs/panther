@@ -6,28 +6,52 @@ labels: ''
 assignees: ''
 ---
 
-### Description
+> **_Note:_** This is the main Epic. There may be sub-epics to track the phases of feature completion.
 
-A couple high-level sentences of the feature
+## Description
 
-### RFC
+A high-level description explaining the purpose of the feature and why it's important for Panther users. This should be written at a level to where non-engineers can understand what the feature is.
 
-The link to the internal Request for Comments document
+## RFC
 
-### Designs
+> **_Note:_** To be updated by the feature owner once completed
 
-The link to the feature's designs
+## Design
 
-### Acceptance Criteria
+> **_Note:_** To be updated by the feature owner once completed
 
-A concise list of specific user stories that qualify this story as done and tell the user journey.
+## Status
 
-This acts as a checklist and high-level context for anyone reading this issue to verify your implementation.
+> **_Note:_** Tag each responsible party below
 
-For example:
+- [ ] Epic created [product]
+- [ ] RFC written [feature owner]
+- [ ] Designs mocked [designer]
+- [ ] Stories planned [fe/be]
+- [ ] Stories executed [fe/be]
+- [ ] Validation [product/feature owner]
 
-- We can collect anonymized frontend crash logs from user browsers
-- Users can opt in to send these logs to panther
-- The crash logs will contain the following fields : browser version
-- Users can opt-out from collection at any time
-- ...
+## Stories and Acceptance Criteria
+
+### Major Feature 1 [MVP/MMP/MDP]
+
+> **_Reference_**
+
+> Minimum Viable Product
+
+> Minimum Marketable Product
+
+> Minimum Delightful Product
+
+> _Each stage is sequential and we gather user feedback from the previous phase_
+
+#### User Stories
+
+As a PERSONA
+I want to HAVE NEW FUNCTIONALITY
+To OBTAIN SOME RESULT
+
+#### Acceptance Criteria
+
+- If PERSONA interacts with NEW FEATURE, they get THIS RESULT
+- A very detailed set of examples of how this feature will be used
