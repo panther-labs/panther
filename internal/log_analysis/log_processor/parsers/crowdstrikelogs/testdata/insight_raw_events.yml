@@ -1,0 +1,161 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+name: crowdstrike_aid_master_event
+logType: Crowdstrike.AIDMaster
+input: |
+  {
+    "aid": "0cfb1a68ef6b49fdb0d2b12725057057",
+    "aip": "10.0.0.1",
+    "AgentLoadFlags": "1",
+    "AgentLocalTime": "1590364206.00",
+    "AgentTimeOffset": "-15967.470",
+    "AgentVersion": "2.0.0002.2180",
+    "BiosManufacturer": "Phoenix Technologies LTC",
+    "BiosVersion": "6.00",
+    "cid": "0123456789ABCDEFGHIJKLMNOPQRSTUV",
+    "ChassisType": "Desktop",
+    "City": "Sunnyvale",
+    "Country": "United States",
+    "ComputerName": "my-host-name",
+    "ConfigIDBuild": "abc1",
+    "Continent": "North America",
+    "event_platform": "Win",
+    "FirstSeen": "1590364206.00",
+    "MachineDomain": "XYZ.CORP",
+    "OU": "TEST-ORGANIZATIONAL-UNIT",
+    "PointerSize": "8",
+    "ProductType": "1",
+    "ServicePackMajor": "1",
+    "SiteName": "Test-Office",
+    "SystemManufacturer": "Test-Manufacturer",
+    "SystemProductName": "12345",
+    "Time": "1590364206.99",
+    "Timezone": "America/Los Angeles",
+    "Version": "Windows 8.1"
+  }
+result: |
+  {
+    "aid": "0cfb1a68ef6b49fdb0d2b12725057057",
+    "aip": "10.0.0.1",
+    "AgentLoadFlags": 1,
+    "AgentLocalTime": 1590364206,
+    "AgentTimeOffset": -15967.470,
+    "AgentVersion": "2.0.0002.2180",
+    "BiosManufacturer": "Phoenix Technologies LTC",
+    "BiosVersion": "6.00",
+    "cid": "0123456789ABCDEFGHIJKLMNOPQRSTUV",
+    "ChassisType": "Desktop",
+    "City": "Sunnyvale",
+    "Country": "United States",
+    "ComputerName": "my-host-name",
+    "ConfigIDBuild": "abc1",
+    "Continent": "North America",
+    "event_platform": "Win",
+    "FirstSeen": 1590364206,
+    "MachineDomain": "XYZ.CORP",
+    "OU": "TEST-ORGANIZATIONAL-UNIT",
+    "PointerSize": 8,
+    "ProductType": "1",
+    "ServicePackMajor": "1",
+    "SiteName": "Test-Office",
+    "SystemManufacturer": "Test-Manufacturer",
+    "SystemProductName": "12345",
+    "Time": 1590364206.99,
+    "Timezone": "America/Los Angeles",
+    "Version": "Windows 8.1",
+    "p_any_ip_addresses": ["10.0.0.1"],
+    "p_log_type": "Crowdstrike.AIDMaster",
+    "p_event_time": "2020-05-24T23:50:06.99Z"
+  }
+---
+name: crowdstrike_managed_assets_event
+logType: Crowdstrike.ManagedAssets
+input: |
+  {
+    "_time": "1590364206.99",
+    "aid": "0cfb1a68ef6b49fdb0d2b12725057057",
+    "cid": "0123456789ABCDEFGHIJKLMNOPQRSTUV",
+    "GatewayIP": "10.0.0.1",
+    "GatewayMAC": "11-22-33-44-55-66",
+    "MacPrefix": "11-22-33",
+    "MAC": "11-22-33-99-88-77",
+    "InterfaceAlias": "Ethernet",
+    "InterfaceDescription": "Inter(R) PRO/1000 MT",
+    "LocalAddressIP4": "10.0.0.190"
+  }
+result: |
+  {
+    "_time": 1590364206.99,
+    "aid": "0cfb1a68ef6b49fdb0d2b12725057057",
+    "cid": "0123456789ABCDEFGHIJKLMNOPQRSTUV",
+    "GatewayIP": "10.0.0.1",
+    "GatewayMAC": "11-22-33-44-55-66",
+    "MacPrefix": "11-22-33",
+    "MAC": "11-22-33-99-88-77",
+    "InterfaceAlias": "Ethernet",
+    "InterfaceDescription": "Inter(R) PRO/1000 MT",
+    "LocalAddressIP4": "10.0.0.190",
+    "p_event_time": "2020-05-24T23:50:06.99Z",
+    "p_log_type": "Crowdstrike.ManagedAssets",
+    "p_any_ip_addresses": ["10.0.0.1", "10.0.0.190"]
+  }
+---
+name: crowdstrike_not_managed_assets_event
+logType: Crowdstrike.NotManagedAssets
+input: |
+  {
+    "_time": "1590364206.99",
+    "cid": "0123456789ABCDEFGHIJKLMNOPQRSTUV",
+    "aip": "10.0.0.1",
+    "aipcount": "1",
+    "CurrentLocalIP": "10.0.0.190",
+    "MacPrefix": "11-22-33",
+    "MAC": "11-22-33-99-88-77",
+    "ComputerName": "mysecurecomputer",
+    "discoverer_aid": ["0cfb1a68ef6b49fdb0d2b12725057057"],
+    "discoverer_devicetype": "Server",
+    "discovererCount": "1",
+    "FirstDiscoveredDate": "1590364106.99",
+    "LastDiscoveredBy": "1590364150.98",
+    "LocalAddressIP4": "10.0.0.175",
+    "localipCount": "1",
+    "NeighborName": "myvulnerablecomputer",
+    "subnet": "255.255.255.0"
+  }
+result: |
+  {
+    "_time": 1590364206.99,
+    "cid": "0123456789ABCDEFGHIJKLMNOPQRSTUV",
+    "aip": "10.0.0.1",
+    "aipcount": 1,
+    "CurrentLocalIP": "10.0.0.190",
+    "MacPrefix": "11-22-33",
+    "MAC": "11-22-33-99-88-77",
+    "ComputerName": "mysecurecomputer",
+    "discoverer_aid": ["0cfb1a68ef6b49fdb0d2b12725057057"],
+    "discoverer_devicetype": "Server",
+    "discovererCount": 1,
+    "FirstDiscoveredDate": 1590364106.99,
+    "LastDiscoveredBy": 1590364150.98,
+    "LocalAddressIP4": "10.0.0.175",
+    "localipCount": 1,
+    "NeighborName": "myvulnerablecomputer",
+    "subnet": "255.255.255.0",
+    "p_event_time": "2020-05-24T23:50:06.99Z",
+    "p_log_type": "Crowdstrike.NotManagedAssets",
+    "p_any_ip_addresses": ["10.0.0.1", "10.0.0.175", "10.0.0.190"]
+  }

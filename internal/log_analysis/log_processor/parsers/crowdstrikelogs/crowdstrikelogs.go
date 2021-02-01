@@ -42,6 +42,13 @@ var logTypes = logtypes.Must(TypePrefix,
 	TypeNetworkListen,
 	TypeProcessRollup2,
 	TypeSyntheticProcessRollup2,
+	// Falcon Insight Special Raw Events
+	TypeAIDMaster,
+	TypeManagedAssets,
+	TypeNotManagedAssets,
+	// Falcon Discover Processed Events
+	TypeUserInfo,
+	TypeAppInfo,
 	TypeUnknownEvent,
 )
 

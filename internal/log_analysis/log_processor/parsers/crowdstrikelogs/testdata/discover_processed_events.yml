@@ -1,0 +1,93 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+name: crowdstrike_app_info_event
+logType: Crowdstrike.AppInfo
+input: |
+  {
+    "cid": "0123456789ABCDEFGHIJKLMNOPQRSTUV",
+    "_time": "1590364206.99",
+    "CompanyName": "Test Company",
+    "detectioncount": "1",
+    "FileName": "googleupdate.exe",
+    "SHA256HashData": "69061e33acb7587d773d05000390f9101f71dfd6eed7973b551594eaf3f04193",
+    "FileDescription": "Google Installer",
+    "FileVersion": "15.00.0847.030",
+    "ProductName": "Microsoft Exchange",
+    "ProductVersion": "15.0"
+  }
+result: |
+  {
+    "cid": "0123456789ABCDEFGHIJKLMNOPQRSTUV",
+    "_time": 1590364206.99,
+    "CompanyName": "Test Company",
+    "detectioncount": 1,
+    "FileName": "googleupdate.exe",
+    "FileDescription": "Google Installer",
+    "FileVersion": "15.00.0847.030",
+    "ProductName": "Microsoft Exchange",
+    "ProductVersion": "15.0",
+    "SHA256HashData": "69061e33acb7587d773d05000390f9101f71dfd6eed7973b551594eaf3f04193",
+    "p_log_type": "Crowdstrike.AppInfo",
+    "p_event_time": "2020-05-24T23:50:06.99Z",
+    "p_any_sha256_hashes": ["69061e33acb7587d773d05000390f9101f71dfd6eed7973b551594eaf3f04193"]
+  }
+---
+name: crowdstrike_user_info_event
+logType: Crowdstrike.UserInfo
+input: |
+  {
+    "_time": "1590364206.99",
+    "cid": "0123456789ABCDEFGHIJKLMNOPQRSTUV",
+    "AccountType": "Domain User",
+    "DomainUser": "Yes",
+    "UserName": "User-1",
+    "UserSid_readable": "S-A-BBBB-CCCC-DDDD",
+    "LastLoggedOnHost": "test-host",
+    "LocalAdminAccess": "Yes",
+    "LoggedOnHostCount": "1",
+    "LogonInfo": "Local User Logon",
+    "LogonTime": "1590212206.99",
+    "LogonType": "INTERACTIVE",
+    "monthsincereset": "1",
+    "PasswordLastSet": "1590214206.99",
+    "User": "domain/User-1",
+    "UserIsAdmin": "0",
+    "UserLogonFlags_decimal": "1"
+  }
+result: |
+  {
+    "_time": 1590364206.99,
+    "cid": "0123456789ABCDEFGHIJKLMNOPQRSTUV",
+    "AccountType": "Domain User",
+    "DomainUser": "Yes",
+    "UserName": "User-1",
+    "UserSid_readable": "S-A-BBBB-CCCC-DDDD",
+    "LastLoggedOnHost": "test-host",
+    "LocalAdminAccess": "Yes",
+    "LoggedOnHostCount": 1,
+    "LogonInfo": "Local User Logon",
+    "LogonTime": 1590212206.99,
+    "LogonType": "INTERACTIVE",
+    "monthsincereset": 1,
+    "PasswordLastSet": 1590214206.99,
+    "User": "domain/User-1",
+    "UserIsAdmin": 0,
+    "UserLogonFlags_decimal": 1,
+    "p_log_type": "Crowdstrike.UserInfo",
+    "p_event_time": "2020-05-24T23:50:06.99Z",
+    "p_any_usernames": ["User-1"]
+  }
