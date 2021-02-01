@@ -90,9 +90,12 @@ func TestIntegrationRequeue(t *testing.T) {
 	require.NoError(t, err)
 
 	// check
-	numberMovedMessages, err := testutils.CountMessagesInQueue(sqsClient, toq, messageBatchSize, visibilityTimeoutSeconds)
+	numberMovedMessages, numberMovedMessagesWithAttrs, err := testutils.CountMessagesInQueue(sqsClient, toq,
+		messageBatchSize, visibilityTimeoutSeconds)
 	assert.NoError(t, err)
 	assert.Equal(t, numberTestMessages, numberMovedMessages)
+	// 1/2 will have attributes, see testutils.AddMessagesToQueue()
+	assert.Equal(t, numberTestMessages/2, numberMovedMessagesWithAttrs)
 
 	// clean up
 	err = testutils.DeleteQueue(sqsClient, fromq)
