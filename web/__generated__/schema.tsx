@@ -770,7 +770,10 @@ export type LogAnalysisMetricsResponse = {
   __typename?: 'LogAnalysisMetricsResponse';
   eventsProcessed: LongSeriesData;
   alertsBySeverity: LongSeriesData;
-  eventsLatency: FloatSeriesData;
+  /**
+   * TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
+   * eventsLatency: FloatSeriesData!
+   */
   totalAlertsDelta: Array<SingleValue>;
   alertsByRuleID: Array<SingleValue>;
   fromDate: Scalars['AWSDateTime'];
@@ -1778,9 +1781,6 @@ export type ResolversTypes = {
   LongSeriesData: ResolverTypeWrapper<LongSeriesData>;
   LongSeries: ResolverTypeWrapper<LongSeries>;
   Long: ResolverTypeWrapper<Scalars['Long']>;
-  FloatSeriesData: ResolverTypeWrapper<FloatSeriesData>;
-  FloatSeries: ResolverTypeWrapper<FloatSeries>;
-  Float: ResolverTypeWrapper<Scalars['Float']>;
   SingleValue: ResolverTypeWrapper<SingleValue>;
   GetRuleInput: GetRuleInput;
   Rule: ResolverTypeWrapper<Rule>;
@@ -1851,6 +1851,9 @@ export type ResolversTypes = {
   UploadDetectionsResponse: ResolverTypeWrapper<UploadDetectionsResponse>;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
   CustomLogOutput: ResolverTypeWrapper<CustomLogOutput>;
+  FloatSeries: ResolverTypeWrapper<FloatSeries>;
+  Float: ResolverTypeWrapper<Scalars['Float']>;
+  FloatSeriesData: ResolverTypeWrapper<FloatSeriesData>;
   ListPoliciesSortFieldsEnum: ListPoliciesSortFieldsEnum;
   ListRulesSortFieldsEnum: ListRulesSortFieldsEnum;
   AccountTypeEnum: AccountTypeEnum;
@@ -1962,9 +1965,6 @@ export type ResolversParentTypes = {
   LongSeriesData: LongSeriesData;
   LongSeries: LongSeries;
   Long: Scalars['Long'];
-  FloatSeriesData: FloatSeriesData;
-  FloatSeries: FloatSeries;
-  Float: Scalars['Float'];
   SingleValue: SingleValue;
   GetRuleInput: GetRuleInput;
   Rule: Rule;
@@ -2035,6 +2035,9 @@ export type ResolversParentTypes = {
   UploadDetectionsResponse: UploadDetectionsResponse;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
   CustomLogOutput: CustomLogOutput;
+  FloatSeries: FloatSeries;
+  Float: Scalars['Float'];
+  FloatSeriesData: FloatSeriesData;
   ListPoliciesSortFieldsEnum: ListPoliciesSortFieldsEnum;
   ListRulesSortFieldsEnum: ListRulesSortFieldsEnum;
   AccountTypeEnum: AccountTypeEnum;
@@ -2590,7 +2593,6 @@ export type LogAnalysisMetricsResponseResolvers<
 > = {
   eventsProcessed?: Resolver<ResolversTypes['LongSeriesData'], ParentType, ContextType>;
   alertsBySeverity?: Resolver<ResolversTypes['LongSeriesData'], ParentType, ContextType>;
-  eventsLatency?: Resolver<ResolversTypes['FloatSeriesData'], ParentType, ContextType>;
   totalAlertsDelta?: Resolver<Array<ResolversTypes['SingleValue']>, ParentType, ContextType>;
   alertsByRuleID?: Resolver<Array<ResolversTypes['SingleValue']>, ParentType, ContextType>;
   fromDate?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
