@@ -601,8 +601,8 @@ type ComplianceIntegration {
   integrationLabel: String!
   cweEnabled: Boolean
   remediationEnabled: Boolean
-  excludedRegions: [String!]
-  excludedResourceTypes: [String!]
+  regionIgnoreList: [String!]
+  resourceTypeIgnoreList: [String!]
   health: ComplianceIntegrationHealth!
   stackName: String!
 }
@@ -645,8 +645,8 @@ input AddComplianceIntegrationInput {
   integrationLabel: String!
   remediationEnabled: Boolean
   cweEnabled: Boolean
-  excludedRegions: [String!]
-  excludedResourceTypes: [String!]
+  regionIgnoreList: [String!]
+  resourceTypeIgnoreList: [String!]
 }
 
 input S3PrefixLogTypesInput {
@@ -678,8 +678,8 @@ input UpdateComplianceIntegrationInput {
   integrationLabel: String
   cweEnabled: Boolean
   remediationEnabled: Boolean
-  excludedRegions: [String!]
-  excludedResourceTypes: [String!]
+  regionIgnoreList: [String!]
+  resourceTypeIgnoreList: [String!]
 }
 
 input UpdateS3LogIntegrationInput {

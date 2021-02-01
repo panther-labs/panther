@@ -50,8 +50,8 @@ export type AddComplianceIntegrationInput = {
   integrationLabel: Scalars['String'];
   remediationEnabled?: Maybe<Scalars['Boolean']>;
   cweEnabled?: Maybe<Scalars['Boolean']>;
-  excludedRegions?: Maybe<Array<Scalars['String']>>;
-  excludedResourceTypes?: Maybe<Array<Scalars['String']>>;
+  regionIgnoreList?: Maybe<Array<Scalars['String']>>;
+  resourceTypeIgnoreList?: Maybe<Array<Scalars['String']>>;
 };
 
 export type AddGlobalPythonModuleInput = {
@@ -233,8 +233,8 @@ export type ComplianceIntegration = {
   integrationLabel: Scalars['String'];
   cweEnabled?: Maybe<Scalars['Boolean']>;
   remediationEnabled?: Maybe<Scalars['Boolean']>;
-  excludedRegions?: Maybe<Array<Scalars['String']>>;
-  excludedResourceTypes?: Maybe<Array<Scalars['String']>>;
+  regionIgnoreList?: Maybe<Array<Scalars['String']>>;
+  resourceTypeIgnoreList?: Maybe<Array<Scalars['String']>>;
   health: ComplianceIntegrationHealth;
   stackName: Scalars['String'];
 };
@@ -1479,8 +1479,8 @@ export type UpdateComplianceIntegrationInput = {
   integrationLabel?: Maybe<Scalars['String']>;
   cweEnabled?: Maybe<Scalars['Boolean']>;
   remediationEnabled?: Maybe<Scalars['Boolean']>;
-  excludedRegions?: Maybe<Array<Scalars['String']>>;
-  excludedResourceTypes?: Maybe<Array<Scalars['String']>>;
+  regionIgnoreList?: Maybe<Array<Scalars['String']>>;
+  resourceTypeIgnoreList?: Maybe<Array<Scalars['String']>>;
 };
 
 export type UpdateGeneralSettingsInput = {
@@ -2203,8 +2203,12 @@ export type ComplianceIntegrationResolvers<
   integrationLabel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   cweEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   remediationEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  excludedRegions?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
-  excludedResourceTypes?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  regionIgnoreList?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  resourceTypeIgnoreList?: Resolver<
+    Maybe<Array<ResolversTypes['String']>>,
+    ParentType,
+    ContextType
+  >;
   health?: Resolver<ResolversTypes['ComplianceIntegrationHealth'], ParentType, ContextType>;
   stackName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
