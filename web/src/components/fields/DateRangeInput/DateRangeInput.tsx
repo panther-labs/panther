@@ -19,16 +19,6 @@
 import React from 'react';
 import { Box, FormError, DateRangeInput, DateRangeInputProps } from 'pouncejs';
 import { useField } from 'formik';
-import dayjs from 'dayjs';
-
-const shiftOffset = (date: Date, operation: 'subtract' | 'add') => {
-  const d = dayjs(date);
-  const utcOffsetHours = d.utcOffset() / 60;
-  const modifiedDate =
-    operation === 'subtract' ? d.subtract(utcOffsetHours, 'hour') : d.add(utcOffsetHours, 'hour');
-
-  return modifiedDate.toDate();
-};
 
 export interface FieldDateRangeInputProps
   extends Omit<DateRangeInputProps, 'name' | 'iconAlignment' | 'iconProps' | 'value' | 'onChange'> {
@@ -59,25 +49,18 @@ const FormikDateRangeInput: React.FC<FieldDateRangeInputProps> = ({
 
   const errorElementId = isInvalid ? `${nameStart}-${nameEnd}-error` : undefined;
 
-  const value = React.useMemo(() => {
-    // The last `.map` is an UGLY hack that's used as a workaround, to allow the date range picker
-    // to display the same exact time that was used as an initial value (stripping the timezone).
-    return [valueStart, valueEnd]
-      .filter(Boolean)
-      .map(val => (val ? new Date(val) : null))
-      .map(date => (useUTC ? shiftOffset(date, 'subtract') : date));
-  }, [valueStart, valueEnd, useUTC]);
+  const value = React.useMemo(
+    (): [Date?, Date?] => [
+      valueStart ? new Date(valueStart) : null,
+      valueEnd ? new Date(valueEnd) : null,
+    ],
+    [valueStart, valueEnd, useUTC]
+  );
 
   const onRangeChange = React.useCallback<DateRangeInputProps['onChange']>(
     ([start, end]) => {
-      // This is an UGLY hack that's used as a workaround, to allow the date range picker to
-      // allow the user to select values in UTC (currently the picker selects dates in the user'ss
-      // timezone and this is something not configurable through a prop)
-      const startDate = useUTC ? shiftOffset(start, 'add') : start;
-      const endDate = useUTC ? shiftOffset(end, 'add') : end;
-
-      setValueStart(startDate.toISOString());
-      setValueEnd(endDate.toISOString());
+      setValueStart(start.toISOString());
+      setValueEnd(end.toISOString());
     },
     [setValueStart, setValueEnd, useUTC]
   );
@@ -86,6 +69,7 @@ const FormikDateRangeInput: React.FC<FieldDateRangeInputProps> = ({
     <Box>
       <DateRangeInput
         {...rest}
+        timezone={useUTC ? 'utc' : 'local'}
         name={`${nameStart}-${nameEnd}`}
         invalid={isInvalid}
         value={value}
