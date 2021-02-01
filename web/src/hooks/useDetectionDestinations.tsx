@@ -20,7 +20,7 @@ import { Destination, Policy, Rule } from 'Generated/schema';
 import { useListDestinations } from 'Source/graphql/queries';
 
 interface UseDetectionDestinationsProps {
-  detection: Rule | Policy;
+  detection: Pick<Rule | Policy, 'severity' | 'outputIds'>;
 }
 
 interface UseDetectionDestinationsResponse {

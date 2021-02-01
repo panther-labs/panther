@@ -23,8 +23,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/panther-labs/panther/internal/log_analysis/athenaviews"
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
+	"github.com/panther-labs/panther/internal/log_analysis/datalake/athena/athenaviews"
 	"github.com/panther-labs/panther/internal/log_analysis/gluetables"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
@@ -105,20 +105,8 @@ func (h *LambdaHandler) createOrUpdateTablesForLogTypes(ctx context.Context, log
 }
 
 func (h *LambdaHandler) createOrReplaceViewsForAllDeployedLogTables(ctx context.Context) error {
-	// We fetch the tables again to avoid any possible race condition
-	deployedLogTypes, err := h.fetchAllDeployedLogTypes(ctx)
-	if err != nil {
-		return errors.Wrap(err, "failed to fetch deployed log types")
-	}
-	// We map the deployed log types to their 'base' log tables, errors are collected and not fatal
-	tables, err := resolveTables(ctx, h.Resolver, deployedLogTypes...)
-	if err != nil {
-		return err
-	}
-
-	// update the views for *all* tables based on the log tables.
-	// FIXME: this is confusing, the athenaviews package should not be creating views by expanding table metadata based on hard-wired logic
-	if err := athenaviews.CreateOrReplaceLogViews(h.AthenaClient, h.AthenaWorkgroup, tables); err != nil {
+	// update the views for *all* tables
+	if err := athenaviews.NewViewMaker(h.AthenaClient, h.AthenaWorkgroup).CreateOrReplaceLogViews(ctx); err != nil {
 		return errors.Wrap(err, "failed to update athena views")
 	}
 	return nil

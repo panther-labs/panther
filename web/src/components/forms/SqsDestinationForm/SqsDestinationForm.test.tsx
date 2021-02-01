@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent, waitFor, waitMs, faker } from 'test-utils';
+import { render, fireEvent, waitFor, waitMs, faker, fireClickAndMouseEvents } from 'test-utils';
 import { AlertTypesEnum, SeverityEnum } from 'Generated/schema';
 import SqsDestinationForm from './index';
 
@@ -51,7 +51,7 @@ const initialValues = {
 
 describe('SqsDestinationForm', () => {
   it('renders the correct fields', () => {
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText, getByText, getAllByLabelText } = render(
       <SqsDestinationForm onSubmit={() => {}} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
@@ -59,63 +59,75 @@ describe('SqsDestinationForm', () => {
     const submitButton = getByText('Add Destination');
     expect(displayNameField).toBeInTheDocument();
     expect(queueUrl).toBeInTheDocument();
-    Object.values(SeverityEnum).forEach(sev => {
-      expect(getByText(sev)).toBeInTheDocument();
-    });
+    expect(getAllByLabelText('Severity')[0]).toBeInTheDocument();
+    expect(getAllByLabelText('Alert Types')[0]).toBeInTheDocument();
 
     expect(submitButton).toHaveAttribute('disabled');
   });
 
   it('has proper validation', async () => {
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText, getByText, getAllByLabelText } = render(
       <SqsDestinationForm onSubmit={() => {}} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
     const queueUrl = getByLabelText('Queue URL');
     const submitButton = getByText('Add Destination');
-    const criticalSeverityCheckBox = document.getElementById(severity);
-    expect(criticalSeverityCheckBox).not.toBeNull();
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
     expect(submitButton).toHaveAttribute('disabled');
 
     fireEvent.change(displayNameField, { target: { value: displayName } });
-    fireEvent.click(criticalSeverityCheckBox);
     await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(queueUrl, { target: { value: 'notAUrl' } });
     await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(queueUrl, { target: { value: validUrl } });
+
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
     await waitMs(1);
+
     expect(submitButton).not.toHaveAttribute('disabled');
   });
 
   it('submit is triggering successfully', async () => {
     const submitMockFunc = jest.fn();
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText, getByText, getAllByLabelText } = render(
       <SqsDestinationForm onSubmit={submitMockFunc} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
     const queueUrl = getByLabelText('Queue URL');
     const submitButton = getByText('Add Destination');
-    const criticalSeverityCheckBox = document.getElementById(severity);
-    expect(criticalSeverityCheckBox).not.toBeNull();
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
     expect(submitButton).toHaveAttribute('disabled');
 
     fireEvent.change(displayNameField, { target: { value: displayName } });
-    fireEvent.click(criticalSeverityCheckBox);
     fireEvent.change(queueUrl, { target: { value: validUrl } });
+
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
     await waitMs(1);
+
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);
     await waitFor(() => expect(submitMockFunc).toHaveBeenCalledTimes(1));
-    expect(submitMockFunc).toHaveBeenCalledWith({
-      outputId: null,
-      displayName,
-      outputConfig: initialValues.outputConfig,
-      defaultForSeverity: [severity],
-      alertTypes: [],
-    });
+    expect(submitMockFunc).toHaveBeenCalledWith(
+      {
+        outputId: null,
+        displayName,
+        outputConfig: initialValues.outputConfig,
+        defaultForSeverity: [severity],
+        alertTypes: [AlertTypesEnum.Rule],
+      },
+      expect.toBeObject()
+    );
   });
 
   it('should edit SQS Destination successfully', async () => {
@@ -135,12 +147,15 @@ describe('SqsDestinationForm', () => {
 
     fireEvent.click(submitButton);
     await waitFor(() => expect(submitMockFunc).toHaveBeenCalledTimes(1));
-    expect(submitMockFunc).toHaveBeenCalledWith({
-      outputId: initialValues.outputId,
-      displayName: newDisplayName,
-      outputConfig: initialValues.outputConfig,
-      defaultForSeverity: initialValues.defaultForSeverity,
-      alertTypes: initialValues.alertTypes,
-    });
+    expect(submitMockFunc).toHaveBeenCalledWith(
+      {
+        outputId: initialValues.outputId,
+        displayName: newDisplayName,
+        outputConfig: initialValues.outputConfig,
+        defaultForSeverity: initialValues.defaultForSeverity,
+        alertTypes: initialValues.alertTypes,
+      },
+      expect.toBeObject()
+    );
   });
 });

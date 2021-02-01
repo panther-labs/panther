@@ -71,7 +71,7 @@ const RuleFormCoreSection: React.FC = () => {
     outputIds: values.outputIds,
   });
 
-  const generateHelperText = React.useCallback(() => {
+  const generateDestinationHelperText = React.useCallback(() => {
     if (destinationsError) {
       return (
         <FormError id="outputIds-description" mt={2}>
@@ -103,7 +103,7 @@ const RuleFormCoreSection: React.FC = () => {
     );
   }, [destinationsError, destinationsLoading, availableOutputIds]);
 
-  const destinationHelperText = React.useMemo(() => generateHelperText(), [
+  const destinationHelperText = React.useMemo(() => generateDestinationHelperText(), [
     destinationsError,
     destinationsLoading,
     availableOutputIds,
@@ -143,7 +143,7 @@ const RuleFormCoreSection: React.FC = () => {
           label="Log Types"
           name="logTypes"
           items={data?.listAvailableLogTypes.logTypes ?? []}
-          placeholder="Where should the rule apply?"
+          placeholder="Which log types should this rule apply to?"
         />
       </Flex>
       <Flex as="section" direction="column" spacing={5}>
