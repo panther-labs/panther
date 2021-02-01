@@ -24,23 +24,24 @@ import { extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import { PageViewEnum } from 'Helpers/analytics';
-import TablePlaceholder from 'Components/TablePlaceholder';
 import EmptyDataFallback from './EmptyDataFallback';
 import { useListDataModels } from './graphql/listDataModels.generated';
 import DataModelCard from './DataModelCard';
 import ListDataModelFilters from './ListDataModelFilters';
+import ListDataModelsSkeleton from './Skeleton';
 
 const ListDataModels = () => {
   useTrackPageView(PageViewEnum.ListDataModels);
 
   const { loading, error, data } = useListDataModels({ variables: { input: {} } });
-
+  if (loading && !data) {
+    return <ListDataModelsSkeleton />;
+  }
   const dataModels = data?.listDataModels?.models;
   return (
     <Box mb={6}>
       <Panel title="Data Models" actions={<ListDataModelFilters />}>
         <ErrorBoundary>
-          {loading && <TablePlaceholder />}
           {error && (
             <Alert
               variant="error"
