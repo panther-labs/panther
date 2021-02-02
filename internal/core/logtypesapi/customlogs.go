@@ -28,7 +28,6 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/customlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/pkg/stringset"
 )
 
@@ -61,15 +60,11 @@ type GetCustomLogOutput struct {
 
 func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInput) (*PutCustomLogOutput, error) {
 	id := customlogs.LogType(input.LogType)
-	desc := logtypes.Desc{
-		Name:         id,
-		Description:  input.Description,
-		ReferenceURL: input.ReferenceURL,
-	}
-	schema, err := buildSchema(desc, input.Spec)
+	schema, err := buildSchema(id, input.Description, input.ReferenceURL, input.Spec)
 	if err != nil {
 		return nil, err
 	}
+	schema.Schema = id
 
 	switch currentRevision := input.Revision; currentRevision {
 	case 0:
@@ -99,7 +94,7 @@ func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInp
 			return nil, NewAPIError(ErrRevisionConflict, fmt.Sprintf("record %q is not on revision %d", id, currentRevision))
 		}
 
-		currentSchema, err := buildSchema(current.Describe(), current.Spec)
+		currentSchema, err := buildSchema(current.Name, current.Description, current.ReferenceURL, current.Spec)
 		if err != nil {
 			return nil, err
 		}
@@ -135,25 +130,27 @@ func (api *LogTypesAPI) checkUpdate(a, b *logschema.Schema) error {
 	return err
 }
 
-func buildSchema(desc logtypes.Desc, spec string) (*logschema.Schema, error) {
-	// Pass strict validation rules for logtype.Desc
-	desc.Fill()
-
-	// This is checked again in `customlogs.Build` but we check here to provide the appropriate error code
-	if err := desc.Validate(); err != nil {
-		return nil, NewAPIError(ErrInvalidMetadata, err.Error())
-	}
+func buildSchema(name, desc, refURL, spec string) (*logschema.Schema, error) {
 	schema := logschema.Schema{}
 	if err := yaml.Unmarshal([]byte(spec), &schema); err != nil {
 		return nil, NewAPIError(ErrInvalidSyntax, err.Error())
+	}
+	if desc != "" {
+		schema.Description = desc
+	}
+	if refURL != "" {
+		schema.ReferenceURL = refURL
+	}
+	if err := logschema.ValidateSchema(&schema); err != nil {
+		return nil, NewAPIError(ErrInvalidLogSchema, err.Error())
 	}
 	// Schemas requiring native parsers don't need further checks
 	if p := schema.Parser; p != nil && p.Native != nil {
 		return &schema, nil
 	}
 	// Build non-native parser entries
-	if _, err := customlogs.Build(desc, &schema); err != nil {
-		return nil, NewAPIError(ErrInvalidLogSchema, err.Error())
+	if _, err := customlogs.Build(name, &schema); err != nil {
+		return nil, err
 	}
 	return &schema, nil
 }
@@ -174,7 +171,7 @@ type PutCustomLogOutput struct {
 }
 
 func (api *LogTypesAPI) DelCustomLog(ctx context.Context, input *DelCustomLogInput) (*DelCustomLogOutput, error) {
-	inUse, err := api.LogTypeInUse(ctx)
+	inUse, err := api.LogTypesInUse(ctx)
 	if err != nil {
 		return nil, err
 	}

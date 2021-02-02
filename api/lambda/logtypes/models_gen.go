@@ -37,19 +37,25 @@ type LogTypesAPI interface {
 	ListCustomLogs() (ListCustomLogsResponse, error)
 
 	GetSchema(input GetSchemaInput) (GetSchemaResponse, error)
+
+	ListManagedSchemaUpdates(input ListManagedSchemaUpdatesInput) (ListManagedSchemaUpdatesResponse, error)
+
+	UpdateManagedSchemas(input UpdateManagedSchemasInput) (UpdateManagedSchemasResponse, error)
 }
 
 // Models for LogTypesAPI
 
 // LogTypesAPIPayload is the payload for calls to LogTypesAPI endpoints.
 type LogTypesAPIPayload struct {
-	ListAvailableLogTypes *struct{}
-	ListDeletedCustomLogs *struct{}
-	GetCustomLog          *GetCustomLogInput
-	PutCustomLog          *PutCustomLogInput
-	DelCustomLog          *DelCustomLogInput
-	ListCustomLogs        *struct{}
-	GetSchema             *GetSchemaInput
+	ListAvailableLogTypes    *struct{}
+	ListDeletedCustomLogs    *struct{}
+	GetCustomLog             *GetCustomLogInput
+	PutCustomLog             *PutCustomLogInput
+	DelCustomLog             *DelCustomLogInput
+	ListCustomLogs           *struct{}
+	GetSchema                *GetSchemaInput
+	ListManagedSchemaUpdates *ListManagedSchemaUpdatesInput
+	UpdateManagedSchemas     *UpdateManagedSchemasInput
 }
 
 type DelCustomLogInput struct {
@@ -143,6 +149,20 @@ type ListDeletedCustomLogsResponse struct {
 	} `json:"error,omitempty" description:"An error that occurred while fetching the list"`
 }
 
+type ListManagedSchemaUpdatesInput struct{}
+
+type ListManagedSchemaUpdatesResponse struct {
+	Releases []struct {
+		Tag         string `json:"tag"`
+		Description string `json:"description"`
+		ManifestURL string `json:"manifestURL"`
+	} `json:"releases,omitempty" description:"Available release updates"`
+	Error struct {
+		Code    string `json:"code" validate:"required"`
+		Message string `json:"message" validate:"required"`
+	} `json:"error,omitempty" description:"An error that occurred while fetching the record"`
+}
+
 type PutCustomLogInput struct {
 	LogType      string `json:"logType" validate:"required,startswith=Custom." description:"The log type id"`
 	Revision     int64  `json:"revision,omitempty" validate:"omitempty,min=1" description:"Custom log record revision to update (if omitted a new record will be created)"`
@@ -168,4 +188,28 @@ type PutCustomLogResponse struct {
 		Code    string `json:"code" validate:"required"`
 		Message string `json:"message" validate:"required"`
 	} `json:"error,omitempty" description:"An error that occurred during the operation"`
+}
+
+type UpdateManagedSchemasInput struct {
+	Release     string `json:"release" validate:"required" description:"The release of the schema"`
+	ManifestURL string `json:"manifestURL" validate:"required" description:"The URL to download the manifest archive from"`
+}
+
+type UpdateManagedSchemasResponse struct {
+	Records []struct {
+		Name         string    `json:"logType" dynamodbav:"logType" validate:"required" description:"The schema id"`
+		Revision     int64     `json:"revision" validate:"required,min=1" description:"Schema record revision"`
+		Release      string    `json:"release,omitempty" description:"Managed schema release version"`
+		UpdatedAt    time.Time `json:"updatedAt" description:"Last update timestamp of the record"`
+		CreatedAt    time.Time `json:"createdAt" description:"Creation timestamp of the record"`
+		Managed      bool      `json:"managed,omitempty" description:"Schema is managed by Panther"`
+		Disabled     bool      `json:"disabled,omitempty" dynamodbav:"IsDeleted"  description:"Log record is deleted"`
+		Description  string    `json:"description" description:"Log type description"`
+		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the schema"`
+		Spec         string    `json:"logSpec" dynamodbav:"logSpec" validate:"required" description:"The schema spec in YAML or JSON format"`
+	} `json:"records"`
+	Error struct {
+		Code    string `json:"code" validate:"required"`
+		Message string `json:"message" validate:"required"`
+	} `json:"error,omitempty" description:"An error that occurred while fetching the record"`
 }

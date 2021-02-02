@@ -20,12 +20,14 @@ package main
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	lambdaclient "github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/google/go-github/github"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/pkg/errors"
@@ -36,6 +38,7 @@ import (
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/datacatalog_updater/datacatalog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
+	"github.com/panther-labs/panther/internal/log_analysis/managedschemas"
 	"github.com/panther-labs/panther/pkg/genericapi"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
 	"github.com/panther-labs/panther/pkg/x/lambdamux"
@@ -61,8 +64,6 @@ func main() {
 
 	session := session.Must(session.NewSession())
 	lambdaClient := lambdaclient.New(session)
-	// FIXME: uncomment the below line to add the resource history to the of available logTypes and allow rules to target
-	// nativeLogTypes = append(nativeLogTypes, logtypes.CollectNames(snapshotlogs.LogTypes())...)
 	api := &logtypesapi.LogTypesAPI{
 		Database: &logtypesapi.DynamoDBSchemas{
 			DB:        dynamodb.New(session),
@@ -78,7 +79,7 @@ func main() {
 			}
 			return client.SendUpdateTableForLogType(ctx, logType)
 		},
-		LogTypeInUse: func(ctx context.Context) ([]string, error) {
+		LogTypesInUse: func(ctx context.Context) ([]string, error) {
 			input := &models.LambdaInput{
 				ListIntegrations: &models.ListIntegrationsInput{},
 			}
@@ -92,6 +93,11 @@ func main() {
 				logTypes = append(logTypes, output.RequiredLogTypes()...)
 			}
 			return logTypes, nil
+		},
+		ManagedSchemas: &managedschemas.GitHubRepository{
+			Repo:   "panther-analysis",
+			Owner:  "panther-labs",
+			Client: github.NewClient(&http.Client{}),
 		},
 	}
 

@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
+	"github.com/panther-labs/panther/internal/log_analysis/managedschemas"
 )
 
 const LambdaName = "panther-logtypes-api"
@@ -40,8 +41,8 @@ const LambdaName = "panther-logtypes-api"
 type LogTypesAPI struct {
 	Database          SchemaDatabase
 	UpdateDataCatalog func(ctx context.Context, logType string, from, to []logschema.FieldSchema) error
-	// FIXME: Rename to LogTypesInUse
-	LogTypeInUse func(ctx context.Context) ([]string, error)
+	LogTypesInUse     func(ctx context.Context) ([]string, error)
+	ManagedSchemas    managedschemas.ReleaseFeeder
 }
 
 // SchemaDatabase handles the external actions required for LogTypesAPI to be implemented

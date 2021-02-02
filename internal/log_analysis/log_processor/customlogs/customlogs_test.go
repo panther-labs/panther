@@ -40,8 +40,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/customlogs"
-	logschema "github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
@@ -83,12 +82,7 @@ func ExampleBuild() {
 	logSchema := logschema.Schema{}
 	fmt.Println("load schema JSON", jsoniter.UnmarshalFromString(logSchemaJSON, &logSchema))
 
-	desc := logtypes.Desc{
-		Name:         "API",
-		Description:  "API log type",
-		ReferenceURL: "-",
-	}
-	config, err := customlogs.Build(desc, &logSchema)
+	config, err := customlogs.Build("Custom.API", &logSchema)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -129,7 +123,9 @@ func ExampleBuild() {
 func TestLogSchemaParser(t *testing.T) {
 	assert := require.New(t)
 	logSchema := logschema.Schema{
-		Schema: "Test",
+		Schema:       "Test",
+		Description:  "Test schema",
+		ReferenceURL: "https://example.com",
 		Fields: []logschema.FieldSchema{
 			{
 				Name:        "ts",
@@ -166,12 +162,7 @@ func TestLogSchemaParser(t *testing.T) {
 			},
 		},
 	}
-	desc := logtypes.Desc{
-		Name:         "Test",
-		Description:  "Test log",
-		ReferenceURL: "-",
-	}
-	config, err := customlogs.Build(desc, &logSchema)
+	config, err := customlogs.Build("Custom.Test", &logSchema)
 	assert.NoError(err)
 	parser, err := config.NewParser(nil)
 	assert.NoError(err)
@@ -225,12 +216,7 @@ func TestBuild(t *testing.T) {
 			assert.NoError(yaml.Unmarshal(data, &logSchema))
 			err = logschema.ValidateSchema(&logSchema)
 			assert.NoError(err)
-			desc := logtypes.Desc{
-				Name:         logSchema.Schema,
-				Description:  "foo",
-				ReferenceURL: "-",
-			}
-			entry, err := customlogs.Build(desc, &logSchema)
+			entry, err := customlogs.Build(logSchema.Schema, &logSchema)
 			assert.NoError(err)
 			assert.NotNil(entry)
 		})
@@ -253,12 +239,7 @@ func TestApacheCommonLog_FastMatch(t *testing.T) {
 			assert.NoError(yaml.Unmarshal(data, &logSchema))
 			err = logschema.ValidateSchema(&logSchema)
 			assert.NoError(err)
-			desc := logtypes.Desc{
-				Name:         logSchema.Schema,
-				Description:  "foo",
-				ReferenceURL: "-",
-			}
-			entry, err := customlogs.Build(desc, &logSchema)
+			entry, err := customlogs.Build(logSchema.Schema, &logSchema)
 			assert.NoError(err)
 			assert.NotNil(entry)
 			var expectJSON = fmt.Sprintf(`{
@@ -289,12 +270,7 @@ func TestVPCFlowLog_CSV(t *testing.T) {
 	assert.NoError(yaml.Unmarshal(data, &logSchema))
 	err = logschema.ValidateSchema(&logSchema)
 	assert.NoError(err)
-	desc := logtypes.Desc{
-		Name:         logSchema.Schema,
-		Description:  "foo",
-		ReferenceURL: "-",
-	}
-	entry, err := customlogs.Build(desc, &logSchema)
+	entry, err := customlogs.Build(logSchema.Schema, &logSchema)
 	assert.NoError(err)
 	assert.NotNil(entry)
 	const vpcFlowDefaultHeader = "version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status" // nolint:lll
@@ -343,11 +319,7 @@ func TestNameCollisions(t *testing.T) {
 			},
 		},
 	}
-	entry, err := customlogs.Build(logtypes.Desc{
-		Name:         "TestNameCollisions",
-		Description:  "test schema for name collisions",
-		ReferenceURL: "-",
-	}, &schema)
+	entry, err := customlogs.Build("TestNameCollisions", &schema)
 	assert := require.New(t)
 	assert.Error(err)
 	assert.Nil(entry)

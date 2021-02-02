@@ -39,13 +39,15 @@ type LogTypesAPILambdaClient struct {
 }
 
 type LogTypesAPIPayload struct {
-	ListAvailableLogTypes *struct{}          `json:"ListAvailableLogTypes,omitempty"`
-	ListDeletedCustomLogs *struct{}          `json:"ListDeletedCustomLogs,omitempty"`
-	GetCustomLog          *GetCustomLogInput `json:"GetCustomLog,omitempty"`
-	PutCustomLog          *PutCustomLogInput `json:"PutCustomLog,omitempty"`
-	DelCustomLog          *DelCustomLogInput `json:"DelCustomLog,omitempty"`
-	ListCustomLogs        *struct{}          `json:"ListCustomLogs,omitempty"`
-	GetSchema             *GetSchemaInput    `json:"GetSchema,omitempty"`
+	ListAvailableLogTypes    *struct{}                      `json:"ListAvailableLogTypes,omitempty"`
+	ListDeletedCustomLogs    *struct{}                      `json:"ListDeletedCustomLogs,omitempty"`
+	GetCustomLog             *GetCustomLogInput             `json:"GetCustomLog,omitempty"`
+	PutCustomLog             *PutCustomLogInput             `json:"PutCustomLog,omitempty"`
+	DelCustomLog             *DelCustomLogInput             `json:"DelCustomLog,omitempty"`
+	ListCustomLogs           *struct{}                      `json:"ListCustomLogs,omitempty"`
+	GetSchema                *GetSchemaInput                `json:"GetSchema,omitempty"`
+	ListManagedSchemaUpdates *ListManagedSchemaUpdatesInput `json:"ListManagedSchemaUpdates,omitempty"`
+	UpdateManagedSchemas     *UpdateManagedSchemasInput     `json:"UpdateManagedSchemas,omitempty"`
 }
 
 func (c *LogTypesAPILambdaClient) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, error) {
@@ -131,6 +133,34 @@ func (c *LogTypesAPILambdaClient) GetSchema(ctx context.Context, input *GetSchem
 		GetSchema: input,
 	}
 	reply := GetSchemaOutput{}
+	if err := c.invoke(ctx, &payload, &reply); err != nil {
+		return nil, err
+	}
+	return &reply, nil
+}
+
+func (c *LogTypesAPILambdaClient) ListManagedSchemaUpdates(ctx context.Context, input *ListManagedSchemaUpdatesInput) (*ListManagedSchemaUpdatesOutput, error) {
+	if input == nil {
+		input = &ListManagedSchemaUpdatesInput{}
+	}
+	payload := LogTypesAPIPayload{
+		ListManagedSchemaUpdates: input,
+	}
+	reply := ListManagedSchemaUpdatesOutput{}
+	if err := c.invoke(ctx, &payload, &reply); err != nil {
+		return nil, err
+	}
+	return &reply, nil
+}
+
+func (c *LogTypesAPILambdaClient) UpdateManagedSchemas(ctx context.Context, input *UpdateManagedSchemasInput) (*UpdateManagedSchemasOutput, error) {
+	if input == nil {
+		input = &UpdateManagedSchemasInput{}
+	}
+	payload := LogTypesAPIPayload{
+		UpdateManagedSchemas: input,
+	}
+	reply := UpdateManagedSchemasOutput{}
 	if err := c.invoke(ctx, &payload, &reply); err != nil {
 		return nil, err
 	}

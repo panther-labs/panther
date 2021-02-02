@@ -73,12 +73,8 @@ func (r *Resolver) Resolve(ctx context.Context, name string) (logtypes.Entry, er
 		}
 		return entry, nil
 	}
+	schema.Description = record.Description
+	schema.ReferenceURL = record.ReferenceURL
 
-	desc := logtypes.Desc{
-		Name:         record.Name,
-		Description:  record.Description,
-		ReferenceURL: record.ReferenceURL,
-	}
-
-	return customlogs.Build(desc, &schema)
+	return customlogs.Build(record.Name, &schema)
 }

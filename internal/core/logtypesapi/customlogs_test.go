@@ -32,7 +32,7 @@ func TestAPI_PutCustomLog(t *testing.T) {
 	numDataCatalogCalls := 0
 	api := logtypesapi.LogTypesAPI{
 		Database: logtypesapi.NewInMemory(),
-		LogTypeInUse: func(ctx context.Context) ([]string, error) {
+		LogTypesInUse: func(ctx context.Context) ([]string, error) {
 			return []string{"Custom.InUse"}, nil
 		},
 		UpdateDataCatalog: func(ctx context.Context, logType string, from, to []logschema.FieldSchema) error {
