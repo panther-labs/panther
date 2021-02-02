@@ -192,7 +192,7 @@ type PutCustomLogResponse struct {
 
 type UpdateManagedSchemasInput struct {
 	Release     string `json:"release" validate:"required" description:"The release of the schema"`
-	ManifestURL string `json:"manifestURL" validate:"required" description:"The URL to download the manifest archive from"`
+	ManifestURL string `json:"manifestURL,omitempty" validate:"omitempty,url" description:"The URL to download the manifest archive from"`
 }
 
 type UpdateManagedSchemasResponse struct {
