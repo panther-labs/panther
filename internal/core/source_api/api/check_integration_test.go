@@ -19,9 +19,9 @@ package api
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/stretchr/testify/require"
@@ -40,7 +40,12 @@ func (e mockAWSError) OrigErr() error  { panic("implement me") }
 var _ awserr.Error = (*mockAWSError)(nil)
 
 func Test_CheckGetObject(t *testing.T) {
-	input := &s3.GetObjectInput{
+	listInput := &s3.ListObjectsInput{
+		Bucket:              aws.String("bucket-name"),
+		ExpectedBucketOwner: aws.String("bucket-owner"),
+		MaxKeys:             aws.Int64(1),
+	}
+	getInput := &s3.GetObjectInput{
 		Bucket:              aws.String("bucket-name"),
 		ExpectedBucketOwner: aws.String("bucket-owner"),
 		Key:                 aws.String("panther-health-check"),
@@ -48,25 +53,30 @@ func Test_CheckGetObject(t *testing.T) {
 
 	t.Run("healthy", func(t *testing.T) {
 		s3Client := &testutils.S3Mock{}
-		s3Client.On("GetObject", input).Return(&s3.GetObjectOutput{}, nil)
+		s3Client.On("ListObjects", listInput).Return(&s3.ListObjectsOutput{}, nil)
+		s3Client.On("GetObject", getInput).Return(&s3.GetObjectOutput{}, nil)
 
 		health := checkGetObject(s3Client, "bucket-name", "bucket-owner")
 
+		s3Client.AssertExpectations(t)
 		require.True(t, health.Healthy)
 	})
 	t.Run(s3.ErrCodeNoSuchKey, func(t *testing.T) {
 		s3Client := &testutils.S3Mock{}
-		s3Client.On("GetObject", input).
+		s3Client.On("ListObjects", listInput).Return(&s3.ListObjectsOutput{}, nil)
+		s3Client.On("GetObject", getInput).
 			Return(&s3.GetObjectOutput{}, mockAWSError(s3.ErrCodeNoSuchKey))
 
 		health := checkGetObject(s3Client, "bucket-name", "bucket-owner")
 
+		s3Client.AssertExpectations(t)
 		require.True(t, health.Healthy)
 	})
 	t.Run("AccessDenied", func(t *testing.T) {
 		mockErr := mockAWSError("AccessDenied")
 		s3Client := &testutils.S3Mock{}
-		s3Client.On("GetObject", input).
+		s3Client.On("ListObjects", listInput).Return(&s3.ListObjectsOutput{}, nil)
+		s3Client.On("GetObject", getInput).
 			Return(&s3.GetObjectOutput{}, &mockErr)
 
 		health := checkGetObject(s3Client, "bucket-name", "bucket-owner")
@@ -76,6 +86,8 @@ func Test_CheckGetObject(t *testing.T) {
 			Message:      "Unexpected error returned from s3.GetObject",
 			ErrorMessage: mockErr.Error(),
 		}
+
+		s3Client.AssertExpectations(t)
 		require.Equal(t, expected, health)
 	})
 }

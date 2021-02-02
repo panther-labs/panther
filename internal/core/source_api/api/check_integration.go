@@ -107,8 +107,26 @@ func (api *API) checkAwsS3Integration(input *models.CheckIntegrationInput) *mode
 
 func checkGetObject(s3Client s3iface.S3API, bucket, owner string) models.SourceIntegrationItemStatus {
 	// Check the error for a non-existent key. If the error is s3.ErrCodeNoSuchKey, we are good.
+	// The IAM role should have s3.ListBucket permissions, otherwise s3 will return AccessDenied even for
+	// missing keys.
+	_, err := s3Client.ListObjects(&s3.ListObjectsInput{
+		Bucket:              &bucket,
+		ExpectedBucketOwner: &owner,
+		MaxKeys:             aws.Int64(1),
+	})
+	if err != nil {
+		msg := "Error returned from s3.ListBucket request."
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "AccessDenied" {
+			msg = "We couldn't perform the s3.GetObject check because the IAM role doesn't have the s3.ListBucket permission."
+		}
+		return models.SourceIntegrationItemStatus{
+			Healthy:      false,
+			Message:      msg,
+			ErrorMessage: err.Error(),
+		}
+	}
 	nonExistingKey := "panther-health-check"
-	_, err := s3Client.GetObject(&s3.GetObjectInput{
+	_, err = s3Client.GetObject(&s3.GetObjectInput{
 		Bucket:              &bucket,
 		ExpectedBucketOwner: &owner,
 		Key:                 &nonExistingKey,

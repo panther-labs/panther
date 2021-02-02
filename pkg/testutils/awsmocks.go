@@ -90,6 +90,11 @@ func (m *S3Mock) GetBucketLocationWithContext(
 	return args.Get(0).(*s3.GetBucketLocationOutput), args.Error(1)
 }
 
+func (m *S3Mock) ListObjects(i *s3.ListObjectsInput) (*s3.ListObjectsOutput, error){
+	args := m.Called(i)
+	return args.Get(0).(*s3.ListObjectsOutput), args.Error(1)
+}
+
 func (m *S3Mock) ListObjectsV2Pages(input *s3.ListObjectsV2Input, f func(page *s3.ListObjectsV2Output, morePages bool) bool) error {
 	args := m.Called(input, f)
 	f(args.Get(0).(*s3.ListObjectsV2Output), false)
