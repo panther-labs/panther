@@ -29,6 +29,7 @@ package main
 import (
 	"bufio"
 	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -55,9 +56,8 @@ func main() {
 	stdin := os.Stdin
 	var stderr io.Writer
 	if *debug {
-		w := bufio.NewWriter(os.Stderr)
-		defer w.Flush()
-		stderr = w
+		fmt.Fprintf(os.Stderr, "[DEBUG] Writing debug output\n")
+		stderr = os.Stderr
 	} else {
 		stderr = ioutil.Discard
 	}
@@ -76,6 +76,7 @@ func main() {
 	stream := logstream.NewLineStream(stdin, logstream.DefaultBufferSize)
 	numLines := 0
 	numEvents := 0
+
 	for {
 		next := stream.Next()
 		if next == nil {
@@ -91,7 +92,6 @@ func main() {
 		if err != nil {
 			debugLog.Printf("Failed to classify line %d: %s\n", numLines, err)
 			os.Exit(1)
-			return
 		}
 		debugLog.Printf("Line=%d NumEvents=%d\n", numLines, len(result.Events))
 		for _, event := range result.Events {
