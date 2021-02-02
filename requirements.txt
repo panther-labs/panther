@@ -1,11 +1,11 @@
 astroid==2.4.2
 attrs==20.3.0
-aws-sam-translator==1.33.0
+aws-sam-translator==1.34.0
 bandit==1.7.0
-boto3==1.16.61
-botocore==1.19.61
+boto3==1.16.63
+botocore==1.19.63
 cfn-flip==1.2.3
-cfn-lint==0.44.5
+cfn-lint==0.44.6
 click==7.1.2
 decorator==4.4.2
 gitdb==4.0.5
