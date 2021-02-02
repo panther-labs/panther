@@ -72,6 +72,13 @@ func Deploy() error {
 	packager.PipLibs = config.PipLayer
 	packager.PostProcess = embedVersion
 
+	// Docker build before the parallel packaging.
+	// It's too resource-intensive to run in parallel with other build operations.
+	packager.DockerImageID, err = pkg.DockerBuild(log, filepath.Join("deployments", "Dockerfile"))
+	if err != nil {
+		return err
+	}
+
 	// TODO - cfn waiters need better progress updates and error extraction for nested stacks
 	// TODO - support updating nested stacks directly
 	// TODO - use deployment IAM role

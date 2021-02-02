@@ -27,11 +27,12 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/magefile/mage/sh"
+	"go.uber.org/zap"
 )
 
 // Returns local image ID (truncated SHA256)
-func (p Packager) DockerBuild(dockerfile string) (string, error) {
-	p.Log.Infof("docker build web server (%s)", dockerfile)
+func DockerBuild(log *zap.SugaredLogger, dockerfile string) (string, error) {
+	log.Infof("docker build web server (%s)", dockerfile)
 	tmpfile, err := ioutil.TempFile("", "panther-web-image-id")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp image ID file: %s", err)

@@ -20,6 +20,7 @@ package deploy
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -48,6 +49,12 @@ func deployFrontend(settings *PantherConfig, packager pkg.Packager, bootstrapOut
 		return fmt.Errorf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
 	}
 
+	var err error
+	packager.DockerImageID, err = pkg.DockerBuild(packager.Log, filepath.Join("deployments", "Dockerfile"))
+	if err != nil {
+		return err
+	}
+
 	params := map[string]string{
 		"AlarmTopicArn":              bootstrapOutputs["AlarmTopicArn"],
 		"AppClientId":                bootstrapOutputs["AppClientId"],
@@ -69,6 +76,6 @@ func deployFrontend(settings *PantherConfig, packager pkg.Packager, bootstrapOut
 		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
 		"UserPoolId":                 bootstrapOutputs["UserPoolId"],
 	}
-	_, err := Stack(packager, cfnstacks.FrontendTemplate, cfnstacks.Frontend, params)
+	_, err = Stack(packager, cfnstacks.FrontendTemplate, cfnstacks.Frontend, params)
 	return err
 }

@@ -70,6 +70,11 @@ type Packager struct {
 	// and it will push to ECR even if it means overwriting an image with the same tag.
 	EcrTagWithHash bool
 
+	// The image ID (truncated SHA256) for the "docker push" command.
+	//
+	// The docker image must be built before the packaging starts.
+	DockerImageID string
+
 	// Pip library versions to install for the shared python layer
 	PipLibs []string
 
@@ -261,23 +266,17 @@ func (p Packager) ecsTaskDefinition(logPrefix string, r cfnResource) cfnResource
 
 	p.Log.Debugf("%s: packaging AWS::ECS::TaskDefinition %s", logPrefix, r.logicalID)
 
-	imageID, err := p.DockerBuild(filepath.Join("deployments", dockerfile))
-	if err != nil {
-		r.err = err
-		return r
-	}
-
 	var tag string
 
 	if p.EcrTagWithHash {
 		// Check if this image ID already exists in ECR before uploading it
 		response, err := ecr.New(p.AwsSession).DescribeImages(&ecr.DescribeImagesInput{
-			ImageIds:       []*ecr.ImageIdentifier{{ImageTag: &imageID}},
+			ImageIds:       []*ecr.ImageIdentifier{{ImageTag: &p.DockerImageID}},
 			RepositoryName: aws.String(strings.Split(p.EcrRegistry, "/")[1]),
 		})
 		if err == nil && len(response.ImageDetails) > 0 {
-			p.Log.Debugf("%s: ecr image tag %s already exists", logPrefix, imageID)
-			containerDef["Image"] = p.EcrRegistry + ":" + imageID
+			p.Log.Debugf("%s: ecr image tag %s already exists", logPrefix, p.DockerImageID)
+			containerDef["Image"] = p.EcrRegistry + ":" + p.DockerImageID
 			return r
 		}
 
@@ -293,7 +292,7 @@ func (p Packager) ecsTaskDefinition(logPrefix string, r cfnResource) cfnResource
 	}
 
 	// Either the img does not yet exist or the caller requested release tagging - docker push to ECR
-	containerDef["Image"], r.err = p.DockerPush(imageID, tag)
+	containerDef["Image"], r.err = p.DockerPush(p.DockerImageID, tag)
 	return r
 }
 
