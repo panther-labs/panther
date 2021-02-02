@@ -103,7 +103,7 @@ func (d *DynamoDBSchemas) ScanSchemas(ctx context.Context, scan ScanSchemaFunc) 
 func (d *DynamoDBSchemas) GetSchema(ctx context.Context, id string, revision int64) (*SchemaRecord, error) {
 	input := dynamodb.GetItemInput{
 		TableName: aws.String(d.TableName),
-		Key:       mustMarshalMap(schemaRecordID(id, revision)),
+		Key:       mustMarshalMap(schemaRecordKey(id, revision)),
 	}
 	output, err := d.DB.GetItemWithContext(ctx, &input)
 	if err != nil {
