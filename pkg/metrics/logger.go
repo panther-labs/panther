@@ -98,8 +98,8 @@ type Metric struct {
 
 // Values that AWS understands as Metric Units
 const (
-	UnitBytes = "Bytes"
-	// UnitSeconds      = "Seconds"
+	UnitBytes   = "Bytes"
+	UnitSeconds = "Seconds"
 	// UnitMicroseconds = "Microseconds"
 	UnitMilliseconds = "Milliseconds"
 	UnitCount        = "Count"
