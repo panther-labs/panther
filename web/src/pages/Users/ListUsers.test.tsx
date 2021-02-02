@@ -22,12 +22,18 @@ import { mockListUsers } from './graphql/listUsers.generated';
 import ListUsers from './ListUsers';
 
 const users = [
-  buildUser(),
+  buildUser({
+    email: 'richardmiles@gmail.com',
+    familyName: 'Miles',
+    givenName: 'Richard',
+    id: '1',
+    status: 'CONFIRMED',
+  }),
   buildUser({
     email: 'johndoe@gmail.com',
-    familyName: 'John Doe',
+    familyName: 'Doe',
     givenName: 'John',
-    id: '123',
+    id: '2',
     // User hasn't accepted the invitation yet
     status: 'FORCE_CHANGE_PASSWORD',
   }),
