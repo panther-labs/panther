@@ -160,3 +160,19 @@ func LoadReleaseManifestFromURL(ctx context.Context, manifestURL string) ([]Mani
 	releaseVersion := zipArchive.Comment
 	return ReadYAMLManifest(releaseVersion, bytes.NewReader(manifestFile))
 }
+
+func MustLoadDefaultManifest() []ManifestEntry {
+	entries, err := LoadDefaultManifest()
+	if err != nil {
+		panic("failed to load manifest: " + err.Error())
+	}
+	return entries
+}
+
+func LoadDefaultManifest() ([]ManifestEntry, error) {
+	data, err := Asset("manifest.yml")
+	if err != nil {
+		return nil, err
+	}
+	return ReadYAMLManifest(ReleaseVersion, bytes.NewReader(data))
+}

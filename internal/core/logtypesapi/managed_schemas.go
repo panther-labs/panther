@@ -83,11 +83,12 @@ type UpdateManagedSchemasOutput struct {
 }
 
 func (api *LogTypesAPI) UpdateManagedSchemas(ctx context.Context, input *UpdateManagedSchemasInput) (*UpdateManagedSchemasOutput, error) {
-	entries, err := managedschemas.LoadReleaseManifestFromURL(ctx, input.ManifestURL)
+	entries, err := loadManifest(ctx, input.Release, input.ManifestURL)
 
 	if err != nil {
 		return nil, err
 	}
+
 	records := make([]*SchemaRecord, 0, len(entries))
 	for _, entry := range entries {
 		if entry.Release != input.Release {
@@ -103,6 +104,13 @@ func (api *LogTypesAPI) UpdateManagedSchemas(ctx context.Context, input *UpdateM
 	return &UpdateManagedSchemasOutput{
 		Records: records,
 	}, nil
+}
+
+func loadManifest(ctx context.Context, release, manifestURL string) ([]managedschemas.ManifestEntry, error) {
+	if release == managedschemas.ReleaseVersion {
+		return managedschemas.LoadDefaultManifest()
+	}
+	return managedschemas.LoadReleaseManifestFromURL(ctx, manifestURL)
 }
 
 func (api *LogTypesAPI) updateManagedSchema(ctx context.Context, entry managedschemas.ManifestEntry) (*SchemaRecord, error) {
