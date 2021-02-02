@@ -20,6 +20,7 @@ import { buildDestination, buildGithubConfig, render } from 'test-utils';
 import React from 'react';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
 import { DestinationTypeEnum } from 'Generated/schema';
+import { alertTypeToString } from 'Helpers/utils';
 import { GithubDestinationCard } from '../index';
 
 describe('GithubDestinationCard', () => {
@@ -36,7 +37,8 @@ describe('GithubDestinationCard', () => {
     expect(getByAriaLabel(/Toggle Options/i)).toBeInTheDocument();
     expect(getByText(githubDestination.displayName)).toBeInTheDocument();
     expect(getByText(githubDestination.outputConfig.github.repoName)).toBeInTheDocument();
-    expect(getByText('Date Created')).toBeInTheDocument();
-    expect(getByText('Last Updated')).toBeInTheDocument();
+    expect(
+      getByText(githubDestination.alertTypes.map(alertTypeToString).join(' ,'))
+    ).toBeInTheDocument();
   });
 });

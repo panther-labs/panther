@@ -729,6 +729,7 @@ Resources:
                 - athena:StartQueryExecution
                 - athena:StopQueryExecution
                 - athena:GetQuery*
+                - athena:ListTableMetadata
               Resource: '*'
             - Effect: Allow # athena writes results to S3
               Action:

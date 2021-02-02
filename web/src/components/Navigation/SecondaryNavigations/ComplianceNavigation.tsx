@@ -34,12 +34,6 @@ const ComplianceNavigation: React.FC = () => {
         />
         <NavLink
           isSecondary
-          icon="policy"
-          to={`${urls.compliance.policies.list()}?page=1&sortBy=lastModified&sortDir=descending`}
-          label="Policies"
-        />
-        <NavLink
-          isSecondary
           icon="resource"
           to={urls.compliance.resources.list()}
           label="Resources"

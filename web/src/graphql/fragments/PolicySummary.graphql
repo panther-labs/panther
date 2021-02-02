@@ -12,4 +12,5 @@ fragment PolicySummary on Policy {
   createdAt
   lastModified
   enabled
+  analysisType
 }

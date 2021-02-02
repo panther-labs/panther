@@ -29,8 +29,9 @@ const (
 
 type LambdaInput struct {
 	// Shared
-	BulkUpload     *BulkUploadInput     `json:"bulkUpload,omitempty"`
-	ListDetections *ListDetectionsInput `json:"listDetections,omitempty"`
+	BulkUpload       *BulkUploadInput     `json:"bulkUpload,omitempty"`
+	ListDetections   *ListDetectionsInput `json:"listDetections,omitempty"`
+	DeleteDetections *DeletePoliciesInput `json:"deleteDetections,omitempty"`
 
 	// Globals
 	CreateGlobal  *CreateGlobalInput  `json:"createGlobal,omitempty"`

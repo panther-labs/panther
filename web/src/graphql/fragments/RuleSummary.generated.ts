@@ -37,6 +37,7 @@ export type RuleSummary = Pick<
   | 'createdAt'
   | 'lastModified'
   | 'enabled'
+  | 'analysisType'
 >;
 
 export const RuleSummary = gql`
@@ -55,5 +56,6 @@ export const RuleSummary = gql`
     createdAt
     lastModified
     enabled
+    analysisType
   }
 `;

@@ -21,8 +21,8 @@ import { Badge, BadgeProps, Box, Tooltip } from 'pouncejs';
 import { ComplianceStatusEnum } from 'Generated/schema';
 
 export const STATUS_COLOR_MAP: { [key in StatusBadgeProps['status']]: BadgeProps['color'] } = {
-  [ComplianceStatusEnum.Pass]: 'green-400' as const,
-  [ComplianceStatusEnum.Fail]: 'red-300' as const,
+  [ComplianceStatusEnum.Pass]: 'green-500' as const,
+  [ComplianceStatusEnum.Fail]: 'red-200' as const,
   [ComplianceStatusEnum.Error]: 'orange-400' as const,
   ENABLED: 'cyan-400' as const,
 };
@@ -43,7 +43,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
   if (disabled) {
     return (
       <Box opacity={0.5}>
-        <Badge color="gray-600">{disabledLabel}</Badge>
+        <Badge color="navyblue-300">{disabledLabel}</Badge>
       </Box>
     );
   }

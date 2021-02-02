@@ -30,8 +30,8 @@ import (
 	"github.com/panther-labs/panther/api/lambda/resources/models"
 )
 
-// Deleted resources are retained for 30 days in the database
-const deleteWindowSecs = 30 * 24 * 60 * 60
+// Deleted resources are retained for 2 days in the database
+const deleteWindowSecs = 2 * 24 * 60 * 60
 
 // DeleteResources marks one or more resources as deleted.
 func (API) DeleteResources(input *models.DeleteResourcesInput) *events.APIGatewayProxyResponse {

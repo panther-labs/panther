@@ -266,7 +266,7 @@ exports[`AlertDetailsInfo matches snapshot 1`] = `
             </div>
             <a
               class="panther-8"
-              href="/log-analysis/rules/panel/"
+              href="/detections/rules/b2335d05-121b-4244-8cef-2c069cfa3075/"
               id="rule-link"
             >
               AI
@@ -319,7 +319,7 @@ exports[`AlertDetailsInfo matches snapshot 1`] = `
             >
               <a
                 class="panther-16"
-                href="/log-analysis/rules/?page=1&tags[]=invoice"
+                href="/detections/?page=1&tags[]=invoice"
               >
                 invoice
               </a>

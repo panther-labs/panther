@@ -32,9 +32,6 @@ export type GetLogAnalysisMetrics = {
     eventsProcessed: Pick<Types.LongSeriesData, 'timestamps'> & {
       series: Array<Pick<Types.LongSeries, 'label' | 'values'>>;
     };
-    eventsLatency: Pick<Types.FloatSeriesData, 'timestamps'> & {
-      series: Array<Pick<Types.FloatSeries, 'label' | 'values'>>;
-    };
     alertsBySeverity: Pick<Types.LongSeriesData, 'timestamps'> & {
       series: Array<Pick<Types.LongSeries, 'label' | 'values'>>;
     };
@@ -47,13 +44,6 @@ export const GetLogAnalysisMetricsDocument = gql`
   query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput!) {
     getLogAnalysisMetrics(input: $input) {
       eventsProcessed {
-        series {
-          label
-          values
-        }
-        timestamps
-      }
-      eventsLatency {
         series {
           label
           values
