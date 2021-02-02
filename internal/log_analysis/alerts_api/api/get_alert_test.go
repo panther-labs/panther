@@ -167,6 +167,9 @@ func TestGetRuleAlert(t *testing.T) {
 	api = initTestAPI()                                           // reset mocks
 	input.EventsExclusiveStartKey = result.EventsLastEvaluatedKey // set paginator
 
+	// extend LIMIT since we are paging and S3 select has no OFFSET support
+	expectedSelectObjectInput.Expression = aws.String("SELECT * FROM S3Object o WHERE o.p_alert_id='alertId' LIMIT 2")
+
 	expectedPagedListObjectsRequest := &s3.ListObjectsV2Input{
 		Bucket:     aws.String(api.env.ProcessedDataBucket),
 		Prefix:     aws.String("rules/logtype/year=2020/month=01/day=01/hour=01/rule_id=ruleId/"),

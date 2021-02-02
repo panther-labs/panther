@@ -13,4 +13,5 @@ fragment RuleSummary on Rule {
   createdAt
   lastModified
   enabled
+  analysisType
 }

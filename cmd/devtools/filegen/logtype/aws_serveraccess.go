@@ -21,13 +21,13 @@ package logtype
 import (
 	"io"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/panther-labs/panther/cmd/devtools/filegen"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/awslogs"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/pkg/box"
 )
 
@@ -66,15 +66,13 @@ func (sa *AWSS3ServerAccess) NewFile(hour time.Time) *filegen.File {
 }
 
 func (sa *AWSS3ServerAccess) writeEvent(event *awslogs.S3ServerAccess, hour time.Time, w io.Writer) {
-	event.BucketOwner = box.String(filegen.String(64))
+	event.BucketOwner = box.String(filegen.StringAlphaNum(64))
 	sa.writeString(event.BucketOwner, w, true)
 
 	event.Bucket = box.String(filegen.String(64))
 	sa.writeString(event.Bucket, w, true)
 
-	event.Time = (*timestamp.RFC3339)(&hour)
-	eventTime := (*time.Time)(event.Time).Format("[2/Jan/2006:15:04:05 -0700]")
-	sa.writeString(&eventTime, w, true)
+	sa.writeEventTime(hour, w)
 
 	event.RemoteIP = box.String(filegen.IP())
 	sa.writeString(event.RemoteIP, w, true)
@@ -100,16 +98,16 @@ func (sa *AWSS3ServerAccess) writeEvent(event *awslogs.S3ServerAccess, hour time
 	event.ErrorCode = box.String(filegen.String(8))
 	sa.writeString(event.ErrorCode, w, true)
 
-	event.BytesSent = box.Int(filegen.Int())
+	event.BytesSent = box.Int(filegen.Intn(10000))
 	sa.writeInt(event.BytesSent, w)
 
-	event.ObjectSize = box.Int(filegen.Int())
+	event.ObjectSize = box.Int(filegen.Intn(10000))
 	sa.writeInt(event.ObjectSize, w)
 
-	event.TotalTime = box.Int(filegen.Int())
+	event.TotalTime = box.Int(filegen.Intn(10000))
 	sa.writeInt(event.TotalTime, w)
 
-	event.TurnAroundTime = box.Int(filegen.Int())
+	event.TurnAroundTime = box.Int(filegen.Intn(10000))
 	sa.writeInt(event.TurnAroundTime, w)
 
 	event.Referrer = box.String(filegen.String(64))
@@ -136,7 +134,7 @@ func (sa *AWSS3ServerAccess) writeEvent(event *awslogs.S3ServerAccess, hour time
 	event.HostHeader = box.String(filegen.String(32))
 	sa.writeString(event.HostHeader, w, true)
 
-	event.TLSVersion = box.String(filegen.String(8))
+	event.TLSVersion = box.String(filegen.StringChoice(tlsVersions))
 	sa.writeString(event.TLSVersion, w, false) // false! last element, write \n
 }
 
@@ -154,12 +152,17 @@ func (sa *AWSS3ServerAccess) writeLineDelimiter(w io.Writer) {
 	}
 }
 
+var (
+	tlsVersions = []string{"TLSv1", "TLSv1.1", "TLSv1.2", "NULL"}
+)
+
 func (sa *AWSS3ServerAccess) writeString(s *string, w io.Writer, delimiter bool) {
 	var err error
 	if s == nil {
 		_, err = w.Write(sa.null)
 	} else {
-		_, err = io.WriteString(w, *s)
+		// ensure we do not inject any delimiters!
+		_, err = io.WriteString(w, strings.Replace(*s, sa.Delimiter(), "d", -1))
 	}
 	if err != nil {
 		panic(err)
@@ -181,4 +184,14 @@ func (sa *AWSS3ServerAccess) writeInt(i *int, w io.Writer) {
 	if err != nil {
 		panic(err)
 	}
+	sa.writeDelimiter(w)
+}
+
+func (sa *AWSS3ServerAccess) writeEventTime(t time.Time, w io.Writer) {
+	var err error
+	_, err = io.WriteString(w, t.Format("[2/Jan/2006:15:04:05 -0700]"))
+	if err != nil {
+		panic(err)
+	}
+	sa.writeDelimiter(w)
 }

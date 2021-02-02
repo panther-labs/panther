@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Dropdown, DropdownButton, DropdownItem, DropdownLink, DropdownMenu } from 'pouncejs';
-import { Rule } from 'Generated/schema';
+import { RuleSummary } from 'Source/graphql/fragments/RuleSummary.generated';
 import urls from 'Source/urls';
 import useModal from 'Hooks/useModal';
 import { MODALS } from 'Components/utils/Modal';
@@ -26,7 +26,7 @@ import { Link as RRLink } from 'react-router-dom';
 import GenericItemCard from 'Components/GenericItemCard';
 
 interface RuleCardOptionsProps {
-  rule: Rule;
+  rule: RuleSummary;
 }
 
 const RuleCardOptions: React.FC<RuleCardOptionsProps> = ({ rule }) => {
