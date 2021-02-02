@@ -32,28 +32,34 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 )
 
+// ReleaseFeeder provides a feed of releases since a specific version tag
 type ReleaseFeeder interface {
 	ReleaseFeed(ctx context.Context, sinceTag string) ([]Release, error)
 }
 
-type ManifestEntry struct {
-	Release string
-	Name    string
-	Spec    string
-}
-
+// Release describes a managed schema release
 type Release struct {
 	Tag         string `json:"tag"`
 	Description string `json:"description"`
 	ManifestURL string `json:"manifestURL"`
 }
 
+// ReleaseFeed is a list of managed schema releases
 type ReleaseFeed []Release
 
+// ManifestEntry describes a managed schema entry from a specific release
+type ManifestEntry struct {
+	Release string
+	Name    string
+	Spec    string
+}
+
+// IsValid checks that a release has a valid version and points to a manifest file
 func (r *Release) IsValid() bool {
 	return semver.IsValid(r.Tag) && r.ManifestURL != ""
 }
 
+// Valid filters a release feed keeping only valid entries
 func (f ReleaseFeed) Valid() ReleaseFeed {
 	if f == nil {
 		return nil
@@ -106,6 +112,7 @@ func findArchiveFile(z *zip.Reader, name string) *zip.File {
 	return nil
 }
 
+// ReadYAMLManifest reads entries from a `manifest.yml` file
 func ReadYAMLManifest(release string, r io.Reader) ([]ManifestEntry, error) {
 	dec := yaml3.NewDecoder(r)
 	var manifest []ManifestEntry
@@ -133,6 +140,7 @@ func ReadYAMLManifest(release string, r io.Reader) ([]ManifestEntry, error) {
 	}
 }
 
+// LoadReleaeManifestFromURL fetches a release archive from a URL and reads manifest entries.
 func LoadReleaseManifestFromURL(ctx context.Context, manifestURL string) ([]ManifestEntry, error) {
 	manifestArchive, err := DownloadFile(ctx, nil, manifestURL)
 	if err != nil {

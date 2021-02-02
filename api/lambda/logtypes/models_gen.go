@@ -36,11 +36,11 @@ type LogTypesAPI interface {
 
 	ListCustomLogs() (ListCustomLogsResponse, error)
 
-	GetSchema(input GetSchemaInput) (GetSchemaResponse, error)
-
 	ListManagedSchemaUpdates(input ListManagedSchemaUpdatesInput) (ListManagedSchemaUpdatesResponse, error)
 
 	UpdateManagedSchemas(input UpdateManagedSchemasInput) (UpdateManagedSchemasResponse, error)
+
+	GetSchema(input GetSchemaInput) (GetSchemaResponse, error)
 }
 
 // Models for LogTypesAPI
@@ -53,9 +53,9 @@ type LogTypesAPIPayload struct {
 	PutCustomLog             *PutCustomLogInput
 	DelCustomLog             *DelCustomLogInput
 	ListCustomLogs           *struct{}
-	GetSchema                *GetSchemaInput
 	ListManagedSchemaUpdates *ListManagedSchemaUpdatesInput
 	UpdateManagedSchemas     *UpdateManagedSchemasInput
+	GetSchema                *GetSchemaInput
 }
 
 type DelCustomLogInput struct {

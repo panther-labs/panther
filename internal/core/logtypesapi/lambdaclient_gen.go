@@ -45,9 +45,9 @@ type LogTypesAPIPayload struct {
 	PutCustomLog             *PutCustomLogInput             `json:"PutCustomLog,omitempty"`
 	DelCustomLog             *DelCustomLogInput             `json:"DelCustomLog,omitempty"`
 	ListCustomLogs           *struct{}                      `json:"ListCustomLogs,omitempty"`
-	GetSchema                *GetSchemaInput                `json:"GetSchema,omitempty"`
 	ListManagedSchemaUpdates *ListManagedSchemaUpdatesInput `json:"ListManagedSchemaUpdates,omitempty"`
 	UpdateManagedSchemas     *UpdateManagedSchemasInput     `json:"UpdateManagedSchemas,omitempty"`
+	GetSchema                *GetSchemaInput                `json:"GetSchema,omitempty"`
 }
 
 func (c *LogTypesAPILambdaClient) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, error) {
@@ -125,20 +125,6 @@ func (c *LogTypesAPILambdaClient) ListCustomLogs(ctx context.Context) (*ListCust
 	return &reply, nil
 }
 
-func (c *LogTypesAPILambdaClient) GetSchema(ctx context.Context, input *GetSchemaInput) (*GetSchemaOutput, error) {
-	if input == nil {
-		input = &GetSchemaInput{}
-	}
-	payload := LogTypesAPIPayload{
-		GetSchema: input,
-	}
-	reply := GetSchemaOutput{}
-	if err := c.invoke(ctx, &payload, &reply); err != nil {
-		return nil, err
-	}
-	return &reply, nil
-}
-
 func (c *LogTypesAPILambdaClient) ListManagedSchemaUpdates(ctx context.Context, input *ListManagedSchemaUpdatesInput) (*ListManagedSchemaUpdatesOutput, error) {
 	if input == nil {
 		input = &ListManagedSchemaUpdatesInput{}
@@ -161,6 +147,20 @@ func (c *LogTypesAPILambdaClient) UpdateManagedSchemas(ctx context.Context, inpu
 		UpdateManagedSchemas: input,
 	}
 	reply := UpdateManagedSchemasOutput{}
+	if err := c.invoke(ctx, &payload, &reply); err != nil {
+		return nil, err
+	}
+	return &reply, nil
+}
+
+func (c *LogTypesAPILambdaClient) GetSchema(ctx context.Context, input *GetSchemaInput) (*GetSchemaOutput, error) {
+	if input == nil {
+		input = &GetSchemaInput{}
+	}
+	payload := LogTypesAPIPayload{
+		GetSchema: input,
+	}
+	reply := GetSchemaOutput{}
 	if err := c.invoke(ctx, &payload, &reply); err != nil {
 		return nil, err
 	}

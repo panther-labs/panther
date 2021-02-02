@@ -28,6 +28,7 @@ import (
 
 var _ ReleaseFeeder = (*GitHubRepository)(nil)
 
+// GitHubRepository fetches release feeds using GitHub Releases API
 type GitHubRepository struct {
 	Repo   string
 	Owner  string
@@ -36,6 +37,7 @@ type GitHubRepository struct {
 
 const githubAssetName = "managed-schemas.zip"
 
+// ReleaseFeed implements ReleaseFeeder interface
 func (p *GitHubRepository) ReleaseFeed(ctx context.Context, sinceTag string) ([]Release, error) {
 	latestReleases, _, err := p.Client.Repositories.ListReleases(ctx, p.Owner, p.Repo, &github.ListOptions{})
 	if err != nil {
