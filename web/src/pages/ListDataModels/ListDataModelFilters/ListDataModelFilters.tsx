@@ -19,12 +19,7 @@
 import React from 'react';
 import urls from 'Source/urls';
 import { Form, Formik, FastField } from 'formik';
-import {
-  SortDirEnum,
-  ListRulesInput,
-  ListDataModelsInput,
-  ListDataModelsSortFieldsEnum,
-} from 'Generated/schema';
+import { SortDirEnum, ListDataModelsInput, ListDataModelsSortFieldsEnum } from 'Generated/schema';
 import { Box, Flex } from 'pouncejs';
 import pick from 'lodash/pick';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
@@ -80,7 +75,7 @@ const sortingOpts: SortingOptions = [
 ];
 
 /**
- * Since sorting is not responding to some ListAlertsInput key we shall extract
+ * Since sorting is not responding to some ListDataModelsInput key we shall extract
  * this information from `sortBy` and `sortDir` parameters in order to align the
  * combobox values.
  */
@@ -107,8 +102,9 @@ const wrapSortingOptions = params => {
 
 const ListDataModelFilters: React.FC = () => {
   const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
-    ListRulesInput
+    ListDataModelsInput
   >();
+
   const initialFilterValues = React.useMemo(
     () =>
       ({
@@ -117,6 +113,7 @@ const ListDataModelFilters: React.FC = () => {
       } as ListDataModelInlineFiltersValues),
     [requestParams]
   );
+
   return (
     <Flex justify="flex-end" align="center">
       <Formik<ListDataModelInlineFiltersValues>
@@ -135,8 +132,8 @@ const ListDataModelFilters: React.FC = () => {
                 icon="search"
                 iconAlignment="left"
                 as={FormikTextInput}
-                label="Filter Rules by text"
-                placeholder="Search for a rule..."
+                label="Filter Data Models by text"
+                placeholder="Search for a data model..."
               />
             </Box>
             <Box minWidth={220}>

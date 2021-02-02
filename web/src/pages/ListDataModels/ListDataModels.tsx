@@ -23,6 +23,8 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import { extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
 import useTrackPageView from 'Hooks/useTrackPageView';
+import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
+import { ListDataModelsInput } from 'Generated/schema';
 import { PageViewEnum } from 'Helpers/analytics';
 import EmptyDataFallback from './EmptyDataFallback';
 import { useListDataModels } from './graphql/listDataModels.generated';
@@ -33,7 +35,15 @@ import ListDataModelsSkeleton from './Skeleton';
 const ListDataModels = () => {
   useTrackPageView(PageViewEnum.ListDataModels);
 
-  const { loading, error, data } = useListDataModels({ variables: { input: {} } });
+  const { requestParams } = useRequestParamsWithoutPagination<ListDataModelsInput>();
+
+  const { loading, error, data } = useListDataModels({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      input: requestParams,
+    },
+  });
+
   if (loading && !data) {
     return <ListDataModelsSkeleton />;
   }
