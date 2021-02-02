@@ -19,17 +19,18 @@ package aws
  */
 
 import (
+	"testing"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/kms"
 	lru "github.com/hashicorp/golang-lru"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+
 	awsmodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/aws"
 	pollermodels "github.com/panther-labs/panther/internal/compliance/snapshot_poller/models/poller"
 	"github.com/panther-labs/panther/internal/compliance/snapshot_poller/pollers/aws/awstest"
-	"github.com/pkg/errors"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 // Unit tests
