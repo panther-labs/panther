@@ -30,7 +30,22 @@ import { extractErrorMessage } from 'Helpers/utils';
 import { ApolloError } from '@apollo/client';
 import { LOG_ONBOARDING_SNS_DOC_URL } from 'Source/constants';
 import { AddS3LogSource } from 'Pages/CreateLogSource/CreateS3LogSource/graphql/addS3LogSource.generated';
+import { UpdateS3LogSource } from 'Pages/EditS3LogSource/graphql/updateS3LogSource.generated';
 import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
+
+type SubmitResult = {
+  data: AddS3LogSource & UpdateS3LogSource;
+};
+
+function getResponseData(result: SubmitResult) {
+  let castedResult;
+  if (result?.data.addS3LogIntegration) {
+    castedResult = result as { data: AddS3LogSource };
+  } else {
+    castedResult = result as { data: UpdateS3LogSource };
+  }
+  return castedResult;
+}
 
 const ValidationPanel: React.FC = () => {
   const [errorMessage, setErrorMessage] = React.useState('');
@@ -40,34 +55,32 @@ const ValidationPanel: React.FC = () => {
     !initialValues.integrationId
   );
 
-  const [managedNotificationsStatus, setManagedNotificationsStatus] = React.useState<
-    'pass' | 'fail' | 'n/a'
-  >('n/a');
+  const [showManagedNotificationsWarning, setShowManagedNotificationsWarning] = React.useState(
+    false
+  );
 
   React.useEffect(() => {
     (async () => {
       try {
-        const result = await submitForm();
+        const result = ((await submitForm()) as unknown) as SubmitResult;
 
-        if (!initialValues.integrationId) {
-          /* If this is a new S3 Log source, we need to check if user has selected to automate
-           * setting up notifications, this can fail while the integration was successfully created
-           * so we need to inform user if something went wrong so they can add them manually
-           */
-          const responseData = ((result as unknown) as {
-            data: AddS3LogSource;
-          })?.data.addS3LogIntegration;
-          const { managedBucketNotifications, notificationsConfigurationSucceeded } = responseData;
-          if (managedBucketNotifications === false) {
-            setManagedNotificationsStatus('n/a');
-          } else if (notificationsConfigurationSucceeded) {
-            setManagedNotificationsStatus('pass');
-            // If there were successfully configure we dont need to show them
-            // info about how they can set them up
-            setNotificationScreenVisibility(false);
-          } else {
-            setManagedNotificationsStatus('fail');
-          }
+        const { managedBucketNotifications, notificationsConfigurationSucceeded } = getResponseData(
+          result
+        );
+        /* When this source is created or updated we need to check if user has selected to automate
+         * setting up notifications, this can fail while the integration was successfully created
+         * so we need to inform user if something went wrong so they can add them manually
+         */
+        if (managedBucketNotifications === true && notificationsConfigurationSucceeded === false) {
+          setShowManagedNotificationsWarning(true);
+        } else if (
+          managedBucketNotifications === true &&
+          notificationsConfigurationSucceeded === true
+        ) {
+          setShowManagedNotificationsWarning(false);
+          // If there were successfully configure we dont need to show them
+          // info about how they can set them up
+          setNotificationScreenVisibility(false);
         }
 
         setErrorMessage('');
@@ -121,12 +134,12 @@ const ValidationPanel: React.FC = () => {
     return (
       <WizardPanel>
         <Flex align="center" direction="column" mx="auto" width={600}>
-          {managedNotificationsStatus === 'fail' && (
+          {showManagedNotificationsWarning && (
             <Box mb={6}>
               <Alert
-                variant="error"
+                variant="warning"
                 title={'Setting up managed notifications failed'}
-                description={'You should set them up by following instructions below'}
+                description={'Please set them up using the instructions below'}
               />
             </Box>
           )}
