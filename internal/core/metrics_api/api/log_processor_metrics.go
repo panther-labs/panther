@@ -26,12 +26,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/metrics/models"
+	logmetrics "github.com/panther-labs/panther/internal/log_analysis/log_processor/metrics"
 	"github.com/panther-labs/panther/pkg/metrics"
-)
-
-const (
-	eventsProcessedMetric = "EventsProcessed"
-	eventsLatencyMetric   = "CombinedLatency"
 )
 
 // getEventsProcessed returns the count of events processed by the log processor per log type
@@ -41,14 +37,14 @@ func getEventsProcessed(input *models.GetMetricsInput, output *models.GetMetrics
 	// First determine applicable metric dimensions
 	var listMetricsResponse []*cloudwatch.Metric
 	err := cloudwatchClient.ListMetricsPages(&cloudwatch.ListMetricsInput{
-		MetricName: aws.String(eventsProcessedMetric),
+		MetricName: aws.String(logmetrics.MetricLogProcessorCombinedLatency),
 		Namespace:  aws.String(input.Namespace),
 	}, func(page *cloudwatch.ListMetricsOutput, _ bool) bool {
 		listMetricsResponse = append(listMetricsResponse, page.Metrics...)
 		return true
 	})
 	if err != nil {
-		zap.L().Error("unable to list metrics", zap.String("metric", eventsProcessedMetric), zap.Error(err))
+		zap.L().Error("unable to list metrics", zap.String("metric", logmetrics.MetricLogProcessorCombinedLatency), zap.Error(err))
 		return metricsInternalError
 	}
 	zap.L().Debug("found applicable metrics", zap.Any("metrics", listMetricsResponse))
@@ -98,14 +94,14 @@ func getEventsLatency(input *models.GetMetricsInput, output *models.GetMetricsOu
 	// First determine applicable metric dimensions
 	var listMetricsResponse []*cloudwatch.Metric
 	err := cloudwatchClient.ListMetricsPages(&cloudwatch.ListMetricsInput{
-		MetricName: aws.String(eventsLatencyMetric),
+		MetricName: aws.String(logmetrics.MetricLogProcessorCombinedLatency),
 		Namespace:  aws.String(input.Namespace),
 	}, func(page *cloudwatch.ListMetricsOutput, _ bool) bool {
 		listMetricsResponse = append(listMetricsResponse, page.Metrics...)
 		return true
 	})
 	if err != nil {
-		zap.L().Error("unable to list metrics", zap.String("metric", eventsLatencyMetric), zap.Error(err))
+		zap.L().Error("unable to list metrics", zap.String("metric", logmetrics.MetricLogProcessorCombinedLatency), zap.Error(err))
 		return metricsInternalError
 	}
 	zap.L().Debug("found applicable metrics", zap.Any("metrics", listMetricsResponse))
@@ -132,11 +128,11 @@ func getEventsLatency(input *models.GetMetricsInput, output *models.GetMetricsOu
 					Metric: &cloudwatch.Metric{
 						Dimensions: []*cloudwatch.Dimension{
 							{
-								Name:  aws.String("LogType"),
+								Name:  aws.String(metrics.LogTypeDimension),
 								Value: metric.Dimensions[0].Value,
 							},
 						},
-						MetricName: aws.String(eventsProcessedMetric),
+						MetricName: aws.String(logmetrics.MetricLogProcessorEventsProcessed),
 						Namespace:  aws.String(input.Namespace),
 					},
 					Period: aws.Int64(input.IntervalMinutes * 60), // number of seconds, must be multiple of 60

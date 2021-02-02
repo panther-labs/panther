@@ -37,6 +37,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/metrics"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -58,7 +59,7 @@ func init() {
 	getObjectMock := &testutils.CounterMock{}
 	getObjectMock.On("With", mock.Anything).Return(getObjectMock).Maybe()
 	getObjectMock.On("Add", mock.Anything).Maybe()
-	common.GetObject = getObjectMock
+	metrics.GetObject = getObjectMock
 }
 
 func TestStreamEvents(t *testing.T) {
