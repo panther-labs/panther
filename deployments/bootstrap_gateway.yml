@@ -255,6 +255,9 @@ Resources:
                 - kms:Decrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+            - Effect: Allow
+              Action: lambda:InvokeFunction # this is for updating managed schemas
+              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-logtypes-api
 
   # The PantherTeardown resource adds an IAM permission boundary to the custom resource role
   # which blocks future logs.
