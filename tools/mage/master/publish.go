@@ -39,6 +39,13 @@ import (
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
+const (
+	// AWS Account where Panther publishes release assets
+	publicAccountID = "349240696275"
+
+	publicEcrRepoName = "panther-community"
+)
+
 // Publish a new Panther release (Panther team only)
 func Publish() error {
 	log := logger.Build("[master:publish]")
@@ -149,7 +156,7 @@ func publishToRegion(log *zap.SugaredLogger, region string) error {
 		Log:            log,
 		AwsSession:     awsSession,
 		Bucket:         bucket,
-		EcrRegistry:    fmt.Sprintf("349240696275.dkr.ecr.%s.amazonaws.com/panther-community", region),
+		EcrRegistry:    util.EcrRepoURI(publicAccountID, region, publicEcrRepoName),
 		EcrTagWithHash: false,
 		PipLibs:        defaultPipLayer,
 		PostProcess:    embedVersion,
@@ -181,6 +188,5 @@ func publishToRegion(log *zap.SugaredLogger, region string) error {
 func s3MasterTemplate(region string) (string, string, string) {
 	bucket := util.PublicAssetsBucket(region)
 	s3Key := fmt.Sprintf("v%s/panther.yml", util.Semver())
-	s3URL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, s3Key)
-	return bucket, s3Key, s3URL
+	return bucket, s3Key, util.S3ObjectURL(region, bucket, s3Key)
 }

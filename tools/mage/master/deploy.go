@@ -78,8 +78,6 @@ func Deploy() error {
 	// TODO - expose 'mage pkg' target
 	log.Infof("deploying %s %s (%s) to account %s (%s) as stack '%s'", rootTemplate,
 		util.Semver(), util.CommitSha(), clients.AccountID(), clients.Region(), config.RootStackName)
-	// TODO - don't want to pkg twice - the doubly packaged template has no quotes around the commit,
-	// which could cause problems
 	rootOutputs, err := deploy.Stack(packager, rootTemplate, config.RootStackName, config.ParameterOverrides)
 	if err != nil {
 		return err

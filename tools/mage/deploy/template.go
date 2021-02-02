@@ -182,7 +182,7 @@ func createChangeSet(
 		if err != nil {
 			return nil, err
 		}
-		createInput.SetTemplateURL(fmt.Sprintf("https://s3.amazonaws.com/%s/%s", packager.Bucket, key))
+		createInput.SetTemplateURL(util.S3ObjectURL(clients.Region(), packager.Bucket, key))
 	}
 
 	packager.Log.Infof("%s CloudFormation stack %s", strings.ToLower(changeSetType), stack)

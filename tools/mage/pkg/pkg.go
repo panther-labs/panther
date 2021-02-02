@@ -124,7 +124,9 @@ func (p Packager) Template(path string) (string, error) {
 	// Start the worker routines
 	resources := body["Resources"].(map[string]interface{})
 	jobs := make(chan cfnResource, len(resources))
+	defer close(jobs)
 	results := make(chan cfnResource, len(resources))
+	defer close(results)
 
 	workers := numWorkers
 	if len(resources) < workers {
@@ -140,7 +142,6 @@ func (p Packager) Template(path string) (string, error) {
 	for logicalID, r := range resources {
 		jobs <- cfnResource{logicalID: logicalID, fields: r.(map[string]interface{})}
 	}
-	close(jobs)
 
 	// Rebuild the resource map with the packaged versions
 	for i := 0; i < len(resources); i++ {
@@ -240,8 +241,7 @@ func (p Packager) cloudformationStack(logPrefix string, r cfnResource) cfnResour
 		return r
 	}
 
-	properties["TemplateURL"] = fmt.Sprintf(
-		"https://s3.%s.amazonaws.com/%s/%s", *p.AwsSession.Config.Region, p.Bucket, s3Key)
+	properties["TemplateURL"] = util.S3ObjectURL(*p.AwsSession.Config.Region, p.Bucket, s3Key)
 	return r
 }
 

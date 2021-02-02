@@ -18,7 +18,30 @@ package util
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import (
+	"fmt"
+	"strings"
+)
+
 // The name of the bucket containing published Panther releases
 func PublicAssetsBucket(region string) string {
 	return "panther-community-" + region
+}
+
+// Returns ECR image repo uri
+func EcrRepoURI(accountID, region, repoName string) string {
+	return fmt.Sprintf("%s.dkr.ecr.%s.%s/%s", accountID, region, URLSuffix(region), repoName)
+}
+
+// Returns S3 URL using virtual addressing (BUCKET.s3.REGION.SUFFIX/KEY)
+func S3ObjectURL(region, bucket, key string) string {
+	return fmt.Sprintf("https://%s.s3.%s.%s/%s", bucket, region, URLSuffix(region), key)
+}
+
+// Return the URL suffix for the partition associated with the given region.
+func URLSuffix(region string) string {
+	if strings.HasPrefix(region, "cn-") {
+		return "amazonaws.com.cn"
+	}
+	return "amazonaws.com"
 }
