@@ -123,7 +123,7 @@ func (api *LogTypesAPI) updateManagedSchema(ctx context.Context, entry managedsc
 		return nil, err
 	}
 	if _, err := buildSchema(desc.Name, desc.Description, desc.ReferenceURL, entry.Spec); err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "could not build schema %q", entry.Name)
 	}
 	record, err := api.Database.GetSchema(ctx, desc.Name, 0)
 	if err != nil {

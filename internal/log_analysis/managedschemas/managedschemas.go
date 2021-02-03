@@ -26,7 +26,6 @@ import (
 	"io/ioutil"
 
 	"golang.org/x/mod/semver"
-	"gopkg.in/yaml.v2"
 	yaml3 "gopkg.in/yaml.v3"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
@@ -124,7 +123,7 @@ func ReadYAMLManifest(release string, r io.Reader) ([]ManifestEntry, error) {
 			}
 			return nil, err
 		}
-		spec, err := yaml.Marshal(&node)
+		spec, err := yaml3.Marshal(&node)
 		if err != nil {
 			return nil, err
 		}
@@ -140,7 +139,7 @@ func ReadYAMLManifest(release string, r io.Reader) ([]ManifestEntry, error) {
 	}
 }
 
-// LoadReleaeManifestFromURL fetches a release archive from a URL and reads manifest entries.
+// LoadReleaseManifestFromURL fetches a release archive from a URL and reads manifest entries.
 func LoadReleaseManifestFromURL(ctx context.Context, manifestURL string) ([]ManifestEntry, error) {
 	manifestArchive, err := DownloadFile(ctx, nil, manifestURL)
 	if err != nil {
