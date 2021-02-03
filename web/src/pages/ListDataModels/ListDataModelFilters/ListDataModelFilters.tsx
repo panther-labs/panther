@@ -26,7 +26,7 @@ import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagi
 import FormikAutosave from 'Components/utils/Autosave';
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikTextInput from 'Components/fields/TextInput';
-import LinkButton from 'Components/buttons/LinkButton';
+import LinkIconButton from 'Components/buttons/LinkIconButton';
 import DropdownFilters from './DropdownFilters';
 
 export type ListDataModelInlineFiltersValues = Pick<ListDataModelsInput, 'sortBy' | 'sortDir'>;
@@ -151,9 +151,11 @@ const ListDataModelFilters: React.FC = () => {
       <Box pr={4}>
         <DropdownFilters />
       </Box>
-      <LinkButton to={urls.logAnalysis.dataModels.create()} icon="add">
-        Add new
-      </LinkButton>
+      <LinkIconButton
+        icon="add-circle"
+        aria-label="Add a new Data Model"
+        to={urls.logAnalysis.dataModels.create()}
+      />
     </Flex>
   );
 };
