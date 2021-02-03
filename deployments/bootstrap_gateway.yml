@@ -210,13 +210,13 @@ Resources:
                 - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:server-certificate/Panther*
             - Effect: Allow
               Action: iam:PassRole
-              Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/Panther*
+              Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/Panther*
             - Effect: Allow
               # This function needs to be able to modify its own permission boundary for a clean teardown.
               # We don't know the role name, which is randomly generated, but we know it will contain
               # at least part of the CloudFormation resource name.
               Action: iam:PutRolePermissionsBoundary
-              Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/*CustomResourceFunction*
+              Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/*CustomResourceFunction*
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource:
@@ -246,7 +246,7 @@ Resources:
                 - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}*
             - Effect: Allow
               Action: s3:Get*
-              Resource: arn:aws:s3:::panther-public-cloudformation-templates*
+              Resource: !Sub arn:${AWS::Partition}:s3:::panther-public-cloudformation-templates*
             - Effect: Allow
               Action: sqs:SendMessage # this is for sending a message to datacatalog_updater to update/sync Glue tables
               Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-datacatalog-updater-queue

@@ -231,7 +231,7 @@ Resources:
               Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
   # A log group for storing the stdout logs from the server's task definition
   LogGroup:
