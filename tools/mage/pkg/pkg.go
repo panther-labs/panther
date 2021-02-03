@@ -20,6 +20,7 @@ package pkg
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha1" // nolint: gosec
 	"fmt"
 	"io/ioutil"
@@ -27,16 +28,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
+	ecrTypes "github.com/aws/aws-sdk-go-v2/service/ecr/types"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 
-	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/shutil"
 	"github.com/panther-labs/panther/tools/mage/build"
 	"github.com/panther-labs/panther/tools/mage/util"
@@ -54,11 +54,16 @@ type Packager struct {
 	// zap logger for printing progress updates
 	Log *zap.SugaredLogger
 
-	// AWS session for S3/ECR client creation (determines region)
-	AwsSession *session.Session
+	// AWS session configuration
+	AwsConfig aws.Config
 
 	// S3 bucket for uploading lambda zipfiles
 	Bucket string
+
+	// The image ID (truncated SHA256) for the "docker push" command.
+	//
+	// The docker image must be built before the packaging starts.
+	DockerImageID string
 
 	// ECR registry URI for publishing docker images
 	EcrRegistry string
@@ -69,11 +74,6 @@ type Packager struct {
 	// If false, the docker images will be tagged with the Panther version (for releases),
 	// and it will push to ECR even if it means overwriting an image with the same tag.
 	EcrTagWithHash bool
-
-	// The image ID (truncated SHA256) for the "docker push" command.
-	//
-	// The docker image must be built before the packaging starts.
-	DockerImageID string
 
 	// Pip library versions to install for the shared python layer
 	PipLibs []string
@@ -116,7 +116,7 @@ type cfnResource struct {
 //     AWS::Serverless::Function (CodeUri)
 //
 // Returns the path to the packaged template (in the out/ folder)
-func (p Packager) Template(path string) (string, error) {
+func (p *Packager) Template(path string) (string, error) {
 	// We considered parsing templates with https://github.com/awslabs/goformation, but
 	// it doesn't support all intrinsic functions and it tries to actually resolve parameters.
 	// We just need an exact representation of the yml structure; a map[string]interface{} is the
@@ -180,9 +180,10 @@ func (p Packager) Template(path string) (string, error) {
 }
 
 // Each of the build/pkg workers runs this loop, processing one CloudFormation resource at a time.
-func (p Packager) resourceWorker(logPrefix string, resources <-chan cfnResource, results chan<- cfnResource) {
+func (p *Packager) resourceWorker(logPrefix string, resources <-chan cfnResource, results chan<- cfnResource) {
 	for r := range resources {
 		rType := r.fields["Type"].(string)
+		// p.Log.Debugf("%s %s %s", logPrefix, rType, r.logicalID)
 
 		switch rType {
 		case "AWS::AppSync::GraphQLSchema":
@@ -204,7 +205,7 @@ func (p Packager) resourceWorker(logPrefix string, resources <-chan cfnResource,
 }
 
 // Upload AppSync GraphQL schema to S3 - returns resource with modified DefinitionS3Location property
-func (p Packager) appsyncGraphQlSchema(logPrefix string, r cfnResource) cfnResource {
+func (p *Packager) appsyncGraphQlSchema(logPrefix string, r cfnResource) cfnResource {
 	properties := r.fields["Properties"].(map[string]interface{})
 	schemaPath := properties["DefinitionS3Location"].(string)
 	if strings.HasPrefix(schemaPath, "s3://") {
@@ -213,7 +214,7 @@ func (p Packager) appsyncGraphQlSchema(logPrefix string, r cfnResource) cfnResou
 
 	// Upload schema to S3
 	p.Log.Debugf("%s: packaging AWS::Appsync::GraphQLSchema %s", logPrefix, r.logicalID)
-	s3Key, _, err := p.UploadAsset(filepath.Join("deployments", schemaPath))
+	s3Key, _, err := p.UploadAsset(filepath.Join("deployments", schemaPath), "")
 	if err != nil {
 		r.err = err
 		return r
@@ -224,7 +225,7 @@ func (p Packager) appsyncGraphQlSchema(logPrefix string, r cfnResource) cfnResou
 }
 
 // Upload nested CFN template to S3 - returns resource with modified TemplateURL property
-func (p Packager) cloudformationStack(logPrefix string, r cfnResource) cfnResource {
+func (p *Packager) cloudformationStack(logPrefix string, r cfnResource) cfnResource {
 	properties := r.fields["Properties"].(map[string]interface{})
 	nestedPath := properties["TemplateURL"].(string)
 	if strings.HasPrefix(nestedPath, "https://") {
@@ -240,18 +241,18 @@ func (p Packager) cloudformationStack(logPrefix string, r cfnResource) cfnResour
 	}
 
 	// Upload packaged template to S3
-	s3Key, _, err := p.UploadAsset(pkgPath)
+	s3Key, _, err := p.UploadAsset(pkgPath, "")
 	if err != nil {
 		r.err = err
 		return r
 	}
 
-	properties["TemplateURL"] = util.S3ObjectURL(*p.AwsSession.Config.Region, p.Bucket, s3Key)
+	properties["TemplateURL"] = util.S3ObjectURL(p.AwsConfig.Region, p.Bucket, s3Key)
 	return r
 }
 
 // Upload web docker image to ECR - returns resource with modified Image property
-func (p Packager) ecsTaskDefinition(logPrefix string, r cfnResource) cfnResource {
+func (p *Packager) ecsTaskDefinition(logPrefix string, r cfnResource) cfnResource {
 	properties := r.fields["Properties"].(map[string]interface{})
 	containerDefs := properties["ContainerDefinitions"].([]interface{})
 	if len(containerDefs) != 1 {
@@ -270,8 +271,8 @@ func (p Packager) ecsTaskDefinition(logPrefix string, r cfnResource) cfnResource
 
 	if p.EcrTagWithHash {
 		// Check if this image ID already exists in ECR before uploading it
-		response, err := ecr.New(p.AwsSession).DescribeImages(&ecr.DescribeImagesInput{
-			ImageIds:       []*ecr.ImageIdentifier{{ImageTag: &p.DockerImageID}},
+		response, err := ecr.NewFromConfig(p.AwsConfig).DescribeImages(context.TODO(), &ecr.DescribeImagesInput{
+			ImageIds:       []ecrTypes.ImageIdentifier{{ImageTag: &p.DockerImageID}},
 			RepositoryName: aws.String(strings.Split(p.EcrRegistry, "/")[1]),
 		})
 		if err == nil && len(response.ImageDetails) > 0 {
@@ -280,7 +281,8 @@ func (p Packager) ecsTaskDefinition(logPrefix string, r cfnResource) cfnResource
 			return r
 		}
 
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == ecr.ErrCodeImageNotFoundException {
+		var notFound *ecrTypes.ImageNotFoundException
+		if errors.As(err, &notFound) {
 			// image doesn't exist - continue to the docker push below
 		} else {
 			// we couldn't actually check the image status - fallback to the docker push
@@ -305,7 +307,7 @@ func (p Packager) ecsTaskDefinition(logPrefix string, r cfnResource) cfnResource
 //   Content:
 //     S3Bucket: panther-dev-...
 //     S3Key: abcd...
-func (p Packager) lambdaLayerVersion(logPrefix string, r cfnResource) cfnResource {
+func (p *Packager) lambdaLayerVersion(logPrefix string, r cfnResource) cfnResource {
 	properties := r.fields["Properties"].(map[string]interface{})
 	content, ok := properties["Content"].(string)
 	if !ok {
@@ -327,7 +329,7 @@ func (p Packager) lambdaLayerVersion(logPrefix string, r cfnResource) cfnResourc
 	}
 
 	// Upload layer zipfile to S3
-	s3Key, _, err := p.UploadAsset(filepath.Join("deployments", content))
+	s3Key, _, err := p.UploadAsset(filepath.Join("deployments", content), "")
 	if err != nil {
 		r.err = err
 		return r
@@ -338,7 +340,7 @@ func (p Packager) lambdaLayerVersion(logPrefix string, r cfnResource) cfnResourc
 }
 
 // Compile lambda zipfile and upload to S3 - returns resource with modified CodeUri property
-func (p Packager) serverlessFunction(logPrefix string, r cfnResource) cfnResource {
+func (p *Packager) serverlessFunction(logPrefix string, r cfnResource) cfnResource {
 	properties := r.fields["Properties"].(map[string]interface{})
 	codeURI := properties["CodeUri"].(string)
 	if strings.HasPrefix(codeURI, "s3://") {
@@ -372,7 +374,7 @@ func (p Packager) serverlessFunction(logPrefix string, r cfnResource) cfnResourc
 	}
 
 	// Upload lambda deployment pkg to S3
-	s3Key, _, err := p.UploadAsset(zipPath)
+	s3Key, _, err := p.UploadAsset(zipPath, "")
 	if err != nil {
 		r.err = err
 		return r
@@ -382,36 +384,42 @@ func (p Packager) serverlessFunction(logPrefix string, r cfnResource) cfnResourc
 	return r
 }
 
-// Upload a CloudFormation asset to S3 if it doesn't already exist, returning s3 object key and version
-func (p Packager) UploadAsset(assetPath string) (string, string, error) {
-	// Assets can be up to 100 MB or so, should fit in memory just fine
-	contents := util.MustReadFile(assetPath)
-
-	// We are using SHA1 for caching / asset lookup, we don't need strong cryptographic guarantees
-	// (SHA1 is faster than SHA256)
-	s3Key := fmt.Sprintf("%x", sha1.Sum(contents)) // nolint: gosec
-	response, err := s3.New(p.AwsSession).HeadObject(&s3.HeadObjectInput{Bucket: &p.Bucket, Key: &s3Key})
-	if err == nil {
-		p.Log.Debugf("upload: %s (sha1:%s) already exists in %s", assetPath, s3Key[:10], p.Bucket)
-		return s3Key, *response.VersionId, nil // object already exists in S3 with the same hash
+// Upload a CloudFormation asset to S3, returning s3 object key and version.
+//
+// If no s3 key is chosen by the caller, the hash is used for the key and objects
+// will not be uploaded if they already exist.
+func (p *Packager) UploadAsset(assetPath, s3Key string) (string, string, error) {
+	// Assets can be up to 100 MB or so, they all should fit in memory just fine
+	contents, err := ioutil.ReadFile(assetPath)
+	if err != nil {
+		return "", "", err
 	}
 
-	if awsutils.IsAnyError(err, "NotFound") {
-		// object does not exist yet - upload it!
-		p.Log.Infof("uploading %s file %s (sha1:%s) to S3",
-			util.ByteCountSI(int64(len(contents))), assetPath, s3Key[:10])
+	s3Client := s3.NewFromConfig(p.AwsConfig)
 
-		response, err := s3manager.NewUploader(p.AwsSession).Upload(&s3manager.UploadInput{
-			Body:   bytes.NewReader(contents),
-			Bucket: &p.Bucket,
-			Key:    &s3Key,
-		})
-		if err != nil {
-			return "", "", fmt.Errorf("failed to upload %s: %s", assetPath, err)
+	if s3Key == "" {
+		// We are using SHA1 for caching / asset lookup, we don't need strong cryptographic guarantees
+		// (SHA1 is faster than SHA256)
+		s3Key = fmt.Sprintf("%x", sha1.Sum(contents)) // nolint: gosec
+
+		head, err := s3Client.HeadObject(context.TODO(),
+			&s3.HeadObjectInput{Bucket: &p.Bucket, Key: &s3Key})
+		if err == nil {
+			p.Log.Debugf("upload: %s (sha1:%s) already exists in %s", assetPath, s3Key[:10], p.Bucket)
+			return s3Key, *head.VersionId, nil // object already exists in S3 with the same hash
 		}
-		return s3Key, *response.VersionID, nil
 	}
 
-	// Some other error related to HeadObject
-	return "", "", fmt.Errorf("failed to describe s3://%s/%s: %s", p.Bucket, s3Key, err)
+	p.Log.Infof("uploading %s file %s (sha1:%s) to S3",
+		util.ByteCountSI(int64(len(contents))), assetPath, s3Key[:10])
+
+	response, err := manager.NewUploader(s3Client).Upload(context.TODO(), &s3.PutObjectInput{
+		Bucket: &p.Bucket,
+		Key:    &s3Key,
+		Body:   bytes.NewReader(contents),
+	})
+	if err != nil {
+		return "", "", fmt.Errorf("failed to upload %s: %s", assetPath, err)
+	}
+	return s3Key, *response.VersionID, nil
 }

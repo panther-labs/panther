@@ -6,6 +6,13 @@ require (
 	github.com/anyascii/go v0.1.7
 	github.com/aws/aws-lambda-go v1.20.0
 	github.com/aws/aws-sdk-go v1.35.34
+	github.com/aws/aws-sdk-go-v2 v1.1.0
+	github.com/aws/aws-sdk-go-v2/config v1.1.0
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.0.1
+	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.1.0
+	github.com/aws/aws-sdk-go-v2/service/ecr v1.1.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.1.0
+	github.com/aws/aws-sdk-go-v2/service/sts v1.1.0
 	github.com/cenkalti/backoff/v4 v4.1.0
 	github.com/dchest/uniuri v0.0.0-20200228104902-7aecb25e1fe5
 	github.com/fatih/structtag v1.2.0

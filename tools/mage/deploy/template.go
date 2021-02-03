@@ -44,14 +44,14 @@ const (
 //
 // The bucket parameter can be empty to skip S3 packaging.
 func Stack(
-	packager pkg.Packager,
+	packager *pkg.Packager,
 	templatePath, stack string,
 	params map[string]string,
 ) (map[string]string, error) {
 
 	// 1) Generate packaged template, packaging assets in S3 and ECR
 	packagedTemplate := templatePath
-	if packager.Bucket != "" {
+	if packager != nil {
 		packager.Log.Debugf("packaging %s to s3 bucket %s and ecr registry %s",
 			templatePath, packager.Bucket, packager.EcrRegistry)
 		var err error
@@ -140,7 +140,7 @@ func prepareStack(stackName string) (map[string]string, error) {
 //
 // If there are no changes, the change set is deleted and (nil, nil) is returned.
 func createChangeSet(
-	packager pkg.Packager,
+	packager *pkg.Packager,
 	stack string,
 	changeSetType string, // "CREATE" or "UPDATE"
 	templatePath string,
@@ -178,14 +178,14 @@ func createChangeSet(
 		createInput.SetTemplateBody(string(template))
 	} else {
 		// Upload to S3 (if it doesn't already exist)
-		key, _, err := packager.UploadAsset(templatePath)
+		key, _, err := packager.UploadAsset(templatePath, "")
 		if err != nil {
 			return nil, err
 		}
 		createInput.SetTemplateURL(util.S3ObjectURL(clients.Region(), packager.Bucket, key))
 	}
 
-	packager.Log.Infof("%s CloudFormation stack %s", strings.ToLower(changeSetType), stack)
+	log.Infof("%s CloudFormation stack %s", strings.ToLower(changeSetType), stack)
 	if _, err := clients.Cfn().CreateChangeSet(createInput); err != nil {
 		return nil, fmt.Errorf("failed to create change set for stack %s: %v", stack, err)
 	}

@@ -19,13 +19,14 @@ package pkg
  */
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/magefile/mage/sh"
 	"go.uber.org/zap"
 )
@@ -59,9 +60,8 @@ func DockerBuild(log *zap.SugaredLogger, dockerfile string) (string, error) {
 // Build the web docker image from source and push it to the ecr registry
 func (p Packager) DockerPush(localImageID, tag string) (string, error) {
 	p.Log.Debug("requesting access to remote image repo")
-	ecrClient := ecr.New(p.AwsSession)
 
-	response, err := ecrClient.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+	response, err := ecr.NewFromConfig(p.AwsConfig).GetAuthorizationToken(context.TODO(), &ecr.GetAuthorizationTokenInput{})
 	if err != nil {
 		return "", fmt.Errorf("failed to get ecr auth token: %v", err)
 	}

@@ -19,18 +19,19 @@ package master
  */
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/magefile/mage/sh"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/logger"
@@ -94,13 +95,18 @@ func Publish() error {
 		return err
 	}
 
+	imgID, err := pkg.DockerBuild(log, filepath.Join("deployments", "Dockerfile"))
+	if err != nil {
+		return err
+	}
+
 	// Publish to each region.
 	for _, region := range regions {
 		if !deploy.SupportedRegions[region] {
 			return fmt.Errorf("%s is not a supported region", region)
 		}
 
-		if err := publishToRegion(log, region); err != nil {
+		if err := publishToRegion(log, region, imgID); err != nil {
 			return err
 		}
 	}
@@ -119,9 +125,13 @@ func getPublicationApproval(log *zap.SugaredLogger, regions []string) error {
 	// in the template file and we probably don't want to overwrite a previous version.
 	for _, region := range regions {
 		bucket, s3Key, s3URL := s3MasterTemplate(region)
-		awsSession := session.Must(session.NewSession(aws.NewConfig().WithRegion(region)))
 
-		_, err := s3.New(awsSession).HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
+		awsCfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
+		if err != nil {
+			return err
+		}
+
+		_, err = s3.NewFromConfig(awsCfg).HeadObject(context.TODO(), &s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
 		if err == nil {
 			log.Warnf("%s already exists", s3URL)
 			result := prompt.Read("Are you sure you want to overwrite the published release in each region? (yes|no) ",
@@ -132,7 +142,8 @@ func getPublicationApproval(log *zap.SugaredLogger, regions []string) error {
 			return nil // override approved - don't need to keep checking each region
 		}
 
-		if !awsutils.IsAnyError(err, "NotFound") {
+		var notFound *s3Types.NotFound
+		if !errors.As(err, &notFound) {
 			// Some error other than 'not found'
 			return fmt.Errorf("failed to describe %s : %v", s3URL, err)
 		}
@@ -141,21 +152,22 @@ func getPublicationApproval(log *zap.SugaredLogger, regions []string) error {
 	return nil
 }
 
-func publishToRegion(log *zap.SugaredLogger, region string) error {
+func publishToRegion(log *zap.SugaredLogger, region, imgID string) error {
 	log.Infof("publishing to %s", region)
 
 	// We need a different session for each region.
-	awsSession, err := session.NewSession(aws.NewConfig().WithRegion(region))
+	awsCfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {
-		return fmt.Errorf("failed to build AWS session: %v", err)
+		return fmt.Errorf("failed to build AWS config: %v", err)
 	}
 
 	bucket, s3Key, s3URL := s3MasterTemplate(region)
 
 	packager := pkg.Packager{
 		Log:            log,
-		AwsSession:     awsSession,
+		AwsConfig:      awsCfg,
 		Bucket:         bucket,
+		DockerImageID:  imgID,
 		EcrRegistry:    util.EcrRepoURI(publicAccountID, region, publicEcrRepoName),
 		EcrTagWithHash: false,
 		PipLibs:        defaultPipLayer,
@@ -166,18 +178,8 @@ func publishToRegion(log *zap.SugaredLogger, region string) error {
 		return err
 	}
 
-	f, err := os.Open(pkgTemplate)
-	if err != nil {
+	if _, _, err = packager.UploadAsset(pkgTemplate, s3Key); err != nil {
 		return err
-	}
-	defer f.Close()
-
-	if _, err = s3manager.NewUploader(awsSession).Upload(&s3manager.UploadInput{
-		Body:   f,
-		Bucket: &bucket,
-		Key:    &s3Key,
-	}); err != nil {
-		return fmt.Errorf("failed to upload %s : %v", s3URL, err)
 	}
 
 	log.Infof("successfully published %s", s3URL)

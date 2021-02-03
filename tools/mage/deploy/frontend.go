@@ -34,7 +34,7 @@ import (
 
 const awsEnvFile = "out/.env.aws"
 
-func deployFrontend(settings *PantherConfig, packager pkg.Packager, bootstrapOutputs map[string]string) error {
+func deployFrontend(settings *PantherConfig, packager *pkg.Packager, bootstrapOutputs map[string]string) error {
 	// Save .env file (only used when running web server locally)
 	if err := godotenv.Write(
 		map[string]string{

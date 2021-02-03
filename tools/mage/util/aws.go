@@ -19,9 +19,31 @@ package util
  */
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"strings"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
+
+var accountID string
+
+// Returns the 12-digit account ID associated with the current session.
+//
+// The result will be cached for subsequent queries.
+func AccountID(config aws.Config) string {
+	if accountID == "" {
+		identity, err := sts.NewFromConfig(config).GetCallerIdentity(context.TODO(), &sts.GetCallerIdentityInput{})
+		if err != nil {
+			log.Fatalf("failed to get caller identity: %v", err)
+		}
+		accountID = *identity.Account
+	}
+
+	return accountID
+}
 
 // The name of the bucket containing published Panther releases
 func PublicAssetsBucket(region string) string {
