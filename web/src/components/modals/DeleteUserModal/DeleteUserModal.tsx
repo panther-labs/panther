@@ -20,6 +20,7 @@ import React from 'react';
 import { ModalProps, useSnackbar } from 'pouncejs';
 import useAuth from 'Hooks/useAuth';
 import { UserDetails } from 'Source/graphql/fragments/UserDetails.generated';
+import { getUserDisplayName } from 'Helpers/utils';
 import { useDeleteUser } from './graphql/deleteUser.generated';
 import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
@@ -31,7 +32,7 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({ user, ...rest }) => {
   const { signOut, userInfo } = useAuth();
   const { pushSnackbar } = useSnackbar();
 
-  const userDisplayName = `${user.givenName} ${user.familyName}` || user.id;
+  const userDisplayName = getUserDisplayName(user);
   const [deleteUser] = useDeleteUser({
     variables: {
       id: user.id,

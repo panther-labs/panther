@@ -23,6 +23,7 @@ import { MODALS } from 'Components/utils/Modal';
 import DeletePolicyModal from 'Components/modals/DeletePolicyModal';
 import DeleteUserModal from 'Components/modals/DeleteUserModal';
 import ResetUserPasswordModal from 'Components/modals/ResetUserPasswordModal';
+import ReinviteUserModal from 'Components/modals/ReinviteUserModal';
 import DeleteComplianceSourceModal from 'Components/modals/DeleteComplianceSourceModal';
 import DeleteLogSourceModal from 'Components/modals/DeleteLogSourceModal';
 import DeleteDestinationModal from 'Components/modals/DeleteDestinationModal';
@@ -58,6 +59,9 @@ const ModalManager: React.FC = () => {
       break;
     case MODALS.RESET_USER_PASS:
       Component = ResetUserPasswordModal;
+      break;
+    case MODALS.REINVITE_USER:
+      Component = ReinviteUserModal;
       break;
     case MODALS.DELETE_RULE:
       Component = DeleteRuleModal;

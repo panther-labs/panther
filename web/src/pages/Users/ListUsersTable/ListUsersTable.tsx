@@ -19,6 +19,7 @@
 import React from 'react';
 import { Badge, Box, Table } from 'pouncejs';
 import dayjs from 'dayjs';
+import { getUserDisplayName } from 'Helpers/utils';
 import { ListUsers } from '../graphql/listUsers.generated';
 import ListUsersTableRowOptions from './ListUsersTableRowOptions';
 
@@ -40,9 +41,7 @@ const ListUsersTable: React.FC<ListUsersTableProps> = ({ users }) => {
       <Table.Body>
         {users.map(user => (
           <Table.Row key={user.id}>
-            <Table.Cell>
-              {user.givenName} {user.familyName}
-            </Table.Cell>
+            <Table.Cell>{getUserDisplayName(user)}</Table.Cell>
             <Table.Cell>{user.email}</Table.Cell>
             <Table.Cell>Admin</Table.Cell>
             <Table.Cell>

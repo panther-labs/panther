@@ -1,0 +1,378 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ListUsers matches snapshot 1`] = `
+.panther-27 {
+  background-color: #23344e;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.panther-3 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid;
+  border-color: #3e516b;
+  max-height: 80px;
+}
+
+.panther-0 {
+  font-weight: 400;
+  font-size: 1.125rem;
+}
+
+.panther-26 {
+  padding: 24px;
+}
+
+
+
+.panther-2 {
+  width: auto;
+  outline: none;
+  padding-left: 20px;
+  padding-right: 20px;
+  height: 46px;
+  font-size: 0.938rem;
+  -webkit-transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 100ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border-radius: 4px;
+  border: 1px solid;
+  border-color: #0081c5;
+  background-color: #0081c5;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.panther-2:hover {
+  background-color: #0a8bcf;
+  border-color: #0a8bcf;
+}
+
+.panther-2:focus {
+  background-color: #0a8bcf;
+  border-color: #55d6ff;
+}
+
+.panther-2:active,
+.panther-2[data-active=true] {
+  background-color: #0077bb;
+  border-color: #0077bb;
+}
+
+.panther-1 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+  margin-left: -4px;
+  margin-right: 8px;
+}
+
+.panther-25 {
+  table-layout: auto;
+  width: 100%;
+}
+
+
+
+tbody>.panther-10:nth-of-type(odd) {
+  background-color: #1d2a3f;
+}
+
+.panther-4 {
+  padding: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  text-align: left;
+  background-color: inherit;
+  vertical-align: middle;
+}
+
+.panther-8 {
+  padding: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  text-align: center;
+  background-color: inherit;
+  vertical-align: middle;
+}
+
+.panther-12 {
+  padding: 16px;
+  font-size: 0.875rem;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.panther-18 {
+  padding: 16px;
+  font-size: 0.875rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.panther-17 {
+  margin-top: -4px;
+  margin-bottom: -4px;
+  display: inline-block;
+}
+
+.panther-16 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  cursor: default;
+  width: -webkit-fit-content;
+  width: -moz-fit-content;
+  width: fit-content;
+  min-width: 85px;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 40px;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 16px;
+  padding-right: 16px;
+  background-color: #11a5f3;
+}
+
+.panther-21 {
+  margin-top: -8px;
+  margin-bottom: -8px;
+}
+
+.panther-20 {
+  outline: none;
+  line-height: 1;
+  border-radius: 99999px;
+  height: 32px;
+  width: 32px;
+  -webkit-transition: background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border: 1px solid;
+  border-color: transparent;
+  background-color: transparent;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.panther-20:hover {
+  background-color: rgba(0,129,197,0.3);
+}
+
+.panther-20:focus {
+  background-color: rgba(0,129,197,0.3);
+}
+
+.panther-20:active,
+.panther-20[data-active=true] {
+  background-color: #0081c5;
+}
+
+.panther-19 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <section
+    class="panther-27"
+  >
+    <div
+      class="panther-3"
+    >
+      <h4
+        class="panther-0"
+      >
+        Users
+      </h4>
+      <button
+        class="panther-2"
+        type="button"
+      >
+        <svg
+          class="panther-1"
+          role="presentation"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M15 12C17.21 12 19 10.21 19 8C19 5.79 17.21 4 15 4C12.79 4 11 5.79 11 8C11 10.21 12.79 12 15 12ZM6 10V7H4V10H1V12H4V15H6V12H9V10H6ZM15 14C12.33 14 7 15.34 7 18V20H23V18C23 15.34 17.67 14 15 14Z"
+          />
+        </svg>
+        Invite User
+      </button>
+    </div>
+    <div
+      class="panther-26"
+    >
+      <table
+        class="panther-25"
+      >
+        <thead
+          class="panther-11"
+        >
+          <tr
+            class="panther-10"
+            role="row"
+          >
+            <th
+              class="panther-4"
+              role="columnheader"
+            >
+              Name
+            </th>
+            <th
+              class="panther-4"
+              role="columnheader"
+            >
+              Email
+            </th>
+            <th
+              class="panther-4"
+              role="columnheader"
+            >
+              Role
+            </th>
+            <th
+              class="panther-4"
+              role="columnheader"
+            >
+              Invited At
+            </th>
+            <th
+              class="panther-8"
+              role="columnheader"
+            >
+              Status
+            </th>
+            <th
+              class="panther-4"
+              role="columnheader"
+            />
+          </tr>
+        </thead>
+        <tbody
+          class="panther-11"
+        >
+          <tr
+            class="panther-10"
+            role="row"
+          >
+            <td
+              class="panther-12"
+              role="cell"
+            >
+              Richard Miles
+            </td>
+            <td
+              class="panther-12"
+              role="cell"
+            >
+              richardmiles@gmail.com
+            </td>
+            <td
+              class="panther-12"
+              role="cell"
+            >
+              Admin
+            </td>
+            <td
+              class="panther-12"
+              role="cell"
+            >
+              05/02/51975, 20:27 GMT+0000
+            </td>
+            <td
+              class="panther-18"
+              role="cell"
+            >
+              <div
+                class="panther-17"
+              >
+                <div
+                  aria-atomic="true"
+                  class="panther-16"
+                  role="status"
+                >
+                  CONFIRMED
+                </div>
+              </div>
+            </td>
+            <td
+              class="panther-12"
+              role="cell"
+            >
+              <div
+                class="panther-21"
+              >
+                <button
+                  aria-controls="menu--1"
+                  aria-haspopup="true"
+                  aria-label="User Options"
+                  aria-pressed="false"
+                  class="panther-20"
+                  data-reach-menu-button=""
+                  id="menu-button--menu--1"
+                  type="button"
+                >
+                  <svg
+                    class="panther-19"
+                    role="presentation"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M6 10C4.9 10 4 10.9 4 12C4 13.1 4.9 14 6 14C7.1 14 8 13.1 8 12C8 10.9 7.1 10 6 10ZM18 10C16.9 10 16 10.9 16 12C16 13.1 16.9 14 18 14C19.1 14 20 13.1 20 12C20 10.9 19.1 10 18 10ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10Z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <footer
+    id="footer"
+  />
+</div>
+`;
