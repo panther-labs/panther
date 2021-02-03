@@ -50,7 +50,6 @@ const (
 	attrDescription  = "description"
 	attrReferenceURL = "referenceURL"
 	attrSpec         = "logSpec"
-	attrRelease      = "release"
 	attrManaged      = "managed"
 	attrLogType      = "logType"
 
@@ -124,6 +123,7 @@ func (d *DynamoDBSchemas) GetSchema(ctx context.Context, id string, revision int
 	return &record.SchemaRecord, nil
 }
 
+// nolint:lll
 func (d *DynamoDBSchemas) UpdateManagedSchema(ctx context.Context, id string, rev int64, release string, upd SchemaUpdate) (*SchemaRecord, error) {
 	now := time.Now().UTC()
 	record := SchemaRecord{

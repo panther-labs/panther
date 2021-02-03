@@ -21,10 +21,11 @@ package logtypesapi
 import (
 	"context"
 	"fmt"
-	"golang.org/x/mod/semver"
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/mod/semver"
 )
 
 // InMemDB is an in-memory implementation of the SchemaDatabase.
@@ -116,7 +117,8 @@ func (db *InMemDB) UpdateUserSchema(ctx context.Context, name string, rev int64,
 	return &record, nil
 }
 
-func (db *InMemDB) UpdateManagedSchema(ctx context.Context, name string, rev int64, release string, upd SchemaUpdate) (*SchemaRecord, error) {
+// nolint:lll
+func (db *InMemDB) UpdateManagedSchema(_ context.Context, name string, rev int64, release string, upd SchemaUpdate) (*SchemaRecord, error) {
 	id := strings.ToUpper(name)
 	key := inMemKey{
 		LogType:  id,
