@@ -59,9 +59,13 @@ var (
 				},
 				IpAddressType: aws.String("ipv4"),
 			},
+		},
+	}
+	ExampleDescribeNetworkLoadBalancersOutput = &elbv2.DescribeLoadBalancersOutput{
+		LoadBalancers: []*elbv2.LoadBalancer{
 			{
-				LoadBalancerArn:       aws.String("arn:aws:elasticloadbalancing:us-west-2:111111111111:loadbalancer/app/panther-test/bbbbbbbbbbbb"),
-				DNSName:               aws.String("internal-panther-test-9876543210.us-west-2.elb.amazonaws.com"),
+				LoadBalancerArn:       aws.String("arn:aws:elasticloadbalancing:us-west-2:222222222222:loadbalancer/app/panther-test/bbbbbbbbbbbb"),
+				DNSName:               aws.String("internal-panther-test-987654321.us-west-2.elb.amazonaws.com"),
 				CanonicalHostedZoneId: aws.String("BBBB123"),
 				CreatedTime:           &ExampleTime,
 				LoadBalancerName:      aws.String("panther-test"),
@@ -74,11 +78,11 @@ var (
 				AvailabilityZones: []*elbv2.AvailabilityZone{
 					{
 						ZoneName: aws.String("us-west-2c"),
-						SubnetId: aws.String("subnet-1234ddd"),
+						SubnetId: aws.String("subnet-1234eee"),
 					},
 					{
 						ZoneName: aws.String("us-west-2d"),
-						SubnetId: aws.String("subnet-1234ggg"),
+						SubnetId: aws.String("subnet-1234fff"),
 					},
 				},
 				SecurityGroups: []*string{
