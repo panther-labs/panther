@@ -19,36 +19,39 @@
 import React from 'react';
 import { Alert, Box, Flex } from 'pouncejs';
 import Panel from 'Components/Panel';
-import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import LinkButton from 'Components/buttons/LinkButton';
 import { extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
 import useTrackPageView from 'Hooks/useTrackPageView';
+import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
+import { ListDataModelsInput } from 'Generated/schema';
 import { PageViewEnum } from 'Helpers/analytics';
-import TablePlaceholder from 'Components/TablePlaceholder';
 import EmptyDataFallback from './EmptyDataFallback';
 import { useListDataModels } from './graphql/listDataModels.generated';
 import DataModelCard from './DataModelCard';
+import ListDataModelFilters from './ListDataModelFilters';
+import ListDataModelsSkeleton from './Skeleton';
 
 const ListDataModels = () => {
   useTrackPageView(PageViewEnum.ListDataModels);
 
-  const { loading, error, data } = useListDataModels({ variables: { input: {} } });
+  const { requestParams } = useRequestParamsWithoutPagination<ListDataModelsInput>();
 
+  const { loading, error, data } = useListDataModels({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      input: requestParams,
+    },
+  });
+
+  if (loading && !data) {
+    return <ListDataModelsSkeleton />;
+  }
   const dataModels = data?.listDataModels?.models;
   return (
     <Box mb={6}>
-      <Panel
-        title="Data Models"
-        actions={
-          <LinkButton to={urls.logAnalysis.dataModels.create()} icon="add">
-            Add new
-          </LinkButton>
-        }
-      >
-        <ErrorBoundary>
-          {loading && <TablePlaceholder />}
+      <ErrorBoundary>
+        <Panel title="Data Models" actions={<ListDataModelFilters />}>
           {error && (
             <Alert
               variant="error"
@@ -69,8 +72,8 @@ const ListDataModels = () => {
             ) : (
               <EmptyDataFallback />
             ))}
-        </ErrorBoundary>
-      </Panel>
+        </Panel>
+      </ErrorBoundary>
     </Box>
   );
 };

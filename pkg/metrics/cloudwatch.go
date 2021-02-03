@@ -70,8 +70,6 @@ func NewCWEmbeddedMetrics(writer io.Writer) *CWEmbeddedMetricsManager {
 // NewCounter returns a counter. Observations are aggregated and emitted once
 // per Sync invocation.
 func (c *CWEmbeddedMetricsManager) NewCounter(name, unit string) Counter {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
 	return &DimensionsCounter{
 		name: name,
 		unit: unit,

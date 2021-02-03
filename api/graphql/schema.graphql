@@ -1147,6 +1147,7 @@ input InviteUserInput {
   givenName: String
   familyName: String
   email: AWSEmail
+  messageAction: MessageActionEnum
 }
 
 enum ComplianceStatusEnum {
@@ -1248,6 +1249,11 @@ enum OpsgenieServiceRegionEnum {
 
 enum ErrorCodeEnum {
   NotFound
+}
+
+enum MessageActionEnum {
+  RESEND
+  SUPPRESS
 }
 
 enum DetectionTypeEnum {

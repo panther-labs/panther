@@ -20,7 +20,9 @@ package metrics
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,6 +37,7 @@ func TestNewCounter(t *testing.T) {
 	}
 
 	t.Run("no metrics", func(t *testing.T) {
+		buf.Reset()
 		cm.NewCounter("test", UnitBytes)
 		assert.NoError(t, cm.Sync())
 		// Assert nothing is written if there is no data present
@@ -111,5 +114,26 @@ func TestNewCounter(t *testing.T) {
 		// The output will be like `<json>\n<json>\n`. The `strings.Split` will generate a slice with 3 strings
 		// one of them will be the empty string
 		assert.ElementsMatch(t, append(expected, ""), strings.Split(buf.String(), "\n"))
+	})
+
+	t.Run("concurrent counter creation", func(t *testing.T) {
+		buf.Reset()
+
+		const parallelInvocations = 100
+		var wg sync.WaitGroup
+		for i := 0; i < parallelInvocations; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				counter := cm.NewCounter("test", UnitCount)
+				counter.With("dimension", "value1").Add(1)
+			}()
+		}
+
+		wg.Wait()
+
+		assert.NoError(t, cm.Sync())
+		// nolint: lll
+		assert.Equal(t, fmt.Sprintf(`{"test":%d,"dimension":"value1","_aws":{"CloudWatchMetrics":[{"Namespace":"Panther","Dimensions":[["dimension"]],"Metrics":[{"Name":"test","Unit":"Count"}]}],"Timestamp":1000}}`, parallelInvocations)+"\n", buf.String())
 	})
 }
