@@ -44,13 +44,7 @@ export type UpdatePolicy = {
     | 'severity'
     | 'suppressions'
     | 'tags'
-  > & {
-    tests?: Types.Maybe<
-      Array<
-        Types.Maybe<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>>
-      >
-    >;
-  };
+  > & { tests: Array<Pick<Types.DetectionTestDefinition, 'expectedResult' | 'name' | 'resource'>> };
 };
 
 export const UpdatePolicyDocument = gql`

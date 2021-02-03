@@ -60,7 +60,8 @@ const LogAnalysisOverview: React.FC = () => {
           'eventsProcessed',
           'totalAlertsDelta',
           'alertsBySeverity',
-          'eventsLatency',
+          // TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
+          // 'eventsLatency',
           'alertsByRuleID',
         ],
         ...initialValues,
@@ -91,8 +92,8 @@ const LogAnalysisOverview: React.FC = () => {
       />
     );
   }
-
-  const { alertsBySeverity, totalAlertsDelta, eventsProcessed, eventsLatency, alertsByRuleID } = data.getLogAnalysisMetrics; // prettier-ignore
+  // TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
+  const { alertsBySeverity, totalAlertsDelta, eventsProcessed,/* eventsLatency, */ alertsByRuleID } = data.getLogAnalysisMetrics; // prettier-ignore
   const topAlertSummaries = alertsData?.topAlerts?.alertSummaries || [];
   const recentAlertSummaries = alertsData?.recentAlerts?.alertSummaries || [];
 
@@ -107,7 +108,7 @@ const LogAnalysisOverview: React.FC = () => {
         />
       </SimpleGrid>
       <SimpleGrid columns={1} spacingX={3} spacingY={2} my={5}>
-        <LogTypeCharts eventsProcessed={eventsProcessed} eventsLatency={eventsLatency} />
+        <LogTypeCharts eventsProcessed={eventsProcessed} /* eventsLatency={eventsLatency} */ />
       </SimpleGrid>
       <SimpleGrid columns={1} spacingX={3} spacingY={2}>
         {loadingAlerts ? (

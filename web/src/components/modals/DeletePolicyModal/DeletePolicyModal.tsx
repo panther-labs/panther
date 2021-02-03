@@ -18,14 +18,15 @@
 
 import React from 'react';
 import { ModalProps, useSnackbar } from 'pouncejs';
-import { Policy } from 'Generated/schema';
+import { PolicySummary } from 'Source/graphql/fragments/PolicySummary.generated';
+import { PolicyDetails } from 'Source/graphql/fragments/PolicyDetails.generated';
 import useRouter from 'Hooks/useRouter';
 import urls from 'Source/urls';
 import { useDeletePolicy } from './graphql/deletePolicy.generated';
 import OptimisticConfirmModal from '../OptimisticConfirmModal';
 
 export interface DeletePolicyModalProps extends ModalProps {
-  policy: Policy;
+  policy: PolicySummary | PolicyDetails;
 }
 
 const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy, ...rest }) => {
@@ -47,11 +48,11 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy, ...rest }
     },
     update: async cache => {
       cache.modify('ROOT_QUERY', {
-        policies: (data, helpers) => {
+        detections: (data, helpers) => {
           const policyRef = helpers.toReference({ __typename: 'Policy', id: policy.id });
           return {
             ...data,
-            policies: data.policies.filter(p => p.__ref !== policyRef.__ref),
+            detections: data.detections.filter(p => p.__ref !== policyRef.__ref),
           };
         },
         policy: (data, helpers) => {

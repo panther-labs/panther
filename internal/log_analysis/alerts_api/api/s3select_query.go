@@ -58,9 +58,13 @@ func (s *S3Select) Query(ctx context.Context) (*S3SelectResult, error) {
 	out := &S3SelectResult{
 		objectKey: s.objectKey,
 	}
+
+	// account for those we skip in loop below because there is no OFFSET support in S3 select
+	maxResults := s.maxResults + s.exclusiveStartIndex
+
 	// nolint:gosec
 	// The alertID is an MD5 hash. AlertsAPI is performing the appropriate validation
-	query := fmt.Sprintf("SELECT * FROM S3Object o WHERE o.p_alert_id='%s' LIMIT %d", s.alertID, s.maxResults)
+	query := fmt.Sprintf("SELECT * FROM S3Object o WHERE o.p_alert_id='%s' LIMIT %d", s.alertID, maxResults)
 
 	zap.L().Debug("querying object using S3 Select",
 		zap.String("S3ObjectKey", s.objectKey),

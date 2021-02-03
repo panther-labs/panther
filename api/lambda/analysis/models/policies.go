@@ -137,6 +137,7 @@ type TestError struct {
 }
 
 type UpdatePolicyInput struct {
+	AnalysisType              DetectionType       `json:"analysisType"`
 	AutoRemediationID         string              `json:"autoRemediationId" validate:"max=1000"`
 	AutoRemediationParameters map[string]string   `json:"autoRemediationParameters" validate:"max=500"`
 	Body                      string              `json:"body" validate:"required,max=100000"`
@@ -158,6 +159,7 @@ type UpdatePolicyInput struct {
 
 // The validate tags here are used by BulkUpload
 type Policy struct {
+	AnalysisType              DetectionType           `json:"analysisType"`
 	AutoRemediationID         string                  `json:"autoRemediationId" validate:"max=1000"`
 	AutoRemediationParameters map[string]string       `json:"autoRemediationParameters" validte:"max=500"`
 	Body                      string                  `json:"body" validate:"required,max=100000"`

@@ -184,8 +184,8 @@ func main() {
 	beginRun := time.Now()
 
 	generateBy := generateBy{
-		startHour:      opts.startTime,
-		endHour:        opts.endTime,
+		startHour:      opts.startTime.UTC(),
+		endHour:        opts.endTime.UTC(),
 		fileGenerators: enabledGenerators,
 		fileChan:       fileChan,
 		concurrency:    *opts.Concurrency,

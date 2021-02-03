@@ -1151,6 +1151,45 @@ Resources:
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCodeNoBody, VTL]
 
+  ListDetectionsResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: detections
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "listDetections": $util.defaultIfNull($ctx.args.input, {})
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, {})
+        #else
+          #set($result = $util.parseJson($ctx.result.body))
+          #set($detections = [])
+
+          #foreach($item in $result.detections)
+            #if ($item.analysisType == "RULE")
+              $util.qr($item.put("__typename", "Rule"))
+            #elseif ($item.analysisType == "POLICY")
+              $util.qr($item.put("__typename", "Policy"))
+            #else
+              $util.error("Invalid analysisType found")
+            #end
+            $util.qr($detections.add($item))
+          #end
+
+          $util.toJson({
+              "detections": $detections,
+              "paging": $result.paging
+          })
+        #end
+
   ListRulesResolver:
     Type: AWS::AppSync::Resolver
     Properties:

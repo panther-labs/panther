@@ -48,7 +48,7 @@ exports[`RuleFormTestResult matches the snapshot 1`] = `
   padding-bottom: 4px;
   padding-left: 16px;
   padding-right: 16px;
-  background-color: #67b52c;
+  background-color: #50931d;
 }
 
 

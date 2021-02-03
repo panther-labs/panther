@@ -19,7 +19,6 @@
 import React from 'react';
 import GenericItemCard from 'Components/GenericItemCard';
 import { DestinationFull } from 'Source/graphql/fragments/DestinationFull.generated';
-import { formatDatetime } from 'Helpers/utils';
 import { DESTINATIONS } from 'Source/constants';
 import { DestinationTypeEnum, OpsgenieServiceRegionEnum } from 'Generated/schema';
 import DestinationCard from './DestinationCard';
@@ -41,15 +40,6 @@ const OpsGenieDestinationCard: React.FC<OpsGenieDestinationCardProps> = ({ desti
             ? 'European'
             : 'American (Default)'
         }
-      />
-      <GenericItemCard.LineBreak />
-      <GenericItemCard.Value
-        label="Date Created"
-        value={formatDatetime(destination.creationTime, true)}
-      />
-      <GenericItemCard.Value
-        label="Last Updated"
-        value={formatDatetime(destination.lastModifiedTime, true)}
       />
     </DestinationCard>
   );

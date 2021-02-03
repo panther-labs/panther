@@ -18,7 +18,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { PolicySummary } from '../../../graphql/fragments/PolicySummary.generated';
+import { PolicyDetails } from '../../../graphql/fragments/PolicyDetails.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
@@ -30,10 +30,7 @@ export type GetPolicyDetailsVariables = {
 };
 
 export type GetPolicyDetails = {
-  policy?: Types.Maybe<
-    Pick<Types.Policy, 'autoRemediationId' | 'autoRemediationParameters' | 'suppressions'> &
-      PolicySummary
-  >;
+  policy?: Types.Maybe<PolicyDetails>;
   resourcesForPolicy?: Types.Maybe<{
     totals?: Types.Maybe<{
       active?: Types.Maybe<Pick<Types.ComplianceStatusCounts, 'fail' | 'pass' | 'error'>>;
@@ -48,10 +45,7 @@ export const GetPolicyDetailsDocument = gql`
     $resourcesForPolicyInput: ResourcesForPolicyInput!
   ) {
     policy(input: $policyDetailsInput) {
-      ...PolicySummary
-      autoRemediationId
-      autoRemediationParameters
-      suppressions
+      ...PolicyDetails
     }
     resourcesForPolicy(input: $resourcesForPolicyInput) {
       totals {
@@ -68,7 +62,7 @@ export const GetPolicyDetailsDocument = gql`
       }
     }
   }
-  ${PolicySummary}
+  ${PolicyDetails}
 `;
 
 /**

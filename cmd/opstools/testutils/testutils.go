@@ -31,6 +31,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	logDataTypeAttributeName = "type"
+	logTypeAttributeName     = "id"
+)
+
 func CreateTopic(client snsiface.SNSAPI, topic string) (output *sns.CreateTopicOutput, err error) {
 	output, err = client.CreateTopic(&sns.CreateTopicInput{
 		Name:       &topic,
@@ -67,30 +72,44 @@ func DeleteQueue(client sqsiface.SQSAPI, qname string) (err error) {
 }
 
 func CountMessagesInQueue(client sqsiface.SQSAPI, qname string,
-	messageBatchSize, visibilityTimeoutSeconds int64) (totalMessages int, err error) {
+	messageBatchSize, visibilityTimeoutSeconds int64) (totalMessages, totalMessagesWithAttrs int, err error) {
 
 	countQueueURL, err := client.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: &qname,
 	})
 	if err != nil {
-		return 0, errors.Wrapf(err, "cannot get count queue url for %s", qname)
+		return 0, 0, errors.Wrapf(err, "cannot get count queue url for %s", qname)
+	}
+
+	// used by Panther
+	messageAttributes := []*string{
+		&logDataTypeAttributeName,
+		&logTypeAttributeName,
 	}
 
 	// drain the queue, counting
 	for {
 		resp, err := client.ReceiveMessage(&sqs.ReceiveMessageInput{
-			MaxNumberOfMessages: aws.Int64(messageBatchSize),
-			VisibilityTimeout:   aws.Int64(visibilityTimeoutSeconds),
-			QueueUrl:            countQueueURL.QueueUrl,
+			MessageAttributeNames: messageAttributes,
+			MaxNumberOfMessages:   aws.Int64(messageBatchSize),
+			VisibilityTimeout:     aws.Int64(visibilityTimeoutSeconds),
+			QueueUrl:              countQueueURL.QueueUrl,
 		})
 
 		if err != nil {
-			return 0, errors.Wrap(err, qname)
+			return 0, 0, errors.Wrap(err, qname)
 		}
 
 		totalMessages += len(resp.Messages)
+
+		for _, message := range resp.Messages {
+			if message.MessageAttributes != nil {
+				totalMessagesWithAttrs++
+			}
+		}
+
 		if len(resp.Messages) == 0 {
-			return totalMessages, nil
+			return totalMessages, totalMessagesWithAttrs, nil
 		}
 	}
 }
@@ -106,10 +125,25 @@ func AddMessagesToQueue(client sqsiface.SQSAPI, qname string, nBatches, messageB
 	for batch := 0; batch < nBatches; batch++ {
 		var sendMessageBatchRequestEntries []*sqs.SendMessageBatchRequestEntry
 		for i := 0; i < messageBatchSize; i++ {
+			// give every other one some panther message attrs, ensure passing these work
+			var messageAttributes map[string]*sqs.MessageAttributeValue
+			if i%2 == 0 {
+				messageAttributes = map[string]*sqs.MessageAttributeValue{
+					logDataTypeAttributeName: {
+						StringValue: aws.String("LogData"),
+						DataType:    aws.String("String"),
+					},
+					logTypeAttributeName: {
+						StringValue: aws.String("AWS.CloudTrail"),
+						DataType:    aws.String("String"),
+					},
+				}
+			}
 			id := aws.String(strconv.Itoa(i))
 			sendMessageBatchRequestEntries = append(sendMessageBatchRequestEntries, &sqs.SendMessageBatchRequestEntry{
-				Id:          id,
-				MessageBody: id,
+				Id:                id,
+				MessageBody:       id,
+				MessageAttributes: messageAttributes,
 			})
 		}
 

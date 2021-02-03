@@ -54,6 +54,22 @@ func (API) DeleteRules(input *models.DeleteRulesInput) *events.APIGatewayProxyRe
 	return &events.APIGatewayProxyResponse{StatusCode: http.StatusOK}
 }
 
+func (API) DeleteDetections(input *models.DeletePoliciesInput) *events.APIGatewayProxyResponse {
+	if err := s3BatchDelete(input); err != nil {
+		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+	}
+
+	if err := complianceBatchDelete(input.Entries, []string{}); err != nil {
+		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+	}
+
+	if err := dynamoBatchDelete(input); err != nil {
+		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+	}
+
+	return &events.APIGatewayProxyResponse{StatusCode: http.StatusOK}
+}
+
 func (api API) DeleteDataModels(input *models.DeleteDataModelsInput) *events.APIGatewayProxyResponse {
 	return api.DeleteRules(input)
 }
