@@ -57,7 +57,7 @@ type SchemaDatabase interface {
 	UpdateUserSchema(ctx context.Context, id string, rev int64, upd SchemaUpdate) (*SchemaRecord, error)
 
 	// UpdateManagedSchema updates a managed schema to the release version provided
-	UpdateManagedSchema(ctx context.Context, id string, release string, upd SchemaUpdate) (*SchemaRecord, error)
+	UpdateManagedSchema(ctx context.Context, id string, rev int64, release string, upd SchemaUpdate) (*SchemaRecord, error)
 
 	ToggleSchema(ctx context.Context, id string, enabled bool) error
 

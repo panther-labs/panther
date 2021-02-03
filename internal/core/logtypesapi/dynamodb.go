@@ -124,10 +124,11 @@ func (d *DynamoDBSchemas) GetSchema(ctx context.Context, id string, revision int
 	return &record.SchemaRecord, nil
 }
 
-func (d *DynamoDBSchemas) UpdateManagedSchema(ctx context.Context, id string, release string, upd SchemaUpdate) (*SchemaRecord, error) {
+func (d *DynamoDBSchemas) UpdateManagedSchema(ctx context.Context, id string, rev int64, release string, upd SchemaUpdate) (*SchemaRecord, error) {
 	now := time.Now().UTC()
 	record := SchemaRecord{
 		Name:         id,
+		Revision:     rev + 1,
 		Managed:      true,
 		Release:      release,
 		UpdatedAt:    now,
@@ -145,6 +146,7 @@ func (d *DynamoDBSchemas) UpdateManagedSchema(ctx context.Context, id string, re
 }
 
 func buildUpdateManagedSchemaTx(tableName string, record SchemaRecord) transact.Transaction {
+	currentRevision := record.Revision - 1
 	return transact.Transaction{
 		&transact.Update{
 			TableName: tableName,
@@ -152,13 +154,11 @@ func buildUpdateManagedSchemaTx(tableName string, record SchemaRecord) transact.
 			Set: map[string]interface{}{
 				transact.SetIfNotExists: struct {
 					CreatedAt time.Time `dynamodbav:"createdAt"`
-					Revision  int64     `dynamodbav:"revision"`
 					Name      string    `dynamodbav:"logType"`
 					Managed   bool      `dynamodbav:"managed"`
 					Disabled  bool      `dynamodbav:"IsDeleted"`
 				}{
 					CreatedAt: record.UpdatedAt,
-					Revision:  0,
 					Name:      record.Name,
 					Managed:   true,
 					Disabled:  false,
@@ -166,11 +166,13 @@ func buildUpdateManagedSchemaTx(tableName string, record SchemaRecord) transact.
 				transact.SetAll: struct {
 					UpdatedAt    time.Time `dynamodbav:"updatedAt"`
 					Release      string    `dynamodbav:"release"`
+					Revision     int64     `dynamodbav:"revision"`
 					Description  string    `dynamodbav:"description"`
 					ReferenceURL string    `dynamodbav:"referenceURL"`
 					Spec         string    `dynamodbav:"logSpec"`
 				}{
 					UpdatedAt:    record.UpdatedAt,
+					Revision:     record.Revision,
 					Release:      record.Release,
 					Description:  record.Description,
 					ReferenceURL: record.ReferenceURL,
@@ -182,8 +184,8 @@ func buildUpdateManagedSchemaTx(tableName string, record SchemaRecord) transact.
 				expression.And(
 					// Check that the record is managed
 					expression.Name(attrManaged).Equal(expression.Value(true)),
-					// Check that the record is at an older release than the one it is being updated to
-					expression.Name(attrRelease).LessThan(expression.Value(record.Release)),
+					// Check that the record has not incremented its revision
+					expression.Name(attrRevision).Equal(expression.Value(currentRevision)),
 				),
 			),
 			// Possible failures of the condition are
@@ -201,8 +203,8 @@ func buildUpdateManagedSchemaTx(tableName string, record SchemaRecord) transact.
 					if !rec.Managed {
 						return NewAPIError(ErrRevisionConflict, fmt.Sprintf("schema record %q is not managed", rec.RecordID))
 					}
-					if rec.Release >= record.Release {
-						return NewAPIError(ErrRevisionConflict, fmt.Sprintf("managed schema record %q is at release %q", rec.RecordID, rec.Release))
+					if rec.Revision != currentRevision {
+						return NewAPIError(ErrRevisionConflict, fmt.Sprintf("managed schema record %q is at revision %d", rec.RecordID, rec.Revision))
 					}
 				}
 				return nil

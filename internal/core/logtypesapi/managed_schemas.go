@@ -129,16 +129,18 @@ func (api *LogTypesAPI) updateManagedSchema(ctx context.Context, entry managedsc
 	if err != nil {
 		return nil, err
 	}
+	rev := int64(1)
 	if record != nil {
 		if !record.IsManaged() {
 			return nil, NewAPIError(ErrAlreadyExists, fmt.Sprintf("record %q exists and is not managed by Panther", desc.Name))
 		}
-		if record.Release >= entry.Release {
+		if semver.Compare(record.Release, entry.Release) != -1 {
 			return record, nil
 		}
+		rev = record.Revision + 1
 		// TODO: check update compatibility
 	}
-	return api.Database.UpdateManagedSchema(ctx, desc.Name, entry.Release, SchemaUpdate{
+	return api.Database.UpdateManagedSchema(ctx, desc.Name, rev, entry.Release, SchemaUpdate{
 		Description:  desc.Description,
 		ReferenceURL: desc.ReferenceURL,
 		Spec:         entry.Spec,

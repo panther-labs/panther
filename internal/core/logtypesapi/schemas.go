@@ -56,8 +56,8 @@ func (api *LogTypesAPI) GetSchema(ctx context.Context, input *GetSchemaInput) (*
 // SchemaRecord describes a stored schema.
 //
 // A SchemaRecord can either be managed or user-defined.
-// Managed schema records have their `Managed` field set to `true` and include a version tag in `Release` field.
-// User-defined schema records have non-zero `Revision` fields.
+// Managed schema records have their Managed field set to `true` and include a version tag in Release field.
+// User-defined schema records have Managed and Release fields missing.
 type SchemaRecord struct {
 	// For compatibility we use 'logType' as the DDB field name
 	Name      string    `json:"logType" dynamodbav:"logType" validate:"required" description:"The schema id"`

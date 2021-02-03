@@ -73,7 +73,7 @@ func (l ListAvailableAPI) UpdateUserSchema(ctx context.Context, id string, rev i
 }
 
 // nolint:lll
-func (l ListAvailableAPI) UpdateManagedSchema(ctx context.Context, id string, release string, upd logtypesapi.SchemaUpdate) (*logtypesapi.SchemaRecord, error) {
+func (l ListAvailableAPI) UpdateManagedSchema(ctx context.Context, id string, rev int64, release string, upd logtypesapi.SchemaUpdate) (*logtypesapi.SchemaRecord, error) {
 	panic("implement me")
 }
 

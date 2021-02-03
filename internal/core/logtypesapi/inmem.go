@@ -21,6 +21,7 @@ package logtypesapi
 import (
 	"context"
 	"fmt"
+	"golang.org/x/mod/semver"
 	"strings"
 	"sync"
 	"time"
@@ -115,16 +116,18 @@ func (db *InMemDB) UpdateUserSchema(ctx context.Context, name string, rev int64,
 	return &record, nil
 }
 
-func (db *InMemDB) UpdateManagedSchema(ctx context.Context, name string, release string, upd SchemaUpdate) (*SchemaRecord, error) {
+func (db *InMemDB) UpdateManagedSchema(ctx context.Context, name string, rev int64, release string, upd SchemaUpdate) (*SchemaRecord, error) {
 	id := strings.ToUpper(name)
 	key := inMemKey{
 		LogType:  id,
 		Revision: 0,
 	}
 	now := time.Now()
+	currentRevision := rev - 1
 	record := SchemaRecord{
 		Name:         name,
 		Managed:      true,
+		Revision:     rev,
 		Release:      release,
 		UpdatedAt:    now,
 		CreatedAt:    now,
@@ -140,11 +143,12 @@ func (db *InMemDB) UpdateManagedSchema(ctx context.Context, name string, release
 		db.records[key] = &record
 		return &record, nil
 	}
-	if !ok || !current.Managed || current.Release >= release {
+	if !current.Managed || current.Revision != currentRevision || semver.Compare(current.Release, release) != -1 {
 		return nil, NewAPIError("Conflict", "record revision mismatch")
 	}
 	current.UpdatedAt = now
 	current.Release = release
+	current.Revision = rev
 	current.SchemaUpdate = upd
 	return &record, nil
 }
