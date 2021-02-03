@@ -128,7 +128,7 @@ func (d *DynamoDBSchemas) UpdateManagedSchema(ctx context.Context, id string, re
 	now := time.Now().UTC()
 	record := SchemaRecord{
 		Name:         id,
-		Revision:     rev + 1,
+		Revision:     rev,
 		Managed:      true,
 		Release:      release,
 		UpdatedAt:    now,
