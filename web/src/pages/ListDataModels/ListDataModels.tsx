@@ -50,8 +50,8 @@ const ListDataModels = () => {
   const dataModels = data?.listDataModels?.models;
   return (
     <Box mb={6}>
-      <Panel title="Data Models" actions={<ListDataModelFilters />}>
-        <ErrorBoundary>
+      <ErrorBoundary>
+        <Panel title="Data Models" actions={<ListDataModelFilters />}>
           {error && (
             <Alert
               variant="error"
@@ -72,8 +72,8 @@ const ListDataModels = () => {
             ) : (
               <EmptyDataFallback />
             ))}
-        </ErrorBoundary>
-      </Panel>
+        </Panel>
+      </ErrorBoundary>
     </Box>
   );
 };
