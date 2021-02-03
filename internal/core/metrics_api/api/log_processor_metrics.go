@@ -37,14 +37,14 @@ func getEventsProcessed(input *models.GetMetricsInput, output *models.GetMetrics
 	// First determine applicable metric dimensions
 	var listMetricsResponse []*cloudwatch.Metric
 	err := cloudwatchClient.ListMetricsPages(&cloudwatch.ListMetricsInput{
-		MetricName: aws.String(logmetrics.MetricLogProcessorCombinedLatency),
+		MetricName: aws.String(logmetrics.MetricLogProcessorEventLatency),
 		Namespace:  aws.String(input.Namespace),
 	}, func(page *cloudwatch.ListMetricsOutput, _ bool) bool {
 		listMetricsResponse = append(listMetricsResponse, page.Metrics...)
 		return true
 	})
 	if err != nil {
-		zap.L().Error("unable to list metrics", zap.String("metric", logmetrics.MetricLogProcessorCombinedLatency), zap.Error(err))
+		zap.L().Error("unable to list metrics", zap.String("metric", logmetrics.MetricLogProcessorEventLatency), zap.Error(err))
 		return metricsInternalError
 	}
 	zap.L().Debug("found applicable metrics", zap.Any("metrics", listMetricsResponse))
@@ -52,13 +52,6 @@ func getEventsProcessed(input *models.GetMetricsInput, output *models.GetMetrics
 	// Build the query based on the applicable metric dimensions
 	var queries []*cloudwatch.MetricDataQuery
 	for i, metric := range listMetricsResponse {
-		if len(metric.Dimensions) != 1 {
-			// This if statement is only needed by developers who have deployed the unstable branch
-			// of Panther before v1.6.0. Old metrics can't be deleted and you can't filter out
-			// dimensions you don't want, so we have to skip metrics where the Component dimension
-			// still exists.
-			continue
-		}
 		queries = append(queries, &cloudwatch.MetricDataQuery{
 			Id: aws.String("query" + strconv.Itoa(i)),
 			MetricStat: &cloudwatch.MetricStat{
@@ -94,14 +87,14 @@ func getEventsLatency(input *models.GetMetricsInput, output *models.GetMetricsOu
 	// First determine applicable metric dimensions
 	var listMetricsResponse []*cloudwatch.Metric
 	err := cloudwatchClient.ListMetricsPages(&cloudwatch.ListMetricsInput{
-		MetricName: aws.String(logmetrics.MetricLogProcessorCombinedLatency),
+		MetricName: aws.String(logmetrics.MetricLogProcessorEventLatency),
 		Namespace:  aws.String(input.Namespace),
 	}, func(page *cloudwatch.ListMetricsOutput, _ bool) bool {
 		listMetricsResponse = append(listMetricsResponse, page.Metrics...)
 		return true
 	})
 	if err != nil {
-		zap.L().Error("unable to list metrics", zap.String("metric", logmetrics.MetricLogProcessorCombinedLatency), zap.Error(err))
+		zap.L().Error("unable to list metrics", zap.String("metric", logmetrics.MetricLogProcessorEventLatency), zap.Error(err))
 		return metricsInternalError
 	}
 	zap.L().Debug("found applicable metrics", zap.Any("metrics", listMetricsResponse))

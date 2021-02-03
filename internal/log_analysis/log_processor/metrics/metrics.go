@@ -29,7 +29,7 @@ const (
 	MetricLogProcessorGetObject       = "GetObject"
 	MetricLogProcessorBytesProcessed  = "BytesProcessed"
 	MetricLogProcessorEventsProcessed = "EventsProcessed"
-	MetricLogProcessorCombinedLatency = "CombinedLatency"
+	MetricLogProcessorEventLatency    = "EventLatency"
 
 	// StatusDimension indicating that a subsystem operation is well
 	StatusOK = "OK"
@@ -56,5 +56,5 @@ func Setup() {
 	// Note that these don't have all the dimensions
 	BytesProcessed = CWManager.NewCounter(MetricLogProcessorBytesProcessed, metrics.UnitBytes)
 	EventsProcessed = CWManager.NewCounter(MetricLogProcessorEventsProcessed, metrics.UnitCount)
-	EventLatencySeconds = CWManager.NewCounter(MetricLogProcessorCombinedLatency, metrics.UnitSeconds)
+	EventLatencySeconds = CWManager.NewCounter(MetricLogProcessorEventLatency, metrics.UnitMilliseconds)
 }

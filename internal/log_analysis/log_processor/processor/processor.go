@@ -260,7 +260,6 @@ func (p *Processor) logStats(err error) {
 	p.operation.Stop()
 	p.operation.Log(err, zap.Any(statsKey, *p.classifier.Stats()))
 	for _, stats := range p.classifier.ParserStats() {
-		p.operation.Log(err, zap.Any(statsKey, *stats))
 		logmetrics.BytesProcessed.With(metrics.LogTypeDimension, stats.LogType).Add(float64(stats.BytesProcessedCount))
 		logmetrics.EventsProcessed.With(metrics.LogTypeDimension, stats.LogType).Add(float64(stats.EventCount))
 	}
