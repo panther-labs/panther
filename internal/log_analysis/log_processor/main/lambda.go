@@ -75,9 +75,12 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 		NativeLogTypes: logtypes.MustMerge("native", registry.NativeLogTypes(), snapshotlogs.LogTypes()),
 	}
 
+	// We also need the cloud-security resolvers to handle their delivered S3 objects
+	resolver := logtypes.ChainResolvers(apiResolver, snapshotlogs.Resolver())
+
 	// Log cases where a log type failed to resolve. Almost certainly something is amiss in the DDB.
 	logTypesResolver := logtypes.ResolverFunc(func(ctx context.Context, name string) (logtypes.Entry, error) {
-		entry, err := apiResolver.Resolve(ctx, name)
+		entry, err := resolver.Resolve(ctx, name)
 		if err != nil {
 			return nil, err
 		}
