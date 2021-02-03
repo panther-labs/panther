@@ -34,17 +34,17 @@ A high-level description explaining the purpose of the feature and why it's impo
 
 ## Stories and Acceptance Criteria
 
-### Feature Name [MVP/MMP/MDP]
-
 > **_Reference_**
 
-> Minimum Viable Product
+> Minimum Viable Product [MVP]: A set of sufficient features to satisfy early adopters.
 
-> Minimum Marketable Product
+> Minimum Marketable Product [MMP]: Features to deliver must-have functionality to users and bring quantifiable value back to the business.
 
-> Minimum Delightful Product
+> Minimum Delightful Product [MDP]: Features that deliver a delightful product experience that they’re going tell others about.
 
 > _Each stage is sequential and we gather user feedback from the previous phase_
+
+### Feature Name
 
 #### User Story
 
