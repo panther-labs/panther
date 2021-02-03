@@ -132,6 +132,9 @@ func (db *InMemDB) UpdateManagedSchema(ctx context.Context, name string, release
 	}
 	db.mu.Lock()
 	defer db.mu.Unlock()
+	if db.records == nil {
+		db.records = map[inMemKey]*SchemaRecord{}
+	}
 	current, ok := db.records[key]
 	if !ok {
 		db.records[key] = &record
