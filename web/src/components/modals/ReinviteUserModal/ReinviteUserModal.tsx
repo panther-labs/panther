@@ -20,21 +20,26 @@ import React from 'react';
 import { ModalProps, useSnackbar } from 'pouncejs';
 import { ListUsersDocument } from 'Pages/Users';
 import { getOperationName } from 'apollo-utilities';
-import { getUserDisplayName } from 'Helpers/utils';
 import ConfirmModal from 'Components/modals/ConfirmModal';
 import { UserDetails } from 'Source/graphql/fragments/UserDetails.generated';
-import { useResetUserPassword } from './graphql/resetUserPassword.generated';
+import { MessageActionEnum } from 'Generated/schema';
+import { useInviteUser } from './graphql/inviteUser.generated';
 
-export interface ResetUserPasswordProps extends ModalProps {
+export interface ReinviteUserProps extends ModalProps {
   user: UserDetails;
 }
 
-const ResetUserPasswordModal: React.FC<ResetUserPasswordProps> = ({ user, onClose, ...rest }) => {
+const ResetUserPasswordModal: React.FC<ReinviteUserProps> = ({ user, onClose, ...rest }) => {
   const { pushSnackbar } = useSnackbar();
-  const userDisplayName = getUserDisplayName(user);
-  const [resetUserPassword, { loading }] = useResetUserPassword({
+  const userDisplayName = `${user.givenName} ${user.familyName}` || user.id;
+  const [resetUserPassword, { loading }] = useInviteUser({
     variables: {
-      id: user.id,
+      input: {
+        email: user.email,
+        familyName: user.familyName,
+        givenName: user.givenName,
+        messageAction: MessageActionEnum.Resend,
+      },
     },
     awaitRefetchQueries: true,
     refetchQueries: [getOperationName(ListUsersDocument)],
@@ -42,12 +47,12 @@ const ResetUserPasswordModal: React.FC<ResetUserPasswordProps> = ({ user, onClos
       onClose();
       pushSnackbar({
         variant: 'success',
-        title: `Successfully forced a password change for ${userDisplayName}`,
+        title: `Successfully reinvited user ${userDisplayName}`,
       });
     },
     onError: () => {
       onClose();
-      pushSnackbar({ variant: 'error', title: `Failed to reset password for ${userDisplayName}` });
+      pushSnackbar({ variant: 'error', title: `Failed to reinvite user ${userDisplayName}` });
     },
   });
 
@@ -56,8 +61,8 @@ const ResetUserPasswordModal: React.FC<ResetUserPasswordProps> = ({ user, onClos
       onConfirm={resetUserPassword}
       onClose={onClose}
       loading={loading}
-      title={`Force a password change for ${userDisplayName}`}
-      subtitle={`Are you sure you want to reset password for ${userDisplayName}?`}
+      title={`Reinvite user ${userDisplayName}`}
+      subtitle={`Are you sure you want to reinvite user ${userDisplayName}?`}
       {...rest}
     />
   );

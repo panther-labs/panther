@@ -870,23 +870,6 @@ Resources:
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
-  ListPoliciesResolver:
-    Type: AWS::AppSync::Resolver
-    Properties:
-      ApiId: !Ref ApiId
-      TypeName: Query
-      FieldName: policies
-      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
-      RequestMappingTemplate: |
-        {
-          "version" : "2017-02-28",
-          "operation": "Invoke",
-          "payload": $util.toJson({
-            "listPolicies": $util.defaultIfNull($ctx.args.input, {})
-          })
-        }
-      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
-
   GetPolicyResolver:
     Type: AWS::AppSync::Resolver
     Properties:
@@ -1189,23 +1172,6 @@ Resources:
               "paging": $result.paging
           })
         #end
-
-  ListRulesResolver:
-    Type: AWS::AppSync::Resolver
-    Properties:
-      ApiId: !Ref ApiId
-      TypeName: Query
-      FieldName: rules
-      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
-      RequestMappingTemplate: |
-        {
-          "version" : "2017-02-28",
-          "operation": "Invoke",
-          "payload": $util.toJson({
-            "listRules": $util.defaultIfNull($ctx.args.input, {})
-          })
-        }
-      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
   GetRuleResolver:
     Type: AWS::AppSync::Resolver
