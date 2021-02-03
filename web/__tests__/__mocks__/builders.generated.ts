@@ -172,6 +172,7 @@ import {
   ListResourcesSortFieldsEnum,
   ListRulesSortFieldsEnum,
   LogIntegration,
+  MessageActionEnum,
   OpsgenieServiceRegionEnum,
   SeverityEnum,
   SortDirEnum,
@@ -943,6 +944,8 @@ export const buildInviteUserInput = (overrides: Partial<InviteUserInput> = {}): 
     givenName: 'givenName' in overrides ? overrides.givenName : 'system-worthy',
     familyName: 'familyName' in overrides ? overrides.familyName : 'copy',
     email: 'email' in overrides ? overrides.email : 'Gennaro_Kerluke71@gmail.com',
+    messageAction:
+      'messageAction' in overrides ? overrides.messageAction : MessageActionEnum.Resend,
   };
 };
 

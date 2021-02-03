@@ -581,6 +581,7 @@ export type InviteUserInput = {
   givenName?: Maybe<Scalars['String']>;
   familyName?: Maybe<Scalars['String']>;
   email?: Maybe<Scalars['AWSEmail']>;
+  messageAction?: Maybe<MessageActionEnum>;
 };
 
 export type JiraConfig = {
@@ -792,6 +793,11 @@ export type LongSeriesData = {
   timestamps: Array<Scalars['AWSDateTime']>;
   series: Array<LongSeries>;
 };
+
+export enum MessageActionEnum {
+  Resend = 'RESEND',
+  Suppress = 'SUPPRESS',
+}
 
 export type ModifyGlobalPythonModuleInput = {
   description: Scalars['String'];
@@ -1822,6 +1828,7 @@ export type ResolversTypes = {
   DeleteRuleInput: DeleteRuleInput;
   DeleteGlobalPythonModuleInput: DeleteGlobalPythonModuleInput;
   InviteUserInput: InviteUserInput;
+  MessageActionEnum: MessageActionEnum;
   RemediateResourceInput: RemediateResourceInput;
   DeliverAlertInput: DeliverAlertInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
@@ -2006,6 +2013,7 @@ export type ResolversParentTypes = {
   DeleteRuleInput: DeleteRuleInput;
   DeleteGlobalPythonModuleInput: DeleteGlobalPythonModuleInput;
   InviteUserInput: InviteUserInput;
+  MessageActionEnum: MessageActionEnum;
   RemediateResourceInput: RemediateResourceInput;
   DeliverAlertInput: DeliverAlertInput;
   SuppressPoliciesInput: SuppressPoliciesInput;
