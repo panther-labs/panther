@@ -41,17 +41,17 @@ func TestWith(t *testing.T) {
 
 func TestSpaceWalkAbort(t *testing.T) {
 	s := NewSpace()
-	s.Observe("a", DimensionValues{"a", "b"}, 1)
-	s.Observe("a", DimensionValues{"c", "d"}, 2)
-	s.Observe("a", DimensionValues{"e", "f"}, 4)
-	s.Observe("a", DimensionValues{"g", "h"}, 8)
-	s.Observe("b", DimensionValues{"a", "b"}, 16)
-	s.Observe("b", DimensionValues{"c", "d"}, 32)
-	s.Observe("b", DimensionValues{"e", "f"}, 64)
-	s.Observe("b", DimensionValues{"g", "h"}, 128)
+	s.Observe("a", "unit", DimensionValues{"a", "b"}, 1)
+	s.Observe("a", "unit", DimensionValues{"c", "d"}, 2)
+	s.Observe("a", "unit", DimensionValues{"e", "f"}, 4)
+	s.Observe("a", "unit", DimensionValues{"g", "h"}, 8)
+	s.Observe("b", "unit", DimensionValues{"a", "b"}, 16)
+	s.Observe("b", "unit", DimensionValues{"c", "d"}, 32)
+	s.Observe("b", "unit", DimensionValues{"e", "f"}, 64)
+	s.Observe("b", "unit", DimensionValues{"g", "h"}, 128)
 
 	var count int
-	s.Walk(func(name string, lvs DimensionValues, obs []float64) bool {
+	s.Walk(func(name, unit string, lvs DimensionValues, obs []float64) bool {
 		count++
 		return false
 	})
@@ -62,18 +62,18 @@ func TestSpaceWalkAbort(t *testing.T) {
 
 func TestSpaceWalkSums(t *testing.T) {
 	s := NewSpace()
-	s.Observe("metric_one", DimensionValues{}, 1)
-	s.Observe("metric_one", DimensionValues{}, 2)
-	s.Observe("metric_one", DimensionValues{"a", "1", "b", "2"}, 4)
-	s.Observe("metric_one", DimensionValues{"a", "1", "b", "2"}, 8)
-	s.Observe("metric_one", DimensionValues{}, 16)
-	s.Observe("metric_one", DimensionValues{"a", "1", "b", "3"}, 32)
-	s.Observe("metric_two", DimensionValues{}, 64)
-	s.Observe("metric_two", DimensionValues{}, 128)
-	s.Observe("metric_two", DimensionValues{"a", "1", "b", "2"}, 256)
+	s.Observe("metric_one", "unit", DimensionValues{}, 1)
+	s.Observe("metric_one", "unit", DimensionValues{}, 2)
+	s.Observe("metric_one", "unit", DimensionValues{"a", "1", "b", "2"}, 4)
+	s.Observe("metric_one", "unit", DimensionValues{"a", "1", "b", "2"}, 8)
+	s.Observe("metric_one", "unit", DimensionValues{}, 16)
+	s.Observe("metric_one", "unit", DimensionValues{"a", "1", "b", "3"}, 32)
+	s.Observe("metric_two", "unit", DimensionValues{}, 64)
+	s.Observe("metric_two", "unit", DimensionValues{}, 128)
+	s.Observe("metric_two", "unit", DimensionValues{"a", "1", "b", "2"}, 256)
 
 	have := map[string]float64{}
-	s.Walk(func(name string, lvs DimensionValues, obs []float64) bool {
+	s.Walk(func(name, unit string, lvs DimensionValues, obs []float64) bool {
 		have[name+" ["+strings.Join(lvs, "")+"]"] += sum(obs)
 		return true
 	})
@@ -99,10 +99,10 @@ func TestSpaceWalkSums(t *testing.T) {
 
 func TestSpaceWalkSkipsEmptyDimensions(t *testing.T) {
 	s := NewSpace()
-	s.Observe("foo", DimensionValues{"bar", "1", "baz", "2"}, 123)
+	s.Observe("foo", "unit", DimensionValues{"bar", "1", "baz", "2"}, 123)
 
 	var count int
-	s.Walk(func(name string, lvs DimensionValues, obs []float64) bool {
+	s.Walk(func(name, unit string, lvs DimensionValues, obs []float64) bool {
 		count++
 		return true
 	})
