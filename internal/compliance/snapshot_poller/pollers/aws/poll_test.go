@@ -67,7 +67,7 @@ func TestSingleResourceScanRegionIgnoreListError(t *testing.T) {
 
 	_, err := singleResourceScan(sampleScanRequest, sampleResourcePollerInput)
 
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 }
 
 func TestSingleResourceScanGenericError(t *testing.T) {
