@@ -143,7 +143,7 @@ func TestBuildElbv2NetworkLoadBalancerSnapshot(t *testing.T) {
 	elbv2Snapshot, err := buildElbv2ApplicationLoadBalancerSnapshot(
 		mockElbv2Svc,
 		mockWafRegionalSvc,
-		awstest.ExampleDescribeNetworkLoadBalancersOutput.LoadBalancers[0],
+		awstest.ExampleDescribeLoadBalancersOutput.LoadBalancers[1],
 	)
 
 	assert.NoError(t, err)
