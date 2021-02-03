@@ -88,9 +88,12 @@ func main() {
 		NativeLogTypes: logtypes.MustMerge("native", registry.NativeLogTypes(), snapshotlogs.LogTypes()),
 	}
 
+	// Also include the cloud-security logs since they are not yet exported as managed schemas.
+	chainResolver := logtypes.ChainResolvers(apiResolver, snapshotlogs.Resolver())
+
 	// Log cases where a log type failed to resolve. Almost certainly something is amiss in the DDB.
 	resolver := logtypes.ResolverFunc(func(ctx context.Context, name string) (logtypes.Entry, error) {
-		entry, err := apiResolver.Resolve(ctx, name)
+		entry, err := chainResolver.Resolve(ctx, name)
 		if err != nil {
 			return nil, err
 		}
