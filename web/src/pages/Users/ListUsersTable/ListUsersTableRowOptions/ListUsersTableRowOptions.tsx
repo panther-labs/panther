@@ -48,7 +48,7 @@ const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ use
         >
           Edit
         </DropdownItem>
-        {user.status !== 'FORCE_CHANGE_PASSWORD' && (
+        {user.status !== 'FORCE_CHANGE_PASSWORD' ? (
           <DropdownItem
             onSelect={() =>
               showModal({
@@ -58,6 +58,17 @@ const ListUsersTableRowOptions: React.FC<ListUsersTableRowOptionsProps> = ({ use
             }
           >
             Force password reset
+          </DropdownItem>
+        ) : (
+          <DropdownItem
+            onSelect={() =>
+              showModal({
+                modal: MODALS.REINVITE_USER,
+                props: { user },
+              })
+            }
+          >
+            Reinvite user
           </DropdownItem>
         )}
         <DropdownItem

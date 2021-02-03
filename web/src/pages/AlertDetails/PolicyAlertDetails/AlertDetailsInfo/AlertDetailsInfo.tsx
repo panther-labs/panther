@@ -123,7 +123,7 @@ const AlertDetailsInfo: React.FC<AlertDetailsInfoProps> = ({ alert, policy }) =>
                         <Link
                           key={tag}
                           as={RRLink}
-                          to={`${urls.compliance.policies.list()}?page=1&tags[]=${tag}`}
+                          to={`${urls.detections.list()}?page=1&tags[]=${tag}`}
                         >
                           {tag}
                           {index !== policy.tags.length - 1 ? ', ' : null}

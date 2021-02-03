@@ -165,7 +165,7 @@ func validateFlags() {
 		return
 	}
 	// This ensures more continuous average activity for small FPS
-	if float64(*CONCURRENCY) > *RATE {
+	if *RATE > 0 && float64(*CONCURRENCY) > *RATE {
 		*CONCURRENCY = int(*RATE)
 	}
 

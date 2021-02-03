@@ -109,6 +109,13 @@ const Navigation = () => {
               label="Alerts"
             />
           </Box>
+          <Box as="li" mb={2}>
+            <NavLink
+              icon="detection"
+              to={`${urls.detections.list()}?page=1&sortBy=lastModified&sortDir=descending`}
+              label="Detections"
+            />
+          </Box>
 
           <Box as="li" mb={2}>
             <NavGroup

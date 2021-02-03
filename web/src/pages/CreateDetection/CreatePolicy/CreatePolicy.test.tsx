@@ -29,7 +29,6 @@ import {
 import { mockListRemediations } from 'Components/forms/PolicyForm/PolicyFormAutoRemediationSection';
 import urls from 'Source/urls';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
-import { mockListPolicies } from 'Pages/ListPolicies';
 import { GraphQLError } from 'graphql';
 import CreatePolicy, { initialValues } from './CreatePolicy';
 import { mockCreatePolicy } from './graphql/createPolicy.generated';
@@ -136,14 +135,6 @@ describe('CreatePolicy', () => {
           },
         },
         data: { addPolicy: policy },
-      }),
-      mockListPolicies({
-        variables: { input: {} },
-        data: {
-          policies: {
-            policies: [],
-          },
-        },
       }),
     ];
     const { getByText, getByLabelText, history, getAllByLabelText } = render(<CreatePolicy />, {

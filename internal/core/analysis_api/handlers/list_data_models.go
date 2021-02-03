@@ -65,7 +65,7 @@ func (API) ListDataModels(input *models.ListDataModelsInput) *events.APIGatewayP
 	}
 
 	// Sort and page
-	sortItems(items, "id", input.SortDir, nil)
+	sortItems(items, input.SortBy, input.SortDir, nil)
 	var paging models.Paging
 	paging, items = pageItems(items, input.Page, input.PageSize)
 

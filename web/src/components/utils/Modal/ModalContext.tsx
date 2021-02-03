@@ -20,6 +20,7 @@ import React from 'react';
 import { DeletePolicyModalProps } from 'Components/modals/DeletePolicyModal';
 import { DeleteUserModalProps } from 'Components/modals/DeleteUserModal';
 import { ResetUserPasswordProps } from 'Components/modals/ResetUserPasswordModal';
+import { ReinviteUserProps } from 'Components/modals/ReinviteUserModal';
 import { DeleteComplianceSourceModalProps } from 'Components/modals/DeleteComplianceSourceModal';
 import { DeleteLogSourceModalProps } from 'Components/modals/DeleteLogSourceModal';
 import { DeleteDestinationModalProps } from 'Components/modals/DeleteDestinationModal';
@@ -46,6 +47,7 @@ export enum MODALS {
   GENERIC_MODAL = 'GENERIC_MODAL',
   EDIT_PROFILE_SETTINGS = 'EDIT_PROFILE_SETTINGS',
   RESET_USER_PASS = 'RESET_USER_PASS',
+  REINVITE_USER = 'REINVITE_USER',
   DELETE_COMPLIANCE_SOURCE = 'DELETE_COMPLIANCE_SOURCE',
   DELETE_LOG_SOURCE = 'DELETE_LOG_SOURCE',
   DELETE_DESTINATION = 'DELETE_DESTINATION',
@@ -113,6 +115,15 @@ interface ShowResetUserPasswordModalAction {
   payload: {
     modal: MODALS.RESET_USER_PASS;
     props: OmitControlledProps<ResetUserPasswordProps>;
+  };
+}
+
+/* Reset user password */
+interface ShowReinviteUserModalAction {
+  type: typeof SHOW_MODAL;
+  payload: {
+    modal: MODALS.REINVITE_USER;
+    props: OmitControlledProps<ReinviteUserProps>;
   };
 }
 
@@ -205,6 +216,7 @@ type ModalStateAction =
   | ShowDeleteTestModalAction
   | ShowProfileSettingsModalAction
   | ShowResetUserPasswordModalAction
+  | ShowReinviteUserModalAction
   | ShowPolicyModalAction
   | ShowDeleteRuleModalAction
   | ShowDeleteDestinationModalAction
