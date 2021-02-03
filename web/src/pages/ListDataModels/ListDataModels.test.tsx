@@ -206,7 +206,7 @@ describe('ListDataModels', () => {
 
     // Verify filter values outside of Dropdown
     expect(getByLabelText('Filter Data Models by text')).toHaveValue('test');
-    expect(getAllByLabelText('Sort By')[0]).toHaveValue('A to Z');
+    expect(getAllByLabelText('Sort By')[0]).toHaveValue('Id (A-Z)');
 
     // Verify filter values inside the Dropdown
     fireClickAndMouseEvents(getByText('Filters (2)'));
@@ -316,7 +316,7 @@ describe('ListDataModels', () => {
 
     // Expect the rest of the filters to be intact (to not have changed in any way)
     expect(getByLabelText('Filter Data Models by text')).toHaveValue('test');
-    expect(getAllByLabelText('Sort By')[0]).toHaveValue('A to Z');
+    expect(getAllByLabelText('Sort By')[0]).toHaveValue('Id (A-Z)');
 
     // Open the Dropdown (again)
     fireClickAndMouseEvents(getByText('Filters (2)'));
@@ -343,7 +343,7 @@ describe('ListDataModels', () => {
 
     // Expect the rest of the filters to STILL be intact (to not have changed in any way)
     expect(getByLabelText('Filter Data Models by text')).toHaveValue('test');
-    expect(getAllByLabelText('Sort By')[0]).toHaveValue('A to Z');
+    expect(getAllByLabelText('Sort By')[0]).toHaveValue('Id (A-Z)');
   });
 
   it('correctly updates filters & sorts on every change outside of the dropdown', async () => {

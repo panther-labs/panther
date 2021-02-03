@@ -45,14 +45,14 @@ const defaultValues = {
 
 const sortingOpts: SortingOptions = [
   {
-    opt: 'A to Z',
+    opt: 'Id (A-Z)',
     resolution: {
       sortBy: ListDataModelsSortFieldsEnum.Id,
       sortDir: SortDirEnum.Ascending,
     },
   },
   {
-    opt: 'Z to A',
+    opt: 'Id (Z-A)',
     resolution: {
       sortBy: ListDataModelsSortFieldsEnum.Id,
       sortDir: SortDirEnum.Descending,

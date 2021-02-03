@@ -25,7 +25,7 @@ const ListDataModelsPageSkeleton: React.FC = () => {
     <FadeIn from="bottom">
       <TablePlaceholder rowCount={1} rowHeight={15} />
       <Card p={6} mt={5}>
-        <TablePlaceholder />
+        <TablePlaceholder rowCount={5} rowHeight={40} />
       </Card>
     </FadeIn>
   );

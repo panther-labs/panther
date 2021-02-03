@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Field, Form, Formik } from 'formik';
+import { FastField, Field, Form, Formik } from 'formik';
 import { Box, Button, Card, Flex, Popover, PopoverContent, PopoverTrigger } from 'pouncejs';
 import { ListDataModelsInput } from 'Generated/schema';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
@@ -32,6 +32,13 @@ export type ListDataModelsDropdownFiltersValues = Pick<ListDataModelsInput, 'log
 const defaultValues = {
   logTypes: [],
   enabled: null,
+};
+
+const enabledFilterToString = (item: boolean | string) => {
+  if (item === '') {
+    return 'All';
+  }
+  return item ? 'Yes' : 'No';
 };
 
 const DropdownFilters: React.FC = () => {
@@ -94,16 +101,11 @@ const DropdownFilters: React.FC = () => {
                       />
                     </Box>
                     <Box pb={4}>
-                      <Field
+                      <FastField
                         name="enabled"
                         as={FormikCombobox}
                         items={['', true, false]}
-                        itemToString={(item: boolean | string) => {
-                          if (item === '') {
-                            return 'All';
-                          }
-                          return item ? 'Yes' : 'No';
-                        }}
+                        itemToString={enabledFilterToString}
                         label="Enabled"
                         placeholder="Only show enabled data models?"
                       />
