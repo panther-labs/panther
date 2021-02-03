@@ -18,6 +18,19 @@
 
 set -euxo pipefail
 
+# This script should be used to update the embedded managed schema manifest release.
+# Each version of Panther is bound to a minimum version of the `panther-analysis` repo.
+# To avoid broken deployments due to GitHub outage or API limits, we embed the manifest of that release in the go code.
+# This allows the custom resource that handles the managed schema updates to not rely on GitHub availability.
+# Upon deployment, the custom resource handler will ensure all managed schemas are updated to at least this version.
+
+# The script requires a single argument that is the tag of the minimum required version on the panther-analysis repo.
+# When we want to update the minimum release version we should:
+# - cd into this directory
+# - run `./build.sh vX.Y.Z` to clone the tag, build the manifest and embed it using `go-bindata`
+# - add the changed files (release_asset.go and release.go) and commit the changes
+# - make a PR for the update
+
 # Use first argument as release tag
 RELEASE_TAG="$1"
 PKG_NAME="managedschemas"
