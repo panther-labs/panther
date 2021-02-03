@@ -266,7 +266,7 @@ func buildElbv2ApplicationLoadBalancerSnapshot(
 	}
 
 	// currently, waf is only supported in ALB
-	if *lb.Type == elbv2.LoadBalancerTypeEnumApplication {
+	if aws.StringValue(lb.Type) == elbv2.LoadBalancerTypeEnumApplication {
 		// Try to find a webACL ID
 		if applicationLoadBalancer.WebAcl, err = getWebACLForResource(wafRegionalSvc, lb.LoadBalancerArn); err != nil {
 			return nil, err
