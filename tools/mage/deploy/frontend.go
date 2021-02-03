@@ -27,7 +27,6 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/panther-labs/panther/tools/cfnstacks"
-	"github.com/panther-labs/panther/tools/mage/clients"
 	"github.com/panther-labs/panther/tools/mage/pkg"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
@@ -38,8 +37,8 @@ func deployFrontend(settings *PantherConfig, packager *pkg.Packager, bootstrapOu
 	// Save .env file (only used when running web server locally)
 	if err := godotenv.Write(
 		map[string]string{
-			"AWS_ACCOUNT_ID":                       clients.AccountID(),
-			"AWS_REGION":                           clients.Region(),
+			"AWS_ACCOUNT_ID":                       util.AccountID(packager.AwsConfig),
+			"AWS_REGION":                           packager.AwsConfig.Region,
 			"WEB_APPLICATION_GRAPHQL_API_ENDPOINT": bootstrapOutputs["GraphQLApiEndpoint"],
 			"WEB_APPLICATION_USER_POOL_ID":         bootstrapOutputs["UserPoolId"],
 			"WEB_APPLICATION_USER_POOL_CLIENT_ID":  bootstrapOutputs["AppClientId"],

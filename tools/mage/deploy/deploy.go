@@ -72,7 +72,7 @@ var SupportedRegions = map[string]bool{
 // Deploy Panther to your AWS account
 func Deploy() error {
 	start := time.Now()
-	if err := PreCheck(); err != nil {
+	if err := PreCheck(clients.Region()); err != nil {
 		return err
 	}
 
@@ -112,30 +112,23 @@ func Deploy() error {
 }
 
 // Fail the deploy early if there is a known issue with the user's environment.
-func PreCheck() error {
+func PreCheck(region string) error {
 	// Ensure the AWS region is supported
-	if region := clients.Region(); !SupportedRegions[region] {
+	if region != "" && !SupportedRegions[region] {
 		return fmt.Errorf("panther is not supported in %s region", region)
 	}
 
-	// Check the Go version
 	if version := runtime.Version(); version < "go1.15" {
 		return fmt.Errorf("go %s not supported, upgrade to 1.15+", version)
 	}
 
-	// Check the major node version
-	nodeVersion, err := sh.Output("node", "--version")
-	if err != nil {
-		return fmt.Errorf("failed to check node version: %v", err)
-	}
-	if !strings.HasPrefix(strings.TrimSpace(nodeVersion), "v14") {
-		return fmt.Errorf("node version must be v14.x.x, found %s", nodeVersion)
-	}
-
 	// Make sure docker is running
-	if _, err = sh.Output("docker", "info"); err != nil {
+	if _, err := sh.Output("docker", "info"); err != nil {
 		return fmt.Errorf("docker is not available: %v", err)
 	}
+
+	// Note: npm and python are not required for deployment
+	// (npm install runs within the web dockerfile, need not run locally)
 
 	return nil
 }

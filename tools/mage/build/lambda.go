@@ -32,8 +32,8 @@ import (
 
 // "go build" sequentially for each Lambda function.
 //
-// Run "go mod download" or "mage setup" before building to download the go modules.
-// If you're adding a new module, run "go get ./..." before building to fetch the new module.
+// This function is not used during the deploy process - each function is built and uploaded
+// individually during the packaging.
 func Lambda() error {
 	log := logger.Build("[build:lambda]")
 

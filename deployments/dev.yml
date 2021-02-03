@@ -52,7 +52,7 @@ Resources:
       LifecycleConfiguration:
         Rules:
           # Once a stack is deployed, its resources in S3 can be safely removed.
-          - ExpirationInDays: 14
+          - ExpirationInDays: 30
             Status: Enabled
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true

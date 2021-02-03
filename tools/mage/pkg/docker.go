@@ -40,7 +40,7 @@ func DockerBuild(log *zap.SugaredLogger, dockerfile string) (string, error) {
 	}
 	defer os.Remove(tmpfile.Name())
 
-	// When running without the "-q" flag, docker build has no capturable stdout.
+	// When running without the "-q" flag, docker build has no stdout we can capture.
 	// Instead, we use --iidfile to write the image ID to a tmp file and read it back.
 	err = sh.Run("docker", "build",
 		"--file", dockerfile, "--iidfile", tmpfile.Name(), ".")
@@ -100,23 +100,25 @@ func dockerLogin(ecrServer, username, password string) error {
 	// We are going to replace Stdin with a pipe reader, so temporarily
 	// cache previous Stdin
 	existingStdin := os.Stdin
-	// Make sure to reset the Stdin.
-	defer func() {
-		os.Stdin = existingStdin
-	}()
+
 	// Create a pipe to pass docker password to the docker login command
 	pipeReader, pipeWriter, err := os.Pipe()
 	if err != nil {
 		return fmt.Errorf("failed to open pipe: %v", err)
 	}
+
+	// Reset stdin and close resources
+	defer func() {
+		os.Stdin = existingStdin
+		_ = pipeReader.Close()
+		_ = pipeWriter.Close()
+	}()
+
 	os.Stdin = pipeReader
 
 	// Write password to pipe
 	if _, err = pipeWriter.WriteString(password); err != nil {
 		return fmt.Errorf("failed to write password to pipe: %v", err)
-	}
-	if err = pipeWriter.Close(); err != nil {
-		return fmt.Errorf("failed to close password pipe: %v", err)
 	}
 
 	err = sh.Run("docker", "login",

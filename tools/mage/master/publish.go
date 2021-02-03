@@ -36,7 +36,6 @@ import (
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/logger"
 	"github.com/panther-labs/panther/tools/mage/pkg"
-	"github.com/panther-labs/panther/tools/mage/setup"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
@@ -50,7 +49,7 @@ const (
 // Publish a new Panther release (Panther team only)
 func Publish() error {
 	log := logger.Build("[master:publish]")
-	if err := deploy.PreCheck(); err != nil {
+	if err := deploy.PreCheck(""); err != nil {
 		return err
 	}
 
@@ -85,15 +84,14 @@ func Publish() error {
 		return err
 	}
 
-	// To be safe, always reset dependencies, clear build artifacts, and re-generate source files before publishing.
+	// To be safe, always clear build artifacts before publishing.
 	// Don't need to do a full 'mage clean', but we do want to remove the `out/` directory
 	log.Info("rm -r out/")
 	if err := os.RemoveAll("out"); err != nil {
 		return fmt.Errorf("failed to remove out/ : %v", err)
 	}
-	if err := setup.Setup(); err != nil {
-		return err
-	}
+
+	// 'mage setup' not required to publish - npm and python aren't needed
 
 	imgID, err := pkg.DockerBuild(log, filepath.Join("deployments", "Dockerfile"))
 	if err != nil {

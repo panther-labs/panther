@@ -139,8 +139,9 @@ func (p *Packager) Template(path string) (string, error) {
 		// no need to spin up workers that won't have anything to do.
 		workers = len(resources)
 	}
+	p.Log.Debugf("packaging %s: starting %d workers", path, workers)
 	for w := 1; w <= workers; w++ {
-		go p.resourceWorker(fmt.Sprintf("[%d] %s", w, path), jobs, results)
+		go p.resourceWorker(jobs, results)
 	}
 
 	// Queue a job for each resource in the template
@@ -180,24 +181,21 @@ func (p *Packager) Template(path string) (string, error) {
 }
 
 // Each of the build/pkg workers runs this loop, processing one CloudFormation resource at a time.
-func (p *Packager) resourceWorker(logPrefix string, resources <-chan cfnResource, results chan<- cfnResource) {
+func (p *Packager) resourceWorker(resources <-chan cfnResource, results chan<- cfnResource) {
 	for r := range resources {
-		rType := r.fields["Type"].(string)
-		// p.Log.Debugf("%s %s %s", logPrefix, rType, r.logicalID)
-
-		switch rType {
+		switch r.fields["Type"].(string) {
 		case "AWS::AppSync::GraphQLSchema":
-			results <- p.appsyncGraphQlSchema(logPrefix, r)
+			results <- p.appsyncGraphQlSchema(r)
 		case "AWS::CloudFormation::Stack":
-			results <- p.cloudformationStack(logPrefix, r)
+			results <- p.cloudformationStack(r)
 		case "AWS::ECS::TaskDefinition":
-			// We assume only one of these in Panther
-			results <- p.ecsTaskDefinition(logPrefix, r)
+			// We assume there is only one of these in Panther
+			results <- p.ecsTaskDefinition(r)
 		case "AWS::Lambda::LayerVersion":
-			// We assume only one of these in Panther
-			results <- p.lambdaLayerVersion(logPrefix, r)
+			// We assume there is only one of these in Panther
+			results <- p.lambdaLayerVersion(r)
 		case "AWS::Serverless::Function":
-			results <- p.serverlessFunction(logPrefix, r)
+			results <- p.serverlessFunction(r)
 		default:
 			results <- r
 		}
@@ -205,7 +203,7 @@ func (p *Packager) resourceWorker(logPrefix string, resources <-chan cfnResource
 }
 
 // Upload AppSync GraphQL schema to S3 - returns resource with modified DefinitionS3Location property
-func (p *Packager) appsyncGraphQlSchema(logPrefix string, r cfnResource) cfnResource {
+func (p *Packager) appsyncGraphQlSchema(r cfnResource) cfnResource {
 	properties := r.fields["Properties"].(map[string]interface{})
 	schemaPath := properties["DefinitionS3Location"].(string)
 	if strings.HasPrefix(schemaPath, "s3://") {
@@ -213,19 +211,19 @@ func (p *Packager) appsyncGraphQlSchema(logPrefix string, r cfnResource) cfnReso
 	}
 
 	// Upload schema to S3
-	p.Log.Debugf("%s: packaging AWS::Appsync::GraphQLSchema %s", logPrefix, r.logicalID)
+	p.Log.Debugf("packaging AWS::Appsync::GraphQLSchema %s", r.logicalID)
 	s3Key, _, err := p.UploadAsset(filepath.Join("deployments", schemaPath), "")
 	if err != nil {
 		r.err = err
 		return r
 	}
 
-	properties["DefinitionS3Location"] = fmt.Sprintf("s3://%s/%s", p.Bucket, s3Key)
+	properties["DefinitionS3Location"] = util.S3URI(p.Bucket, s3Key)
 	return r
 }
 
 // Upload nested CFN template to S3 - returns resource with modified TemplateURL property
-func (p *Packager) cloudformationStack(logPrefix string, r cfnResource) cfnResource {
+func (p *Packager) cloudformationStack(r cfnResource) cfnResource {
 	properties := r.fields["Properties"].(map[string]interface{})
 	nestedPath := properties["TemplateURL"].(string)
 	if strings.HasPrefix(nestedPath, "https://") {
@@ -233,7 +231,7 @@ func (p *Packager) cloudformationStack(logPrefix string, r cfnResource) cfnResou
 	}
 
 	// Recursively package the nested stack
-	p.Log.Debugf("%s: packaging AWS::CloudFormation::Stack %s", logPrefix, r.logicalID)
+	p.Log.Debugf("packaging AWS::CloudFormation::Stack %s", r.logicalID)
 	pkgPath, err := p.Template(filepath.Join("deployments", nestedPath))
 	if err != nil {
 		r.err = err
@@ -252,7 +250,7 @@ func (p *Packager) cloudformationStack(logPrefix string, r cfnResource) cfnResou
 }
 
 // Upload web docker image to ECR - returns resource with modified Image property
-func (p *Packager) ecsTaskDefinition(logPrefix string, r cfnResource) cfnResource {
+func (p *Packager) ecsTaskDefinition(r cfnResource) cfnResource {
 	properties := r.fields["Properties"].(map[string]interface{})
 	containerDefs := properties["ContainerDefinitions"].([]interface{})
 	if len(containerDefs) != 1 {
@@ -265,7 +263,7 @@ func (p *Packager) ecsTaskDefinition(logPrefix string, r cfnResource) cfnResourc
 		return r // Image is already an ECR url
 	}
 
-	p.Log.Debugf("%s: packaging AWS::ECS::TaskDefinition %s", logPrefix, r.logicalID)
+	p.Log.Debugf("packaging AWS::ECS::TaskDefinition %s", r.logicalID)
 
 	var tag string
 
@@ -276,17 +274,15 @@ func (p *Packager) ecsTaskDefinition(logPrefix string, r cfnResource) cfnResourc
 			RepositoryName: aws.String(strings.Split(p.EcrRegistry, "/")[1]),
 		})
 		if err == nil && len(response.ImageDetails) > 0 {
-			p.Log.Debugf("%s: ecr image tag %s already exists", logPrefix, p.DockerImageID)
+			p.Log.Debugf("ecr image tag %s already exists", p.DockerImageID)
 			containerDef["Image"] = p.EcrRegistry + ":" + p.DockerImageID
 			return r
 		}
 
 		var notFound *ecrTypes.ImageNotFoundException
-		if errors.As(err, &notFound) {
-			// image doesn't exist - continue to the docker push below
-		} else {
+		if err != nil && !errors.As(err, &notFound) {
 			// we couldn't actually check the image status - fallback to the docker push
-			p.Log.Warnf("%s: failed to check for existing ecr image: %s", logPrefix, err)
+			p.Log.Warnf("failed to check for existing ecr image: %s", err)
 		}
 	} else {
 		// Images will be tagged with the panther version
@@ -307,7 +303,7 @@ func (p *Packager) ecsTaskDefinition(logPrefix string, r cfnResource) cfnResourc
 //   Content:
 //     S3Bucket: panther-dev-...
 //     S3Key: abcd...
-func (p *Packager) lambdaLayerVersion(logPrefix string, r cfnResource) cfnResource {
+func (p *Packager) lambdaLayerVersion(r cfnResource) cfnResource {
 	properties := r.fields["Properties"].(map[string]interface{})
 	content, ok := properties["Content"].(string)
 	if !ok {
@@ -321,7 +317,7 @@ func (p *Packager) lambdaLayerVersion(logPrefix string, r cfnResource) cfnResour
 		return r
 	}
 
-	p.Log.Debugf("%s: packaging AWS::Lambda::LayerVersion %s", logPrefix, r.logicalID)
+	p.Log.Debugf("packaging AWS::Lambda::LayerVersion %s", r.logicalID)
 
 	if err := build.Layer(p.Log, p.PipLibs); err != nil {
 		r.err = err
@@ -340,14 +336,14 @@ func (p *Packager) lambdaLayerVersion(logPrefix string, r cfnResource) cfnResour
 }
 
 // Compile lambda zipfile and upload to S3 - returns resource with modified CodeUri property
-func (p *Packager) serverlessFunction(logPrefix string, r cfnResource) cfnResource {
+func (p *Packager) serverlessFunction(r cfnResource) cfnResource {
 	properties := r.fields["Properties"].(map[string]interface{})
 	codeURI := properties["CodeUri"].(string)
 	if strings.HasPrefix(codeURI, "s3://") {
 		return r // codeURI is already an S3 path
 	}
 
-	p.Log.Debugf("%s: packaging AWS::Serverless::Function %s", logPrefix, r.logicalID)
+	p.Log.Debugf("packaging AWS::Serverless::Function %s", r.logicalID)
 
 	// Build/find the directory which needs to be zipped
 	var zipDir string
@@ -380,7 +376,7 @@ func (p *Packager) serverlessFunction(logPrefix string, r cfnResource) cfnResour
 		return r
 	}
 
-	properties["CodeUri"] = fmt.Sprintf("s3://%s/%s", p.Bucket, s3Key)
+	properties["CodeUri"] = util.S3URI(p.Bucket, s3Key)
 	return r
 }
 
@@ -389,7 +385,7 @@ func (p *Packager) serverlessFunction(logPrefix string, r cfnResource) cfnResour
 // If no s3 key is chosen by the caller, the hash is used for the key and objects
 // will not be uploaded if they already exist.
 func (p *Packager) UploadAsset(assetPath, s3Key string) (string, string, error) {
-	// Assets can be up to 100 MB or so, they all should fit in memory just fine
+	// Assets can be up to 25 MB or so, they all should fit in memory just fine
 	contents, err := ioutil.ReadFile(assetPath)
 	if err != nil {
 		return "", "", err

@@ -21,6 +21,7 @@ package clean
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/panther-labs/panther/tools/mage/logger"
@@ -32,8 +33,8 @@ func Clean() error {
 	paths := []string{
 		util.SetupDir,
 		util.NpmDir,
-		"deployments/root_config.yml",
-		"internal/core/analysis_api/main/bulk_upload.zip", // created by integration tests
+		filepath.Join("deployments", "root_config.yml"),
+		filepath.Join("internal", "core", "analysis_api", "main", "bulk_upload.zip"), // created by integration tests
 		"out",
 	}
 

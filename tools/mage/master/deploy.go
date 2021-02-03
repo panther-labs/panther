@@ -105,7 +105,7 @@ func Deploy() error {
 
 // Stop early if there is a known issue with the dev environment.
 func deployPreCheck(config aws.Config) error {
-	if err := deploy.PreCheck(); err != nil {
+	if err := deploy.PreCheck(config.Region); err != nil {
 		return err
 	}
 

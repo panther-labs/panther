@@ -55,7 +55,16 @@ func EcrRepoURI(accountID, region, repoName string) string {
 	return fmt.Sprintf("%s.dkr.ecr.%s.%s/%s", accountID, region, URLSuffix(region), repoName)
 }
 
-// Returns S3 URL using virtual addressing (BUCKET.s3.REGION.SUFFIX/KEY)
+// Returns s3 URI ("s3://bucket/key")
+func S3URI(bucket, key string) string {
+	result := "s3://" + bucket
+	if key != "" {
+		result += "/" + key
+	}
+	return result
+}
+
+// Returns S3 URL using virtual addressing ("BUCKET.s3.REGION.SUFFIX/KEY")
 func S3ObjectURL(region, bucket, key string) string {
 	return fmt.Sprintf("https://%s.s3.%s.%s/%s", bucket, region, URLSuffix(region), key)
 }

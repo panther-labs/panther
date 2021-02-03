@@ -23,16 +23,15 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/sts"
 
 	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/tools/mage/logger"
 )
+
+// NOTE: This file is deprecated - use AWS SDK v2 for new code
 
 const (
 	maxRetries = 20 // try very hard, avoid throttles
@@ -48,16 +47,13 @@ var (
 	accountID  string
 
 	cfnClient    *cloudformation.CloudFormation
-	ecrClient    *ecr.ECR
-	glueClient   *glue.Glue
 	lambdaClient *lambda.Lambda
 	s3Client     *s3.S3
-	s3Uploader   *s3manager.Uploader
 	stsClient    *sts.STS
 )
 
 // Build the AWS session from credentials - subsequent calls return the cached result.
-func GetSession() *session.Session {
+func getSession() *session.Session {
 	if awsSession != nil {
 		return awsSession
 	}
@@ -93,7 +89,7 @@ func GetSession() *session.Session {
 
 // Returns the current AWS region.
 func Region() string {
-	return *GetSession().Config.Region
+	return *getSession().Config.Region
 }
 
 // Returns the current AWS account ID - subsequent calls return the cached result.
@@ -111,49 +107,28 @@ func AccountID() string {
 
 func Cfn() *cloudformation.CloudFormation {
 	if cfnClient == nil {
-		cfnClient = cloudformation.New(GetSession())
+		cfnClient = cloudformation.New(getSession())
 	}
 	return cfnClient
 }
 
-func ECR() *ecr.ECR {
-	if ecrClient == nil {
-		ecrClient = ecr.New(GetSession())
-	}
-	return ecrClient
-}
-
-func Glue() *glue.Glue {
-	if glueClient == nil {
-		glueClient = glue.New(GetSession())
-	}
-	return glueClient
-}
-
 func Lambda() *lambda.Lambda {
 	if lambdaClient == nil {
-		lambdaClient = lambda.New(GetSession())
+		lambdaClient = lambda.New(getSession())
 	}
 	return lambdaClient
 }
 
 func S3() *s3.S3 {
 	if s3Client == nil {
-		s3Client = s3.New(GetSession())
+		s3Client = s3.New(getSession())
 	}
 	return s3Client
 }
 
-func S3Uploader() *s3manager.Uploader {
-	if s3Uploader == nil {
-		s3Uploader = s3manager.NewUploader(GetSession())
-	}
-	return s3Uploader
-}
-
 func STS() *sts.STS {
 	if stsClient == nil {
-		stsClient = sts.New(GetSession())
+		stsClient = sts.New(getSession())
 	}
 	return stsClient
 }
