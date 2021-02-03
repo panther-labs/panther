@@ -27,7 +27,7 @@ import (
 	"strings"
 
 	"github.com/iancoleman/strcase"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes/logtesting"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"

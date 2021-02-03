@@ -13,10 +13,9 @@
 # deactivate
 bandit
 boto3~=1.16.31  # Matches version in Lambda: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
-cfn-flip
 cfn-lint
 jsonpath-ng
 mypy
-pip==21.0
+pip~=21.0
 pylint
 yapf
