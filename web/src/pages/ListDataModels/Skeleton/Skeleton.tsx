@@ -20,7 +20,7 @@ import React from 'react';
 import TablePlaceholder from 'Components/TablePlaceholder';
 import { Card, FadeIn } from 'pouncejs';
 
-const ListRulesPageSkeleton: React.FC = () => {
+const ListDataModelsPageSkeleton: React.FC = () => {
   return (
     <FadeIn from="bottom">
       <TablePlaceholder rowCount={1} rowHeight={15} />
@@ -31,4 +31,4 @@ const ListRulesPageSkeleton: React.FC = () => {
   );
 };
 
-export default ListRulesPageSkeleton;
+export default ListDataModelsPageSkeleton;
