@@ -31,7 +31,6 @@ import (
 // It is useful for tests and for caching results of another implementation.
 type InMemDB struct {
 	mu      sync.RWMutex
-	deleted []string
 	records map[inMemKey]*SchemaRecord
 }
 

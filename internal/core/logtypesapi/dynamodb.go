@@ -50,7 +50,6 @@ const (
 	attrReferenceURL = "referenceURL"
 	attrSpec         = "logSpec"
 	attrManaged      = "managed"
-	attrLogType      = "logType"
 
 	recordKindStatus      = "status"
 	attrAvailableLogTypes = "AvailableLogTypes"
