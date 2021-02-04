@@ -50,7 +50,6 @@ func Stack(
 ) (map[string]string, error) {
 
 	// 1) Generate packaged template, packaging assets in S3 and ECR
-	// 1) Generate packaged template, packaging assets in S3 and ECR
 	packagedTemplate := templatePath
 	if packager != nil {
 		packager.Log.Debugf("packaging %s to s3 bucket %s and ecr registry %s",
