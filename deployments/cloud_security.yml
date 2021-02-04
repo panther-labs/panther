@@ -130,7 +130,7 @@ Resources:
       # * Failure of this sqs queue will impact delivery of alerts to output destinations.
       # * Failed events will go into the `panther-alert-processor-queue-dlq`. When the system has recovered they should be re-queued to the `panther-alert-processor-queue` using the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       KmsMasterKeyId: !Ref SqsKeyId
       VisibilityTimeout: !FindInMap [Functions, AlertProcessor, Timeout]
       RedrivePolicy:
@@ -155,7 +155,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-alert-processor-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       VisibilityTimeout: 60
 
   AlertProcessorDLQAlarms:
@@ -183,7 +183,7 @@ Resources:
   AlertProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/alert_processor/main
+      CodeUri: ../internal/compliance/alert_processor/main
       Description: Processes events generated from the compliance engine
       Environment:
         Variables:
@@ -297,7 +297,7 @@ Resources:
   AlertForwarderFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/alert_forwarder/main
+      CodeUri: ../internal/compliance/alert_forwarder/main
       Description: Forwards the alerts to the alert delivery mechanism
       Environment:
         Variables:
@@ -364,7 +364,7 @@ Resources:
   EventQueue:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: 86400 # 24 hours
+      MessageRetentionPeriod: '86400' # 24 hours
       QueueName: panther-aws-events-queue
       # <cfndoc>
       # This sqs q receives CloudTrail events delivered by CloudWatch events
@@ -394,7 +394,7 @@ Resources:
   EventDLQ:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       QueueName: panther-aws-events-queue-dlq
       # <cfndoc>
       # This is the dead letter queue for the `panther-aws-events-queue`.
@@ -466,7 +466,7 @@ Resources:
   EventProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/aws_event_processor/main
+      CodeUri: ../internal/compliance/aws_event_processor/main
       Description: Process real-time changes to AWS infrastructure
       Environment:
         Variables:
@@ -543,7 +543,7 @@ Resources:
   ComplianceApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/compliance_api/main
+      CodeUri: ../internal/compliance/compliance_api/main
       Description: Compliance API
       Environment:
         Variables:
@@ -652,7 +652,7 @@ Resources:
   RemediationApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/remediation_api/main
+      CodeUri: ../internal/compliance/remediation_api/main
       Description: Triggers AWS remediations
       Environment:
         Variables:
@@ -732,7 +732,7 @@ Resources:
       # * Failure of this sqs queue will impact the remediation of policy violations.
       # * Failed events will go into the `panther-remediation-queue`. When the system has recovered they should be re-queued to the `panther-remediation-queue-dlq` using the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       KmsMasterKeyId: !Ref SqsKeyId
       VisibilityTimeout: !FindInMap [Functions, RemediationProcessor, Timeout]
       RedrivePolicy:
@@ -757,7 +757,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-remediation-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       VisibilityTimeout: 60
 
   RemediationDLQAlarms:
@@ -785,7 +785,7 @@ Resources:
   RemediationProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/remediation_processor/main
+      CodeUri: ../internal/compliance/remediation_processor/main
       Description: Process queued remediations
       Environment:
         Variables:
@@ -902,7 +902,7 @@ Resources:
   ResourcesApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/resources_api/main
+      CodeUri: ../internal/compliance/resources_api/main
       Description: Resources API
       Environment:
         Variables:
@@ -1044,7 +1044,7 @@ Resources:
   ResourcesDLQ:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       QueueName: panther-resources-queue-dlq
       # <cfndoc>
       # The dead letter queue for the `panther-resources-queue`.
@@ -1079,7 +1079,7 @@ Resources:
   ResourceProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/resource_processor/main
+      CodeUri: ../internal/compliance/resource_processor/main
       Description: Scans recently modified resources
       Environment:
         Variables:
@@ -1253,7 +1253,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-snapshot-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: 1209600 # Max duration - 14 days
+      MessageRetentionPeriod: '1209600' # Max duration - 14 days
       VisibilityTimeout: 60
 
   SnapshotDLQAlarms:
@@ -1268,7 +1268,7 @@ Resources:
   PollerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/snapshot_poller/main
+      CodeUri: ../internal/compliance/snapshot_poller/main
       Description: Polls AWS resources and writes them to the resources-api
       Environment:
         Variables:
@@ -1361,7 +1361,7 @@ Resources:
   SnapshotSchedulerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/snapshot_scheduler/main
+      CodeUri: ../internal/compliance/snapshot_scheduler/main
       Description: Runs once daily to schedule account-wide scans
       Environment:
         Variables:
@@ -1492,7 +1492,7 @@ Resources:
   DataLakeForwarderFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/datalake_forwarder/main
+      CodeUri: ../internal/compliance/datalake_forwarder/main
       Description: Forwards Cloud Security resource snapshots & compliance state to the Log Analysis pipeline
       Environment:
         Variables:

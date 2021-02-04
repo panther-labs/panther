@@ -45,7 +45,8 @@ input: |
     "SystemProductName": "12345",
     "Time": "1590364206.99",
     "Timezone": "America/Los Angeles",
-    "Version": "Windows 8.1"
+    "Version": "Windows 8.1",
+    "HostHiddenStatus": "VISIBLE"
   }
 result: |
   {
@@ -68,7 +69,7 @@ result: |
     "FirstSeen": 1590364206,
     "MachineDomain": "XYZ.CORP",
     "OU": "TEST-ORGANIZATIONAL-UNIT",
-    "PointerSize": 8,
+    "PointerSize": "8",
     "ProductType": "1",
     "ServicePackMajor": "1",
     "SiteName": "Test-Office",
@@ -79,7 +80,8 @@ result: |
     "Version": "Windows 8.1",
     "p_any_ip_addresses": ["10.0.0.1"],
     "p_log_type": "Crowdstrike.AIDMaster",
-    "p_event_time": "2020-05-24T23:50:06.99Z"
+    "p_event_time": "2020-05-24T23:50:06.99Z",
+    "HostHiddenStatus": "VISIBLE"
   }
 ---
 name: crowdstrike_managed_assets_event

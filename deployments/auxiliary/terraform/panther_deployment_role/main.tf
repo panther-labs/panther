@@ -200,7 +200,7 @@ resource "aws_iam_policy" "deployment" {
     {
       "Action": "s3:GetObject",
       "Effect": "Allow",
-      "Resource": "arn:aws:s3:::awsserverlessrepo-changesets-*"
+      "Resource": "arn:${var.aws_partition}:s3:::awsserverlessrepo-changesets-*"
     },
     {
       "Action": "dynamodb:*",
