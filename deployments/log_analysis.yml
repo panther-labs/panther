@@ -125,7 +125,7 @@ Resources:
 
   ###### Update Glue Table Schemas for Deployed Tables #####
   UpdateLogProcessorGlueTables:
-    DependsOn: UpdateManagedSchemas
+    DependsOn: UpdateManagedSchemas # The data catalog updater needs to have up-to-date schemas 
     Type: Custom::UpdateLogProcessorTables
     Properties:
       CustomResourceVersion: !Ref CustomResourceVersion
