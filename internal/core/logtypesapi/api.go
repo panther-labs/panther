@@ -62,9 +62,6 @@ type SchemaDatabase interface {
 	// ToggleSchema enables/disables a schema record
 	ToggleSchema(ctx context.Context, id string, enabled bool) error
 
-	// Get multiple custom log records at their latest revision
-	BatchGetSchemas(ctx context.Context, ids ...string) ([]*SchemaRecord, error)
-
 	// ScanSchemas iterates through all schema records as long as scan returns true
 	ScanSchemas(ctx context.Context, scan ScanSchemaFunc) error
 }

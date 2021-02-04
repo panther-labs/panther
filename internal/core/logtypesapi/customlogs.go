@@ -201,7 +201,7 @@ type DelCustomLogOutput struct {
 }
 
 func (api *LogTypesAPI) ListCustomLogs(ctx context.Context) (*ListCustomLogsOutput, error) {
-	records := []*SchemaRecord{}
+	records := make([]*SchemaRecord, 0, 8)
 	scan := func(r *SchemaRecord) bool {
 		if r.IsCustom() {
 			records = append(records, r)

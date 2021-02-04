@@ -20,7 +20,6 @@ package logtypesapi
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -165,49 +164,6 @@ func (db *InMemDB) ToggleSchema(ctx context.Context, id string, enabled bool) er
 		record.Disabled = !enabled
 	}
 	return nil
-}
-
-func (db *InMemDB) BatchGetSchemas(ctx context.Context, ids ...string) ([]*SchemaRecord, error) {
-	var records []*SchemaRecord
-	db.mu.RLock()
-	defer db.mu.RUnlock()
-	for _, id := range ids {
-		record, ok := db.records[inMemKey{
-			LogType: strings.ToUpper(id),
-		}]
-		if !ok {
-			return nil, NewAPIError(ErrNotFound, fmt.Sprintf(`record %q not found`, id))
-		}
-		records = append(records, record)
-	}
-	return records, nil
-}
-
-func (db *InMemDB) DeleteCustomLog(_ context.Context, id string, revision int64) error {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-	current, ok := db.records[inMemKey{
-		LogType: id,
-	}]
-	if !ok || current.Revision != revision {
-		return NewAPIError(ErrRevisionConflict, "record revision mismatch")
-	}
-	for rev := int64(0); rev < revision; rev++ {
-		delete(db.records, inMemKey{
-			LogType:  id,
-			Revision: rev,
-		})
-	}
-	db.deleted = append(db.deleted, id)
-	return nil
-}
-
-func (db *InMemDB) ListDeletedLogTypes(ctx context.Context) ([]string, error) {
-	var out []string
-	db.mu.RLock()
-	defer db.mu.RUnlock()
-	out = append(out, db.deleted...)
-	return out, nil
 }
 
 func (db *InMemDB) ScanSchemas(ctx context.Context, scan ScanSchemaFunc) error {

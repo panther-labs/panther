@@ -107,6 +107,8 @@ func (api *LogTypesAPI) UpdateManagedSchemas(ctx context.Context, input *UpdateM
 }
 
 func loadManifest(ctx context.Context, release, manifestURL string) ([]managedschemas.ManifestEntry, error) {
+	// Avoid calling github when the release is the embedded minimum release.
+	// This ensures deployments succeed regardless of GitHub API availability.
 	if release == managedschemas.ReleaseVersion {
 		return managedschemas.LoadDefaultManifest()
 	}

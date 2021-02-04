@@ -34,7 +34,6 @@ import (
 
 	"github.com/panther-labs/panther/internal/core/logtypesapi/transact"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
-	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 var L = lambdalogger.FromContext
@@ -211,64 +210,6 @@ func buildUpdateManagedSchemaTx(tableName string, record SchemaRecord) transact.
 			},
 		},
 	}
-}
-
-func (d *DynamoDBSchemas) IndexLogTypes(ctx context.Context) ([]string, error) {
-	input := dynamodb.GetItemInput{
-		TableName:            aws.String(d.TableName),
-		ProjectionExpression: aws.String(attrAvailableLogTypes),
-		Key:                  mustMarshalMap(statusRecordKey()),
-	}
-
-	output, err := d.DB.GetItemWithContext(ctx, &input)
-	if err != nil {
-		L(ctx).Error(`failed to get DynamoDB item`, zap.Error(err))
-		return nil, err
-	}
-
-	item := struct {
-		AvailableLogTypes []string
-	}{}
-	if err := dynamodbattribute.UnmarshalMap(output.Item, &item); err != nil {
-		L(ctx).Error(`failed to unmarshal DynamoDB item`, zap.Error(err))
-		return nil, err
-	}
-
-	return item.AvailableLogTypes, nil
-}
-
-func (d *DynamoDBSchemas) BatchGetSchemas(ctx context.Context, ids ...string) ([]*SchemaRecord, error) {
-	var records []*SchemaRecord
-	const maxItems = 25
-	for _, ids := range chunkStrings(ids, maxItems) {
-		keys := make([]map[string]*dynamodb.AttributeValue, len(ids))
-		for i := range keys {
-			keys[i] = mustMarshalMap(schemaRecordKey(ids[i], 0))
-		}
-		input := dynamodb.BatchGetItemInput{
-			RequestItems: map[string]*dynamodb.KeysAndAttributes{
-				d.TableName: {
-					Keys: keys,
-				},
-			},
-		}
-		output, err := d.DB.BatchGetItemWithContext(ctx, &input)
-		if err != nil {
-			return nil, err
-		}
-		items := output.Responses[d.TableName]
-		for _, item := range items {
-			record := ddbSchemaRecord{}
-			if err := dynamodbattribute.UnmarshalMap(item, &record); err != nil {
-				return nil, err
-			}
-			if record.Disabled || record.Name == "" {
-				continue
-			}
-			records = append(records, &record.SchemaRecord)
-		}
-	}
-	return records, nil
 }
 
 func (d *DynamoDBSchemas) ToggleSchema(ctx context.Context, id string, enabled bool) error {
@@ -496,62 +437,9 @@ type ddbSchemaRecord struct {
 	SchemaRecord
 }
 
-func chunkStrings(values []string, maxSize int) (chunks [][]string) {
-	if len(values) == 0 {
-		return
-	}
-	for {
-		if len(values) <= maxSize {
-			return append(chunks, values)
-		}
-		chunks, values = append(chunks, values[:maxSize]), values[maxSize:]
-	}
-}
-
 // newStringSet is inlined and helps create a dynamodb.AttributeValue of type StringSet
 func newStringSet(strings ...string) *dynamodb.AttributeValue {
 	return &dynamodb.AttributeValue{
 		SS: aws.StringSlice(strings),
 	}
-}
-
-func (d *DynamoDBSchemas) ListDeletedLogTypes(ctx context.Context) ([]string, error) {
-	// Filter deleted
-	cond := expression.Name(attrDisabled).Equal(expression.Value(true))
-	cond = cond.And(expression.Name(attrRecordKind).Equal(expression.Value(recordKindSchema)))
-	// Only fetch 'logType' attr
-	proj := expression.NamesList(expression.Name(attrLogType))
-	expr, err := expression.NewBuilder().WithFilter(cond).WithProjection(proj).Build()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to build DynamoDB expression for listing deleted log types")
-	}
-	input := dynamodb.ScanInput{
-		TableName:                 aws.String(d.TableName),
-		ProjectionExpression:      expr.Projection(),
-		FilterExpression:          expr.Filter(),
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-	}
-	var out []string
-	var itemErr error
-	scan := func(p *dynamodb.ScanOutput, _ bool) bool {
-		for _, item := range p.Items {
-			row := struct {
-				LogType string `json:"logType"`
-			}{}
-			if err := dynamodbattribute.UnmarshalMap(item, &row); err != nil {
-				itemErr = errors.Wrap(err, "failed to unmarshal DynamoDB item while scanning for deleted log types")
-				return false
-			}
-			out = stringset.Append(out, row.LogType)
-		}
-		return true
-	}
-	if err := d.DB.ScanPagesWithContext(ctx, &input, scan); err != nil {
-		return nil, errors.Wrap(err, "failed to scan DynamoDB for deleted log types")
-	}
-	if itemErr != nil {
-		return nil, itemErr
-	}
-	return out, nil
 }
