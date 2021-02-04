@@ -34,8 +34,6 @@ type Manager interface {
 	Run(ctx context.Context, interval time.Duration)
 	// Returns a new Counter
 	NewCounter(name, unit string) Counter
-	// Returns a new Counter
-	NewCounterAvg(name, unit string) Counter
 	// Sync the metrics to the underlying system
 	Sync() error
 }
@@ -45,8 +43,6 @@ type CWEmbeddedMetricsManager struct {
 	mtx sync.Mutex
 	// Space that keeps track of the counters
 	counters *Space
-	// Space that keeps track of the counters
-	averageCounters *Space
 	// The writer will the metrics will be written to
 	writer io.Writer
 	stream *jsoniter.Stream
@@ -61,10 +57,9 @@ type CWEmbeddedMetricsManager struct {
 // manually or with one of the helper methods.
 func NewCWEmbeddedMetrics(writer io.Writer) *CWEmbeddedMetricsManager {
 	cwManager := &CWEmbeddedMetricsManager{
-		writer:          writer,
-		counters:        NewSpace(),
-		averageCounters: NewSpace(),
-		stream:          jsoniter.NewStream(jsoniter.ConfigDefault, nil, 8192),
+		writer:   writer,
+		counters: NewSpace(),
+		stream:   jsoniter.NewStream(jsoniter.ConfigDefault, nil, 8192),
 		timeFunc: func() int64 {
 			return time.Now().UnixNano() / 1e6
 		},
@@ -79,16 +74,6 @@ func (c *CWEmbeddedMetricsManager) NewCounter(name, unit string) Counter {
 		name: name,
 		unit: unit,
 		obs:  c.counters.Observe,
-	}
-}
-
-// NewCounter returns a counter. Observations are aggregated and emitted once
-// per Sync invocation.
-func (c *CWEmbeddedMetricsManager) NewCounterAvg(name, unit string) Counter {
-	return &DimensionsCounter{
-		name: name,
-		unit: unit,
-		obs:  c.averageCounters.Observe,
 	}
 }
 
@@ -132,13 +117,40 @@ func (c *CWEmbeddedMetricsManager) sync() ([]byte, error) {
 
 	timeNow := c.timeFunc()
 
-	c.counters.Reset().Walk(func(name, unit string, dms DimensionValues, sum float64, count int64) bool {
-		c.writeEntry(name, unit, sum, dms, timeNow)
-		return true
-	})
+	c.counters.Reset().Walk(func(name, unit string, dms DimensionValues, value float64, observations int64) bool {
+		c.stream.WriteObjectStart()
 
-	c.averageCounters.Reset().Walk(func(name, unit string, dms DimensionValues, sum float64, count int64) bool {
-		c.writeEntry(name, unit, sum/float64(count), dms, timeNow)
+		// Write `"<metric name>" : <value>`
+		c.stream.WriteObjectField(name)
+		c.stream.WriteVal(value)
+		c.stream.WriteMore()
+
+		// Write dimension values
+		dims := dms
+		var labelName, labelValue string
+		for len(dims) >= 2 {
+			labelName, labelValue, dims = dims[0], dims[1], dims[2:]
+			c.stream.WriteObjectField(labelName)
+			c.stream.WriteVal(labelValue)
+			c.stream.WriteMore()
+		}
+
+		embeddedMetric := EmbeddedMetric{
+			Timestamp: timeNow,
+			CloudWatchMetrics: []MetricDirectiveObject{
+				{
+					Namespace:  Namespace,
+					Dimensions: []DimensionSet{dimensionNames(dms...)},
+					Metrics:    []Metric{{Name: name, Unit: unit}},
+				},
+			},
+		}
+
+		const rootElement = "_aws"
+		c.stream.WriteObjectField(rootElement)
+		c.stream.WriteVal(embeddedMetric)
+		c.stream.WriteObjectEnd()
+		c.stream.WriteRaw("\n")
 		return true
 	})
 
@@ -157,40 +169,4 @@ func dimensionNames(dimensionValues ...string) DimensionSet {
 		dimensions[j] = dimensionValues[i]
 	}
 	return dimensions
-}
-
-func (c *CWEmbeddedMetricsManager) writeEntry(name, unit string, value interface{}, dms []string, time int64) {
-	dimNames := dimensionNames(dms...)
-	c.stream.WriteObjectStart()
-
-	// Write `"<metric name>" : <value>`
-	c.stream.WriteObjectField(name)
-	c.stream.WriteVal(value)
-	c.stream.WriteMore()
-
-	var labelName, labelValue string
-	dims := dms
-	for len(dims) >= 2 {
-		labelName, labelValue, dims = dims[0], dims[1], dims[2:]
-		c.stream.WriteObjectField(labelName)
-		c.stream.WriteVal(labelValue)
-		c.stream.WriteMore()
-	}
-
-	embeddedMetric := EmbeddedMetric{
-		Timestamp: time,
-		CloudWatchMetrics: []MetricDirectiveObject{
-			{
-				Namespace:  Namespace,
-				Dimensions: []DimensionSet{dimNames},
-				Metrics:    []Metric{{Name: name, Unit: unit}},
-			},
-		},
-	}
-
-	const rootElement = "_aws"
-	c.stream.WriteObjectField(rootElement)
-	c.stream.WriteVal(embeddedMetric)
-	c.stream.WriteObjectEnd()
-	c.stream.WriteRaw("\n")
 }

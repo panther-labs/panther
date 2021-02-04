@@ -62,11 +62,6 @@ func (m *MetricsManagerMock) NewCounter(name, unit string) metrics.Counter {
 	return args.Get(0).(metrics.Counter)
 }
 
-func (m *MetricsManagerMock) NewCounterAvg(name, unit string) metrics.Counter {
-	args := m.Called(name, unit)
-	return args.Get(0).(metrics.Counter)
-}
-
 func (m *MetricsManagerMock) Sync() error {
 	return m.Called().Error(0)
 }
