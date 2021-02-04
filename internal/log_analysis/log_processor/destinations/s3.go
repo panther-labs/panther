@@ -362,7 +362,9 @@ func (bs *s3EventBufferSet) writeEvent(event *parsers.Result) (sendBuffers []*s3
 	if buf == nil {
 		return nil, errors.New(`could not resolve a buffer for the event`)
 	}
-	buf.latencyCounter.Add(float64(event.PantherParseTime.Sub(event.PantherEventTime).Milliseconds()))
+	// We need to increment the counter here since the event.PantherParseTime and event.PantherEventTime are populated only
+	// after the event has been serialized
+	buf.latencyCounter.Add(event.PantherParseTime.Sub(event.PantherEventTime).Seconds())
 	n, err := buf.addEvent(stream.Buffer())
 	if err != nil {
 		return nil, err
