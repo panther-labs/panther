@@ -19,6 +19,7 @@ package deploy
  */
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -27,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/magefile/mage/sh"
 
@@ -39,6 +41,7 @@ import (
 	"github.com/panther-labs/panther/tools/mage/build"
 	"github.com/panther-labs/panther/tools/mage/clients"
 	"github.com/panther-labs/panther/tools/mage/logger"
+	"github.com/panther-labs/panther/tools/mage/pkg"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
@@ -69,7 +72,7 @@ var SupportedRegions = map[string]bool{
 // Deploy Panther to your AWS account
 func Deploy() error {
 	start := time.Now()
-	if err := PreCheck(); err != nil {
+	if err := PreCheck(clients.Region()); err != nil {
 		return err
 	}
 
@@ -95,11 +98,11 @@ func Deploy() error {
 		return err
 	}
 
-	outputs, err := bootstrap(settings)
+	packager, outputs, err := bootstrap(settings)
 	if err != nil {
 		return err
 	}
-	if err := deployMainStacks(settings, outputs); err != nil {
+	if err := deployMainStacks(settings, packager, outputs); err != nil {
 		return err
 	}
 
@@ -109,30 +112,23 @@ func Deploy() error {
 }
 
 // Fail the deploy early if there is a known issue with the user's environment.
-func PreCheck() error {
+func PreCheck(region string) error {
 	// Ensure the AWS region is supported
-	if region := clients.Region(); !SupportedRegions[region] {
+	if region != "" && !SupportedRegions[region] {
 		return fmt.Errorf("panther is not supported in %s region", region)
 	}
 
-	// Check the Go version (1.12 fails with a build error)
-	if version := runtime.Version(); version <= "go1.12" {
-		return fmt.Errorf("go %s not supported, upgrade to 1.13+", version)
-	}
-
-	// Check the major node version
-	nodeVersion, err := sh.Output("node", "--version")
-	if err != nil {
-		return fmt.Errorf("failed to check node version: %v", err)
-	}
-	if !strings.HasPrefix(strings.TrimSpace(nodeVersion), "v14") {
-		return fmt.Errorf("node version must be v14.x.x, found %s", nodeVersion)
+	if version := runtime.Version(); version < "go1.15" {
+		return fmt.Errorf("go %s not supported, upgrade to 1.15+", version)
 	}
 
 	// Make sure docker is running
-	if _, err = sh.Output("docker", "info"); err != nil {
+	if _, err := sh.Output("docker", "info"); err != nil {
 		return fmt.Errorf("docker is not available: %v", err)
 	}
+
+	// Note: npm and python are not required for deployment
+	// (npm install runs within the web dockerfile, need not run locally)
 
 	return nil
 }
@@ -234,16 +230,16 @@ func updateLambdaCode(function, srcPath, runtime string) error {
 	}
 
 	// Create zipfile
-	pkg := filepath.Join("out", "deployments", function+".zip")
-	if err := shutil.ZipDirectory(pathToZip, pkg, false); err != nil {
-		return fmt.Errorf("failed to zip %s into %s: %v", pathToZip, pkg, err)
+	lambdaZip := filepath.Join("out", "deployments", function+".zip")
+	if err := shutil.ZipDirectory(pathToZip, lambdaZip, false); err != nil {
+		return fmt.Errorf("failed to zip %s into %s: %v", pathToZip, lambdaZip, err)
 	}
 
 	// Update function
 	log.Infof("updating code for %s Lambda function %s", runtime, function)
 	response, err := clients.Lambda().UpdateFunctionCode(&lambda.UpdateFunctionCodeInput{
 		FunctionName: &function,
-		ZipFile:      util.MustReadFile(pkg),
+		ZipFile:      util.MustReadFile(lambdaZip),
 	})
 	log.Debugf("Lambda update response: %v", response)
 	return err
@@ -258,113 +254,98 @@ func deploySingleStack(stack string) error {
 		return err
 	}
 
+	var outputs map[string]string
+	var packager *pkg.Packager
+	if stack != cfnstacks.Bootstrap {
+		outputs, err = awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
+		if err != nil {
+			return err
+		}
+		packager, err = buildPackager(settings, outputs)
+		if err != nil {
+			return err
+		}
+	}
+
 	switch stack {
 	case cfnstacks.Bootstrap:
-		_, err := deployBootstrapStack(settings)
+		_, err := deployBootstrapStack(settings, nil)
 		return err
 	case cfnstacks.Gateway:
-		if err := build.Lambda(); err != nil { // custom-resources
-			return err
-		}
-		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap)
-		if err != nil {
-			return err
-		}
-		_, err = deployBootstrapGatewayStack(settings, outputs)
+		_, err := deployBootstrapGatewayStack(settings, packager, outputs)
 		return err
 	case cfnstacks.Appsync:
-		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
-		if err != nil {
-			return err
-		}
-		return deployAppsyncStack(outputs)
+		return deployAppsyncStack(packager, outputs)
 	case cfnstacks.Cloudsec:
-		if err := build.Lambda(); err != nil {
-			return err
-		}
-		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
-		if err != nil {
-			return err
-		}
-		return deployCloudSecurityStack(settings, outputs)
+		return deployCloudSecurityStack(settings, packager, outputs)
 	case cfnstacks.Core:
-		if err := build.Lambda(); err != nil {
-			return err
-		}
-		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
-		if err != nil {
-			return err
-		}
-		return deployCoreStack(settings, outputs)
+		return deployCoreStack(settings, packager, outputs)
 	case cfnstacks.Dashboard:
-		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap)
-		if err != nil {
-			return err
-		}
-		return deployDashboardStack(outputs["SourceBucket"])
+		return deployDashboardStack(packager)
 	case cfnstacks.Frontend:
 		if err := setFirstUser(settings); err != nil {
 			return err
 		}
-		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
-		if err != nil {
-			return err
-		}
-		return deployFrontend(outputs, settings)
+		return deployFrontend(settings, packager, outputs)
 	case cfnstacks.LogAnalysis:
-		if err := build.Lambda(); err != nil {
-			return err
-		}
-		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap, cfnstacks.Gateway)
-		if err != nil {
-			return err
-		}
-		return deployLogAnalysisStack(settings, outputs)
+		return deployLogAnalysisStack(settings, packager, outputs)
 	case cfnstacks.Onboard:
-		outputs, err := awscfn.StackOutputs(clients.Cfn(), cfnstacks.Bootstrap)
-		if err != nil {
-			return err
-		}
-		return deployOnboardStack(settings, outputs)
+		return deployOnboardStack(settings, packager, outputs)
 	default:
 		return fmt.Errorf("unknown stack '%s'", stack)
 	}
 }
 
-// Deploy bootstrap stacks and build deployment artifacts.
-//
-// Returns combined outputs from bootstrap stacks.
-func bootstrap(settings *PantherConfig) (map[string]string, error) {
-	// Lambda compilation required for most stacks, including bootstrap-gateway
-	if err := build.Lambda(); err != nil {
+func buildPackager(settings *PantherConfig, outputs map[string]string) (*pkg.Packager, error) {
+	awsCfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
 		return nil, err
 	}
 
-	outputs, err := deployBootstrapStack(settings)
+	return &pkg.Packager{
+		Log:            log,
+		AwsConfig:      awsCfg,
+		Bucket:         outputs["SourceBucket"],
+		EcrRegistry:    outputs["ImageRegistryUri"],
+		EcrTagWithHash: true,
+		PipLibs:        settings.Infra.PipLayer,
+	}, nil
+}
+
+// Deploy bootstrap stacks and build deployment artifacts.
+//
+// Returns asset pacakger and combined outputs from bootstrap stacks.
+func bootstrap(settings *PantherConfig) (*pkg.Packager, map[string]string, error) {
+	outputs, err := deployBootstrapStack(settings, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	log.Infof("    √ %s finished (1/%d)", cfnstacks.Bootstrap, cfnstacks.NumStacks)
 
-	// Deploy second bootstrap stack and merge outputs
-	gatewayOutputs, err := deployBootstrapGatewayStack(settings, outputs)
+	packager, err := buildPackager(settings, outputs)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+
+	// Deploy second bootstrap stack and merge outputs
+	gatewayOutputs, err := deployBootstrapGatewayStack(settings, packager, outputs)
+	if err != nil {
+		return packager, nil, err
 	}
 
 	for k, v := range gatewayOutputs {
 		if _, exists := outputs[k]; exists {
-			return nil, fmt.Errorf("output %s exists in both bootstrap stacks", k)
+			return packager, nil, fmt.Errorf("output %s exists in both bootstrap stacks", k)
 		}
 		outputs[k] = v
 	}
 
 	log.Infof("    √ %s finished (2/%d)", cfnstacks.Gateway, cfnstacks.NumStacks)
-	return outputs, nil
+	return packager, outputs, nil
 }
 
 // Deploy main stacks (everything after bootstrap and bootstrap-gateway)
-func deployMainStacks(settings *PantherConfig, outputs map[string]string) error {
+func deployMainStacks(settings *PantherConfig, packager *pkg.Packager, outputs map[string]string) error {
 	results := make(chan util.TaskResult)
 	completedStackCount := 3 // There are two stacks before this function call
 	count := 0
@@ -372,25 +353,25 @@ func deployMainStacks(settings *PantherConfig, outputs map[string]string) error 
 	// Appsync
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: cfnstacks.Appsync, Err: deployAppsyncStack(outputs)}
+		c <- util.TaskResult{Summary: cfnstacks.Appsync, Err: deployAppsyncStack(packager, outputs)}
 	}(results)
 
 	// Cloud security
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: cfnstacks.Cloudsec, Err: deployCloudSecurityStack(settings, outputs)}
+		c <- util.TaskResult{Summary: cfnstacks.Cloudsec, Err: deployCloudSecurityStack(settings, packager, outputs)}
 	}(results)
 
 	// Core
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: cfnstacks.Core, Err: deployCoreStack(settings, outputs)}
+		c <- util.TaskResult{Summary: cfnstacks.Core, Err: deployCoreStack(settings, packager, outputs)}
 	}(results)
 
 	// Dashboards
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: cfnstacks.Dashboard, Err: deployDashboardStack(outputs["SourceBucket"])}
+		c <- util.TaskResult{Summary: cfnstacks.Dashboard, Err: deployDashboardStack(packager)}
 	}(results)
 
 	// Wait for above stacks to finish.
@@ -405,13 +386,13 @@ func deployMainStacks(settings *PantherConfig, outputs map[string]string) error 
 	// Log analysis (requires core stack to exist first)
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: cfnstacks.LogAnalysis, Err: deployLogAnalysisStack(settings, outputs)}
+		c <- util.TaskResult{Summary: cfnstacks.LogAnalysis, Err: deployLogAnalysisStack(settings, packager, outputs)}
 	}(results)
 
 	// Web stack (requires core stack to exist first)
 	count++
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: cfnstacks.Frontend, Err: deployFrontend(outputs, settings)}
+		c <- util.TaskResult{Summary: cfnstacks.Frontend, Err: deployFrontend(settings, packager, outputs)}
 	}(results)
 
 	// Wait,  counting where the last parallel group left off to give the illusion of one continuous deploy progress tracker.
@@ -424,15 +405,15 @@ func deployMainStacks(settings *PantherConfig, outputs map[string]string) error 
 
 	// Onboard Panther to scan itself (requires all stacks deployed)
 	go func(c chan util.TaskResult) {
-		c <- util.TaskResult{Summary: cfnstacks.Onboard, Err: deployOnboardStack(settings, outputs)}
+		c <- util.TaskResult{Summary: cfnstacks.Onboard, Err: deployOnboardStack(settings, packager, outputs)}
 	}(results)
 
 	// Wait,  counting where the last parallel group left off to give the illusion of one continuous deploy progress tracker.
 	return util.WaitForTasks(log, results, completedStackCount, cfnstacks.NumStacks, cfnstacks.NumStacks)
 }
 
-func deployBootstrapStack(settings *PantherConfig) (map[string]string, error) {
-	return deployTemplate(cfnstacks.BootstrapTemplate, "", cfnstacks.Bootstrap, map[string]string{
+func deployBootstrapStack(settings *PantherConfig, packager *pkg.Packager) (map[string]string, error) {
+	return Stack(packager, cfnstacks.BootstrapTemplate, cfnstacks.Bootstrap, map[string]string{
 		"AccessLogsBucket":              settings.Setup.S3AccessLogsBucket,
 		"AlarmTopicArn":                 settings.Monitoring.AlarmSnsTopicArn,
 		"CloudWatchLogRetentionDays":    strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
@@ -455,14 +436,11 @@ func deployBootstrapStack(settings *PantherConfig) (map[string]string, error) {
 
 func deployBootstrapGatewayStack(
 	settings *PantherConfig,
+	packager *pkg.Packager,
 	outputs map[string]string, // from bootstrap stack
 ) (map[string]string, error) {
 
-	if err := build.Layer(log, settings.Infra.PipLayer); err != nil {
-		return nil, err
-	}
-
-	return deployTemplate(cfnstacks.GatewayTemplate, outputs["SourceBucket"], cfnstacks.Gateway, map[string]string{
+	return Stack(packager, cfnstacks.GatewayTemplate, cfnstacks.Gateway, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
 		"AthenaResultsBucket":        outputs["AthenaResultsBucket"],
 		"AuditLogsBucket":            outputs["AuditLogsBucket"],
@@ -479,8 +457,8 @@ func deployBootstrapGatewayStack(
 	})
 }
 
-func deployAppsyncStack(outputs map[string]string) error {
-	_, err := deployTemplate(cfnstacks.AppsyncTemplate, outputs["SourceBucket"], cfnstacks.Appsync, map[string]string{
+func deployAppsyncStack(packager *pkg.Packager, outputs map[string]string) error {
+	_, err := Stack(packager, cfnstacks.AppsyncTemplate, cfnstacks.Appsync, map[string]string{
 		"AlarmTopicArn":         outputs["AlarmTopicArn"],
 		"ApiId":                 outputs["GraphQLApiId"],
 		"CustomResourceVersion": customResourceVersion(),
@@ -489,8 +467,8 @@ func deployAppsyncStack(outputs map[string]string) error {
 	return err
 }
 
-func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string) error {
-	_, err := deployTemplate(cfnstacks.CloudsecTemplate, outputs["SourceBucket"], cfnstacks.Cloudsec, map[string]string{
+func deployCloudSecurityStack(settings *PantherConfig, packager *pkg.Packager, outputs map[string]string) error {
+	_, err := Stack(packager, cfnstacks.CloudsecTemplate, cfnstacks.Cloudsec, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomResourceVersion":      customResourceVersion(),
@@ -506,8 +484,8 @@ func deployCloudSecurityStack(settings *PantherConfig, outputs map[string]string
 	return err
 }
 
-func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
-	_, err := deployTemplate(cfnstacks.CoreTemplate, outputs["SourceBucket"], cfnstacks.Core, map[string]string{
+func deployCoreStack(settings *PantherConfig, packager *pkg.Packager, outputs map[string]string) error {
+	_, err := Stack(packager, cfnstacks.CoreTemplate, cfnstacks.Core, map[string]string{
 		"AlarmTopicArn":              outputs["AlarmTopicArn"],
 		"AnalysisVersionsBucket":     outputs["AnalysisVersionsBucket"],
 		"AppDomainURL":               outputs["LoadBalancerUrl"],
@@ -530,13 +508,13 @@ func deployCoreStack(settings *PantherConfig, outputs map[string]string) error {
 	return err
 }
 
-func deployDashboardStack(bucket string) error {
-	_, err := deployTemplate(cfnstacks.DashboardTemplate, bucket, cfnstacks.Dashboard, nil)
+func deployDashboardStack(packager *pkg.Packager) error {
+	_, err := Stack(packager, cfnstacks.DashboardTemplate, cfnstacks.Dashboard, nil)
 	return err
 }
 
-func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) error {
-	_, err := deployTemplate(cfnstacks.LogAnalysisTemplate, outputs["SourceBucket"], cfnstacks.LogAnalysis, map[string]string{
+func deployLogAnalysisStack(settings *PantherConfig, packager *pkg.Packager, outputs map[string]string) error {
+	_, err := Stack(packager, cfnstacks.LogAnalysisTemplate, cfnstacks.LogAnalysis, map[string]string{
 		"AlarmTopicArn":                      outputs["AlarmTopicArn"],
 		"AthenaResultsBucket":                outputs["AthenaResultsBucket"],
 		"AthenaWorkGroup":                    outputs["AthenaWorkGroup"],
@@ -557,10 +535,10 @@ func deployLogAnalysisStack(settings *PantherConfig, outputs map[string]string) 
 	return err
 }
 
-func deployOnboardStack(settings *PantherConfig, outputs map[string]string) error {
+func deployOnboardStack(settings *PantherConfig, packager *pkg.Packager, outputs map[string]string) error {
 	var err error
 	if settings.Setup.OnboardSelf {
-		_, err = deployTemplate(cfnstacks.OnboardTemplate, outputs["SourceBucket"], cfnstacks.Onboard, map[string]string{
+		_, err = Stack(packager, cfnstacks.OnboardTemplate, cfnstacks.Onboard, map[string]string{
 			"AlarmTopicArn":         outputs["AlarmTopicArn"],
 			"AuditLogsBucket":       outputs["AuditLogsBucket"],
 			"CustomResourceVersion": customResourceVersion(),

@@ -19,19 +19,17 @@ package deploy
  */
 
 import (
-	"crypto/sha1" // nolint: gosec
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/s3"
 
 	"github.com/panther-labs/panther/pkg/awscfn"
-	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/tools/cfnstacks"
 	"github.com/panther-labs/panther/tools/mage/clients"
+	"github.com/panther-labs/panther/tools/mage/pkg"
 	"github.com/panther-labs/panther/tools/mage/teardown"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
@@ -45,15 +43,22 @@ const (
 // Deploy a CloudFormation template, returning stack outputs.
 //
 // The bucket parameter can be empty to skip S3 packaging.
-func deployTemplate(
-	templatePath, bucket, stack string,
+func Stack(
+	packager *pkg.Packager,
+	templatePath, stack string,
 	params map[string]string,
 ) (map[string]string, error) {
 
-	// 1) Generate final template, with large assets packaged in S3.
-	packagedTemplate, err := util.SamPackage(clients.Region(), templatePath, bucket)
-	if err != nil {
-		return nil, err
+	// 1) Generate packaged template, packaging assets in S3 and ECR
+	packagedTemplate := templatePath
+	if packager != nil {
+		packager.Log.Debugf("packaging %s to s3 bucket %s and ecr registry %s",
+			templatePath, packager.Bucket, packager.EcrRegistry)
+		var err error
+		packagedTemplate, err = packager.Template(templatePath)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// 2) If the stack already exists, wait for it to reach a steady state.
@@ -69,7 +74,7 @@ func deployTemplate(
 		changeSetType = "UPDATE"
 	}
 
-	changeID, err := createChangeSet(bucket, stack, changeSetType, packagedTemplate, params)
+	changeID, err := createChangeSet(packager, stack, changeSetType, packagedTemplate, params)
 	if err != nil {
 		return nil, err
 	}
@@ -80,31 +85,6 @@ func deployTemplate(
 
 	// 4) Execute the change set
 	return executeChangeSet(*changeID, changeSetType, stack)
-}
-
-// Upload a CloudFormation asset to S3 if it doesn't already exist, returning s3 object key and version
-func uploadAsset(assetPath, bucket, stack string) (string, string, error) {
-	contents := util.MustReadFile(assetPath)
-
-	// We are using SHA1 for caching / asset lookup, we don't need strong cryptographic guarantees
-	hash := sha1.Sum(contents) // nolint: gosec
-	s3Key := fmt.Sprintf("%s/%x", stack, hash)
-	response, err := clients.S3().HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
-	if err == nil {
-		return s3Key, *response.VersionId, nil // object already exists in S3 with the same hash
-	}
-
-	if awsutils.IsAnyError(err, "NotFound") {
-		// object does not exist yet - upload it!
-		response, err := util.UploadFileToS3(log, clients.S3Uploader(), assetPath, bucket, s3Key)
-		if err != nil {
-			return "", "", fmt.Errorf("package %s: failed to upload %s: %v", stack, assetPath, err)
-		}
-		return s3Key, *response.VersionID, nil
-	}
-
-	// Some other error related to HeadObject
-	return "", "", fmt.Errorf("package %s: failed to describe s3://%s/%s: %v", stack, bucket, s3Key, err)
 }
 
 // Before a change set can be created, the stack needs to be in a steady state.
@@ -160,7 +140,8 @@ func prepareStack(stackName string) (map[string]string, error) {
 //
 // If there are no changes, the change set is deleted and (nil, nil) is returned.
 func createChangeSet(
-	bucket, stack string,
+	packager *pkg.Packager,
+	stack string,
 	changeSetType string, // "CREATE" or "UPDATE"
 	templatePath string,
 	params map[string]string,
@@ -197,11 +178,11 @@ func createChangeSet(
 		createInput.SetTemplateBody(string(template))
 	} else {
 		// Upload to S3 (if it doesn't already exist)
-		key, _, err := uploadAsset(templatePath, bucket, stack)
+		key, _, err := packager.UploadAsset(templatePath, "")
 		if err != nil {
 			return nil, err
 		}
-		createInput.SetTemplateURL(fmt.Sprintf("https://s3.amazonaws.com/%s/%s", bucket, key))
+		createInput.SetTemplateURL(util.S3ObjectURL(clients.Region(), packager.Bucket, key))
 	}
 
 	log.Infof("%s CloudFormation stack %s", strings.ToLower(changeSetType), stack)

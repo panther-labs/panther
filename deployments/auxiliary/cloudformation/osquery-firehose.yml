@@ -158,7 +158,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+              AWS: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:root
             Action: sts:AssumeRole
       Policies:
         - PolicyName: FirehosePutRecords
@@ -171,4 +171,4 @@ Resources:
                   - firehose:PutRecordBatch
                 Resource: !GetAtt OsqueryDataFirehose.Arn
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonKinesisFirehoseReadOnlyAccess
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonKinesisFirehoseReadOnlyAccess

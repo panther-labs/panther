@@ -100,10 +100,6 @@ Parameters:
     Description: Initial Panther user - first name
     Default: PantherUser
     MinLength: 1
-  ImageRegistry:
-    Type: String
-    Description: Docker image registry which stores web app images. Used only when deploying from source and otherwise defaults to the Panther public account.
-    Default: ''
   InitialAnalysisPackUrls:
     Type: CommaDelimitedList
     Description: Comma-separated list of Python analysis pack URLs installed on the first deployment
@@ -202,7 +198,6 @@ Mappings:
 
 Conditions:
   FullDeployment: !Equals [!Ref BootstrapStackOnly, 'false']
-  RegistryProvided: !Not [!Equals [!Ref ImageRegistry, '']]
   CreateOnboard: !And [!Condition FullDeployment, !Equals [!Ref OnboardSelf, true]]
 
 Resources:
@@ -467,13 +462,6 @@ Resources:
         FirstUserFamilyName: !Ref FirstUserFamilyName
         FirstUserGivenName: !Ref FirstUserGivenName
         GraphQLApiEndpoint: !GetAtt Bootstrap.Outputs.GraphQLApiEndpoint
-        Image: !Sub
-          - '${registry}:${tag}'
-          - registry: !If
-              - RegistryProvided
-              - !Ref ImageRegistry
-              - !Sub 349240696275.dkr.ecr.${AWS::Region}.amazonaws.com/panther-community
-            tag: !FindInMap [Constants, Panther, Version]
         InitialAnalysisPackUrls: !Join [',', !Ref InitialAnalysisPackUrls]
         PantherCommit: !FindInMap [Constants, Panther, Commit]
         PantherVersion: !FindInMap [Constants, Panther, Version]

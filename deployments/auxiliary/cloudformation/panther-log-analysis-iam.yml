@@ -100,7 +100,7 @@ Resources:
               - Effect: Allow
                 Action: s3:GetBucketLocation
                 Resource: !Sub
-                  - 'arn:aws:s3:::${Bucket}'
+                  - arn:${AWS::Partition}:s3:::${Bucket}
                   - Bucket:
                       !If [
                         IsGenerated,
@@ -110,7 +110,7 @@ Resources:
               - Effect: Allow
                 Action: s3:GetObject
                 Resource: !Sub
-                  - 'arn:aws:s3:::${Bucket}/*'
+                  - arn:${AWS::Partition}:s3:::${Bucket}/*
                   - Bucket:
                       !If [
                         IsGenerated,

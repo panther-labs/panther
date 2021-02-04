@@ -33,7 +33,7 @@ type Manager interface {
 	// It will sync the metrics every `interval` duration
 	Run(ctx context.Context, interval time.Duration)
 	// Returns a new Counter
-	NewCounter(name string) Counter
+	NewCounter(name, unit string) Counter
 	// Sync the metrics to the underlying system
 	Sync() error
 }
@@ -48,9 +48,7 @@ type CWEmbeddedMetricsManager struct {
 	stream *jsoniter.Stream
 	// Function that return the current time in milliseconds
 	// Can be overwritten in unit tests
-	timeFunc      func() int64
-	metricsBuf    []Metric
-	dimensionsBuf [][]string
+	timeFunc func() int64
 }
 
 // New returns a CWEmbeddedMetricsManager object that may be used to create metrics.
@@ -70,13 +68,11 @@ func NewCWEmbeddedMetrics(writer io.Writer) *CWEmbeddedMetricsManager {
 }
 
 // NewCounter returns a counter. Observations are aggregated and emitted once
-// per write invocation.
-// Panics if the client has been closed
-func (c *CWEmbeddedMetricsManager) NewCounter(name string) Counter {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
+// per Sync invocation.
+func (c *CWEmbeddedMetricsManager) NewCounter(name, unit string) Counter {
 	return &DimensionsCounter{
 		name: name,
+		unit: unit,
 		obs:  c.counters.Observe,
 	}
 }
@@ -119,13 +115,11 @@ func (c *CWEmbeddedMetricsManager) sync() ([]byte, error) {
 	c.stream.Reset(nil)
 	c.stream.Error = nil
 
-	// Reusing slices to avoid extra allocations
-	c.metricsBuf = c.metricsBuf[:0]
-	c.dimensionsBuf = c.dimensionsBuf[:0]
+	timeNow := c.timeFunc()
 
-	c.stream.WriteObjectStart()
+	c.counters.Reset().Walk(func(name, unit string, dms DimensionValues, values []float64) bool {
+		c.stream.WriteObjectStart()
 
-	c.counters.Reset().Walk(func(name string, dms DimensionValues, values []float64) bool {
 		// Write `"<metric name>" : <value>`
 		c.stream.WriteObjectField(name)
 		c.stream.WriteVal(sum(values))
@@ -141,35 +135,30 @@ func (c *CWEmbeddedMetricsManager) sync() ([]byte, error) {
 			c.stream.WriteMore()
 		}
 
-		c.metricsBuf = append(c.metricsBuf, Metric{Name: name, Unit: "Count"})
-		c.dimensionsBuf = append(c.dimensionsBuf, dimensionNames(dms...))
+		embeddedMetric := EmbeddedMetric{
+			Timestamp: timeNow,
+			CloudWatchMetrics: []MetricDirectiveObject{
+				{
+					Namespace:  Namespace,
+					Dimensions: []DimensionSet{dimensionNames(dms...)},
+					Metrics:    []Metric{{Name: name, Unit: unit}},
+				},
+			},
+		}
 
+		const rootElement = "_aws"
+		c.stream.WriteObjectField(rootElement)
+		c.stream.WriteVal(embeddedMetric)
+		c.stream.WriteObjectEnd()
+		c.stream.WriteRaw("\n")
 		return true
 	})
 
 	// If there are no metrics to be reported
 	// Don't log anything
-	if len(c.metricsBuf) == 0 {
+	if len(c.stream.Buffer()) == 0 {
 		return nil, nil
 	}
-
-	const namespace = "Panther"
-	embeddedMetric := EmbeddedMetric{
-		Timestamp: c.timeFunc(),
-		CloudWatchMetrics: []MetricDirectiveObject{
-			{
-				Namespace:  namespace,
-				Dimensions: c.dimensionsBuf,
-				Metrics:    c.metricsBuf,
-			},
-		},
-	}
-
-	const rootElement = "_aws"
-	c.stream.WriteObjectField(rootElement)
-	c.stream.WriteVal(embeddedMetric)
-	c.stream.WriteObjectEnd()
-	c.stream.WriteRaw("\n")
 
 	return c.stream.Buffer(), c.stream.Error
 }
@@ -182,7 +171,7 @@ func sum(a []float64) float64 {
 	return v
 }
 
-func dimensionNames(dimensionValues ...string) []string {
+func dimensionNames(dimensionValues ...string) DimensionSet {
 	dimensions := make([]string, len(dimensionValues)/2)
 	for i, j := 0, 0; i < len(dimensionValues); i, j = i+2, j+1 {
 		dimensions[j] = dimensionValues[i]
