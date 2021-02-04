@@ -31,6 +31,7 @@ import {
   SettingsNavigation,
   ComplianceNavigation,
   LogAnalysisNavigation,
+  AnalysisNavigationLinks,
 } from './SecondaryNavigations';
 
 const COMPLIANCE_NAV_KEY = 'compliance';
@@ -51,15 +52,15 @@ const Navigation = () => {
   // initial value of `null` which would instantly be updated from the code in `React.useEffect`
   const getSecondaryNavKey = () => {
     const isCompliancePage = pathname.includes(urls.compliance.home());
-    const isLogAnalysisPage =
-      pathname.includes(urls.logAnalysis.home()) &&
-      !pathname.includes(urls.logAnalysis.alerts.list());
+    const isUnderAnalysisNav = AnalysisNavigationLinks.some(navLinks =>
+      pathname.includes(navLinks.to)
+    );
     const isSettingsPage = pathname.includes(urls.settings.home());
 
     if (isCompliancePage) {
       return COMPLIANCE_NAV_KEY;
     }
-    if (isLogAnalysisPage) {
+    if (isUnderAnalysisNav) {
       return LOG_ANALYSIS_NAV_KEY;
     }
     if (isSettingsPage) {

@@ -136,7 +136,7 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
         <GenericItemCard.Body>
           <GenericItemCard.Header>
             <GenericItemCard.Heading>
-              <Link as={RRLink} aria-label="Link to Pack" to={urls.analysis.packs.details(pack.id)}>
+              <Link as={RRLink} aria-label="Link to Pack" to={urls.packs.details(pack.id)}>
                 {pack.displayName || pack.id}
               </Link>
             </GenericItemCard.Heading>
