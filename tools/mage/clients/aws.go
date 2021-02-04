@@ -23,16 +23,15 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/sts"
 
 	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/tools/mage/logger"
 )
+
+// NOTE: This file is deprecated - use AWS SDK v2 for new code
 
 const (
 	maxRetries = 20 // try very hard, avoid throttles
@@ -48,11 +47,8 @@ var (
 	accountID  string
 
 	cfnClient    *cloudformation.CloudFormation
-	ecrClient    *ecr.ECR
-	glueClient   *glue.Glue
 	lambdaClient *lambda.Lambda
 	s3Client     *s3.S3
-	s3Uploader   *s3manager.Uploader
 	stsClient    *sts.STS
 )
 
@@ -116,20 +112,6 @@ func Cfn() *cloudformation.CloudFormation {
 	return cfnClient
 }
 
-func ECR() *ecr.ECR {
-	if ecrClient == nil {
-		ecrClient = ecr.New(getSession())
-	}
-	return ecrClient
-}
-
-func Glue() *glue.Glue {
-	if glueClient == nil {
-		glueClient = glue.New(getSession())
-	}
-	return glueClient
-}
-
 func Lambda() *lambda.Lambda {
 	if lambdaClient == nil {
 		lambdaClient = lambda.New(getSession())
@@ -142,13 +124,6 @@ func S3() *s3.S3 {
 		s3Client = s3.New(getSession())
 	}
 	return s3Client
-}
-
-func S3Uploader() *s3manager.Uploader {
-	if s3Uploader == nil {
-		s3Uploader = s3manager.NewUploader(getSession())
-	}
-	return s3Uploader
 }
 
 func STS() *sts.STS {

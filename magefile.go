@@ -93,7 +93,7 @@ func (Master) Publish() error {
 	return master.Publish()
 }
 
-// Install build and development dependencies
+// Install development dependencies (not required to deploy)
 func Setup() error {
 	return setup.Setup()
 }

@@ -69,7 +69,7 @@ type AIDMaster struct {
 	FirstSeen          pantherlog.Time    `json:"FirstSeen" tcodec:"unix" description:"The first time the sensor was seen by the CrowdStrike cloud in epoch format."`
 	MachineDomain      pantherlog.String  `json:"MachineDomain" description:"The Windows domain name to which the host is currently joined."`
 	OU                 pantherlog.String  `json:"OU" description:"The organizational unit of the host as seen by the sensor (defined by system admin)."`
-	PointerSize        pantherlog.Int32   `json:"PointerSize" description:"The processor architecture (in decimal, non-hex format): '4' for 32-bit, '8' for 64-bit."`
+	PointerSize        pantherlog.String  `json:"PointerSize" description:"The processor architecture (in decimal, non-hex format): '4' for 32-bit, '8' for 64-bit, or 'none' for unknown."`
 	ProductType        pantherlog.String  `json:"ProductType" description:"The type of product (in decimal, non-hex format). Example values: '1' (Workstation), '2' (Domain Controller), '3' (Server)."`
 	ServicePackMajor   pantherlog.String  `json:"ServicePackMajor" description:"The major version # of the OS Service Pack (in decimal, non-hex format)."`
 	SiteName           pantherlog.String  `json:"SiteName" description:"The site name of the domain to which the host is joined (defined by system admin)."`
@@ -77,6 +77,7 @@ type AIDMaster struct {
 	SystemProductName  pantherlog.String  `json:"SystemProductName" description:"The host's product name."`
 	Timezone           pantherlog.String  `json:"Timezone" description:"The sensor's time zone, as seen from the CrowdStrike cloud."`
 	Version            pantherlog.String  `json:"Version" description:"The host's system version."`
+	HostHiddenStatus   pantherlog.String  `json:"HostHiddenStatus" description:"Whether the host is visible or not."`
 }
 
 // nolint:lll
