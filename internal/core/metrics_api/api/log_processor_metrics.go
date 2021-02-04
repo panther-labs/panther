@@ -110,7 +110,7 @@ func getEventsLatency(input *models.GetMetricsInput, output *models.GetMetricsOu
 				MetricStat: &cloudwatch.MetricStat{
 					Metric: metric,
 					Period: aws.Int64(input.IntervalMinutes * 60), // number of seconds, must be multiple of 60
-					Stat:   aws.String("Average"),
+					Stat:   aws.String("Sum"),
 					Unit:   aws.String(metrics.UnitSeconds),
 				},
 				ReturnData: aws.Bool(false),
