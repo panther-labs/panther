@@ -83,7 +83,7 @@ func (p Packager) DockerPush(tag string) (string, error) {
 	}
 	remoteImage := p.EcrRegistry + ":" + tag
 
-	if err = sh.RunV("docker", "tag", p.DockerImageID, remoteImage); err != nil {
+	if err = sh.Run("docker", "tag", p.DockerImageID, remoteImage); err != nil {
 		return "", fmt.Errorf("docker tag %s %s failed: %v", p.DockerImageID, remoteImage, err)
 	}
 

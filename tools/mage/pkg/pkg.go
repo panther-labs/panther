@@ -406,8 +406,8 @@ func (p *Packager) UploadAsset(assetPath, s3Key string) (string, string, error) 
 		}
 	}
 
-	p.Log.Infof("uploading %s file %s (sha1:%s) to S3",
-		util.ByteCountSI(int64(len(contents))), assetPath, s3Key[:10])
+	p.Log.Infof("uploading %s file %s to S3: %s",
+		util.ByteCountSI(int64(len(contents))), assetPath, s3Key[:15])
 
 	response, err := manager.NewUploader(s3Client).Upload(context.TODO(), &s3.PutObjectInput{
 		Bucket: &p.Bucket,
