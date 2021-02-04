@@ -93,6 +93,7 @@ func Deploy() error {
 	// TODO - expose 'mage pkg' target
 	log.Infof("deploying %s %s (%s) to account %s (%s) as stack '%s'", rootTemplate,
 		util.Semver(), util.CommitSha(), util.AccountID(awsCfg), awsCfg.Region, devCfg.RootStackName)
+	log.Debugf("parameter overrides: %s", devCfg.ParameterOverrides)
 	rootOutputs, err := deploy.Stack(packager, rootTemplate, devCfg.RootStackName, devCfg.ParameterOverrides)
 	if err != nil {
 		return err

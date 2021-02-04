@@ -24,7 +24,7 @@ import (
 )
 
 // Parse a CloudFormation template and unmarshal into the out parameter.
-// The caller can pass map[string]interface{} or a struct if the format is known.
+// The out parameter must be a map or a pointer to a struct.
 //
 // Short-form functions like "!If" and "!Sub" will be replaced with "Fn::" objects.
 func ParseTemplate(path string, out interface{}) error {
