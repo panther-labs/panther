@@ -62,7 +62,7 @@ var (
 			return testutil.AlwaysFailParser(errors.New("fail parser")), nil
 		}),
 	})
-	testResolver = logtypes.LocalResolver(testRegistry)
+	testResolver = logtypes.ParserResolver(logtypes.LocalResolver(testRegistry))
 
 	testLogType          = "testLogType"
 	testLogLine          = "line"

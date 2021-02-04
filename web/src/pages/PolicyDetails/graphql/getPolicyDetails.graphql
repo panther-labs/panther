@@ -3,10 +3,7 @@ query GetPolicyDetails(
   $resourcesForPolicyInput: ResourcesForPolicyInput!
 ) {
   policy(input: $policyDetailsInput) {
-    ...PolicySummary
-    autoRemediationId
-    autoRemediationParameters
-    suppressions
+    ...PolicyDetails
   }
   resourcesForPolicy(input: $resourcesForPolicyInput) {
     totals {

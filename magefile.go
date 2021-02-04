@@ -49,6 +49,11 @@ func (Build) Tools() error {
 	return build.Tools()
 }
 
+// Export native schemas as YAML
+func (Build) Schemas() error {
+	return build.Schemas()
+}
+
 // Remove dev libraries and build/test artifacts
 func Clean() error {
 	return clean.Clean()
@@ -88,7 +93,7 @@ func (Master) Publish() error {
 	return master.Publish()
 }
 
-// Install build and development dependencies
+// Install development dependencies (not required to deploy)
 func Setup() error {
 	return setup.Setup()
 }

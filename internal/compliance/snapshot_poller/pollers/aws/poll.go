@@ -185,7 +185,7 @@ func Poll(scanRequest *pollermodels.ScanEntry) (
 	// Check if integration is disabled
 	if scanRequest.Enabled != nil && !*scanRequest.Enabled {
 		zap.L().Info("source integration disabled",
-			zap.String("integration id", *scanRequest.IntegrationID), zap.Time("timestamp", time.Now()))
+			zap.String("integration id", *scanRequest.IntegrationID))
 		return nil, nil
 	}
 
@@ -267,10 +267,14 @@ func multiRegionScan(
 		err = utils.Requeue(pollermodels.ScanMsg{
 			Entries: []*pollermodels.ScanEntry{
 				{
-					AWSAccountID:  scanRequest.AWSAccountID,
-					IntegrationID: scanRequest.IntegrationID,
-					Region:        region,
-					ResourceType:  scanRequest.ResourceType,
+					AWSAccountID:            scanRequest.AWSAccountID,
+					IntegrationID:           scanRequest.IntegrationID,
+					Region:                  region,
+					ResourceType:            scanRequest.ResourceType,
+					Enabled:                 scanRequest.Enabled,
+					RegionIgnoreList:        scanRequest.RegionIgnoreList,
+					ResourceRegexIgnoreList: scanRequest.ResourceRegexIgnoreList,
+					ResourceTypeIgnoreList:  scanRequest.ResourceTypeIgnoreList,
 				},
 			},
 		}, int64(pageRequeueDelayer.Intn(30)+1)) // Delay between 1 & 30 seconds to spread out region scans
@@ -370,7 +374,8 @@ func singleResourceScan(
 
 	if err != nil {
 		// Check for region ignoreList error
-		if err == err.(*RegionIgnoreListError) {
+		var e *RegionIgnoreListError
+		if errors.As(err, &e) {
 			zap.L().Info("Skipping denied region in single resource scan")
 			return nil, nil
 		}

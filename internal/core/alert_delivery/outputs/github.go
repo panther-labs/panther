@@ -24,7 +24,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 )
 
@@ -36,7 +36,7 @@ const (
 
 // Github alert send an issue.
 func (client *OutputClient) Github(
-	ctx context.Context, alert *alertModels.Alert, config *outputModels.GithubConfig) *AlertDeliveryResponse {
+	ctx context.Context, alert *deliverymodel.Alert, config *outputModels.GithubConfig) *AlertDeliveryResponse {
 
 	description := "**Description:** " + alert.AnalysisDescription
 	link := "\n [Click here to view in the Panther UI](" + generateURL(alert) + ")"

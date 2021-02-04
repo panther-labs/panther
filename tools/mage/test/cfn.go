@@ -64,7 +64,7 @@ func Cfn() error {
 func testCfnLint() error {
 	var templates []string
 	util.MustWalk("deployments", func(path string, info os.FileInfo) error {
-		if !info.IsDir() && filepath.Ext(path) == ".yml" && filepath.Base(path) != "panther_config.yml" {
+		if !info.IsDir() && filepath.Ext(path) == ".yml" && !strings.HasSuffix(path, "_config.yml") {
 			templates = append(templates, path)
 		}
 		return nil
@@ -108,7 +108,7 @@ func testCfnLint() error {
 	//   - Required custom resources
 	var errs []string
 	for template, body := range parsed {
-		if template == "deployments/master.yml" {
+		if template == "deployments/root.yml" {
 			continue
 		}
 
@@ -276,7 +276,7 @@ func cfnTestFunction(logicalID, template string, resources map[string]cfnResourc
 func cfnValidateMaster(parsed map[string]cfnTemplate) []string {
 	var errs []string
 
-	masterResources := parsed["deployments/master.yml"].Resources
+	masterResources := parsed["deployments/root.yml"].Resources
 	for resourceID, resource := range masterResources {
 		if resource.Type != "AWS::CloudFormation::Stack" || resource.Properties["Parameters"] == nil {
 			continue
@@ -289,7 +289,7 @@ func cfnValidateMaster(parsed map[string]cfnTemplate) []string {
 		for paramName := range parsed[templatePath].Parameters {
 			if _, exists := passedParams[paramName]; !exists {
 				errs = append(errs, fmt.Sprintf(
-					"deployments/master.yml: %s: missing required parameter %s",
+					"deployments/root.yml: %s: missing required parameter %s",
 					resourceID, paramName))
 			}
 		}
@@ -297,7 +297,7 @@ func cfnValidateMaster(parsed map[string]cfnTemplate) []string {
 		for paramName := range passedParams {
 			if _, exists := parsed[templatePath].Parameters[paramName]; !exists {
 				errs = append(errs, fmt.Sprintf(
-					"deployments/master.yml: %s: parameter %s does not exist",
+					"deployments/root.yml: %s: parameter %s does not exist",
 					resourceID, paramName))
 			}
 		}
@@ -328,7 +328,7 @@ func cfnValidateMaster(parsed map[string]cfnTemplate) []string {
 			refPath := resolvedTemplatePath(masterResources[stack])
 			if _, exists := parsed[refPath].Outputs[output]; !exists {
 				errs = append(errs, fmt.Sprintf(
-					"deployments/master.yml: %s.Properties.Parameters.%s: output %s does not exist in %s",
+					"deployments/root.yml: %s.Properties.Parameters.%s: output %s does not exist in %s",
 					resourceID, name, output, stack))
 			}
 		}

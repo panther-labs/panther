@@ -26,6 +26,7 @@ import {
   AddRuleInput,
   AddS3LogIntegrationInput,
   AddSqsLogIntegrationInput,
+  Alert,
   AlertDetails,
   AlertDetailsRuleInfo,
   AlertSummary,
@@ -57,6 +58,7 @@ import {
   DestinationConfig,
   DestinationConfigInput,
   DestinationInput,
+  Detection,
   DetectionTestDefinition,
   DetectionTestDefinitionInput,
   Error,
@@ -86,14 +88,12 @@ import {
   ListComplianceItemsResponse,
   ListDataModelsInput,
   ListDataModelsResponse,
+  ListDetectionsInput,
+  ListDetectionsResponse,
   ListGlobalPythonModuleInput,
   ListGlobalPythonModulesResponse,
-  ListPoliciesInput,
-  ListPoliciesResponse,
   ListResourcesInput,
   ListResourcesResponse,
-  ListRulesInput,
-  ListRulesResponse,
   LogAnalysisMetricsInput,
   LogAnalysisMetricsResponse,
   LongSeries,
@@ -140,6 +140,7 @@ import {
   TestPolicyRecord,
   TestPolicyRecordFunctions,
   TestPolicyResponse,
+  TestRecord,
   TestRuleInput,
   TestRuleRecord,
   TestRuleRecordFunctions,
@@ -152,8 +153,8 @@ import {
   UpdateS3LogIntegrationInput,
   UpdateSqsLogIntegrationInput,
   UpdateUserInput,
-  UploadPoliciesInput,
-  UploadPoliciesResponse,
+  UploadDetectionsInput,
+  UploadDetectionsResponse,
   User,
   AccountTypeEnum,
   AlertDetailsDetectionInfo,
@@ -162,13 +163,16 @@ import {
   AlertTypesEnum,
   ComplianceStatusEnum,
   DestinationTypeEnum,
+  DetectionTypeEnum,
   ErrorCodeEnum,
   ListAlertsSortFieldsEnum,
   ListDataModelsSortFieldsEnum,
+  ListDetectionsSortFieldsEnum,
   ListPoliciesSortFieldsEnum,
   ListResourcesSortFieldsEnum,
   ListRulesSortFieldsEnum,
   LogIntegration,
+  MessageActionEnum,
   OpsgenieServiceRegionEnum,
   SeverityEnum,
   SortDirEnum,
@@ -299,6 +303,26 @@ export const buildAddSqsLogIntegrationInput = (
   };
 };
 
+export const buildAlert = (overrides: Partial<Alert> = {}): Alert => {
+  return {
+    alertId: 'alertId' in overrides ? overrides.alertId : 'dead4742-2a4d-42d0-b643-d62a34c2d7cb',
+    creationTime: 'creationTime' in overrides ? overrides.creationTime : '2020-12-27T19:36:20.190Z',
+    deliveryResponses:
+      'deliveryResponses' in overrides ? overrides.deliveryResponses : [buildDeliveryResponse()],
+    severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
+    status: 'status' in overrides ? overrides.status : AlertStatusesEnum.Closed,
+    title: 'title' in overrides ? overrides.title : 'SQL',
+    type: 'type' in overrides ? overrides.type : AlertTypesEnum.Policy,
+    lastUpdatedBy:
+      'lastUpdatedBy' in overrides
+        ? overrides.lastUpdatedBy
+        : '7a649a4d-3db4-4bc4-89a8-91c31f9cef5b',
+    lastUpdatedByTime:
+      'lastUpdatedByTime' in overrides ? overrides.lastUpdatedByTime : '2020-11-05T22:52:21.828Z',
+    updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-12-04T12:07:59.707Z',
+  };
+};
+
 export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertDetails => {
   return {
     __typename: 'AlertDetails',
@@ -318,6 +342,9 @@ export const buildAlertDetails = (overrides: Partial<AlertDetails> = {}): AlertD
       'lastUpdatedByTime' in overrides ? overrides.lastUpdatedByTime : '2020-07-02T20:00:23.050Z',
     updateTime: 'updateTime' in overrides ? overrides.updateTime : '2020-02-22T04:54:35.910Z',
     detection: 'detection' in overrides ? overrides.detection : buildAlertDetailsRuleInfo(),
+    description: 'description' in overrides ? overrides.description : 'Music',
+    reference: 'reference' in overrides ? overrides.reference : 'input',
+    runbook: 'runbook' in overrides ? overrides.runbook : 'Granite',
   };
 };
 
@@ -636,6 +663,7 @@ export const buildDestination = (overrides: Partial<Destination> = {}): Destinat
       'verificationStatus' in overrides ? overrides.verificationStatus : 'Licensed',
     defaultForSeverity:
       'defaultForSeverity' in overrides ? overrides.defaultForSeverity : [SeverityEnum.Critical],
+    alertTypes: 'alertTypes' in overrides ? overrides.alertTypes : [AlertTypesEnum.Policy],
   };
 };
 
@@ -687,6 +715,35 @@ export const buildDestinationInput = (
     outputType: 'outputType' in overrides ? overrides.outputType : 'New Hampshire',
     defaultForSeverity:
       'defaultForSeverity' in overrides ? overrides.defaultForSeverity : [SeverityEnum.Critical],
+    alertTypes: 'alertTypes' in overrides ? overrides.alertTypes : [AlertTypesEnum.Policy],
+  };
+};
+
+export const buildDetection = (overrides: Partial<Detection> = {}): Detection => {
+  return {
+    body: 'body' in overrides ? overrides.body : 'withdrawal',
+    createdAt: 'createdAt' in overrides ? overrides.createdAt : '2020-09-15T05:35:26.952Z',
+    createdBy:
+      'createdBy' in overrides ? overrides.createdBy : '373151ac-df51-4017-97f1-f57c1584d52e',
+    description: 'description' in overrides ? overrides.description : 'Pitcairn Islands',
+    displayName: 'displayName' in overrides ? overrides.displayName : 'Markets',
+    enabled: 'enabled' in overrides ? overrides.enabled : false,
+    id: 'id' in overrides ? overrides.id : '510da7f2-5d18-44ab-b500-ffd31a71f701',
+    lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-05-26T16:26:19.681Z',
+    lastModifiedBy:
+      'lastModifiedBy' in overrides
+        ? overrides.lastModifiedBy
+        : '4f4b45f0-36bb-44f5-86b0-6edf3ddfc0d9',
+    outputIds:
+      'outputIds' in overrides ? overrides.outputIds : ['2a16147c-10aa-4567-913e-9281427f8267'],
+    reference: 'reference' in overrides ? overrides.reference : 'eco-centric',
+    runbook: 'runbook' in overrides ? overrides.runbook : 'red',
+    severity: 'severity' in overrides ? overrides.severity : SeverityEnum.Critical,
+    tags: 'tags' in overrides ? overrides.tags : ['Zambia'],
+    tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinition()],
+    versionId:
+      'versionId' in overrides ? overrides.versionId : '816cc48d-8608-4d79-a2a4-4b6aa1882e30',
+    analysisType: 'analysisType' in overrides ? overrides.analysisType : DetectionTypeEnum.Policy,
   };
 };
 
@@ -887,6 +944,8 @@ export const buildInviteUserInput = (overrides: Partial<InviteUserInput> = {}): 
     givenName: 'givenName' in overrides ? overrides.givenName : 'system-worthy',
     familyName: 'familyName' in overrides ? overrides.familyName : 'copy',
     email: 'email' in overrides ? overrides.email : 'Gennaro_Kerluke71@gmail.com',
+    messageAction:
+      'messageAction' in overrides ? overrides.messageAction : MessageActionEnum.Resend,
   };
 };
 
@@ -994,6 +1053,41 @@ export const buildListDataModelsResponse = (
   };
 };
 
+export const buildListDetectionsInput = (
+  overrides: Partial<ListDetectionsInput> = {}
+): ListDetectionsInput => {
+  return {
+    complianceStatus:
+      'complianceStatus' in overrides ? overrides.complianceStatus : ComplianceStatusEnum.Fail,
+    hasRemediation: 'hasRemediation' in overrides ? overrides.hasRemediation : false,
+    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['Extended'],
+    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['content'],
+    analysisTypes:
+      'analysisTypes' in overrides ? overrides.analysisTypes : [DetectionTypeEnum.Rule],
+    nameContains: 'nameContains' in overrides ? overrides.nameContains : 'recontextualize',
+    enabled: 'enabled' in overrides ? overrides.enabled : false,
+    severity: 'severity' in overrides ? overrides.severity : [SeverityEnum.Critical],
+    createdBy: 'createdBy' in overrides ? overrides.createdBy : 'Brand',
+    lastModifiedBy: 'lastModifiedBy' in overrides ? overrides.lastModifiedBy : 'metrics',
+    initialSet: 'initialSet' in overrides ? overrides.initialSet : true,
+    tags: 'tags' in overrides ? overrides.tags : ['multi-byte'],
+    sortBy: 'sortBy' in overrides ? overrides.sortBy : ListDetectionsSortFieldsEnum.Id,
+    sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
+    pageSize: 'pageSize' in overrides ? overrides.pageSize : 419,
+    page: 'page' in overrides ? overrides.page : 299,
+  };
+};
+
+export const buildListDetectionsResponse = (
+  overrides: Partial<ListDetectionsResponse> = {}
+): ListDetectionsResponse => {
+  return {
+    __typename: 'ListDetectionsResponse',
+    detections: 'detections' in overrides ? overrides.detections : [buildDetection()],
+    paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
+  };
+};
+
 export const buildListGlobalPythonModuleInput = (
   overrides: Partial<ListGlobalPythonModuleInput> = {}
 ): ListGlobalPythonModuleInput => {
@@ -1013,38 +1107,6 @@ export const buildListGlobalPythonModulesResponse = (
     __typename: 'ListGlobalPythonModulesResponse',
     paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
     globals: 'globals' in overrides ? overrides.globals : [buildGlobalPythonModule()],
-  };
-};
-
-export const buildListPoliciesInput = (
-  overrides: Partial<ListPoliciesInput> = {}
-): ListPoliciesInput => {
-  return {
-    createdBy: 'createdBy' in overrides ? overrides.createdBy : 'Sports',
-    lastModifiedBy: 'lastModifiedBy' in overrides ? overrides.lastModifiedBy : 'incubate',
-    initialSet: 'initialSet' in overrides ? overrides.initialSet : false,
-    complianceStatus:
-      'complianceStatus' in overrides ? overrides.complianceStatus : ComplianceStatusEnum.Pass,
-    nameContains: 'nameContains' in overrides ? overrides.nameContains : 'parse',
-    enabled: 'enabled' in overrides ? overrides.enabled : false,
-    hasRemediation: 'hasRemediation' in overrides ? overrides.hasRemediation : false,
-    resourceTypes: 'resourceTypes' in overrides ? overrides.resourceTypes : ['software'],
-    severity: 'severity' in overrides ? overrides.severity : [SeverityEnum.High],
-    tags: 'tags' in overrides ? overrides.tags : ['Fish'],
-    sortBy: 'sortBy' in overrides ? overrides.sortBy : ListPoliciesSortFieldsEnum.ResourceTypes,
-    sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
-    pageSize: 'pageSize' in overrides ? overrides.pageSize : 50,
-    page: 'page' in overrides ? overrides.page : 254,
-  };
-};
-
-export const buildListPoliciesResponse = (
-  overrides: Partial<ListPoliciesResponse> = {}
-): ListPoliciesResponse => {
-  return {
-    __typename: 'ListPoliciesResponse',
-    paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
-    policies: 'policies' in overrides ? overrides.policies : [buildPolicy()],
   };
 };
 
@@ -1078,33 +1140,6 @@ export const buildListResourcesResponse = (
   };
 };
 
-export const buildListRulesInput = (overrides: Partial<ListRulesInput> = {}): ListRulesInput => {
-  return {
-    createdBy: 'createdBy' in overrides ? overrides.createdBy : 'neural',
-    lastModifiedBy: 'lastModifiedBy' in overrides ? overrides.lastModifiedBy : 'Integration',
-    initialSet: 'initialSet' in overrides ? overrides.initialSet : true,
-    nameContains: 'nameContains' in overrides ? overrides.nameContains : 'Cotton',
-    enabled: 'enabled' in overrides ? overrides.enabled : false,
-    logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Drive'],
-    severity: 'severity' in overrides ? overrides.severity : [SeverityEnum.Low],
-    tags: 'tags' in overrides ? overrides.tags : ['channels'],
-    sortBy: 'sortBy' in overrides ? overrides.sortBy : ListRulesSortFieldsEnum.DisplayName,
-    sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
-    pageSize: 'pageSize' in overrides ? overrides.pageSize : 19,
-    page: 'page' in overrides ? overrides.page : 323,
-  };
-};
-
-export const buildListRulesResponse = (
-  overrides: Partial<ListRulesResponse> = {}
-): ListRulesResponse => {
-  return {
-    __typename: 'ListRulesResponse',
-    paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
-    rules: 'rules' in overrides ? overrides.rules : [buildRule()],
-  };
-};
-
 export const buildLogAnalysisMetricsInput = (
   overrides: Partial<LogAnalysisMetricsInput> = {}
 ): LogAnalysisMetricsInput => {
@@ -1125,7 +1160,6 @@ export const buildLogAnalysisMetricsResponse = (
       'eventsProcessed' in overrides ? overrides.eventsProcessed : buildLongSeriesData(),
     alertsBySeverity:
       'alertsBySeverity' in overrides ? overrides.alertsBySeverity : buildLongSeriesData(),
-    eventsLatency: 'eventsLatency' in overrides ? overrides.eventsLatency : buildFloatSeriesData(),
     totalAlertsDelta:
       'totalAlertsDelta' in overrides ? overrides.totalAlertsDelta : [buildSingleValue()],
     alertsByRuleID: 'alertsByRuleID' in overrides ? overrides.alertsByRuleID : [buildSingleValue()],
@@ -1307,6 +1341,7 @@ export const buildPolicy = (overrides: Partial<Policy> = {}): Policy => {
     tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinition()],
     versionId:
       'versionId' in overrides ? overrides.versionId : '84c8b64a-eb86-4a6b-87e4-af54d8e559e1',
+    analysisType: 'analysisType' in overrides ? overrides.analysisType : DetectionTypeEnum.Policy,
   };
 };
 
@@ -1378,7 +1413,7 @@ export const buildRule = (overrides: Partial<Rule> = {}): Rule => {
     description: 'description' in overrides ? overrides.description : 'Cotton',
     displayName: 'displayName' in overrides ? overrides.displayName : 'AI',
     enabled: 'enabled' in overrides ? overrides.enabled : false,
-    id: 'id' in overrides ? overrides.id : 'panel',
+    id: 'id' in overrides ? overrides.id : 'b2335d05-121b-4244-8cef-2c069cfa3075',
     lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-06-09T20:02:02.412Z',
     lastModifiedBy:
       'lastModifiedBy' in overrides
@@ -1394,6 +1429,7 @@ export const buildRule = (overrides: Partial<Rule> = {}): Rule => {
     tests: 'tests' in overrides ? overrides.tests : [buildDetectionTestDefinition()],
     versionId:
       'versionId' in overrides ? overrides.versionId : '15cf3733-082e-44e1-8802-490c1064f983',
+    analysisType: 'analysisType' in overrides ? overrides.analysisType : DetectionTypeEnum.Rule,
   };
 };
 
@@ -1657,6 +1693,15 @@ export const buildTestPolicyResponse = (
   };
 };
 
+export const buildTestRecord = (overrides: Partial<TestRecord> = {}): TestRecord => {
+  return {
+    id: 'id' in overrides ? overrides.id : 'distributed',
+    name: 'name' in overrides ? overrides.name : 'convergence',
+    passed: 'passed' in overrides ? overrides.passed : true,
+    error: 'error' in overrides ? overrides.error : buildError(),
+  };
+};
+
 export const buildTestRuleInput = (overrides: Partial<TestRuleInput> = {}): TestRuleInput => {
   return {
     body: 'body' in overrides ? overrides.body : 'Steel',
@@ -1832,28 +1877,31 @@ export const buildUpdateUserInput = (overrides: Partial<UpdateUserInput> = {}): 
   };
 };
 
-export const buildUploadPoliciesInput = (
-  overrides: Partial<UploadPoliciesInput> = {}
-): UploadPoliciesInput => {
+export const buildUploadDetectionsInput = (
+  overrides: Partial<UploadDetectionsInput> = {}
+): UploadDetectionsInput => {
   return {
-    data: 'data' in overrides ? overrides.data : 'back-end',
+    data: 'data' in overrides ? overrides.data : 'Fantastic',
   };
 };
 
-export const buildUploadPoliciesResponse = (
-  overrides: Partial<UploadPoliciesResponse> = {}
-): UploadPoliciesResponse => {
+export const buildUploadDetectionsResponse = (
+  overrides: Partial<UploadDetectionsResponse> = {}
+): UploadDetectionsResponse => {
   return {
-    __typename: 'UploadPoliciesResponse',
-    totalPolicies: 'totalPolicies' in overrides ? overrides.totalPolicies : 102,
-    newPolicies: 'newPolicies' in overrides ? overrides.newPolicies : 971,
-    modifiedPolicies: 'modifiedPolicies' in overrides ? overrides.modifiedPolicies : 829,
-    totalRules: 'totalRules' in overrides ? overrides.totalRules : 916,
-    newRules: 'newRules' in overrides ? overrides.newRules : 898,
-    modifiedRules: 'modifiedRules' in overrides ? overrides.modifiedRules : 463,
-    totalGlobals: 'totalGlobals' in overrides ? overrides.totalGlobals : 491,
-    newGlobals: 'newGlobals' in overrides ? overrides.newGlobals : 544,
-    modifiedGlobals: 'modifiedGlobals' in overrides ? overrides.modifiedGlobals : 197,
+    __typename: 'UploadDetectionsResponse',
+    totalPolicies: 'totalPolicies' in overrides ? overrides.totalPolicies : 771,
+    newPolicies: 'newPolicies' in overrides ? overrides.newPolicies : 395,
+    modifiedPolicies: 'modifiedPolicies' in overrides ? overrides.modifiedPolicies : 923,
+    totalRules: 'totalRules' in overrides ? overrides.totalRules : 871,
+    newRules: 'newRules' in overrides ? overrides.newRules : 545,
+    modifiedRules: 'modifiedRules' in overrides ? overrides.modifiedRules : 347,
+    totalGlobals: 'totalGlobals' in overrides ? overrides.totalGlobals : 945,
+    newGlobals: 'newGlobals' in overrides ? overrides.newGlobals : 117,
+    modifiedGlobals: 'modifiedGlobals' in overrides ? overrides.modifiedGlobals : 780,
+    totalDataModels: 'totalDataModels' in overrides ? overrides.totalDataModels : 495,
+    newDataModels: 'newDataModels' in overrides ? overrides.newDataModels : 383,
+    modifiedDataModels: 'modifiedDataModels' in overrides ? overrides.modifiedDataModels : 293,
   };
 };
 

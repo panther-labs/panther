@@ -24,6 +24,8 @@ import (
 	"time"
 
 	"golang.org/x/sync/singleflight"
+
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 )
 
 // Resolver resolves a log type name to it's entry.
@@ -32,6 +34,27 @@ import (
 // If an entry could not be resolved but no errors occurred the implementations should return `nil, nil`.
 type Resolver interface {
 	Resolve(ctx context.Context, name string) (Entry, error)
+}
+
+func ParserResolver(r Resolver) pantherlog.ParserResolver {
+	return &parserResolver{
+		r: r,
+	}
+}
+
+type parserResolver struct {
+	r Resolver
+}
+
+func (p *parserResolver) ResolveParser(ctx context.Context, name string) (pantherlog.LogParser, error) {
+	entry, err := p.r.Resolve(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	if entry != nil {
+		return entry.NewParser(nil)
+	}
+	return nil, nil
 }
 
 // LocalResolver returns a log type resolver that looks up entries locally

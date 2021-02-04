@@ -44,7 +44,9 @@ describe('EditDestination', () => {
 
     const mocks = [mockGetDestinationDetails({ data: { destination } })];
 
-    const { findByLabelText, getByAriaLabel } = render(<EditDestination />, { mocks });
+    const { findByLabelText, getByAriaLabel, getAllByLabelText } = render(<EditDestination />, {
+      mocks,
+    });
 
     // Expect loading
     expect(getByAriaLabel('Loading...')).toBeInTheDocument();
@@ -52,15 +54,12 @@ describe('EditDestination', () => {
     // Expect a form
     const displayInput = (await findByLabelText('* Display Name')) as HTMLInputElement;
     const webhookUrlInput = (await findByLabelText('Slack Webhook URL')) as HTMLInputElement;
-    const criticalSeverityCheckbox = (await findByLabelText(
-      SeverityEnum.Critical
-    )) as HTMLInputElement;
+    expect(getAllByLabelText('Severity')[0]).toBeInTheDocument();
+    expect(getAllByLabelText('Alert Types')[0]).toBeInTheDocument();
 
     // With correct pre-populated values
     expect(displayInput.value).toEqual(destination.displayName);
     expect(webhookUrlInput.value).toEqual(destination.outputConfig.slack.webhookURL);
-    expect(criticalSeverityCheckbox.checked).toBeTruthy();
-    expect(criticalSeverityCheckbox.value).toBeTruthy();
   });
 
   it('can successfully edit Slack destination', async () => {
@@ -83,6 +82,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               slack: {
                 webhookURL: destination.outputConfig.slack.webhookURL,
@@ -131,6 +131,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               github: {
                 token: destination.outputConfig.github.token,
@@ -181,6 +182,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               jira: {
                 orgDomain: destination.outputConfig.jira.orgDomain,
@@ -237,6 +239,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               pagerDuty: {
                 integrationKey: destination.outputConfig.pagerDuty.integrationKey,
@@ -286,6 +289,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               sqs: {
                 queueUrl: destination.outputConfig.sqs.queueUrl,
@@ -336,6 +340,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               sns: {
                 topicArn: destination.outputConfig.sns.topicArn,
@@ -385,6 +390,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               customWebhook: {
                 webhookURL: destination.outputConfig.customWebhook.webhookURL,
@@ -434,6 +440,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               msTeams: {
                 webhookURL: destination.outputConfig.msTeams.webhookURL,
@@ -488,6 +495,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               opsgenie: {
                 apiKey: destination.outputConfig.opsgenie.apiKey,
@@ -538,6 +546,7 @@ describe('EditDestination', () => {
             outputId: destination.outputId,
             outputType: destination.outputType,
             defaultForSeverity: destination.defaultForSeverity,
+            alertTypes: destination.alertTypes,
             outputConfig: {
               asana: {
                 projectGids: destination.outputConfig.asana.projectGids,

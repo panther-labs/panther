@@ -870,23 +870,6 @@ Resources:
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, Lambda, VTL]
 
-  ListPoliciesResolver:
-    Type: AWS::AppSync::Resolver
-    Properties:
-      ApiId: !Ref ApiId
-      TypeName: Query
-      FieldName: policies
-      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
-      RequestMappingTemplate: |
-        {
-          "version" : "2017-02-28",
-          "operation": "Invoke",
-          "payload": $util.toJson({
-            "listPolicies": $util.defaultIfNull($ctx.args.input, {})
-          })
-        }
-      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
-
   GetPolicyResolver:
     Type: AWS::AppSync::Resolver
     Properties:
@@ -961,12 +944,12 @@ Resources:
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCodeNoBody, VTL]
 
-  UploadPoliciesResolver:
+  UploadDetectionsResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
-      FieldName: uploadPolicies
+      FieldName: uploadDetections
       DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $ctx.args.input)
@@ -1151,22 +1134,44 @@ Resources:
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCodeNoBody, VTL]
 
-  ListRulesResolver:
+  ListDetectionsResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
-      FieldName: rules
+      FieldName: detections
       DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "listRules": $util.defaultIfNull($ctx.args.input, {})
+            "listDetections": $util.defaultIfNull($ctx.args.input, {})
           })
         }
-      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
+      ResponseMappingTemplate: |
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, {})
+        #else
+          #set($result = $util.parseJson($ctx.result.body))
+          #set($detections = [])
+
+          #foreach($item in $result.detections)
+            #if ($item.analysisType == "RULE")
+              $util.qr($item.put("__typename", "Rule"))
+            #elseif ($item.analysisType == "POLICY")
+              $util.qr($item.put("__typename", "Policy"))
+            #else
+              $util.error("Invalid analysisType found")
+            #end
+            $util.qr($detections.add($item))
+          #end
+
+          $util.toJson({
+              "detections": $detections,
+              "paging": $result.paging
+          })
+        #end
 
   GetRuleResolver:
     Type: AWS::AppSync::Resolver

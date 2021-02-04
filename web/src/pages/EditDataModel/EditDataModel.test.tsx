@@ -38,6 +38,7 @@ import { mockGetDataModel } from './graphql/getDataModel.generated';
 import { mockUpdateDataModel } from './graphql/updateDataModel.generated';
 
 jest.mock('Helpers/analytics');
+jest.mock('lodash/debounce', () => jest.fn(fn => fn));
 
 describe('UpdateDataModel', () => {
   it('can create a data model successfully', async () => {
@@ -127,7 +128,7 @@ describe('UpdateDataModel', () => {
     });
 
     // wait for debounce and validations
-    await waitMs(210);
+    await waitMs(1);
 
     fireEvent.click(getByText('Save'));
 

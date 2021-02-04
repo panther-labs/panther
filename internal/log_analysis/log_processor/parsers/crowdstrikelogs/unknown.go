@@ -29,7 +29,7 @@ import (
 )
 
 var (
-	// This index is filled by mustRegisterCrowdstrikeEvent
+	// This index is filled by mustBuild
 	knownEventNames = map[string]bool{}
 	// TypeUnknownEvent is a special event collects all crowdstrike events that don't yet have a registered log type
 	TypeUnknownEvent = logtypes.MustBuild(logtypes.ConfigJSON{

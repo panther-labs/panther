@@ -30,7 +30,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/alerts/models"
-	alertdeliverymodels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 )
 
 // ListAll - lists all alerts and apply filtering, sorting logic
@@ -324,7 +324,7 @@ func filterByType(filter *expression.ConditionBuilder, input *models.ListAlertsI
 		var multiFilter expression.ConditionBuilder
 
 		// Rule errors don't always have the attribute specified for backwards compatibility
-		if input.Types[0] == alertdeliverymodels.RuleErrorType {
+		if input.Types[0] == deliverymodel.RuleErrorType {
 			multiFilter = expression.
 				Or(
 					expression.AttributeNotExists(expression.Name(TypeKey)),
@@ -337,7 +337,7 @@ func filterByType(filter *expression.ConditionBuilder, input *models.ListAlertsI
 		// Then add or conditions starting at a new slice from the second index
 		for _, alertType := range input.Types[1:] {
 			// Rule errors don't always have the attribute specified for backwards compatibility
-			if alertType == alertdeliverymodels.RuleErrorType {
+			if alertType == deliverymodel.RuleErrorType {
 				multiFilter = multiFilter.
 					Or(
 						expression.AttributeNotExists(expression.Name(TypeKey)),
@@ -371,7 +371,7 @@ func filterByTitleContains(input *models.ListAlertsInput, alert *AlertItem) *Ale
 	}
 
 	// Check for non-policy types in this order: RuleDisplayName, RuleID
-	if alert.Type != alertdeliverymodels.PolicyType {
+	if alert.Type != deliverymodel.PolicyType {
 		if alert.RuleDisplayName != nil && strings.Contains(
 			strings.ToLower(*alert.RuleDisplayName),
 			lowerNameContains,

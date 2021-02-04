@@ -23,6 +23,7 @@
           "format": "uri"
         },
         "parser": {
+          "type": "object",
           "maxProperties": 1,
           "minProperties": 1,
           "properties": {
@@ -41,6 +42,9 @@
             },
             "regex": {
               "$ref": "#/definitions/parserRegexMatch"
+            },
+            "native": {
+              "$ref": "#/definitions/parserNative"
             }
           }
         },
@@ -251,7 +255,7 @@
         },
         "columns": {
           "type": "array",
-          "minLength": 1,
+          "minItems": 1,
           "items": {
             "type": "string",
             "minLength": 1
@@ -263,7 +267,7 @@
         },
         "emptyValues": {
           "type": "array",
-          "minLength": 1,
+          "minItems": 1,
           "items": {
             "type": "string"
           }
@@ -290,7 +294,7 @@
         },
         "columns": {
           "type": "array",
-          "minLength": 1,
+          "minItems": 1,
           "items": {
             "type": "string",
             "minLength": 1
@@ -302,7 +306,7 @@
         },
         "emptyValues": {
           "type": "array",
-          "minLength": 1,
+          "minItems": 1,
           "items": {
             "type": "string"
           }
@@ -321,7 +325,7 @@
       "properties": {
         "match": {
           "type": "array",
-          "minLength": 1,
+          "minItems": 1,
           "items": {
             "$ref": "#/definitions/fastmatchPattern"
           }
@@ -332,7 +336,7 @@
         },
         "emptyValues": {
           "type": "array",
-          "minLength": 1,
+          "minItems": 1,
           "items": {
             "type": "string",
             "minLength": 1
@@ -346,7 +350,16 @@
         }
       }
     },
+    "parserNative": {
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "parserRegexMatch": {
+      "type": "object",
       "required": ["match"],
       "properties": {
         "patternDefintions": {
@@ -361,7 +374,7 @@
         },
         "match": {
           "type": "array",
-          "minLength": 1,
+          "minItems": 1,
           "items": {
             "type": "string"
           }
@@ -372,7 +385,7 @@
         },
         "emptyValues": {
           "type": "array",
-          "minLength": 1,
+          "minItems": 1,
           "items": {
             "type": "string"
           }
@@ -398,11 +411,13 @@
           "minLength": 4
         },
         {
+          "type": "string",
           "title": "Pattern with placeholder",
           "$comment": "Must contain at least one placeholder",
-          "pattern": "%{\\s*[^}]+\\s*}"
+          "pattern": "%\\{\\s*[^}]+\\s*\\}"
         },
         {
+          "type": "string",
           "title": "Pattern without newlines",
           "$comment": "Only allow newline at the end",
           "pattern": "^[^\\n]+\\n?$"

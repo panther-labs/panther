@@ -24,7 +24,7 @@ import (
 	"strings"
 
 	"github.com/magefile/mage/sh"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/panther-labs/panther/tools/mage/gen/dashboards"
 	"github.com/panther-labs/panther/tools/mage/logger"

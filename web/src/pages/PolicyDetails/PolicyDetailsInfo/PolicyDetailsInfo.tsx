@@ -21,11 +21,11 @@ import { Link as RRLink } from 'react-router-dom';
 import { Box, SimpleGrid, Text, Link, Flex, Card } from 'pouncejs';
 import { formatDatetime } from 'Helpers/utils';
 import Linkify from 'Components/Linkify';
-import { Policy } from 'Generated/schema';
+import { PolicyDetails } from 'Source/graphql/fragments/PolicyDetails.generated';
 import urls from 'Source/urls';
 
 interface ResourceDetailsInfoProps {
-  policy?: Policy;
+  policy?: PolicyDetails;
 }
 
 const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
@@ -83,7 +83,7 @@ const PolicyDetailsInfo: React.FC<ResourceDetailsInfoProps> = ({ policy }) => {
                     <Link
                       key={tag}
                       as={RRLink}
-                      to={`${urls.compliance.policies.list()}?page=1&tags[]=${tag}`}
+                      to={`${urls.detections.list()}?page=1&tags[]=${tag}`}
                     >
                       {tag}
                       {index !== policy.tags.length - 1 ? ', ' : null}

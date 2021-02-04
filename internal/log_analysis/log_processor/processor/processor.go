@@ -30,7 +30,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/pkg/metrics"
@@ -155,7 +155,7 @@ type Processor struct {
 
 type Factory func(r *common.DataStream) (*Processor, error)
 
-func NewFactory(resolver logtypes.Resolver) Factory {
+func NewFactory(resolver pantherlog.ParserResolver) Factory {
 	return func(input *common.DataStream) (*Processor, error) {
 		switch src := input.Source; src.IntegrationType {
 		case models.IntegrationTypeSqs:

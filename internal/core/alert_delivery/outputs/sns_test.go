@@ -33,7 +33,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	alertModels "github.com/panther-labs/panther/api/lambda/delivery/models"
+	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
 	outputModels "github.com/panther-labs/panther/api/lambda/outputs/models"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
@@ -47,10 +47,10 @@ func TestSendSns(t *testing.T) {
 	}
 
 	createdAtTime := time.Now()
-	alert := &alertModels.Alert{
+	alert := &deliverymodel.Alert{
 		AlertID:             aws.String("alertId"),
 		AnalysisName:        aws.String("policyName"),
-		Type:                alertModels.PolicyType,
+		Type:                deliverymodel.PolicyType,
 		AnalysisID:          "policyId",
 		AnalysisDescription: "policyDescription",
 		Severity:            "severity",
@@ -65,7 +65,7 @@ func TestSendSns(t *testing.T) {
 	defaultMessage := Notification{
 		ID:          "policyId",
 		AlertID:     aws.String("alertId"),
-		Type:        alertModels.PolicyType,
+		Type:        deliverymodel.PolicyType,
 		Name:        aws.String("policyName"),
 		Description: aws.String("policyDescription"),
 		Severity:    "severity",
@@ -142,10 +142,10 @@ func TestTruncateSnsTitle(t *testing.T) {
 	expectedEmailSubject += "..."
 
 	createdAtTime := time.Now()
-	alert := &alertModels.Alert{
+	alert := &deliverymodel.Alert{
 		AlertID:             aws.String("alertID"),
 		AnalysisName:        aws.String("ruleName"),
-		Type:                alertModels.RuleType,
+		Type:                deliverymodel.RuleType,
 		AnalysisID:          "ruleId",
 		AnalysisDescription: "ruleDescription",
 		Severity:            "severity",
@@ -225,10 +225,10 @@ func TestResendEmailSubject(t *testing.T) {
 	}
 
 	createdAtTime := time.Now()
-	alert := &alertModels.Alert{
+	alert := &deliverymodel.Alert{
 		AlertID:             aws.String("alertID"),
 		AnalysisName:        aws.String("ruleName"),
-		Type:                alertModels.RuleType,
+		Type:                deliverymodel.RuleType,
 		AnalysisID:          "ruleId",
 		AnalysisDescription: "ruleDescription",
 		Severity:            "severity",

@@ -28,6 +28,8 @@ import {
 import { mockListAvailableLogTypes } from 'Source/graphql/queries';
 import DataModelForm from './DataModelForm';
 
+jest.mock('lodash/debounce', () => jest.fn(fn => fn));
+
 describe('DataModelForm', () => {
   it('can add & remove mappings', () => {
     const initialValues = {
@@ -76,12 +78,12 @@ describe('DataModelForm', () => {
     fireEvent.change(getByLabelText('Name'), { target: { value: 'test' } });
     fireEvent.change(getByLabelText('Field Method'), { target: { value: '' } });
 
-    await waitMs(10);
+    await waitMs(1);
     expect(queryAllByText("You shouldn't provide both a path & method")).toBeEmpty();
 
     fireEvent.change(getByLabelText('Field Path'), { target: { value: 'test' } });
 
-    await waitMs(10);
+    await waitMs(1);
     expect(queryAllByText("You shouldn't provide both a path & method")).toBeEmpty();
   });
 
@@ -120,20 +122,20 @@ describe('DataModelForm', () => {
     expect(submitBtn).toHaveAttribute('disabled');
 
     fireEvent.change(getByLabelText('Display Name'), { target: { value: 'test-name' } });
-    await waitMs(10);
+    await waitMs(1);
     expect(submitBtn).toHaveAttribute('disabled');
 
     fireEvent.change(getByLabelText('ID'), { target: { value: 'test-id' } });
-    await waitMs(10);
+    await waitMs(1);
     expect(submitBtn).toHaveAttribute('disabled');
 
     fireEvent.change(getAllByLabelText('Log Type')[0], { target: { value: 'AWS.ALB' } });
     fireClickAndMouseEvents(await findByText('AWS.ALB'));
-    await waitMs(10);
+    await waitMs(1);
     expect(submitBtn).toHaveAttribute('disabled');
 
     fireEvent.click(getByPlaceholderText('Toggle Enabled'));
-    await waitMs(10);
+    await waitMs(1);
     expect(submitBtn).toHaveAttribute('disabled');
 
     fireEvent.change(getAllByLabelText('Name')[0], { target: { value: 'test-field-name-1' } });
@@ -148,7 +150,7 @@ describe('DataModelForm', () => {
       target: { value: 'test-field-method-2' },
     });
 
-    await waitMs(10);
+    await waitMs(1);
     expect(submitBtn).not.toHaveAttribute('disabled');
 
     fireEvent.click(getByAriaLabel('Toggle Python Editor visibility'));
@@ -157,7 +159,7 @@ describe('DataModelForm', () => {
     });
 
     // wait for editor's debounce
-    await waitMs(210);
+    await waitMs(1);
     expect(submitBtn).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitBtn);

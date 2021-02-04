@@ -109,6 +109,13 @@ const Navigation = () => {
               label="Alerts"
             />
           </Box>
+          <Box as="li" mb={2}>
+            <NavLink
+              icon="detection"
+              to={`${urls.detections.list()}?page=1&sortBy=lastModified&sortDir=descending`}
+              label="Detections"
+            />
+          </Box>
 
           <Box as="li" mb={2}>
             <NavGroup
@@ -146,26 +153,24 @@ const Navigation = () => {
           </Box>
 
           <Box as="li" mt="auto">
-            <Box
-              as={Link}
-              external
-              href={PANTHER_DOCS_LINK}
-              fontWeight="normal"
-              borderRadius="small"
-              px={4}
-              py={3}
-              fontSize="medium"
-              display="flex"
-              color="gray-50"
-              alignItems="center"
-              _hover={{
-                color: 'gray-50',
-                backgroundColor: 'navyblue-500',
-              }}
-            >
-              <Icon type="docs" size="medium" mr={3} />
-              <Box>Documentation</Box>
-            </Box>
+            <Link external href={PANTHER_DOCS_LINK}>
+              <Flex
+                align="center"
+                fontSize="medium"
+                fontWeight="normal"
+                borderRadius="small"
+                px={4}
+                py={3}
+                color="gray-50"
+                _hover={{
+                  color: 'gray-50',
+                  backgroundColor: 'navyblue-500',
+                }}
+              >
+                <Icon type="docs" size="medium" mr={3} />
+                <Box>Documentation</Box>
+              </Flex>
+            </Link>
           </Box>
 
           <Box as="li">

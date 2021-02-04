@@ -59,6 +59,7 @@ var (
 
 	// NOTE: this gets changed by the bulk upload!
 	policy = &models.Policy{
+		AnalysisType:              models.TypePolicy,
 		AutoRemediationParameters: map[string]string{},
 		Description:               "Matches every resource",
 		DisplayName:               "AlwaysTrue",
@@ -90,6 +91,7 @@ var (
 	policyFromBulkJSON = &models.Policy{ID: "Test:Policy:JSON"}
 
 	rule = &models.Rule{
+		AnalysisType:       models.TypeRule,
 		Body:               "def rule(event): return len(event) > 0\n",
 		DedupPeriodMinutes: 1440,
 		Description:        "Matches every non-empty event",
@@ -277,6 +279,7 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ListGlobals", listGlobals)
 		t.Run("ListDataModels", listDataModels)
 		t.Run("ListEnabledDataModels", listEnabledDataModels)
+		t.Run("ListSortedDataModels", listSortedDataModels)
 		t.Run("ListDetections", listDetections)
 		t.Run("ListDetectionsFiltered", listDetectionsFiltered)
 		t.Run("ListDetectionsComplianceProjection", listDetectionsComplianceProjection)
@@ -1634,6 +1637,7 @@ func bulkUploadSuccess(t *testing.T) {
 
 	// Verify newly created Rule
 	expectedNewRule := models.Rule{
+		AnalysisType:       models.TypeRule,
 		DedupPeriodMinutes: 480,
 		Description:        "Test rule",
 		DisplayName:        "Rule Always True display name",
@@ -1868,6 +1872,7 @@ func listProjection(t *testing.T) {
 
 	// Empty lists/maps will always be initialized in the response
 	emptyPolicy := models.Policy{
+		AnalysisType:              models.TypePolicy,
 		AutoRemediationParameters: map[string]string{},
 		OutputIDs:                 []string{},
 		Reports:                   map[string][]string{},
@@ -1985,6 +1990,52 @@ func listEnabledDataModels(t *testing.T) {
 		},
 		Models: []models.DataModel{
 			*dataModel, *dataModelTwo, *dataModelFromBulkYML,
+		},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listSortedDataModels(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListDataModels: &models.ListDataModelsInput{
+			SortBy: "enabled",
+		},
+	}
+	var result models.ListDataModelsOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListDataModelsOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 4,
+			TotalPages: 1,
+		},
+		Models: []models.DataModel{
+			*dataModel, *dataModelTwo, *dataModelFromBulkYML, *dataModelDisabled,
+		},
+	}
+	assert.Equal(t, expected, result)
+
+	input = models.LambdaInput{
+		ListDataModels: &models.ListDataModelsInput{
+			SortBy: "lastModified",
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected = models.ListDataModelsOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 4,
+			TotalPages: 1,
+		},
+		Models: []models.DataModel{
+			*dataModel, *dataModelTwo, *dataModelDisabled, *dataModelFromBulkYML,
 		},
 	}
 	assert.Equal(t, expected, result)

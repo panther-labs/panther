@@ -82,7 +82,7 @@ describe('CreateDataModel', () => {
     fireEvent.change(getByLabelText('Field Path'), { target: { value: 'test-field-path' } });
 
     // wait for validation to kick in
-    await waitMs(10);
+    await waitMs(1);
     fireEvent.click(getByText('Save'));
 
     await waitFor(() =>
@@ -133,7 +133,7 @@ describe('CreateDataModel', () => {
     fireEvent.change(getByLabelText('Field Path'), { target: { value: 'test-field-path' } });
 
     // wait for validation to kick in
-    await waitMs(10);
+    await waitMs(1);
     fireEvent.click(getByText('Save'));
 
     expect(await findByText('Fake Error Message')).toBeInTheDocument();

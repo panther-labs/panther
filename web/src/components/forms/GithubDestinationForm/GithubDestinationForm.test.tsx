@@ -17,14 +17,22 @@
  */
 
 import React from 'react';
-import { render, fireEvent, waitFor, waitMs, buildGithubConfigInput } from 'test-utils';
-import { SeverityEnum } from 'Generated/schema';
+import {
+  render,
+  fireEvent,
+  waitFor,
+  waitMs,
+  buildGithubConfigInput,
+  fireClickAndMouseEvents,
+} from 'test-utils';
+import { AlertTypesEnum, SeverityEnum } from 'Generated/schema';
 import GithubDestinationForm from './index';
 
 const emptyInitialValues = {
   outputId: null,
   displayName: '',
   defaultForSeverity: [],
+  alertTypes: [],
   outputConfig: {
     github: {
       token: '',
@@ -46,11 +54,12 @@ const initialValues = {
     },
   },
   defaultForSeverity: [severity],
+  alertTypes: [AlertTypesEnum.Rule, AlertTypesEnum.RuleError, AlertTypesEnum.Policy],
 };
 
 describe('GithubDestinationForm', () => {
   it('renders the correct fields', () => {
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText, getByText, getAllByLabelText } = render(
       <GithubDestinationForm onSubmit={() => {}} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
@@ -60,40 +69,42 @@ describe('GithubDestinationForm', () => {
     expect(displayNameField).toBeInTheDocument();
     expect(repoNameField).toBeInTheDocument();
     expect(tokenField).toBeInTheDocument();
-    Object.values(SeverityEnum).forEach(sev => {
-      expect(getByText(sev)).toBeInTheDocument();
-    });
+    expect(getAllByLabelText('Severity')[0]).toBeInTheDocument();
+    expect(getAllByLabelText('Alert Types')[0]).toBeInTheDocument();
 
     expect(submitButton).toHaveAttribute('disabled');
   });
 
   it('has proper validation', async () => {
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText, getByText, getAllByLabelText } = render(
       <GithubDestinationForm onSubmit={() => {}} initialValues={emptyInitialValues} />
     );
     const displayNameField = getByLabelText('* Display Name');
     const repoNameField = getByLabelText('Repository name');
     const tokenField = getByLabelText('Token');
     const submitButton = getByText('Add Destination');
-    const criticalSeverityCheckBox = document.getElementById(severity);
-    expect(criticalSeverityCheckBox).not.toBeNull();
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
     expect(submitButton).toHaveAttribute('disabled');
 
     fireEvent.change(displayNameField, { target: { value: displayName } });
-    fireEvent.click(criticalSeverityCheckBox);
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(repoNameField, { target: { value: 'repo' } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).toHaveAttribute('disabled');
     fireEvent.change(tokenField, { target: { value: 'someToken' } });
-    await waitMs(50);
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
   });
 
   it('should trigger submit successfully', async () => {
     const submitMockFunc = jest.fn();
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText, getByText, getAllByLabelText } = render(
       <GithubDestinationForm onSubmit={submitMockFunc} initialValues={emptyInitialValues} />
     );
     const githubInput = buildGithubConfigInput();
@@ -101,25 +112,32 @@ describe('GithubDestinationForm', () => {
     const repoNameField = getByLabelText('Repository name');
     const tokenField = getByLabelText('Token');
     const submitButton = getByText('Add Destination');
-    const criticalSeverityCheckBox = document.getElementById(severity);
-    expect(criticalSeverityCheckBox).not.toBeNull();
+    const severityField = getAllByLabelText('Severity')[0];
+    const alertTypeField = getAllByLabelText('Alert Types')[0];
     expect(submitButton).toHaveAttribute('disabled');
 
     fireEvent.change(displayNameField, { target: { value: displayName } });
-    fireEvent.click(criticalSeverityCheckBox);
     fireEvent.change(repoNameField, { target: { value: githubInput.repoName } });
     fireEvent.change(tokenField, { target: { value: githubInput.token } });
-    await waitMs(50);
+    fireEvent.change(severityField, { target: { value: 'Critical' } });
+    fireClickAndMouseEvents(getByText('Critical'));
+    fireEvent.change(alertTypeField, { target: { value: 'Rule Matches' } });
+    fireClickAndMouseEvents(getByText('Rule Matches'));
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);
     await waitFor(() => expect(submitMockFunc).toHaveBeenCalledTimes(1));
-    expect(submitMockFunc).toHaveBeenCalledWith({
-      outputId: null,
-      displayName,
-      outputConfig: { github: githubInput },
-      defaultForSeverity: [severity],
-    });
+    expect(submitMockFunc).toHaveBeenCalledWith(
+      {
+        outputId: null,
+        displayName,
+        outputConfig: { github: githubInput },
+        defaultForSeverity: [severity],
+        alertTypes: [AlertTypesEnum.Rule],
+      },
+      expect.toBeObject()
+    );
   });
 
   it('should edit Github Destination successfully', async () => {
@@ -138,16 +156,20 @@ describe('GithubDestinationForm', () => {
 
     const newDisplayName = 'New Github Name';
     fireEvent.change(displayNameField, { target: { value: newDisplayName } });
-    await waitMs(50);
+    await waitMs(1);
     expect(submitButton).not.toHaveAttribute('disabled');
 
     fireEvent.click(submitButton);
     await waitFor(() => expect(submitMockFunc).toHaveBeenCalledTimes(1));
-    expect(submitMockFunc).toHaveBeenCalledWith({
-      outputId: initialValues.outputId,
-      displayName: newDisplayName,
-      outputConfig: initialValues.outputConfig,
-      defaultForSeverity: initialValues.defaultForSeverity,
-    });
+    expect(submitMockFunc).toHaveBeenCalledWith(
+      {
+        outputId: initialValues.outputId,
+        displayName: newDisplayName,
+        outputConfig: initialValues.outputConfig,
+        defaultForSeverity: initialValues.defaultForSeverity,
+        alertTypes: initialValues.alertTypes,
+      },
+      expect.toBeObject()
+    );
   });
 });

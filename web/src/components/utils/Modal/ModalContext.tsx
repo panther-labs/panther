@@ -20,9 +20,11 @@ import React from 'react';
 import { DeletePolicyModalProps } from 'Components/modals/DeletePolicyModal';
 import { DeleteUserModalProps } from 'Components/modals/DeleteUserModal';
 import { ResetUserPasswordProps } from 'Components/modals/ResetUserPasswordModal';
+import { ReinviteUserProps } from 'Components/modals/ReinviteUserModal';
 import { DeleteComplianceSourceModalProps } from 'Components/modals/DeleteComplianceSourceModal';
 import { DeleteLogSourceModalProps } from 'Components/modals/DeleteLogSourceModal';
 import { DeleteDestinationModalProps } from 'Components/modals/DeleteDestinationModal';
+import { GenericModalProps } from 'Components/modals/GenericModal';
 import { DeleteRuleModalProps } from 'Components/modals/DeleteRuleModal';
 import { DeleteTestModalProps } from 'Components/modals/DeleteTestModal';
 import { DeleteGlobalPythonModuleModalProps } from 'Components/modals/DeleteGlobalPythonModuleModal';
@@ -42,8 +44,10 @@ export enum MODALS {
   DELETE_GLOBAL_PYTHON_MODULE = 'DELETE_GLOBAL_PYTHON_MODULE',
   DELETE_USER = 'DELETE_USER',
   DELETE_TEST = 'DELETE_TEST',
+  GENERIC_MODAL = 'GENERIC_MODAL',
   EDIT_PROFILE_SETTINGS = 'EDIT_PROFILE_SETTINGS',
   RESET_USER_PASS = 'RESET_USER_PASS',
+  REINVITE_USER = 'REINVITE_USER',
   DELETE_COMPLIANCE_SOURCE = 'DELETE_COMPLIANCE_SOURCE',
   DELETE_LOG_SOURCE = 'DELETE_LOG_SOURCE',
   DELETE_DESTINATION = 'DELETE_DESTINATION',
@@ -76,6 +80,14 @@ interface ShowCustomLogModalAction {
   };
 }
 
+interface ShowGenericModal {
+  type: typeof SHOW_MODAL;
+  payload: {
+    modal: MODALS.GENERIC_MODAL;
+    props: OmitControlledProps<GenericModalProps>;
+  };
+}
+
 /* 2nd action */
 interface HideModalAction {
   type: typeof HIDE_MODAL;
@@ -103,6 +115,15 @@ interface ShowResetUserPasswordModalAction {
   payload: {
     modal: MODALS.RESET_USER_PASS;
     props: OmitControlledProps<ResetUserPasswordProps>;
+  };
+}
+
+/* Reset user password */
+interface ShowReinviteUserModalAction {
+  type: typeof SHOW_MODAL;
+  payload: {
+    modal: MODALS.REINVITE_USER;
+    props: OmitControlledProps<ReinviteUserProps>;
   };
 }
 
@@ -185,6 +206,7 @@ interface ShowAnalyticsConsentModalAction {
 
 /* The available actions that can be dispatched */
 type ModalStateAction =
+  | ShowGenericModal
   | ShowDeleteComplianceSourceModalAction
   | ShowCustomLogModalAction
   | ShowDeleteLogSourceModalAction
@@ -194,6 +216,7 @@ type ModalStateAction =
   | ShowDeleteTestModalAction
   | ShowProfileSettingsModalAction
   | ShowResetUserPasswordModalAction
+  | ShowReinviteUserModalAction
   | ShowPolicyModalAction
   | ShowDeleteRuleModalAction
   | ShowDeleteDestinationModalAction

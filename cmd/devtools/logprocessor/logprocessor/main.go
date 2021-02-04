@@ -146,7 +146,7 @@ func main() {
 	// Use the global registry
 	dest := destinations.CreateS3Destination(jsonAPI)
 
-	newProcessor := processor.NewFactory(registry.NativeLogTypesResolver())
+	newProcessor := processor.NewFactory(registry.NativeParsersResolver())
 	err = processor.Process(context.Background(), streamChan, dest, newProcessor)
 	if err != nil {
 		log.Fatal(err)

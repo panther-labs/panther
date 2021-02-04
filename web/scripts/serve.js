@@ -20,6 +20,7 @@
 const express = require('express');
 const expressStaticGzip = require('express-static-gzip');
 const path = require('path');
+const helmet = require('helmet');
 const { getAppTemplateParams, getCacheControlForFileType } = require('./utils');
 
 // construct a mini server
@@ -29,18 +30,32 @@ const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.resolve(__dirname, '../dist'));
 
-// Add Security headers to all responses
+// Add Helmet Security headers to all responses
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: "'none'",
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        connectSrc: ["'self'", '*.amazonaws.com', 'api-js.mixpanel.com', 'sentry.io'],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+      },
+    },
+    hsts: {
+      maxAge: 31536000,
+    },
+    dnsPrefetchControl: false,
+    expectCt: false,
+  })
+);
+
 app.use('*', (req, res, next) => {
-  res.header('X-Powered-by', 'N/A');
-  res.header('X-XSS-Protection', '1; mode=block');
-  res.header('X-Frame-Options', 'SAMEORIGIN');
-  res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  res.header('X-Content-Type-Options', 'nosniff');
-  res.header(
-    'Content-Security-Policy',
-    "default-src 'none'; script-src 'self' 'unsafe-inline'; connect-src 'self' *.amazonaws.com api-js.mixpanel.com sentry.io; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; base-uri 'self';form-action 'self'"
-  );
-  res.header('Referrer-Policy', 'no-referrer');
+  // Feature-Policy headers are deprecated and will be replaced by Permissions-Policy,
+  // we can remove this custom header once major browsers add support for Permissions-Policy headers.
   res.header(
     'Feature-Policy',
     "accelerometer 'none'; ambient-light-sensor 'none'; autoplay 'none'; battery 'none'; camera 'none'; geolocation 'none'; magnetometer 'none'; microphone 'none'; payment 'none'; usb 'none'; midi 'none"

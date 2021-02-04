@@ -291,6 +291,7 @@ func updateSlack(t *testing.T) {
 	require.NoError(t, genericapi.Invoke(lambdaClient, outputsAPI, &input, &output))
 
 	expected := models.UpdateOutputOutput{
+		AlertTypes:         []string{"RULE", "RULE_ERROR", "POLICY"},
 		CreatedBy:          userID,
 		CreationTime:       output.CreationTime,
 		DefaultForSeverity: input.UpdateOutput.DefaultForSeverity,
@@ -477,6 +478,7 @@ func verifyListOutputs(t *testing.T, withSecrets bool) {
 
 	expected := models.GetOutputsOutput{
 		{
+			AlertTypes:         []string{"RULE", "RULE_ERROR", "POLICY"},
 			CreatedBy:          userID,
 			CreationTime:       outputs[0].CreationTime,
 			DefaultForSeverity: []*string{},
@@ -488,6 +490,7 @@ func verifyListOutputs(t *testing.T, withSecrets bool) {
 			OutputConfig:       &models.OutputConfig{Sns: sns},
 		},
 		{
+			AlertTypes:         []string{"RULE", "RULE_ERROR", "POLICY"},
 			CreatedBy:          userID,
 			CreationTime:       outputs[1].CreationTime,
 			DefaultForSeverity: aws.StringSlice([]string{"HIGH"}),
@@ -499,6 +502,7 @@ func verifyListOutputs(t *testing.T, withSecrets bool) {
 			OutputConfig:       &models.OutputConfig{Slack: slack},
 		},
 		{
+			AlertTypes:         []string{"RULE", "RULE_ERROR", "POLICY"},
 			CreatedBy:          userID,
 			CreationTime:       outputs[2].CreationTime,
 			DefaultForSeverity: []*string{},
@@ -510,6 +514,7 @@ func verifyListOutputs(t *testing.T, withSecrets bool) {
 			OutputConfig:       &models.OutputConfig{PagerDuty: pagerDuty},
 		},
 		{
+			AlertTypes:         []string{"RULE", "RULE_ERROR", "POLICY"},
 			CreatedBy:          userID,
 			CreationTime:       outputs[3].CreationTime,
 			DefaultForSeverity: aws.StringSlice([]string{"HIGH"}),

@@ -47,7 +47,7 @@ describe('Sentry Reporting', () => {
     const btn = getByText('Button click');
 
     fireEvent.click(btn);
-    await waitMs(100);
+    await waitMs(1);
     expect(Sentry.init).toHaveBeenCalled();
     expect(Sentry.captureException).toHaveBeenCalledWith(error);
   });
@@ -60,7 +60,7 @@ describe('Sentry Reporting', () => {
     const btn = getByText('Button click');
 
     fireEvent.click(btn);
-    await waitMs(100);
+    await waitMs(1);
     expect(Sentry.init).not.toBeCalled();
     expect(Sentry.captureException).not.toBeCalled();
   });

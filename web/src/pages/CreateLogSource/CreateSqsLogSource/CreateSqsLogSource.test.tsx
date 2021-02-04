@@ -95,7 +95,7 @@ describe('CreateSqsLogSource', () => {
     fireEvent.keyDown(sourceArnField, { key: 'Enter', code: 'Enter' });
 
     // Wait for form validation to kick in and move on to the next screen
-    await waitMs(50);
+    await waitMs(1);
     fireEvent.click(getByText('Continue Setup'));
 
     // Expect to see a loading animation while the resource is being validated ...

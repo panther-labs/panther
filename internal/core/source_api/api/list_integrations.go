@@ -37,8 +37,14 @@ func (api *API) ListIntegrations(
 		return nil, genericListError
 	}
 
-	result := make([]*models.SourceIntegration, len(integrationItems))
-	for i, item := range integrationItems {
+	result := make([]*models.SourceIntegration, 0, len(integrationItems))
+	for _, item := range integrationItems {
+		if item.IntegrationType == "" {
+			// Due to a previous bug, a deleted integration could be re-created in the DB without
+			// the IntegrationType field. This would break Panther in many places in addition to
+			// breaking Panther upgrades. Skip these sources.
+			continue
+		}
 		integ := itemToIntegration(item)
 		// This is required for backwards compatibility
 		// Before https://github.com/panther-labs/panther/issues/2031 , the Compliance sources
@@ -49,7 +55,7 @@ func (api *API) ListIntegrations(
 				integ.LogProcessingRole = api.Config.InputDataRoleArn
 			}
 		}
-		result[i] = integ
+		result = append(result, integ)
 	}
 	return result, nil
 }

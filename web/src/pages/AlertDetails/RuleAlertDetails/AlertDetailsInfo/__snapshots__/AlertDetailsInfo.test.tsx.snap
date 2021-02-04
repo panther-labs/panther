@@ -1,0 +1,419 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AlertDetailsInfo matches snapshot 1`] = `
+@keyframes animation-0 {
+  0% {
+    -webkit-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -ms-transform: rotate(0);
+    transform: rotate(0);
+  }
+
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes animation-1 {
+  0% {
+    stroke-dashoffset: 600;
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.panther-37 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+
+.panther-37>*:not(:last-child) {
+  margin-bottom: 16px;
+}
+
+.panther-6 {
+  background-color: #1d2a3f;
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.panther-0 {
+  margin-bottom: 24px;
+}
+
+.panther-5 {
+  display: grid;
+  grid-gap: 20px;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.panther-2 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+
+.panther-2>*:not(:last-child) {
+  margin-bottom: 8px;
+}
+
+.panther-1 {
+  color: #86a3c3;
+  font-size: 0.813rem;
+}
+
+.panther-31 {
+  display: grid;
+  grid-gap: 20px;
+  grid-template-columns: repeat(2, 1fr);
+  font-size: 0.813rem;
+}
+
+
+
+.panther-18 {
+  display: grid;
+  grid-gap: 8px;
+  grid-template-columns: repeat(8, 1fr);
+}
+
+.panther-7 {
+  color: #86a3c3;
+  grid-column: 1/3;
+}
+
+.panther-8 {
+  -webkit-transition: color 0.1s ease-out;
+  transition: color 0.1s ease-out;
+  font-weight: 500;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  color: #7fd3ff;
+  grid-column: 3/8;
+}
+
+.panther-8:hover {
+  color: #ace2ff;
+}
+
+.panther-8:focus {
+  color: #ace2ff;
+}
+
+.panther-8:active,
+.panther-8[data-active=true] {
+  color: #11a5f3;
+}
+
+.panther-10 {
+  grid-column: 3/8;
+}
+
+.panther-16 {
+  -webkit-transition: color 0.1s ease-out;
+  transition: color 0.1s ease-out;
+  font-weight: 500;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  color: #7fd3ff;
+}
+
+.panther-16:hover {
+  color: #ace2ff;
+}
+
+.panther-16:focus {
+  color: #ace2ff;
+}
+
+.panther-16:active,
+.panther-16[data-active=true] {
+  color: #11a5f3;
+}
+
+.panther-27 {
+  height: 18px;
+}
+
+.panther-26 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-animation: animation-0 2s linear infinite;
+  animation: animation-0 2s linear infinite;
+  width: 18px;
+  height: 18px;
+}
+
+.panther-25 {
+  stroke-dashoffset: 600;
+  stroke-dasharray: 300;
+  stroke-width: 13;
+  stroke-miterlimit: 10;
+  stroke-linecap: round;
+  -webkit-animation: animation-1 1.6s cubic-bezier(0.4, 0.15, 0.6, 0.85) infinite;
+  animation: animation-1 1.6s cubic-bezier(0.4, 0.15, 0.6, 0.85) infinite;
+  stroke: currentColor;
+  fill: transparent;
+}
+
+.panther-35 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: warning;
+  -webkit-box-align: warning;
+  -ms-flex-align: warning;
+  align-items: warning;
+}
+
+.panther-35>*:not(:last-child) {
+  margin-right: 16px;
+}
+
+.panther-33 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: #0081c5;
+}
+
+.panther-34 {
+  font-weight: 500;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <div
+    class="panther-37"
+  >
+    <section
+      class="panther-6"
+    >
+      <p
+        class="panther-0"
+      >
+        Music
+      </p>
+      <div
+        class="panther-5"
+      >
+        <div
+          class="panther-2"
+        >
+          <div
+            aria-describedby="runbook-description"
+            class="panther-1"
+          >
+            Runbook
+          </div>
+          <p>
+            Granite
+          </p>
+        </div>
+        <div
+          class="panther-2"
+        >
+          <div
+            aria-describedby="reference-description"
+            class="panther-1"
+          >
+            Reference
+          </div>
+          <p>
+            input
+          </p>
+        </div>
+      </div>
+    </section>
+    <section
+      class="panther-6"
+    >
+      <div
+        class="panther-31"
+      >
+        <div
+          class="panther-19"
+        >
+          <div
+            class="panther-18"
+          >
+            <div
+              aria-describedby="rule-link"
+              class="panther-7"
+            >
+              Rule
+            </div>
+            <a
+              class="panther-8"
+              href="/detections/rules/b2335d05-121b-4244-8cef-2c069cfa3075/"
+              id="rule-link"
+            >
+              AI
+            </a>
+            <div
+              aria-describedby="threshold"
+              class="panther-7"
+            >
+              Rule Threshold
+            </div>
+            <div
+              class="panther-10"
+              id="threshold"
+            >
+              347
+            </div>
+            <div
+              aria-describedby="deduplication-period"
+              class="panther-7"
+            >
+              Deduplication Period
+            </div>
+            <div
+              class="panther-10"
+              id="deduplication-period"
+            >
+              13.466666666666667h
+            </div>
+            <div
+              aria-describedby="deduplication-string"
+              class="panther-7"
+            >
+              Deduplication String
+            </div>
+            <div
+              class="panther-10"
+              id="deduplication-string"
+            >
+              panel
+            </div>
+            <div
+              aria-describedby="tags-list"
+              class="panther-7"
+            >
+              Tags
+            </div>
+            <div
+              class="panther-10"
+              id="tags-list"
+            >
+              <a
+                class="panther-16"
+                href="/detections/?page=1&tags[]=invoice"
+              >
+                invoice
+              </a>
+            </div>
+          </div>
+        </div>
+        <div
+          class="panther-19"
+        >
+          <div
+            class="panther-18"
+          >
+            <div
+              aria-describedby="created-at"
+              class="panther-7"
+            >
+              Created
+            </div>
+            <div
+              class="panther-10"
+              id="created-at"
+            >
+              2020-10-28 02:06 GMT
+            </div>
+            <div
+              aria-describedby="last-matched-at"
+              class="panther-7"
+            >
+              Last Matched
+            </div>
+            <div
+              class="panther-10"
+              id="last-matched-at"
+            >
+              2020-02-22 04:54 GMT
+            </div>
+            <div
+              aria-describedby="destinations"
+              class="panther-7"
+            >
+              Destinations
+            </div>
+            <div
+              class="panther-10"
+              id="destinations"
+            >
+              <div
+                class="panther-27"
+              >
+                <svg
+                  aria-label="Loading..."
+                  class="panther-26"
+                  viewBox="0 0 150 150"
+                >
+                  <circle
+                    class="panther-25"
+                    color="current"
+                    cx="75"
+                    cy="75"
+                    r="60"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section
+      class="panther-6"
+    >
+      <div
+        class="panther-35"
+      >
+        <svg
+          class="panther-33"
+          role="presentation"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M12,2 C17.5228475,2 22,6.4771525 22,12 C22,17.5228475 17.5228475,22 12,22 C6.4771525,22 2,17.5228475 2,12 C2,6.4771525 6.4771525,2 12,2 Z M13,15.5 L11,15.5 L11,17.5 L13,17.5 L13,15.5 Z M13,7 L11,7 L11,14 L13,14 L13,7 Z"
+            transform="translate(12.000000, 12.000000) rotate(-180.000000) translate(-12.000000, -12.000000) "
+          />
+        </svg>
+        <p
+          class="panther-34"
+        >
+          No delivery information could be found for this alert
+        </p>
+      </div>
+    </section>
+  </div>
+  <footer
+    id="footer"
+  />
+</div>
+`;
