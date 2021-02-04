@@ -54,7 +54,7 @@ const RuleAlertCard: React.FC<RuleAlertCardProps> = ({
       <Flex align="start" pr={2}>
         {selectionEnabled && (
           <Box transform="translate3d(0,-8px,0)">
-            <SelectCheckbox selectionId={alert.alertId} />
+            <SelectCheckbox selectionItem={alert.alertId} />
           </Box>
         )}
       </Flex>
