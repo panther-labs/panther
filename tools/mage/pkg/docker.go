@@ -33,7 +33,7 @@ import (
 
 // Returns local image ID (truncated SHA256)
 func DockerBuild(log *zap.SugaredLogger, dockerfile string) (string, error) {
-	log.Infof("docker build web server (%s)", dockerfile)
+	log.Infof("docker build --file %s", dockerfile)
 	tmpfile, err := ioutil.TempFile("", "panther-web-image-id")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp image ID file: %s", err)
@@ -42,7 +42,7 @@ func DockerBuild(log *zap.SugaredLogger, dockerfile string) (string, error) {
 
 	// When running without the "-q" flag, docker build has no stdout we can capture.
 	// Instead, we use --iidfile to write the image ID to a tmp file and read it back.
-	err = sh.Run("docker", "build",
+	err = sh.RunV("docker", "build",
 		"--file", dockerfile, "--iidfile", tmpfile.Name(), ".")
 	if err != nil {
 		return "", fmt.Errorf("docker build failed: %v", err)
@@ -58,9 +58,8 @@ func DockerBuild(log *zap.SugaredLogger, dockerfile string) (string, error) {
 }
 
 // Build the web docker image from source and push it to the ecr registry
-func (p Packager) DockerPush(localImageID, tag string) (string, error) {
-	p.Log.Debug("requesting access to remote image repo")
-
+func (p Packager) DockerPush(tag string) (string, error) {
+	p.Log.Debug("requesting ecr auth token")
 	response, err := ecr.NewFromConfig(p.AwsConfig).GetAuthorizationToken(context.TODO(), &ecr.GetAuthorizationTokenInput{})
 	if err != nil {
 		return "", fmt.Errorf("failed to get ecr auth token: %v", err)
@@ -80,16 +79,16 @@ func (p Packager) DockerPush(localImageID, tag string) (string, error) {
 	}
 
 	if tag == "" {
-		tag = localImageID
+		tag = p.DockerImageID
 	}
 	remoteImage := p.EcrRegistry + ":" + tag
 
-	if err = sh.Run("docker", "tag", localImageID, remoteImage); err != nil {
-		return "", fmt.Errorf("docker tag %s %s failed: %v", localImageID, remoteImage, err)
+	if err = sh.RunV("docker", "tag", p.DockerImageID, remoteImage); err != nil {
+		return "", fmt.Errorf("docker tag %s %s failed: %v", p.DockerImageID, remoteImage, err)
 	}
 
 	p.Log.Infof("pushing docker image %s to remote repo", remoteImage)
-	if err := sh.Run("docker", "push", remoteImage); err != nil {
+	if err := sh.RunV("docker", "push", remoteImage); err != nil {
 		return "", err
 	}
 
@@ -119,6 +118,9 @@ func dockerLogin(ecrServer, username, password string) error {
 	// Write password to pipe
 	if _, err = pipeWriter.WriteString(password); err != nil {
 		return fmt.Errorf("failed to write password to pipe: %v", err)
+	}
+	if err = pipeWriter.Close(); err != nil { // writer must be closed now to finish the login
+		return fmt.Errorf("failed to close password pipe: %v", err)
 	}
 
 	err = sh.Run("docker", "login",

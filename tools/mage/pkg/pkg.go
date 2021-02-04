@@ -290,7 +290,7 @@ func (p *Packager) ecsTaskDefinition(r cfnResource) cfnResource {
 	}
 
 	// Either the img does not yet exist or the caller requested release tagging - docker push to ECR
-	containerDef["Image"], r.err = p.DockerPush(p.DockerImageID, tag)
+	containerDef["Image"], r.err = p.DockerPush(tag)
 	return r
 }
 
@@ -385,7 +385,7 @@ func (p *Packager) serverlessFunction(r cfnResource) cfnResource {
 // If no s3 key is chosen by the caller, the hash is used for the key and objects
 // will not be uploaded if they already exist.
 func (p *Packager) UploadAsset(assetPath, s3Key string) (string, string, error) {
-	// Assets can be up to 25 MB or so, they all should fit in memory just fine
+	// Assets can be up to 50 MB or so, they all should fit in memory just fine
 	contents, err := ioutil.ReadFile(assetPath)
 	if err != nil {
 		return "", "", err
