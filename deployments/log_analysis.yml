@@ -155,10 +155,10 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: s3:GetBucketLocation
-                Resource: !Sub arn:aws:s3:::${InputDataBucket}
+                Resource: !Sub arn:${AWS::Partition}:s3:::${InputDataBucket}
               - Effect: Allow
                 Action: s3:GetObject
-                Resource: !Sub arn:aws:s3:::${InputDataBucket}/*
+                Resource: !Sub arn:${AWS::Partition}:s3:::${InputDataBucket}/*
 
   ###### Alerts API #####
   AlertsApiLogGroup:
@@ -737,7 +737,7 @@ Resources:
                 - s3:List*
                 - s3:GetObject
                 - s3:PutObject
-              Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
+              Resource: !Sub arn:${AWS::Partition}:s3:::${AthenaResultsBucket}*
         - Id: SyncPermissions # used in sync
           Version: 2012-10-17
           Statement:

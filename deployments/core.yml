@@ -751,9 +751,9 @@ Resources:
           INPUT_DATA_ROLE_ARN: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/PantherInputDataLogProcessingRole-${AWS::Region}
           INPUT_DATA_BUCKET_NAME: !Ref InputDataBucket
           INPUT_DATA_TOPIC_ARN: !Ref InputDataTopicArn
-          LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-input-data-notifications-queue
+          LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-input-data-notifications-queue
           LOG_PROCESSOR_QUEUE_ARN: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-input-data-notifications-queue
-          SNAPSHOT_POLLERS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-snapshot-queue
+          SNAPSHOT_POLLERS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-snapshot-queue
           TABLE_NAME: !Ref IntegrationsTable
           VERSION: !Ref PantherVersion
       FunctionName: panther-source-api
@@ -816,7 +816,7 @@ Resources:
           Statement:
             - Effect: Allow
               Action: s3:GetObject
-              Resource: arn:aws:s3:::panther-public-cloudformation-templates/*
+              Resource: !Sub arn:${AWS::Partition}:s3:::panther-public-cloudformation-templates/*
         - Id: CreateSqsQueues # Allows Lambda to manage SQS source queues - these are SQS queues users send data to for log analysis
           Version: 2012-10-17
           Statement:
