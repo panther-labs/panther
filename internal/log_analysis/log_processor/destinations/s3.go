@@ -362,7 +362,6 @@ func (bs *s3EventBufferSet) writeEvent(event *parsers.Result) (sendBuffers []*s3
 	if buf == nil {
 		return nil, errors.New(`could not resolve a buffer for the event`)
 	}
-	// Increase metrics counter
 	buf.latencyCounter.Add(float64(event.PantherParseTime.Sub(event.PantherEventTime).Milliseconds()))
 	n, err := buf.addEvent(stream.Buffer())
 	if err != nil {
@@ -513,10 +512,11 @@ func newS3EventBuffer(latencyCounter metrics.Counter, logType string, hour time.
 	buffer := &bytes.Buffer{}
 	writer := gzip.NewWriter(buffer)
 	return &s3EventBuffer{
-		logType:        logType,
-		buffer:         buffer,
-		writer:         writer,
-		hour:           hour,
+		logType: logType,
+		buffer:  buffer,
+		writer:  writer,
+		hour:    hour,
+		// All events in the buffer have the same log type
 		latencyCounter: latencyCounter.With(metrics.LogTypeDimension, logType),
 		createTime:     time.Now(), // used with time.Tick() to check expiration ... no need for UTC()
 	}

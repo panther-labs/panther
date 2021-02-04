@@ -56,5 +56,5 @@ func Setup() {
 	// Note that these don't have all the dimensions
 	BytesProcessed = CWManager.NewCounter(MetricLogProcessorBytesProcessed, metrics.UnitBytes)
 	EventsProcessed = CWManager.NewCounter(MetricLogProcessorEventsProcessed, metrics.UnitCount)
-	EventLatencySeconds = CWManager.NewCounter(MetricLogProcessorEventLatency, metrics.UnitMilliseconds)
+	EventLatencySeconds = CWManager.NewCounterAvg(MetricLogProcessorEventLatency, metrics.UnitSeconds)
 }

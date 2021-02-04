@@ -360,25 +360,6 @@ func TestProcessClassifyFailure(t *testing.T) {
 		{
 			Entry: zapcore.Entry{
 				Level:   zapcore.InfoLevel,
-				Message: common.OpLogNamespace + ":" + common.OpLogComponent + ":" + operationName,
-			},
-			Context: []zapcore.Field{
-				// custom
-				zap.Any(statsKey, *mockParserStats[testLogType]),
-
-				// standard
-				zap.String("namespace", common.OpLogNamespace),
-				zap.String("component", common.OpLogComponent),
-				zap.String("operation", operationName),
-				zap.String("status", oplog.Success),
-				zap.Time("startOp", p.operation.StartTime),
-				zap.Duration("opTime", p.operation.EndTime.Sub(p.operation.StartTime)),
-				zap.Time("endOp", p.operation.EndTime),
-			},
-		},
-		{
-			Entry: zapcore.Entry{
-				Level:   zapcore.InfoLevel,
 				Message: common.OpLogNamespace + ":" + common.OpLogComponent + ":" + "readS3Object",
 			},
 			Context: []zapcore.Field{

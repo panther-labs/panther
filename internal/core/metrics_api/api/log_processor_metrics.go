@@ -104,16 +104,17 @@ func getEventsLatency(input *models.GetMetricsInput, output *models.GetMetricsOu
 	for i, metric := range listMetricsResponse {
 		// Add the latency query
 		index := strconv.Itoa(i)
-		queries = append(queries, &cloudwatch.MetricDataQuery{
-			Id: aws.String("latency_query_" + index),
-			MetricStat: &cloudwatch.MetricStat{
-				Metric: metric,
-				Period: aws.Int64(input.IntervalMinutes * 60), // number of seconds, must be multiple of 60
-				Stat:   aws.String("Sum"),
-				Unit:   aws.String(metrics.UnitMilliseconds),
+		queries = append(queries,
+			&cloudwatch.MetricDataQuery{
+				Id: aws.String("latency_query_" + index),
+				MetricStat: &cloudwatch.MetricStat{
+					Metric: metric,
+					Period: aws.Int64(input.IntervalMinutes * 60), // number of seconds, must be multiple of 60
+					Stat:   aws.String("Average"),
+					Unit:   aws.String(metrics.UnitSeconds),
+				},
+				ReturnData: aws.Bool(false),
 			},
-			ReturnData: aws.Bool(false),
-		},
 			// Add the event count query
 			&cloudwatch.MetricDataQuery{
 				Id: aws.String("events_query_" + index),
