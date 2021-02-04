@@ -130,7 +130,7 @@ const ListAlerts = () => {
       <Panel
         title={
           <Flex align="center" spacing={2} ml={4}>
-            <SelectAllCheckbox selectionIds={alertIds} />
+            <SelectAllCheckbox selectionItems={alertIds} />
             <Text>Alerts</Text>
           </Flex>
         }
