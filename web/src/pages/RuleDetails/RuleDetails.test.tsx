@@ -677,6 +677,7 @@ describe('RuleDetails', () => {
       getByText,
       getByTestId,
       getByAriaLabel,
+      getAllByAriaLabel,
       findAllByText,
       queryByAriaLabel,
       getAllByLabelText,
@@ -702,20 +703,18 @@ describe('RuleDetails', () => {
     alertSummaries.forEach(alertSummary => {
       expect(getByText(alertSummary.title)).toBeInTheDocument();
     });
-    alertSummaries.forEach(alertSummary => {
-      expect(getByAriaLabel(`select ${alertSummary.alertId}`)).toBeInTheDocument();
-    });
+
     // Single select all of 2 Alerts
-    const checkboxForAlert1 = getByAriaLabel(`select ${alertSummaries[0].alertId}`);
+    const [checkboxForAlert1, checkboxForAlert2] = getAllByAriaLabel(`select item`);
+
     fireClickAndMouseEvents(checkboxForAlert1);
     expect(getByText('1 Selected')).toBeInTheDocument();
-    const checkboxForAlert2 = getByAriaLabel(`select ${alertSummaries[1].alertId}`);
+
     fireClickAndMouseEvents(checkboxForAlert2);
     expect(getByText('2 Selected')).toBeInTheDocument();
 
     // Deselect first alert
-    const checkedCheckboxForAlert1 = getByAriaLabel(`unselect ${alertSummaries[0].alertId}`);
-    fireClickAndMouseEvents(checkedCheckboxForAlert1);
+    fireClickAndMouseEvents(checkboxForAlert1);
     expect(getByText('1 Selected')).toBeInTheDocument();
 
     // Expect status field to have Resolved as default
@@ -732,16 +731,13 @@ describe('RuleDetails', () => {
     // Find the alerts with the updated status
     expect(await findAllByText('INVALID')).toHaveLength(1);
     // And expect that the selection has been reset
-    expect(await queryByAriaLabel(`unselect ${alertSummaries[0].alertId}`)).not.toBeInTheDocument();
-    expect(await queryByAriaLabel(`unselect ${alertSummaries[1].alertId}`)).not.toBeInTheDocument();
+    expect(await queryByAriaLabel(`unselect item`)).not.toBeInTheDocument();
 
     // Now select all Rule Matches and updated to Open
     const selectAllCheckbox = getByAriaLabel('select all');
     fireClickAndMouseEvents(selectAllCheckbox);
 
-    alertSummaries.forEach(alertSummary => {
-      expect(getByAriaLabel(`unselect ${alertSummary.alertId}`)).toBeInTheDocument();
-    });
+    expect(getAllByAriaLabel(`unselect item`)).toHaveLength(alertSummaries.length);
     // Expect status field to have Resolved as default
 
     fireClickAndMouseEvents(getAllByLabelText('Status')[0]);
@@ -837,6 +833,7 @@ describe('RuleDetails', () => {
       getByText,
       getByTestId,
       getByAriaLabel,
+      getAllByAriaLabel,
       findAllByText,
       queryByAriaLabel,
       getAllByLabelText,
@@ -859,23 +856,22 @@ describe('RuleDetails', () => {
     const loadingListingInterfaceElement = getByTestId('rule-alerts-listing-loading');
     expect(loadingListingInterfaceElement).toBeTruthy();
     await waitForElementToBeRemoved(loadingListingInterfaceElement);
+
     alertSummaries.forEach(alertSummary => {
       expect(getByText(alertSummary.title)).toBeInTheDocument();
     });
-    alertSummaries.forEach(alertSummary => {
-      expect(getByAriaLabel(`select ${alertSummary.alertId}`)).toBeInTheDocument();
-    });
+
     // Single select all of 2 Alerts
-    const checkboxForAlert1 = getByAriaLabel(`select ${alertSummaries[0].alertId}`);
+    const [checkboxForAlert1, checkboxForAlert2] = getAllByAriaLabel(`select item`);
+
     fireClickAndMouseEvents(checkboxForAlert1);
     expect(getByText('1 Selected')).toBeInTheDocument();
-    const checkboxForAlert2 = getByAriaLabel(`select ${alertSummaries[1].alertId}`);
+
     fireClickAndMouseEvents(checkboxForAlert2);
     expect(getByText('2 Selected')).toBeInTheDocument();
 
     // Deselect first alert
-    const checkedCheckboxForAlert1 = getByAriaLabel(`unselect ${alertSummaries[0].alertId}`);
-    fireClickAndMouseEvents(checkedCheckboxForAlert1);
+    fireClickAndMouseEvents(checkboxForAlert1);
     expect(getByText('1 Selected')).toBeInTheDocument();
 
     // Expect status field to have Resolved as default
@@ -892,16 +888,14 @@ describe('RuleDetails', () => {
     // Find the alerts with the updated status
     expect(await findAllByText('INVALID')).toHaveLength(1);
     // And expect that the selection has been reset
-    expect(await queryByAriaLabel(`unselect ${alertSummaries[0].alertId}`)).not.toBeInTheDocument();
-    expect(await queryByAriaLabel(`unselect ${alertSummaries[1].alertId}`)).not.toBeInTheDocument();
+    expect(await queryByAriaLabel(`unselect item`)).not.toBeInTheDocument();
 
     // Now select all Rule Matches and updated to Open
     const selectAllCheckbox = getByAriaLabel('select all');
     fireClickAndMouseEvents(selectAllCheckbox);
 
-    alertSummaries.forEach(alertSummary => {
-      expect(getByAriaLabel(`unselect ${alertSummary.alertId}`)).toBeInTheDocument();
-    });
+    expect(getAllByAriaLabel(`unselect item`)).toHaveLength(alertSummaries.length);
+
     // Expect status field to have Resolved as default
 
     fireClickAndMouseEvents(getAllByLabelText('Status')[0]);
