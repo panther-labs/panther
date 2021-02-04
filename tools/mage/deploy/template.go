@@ -50,15 +50,11 @@ func Stack(
 ) (map[string]string, error) {
 
 	// 1) Generate packaged template, packaging assets in S3 and ECR
-	packagedTemplate := templatePath
-	if packager != nil {
-		packager.Log.Debugf("packaging %s to s3 bucket %s and ecr registry %s",
-			templatePath, packager.Bucket, packager.EcrRegistry)
-		var err error
-		packagedTemplate, err = packager.Template(templatePath)
-		if err != nil {
-			return nil, err
-		}
+	packager.Log.Debugf("packaging %s to s3 bucket %s and ecr registry %s",
+		templatePath, packager.Bucket, packager.EcrRegistry)
+	packagedTemplate, err := packager.Template(templatePath)
+	if err != nil {
+		return nil, err
 	}
 
 	// 2) If the stack already exists, wait for it to reach a steady state.
