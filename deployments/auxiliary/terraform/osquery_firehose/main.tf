@@ -112,7 +112,7 @@ resource "aws_s3_bucket" "osquery_data_bucket" {
   }
 }
 
-resource aws_s3_bucket_policy "osquery_data_bucket" {
+resource "aws_s3_bucket_policy" "osquery_data_bucket" {
   bucket     = aws_s3_bucket.osquery_data_bucket.id
   depends_on = [aws_s3_bucket_public_access_block.osquery_data_bucket]
 

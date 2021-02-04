@@ -19,30 +19,18 @@ package util
  */
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
-
-	jsoniter "github.com/json-iterator/go"
-	"github.com/magefile/mage/sh"
+	"github.com/aws-cloudformation/rain/cft/parse"
+	"github.com/mitchellh/mapstructure"
 )
 
 // Parse a CloudFormation template and unmarshal into the out parameter.
-// The caller can pass map[string]interface{} or a struct if the format is known.
+// The out parameter must be a map or a pointer to a struct.
 //
 // Short-form functions like "!If" and "!Sub" will be replaced with "Fn::" objects.
 func ParseTemplate(path string, out interface{}) error {
-	// The Go yaml parser doesn't understand short-form functions.
-	// So we first use cfn-flip to flip .yml to .json
-	if strings.ToLower(filepath.Ext(path)) != ".json" {
-		jsonPath := filepath.Join(os.TempDir(), filepath.Base(path)+".json")
-		if err := sh.Run(PipPath("cfn-flip"), "-j", path, jsonPath); err != nil {
-			return fmt.Errorf("failed to flip %s to json: %v", path, err)
-		}
-		defer os.Remove(jsonPath)
-		path = jsonPath
+	body, err := parse.File(path)
+	if err != nil {
+		return err
 	}
-
-	return jsoniter.Unmarshal(MustReadFile(path), out)
+	return mapstructure.Decode(body.Map(), out)
 }

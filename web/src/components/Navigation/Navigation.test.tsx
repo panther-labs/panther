@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent, waitFor } from 'test-utils';
+import { render, fireEvent } from 'test-utils';
 import urls from 'Source/urls';
 import Navigation from './Navigation';
 
@@ -47,28 +47,21 @@ describe('Navigation', () => {
     });
 
     expect(getByText('Alerts')).toBeInTheDocument();
+    expect(getByText('Detections')).toBeInTheDocument();
 
     // Expand
     fireEvent.click(getByText('Log Analysis'));
-    await waitFor(() => {
-      expect(getByText('Overview')).toBeInTheDocument();
-    });
-    expect(getByText('Rules')).toBeInTheDocument();
+    expect(getByText('Overview')).toBeInTheDocument();
     expect(getByText('Sources')).toBeInTheDocument();
 
     expect(getByText('Cloud Security')).toBeInTheDocument();
 
     fireEvent.click(getByText('Cloud Security'));
-    await waitFor(() => {
-      expect(getByText('Policies')).toBeInTheDocument();
-    });
     expect(getByText('Resources')).toBeInTheDocument();
     expect(getByText('Settings')).toBeInTheDocument();
 
     fireEvent.click(getByText('Settings'));
-    await waitFor(() => {
-      expect(getByText('General')).toBeInTheDocument();
-    });
+    expect(getByText('General')).toBeInTheDocument();
     expect(getByText('Global Modules')).toBeInTheDocument();
     expect(getByText('Bulk Uploader')).toBeInTheDocument();
 

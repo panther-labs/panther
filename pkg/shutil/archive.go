@@ -57,12 +57,14 @@ func ZipDirectory(root, savefile string, preserveModTime bool) error {
 		if err != nil {
 			return err
 		}
+		defer file.Close()
 		header, err := zip.FileInfoHeader(info)
 		if err != nil {
 			return err
 		}
 
 		if !preserveModTime {
+			// All 3 of these have to be reset to guarantee zip hashes are idempotent
 			header.Modified = time.Time{}
 			header.ModifiedDate = 0
 			header.ModifiedTime = 0

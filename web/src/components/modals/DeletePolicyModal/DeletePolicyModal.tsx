@@ -48,11 +48,11 @@ const DeletePolicyModal: React.FC<DeletePolicyModalProps> = ({ policy, ...rest }
     },
     update: async cache => {
       cache.modify('ROOT_QUERY', {
-        policies: (data, helpers) => {
+        detections: (data, helpers) => {
           const policyRef = helpers.toReference({ __typename: 'Policy', id: policy.id });
           return {
             ...data,
-            policies: data.policies.filter(p => p.__ref !== policyRef.__ref),
+            detections: data.detections.filter(p => p.__ref !== policyRef.__ref),
           };
         },
         policy: (data, helpers) => {

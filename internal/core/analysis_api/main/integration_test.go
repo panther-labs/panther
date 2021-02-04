@@ -279,6 +279,7 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ListGlobals", listGlobals)
 		t.Run("ListDataModels", listDataModels)
 		t.Run("ListEnabledDataModels", listEnabledDataModels)
+		t.Run("ListSortedDataModels", listSortedDataModels)
 		t.Run("ListDetections", listDetections)
 		t.Run("ListDetectionsFiltered", listDetectionsFiltered)
 		t.Run("ListDetectionsComplianceProjection", listDetectionsComplianceProjection)
@@ -1989,6 +1990,52 @@ func listEnabledDataModels(t *testing.T) {
 		},
 		Models: []models.DataModel{
 			*dataModel, *dataModelTwo, *dataModelFromBulkYML,
+		},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func listSortedDataModels(t *testing.T) {
+	t.Parallel()
+	input := models.LambdaInput{
+		ListDataModels: &models.ListDataModelsInput{
+			SortBy: "enabled",
+		},
+	}
+	var result models.ListDataModelsOutput
+	statusCode, err := apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected := models.ListDataModelsOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 4,
+			TotalPages: 1,
+		},
+		Models: []models.DataModel{
+			*dataModel, *dataModelTwo, *dataModelFromBulkYML, *dataModelDisabled,
+		},
+	}
+	assert.Equal(t, expected, result)
+
+	input = models.LambdaInput{
+		ListDataModels: &models.ListDataModelsInput{
+			SortBy: "lastModified",
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+
+	expected = models.ListDataModelsOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 4,
+			TotalPages: 1,
+		},
+		Models: []models.DataModel{
+			*dataModel, *dataModelTwo, *dataModelDisabled, *dataModelFromBulkYML,
 		},
 	}
 	assert.Equal(t, expected, result)

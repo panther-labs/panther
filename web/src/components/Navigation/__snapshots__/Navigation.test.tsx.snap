@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Navigation renders with active links 1`] = `
-.panther-43 {
+.panther-48 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -15,7 +15,7 @@ exports[`Navigation renders with active links 1`] = `
   background-color: #141c2a;
 }
 
-.panther-42 {
+.panther-47 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -40,7 +40,7 @@ exports[`Navigation renders with active links 1`] = `
   display: block;
 }
 
-.panther-36 {
+.panther-41 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -119,110 +119,7 @@ exports[`Navigation renders with active links 1`] = `
 
 
 
-.panther-12 {
-  font-size: 0.875rem;
-  border-radius: 2px;
-  background-color: transparent;
-}
-
-.panther-11 {
-  padding-left: 16px;
-  padding-right: 16px;
-  padding-top: 12px;
-  padding-bottom: 12px;
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-align-items: center;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-  width: 100%;
-  cursor: pointer;
-  color: #f6f6f6;
-  -webkit-text-decoration: none;
-  text-decoration: none;
-  background-color: transparent;
-  -webkit-transition: all 0.1s linear;
-  transition: all 0.1s linear;
-}
-
-.panther-11:hover {
-  color: #f6f6f6;
-  background-color: #1d2a3f;
-}
-
 .panther-10 {
-  display: inline-block;
-  vertical-align: sub;
-  -webkit-flex-shrink: 0;
-  -ms-flex-negative: 0;
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  color: currentColor;
-  -webkit-transition: -webkit-transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 80ms;
-  transition: transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 80ms;
-  -webkit-transform: rotate(0deg);
-  -moz-transform: rotate(0deg);
-  -ms-transform: rotate(0deg);
-  transform: rotate(0deg);
-  justify-self: flex-end;
-  margin-left: auto;
-}
-
-.panther-30 {
-  margin-top: auto;
-}
-
-.panther-29 {
-  -webkit-transition: color 0.1s ease-out;
-  transition: color 0.1s ease-out;
-  font-weight: 500;
-  -webkit-text-decoration: none;
-  text-decoration: none;
-  color: #7fd3ff;
-}
-
-.panther-29:hover {
-  color: #ace2ff;
-}
-
-.panther-29:focus {
-  color: #ace2ff;
-}
-
-.panther-29:active,
-.panther-29[data-active=true] {
-  color: #11a5f3;
-}
-
-.panther-28 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-align-items: center;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-  font-size: 0.875rem;
-  font-weight: 400;
-  border-radius: 2px;
-  padding-left: 16px;
-  padding-right: 16px;
-  padding-top: 12px;
-  padding-bottom: 12px;
-  color: #f6f6f6;
-}
-
-.panther-28:hover {
-  color: #f6f6f6;
-  background-color: #1d2a3f;
-}
-
-.panther-33 {
   border-radius: 2px;
   color: #f6f6f6;
   font-size: 0.875rem;
@@ -246,21 +143,33 @@ exports[`Navigation renders with active links 1`] = `
   white-space: nowrap;
 }
 
-.panther-33:hover {
+.panther-10:hover {
   background-color: #1d2a3f;
 }
 
-.panther-33:focus {
+.panther-10:focus {
   background-color: #1d2a3f;
 }
 
-.panther-41 {
-  padding: 16px;
-  background-color: #0f1623;
-  margin-top: 16px;
+.panther-17 {
+  font-size: 0.875rem;
+  border-radius: 2px;
+  background-color: transparent;
 }
 
-.panther-40 {
+.panther-16 {
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
   width: 100%;
   cursor: pointer;
   color: #f6f6f6;
@@ -271,7 +180,98 @@ exports[`Navigation renders with active links 1`] = `
   transition: all 0.1s linear;
 }
 
-.panther-39 {
+.panther-16:hover {
+  color: #f6f6f6;
+  background-color: #1d2a3f;
+}
+
+.panther-15 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+  -webkit-transition: -webkit-transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 80ms;
+  transition: transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 80ms;
+  -webkit-transform: rotate(0deg);
+  -moz-transform: rotate(0deg);
+  -ms-transform: rotate(0deg);
+  transform: rotate(0deg);
+  justify-self: flex-end;
+  margin-left: auto;
+}
+
+.panther-35 {
+  margin-top: auto;
+}
+
+.panther-34 {
+  -webkit-transition: color 0.1s ease-out;
+  transition: color 0.1s ease-out;
+  font-weight: 500;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  color: #7fd3ff;
+}
+
+.panther-34:hover {
+  color: #ace2ff;
+}
+
+.panther-34:focus {
+  color: #ace2ff;
+}
+
+.panther-34:active,
+.panther-34[data-active=true] {
+  color: #11a5f3;
+}
+
+.panther-33 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: 400;
+  border-radius: 2px;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  color: #f6f6f6;
+}
+
+.panther-33:hover {
+  color: #f6f6f6;
+  background-color: #1d2a3f;
+}
+
+.panther-46 {
+  padding: 16px;
+  background-color: #0f1623;
+  margin-top: 16px;
+}
+
+.panther-45 {
+  width: 100%;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: transparent;
+  -webkit-transition: all 0.1s linear;
+  transition: all 0.1s linear;
+}
+
+.panther-44 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -282,11 +282,11 @@ exports[`Navigation renders with active links 1`] = `
   align-items: center;
 }
 
-.panther-39>*:not(:last-child) {
+.panther-44>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-37 {
+.panther-42 {
   width: 40px;
   display: -webkit-box;
   display: -webkit-flex;
@@ -312,11 +312,11 @@ exports[`Navigation renders with active links 1`] = `
   flex-shrink: 0;
 }
 
-.panther-37:hover {
+.panther-42:hover {
   background-color: #7268a6;
 }
 
-.panther-38 {
+.panther-43 {
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -328,11 +328,11 @@ exports[`Navigation renders with active links 1`] = `
     id="main-header"
   />
   <aside
-    class="panther-43"
+    class="panther-48"
   >
     <nav
       aria-label="Main"
-      class="panther-42"
+      class="panther-47"
     >
       <a
         class="panther-1"
@@ -347,7 +347,7 @@ exports[`Navigation renders with active links 1`] = `
         />
       </a>
       <ul
-        class="panther-36"
+        class="panther-41"
       >
         <hr
           aria-orientation="horizontal"
@@ -401,11 +401,38 @@ exports[`Navigation renders with active links 1`] = `
         <li
           class="panther-7"
         >
+          <a
+            class="panther-6"
+            href="/detections/?page=1&sortBy=lastModified&sortDir=descending"
+          >
+            <div
+              class="panther-10"
+            >
+              <svg
+                class="panther-3"
+                role="presentation"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M11.1086438,2.40803254 C11.1987128,2.95292337 10.8300069,3.46766002 10.285116,3.55772902 C6.23075839,4.22790349 3.21497112,7.75038391 3.21497112,11.9056486 C3.21497112,16.5788757 7.00337026,20.3672749 11.6765974,20.3672749 C15.8494723,20.3672749 19.3820576,17.3263384 20.0321756,13.2499676 C20.1191573,12.7045754 20.6317975,12.3329602 21.1771897,12.4199418 C21.7225819,12.5069234 22.0941971,13.0195637 22.0072155,13.5649559 C21.2028724,18.6083491 16.8362157,22.3672749 11.6765974,22.3672749 C5.89880076,22.3672749 1.21497112,17.6834452 1.21497112,11.9056486 C1.21497112,6.76781149 4.94279633,2.4136611 9.95894734,1.58450476 C10.5038382,1.49443576 11.0185748,1.86314171 11.1086438,2.40803254 Z M10.6790525,6.67262211 C10.8833183,7.18574385 10.6329412,7.76730137 10.1198194,7.97156719 C8.52530651,8.6063181 7.45695409,10.1527023 7.45695409,11.8982089 C7.45695409,14.2312374 9.34824734,16.1225306 11.6812758,16.1225306 C13.5033202,16.1225306 15.102962,14.9582991 15.681088,13.2614427 C15.8591999,12.7386668 16.4273817,12.4592615 16.9501576,12.6373734 C17.4729334,12.8154853 17.7523388,13.3836671 17.5742269,13.906443 C16.7220767,16.4075868 14.3657622,18.1225306 11.6812758,18.1225306 C8.24367784,18.1225306 5.45695409,15.3358069 5.45695409,11.8982089 C5.45695409,9.32678302 7.03090626,7.04856962 9.38010744,6.113389 C9.89322918,5.90912318 10.4747867,6.15950037 10.6790525,6.67262211 Z M14.755516,1.59885578 C18.2646169,2.584397 21.007297,5.32372742 21.9988415,8.8310883 C22.0710616,9.09277549 22.0285796,9.3731686 21.883289,9.60257719 C21.7580214,9.7999421 21.5665951,9.94361931 21.3459109,10.0095355 L21.2333016,10.0359021 L13.931282,11.3228349 C13.9471912,11.4267313 13.9554429,11.5331492 13.9554429,11.6414944 C13.9554429,12.7947219 13.0205672,13.7295976 11.8673397,13.7295976 C10.7141121,13.7295976 9.77923644,12.7947219 9.77923644,11.6414944 C9.77923644,10.4882668 10.7141121,9.55339115 11.8673397,9.55339115 C12.0068911,9.55339115 12.1432451,9.5670808 12.2751321,9.59319043 L13.5507239,2.35333968 C13.5991418,2.08741103 13.7580334,1.85375228 13.987442,1.71016038 C14.2159805,1.56741895 14.4955254,1.52663568 14.755516,1.59885578 Z"
+                />
+              </svg>
+              <div
+                class="panther-4"
+              >
+                Detections
+              </div>
+            </div>
+          </a>
+        </li>
+        <li
+          class="panther-7"
+        >
           <div
-            class="panther-12"
+            class="panther-17"
           >
             <button
-              class="panther-11"
+              class="panther-16"
               type="button"
             >
               <svg
@@ -424,7 +451,7 @@ exports[`Navigation renders with active links 1`] = `
                 Log Analysis
               </div>
               <svg
-                class="panther-10"
+                class="panther-15"
                 role="presentation"
                 viewBox="0 0 24 24"
               >
@@ -439,10 +466,10 @@ exports[`Navigation renders with active links 1`] = `
           class="panther-7"
         >
           <div
-            class="panther-12"
+            class="panther-17"
           >
             <button
-              class="panther-11"
+              class="panther-16"
               type="button"
             >
               <svg
@@ -461,7 +488,7 @@ exports[`Navigation renders with active links 1`] = `
                 Cloud Security
               </div>
               <svg
-                class="panther-10"
+                class="panther-15"
                 role="presentation"
                 viewBox="0 0 24 24"
               >
@@ -476,10 +503,10 @@ exports[`Navigation renders with active links 1`] = `
           class="panther-7"
         >
           <div
-            class="panther-12"
+            class="panther-17"
           >
             <button
-              class="panther-11"
+              class="panther-16"
               type="button"
             >
               <svg
@@ -497,7 +524,7 @@ exports[`Navigation renders with active links 1`] = `
                 Settings
               </div>
               <svg
-                class="panther-10"
+                class="panther-15"
                 role="presentation"
                 viewBox="0 0 24 24"
               >
@@ -509,16 +536,16 @@ exports[`Navigation renders with active links 1`] = `
           </div>
         </li>
         <li
-          class="panther-30"
+          class="panther-35"
         >
           <a
-            class="panther-29"
+            class="panther-34"
             href="https://docs.runpanther.io/v/release-1.2"
             rel="noopener noreferrer"
             target="_blank"
           >
             <div
-              class="panther-28"
+              class="panther-33"
             >
               <svg
                 class="panther-3"
@@ -545,7 +572,7 @@ exports[`Navigation renders with active links 1`] = `
             href="/support"
           >
             <div
-              class="panther-33"
+              class="panther-10"
             >
               <svg
                 class="panther-3"
@@ -566,24 +593,24 @@ exports[`Navigation renders with active links 1`] = `
         </li>
       </ul>
       <div
-        class="panther-41"
+        class="panther-46"
       >
         <button
           aria-describedby="1"
           aria-label="Toggle User Menu"
-          class="panther-40"
+          class="panther-45"
           type="button"
         >
           <div
-            class="panther-39"
+            class="panther-44"
           >
             <div
-              class="panther-37"
+              class="panther-42"
             >
               TT
             </div>
             <div
-              class="panther-38"
+              class="panther-43"
             >
               T. TestSurname
             </div>
