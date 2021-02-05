@@ -211,14 +211,17 @@ func TestAuditLogParserDataAccess(t *testing.T) {
 		Payload: AuditLog{
 			PayloadType: aws.String("type.googleapis.com/google.cloud.audit.AuditLog"),
 			AuthenticationInfo: &AuthenticationInfo{
-				PrincipalSubject: aws.String("serviceAccount:production.svc.id.goog[webservice]"),
+				PrincipalSubject:             aws.String("serviceAccount:production.svc.id.goog[webservice]"),
+				ServiceAccountDelegationInfo: []ServiceAccountDelegationInfo{{}},
 			},
 			AuthorizationInfo: []AuthorizationInfo{
 				{
-					Granted:    aws.Bool(true),
-					Permission: aws.String("iam.serviceAccounts.getAccessToken"),
+					Granted:            aws.Bool(true),
+					Permission:         aws.String("iam.serviceAccounts.getAccessToken"),
+					ResourceAttributes: &ResourceAttributes{},
 				},
 			},
+			Status:       &Status{},
 			MethodName:   aws.String("GenerateAccessToken"),
 			ResourceName: aws.String("projects/-/serviceAccounts/1"),
 			ServiceName:  aws.String("iamcredentials.googleapis.com"),
