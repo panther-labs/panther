@@ -40,6 +40,26 @@ Parameters:
     # Example: "arn:aws:acm:us-west-2:111122223333:certificate/6e51b91b-0d7d-4592-89a3-c113c78e3ab3" or
     # "arn:aws:iam::111122223333:server-certificate/panther/us-west-2/MyCert"
     AllowedPattern: '^((arn:(aws|aws-cn|aws-us-gov):acm:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:certificate\/[a-f0-9-]{36})|(arn:(aws|aws-cn|aws-us-gov):iam::\d{12}:server-certificate\/\S+))?$'
+  CloudSecurityMaxReadCapacity:
+    Type: Number
+    Description: Maximum read capacity units to provision for the resources-table
+    Default: 0
+    MinValue: 0
+  CloudSecurityMinReadCapacity:
+    Type: Number
+    Description: Minimum read capacity units to provision for the resources-table
+    Default: 0
+    MinValue: 0
+  CloudSecurityMaxWriteCapacity:
+    Type: Number
+    Description: Maximum write capacity units to provision for the resources-table
+    Default: 0
+    MinValue: 0
+  CloudSecurityMinWriteCapacity:
+    Type: Number
+    Description: Minimum write capacity units to provision for resources-table
+    Default: 0
+    MinValue: 0
   CloudWatchLogRetentionDays:
     Type: Number
     Description: Number of days to retain CloudWatch logs (e.g. Lambda execution logs)
@@ -316,6 +336,10 @@ Resources:
         PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TracingMode: !Ref TracingMode
+        CloudSecurityMaxReadCapacity: !Ref CloudSecurityMaxReadCapacity
+        CloudSecurityMinReadCapacity: !Ref CloudSecurityMinReadCapacity
+        CloudSecurityMaxWriteCapacity: !Ref CloudSecurityMaxWriteCapacity
+        CloudSecurityMinWriteCapacity: !Ref CloudSecurityMinWriteCapacity
       Tags:
         - Key: Application
           Value: Panther

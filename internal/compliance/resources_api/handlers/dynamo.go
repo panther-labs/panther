@@ -113,15 +113,13 @@ type scanResult struct {
 }
 
 // Wrapper around dynamoClient.ScanPages that accepts a handler function to process each item.
-func scanPages(inputs []*dynamodb.ScanInput, includeCompliance bool, requiredComplianceStatus compliancemodels.ComplianceStatus) ([]models.Resource, error) {
+func scanPages(inputs []*dynamodb.ScanInput, includeCompliance bool,
+	requiredComplianceStatus compliancemodels.ComplianceStatus) ([]models.Resource, error) {
 
-	zap.L().Info("scanning pages")
 	pages := 0
-
 	results := make(chan scanResult)
 	// The scan inputs have already been broken up into segments, scan each segment in parallel
-	for j, scanInput := range inputs {
-		zap.L().Info("starting segment scan go routine", zap.Any("segment", j))
+	for _, scanInput := range inputs {
 		go func(input *dynamodb.ScanInput) {
 			// Recover from panic so we don't block forever when waiting for routines to finish.
 			defer func() {
@@ -179,7 +177,6 @@ func scanPages(inputs []*dynamodb.ScanInput, includeCompliance bool, requiredCom
 				results <- scanResult{nil, err}
 			}
 
-			zap.L().Info("segment scan complete", zap.Any("segment", j))
 			// Report results
 			results <- scanResult{
 				resources: segmentResources,
@@ -195,11 +192,9 @@ func scanPages(inputs []*dynamodb.ScanInput, includeCompliance bool, requiredCom
 	for range inputs {
 		result := <-results
 		if result.err != nil {
-			zap.L().Info("recieved a page of results, but an error occurred", zap.Error(result.err))
 			err = result.err
 			continue
 		}
-		zap.L().Info("recieved a page of results", zap.Any("resources", len(result.resources)))
 		mergedResources = append(mergedResources, result.resources...)
 	}
 

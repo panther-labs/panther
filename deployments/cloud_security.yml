@@ -26,6 +26,22 @@ Parameters:
     Description: SNS topic for CloudWatch alarms
     # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
+  CloudSecurityMaxReadCapacity:
+    Type: Number
+    Description: Maximum read capacity units to provision for the resources-table
+    MinValue: 0
+  CloudSecurityMinReadCapacity:
+    Type: Number
+    Description: Minimum read capacity units to provision for the resources-table
+    MinValue: 0
+  CloudSecurityMaxWriteCapacity:
+    Type: Number
+    Description: Maximum write capacity units to provision for the resources-table
+    MinValue: 0
+  CloudSecurityMinWriteCapacity:
+    Type: Number
+    Description: Minimum write capacity units to provision for resources-table
+    MinValue: 0
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
@@ -114,6 +130,7 @@ Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
   DebugEnabled: !Equals [!Ref Debug, true]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
+  ProvisionResourceTableCapacity: !Not [!Equals [0, !Ref CloudSecurityMaxReadCapacity]]
 
 Resources:
   ##### Alert Processor #####
@@ -992,7 +1009,10 @@ Resources:
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
-      BillingMode: PAY_PER_REQUEST
+      BillingMode: !If
+        - ProvisionResourceTableCapacity
+        - PROVISIONED
+        - PAY_PER_REQUEST
       KeySchema:
         - AttributeName: id
           KeyType: HASH
@@ -1007,53 +1027,54 @@ Resources:
         Enabled: true
 
   ResourcesTableWriteCapacityScalableTarget:
-    Type: "AWS::ApplicationAutoScaling::ScalableTarget"
+    Condition: ProvisionResourceTableCapacity
+    Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
     Properties:
-      MaxCapacity: 100
-      MinCapacity: 5
-      ResourceId: !Sub table/${ResourcesTable} # table name
+      MaxCapacity: !Ref CloudSecurityMaxWriteCapacity
+      MinCapacity: !Ref CloudSecurityMinWriteCapacity
+      ResourceId: !Sub table/${ResourcesTable}
       RoleARN: !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_DynamoDBTable
-      ScalableDimension: "dynamodb:table:WriteCapacityUnits"
-      #ScalableDimension: "dynamodb:table:ReadCapacityUnits"
+      ScalableDimension: 'dynamodb:table:WriteCapacityUnits'
       ServiceNamespace: dynamodb
 
   ResourcesTableWriteScalingPolicy:
-        Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
-        Properties:
-          PolicyName: WriteAutoScalingPolicy
-          PolicyType: TargetTrackingScaling
-          ScalingTargetId: !Ref ResourcesTableWriteCapacityScalableTarget
-          TargetTrackingScalingPolicyConfiguration:
-            TargetValue: 70
-            ScaleInCooldown: 60
-            ScaleOutCooldown: 60
-            PredefinedMetricSpecification:
-            PredefinedMetricType: DynamoDBWriteCapacityUtilization
-
-  ResourcesTableWriteCapacityScalableTarget:
-    Type: "AWS::ApplicationAutoScaling::ScalableTarget"
+    Condition: ProvisionResourceTableCapacity
+    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
     Properties:
-      MaxCapacity: 100
-      MinCapacity: 5
-      ResourceId: !Sub table/${ResourcesTable} # table name
-      RoleARN: !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_DynamoDBTable
-      ScalableDimension: "dynamodb:table:WriteCapacityUnits"
-      #ScalableDimension: "dynamodb:table:ReadCapacityUnits"
-      ServiceNamespace: dynamodb
-
-  ResourcesTableWriteScalingPolicy:
-      Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
-      Properties:
-        PolicyName: WriteAutoScalingPolicy
-        PolicyType: TargetTrackingScaling
-        ScalingTargetId: !Ref ResourcesTableWriteCapacityScalableTarget
-        TargetTrackingScalingPolicyConfiguration:
-          TargetValue: 70
-          ScaleInCooldown: 60
-          ScaleOutCooldown: 60
-          PredefinedMetricSpecification:
+      PolicyName: WriteAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ResourcesTableWriteCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
           PredefinedMetricType: DynamoDBWriteCapacityUtilization
 
+  ResourcesTableReadCapacityScalableTarget:
+    Condition: ProvisionResourceTableCapacity
+    Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+    Properties:
+      MaxCapacity: !Ref CloudSecurityMaxReadCapacity
+      MinCapacity: !Ref CloudSecurityMinReadCapacity
+      ResourceId: !Sub table/${ResourcesTable}
+      RoleARN: !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_DynamoDBTable
+      ScalableDimension: 'dynamodb:table:ReadCapacityUnits'
+      ServiceNamespace: dynamodb
+
+  ResourcesTableReadScalingPolicy:
+    Condition: ProvisionResourceTableCapacity
+    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+    Properties:
+      PolicyName: ReadAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ResourcesTableReadCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBReadCapacityUtilization
 
   ResourcesTableAlarms:
     Type: Custom::DynamoDBAlarms
