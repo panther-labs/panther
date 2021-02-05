@@ -51,43 +51,53 @@ func (API) AddResources(input *models.AddResourcesInput) *events.APIGatewayProxy
 	now := time.Now()
 	writeRequests := make([]*dynamodb.WriteRequest, 0, len(input.Resources))
 	sqsEntries := make([]*sqs.SendMessageBatchRequestEntry, 0, len(input.Resources))
-	for i, r := range input.Resources {
-		item := resourceItem{
-			Attributes:      r.Attributes,
-			Deleted:         false,
-			ID:              r.ID,
-			IntegrationID:   r.IntegrationID,
-			IntegrationType: r.IntegrationType,
-			LastModified:    now,
-			Type:            r.Type,
-			LowerID:         strings.ToLower(r.ID),
-			ExpiresAt:       time.Now().Unix() + deleteMissWindow,
-		}
+	entryExpansionRatio := 1
+	for j := 0; j < entryExpansionRatio; j++ {
+		for i, r := range input.Resources {
+			idOffset := ""
+			if j > 0 {
+				idOffset = "_" + strconv.Itoa(j)
+			}
+			item := resourceItem{
+				Attributes:      r.Attributes,
+				Deleted:         false,
+				ID:              r.ID + idOffset,
+				IntegrationID:   r.IntegrationID,
+				IntegrationType: r.IntegrationType,
+				LastModified:    now,
+				Type:            r.Type,
+				LowerID:         strings.ToLower(r.ID),
+				ExpiresAt:       time.Now().Unix() + deleteMissWindow,
+			}
 
-		marshalled, err := dynamodbattribute.MarshalMap(item)
-		if err != nil {
-			zap.L().Error("dynamodbattribute.MarshalMap failed", zap.Error(err))
-			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
-		}
-		itemSize := dynamodbbatch.GetDynamoItemSize(marshalled)
-		if itemSize > maxDynamoItemSize {
-			zap.L().Warn("item too large to send to dynamo",
-				zap.String("id", r.ID),
-				zap.String("type", r.Type),
-				zap.Int("size", itemSize))
-			continue
-		}
-		writeRequests = append(writeRequests, &dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: marshalled}})
+			marshalled, err := dynamodbattribute.MarshalMap(item)
+			if err != nil {
+				zap.L().Error("dynamodbattribute.MarshalMap failed", zap.Error(err))
+				return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+			}
+			itemSize := dynamodbbatch.GetDynamoItemSize(marshalled)
+			if itemSize > maxDynamoItemSize {
+				zap.L().Warn("item too large to send to dynamo",
+					zap.String("id", r.ID),
+					zap.String("type", r.Type),
+					zap.Int("size", itemSize))
+				continue
+			}
+			writeRequests = append(writeRequests, &dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: marshalled}})
 
-		body, err := jsoniter.MarshalToString(item.Resource(""))
-		if err != nil {
-			zap.L().Error("jsoniter.MarshalToString(resource) failed", zap.Error(err))
-			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+			body, err := jsoniter.MarshalToString(item.Resource(""))
+			if err != nil {
+				zap.L().Error("jsoniter.MarshalToString(resource) failed", zap.Error(err))
+				return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
+			}
+			// Only expand dynamo, not SQS and other processing pipelines
+			if j == 0 {
+				sqsEntries = append(sqsEntries, &sqs.SendMessageBatchRequestEntry{
+					Id:          aws.String(strconv.Itoa(i)),
+					MessageBody: aws.String(body),
+				})
+			}
 		}
-		sqsEntries = append(sqsEntries, &sqs.SendMessageBatchRequestEntry{
-			Id:          aws.String(strconv.Itoa(i)),
-			MessageBody: aws.String(body),
-		})
 	}
 
 	// If everything was too big to send, send a generic message back

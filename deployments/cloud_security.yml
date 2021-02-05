@@ -909,6 +909,7 @@ Resources:
           DEBUG: !Ref Debug
           RESOURCES_QUEUE_URL: !Ref ResourcesQueue
           RESOURCES_TABLE: !Ref ResourcesTable
+          SCAN_SEGMENTS: 5
       FunctionName: panther-resources-api
       # <cfndoc>
       # The `panther-resources-api` lambda implements the resources API.
@@ -1004,6 +1005,55 @@ Resources:
       TimeToLiveSpecification: # Deleted resources are expired after 30 days
         AttributeName: expiresAt
         Enabled: true
+
+  ResourcesTableWriteCapacityScalableTarget:
+    Type: "AWS::ApplicationAutoScaling::ScalableTarget"
+    Properties:
+      MaxCapacity: 100
+      MinCapacity: 5
+      ResourceId: !Sub table/${ResourcesTable} # table name
+      RoleARN: !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_DynamoDBTable
+      ScalableDimension: "dynamodb:table:WriteCapacityUnits"
+      #ScalableDimension: "dynamodb:table:ReadCapacityUnits"
+      ServiceNamespace: dynamodb
+
+  ResourcesTableWriteScalingPolicy:
+        Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
+        Properties:
+          PolicyName: WriteAutoScalingPolicy
+          PolicyType: TargetTrackingScaling
+          ScalingTargetId: !Ref ResourcesTableWriteCapacityScalableTarget
+          TargetTrackingScalingPolicyConfiguration:
+            TargetValue: 70
+            ScaleInCooldown: 60
+            ScaleOutCooldown: 60
+            PredefinedMetricSpecification:
+            PredefinedMetricType: DynamoDBWriteCapacityUtilization
+
+  ResourcesTableWriteCapacityScalableTarget:
+    Type: "AWS::ApplicationAutoScaling::ScalableTarget"
+    Properties:
+      MaxCapacity: 100
+      MinCapacity: 5
+      ResourceId: !Sub table/${ResourcesTable} # table name
+      RoleARN: !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_DynamoDBTable
+      ScalableDimension: "dynamodb:table:WriteCapacityUnits"
+      #ScalableDimension: "dynamodb:table:ReadCapacityUnits"
+      ServiceNamespace: dynamodb
+
+  ResourcesTableWriteScalingPolicy:
+      Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
+      Properties:
+        PolicyName: WriteAutoScalingPolicy
+        PolicyType: TargetTrackingScaling
+        ScalingTargetId: !Ref ResourcesTableWriteCapacityScalableTarget
+        TargetTrackingScalingPolicyConfiguration:
+          TargetValue: 70
+          ScaleInCooldown: 60
+          ScaleOutCooldown: 60
+          PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBWriteCapacityUtilization
+
 
   ResourcesTableAlarms:
     Type: Custom::DynamoDBAlarms
