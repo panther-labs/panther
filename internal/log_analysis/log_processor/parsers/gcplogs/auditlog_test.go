@@ -98,7 +98,7 @@ func TestAuditLogParserActivity(t *testing.T) {
 				"authorization.k8s.io/decision": "allow",
 			},
 			InsertID: aws.String("dc7605e6-1e19-4571-8a7a-d23682efcea1"),
-			Resource: MonitoredResource{
+			Resource: &MonitoredResource{
 				Type: aws.String("k8s_cluster"),
 				Labels: Labels{
 					"project_id":   "some-project-id",
@@ -134,6 +134,103 @@ func TestAuditLogParserActivity(t *testing.T) {
 			Status: &Status{
 				Code: aws.Int32(0),
 			},
+		},
+	}
+
+	entry.SetCoreFields(TypeAuditLog, entry.Timestamp, entry)
+	entry.AppendAnyIPAddress("35.238.150.117")
+	testutil.CheckPantherParser(t, log, NewAuditLogParser(), &entry.PantherLog)
+}
+
+func TestAuditLogParserDataAccess(t *testing.T) {
+	log := `{
+		"insertId":"ptjpqedufb0",
+		"logName":"projects/myproject/logs/cloudaudit.googleapis.com%2Fdata_access",
+		"severity":"INFO",
+		"timestamp":"2021-02-03T09:43:54.522742715Z",
+		"receiveTimestamp":"2021-02-03T09:43:55.952765323Z",
+		"resource":{
+			"labels":{
+				"email_id":"test@runpanther.io",
+				"project_id":"production",
+				"unique_id":"999999"
+			},
+			"type":"service_account"
+		},
+
+		"operation":{
+			"first":true,
+			"id":"16864425197057211077",
+			"last":true,
+			"producer":"iamcredentials.googleapis.com"
+		},
+		"protoPayload":{
+			"@type":"type.googleapis.com/google.cloud.audit.AuditLog",
+			"authenticationInfo":{
+				"principalSubject":"serviceAccount:production.svc.id.goog[webservice]",
+				"serviceAccountDelegationInfo":[{}]},
+			"authorizationInfo":[
+				{"granted":true,"permission":"iam.serviceAccounts.getAccessToken","resourceAttributes":{}}
+			],
+			"methodName":"GenerateAccessToken",
+			"request":{
+				"@type":"type.googleapis.com/google.iam.credentials.v1.GenerateAccessTokenRequest",
+				"name":"projects/-/serviceAccounts/gitlab-webservice@gitlab-production.iam.gserviceaccount.com"
+			},
+			"resourceName":"projects/-/serviceAccounts/10796",
+			"serviceName":"iamcredentials.googleapis.com","status":{}
+		}
+}`
+
+	ts, err := time.Parse(time.RFC3339Nano, "2021-02-03T09:43:54.522742715Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tsReceive, err := time.Parse(time.RFC3339Nano, "2021-02-03T09:43:55.952765323Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entry := &LogEntryAuditLog{
+		LogEntry: LogEntry{
+			LogName:          aws.String("projects/myproject/logs/cloudaudit.googleapis.com%2Fdata_access"),
+			Severity:         aws.String("INFO"),
+			Timestamp:        (*timestamp.RFC3339)(&ts),
+			ReceiveTimestamp: (*timestamp.RFC3339)(&tsReceive),
+			Operation: &LogEntryOperation{
+				ID:       aws.String("16864425197057211077"),
+				Producer: aws.String("iamcredentials.googleapis.com"),
+				First:    aws.Bool(true),
+				Last:     aws.Bool(true),
+			},
+			InsertID: aws.String("ptjpqedufb0"),
+			Resource: &MonitoredResource{
+				Type: aws.String("service_account"),
+				Labels: map[string]string{
+					"email_id":   "test@runpanther.io",
+					"project_id": "production",
+					"unique_id":  "999999",
+				},
+			},
+		},
+		Payload: AuditLog{
+			PayloadType: aws.String("type.googleapis.com/google.cloud.audit.AuditLog"),
+			AuthenticationInfo: &AuthenticationInfo{
+				PrincipalSubject: aws.String("serviceAccount:production.svc.id.goog[webservice]"),
+			},
+			AuthorizationInfo: []AuthorizationInfo{
+				{
+					Granted:    aws.Bool(true),
+					Permission: aws.String("io.k8s.core.v1.nodes.proxy.get"),
+				},
+			},
+			MethodName: aws.String("GenerateAccessToken"),
+			RequestMetadata: &RequestMetadata{
+				CallerIP:                aws.String("35.238.150.117"),
+				CallerSuppliedUserAgent: aws.String("Prometheus/1.8.2"),
+			},
+			ResourceName: aws.String("projects/-/serviceAccounts/10796"),
+			ServiceName:  aws.String("iamcredentials.googleapis.com"),
 		},
 	}
 
@@ -197,7 +294,7 @@ func TestAuditLogParserSystemEvent(t *testing.T) {
 			Timestamp:        (*timestamp.RFC3339)(&ts),
 			ReceiveTimestamp: (*timestamp.RFC3339)(&tsReceive),
 			InsertID:         aws.String("nbhw56e2lqay"),
-			Resource: MonitoredResource{
+			Resource: &MonitoredResource{
 				Type: aws.String("gce_instance"),
 				Labels: Labels{
 					"instance_id": "2587554859816992587",
@@ -267,7 +364,7 @@ func TestAuditLogParserActivityBug(t *testing.T) {
 			Timestamp:        (*timestamp.RFC3339)(&ts),
 			ReceiveTimestamp: (*timestamp.RFC3339)(&tsReceive),
 			InsertID:         aws.String("-eyvi2zd601a"),
-			Resource: MonitoredResource{
+			Resource: &MonitoredResource{
 				Type: aws.String("audited_resource"),
 				Labels: Labels{
 					"project_id": "some-project-id",
