@@ -26,6 +26,7 @@ export interface AutosaveProps {
 
 const FormikAutosave: React.FC<AutosaveProps> = ({ threshold = 0 }) => {
   const { submitForm, values } = useFormikContext();
+  const isInitialMount = React.useRef(true);
 
   const debouncedSubmit = React.useCallback(
     debounce(() => {
@@ -35,7 +36,11 @@ const FormikAutosave: React.FC<AutosaveProps> = ({ threshold = 0 }) => {
   );
 
   React.useEffect(() => {
-    debouncedSubmit();
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+    } else {
+      debouncedSubmit();
+    }
   }, [debouncedSubmit, values]);
 
   return null;

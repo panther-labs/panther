@@ -197,6 +197,10 @@ export const buildAddComplianceIntegrationInput = (
     integrationLabel: 'integrationLabel' in overrides ? overrides.integrationLabel : 'withdrawal',
     remediationEnabled: 'remediationEnabled' in overrides ? overrides.remediationEnabled : false,
     cweEnabled: 'cweEnabled' in overrides ? overrides.cweEnabled : false,
+    regionIgnoreList:
+      'regionIgnoreList' in overrides ? overrides.regionIgnoreList : ['Licensed Granite Sausages'],
+    resourceTypeIgnoreList:
+      'resourceTypeIgnoreList' in overrides ? overrides.resourceTypeIgnoreList : ['Orchestrator'],
   };
 };
 
@@ -444,6 +448,9 @@ export const buildComplianceIntegration = (
     integrationLabel: 'integrationLabel' in overrides ? overrides.integrationLabel : 'Movies',
     cweEnabled: 'cweEnabled' in overrides ? overrides.cweEnabled : true,
     remediationEnabled: 'remediationEnabled' in overrides ? overrides.remediationEnabled : false,
+    regionIgnoreList: 'regionIgnoreList' in overrides ? overrides.regionIgnoreList : ['generating'],
+    resourceTypeIgnoreList:
+      'resourceTypeIgnoreList' in overrides ? overrides.resourceTypeIgnoreList : ['revolutionize'],
     health: 'health' in overrides ? overrides.health : buildComplianceIntegrationHealth(),
     stackName: 'stackName' in overrides ? overrides.stackName : 'Chips',
   };
@@ -1782,6 +1789,9 @@ export const buildUpdateComplianceIntegrationInput = (
     integrationLabel: 'integrationLabel' in overrides ? overrides.integrationLabel : 'holistic',
     cweEnabled: 'cweEnabled' in overrides ? overrides.cweEnabled : false,
     remediationEnabled: 'remediationEnabled' in overrides ? overrides.remediationEnabled : false,
+    regionIgnoreList: 'regionIgnoreList' in overrides ? overrides.regionIgnoreList : ['Bike'],
+    resourceTypeIgnoreList:
+      'resourceTypeIgnoreList' in overrides ? overrides.resourceTypeIgnoreList : ['Corporate'],
   };
 };
 

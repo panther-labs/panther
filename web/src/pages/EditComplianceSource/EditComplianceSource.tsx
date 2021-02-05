@@ -63,6 +63,8 @@ const EditComplianceSource: React.FC = () => {
       awsAccountId: data?.getComplianceIntegration.awsAccountId ?? 'Loading...',
       cweEnabled: data?.getComplianceIntegration.cweEnabled ?? false,
       remediationEnabled: data?.getComplianceIntegration.remediationEnabled ?? false,
+      regionIgnoreList: data?.getComplianceIntegration.regionIgnoreList ?? [],
+      resourceTypeIgnoreList: data?.getComplianceIntegration.resourceTypeIgnoreList ?? [],
     }),
     [data]
   );
@@ -83,6 +85,8 @@ const EditComplianceSource: React.FC = () => {
               integrationLabel: values.integrationLabel,
               cweEnabled: values.cweEnabled,
               remediationEnabled: values.remediationEnabled,
+              regionIgnoreList: values.regionIgnoreList,
+              resourceTypeIgnoreList: values.resourceTypeIgnoreList,
             },
           },
         })
