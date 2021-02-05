@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/go-playground/validator.v9"
 
@@ -160,7 +159,7 @@ func TestAuditLogParserDataAccess(t *testing.T) {
 
 		"operation":{
 			"first":true,
-			"id":"16864425197057211077",
+			"id":"999999",
 			"last":true,
 			"producer":"iamcredentials.googleapis.com"
 		},
@@ -173,11 +172,7 @@ func TestAuditLogParserDataAccess(t *testing.T) {
 				{"granted":true,"permission":"iam.serviceAccounts.getAccessToken","resourceAttributes":{}}
 			],
 			"methodName":"GenerateAccessToken",
-			"request":{
-				"@type":"type.googleapis.com/google.iam.credentials.v1.GenerateAccessTokenRequest",
-				"name":"projects/-/serviceAccounts/gitlab-webservice@gitlab-production.iam.gserviceaccount.com"
-			},
-			"resourceName":"projects/-/serviceAccounts/10796",
+			"resourceName":"projects/-/serviceAccounts/1",
 			"serviceName":"iamcredentials.googleapis.com","status":{}
 		}
 }`
@@ -198,7 +193,7 @@ func TestAuditLogParserDataAccess(t *testing.T) {
 			Timestamp:        (*timestamp.RFC3339)(&ts),
 			ReceiveTimestamp: (*timestamp.RFC3339)(&tsReceive),
 			Operation: &LogEntryOperation{
-				ID:       aws.String("16864425197057211077"),
+				ID:       aws.String("999999"),
 				Producer: aws.String("iamcredentials.googleapis.com"),
 				First:    aws.Bool(true),
 				Last:     aws.Bool(true),
@@ -221,21 +216,16 @@ func TestAuditLogParserDataAccess(t *testing.T) {
 			AuthorizationInfo: []AuthorizationInfo{
 				{
 					Granted:    aws.Bool(true),
-					Permission: aws.String("io.k8s.core.v1.nodes.proxy.get"),
+					Permission: aws.String("iam.serviceAccounts.getAccessToken"),
 				},
 			},
-			MethodName: aws.String("GenerateAccessToken"),
-			RequestMetadata: &RequestMetadata{
-				CallerIP:                aws.String("35.238.150.117"),
-				CallerSuppliedUserAgent: aws.String("Prometheus/1.8.2"),
-			},
-			ResourceName: aws.String("projects/-/serviceAccounts/10796"),
+			MethodName:   aws.String("GenerateAccessToken"),
+			ResourceName: aws.String("projects/-/serviceAccounts/1"),
 			ServiceName:  aws.String("iamcredentials.googleapis.com"),
 		},
 	}
 
 	entry.SetCoreFields(TypeAuditLog, entry.Timestamp, entry)
-	entry.AppendAnyIPAddress("35.238.150.117")
 	testutil.CheckPantherParser(t, log, NewAuditLogParser(), &entry.PantherLog)
 }
 
@@ -317,13 +307,13 @@ func TestAuditLogParserSystemEvent(t *testing.T) {
 			},
 			MethodName: aws.String("compute.instances.migrateOnHostMaintenance"),
 			RequestMetadata: &RequestMetadata{
-				RequestAttributes:     jsoniter.RawMessage(`{}`),
-				DestinationAttributes: jsoniter.RawMessage(`{}`),
+				RequestAttributes:     testutil.NewRawMessage(`{}`),
+				DestinationAttributes: testutil.NewRawMessage(`{}`),
 			},
+			Status:       &Status{},
 			ResourceName: aws.String("projects/project-id/zones/us-central1-f/instances/gke-cluster-default-pool-7dff1419-8v1j"),
 			ServiceName:  aws.String("compute.googleapis.com"),
-			Status:       &Status{},
-			Request:      jsoniter.RawMessage(`{"@type": "type.googleapis.com/compute.instances.migrateOnHostMaintenance"}`),
+			Request:      testutil.NewRawMessage(`{"@type": "type.googleapis.com/compute.instances.migrateOnHostMaintenance"}`),
 		},
 	}
 
@@ -433,7 +423,7 @@ func TestAuditLogParserActivityBug(t *testing.T) {
 					Resource:   aws.String("services/bigtable.googleapis.com/consumers/951849100836"),
 				},
 			},
-			Response: jsoniter.RawMessage(`{
+			Response: testutil.NewRawMessage(`{
 				"@type": "type.googleapis.com/google.api.servicemanagement.v1.ActivateServicesResponse",
 				"settings": [
 					{
@@ -450,7 +440,7 @@ func TestAuditLogParserActivityBug(t *testing.T) {
 					}
 				]
 			}`),
-			Request: jsoniter.RawMessage(`{
+			Request: testutil.NewRawMessage(`{
 				"@type": "type.googleapis.com/google.api.servicemanagement.v1.ActivateServicesRequest",
 				"consumerProjectId": "951849100836",
 				"serviceNames": [
