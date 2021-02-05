@@ -70,7 +70,7 @@ func testCfnLint() error {
 		return nil
 	})
 
-	args := []string{"-i", "W3002", "--"}  // warns about templates which require packaging; ours all do
+	args := []string{"-i", "W3002", "--"} // warns about templates which require packaging; ours all do
 	args = append(args, templates...)
 	if err := sh.RunV(util.PipPath("cfn-lint"), args...); err != nil {
 		return err
