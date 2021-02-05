@@ -17,14 +17,15 @@
  */
 
 import { Box, Flex, FormHelperText, Link } from 'pouncejs';
-import { Field, useFormikContext } from 'formik';
+import { FastField, Field, useFormikContext } from 'formik';
 import FormikTextInput from 'Components/fields/TextInput';
 import React from 'react';
-import FormikCheckbox from 'Components/fields/Checkbox';
+import FormikSwitch from 'Components/fields/Switch';
 import logo from 'Assets/aws-minimal-logo.svg';
-import { REMEDIATION_DOC_URL } from 'Source/constants';
+import { AWS_REGIONS, REMEDIATION_DOC_URL, RESOURCE_TYPES } from 'Source/constants';
 import { ComplianceSourceWizardValues } from 'Components/wizards/ComplianceSourceWizard/ComplianceSourceWizard';
 import { WizardPanel } from 'Components/Wizard';
+import FormikMultiCombobox from 'Components/fields/MultiComboBox';
 
 const SourceConfigurationPanel: React.FC = () => {
   const { initialValues, dirty, isValid } = useFormikContext<ComplianceSourceWizardValues>();
@@ -62,31 +63,57 @@ const SourceConfigurationPanel: React.FC = () => {
             disabled={!!initialValues.integrationId}
           />
         </Flex>
-        <Flex direction="column" spacing={6} my={4} ml={-2}>
-          <Box as="fieldset">
-            <Field
-              as={FormikCheckbox}
-              name="cweEnabled"
-              aria-describedby="cweEnabled-description"
-              label="Real-Time AWS Resource Scans"
-            />
-            <FormHelperText id="cweEnabled-description" ml={45}>
+        <Flex direction="column" spacing={6} my={4}>
+          <Flex as="fieldset" spacing={8}>
+            <FormHelperText id="cweEnabled-description">
               Configure Panther to monitor all AWS resource changes in real-time through CloudWatch
               Events.
             </FormHelperText>
-          </Box>
-          <Box as="fieldset">
             <Field
-              as={FormikCheckbox}
-              name="remediationEnabled"
-              aria-describedby="remediationEnabled-description"
-              label="AWS Automatic Remediations"
+              as={FormikSwitch}
+              aria-label="Real-Time AWS Resource Scans"
+              name="cweEnabled"
+              aria-describedby="cweEnabled-description"
             />
-            <FormHelperText id="remediationEnabled-description" ml={45}>
+          </Flex>
+          <Flex as="fieldset" spacing={8}>
+            <FormHelperText id="remediationEnabled-description">
               Allow Panther to fix misconfigured infrastructure as soon as it is detected.{' '}
               <Link external href={REMEDIATION_DOC_URL}>
                 Read more
               </Link>
+            </FormHelperText>
+            <Field
+              as={FormikSwitch}
+              aria-label="AWS Automatic Remediations"
+              name="remediationEnabled"
+              aria-describedby="remediationEnabled-description"
+            />
+          </Flex>
+          <Box as="fieldset">
+            <FastField
+              as={FormikMultiCombobox}
+              searchable
+              label="Exclude AWS Regions"
+              name="regionIgnoreList"
+              items={AWS_REGIONS}
+              aria-describedby="exclude-aws-regions-description"
+            />
+            <FormHelperText id="exclude-aws-regions-description" mt={2}>
+              Disable Cloud Security Scanning for certain AWS regions
+            </FormHelperText>
+          </Box>
+          <Box as="fieldset">
+            <FastField
+              as={FormikMultiCombobox}
+              searchable
+              label="Exclude Resource Types"
+              name="resourceTypeIgnoreList"
+              items={RESOURCE_TYPES}
+              aria-describedby="exclude-resourceTypes-description"
+            />
+            <FormHelperText id="exclude-resourceTypes-description" mt={2}>
+              Disable Cloud Security Scanning for certain Resource types
             </FormHelperText>
           </Box>
         </Flex>
