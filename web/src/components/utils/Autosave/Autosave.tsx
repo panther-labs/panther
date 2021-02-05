@@ -36,7 +36,7 @@ const FormikAutosave: React.FC<AutosaveProps> = ({ threshold = 0 }) => {
   );
 
   React.useEffect(() => {
-    if (isInitialMount) {
+    if (isInitialMount.current) {
       isInitialMount.current = false;
     } else {
       debouncedSubmit();
