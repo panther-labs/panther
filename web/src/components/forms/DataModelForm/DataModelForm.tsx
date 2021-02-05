@@ -47,7 +47,7 @@ export interface DataModelFormProps {
 }
 
 const validationSchema = Yup.object<DataModelFormValues>({
-  displayName: Yup.string().required(),
+  displayName: Yup.string(),
   id: Yup.string().required(),
   enabled: Yup.boolean().required(),
   logType: Yup.string().required(),

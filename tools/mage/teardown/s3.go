@@ -28,6 +28,7 @@ import (
 	"github.com/panther-labs/panther/pkg/awsbatch/s3batch"
 	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/tools/mage/logger"
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 var log = logger.Build("[teardown]")
@@ -109,8 +110,9 @@ func removeBucket(client *s3.S3, bucketName *string) error {
 		return fmt.Errorf("failed to list object versions for %s: %v", *bucketName, err)
 	}
 
+	uri := util.S3URI(*bucketName, "")
 	if len(objectVersions) >= s3MaxDeletes {
-		log.Warnf("s3://%s has too many items to delete directly, setting an expiration policy instead", *bucketName)
+		log.Warnf("%s has too many items to delete directly, setting an expiration policy instead", uri)
 		_, err = client.PutBucketLifecycleConfiguration(&s3.PutBucketLifecycleConfigurationInput{
 			Bucket: bucketName,
 			LifecycleConfiguration: &s3.BucketLifecycleConfiguration{
@@ -145,13 +147,13 @@ func removeBucket(client *s3.S3, bucketName *string) error {
 		_, err := client.PutBucketNotificationConfiguration(notificationInput)
 		if err != nil {
 			log.Warnf("Unable to clear S3 event notifications on bucket %s (%v). Use the console to clear.",
-				bucketName, err)
+				*bucketName, err)
 		}
 		return nil
 	}
 
 	// Here there aren't too many objects, we can delete them in a handful of BatchDelete calls.
-	log.Infof("deleting s3://%s", *bucketName)
+	log.Info("deleting " + uri)
 	err = s3batch.DeleteObjects(client, 2*time.Minute, &s3.DeleteObjectsInput{
 		Bucket: bucketName,
 		Delete: &s3.Delete{Objects: objectVersions},
