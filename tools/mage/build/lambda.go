@@ -30,13 +30,10 @@ import (
 	"github.com/panther-labs/panther/tools/mage/logger"
 )
 
-// "go build" in parallel for each Lambda function.
+// "go build" sequentially for each Lambda function.
 //
-// If you don't already have all go modules downloaded, this may fail because each goroutine will
-// automatically modify the go.mod/go.sum files which will cause conflicts with itself.
-//
-// Run "go mod download" or "mage setup" before building to download the go modules.
-// If you're adding a new module, run "go get ./..." before building to fetch the new module.
+// This function is not used during the deploy process - each function is built and uploaded
+// individually during the packaging.
 func Lambda() error {
 	log := logger.Build("[build:lambda]")
 
@@ -75,7 +72,7 @@ func LambdaPackage(pkg string) (string, error) {
 	if err := os.MkdirAll(targetDir, 0700); err != nil {
 		return binary, fmt.Errorf("failed to create %s directory: %v", targetDir, err)
 	}
-	if err := sh.RunWith(buildEnv, "go", "build", "-p", "1", "-ldflags", "-s -w", "-o", targetDir, "./"+pkg); err != nil {
+	if err := sh.RunWith(buildEnv, "go", "build", "-ldflags", "-s -w", "-o", targetDir, "./"+pkg); err != nil {
 		return binary, fmt.Errorf("go build %s failed: %v", binary, err)
 	}
 

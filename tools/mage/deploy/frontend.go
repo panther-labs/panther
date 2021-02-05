@@ -19,29 +19,26 @@ package deploy
  */
 
 import (
-	"encoding/base64"
 	"fmt"
-	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/joho/godotenv"
-	"github.com/magefile/mage/sh"
 
 	"github.com/panther-labs/panther/tools/cfnstacks"
-	"github.com/panther-labs/panther/tools/mage/clients"
+	"github.com/panther-labs/panther/tools/mage/pkg"
 	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 const awsEnvFile = "out/.env.aws"
 
-func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig) error {
+func deployFrontend(settings *PantherConfig, packager *pkg.Packager, bootstrapOutputs map[string]string) error {
 	// Save .env file (only used when running web server locally)
 	if err := godotenv.Write(
 		map[string]string{
-			"AWS_ACCOUNT_ID":                       clients.AccountID(),
-			"AWS_REGION":                           clients.Region(),
+			"AWS_ACCOUNT_ID":                       util.AccountID(packager.AwsConfig),
+			"AWS_REGION":                           packager.AwsConfig.Region,
 			"WEB_APPLICATION_GRAPHQL_API_ENDPOINT": bootstrapOutputs["GraphQLApiEndpoint"],
 			"WEB_APPLICATION_USER_POOL_ID":         bootstrapOutputs["UserPoolId"],
 			"WEB_APPLICATION_USER_POOL_CLIENT_ID":  bootstrapOutputs["AppClientId"],
@@ -51,12 +48,8 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig)
 		return fmt.Errorf("failed to write ENV variables to file %s: %v", awsEnvFile, err)
 	}
 
-	localImageID, err := DockerBuild()
-	if err != nil {
-		return err
-	}
-
-	dockerImage, err := DockerPush(clients.ECR(), bootstrapOutputs["ImageRegistryUri"], localImageID, "")
+	var err error
+	packager.DockerImageID, err = pkg.DockerBuild(packager.Log, filepath.Join("deployments", "Dockerfile"))
 	if err != nil {
 		return err
 	}
@@ -74,7 +67,6 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig)
 		"FirstUserFamilyName":        settings.Setup.FirstUser.FamilyName,
 		"FirstUserGivenName":         settings.Setup.FirstUser.GivenName,
 		"GraphQLApiEndpoint":         bootstrapOutputs["GraphQLApiEndpoint"],
-		"Image":                      dockerImage,
 		"InitialAnalysisPackUrls":    strings.Join(settings.Setup.InitialAnalysisSets, ","),
 		"PantherCommit":              util.CommitSha(),
 		"PantherVersion":             util.Semver(),
@@ -83,89 +75,6 @@ func deployFrontend(bootstrapOutputs map[string]string, settings *PantherConfig)
 		"SubnetTwoId":                bootstrapOutputs["SubnetTwoId"],
 		"UserPoolId":                 bootstrapOutputs["UserPoolId"],
 	}
-	_, err = deployTemplate(cfnstacks.FrontendTemplate, bootstrapOutputs["SourceBucket"], cfnstacks.Frontend, params)
+	_, err = Stack(packager, cfnstacks.FrontendTemplate, cfnstacks.Frontend, params)
 	return err
-}
-
-// Returns local image ID
-func DockerBuild() (string, error) {
-	log.Info("docker build web server (deployments/Dockerfile)")
-	dockerBuildOutput, err := sh.Output("docker", "build", "--file", "deployments/Dockerfile", "--quiet", ".")
-	if err != nil {
-		return "", fmt.Errorf("docker build failed: %v", err)
-	}
-
-	return strings.Replace(dockerBuildOutput, "sha256:", "", 1), nil
-}
-
-// Build a personalized docker image from source and push it to the private image repo of the user
-func DockerPush(ecrClient *ecr.ECR, imageRegistry, localImageID, tag string) (string, error) {
-	log.Debug("requesting access to remote image repo")
-	response, err := ecrClient.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
-	if err != nil {
-		return "", fmt.Errorf("failed to get ecr auth token: %v", err)
-	}
-
-	ecrAuthorizationToken := *response.AuthorizationData[0].AuthorizationToken
-	ecrServer := *response.AuthorizationData[0].ProxyEndpoint
-
-	decodedCredentialsInBytes, err := base64.StdEncoding.DecodeString(ecrAuthorizationToken)
-	if err != nil {
-		return "", fmt.Errorf("failed to base64-decode ecr auth token: %v", err)
-	}
-	credentials := strings.Split(string(decodedCredentialsInBytes), ":") // username:password
-
-	if err := dockerLogin(ecrServer, credentials[0], credentials[1]); err != nil {
-		return "", err
-	}
-
-	if tag == "" {
-		tag = localImageID
-	}
-	remoteImage := imageRegistry + ":" + tag
-
-	if err = sh.Run("docker", "tag", localImageID, remoteImage); err != nil {
-		return "", fmt.Errorf("docker tag %s %s failed: %v", localImageID, remoteImage, err)
-	}
-
-	log.Infof("pushing docker image %s to remote repo", remoteImage)
-	if err := sh.Run("docker", "push", remoteImage); err != nil {
-		return "", err
-	}
-
-	return remoteImage, nil
-}
-
-func dockerLogin(ecrServer, username, password string) error {
-	// We are going to replace Stdin with a pipe reader, so temporarily
-	// cache previous Stdin
-	existingStdin := os.Stdin
-	// Make sure to reset the Stdin.
-	defer func() {
-		os.Stdin = existingStdin
-	}()
-	// Create a pipe to pass docker password to the docker login command
-	pipeReader, pipeWriter, err := os.Pipe()
-	if err != nil {
-		return fmt.Errorf("failed to open pipe: %v", err)
-	}
-	os.Stdin = pipeReader
-
-	// Write password to pipe
-	if _, err = pipeWriter.WriteString(password); err != nil {
-		return fmt.Errorf("failed to write password to pipe: %v", err)
-	}
-	if err = pipeWriter.Close(); err != nil {
-		return fmt.Errorf("failed to close password pipe: %v", err)
-	}
-
-	err = sh.Run("docker", "login",
-		"-u", username,
-		"--password-stdin",
-		ecrServer,
-	)
-	if err != nil {
-		return fmt.Errorf("docker login failed: %v", err)
-	}
-	return nil
 }

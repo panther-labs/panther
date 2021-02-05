@@ -19,30 +19,37 @@ package master
  */
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/magefile/mage/sh"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/prompt"
 	"github.com/panther-labs/panther/tools/mage/deploy"
 	"github.com/panther-labs/panther/tools/mage/logger"
-	"github.com/panther-labs/panther/tools/mage/setup"
+	"github.com/panther-labs/panther/tools/mage/pkg"
 	"github.com/panther-labs/panther/tools/mage/util"
+)
+
+const (
+	// AWS Account where Panther publishes release assets
+	publicAccountID = "349240696275"
+
+	publicEcrRepoName = "panther-community"
 )
 
 // Publish a new Panther release (Panther team only)
 func Publish() error {
 	log := logger.Build("[master:publish]")
-	if err := deploy.PreCheck(); err != nil {
+	if err := deploy.PreCheck(""); err != nil {
 		return err
 	}
 
@@ -77,31 +84,27 @@ func Publish() error {
 		return err
 	}
 
-	// To be safe, always reset dependencies, clear build artifacts, and re-generate source files before publishing.
+	// To be safe, always clear build artifacts before publishing.
 	// Don't need to do a full 'mage clean', but we do want to remove the `out/` directory
 	log.Info("rm -r out/")
 	if err := os.RemoveAll("out"); err != nil {
 		return fmt.Errorf("failed to remove out/ : %v", err)
 	}
-	if err := setup.Setup(); err != nil {
-		return err
-	}
 
-	dockerImageID, err := buildAssets(log)
+	// 'mage setup' not required to publish - npm and python aren't needed
+
+	imgID, err := pkg.DockerBuild(log, filepath.Join("deployments", "Dockerfile"))
 	if err != nil {
 		return err
 	}
 
 	// Publish to each region.
-	//
-	// This fails if you publish multiple regions in parallel, unfortunately.
-	// However, when we implement our own packaging, each region will package its own assets in parallel.
 	for _, region := range regions {
 		if !deploy.SupportedRegions[region] {
 			return fmt.Errorf("%s is not a supported region", region)
 		}
 
-		if err := publishToRegion(log, region, dockerImageID); err != nil {
+		if err := publishToRegion(log, region, imgID); err != nil {
 			return err
 		}
 	}
@@ -120,9 +123,13 @@ func getPublicationApproval(log *zap.SugaredLogger, regions []string) error {
 	// in the template file and we probably don't want to overwrite a previous version.
 	for _, region := range regions {
 		bucket, s3Key, s3URL := s3MasterTemplate(region)
-		awsSession := session.Must(session.NewSession(aws.NewConfig().WithRegion(region)))
 
-		_, err := s3.New(awsSession).HeadObject(&s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
+		awsCfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
+		if err != nil {
+			return err
+		}
+
+		_, err = s3.NewFromConfig(awsCfg).HeadObject(context.TODO(), &s3.HeadObjectInput{Bucket: &bucket, Key: &s3Key})
 		if err == nil {
 			log.Warnf("%s already exists", s3URL)
 			result := prompt.Read("Are you sure you want to overwrite the published release in each region? (yes|no) ",
@@ -133,7 +140,8 @@ func getPublicationApproval(log *zap.SugaredLogger, regions []string) error {
 			return nil // override approved - don't need to keep checking each region
 		}
 
-		if !awsutils.IsAnyError(err, "NotFound") {
+		var notFound *s3Types.NotFound
+		if !errors.As(err, &notFound) {
 			// Some error other than 'not found'
 			return fmt.Errorf("failed to describe %s : %v", s3URL, err)
 		}
@@ -142,26 +150,34 @@ func getPublicationApproval(log *zap.SugaredLogger, regions []string) error {
 	return nil
 }
 
-func publishToRegion(log *zap.SugaredLogger, region, dockerImageID string) error {
-	log.Debugf("publishing to %s", region)
+func publishToRegion(log *zap.SugaredLogger, region, imgID string) error {
+	log.Infof("publishing to %s", region)
 
-	// We can't use the global aws clients here because we need a different client for each region.
-	awsSession, err := session.NewSession(aws.NewConfig().WithRegion(region))
+	// We need a different session for each region.
+	awsCfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {
-		return fmt.Errorf("failed to build AWS session: %v", err)
+		return fmt.Errorf("failed to build AWS config: %v", err)
 	}
 
 	bucket, s3Key, s3URL := s3MasterTemplate(region)
 
-	// Publish S3 assets and ECR docker image
-	ecrRegistry := fmt.Sprintf("349240696275.dkr.ecr.%s.amazonaws.com/panther-community", region)
-	pkg, err := pkgAssets(log, ecr.New(awsSession), region, bucket, ecrRegistry, dockerImageID)
+	packager := pkg.Packager{
+		Log:            log,
+		AwsConfig:      awsCfg,
+		Bucket:         bucket,
+		DockerImageID:  imgID,
+		EcrRegistry:    util.EcrRepoURI(publicAccountID, region, publicEcrRepoName),
+		EcrTagWithHash: false,
+		PipLibs:        defaultPipLayer,
+		PostProcess:    embedVersion,
+	}
+	pkgTemplate, err := packager.Template(rootTemplate)
 	if err != nil {
 		return err
 	}
 
-	if _, err := util.UploadFileToS3(log, s3manager.NewUploader(awsSession), pkg, bucket, s3Key); err != nil {
-		return fmt.Errorf("failed to upload %s : %v", s3URL, err)
+	if _, _, err = packager.UploadAsset(pkgTemplate, s3Key); err != nil {
+		return err
 	}
 
 	log.Infof("successfully published %s", s3URL)
@@ -172,6 +188,5 @@ func publishToRegion(log *zap.SugaredLogger, region, dockerImageID string) error
 func s3MasterTemplate(region string) (string, string, string) {
 	bucket := util.PublicAssetsBucket(region)
 	s3Key := fmt.Sprintf("v%s/panther.yml", util.Semver())
-	s3URL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, s3Key)
-	return bucket, s3Key, s3URL
+	return bucket, s3Key, util.S3ObjectURL(region, bucket, s3Key)
 }

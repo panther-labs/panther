@@ -21,6 +21,7 @@ package clean
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/panther-labs/panther/tools/mage/logger"
@@ -29,7 +30,13 @@ import (
 
 func Clean() error {
 	log := logger.Build("[clean]")
-	paths := []string{util.SetupDir, util.NpmDir, "out", "internal/core/analysis_api/main/bulk_upload.zip"}
+	paths := []string{
+		util.SetupDir,
+		util.NpmDir,
+		filepath.Join("deployments", "root_config.yml"),
+		filepath.Join("internal", "core", "analysis_api", "main", "bulk_upload.zip"), // created by integration tests
+		"out",
+	}
 
 	// Remove __pycache__ folders
 	for _, target := range util.PyTargets {
