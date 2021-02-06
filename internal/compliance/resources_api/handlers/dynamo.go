@@ -116,7 +116,6 @@ type scanResult struct {
 func scanPages(inputs []*dynamodb.ScanInput, includeCompliance bool,
 	requiredComplianceStatus compliancemodels.ComplianceStatus) ([]models.Resource, error) {
 
-	pages := 0
 	results := make(chan scanResult)
 	// The scan inputs have already been broken up into segments, scan each segment in parallel
 	for _, scanInput := range inputs {
@@ -136,7 +135,6 @@ func scanPages(inputs []*dynamodb.ScanInput, includeCompliance bool,
 			// The pages of this segment will be handled serially
 			err := dynamoClient.ScanPages(input, func(page *dynamodb.ScanOutput, lastPage bool) bool {
 				var items []*resourceItem
-				pages++
 				if unmarshalErr = dynamodbattribute.UnmarshalListOfMaps(page.Items, &items); unmarshalErr != nil {
 					return false // stop paginating
 				}
