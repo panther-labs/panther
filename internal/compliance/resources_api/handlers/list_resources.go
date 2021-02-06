@@ -53,15 +53,13 @@ var (
 
 // ListResources returns a filtered list of resources.
 func (API) ListResources(input *models.ListResourcesInput) *events.APIGatewayProxyResponse {
-	zap.L().Info("entering ListResources", zap.Any("input", input))
 	setListDefaults(input)
 
 	scanInputs, err := buildListScan(input)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
-	// zap.L().Debug("built Dynamo scan input", zap.Any("scanInput", scanInput))
-	zap.L().Info("built Dynamo scan input", zap.Any("scanInputs", scanInputs))
+	zap.L().Debug("built Dynamo scan input", zap.Any("scanInputs", scanInputs))
 
 	resources, err := listFilteredResources(scanInputs, input)
 	if err != nil {
@@ -75,7 +73,6 @@ func (API) ListResources(input *models.ListResourcesInput) *events.APIGatewayPro
 
 func setListDefaults(input *models.ListResourcesInput) {
 	if len(input.Fields) == 0 {
-		zap.L().Info("using default fields")
 		input.Fields = defaultFields
 	}
 	if input.Page == 0 {
@@ -174,10 +171,7 @@ func listFilteredResources(scanInputs []*dynamodb.ScanInput, input *models.ListR
 			break
 		}
 	}
-
-	zap.L().Info("about to scan pages")
 	resources, err := scanPages(scanInputs, includeCompliance, input.ComplianceStatus)
-	zap.L().Info("done scanning pages", zap.Any("results", len(resources)))
 
 	return resources, err
 }
