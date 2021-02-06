@@ -29,7 +29,7 @@ import (
 // MaxWorkers limits CPU-intensive operations depending on the environment.
 var MaxWorkers = func() int {
 	n := runtime.NumCPU()
-	// Use all CPUs on CI environment
+	// Use all CPUs in CI environment
 	if IsRunningInCI() {
 		return n
 	}

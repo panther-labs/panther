@@ -200,7 +200,7 @@ Resources:
   AlertProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/alert_processor/main
+      CodeUri: ../internal/compliance/alert_processor/main
       Description: Processes events generated from the compliance engine
       Environment:
         Variables:
@@ -314,7 +314,7 @@ Resources:
   AlertForwarderFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/alert_forwarder/main
+      CodeUri: ../internal/compliance/alert_forwarder/main
       Description: Forwards the alerts to the alert delivery mechanism
       Environment:
         Variables:
@@ -483,7 +483,7 @@ Resources:
   EventProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/aws_event_processor/main
+      CodeUri: ../internal/compliance/aws_event_processor/main
       Description: Process real-time changes to AWS infrastructure
       Environment:
         Variables:
@@ -560,7 +560,7 @@ Resources:
   ComplianceApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/compliance_api/main
+      CodeUri: ../internal/compliance/compliance_api/main
       Description: Compliance API
       Environment:
         Variables:
@@ -669,7 +669,7 @@ Resources:
   RemediationApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/remediation_api/main
+      CodeUri: ../internal/compliance/remediation_api/main
       Description: Triggers AWS remediations
       Environment:
         Variables:
@@ -802,7 +802,7 @@ Resources:
   RemediationProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/remediation_processor/main
+      CodeUri: ../internal/compliance/remediation_processor/main
       Description: Process queued remediations
       Environment:
         Variables:
@@ -919,7 +919,7 @@ Resources:
   ResourcesApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/resources_api/main
+      CodeUri: ../internal/compliance/resources_api/main
       Description: Resources API
       Environment:
         Variables:
@@ -1150,7 +1150,7 @@ Resources:
   ResourceProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/resource_processor/main
+      CodeUri: ../internal/compliance/resource_processor/main
       Description: Scans recently modified resources
       Environment:
         Variables:
@@ -1339,7 +1339,7 @@ Resources:
   PollerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/snapshot_poller/main
+      CodeUri: ../internal/compliance/snapshot_poller/main
       Description: Polls AWS resources and writes them to the resources-api
       Environment:
         Variables:
@@ -1432,7 +1432,7 @@ Resources:
   SnapshotSchedulerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/snapshot_scheduler/main
+      CodeUri: ../internal/compliance/snapshot_scheduler/main
       Description: Runs once daily to schedule account-wide scans
       Environment:
         Variables:
@@ -1563,7 +1563,7 @@ Resources:
   DataLakeForwarderFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/compliance/datalake_forwarder/main
+      CodeUri: ../internal/compliance/datalake_forwarder/main
       Description: Forwards Cloud Security resource snapshots & compliance state to the Log Analysis pipeline
       Environment:
         Variables:

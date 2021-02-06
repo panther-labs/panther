@@ -37,7 +37,7 @@ const DataModelCard: React.FC<DataModelCardProps> = ({ dataModel }) => {
         <GenericItemCard.Header>
           <GenericItemCard.Heading>
             <Link as={RRLink} to={urls.logAnalysis.dataModels.details(dataModel.id)}>
-              {dataModel.displayName}
+              {dataModel.displayName || dataModel.id}
             </Link>
           </GenericItemCard.Heading>
           <GenericItemCard.Date date={formatDatetime(dataModel.lastModified)} />

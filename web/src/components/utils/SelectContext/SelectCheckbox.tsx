@@ -20,21 +20,22 @@ import React from 'react';
 import { Checkbox } from 'pouncejs';
 import { useSelect } from './SelectContext';
 
-interface SelectCheckboxProps {
-  selectionId: string;
+interface SelectCheckboxProps<T> {
+  selectionItem: T;
 }
 
-const SelectCheckboxComponent: React.FC<SelectCheckboxProps> = ({ selectionId, ...rest }) => {
-  const { checkIfSelected, toggleItem } = useSelect();
-  const isSelected = checkIfSelected(selectionId);
+function SelectCheckboxComponent<T>({ selectionItem, ...rest }: SelectCheckboxProps<T>) {
+  const { checkIfSelected, toggleItem } = useSelect<T>();
+  const isSelected = checkIfSelected(selectionItem);
+
   return (
     <Checkbox
       checked={isSelected}
-      aria-label={isSelected ? `unselect ${selectionId}` : `select ${selectionId}`}
-      onChange={() => toggleItem(selectionId)}
+      aria-label={isSelected ? 'unselect item' : 'select item'}
+      onChange={() => toggleItem(selectionItem)}
       {...rest}
     />
   );
-};
+}
 
-export const SelectCheckbox = React.memo(SelectCheckboxComponent);
+export default React.memo(SelectCheckboxComponent);

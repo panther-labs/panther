@@ -153,13 +153,13 @@ Mappings:
     sa-east-1:
       ARN: arn:aws:iam::507241528517:root
     us-gov-west-1:
-      ARN: arn:aws:iam::048591011584:root
+      ARN: arn:aws-us-gov:iam::048591011584:root
     us-gov-east-1:
-      ARN: arn:aws:iam::190560391635:root
+      ARN: arn:aws-us-gov:iam::190560391635:root
     cn-north-1:
-      ARN: arn:aws:iam::638102146993:root
+      ARN: arn:aws-cn:iam::638102146993:root
     cn-northwest-1:
-      ARN: arn:aws:iam::037604701340:root
+      ARN: arn:aws-cn:iam::037604701340:root
 
 Conditions:
   ConfigureLogSubscriptions: !Not [!Equals [!Select [0, !Ref LogSubscriptionPrincipals], '']]
@@ -484,7 +484,7 @@ Resources:
         - !Ref AWS::NoValue
       ReplicationConfiguration: !If
         - ReplicateData
-        - Role: !Sub arn:aws:iam::${AWS::AccountId}:role/panther-data-replication-role-${AWS::Region}
+        - Role: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/panther-data-replication-role-${AWS::Region}
           Rules:
             - Destination:
                 Bucket: !Ref DataReplicationBucket
@@ -991,9 +991,19 @@ Resources:
             Action: sts:AssumeRole
             Principal:
               Service: appsync.amazonaws.com
-      ManagedPolicyArns:
-        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSAppSyncPushToCloudWatchLogs
       Policies:
+        - PolicyName: PushToCloudWatchLogs
+          # the arn:aws:iam::aws:policy/service-role/AWSAppSyncPushToCloudWatchLogs managed policy
+          # is not available in all partitions, so we just embed the same permissions directly here:
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*' # log group name not known until api is created, which requires this role to exist first
         - PolicyName: InvokeLegacyApis
           PolicyDocument:
             Version: 2012-10-17

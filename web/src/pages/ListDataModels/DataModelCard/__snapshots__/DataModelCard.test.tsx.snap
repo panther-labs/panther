@@ -1,0 +1,378 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DataModelCard matches snapshot 1`] = `
+.panther-22 {
+  background-color: #1d2a3f;
+  border-radius: 4px;
+  padding: 16px;
+  overflow: hidden;
+}
+
+
+
+.panther-20 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  position: relative;
+  height: 100%;
+}
+
+.panther-19 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.panther-6 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: flex-start;
+  -webkit-box-align: flex-start;
+  -ms-flex-align: flex-start;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.panther-1 {
+  font-weight: 500;
+  margin-right: auto;
+  max-width: 70%;
+  word-break: break-word;
+}
+
+.panther-0 {
+  -webkit-transition: color 0.1s ease-out;
+  transition: color 0.1s ease-out;
+  font-weight: 500;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  color: #7fd3ff;
+}
+
+.panther-0:hover {
+  color: #ace2ff;
+}
+
+.panther-0:focus {
+  color: #ace2ff;
+}
+
+.panther-0:active,
+.panther-0[data-active=true] {
+  color: #11a5f3;
+}
+
+.panther-2 {
+  font-size: 0.75rem;
+  color: #86a3c3;
+}
+
+.panther-5 {
+  margin-left: 8px;
+  margin-top: -4px;
+}
+
+.panther-4 {
+  outline: none;
+  line-height: 1;
+  border-radius: 99999px;
+  height: 24px;
+  width: 24px;
+  -webkit-transition: background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border: 1px solid;
+  border-color: transparent;
+  background-color: transparent;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.panther-4:hover {
+  background-color: rgba(62,81,107,0.3);
+}
+
+.panther-4:focus {
+  background-color: rgba(62,81,107,0.3);
+}
+
+.panther-4:active,
+.panther-4[data-active=true] {
+  background-color: #3e516b;
+}
+
+.panther-3 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: currentColor;
+}
+
+.panther-18 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-flex-wrap: wrap;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+}
+
+.panther-18>*:not(:last-child) {
+  margin-right: 32px;
+}
+
+.panther-9 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  margin-top: 8px;
+}
+
+.panther-7 {
+  color: #bdbdbd;
+  font-size: 0.563rem;
+  font-weight: 500;
+}
+
+.panther-8 {
+  display: -webkit-inline-box;
+  display: -webkit-inline-flex;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-flex: 1;
+  -webkit-flex-grow: 1;
+  -ms-flex-positive: 1;
+  flex-grow: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  opacity: 1;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  min-height: 24px;
+}
+
+.panther-13 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-13>*:not(:last-child) {
+  margin-right: 8px;
+}
+
+.panther-11 {
+  width: 12px;
+  height: 12px;
+  background-color: hsl(49, 39%, 69%);
+  border-radius: 99999px;
+}
+
+.panther-12 {
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.panther-17 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: flex-end;
+  -webkit-box-align: flex-end;
+  -ms-flex-align: flex-end;
+  align-items: flex-end;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.panther-17>*:not(:last-child) {
+  margin-right: 16px;
+}
+
+.panther-16 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  cursor: default;
+  width: -webkit-fit-content;
+  width: -moz-fit-content;
+  width: fit-content;
+  min-width: 85px;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 40px;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 16px;
+  padding-right: 16px;
+  background-color: #3e516b;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <section
+    class="panther-22"
+  >
+    <div
+      class="panther-21"
+    >
+      <div
+        class="panther-20"
+      >
+        <div
+          class="panther-19"
+        >
+          <header
+            class="panther-6"
+          >
+            <h4
+              class="panther-1"
+            >
+              <a
+                class="panther-0"
+                href="/log-analysis/data-models/97c37f76-8bd8-4def-b4ab-7bfe83d62081/"
+              >
+                collaboration
+              </a>
+            </h4>
+            <span
+              class="panther-2"
+            >
+              2020-08-20 04:58 GMT
+            </span>
+            <div
+              class="panther-5"
+            >
+              <button
+                aria-controls="menu--1"
+                aria-haspopup="true"
+                aria-label="Toggle Options"
+                aria-pressed="false"
+                class="panther-4"
+                data-reach-menu-button=""
+                id="menu-button--menu--1"
+                type="button"
+              >
+                <svg
+                  class="panther-3"
+                  role="presentation"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M6 10C4.9 10 4 10.9 4 12C4 13.1 4.9 14 6 14C7.1 14 8 13.1 8 12C8 10.9 7.1 10 6 10ZM18 10C16.9 10 16 10.9 16 12C16 13.1 16.9 14 18 14C19.1 14 20 13.1 20 12C20 10.9 19.1 10 18 10ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10Z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </header>
+          <div
+            class="panther-18"
+          >
+            <dl
+              class="panther-9"
+            >
+              <dt
+                aria-labelledby="id97c37f76-8bd8-4def-b4ab-7bfe83d62081"
+                class="panther-7"
+              >
+                ID
+              </dt>
+              <dd
+                aria-labelledby="id97c37f76-8bd8-4def-b4ab-7bfe83d62081"
+                class="panther-8"
+              >
+                97c37f76-8bd8-4def-b4ab-7bfe83d62081
+              </dd>
+            </dl>
+            <dl
+              class="panther-9"
+            >
+              <dt
+                aria-labelledby="log-typeobject-object"
+                class="panther-7"
+              >
+                Log Type
+              </dt>
+              <dd
+                aria-labelledby="log-typeobject-object"
+                class="panther-8"
+              >
+                <div
+                  class="panther-13"
+                >
+                  <span
+                    class="panther-11"
+                  />
+                  <span
+                    class="panther-12"
+                  >
+                    enterprise
+                  </span>
+                </div>
+              </dd>
+            </dl>
+            <div
+              class="panther-17"
+            >
+              <div
+                aria-atomic="true"
+                class="panther-16"
+                role="status"
+              >
+                DISABLED
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <footer
+    id="footer"
+  />
+</div>
+`;
