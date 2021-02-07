@@ -32,6 +32,8 @@ export type ComplianceIntegrationDetails = Pick<
   | 'cweEnabled'
   | 'remediationEnabled'
   | 'stackName'
+  | 'regionIgnoreList'
+  | 'resourceTypeIgnoreList'
 > & {
   health: {
     auditRoleStatus: IntegrationItemHealthDetails;
@@ -50,6 +52,8 @@ export const ComplianceIntegrationDetails = gql`
     cweEnabled
     remediationEnabled
     stackName
+    regionIgnoreList
+    resourceTypeIgnoreList
     health {
       auditRoleStatus {
         ...IntegrationItemHealthDetails

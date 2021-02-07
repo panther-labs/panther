@@ -74,11 +74,6 @@ Parameters:
     Description: The URL of the GraphQL API that the web application uses
     # Example: "https://mmo6but73nazdmp454amim3baa.appsync-api.us-west-2.amazonaws.com/graphql"
     AllowedPattern: '^https:\/\/[a-z0-9]{26}\.appsync-api\.[a-z]{2}-[a-z]{4,9}-[1-9]\.amazonaws\.com(\.cn)?\/graphql$'
-  Image:
-    Type: String
-    Description: The container image to use for the front-end web application server
-    # Truncated example: "111122223333.dkr.ecr.us-west-2.amazonaws.com/panther-web:9c2511a443"
-    AllowedPattern: '^[a-zA-Z0-9._\/-]{3,}:\S+$' # "host:tag" - docker host does not have to be AWS
   InitialAnalysisPackUrls:
     Type: CommaDelimitedList
     Description: Initial Python analysis packs
@@ -160,7 +155,7 @@ Resources:
         - Type: redirect
           RedirectConfig:
             Protocol: HTTPS
-            Port: 443
+            Port: '443'
             Host: '#{host}'
             Path: '/#{path}'
             Query: '#{query}'
@@ -231,7 +226,7 @@ Resources:
               Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
   # A log group for storing the stdout logs from the server's task definition
   LogGroup:
@@ -277,7 +272,7 @@ Resources:
               Value: !Ref PantherVersion
 
           Essential: true
-          Image: !Ref Image
+          Image: Dockerfile
           Interactive: false
           LogConfiguration:
             LogDriver: awslogs

@@ -20,6 +20,7 @@ import React from 'react';
 import { ModalProps, useSnackbar } from 'pouncejs';
 import { ListUsersDocument } from 'Pages/Users';
 import { getOperationName } from 'apollo-utilities';
+import { getUserDisplayName } from 'Helpers/utils';
 import ConfirmModal from 'Components/modals/ConfirmModal';
 import { UserDetails } from 'Source/graphql/fragments/UserDetails.generated';
 import { useResetUserPassword } from './graphql/resetUserPassword.generated';
@@ -30,7 +31,7 @@ export interface ResetUserPasswordProps extends ModalProps {
 
 const ResetUserPasswordModal: React.FC<ResetUserPasswordProps> = ({ user, onClose, ...rest }) => {
   const { pushSnackbar } = useSnackbar();
-  const userDisplayName = `${user.givenName} ${user.familyName}` || user.id;
+  const userDisplayName = getUserDisplayName(user);
   const [resetUserPassword, { loading }] = useResetUserPassword({
     variables: {
       id: user.id,

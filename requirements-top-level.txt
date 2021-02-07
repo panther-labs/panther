@@ -11,15 +11,11 @@
 # pip3 install -r requirements-top-level.txt
 # pip3 freeze --all > requirements.txt
 # deactivate
-aws-sam-cli
 bandit
-boto3~=1.14.40  # Matches version in Lambda: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
+boto3~=1.16.31  # Matches version in Lambda: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
 cfn-lint
-cfn-flip
 jsonpath-ng
 mypy
-pip==20.2.4
+pip~=21.0
 pylint
-requests==2.23.0  # this version required by aws-sam-cli
-urllib3~=1.25.0  # aws-sam-cli requires urllib3<1.26,>=1.20
 yapf

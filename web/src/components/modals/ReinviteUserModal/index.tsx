@@ -1,5 +1,3 @@
-package util
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,31 +16,5 @@ package util
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"fmt"
-	"os"
-
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"go.uber.org/zap"
-)
-
-// The name of the bucket containing published Panther releases
-func PublicAssetsBucket(region string) string {
-	return "panther-community-" + region
-}
-
-// Upload a local file to S3.
-func UploadFileToS3(log *zap.SugaredLogger, uploader *s3manager.Uploader, path, bucket, key string) (*s3manager.UploadOutput, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open %s: %v", path, err)
-	}
-	defer file.Close()
-
-	log.Debugf("uploading %s to s3://%s/%s", path, bucket, key)
-	return uploader.Upload(&s3manager.UploadInput{
-		Body:   file,
-		Bucket: &bucket,
-		Key:    &key,
-	})
-}
+export { default } from './ReinviteUserModal';
+export * from './ReinviteUserModal';

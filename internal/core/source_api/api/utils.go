@@ -55,6 +55,10 @@ func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 		item.ScanIntervalMins = input.ScanIntervalMins
 		item.ScanStatus = input.ScanStatus
 		item.StackName = input.StackName
+		item.Enabled = input.Enabled
+		item.RegionIgnoreList = input.RegionIgnoreList
+		item.ResourceTypeIgnoreList = input.ResourceTypeIgnoreList
+		item.ResourceRegexIgnoreList = input.ResourceRegexIgnoreList
 	case models.IntegrationTypeSqs:
 		item.SqsConfig = &ddb.SqsConfig{
 			QueueURL:             input.SqsConfig.QueueURL,

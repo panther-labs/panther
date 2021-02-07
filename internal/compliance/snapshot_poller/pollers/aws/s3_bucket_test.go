@@ -21,7 +21,9 @@ package aws
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -276,4 +278,26 @@ func TestS3BucketPollerError(t *testing.T) {
 	assert.Empty(t, resources)
 	assert.Nil(t, marker)
 	assert.Error(t, err)
+}
+
+func TestS3BucketPollerRegionIgnoreListError(t *testing.T) {
+	resetCache()
+	awstest.MockS3ForSetup = awstest.BuildMockS3SvcAllError()
+
+	S3ClientFunc = awstest.SetupMockS3
+	var e *RegionIgnoreListError
+
+	resources, marker, err := PollS3Buckets(&awsmodels.ResourcePollerInput{
+		AuthSource:          &awstest.ExampleAuthSource,
+		AuthSourceParsedARN: awstest.ExampleAuthSourceParsedARN,
+		IntegrationID:       awstest.ExampleIntegrationID,
+		Region:              awstest.ExampleRegion,
+		Timestamp:           &awstest.ExampleTime,
+		RegionIgnoreList:    []string{aws.StringValue(awstest.ExampleRegion)},
+	})
+
+	assert.Empty(t, resources)
+	assert.Nil(t, marker)
+	assert.Error(t, err)
+	assert.True(t, errors.As(err, &e))
 }
