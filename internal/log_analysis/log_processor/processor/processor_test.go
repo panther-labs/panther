@@ -184,6 +184,9 @@ func TestProcessDataStreamError(t *testing.T) {
 	actualLog := logs.FilterMessage(expectedLogMesg).AllUntimed()[0]
 	assertLogEqual(t, expectedLog, actualLog)
 
+	// check we tracked the s3 path with the error
+	assert.Len(t, dataStream.FailureTracker.(*testFailureTracker).failures, 1)
+
 	// ensure the closer was called
 	assert.True(t, dataStream.Closer.(*dummyCloser).closed)
 }
@@ -550,9 +553,20 @@ var testSource = &models.SourceIntegration{
 	},
 }
 
+type testFailureTracker struct {
+	failures map[string]struct{}
+}
+
+func (ft *testFailureTracker) AddFailedObjectPrefix(bucket, key string) {
+	ft.failures[bucket+"/"+key] = struct{}{}
+}
+
 // returns a dataStream that will cause the parse to fail
 func makeBadDataStream() *common.DataStream {
 	return &common.DataStream{
+		FailureTracker: &testFailureTracker{
+			failures: make(map[string]struct{}),
+		},
 		Stream: logstream.NewLineStream(&failingReader{}, 4096),
 		Closer: &dummyCloser{},
 		Source: testSource,

@@ -28,7 +28,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -107,8 +106,8 @@ func TestHandleUnsupportedFileType(t *testing.T) {
 	lambdaMock := &testutils.LambdaMock{}
 	common.LambdaClient = lambdaMock
 
-	s3Mock := &testutils.S3Mock{}
-	newS3ClientFunc = func(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
+	s3Mock := newTestS3Reader()
+	newS3ClientFunc = func(region *string, creds *credentials.Credentials) S3Reader {
 		return s3Mock
 	}
 

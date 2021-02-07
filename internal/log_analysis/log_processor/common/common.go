@@ -90,12 +90,18 @@ func Setup() {
 
 // DataStream represents a data stream for an s3 object read by the processor
 type DataStream struct {
-	Stream       logstream.Stream
-	Closer       io.Closer
-	Source       *models.SourceIntegration
-	S3ObjectKey  string
-	S3Bucket     string
-	S3ObjectSize int64
+	FailureTracker DataStreamFailureTracker
+	Stream         logstream.Stream
+	Closer         io.Closer
+	Source         *models.SourceIntegration
+	S3ObjectKey    string
+	S3Bucket       string
+	S3ObjectSize   int64
+}
+
+// used to track S3 prefixes that have repeated failures to reduce retry time
+type DataStreamFailureTracker interface {
+	AddFailedObjectPrefix(bucket, key string)
 }
 
 const (

@@ -19,6 +19,7 @@ package sources
  */
 
 import (
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -53,7 +54,8 @@ const (
 
 	s3BucketLocationCacheSize = 1000
 	s3ClientCacheSize         = 1000
-	s3ClientMaxRetries        = 5 // keep short to avoid large lambda bills when access is not fixed for long periods of time
+	s3ClientMaxRetries        = 10 // ~1'
+	s3ClientMaxRetriesOnError = 0  // if a previous use of a s3 the prefix failed, only retry this many times
 )
 
 type s3ClientCacheKey struct {
@@ -196,7 +198,7 @@ func init() {
 // getS3Client Fetches
 // 1. S3 client with permissions to read data from the account that contains the event
 // 2. The source integration
-func getS3Client(bucketName, objectKey string) (s3iface.S3API, *models.SourceIntegration, error) {
+func getS3Client(bucketName, objectKey string) (S3Reader, *models.SourceIntegration, error) {
 	source, err := LoadSourceS3(bucketName, objectKey)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "failed to fetch the appropriate role arn to retrieve S3 object %s/%s", bucketName, objectKey)
@@ -242,7 +244,7 @@ func getS3Client(bucketName, objectKey string) (s3iface.S3API, *models.SourceInt
 		client = newS3ClientFunc(&cacheKey.awsRegion, awsCreds)
 		s3ClientCache.Add(cacheKey, client)
 	}
-	return client.(s3iface.S3API), source, nil
+	return client.(S3Reader), source, nil
 }
 
 func getBucketRegion(s3Bucket string, awsCreds *credentials.Credentials) (string, error) {
@@ -289,7 +291,46 @@ func updateIntegrationStatus(integrationID string, timestamp time.Time) {
 	}
 }
 
-func getNewS3Client(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
+type S3Reader interface {
+	s3iface.S3API
+	FailedReadObjectClient() s3iface.S3API
+	AddFailedObjectPrefix(bucket, key string)
+	HasFailedObjectPrefix(bucket, key string) bool
+}
+
+// S3ReaderClient wraps the S3 client and tracks prefixes with repeated errors. If an s3 object being read
+// has a prefix in the map of previously failed objects then the downloader will use the failedReadObjectClient
+// to read the file which has a much lower retry count. This avoids the lambda spending large amounts
+// of time retrying when permissions are not set properly on buckets (which can last hours or days sometimes).
+type S3ReaderClient struct {
+	s3.S3
+	failedReadObjectPrefixes map[string]struct{} // remember the S3 folders that fail
+	failedReadObjectClient   s3iface.S3API       // the client to use if path is in failedReadObjectPrefixes, lower retries!
+}
+
+func (c *S3ReaderClient) FailedReadObjectClient() s3iface.S3API {
+	return c.failedReadObjectClient
+}
+
+func (c *S3ReaderClient) failedPath(bucket, key string) string {
+	// take at most top 3 dirs in path, including bucket
+	parts := append([]string{bucket}, filepath.SplitList(key)...)
+	if len(parts) > 2 {
+		parts = parts[0:2]
+	}
+	return strings.Join(parts, "/")
+}
+
+func (c *S3ReaderClient) AddFailedObjectPrefix(bucket, key string) {
+	c.failedReadObjectPrefixes[c.failedPath(bucket, key)] = struct{}{}
+}
+
+func (c *S3ReaderClient) HasFailedObjectPrefix(bucket, key string) bool {
+	_, found := c.failedReadObjectPrefixes[c.failedPath(bucket, key)]
+	return found
+}
+
+func getNewS3Client(region *string, creds *credentials.Credentials) S3Reader {
 	config := aws.NewConfig().WithCredentials(creds)
 	if region != nil {
 		config.WithRegion(*region)
@@ -297,6 +338,11 @@ func getNewS3Client(region *string, creds *credentials.Credentials) (result s3if
 	// We have seen that in some case AWS will return AccessDenied while accessing data
 	// through STS creds. The issue seems to disappear after some retries
 	awsSession := session.Must(session.NewSession(config)) // use default retries for fetching creds, avoids hangs!
-	return s3.New(awsSession.Copy(request.WithRetryer(config.WithMaxRetries(s3ClientMaxRetries),
-		awsretry.NewAccessDeniedRetryer(s3ClientMaxRetries))))
+	return &S3ReaderClient{
+		S3: *s3.New(awsSession.Copy(request.WithRetryer(config.WithMaxRetries(s3ClientMaxRetries),
+			awsretry.NewAccessDeniedRetryer(s3ClientMaxRetries)))),
+		failedReadObjectPrefixes: make(map[string]struct{}),
+		failedReadObjectClient: s3.New(awsSession.Copy(request.WithRetryer(config.WithMaxRetries(s3ClientMaxRetriesOnError),
+			awsretry.NewAccessDeniedRetryer(s3ClientMaxRetriesOnError)))),
+	}
 }

@@ -19,6 +19,8 @@ package sources
  */
 
 import (
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -55,8 +57,8 @@ func TestGetS3Client(t *testing.T) {
 	lambdaMock := &testutils.LambdaMock{}
 	common.LambdaClient = lambdaMock
 
-	s3Mock := &testutils.S3Mock{}
-	newS3ClientFunc = func(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
+	s3Mock := newTestS3Reader()
+	newS3ClientFunc = func(region *string, creds *credentials.Credentials) S3Reader {
 		return s3Mock
 	}
 
@@ -111,8 +113,8 @@ func TestGetS3ClientUnknownBucket(t *testing.T) {
 	lambdaMock := &testutils.LambdaMock{}
 	common.LambdaClient = lambdaMock
 
-	s3Mock := &testutils.S3Mock{}
-	newS3ClientFunc = func(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
+	s3Mock := newTestS3Reader()
+	newS3ClientFunc = func(region *string, creds *credentials.Credentials) S3Reader {
 		return s3Mock
 	}
 
@@ -147,8 +149,8 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 	lambdaMock := &testutils.LambdaMock{}
 	common.LambdaClient = lambdaMock
 
-	s3Mock := &testutils.S3Mock{}
-	newS3ClientFunc = func(region *string, creds *credentials.Credentials) (result s3iface.S3API) {
+	s3Mock := newTestS3Reader()
+	newS3ClientFunc = func(region *string, creds *credentials.Credentials) S3Reader {
 		return s3Mock
 	}
 
@@ -309,4 +311,40 @@ func TestSourceCacheStructFind(t *testing.T) {
 		src := cache.FindS3("bar", "foo/foo/foo/prefix/qux.json")
 		assert.Equal("6", src.IntegrationID)
 	}
+}
+
+type testS3ReaderClient struct {
+	testutils.S3Mock
+	failedReadObjectPrefixes map[string]struct{} // remember the S3 folders that fail after retries
+	failedReadObjectClient   s3iface.S3API       // the client to use if path is in failedReadObjectPrefixes, lower retries!
+}
+
+func (c *testS3ReaderClient) FailedReadObjectClient() s3iface.S3API {
+	return c.failedReadObjectClient
+}
+
+func (c *testS3ReaderClient) failedPath(bucket, key string) string {
+	// take at most top 3 dirs in path, including bucket
+	parts := append([]string{bucket}, filepath.SplitList(key)...)
+	if len(parts) > 2 {
+		parts = parts[0:2]
+	}
+	return strings.Join(parts, "/")
+}
+
+func (c *testS3ReaderClient) AddFailedObjectPrefix(bucket, key string) {
+	c.failedReadObjectPrefixes[c.failedPath(bucket, key)] = struct{}{}
+}
+
+func (c *testS3ReaderClient) HasFailedObjectPrefix(bucket, key string) bool {
+	_, found := c.failedReadObjectPrefixes[c.failedPath(bucket, key)]
+	return found
+}
+
+func newTestS3Reader() *testS3ReaderClient {
+	r := &testS3ReaderClient{
+		failedReadObjectPrefixes: make(map[string]struct{}),
+	}
+	r.failedReadObjectClient = r
+	return r
 }

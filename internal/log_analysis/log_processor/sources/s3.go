@@ -29,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/sns"
 	jsoniter "github.com/json-iterator/go"
@@ -142,8 +143,14 @@ func buildStream(ctx context.Context, s3Object *S3ObjectInfo) (*common.DataStrea
 		return nil, nil
 	}
 
+	// check if this path has had errors before in this session, if so use a client with a very low retry setting
+	var s3DownloaderClient s3iface.S3API = s3Client
+	if s3Client.HasFailedObjectPrefix(bucket, key) {
+		s3DownloaderClient = s3Client.FailedReadObjectClient()
+	}
+
 	downloader := s3pipe.Downloader{
-		S3:       s3Client,
+		S3:       s3DownloaderClient,
 		PartSize: calculatePartSize(s3Object.S3ObjectSize),
 	}
 	// gzip streams are transparently uncompressed
@@ -166,12 +173,13 @@ func buildStream(ctx context.Context, s3Object *S3ObjectInfo) (*common.DataStrea
 	}
 
 	return &common.DataStream{
-		Stream:       stream,
-		Closer:       r,
-		Source:       src,
-		S3Bucket:     s3Object.S3Bucket,
-		S3ObjectKey:  s3Object.S3ObjectKey,
-		S3ObjectSize: s3Object.S3ObjectSize,
+		FailureTracker: s3Client,
+		Stream:         stream,
+		Closer:         r,
+		Source:         src,
+		S3Bucket:       s3Object.S3Bucket,
+		S3ObjectKey:    s3Object.S3ObjectKey,
+		S3ObjectSize:   s3Object.S3ObjectSize,
 	}, nil
 }
 
