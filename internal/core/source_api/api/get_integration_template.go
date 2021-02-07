@@ -20,13 +20,13 @@ package api
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
