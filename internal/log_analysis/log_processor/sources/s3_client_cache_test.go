@@ -19,8 +19,6 @@ package sources
  */
 
 import (
-	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -31,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	lru "github.com/hashicorp/golang-lru"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -313,6 +312,12 @@ func TestSourceCacheStructFind(t *testing.T) {
 	}
 }
 
+func TestFailedPath(t *testing.T) {
+	assert.Equal(t, "bucket", failedPath("bucket", "foo.gz"))
+	assert.Equal(t, "bucket/a/b", failedPath("bucket", "a/b/foo.gz"))
+	assert.Equal(t, "bucket/a/b", failedPath("bucket", "a/b/c/d/e/foo.gz"))
+}
+
 type testS3ReaderClient struct {
 	testutils.S3Mock
 	failedReadObjectPrefixes map[string]struct{} // remember the S3 folders that fail after retries
@@ -323,21 +328,12 @@ func (c *testS3ReaderClient) FailedReadObjectClient() s3iface.S3API {
 	return c.failedReadObjectClient
 }
 
-func (c *testS3ReaderClient) failedPath(bucket, key string) string {
-	// take at most top 3 dirs in path, including bucket
-	parts := append([]string{bucket}, filepath.SplitList(key)...)
-	if len(parts) > 2 {
-		parts = parts[0:2]
-	}
-	return strings.Join(parts, "/")
-}
-
 func (c *testS3ReaderClient) AddFailedObjectPrefix(bucket, key string) {
-	c.failedReadObjectPrefixes[c.failedPath(bucket, key)] = struct{}{}
+	c.failedReadObjectPrefixes[failedPath(bucket, key)] = struct{}{}
 }
 
 func (c *testS3ReaderClient) HasFailedObjectPrefix(bucket, key string) bool {
-	_, found := c.failedReadObjectPrefixes[c.failedPath(bucket, key)]
+	_, found := c.failedReadObjectPrefixes[failedPath(bucket, key)]
 	return found
 }
 

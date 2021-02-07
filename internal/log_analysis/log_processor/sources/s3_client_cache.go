@@ -312,22 +312,27 @@ func (c *S3ReaderClient) FailedReadObjectClient() s3iface.S3API {
 	return c.failedReadObjectClient
 }
 
-func (c *S3ReaderClient) failedPath(bucket, key string) string {
-	// take at most top 3 dirs in path, including bucket
-	parts := append([]string{bucket}, filepath.SplitList(key)...)
-	if len(parts) > 2 {
-		parts = parts[0:2]
-	}
-	return strings.Join(parts, "/")
-}
-
 func (c *S3ReaderClient) AddFailedObjectPrefix(bucket, key string) {
-	c.failedReadObjectPrefixes[c.failedPath(bucket, key)] = struct{}{}
+	c.failedReadObjectPrefixes[failedPath(bucket, key)] = struct{}{}
 }
 
 func (c *S3ReaderClient) HasFailedObjectPrefix(bucket, key string) bool {
-	_, found := c.failedReadObjectPrefixes[c.failedPath(bucket, key)]
+	_, found := c.failedReadObjectPrefixes[failedPath(bucket, key)]
 	return found
+}
+
+func failedPath(bucket, key string) string {
+	// take at most top n dirs in path, including bucket
+	const n = 3
+	parts := []string{bucket}
+	dir := filepath.Dir(key)
+	if dir != "." {
+		parts = append(parts, strings.Split(dir, "/")...)
+	}
+	if len(parts) > n {
+		parts = parts[0:n]
+	}
+	return strings.Join(parts, "/")
 }
 
 func getNewS3Client(region *string, creds *credentials.Credentials) S3Reader {
