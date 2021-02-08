@@ -47,6 +47,7 @@ const ListPacks = () => {
   useTrackPageView(PageViewEnum.ListPacks);
   const { updatePagingParams } = useRequestParamsWithPagination<ListPacksInput>();
 
+  // FIXME: Waiting for BE to implement this request
   // const { loading, error, data } = useListPacks({
   //   fetchPolicy: 'cache-and-network',
   //   variables: {
