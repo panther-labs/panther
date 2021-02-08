@@ -18,7 +18,7 @@
 
 import { pantherConfig } from 'Source/config';
 import slackLogo from 'Assets/slack-minimal-logo.svg';
-import { DestinationTypeEnum, SeverityEnum } from 'Generated/schema';
+import { DestinationTypeEnum, DetectionTypeEnum, SeverityEnum } from 'Generated/schema';
 import msTeamsLogo from 'Assets/ms-teams-minimal-logo.svg';
 import opsgenieLogo from 'Assets/opsgenie-minimal-logo.svg';
 import jiraLogo from 'Assets/jira-minimal-logo.svg';
@@ -216,4 +216,12 @@ export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: keyof Theme['colors'] 
   [SeverityEnum.Medium]: 'yellow-500' as const,
   [SeverityEnum.Low]: 'blue-300' as const,
   [SeverityEnum.Info]: 'gray-300' as const,
+};
+
+export const DETECTION_TYPE_COLOR_MAP: {
+  [key in DetectionTypeEnum | 'GLOBAL']: keyof Theme['colors'];
+} = {
+  [DetectionTypeEnum.Policy]: 'indigo-300' as const,
+  [DetectionTypeEnum.Rule]: 'cyan-500' as const,
+  GLOBAL: 'green-200' as const,
 };
