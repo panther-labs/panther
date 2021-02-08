@@ -21,28 +21,26 @@ import GenericItemCard from 'Components/GenericItemCard';
 import { Box, Card, Flex, Link, Text, useSnackbar } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
-import { PackFull } from 'Source/graphql/fragments/PackFull.generated';
 import UpdateVersion, { UpdateVersionFormValues } from 'Components/cards/PackCard/UpdateVersion';
 import { useUpdatePack } from 'Source/graphql/queries';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { extractErrorMessage } from 'Helpers/utils';
 import BulletedLoading from 'Components/BulletedLoading';
 import UpdateStatus, { UpdateStatusFormValues } from 'Components/cards/PackCard/UpdateStatus';
+import { PackDetails } from 'Source/graphql/fragments/PackDetails.generated';
 
 interface PackCardProps {
-  pack: PackFull;
+  pack: PackDetails;
 }
 
 const PackCard: React.FC<PackCardProps> = ({ pack }) => {
   const { pushSnackbar } = useSnackbar();
 
-  const [isUpdating, setIsUpdating] = React.useState(false);
-
-  const [updatePack] = useUpdatePack({
+  const [updatePack, { loading }] = useUpdatePack({
     // This hook ensures we also update the AlertDetails item in the cache
     update: (cache, { data }) => {
       const dataId = cache.identify({
-        __typename: 'Pack',
+        __typename: 'PackDetails',
         id: data.updatePack.id,
       });
       cache.modify(dataId, {
@@ -52,18 +50,16 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
       // TODO: when apollo client is updated to 3.0.0-rc.12+, use this code
       // cache.modify({
       //   id: cache.identify({
-      //     __typename: 'AlertDetails',
-      //     alertId: data.updateAlertStatus.alertId,
+      //     __typename: 'PackDetails',
+      //     id: data.updatePack.alertId,
       //   }),
       //   fields: {
-      //     status: () => data.updateAlertStatus.status,
-      //     lastUpdatedBy: () => data.updateAlertStatus.lastUpdatedBy,
-      //     lastUpdatedByTime: () => data.updateAlertStatus.lastUpdatedByTime,
+      //     packVersion: () => data.updatePack.packVersion,
+      //     enabled: () => data.updatePack.enabled,
       //   },
       // });
     },
     onCompleted: data => {
-      setIsUpdating(false);
       trackEvent({
         event: EventEnum.UpdatedPack,
         src: SrcEnum.Packs,
@@ -74,7 +70,6 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
       });
     },
     onError: error => {
-      setIsUpdating(false);
       trackError({
         event: TrackErrorEnum.FailedToUpdatePack,
         src: SrcEnum.Packs,
@@ -88,7 +83,6 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
   });
 
   const onPatch = (values: UpdateVersionFormValues) => {
-    setIsUpdating(true);
     return updatePack({
       variables: {
         input: {
@@ -100,7 +94,6 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
   };
 
   const onStatusUpdate = (values: UpdateStatusFormValues) => {
-    setIsUpdating(true);
     return updatePack({
       variables: {
         input: {
@@ -113,7 +106,7 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
   return (
     // Replaced GenericItemCard with simple card in order to exclude overflow property
     <Card as="section" variant="dark" position="relative">
-      {isUpdating && (
+      {loading && (
         <Flex
           position="absolute"
           direction="column"
