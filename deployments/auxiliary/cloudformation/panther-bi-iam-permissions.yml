@@ -15,13 +15,23 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 AWSTemplateFormatVersion: 2010-09-09
-Description: IAM permissions needed to connect to Athena through third party tools.
+Description: 'Athena Third Party BI Tool Permissions (Create access and secret key post deployment for IAM user created)'
+
+Parameters:
+  UserName:
+    Type: String
+    Default: PantherAthenaBI
+    Description: Enter a name for the IAM user that will be created.
+  RootStackName:
+    Type: String
+    Default: panther
+    Description: Enter the Panther Root Stack Name
 
 Resources:
   Athena:
     Type: AWS::IAM::User
     Properties:
-      UserName: Athena_analytics_readonly
+      UserName: !Ref UserName
 
   AthenaGroupMembership:
     Type: AWS::IAM::UserToGroupAddition
@@ -68,27 +78,10 @@ Resources:
               - s3:ListBucketMultipartUploads
               - s3:ListMultipartUploadParts
               - s3:PutObject
-            Resource: arn:aws:s3:::panther-bootstrap-athenaresults-*
-          - Effect: Allow
-            Action:
-              - s3:AbortMultipartUpload
-              - s3:GetBucketLocation
-              - s3:GetObject
-              - s3:ListBucket
-              - s3:ListBucketMultipartUploads
-              - s3:ListMultipartUploadParts
-              - s3:PutObject
-            Resource: arn:aws:s3:::panther-bootstrap-processeddata-*
-          - Effect: Allow
-            Action:
-              - s3:AbortMultipartUpload
-              - s3:GetBucketLocation
-              - s3:GetObject
-              - s3:ListBucket
-              - s3:ListBucketMultipartUploads
-              - s3:ListMultipartUploadParts
-              - s3:PutObject
-            Resource: arn:aws:s3:::panther-bootstrap-historicaldata-*
+            Resource:
+              - !Sub arn:aws:s3:::${RootStackName}-*-athenaresults-*
+              - !Sub arn:aws:s3:::${RootStackName}-*-processeddata-*
+              - !Sub arn:aws:s3:::${RootStackName}-*-historicaldata-*
           - Effect: Allow
             Action:
               - s3:GetBucketLocation
@@ -99,14 +92,7 @@ Resources:
             Action: lakeformation:GetDataAccess
             Resource: '*'
 
-  AthenaAccessKey:
-    Type: AWS::IAM::AccessKey
-    Properties:
-      Status: Active
-      UserName: !Ref Athena
-
 Outputs:
-  AccessKey:
-    Value: !Ref AthenaAccessKey
-  SecretKey:
-    Value: !GetAtt AthenaAccessKey.SecretAccessKey
+  IAMUser:
+    Description: Panther Athena BI tool integration IAM user.
+    Value: !Ref Athena
