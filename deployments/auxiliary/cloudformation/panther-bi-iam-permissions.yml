@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 AWSTemplateFormatVersion: 2010-09-09
-Description: 'Athena Third Party BI Tool Permissions (Create access and secret key post deployment for IAM user created)'
+Description: Athena Third Party BI Tool Permissions (Create access key post deployment for IAM user created)
 
 Parameters:
   UserName:
