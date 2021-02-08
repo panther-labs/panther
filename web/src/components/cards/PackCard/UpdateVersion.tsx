@@ -16,11 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import React from 'react';
-import semver from 'semver';
-import { Pack } from 'Generated/schema';
-import { Button, Flex, Box } from 'pouncejs';
-import { Form, Formik, FastField } from 'formik';
-import FormikCombobox from 'Components/fields/ComboBox';
+import { Pack, PackVersion } from 'Generated/schema';
+import { Button, Flex, Box, Combobox } from 'pouncejs';
+import { versionCompare } from 'Helpers/utils';
 
 interface UpdateVersionProps {
   pack: Pick<Pack, 'availableVersions' | 'packVersion' | 'enabled'>;
@@ -33,48 +31,45 @@ export interface UpdateVersionFormValues {
     name: string;
   };
 }
+
 const UpdateVersion: React.FC<UpdateVersionProps> = ({
   pack: { enabled, availableVersions, packVersion: current },
   onPatch,
 }) => {
-  availableVersions.sort((a, b) => semver.rcompare(a.name, b.name));
+  availableVersions.sort((a, b) => versionCompare(b.name, a.name));
+  const [selectedVersion, setSelectedVersion] = React.useState<PackVersion>(availableVersions[0]);
 
-  const initialValues = { packVersion: availableVersions[0] };
   return (
-    <Formik<UpdateVersionFormValues> initialValues={initialValues} onSubmit={onPatch}>
-      {({ values }) => {
-        return (
-          <Form>
-            <Flex spacing={4}>
-              <Box width={100}>
-                <FastField
-                  name="packVersion"
-                  as={FormikCombobox}
-                  disabled={!enabled}
-                  items={availableVersions}
-                  itemToString={v => v.name}
-                />
-              </Box>
-              <Box width={130}>
-                {semver.lt(values.packVersion.name, current.name) ? (
-                  <Button type="submit" fullWidth variantColor="violet" disabled={!enabled}>
-                    Roll Back
-                  </Button>
-                ) : (
-                  <Button
-                    type="submit"
-                    fullWidth
-                    disabled={!enabled || values.packVersion.name === current.name}
-                  >
-                    Update Pack
-                  </Button>
-                )}
-              </Box>
-            </Flex>
-          </Form>
-        );
-      }}
-    </Formik>
+    <Flex spacing={4}>
+      <Box width={100}>
+        <Combobox
+          label="Version"
+          value={selectedVersion}
+          disabled={!enabled}
+          onChange={setSelectedVersion}
+          items={availableVersions}
+          itemToString={v => v.name}
+        />
+      </Box>
+      <Box width={130}>
+        {versionCompare(selectedVersion.name, current.name) >= 0 ? (
+          <Button
+            disabled={!enabled || selectedVersion.name === current.name}
+            onClick={() => onPatch({ packVersion: selectedVersion })}
+          >
+            Update Pack
+          </Button>
+        ) : (
+          <Button
+            variantColor="violet"
+            disabled={!enabled || selectedVersion.name === current.name}
+            onClick={() => onPatch({ packVersion: selectedVersion })}
+          >
+            Revert Pack
+          </Button>
+        )}
+      </Box>
+    </Flex>
   );
 };
 

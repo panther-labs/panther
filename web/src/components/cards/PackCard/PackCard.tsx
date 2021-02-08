@@ -18,7 +18,7 @@
 
 import React from 'react';
 import GenericItemCard from 'Components/GenericItemCard';
-import { Box, Card, Flex, Link, Text, useSnackbar } from 'pouncejs';
+import { Box, Card, Flex, Link, Switch, Text, useSnackbar } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import UpdateVersion, { UpdateVersionFormValues } from 'Components/cards/PackCard/UpdateVersion';
@@ -26,7 +26,7 @@ import { useUpdatePack } from 'Source/graphql/queries';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { extractErrorMessage } from 'Helpers/utils';
 import BulletedLoading from 'Components/BulletedLoading';
-import UpdateStatus, { UpdateStatusFormValues } from 'Components/cards/PackCard/UpdateStatus';
+
 import { PackDetails } from 'Source/graphql/fragments/PackDetails.generated';
 import DetectionTypeBadge from 'Components/badges/DetectionTypeBadge';
 import { DetectionTypeEnum } from 'Generated/schema';
@@ -95,19 +95,19 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
     });
   };
 
-  const onStatusUpdate = (values: UpdateStatusFormValues) => {
+  const onStatusUpdate = () => {
     return updatePack({
       variables: {
         input: {
           id: pack.id,
-          enabled: values.enabled,
+          enabled: !pack.enabled,
         },
       },
     });
   };
   return (
     // Replaced GenericItemCard with simple card in order to exclude overflow property
-    <Card as="section" variant="dark" position="relative" overflowX="hidden">
+    <Card as="section" variant="dark" position="relative">
       {loading && (
         <Flex
           position="absolute"
@@ -139,7 +139,7 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
               {pack.updateAvailable && (
                 <Box
                   as="span"
-                  backgroundColor="red-500"
+                  backgroundColor={pack.enabled ? 'red-500' : 'gray-500'}
                   borderRadius="small"
                   px={2}
                   py={1}
@@ -148,10 +148,6 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
                   UPDATE AVAILABLE
                 </Box>
               )}
-              <Text as="span">Version</Text>
-              <Text as="span" color="gray-400">
-                {pack.packVersion.name}
-              </Text>
             </Flex>
           </GenericItemCard.Header>
           <Flex spacing={2}>
@@ -177,7 +173,7 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
                 <UpdateVersion pack={pack} onPatch={onPatch} />
               </Box>
               <Flex ml="auto" mr={0} align="flex-end">
-                <UpdateStatus pack={pack} onUpdate={onStatusUpdate} />
+                <Switch onClick={onStatusUpdate} label="Enabled" checked={pack.enabled} />
               </Flex>
             </Flex>
           </GenericItemCard.ValuesGroup>
