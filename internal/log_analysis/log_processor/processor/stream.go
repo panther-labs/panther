@@ -212,6 +212,9 @@ func kickOffReaders(ctx context.Context, streams []*common.DataStream) error {
 				metrics.SourceIDDimension, s.Source.IntegrationID,
 				metrics.StatusDimension, statusFromErr(err),
 			).Add(1)
+			if err != nil {
+				s.SetError(err)
+			}
 			return err
 		})
 	}

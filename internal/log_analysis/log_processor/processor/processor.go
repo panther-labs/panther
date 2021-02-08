@@ -224,8 +224,7 @@ func (p *Processor) run(ctx context.Context, outputChan chan<- *parsers.Result) 
 		p.processLogLine(ctx, string(line), outputChan)
 	}
 	if err = stream.Err(); err != nil {
-		// record the failed prefix, subsequent reads of this path will timeout more quickly
-		p.input.FailureTracker.AddFailedObjectPrefix(p.input.S3Bucket, p.input.S3ObjectKey)
+		p.input.SetError(err)
 		err = errors.Wrap(err, "failed to read log line")
 	}
 	return err

@@ -90,6 +90,7 @@ func Setup() {
 
 // DataStream represents a data stream for an s3 object read by the processor
 type DataStream struct {
+	Error          error
 	FailureTracker DataStreamFailureTracker
 	Stream         logstream.Stream
 	Closer         io.Closer
@@ -97,6 +98,12 @@ type DataStream struct {
 	S3ObjectKey    string
 	S3Bucket       string
 	S3ObjectSize   int64
+}
+
+// SetError records the failed prefix so subsequent reads of this path will timeout more quickly
+func (ds *DataStream) SetError(err error) {
+	ds.Error = err
+	ds.FailureTracker.AddFailedObjectPrefix(ds.S3Bucket, ds.S3ObjectKey)
 }
 
 // used to track S3 prefixes that have repeated failures to reduce retry time

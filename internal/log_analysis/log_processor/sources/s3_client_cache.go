@@ -218,7 +218,11 @@ func getS3Client(bucketName, objectKey string) (S3Reader, *models.SourceIntegrat
 			return nil, nil, errors.Errorf("failed to fetch credentials for assumed role %s to read %s/%s",
 				roleArn, bucketName, objectKey)
 		}
-		bucketRegion, err = getBucketRegion(bucketName, awsCreds)
+		locationDiscoveryClient, err := getCachedClient(roleArn, bucketName, "", objectKey, awsCreds)
+		if err != nil {
+			return nil, nil, err
+		}
+		bucketRegion, err = getBucketRegion(bucketName, locationDiscoveryClient)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -226,10 +230,14 @@ func getS3Client(bucketName, objectKey string) (S3Reader, *models.SourceIntegrat
 	}
 
 	zap.L().Debug("found bucket region", zap.Any("region", bucketRegion))
+	client, err := getCachedClient(roleArn, bucketName, bucketRegion.(string), objectKey, awsCreds)
+	return client, source, err
+}
 
+func getCachedClient(roleArn, bucketName, bucketRegion, objectKey string, awsCreds *credentials.Credentials) (S3Reader, error) {
 	cacheKey := s3ClientCacheKey{
 		roleArn:   roleArn,
-		awsRegion: bucketRegion.(string),
+		awsRegion: bucketRegion,
 	}
 	client, ok := s3ClientCache.Get(cacheKey)
 	if !ok {
@@ -237,22 +245,25 @@ func getS3Client(bucketName, objectKey string) (S3Reader, *models.SourceIntegrat
 		if awsCreds == nil {
 			awsCreds = newCredentialsFunc(roleArn)
 			if awsCreds == nil {
-				return nil, nil, errors.Errorf("failed to fetch credentials for assumed role %s to read %s/%s",
+				return nil, errors.Errorf("failed to fetch credentials for assumed role %s to read %s/%s",
 					roleArn, bucketName, objectKey)
 			}
 		}
 		client = newS3ClientFunc(&cacheKey.awsRegion, awsCreds)
 		s3ClientCache.Add(cacheKey, client)
 	}
-	return client.(S3Reader), source, nil
+	return client.(S3Reader), nil
 }
 
-func getBucketRegion(s3Bucket string, awsCreds *credentials.Credentials) (string, error) {
+func getBucketRegion(s3Bucket string, client S3Reader) (string, error) {
 	zap.L().Debug("searching bucket region", zap.String("bucket", s3Bucket))
 
-	locationDiscoveryClient := newS3ClientFunc(nil, awsCreds)
 	input := &s3.GetBucketLocationInput{Bucket: aws.String(s3Bucket)}
-	location, err := locationDiscoveryClient.GetBucketLocation(input)
+	var locationClient s3iface.S3API = client
+	if client.HasFailedObjectPrefix(s3Bucket, "") {
+		locationClient = client.FailedReadObjectClient()
+	}
+	location, err := locationClient.GetBucketLocation(input)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to find bucket region for %s", s3Bucket)
 	}
