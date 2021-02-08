@@ -131,7 +131,8 @@ func (api *API) getTemplate(integrationType string) (string, error) {
 	zap.L().Debug("requesting template", zap.String("key", *templateRequest.Key), zap.String("bucket", *templateRequest.Bucket))
 	s3Object, err := api.TemplateS3Client.GetObject(templateRequest)
 	if err != nil {
-		return "", errors.Wrapf(err, "cannot read template %#v, check Panther VERSION file", templateRequest)
+		return "", errors.Wrapf(err, "cannot read template s3://%s/%s, check Panther VERSION file",
+			*templateRequest.Bucket, *templateRequest.Key)
 	}
 
 	// Load the s3Object into memory. They're only ~8Kb in size.
