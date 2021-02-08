@@ -28,6 +28,8 @@ import { extractErrorMessage } from 'Helpers/utils';
 import BulletedLoading from 'Components/BulletedLoading';
 import UpdateStatus, { UpdateStatusFormValues } from 'Components/cards/PackCard/UpdateStatus';
 import { PackDetails } from 'Source/graphql/fragments/PackDetails.generated';
+import DetectionTypeBadge from 'Components/badges/DetectionTypeBadge';
+import { DetectionTypeEnum } from 'Generated/schema';
 
 interface PackCardProps {
   pack: PackDetails;
@@ -105,7 +107,7 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
   };
   return (
     // Replaced GenericItemCard with simple card in order to exclude overflow property
-    <Card as="section" variant="dark" position="relative">
+    <Card as="section" variant="dark" position="relative" overflowX="hidden">
       {loading && (
         <Flex
           position="absolute"
@@ -153,36 +155,18 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
             </Flex>
           </GenericItemCard.Header>
           <Flex spacing={2}>
-            <Box
-              as="span"
-              backgroundColor="navyblue-700"
-              borderRadius="small"
-              p={1}
-              fontSize="small"
-              color="cyan-500"
-              mr={1}
-            >
-              {pack.detectionTypes.RULE} Rules
-            </Box>
-            <Box
-              backgroundColor="navyblue-700"
-              borderRadius="small"
-              p={1}
-              fontSize="small"
-              color="indigo-300"
-            >
-              {pack.detectionTypes.POLICY} Policies
-            </Box>
-            <Box
-              backgroundColor="navyblue-700"
-              borderRadius="small"
-              px={1}
-              py={1}
-              fontSize="small"
-              color="green-200"
-            >
-              {pack.detectionTypes.GLOBAL} Helpers
-            </Box>
+            {pack.detectionTypes.RULE && (
+              <DetectionTypeBadge type={DetectionTypeEnum.Rule} count={pack.detectionTypes.RULE} />
+            )}
+            {pack.detectionTypes.POLICY && (
+              <DetectionTypeBadge
+                type={DetectionTypeEnum.Policy}
+                count={pack.detectionTypes.POLICY}
+              />
+            )}
+            {pack.detectionTypes.GLOBAL && (
+              <DetectionTypeBadge type="GLOBAL" count={pack.detectionTypes.GLOBAL} />
+            )}
           </Flex>
           <GenericItemCard.ValuesGroup>
             <Flex width={1} mt={3}>
