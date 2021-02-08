@@ -141,7 +141,7 @@ const RuleAlertsListing: React.FC<RuleAlertsListingProps> = ({ ruleId, type }) =
         <Flex width="100%" pt={6} px={6}>
           <Flex width="100%" spacing={2} justify="space-between">
             <Flex align="center" spacing={2} ml={4}>
-              <SelectAllCheckbox selectionIds={alertIds} />
+              <SelectAllCheckbox selectionItems={alertIds} />
               <Text>Alerts</Text>
             </Flex>
             <Flex justify="flex-end">

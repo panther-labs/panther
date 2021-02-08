@@ -18,7 +18,7 @@
 
 import * as Types from '../../../../__generated__/schema';
 
-import { PackFull } from '../../../graphql/fragments/PackFull.generated';
+import { PackDetails } from '../../../graphql/fragments/PackDetails.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
@@ -30,7 +30,7 @@ export type ListPacksVariables = {
 
 export type ListPacks = {
   listPacks: {
-    packs: Array<PackFull>;
+    packs: Array<PackDetails>;
     paging: Pick<Types.PagingData, 'totalPages' | 'thisPage' | 'totalItems'>;
   };
 };
@@ -39,7 +39,7 @@ export const ListPacksDocument = gql`
   query ListPacks($input: ListPacksInput!) {
     listPacks(input: $input) {
       packs {
-        ...PackFull
+        ...PackDetails
       }
       paging {
         totalPages
@@ -48,7 +48,7 @@ export const ListPacksDocument = gql`
       }
     }
   }
-  ${PackFull}
+  ${PackDetails}
 `;
 
 /**

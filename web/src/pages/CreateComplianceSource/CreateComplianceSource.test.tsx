@@ -25,9 +25,10 @@ import {
   waitFor,
   waitMs,
   buildAddComplianceIntegrationInput,
+  fireClickAndMouseEvents,
 } from 'test-utils';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
-import { CLOUD_SECURITY_REAL_TIME_DOC_URL } from 'Source/constants';
+import { AWS_REGIONS, CLOUD_SECURITY_REAL_TIME_DOC_URL, RESOURCE_TYPES } from 'Source/constants';
 import { mockAddComplianceSource } from './graphql/addComplianceSource.generated';
 import CreateComplianceSource from './CreateComplianceSource';
 
@@ -39,6 +40,8 @@ describe('CreateComplianceSource', () => {
       awsAccountId: '123123123123',
       remediationEnabled: false,
       cweEnabled: false,
+      regionIgnoreList: [],
+      resourceTypeIgnoreList: [],
     });
 
     const mocks = [
@@ -49,6 +52,8 @@ describe('CreateComplianceSource', () => {
             awsAccountId: complianceSource.awsAccountId,
             cweEnabled: complianceSource.cweEnabled,
             remediationEnabled: complianceSource.remediationEnabled,
+            regionIgnoreList: complianceSource.regionIgnoreList,
+            resourceTypeIgnoreList: complianceSource.resourceTypeIgnoreList,
           }),
         },
         data: {
@@ -60,6 +65,7 @@ describe('CreateComplianceSource', () => {
     const {
       getByText,
       getByLabelText,
+      getByAriaLabel,
       getByAltText,
       findByText,
     } = render(<CreateComplianceSource />, { mocks });
@@ -71,8 +77,8 @@ describe('CreateComplianceSource', () => {
     fireEvent.change(getByLabelText('AWS Account ID'), {
       target: { value: complianceSource.awsAccountId },
     });
-    fireEvent.click(getByLabelText('Real-Time AWS Resource Scans'));
-    fireEvent.click(getByLabelText('AWS Automatic Remediations'));
+    fireEvent.click(getByAriaLabel('Real-Time AWS Resource Scans'));
+    fireEvent.click(getByAriaLabel('AWS Automatic Remediations'));
 
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(1);
@@ -101,6 +107,8 @@ describe('CreateComplianceSource', () => {
       awsAccountId: '123123123123',
       remediationEnabled: true,
       cweEnabled: true,
+      regionIgnoreList: [AWS_REGIONS[0]],
+      resourceTypeIgnoreList: [RESOURCE_TYPES[0]],
     });
 
     const mocks = [
@@ -111,6 +119,8 @@ describe('CreateComplianceSource', () => {
             awsAccountId: complianceSource.awsAccountId,
             cweEnabled: complianceSource.cweEnabled,
             remediationEnabled: complianceSource.remediationEnabled,
+            regionIgnoreList: complianceSource.regionIgnoreList,
+            resourceTypeIgnoreList: complianceSource.resourceTypeIgnoreList,
           }),
         },
         data: {
@@ -124,6 +134,7 @@ describe('CreateComplianceSource', () => {
       getByLabelText,
       getByAltText,
       findByText,
+      getAllByLabelText,
     } = render(<CreateComplianceSource />, { mocks });
 
     // Fill in  the form and press continue
@@ -133,6 +144,16 @@ describe('CreateComplianceSource', () => {
     fireEvent.change(getByLabelText('AWS Account ID'), {
       target: { value: complianceSource.awsAccountId },
     });
+
+    fireEvent.change(getAllByLabelText('Exclude AWS Regions')[0], {
+      target: { value: AWS_REGIONS[0] },
+    });
+    fireClickAndMouseEvents(await findByText(AWS_REGIONS[0]));
+
+    fireEvent.change(getAllByLabelText('Exclude Resource Types')[0], {
+      target: { value: RESOURCE_TYPES[0] },
+    });
+    fireClickAndMouseEvents(await findByText(RESOURCE_TYPES[0]));
 
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(1);
@@ -168,6 +189,8 @@ describe('CreateComplianceSource', () => {
       awsAccountId: '123123123123',
       remediationEnabled: false,
       cweEnabled: false,
+      regionIgnoreList: [],
+      resourceTypeIgnoreList: [],
     });
 
     const mocks = [
@@ -178,6 +201,8 @@ describe('CreateComplianceSource', () => {
             awsAccountId: complianceSource.awsAccountId,
             cweEnabled: complianceSource.cweEnabled,
             remediationEnabled: complianceSource.remediationEnabled,
+            regionIgnoreList: complianceSource.regionIgnoreList,
+            resourceTypeIgnoreList: complianceSource.resourceTypeIgnoreList,
           }),
         },
         data: null,
@@ -189,6 +214,7 @@ describe('CreateComplianceSource', () => {
       getByText,
       getByLabelText,
       getByAltText,
+      getByAriaLabel,
       findByText,
     } = render(<CreateComplianceSource />, { mocks });
 
@@ -199,8 +225,8 @@ describe('CreateComplianceSource', () => {
     fireEvent.change(getByLabelText('AWS Account ID'), {
       target: { value: complianceSource.awsAccountId },
     });
-    fireEvent.click(getByLabelText('Real-Time AWS Resource Scans'));
-    fireEvent.click(getByLabelText('AWS Automatic Remediations'));
+    fireEvent.click(getByAriaLabel('Real-Time AWS Resource Scans'));
+    fireEvent.click(getByAriaLabel('AWS Automatic Remediations'));
 
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(1);

@@ -48,7 +48,7 @@ type Mutation {
   updateUser(input: UpdateUserInput!): User!
   uploadDetections(input: UploadDetectionsInput!): UploadDetectionsResponse
   updateGlobalPythonlModule(input: ModifyGlobalPythonModuleInput!): GlobalPythonModule!
-  updatePack(input: UpdatePackInput): Pack!
+  updatePack(input: UpdatePackInput!): Pack!
 }
 
 type Query {
@@ -89,7 +89,7 @@ type Query {
 }
 
 input ListPacksInput {
-  ids: [String!]
+  ids: [ID!]
   exclusiveStartKey: String
   contains: String
   createdBefore: AWSDateTime
@@ -108,7 +108,7 @@ input PackVersionInput {
 
 input UpdatePackInput {
   enabled: Boolean
-  id: String!
+  id: ID!
   packVersion: PackVersionInput
 }
 
@@ -499,17 +499,17 @@ type PackVersion {
 
 type PackDetectionsPatterns {
   # This is an array Detection['id'] that are related to the pack
-  IDs: [String!]
+  IDs: [ID!]
 }
 
 type DetectionTypes {
-  GLOBAL: Int
-  RULE: Int
-  POLICY: Int
+  GLOBAL: Int!
+  RULE: Int!
+  POLICY: Int!
 }
 
 type Pack {
-  id: String!
+  id: ID!
   enabled: Boolean!
   updateAvailable: Boolean!
 
@@ -698,6 +698,8 @@ type ComplianceIntegration {
   integrationLabel: String!
   cweEnabled: Boolean
   remediationEnabled: Boolean
+  regionIgnoreList: [String!]
+  resourceTypeIgnoreList: [String!]
   health: ComplianceIntegrationHealth!
   stackName: String!
 }
@@ -740,6 +742,8 @@ input AddComplianceIntegrationInput {
   integrationLabel: String!
   remediationEnabled: Boolean
   cweEnabled: Boolean
+  regionIgnoreList: [String!]
+  resourceTypeIgnoreList: [String!]
 }
 
 input S3PrefixLogTypesInput {
@@ -771,6 +775,8 @@ input UpdateComplianceIntegrationInput {
   integrationLabel: String
   cweEnabled: Boolean
   remediationEnabled: Boolean
+  regionIgnoreList: [String!]
+  resourceTypeIgnoreList: [String!]
 }
 
 input UpdateS3LogIntegrationInput {

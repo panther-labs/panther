@@ -122,7 +122,7 @@ describe('ListAlerts', () => {
       getAllByLabelText,
       getByText,
       findByAriaLabel,
-      getByAriaLabel,
+      getAllByAriaLabel,
       findAllByText,
       queryByAriaLabel,
       queryAllByText,
@@ -136,24 +136,23 @@ describe('ListAlerts', () => {
     alertSummaries.forEach(alertSummary => {
       expect(getByText(alertSummary.title)).toBeInTheDocument();
     });
-    alertSummaries.forEach(alertSummary => {
-      expect(getByAriaLabel(`select ${alertSummary.alertId}`)).toBeInTheDocument();
-    });
 
     // Single select all of 3 Alerts
-    const checkboxForAlert1 = getByAriaLabel(`select ${alertSummaries[0].alertId}`);
+    const [checkboxForAlert1, checkboxForAlert2, checkboxForAlert3] = getAllByAriaLabel(
+      `select item`
+    );
+
     fireClickAndMouseEvents(checkboxForAlert1);
     expect(getByText('1 Selected')).toBeInTheDocument();
-    const checkboxForAlert2 = getByAriaLabel(`select ${alertSummaries[1].alertId}`);
+
     fireClickAndMouseEvents(checkboxForAlert2);
     expect(getByText('2 Selected')).toBeInTheDocument();
-    const checkboxForAlert3 = getByAriaLabel(`select ${alertSummaries[2].alertId}`);
+
     fireClickAndMouseEvents(checkboxForAlert3);
     expect(getByText('3 Selected')).toBeInTheDocument();
 
     // Deselect first alert
-    const checkedCheckboxForAlert1 = getByAriaLabel(`unselect ${alertSummaries[0].alertId}`);
-    fireClickAndMouseEvents(checkedCheckboxForAlert1);
+    fireClickAndMouseEvents(checkboxForAlert1);
     expect(getByText('2 Selected')).toBeInTheDocument();
 
     // Expect status field to have Resolved as default
@@ -170,8 +169,7 @@ describe('ListAlerts', () => {
     // Find the alerts with the updated status
     expect(await findAllByText('INVALID')).toHaveLength(2);
     // And expect that the selection has been reset
-    expect(await queryByAriaLabel(`unselect ${alertSummaries[1].alertId}`)).not.toBeInTheDocument();
-    expect(await queryByAriaLabel(`unselect ${alertSummaries[2].alertId}`)).not.toBeInTheDocument();
+    expect(queryByAriaLabel(`unselect item`)).not.toBeInTheDocument();
   });
 
   it('can select all alerts and update their status', async () => {
@@ -225,7 +223,7 @@ describe('ListAlerts', () => {
       getAllByLabelText,
       getByText,
       findByAriaLabel,
-      getByAriaLabel,
+      getAllByAriaLabel,
       findAllByText,
       queryByAriaLabel,
     } = render(<ListAlerts />, {
@@ -239,9 +237,8 @@ describe('ListAlerts', () => {
     alertSummaries.forEach(alertSummary => {
       expect(getByText(alertSummary.title)).toBeInTheDocument();
     });
-    alertSummaries.forEach(alertSummary => {
-      expect(getByAriaLabel(`select ${alertSummary.alertId}`)).toBeInTheDocument();
-    });
+
+    expect(getAllByAriaLabel(`select item`)).toHaveLength(alertSummaries.length);
 
     fireClickAndMouseEvents(selectAllCheckbox);
     expect(getByText('3 Selected')).toBeInTheDocument();
@@ -259,9 +256,7 @@ describe('ListAlerts', () => {
     // Find the alerts with the updated status
     expect(await findAllByText('OPEN')).toHaveLength(alertSummaries.length);
     // And expect that the selection has been reset
-    alertSummaries.forEach(alertSummary => {
-      expect(queryByAriaLabel(`unselect ${alertSummary.alertId}`)).not.toBeInTheDocument();
-    });
+    expect(queryByAriaLabel(`unselect item`)).not.toBeInTheDocument();
   });
 
   it('can correctly boot from URL params', async () => {

@@ -50,6 +50,8 @@ export type AddComplianceIntegrationInput = {
   integrationLabel: Scalars['String'];
   remediationEnabled?: Maybe<Scalars['Boolean']>;
   cweEnabled?: Maybe<Scalars['Boolean']>;
+  regionIgnoreList?: Maybe<Array<Scalars['String']>>;
+  resourceTypeIgnoreList?: Maybe<Array<Scalars['String']>>;
 };
 
 export type AddGlobalPythonModuleInput = {
@@ -231,6 +233,8 @@ export type ComplianceIntegration = {
   integrationLabel: Scalars['String'];
   cweEnabled?: Maybe<Scalars['Boolean']>;
   remediationEnabled?: Maybe<Scalars['Boolean']>;
+  regionIgnoreList?: Maybe<Array<Scalars['String']>>;
+  resourceTypeIgnoreList?: Maybe<Array<Scalars['String']>>;
   health: ComplianceIntegrationHealth;
   stackName: Scalars['String'];
 };
@@ -466,9 +470,9 @@ export enum DetectionTypeEnum {
 
 export type DetectionTypes = {
   __typename?: 'DetectionTypes';
-  GLOBAL?: Maybe<Scalars['Int']>;
-  RULE?: Maybe<Scalars['Int']>;
-  POLICY?: Maybe<Scalars['Int']>;
+  GLOBAL: Scalars['Int'];
+  RULE: Scalars['Int'];
+  POLICY: Scalars['Int'];
 };
 
 export type Error = {
@@ -724,7 +728,7 @@ export type ListGlobalPythonModulesResponse = {
 };
 
 export type ListPacksInput = {
-  ids?: Maybe<Array<Scalars['String']>>;
+  ids?: Maybe<Array<Scalars['ID']>>;
   exclusiveStartKey?: Maybe<Scalars['String']>;
   contains?: Maybe<Scalars['String']>;
   createdBefore?: Maybe<Scalars['AWSDateTime']>;
@@ -1035,7 +1039,7 @@ export type MutationUpdateGlobalPythonlModuleArgs = {
 };
 
 export type MutationUpdatePackArgs = {
-  input?: Maybe<UpdatePackInput>;
+  input: UpdatePackInput;
 };
 
 export type OpsgenieConfig = {
@@ -1077,7 +1081,7 @@ export type OrganizationStatsResponse = {
 
 export type Pack = {
   __typename?: 'Pack';
-  id: Scalars['String'];
+  id: Scalars['ID'];
   enabled: Scalars['Boolean'];
   updateAvailable: Scalars['Boolean'];
   description: Scalars['String'];
@@ -1094,7 +1098,7 @@ export type Pack = {
 
 export type PackDetectionsPatterns = {
   __typename?: 'PackDetectionsPatterns';
-  IDs?: Maybe<Array<Scalars['String']>>;
+  IDs?: Maybe<Array<Scalars['ID']>>;
 };
 
 export type PackVersion = {
@@ -1563,6 +1567,8 @@ export type UpdateComplianceIntegrationInput = {
   integrationLabel?: Maybe<Scalars['String']>;
   cweEnabled?: Maybe<Scalars['Boolean']>;
   remediationEnabled?: Maybe<Scalars['Boolean']>;
+  regionIgnoreList?: Maybe<Array<Scalars['String']>>;
+  resourceTypeIgnoreList?: Maybe<Array<Scalars['String']>>;
 };
 
 export type UpdateGeneralSettingsInput = {
@@ -1574,7 +1580,7 @@ export type UpdateGeneralSettingsInput = {
 
 export type UpdatePackInput = {
   enabled?: Maybe<Scalars['Boolean']>;
-  id: Scalars['String'];
+  id: Scalars['ID'];
   packVersion?: Maybe<PackVersionInput>;
 };
 
@@ -2311,6 +2317,12 @@ export type ComplianceIntegrationResolvers<
   integrationLabel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   cweEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   remediationEnabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  regionIgnoreList?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  resourceTypeIgnoreList?: Resolver<
+    Maybe<Array<ResolversTypes['String']>>,
+    ParentType,
+    ContextType
+  >;
   health?: Resolver<ResolversTypes['ComplianceIntegrationHealth'], ParentType, ContextType>;
   stackName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
@@ -2512,9 +2524,9 @@ export type DetectionTypesResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['DetectionTypes'] = ResolversParentTypes['DetectionTypes']
 > = {
-  GLOBAL?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  RULE?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  POLICY?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  GLOBAL?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  RULE?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  POLICY?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2991,7 +3003,7 @@ export type MutationResolvers<
     ResolversTypes['Pack'],
     ParentType,
     ContextType,
-    RequireFields<MutationUpdatePackArgs, never>
+    RequireFields<MutationUpdatePackArgs, 'input'>
   >;
 };
 
@@ -3035,7 +3047,7 @@ export type PackResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['Pack'] = ResolversParentTypes['Pack']
 > = {
-  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   enabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   updateAvailable?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -3055,7 +3067,7 @@ export type PackDetectionsPatternsResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['PackDetectionsPatterns'] = ResolversParentTypes['PackDetectionsPatterns']
 > = {
-  IDs?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  IDs?: Resolver<Maybe<Array<ResolversTypes['ID']>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

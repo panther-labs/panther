@@ -1,4 +1,4 @@
-fragment PackFull on Pack {
+fragment PackDetails on Pack {
     id
     displayName
     description

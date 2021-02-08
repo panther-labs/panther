@@ -16,39 +16,43 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
+import React, { ReactNode } from 'react';
 
-export interface SelectContextValue {
-  selection: string[];
-  selectItem: (id: string) => void;
-  deselectItem: (id: string) => void;
+const identity = (x: any) => x;
+
+export interface SelectContextValue<T> {
+  selection: T[];
+  selectItem: (item: T) => void;
+  deselectItem: (item: T) => void;
   resetSelection: () => void;
-  selectAll: (ids: string[]) => void;
-  checkIfSelected: (id) => boolean;
-  toggleItem: (id) => void;
+  selectAll: (items: T[]) => void;
+  checkIfSelected: (item: T) => boolean;
+  toggleItem: (item: T) => void;
 }
 
-const SelectContext = React.createContext<SelectContextValue>(undefined);
+const SelectContext = React.createContext<SelectContextValue<any>>(undefined);
 
-interface SelectProviderProps {
+interface SelectProviderProps<T> {
   children: React.ReactNode;
-  initialSelection?: string[];
+  initialSelection?: T[];
+  getItemKey?: (item: T) => string;
 }
 
-const SelectProvider: React.FC<SelectProviderProps> = ({ initialSelection = [], children }) => {
-  const [selection, setSelected] = React.useState<Array<string>>(initialSelection);
+function SelectProvider<T>({
+  initialSelection = [],
+  getItemKey = identity,
+  children,
+}: SelectProviderProps<T>) {
+  const [selection, setSelected] = React.useState<Array<T>>(initialSelection);
 
   /**
    * @public
    * Add an item to the selection
    *
    */
-  const selectItem = React.useCallback(
-    id => {
-      return setSelected([...selection, id]);
-    },
-    [selection]
-  );
+  const selectItem = React.useCallback(item => {
+    return setSelected(existing => [...existing, item]);
+  }, []);
 
   /**
    * @public
@@ -56,10 +60,10 @@ const SelectProvider: React.FC<SelectProviderProps> = ({ initialSelection = [], 
    *
    */
   const deselectItem = React.useCallback(
-    id => {
-      return setSelected(selection.filter(i => i !== id));
+    item => {
+      return setSelected(existing => existing.filter(i => getItemKey(i) !== getItemKey(item)));
     },
-    [selection]
+    [getItemKey]
   );
 
   /**
@@ -69,8 +73,8 @@ const SelectProvider: React.FC<SelectProviderProps> = ({ initialSelection = [], 
    */
   const resetSelection = React.useCallback(() => setSelected([]), []);
 
-  const selectAll = React.useCallback((ids: string[]) => {
-    return setSelected(ids);
+  const selectAll = React.useCallback((items: T[]) => {
+    return setSelected(items);
   }, []);
 
   /**
@@ -79,10 +83,10 @@ const SelectProvider: React.FC<SelectProviderProps> = ({ initialSelection = [], 
    *
    */
   const checkIfSelected = React.useCallback(
-    id => {
-      return !!selection.find(i => i === id);
+    (item: T) => {
+      return !!selection.find(i => getItemKey(i) === getItemKey(item));
     },
-    [selection]
+    [selection, getItemKey]
   );
 
   /**
@@ -91,9 +95,8 @@ const SelectProvider: React.FC<SelectProviderProps> = ({ initialSelection = [], 
    * and change its status to the opposite
    */
   const toggleItem = React.useCallback(
-    id => {
-      const isSelected = checkIfSelected(id);
-      return isSelected ? deselectItem(id) : selectItem(id);
+    (item: T) => {
+      return checkIfSelected(item) ? deselectItem(item) : selectItem(item);
     },
     [checkIfSelected, deselectItem, selectItem]
   );
@@ -112,7 +115,7 @@ const SelectProvider: React.FC<SelectProviderProps> = ({ initialSelection = [], 
   );
 
   return <SelectContext.Provider value={contextValue}>{children}</SelectContext.Provider>;
-};
+}
 
 const MemoizedSelectProvider = React.memo(SelectProvider);
 
@@ -122,9 +125,17 @@ const withSelectContext = (Component: React.FC) => props => (
   </SelectProvider>
 );
 
-const useSelect = () => React.useContext(SelectContext);
+const useSelect = <T extends unknown = string>() =>
+  React.useContext<SelectContextValue<T>>(SelectContext);
+
 /** A shortcut for the consumer component */
-const SelectConsumer = SelectContext.Consumer;
+
+const SelectConsumer = <T extends unknown = string>(
+  props: React.ConsumerProps<SelectContextValue<T>>
+) => {
+  const Consumer = SelectContext.Consumer as React.Consumer<SelectContextValue<T>>;
+  return <Consumer {...props} />;
+};
 
 export {
   SelectContext,
