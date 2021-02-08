@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
+	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 	"go.uber.org/zap"
 )
@@ -40,12 +41,13 @@ func DockerBuild(log *zap.SugaredLogger, dockerfile string) (string, error) {
 	}
 	defer os.Remove(tmpfile.Name())
 
+	args := []string{"build", "--file", dockerfile, "--iidfile", tmpfile.Name()}
+	if !mg.Verbose() {
+		args = append(args, "--quiet")
+	}
 	// When running without the "-q" flag, docker build has no stdout we can capture.
 	// Instead, we use --iidfile to write the image ID to a tmp file and read it back.
-	err = sh.RunV("docker", "build",
-		"--quiet",
-		"--file", dockerfile,
-		"--iidfile", tmpfile.Name(), ".")
+	err = sh.RunV("docker", append(args, ".")...)
 	if err != nil {
 		return "", fmt.Errorf("docker build failed: %v", err)
 	}
