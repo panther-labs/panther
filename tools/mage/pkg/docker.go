@@ -49,7 +49,7 @@ func DockerBuild(log *zap.SugaredLogger, dockerfile string) (string, error) {
 	log.Infof("docker %s", strings.Join(args, " "))
 	// When running without the "--quiet" flag, docker build has no stdout we can capture.
 	// Instead, we use --iidfile to write the image ID to a tmp file and read it back.
-	err = sh.RunV("docker", append(args, ".")...)
+	err = sh.RunV("docker", args...)
 	if err != nil {
 		return "", fmt.Errorf("docker build failed: %v", err)
 	}
