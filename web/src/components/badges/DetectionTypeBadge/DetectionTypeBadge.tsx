@@ -43,7 +43,8 @@ const DetectionTypeBadge: React.FC<DetectionTypeBadgeProps> = ({ count, type }) 
       borderRadius="small"
       px={1}
       py={1}
-      fontSize="small"
+      fontWeight="bold"
+      fontSize="x-small"
       color={DETECTION_TYPE_COLOR_MAP[type]}
     >
       {count
