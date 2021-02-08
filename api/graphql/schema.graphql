@@ -503,9 +503,9 @@ type PackDetectionsPatterns {
 }
 
 type DetectionTypes {
-  GLOBAL: Int
-  RULE: Int
-  POLICY: Int
+  GLOBAL: Int!
+  RULE: Int!
+  POLICY: Int!
 }
 
 type Pack {

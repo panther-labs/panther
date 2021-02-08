@@ -25,13 +25,13 @@ import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
 export type UpdatePackVariables = {
-  input?: Types.Maybe<Types.UpdatePackInput>;
+  input: Types.UpdatePackInput;
 };
 
 export type UpdatePack = { updatePack: PackFull };
 
 export const UpdatePackDocument = gql`
-  mutation UpdatePack($input: UpdatePackInput) {
+  mutation UpdatePack($input: UpdatePackInput!) {
     updatePack(input: $input) {
       ...PackFull
     }

@@ -1,4 +1,4 @@
-mutation UpdatePack($input: UpdatePackInput) {
+mutation UpdatePack($input: UpdatePackInput!) {
     updatePack(input: $input) {
         ...PackFull
     }

@@ -1136,7 +1136,7 @@ export const buildListGlobalPythonModulesResponse = (
 
 export const buildListPacksInput = (overrides: Partial<ListPacksInput> = {}): ListPacksInput => {
   return {
-    ids: 'ids' in overrides ? overrides.ids : ['Small'],
+    ids: 'ids' in overrides ? overrides.ids : ['1004df7e-2f2b-4cc8-983d-51c8755448b1'],
     exclusiveStartKey: 'exclusiveStartKey' in overrides ? overrides.exclusiveStartKey : 'approach',
     contains: 'contains' in overrides ? overrides.contains : 'virtual',
     createdBefore:
@@ -1320,7 +1320,7 @@ export const buildOrganizationStatsResponse = (
 export const buildPack = (overrides: Partial<Pack> = {}): Pack => {
   return {
     __typename: 'Pack',
-    id: 'id' in overrides ? overrides.id : 'Plastic',
+    id: 'id' in overrides ? overrides.id : '1578714e-d0a4-4b15-8b2f-5a01491e6250',
     enabled: 'enabled' in overrides ? overrides.enabled : true,
     updateAvailable: 'updateAvailable' in overrides ? overrides.updateAvailable : true,
     description: 'description' in overrides ? overrides.description : 'Human',
@@ -1350,7 +1350,7 @@ export const buildPackDetectionsPatterns = (
 ): PackDetectionsPatterns => {
   return {
     __typename: 'PackDetectionsPatterns',
-    IDs: 'IDs' in overrides ? overrides.IDs : ['Rubber'],
+    IDs: 'IDs' in overrides ? overrides.IDs : ['29535cdd-7ce3-4006-a706-e502d29c7601'],
   };
 };
 
@@ -1906,7 +1906,7 @@ export const buildUpdateGeneralSettingsInput = (
 export const buildUpdatePackInput = (overrides: Partial<UpdatePackInput> = {}): UpdatePackInput => {
   return {
     enabled: 'enabled' in overrides ? overrides.enabled : true,
-    id: 'id' in overrides ? overrides.id : 'parse',
+    id: 'id' in overrides ? overrides.id : 'cf999351-d016-4ca1-b52e-c9a8c1a47331',
     packVersion: 'packVersion' in overrides ? overrides.packVersion : buildPackVersionInput(),
   };
 };
