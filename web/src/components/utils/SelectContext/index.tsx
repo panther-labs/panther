@@ -17,5 +17,5 @@
  */
 
 export * from './SelectContext';
-export * from './SelectCheckbox';
-export * from './SelectAllCheckbox';
+export { default as SelectCheckbox } from './SelectCheckbox';
+export { default as SelectAllCheckbox } from './SelectAllCheckbox';

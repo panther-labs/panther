@@ -93,49 +93,81 @@ type LogEntryAuditLog struct {
 
 // nolint:lll
 type AuditLog struct {
-	PayloadType        *string             `json:"@type" validate:"required,eq=type.googleapis.com/google.cloud.audit.AuditLog" description:"The type of payload"`
-	ServiceName        *string             `json:"serviceName,omitempty" description:"The name of the API service performing the operation"`
-	MethodName         *string             `json:"methodName,omitempty" description:"The name of the service method or operation. For API calls, this should be the name of the API method."`
-	ResourceName       *string             `json:"resourceName,omitempty" description:"The resource or collection that is the target of the operation. The name is a scheme-less URI, not including the API service name."`
-	NumResponseItems   *numerics.Int64     `json:"numResponseItems,omitempty" description:"The number of items returned from a List or Query API method, if applicable."`
-	Status             *Status             `json:"status,omitempty" description:" The status of the overall operation."`
-	AuthenticationInfo *AuthenticationInfo `json:"authenticationInfo,omitempty" description:"Authentication information."`
-	AuthorizationInfo  []AuthorizationInfo `json:"authorizationInfo,omitempty" validate:"omitempty,dive" description:"Authorization information. If there are multiple resources or permissions involved, then there is one AuthorizationInfo element for each {resource, permission} tuple."`
-	RequestMetadata    *RequestMetadata    `json:"requestMetadata,omitempty" description:"Metadata about the request"`
-	Request            jsoniter.RawMessage `json:"request,omitempty" description:"The operation request. This may not include all request parameters, such as those that are too large, privacy-sensitive, or duplicated elsewhere in the log record. When the JSON object represented here has a proto equivalent, the proto name will be indicated in the @type property."`
-	Response           jsoniter.RawMessage `json:"response,omitempty" description:"The operation response. This may not include all response parameters, such as those that are too large, privacy-sensitive, or duplicated elsewhere in the log record. When the JSON object represented here has a proto equivalent, the proto name will be indicated in the @type property."`
-	ServiceData        jsoniter.RawMessage `json:"serviceData,omitempty" description:"Other service-specific data about the request, response, and other activities."`
+	PayloadType        *string              `json:"@type" validate:"required,eq=type.googleapis.com/google.cloud.audit.AuditLog" description:"The type of payload"`
+	ServiceName        *string              `json:"serviceName,omitempty" description:"The name of the API service performing the operation"`
+	MethodName         *string              `json:"methodName,omitempty" description:"The name of the service method or operation. For API calls, this should be the name of the API method."`
+	ResourceName       *string              `json:"resourceName,omitempty" description:"The resource or collection that is the target of the operation. The name is a scheme-less URI, not including the API service name."`
+	NumResponseItems   *numerics.Int64      `json:"numResponseItems,omitempty" description:"The number of items returned from a List or Query API method, if applicable."`
+	Status             *Status              `json:"status,omitempty" description:"The status of the overall operation."`
+	AuthenticationInfo *AuthenticationInfo  `json:"authenticationInfo,omitempty" description:"Authentication information."`
+	AuthorizationInfo  []AuthorizationInfo  `json:"authorizationInfo,omitempty" validate:"omitempty" description:"Authorization information. If there are multiple resources or permissions involved, then there is one AuthorizationInfo element for each {resource, permission} tuple."`
+	RequestMetadata    *RequestMetadata     `json:"requestMetadata,omitempty" description:"Metadata about the request"`
+	Request            *jsoniter.RawMessage `json:"request,omitempty" description:"The operation request. This may not include all request parameters, such as those that are too large, privacy-sensitive, or duplicated elsewhere in the log record. When the JSON object represented here has a proto equivalent, the proto name will be indicated in the @type property."`
+	Response           *jsoniter.RawMessage `json:"response,omitempty" description:"The operation response. This may not include all response parameters, such as those that are too large, privacy-sensitive, or duplicated elsewhere in the log record. When the JSON object represented here has a proto equivalent, the proto name will be indicated in the @type property."`
+	ServiceData        *jsoniter.RawMessage `json:"serviceData,omitempty" description:"Other service-specific data about the request, response, and other activities."`
+	Metadata           *jsoniter.RawMessage `json:"metadata,omitempty" description:"Other service-specific data about the request, response, and other information associated with the current audited event."`
 }
 
 // nolint:lll
 type Status struct {
 	// https://cloud.google.com/vision/docs/reference/rpc/google.rpc#google.rpc.Code
-	Code    *int32              `json:"code,omitempty" description:"The status code, which should be an enum value of google.rpc.Code."`
-	Message *string             `json:"message,omitempty" description:"A developer-facing error message, which should be in English."`
-	Details jsoniter.RawMessage `json:"details,omitempty" description:"A list of messages that carry the error details. There is a common set of message types for APIs to use."`
+	Code    *int32               `json:"code,omitempty" description:"The status code, which should be an enum value of google.rpc.Code."`
+	Message *string              `json:"message,omitempty" description:"A developer-facing error message, which should be in English."`
+	Details *jsoniter.RawMessage `json:"details,omitempty" description:"A list of messages that carry the error details. There is a common set of message types for APIs to use."`
 }
 
 // nolint:lll
 type AuthenticationInfo struct {
-	PrincipalEmail    *string `json:"principalEmail" validate:"required" description:"The email address of the authenticated user making the request."`
-	AuthoritySelector *string `json:"authoritySelector,omitempty" description:"The authority selector specified by the requestor, if any. It is not guaranteed that the principal was allowed to use this authority."`
+	PrincipalSubject             *string                        `json:"principalSubject,omitempty" description:"String representation of identity of requesting party. Populated for both first and third party identities."`
+	ServiceAccountKeyName        *string                        `json:"serviceAccountKeyName,omitempty" description:"The name of the service account key used to create or exchange credentials for authenticating the service account making the request. This is a scheme-less URI full resource name."`
+	PrincipalEmail               *string                        `json:"principalEmail,omitempty" description:"The email address of the authenticated user making the request."`
+	AuthoritySelector            *string                        `json:"authoritySelector,omitempty" description:"The authority selector specified by the requestor, if any. It is not guaranteed that the principal was allowed to use this authority."`
+	ThirdPartyPrincipal          *jsoniter.RawMessage           `json:"thirdPartyPrincipal,omitempty" description:"The third party identification (if any) of the authenticated user making the request. When the JSON object represented here has a proto equivalent, the proto name will be indicated in the @type property."`
+	ServiceAccountDelegationInfo []ServiceAccountDelegationInfo `json:"serviceAccountDelegationInfo,omitempty" description:"Identity delegation history of an authenticated service account that makes the request. It contains information on the real authorities that try to access GCP resources by delegating on a service account. When multiple authorities present, they are guaranteed to be sorted based on the original ordering of the identity delegation events."`
+}
+
+// nolint:lll
+type ServiceAccountDelegationInfo struct {
+	FirstPartyPrincipal *FirstPartyPrincipal `json:"firstPartyPrincipal,omitempty" description:"First party (Google) identity as the real authority."`
+	ThirdPartyPrincipal *ThirdPartyPrincipal `json:"thirdPartyPrincipal,omitempty" description:"Third party identity as the real authority."`
+}
+
+// nolint:lll
+type FirstPartyPrincipal struct {
+	PrincipalEmail  *string              `json:"principalEmail,omitempty" description:"The email address of a Google account."`
+	ServiceMetadata *jsoniter.RawMessage `json:"serviceMetadata,omitempty" description:"Metadata about the service that uses the service account."`
+}
+
+// nolint:lll
+type ThirdPartyPrincipal struct {
+	ThirdPartyClaims *jsoniter.RawMessage `json:"thirdPartyClaims,omitempty" description:"Metadata about third party identity."`
 }
 
 // nolint:lll
 type AuthorizationInfo struct {
-	Resource   *string `json:"resource,omitempty"  description:"The resource being accessed, as a REST-style string."`
-	Permission *string `json:"permission,omitempty"  description:"The required IAM permission"`
-	Granted    *bool   `json:"granted,omitempty" description:" Whether or not authorization for resource and permission was granted."`
+	Resource           *string             `json:"resource,omitempty"  description:"The resource being accessed, as a REST-style string."`
+	Permission         *string             `json:"permission,omitempty"  description:"The required IAM permission"`
+	Granted            *bool               `json:"granted,omitempty" description:" Whether or not authorization for resource and permission was granted."`
+	ResourceAttributes *ResourceAttributes `json:"resourceAttributes,omitempty" description:"Resource attributes used in IAM condition evaluation. This field contains resource attributes like resource type and resource name. To get the whole view of the attributes used in IAM condition evaluation, the user must also look into AuditLog.request_metadata.request_attributes."`
+}
+
+// nolint:lll
+type ResourceAttributes struct {
+	Service *string `json:"service,omitempty" description:"The name of the service that this resource belongs to, such as pubsub.googleapis.com. The service may be different from the DNS hostname that actually serves the request."`
+	Name    *string `json:"name,omitempty" description:"The stable identifier (name) of a resource on the service."`
+	Type    *string `json:"type,omitempty" description:"The type of the resource. The syntax is platform-specific because different platforms define their resources differently."`
+	Labels  *string `json:"labels,omitempty" description:"The labels or tags on the resource, such as AWS resource tags and Kubernetes resource labels."`
+	UID     *string `json:"uid,omitempty" description:"The unique identifier of the resource. UID is unique in the time and space for this resource within the scope of the service. It is typically generated by the server on successful creation of a resource and must not be changed. UID is used to uniquely identify resources with resource name reuses. This should be a UUID4."`
 }
 
 // nolint:lll
 // Reference https://cloud.google.com/service-infrastructure/docs/service-control/reference/rest/v1/AuditLog#RequestMetadata
 type RequestMetadata struct {
-	CallerIP                *string             `json:"callerIP,omitempty"  description:"The IP address of the caller."`
-	CallerSuppliedUserAgent *string             `json:"callerSuppliedUserAgent,omitempty"  description:"The user agent of the caller. This information is not authenticated and should be treated accordingly."`
-	CallerNetwork           *string             `json:"callerNetwork,omitempty" description:"The network of the caller. Set only if the network host project is part of the same GCP organization (or project) as the accessed resource."`
-	RequestAttributes       jsoniter.RawMessage `json:"requestAttributes,omitempty" description:"Request attributes used in IAM condition evaluation. This field contains request attributes like request time and access levels associated with the request."`
-	DestinationAttributes   jsoniter.RawMessage `json:"destinationAttributes,omitempty" description:"The destination of a network activity, such as accepting a TCP connection."`
+	CallerIP                *string              `json:"callerIP,omitempty"  description:"The IP address of the caller."`
+	CallerSuppliedUserAgent *string              `json:"callerSuppliedUserAgent,omitempty"  description:"The user agent of the caller. This information is not authenticated and should be treated accordingly."`
+	CallerNetwork           *string              `json:"callerNetwork,omitempty" description:"The network of the caller. Set only if the network host project is part of the same GCP organization (or project) as the accessed resource."`
+	RequestAttributes       *jsoniter.RawMessage `json:"requestAttributes,omitempty" description:"Request attributes used in IAM condition evaluation. This field contains request attributes like request time and access levels associated with the request."`
+	DestinationAttributes   *jsoniter.RawMessage `json:"destinationAttributes,omitempty" description:"The destination of a network activity, such as accepting a TCP connection."`
 }
 
 // IAM Data audit log

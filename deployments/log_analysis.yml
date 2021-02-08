@@ -419,7 +419,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
   LogProcessorDLQAlarms:
     Type: Custom::SQSAlarms
@@ -628,7 +628,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-datacatalog-updater-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
   UpdaterDLQAlarms:
     Type: Custom::SQSAlarms
@@ -826,7 +826,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-rules-engine-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
   RulesEngineDLQAlarms:
     Type: Custom::SQSAlarms

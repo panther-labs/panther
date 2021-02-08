@@ -215,8 +215,6 @@ func updateLambdaCode(function, srcPath, runtime string) error {
 	var pathToZip string
 
 	if strings.HasPrefix(runtime, "go") {
-		srcPath = strings.TrimPrefix(srcPath, "out/")
-		srcPath = strings.TrimPrefix(srcPath, "bin/")
 		log.Infof("compiling %s", srcPath)
 		binary, err := build.LambdaPackage(srcPath)
 		if err != nil {
@@ -269,7 +267,7 @@ func deploySingleStack(stack string) error {
 
 	switch stack {
 	case cfnstacks.Bootstrap:
-		_, err := deployBootstrapStack(settings, nil)
+		_, err := deployBootstrapStack(settings)
 		return err
 	case cfnstacks.Gateway:
 		_, err := deployBootstrapGatewayStack(settings, packager, outputs)
@@ -314,9 +312,9 @@ func buildPackager(settings *PantherConfig, outputs map[string]string) (*pkg.Pac
 
 // Deploy bootstrap stacks and build deployment artifacts.
 //
-// Returns asset pacakger and combined outputs from bootstrap stacks.
+// Returns asset packager and combined outputs from bootstrap stacks.
 func bootstrap(settings *PantherConfig) (*pkg.Packager, map[string]string, error) {
-	outputs, err := deployBootstrapStack(settings, nil)
+	outputs, err := deployBootstrapStack(settings)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -412,7 +410,15 @@ func deployMainStacks(settings *PantherConfig, packager *pkg.Packager, outputs m
 	return util.WaitForTasks(log, results, completedStackCount, cfnstacks.NumStacks, cfnstacks.NumStacks)
 }
 
-func deployBootstrapStack(settings *PantherConfig, packager *pkg.Packager) (map[string]string, error) {
+func deployBootstrapStack(settings *PantherConfig) (map[string]string, error) {
+	// Hack: we still need to "package" the bootstrap template to strip comments
+	// so the size is small enough to upload it directly to S3.
+	// But the packager won't actually have a bucket configured and won't need to talk to S3.
+	packager, err := buildPackager(settings, make(map[string]string))
+	if err != nil {
+		return nil, err
+	}
+
 	return Stack(packager, cfnstacks.BootstrapTemplate, cfnstacks.Bootstrap, map[string]string{
 		"AccessLogsBucket":              settings.Setup.S3AccessLogsBucket,
 		"AlarmTopicArn":                 settings.Monitoring.AlarmSnsTopicArn,

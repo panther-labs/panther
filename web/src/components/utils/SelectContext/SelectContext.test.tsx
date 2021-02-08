@@ -18,19 +18,20 @@
 import React from 'react';
 import { Text } from 'pouncejs';
 import { fireClickAndMouseEvents, render } from 'test-utils';
-import { SelectProvider, useSelect } from 'Components/utils/SelectContext/SelectContext';
-import { SelectCheckbox } from 'Components/utils/SelectContext/SelectCheckbox';
-import { SelectAllCheckbox } from 'Components/utils/SelectContext/SelectAllCheckbox';
+import { SelectProvider, useSelect, SelectCheckbox, SelectAllCheckbox } from './index';
 
-const TestingComponent: React.FC<{ items: string[] }> = ({ items }) => {
-  const { checkIfSelected } = useSelect();
+const items = [{ id: 'a' }, { id: 'b' }];
+type Item = typeof items[0];
+
+const TestingComponent: React.FC<{ items: Item[] }> = ({ items: itms }) => {
+  const { checkIfSelected } = useSelect<Item>();
   return (
     <React.Fragment>
-      {items.map(id => (
-        <React.Fragment key={id}>
-          <SelectCheckbox selectionId={id} />
+      {itms.map(item => (
+        <React.Fragment key={item.id}>
+          <SelectCheckbox selectionItem={item} />
           <Text>
-            {id} is {checkIfSelected(id) ? 'selected' : 'unselected'}
+            {item.id} is {checkIfSelected(item) ? 'selected' : 'unselected'}
           </Text>
         </React.Fragment>
       ))}
@@ -40,47 +41,46 @@ const TestingComponent: React.FC<{ items: string[] }> = ({ items }) => {
 
 describe('Select Context tests', () => {
   it('should select & unselect items', async () => {
-    const items = ['a', 'b', 'c'];
-    const [itemA, itemB] = items;
-
-    const { getByText, getByAriaLabel } = render(
+    const { getByText, getAllByAriaLabel } = render(
       <SelectProvider>
         <TestingComponent items={items} />
       </SelectProvider>
     );
-    items.forEach(id => {
-      expect(getByText(`${id} is unselected`));
+    const [checkboxA, checkboxB] = getAllByAriaLabel(`select item`);
+
+    items.forEach(item => {
+      expect(getByText(`${item.id} is unselected`));
     });
 
-    const checkboxB = getByAriaLabel(`select ${itemB}`);
+    await fireClickAndMouseEvents(checkboxA);
+    expect(getByText(`${items[0].id} is selected`));
+    expect(getByText(`${items[1].id} is unselected`));
+
     await fireClickAndMouseEvents(checkboxB);
-    expect(getByText(`${itemB} is selected`));
-    expect(getByText(`${itemA} is unselected`));
-    const uncheckboxB = getByAriaLabel(`unselect ${itemB}`);
-    await fireClickAndMouseEvents(uncheckboxB);
-    expect(getByText(`${itemB} is unselected`));
+    expect(getByText(`${items[0].id} is selected`));
+    expect(getByText(`${items[1].id} is selected`));
   });
 
   it('should select all & deselect all items', async () => {
-    const items = ['a', 'b', 'c'];
     const { getByText, getByAriaLabel } = render(
       <SelectProvider>
-        <SelectAllCheckbox selectionIds={items} />
+        <SelectAllCheckbox selectionItems={items} />
         <TestingComponent items={items} />
       </SelectProvider>
     );
-    items.forEach(id => {
-      expect(getByText(`${id} is unselected`));
+
+    items.forEach(item => {
+      expect(getByText(`${item.id} is unselected`));
     });
-    const selectAll = getByAriaLabel(`select all`);
-    await fireClickAndMouseEvents(selectAll);
-    items.forEach(id => {
-      expect(getByText(`${id} is selected`));
+
+    await fireClickAndMouseEvents(getByAriaLabel(`select all`));
+    items.forEach(item => {
+      expect(getByText(`${item.id} is selected`));
     });
-    const deselectAll = getByAriaLabel(`unselect all`);
-    await fireClickAndMouseEvents(deselectAll);
-    items.forEach(id => {
-      expect(getByText(`${id} is unselected`));
+
+    await fireClickAndMouseEvents(getByAriaLabel('unselect all'));
+    items.forEach(item => {
+      expect(getByText(`${item.id} is unselected`));
     });
   });
 });
