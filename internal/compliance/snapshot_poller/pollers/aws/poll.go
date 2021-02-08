@@ -63,6 +63,17 @@ var (
 
 	// IndividualARNResourcePollers maps resource types to their corresponding individual polling
 	// functions for resources whose ID is their ARN.
+	//
+	// NOTE! - This hardcoded data set is found in several places in our code base.
+	// Until this data is sourced from a single location you need to check if any additions
+	// or modifications to this data need to coincide with updates in the other places where this data
+	// is hardcoded.
+	//
+	// Locations may not be in this list! right now this data is hardcoded in
+	// • internal/compliance/snapshot_poller/models/aws/ResourceTypes.go
+	// • internal/compliance/snapshot_poller/pollers/aws/clients.go
+	// • web/src/constants.ts
+	//
 	IndividualARNResourcePollers = map[string]func(
 		input *awsmodels.ResourcePollerInput, arn arn.ARN, entry *pollermodels.ScanEntry) (interface{}, error){
 		awsmodels.AcmCertificateSchema:      PollACMCertificate,

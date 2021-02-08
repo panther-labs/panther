@@ -22,8 +22,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/base64"
-	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
@@ -31,6 +29,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	validate "gopkg.in/go-playground/validator.v9"
 	"gopkg.in/yaml.v2"
@@ -83,9 +82,9 @@ func (API) BulkUpload(input *models.BulkUploadInput) *events.APIGatewayProxyResp
 		if result.err != nil {
 			// Set the response with an error code - 4XX first, otherwise 5XX
 			if result.err == errWrongType {
-				msg := fmt.Sprintf("ID %s does not have expected type %s", result.item.ID, result.item.Type)
+				err := errors.Errorf("ID %s does not have expected type %s", result.item.ID, result.item.Type)
 				response = &events.APIGatewayProxyResponse{
-					Body:       msg,
+					Body:       err.Error(),
 					StatusCode: http.StatusConflict,
 				}
 			} else if response == nil {
@@ -156,17 +155,22 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 	// Base64-decode
 	content, err := base64.StdEncoding.DecodeString(input.Data)
 	if err != nil {
-		return nil, fmt.Errorf("base64 decoding failed: %s", err)
+		return nil, errors.Errorf("base64 decoding failed: %s", err)
 	}
 
 	// Unzip in memory (the max request size is only 6 MB, so this should easily fit)
 	zipReader, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
 	if err != nil {
-		return nil, fmt.Errorf("zipReader failed: %s", err)
+		return nil, errors.Errorf("zipReader failed: %s", err)
 	}
 
 	policyBodies := make(map[string]string) // map base file name to contents
 	result := make(map[string]*tableItem)
+
+	logtypes, err := getLogTypesSet()
+	if err != nil {
+		return nil, errors.Wrap(err, "BulkUpload extractZipFile getLogTypesSet")
+	}
 
 	// Process each file
 	for _, zipFile := range zipReader.File {
@@ -176,7 +180,7 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 
 		unzippedBytes, err := readZipFile(zipFile)
 		if err != nil {
-			return nil, fmt.Errorf("file extraction failed: %s: %s", zipFile.Name, err)
+			return nil, errors.Errorf("file extraction failed: %s: %s", zipFile.Name, err)
 		}
 
 		if strings.Contains(zipFile.Name, "__pycache__") {
@@ -197,7 +201,12 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 		default:
 			zap.L().Debug("skipped unsupported file", zap.String("fileName", zipFile.Name))
 		}
+		if err != nil {
+			return nil, err
+		}
 
+		// Check for invalid log or resource types
+		err = bulkValidateLogAndResourceTypes(config, logtypes)
 		if err != nil {
 			return nil, err
 		}
@@ -237,7 +246,7 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 		}
 
 		if _, exists := result[analysisItem.ID]; exists {
-			return nil, fmt.Errorf("multiple analysis specs with ID %s", analysisItem.ID)
+			return nil, errors.Errorf("multiple analysis specs with ID %s", analysisItem.ID)
 		}
 		result[analysisItem.ID] = analysisItem
 	}
@@ -251,11 +260,83 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 			}
 		} else if policy.Type != models.TypeDataModel {
 			// it is ok for DataModels to be missing python body
-			return nil, fmt.Errorf("policy %s is missing a body", policy.ID)
+			return nil, errors.Errorf("policy %s is missing a body", policy.ID)
 		}
 	}
 
 	return result, nil
+}
+
+func buildMapping(mapping analysis.Mapping) (models.DataModelMapping, error) {
+	var result models.DataModelMapping
+	if mapping.Path != "" && mapping.Method != "" {
+		return result, errMappingTooManyOptions
+	}
+	if mapping.Path == "" && mapping.Method == "" {
+		return result, errPathOrMethodMissing
+	}
+	return models.DataModelMapping{
+		Name:   mapping.Name,
+		Path:   mapping.Path,
+		Method: mapping.Method,
+	}, nil
+}
+
+func buildPolicyTest(test analysis.Test) (models.UnitTest, error) {
+	resource, err := jsoniter.MarshalToString(test.Resource)
+	return models.UnitTest{
+		ExpectedResult: test.ExpectedResult,
+		Name:           test.Name,
+		Resource:       resource,
+	}, err
+}
+
+func buildRuleTest(test analysis.Test) (models.UnitTest, error) {
+	log, err := jsoniter.MarshalToString(test.Log)
+	return models.UnitTest{
+		ExpectedResult: test.ExpectedResult,
+		Name:           test.Name,
+		Resource:       log,
+	}, err
+}
+
+// Validate the analysis item's Resource type or Log type depending on the config AnalysisType.
+// Passing the logtypes allows us to retrieve the set of valid log types once for a set of validations
+func bulkValidateLogAndResourceTypes(config analysis.Config, logtypes map[string]struct{}) error {
+	itemType := models.DetectionType(strings.ToUpper(config.AnalysisType))
+	resourceTypes := config.ResourceTypes
+	switch itemType {
+	case models.TypeDataModel, models.TypeRule:
+		if len(resourceTypes) == 0 {
+			resourceTypes = config.LogTypes
+		}
+		invalidRsc := FirstSetItemNotInMapKeys(resourceTypes, logtypes)
+		if len(invalidRsc) > 0 {
+			itemTitle := "DataModel"
+			if itemType == models.TypeRule {
+				itemTitle = "Rule"
+			}
+			return errors.Errorf("%s %s contains invalid log type: %s", itemTitle, config.DisplayName, invalidRsc)
+		}
+	case models.TypePolicy:
+		if err := validResourceTypeSet(resourceTypes); err != nil {
+			return errors.Errorf("Policy %s contains invalid log type: %s", config.DisplayName, err.Error())
+		}
+	}
+	return nil
+}
+
+func readZipFile(zf *zip.File) ([]byte, error) {
+	f, err := zf.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			zap.L().Info("error closing zip file", zap.Error(err))
+		}
+	}()
+	return ioutil.ReadAll(f)
 }
 
 func tableItemFromConfig(config analysis.Config) *tableItem {
@@ -324,52 +405,7 @@ func tableItemFromConfig(config analysis.Config) *tableItem {
 	return &item
 }
 
-func buildRuleTest(test analysis.Test) (models.UnitTest, error) {
-	log, err := jsoniter.MarshalToString(test.Log)
-	return models.UnitTest{
-		ExpectedResult: test.ExpectedResult,
-		Name:           test.Name,
-		Resource:       log,
-	}, err
-}
-
-func buildPolicyTest(test analysis.Test) (models.UnitTest, error) {
-	resource, err := jsoniter.MarshalToString(test.Resource)
-	return models.UnitTest{
-		ExpectedResult: test.ExpectedResult,
-		Name:           test.Name,
-		Resource:       resource,
-	}, err
-}
-
-func buildMapping(mapping analysis.Mapping) (models.DataModelMapping, error) {
-	var result models.DataModelMapping
-	if mapping.Path != "" && mapping.Method != "" {
-		return result, errMappingTooManyOptions
-	}
-	if mapping.Path == "" && mapping.Method == "" {
-		return result, errPathOrMethodMissing
-	}
-	return models.DataModelMapping{
-		Name:   mapping.Name,
-		Path:   mapping.Path,
-		Method: mapping.Method,
-	}, nil
-}
-
-func readZipFile(zf *zip.File) ([]byte, error) {
-	f, err := zf.Open()
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			zap.L().Error("error closing zip file", zap.Error(err))
-		}
-	}()
-	return ioutil.ReadAll(f)
-}
-
+// Data Model Validations: len(ResourceTypes) <= 1, Single Model Enabled
 func validateUploadedDataModel(item *tableItem) error {
 	if len(item.ResourceTypes) > 1 {
 		return errors.New("only one LogType may be specified per DataModel")
@@ -394,12 +430,13 @@ func validateUploadedPolicy(item *tableItem) error {
 	case models.TypePolicy, models.TypeRule:
 		break
 	default:
-		return fmt.Errorf("policy ID %s is invalid: unknown analysis type %s", item.ID, item.Type)
+		return errors.Errorf("policy ID %s is invalid: unknown analysis type %s", item.ID, item.Type)
 	}
 
-	policy := item.Policy(compliancemodels.StatusPass) // Convert to the external Policy model for validation
+	// Convert to the external Policy model for validation
+	policy := item.Policy(compliancemodels.StatusPass)
 	if err := validate.New().Struct(policy); err != nil {
-		return fmt.Errorf("policy ID %s is invalid: %s", policy.ID, err)
+		return errors.Errorf("policy ID %s is invalid: %s", policy.ID, err)
 	}
 	return nil
 }

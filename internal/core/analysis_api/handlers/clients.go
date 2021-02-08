@@ -19,6 +19,8 @@ package handlers
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
@@ -30,10 +32,13 @@ import (
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
+	"github.com/panther-labs/panther/internal/core/logtypesapi"
+	"github.com/panther-labs/panther/pkg/awsretry"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
 const systemUserID = "00000000-0000-4000-8000-000000000000"
+const maxRetries = 5
 
 var (
 	env envConfig
@@ -46,6 +51,8 @@ var (
 
 	policyEngine analysis.PolicyEngine
 	ruleEngine   analysis.RuleEngine
+
+	logtypesAPI *logtypesapi.LogTypesAPILambdaClient
 )
 
 type envConfig struct {
@@ -74,4 +81,16 @@ func Setup() {
 
 	policyEngine = analysis.NewPolicyEngine(lambdaClient, env.PolicyEngine)
 	ruleEngine = analysis.NewRuleEngine(lambdaClient, env.RulesEngine)
+
+	logtypesClientsSession := awsSession.Copy(
+		request.WithRetryer(
+			aws.NewConfig().WithMaxRetries(maxRetries),
+			awsretry.NewConnectionErrRetryer(maxRetries),
+		),
+	)
+
+	logtypesAPI = &logtypesapi.LogTypesAPILambdaClient{
+		LambdaName: logtypesapi.LambdaName,
+		LambdaAPI:  lambda.New(logtypesClientsSession),
+	}
 }
