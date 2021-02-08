@@ -1,7 +1,7 @@
 query ListPacks($input: ListPacksInput!) {
     listPacks(input: $input) {
         packs {
-            ...PackFull
+            ...PackDetails
         }
         paging {
             totalPages

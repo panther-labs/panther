@@ -21,7 +21,7 @@ import * as Types from '../../../__generated__/schema';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
-export type PackFull = Pick<
+export type PackDetails = Pick<
   Types.Pack,
   | 'id'
   | 'displayName'
@@ -39,8 +39,8 @@ export type PackFull = Pick<
   detectionsPatterns: Pick<Types.PackDetectionsPatterns, 'IDs'>;
 };
 
-export const PackFull = gql`
-  fragment PackFull on Pack {
+export const PackDetails = gql`
+  fragment PackDetails on Pack {
     id
     displayName
     description

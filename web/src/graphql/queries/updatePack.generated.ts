@@ -18,7 +18,7 @@
 
 import * as Types from '../../../__generated__/schema';
 
-import { PackFull } from '../fragments/PackFull.generated';
+import { PackDetails } from '../fragments/PackDetails.generated';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
@@ -28,15 +28,15 @@ export type UpdatePackVariables = {
   input: Types.UpdatePackInput;
 };
 
-export type UpdatePack = { updatePack: PackFull };
+export type UpdatePack = { updatePack: PackDetails };
 
 export const UpdatePackDocument = gql`
   mutation UpdatePack($input: UpdatePackInput!) {
     updatePack(input: $input) {
-      ...PackFull
+      ...PackDetails
     }
   }
-  ${PackFull}
+  ${PackDetails}
 `;
 export type UpdatePackMutationFn = ApolloReactCommon.MutationFunction<
   UpdatePack,
