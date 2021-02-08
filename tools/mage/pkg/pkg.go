@@ -159,20 +159,23 @@ func (p *Packager) Template(path string) (string, error) {
 	}
 
 	// Write the packaged template to out/deployments
-	newBody, err := yaml.Marshal(body)
-	if err != nil {
+	var buf bytes.Buffer
+	enc := yaml.NewEncoder(&buf)
+	enc.SetIndent(2) // 2 spaces instead of 4 for a smaller template body
+	if err := enc.Encode(body); err != nil {
 		return "", err
 	}
+	newBody := buf.Bytes()
 
 	if p.PostProcess != nil {
 		newBody = p.PostProcess(path, newBody)
 	}
 
 	pkgPath := filepath.Join("out", "deployments", "pkg."+filepath.Base(path))
-	if err = os.MkdirAll(filepath.Dir(pkgPath), 0700); err != nil {
+	if err := os.MkdirAll(filepath.Dir(pkgPath), 0700); err != nil {
 		return "", err
 	}
-	if err = ioutil.WriteFile(pkgPath, newBody, 0600); err != nil {
+	if err := ioutil.WriteFile(pkgPath, newBody, 0600); err != nil {
 		return "", err
 	}
 
@@ -407,7 +410,7 @@ func (p *Packager) UploadAsset(assetPath, s3Key string) (string, string, error) 
 	}
 
 	p.Log.Infof("uploading %s file %s to S3: %s",
-		util.ByteCountSI(int64(len(contents))), assetPath, s3Key[:15])
+		util.ByteCountSI(int64(len(contents))), assetPath, s3Key[:12])
 
 	response, err := manager.NewUploader(s3Client).Upload(context.TODO(), &s3.PutObjectInput{
 		Bucket: &p.Bucket,
