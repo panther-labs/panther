@@ -54,7 +54,7 @@ type LogEntry struct {
 	LogName          *string                 `json:"logName" validate:"required" description:"The resource name of the log to which this log entry belongs."`
 	Severity         *string                 `json:"severity,omitempty" description:"The severity of the log entry. The default value is LogSeverity.DEFAULT."`
 	InsertID         *string                 `json:"insertId,omitempty" description:"A unique identifier for the log entry."`
-	Resource         MonitoredResource       `json:"resource,omitempty" description:"The monitored resource that produced this log entry."`
+	Resource         *MonitoredResource      `json:"resource,omitempty" description:"The monitored resource that produced this log entry."`
 	Timestamp        *timestamp.RFC3339      `json:"timestamp,omitempty" description:"The time the event described by the log entry occurred."`
 	ReceiveTimestamp *timestamp.RFC3339      `json:"receiveTimestamp" validate:"required" description:"The time the log entry was received by Logging."`
 	Labels           Labels                  `json:"labels,omitempty" description:"A set of user-defined (key, value) data that provides additional information about the log entry."`
