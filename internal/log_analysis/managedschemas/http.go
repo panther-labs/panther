@@ -1,4 +1,4 @@
-package common
+package managedschemas
 
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
@@ -19,26 +19,32 @@ package common
  */
 
 import (
-	"github.com/panther-labs/panther/pkg/metrics"
+	"context"
+	"io/ioutil"
+	"net/http"
+
+	"github.com/pkg/errors"
 )
 
-var (
-	BytesProcessedLogger = metrics.MustStaticLogger([]metrics.DimensionSet{
-		{
-			"LogType",
-		},
-	}, []metrics.Metric{
-		{
-			Name: "BytesProcessed",
-			Unit: metrics.UnitBytes,
-		},
-		{
-			Name: "EventsProcessed",
-			Unit: metrics.UnitCount,
-		},
-		{
-			Name: "CombinedLatency",
-			Unit: metrics.UnitMilliseconds,
-		},
-	})
-)
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+func DownloadFile(ctx context.Context, client HTTPClient, url string) ([]byte, error) {
+	if client == nil {
+		client = &http.Client{}
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.Errorf("invalid HTTP response status %d: %s", resp.StatusCode, resp.Status)
+	}
+	return ioutil.ReadAll(resp.Body)
+}

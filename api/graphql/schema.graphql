@@ -48,6 +48,7 @@ type Mutation {
   updateUser(input: UpdateUserInput!): User!
   uploadDetections(input: UploadDetectionsInput!): UploadDetectionsResponse
   updateGlobalPythonlModule(input: ModifyGlobalPythonModuleInput!): GlobalPythonModule!
+  updatePack(input: UpdatePackInput!): Pack!
 }
 
 type Query {
@@ -77,6 +78,7 @@ type Query {
   listComplianceIntegrations: [ComplianceIntegration!]!
   listDataModels(input: ListDataModelsInput!): ListDataModelsResponse!
   listLogIntegrations: [LogIntegration!]!
+  listPacks(input: ListPacksInput) : ListPacksResponse!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   getLogAnalysisMetrics(input: LogAnalysisMetricsInput!): LogAnalysisMetricsResponse!
   rule(input: GetRuleInput!): Rule
@@ -84,6 +86,30 @@ type Query {
   users: [User!]!
   getCustomLog(input: GetCustomLogInput!): GetCustomLogOutput!
   listCustomLogs: [CustomLogRecord!]!
+}
+
+input ListPacksInput {
+  ids: [ID!]
+  exclusiveStartKey: String
+  contains: String
+  createdBefore: AWSDateTime
+  createdAfter: AWSDateTime
+  userId: ID
+  sortDir: SortDirEnum # defaults to `ascending`
+  # Paging
+  pageSize: Int # defaults to `25`
+  page: Int # defaults to `1`
+}
+
+input PackVersionInput {
+  id: String!
+  name: String!
+}
+
+input UpdatePackInput {
+  enabled: Boolean
+  id: ID!
+  packVersion: PackVersionInput
 }
 
 input ListDetectionsInput {
@@ -201,6 +227,10 @@ input GetAlertInput {
 
 type ListDetectionsResponse {
   detections: [Detection!]!
+  paging: PagingData!
+}
+type ListPacksResponse {
+  packs: [Pack!]!
   paging: PagingData!
 }
 
@@ -461,6 +491,43 @@ type Rule implements Detection {
   versionId: ID
   analysisType: DetectionTypeEnum!
 }
+
+type PackVersion {
+  id: String!
+  name: String!
+}
+
+type PackDetectionsPatterns {
+  # This is an array Detection['id'] that are related to the pack
+  IDs: [ID!]
+}
+
+type DetectionTypes {
+  GLOBAL: Int!
+  RULE: Int!
+  POLICY: Int!
+}
+
+type Pack {
+  id: ID!
+  enabled: Boolean!
+  updateAvailable: Boolean!
+
+  description: String!
+  displayName: String!
+  packVersion: PackVersion!
+
+  availableVersions: [PackVersion!]!
+  createdBy: ID!
+  lastModifiedBy: ID!
+
+  createdAt: AWSDateTime!
+  lastModified: AWSDateTime!
+
+  detectionsPatterns: PackDetectionsPatterns!
+  detectionTypes: DetectionTypes!
+}
+
 
 input SuppressPoliciesInput {
   policyIds: [ID]!

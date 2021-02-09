@@ -1,0 +1,95 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: Athena Third Party BI Tool Permissions (Create access key post deployment for IAM user created).
+
+Parameters:
+  UserName:
+    Type: String
+    Default: PantherAthenaBI
+    Description: Enter a name for the IAM user that will be created.
+  RootStackName:
+    Type: String
+    Default: panther
+    Description: Enter the Panther Root Stack Name.
+
+Resources:
+  Athena:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Ref UserName
+
+  AthenaGroupMembership:
+    Type: AWS::IAM::UserToGroupAddition
+    Properties:
+      GroupName: !Ref AthenaGroup
+      Users:
+        - !Ref Athena
+
+  AthenaGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: AthenaAnalytics
+
+  AthenaGroupPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ReadPantherProcessedData
+      Groups:
+        - !Ref AthenaGroup
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - athena:BatchGetQueryExecution
+              - athena:CancelQueryExecution
+              - athena:Get*
+              - athena:List*
+              - athena:RunQuery
+              - athena:StartQueryExecution
+              - athena:StopQueryExecution
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - glue:BatchGetPartition
+              - glue:Get*
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - s3:AbortMultipartUpload
+              - s3:GetBucketLocation
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:ListBucketMultipartUploads
+              - s3:ListMultipartUploadParts
+              - s3:PutObject
+            Resource:
+              - !Sub arn:${AWS::Partition}:s3:::${RootStackName}-*-athenaresults-*
+              - !Sub arn:${AWS::Partition}:s3:::${RootStackName}-*-processeddata-*
+              - !Sub arn:${AWS::Partition}:s3:::${RootStackName}-*-historicaldata-*
+          - Effect: Allow
+            Action: s3:ListAllMyBuckets
+            Resource: '*'
+          - Effect: Allow
+            Action: lakeformation:GetDataAccess
+            Resource: '*'
+
+Outputs:
+  IAMUser:
+    Description: Panther Athena BI tool integration IAM user.
+    Value: !Ref Athena

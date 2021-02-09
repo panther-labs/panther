@@ -42,13 +42,17 @@ func LogType(name string) string {
 }
 
 // Build validates the schema and metadata and builds a logtypes.Entry
-func Build(desc logtypes.Desc, schema *logschema.Schema) (logtypes.Entry, error) {
-	// Pass strict validation rules for logtype.Desc
+func Build(name string, schema *logschema.Schema) (logtypes.Entry, error) {
+	desc := logtypes.Desc{
+		Name:         name,
+		Description:  schema.Description,
+		ReferenceURL: schema.ReferenceURL,
+	}
 	desc.Fill()
-
 	if err := desc.Validate(); err != nil {
 		return nil, errors.Wrap(err, "log type metadata validation failed")
 	}
+
 	if err := logschema.ValidateSchema(schema); err != nil {
 		return nil, err
 	}
@@ -66,19 +70,17 @@ func Build(desc logtypes.Desc, schema *logschema.Schema) (logtypes.Entry, error)
 	if err != nil {
 		return nil, err
 	}
-
-	logType := LogType(desc.Name)
 	preProcessor, err := buildPreprocessor(schema.Parser)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to build preprocessor")
 	}
 	entry, err := logtypes.Config{
-		Name:         logType,
+		Name:         name,
 		Description:  desc.Description,
 		ReferenceURL: desc.ReferenceURL,
 		Schema:       reflect.New(eventSchema).Interface(),
 		NewParser: &customparser.Factory{
-			LogType:      LogType(logType),
+			LogType:      name,
 			EventSchema:  eventType,
 			PreProcessor: preProcessor,
 			API:          pantherlog.ConfigJSON(),

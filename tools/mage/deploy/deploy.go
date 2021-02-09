@@ -486,6 +486,13 @@ func deployCloudSecurityStack(settings *PantherConfig, packager *pkg.Packager, o
 		"PythonLayerVersionArn":      outputs["PythonLayerVersionArn"],
 		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
+
+		// These settings are not supported for source code deploys
+		"CloudSecurityMaxReadCapacity":  "0",
+		"CloudSecurityMaxWriteCapacity": "0",
+		"CloudSecurityMemory":           "512",
+		"CloudSecurityMinReadCapacity":  "0",
+		"CloudSecurityMinWriteCapacity": "0",
 	})
 	return err
 }
