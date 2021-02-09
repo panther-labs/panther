@@ -488,8 +488,8 @@ func deployCloudSecurityStack(settings *PantherConfig, packager *pkg.Packager, o
 		"TracingMode":                settings.Monitoring.TracingMode,
 
 		// These settings are not supported for source code deploys
-		"CloudSecurityMaxReadCapacity": "0",
-		"CloudSecurityMinReadCapacity": "0",
+		"CloudSecurityMaxReadCapacity":  "0",
+		"CloudSecurityMinReadCapacity":  "0",
 		"CloudSecurityMaxWriteCapacity": "0",
 		"CloudSecurityMinWriteCapacity": "0",
 	})
