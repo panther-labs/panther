@@ -16,9 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export * from './listDestinations.generated';
-export * from './listAvailableLogTypes.generated';
-export * from './sendTestAlert.generated';
-export * from './updateAlertStatus.generated';
-export * from './updatePack.generated';
-export * from './listComplianceSourceNames.generated';
+export { default } from './BulletedLoading';
