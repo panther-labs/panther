@@ -79,14 +79,11 @@ Resources:
               - s3:ListMultipartUploadParts
               - s3:PutObject
             Resource:
-              - !Sub arn:aws:s3:::${RootStackName}-*-athenaresults-*
-              - !Sub arn:aws:s3:::${RootStackName}-*-processeddata-*
-              - !Sub arn:aws:s3:::${RootStackName}-*-historicaldata-*
+              - !Sub arn:${AWS::Partition}:s3:::${RootStackName}-*-athenaresults-*
+              - !Sub arn:${AWS::Partition}:s3:::${RootStackName}-*-processeddata-*
+              - !Sub arn:${AWS::Partition}:s3:::${RootStackName}-*-historicaldata-*
           - Effect: Allow
-            Action:
-              - s3:GetBucketLocation
-              - s3:ListAllMyBuckets
-              - s3:ListBucket
+            Action: s3:ListAllMyBuckets
             Resource: '*'
           - Effect: Allow
             Action: lakeformation:GetDataAccess
