@@ -65,6 +65,3 @@ package $PKG_NAME
 const ReleaseVersion = "${RELEASE_TAG}"
 
 EOF
-
-# Clean up
-rm -rf "${TMP_DIR}"
