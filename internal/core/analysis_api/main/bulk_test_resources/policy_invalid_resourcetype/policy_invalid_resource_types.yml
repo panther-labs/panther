@@ -14,14 +14,26 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-AnalysisType: DataModel
-Name: My Data Model
-LogTypes:
-  - Some.Events
-DataModelID: Some.Events.DataModel
+AnalysisType: policy
+ActionDelaySeconds: 10
+AutoRemediationID: fix-it
+AutoRemediationParameters:
+  hello: goodbye
+DisplayName: AlwaysTrue
+Filename: policy_invalid_resource_types.py
+OutputIds: []
+PolicyID: Test:Invalid:Policy
 Enabled: true
-Mappings:
-  - Name: source_ip
-    Path: ipAddress
-  - Name: dest_ip
-    Path: destAddress
+Suppressions:
+  - 'panther.*'
+Tags: []
+Tests:
+  - Name: This will be True
+    ResourceType: AWS.Tornado.Resource
+    ExpectedResult: true
+    Resource: { 'Bucket': 'empty' }
+ResourceTypes:
+  - AWS.Tornado.Resource
+Severity: Medium
+Description: >
+  Matches every resource
