@@ -723,7 +723,7 @@ Resources:
       ScalingTargetId: !Ref ComplianceTableReadCapacityScalableTarget
       TargetTrackingScalingPolicyConfiguration:
         TargetValue: 70
-        ScaleInCooldown: 60
+        ScaleInCooldown: 500
         ScaleOutCooldown: 60
         PredefinedMetricSpecification:
           PredefinedMetricType: DynamoDBReadCapacityUtilization
@@ -1147,7 +1147,7 @@ Resources:
       ScalingTargetId: !Ref ResourcesTableReadCapacityScalableTarget
       TargetTrackingScalingPolicyConfiguration:
         TargetValue: 70
-        ScaleInCooldown: 60
+        ScaleInCooldown: 300
         ScaleOutCooldown: 60
         PredefinedMetricSpecification:
           PredefinedMetricType: DynamoDBReadCapacityUtilization
