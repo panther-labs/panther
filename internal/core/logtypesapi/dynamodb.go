@@ -150,6 +150,7 @@ func buildUpdateManagedSchemaTx(tableName string, record SchemaRecord) transact.
 			TableName: tableName,
 			Key:       schemaRecordKey(record.Name, 0),
 			Set: map[string]interface{}{
+				// Set if the record is being put for the first time
 				transact.SetIfNotExists: struct {
 					CreatedAt time.Time `dynamodbav:"createdAt"`
 					Name      string    `dynamodbav:"logType"`
@@ -161,6 +162,7 @@ func buildUpdateManagedSchemaTx(tableName string, record SchemaRecord) transact.
 					Managed:   true,
 					Disabled:  false,
 				},
+				// Update fields of the schema record
 				transact.SetAll: struct {
 					UpdatedAt    time.Time `dynamodbav:"updatedAt"`
 					Release      string    `dynamodbav:"release"`
@@ -178,7 +180,9 @@ func buildUpdateManagedSchemaTx(tableName string, record SchemaRecord) transact.
 				},
 			},
 			Condition: expression.Or(
+				// Check that the record does not exist
 				expression.Name(attrRecordKind).AttributeNotExists(),
+				// OR
 				expression.And(
 					// Check that the record is managed
 					expression.Name(attrManaged).Equal(expression.Value(true)),
@@ -199,7 +203,7 @@ func buildUpdateManagedSchemaTx(tableName string, record SchemaRecord) transact.
 						return e
 					}
 					if !rec.Managed {
-						return NewAPIError(ErrRevisionConflict, fmt.Sprintf("schema record %q is not managed", rec.RecordID))
+						return NewAPIError(ErrAlreadyExists, fmt.Sprintf("schema record %q is not managed", rec.RecordID))
 					}
 					if rec.Revision != currentRevision {
 						return NewAPIError(ErrRevisionConflict, fmt.Sprintf("managed schema record %q is at revision %d", rec.RecordID, rec.Revision))
