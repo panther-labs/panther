@@ -633,7 +633,10 @@ Resources:
           AttributeType: S
         - AttributeName: resourceId
           AttributeType: S
-      BillingMode: PAY_PER_REQUEST
+      BillingMode: !If
+        - ProvisionResourceTableCapacity
+        - PROVISIONED
+        - PAY_PER_REQUEST
       GlobalSecondaryIndexes:
         - # Add an index for policyId to efficiently search for a specific policy
           KeySchema:
@@ -649,6 +652,11 @@ Resources:
           KeyType: RANGE
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: True
+      ProvisionedCapacity: !If
+        - ProvisionResourceTableCapacity
+        - ReadCapacityUnits: !Ref CloudSecurityMaxReadCapacity
+          WriteCapacityUnits: !Ref CloudSecurityMaxWriteCapacity
+        - !Ref AWS::NoValue
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
       SSESpecification:
@@ -656,6 +664,56 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: expiresAt
         Enabled: True
+
+  ComplianceTableWriteCapacityScalableTarget:
+    Condition: ProvisionResourceTableCapacity
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: !Ref CloudSecurityMaxWriteCapacity
+      MinCapacity: !Ref CloudSecurityMinWriteCapacity
+      ResourceId: !Sub table/${ComplianceTable}
+      RoleARN: !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_DynamoDBTable
+      ScalableDimension: 'dynamodb:table:WriteCapacityUnits'
+      ServiceNamespace: dynamodb
+
+  ComplianceTableWriteScalingPolicy:
+    Condition: ProvisionResourceTableCapacity
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: WriteAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ComplianceTableWriteCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBWriteCapacityUtilization
+
+  ComplianceTableReadCapacityScalableTarget:
+    Condition: ProvisionResourceTableCapacity
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: !Ref CloudSecurityMaxReadCapacity
+      MinCapacity: !Ref CloudSecurityMinReadCapacity
+      ResourceId: !Sub table/${ComplianceTable}
+      RoleARN: !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/dynamodb.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_DynamoDBTable
+      ScalableDimension: 'dynamodb:table:ReadCapacityUnits'
+      ServiceNamespace: dynamodb
+
+  ComplianceTableReadScalingPolicy:
+    Condition: ProvisionResourceTableCapacity
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: ReadAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ComplianceTableReadCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBReadCapacityUtilization
 
   ComplianceTableAlarms:
     Type: Custom::DynamoDBAlarms
@@ -1018,6 +1076,11 @@ Resources:
           KeyType: HASH
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: True
+      ProvisionedCapacity: !If
+        - ProvisionResourceTableCapacity
+        - ReadCapacityUnits: !Ref CloudSecurityMaxReadCapacity
+          WriteCapacityUnits: !Ref CloudSecurityMaxWriteCapacity
+        - !Ref AWS::NoValue
       SSESpecification:
         SSEEnabled: True
       StreamSpecification:
@@ -1028,7 +1091,7 @@ Resources:
 
   ResourcesTableWriteCapacityScalableTarget:
     Condition: ProvisionResourceTableCapacity
-    Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
       MaxCapacity: !Ref CloudSecurityMaxWriteCapacity
       MinCapacity: !Ref CloudSecurityMinWriteCapacity
@@ -1039,7 +1102,7 @@ Resources:
 
   ResourcesTableWriteScalingPolicy:
     Condition: ProvisionResourceTableCapacity
-    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
       PolicyName: WriteAutoScalingPolicy
       PolicyType: TargetTrackingScaling
@@ -1053,7 +1116,7 @@ Resources:
 
   ResourcesTableReadCapacityScalableTarget:
     Condition: ProvisionResourceTableCapacity
-    Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
       MaxCapacity: !Ref CloudSecurityMaxReadCapacity
       MinCapacity: !Ref CloudSecurityMinReadCapacity
@@ -1064,7 +1127,7 @@ Resources:
 
   ResourcesTableReadScalingPolicy:
     Condition: ProvisionResourceTableCapacity
-    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
       PolicyName: ReadAutoScalingPolicy
       PolicyType: TargetTrackingScaling

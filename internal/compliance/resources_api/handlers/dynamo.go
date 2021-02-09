@@ -117,6 +117,7 @@ func scanPages(inputs []*dynamodb.ScanInput, includeCompliance bool,
 	requiredComplianceStatus compliancemodels.ComplianceStatus) ([]models.Resource, error) {
 
 	results := make(chan scanResult)
+	defer close(results)
 	// The scan inputs have already been broken up into segments, scan each segment in parallel
 	for _, scanInput := range inputs {
 		go func(input *dynamodb.ScanInput) {
@@ -184,7 +185,7 @@ func scanPages(inputs []*dynamodb.ScanInput, includeCompliance bool,
 	}
 
 	// Merge scan results
-	zap.L().Info("scans initiated, awaiting results")
+	zap.L().Debug("scans initiated, awaiting results")
 	var err error
 	var mergedResources []models.Resource
 	for range inputs {
