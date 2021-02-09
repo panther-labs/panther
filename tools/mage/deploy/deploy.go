@@ -479,6 +479,7 @@ func deployCloudSecurityStack(settings *PantherConfig, packager *pkg.Packager, o
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomResourceVersion":      customResourceVersion(),
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
+		"DynamoScalingRoleArn":       outputs["DynamoScalingRoleArn"],
 		"InputDataBucket":            outputs["InputDataBucket"],
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
