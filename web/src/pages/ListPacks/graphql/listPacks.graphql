@@ -1,0 +1,12 @@
+query ListPacks($input: ListPacksInput!) {
+    listPacks(input: $input) {
+        packs {
+            ...PackDetails
+        }
+        paging {
+            totalPages
+            thisPage
+            totalItems
+        }
+    }
+}

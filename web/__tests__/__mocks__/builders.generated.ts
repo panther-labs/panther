@@ -61,6 +61,7 @@ import {
   Detection,
   DetectionTestDefinition,
   DetectionTestDefinitionInput,
+  DetectionTypes,
   Error,
   FloatSeries,
   FloatSeriesData,
@@ -92,6 +93,8 @@ import {
   ListDetectionsResponse,
   ListGlobalPythonModuleInput,
   ListGlobalPythonModulesResponse,
+  ListPacksInput,
+  ListPacksResponse,
   ListResourcesInput,
   ListResourcesResponse,
   LogAnalysisMetricsInput,
@@ -106,6 +109,10 @@ import {
   OrganizationReportBySeverity,
   OrganizationStatsInput,
   OrganizationStatsResponse,
+  Pack,
+  PackDetectionsPatterns,
+  PackVersion,
+  PackVersionInput,
   PagerDutyConfig,
   PagerDutyConfigInput,
   PagingData,
@@ -148,6 +155,7 @@ import {
   UpdateAlertStatusInput,
   UpdateComplianceIntegrationInput,
   UpdateGeneralSettingsInput,
+  UpdatePackInput,
   UpdatePolicyInput,
   UpdateRuleInput,
   UpdateS3LogIntegrationInput,
@@ -775,6 +783,15 @@ export const buildDetectionTestDefinitionInput = (
   };
 };
 
+export const buildDetectionTypes = (overrides: Partial<DetectionTypes> = {}): DetectionTypes => {
+  return {
+    __typename: 'DetectionTypes',
+    GLOBAL: 'GLOBAL' in overrides ? overrides.GLOBAL : 675,
+    RULE: 'RULE' in overrides ? overrides.RULE : 48,
+    POLICY: 'POLICY' in overrides ? overrides.POLICY : 936,
+  };
+};
+
 export const buildError = (overrides: Partial<Error> = {}): Error => {
   return {
     __typename: 'Error',
@@ -1117,6 +1134,31 @@ export const buildListGlobalPythonModulesResponse = (
   };
 };
 
+export const buildListPacksInput = (overrides: Partial<ListPacksInput> = {}): ListPacksInput => {
+  return {
+    ids: 'ids' in overrides ? overrides.ids : ['1004df7e-2f2b-4cc8-983d-51c8755448b1'],
+    exclusiveStartKey: 'exclusiveStartKey' in overrides ? overrides.exclusiveStartKey : 'approach',
+    contains: 'contains' in overrides ? overrides.contains : 'virtual',
+    createdBefore:
+      'createdBefore' in overrides ? overrides.createdBefore : '2020-12-18T06:01:14.683Z',
+    createdAfter: 'createdAfter' in overrides ? overrides.createdAfter : '2020-09-06T06:26:32.447Z',
+    userId: 'userId' in overrides ? overrides.userId : 'babecc5a-ee30-4e0c-98c0-f755157ad03e',
+    sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
+    pageSize: 'pageSize' in overrides ? overrides.pageSize : 303,
+    page: 'page' in overrides ? overrides.page : 639,
+  };
+};
+
+export const buildListPacksResponse = (
+  overrides: Partial<ListPacksResponse> = {}
+): ListPacksResponse => {
+  return {
+    __typename: 'ListPacksResponse',
+    packs: 'packs' in overrides ? overrides.packs : [buildPack()],
+    paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
+  };
+};
+
 export const buildListResourcesInput = (
   overrides: Partial<ListResourcesInput> = {}
 ): ListResourcesInput => {
@@ -1272,6 +1314,60 @@ export const buildOrganizationStatsResponse = (
       'topFailingPolicies' in overrides ? overrides.topFailingPolicies : [buildPolicy()],
     topFailingResources:
       'topFailingResources' in overrides ? overrides.topFailingResources : [buildResourceSummary()],
+  };
+};
+
+export const buildPack = (overrides: Partial<Pack> = {}): Pack => {
+  return {
+    __typename: 'Pack',
+    id: 'id' in overrides ? overrides.id : '1578714e-d0a4-4b15-8b2f-5a01491e6250',
+    enabled: 'enabled' in overrides ? overrides.enabled : true,
+    updateAvailable: 'updateAvailable' in overrides ? overrides.updateAvailable : true,
+    description: 'description' in overrides ? overrides.description : 'Human',
+    displayName: 'displayName' in overrides ? overrides.displayName : 'Regional',
+    packVersion: 'packVersion' in overrides ? overrides.packVersion : buildPackVersion(),
+    availableVersions:
+      'availableVersions' in overrides ? overrides.availableVersions : [buildPackVersion()],
+    createdBy:
+      'createdBy' in overrides ? overrides.createdBy : 'd28f3971-92e4-4d7c-b8ec-25309861c0d1',
+    lastModifiedBy:
+      'lastModifiedBy' in overrides
+        ? overrides.lastModifiedBy
+        : '0784eeea-c28c-4ad9-afeb-4be7ea05ee08',
+    createdAt: 'createdAt' in overrides ? overrides.createdAt : '2020-03-12T10:42:13.067Z',
+    lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-01-13T14:33:23.011Z',
+    detectionsPatterns:
+      'detectionsPatterns' in overrides
+        ? overrides.detectionsPatterns
+        : buildPackDetectionsPatterns(),
+    detectionTypes:
+      'detectionTypes' in overrides ? overrides.detectionTypes : buildDetectionTypes(),
+  };
+};
+
+export const buildPackDetectionsPatterns = (
+  overrides: Partial<PackDetectionsPatterns> = {}
+): PackDetectionsPatterns => {
+  return {
+    __typename: 'PackDetectionsPatterns',
+    IDs: 'IDs' in overrides ? overrides.IDs : ['29535cdd-7ce3-4006-a706-e502d29c7601'],
+  };
+};
+
+export const buildPackVersion = (overrides: Partial<PackVersion> = {}): PackVersion => {
+  return {
+    __typename: 'PackVersion',
+    id: 'id' in overrides ? overrides.id : 'Unbranded',
+    name: 'name' in overrides ? overrides.name : 'Shirt',
+  };
+};
+
+export const buildPackVersionInput = (
+  overrides: Partial<PackVersionInput> = {}
+): PackVersionInput => {
+  return {
+    id: 'id' in overrides ? overrides.id : 'Garden',
+    name: 'name' in overrides ? overrides.name : 'plum',
   };
 };
 
@@ -1804,6 +1900,14 @@ export const buildUpdateGeneralSettingsInput = (
     errorReportingConsent:
       'errorReportingConsent' in overrides ? overrides.errorReportingConsent : true,
     analyticsConsent: 'analyticsConsent' in overrides ? overrides.analyticsConsent : false,
+  };
+};
+
+export const buildUpdatePackInput = (overrides: Partial<UpdatePackInput> = {}): UpdatePackInput => {
+  return {
+    enabled: 'enabled' in overrides ? overrides.enabled : true,
+    id: 'id' in overrides ? overrides.id : 'cf999351-d016-4ca1-b52e-c9a8c1a47331',
+    packVersion: 'packVersion' in overrides ? overrides.packVersion : buildPackVersionInput(),
   };
 };
 

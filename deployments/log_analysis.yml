@@ -115,9 +115,17 @@ Conditions:
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
+  ###### Update managed schemas to the minimum required version
+  UpdateManagedSchemas:
+    Type: Custom::ManagedSchemas
+    DependsOn: UpdaterFunction
+    Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ###### Update Glue Table Schemas for Deployed Tables #####
   UpdateLogProcessorGlueTables:
-    DependsOn: UpdaterFunction
+    DependsOn: UpdateManagedSchemas # The data catalog updater needs to have up-to-date schemas
     Type: Custom::UpdateLogProcessorTables
     Properties:
       CustomResourceVersion: !Ref CustomResourceVersion

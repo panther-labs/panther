@@ -1,0 +1,30 @@
+fragment PackDetails on Pack {
+    id
+    displayName
+    description
+    enabled
+    updateAvailable
+
+    packVersion {
+        id
+        name
+    }
+
+    availableVersions {
+        id
+        name
+    }
+    detectionTypes {
+        GLOBAL
+        POLICY
+        RULE
+    }
+    detectionsPatterns {
+        IDs
+    }
+
+    lastModified
+    lastModifiedBy
+    createdAt
+    createdBy
+}
