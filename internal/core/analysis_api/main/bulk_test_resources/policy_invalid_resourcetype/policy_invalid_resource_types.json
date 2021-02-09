@@ -1,0 +1,30 @@
+{
+  "ActionDelaySeconds": 10,
+  "AnalysisType": "policy",
+  "AutoRemediationID": "fix-it",
+  "AutoRemediationParameters": {
+    "hello": "goodbye"
+  },
+  "Description": "Matches every resource",
+  "DisplayName": "InvalidResourceTypesPolicy",
+  "Enabled": true,
+  "Filename": "policy_invalid_resource_types.py",
+  "OutputIds": [],
+  "PolicyID": "Test:Invalid:Policy",
+  "ResourceTypes": ["AWS.Tornado.Resource"],
+  "Severity": "Medium",
+  "Tags": [],
+  "Reports": {
+    "Test": ["Value1", "Value2"]
+  },
+  "Tests": [
+    {
+      "ExpectedResult": true,
+      "Name": "This will be True",
+      "Resource": {
+        "Bucket": "empty"
+      },
+      "ResourceType": "AWS.Tornado.Resource"
+    }
+  ]
+}
