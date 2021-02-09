@@ -31,6 +31,7 @@ import (
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/metrics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
@@ -84,10 +85,10 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 	cwCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	// Sync metrics every minute
-	go common.CWMetrics.Run(cwCtx, time.Minute)
+	go metrics.CWManager.Run(cwCtx, time.Minute)
 	defer func() {
 		// Force syncing metrics at the end of the invocation
-		if err := common.CWMetrics.Sync(); err != nil {
+		if err := metrics.CWManager.Sync(); err != nil {
 			zap.L().Warn("failed to sync metrics", zap.Error(err))
 		}
 	}()
