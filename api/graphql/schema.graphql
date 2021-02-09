@@ -48,11 +48,13 @@ type Mutation {
   updateUser(input: UpdateUserInput!): User!
   uploadDetections(input: UploadDetectionsInput!): UploadDetectionsResponse
   updateGlobalPythonlModule(input: ModifyGlobalPythonModuleInput!): GlobalPythonModule!
+  updatePack(input: UpdatePackInput!): Pack!
 }
 
 type Query {
   alert(input: GetAlertInput!): AlertDetails
   alerts(input: ListAlertsInput): ListAlertsResponse
+  detections(input: ListDetectionsInput): ListDetectionsResponse!
   sendTestAlert(input: SendTestAlertInput!): [DeliveryResponse]!
   destination(id: ID!): Destination
   destinations: [Destination]
@@ -71,20 +73,67 @@ type Query {
   resourcesForPolicy(input: ResourcesForPolicyInput!): ListComplianceItemsResponse
   getGlobalPythonModule(input: GetGlobalPythonModuleInput!): GlobalPythonModule!
   policy(input: GetPolicyInput!): Policy
-  policies(input: ListPoliciesInput): ListPoliciesResponse
   policiesForResource(input: PoliciesForResourceInput): ListComplianceItemsResponse
   listAvailableLogTypes: ListAvailableLogTypesResponse!
   listComplianceIntegrations: [ComplianceIntegration!]!
   listDataModels(input: ListDataModelsInput!): ListDataModelsResponse!
   listLogIntegrations: [LogIntegration!]!
+  listPacks(input: ListPacksInput) : ListPacksResponse!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   getLogAnalysisMetrics(input: LogAnalysisMetricsInput!): LogAnalysisMetricsResponse!
   rule(input: GetRuleInput!): Rule
-  rules(input: ListRulesInput): ListRulesResponse
   listGlobalPythonModules(input: ListGlobalPythonModuleInput!): ListGlobalPythonModulesResponse!
   users: [User!]!
   getCustomLog(input: GetCustomLogInput!): GetCustomLogOutput!
   listCustomLogs: [CustomLogRecord!]!
+}
+
+input ListPacksInput {
+  ids: [ID!]
+  exclusiveStartKey: String
+  contains: String
+  createdBefore: AWSDateTime
+  createdAfter: AWSDateTime
+  userId: ID
+  sortDir: SortDirEnum # defaults to `ascending`
+  # Paging
+  pageSize: Int # defaults to `25`
+  page: Int # defaults to `1`
+}
+
+input PackVersionInput {
+  id: String!
+  name: String!
+}
+
+input UpdatePackInput {
+  enabled: Boolean
+  id: ID!
+  packVersion: PackVersionInput
+}
+
+input ListDetectionsInput {
+  # Policy Only
+  complianceStatus: ComplianceStatusEnum
+  hasRemediation: Boolean
+  resourceTypes: [String!]
+
+  # Rule Only
+  logTypes: [String!]
+
+  # Common
+  analysisTypes: [DetectionTypeEnum!]
+  nameContains: String
+  enabled: Boolean
+  severity: [SeverityEnum!]
+  createdBy: String
+  lastModifiedBy: String
+  initialSet: Boolean
+  tags: [String!]
+  sortBy: ListDetectionsSortFieldsEnum # defaults to `id`
+  sortDir: SortDirEnum # defaults to `ascending`
+  pageSize: Int # defaults to `25`
+  page: Int # defaults to `1`
 }
 
 input DeleteEntry {
@@ -174,6 +223,15 @@ input GetAlertInput {
   alertId: ID!
   eventsPageSize: Int
   eventsExclusiveStartKey: String
+}
+
+type ListDetectionsResponse {
+  detections: [Detection!]!
+  paging: PagingData!
+}
+type ListPacksResponse {
+  packs: [Pack!]!
+  paging: PagingData!
 }
 
 type DataModelMapping {
@@ -348,23 +406,6 @@ input SendTestAlertInput {
   outputIds: [ID!]!
 }
 
-input ListRulesInput {
-  createdBy: String
-  lastModifiedBy: String
-  initialSet: Boolean
-  nameContains: String
-  enabled: Boolean
-  logTypes: [String!]
-  severity: [SeverityEnum!]
-  tags: [String!]
-  # Sorting
-  sortBy: ListRulesSortFieldsEnum # defaults to `id`
-  sortDir: SortDirEnum # defaults to `ascending`
-  # Paging
-  pageSize: Int # defaults to `25`
-  page: Int # defaults to `1`
-}
-
 input AddRuleInput {
   body: String!
   dedupPeriodMinutes: Int!
@@ -408,12 +449,27 @@ input DeleteRuleInput {
   rules: [DeleteEntry!]!
 }
 
-type ListRulesResponse {
-  paging: PagingData
-  rules: [Rule!]!
+interface Detection {
+  body: String!
+  createdAt: AWSDateTime!
+  createdBy: ID
+  description: String
+  displayName: String
+  enabled: Boolean!
+  id: ID!
+  lastModified: AWSDateTime
+  lastModifiedBy: ID
+  outputIds: [ID!]!
+  reference: String
+  runbook: String
+  severity: SeverityEnum!
+  tags: [String!]!
+  tests: [DetectionTestDefinition!]!
+  versionId: ID
+  analysisType: DetectionTypeEnum!
 }
 
-type Rule {
+type Rule implements Detection {
   body: String!
   createdAt: AWSDateTime!
   createdBy: ID
@@ -422,7 +478,7 @@ type Rule {
   description: String
   displayName: String
   enabled: Boolean!
-  id: String!
+  id: ID!
   lastModified: AWSDateTime
   lastModifiedBy: ID
   logTypes: [String!]
@@ -433,7 +489,45 @@ type Rule {
   tags: [String!]!
   tests: [DetectionTestDefinition!]!
   versionId: ID
+  analysisType: DetectionTypeEnum!
 }
+
+type PackVersion {
+  id: String!
+  name: String!
+}
+
+type PackDetectionsPatterns {
+  # This is an array Detection['id'] that are related to the pack
+  IDs: [ID!]
+}
+
+type DetectionTypes {
+  GLOBAL: Int!
+  RULE: Int!
+  POLICY: Int!
+}
+
+type Pack {
+  id: ID!
+  enabled: Boolean!
+  updateAvailable: Boolean!
+
+  description: String!
+  displayName: String!
+  packVersion: PackVersion!
+
+  availableVersions: [PackVersion!]!
+  createdBy: ID!
+  lastModifiedBy: ID!
+
+  createdAt: AWSDateTime!
+  lastModified: AWSDateTime!
+
+  detectionsPatterns: PackDetectionsPatterns!
+  detectionTypes: DetectionTypes!
+}
+
 
 input SuppressPoliciesInput {
   policyIds: [ID]!
@@ -552,7 +646,10 @@ type SingleValue {
 type LogAnalysisMetricsResponse {
   eventsProcessed: LongSeriesData!
   alertsBySeverity: LongSeriesData!
+  """
+  TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
   eventsLatency: FloatSeriesData!
+  """
   totalAlertsDelta: [SingleValue!]!
   alertsByRuleID: [SingleValue!]!
   fromDate: AWSDateTime!
@@ -601,6 +698,8 @@ type ComplianceIntegration {
   integrationLabel: String!
   cweEnabled: Boolean
   remediationEnabled: Boolean
+  regionIgnoreList: [String!]
+  resourceTypeIgnoreList: [String!]
   health: ComplianceIntegrationHealth!
   stackName: String!
 }
@@ -643,6 +742,8 @@ input AddComplianceIntegrationInput {
   integrationLabel: String!
   remediationEnabled: Boolean
   cweEnabled: Boolean
+  regionIgnoreList: [String!]
+  resourceTypeIgnoreList: [String!]
 }
 
 input S3PrefixLogTypesInput {
@@ -674,6 +775,8 @@ input UpdateComplianceIntegrationInput {
   integrationLabel: String
   cweEnabled: Boolean
   remediationEnabled: Boolean
+  regionIgnoreList: [String!]
+  resourceTypeIgnoreList: [String!]
 }
 
 input UpdateS3LogIntegrationInput {
@@ -688,11 +791,6 @@ input UpdateSqsLogIntegrationInput {
   integrationId: String!
   integrationLabel: String!
   sqsConfig: SqsLogConfigInput!
-}
-
-type ListPoliciesResponse {
-  paging: PagingData
-  policies: [Policy!]!
 }
 
 type ListResourcesResponse {
@@ -847,7 +945,7 @@ input PagerDutyConfigInput {
   integrationKey: String!
 }
 
-type Policy {
+type Policy implements Detection {
   autoRemediationId: ID
   autoRemediationParameters: AWSJSON
   body: String!
@@ -862,13 +960,14 @@ type Policy {
   lastModifiedBy: ID
   outputIds: [ID!]!
   reference: String
-  resourceTypes: [String]
+  resourceTypes: [String!]
   runbook: String
   severity: SeverityEnum!
   suppressions: [String!]
   tags: [String!]!
   tests: [DetectionTestDefinition!]!
   versionId: ID
+  analysisType: DetectionTypeEnum!
 }
 
 type GlobalPythonModule {
@@ -965,25 +1064,6 @@ input DeleteGlobalPythonModuleInput {
 
 input DeletePolicyInput {
   policies: [DeleteEntry!]!
-}
-
-input ListPoliciesInput {
-  createdBy: String
-  lastModifiedBy: String
-  initialSet: Boolean
-  complianceStatus: ComplianceStatusEnum
-  nameContains: String
-  enabled: Boolean
-  hasRemediation: Boolean
-  resourceTypes: [String!]
-  severity: [SeverityEnum!]
-  tags: [String!]
-  # Sorting
-  sortBy: ListPoliciesSortFieldsEnum # defaults to `id`
-  sortDir: SortDirEnum # defaults to `ascending`
-  # Paging
-  pageSize: Int # defaults to `25`
-  page: Int # defaults to `1`
 }
 
 input UploadDetectionsInput {
@@ -1140,6 +1220,7 @@ input InviteUserInput {
   givenName: String
   familyName: String
   email: AWSEmail
+  messageAction: MessageActionEnum
 }
 
 enum ComplianceStatusEnum {
@@ -1169,6 +1250,14 @@ enum ListRulesSortFieldsEnum {
   id
   lastModified
   logTypes
+  severity
+}
+
+enum ListDetectionsSortFieldsEnum {
+  displayName
+  id
+  lastModified
+  enabled
   severity
 }
 
@@ -1233,4 +1322,14 @@ enum OpsgenieServiceRegionEnum {
 
 enum ErrorCodeEnum {
   NotFound
+}
+
+enum MessageActionEnum {
+  RESEND
+  SUPPRESS
+}
+
+enum DetectionTypeEnum {
+  RULE
+  POLICY
 }

@@ -31,6 +31,7 @@ import (
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/metrics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/registry"
 	"github.com/panther-labs/panther/pkg/lambdalogger"
@@ -39,7 +40,6 @@ import (
 const (
 	// How often we check if we need to scale (controls responsiveness).
 	defaultScalingDecisionInterval = 30 * time.Second
-	logTypeMaxAge                  = time.Minute
 )
 
 func main() {
@@ -67,27 +67,40 @@ func process(ctx context.Context, scalingDecisionInterval time.Duration) (err er
 		operation.Stop().Log(err, zap.Int("sqsMessageCount", sqsMessageCount))
 	}()
 
-	// Chain default registry and customlogs resolver
-	logTypesResolver := logtypes.ChainResolvers(
-		registry.NativeLogTypesResolver(),
-		snapshotlogs.Resolver(),
-		logtypes.NewCachedResolver(logTypeMaxAge, &logtypesapi.Resolver{
-			LogTypesAPI: &logtypesapi.LogTypesAPILambdaClient{
-				LambdaName: logtypesapi.LambdaName,
-				LambdaAPI:  common.LambdaClient,
-				Validate:   validator.New().Struct,
-			},
-		}),
-	)
+	apiResolver := &logtypesapi.Resolver{
+		LogTypesAPI: &logtypesapi.LogTypesAPILambdaClient{
+			LambdaName: logtypesapi.LambdaName,
+			LambdaAPI:  common.LambdaClient,
+			Validate:   validator.New().Struct,
+		},
+		NativeLogTypes: logtypes.MustMerge("native", registry.NativeLogTypes(), snapshotlogs.LogTypes()),
+	}
+
+	// We also need the cloud-security resolvers to handle their delivered S3 objects
+	resolver := logtypes.ChainResolvers(apiResolver, snapshotlogs.Resolver())
+
+	// Log cases where a log type failed to resolve. Almost certainly something is amiss in the DDB.
+	logTypesResolver := logtypes.ResolverFunc(func(ctx context.Context, name string) (logtypes.Entry, error) {
+		entry, err := resolver.Resolve(ctx, name)
+		if err != nil {
+			return nil, err
+		}
+		if entry == nil {
+			// if a logType is not found, this indicates bad data ... log/alarm
+			lambdalogger.FromContext(ctx).Error("cannot resolve log type", zap.String("logType", name))
+			return nil, nil
+		}
+		return entry, nil
+	})
 
 	// Configure metrics
 	cwCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	// Sync metrics every minute
-	go common.CWMetrics.Run(cwCtx, time.Minute)
+	go metrics.CWManager.Run(cwCtx, time.Minute)
 	defer func() {
 		// Force syncing metrics at the end of the invocation
-		if err := common.CWMetrics.Sync(); err != nil {
+		if err := metrics.CWManager.Sync(); err != nil {
 			zap.L().Warn("failed to sync metrics", zap.Error(err))
 		}
 	}()

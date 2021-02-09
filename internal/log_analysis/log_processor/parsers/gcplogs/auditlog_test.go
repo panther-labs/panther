@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/go-playground/validator.v9"
 
@@ -98,7 +97,7 @@ func TestAuditLogParserActivity(t *testing.T) {
 				"authorization.k8s.io/decision": "allow",
 			},
 			InsertID: aws.String("dc7605e6-1e19-4571-8a7a-d23682efcea1"),
-			Resource: MonitoredResource{
+			Resource: &MonitoredResource{
 				Type: aws.String("k8s_cluster"),
 				Labels: Labels{
 					"project_id":   "some-project-id",
@@ -139,6 +138,97 @@ func TestAuditLogParserActivity(t *testing.T) {
 
 	entry.SetCoreFields(TypeAuditLog, entry.Timestamp, entry)
 	entry.AppendAnyIPAddress("35.238.150.117")
+	testutil.CheckPantherParser(t, log, NewAuditLogParser(), &entry.PantherLog)
+}
+
+func TestAuditLogParserDataAccess(t *testing.T) {
+	log := `{
+		"insertId":"ptjpqedufb0",
+		"logName":"projects/myproject/logs/cloudaudit.googleapis.com%2Fdata_access",
+		"severity":"INFO",
+		"timestamp":"2021-02-03T09:43:54.522742715Z",
+		"receiveTimestamp":"2021-02-03T09:43:55.952765323Z",
+		"resource":{
+			"labels":{
+				"email_id":"test@runpanther.io",
+				"project_id":"production",
+				"unique_id":"999999"
+			},
+			"type":"service_account"
+		},
+
+		"operation":{
+			"first":true,
+			"id":"999999",
+			"last":true,
+			"producer":"iamcredentials.googleapis.com"
+		},
+		"protoPayload":{
+			"@type":"type.googleapis.com/google.cloud.audit.AuditLog",
+			"authenticationInfo":{
+				"principalSubject":"serviceAccount:production.svc.id.goog[webservice]",
+				"serviceAccountDelegationInfo":[{}]},
+			"authorizationInfo":[
+				{"granted":true,"permission":"iam.serviceAccounts.getAccessToken","resourceAttributes":{}}
+			],
+			"methodName":"GenerateAccessToken",
+			"resourceName":"projects/-/serviceAccounts/1",
+			"serviceName":"iamcredentials.googleapis.com","status":{}
+		}
+}`
+
+	ts, err := time.Parse(time.RFC3339Nano, "2021-02-03T09:43:54.522742715Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tsReceive, err := time.Parse(time.RFC3339Nano, "2021-02-03T09:43:55.952765323Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entry := &LogEntryAuditLog{
+		LogEntry: LogEntry{
+			LogName:          aws.String("projects/myproject/logs/cloudaudit.googleapis.com%2Fdata_access"),
+			Severity:         aws.String("INFO"),
+			Timestamp:        (*timestamp.RFC3339)(&ts),
+			ReceiveTimestamp: (*timestamp.RFC3339)(&tsReceive),
+			Operation: &LogEntryOperation{
+				ID:       aws.String("999999"),
+				Producer: aws.String("iamcredentials.googleapis.com"),
+				First:    aws.Bool(true),
+				Last:     aws.Bool(true),
+			},
+			InsertID: aws.String("ptjpqedufb0"),
+			Resource: &MonitoredResource{
+				Type: aws.String("service_account"),
+				Labels: map[string]string{
+					"email_id":   "test@runpanther.io",
+					"project_id": "production",
+					"unique_id":  "999999",
+				},
+			},
+		},
+		Payload: AuditLog{
+			PayloadType: aws.String("type.googleapis.com/google.cloud.audit.AuditLog"),
+			AuthenticationInfo: &AuthenticationInfo{
+				PrincipalSubject:             aws.String("serviceAccount:production.svc.id.goog[webservice]"),
+				ServiceAccountDelegationInfo: []ServiceAccountDelegationInfo{{}},
+			},
+			AuthorizationInfo: []AuthorizationInfo{
+				{
+					Granted:            aws.Bool(true),
+					Permission:         aws.String("iam.serviceAccounts.getAccessToken"),
+					ResourceAttributes: &ResourceAttributes{},
+				},
+			},
+			Status:       &Status{},
+			MethodName:   aws.String("GenerateAccessToken"),
+			ResourceName: aws.String("projects/-/serviceAccounts/1"),
+			ServiceName:  aws.String("iamcredentials.googleapis.com"),
+		},
+	}
+
+	entry.SetCoreFields(TypeAuditLog, entry.Timestamp, entry)
 	testutil.CheckPantherParser(t, log, NewAuditLogParser(), &entry.PantherLog)
 }
 
@@ -197,7 +287,7 @@ func TestAuditLogParserSystemEvent(t *testing.T) {
 			Timestamp:        (*timestamp.RFC3339)(&ts),
 			ReceiveTimestamp: (*timestamp.RFC3339)(&tsReceive),
 			InsertID:         aws.String("nbhw56e2lqay"),
-			Resource: MonitoredResource{
+			Resource: &MonitoredResource{
 				Type: aws.String("gce_instance"),
 				Labels: Labels{
 					"instance_id": "2587554859816992587",
@@ -220,13 +310,13 @@ func TestAuditLogParserSystemEvent(t *testing.T) {
 			},
 			MethodName: aws.String("compute.instances.migrateOnHostMaintenance"),
 			RequestMetadata: &RequestMetadata{
-				RequestAttributes:     jsoniter.RawMessage(`{}`),
-				DestinationAttributes: jsoniter.RawMessage(`{}`),
+				RequestAttributes:     testutil.NewRawMessage(`{}`),
+				DestinationAttributes: testutil.NewRawMessage(`{}`),
 			},
+			Status:       &Status{},
 			ResourceName: aws.String("projects/project-id/zones/us-central1-f/instances/gke-cluster-default-pool-7dff1419-8v1j"),
 			ServiceName:  aws.String("compute.googleapis.com"),
-			Status:       &Status{},
-			Request:      jsoniter.RawMessage(`{"@type": "type.googleapis.com/compute.instances.migrateOnHostMaintenance"}`),
+			Request:      testutil.NewRawMessage(`{"@type": "type.googleapis.com/compute.instances.migrateOnHostMaintenance"}`),
 		},
 	}
 
@@ -267,7 +357,7 @@ func TestAuditLogParserActivityBug(t *testing.T) {
 			Timestamp:        (*timestamp.RFC3339)(&ts),
 			ReceiveTimestamp: (*timestamp.RFC3339)(&tsReceive),
 			InsertID:         aws.String("-eyvi2zd601a"),
-			Resource: MonitoredResource{
+			Resource: &MonitoredResource{
 				Type: aws.String("audited_resource"),
 				Labels: Labels{
 					"project_id": "some-project-id",
@@ -336,7 +426,7 @@ func TestAuditLogParserActivityBug(t *testing.T) {
 					Resource:   aws.String("services/bigtable.googleapis.com/consumers/951849100836"),
 				},
 			},
-			Response: jsoniter.RawMessage(`{
+			Response: testutil.NewRawMessage(`{
 				"@type": "type.googleapis.com/google.api.servicemanagement.v1.ActivateServicesResponse",
 				"settings": [
 					{
@@ -353,7 +443,7 @@ func TestAuditLogParserActivityBug(t *testing.T) {
 					}
 				]
 			}`),
-			Request: jsoniter.RawMessage(`{
+			Request: testutil.NewRawMessage(`{
 				"@type": "type.googleapis.com/google.api.servicemanagement.v1.ActivateServicesRequest",
 				"consumerProjectId": "951849100836",
 				"serviceNames": [

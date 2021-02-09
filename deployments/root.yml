@@ -1,0 +1,516 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: Master template for deploying Panther Community
+
+Parameters:
+  # FirstUserEmail is the only required parameter
+
+  # Alphabetize parameters so it's easy to compare side-by-side with other code that passes values
+  # and because the CloudFormation console always shows parameters in alphabetical order.
+  AccessLogsBucketName:
+    Type: String
+    Description: Name of the S3 bucket for storing S3 access logs (has no effect if EnableS3AccessLogs=false). Defaults to the Panther audit bucket, created automatically.
+    Default: ''
+    AllowedPattern: '^([a-z0-9.-]{3,63})?$'
+  AlarmTopicArn:
+    Type: String
+    Description: SNS topic notified by CloudWatch alarms. If not specified, a topic is created for you.
+    Default: ''
+    # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
+    AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+)?$'
+  CertificateArn:
+    Type: String
+    Description: TLS certificate (ACM or IAM) used by the web app - see also CustomDomain. If not specified, a self-signed cert is created for you.
+    Default: ''
+    # Example: "arn:aws:acm:us-west-2:111122223333:certificate/6e51b91b-0d7d-4592-89a3-c113c78e3ab3" or
+    # "arn:aws:iam::111122223333:server-certificate/panther/us-west-2/MyCert"
+    AllowedPattern: '^((arn:(aws|aws-cn|aws-us-gov):acm:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:certificate\/[a-f0-9-]{36})|(arn:(aws|aws-cn|aws-us-gov):iam::\d{12}:server-certificate\/\S+))?$'
+  CloudSecurityMaxReadCapacity:
+    Type: Number
+    Description: Maximum read capacity units to provision for the Cloud Security tables
+    Default: 0
+    MinValue: 0
+  CloudSecurityMaxWriteCapacity:
+    Type: Number
+    Description: Maximum write capacity units to provision for the Cloud Security tables
+    Default: 0
+    MinValue: 0
+  CloudSecurityMemory:
+    Type: Number
+    Description: Minimum write capacity units to provision for Cloud Secuurity lambdas
+    Default: 512
+    MinValue: 256
+  CloudSecurityMinReadCapacity:
+    Type: Number
+    Description: Minimum read capacity units to provision for the Cloud Security tables
+    Default: 0
+    MinValue: 0
+  CloudSecurityMinWriteCapacity:
+    Type: Number
+    Description: Minimum write capacity units to provision for the Cloud Security tables
+    Default: 0
+    MinValue: 0
+  CloudWatchLogRetentionDays:
+    Type: Number
+    Description: Number of days to retain CloudWatch logs (e.g. Lambda execution logs)
+    Default: 365
+    MinValue: 1
+  CompanyDisplayName:
+    Type: String
+    Description: Company name displayed in Settings > General
+    Default: AwesomeCo
+    MinLength: 1
+  CustomDomain:
+    Type: String
+    Description: If CertificateArn is registered for a custom domain (e.g. 'app.example.com'), list that here.
+    Default: ''
+    AllowedPattern: '^([a-z0-9.-]+\.[a-z]{2,})?$'
+  DataReplicationBucketName:
+    Type: String
+    Description: Replicate processed log data to this S3 bucket for Glacier backup storage
+    Default: ''
+    AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):s3:::[a-z0-9.-]{3,63})?$'
+  Debug:
+    Type: String
+    Description: Toggle debug logging for all components
+    AllowedValues: [true, false]
+    Default: false
+  EnableCloudTrail:
+    Type: String
+    Description: Create a CloudTrail in this account configured for log processing. Has no effect if OnboardSelf=false
+    AllowedValues: [true, false]
+    Default: false
+  EnableGuardDuty:
+    Type: String
+    Description: Enable GuardDuty in this account configured for log processing. Has no effect if OnboardSelf=false
+    AllowedValues: [true, false]
+    Default: false
+  EnableS3AccessLogs:
+    Type: String
+    Description: Enable S3 access logging for all Panther buckets. This is strongly recommended for security, but comes at an additional cost.
+    AllowedValues: [true, false]
+    Default: true
+  FirstUserEmail:
+    Type: String
+    Description: Initial Panther user - email address
+    # There is no perfect email regex, but this is good enough 99% of the time.
+    # https://www.regular-expressions.info/email.html
+    #
+    # The goal is to fail early if the user provides an invalid email, otherwise the deploy will
+    # fail at the very last step (onboarding the first user in the web stack), and the entire thing
+    # will rollback.
+    AllowedPattern: '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
+  FirstUserFamilyName:
+    Type: String
+    Description: Initial Panther user - last name
+    Default: Community
+    MinLength: 1
+  FirstUserGivenName:
+    Type: String
+    Description: Initial Panther user - first name
+    Default: PantherUser
+    MinLength: 1
+  InitialAnalysisPackUrls:
+    Type: CommaDelimitedList
+    Description: Comma-separated list of Python analysis pack URLs installed on the first deployment
+    Default: https://github.com/panther-labs/panther-analysis/releases/latest/download/panther-analysis-all.zip
+  KvTableBillingMode:
+    Type: String
+    Description: Configure billing mode for DynamoDB table panther-kv-store. This table is used by the custom python policies & rules to store state, and provisioned billing may be cheaper if this feature is used heavily.
+    AllowedValues: [PROVISIONED, PAY_PER_REQUEST]
+    Default: PAY_PER_REQUEST
+  LayerVersionArns:
+    Type: CommaDelimitedList
+    Description: Comma-separated list of at most 3 LayerVersion ARNs to attach to each Lambda function (e.g. if you have a serverless monitoring service)
+    Default: ''
+  LoadBalancerSecurityGroupCidr:
+    Type: String
+    Description: Allow HTTP(S) ingress access to the web app (ALB) security group from this IP block. Use 0.0.0.0/0 to allow unrestricted access
+    Default: 0.0.0.0/0
+    # cfn-lint suggested this regex pattern:
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+  LogProcessorLambdaMemorySize:
+    Type: Number
+    Description: Log processor Lambda memory allocation. Increase to eliminate out-of-memory errors or reduce processing time (in exchange for higher cost)
+    MinValue: 256 # 128 is too small, risks OOM errors
+    MaxValue: 10240
+    Default: 2048
+  LogProcessorLambdaSQSReadBatchSize:
+    Type: Number
+    Description: How many SQS messsage the log processor reads per SQS read. If the log processor is timing out, reduce this number.
+    MinValue: 1
+    MaxValue: 10
+    Default: 10
+  LogSubscriptionPrincipals:
+    Type: CommaDelimitedList
+    Description: Comma-separated list of AWS principal ARNs which will be authorized to subscribe to processed log data S3 notifications
+    Default: ''
+  OnboardSelf:
+    Type: String
+    Description: Configure Panther to automatically onboard itself as a data source
+    AllowedValues: [true, false]
+    Default: true
+  PythonLayerVersionArn:
+    Type: String
+    Description: Custom Python layer for analysis and remediation. Defaults to a pre-built layer with 'policyuniverse' and 'requests' pip libraries
+    Default: ''
+    # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
+    AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+)?$'
+  SecurityGroupID:
+    Type: String
+    Description: An existing SecurityGroup to deploy Panther into. Only takes affect if VpcID is specified.
+    Default: ''
+    AllowedPattern: '^(sg-[0-9a-f]{10,})?$'
+  SubnetOneID:
+    Type: String
+    Description: An existing Subnet to deploy the Panther loadbalancer into. If you set this option, you must also specify VpcID, SecurityGroupID, SubnetOneIPRange, and SubnetTwoIPRange.
+    Default: ''
+    AllowedPattern: '^(subnet-[0-9a-f]{4,})?$'
+  SubnetTwoID:
+    Type: String
+    Description: A second existing Subnet to deploy the Panther loadbalancer into. If you set this option, you must also specify VpcID, SecurityGroupID, SubnetOneIPRange, and SubnetTwoIPRange.
+    Default: ''
+    AllowedPattern: '^(subnet-[0-9a-f]{4,})?$'
+  SubnetOneIPRange:
+    Type: String
+    Description: A valid & available IP range in the existing VPC you plan to deploy Panther into. Only takes affect if VpcID is specified.
+    Default: '172.31.250.0/26'
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+  SubnetTwoIPRange:
+    Type: String
+    Description: A second valid & available IP range in the existing VPC you plan to deploy Panther into, for multiple AZ redundancy. Only takes affect if VpcID is specified.
+    Default: '172.31.251.0/26'
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+  TracingMode:
+    Type: String
+    Description: Enable XRay tracing on Lambda, API Gateway, and GraphQL
+    AllowedValues: ['', Active, PassThrough]
+    Default: ''
+  VpcID:
+    Type: String
+    Description: An existing VPC to deploy the Panther loadbalancer into. If you set this option, you must also specify SecurityGroupID, SubnetOneIPRange, and SubnetTwoIPRange.
+    Default: ''
+    AllowedPattern: '^(vpc-[0-9a-f]{4,})?$'
+  BootstrapStackOnly:
+    Type: String
+    Description: 'If true, only the Bootstrap stack will be deployed (WARNING: ALL NON-BOOTSTRAP PANTHER INFRA WILL BE DELETED)'
+    Default: false
+    AllowedValues:
+      - true
+      - false
+
+Mappings:
+  Constants:
+    Panther:
+      # Mage will replace these strings during master:deploy or master:publish
+      Commit: ${{PANTHER_COMMIT}} # E.g. "5c2a8a76"
+      Version: ${{PANTHER_VERSION}} # E.g. "1.14.0"
+
+Conditions:
+  FullDeployment: !Equals [!Ref BootstrapStackOnly, 'false']
+  CreateOnboard: !And [!Condition FullDeployment, !Equals [!Ref OnboardSelf, true]]
+
+Resources:
+  Bootstrap:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: bootstrap.yml
+      Parameters:
+        AccessLogsBucket: !Ref AccessLogsBucketName
+        AlarmTopicArn: !Ref AlarmTopicArn
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CustomDomain: !Ref CustomDomain
+        DataReplicationBucket: !Ref DataReplicationBucketName
+        Debug: !Ref Debug
+        DeployFromSource: false
+        EnableS3AccessLogs: !Ref EnableS3AccessLogs
+        LoadBalancerSecurityGroupCidr: !Ref LoadBalancerSecurityGroupCidr
+        VpcID: !Ref VpcID
+        SecurityGroupID: !Ref SecurityGroupID
+        SubnetOneID: !Ref SubnetOneID
+        SubnetTwoID: !Ref SubnetTwoID
+        SubnetOneIPRange: !Ref SubnetOneIPRange
+        SubnetTwoIPRange: !Ref SubnetTwoIPRange
+        LogSubscriptionPrincipals: !Join [',', !Ref LogSubscriptionPrincipals]
+        TracingMode: !Ref TracingMode
+      Tags:
+        - Key: Application
+          Value: Panther
+        - Key: PantherEdition
+          Value: Community
+        - Key: PantherVersion
+          Value: !FindInMap [Constants, Panther, Version]
+        - Key: Stack
+          Value: panther-bootstrap # friendly name, not actual stack name
+
+  BootstrapGateway:
+    Condition: FullDeployment
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: bootstrap_gateway.yml
+      Parameters:
+        # If the AlarmTopicArn parameter is blank, Bootstrap will create the topic.
+        # That's why this uses the Bootstrap output instead of the parameter.
+        AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
+        AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CompanyDisplayName: !Ref CompanyDisplayName
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
+        ImageRegistryName: !GetAtt Bootstrap.Outputs.ImageRegistryName
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
+        ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
+        PythonLayerVersionArn: !Ref PythonLayerVersionArn
+        SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
+        TracingMode: !Ref TracingMode
+        UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
+      Tags:
+        - Key: Application
+          Value: Panther
+        - Key: PantherEdition
+          Value: Community
+        - Key: PantherVersion
+          Value: !FindInMap [Constants, Panther, Version]
+        - Key: Stack
+          Value: panther-bootstrap-gateway
+
+  Appsync:
+    Condition: FullDeployment
+    Type: AWS::CloudFormation::Stack
+    DependsOn: BootstrapGateway # custom resources lambda function
+    Properties:
+      TemplateURL: appsync.yml
+      Parameters:
+        AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        ApiId: !GetAtt Bootstrap.Outputs.GraphQLApiId
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
+        ServiceRole: !GetAtt Bootstrap.Outputs.AppsyncServiceRoleArn
+      Tags:
+        - Key: Application
+          Value: Panther
+        - Key: PantherEdition
+          Value: Community
+        - Key: PantherVersion
+          Value: !FindInMap [Constants, Panther, Version]
+        - Key: Stack
+          Value: panther-appsync
+
+  CloudSecurity:
+    Condition: FullDeployment
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: cloud_security.yml
+      Parameters:
+        AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        CloudSecurityMaxReadCapacity: !Ref CloudSecurityMaxReadCapacity
+        CloudSecurityMaxWriteCapacity: !Ref CloudSecurityMaxWriteCapacity
+        CloudSecurityMemory: !Ref CloudSecurityMemory
+        CloudSecurityMinReadCapacity: !Ref CloudSecurityMinReadCapacity
+        CloudSecurityMinWriteCapacity: !Ref CloudSecurityMinWriteCapacity
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
+        Debug: !Ref Debug
+        DynamoScalingRoleArn: !GetAtt Bootstrap.Outputs.DynamoScalingRoleArn
+        InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
+        ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
+        ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
+        PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
+        SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
+        TracingMode: !Ref TracingMode
+      Tags:
+        - Key: Application
+          Value: Panther
+        - Key: PantherEdition
+          Value: Community
+        - Key: PantherVersion
+          Value: !FindInMap [Constants, Panther, Version]
+        - Key: Stack
+          Value: panther-cloud-security
+
+  Core:
+    Condition: FullDeployment
+    Type: AWS::CloudFormation::Stack
+    DependsOn: BootstrapGateway # custom resources Lambda function
+    Properties:
+      TemplateURL: core.yml
+      Parameters:
+        AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        AnalysisVersionsBucket: !GetAtt Bootstrap.Outputs.AnalysisVersionsBucket
+        AppDomainURL: !GetAtt Bootstrap.Outputs.LoadBalancerUrl
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CompanyDisplayName: !Ref CompanyDisplayName
+        CompanyEmail: !Ref FirstUserEmail
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
+        Debug: !Ref Debug
+        DynamoScalingRoleArn: !GetAtt Bootstrap.Outputs.DynamoScalingRoleArn
+        InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
+        InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
+        KvTableBillingMode: !Ref KvTableBillingMode
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
+        OutputsKeyId: !GetAtt Bootstrap.Outputs.OutputsEncryptionKeyId
+        PantherVersion: !FindInMap [Constants, Panther, Version]
+        SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
+        TracingMode: !Ref TracingMode
+        UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
+      Tags:
+        - Key: Application
+          Value: Panther
+        - Key: PantherEdition
+          Value: Community
+        - Key: PantherVersion
+          Value: !FindInMap [Constants, Panther, Version]
+        - Key: Stack
+          Value: panther-core
+
+  Dashboards:
+    Condition: FullDeployment
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: dashboards.yml
+      Tags:
+        - Key: Application
+          Value: Panther
+        - Key: PantherEdition
+          Value: Community
+        - Key: PantherVersion
+          Value: !FindInMap [Constants, Panther, Version]
+        - Key: Stack
+          Value: panther-cw-dashboards
+
+  LogAnalysis:
+    Condition: FullDeployment
+    DependsOn: Core
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: log_analysis.yml
+      Parameters:
+        AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        AthenaWorkGroup: !GetAtt BootstrapGateway.Outputs.AthenaWorkGroup
+        AthenaResultsBucket: !GetAtt Bootstrap.Outputs.AthenaResultsBucket
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
+        Debug: !Ref Debug
+        InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
+        InputDataTopicArn: !GetAtt Bootstrap.Outputs.InputDataTopicArn
+        LayerVersionArns: !Join [',', !Ref LayerVersionArns]
+        LogProcessorLambdaMemorySize: !Ref LogProcessorLambdaMemorySize
+        LogProcessorLambdaSQSReadBatchSize: !Ref LogProcessorLambdaSQSReadBatchSize
+        ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
+        ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
+        PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
+        SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
+        TracingMode: !Ref TracingMode
+      Tags:
+        - Key: Application
+          Value: Panther
+        - Key: PantherEdition
+          Value: Community
+        - Key: PantherVersion
+          Value: !FindInMap [Constants, Panther, Version]
+        - Key: Stack
+          Value: panther-log-analysis
+
+  Onboard:
+    Condition: CreateOnboard
+    # Onboard stack adds new source integrations, which requires custom resources (bootstrap-gateway),
+    # source-api (core), and queues from cloud-security and log-analysis to exist.
+    DependsOn: [BootstrapGateway, CloudSecurity, Core, LogAnalysis]
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: onboard.yml
+      Parameters:
+        AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        AuditLogsBucket: !GetAtt Bootstrap.Outputs.AuditLogsBucket
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
+        EnableCloudTrail: !Ref EnableCloudTrail
+        EnableGuardDuty: !Ref EnableGuardDuty
+        EnableS3AccessLogs: !Ref EnableS3AccessLogs
+      Tags:
+        - Key: Application
+          Value: Panther
+        - Key: PantherEdition
+          Value: Community
+        - Key: PantherVersion
+          Value: !FindInMap [Constants, Panther, Version]
+        - Key: Stack
+          Value: panther-onboard
+
+  Web:
+    Condition: FullDeployment
+    Type: AWS::CloudFormation::Stack
+    # Custom resources in this stack require the analysis-api, users-api, and both Python engines to exist
+    DependsOn: [CloudSecurity, Core, LogAnalysis]
+    Properties:
+      TemplateURL: web_server.yml
+      TimeoutInMinutes: 20 # if something goes wrong, the ECS service will get stuck in a retry loop for 4 hours
+      Parameters:
+        AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        AppClientId: !GetAtt BootstrapGateway.Outputs.AppClientId
+        CertificateArn: !Ref CertificateArn
+        CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
+        CustomResourceVersion: !Sub
+          - '${version} (${commit})'
+          - version: !FindInMap [Constants, Panther, Version]
+            commit: !FindInMap [Constants, Panther, Commit]
+        ElbArn: !GetAtt Bootstrap.Outputs.LoadBalancerArn
+        ElbFullName: !GetAtt Bootstrap.Outputs.LoadBalancerFullName
+        ElbTargetGroup: !GetAtt Bootstrap.Outputs.LoadBalancerTargetGroup
+        FirstUserEmail: !Ref FirstUserEmail
+        FirstUserFamilyName: !Ref FirstUserFamilyName
+        FirstUserGivenName: !Ref FirstUserGivenName
+        GraphQLApiEndpoint: !GetAtt Bootstrap.Outputs.GraphQLApiEndpoint
+        InitialAnalysisPackUrls: !Join [',', !Ref InitialAnalysisPackUrls]
+        PantherCommit: !FindInMap [Constants, Panther, Commit]
+        PantherVersion: !FindInMap [Constants, Panther, Version]
+        SecurityGroup: !GetAtt Bootstrap.Outputs.WebSecurityGroup
+        SubnetOneId: !GetAtt Bootstrap.Outputs.SubnetOneId
+        SubnetTwoId: !GetAtt Bootstrap.Outputs.SubnetTwoId
+        UserPoolId: !GetAtt Bootstrap.Outputs.UserPoolId
+      Tags:
+        - Key: Application
+          Value: Panther
+        - Key: PantherEdition
+          Value: Community
+        - Key: PantherVersion
+          Value: !FindInMap [Constants, Panther, Version]
+        - Key: Stack
+          Value: panther-web
+
+Outputs:
+  LoadBalancerUrl:
+    Description: Panther URL serving the web app
+    Value: !Sub https://${Bootstrap.Outputs.LoadBalancerUrl}

@@ -57,8 +57,8 @@ type MetricsManagerMock struct {
 func (m *MetricsManagerMock) Run(ctx context.Context, interval time.Duration) {
 	m.Called(ctx, interval)
 }
-func (m *MetricsManagerMock) NewCounter(name string) metrics.Counter {
-	args := m.Called(name)
+func (m *MetricsManagerMock) NewCounter(name, unit string) metrics.Counter {
+	args := m.Called(name, unit)
 	return args.Get(0).(metrics.Counter)
 }
 

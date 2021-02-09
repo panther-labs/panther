@@ -136,6 +136,22 @@ func TestBuildElbv2ApplicationLoadBalancerSnapshot(t *testing.T) {
 	assert.NotEmpty(t, elbv2Snapshot.Name)
 }
 
+func TestBuildElbv2NetworkLoadBalancerSnapshot(t *testing.T) {
+	mockElbv2Svc := awstest.BuildMockElbv2SvcAll()
+	mockWafRegionalSvc := awstest.BuildMockWafRegionalSvcAll()
+
+	elbv2Snapshot, err := buildElbv2ApplicationLoadBalancerSnapshot(
+		mockElbv2Svc,
+		mockWafRegionalSvc,
+		awstest.ExampleDescribeNetworkLoadBalancersOutput.LoadBalancers[0],
+	)
+
+	assert.NoError(t, err)
+	assert.NotEmpty(t, elbv2Snapshot.SecurityGroups)
+	assert.Nil(t, elbv2Snapshot.WebAcl)
+	assert.NotEmpty(t, elbv2Snapshot.Name)
+}
+
 func TestBuildElbv2ApplicationLoadBalancerSnapshotError(t *testing.T) {
 	mockElbv2Svc := awstest.BuildMockElbv2SvcAllError()
 	mockWafRegionalSvc := awstest.BuildMockWafRegionalSvcAllError()

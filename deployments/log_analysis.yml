@@ -115,9 +115,17 @@ Conditions:
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
+  ###### Update managed schemas to the minimum required version
+  UpdateManagedSchemas:
+    Type: Custom::ManagedSchemas
+    DependsOn: UpdaterFunction
+    Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ###### Update Glue Table Schemas for Deployed Tables #####
   UpdateLogProcessorGlueTables:
-    DependsOn: UpdaterFunction
+    DependsOn: UpdateManagedSchemas # The data catalog updater needs to have up-to-date schemas
     Type: Custom::UpdateLogProcessorTables
     Properties:
       CustomResourceVersion: !Ref CustomResourceVersion
@@ -155,10 +163,10 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: s3:GetBucketLocation
-                Resource: !Sub arn:aws:s3:::${InputDataBucket}
+                Resource: !Sub arn:${AWS::Partition}:s3:::${InputDataBucket}
               - Effect: Allow
                 Action: s3:GetObject
-                Resource: !Sub arn:aws:s3:::${InputDataBucket}/*
+                Resource: !Sub arn:${AWS::Partition}:s3:::${InputDataBucket}/*
 
   ###### Alerts API #####
   AlertsApiLogGroup:
@@ -177,7 +185,7 @@ Resources:
   AlertsApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/log_analysis/alerts_api/main
+      CodeUri: ../internal/log_analysis/alerts_api/main
       Description: CRUD actions for the alerts database
       Environment:
         Variables:
@@ -310,7 +318,7 @@ Resources:
   AlertsForwarderFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/log_analysis/alert_forwarder/main
+      CodeUri: ../internal/log_analysis/alert_forwarder/main
       Description: Lambda that creates and updates alerts in alerts-info table
       Environment:
         Variables:
@@ -465,7 +473,7 @@ Resources:
       # * There is the possibility of duplicate data ingested if the failures had partial results.
       # </cfndoc>
       Description: Downloads security logs from S3 for Panther analysis
-      CodeUri: ../out/bin/internal/log_analysis/log_processor/main
+      CodeUri: ../internal/log_analysis/log_processor/main
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !Ref LogProcessorLambdaMemorySize
@@ -666,7 +674,7 @@ Resources:
       # * Users will not be able to see new events that matched some rule.
       # </cfndoc>
       Description: Updates the glue data catalog
-      CodeUri: ../out/bin/internal/log_analysis/datacatalog_updater/main
+      CodeUri: ../internal/log_analysis/datacatalog_updater/main
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !FindInMap [Functions, Updater, Memory]
@@ -737,7 +745,7 @@ Resources:
                 - s3:List*
                 - s3:GetObject
                 - s3:PutObject
-              Resource: !Sub arn:aws:s3:::${AthenaResultsBucket}*
+              Resource: !Sub arn:${AWS::Partition}:s3:::${AthenaResultsBucket}*
         - Id: SyncPermissions # used in sync
           Version: 2012-10-17
           Statement:
@@ -1079,7 +1087,7 @@ Resources:
       # Panther will stop processing data from SQS sources.
       # </cfndoc>
       Description: Pulls logs from external sources
-      CodeUri: ../out/bin/internal/log_analysis/message_forwarder/main
+      CodeUri: ../internal/log_analysis/message_forwarder/main
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       MemorySize: !FindInMap [Functions, MessageForwarder, Memory]

@@ -119,7 +119,6 @@ const generateMockValue = (typeName, fieldName, types, currentType) => {
     case 'ListType': {
       const valueGenerator = generateMockValue(typeName, fieldName, types, currentType.type);
       return `[${valueGenerator}]`;
-      // return generateRandomArray(() => valueGenerator());
     }
     default:
       return 'FAIL';
@@ -162,6 +161,17 @@ exports.plugin = (schema, documents, config) => {
           types: node.types,
         });
       }
+    },
+    InterfaceTypeDefinition: node => {
+      const typeName = node.name.value;
+      const { fields } = node;
+      return {
+        typeName,
+        mockFn: () => {
+          const mockFields = fields ? fields.map(({ mockFn }) => mockFn(typeName)).join('\n') : '';
+          return createGraphQLResourceFunction(typeName, mockFields, false);
+        },
+      };
     },
     FieldDefinition: node => {
       const fieldName = node.name.value;
