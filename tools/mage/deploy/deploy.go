@@ -489,8 +489,9 @@ func deployCloudSecurityStack(settings *PantherConfig, packager *pkg.Packager, o
 
 		// These settings are not supported for source code deploys
 		"CloudSecurityMaxReadCapacity":  "0",
-		"CloudSecurityMinReadCapacity":  "0",
 		"CloudSecurityMaxWriteCapacity": "0",
+		"CloudSecurityMemory":  "512",
+		"CloudSecurityMinReadCapacity":  "0",
 		"CloudSecurityMinWriteCapacity": "0",
 	})
 	return err
