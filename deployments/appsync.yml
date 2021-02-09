@@ -605,8 +605,9 @@ Resources:
         $util.qr($input.put("awsAccountId", $ctx.source.awsAccountId))
         $util.qr($input.put("integrationLabel", $ctx.source.integrationLabel))
         $util.qr($input.put("s3Bucket", $ctx.source.s3Bucket))
-        $util.qr($input.put("s3Prefix", $ctx.source.s3Prefix))
+        $util.qr($input.put("s3PrefixLogTypes", $ctx.source.s3PrefixLogTypes))
         $util.qr($input.put("kmsKey", $ctx.source.kmsKey))
+        $util.qr($input.put("pantherVersion", $ctx.source.pantherVersion))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",

@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -40,54 +41,113 @@ func (e mockAWSError) OrigErr() error  { panic("implement me") }
 var _ awserr.Error = (*mockAWSError)(nil)
 
 func Test_CheckGetObject(t *testing.T) {
+	prefixLogTypes := []models.S3PrefixLogtypesMapping{{
+		S3Prefix: "prefix/",
+		LogTypes: []string{"Some.LogType"}},
+	}
 	listInput := &s3.ListObjectsInput{
 		Bucket:              aws.String("bucket-name"),
 		ExpectedBucketOwner: aws.String("bucket-owner"),
 		MaxKeys:             aws.Int64(1),
+		Prefix:              aws.String(prefixLogTypes[0].S3Prefix),
 	}
-	getInput := &s3.GetObjectInput{
+	headInput := &s3.HeadObjectInput{
 		Bucket:              aws.String("bucket-name"),
 		ExpectedBucketOwner: aws.String("bucket-owner"),
-		Key:                 aws.String("panther-health-check"),
+		Key:                 aws.String("prefixa/file.log"),
 	}
 
 	t.Run("healthy", func(t *testing.T) {
 		s3Client := &testutils.S3Mock{}
-		s3Client.On("ListObjects", listInput).Return(&s3.ListObjectsOutput{}, nil)
-		s3Client.On("GetObject", getInput).Return(&s3.GetObjectOutput{}, nil)
+		listOutput := s3.ListObjectsOutput{
+			Contents: []*s3.Object{{Key: aws.String("prefixa/file.log")}},
+		}
+		s3Client.On("ListObjects", listInput).Return(&listOutput, nil)
+		s3Client.On("HeadObject", headInput).Return(&s3.HeadObjectOutput{}, nil)
 
-		health := checkGetObject(s3Client, "bucket-name", "bucket-owner")
-
-		s3Client.AssertExpectations(t)
-		require.True(t, health.Healthy)
-	})
-	t.Run(s3.ErrCodeNoSuchKey, func(t *testing.T) {
-		s3Client := &testutils.S3Mock{}
-		s3Client.On("ListObjects", listInput).Return(&s3.ListObjectsOutput{}, nil)
-		s3Client.On("GetObject", getInput).
-			Return(&s3.GetObjectOutput{}, mockAWSError(s3.ErrCodeNoSuchKey))
-
-		health := checkGetObject(s3Client, "bucket-name", "bucket-owner")
+		input := &models.CheckIntegrationInput{
+			AWSAccountID:      "bucket-owner",
+			S3Bucket:          "bucket-name",
+			S3PrefixLogTypes:  prefixLogTypes,
+			PantherVersionStr: "1.16.0-dev",
+		}
+		health, _ := checkGetObject(s3Client, input)
 
 		s3Client.AssertExpectations(t)
 		require.True(t, health.Healthy)
 	})
-	t.Run("AccessDenied", func(t *testing.T) {
-		mockErr := mockAWSError("AccessDenied")
+
+	t.Run("not skipped", func(t *testing.T) {
 		s3Client := &testutils.S3Mock{}
 		s3Client.On("ListObjects", listInput).Return(&s3.ListObjectsOutput{}, nil)
-		s3Client.On("GetObject", getInput).
-			Return(&s3.GetObjectOutput{}, &mockErr)
 
-		health := checkGetObject(s3Client, "bucket-name", "bucket-owner")
+		input := &models.CheckIntegrationInput{
+			AWSAccountID:      "bucket-owner",
+			S3Bucket:          "bucket-name",
+			S3PrefixLogTypes:  prefixLogTypes,
+			PantherVersionStr: "1.17.0",
+		}
+		_, skipped := checkGetObject(s3Client, input)
+
+		require.False(t, skipped)
+	})
+
+	t.Run("skipped", func(t *testing.T) {
+		s3Client := &testutils.S3Mock{}
+
+		input := &models.CheckIntegrationInput{
+			AWSAccountID:      "bucket-owner",
+			S3Bucket:          "bucket-name",
+			S3PrefixLogTypes:  prefixLogTypes,
+			PantherVersionStr: "1.15.x",
+		}
+		_, skipped := checkGetObject(s3Client, input)
+
+		require.True(t, skipped)
+	})
+
+	t.Run("ListObjects error", func(t *testing.T) {
+		s3Client := &testutils.S3Mock{}
+		s3Client.On("ListObjects", listInput).Return(&s3.ListObjectsOutput{}, errors.New("ListObjects error"))
+
+		input := &models.CheckIntegrationInput{
+			AWSAccountID:      "bucket-owner",
+			S3Bucket:          "bucket-name",
+			S3PrefixLogTypes:  prefixLogTypes,
+			PantherVersionStr: "1.16.0",
+		}
+
+		health, skipped := checkGetObject(s3Client, input)
+
+		s3Client.AssertExpectations(t)
+		require.False(t, skipped)
+		require.False(t, health.Healthy)
+		require.Equal(t, "s3.ListObjects request failed: ListObjects error", health.ErrorMessage)
+	})
+
+	t.Run("HeadObject error", func(t *testing.T) {
+		s3Client := &testutils.S3Mock{}
+		listOutput := &s3.ListObjectsOutput{
+			Contents: []*s3.Object{{Key: aws.String("prefixa/file.log")}},
+		}
+		s3Client.On("ListObjects", listInput).Return(listOutput, nil)
+		s3Client.On("HeadObject", headInput).
+			Return(&s3.HeadObjectOutput{}, mockAWSError("AccessDenied"))
+
+		input := &models.CheckIntegrationInput{
+			AWSAccountID:      "bucket-owner",
+			S3Bucket:          "bucket-name",
+			S3PrefixLogTypes:  prefixLogTypes,
+			PantherVersionStr: "1.16.0",
+		}
+		health, _ := checkGetObject(s3Client, input)
 
 		expected := models.SourceIntegrationItemStatus{
 			Healthy:      false,
-			Message:      "Unexpected error returned from s3.GetObject",
-			ErrorMessage: mockErr.Error(),
+			Message:      "Failed to read S3 object",
+			ErrorMessage: "s3.HeadObject request failed for prefixa/file.log: AccessDenied",
 		}
-
-		s3Client.AssertExpectations(t)
 		require.Equal(t, expected, health)
+		s3Client.AssertExpectations(t)
 	})
 }

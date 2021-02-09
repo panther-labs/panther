@@ -22,11 +22,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/magefile/mage/sh"
 )
 
 var (
-	semver    string
+	version   string
 	commitSha string
 )
 
@@ -34,10 +35,11 @@ var (
 func Semver() string {
 	// We use this rather than the git release tag because the VERSION file is tied to the commit,
 	// whereas tags can be changed at any time (and don't always exist in every branch).
-	if semver == "" {
-		semver = strings.TrimSpace(string(MustReadFile("VERSION")))
+	if version == "" {
+		s := strings.TrimSpace(string(MustReadFile("VERSION")))
+		version = semver.MustParse(s).String() // make sure it is a valid semver cause it is used throughout Panther
 	}
-	return semver
+	return version
 }
 
 // Returns short commit string. For example, "64391f1e"

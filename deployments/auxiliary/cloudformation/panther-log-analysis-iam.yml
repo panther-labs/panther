@@ -113,13 +113,9 @@ Resources:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
-                Action: s3:GetBucketLocation
-                Resource: !Sub
-                  - arn:${AWS::Partition}:s3:::${Bucket}
-                  # prettier-ignore
-                  - Bucket: !If [IsGenerated, !FindInMap [PantherParameters, S3Bucket, Value], !Ref S3Bucket]
-              - Effect: Allow
-                Action: s3:ListBucket
+                Action:
+                  - s3:GetBucketLocation
+                  - s3:ListBucket
                 Resource: !Sub
                   - arn:${AWS::Partition}:s3:::${Bucket}
                   # prettier-ignore

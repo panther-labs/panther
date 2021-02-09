@@ -19,12 +19,11 @@ package api
  */
 
 import (
-	"errors"
 	"fmt"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
@@ -33,6 +32,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -92,59 +92,84 @@ func (api *API) checkAwsS3Integration(input *models.CheckIntegrationInput) *mode
 	var roleCreds *credentials.Credentials
 	logProcessingRole := generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
 	roleCreds, out.ProcessingRoleStatus = api.getCredentialsWithStatus(logProcessingRole)
-	if out.ProcessingRoleStatus.Healthy {
-		bucketStatus, bucketRegion := api.checkBucket(roleCreds, input.S3Bucket)
-		out.S3BucketStatus = bucketStatus
-		out.KMSKeyStatus = api.checkKey(roleCreds, input.KmsKey)
-		s3Client := s3.New(api.AwsSession, &aws.Config{
-			Credentials: roleCreds,
-			Region:      bucketRegion,
-		})
-		out.S3GetObject = checkGetObject(s3Client, input.S3Bucket, input.AWSAccountID)
+
+	if !out.ProcessingRoleStatus.Healthy {
+		return out // can't run the next checks without a working IAM role
 	}
+
+	bucketStatus, bucketRegion := api.checkBucket(roleCreds, input.S3Bucket)
+	out.S3BucketStatus = bucketStatus
+	out.KMSKeyStatus = api.checkKey(roleCreds, input.KmsKey)
+
+	s3Client := s3.New(api.AwsSession, &aws.Config{
+		Credentials: roleCreds,
+		Region:      bucketRegion,
+	})
+	h, skipped := checkGetObject(s3Client, input)
+	if !skipped {
+		out.GetObjectStatus = &h
+	}
+
 	return out
 }
 
-func checkGetObject(s3Client s3iface.S3API, bucket, owner string) models.SourceIntegrationItemStatus {
-	// Check the error for a non-existent key. If the error is s3.ErrCodeNoSuchKey, we are good.
-	// The IAM role should have s3.ListBucket permissions, otherwise s3 will return AccessDenied even for
-	// missing keys.
-	_, err := s3Client.ListObjects(&s3.ListObjectsInput{
-		Bucket:              &bucket,
-		ExpectedBucketOwner: &owner,
-		MaxKeys:             aws.Int64(1),
-	})
-	if err != nil {
-		msg := "Error returned from s3.ListBucket request."
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "AccessDenied" {
-			msg = "We couldn't perform the s3.GetObject check because the IAM role doesn't have the s3.ListBucket permission."
-		}
-		return models.SourceIntegrationItemStatus{
-			Healthy:      false,
-			Message:      msg,
-			ErrorMessage: err.Error(),
-		}
+// This function checks if the IAM identity of the s3Client has permissions to
+// read objects on the bucket.
+// For every s3 prefix in the input, it tries to read a random file on the bucket.
+// Even if the IAM role has permissions to read objects, the check may still fail due to a bucket policy or object ACL.
+// See https://github.com/panther-labs/panther/issues/2586 for details.
+func checkGetObject(s3Client s3iface.S3API, input *models.CheckIntegrationInput) (h models.SourceIntegrationItemStatus, skipped bool) {
+	// This check must only run for sources created in Panther >= 1.16, because it needs a new
+	// permission (s3.ListBucket) in the log processing role. The CFN stack of older sources doesn't have it.
+	minVersion := semver.MustParse("1.16.0-a") // 1.16.0-a < 1.16.0-dev (runs in dev env) < 1.16.0
+	if input.PantherVersion().LessThan(minVersion) {
+		return models.SourceIntegrationItemStatus{}, true
 	}
-	nonExistingKey := "panther-health-check"
-	_, err = s3Client.GetObject(&s3.GetObjectInput{
-		Bucket:              &bucket,
-		ExpectedBucketOwner: &owner,
-		Key:                 &nonExistingKey,
-	})
-	awsErr, ok := err.(awserr.Error)
-	if err == nil || (ok && awsErr.Code() == s3.ErrCodeNoSuchKey) {
-		return models.SourceIntegrationItemStatus{
-			Healthy: true,
-			Message: "We were able to use s3:GetObject on the specified S3 bucket.",
+
+	bucket, owner, s3Prefixes := input.S3Bucket, input.AWSAccountID, input.S3PrefixLogTypes.S3Prefixes()
+	prefixes := reduceNoPrefixStrings(s3Prefixes) // no need to check prefixes that overlap
+	for _, p := range prefixes {
+		err := checkGetObjectPrefix(s3Client, bucket, owner, p)
+		if err != nil {
+			return models.SourceIntegrationItemStatus{
+				Healthy:      false,
+				Message:      "Failed to read S3 object",
+				ErrorMessage: err.Error(),
+			}, false
 		}
 	}
 
-	// Something is wrong with bucket permissions.
 	return models.SourceIntegrationItemStatus{
-		Healthy:      false,
-		Message:      "Unexpected error returned from s3.GetObject",
-		ErrorMessage: err.Error(),
+		Healthy: true,
+		Message: "We were able to read an object on the specified S3 bucket.",
+	}, false
+}
+
+func checkGetObjectPrefix(s3Client s3iface.S3API, bucket, owner, prefix string) error {
+	listOutput, err := s3Client.ListObjects(&s3.ListObjectsInput{
+		Bucket:              &bucket,
+		ExpectedBucketOwner: &owner,
+		Prefix:              &prefix,
+		MaxKeys:             aws.Int64(1),
+	})
+	if err != nil {
+		return errors.Wrap(err, "s3.ListObjects request failed")
 	}
+
+	if len(listOutput.Contents) == 0 {
+		return nil
+	}
+
+	s3Obj := listOutput.Contents[0]
+	_, err = s3Client.HeadObject(&s3.HeadObjectInput{
+		Bucket:              &bucket,
+		ExpectedBucketOwner: &owner,
+		Key:                 s3Obj.Key,
+	})
+	if err != nil {
+		return errors.Wrapf(err, "s3.HeadObject request failed for %s", *s3Obj.Key)
+	}
+	return nil
 }
 
 func (api *API) checkKey(roleCredentials *credentials.Credentials, key string) models.SourceIntegrationItemStatus {
@@ -278,8 +303,8 @@ func (api *API) evaluateIntegration(integration *models.CheckIntegrationInput) (
 			return status.KMSKeyStatus.Message, false, nil
 		}
 
-		if !status.S3GetObject.Healthy {
-			return status.S3GetObject.Message, false, nil
+		if !status.GetObjectStatus.Healthy {
+			return status.GetObjectStatus.Message, false, nil
 		}
 
 		return "", true, nil
