@@ -448,11 +448,11 @@ func packTableItemFromConfig(config analysis.PackConfig) *packTableItem {
 		ID:          config.PackID,
 		Type:        models.DetectionType(strings.ToUpper(config.AnalysisType)),
 	}
-	var detectionPattern models.DetectionPattern
-	if config.DetectionPattern.IDs != nil {
-		detectionPattern.IDs = config.DetectionPattern.IDs
+	var detectionPattern models.PackDefinition
+	if config.PackDefinition.IDs != nil {
+		detectionPattern.IDs = config.PackDefinition.IDs
 	}
-	item.DetectionPattern = detectionPattern
+	item.PackDefinition = detectionPattern
 	return &item
 }
 

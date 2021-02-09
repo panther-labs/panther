@@ -68,14 +68,14 @@ type Test struct {
 
 // PackConfig is specifically for pack definitions
 type PackConfig struct {
-	AnalysisType     string           `yaml:"AnalysisType"`
-	Description      string           `yaml:"Description"`
-	DetectionPattern DetectionPattern `yaml:"DetectionPatterns"`
-	DisplayName      string           `yaml:"DisplayName"`
-	PackID           string           `yaml:"PackID"`
+	AnalysisType   string         `yaml:"AnalysisType"`
+	Description    string         `yaml:"Description"`
+	PackDefinition PackDefinition `yaml:"PackDefinition"`
+	DisplayName    string         `yaml:"DisplayName"`
+	PackID         string         `yaml:"PackID"`
 }
 
 // DetectionPattern defines what makes up a pack
-type DetectionPattern struct {
+type PackDefinition struct {
 	IDs []string `yaml:"IDs"`
 }

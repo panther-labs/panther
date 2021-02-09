@@ -26,7 +26,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
-	"errors"
 	"fmt"
 
 	"github.com/hashicorp/go-version"
@@ -65,8 +64,6 @@ const (
 )
 
 var (
-	// error for when input version name and id do not match
-	errInvalidVersion = errors.New("invalid version specified")
 	pantherPackAssets = []string{
 		//pantherSourceFilename,
 		//pantherSignatureFilename,
@@ -81,13 +78,9 @@ var (
 )
 
 func downloadValidatePackData(config githubwrapper.Config,
-	version models.Version) (map[string]*packTableItem, map[string]*tableItem, error) {
+	version int64) (map[string]*packTableItem, map[string]*tableItem, error) {
 
-	err := validateGithubVersion(config, version)
-	if err != nil {
-		return nil, nil, err
-	}
-	assets, err := githubClient.DownloadGithubReleaseAssets(context.TODO(), config, version.ID)
+	assets, err := githubClient.DownloadGithubReleaseAssets(context.TODO(), config, version)
 	if err != nil {
 		return nil, nil, err
 	} else if len(assets) != len(pantherPackAssets) {
@@ -123,8 +116,8 @@ func listAvailableGithubReleases(config githubwrapper.Config) ([]models.Version,
 		}
 		if version.GreaterThanOrEqual(minimumVersion) {
 			newVersion := models.Version{
-				ID:   *release.ID,
-				Name: *release.TagName,
+				ID:     *release.ID,
+				SemVer: *release.TagName,
 			}
 			availableVersions = append(availableVersions, newVersion)
 		}
@@ -132,15 +125,9 @@ func listAvailableGithubReleases(config githubwrapper.Config) ([]models.Version,
 	return availableVersions, nil
 }
 
-func validateGithubVersion(config githubwrapper.Config, version models.Version) error {
+func getReleaseName(config githubwrapper.Config, version int64) (string, error) {
 	// validate the user supplied version information matches up (name <->id)
-	versionName, err := githubClient.GetReleaseTagName(context.TODO(), config, version.ID)
-	if err != nil {
-		return err
-	} else if versionName != version.Name {
-		return errInvalidVersion
-	}
-	return nil
+	return githubClient.GetReleaseTagName(context.TODO(), config, version)
 }
 
 func validateSignature(publicKey []byte, rawData []byte, signature []byte) error {

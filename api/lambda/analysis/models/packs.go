@@ -26,6 +26,28 @@ type GetPackInput struct {
 	ID string `json:"id" validate:"required,max=1000,excludesall='<>&\""`
 }
 
+// EnumeratePack is similar to ListDetections, ListGlobals, and ListDataModels in that
+// it will return paged data given some input filter. It differs in that it will return any
+// type (whether it be policy, rule, data model, global, etc.)
+type EnumeratePack struct {
+
+	// Take in the pack definition
+	PackDefinition PackDefinition `json:"packDefinition"`
+
+	// ----- Projection -----
+
+	// Detection fields to return in the response (default: all)
+	Fields []string `json:"fields" validate:"max=20,dive,required,max=100"`
+
+	// ----- Sorting -----
+	SortBy  string `json:"sortBy" validate:"omitempty,oneof=displayName enabled id lastModified severity"`
+	SortDir string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
+
+	// ----- Paging -----
+	PageSize int `json:"pageSize" validate:"min=0,max=1000"`
+	Page     int `json:"page" validate:"min=0"`
+}
+
 type ListPacksInput struct {
 	// ----- Filtering -----
 	// Only include packs which are enabled or disabled
@@ -58,39 +80,39 @@ type ListPacksOutput struct {
 
 type PatchPackInput struct {
 	// This is a partial update
-	Enabled     bool    `json:"enabled"`
-	PackVersion Version `json:"packVersion"`
-	ID          string  `json:"id" validate:"required,max=1000,excludesall='<>&\""`
-	UserID      string  `json:"userId" validate:"required"`
+	Enabled   bool   `json:"enabled"`
+	VersionID int64  `json:"versionID"`
+	ID        string `json:"id" validate:"required,max=1000,excludesall='<>&\""`
+	UserID    string `json:"userId" validate:"required"`
 }
 
 // PollPacksInput will also update the pack metadata: "availableReleases" and "updateAvailable"
 type PollPacksInput struct {
 	// allow to poll for a particular release
-	ReleaseVersion Version `json:"ReleaseVersion"`
+	VersionID int64 `json:"versionID"`
 }
 
 type Pack struct {
-	Enabled           bool             `json:"enabled"`
-	UpdateAvailable   bool             `json:"updateAvailable"`
-	CreatedBy         string           `json:"createdBy"`
-	Description       string           `json:"description"`
-	DisplayName       string           `json:"displayName"`
-	PackVersion       Version          `json:"packVersion"`
-	ID                string           `json:"id" validate:"required,max=1000,excludesall='<>&\""`
-	LastModifiedBy    string           `json:"lastModifiedBy"`
-	CreatedAt         time.Time        `json:"createdAt"`
-	LastModified      time.Time        `json:"lastModified"`
-	AvailableVersions []Version        `json:"availableVersions"`
-	DetectionPattern  DetectionPattern `json:"detectionPatterns"`
-	DetectionTypes    []DetectionType  `json:"detectionTypes"`
+	Enabled           bool                  `json:"enabled"`
+	UpdateAvailable   bool                  `json:"updateAvailable"`
+	CreatedBy         string                `json:"createdBy"`
+	Description       string                `json:"description"`
+	DisplayName       string                `json:"displayName"`
+	PackVersion       Version               `json:"packVersion"`
+	ID                string                `json:"id" validate:"required,max=1000,excludesall='<>&\""`
+	LastModifiedBy    string                `json:"lastModifiedBy"`
+	CreatedAt         time.Time             `json:"createdAt"`
+	LastModified      time.Time             `json:"lastModified"`
+	AvailableVersions []Version             `json:"availableVersions"`
+	PackDefinition    PackDefinition        `json:"packDefinition"`
+	PackTypes         map[DetectionType]int `json:"packTypes"`
 }
 
-type DetectionPattern struct {
+type PackDefinition struct {
 	IDs []string `json:"IDs"`
 }
 
 type Version struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
+	ID     int64  `json:"id"`
+	SemVer string `json:"semVer"`
 }

@@ -32,6 +32,10 @@ import (
 )
 
 func (API) ListDetections(input *models.ListDetectionsInput) *events.APIGatewayProxyResponse {
+	return handleListItems(input)
+}
+
+func handleListItems(input *models.ListDetectionsInput) *events.APIGatewayProxyResponse {
 	projectComplianceStatus := stdDetectionListInput(input)
 
 	// Scan dynamo
@@ -157,6 +161,7 @@ func detectionScanInput(input *models.ListDetectionsInput) (*dynamodb.ScanInput,
 	listFilters := pythonFilters{
 		CreatedBy:      input.CreatedBy,
 		Enabled:        input.Enabled,
+		IDs:            input.IDs,
 		InitialSet:     input.InitialSet,
 		LastModifiedBy: input.LastModifiedBy,
 		NameContains:   input.NameContains,

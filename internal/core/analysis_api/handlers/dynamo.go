@@ -85,18 +85,18 @@ type tableItem struct {
 //
 // optional values can be omitted from the table if they are empty,
 type packTableItem struct {
-	AvailableVersions []models.Version        `json:"availableVersions"`
-	CreatedAt         time.Time               `json:"createdAt"`
-	CreatedBy         string                  `json:"createdBy"`
-	Description       string                  `json:"description,omitempty"`
-	DetectionPattern  models.DetectionPattern `json:"detectionPattern,omitempty"`
-	DetectionTypes    []models.DetectionType  `json:"detectionTypes,omitempty"`
-	DisplayName       string                  `json:"displayName,omitempty"`
-	PackVersion       models.Version          `json:"packVersion,omitempty"`
-	ID                string                  `json:"id"`
-	LastModified      time.Time               `json:"lastModified"`
-	LastModifiedBy    string                  `json:"lastModifiedBy"`
-	Type              models.DetectionType    `json:"type"`
+	AvailableVersions []models.Version             `json:"availableVersions"`
+	CreatedAt         time.Time                    `json:"createdAt"`
+	CreatedBy         string                       `json:"createdBy"`
+	Description       string                       `json:"description,omitempty"`
+	PackDefinition    models.PackDefinition        `json:"packDefinition,omitempty"`
+	PackTypes         map[models.DetectionType]int `json:"packTypes,omitempty"`
+	DisplayName       string                       `json:"displayName,omitempty"`
+	PackVersion       models.Version               `json:"packVersion,omitempty"`
+	ID                string                       `json:"id"`
+	LastModified      time.Time                    `json:"lastModified"`
+	LastModifiedBy    string                       `json:"lastModifiedBy"`
+	Type              models.DetectionType         `json:"type"`
 
 	// Lowercase versions of string fields for easy filtering
 	LowerDisplayName string `json:"lowerDisplayName,omitempty"`
@@ -268,8 +268,8 @@ func (r *packTableItem) Pack() *models.Pack {
 		CreatedAt:         r.CreatedAt,
 		CreatedBy:         r.CreatedBy,
 		Description:       r.Description,
-		DetectionPattern:  r.DetectionPattern,
-		DetectionTypes:    r.DetectionTypes,
+		PackDefinition:    r.PackDefinition,
+		PackTypes:         r.PackTypes,
 		DisplayName:       r.DisplayName,
 		PackVersion:       r.PackVersion,
 		Enabled:           r.Enabled,

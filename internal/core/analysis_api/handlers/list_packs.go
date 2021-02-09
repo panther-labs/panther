@@ -31,6 +31,12 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
+func (API) EnumeratePack(input *models.EnumeratePack) *events.APIGatewayProxyResponse {
+	// Convert pack definition to a list detection option
+	listDetectionInput := getListOptions(input)
+	return handleListItems(listDetectionInput)
+}
+
 func (API) ListPacks(input *models.ListPacksInput) *events.APIGatewayProxyResponse {
 	// Standardize input
 	input.NameContains = strings.ToLower(input.NameContains)
@@ -71,6 +77,23 @@ func (API) ListPacks(input *models.ListPacksInput) *events.APIGatewayProxyRespon
 	return gatewayapi.MarshalResponse(&result, http.StatusOK)
 }
 
+func getListOptions(input *models.EnumeratePack) *models.ListDetectionsInput {
+	// Currently, we only support defining IDs, this can be extended
+	// in the future to convert other defitions into a proper list option
+	listInput := models.ListDetectionsInput{
+		IDs: input.PackDefinition.IDs,
+	}
+	// Packs can contain any "detection" types
+	listInput.AnalysisTypes = []models.DetectionType{models.TypeDataModel, models.TypeGlobal, models.TypePolicy, models.TypeRule}
+	// then populate the other standard fields
+	listInput.Fields = input.Fields
+	listInput.SortBy = input.SortBy
+	listInput.SortDir = input.SortDir
+	listInput.PageSize = input.PageSize
+	listInput.Page = input.Page
+	return &listInput
+}
+
 func scanPackInput(input *models.ListPacksInput) (*dynamodb.ScanInput, error) {
 	var filters []expression.ConditionBuilder
 
@@ -79,7 +102,7 @@ func scanPackInput(input *models.ListPacksInput) (*dynamodb.ScanInput, error) {
 			expression.Name("enabled"), expression.Value(*input.Enabled)))
 	}
 
-	if input.PackVersion.Name != "" {
+	if input.PackVersion.SemVer != "" {
 		filters = append(filters, expression.Equal(expression.Name("packVersion"),
 			expression.Value(input.PackVersion)))
 	}
