@@ -23,6 +23,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	compliancemodels "github.com/panther-labs/panther/api/lambda/compliance/models"
@@ -41,6 +42,13 @@ func (API) UpdatePolicy(input *models.UpdatePolicyInput) *events.APIGatewayProxy
 
 // Shared by CreatePolicy and UpdatePolicy
 func writePolicy(input *models.CreatePolicyInput, create bool) *events.APIGatewayProxyResponse {
+	if err := validateUpdatePolicy(input); err != nil {
+		return &events.APIGatewayProxyResponse{
+			Body:       err.Error(),
+			StatusCode: http.StatusBadRequest,
+		}
+	}
+
 	// Disallow saving if policy is enabled and its tests fail.
 	testsPass, err := enabledPolicyTestsPass(input)
 
@@ -116,6 +124,14 @@ func writePolicy(input *models.CreatePolicyInput, create bool) *events.APIGatewa
 	}
 
 	return gatewayapi.MarshalResponse(item.Policy(status), statusCode)
+}
+
+// Some extra validation which is not implemented in the input struct tags
+func validateUpdatePolicy(input *models.CreatePolicyInput) error {
+	if err := validResourceTypeSet(input.ResourceTypes); err != nil {
+		return errors.Errorf("policy contains invalid resource type: %s", err.Error())
+	}
+	return nil
 }
 
 // enabledPolicyTestsPass returns false if the policy is enabled and its tests fail.
