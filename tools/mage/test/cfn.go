@@ -70,20 +70,7 @@ func testCfnLint() error {
 		return nil
 	})
 
-	// cfn-lint will complain:
-	//   E3012 Property Resources/SnapshotDLQ/Properties/MessageRetentionPeriod should be of type Integer
-	//
-	// But if we keep them integers, yaml marshaling converts large integers to scientific notation,
-	// which CFN does not understand. So we force string values to serialize them correctly.
-	args := []string{
-		"-x", "E3012:strict=false",
-		// cfn-lint complains: E3002 Invalid Property Resources/WebApplicationServer/Properties/NetworkConfiguration/AwsvpcConfiguration
-		//deployments/web_server.yml:208:9 .
-		// nolint:lll
-		// However this property is valid: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ecs-service-networkconfiguration.html#cfn-ecs-service-networkconfiguration-awsvpcconfiguration
-		"-i", "E3002",
-		"-i", "W3002", // warns about templates which require packaging; ours all do
-		"--"}
+	args := []string{"-i", "W3002", "--"} // warns about templates which require packaging; ours all do
 	args = append(args, templates...)
 	if err := sh.RunV(util.PipPath("cfn-lint"), args...); err != nil {
 		return err
