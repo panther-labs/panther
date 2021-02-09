@@ -19,12 +19,12 @@ package handlers
  */
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
@@ -114,6 +114,10 @@ func validateUpdateDataModel(input *models.UpdateDataModelInput) error {
 		if mapping.Path != "" && mapping.Method != "" {
 			return errMappingTooManyOptions
 		}
+	}
+
+	if err := validateLogtypeSet(input.LogTypes); err != nil {
+		return errors.Errorf("dataModel contains invalid log type: %s", err.Error())
 	}
 
 	return nil
