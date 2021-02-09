@@ -84,7 +84,6 @@ func TestClassifyRespectsPriorityOfParsers(t *testing.T) {
 		LogLineCount:        uint64(repetitions),
 		EventCount:          uint64(repetitions),
 		LogType:             "success",
-		CombinedLatency:     18437520701672697616,
 	}
 
 	for i := 0; i < repetitions; i++ {
