@@ -59,12 +59,13 @@ type GetCustomLogOutput struct {
 }
 
 func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInput) (*PutCustomLogOutput, error) {
-	id := customlogs.LogType(input.LogType)
-	schema, err := buildSchema(id, input.Description, input.ReferenceURL, input.Spec)
+	id, schema, err := buildAndValidateUserSchema(input)
 	if err != nil {
 		return nil, err
 	}
-	schema.Schema = id
+	if err := checkSchema(id, schema); err != nil {
+		return nil, err
+	}
 
 	switch currentRevision := input.Revision; currentRevision {
 	case 0:
@@ -88,17 +89,15 @@ func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInp
 			return nil, NewAPIError(ErrNotFound, fmt.Sprintf("record %q was not found", id))
 		}
 		if !current.IsCustom() {
-			return nil, NewAPIError(ErrNotFound, fmt.Sprintf("record %q was not found", id))
+			return nil, NewAPIError(ErrAlreadyExists, fmt.Sprintf("record %q is not user-defined", id))
 		}
 		if current.Revision != currentRevision {
 			return nil, NewAPIError(ErrRevisionConflict, fmt.Sprintf("record %q is not on revision %d", id, currentRevision))
 		}
-
-		currentSchema, err := buildSchema(current.Name, current.Description, current.ReferenceURL, current.Spec)
+		currentSchema, err := buildSchema(current.Spec)
 		if err != nil {
 			return nil, err
 		}
-
 		if err := api.checkUpdate(currentSchema, schema); err != nil {
 			return nil, NewAPIError(ErrInvalidUpdate, fmt.Sprintf("schema update is not backwards compatible: %s", err))
 		}
@@ -130,27 +129,41 @@ func (api *LogTypesAPI) checkUpdate(a, b *logschema.Schema) error {
 	return err
 }
 
-func buildSchema(name, desc, refURL, spec string) (*logschema.Schema, error) {
-	schema := logschema.Schema{}
-	if err := yaml.Unmarshal([]byte(spec), &schema); err != nil {
-		return nil, NewAPIError(ErrInvalidSyntax, err.Error())
-	}
-	if desc != "" {
-		schema.Description = desc
-	}
-	if refURL != "" {
-		schema.ReferenceURL = refURL
-	}
-	if err := logschema.ValidateSchema(&schema); err != nil {
-		return nil, NewAPIError(ErrInvalidLogSchema, err.Error())
+func checkSchema(name string, schema *logschema.Schema) error {
+	if err := logschema.ValidateSchema(schema); err != nil {
+		return NewAPIError(ErrInvalidLogSchema, err.Error())
 	}
 	// Schemas requiring native parsers don't need further checks
 	if p := schema.Parser; p != nil && p.Native != nil {
-		return &schema, nil
+		return nil
 	}
 	// Build non-native parser entries
-	if _, err := customlogs.Build(name, &schema); err != nil {
-		return nil, err
+	if _, err := customlogs.Build(name, schema); err != nil {
+		return err
+	}
+	return nil
+}
+
+func buildAndValidateUserSchema(input *PutCustomLogInput) (string, *logschema.Schema, error) {
+	name := customlogs.LogType(input.LogType)
+	schema, err := buildSchema(input.Spec)
+	if err != nil {
+		return name, nil, err
+	}
+	schema.Schema = name
+	if input.Description != "" {
+		schema.Description = input.Description
+	}
+	if input.ReferenceURL != "" {
+		schema.ReferenceURL = input.ReferenceURL
+	}
+	return name, schema, nil
+}
+
+func buildSchema(spec string) (*logschema.Schema, error) {
+	schema := logschema.Schema{}
+	if err := yaml.Unmarshal([]byte(spec), &schema); err != nil {
+		return nil, NewAPIError(ErrInvalidSyntax, err.Error())
 	}
 	return &schema, nil
 }

@@ -24,8 +24,8 @@ import (
 
 	"github.com/pkg/errors"
 	"golang.org/x/mod/semver"
-	"gopkg.in/yaml.v2"
 
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
 	"github.com/panther-labs/panther/internal/log_analysis/managedschemas"
 )
 
@@ -116,25 +116,18 @@ func loadManifest(ctx context.Context, release, manifestURL string) ([]managedsc
 }
 
 func (api *LogTypesAPI) updateManagedSchema(ctx context.Context, entry managedschemas.ManifestEntry) (*SchemaRecord, error) {
-	desc := struct {
-		Name         string `yaml:"schema"`
-		Description  string `yaml:"description"`
-		ReferenceURL string `yaml:"referenceURL"`
-	}{}
-	if err := yaml.Unmarshal([]byte(entry.Spec), &desc); err != nil {
+	schema, err := buildAndValidateManagedSchema(entry)
+	if err != nil {
 		return nil, err
 	}
-	if _, err := buildSchema(desc.Name, desc.Description, desc.ReferenceURL, entry.Spec); err != nil {
-		return nil, errors.Wrapf(err, "could not build schema %q", entry.Name)
-	}
-	record, err := api.Database.GetSchema(ctx, desc.Name, 0)
+	record, err := api.Database.GetSchema(ctx, entry.Name, 0)
 	if err != nil {
 		return nil, err
 	}
 	rev := int64(1)
 	if record != nil {
 		if !record.IsManaged() {
-			return nil, NewAPIError(ErrAlreadyExists, fmt.Sprintf("record %q exists and is not managed by Panther", desc.Name))
+			return nil, NewAPIError(ErrAlreadyExists, fmt.Sprintf("record %q exists and is not managed by Panther", entry.Name))
 		}
 		if semver.Compare(record.Release, entry.Release) != -1 {
 			return record, nil
@@ -142,9 +135,20 @@ func (api *LogTypesAPI) updateManagedSchema(ctx context.Context, entry managedsc
 		rev = record.Revision + 1
 		// TODO: check update compatibility
 	}
-	return api.Database.UpdateManagedSchema(ctx, desc.Name, rev, entry.Release, SchemaUpdate{
-		Description:  desc.Description,
-		ReferenceURL: desc.ReferenceURL,
+	return api.Database.UpdateManagedSchema(ctx, entry.Name, rev, entry.Release, SchemaUpdate{
+		Description:  schema.Description,
+		ReferenceURL: schema.ReferenceURL,
 		Spec:         entry.Spec,
 	})
+}
+
+func buildAndValidateManagedSchema(entry managedschemas.ManifestEntry) (*logschema.Schema, error) {
+	schema, err := buildSchema(entry.Spec)
+	if err != nil {
+		return nil, errors.Wrapf(err, "managed schema entry %q in release %q has invalid YAML syntax", entry.Name, entry.Release)
+	}
+	if err := checkSchema(entry.Name, schema); err != nil {
+		return nil, errors.Wrapf(err, "managed schema entry %q in release %q is not valid", entry.Name, entry.Release)
+	}
+	return schema, nil
 }
