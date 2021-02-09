@@ -1,0 +1,5 @@
+mutation UpdatePack($input: UpdatePackInput!) {
+    updatePack(input: $input) {
+        ...PackDetails
+    }
+}

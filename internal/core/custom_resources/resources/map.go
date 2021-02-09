@@ -236,4 +236,11 @@ var CustomResources = map[string]cfn.CustomResourceFunction{
 	// Outputs: None
 	// PhysicalId: custom:alarms:sqs:$QUEUE_NAME
 	"Custom::SQSAlarms": customSQSAlarms,
+
+	// Updates managed schemas to match minimum required version
+	//
+	// Parameters: None
+	// Outputs: None
+	// PhysicalId: custom:schemas:managed
+	"Custom::ManagedSchemas": customUpdateManagedSchemas,
 }

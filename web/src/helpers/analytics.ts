@@ -53,6 +53,7 @@ export enum PageViewEnum {
   ListDetections = 'List Detections',
   ListLogSources = 'List Log Sources',
   ListDataModels = 'List Data Models',
+  ListPacks = 'List Packs',
   Home = 'Home',
   Support = 'Support',
   CustomLogDetails = 'Custom Log Details Screen',
@@ -89,6 +90,7 @@ export enum EventEnum {
   UpdatedAlertStatus = 'Updated Alert Status',
   UpdatedComplianceSource = 'Updated Compliance Source',
   UpdatedLogSource = 'Updated Log Source',
+  UpdatedPack = 'Updated Pack',
   BulkUpdatedAlertStatus = 'Bulk Updated Alert Status',
   TestedDestination = 'Tested a destination',
   TestedDestinationSuccessfully = 'Successfully tested Destination',
@@ -106,6 +108,7 @@ export enum SrcEnum {
   LogSources = 'log sources',
   CustomLogs = 'custom logs',
   DataModels = 'data models',
+  Packs = 'packs',
 }
 
 type LogSources = 'S3' | 'SQS';
@@ -231,6 +234,11 @@ interface BulkUpdatedAlertStatus extends AlertStatusEvents {
   event: EventEnum.BulkUpdatedAlertStatus;
 }
 
+interface UpdatedPackEvent {
+  event: EventEnum.UpdatedPack;
+  src: SrcEnum.Packs;
+}
+
 type TrackEvent =
   | AddedDestinationEvent
   | AddedDataModelEvent
@@ -253,7 +261,8 @@ type TrackEvent =
   | DeletedCustomLogEvent
   | TestedDestination
   | TestedDestinationSuccessfully
-  | TestedDestinationFailure;
+  | TestedDestinationFailure
+  | UpdatedPackEvent;
 
 export const trackEvent = (payload: TrackEvent) => {
   evaluateTracking(payload.event, {
@@ -276,6 +285,7 @@ export enum TrackErrorEnum {
   FailedToDeleteDataModel = 'Failed to delete a Data Model',
   FailedToAddLogSource = 'Failed to add log source',
   FailedToUpdateLogSource = 'Failed to update log source',
+  FailedToUpdatePack = 'Failed to update a pack',
   FailedToAddComplianceSource = 'Failed to add compliance source',
   FailedToUpdateComplianceSource = 'Failed to update compliance source',
   FailedMfa = 'Failed MFA',
@@ -366,6 +376,11 @@ interface AddCustomLogError extends CustomLogError {
   event: TrackErrorEnum.FailedToAddCustomLog;
 }
 
+interface UpdatePackError {
+  event: TrackErrorEnum.FailedToUpdatePack;
+  src: SrcEnum.Packs;
+}
+
 type TrackError =
   | AddDestinationError
   | AddDataModelError
@@ -381,7 +396,8 @@ type TrackError =
   | UpdateLogSourceError
   | UpdateCustomLogError
   | AddComplianceSourceError
-  | UpdateComplianceSourceError;
+  | UpdateComplianceSourceError
+  | UpdatePackError;
 
 export const trackError = (payload: TrackError) => {
   evaluateTracking(payload.event, {

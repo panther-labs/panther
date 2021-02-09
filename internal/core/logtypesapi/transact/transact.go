@@ -175,6 +175,7 @@ var _ ItemBuilder = (*Update)(nil)
 
 // SetAll is a special attribute name that will set all attributes of a struct/map value.
 const SetAll = "*"
+const SetIfNotExists = "?"
 
 func (u *Update) BuildItem() (*dynamodb.TransactWriteItem, error) {
 	key, err := dynamodbattribute.MarshalMap(u.Key)
@@ -202,6 +203,15 @@ func (u *Update) BuildItem() (*dynamodb.TransactWriteItem, error) {
 }
 func (u *Update) BuildExpression() (*expression.Expression, error) {
 	upd := expression.UpdateBuilder{}
+	if ifNot, ok := u.Set[SetIfNotExists]; ok {
+		values, err := dynamodbattribute.MarshalMap(ifNot)
+		if err != nil {
+			return nil, err
+		}
+		for name, value := range values {
+			upd = upd.Set(expression.Name(name), expression.Name(name).IfNotExists(expression.Value(value)))
+		}
+	}
 	if all, ok := u.Set[SetAll]; ok {
 		values, err := dynamodbattribute.MarshalMap(all)
 		if err != nil {

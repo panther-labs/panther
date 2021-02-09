@@ -98,7 +98,7 @@ func Describe(field reflect.StructField) string {
 		return desc
 	}
 	if field.Anonymous {
-		return fmt.Sprintf("Anonymous %s field", field.Type)
+		return "Anonymous field"
 	}
-	return fmt.Sprintf("%s field %s", field.Name, field.Type)
+	return fmt.Sprintf("%s field", field.Name)
 }

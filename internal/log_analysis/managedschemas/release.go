@@ -1,3 +1,6 @@
+// Code generated for package managedschemas by build.sh DO NOT EDIT. (@generated)
+package managedschemas
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,9 +19,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export * from './listDestinations.generated';
-export * from './listAvailableLogTypes.generated';
-export * from './sendTestAlert.generated';
-export * from './updateAlertStatus.generated';
-export * from './updatePack.generated';
-export * from './listComplianceSourceNames.generated';
+const ReleaseVersion = "v0.0.0-test"

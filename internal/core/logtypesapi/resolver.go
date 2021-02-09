@@ -20,7 +20,6 @@ package logtypesapi
 
 import (
 	"context"
-	"strings"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -31,23 +30,21 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 )
 
-// Resolver resolves a custom log type using the API
+// Resolver resolves a log type entry using the API
 type Resolver struct {
-	LogTypesAPI *LogTypesAPILambdaClient
+	LogTypesAPI    *LogTypesAPILambdaClient
+	NativeLogTypes logtypes.Finder
 }
 
 var _ logtypes.Resolver = (*Resolver)(nil)
 
 // Resolve implements logtypes.Resolver
 func (r *Resolver) Resolve(ctx context.Context, name string) (logtypes.Entry, error) {
-	if !strings.HasPrefix(name, customlogs.LogTypePrefix) {
-		return nil, nil
-	}
-	reply, err := r.LogTypesAPI.GetCustomLog(ctx, &GetCustomLogInput{
-		LogType:  name,
+	reply, err := r.LogTypesAPI.GetSchema(ctx, &GetSchemaInput{
+		Name:     name,
 		Revision: 0,
 	})
-	zap.L().Debug("logtypesapi reply", zap.Any("reply", reply), zap.Error(err))
+	zap.L().Debug("log types API reply", zap.Any("reply", reply), zap.Error(err))
 	if err != nil {
 		return nil, err
 	}
@@ -58,22 +55,26 @@ func (r *Resolver) Resolve(ctx context.Context, name string) (logtypes.Entry, er
 		}
 		return nil, NewAPIError(reply.Error.Code, reply.Error.Message)
 	}
-	record := reply.Result
+	record := reply.Record
 	if record == nil {
 		return nil, errors.New("unexpected empty result")
 	}
 	schema := logschema.Schema{}
-	if err := yaml.Unmarshal([]byte(record.LogSpec), &schema); err != nil {
+	if err := yaml.Unmarshal([]byte(record.Spec), &schema); err != nil {
 		return nil, errors.Wrap(err, "invalid schema YAML")
 	}
-	desc := logtypes.Desc{
-		Name:         record.LogType,
-		Description:  record.Description,
-		ReferenceURL: record.ReferenceURL,
+
+	// Resolve native log types from their definition in go
+	// TODO: only resolve the parser part of the entry once schema/parser split is done
+	if p := schema.Parser; p != nil && p.Native != nil {
+		entry := r.NativeLogTypes.Find(p.Native.Name)
+		if entry == nil {
+			return nil, errors.Errorf("failed to resolve native log type %q", name)
+		}
+		return entry, nil
 	}
-	entry, err := customlogs.Build(desc, &schema)
-	if err != nil {
-		return nil, errors.Wrap(err, "invalid schema")
-	}
-	return entry, nil
+	schema.Description = record.Description
+	schema.ReferenceURL = record.ReferenceURL
+
+	return customlogs.Build(record.Name, &schema)
 }

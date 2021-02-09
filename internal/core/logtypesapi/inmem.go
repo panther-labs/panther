@@ -20,19 +20,18 @@ package logtypesapi
 
 import (
 	"context"
-	"fmt"
+	"strings"
 	"sync"
 	"time"
 
-	"github.com/panther-labs/panther/pkg/stringset"
+	"golang.org/x/mod/semver"
 )
 
-// InMemDB is an in-memory implementation of the LogTypesDatabase.
+// InMemDB is an in-memory implementation of the SchemaDatabase.
 // It is useful for tests and for caching results of another implementation.
 type InMemDB struct {
 	mu      sync.RWMutex
-	deleted []string
-	records map[inMemKey]*CustomLogRecord
+	records map[inMemKey]*SchemaRecord
 }
 
 type inMemKey struct {
@@ -40,27 +39,19 @@ type inMemKey struct {
 	Revision int64
 }
 
-var _ LogTypesDatabase = (*InMemDB)(nil)
+var _ SchemaDatabase = (*InMemDB)(nil)
 
 func NewInMemory() *InMemDB {
 	return &InMemDB{
-		records: map[inMemKey]*CustomLogRecord{},
+		records: map[inMemKey]*SchemaRecord{},
 	}
 }
 
-func (db *InMemDB) IndexLogTypes(_ context.Context) ([]string, error) {
+func (db *InMemDB) GetSchema(_ context.Context, id string, revision int64) (*SchemaRecord, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
-	logtypes := make([]string, 0, len(db.records))
-	for key := range db.records {
-		logtypes = appendDistinct(logtypes, key.LogType)
-	}
-	return logtypes, nil
-}
-
-func (db *InMemDB) GetCustomLog(_ context.Context, id string, revision int64) (*CustomLogRecord, error) {
 	result, ok := db.records[inMemKey{
-		LogType:  id,
+		LogType:  strings.ToUpper(id),
 		Revision: revision,
 	}]
 	if !ok {
@@ -69,93 +60,118 @@ func (db *InMemDB) GetCustomLog(_ context.Context, id string, revision int64) (*
 	return result, nil
 }
 
-func (db *InMemDB) CreateCustomLog(_ context.Context, id string, params *CustomLog) (*CustomLogRecord, error) {
+func (db *InMemDB) CreateUserSchema(ctx context.Context, name string, upd SchemaUpdate) (*SchemaRecord, error) {
+	now := time.Now()
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	key := inMemKey{
-		LogType:  id,
+		LogType:  strings.ToUpper(name),
 		Revision: 0,
-	}
-	if stringset.Contains(db.deleted, id) {
-		return nil, NewAPIError(ErrAlreadyExists, "record used to exist but was deleted")
 	}
 	if _, exists := db.records[key]; exists {
 		return nil, NewAPIError(ErrRevisionConflict, "record revision mismatch")
 	}
-	record := &CustomLogRecord{
-		CustomLog: *params,
-		LogType:   id,
-		Revision:  1,
-		UpdatedAt: time.Now(),
+	record := SchemaRecord{
+		Name:         name,
+		Revision:     1,
+		UpdatedAt:    now,
+		CreatedAt:    now,
+		SchemaUpdate: upd,
 	}
-	db.records[key] = record
+	headRecord := record
+	db.records[key] = &headRecord
 	key.Revision = 1
-	db.records[key] = record
-	return record, nil
+	revRecord := record
+	db.records[key] = &revRecord
+	return &record, nil
 }
 
-func (db *InMemDB) UpdateCustomLog(_ context.Context, id string, revision int64, params *CustomLog) (*CustomLogRecord, error) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
+func (db *InMemDB) UpdateUserSchema(ctx context.Context, name string, rev int64, upd SchemaUpdate) (*SchemaRecord, error) {
+	revision := rev - 1
+	id := strings.ToUpper(name)
 	key := inMemKey{
 		LogType:  id,
 		Revision: 0,
 	}
+	now := time.Now()
+	record := SchemaRecord{
+		Name:         name,
+		Revision:     rev,
+		UpdatedAt:    now,
+		CreatedAt:    now,
+		SchemaUpdate: upd,
+	}
+	db.mu.Lock()
+	defer db.mu.Unlock()
 	current, ok := db.records[key]
 	if !ok || current.Revision != revision {
 		return nil, NewAPIError("Conflict", "record revision mismatch")
 	}
-	record := &CustomLogRecord{
-		CustomLog: *params,
-		LogType:   id,
-		Revision:  revision + 1,
-		UpdatedAt: time.Now(),
-	}
-	db.records[key] = record
+	current.UpdatedAt = now
+	current.Revision = rev
+	current.SchemaUpdate = upd
 	key.Revision = revision + 1
-	db.records[key] = record
-	return record, nil
+	db.records[key] = &record
+	return &record, nil
 }
 
-func (db *InMemDB) DeleteCustomLog(_ context.Context, id string, revision int64) error {
+// nolint:lll
+func (db *InMemDB) UpdateManagedSchema(_ context.Context, name string, rev int64, release string, upd SchemaUpdate) (*SchemaRecord, error) {
+	id := strings.ToUpper(name)
+	key := inMemKey{
+		LogType:  id,
+		Revision: 0,
+	}
+	now := time.Now()
+	currentRevision := rev - 1
+	record := SchemaRecord{
+		Name:         name,
+		Managed:      true,
+		Revision:     rev,
+		Release:      release,
+		UpdatedAt:    now,
+		CreatedAt:    now,
+		SchemaUpdate: upd,
+	}
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	current, ok := db.records[inMemKey{
-		LogType: id,
+	if db.records == nil {
+		db.records = map[inMemKey]*SchemaRecord{}
+	}
+	current, ok := db.records[key]
+	if !ok {
+		db.records[key] = &record
+		return &record, nil
+	}
+	if !current.Managed || current.Revision != currentRevision || semver.Compare(current.Release, release) != -1 {
+		return nil, NewAPIError("Conflict", "record revision mismatch")
+	}
+	current.UpdatedAt = now
+	current.Release = release
+	current.Revision = rev
+	current.SchemaUpdate = upd
+	return &record, nil
+}
+
+func (db *InMemDB) ToggleSchema(ctx context.Context, id string, enabled bool) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	record, ok := db.records[inMemKey{
+		LogType: strings.ToUpper(id),
 	}]
-	if !ok || current.Revision != revision {
-		return NewAPIError(ErrRevisionConflict, "record revision mismatch")
+	if ok {
+		record.Disabled = !enabled
 	}
-	for rev := int64(0); rev < revision; rev++ {
-		delete(db.records, inMemKey{
-			LogType:  id,
-			Revision: rev,
-		})
-	}
-	db.deleted = append(db.deleted, id)
 	return nil
 }
 
-func (db *InMemDB) BatchGetCustomLogs(ctx context.Context, ids ...string) ([]*CustomLogRecord, error) {
-	var records []*CustomLogRecord
+func (db *InMemDB) ScanSchemas(ctx context.Context, scan ScanSchemaFunc) error {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
-	for _, id := range ids {
-		record, ok := db.records[inMemKey{
-			LogType: id,
-		}]
-		if !ok {
-			return nil, NewAPIError(ErrNotFound, fmt.Sprintf(`record %q not found`, id))
+	for _, r := range db.records {
+		if !scan(r) {
+			return nil
 		}
-		records = append(records, record)
 	}
-	return records, nil
-}
-
-func (db *InMemDB) ListDeletedLogTypes(ctx context.Context) ([]string, error) {
-	var out []string
-	db.mu.RLock()
-	defer db.mu.RUnlock()
-	out = append(out, db.deleted...)
-	return out, nil
+	return nil
 }

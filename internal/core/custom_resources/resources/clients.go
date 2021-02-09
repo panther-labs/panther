@@ -49,6 +49,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/kelseyhightower/envconfig"
+
+	"github.com/panther-labs/panther/internal/core/logtypesapi"
 )
 
 var (
@@ -69,6 +71,10 @@ var (
 	lambdaClient         lambdaiface.LambdaAPI                                   = lambda.New(awsSession)
 	s3Client             s3iface.S3API                                           = s3.New(awsSession)
 	sqsClient            sqsiface.SQSAPI                                         = sqs.New(awsSession)
+	logtypesAPI          logtypesapi.LogTypesAPILambdaClient                     = logtypesapi.LogTypesAPILambdaClient{
+		LambdaName: logtypesapi.LambdaName,
+		LambdaAPI:  lambdaClient,
+	}
 
 	accountDescription string
 )
