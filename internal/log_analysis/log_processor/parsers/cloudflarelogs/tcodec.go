@@ -39,7 +39,7 @@ func (c *timeDecoder) DecodeTime(iter *jsoniter.Iterator) time.Time {
 	const opName = "ParseCloudflareTimestamp"
 	switch iter.WhatIsNext() {
 	case jsoniter.StringValue:
-		// If the value is a string we use the RFC3339 layout. This handles
+		// If the value is a string we use the RFC3339 layout.
 		return decodeRFC3339(iter)
 	case jsoniter.NumberValue:
 		// Cloudflare unix timestamps are integers of either seconds or nanoseconds

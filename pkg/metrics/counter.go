@@ -20,6 +20,8 @@ package metrics
 
 import "sync"
 
+type observerFunc func(name, unit string, dvs DimensionValues, value float64)
+
 type Counter interface {
 	With(dimensionValues ...string) Counter
 	Add(delta float64)
@@ -31,7 +33,7 @@ type DimensionsCounter struct {
 	name string
 	unit string
 	dvs  DimensionValues
-	obs  func(name, unit string, dvs DimensionValues, value float64)
+	obs  observerFunc
 }
 
 // With implements metrics.Counter.
@@ -83,13 +85,13 @@ func (s *Space) Observe(name, unit string, dvs DimensionValues, value float64) {
 
 // Walk traverses the vector space and invokes fn for each non-empty time series
 // which is encountered. Return false to abort the traversal.
-func (s *Space) Walk(fn func(name, unit string, dvs DimensionValues, observations []float64) bool) {
+func (s *Space) Walk(fn func(name, unit string, dvs DimensionValues, sum float64, count int64) bool) {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 	for name, node := range s.nodes {
 		name := name
 		unit := node.unit
-		f := func(dvs DimensionValues, observations []float64) bool { return fn(name, unit, dvs, observations) }
+		f := func(dvs DimensionValues, sum float64, count int64) bool { return fn(name, unit, dvs, sum, count) }
 		if !node.walk(DimensionValues{}, f) {
 			return
 		}
@@ -124,9 +126,12 @@ func (s *Space) nodeFor(name, unit string) *node {
 // possible label values. The node collects observations and has child nodes
 // with greater specificity.
 type node struct {
-	unit         string
-	mtx          sync.RWMutex
-	observations []float64
+	unit string
+	mtx  sync.RWMutex
+	// Sum of all observations
+	sum float64
+	// number of observations
+	observations int64
 	children     map[pair]*node
 }
 
@@ -136,7 +141,8 @@ func (n *node) observe(dvs DimensionValues, value float64) {
 	n.mtx.Lock()
 	defer n.mtx.Unlock()
 	if len(dvs) <= 0 {
-		n.observations = append(n.observations, value)
+		n.observations++
+		n.sum += value
 		return
 	}
 	if len(dvs) < 2 {
@@ -154,10 +160,10 @@ func (n *node) observe(dvs DimensionValues, value float64) {
 	child.observe(tail, value)
 }
 
-func (n *node) walk(dvs DimensionValues, fn func(DimensionValues, []float64) bool) bool {
+func (n *node) walk(dvs DimensionValues, fn func(DimensionValues, float64, int64) bool) bool {
 	n.mtx.RLock()
 	defer n.mtx.RUnlock()
-	if len(n.observations) > 0 && !fn(dvs, n.observations) {
+	if n.observations > 0 && !fn(dvs, n.sum, n.observations) {
 		return false
 	}
 	for p, child := range n.children {

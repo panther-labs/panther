@@ -13,7 +13,7 @@
         "schema": {
           "type": "string",
           "minLength": 3,
-          "pattern": "^[A-Z][A-Za-z0-9]+$"
+          "pattern": "^[A-Z][A-Za-z0-9]+(\\.[A-Z][A-Za-z0-9]+)?$"
         },
         "description": {
           "type": "string"
@@ -189,7 +189,6 @@
         "domain",
         "hostname",
         "url",
-        "net_addr",
         "md5",
         "sha1",
         "sha256",
@@ -197,7 +196,10 @@
         "aws_account_id",
         "aws_instance_id",
         "aws_tag",
-        "trace_id"
+        "trace_id",
+        "username",
+        "email",
+        "net_addr"
       ]
     },
     "timeSpec": {
@@ -215,13 +217,19 @@
               "type": "string",
               "title": "Built-in timestamp format",
               "description": "Common timestamp formats",
-              "enum": ["rfc3339", "unix", "unix_ms", "unix_us", "unix_ns"]
+              "enum": ["rfc3339", "unix", "unix_ms", "unix_us", "unix_ns", "cloudflare"]
             },
             {
               "type": "string",
               "title": "Custom timestamp format",
               "description": "A custom time format in strftime notation",
               "pattern": "%[aAbBcCdfHIjmMpSUwWxyYzZ]"
+            },
+            {
+              "type": "string",
+              "title": "Go layout timestamp format",
+              "description": "A custom time format in go layout notation",
+              "pattern": "^layout="
             }
           ]
         }
@@ -414,7 +422,7 @@
           "type": "string",
           "title": "Pattern with placeholder",
           "$comment": "Must contain at least one placeholder",
-          "pattern": "%\\{\\s*[^}]+\\s*\\}"
+          "pattern": "%{\\s*[^}]+\\s*\\}"
         },
         {
           "type": "string",

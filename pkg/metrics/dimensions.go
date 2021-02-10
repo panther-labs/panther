@@ -19,19 +19,11 @@ package metrics
  */
 
 const (
-
-	// SubsystemDimension dimension
 	SubsystemDimension = "Subsystem"
 
-	// StatusDimension dimension
 	StatusDimension = "Status"
-	// StatusDimension indicating that a subsystem operation is well
-	StatusOk = "Ok"
-	// StatusDimension indicating that a subsystem is experiencing authZ/N errors
-	StatusAuthErr = "AuthErr"
-	// StatusDimension indicating some general error with the subsystem
-	StatusErr = "Err"
 
-	// SourceIDDimension dimensions
 	SourceIDDimension = "ID"
+
+	LogTypeDimension = "LogType"
 )

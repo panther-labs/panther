@@ -23,6 +23,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/api/lambda/analysis/models"
 	"github.com/panther-labs/panther/internal/core/analysis_api/analysis"
@@ -46,6 +47,13 @@ func (API) UpdateRule(input *models.UpdateRuleInput) *events.APIGatewayProxyResp
 
 // Shared by CreateRule and UpdateRule
 func writeRule(input *models.CreateRuleInput, create bool) *events.APIGatewayProxyResponse {
+	if err := validateUpdateRule(input); err != nil {
+		return &events.APIGatewayProxyResponse{
+			Body:       err.Error(),
+			StatusCode: http.StatusBadRequest,
+		}
+	}
+
 	// in case it is not set, put a default. Minimum value for DedupPeriodMinutes is 15, so 0 means it's not set
 	if input.DedupPeriodMinutes == 0 {
 		input.DedupPeriodMinutes = defaultDedupPeriodMinutes
@@ -112,6 +120,14 @@ func writeRule(input *models.CreateRuleInput, create bool) *events.APIGatewayPro
 	}
 
 	return gatewayapi.MarshalResponse(item.Rule(), statusCode)
+}
+
+// Some extra validation which is not implemented in the input struct tags
+func validateUpdateRule(input *models.CreateRuleInput) error {
+	if err := validateLogtypeSet(input.LogTypes); err != nil {
+		return errors.Errorf("rule contains invalid log type: %s", err.Error())
+	}
+	return nil
 }
 
 // enabledRuleTestsPass returns false if the rule is enabled and its tests fail.

@@ -32,7 +32,6 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/customlogs"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
-	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 )
@@ -57,12 +56,7 @@ func Test(logger *zap.SugaredLogger, opts *TestOpts) {
 	if err := yaml.Unmarshal(schemaData, &schema); err != nil {
 		logger.Fatalf("failed to parse schema file as YAML %q: %s", schemaFile, err)
 	}
-	desc := logtypes.Desc{
-		Name:         "Custom.Test",
-		Description:  fmt.Sprintf("Custom log test schema %s", schemaFile),
-		ReferenceURL: "-",
-	}
-	entry, err := customlogs.Build(desc, &schema)
+	entry, err := customlogs.Build("Custom.Test", &schema)
 	if err != nil {
 		validationErrors := logschema.ValidationErrors(err)
 		if len(validationErrors) > 0 {

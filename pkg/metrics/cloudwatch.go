@@ -117,12 +117,12 @@ func (c *CWEmbeddedMetricsManager) sync() ([]byte, error) {
 
 	timeNow := c.timeFunc()
 
-	c.counters.Reset().Walk(func(name, unit string, dms DimensionValues, values []float64) bool {
+	c.counters.Reset().Walk(func(name, unit string, dms DimensionValues, value float64, observations int64) bool {
 		c.stream.WriteObjectStart()
 
 		// Write `"<metric name>" : <value>`
 		c.stream.WriteObjectField(name)
-		c.stream.WriteVal(sum(values))
+		c.stream.WriteVal(value)
 		c.stream.WriteMore()
 
 		// Write dimension values
@@ -161,14 +161,6 @@ func (c *CWEmbeddedMetricsManager) sync() ([]byte, error) {
 	}
 
 	return c.stream.Buffer(), c.stream.Error
-}
-
-func sum(a []float64) float64 {
-	var v float64
-	for _, f := range a {
-		v += f
-	}
-	return v
 }
 
 func dimensionNames(dimensionValues ...string) DimensionSet {

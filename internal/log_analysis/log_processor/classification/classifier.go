@@ -163,9 +163,6 @@ func (c *Classifier) Classify(log string) (*ClassifierResult, error) {
 		parserStat.BytesProcessedCount += uint64(len(log))
 		parserStat.LogLineCount++
 		parserStat.EventCount += uint64(len(result.Events))
-		for _, event := range parsedEvents {
-			parserStat.CombinedLatency += uint64(event.PantherParseTime.Sub(event.PantherEventTime).Milliseconds())
-		}
 		break
 	}
 
@@ -204,7 +201,6 @@ type ParserStats struct {
 	BytesProcessedCount    uint64 // input bytes
 	LogLineCount           uint64 // input records
 	EventCount             uint64 // output records
-	CombinedLatency        uint64 // sum of latency of events
 	LogType                string
 }
 
@@ -213,7 +209,6 @@ func (s *ParserStats) Add(other *ParserStats) {
 	s.BytesProcessedCount += other.BytesProcessedCount
 	s.EventCount += other.EventCount
 	s.LogLineCount += other.LogLineCount
-	s.CombinedLatency += other.CombinedLatency
 }
 
 func MergeParserStats(dst map[string]*ParserStats, src map[string]*ParserStats) {
