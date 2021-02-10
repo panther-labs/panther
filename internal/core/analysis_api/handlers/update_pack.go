@@ -74,7 +74,7 @@ func updatePackVersion(input *models.PatchPackInput, oldPackItem *packTableItem)
 	}
 	if newPackItem, ok := packVersionSet[input.ID]; ok {
 		// Update the detections in the pack
-		err = updateDetectionsToVersion(input.UserID, newPackItem, detectionVersionSet)
+		err = updateDetectionsToVersion(input.UserID, oldPackItem, newPackItem, detectionVersionSet)
 		if err != nil {
 			zap.L().Error("Error updating pack detections", zap.Error(err))
 			return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
@@ -141,8 +141,8 @@ func setupUpdatePackToVersion(input *models.PatchPackInput, oldPackItem *packTab
 // updatePackDetections updates detections by:
 // (1) setting up new items based on release data
 // (2) writing out the new items
-func updateDetectionsToVersion(userID string, pack *packTableItem, newDetectionItems map[string]*tableItem) error {
-	newDetections, err := setupUpdateDetectionsToVersion(pack, newDetectionItems)
+func updateDetectionsToVersion(userID string, oldPack *packTableItem, pack *packTableItem, newDetectionItems map[string]*tableItem) error {
+	newDetections, err := setupUpdateDetectionsToVersion(oldPack, pack, newDetectionItems)
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func updateDetectionsToVersion(userID string, pack *packTableItem, newDetectionI
 }
 
 // setupUpdatePackDetections is a helper method that will generate the new `panther-analysis` ddb table items
-func setupUpdateDetectionsToVersion(pack *packTableItem, newDetectionItems map[string]*tableItem) ([]*tableItem, error) {
+func setupUpdateDetectionsToVersion(oldPack *packTableItem, pack *packTableItem, newDetectionItems map[string]*tableItem) ([]*tableItem, error) {
 	// setup slice to return
 	var newItems []*tableItem
 	// First lookup the existing detections in this pack
@@ -170,6 +170,29 @@ func setupUpdateDetectionsToVersion(pack *packTableItem, newDetectionItems map[s
 	if err != nil {
 		return nil, err
 	}
+	// if we are enabling or disabling the pack, we need to enable/disable
+	// the detections in it.
+	// if this is simply updating the pack to a new version, we should
+	// not update the enabled status of the detections in it
+	// This will ensure user-enabled / user-disabled detections will remain
+	enabledStatusChanged := false
+	var otherExistingPacks []*packTableItem
+	if oldPack.Enabled != pack.Enabled {
+		enabledStatusChanged = true
+		// if we are disabling a pack, we need to look up detection pack memebership
+		// so that if a detection spans multiple packs, we only disable it if it
+		// is not enabled via another pack
+		// look up all other packs not including this one
+		filter := expression.NotEqual(expression.Name("lowerId"), expression.Value(strings.ToLower(pack.ID)))
+		scanInput, err := buildTableScanInput(env.PackTable, []models.DetectionType{models.TypePack}, []string{}, []expression.ConditionBuilder{filter}...)
+		if err != nil {
+			return nil, err
+		}
+		otherExistingPacks, err = getPackItems(scanInput)
+		if err != nil {
+			return nil, err
+		}
+	}
 	// Loop through the new detections and update appropriate fields or
 	//  create new detection
 	for id, newDetection := range newDetections {
@@ -179,7 +202,6 @@ func setupUpdateDetectionsToVersion(pack *packTableItem, newDetectionItems map[s
 			// detection.DedupPeriodMinutes = newDetection.DedupPeriodMinutes
 			detection.Description = newDetection.Description
 			detection.DisplayName = newDetection.DisplayName
-			detection.Enabled = pack.Enabled
 			detection.ResourceTypes = newDetection.ResourceTypes // aka LogTypes
 			// detection.OutputIDs = newDetection.OutputIDs
 			detection.Reference = newDetection.Reference
@@ -190,6 +212,15 @@ func setupUpdateDetectionsToVersion(pack *packTableItem, newDetectionItems map[s
 			detection.Tests = newDetection.Tests
 			// detection.Threshold = newDetection.Threshold
 			newItems = append(newItems, detection)
+			if enabledStatusChanged {
+				// if we are disabling this pack, make sure
+				// the detections in it aren't in another enabled
+				// pack before disabling it
+				if !pack.Enabled {
+					detection.Enabled = isDetectionInMultipleEnabledPacks(otherExistingPacks, id)
+				}
+				detection.Enabled = pack.Enabled
+			}
 		} else {
 			// create new detection
 			newItems = append(newItems, newDetection)
@@ -198,10 +229,37 @@ func setupUpdateDetectionsToVersion(pack *packTableItem, newDetectionItems map[s
 	return newItems, nil
 }
 
+// isDetectionInMultipleEnabledPacks will return True is a detection exists in another enabled pack
+// otherwise it will return False
+func isDetectionInMultipleEnabledPacks(packs []*packTableItem, detectionID string) bool {
+	// if a user disables a pack, it disables all the detections in the pack unless those detections are in another pack
+	for _, pack := range packs {
+		packDetections, err := detectionDdbLookup(pack.DetectionPattern)
+		if err != nil {
+			zap.L().Error("error looking up detections in pack", zap.String("packId", pack.ID))
+			return false
+		}
+		if _, ok := packDetections[detectionID]; ok {
+			// This detection is in another pack:
+			// If that other pack is enabled, go ahead and return true;
+			// otherwise, continuing checking for any enabled pack that
+			// contains this detection
+			if pack.Enabled {
+				return true
+			}
+		}
+	}
+	// if this detection does not exist in any other pack OR
+	// all packs taht this detection is in are disabled, return false
+	return false
+}
+
 // updatePackVersions update the `AvailableVersions` and `UpdateAvailable` metadata fields in the
 // `panther-analysis-packs` ddb table
 func updatePackVersions(newVersion models.Version, oldPackItems []*packTableItem) error {
 	// First, look up the relevate pack and detection data for this release
+	// This should also validate the detections; so as not to list a release that wouldn't actually work
+	// or pass validatiaons
 	packVersionSet, detectionVersionSet, err := downloadValidatePackData(pantherGithubConfig, newVersion)
 	if err != nil {
 		return err
