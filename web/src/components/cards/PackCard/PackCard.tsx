@@ -120,8 +120,11 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
           justify="center"
           width={1}
         >
+          <Text textAlign="center" opacity={1} fontWeight="bold">
+            {pack.displayName || pack.id}
+          </Text>
           <Text textAlign="center" opacity={1}>
-            The pack is updating, please wait.
+            is being updated, please wait.
           </Text>
           <BulletedLoading />
         </Flex>
