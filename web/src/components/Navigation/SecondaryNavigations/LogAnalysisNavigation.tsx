@@ -49,11 +49,12 @@ export const analysisNavigationsLinks: NavigationLinks[] = [
     icon: 'data-models',
     label: 'Data Models',
   },
-  {
-    to: urls.packs.list(),
-    icon: 'packs',
-    label: 'Packs',
-  },
+  // TODO: Uncomment when 'Packs' are functional e2e
+  // {
+  //   to: urls.packs.list(),
+  //   icon: 'packs',
+  //   label: 'Packs',
+  // },
 ];
 
 const LogAnalysisNavigation: React.FC = () => {
