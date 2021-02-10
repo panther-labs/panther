@@ -26,10 +26,9 @@ import { useUpdatePack } from 'Source/graphql/queries';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { extractErrorMessage } from 'Helpers/utils';
 import BulletedLoading from 'Components/BulletedLoading';
-
+import { DETECTION_TYPE_COLOR_MAP } from 'Source/constants';
 import { PackDetails } from 'Source/graphql/fragments/PackDetails.generated';
-import DetectionTypeBadge from 'Components/badges/DetectionTypeBadge';
-import { DetectionTypeEnum } from 'Generated/schema';
+import FlatBadge from 'Components/badges/FlatBadge';
 
 interface PackCardProps {
   pack: PackDetails;
@@ -152,16 +151,19 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
           </GenericItemCard.Header>
           <Flex spacing={2}>
             {pack.detectionTypes.RULE && (
-              <DetectionTypeBadge type={DetectionTypeEnum.Rule} count={pack.detectionTypes.RULE} />
+              <FlatBadge color={DETECTION_TYPE_COLOR_MAP.RULE}>
+                {pack.detectionTypes.RULE} RULES
+              </FlatBadge>
             )}
             {pack.detectionTypes.POLICY && (
-              <DetectionTypeBadge
-                type={DetectionTypeEnum.Policy}
-                count={pack.detectionTypes.POLICY}
-              />
+              <FlatBadge color={DETECTION_TYPE_COLOR_MAP.POLICY}>
+                {pack.detectionTypes.RULE} POLICIES
+              </FlatBadge>
             )}
             {pack.detectionTypes.GLOBAL && (
-              <DetectionTypeBadge type="GLOBAL" count={pack.detectionTypes.GLOBAL} />
+              <FlatBadge color={DETECTION_TYPE_COLOR_MAP.GLOBAL}>
+                {pack.detectionTypes.GLOBAL} HELPERS
+              </FlatBadge>
             )}
           </Flex>
           <GenericItemCard.ValuesGroup>
