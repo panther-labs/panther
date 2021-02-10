@@ -39,6 +39,11 @@ type sourceCache struct {
 	byBucket map[string][]prefixSource
 }
 
+type prefixSource struct {
+	prefix string
+	source *models.SourceIntegration
+}
+
 // LoadS3 loads the source configuration for an S3 object.
 // This will update the cache if needed.
 // It will return error if it encountered an issue retrieving the source information

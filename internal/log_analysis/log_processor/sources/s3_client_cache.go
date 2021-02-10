@@ -36,6 +36,7 @@ import (
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/pkg/awsretry"
+	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -57,11 +58,6 @@ const (
 type s3ClientCacheKey struct {
 	roleArn   string
 	awsRegion string
-}
-
-type prefixSource struct {
-	prefix string
-	source *models.SourceIntegration
 }
 
 var (
@@ -198,6 +194,25 @@ func getNewS3Client(region *string, creds *credentials.Credentials) (result s3if
 		config.WithRegion(*region)
 	}
 	awsSession := session.Must(session.NewSession(config)) // use default retries for fetching creds, avoids hangs!
-	return s3.New(awsSession.Copy(request.WithRetryer(config.WithMaxRetries(s3ClientMaxRetries),
+	s3Client := s3.New(awsSession.Copy(request.WithRetryer(config.WithMaxRetries(s3ClientMaxRetries),
 		awsretry.NewConnectionErrRetryer(s3ClientMaxRetries))))
+	return &RefreshableS3Client{
+		client: s3Client,
+		creds:  creds,
+	}
+}
+
+type RefreshableS3Client struct {
+	s3iface.S3API
+	client s3iface.S3API
+	creds  *credentials.Credentials
+}
+
+func (r *RefreshableS3Client) GetObjectWithContext(ctx aws.Context, request *s3.GetObjectInput, options ...request.Option) (*s3.GetObjectOutput, error) {
+	response, err := r.client.GetObjectWithContext(ctx, request, options...)
+	if awsutils.IsAnyError(err, "InvalidAccessKeyId") {
+		r.creds.Expire()
+		response, err = r.client.GetObjectWithContext(ctx, request, options...)
+	}
+	return response, err
 }
