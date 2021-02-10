@@ -151,7 +151,7 @@ describe('EditS3LogSource', () => {
       logTypes: ['AWS.S3', 'AWS.ALB'],
     });
     const existingPrefixLogType = {
-      prefix: '/prefix/existing',
+      prefix: 'prefix/existing',
       logTypes: [logTypesResponse.logTypes[0]],
     };
     const logSource = buildS3LogIntegration({
@@ -160,7 +160,7 @@ describe('EditS3LogSource', () => {
       kmsKey: '',
     });
 
-    const newS3PrefixLogType = { prefix: '/prefix/new', logTypes: [logTypesResponse.logTypes[1]] };
+    const newS3PrefixLogType = { prefix: 'prefix/new', logTypes: [logTypesResponse.logTypes[1]] };
     const updatedLogSource = buildS3LogIntegration({
       ...logSource,
       s3PrefixLogTypes: [existingPrefixLogType, newS3PrefixLogType],
@@ -227,11 +227,11 @@ describe('EditS3LogSource', () => {
     fireClickAndMouseEvents(await findByText(updatedLogSource.s3PrefixLogTypes[1].logTypes[0]));
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(1);
+    expect(getByText('Continue')).not.toHaveAttribute('disabled');
     fireEvent.click(getByText('Continue'));
 
     // We expect to skip the template step cause user only changed the s3PrefixLogTypes
-    expect(queryByText('Get template file')).toBeInTheDocument();
-    fireEvent.click(getByText('Continue'));
+    expect(queryByText('Get template file')).not.toBeInTheDocument();
     // Expect to see a loading animation while the source is being validated ...
     expect(getByAltText('Validating source health...')).toBeInTheDocument();
 
@@ -250,8 +250,8 @@ describe('EditS3LogSource', () => {
     const logTypesResponse = buildListAvailableLogTypesResponse({
       logTypes: ['AWS.S3', 'AWS.ALB'],
     });
-    const prefixLogType1 = { prefix: '/prefix/1', logTypes: [logTypesResponse.logTypes[1]] };
-    const prefixLogType2 = { prefix: '/prefix/2', logTypes: [logTypesResponse.logTypes[1]] };
+    const prefixLogType1 = { prefix: 'prefix/1', logTypes: [logTypesResponse.logTypes[1]] };
+    const prefixLogType2 = { prefix: 'prefix/2', logTypes: [logTypesResponse.logTypes[1]] };
     const logSource = buildS3LogIntegration({
       awsAccountId: '123123123123',
       s3PrefixLogTypes: [prefixLogType1, prefixLogType2],
@@ -319,11 +319,11 @@ describe('EditS3LogSource', () => {
     await fireClickAndMouseEvents(getByAriaLabel('Remove prefix 0'));
     // Wait for form validation to kick in and move on to the next screen
     await waitMs(1);
+    expect(getByText('Continue')).not.toHaveAttribute('disabled');
     fireEvent.click(getByText('Continue'));
 
     // We expect to skip the template step cause user only changed the s3PrefixLogTypes
-    expect(queryByText('Get template file')).toBeInTheDocument();
-    fireEvent.click(getByText('Continue'));
+    expect(queryByText('Get template file')).not.toBeInTheDocument();
     // Expect to see a loading animation while the source is being validated ...
     expect(getByAltText('Validating source health...')).toBeInTheDocument();
 
