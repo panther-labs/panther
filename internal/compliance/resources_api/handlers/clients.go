@@ -33,6 +33,7 @@ import (
 type envConfig struct {
 	ResourcesQueueURL string `required:"true" split_words:"true"`
 	ResourcesTable    string `required:"true" split_words:"true"`
+	ScanSegments      int    `required:"true" split_words:"true"`
 }
 
 // API has all of the handlers as receiver methods.

@@ -19,6 +19,7 @@ package handlers
  */
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -106,39 +107,95 @@ func doUpdate(update expression.UpdateBuilder, resourceID string) *events.APIGat
 	return &events.APIGatewayProxyResponse{StatusCode: http.StatusOK}
 }
 
+type scanResult struct {
+	resources []models.Resource
+	err       error
+}
+
 // Wrapper around dynamoClient.ScanPages that accepts a handler function to process each item.
-func scanPages(input *dynamodb.ScanInput, handler func(*resourceItem) error) error {
-	var handlerErr, unmarshalErr error
+func scanPages(inputs []*dynamodb.ScanInput, includeCompliance bool,
+	requiredComplianceStatus compliancemodels.ComplianceStatus) ([]models.Resource, error) {
 
-	err := dynamoClient.ScanPages(input, func(page *dynamodb.ScanOutput, lastPage bool) bool {
-		var items []*resourceItem
-		if unmarshalErr = dynamodbattribute.UnmarshalListOfMaps(page.Items, &items); unmarshalErr != nil {
-			return false // stop paginating
-		}
+	results := make(chan scanResult)
+	defer close(results)
+	// The scan inputs have already been broken up into segments, scan each segment in parallel
+	for _, scanInput := range inputs {
+		go func(input *dynamodb.ScanInput) {
+			// Recover from panic so we don't block forever when waiting for routines to finish.
+			defer func() {
+				if r := recover(); r != nil {
+					zap.L().Error("panicked while scanning segment",
+						zap.Any("segment", input.Segment), zap.Any("panic", r))
+					results <- scanResult{nil, errors.New("panicked goroutine")}
+				}
+			}()
 
-		for _, entry := range items {
-			if handlerErr = handler(entry); handlerErr != nil {
-				return false // stop paginating
+			// Scan this segment
+			var segmentResources []models.Resource
+			var handlerErr, unmarshalErr error
+			// The pages of this segment will be handled serially
+			err := dynamoClient.ScanPages(input, func(page *dynamodb.ScanOutput, lastPage bool) bool {
+				var items []*resourceItem
+				if unmarshalErr = dynamodbattribute.UnmarshalListOfMaps(page.Items, &items); unmarshalErr != nil {
+					return false // stop paginating
+				}
+
+				for _, entry := range items {
+					if !includeCompliance {
+						segmentResources = append(segmentResources, entry.Resource(""))
+						return true
+					}
+
+					var status *complianceStatus
+					status, handlerErr = getComplianceStatus(entry.ID)
+					if handlerErr != nil {
+						return false
+					}
+
+					// Filter on the compliance status (if applicable)
+					if requiredComplianceStatus == "" || requiredComplianceStatus == status.Status {
+						// Resource passed all of the filters - add it to the result set
+						segmentResources = append(segmentResources, entry.Resource(status.Status))
+					}
+				}
+				return true // keep paging
+			})
+
+			if handlerErr != nil {
+				zap.L().Error("query item handler failed", zap.Error(handlerErr))
+				results <- scanResult{nil, handlerErr}
 			}
+
+			if unmarshalErr != nil {
+				zap.L().Error("dynamodbattribute.UnmarshalListOfMaps failed", zap.Error(unmarshalErr))
+				results <- scanResult{nil, unmarshalErr}
+			}
+
+			if err != nil {
+				zap.L().Error("dynamoClient.QueryPages failed", zap.Error(err))
+				results <- scanResult{nil, err}
+			}
+
+			// Report results
+			results <- scanResult{
+				resources: segmentResources,
+				err:       nil,
+			}
+		}(scanInput)
+	}
+
+	// Merge scan results
+	zap.L().Debug("scans initiated, awaiting results")
+	var err error
+	var mergedResources []models.Resource
+	for range inputs {
+		result := <-results
+		if result.err != nil {
+			err = result.err
+			continue
 		}
-
-		return true // keep paging
-	})
-
-	if handlerErr != nil {
-		zap.L().Error("query item handler failed", zap.Error(handlerErr))
-		return handlerErr
+		mergedResources = append(mergedResources, result.resources...)
 	}
 
-	if unmarshalErr != nil {
-		zap.L().Error("dynamodbattribute.UnmarshalListOfMaps failed", zap.Error(unmarshalErr))
-		return unmarshalErr
-	}
-
-	if err != nil {
-		zap.L().Error("dynamoClient.QueryPages failed", zap.Error(err))
-		return err
-	}
-
-	return nil
+	return mergedResources, err
 }
