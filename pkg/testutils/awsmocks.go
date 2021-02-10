@@ -81,8 +81,12 @@ func (m *S3Mock) GetObjectWithContext(ctx aws.Context, input *s3.GetObjectInput,
 	return args.Get(0).(*s3.GetObjectOutput), args.Error(1)
 }
 
-func (m *S3Mock) GetBucketLocation(input *s3.GetBucketLocationInput) (*s3.GetBucketLocationOutput, error) {
-	args := m.Called(input)
+func (m *S3Mock) GetBucketLocationWithContext(
+	ctx aws.Context,
+	input *s3.GetBucketLocationInput,
+	options ...request.Option) (*s3.GetBucketLocationOutput, error) {
+
+	args := m.Called(ctx, input, options)
 	return args.Get(0).(*s3.GetBucketLocationOutput), args.Error(1)
 }
 

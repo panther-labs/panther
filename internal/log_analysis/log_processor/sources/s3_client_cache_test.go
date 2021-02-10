@@ -72,7 +72,7 @@ func TestGetS3Client(t *testing.T) {
 	lambdaMock.On("Invoke", mock.Anything).Return(lambdaOutput, nil).Once()
 	// Second invocation would be to update the status
 	lambdaMock.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{}, nil).Once()
-	s3Mock.On("GetBucketLocation", expectedGetBucketLocationInput).Return(
+	s3Mock.On("GetBucketLocationWithContext", mock.Anything, expectedGetBucketLocationInput, mock.Anything).Return(
 		&s3.GetBucketLocationOutput{LocationConstraint: aws.String("us-west-2")}, nil).Once()
 
 	newCredentialsFunc = func(roleArn string) *credentials.Credentials {
@@ -175,7 +175,7 @@ func TestGetS3ClientSourceNoPrefix(t *testing.T) {
 	lambdaMock.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{}, nil).Once()
 
 	expectedGetBucketLocationInput := &s3.GetBucketLocationInput{Bucket: aws.String("test-bucket")}
-	s3Mock.On("GetBucketLocation", expectedGetBucketLocationInput).Return(
+	s3Mock.On("GetBucketLocationWithContext", mock.Anything, expectedGetBucketLocationInput, mock.Anything).Return(
 		&s3.GetBucketLocationOutput{LocationConstraint: aws.String("us-west-2")}, nil).Once()
 
 	newCredentialsFunc = func(roleArn string) *credentials.Credentials {
@@ -201,112 +201,4 @@ func resetCaches() {
 	globalSourceCache.cacheUpdateTime = time.Unix(0, 0)
 	bucketCache, _ = lru.NewARC(s3BucketLocationCacheSize)
 	s3ClientCache, _ = lru.NewARC(s3ClientCacheSize)
-}
-
-func TestSourceCacheStructFind(t *testing.T) {
-	cache := sourceCache{}
-	now := time.Now()
-	sources := []*models.SourceIntegration{
-		{
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationID:    "1",
-				IntegrationType:  models.IntegrationTypeAWS3,
-				S3Bucket:         "foo",
-				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: []string{"Foo.Bar"}}},
-			},
-		},
-		{
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationID:    "2",
-				IntegrationType:  models.IntegrationTypeAWS3,
-				S3Bucket:         "foo",
-				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "foo", LogTypes: []string{"Foo.Baz"}}},
-			},
-		},
-		{
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationID:    "3",
-				IntegrationType:  models.IntegrationTypeAWS3,
-				S3Bucket:         "foo",
-				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "foo/bar/sqs", LogTypes: []string{"Foo.Sqs"}}},
-			},
-		},
-		{
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationID:    "4",
-				IntegrationType:  models.IntegrationTypeAWS3,
-				S3Bucket:         "foo",
-				S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "foo/bar/baz", LogTypes: []string{"Foo.Qux"}}},
-			},
-		},
-		{
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationID:   "5",
-				IntegrationType: models.IntegrationTypeAWS3,
-				S3Bucket:        "foo",
-				S3PrefixLogTypes: models.S3PrefixLogtypes{
-					{S3Prefix: "bar/bar/bar/bar", LogTypes: []string{"Foo.Qux"}},
-					{S3Prefix: "foo/foo/foo", LogTypes: []string{"Foo.Qux"}},
-					{S3Prefix: "foo/bar/baz/prefix", LogTypes: []string{"Foo.Qux"}},
-				},
-			},
-		},
-		{
-			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
-				IntegrationID:   "6",
-				IntegrationType: models.IntegrationTypeAWS3,
-				// Different bucket with similar prefixes as some other source.
-				S3Bucket: "bar",
-				S3PrefixLogTypes: models.S3PrefixLogtypes{
-					{S3Prefix: "bar/bar/bar/bar", LogTypes: []string{"Foo.Qux"}},
-					{S3Prefix: "foo/foo/foo", LogTypes: []string{"Foo.Qux"}},
-					{S3Prefix: "foo/bar/baz/prefix", LogTypes: []string{"Foo.Qux"}},
-				},
-			},
-		},
-	}
-	assert := require.New(t)
-	cache.Update(now, sources)
-	{
-		src := cache.FindS3("foo", "bar")
-		assert.NotNil(src)
-		assert.Equal("1", src.IntegrationID)
-	}
-	{
-		src := cache.FindS3("foo", "foo/bar.json")
-		assert.NotNil(src)
-		assert.Equal("2", src.IntegrationID)
-	}
-	{
-		src := cache.FindS3("foo", "foo/bar/baz.json")
-		assert.NotNil(src)
-		assert.Equal("4", src.IntegrationID)
-	}
-	{
-		src := cache.FindS3("foo", "foo/bar/sqs/test.json")
-		assert.NotNil(src)
-		assert.Equal("3", src.IntegrationID)
-	}
-	{
-		src := cache.FindS3("foo", "foo/bar/baz/qux.json")
-		assert.NotNil(src)
-		assert.Equal("4", src.IntegrationID)
-	}
-	{
-		src := cache.FindS3("goo", "foo/bar/baz/qux.json")
-		assert.Nil(src)
-	}
-	{
-		src := cache.FindS3("foo", "foo/bar/baz/prefix/qux.json")
-		assert.NotNil(src)
-		assert.Equal("5", src.IntegrationID)
-	}
-	{
-		src := cache.FindS3("bar", "foo/bar/baz/prefix/qux.json")
-		assert.Equal("6", src.IntegrationID)
-	}
-	{
-		src := cache.FindS3("bar", "foo/foo/foo/prefix/qux.json")
-		assert.Equal("6", src.IntegrationID)
-	}
 }

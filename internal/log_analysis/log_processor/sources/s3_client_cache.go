@@ -198,34 +198,45 @@ func getNewS3Client(region *string, creds *credentials.Credentials) (result s3if
 	s3Client := s3.New(awsSession.Copy(request.WithRetryer(config.WithMaxRetries(s3ClientMaxRetries),
 		awsretry.NewConnectionErrRetryer(s3ClientMaxRetries))))
 	return &RefreshableS3Client{
-		S3:    s3Client,
+		S3API: s3Client,
 		creds: creds,
 	}
 }
 
+// Wrapper around S3 client. It will refresh credentials in case `InvalidAccessKeyId` error is encountered
 type RefreshableS3Client struct {
-	*s3.S3
+	s3iface.S3API
 	creds *credentials.Credentials
 }
 
+// This error code will appear if the IAM role assumed by Panther log processing is deleted and recreated.
+// When we try to perform operations to S3, we will get an error that the AKID is invalid
 const invalidAKIDError = "InvalidAccessKeyId"
 
-func (r *RefreshableS3Client) GetBucketLocationWithContext(ctx aws.Context, request *s3.GetBucketLocationInput, options ...request.Option) (*s3.GetBucketLocationOutput, error) {
-	response, err := r.S3.GetBucketLocationWithContext(ctx, request, options...)
+func (r *RefreshableS3Client) GetBucketLocationWithContext(
+	ctx aws.Context,
+	request *s3.GetBucketLocationInput,
+	options ...request.Option) (*s3.GetBucketLocationOutput, error) {
+
+	response, err := r.S3API.GetBucketLocationWithContext(ctx, request, options...)
 	if awsutils.IsAnyError(err, invalidAKIDError) {
 		zap.L().Debug("encountered error, refreshing S3 client credentials", zap.Error(err))
 		r.creds.Expire()
-		response, err = r.S3.GetBucketLocationWithContext(ctx, request, options...)
+		response, err = r.S3API.GetBucketLocationWithContext(ctx, request, options...)
 	}
 	return response, err
 }
 
-func (r *RefreshableS3Client) GetObjectWithContext(ctx aws.Context, request *s3.GetObjectInput, options ...request.Option) (*s3.GetObjectOutput, error) {
-	response, err := r.S3.GetObjectWithContext(ctx, request, options...)
+func (r *RefreshableS3Client) GetObjectWithContext(
+	ctx aws.Context,
+	request *s3.GetObjectInput,
+	options ...request.Option) (*s3.GetObjectOutput, error) {
+
+	response, err := r.S3API.GetObjectWithContext(ctx, request, options...)
 	if awsutils.IsAnyError(err, invalidAKIDError) {
 		zap.L().Debug("encountered error, refreshing S3 client credentials", zap.Error(err))
 		r.creds.Expire()
-		response, err = r.S3.GetObjectWithContext(ctx, request, options...)
+		response, err = r.S3API.GetObjectWithContext(ctx, request, options...)
 	}
 	return response, err
 }
