@@ -76,7 +76,6 @@ const StackDeployment: React.FC = () => {
                 continue with setup completion.
               </Text>
               <LinkButton
-                loading={true}
                 disabled={!!error || loading}
                 external
                 to={cfnConsoleLink}

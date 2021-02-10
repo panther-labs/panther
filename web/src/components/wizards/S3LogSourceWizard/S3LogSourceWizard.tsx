@@ -56,7 +56,17 @@ const validationSchema = Yup.object().shape<S3LogSourceWizardValues>({
   s3PrefixLogTypes: Yup.array()
     .of(
       Yup.object().shape({
-        prefix: Yup.string(),
+        prefix: Yup.string()
+          .test(
+            'mutex',
+            "'*' is not an acceptable value, leave empty if you want to include everything",
+            prefix => {
+              return !prefix || !prefix.includes('*');
+            }
+          )
+          .test('mutex', "S3 prefix should not start with '/'", prefix => {
+            return !prefix || !prefix.startsWith('/');
+          }),
         logTypes: Yup.array().of(Yup.string()).required(),
       })
     )
