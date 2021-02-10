@@ -145,6 +145,7 @@ Resources:
             - Effect: Allow
               Action:
                 - acm:ImportCertificate
+                - athena:UpdateWorkGroup
                 - athena:GetQuery*
                 - athena:StartQueryExecution
                 - athena:StopQueryExecution
