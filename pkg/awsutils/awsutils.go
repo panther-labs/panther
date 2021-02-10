@@ -26,6 +26,9 @@ import (
 // Method returns true if the provided error is an AWS error with any
 // of the given codes.
 func IsAnyError(err error, codes ...string) bool {
+	if err == nil {
+		return false
+	}
 	var awserror awserr.Error
 	if !errors.As(err, &awserror) {
 		return false
