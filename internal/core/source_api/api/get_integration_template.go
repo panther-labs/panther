@@ -53,12 +53,14 @@ const (
 	remediationReplace = "Value: '%t' # DeployRemediation"
 
 	// Formatting variables for Log Analysis
-	roleSuffixIDFind  = "Value: '' # RoleSuffix"
-	roleSuffixReplace = "Value: '%s' # RoleSuffix"
-	s3BucketFind      = "Value: '' # S3Bucket"
-	s3BucketReplace   = "Value: '%s' # S3Bucket"
-	kmsKeyFind        = "Value: '' # KmsKey"
-	kmsKeyReplace     = "Value: '%s' # KmsKey"
+	roleSuffixIDFind            = "Value: '' # RoleSuffix"
+	roleSuffixReplace           = "Value: '%s' # RoleSuffix"
+	s3BucketFind                = "Value: '' # S3Bucket"
+	s3BucketReplace             = "Value: '%s' # S3Bucket"
+	kmsKeyFind                  = "Value: '' # KmsKey"
+	kmsKeyReplace               = "Value: '%s' # KmsKey"
+	managedNotificationsFind    = "Value: '' # ManagedBucketNotifications"
+	managedNotificationsReplace = "Value: '%s' # ManagedBucketNotifications"
 )
 
 var (
@@ -103,6 +105,11 @@ func (api *API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput
 		if len(input.KmsKey) > 0 {
 			formattedTemplate = strings.Replace(formattedTemplate, kmsKeyFind,
 				fmt.Sprintf(kmsKeyReplace, input.KmsKey), 1)
+		}
+
+		if input.ManagedBucketNotifications {
+			formattedTemplate = strings.Replace(formattedTemplate, managedNotificationsFind,
+				fmt.Sprintf(managedNotificationsReplace, "true"), 1)
 		}
 	}
 

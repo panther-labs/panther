@@ -302,6 +302,8 @@ export const buildAddS3LogIntegrationInput = (
     kmsKey: 'kmsKey' in overrides ? overrides.kmsKey : 'Personal Loan Account',
     s3PrefixLogTypes:
       's3PrefixLogTypes' in overrides ? overrides.s3PrefixLogTypes : [buildS3PrefixLogTypesInput()],
+    managedBucketNotifications:
+      'managedBucketNotifications' in overrides ? overrides.managedBucketNotifications : false,
   };
 };
 
@@ -909,6 +911,8 @@ export const buildGetS3LogIntegrationTemplateInput = (
     integrationLabel: 'integrationLabel' in overrides ? overrides.integrationLabel : 'Concrete',
     s3Bucket: 's3Bucket' in overrides ? overrides.s3Bucket : 'generating',
     kmsKey: 'kmsKey' in overrides ? overrides.kmsKey : 'Books',
+    managedBucketNotifications:
+      'managedBucketNotifications' in overrides ? overrides.managedBucketNotifications : false,
   };
 };
 
@@ -1559,6 +1563,12 @@ export const buildS3LogIntegration = (
     kmsKey: 'kmsKey' in overrides ? overrides.kmsKey : 'robust',
     s3PrefixLogTypes:
       's3PrefixLogTypes' in overrides ? overrides.s3PrefixLogTypes : [buildS3PrefixLogTypes()],
+    managedBucketNotifications:
+      'managedBucketNotifications' in overrides ? overrides.managedBucketNotifications : true,
+    notificationsConfigurationSucceeded:
+      'notificationsConfigurationSucceeded' in overrides
+        ? overrides.notificationsConfigurationSucceeded
+        : true,
     health: 'health' in overrides ? overrides.health : buildS3LogIntegrationHealth(),
     stackName: 'stackName' in overrides ? overrides.stackName : 'River',
   };

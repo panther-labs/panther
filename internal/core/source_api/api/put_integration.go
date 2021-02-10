@@ -67,10 +67,14 @@ func (api *API) PutIntegration(input *models.PutIntegrationInput) (newIntegratio
 		return nil, putIntegrationInternalError
 	}
 
-	// Try to setupExternalResources
-	if err := api.setupExternalResources(newIntegration); err != nil {
-		zap.L().Error("failed to setup external integration", zap.Error(err))
+	err = api.setupExternalResources(newIntegration)
+	if err != nil {
+		zap.L().Error("failed to setup external resources", zap.Error(err))
 		return nil, putIntegrationInternalError
+	}
+
+	if newIntegration.ManagedBucketNotifications {
+		api.handleManagedBucketNotifications(newIntegration)
 	}
 
 	// Write to DynamoDB
@@ -89,6 +93,14 @@ func (api *API) PutIntegration(input *models.PutIntegrationInput) (newIntegratio
 	}
 
 	return newIntegration, nil
+}
+
+func (api *API) handleManagedBucketNotifications(source *models.SourceIntegration) {
+	err := ManageBucketNotifications(api.AwsSession, api.Config.AccountID, api.Config.AWSPartition, source)
+	source.NotificationsConfigurationSucceeded = err == nil
+	if err != nil {
+		zap.L().Error("failed to manage bucket notifications", zap.Error(err))
+	}
 }
 
 func (api *API) setupExternalResources(integration *models.SourceIntegration) error {
@@ -113,7 +125,7 @@ func (api *API) setupExternalResources(integration *models.SourceIntegration) er
 }
 
 func (api *API) validateIntegration(input *models.PutIntegrationInput) error {
-	// Prefixes in the same S3 source should should be unique (although we allow overlapping for now)
+	// Prefixes in the same S3 source should be unique (although we allow overlapping for now)
 	if input.IntegrationType == models.IntegrationTypeAWS3 {
 		prefixes := input.S3PrefixLogTypes.S3Prefixes()
 		if len(prefixes) != len(stringset.Dedup(prefixes)) {
@@ -294,6 +306,7 @@ func (api *API) generateNewIntegration(input *models.PutIntegrationInput) *model
 		metadata.S3PrefixLogTypes = input.S3PrefixLogTypes
 		metadata.StackName = getStackName(input.IntegrationType, input.IntegrationLabel)
 		metadata.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
+		metadata.ManagedBucketNotifications = input.ManagedBucketNotifications
 	case models.IntegrationTypeSqs:
 		metadata.SqsConfig = &models.SqsConfig{
 			S3Bucket:             api.Config.InputDataBucketName,

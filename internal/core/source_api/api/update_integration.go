@@ -77,12 +77,20 @@ func (api *API) UpdateIntegrationSettings(input *models.UpdateIntegrationSetting
 		}
 	}
 
-	if err := api.DdbClient.PutItem(existingItem); err != nil {
+	existingIntegration := itemToIntegration(existingItem)
+
+	if existingIntegration.IntegrationType == models.IntegrationTypeAWS3 &&
+		existingIntegration.ManagedBucketNotifications {
+
+		api.handleManagedBucketNotifications(existingIntegration)
+	}
+
+	item := integrationToItem(existingIntegration)
+	if err := api.DdbClient.PutItem(item); err != nil {
 		zap.L().Error("failed to put item in ddb", zap.Error(err))
 		return nil, updateIntegrationInternalError
 	}
 
-	existingIntegration := itemToIntegration(existingItem)
 	return existingIntegration, nil
 }
 

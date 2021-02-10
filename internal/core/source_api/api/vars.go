@@ -42,6 +42,7 @@ const (
 
 type Config struct {
 	AccountID                  string `required:"true" split_words:"true"`
+	AWSPartition               string `required:"true" envconfig:"aws_partition"`
 	DataCatalogUpdaterQueueURL string `required:"true" split_words:"true"`
 	Debug                      bool   `required:"false"`
 	LogProcessorQueueURL       string `required:"true" split_words:"true"`

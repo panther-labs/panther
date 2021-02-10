@@ -37,3 +37,20 @@ func IsAnyError(err error, codes ...string) bool {
 	}
 	return false
 }
+
+// Helper struct for creating AWS policy documents and marshalling them into json.
+type PolicyDocument struct {
+	Version   string
+	Statement []StatementEntry
+}
+type StatementEntry struct {
+	Sid       string
+	Effect    string
+	Action    string
+	Resource  string    `json:",omitempty"`
+	Principal Principal `json:",omitempty"`
+}
+type Principal struct {
+	Service string `json:",omitempty"`
+	AWS     string `json:",omitempty"`
+}

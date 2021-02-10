@@ -59,7 +59,9 @@ type Integration struct {
 	StackName         string   `json:"stackName,omitempty"`
 	LogProcessingRole string   `json:"logProcessingRole,omitempty"`
 
-	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
+	SqsConfig                  *SqsConfig                `json:"sqsConfig,omitempty"`
+	ManagedBucketNotifications bool                      `json:"managedBucketNotifications,omitempty"`
+	ManagedS3Resources         models.ManagedS3Resources `json:"managedS3Resources,omitempty"`
 }
 
 type IntegrationStatus struct {

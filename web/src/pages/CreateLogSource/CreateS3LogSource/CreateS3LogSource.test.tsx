@@ -41,7 +41,116 @@ import CreateS3LogSource from './CreateS3LogSource';
 jest.mock('Helpers/analytics');
 
 describe('CreateS3LogSource', () => {
-  it('can successfully onboard an S3 log source', async () => {
+  it('can successfully onboard an S3 log source without managed notifications', async () => {
+    const logTypesResponse = buildListAvailableLogTypesResponse({
+      logTypes: ['AWS.ALB', 'AWS.S3'],
+    });
+    const logSource = buildS3LogIntegration({
+      awsAccountId: '123123123123',
+      s3PrefixLogTypes: [buildS3PrefixLogTypesInput({ logTypes: logTypesResponse.logTypes })],
+      kmsKey: '',
+      managedBucketNotifications: false,
+    });
+
+    const mocks = [
+      mockListAvailableLogTypes({
+        data: {
+          listAvailableLogTypes: logTypesResponse,
+        },
+      }),
+      mockGetLogCfnTemplate({
+        variables: {
+          input: {
+            awsAccountId: pantherConfig.AWS_ACCOUNT_ID,
+            integrationLabel: logSource.integrationLabel,
+            s3Bucket: logSource.s3Bucket,
+            kmsKey: logSource.kmsKey || null,
+            managedBucketNotifications: false,
+          },
+        },
+        data: {
+          getS3LogIntegrationTemplate: buildIntegrationTemplate(),
+        },
+      }),
+      mockAddS3LogSource({
+        variables: {
+          input: buildAddS3LogIntegrationInput({
+            integrationLabel: logSource.integrationLabel,
+            awsAccountId: logSource.awsAccountId,
+            s3Bucket: logSource.s3Bucket,
+            s3PrefixLogTypes: logSource.s3PrefixLogTypes,
+            kmsKey: logSource.kmsKey,
+            managedBucketNotifications: logSource.managedBucketNotifications,
+          }),
+        },
+        data: {
+          addS3LogIntegration: buildS3LogIntegration({ managedBucketNotifications: false }),
+        },
+      }),
+    ];
+    const {
+      getByText,
+      getByLabelText,
+      getByAltText,
+      findByText,
+      getAllByLabelText,
+      queryByText,
+    } = render(<CreateS3LogSource />, {
+      mocks,
+    });
+
+    // Fill in  the form and press continue
+    fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
+    fireEvent.change(getByLabelText('AWS Account ID'), {target: {value: logSource.awsAccountId } }); // prettier-ignore
+    fireEvent.change(getByLabelText('Bucket Name'), { target: { value: logSource.s3Bucket } });
+    fireEvent.change(getByLabelText('S3 Prefix Filter (leave empty to allow all)'), {target: {value: logSource.s3PrefixLogTypes[0].prefix } }); // prettier-ignore
+    // Adding 2 logTypes for this prefix
+    fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.s3PrefixLogTypes[0].logTypes[0] } }); // prettier-ignore
+    fireClickAndMouseEvents(await findByText(logSource.s3PrefixLogTypes[0].logTypes[0]));
+    fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.s3PrefixLogTypes[0].logTypes[1] } }); // prettier-ignore
+    fireClickAndMouseEvents(await findByText(logSource.s3PrefixLogTypes[0].logTypes[1]));
+    // Wait for form validation to kick in and move on to the next screen
+    await waitMs(50);
+    fireEvent.click(getByText('Continue'));
+
+    // Expect to see two buttons for user to select if wants to let us managed notifications
+    expect(getByText('Yes, manage my notifications')).toBeInTheDocument();
+    expect(getByText("No, don't manage my notifications")).toBeInTheDocument();
+    // And user selects to do them manually
+    fireEvent.click(getByText("No, don't manage my notifications"));
+    // Initially we expect a disabled button while the template is being fetched ...
+    expect(getByText('Get template file')).toHaveAttribute('disabled');
+    expect(getByText('Launch Console')).toHaveAttribute('aria-disabled', 'true');
+
+    // ... replaced by an active button as soon as it's fetched
+    await waitFor(() => expect(getByText('Get template file')).not.toHaveAttribute('disabled'));
+    expect(getByText('Launch Console')).toHaveAttribute('aria-disabled', 'false');
+    // We move on to the final screen
+    fireEvent.click(getByText('Continue'));
+
+    // Expect to see a loading animation while the resource is being validated ...
+    expect(getByAltText('Validating source health...')).toBeInTheDocument();
+    // ... followed by a "setup notifications" screen
+    expect(await findByText('Adding Notifications for New Data')).toBeInTheDocument();
+    expect(getByText('steps found here')).toHaveAttribute('href', LOG_ONBOARDING_SNS_DOC_URL);
+
+    // expect NOT to see an error for failed managed notification since user selected to do it manually
+    expect(queryByText('Setting up managed notifications failed'));
+    // ... replaced by a success screen
+    fireEvent.click(getByText('I Have Setup Notifications'));
+    expect(await findByText('Everything looks good!')).toBeInTheDocument();
+    expect(getByText('Finish Setup')).toBeInTheDocument();
+    expect(getByText('Add Another')).toBeInTheDocument();
+
+    // Expect analytics to have been called
+    expect(trackEvent).toHaveBeenCalledWith({
+      event: EventEnum.AddedLogSource,
+      src: SrcEnum.LogSources,
+      ctx: 'S3',
+    });
+  });
+
+  it('can successfully onboard an S3 log source with successful managed notifications', async () => {
     const logTypesResponse = buildListAvailableLogTypesResponse({
       logTypes: ['AWS.ALB', 'AWS.S3'],
     });
@@ -64,6 +173,7 @@ describe('CreateS3LogSource', () => {
             integrationLabel: logSource.integrationLabel,
             s3Bucket: logSource.s3Bucket,
             kmsKey: logSource.kmsKey || null,
+            managedBucketNotifications: true,
           },
         },
         data: {
@@ -78,10 +188,11 @@ describe('CreateS3LogSource', () => {
             s3Bucket: logSource.s3Bucket,
             s3PrefixLogTypes: logSource.s3PrefixLogTypes,
             kmsKey: logSource.kmsKey,
+            managedBucketNotifications: logSource.managedBucketNotifications,
           }),
         },
         data: {
-          addS3LogIntegration: buildS3LogIntegration(),
+          addS3LogIntegration: buildS3LogIntegration({ managedBucketNotifications: true }),
         },
       }),
     ];
@@ -106,7 +217,109 @@ describe('CreateS3LogSource', () => {
     await waitMs(1);
     fireEvent.click(getByText('Continue'));
 
-    // Initially we expect 2 disabled buttons while the template is being fetched ...
+    // Expect to see two buttons for user to select if wants to let us managed notifications
+    expect(getByText('Yes, manage my notifications')).toBeInTheDocument();
+    expect(getByText("No, don't manage my notifications")).toBeInTheDocument();
+    // And user selects to let Panther try to manage them
+    fireEvent.click(getByText('Yes, manage my notifications'));
+    // Initially we expect a disabled button while the template is being fetched ...
+    expect(getByText('Get template file')).toHaveAttribute('disabled');
+
+    // ... replaced by an active button as soon as it's fetched
+    await waitFor(() => expect(getByText('Get template file')).not.toHaveAttribute('disabled'));
+
+    // We move on to the final screen
+    fireEvent.click(getByText('Continue'));
+
+    // Expect to see a loading animation while the resource is being validated ...
+    expect(getByAltText('Validating source health...')).toBeInTheDocument();
+    // Expect to see the success screen directly since notifications have been successfully managed by us
+    expect(await findByText('Everything looks good!')).toBeInTheDocument();
+    expect(getByText('Finish Setup')).toBeInTheDocument();
+    expect(getByText('Add Another')).toBeInTheDocument();
+
+    // Expect analytics to have been called
+    expect(trackEvent).toHaveBeenCalledWith({
+      event: EventEnum.AddedLogSource,
+      src: SrcEnum.LogSources,
+      ctx: 'S3',
+    });
+  });
+
+  it('can successfully onboard an S3 log source with failed managed notifications', async () => {
+    const logTypesResponse = buildListAvailableLogTypesResponse({
+      logTypes: ['AWS.ALB', 'AWS.S3'],
+    });
+    const logSource = buildS3LogIntegration({
+      awsAccountId: '123123123123',
+      s3PrefixLogTypes: [buildS3PrefixLogTypesInput({ logTypes: logTypesResponse.logTypes })],
+      kmsKey: '',
+      notificationsConfigurationSucceeded: false,
+    });
+
+    const mocks = [
+      mockListAvailableLogTypes({
+        data: {
+          listAvailableLogTypes: logTypesResponse,
+        },
+      }),
+      mockGetLogCfnTemplate({
+        variables: {
+          input: {
+            awsAccountId: pantherConfig.AWS_ACCOUNT_ID,
+            integrationLabel: logSource.integrationLabel,
+            s3Bucket: logSource.s3Bucket,
+            kmsKey: logSource.kmsKey || null,
+            managedBucketNotifications: true,
+          },
+        },
+        data: {
+          getS3LogIntegrationTemplate: buildIntegrationTemplate(),
+        },
+      }),
+      mockAddS3LogSource({
+        variables: {
+          input: buildAddS3LogIntegrationInput({
+            integrationLabel: logSource.integrationLabel,
+            awsAccountId: logSource.awsAccountId,
+            s3Bucket: logSource.s3Bucket,
+            s3PrefixLogTypes: logSource.s3PrefixLogTypes,
+            kmsKey: logSource.kmsKey,
+            managedBucketNotifications: logSource.managedBucketNotifications,
+          }),
+        },
+        data: {
+          addS3LogIntegration: logSource,
+        },
+      }),
+    ];
+    const { getByText, getByLabelText, getByAltText, findByText, getAllByLabelText } = render(
+      <CreateS3LogSource />,
+      {
+        mocks,
+      }
+    );
+
+    // Fill in  the form and press continue
+    fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
+    fireEvent.change(getByLabelText('AWS Account ID'), {target: {value: logSource.awsAccountId } }); // prettier-ignore
+    fireEvent.change(getByLabelText('Bucket Name'), { target: { value: logSource.s3Bucket } });
+    fireEvent.change(getByLabelText('S3 Prefix Filter (leave empty to allow all)'), {target: {value: logSource.s3PrefixLogTypes[0].prefix } }); // prettier-ignore
+    // Adding 2 logTypes for this prefix
+    fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.s3PrefixLogTypes[0].logTypes[0] } }); // prettier-ignore
+    fireClickAndMouseEvents(await findByText(logSource.s3PrefixLogTypes[0].logTypes[0]));
+    fireEvent.change(getAllByLabelText('Log Types')[0], {target: {value: logSource.s3PrefixLogTypes[0].logTypes[1] } }); // prettier-ignore
+    fireClickAndMouseEvents(await findByText(logSource.s3PrefixLogTypes[0].logTypes[1]));
+    // Wait for form validation to kick in and move on to the next screen
+    await waitMs(50);
+    fireEvent.click(getByText('Continue'));
+
+    // Expect to see two buttons for user to select if wants to let us managed notifications
+    expect(getByText('Yes, manage my notifications')).toBeInTheDocument();
+    expect(getByText("No, don't manage my notifications")).toBeInTheDocument();
+    // And user selects to let Panther try to manage them
+    fireEvent.click(getByText('Yes, manage my notifications'));
+    // Initially we expect a disabled button while the template is being fetched ...
     expect(getByText('Get template file')).toHaveAttribute('disabled');
     expect(getByText('Launch Console')).toHaveAttribute('aria-disabled', 'true');
 
@@ -119,10 +332,11 @@ describe('CreateS3LogSource', () => {
 
     // Expect to see a loading animation while the resource is being validated ...
     expect(getByAltText('Validating source health...')).toBeInTheDocument();
+    // expect to see error of failed to manage notifications
+    expect(await findByText('Setting up managed notifications failed'));
     // ... followed by a "setup notifications" screen
-    expect(await findByText('Adding Notifications for New Data')).toBeInTheDocument();
+    expect(getByText('Adding Notifications for New Data')).toBeInTheDocument();
     expect(getByText('steps found here')).toHaveAttribute('href', LOG_ONBOARDING_SNS_DOC_URL);
-
     // ... replaced by a success screen
     fireEvent.click(getByText('I Have Setup Notifications'));
     expect(await findByText('Everything looks good!')).toBeInTheDocument();
@@ -160,6 +374,7 @@ describe('CreateS3LogSource', () => {
             s3Bucket: logSource.s3Bucket,
             s3PrefixLogTypes: logSource.s3PrefixLogTypes,
             kmsKey: logSource.kmsKey,
+            managedBucketNotifications: logSource.managedBucketNotifications,
           }),
         },
         data: null,
@@ -186,6 +401,8 @@ describe('CreateS3LogSource', () => {
     await waitMs(1);
     fireEvent.click(getByText('Continue'));
 
+    // User selects to let Panther try to manage notifications
+    fireEvent.click(getByText('Yes, manage my notifications'));
     // We move on to the final screen
     fireEvent.click(getByText('Continue'));
 
