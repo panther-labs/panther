@@ -180,11 +180,11 @@ var (
 	}
 	packOriginalRelease = &models.Pack{
 		AvailableVersions: []models.Version{
-			{ID: 35328828, Name: "v1.14.0"},
+			{ID: 35328828, SemVer: "v1.14.0"},
 		},
 		CreatedBy:   systemUserID,
 		Description: "This pack is an example",
-		DetectionPattern: models.DetectionPattern{
+		PackDefinition: models.PackDefinition{
 			IDs: []string{
 				"AWS.CloudTrail.Created",
 				"AWS.Console.LoginFailed",
@@ -195,11 +195,13 @@ var (
 		ID:             "Sample.Pack.ID",
 		LastModifiedBy: systemUserID,
 		PackVersion: models.Version{
-			ID:   35328828,
-			Name: "v1.14.0",
+			ID:     35328828,
+			SemVer: "v1.14.0",
 		},
 		UpdateAvailable: false,
-		DetectionTypes:  []models.DetectionType{models.TypeRule},
+		PackTypes: map[models.DetectionType]int{
+			models.TypeRule: 3,
+		},
 	}
 )
 
@@ -2922,10 +2924,7 @@ func pollPacks(t *testing.T) {
 	// poll for packs from well known release version
 	input = models.LambdaInput{
 		PollPacks: &models.PollPacksInput{
-			ReleaseVersion: models.Version{
-				ID:   35328828,
-				Name: "v1.14.0",
-			},
+			VersionID: 35328828,
 		},
 	}
 	statusCode, err = apiClient.Invoke(&input, nil)
@@ -3011,10 +3010,10 @@ func patchPack(t *testing.T) {
 	var result models.Pack
 	input := models.LambdaInput{
 		PatchPack: &models.PatchPackInput{
-			ID:          packOriginalRelease.ID,
-			Enabled:     false,
-			PackVersion: packOriginalRelease.PackVersion,
-			UserID:      userID,
+			ID:        packOriginalRelease.ID,
+			Enabled:   false,
+			VersionID: packOriginalRelease.PackVersion.ID,
+			UserID:    userID,
 		},
 	}
 	packOriginalRelease.LastModifiedBy = userID
@@ -3029,10 +3028,10 @@ func patchPack(t *testing.T) {
 	// enable pack
 	input = models.LambdaInput{
 		PatchPack: &models.PatchPackInput{
-			ID:          packOriginalRelease.ID,
-			Enabled:     true,
-			PackVersion: packOriginalRelease.PackVersion,
-			UserID:      userID,
+			ID:        packOriginalRelease.ID,
+			Enabled:   true,
+			VersionID: packOriginalRelease.PackVersion.ID,
+			UserID:    userID,
 		},
 	}
 	packOriginalRelease.Enabled = true

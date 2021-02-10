@@ -33,6 +33,9 @@ type ListDetectionsInput struct {
 	// Only include policies with or without auto-remediation enabled. Only applies to policies.
 	HasRemediation *bool `json:"hasRemediation"`
 
+	// Only include detections with the following ids
+	IDs []string `json:"ids" validate:"max=1000"`
+
 	// Only include policies which apply to one of these resource types. Only applies to policies.
 	ResourceTypes []string `json:"resourceTypes" validate:"max=500,dive,required,max=500"`
 

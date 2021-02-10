@@ -90,6 +90,6 @@ func packUpdated(oldItem, newItem *packTableItem) bool {
 		return true
 	}
 	// check detection patterns, which currently only cover IDs
-	itemsEqual = itemsEqual && !setEquality(oldItem.DetectionPattern.IDs, newItem.DetectionPattern.IDs)
+	itemsEqual = itemsEqual && !setEquality(oldItem.PackDefinition.IDs, newItem.PackDefinition.IDs)
 	return !itemsEqual
 }

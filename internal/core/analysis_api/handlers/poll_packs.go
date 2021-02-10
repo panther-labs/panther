@@ -33,16 +33,18 @@ func (API) PollPacks(input *models.PollPacksInput) *events.APIGatewayProxyRespon
 	var releases []models.Version
 	var err error
 	// determine if polling for a particular release or the latest version
-	if input.ReleaseVersion != (models.Version{}) {
+	if input.VersionID != 0 {
 		// first, validate the version information
-		err := validateGithubVersion(pantherGithubConfig, input.ReleaseVersion)
+		versionName, err := getReleaseName(pantherGithubConfig, input.VersionID)
 		if err != nil {
 			return &events.APIGatewayProxyResponse{
 				StatusCode: http.StatusInternalServerError,
 				Body:       err.Error(),
 			}
 		}
-		releases = []models.Version{input.ReleaseVersion}
+		releases = []models.Version{
+			{ID: input.VersionID, SemVer: versionName},
+		}
 	} else {
 		// First, check for a new release in the github repo by listing all releases
 		releases, err = listAvailableGithubReleases(pantherGithubConfig)
@@ -85,11 +87,11 @@ func (API) PollPacks(input *models.PollPacksInput) *events.APIGatewayProxyRespon
 }
 
 func isNewReleaseAvailable(currentVersion models.Version, currentPacks []*packTableItem) bool {
-	parsedCurrentVersion, err := version.NewVersion(currentVersion.Name)
+	parsedCurrentVersion, err := version.NewVersion(currentVersion.SemVer)
 	if err != nil {
 		// Failed to parse the version string
 		zap.L().Error("Failed to parse the version string for a release",
-			zap.String("versionString", currentVersion.Name))
+			zap.String("versionString", currentVersion.SemVer))
 		return false
 	}
 	// if there aren't any current packs, then there is a new release available
@@ -99,12 +101,12 @@ func isNewReleaseAvailable(currentVersion models.Version, currentPacks []*packTa
 	for _, pack := range currentPacks {
 		// if availableReleases doesn't contain the currentVersion, this
 		// is a new release
-		if !containsRelease(pack.AvailableVersions, currentVersion) {
+		if !containsRelease(pack.AvailableVersions, currentVersion.ID) {
 			return true
 		}
 		// Otherwise, check if this release is the newest value in the available releases
 		for _, availablePackVersion := range pack.AvailableVersions {
-			availableVersion, err := version.NewVersion(availablePackVersion.Name)
+			availableVersion, err := version.NewVersion(availablePackVersion.SemVer)
 			if err != nil {
 				continue
 			}
@@ -116,9 +118,9 @@ func isNewReleaseAvailable(currentVersion models.Version, currentPacks []*packTa
 	return false
 }
 
-func containsRelease(versions []models.Version, newVersion models.Version) bool {
+func containsRelease(versions []models.Version, newVersion int64) bool {
 	for _, version := range versions {
-		if version.ID == newVersion.ID {
+		if version.ID == newVersion {
 			return true
 		}
 	}
@@ -127,13 +129,13 @@ func containsRelease(versions []models.Version, newVersion models.Version) bool 
 
 func getLatestRelease(versions []models.Version) models.Version {
 	latestRelease := versions[0]
-	latestReleaseVersion, err := version.NewVersion(latestRelease.Name)
+	latestReleaseVersion, err := version.NewVersion(latestRelease.SemVer)
 	if err != nil {
-		zap.L().Error("error parsing version string", zap.String("version", latestRelease.Name))
+		zap.L().Error("error parsing version string", zap.String("version", latestRelease.SemVer))
 		return latestRelease
 	}
 	for _, release := range versions {
-		version, err := version.NewVersion(release.Name)
+		version, err := version.NewVersion(release.SemVer)
 		if err != nil {
 			continue
 		}
