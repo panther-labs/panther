@@ -19,6 +19,7 @@ package sources
  */
 
 import (
+	"context"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -149,7 +150,7 @@ func getBucketRegion(s3Bucket string, awsCreds *credentials.Credentials) (string
 
 	locationDiscoveryClient := newS3ClientFunc(nil, awsCreds)
 	input := &s3.GetBucketLocationInput{Bucket: aws.String(s3Bucket)}
-	location, err := locationDiscoveryClient.GetBucketLocation(input)
+	location, err := locationDiscoveryClient.GetBucketLocationWithContext(context.TODO(), input)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to find bucket region for %s", s3Bucket)
 	}
@@ -197,22 +198,32 @@ func getNewS3Client(region *string, creds *credentials.Credentials) (result s3if
 	s3Client := s3.New(awsSession.Copy(request.WithRetryer(config.WithMaxRetries(s3ClientMaxRetries),
 		awsretry.NewConnectionErrRetryer(s3ClientMaxRetries))))
 	return &RefreshableS3Client{
-		client: s3Client,
-		creds:  creds,
+		S3:    s3Client,
+		creds: creds,
 	}
 }
 
 type RefreshableS3Client struct {
-	s3iface.S3API
-	client s3iface.S3API
-	creds  *credentials.Credentials
+	*s3.S3
+	creds *credentials.Credentials
+}
+
+const invalidAKIDError = "InvalidAccessKeyId"
+
+func (r *RefreshableS3Client) GetBucketLocationWithContext(ctx aws.Context, request *s3.GetBucketLocationInput, options ...request.Option) (*s3.GetBucketLocationOutput, error) {
+	response, err := r.S3.GetBucketLocationWithContext(ctx, request, options...)
+	if awsutils.IsAnyError(err, invalidAKIDError) {
+		r.creds.Expire()
+		response, err = r.S3.GetBucketLocationWithContext(ctx, request, options...)
+	}
+	return response, err
 }
 
 func (r *RefreshableS3Client) GetObjectWithContext(ctx aws.Context, request *s3.GetObjectInput, options ...request.Option) (*s3.GetObjectOutput, error) {
-	response, err := r.client.GetObjectWithContext(ctx, request, options...)
-	if awsutils.IsAnyError(err, "InvalidAccessKeyId") {
+	response, err := r.S3.GetObjectWithContext(ctx, request, options...)
+	if awsutils.IsAnyError(err, invalidAKIDError) {
 		r.creds.Expire()
-		response, err = r.client.GetObjectWithContext(ctx, request, options...)
+		response, err = r.S3.GetObjectWithContext(ctx, request, options...)
 	}
 	return response, err
 }
