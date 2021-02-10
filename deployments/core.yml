@@ -335,7 +335,7 @@ Resources:
           Type: Schedule
           Properties:
             Input: '{"PollPacks": {}}'
-            Schedule: rate(15 minutes)
+            Schedule: rate(24 hours)
       FunctionName: panther-analysis-api
       # <cfndoc>
       # This lambda implements the analysis API which is responsible for
