@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, Img, Icon, Link, Divider } from 'pouncejs';
+import { Box, Flex, Img, Icon, Link, Divider, IconProps } from 'pouncejs';
 import urls from 'Source/urls';
 import { Link as RRLink } from 'react-router-dom';
 import PantherLogo from 'Assets/panther-plain-logo.svg';
@@ -37,6 +37,12 @@ import {
 const COMPLIANCE_NAV_KEY = 'compliance';
 const LOG_ANALYSIS_NAV_KEY = 'logAnalysis';
 const SETTINGS_NAV_KEY = 'settings';
+
+export type NavigationLinks = {
+  to: string;
+  icon: IconProps['type'];
+  label: string;
+};
 
 type NavKeys = typeof COMPLIANCE_NAV_KEY | typeof LOG_ANALYSIS_NAV_KEY | typeof SETTINGS_NAV_KEY;
 

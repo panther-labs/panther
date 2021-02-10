@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Flex, IconProps } from 'pouncejs';
+import { Flex } from 'pouncejs';
 import urls from 'Source/urls';
 import FadeInTrail from 'Components/utils/FadeInTrail';
 import {
@@ -25,13 +25,9 @@ import {
   useListAvailableLogTypes,
   useListComplianceSourceNames,
 } from 'Source/graphql/queries';
+import { NavigationLinks } from 'Components/Navigation';
 import NavLink from '../NavLink';
 
-type NavigationLinks = {
-  to: string;
-  icon: IconProps['type'];
-  label: string;
-};
 export const analysisNavigationsLinks: NavigationLinks[] = [
   {
     to: urls.logAnalysis.overview(),
