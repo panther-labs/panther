@@ -18,7 +18,7 @@
 import React from 'react';
 import { Pack, PackVersion } from 'Generated/schema';
 import { Button, Flex, Box, Combobox } from 'pouncejs';
-import { versionCompare } from 'Helpers/utils';
+import { compareSemanticVersion } from 'Helpers/utils';
 
 interface UpdateVersionProps {
   pack: Pick<Pack, 'availableVersions' | 'packVersion' | 'enabled'>;
@@ -36,7 +36,7 @@ const UpdateVersion: React.FC<UpdateVersionProps> = ({
   pack: { enabled, availableVersions, packVersion: current },
   onPatch,
 }) => {
-  availableVersions.sort((a, b) => versionCompare(b.name, a.name));
+  availableVersions.sort((a, b) => compareSemanticVersion(b.name, a.name));
   const [selectedVersion, setSelectedVersion] = React.useState<PackVersion>(availableVersions[0]);
 
   return (
@@ -52,7 +52,7 @@ const UpdateVersion: React.FC<UpdateVersionProps> = ({
         />
       </Box>
       <Box width={130}>
-        {versionCompare(selectedVersion.name, current.name) >= 0 ? (
+        {compareSemanticVersion(selectedVersion.name, current.name) >= 0 ? (
           <Button
             disabled={!enabled || selectedVersion.name === current.name}
             onClick={() => onPatch({ packVersion: selectedVersion })}

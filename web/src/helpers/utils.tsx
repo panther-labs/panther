@@ -454,7 +454,7 @@ export { toPlural };
  * returns 0 if a version is equal to b
  * @returns Number [1,0,-1]
  */
-export function versionCompare(a: string, b: string) {
+export function compareSemanticVersion(a: string, b: string) {
   const av = a.match(/([0-9]+|[^0-9]+)/g);
   const bv = b.match(/([0-9]+|[^0-9]+)/g);
   for (;;) {
