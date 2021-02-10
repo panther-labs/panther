@@ -213,6 +213,7 @@ const invalidAKIDError = "InvalidAccessKeyId"
 func (r *RefreshableS3Client) GetBucketLocationWithContext(ctx aws.Context, request *s3.GetBucketLocationInput, options ...request.Option) (*s3.GetBucketLocationOutput, error) {
 	response, err := r.S3.GetBucketLocationWithContext(ctx, request, options...)
 	if awsutils.IsAnyError(err, invalidAKIDError) {
+		zap.L().Debug("encountered error, refreshing S3 client credentials", zap.Error(err))
 		r.creds.Expire()
 		response, err = r.S3.GetBucketLocationWithContext(ctx, request, options...)
 	}
@@ -222,6 +223,7 @@ func (r *RefreshableS3Client) GetBucketLocationWithContext(ctx aws.Context, requ
 func (r *RefreshableS3Client) GetObjectWithContext(ctx aws.Context, request *s3.GetObjectInput, options ...request.Option) (*s3.GetObjectOutput, error) {
 	response, err := r.S3.GetObjectWithContext(ctx, request, options...)
 	if awsutils.IsAnyError(err, invalidAKIDError) {
+		zap.L().Debug("encountered error, refreshing S3 client credentials", zap.Error(err))
 		r.creds.Expire()
 		response, err = r.S3.GetObjectWithContext(ctx, request, options...)
 	}
