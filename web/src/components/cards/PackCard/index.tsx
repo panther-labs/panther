@@ -16,7 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default as ComplianceNavigation } from './ComplianceNavigation';
-export { default as LogAnalysisNavigation } from './LogAnalysisNavigation';
-export { default as SettingsNavigation } from './SettingsNavigation';
-export { analysisNavigationsLinks as AnalysisNavigationLinks } from './LogAnalysisNavigation';
+export { default } from './PackCard';

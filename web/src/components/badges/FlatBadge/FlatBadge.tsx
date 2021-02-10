@@ -16,7 +16,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default as ComplianceNavigation } from './ComplianceNavigation';
-export { default as LogAnalysisNavigation } from './LogAnalysisNavigation';
-export { default as SettingsNavigation } from './SettingsNavigation';
-export { analysisNavigationsLinks as AnalysisNavigationLinks } from './LogAnalysisNavigation';
+import React from 'react';
+import { Box, Theme } from 'pouncejs';
+
+interface FlatBadgeProps {
+  children: React.ReactNode;
+  backgroundColor?: keyof Theme['colors'];
+  color?: keyof Theme['colors'];
+}
+
+const FlatBadge: React.FC<FlatBadgeProps> = ({
+  backgroundColor = 'navyblue-700',
+  color = 'white',
+  children,
+}) => {
+  return (
+    <Box
+      backgroundColor={backgroundColor}
+      borderRadius="small"
+      px={1}
+      py={1}
+      fontWeight="bold"
+      fontSize="x-small"
+      color={color}
+    >
+      {children}
+    </Box>
+  );
+};
+
+export default FlatBadge;

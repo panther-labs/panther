@@ -27,8 +27,8 @@ github.com/aws-cloudformation/rain v1.1.1 h1:Xg4G7gQr/sxSPtJyaMWQ0+a2V8qcLHQfbsU
 github.com/aws-cloudformation/rain v1.1.1/go.mod h1:M7U9Q5Hf76TpgQ5rII6r9UnftRYHZivCzHAQ5Iuhink=
 github.com/aws/aws-lambda-go v1.20.0 h1:ZSweJx/Hy9BoIDXKBEh16vbHH0t0dehnF8MKpMiOWc0=
 github.com/aws/aws-lambda-go v1.20.0/go.mod h1:jJmlefzPfGnckuHdXX7/80O3BvUUi12XOkbv4w9SGLU=
-github.com/aws/aws-sdk-go v1.35.34 h1:PfsnVvEq7FgsgIOsW8YeParB9ZknW4NXPXcsgqt4srE=
-github.com/aws/aws-sdk-go v1.35.34/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2zKMmprdro=
+github.com/aws/aws-sdk-go v1.37.8 h1:9kywcbuz6vQuTf+FD+U7FshafrHzmqUCjgAEiLuIJ8U=
+github.com/aws/aws-sdk-go v1.37.8/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2zKMmprdro=
 github.com/aws/aws-sdk-go-v2 v0.29.0/go.mod h1:4d1/Ee0vCwCF7BfG1hCT3zu82493cRy5+VZ8JHvMPf0=
 github.com/aws/aws-sdk-go-v2 v1.1.0 h1:sKP6QWxdN1oRYjl+k6S3bpgBI+XUx/0mqVOLIw4lR/Q=
 github.com/aws/aws-sdk-go-v2 v1.1.0/go.mod h1:smfAbmpW+tcRVuNUjo3MOArSZmW72t62rkCzc2i0TWM=

@@ -42,6 +42,8 @@ func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 		item.KmsKey = input.KmsKey
 		item.StackName = input.StackName
 		item.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
+		item.ManagedBucketNotifications = input.ManagedBucketNotifications
+		item.ManagedS3Resources = input.ManagedS3Resources
 	case models.IntegrationTypeAWSScan:
 		item.AWSAccountID = input.AWSAccountID
 		item.CWEEnabled = input.CWEEnabled
@@ -94,6 +96,8 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 		integration.KmsKey = item.KmsKey
 		integration.StackName = item.StackName
 		integration.LogProcessingRole = item.LogProcessingRole
+		integration.ManagedBucketNotifications = item.ManagedBucketNotifications
+		integration.ManagedS3Resources = item.ManagedS3Resources
 	case models.IntegrationTypeAWSScan:
 		integration.AWSAccountID = item.AWSAccountID
 		integration.CWEEnabled = item.CWEEnabled

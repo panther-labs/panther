@@ -118,6 +118,7 @@ export type AddS3LogIntegrationInput = {
   s3Bucket: Scalars['String'];
   kmsKey?: Maybe<Scalars['String']>;
   s3PrefixLogTypes: Array<S3PrefixLogTypesInput>;
+  managedBucketNotifications: Scalars['Boolean'];
 };
 
 export type AddSqsLogIntegrationInput = {
@@ -553,6 +554,7 @@ export type GetS3LogIntegrationTemplateInput = {
   integrationLabel: Scalars['String'];
   s3Bucket: Scalars['String'];
   kmsKey?: Maybe<Scalars['String']>;
+  managedBucketNotifications: Scalars['Boolean'];
 };
 
 export type GithubConfig = {
@@ -1367,6 +1369,8 @@ export type S3LogIntegration = {
   s3Prefix?: Maybe<Scalars['String']>;
   kmsKey?: Maybe<Scalars['String']>;
   s3PrefixLogTypes: Array<S3PrefixLogTypes>;
+  managedBucketNotifications: Scalars['Boolean'];
+  notificationsConfigurationSucceeded: Scalars['Boolean'];
   health: S3LogIntegrationHealth;
   stackName: Scalars['String'];
 };
@@ -3379,6 +3383,12 @@ export type S3LogIntegrationResolvers<
   s3Prefix?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   kmsKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   s3PrefixLogTypes?: Resolver<Array<ResolversTypes['S3PrefixLogTypes']>, ParentType, ContextType>;
+  managedBucketNotifications?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  notificationsConfigurationSucceeded?: Resolver<
+    ResolversTypes['Boolean'],
+    ParentType,
+    ContextType
+  >;
   health?: Resolver<ResolversTypes['S3LogIntegrationHealth'], ParentType, ContextType>;
   stackName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;

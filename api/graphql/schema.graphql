@@ -199,6 +199,7 @@ input GetS3LogIntegrationTemplateInput {
   integrationLabel: String!
   s3Bucket: String!
   kmsKey: String
+  managedBucketNotifications: Boolean!
 }
 
 input ListAlertsInput {
@@ -722,6 +723,8 @@ type S3LogIntegration {
   s3Prefix: String
   kmsKey: String
   s3PrefixLogTypes: [S3PrefixLogTypes!]!
+  managedBucketNotifications: Boolean!
+  notificationsConfigurationSucceeded: Boolean!
   health: S3LogIntegrationHealth!
   stackName: String!
 }
@@ -757,6 +760,7 @@ input AddS3LogIntegrationInput {
   s3Bucket: String!
   kmsKey: String
   s3PrefixLogTypes: [S3PrefixLogTypesInput!]!
+  managedBucketNotifications: Boolean!
 }
 
 input SqsLogConfigInput {
