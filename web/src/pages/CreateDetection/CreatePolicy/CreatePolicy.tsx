@@ -49,10 +49,10 @@ const CreatePolicy: React.FC = () => {
   const { history } = useRouter();
   const [createPolicy, { error }] = useCreatePolicy({
     onCompleted: data => {
-      trackEvent({ event: EventEnum.AddedPolicy, src: SrcEnum.Policies });
+      trackEvent({ event: EventEnum.AddedPolicy, src: SrcEnum.Detections });
       history.push(urls.compliance.policies.details(data.addPolicy.id));
     },
-    onError: () => trackError({ event: TrackErrorEnum.FailedToAddPolicy, src: SrcEnum.Policies }),
+    onError: () => trackError({ event: TrackErrorEnum.FailedToAddPolicy, src: SrcEnum.Detections }),
   });
 
   const handleSubmit = React.useCallback(

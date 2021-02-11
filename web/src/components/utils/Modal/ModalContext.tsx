@@ -17,7 +17,6 @@
  */
 
 import React from 'react';
-import { DeletePolicyModalProps } from 'Components/modals/DeletePolicyModal';
 import { DeleteUserModalProps } from 'Components/modals/DeleteUserModal';
 import { ResetUserPasswordProps } from 'Components/modals/ResetUserPasswordModal';
 import { ReinviteUserProps } from 'Components/modals/ReinviteUserModal';
@@ -25,7 +24,7 @@ import { DeleteComplianceSourceModalProps } from 'Components/modals/DeleteCompli
 import { DeleteLogSourceModalProps } from 'Components/modals/DeleteLogSourceModal';
 import { DeleteDestinationModalProps } from 'Components/modals/DeleteDestinationModal';
 import { GenericModalProps } from 'Components/modals/GenericModal';
-import { DeleteRuleModalProps } from 'Components/modals/DeleteRuleModal';
+import { DeleteDetectionsModalProps } from 'Components/modals/DeleteDetectionsModal';
 import { DeleteTestModalProps } from 'Components/modals/DeleteTestModal';
 import { DeleteGlobalPythonModuleModalProps } from 'Components/modals/DeleteGlobalPythonModuleModal';
 import { AnalyticsConsentModalProps } from 'Components/modals/AnalyticsConsentModal';
@@ -37,10 +36,9 @@ const HIDE_MODAL = 'HIDE_MODAL';
 
 /* The available list of modals to dispatch */
 export enum MODALS {
-  DELETE_POLICY = 'DELETE_POLICY',
   DELETE_CUSTOM_LOG = 'DELETE_CUSTOM_LOG',
   DELETE_DATA_MODEL = 'DELETE_DATA_MODEL',
-  DELETE_RULE = 'DELETE_RULE',
+  DELETE_DETECTIONS = 'DELETE_DETECTIONS',
   DELETE_GLOBAL_PYTHON_MODULE = 'DELETE_GLOBAL_PYTHON_MODULE',
   DELETE_USER = 'DELETE_USER',
   DELETE_TEST = 'DELETE_TEST',
@@ -64,14 +62,6 @@ interface ModalStateShape {
   isVisible: boolean;
 }
 
-/* Show delete policy modal */
-interface ShowPolicyModalAction {
-  type: typeof SHOW_MODAL;
-  payload: {
-    modal: MODALS.DELETE_POLICY;
-    props: OmitControlledProps<DeletePolicyModalProps>;
-  };
-}
 interface ShowCustomLogModalAction {
   type: typeof SHOW_MODAL;
   payload: {
@@ -170,11 +160,11 @@ interface ShowProfileSettingsModalAction {
 }
 
 /* 1st action */
-interface ShowDeleteRuleModalAction {
+interface ShowDeleteDetectionsModalAction {
   type: typeof SHOW_MODAL;
   payload: {
-    modal: MODALS.DELETE_RULE;
-    props: OmitControlledProps<DeleteRuleModalProps>;
+    modal: MODALS.DELETE_DETECTIONS;
+    props: OmitControlledProps<DeleteDetectionsModalProps>;
   };
 }
 
@@ -217,8 +207,7 @@ type ModalStateAction =
   | ShowProfileSettingsModalAction
   | ShowResetUserPasswordModalAction
   | ShowReinviteUserModalAction
-  | ShowPolicyModalAction
-  | ShowDeleteRuleModalAction
+  | ShowDeleteDetectionsModalAction
   | ShowDeleteDestinationModalAction
   | ShowNetworkErrorModalAction
   | ShowAnalyticsConsentModalAction

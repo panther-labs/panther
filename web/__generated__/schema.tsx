@@ -337,20 +337,16 @@ export type DeleteDataModelInput = {
   dataModels: Array<DeleteEntry>;
 };
 
+export type DeleteDetectionInput = {
+  detections: Array<DeleteEntry>;
+};
+
 export type DeleteEntry = {
   id: Scalars['ID'];
 };
 
 export type DeleteGlobalPythonModuleInput = {
   globals: Array<DeleteEntry>;
-};
-
-export type DeletePolicyInput = {
-  policies: Array<DeleteEntry>;
-};
-
-export type DeleteRuleInput = {
-  rules: Array<DeleteEntry>;
 };
 
 export type DeliverAlertInput = {
@@ -857,12 +853,11 @@ export type Mutation = {
   addRule: Rule;
   addGlobalPythonModule: GlobalPythonModule;
   deleteDataModel?: Maybe<Scalars['Boolean']>;
+  deleteDetections?: Maybe<Scalars['Boolean']>;
   deleteDestination?: Maybe<Scalars['Boolean']>;
   deleteComplianceIntegration?: Maybe<Scalars['Boolean']>;
   deleteCustomLog: DeleteCustomLogOutput;
   deleteLogIntegration?: Maybe<Scalars['Boolean']>;
-  deletePolicy?: Maybe<Scalars['Boolean']>;
-  deleteRule?: Maybe<Scalars['Boolean']>;
   deleteGlobalPythonModule?: Maybe<Scalars['Boolean']>;
   deleteUser?: Maybe<Scalars['Boolean']>;
   inviteUser: User;
@@ -928,6 +923,10 @@ export type MutationDeleteDataModelArgs = {
   input: DeleteDataModelInput;
 };
 
+export type MutationDeleteDetectionsArgs = {
+  input: DeleteDetectionInput;
+};
+
 export type MutationDeleteDestinationArgs = {
   id: Scalars['ID'];
 };
@@ -942,14 +941,6 @@ export type MutationDeleteCustomLogArgs = {
 
 export type MutationDeleteLogIntegrationArgs = {
   id: Scalars['ID'];
-};
-
-export type MutationDeletePolicyArgs = {
-  input: DeletePolicyInput;
-};
-
-export type MutationDeleteRuleArgs = {
-  input: DeleteRuleInput;
 };
 
 export type MutationDeleteGlobalPythonModuleArgs = {
@@ -1912,10 +1903,9 @@ export type ResolversTypes = {
   AddGlobalPythonModuleInput: AddGlobalPythonModuleInput;
   DeleteDataModelInput: DeleteDataModelInput;
   DeleteEntry: DeleteEntry;
+  DeleteDetectionInput: DeleteDetectionInput;
   DeleteCustomLogInput: DeleteCustomLogInput;
   DeleteCustomLogOutput: ResolverTypeWrapper<DeleteCustomLogOutput>;
-  DeletePolicyInput: DeletePolicyInput;
-  DeleteRuleInput: DeleteRuleInput;
   DeleteGlobalPythonModuleInput: DeleteGlobalPythonModuleInput;
   InviteUserInput: InviteUserInput;
   MessageActionEnum: MessageActionEnum;
@@ -2105,10 +2095,9 @@ export type ResolversParentTypes = {
   AddGlobalPythonModuleInput: AddGlobalPythonModuleInput;
   DeleteDataModelInput: DeleteDataModelInput;
   DeleteEntry: DeleteEntry;
+  DeleteDetectionInput: DeleteDetectionInput;
   DeleteCustomLogInput: DeleteCustomLogInput;
   DeleteCustomLogOutput: DeleteCustomLogOutput;
-  DeletePolicyInput: DeletePolicyInput;
-  DeleteRuleInput: DeleteRuleInput;
   DeleteGlobalPythonModuleInput: DeleteGlobalPythonModuleInput;
   InviteUserInput: InviteUserInput;
   MessageActionEnum: MessageActionEnum;
@@ -2835,6 +2824,12 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationDeleteDataModelArgs, 'input'>
   >;
+  deleteDetections?: Resolver<
+    Maybe<ResolversTypes['Boolean']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationDeleteDetectionsArgs, 'input'>
+  >;
   deleteDestination?: Resolver<
     Maybe<ResolversTypes['Boolean']>,
     ParentType,
@@ -2858,18 +2853,6 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationDeleteLogIntegrationArgs, 'id'>
-  >;
-  deletePolicy?: Resolver<
-    Maybe<ResolversTypes['Boolean']>,
-    ParentType,
-    ContextType,
-    RequireFields<MutationDeletePolicyArgs, 'input'>
-  >;
-  deleteRule?: Resolver<
-    Maybe<ResolversTypes['Boolean']>,
-    ParentType,
-    ContextType,
-    RequireFields<MutationDeleteRuleArgs, 'input'>
   >;
   deleteGlobalPythonModule?: Resolver<
     Maybe<ResolversTypes['Boolean']>,

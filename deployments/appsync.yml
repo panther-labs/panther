@@ -925,25 +925,6 @@ Resources:
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
-  DeletePolicyResolver:
-    Type: AWS::AppSync::Resolver
-    Properties:
-      ApiId: !Ref ApiId
-      TypeName: Mutation
-      FieldName: deletePolicy
-      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
-      RequestMappingTemplate: |
-        {
-          "version" : "2017-02-28",
-          "operation": "Invoke",
-          "payload": $util.toJson({
-            "deletePolicies": {
-              "entries": $ctx.args.input.policies
-            }
-          })
-        }
-      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCodeNoBody, VTL]
-
   UploadDetectionsResolver:
     Type: AWS::AppSync::Resolver
     Properties:
@@ -1228,20 +1209,20 @@ Resources:
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
-  DeleteRuleResolver:
+  DeleteDetectionResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
-      FieldName: deleteRule
+      FieldName: deleteDetections
       DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "deleteRules": {
-              "entries": $ctx.args.input.rules
+            "deleteDetections": {
+              "entries": $ctx.args.input.detections
             }
           })
         }

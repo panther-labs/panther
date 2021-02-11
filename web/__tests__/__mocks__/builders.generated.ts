@@ -48,10 +48,9 @@ import {
   DeleteCustomLogInput,
   DeleteCustomLogOutput,
   DeleteDataModelInput,
+  DeleteDetectionInput,
   DeleteEntry,
   DeleteGlobalPythonModuleInput,
-  DeletePolicyInput,
-  DeleteRuleInput,
   DeliverAlertInput,
   DeliveryResponse,
   Destination,
@@ -613,6 +612,14 @@ export const buildDeleteDataModelInput = (
   };
 };
 
+export const buildDeleteDetectionInput = (
+  overrides: Partial<DeleteDetectionInput> = {}
+): DeleteDetectionInput => {
+  return {
+    detections: 'detections' in overrides ? overrides.detections : [buildDeleteEntry()],
+  };
+};
+
 export const buildDeleteEntry = (overrides: Partial<DeleteEntry> = {}): DeleteEntry => {
   return {
     id: 'id' in overrides ? overrides.id : 'c332a174-a738-4158-8e60-4fd94281e5ed',
@@ -624,20 +631,6 @@ export const buildDeleteGlobalPythonModuleInput = (
 ): DeleteGlobalPythonModuleInput => {
   return {
     globals: 'globals' in overrides ? overrides.globals : [buildDeleteEntry()],
-  };
-};
-
-export const buildDeletePolicyInput = (
-  overrides: Partial<DeletePolicyInput> = {}
-): DeletePolicyInput => {
-  return {
-    policies: 'policies' in overrides ? overrides.policies : [buildDeleteEntry()],
-  };
-};
-
-export const buildDeleteRuleInput = (overrides: Partial<DeleteRuleInput> = {}): DeleteRuleInput => {
-  return {
-    rules: 'rules' in overrides ? overrides.rules : [buildDeleteEntry()],
   };
 };
 

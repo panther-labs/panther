@@ -20,12 +20,11 @@ type Mutation {
   addRule(input: AddRuleInput!): Rule!
   addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
   deleteDataModel(input: DeleteDataModelInput!): Boolean
+  deleteDetections(input: DeleteDetectionInput!): Boolean
   deleteDestination(id: ID!): Boolean
   deleteComplianceIntegration(id: ID!): Boolean
   deleteCustomLog(input: DeleteCustomLogInput): DeleteCustomLogOutput!
   deleteLogIntegration(id: ID!): Boolean
-  deletePolicy(input: DeletePolicyInput!): Boolean
-  deleteRule(input: DeleteRuleInput!): Boolean
   deleteGlobalPythonModule(input: DeleteGlobalPythonModuleInput!): Boolean
   deleteUser(id: ID!): Boolean
   inviteUser(input: InviteUserInput): User!
@@ -446,8 +445,8 @@ input GetRuleInput {
   versionId: ID
 }
 
-input DeleteRuleInput {
-  rules: [DeleteEntry!]!
+input DeleteDetectionInput {
+  detections: [DeleteEntry!]!
 }
 
 interface Detection {
@@ -1064,10 +1063,6 @@ input AddGlobalPythonModuleInput {
 
 input DeleteGlobalPythonModuleInput {
   globals: [DeleteEntry!]!
-}
-
-input DeletePolicyInput {
-  policies: [DeleteEntry!]!
 }
 
 input UploadDetectionsInput {
