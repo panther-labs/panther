@@ -60,6 +60,26 @@ var (
 	}
 )
 
+func TestIsDetectionInMultipleEnabledPacks(t *testing.T) {
+	detectionsToPacks := map[string][]*packTableItem{
+		ruleDetectionID: {
+			&packTableItem{Enabled: false},
+		},
+		globalDetectionID: {
+			&packTableItem{Enabled: true},
+		},
+	}
+	// detection not in any other pack
+	result := isDetectionInEnabledPack(detectionsToPacks, policyDetectionID)
+	assert.False(t, result)
+	// detection in another pack, but it is disabled
+	result = isDetectionInEnabledPack(detectionsToPacks, ruleDetectionID)
+	assert.False(t, result)
+	// detection in another pack that is enabled
+	result = isDetectionInEnabledPack(detectionsToPacks, globalDetectionID)
+	assert.True(t, result)
+}
+
 func TestSetupUpdatePacksVersions(t *testing.T) {
 	// This tests setting up pack items when there is
 	// no change needed (packs already have knowledge of all releases)
