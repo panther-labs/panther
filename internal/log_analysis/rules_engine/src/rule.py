@@ -195,7 +195,8 @@ class Rule:
         self._default_dedup_string = 'defaultDedupString:{}'.format(self.rule_id)
 
     @property
-    def module(self):
+    def module(self) -> Any:
+        """Used to expose the loaded python module to the engine, solely added in to support unit test mocking"""
         return self._module
 
     def run(self, event: PantherEvent, batch_mode: bool = True) -> RuleResult:
