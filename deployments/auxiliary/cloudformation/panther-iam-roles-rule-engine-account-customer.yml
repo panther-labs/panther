@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# TODO Add KMS encryption option for S3 Bucket
 AWSTemplateFormatVersion: 2010-09-09
 Description: Panther Rules Engine Customer Account Cross Account Read-only S3 and Secrets Role
-
 Parameters:
   PantherMasterAccountID:
     Type: String
@@ -31,7 +31,7 @@ Parameters:
   TargetBucketName:
     Type: String
     Description: Enter the S3 Bucket that the Panther Rules Engine can Read from.
-
+   
 Resources:
   PantherRulesEngineIamRole:
     Type: 'AWS::IAM::Role'
