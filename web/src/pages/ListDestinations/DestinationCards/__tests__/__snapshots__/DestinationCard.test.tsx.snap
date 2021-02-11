@@ -1,18 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Generic Destination Card should match snapshot 1`] = `
-.panther-17 {
+.panther-19 {
   background-color: #1d2a3f;
   border-radius: 4px;
   overflow: hidden;
 }
 
-.panther-16 {
+.panther-18 {
   background-color: transparent;
   padding: 16px;
 }
 
-.panther-15 {
+.panther-17 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -26,7 +26,7 @@ exports[`Generic Destination Card should match snapshot 1`] = `
   margin-right: 20px;
 }
 
-.panther-14 {
+.panther-16 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -40,7 +40,7 @@ exports[`Generic Destination Card should match snapshot 1`] = `
   width: 100%;
 }
 
-.panther-7 {
+.panther-9 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -55,7 +55,7 @@ exports[`Generic Destination Card should match snapshot 1`] = `
 .panther-2 {
   font-weight: 500;
   margin-right: auto;
-  max-width: 70%;
+  max-width: 60%;
   word-break: break-word;
 }
 
@@ -81,17 +81,24 @@ exports[`Generic Destination Card should match snapshot 1`] = `
   color: #11a5f3;
 }
 
-.panther-3 {
+.panther-5 {
   font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.panther-3 {
+  padding-right: 4px;
   color: #86a3c3;
 }
 
-.panther-6 {
+
+
+.panther-8 {
   margin-left: 8px;
   margin-top: -4px;
 }
 
-.panther-5 {
+.panther-7 {
   outline: none;
   line-height: 1;
   border-radius: 99999px;
@@ -108,20 +115,20 @@ exports[`Generic Destination Card should match snapshot 1`] = `
   text-decoration: none;
 }
 
-.panther-5:hover {
+.panther-7:hover {
   background-color: rgba(62,81,107,0.3);
 }
 
-.panther-5:focus {
+.panther-7:focus {
   background-color: rgba(62,81,107,0.3);
 }
 
-.panther-5:active,
-.panther-5[data-active=true] {
+.panther-7:active,
+.panther-7[data-active=true] {
   background-color: #3e516b;
 }
 
-.panther-4 {
+.panther-6 {
   display: inline-block;
   vertical-align: sub;
   -webkit-flex-shrink: 0;
@@ -132,7 +139,7 @@ exports[`Generic Destination Card should match snapshot 1`] = `
   color: currentColor;
 }
 
-.panther-13 {
+.panther-15 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -143,11 +150,11 @@ exports[`Generic Destination Card should match snapshot 1`] = `
   flex-wrap: wrap;
 }
 
-.panther-13>*:not(:last-child) {
+.panther-15>*:not(:last-child) {
   margin-right: 32px;
 }
 
-.panther-10 {
+.panther-12 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -158,13 +165,13 @@ exports[`Generic Destination Card should match snapshot 1`] = `
   margin-top: 8px;
 }
 
-.panther-8 {
+.panther-10 {
   color: #bdbdbd;
   font-size: 0.563rem;
   font-weight: 500;
 }
 
-.panther-9 {
+.panther-11 {
   display: -webkit-inline-box;
   display: -webkit-inline-flex;
   display: -ms-inline-flexbox;
@@ -183,7 +190,7 @@ exports[`Generic Destination Card should match snapshot 1`] = `
   min-height: 24px;
 }
 
-.panther-12 {
+.panther-14 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -197,11 +204,11 @@ exports[`Generic Destination Card should match snapshot 1`] = `
   margin-top: 16px;
 }
 
-.panther-12>*:not(:last-child) {
+.panther-14>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-11 {
+.panther-13 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -237,13 +244,13 @@ exports[`Generic Destination Card should match snapshot 1`] = `
     id="main-header"
   />
   <section
-    class="panther-17"
+    class="panther-19"
   >
     <div
-      class="panther-16"
+      class="panther-18"
     >
       <div
-        class="panther-15"
+        class="panther-17"
       >
         <img
           alt="Logo"
@@ -253,10 +260,10 @@ exports[`Generic Destination Card should match snapshot 1`] = `
           width="20"
         />
         <div
-          class="panther-14"
+          class="panther-16"
         >
           <header
-            class="panther-7"
+            class="panther-9"
           >
             <h4
               class="panther-2"
@@ -268,26 +275,35 @@ exports[`Generic Destination Card should match snapshot 1`] = `
                 Accountability
               </a>
             </h4>
-            <span
-              class="panther-3"
-            >
-              2020-07-05 06:23 GMT
-            </span>
             <div
-              class="panther-6"
+              class="panther-5"
+            >
+              <span
+                class="panther-3"
+              >
+                Updated
+              </span>
+              <span
+                class="panther-4"
+              >
+                2020-07-05 06:23 GMT
+              </span>
+            </div>
+            <div
+              class="panther-8"
             >
               <button
                 aria-controls="menu--1"
                 aria-haspopup="true"
                 aria-label="Toggle Options"
                 aria-pressed="false"
-                class="panther-5"
+                class="panther-7"
                 data-reach-menu-button=""
                 id="menu-button--menu--1"
                 type="button"
               >
                 <svg
-                  class="panther-4"
+                  class="panther-6"
                   role="presentation"
                   viewBox="0 0 24 24"
                 >
@@ -299,31 +315,31 @@ exports[`Generic Destination Card should match snapshot 1`] = `
             </div>
           </header>
           <div
-            class="panther-13"
+            class="panther-15"
           >
             <dl
-              class="panther-10"
+              class="panther-12"
             >
               <dt
                 aria-labelledby="alert-typespolicy-failures"
-                class="panther-8"
+                class="panther-10"
               >
                 Alert Types
               </dt>
               <dd
                 aria-labelledby="alert-typespolicy-failures"
-                class="panther-9"
+                class="panther-11"
               >
                 Policy Failures
               </dd>
             </dl>
             A children
             <div
-              class="panther-12"
+              class="panther-14"
             >
               <div
                 aria-atomic="true"
-                class="panther-11"
+                class="panther-13"
                 role="status"
               >
                 CRITICAL

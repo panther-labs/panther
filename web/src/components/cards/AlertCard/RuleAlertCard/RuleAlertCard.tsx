@@ -87,25 +87,23 @@ const RuleAlertCard: React.FC<RuleAlertCardProps> = ({
             {alert.type === AlertTypesEnum.Rule ? 'RULE MATCH' : 'RULE ERROR'}
           </FlatBadge>
         </Box>
-        <Grid gap={2} templateColumns="3fr 4fr 3fr">
-          <Box>
-            {!hideRuleButton && (
-              <GenericItemCard.Value
-                label="Rule"
-                value={
-                  <Flex align="center" spacing={2}>
-                    <Text maxWidth={250} truncated alignItems="center" as="span">
-                      {detectionData.ruleId}
-                    </Text>
-                    <GenericItemCard.Link
-                      aria-label={`Link to rule ${detectionData.ruleId}`}
-                      to={urls.logAnalysis.rules.details(detectionData.ruleId)}
-                    />
-                  </Flex>
-                }
-              />
-            )}
-          </Box>
+        <Grid gap={2} templateColumns={hideRuleButton ? 'repeat(2, 1fr)' : '3fr 4fr 3fr'}>
+          {!hideRuleButton && (
+            <GenericItemCard.Value
+              label="Rule"
+              value={
+                <Flex align="center" spacing={2}>
+                  <Text maxWidth={250} truncated alignItems="center" as="span">
+                    {detectionData.ruleId}
+                  </Text>
+                  <GenericItemCard.Link
+                    aria-label={`Link to rule ${detectionData.ruleId}`}
+                    to={urls.logAnalysis.rules.details(detectionData.ruleId)}
+                  />
+                </Flex>
+              }
+            />
+          )}
           <GenericItemCard.Value
             label="Log Types"
             value={<BulletedValueList values={detectionData.logTypes} limit={2} />}

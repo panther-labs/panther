@@ -30,7 +30,6 @@ describe('RuleCard', () => {
     const { getByText } = render(<RuleCard rule={rule} />);
 
     expect(getByText(rule.displayName)).toBeInTheDocument();
-    expect(getByText('Destinations')).toBeInTheDocument();
     expect(getByText(SeverityEnum.High)).toBeInTheDocument();
     expect(getByText('DISABLED')).toBeInTheDocument();
   });

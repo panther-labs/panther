@@ -36,7 +36,9 @@ const ComplianceSourceEventState: React.FC<ComplianceSourceEventStateProps> = ({
         size="large"
         mr={1}
       />
-      <Text fontSize="small">{text}</Text>
+      <Text aria-label={`${text} ${enabled ? 'enabled' : 'disabled'}`} fontSize="small">
+        {text}
+      </Text>
     </Flex>
   );
 };
