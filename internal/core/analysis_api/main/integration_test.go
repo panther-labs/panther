@@ -50,14 +50,15 @@ const (
 	packTableName       = "panther-analysis-packs"
 	analysesRoot        = "./test_analyses"
 	analysesZipLocation = "./bulk_upload.zip"
-	systemUserID        = "00000000-0000-4000-8000-000000000000"
+	packVersionID       = 35328828
 )
 
 var (
 	integrationTest bool
 	apiClient       gatewayapi.API
 
-	userID = "test-panther-user" // does NOT need to be a uuid4
+	userID       = "test-panther-user" // does NOT need to be a uuid4
+	systemUserID = "00000000-0000-4000-8000-000000000000"
 
 	// NOTE: this gets changed by the bulk upload!
 	policy = &models.Policy{
@@ -119,7 +120,7 @@ var (
 		Description: "Example LogType Schema",
 		Enabled:     true,
 		ID:          "DataModelTypeAnalysis",
-		LogTypes:    []string{"OneLogin.Events"},
+		LogTypes:    []string{"Custom.Log.1"},
 		Mappings: []models.DataModelMapping{
 			{
 				Name: "source_ip",
@@ -132,7 +133,7 @@ var (
 		Description: "Example LogType Schema",
 		Enabled:     true,
 		ID:          "SecondDataModelTypeAnalysis",
-		LogTypes:    []string{"Box.Events"},
+		LogTypes:    []string{"Custom.Log.2"},
 		Mappings: []models.DataModelMapping{
 			{
 				Name: "source_ip",
@@ -145,7 +146,7 @@ var (
 		Description: "Example LogType Schema",
 		Enabled:     false,
 		ID:          "ThirdDataModelTypeAnalysis",
-		LogTypes:    []string{"Box.Events"},
+		LogTypes:    []string{"Custom.Log.2"},
 		Mappings: []models.DataModelMapping{
 			{
 				Name: "source_ip",
@@ -171,7 +172,7 @@ var (
 	}
 	packOriginalRelease = &models.Pack{
 		AvailableVersions: []models.Version{
-			{ID: 35328828, SemVer: "v1.14.0"},
+			{ID: packVersionID, SemVer: "v1.14.0"},
 		},
 		CreatedBy:   systemUserID,
 		Description: "This pack is an example",
@@ -186,12 +187,47 @@ var (
 		ID:             "Sample.Pack.ID",
 		LastModifiedBy: systemUserID,
 		PackVersion: models.Version{
-			ID:     35328828,
+			ID:     packVersionID,
 			SemVer: "v1.14.0",
 		},
 		UpdateAvailable: false,
 		PackTypes: map[models.DetectionType]int{
 			models.TypeRule: 3,
+		},
+	}
+	packOriginalReleaseStandardSet = &models.Pack{
+		AvailableVersions: []models.Version{
+			{ID: packVersionID, SemVer: "v1.14.0"},
+		},
+		CreatedBy:   systemUserID,
+		Description: "This pack groups the standard rules that leverage universal data models",
+		PackDefinition: models.PackDefinition{
+			IDs: []string{
+				"Standard.AWS.ALB",
+				"Standard.AWS.CloudTrail",
+				"Standard.AWS.S3ServerAccess",
+				"Standard.AWS.VPCFlow",
+				"Standard.Box.Event",
+				"Standard.GCP.AuditLog",
+				"Standard.GSuite.Reports",
+				"Standard.Okta.SystemLog",
+				"Standard.OneLogin.Events",
+				"Standard.AdminRoleAssigned",
+				"Standard.BruteForceByIP",
+			},
+		},
+		DisplayName:    "Standard Ruleset Pack",
+		Enabled:        false,
+		ID:             "Standard.Ruleset",
+		LastModifiedBy: systemUserID,
+		PackVersion: models.Version{
+			ID:     packVersionID,
+			SemVer: "v1.14.0",
+		},
+		UpdateAvailable: false,
+		PackTypes: map[models.DetectionType]int{
+			models.TypeDataModel: 9,
+			models.TypeRule:      2,
 		},
 	}
 )
@@ -317,7 +353,6 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ListDetectionsAnalysisTypeFilter", listDetectionsAnalysisTypeFilter)
 		t.Run("ListDetectionsComplianceFilter", listDetectionsComplianceFilter)
 		t.Run("ListPacks", listPacks)
-		t.Run("EnumeratePack", enumeratePack)
 	})
 
 	t.Run("Modify", func(t *testing.T) {
@@ -340,10 +375,11 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("DeleteGlobals", deleteGlobals)
 	})
 
-	// This ahs to run after the other detection changes since it will
+	// This has to run after the other detection changes since it will
 	// add/remove/update detections
 	t.Run("Patch", func(t *testing.T) {
 		t.Run("PatchPack", patchPack)
+		t.Run("EnumeratePack", enumeratePack)
 	})
 }
 
@@ -1185,7 +1221,7 @@ func createDataModel(t *testing.T) {
 			Description: "Example LogType Schema",
 			Enabled:     true,
 			ID:          "AnotherDataModelTypeAnalysis",
-			LogTypes:    []string{"OneLogin.Events"},
+			LogTypes:    []string{"Custom.Log.1"},
 			Mappings:    []models.DataModelMapping{},
 		},
 	}
@@ -2725,7 +2761,7 @@ func pollPacks(t *testing.T) {
 	// poll for packs from well known release version
 	input = models.LambdaInput{
 		PollPacks: &models.PollPacksInput{
-			VersionID: 35328828,
+			VersionID: packVersionID,
 		},
 	}
 	statusCode, err = apiClient.Invoke(&input, nil)
@@ -2738,15 +2774,23 @@ func pollPacks(t *testing.T) {
 	statusCode, err = apiClient.Invoke(&input, &result)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
-	packOriginalRelease.CreatedAt = result.Packs[0].CreatedAt
-	packOriginalRelease.LastModified = result.Packs[0].LastModified
+	for _, pack := range result.Packs {
+		if pack.ID == packOriginalRelease.ID {
+			packOriginalRelease.CreatedAt = pack.CreatedAt
+			packOriginalRelease.LastModified = pack.LastModified
+		} else if pack.ID == packOriginalReleaseStandardSet.ID {
+			packOriginalReleaseStandardSet.CreatedAt = pack.CreatedAt
+			packOriginalReleaseStandardSet.LastModified = pack.LastModified
+		}
+	}
 	expected = models.ListPacksOutput{
 		Paging: models.Paging{
 			ThisPage:   1,
-			TotalItems: 1,
+			TotalItems: 2,
 			TotalPages: 1,
 		},
 		Packs: []models.Pack{
+			*packOriginalReleaseStandardSet,
 			*packOriginalRelease,
 		},
 	}
@@ -2791,10 +2835,11 @@ func listPacks(t *testing.T) {
 	expected := models.ListPacksOutput{
 		Paging: models.Paging{
 			ThisPage:   1,
-			TotalItems: 1,
+			TotalItems: 2,
 			TotalPages: 1,
 		},
 		Packs: []models.Pack{
+			*packOriginalReleaseStandardSet,
 			*packOriginalRelease,
 		},
 	}
@@ -2828,6 +2873,36 @@ func enumeratePack(t *testing.T) {
 	}
 	_, err = apiClient.Invoke(&input, &result)
 	assert.Error(t, err)
+	// First, have to enable to pack to get the detections in
+	var modifyResult models.Pack
+	modifyInput := models.LambdaInput{
+		PatchPack: &models.PatchPackInput{
+			ID:        packOriginalReleaseStandardSet.ID,
+			Enabled:   true,
+			VersionID: packOriginalReleaseStandardSet.PackVersion.ID,
+			UserID:    userID,
+		},
+	}
+	statusCode, err = apiClient.Invoke(&modifyInput, &modifyResult)
+	// update appropriate fields to compare
+	packOriginalReleaseStandardSet.Enabled = true
+	packOriginalReleaseStandardSet.LastModified = modifyResult.LastModified
+	packOriginalReleaseStandardSet.LastModifiedBy = userID
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	assert.Equal(t, *packOriginalReleaseStandardSet, modifyResult)
+	// success: multi types
+	input = models.LambdaInput{
+		EnumeratePack: &models.EnumeratePackInput{
+			ID: packOriginalReleaseStandardSet.ID,
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	assert.Equal(t, 2, len(result.Detections))
+	assert.Equal(t, 9, len(result.Models))
+	assert.Equal(t, 0, len(result.Globals))
 }
 
 func patchPack(t *testing.T) {
