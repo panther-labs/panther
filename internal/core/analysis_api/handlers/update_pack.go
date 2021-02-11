@@ -129,14 +129,14 @@ func setupUpdatePackToVersion(input *models.PatchPackInput, version models.Versi
 
 	// get the new detections in the pack
 	newPackDetections := detectionSetLookup(detectionVersionSet, newPackItem.PackDefinition)
-	packDetectionTypes := getDetectionTypeSet(newPackDetections)
+	packTypes := setPackTypes(newPackDetections)
 	updateAvailable := isNewReleaseAvailable(version, []*packTableItem{oldPackItem})
 	pack := &packTableItem{
 		Enabled:           input.Enabled, // update the item enablement status if it has been updated
 		UpdateAvailable:   updateAvailable,
 		Description:       newPackItem.Description,
 		PackDefinition:    newPackItem.PackDefinition,
-		PackTypes:         packDetectionTypes,
+		PackTypes:         packTypes,
 		DisplayName:       newPackItem.DisplayName,
 		PackVersion:       version,
 		ID:                input.ID,
@@ -321,6 +321,7 @@ func setupUpdatePacksVersions(newVersion models.Version, oldPackItems []*packTab
 	}
 	// Loop through new packs. Old/deprecated packs will simply not get updated
 	for id, newPack := range newPackItems {
+		detections := detectionSetLookup(newPackDetections, newPack.PackDefinition)
 		if oldPack, ok := oldPackItemsMap[id]; ok {
 			// Update existing pack metadata fields: AvailableVersions and UpdateAvailable
 			if !containsRelease(oldPack.AvailableVersions, newVersion.ID) {
@@ -339,7 +340,7 @@ func setupUpdatePacksVersions(newVersion models.Version, oldPackItems []*packTab
 			newPack.AvailableVersions = []models.Version{newVersion}
 			// this is a new pack, adding the only version applicable to it so no update is available
 			// lookup detections that will be in this pack
-			packDetectionTypes := getDetectionTypeSet(detectionSetLookup(newPackDetections, newPack.PackDefinition))
+			packDetectionTypes := setPackTypes(detections)
 			newPack.PackTypes = packDetectionTypes
 			newPack.UpdateAvailable = false
 			newPack.PackVersion = newVersion
@@ -415,14 +416,19 @@ func detectionSetLookup(newDetections map[string]*tableItem, input models.PackDe
 	return items
 }
 
-func getDetectionTypeSet(detections map[string]*tableItem) map[models.DetectionType]int {
-	detectionTypes := make(map[models.DetectionType]int)
+// setPackTypes will loop through the detections/data models/globals that make it up
+// and set the type counts. For example:
+// {
+//   "GLOBAL": 0, "DATAMODEL": 1, "RULE": 2, "POLICY": 3,
+// }
+func setPackTypes(detections map[string]*tableItem) map[models.DetectionType]int {
+	packTypes := make(map[models.DetectionType]int)
 	for _, detection := range detections {
-		if _, ok := detectionTypes[detection.Type]; ok {
-			detectionTypes[detection.Type] = detectionTypes[detection.Type] + 1
+		if _, ok := packTypes[detection.Type]; ok {
+			packTypes[detection.Type] = packTypes[detection.Type] + 1
 		} else {
-			detectionTypes[detection.Type] = 1
+			packTypes[detection.Type] = 1
 		}
 	}
-	return detectionTypes
+	return packTypes
 }

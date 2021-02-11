@@ -32,18 +32,58 @@ import (
 	"github.com/panther-labs/panther/pkg/gatewayapi"
 )
 
-func (API) EnumeratePack(input *models.EnumeratePack) *events.APIGatewayProxyResponse {
-	// Convert pack definition to a list detection option
-	var item *packTableItem
-	item, err := dynamoGetPack(input.ID, false)
+func (API) EnumeratePack(input *models.EnumeratePackInput) *events.APIGatewayProxyResponse {
+	if input.Page == 0 {
+		input.Page = defaultPage
+	}
+	if input.PageSize == 0 {
+		input.PageSize = defaultPageSize
+	}
+	var pack *packTableItem
+	pack, err := dynamoGetPack(input.ID, false)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{
 			Body:       fmt.Sprintf("Internal error finding %s (%s)", input.ID, models.TypePack),
 			StatusCode: http.StatusInternalServerError,
 		}
 	}
-	listDetectionInput := getListOptions(input, item.PackDefinition)
-	return handleListItems(listDetectionInput)
+	if pack == nil {
+		return &events.APIGatewayProxyResponse{
+			Body:       fmt.Sprintf("Cannot find %s (%s)", input.ID, models.TypePack),
+			StatusCode: http.StatusNotFound,
+		}
+	}
+	// Convert pack definition to a list detection option
+	listDetectionInput := getListOptions(input, pack.PackDefinition)
+	items, compliance, err := handleListItems(listDetectionInput)
+	if err != nil {
+		return &events.APIGatewayProxyResponse{
+			Body: err.Error(), StatusCode: http.StatusInternalServerError}
+	}
+	// Page
+	var paging models.Paging
+	paging, items = pageItems(items, input.Page, input.PageSize)
+	// Convert to output struct
+	result := models.EnumeratePackOutput{
+		Detections: make([]models.Detection, 0, pack.PackTypes[models.TypePolicy]+pack.PackTypes[models.TypeRule]),
+		Globals:    make([]models.Global, 0, pack.PackTypes[models.TypeGlobal]),
+		Models:     make([]models.DataModel, 0, pack.PackTypes[models.TypeDataModel]),
+		Paging:     paging,
+	}
+	for _, item := range items {
+		switch item.Type {
+		case models.TypePolicy, models.TypeRule:
+			status := compliance[item.ID].Status
+			result.Detections = append(result.Detections, *item.Detection(status))
+		case models.TypeGlobal:
+			result.Globals = append(result.Globals, *item.Global())
+		case models.TypeDataModel:
+			result.Models = append(result.Models, *item.DataModel())
+		default:
+			zap.L().Warn("attempting to add unknown analysis type to pack enumeration", zap.String("analysisType", string(item.Type)))
+		}
+	}
+	return gatewayapi.MarshalResponse(&result, http.StatusOK)
 }
 
 func (API) ListPacks(input *models.ListPacksInput) *events.APIGatewayProxyResponse {
@@ -86,7 +126,7 @@ func (API) ListPacks(input *models.ListPacksInput) *events.APIGatewayProxyRespon
 	return gatewayapi.MarshalResponse(&result, http.StatusOK)
 }
 
-func getListOptions(input *models.EnumeratePack, definition models.PackDefinition) *models.ListDetectionsInput {
+func getListOptions(input *models.EnumeratePackInput, definition models.PackDefinition) *models.ListDetectionsInput {
 	// Currently, we only support defining IDs, this can be extended
 	// in the future to convert other defitions into a proper list option
 	listInput := models.ListDetectionsInput{
@@ -96,8 +136,6 @@ func getListOptions(input *models.EnumeratePack, definition models.PackDefinitio
 	listInput.AnalysisTypes = []models.DetectionType{models.TypeDataModel, models.TypeGlobal, models.TypePolicy, models.TypeRule}
 	// then populate the other standard fields
 	listInput.Fields = input.Fields
-	listInput.SortBy = input.SortBy
-	listInput.SortDir = input.SortDir
 	listInput.PageSize = input.PageSize
 	listInput.Page = input.Page
 	return &listInput
