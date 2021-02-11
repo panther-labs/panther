@@ -383,6 +383,7 @@ results:
         "eventCategory": "Insight",
         "p_event_time": "2019-10-17T10:05:00Z",
         "p_any_aws_account_ids": ["123456789012"],
+        "p_any_trace_ids": ["12edc982-3348-4794-83d3-a3db26525049"],
         "p_log_type": "AWS.CloudTrailInsight"
     }
   - |
@@ -414,5 +415,6 @@ results:
         "eventCategory": "Insight",
         "p_event_time": "2019-10-17T10:13:00Z",
         "p_any_aws_account_ids": ["123456789012"],
+        "p_any_trace_ids": ["12edc982-3348-4794-83d3-a3db26525049"],
         "p_log_type": "AWS.CloudTrailInsight"
     }

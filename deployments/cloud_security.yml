@@ -26,6 +26,27 @@ Parameters:
     Description: SNS topic for CloudWatch alarms
     # Example: "arn:aws:sns:us-west-2:111122223333:panther-cw-alarms"
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
+  CloudSecurityMaxReadCapacity:
+    Type: Number
+    Description: Maximum read capacity units to provision for the Cloud Security tables
+    MinValue: 0
+  CloudSecurityMaxWriteCapacity:
+    Type: Number
+    Description: Maximum write capacity units to provision for the Cloud Security tables
+    MinValue: 0
+  CloudSecurityMemory:
+    Type: Number
+    Description: Memory to use for Cloud Security lambdas
+    MinValue: 256
+    MaxValue: 2048
+  CloudSecurityMinReadCapacity:
+    Type: Number
+    Description: Minimum read capacity units to provision for the Cloud Security tables
+    MinValue: 0
+  CloudSecurityMinWriteCapacity:
+    Type: Number
+    Description: Minimum write capacity units to provision for Cloud Security tables
+    MinValue: 0
   CloudWatchLogRetentionDays:
     Type: Number
     Description: CloudWatch log retention period
@@ -38,6 +59,11 @@ Parameters:
     Type: String
     Description: Toggle debug logging
     AllowedValues: [true, false]
+  DynamoScalingRoleArn:
+    Type: String
+    Description: IAM role arn for DynamoDB auto-scaling
+    # Example: "arn:aws:iam::111122223333:role/panther-bootstrap-DynamoScalingRole-UVZQF2N2BBRN"
+    AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):iam::\d{12}:role\/\S+$'
   InputDataBucket:
     Type: String
     Description: Name of the S3 bucket will contain data meant to be processed by log analysis.
@@ -77,7 +103,6 @@ Mappings:
       Memory: 128
       Timeout: 60
     ComplianceApi:
-      Memory: 512
       Timeout: 180
     DatalakeForwarder:
       Memory: 128
@@ -104,7 +129,6 @@ Mappings:
       Memory: 256
       Timeout: 180
     ResourcesApi:
-      Memory: 512
       Timeout: 120
     SnapshotScheduler:
       Memory: 128
@@ -114,6 +138,7 @@ Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
   DebugEnabled: !Equals [!Ref Debug, true]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
+  ProvisionResourceTableCapacity: !Not [!Equals [0, !Ref CloudSecurityMaxReadCapacity]]
 
 Resources:
   ##### Alert Processor #####
@@ -560,7 +585,7 @@ Resources:
       # * Policy failures are no longer be recorded.
       # </cfndoc>
       Handler: main
-      MemorySize: !FindInMap [Functions, ComplianceApi, Memory]
+      MemorySize: !Ref CloudSecurityMemory
       Runtime: go1.x
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
       Timeout: !FindInMap [Functions, ComplianceApi, Timeout]
@@ -596,7 +621,7 @@ Resources:
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       CustomResourceVersion: !Ref CustomResourceVersion
-      FunctionMemoryMB: !FindInMap [Functions, ComplianceApi, Memory]
+      FunctionMemoryMB: !Ref CloudSecurityMemory
       FunctionName: panther-compliance-api
       FunctionTimeoutSec: !FindInMap [Functions, ComplianceApi, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
@@ -616,7 +641,10 @@ Resources:
           AttributeType: S
         - AttributeName: resourceId
           AttributeType: S
-      BillingMode: PAY_PER_REQUEST
+      BillingMode: !If
+        - ProvisionResourceTableCapacity
+        - PROVISIONED
+        - PAY_PER_REQUEST
       GlobalSecondaryIndexes:
         - # Add an index for policyId to efficiently search for a specific policy
           KeySchema:
@@ -625,6 +653,11 @@ Resources:
           IndexName: policy-index
           Projection:
             ProjectionType: ALL
+          ProvisionedThroughput: !If
+            - ProvisionResourceTableCapacity
+            - ReadCapacityUnits: !Ref CloudSecurityMaxReadCapacity
+              WriteCapacityUnits: !Ref CloudSecurityMaxWriteCapacity
+            - !Ref AWS::NoValue
       KeySchema:
         - AttributeName: resourceId
           KeyType: HASH
@@ -632,6 +665,11 @@ Resources:
           KeyType: RANGE
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: True
+      ProvisionedThroughput: !If
+        - ProvisionResourceTableCapacity
+        - ReadCapacityUnits: !Ref CloudSecurityMaxReadCapacity
+          WriteCapacityUnits: !Ref CloudSecurityMaxWriteCapacity
+        - !Ref AWS::NoValue
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
       SSESpecification:
@@ -639,6 +677,56 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: expiresAt
         Enabled: True
+
+  ComplianceTableWriteCapacityScalableTarget:
+    Condition: ProvisionResourceTableCapacity
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: !Ref CloudSecurityMaxWriteCapacity
+      MinCapacity: !Ref CloudSecurityMinWriteCapacity
+      ResourceId: !Sub table/${ComplianceTable}
+      RoleARN: !Ref DynamoScalingRoleArn
+      ScalableDimension: 'dynamodb:table:WriteCapacityUnits'
+      ServiceNamespace: dynamodb
+
+  ComplianceTableWriteScalingPolicy:
+    Condition: ProvisionResourceTableCapacity
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: WriteAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ComplianceTableWriteCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBWriteCapacityUtilization
+
+  ComplianceTableReadCapacityScalableTarget:
+    Condition: ProvisionResourceTableCapacity
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: !Ref CloudSecurityMaxReadCapacity
+      MinCapacity: !Ref CloudSecurityMinReadCapacity
+      ResourceId: !Sub table/${ComplianceTable}
+      RoleARN: !Ref DynamoScalingRoleArn
+      ScalableDimension: 'dynamodb:table:ReadCapacityUnits'
+      ServiceNamespace: dynamodb
+
+  ComplianceTableReadScalingPolicy:
+    Condition: ProvisionResourceTableCapacity
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: ReadAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ComplianceTableReadCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 500
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBReadCapacityUtilization
 
   ComplianceTableAlarms:
     Type: Custom::DynamoDBAlarms
@@ -909,6 +997,7 @@ Resources:
           DEBUG: !Ref Debug
           RESOURCES_QUEUE_URL: !Ref ResourcesQueue
           RESOURCES_TABLE: !Ref ResourcesTable
+          SCAN_SEGMENTS: 5
       FunctionName: panther-resources-api
       # <cfndoc>
       # The `panther-resources-api` lambda implements the resources API.
@@ -919,7 +1008,7 @@ Resources:
       # </cfndoc>
       Handler: main
       Layers: !If [AttachLayers, !Ref LayerVersionArns, !Ref AWS::NoValue]
-      MemorySize: !FindInMap [Functions, ResourcesApi, Memory]
+      MemorySize: !Ref CloudSecurityMemory
       Runtime: go1.x
       Timeout: !FindInMap [Functions, ResourcesApi, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
@@ -971,7 +1060,7 @@ Resources:
     Properties:
       AlarmTopicArn: !Ref AlarmTopicArn
       CustomResourceVersion: !Ref CustomResourceVersion
-      FunctionMemoryMB: !FindInMap [Functions, ResourcesApi, Memory]
+      FunctionMemoryMB: !Ref CloudSecurityMemory
       FunctionName: panther-resources-api
       FunctionTimeoutSec: !FindInMap [Functions, ResourcesApi, Timeout]
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
@@ -991,19 +1080,77 @@ Resources:
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
-      BillingMode: PAY_PER_REQUEST
+      BillingMode: !If
+        - ProvisionResourceTableCapacity
+        - PROVISIONED
+        - PAY_PER_REQUEST
       KeySchema:
         - AttributeName: id
           KeyType: HASH
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: True
+      ProvisionedThroughput: !If
+        - ProvisionResourceTableCapacity
+        - ReadCapacityUnits: !Ref CloudSecurityMaxReadCapacity
+          WriteCapacityUnits: !Ref CloudSecurityMaxWriteCapacity
+        - !Ref AWS::NoValue
       SSESpecification:
         SSEEnabled: True
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
-      TimeToLiveSpecification: # Deleted resources are expired after 30 days
+      TimeToLiveSpecification: # Deleted resources are expired after 2 days
         AttributeName: expiresAt
         Enabled: true
+
+  ResourcesTableWriteCapacityScalableTarget:
+    Condition: ProvisionResourceTableCapacity
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: !Ref CloudSecurityMaxWriteCapacity
+      MinCapacity: !Ref CloudSecurityMinWriteCapacity
+      ResourceId: !Sub table/${ResourcesTable}
+      RoleARN: !Ref DynamoScalingRoleArn
+      ScalableDimension: 'dynamodb:table:WriteCapacityUnits'
+      ServiceNamespace: dynamodb
+
+  ResourcesTableWriteScalingPolicy:
+    Condition: ProvisionResourceTableCapacity
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: WriteAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ResourcesTableWriteCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBWriteCapacityUtilization
+
+  ResourcesTableReadCapacityScalableTarget:
+    Condition: ProvisionResourceTableCapacity
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: !Ref CloudSecurityMaxReadCapacity
+      MinCapacity: !Ref CloudSecurityMinReadCapacity
+      ResourceId: !Sub table/${ResourcesTable}
+      RoleARN: !Ref DynamoScalingRoleArn
+      ScalableDimension: 'dynamodb:table:ReadCapacityUnits'
+      ServiceNamespace: dynamodb
+
+  ResourcesTableReadScalingPolicy:
+    Condition: ProvisionResourceTableCapacity
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: ReadAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ResourcesTableReadCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBReadCapacityUtilization
 
   ResourcesTableAlarms:
     Type: Custom::DynamoDBAlarms

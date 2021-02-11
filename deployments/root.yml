@@ -40,6 +40,31 @@ Parameters:
     # Example: "arn:aws:acm:us-west-2:111122223333:certificate/6e51b91b-0d7d-4592-89a3-c113c78e3ab3" or
     # "arn:aws:iam::111122223333:server-certificate/panther/us-west-2/MyCert"
     AllowedPattern: '^((arn:(aws|aws-cn|aws-us-gov):acm:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:certificate\/[a-f0-9-]{36})|(arn:(aws|aws-cn|aws-us-gov):iam::\d{12}:server-certificate\/\S+))?$'
+  CloudSecurityMaxReadCapacity:
+    Type: Number
+    Description: Maximum read capacity units to provision for the Cloud Security tables
+    Default: 0
+    MinValue: 0
+  CloudSecurityMaxWriteCapacity:
+    Type: Number
+    Description: Maximum write capacity units to provision for the Cloud Security tables
+    Default: 0
+    MinValue: 0
+  CloudSecurityMemory:
+    Type: Number
+    Description: Minimum write capacity units to provision for Cloud Secuurity lambdas
+    Default: 512
+    MinValue: 256
+  CloudSecurityMinReadCapacity:
+    Type: Number
+    Description: Minimum read capacity units to provision for the Cloud Security tables
+    Default: 0
+    MinValue: 0
+  CloudSecurityMinWriteCapacity:
+    Type: Number
+    Description: Minimum write capacity units to provision for the Cloud Security tables
+    Default: 0
+    MinValue: 0
   CloudWatchLogRetentionDays:
     Type: Number
     Description: Number of days to retain CloudWatch logs (e.g. Lambda execution logs)
@@ -298,12 +323,18 @@ Resources:
       TemplateURL: cloud_security.yml
       Parameters:
         AlarmTopicArn: !GetAtt Bootstrap.Outputs.AlarmTopicArn
+        CloudSecurityMaxReadCapacity: !Ref CloudSecurityMaxReadCapacity
+        CloudSecurityMaxWriteCapacity: !Ref CloudSecurityMaxWriteCapacity
+        CloudSecurityMemory: !Ref CloudSecurityMemory
+        CloudSecurityMinReadCapacity: !Ref CloudSecurityMinReadCapacity
+        CloudSecurityMinWriteCapacity: !Ref CloudSecurityMinWriteCapacity
         CloudWatchLogRetentionDays: !Ref CloudWatchLogRetentionDays
         CustomResourceVersion: !Sub
           - '${version} (${commit})'
           - version: !FindInMap [Constants, Panther, Version]
             commit: !FindInMap [Constants, Panther, Commit]
         Debug: !Ref Debug
+        DynamoScalingRoleArn: !GetAtt Bootstrap.Outputs.DynamoScalingRoleArn
         InputDataBucket: !GetAtt Bootstrap.Outputs.InputDataBucket
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket

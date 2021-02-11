@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"go.uber.org/zap"
@@ -54,13 +55,13 @@ var (
 func (API) ListResources(input *models.ListResourcesInput) *events.APIGatewayProxyResponse {
 	setListDefaults(input)
 
-	scanInput, err := buildListScan(input)
+	scanInputs, err := buildListScan(input)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
-	zap.L().Debug("built Dynamo scan input", zap.Any("scanInput", scanInput))
+	zap.L().Debug("built Dynamo scan input", zap.Any("scanInputs", scanInputs))
 
-	resources, err := listFilteredResources(scanInput, input)
+	resources, err := listFilteredResources(scanInputs, input)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{StatusCode: http.StatusInternalServerError}
 	}
@@ -82,7 +83,7 @@ func setListDefaults(input *models.ListResourcesInput) {
 	}
 }
 
-func buildListScan(input *models.ListResourcesInput) (*dynamodb.ScanInput, error) {
+func buildListScan(input *models.ListResourcesInput) ([]*dynamodb.ScanInput, error) {
 	var projection expression.ProjectionBuilder
 	for i, field := range input.Fields {
 		if field == "complianceStatus" {
@@ -144,18 +145,25 @@ func buildListScan(input *models.ListResourcesInput) (*dynamodb.ScanInput, error
 		return nil, err
 	}
 
-	return &dynamodb.ScanInput{
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		FilterExpression:          expr.Filter(),
-		ProjectionExpression:      expr.Projection(),
-		TableName:                 &env.ResourcesTable,
-	}, nil
+	totalSegments := env.ScanSegments
+	scanInputs := make([]*dynamodb.ScanInput, 0, totalSegments)
+	for i := 0; i < totalSegments; i++ {
+		scanInputs = append(scanInputs, &dynamodb.ScanInput{
+			ExpressionAttributeNames:  expr.Names(),
+			ExpressionAttributeValues: expr.Values(),
+			FilterExpression:          expr.Filter(),
+			ProjectionExpression:      expr.Projection(),
+			TableName:                 &env.ResourcesTable,
+
+			Segment:       aws.Int64(int64(i)),
+			TotalSegments: aws.Int64(int64(totalSegments)),
+		})
+	}
+	return scanInputs, nil
 }
 
 // Scan the table for resources, applying additional filters before returning the results
-func listFilteredResources(scanInput *dynamodb.ScanInput, input *models.ListResourcesInput) ([]models.Resource, error) {
-	result := make([]models.Resource, 0)
+func listFilteredResources(scanInputs []*dynamodb.ScanInput, input *models.ListResourcesInput) ([]models.Resource, error) {
 	includeCompliance := false
 	for _, field := range input.Fields {
 		if field == "complianceStatus" {
@@ -163,28 +171,9 @@ func listFilteredResources(scanInput *dynamodb.ScanInput, input *models.ListReso
 			break
 		}
 	}
+	resources, err := scanPages(scanInputs, includeCompliance, input.ComplianceStatus)
 
-	err := scanPages(scanInput, func(item *resourceItem) error {
-		if !includeCompliance {
-			result = append(result, item.Resource(""))
-			return nil
-		}
-
-		status, err := getComplianceStatus(item.ID)
-		if err != nil {
-			return err
-		}
-
-		// Filter on the compliance status (if applicable)
-		if input.ComplianceStatus == "" || input.ComplianceStatus == status.Status {
-			// Resource passed all of the filters - add it to the result set
-			result = append(result, item.Resource(status.Status))
-		}
-
-		return nil
-	})
-
-	return result, err
+	return resources, err
 }
 
 func sortResources(resources []models.Resource, sortBy string, ascending bool) {

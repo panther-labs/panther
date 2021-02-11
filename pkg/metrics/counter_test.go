@@ -51,7 +51,7 @@ func TestSpaceWalkAbort(t *testing.T) {
 	s.Observe("b", "unit", DimensionValues{"g", "h"}, 128)
 
 	var count int
-	s.Walk(func(name, unit string, lvs DimensionValues, obs []float64) bool {
+	s.Walk(func(name, unit string, lvs DimensionValues, sum float64, observations int64) bool {
 		count++
 		return false
 	})
@@ -73,8 +73,8 @@ func TestSpaceWalkSums(t *testing.T) {
 	s.Observe("metric_two", "unit", DimensionValues{"a", "1", "b", "2"}, 256)
 
 	have := map[string]float64{}
-	s.Walk(func(name, unit string, lvs DimensionValues, obs []float64) bool {
-		have[name+" ["+strings.Join(lvs, "")+"]"] += sum(obs)
+	s.Walk(func(name, unit string, lvs DimensionValues, sum float64, observations int64) bool {
+		have[name+" ["+strings.Join(lvs, "")+"]"] += sum
 		return true
 	})
 
@@ -102,7 +102,7 @@ func TestSpaceWalkSkipsEmptyDimensions(t *testing.T) {
 	s.Observe("foo", "unit", DimensionValues{"bar", "1", "baz", "2"}, 123)
 
 	var count int
-	s.Walk(func(name, unit string, lvs DimensionValues, obs []float64) bool {
+	s.Walk(func(name, unit string, lvs DimensionValues, sum float64, observations int64) bool {
 		count++
 		return true
 	})

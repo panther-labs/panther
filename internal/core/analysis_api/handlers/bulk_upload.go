@@ -22,7 +22,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -31,6 +30,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	validate "gopkg.in/go-playground/validator.v9"
 	"gopkg.in/yaml.v2"
@@ -83,9 +83,9 @@ func (API) BulkUpload(input *models.BulkUploadInput) *events.APIGatewayProxyResp
 		if result.err != nil {
 			// Set the response with an error code - 4XX first, otherwise 5XX
 			if result.err == errWrongType {
-				msg := fmt.Sprintf("ID %s does not have expected type %s", result.item.ID, result.item.Type)
+				err := errors.Errorf("ID %s does not have expected type %s", result.item.ID, result.item.Type)
 				response = &events.APIGatewayProxyResponse{
-					Body:       msg,
+					Body:       err.Error(),
 					StatusCode: http.StatusConflict,
 				}
 			} else if response == nil {
@@ -156,7 +156,7 @@ func extractZipFile(input *models.BulkUploadInput) (map[string]*tableItem, error
 	// Base64-decode
 	content, err := base64.StdEncoding.DecodeString(input.Data)
 	if err != nil {
-		return nil, fmt.Errorf("base64 decoding failed: %s", err)
+		return nil, errors.Errorf("base64 decoding failed: %s", err)
 	}
 	_, detections, err := extractZipFileBytes(content)
 	return detections, err
@@ -171,7 +171,13 @@ func extractZipFileBytes(content []byte) (map[string]*packTableItem, map[string]
 	packs := make(map[string]*packTableItem)
 	detections := make(map[string]*tableItem)
 	detectionBodies := make(map[string]string) // map base file name to contents
-	// Process the zip file and extract each file
+
+	logtypes, err := getLogTypesSet()
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "BulkUpload extractZipFile getLogTypesSet")
+	}
+
+	// Process each file
 	for _, zipFile := range zipReader.File {
 		if strings.HasSuffix(zipFile.Name, "/") {
 			continue // skip directories (we will see their nested files next)
@@ -185,22 +191,10 @@ func extractZipFileBytes(content []byte) (map[string]*packTableItem, map[string]
 		}
 		// the pack directory
 		if strings.Contains(zipFile.Name, "packs/") {
-			var config analysis.PackConfig
-
-			switch strings.ToLower(filepath.Ext(zipFile.Name)) {
-			case ".yml", ".yaml":
-				err = yaml.Unmarshal(unzippedBytes, &config)
-			default:
-				zap.L().Debug("skipped unsupported file", zap.String("fileName", zipFile.Name))
-				continue
-			}
-
+			analysisPackItem, err := buildPackItem(unzippedBytes, zipFile.Name)
 			if err != nil {
 				return nil, nil, err
 			}
-
-			// Map the Config struct fields over to the fields we need to store in Dynamo
-			analysisPackItem := packTableItemFromConfig(config)
 			if _, exists := packs[analysisPackItem.ID]; exists {
 				return nil, nil, fmt.Errorf("multiple pack specs with ID %s", analysisPackItem.ID)
 			}
@@ -225,7 +219,11 @@ func extractZipFileBytes(content []byte) (map[string]*packTableItem, map[string]
 			if err != nil {
 				return nil, nil, err
 			}
-
+			// Check for invalid log or resource types
+			err = bulkValidateLogAndResourceTypes(config, logtypes)
+			if err != nil {
+				return nil, nil, err
+			}
 			// Map the Config struct fields over to the fields we need to store in Dynamo
 			analysisItem := tableItemFromConfig(config)
 			if analysisItem.Type == models.TypeDataModel {
@@ -283,6 +281,98 @@ func extractZipFileBytes(content []byte) (map[string]*packTableItem, map[string]
 	}
 
 	return packs, detections, err
+}
+
+func buildMapping(mapping analysis.Mapping) (models.DataModelMapping, error) {
+	var result models.DataModelMapping
+	if mapping.Path != "" && mapping.Method != "" {
+		return result, errMappingTooManyOptions
+	}
+	if mapping.Path == "" && mapping.Method == "" {
+		return result, errPathOrMethodMissing
+	}
+	return models.DataModelMapping{
+		Name:   mapping.Name,
+		Path:   mapping.Path,
+		Method: mapping.Method,
+	}, nil
+}
+
+func buildPackItem(unzippedBytes []byte, filename string) (*packTableItem, error) {
+	var config analysis.PackConfig
+	var err error
+	switch strings.ToLower(filepath.Ext(filename)) {
+	case ".yml", ".yaml":
+		err = yaml.Unmarshal(unzippedBytes, &config)
+	default:
+		zap.L().Debug("skipped unsupported file", zap.String("fileName", filename))
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Map the Config struct fields over to the fields we need to store in Dynamo
+	analysisPackItem := packTableItemFromConfig(config)
+	return analysisPackItem, nil
+}
+
+func buildPolicyTest(test analysis.Test) (models.UnitTest, error) {
+	resource, err := jsoniter.MarshalToString(test.Resource)
+	return models.UnitTest{
+		ExpectedResult: test.ExpectedResult,
+		Name:           test.Name,
+		Resource:       resource,
+	}, err
+}
+
+func buildRuleTest(test analysis.Test) (models.UnitTest, error) {
+	log, err := jsoniter.MarshalToString(test.Log)
+	return models.UnitTest{
+		ExpectedResult: test.ExpectedResult,
+		Name:           test.Name,
+		Resource:       log,
+	}, err
+}
+
+// Validate the analysis item's Resource type or Log type depending on the config AnalysisType.
+// Passing the logtypes allows us to retrieve the set of valid log types once for a set of validations
+func bulkValidateLogAndResourceTypes(config analysis.Config, logtypes map[string]struct{}) error {
+	itemType := models.DetectionType(strings.ToUpper(config.AnalysisType))
+	resourceTypes := config.ResourceTypes
+	switch itemType {
+	case models.TypeDataModel, models.TypeRule:
+		if len(resourceTypes) == 0 {
+			resourceTypes = config.LogTypes
+		}
+		invalidRsc := FirstSetItemNotInMapKeys(resourceTypes, logtypes)
+		if len(invalidRsc) > 0 {
+			itemTitle := "DataModel"
+			if itemType == models.TypeRule {
+				itemTitle = "Rule"
+			}
+			return errors.Errorf("%s %s contains invalid log type: %s", itemTitle, config.DisplayName, invalidRsc)
+		}
+	case models.TypePolicy:
+		if err := validResourceTypeSet(resourceTypes); err != nil {
+			return errors.Errorf("Policy %s contains invalid log type: %s", config.DisplayName, err.Error())
+		}
+	}
+	return nil
+}
+
+func readZipFile(zf *zip.File) ([]byte, error) {
+	f, err := zf.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			zap.L().Info("error closing zip file", zap.Error(err))
+		}
+	}()
+	return ioutil.ReadAll(f)
 }
 
 func tableItemFromConfig(config analysis.Config) *tableItem {
@@ -366,52 +456,7 @@ func packTableItemFromConfig(config analysis.PackConfig) *packTableItem {
 	return &item
 }
 
-func buildRuleTest(test analysis.Test) (models.UnitTest, error) {
-	log, err := jsoniter.MarshalToString(test.Log)
-	return models.UnitTest{
-		ExpectedResult: test.ExpectedResult,
-		Name:           test.Name,
-		Resource:       log,
-	}, err
-}
-
-func buildPolicyTest(test analysis.Test) (models.UnitTest, error) {
-	resource, err := jsoniter.MarshalToString(test.Resource)
-	return models.UnitTest{
-		ExpectedResult: test.ExpectedResult,
-		Name:           test.Name,
-		Resource:       resource,
-	}, err
-}
-
-func buildMapping(mapping analysis.Mapping) (models.DataModelMapping, error) {
-	var result models.DataModelMapping
-	if mapping.Path != "" && mapping.Method != "" {
-		return result, errMappingTooManyOptions
-	}
-	if mapping.Path == "" && mapping.Method == "" {
-		return result, errPathOrMethodMissing
-	}
-	return models.DataModelMapping{
-		Name:   mapping.Name,
-		Path:   mapping.Path,
-		Method: mapping.Method,
-	}, nil
-}
-
-func readZipFile(zf *zip.File) ([]byte, error) {
-	f, err := zf.Open()
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			zap.L().Error("error closing zip file", zap.Error(err))
-		}
-	}()
-	return ioutil.ReadAll(f)
-}
-
+// Data Model Validations: len(ResourceTypes) <= 1, Single Model Enabled
 func validateUploadedDataModel(item *tableItem) error {
 	if len(item.ResourceTypes) > 1 {
 		return errors.New("only one LogType may be specified per DataModel")
