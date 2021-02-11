@@ -19,6 +19,7 @@
 import React from 'react';
 import { buildRule, render } from 'test-utils';
 import { SeverityEnum } from 'Generated/schema';
+import { SelectProvider } from 'Components/utils/SelectContext';
 import urls from 'Source/urls';
 import RuleCard from './index';
 
@@ -45,7 +46,11 @@ describe('RuleCard', () => {
   });
 
   it('renders a checkbox when selection is enabled', () => {
-    const { getByAriaLabel } = render(<RuleCard rule={buildRule()} selectionEnabled />);
+    const { getByAriaLabel } = render(
+      <SelectProvider>
+        <RuleCard rule={buildRule()} selectionEnabled />
+      </SelectProvider>
+    );
 
     expect(getByAriaLabel(`select item`)).toBeInTheDocument();
   });
