@@ -23,7 +23,6 @@ import traceback
 from dataclasses import dataclass
 from typing import Any, Optional, Callable, List
 
-from unittest.mock import patch, MagicMock
 from .logging import get_logger
 from .util import id_to_path, import_file_as_module, store_modules
 from .enriched_event import PantherEvent
