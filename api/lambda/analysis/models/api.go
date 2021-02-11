@@ -68,19 +68,11 @@ type LambdaInput struct {
 	UpdateDataModel  *UpdateDataModelInput  `json:"updateDataModel,omitempty"`
 
 	// Detection Packs
-<<<<<<< HEAD
-	GetPack       *GetPackInput   `json:"getPack,omitempty"`
-	EnumeratePack *EnumeratePack  `json:"enumeratePack,omitempty"`
-	ListPacks     *ListPacksInput `json:"listPacks,omitempty"`
-	PatchPack     *PatchPackInput `json:"patchPack,omitempty"`
-	PollPacks     *PollPacksInput `json:"pollPacks,omitempty"`
-=======
 	GetPack       *GetPackInput       `json:"getPack,omitempty"`
 	EnumeratePack *EnumeratePackInput `json:"enumeratePack,omitempty"`
 	ListPacks     *ListPacksInput     `json:"listPacks,omitempty"`
 	PatchPack     *PatchPackInput     `json:"patchPack,omitempty"`
 	PollPacks     *PollPacksInput     `json:"pollPacks,omitempty"`
->>>>>>> feature/pack-management
 }
 
 type UnitTest struct {

@@ -32,12 +32,6 @@ import (
 )
 
 func (API) ListDetections(input *models.ListDetectionsInput) *events.APIGatewayProxyResponse {
-<<<<<<< HEAD
-	return handleListItems(input)
-}
-
-func handleListItems(input *models.ListDetectionsInput) *events.APIGatewayProxyResponse {
-=======
 	items, compliance, err := handleListItems(input)
 	if err != nil {
 		return &events.APIGatewayProxyResponse{
@@ -61,7 +55,6 @@ func handleListItems(input *models.ListDetectionsInput) *events.APIGatewayProxyR
 }
 
 func handleListItems(input *models.ListDetectionsInput) ([]tableItem, map[string]complianceStatus, error) {
->>>>>>> feature/pack-management
 	projectComplianceStatus := stdDetectionListInput(input)
 
 	// Scan dynamo
