@@ -391,7 +391,7 @@ func TestDetectionTypeSet(t *testing.T) {
 	expectedOutput := map[models.DetectionType]int{
 		models.TypeRule: 1,
 	}
-	types := getDetectionTypeSet(detections)
+	types := setPackTypes(detections)
 	assert.Equal(t, 1, len(types))
 	assert.Equal(t, expectedOutput, types)
 	// contains two types
@@ -399,7 +399,7 @@ func TestDetectionTypeSet(t *testing.T) {
 		ruleDetectionID:   allDetections[ruleDetectionID],
 		policyDetectionID: allDetections[policyDetectionID],
 	}
-	types = getDetectionTypeSet(detections)
+	types = setPackTypes(detections)
 	assert.Equal(t, 2, len(types))
 	// contains two of the same types
 	detections = map[string]*tableItem{
@@ -409,10 +409,10 @@ func TestDetectionTypeSet(t *testing.T) {
 	expectedOutput = map[models.DetectionType]int{
 		models.TypeRule: 2,
 	}
-	types = getDetectionTypeSet(detections)
+	types = setPackTypes(detections)
 	assert.Equal(t, expectedOutput, types)
 	assert.Equal(t, 1, len(types))
 	// contains four types
-	types = getDetectionTypeSet(allDetections)
+	types = setPackTypes(allDetections)
 	assert.Equal(t, 4, len(types))
 }

@@ -29,25 +29,46 @@ type GetPackInput struct {
 // EnumeratePack is similar to ListDetections, ListGlobals, and ListDataModels in that
 // it will return paged data given some input filter. It differs in that it will return any
 // type (whether it be policy, rule, data model, global, etc.)
+<<<<<<< HEAD
 type EnumeratePack struct {
 
 	// Take in the pack definition
 	PackDefinition PackDefinition `json:"packDefinition"`
+=======
+type EnumeratePackInput struct {
+
+	// Take in the pack definition
+	ID string `json:"id"`
+>>>>>>> feature/pack-management
 
 	// ----- Projection -----
 
 	// Detection fields to return in the response (default: all)
 	Fields []string `json:"fields" validate:"max=20,dive,required,max=100"`
 
+<<<<<<< HEAD
 	// ----- Sorting -----
 	SortBy  string `json:"sortBy" validate:"omitempty,oneof=displayName enabled id lastModified severity"`
 	SortDir string `json:"sortDir" validate:"omitempty,oneof=ascending descending"`
+=======
+	// ----- Sorting ----- TODO: not supported in first version
+>>>>>>> feature/pack-management
 
 	// ----- Paging -----
 	PageSize int `json:"pageSize" validate:"min=0,max=1000"`
 	Page     int `json:"page" validate:"min=0"`
 }
 
+<<<<<<< HEAD
+=======
+type EnumeratePackOutput struct {
+	Paging     Paging      `json:"paging"`
+	Detections []Detection `json:"detections"`
+	Globals    []Global    `json:"globals"`
+	Models     []DataModel `json:"models"`
+}
+
+>>>>>>> feature/pack-management
 type ListPacksInput struct {
 	// ----- Filtering -----
 	// Only include packs which are enabled or disabled
