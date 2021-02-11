@@ -4,11 +4,13 @@ exports[`GenericItemCard renders a step 1`] = `
 .panther-20 {
   background-color: #1d2a3f;
   border-radius: 4px;
-  padding: 16px;
   overflow: hidden;
 }
 
-
+.panther-19 {
+  background-color: transparent;
+  padding: 16px;
+}
 
 .panther-18 {
   display: -webkit-box;
@@ -96,6 +98,8 @@ exports[`GenericItemCard renders a step 1`] = `
   height: 0;
 }
 
+
+
 .panther-13 {
   display: -webkit-box;
   display: -webkit-flex;
@@ -117,7 +121,7 @@ exports[`GenericItemCard renders a step 1`] = `
     class="panther-20"
   >
     <div
-      class="panther-9"
+      class="panther-19"
     >
       <div
         class="panther-18"

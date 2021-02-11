@@ -4,11 +4,13 @@ exports[`CustomLogCard matches snapshot 1`] = `
 .panther-19 {
   background-color: #1d2a3f;
   border-radius: 4px;
-  padding: 16px;
   overflow: hidden;
 }
 
-
+.panther-18 {
+  background-color: transparent;
+  padding: 16px;
+}
 
 .panther-17 {
   display: -webkit-box;

@@ -23,64 +23,64 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type DeletePolicyVariables = {
-  input: Types.DeletePolicyInput;
+export type DeleteDetectionsVariables = {
+  input: Types.DeleteDetectionInput;
 };
 
-export type DeletePolicy = Pick<Types.Mutation, 'deletePolicy'>;
+export type DeleteDetections = Pick<Types.Mutation, 'deleteDetections'>;
 
-export const DeletePolicyDocument = gql`
-  mutation DeletePolicy($input: DeletePolicyInput!) {
-    deletePolicy(input: $input)
+export const DeleteDetectionsDocument = gql`
+  mutation DeleteDetections($input: DeleteDetectionInput!) {
+    deleteDetections(input: $input)
   }
 `;
-export type DeletePolicyMutationFn = ApolloReactCommon.MutationFunction<
-  DeletePolicy,
-  DeletePolicyVariables
+export type DeleteDetectionsMutationFn = ApolloReactCommon.MutationFunction<
+  DeleteDetections,
+  DeleteDetectionsVariables
 >;
 
 /**
- * __useDeletePolicy__
+ * __useDeleteDetections__
  *
- * To run a mutation, you first call `useDeletePolicy` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeletePolicy` returns a tuple that includes:
+ * To run a mutation, you first call `useDeleteDetections` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteDetections` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [deletePolicy, { data, loading, error }] = useDeletePolicy({
+ * const [deleteDetections, { data, loading, error }] = useDeleteDetections({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useDeletePolicy(
-  baseOptions?: ApolloReactHooks.MutationHookOptions<DeletePolicy, DeletePolicyVariables>
+export function useDeleteDetections(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteDetections, DeleteDetectionsVariables>
 ) {
-  return ApolloReactHooks.useMutation<DeletePolicy, DeletePolicyVariables>(
-    DeletePolicyDocument,
+  return ApolloReactHooks.useMutation<DeleteDetections, DeleteDetectionsVariables>(
+    DeleteDetectionsDocument,
     baseOptions
   );
 }
-export type DeletePolicyHookResult = ReturnType<typeof useDeletePolicy>;
-export type DeletePolicyMutationResult = ApolloReactCommon.MutationResult<DeletePolicy>;
-export type DeletePolicyMutationOptions = ApolloReactCommon.BaseMutationOptions<
-  DeletePolicy,
-  DeletePolicyVariables
+export type DeleteDetectionsHookResult = ReturnType<typeof useDeleteDetections>;
+export type DeleteDetectionsMutationResult = ApolloReactCommon.MutationResult<DeleteDetections>;
+export type DeleteDetectionsMutationOptions = ApolloReactCommon.BaseMutationOptions<
+  DeleteDetections,
+  DeleteDetectionsVariables
 >;
-export function mockDeletePolicy({
+export function mockDeleteDetections({
   data,
   variables,
   errors,
 }: {
-  data: DeletePolicy;
-  variables?: DeletePolicyVariables;
+  data: DeleteDetections;
+  variables?: DeleteDetectionsVariables;
   errors?: GraphQLError[];
 }) {
   return {
-    request: { query: DeletePolicyDocument, variables },
+    request: { query: DeleteDetectionsDocument, variables },
     result: { data, errors },
   };
 }

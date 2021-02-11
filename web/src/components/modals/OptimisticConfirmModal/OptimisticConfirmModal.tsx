@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Button, Flex, Modal, ModalProps, Text } from 'pouncejs';
+import { Box, Button, Flex, Modal, ModalProps, Text } from 'pouncejs';
 
 export interface OptimisticConfirmModalProps extends ModalProps {
   subtitle: React.ReactNode;
@@ -37,18 +37,20 @@ const OptimisticConfirmModal: React.FC<OptimisticConfirmModalProps> = ({
 
   return (
     <Modal aria-describedby="modal-subtitle" onClose={onClose} {...rest}>
-      <Text mb={8} textAlign="center" id="modal-subtitle">
-        {subtitle}
-      </Text>
+      <Box maxWidth={700}>
+        <Text mb={8} textAlign="center" id="modal-subtitle">
+          {subtitle}
+        </Text>
 
-      <Flex justify="flex-end" spacing={3}>
-        <Button variant="outline" variantColor="navyblue" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button variantColor="red" onClick={handleConfirm}>
-          Confirm
-        </Button>
-      </Flex>
+        <Flex justify="flex-end" spacing={3}>
+          <Button variant="outline" variantColor="navyblue" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button variantColor="red" onClick={handleConfirm}>
+            Confirm
+          </Button>
+        </Flex>
+      </Box>
     </Modal>
   );
 };

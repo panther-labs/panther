@@ -163,7 +163,7 @@ describe('CreatePolicy', () => {
     // Expect analytics to have been called
     expect(trackEvent).toHaveBeenCalledWith({
       event: EventEnum.AddedPolicy,
-      src: SrcEnum.Policies,
+      src: SrcEnum.Detections,
     });
   });
 
@@ -212,7 +212,7 @@ describe('CreatePolicy', () => {
     // Expect analytics to have been called
     expect(trackError).toHaveBeenCalledWith({
       event: TrackErrorEnum.FailedToAddPolicy,
-      src: SrcEnum.Policies,
+      src: SrcEnum.Detections,
     });
   });
 });
