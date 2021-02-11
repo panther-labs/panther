@@ -195,14 +195,17 @@ class Rule:
 
         self._default_dedup_string = 'defaultDedupString:{}'.format(self.rule_id)
 
-    def run(self, event: PantherEvent, batch_mode: bool = True, event_mocks: Mapping = None) -> RuleResult:
+    @property
+    def module(self):
+        return self._module
+
+    def run(self, event: PantherEvent, batch_mode: bool = True) -> RuleResult:
         """
         Analyze a log line with this rule and return True, False, or an error.
         :param event: The event to run the rule against
         :param batch_mode: Whether the rule runs as part of the log analysis or as part of a simple rule test.
         In batch mode, title/dedup functions are not checked if the rule won't trigger an alert and also title()/dedup()
         won't raise exceptions, so that an alert won't be missed.
-        :param event_mocks: The functions to mock the rule execution against
         """
         rule_result = RuleResult()
         # If there was an error setting up the rule
@@ -211,24 +214,12 @@ class Rule:
             rule_result.setup_exception = self._setup_exception
             return rule_result
 
-        # Setup mock functions
-        mock_methods = dict()
-        if event_mocks:
-            mock_methods = {k: MagicMock(return_value=v) for k, v in event_mocks.items()}
-        # Start mock patching if there are methods to mock
-        if len(mock_methods) != 0:
-            mock_patcher = patch.multiple(self._module, **mock_methods)
-            mock_patcher.start()
-
         try:
             rule_result.matched = self._run_command(self._module.rule, event, bool)
         except Exception as err:  # pylint: disable=broad-except
             rule_result.rule_exception = err
 
         if batch_mode and not rule_result.matched:
-            # Stop the mock patching
-            if len(mock_methods) != 0:
-                mock_patcher.stop()
             # In batch mode (log analysis), there is no need to run the title/dedup functions
             # if the rule isn't going to trigger an alert
             return rule_result
@@ -272,10 +263,6 @@ class Rule:
             rule_result.alert_context = self._get_alert_context(event, use_default_on_exception=batch_mode)
         except Exception as err:  # pylint: disable=broad-except
             rule_result.alert_context_exception = err
-
-        # Stop the mock patching
-        if len(mock_methods) != 0:
-            mock_patcher.stop()
 
         return rule_result
 
