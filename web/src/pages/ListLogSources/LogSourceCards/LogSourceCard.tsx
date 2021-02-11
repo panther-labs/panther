@@ -52,12 +52,17 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
     switch (sourceHealth.__typename) {
       case 'SqsLogIntegrationHealth':
         return [sourceHealth.sqsStatus];
-      case 'S3LogIntegrationHealth':
-        return [
+      case 'S3LogIntegrationHealth': {
+        const checks = [
           sourceHealth.processingRoleStatus,
           sourceHealth.s3BucketStatus,
           sourceHealth.kmsKeyStatus,
         ];
+        if (sourceHealth.getObjectStatus) {
+          checks.push(sourceHealth.getObjectStatus);
+        }
+        return checks;
+      }
       default:
         throw new Error(`Unknown source health item`);
     }

@@ -3,6 +3,7 @@ module github.com/panther-labs/panther
 go 1.15
 
 require (
+	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/anyascii/go v0.1.7
 	github.com/aws-cloudformation/rain v1.1.1
 	github.com/aws/aws-lambda-go v1.20.0

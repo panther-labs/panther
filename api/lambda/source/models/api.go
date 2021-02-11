@@ -18,7 +18,11 @@ package models
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "time"
+import (
+	"time"
+
+	"github.com/Masterminds/semver/v3"
+)
 
 // LambdaInput is the collection of all possible args to the Lambda function.
 type LambdaInput struct {
@@ -61,6 +65,17 @@ type CheckIntegrationInput struct {
 
 	// Checks for Sqs configuration
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
+
+	// PantherVersion is the version of Panther that the source was created with. Must follow semver format.
+	PantherVersionStr string `json:"pantherVersion"`
+}
+
+func (i *CheckIntegrationInput) PantherVersion() *semver.Version {
+	v, err := semver.NewVersion(i.PantherVersionStr)
+	if err != nil {
+		return &semver.Version{}
+	}
+	return v
 }
 
 //
