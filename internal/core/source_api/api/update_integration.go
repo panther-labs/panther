@@ -101,13 +101,14 @@ func (api *API) checkSource(existingItem *ddb.Integration, input *models.UpdateI
 		IntegrationType: existingItem.IntegrationType,
 
 		// From update existingItem request
-		IntegrationLabel:  input.IntegrationLabel,
-		EnableCWESetup:    input.CWEEnabled,
-		EnableRemediation: input.RemediationEnabled,
-		S3Bucket:          input.S3Bucket,
-		S3PrefixLogTypes:  input.S3PrefixLogTypes,
-		KmsKey:            input.KmsKey,
-		SqsConfig:         input.SqsConfig,
+		IntegrationLabel:     input.IntegrationLabel,
+		EnableCWESetup:       input.CWEEnabled,
+		EnableRemediation:    input.RemediationEnabled,
+		S3Bucket:             input.S3Bucket,
+		S3PrefixLogTypes:     input.S3PrefixLogTypes,
+		KmsKey:               input.KmsKey,
+		LogProcessingRoleARN: input.LogProcessingRoleARN,
+		SqsConfig:            input.SqsConfig,
 	})
 	if err != nil {
 		return err
@@ -196,8 +197,8 @@ func updateIntegrationDBItem(item *ddb.Integration, input *models.UpdateIntegrat
 		if input.IntegrationLabel != "" {
 			item.IntegrationLabel = input.IntegrationLabel
 			item.StackName = getStackName(models.IntegrationTypeAWS3, input.IntegrationLabel)
-			item.LogProcessingRole = generateLogProcessingRoleArn(item.AWSAccountID, input.IntegrationLabel)
 		}
+		item.LogProcessingRoleARN = input.LogProcessingRoleARN
 		item.S3Bucket = input.S3Bucket
 		item.KmsKey = input.KmsKey
 		item.S3PrefixLogTypes = input.S3PrefixLogTypes

@@ -199,6 +199,7 @@ input GetS3LogIntegrationTemplateInput {
   s3Bucket: String!
   kmsKey: String
   managedBucketNotifications: Boolean!
+  roleARN: String!
 }
 
 input ListAlertsInput {
@@ -761,6 +762,7 @@ input AddS3LogIntegrationInput {
   kmsKey: String
   s3PrefixLogTypes: [S3PrefixLogTypesInput!]!
   managedBucketNotifications: Boolean!
+  roleARN: String!
 }
 
 input SqsLogConfigInput {
@@ -789,6 +791,7 @@ input UpdateS3LogIntegrationInput {
   s3Bucket: String
   kmsKey: String
   s3PrefixLogTypes: [S3PrefixLogTypesInput!]
+  roleARN: String!
 }
 
 input UpdateSqsLogIntegrationInput {

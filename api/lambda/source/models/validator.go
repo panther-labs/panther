@@ -43,6 +43,9 @@ func Validator() (*validator.Validate, error) {
 	if err := result.RegisterValidation("kmsKeyArn", validateKmsKeyArn); err != nil {
 		return nil, err
 	}
+	if err := result.RegisterValidation("iamARN", validateIAMARN); err != nil {
+		return nil, err
+	}
 	return result, nil
 }
 
@@ -65,4 +68,13 @@ func validateKmsKeyArn(fl validator.FieldLevel) bool {
 		return false
 	}
 	return true
+}
+
+func validateIAMARN(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	a, err := arn.Parse(value)
+	if err != nil {
+		return false
+	}
+	return a.Service == "iam" && strings.HasPrefix(a.Resource, "role")
 }

@@ -52,7 +52,7 @@ func (api *API) ListIntegrations(
 		if integ.IntegrationType == models.IntegrationTypeAWSScan {
 			if integ.S3Bucket == "" {
 				integ.S3Bucket = api.Config.InputDataBucketName
-				integ.LogProcessingRole = api.Config.InputDataRoleArn
+				integ.LogProcessingRoleARN = api.Config.InputDataRoleArn
 			}
 		}
 		result = append(result, integ)

@@ -57,7 +57,7 @@ type Integration struct {
 	LogTypes                   []string                  `json:"logTypes" dynamodbav:",stringset"`
 	KmsKey                     string                    `json:"kmsKey,omitempty"`
 	StackName                  string                    `json:"stackName,omitempty"`
-	LogProcessingRole          string                    `json:"logProcessingRole,omitempty"`
+	LogProcessingRoleARN       string                    `json:"logProcessingRole,omitempty"`
 	ManagedBucketNotifications bool                      `json:"managedBucketNotifications,omitempty"`
 	ManagedS3Resources         models.ManagedS3Resources `json:"managedS3Resources,omitempty"`
 

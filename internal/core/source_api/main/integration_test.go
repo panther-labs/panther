@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -62,9 +63,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegration(t *testing.T) {
-	//if !integrationTest {
+	// if !integrationTest {
 	//	t.Skip()
-	//}
+	// }
 	// TODO This integration test currently fails since it tries to do healthcheck when adding integration.
 	// This causes all subsequent tests to fail
 	// See https://github.com/panther-labs/panther/issues/394
@@ -346,4 +347,68 @@ func TestIntegration_TestAPI_UpdateStatus_FailsIfIntegrationNotExists(t *testing
 	err := testAPI.UpdateStatus(&input)
 
 	require.Error(t, err)
+}
+
+func TestIntegration_PutUpdateIntegration_S3(t *testing.T) {
+	t.Parallel()
+	testutils.IntegrationTest(t)
+
+	sess = session.Must(session.NewSession())
+	c := lambda.New(sess)
+
+	// Create
+	input := models.LambdaInput{
+		PutIntegration: &models.PutIntegrationInput{
+			PutIntegrationSettings: models.PutIntegrationSettings{
+				IntegrationLabel:     "source-" + uuid.New().String()[:6],
+				IntegrationType:      models.IntegrationTypeAWS3,
+				UserID:               uuid.New().String(),
+				AWSAccountID:         "555555555555",
+				S3Bucket:             "some-bucket-" + uuid.New().String()[:6],
+				S3PrefixLogTypes:     models.S3PrefixLogtypes{{S3Prefix: "", LogTypes: []string{"Custom.LogType"}}},
+				LogProcessingRoleARN: "arn:aws:iam::region:role/user-provided-role",
+			},
+		},
+	}
+
+	var output models.SourceIntegration
+	err := genericapi.Invoke(c, functionName, input, &output)
+
+	require.NoError(t, err)
+	require.Equal(t, input.PutIntegration.IntegrationLabel, output.IntegrationLabel)
+	require.Equal(t, input.PutIntegration.LogProcessingRoleARN, output.LogProcessingRoleARN)
+	require.Equal(t, input.PutIntegration.S3PrefixLogTypes, output.S3PrefixLogTypes)
+
+	// defer cleanup
+	defer func() {
+		err := deleteIntegration(c, output.IntegrationID)
+		require.NoError(t, err)
+	}()
+
+	// Update
+	upd := models.LambdaInput{
+		UpdateIntegrationSettings: &models.UpdateIntegrationSettingsInput{
+			IntegrationID:        output.IntegrationID,
+			IntegrationLabel:     "source-" + uuid.New().String()[:6],
+			S3Bucket:             "some-bucket-" + uuid.New().String()[:6],
+			S3PrefixLogTypes:     models.S3PrefixLogtypes{{S3Prefix: "prefix", LogTypes: []string{"Custom.LogType2"}}},
+			LogProcessingRoleARN: "arn:aws:iam::region:role/user-provided-role-2",
+		},
+	}
+
+	err = genericapi.Invoke(c, functionName, upd, &output)
+
+	require.NoError(t, err)
+	require.Equal(t, upd.UpdateIntegrationSettings.IntegrationLabel, output.IntegrationLabel)
+	require.Equal(t, upd.UpdateIntegrationSettings.LogProcessingRoleARN, output.LogProcessingRoleARN)
+	require.Equal(t, upd.UpdateIntegrationSettings.S3PrefixLogTypes, output.S3PrefixLogTypes)
+}
+
+func deleteIntegration(c *lambda.Lambda, id string) error {
+	deleteInput := models.LambdaInput{
+		DeleteIntegration: &models.DeleteIntegrationInput{
+			IntegrationID: id,
+		},
+	}
+	return genericapi.Invoke(c, functionName, deleteInput, nil)
 }

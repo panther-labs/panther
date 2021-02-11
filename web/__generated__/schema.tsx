@@ -119,6 +119,7 @@ export type AddS3LogIntegrationInput = {
   kmsKey?: Maybe<Scalars['String']>;
   s3PrefixLogTypes: Array<S3PrefixLogTypesInput>;
   managedBucketNotifications: Scalars['Boolean'];
+  roleARN: Scalars['String'];
 };
 
 export type AddSqsLogIntegrationInput = {
@@ -551,6 +552,7 @@ export type GetS3LogIntegrationTemplateInput = {
   s3Bucket: Scalars['String'];
   kmsKey?: Maybe<Scalars['String']>;
   managedBucketNotifications: Scalars['Boolean'];
+  roleARN: Scalars['String'];
 };
 
 export type GithubConfig = {
@@ -1621,6 +1623,7 @@ export type UpdateS3LogIntegrationInput = {
   s3Bucket?: Maybe<Scalars['String']>;
   kmsKey?: Maybe<Scalars['String']>;
   s3PrefixLogTypes?: Maybe<Array<S3PrefixLogTypesInput>>;
+  roleARN: Scalars['String'];
 };
 
 export type UpdateSqsLogIntegrationInput = {

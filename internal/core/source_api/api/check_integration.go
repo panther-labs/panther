@@ -40,10 +40,9 @@ import (
 )
 
 const (
-	auditRoleFormat         = "arn:aws:iam::%s:role/PantherAuditRole-%s"
-	logProcessingRoleFormat = "arn:aws:iam::%s:role/PantherLogProcessingRole-%s"
-	cweRoleFormat           = "arn:aws:iam::%s:role/PantherCloudFormationStackSetExecutionRole-%s"
-	remediationRoleFormat   = "arn:aws:iam::%s:role/PantherRemediationRole-%s"
+	auditRoleFormat       = "arn:aws:iam::%s:role/PantherAuditRole-%s"
+	cweRoleFormat         = "arn:aws:iam::%s:role/PantherCloudFormationStackSetExecutionRole-%s"
+	remediationRoleFormat = "arn:aws:iam::%s:role/PantherRemediationRole-%s"
 )
 
 var (
@@ -90,7 +89,7 @@ func (api *API) checkAwsS3Integration(input *models.CheckIntegrationInput) *mode
 		IntegrationType: input.IntegrationType,
 	}
 	var roleCreds *credentials.Credentials
-	logProcessingRole := generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
+	logProcessingRole := input.LogProcessingRoleARN
 	roleCreds, out.ProcessingRoleStatus = api.getCredentialsWithStatus(logProcessingRole)
 
 	if !out.ProcessingRoleStatus.Healthy {

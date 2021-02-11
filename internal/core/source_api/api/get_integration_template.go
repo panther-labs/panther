@@ -166,11 +166,6 @@ func getStackName(integrationType string, label string) string {
 	return fmt.Sprintf(LogAnalysisStackNameTemplate, normalizedLabel(label))
 }
 
-// Generates the ARN of the log processing role
-func generateLogProcessingRoleArn(awsAccountID string, label string) string {
-	return fmt.Sprintf(logProcessingRoleFormat, awsAccountID, normalizedLabel(label))
-}
-
 func normalizedLabel(label string) string {
 	sanitized := strings.ReplaceAll(label, " ", "-")
 	return strings.ToLower(sanitized)

@@ -303,6 +303,7 @@ export const buildAddS3LogIntegrationInput = (
       's3PrefixLogTypes' in overrides ? overrides.s3PrefixLogTypes : [buildS3PrefixLogTypesInput()],
     managedBucketNotifications:
       'managedBucketNotifications' in overrides ? overrides.managedBucketNotifications : false,
+    roleARN: 'roleARN' in overrides ? overrides.roleARN : 'networks',
   };
 };
 
@@ -906,6 +907,7 @@ export const buildGetS3LogIntegrationTemplateInput = (
     kmsKey: 'kmsKey' in overrides ? overrides.kmsKey : 'Books',
     managedBucketNotifications:
       'managedBucketNotifications' in overrides ? overrides.managedBucketNotifications : false,
+    roleARN: 'roleARN' in overrides ? overrides.roleARN : 'e-business',
   };
 };
 
@@ -1976,6 +1978,7 @@ export const buildUpdateS3LogIntegrationInput = (
     kmsKey: 'kmsKey' in overrides ? overrides.kmsKey : 'deposit',
     s3PrefixLogTypes:
       's3PrefixLogTypes' in overrides ? overrides.s3PrefixLogTypes : [buildS3PrefixLogTypesInput()],
+    roleARN: 'roleARN' in overrides ? overrides.roleARN : 'UIC-Franc',
   };
 };
 

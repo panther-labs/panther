@@ -59,9 +59,10 @@ type CheckIntegrationInput struct {
 	EnableRemediation *bool `json:"enableRemediation"`
 
 	// Checks for log analysis integrations
-	S3Bucket         string           `json:"s3Bucket"`
-	S3PrefixLogTypes S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty"`
-	KmsKey           string           `json:"kmsKey"`
+	S3Bucket             string           `json:"s3Bucket"`
+	S3PrefixLogTypes     S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty"`
+	KmsKey               string           `json:"kmsKey"`
+	LogProcessingRoleARN string           `json:"roleARN"` // arn validation missing, FE handles the healthcheck response
 
 	// Checks for Sqs configuration
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
@@ -104,6 +105,8 @@ type PutIntegrationSettings struct {
 	S3PrefixLogTypes           S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
 	KmsKey                     string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
 	ManagedBucketNotifications bool             `json:"managedBucketNotifications"`
+	// The AWS IAM role Panther can use to read objects from the user's S3 bucket.
+	LogProcessingRoleARN string `json:"roleARN" validate:"omitempty,iamARN"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }
@@ -131,6 +134,7 @@ type UpdateIntegrationSettingsInput struct {
 	S3Bucket                string           `json:"s3Bucket" validate:"omitempty,min=1"`
 	S3PrefixLogTypes        S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty" validate:"omitempty,min=1"`
 	KmsKey                  string           `json:"kmsKey" validate:"omitempty,kmsKeyArn"`
+	LogProcessingRoleARN    string           `json:"roleARN" validate:"omitempty,iamARN"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
 }

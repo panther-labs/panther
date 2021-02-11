@@ -44,7 +44,7 @@ func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 		item.S3PrefixLogTypes = input.S3PrefixLogTypes
 		item.KmsKey = input.KmsKey
 		item.StackName = input.StackName
-		item.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
+		item.LogProcessingRoleARN = input.LogProcessingRoleARN
 		item.ManagedBucketNotifications = input.ManagedBucketNotifications
 		item.ManagedS3Resources = input.ManagedS3Resources
 	case models.IntegrationTypeAWSScan:
@@ -54,7 +54,7 @@ func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 		item.LastScanErrorMessage = input.LastScanErrorMessage
 		item.LastScanEndTime = input.LastScanEndTime
 		item.LastScanStartTime = input.LastScanStartTime
-		item.LogProcessingRole = input.LogProcessingRole
+		item.LogProcessingRoleARN = input.LogProcessingRoleARN
 		item.RemediationEnabled = input.RemediationEnabled
 		item.S3Bucket = input.S3Bucket
 		item.ScanIntervalMins = input.ScanIntervalMins
@@ -99,7 +99,7 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 		}
 		integration.KmsKey = item.KmsKey
 		integration.StackName = item.StackName
-		integration.LogProcessingRole = item.LogProcessingRole
+		integration.LogProcessingRoleARN = item.LogProcessingRoleARN
 		integration.ManagedBucketNotifications = item.ManagedBucketNotifications
 		integration.ManagedS3Resources = item.ManagedS3Resources
 	case models.IntegrationTypeAWSScan:
@@ -109,7 +109,7 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 		integration.ScanIntervalMins = item.ScanIntervalMins
 		integration.ScanStatus = item.ScanStatus
 		integration.S3Bucket = item.S3Bucket
-		integration.LogProcessingRole = item.LogProcessingRole
+		integration.LogProcessingRoleARN = item.LogProcessingRoleARN
 		integration.EventStatus = item.EventStatus
 		integration.LastScanStartTime = item.LastScanStartTime
 		integration.LastScanEndTime = item.LastScanEndTime

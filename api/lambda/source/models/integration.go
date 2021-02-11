@@ -69,10 +69,10 @@ type SourceIntegrationMetadata struct {
 	ResourceRegexIgnoreList []string `json:"resourceRegexIgnoreList,omitempty"`
 
 	// fields specific for an s3 integration (plus AWSAccountID, StackName)
-	S3Bucket          string           `json:"s3Bucket,omitempty"`
-	S3PrefixLogTypes  S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty"`
-	KmsKey            string           `json:"kmsKey,omitempty"`
-	LogProcessingRole string           `json:"logProcessingRole,omitempty"`
+	S3Bucket             string           `json:"s3Bucket,omitempty"`
+	S3PrefixLogTypes     S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty"`
+	KmsKey               string           `json:"kmsKey,omitempty"`
+	LogProcessingRoleARN string           `json:"roleARN,omitempty"`
 	// Whether Panther should configure the user's bucket notifications.
 	ManagedBucketNotifications bool `json:"managedBucketNotifications"`
 	// The resources that Panther created. This may be partial if an error occurred
@@ -156,7 +156,7 @@ func (s *SourceIntegration) RequiredLogTypes() (logTypes []string) {
 func (s *SourceIntegration) RequiredLogProcessingRole() string {
 	switch typ := s.IntegrationType; typ {
 	case IntegrationTypeAWS3, IntegrationTypeAWSScan:
-		return s.LogProcessingRole
+		return s.LogProcessingRoleARN
 	case IntegrationTypeSqs:
 		return s.SqsConfig.LogProcessingRole
 	default:
