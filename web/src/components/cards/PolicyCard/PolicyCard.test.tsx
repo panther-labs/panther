@@ -19,32 +19,43 @@
 import React from 'react';
 import { buildPolicy, render } from 'test-utils';
 import { SeverityEnum } from 'Generated/schema';
+import { SelectProvider } from 'Components/utils/SelectContext';
 import urls from 'Source/urls';
 import PolicyCard from './index';
 
 describe('PolicyCard', () => {
   it('displays the correct data in the card', async () => {
-    const policyData = buildPolicy();
+    const policy = buildPolicy();
 
-    const { getByText } = render(<PolicyCard policy={policyData} />);
+    const { getByText } = render(<PolicyCard policy={policy} />);
 
-    expect(getByText(policyData.displayName)).toBeInTheDocument();
+    expect(getByText(policy.displayName)).toBeInTheDocument();
     expect(getByText('Destinations')).toBeInTheDocument();
     expect(getByText(SeverityEnum.Medium)).toBeInTheDocument();
-    expect(getByText(policyData.enabled ? 'ENABLED' : 'DISABLED')).toBeInTheDocument();
+    expect(getByText(policy.enabled ? 'ENABLED' : 'DISABLED')).toBeInTheDocument();
 
-    policyData.resourceTypes.forEach(resourceType => {
+    policy.resourceTypes.forEach(resourceType => {
       expect(getByText(resourceType)).toBeInTheDocument();
     });
   });
 
   it('should have valid links', async () => {
-    const policyData = buildPolicy();
+    const policy = buildPolicy();
 
-    const { getByAriaLabel } = render(<PolicyCard policy={policyData} />);
+    const { getByAriaLabel } = render(<PolicyCard policy={policy} />);
     expect(getByAriaLabel('Link to Policy')).toHaveAttribute(
       'href',
-      urls.compliance.policies.details(policyData.id)
+      urls.compliance.policies.details(policy.id)
     );
+  });
+
+  it('renders a checkbox when selection is enabled', () => {
+    const { getByAriaLabel } = render(
+      <SelectProvider>
+        <PolicyCard policy={buildPolicy()} selectionEnabled />
+      </SelectProvider>
+    );
+
+    expect(getByAriaLabel(`select item`)).toBeInTheDocument();
   });
 });

@@ -53,10 +53,10 @@ const CreateRule: React.FC = () => {
   const { history } = useRouter();
   const [createRule, { error }] = useCreateRule({
     onCompleted: data => {
-      trackEvent({ event: EventEnum.AddedRule, src: SrcEnum.Rules });
+      trackEvent({ event: EventEnum.AddedRule, src: SrcEnum.Detections });
       history.push(urls.logAnalysis.rules.details(data.addRule.id));
     },
-    onError: () => trackError({ event: TrackErrorEnum.FailedToAddRule, src: SrcEnum.Rules }),
+    onError: () => trackError({ event: TrackErrorEnum.FailedToAddRule, src: SrcEnum.Detections }),
   });
 
   const handleSubmit = React.useCallback(

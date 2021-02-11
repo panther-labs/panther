@@ -19,7 +19,7 @@
 import React from 'react';
 import { Alert, Box, Card, Flex } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
-import { DetectionTypeEnum, ListDetectionsInput } from 'Generated/schema';
+import { Detection, DetectionTypeEnum, ListDetectionsInput } from 'Generated/schema';
 import { TableControlsPagination } from 'Components/utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import isEmpty from 'lodash/isEmpty';
@@ -32,15 +32,19 @@ import Panel from 'Components/Panel';
 import RuleCard from 'Components/cards/RuleCard';
 import PolicyCard from 'Components/cards/PolicyCard';
 import { RuleSummary } from 'Source/graphql/fragments/RuleSummary.generated';
+import { useSelect, withSelectContext, SelectAllCheckbox } from 'Components/utils/SelectContext';
+import { compose } from 'Helpers/compose';
 import { PolicySummary } from 'Source/graphql/fragments/PolicySummary.generated';
 import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
 import ListDetectionsPageSkeleton from './Skeleton';
 import ListDetectionsPageEmptyDataFallback from './EmptyDataFallback';
-import ListDetectionsFilters from './ListDetectionsFilters';
+import ListDetectionsActions from './ListDetectionsActions';
 import { useListDetections } from './graphql/listDetections.generated';
 
 const ListDetections = () => {
   useTrackPageView(PageViewEnum.ListDetections);
+
+  const { checkIfSelected } = useSelect<Detection>();
   const { requestParams, updatePagingParams } = useRequestParamsWithPagination<
     ListDetectionsInput
   >();
@@ -82,7 +86,15 @@ const ListDetections = () => {
   //  Check how many active filters exist by checking how many columns keys exist in the URL
   return (
     <ErrorBoundary>
-      <Panel title="Detections" actions={<ListDetectionsFilters />}>
+      <Panel
+        title={
+          <Flex align="center" spacing={4}>
+            <SelectAllCheckbox selectionItems={detectionItems} />
+            <Box as="span">Detections</Box>
+          </Flex>
+        }
+        actions={<ListDetectionsActions />}
+      >
         <Card as="section" position="relative">
           <Box position="relative">
             <Flex direction="column" spacing={2}>
@@ -90,9 +102,23 @@ const ListDetections = () => {
                 detectionItems.map(detection => {
                   switch (detection.analysisType) {
                     case DetectionTypeEnum.Rule:
-                      return <RuleCard rule={detection as RuleSummary} key={detection.id} />;
+                      return (
+                        <RuleCard
+                          key={detection.id}
+                          rule={detection as RuleSummary}
+                          selectionEnabled
+                          isSelected={checkIfSelected(detection as Detection)}
+                        />
+                      );
                     case DetectionTypeEnum.Policy:
-                      return <PolicyCard policy={detection as PolicySummary} key={detection.id} />;
+                      return (
+                        <PolicyCard
+                          selectionEnabled
+                          policy={detection as PolicySummary}
+                          key={detection.id}
+                          isSelected={checkIfSelected(detection as Detection)}
+                        />
+                      );
                     default:
                       return null;
                   }
@@ -117,4 +143,4 @@ const ListDetections = () => {
   );
 };
 
-export default withSEO({ title: 'Detections' })(ListDetections);
+export default compose(withSEO({ title: 'Detections' }), withSelectContext)(ListDetections);

@@ -125,7 +125,9 @@ func handleNotificationMessage(ctx context.Context, notification *SnsNotificatio
 func shouldIgnoreS3Object(s3Object *S3ObjectInfo) bool {
 	// We should ignore S3 objects that end in `/`.
 	// These objects are used in S3 to define a "folder" and do not contain data.
-	return strings.HasSuffix(s3Object.S3ObjectKey, "/")
+	// We also ignore empty files since they do not contain any logs, they log errors that page on-call, and some
+	// systems like to create them during their normal process of delivering logs to Panther.
+	return s3Object.S3ObjectSize == 0 || strings.HasSuffix(s3Object.S3ObjectKey, "/")
 }
 
 func buildStream(ctx context.Context, s3Object *S3ObjectInfo) (*common.DataStream, error) {
