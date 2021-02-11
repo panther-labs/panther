@@ -70,7 +70,11 @@ const RelatedDestinations: React.FC<RelatedDestinationsSectionProps> = ({
   }
 
   if (!sortedDestinations.length) {
-    return <Text opacity={0.3}>Not configured</Text>;
+    return (
+      <Text fontSize="small" opacity={0.3}>
+        Not configured
+      </Text>
+    );
   }
 
   // If component is verbose, we should render all destinations as row with the name of destination displayed

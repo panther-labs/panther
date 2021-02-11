@@ -45,7 +45,11 @@ const CustomLogCard: React.FC<CustomLogCardProps> = ({ customLog }) => {
           </GenericItemCard.Heading>
           {customLog.referenceURL && (
             <GenericItemCard.HeadingValue
-              value={customLog.referenceURL}
+              value={
+                <Link external href={customLog.referenceURL}>
+                  {customLog.referenceURL}
+                </Link>
+              }
               label="Reference URL"
               labelFirst
             />

@@ -17,7 +17,7 @@
  */
 
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Icon, Link, Text, Box, Divider, SimpleGrid } from 'pouncejs';
+import { Flex, Icon, Link, Text, Box, Divider, Grid } from 'pouncejs';
 import { AlertSummaryRuleInfo, AlertTypesEnum } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
@@ -84,7 +84,8 @@ const RuleAlertCard: React.FC<RuleAlertCardProps> = ({
         <Box
           backgroundColor="navyblue-700"
           borderRadius="small"
-          p={1}
+          py={1}
+          px="6px"
           mr="auto"
           fontSize="small"
           as="span"
@@ -93,14 +94,14 @@ const RuleAlertCard: React.FC<RuleAlertCardProps> = ({
         >
           {alert.type === AlertTypesEnum.Rule ? 'Rule Match' : 'Rule Error'}
         </Box>
-        <SimpleGrid gap={2} columns={3}>
+        <Grid gap={2} templateColumns="3fr 4fr 3fr">
           <Box>
             {!hideRuleButton && (
               <GenericItemCard.Value
                 label="Rule"
                 value={
-                  <Flex spacing={2}>
-                    <Text display="inline-flex" alignItems="center" as="span">
+                  <Flex align="center" spacing={2}>
+                    <Text maxWidth={250} truncated alignItems="center" as="span">
                       {detectionData.ruleId}
                     </Text>
                     <GenericItemCard.Link
@@ -124,7 +125,7 @@ const RuleAlertCard: React.FC<RuleAlertCardProps> = ({
               <UpdateAlertDropdown alert={alert} />
             </Flex>
           </Flex>
-        </SimpleGrid>
+        </Grid>
         {!loading && !allDestinationDeliveredSuccessfully && (
           <Flex
             as="section"

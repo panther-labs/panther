@@ -17,7 +17,7 @@
  */
 
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Icon, Link, Text, Box, SimpleGrid, Divider } from 'pouncejs';
+import { Flex, Icon, Link, Text, Box, Divider, Grid } from 'pouncejs';
 import { AlertSummaryPolicyInfo } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
@@ -90,7 +90,8 @@ const PolicyAlertCard: React.FC<PolicyAlertCardProps> = ({
         <Box
           backgroundColor="navyblue-700"
           borderRadius="small"
-          p={1}
+          py={1}
+          px="6px"
           mr="auto"
           fontSize="small"
           as="span"
@@ -99,14 +100,14 @@ const PolicyAlertCard: React.FC<PolicyAlertCardProps> = ({
         >
           Policy Fail
         </Box>
-        <SimpleGrid gap={2} columns={3}>
+        <Grid gap={2} templateColumns="3fr 4fr 3fr">
           <Box>
             {!hidePolicyButton && (
               <GenericItemCard.Value
                 label="Policy"
                 value={
-                  <Flex spacing={2}>
-                    <Text display="inline-flex" alignItems="center" as="span">
+                  <Flex align="center" spacing={2}>
+                    <Text maxWidth={250} truncated alignItems="center" as="span">
                       {detectionData.policyId}
                     </Text>
                     <GenericItemCard.Link
@@ -130,7 +131,7 @@ const PolicyAlertCard: React.FC<PolicyAlertCardProps> = ({
               <UpdateAlertDropdown alert={alert} />
             </Flex>
           </Flex>
-        </SimpleGrid>
+        </Grid>
         {!loading && !allDestinationDeliveredSuccessfully && (
           <Flex
             as="section"

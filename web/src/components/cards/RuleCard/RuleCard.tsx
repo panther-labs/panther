@@ -59,7 +59,8 @@ const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
         <Box
           backgroundColor="navyblue-700"
           borderRadius="small"
-          p={1}
+          py={1}
+          px="6px"
           mr="auto"
           fontSize="small"
           as="span"

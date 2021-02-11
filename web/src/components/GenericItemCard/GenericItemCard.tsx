@@ -40,7 +40,7 @@ interface GenericItemCardLinkProps {
 }
 
 interface GenericItemCardHeadingValueProps {
-  value: string | number;
+  value: string | number | React.ReactElement;
   label: string;
   labelFirst?: boolean;
   withDivider?: boolean;
@@ -102,7 +102,7 @@ const GenericItemCardHeadingValue: React.FC<GenericItemCardHeadingValueProps> = 
             {label}
           </Text>
         )}
-        <Text as="span">{value}</Text>
+        {value}
         {!labelFirst && (
           <Text ml={1} as="span" color="navyblue-100">
             {label}
