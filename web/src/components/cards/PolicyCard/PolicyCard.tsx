@@ -30,6 +30,7 @@ import { formatDatetime } from 'Helpers/utils';
 import { SelectCheckbox } from 'Components/utils/SelectContext';
 import useDetectionDestinations from 'Hooks/useDetectionDestinations';
 import RelatedDestinations from 'Components/RelatedDestinations';
+import FlatBadge from 'Components/badges/FlatBadge';
 import PolicyCardOptions from './PolicyCardOptions';
 
 interface PolicyCardProps {
@@ -68,18 +69,8 @@ const PolicyCard: React.FC<PolicyCardProps> = ({
           <GenericItemCard.Date date={formatDatetime(policy.lastModified)} label="Updated" />
           <PolicyCardOptions policy={policy} />
         </GenericItemCard.Header>
-        <Box
-          backgroundColor="navyblue-700"
-          borderRadius="small"
-          py={1}
-          px="6px"
-          mr="auto"
-          fontSize="small"
-          as="span"
-          color="indigo-300"
-          textTransform="capitalize"
-        >
-          Policy
+        <Box mr="auto">
+          <FlatBadge color="indigo-300">POLICY</FlatBadge>
         </Box>
         <SimpleGrid gap={2} columns={2}>
           <GenericItemCard.Value

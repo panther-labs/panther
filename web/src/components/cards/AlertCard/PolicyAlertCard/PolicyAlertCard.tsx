@@ -32,6 +32,7 @@ import useAlertDestinations from 'Hooks/useAlertDestinations';
 import useAlertDestinationsDeliverySuccess from 'Hooks/useAlertDestinationsDeliverySuccess';
 import { SelectCheckbox } from 'Components/utils/SelectContext';
 import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
+import FlatBadge from 'Components/badges/FlatBadge';
 
 export interface PolicyAlertCardProps {
   alert: AlertSummaryFull;
@@ -87,18 +88,8 @@ const PolicyAlertCard: React.FC<PolicyAlertCardProps> = ({
             label="Created"
           />
         </GenericItemCard.Header>
-        <Box
-          backgroundColor="navyblue-700"
-          borderRadius="small"
-          py={1}
-          px="6px"
-          mr="auto"
-          fontSize="small"
-          as="span"
-          color="cyan-400"
-          textTransform="capitalize"
-        >
-          Policy Fail
+        <Box mr="auto">
+          <FlatBadge color="cyan-400">POLICY FAIL</FlatBadge>
         </Box>
         <Grid gap={2} templateColumns="3fr 4fr 3fr">
           <Box>

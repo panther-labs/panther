@@ -31,6 +31,7 @@ import useAlertDestinations from 'Hooks/useAlertDestinations';
 import useAlertDestinationsDeliverySuccess from 'Hooks/useAlertDestinationsDeliverySuccess';
 import { SelectCheckbox } from 'Components/utils/SelectContext';
 import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
+import FlatBadge from 'Components/badges/FlatBadge';
 
 export interface RuleAlertCardProps {
   alert: AlertSummaryFull;
@@ -81,18 +82,10 @@ const RuleAlertCard: React.FC<RuleAlertCardProps> = ({
             label="Created"
           />
         </GenericItemCard.Header>
-        <Box
-          backgroundColor="navyblue-700"
-          borderRadius="small"
-          py={1}
-          px="6px"
-          mr="auto"
-          fontSize="small"
-          as="span"
-          color={alert.type === AlertTypesEnum.Rule ? 'red-300' : 'teal-500'}
-          textTransform="capitalize"
-        >
-          {alert.type === AlertTypesEnum.Rule ? 'Rule Match' : 'Rule Error'}
+        <Box mr="auto">
+          <FlatBadge color={alert.type === AlertTypesEnum.Rule ? 'red-300' : 'teal-500'}>
+            {alert.type === AlertTypesEnum.Rule ? 'RULE MATCH' : 'RULE ERROR'}
+          </FlatBadge>
         </Box>
         <Grid gap={2} templateColumns="3fr 4fr 3fr">
           <Box>

@@ -30,6 +30,7 @@ import { RuleSummary } from 'Source/graphql/fragments/RuleSummary.generated';
 import { formatDatetime } from 'Helpers/utils';
 import useDetectionDestinations from 'Hooks/useDetectionDestinations';
 import RelatedDestinations from 'Components/RelatedDestinations';
+import FlatBadge from 'Components/badges/FlatBadge';
 import RuleCardOptions from './RuleCardOptions';
 
 interface RuleCardProps {
@@ -68,18 +69,8 @@ const RuleCard: React.FC<RuleCardProps> = ({
           <GenericItemCard.Date date={formatDatetime(rule.lastModified)} label="Updated" />
           <RuleCardOptions rule={rule} />
         </GenericItemCard.Header>
-        <Box
-          backgroundColor="navyblue-700"
-          borderRadius="small"
-          py={1}
-          px="6px"
-          mr="auto"
-          fontSize="small"
-          as="span"
-          color="cyan-500"
-          textTransform="capitalize"
-        >
-          Rule
+        <Box mr="auto">
+          <FlatBadge color="cyan-500">RULE</FlatBadge>
         </Box>
         <SimpleGrid gap={2} columns={2}>
           <GenericItemCard.Value
