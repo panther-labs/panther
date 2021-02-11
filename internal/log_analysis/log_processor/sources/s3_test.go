@@ -193,6 +193,30 @@ func TestHandleS3Folder(t *testing.T) {
 	require.Equal(t, 0, len(dataStreams))
 }
 
+func TestHandleEmptyObject(t *testing.T) {
+	resetCaches()
+
+	//nolint:lll
+	s3Event := "{\"Records\":[{\"eventVersion\":\"2.1\",\"eventSource\":\"aws:s3\",\"awsRegion\":\"us-west-2\",\"eventTime\":\"1970-01-01T00:00:00.000Z\"," +
+		"\"eventName\":\"ObjectCreated:Put\",\"userIdentity\":{\"principalId\":\"AIDAJDPLRKLG7UEXAMPLE\"},\"requestParameters\":{\"sourceIPAddress\":\"127.0.0.1\"}," +
+		"\"responseElements\":{\"x-amz-request-id\":\"C3D13FE58DE4C810\",\"x-amz-id-2\":\"FMyUVURIY8/IgAtTv8xRjskZQpcIZ9KG4V5Wp6S7S/JRWeUWerMUE5JgHvANOjpD\"}," +
+		"\"s3\":{\"s3SchemaVersion\":\"1.0\",\"configurationId\":\"testConfigRule\"," +
+		"\"bucket\":{\"name\":\"mybucket\",\"ownerIdentity\":{\"principalId\":\"A3NL1KOZZKExample\"},\"arn\":\"arn:aws:s3:::mybucket\"},\"object\":{\"key\":\"empty-file.txt\",\"size\":0," +
+		"\"eTag\":\"d41d8cd98f00b204e9800998ecf8427e\",\"versionId\":\"096fKKXTRTtl3on89fVO.nfljtsv6qko\",\"sequencer\":\"0055AED6DCD90281E5\"}}}]}"
+
+	notification := SnsNotification{}
+	notification.Type = "Notification"
+	notification.Message = s3Event
+	marshaledNotification, err := jsoniter.MarshalToString(notification)
+	require.NoError(t, err)
+
+	dataStreams, err := ReadSnsMessage(context.TODO(), marshaledNotification)
+	// Method shouldn't return error
+	require.NoError(t, err)
+	// Method should not return data stream
+	require.Equal(t, 0, len(dataStreams))
+}
+
 func TestHandleUnregisteredSource(t *testing.T) {
 	resetCaches()
 	// if we encounter an unsupported file type, we should just skip the object
