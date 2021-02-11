@@ -37,7 +37,7 @@ import (
 
 const (
 	// github org and repo containing detection packs
-	pantherGithubOwner = "panther-labs"
+	pantherGithubOwner = "lindsey-w"
 	pantherGithubRepo  = "panther-analysis"
 	// signing key information
 	pantherPublicKey = "-----BEGIN PUBLIC KEY-----\n" + // TODO: update keys

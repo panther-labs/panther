@@ -149,7 +149,12 @@ func setupUpdatePackToVersion(input *models.PatchPackInput, version models.Versi
 // (1) setting up new items based on release data
 // (2) writing out the new items
 func updateDetectionsToVersion(userID string, oldPack *packTableItem, pack *packTableItem, newDetectionItems map[string]*tableItem) error {
-	newDetections, err := setupUpdateDetectionsToVersion(oldPack, pack, newDetectionItems)
+	// First lookup the existing detections in this pack
+	oldDetectionItems, err := detectionDdbLookup(pack.PackDefinition)
+	if err != nil {
+		return err
+	}
+	newDetections, err := setupUpdateDetectionsToVersion(oldPack, pack, oldDetectionItems, newDetectionItems)
 	if err != nil {
 		return err
 	}
@@ -164,19 +169,13 @@ func updateDetectionsToVersion(userID string, oldPack *packTableItem, pack *pack
 }
 
 // setupUpdatePackDetections is a helper method that will generate the new `panther-analysis` ddb table items
-func setupUpdateDetectionsToVersion(oldPack *packTableItem, pack *packTableItem, newDetectionItems map[string]*tableItem) ([]*tableItem, error) {
+func setupUpdateDetectionsToVersion(oldPack *packTableItem, pack *packTableItem,
+	oldDetectionItems map[string]*tableItem, newDetectionItems map[string]*tableItem) ([]*tableItem, error) {
+
 	// setup slice to return
 	var newItems []*tableItem
-	// First lookup the existing detections in this pack
-	detections, err := detectionDdbLookup(pack.PackDefinition)
-	if err != nil {
-		return nil, err
-	}
 	// Then get a list of the updated detection in the pack
 	newDetections := detectionSetLookup(newDetectionItems, pack.PackDefinition)
-	if err != nil {
-		return nil, err
-	}
 	// if we are enabling or disabling the pack, we need to enable/disable
 	// the detections in it.
 	// if this is simply updating the pack to a new version, we should
@@ -184,19 +183,10 @@ func setupUpdateDetectionsToVersion(oldPack *packTableItem, pack *packTableItem,
 	// This will ensure user-enabled / user-disabled detections will remain
 	enabledStatusChanged := false
 	var otherExistingPacks []*packTableItem
+	var err error
 	if oldPack.Enabled != pack.Enabled {
 		enabledStatusChanged = true
-		// if we are disabling a pack, we need to look up detection pack memebership
-		// so that if a detection spans multiple packs, we only disable it if it
-		// is not enabled via another pack
-		// look up all other packs not including this one
-		filter := expression.NotEqual(expression.Name("lowerId"), expression.Value(strings.ToLower(pack.ID)))
-		scanInput, err := buildTableScanInput(env.PackTable, []models.DetectionType{models.TypePack},
-			[]string{}, []expression.ConditionBuilder{filter}...)
-		if err != nil {
-			return nil, err
-		}
-		otherExistingPacks, err = getPackItems(scanInput)
+		otherExistingPacks, err = lookupNonMatchingPacks(oldPack.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -204,7 +194,7 @@ func setupUpdateDetectionsToVersion(oldPack *packTableItem, pack *packTableItem,
 	// Loop through the new detections and update appropriate fields or
 	//  create new detection
 	for id, newDetection := range newDetections {
-		if detection, ok := detections[id]; ok {
+		if detection, ok := oldDetectionItems[id]; ok {
 			// update existing detection
 			detection.Body = newDetection.Body
 			// detection.DedupPeriodMinutes = newDetection.DedupPeriodMinutes
@@ -231,16 +221,36 @@ func setupUpdateDetectionsToVersion(oldPack *packTableItem, pack *packTableItem,
 			}
 		} else {
 			// create new detection
+			newDetection.Enabled = pack.Enabled
 			newItems = append(newItems, newDetection)
 		}
 	}
 	return newItems, nil
 }
 
+func lookupNonMatchingPacks(id string) ([]*packTableItem, error) {
+	// if we are disabling a pack, we need to look up detection pack memebership
+	// so that if a detection spans multiple packs, we only disable it if it
+	// is not enabled via another pack
+	// look up all other packs not including this one
+	filter := expression.NotEqual(expression.Name("lowerId"), expression.Value(strings.ToLower(id)))
+	scanInput, err := buildTableScanInput(env.PackTable, []models.DetectionType{models.TypePack},
+		[]string{}, []expression.ConditionBuilder{filter}...)
+	if err != nil {
+		return nil, err
+	}
+	otherExistingPacks, err := getPackItems(scanInput)
+	if err != nil {
+		return nil, err
+	}
+	return otherExistingPacks, nil
+}
+
 // isDetectionInMultipleEnabledPacks will return True is a detection exists in another enabled pack
 // otherwise it will return False
 func isDetectionInMultipleEnabledPacks(packs []*packTableItem, detectionID string) bool {
-	// if a user disables a pack, it disables all the detections in the pack unless those detections are in another pack
+	// if a user disables a pack, it disables all the detections in the pack unless those detections
+	// are in another, enabled pack
 	for _, pack := range packs {
 		packDetections, err := detectionDdbLookup(pack.PackDefinition)
 		if err != nil {

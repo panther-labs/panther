@@ -33,20 +33,24 @@ var (
 	dataModelDetectionID = "detection.datamodel"
 
 	ruleDetection = &tableItem{
-		ID:   ruleDetectionID,
-		Type: models.TypeRule,
+		ID:      ruleDetectionID,
+		Enabled: true,
+		Type:    models.TypeRule,
 	}
 	policyDetection = &tableItem{
-		ID:   policyDetectionID,
-		Type: models.TypePolicy,
+		ID:      policyDetectionID,
+		Enabled: true,
+		Type:    models.TypePolicy,
 	}
 	globalDetection = &tableItem{
-		ID:   globalDetectionID,
-		Type: models.TypeGlobal,
+		ID:      globalDetectionID,
+		Enabled: true,
+		Type:    models.TypeGlobal,
 	}
 	dataModelDetection = &tableItem{
-		ID:   dataModelDetectionID,
-		Type: models.TypeDataModel,
+		ID:      dataModelDetectionID,
+		Enabled: true,
+		Type:    models.TypeDataModel,
 	}
 	allDetections = map[string]*tableItem{
 		policyDetectionID:    policyDetection,
