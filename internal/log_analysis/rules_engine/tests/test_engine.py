@@ -323,14 +323,12 @@ class TestEngine(TestCase):
         ]
 
         rule_body = [
-            'import boto3', 'from datetime import date', 'from unittest.mock import MagicMock',
-            'def rule(event):', '\tassert isinstance(boto3, MagicMock)', '\tassert isinstance(date, MagicMock)',
-            '\tassert isinstance(boto3.client, MagicMock)', '\ts3_client = boto3.client("s3")',
-            '\tassert isinstance(s3_client, MagicMock)', '\tboto3.client.assert_called_once_with("s3")',
-            '\tdt = date(2000, 1, 1)', '\tassert dt == "date_return_value"',
-            '\tdate.assert_called_once_with(2000, 1, 1)', '\treturn True',
-            'def alert_context(event):', '\treturn {}',
-            'def title(event):', '\treturn f"test_rule_with_mocking_{str(isinstance(boto3, MagicMock))}"'
+            'import boto3', 'from datetime import date', 'from unittest.mock import MagicMock', 'def rule(event):',
+            '\tassert isinstance(boto3, MagicMock)', '\tassert isinstance(date, MagicMock)', '\tassert isinstance(boto3.client, MagicMock)',
+            '\ts3_client = boto3.client("s3")', '\tassert isinstance(s3_client, MagicMock)', '\tboto3.client.assert_called_once_with("s3")',
+            '\tdt = date(2000, 1, 1)', '\tassert dt == "date_return_value"', '\tdate.assert_called_once_with(2000, 1, 1)', '\treturn True',
+            'def alert_context(event):', '\treturn {}', 'def title(event):',
+            '\treturn f"test_rule_with_mocking_{str(isinstance(boto3, MagicMock))}"'
         ]
         mocks = {
             'boto3': 'boto3_return_value',
