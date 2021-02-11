@@ -52,9 +52,14 @@ const CustomLogCard: React.FC<CustomLogCardProps> = ({ customLog }) => {
               }
               label="Reference URL"
               labelFirst
+              withDivider
             />
           )}
-          <GenericItemCard.Date date={formatDatetime(customLog.updatedAt)} label="Updated" />
+          <GenericItemCard.HeadingValue
+            value={formatDatetime(customLog.updatedAt)}
+            label="Updated"
+            labelFirst
+          />
           <CustomLogCardOptions customLog={customLog} />
         </GenericItemCard.Header>
         <Text fontSize="small">{customLog.description}</Text>

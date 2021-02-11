@@ -1,18 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`DataModelCard matches snapshot 1`] = `
-.panther-24 {
+.panther-23 {
   background-color: #1d2a3f;
   border-radius: 4px;
   overflow: hidden;
 }
 
-.panther-23 {
+.panther-22 {
   background-color: transparent;
   padding: 16px;
 }
 
-.panther-22 {
+.panther-21 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -21,7 +21,7 @@ exports[`DataModelCard matches snapshot 1`] = `
   height: 100%;
 }
 
-.panther-21 {
+.panther-20 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -35,7 +35,7 @@ exports[`DataModelCard matches snapshot 1`] = `
   width: 100%;
 }
 
-.panther-11 {
+.panther-10 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -96,24 +96,12 @@ exports[`DataModelCard matches snapshot 1`] = `
   color: #86a3c3;
 }
 
-.panther-7 {
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-
-.panther-5 {
-  padding-right: 4px;
-  color: #86a3c3;
-}
-
-
-
-.panther-10 {
+.panther-9 {
   margin-left: 8px;
   margin-top: -4px;
 }
 
-.panther-9 {
+.panther-8 {
   outline: none;
   line-height: 1;
   border-radius: 99999px;
@@ -130,20 +118,20 @@ exports[`DataModelCard matches snapshot 1`] = `
   text-decoration: none;
 }
 
-.panther-9:hover {
+.panther-8:hover {
   background-color: rgba(62,81,107,0.3);
 }
 
-.panther-9:focus {
+.panther-8:focus {
   background-color: rgba(62,81,107,0.3);
 }
 
-.panther-9:active,
-.panther-9[data-active=true] {
+.panther-8:active,
+.panther-8[data-active=true] {
   background-color: #3e516b;
 }
 
-.panther-8 {
+.panther-7 {
   display: inline-block;
   vertical-align: sub;
   -webkit-flex-shrink: 0;
@@ -154,7 +142,7 @@ exports[`DataModelCard matches snapshot 1`] = `
   color: currentColor;
 }
 
-.panther-20 {
+.panther-19 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -165,11 +153,11 @@ exports[`DataModelCard matches snapshot 1`] = `
   flex-wrap: wrap;
 }
 
-.panther-20>*:not(:last-child) {
+.panther-19>*:not(:last-child) {
   margin-right: 32px;
 }
 
-.panther-17 {
+.panther-16 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -180,13 +168,13 @@ exports[`DataModelCard matches snapshot 1`] = `
   margin-top: 8px;
 }
 
-.panther-12 {
+.panther-11 {
   color: #bdbdbd;
   font-size: 0.563rem;
   font-weight: 500;
 }
 
-.panther-16 {
+.panther-15 {
   display: -webkit-inline-box;
   display: -webkit-inline-flex;
   display: -ms-inline-flexbox;
@@ -205,7 +193,7 @@ exports[`DataModelCard matches snapshot 1`] = `
   min-height: 24px;
 }
 
-.panther-15 {
+.panther-14 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -216,24 +204,24 @@ exports[`DataModelCard matches snapshot 1`] = `
   align-items: center;
 }
 
-.panther-15>*:not(:last-child) {
+.panther-14>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-13 {
+.panther-12 {
   width: 12px;
   height: 12px;
   background-color: hsl(49, 39%, 69%);
   border-radius: 99999px;
 }
 
-.panther-14 {
+.panther-13 {
   font-size: 0.75rem;
   font-weight: 400;
   line-height: 1.5;
 }
 
-.panther-19 {
+.panther-18 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -246,11 +234,11 @@ exports[`DataModelCard matches snapshot 1`] = `
   margin-right: 0;
 }
 
-.panther-19>*:not(:last-child) {
+.panther-18>*:not(:last-child) {
   margin-right: 16px;
 }
 
-.panther-18 {
+.panther-17 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -284,19 +272,19 @@ exports[`DataModelCard matches snapshot 1`] = `
     id="main-header"
   />
   <section
-    class="panther-24"
+    class="panther-23"
   >
     <div
-      class="panther-23"
+      class="panther-22"
     >
       <div
-        class="panther-22"
+        class="panther-21"
       >
         <div
-          class="panther-21"
+          class="panther-20"
         >
           <header
-            class="panther-11"
+            class="panther-10"
           >
             <h4
               class="panther-1"
@@ -324,34 +312,30 @@ exports[`DataModelCard matches snapshot 1`] = `
               •
             </span>
             <div
-              class="panther-7"
+              class="panther-3"
             >
               <span
-                class="panther-5"
+                class="panther-2"
               >
                 Updated
               </span>
-              <span
-                class="panther-6"
-              >
-                2020-08-20 04:58 GMT
-              </span>
+              2020-08-20 04:58 GMT
             </div>
             <div
-              class="panther-10"
+              class="panther-9"
             >
               <button
                 aria-controls="menu--1"
                 aria-haspopup="true"
                 aria-label="Toggle Options"
                 aria-pressed="false"
-                class="panther-9"
+                class="panther-8"
                 data-reach-menu-button=""
                 id="menu-button--menu--1"
                 type="button"
               >
                 <svg
-                  class="panther-8"
+                  class="panther-7"
                   role="presentation"
                   viewBox="0 0 24 24"
                 >
@@ -363,29 +347,29 @@ exports[`DataModelCard matches snapshot 1`] = `
             </div>
           </header>
           <div
-            class="panther-20"
+            class="panther-19"
           >
             <dl
-              class="panther-17"
+              class="panther-16"
             >
               <dt
                 aria-labelledby="log-typeobject-object"
-                class="panther-12"
+                class="panther-11"
               >
                 Log Type
               </dt>
               <dd
                 aria-labelledby="log-typeobject-object"
-                class="panther-16"
+                class="panther-15"
               >
                 <div
-                  class="panther-15"
+                  class="panther-14"
                 >
                   <span
-                    class="panther-13"
+                    class="panther-12"
                   />
                   <span
-                    class="panther-14"
+                    class="panther-13"
                   >
                     enterprise
                   </span>
@@ -393,11 +377,11 @@ exports[`DataModelCard matches snapshot 1`] = `
               </dd>
             </dl>
             <div
-              class="panther-19"
+              class="panther-18"
             >
               <div
                 aria-atomic="true"
-                class="panther-18"
+                class="panther-17"
                 role="status"
               >
                 DISABLED

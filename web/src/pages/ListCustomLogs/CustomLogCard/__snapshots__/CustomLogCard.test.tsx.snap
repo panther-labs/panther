@@ -1,18 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`CustomLogCard matches snapshot 1`] = `
-.panther-17 {
+.panther-16 {
   background-color: #1d2a3f;
   border-radius: 4px;
   overflow: hidden;
 }
 
-.panther-16 {
+.panther-15 {
   background-color: transparent;
   padding: 16px;
 }
 
-.panther-15 {
+.panther-14 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -21,7 +21,7 @@ exports[`CustomLogCard matches snapshot 1`] = `
   height: 100%;
 }
 
-.panther-14 {
+.panther-13 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -35,7 +35,7 @@ exports[`CustomLogCard matches snapshot 1`] = `
   width: 100%;
 }
 
-.panther-12 {
+.panther-11 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -119,24 +119,12 @@ exports[`CustomLogCard matches snapshot 1`] = `
   color: #86a3c3;
 }
 
-.panther-8 {
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-
-.panther-6 {
-  padding-right: 4px;
-  color: #86a3c3;
-}
-
-
-
-.panther-11 {
+.panther-10 {
   margin-left: 8px;
   margin-top: -4px;
 }
 
-.panther-10 {
+.panther-9 {
   outline: none;
   line-height: 1;
   border-radius: 99999px;
@@ -153,20 +141,20 @@ exports[`CustomLogCard matches snapshot 1`] = `
   text-decoration: none;
 }
 
-.panther-10:hover {
+.panther-9:hover {
   background-color: rgba(62,81,107,0.3);
 }
 
-.panther-10:focus {
+.panther-9:focus {
   background-color: rgba(62,81,107,0.3);
 }
 
-.panther-10:active,
-.panther-10[data-active=true] {
+.panther-9:active,
+.panther-9[data-active=true] {
   background-color: #3e516b;
 }
 
-.panther-9 {
+.panther-8 {
   display: inline-block;
   vertical-align: sub;
   -webkit-flex-shrink: 0;
@@ -177,7 +165,7 @@ exports[`CustomLogCard matches snapshot 1`] = `
   color: currentColor;
 }
 
-.panther-13 {
+.panther-12 {
   font-size: 0.75rem;
 }
 
@@ -186,19 +174,19 @@ exports[`CustomLogCard matches snapshot 1`] = `
     id="main-header"
   />
   <section
-    class="panther-17"
+    class="panther-16"
   >
     <div
-      class="panther-16"
+      class="panther-15"
     >
       <div
-        class="panther-15"
+        class="panther-14"
       >
         <div
-          class="panther-14"
+          class="panther-13"
         >
           <header
-            class="panther-12"
+            class="panther-11"
           >
             <h4
               class="panther-1"
@@ -233,34 +221,30 @@ exports[`CustomLogCard matches snapshot 1`] = `
               •
             </span>
             <div
-              class="panther-8"
+              class="panther-4"
             >
               <span
-                class="panther-6"
+                class="panther-2"
               >
                 Updated
               </span>
-              <span
-                class="panther-7"
-              >
-                Invalid Date
-              </span>
+              Invalid Date
             </div>
             <div
-              class="panther-11"
+              class="panther-10"
             >
               <button
                 aria-controls="menu--1"
                 aria-haspopup="true"
                 aria-label="Toggle Options"
                 aria-pressed="false"
-                class="panther-10"
+                class="panther-9"
                 data-reach-menu-button=""
                 id="menu-button--menu--1"
                 type="button"
               >
                 <svg
-                  class="panther-9"
+                  class="panther-8"
                   role="presentation"
                   viewBox="0 0 24 24"
                 >
@@ -272,7 +256,7 @@ exports[`CustomLogCard matches snapshot 1`] = `
             </div>
           </header>
           <p
-            class="panther-13"
+            class="panther-12"
           >
             Rustic
           </p>

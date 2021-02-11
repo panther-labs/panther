@@ -40,8 +40,12 @@ const DataModelCard: React.FC<DataModelCardProps> = ({ dataModel }) => {
               {dataModel.displayName || dataModel.id}
             </Link>
           </GenericItemCard.Heading>
-          <GenericItemCard.HeadingValue label="ID" value={dataModel.id} labelFirst />
-          <GenericItemCard.Date date={formatDatetime(dataModel.lastModified)} label="Updated" />
+          <GenericItemCard.HeadingValue label="ID" value={dataModel.id} labelFirst withDivider />
+          <GenericItemCard.HeadingValue
+            value={formatDatetime(dataModel.lastModified)}
+            label="Updated"
+            labelFirst
+          />
           <DataModelCardOptions dataModel={dataModel} />
         </GenericItemCard.Header>
 

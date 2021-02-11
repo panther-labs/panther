@@ -75,11 +75,13 @@ const RuleAlertCard: React.FC<RuleAlertCardProps> = ({
               detectionData?.eventsMatched ? detectionData?.eventsMatched.toLocaleString() : '0'
             }
             label="Events"
+            withDivider
           />
-          <GenericItemCard.Date
+          <GenericItemCard.HeadingValue
             aria-label={`Creation time for ${alert.alertId}`}
-            date={formatDatetime(alert.creationTime)}
+            value={formatDatetime(alert.creationTime)}
             label="Created"
+            labelFirst
           />
         </GenericItemCard.Header>
         <Box mr="auto">

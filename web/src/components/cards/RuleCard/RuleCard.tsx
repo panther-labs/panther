@@ -66,7 +66,11 @@ const RuleCard: React.FC<RuleCardProps> = ({
               {rule.displayName || rule.id}
             </Link>
           </GenericItemCard.Heading>
-          <GenericItemCard.Date date={formatDatetime(rule.lastModified)} label="Updated" />
+          <GenericItemCard.HeadingValue
+            value={formatDatetime(rule.lastModified)}
+            label="Updated"
+            labelFirst
+          />
           <RuleCardOptions rule={rule} />
         </GenericItemCard.Header>
         <Box mr="auto">

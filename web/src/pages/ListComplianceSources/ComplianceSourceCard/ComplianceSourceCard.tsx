@@ -67,8 +67,13 @@ const ComplianceSourceCard: React.FC<ComplianceSourceCardProps> = ({ source }) =
             label="AWS Stack Name"
             value={source.stackName}
             labelFirst
+            withDivider
           />
-          <GenericItemCard.Date date={formatDatetime(source.createdAtTime)} label="Created" />
+          <GenericItemCard.HeadingValue
+            value={formatDatetime(source.createdAtTime)}
+            label="Created"
+            labelFirst
+          />
           {!isCreatedByPanther && <ComplianceSourceCardOptions source={source} />}
         </GenericItemCard.Header>
         <SimpleGrid templateColumns="1fr 2fr 1fr">

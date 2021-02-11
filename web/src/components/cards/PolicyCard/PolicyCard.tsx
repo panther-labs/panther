@@ -66,7 +66,11 @@ const PolicyCard: React.FC<PolicyCardProps> = ({
               {policy.displayName || policy.id}
             </Link>
           </GenericItemCard.Heading>
-          <GenericItemCard.Date date={formatDatetime(policy.lastModified)} label="Updated" />
+          <GenericItemCard.HeadingValue
+            value={formatDatetime(policy.lastModified)}
+            label="Updated"
+            labelFirst
+          />
           <PolicyCardOptions policy={policy} />
         </GenericItemCard.Header>
         <Box mr="auto">

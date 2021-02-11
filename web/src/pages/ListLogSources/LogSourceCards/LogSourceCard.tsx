@@ -91,9 +91,10 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
               </Tooltip>
             )}
           </GenericItemCard.Heading>
-          <GenericItemCard.Date
-            date={lastReceivedMessage}
+          <GenericItemCard.HeadingValue
+            value={lastReceivedMessage}
             label={source.lastEventReceived ? 'Last Received Data' : null}
+            labelFirst
           />
           {!isCreatedByPanther && <LogSourceCardOptions source={source} />}
         </GenericItemCard.Header>

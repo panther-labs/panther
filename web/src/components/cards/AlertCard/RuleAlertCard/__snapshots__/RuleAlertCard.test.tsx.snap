@@ -27,18 +27,18 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   }
 }
 
-.panther-43 {
+.panther-42 {
   background-color: #1d2a3f;
   border-radius: 4px;
   overflow: hidden;
 }
 
-.panther-42 {
+.panther-41 {
   background-color: transparent;
   padding: 16px;
 }
 
-.panther-41 {
+.panther-40 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -59,7 +59,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   padding-right: 8px;
 }
 
-.panther-40 {
+.panther-39 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -73,7 +73,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   width: 100%;
 }
 
-.panther-9 {
+.panther-8 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -134,23 +134,16 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   color: #86a3c3;
 }
 
-.panther-8 {
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-
 .panther-6 {
-  padding-right: 4px;
+  margin-right: 4px;
   color: #86a3c3;
 }
 
-
-
-.panther-11 {
+.panther-10 {
   margin-right: auto;
 }
 
-.panther-10 {
+.panther-9 {
   background-color: #141c2a;
   border-radius: 2px;
   padding-left: 6px;
@@ -162,13 +155,13 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   color: #09a084;
 }
 
-.panther-39 {
+.panther-38 {
   display: grid;
   grid-gap: 8px;
   grid-template-columns: 3fr 4fr 3fr;
 }
 
-.panther-18 {
+.panther-17 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -179,13 +172,13 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   margin-top: 8px;
 }
 
-.panther-12 {
+.panther-11 {
   color: #bdbdbd;
   font-size: 0.563rem;
   font-weight: 500;
 }
 
-.panther-17 {
+.panther-16 {
   display: -webkit-inline-box;
   display: -webkit-inline-flex;
   display: -ms-inline-flexbox;
@@ -204,7 +197,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   min-height: 24px;
 }
 
-.panther-16 {
+.panther-15 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -215,11 +208,11 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   align-items: center;
 }
 
-.panther-16>*:not(:last-child) {
+.panther-15>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-13 {
+.panther-12 {
   max-width: 250px;
   -webkit-align-items: center;
   -webkit-box-align: center;
@@ -230,7 +223,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   white-space: nowrap;
 }
 
-.panther-15 {
+.panther-14 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -250,12 +243,12 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   border-radius: 99999px;
 }
 
-.panther-15:hover {
+.panther-14:hover {
   background-color: #11a5f3;
   border-color: #11a5f3;
 }
 
-.panther-14 {
+.panther-13 {
   display: inline-block;
   vertical-align: sub;
   -webkit-flex-shrink: 0;
@@ -266,7 +259,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   color: currentColor;
 }
 
-.panther-23 {
+.panther-22 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -281,24 +274,24 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   flex-wrap: wrap;
 }
 
-.panther-23>*:not(:last-child) {
+.panther-22>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-20 {
+.panther-19 {
   width: 12px;
   height: 12px;
   background-color: hsl(221, 31%, 31%);
   border-radius: 99999px;
 }
 
-.panther-21 {
+.panther-20 {
   font-size: 0.75rem;
   font-weight: 400;
   line-height: 1.5;
 }
 
-.panther-38 {
+.panther-37 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -309,7 +302,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   align-items: flex-end;
 }
 
-.panther-37 {
+.panther-36 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -325,15 +318,15 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   width: 100%;
 }
 
-.panther-37>*:not(:last-child) {
+.panther-36>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-28 {
+.panther-27 {
   height: 18px;
 }
 
-.panther-27 {
+.panther-26 {
   display: inline-block;
   vertical-align: sub;
   -webkit-animation: animation-0 2s linear infinite;
@@ -342,7 +335,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   height: 18px;
 }
 
-.panther-26 {
+.panther-25 {
   stroke-dashoffset: 600;
   stroke-dasharray: 300;
   stroke-width: 13;
@@ -354,7 +347,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   fill: transparent;
 }
 
-.panther-29 {
+.panther-28 {
   border: none;
   opacity: 0.6;
   border-left: 0.0625rem solid;
@@ -367,7 +360,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   align-self: stretch;
 }
 
-.panther-30 {
+.panther-29 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -398,7 +391,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   background-color: transparent;
 }
 
-.panther-36 {
+.panther-35 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -413,11 +406,11 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   align-items: center;
 }
 
-.panther-36>*:not(:last-child) {
+.panther-35>*:not(:last-child) {
   margin-right: 4px;
 }
 
-.panther-32 {
+.panther-31 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -425,7 +418,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   width: 85px;
 }
 
-.panther-31 {
+.panther-30 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -454,14 +447,14 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   background-color: #6e3078;
 }
 
-.panther-35 {
+.panther-34 {
   display: -webkit-inline-box;
   display: -webkit-inline-flex;
   display: -ms-inline-flexbox;
   display: inline-flex;
 }
 
-.panther-34 {
+.panther-33 {
   outline: none;
   line-height: 1;
   border-radius: 99999px;
@@ -478,23 +471,23 @@ exports[`RuleAlertCard should match snapshot 1`] = `
   text-decoration: none;
 }
 
-.panther-34:hover {
+.panther-33:hover {
   background-color: #465973;
   border-color: #465973;
 }
 
-.panther-34:focus {
+.panther-33:focus {
   background-color: #465973;
   border-color: #93a6c0;
 }
 
-.panther-34:active,
-.panther-34[data-active=true] {
+.panther-33:active,
+.panther-33[data-active=true] {
   background-color: #253852;
   border-color: #253852;
 }
 
-.panther-33 {
+.panther-32 {
   display: inline-block;
   vertical-align: sub;
   -webkit-flex-shrink: 0;
@@ -510,22 +503,22 @@ exports[`RuleAlertCard should match snapshot 1`] = `
     id="main-header"
   />
   <section
-    class="panther-43"
+    class="panther-42"
   >
     <div
-      class="panther-42"
+      class="panther-41"
     >
       <div
-        class="panther-41"
+        class="panther-40"
       >
         <div
           class="panther-0"
         />
         <div
-          class="panther-40"
+          class="panther-39"
         >
           <header
-            class="panther-9"
+            class="panther-8"
           >
             <h4
               class="panther-2"
@@ -555,50 +548,46 @@ exports[`RuleAlertCard should match snapshot 1`] = `
             </span>
             <div
               aria-label="Creation time for f67b8f04-5fac-404a-93a4-38db29f258ba"
-              class="panther-8"
+              class="panther-4"
             >
               <span
                 class="panther-6"
               >
                 Created
               </span>
-              <span
-                class="panther-7"
-              >
-                2020-08-08 12:15 GMT
-              </span>
+              2020-08-08 12:15 GMT
             </div>
           </header>
           <div
-            class="panther-11"
+            class="panther-10"
           >
             <div
-              class="panther-10"
+              class="panther-9"
             >
               RULE ERROR
             </div>
           </div>
           <div
-            class="panther-39"
+            class="panther-38"
           >
             <dl
-              class="panther-18"
+              class="panther-17"
             >
               <dt
                 aria-labelledby="ruleobject-object"
-                class="panther-12"
+                class="panther-11"
               >
                 Rule
               </dt>
               <dd
                 aria-labelledby="ruleobject-object"
-                class="panther-17"
+                class="panther-16"
               >
                 <div
-                  class="panther-16"
+                  class="panther-15"
                 >
                   <span
-                    class="panther-13"
+                    class="panther-12"
                   >
                     8780849b-30b8-4ce2-934b-bf033369b110
                   </span>
@@ -607,10 +596,10 @@ exports[`RuleAlertCard should match snapshot 1`] = `
                     href="/detections/rules/8780849b-30b8-4ce2-934b-bf033369b110/"
                   >
                     <div
-                      class="panther-15"
+                      class="panther-14"
                     >
                       <svg
-                        class="panther-14"
+                        class="panther-13"
                         role="presentation"
                         viewBox="0 0 24 24"
                       >
@@ -624,29 +613,29 @@ exports[`RuleAlertCard should match snapshot 1`] = `
               </dd>
             </dl>
             <dl
-              class="panther-18"
+              class="panther-17"
             >
               <dt
                 aria-labelledby="log-typesobject-object"
-                class="panther-12"
+                class="panther-11"
               >
                 Log Types
               </dt>
               <dd
                 aria-labelledby="log-typesobject-object"
-                class="panther-17"
+                class="panther-16"
               >
                 <div
-                  class="panther-23"
+                  class="panther-22"
                 >
                   <div
-                    class="panther-16"
+                    class="panther-15"
                   >
                     <span
-                      class="panther-20"
+                      class="panther-19"
                     />
                     <span
-                      class="panther-21"
+                      class="panther-20"
                     >
                       Personal Loan Account
                     </span>
@@ -655,21 +644,21 @@ exports[`RuleAlertCard should match snapshot 1`] = `
               </dd>
             </dl>
             <div
-              class="panther-38"
+              class="panther-37"
             >
               <div
-                class="panther-37"
+                class="panther-36"
               >
                 <div
-                  class="panther-28"
+                  class="panther-27"
                 >
                   <svg
                     aria-label="Loading..."
-                    class="panther-27"
+                    class="panther-26"
                     viewBox="0 0 150 150"
                   >
                     <circle
-                      class="panther-26"
+                      class="panther-25"
                       color="current"
                       cx="75"
                       cy="75"
@@ -679,24 +668,24 @@ exports[`RuleAlertCard should match snapshot 1`] = `
                 </div>
                 <hr
                   aria-orientation="vertical"
-                  class="panther-29"
+                  class="panther-28"
                 />
                 <div
                   aria-atomic="true"
-                  class="panther-30"
+                  class="panther-29"
                   role="status"
                 >
                   MEDIUM
                 </div>
                 <div
-                  class="panther-36"
+                  class="panther-35"
                 >
                   <div
-                    class="panther-32"
+                    class="panther-31"
                   >
                     <div
                       aria-atomic="true"
-                      class="panther-31"
+                      class="panther-30"
                       role="status"
                     >
                       TRIAGED
@@ -705,7 +694,7 @@ exports[`RuleAlertCard should match snapshot 1`] = `
                   <div
                     aria-controls="menu--1"
                     aria-haspopup="true"
-                    class="panther-35"
+                    class="panther-34"
                     data-reach-menu-button=""
                     id="menu-button--menu--1"
                     type="button"
@@ -713,11 +702,11 @@ exports[`RuleAlertCard should match snapshot 1`] = `
                     <button
                       aria-label="Change Alert Status"
                       aria-pressed="false"
-                      class="panther-34"
+                      class="panther-33"
                       type="button"
                     >
                       <svg
-                        class="panther-33"
+                        class="panther-32"
                         role="presentation"
                         viewBox="0 0 24 24"
                       >
