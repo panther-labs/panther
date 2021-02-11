@@ -18,13 +18,14 @@
 
 import React from 'react';
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Link, SimpleGrid, Text } from 'pouncejs';
+import { Box, Flex, Link, SimpleGrid, Text } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import StatusBadge from 'Components/badges/StatusBadge';
 import BulletedValueList from 'Components/BulletedValueList';
 import urls from 'Source/urls';
 import { ComplianceStatusEnum } from 'Generated/schema';
+import { SelectCheckbox } from 'Components/utils/SelectContext';
 import { RuleSummary } from 'Source/graphql/fragments/RuleSummary.generated';
 import { formatDatetime } from 'Helpers/utils';
 import useDetectionDestinations from 'Hooks/useDetectionDestinations';
@@ -33,15 +34,26 @@ import RuleCardOptions from './RuleCardOptions';
 
 interface RuleCardProps {
   rule: RuleSummary;
+  selectionEnabled?: boolean;
+  isSelected?: boolean;
 }
 
-const RuleCard: React.FC<RuleCardProps> = ({ rule }) => {
+const RuleCard: React.FC<RuleCardProps> = ({
+  rule,
+  selectionEnabled = false,
+  isSelected = false,
+}) => {
   const {
     detectionDestinations,
     loading: loadingDetectionDestinations,
   } = useDetectionDestinations({ detection: rule });
   return (
-    <GenericItemCard>
+    <GenericItemCard isHighlighted={isSelected}>
+      {selectionEnabled && (
+        <Box transform="translate3d(-12px,-12px,0)">
+          <SelectCheckbox selectionItem={rule} />
+        </Box>
+      )}
       <GenericItemCard.Body>
         <GenericItemCard.Header>
           <GenericItemCard.Heading>

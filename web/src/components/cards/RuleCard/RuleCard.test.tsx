@@ -19,28 +19,39 @@
 import React from 'react';
 import { buildRule, render } from 'test-utils';
 import { SeverityEnum } from 'Generated/schema';
+import { SelectProvider } from 'Components/utils/SelectContext';
 import urls from 'Source/urls';
 import RuleCard from './index';
 
 describe('RuleCard', () => {
   it('displays the correct Alert data in the card', async () => {
-    const ruleData = buildRule();
+    const rule = buildRule();
 
-    const { getByText } = render(<RuleCard rule={ruleData} />);
+    const { getByText } = render(<RuleCard rule={rule} />);
 
-    expect(getByText(ruleData.displayName)).toBeInTheDocument();
+    expect(getByText(rule.displayName)).toBeInTheDocument();
     expect(getByText('Destinations')).toBeInTheDocument();
     expect(getByText(SeverityEnum.High)).toBeInTheDocument();
     expect(getByText('DISABLED')).toBeInTheDocument();
   });
 
   it('should check links are valid', async () => {
-    const ruleData = buildRule();
+    const rule = buildRule();
 
-    const { getByAriaLabel } = render(<RuleCard rule={ruleData} />);
+    const { getByAriaLabel } = render(<RuleCard rule={rule} />);
     expect(getByAriaLabel('Link to Rule')).toHaveAttribute(
       'href',
-      urls.logAnalysis.rules.details(ruleData.id)
+      urls.logAnalysis.rules.details(rule.id)
     );
+  });
+
+  it('renders a checkbox when selection is enabled', () => {
+    const { getByAriaLabel } = render(
+      <SelectProvider>
+        <RuleCard rule={buildRule()} selectionEnabled />
+      </SelectProvider>
+    );
+
+    expect(getByAriaLabel(`select item`)).toBeInTheDocument();
   });
 });
