@@ -605,8 +605,9 @@ Resources:
         $util.qr($input.put("awsAccountId", $ctx.source.awsAccountId))
         $util.qr($input.put("integrationLabel", $ctx.source.integrationLabel))
         $util.qr($input.put("s3Bucket", $ctx.source.s3Bucket))
-        $util.qr($input.put("s3Prefix", $ctx.source.s3Prefix))
+        $util.qr($input.put("s3PrefixLogTypes", $ctx.source.s3PrefixLogTypes))
         $util.qr($input.put("kmsKey", $ctx.source.kmsKey))
+        $util.qr($input.put("pantherVersion", $ctx.source.pantherVersion))
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
@@ -925,25 +926,6 @@ Resources:
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
-  DeletePolicyResolver:
-    Type: AWS::AppSync::Resolver
-    Properties:
-      ApiId: !Ref ApiId
-      TypeName: Mutation
-      FieldName: deletePolicy
-      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
-      RequestMappingTemplate: |
-        {
-          "version" : "2017-02-28",
-          "operation": "Invoke",
-          "payload": $util.toJson({
-            "deletePolicies": {
-              "entries": $ctx.args.input.policies
-            }
-          })
-        }
-      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCodeNoBody, VTL]
-
   UploadDetectionsResolver:
     Type: AWS::AppSync::Resolver
     Properties:
@@ -1228,20 +1210,20 @@ Resources:
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
-  DeleteRuleResolver:
+  DeleteDetectionResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
-      FieldName: deleteRule
+      FieldName: deleteDetections
       DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
           "version" : "2017-02-28",
           "operation": "Invoke",
           "payload": $util.toJson({
-            "deleteRules": {
-              "entries": $ctx.args.input.rules
+            "deleteDetections": {
+              "entries": $ctx.args.input.detections
             }
           })
         }

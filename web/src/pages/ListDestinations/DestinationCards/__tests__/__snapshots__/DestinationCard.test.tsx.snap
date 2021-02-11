@@ -4,11 +4,13 @@ exports[`Generic Destination Card should match snapshot 1`] = `
 .panther-17 {
   background-color: #1d2a3f;
   border-radius: 4px;
-  padding: 16px;
   overflow: hidden;
 }
 
-
+.panther-16 {
+  background-color: transparent;
+  padding: 16px;
+}
 
 .panther-15 {
   display: -webkit-box;

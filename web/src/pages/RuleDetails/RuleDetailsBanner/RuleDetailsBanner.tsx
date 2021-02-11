@@ -58,8 +58,8 @@ const RuleDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ rule }) => {
             aria-label="Delete Rule"
             onClick={() =>
               showModal({
-                modal: MODALS.DELETE_RULE,
-                props: { rule },
+                modal: MODALS.DELETE_DETECTIONS,
+                props: { detections: [rule] },
               })
             }
           >

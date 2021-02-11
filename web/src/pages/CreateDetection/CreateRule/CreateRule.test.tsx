@@ -126,7 +126,7 @@ describe('CreateRule', () => {
     // Expect analytics to have been called
     expect(trackEvent).toHaveBeenCalledWith({
       event: EventEnum.AddedRule,
-      src: SrcEnum.Rules,
+      src: SrcEnum.Detections,
     });
   });
 
@@ -182,7 +182,7 @@ describe('CreateRule', () => {
     // Expect analytics to have been called
     expect(trackError).toHaveBeenCalledWith({
       event: TrackErrorEnum.FailedToAddRule,
-      src: SrcEnum.Rules,
+      src: SrcEnum.Detections,
     });
   });
 });
