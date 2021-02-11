@@ -82,6 +82,7 @@ Parameters:
   PythonAssumableRoleArns:
     Type: CommaDelimitedList
     Description: List of IAM roles which the Python policy-engine will be allowed to assume
+    AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):iam::\d{12}:role\/[a-zA-Z0-9+=,.@_\/-]+)*$'
   PythonLayerVersionArn:
     Type: String
     Description: Versioned lambda layer with pip libraries for python analysis and remediation
