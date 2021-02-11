@@ -31,7 +31,7 @@ Parameters:
   TargetBucketName:
     Type: String
     Description: Enter the S3 Bucket that the Panther Rules Engine can Read from.
-   
+
 Resources:
   PantherRulesEngineIamRole:
     Type: 'AWS::IAM::Role'
