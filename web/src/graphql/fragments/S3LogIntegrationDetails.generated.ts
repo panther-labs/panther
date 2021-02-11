@@ -34,6 +34,8 @@ export type S3LogIntegrationDetails = Pick<
   | 'kmsKey'
   | 's3Bucket'
   | 'stackName'
+  | 'managedBucketNotifications'
+  | 'notificationsConfigurationSucceeded'
 > & {
   s3PrefixLogTypes: Array<Pick<Types.S3PrefixLogTypes, 'prefix' | 'logTypes'>>;
   health: {
@@ -59,6 +61,8 @@ export const S3LogIntegrationDetails = gql`
       logTypes
     }
     stackName
+    managedBucketNotifications
+    notificationsConfigurationSucceeded
     health {
       processingRoleStatus {
         ...IntegrationItemHealthDetails

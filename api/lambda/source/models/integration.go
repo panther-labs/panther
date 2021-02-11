@@ -50,6 +50,7 @@ type SourceIntegrationScanInformation struct {
 }
 
 // SourceIntegrationMetadata is general settings and metadata for an integration.
+//nolint:maligned
 type SourceIntegrationMetadata struct {
 	AWSAccountID       string    `json:"awsAccountId,omitempty"`
 	CreatedAtTime      time.Time `json:"createdAtTime,omitempty"`
@@ -72,10 +73,29 @@ type SourceIntegrationMetadata struct {
 	S3PrefixLogTypes  S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty"`
 	KmsKey            string           `json:"kmsKey,omitempty"`
 	LogProcessingRole string           `json:"logProcessingRole,omitempty"`
+	// Whether Panther should configure the user's bucket notifications.
+	ManagedBucketNotifications bool `json:"managedBucketNotifications"`
+	// The resources that Panther created. This may be partial if an error occurred
+	// while creating a resource.
+	ManagedS3Resources ManagedS3Resources `json:"managedS3Resources,omitempty"`
+	// This is only needed for the API response, so that the UI can show a warning message
+	// if Panther couldn't setup bucket notifications. Failing to do so doesn't
+	// block any other source operations like saving to the DB.
+	NotificationsConfigurationSucceeded bool `json:"notificationsConfigurationSucceeded"`
 
 	StackName string `json:"stackName,omitempty"`
 
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
+}
+
+type ManagedS3Resources struct {
+	// Storing the topic's ARN
+	// - saves us from an extra network call when checking whether Panther managed to create the topic
+	// - we don't ever delete it from AWS, so we need to show to the user the exact resource that will be kept.
+	TopicARN *string `json:"topicARN"`
+	// Only the IDs from configurations that Panther manages. The bucket may have
+	// other user-created topic configurations as well.
+	TopicConfigurationIDs []string `json:"topicConfigIds"`
 }
 
 // S3PrefixLogtypesMapping contains the logtypes Panther should parse for this s3 prefix.

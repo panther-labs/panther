@@ -42,8 +42,8 @@ const PolicyCardOptions: React.FC<PolicyCardOptionsProps> = ({ policy }) => {
         <DropdownItem
           onSelect={() =>
             showModal({
-              modal: MODALS.DELETE_POLICY,
-              props: { policy },
+              modal: MODALS.DELETE_DETECTIONS,
+              props: { detections: [policy] },
             })
           }
         >

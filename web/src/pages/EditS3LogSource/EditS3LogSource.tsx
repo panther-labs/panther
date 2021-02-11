@@ -67,6 +67,7 @@ const EditS3LogSource: React.FC = () => {
         { prefix: '', logTypes: [] },
       ],
       kmsKey: data?.getS3LogIntegration?.kmsKey ?? '',
+      managedBucketNotifications: data?.getS3LogIntegration?.managedBucketNotifications ?? false,
     }),
     [data]
   );

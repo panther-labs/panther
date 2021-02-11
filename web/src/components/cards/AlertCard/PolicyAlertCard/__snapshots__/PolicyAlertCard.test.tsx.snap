@@ -30,11 +30,13 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
 .panther-41 {
   background-color: #1d2a3f;
   border-radius: 4px;
-  padding: 16px;
   overflow: hidden;
 }
 
-
+.panther-40 {
+  background-color: transparent;
+  padding: 16px;
+}
 
 .panther-39 {
   display: -webkit-box;

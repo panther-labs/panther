@@ -13,6 +13,8 @@ fragment S3LogIntegrationDetails on S3LogIntegration {
     logTypes
   }
   stackName
+  managedBucketNotifications
+  notificationsConfigurationSucceeded
   health {
     processingRoleStatus {
       ...IntegrationItemHealthDetails

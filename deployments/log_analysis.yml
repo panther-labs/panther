@@ -115,9 +115,17 @@ Conditions:
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
+  ###### Update managed schemas to the minimum required version
+  UpdateManagedSchemas:
+    Type: Custom::ManagedSchemas
+    DependsOn: UpdaterFunction
+    Properties:
+      CustomResourceVersion: !Ref CustomResourceVersion
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+
   ###### Update Glue Table Schemas for Deployed Tables #####
   UpdateLogProcessorGlueTables:
-    DependsOn: UpdaterFunction
+    DependsOn: UpdateManagedSchemas # The data catalog updater needs to have up-to-date schemas
     Type: Custom::UpdateLogProcessorTables
     Properties:
       CustomResourceVersion: !Ref CustomResourceVersion
@@ -419,7 +427,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-input-data-notifications-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
   LogProcessorDLQAlarms:
     Type: Custom::SQSAlarms
@@ -628,7 +636,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-datacatalog-updater-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
   UpdaterDLQAlarms:
     Type: Custom::SQSAlarms
@@ -826,7 +834,7 @@ Resources:
       # When the system has recovered they should be re-queued to the `panther-rules-engine-queue` using
       # the Panther tool `requeue`.
       # </cfndoc>
-      MessageRetentionPeriod: '1209600' # Max duration - 14 days
+      MessageRetentionPeriod: 1209600 # Max duration - 14 days
 
   RulesEngineDLQAlarms:
     Type: Custom::SQSAlarms

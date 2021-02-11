@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { AWS_ACCOUNT_ID_REGEX } from 'Source/constants';
+import { AWS_ACCOUNT_ID_REGEX, AWS_REGIONS, RESOURCE_TYPES } from 'Source/constants';
 import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import { Wizard } from 'Components/Wizard';
@@ -38,6 +38,8 @@ export interface ComplianceSourceWizardValues {
   integrationLabel: string;
   cweEnabled: boolean;
   remediationEnabled: boolean;
+  regionIgnoreList: string[];
+  resourceTypeIgnoreList: string[];
 }
 
 const validationSchema = Yup.object().shape<ComplianceSourceWizardValues>({
@@ -47,6 +49,16 @@ const validationSchema = Yup.object().shape<ComplianceSourceWizardValues>({
     .required(),
   cweEnabled: Yup.boolean().required(),
   remediationEnabled: Yup.boolean().required(),
+  regionIgnoreList: Yup.array().of(
+    Yup.string()
+      .oneOf((AWS_REGIONS as unknown) as string[])
+      .required()
+  ),
+  resourceTypeIgnoreList: Yup.array().of(
+    Yup.string()
+      .oneOf((RESOURCE_TYPES as unknown) as string[])
+      .required()
+  ),
 });
 
 const ComplianceSourceWizard: React.FC<ComplianceSourceWizardProps> = ({
