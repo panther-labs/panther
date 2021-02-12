@@ -188,7 +188,7 @@ func setupUpdateDetectionsToVersion(oldPack *packTableItem, pack *packTableItem,
 	var err error
 	if oldPack.Enabled != pack.Enabled {
 		enabledStatusChanged = true
-		otherExistingPacks, err = lookupPackMembership(oldPack.ID)
+		otherExistingPacks, err = lookupPackMembership()
 		if err != nil {
 			return nil, err
 		}
@@ -220,18 +220,22 @@ func setupUpdateDetectionsToVersion(oldPack *packTableItem, pack *packTableItem,
 					// if the detection is already disabled, no need to do a check
 					if !detection.Enabled {
 						detection.Enabled = pack.Enabled
-						zap.L().Debug("pack is being disabled, detection is continuing to be disabled", zap.Bool("detectionEnabledStatus", detection.Enabled), zap.String("detectionID", detection.ID))
+						zap.L().Debug("pack is being disabled, detection is continuing to be disabled",
+							zap.Bool("detectionEnabledStatus", detection.Enabled), zap.String("detectionID", detection.ID))
 					} else {
 						// otherwise check that it isn't enabled via another pack
 						detection.Enabled = isDetectionInEnabledPack(otherExistingPacks, pack.ID, id)
-						zap.L().Debug("pack is being disabled, detection status could change", zap.Bool("detectionEnabledStatus", detection.Enabled), zap.String("detectionID", detection.ID))
+						zap.L().Debug("pack is being disabled, detection status could change",
+							zap.Bool("detectionEnabledStatus", detection.Enabled), zap.String("detectionID", detection.ID))
 					}
 				} else {
 					detection.Enabled = pack.Enabled
-					zap.L().Debug("pack is being enabled, detection is being enabled", zap.String("detectionID", detection.ID))
+					zap.L().Debug("pack is being enabled, detection is being enabled",
+						zap.String("detectionID", detection.ID))
 				}
 			} else {
-				zap.L().Debug("pack enablement has not changed", zap.Bool("detectionEnabled", detection.Enabled), zap.String("detectionID", detection.ID))
+				zap.L().Debug("pack enablement has not changed", zap.Bool("detectionEnabled", detection.Enabled),
+					zap.String("detectionID", detection.ID))
 			}
 		} else {
 			// create new detection
@@ -244,11 +248,10 @@ func setupUpdateDetectionsToVersion(oldPack *packTableItem, pack *packTableItem,
 
 // lookupPackMembership will setup a map from detectionID -> []pack to easily track which packs
 // each detection is in
-func lookupPackMembership(id string) (map[string][]*packTableItem, error) {
+func lookupPackMembership() (map[string][]*packTableItem, error) {
 	// if we are disabling a pack, we need to look up detection pack memebership
 	// so that if a detection spans multiple packs, we only disable it if it
 	// is not enabled via another pack
-	// look up all other packs not including this one
 	detectionToPack := make(map[string][]*packTableItem)
 	scanInput, err := buildTableScanInput(env.PackTable, []models.DetectionType{models.TypePack},
 		[]string{}, []expression.ConditionBuilder{}...)
@@ -265,11 +268,7 @@ func lookupPackMembership(id string) (map[string][]*packTableItem, error) {
 			return nil, err
 		}
 		for _, detection := range packDetections {
-			if _, ok := detectionToPack[detection.ID]; ok {
-				detectionToPack[detection.ID] = append(detectionToPack[detection.ID], pack)
-			} else {
-				detectionToPack[detection.ID] = []*packTableItem{pack}
-			}
+			detectionToPack[detection.ID] = append(detectionToPack[detection.ID], pack)
 		}
 	}
 	return detectionToPack, nil
