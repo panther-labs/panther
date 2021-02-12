@@ -73,6 +73,8 @@ func updatePackVersion(input *models.PatchPackInput, oldPackItem *packTableItem)
 		}
 	}
 	if newPackItem, ok := packVersionSet[input.ID]; ok {
+		// Ensure the new item picks up the new enabled status
+		newPackItem.Enabled = input.Enabled
 		// Update the detections in the pack
 		err = updateDetectionsToVersion(input.UserID, oldPackItem, newPackItem, detectionVersionSet)
 		if err != nil {
@@ -218,12 +220,18 @@ func setupUpdateDetectionsToVersion(oldPack *packTableItem, pack *packTableItem,
 					// if the detection is already disabled, no need to do a check
 					if !detection.Enabled {
 						detection.Enabled = pack.Enabled
+						zap.L().Error("pack is being disabled, detection is continuing to be disabled", zap.Bool("detectionEnabled", detection.Enabled), zap.String("detectionID", detection.ID))
 					} else {
 						// otherwise check that it isn't enabled via another pack
-						detection.Enabled = isDetectionInEnabledPack(otherExistingPacks, id)
+						detection.Enabled = isDetectionInEnabledPack(otherExistingPacks, pack.ID, id)
+						zap.L().Error("pack is being disabled, detection is being", zap.Bool("detectionEnabled", detection.Enabled), zap.String("detectionID", detection.ID))
 					}
+				} else {
+					detection.Enabled = pack.Enabled
+					zap.L().Error("pack is being enabled, detection is being enabled", zap.Bool("detectionEnabled", detection.Enabled), zap.String("detectionID", detection.ID))
 				}
-				detection.Enabled = pack.Enabled
+			} else {
+				zap.L().Error("pack enablement hasn't changed", zap.Bool("detectionEnabled", detection.Enabled), zap.String("detectionID", detection.ID))
 			}
 		} else {
 			// create new detection
@@ -242,9 +250,8 @@ func lookupPackMembership(id string) (map[string][]*packTableItem, error) {
 	// is not enabled via another pack
 	// look up all other packs not including this one
 	detectionToPack := make(map[string][]*packTableItem)
-	filter := expression.NotEqual(expression.Name("lowerId"), expression.Value(strings.ToLower(id)))
 	scanInput, err := buildTableScanInput(env.PackTable, []models.DetectionType{models.TypePack},
-		[]string{}, []expression.ConditionBuilder{filter}...)
+		[]string{}, []expression.ConditionBuilder{}...)
 	if err != nil {
 		return nil, err
 	}
@@ -270,12 +277,12 @@ func lookupPackMembership(id string) (map[string][]*packTableItem, error) {
 
 // isDetectionInMultipleEnabledPacks will return True is a detection exists in another enabled pack
 // otherwise it will return False
-func isDetectionInEnabledPack(detectionToPacks map[string][]*packTableItem, detectionID string) bool {
+func isDetectionInEnabledPack(detectionToPacks map[string][]*packTableItem, currentPackID string, detectionID string) bool {
 	// if a user disables a pack, it disables all the detections in the pack unless those detections
 	// are in another, enabled pack
 	if packs, ok := detectionToPacks[detectionID]; ok {
 		for _, pack := range packs {
-			if pack.Enabled {
+			if pack.Enabled && pack.ID != currentPackID {
 				return true
 			}
 		}
