@@ -823,7 +823,7 @@ export type LongSeriesData = {
 
 export type ManagedS3Resources = {
   __typename?: 'ManagedS3Resources';
-  topicARN: Scalars['String'];
+  topicARN?: Maybe<Scalars['String']>;
 };
 
 export enum MessageActionEnum {
@@ -2765,7 +2765,7 @@ export type ManagedS3ResourcesResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['ManagedS3Resources'] = ResolversParentTypes['ManagedS3Resources']
 > = {
-  topicARN?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  topicARN?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
