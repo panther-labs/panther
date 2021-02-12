@@ -220,18 +220,18 @@ func setupUpdateDetectionsToVersion(oldPack *packTableItem, pack *packTableItem,
 					// if the detection is already disabled, no need to do a check
 					if !detection.Enabled {
 						detection.Enabled = pack.Enabled
-						zap.L().Error("pack is being disabled, detection is continuing to be disabled", zap.Bool("detectionEnabled", detection.Enabled), zap.String("detectionID", detection.ID))
+						zap.L().Debug("pack is being disabled, detection is continuing to be disabled", zap.Bool("detectionEnabledStatus", detection.Enabled), zap.String("detectionID", detection.ID))
 					} else {
 						// otherwise check that it isn't enabled via another pack
 						detection.Enabled = isDetectionInEnabledPack(otherExistingPacks, pack.ID, id)
-						zap.L().Error("pack is being disabled, detection is being", zap.Bool("detectionEnabled", detection.Enabled), zap.String("detectionID", detection.ID))
+						zap.L().Debug("pack is being disabled, detection status could change", zap.Bool("detectionEnabledStatus", detection.Enabled), zap.String("detectionID", detection.ID))
 					}
 				} else {
 					detection.Enabled = pack.Enabled
-					zap.L().Error("pack is being enabled, detection is being enabled", zap.Bool("detectionEnabled", detection.Enabled), zap.String("detectionID", detection.ID))
+					zap.L().Debug("pack is being enabled, detection is being enabled", zap.String("detectionID", detection.ID))
 				}
 			} else {
-				zap.L().Error("pack enablement hasn't changed", zap.Bool("detectionEnabled", detection.Enabled), zap.String("detectionID", detection.ID))
+				zap.L().Debug("pack enablement has not changed", zap.Bool("detectionEnabled", detection.Enabled), zap.String("detectionID", detection.ID))
 			}
 		} else {
 			// create new detection
