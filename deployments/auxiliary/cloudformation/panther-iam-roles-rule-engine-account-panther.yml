@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 AWSTemplateFormatVersion: 2010-09-09
-Description: Panther Rules Engine Read-only Cross Account Assume Role and Secrets Manager Managed Policy for Panther Account
+Description: Panther Rules Engine Read-only Cross Account Assume Role for Panther Account.
 
 Parameters:
   TargetAccountID:
@@ -24,6 +24,9 @@ Parameters:
   PantherRulesEngineRoleName:
     Type: String
     Description: Enter the name of the Panther Rules Engine Role name which can be found under IAM by searching "rules" in the Panther Master Account.
+  CustomerCrossAccountReadOnlyRoleName:
+    Type: String
+    Description: Enter the name of the IAM role created in the customer account.
 
 Resources:
   RulesEngineAssumeReadOnlyPolicy:
@@ -32,11 +35,11 @@ Resources:
       ManagedPolicyName: panther-rule-engine-cross-account-readonly-permissions
       Description: Panther Rules Engine Cross Account Read-only Managed policy
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: 2012-10-17
         Statement:
           - Effect: Allow
             Action: sts:AssumeRole
-            Resource: !Sub arn:aws:iam::${TargetAccountID}:role/PantherRulesEngineCrossAccountReadOnlyRole
+            Resource: !Sub arn:${AWS::Partition}:iam::${TargetAccountID}:role/${CustomerCrossAccountReadOnlyRoleName}
       Roles:
         - !Ref PantherRulesEngineRoleName
 

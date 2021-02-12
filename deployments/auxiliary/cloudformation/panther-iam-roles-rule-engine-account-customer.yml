@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 AWSTemplateFormatVersion: 2010-09-09
-Description: Panther Rules Engine Customer Account Cross Account Read-only S3 and Secrets Role
+Description: Panther Rules Engine Customer Account Cross Account Read-only S3 and Secrets Role.
 
 Parameters:
   PantherMasterAccountID:
@@ -34,15 +34,15 @@ Parameters:
 
 Resources:
   PantherRulesEngineIamRole:
-    Type: 'AWS::IAM::Role'
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: 2012-10-17
         Statement:
           - Effect: Allow
             Action: sts:AssumeRole
             Principal:
-              AWS: !Sub arn:aws:iam::${PantherMasterAccountID}:role/${PantherRulesEngineRoleName}
+              AWS: !Sub arn:${AWS::Partition}:iam::${PantherMasterAccountID}:role/${PantherRulesEngineRoleName}
 
       Policies:
         - PolicyName: panther-rule-engine-cross-account-read-only-role
@@ -54,15 +54,15 @@ Resources:
                   - s3:Get*
                   - s3:List*
                 Resource:
-                  - !Sub arn:aws:s3:::${TargetBucketName}
-                  - !Sub arn:aws:s3:::${TargetBucketName}/*
+                  - !Sub arn:${AWS::Partition}:s3:::${TargetBucketName}
+                  - !Sub arn:${AWS::Partition}:s3:::${TargetBucketName}/*
               - Effect: Allow
                 Action:
                   - secretsmanager:GetResourcePolicy
                   - secretsmanager:GetSecretValue
                   - secretsmanager:DescribeSecret
                   - secretsmanager:ListSecretVersionIds
-                Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${SecretName}
+                Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${SecretName}
 
       RoleName: !Sub PantherRulesEngineCrossAccountReadOnlyRole-${AWS::Region}
 
