@@ -21,7 +21,7 @@ import queryString from 'query-string';
 import { queryStringOptions } from 'Hooks/useUrlParams';
 import { fireClickAndMouseEvents, fireEvent, render, within, waitFor } from 'test-utils';
 import { ListDetectionsSortFieldsEnum, SortDirEnum } from 'Generated/schema';
-import ListDetectionsFilters from './index';
+import ListDetectionsFilters from './ListDetectionsFilters';
 
 // Mock debounce so it just executes the callback instantly
 jest.mock('lodash/debounce', () => jest.fn(fn => fn));
@@ -108,15 +108,17 @@ describe('ListDetectionsFilters', () => {
     fireClickAndMouseEvents(dropdownTrigger);
 
     withinDropdown = within(getByTestId('dropdown-detections-listing-filters'));
+
     fireClickAndMouseEvents(withinDropdown.getByText('Clear Filters'));
     fireClickAndMouseEvents(withinDropdown.getByText('Apply Filters'));
 
+    // expect to find the ONLY the filters that are not part of the dropdown
     await waitFor(() =>
       expect(parseParams(history.location.search)).toEqual({
         nameContains: 'AWS',
         page: 1,
-        sortBy: ListDetectionsSortFieldsEnum.Severity,
-        sortDir: SortDirEnum.Ascending,
+        sortBy: 'severity',
+        sortDir: 'ascending',
       })
     );
   });

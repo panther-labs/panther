@@ -479,13 +479,23 @@ func deployCloudSecurityStack(settings *PantherConfig, packager *pkg.Packager, o
 		"CloudWatchLogRetentionDays": strconv.Itoa(settings.Monitoring.CloudWatchLogRetentionDays),
 		"CustomResourceVersion":      customResourceVersion(),
 		"Debug":                      strconv.FormatBool(settings.Monitoring.Debug),
+		"DynamoScalingRoleArn":       outputs["DynamoScalingRoleArn"],
 		"InputDataBucket":            outputs["InputDataBucket"],
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
 		"ProcessedDataTopicArn":      outputs["ProcessedDataTopicArn"],
+		"PythonAssumableRoleArns":    strings.Join(settings.Infra.PythonAssumableRoleArns, ","),
 		"PythonLayerVersionArn":      outputs["PythonLayerVersionArn"],
+		"PythonManagedPolicyArn":     settings.Infra.PythonManagedPolicyArn,
 		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
+
+		// These settings are not supported for source code deploys
+		"CloudSecurityMaxReadCapacity":  "0",
+		"CloudSecurityMaxWriteCapacity": "0",
+		"CloudSecurityMemory":           "512",
+		"CloudSecurityMinReadCapacity":  "0",
+		"CloudSecurityMinWriteCapacity": "0",
 	})
 	return err
 }
@@ -534,7 +544,9 @@ func deployLogAnalysisStack(settings *PantherConfig, packager *pkg.Packager, out
 		"LogProcessorLambdaSQSReadBatchSize": settings.Infra.LogProcessorLambdaSQSReadBatchSize,
 		"ProcessedDataBucket":                outputs["ProcessedDataBucket"],
 		"ProcessedDataTopicArn":              outputs["ProcessedDataTopicArn"],
+		"PythonAssumableRoleArns":            strings.Join(settings.Infra.PythonAssumableRoleArns, ","),
 		"PythonLayerVersionArn":              outputs["PythonLayerVersionArn"],
+		"PythonManagedPolicyArn":             settings.Infra.PythonManagedPolicyArn,
 		"SqsKeyId":                           outputs["QueueEncryptionKeyId"],
 		"TracingMode":                        settings.Monitoring.TracingMode,
 	})

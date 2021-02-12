@@ -19,6 +19,7 @@ package registry
  */
 
 import (
+	"net/url"
 	"reflect"
 	"strings"
 
@@ -44,6 +45,10 @@ func ExportSchemas() (map[string]*logschema.Schema, error) {
 		}
 
 		desc := entry.Describe()
+		// Avoid invalid reference URLs in export
+		if u, err := url.Parse(desc.ReferenceURL); err != nil || u.Scheme == "" {
+			desc.ReferenceURL = ""
+		}
 		schema := logschema.Schema{
 			Parser: &logschema.Parser{
 				Native: &logschema.NativeParser{

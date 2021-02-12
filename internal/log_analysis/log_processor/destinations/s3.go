@@ -38,10 +38,12 @@ import (
 
 	"github.com/panther-labs/panther/internal/log_analysis/awsglue"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	logmetrics "github.com/panther-labs/panther/internal/log_analysis/log_processor/metrics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
 	"github.com/panther-labs/panther/internal/log_analysis/notify"
 	"github.com/panther-labs/panther/internal/log_analysis/pantherdb"
+	"github.com/panther-labs/panther/pkg/metrics"
 	pq "github.com/panther-labs/panther/pkg/priorityq"
 )
 
@@ -82,6 +84,7 @@ func CreateS3Destination(jsonAPI jsoniter.API) Destination {
 		snsClient:           common.SnsClient,
 		s3Bucket:            common.Config.ProcessedDataBucket,
 		snsTopicArn:         common.Config.SnsTopicARN,
+		latencyCounter:      logmetrics.EventLatencySeconds,
 		maxBufferedMemBytes: maxS3BufferMemUsageBytes(common.Config.AwsLambdaFunctionMemorySize),
 		maxBufferSize:       uploaderBufferMaxSizeBytes,
 		maxDuration:         maxDuration,
@@ -121,6 +124,7 @@ type S3Destination struct {
 	maxDuration         time.Duration
 	maxBuffers          int
 	jsonAPI             jsoniter.API
+	latencyCounter      metrics.Counter
 }
 
 // SendEvents stores events in S3.
@@ -323,6 +327,7 @@ type s3EventBufferSet struct {
 	maxBuffers              int
 	maxBufferSize           int
 	maxTotalSize            uint64
+	latencyCounter          metrics.Counter
 }
 
 func (d *S3Destination) newS3EventBufferSet() *s3EventBufferSet {
@@ -330,11 +335,12 @@ func (d *S3Destination) newS3EventBufferSet() *s3EventBufferSet {
 	// Stream will be a buffered stream
 	stream := jsoniter.NewStream(d.jsonAPI, nil, initialBufferSize)
 	return &s3EventBufferSet{
-		stream:        stream,
-		set:           make(map[time.Time]map[string]*s3EventBuffer),
-		maxBuffers:    d.maxBuffers,
-		maxBufferSize: d.maxBufferSize,
-		maxTotalSize:  d.maxBufferedMemBytes,
+		stream:         stream,
+		set:            make(map[time.Time]map[string]*s3EventBuffer),
+		maxBuffers:     d.maxBuffers,
+		maxBufferSize:  d.maxBufferSize,
+		maxTotalSize:   d.maxBufferedMemBytes,
+		latencyCounter: d.latencyCounter,
 	}
 }
 
@@ -356,6 +362,9 @@ func (bs *s3EventBufferSet) writeEvent(event *parsers.Result) (sendBuffers []*s3
 	if buf == nil {
 		return nil, errors.New(`could not resolve a buffer for the event`)
 	}
+	// We need to increment the counter here since the event.PantherParseTime and event.PantherEventTime are populated only
+	// after the event has been serialized
+	buf.latencyCounter.Add(event.PantherParseTime.Sub(event.PantherEventTime).Seconds())
 	n, err := buf.addEvent(stream.Buffer())
 	if err != nil {
 		return nil, err
@@ -420,7 +429,7 @@ func (bs *s3EventBufferSet) getBuffer(event *parsers.Result) *s3EventBuffer {
 	logType := event.PantherLogType
 	buffer, ok := logTypeToBuffer[logType]
 	if !ok {
-		buffer = newS3EventBuffer(logType, hour)
+		buffer = newS3EventBuffer(bs.latencyCounter, logType, hour)
 		logTypeToBuffer[logType] = buffer
 		bs.numBuffers++
 		bs.sizePriorityQueue.Insert(buffer, 0.0)
@@ -491,24 +500,27 @@ func (bs *s3EventBufferSet) apply(f func(buffer *s3EventBuffer) (bool, error)) e
 // s3EventBuffer is a group of events of the same type
 // that will be stored in the same S3 object
 type s3EventBuffer struct {
-	logType    string
-	buffer     *bytes.Buffer
-	writer     *gzip.Writer
-	bytes      int
-	events     int
-	hour       time.Time // the event time bin
-	createTime time.Time // used to expire buffer
+	logType        string
+	buffer         *bytes.Buffer
+	writer         *gzip.Writer
+	bytes          int
+	events         int
+	hour           time.Time // the event time bin
+	createTime     time.Time // used to expire buffer
+	latencyCounter metrics.Counter
 }
 
-func newS3EventBuffer(logType string, hour time.Time) *s3EventBuffer {
+func newS3EventBuffer(latencyCounter metrics.Counter, logType string, hour time.Time) *s3EventBuffer {
 	buffer := &bytes.Buffer{}
 	writer := gzip.NewWriter(buffer)
 	return &s3EventBuffer{
-		logType:    logType,
-		buffer:     buffer,
-		writer:     writer,
-		hour:       hour,
-		createTime: time.Now(), // used with time.Tick() to check expiration ... no need for UTC()
+		logType: logType,
+		buffer:  buffer,
+		writer:  writer,
+		hour:    hour,
+		// All events in the buffer have the same log type
+		latencyCounter: latencyCounter.With(metrics.LogTypeDimension, logType),
+		createTime:     time.Now(), // used with time.Tick() to check expiration ... no need for UTC()
 	}
 }
 

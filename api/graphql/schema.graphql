@@ -20,12 +20,11 @@ type Mutation {
   addRule(input: AddRuleInput!): Rule!
   addGlobalPythonModule(input: AddGlobalPythonModuleInput!): GlobalPythonModule!
   deleteDataModel(input: DeleteDataModelInput!): Boolean
+  deleteDetections(input: DeleteDetectionInput!): Boolean
   deleteDestination(id: ID!): Boolean
   deleteComplianceIntegration(id: ID!): Boolean
   deleteCustomLog(input: DeleteCustomLogInput): DeleteCustomLogOutput!
   deleteLogIntegration(id: ID!): Boolean
-  deletePolicy(input: DeletePolicyInput!): Boolean
-  deleteRule(input: DeleteRuleInput!): Boolean
   deleteGlobalPythonModule(input: DeleteGlobalPythonModuleInput!): Boolean
   deleteUser(id: ID!): Boolean
   inviteUser(input: InviteUserInput): User!
@@ -48,6 +47,7 @@ type Mutation {
   updateUser(input: UpdateUserInput!): User!
   uploadDetections(input: UploadDetectionsInput!): UploadDetectionsResponse
   updateGlobalPythonlModule(input: ModifyGlobalPythonModuleInput!): GlobalPythonModule!
+  updatePack(input: UpdatePackInput!): Pack!
 }
 
 type Query {
@@ -77,6 +77,7 @@ type Query {
   listComplianceIntegrations: [ComplianceIntegration!]!
   listDataModels(input: ListDataModelsInput!): ListDataModelsResponse!
   listLogIntegrations: [LogIntegration!]!
+  listPacks(input: ListPacksInput) : ListPacksResponse!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   getLogAnalysisMetrics(input: LogAnalysisMetricsInput!): LogAnalysisMetricsResponse!
   rule(input: GetRuleInput!): Rule
@@ -84,6 +85,30 @@ type Query {
   users: [User!]!
   getCustomLog(input: GetCustomLogInput!): GetCustomLogOutput!
   listCustomLogs: [CustomLogRecord!]!
+}
+
+input ListPacksInput {
+  ids: [ID!]
+  exclusiveStartKey: String
+  contains: String
+  createdBefore: AWSDateTime
+  createdAfter: AWSDateTime
+  userId: ID
+  sortDir: SortDirEnum # defaults to `ascending`
+  # Paging
+  pageSize: Int # defaults to `25`
+  page: Int # defaults to `1`
+}
+
+input PackVersionInput {
+  id: String!
+  name: String!
+}
+
+input UpdatePackInput {
+  enabled: Boolean
+  id: ID!
+  packVersion: PackVersionInput
 }
 
 input ListDetectionsInput {
@@ -173,6 +198,7 @@ input GetS3LogIntegrationTemplateInput {
   integrationLabel: String!
   s3Bucket: String!
   kmsKey: String
+  managedBucketNotifications: Boolean!
 }
 
 input ListAlertsInput {
@@ -201,6 +227,10 @@ input GetAlertInput {
 
 type ListDetectionsResponse {
   detections: [Detection!]!
+  paging: PagingData!
+}
+type ListPacksResponse {
+  packs: [Pack!]!
   paging: PagingData!
 }
 
@@ -274,6 +304,7 @@ type S3LogIntegrationHealth {
   processingRoleStatus: IntegrationItemHealthStatus!
   s3BucketStatus: IntegrationItemHealthStatus!
   kmsKeyStatus: IntegrationItemHealthStatus!
+  getObjectStatus: IntegrationItemHealthStatus # can be null for sources created in Panther<1.16
 }
 
 type SqsLogIntegrationHealth {
@@ -415,8 +446,8 @@ input GetRuleInput {
   versionId: ID
 }
 
-input DeleteRuleInput {
-  rules: [DeleteEntry!]!
+input DeleteDetectionInput {
+  detections: [DeleteEntry!]!
 }
 
 interface Detection {
@@ -461,6 +492,43 @@ type Rule implements Detection {
   versionId: ID
   analysisType: DetectionTypeEnum!
 }
+
+type PackVersion {
+  id: String!
+  name: String!
+}
+
+type PackDetectionsPatterns {
+  # This is an array Detection['id'] that are related to the pack
+  IDs: [ID!]
+}
+
+type DetectionTypes {
+  GLOBAL: Int!
+  RULE: Int!
+  POLICY: Int!
+}
+
+type Pack {
+  id: ID!
+  enabled: Boolean!
+  updateAvailable: Boolean!
+
+  description: String!
+  displayName: String!
+  packVersion: PackVersion!
+
+  availableVersions: [PackVersion!]!
+  createdBy: ID!
+  lastModifiedBy: ID!
+
+  createdAt: AWSDateTime!
+  lastModified: AWSDateTime!
+
+  detectionsPatterns: PackDetectionsPatterns!
+  detectionTypes: DetectionTypes!
+}
+
 
 input SuppressPoliciesInput {
   policyIds: [ID]!
@@ -655,6 +723,8 @@ type S3LogIntegration {
   s3Prefix: String
   kmsKey: String
   s3PrefixLogTypes: [S3PrefixLogTypes!]!
+  managedBucketNotifications: Boolean!
+  notificationsConfigurationSucceeded: Boolean!
   health: S3LogIntegrationHealth!
   stackName: String!
 }
@@ -690,6 +760,7 @@ input AddS3LogIntegrationInput {
   s3Bucket: String!
   kmsKey: String
   s3PrefixLogTypes: [S3PrefixLogTypesInput!]!
+  managedBucketNotifications: Boolean!
 }
 
 input SqsLogConfigInput {
@@ -993,10 +1064,6 @@ input AddGlobalPythonModuleInput {
 
 input DeleteGlobalPythonModuleInput {
   globals: [DeleteEntry!]!
-}
-
-input DeletePolicyInput {
-  policies: [DeleteEntry!]!
 }
 
 input UploadDetectionsInput {

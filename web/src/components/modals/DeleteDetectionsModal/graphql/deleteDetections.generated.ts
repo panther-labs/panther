@@ -23,64 +23,64 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type DeleteRuleVariables = {
-  input: Types.DeleteRuleInput;
+export type DeleteDetectionsVariables = {
+  input: Types.DeleteDetectionInput;
 };
 
-export type DeleteRule = Pick<Types.Mutation, 'deleteRule'>;
+export type DeleteDetections = Pick<Types.Mutation, 'deleteDetections'>;
 
-export const DeleteRuleDocument = gql`
-  mutation DeleteRule($input: DeleteRuleInput!) {
-    deleteRule(input: $input)
+export const DeleteDetectionsDocument = gql`
+  mutation DeleteDetections($input: DeleteDetectionInput!) {
+    deleteDetections(input: $input)
   }
 `;
-export type DeleteRuleMutationFn = ApolloReactCommon.MutationFunction<
-  DeleteRule,
-  DeleteRuleVariables
+export type DeleteDetectionsMutationFn = ApolloReactCommon.MutationFunction<
+  DeleteDetections,
+  DeleteDetectionsVariables
 >;
 
 /**
- * __useDeleteRule__
+ * __useDeleteDetections__
  *
- * To run a mutation, you first call `useDeleteRule` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteRule` returns a tuple that includes:
+ * To run a mutation, you first call `useDeleteDetections` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteDetections` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [deleteRule, { data, loading, error }] = useDeleteRule({
+ * const [deleteDetections, { data, loading, error }] = useDeleteDetections({
  *   variables: {
  *      input: // value for 'input'
  *   },
  * });
  */
-export function useDeleteRule(
-  baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteRule, DeleteRuleVariables>
+export function useDeleteDetections(
+  baseOptions?: ApolloReactHooks.MutationHookOptions<DeleteDetections, DeleteDetectionsVariables>
 ) {
-  return ApolloReactHooks.useMutation<DeleteRule, DeleteRuleVariables>(
-    DeleteRuleDocument,
+  return ApolloReactHooks.useMutation<DeleteDetections, DeleteDetectionsVariables>(
+    DeleteDetectionsDocument,
     baseOptions
   );
 }
-export type DeleteRuleHookResult = ReturnType<typeof useDeleteRule>;
-export type DeleteRuleMutationResult = ApolloReactCommon.MutationResult<DeleteRule>;
-export type DeleteRuleMutationOptions = ApolloReactCommon.BaseMutationOptions<
-  DeleteRule,
-  DeleteRuleVariables
+export type DeleteDetectionsHookResult = ReturnType<typeof useDeleteDetections>;
+export type DeleteDetectionsMutationResult = ApolloReactCommon.MutationResult<DeleteDetections>;
+export type DeleteDetectionsMutationOptions = ApolloReactCommon.BaseMutationOptions<
+  DeleteDetections,
+  DeleteDetectionsVariables
 >;
-export function mockDeleteRule({
+export function mockDeleteDetections({
   data,
   variables,
   errors,
 }: {
-  data: DeleteRule;
-  variables?: DeleteRuleVariables;
+  data: DeleteDetections;
+  variables?: DeleteDetectionsVariables;
   errors?: GraphQLError[];
 }) {
   return {
-    request: { query: DeleteRuleDocument, variables },
+    request: { query: DeleteDetectionsDocument, variables },
     result: { data, errors },
   };
 }

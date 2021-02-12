@@ -1,5 +1,3 @@
-package common
-
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -18,27 +16,33 @@ package common
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import (
-	"github.com/panther-labs/panther/pkg/metrics"
-)
+import React from 'react';
+import { Box, Theme } from 'pouncejs';
 
-var (
-	BytesProcessedLogger = metrics.MustStaticLogger([]metrics.DimensionSet{
-		{
-			"LogType",
-		},
-	}, []metrics.Metric{
-		{
-			Name: "BytesProcessed",
-			Unit: metrics.UnitBytes,
-		},
-		{
-			Name: "EventsProcessed",
-			Unit: metrics.UnitCount,
-		},
-		{
-			Name: "CombinedLatency",
-			Unit: metrics.UnitMilliseconds,
-		},
-	})
-)
+interface FlatBadgeProps {
+  children: React.ReactNode;
+  backgroundColor?: keyof Theme['colors'];
+  color?: keyof Theme['colors'];
+}
+
+const FlatBadge: React.FC<FlatBadgeProps> = ({
+  backgroundColor = 'navyblue-700',
+  color = 'white',
+  children,
+}) => {
+  return (
+    <Box
+      backgroundColor={backgroundColor}
+      borderRadius="small"
+      px={1}
+      py={1}
+      fontWeight="bold"
+      fontSize="x-small"
+      color={color}
+    >
+      {children}
+    </Box>
+  );
+};
+
+export default FlatBadge;

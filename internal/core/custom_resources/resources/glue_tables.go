@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/service/athena"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -58,6 +59,9 @@ func customUpdateLogTables(ctx context.Context, event cfn.Event) (string, map[st
 		if err := parseProperties(event.ResourceProperties, &props); err != nil {
 			return physicalResourceID, nil, errors.Wrap(err, "failed to parse resource properties")
 		}
+
+		// FIXME: remove when this is supported by CloudFormation
+		useAthena2()
 
 		for db, desc := range pantherdb.Databases {
 			if err := awsglue.EnsureDatabase(ctx, glueClient, db, desc); err != nil {
@@ -129,4 +133,23 @@ func createCloudSecurityDDBTables(_ context.Context) error {
 		return errors.Wrap(err, "failed to create compliance table")
 	}
 	return nil
+}
+
+// FIXME: remove when this is supported by CloudFormation and add to Panther WorkGroup CF
+func useAthena2() {
+	version := "Athena engine version 2"
+	athenaClient := athena.New(awsSession)
+	input := &athena.UpdateWorkGroupInput{
+		ConfigurationUpdates: &athena.WorkGroupConfigurationUpdates{
+			EngineVersion: &athena.EngineVersion{
+				EffectiveEngineVersion: &version,
+				SelectedEngineVersion:  &version,
+			},
+		},
+		WorkGroup: aws.String("Panther"),
+	}
+	_, err := athenaClient.UpdateWorkGroup(input)
+	if err != nil { // best effort, don't break the deploy in regions not supported!
+		zap.L().Warn("useAthena2()", zap.Error(errors.Wrap(err, "failed to set Athena workgroup to version 2")))
+	}
 }

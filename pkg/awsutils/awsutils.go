@@ -26,6 +26,9 @@ import (
 // Method returns true if the provided error is an AWS error with any
 // of the given codes.
 func IsAnyError(err error, codes ...string) bool {
+	if err == nil {
+		return false
+	}
 	var awserror awserr.Error
 	if !errors.As(err, &awserror) {
 		return false
@@ -36,4 +39,21 @@ func IsAnyError(err error, codes ...string) bool {
 		}
 	}
 	return false
+}
+
+// Helper struct for creating AWS policy documents and marshalling them into json.
+type PolicyDocument struct {
+	Version   string
+	Statement []StatementEntry
+}
+type StatementEntry struct {
+	Sid       string
+	Effect    string
+	Action    string
+	Resource  string    `json:",omitempty"`
+	Principal Principal `json:",omitempty"`
+}
+type Principal struct {
+	Service string `json:",omitempty"`
+	AWS     string `json:",omitempty"`
 }

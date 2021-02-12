@@ -27,23 +27,29 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
+	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 	"go.uber.org/zap"
 )
 
 // Returns local image ID (truncated SHA256)
 func DockerBuild(log *zap.SugaredLogger, dockerfile string) (string, error) {
-	log.Infof("docker build --file %s", dockerfile)
 	tmpfile, err := ioutil.TempFile("", "panther-web-image-id")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp image ID file: %s", err)
 	}
 	defer os.Remove(tmpfile.Name())
 
-	// When running without the "-q" flag, docker build has no stdout we can capture.
+	args := []string{"build", "--file", dockerfile, "--iidfile", tmpfile.Name()}
+	if !mg.Verbose() {
+		args = append(args, "--quiet")
+	}
+	args = append(args, ".")
+
+	log.Infof("docker %s", strings.Join(args, " "))
+	// When running without the "--quiet" flag, docker build has no stdout we can capture.
 	// Instead, we use --iidfile to write the image ID to a tmp file and read it back.
-	err = sh.RunV("docker", "build",
-		"--file", dockerfile, "--iidfile", tmpfile.Name(), ".")
+	err = sh.RunV("docker", args...)
 	if err != nil {
 		return "", fmt.Errorf("docker build failed: %v", err)
 	}

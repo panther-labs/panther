@@ -31,32 +31,58 @@ func TestAPI_ListAvailableLogTypes(t *testing.T) {
 	assert := require.New(t)
 	ctx := context.Background()
 	api := logtypesapi.LogTypesAPI{
-		Database: ListAvailableAPI{"bar", "baz", "foo"},
+		Database: ListAvailableAPI{"bar", "baz", "foo", "aaa"},
 	}
 
 	actual, _ := api.ListAvailableLogTypes(ctx)
-	assert.Equal(&logtypesapi.AvailableLogTypes{
-		LogTypes: []string{"bar", "baz", "foo"},
-	}, actual)
-
-	api.NativeLogTypes = func() []string {
-		return []string{"aaa", "foo"}
-	}
-
-	actual, _ = api.ListAvailableLogTypes(ctx)
 	assert.Equal(&logtypesapi.AvailableLogTypes{
 		LogTypes: []string{"aaa", "bar", "baz", "foo"},
 	}, actual)
 }
 
+var _ logtypesapi.SchemaDatabase = (ListAvailableAPI)(nil)
+
 type ListAvailableAPI []string
 
-func (l ListAvailableAPI) ListDeletedLogTypes(ctx context.Context) ([]string, error) {
-	return nil, nil
+// nolint:lll
+func (l ListAvailableAPI) ScanSchemas(ctx context.Context, scan logtypesapi.ScanSchemaFunc) error {
+	for _, name := range l {
+		r := logtypesapi.SchemaRecord{
+			Name: name,
+		}
+		if !scan(&r) {
+			return nil
+		}
+	}
+	return nil
 }
 
-var _ logtypesapi.LogTypesDatabase = (ListAvailableAPI)(nil)
+// nolint:lll
+func (l ListAvailableAPI) CreateUserSchema(ctx context.Context, id string, upd logtypesapi.SchemaUpdate) (*logtypesapi.SchemaRecord, error) {
+	panic("implement me")
+}
 
-func (l ListAvailableAPI) IndexLogTypes(ctx context.Context) ([]string, error) {
-	return l, nil
+// nolint:lll
+func (l ListAvailableAPI) GetSchema(ctx context.Context, id string, revision int64) (*logtypesapi.SchemaRecord, error) {
+	panic("implement me")
+}
+
+// nolint:lll
+func (l ListAvailableAPI) UpdateUserSchema(ctx context.Context, id string, rev int64, upd logtypesapi.SchemaUpdate) (*logtypesapi.SchemaRecord, error) {
+	panic("implement me")
+}
+
+// nolint:lll
+func (l ListAvailableAPI) UpdateManagedSchema(ctx context.Context, id string, rev int64, release string, upd logtypesapi.SchemaUpdate) (*logtypesapi.SchemaRecord, error) {
+	panic("implement me")
+}
+
+// nolint:lll
+func (l ListAvailableAPI) ToggleSchema(ctx context.Context, id string, enabled bool) error {
+	panic("implement me")
+}
+
+// nolint:lll
+func (l ListAvailableAPI) BatchGetSchemas(ctx context.Context, ids ...string) ([]*logtypesapi.SchemaRecord, error) {
+	panic("implement me")
 }

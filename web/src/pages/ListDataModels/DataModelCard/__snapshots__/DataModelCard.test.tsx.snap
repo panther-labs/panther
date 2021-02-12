@@ -4,11 +4,13 @@ exports[`DataModelCard matches snapshot 1`] = `
 .panther-26 {
   background-color: #1d2a3f;
   border-radius: 4px;
-  padding: 16px;
   overflow: hidden;
 }
 
-
+.panther-25 {
+  background-color: transparent;
+  padding: 16px;
+}
 
 .panther-24 {
   display: -webkit-box;
