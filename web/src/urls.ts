@@ -27,6 +27,7 @@ import {
   Rule,
   CustomLogRecord,
   DataModel,
+  Pack,
 } from 'Generated/schema';
 
 // Typical URL encoding, allowing colons (:) to be present in the URL. Colons are safe.
@@ -36,13 +37,14 @@ const urlEncode = (str: string) => encodeURIComponent(str).replace(/%3A/g, unesc
 const urls = {
   detections: {
     home: () => '/detections/',
+    list: () => urls.detections.home(),
     create: () => `${urls.detections.home()}new/`,
   },
   compliance: {
     home: () => '/cloud-security/',
     overview: () => `${urls.compliance.home()}overview/`,
     policies: {
-      list: () => `${urls.compliance.home()}policies/`,
+      list: () => `${urls.detections.list()}policies/`,
       create: () => `${urls.detections.create()}?type=policy`,
       details: (id: Policy['id']) => `${urls.compliance.policies.list()}${urlEncode(id)}/`,
       edit: (id: Policy['id']) => `${urls.compliance.policies.details(id)}edit/`,
@@ -69,7 +71,7 @@ const urls = {
       edit: (id: DataModel['id']) => `${urls.logAnalysis.dataModels.details(id)}edit/`,
     },
     rules: {
-      list: () => `${urls.logAnalysis.home()}rules/`,
+      list: () => `${urls.detections.list()}rules/`,
       create: () => `${urls.detections.create()}?type=rule`,
       details: (id: Rule['id']) => `${urls.logAnalysis.rules.list()}${urlEncode(id)}/`,
       edit: (id: Rule['id']) => `${urls.logAnalysis.rules.details(id)}edit/`,
@@ -92,6 +94,11 @@ const urls = {
         `${urls.logAnalysis.customLogs.details(logType)}/edit/`,
       create: () => `${urls.logAnalysis.customLogs.list()}new/`,
     },
+  },
+  packs: {
+    home: () => '/packs/',
+    list: () => urls.packs.home(),
+    details: (id: Pack['id']) => `${urls.packs.home()}${urlEncode(id)}/`,
   },
   settings: {
     home: () => '/settings/',

@@ -57,7 +57,6 @@ describe('RuleAlertCard', () => {
     expect(getByText(alert.title)).toBeInTheDocument();
     expect(getByAriaLabel(`Link to rule ${detectionData.ruleId}`)).toBeInTheDocument();
     expect(getByText('Events')).toBeInTheDocument();
-    expect(getByText('Destinations')).toBeInTheDocument();
     expect(getByAriaLabel(`Creation time for ${alert.alertId}`)).toBeInTheDocument();
     expect(getByText(SeverityEnum.Medium)).toBeInTheDocument();
     expect(getByText(AlertStatusesEnum.Triaged)).toBeInTheDocument();

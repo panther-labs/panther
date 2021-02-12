@@ -170,7 +170,7 @@ Resources:
   UsersAPIFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/core/users_api/main
+      CodeUri: ../internal/core/users_api/main
       Description: CRUD actions for the cognito api
       Environment:
         Variables:
@@ -268,7 +268,7 @@ Resources:
   OrganizationAPIFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/core/organization_api/main
+      CodeUri: ../internal/core/organization_api/main
       Description: CRUD actions for the organization database
       Environment:
         Variables:
@@ -318,7 +318,7 @@ Resources:
   AnalysisApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/core/analysis_api/main
+      CodeUri: ../internal/core/analysis_api/main
       Description: Analysis API
       Environment:
         Variables:
@@ -351,6 +351,7 @@ Resources:
               Action: lambda:InvokeFunction
               Resource:
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-compliance-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-logtypes-api
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-policy-engine
                 - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-rules-engine
         - Id: ManageDataStores
@@ -488,7 +489,7 @@ Resources:
   OutputsApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/core/outputs_api/main
+      CodeUri: ../internal/core/outputs_api/main
       Description: CRUD actions for alert outputs
       Environment:
         Variables:
@@ -609,7 +610,7 @@ Resources:
   AlertDeliveryFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/core/alert_delivery/main
+      CodeUri: ../internal/core/alert_delivery/main
       Description: Dispatch alerts to their specified outputs
       Environment:
         Variables:
@@ -624,7 +625,6 @@ Resources:
           MIN_RETRY_DELAY_SECS: !FindInMap [Alerts, MinRetryDelay, Seconds]
           OUTPUTS_API: panther-outputs-api
           OUTPUTS_REFRESH_INTERVAL: '30s'
-          POLICY_URL_PREFIX: !Sub https://${AppDomainURL}/cloud-security/policies/
           RULE_INDEX_NAME: ruleId-creationTime-index
           TIME_INDEX_NAME: timePartition-creationTime-index
       Events:
@@ -742,19 +742,20 @@ Resources:
   SourceApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/core/source_api/main
+      CodeUri: ../internal/core/source_api/main
       Description: Manages database of source integrations
       Environment:
         Variables:
           ACCOUNT_ID: !Ref AWS::AccountId
+          AWS_PARTITION: !Ref AWS::Partition
           DATA_CATALOG_UPDATER_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-datacatalog-updater-queue
           DEBUG: !Ref Debug
           INPUT_DATA_ROLE_ARN: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/PantherInputDataLogProcessingRole-${AWS::Region}
           INPUT_DATA_BUCKET_NAME: !Ref InputDataBucket
           INPUT_DATA_TOPIC_ARN: !Ref InputDataTopicArn
-          LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-input-data-notifications-queue
+          LOG_PROCESSOR_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-input-data-notifications-queue
           LOG_PROCESSOR_QUEUE_ARN: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:panther-input-data-notifications-queue
-          SNAPSHOT_POLLERS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/panther-snapshot-queue
+          SNAPSHOT_POLLERS_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-snapshot-queue
           TABLE_NAME: !Ref IntegrationsTable
           VERSION: !Ref PantherVersion
       FunctionName: panther-source-api
@@ -817,7 +818,7 @@ Resources:
           Statement:
             - Effect: Allow
               Action: s3:GetObject
-              Resource: arn:aws:s3:::panther-public-cloudformation-templates/*
+              Resource: !Sub arn:${AWS::Partition}:s3:::panther-public-cloudformation-templates/*
         - Id: CreateSqsQueues # Allows Lambda to manage SQS source queues - these are SQS queues users send data to for log analysis
           Version: 2012-10-17
           Statement:
@@ -913,7 +914,7 @@ Resources:
   LayerManagerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/core/layer_manager/main
+      CodeUri: ../internal/core/layer_manager/main
       Description: Manage updates to the layers on the panther python engines.
       Environment:
         Variables:
@@ -1099,7 +1100,7 @@ Resources:
   MetricsApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/core/metrics_api/main
+      CodeUri: ../internal/core/metrics_api/main
       Description: Handles requests for metric data
       Environment:
         Variables:
@@ -1210,7 +1211,7 @@ Resources:
   LogTypesAPIFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ../out/bin/internal/core/logtypesapi/main
+      CodeUri: ../internal/core/logtypesapi/main
       Description: Implements logtypes API to manage logtypes.
       Environment:
         Variables:

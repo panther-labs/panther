@@ -20,7 +20,6 @@ import React from 'react';
 import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import PolicyForm from 'Components/forms/PolicyForm';
-import { ListPoliciesDocument } from 'Pages/ListPolicies';
 import { AddPolicyInput } from 'Generated/schema';
 import { DEFAULT_POLICY_FUNCTION } from 'Source/constants';
 import { extractErrorMessage } from 'Helpers/utils';
@@ -49,12 +48,11 @@ export const initialValues: Required<AddPolicyInput> = {
 const CreatePolicy: React.FC = () => {
   const { history } = useRouter();
   const [createPolicy, { error }] = useCreatePolicy({
-    refetchQueries: [{ query: ListPoliciesDocument, variables: { input: {} } }],
     onCompleted: data => {
-      trackEvent({ event: EventEnum.AddedPolicy, src: SrcEnum.Policies });
+      trackEvent({ event: EventEnum.AddedPolicy, src: SrcEnum.Detections });
       history.push(urls.compliance.policies.details(data.addPolicy.id));
     },
-    onError: () => trackError({ event: TrackErrorEnum.FailedToAddPolicy, src: SrcEnum.Policies }),
+    onError: () => trackError({ event: TrackErrorEnum.FailedToAddPolicy, src: SrcEnum.Detections }),
   });
 
   const handleSubmit = React.useCallback(

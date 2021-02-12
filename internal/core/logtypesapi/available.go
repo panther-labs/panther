@@ -21,26 +21,23 @@ package logtypesapi
 import (
 	"context"
 	"sort"
-
-	"go.uber.org/zap"
 )
 
 // ListAvailableLogTypes lists all available log type ids
 func (api *LogTypesAPI) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, error) {
-	logTypes, err := api.Database.IndexLogTypes(ctx)
-	if err != nil {
-		return nil, err
+	logTypes := make([]string, 0)
+	scan := func(r *SchemaRecord) bool {
+		if !r.Disabled {
+			logTypes = append(logTypes, r.Name)
+		}
+		return true
 	}
-	if api.NativeLogTypes != nil {
-		native := api.NativeLogTypes()
-		L(ctx).Debug(`merging native log types with database log types`,
-			zap.Strings(`external`, logTypes),
-			zap.Strings(`native`, native),
-		)
-		logTypes = appendDistinct(logTypes, native...)
+	if err := api.Database.ScanSchemas(ctx, scan); err != nil {
+		return nil, err
 	}
 	// Sort available log types by name
 	sort.Strings(logTypes)
+
 	return &AvailableLogTypes{
 		LogTypes: logTypes,
 	}, nil
@@ -50,23 +47,16 @@ type AvailableLogTypes struct {
 	LogTypes []string `json:"logTypes"`
 }
 
-func appendDistinct(dst []string, src ...string) []string {
-skip:
-	for _, s := range src {
-		for _, d := range dst {
-			if d == s {
-				continue skip
-			}
-		}
-		dst = append(dst, s)
-	}
-	return dst
-}
-
 // ListDeletedCustomLogs lists all deleted log type ids
 func (api *LogTypesAPI) ListDeletedCustomLogs(ctx context.Context) (*DeletedCustomLogs, error) {
-	logTypes, err := api.Database.ListDeletedLogTypes(ctx)
-	if err != nil {
+	logTypes := make([]string, 0)
+	scan := func(r *SchemaRecord) bool {
+		if r.IsCustom() && r.Disabled {
+			logTypes = append(logTypes, r.Name)
+		}
+		return true
+	}
+	if err := api.Database.ScanSchemas(ctx, scan); err != nil {
 		return nil, err
 	}
 	// Sort deleted log types by name

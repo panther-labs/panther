@@ -29,6 +29,7 @@ import {
   DropdownLink,
   DropdownItem,
   Link,
+  Text,
 } from 'pouncejs';
 import { getElapsedTime } from 'Helpers/utils';
 import useModal from 'Hooks/useModal';
@@ -46,17 +47,20 @@ const GlobalPythonModuleItem: React.FC<GlobalItemProps> = ({ globalPythonModule 
 
   const lastModifiedTime = Math.floor(new Date(globalPythonModule.lastModified).getTime() / 1000);
   return (
-    <Card variant="dark" p={6} key={globalPythonModule.id}>
-      <Flex align="flex-start" justify="space-between">
+    <Card variant="dark" p={4} key={globalPythonModule.id}>
+      <Flex align="center" justify="space-between">
         <Box>
           <Heading as="h4" size="x-small">
             <Link as={RRLink} to={urls.settings.globalPythonModules.edit(globalPythonModule.id)}>
               {globalPythonModule.id}
             </Link>
           </Heading>
-          <Box as="time" fontSize="small" color="gray-300">
-            Last updated {getElapsedTime(lastModifiedTime)}
-          </Box>
+        </Box>
+        <Box mr={0} ml="auto" fontSize="small">
+          <Text mr={1} color="navyblue-100" as="span">
+            Last updated
+          </Text>
+          <Text as="time">{getElapsedTime(lastModifiedTime)}</Text>
         </Box>
         <Dropdown>
           <DropdownButton

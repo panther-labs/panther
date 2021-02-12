@@ -27,6 +27,8 @@ const initialValues = {
   integrationLabel: '',
   cweEnabled: true,
   remediationEnabled: true,
+  regionIgnoreList: [],
+  resourceTypeIgnoreList: [],
 };
 
 const CreateComplianceSource: React.FC = () => {
@@ -64,6 +66,8 @@ const CreateComplianceSource: React.FC = () => {
               awsAccountId: values.awsAccountId,
               cweEnabled: values.cweEnabled,
               remediationEnabled: values.remediationEnabled,
+              regionIgnoreList: values.regionIgnoreList,
+              resourceTypeIgnoreList: values.resourceTypeIgnoreList,
             },
           },
         })

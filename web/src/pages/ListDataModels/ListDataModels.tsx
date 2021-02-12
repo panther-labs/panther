@@ -19,36 +19,50 @@
 import React from 'react';
 import { Alert, Box, Flex } from 'pouncejs';
 import Panel from 'Components/Panel';
-import urls from 'Source/urls';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import LinkButton from 'Components/buttons/LinkButton';
+import { SelectAllCheckbox, withSelectContext } from 'Components/utils/SelectContext';
 import { extractErrorMessage } from 'Helpers/utils';
 import withSEO from 'Hoc/withSEO';
 import useTrackPageView from 'Hooks/useTrackPageView';
+import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
+import { DataModel, ListDataModelsInput } from 'Generated/schema';
 import { PageViewEnum } from 'Helpers/analytics';
-import TablePlaceholder from 'Components/TablePlaceholder';
+import { compose } from 'Helpers/compose';
 import EmptyDataFallback from './EmptyDataFallback';
 import { useListDataModels } from './graphql/listDataModels.generated';
 import DataModelCard from './DataModelCard';
+import ListDataModelsSkeleton from './Skeleton';
+import ListDataModelActions from './ListDataModelActions';
 
 const ListDataModels = () => {
   useTrackPageView(PageViewEnum.ListDataModels);
 
-  const { loading, error, data } = useListDataModels({ variables: { input: {} } });
+  const { requestParams } = useRequestParamsWithoutPagination<ListDataModelsInput>();
 
-  const dataModels = data?.listDataModels?.models;
+  const { loading, error, data } = useListDataModels({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      input: requestParams,
+    },
+  });
+  const dataModels = data?.listDataModels?.models || [];
+
+  if (loading && !data) {
+    return <ListDataModelsSkeleton />;
+  }
+
   return (
     <Box mb={6}>
-      <Panel
-        title="Data Models"
-        actions={
-          <LinkButton to={urls.logAnalysis.dataModels.create()} icon="add">
-            Add new
-          </LinkButton>
-        }
-      >
-        <ErrorBoundary>
-          {loading && <TablePlaceholder />}
+      <ErrorBoundary>
+        <Panel
+          title={
+            <Flex align="center" spacing={2} ml={4}>
+              {dataModels.length > 0 && <SelectAllCheckbox selectionItems={dataModels} />}
+              <Box as="span">Data Models</Box>
+            </Flex>
+          }
+          actions={<ListDataModelActions />}
+        >
           {error && (
             <Alert
               variant="error"
@@ -59,20 +73,22 @@ const ListDataModels = () => {
               }
             />
           )}
-          {dataModels &&
-            (dataModels.length > 0 ? (
-              <Flex direction="column" spacing={2}>
-                {dataModels.map(dataModel => (
-                  <DataModelCard key={dataModel.id} dataModel={dataModel} />
-                ))}
-              </Flex>
-            ) : (
-              <EmptyDataFallback />
-            ))}
-        </ErrorBoundary>
-      </Panel>
+          {dataModels.length > 0 ? (
+            <Flex direction="column" spacing={2}>
+              {dataModels.map(dataModel => (
+                <DataModelCard key={dataModel.id} dataModel={dataModel} />
+              ))}
+            </Flex>
+          ) : (
+            <EmptyDataFallback />
+          )}
+        </Panel>
+      </ErrorBoundary>
     </Box>
   );
 };
 
-export default withSEO({ title: 'Data Models' })(ListDataModels);
+export default compose(
+  withSEO({ title: 'Data Models' }),
+  withSelectContext({ getItemKey: (item: DataModel) => item.id })
+)(ListDataModels);

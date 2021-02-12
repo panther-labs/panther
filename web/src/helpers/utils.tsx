@@ -446,3 +446,47 @@ function toPlural(word: string, pluralFormOrCount?: number | string, count?: num
   return cnt === 1 ? word : pluralForm;
 }
 export { toPlural };
+
+/**
+ * Compares two semver version
+ * returns 1 if a version is bigger than b
+ * returns -1 if a version is smaller than b
+ * returns 0 if a version is equal to b
+ * @returns Number [1,0,-1]
+ */
+export function compareSemanticVersion(a: string, b: string) {
+  const av = a.match(/([0-9]+|[^0-9]+)/g);
+  const bv = b.match(/([0-9]+|[^0-9]+)/g);
+  for (;;) {
+    let ia = av.shift();
+    let ib = bv.shift();
+    if (typeof ia === 'undefined' && typeof ib === 'undefined') {
+      return 0;
+    }
+    if (typeof ia === 'undefined') {
+      ia = '';
+    }
+    if (typeof ib === 'undefined') {
+      ib = '';
+    }
+
+    const ian = parseInt(ia, 10);
+    const ibn = parseInt(ib, 10);
+    if (Number.isNaN(ian) || Number.isNaN(ibn)) {
+      // non-numeric comparison
+      if (ia < ib) {
+        return -1;
+      }
+      if (ia > ib) {
+        return 1;
+      }
+    } else {
+      if (ian < ibn) {
+        return -1;
+      }
+      if (ian > ibn) {
+        return 1;
+      }
+    }
+  }
+}

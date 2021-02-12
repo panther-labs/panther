@@ -94,7 +94,7 @@ func TestUnknownEventParser(t *testing.T) {
 		"p_any_ip_addresses": ["71.198.164.96"],
 		"p_log_type": "Crowdstrike.Unknown",
 		"p_event_time": "%s"
-}`,
+		}`,
 		ts.UTC().Format(time.RFC3339Nano),
 	)
 

@@ -29,8 +29,9 @@ const (
 
 type LambdaInput struct {
 	// Shared
-	BulkUpload     *BulkUploadInput     `json:"bulkUpload,omitempty"`
-	ListDetections *ListDetectionsInput `json:"listDetections,omitempty"`
+	BulkUpload       *BulkUploadInput     `json:"bulkUpload,omitempty"`
+	ListDetections   *ListDetectionsInput `json:"listDetections,omitempty"`
+	DeleteDetections *DeletePoliciesInput `json:"deleteDetections,omitempty"`
 
 	// Globals
 	CreateGlobal  *CreateGlobalInput  `json:"createGlobal,omitempty"`
@@ -68,6 +69,7 @@ type LambdaInput struct {
 
 type UnitTest struct {
 	ExpectedResult bool   `json:"expectedResult"`
+	Mocks          string `json:"mocks"`
 	Name           string `json:"name" validate:"required"`
 	Resource       string `json:"resource" validate:"required"`
 }

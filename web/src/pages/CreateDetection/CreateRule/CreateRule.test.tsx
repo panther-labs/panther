@@ -22,7 +22,6 @@ import urls from 'Source/urls';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { mockListAvailableLogTypes } from 'Source/graphql/queries';
 import { GraphQLError } from 'graphql';
-import { mockListRules } from 'Pages/ListRules';
 import { mockCreateRule } from './graphql/createRule.generated';
 import CreateRule, { initialValues } from './CreateRule';
 
@@ -97,14 +96,6 @@ describe('CreateRule', () => {
         },
         data: { addRule: rule },
       }),
-      mockListRules({
-        variables: { input: {} },
-        data: {
-          rules: {
-            rules: [],
-          },
-        },
-      }),
     ];
     const { getByText, findByText, getByLabelText, history, getAllByLabelText } = render(
       <CreateRule />,
@@ -135,7 +126,7 @@ describe('CreateRule', () => {
     // Expect analytics to have been called
     expect(trackEvent).toHaveBeenCalledWith({
       event: EventEnum.AddedRule,
-      src: SrcEnum.Rules,
+      src: SrcEnum.Detections,
     });
   });
 
@@ -161,14 +152,6 @@ describe('CreateRule', () => {
         },
         data: null,
         errors: [new GraphQLError('Fake Error')],
-      }),
-      mockListRules({
-        variables: { input: {} },
-        data: {
-          rules: {
-            rules: [],
-          },
-        },
       }),
     ];
     const { getByText, findByText, getByLabelText, history, getAllByLabelText } = render(
@@ -199,7 +182,7 @@ describe('CreateRule', () => {
     // Expect analytics to have been called
     expect(trackError).toHaveBeenCalledWith({
       event: TrackErrorEnum.FailedToAddRule,
-      src: SrcEnum.Rules,
+      src: SrcEnum.Detections,
     });
   });
 });

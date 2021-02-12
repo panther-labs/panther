@@ -28,6 +28,7 @@ const initialValues = {
   s3Bucket: '',
   kmsKey: '',
   s3PrefixLogTypes: [{ prefix: '', logTypes: [] }],
+  managedBucketNotifications: false,
 };
 
 const CreateS3LogSource: React.FC = () => {
@@ -67,6 +68,7 @@ const CreateS3LogSource: React.FC = () => {
               s3Bucket: values.s3Bucket,
               s3PrefixLogTypes: values.s3PrefixLogTypes,
               kmsKey: values.kmsKey,
+              managedBucketNotifications: values.managedBucketNotifications,
             },
           },
         })

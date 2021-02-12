@@ -43,9 +43,13 @@ const CreateDataModel: React.FC = () => {
   const [createDataModel] = useCreateDataModel({
     update: (cache, { data: { addDataModel: dataModel } }) => {
       cache.modify('ROOT_QUERY', {
-        listDataModels: (queryData, { toReference }) => {
+        listDataModels: (dataModels, { toReference }) => {
           const dataModelRef = toReference(dataModel);
-          return queryData ? [dataModelRef, ...queryData] : [dataModelRef];
+
+          return {
+            ...dataModels,
+            models: dataModels.models ? [dataModelRef, ...dataModels.models] : [dataModelRef],
+          };
         },
       });
     },

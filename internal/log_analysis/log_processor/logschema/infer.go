@@ -247,6 +247,12 @@ func inferFieldSchema(s *FieldSchema, field reflect.StructField) error {
 		value.IsEventTime = isEventTime
 	}
 	value.TimeFormat = field.Tag.Get("tcodec")
+	if value.Type == TypeTimestamp {
+		value.TimeFormat = "rfc3339"
+		if format, ok := field.Tag.Lookup("tcodec"); ok {
+			value.TimeFormat = format
+		}
+	}
 	if pantherTag := field.Tag.Get("panther"); pantherTag != "" {
 		scanners := strings.Split(pantherTag, ",")
 		for _, name := range scanners {

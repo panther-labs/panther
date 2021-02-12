@@ -305,3 +305,62 @@ class TestEngine(TestCase):
         ]
 
         self.assertEqual(result, expected_event_matches)
+
+    def test_analyze_single_rule_with_mocking(self) -> None:
+        """ Tests a rule with defined mocking functions in rule and title -- covers both ways of importing a module. """
+
+        analysis_api = mock.MagicMock()
+        analysis_api.get_enabled_data_models.return_value = [
+            {
+                'id': 'data_model_id',
+                'logTypes': ['log'],
+                'versionId': 'version',
+                'mappings': [{
+                    'name': 'destination',
+                    'path': 'is_dst'
+                }]
+            }
+        ]
+
+        rule_body = [
+            'import boto3', 'from datetime import date', 'from unittest.mock import MagicMock', 'def rule(event):',
+            '\tassert isinstance(boto3, MagicMock)', '\tassert isinstance(date, MagicMock)', '\tassert isinstance(boto3.client, MagicMock)',
+            '\ts3_client = boto3.client("s3")', '\tassert isinstance(s3_client, MagicMock)', '\tboto3.client.assert_called_once_with("s3")',
+            '\tdt = date(2000, 1, 1)', '\tassert dt == "date_return_value"', '\tdate.assert_called_once_with(2000, 1, 1)', '\treturn True',
+            'def alert_context(event):', '\treturn {}', 'def title(event):',
+            '\treturn f"test_rule_with_mocking_{str(isinstance(boto3, MagicMock))}"'
+        ]
+        mocks = {
+            'boto3': 'boto3_return_value',
+            'date': 'date_return_value',
+        }
+        event = {'id': 'event_id', 'data': {'is_dst': True, 'p_log_type': 'log'}, 'mocks': mocks}
+        rule = {'id': 'test_rule_with_mocking', 'body': '\n'.join(x for x in rule_body), 'versionId': 'versionId'}
+        expected_result = {
+            'id': 'event_id',
+            'ruleId': "test_rule_with_mocking",
+            'genericError': None,
+            'errored': False,
+            'ruleOutput': True,
+            'ruleError': None,
+            'titleOutput': 'test_rule_with_mocking_True',
+            'titleError': None,
+            'descriptionOutput': None,
+            'descriptionError': None,
+            'referenceOutput': None,
+            'referenceError': None,
+            'severityOutput': None,
+            'severityError': None,
+            'runbookOutput': None,
+            'runbookError': None,
+            'destinationsOutput': None,
+            'destinationsError': None,
+            'dedupOutput': 'test_rule_with_mocking_True',
+            'dedupError': None,
+            'alertContextOutput': '{}',
+            'alertContextError': None,
+        }
+
+        engine = Engine(analysis_api)
+        result = engine.analyze_single_rule(rule, event)
+        self.assertEqual(expected_result, result)

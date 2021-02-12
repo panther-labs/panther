@@ -40,6 +40,12 @@ func String(n int) string {
 	return uniuri.NewLen(n)
 }
 
+var alphaNumChars = []byte(`abcdedfhijklmnopqrstuvwxyz0123456789`)
+
+func StringAlphaNum(n int) string {
+	return uniuri.NewLenChars(n, alphaNumChars)
+}
+
 func StringSlice(n, m int) []string {
 	slice := make([]string, m)
 	for i := 0; i < m; i++ {

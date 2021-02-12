@@ -60,7 +60,7 @@ func Tools() error {
 		// used in tools to check/display which Panther version was compiled
 		setVersionVar := fmt.Sprintf("-X 'main.version=%s'", util.Semver())
 
-		log.Infof("build:tools: compiling %s to %s with %d os/arch combinations",
+		log.Infof("compiling %s to %s with %d os/arch combinations",
 			path, outDir, len(buildEnvs))
 		for _, env := range buildEnvs {
 			// E.g. "requeue-darwin-amd64"

@@ -24,6 +24,7 @@ import { Wizard } from 'Components/Wizard';
 import { FetchResult } from '@apollo/client';
 import { getArnRegexForService, yupIntegrationLabelValidation } from 'Helpers/utils';
 import { S3PrefixLogTypes } from 'Generated/schema';
+import NotificationsManagementPanel from './NotificationsManagementPanel';
 import StackDeploymentPanel from './StackDeploymentPanel';
 import S3SourceConfigurationPanel from './S3SourceConfigurationPanel';
 import ValidationPanel from './ValidationPanel';
@@ -43,6 +44,7 @@ export interface S3LogSourceWizardValues {
   s3Bucket: string;
   kmsKey: string;
   s3PrefixLogTypes: S3PrefixLogTypes[];
+  managedBucketNotifications: boolean;
 }
 
 const validationSchema = Yup.object().shape<S3LogSourceWizardValues>({
@@ -54,12 +56,23 @@ const validationSchema = Yup.object().shape<S3LogSourceWizardValues>({
   s3PrefixLogTypes: Yup.array()
     .of(
       Yup.object().shape({
-        prefix: Yup.string(),
+        prefix: Yup.string()
+          .test(
+            'mutex',
+            "'*' is not an acceptable value, leave empty if you want to include everything",
+            prefix => {
+              return !prefix || !prefix.includes('*');
+            }
+          )
+          .test('mutex', "S3 prefix should not start with '/'", prefix => {
+            return !prefix || !prefix.startsWith('/');
+          }),
         logTypes: Yup.array().of(Yup.string()).required(),
       })
     )
     .required(),
   kmsKey: Yup.string().matches(getArnRegexForService('KMS'), 'Must be a valid KMS ARN'),
+  managedBucketNotifications: Yup.boolean().required(),
 });
 
 const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({ initialValues, onSubmit }) => {
@@ -75,6 +88,11 @@ const S3LogSourceWizard: React.FC<S3LogSourceWizardProps> = ({ initialValues, on
           <Wizard.Step title="Configure Source">
             <S3SourceConfigurationPanel />
           </Wizard.Step>
+          {!initialValues.integrationId && (
+            <Wizard.Step title="Notification Management">
+              <NotificationsManagementPanel />
+            </Wizard.Step>
+          )}
           <Wizard.Step title="Setup IAM Roles">
             <StackDeploymentPanel />
           </Wizard.Step>

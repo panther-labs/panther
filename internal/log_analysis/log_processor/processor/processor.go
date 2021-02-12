@@ -30,6 +30,7 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/classification"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
+	logmetrics "github.com/panther-labs/panther/internal/log_analysis/log_processor/metrics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/sources"
@@ -258,17 +259,8 @@ func (p *Processor) processLogLine(ctx context.Context, line string, outputChan 
 func (p *Processor) logStats(err error) {
 	p.operation.Stop()
 	p.operation.Log(err, zap.Any(statsKey, *p.classifier.Stats()))
-	logType := metrics.Dimension{Name: "LogType"}
-	pMetrics := []metrics.Metric{
-		{Name: "BytesProcessed"},
-		{Name: "EventsProcessed"},
-		{Name: "CombinedLatency"},
-	}
-	for _, parserStats := range p.classifier.ParserStats() {
-		p.operation.Log(err, zap.Any(statsKey, *parserStats))
-		logType.Value = parserStats.LogType
-		pMetrics[0].Value, pMetrics[1].Value, pMetrics[2].Value =
-			parserStats.BytesProcessedCount, parserStats.EventCount, parserStats.CombinedLatency
-		common.BytesProcessedLogger.Log(pMetrics, logType)
+	for _, stats := range p.classifier.ParserStats() {
+		logmetrics.BytesProcessed.With(metrics.LogTypeDimension, stats.LogType).Add(float64(stats.BytesProcessedCount))
+		logmetrics.EventsProcessed.With(metrics.LogTypeDimension, stats.LogType).Add(float64(stats.EventCount))
 	}
 }

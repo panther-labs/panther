@@ -18,7 +18,7 @@
 
 import { pantherConfig } from 'Source/config';
 import slackLogo from 'Assets/slack-minimal-logo.svg';
-import { DestinationTypeEnum, SeverityEnum } from 'Generated/schema';
+import { DestinationTypeEnum, DetectionTypeEnum, SeverityEnum } from 'Generated/schema';
 import msTeamsLogo from 'Assets/ms-teams-minimal-logo.svg';
 import opsgenieLogo from 'Assets/opsgenie-minimal-logo.svg';
 import jiraLogo from 'Assets/jira-minimal-logo.svg';
@@ -100,6 +100,34 @@ export const RESOURCE_TYPES = [
   'AWS.S3.Bucket',
   'AWS.WAF.Regional.WebACL',
   'AWS.WAF.WebACL',
+] as const;
+
+export const AWS_REGIONS = [
+  'us-east-1',
+  'us-east-2',
+  'us-west-1',
+  'us-west-2',
+  'af-south-1',
+  'ap-east-1',
+  'ap-south-1',
+  'ap-northeast-1',
+  'ap-northeast-2',
+  'ap-northeast-3',
+  'ap-southeast-1',
+  'ap-southeast-2',
+  'ca-central-1',
+  'cn-north-1',
+  'cn-northwest-1',
+  'eu-central-1',
+  'eu-west-1',
+  'eu-west-2',
+  'eu-west-3',
+  'eu-south-1',
+  'eu-north-1',
+  'me-south-1',
+  'sa-east-1',
+  'us-gov-east-1',
+  'us-gov-west-1',
 ] as const;
 
 const VERSION_PARTS = pantherConfig.PANTHER_VERSION.split('.'); // ["1", "7", "1]
@@ -188,4 +216,12 @@ export const SEVERITY_COLOR_MAP: { [key in SeverityEnum]: keyof Theme['colors'] 
   [SeverityEnum.Medium]: 'yellow-500' as const,
   [SeverityEnum.Low]: 'blue-300' as const,
   [SeverityEnum.Info]: 'gray-300' as const,
+};
+
+export const DETECTION_TYPE_COLOR_MAP: {
+  [key in DetectionTypeEnum | 'GLOBAL']: keyof Theme['colors'];
+} = {
+  [DetectionTypeEnum.Policy]: 'indigo-300' as const,
+  [DetectionTypeEnum.Rule]: 'cyan-500' as const,
+  GLOBAL: 'green-200' as const,
 };

@@ -20,7 +20,6 @@ import React from 'react';
 import { Alert, Box } from 'pouncejs';
 import urls from 'Source/urls';
 import RuleForm from 'Components/forms/RuleForm';
-import { ListRulesDocument } from 'Pages/ListRules';
 import { AddRuleInput } from 'Generated/schema';
 import {
   DEFAULT_DEDUP_FUNCTION,
@@ -53,12 +52,11 @@ export const initialValues: Required<AddRuleInput> = {
 const CreateRule: React.FC = () => {
   const { history } = useRouter();
   const [createRule, { error }] = useCreateRule({
-    refetchQueries: [{ query: ListRulesDocument, variables: { input: {} } }],
     onCompleted: data => {
-      trackEvent({ event: EventEnum.AddedRule, src: SrcEnum.Rules });
+      trackEvent({ event: EventEnum.AddedRule, src: SrcEnum.Detections });
       history.push(urls.logAnalysis.rules.details(data.addRule.id));
     },
-    onError: () => trackError({ event: TrackErrorEnum.FailedToAddRule, src: SrcEnum.Rules }),
+    onError: () => trackError({ event: TrackErrorEnum.FailedToAddRule, src: SrcEnum.Detections }),
   });
 
   const handleSubmit = React.useCallback(
