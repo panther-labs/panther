@@ -731,8 +731,7 @@ type S3LogIntegration {
 }
 
 type ManagedS3Resources {
-  topicARN: String
-  topicConfigurationIds: [String!]
+  topicARN: String!
 }
 
 type SqsLogSourceIntegration {
