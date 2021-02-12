@@ -1,18 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`CustomLogCard matches snapshot 1`] = `
-.panther-19 {
+.panther-16 {
   background-color: #1d2a3f;
   border-radius: 4px;
   overflow: hidden;
 }
 
-.panther-18 {
+.panther-15 {
   background-color: transparent;
   padding: 16px;
 }
 
-.panther-17 {
+.panther-14 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -21,7 +21,7 @@ exports[`CustomLogCard matches snapshot 1`] = `
   height: 100%;
 }
 
-.panther-16 {
+.panther-13 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -35,7 +35,7 @@ exports[`CustomLogCard matches snapshot 1`] = `
   width: 100%;
 }
 
-.panther-5 {
+.panther-11 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -50,7 +50,7 @@ exports[`CustomLogCard matches snapshot 1`] = `
 .panther-1 {
   font-weight: 500;
   margin-right: auto;
-  max-width: 70%;
+  max-width: 60%;
   word-break: break-word;
 }
 
@@ -78,11 +78,53 @@ exports[`CustomLogCard matches snapshot 1`] = `
 }
 
 .panther-4 {
+  font-size: 0.75rem;
+  max-width: 20%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panther-2 {
+  margin-right: 4px;
+  color: #86a3c3;
+}
+
+.panther-3 {
+  -webkit-transition: color 0.1s ease-out;
+  transition: color 0.1s ease-out;
+  font-weight: 500;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  color: #7fd3ff;
+}
+
+.panther-3:hover {
+  color: #ace2ff;
+}
+
+.panther-3:focus {
+  color: #ace2ff;
+}
+
+.panther-3:active,
+.panther-3[data-active=true] {
+  color: #11a5f3;
+}
+
+.panther-5 {
+  padding-left: 8px;
+  padding-right: 8px;
+  font-size: 0.75rem;
+  color: #86a3c3;
+}
+
+.panther-10 {
   margin-left: 8px;
   margin-top: -4px;
 }
 
-.panther-3 {
+.panther-9 {
   outline: none;
   line-height: 1;
   border-radius: 99999px;
@@ -99,20 +141,20 @@ exports[`CustomLogCard matches snapshot 1`] = `
   text-decoration: none;
 }
 
-.panther-3:hover {
+.panther-9:hover {
   background-color: rgba(62,81,107,0.3);
 }
 
-.panther-3:focus {
+.panther-9:focus {
   background-color: rgba(62,81,107,0.3);
 }
 
-.panther-3:active,
-.panther-3[data-active=true] {
+.panther-9:active,
+.panther-9[data-active=true] {
   background-color: #3e516b;
 }
 
-.panther-2 {
+.panther-8 {
   display: inline-block;
   vertical-align: sub;
   -webkit-flex-shrink: 0;
@@ -123,55 +165,8 @@ exports[`CustomLogCard matches snapshot 1`] = `
   color: currentColor;
 }
 
-.panther-15 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-flex-wrap: wrap;
-  -webkit-flex-wrap: wrap;
-  -ms-flex-wrap: wrap;
-  flex-wrap: wrap;
-}
-
-.panther-15>*:not(:last-child) {
-  margin-right: 32px;
-}
-
-.panther-8 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-flex-direction: column;
-  -ms-flex-direction: column;
-  flex-direction: column;
-  margin-top: 8px;
-}
-
-.panther-6 {
-  color: #bdbdbd;
-  font-size: 0.563rem;
-  font-weight: 500;
-}
-
-.panther-7 {
-  display: -webkit-inline-box;
-  display: -webkit-inline-flex;
-  display: -ms-inline-flexbox;
-  display: inline-flex;
-  -webkit-box-flex: 1;
-  -webkit-flex-grow: 1;
-  -ms-flex-positive: 1;
-  flex-grow: 1;
-  font-size: 0.875rem;
-  font-weight: 500;
-  opacity: 1;
-  -webkit-align-items: center;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-  min-height: 24px;
+.panther-12 {
+  font-size: 0.75rem;
 }
 
 <div>
@@ -179,19 +174,19 @@ exports[`CustomLogCard matches snapshot 1`] = `
     id="main-header"
   />
   <section
-    class="panther-19"
+    class="panther-16"
   >
     <div
-      class="panther-18"
+      class="panther-15"
     >
       <div
-        class="panther-17"
+        class="panther-14"
       >
         <div
-          class="panther-16"
+          class="panther-13"
         >
           <header
-            class="panther-5"
+            class="panther-11"
           >
             <h4
               class="panther-1"
@@ -206,18 +201,50 @@ exports[`CustomLogCard matches snapshot 1`] = `
             <div
               class="panther-4"
             >
+              <span
+                class="panther-2"
+              >
+                Reference URL
+              </span>
+              <a
+                class="panther-3"
+                href="Savings Account"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Savings Account
+              </a>
+            </div>
+            <span
+              class="panther-5"
+            >
+              •
+            </span>
+            <div
+              class="panther-4"
+            >
+              <span
+                class="panther-2"
+              >
+                Updated
+              </span>
+              Invalid Date
+            </div>
+            <div
+              class="panther-10"
+            >
               <button
                 aria-controls="menu--1"
                 aria-haspopup="true"
                 aria-label="Toggle Options"
                 aria-pressed="false"
-                class="panther-3"
+                class="panther-9"
                 data-reach-menu-button=""
                 id="menu-button--menu--1"
                 type="button"
               >
                 <svg
-                  class="panther-2"
+                  class="panther-8"
                   role="presentation"
                   viewBox="0 0 24 24"
                 >
@@ -228,58 +255,11 @@ exports[`CustomLogCard matches snapshot 1`] = `
               </button>
             </div>
           </header>
-          <div
-            class="panther-15"
+          <p
+            class="panther-12"
           >
-            <dl
-              class="panther-8"
-            >
-              <dt
-                aria-labelledby="descriptionrustic"
-                class="panther-6"
-              >
-                Description
-              </dt>
-              <dd
-                aria-labelledby="descriptionrustic"
-                class="panther-7"
-              >
-                Rustic
-              </dd>
-            </dl>
-            <dl
-              class="panther-8"
-            >
-              <dt
-                aria-labelledby="reference-urlsavings-account"
-                class="panther-6"
-              >
-                Reference URL
-              </dt>
-              <dd
-                aria-labelledby="reference-urlsavings-account"
-                class="panther-7"
-              >
-                Savings Account
-              </dd>
-            </dl>
-            <dl
-              class="panther-8"
-            >
-              <dt
-                aria-labelledby="updated-atinvalid-date"
-                class="panther-6"
-              >
-                Updated At
-              </dt>
-              <dd
-                aria-labelledby="updated-atinvalid-date"
-                class="panther-7"
-              >
-                Invalid Date
-              </dd>
-            </dl>
-          </div>
+            Rustic
+          </p>
         </div>
       </div>
     </div>

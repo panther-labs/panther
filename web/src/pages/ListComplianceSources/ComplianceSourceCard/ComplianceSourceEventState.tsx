@@ -17,32 +17,30 @@
  */
 
 import React from 'react';
-import { Box, Theme } from 'pouncejs';
+import { Flex, Icon, Text } from 'pouncejs';
 
-interface FlatBadgeProps {
-  children: React.ReactNode;
-  backgroundColor?: keyof Theme['colors'];
-  color?: keyof Theme['colors'];
+interface ComplianceSourceEventStateProps {
+  enabled: boolean;
+  text: string;
 }
 
-const FlatBadge: React.FC<FlatBadgeProps> = ({
-  backgroundColor = 'navyblue-700',
-  color = 'white',
-  children,
+const ComplianceSourceEventState: React.FC<ComplianceSourceEventStateProps> = ({
+  enabled,
+  text,
 }) => {
   return (
-    <Box
-      backgroundColor={backgroundColor}
-      borderRadius="small"
-      px="6px"
-      py={1}
-      fontWeight="bold"
-      fontSize="x-small"
-      color={color}
-    >
-      {children}
-    </Box>
+    <Flex align="center">
+      <Icon
+        type={enabled ? 'check-circle' : 'remove'}
+        color={enabled ? 'green-400' : 'red-400'}
+        size="large"
+        mr={1}
+      />
+      <Text aria-label={`${text} ${enabled ? 'enabled' : 'disabled'}`} fontSize="small">
+        {text}
+      </Text>
+    </Flex>
   );
 };
 
-export default FlatBadge;
+export default React.memo(ComplianceSourceEventState);

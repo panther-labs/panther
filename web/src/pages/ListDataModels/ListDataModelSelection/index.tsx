@@ -16,33 +16,4 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
-import { Box, Theme } from 'pouncejs';
-
-interface FlatBadgeProps {
-  children: React.ReactNode;
-  backgroundColor?: keyof Theme['colors'];
-  color?: keyof Theme['colors'];
-}
-
-const FlatBadge: React.FC<FlatBadgeProps> = ({
-  backgroundColor = 'navyblue-700',
-  color = 'white',
-  children,
-}) => {
-  return (
-    <Box
-      backgroundColor={backgroundColor}
-      borderRadius="small"
-      px="6px"
-      py={1}
-      fontWeight="bold"
-      fontSize="x-small"
-      color={color}
-    >
-      {children}
-    </Box>
-  );
-};
-
-export default FlatBadge;
+export { default } from './ListDataModelSelection';

@@ -17,7 +17,7 @@
  */
 
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Icon, Link, Text, Box } from 'pouncejs';
+import { Flex, Icon, Link, Text, Box, Divider, Grid } from 'pouncejs';
 import { AlertSummaryPolicyInfo } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
@@ -32,6 +32,7 @@ import useAlertDestinations from 'Hooks/useAlertDestinations';
 import useAlertDestinationsDeliverySuccess from 'Hooks/useAlertDestinationsDeliverySuccess';
 import { SelectCheckbox } from 'Components/utils/SelectContext';
 import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
+import FlatBadge from 'Components/badges/FlatBadge';
 
 export interface PolicyAlertCardProps {
   alert: AlertSummaryFull;
@@ -54,7 +55,6 @@ const PolicyAlertCard: React.FC<PolicyAlertCardProps> = ({
   const source = complianceSourceData?.listComplianceIntegrations?.find(
     s => s.integrationId === detectionData.policySourceId
   );
-
   return (
     <GenericItemCard>
       <Flex align="start" pr={2}>
@@ -75,47 +75,56 @@ const PolicyAlertCard: React.FC<PolicyAlertCardProps> = ({
               {alert.title}
             </Link>
           </GenericItemCard.Heading>
-          <GenericItemCard.Date
-            aria-label={`Creation time for ${alert.alertId}`}
-            date={formatDatetime(alert.creationTime)}
-          />
-        </GenericItemCard.Header>
-        <Text fontSize="small" as="span" color="cyan-400">
-          Policy Fail
-        </Text>
-        <GenericItemCard.ValuesGroup>
-          {!hidePolicyButton && (
-            <GenericItemCard.Value
-              label="Policy"
-              value={
-                <Flex spacing={2}>
-                  <Text display="inline-flex" alignItems="center" as="span">
-                    {detectionData.policyId}
-                  </Text>
-                  <GenericItemCard.Link
-                    aria-label={`Link to policy ${detectionData.policyId}`}
-                    to={urls.compliance.policies.details(detectionData.policyId)}
-                  />
-                </Flex>
-              }
+          {source && (
+            <GenericItemCard.HeadingValue
+              value={source.integrationLabel}
+              label="Source"
+              labelFirst
+              withDivider
             />
           )}
-          <GenericItemCard.Value label="Source" value={source ? source.integrationLabel : null} />
-          <GenericItemCard.Value
-            label="Destinations"
-            value={
-              <RelatedDestinations destinations={alertDestinations} loading={loadingDestinations} />
-            }
+          <GenericItemCard.HeadingValue
+            aria-label={`Creation time for ${alert.alertId}`}
+            value={formatDatetime(alert.creationTime)}
+            label="Created"
+            labelFirst
           />
+        </GenericItemCard.Header>
+        <Box mr="auto">
+          <FlatBadge color="cyan-400">POLICY FAIL</FlatBadge>
+        </Box>
+        <Grid gap={2} templateColumns="3fr 4fr 3fr">
+          <Box>
+            {!hidePolicyButton && (
+              <GenericItemCard.Value
+                label="Policy"
+                value={
+                  <Flex align="center" spacing={2}>
+                    <Text maxWidth={250} truncated alignItems="center" as="span">
+                      {detectionData.policyId}
+                    </Text>
+                    <GenericItemCard.Link
+                      aria-label={`Link to policy ${detectionData.policyId}`}
+                      to={urls.compliance.policies.details(detectionData.policyId)}
+                    />
+                  </Flex>
+                }
+              />
+            )}
+          </Box>
           <GenericItemCard.Value
             label="Resource Types"
             value={<BulletedValueList values={detectionData.resourceTypes} limit={2} />}
           />
-          <Flex ml="auto" mr={0} align="flex-end" spacing={2}>
-            <SeverityBadge severity={alert.severity} />
-            <UpdateAlertDropdown alert={alert} />
+          <Flex align="flex-end">
+            <Flex spacing={2} align="center" width="100%" justify="flex-end">
+              <RelatedDestinations destinations={alertDestinations} loading={loadingDestinations} />
+              <Divider mx={0} alignSelf="stretch" orientation="vertical"></Divider>
+              <SeverityBadge severity={alert.severity} />
+              <UpdateAlertDropdown alert={alert} />
+            </Flex>
           </Flex>
-        </GenericItemCard.ValuesGroup>
+        </Grid>
         {!loading && !allDestinationDeliveredSuccessfully && (
           <Flex
             as="section"

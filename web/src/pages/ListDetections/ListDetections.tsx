@@ -143,4 +143,4 @@ const ListDetections = () => {
   );
 };
 
-export default compose(withSEO({ title: 'Detections' }), withSelectContext)(ListDetections);
+export default compose(withSEO({ title: 'Detections' }), withSelectContext())(ListDetections);

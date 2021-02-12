@@ -32,9 +32,9 @@ describe('ComplianceSourceCard', () => {
     expect(getByAriaLabel(/Toggle Options/i)).toBeInTheDocument();
     expect(getByText(source.integrationLabel)).toBeInTheDocument();
     expect(getByText(source.awsAccountId)).toBeInTheDocument();
-    expect(getByText(/Enabled/i)).toBeInTheDocument();
-    expect(getByText(/Disabled/i)).toBeInTheDocument();
+    expect(getByAriaLabel(/Real-Time AWS Resource Scans enabled/i)).toBeInTheDocument();
+    expect(getByAriaLabel(/AWS Automatic Remediations disabled/i)).toBeInTheDocument();
     expect(getByText(/Unhealthy/i)).toBeInTheDocument();
-    expect(getByText(formatDatetime(source.createdAtTime, true))).toBeInTheDocument();
+    expect(getByText(formatDatetime(source.createdAtTime))).toBeInTheDocument();
   });
 });

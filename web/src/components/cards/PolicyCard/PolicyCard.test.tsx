@@ -30,7 +30,6 @@ describe('PolicyCard', () => {
     const { getByText } = render(<PolicyCard policy={policy} />);
 
     expect(getByText(policy.displayName)).toBeInTheDocument();
-    expect(getByText('Destinations')).toBeInTheDocument();
     expect(getByText(SeverityEnum.Medium)).toBeInTheDocument();
     expect(getByText(policy.enabled ? 'ENABLED' : 'DISABLED')).toBeInTheDocument();
 

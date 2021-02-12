@@ -17,40 +17,39 @@
  */
 
 import React from 'react';
-import { Dropdown, DropdownButton, DropdownItem, DropdownLink, DropdownMenu } from 'pouncejs';
-import { DataModel } from 'Generated/schema';
-import urls from 'Source/urls';
-import { Link as RRLink } from 'react-router-dom';
-import GenericItemCard from 'Components/GenericItemCard';
-import { MODALS } from 'Components/utils/Modal';
+import { Button, Flex, Text } from 'pouncejs';
+import { useSelect } from 'Components/utils/SelectContext';
 import useModal from 'Hooks/useModal';
+import { MODALS } from 'Components/utils/Modal';
+import { DataModel } from 'Generated/schema';
 
-interface DataModelCardOptionsProps {
-  dataModel: DataModel;
-}
-
-const DataModelCardOptions: React.FC<DataModelCardOptionsProps> = ({ dataModel }) => {
+const ListDataModelSelection: React.FC = () => {
+  const { selection, resetSelection } = useSelect<DataModel>();
   const { showModal } = useModal();
+
   return (
-    <Dropdown>
-      <DropdownButton as={GenericItemCard.OptionsButton} />
-      <DropdownMenu>
-        <DropdownLink as={RRLink} to={urls.logAnalysis.dataModels.edit(dataModel.id)}>
-          Edit
-        </DropdownLink>
-        <DropdownItem
-          onSelect={() => {
+    <Flex justify="flex-end" align="center">
+      <Flex spacing={4} align="center">
+        <Text>{selection.length} Selected</Text>
+        <Button
+          icon="delete"
+          variantColor="red"
+          aria-label="Delete selected Data Models"
+          onClick={() => {
             return showModal({
               modal: MODALS.DELETE_DATA_MODELS,
-              props: { dataModels: [dataModel] },
+              props: {
+                dataModels: selection,
+                onDelete: resetSelection,
+              },
             });
           }}
         >
           Delete
-        </DropdownItem>
-      </DropdownMenu>
-    </Dropdown>
+        </Button>
+      </Flex>
+    </Flex>
   );
 };
 
-export default React.memo(DataModelCardOptions);
+export default React.memo(ListDataModelSelection);

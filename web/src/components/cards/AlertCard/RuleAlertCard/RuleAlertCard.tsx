@@ -17,7 +17,7 @@
  */
 
 import GenericItemCard from 'Components/GenericItemCard';
-import { Flex, Icon, Link, Text, Box } from 'pouncejs';
+import { Flex, Icon, Link, Text, Box, Divider, Grid } from 'pouncejs';
 import { AlertSummaryRuleInfo, AlertTypesEnum } from 'Generated/schema';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
@@ -31,6 +31,7 @@ import useAlertDestinations from 'Hooks/useAlertDestinations';
 import useAlertDestinationsDeliverySuccess from 'Hooks/useAlertDestinationsDeliverySuccess';
 import { SelectCheckbox } from 'Components/utils/SelectContext';
 import UpdateAlertDropdown from 'Components/dropdowns/UpdateAlertDropdown';
+import FlatBadge from 'Components/badges/FlatBadge';
 
 export interface RuleAlertCardProps {
   alert: AlertSummaryFull;
@@ -69,25 +70,32 @@ const RuleAlertCard: React.FC<RuleAlertCardProps> = ({
               {alert.title}
             </Link>
           </GenericItemCard.Heading>
-          <GenericItemCard.Date
+          <GenericItemCard.HeadingValue
+            value={
+              detectionData?.eventsMatched ? detectionData?.eventsMatched.toLocaleString() : '0'
+            }
+            label="Events"
+            withDivider
+          />
+          <GenericItemCard.HeadingValue
             aria-label={`Creation time for ${alert.alertId}`}
-            date={formatDatetime(alert.creationTime)}
+            value={formatDatetime(alert.creationTime)}
+            label="Created"
+            labelFirst
           />
         </GenericItemCard.Header>
-        <Text
-          fontSize="small"
-          as="span"
-          color={alert.type === AlertTypesEnum.Rule ? 'red-300' : 'teal-500'}
-        >
-          {alert.type === AlertTypesEnum.Rule ? 'Rule Match' : 'Rule Error'}
-        </Text>
-        <GenericItemCard.ValuesGroup>
+        <Box mr="auto">
+          <FlatBadge color={alert.type === AlertTypesEnum.Rule ? 'red-300' : 'teal-500'}>
+            {alert.type === AlertTypesEnum.Rule ? 'RULE MATCH' : 'RULE ERROR'}
+          </FlatBadge>
+        </Box>
+        <Grid gap={2} templateColumns={hideRuleButton ? 'repeat(2, 1fr)' : '3fr 4fr 3fr'}>
           {!hideRuleButton && (
             <GenericItemCard.Value
               label="Rule"
               value={
-                <Flex spacing={2}>
-                  <Text display="inline-flex" alignItems="center" as="span">
+                <Flex align="center" spacing={2}>
+                  <Text maxWidth={250} truncated alignItems="center" as="span">
                     {detectionData.ruleId}
                   </Text>
                   <GenericItemCard.Link
@@ -99,26 +107,18 @@ const RuleAlertCard: React.FC<RuleAlertCardProps> = ({
             />
           )}
           <GenericItemCard.Value
-            label="Destinations"
-            value={
-              <RelatedDestinations destinations={alertDestinations} loading={loadingDestinations} />
-            }
-          />
-          <GenericItemCard.Value
             label="Log Types"
             value={<BulletedValueList values={detectionData.logTypes} limit={2} />}
           />
-          <GenericItemCard.Value
-            label="Events"
-            value={
-              detectionData?.eventsMatched ? detectionData?.eventsMatched.toLocaleString() : '0'
-            }
-          />
-          <Flex ml="auto" mr={0} align="flex-end" spacing={2}>
-            <SeverityBadge severity={alert.severity} />
-            <UpdateAlertDropdown alert={alert} />
+          <Flex align="flex-end">
+            <Flex spacing={2} align="center" width="100%" justify="flex-end">
+              <RelatedDestinations destinations={alertDestinations} loading={loadingDestinations} />
+              <Divider mx={0} alignSelf="stretch" orientation="vertical"></Divider>
+              <SeverityBadge severity={alert.severity} />
+              <UpdateAlertDropdown alert={alert} />
+            </Flex>
           </Flex>
-        </GenericItemCard.ValuesGroup>
+        </Grid>
         {!loading && !allDestinationDeliveredSuccessfully && (
           <Flex
             as="section"
