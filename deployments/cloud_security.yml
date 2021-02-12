@@ -79,11 +79,18 @@ Parameters:
     Type: String
     Description: The ARN of the processed data SNS topic
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
+  PythonAssumableRoleArns:
+    Type: CommaDelimitedList
+    Description: List of IAM roles which the Python policy-engine will be allowed to assume
   PythonLayerVersionArn:
     Type: String
     Description: Versioned lambda layer with pip libraries for python analysis and remediation
     # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+$'
+  PythonManagedPolicyArn:
+    Type: String
+    Description: Managed IAM policy which will be attached to the Python policy-engine
+    AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):iam::(\d{12}|aws):policy\/\S+)?$'
   SqsKeyId:
     Type: String
     Description: KMS key ID for SQS encryption
@@ -139,6 +146,8 @@ Conditions:
   DebugEnabled: !Equals [!Ref Debug, true]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
   ProvisionResourceTableCapacity: !Not [!Equals [0, !Ref CloudSecurityMaxReadCapacity]]
+  PythonAssumeRoles: !Not [!Equals [!Join ['', !Ref PythonAssumableRoleArns], '']]
+  PythonManagedPolicy: !Not [!Equals ['', !Ref PythonManagedPolicyArn]]
 
 Resources:
   ##### Alert Processor #####
@@ -1324,6 +1333,21 @@ Resources:
               Resource:
                 - !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:panther-analysis/*
                 - !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:panther-policies/*
+        - !If
+          - PythonAssumeRoles
+          - Id: AssumeRoles
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: sts:AssumeRole
+                Resource: !Ref PythonAssumableRoleArns
+                Condition:
+                  Bool: { 'aws:SecureTransport': true }
+          - !Ref AWS::NoValue
+        - !If
+          - PythonManagedPolicy
+          - !Ref PythonManagedPolicyArn
+          - !Ref AWS::NoValue
 
   PolicyEngineLayers:
     Type: Custom::LayerAttachment

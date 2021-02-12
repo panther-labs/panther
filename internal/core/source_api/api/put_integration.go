@@ -283,6 +283,7 @@ func (api *API) generateNewIntegration(input *models.PutIntegrationInput) *model
 		IntegrationID:    uuid.New().String(),
 		IntegrationLabel: input.IntegrationLabel,
 		IntegrationType:  input.IntegrationType,
+		PantherVersion:   api.Config.Version,
 	}
 
 	switch input.IntegrationType {

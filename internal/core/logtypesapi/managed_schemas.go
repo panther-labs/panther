@@ -32,8 +32,8 @@ import (
 type ListManagedSchemaUpdatesInput struct{}
 
 type ListManagedSchemaUpdatesOutput struct {
-	Releases []managedschemas.Release `json:"releases,omitempty" description:"Available release updates"`
-	Error    *APIError                `json:"error,omitempty" description:"An error that occurred while fetching the record"`
+	Releases *[]managedschemas.Release `json:"releases,omitempty" description:"Available release updates"`
+	Error    *APIError                 `json:"error,omitempty" description:"An error that occurred while fetching the record"`
 }
 
 // nolint:lll
@@ -47,8 +47,11 @@ func (api *LogTypesAPI) ListManagedSchemaUpdates(ctx context.Context, _ *ListMan
 	if err != nil {
 		return nil, err
 	}
+	if releases == nil {
+		releases = []managedschemas.Release{}
+	}
 	return &ListManagedSchemaUpdatesOutput{
-		Releases: releases,
+		Releases: &releases,
 	}, nil
 }
 

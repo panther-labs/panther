@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Card, Flex, Icon, IconButton, Img, Text, TextProps } from 'pouncejs';
+import { Box, Card, Flex, Icon, IconButton, Img, Text, TextProps, CardProps } from 'pouncejs';
 import { slugify } from 'Helpers/utils';
 import { Link as RRLink } from 'react-router-dom';
 
@@ -51,10 +51,13 @@ interface GenericItemCardComposition {
   LineBreak: React.FC;
 }
 
-const GenericItemCard: React.FC & GenericItemCardComposition = ({ children }) => {
+const GenericItemCard: React.FC<CardProps> & GenericItemCardComposition = ({
+  children,
+  isHighlighted = false,
+}) => {
   return (
-    <Card as="section" variant="dark" p={4} overflow="hidden">
-      <Box>
+    <Card as="section" variant="dark" overflow="hidden">
+      <Box backgroundColor={isHighlighted ? 'navyblue-600' : 'transparent'} p={4}>
         <Flex position="relative" height="100%">
           {children}
         </Flex>
