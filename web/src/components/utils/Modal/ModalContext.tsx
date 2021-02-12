@@ -37,7 +37,7 @@ const HIDE_MODAL = 'HIDE_MODAL';
 /* The available list of modals to dispatch */
 export enum MODALS {
   DELETE_CUSTOM_LOG = 'DELETE_CUSTOM_LOG',
-  DELETE_DATA_MODEL = 'DELETE_DATA_MODEL',
+  DELETE_DATA_MODELS = 'DELETE_DATA_MODELS',
   DELETE_DETECTIONS = 'DELETE_DETECTIONS',
   DELETE_GLOBAL_PYTHON_MODULE = 'DELETE_GLOBAL_PYTHON_MODULE',
   DELETE_USER = 'DELETE_USER',
@@ -128,7 +128,7 @@ interface ShowDeleteTestModalAction {
 interface ShowDeleteDataModelModalAction {
   type: typeof SHOW_MODAL;
   payload: {
-    modal: MODALS.DELETE_DATA_MODEL;
+    modal: MODALS.DELETE_DATA_MODELS;
     props: OmitControlledProps<DeleteDataModelModalProps>;
   };
 }

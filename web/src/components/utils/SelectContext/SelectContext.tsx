@@ -119,8 +119,10 @@ function SelectProvider<T>({
 
 const MemoizedSelectProvider = React.memo(SelectProvider);
 
-const withSelectContext = <T,>(Component: React.FC) => props => (
-  <SelectProvider<T>>
+const withSelectContext = <T,>(config?: Omit<SelectProviderProps<T>, 'children'>) => (
+  Component: React.FC
+) => props => (
+  <SelectProvider {...config}>
     <Component {...props} />
   </SelectProvider>
 );
