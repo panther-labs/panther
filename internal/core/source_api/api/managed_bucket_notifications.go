@@ -97,25 +97,6 @@ func ManageBucketNotifications(
 	return nil
 }
 
-// reduceNoPrefixStrings reduces a list of strings to a list where no string is a prefix of another.
-// e.g [pref, prefi, prefix, abc] -> [pref, abc]
-func reduceNoPrefixStrings(strs []string) (reduced []string) {
-	uniques := make(map[string]struct{})
-	for i := 0; i < len(strs); i++ {
-		smallestPrefix := strs[i]
-		for j := 0; j < len(strs); j++ {
-			if strings.HasPrefix(smallestPrefix, strs[j]) {
-				smallestPrefix = strs[j]
-			}
-		}
-		uniques[smallestPrefix] = struct{}{}
-	}
-	for k := range uniques {
-		reduced = append(reduced, k)
-	}
-	return
-}
-
 func createSNSResources(
 	pantherSess,
 	stsSess *session.Session,

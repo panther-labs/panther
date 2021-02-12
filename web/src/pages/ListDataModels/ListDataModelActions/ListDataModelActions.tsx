@@ -15,34 +15,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 import React from 'react';
-import { Box, Theme } from 'pouncejs';
+import { useSelect } from 'Components/utils/SelectContext';
+import ListDataModelSelection from '../ListDataModelSelection';
+import ListDataModelFilters from '../ListDataModelFilters';
 
-interface FlatBadgeProps {
-  children: React.ReactNode;
-  backgroundColor?: keyof Theme['colors'];
-  color?: keyof Theme['colors'];
-}
-
-const FlatBadge: React.FC<FlatBadgeProps> = ({
-  backgroundColor = 'navyblue-700',
-  color = 'white',
-  children,
-}) => {
-  return (
-    <Box
-      backgroundColor={backgroundColor}
-      borderRadius="small"
-      px="6px"
-      py={1}
-      fontWeight="bold"
-      fontSize="x-small"
-      color={color}
-    >
-      {children}
-    </Box>
-  );
+const ListDataModelActions: React.FC = () => {
+  const { selection } = useSelect();
+  return selection.length ? <ListDataModelSelection /> : <ListDataModelFilters />;
 };
 
-export default FlatBadge;
+export default React.memo(ListDataModelActions);

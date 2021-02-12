@@ -1371,6 +1371,7 @@ export type S3LogIntegrationHealth = {
   processingRoleStatus: IntegrationItemHealthStatus;
   s3BucketStatus: IntegrationItemHealthStatus;
   kmsKeyStatus: IntegrationItemHealthStatus;
+  getObjectStatus?: Maybe<IntegrationItemHealthStatus>;
 };
 
 export type S3PrefixLogTypes = {
@@ -3388,6 +3389,11 @@ export type S3LogIntegrationHealthResolvers<
   >;
   s3BucketStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
   kmsKeyStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
+  getObjectStatus?: Resolver<
+    Maybe<ResolversTypes['IntegrationItemHealthStatus']>,
+    ParentType,
+    ContextType
+  >;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

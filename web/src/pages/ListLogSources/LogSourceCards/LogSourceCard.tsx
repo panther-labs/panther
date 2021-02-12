@@ -52,12 +52,17 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
     switch (sourceHealth.__typename) {
       case 'SqsLogIntegrationHealth':
         return [sourceHealth.sqsStatus];
-      case 'S3LogIntegrationHealth':
-        return [
+      case 'S3LogIntegrationHealth': {
+        const checks = [
           sourceHealth.processingRoleStatus,
           sourceHealth.s3BucketStatus,
           sourceHealth.kmsKeyStatus,
         ];
+        if (sourceHealth.getObjectStatus) {
+          checks.push(sourceHealth.getObjectStatus);
+        }
+        return checks;
+      }
       default:
         throw new Error(`Unknown source health item`);
     }
@@ -65,8 +70,7 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
 
   const lastReceivedMessage = React.useMemo(() => {
     return source.lastEventReceived
-      ? `
-  Last Received Data ${getElapsedTime(new Date(source.lastEventReceived).getTime() / 1000)}`
+      ? `${getElapsedTime(new Date(source.lastEventReceived).getTime() / 1000)}`
       : 'No Data Received yet';
   }, [source.lastEventReceived]);
 
@@ -92,7 +96,11 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
               </Tooltip>
             )}
           </GenericItemCard.Heading>
-          <GenericItemCard.Date date={lastReceivedMessage} />
+          <GenericItemCard.HeadingValue
+            value={lastReceivedMessage}
+            label={source.lastEventReceived ? 'Last Received Data' : null}
+            labelFirst
+          />
           {!isCreatedByPanther && <LogSourceCardOptions source={source} />}
         </GenericItemCard.Header>
         <GenericItemCard.ValuesGroup>

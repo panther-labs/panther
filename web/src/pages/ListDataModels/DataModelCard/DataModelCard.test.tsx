@@ -17,19 +17,28 @@
  */
 
 import React from 'react';
+import { SelectProvider } from 'Components/utils/SelectContext';
 import { buildDataModel, render } from 'test-utils';
 import DataModelCard from './DataModelCard';
 
 describe('DataModelCard', () => {
   it('matches snapshot', () => {
-    const { container } = render(<DataModelCard dataModel={buildDataModel()} />);
+    const { container } = render(
+      <SelectProvider>
+        <DataModelCard dataModel={buildDataModel()} />
+      </SelectProvider>
+    );
     expect(container).toMatchSnapshot();
   });
 
   it('renders the necessary information', () => {
     const dataModel = buildDataModel();
 
-    const { getByText, getByAriaLabel } = render(<DataModelCard dataModel={dataModel} />);
+    const { getByText, getByAriaLabel } = render(
+      <SelectProvider>
+        <DataModelCard dataModel={dataModel} />
+      </SelectProvider>
+    );
 
     expect(getByText(dataModel.id)).toBeInTheDocument();
     expect(getByText(dataModel.displayName)).toBeInTheDocument();
@@ -40,7 +49,11 @@ describe('DataModelCard', () => {
   it('fallbacks to `id` when display name is not existent', () => {
     const dataModel = buildDataModel({ displayName: '' });
 
-    const { getAllByText } = render(<DataModelCard dataModel={dataModel} />);
+    const { getAllByText } = render(
+      <SelectProvider>
+        <DataModelCard dataModel={dataModel} />
+      </SelectProvider>
+    );
 
     expect(getAllByText(dataModel.id)).toHaveLength(2);
   });

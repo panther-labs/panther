@@ -27,18 +27,18 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
   }
 }
 
-.panther-41 {
+.panther-40 {
   background-color: #1d2a3f;
   border-radius: 4px;
   overflow: hidden;
 }
 
-.panther-40 {
+.panther-39 {
   background-color: transparent;
   padding: 16px;
 }
 
-.panther-39 {
+.panther-38 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -59,7 +59,7 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
   padding-right: 8px;
 }
 
-.panther-38 {
+.panther-37 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -73,7 +73,7 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
   width: 100%;
 }
 
-.panther-4 {
+.panther-5 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -88,7 +88,7 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
 .panther-2 {
   font-weight: 500;
   margin-right: auto;
-  max-width: 70%;
+  max-width: 60%;
   word-break: break-word;
 }
 
@@ -114,32 +114,44 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
   color: #11a5f3;
 }
 
-.panther-3 {
+.panther-4 {
   font-size: 0.75rem;
+  max-width: 20%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panther-3 {
+  margin-right: 4px;
   color: #86a3c3;
 }
 
-.panther-5 {
-  font-size: 0.75rem;
+.panther-7 {
+  margin-right: auto;
+}
+
+.panther-6 {
+  background-color: #141c2a;
+  border-radius: 2px;
+  padding-left: 6px;
+  padding-right: 6px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  font-weight: 700;
+  font-size: 0.625rem;
   color: #29bac6;
 }
 
-.panther-37 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-flex-wrap: wrap;
-  -webkit-flex-wrap: wrap;
-  -ms-flex-wrap: wrap;
-  flex-wrap: wrap;
+.panther-36 {
+  display: grid;
+  grid-gap: 8px;
+  grid-template-columns: 3fr 4fr 3fr;
 }
 
-.panther-37>*:not(:last-child) {
-  margin-right: 32px;
-}
 
-.panther-12 {
+
+.panther-14 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -150,13 +162,13 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
   margin-top: 8px;
 }
 
-.panther-6 {
+.panther-8 {
   color: #bdbdbd;
   font-size: 0.563rem;
   font-weight: 500;
 }
 
-.panther-11 {
+.panther-13 {
   display: -webkit-inline-box;
   display: -webkit-inline-flex;
   display: -ms-inline-flexbox;
@@ -175,29 +187,33 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
   min-height: 24px;
 }
 
-.panther-10 {
+.panther-12 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-}
-
-.panther-10>*:not(:last-child) {
-  margin-right: 8px;
-}
-
-.panther-7 {
-  display: -webkit-inline-box;
-  display: -webkit-inline-flex;
-  display: -ms-inline-flexbox;
-  display: inline-flex;
   -webkit-align-items: center;
   -webkit-box-align: center;
   -ms-flex-align: center;
   align-items: center;
 }
 
+.panther-12>*:not(:last-child) {
+  margin-right: 8px;
+}
+
 .panther-9 {
+  max-width: 250px;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panther-11 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -217,12 +233,12 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
   border-radius: 99999px;
 }
 
-.panther-9:hover {
+.panther-11:hover {
   background-color: #11a5f3;
   border-color: #11a5f3;
 }
 
-.panther-8 {
+.panther-10 {
   display: inline-block;
   vertical-align: sub;
   -webkit-flex-shrink: 0;
@@ -233,51 +249,7 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
   color: currentColor;
 }
 
-.panther-14 {
-  display: -webkit-inline-box;
-  display: -webkit-inline-flex;
-  display: -ms-inline-flexbox;
-  display: inline-flex;
-  -webkit-box-flex: 1;
-  -webkit-flex-grow: 1;
-  -ms-flex-positive: 1;
-  flex-grow: 1;
-  font-size: 0.875rem;
-  font-weight: 500;
-  opacity: 0.3;
-  -webkit-align-items: center;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-  min-height: 24px;
-}
-
-.panther-19 {
-  height: 18px;
-}
-
-.panther-18 {
-  display: inline-block;
-  vertical-align: sub;
-  -webkit-animation: animation-0 2s linear infinite;
-  animation: animation-0 2s linear infinite;
-  width: 18px;
-  height: 18px;
-}
-
-.panther-17 {
-  stroke-dashoffset: 600;
-  stroke-dasharray: 300;
-  stroke-width: 13;
-  stroke-miterlimit: 10;
-  stroke-linecap: round;
-  -webkit-animation: animation-1 1.6s cubic-bezier(0.4, 0.15, 0.6, 0.85) infinite;
-  animation: animation-1 1.6s cubic-bezier(0.4, 0.15, 0.6, 0.85) infinite;
-  stroke: currentColor;
-  fill: transparent;
-}
-
-.panther-26 {
+.panther-20 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -292,39 +264,24 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
   flex-wrap: wrap;
 }
 
-.panther-26>*:not(:last-child) {
+.panther-20>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-25 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-align-items: center;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-}
-
-.panther-25>*:not(:last-child) {
-  margin-right: 8px;
-}
-
-.panther-23 {
+.panther-17 {
   width: 12px;
   height: 12px;
   background-color: hsl(159, 29%, 39%);
   border-radius: 99999px;
 }
 
-.panther-24 {
+.panther-18 {
   font-size: 0.75rem;
   font-weight: 400;
   line-height: 1.5;
 }
 
-.panther-36 {
+.panther-35 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -333,15 +290,67 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
   -webkit-box-align: flex-end;
   -ms-flex-align: flex-end;
   align-items: flex-end;
-  margin-left: auto;
-  margin-right: 0;
 }
 
-.panther-36>*:not(:last-child) {
+.panther-34 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: end;
+  -ms-flex-pack: end;
+  -webkit-justify-content: flex-end;
+  justify-content: flex-end;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  width: 100%;
+}
+
+.panther-34>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-29 {
+.panther-25 {
+  height: 18px;
+}
+
+.panther-24 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-animation: animation-0 2s linear infinite;
+  animation: animation-0 2s linear infinite;
+  width: 18px;
+  height: 18px;
+}
+
+.panther-23 {
+  stroke-dashoffset: 600;
+  stroke-dasharray: 300;
+  stroke-width: 13;
+  stroke-miterlimit: 10;
+  stroke-linecap: round;
+  -webkit-animation: animation-1 1.6s cubic-bezier(0.4, 0.15, 0.6, 0.85) infinite;
+  animation: animation-1 1.6s cubic-bezier(0.4, 0.15, 0.6, 0.85) infinite;
+  stroke: currentColor;
+  fill: transparent;
+}
+
+.panther-26 {
+  border: none;
+  opacity: 0.6;
+  border-left: 0.0625rem solid;
+  height: auto;
+  margin-left: 0;
+  margin-right: 0;
+  border-color: inherit;
+  -webkit-align-self: stretch;
+  -ms-flex-item-align: stretch;
+  align-self: stretch;
+}
+
+.panther-27 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -372,7 +381,7 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
   background-color: transparent;
 }
 
-.panther-35 {
+.panther-33 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -387,11 +396,11 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
   align-items: center;
 }
 
-.panther-35>*:not(:last-child) {
+.panther-33>*:not(:last-child) {
   margin-right: 4px;
 }
 
-.panther-31 {
+.panther-29 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -399,7 +408,7 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
   width: 85px;
 }
 
-.panther-30 {
+.panther-28 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -428,14 +437,14 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
   background-color: #6e3078;
 }
 
-.panther-34 {
+.panther-32 {
   display: -webkit-inline-box;
   display: -webkit-inline-flex;
   display: -ms-inline-flexbox;
   display: inline-flex;
 }
 
-.panther-33 {
+.panther-31 {
   outline: none;
   line-height: 1;
   border-radius: 99999px;
@@ -452,23 +461,23 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
   text-decoration: none;
 }
 
-.panther-33:hover {
+.panther-31:hover {
   background-color: #465973;
   border-color: #465973;
 }
 
-.panther-33:focus {
+.panther-31:focus {
   background-color: #465973;
   border-color: #93a6c0;
 }
 
-.panther-33:active,
-.panther-33[data-active=true] {
+.panther-31:active,
+.panther-31[data-active=true] {
   background-color: #253852;
   border-color: #253852;
 }
 
-.panther-32 {
+.panther-30 {
   display: inline-block;
   vertical-align: sub;
   -webkit-flex-shrink: 0;
@@ -484,22 +493,22 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
     id="main-header"
   />
   <section
-    class="panther-41"
+    class="panther-40"
   >
     <div
-      class="panther-40"
+      class="panther-39"
     >
       <div
-        class="panther-39"
+        class="panther-38"
       >
         <div
           class="panther-0"
         />
         <div
-          class="panther-38"
+          class="panther-37"
         >
           <header
-            class="panther-4"
+            class="panther-5"
           >
             <h4
               class="panther-2"
@@ -512,135 +521,100 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
                 indexing
               </a>
             </h4>
-            <span
+            <div
               aria-label="Creation time for f67b8f04-5fac-404a-93a4-38db29f258ba"
-              class="panther-3"
+              class="panther-4"
             >
+              <span
+                class="panther-3"
+              >
+                Created
+              </span>
               2020-08-08 12:15 GMT
-            </span>
+            </div>
           </header>
-          <span
-            class="panther-5"
-          >
-            Policy Fail
-          </span>
           <div
-            class="panther-37"
+            class="panther-7"
           >
-            <dl
-              class="panther-12"
+            <div
+              class="panther-6"
             >
-              <dt
-                aria-labelledby="policyobject-object"
-                class="panther-6"
-              >
-                Policy
-              </dt>
-              <dd
-                aria-labelledby="policyobject-object"
-                class="panther-11"
-              >
-                <div
-                  class="panther-10"
-                >
-                  <span
-                    class="panther-7"
-                  >
-                    a68babd7-7c1c-4dee-a33e-b8009e6d8017
-                  </span>
-                  <a
-                    aria-label="Link to policy a68babd7-7c1c-4dee-a33e-b8009e6d8017"
-                    href="/detections/policies/a68babd7-7c1c-4dee-a33e-b8009e6d8017/"
-                  >
-                    <div
-                      class="panther-9"
-                    >
-                      <svg
-                        class="panther-8"
-                        role="presentation"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          d="M12 4L10.59 5.41L16.17 11H4V13H16.17L10.59 18.59L12 20L20 12L12 4Z"
-                        />
-                      </svg>
-                    </div>
-                  </a>
-                </div>
-              </dd>
-            </dl>
-            <dl
-              class="panther-12"
+              POLICY FAIL
+            </div>
+          </div>
+          <div
+            class="panther-36"
+          >
+            <div
+              class="panther-15"
             >
-              <dt
-                aria-labelledby="sourcenull"
-                class="panther-6"
-              >
-                Source
-              </dt>
-              <dd
-                aria-labelledby="sourcenull"
+              <dl
                 class="panther-14"
               >
-                Not Set
-              </dd>
-            </dl>
-            <dl
-              class="panther-12"
-            >
-              <dt
-                aria-labelledby="destinationsobject-object"
-                class="panther-6"
-              >
-                Destinations
-              </dt>
-              <dd
-                aria-labelledby="destinationsobject-object"
-                class="panther-11"
-              >
-                <div
-                  class="panther-19"
+                <dt
+                  aria-labelledby="policyobject-object"
+                  class="panther-8"
                 >
-                  <svg
-                    aria-label="Loading..."
-                    class="panther-18"
-                    viewBox="0 0 150 150"
+                  Policy
+                </dt>
+                <dd
+                  aria-labelledby="policyobject-object"
+                  class="panther-13"
+                >
+                  <div
+                    class="panther-12"
                   >
-                    <circle
-                      class="panther-17"
-                      color="current"
-                      cx="75"
-                      cy="75"
-                      r="60"
-                    />
-                  </svg>
-                </div>
-              </dd>
-            </dl>
+                    <span
+                      class="panther-9"
+                    >
+                      a68babd7-7c1c-4dee-a33e-b8009e6d8017
+                    </span>
+                    <a
+                      aria-label="Link to policy a68babd7-7c1c-4dee-a33e-b8009e6d8017"
+                      href="/detections/policies/a68babd7-7c1c-4dee-a33e-b8009e6d8017/"
+                    >
+                      <div
+                        class="panther-11"
+                      >
+                        <svg
+                          class="panther-10"
+                          role="presentation"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            d="M12 4L10.59 5.41L16.17 11H4V13H16.17L10.59 18.59L12 20L20 12L12 4Z"
+                          />
+                        </svg>
+                      </div>
+                    </a>
+                  </div>
+                </dd>
+              </dl>
+            </div>
             <dl
-              class="panther-12"
+              class="panther-14"
             >
               <dt
                 aria-labelledby="resource-typesobject-object"
-                class="panther-6"
+                class="panther-8"
               >
                 Resource Types
               </dt>
               <dd
                 aria-labelledby="resource-typesobject-object"
-                class="panther-11"
+                class="panther-13"
               >
                 <div
-                  class="panther-26"
+                  class="panther-20"
                 >
                   <div
-                    class="panther-25"
+                    class="panther-12"
                   >
                     <span
-                      class="panther-23"
+                      class="panther-17"
                     />
                     <span
-                      class="panther-24"
+                      class="panther-18"
                     >
                       brand
                     </span>
@@ -649,53 +623,78 @@ exports[`PolicyAlertCard should match snapshot 1`] = `
               </dd>
             </dl>
             <div
-              class="panther-36"
+              class="panther-35"
             >
               <div
-                aria-atomic="true"
-                class="panther-29"
-                role="status"
-              >
-                MEDIUM
-              </div>
-              <div
-                class="panther-35"
+                class="panther-34"
               >
                 <div
-                  class="panther-31"
+                  class="panther-25"
                 >
-                  <div
-                    aria-atomic="true"
-                    class="panther-30"
-                    role="status"
+                  <svg
+                    aria-label="Loading..."
+                    class="panther-24"
+                    viewBox="0 0 150 150"
                   >
-                    TRIAGED
-                  </div>
+                    <circle
+                      class="panther-23"
+                      color="current"
+                      cx="75"
+                      cy="75"
+                      r="60"
+                    />
+                  </svg>
+                </div>
+                <hr
+                  aria-orientation="vertical"
+                  class="panther-26"
+                />
+                <div
+                  aria-atomic="true"
+                  class="panther-27"
+                  role="status"
+                >
+                  MEDIUM
                 </div>
                 <div
-                  aria-controls="menu--1"
-                  aria-haspopup="true"
-                  class="panther-34"
-                  data-reach-menu-button=""
-                  id="menu-button--menu--1"
-                  type="button"
+                  class="panther-33"
                 >
-                  <button
-                    aria-label="Change Alert Status"
-                    aria-pressed="false"
-                    class="panther-33"
+                  <div
+                    class="panther-29"
+                  >
+                    <div
+                      aria-atomic="true"
+                      class="panther-28"
+                      role="status"
+                    >
+                      TRIAGED
+                    </div>
+                  </div>
+                  <div
+                    aria-controls="menu--1"
+                    aria-haspopup="true"
+                    class="panther-32"
+                    data-reach-menu-button=""
+                    id="menu-button--menu--1"
                     type="button"
                   >
-                    <svg
-                      class="panther-32"
-                      role="presentation"
-                      viewBox="0 0 24 24"
+                    <button
+                      aria-label="Change Alert Status"
+                      aria-pressed="false"
+                      class="panther-31"
+                      type="button"
                     >
-                      <path
-                        d="M7 10L12 15L17 10H7Z"
-                      />
-                    </svg>
-                  </button>
+                      <svg
+                        class="panther-30"
+                        role="presentation"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          d="M7 10L12 15L17 10H7Z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

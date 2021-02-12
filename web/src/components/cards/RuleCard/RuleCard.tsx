@@ -18,7 +18,7 @@
 
 import React from 'react';
 import GenericItemCard from 'Components/GenericItemCard';
-import { Box, Flex, Link, SimpleGrid, Text } from 'pouncejs';
+import { Box, Flex, Divider, Link, SimpleGrid } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import SeverityBadge from 'Components/badges/SeverityBadge';
 import StatusBadge from 'Components/badges/StatusBadge';
@@ -30,6 +30,7 @@ import { RuleSummary } from 'Source/graphql/fragments/RuleSummary.generated';
 import { formatDatetime } from 'Helpers/utils';
 import useDetectionDestinations from 'Hooks/useDetectionDestinations';
 import RelatedDestinations from 'Components/RelatedDestinations';
+import FlatBadge from 'Components/badges/FlatBadge';
 import RuleCardOptions from './RuleCardOptions';
 
 interface RuleCardProps {
@@ -65,37 +66,36 @@ const RuleCard: React.FC<RuleCardProps> = ({
               {rule.displayName || rule.id}
             </Link>
           </GenericItemCard.Heading>
-          <GenericItemCard.Date date={formatDatetime(rule.lastModified)} />
+          <GenericItemCard.HeadingValue
+            value={formatDatetime(rule.lastModified)}
+            label="Updated"
+            labelFirst
+          />
           <RuleCardOptions rule={rule} />
         </GenericItemCard.Header>
-        <Text fontSize="small" as="span" color="cyan-500">
-          Rule
-        </Text>
+        <Box mr="auto">
+          <FlatBadge color="cyan-500">RULE</FlatBadge>
+        </Box>
         <SimpleGrid gap={2} columns={2}>
-          <GenericItemCard.ValuesGroup>
-            <GenericItemCard.Value
-              label="Log Types"
-              value={<BulletedValueList values={rule.logTypes} limit={2} />}
-            />
-            <GenericItemCard.Value
-              label="Destinations"
-              value={
-                <RelatedDestinations
-                  destinations={detectionDestinations}
-                  loading={loadingDetectionDestinations}
-                />
-              }
-            />
-          </GenericItemCard.ValuesGroup>
-          <GenericItemCard.ValuesGroup>
-            <Flex ml="auto" mr={0} align="flex-end" spacing={4}>
+          <GenericItemCard.Value
+            label="Log Types"
+            value={<BulletedValueList values={rule.logTypes} limit={3} />}
+          />
+          <Flex align="flex-end">
+            <Flex spacing={2} align="center" width="100%" justify="flex-end">
+              <RelatedDestinations
+                destinations={detectionDestinations}
+                loading={loadingDetectionDestinations}
+                limit={3}
+              />
+              <Divider mx={0} alignSelf="stretch" orientation="vertical"></Divider>
               <StatusBadge
                 status={rule.enabled ? 'ENABLED' : ComplianceStatusEnum.Error}
                 disabled={!rule.enabled}
               />
               <SeverityBadge severity={rule.severity} />
             </Flex>
-          </GenericItemCard.ValuesGroup>
+          </Flex>
         </SimpleGrid>
       </GenericItemCard.Body>
     </GenericItemCard>

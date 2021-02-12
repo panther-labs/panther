@@ -1580,6 +1580,10 @@ export const buildS3LogIntegrationHealth = (
       's3BucketStatus' in overrides ? overrides.s3BucketStatus : buildIntegrationItemHealthStatus(),
     kmsKeyStatus:
       'kmsKeyStatus' in overrides ? overrides.kmsKeyStatus : buildIntegrationItemHealthStatus(),
+    getObjectStatus:
+      'getObjectStatus' in overrides
+        ? overrides.getObjectStatus
+        : buildIntegrationItemHealthStatus(),
   };
 };
 

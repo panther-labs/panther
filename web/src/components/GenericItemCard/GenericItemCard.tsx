@@ -31,11 +31,15 @@ interface GenericItemCardValueProps {
   value: string | number | React.ReactElement;
 }
 
-interface GenericItemCardDate {
-  date: string;
-}
 interface GenericItemCardLinkProps {
   to: string;
+}
+
+interface GenericItemCardHeadingValueProps {
+  value: string | number | React.ReactElement;
+  label: string;
+  labelFirst?: boolean;
+  withDivider?: boolean;
 }
 
 interface GenericItemCardComposition {
@@ -47,7 +51,7 @@ interface GenericItemCardComposition {
   OptionsButton: React.ForwardRefExoticComponent<React.RefAttributes<HTMLButtonElement>>;
   Value: React.FC<GenericItemCardValueProps>;
   ValuesGroup: React.FC;
-  Date: React.FC<GenericItemCardDate>;
+  HeadingValue: React.FC<GenericItemCardHeadingValueProps>;
   LineBreak: React.FC;
 }
 
@@ -76,9 +80,40 @@ const GenericItemCardHeader: React.FC = ({ children }) => {
 
 const GenericItemCardHeading: React.FC<TextProps> = ({ children, ...rest }) => {
   return (
-    <Text as="h4" fontWeight="medium" mr="auto" maxWidth="70%" wordBreak="break-word" {...rest}>
+    <Text as="h4" fontWeight="medium" mr="auto" maxWidth="60%" wordBreak="break-word" {...rest}>
       {children}
     </Text>
+  );
+};
+
+const GenericItemCardHeadingValue: React.FC<GenericItemCardHeadingValueProps> = ({
+  value,
+  label,
+  labelFirst,
+  withDivider,
+  ...rest
+}) => {
+  return (
+    <>
+      <Box fontSize="small" maxWidth="20%" truncated {...rest}>
+        {labelFirst && (
+          <Text mr={1} as="span" color="navyblue-100">
+            {label}
+          </Text>
+        )}
+        {value}
+        {!labelFirst && (
+          <Text ml={1} as="span" color="navyblue-100">
+            {label}
+          </Text>
+        )}
+      </Box>
+      {withDivider && (
+        <Text px={2} fontSize="small" as="span" color="navyblue-100">
+          &bull;
+        </Text>
+      )}
+    </>
   );
 };
 
@@ -122,14 +157,6 @@ const GenericItemCardOptionsButton = React.forwardRef<HTMLButtonElement>(functio
   );
 });
 
-const GenericItemCardDate: React.FC<GenericItemCardDate> = ({ date, ...rest }) => {
-  return (
-    <Text fontSize="small" as="span" color="navyblue-100" {...rest}>
-      {date}
-    </Text>
-  );
-};
-
 const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, value, id }) => {
   const cardId = id || slugify(`${label}${value}`);
 
@@ -162,6 +189,7 @@ const GenericItemCardValue: React.FC<GenericItemCardValueProps> = ({ label, valu
     </Flex>
   );
 };
+
 const GenericItemCardLink: React.FC<GenericItemCardLinkProps> = ({ to, ...rest }) => {
   return (
     <RRLink to={to} {...rest}>
@@ -191,7 +219,7 @@ GenericItemCard.Logo = GenericItemCardLogo;
 GenericItemCard.OptionsButton = GenericItemCardOptionsButton;
 GenericItemCard.Value = GenericItemCardValue;
 GenericItemCard.ValuesGroup = GenericItemCardValuesGroup;
-GenericItemCard.Date = GenericItemCardDate;
 GenericItemCard.LineBreak = GenericItemCardLineBreak;
+GenericItemCard.HeadingValue = GenericItemCardHeadingValue;
 
 export default GenericItemCard;

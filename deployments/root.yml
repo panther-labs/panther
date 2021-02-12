@@ -165,12 +165,20 @@ Parameters:
     Description: Configure Panther to automatically onboard itself as a data source
     AllowedValues: [true, false]
     Default: true
+  PythonAssumableRoleArns:
+    Type: CommaDelimitedList
+    Description: Comma-separated list of IAM roles which the Python rules-engine and policy-engine will be allowed to assume
+    Default: ''
   PythonLayerVersionArn:
     Type: String
     Description: Custom Python layer for analysis and remediation. Defaults to a pre-built layer with 'policyuniverse' and 'requests' pip libraries
     Default: ''
     # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
     AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+)?$'
+  PythonManagedPolicyArn:
+    Type: String
+    Description: Managed IAM policy which will be attached to the Python rules-engine and policy-engine
+    AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):iam::(\d{12}|aws):policy\/\S+)?$'
   SecurityGroupID:
     Type: String
     Description: An existing SecurityGroup to deploy Panther into. Only takes affect if VpcID is specified.
@@ -339,7 +347,9 @@ Resources:
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
+        PythonAssumableRoleArns: !Ref PythonAssumableRoleArns
         PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
+        PythonManagedPolicyArn: !Ref PythonManagedPolicyArn
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TracingMode: !Ref TracingMode
       Tags:
@@ -428,7 +438,9 @@ Resources:
         LogProcessorLambdaSQSReadBatchSize: !Ref LogProcessorLambdaSQSReadBatchSize
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
+        PythonAssumableRoleArns: !Ref PythonAssumableRoleArns
         PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
+        PythonManagedPolicyArn: !Ref PythonManagedPolicyArn
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
         TracingMode: !Ref TracingMode
       Tags:

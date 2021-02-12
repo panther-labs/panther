@@ -83,7 +83,7 @@ const ModalManager: React.FC = () => {
     case MODALS.DELETE_CUSTOM_LOG:
       Component = DeleteCustomLogModal;
       break;
-    case MODALS.DELETE_DATA_MODEL:
+    case MODALS.DELETE_DATA_MODELS:
       Component = DeleteDataModelModal;
       break;
     default:

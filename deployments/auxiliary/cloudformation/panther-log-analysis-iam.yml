@@ -113,15 +113,17 @@ Resources:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
-                Action: s3:GetBucketLocation
+                Action:
+                  - s3:GetBucketLocation
+                  - s3:ListBucket
                 Resource: !Sub
                   - arn:${AWS::Partition}:s3:::${Bucket}
                   # prettier-ignore
-                  - Bucket: !If [ IsGenerated, !FindInMap [ PantherParameters, S3Bucket, Value ], !Ref S3Bucket ]
+                  - Bucket: !If [IsGenerated, !FindInMap [PantherParameters, S3Bucket, Value], !Ref S3Bucket]
               - Effect: Allow
                 Action: s3:GetObject
                 Resource: !Sub
-                  - 'arn:${AWS::Partition}:s3:::${Bucket}/*'
+                  - arn:${AWS::Partition}:s3:::${Bucket}/*
                   # prettier-ignore
                   - Bucket: !If [ IsGenerated, !FindInMap [ PantherParameters, S3Bucket, Value ], !Ref S3Bucket ]
               - !If
@@ -171,6 +173,6 @@ Resources:
           - Effect: Allow
             Action: [s3:GetBucketNotification, s3:PutBucketNotification]
             Resource: !Sub
-              - 'arn:aws:s3:::${Bucket}'
+              - 'arn:${AWS::Partition}:s3:::${Bucket}'
               # prettier-ignore
               - Bucket: !If [ IsGenerated, !FindInMap [ PantherParameters, S3Bucket, Value ], !Ref S3Bucket ]

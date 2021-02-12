@@ -43,10 +43,13 @@ const DestinationCard: React.FC<DestinationCardProps> = ({ destination, logo, ch
               {destination.displayName}
             </Link>
           </GenericItemCard.Heading>
-          <GenericItemCard.Date date={formatDatetime(destination.lastModifiedTime)} />
+          <GenericItemCard.HeadingValue
+            value={formatDatetime(destination.lastModifiedTime)}
+            label="Updated"
+            labelFirst
+          />
           <DestinationCardOptions destination={destination} />
         </GenericItemCard.Header>
-
         <GenericItemCard.ValuesGroup>
           <GenericItemCard.Value
             label="Alert Types"
