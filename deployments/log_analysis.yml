@@ -74,11 +74,18 @@ Parameters:
     Type: String
     Description: The ARN of the processed data SNS topic
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):sns:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:\S+$'
+  PythonAssumableRoleArns:
+    Type: CommaDelimitedList
+    Description: List of IAM roles which the Python rules-engine will be allowed to assume
   PythonLayerVersionArn:
     Type: String
     Description: Pip libraries for python analysis and remediation
     # Example: "arn:aws:lambda:us-west-2:111122223333:layer:panther-analysis:143"
     AllowedPattern: '^arn:(aws|aws-cn|aws-us-gov):lambda:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:layer:\S+:\d+$'
+  PythonManagedPolicyArn:
+    Type: String
+    Description: Managed IAM policy which will be attached to the Python rules-engine
+    AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):iam::(\d{12}|aws):policy\/\S+)?$'
   SqsKeyId:
     Type: String
     Description: KMS key ID for SQS encryption
@@ -113,6 +120,8 @@ Mappings:
 Conditions:
   AttachLayers: !Not [!Equals [!Join ['', !Ref LayerVersionArns], '']]
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
+  PythonAssumeRoles: !Not [!Equals [!Join ['', !Ref PythonAssumableRoleArns], '']]
+  PythonManagedPolicy: !Not [!Equals ['', !Ref PythonManagedPolicyArn]]
 
 Resources:
   ###### Update managed schemas to the minimum required version
@@ -926,58 +935,60 @@ Resources:
       Timeout: !FindInMap [Functions, RulesEngine, Timeout]
       Tracing: !If [TracingEnabled, !Ref TracingMode, !Ref AWS::NoValue]
       Policies:
-        - Id: SendToNotificationsTopic
-          Version: 2012-10-17
+        - Version: 2012-10-17
           Statement:
             - Effect: Allow
-              Action: sns:Publish
-              Resource: !Ref ProcessedDataTopicArn
-        - Id: ProcessedDataBucket
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: s3:GetObject # reading from
-              Resource:
-                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/cloud_security/*
-                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs/*
-                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rules/*
-            - Effect: Allow
-              Action: s3:PutObject # writing to
-              Resource:
-                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rules/*
-                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rule_errors/*
-        - Id: DDBUpdate
-          Version: 2012-10-17
-          Statement:
+              Action: dynamodb:GetItem
+              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-resources
             - Effect: Allow
               Action: dynamodb:UpdateItem
               Resource: !GetAtt AlertsDedup.Arn
-        - Id: AccessKms
-          Version: 2012-10-17
-          Statement:
+            - Effect: Allow
+              Action: dynamodb:*Item
+              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-kv-store
             - Effect: Allow
               Action:
                 - kms:Decrypt
                 - kms:Encrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
-        - Id: PantherLookup
-          Version: 2012-10-17
-          Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
             - Effect: Allow
-              Action: dynamodb:GetItem
-              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-resources
+              Action: s3:GetObject
+              Resource:
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/cloud_security/*
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/logs/*
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rules/*
             - Effect: Allow
-              Action: dynamodb:*Item
-              Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/panther-kv-store
+              Action: s3:PutObject
+              Resource:
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rules/*
+                - !Sub arn:${AWS::Partition}:s3:::${ProcessedDataBucket}/rule_errors/*
             - Effect: Allow
               Action: secretsmanager:GetSecretValue
               Resource:
                 - !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:panther-analysis/*
                 - !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:panther-rules/*
+            - Effect: Allow
+              Action: sns:Publish
+              Resource: !Ref ProcessedDataTopicArn
+        - !If
+          - PythonAssumeRoles
+          - Id: AssumeRoles
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: sts:AssumeRole
+                Resource: !Ref PythonAssumableRoleArns
+                Condition:
+                  Bool: { 'aws:SecureTransport': true }
+          - !Ref AWS::NoValue
+        - !If
+          - PythonManagedPolicy
+          - !Ref PythonManagedPolicyArn
+          - !Ref AWS::NoValue
 
   RulesEngineAlarms:
     Type: Custom::LambdaAlarms

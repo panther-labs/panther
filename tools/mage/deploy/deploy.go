@@ -484,7 +484,9 @@ func deployCloudSecurityStack(settings *PantherConfig, packager *pkg.Packager, o
 		"LayerVersionArns":           settings.Infra.BaseLayerVersionArns,
 		"ProcessedDataBucket":        outputs["ProcessedDataBucket"],
 		"ProcessedDataTopicArn":      outputs["ProcessedDataTopicArn"],
+		"PythonAssumableRoleArns":    strings.Join(settings.Infra.PythonAssumableRoleArns, ","),
 		"PythonLayerVersionArn":      outputs["PythonLayerVersionArn"],
+		"PythonManagedPolicyArn":     settings.Infra.PythonManagedPolicyArn,
 		"SqsKeyId":                   outputs["QueueEncryptionKeyId"],
 		"TracingMode":                settings.Monitoring.TracingMode,
 
@@ -542,7 +544,9 @@ func deployLogAnalysisStack(settings *PantherConfig, packager *pkg.Packager, out
 		"LogProcessorLambdaSQSReadBatchSize": settings.Infra.LogProcessorLambdaSQSReadBatchSize,
 		"ProcessedDataBucket":                outputs["ProcessedDataBucket"],
 		"ProcessedDataTopicArn":              outputs["ProcessedDataTopicArn"],
+		"PythonAssumableRoleArns":            strings.Join(settings.Infra.PythonAssumableRoleArns, ","),
 		"PythonLayerVersionArn":              outputs["PythonLayerVersionArn"],
+		"PythonManagedPolicyArn":             settings.Infra.PythonManagedPolicyArn,
 		"SqsKeyId":                           outputs["QueueEncryptionKeyId"],
 		"TracingMode":                        settings.Monitoring.TracingMode,
 	})

@@ -41,6 +41,8 @@ type Infra struct {
 	PipLayer                           []string `yaml:"PipLayer"`
 	KvTableBillingMode                 string   `yaml:"KvTableBillingMode"`
 	PythonLayerVersionArn              string   `yaml:"PythonLayerVersionArn"`
+	PythonManagedPolicyArn             string   `yaml:"PythonManagedPolicyArn"`
+	PythonAssumableRoleArns            []string `yaml:"PythonAssumableRoleArns"`
 	SecurityGroupID                    string   `yaml:"SecurityGroupID"`
 	SubnetOneID                        string   `yaml:"SubnetOneID"`
 	SubnetTwoID                        string   `yaml:"SubnetTwoID"`
