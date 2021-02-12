@@ -330,6 +330,12 @@ Resources:
           RULES_ENGINE: panther-rules-engine
           RESOURCE_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-resources-queue
           TABLE: !Ref AnalysisTable
+      Events:
+        SchedulePolling:
+          Type: Schedule
+          Properties:
+            Input: '{"PollPacks": {}}'
+            Schedule: rate(24 hours)
       FunctionName: panther-analysis-api
       # <cfndoc>
       # This lambda implements the analysis API which is responsible for
