@@ -178,6 +178,7 @@ Parameters:
   PythonManagedPolicyArn:
     Type: String
     Description: Managed IAM policy which will be attached to the Python rules-engine and policy-engine
+    Default: ''
     AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):iam::(\d{12}|aws):policy\/\S+)?$'
   SecurityGroupID:
     Type: String
@@ -347,7 +348,7 @@ Resources:
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
-        PythonAssumableRoleArns: !Ref PythonAssumableRoleArns
+        PythonAssumableRoleArns: !Join [',', !Ref PythonAssumableRoleArns]
         PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
         PythonManagedPolicyArn: !Ref PythonManagedPolicyArn
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
@@ -438,7 +439,7 @@ Resources:
         LogProcessorLambdaSQSReadBatchSize: !Ref LogProcessorLambdaSQSReadBatchSize
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
-        PythonAssumableRoleArns: !Ref PythonAssumableRoleArns
+        PythonAssumableRoleArns: !Join [',', !Ref PythonAssumableRoleArns]
         PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
         PythonManagedPolicyArn: !Ref PythonManagedPolicyArn
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
