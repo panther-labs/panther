@@ -177,6 +177,24 @@ Conditions:
 
 Resources:
   ########## S3 Buckets ##########
+
+  LayerHost: # Panther lambda layer host
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain # retain on stack deletion?
+    UpdateReplacePolicy: Retain
+    Properties:
+      LifecycleConfiguration:
+        Rules:
+          # Keep access logs for 1 year, permanently delete 30 days after they expire
+          - ExpirationInDays: 365
+            NoncurrentVersionExpirationInDays: 30
+            Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
   AuditLogs: # Panther self-auditing: S3 access logs (but NOT data processing related!), flow logs, etc
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain

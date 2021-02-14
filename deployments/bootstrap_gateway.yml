@@ -98,6 +98,15 @@ Conditions:
   TracingEnabled: !Not [!Equals ['', !Ref TracingMode]]
 
 Resources:
+  LayerHostFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../internal/core/layer_host
+      Description: AWS Lambda layer builder and provider function.
+      FunctionName: panther-layer-host
+      Handler: src.main.lambda_handler
+      Runtime: python3.7
+
   PythonLayer:
     Condition: CreatePythonLayer
     Type: AWS::Lambda::LayerVersion
