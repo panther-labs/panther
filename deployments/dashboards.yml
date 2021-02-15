@@ -48,6 +48,34 @@ Resources:
                                 "width": 9,
                                 "height": 3,
                                 "properties": {
+                                    "query": "SOURCE '/aws/lambda/panther-log-processor' | filter ispresent(stats.LogType) | stats sum(stats.BytesProcessedCount)/(1000000) as mbbytes by bin(5m)",
+                                    "region": "${AWS::Region}",
+                                    "stacked": false,
+                                    "title": "Input MBytes (Uncompressed) Processed",
+                                    "view": "timeSeries"
+                                }
+                            },
+                            {
+                                "type": "log",
+                                "x": 0,
+                                "y": 32,
+                                "width": 9,
+                                "height": 3,
+                                "properties": {
+                                    "query": "SOURCE '/aws/lambda/panther-log-processor' | filter ispresent(stats.LogType) | stats sum(stats.EventCount) as events by bin(5m)",
+                                    "region": "${AWS::Region}",
+                                    "stacked": false,
+                                    "title": "Output Events Written to S3",
+                                    "view": "timeSeries"
+                                }
+                            },
+                            {
+                                "type": "log",
+                                "x": 0,
+                                "y": 29,
+                                "width": 9,
+                                "height": 3,
+                                "properties": {
                                     "query": "SOURCE '/aws/lambda/panther-log-processor' | filter operation='readS3Object' | stats percentile(opTime, 50)*1000.0 as p50, percentile(opTime, 90)*1000.0 as p90, percentile(opTime, 95)*1000.0 as p95, percentile(opTime, 100)*1000.0 as p100 by bin(5m)",
                                     "region": "${AWS::Region}",
                                     "stacked": false,
@@ -56,9 +84,37 @@ Resources:
                                 }
                             },
                             {
+                                "type": "log",
+                                "x": 0,
+                                "y": 20,
+                                "width": 9,
+                                "height": 3,
+                                "properties": {
+                                    "query": "SOURCE '/aws/lambda/panther-log-processor' | filter ispresent(stats.LogType)  | stats count(stats.LogType) as files by stats.LogType as logtype | sort files desc",
+                                    "region": "${AWS::Region}",
+                                    "stacked": false,
+                                    "title": "Input File Count by Log Type",
+                                    "view": "table"
+                                }
+                            },
+                            {
+                                "type": "log",
+                                "x": 9,
+                                "y": 26,
+                                "width": 9,
+                                "height": 3,
+                                "properties": {
+                                    "query": "SOURCE '/aws/lambda/panther-log-processor' | filter operation='readS3Object' | stats count(*) as files by bin(5m)",
+                                    "region": "${AWS::Region}",
+                                    "stacked": false,
+                                    "title": "Input Files Processed",
+                                    "view": "timeSeries"
+                                }
+                            },
+                            {
                                 "type": "metric",
                                 "x": 0,
-                                "y": 19,
+                                "y": 23,
                                 "width": 18,
                                 "height": 3,
                                 "properties": {
@@ -81,7 +137,7 @@ Resources:
                             {
                                 "type": "metric",
                                 "x": 0,
-                                "y": 32,
+                                "y": 35,
                                 "width": 18,
                                 "height": 3,
                                 "properties": {
@@ -102,6 +158,20 @@ Resources:
                                 }
                             },
                             {
+                                "type": "log",
+                                "x": 9,
+                                "y": 29,
+                                "width": 9,
+                                "height": 3,
+                                "properties": {
+                                    "query": "SOURCE '/aws/lambda/panther-log-processor' | filter operation='parse' | filter ispresent(stats.LogType)  | stats percentile(opTime, 50)*1000.0 as p50, percentile(opTime, 90)*1000.0 as p90, percentile(opTime, 95)*1000.0 as p95, percentile(opTime, 100)*1000.0 as p100 by bin(5m)",
+                                    "region": "${AWS::Region}",
+                                    "stacked": false,
+                                    "title": "Processing Time Percentiles (msec)",
+                                    "view": "timeSeries"
+                                }
+                            },
+                            {
                                 "type": "text",
                                 "x": 0,
                                 "y": 0,
@@ -112,9 +182,37 @@ Resources:
                                 }
                             },
                             {
+                                "type": "log",
+                                "x": 9,
+                                "y": 32,
+                                "width": 9,
+                                "height": 3,
+                                "properties": {
+                                    "query": "SOURCE '/aws/lambda/panther-log-processor' | filter operation='sendData' | stats sum(contentLength) / 1000000 as mbbytes by bin(5m)",
+                                    "region": "${AWS::Region}",
+                                    "stacked": false,
+                                    "title": "Output MBytes (Compressed) Written to S3",
+                                    "view": "timeSeries"
+                                }
+                            },
+                            {
+                                "type": "log",
+                                "x": 9,
+                                "y": 20,
+                                "width": 9,
+                                "height": 3,
+                                "properties": {
+                                    "query": "SOURCE '/aws/lambda/panther-log-processor' | filter ispresent(stats.LogType)  | stats sum(stats.BytesProcessedCount) / 1000000 as mbbytes by stats.LogType as logtype | sort mbbytes desc",
+                                    "region": "${AWS::Region}",
+                                    "stacked": false,
+                                    "title": "Input MBytes (Uncompressed) by Log Type",
+                                    "view": "table"
+                                }
+                            },
+                            {
                                 "type": "metric",
                                 "x": 3,
-                                "y": 36,
+                                "y": 39,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -132,7 +230,7 @@ Resources:
                             {
                                 "type": "metric",
                                 "x": 6,
-                                "y": 36,
+                                "y": 39,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -150,7 +248,7 @@ Resources:
                             {
                                 "type": "metric",
                                 "x": 9,
-                                "y": 36,
+                                "y": 39,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -173,7 +271,7 @@ Resources:
                             {
                                 "type": "log",
                                 "x": 15,
-                                "y": 42,
+                                "y": 45,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -187,7 +285,7 @@ Resources:
                             {
                                 "type": "metric",
                                 "x": 3,
-                                "y": 39,
+                                "y": 42,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -205,7 +303,7 @@ Resources:
                             {
                                 "type": "metric",
                                 "x": 6,
-                                "y": 39,
+                                "y": 42,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -225,7 +323,7 @@ Resources:
                             {
                                 "type": "metric",
                                 "x": 9,
-                                "y": 39,
+                                "y": 42,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -320,7 +418,7 @@ Resources:
                             {
                                 "type": "log",
                                 "x": 12,
-                                "y": 39,
+                                "y": 42,
                                 "width": 6,
                                 "height": 3,
                                 "properties": {
@@ -334,7 +432,7 @@ Resources:
                             {
                                 "type": "text",
                                 "x": 0,
-                                "y": 42,
+                                "y": 45,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -344,7 +442,7 @@ Resources:
                             {
                                 "type": "text",
                                 "x": 0,
-                                "y": 22,
+                                "y": 19,
                                 "width": 18,
                                 "height": 1,
                                 "properties": {
@@ -354,7 +452,7 @@ Resources:
                             {
                                 "type": "text",
                                 "x": 0,
-                                "y": 36,
+                                "y": 39,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -364,7 +462,7 @@ Resources:
                             {
                                 "type": "text",
                                 "x": 0,
-                                "y": 35,
+                                "y": 38,
                                 "width": 18,
                                 "height": 1,
                                 "properties": {
@@ -384,7 +482,7 @@ Resources:
                             {
                                 "type": "text",
                                 "x": 0,
-                                "y": 39,
+                                "y": 42,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -394,7 +492,7 @@ Resources:
                             {
                                 "type": "metric",
                                 "x": 3,
-                                "y": 42,
+                                "y": 45,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -410,7 +508,7 @@ Resources:
                             {
                                 "type": "metric",
                                 "x": 6,
-                                "y": 42,
+                                "y": 45,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -428,7 +526,7 @@ Resources:
                             {
                                 "type": "metric",
                                 "x": 9,
-                                "y": 42,
+                                "y": 45,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -451,7 +549,7 @@ Resources:
                             {
                                 "type": "log",
                                 "x": 12,
-                                "y": 36,
+                                "y": 39,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -465,7 +563,7 @@ Resources:
                             {
                                 "type": "log",
                                 "x": 15,
-                                "y": 36,
+                                "y": 39,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -479,7 +577,7 @@ Resources:
                             {
                                 "type": "log",
                                 "x": 12,
-                                "y": 42,
+                                "y": 45,
                                 "width": 3,
                                 "height": 3,
                                 "properties": {
@@ -510,105 +608,6 @@ Resources:
                                     "start": "-PT12H",
                                     "end": "P0D",
                                     "title": "Input SQS Queue Performance"
-                                }
-                            },
-                            {
-                                "type": "metric",
-                                "x": 0,
-                                "y": 23,
-                                "width": 9,
-                                "height": 3,
-                                "properties": {
-                                    "metrics": [
-                                        [ { "expression": "SEARCH('{Panther,LogType} MetricName=\"BytesProcessed\"', 'Sum', 300)/1000000", "id": "e1", "period": 300 } ]
-                                    ],
-                                    "view": "timeSeries",
-                                    "stacked": false,
-                                    "region": "${AWS::Region}",
-                                    "stat": "Average",
-                                    "period": 300,
-                                    "yAxis": {
-                                        "left": {
-                                            "label": "MB"
-                                        },
-                                        "right": {
-                                            "showUnits": false
-                                        }
-                                    },
-                                    "title": "Input data by Log Type ( MB Uncompressed)",
-                                    "legend": {
-                                        "position": "bottom"
-                                    },
-                                    "liveData": false
-                                }
-                            },
-                            {
-                                "type": "metric",
-                                "x": 9,
-                                "y": 23,
-                                "width": 9,
-                                "height": 3,
-                                "properties": {
-                                    "metrics": [
-                                        [ { "expression": "SUM(SEARCH('{Panther,LogType} MetricName=\"BytesProcessed\"', 'Sum', 300))/1000000", "id": "e1", "period": 300 } ]
-                                    ],
-                                    "view": "timeSeries",
-                                    "stacked": false,
-                                    "region": "${AWS::Region}",
-                                    "stat": "Average",
-                                    "title": "Input Processed (MB Uncompressed)"
-                                }
-                            },
-                            {
-                                "type": "metric",
-                                "x": 9,
-                                "y": 26,
-                                "width": 9,
-                                "height": 3,
-                                "properties": {
-                                    "metrics": [
-                                        [ { "expression": "SUM(SEARCH('{Panther,ID,Status,Subsystem} MetricName=\"GetObject\" Status=\"OK\"', 'Sum', 300))", "id": "e1", "period": 300 } ]
-                                    ],
-                                    "view": "timeSeries",
-                                    "stacked": false,
-                                    "region": "${AWS::Region}",
-                                    "stat": "Average",
-                                    "title": "Input Files Processed"
-                                }
-                            },
-                            {
-                                "type": "metric",
-                                "x": 0,
-                                "y": 29,
-                                "width": 9,
-                                "height": 3,
-                                "properties": {
-                                    "metrics": [
-                                        [ { "expression": "SEARCH('{Panther,Subsystem} MetricName=\"OutputBytes\"', 'Sum', 300)/1000000", "id": "e1", "period": 300 } ]
-                                    ],
-                                    "view": "timeSeries",
-                                    "stacked": false,
-                                    "region": "${AWS::Region}",
-                                    "stat": "Sum",
-                                    "period": 300,
-                                    "title": "Output MBytes (Compressed) written to S3"
-                                }
-                            },
-                            {
-                                "type": "metric",
-                                "x": 9,
-                                "y": 29,
-                                "width": 9,
-                                "height": 3,
-                                "properties": {
-                                    "metrics": [
-                                        [ { "expression": "SEARCH('{Panther,Subsystem} MetricName=\"OutputFiles\"', 'Sum', 300)", "id": "e1", "period": 300 } ]
-                                    ],
-                                    "view": "timeSeries",
-                                    "stacked": false,
-                                    "region": "${AWS::Region}",
-                                    "stat": "Average",
-                                    "title": "Output Files written to S3"
                                 }
                             }
                         ]
