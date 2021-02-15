@@ -25,7 +25,37 @@ import {
   useListAvailableLogTypes,
   useListComplianceSourceNames,
 } from 'Source/graphql/queries';
+import { NavigationLinks } from 'Components/Navigation';
 import NavLink from '../NavLink';
+
+export const analysisNavigationsLinks: NavigationLinks[] = [
+  {
+    to: urls.logAnalysis.overview(),
+    icon: 'dashboard-alt',
+    label: 'Overview',
+  },
+  {
+    to: urls.logAnalysis.sources.list(),
+    icon: 'log-source',
+    label: 'Sources',
+  },
+  {
+    to: urls.logAnalysis.customLogs.list(),
+    icon: 'source-code',
+    label: 'Custom Schemas',
+  },
+  {
+    to: urls.logAnalysis.dataModels.list(),
+    icon: 'data-models',
+    label: 'Data Models',
+  },
+  // TODO: Uncomment when 'Packs' are functional e2e
+  // {
+  //   to: urls.packs.list(),
+  //   icon: 'packs',
+  //   label: 'Packs',
+  // },
+];
 
 const LogAnalysisNavigation: React.FC = () => {
   // We expect that oftentimes the user will go need the available log types if the log analysis
@@ -41,30 +71,9 @@ const LogAnalysisNavigation: React.FC = () => {
   return (
     <Flex direction="column" as="ul" spacing={1}>
       <FadeInTrail as="li">
-        <NavLink
-          isSecondary
-          icon="dashboard-alt"
-          to={urls.logAnalysis.overview()}
-          label="Overview"
-        />
-        <NavLink
-          isSecondary
-          icon="log-source"
-          to={urls.logAnalysis.sources.list()}
-          label="Sources"
-        />
-        <NavLink
-          isSecondary
-          icon="source-code"
-          to={urls.logAnalysis.customLogs.list()}
-          label="Custom Schemas"
-        />
-        <NavLink
-          isSecondary
-          icon="code-semi"
-          to={urls.logAnalysis.dataModels.list()}
-          label="Data Models"
-        />
+        {analysisNavigationsLinks.map(({ to, icon, label }) => (
+          <NavLink key={label} icon={icon} label={label} to={to} isSecondary />
+        ))}
       </FadeInTrail>
     </Flex>
   );

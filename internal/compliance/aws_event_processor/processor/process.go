@@ -141,9 +141,11 @@ var (
 		"BatchWriteItem":     {},
 
 		// ec2
-		"DeleteNetworkInterface": {}, // we handle "DetachNetworkInterface"
-		"CreateInternetGateway":  {}, // Currently we don't have an EC2 InternetGateway resource,
-		"DeleteInternetGateway":  {}, // when we do we will need to handle these
+		"DeleteNetworkInterface":      {}, // we handle "DetachNetworkInterface"
+		"CreateInternetGateway":       {}, // Currently we don't have an EC2 InternetGateway resource,
+		"DeleteInternetGateway":       {}, // when we do we will need to handle these
+		"SharedSnapshotCopyInitiated": {},
+		"SharedSnapshotVolumeCreated": {},
 
 		// ecs
 		"DeleteAccountSetting":     {},

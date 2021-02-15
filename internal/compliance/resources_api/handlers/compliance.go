@@ -28,7 +28,7 @@ import (
 
 // Cache pass/fail status for each policy for a few seconds so that ListResources can filter and
 // sort by compliance status without having to query the compliance-api for every resource.
-const complianceCacheDuration = 3 * time.Second
+const complianceCacheDuration = 30 * time.Second
 
 type complianceCacheEntry struct {
 	ExpiresAt time.Time

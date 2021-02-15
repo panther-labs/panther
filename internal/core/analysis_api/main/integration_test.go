@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
@@ -47,15 +48,21 @@ import (
 
 const (
 	tableName           = "panther-analysis"
-	analysesRoot        = "./test_analyses"
+	analysesRoot        = "./bulk_test_resources/test_analyses"
 	analysesZipLocation = "./bulk_upload.zip"
+
+	bulkTestDataDirPath              = "./bulk_test_resources"
+	bulkInvalidRuleLogTypeDir        = "rule_invalid_logtype"
+	bulkInvalidDatamodelTypeDir      = "datamodel_invalid_logtype"
+	bulkInvalidPolicyResourceTypeDir = "policy_invalid_resourcetype"
 )
 
 var (
 	integrationTest bool
 	apiClient       gatewayapi.API
 
-	userID = "test-panther-user" // does NOT need to be a uuid4
+	// does NOT need to be a uuid4
+	userID = "test-panther-user"
 
 	// NOTE: this gets changed by the bulk upload!
 	policy = &models.Policy{
@@ -84,7 +91,9 @@ var (
 			},
 		},
 	}
-	versionedPolicy *models.Policy // this will get set when we modify policy for use in delete testing
+
+	// this will get set when we modify policy for use in delete testing
+	versionedPolicy *models.Policy
 
 	// Set during bulk upload
 	policyFromBulk     = &models.Policy{ID: "AWS.CloudTrail.Log.Validation.Enabled"}
@@ -130,7 +139,7 @@ var (
 		Description: "Example LogType Schema",
 		Enabled:     true,
 		ID:          "SecondDataModelTypeAnalysis",
-		LogTypes:    []string{"Box.Events"},
+		LogTypes:    []string{"Box.Event"},
 		Mappings: []models.DataModelMapping{
 			{
 				Name: "source_ip",
@@ -143,7 +152,7 @@ var (
 		Description: "Example LogType Schema",
 		Enabled:     false,
 		ID:          "ThirdDataModelTypeAnalysis",
-		LogTypes:    []string{"Box.Events"},
+		LogTypes:    []string{"Box.Event"},
 		Mappings: []models.DataModelMapping{
 			{
 				Name: "source_ip",
@@ -155,7 +164,7 @@ var (
 	dataModelFromBulkYML = &models.DataModel{
 		Enabled:  true,
 		ID:       "Some.Events.DataModel",
-		LogTypes: []string{"Some.Events"},
+		LogTypes: []string{"Fastly.Access"},
 		Mappings: []models.DataModelMapping{
 			{
 				Name: "source_ip",
@@ -179,6 +188,19 @@ func TestIntegrationAPI(t *testing.T) {
 	if !integrationTest {
 		t.Skip()
 	}
+
+	t.Cleanup(func() {
+		err := filepath.Walk(".", func(fPath string, info os.FileInfo, err error) error {
+			if info.IsDir() && fPath != "." {
+				return filepath.SkipDir
+			}
+			if filepath.Ext(fPath) == ".zip" {
+				assert.Nil(t, os.Remove(fPath))
+			}
+			return nil
+		})
+		assert.Nil(t, err)
+	})
 
 	awsSession := session.Must(session.NewSession())
 	apiClient = gatewayapi.NewClient(lambda.New(awsSession), "panther-analysis-api")
@@ -229,11 +251,14 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("CreatePolicyInvalid", createInvalid)
 		t.Run("CreatePolicySuccess", createPolicySuccess)
 		t.Run("CreateRuleSuccess", createRuleSuccess)
+		t.Run("TestFailCreateRuleInvalidLogType", testFailCreateRuleInvalidLogType)
+
 		// This test (and the other global tests) does trigger the layer-manager lambda to run, but since there is only
 		// support for a single global nothing changes (the version gets bumped a few times). Once multiple globals are
 		// supported, these tests can be improved to run policies and rules that rely on these imports.
 		t.Run("CreateGlobalSuccess", createGlobalSuccess)
 		t.Run("CreateDataModel", createDataModel)
+		t.Run("TestFailCreateDataModelInvalidLogType", testFailCreateDataModelInvalidLogType)
 
 		t.Run("SaveEnabledPolicyFailingTests", saveEnabledPolicyFailingTests)
 		t.Run("SaveDisabledPolicyFailingTests", saveDisabledPolicyFailingTests)
@@ -244,6 +269,7 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("SaveDisabledRuleFailingTests", saveDisabledRuleFailingTests)
 		t.Run("SaveEnabledRulePassingTests", saveEnabledRulePassingTests)
 		t.Run("SaveRuleInvalidTestInputJson", saveRuleInvalidTestInputJSON)
+		t.Run("TestFailCreatePolicyInvalidResourceType", testFailCreatePolicyInvalidResourceType)
 	})
 	if t.Failed() {
 		return
@@ -263,6 +289,12 @@ func TestIntegrationAPI(t *testing.T) {
 	t.Run("BulkUpload", func(t *testing.T) {
 		t.Run("BulkUploadInvalid", bulkUploadInvalid)
 		t.Run("BulkUploadSuccess", bulkUploadSuccess)
+	})
+
+	t.Run("BulkUploadInvalid", func(t *testing.T) {
+		t.Run("BulkUploadInvalidPolicyResourceTypesFail", bulkUploadInvalidPolicyResourceTypesFail)
+		t.Run("BulkUploadInvalidRuleLogtypeFail", bulkUploadInvalidRuleLogtypeFail)
+		t.Run("BulkUploadInvalidDatamodelLogtypeFail", bulkUploadInvalidDatamodelLogtypeFail)
 	})
 	if t.Failed() {
 		return
@@ -749,6 +781,38 @@ func createPolicySuccess(t *testing.T) {
 	policy = &result
 }
 
+// Create policy fail when policy contains invalid ResourceTypes
+func testFailCreatePolicyInvalidResourceType(t *testing.T) {
+	input := models.LambdaInput{
+		CreatePolicy: &models.CreatePolicyInput{
+			AutoRemediationID:         policy.AutoRemediationID,
+			AutoRemediationParameters: policy.AutoRemediationParameters,
+			Body:                      policy.Body,
+			Description:               policy.Description,
+			DisplayName:               "Duplicate AWS Config Recording Status",
+			Enabled:                   policy.Enabled,
+			ID:                        "AWS.Config.DuplicateRecordingNoErrors",
+			OutputIDs:                 policy.OutputIDs,
+			ResourceTypes: []string{
+				"AWS.Config.DuplicateRecorder",
+			},
+			Severity:     policy.Severity,
+			Suppressions: policy.Suppressions,
+			Tags:         policy.Tags,
+			Tests:        policy.Tests,
+			UserID:       userID,
+		},
+	}
+	var result models.Policy
+	statusCode, err := apiClient.Invoke(&input, &result)
+	assert.Equal(t, http.StatusBadRequest, statusCode)
+	assert.Error(t, err)
+
+	errStr := "policy contains invalid resource type: AWS.Config.DuplicateRecorder"
+	errMsg := fmt.Sprintf("panther-analysis-api: unsuccessful status code 400: %s", errStr)
+	assert.Equal(t, errMsg, err.Error())
+}
+
 // Tests that a policy cannot be saved if it is enabled and its tests fail.
 func saveEnabledPolicyFailingTests(t *testing.T) {
 	t.Parallel()
@@ -1108,6 +1172,41 @@ func createRuleSuccess(t *testing.T) {
 	rule = &result
 }
 
+// Create policy fail when policy contains invalid ResourceTypes
+func testFailCreateRuleInvalidLogType(t *testing.T) {
+	logTypes := []string{
+		"AWS.CloudTrailInvalidLogtype",
+	}
+	tags := []string{
+		"AWS",
+		"Identity and Access Management",
+	}
+	input := models.LambdaInput{
+		CreateRule: &models.CreateRuleInput{
+			Body:               rule.Body,
+			DedupPeriodMinutes: rule.DedupPeriodMinutes,
+			Description:        "--INVALID-LOGTYPES-RULE--",
+			DisplayName:        "--INVALID-LOGTYPES-RULE--",
+			Enabled:            rule.Enabled,
+			ID:                 "AWS.CloudTrail.ConsoleLoginInvalidRule",
+			LogTypes:           logTypes,
+			OutputIDs:          []string{},
+			Severity:           rule.Severity,
+			Tags:               tags,
+			Threshold:          rule.Threshold,
+			UserID:             "test-panther-user",
+		},
+	}
+	var result models.Rule
+	statusCode, err := apiClient.Invoke(&input, &result)
+	assert.Equal(t, http.StatusBadRequest, statusCode)
+	assert.Error(t, err)
+
+	errStr := "rule contains invalid log type: AWS.CloudTrailInvalidLogtype"
+	errMsg := fmt.Sprintf("panther-analysis-api: unsuccessful status code 400: %s", errStr)
+	assert.Equal(t, errMsg, err.Error())
+}
+
 func createDataModel(t *testing.T) {
 	t.Parallel()
 
@@ -1175,6 +1274,36 @@ func createDataModel(t *testing.T) {
 	statusCode, err = apiClient.Invoke(&input, nil)
 	require.Error(t, err)
 	assert.Equal(t, http.StatusBadRequest, statusCode)
+}
+
+// Verify Fail on create data model where data model LogTypes contains an invalid log type.
+func testFailCreateDataModelInvalidLogType(t *testing.T) {
+	invalidDataModel := &models.CreateDataModelInput{
+		Body:        "def get_source_ip(event): return 'source_ip'\n",
+		Description: "A Data Model with an invalid log type for testing",
+		DisplayName: "INVALIDDATAMODEL",
+		Enabled:     true,
+		ID:          "INVALIDLOGTYPEDataModelTypeAnalysis",
+		LogTypes:    []string{"OneLogin.INVALIDEvents"},
+		Mappings: []models.DataModelMapping{
+			{
+				Name: "source_ip",
+				Path: "ipAddress",
+			},
+		},
+		UserID: "test-panther-user",
+	}
+	input := models.LambdaInput{
+		CreateDataModel: invalidDataModel,
+	}
+	var result models.DataModel
+	statusCode, err := apiClient.Invoke(&input, &result)
+	assert.Equal(t, http.StatusBadRequest, statusCode)
+	assert.Error(t, err)
+
+	errStr := "dataModel contains invalid log type: OneLogin.INVALIDEvents"
+	errMsg := fmt.Sprintf("panther-analysis-api: unsuccessful status code 400: %s", errStr)
+	assert.Equal(t, errMsg, err.Error())
 }
 
 func createGlobalSuccess(t *testing.T) {
@@ -2661,4 +2790,74 @@ func batchDeleteRules(t *testing.T, ruleID ...string) {
 	statusCode, err := apiClient.Invoke(&input, nil)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, statusCode)
+}
+
+// Validate a bulk upload failure where policies in bulk data contain invalid Resource Types
+func bulkUploadInvalidPolicyResourceTypesFail(t *testing.T) {
+	t.Parallel()
+	// zipFsSourcePath is the path where the zip contents are located. All files will be zipped
+	zipFsSourcePath := path.Join(bulkTestDataDirPath, bulkInvalidPolicyResourceTypeDir)
+
+	// Zip all the files in source path to destination path
+	result, _, err := BulkZipUploadHelper(t, zipFsSourcePath)
+	require.Error(t, err)
+
+	// This is an empty BulkUpload Output
+	expected := models.BulkUploadOutput{}
+	require.Equal(t, expected, *result)
+}
+
+// validate fail of bulk upload where upload zip contains a rule with an invalid log type
+func bulkUploadInvalidRuleLogtypeFail(t *testing.T) {
+	t.Parallel()
+	// zipFsSourcePath is the path where the zip contents are located. All files will be zipped
+	zipFsSourcePath := filepath.Join(bulkTestDataDirPath, bulkInvalidRuleLogTypeDir)
+
+	// Zip all the files in source path to destination path
+	result, _, err := BulkZipUploadHelper(t, zipFsSourcePath)
+	require.Error(t, err)
+
+	// This is an empty BulkUpload Output
+	expected := models.BulkUploadOutput{}
+	require.Equal(t, expected, *result)
+}
+
+// validate fail of bulk upload where upload zip contains a rule with an invalid log type
+func bulkUploadInvalidDatamodelLogtypeFail(t *testing.T) {
+	t.Parallel()
+	// zipFsSourcePath is the path where the zip contents are located. All files will be zipped
+	ruleInvalidLTZipPath := filepath.Join(bulkTestDataDirPath, bulkInvalidDatamodelTypeDir)
+
+	// Zip all the files in source path to destination path
+	result, _, err := BulkZipUploadHelper(t, ruleInvalidLTZipPath)
+	require.Error(t, err) // Invalid rule logtypes test. Expect an error
+
+	// Empty BulkUpload Output. All fields initialized to zero value
+	expected := models.BulkUploadOutput{}
+	require.Equal(t, expected, *result)
+}
+
+// Utility Methods:
+
+// Bulk Data upload helper Zips files in the fsSourcePath to ./<basename(fsSourcePath)>.zip
+// then attempts to upload them to the analysis service
+// BulkZipUploadHelper returns an error because some tests are intended to fail. Acceptable Errors
+// are never expected when managing the files so the test will fail if the error originates from
+// anything besides invoking the service client upload invokation.
+func BulkZipUploadHelper(t *testing.T, fsSourcePath string) (*models.BulkUploadOutput, int, error) {
+	srcPathBaseName := filepath.Base(fsSourcePath)            // Get the base name
+	fsDstName := srcPathBaseName + ".zip"                     // Add the zip extension
+	err := shutil.ZipDirectory(fsSourcePath, fsDstName, true) // Zip the contents source -> dst
+	require.NoError(t, err)
+	zipFile, err := os.Open(fsDstName)
+	require.NoError(t, err)
+	content, err := ioutil.ReadAll(bufio.NewReader(zipFile))
+	require.NoError(t, err)
+	encoded := base64.StdEncoding.EncodeToString(content)
+	// Invoke bulk upload content
+	uploadContent := &models.BulkUploadInput{Data: encoded, UserID: userID}
+	input := models.LambdaInput{BulkUpload: uploadContent}
+	var output models.BulkUploadOutput
+	statusCode, err := apiClient.Invoke(&input, &output)
+	return &output, statusCode, err
 }

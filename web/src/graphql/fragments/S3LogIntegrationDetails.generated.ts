@@ -34,13 +34,17 @@ export type S3LogIntegrationDetails = Pick<
   | 'kmsKey'
   | 's3Bucket'
   | 'stackName'
+  | 'managedBucketNotifications'
+  | 'notificationsConfigurationSucceeded'
 > & {
   s3PrefixLogTypes: Array<Pick<Types.S3PrefixLogTypes, 'prefix' | 'logTypes'>>;
   health: {
     processingRoleStatus: IntegrationItemHealthDetails;
     s3BucketStatus: IntegrationItemHealthDetails;
     kmsKeyStatus: IntegrationItemHealthDetails;
+    getObjectStatus?: Types.Maybe<IntegrationItemHealthDetails>;
   };
+  managedS3Resources?: Types.Maybe<Pick<Types.ManagedS3Resources, 'topicARN'>>;
 };
 
 export const S3LogIntegrationDetails = gql`
@@ -59,6 +63,8 @@ export const S3LogIntegrationDetails = gql`
       logTypes
     }
     stackName
+    managedBucketNotifications
+    notificationsConfigurationSucceeded
     health {
       processingRoleStatus {
         ...IntegrationItemHealthDetails
@@ -69,6 +75,12 @@ export const S3LogIntegrationDetails = gql`
       kmsKeyStatus {
         ...IntegrationItemHealthDetails
       }
+      getObjectStatus {
+        ...IntegrationItemHealthDetails
+      }
+    }
+    managedS3Resources {
+      topicARN
     }
   }
   ${IntegrationItemHealthDetails}

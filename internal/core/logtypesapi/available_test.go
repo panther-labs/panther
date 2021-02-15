@@ -31,32 +31,38 @@ func TestAPI_ListAvailableLogTypes(t *testing.T) {
 	assert := require.New(t)
 	ctx := context.Background()
 	api := logtypesapi.LogTypesAPI{
-		Database: ListAvailableAPI{"bar", "baz", "foo"},
+		Database: ListAvailableAPI{"bar", "baz", "foo", "aaa"},
 	}
 
 	actual, _ := api.ListAvailableLogTypes(ctx)
-	assert.Equal(&logtypesapi.AvailableLogTypes{
-		LogTypes: []string{"bar", "baz", "foo"},
-	}, actual)
-
-	api.NativeLogTypes = func() []string {
-		return []string{"aaa", "foo"}
-	}
-
-	actual, _ = api.ListAvailableLogTypes(ctx)
 	assert.Equal(&logtypesapi.AvailableLogTypes{
 		LogTypes: []string{"aaa", "bar", "baz", "foo"},
 	}, actual)
 }
 
+var _ logtypesapi.SchemaDatabase = (ListAvailableAPI)(nil)
+
 type ListAvailableAPI []string
 
-func (l ListAvailableAPI) ListDeletedLogTypes(ctx context.Context) ([]string, error) {
-	return nil, nil
+// nolint:lll
+func (l ListAvailableAPI) GetSchema(_ context.Context, _ string) (*logtypesapi.SchemaRecord, error) {
+	panic("implement me")
 }
 
-var _ logtypesapi.LogTypesDatabase = (ListAvailableAPI)(nil)
+// nolint:lll
+func (l ListAvailableAPI) PutSchema(_ context.Context, _ string, _ *logtypesapi.SchemaRecord) (*logtypesapi.SchemaRecord, error) {
+	panic("implement me")
+}
 
-func (l ListAvailableAPI) IndexLogTypes(ctx context.Context) ([]string, error) {
-	return l, nil
+// nolint:lll
+func (l ListAvailableAPI) ScanSchemas(_ context.Context, scan logtypesapi.ScanSchemaFunc) error {
+	for _, name := range l {
+		r := logtypesapi.SchemaRecord{
+			Name: name,
+		}
+		if !scan(&r) {
+			return nil
+		}
+	}
+	return nil
 }

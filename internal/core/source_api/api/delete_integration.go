@@ -68,6 +68,16 @@ func (api *API) DeleteIntegration(input *models.DeleteIntegrationInput) error {
 			}
 		}
 
+		if integrationItem.ManagedBucketNotifications {
+			source := itemToIntegration(integrationItem)
+			err = RemoveBucketNotifications(api.AwsSession, source)
+			if err != nil {
+				zap.L().Error("failed to remove bucket notifications",
+					zap.Error(err), zap.String("integrationId", input.IntegrationID))
+				return deleteIntegrationInternalError
+			}
+		}
+
 		if shouldRemovePermissions {
 			if err = api.DisableExternalSnsTopicSubscription(integrationItem.AWSAccountID); err != nil {
 				zap.L().Error("failed to remove permission from SQS queue for integrationItem",

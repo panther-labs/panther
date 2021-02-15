@@ -74,8 +74,9 @@ type Rule struct {
 
 // Event is a security log to be analyzed, e.g. a  CloudTrail event.
 type Event struct {
-	Data interface{} `json:"data"`
-	ID   string      `json:"id"`
+	Data  interface{}       `json:"data"`
+	ID    string            `json:"id"`
+	Mocks map[string]string `json:"mocks"`
 }
 
 // RulesEngineOutput is the response returned when invoking in log analysis mode.

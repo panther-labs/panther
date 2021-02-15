@@ -130,7 +130,7 @@ const ListAlerts = () => {
       <Panel
         title={
           <Flex align="center" spacing={2} ml={4}>
-            <SelectAllCheckbox selectionIds={alertIds} />
+            <SelectAllCheckbox selectionItems={alertIds} />
             <Text>Alerts</Text>
           </Flex>
         }
@@ -161,4 +161,4 @@ const ListAlerts = () => {
   );
 };
 
-export default compose(withSEO({ title: 'Alerts' }), withSelectContext, React.memo)(ListAlerts);
+export default compose(withSEO({ title: 'Alerts' }), withSelectContext(), React.memo)(ListAlerts);

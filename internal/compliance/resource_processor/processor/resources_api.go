@@ -27,7 +27,7 @@ import (
 
 // How many resources (with attributes) we can request in a single page.
 // The goal is to keep this as high as possible while still keeping the result under 6MB.
-const resourcePageSize = 2000
+const resourcePageSize = 200
 
 // Get a page of resources from the resources-api
 //

@@ -19,6 +19,8 @@ package api
  */
 
 import (
+	"strings"
+
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 )
@@ -31,6 +33,7 @@ func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 		IntegrationID:    input.IntegrationID,
 		IntegrationLabel: input.IntegrationLabel,
 		IntegrationType:  input.IntegrationType,
+		PantherVersion:   input.PantherVersion,
 	}
 	item.LastEventReceived = input.LastEventReceived
 
@@ -42,6 +45,8 @@ func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 		item.KmsKey = input.KmsKey
 		item.StackName = input.StackName
 		item.LogProcessingRole = generateLogProcessingRoleArn(input.AWSAccountID, input.IntegrationLabel)
+		item.ManagedBucketNotifications = input.ManagedBucketNotifications
+		item.ManagedS3Resources = input.ManagedS3Resources
 	case models.IntegrationTypeAWSScan:
 		item.AWSAccountID = input.AWSAccountID
 		item.CWEEnabled = input.CWEEnabled
@@ -55,6 +60,10 @@ func integrationToItem(input *models.SourceIntegration) *ddb.Integration {
 		item.ScanIntervalMins = input.ScanIntervalMins
 		item.ScanStatus = input.ScanStatus
 		item.StackName = input.StackName
+		item.Enabled = input.Enabled
+		item.RegionIgnoreList = input.RegionIgnoreList
+		item.ResourceTypeIgnoreList = input.ResourceTypeIgnoreList
+		item.ResourceRegexIgnoreList = input.ResourceRegexIgnoreList
 	case models.IntegrationTypeSqs:
 		item.SqsConfig = &ddb.SqsConfig{
 			QueueURL:             input.SqsConfig.QueueURL,
@@ -77,6 +86,7 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 	integration.CreatedAtTime = item.CreatedAtTime
 	integration.CreatedBy = item.CreatedBy
 	integration.LastEventReceived = item.LastEventReceived
+	integration.PantherVersion = item.PantherVersion
 	switch item.IntegrationType {
 	case models.IntegrationTypeAWS3:
 		integration.AWSAccountID = item.AWSAccountID
@@ -90,6 +100,8 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 		integration.KmsKey = item.KmsKey
 		integration.StackName = item.StackName
 		integration.LogProcessingRole = item.LogProcessingRole
+		integration.ManagedBucketNotifications = item.ManagedBucketNotifications
+		integration.ManagedS3Resources = item.ManagedS3Resources
 	case models.IntegrationTypeAWSScan:
 		integration.AWSAccountID = item.AWSAccountID
 		integration.CWEEnabled = item.CWEEnabled
@@ -118,4 +130,23 @@ func itemToIntegration(item *ddb.Integration) *models.SourceIntegration {
 		}
 	}
 	return integration
+}
+
+// reduceNoPrefixStrings reduces a list of strings to a list where no string is a prefix of another.
+// e.g [pref, prefi, prefix, abc] -> [pref, abc]
+func reduceNoPrefixStrings(strs []string) (reduced []string) {
+	uniques := make(map[string]struct{})
+	for i := 0; i < len(strs); i++ {
+		smallestPrefix := strs[i]
+		for j := 0; j < len(strs); j++ {
+			if strings.HasPrefix(smallestPrefix, strs[j]) {
+				smallestPrefix = strs[j]
+			}
+		}
+		uniques[smallestPrefix] = struct{}{}
+	}
+	for k := range uniques {
+		reduced = append(reduced, k)
+	}
+	return
 }

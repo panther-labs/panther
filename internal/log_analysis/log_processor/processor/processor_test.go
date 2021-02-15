@@ -39,13 +39,14 @@ import (
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/destinations"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logtypes"
+	logmetrics "github.com/panther-labs/panther/internal/log_analysis/log_processor/metrics"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/testutil"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/parsers/timestamp"
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/processor/logstream"
-	"github.com/panther-labs/panther/pkg/metrics"
 	"github.com/panther-labs/panther/pkg/oplog"
+	"github.com/panther-labs/panther/pkg/testutils"
 )
 
 var (
@@ -91,6 +92,12 @@ func newTestLog() *parsers.Result {
 
 func TestProcess(t *testing.T) {
 	destination := (&testDestination{}).standardMock()
+	metrics := setupMockMetrics()
+	metrics.bytesProcessed.On("With", []string{"LogType", "testLogType"}).Return(metrics.bytesProcessed).Once()
+	metrics.bytesProcessed.On("Add", float64(int(testLogLines)*len(testLogLine))).Once()
+
+	metrics.eventsProcessed.On("With", []string{"LogType", "testLogType"}).Return(metrics.eventsProcessed).Once()
+	metrics.eventsProcessed.On("Add", float64(testLogLines)).Once()
 
 	dataStream := makeDataStream()
 	f := NewFactory(testResolver)
@@ -194,6 +201,13 @@ func TestProcessDataStreamErrorNoChannelBuffers(t *testing.T) {
 }
 
 func TestProcessDestinationError(t *testing.T) {
+	metrics := setupMockMetrics()
+	metrics.bytesProcessed.On("With", mock.Anything).Return(metrics.bytesProcessed).Once()
+	metrics.bytesProcessed.On("Add", mock.Anything).Once()
+
+	metrics.eventsProcessed.On("With", mock.Anything).Return(metrics.eventsProcessed).Once()
+	metrics.eventsProcessed.On("Add", mock.Anything).Once()
+
 	// error in Send events
 	sendEventsErr := errors.New("fail SendEvents")
 	destination := &testDestination{}
@@ -247,6 +261,12 @@ func TestProcessDestinationErrorNoChannelBuffers(t *testing.T) {
 // test we properly log parse failures so we can see which file and where in the file there was a failure
 func TestProcessClassifyFailure(t *testing.T) {
 	logs := mockLogger()
+	metrics := setupMockMetrics()
+	metrics.bytesProcessed.On("With", mock.Anything).Return(metrics.bytesProcessed).Once()
+	metrics.bytesProcessed.On("Add", mock.Anything).Once()
+
+	metrics.eventsProcessed.On("With", mock.Anything).Return(metrics.eventsProcessed).Once()
+	metrics.eventsProcessed.On("Add", mock.Anything).Once()
 
 	destination := (&testDestination{}).standardMock()
 	dataStream := makeDataStream()
@@ -291,29 +311,6 @@ func TestProcessClassifyFailure(t *testing.T) {
 	require.NoError(t, err)
 
 	actual := logs.AllUntimed()
-	embeddedMetric := metrics.EmbeddedMetric{
-		CloudWatchMetrics: []metrics.MetricDirectiveObject{
-			{
-				Namespace:  "Panther",
-				Dimensions: []metrics.DimensionSet{{"LogType"}},
-				Metrics: []metrics.Metric{
-					{
-						Name: "BytesProcessed",
-						Unit: metrics.UnitBytes,
-					},
-					{
-						Name: "EventsProcessed",
-						Unit: metrics.UnitCount,
-					},
-					{
-						Name: "CombinedLatency",
-						Unit: metrics.UnitMilliseconds,
-					},
-				},
-			},
-		},
-		Timestamp: time.Duration(p.operation.EndTime.UnixNano()).Milliseconds(),
-	}
 
 	expected := []observer.LoggedEntry{
 		{
@@ -363,38 +360,6 @@ func TestProcessClassifyFailure(t *testing.T) {
 		{
 			Entry: zapcore.Entry{
 				Level:   zapcore.InfoLevel,
-				Message: common.OpLogNamespace + ":" + common.OpLogComponent + ":" + operationName,
-			},
-			Context: []zapcore.Field{
-				// custom
-				zap.Any(statsKey, *mockParserStats[testLogType]),
-
-				// standard
-				zap.String("namespace", common.OpLogNamespace),
-				zap.String("component", common.OpLogComponent),
-				zap.String("operation", operationName),
-				zap.String("status", oplog.Success),
-				zap.Time("startOp", p.operation.StartTime),
-				zap.Duration("opTime", p.operation.EndTime.Sub(p.operation.StartTime)),
-				zap.Time("endOp", p.operation.EndTime),
-			},
-		},
-		{
-			Entry: zapcore.Entry{
-				Level:   zapcore.InfoLevel,
-				Message: "metric",
-			},
-			Context: []zapcore.Field{
-				zap.String("LogType", testLogType),
-				zap.Uint64("BytesProcessed", 7996),
-				zap.Uint64("EventsProcessed", 1999),
-				zap.Uint64("CombinedLatency", 0),
-				zap.Any("_aws", embeddedMetric),
-			},
-		},
-		{
-			Entry: zapcore.Entry{
-				Level:   zapcore.InfoLevel,
 				Message: common.OpLogNamespace + ":" + common.OpLogComponent + ":" + "readS3Object",
 			},
 			Context: []zapcore.Field{
@@ -408,30 +373,7 @@ func TestProcessClassifyFailure(t *testing.T) {
 			},
 		},
 	}
-	require.Equal(t, len(expected), len(actual))
-
-	for i := range expected {
-		// This thing checks metrics logs...
-		if i == len(expected)-2 {
-			assert.Equal(t, expected[i].Entry.Level, actual[i].Entry.Level)
-			assert.Equal(t, expected[i].Entry.Message, actual[i].Entry.Message)
-			require.Equal(t, len(expected[i].Context), len(actual[i].Context))
-			for j := range expected[i].Context {
-				assert.Equal(t, expected[i].Context[j].Key, actual[i].Context[j].Key)
-				if actual[i].Context[j].Key == "_aws" {
-					actualTyped := actual[i].Context[j].Interface.(metrics.EmbeddedMetric)
-					actualTyped.Timestamp = p.operation.EndTime.UnixNano() / metrics.NanosecondsPerMillisecond
-					assert.Equal(t, expected[i].Context[j].Interface, actualTyped)
-					continue
-				}
-				assert.Equal(t, expected[i].Context[j].Interface, actual[i].Context[j].Interface)
-				assert.Equal(t, expected[i].Context[j].String, actual[i].Context[j].String)
-				assert.Equal(t, expected[i].Context[j].Integer, actual[i].Context[j].Integer)
-			}
-			continue
-		}
-		assertLogEqual(t, expected[i], actual[i])
-	}
+	assert.Equal(t, len(expected), len(actual))
 
 	// ensure the closer was called
 	assert.True(t, dataStream.Closer.(*dummyCloser).closed)
@@ -564,4 +506,22 @@ func mockLogger() *observer.ObservedLogs {
 	core, mockLog := observer.New(zap.InfoLevel)
 	zap.ReplaceGlobals(zap.New(core))
 	return mockLog
+}
+
+type mockMetrics struct {
+	bytesProcessed  *testutils.CounterMock
+	eventsProcessed *testutils.CounterMock
+}
+
+func setupMockMetrics() *mockMetrics {
+	bytesProcessedMock := &testutils.CounterMock{}
+	logmetrics.BytesProcessed = bytesProcessedMock
+
+	eventsProcessedMock := &testutils.CounterMock{}
+	logmetrics.EventsProcessed = eventsProcessedMock
+
+	return &mockMetrics{
+		bytesProcessed:  bytesProcessedMock,
+		eventsProcessed: eventsProcessedMock,
+	}
 }

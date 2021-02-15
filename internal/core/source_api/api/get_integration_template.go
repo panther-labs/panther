@@ -26,6 +26,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
@@ -52,12 +53,14 @@ const (
 	remediationReplace = "Value: '%t' # DeployRemediation"
 
 	// Formatting variables for Log Analysis
-	roleSuffixIDFind  = "Value: '' # RoleSuffix"
-	roleSuffixReplace = "Value: '%s' # RoleSuffix"
-	s3BucketFind      = "Value: '' # S3Bucket"
-	s3BucketReplace   = "Value: '%s' # S3Bucket"
-	kmsKeyFind        = "Value: '' # KmsKey"
-	kmsKeyReplace     = "Value: '%s' # KmsKey"
+	roleSuffixIDFind            = "Value: '' # RoleSuffix"
+	roleSuffixReplace           = "Value: '%s' # RoleSuffix"
+	s3BucketFind                = "Value: '' # S3Bucket"
+	s3BucketReplace             = "Value: '%s' # S3Bucket"
+	kmsKeyFind                  = "Value: '' # KmsKey"
+	kmsKeyReplace               = "Value: '%s' # KmsKey"
+	managedNotificationsFind    = "Value: '' # ManagedBucketNotifications"
+	managedNotificationsReplace = "Value: '%s' # ManagedBucketNotifications"
 )
 
 var (
@@ -103,6 +106,11 @@ func (api *API) GetIntegrationTemplate(input *models.GetIntegrationTemplateInput
 			formattedTemplate = strings.Replace(formattedTemplate, kmsKeyFind,
 				fmt.Sprintf(kmsKeyReplace, input.KmsKey), 1)
 		}
+
+		if input.ManagedBucketNotifications {
+			formattedTemplate = strings.Replace(formattedTemplate, managedNotificationsFind,
+				fmt.Sprintf(managedNotificationsReplace, "true"), 1)
+		}
 	}
 
 	return &models.SourceIntegrationTemplate{
@@ -130,7 +138,8 @@ func (api *API) getTemplate(integrationType string) (string, error) {
 	zap.L().Debug("requesting template", zap.String("key", *templateRequest.Key), zap.String("bucket", *templateRequest.Bucket))
 	s3Object, err := api.TemplateS3Client.GetObject(templateRequest)
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "cannot read template s3://%s/%s, check Panther VERSION file",
+			*templateRequest.Bucket, *templateRequest.Key)
 	}
 
 	// Load the s3Object into memory. They're only ~8Kb in size.

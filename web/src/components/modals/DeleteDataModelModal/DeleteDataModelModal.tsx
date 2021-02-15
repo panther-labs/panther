@@ -19,28 +19,35 @@
 import React from 'react';
 import { ModalProps, useSnackbar } from 'pouncejs';
 import { DataModel } from 'Generated/schema';
-import { extractErrorMessage } from 'Helpers/utils';
+import { extractErrorMessage, toPlural } from 'Helpers/utils';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import OptimisticConfirmModal from 'Components/modals/OptimisticConfirmModal';
 import { useDeleteDataModel } from './graphql/deleteDataModel.generated';
 
 export interface DeleteDataModelModalProps extends ModalProps {
-  dataModel: DataModel;
+  dataModels: DataModel[];
+  onDelete?: () => void;
 }
 
-const DeleteDataModelModal: React.FC<DeleteDataModelModalProps> = ({ dataModel, ...rest }) => {
+const DeleteDataModelModal: React.FC<DeleteDataModelModalProps> = ({
+  dataModels,
+  onDelete,
+  ...rest
+}) => {
+  const dataModelToString = toPlural('Data Model', dataModels.length);
   const { pushSnackbar } = useSnackbar();
   const [deleteDataModel] = useDeleteDataModel({
-    variables: { input: { dataModels: [{ id: dataModel.id }] } },
-
+    variables: { input: { dataModels: dataModels.map(m => ({ id: m.id })) } },
     // FIXME: issue: https://github.com/apollographql/apollo-client/issues/5790
     update: cache => {
       cache.modify('ROOT_QUERY', {
-        listDataModels(dataModels, { toReference }) {
-          const deletedDataModel = toReference({ __typename: 'DataModel', id: dataModel.id });
+        listDataModels(data, { toReference }) {
+          const deletedDataModels = dataModels.map(
+            dm => toReference({ __typename: 'DataModel', id: dm.id }).__ref
+          );
           return {
-            ...dataModels,
-            models: dataModels.models.filter(d => d.__ref !== deletedDataModel.__ref),
+            ...data,
+            models: data.models.filter(d => !deletedDataModels.includes(d.__ref)),
           };
         },
       });
@@ -52,18 +59,33 @@ const DeleteDataModelModal: React.FC<DeleteDataModelModalProps> = ({ dataModel, 
     onError: error => {
       pushSnackbar({
         variant: 'error',
-        title: 'Failed to delete your Data Model',
+        title: `Failed to delete your ${dataModelToString}`,
         description: extractErrorMessage(error),
       });
       trackError({ event: TrackErrorEnum.FailedToDeleteDataModel, src: SrcEnum.DataModels });
     },
   });
 
+  const handleConfirm = () => {
+    deleteDataModel();
+    if (onDelete) {
+      onDelete();
+    }
+  };
+
   return (
     <OptimisticConfirmModal
-      onConfirm={deleteDataModel}
-      title="Delete Data Model"
-      subtitle={[`Are you sure you want to delete `, <b key={0}>{dataModel.displayName}?</b>]}
+      onConfirm={handleConfirm}
+      title={`Delete ${dataModelToString}`}
+      subtitle={[
+        `Are you sure you want to delete `,
+        <b key={0}>
+          {dataModels.length === 1
+            ? dataModels[0].displayName || dataModels[0].id
+            : `${dataModels.length} Data Models`}
+        </b>,
+        '?',
+      ]}
       {...rest}
     />
   );

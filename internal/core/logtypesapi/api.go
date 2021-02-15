@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/logschema"
+	"github.com/panther-labs/panther/internal/log_analysis/managedschemas"
 )
 
 const LambdaName = "panther-logtypes-api"
@@ -38,30 +39,23 @@ const LambdaName = "panther-logtypes-api"
 
 // LogTypesAPI handles the business logic of log types LogTypesAPI
 type LogTypesAPI struct {
-	NativeLogTypes    func() []string
-	Database          LogTypesDatabase
+	Database          SchemaDatabase
 	UpdateDataCatalog func(ctx context.Context, logType string, from, to []logschema.FieldSchema) error
-	// FIXME: Rename to LogTypesInUse
-	LogTypeInUse func(ctx context.Context) ([]string, error)
+	LogTypesInUse     func(ctx context.Context) ([]string, error)
+	ManagedSchemas    managedschemas.ReleaseFeeder
 }
 
-// LogTypesDatabase handles the external actions required for LogTypesAPI to be implemented
-type LogTypesDatabase interface {
-	// Return an index of available log types
-	IndexLogTypes(ctx context.Context) ([]string, error)
-	// Create a new custom log record
-	CreateCustomLog(ctx context.Context, id string, params *CustomLog) (*CustomLogRecord, error)
-	// Get a single custom log record
-	GetCustomLog(ctx context.Context, id string, revision int64) (*CustomLogRecord, error)
-	// Update a custom log record
-	UpdateCustomLog(ctx context.Context, id string, currentRevision int64, params *CustomLog) (*CustomLogRecord, error)
-	// Delete a custom log record
-	DeleteCustomLog(ctx context.Context, id string, currentRevision int64) error
-	// Get multiple custom log records at their latest revision
-	BatchGetCustomLogs(ctx context.Context, ids ...string) ([]*CustomLogRecord, error)
-	// List deleted log types
-	ListDeletedLogTypes(ctx context.Context) ([]string, error)
+// SchemaDatabase handles the external actions required for LogTypesAPI to be implemented
+type SchemaDatabase interface {
+	// GetSchema gets a single schema record
+	GetSchema(ctx context.Context, id string) (*SchemaRecord, error)
+	// PutSchema puts a single schema record
+	PutSchema(ctx context.Context, id string, record *SchemaRecord) (*SchemaRecord, error)
+	// ScanSchemas iterates through all schema records as long as scan returns true
+	ScanSchemas(ctx context.Context, scan ScanSchemaFunc) error
 }
+
+type ScanSchemaFunc func(r *SchemaRecord) bool
 
 const (
 	// ErrRevisionConflict is the error code to use when there is a revision conflict
@@ -70,7 +64,6 @@ const (
 	ErrNotFound         = "NotFound"
 	ErrInUse            = "InUse"
 	ErrInvalidUpdate    = "InvalidUpdate"
-	ErrInvalidMetadata  = "InvalidMetadata"
 	ErrInvalidSyntax    = "InvalidSyntax"
 	ErrInvalidLogSchema = "InvalidLogSchema"
 	ErrServerError      = "ServerError"

@@ -58,12 +58,12 @@ func TestCloudSecTemplate(t *testing.T) {
 func TestLogAnalysisTemplate(t *testing.T) {
 	apiTest := NewAPITest()
 	input := &models.GetIntegrationTemplateInput{
-		AWSAccountID:     "123456789012",
-		IntegrationType:  models.IntegrationTypeAWS3,
-		IntegrationLabel: "TestLabel-",
-		S3Bucket:         "test-bucket",
-		S3Prefix:         "prefix",
-		KmsKey:           "key-arn",
+		AWSAccountID:               "123456789012",
+		IntegrationType:            models.IntegrationTypeAWS3,
+		IntegrationLabel:           "TestLabel-",
+		S3Bucket:                   "test-bucket",
+		KmsKey:                     "key-arn",
+		ManagedBucketNotifications: true,
 	}
 
 	template, err := ioutil.ReadFile("../../../../deployments/auxiliary/cloudformation/panther-log-analysis-iam.yml")

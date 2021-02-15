@@ -35,6 +35,7 @@ import (
 	"go.uber.org/zap/zaptest/observer"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/common"
+	"github.com/panther-labs/panther/internal/log_analysis/log_processor/metrics"
 	"github.com/panther-labs/panther/pkg/testutils"
 )
 
@@ -49,7 +50,7 @@ func TestProcessOpLog(t *testing.T) {
 	common.Config.AwsLambdaFunctionMemorySize = 1024
 
 	mockMetricsManager := &testutils.MetricsManagerMock{}
-	common.CWMetrics = mockMetricsManager
+	metrics.CWManager = mockMetricsManager
 
 	mockMetricsManager.On("Run", mock.Anything, mock.Anything).Once()
 	mockMetricsManager.On("Sync").Return(nil).Once()

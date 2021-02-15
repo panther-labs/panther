@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Flex, Link, Text, Tooltip } from 'pouncejs';
+import { Flex, Link, SimpleGrid, Text, Tooltip } from 'pouncejs';
 import GenericItemCard from 'Components/GenericItemCard';
 import { ComplianceIntegration } from 'Generated/schema';
 import { formatDatetime } from 'Helpers/utils';
@@ -27,6 +27,7 @@ import { Link as RRLink } from 'react-router-dom';
 import SourceHealthBadge from 'Components/badges/SourceHealthBadge';
 import { PANTHER_USER_ID } from 'Source/constants';
 import ComplianceSourceCardOptions from './ComplianceSourceCardOptions';
+import ComplianceSourceEventState from './ComplianceSourceEventState';
 
 interface ComplianceSourceCardProps {
   source: ComplianceIntegration;
@@ -62,28 +63,35 @@ const ComplianceSourceCard: React.FC<ComplianceSourceCardProps> = ({ source }) =
               </Tooltip>
             )}
           </GenericItemCard.Heading>
+          <GenericItemCard.HeadingValue
+            label="AWS Stack Name"
+            value={source.stackName}
+            labelFirst
+            withDivider
+          />
+          <GenericItemCard.HeadingValue
+            value={formatDatetime(source.createdAtTime)}
+            label="Created"
+            labelFirst
+          />
           {!isCreatedByPanther && <ComplianceSourceCardOptions source={source} />}
         </GenericItemCard.Header>
-        <GenericItemCard.ValuesGroup>
+        <SimpleGrid templateColumns="1fr 2fr 1fr">
           <GenericItemCard.Value label="AWS Account ID" value={source.awsAccountId} />
-          <GenericItemCard.Value
-            label="Real-Time Updates"
-            value={source.cweEnabled ? 'Enabled' : 'Disabled'}
-          />
-          <GenericItemCard.Value
-            label="Auto-Remediations"
-            value={source.remediationEnabled ? 'Enabled' : 'Disabled'}
-          />
-          <GenericItemCard.Value label="AWS Stack Name" value={source.stackName} />
-          <GenericItemCard.LineBreak />
-          <GenericItemCard.Value
-            label="Date Created"
-            value={formatDatetime(source.createdAtTime, true)}
-          />
+          <Flex spacing={6} align="flex-end" justify="center">
+            <ComplianceSourceEventState
+              enabled={source.cweEnabled}
+              text="Real-Time AWS Resource Scans"
+            />
+            <ComplianceSourceEventState
+              enabled={source.remediationEnabled}
+              text="AWS Automatic Remediations"
+            />
+          </Flex>
           <Flex ml="auto" mr={0} align="flex-end">
             <SourceHealthBadge healthMetrics={healthMetrics} />
           </Flex>
-        </GenericItemCard.ValuesGroup>
+        </SimpleGrid>
       </GenericItemCard.Body>
     </GenericItemCard>
   );
