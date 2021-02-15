@@ -1,0 +1,93 @@
+# Panther is a Cloud-Native SIEM for the Modern Security Team.
+# Copyright (C) 2020 Panther Labs Inc
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creates an IAM role in an external customer account which Panther can assume for read-only access
+
+Parameters:
+  PantherMasterAccountID:
+    Type: String
+    Description: 12 Digit AWS Panther Master AccountID located in Panther under General > Settings
+    AllowedPattern: '^\d{12}$'
+  PantherRulesEngineRoleName:
+    Type: String
+    Description: Panther rules-engine role name which can be found in the AWS Console under IAM by searching "rules" in the Panther Master Account
+  SecretArn:
+    Type: String
+    Default: ''
+    Description: (Optional) Allow Panther rules-engine to read the given secret arn
+    AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):secretsmanager:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:secret:\S+)?$'
+  TargetBucketName:
+    Type: String
+    Description: External S3 bucket which the Panther rules-engine will be allowed to read from
+  TargetBucketKmsKeyArn:
+    Type: String
+    Default: ''
+    Description: (Optional) Allow Panther rules-engine to decrypt this KMS key arn (required if the target bucket has KMS encryption enabled)
+    AllowedPattern: '^(arn:(aws|aws-cn|aws-us-gov):kms:[a-z]{2}-[a-z]{4,9}-[1-9]:\d{12}:key\/[0-9a-f-]{36})?$'
+
+Conditions:
+  SecretDefined: !Not [!Equals [!Ref SecretArn, '']]
+  KmsKeyDefined: !Not [!Equals [!Ref TargetBucketKmsKeyArn, '']]
+
+Resources:
+  PantherRulesEngineIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${PantherMasterAccountID}:role/${PantherRulesEngineRoleName}
+
+      Policies:
+        - PolicyName: panther-rule-engine-cross-account-read-only-role
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:Get*
+                  - s3:List*
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::${TargetBucketName}
+                  - !Sub arn:${AWS::Partition}:s3:::${TargetBucketName}/*
+              - !If
+                - SecretDefined
+                - Effect: Allow
+                  Action:
+                    - secretsmanager:GetResourcePolicy
+                    - secretsmanager:GetSecretValue
+                    - secretsmanager:DescribeSecret
+                    - secretsmanager:ListSecretVersionIds
+                  Resource: !Ref SecretArn
+                - !Ref AWS::NoValue
+              - !If
+                - KmsKeyDefined
+                - Effect: Allow
+                  Action: kms:Decrypt
+                  Resource: !Ref TargetBucketKmsKeyArn
+                - !Ref AWS::NoValue
+
+Outputs:
+  PantherRulesEngineCrossAccountIamRoleName:
+    Description: Panther Rules Engine Read-only IAM Role Name
+    Value: !Ref PantherRulesEngineIamRole
+  PantherRulesEngineCrossAccountIamRoleArn:
+    Description: Panther Rules Engine Read-only IAM Role ARN
+    Value: !GetAtt PantherRulesEngineIamRole.Arn

@@ -87,6 +87,7 @@ export const RESOURCE_TYPES = [
   'AWS.EKS.Cluster',
   'AWS.ELBV2.ApplicationLoadBalancer',
   'AWS.GuardDuty.Detector',
+  'AWS.GuardDuty.Detector.Meta',
   'AWS.IAM.Group',
   'AWS.IAM.Policy',
   'AWS.IAM.Role',
