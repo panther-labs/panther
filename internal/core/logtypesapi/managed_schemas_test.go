@@ -32,6 +32,7 @@ import (
 
 func TestManagedSchemasUpdates(t *testing.T) {
 	// Skip until we can mock http client for github
+	t.Skip()
 
 	db := &InMemDB{}
 	db.PutSchema(context.Background(), "AWS.CloudTrail", &SchemaRecord{
@@ -69,7 +70,8 @@ func TestManagedSchemasUpdates(t *testing.T) {
 
 	{
 		reply, err := api.UpdateManagedSchemas(context.Background(), &UpdateManagedSchemasInput{
-			Release: managedschemas.ReleaseVersion,
+			Release:     "v0.15.0",
+			ManifestURL: "https://github.com/panther-labs/panther-analysis/releases/download/v1.15.0/managed-schemas.zip",
 		})
 		require.NoError(t, err)
 		require.NotNil(t, reply)
