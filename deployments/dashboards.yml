@@ -556,7 +556,7 @@ Resources:
                                     "stacked": false,
                                     "region": "${AWS::Region}",
                                     "stat": "Average",
-                                    "title": "Input Processed (MB Uncompressed)"
+                                    "title": "Input data processed (MB Uncompressed)"
                                 }
                             },
                             {
