@@ -1596,6 +1596,10 @@ export const buildS3LogIntegrationHealth = (
       'getObjectStatus' in overrides
         ? overrides.getObjectStatus
         : buildIntegrationItemHealthStatus(),
+    bucketNotificationsStatus:
+      'bucketNotificationsStatus' in overrides
+        ? overrides.bucketNotificationsStatus
+        : buildIntegrationItemHealthStatus(),
   };
 };
 

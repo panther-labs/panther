@@ -61,6 +61,9 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
         if (sourceHealth.getObjectStatus) {
           checks.push(sourceHealth.getObjectStatus);
         }
+        if (sourceHealth.bucketNotificationsStatus) {
+          checks.push(sourceHealth.bucketNotificationsStatus);
+        }
         return checks;
       }
       default:
