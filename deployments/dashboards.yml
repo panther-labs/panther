@@ -535,7 +535,7 @@ Resources:
                                             "showUnits": false
                                         }
                                     },
-                                    "title": "Input data by Log Type ( MB - Uncompressed)",
+                                    "title": "Input data by Log Type ( MB Uncompressed)",
                                     "legend": {
                                         "position": "bottom"
                                     },
