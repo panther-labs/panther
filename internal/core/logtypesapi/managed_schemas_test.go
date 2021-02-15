@@ -35,7 +35,7 @@ func TestManagedSchemasUpdates(t *testing.T) {
 	t.Skip()
 
 	db := &InMemDB{}
-	db.PutSchema(context.Background(), "AWS.CloudTrail", &SchemaRecord{
+	_, _ = db.PutSchema(context.Background(), "AWS.CloudTrail", &SchemaRecord{
 		Name:         "AWS.CloudTrail",
 		Revision:     1,
 		Release:      "v0.0.0-test",
@@ -75,6 +75,5 @@ func TestManagedSchemasUpdates(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.NotNil(t, reply)
-
 	}
 }
