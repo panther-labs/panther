@@ -21,6 +21,7 @@ package logtypesapi
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 	"golang.org/x/mod/semver"
@@ -123,26 +124,38 @@ func (api *LogTypesAPI) updateManagedSchema(ctx context.Context, entry managedsc
 	if err != nil {
 		return nil, err
 	}
-	record, err := api.Database.GetSchema(ctx, entry.Name, 0)
-	if err != nil {
-		return nil, err
-	}
-	rev := int64(1)
-	if record != nil {
-		if !record.IsManaged() {
-			return nil, NewAPIError(ErrAlreadyExists, fmt.Sprintf("record %q exists and is not managed by Panther", entry.Name))
-		}
-		if semver.Compare(record.Release, entry.Release) != -1 {
-			return record, nil
-		}
-		rev = record.Revision + 1
-		// TODO: check update compatibility
-	}
-	return api.Database.UpdateManagedSchema(ctx, entry.Name, rev, entry.Release, SchemaUpdate{
+	now := time.Now()
+	record := SchemaRecord{
+		Name:         entry.Name,
+		Revision:     0,
+		Release:      entry.Release,
+		Managed:      true,
+		UpdatedAt:    now,
+		CreatedAt:    now,
 		Description:  schema.Description,
 		ReferenceURL: schema.ReferenceURL,
 		Spec:         entry.Spec,
-	})
+	}
+
+	current, err := api.Database.GetSchema(ctx, entry.Name)
+	if err != nil {
+		return nil, err
+	}
+	if current != nil {
+		if !current.IsManaged() {
+			return nil, NewAPIError(ErrAlreadyExists, fmt.Sprintf("record %q exists and is not managed by Panther", entry.Name))
+		}
+		if semver.Compare(current.Release, entry.Release) != -1 {
+			return current, nil
+		}
+		// TODO: check update compatibility
+
+		record.Revision = current.Revision
+		record.CreatedAt = current.CreatedAt
+		record.Disabled = current.Disabled
+	}
+
+	return api.Database.PutSchema(ctx, entry.Name, &record)
 }
 
 func buildAndValidateManagedSchema(entry managedschemas.ManifestEntry) (*logschema.Schema, error) {
