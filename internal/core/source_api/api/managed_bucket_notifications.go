@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -53,7 +52,8 @@ const pantherNotificationsTopic = "panther-notifications-topic"
 func ManageBucketNotifications(
 	pantherSess *session.Session,
 	pantherAccountID,
-	pantherPartition string,
+	pantherPartition,
+	pantherInputDataQueueARN string,
 	source *models.SourceIntegration) error {
 
 	managed := &source.ManagedS3Resources
@@ -74,7 +74,7 @@ func ManageBucketNotifications(
 	// Create the topic if it wasn't created previously. This saves some API requests during
 	// source updates.
 	if managed.TopicARN == nil {
-		topicARN, err := createSNSResources(pantherSess, stsSess, bucketRegion, pantherAccountID, pantherPartition)
+		topicARN, err := createSNSResources(stsSess, bucketRegion, pantherAccountID, pantherPartition, pantherInputDataQueueARN)
 		if err != nil {
 			return err
 		}
@@ -98,11 +98,11 @@ func ManageBucketNotifications(
 }
 
 func createSNSResources(
-	pantherSess,
 	stsSess *session.Session,
 	bucketRegion *string,
 	pantherAccountID,
-	pantherPartition string) (*string, error) {
+	pantherPartition,
+	pantherInputDataQueueARN string) (*string, error) {
 
 	// Create the topic with policy and subscribe to Panther input data queue.
 	snsClient := sns.New(stsSess, &aws.Config{Region: bucketRegion})
@@ -113,18 +113,11 @@ func createSNSResources(
 	}
 	zap.S().Debugf("created topic %s", *topicARN)
 
-	queueARN := arn.ARN{
-		Partition: pantherPartition,
-		Service:   "sqs",
-		Region:    aws.StringValue(pantherSess.Config.Region),
-		AccountID: pantherAccountID,
-		Resource:  "panther-input-data-notifications-queue",
-	}
-	err = subscribeTopicToQueue(snsClient, topicARN, queueARN)
+	err = subscribeTopicToQueue(snsClient, topicARN, pantherInputDataQueueARN)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to subscribe topic %s to %s", *topicARN, queueARN.String())
+		return nil, errors.Wrapf(err, "failed to subscribe topic %s to %s", *topicARN, pantherInputDataQueueARN)
 	}
-	zap.S().Debugf("subscribed topic %s to %s", *topicARN, queueARN.String())
+	zap.S().Debugf("subscribed topic %s to %s", *topicARN, pantherInputDataQueueARN)
 
 	return topicARN, nil
 }
@@ -213,9 +206,9 @@ func createTopic(snsClient *sns.SNS, pantherAccountID, pantherPartition string) 
 	return topic.TopicArn, nil
 }
 
-func subscribeTopicToQueue(snsClient *sns.SNS, topicARN *string, queueARN arn.ARN) error {
+func subscribeTopicToQueue(snsClient *sns.SNS, topicARN *string, queueARN string) error {
 	sub := sns.SubscribeInput{
-		Endpoint: aws.String(queueARN.String()),
+		Endpoint: aws.String(queueARN),
 		Protocol: aws.String("sqs"),
 		TopicArn: topicARN,
 	}
