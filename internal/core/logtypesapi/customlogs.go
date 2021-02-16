@@ -21,6 +21,7 @@ package logtypesapi
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
@@ -34,12 +35,12 @@ import (
 // GetCustomLog gets a custom log record for the specified id and revision
 func (api *LogTypesAPI) GetCustomLog(ctx context.Context, input *GetCustomLogInput) (*GetCustomLogOutput, error) {
 	id := customlogs.LogType(input.LogType)
-	r, err := api.Database.GetSchema(ctx, id, input.Revision)
+	r, err := api.Database.GetSchema(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 	if r == nil || !r.IsCustom() || r.Disabled {
-		return nil, NewAPIError(ErrNotFound, fmt.Sprintf("custom log record %q not found at revision %d", input.LogType, input.Revision))
+		return nil, NewAPIError(ErrNotFound, fmt.Sprintf("custom log record %q not found", input.LogType))
 	}
 	// Return compatible type
 	return &GetCustomLogOutput{
@@ -50,8 +51,7 @@ func (api *LogTypesAPI) GetCustomLog(ctx context.Context, input *GetCustomLogInp
 // GetCustomLogInput specifies the log type id and revision to retrieve.
 // Zero Revision will get the latest revision of the log type record
 type GetCustomLogInput struct {
-	LogType  string `json:"logType" validate:"required,startswith=Custom." description:"The log type id"`
-	Revision int64  `json:"revision,omitempty" validate:"omitempty,min=1" description:"Log record revision (0 means latest)"`
+	LogType string `json:"logType" validate:"required,startswith=Custom." description:"The log type id"`
 }
 type GetCustomLogOutput struct {
 	Result *SchemaRecord `json:"record,omitempty" description:"The custom log record (field omitted if an error occurred)"`
@@ -67,9 +67,20 @@ func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInp
 		return nil, err
 	}
 
+	now := time.Now()
 	switch currentRevision := input.Revision; currentRevision {
 	case 0:
-		result, err := api.Database.CreateUserSchema(ctx, id, input.SchemaUpdate)
+		result, err := api.Database.PutSchema(ctx, id, &SchemaRecord{
+			Name:         id,
+			Revision:     0,
+			UpdatedAt:    now,
+			CreatedAt:    now,
+			Managed:      false,
+			Disabled:     false,
+			Description:  input.Description,
+			ReferenceURL: input.ReferenceURL,
+			Spec:         input.Spec,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +92,7 @@ func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInp
 			Result: result,
 		}, nil
 	default:
-		current, err := api.Database.GetSchema(ctx, id, 0)
+		current, err := api.Database.GetSchema(ctx, id)
 		if err != nil {
 			return nil, err
 		}
@@ -101,7 +112,18 @@ func (api *LogTypesAPI) PutCustomLog(ctx context.Context, input *PutCustomLogInp
 		if err := api.checkUpdate(currentSchema, schema); err != nil {
 			return nil, NewAPIError(ErrInvalidUpdate, fmt.Sprintf("schema update is not backwards compatible: %s", err))
 		}
-		result, err := api.Database.UpdateUserSchema(ctx, id, current.Revision, input.SchemaUpdate)
+
+		result, err := api.Database.PutSchema(ctx, id, &SchemaRecord{
+			Name:         id,
+			Revision:     currentRevision,
+			UpdatedAt:    now,
+			CreatedAt:    current.CreatedAt,
+			Managed:      false,
+			Disabled:     current.Disabled,
+			Description:  input.Description,
+			ReferenceURL: input.ReferenceURL,
+			Spec:         input.Spec,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -173,8 +195,11 @@ type PutCustomLogInput struct {
 	LogType string `json:"logType" validate:"required,startswith=Custom." description:"The log type id"`
 	// Revision is required when updating a custom log record.
 	// If  is omitted a new custom log record will be created.
-	Revision int64 `json:"revision,omitempty" validate:"omitempty,min=1" description:"Custom log record revision to update (if omitted a new record will be created)"`
-	SchemaUpdate
+	Revision     int64  `json:"revision,omitempty" validate:"omitempty,min=1" description:"Custom log record revision to update (if omitted a new record will be created)"`
+	Description  string `json:"description" description:"Log type description"`
+	ReferenceURL string `json:"referenceURL" description:"A URL with reference docs for the schema"`
+	// For compatibility we use 'logSpec' as the JSON and DDB field names
+	Spec string `json:"logSpec" dynamodbav:"logSpec" validate:"required" description:"The schema spec in YAML or JSON format"`
 }
 
 //nolint:lll
@@ -194,7 +219,20 @@ func (api *LogTypesAPI) DelCustomLog(ctx context.Context, input *DelCustomLogInp
 	}
 
 	id := customlogs.LogType(input.LogType)
-	if err := api.Database.ToggleSchema(ctx, id, false); err != nil {
+	rec, err := api.Database.GetSchema(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if rec == nil {
+		return nil, NewAPIError(ErrNotFound, fmt.Sprintf("schema record %q no found", id))
+	}
+	if rec.Disabled {
+		return &DelCustomLogOutput{}, nil
+	}
+
+	rec.Disabled = true
+
+	if _, err := api.Database.PutSchema(ctx, id, rec); err != nil {
 		return nil, err
 	}
 	if err := api.UpdateDataCatalog(ctx, input.LogType, nil, nil); err != nil {

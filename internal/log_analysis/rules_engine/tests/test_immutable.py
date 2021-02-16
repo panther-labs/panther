@@ -87,6 +87,20 @@ class TestImmutableDict(TestCase):
         self.assertIsInstance(immutable_dict['e']['f'][0], ImmutableDict)
         self.assertEqual(immutable_dict['e']['f'][0]['g'], 90)
 
+    def test_copy(self) -> None:
+        initial_dict = {'a': True, 'b': {'c': {'e': True, 'd': [{'g': False}]}}}
+        immutable_dict = ImmutableDict(initial_dict)
+        dict_copy = immutable_dict.copy()
+        self.assertIsNot(dict_copy, initial_dict)
+        self.assertIsNot(dict_copy['b'], initial_dict['b'])
+        self.assertEqual(dict_copy['b'], initial_dict['b'])
+        self.assertIsInstance(dict_copy['b'], dict)
+        self.assertIsInstance(dict_copy['b']['c'], dict)
+        self.assertIsInstance(dict_copy['b']['c']['d'], list)
+        self.assertIsNot(dict_copy['b']['c']['d'], initial_dict['b']['c']['d'])  # type: ignore
+        dict_copy['h'] = False
+        self.assertIs(dict_copy['h'], False)
+
 
 class TestImmutableList(TestCase):
 
@@ -124,6 +138,26 @@ class TestImmutableList(TestCase):
         self.assertIsInstance(immutable_list[0], ImmutableList)
         self.assertIsInstance(immutable_list[2], ImmutableDict)
         self.assertIsInstance(immutable_list[2]['a'], ImmutableDict)
+
+    def test_iteration_returns_immutable_objects(self) -> None:
+        data = [{'b': {'c': True}}, {'d': {'c': False}}]
+        immutable_list = ImmutableList(data)
+        iterated_list = list(immutable_list)
+        self.assertIsNot(iterated_list[0], data[0])
+        self.assertIsNot(iterated_list[1], data[1])
+        self.assertIsNot(iterated_list[0]['b'], data[0]['b'])
+        self.assertIsInstance(iterated_list[0]['b'], ImmutableDict)
+
+    def test_copy(self) -> None:
+        initial_list = [{'b': {'c': True}}, {'d': {'c': False}}]
+        immutable_list = ImmutableList(initial_list)
+        list_copy = immutable_list.copy()
+        self.assertIsNot(list_copy, initial_list)
+        self.assertIsNot(list_copy[0], initial_list[0])
+        self.assertEqual(list_copy[0], initial_list[0])
+        self.assertIsInstance(list_copy[0], dict)
+        list_copy.append({'e': False})
+        self.assertIs(list_copy[-1]['e'], False)
 
 
 class TestImmutableNestedList(TestCase):
