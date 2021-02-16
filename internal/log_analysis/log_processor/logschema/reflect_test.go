@@ -72,8 +72,10 @@ func TestAllowDeny(t *testing.T) {
 			{
 				Name: "foo",
 				ValueSchema: ValueSchema{
-					Type:  TypeString,
-					Allow: []string{"Foo", "Foo|Bar", `"Foo"`, "`Foo`", "Bar,Baz", "Φου"},
+					Type: TypeString,
+					Validate: &Validation{
+						Allow: []string{"Foo", "Foo|Bar", `"Foo"`, "`Foo`", "Bar,Baz", "Φου"},
+					},
 				},
 			},
 		},
@@ -113,9 +115,9 @@ func TestAllowDeny(t *testing.T) {
 	}
 	{
 		x := reflect.New(typ).Interface()
-		assert.NoError(jsoniter.UnmarshalFromString(`{"foo":"Foo|Bar"}`, x))
+		assert.NoError(jsoniter.UnmarshalFromString(`{"foo":"Bar,Baz"}`, x))
 		err := validate.Struct(x)
-		assert.NoError(err, "Foo|Bar allowed")
+		assert.NoError(err, "Bar,Baz allowed")
 	}
 	{
 		x := reflect.New(typ).Interface()

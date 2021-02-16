@@ -167,8 +167,41 @@
       },
       "required": ["type"]
     },
+    "validateSpec": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["allow"],
+          "properties": {
+            "allow": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["deny"],
+          "properties": {
+            "deny": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
     "stringSpec": {
       "type": "object",
+      "required": ["type"],
       "properties": {
         "type": {
           "const": "string"
@@ -180,26 +213,10 @@
             "$ref": "#/definitions/indicator"
           }
         },
-        "allowValues": {
-          "$comment": "Allowed values",
-          "type": "array",
-          "minLength": 1,
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "denyValues": {
-          "$comment": "Denied values",
-          "type": "array",
-          "minLength": 1,
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
+        "validate": {
+          "$ref": "#/definitions/validateSpec"
         }
-      },
-      "required": ["type"]
+      }
     },
     "indicator": {
       "type": "string",

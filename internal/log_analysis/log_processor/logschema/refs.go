@@ -103,8 +103,7 @@ func safeBuild(input *ValueSchema, manifest map[string]*ValueSchema, path, visit
 		return &ValueSchema{
 			Type:       TypeString,
 			Indicators: append([]string(nil), input.Indicators...),
-			Allow:      input.Allow,
-			Deny:       input.Deny,
+			Validate:   input.Validate,
 		}, nil
 	case TypeTimestamp:
 		return &ValueSchema{

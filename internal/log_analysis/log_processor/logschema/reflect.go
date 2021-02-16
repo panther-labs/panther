@@ -134,10 +134,12 @@ func buildStructTag(schema *FieldSchema) reflect.StructTag {
 
 func buildValidate(s *FieldSchema) (rules []string) {
 	// The precedence is Allow > Deny
-	if len(s.Allow) > 0 {
-		rules = append(rules, multiRule("eq", s.Allow...))
-	} else if len(s.Deny) > 0 {
-		rules = append(rules, multiRule("ne", s.Deny...))
+	if v := s.Validate; v != nil {
+		if len(v.Allow) > 0 {
+			rules = append(rules, multiRule("eq", v.Allow...))
+		} else if len(v.Deny) > 0 {
+			rules = append(rules, multiRule("ne", v.Deny...))
+		}
 	}
 	if s.Required {
 		return append(rules, "required")
