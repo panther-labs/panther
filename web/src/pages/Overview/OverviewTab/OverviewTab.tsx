@@ -17,13 +17,13 @@
  */
 
 import React from 'react';
-import { Heading, HeadingProps, Tab } from 'pouncejs';
+import { Flex, Tab, Box, BoxProps } from 'pouncejs';
 
 /**
  * These props are automatically passed by `TabList` and not by the developer. At the export level
  * of this component, we "hide" them from the developer by exporting this component `as React.FC`
  */
-interface PrivateBorderedTabProps {
+interface OverviewTabProps {
   /** Whether the tab is selected */
   isSelected: boolean;
 
@@ -31,38 +31,37 @@ interface PrivateBorderedTabProps {
   isFocused: boolean;
 }
 
-const BorderedTab: React.FC<PrivateBorderedTabProps> = ({ isSelected, isFocused, children }) => {
-  const selectedColor = 'blue-400';
-  const focusedColor = 'navyblue-300';
-
-  let borderColor: HeadingProps['borderColor'];
+const OverviewTab: React.FC<OverviewTabProps> = ({ isSelected, isFocused, children }) => {
+  let backgroundColor: BoxProps['backgroundColor'];
   if (isSelected) {
-    borderColor = selectedColor;
+    backgroundColor = 'blue-400';
   } else if (isFocused) {
-    borderColor = focusedColor;
+    backgroundColor = 'navyblue-300';
   } else {
-    borderColor = 'transparent';
+    backgroundColor = 'navyblue-400';
   }
 
   return (
     <Tab>
-      <Heading
+      <Box
         size="x-small"
-        as="h4"
-        borderBottom="3px solid"
         zIndex={5}
-        mx={4}
-        py={6}
-        transition="border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms"
-        borderColor={borderColor}
+        mr={4}
+        px={5}
+        py={3}
+        borderRadius="pill"
+        transition="background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms"
+        backgroundColor={backgroundColor}
         _hover={{
-          borderColor: !isSelected ? focusedColor : undefined,
+          backgroundColor: !isSelected ? 'navyblue-300' : undefined,
         }}
       >
-        {children}
-      </Heading>
+        <Flex align="center" spacing={2}>
+          {children}
+        </Flex>
+      </Box>
     </Tab>
   );
 };
 
-export default React.memo(BorderedTab) as React.FC;
+export default React.memo(OverviewTab) as React.FC;

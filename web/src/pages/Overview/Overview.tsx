@@ -17,11 +17,70 @@
  */
 
 import React from 'react';
-import { Flex } from 'pouncejs';
+import { invert } from 'lodash';
+import { Flex, Tabs, TabPanels, TabList, TabPanel, Icon, Text } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
+import useUrlParams from 'Hooks/useUrlParams';
+import AlertsOverview from './AlertsOverview';
+import CloudSecurityOverview from './CloudSecurityOverview';
+import DataOverview from './DataOverview';
+import OverviewTab from './OverviewTab';
+
+export interface OverviewUrlParams {
+  tab?: 'alerts' | 'cloudSecurity' | 'data';
+}
+
+const tabToIndex: Record<OverviewUrlParams['tab'], number> = {
+  alerts: 0,
+  cloudSecurity: 1,
+  data: 2,
+};
+
+const indexToTab = invert(tabToIndex) as Record<number, OverviewUrlParams['tab']>;
 
 const Overview: React.FC = () => {
-  return <Flex>Overview Page</Flex>;
+  const {
+    urlParams: { tab },
+    setUrlParams,
+  } = useUrlParams<OverviewUrlParams>();
+
+  React.useLayoutEffect(() => {
+    if (!tab) {
+      setUrlParams({ tab: 'alerts' });
+    }
+  }, [tab, useUrlParams]);
+
+  return (
+    <Flex>
+      <Tabs index={tabToIndex[tab]} onChange={index => setUrlParams({ tab: indexToTab[index] })}>
+        <TabList>
+          <OverviewTab>
+            <Icon type="alert-circle" />
+            <Text>Alerts</Text>
+          </OverviewTab>
+          <OverviewTab>
+            <Icon type="alert-circle" />
+            <Text>Cloud Security</Text>
+          </OverviewTab>
+          <OverviewTab>
+            <Icon type="alert-circle" />
+            <Text>Data</Text>
+          </OverviewTab>
+        </TabList>
+        <TabPanels>
+          <TabPanel lazy>
+            <AlertsOverview />
+          </TabPanel>
+          <TabPanel lazy>
+            <CloudSecurityOverview />
+          </TabPanel>
+          <TabPanel lazy>
+            <DataOverview />
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
+    </Flex>
+  );
 };
 
 export default withSEO({ title: 'Overview' })(Overview);
