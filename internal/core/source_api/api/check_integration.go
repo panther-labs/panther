@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -112,21 +113,22 @@ func (api *API) checkAwsS3Integration(input *models.CheckIntegrationInput) *mode
 		out.GetObjectStatus = &getObjectCheck
 	}
 
-	notificationsCheck, skipped := checkBucketNotifications(s3Client, input, api.Config, bucketRegion)
+	notificationsCheck, skipped := checkBucketNotifications(context.TODO(), s3Client, input, api.Config, *bucketRegion)
 	if !skipped {
 		out.BucketNotificationsStatus = &notificationsCheck
 	}
 	return out
 }
 
-func checkBucketNotifications(s3Client s3iface.S3API, input *models.CheckIntegrationInput, config Config, bucketRegion *string) (
+func checkBucketNotifications(
+	ctx context.Context, s3Client s3iface.S3API, input *models.CheckIntegrationInput, config Config, bucketRegion string) (
 	h models.SourceIntegrationItemStatus, skipped bool) {
 
 	if !input.ManagedBucketNotifications {
 		return models.SourceIntegrationItemStatus{}, true
 	}
 
-	out, err := s3Client.GetBucketNotificationConfiguration(&s3.GetBucketNotificationConfigurationRequest{
+	out, err := s3Client.GetBucketNotificationConfigurationWithContext(ctx, &s3.GetBucketNotificationConfigurationRequest{
 		Bucket:              &input.S3Bucket,
 		ExpectedBucketOwner: &input.AWSAccountID,
 	})
@@ -141,7 +143,7 @@ func checkBucketNotifications(s3Client s3iface.S3API, input *models.CheckIntegra
 	topicARN := arn.ARN{
 		Partition: config.AWSPartition, // Note: Assume the onboarded bucket is in the same AWS partition as Panther
 		Service:   "sns",
-		Region:    *bucketRegion,
+		Region:    bucketRegion,
 		AccountID: input.AWSAccountID,
 		Resource:  "panther-notifications-topic",
 	}.String()
@@ -152,7 +154,6 @@ func checkBucketNotifications(s3Client s3iface.S3API, input *models.CheckIntegra
 		// search the prefix in the configurations
 		ok := false
 		for _, c := range out.TopicConfigurations {
-			zap.S().Warn("topic arn", topicARN, aws.StringValue(c.TopicArn))
 			if topicARN != aws.StringValue(c.TopicArn) {
 				continue
 			}
@@ -173,6 +174,9 @@ func checkBucketNotifications(s3Client s3iface.S3API, input *models.CheckIntegra
 				}
 			}
 			ok = rulePrefix == p
+			if ok {
+				break
+			}
 		}
 		if !ok {
 			notFound = append(notFound, p) // checked all topic configs, couldn't find the prefix
