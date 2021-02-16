@@ -50,11 +50,11 @@ func (API) PatchPack(input *models.PatchPackInput) *events.APIGatewayProxyRespon
 	// Note: currently only support `enabled` and `enabledRelease` updates from the `patch` operation
 	// But you cannot update version and enabled status in same request
 	if input.VersionID != 0 && input.VersionID != oldItem.PackVersion.ID {
+		// we are updating the version
 		return updateVersion(input, oldItem)
 	}
 	// we are updating the enabled status
 	return updatePackEnabledStatus(input, oldItem)
-	// we are updating the version
 }
 
 // updatePackEnabledStatus will update the enabled status of the pack and the detections in it
