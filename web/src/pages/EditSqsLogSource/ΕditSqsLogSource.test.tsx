@@ -87,12 +87,12 @@ describe('EditSqsLogSource', () => {
       }),
     ];
     const { getByText, getByLabelText, findByText } = render(
-      <Route path={urls.logAnalysis.sources.edit(':id', ':type')}>
+      <Route path={urls.integrations.logSources.edit(':id', ':type')}>
         <EditSqsLogSource />
       </Route>,
       {
         mocks,
-        initialRoute: urls.logAnalysis.sources.edit(logSource.integrationId, 'sqs'),
+        initialRoute: urls.integrations.logSources.edit(logSource.integrationId, 'sqs'),
       }
     );
 

@@ -32,10 +32,12 @@ import {
   ComplianceNavigation,
   LogAnalysisNavigation,
   AnalysisNavigationLinks,
+  IntegrationsNavigation,
 } from './SecondaryNavigations';
 
 const COMPLIANCE_NAV_KEY = 'compliance';
 const LOG_ANALYSIS_NAV_KEY = 'logAnalysis';
+const INTEGRATIONS_NAV_KEY = 'integrations';
 const SETTINGS_NAV_KEY = 'settings';
 
 export type NavigationLinks = {
@@ -44,7 +46,11 @@ export type NavigationLinks = {
   label: string;
 };
 
-type NavKeys = typeof COMPLIANCE_NAV_KEY | typeof LOG_ANALYSIS_NAV_KEY | typeof SETTINGS_NAV_KEY;
+type NavKeys =
+  | typeof COMPLIANCE_NAV_KEY
+  | typeof LOG_ANALYSIS_NAV_KEY
+  | typeof SETTINGS_NAV_KEY
+  | typeof INTEGRATIONS_NAV_KEY;
 
 const Navigation = () => {
   const {
@@ -62,12 +68,16 @@ const Navigation = () => {
       pathname.includes(navLinks.to)
     );
     const isSettingsPage = pathname.includes(urls.settings.home());
+    const isIntegrationsPage = pathname.includes(urls.integrations.home());
 
     if (isCompliancePage) {
       return COMPLIANCE_NAV_KEY;
     }
     if (isUnderAnalysisNav) {
       return LOG_ANALYSIS_NAV_KEY;
+    }
+    if (isIntegrationsPage) {
+      return INTEGRATIONS_NAV_KEY;
     }
     if (isSettingsPage) {
       return SETTINGS_NAV_KEY;
@@ -83,6 +93,7 @@ const Navigation = () => {
 
   const isComplianceNavigationActive = secondaryNav === COMPLIANCE_NAV_KEY;
   const isLogAnalysisNavigationActive = secondaryNav === LOG_ANALYSIS_NAV_KEY;
+  const isIntegrationsNavigationActive = secondaryNav === INTEGRATIONS_NAV_KEY;
   const isSettingsNavigationActive = secondaryNav === SETTINGS_NAV_KEY;
 
   return (
@@ -146,6 +157,18 @@ const Navigation = () => {
               }
             >
               <ComplianceNavigation />
+            </NavGroup>
+          </Box>
+          <Box as="li" mb={2}>
+            <NavGroup
+              active={isIntegrationsNavigationActive}
+              icon="integrations"
+              label="Integrations"
+              onSelect={() =>
+                setSecondaryNav(isIntegrationsNavigationActive ? null : INTEGRATIONS_NAV_KEY)
+              }
+            >
+              <IntegrationsNavigation />
             </NavGroup>
           </Box>
           <Box as="li" mb={2}>

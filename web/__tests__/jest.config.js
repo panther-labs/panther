@@ -57,6 +57,7 @@ module.exports = {
 
   // report results for each file
   verbose: true,
+  testSequencer: require.resolve('./jestSequencer'),
 
   // Helps in the CLI by adding typeahead searches for filenames and testnames
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],

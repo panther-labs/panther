@@ -89,7 +89,7 @@ describe('ListDestinations', () => {
       const editButton = await findByText('Edit');
       expect(editButton.parentElement).toHaveAttribute(
         'href',
-        urls.settings.destinations.edit(destinations[index].outputId)
+        urls.integrations.destinations.edit(destinations[index].outputId)
       );
 
       // close menu

@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Navigation renders with active links 1`] = `
-.panther-48 {
+.panther-54 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -15,7 +15,7 @@ exports[`Navigation renders with active links 1`] = `
   background-color: #141c2a;
 }
 
-.panther-47 {
+.panther-53 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -40,7 +40,7 @@ exports[`Navigation renders with active links 1`] = `
   display: block;
 }
 
-.panther-41 {
+.panther-47 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -204,11 +204,11 @@ exports[`Navigation renders with active links 1`] = `
   margin-left: auto;
 }
 
-.panther-35 {
+.panther-41 {
   margin-top: auto;
 }
 
-.panther-34 {
+.panther-40 {
   -webkit-transition: color 0.1s ease-out;
   transition: color 0.1s ease-out;
   font-weight: 500;
@@ -217,20 +217,20 @@ exports[`Navigation renders with active links 1`] = `
   color: #7fd3ff;
 }
 
-.panther-34:hover {
+.panther-40:hover {
   color: #ace2ff;
 }
 
-.panther-34:focus {
+.panther-40:focus {
   color: #ace2ff;
 }
 
-.panther-34:active,
-.panther-34[data-active=true] {
+.panther-40:active,
+.panther-40[data-active=true] {
   color: #11a5f3;
 }
 
-.panther-33 {
+.panther-39 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -249,18 +249,18 @@ exports[`Navigation renders with active links 1`] = `
   color: #f6f6f6;
 }
 
-.panther-33:hover {
+.panther-39:hover {
   color: #f6f6f6;
   background-color: #1d2a3f;
 }
 
-.panther-46 {
+.panther-52 {
   padding: 16px;
   background-color: #0f1623;
   margin-top: 16px;
 }
 
-.panther-45 {
+.panther-51 {
   width: 100%;
   cursor: pointer;
   color: #f6f6f6;
@@ -271,7 +271,7 @@ exports[`Navigation renders with active links 1`] = `
   transition: all 0.1s linear;
 }
 
-.panther-44 {
+.panther-50 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -282,11 +282,11 @@ exports[`Navigation renders with active links 1`] = `
   align-items: center;
 }
 
-.panther-44>*:not(:last-child) {
+.panther-50>*:not(:last-child) {
   margin-right: 8px;
 }
 
-.panther-42 {
+.panther-48 {
   width: 40px;
   display: -webkit-box;
   display: -webkit-flex;
@@ -312,11 +312,11 @@ exports[`Navigation renders with active links 1`] = `
   flex-shrink: 0;
 }
 
-.panther-42:hover {
+.panther-48:hover {
   background-color: #7268a6;
 }
 
-.panther-43 {
+.panther-49 {
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -328,11 +328,11 @@ exports[`Navigation renders with active links 1`] = `
     id="main-header"
   />
   <aside
-    class="panther-48"
+    class="panther-54"
   >
     <nav
       aria-label="Main"
-      class="panther-47"
+      class="panther-53"
     >
       <a
         class="panther-1"
@@ -347,7 +347,7 @@ exports[`Navigation renders with active links 1`] = `
         />
       </a>
       <ul
-        class="panther-41"
+        class="panther-47"
       >
         <hr
           aria-orientation="horizontal"
@@ -515,6 +515,47 @@ exports[`Navigation renders with active links 1`] = `
                 viewBox="0 0 24 24"
               >
                 <path
+                  d="M0 0h24v24H0z"
+                  fill="none"
+                />
+                <path
+                  d="M22.392 16.342v2l-.005.2a4 4 0 01-3.995 3.8H7.437v-2h10.955l.149-.006a2 2 0 001.85-1.994v-2h2zM4.608 7.547h2v1.668a2 2 0 001.856 1.99l.15.005 8.01-.02-1.91-1.911 1.414-1.415 4.243 4.243-4.243 4.243-1.414-1.415 1.745-1.746-1.36.004v.038l-9.486-.025-.149.005a2 2 0 00-1.85 1.833l-.006.157v.667l-2 .001v-.673l.006-.2a4.001 4.001 0 013.543-3.765 3.96 3.96 0 01-.544-1.811l-.005-.2V7.547zm13.784-5.889a4 4 0 013.995 3.8l.005.2v2h-2v-2a2 2 0 00-1.851-1.994l-.15-.006H7.438v-2h10.955z"
+                  fill="#FFF"
+                />
+              </svg>
+              <div
+                class="panther-4"
+              >
+                Integrations
+              </div>
+              <svg
+                class="panther-15"
+                role="presentation"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M7.41 8.58997L12 13.17L16.59 8.58997L18 9.99997L12 16L6 9.99997L7.41 8.58997Z"
+                />
+              </svg>
+            </button>
+          </div>
+        </li>
+        <li
+          class="panther-7"
+        >
+          <div
+            class="panther-17"
+          >
+            <button
+              class="panther-16"
+              type="button"
+            >
+              <svg
+                class="panther-3"
+                role="presentation"
+                viewBox="0 0 24 24"
+              >
+                <path
                   d="M14.077 1c.674 0 1.253.468 1.393 1.102l.022.13.324 2.298.198.1c.149.078.295.162.44.25l.214.135.189.128 2.137-.87a1.44 1.44 0 011.604.423l.076.103.067.112 2.084 3.667a1.458 1.458 0 01-.257 1.733l-.105.092-1.795 1.427.014.192.01.219.003.217-.003.218-.01.219-.014.19 1.799 1.431c.474.38.643 1.009.458 1.583l-.05.13-.06.13-2.063 3.627a1.419 1.419 0 01-1.659.692l-.128-.045-2.112-.862-.205.14c-.143.092-.287.18-.432.263l-.219.12-.18.09-.322 2.285a1.423 1.423 0 01-1.154 1.223l-.13.019-.134.006H9.93a1.425 1.425 0 01-1.393-1.103l-.022-.129-.325-2.3-.197-.098a8.351 8.351 0 01-.44-.25l-.215-.136-.189-.129-2.136.873a1.44 1.44 0 01-1.604-.424l-.076-.103-.067-.112-2.084-3.667a1.458 1.458 0 01.257-1.733l.105-.093 1.794-1.428-.019-.302-.004-.11-.003-.215.003-.215.01-.22.013-.193L1.54 10.4a1.443 1.443 0 01-.46-1.597l.048-.12.065-.125 2.062-3.627a1.419 1.419 0 011.658-.692l.129.044 2.11.862.207-.139c.143-.092.287-.18.432-.263l.219-.12.18-.091.322-2.284a1.423 1.423 0 011.154-1.224l.13-.018L9.93 1h4.147zm-.352 1.833h-3.444l-.418 2.965L9.381 6a6.707 6.707 0 00-1.29.727l-.259.189-.417.318-2.727-1.114-1.739 3.06 2.325 1.848-.063.51a7.521 7.521 0 00-.066.921c0 .218.015.45.043.716l.086.715-2.326 1.85 1.74 3.058 2.734-1.116.42.328c.405.317.827.58 1.27.79l.269.119.482.2.418 2.965h3.444l.419-2.964.482-.201a6.707 6.707 0 001.29-.727l.259-.19.417-.317 2.726 1.113 1.74-3.059-2.325-1.849.063-.51c.044-.362.065-.642.065-.92 0-.224-.013-.448-.041-.714l-.024-.208-.063-.51 2.325-1.85-1.739-3.058-2.734 1.117-.42-.328a6.719 6.719 0 00-1.27-.79L14.626 6l-.482-.2-.419-2.966zm-1.724 5.5A3.67 3.67 0 0115.668 12 3.67 3.67 0 0112 15.667 3.67 3.67 0 018.335 12 3.67 3.67 0 0112 8.333zm0 1.834c-1.01 0-1.833.823-1.833 1.833s.823 1.833 1.833 1.833 1.834-.823 1.834-1.833-.824-1.833-1.834-1.833z"
                 />
               </svg>
@@ -536,16 +577,16 @@ exports[`Navigation renders with active links 1`] = `
           </div>
         </li>
         <li
-          class="panther-35"
+          class="panther-41"
         >
           <a
-            class="panther-34"
+            class="panther-40"
             href="https://docs.runpanther.io/v/release-1.2"
             rel="noopener noreferrer"
             target="_blank"
           >
             <div
-              class="panther-33"
+              class="panther-39"
             >
               <svg
                 class="panther-3"
@@ -593,24 +634,24 @@ exports[`Navigation renders with active links 1`] = `
         </li>
       </ul>
       <div
-        class="panther-46"
+        class="panther-52"
       >
         <button
           aria-describedby="1"
           aria-label="Toggle User Menu"
-          class="panther-45"
+          class="panther-51"
           type="button"
         >
           <div
-            class="panther-44"
+            class="panther-50"
           >
             <div
-              class="panther-42"
+              class="panther-48"
             >
               TT
             </div>
             <div
-              class="panther-43"
+              class="panther-49"
             >
               T. TestSurname
             </div>

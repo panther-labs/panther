@@ -35,11 +35,6 @@ export const analysisNavigationsLinks: NavigationLinks[] = [
     label: 'Overview',
   },
   {
-    to: urls.logAnalysis.sources.list(),
-    icon: 'log-source',
-    label: 'Sources',
-  },
-  {
     to: urls.logAnalysis.customLogs.list(),
     icon: 'source-code',
     label: 'Custom Schemas',

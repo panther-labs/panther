@@ -17,14 +17,11 @@
  */
 
 import React from 'react';
-import { AbstractButton, Alert, Button, Flex, Img, Link, Text, Box } from 'pouncejs';
+import { Alert, Button, Flex, Img, Link, Text, Box } from 'pouncejs';
 import { useFormikContext } from 'formik';
 import FailureStatus from 'Assets/statuses/failure.svg';
 import WaitingStatus from 'Assets/statuses/waiting.svg';
-import SuccessStatus from 'Assets/statuses/success.svg';
 import RealTimeNotification from 'Assets/statuses/real-time-notification.svg';
-import urls from 'Source/urls';
-import LinkButton from 'Components/buttons/LinkButton';
 import { useWizardContext, WizardPanel } from 'Components/Wizard';
 import { extractErrorMessage } from 'Helpers/utils';
 import { ApolloError } from '@apollo/client';
@@ -33,6 +30,7 @@ import { AddS3LogSource } from 'Pages/CreateLogSource/CreateS3LogSource/graphql/
 import { UpdateS3LogSource } from 'Pages/EditS3LogSource/graphql/updateS3LogSource.generated';
 import { S3LogIntegrationDetails } from 'Source/graphql/fragments/S3LogIntegrationDetails.generated';
 import { S3LogSourceWizardValues } from '../S3LogSourceWizard';
+import HealthCheckPanel from './HealthCheckPanel';
 
 type SubmitResult = {
   data: AddS3LogSource & UpdateS3LogSource;
@@ -50,8 +48,13 @@ function getResponseData(result: SubmitResult): S3LogIntegrationDetails {
 
 const ValidationPanel: React.FC = () => {
   const [errorMessage, setErrorMessage] = React.useState('');
-  const { reset: resetWizard, currentStepStatus, setCurrentStepStatus } = useWizardContext();
-  const { initialValues, submitForm, resetForm } = useFormikContext<S3LogSourceWizardValues>();
+  const {
+    reset: resetWizard,
+    currentStepStatus,
+    setCurrentStepStatus,
+    updateData,
+  } = useWizardContext<{ integrationId?: string }>();
+  const { submitForm } = useFormikContext<S3LogSourceWizardValues>();
   const [shouldShowNotificationsScreen, setNotificationScreenVisibility] = React.useState(true);
 
   const [showManagedNotificationsWarning, setShowManagedNotificationsWarning] = React.useState(
@@ -62,9 +65,12 @@ const ValidationPanel: React.FC = () => {
     (async () => {
       try {
         const result = ((await submitForm()) as unknown) as SubmitResult;
-        const { managedBucketNotifications, notificationsConfigurationSucceeded } = getResponseData(
-          result
-        );
+        const {
+          managedBucketNotifications,
+          notificationsConfigurationSucceeded,
+          integrationId: newIntegrationId,
+        } = getResponseData(result);
+        updateData({ integrationId: newIntegrationId });
         /* When this source is created or updated we need to check if user has selected to automate
          * setting up notifications, this can fail while the integration was successfully created
          * so we need to inform user if something went wrong so they can add them manually
@@ -80,7 +86,6 @@ const ValidationPanel: React.FC = () => {
           // info about how they can set them up
           setNotificationScreenVisibility(false);
         }
-
         setErrorMessage('');
         setCurrentStepStatus('PASSING');
       } catch (err) {
@@ -168,43 +173,7 @@ const ValidationPanel: React.FC = () => {
     );
   }
 
-  return (
-    <WizardPanel>
-      <Flex align="center" direction="column" mx="auto" width={375}>
-        <WizardPanel.Heading
-          title="Everything looks good!"
-          subtitle={
-            initialValues.integrationId
-              ? 'Your stack was successfully updated'
-              : 'Your configured stack was deployed successfully and Panther now has permissions to pull data!'
-          }
-        />
-        <Img
-          nativeWidth={120}
-          nativeHeight={120}
-          alt="Stack deployed successfully"
-          src={SuccessStatus}
-        />
-        <WizardPanel.Actions>
-          <Flex direction="column" spacing={4}>
-            <LinkButton to={urls.logAnalysis.sources.list()}>Finish Setup</LinkButton>
-            {!initialValues.integrationId && (
-              <Link
-                as={AbstractButton}
-                variant="discreet"
-                onClick={() => {
-                  resetForm();
-                  resetWizard();
-                }}
-              >
-                Add Another
-              </Link>
-            )}
-          </Flex>
-        </WizardPanel.Actions>
-      </Flex>
-    </WizardPanel>
-  );
+  return <HealthCheckPanel />;
 };
 
 export default ValidationPanel;

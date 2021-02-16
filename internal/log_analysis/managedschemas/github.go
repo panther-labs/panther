@@ -57,7 +57,7 @@ func (p *GitHubRepository) ReleaseFeed(ctx context.Context, sinceTag string) ([]
 		return feed, nil
 	}
 	for i := range feed {
-		if semver.Compare(sinceTag, feed[i].Tag) == 1 {
+		if semver.Compare(sinceTag, feed[i].Tag) == -1 {
 			return feed[i:], nil
 		}
 	}

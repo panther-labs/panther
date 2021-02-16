@@ -29,4 +29,7 @@ fragment S3LogIntegrationDetails on S3LogIntegration {
       ...IntegrationItemHealthDetails
     }
   }
+  managedS3Resources {
+    topicARN
+  }
 }

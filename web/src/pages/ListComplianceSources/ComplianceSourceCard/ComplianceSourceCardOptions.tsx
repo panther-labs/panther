@@ -36,7 +36,7 @@ const ComplianceSourceCardOptions: React.FC<ComplianceSourceCardOptionsProps> = 
     <Dropdown>
       <DropdownButton as={GenericItemCard.OptionsButton} />
       <DropdownMenu>
-        <DropdownLink as={RRLink} to={urls.compliance.sources.edit(source.integrationId)}>
+        <DropdownLink as={RRLink} to={urls.integrations.cloudAccounts.edit(source.integrationId)}>
           Edit
         </DropdownLink>
         <DropdownItem
