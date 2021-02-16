@@ -27,6 +27,8 @@ import (
 const (
 	SubsystemLogProcessor             = "LogProcessor"
 	MetricLogProcessorGetObject       = "GetObject"
+	MetricLogProcessorOutputFiles     = "OutputFiles"
+	MetricLogProcessorOutputBytes     = "OutputBytes"
 	MetricLogProcessorBytesProcessed  = "BytesProcessed"
 	MetricLogProcessorEventsProcessed = "EventsProcessed"
 	MetricLogProcessorEventLatency    = "EventLatency"
@@ -45,12 +47,19 @@ var (
 	BytesProcessed      metrics.Counter
 	EventsProcessed     metrics.Counter
 	EventLatencySeconds metrics.Counter
+	OutputFiles         metrics.Counter
+	OutputBytes         metrics.Counter
 )
 
 func Setup() {
 	CWManager = metrics.NewCWEmbeddedMetrics(os.Stdout)
 	// System-health metrics
 	GetObject = CWManager.NewCounter(MetricLogProcessorGetObject, metrics.UnitCount).
+		With(metrics.SubsystemDimension, SubsystemLogProcessor)
+
+	OutputFiles = CWManager.NewCounter(MetricLogProcessorOutputFiles, metrics.UnitCount).
+		With(metrics.SubsystemDimension, SubsystemLogProcessor)
+	OutputBytes = CWManager.NewCounter(MetricLogProcessorOutputBytes, metrics.UnitBytes).
 		With(metrics.SubsystemDimension, SubsystemLogProcessor)
 
 	// Note that these don't have all the dimensions
