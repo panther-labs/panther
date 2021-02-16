@@ -80,7 +80,7 @@ const RelatedDestinations: React.FC<RelatedDestinationsSectionProps> = ({
   // If component is verbose, we should render all destinations as row with the name of destination displayed
   if (verbose) {
     return (
-      <RRLink to={urls.settings.destinations.list()}>
+      <RRLink to={urls.integrations.destinations.list()}>
         <Flex inline direction="column" spacing={2}>
           <LimitItemDisplay limit={limit}>
             {sortedDestinations.map(destination => (

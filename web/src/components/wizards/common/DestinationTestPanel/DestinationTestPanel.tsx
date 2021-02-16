@@ -124,12 +124,12 @@ const DestinationTestPanel: React.FC = () => {
             If you don{"'"}t feel like it right now, you can always change the configuration later
           </Text>
           <LinkButton
-            to={urls.settings.destinations.edit(destination.outputId)}
+            to={urls.integrations.destinations.edit(destination.outputId)}
             onClick={goToPrevStep}
           >
             Back to Configuration
           </LinkButton>
-          <Link as={RRLink} variant="discreet" to={urls.settings.destinations.list()}>
+          <Link as={RRLink} variant="discreet" to={urls.integrations.destinations.list()}>
             Skip Testing
           </Link>
         </Flex>
@@ -153,7 +153,7 @@ const DestinationTestPanel: React.FC = () => {
             src={NotificationStatus}
           />
           <Text>Signed, sealed, and delivered. You are good to go!</Text>
-          <LinkButton to={urls.settings.destinations.list()}>Finish Setup</LinkButton>
+          <LinkButton to={urls.integrations.destinations.list()}>Finish Setup</LinkButton>
           <Link as={AbstractButton} variant="discreet" onClick={reset}>
             Add Another
           </Link>
@@ -176,7 +176,7 @@ const DestinationTestPanel: React.FC = () => {
             Send Test Alert
           </Button>
         </Box>
-        <Link as={RRLink} variant="discreet" to={urls.settings.destinations.list()}>
+        <Link as={RRLink} variant="discreet" to={urls.integrations.destinations.list()}>
           Finish Setup
         </Link>
       </Flex>

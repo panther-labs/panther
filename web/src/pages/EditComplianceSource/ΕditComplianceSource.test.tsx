@@ -75,10 +75,10 @@ describe('EditComplianceSource', () => {
       }),
     ];
     const { getByText, getByLabelText, getByAltText, findByText } = render(
-      <Route path={urls.compliance.sources.edit(':id')}>
+      <Route path={urls.integrations.cloudAccounts.edit(':id')}>
         <EditComplianceSource />
       </Route>,
-      { mocks, initialRoute: urls.compliance.sources.edit(complianceSource.integrationId) }
+      { mocks, initialRoute: urls.integrations.cloudAccounts.edit(complianceSource.integrationId) }
     );
 
     const nameField = getByLabelText('Name') as HTMLInputElement;
@@ -163,10 +163,10 @@ describe('EditComplianceSource', () => {
       findByText,
       queryByText,
     } = render(
-      <Route path={urls.compliance.sources.edit(':id')}>
+      <Route path={urls.integrations.cloudAccounts.edit(':id')}>
         <EditComplianceSource />
       </Route>,
-      { mocks, initialRoute: urls.compliance.sources.edit(complianceSource.integrationId) }
+      { mocks, initialRoute: urls.integrations.cloudAccounts.edit(complianceSource.integrationId) }
     );
 
     const nameField = getByLabelText('Name') as HTMLInputElement;

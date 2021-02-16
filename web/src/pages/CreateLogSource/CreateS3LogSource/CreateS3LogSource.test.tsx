@@ -29,17 +29,29 @@ import {
   fireClickAndMouseEvents,
   buildS3PrefixLogTypesInput,
   buildIntegrationTemplate,
+  waitForElementToBeRemoved,
+  buildS3LogIntegrationHealth,
+  buildIntegrationItemHealthStatus,
 } from 'test-utils';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { LOG_ONBOARDING_SNS_DOC_URL } from 'Source/constants';
 import { mockListAvailableLogTypes } from 'Source/graphql/queries';
 import { mockGetLogCfnTemplate } from 'Components/wizards/S3LogSourceWizard';
 import { pantherConfig } from 'Source/config';
+import { mockGetS3LogSource } from 'Pages/EditS3LogSource/graphql/getS3LogSource.generated';
 import { mockAddS3LogSource } from './graphql/addS3LogSource.generated';
 import CreateS3LogSource from './CreateS3LogSource';
 
 jest.mock('Helpers/analytics');
 
+const healthyS3 = buildS3LogIntegration({
+  health: buildS3LogIntegrationHealth({
+    kmsKeyStatus: buildIntegrationItemHealthStatus({ healthy: true }),
+    processingRoleStatus: buildIntegrationItemHealthStatus({ healthy: true }),
+    s3BucketStatus: buildIntegrationItemHealthStatus({ healthy: true }),
+    getObjectStatus: buildIntegrationItemHealthStatus({ healthy: true }),
+  }),
+});
 describe('CreateS3LogSource', () => {
   it('can successfully onboard an S3 log source without managed notifications', async () => {
     const logTypesResponse = buildListAvailableLogTypesResponse({
@@ -84,7 +96,16 @@ describe('CreateS3LogSource', () => {
           }),
         },
         data: {
-          addS3LogIntegration: buildS3LogIntegration({ managedBucketNotifications: false }),
+          addS3LogIntegration: buildS3LogIntegration({
+            integrationId: healthyS3.integrationId,
+            managedBucketNotifications: false,
+          }),
+        },
+      }),
+      mockGetS3LogSource({
+        variables: { id: healthyS3.integrationId },
+        data: {
+          getS3LogIntegration: healthyS3,
         },
       }),
     ];
@@ -95,6 +116,7 @@ describe('CreateS3LogSource', () => {
       findByText,
       getAllByLabelText,
       queryByText,
+      getByAriaLabel,
     } = render(<CreateS3LogSource />, {
       mocks,
     });
@@ -138,6 +160,11 @@ describe('CreateS3LogSource', () => {
     expect(queryByText('Setting up managed notifications failed'));
     // ... replaced by a success screen
     fireEvent.click(getByText('I Have Setup Notifications'));
+    const loadingInterfaceElement = getByAriaLabel('Loading...');
+    expect(loadingInterfaceElement).toBeInTheDocument();
+
+    // Wait for it to not exist anymore
+    await waitForElementToBeRemoved(loadingInterfaceElement);
     expect(await findByText('Everything looks good!')).toBeInTheDocument();
     expect(getByText('Finish Setup')).toBeInTheDocument();
     expect(getByText('Add Another')).toBeInTheDocument();
@@ -192,16 +219,29 @@ describe('CreateS3LogSource', () => {
           }),
         },
         data: {
-          addS3LogIntegration: buildS3LogIntegration({ managedBucketNotifications: true }),
+          addS3LogIntegration: buildS3LogIntegration({
+            integrationId: healthyS3.integrationId,
+            managedBucketNotifications: true,
+          }),
+        },
+      }),
+      mockGetS3LogSource({
+        variables: { id: healthyS3.integrationId },
+        data: {
+          getS3LogIntegration: healthyS3,
         },
       }),
     ];
-    const { getByText, getByLabelText, getByAltText, findByText, getAllByLabelText } = render(
-      <CreateS3LogSource />,
-      {
-        mocks,
-      }
-    );
+    const {
+      getByText,
+      getByLabelText,
+      getByAltText,
+      findByText,
+      getAllByLabelText,
+      getByAriaLabel,
+    } = render(<CreateS3LogSource />, {
+      mocks,
+    });
 
     // Fill in  the form and press continue
     fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
@@ -232,7 +272,14 @@ describe('CreateS3LogSource', () => {
     fireEvent.click(getByText('Continue'));
 
     // Expect to see a loading animation while the resource is being validated ...
-    expect(getByAltText('Validating source health...')).toBeInTheDocument();
+    const validatingSourceHealthLoading = getByAltText('Validating source health...');
+    expect(validatingSourceHealthLoading).toBeInTheDocument();
+    await waitForElementToBeRemoved(validatingSourceHealthLoading);
+    const loadingInterfaceElement = getByAriaLabel('Loading...');
+    expect(loadingInterfaceElement).toBeInTheDocument();
+
+    // Wait for it to not exist anymore
+    await waitForElementToBeRemoved(loadingInterfaceElement);
     // Expect to see the success screen directly since notifications have been successfully managed by us
     expect(await findByText('Everything looks good!')).toBeInTheDocument();
     expect(getByText('Finish Setup')).toBeInTheDocument();
@@ -292,13 +339,23 @@ describe('CreateS3LogSource', () => {
           addS3LogIntegration: logSource,
         },
       }),
+      mockGetS3LogSource({
+        variables: { id: logSource.integrationId },
+        data: {
+          getS3LogIntegration: healthyS3,
+        },
+      }),
     ];
-    const { getByText, getByLabelText, getByAltText, findByText, getAllByLabelText } = render(
-      <CreateS3LogSource />,
-      {
-        mocks,
-      }
-    );
+    const {
+      getByText,
+      getByLabelText,
+      getByAltText,
+      findByText,
+      getAllByLabelText,
+      getByAriaLabel,
+    } = render(<CreateS3LogSource />, {
+      mocks,
+    });
 
     // Fill in  the form and press continue
     fireEvent.change(getByLabelText('Name'), { target: { value: logSource.integrationLabel } });
@@ -339,6 +396,13 @@ describe('CreateS3LogSource', () => {
     expect(getByText('steps found here')).toHaveAttribute('href', LOG_ONBOARDING_SNS_DOC_URL);
     // ... replaced by a success screen
     fireEvent.click(getByText('I Have Setup Notifications'));
+
+    const loadingInterfaceElement = getByAriaLabel('Loading...');
+    expect(loadingInterfaceElement).toBeInTheDocument();
+
+    // Wait for it to not exist anymore
+    await waitForElementToBeRemoved(loadingInterfaceElement);
+
     expect(await findByText('Everything looks good!')).toBeInTheDocument();
     expect(getByText('Finish Setup')).toBeInTheDocument();
     expect(getByText('Add Another')).toBeInTheDocument();

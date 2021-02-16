@@ -109,7 +109,10 @@ describe('EditDestination', () => {
 
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can successfully edit Github destination', async () => {
@@ -159,7 +162,10 @@ describe('EditDestination', () => {
 
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can successfully edit Jira destination', async () => {
@@ -215,7 +221,10 @@ describe('EditDestination', () => {
 
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can successfully edit PagerDuty destination', async () => {
@@ -266,7 +275,10 @@ describe('EditDestination', () => {
 
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can successfully edit SQS destination', async () => {
@@ -316,7 +328,10 @@ describe('EditDestination', () => {
 
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can successfully edit SNS destination', async () => {
@@ -367,7 +382,10 @@ describe('EditDestination', () => {
 
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can successfully edit Custom Webhook destination', async () => {
@@ -417,7 +435,10 @@ describe('EditDestination', () => {
 
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can successfully edit MS Teams destination', async () => {
@@ -467,7 +488,10 @@ describe('EditDestination', () => {
 
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can successfully edit Opsgenie destination', async () => {
@@ -523,7 +547,10 @@ describe('EditDestination', () => {
 
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can successfully edit Asana destination', async () => {
@@ -574,6 +601,9 @@ describe('EditDestination', () => {
 
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 });

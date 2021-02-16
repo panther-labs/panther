@@ -17,24 +17,27 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading, Text } from 'pouncejs';
-import BlankCanvasImg from 'Assets/illustrations/blank-canvas.svg';
-import urls from 'Source/urls';
-import LinkButton from 'Components/buttons/LinkButton';
+import { Box, Flex, Text, Img } from 'pouncejs';
+import WarningIcon from 'Assets/icons/warning.svg';
 
-const ListResourcesPageEmptyDataFallback: React.FC = () => {
+interface WarningProps {
+  title: string;
+  description?: string;
+}
+const HealthCheckWarning: React.FC<WarningProps> = ({ title, description }) => {
   return (
-    <Flex justify="center" align="center" direction="column">
-      <Box my={10}>
-        <img alt="Black Canvas Illustration" src={BlankCanvasImg} width="auto" height={300} />
+    <Flex spacing={4} backgroundColor="navyblue-500" p={4}>
+      <Img src={WarningIcon} alt="Warning" nativeWidth={24} nativeHeight={24} />
+      <Box>
+        <Text fontSize="medium" pb={2}>
+          {title}
+        </Text>
+        <Text fontSize="small" color="gray-300">
+          {description}
+        </Text>
       </Box>
-      <Heading mb={6}>No resources found</Heading>
-      <Text color="gray-300" textAlign="center" mb={8}>
-        You don{"'"}t have any resources connected to your Panther account
-      </Text>
-      <LinkButton to={urls.integrations.cloudAccounts.create()}>Get started</LinkButton>
     </Flex>
   );
 };
 
-export default ListResourcesPageEmptyDataFallback;
+export default React.memo(HealthCheckWarning);
