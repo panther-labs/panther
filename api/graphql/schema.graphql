@@ -797,7 +797,7 @@ input AddS3LogIntegrationInput {
   kmsKey: String
   s3PrefixLogTypes: [S3PrefixLogTypesInput!]!
   managedBucketNotifications: Boolean!
-  logSourceId: ID
+  logSourceId: ID!
 }
 
 input SqsLogConfigInput {
