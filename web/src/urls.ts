@@ -35,6 +35,9 @@ import {
 const urlEncode = (str: string) => encodeURIComponent(str).replace(/%3A/g, unescape);
 
 const urls = {
+  overview: {
+    home: () => '/overview/',
+  },
   detections: {
     home: () => '/detections/',
     list: () => urls.detections.home(),

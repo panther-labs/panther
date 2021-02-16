@@ -67,6 +67,7 @@ import ListDataModelsPage from 'Pages/ListDataModels';
 import EditCustomLogPage from 'Pages/EditCustomLog';
 import ListDetectionsPage from 'Pages/ListDetections';
 import ListPacksPage from 'Pages/ListPacks';
+import Overview from 'Pages/Overview';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -96,6 +97,7 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
             <APIErrorFallback>
               <Switch>
                 <Route exact path="/" component={LandingPage} />
+                <Route exact path={urls.overview.home()} component={Overview} />
                 <Route exact path={urls.detections.list()} component={ListDetectionsPage} />
                 {/* ******************* COMPLIANCE ***************************** */}
                 <Redirect exact from={urls.compliance.home()} to={urls.compliance.overview()} />
