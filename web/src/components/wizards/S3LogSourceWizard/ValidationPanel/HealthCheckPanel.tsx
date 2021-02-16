@@ -80,7 +80,7 @@ const HealthCheckPanel: React.FC = () => {
                 <Link
                   as={RRLink}
                   variant="discreet"
-                  to={urls.logAnalysis.sources.edit(wizardData.integrationId, 's3')}
+                  to={urls.integrations.logSources.edit(wizardData.integrationId, 's3')}
                 >
                   Edit Source Info
                 </Link>
@@ -110,7 +110,7 @@ const HealthCheckPanel: React.FC = () => {
         />
         <WizardPanel.Actions>
           <Flex direction="column" spacing={4}>
-            <LinkButton to={urls.logAnalysis.sources.list()}>Finish Setup</LinkButton>
+            <LinkButton to={urls.integrations.logSources.list()}>Finish Setup</LinkButton>
             {!initialValues.integrationId && (
               <Link
                 as={AbstractButton}

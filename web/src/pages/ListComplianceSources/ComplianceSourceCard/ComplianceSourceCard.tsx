@@ -52,7 +52,7 @@ const ComplianceSourceCard: React.FC<ComplianceSourceCardProps> = ({ source }) =
         <GenericItemCard.Header>
           <GenericItemCard.Heading>
             {!isCreatedByPanther ? (
-              <Link as={RRLink} to={urls.compliance.sources.edit(source.integrationId)}>
+              <Link as={RRLink} to={urls.integrations.cloudAccounts.edit(source.integrationId)}>
                 {source.integrationLabel}
               </Link>
             ) : (

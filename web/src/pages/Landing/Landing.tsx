@@ -71,7 +71,11 @@ const LandingPage: React.FC = () => {
                 Connect AWS accounts, scan resources and detect misconfigurations
               </Text>
               <Box width={225}>
-                <LinkButton to={urls.compliance.sources.create()} fullWidth variantColor="teal">
+                <LinkButton
+                  to={urls.integrations.cloudAccounts.create()}
+                  fullWidth
+                  variantColor="teal"
+                >
                   Onboard an AWS account
                 </LinkButton>
               </Box>
@@ -85,7 +89,11 @@ const LandingPage: React.FC = () => {
                 Connect your log buckets and analyze data with rules
               </Text>
               <Box width={225}>
-                <LinkButton to={urls.logAnalysis.sources.create()} fullWidth variantColor="teal">
+                <LinkButton
+                  to={urls.integrations.logSources.create()}
+                  fullWidth
+                  variantColor="teal"
+                >
                   Connect S3 Buckets
                 </LinkButton>
               </Box>
@@ -104,7 +112,7 @@ const LandingPage: React.FC = () => {
                 Add destinations so Panther can notify you of policy and rule findings
               </Text>
               <Box width={225}>
-                <LinkButton to={urls.settings.destinations.list()} fullWidth variantColor="red">
+                <LinkButton to={urls.integrations.destinations.list()} fullWidth variantColor="red">
                   Setup Destinations
                 </LinkButton>
               </Box>

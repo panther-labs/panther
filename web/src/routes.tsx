@@ -126,21 +126,6 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   path={urls.compliance.resources.details(':id')}
                   component={ResourceDetailsPage}
                 />
-                <Route
-                  exact
-                  path={urls.compliance.sources.list()}
-                  component={ListComplianceSourcesPage}
-                />
-                <Route
-                  exact
-                  path={urls.compliance.sources.create()}
-                  component={CreateComplianceSourcePage}
-                />
-                <Route
-                  exact
-                  path={urls.compliance.sources.edit(':id')}
-                  component={EditComplianceSourcePage}
-                />
                 {/* ******************* LOG ANALYSIS ***************************** */}
                 <Redirect exact from={urls.logAnalysis.home()} to={urls.logAnalysis.overview()} />
                 <Redirect
@@ -163,31 +148,6 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 />
                 <Route
                   exact
-                  path={urls.logAnalysis.sources.list()}
-                  component={ListLogSourcesPage}
-                />
-                <Route
-                  exact
-                  path={urls.logAnalysis.sources.create(':type')}
-                  component={CreateLogSourcePage}
-                />
-                <Route
-                  exact
-                  path={urls.logAnalysis.sources.create()}
-                  component={LogSourceOnboarding}
-                />
-                <Route
-                  exact
-                  path={urls.logAnalysis.sources.edit(':id', 's3')}
-                  component={EditS3LogSourcePage}
-                />
-                <Route
-                  exact
-                  path={urls.logAnalysis.sources.edit(':id', 'sqs')}
-                  component={EditSqsLogSource}
-                />
-                <Route
-                  exact
                   path={urls.logAnalysis.dataModels.list()}
                   component={ListDataModelsPage}
                 />
@@ -206,12 +166,73 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   from={urls.logAnalysis.dataModels.details(':id')}
                   to={urls.logAnalysis.dataModels.edit(':id')}
                 />
+                <Route exact path={urls.packs.list()} component={ListPacksPage} />
+                {/* ******************* INTEGRATIONS ***************************** */}
                 <Redirect
                   exact
-                  from={`${urls.logAnalysis.sources.list()}:type`}
-                  to={urls.logAnalysis.sources.list()}
+                  from={urls.integrations.home()}
+                  to={urls.integrations.logSources.list()}
                 />
-                <Route exact path={urls.packs.list()} component={ListPacksPage} />
+                <Redirect
+                  exact
+                  from={`${urls.integrations.logSources.list()}:type`}
+                  to={urls.integrations.logSources.list()}
+                />
+                <Route
+                  exact
+                  path={urls.integrations.logSources.list()}
+                  component={ListLogSourcesPage}
+                />
+                <Route
+                  exact
+                  path={urls.integrations.logSources.create(':type')}
+                  component={CreateLogSourcePage}
+                />
+                <Route
+                  exact
+                  path={urls.integrations.logSources.create()}
+                  component={LogSourceOnboarding}
+                />
+                <Route
+                  exact
+                  path={urls.integrations.logSources.edit(':id', 's3')}
+                  component={EditS3LogSourcePage}
+                />
+                <Route
+                  exact
+                  path={urls.integrations.logSources.edit(':id', 'sqs')}
+                  component={EditSqsLogSource}
+                />
+                <Route
+                  exact
+                  path={urls.integrations.cloudAccounts.list()}
+                  component={ListComplianceSourcesPage}
+                />
+                <Route
+                  exact
+                  path={urls.integrations.cloudAccounts.create()}
+                  component={CreateComplianceSourcePage}
+                />
+                <Route
+                  exact
+                  path={urls.integrations.cloudAccounts.edit(':id')}
+                  component={EditComplianceSourcePage}
+                />
+                <Route
+                  exact
+                  path={urls.integrations.destinations.create()}
+                  component={CreateDestinationPage}
+                />
+                <Route
+                  exact
+                  path={urls.integrations.destinations.edit(':id')}
+                  component={EditDestinationPage}
+                />
+                <Route
+                  exact
+                  path={urls.integrations.destinations.list()}
+                  component={ListDestinationsPage}
+                />
                 {/* ******************* SETTINGS ***************************** */}
                 <Redirect exact from={urls.settings.home()} to={urls.settings.general()} />
                 <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />
@@ -238,21 +259,6 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   to={urls.settings.globalPythonModules.edit(':id')}
                 />
                 <Route exact path={urls.settings.users()} component={UsersPage} />
-                <Route
-                  exact
-                  path={urls.settings.destinations.create()}
-                  component={CreateDestinationPage}
-                />
-                <Route
-                  exact
-                  path={urls.settings.destinations.edit(':id')}
-                  component={EditDestinationPage}
-                />
-                <Route
-                  exact
-                  path={urls.settings.destinations.list()}
-                  component={ListDestinationsPage}
-                />
                 <Route
                   exact
                   path={urls.logAnalysis.customLogs.create()}

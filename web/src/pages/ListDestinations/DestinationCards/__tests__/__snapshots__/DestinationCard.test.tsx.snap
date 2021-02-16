@@ -271,7 +271,7 @@ exports[`Generic Destination Card should match snapshot 1`] = `
             >
               <a
                 class="panther-1"
-                href="/settings/destinations/8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7/edit/"
+                href="/integrations/destinations/8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7/edit/"
               >
                 Accountability
               </a>

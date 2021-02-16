@@ -137,7 +137,10 @@ describe('CreateDestination', () => {
 
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can create a Github destination', async () => {
@@ -187,7 +190,10 @@ describe('CreateDestination', () => {
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can create a Jira destination', async () => {
@@ -253,7 +259,10 @@ describe('CreateDestination', () => {
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can create a PagerDuty destination', async () => {
@@ -302,7 +311,10 @@ describe('CreateDestination', () => {
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can create a SQS destination', async () => {
@@ -350,7 +362,10 @@ describe('CreateDestination', () => {
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can create a SNS destination', async () => {
@@ -400,7 +415,10 @@ describe('CreateDestination', () => {
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can create a Webhook destination', async () => {
@@ -448,7 +466,10 @@ describe('CreateDestination', () => {
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can create a Teams destination', async () => {
@@ -496,7 +517,10 @@ describe('CreateDestination', () => {
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can create a Opsgenie destination', async () => {
@@ -544,7 +568,10 @@ describe('CreateDestination', () => {
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 
   it('can create a Asana destination', async () => {
@@ -601,6 +628,9 @@ describe('CreateDestination', () => {
     fireEvent.click(getByText('Add Destination'));
     // Expect success screen with proper redirect link
     expect(await findByText('Everything looks good!'));
-    expect(getByText('Finish Setup')).toHaveAttribute('href', urls.settings.destinations.list());
+    expect(getByText('Finish Setup')).toHaveAttribute(
+      'href',
+      urls.integrations.destinations.list()
+    );
   });
 });

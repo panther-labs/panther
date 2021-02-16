@@ -103,7 +103,7 @@ const LogSourceOnboarding: React.FC = () => {
                   logo={config.logo}
                   title={config.title}
                   disabled={config.disabled}
-                  to={`${urls.logAnalysis.sources.create(config.type)}`}
+                  to={`${urls.integrations.logSources.create(config.type)}`}
                 />
               ))}
             </SimpleGrid>

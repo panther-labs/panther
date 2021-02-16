@@ -40,7 +40,7 @@ const LogSourceCardOptions: React.FC<LogSourceCardOptionsProps> = ({ source }) =
   switch (source.integrationType) {
     case LogIntegrationsEnum.sqs:
       castedSource = source as SqsLogSourceIntegration;
-      logSourceEditUrl = urls.logAnalysis.sources.edit(source.integrationId, 'sqs');
+      logSourceEditUrl = urls.integrations.logSources.edit(source.integrationId, 'sqs');
       break;
     case LogIntegrationsEnum.s3:
     default:
@@ -49,7 +49,7 @@ const LogSourceCardOptions: React.FC<LogSourceCardOptionsProps> = ({ source }) =
       if (castedSource.managedS3Resources?.topicARN) {
         description += `. The SNS topic created by Panther will also be kept (${castedSource.managedS3Resources.topicARN})`;
       }
-      logSourceEditUrl = urls.logAnalysis.sources.edit(source.integrationId, 's3');
+      logSourceEditUrl = urls.integrations.logSources.edit(source.integrationId, 's3');
   }
 
   return (

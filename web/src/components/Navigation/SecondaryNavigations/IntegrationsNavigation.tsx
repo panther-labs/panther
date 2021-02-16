@@ -17,24 +17,36 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading, Text } from 'pouncejs';
-import BlankCanvasImg from 'Assets/illustrations/blank-canvas.svg';
+import { Flex } from 'pouncejs';
+import FadeInTrail from 'Components/utils/FadeInTrail';
 import urls from 'Source/urls';
-import LinkButton from 'Components/buttons/LinkButton';
+import NavLink from '../NavLink';
 
-const ListResourcesPageEmptyDataFallback: React.FC = () => {
+const IntegrationsNavigation: React.FC = () => {
   return (
-    <Flex justify="center" align="center" direction="column">
-      <Box my={10}>
-        <img alt="Black Canvas Illustration" src={BlankCanvasImg} width="auto" height={300} />
-      </Box>
-      <Heading mb={6}>No resources found</Heading>
-      <Text color="gray-300" textAlign="center" mb={8}>
-        You don{"'"}t have any resources connected to your Panther account
-      </Text>
-      <LinkButton to={urls.integrations.cloudAccounts.create()}>Get started</LinkButton>
+    <Flex direction="column" as="ul">
+      <FadeInTrail as="li">
+        <NavLink
+          isSecondary
+          icon="log-source"
+          to={urls.integrations.logSources.list()}
+          label="Log Sources"
+        />
+        <NavLink
+          isSecondary
+          icon="cloud-security"
+          to={urls.integrations.cloudAccounts.list()}
+          label="Cloud Accounts"
+        />
+        <NavLink
+          isSecondary
+          icon="output"
+          to={urls.integrations.destinations.list()}
+          label="Alert Destinations"
+        />
+      </FadeInTrail>
     </Flex>
   );
 };
 
-export default ListResourcesPageEmptyDataFallback;
+export default React.memo(IntegrationsNavigation);
