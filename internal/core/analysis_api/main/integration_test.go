@@ -49,7 +49,7 @@ import (
 const (
 	tableName           = "panther-analysis"
 	packTableName       = "panther-analysis-packs"
-	analysesRoot        = "./test_analyses"
+	analysesRoot        = "./bulk_test_resources/test_analyses"
 	analysesZipLocation = "./bulk_upload.zip"
 
 	bulkTestDataDirPath              = "./bulk_test_resources"
@@ -129,7 +129,7 @@ var (
 		Description: "Example LogType Schema",
 		Enabled:     true,
 		ID:          "DataModelTypeAnalysis",
-		LogTypes:    []string{"Custom.Log.1"},
+		LogTypes:    []string{"Crowdstrike.DNSRequest"},
 		Mappings: []models.DataModelMapping{
 			{
 				Name: "source_ip",
@@ -142,7 +142,7 @@ var (
 		Description: "Example LogType Schema",
 		Enabled:     true,
 		ID:          "SecondDataModelTypeAnalysis",
-		LogTypes:    []string{"Custom.Log.2"},
+		LogTypes:    []string{"Crowdstrike.NetworkConnect"},
 		Mappings: []models.DataModelMapping{
 			{
 				Name: "source_ip",
@@ -155,7 +155,7 @@ var (
 		Description: "Example LogType Schema",
 		Enabled:     false,
 		ID:          "ThirdDataModelTypeAnalysis",
-		LogTypes:    []string{"Custom.Log.2"},
+		LogTypes:    []string{"Crowdstrike.NetworkConnect"},
 		Mappings: []models.DataModelMapping{
 			{
 				Name: "source_ip",
@@ -313,8 +313,6 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("SaveRuleInvalidTestInputJson", saveRuleInvalidTestInputJSON)
 
 		t.Run("TestFailCreatePolicyInvalidResourceType", testFailCreatePolicyInvalidResourceType)
-
-		t.Run("PollAnalysisPacks", pollPacks)
 	})
 	if t.Failed() {
 		return
@@ -328,7 +326,6 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("GetRuleWrongType", getRuleWrongType)
 		t.Run("GetGlobal", getGlobal)
 		t.Run("GetDataModel", getDataModel)
-		t.Run("GetPack", getPack)
 	})
 
 	// NOTE! This will mutate the original policy above!
@@ -363,7 +360,6 @@ func TestIntegrationAPI(t *testing.T) {
 		t.Run("ListDetectionsComplianceProjection", listDetectionsComplianceProjection)
 		t.Run("ListDetectionsAnalysisTypeFilter", listDetectionsAnalysisTypeFilter)
 		t.Run("ListDetectionsComplianceFilter", listDetectionsComplianceFilter)
-		t.Run("ListPacks", listPacks)
 	})
 
 	t.Run("Modify", func(t *testing.T) {
@@ -388,7 +384,15 @@ func TestIntegrationAPI(t *testing.T) {
 
 	// This has to run after the other detection changes since it will
 	// add/remove/update detections
+	t.Run("PollPack", func(t *testing.T) {
+		t.Run("PollAnalysisPacks", pollPacks)
+	})
+	t.Run("ListPacks", func(t *testing.T) {
+		t.Run("GetPack", getPack)
+		t.Run("ListPacks", listPacks)
+	})
 	t.Run("Patch", func(t *testing.T) {
+		t.Run("ListPacks", listPacks)
 		t.Run("PatchPack", patchPack)
 		t.Run("EnumeratePack", enumeratePack)
 	})
@@ -1299,7 +1303,7 @@ func createDataModel(t *testing.T) {
 			Description: "Example LogType Schema",
 			Enabled:     true,
 			ID:          "AnotherDataModelTypeAnalysis",
-			LogTypes:    []string{"Custom.Log.1"},
+			LogTypes:    []string{"Crowdstrike.DNSRequest"},
 			Mappings:    []models.DataModelMapping{},
 		},
 	}
@@ -2966,6 +2970,27 @@ func pollPacks(t *testing.T) {
 	}
 	assert.Equal(t, expected, result)
 	assert.NoError(t, err)
+	// test name contains filter
+	input = models.LambdaInput{
+		ListPacks: &models.ListPacksInput{
+			NameContains: "standard",
+		},
+	}
+	statusCode, err = apiClient.Invoke(&input, &result)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
+	expected = models.ListPacksOutput{
+		Paging: models.Paging{
+			ThisPage:   1,
+			TotalItems: 1,
+			TotalPages: 1,
+		},
+		Packs: []models.Pack{
+			*packOriginalReleaseStandardSet,
+		},
+	}
+	assert.Equal(t, expected, result)
+	assert.NoError(t, err)
 
 	// test detection removed from a pack ??
 
@@ -3063,7 +3088,7 @@ func enumeratePack(t *testing.T) {
 }
 
 func patchPack(t *testing.T) {
-	// disable pack
+	// enable pack
 	var result models.Pack
 	input := models.LambdaInput{
 		PatchPack: &models.PatchPackInput{
@@ -3082,7 +3107,7 @@ func patchPack(t *testing.T) {
 	assert.Equal(t, *packOriginalReleaseStandardSet, result)
 	// TODO: lookup detection in pack and ensure enabled: false
 
-	// enable pack
+	// disable pack
 	input = models.LambdaInput{
 		PatchPack: &models.PatchPackInput{
 			ID:        packOriginalReleaseStandardSet.ID,
