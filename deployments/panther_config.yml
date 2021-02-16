@@ -82,6 +82,21 @@ Infra:
   # If not specified, a layer is created for you based on the PipLayer setting above.
   PythonLayerVersionArn: ''
 
+  # A managed IAM policy which will be attached to the Python rules-engine and policy-engine.
+  #
+  # This lets your rules and policies interact with any AWS infrastructure you would like.
+  PythonManagedPolicyArn: ''
+
+  # A list of IAM roles which the Python rules-engine and policy-engine will be allowed to assume.
+  #
+  # You could instead create a managed policy and use the PythonManagedPolicyArn setting, above.
+  # But if you just need to assume a role, specifying it here requires no additional infrastructure;
+  # it will update the inline IAM policy for the Python engines.
+  #
+  # For example, you could give the Python engines permission to assume the audit role used for
+  # cloud security scanning.
+  PythonAssumableRoleArns: []
+
 Monitoring:
   # This is the arn for the SNS topic you want associated with Panther system alarms.
   # If this is not set alarms will be associated with the SNS topic `panther-alarms`.

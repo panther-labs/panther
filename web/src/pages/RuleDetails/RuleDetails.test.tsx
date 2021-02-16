@@ -292,9 +292,8 @@ describe('RuleDetails', () => {
     await waitForElementToBeRemoved(loadingListingInterfaceElement);
     const withinTabPanel = within(getByTestId('rule-matches-tabpanel'));
     expect(withinTabPanel.getByText('Alert 1')).toBeInTheDocument();
-    expect(withinTabPanel.getByText('Rule Match')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('RULE MATCH')).toBeInTheDocument();
 
-    expect(withinTabPanel.getByText('Destinations')).toBeInTheDocument();
     expect(withinTabPanel.getByText('Log Types')).toBeInTheDocument();
     expect(withinTabPanel.getByText('Events')).toBeInTheDocument();
   });
@@ -360,8 +359,7 @@ describe('RuleDetails', () => {
     await waitForElementToBeRemoved(loadingListingInterfaceElement);
     const withinTabPanel = within(getByTestId('rule-errors-tabpanel'));
     expect(withinTabPanel.getByText('Error 1')).toBeInTheDocument();
-    expect(withinTabPanel.getByText('Rule Error')).toBeInTheDocument();
-    expect(withinTabPanel.getByText('Destinations')).toBeInTheDocument();
+    expect(withinTabPanel.getByText('RULE ERROR')).toBeInTheDocument();
     expect(withinTabPanel.getByText('Log Types')).toBeInTheDocument();
     expect(withinTabPanel.getByText('Events')).toBeInTheDocument();
   });

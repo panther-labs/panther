@@ -81,6 +81,16 @@ func (m *S3Mock) GetObjectWithContext(ctx aws.Context, input *s3.GetObjectInput,
 	return args.Get(0).(*s3.GetObjectOutput), args.Error(1)
 }
 
+func (m *S3Mock) HeadObject(i *s3.HeadObjectInput) (*s3.HeadObjectOutput, error) {
+	args := m.Called(i)
+	return args.Get(0).(*s3.HeadObjectOutput), args.Error(1)
+}
+
+func (m *S3Mock) GetBucketLocation(input *s3.GetBucketLocationInput) (*s3.GetBucketLocationOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*s3.GetBucketLocationOutput), args.Error(1)
+}
+
 func (m *S3Mock) GetBucketLocationWithContext(
 	ctx aws.Context,
 	input *s3.GetBucketLocationInput,
@@ -88,6 +98,11 @@ func (m *S3Mock) GetBucketLocationWithContext(
 
 	args := m.Called(ctx, input, options)
 	return args.Get(0).(*s3.GetBucketLocationOutput), args.Error(1)
+}
+
+func (m *S3Mock) ListObjects(i *s3.ListObjectsInput) (*s3.ListObjectsOutput, error) {
+	args := m.Called(i)
+	return args.Get(0).(*s3.ListObjectsOutput), args.Error(1)
 }
 
 func (m *S3Mock) ListObjectsV2Pages(input *s3.ListObjectsV2Input, f func(page *s3.ListObjectsV2Output, morePages bool) bool) error {

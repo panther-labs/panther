@@ -39,6 +39,11 @@ type Transaction []ItemBuilder
 type ItemBuilder interface {
 	BuildItem() (*dynamodb.TransactWriteItem, error)
 	cancelled(r *dynamodb.CancellationReason) error
+	buildExpression() (expression.Expression, error)
+}
+
+func BuildExpression(item ItemBuilder) (expression.Expression, error) {
+	return item.buildExpression()
 }
 
 // ExplainTransactionError maps transaction cancelled errors to the error handlers specified in the batch items.
@@ -113,7 +118,7 @@ func (p *Put) BuildItem() (*dynamodb.TransactWriteItem, error) {
 	if err != nil {
 		return nil, err
 	}
-	expr, err := buildConditionExpression(p.Condition)
+	expr, err := p.buildExpression()
 	if err != nil {
 		return nil, err
 	}
@@ -128,6 +133,9 @@ func (p *Put) BuildItem() (*dynamodb.TransactWriteItem, error) {
 	return &dynamodb.TransactWriteItem{
 		Put: &put,
 	}, nil
+}
+func (p *Put) buildExpression() (expression.Expression, error) {
+	return buildConditionExpression(p.Condition)
 }
 
 func returnValuesOnConditionCheckFailure(ok bool) *string {
@@ -182,7 +190,7 @@ func (u *Update) BuildItem() (*dynamodb.TransactWriteItem, error) {
 	if err != nil {
 		return nil, err
 	}
-	expr, err := u.BuildExpression()
+	expr, err := u.buildExpression()
 	if err != nil {
 		return nil, err
 	}
@@ -201,12 +209,13 @@ func (u *Update) BuildItem() (*dynamodb.TransactWriteItem, error) {
 		Update: &update,
 	}, nil
 }
-func (u *Update) BuildExpression() (*expression.Expression, error) {
+
+func (u Update) buildExpression() (expression.Expression, error) {
 	upd := expression.UpdateBuilder{}
 	if ifNot, ok := u.Set[SetIfNotExists]; ok {
 		values, err := dynamodbattribute.MarshalMap(ifNot)
 		if err != nil {
-			return nil, err
+			return expression.Expression{}, err
 		}
 		for name, value := range values {
 			upd = upd.Set(expression.Name(name), expression.Name(name).IfNotExists(expression.Value(value)))
@@ -215,14 +224,15 @@ func (u *Update) BuildExpression() (*expression.Expression, error) {
 	if all, ok := u.Set[SetAll]; ok {
 		values, err := dynamodbattribute.MarshalMap(all)
 		if err != nil {
-			return nil, err
+			return expression.Expression{}, err
 		}
 		for name, value := range values {
 			upd = upd.Set(expression.Name(name), expression.Value(value))
 		}
 	}
 	for name, value := range u.Set {
-		if name == SetAll {
+		switch name {
+		case SetAll, SetIfNotExists:
 			continue
 		}
 		if op, ok := value.(expression.OperandBuilder); ok {
@@ -246,11 +256,7 @@ func (u *Update) BuildExpression() (*expression.Expression, error) {
 	if !reflect.DeepEqual(u.Condition, expression.ConditionBuilder{}) {
 		expr = expr.WithCondition(u.Condition)
 	}
-	out, err := expr.Build()
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
+	return expr.Build()
 }
 
 func (u *Update) cancelled(r *dynamodb.CancellationReason) error {
@@ -277,7 +283,7 @@ type Delete struct {
 }
 
 func (d *Delete) BuildItem() (*dynamodb.TransactWriteItem, error) {
-	expr, err := buildConditionExpression(d.Condition)
+	expr, err := d.buildExpression()
 	if err != nil {
 		return nil, err
 	}
@@ -296,6 +302,9 @@ func (d *Delete) BuildItem() (*dynamodb.TransactWriteItem, error) {
 	return &dynamodb.TransactWriteItem{
 		Delete: &del,
 	}, nil
+}
+func (d *Delete) buildExpression() (expression.Expression, error) {
+	return buildConditionExpression(d.Condition)
 }
 
 func (d *Delete) cancelled(r *dynamodb.CancellationReason) error {
@@ -322,7 +331,7 @@ type ConditionCheck struct {
 }
 
 func (c *ConditionCheck) BuildItem() (*dynamodb.TransactWriteItem, error) {
-	expr, err := expression.NewBuilder().WithCondition(c.Condition).Build()
+	expr, err := c.buildExpression()
 	if err != nil {
 		return nil, err
 	}
@@ -341,6 +350,9 @@ func (c *ConditionCheck) BuildItem() (*dynamodb.TransactWriteItem, error) {
 	return &dynamodb.TransactWriteItem{
 		ConditionCheck: &cond,
 	}, nil
+}
+func (c *ConditionCheck) buildExpression() (expression.Expression, error) {
+	return expression.NewBuilder().WithCondition(c.Condition).Build()
 }
 
 func (c *ConditionCheck) cancelled(r *dynamodb.CancellationReason) error {

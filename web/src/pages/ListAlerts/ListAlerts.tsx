@@ -161,4 +161,4 @@ const ListAlerts = () => {
   );
 };
 
-export default compose(withSEO({ title: 'Alerts' }), withSelectContext, React.memo)(ListAlerts);
+export default compose(withSEO({ title: 'Alerts' }), withSelectContext(), React.memo)(ListAlerts);

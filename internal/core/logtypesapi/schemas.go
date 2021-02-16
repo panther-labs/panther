@@ -30,8 +30,7 @@ import (
 // GetSchemaInput specifies the schema id and revision to retrieve.
 // Zero Revision will get the latest revision of the schema record
 type GetSchemaInput struct {
-	Name     string `json:"name" validate:"required" description:"The schema id"`
-	Revision int64  `json:"revision,omitempty" validate:"omitempty,min=1" description:"Schema record revision (0 means latest)"`
+	Name string `json:"name" validate:"required" description:"The schema id"`
 }
 
 type GetSchemaOutput struct {
@@ -41,7 +40,7 @@ type GetSchemaOutput struct {
 
 // GetSchema gets a schema record
 func (api *LogTypesAPI) GetSchema(ctx context.Context, input *GetSchemaInput) (*GetSchemaOutput, error) {
-	record, err := api.Database.GetSchema(ctx, input.Name, input.Revision)
+	record, err := api.Database.GetSchema(ctx, input.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -67,13 +66,7 @@ type SchemaRecord struct {
 	CreatedAt time.Time `json:"createdAt" description:"Creation timestamp of the record"`
 	Managed   bool      `json:"managed,omitempty" description:"Schema is managed by Panther"`
 	// For compatibility we use 'IsDeleted' as the DDB field name
-	Disabled bool `json:"disabled,omitempty" dynamodbav:"IsDeleted"  description:"Log record is deleted"`
-	// Updatable fields
-	SchemaUpdate
-}
-
-// SchemaUpdate contains the user-updatable fields of a schema record.
-type SchemaUpdate struct {
+	Disabled     bool   `json:"disabled,omitempty" dynamodbav:"IsDeleted"  description:"Log record is deleted"`
 	Description  string `json:"description" description:"Log type description"`
 	ReferenceURL string `json:"referenceURL" description:"A URL with reference docs for the schema"`
 	// For compatibility we use 'logSpec' as the JSON and DDB field names

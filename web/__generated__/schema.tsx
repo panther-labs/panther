@@ -337,20 +337,16 @@ export type DeleteDataModelInput = {
   dataModels: Array<DeleteEntry>;
 };
 
+export type DeleteDetectionInput = {
+  detections: Array<DeleteEntry>;
+};
+
 export type DeleteEntry = {
   id: Scalars['ID'];
 };
 
 export type DeleteGlobalPythonModuleInput = {
   globals: Array<DeleteEntry>;
-};
-
-export type DeletePolicyInput = {
-  policies: Array<DeleteEntry>;
-};
-
-export type DeleteRuleInput = {
-  rules: Array<DeleteEntry>;
 };
 
 export type DeliverAlertInput = {
@@ -825,6 +821,11 @@ export type LongSeriesData = {
   series: Array<LongSeries>;
 };
 
+export type ManagedS3Resources = {
+  __typename?: 'ManagedS3Resources';
+  topicARN?: Maybe<Scalars['String']>;
+};
+
 export enum MessageActionEnum {
   Resend = 'RESEND',
   Suppress = 'SUPPRESS',
@@ -857,12 +858,11 @@ export type Mutation = {
   addRule: Rule;
   addGlobalPythonModule: GlobalPythonModule;
   deleteDataModel?: Maybe<Scalars['Boolean']>;
+  deleteDetections?: Maybe<Scalars['Boolean']>;
   deleteDestination?: Maybe<Scalars['Boolean']>;
   deleteComplianceIntegration?: Maybe<Scalars['Boolean']>;
   deleteCustomLog: DeleteCustomLogOutput;
   deleteLogIntegration?: Maybe<Scalars['Boolean']>;
-  deletePolicy?: Maybe<Scalars['Boolean']>;
-  deleteRule?: Maybe<Scalars['Boolean']>;
   deleteGlobalPythonModule?: Maybe<Scalars['Boolean']>;
   deleteUser?: Maybe<Scalars['Boolean']>;
   inviteUser: User;
@@ -928,6 +928,10 @@ export type MutationDeleteDataModelArgs = {
   input: DeleteDataModelInput;
 };
 
+export type MutationDeleteDetectionsArgs = {
+  input: DeleteDetectionInput;
+};
+
 export type MutationDeleteDestinationArgs = {
   id: Scalars['ID'];
 };
@@ -942,14 +946,6 @@ export type MutationDeleteCustomLogArgs = {
 
 export type MutationDeleteLogIntegrationArgs = {
   id: Scalars['ID'];
-};
-
-export type MutationDeletePolicyArgs = {
-  input: DeletePolicyInput;
-};
-
-export type MutationDeleteRuleArgs = {
-  input: DeleteRuleInput;
 };
 
 export type MutationDeleteGlobalPythonModuleArgs = {
@@ -1373,6 +1369,7 @@ export type S3LogIntegration = {
   notificationsConfigurationSucceeded: Scalars['Boolean'];
   health: S3LogIntegrationHealth;
   stackName: Scalars['String'];
+  managedS3Resources?: Maybe<ManagedS3Resources>;
 };
 
 export type S3LogIntegrationHealth = {
@@ -1380,6 +1377,7 @@ export type S3LogIntegrationHealth = {
   processingRoleStatus: IntegrationItemHealthStatus;
   s3BucketStatus: IntegrationItemHealthStatus;
   kmsKeyStatus: IntegrationItemHealthStatus;
+  getObjectStatus?: Maybe<IntegrationItemHealthStatus>;
 };
 
 export type S3PrefixLogTypes = {
@@ -1832,6 +1830,7 @@ export type ResolversTypes = {
   S3LogIntegration: ResolverTypeWrapper<S3LogIntegration>;
   S3PrefixLogTypes: ResolverTypeWrapper<S3PrefixLogTypes>;
   S3LogIntegrationHealth: ResolverTypeWrapper<S3LogIntegrationHealth>;
+  ManagedS3Resources: ResolverTypeWrapper<ManagedS3Resources>;
   GetS3LogIntegrationTemplateInput: GetS3LogIntegrationTemplateInput;
   SqsLogSourceIntegration: ResolverTypeWrapper<SqsLogSourceIntegration>;
   SqsConfig: ResolverTypeWrapper<SqsConfig>;
@@ -1912,10 +1911,9 @@ export type ResolversTypes = {
   AddGlobalPythonModuleInput: AddGlobalPythonModuleInput;
   DeleteDataModelInput: DeleteDataModelInput;
   DeleteEntry: DeleteEntry;
+  DeleteDetectionInput: DeleteDetectionInput;
   DeleteCustomLogInput: DeleteCustomLogInput;
   DeleteCustomLogOutput: ResolverTypeWrapper<DeleteCustomLogOutput>;
-  DeletePolicyInput: DeletePolicyInput;
-  DeleteRuleInput: DeleteRuleInput;
   DeleteGlobalPythonModuleInput: DeleteGlobalPythonModuleInput;
   InviteUserInput: InviteUserInput;
   MessageActionEnum: MessageActionEnum;
@@ -2023,6 +2021,7 @@ export type ResolversParentTypes = {
   S3LogIntegration: S3LogIntegration;
   S3PrefixLogTypes: S3PrefixLogTypes;
   S3LogIntegrationHealth: S3LogIntegrationHealth;
+  ManagedS3Resources: ManagedS3Resources;
   GetS3LogIntegrationTemplateInput: GetS3LogIntegrationTemplateInput;
   SqsLogSourceIntegration: SqsLogSourceIntegration;
   SqsConfig: SqsConfig;
@@ -2105,10 +2104,9 @@ export type ResolversParentTypes = {
   AddGlobalPythonModuleInput: AddGlobalPythonModuleInput;
   DeleteDataModelInput: DeleteDataModelInput;
   DeleteEntry: DeleteEntry;
+  DeleteDetectionInput: DeleteDetectionInput;
   DeleteCustomLogInput: DeleteCustomLogInput;
   DeleteCustomLogOutput: DeleteCustomLogOutput;
-  DeletePolicyInput: DeletePolicyInput;
-  DeleteRuleInput: DeleteRuleInput;
   DeleteGlobalPythonModuleInput: DeleteGlobalPythonModuleInput;
   InviteUserInput: InviteUserInput;
   MessageActionEnum: MessageActionEnum;
@@ -2763,6 +2761,14 @@ export type LongSeriesDataResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
+export type ManagedS3ResourcesResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['ManagedS3Resources'] = ResolversParentTypes['ManagedS3Resources']
+> = {
+  topicARN?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
 export type MsTeamsConfigResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['MsTeamsConfig'] = ResolversParentTypes['MsTeamsConfig']
@@ -2835,6 +2841,12 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationDeleteDataModelArgs, 'input'>
   >;
+  deleteDetections?: Resolver<
+    Maybe<ResolversTypes['Boolean']>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationDeleteDetectionsArgs, 'input'>
+  >;
   deleteDestination?: Resolver<
     Maybe<ResolversTypes['Boolean']>,
     ParentType,
@@ -2858,18 +2870,6 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationDeleteLogIntegrationArgs, 'id'>
-  >;
-  deletePolicy?: Resolver<
-    Maybe<ResolversTypes['Boolean']>,
-    ParentType,
-    ContextType,
-    RequireFields<MutationDeletePolicyArgs, 'input'>
-  >;
-  deleteRule?: Resolver<
-    Maybe<ResolversTypes['Boolean']>,
-    ParentType,
-    ContextType,
-    RequireFields<MutationDeleteRuleArgs, 'input'>
   >;
   deleteGlobalPythonModule?: Resolver<
     Maybe<ResolversTypes['Boolean']>,
@@ -3391,6 +3391,11 @@ export type S3LogIntegrationResolvers<
   >;
   health?: Resolver<ResolversTypes['S3LogIntegrationHealth'], ParentType, ContextType>;
   stackName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  managedS3Resources?: Resolver<
+    Maybe<ResolversTypes['ManagedS3Resources']>,
+    ParentType,
+    ContextType
+  >;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -3405,6 +3410,11 @@ export type S3LogIntegrationHealthResolvers<
   >;
   s3BucketStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
   kmsKeyStatus?: Resolver<ResolversTypes['IntegrationItemHealthStatus'], ParentType, ContextType>;
+  getObjectStatus?: Resolver<
+    Maybe<ResolversTypes['IntegrationItemHealthStatus']>,
+    ParentType,
+    ContextType
+  >;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -3719,6 +3729,7 @@ export type Resolvers<ContextType = any> = {
   Long?: GraphQLScalarType;
   LongSeries?: LongSeriesResolvers<ContextType>;
   LongSeriesData?: LongSeriesDataResolvers<ContextType>;
+  ManagedS3Resources?: ManagedS3ResourcesResolvers<ContextType>;
   MsTeamsConfig?: MsTeamsConfigResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   OpsgenieConfig?: OpsgenieConfigResolvers<ContextType>;

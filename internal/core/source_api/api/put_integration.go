@@ -96,7 +96,7 @@ func (api *API) PutIntegration(input *models.PutIntegrationInput) (newIntegratio
 }
 
 func (api *API) handleManagedBucketNotifications(source *models.SourceIntegration) {
-	err := ManageBucketNotifications(api.AwsSession, api.Config.AccountID, api.Config.AWSPartition, source)
+	err := ManageBucketNotifications(api.AwsSession, api.Config.AccountID, api.Config.AWSPartition, api.Config.LogProcessorQueueArn, source)
 	source.NotificationsConfigurationSucceeded = err == nil
 	if err != nil {
 		zap.L().Error("failed to manage bucket notifications", zap.Error(err))
@@ -283,6 +283,7 @@ func (api *API) generateNewIntegration(input *models.PutIntegrationInput) *model
 		IntegrationID:    uuid.New().String(),
 		IntegrationLabel: input.IntegrationLabel,
 		IntegrationType:  input.IntegrationType,
+		PantherVersion:   api.Config.Version,
 	}
 
 	switch input.IntegrationType {

@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Modal, Text, Flex, Button, ModalProps } from 'pouncejs';
+import { Box, Modal, Text, Flex, Button, ModalProps } from 'pouncejs';
 
 export interface ConfirmModalProps extends ModalProps {
   title: string;
@@ -35,17 +35,19 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 }) => {
   return (
     <Modal aria-describedby="modal-subtitle" onClose={onClose} {...rest}>
-      <Text mb={8} textAlign="center" id="modal-subtitle">
-        {subtitle}
-      </Text>
-      <Flex justify="flex-end" spacing={3}>
-        <Button variant="outline" variantColor="navyblue" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button variantColor="red" onClick={onConfirm}>
-          Confirm
-        </Button>
-      </Flex>
+      <Box maxWidth={700}>
+        <Text mb={8} textAlign="center" id="modal-subtitle">
+          {subtitle}
+        </Text>
+        <Flex justify="flex-end" spacing={3}>
+          <Button variant="outline" variantColor="navyblue" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button variantColor="red" onClick={onConfirm}>
+            Confirm
+          </Button>
+        </Flex>
+      </Box>
     </Modal>
   );
 };

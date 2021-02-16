@@ -58,7 +58,6 @@ describe('PolicyAlertCard', () => {
 
     expect(getByText(alert.title)).toBeInTheDocument();
     expect(getByAriaLabel(`Link to policy ${detectionData.policyId}`)).toBeInTheDocument();
-    expect(getByText('Destinations')).toBeInTheDocument();
     expect(getByAriaLabel(`Creation time for ${alert.alertId}`)).toBeInTheDocument();
     expect(getByText(SeverityEnum.Medium)).toBeInTheDocument();
     expect(getByText(AlertStatusesEnum.Triaged)).toBeInTheDocument();

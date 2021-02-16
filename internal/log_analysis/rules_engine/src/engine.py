@@ -19,6 +19,7 @@ from collections.abc import Mapping
 from datetime import datetime, timedelta
 from timeit import default_timer
 from typing import Any, Dict, List
+from unittest.mock import patch, MagicMock
 
 from . import EngineResult
 from .analysis_api import AnalysisAPIClient
@@ -51,13 +52,24 @@ class Engine:
         raw_rule['versionId'] = 'default'
         rule = Rule(raw_rule)
         event = test_spec['data']
+        event_mocks = test_spec.get('mocks', dict())
         log_type = event.get('p_log_type', 'default')
 
         # enrich the event to have access to field by standard field name
         #  via the `udm` method
         event = PantherEvent(event, self.log_type_to_data_models.get(log_type))
 
-        rule_result = rule.run(event, batch_mode=False)
+        # Setup mock functions
+        mock_methods = dict()
+        if event_mocks:
+            mock_methods = {k: MagicMock(return_value=v) for k, v in event_mocks.items()}
+
+        if mock_methods:
+            with patch.multiple(rule.module, **mock_methods):
+                rule_result = rule.run(event, batch_mode=False)
+        else:
+            rule_result = rule.run(event, batch_mode=False)
+
         format_exception = lambda exc: '{}: {}'.format(type(exc).__name__, exc) if exc else exc
         # for tests against rules using the `udm` method, you must specify `p_log_type`
         # field in each test definition

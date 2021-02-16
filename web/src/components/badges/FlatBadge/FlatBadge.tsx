@@ -34,7 +34,7 @@ const FlatBadge: React.FC<FlatBadgeProps> = ({
     <Box
       backgroundColor={backgroundColor}
       borderRadius="small"
-      px={1}
+      px="6px"
       py={1}
       fontWeight="bold"
       fontSize="x-small"

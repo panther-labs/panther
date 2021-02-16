@@ -54,14 +54,17 @@ type Integration struct {
 	// Deprecated. Use S3PrefixLogTypes. Kept for backwards compatibility. Don't use omitempty to overwrite to empty during writes.
 	S3Prefix string `json:"s3Prefix"`
 	// Deprecated. Use S3PrefixLogTypes. Kept for backwards compatibility.Don't use omitempty to overwrite to empty during writes.
-	LogTypes          []string `json:"logTypes" dynamodbav:",stringset"`
-	KmsKey            string   `json:"kmsKey,omitempty"`
-	StackName         string   `json:"stackName,omitempty"`
-	LogProcessingRole string   `json:"logProcessingRole,omitempty"`
-
-	SqsConfig                  *SqsConfig                `json:"sqsConfig,omitempty"`
+	LogTypes                   []string                  `json:"logTypes" dynamodbav:",stringset"`
+	KmsKey                     string                    `json:"kmsKey,omitempty"`
+	StackName                  string                    `json:"stackName,omitempty"`
+	LogProcessingRole          string                    `json:"logProcessingRole,omitempty"`
 	ManagedBucketNotifications bool                      `json:"managedBucketNotifications,omitempty"`
 	ManagedS3Resources         models.ManagedS3Resources `json:"managedS3Resources,omitempty"`
+
+	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
+
+	// The Panther version in which this source was created.
+	PantherVersion string `json:"pantherVersion,omitempty"`
 }
 
 type IntegrationStatus struct {
