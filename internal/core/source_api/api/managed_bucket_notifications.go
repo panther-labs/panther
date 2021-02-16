@@ -59,7 +59,7 @@ func ManageBucketNotifications(
 	managed := &source.ManagedS3Resources
 
 	stsSess := pantherSess.Copy(&aws.Config{
-		MaxRetries:  aws.Int(5),
+		MaxRetries:          aws.Int(5),
 		STSRegionalEndpoint: endpoints.RegionalSTSEndpoint,
 		Credentials:         stscreds.NewCredentials(pantherSess, source.RequiredLogProcessingRole()),
 	})
