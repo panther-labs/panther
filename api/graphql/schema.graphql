@@ -809,7 +809,7 @@ input SqsLogConfigInput {
 input AddSqsLogIntegrationInput {
   integrationLabel: String!
   sqsConfig: SqsLogConfigInput!
-  logSourceId: ID
+  logSourceId: ID!
 }
 
 input UpdateComplianceIntegrationInput {
