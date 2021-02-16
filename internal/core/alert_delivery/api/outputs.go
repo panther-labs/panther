@@ -98,6 +98,8 @@ func getOutputsByDynamicDestinations(alert *deliverymodel.Alert, outputs []*outp
 		for _, outputID := range alert.Destinations {
 			if *output.OutputID == outputID {
 				alertOutputs = append(alertOutputs, output)
+			} else if *output.DisplayName == outputID {
+				alertOutputs = append(alertOutputs, output)
 			}
 		}
 	}

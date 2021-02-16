@@ -162,7 +162,7 @@ type Alert struct {
 	Reference string `json:"reference,omitempty"`
 
 	// Destinations is the custom user-provided destination override
-	Destinations []string `json:"destinations,omitempty" validate:"dive,uuid4"`
+	Destinations []string `json:"destinations,omitempty"`
 
 	// Runbook is the user-provided triage information.
 	Runbook string `json:"runbook,omitempty"`

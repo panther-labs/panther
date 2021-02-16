@@ -210,7 +210,7 @@ func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *alertA
 		// as the update time -> the time that an update(new event) caused the matched events to exceed threshold
 		// In case the rule doesnt' have a threshold, the two are anyway the same
 		CreatedAt: alertDedup.UpdateTime,
-		OutputIds: getOutputIds(rule, alertDedup),
+		OutputIds: rule.OutputIDs,
 		Tags:      rule.Tags,
 		Type:      alertDedup.Type,
 		Version:   &alertDedup.RuleVersion,
@@ -220,6 +220,7 @@ func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *alertA
 		Runbook:             getRunbook(rule, alertDedup),
 		Severity:            getSeverity(rule, alertDedup),
 		Title:               getTitle(rule, alertDedup),
+		Destinations:        alertDedup.GeneratedDestinations,
 	}
 
 	if alertDedup.AlertContext != nil {
@@ -286,16 +287,6 @@ func getSeverity(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEven
 		return *alertDedup.GeneratedSeverity
 	}
 	return string(rule.Severity)
-}
-
-func getOutputIds(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEvent) []string {
-	if alertDedup.GeneratedDestinations != nil {
-		if len(alertDedup.GeneratedDestinations) == 0 {
-			return skipOutput
-		}
-		return alertDedup.GeneratedDestinations
-	}
-	return rule.OutputIDs
 }
 
 func getRuleDisplayName(rule *ruleModel.Rule) *string {
