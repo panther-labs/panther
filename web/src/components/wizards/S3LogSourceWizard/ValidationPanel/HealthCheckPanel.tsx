@@ -29,7 +29,7 @@ import { useGetS3LogSource } from 'Pages/EditS3LogSource/graphql/getS3LogSource.
 import HealthCheckWarning from './HealthCheckWarning';
 
 const HealthCheckPanel: React.FC = () => {
-  const { reset: resetWizard, data: wizardData } = useWizardContext();
+  const { reset: resetWizard, data: wizardData } = useWizardContext<{ integrationId?: string }>();
   const { initialValues, resetForm } = useFormikContext<S3LogSourceWizardValues>();
 
   const { data, loading, refetch } = useGetS3LogSource({
@@ -46,18 +46,9 @@ const HealthCheckPanel: React.FC = () => {
     );
   }
 
-  const {
-    processingRoleStatus,
-    getObjectStatus,
-    kmsKeyStatus,
-    s3BucketStatus,
-  } = data?.getS3LogIntegration.health;
+  const healthChecks = Object.values(data?.getS3LogIntegration.health).filter(Boolean);
 
-  const healthChecks = [processingRoleStatus, kmsKeyStatus, s3BucketStatus];
-  if (getObjectStatus) {
-    healthChecks.push(getObjectStatus);
-  }
-  const isHealthy = healthChecks.every(healthMetric => Boolean(healthMetric.healthy));
+  const isHealthy = healthChecks.every(metric => metric.healthy);
 
   if (!isHealthy) {
     return (

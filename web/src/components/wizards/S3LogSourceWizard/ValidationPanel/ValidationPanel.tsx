@@ -53,7 +53,7 @@ const ValidationPanel: React.FC = () => {
     currentStepStatus,
     setCurrentStepStatus,
     updateData,
-  } = useWizardContext();
+  } = useWizardContext<{ integrationId?: string }>();
   const { submitForm } = useFormikContext<S3LogSourceWizardValues>();
   const [shouldShowNotificationsScreen, setNotificationScreenVisibility] = React.useState(true);
 
