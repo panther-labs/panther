@@ -28,6 +28,9 @@ import {
   buildS3PrefixLogTypesInput,
   fireClickAndMouseEvents,
   buildIntegrationTemplate,
+  buildS3LogIntegrationHealth,
+  buildIntegrationItemHealthStatus,
+  waitForElementToBeRemoved,
 } from 'test-utils';
 import { Route } from 'react-router';
 import urls from 'Source/urls';
@@ -41,6 +44,15 @@ import { mockGetS3LogSource } from './graphql/getS3LogSource.generated';
 import { mockUpdateS3LogSource } from './graphql/updateS3LogSource.generated';
 
 jest.mock('Helpers/analytics');
+
+const healthyS3 = buildS3LogIntegration({
+  health: buildS3LogIntegrationHealth({
+    kmsKeyStatus: buildIntegrationItemHealthStatus({ healthy: true }),
+    processingRoleStatus: buildIntegrationItemHealthStatus({ healthy: true }),
+    s3BucketStatus: buildIntegrationItemHealthStatus({ healthy: true }),
+    getObjectStatus: buildIntegrationItemHealthStatus({ healthy: true }),
+  }),
+});
 
 describe('EditS3LogSource', () => {
   it('can successfully update an S3 log source', async () => {
@@ -95,8 +107,21 @@ describe('EditS3LogSource', () => {
           updateS3LogIntegration: updatedLogSource,
         },
       }),
+      mockGetS3LogSource({
+        variables: { id: updatedLogSource.integrationId },
+        data: {
+          getS3LogIntegration: healthyS3,
+        },
+      }),
     ];
-    const { getByText, getByLabelText, getByAltText, findByText, queryByText } = render(
+    const {
+      getByText,
+      getByLabelText,
+      getByAltText,
+      findByText,
+      queryByText,
+      getByAriaLabel,
+    } = render(
       <Route path={urls.logAnalysis.sources.edit(':id', ':type')}>
         <EditS3LogSource />
       </Route>,
@@ -132,7 +157,15 @@ describe('EditS3LogSource', () => {
     fireEvent.click(getByText('Continue'));
 
     // Expect to see a loading animation while the resource is being validated ...
-    expect(getByAltText('Validating source health...')).toBeInTheDocument();
+    const validatingSourceHealthLoading = getByAltText('Validating source health...');
+    expect(validatingSourceHealthLoading).toBeInTheDocument();
+    await waitForElementToBeRemoved(validatingSourceHealthLoading);
+
+    const loadingInterfaceElement = getByAriaLabel('Loading...');
+    expect(loadingInterfaceElement).toBeInTheDocument();
+
+    // Wait for it to not exist anymore
+    await waitForElementToBeRemoved(loadingInterfaceElement);
 
     // ... replaced by a success screen
     expect(await findByText('Everything looks good!')).toBeInTheDocument();
@@ -194,6 +227,12 @@ describe('EditS3LogSource', () => {
           updateS3LogIntegration: updatedLogSource,
         },
       }),
+      mockGetS3LogSource({
+        variables: { id: updatedLogSource.integrationId },
+        data: {
+          getS3LogIntegration: healthyS3,
+        },
+      }),
     ];
     const {
       getByText,
@@ -232,9 +271,17 @@ describe('EditS3LogSource', () => {
 
     // We expect to skip the template step cause user only changed the s3PrefixLogTypes
     expect(queryByText('Get template file')).not.toBeInTheDocument();
-    // Expect to see a loading animation while the source is being validated ...
-    expect(getByAltText('Validating source health...')).toBeInTheDocument();
 
+    // Expect to see a loading animation while the resource is being validated ...
+    const validatingSourceHealthLoading = getByAltText('Validating source health...');
+    expect(validatingSourceHealthLoading).toBeInTheDocument();
+    await waitForElementToBeRemoved(validatingSourceHealthLoading);
+
+    const loadingInterfaceElement = getByAriaLabel('Loading...');
+    expect(loadingInterfaceElement).toBeInTheDocument();
+
+    // Wait for it to not exist anymore
+    await waitForElementToBeRemoved(loadingInterfaceElement);
     // ... replaced by a success screen
     expect(await findByText('Everything looks good!')).toBeInTheDocument();
     expect(getByText('Finish Setup')).toBeInTheDocument();
@@ -291,6 +338,12 @@ describe('EditS3LogSource', () => {
           updateS3LogIntegration: updatedLogSource,
         },
       }),
+      mockGetS3LogSource({
+        variables: { id: updatedLogSource.integrationId },
+        data: {
+          getS3LogIntegration: healthyS3,
+        },
+      }),
     ];
     const {
       getByText,
@@ -324,8 +377,17 @@ describe('EditS3LogSource', () => {
 
     // We expect to skip the template step cause user only changed the s3PrefixLogTypes
     expect(queryByText('Get template file')).not.toBeInTheDocument();
-    // Expect to see a loading animation while the source is being validated ...
-    expect(getByAltText('Validating source health...')).toBeInTheDocument();
+
+    // Expect to see a loading animation while the resource is being validated ...
+    const validatingSourceHealthLoading = getByAltText('Validating source health...');
+    expect(validatingSourceHealthLoading).toBeInTheDocument();
+    await waitForElementToBeRemoved(validatingSourceHealthLoading);
+
+    const loadingInterfaceElement = getByAriaLabel('Loading...');
+    expect(loadingInterfaceElement).toBeInTheDocument();
+
+    // Wait for it to not exist anymore
+    await waitForElementToBeRemoved(loadingInterfaceElement);
 
     // ... replaced by a success screen
     expect(await findByText('Everything looks good!')).toBeInTheDocument();
