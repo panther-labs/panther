@@ -71,8 +71,7 @@ type DelCustomLogResponse struct {
 }
 
 type GetCustomLogInput struct {
-	LogType  string `json:"logType" validate:"required,startswith=Custom." description:"The log type id"`
-	Revision int64  `json:"revision,omitempty" validate:"omitempty,min=1" description:"Log record revision (0 means latest)"`
+	LogType string `json:"logType" validate:"required,startswith=Custom." description:"The log type id"`
 }
 
 type GetCustomLogResponse struct {
@@ -95,8 +94,7 @@ type GetCustomLogResponse struct {
 }
 
 type GetSchemaInput struct {
-	Name     string `json:"name" validate:"required" description:"The schema id"`
-	Revision int64  `json:"revision,omitempty" validate:"omitempty,min=1" description:"Schema record revision (0 means latest)"`
+	Name string `json:"name" validate:"required" description:"The schema id"`
 }
 
 type GetSchemaResponse struct {

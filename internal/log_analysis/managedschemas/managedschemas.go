@@ -145,7 +145,7 @@ func LoadReleaseManifestFromURL(ctx context.Context, manifestURL string) ([]Mani
 	if err != nil {
 		return nil, err
 	}
-	zipArchive, err := zip.NewReader(bytes.NewReader(manifestArchive), int64(len(manifestURL)))
+	zipArchive, err := zip.NewReader(bytes.NewReader(manifestArchive), int64(len(manifestArchive)))
 	if err != nil {
 		return nil, err
 	}

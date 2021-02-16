@@ -132,21 +132,27 @@ func init() {
 type testS3Destination struct {
 	S3Destination
 	// back pointers to mocks
-	mockSns            *testutils.SnsMock
-	mockS3Uploader     *testutils.S3UploaderMock
-	mockLatencyCounter *testutils.CounterMock
+	mockSns                *testutils.SnsMock
+	mockS3Uploader         *testutils.S3UploaderMock
+	mockLatencyCounter     *testutils.CounterMock
+	mockOutputFilesCounter *testutils.CounterMock
+	mockOutputBytesCounter *testutils.CounterMock
 }
 
 func (td *testS3Destination) AssertExpectations(t *testing.T) {
 	td.mockSns.AssertExpectations(t)
 	td.mockS3Uploader.AssertExpectations(t)
 	td.mockLatencyCounter.AssertExpectations(t)
+	td.mockOutputBytesCounter.AssertExpectations(t)
+	td.mockOutputBytesCounter.AssertExpectations(t)
 }
 
 func mockDestination() *testS3Destination {
 	mockSns := &testutils.SnsMock{}
 	mockS3Uploader := &testutils.S3UploaderMock{}
 	mockLatencyCounter := &testutils.CounterMock{}
+	mockOutputBytesCounter := &testutils.CounterMock{}
+	mockOutputFilesCounter := &testutils.CounterMock{}
 	return &testS3Destination{
 		S3Destination: S3Destination{
 			snsTopicArn:         "arn:aws:sns:us-west-2:123456789012:test",
@@ -159,10 +165,14 @@ func mockDestination() *testS3Destination {
 			maxBufferSize:       uploaderBufferMaxSizeBytes,
 			jsonAPI:             common.ConfigForDataLakeWriters(),
 			latencyCounter:      mockLatencyCounter,
+			outputFiles:         mockOutputFilesCounter,
+			outputBytes:         mockOutputBytesCounter,
 		},
-		mockSns:            mockSns,
-		mockS3Uploader:     mockS3Uploader,
-		mockLatencyCounter: mockLatencyCounter,
+		mockSns:                mockSns,
+		mockS3Uploader:         mockS3Uploader,
+		mockLatencyCounter:     mockLatencyCounter,
+		mockOutputFilesCounter: mockOutputFilesCounter,
+		mockOutputBytesCounter: mockOutputBytesCounter,
 	}
 }
 
@@ -174,6 +184,8 @@ func TestSendDataToS3BeforeTerminating(t *testing.T) {
 	// Mock metrics
 	destination.mockLatencyCounter.On("With", mock.Anything).Return(destination.mockLatencyCounter).Once()
 	destination.mockLatencyCounter.On("Add", mock.Anything).Once()
+	destination.mockOutputBytesCounter.On("Add", mock.Anything).Once()
+	destination.mockOutputFilesCounter.On("Add", mock.Anything).Once()
 
 	testResult := newTestResult(nil)
 
@@ -248,6 +260,8 @@ func TestSendDataIfTotalMemSizeLimitHasBeenReached(t *testing.T) {
 	// Mock metrics
 	destination.mockLatencyCounter.On("With", mock.Anything).Return(destination.mockLatencyCounter).Twice()
 	destination.mockLatencyCounter.On("Add", mock.Anything).Twice()
+	destination.mockOutputBytesCounter.On("Add", mock.Anything).Twice()
+	destination.mockOutputFilesCounter.On("Add", mock.Anything).Twice()
 
 	eventChannel := make(chan *parsers.Result, 2)
 	// Use 1 result with `event_time:"true"` struct tag
@@ -281,6 +295,8 @@ func TestSendDataIfBufferSizeLimitHasBeenReached(t *testing.T) {
 	// Mock metrics
 	destination.mockLatencyCounter.On("With", mock.Anything).Return(destination.mockLatencyCounter).Twice()
 	destination.mockLatencyCounter.On("Add", mock.Anything).Twice()
+	destination.mockOutputBytesCounter.On("Add", mock.Anything).Twice()
+	destination.mockOutputFilesCounter.On("Add", mock.Anything).Twice()
 
 	// sending 2 events to buffered channel
 	// The second should already cause the S3 object size limits to be exceeded
@@ -309,6 +325,8 @@ func TestSendDataIfTimeLimitHasBeenReached(t *testing.T) {
 	// Mock metrics
 	destination.mockLatencyCounter.On("With", mock.Anything).Return(destination.mockLatencyCounter).Times(nevents)
 	destination.mockLatencyCounter.On("Add", mock.Anything).Times(nevents)
+	destination.mockOutputBytesCounter.On("Add", mock.Anything).Times(nevents)
+	destination.mockOutputFilesCounter.On("Add", mock.Anything).Times(nevents)
 
 	var wg sync.WaitGroup
 	eventChannel := make(chan *parsers.Result, nevents)
@@ -343,6 +361,8 @@ func TestSendDataToS3FromMultipleLogTypesBeforeTerminating(t *testing.T) {
 	// Mock metrics
 	destination.mockLatencyCounter.On("With", mock.Anything).Return(destination.mockLatencyCounter).Twice()
 	destination.mockLatencyCounter.On("Add", mock.Anything).Twice()
+	destination.mockOutputBytesCounter.On("Add", mock.Anything).Twice()
+	destination.mockOutputFilesCounter.On("Add", mock.Anything).Twice()
 
 	eventChannel := make(chan *parsers.Result, 2)
 	eventChannel <- newTestEvent("testtype1", refTime).Result()
@@ -364,6 +384,8 @@ func TestSendDataToS3FromSameHourBeforeTerminating(t *testing.T) {
 
 	destination.mockLatencyCounter.On("With", mock.Anything).Return(destination.mockLatencyCounter).Once()
 	destination.mockLatencyCounter.On("Add", mock.Anything).Twice()
+	destination.mockOutputBytesCounter.On("Add", mock.Anything).Once()
+	destination.mockOutputFilesCounter.On("Add", mock.Anything).Once()
 
 	eventChannel := make(chan *parsers.Result, 2)
 	// should write both events in 1 file
@@ -386,6 +408,8 @@ func TestSendDataToS3FromMultipleHoursBeforeTerminating(t *testing.T) {
 	// Mock metrics
 	destination.mockLatencyCounter.On("With", mock.Anything).Return(destination.mockLatencyCounter).Twice()
 	destination.mockLatencyCounter.On("Add", mock.Anything).Twice()
+	destination.mockOutputBytesCounter.On("Add", mock.Anything).Twice()
+	destination.mockOutputFilesCounter.On("Add", mock.Anything).Twice()
 
 	// should write 2 files with different time partitions
 	eventChannel := make(chan *parsers.Result, 2)
@@ -423,6 +447,8 @@ func TestSendDataWhenExceedMaxBuffers(t *testing.T) {
 	// Mock metrics
 	destination.mockLatencyCounter.On("With", mock.Anything).Return(destination.mockLatencyCounter).Twice()
 	destination.mockLatencyCounter.On("Add", mock.Anything).Twice()
+	destination.mockOutputBytesCounter.On("Add", mock.Anything).Twice()
+	destination.mockOutputFilesCounter.On("Add", mock.Anything).Twice()
 
 	eventChannel := make(chan *parsers.Result, 2)
 	// Write the first event to the channel
@@ -489,6 +515,8 @@ func TestSendDataFailsIfSnsFails(t *testing.T) {
 	// Mock metrics
 	destination.mockLatencyCounter.On("With", mock.Anything).Return(destination.mockLatencyCounter).Once()
 	destination.mockLatencyCounter.On("Add", mock.Anything).Once()
+	destination.mockOutputBytesCounter.On("Add", mock.Anything).Once()
+	destination.mockOutputFilesCounter.On("Add", mock.Anything).Once()
 
 	eventChannel := make(chan *parsers.Result, 1)
 	eventChannel <- newSimpleTestEvent().Result()
@@ -536,6 +564,8 @@ func TestSendDataToCloudSecurity(t *testing.T) {
 	// Mock metrics
 	destination.mockLatencyCounter.On("With", mock.Anything).Return(destination.mockLatencyCounter).Once()
 	destination.mockLatencyCounter.On("Add", mock.Anything).Once()
+	destination.mockOutputBytesCounter.On("Add", mock.Anything).Once()
+	destination.mockOutputFilesCounter.On("Add", mock.Anything).Once()
 
 	cloudsecEvent := newTestEvent(snapshotlogs.TypeCompliance, refTime)
 
