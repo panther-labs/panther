@@ -1,0 +1,35 @@
+query GetLogAnalysisMetrics($input: LogAnalysisMetricsInput!) {
+  getLogAnalysisMetrics(input: $input) {
+    eventsProcessed {
+      series {
+        label
+        values
+      }
+      timestamps
+    }
+    # TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
+    # eventsLatency {
+    #   series {
+    #     label
+    #     values
+    #   }
+    #   timestamps
+    # }
+    alertsBySeverity {
+      series {
+        label
+        values
+      }
+      timestamps
+    }
+    totalAlertsDelta {
+      label
+      value
+    }
+    alertsByRuleID {
+      label
+      value
+    }
+    intervalMinutes
+  }
+}

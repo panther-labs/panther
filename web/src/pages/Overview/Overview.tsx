@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { invert } from 'lodash';
-import { Flex, Tabs, TabPanels, TabList, TabPanel, Icon, Text } from 'pouncejs';
+import { Box, Tabs, TabPanels, TabList, TabPanel, Icon, Heading } from 'pouncejs';
 import withSEO from 'Hoc/withSEO';
 import useUrlParams from 'Hooks/useUrlParams';
 import AlertsOverview from './AlertsOverview';
@@ -51,35 +51,43 @@ const Overview: React.FC = () => {
   }, [tab, useUrlParams]);
 
   return (
-    <Flex>
+    <Box>
       <Tabs index={tabToIndex[tab]} onChange={index => setUrlParams({ tab: indexToTab[index] })}>
         <TabList>
           <OverviewTab>
             <Icon type="alert-circle" />
-            <Text>Alerts</Text>
+            <Heading as="h4" size="x-small">
+              Alerts
+            </Heading>
           </OverviewTab>
           <OverviewTab>
-            <Icon type="alert-circle" />
-            <Text>Cloud Security</Text>
+            <Icon type="cloud-security" />
+            <Heading as="h4" size="x-small">
+              Cloud Security
+            </Heading>
           </OverviewTab>
           <OverviewTab>
-            <Icon type="alert-circle" />
-            <Text>Data</Text>
+            <Icon type="data" />
+            <Heading as="h4" size="x-small">
+              Data
+            </Heading>
           </OverviewTab>
         </TabList>
-        <TabPanels>
-          <TabPanel lazy>
-            <AlertsOverview />
-          </TabPanel>
-          <TabPanel lazy>
-            <CloudSecurityOverview />
-          </TabPanel>
-          <TabPanel lazy>
-            <DataOverview />
-          </TabPanel>
-        </TabPanels>
+        <Box mt={6}>
+          <TabPanels>
+            <TabPanel lazy>
+              <AlertsOverview />
+            </TabPanel>
+            <TabPanel lazy>
+              <CloudSecurityOverview />
+            </TabPanel>
+            <TabPanel lazy>
+              <DataOverview />
+            </TabPanel>
+          </TabPanels>
+        </Box>
       </Tabs>
-    </Flex>
+    </Box>
   );
 };
 

@@ -1,0 +1,7 @@
+query GetOverviewAlerts {
+  alerts(input: { severity: [CRITICAL, HIGH], pageSize: 5, status: [OPEN] }) {
+    alertSummaries {
+      ...AlertSummaryFull
+    }
+  }
+}

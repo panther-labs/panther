@@ -47,7 +47,8 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ isSelected, isFocused, childr
         size="x-small"
         zIndex={5}
         mr={4}
-        px={5}
+        pl={4}
+        pr={8}
         py={3}
         borderRadius="pill"
         transition="background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms"
@@ -56,7 +57,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ isSelected, isFocused, childr
           backgroundColor: !isSelected ? 'navyblue-300' : undefined,
         }}
       >
-        <Flex align="center" spacing={2}>
+        <Flex align="center" spacing={3}>
           {children}
         </Flex>
       </Box>

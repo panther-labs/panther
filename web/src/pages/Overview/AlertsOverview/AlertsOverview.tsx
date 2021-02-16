@@ -17,10 +17,106 @@
  */
 
 import React from 'react';
-import { Box } from 'pouncejs';
+import { Alert, Box, Card, Flex, SimpleGrid } from 'pouncejs';
+import { extractErrorMessage, getGraphqlSafeDateRange } from 'Helpers/utils';
+import { PageViewEnum } from 'Helpers/analytics';
+import useTrackPageView from 'Hooks/useTrackPageView';
+import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
+import { LogAnalysisMetricsInput } from 'Generated/schema';
+import AlertCard from 'Components/cards/AlertCard';
+import NoResultsFound from 'Components/NoResultsFound';
+import Panel from 'Components/Panel';
+import AlertSummary from './AlertSummary';
+import AlertsOverviewBreadcrumbFilters from './AlertsOverviewBreadcrumbFilters';
+import LogAnalysisOverviewPageSkeleton from './Skeleton';
+import { useGetOverviewAlerts } from './graphql/getOverviewAlerts.generated';
+import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
+import AlertsBySeverity from './AlertsBySeverity';
+import MostActiveRules from './MostActiveRules';
+
+export const DEFAULT_INTERVAL = 180;
+export const DEFAULT_PAST_DAYS = 3;
 
 const AlertsOverview: React.FC = () => {
-  return <Box>Alerts Overview</Box>;
+  useTrackPageView(PageViewEnum.LogAnalysisOverview);
+
+  const {
+    requestParams: { fromDate, toDate, intervalMinutes },
+  } = useRequestParamsWithoutPagination<LogAnalysisMetricsInput>();
+
+  const initialValues = React.useMemo(() => {
+    const [utcDaysAgo, utcNow] = getGraphqlSafeDateRange({ days: DEFAULT_PAST_DAYS });
+    return {
+      intervalMinutes: intervalMinutes ?? DEFAULT_INTERVAL,
+      fromDate: fromDate ?? utcDaysAgo,
+      toDate: toDate ?? utcNow,
+    };
+  }, [intervalMinutes, fromDate, toDate]);
+
+  const { loading: loadingAlerts, data: alertsData } = useGetOverviewAlerts({
+    fetchPolicy: 'cache-and-network',
+  });
+
+  const { loading, data, error } = useGetLogAnalysisMetrics({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      input: {
+        metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity', 'alertsByRuleID'],
+        ...initialValues,
+      },
+    },
+  });
+
+  if ((loading || loadingAlerts) && (!data || !alertsData)) {
+    return <LogAnalysisOverviewPageSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <Alert
+        variant="error"
+        title="We can't display this content right now"
+        description={extractErrorMessage(error)}
+      />
+    );
+  }
+
+  const topAlertSummaries = alertsData?.alerts?.alertSummaries || [];
+  const { alertsBySeverity, totalAlertsDelta, alertsByRuleID } = data.getLogAnalysisMetrics;
+
+  return (
+    <Box as="article" mb={6}>
+      <AlertsOverviewBreadcrumbFilters initialValues={initialValues} />
+      <SimpleGrid columns={1} spacingY={4}>
+        <Card as="section">
+          <Panel title="Alerts Overview">
+            <Flex direction="row">
+              <AlertSummary data={totalAlertsDelta} />
+              <AlertsBySeverity alerts={alertsBySeverity} />
+            </Flex>
+          </Panel>
+        </Card>
+        <Card as="section">
+          <Panel title="Top 5 High Priority Alerts">
+            <Flex direction="column" spacing={2}>
+              {topAlertSummaries.length ? (
+                topAlertSummaries.map(alert => <AlertCard key={alert.alertId} alert={alert} />)
+              ) : (
+                <Box my={6}>
+                  <NoResultsFound />
+                </Box>
+              )}
+            </Flex>
+          </Panel>
+        </Card>
+        <Card as="section">
+          <Panel title="Most Active Detections">
+            <MostActiveRules alertsByRuleID={alertsByRuleID} />
+          </Panel>
+        </Card>
+      </SimpleGrid>
+    </Box>
+  );
 };
 
 export default AlertsOverview;
