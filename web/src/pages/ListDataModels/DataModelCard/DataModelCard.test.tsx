@@ -23,9 +23,14 @@ import DataModelCard from './DataModelCard';
 
 describe('DataModelCard', () => {
   it('matches snapshot', () => {
+    const { container } = render(<DataModelCard dataModel={buildDataModel()} />);
+    expect(container).toMatchSnapshot();
+  });
+
+  it('matches snapshot with selection', () => {
     const { container } = render(
       <SelectProvider>
-        <DataModelCard dataModel={buildDataModel()} />
+        <DataModelCard dataModel={buildDataModel()} selectionEnabled />
       </SelectProvider>
     );
     expect(container).toMatchSnapshot();
