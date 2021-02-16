@@ -30,27 +30,75 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from botocore.exceptions import ClientError
 
+# Notes:
+#
+# SPECIFY S3 Bucket with ENV BUCKET=<bucket_name>
+#
+# ENABLE DEBUGGING WITH ENV DEBUGLAYERHOST=<true>
+# DEBUGLAYERHOST is lowercased before checkking so values True and tRuE etc... also work
+
+def debug():
+    return os.getenv('DEBUGLAYERHOST').lower() == "true"
+
+# USED FOR DEVELOPMENT / DEBUGGING
 layer_sig_name = "panther-layer-sig"
-call_list_layers = True
+call_list_lambda_layers = False
+call_list_lambda_functions = False
+call_list_s3_layers = False
 call_remove_layer = False
-call_list_buckets = True
-call_list_bucket_files = True
-print_debug = True
+call_list_buckets = False
+create_lambda_layer = True
+call_list_bucket_files = False
+
+def pylibs():
+    # Returns the py libs for testing
+    libs = list()
+    libs.append("policyuniverse==1.3.2.2")
+    libs.append("jsonpath-ng==1.5.2")
+    libs.append("requests==2.23.0")
+    return libs
 
 def debuglog():
-    if not print_debug:
+    if not debug():
         return
     print()
     print("DEBUG LOG")
     print()
     print("  layer_bucket_name: %s" % layer_bucket_name())
     print()
-#     print("  build_layer:       %r" % call_build_layer)
-    print("  list_layers:       %r" % call_list_layers)
-    print("  remove_layer:      %r" % call_remove_layer)
-    print("  list_buckets:      %r" % call_list_buckets)
-    print("  list_bucket_files: %r" % call_list_bucket_files)
+    #     print("  build_layer:       %r" % call_build_layer)
+    print("  call_list_s3_layers:        %r" % call_list_s3_layers)
+    print("  call_list_lambda_layers:    %r" % call_list_lambda_layers)
+    print("  call_list_lambda_functions: %r" % call_list_lambda_functions)
+    print("  remove_layer:               %r" % call_remove_layer)
+    print("  list_buckets:               %r" % call_list_buckets)
+    print("  list_bucket_files:          %r" % call_list_bucket_files)
+    print("  create_lambda_layer:        %r" % create_lambda_layer)
     print()
+    try:
+         if call_list_buckets:
+             list_s3_buckets()
+         if call_list_lambda_layers:
+             list_lambda_layers()
+         if call_list_lambda_functions:
+             list_lambda_functions()
+         if call_list_bucket_files:
+             list_s3_files(layer_bucket_name())
+         if call_list_s3_layers:
+             list_s3_layers()
+         if create_lambda_layer:
+            layerarn = handle_layer_request(pylibs())
+            print("LAYER_ARN:\n")
+            print("  %s\n" % layerarn)
+         # if call_remove_layer:
+         #     remove_layer("00f4e0dae31b9fd0483542a6bc9c21cbd46f50bcde5ed832a117e8ad78519b13")
+    except:
+      print("Unexpected error:", sys.exc_info()[0])
+      raise
+
+# BUCKET:
+def layer_bucket_name():
+    return os.getenv('BUCKET')
 
 # HELPERS:
 # --------------------------------------------------------------------------------
@@ -128,12 +176,38 @@ def get_s3_bucket_files(s3, bucket_name):
     for obj in bucket.objects.all():
         s3_file_set.append(obj.key)
     return s3_file_set
+
 def get_s3_buckets(s3):
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.list_buckets
     response = s3.list_buckets()
     return response["Buckets"]
 
+def get_lambda_functions(lmbda):
+    lfns = lmbda.list_functions()
+    return lfns["Functions"]
+
+def get_lambda_layers(lmbda):
+    lls = lmbda.list_layers()
+    return lls["Layers"]
+
 # List Methods
+def list_lambda_functions():
+    print("LIST LAMBDA FUNCTIONS:\n")
+    lmbda = boto3.client('lambda')
+    functions = get_lambda_functions(lmbda)
+    for fn in functions:
+         print("  %s" % fn['FunctionName'])
+    print("\n  COUNT: %d\n" % len(functions))
+
+def list_lambda_layers():
+    print("LIST LAMBDA LAYERS:\n")
+    lmbda = boto3.client('lambda')
+    layers = get_lambda_layers(lmbda)
+    for layer in layers:
+        print("  LAYER: %s" % layer["LayerName"])
+        print("    ARN: %s" % layer["LayerArn"])
+    print("\n  COUNT: %d\n" % len(layers))
+
 def list_s3_buckets():
     print("LIST S3 BUCKETS:\n")
     s3 = boto3.client('s3')
@@ -141,6 +215,7 @@ def list_s3_buckets():
     for bucket in buckets:
         print("  %s" % bucket["Name"])
     print("\n  COUNT: %d\n" % len(buckets))
+
 def list_s3_files(bucket_name):
     print("LIST S3 FILES - BUCKET: %s\n" % bucket_name)
     # List files in the bucket named <bucketname>
@@ -149,6 +224,27 @@ def list_s3_files(bucket_name):
     for bucket_file in bucket_files:
         print("  %s" % bucket_file)
     print("\n  COUNT: %d\n" % len(bucket_files))
+
+def publish_lambda_layer(bucket_name, layerhash):
+    lmbda = boto3.client('lambda')
+    response = lmbda.publish_layer_version(
+        LayerName=layerhash,
+        Description='panther layer host deployed lambda',
+        Content={
+            'S3Bucket': bucket_name,
+            'S3Key': layerhash,
+            # 'S3ObjectVersion': 'string',
+            # 'ZipFile': b'bytes'
+        },
+        CompatibleRuntimes=[
+            "python3.6",
+            "python3.7",
+            "python3.8",
+        ],
+        # LicenseInfo='string'
+    )
+    print(response)
+    return response["LayerVersionArn"]
 
 # Sourced from https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-uploading-files.html
 def upload_file(file_name, bucket, object_name=None):
@@ -170,6 +266,7 @@ def upload_file(file_name, bucket, object_name=None):
         logging.error(e)
         return False
     return True
+
 def rm_s3_file(key, bucket):
     s3 = boto3.resource('s3')
     s3.Object(bucket, key).delete()
@@ -211,11 +308,19 @@ def get_layers():
     return get_s3_bucket_files(s3, bucket_name)
 
 # Checks if the remote storage host (s3) contains a layer for the given hash (layer id / name)
-def layer_exists(hashstr):
+def s3_layer_exists(hashstr):
     return hashstr in get_layers()
 
+def get_lambda_layer_arn(hashstr):
+    lmbda = boto3.client('lambda')
+    layers = get_lambda_layers(lmbda)
+    for layer in layers:
+        if layer["LayerName"] == hashstr:
+            return layer["LayerArn"]
+    return None
+
 # Prints the remote hosted (s3) layers (hash_libs) to stdout
-def list_layers():
+def list_s3_layers():
     print("LIST LAYERS:\n")
     layers = get_layers()
     for layer in layers:
@@ -223,6 +328,7 @@ def list_layers():
     print("\n  COUNT: %d\n" % len(layers))
 
 # Pushes the layer zip file to the remote storage host (s3)
+# where the s3 key is the layer hash
 def push_layer_zip(layer_zip_path):
     print("PUSH LAYER:\n")
     if not os.path.exists(layer_zip_path):
@@ -253,58 +359,50 @@ def remove_layer(layerhash):
     print()
 
 # This method makes no assumptions about the validity of the libs parameter.
+# 1. LAYER NOT IN S3 ? BUILD LAYER
+# 2. LAYER NOT IN LAMBDA LAYERS ? PUBLISH s3 -> LAMBDA
+# 3. Return Layer ARN
 def handle_layer_request(libs):
     print("HANDLE LAYER REQUEST:\n")
     libset = check_fmt_libs(libs)
     hash = hash_libs(libs)
-    if not layer_exists(hash):
-        print("BUILDING NEW LAYer {}".format(hash))
+    print("  HASH:")
+    print("  %s\n" % hash)
+
+    print("  CHECK S3")
+    if not s3_layer_exists(hash):
+        print("    BUILD/PUSH LAYER TO S3")
         layer_zip_path = build_layer(libset)
         push_layer_zip(layer_zip_path)
         rmfpath(layer_zip_path)
     else:
-        print("  HASH:\n")
-        print("  %s\n" % hash)
-        print("  LAYER ALREADY UPLOADED")
+        print("    LAYER IN S3")
+    print("")
+
+    print("  CHECK LAMBDA LAYERS")
+    layerarn = get_lambda_layer_arn(hash)
+    if layerarn is None:
+        print("    PUSHIN LAYER TO LAMBDA")
+        layerarn = publish_lambda_layer(layer_bucket_name(), hash)
+    else:
+        print("    LAMBDA LAYER FOUND")
     print()
+    return layerarn
 
 # TEMPORARY METHODS?
 # --------------------------------------------------------------------------------
 
-# BUCKET:
-def layer_bucket_name():
-    return os.getenv('BUCKET')
-
 #  pylint: disable=unsubscriptable-object
 def lambda_handler(event: Dict[str, Any], unused_context: Any) -> Optional[Dict[str, Any]]:
     """Entry point for the Lambda"""
+    print(event)
     libs = check_fmt_libs(event["libs"])
     debuglog()
+    layer_arn = handle_layer_request(libs)
+    print("lambda_handler LAYER_ARN: %s" % layer_arn)
 
-    try:
-         if call_list_buckets:
-             list_s3_buckets()
-         if call_list_bucket_files:
-             list_s3_files(layer_bucket_name())
-         if call_list_layers:
-             list_layers()
-         # if call_remove_layer:
-        #     remove_layer("00f4e0dae31b9fd0483542a6bc9c21cbd46f50bcde5ed832a117e8ad78519b13")
-    except:
-      print("Unexpected error:", sys.exc_info()[0])
-      raise
+def main():
+    debuglog()
 
-    hash = hash_libs(libs)
-    if not layer_exists(hash):
-        print("BUILDING NEW LAYer {}".format(hash))
-        layer_zip_path = build_layer(libset)
-        push_layer_zip(layer_zip_path)
-        rmfpath(layer_zip_path)
-    else:
-        print("  HASH:\n")
-        print("  %s\n" % hash)
-        print("  LAYER ALREADY UPLOADED")
-    print()
-
-# [ERROR] ClientError: An error occurred (AccessDenied) when calling the ListObjects operation: Access Denied
-# call_build_layer = False
+if __name__ == '__main__':
+    main()
