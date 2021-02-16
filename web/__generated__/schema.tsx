@@ -119,13 +119,13 @@ export type AddS3LogIntegrationInput = {
   kmsKey?: Maybe<Scalars['String']>;
   s3PrefixLogTypes: Array<S3PrefixLogTypesInput>;
   managedBucketNotifications: Scalars['Boolean'];
-  logSourceId?: Maybe<Scalars['ID']>;
+  logSourceId: Scalars['ID'];
 };
 
 export type AddSqsLogIntegrationInput = {
   integrationLabel: Scalars['String'];
   sqsConfig: SqsLogConfigInput;
-  logSourceId?: Maybe<Scalars['ID']>;
+  logSourceId: Scalars['ID'];
 };
 
 export type Alert = {
