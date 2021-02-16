@@ -46,7 +46,9 @@ const HealthCheckPanel: React.FC = () => {
     );
   }
 
-  const healthChecks = Object.values(data?.getS3LogIntegration.health).filter(Boolean);
+  const healthChecks = Object.values(data?.getS3LogIntegration.health)
+    // instead of filter(Boolean) to prevent field __typename: string to be considered a healthcheck
+    .filter(obj => Object(obj) === obj);
 
   const isHealthy = healthChecks.every(metric => metric.healthy);
 
