@@ -30,12 +30,6 @@ const SettingsNavigation: React.FC = () => {
         <NavLink isSecondary icon="organization" to={urls.settings.users()} label="Users" />
         <NavLink
           isSecondary
-          icon="output"
-          to={urls.settings.destinations.list()}
-          label="Destinations"
-        />
-        <NavLink
-          isSecondary
           icon="source-code"
           to={urls.settings.globalPythonModules.list()}
           label="Global Modules"

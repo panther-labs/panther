@@ -16,6 +16,7 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
+from copy import deepcopy
 from typing import Any, Dict, Iterator, Type, no_type_check
 
 
@@ -44,6 +45,15 @@ class ImmutableContainerMixin(ABC):
     def _shallow_copy(self, obj: Any) -> Any:
         """Creates a shallow copy of the given object"""
 
+    def copy(self) -> Any:
+        """
+        Returns a deep copy of the wrapped container object, which is mutable.
+        Useful for interoperability with dependencies that perform their own type-checking,
+        or when mutation is necessary.
+        NOTE: Deep-copying has a performance overhead, so use only when necessary.
+        """
+        return self.mutable_type()(deepcopy(self._container))
+
     @no_type_check
     def __getitem__(self, item):
         value = self._ensure_immutable(self._container[item])
@@ -64,7 +74,7 @@ class ImmutableContainerMixin(ABC):
         return self._container.__len__()
 
     def __iter__(self) -> Iterator:
-        return iter(self._container)
+        return iter(self._ensure_immutable(element) for element in self._container)
 
 
 class ImmutableDict(ImmutableContainerMixin, Mapping):  # pylint: disable=R0901
@@ -76,6 +86,12 @@ class ImmutableDict(ImmutableContainerMixin, Mapping):  # pylint: disable=R0901
 
     def _shallow_copy(self, obj: dict) -> dict:
         return obj.copy()
+
+    def to_dict(self) -> dict:
+        """
+        Create a deep copy as a mutable dictionary.
+        """
+        return self.copy()
 
 
 class ImmutableList(ImmutableContainerMixin, Sequence):  # pylint: disable=R0901
@@ -98,6 +114,12 @@ class ImmutableList(ImmutableContainerMixin, Sequence):  # pylint: disable=R0901
                    self._container == tuple(other)
 
         return False
+
+    def as_list(self) -> list:
+        """
+        Create a deep copy as a mutable list.
+        """
+        return self.copy()
 
 
 ImmutableList.register()

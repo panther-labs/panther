@@ -54,12 +54,6 @@ const urls = {
       details: (id: ResourceDetails['id']) => `${urls.compliance.resources.list()}${urlEncode(id)}/`, // prettier-ignore
       edit: (id: ResourceDetails['id']) => `${urls.compliance.resources.details(id)}edit/`,
     },
-    sources: {
-      list: () => `${urls.compliance.home()}sources/`,
-      create: () => `${urls.compliance.sources.list()}new/`,
-      edit: (id: ComplianceIntegration['integrationId']) =>
-        `${urls.compliance.sources.list()}${id}/edit/`,
-    },
   },
   logAnalysis: {
     home: () => '/log-analysis/',
@@ -80,12 +74,6 @@ const urls = {
       list: () => `${urls.logAnalysis.home()}alerts/`,
       details: (id: AlertDetails['alertId']) => `${urls.logAnalysis.alerts.list()}${urlEncode(id)}/` // prettier-ignore
     },
-    sources: {
-      list: () => `${urls.logAnalysis.home()}sources/`,
-      create: (type?: string) => `${urls.logAnalysis.sources.list()}new/${type || ''}`,
-      edit: (id: LogIntegration['integrationId'], type: string) =>
-        `${urls.logAnalysis.sources.list()}${type}/${id}/edit/`,
-    },
     customLogs: {
       list: () => `${urls.logAnalysis.home()}custom-logs/`,
       details: (logType: CustomLogRecord['logType']) =>
@@ -100,6 +88,27 @@ const urls = {
     list: () => urls.packs.home(),
     details: (id: Pack['id']) => `${urls.packs.home()}${urlEncode(id)}/`,
   },
+  integrations: {
+    home: () => `/integrations/`,
+    logSources: {
+      list: () => `${urls.integrations.home()}log-sources/`,
+      create: (type?: string) => `${urls.integrations.logSources.list()}new/${type || ''}`,
+      edit: (id: LogIntegration['integrationId'], type: string) =>
+        `${urls.integrations.logSources.list()}${type}/${id}/edit/`,
+    },
+    cloudAccounts: {
+      list: () => `${urls.integrations.home()}cloud-accounts/`,
+      create: () => `${urls.integrations.cloudAccounts.list()}new/`,
+      edit: (id: ComplianceIntegration['integrationId']) =>
+        `${urls.integrations.cloudAccounts.list()}${id}/edit/`,
+    },
+    destinations: {
+      list: () => `${urls.integrations.home()}destinations/`,
+      create: () => `${urls.integrations.destinations.list()}new/`,
+      edit: (id: Destination['outputId']) =>
+        `${urls.integrations.destinations.list()}${urlEncode(id)}/edit/`,
+    },
+  },
   settings: {
     home: () => '/settings/',
     general: () => `${urls.settings.home()}general/`,
@@ -111,12 +120,6 @@ const urls = {
     },
     bulkUploader: () => `${urls.settings.home()}bulk-uploader/`,
     users: () => `${urls.settings.home()}users/`,
-    destinations: {
-      list: () => `${urls.settings.home()}destinations/`,
-      create: () => `${urls.settings.destinations.list()}new/`,
-      edit: (id: Destination['outputId']) =>
-        `${urls.settings.destinations.list()}${urlEncode(id)}/edit/`,
-    },
   },
   account: {
     auth: {

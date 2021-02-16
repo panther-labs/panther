@@ -30,7 +30,7 @@ const EmptyDataFallback: React.FC = () => (
     <Text color="gray-300" textAlign="center" mb={8}>
       You don{"'"}t seem to have any Cloud Security sources connected to our system.
     </Text>
-    <LinkButton to="to={urls.compliance.sources.create()}">Connect an account</LinkButton>
+    <LinkButton to="to={urls.integrations.cloudAccounts.create()}">Connect an account</LinkButton>
   </Flex>
 );
 

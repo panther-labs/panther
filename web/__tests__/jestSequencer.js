@@ -16,8 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default as ComplianceNavigation } from './ComplianceNavigation';
-export { default as LogAnalysisNavigation } from './LogAnalysisNavigation';
-export { default as IntegrationsNavigation } from './IntegrationsNavigation';
-export { default as SettingsNavigation } from './SettingsNavigation';
-export { analysisNavigationsLinks as AnalysisNavigationLinks } from './LogAnalysisNavigation';
+const Sequencer = require('@jest/test-sequencer').default;
+
+/* eslint-disable */
+class CustomSequencer extends Sequencer {
+  sort(tests) {
+    if (process.env.CIRCLE_NODE_TOTAL) {
+      // In CI, parallelize tests across multiple tasks.
+      const nodeTotal = parseInt(process.env.CIRCLE_NODE_TOTAL, 10);
+      const nodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX, 10);
+      tests = tests
+        .sort((a, b) => (a.path < b.path ? -1 : 1))
+        .filter((_, i) => i % nodeTotal === nodeIndex);
+    }
+    return tests;
+  }
+}
+
+/* eslint-enable */
+
+module.exports = CustomSequencer;

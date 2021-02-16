@@ -67,23 +67,23 @@ func (api *API) DeleteIntegration(input *models.DeleteIntegrationInput) error {
 				break
 			}
 		}
-
-		if integrationItem.ManagedBucketNotifications {
-			source := itemToIntegration(integrationItem)
-			err = RemoveBucketNotifications(api.AwsSession, source)
-			if err != nil {
-				zap.L().Error("failed to remove bucket notifications",
-					zap.Error(err), zap.String("integrationId", input.IntegrationID))
-				return deleteIntegrationInternalError
-			}
-		}
-
 		if shouldRemovePermissions {
 			if err = api.DisableExternalSnsTopicSubscription(integrationItem.AWSAccountID); err != nil {
 				zap.L().Error("failed to remove permission from SQS queue for integrationItem",
 					zap.String("integrationId", input.IntegrationID),
 					zap.Error(err))
 				return deleteIntegrationInternalError
+			}
+		}
+
+		if integrationItem.ManagedBucketNotifications {
+			source := itemToIntegration(integrationItem)
+			err = RemoveBucketNotifications(api.AwsSession, source)
+			if err != nil {
+				// Handle the error here and allow the delete operation to succeed. The users may have already deleted
+				// the IAM role we assume to configure bucket notifications.
+				zap.L().Warn("failed to remove bucket notifications",
+					zap.Error(err), zap.String("integrationId", input.IntegrationID))
 			}
 		}
 	case models.IntegrationTypeSqs:

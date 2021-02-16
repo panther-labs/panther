@@ -62,7 +62,7 @@ const ListLogSources = () => {
       <Panel
         title="Log Sources"
         actions={
-          <LinkButton to={urls.logAnalysis.sources.create()} icon="add">
+          <LinkButton to={urls.integrations.logSources.create()} icon="add">
             Add Source
           </LinkButton>
         }
