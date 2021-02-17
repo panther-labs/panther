@@ -28,6 +28,9 @@ fragment S3LogIntegrationDetails on S3LogIntegration {
     getObjectStatus {
       ...IntegrationItemHealthDetails
     }
+    bucketNotificationsStatus {
+      ...IntegrationItemHealthDetails
+    }
   }
   managedS3Resources {
     topicARN
