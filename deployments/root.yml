@@ -348,7 +348,7 @@ Resources:
         LayerVersionArns: !Join [',', !Ref LayerVersionArns]
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
-        PythonAssumableRoleArns: !Ref PythonAssumableRoleArns
+        PythonAssumableRoleArns: !Join [',', !Ref PythonAssumableRoleArns]
         PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
         PythonManagedPolicyArn: !Ref PythonManagedPolicyArn
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId
@@ -439,7 +439,7 @@ Resources:
         LogProcessorLambdaSQSReadBatchSize: !Ref LogProcessorLambdaSQSReadBatchSize
         ProcessedDataBucket: !GetAtt Bootstrap.Outputs.ProcessedDataBucket
         ProcessedDataTopicArn: !GetAtt Bootstrap.Outputs.ProcessedDataTopicArn
-        PythonAssumableRoleArns: !Ref PythonAssumableRoleArns
+        PythonAssumableRoleArns: !Join [',', !Ref PythonAssumableRoleArns]
         PythonLayerVersionArn: !GetAtt BootstrapGateway.Outputs.PythonLayerVersionArn
         PythonManagedPolicyArn: !Ref PythonManagedPolicyArn
         SqsKeyId: !GetAtt Bootstrap.Outputs.QueueEncryptionKeyId

@@ -38,12 +38,6 @@ const ComplianceNavigation: React.FC = () => {
           to={urls.compliance.resources.list()}
           label="Resources"
         />
-        <NavLink
-          isSecondary
-          icon="infra-source"
-          to={urls.compliance.sources.list()}
-          label="Sources"
-        />
       </FadeInTrail>
     </Flex>
   );

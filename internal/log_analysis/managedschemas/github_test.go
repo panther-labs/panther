@@ -1,3 +1,5 @@
+package managedschemas
+
 /**
  * Panther is a Cloud-Native SIEM for the Modern Security Team.
  * Copyright (C) 2020 Panther Labs Inc
@@ -16,8 +18,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export { default as ComplianceNavigation } from './ComplianceNavigation';
-export { default as LogAnalysisNavigation } from './LogAnalysisNavigation';
-export { default as IntegrationsNavigation } from './IntegrationsNavigation';
-export { default as SettingsNavigation } from './SettingsNavigation';
-export { analysisNavigationsLinks as AnalysisNavigationLinks } from './LogAnalysisNavigation';
+import (
+	"context"
+	"testing"
+
+	"github.com/google/go-github/github"
+	"github.com/stretchr/testify/require"
+)
+
+func TestGitHubRepository_ReleaseFeed(t *testing.T) {
+	// Skip until we can mock http client for github
+	t.Skip()
+
+	assert := require.New(t)
+	repo := GitHubRepository{
+		Repo:   "panther-analysis",
+		Owner:  "panther-labs",
+		Client: github.NewClient(nil),
+	}
+	feed, err := repo.ReleaseFeed(context.Background(), "v0.0.0")
+	assert.NoError(err)
+	assert.NotEmpty(feed)
+}

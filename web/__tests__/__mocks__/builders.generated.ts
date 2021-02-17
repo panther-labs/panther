@@ -99,6 +99,7 @@ import {
   LogAnalysisMetricsResponse,
   LongSeries,
   LongSeriesData,
+  ManagedS3Resources,
   ModifyGlobalPythonModuleInput,
   MsTeamsConfig,
   MsTeamsConfigInput,
@@ -1219,6 +1220,15 @@ export const buildLongSeriesData = (overrides: Partial<LongSeriesData> = {}): Lo
   };
 };
 
+export const buildManagedS3Resources = (
+  overrides: Partial<ManagedS3Resources> = {}
+): ManagedS3Resources => {
+  return {
+    __typename: 'ManagedS3Resources',
+    topicARN: 'topicARN' in overrides ? overrides.topicARN : 'Horizontal',
+  };
+};
+
 export const buildModifyGlobalPythonModuleInput = (
   overrides: Partial<ModifyGlobalPythonModuleInput> = {}
 ): ModifyGlobalPythonModuleInput => {
@@ -1567,6 +1577,8 @@ export const buildS3LogIntegration = (
         : true,
     health: 'health' in overrides ? overrides.health : buildS3LogIntegrationHealth(),
     stackName: 'stackName' in overrides ? overrides.stackName : 'River',
+    managedS3Resources:
+      'managedS3Resources' in overrides ? overrides.managedS3Resources : buildManagedS3Resources(),
   };
 };
 

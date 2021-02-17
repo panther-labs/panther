@@ -113,6 +113,12 @@ func (r *tableItem) addExtraFields() {
 	r.LowerTags = lowerSet(r.Tags)
 }
 
+// Add extra internal filtering fields before serializing to Dynamo
+func (r *packTableItem) addExtraFields() {
+	r.LowerDisplayName = strings.ToLower(r.DisplayName)
+	r.LowerID = strings.ToLower(r.ID)
+}
+
 // Sort string sets before converting to an external Rule/Policy/Detection model.
 func (r *tableItem) normalize() {
 	sortCaseInsensitive(r.OutputIDs)
@@ -430,6 +436,7 @@ func dynamoPut(policy *tableItem) error {
 
 // Write a single pack to Dynamo.
 func dynamoPutPack(pack *packTableItem) error {
+	pack.addExtraFields()
 	body, err := dynamodbattribute.MarshalMap(pack)
 	if err != nil {
 		zap.L().Error("dynamodbattribute.MarshalMap failed", zap.Error(err))

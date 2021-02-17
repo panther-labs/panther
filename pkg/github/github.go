@@ -126,7 +126,7 @@ func (c *Client) GetReleaseTagName(cxt context.Context, githubConfig Config, ver
 	if err != nil {
 		return "", err
 	}
-	return *release.TagName, nil
+	return aws.StringValue(release.TagName), nil
 }
 
 func downloadGithubAsset(cxt context.Context, client *Client, owner string,

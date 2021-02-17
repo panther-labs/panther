@@ -58,7 +58,7 @@ const ListComplianceSources = () => {
       <Panel
         title="Connected Accounts"
         actions={
-          <LinkButton to={urls.compliance.sources.create()} icon="add">
+          <LinkButton to={urls.integrations.cloudAccounts.create()} icon="add">
             Add Account
           </LinkButton>
         }

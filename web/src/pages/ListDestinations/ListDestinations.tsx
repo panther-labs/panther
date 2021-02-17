@@ -59,7 +59,7 @@ const ListDestinations = () => {
         <Panel
           title="Destinations"
           actions={
-            <LinkButton to={urls.settings.destinations.create()} icon="add">
+            <LinkButton to={urls.integrations.destinations.create()} icon="add">
               Add Destination
             </LinkButton>
           }

@@ -28,6 +28,7 @@ import (
 	"encoding/pem"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/hashicorp/go-version"
 	"go.uber.org/zap"
 
@@ -108,10 +109,14 @@ func listAvailableGithubReleases(config githubwrapper.Config) ([]models.Version,
 	// earliest version of panther managed detections that supports packs
 	minimumVersion, _ := version.NewVersion(minimumVersionName)
 	for _, release := range allReleases {
-		version, err := version.NewVersion(*release.TagName)
+		if aws.BoolValue(release.Draft) {
+			// we don't care about draft releases
+			continue
+		}
+		version, err := version.NewVersion(aws.StringValue(release.TagName))
 		if err != nil {
 			// if we can't parse the version, just throw it away
-			zap.L().Warn("can't parse version", zap.String("version", *release.TagName))
+			zap.L().Warn("can't parse version", zap.String("version", aws.StringValue(release.TagName)))
 			continue
 		}
 		if version.GreaterThanOrEqual(minimumVersion) {

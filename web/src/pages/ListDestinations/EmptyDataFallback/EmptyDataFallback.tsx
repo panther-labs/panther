@@ -33,7 +33,7 @@ const DestinationsPageEmptyDataFallback: React.FC = () => {
         You don{"'"}t seem to have any destinations setup yet. <br />
         Adding destinations will help you get notified when irregularities occur.
       </Text>
-      <LinkButton to={urls.settings.destinations.create()} icon="add">
+      <LinkButton to={urls.integrations.destinations.create()} icon="add">
         Add your first Destination
       </LinkButton>
     </Flex>
