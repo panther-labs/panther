@@ -66,7 +66,8 @@ import EditDataModelPage from 'Pages/EditDataModel';
 import ListDataModelsPage from 'Pages/ListDataModels';
 import EditCustomLogPage from 'Pages/EditCustomLog';
 import ListDetectionsPage from 'Pages/ListDetections';
-import ListPacksPage from 'Pages/ListPacks';
+import ListAnalysisPacks from 'Pages/ListAnalysisPacks';
+import AnalysisPackDetails from 'Pages/AnalysisPackDetails';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -163,7 +164,44 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                 />
                 <Route
                   exact
+<<<<<<< HEAD
                   path={urls.logAnalysis.sources.list()}
+=======
+                  path={urls.logAnalysis.dataModels.list()}
+                  component={ListDataModelsPage}
+                />
+                <Route
+                  exact
+                  path={urls.logAnalysis.dataModels.create()}
+                  component={CreateDataModelPage}
+                />
+                <Route
+                  exact
+                  path={urls.logAnalysis.dataModels.edit(':id')}
+                  component={EditDataModelPage}
+                />
+                <Redirect
+                  exact
+                  from={urls.logAnalysis.dataModels.details(':id')}
+                  to={urls.logAnalysis.dataModels.edit(':id')}
+                />
+                <Route exact path={urls.packs.list()} component={ListAnalysisPacks} />
+                <Route exact path={urls.packs.details(':id')} component={AnalysisPackDetails} />
+                {/* ******************* INTEGRATIONS ***************************** */}
+                <Redirect
+                  exact
+                  from={urls.integrations.home()}
+                  to={urls.integrations.logSources.list()}
+                />
+                <Redirect
+                  exact
+                  from={`${urls.integrations.logSources.list()}:type`}
+                  to={urls.integrations.logSources.list()}
+                />
+                <Route
+                  exact
+                  path={urls.integrations.logSources.list()}
+>>>>>>> 15001026 (Feature/pack management (#2672))
                   component={ListLogSourcesPage}
                 />
                 <Route

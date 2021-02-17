@@ -26,6 +26,7 @@ require (
 	github.com/google/gofuzz v1.0.0
 	github.com/google/uuid v1.1.2
 	github.com/hashicorp/go-cleanhttp v0.5.1
+	github.com/hashicorp/go-version v1.2.1
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/iancoleman/strcase v0.1.3
 	github.com/influxdata/go-syslog/v3 v3.0.0

@@ -22,44 +22,22 @@ import { Box, Card, Flex, Link, Switch, Text, useSnackbar } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import UpdateVersion, { UpdateVersionFormValues } from 'Components/cards/PackCard/UpdateVersion';
-import { useUpdatePack } from 'Source/graphql/queries';
+import { useUpdateAnalysisPack } from 'Source/graphql/queries';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { extractErrorMessage } from 'Helpers/utils';
 import BulletedLoading from 'Components/BulletedLoading';
 import { DETECTION_TYPE_COLOR_MAP } from 'Source/constants';
-import { PackDetails } from 'Source/graphql/fragments/PackDetails.generated';
 import FlatBadge from 'Components/badges/FlatBadge';
+import { AnalysisPackSummary } from 'Source/graphql/fragments/AnalysisPackSummary.generated';
 
 interface PackCardProps {
-  pack: PackDetails;
+  pack: AnalysisPackSummary;
 }
 
 const PackCard: React.FC<PackCardProps> = ({ pack }) => {
   const { pushSnackbar } = useSnackbar();
 
-  const [updatePack, { loading }] = useUpdatePack({
-    // This hook ensures we also update the AlertDetails item in the cache
-    update: (cache, { data }) => {
-      const dataId = cache.identify({
-        __typename: 'PackDetails',
-        id: data.updatePack.id,
-      });
-      cache.modify(dataId, {
-        enabled: () => data.updatePack.enabled,
-        packVersion: () => data.updatePack.packVersion,
-      });
-      // TODO: when apollo client is updated to 3.0.0-rc.12+, use this code
-      // cache.modify({
-      //   id: cache.identify({
-      //     __typename: 'PackDetails',
-      //     id: data.updatePack.alertId,
-      //   }),
-      //   fields: {
-      //     packVersion: () => data.updatePack.packVersion,
-      //     enabled: () => data.updatePack.enabled,
-      //   },
-      // });
-    },
+  const [updatePack, { loading }] = useUpdateAnalysisPack({
     onCompleted: data => {
       trackEvent({
         event: EventEnum.UpdatedPack,
@@ -67,7 +45,7 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
       });
       pushSnackbar({
         variant: 'success',
-        title: `Updated Pack [${data.updatePack.id}] successfully`,
+        title: `Updated Pack [${data.updateAnalysisPack.id}] successfully`,
       });
     },
     onError: error => {
@@ -88,7 +66,7 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
       variables: {
         input: {
           id: pack.id,
-          packVersion: values.packVersion,
+          versionId: values.packVersion.id,
         },
       },
     });
@@ -153,19 +131,24 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
             </Flex>
           </GenericItemCard.Header>
           <Flex spacing={2}>
-            {pack.detectionTypes.RULE && (
+            {pack.packTypes.RULE && (
               <FlatBadge color={DETECTION_TYPE_COLOR_MAP.RULE}>
-                {pack.detectionTypes.RULE} RULES
+                {pack.packTypes.RULE} RULES
               </FlatBadge>
             )}
-            {pack.detectionTypes.POLICY && (
+            {pack.packTypes.POLICY && (
               <FlatBadge color={DETECTION_TYPE_COLOR_MAP.POLICY}>
-                {pack.detectionTypes.RULE} POLICIES
+                {pack.packTypes.RULE} POLICIES
               </FlatBadge>
             )}
-            {pack.detectionTypes.GLOBAL && (
+            {pack.packTypes.GLOBAL && (
               <FlatBadge color={DETECTION_TYPE_COLOR_MAP.GLOBAL}>
-                {pack.detectionTypes.GLOBAL} HELPERS
+                {pack.packTypes.GLOBAL} HELPERS
+              </FlatBadge>
+            )}
+            {pack.packTypes.DATAMODEL && (
+              <FlatBadge color={DETECTION_TYPE_COLOR_MAP.GLOBAL}>
+                {pack.packTypes.DATAMODEL} DATA MODELS
               </FlatBadge>
             )}
           </Flex>

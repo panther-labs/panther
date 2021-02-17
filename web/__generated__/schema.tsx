@@ -214,6 +214,56 @@ export enum AlertTypesEnum {
   Policy = 'POLICY',
 }
 
+export type AnalysisPack = {
+  __typename?: 'AnalysisPack';
+  id: Scalars['ID'];
+  enabled: Scalars['Boolean'];
+  updateAvailable: Scalars['Boolean'];
+  description: Scalars['String'];
+  displayName: Scalars['String'];
+  packVersion: AnalysisPackVersion;
+  availableVersions: Array<AnalysisPackVersion>;
+  createdBy: Scalars['ID'];
+  lastModifiedBy: Scalars['ID'];
+  createdAt: Scalars['AWSDateTime'];
+  lastModified: Scalars['AWSDateTime'];
+  packDefinition: AnalysisPackDefinition;
+  packTypes: AnalysisPackTypes;
+  enumeration: AnalysisPackEnumeration;
+};
+
+export type AnalysisPackDefinition = {
+  __typename?: 'AnalysisPackDefinition';
+  IDs?: Maybe<Array<Scalars['ID']>>;
+};
+
+export type AnalysisPackEnumeration = {
+  __typename?: 'AnalysisPackEnumeration';
+  paging: PagingData;
+  detections: Array<Detection>;
+  models: Array<DataModel>;
+  globals: Array<GlobalPythonModule>;
+};
+
+export type AnalysisPackTypes = {
+  __typename?: 'AnalysisPackTypes';
+  GLOBAL?: Maybe<Scalars['Int']>;
+  RULE?: Maybe<Scalars['Int']>;
+  DATAMODEL?: Maybe<Scalars['Int']>;
+  POLICY?: Maybe<Scalars['Int']>;
+};
+
+export type AnalysisPackVersion = {
+  __typename?: 'AnalysisPackVersion';
+  id: Scalars['Int'];
+  semVer: Scalars['String'];
+};
+
+export type AnalysisPackVersionInput = {
+  id: Scalars['Int'];
+  semVer: Scalars['String'];
+};
+
 export type AsanaConfig = {
   __typename?: 'AsanaConfig';
   personalAccessToken: Scalars['String'];
@@ -465,13 +515,6 @@ export enum DetectionTypeEnum {
   Policy = 'POLICY',
 }
 
-export type DetectionTypes = {
-  __typename?: 'DetectionTypes';
-  GLOBAL: Scalars['Int'];
-  RULE: Scalars['Int'];
-  POLICY: Scalars['Int'];
-};
-
 export type Error = {
   __typename?: 'Error';
   code?: Maybe<Scalars['String']>;
@@ -642,6 +685,21 @@ export enum ListAlertsSortFieldsEnum {
   CreatedAt = 'createdAt',
 }
 
+export type ListAnalysisPacksInput = {
+  enabled?: Maybe<Scalars['Boolean']>;
+  updateAvailable?: Maybe<Scalars['Boolean']>;
+  nameContains?: Maybe<Scalars['String']>;
+  sortDir?: Maybe<SortDirEnum>;
+  pageSize?: Maybe<Scalars['Int']>;
+  page?: Maybe<Scalars['Int']>;
+};
+
+export type ListAnalysisPacksResponse = {
+  __typename?: 'ListAnalysisPacksResponse';
+  packs: Array<AnalysisPack>;
+  paging: PagingData;
+};
+
 export type ListAvailableLogTypesResponse = {
   __typename?: 'ListAvailableLogTypesResponse';
   logTypes: Array<Scalars['String']>;
@@ -723,24 +781,6 @@ export type ListGlobalPythonModulesResponse = {
   __typename?: 'ListGlobalPythonModulesResponse';
   paging?: Maybe<PagingData>;
   globals?: Maybe<Array<Maybe<GlobalPythonModule>>>;
-};
-
-export type ListPacksInput = {
-  ids?: Maybe<Array<Scalars['ID']>>;
-  exclusiveStartKey?: Maybe<Scalars['String']>;
-  contains?: Maybe<Scalars['String']>;
-  createdBefore?: Maybe<Scalars['AWSDateTime']>;
-  createdAfter?: Maybe<Scalars['AWSDateTime']>;
-  userId?: Maybe<Scalars['ID']>;
-  sortDir?: Maybe<SortDirEnum>;
-  pageSize?: Maybe<Scalars['Int']>;
-  page?: Maybe<Scalars['Int']>;
-};
-
-export type ListPacksResponse = {
-  __typename?: 'ListPacksResponse';
-  packs: Array<Pack>;
-  paging: PagingData;
 };
 
 export enum ListPoliciesSortFieldsEnum {
@@ -885,7 +925,7 @@ export type Mutation = {
   updateUser: User;
   uploadDetections?: Maybe<UploadDetectionsResponse>;
   updateGlobalPythonlModule: GlobalPythonModule;
-  updatePack: Pack;
+  updateAnalysisPack: AnalysisPack;
 };
 
 export type MutationAddCustomLogArgs = {
@@ -1036,8 +1076,8 @@ export type MutationUpdateGlobalPythonlModuleArgs = {
   input: ModifyGlobalPythonModuleInput;
 };
 
-export type MutationUpdatePackArgs = {
-  input: UpdatePackInput;
+export type MutationUpdateAnalysisPackArgs = {
+  input: UpdateAnalysisPackInput;
 };
 
 export type OpsgenieConfig = {
@@ -1075,39 +1115,6 @@ export type OrganizationStatsResponse = {
   scannedResources?: Maybe<ScannedResources>;
   topFailingPolicies: Array<Policy>;
   topFailingResources: Array<ResourceSummary>;
-};
-
-export type Pack = {
-  __typename?: 'Pack';
-  id: Scalars['ID'];
-  enabled: Scalars['Boolean'];
-  updateAvailable: Scalars['Boolean'];
-  description: Scalars['String'];
-  displayName: Scalars['String'];
-  packVersion: PackVersion;
-  availableVersions: Array<PackVersion>;
-  createdBy: Scalars['ID'];
-  lastModifiedBy: Scalars['ID'];
-  createdAt: Scalars['AWSDateTime'];
-  lastModified: Scalars['AWSDateTime'];
-  detectionsPatterns: PackDetectionsPatterns;
-  detectionTypes: DetectionTypes;
-};
-
-export type PackDetectionsPatterns = {
-  __typename?: 'PackDetectionsPatterns';
-  IDs?: Maybe<Array<Scalars['ID']>>;
-};
-
-export type PackVersion = {
-  __typename?: 'PackVersion';
-  id: Scalars['String'];
-  name: Scalars['String'];
-};
-
-export type PackVersionInput = {
-  id: Scalars['String'];
-  name: Scalars['String'];
 };
 
 export type PagerDutyConfig = {
@@ -1187,10 +1194,11 @@ export type Query = {
   listComplianceIntegrations: Array<ComplianceIntegration>;
   listDataModels: ListDataModelsResponse;
   listLogIntegrations: Array<LogIntegration>;
-  listPacks: ListPacksResponse;
+  listAnalysisPacks: ListAnalysisPacksResponse;
   organizationStats?: Maybe<OrganizationStatsResponse>;
   getLogAnalysisMetrics: LogAnalysisMetricsResponse;
   rule?: Maybe<Rule>;
+  getAnalysisPack: AnalysisPack;
   listGlobalPythonModules: ListGlobalPythonModulesResponse;
   users: Array<User>;
   getCustomLog: GetCustomLogOutput;
@@ -1269,8 +1277,8 @@ export type QueryListDataModelsArgs = {
   input: ListDataModelsInput;
 };
 
-export type QueryListPacksArgs = {
-  input?: Maybe<ListPacksInput>;
+export type QueryListAnalysisPacksArgs = {
+  input?: Maybe<ListAnalysisPacksInput>;
 };
 
 export type QueryOrganizationStatsArgs = {
@@ -1283,6 +1291,10 @@ export type QueryGetLogAnalysisMetricsArgs = {
 
 export type QueryRuleArgs = {
   input: GetRuleInput;
+};
+
+export type QueryGetAnalysisPackArgs = {
+  id: Scalars['ID'];
 };
 
 export type QueryListGlobalPythonModulesArgs = {
@@ -1565,6 +1577,12 @@ export type UpdateAlertStatusInput = {
   status: AlertStatusesEnum;
 };
 
+export type UpdateAnalysisPackInput = {
+  enabled?: Maybe<Scalars['Boolean']>;
+  id: Scalars['ID'];
+  versionId?: Maybe<Scalars['Int']>;
+};
+
 export type UpdateComplianceIntegrationInput = {
   integrationId: Scalars['String'];
   integrationLabel?: Maybe<Scalars['String']>;
@@ -1579,12 +1597,6 @@ export type UpdateGeneralSettingsInput = {
   email?: Maybe<Scalars['String']>;
   errorReportingConsent?: Maybe<Scalars['Boolean']>;
   analyticsConsent?: Maybe<Scalars['Boolean']>;
-};
-
-export type UpdatePackInput = {
-  enabled?: Maybe<Scalars['Boolean']>;
-  id: Scalars['ID'];
-  packVersion?: Maybe<PackVersionInput>;
 };
 
 export type UpdatePolicyInput = {
@@ -1857,12 +1869,13 @@ export type ResolversTypes = {
   ListDataModelsSortFieldsEnum: ListDataModelsSortFieldsEnum;
   ListDataModelsResponse: ResolverTypeWrapper<ListDataModelsResponse>;
   LogIntegration: ResolversTypes['S3LogIntegration'] | ResolversTypes['SqsLogSourceIntegration'];
-  ListPacksInput: ListPacksInput;
-  ListPacksResponse: ResolverTypeWrapper<ListPacksResponse>;
-  Pack: ResolverTypeWrapper<Pack>;
-  PackVersion: ResolverTypeWrapper<PackVersion>;
-  PackDetectionsPatterns: ResolverTypeWrapper<PackDetectionsPatterns>;
-  DetectionTypes: ResolverTypeWrapper<DetectionTypes>;
+  ListAnalysisPacksInput: ListAnalysisPacksInput;
+  ListAnalysisPacksResponse: ResolverTypeWrapper<ListAnalysisPacksResponse>;
+  AnalysisPack: ResolverTypeWrapper<AnalysisPack>;
+  AnalysisPackVersion: ResolverTypeWrapper<AnalysisPackVersion>;
+  AnalysisPackDefinition: ResolverTypeWrapper<AnalysisPackDefinition>;
+  AnalysisPackTypes: ResolverTypeWrapper<AnalysisPackTypes>;
+  AnalysisPackEnumeration: ResolverTypeWrapper<AnalysisPackEnumeration>;
   OrganizationStatsInput: OrganizationStatsInput;
   OrganizationStatsResponse: ResolverTypeWrapper<OrganizationStatsResponse>;
   OrganizationReportBySeverity: ResolverTypeWrapper<OrganizationReportBySeverity>;
@@ -1942,8 +1955,8 @@ export type ResolversTypes = {
   UploadDetectionsInput: UploadDetectionsInput;
   UploadDetectionsResponse: ResolverTypeWrapper<UploadDetectionsResponse>;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
-  UpdatePackInput: UpdatePackInput;
-  PackVersionInput: PackVersionInput;
+  UpdateAnalysisPackInput: UpdateAnalysisPackInput;
+  AnalysisPackVersionInput: AnalysisPackVersionInput;
   CustomLogOutput: ResolverTypeWrapper<CustomLogOutput>;
   FloatSeries: ResolverTypeWrapper<FloatSeries>;
   Float: ResolverTypeWrapper<Scalars['Float']>;
@@ -2050,12 +2063,13 @@ export type ResolversParentTypes = {
   LogIntegration:
     | ResolversParentTypes['S3LogIntegration']
     | ResolversParentTypes['SqsLogSourceIntegration'];
-  ListPacksInput: ListPacksInput;
-  ListPacksResponse: ListPacksResponse;
-  Pack: Pack;
-  PackVersion: PackVersion;
-  PackDetectionsPatterns: PackDetectionsPatterns;
-  DetectionTypes: DetectionTypes;
+  ListAnalysisPacksInput: ListAnalysisPacksInput;
+  ListAnalysisPacksResponse: ListAnalysisPacksResponse;
+  AnalysisPack: AnalysisPack;
+  AnalysisPackVersion: AnalysisPackVersion;
+  AnalysisPackDefinition: AnalysisPackDefinition;
+  AnalysisPackTypes: AnalysisPackTypes;
+  AnalysisPackEnumeration: AnalysisPackEnumeration;
   OrganizationStatsInput: OrganizationStatsInput;
   OrganizationStatsResponse: OrganizationStatsResponse;
   OrganizationReportBySeverity: OrganizationReportBySeverity;
@@ -2135,8 +2149,8 @@ export type ResolversParentTypes = {
   UploadDetectionsInput: UploadDetectionsInput;
   UploadDetectionsResponse: UploadDetectionsResponse;
   ModifyGlobalPythonModuleInput: ModifyGlobalPythonModuleInput;
-  UpdatePackInput: UpdatePackInput;
-  PackVersionInput: PackVersionInput;
+  UpdateAnalysisPackInput: UpdateAnalysisPackInput;
+  AnalysisPackVersionInput: AnalysisPackVersionInput;
   CustomLogOutput: CustomLogOutput;
   FloatSeries: FloatSeries;
   Float: Scalars['Float'];
@@ -2277,6 +2291,70 @@ export type AlertSummaryRuleInfoResolvers<
   ruleId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   logTypes?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   eventsMatched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type AnalysisPackResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['AnalysisPack'] = ResolversParentTypes['AnalysisPack']
+> = {
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  enabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  updateAvailable?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  displayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  packVersion?: Resolver<ResolversTypes['AnalysisPackVersion'], ParentType, ContextType>;
+  availableVersions?: Resolver<
+    Array<ResolversTypes['AnalysisPackVersion']>,
+    ParentType,
+    ContextType
+  >;
+  createdBy?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  lastModifiedBy?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  lastModified?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
+  packDefinition?: Resolver<ResolversTypes['AnalysisPackDefinition'], ParentType, ContextType>;
+  packTypes?: Resolver<ResolversTypes['AnalysisPackTypes'], ParentType, ContextType>;
+  enumeration?: Resolver<ResolversTypes['AnalysisPackEnumeration'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type AnalysisPackDefinitionResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['AnalysisPackDefinition'] = ResolversParentTypes['AnalysisPackDefinition']
+> = {
+  IDs?: Resolver<Maybe<Array<ResolversTypes['ID']>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type AnalysisPackEnumerationResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['AnalysisPackEnumeration'] = ResolversParentTypes['AnalysisPackEnumeration']
+> = {
+  paging?: Resolver<ResolversTypes['PagingData'], ParentType, ContextType>;
+  detections?: Resolver<Array<ResolversTypes['Detection']>, ParentType, ContextType>;
+  models?: Resolver<Array<ResolversTypes['DataModel']>, ParentType, ContextType>;
+  globals?: Resolver<Array<ResolversTypes['GlobalPythonModule']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type AnalysisPackTypesResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['AnalysisPackTypes'] = ResolversParentTypes['AnalysisPackTypes']
+> = {
+  GLOBAL?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  RULE?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  DATAMODEL?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  POLICY?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
+export type AnalysisPackVersionResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['AnalysisPackVersion'] = ResolversParentTypes['AnalysisPackVersion']
+> = {
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  semVer?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -2523,16 +2601,6 @@ export type DetectionTestDefinitionResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
-export type DetectionTypesResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['DetectionTypes'] = ResolversParentTypes['DetectionTypes']
-> = {
-  GLOBAL?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  RULE?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  POLICY?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
 export type ErrorResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['Error'] = ResolversParentTypes['Error']
@@ -2643,6 +2711,15 @@ export type ListAlertsResponseResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
+export type ListAnalysisPacksResponseResolvers<
+  ContextType = any,
+  ParentType extends ResolversParentTypes['ListAnalysisPacksResponse'] = ResolversParentTypes['ListAnalysisPacksResponse']
+> = {
+  packs?: Resolver<Array<ResolversTypes['AnalysisPack']>, ParentType, ContextType>;
+  paging?: Resolver<ResolversTypes['PagingData'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
+};
+
 export type ListAvailableLogTypesResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['ListAvailableLogTypesResponse'] = ResolversParentTypes['ListAvailableLogTypesResponse']
@@ -2690,15 +2767,6 @@ export type ListGlobalPythonModulesResponseResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type ListPacksResponseResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['ListPacksResponse'] = ResolversParentTypes['ListPacksResponse']
-> = {
-  packs?: Resolver<Array<ResolversTypes['Pack']>, ParentType, ContextType>;
-  paging?: Resolver<ResolversTypes['PagingData'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -3004,11 +3072,11 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationUpdateGlobalPythonlModuleArgs, 'input'>
   >;
-  updatePack?: Resolver<
-    ResolversTypes['Pack'],
+  updateAnalysisPack?: Resolver<
+    ResolversTypes['AnalysisPack'],
     ParentType,
     ContextType,
-    RequireFields<MutationUpdatePackArgs, 'input'>
+    RequireFields<MutationUpdateAnalysisPackArgs, 'input'>
   >;
 };
 
@@ -3045,43 +3113,6 @@ export type OrganizationStatsResponseResolvers<
   scannedResources?: Resolver<Maybe<ResolversTypes['ScannedResources']>, ParentType, ContextType>;
   topFailingPolicies?: Resolver<Array<ResolversTypes['Policy']>, ParentType, ContextType>;
   topFailingResources?: Resolver<Array<ResolversTypes['ResourceSummary']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type PackResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['Pack'] = ResolversParentTypes['Pack']
-> = {
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  enabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  updateAvailable?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  displayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  packVersion?: Resolver<ResolversTypes['PackVersion'], ParentType, ContextType>;
-  availableVersions?: Resolver<Array<ResolversTypes['PackVersion']>, ParentType, ContextType>;
-  createdBy?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  lastModifiedBy?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  createdAt?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
-  lastModified?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
-  detectionsPatterns?: Resolver<ResolversTypes['PackDetectionsPatterns'], ParentType, ContextType>;
-  detectionTypes?: Resolver<ResolversTypes['DetectionTypes'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type PackDetectionsPatternsResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['PackDetectionsPatterns'] = ResolversParentTypes['PackDetectionsPatterns']
-> = {
-  IDs?: Resolver<Maybe<Array<ResolversTypes['ID']>>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType>;
-};
-
-export type PackVersionResolvers<
-  ContextType = any,
-  ParentType extends ResolversParentTypes['PackVersion'] = ResolversParentTypes['PackVersion']
-> = {
-  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 
@@ -3266,11 +3297,11 @@ export type QueryResolvers<
     RequireFields<QueryListDataModelsArgs, 'input'>
   >;
   listLogIntegrations?: Resolver<Array<ResolversTypes['LogIntegration']>, ParentType, ContextType>;
-  listPacks?: Resolver<
-    ResolversTypes['ListPacksResponse'],
+  listAnalysisPacks?: Resolver<
+    ResolversTypes['ListAnalysisPacksResponse'],
     ParentType,
     ContextType,
-    RequireFields<QueryListPacksArgs, never>
+    RequireFields<QueryListAnalysisPacksArgs, never>
   >;
   organizationStats?: Resolver<
     Maybe<ResolversTypes['OrganizationStatsResponse']>,
@@ -3289,6 +3320,12 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryRuleArgs, 'input'>
+  >;
+  getAnalysisPack?: Resolver<
+    ResolversTypes['AnalysisPack'],
+    ParentType,
+    ContextType,
+    RequireFields<QueryGetAnalysisPackArgs, 'id'>
   >;
   listGlobalPythonModules?: Resolver<
     ResolversTypes['ListGlobalPythonModulesResponse'],
@@ -3691,6 +3728,11 @@ export type Resolvers<ContextType = any> = {
   AlertSummaryDetectionInfo?: AlertSummaryDetectionInfoResolvers;
   AlertSummaryPolicyInfo?: AlertSummaryPolicyInfoResolvers<ContextType>;
   AlertSummaryRuleInfo?: AlertSummaryRuleInfoResolvers<ContextType>;
+  AnalysisPack?: AnalysisPackResolvers<ContextType>;
+  AnalysisPackDefinition?: AnalysisPackDefinitionResolvers<ContextType>;
+  AnalysisPackEnumeration?: AnalysisPackEnumerationResolvers<ContextType>;
+  AnalysisPackTypes?: AnalysisPackTypesResolvers<ContextType>;
+  AnalysisPackVersion?: AnalysisPackVersionResolvers<ContextType>;
   AsanaConfig?: AsanaConfigResolvers<ContextType>;
   AWSDateTime?: GraphQLScalarType;
   AWSEmail?: GraphQLScalarType;
@@ -3711,7 +3753,6 @@ export type Resolvers<ContextType = any> = {
   DestinationConfig?: DestinationConfigResolvers<ContextType>;
   Detection?: DetectionResolvers;
   DetectionTestDefinition?: DetectionTestDefinitionResolvers<ContextType>;
-  DetectionTypes?: DetectionTypesResolvers<ContextType>;
   Error?: ErrorResolvers<ContextType>;
   FloatSeries?: FloatSeriesResolvers<ContextType>;
   FloatSeriesData?: FloatSeriesDataResolvers<ContextType>;
@@ -3723,12 +3764,12 @@ export type Resolvers<ContextType = any> = {
   IntegrationTemplate?: IntegrationTemplateResolvers<ContextType>;
   JiraConfig?: JiraConfigResolvers<ContextType>;
   ListAlertsResponse?: ListAlertsResponseResolvers<ContextType>;
+  ListAnalysisPacksResponse?: ListAnalysisPacksResponseResolvers<ContextType>;
   ListAvailableLogTypesResponse?: ListAvailableLogTypesResponseResolvers<ContextType>;
   ListComplianceItemsResponse?: ListComplianceItemsResponseResolvers<ContextType>;
   ListDataModelsResponse?: ListDataModelsResponseResolvers<ContextType>;
   ListDetectionsResponse?: ListDetectionsResponseResolvers<ContextType>;
   ListGlobalPythonModulesResponse?: ListGlobalPythonModulesResponseResolvers<ContextType>;
-  ListPacksResponse?: ListPacksResponseResolvers<ContextType>;
   ListResourcesResponse?: ListResourcesResponseResolvers<ContextType>;
   LogAnalysisMetricsResponse?: LogAnalysisMetricsResponseResolvers<ContextType>;
   LogIntegration?: LogIntegrationResolvers;
@@ -3741,9 +3782,6 @@ export type Resolvers<ContextType = any> = {
   OpsgenieConfig?: OpsgenieConfigResolvers<ContextType>;
   OrganizationReportBySeverity?: OrganizationReportBySeverityResolvers<ContextType>;
   OrganizationStatsResponse?: OrganizationStatsResponseResolvers<ContextType>;
-  Pack?: PackResolvers<ContextType>;
-  PackDetectionsPatterns?: PackDetectionsPatternsResolvers<ContextType>;
-  PackVersion?: PackVersionResolvers<ContextType>;
   PagerDutyConfig?: PagerDutyConfigResolvers<ContextType>;
   PagingData?: PagingDataResolvers<ContextType>;
   Policy?: PolicyResolvers<ContextType>;

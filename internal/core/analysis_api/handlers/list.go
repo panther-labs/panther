@@ -76,6 +76,7 @@ var (
 type pythonFilters struct {
 	CreatedBy      string
 	Enabled        *bool
+	IDs            []string
 	InitialSet     *bool
 	LastModifiedBy string
 	NameContains   string
@@ -96,6 +97,14 @@ func pythonListFilters(input *pythonFilters) []expression.ConditionBuilder {
 	if input.NameContains != "" {
 		filters = append(filters, expression.Contains(expression.Name("lowerId"), input.NameContains).
 			Or(expression.Contains(expression.Name("lowerDisplayName"), input.NameContains)))
+	}
+
+	if len(input.IDs) > 0 {
+		idFilter := expression.Contains(expression.Name("lowerId"), strings.ToLower(input.IDs[0]))
+		for _, id := range input.IDs[1:] {
+			idFilter = idFilter.Or(expression.Contains(expression.Name("lowerId"), strings.ToLower(id)))
+		}
+		filters = append(filters, idFilter)
 	}
 
 	if len(input.ResourceTypes) > 0 {
