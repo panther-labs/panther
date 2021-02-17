@@ -16,9 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export * from './listDestinations.generated';
-export * from './listAvailableLogTypes.generated';
-export * from './sendTestAlert.generated';
-export * from './updateAlertStatus.generated';
-export * from './updateAnalysisPack.generated';
-export * from './listComplianceSourceNames.generated';
+import React from 'react';
+import { Flex, Heading } from 'pouncejs';
+import EmptyBoxImg from 'Assets/illustrations/empty-box.svg';
+
+const EmptyDataFallback: React.FC<{ message: string }> = ({ message }) => {
+  return (
+    <Flex justify="center" align="center" direction="column" my={8} spacing={8}>
+      <img alt="Empty Box Illustration" src={EmptyBoxImg} width="auto" height={200} />
+      <Heading size="small" color="navyblue-100">
+        {message}
+      </Heading>
+    </Flex>
+  );
+};
+
+export default React.memo(EmptyDataFallback);
