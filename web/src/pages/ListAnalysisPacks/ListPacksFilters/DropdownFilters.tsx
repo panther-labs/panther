@@ -19,13 +19,16 @@
 import React from 'react';
 import { FastField, Form, Formik } from 'formik';
 import { Box, Button, Card, Flex, Popover, PopoverContent, PopoverTrigger } from 'pouncejs';
-import { ListPacksInput } from 'Generated/schema';
+import { ListAnalysisPacksInput } from 'Generated/schema';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
 import isUndefined from 'lodash/isUndefined';
 import TextButton from 'Components/buttons/TextButton';
 import FormikCombobox from 'Components/fields/ComboBox';
 
-export type ListPacksDropdownFiltersValues = Pick<ListPacksInput, 'updateAvailable' | 'enabled'>;
+export type ListPacksDropdownFiltersValues = Pick<
+  ListAnalysisPacksInput,
+  'updateAvailable' | 'enabled'
+>;
 
 const defaultValues = {
   updateAvailable: null,

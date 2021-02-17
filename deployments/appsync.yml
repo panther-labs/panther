@@ -1320,12 +1320,12 @@ Resources:
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCodeNoBody, VTL]
 
-  GetPackResolver:
+  GetAnalysisPackResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
-      FieldName: pack
+      FieldName: getAnalysisPack
       DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
@@ -1339,12 +1339,12 @@ Resources:
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
-  UpdatePackResolver:
+  UpdateAnalysisPackResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
       TypeName: Mutation
-      FieldName: updatePack
+      FieldName: updateAnalysisPack
       DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         #set ($input = $ctx.args.input)
@@ -1358,12 +1358,12 @@ Resources:
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
 
-  ListPacksResolver:
+  ListAnalysisPacksResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
       TypeName: Query
-      FieldName: listPacks
+      FieldName: listAnalysisPacks
       DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
@@ -1379,9 +1379,9 @@ Resources:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !Ref ApiId
-      TypeName: Query
-      FieldName: enumeratePack
-      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
+      TypeName: AnalysisPack
+      FieldName: analysisPackEnumeration
+      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
           "version" : "2017-02-28",

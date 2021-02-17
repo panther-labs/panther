@@ -61,8 +61,8 @@ const typePolicies: TypePolicies = {
       getDataModel(existing, { args, toReference }) {
         return existing || toReference({ __typename: 'DataModel', id: args.id });
       },
-      pack(existing, { args, toReference }) {
-        return existing || toReference({ __typename: 'Pack', id: args.id });
+      getAnalysisPack(existing, { args, toReference }) {
+        return existing || toReference({ __typename: 'AnalysisPack', id: args.id });
       },
       getS3LogIntegration(existing, { args, toReference }) {
         return existing || toReference({ __typename: 'S3LogIntegration', integrationId: args.id });

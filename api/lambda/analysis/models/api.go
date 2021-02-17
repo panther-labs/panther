@@ -70,7 +70,7 @@ type LambdaInput struct {
 	// Detection Packs
 	GetPack       *GetPackInput       `json:"getPack,omitempty"`
 	EnumeratePack *EnumeratePackInput `json:"enumeratePack,omitempty"`
-	ListPacks     *ListPacksInput     `json:"listPacks,omitempty"`
+	ListAnalysisPacks     *ListPacksInput     `json:"listPacks,omitempty"`
 	PatchPack     *PatchPackInput     `json:"patchPack,omitempty"`
 	PollPacks     *PollPacksInput     `json:"pollPacks,omitempty"`
 }

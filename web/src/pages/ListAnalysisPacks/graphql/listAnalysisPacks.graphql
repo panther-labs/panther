@@ -1,0 +1,12 @@
+query ListAnalysisPacks($input: ListAnalysisPacksInput!) {
+    listAnalysisPacks(input: $input) {
+        analysisPacks {
+            ...AnalysisPackSummary
+        }
+        paging {
+            totalPages
+            thisPage
+            totalItems
+        }
+    }
+}

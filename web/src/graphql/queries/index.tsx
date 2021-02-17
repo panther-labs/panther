@@ -20,5 +20,5 @@ export * from './listDestinations.generated';
 export * from './listAvailableLogTypes.generated';
 export * from './sendTestAlert.generated';
 export * from './updateAlertStatus.generated';
-export * from './updatePack.generated';
+export * from './updateAnalysisPack.generated';
 export * from './listComplianceSourceNames.generated';

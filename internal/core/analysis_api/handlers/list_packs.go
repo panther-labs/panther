@@ -86,7 +86,7 @@ func (API) EnumeratePack(input *models.EnumeratePackInput) *events.APIGatewayPro
 	return gatewayapi.MarshalResponse(&result, http.StatusOK)
 }
 
-func (API) ListPacks(input *models.ListPacksInput) *events.APIGatewayProxyResponse {
+func (API) ListAnalysisPacks(input *models.ListPacksInput) *events.APIGatewayProxyResponse {
 	// Standardize input
 	input.NameContains = strings.ToLower(input.NameContains)
 	if input.Page == 0 {

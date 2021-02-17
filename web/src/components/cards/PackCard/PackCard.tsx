@@ -22,31 +22,31 @@ import { Box, Card, Flex, Link, Switch, Text, useSnackbar } from 'pouncejs';
 import { Link as RRLink } from 'react-router-dom';
 import urls from 'Source/urls';
 import UpdateVersion, { UpdateVersionFormValues } from 'Components/cards/PackCard/UpdateVersion';
-import { useUpdatePack } from 'Source/graphql/queries';
+import { useUpdateAnalysisPack } from 'Source/graphql/queries';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { extractErrorMessage } from 'Helpers/utils';
 import BulletedLoading from 'Components/BulletedLoading';
 import { DETECTION_TYPE_COLOR_MAP } from 'Source/constants';
-import { PackDetails } from 'Source/graphql/fragments/PackDetails.generated';
 import FlatBadge from 'Components/badges/FlatBadge';
+import { AnalysisPackSummary } from 'Source/graphql/fragments/AnalysisPackSummary.generated';
 
 interface PackCardProps {
-  pack: PackDetails;
+  pack: AnalysisPackSummary;
 }
 
 const PackCard: React.FC<PackCardProps> = ({ pack }) => {
   const { pushSnackbar } = useSnackbar();
 
-  const [updatePack, { loading }] = useUpdatePack({
+  const [updatePack, { loading }] = useUpdateAnalysisPack({
     // This hook ensures we also update the PackDetails item in the cache
     update: (cache, { data }) => {
       const dataId = cache.identify({
-        __typename: 'PackDetails',
-        id: data.updatePack.id,
+        __typename: 'AnalysisPack',
+        id: data.updateAnalysisPack.id,
       });
       cache.modify(dataId, {
-        enabled: () => data.updatePack.enabled,
-        packVersion: () => data.updatePack.packVersion,
+        enabled: () => data.updateAnalysisPack.enabled,
+        packVersion: () => data.updateAnalysisPack.packVersion,
       });
       // TODO: when apollo client is updated to 3.0.0-rc.12+, use this code
       // cache.modify({
@@ -67,7 +67,7 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
       });
       pushSnackbar({
         variant: 'success',
-        title: `Updated Pack [${data.updatePack.id}] successfully`,
+        title: `Updated Pack [${data.updateAnalysisPack.id}] successfully`,
       });
     },
     onError: error => {

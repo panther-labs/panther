@@ -29,7 +29,7 @@ import React from 'react';
 import { Alert, Box, Card, Flex } from 'pouncejs';
 import { extractErrorMessage } from 'Helpers/utils';
 import { compose } from 'Helpers/compose';
-import { ListPacksInput } from 'Generated/schema';
+import { ListAnalysisPacksInput } from 'Generated/schema';
 import NoResultsFound from 'Components/NoResultsFound';
 import ErrorBoundary from 'Components/ErrorBoundary';
 import withSEO from 'Hoc/withSEO';
@@ -40,15 +40,17 @@ import { TableControlsPagination } from 'Components/utils/TableControls';
 import useRequestParamsWithPagination from 'Hooks/useRequestParamsWithPagination';
 import PackCard from 'Components/cards/PackCard';
 import { DEFAULT_SMALL_PAGE_SIZE } from 'Source/constants';
-import { useListPacks } from 'Pages/ListPacks/graphql/listPacks.generated';
+import { useListAnalysisPacks } from './graphql/listAnalysisPacks.generated';
 import ListPacksFilters from './ListPacksFilters';
 import ListPacksSkeleton from './Skeleton';
 
-const ListPacks = () => {
+const ListAnalysisPacks = () => {
   useTrackPageView(PageViewEnum.ListPacks);
-  const { updatePagingParams, requestParams } = useRequestParamsWithPagination<ListPacksInput>();
+  const { updatePagingParams, requestParams } = useRequestParamsWithPagination<
+    ListAnalysisPacksInput
+  >();
 
-  const { loading, error, data } = useListPacks({
+  const { loading, error, data } = useListAnalysisPacks({
     fetchPolicy: 'cache-and-network',
     variables: {
       input: { ...requestParams, pageSize: DEFAULT_SMALL_PAGE_SIZE },
@@ -75,8 +77,8 @@ const ListPacks = () => {
   }
 
   // Get query results while protecting against exceptions
-  const packItems = data?.listPacks.packs;
-  const pagingData = data?.listPacks.paging;
+  const packItems = data?.listAnalysisPacks.analysisPacks;
+  const pagingData = data?.listAnalysisPacks.paging;
 
   return (
     <ErrorBoundary>
@@ -106,4 +108,4 @@ const ListPacks = () => {
   );
 };
 
-export default compose(withSEO({ title: 'Packs' }), React.memo)(ListPacks);
+export default compose(withSEO({ title: 'Packs' }), React.memo)(ListAnalysisPacks);

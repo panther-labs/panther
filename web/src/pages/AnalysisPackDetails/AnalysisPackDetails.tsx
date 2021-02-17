@@ -26,17 +26,16 @@ import withSEO from 'Hoc/withSEO';
 import invert from 'lodash/invert';
 import useUrlParams from 'Hooks/useUrlParams';
 import ErrorBoundary from 'Components/ErrorBoundary';
-import { useGetPackDetails } from 'Pages/PackDetails/graphql/getPackDetails.generated';
-import { useEnumeratePack } from 'Pages/PackDetails/graphql/enumeratePack.generated';
 import RuleCard from 'Components/cards/RuleCard';
 import { RuleSummary } from 'Source/graphql/fragments/RuleSummary.generated';
 import { PolicySummary } from 'Source/graphql/fragments/PolicySummary.generated';
-import EmptyData from 'Pages/PackDetails/EmptyData';
+import EmptyData from 'Pages/AnalysisPackDetails/EmptyData';
 import PolicyCard from 'Components/cards/PolicyCard';
 import GlobalPythonModuleItem from 'Pages/ListGlobalPythonModules/GlobalPythonModuleItem/GlobalPythonModuleItem';
 import DataModelCard from 'Pages/ListDataModels/DataModelCard';
+import { useGetAnalysisPackDetails } from './graphql/getAnalysisPackDetails.generated';
 import PackDetailsPageSkeleton from './Skeleton';
-import PackDetailsBanner from './PackDetailsBanner';
+import AnalysisPackDetailsBanner from './AnalysisPackDetailsBanner';
 
 export interface PackDetailsPageUrlParams {
   section?: 'rules' | 'policies' | 'helpers' | 'models';
@@ -57,21 +56,14 @@ const tabIndexToSection = invert(sectionToTabIndex) as Record<
 const PackDetailsPage: React.FC = () => {
   const { match } = useRouter<{ id: string }>();
   const { urlParams, setUrlParams } = useUrlParams<PackDetailsPageUrlParams>();
-  const { error, data, loading } = useGetPackDetails({
+  const { error, data, loading } = useGetAnalysisPackDetails({
     fetchPolicy: 'cache-and-network',
     variables: {
       id: match.params.id,
     },
   });
 
-  const { data: enumerateData, loading: loadingEnumeration } = useEnumeratePack({
-    fetchPolicy: 'cache-and-network',
-    variables: {
-      id: match.params.id,
-    },
-  });
-
-  if (loading || loadingEnumeration) {
+  if (loading) {
     return <PackDetailsPageSkeleton />;
   }
 
@@ -90,21 +82,22 @@ const PackDetailsPage: React.FC = () => {
     );
   }
 
-  const rules = (enumerateData?.enumeratePack?.detections.filter(d => d.analysisType === 'RULE') ||
-    []) as RuleSummary[];
-  const policies = (enumerateData?.enumeratePack?.detections.filter(
+  const rules = (data?.getAnalysisPack?.analysisPackEnumeration?.detections.filter(
+    d => d.analysisType === 'RULE'
+  ) || []) as RuleSummary[];
+  const policies = (data?.getAnalysisPack?.analysisPackEnumeration?.detections.filter(
     d => d.analysisType === 'POLICY'
   ) || []) as PolicySummary[];
 
-  const models = enumerateData?.enumeratePack.models || [];
+  const models = data?.getAnalysisPack?.analysisPackEnumeration?.models || [];
 
-  const helpers = enumerateData?.enumeratePack.globals || [];
+  const helpers = data?.getAnalysisPack?.analysisPackEnumeration?.globals || [];
 
   return (
     <Box as="article" mb={6}>
       <Flex direction="column" spacing={6}>
         <ErrorBoundary>
-          <PackDetailsBanner pack={data.pack} />
+          <AnalysisPackDetailsBanner pack={data.getAnalysisPack} />
         </ErrorBoundary>
         <Card position="relative">
           <Tabs

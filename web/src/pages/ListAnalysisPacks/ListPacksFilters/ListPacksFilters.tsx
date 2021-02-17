@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { Form, Formik, FastField } from 'formik';
-import { ListPacksInput } from 'Generated/schema';
+import { ListAnalysisPacksInput } from 'Generated/schema';
 import { Box, Flex } from 'pouncejs';
 import pick from 'lodash/pick';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
@@ -26,9 +26,9 @@ import FormikAutosave from 'Components/utils/Autosave';
 import FormikTextInput from 'Components/fields/TextInput';
 import DropdownFilters from './DropdownFilters';
 
-export type ListPackInlineFiltersValues = Pick<ListPacksInput, 'nameContains'>;
+export type ListPackInlineFiltersValues = Pick<ListAnalysisPacksInput, 'nameContains'>;
 
-const filters = ['nameContains'] as (keyof ListPacksInput)[];
+const filters = ['nameContains'] as (keyof ListAnalysisPacksInput)[];
 
 const defaultValues = {
   nameContains: '',
@@ -36,7 +36,7 @@ const defaultValues = {
 
 const ListPacksFilters: React.FC = () => {
   const { requestParams, updateRequestParams } = useRequestParamsWithoutPagination<
-    ListPacksInput
+    ListAnalysisPacksInput
   >();
 
   const initialFilterValues = React.useMemo(

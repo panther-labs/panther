@@ -18,8 +18,9 @@
 
 import React from 'react';
 import {
-  buildPack,
-  buildPackEnumeration,
+  buildAnalysisPack,
+  buildAnalysisPackEnumeration,
+  buildDataModel,
   buildPolicy,
   buildRule,
   fireEvent,
@@ -29,26 +30,20 @@ import {
 } from 'test-utils';
 import { Route } from 'react-router-dom';
 import urls from 'Source/urls';
-import { mockGetPackDetails } from 'Pages/PackDetails/graphql/getPackDetails.generated';
-import { mockEnumeratePack } from 'Pages/PackDetails/graphql/enumeratePack.generated';
-import PackDetails from './PackDetails';
 
-describe('PackDetails', () => {
+import { mockGetAnalysisPackDetails } from './graphql/getAnalysisPackDetails.generated';
+import AnalysisPackDetails from './AnalysisPackDetails';
+
+describe('AnalysisPackDetails', () => {
   it('renders the pack details page', async () => {
-    const pack = buildPack({
+    const pack = buildAnalysisPack({
       displayName: 'Pack 1',
       description: 'This is an amazing description',
     });
 
     const mocks = [
-      mockGetPackDetails({
-        data: { pack },
-        variables: {
-          id: pack.id,
-        },
-      }),
-      mockEnumeratePack({
-        data: { enumeratePack: buildPackEnumeration() },
+      mockGetAnalysisPackDetails({
+        data: { getAnalysisPack: pack },
         variables: {
           id: pack.id,
         },
@@ -57,7 +52,7 @@ describe('PackDetails', () => {
 
     const { getByText, getByTestId } = render(
       <Route exact path={urls.packs.details(':id')}>
-        <PackDetails />
+        <AnalysisPackDetails />
       </Route>,
       {
         mocks,
@@ -80,20 +75,19 @@ describe('PackDetails', () => {
     expect(getByText('Data Models')).toBeTruthy();
   });
 
-  it('shows the tabs as disabled when no alerts are in place', async () => {
-    const pack = buildPack({
+  it('shows the tabs as disabled when no rules or helpers are in place', async () => {
+    const pack = buildAnalysisPack({
       displayName: 'Pack 1',
       description: 'This is an amazing description',
+      analysisPackEnumeration: buildAnalysisPackEnumeration({
+        globals: [],
+        detections: [buildPolicy()],
+        models: [buildDataModel()],
+      }),
     });
     const mocks = [
-      mockGetPackDetails({
-        data: { pack },
-        variables: {
-          id: pack.id,
-        },
-      }),
-      mockEnumeratePack({
-        data: { enumeratePack: buildPackEnumeration({ globals: [], detections: [buildPolicy()] }) },
+      mockGetAnalysisPackDetails({
+        data: { getAnalysisPack: pack },
         variables: {
           id: pack.id,
         },
@@ -102,7 +96,7 @@ describe('PackDetails', () => {
 
     const { getAllByTestId, getByTestId } = render(
       <Route exact path={urls.packs.details(':id')}>
-        <PackDetails />
+        <AnalysisPackDetails />
       </Route>,
       {
         mocks,
@@ -131,19 +125,13 @@ describe('PackDetails', () => {
   });
 
   it('allows URL matching of tab navigation', async () => {
-    const pack = buildPack({
+    const pack = buildAnalysisPack({
       displayName: 'Pack 1',
       description: 'This is an amazing description',
     });
     const mocks = [
-      mockGetPackDetails({
-        data: { pack },
-        variables: {
-          id: pack.id,
-        },
-      }),
-      mockEnumeratePack({
-        data: { enumeratePack: buildPackEnumeration({ globals: [], detections: [buildPolicy()] }) },
+      mockGetAnalysisPackDetails({
+        data: { getAnalysisPack: pack },
         variables: {
           id: pack.id,
         },
@@ -152,7 +140,7 @@ describe('PackDetails', () => {
 
     const { getByText, getByTestId, history } = render(
       <Route exact path={urls.packs.details(':id')}>
-        <PackDetails />
+        <AnalysisPackDetails />
       </Route>,
       {
         mocks,
@@ -174,22 +162,20 @@ describe('PackDetails', () => {
   });
 
   it('fetches and render rules and policies for the pack', async () => {
-    const pack = buildPack({
-      displayName: 'Pack 1',
-      description: 'This is an amazing description',
-    });
     const rule = buildRule();
     const policy = buildPolicy();
+    const pack = buildAnalysisPack({
+      displayName: 'Pack 1',
+      description: 'This is an amazing description',
+      analysisPackEnumeration: buildAnalysisPackEnumeration({
+        globals: [],
+        detections: [rule, policy],
+      }),
+    });
 
     const mocks = [
-      mockGetPackDetails({
-        data: { pack },
-        variables: {
-          id: pack.id,
-        },
-      }),
-      mockEnumeratePack({
-        data: { enumeratePack: buildPackEnumeration({ detections: [rule, policy] }) },
+      mockGetAnalysisPackDetails({
+        data: { getAnalysisPack: pack },
         variables: {
           id: pack.id,
         },
@@ -198,7 +184,7 @@ describe('PackDetails', () => {
 
     const { getByText, getByTestId } = render(
       <Route exact path={urls.packs.details(':id')}>
-        <PackDetails />
+        <AnalysisPackDetails />
       </Route>,
       {
         mocks,
@@ -227,20 +213,18 @@ describe('PackDetails', () => {
   });
 
   it('fetches and render empty fallback for rules & policies', async () => {
-    const pack = buildPack({
+    const pack = buildAnalysisPack({
       displayName: 'Pack 1',
       description: 'This is an amazing description',
+      analysisPackEnumeration: buildAnalysisPackEnumeration({
+        globals: [],
+        detections: [],
+      }),
     });
 
     const mocks = [
-      mockGetPackDetails({
-        data: { pack },
-        variables: {
-          id: pack.id,
-        },
-      }),
-      mockEnumeratePack({
-        data: { enumeratePack: buildPackEnumeration({ detections: [] }) },
+      mockGetAnalysisPackDetails({
+        data: { getAnalysisPack: pack },
         variables: {
           id: pack.id,
         },
@@ -249,7 +233,7 @@ describe('PackDetails', () => {
 
     const { getByText, getByTestId } = render(
       <Route exact path={urls.packs.details(':id')}>
-        <PackDetails />
+        <AnalysisPackDetails />
       </Route>,
       {
         mocks,

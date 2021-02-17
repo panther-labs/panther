@@ -18,30 +18,30 @@
 
 import React from 'react';
 import { Box, Flex, Card, Heading, Switch, useSnackbar, Text } from 'pouncejs';
-import { PackDetails } from 'Source/graphql/fragments/PackDetails.generated';
 import UpdateVersion, { UpdateVersionFormValues } from 'Components/cards/PackCard/UpdateVersion';
-import { useUpdatePack } from 'Source/graphql/queries';
 import { EventEnum, SrcEnum, trackError, TrackErrorEnum, trackEvent } from 'Helpers/analytics';
 import { extractErrorMessage } from 'Helpers/utils';
 import BulletedLoading from 'Components/BulletedLoading';
+import { AnalysisPackSummary } from 'Source/graphql/fragments/AnalysisPackSummary.generated';
+import { useUpdateAnalysisPack } from 'Source/graphql/queries';
 
-interface ResourceDetailsInfoProps {
-  pack?: PackDetails;
+interface AnalysisPackDetailsBannerProps {
+  pack?: AnalysisPackSummary;
 }
 
-const PackDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ pack }) => {
+const AnalysisPackDetailsBanner: React.FC<AnalysisPackDetailsBannerProps> = ({ pack }) => {
   const { pushSnackbar } = useSnackbar();
 
-  const [updatePack, { loading }] = useUpdatePack({
+  const [updatePack, { loading }] = useUpdateAnalysisPack({
     // This hook ensures we also update the AlertDetails item in the cache
     update: (cache, { data }) => {
       const dataId = cache.identify({
-        __typename: 'PackDetails',
-        id: data.updatePack.id,
+        __typename: 'AnalysisPack',
+        id: data.updateAnalysisPack.id,
       });
       cache.modify(dataId, {
-        enabled: () => data.updatePack.enabled,
-        packVersion: () => data.updatePack.packVersion,
+        enabled: () => data.updateAnalysisPack.enabled,
+        packVersion: () => data.updateAnalysisPack.packVersion,
       });
       // TODO: when apollo client is updated to 3.0.0-rc.12+, use this code
       // cache.modify({
@@ -62,7 +62,7 @@ const PackDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ pack }) => {
       });
       pushSnackbar({
         variant: 'success',
-        title: `Updated Pack [${data.updatePack.id}] successfully`,
+        title: `Updated Pack [${data.updateAnalysisPack.id}] successfully`,
       });
     },
     onError: error => {
@@ -172,4 +172,4 @@ const PackDetailsBanner: React.FC<ResourceDetailsInfoProps> = ({ pack }) => {
   );
 };
 
-export default React.memo(PackDetailsBanner);
+export default React.memo(AnalysisPackDetailsBanner);

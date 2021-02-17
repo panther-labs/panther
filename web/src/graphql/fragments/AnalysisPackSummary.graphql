@@ -1,4 +1,4 @@
-fragment PackDetails on Pack {
+fragment AnalysisPackSummary on AnalysisPack {
     id
     displayName
     description

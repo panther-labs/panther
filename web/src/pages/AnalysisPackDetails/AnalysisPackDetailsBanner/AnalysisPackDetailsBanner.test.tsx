@@ -17,12 +17,12 @@
  */
 
 import React from 'react';
-import { render, buildPack } from 'test-utils';
+import { render, buildAnalysisPack } from 'test-utils';
 import PackDetailsBanner from './index';
 
 describe('PackDetailsBanner', () => {
   it('renders the correct data', async () => {
-    const pack = buildPack({ updateAvailable: true });
+    const pack = buildAnalysisPack({ updateAvailable: true });
     const { getByText } = render(<PackDetailsBanner pack={pack} />);
 
     expect(getByText(pack.displayName)).toBeInTheDocument();
@@ -33,7 +33,7 @@ describe('PackDetailsBanner', () => {
   });
 
   it("doesn't render 'Update Available' indication", async () => {
-    const pack = buildPack({ updateAvailable: false });
+    const pack = buildAnalysisPack({ updateAvailable: false });
     const { getByText, queryByText } = render(<PackDetailsBanner pack={pack} />);
 
     expect(getByText(pack.displayName)).toBeInTheDocument();

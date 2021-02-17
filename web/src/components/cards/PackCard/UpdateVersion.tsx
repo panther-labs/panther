@@ -16,12 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import React from 'react';
-import { Pack, PackVersion } from 'Generated/schema';
+import { AnalysisPack, AnalysisPackVersion } from 'Generated/schema';
 import { Button, Flex, Box, Combobox } from 'pouncejs';
 import { compareSemanticVersion } from 'Helpers/utils';
 
 interface UpdateVersionProps {
-  pack: Pick<Pack, 'availableVersions' | 'packVersion' | 'enabled'>;
+  pack: Pick<AnalysisPack, 'availableVersions' | 'packVersion' | 'enabled'>;
   onPatch: (values: UpdateVersionFormValues) => void;
 }
 
@@ -40,7 +40,9 @@ const UpdateVersion: React.FC<UpdateVersionProps> = ({
 }) => {
   const sortedVersions = [...availableVersions];
   sortedVersions.sort((a, b) => compareSemanticVersion(b.semVer, a.semVer));
-  const [selectedVersion, setSelectedVersion] = React.useState<PackVersion>(sortedVersions[0]);
+  const [selectedVersion, setSelectedVersion] = React.useState<AnalysisPackVersion>(
+    sortedVersions[0]
+  );
 
   return (
     <Flex spacing={4}>
