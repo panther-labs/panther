@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Box, Card, Flex, SimpleGrid } from 'pouncejs';
+import { Alert, Box, Flex, SimpleGrid } from 'pouncejs';
 import { extractErrorMessage, getGraphqlSafeDateRange } from 'Helpers/utils';
 import { PageViewEnum } from 'Helpers/analytics';
 import useTrackPageView from 'Hooks/useTrackPageView';
@@ -88,32 +88,26 @@ const AlertsOverview: React.FC = () => {
     <Box as="article" mb={6}>
       <AlertsOverviewBreadcrumbFilters initialValues={initialValues} />
       <SimpleGrid columns={1} spacingY={4}>
-        <Card as="section">
-          <Panel title="Alerts Overview">
-            <Flex direction="row">
-              <AlertSummary data={totalAlertsDelta} />
-              <AlertsBySeverity alerts={alertsBySeverity} />
-            </Flex>
-          </Panel>
-        </Card>
-        <Card as="section">
-          <Panel title="Top 5 High Priority Alerts">
-            <Flex direction="column" spacing={2}>
-              {topAlertSummaries.length ? (
-                topAlertSummaries.map(alert => <AlertCard key={alert.alertId} alert={alert} />)
-              ) : (
-                <Box my={6}>
-                  <NoResultsFound />
-                </Box>
-              )}
-            </Flex>
-          </Panel>
-        </Card>
-        <Card as="section">
-          <Panel title="Most Active Detections">
-            <MostActiveRules alertsByRuleID={alertsByRuleID} />
-          </Panel>
-        </Card>
+        <Panel title="Alerts Overview">
+          <Flex>
+            <AlertSummary data={totalAlertsDelta} />
+            <AlertsBySeverity alerts={alertsBySeverity} />
+          </Flex>
+        </Panel>
+        <Panel title="Top 5 High Priority Alerts">
+          <Flex direction="column" spacing={2}>
+            {topAlertSummaries.length ? (
+              topAlertSummaries.map(alert => <AlertCard key={alert.alertId} alert={alert} />)
+            ) : (
+              <Box my={6}>
+                <NoResultsFound />
+              </Box>
+            )}
+          </Flex>
+        </Panel>
+        <Panel title="Most Active Detections">
+          <MostActiveRules alertsByRuleID={alertsByRuleID} />
+        </Panel>
       </SimpleGrid>
     </Box>
   );

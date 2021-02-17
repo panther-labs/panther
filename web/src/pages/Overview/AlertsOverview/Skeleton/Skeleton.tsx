@@ -17,12 +17,26 @@
  */
 
 import React from 'react';
-import { Box, FadeIn } from 'pouncejs';
+import { Box, FadeIn, SimpleGrid } from 'pouncejs';
+import TablePlaceholder from 'Components/TablePlaceholder';
+import Panel from 'Components/Panel';
 
 const AlertsOverviewSkeleton: React.FC = () => {
   return (
-    <Box as="article" mb={6}>
-      <FadeIn duration={400}></FadeIn>
+    <Box as="article">
+      <FadeIn duration={400}>
+        <SimpleGrid columns={1} spacingY={4}>
+          <Panel title="Alerts Overview">
+            <TablePlaceholder rowCount={1} rowHeight={80} />
+          </Panel>
+          <Panel title="Top 5 High Priority Alerts">
+            <TablePlaceholder rowHeight={36} />
+          </Panel>
+          <Panel title="Most Active Detections">
+            <TablePlaceholder rowCount={1} rowHeight={80} />
+          </Panel>
+        </SimpleGrid>
+      </FadeIn>
     </Box>
   );
 };
