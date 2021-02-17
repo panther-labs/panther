@@ -24,64 +24,66 @@ import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagi
 import FormikDateRangeInput from 'Components/fields/DateRangeInput';
 import FormikCombobox from 'Components/fields/ComboBox';
 import FormikAutosave from 'Components/utils/Autosave';
-import Breadcrumbs from 'Components/Breadcrumbs';
 import { minutesToString } from 'Helpers/utils';
 
-export type AlertsOverviewBreadcrumbFiltersValues = Pick<
+export type AlertsOverviewFiltersValues = Pick<
   LogAnalysisMetricsInput,
   'fromDate' | 'toDate' | 'intervalMinutes'
 >;
 
 const intervalMinutesOptions = [15, 30, 60, 180, 720, 1440];
 
-interface AlertsOverviewBreadcrumbFiltersProps {
-  initialValues: AlertsOverviewBreadcrumbFiltersValues;
+interface AlertsOverviewFiltersProps {
+  initialValues: AlertsOverviewFiltersValues;
 }
 
-const AlertsOverviewBreadcrumbFilters: React.FC<AlertsOverviewBreadcrumbFiltersProps> = ({
-  initialValues,
-}) => {
+const AlertsOverviewFilters: React.FC<AlertsOverviewFiltersProps> = ({ initialValues }) => {
   const { updateRequestParams } = useRequestParamsWithoutPagination<LogAnalysisMetricsInput>();
 
   return (
-    <Breadcrumbs.Actions>
-      <Flex justify="flex-end">
-        <Formik<AlertsOverviewBreadcrumbFiltersValues>
-          initialValues={initialValues}
-          onSubmit={updateRequestParams}
-        >
-          <Form>
-            <FormikAutosave threshold={50} />
-            <Flex spacing={4} maxWidth={500}>
-              <Box maxWidth={100}>
-                <Field
-                  as={FormikCombobox}
-                  variant="solid"
-                  label="Interval"
-                  name="intervalMinutes"
-                  items={intervalMinutesOptions}
-                  itemToString={minutesToString}
-                />
-              </Box>
-              <FormikDateRangeInput
-                alignment="right"
-                withPresets
-                withTime
+    <Flex
+      justify="flex-end"
+      position="absolute"
+      right={0}
+      pb={6}
+      zIndex={1}
+      transform="translateY(-100%)"
+    >
+      <Formik<AlertsOverviewFiltersValues>
+        initialValues={initialValues}
+        onSubmit={updateRequestParams}
+      >
+        <Form>
+          <FormikAutosave threshold={50} />
+          <Flex spacing={4} maxWidth={500}>
+            <Box maxWidth={100}>
+              <Field
+                as={FormikCombobox}
                 variant="solid"
-                format="MM/DD/YYYY HH:mm"
-                labelStart="Date Start"
-                labelEnd="Date End"
-                placeholderStart="MM/DD/YY HH:mm"
-                placeholderEnd="MM/DD/YY HH:mm"
-                nameStart="fromDate"
-                nameEnd="toDate"
+                label="Interval"
+                name="intervalMinutes"
+                items={intervalMinutesOptions}
+                itemToString={minutesToString}
               />
-            </Flex>
-          </Form>
-        </Formik>
-      </Flex>
-    </Breadcrumbs.Actions>
+            </Box>
+            <FormikDateRangeInput
+              alignment="right"
+              withPresets
+              withTime
+              variant="solid"
+              format="MM/DD/YYYY HH:mm"
+              labelStart="Date Start"
+              labelEnd="Date End"
+              placeholderStart="MM/DD/YY HH:mm"
+              placeholderEnd="MM/DD/YY HH:mm"
+              nameStart="fromDate"
+              nameEnd="toDate"
+            />
+          </Flex>
+        </Form>
+      </Formik>
+    </Flex>
   );
 };
 
-export default React.memo(AlertsOverviewBreadcrumbFilters);
+export default React.memo(AlertsOverviewFilters);

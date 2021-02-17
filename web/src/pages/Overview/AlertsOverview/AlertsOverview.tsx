@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Box, Card, Flex, SimpleGrid } from 'pouncejs';
+import { Alert, Box, Flex, SimpleGrid } from 'pouncejs';
 import { extractErrorMessage, getGraphqlSafeDateRange } from 'Helpers/utils';
 import { PageViewEnum } from 'Helpers/analytics';
 import useTrackPageView from 'Hooks/useTrackPageView';
@@ -26,11 +26,11 @@ import { LogAnalysisMetricsInput } from 'Generated/schema';
 import AlertCard from 'Components/cards/AlertCard';
 import NoResultsFound from 'Components/NoResultsFound';
 import Panel from 'Components/Panel';
-import AlertSummary from './AlertSummary';
-import AlertsOverviewBreadcrumbFilters from './AlertsOverviewBreadcrumbFilters';
-import LogAnalysisOverviewPageSkeleton from './Skeleton';
 import { useGetOverviewAlerts } from './graphql/getOverviewAlerts.generated';
 import { useGetLogAnalysisMetrics } from './graphql/getLogAnalysisMetrics.generated';
+import AlertsOverviewFilters from './AlertsOverviewFilters';
+import LogAnalysisOverviewPageSkeleton from './Skeleton';
+import AlertSummary from './AlertSummary';
 import AlertsBySeverity from './AlertsBySeverity';
 import MostActiveRules from './MostActiveRules';
 
@@ -85,17 +85,13 @@ const AlertsOverview: React.FC = () => {
   const { alertsBySeverity, totalAlertsDelta, alertsByRuleID } = data.getLogAnalysisMetrics;
 
   return (
-    <Box as="article" mb={6}>
-      <AlertsOverviewBreadcrumbFilters initialValues={initialValues} />
+    <Box as="article" mb={6} position="relative">
+      <AlertsOverviewFilters initialValues={initialValues} />
       <SimpleGrid columns={1} spacingY={4}>
         <Panel title="Alerts Overview">
           <Flex minHeight={320}>
-            <Card width="20%" variant="dark" px={6} pt={6} pb={4}>
-              <AlertSummary data={totalAlertsDelta} />
-            </Card>
-            <Card width="80%" variant="dark" ml={5} py={6} pl={6}>
-              <AlertsBySeverity alerts={alertsBySeverity} />
-            </Card>
+            <AlertSummary data={totalAlertsDelta} />
+            <AlertsBySeverity alerts={alertsBySeverity} />
           </Flex>
         </Panel>
         <Panel title="Top 5 High Priority Alerts">

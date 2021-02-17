@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Flex } from 'pouncejs';
+import { Card, Flex } from 'pouncejs';
 import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
 import { capitalize } from 'Helpers/utils';
 import { LongSeriesData } from 'Generated/schema';
@@ -41,14 +41,16 @@ const AlertsBySeverity: React.FC<AlertsBySeverityProps> = ({ alerts }) => {
     };
   }, [alerts]);
 
-  if (!timeSeriesData?.series.length) {
-    return <NoDataFound title="No alerts are present in the system" />;
-  }
-
   return (
-    <Flex data-testid="alert-by-severity-chart" height="100%" position="relative">
-      <TimeSeriesChart data={timeSeriesData} zoomable title="Severity" />
-    </Flex>
+    <Card width="80%" variant="dark" ml={5} py={6} pl={6}>
+      {timeSeriesData?.series?.length ? (
+        <Flex data-testid="alert-by-severity-chart" height="100%" position="relative">
+          <TimeSeriesChart data={timeSeriesData} zoomable title="Severity" />
+        </Flex>
+      ) : (
+        <NoDataFound title="No alerts are present in the system" />
+      )}
+    </Card>
   );
 };
 
