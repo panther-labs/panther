@@ -1381,7 +1381,7 @@ Resources:
       ApiId: !Ref ApiId
       TypeName: AnalysisPack
       FieldName: analysisPackEnumeration
-      DataSourceName: !GetAtt SourceAPILambdaDataSource.Name
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {
           "version" : "2017-02-28",
