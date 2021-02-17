@@ -19,7 +19,9 @@ package api
  */
 
 import (
+	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/aws/aws-sdk-go/aws"
@@ -37,6 +39,7 @@ import (
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
 	"github.com/panther-labs/panther/pkg/genericapi"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 const (
@@ -105,12 +108,92 @@ func (api *API) checkAwsS3Integration(input *models.CheckIntegrationInput) *mode
 		Credentials: roleCreds,
 		Region:      bucketRegion,
 	})
-	h, skipped := checkGetObject(s3Client, input)
+	getObjectCheck, skipped := checkGetObject(s3Client, input)
 	if !skipped {
-		out.GetObjectStatus = &h
+		out.GetObjectStatus = &getObjectCheck
 	}
 
+	notificationsCheck, skipped := checkBucketNotifications(context.TODO(), s3Client, input, api.Config, *bucketRegion)
+	if !skipped {
+		out.BucketNotificationsStatus = &notificationsCheck
+	}
 	return out
+}
+
+func checkBucketNotifications(
+	ctx context.Context, s3Client s3iface.S3API, input *models.CheckIntegrationInput, config Config, bucketRegion string) (
+	h models.SourceIntegrationItemStatus, skipped bool) {
+
+	if !input.ManagedBucketNotifications {
+		return models.SourceIntegrationItemStatus{}, true
+	}
+
+	out, err := s3Client.GetBucketNotificationConfigurationWithContext(ctx, &s3.GetBucketNotificationConfigurationRequest{
+		Bucket:              &input.S3Bucket,
+		ExpectedBucketOwner: &input.AWSAccountID,
+	})
+	if err != nil {
+		return models.SourceIntegrationItemStatus{
+			Healthy:      false,
+			Message:      "Failed to get bucket notifications",
+			ErrorMessage: err.Error(),
+		}, false
+	}
+
+	topicARN := arn.ARN{
+		Partition: config.AWSPartition, // Note: Assume the onboarded bucket is in the same AWS partition as Panther
+		Service:   "sns",
+		Region:    bucketRegion,
+		AccountID: input.AWSAccountID,
+		Resource:  "panther-notifications-topic",
+	}.String()
+	// an SNS notification should exist for each one of the prefixes
+	prefixes := reduceNoPrefixStrings(input.S3PrefixLogTypes.S3Prefixes())
+	var notFound []string // keep the prefixes which we didn't find notifications for
+	for _, p := range prefixes {
+		// search the prefix in the configurations
+		ok := false
+		for _, c := range out.TopicConfigurations {
+			if topicARN != aws.StringValue(c.TopicArn) {
+				continue
+			}
+			if !stringset.Contains(aws.StringValueSlice(c.Events), "s3:ObjectCreated:*") {
+				continue
+			}
+			if c.Filter == nil || c.Filter.Key == nil {
+				continue
+			}
+
+			// Check filter rules. The prefix should be equal to p. Missing prefix is also fine if p is empty.
+			// Note we can't validate the suffix. User may have added a suffix to further break down which log files
+			// reach Panther.
+			rulePrefix := ""
+			for _, r := range c.Filter.Key.FilterRules {
+				if strings.ToLower(aws.StringValue(r.Name)) == "prefix" {
+					rulePrefix = aws.StringValue(r.Value)
+				}
+			}
+			ok = rulePrefix == p
+			if ok {
+				break
+			}
+		}
+		if !ok {
+			notFound = append(notFound, p) // checked all topic configs, couldn't find the prefix
+		}
+	}
+
+	if len(notFound) == 0 {
+		return models.SourceIntegrationItemStatus{
+			Healthy: true,
+			Message: "Bucket notifications are configured",
+		}, false
+	}
+	return models.SourceIntegrationItemStatus{
+		Healthy:      false,
+		Message:      "Bucket notifications are not properly configured",
+		ErrorMessage: fmt.Sprintf("Notifications are not configured for these prefixes: %+q", notFound),
+	}, false
 }
 
 // This function checks if the IAM identity of the s3Client has permissions to
