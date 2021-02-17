@@ -20,7 +20,6 @@ package main
  */
 
 import (
-	// Go Packages
 	"flag"
 	"fmt"
 	"io"
@@ -29,21 +28,17 @@ import (
 	"strings"
 	"time"
 
-	// Internal / panther packages
-	"github.com/panther-labs/panther/cmd/opstools"
-	"github.com/panther-labs/panther/pkg/awsbatch/dynamodbbatch"
-
-	// AWS packages
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-
-	// Logging and errors
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+
+	"github.com/panther-labs/panther/cmd/opstools"
+	"github.com/panther-labs/panther/pkg/awsbatch/dynamodbbatch"
 )
 
 const tableName = "panther-resources"
