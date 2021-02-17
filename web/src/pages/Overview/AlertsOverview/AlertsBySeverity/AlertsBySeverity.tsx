@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Flex } from 'pouncejs';
+import { Card, Flex } from 'pouncejs';
 import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
 import { capitalize } from 'Helpers/utils';
 import { LongSeriesData } from 'Generated/schema';
@@ -41,11 +41,11 @@ const AlertsBySeverity: React.FC<AlertsBySeverityProps> = ({ alerts: { series, t
   }
 
   return (
-    <Box ml={2} py={6} pl={6} width="80%" backgroundColor="navyblue-500">
+    <Card width="80%" ml={5} variant="dark" py={6} pl={6}>
       <Flex data-testid="alert-by-severity-chart" height="100%" position="relative">
-        <TimeSeriesChart data={timeseriesData} zoomable title="Alert Severity" />
+        <TimeSeriesChart data={timeseriesData} zoomable title="Severity" />
       </Flex>
-    </Box>
+    </Card>
   );
 };
 

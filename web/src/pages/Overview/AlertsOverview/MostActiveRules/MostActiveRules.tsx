@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Box, Theme } from 'pouncejs';
+import { Card, Theme } from 'pouncejs';
 import { SingleValue } from 'Generated/schema';
 import BarChart from 'Components/charts/BarChart';
 import NoDataFound from 'Components/NoDataFound';
@@ -52,7 +52,7 @@ const MostActiveRules: React.FC<MostActiveRulesProps> = ({ alertsByRuleID }) => 
     [alertsByRuleID, barColors]
   );
   return (
-    <Box
+    <Card
       data-testid="most-active-rules-chart"
       height={217}
       p={6}
@@ -71,7 +71,7 @@ const MostActiveRules: React.FC<MostActiveRulesProps> = ({ alertsByRuleID }) => 
       ) : (
         <NoDataFound title="Your logs haven't matched any rule yet" />
       )}
-    </Box>
+    </Card>
   );
 };
 

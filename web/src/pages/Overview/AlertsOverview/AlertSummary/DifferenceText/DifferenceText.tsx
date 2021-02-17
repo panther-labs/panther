@@ -25,15 +25,11 @@ interface DifferenceTextProps {
 
 const DifferenceText: React.FC<DifferenceTextProps> = ({ diff }) => {
   if (diff === 0) {
-    return (
-      <Text pt={2} fontWeight="bold">
-        {diff}
-      </Text>
-    );
+    return <Text fontWeight="bold">{diff}</Text>;
   }
   if (diff > 0) {
     return (
-      <Flex pt={2}>
+      <Flex>
         <Icon type="caret-down" size="medium" color="green-400" />
         <Text fontWeight="bold">{diff}</Text>
       </Flex>
@@ -41,7 +37,7 @@ const DifferenceText: React.FC<DifferenceTextProps> = ({ diff }) => {
   }
 
   return (
-    <Flex pt={2}>
+    <Flex>
       <Icon type="caret-up" size="medium" color="red-300" />
       <Text fontWeight="bold">{-diff}</Text>
     </Flex>

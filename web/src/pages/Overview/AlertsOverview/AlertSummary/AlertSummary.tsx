@@ -17,77 +17,61 @@
  */
 
 import React from 'react';
-import { Box, Flex, Heading, Text } from 'pouncejs';
+import { Box, Card, Flex, Heading } from 'pouncejs';
 import { slugify } from 'Helpers/utils';
 import { SingleValue } from 'Generated/schema';
 import DifferenceText from './DifferenceText';
+import PercentageBarChart from './PercentageBarChart';
 
 interface AlertSummaryProps {
   data: SingleValue[];
 }
-
-const getText = diff => {
-  if (diff === 0) {
-    return 'No change';
-  }
-  if (diff > 0) {
-    return 'Decreased by';
-  }
-  return 'Increased by';
-};
 
 const AlertSummary: React.FC<AlertSummaryProps> = ({ data }) => {
   const alertsCurrentPeriod = data.find(d => d.label === 'Current Period').value;
   const alertPreviousPeriod = data.find(d => d.label === 'Previous Period').value;
 
   const diff = alertPreviousPeriod - alertsCurrentPeriod;
-  return (
-    <Flex
-      direction="column"
-      backgroundColor="navyblue-500"
-      width="25%"
-      align="center"
-      justify="space-between"
-      p={0}
-      pt={10}
-      pb={4}
-    >
-      <Box textAlign="center">
-        <Heading
-          as="h2"
-          size="3x-large"
-          color="red-400"
-          fontWeight="bold"
-          aria-describedby={slugify('title')}
-        >
-          {alertsCurrentPeriod}
-        </Heading>
-        <Box id={slugify('Total Alerts')} fontWeight="bold" fontSize="medium">
-          Total Alerts
-        </Box>
-      </Box>
-      <Box width="100%" pl={4} pr={6}>
-        <Flex mt={4} minWidth="80%" justify="space-between">
-          <Box>
-            <Text fontSize="small" color="gray-300">
-              Last period
-            </Text>
-            <Text fontSize="small" pt={1} color="gray-300">
-              Current period
-            </Text>
-            <Text fontSize="small" pt={4}>
-              {getText(diff)}
-            </Text>
-          </Box>
-          <Box textAlign="end">
-            <Text color="gray-300">{alertPreviousPeriod}</Text>
 
-            <Text color="gray-300">{alertsCurrentPeriod}</Text>
-            <DifferenceText diff={diff} />
+  const alertsChartData = data.map(d => ({
+    title: d.label,
+    value: d.value,
+    color: d.label === 'Current Period' ? ('red-300' as const) : ('navyblue-200' as const),
+  }));
+
+  return (
+    <Card width="25%" variant="dark" px={6} pt={6} pb={4}>
+      <Flex direction="column" align="center" justify="space-between">
+        <Box width="100%" textAlign="center">
+          <Box id={slugify('Total Alerts')} fontWeight="bold" fontSize="medium">
+            Total Alerts
           </Box>
-        </Flex>
-      </Box>
-    </Flex>
+          <Flex
+            direction="column"
+            align="center"
+            justify="center"
+            borderRadius="medium"
+            my={3}
+            pb={2}
+            backgroundColor="navyblue-600"
+          >
+            <Heading
+              as="h2"
+              size="3x-large"
+              color="red-300"
+              fontWeight="bold"
+              aria-describedby={slugify('title')}
+            >
+              {alertsCurrentPeriod}
+            </Heading>
+            <DifferenceText diff={diff} />
+          </Flex>
+        </Box>
+        <Box width="100%">
+          <PercentageBarChart data={alertsChartData} barHeight={24} />
+        </Box>
+      </Flex>
+    </Card>
   );
 };
 
