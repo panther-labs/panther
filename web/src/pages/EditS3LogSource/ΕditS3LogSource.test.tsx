@@ -51,6 +51,7 @@ const healthyS3 = buildS3LogIntegration({
     processingRoleStatus: buildIntegrationItemHealthStatus({ healthy: true }),
     s3BucketStatus: buildIntegrationItemHealthStatus({ healthy: true }),
     getObjectStatus: buildIntegrationItemHealthStatus({ healthy: true }),
+    bucketNotificationsStatus: buildIntegrationItemHealthStatus({ healthy: true }),
   }),
 });
 
