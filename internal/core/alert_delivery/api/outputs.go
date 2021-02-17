@@ -19,10 +19,10 @@ package api
  */
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"sort"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
 	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"

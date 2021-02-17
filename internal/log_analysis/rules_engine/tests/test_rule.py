@@ -380,9 +380,9 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
             dedup_output='test_rule_with_valid_severity_case_insensitive',
             severity_output="CRITICAL",
             destinations_output=None,
-            destinations_exception=Exception('rule [{}] function [{}] returned [{}], expected a list'.format(
-                rule.rule_id, 'destinations', 'str'
-            ))
+            destinations_exception=Exception(
+                'rule [{}] function [{}] returned [{}], expected a list'.format(rule.rule_id, 'destinations', 'str')
+            )
         )
         result = rule.run(PantherEvent({}, None), batch_mode=False)
         self.assertEqual(str(expected_result), str(result))
