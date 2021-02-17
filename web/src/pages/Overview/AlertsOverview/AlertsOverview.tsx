@@ -108,7 +108,7 @@ const AlertsOverview: React.FC = () => {
           title={
             <Flex spacing={2} align="center">
               <Text>Top 5 High Priority Alerts</Text>
-              <Tooltip content={<Text>Alerts that need your immediate reaction</Text>}>
+              <Tooltip content={<Box>Alerts that need your immediate reaction</Box>}>
                 <Icon type="info" size="medium" />
               </Tooltip>
             </Flex>

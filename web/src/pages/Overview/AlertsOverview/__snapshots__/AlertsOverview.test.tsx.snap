@@ -1,0 +1,2176 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Log Analysis Overview should render all alerts overview sections 1`] = `
+
+
+.panther-197 {
+  display: grid;
+  grid-row-gap: 16px;
+  grid-template-columns: repeat(1, 1fr);
+}
+
+.panther-62 {
+  background-color: #23344e;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.panther-27 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid;
+  border-color: #3e516b;
+  max-height: 80px;
+}
+
+.panther-26 {
+  font-weight: 400;
+  font-size: 1.125rem;
+}
+
+.panther-61 {
+  padding: 24px;
+}
+
+.panther-198 {
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.panther-25 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: end;
+  -ms-flex-pack: end;
+  -webkit-justify-content: flex-end;
+  justify-content: flex-end;
+  position: absolute;
+  right: 0;
+  padding-bottom: 24px;
+  z-index: 1;
+  -webkit-transform: translateY(-100%);
+  -moz-transform: translateY(-100%);
+  -ms-transform: translateY(-100%);
+  transform: translateY(-100%);
+}
+
+.panther-24 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  max-width: 500px;
+}
+
+.panther-24>*:not(:last-child) {
+  margin-right: 16px;
+}
+
+.panther-8 {
+  max-width: 100px;
+}
+
+.panther-4 {
+  position: relative;
+}
+
+.panther-2 {
+  min-height: 47px;
+  position: relative;
+  border: 1px solid;
+  -webkit-transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  background-color: #23344e;
+  border-radius: 4px;
+  border-color: #23344e;
+}
+
+.panther-2:hover {
+  border-color: #0081c5;
+}
+
+.panther-2:focus-within {
+  border-color: #0081c5;
+}
+
+.panther-2:focus-within label {
+  font-weight: 500;
+  -webkit-transform: translate(6px, 4px) scale(0.65);
+  -moz-transform: translate(6px, 4px) scale(0.65);
+  -ms-transform: translate(6px, 4px) scale(0.65);
+  transform: translate(6px, 4px) scale(0.65);
+}
+
+.panther-0 {
+  vertical-align: top;
+  width: 100%;
+  height: 100%;
+  padding-left: 16px;
+  padding-right: 32px;
+  padding-top: 20px;
+  padding-bottom: 8px;
+  position: relative;
+  color: #f6f6f6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panther-0::-webkit-input-placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-0::-moz-placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-0:-ms-input-placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-0::placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+
+
+.panther-0:focus::-webkit-input-placeholder {
+  opacity: 0.4;
+}
+
+.panther-0:focus::-moz-placeholder {
+  opacity: 0.4;
+}
+
+.panther-0:focus:-ms-input-placeholder {
+  opacity: 0.4;
+}
+
+.panther-0:focus::placeholder {
+  opacity: 0.4;
+}
+
+.panther-0:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px #192231 inset;
+  -webkit-text-fill-color: #f6f6f6;
+  border-radius: 4px;
+}
+
+.panther-1 {
+  pointer-events: none;
+  font-size: 0.875rem;
+  padding-left: 16px;
+  padding-right: 16px;
+  color: #bdbdbd;
+  top: 0;
+  left: 0;
+  position: absolute;
+  transform-origin: center left;
+  -webkit-transform: translate(6px, 4px) scale(0.65);
+  -moz-transform: translate(6px, 4px) scale(0.65);
+  -ms-transform: translate(6px, 4px) scale(0.65);
+  transform: translate(6px, 4px) scale(0.65);
+  -webkit-transition: -webkit-transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-3 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  color: currentColor;
+  opacity: 1;
+  position: absolute;
+  pointer-events: none;
+  margin-top: auto;
+  margin-bottom: auto;
+  top: 0;
+  bottom: 0;
+  right: 16px;
+}
+
+.panther-22 {
+  position: relative;
+  z-index: 1;
+}
+
+.panther-15 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-9 {
+  vertical-align: top;
+  width: 100%;
+  height: 100%;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-top: 20px;
+  padding-bottom: 8px;
+  position: relative;
+  color: #f6f6f6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: transparent;
+  border: 0;
+}
+
+.panther-9::-webkit-input-placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-9::-moz-placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-9:-ms-input-placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+.panther-9::placeholder {
+  opacity: 0;
+  color: #f6f6f6;
+  -webkit-transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: opacity 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  font-weight: 500;
+}
+
+
+
+.panther-9:focus::-webkit-input-placeholder {
+  opacity: 0.4;
+}
+
+.panther-9:focus::-moz-placeholder {
+  opacity: 0.4;
+}
+
+.panther-9:focus:-ms-input-placeholder {
+  opacity: 0.4;
+}
+
+.panther-9:focus::placeholder {
+  opacity: 0.4;
+}
+
+.panther-9:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px #192231 inset;
+  -webkit-text-fill-color: #f6f6f6;
+  border-radius: 4px;
+}
+
+.panther-21 {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 2;
+}
+
+.panther-20 {
+  outline: none;
+  line-height: 1;
+  border-radius: 4px;
+  height: 32px;
+  width: 32px;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  background-color: transparent;
+  -webkit-transition: all 0.1s linear;
+  transition: all 0.1s linear;
+}
+
+.panther-20:focus {
+  background-color: rgba(255,255,255,0.1);
+}
+
+.panther-19 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+}
+
+.panther-60 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  min-height: 320px;
+}
+
+.panther-48 {
+  background-color: #1d2a3f;
+  border-radius: 4px;
+  width: 25%;
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-top: 24px;
+  padding-bottom: 16px;
+}
+
+.panther-47 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-32 {
+  width: 100%;
+  text-align: center;
+}
+
+.panther-28 {
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.panther-31 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  border-radius: 4px;
+  margin-top: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  background-color: #192231;
+}
+
+.panther-29 {
+  font-weight: 700;
+  font-size: 3.438rem;
+  color: #d64242;
+}
+
+.panther-30 {
+  font-weight: 700;
+}
+
+.panther-46 {
+  width: 100%;
+}
+
+.panther-45 {
+  border-top: 1px solid;
+  border-color: #3e516b;
+}
+
+.panther-38 {
+  border-bottom: 1px solid;
+  border-color: #3e516b;
+}
+
+.panther-37 {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  overflow: hidden;
+}
+
+.panther-33 {
+  font-size: 0.813rem;
+  margin-left: 8px;
+  margin-right: 8px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panther-36 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-36>*:not(:last-child) {
+  margin-right: 8px;
+}
+
+.panther-34 {
+  background-color: #4f627c;
+  border-radius: 40px;
+  height: 24px;
+  width: 100%;
+  -webkit-flex-shrink: 1;
+  -ms-flex-negative: 1;
+  flex-shrink: 1;
+}
+
+.panther-35 {
+  margin-right: 0;
+  margin-left: auto;
+  font-size: 1.125rem;
+  font-weight: 700;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+}
+
+.panther-40 {
+  background-color: #d64242;
+  border-radius: 40px;
+  height: 24px;
+  width: 100%;
+  -webkit-flex-shrink: 1;
+  -ms-flex-negative: 1;
+  flex-shrink: 1;
+}
+
+.panther-59 {
+  background-color: #1d2a3f;
+  border-radius: 4px;
+  width: 80%;
+  margin-left: 20px;
+  padding-top: 24px;
+  padding-bottom: 24px;
+  padding-left: 24px;
+}
+
+.panther-58 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  height: 100%;
+  position: relative;
+}
+
+.panther-49 {
+  position: absolute;
+  width: 200px;
+  margin-left: 4px;
+  font-weight: 700;
+}
+
+.panther-56 {
+  position: absolute;
+  left: 0;
+  padding-left: 210px;
+  padding-right: 50px;
+  width: 100%;
+}
+
+.panther-55 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-52 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  z-index: 5;
+}
+
+.panther-52>*:not(:last-child) {
+  margin-right: 8px;
+}
+
+.panther-50 {
+  border-radius: 40px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 16px;
+  padding-right: 16px;
+  font-size: 0.75rem;
+  background-color: #0081c5;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  -webkit-transition: all 0.1s linear;
+  transition: all 0.1s linear;
+}
+
+.panther-51 {
+  border-radius: 40px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 16px;
+  padding-right: 16px;
+  font-size: 0.75rem;
+  background-color: transparent;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  -webkit-transition: all 0.1s linear;
+  transition: all 0.1s linear;
+}
+
+.panther-51:hover {
+  background-color: #3e516b;
+}
+
+.panther-54 {
+  z-index: 5;
+  margin-left: auto;
+}
+
+.panther-53 {
+  border-radius: 40px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 16px;
+  padding-right: 16px;
+  font-size: 0.75rem;
+  color: #1d2a3f;
+  font-weight: 700;
+  background-color: #4f627c;
+  cursor: pointer;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  -webkit-transition: all 0.1s linear;
+  transition: all 0.1s linear;
+}
+
+.panther-53:hover {
+  background-color: #0081c5;
+}
+
+.panther-57 {
+  width: 100%;
+  height: 100%;
+}
+
+.panther-188 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+
+.panther-188>*:not(:last-child) {
+  margin-bottom: 8px;
+}
+
+.panther-105 {
+  background-color: #1d2a3f;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.panther-104 {
+  background-color: transparent;
+  padding: 16px;
+}
+
+.panther-103 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  position: relative;
+  height: 100%;
+}
+
+.panther-65 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: start;
+  -webkit-box-align: start;
+  -ms-flex-align: start;
+  align-items: start;
+  padding-right: 8px;
+}
+
+.panther-102 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.panther-73 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: flex-start;
+  -webkit-box-align: flex-start;
+  -ms-flex-align: flex-start;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.panther-67 {
+  font-weight: 500;
+  margin-right: auto;
+  max-width: 60%;
+  word-break: break-word;
+}
+
+.panther-66 {
+  -webkit-transition: color 0.1s ease-out;
+  transition: color 0.1s ease-out;
+  font-weight: 500;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  color: #7fd3ff;
+}
+
+.panther-66:hover {
+  color: #ace2ff;
+}
+
+.panther-66:focus {
+  color: #ace2ff;
+}
+
+.panther-66:active,
+.panther-66[data-active=true] {
+  color: #11a5f3;
+}
+
+.panther-69 {
+  font-size: 0.75rem;
+  max-width: 20%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panther-68 {
+  margin-left: 4px;
+  color: #86a3c3;
+}
+
+.panther-70 {
+  padding-left: 8px;
+  padding-right: 8px;
+  font-size: 0.75rem;
+  color: #86a3c3;
+}
+
+.panther-71 {
+  margin-right: 4px;
+  color: #86a3c3;
+}
+
+.panther-75 {
+  margin-right: auto;
+}
+
+.panther-74 {
+  background-color: #141c2a;
+  border-radius: 2px;
+  padding-left: 6px;
+  padding-right: 6px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  font-weight: 700;
+  font-size: 0.625rem;
+  color: #09a084;
+}
+
+.panther-101 {
+  display: grid;
+  grid-gap: 8px;
+  grid-template-columns: 3fr 4fr 3fr;
+}
+
+.panther-82 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  margin-top: 8px;
+}
+
+.panther-76 {
+  color: #bdbdbd;
+  font-size: 0.563rem;
+  font-weight: 500;
+}
+
+.panther-81 {
+  display: -webkit-inline-box;
+  display: -webkit-inline-flex;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-flex: 1;
+  -webkit-flex-grow: 1;
+  -ms-flex-positive: 1;
+  flex-grow: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  opacity: 1;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  min-height: 24px;
+}
+
+.panther-77 {
+  max-width: 250px;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panther-79 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  width: 24px;
+  height: 24px;
+  background-color: #4f627c;
+  border-color: #4f627c;
+  border-radius: 99999px;
+}
+
+.panther-79:hover {
+  background-color: #11a5f3;
+  border-color: #11a5f3;
+}
+
+.panther-78 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  color: currentColor;
+}
+
+.panther-87 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-flex-wrap: wrap;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+}
+
+.panther-87>*:not(:last-child) {
+  margin-right: 8px;
+}
+
+.panther-84 {
+  width: 12px;
+  height: 12px;
+  background-color: hsl(221, 31%, 31%);
+  border-radius: 99999px;
+}
+
+.panther-85 {
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.panther-100 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: flex-end;
+  -webkit-box-align: flex-end;
+  -ms-flex-align: flex-end;
+  align-items: flex-end;
+}
+
+.panther-99 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: end;
+  -ms-flex-pack: end;
+  -webkit-justify-content: flex-end;
+  justify-content: flex-end;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  width: 100%;
+}
+
+.panther-99>*:not(:last-child) {
+  margin-right: 8px;
+}
+
+.panther-91 {
+  border: none;
+  opacity: 0.6;
+  border-left: 0.0625rem solid;
+  height: auto;
+  margin-left: 0;
+  margin-right: 0;
+  border-color: inherit;
+  -webkit-align-self: stretch;
+  -ms-flex-item-align: stretch;
+  align-self: stretch;
+}
+
+.panther-92 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  cursor: default;
+  width: -webkit-fit-content;
+  width: -moz-fit-content;
+  width: fit-content;
+  min-width: 85px;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 40px;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 16px;
+  padding-right: 16px;
+  border: 1px solid;
+  border-color: #d44621;
+  background-color: transparent;
+}
+
+.panther-98 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.panther-98>*:not(:last-child) {
+  margin-right: 4px;
+}
+
+.panther-94 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  width: 85px;
+}
+
+.panther-93 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  cursor: default;
+  width: -webkit-fit-content;
+  width: -moz-fit-content;
+  width: fit-content;
+  min-width: 85px;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 40px;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 16px;
+  padding-right: 16px;
+  background-color: #6e3078;
+}
+
+.panther-97 {
+  display: -webkit-inline-box;
+  display: -webkit-inline-flex;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+}
+
+.panther-96 {
+  outline: none;
+  line-height: 1;
+  border-radius: 99999px;
+  height: 24px;
+  width: 24px;
+  -webkit-transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  transition: border-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms,background-color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+  border: 1px solid;
+  border-color: #3e516b;
+  background-color: transparent;
+  cursor: pointer;
+  color: #f6f6f6;
+  -webkit-text-decoration: none;
+  text-decoration: none;
+}
+
+.panther-96:hover {
+  background-color: #465973;
+  border-color: #465973;
+}
+
+.panther-96:focus {
+  background-color: #465973;
+  border-color: #93a6c0;
+}
+
+.panther-96:active,
+.panther-96[data-active=true] {
+  background-color: #253852;
+  border-color: #253852;
+}
+
+.panther-95 {
+  display: inline-block;
+  vertical-align: sub;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: currentColor;
+}
+
+.panther-133 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  cursor: default;
+  width: -webkit-fit-content;
+  width: -moz-fit-content;
+  width: fit-content;
+  min-width: 85px;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 40px;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 16px;
+  padding-right: 16px;
+  border: 1px solid;
+  border-color: #c82727;
+  background-color: transparent;
+}
+
+.panther-194 {
+  background-color: #1d2a3f;
+  border-radius: 4px;
+  height: 217px;
+  padding: 24px;
+  padding-right: 0;
+}
+
+.panther-90 {
+  font-size: 0.75rem;
+  opacity: 0.3;
+}
+
+<div>
+  <header
+    id="main-header"
+  />
+  <article
+    class="panther-198"
+  >
+    <div
+      class="panther-25"
+    >
+      <form
+        action="#"
+      >
+        <div
+          class="panther-24"
+        >
+          <div
+            class="panther-8"
+          >
+            <div
+              class="panther-5"
+            >
+              <div
+                aria-expanded="false"
+                aria-haspopup="listbox"
+                aria-labelledby="downshift-0-label"
+                class="panther-4"
+                role="combobox"
+              >
+                <div
+                  class="panther-4"
+                >
+                  <div
+                    aria-disabled="false"
+                    class="panther-2"
+                  >
+                    <input
+                      aria-autocomplete="list"
+                      aria-disabled="false"
+                      aria-invalid="false"
+                      aria-labelledby="downshift-0-label"
+                      aria-readonly="true"
+                      autocomplete="off"
+                      class="panther-0"
+                      id="downshift-0-input"
+                      name="intervalMinutes"
+                      readonly=""
+                      type="text"
+                      value="3h"
+                    />
+                    <label
+                      class="panther-1"
+                      for="downshift-0-input"
+                      id="downshift-0-label"
+                    >
+                      Interval
+                    </label>
+                  </div>
+                  <svg
+                    class="panther-3"
+                    role="presentation"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M7 10L12 15L17 10H7Z"
+                    />
+                  </svg>
+                </div>
+                <ul
+                  aria-labelledby="downshift-0-label"
+                  class="panther-5"
+                  id="downshift-0-menu"
+                  role="listbox"
+                />
+              </div>
+            </div>
+          </div>
+          <div
+            class="panther-5"
+          >
+            <div
+              class="panther-22"
+            >
+              <div
+                class="panther-5"
+              >
+                <fieldset
+                  class="panther-4"
+                >
+                  <div
+                    class="panther-2"
+                  >
+                    <div
+                      class="panther-15"
+                    >
+                      <div
+                        class="panther-4"
+                      >
+                        <input
+                          aria-invalid="false"
+                          aria-readonly="true"
+                          autocomplete="off"
+                          class="panther-9"
+                          id="fromDate-toDate-from"
+                          name="fromDate-toDate-from"
+                          placeholder="MM/DD/YY HH:mm"
+                          readonly=""
+                          type="text"
+                          value="01/27/2000 00:00"
+                        />
+                        <label
+                          class="panther-1"
+                          for="fromDate-toDate-from"
+                        >
+                          Date Start
+                        </label>
+                      </div>
+                      <div
+                        class="panther-4"
+                      >
+                        <input
+                          aria-invalid="false"
+                          aria-readonly="true"
+                          autocomplete="off"
+                          class="panther-9"
+                          id="fromDate-toDate-to"
+                          name="fromDate-toDate-to"
+                          placeholder="MM/DD/YY HH:mm"
+                          readonly=""
+                          type="text"
+                          value="01/30/2000 00:59"
+                        />
+                        <label
+                          class="panther-1"
+                          for="fromDate-toDate-to"
+                        >
+                          Date End
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
+              </div>
+              <div
+                class="panther-21"
+              >
+                <button
+                  aria-label="Toggle picker"
+                  aria-pressed="false"
+                  class="panther-20"
+                  type="button"
+                >
+                  <svg
+                    class="panther-19"
+                    role="presentation"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M19,4 L18,4 L18,2 L16,2 L16,4 L8,4 L8,2 L6,2 L6,4 L5,4 C3.89,4 3.01,4.9 3.01,6 L3,20 C3,21.1 3.89,22 5,22 L19,22 C20.1,22 21,21.1 21,20 L21,6 C21,4.9 20.1,4 19,4 Z M19,20 L5,20 L5,9 L19,9 L19,20 Z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div
+      class="panther-197"
+    >
+      <section
+        class="panther-62"
+      >
+        <div
+          class="panther-27"
+        >
+          <h4
+            class="panther-26"
+          >
+            Alerts Overview
+          </h4>
+        </div>
+        <div
+          class="panther-61"
+        >
+          <div
+            class="panther-60"
+          >
+            <div
+              class="panther-48"
+            >
+              <div
+                class="panther-47"
+              >
+                <div
+                  class="panther-32"
+                >
+                  <div
+                    class="panther-28"
+                    id="total-alerts"
+                  >
+                    Total Alerts
+                  </div>
+                  <div
+                    class="panther-31"
+                  >
+                    <h2
+                      aria-describedby="title"
+                      class="panther-29"
+                    >
+                      72
+                    </h2>
+                    <p
+                      class="panther-30"
+                    >
+                      0
+                    </p>
+                  </div>
+                </div>
+                <div
+                  class="panther-46"
+                >
+                  <ol
+                    class="panther-45"
+                  >
+                    <li
+                      class="panther-38"
+                    >
+                      <div
+                        class="panther-37"
+                      >
+                        <p
+                          class="panther-33"
+                          id="previous-period"
+                        >
+                          Previous Period
+                        </p>
+                        <div
+                          class="panther-36"
+                        >
+                          <span
+                            aria-labelledby="previous-period"
+                            aria-valuenow="72"
+                            class="panther-34"
+                            id="previous-period"
+                          />
+                          <span
+                            class="panther-35"
+                          >
+                            72
+                          </span>
+                        </div>
+                      </div>
+                    </li>
+                    <li
+                      class="panther-38"
+                    >
+                      <div
+                        class="panther-37"
+                      >
+                        <p
+                          class="panther-33"
+                          id="current-period"
+                        >
+                          Current Period
+                        </p>
+                        <div
+                          class="panther-36"
+                        >
+                          <span
+                            aria-labelledby="current-period"
+                            aria-valuenow="72"
+                            class="panther-40"
+                            id="current-period"
+                          />
+                          <span
+                            class="panther-35"
+                          >
+                            72
+                          </span>
+                        </div>
+                      </div>
+                    </li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+            <div
+              class="panther-59"
+            >
+              <div
+                class="panther-58"
+                data-testid="alert-by-severity-chart"
+              >
+                <div
+                  class="panther-49"
+                >
+                  Severity
+                </div>
+                <div
+                  class="panther-56"
+                >
+                  <div
+                    class="panther-55"
+                  >
+                    <div
+                      class="panther-52"
+                    >
+                      <button
+                        class="panther-50"
+                        type="button"
+                      >
+                        Linear
+                      </button>
+                      <button
+                        class="panther-51"
+                        type="button"
+                      >
+                        Logarithmic
+                      </button>
+                    </div>
+                    <div
+                      class="panther-54"
+                    >
+                      <button
+                        class="panther-53"
+                        type="button"
+                      >
+                        RESET
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  _echarts_instance_="ec_949190400000"
+                  class="panther-57"
+                  style="user-select: none; position: relative;"
+                >
+                  <div
+                    style="position: relative; width: 100px; height: 100px; padding: 0px; margin: 0px; border-width: 0px;"
+                  >
+                    <canvas
+                      data-zr-dom-id="zr_0"
+                      height="100"
+                      style="position: absolute; left: 0px; top: 0px; width: 100px; height: 100px; user-select: none; padding: 0px; margin: 0px; border-width: 0px;"
+                      width="100"
+                    />
+                  </div>
+                  <div />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section
+        class="panther-62"
+      >
+        <div
+          class="panther-27"
+        >
+          <h4
+            class="panther-26"
+          >
+            Top 5 High Priority Alerts
+          </h4>
+        </div>
+        <div
+          class="panther-61"
+        >
+          <div
+            class="panther-188"
+          >
+            <section
+              class="panther-105"
+            >
+              <div
+                class="panther-104"
+              >
+                <div
+                  class="panther-103"
+                >
+                  <div
+                    class="panther-65"
+                  />
+                  <div
+                    class="panther-102"
+                  >
+                    <header
+                      class="panther-73"
+                    >
+                      <h4
+                        class="panther-67"
+                      >
+                        <a
+                          aria-label="Link to Alert"
+                          class="panther-66"
+                          href="/log-analysis/alerts/1/"
+                        >
+                          indexing
+                        </a>
+                      </h4>
+                      <div
+                        class="panther-69"
+                      >
+                        240
+                        <span
+                          class="panther-68"
+                        >
+                          Events
+                        </span>
+                      </div>
+                      <span
+                        class="panther-70"
+                      >
+                        •
+                      </span>
+                      <div
+                        aria-label="Creation time for 1"
+                        class="panther-69"
+                      >
+                        <span
+                          class="panther-71"
+                        >
+                          Created
+                        </span>
+                        2020-08-08 12:15 GMT
+                      </div>
+                    </header>
+                    <div
+                      class="panther-75"
+                    >
+                      <div
+                        class="panther-74"
+                      >
+                        RULE ERROR
+                      </div>
+                    </div>
+                    <div
+                      class="panther-101"
+                    >
+                      <dl
+                        class="panther-82"
+                      >
+                        <dt
+                          aria-labelledby="ruleobject-object"
+                          class="panther-76"
+                        >
+                          Rule
+                        </dt>
+                        <dd
+                          aria-labelledby="ruleobject-object"
+                          class="panther-81"
+                        >
+                          <div
+                            class="panther-36"
+                          >
+                            <span
+                              class="panther-77"
+                            >
+                              rule_1
+                            </span>
+                            <a
+                              aria-label="Link to rule rule_1"
+                              href="/detections/rules/rule_1/"
+                            >
+                              <div
+                                class="panther-79"
+                              >
+                                <svg
+                                  class="panther-78"
+                                  role="presentation"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    d="M12 4L10.59 5.41L16.17 11H4V13H16.17L10.59 18.59L12 20L20 12L12 4Z"
+                                  />
+                                </svg>
+                              </div>
+                            </a>
+                          </div>
+                        </dd>
+                      </dl>
+                      <dl
+                        class="panther-82"
+                      >
+                        <dt
+                          aria-labelledby="log-typesobject-object"
+                          class="panther-76"
+                        >
+                          Log Types
+                        </dt>
+                        <dd
+                          aria-labelledby="log-typesobject-object"
+                          class="panther-81"
+                        >
+                          <div
+                            class="panther-87"
+                          >
+                            <div
+                              class="panther-36"
+                            >
+                              <span
+                                class="panther-84"
+                              />
+                              <span
+                                class="panther-85"
+                              >
+                                Personal Loan Account
+                              </span>
+                            </div>
+                          </div>
+                        </dd>
+                      </dl>
+                      <div
+                        class="panther-100"
+                      >
+                        <div
+                          class="panther-99"
+                        >
+                          <p
+                            class="panther-90"
+                          >
+                            Not configured
+                          </p>
+                          <hr
+                            aria-orientation="vertical"
+                            class="panther-91"
+                          />
+                          <div
+                            aria-atomic="true"
+                            class="panther-92"
+                            role="status"
+                          >
+                            HIGH
+                          </div>
+                          <div
+                            class="panther-98"
+                          >
+                            <div
+                              class="panther-94"
+                            >
+                              <div
+                                aria-atomic="true"
+                                class="panther-93"
+                                role="status"
+                              >
+                                TRIAGED
+                              </div>
+                            </div>
+                            <div
+                              aria-controls="menu--1"
+                              aria-haspopup="true"
+                              class="panther-97"
+                              data-reach-menu-button=""
+                              id="menu-button--menu--1"
+                              type="button"
+                            >
+                              <button
+                                aria-label="Change Alert Status"
+                                aria-pressed="false"
+                                class="panther-96"
+                                type="button"
+                              >
+                                <svg
+                                  class="panther-95"
+                                  role="presentation"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    d="M7 10L12 15L17 10H7Z"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section
+              class="panther-105"
+            >
+              <div
+                class="panther-104"
+              >
+                <div
+                  class="panther-103"
+                >
+                  <div
+                    class="panther-65"
+                  />
+                  <div
+                    class="panther-102"
+                  >
+                    <header
+                      class="panther-73"
+                    >
+                      <h4
+                        class="panther-67"
+                      >
+                        <a
+                          aria-label="Link to Alert"
+                          class="panther-66"
+                          href="/log-analysis/alerts/2/"
+                        >
+                          indexing
+                        </a>
+                      </h4>
+                      <div
+                        class="panther-69"
+                      >
+                        240
+                        <span
+                          class="panther-68"
+                        >
+                          Events
+                        </span>
+                      </div>
+                      <span
+                        class="panther-70"
+                      >
+                        •
+                      </span>
+                      <div
+                        aria-label="Creation time for 2"
+                        class="panther-69"
+                      >
+                        <span
+                          class="panther-71"
+                        >
+                          Created
+                        </span>
+                        2020-08-08 12:15 GMT
+                      </div>
+                    </header>
+                    <div
+                      class="panther-75"
+                    >
+                      <div
+                        class="panther-74"
+                      >
+                        RULE ERROR
+                      </div>
+                    </div>
+                    <div
+                      class="panther-101"
+                    >
+                      <dl
+                        class="panther-82"
+                      >
+                        <dt
+                          aria-labelledby="ruleobject-object"
+                          class="panther-76"
+                        >
+                          Rule
+                        </dt>
+                        <dd
+                          aria-labelledby="ruleobject-object"
+                          class="panther-81"
+                        >
+                          <div
+                            class="panther-36"
+                          >
+                            <span
+                              class="panther-77"
+                            >
+                              rule_2
+                            </span>
+                            <a
+                              aria-label="Link to rule rule_2"
+                              href="/detections/rules/rule_2/"
+                            >
+                              <div
+                                class="panther-79"
+                              >
+                                <svg
+                                  class="panther-78"
+                                  role="presentation"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    d="M12 4L10.59 5.41L16.17 11H4V13H16.17L10.59 18.59L12 20L20 12L12 4Z"
+                                  />
+                                </svg>
+                              </div>
+                            </a>
+                          </div>
+                        </dd>
+                      </dl>
+                      <dl
+                        class="panther-82"
+                      >
+                        <dt
+                          aria-labelledby="log-typesobject-object"
+                          class="panther-76"
+                        >
+                          Log Types
+                        </dt>
+                        <dd
+                          aria-labelledby="log-typesobject-object"
+                          class="panther-81"
+                        >
+                          <div
+                            class="panther-87"
+                          >
+                            <div
+                              class="panther-36"
+                            >
+                              <span
+                                class="panther-84"
+                              />
+                              <span
+                                class="panther-85"
+                              >
+                                Personal Loan Account
+                              </span>
+                            </div>
+                          </div>
+                        </dd>
+                      </dl>
+                      <div
+                        class="panther-100"
+                      >
+                        <div
+                          class="panther-99"
+                        >
+                          <p
+                            class="panther-90"
+                          >
+                            Not configured
+                          </p>
+                          <hr
+                            aria-orientation="vertical"
+                            class="panther-91"
+                          />
+                          <div
+                            aria-atomic="true"
+                            class="panther-133"
+                            role="status"
+                          >
+                            CRITICAL
+                          </div>
+                          <div
+                            class="panther-98"
+                          >
+                            <div
+                              class="panther-94"
+                            >
+                              <div
+                                aria-atomic="true"
+                                class="panther-93"
+                                role="status"
+                              >
+                                TRIAGED
+                              </div>
+                            </div>
+                            <div
+                              aria-controls="menu--2"
+                              aria-haspopup="true"
+                              class="panther-97"
+                              data-reach-menu-button=""
+                              id="menu-button--menu--2"
+                              type="button"
+                            >
+                              <button
+                                aria-label="Change Alert Status"
+                                aria-pressed="false"
+                                class="panther-96"
+                                type="button"
+                              >
+                                <svg
+                                  class="panther-95"
+                                  role="presentation"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    d="M7 10L12 15L17 10H7Z"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section
+              class="panther-105"
+            >
+              <div
+                class="panther-104"
+              >
+                <div
+                  class="panther-103"
+                >
+                  <div
+                    class="panther-65"
+                  />
+                  <div
+                    class="panther-102"
+                  >
+                    <header
+                      class="panther-73"
+                    >
+                      <h4
+                        class="panther-67"
+                      >
+                        <a
+                          aria-label="Link to Alert"
+                          class="panther-66"
+                          href="/log-analysis/alerts/3/"
+                        >
+                          indexing
+                        </a>
+                      </h4>
+                      <div
+                        class="panther-69"
+                      >
+                        240
+                        <span
+                          class="panther-68"
+                        >
+                          Events
+                        </span>
+                      </div>
+                      <span
+                        class="panther-70"
+                      >
+                        •
+                      </span>
+                      <div
+                        aria-label="Creation time for 3"
+                        class="panther-69"
+                      >
+                        <span
+                          class="panther-71"
+                        >
+                          Created
+                        </span>
+                        2020-08-08 12:15 GMT
+                      </div>
+                    </header>
+                    <div
+                      class="panther-75"
+                    >
+                      <div
+                        class="panther-74"
+                      >
+                        RULE ERROR
+                      </div>
+                    </div>
+                    <div
+                      class="panther-101"
+                    >
+                      <dl
+                        class="panther-82"
+                      >
+                        <dt
+                          aria-labelledby="ruleobject-object"
+                          class="panther-76"
+                        >
+                          Rule
+                        </dt>
+                        <dd
+                          aria-labelledby="ruleobject-object"
+                          class="panther-81"
+                        >
+                          <div
+                            class="panther-36"
+                          >
+                            <span
+                              class="panther-77"
+                            >
+                              rule_3
+                            </span>
+                            <a
+                              aria-label="Link to rule rule_3"
+                              href="/detections/rules/rule_3/"
+                            >
+                              <div
+                                class="panther-79"
+                              >
+                                <svg
+                                  class="panther-78"
+                                  role="presentation"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    d="M12 4L10.59 5.41L16.17 11H4V13H16.17L10.59 18.59L12 20L20 12L12 4Z"
+                                  />
+                                </svg>
+                              </div>
+                            </a>
+                          </div>
+                        </dd>
+                      </dl>
+                      <dl
+                        class="panther-82"
+                      >
+                        <dt
+                          aria-labelledby="log-typesobject-object"
+                          class="panther-76"
+                        >
+                          Log Types
+                        </dt>
+                        <dd
+                          aria-labelledby="log-typesobject-object"
+                          class="panther-81"
+                        >
+                          <div
+                            class="panther-87"
+                          >
+                            <div
+                              class="panther-36"
+                            >
+                              <span
+                                class="panther-84"
+                              />
+                              <span
+                                class="panther-85"
+                              >
+                                Personal Loan Account
+                              </span>
+                            </div>
+                          </div>
+                        </dd>
+                      </dl>
+                      <div
+                        class="panther-100"
+                      >
+                        <div
+                          class="panther-99"
+                        >
+                          <p
+                            class="panther-90"
+                          >
+                            Not configured
+                          </p>
+                          <hr
+                            aria-orientation="vertical"
+                            class="panther-91"
+                          />
+                          <div
+                            aria-atomic="true"
+                            class="panther-92"
+                            role="status"
+                          >
+                            HIGH
+                          </div>
+                          <div
+                            class="panther-98"
+                          >
+                            <div
+                              class="panther-94"
+                            >
+                              <div
+                                aria-atomic="true"
+                                class="panther-93"
+                                role="status"
+                              >
+                                TRIAGED
+                              </div>
+                            </div>
+                            <div
+                              aria-controls="menu--3"
+                              aria-haspopup="true"
+                              class="panther-97"
+                              data-reach-menu-button=""
+                              id="menu-button--menu--3"
+                              type="button"
+                            >
+                              <button
+                                aria-label="Change Alert Status"
+                                aria-pressed="false"
+                                class="panther-96"
+                                type="button"
+                              >
+                                <svg
+                                  class="panther-95"
+                                  role="presentation"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    d="M7 10L12 15L17 10H7Z"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+      <section
+        class="panther-62"
+      >
+        <div
+          class="panther-27"
+        >
+          <h4
+            class="panther-26"
+          >
+            Most Active Detections
+          </h4>
+        </div>
+        <div
+          class="panther-61"
+        >
+          <div
+            class="panther-194"
+            data-testid="most-active-rules-chart"
+          >
+            <div
+              _echarts_instance_="ec_949190400001"
+              class="panther-57"
+              style="user-select: none; position: relative;"
+            >
+              <div
+                style="position: relative; width: 100px; height: 100px; padding: 0px; margin: 0px; border-width: 0px;"
+              >
+                <canvas
+                  data-zr-dom-id="zr_0"
+                  height="100"
+                  style="position: absolute; left: 0px; top: 0px; width: 100px; height: 100px; user-select: none; padding: 0px; margin: 0px; border-width: 0px;"
+                  width="100"
+                />
+              </div>
+              <div />
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </article>
+  <footer
+    id="footer"
+  />
+</div>
+`;
