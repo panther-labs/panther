@@ -38,7 +38,7 @@ const (
 )
 
 var (
-	defaultPipLayer = []string{"jsonpath-ng==1.5.2", "policyuniverse==1.3.2.2", "requests==2.23.0"}
+	defaultPipLayer = []string{"jsonpath-ng==1.5.2", "policyuniverse==1.3.3.20210209", "requests==2.23.0"}
 	rootConfigPath  = filepath.Join("deployments", "root_config.yml")
 )
 
