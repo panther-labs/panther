@@ -229,7 +229,7 @@ export type AnalysisPack = {
   lastModified: Scalars['AWSDateTime'];
   packDefinition: AnalysisPackDefinition;
   packTypes: AnalysisPackTypes;
-  analysisPackEnumeration: AnalysisPackEnumeration;
+  enumeration: AnalysisPackEnumeration;
 };
 
 export type AnalysisPackDefinition = {
@@ -2314,11 +2314,7 @@ export type AnalysisPackResolvers<
   lastModified?: Resolver<ResolversTypes['AWSDateTime'], ParentType, ContextType>;
   packDefinition?: Resolver<ResolversTypes['AnalysisPackDefinition'], ParentType, ContextType>;
   packTypes?: Resolver<ResolversTypes['AnalysisPackTypes'], ParentType, ContextType>;
-  analysisPackEnumeration?: Resolver<
-    ResolversTypes['AnalysisPackEnumeration'],
-    ParentType,
-    ContextType
-  >;
+  enumeration?: Resolver<ResolversTypes['AnalysisPackEnumeration'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

@@ -79,7 +79,7 @@ describe('AnalysisPackDetails', () => {
     const pack = buildAnalysisPack({
       displayName: 'Pack 1',
       description: 'This is an amazing description',
-      analysisPackEnumeration: buildAnalysisPackEnumeration({
+      enumeration: buildAnalysisPackEnumeration({
         globals: [],
         detections: [buildPolicy()],
         models: [buildDataModel()],
@@ -167,7 +167,7 @@ describe('AnalysisPackDetails', () => {
     const pack = buildAnalysisPack({
       displayName: 'Pack 1',
       description: 'This is an amazing description',
-      analysisPackEnumeration: buildAnalysisPackEnumeration({
+      enumeration: buildAnalysisPackEnumeration({
         globals: [],
         detections: [rule, policy],
       }),
@@ -216,7 +216,7 @@ describe('AnalysisPackDetails', () => {
     const pack = buildAnalysisPack({
       displayName: 'Pack 1',
       description: 'This is an amazing description',
-      analysisPackEnumeration: buildAnalysisPackEnumeration({
+      enumeration: buildAnalysisPackEnumeration({
         globals: [],
         detections: [],
       }),

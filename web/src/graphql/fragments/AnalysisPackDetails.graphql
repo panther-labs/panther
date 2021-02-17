@@ -1,6 +1,6 @@
 fragment AnalysisPackDetails on AnalysisPack {
     ...AnalysisPackSummary
-    analysisPackEnumeration {
+    enumeration {
         paging {
             thisPage
             totalPages

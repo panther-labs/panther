@@ -445,10 +445,8 @@ export const buildAnalysisPack = (overrides: Partial<AnalysisPack> = {}): Analys
     packDefinition:
       'packDefinition' in overrides ? overrides.packDefinition : buildAnalysisPackDefinition(),
     packTypes: 'packTypes' in overrides ? overrides.packTypes : buildAnalysisPackTypes(),
-    analysisPackEnumeration:
-      'analysisPackEnumeration' in overrides
-        ? overrides.analysisPackEnumeration
-        : buildAnalysisPackEnumeration(),
+    enumeration:
+      'enumeration' in overrides ? overrides.enumeration : buildAnalysisPackEnumeration(),
   };
 };
 

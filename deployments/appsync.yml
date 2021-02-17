@@ -1380,7 +1380,7 @@ Resources:
     Properties:
       ApiId: !Ref ApiId
       TypeName: AnalysisPack
-      FieldName: analysisPackEnumeration
+      FieldName: enumeration
       DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
       RequestMappingTemplate: |
         {

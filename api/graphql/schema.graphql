@@ -526,7 +526,7 @@ type AnalysisPack {
   packDefinition: AnalysisPackDefinition!
   packTypes: AnalysisPackTypes!
 
-  analysisPackEnumeration: AnalysisPackEnumeration!
+  enumeration: AnalysisPackEnumeration!
 }
 
 type AnalysisPackEnumeration {

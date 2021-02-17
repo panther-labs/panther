@@ -27,7 +27,7 @@ import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
 export type AnalysisPackDetails = {
-  analysisPackEnumeration: {
+  enumeration: {
     paging: Pick<Types.PagingData, 'thisPage' | 'totalPages' | 'totalItems'>;
     globals: Array<GlobalPythonModuleFull>;
     models: Array<DataModelFull>;
@@ -38,7 +38,7 @@ export type AnalysisPackDetails = {
 export const AnalysisPackDetails = gql`
   fragment AnalysisPackDetails on AnalysisPack {
     ...AnalysisPackSummary
-    analysisPackEnumeration {
+    enumeration {
       paging {
         thisPage
         totalPages

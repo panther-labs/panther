@@ -63,15 +63,20 @@ const PackDetailsPage: React.FC = () => {
     },
   });
 
-  const [rules, policies] = React.useMemo(() => {
-    const ruleData = (data?.getAnalysisPack?.analysisPackEnumeration?.detections.filter(
+  const [rules, policies, models, helpers] = React.useMemo(() => {
+    const ruleData = (data?.getAnalysisPack?.enumeration?.detections.filter(
       d => d.analysisType === 'RULE'
     ) || []) as RuleSummary[];
 
-    const policyData = (data?.getAnalysisPack?.analysisPackEnumeration?.detections.filter(
+    const policyData = (data?.getAnalysisPack?.enumeration?.detections.filter(
       d => d.analysisType === 'POLICY'
     ) || []) as PolicySummary[];
-    return [ruleData, policyData];
+
+    const modelData = data?.getAnalysisPack?.enumeration?.models || [];
+
+    const helperData = data?.getAnalysisPack?.enumeration?.globals || [];
+
+    return [ruleData, policyData, modelData, helperData];
   }, [data]);
 
   if (loading) {
@@ -92,10 +97,6 @@ const PackDetailsPage: React.FC = () => {
       </Box>
     );
   }
-
-  const models = data?.getAnalysisPack?.analysisPackEnumeration?.models || [];
-
-  const helpers = data?.getAnalysisPack?.analysisPackEnumeration?.globals || [];
 
   return (
     <Box as="article" mb={6}>
