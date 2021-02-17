@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Box, Flex, SimpleGrid } from 'pouncejs';
+import { Alert, Box, Card, Flex, SimpleGrid } from 'pouncejs';
 import { extractErrorMessage, getGraphqlSafeDateRange } from 'Helpers/utils';
 import { PageViewEnum } from 'Helpers/analytics';
 import useTrackPageView from 'Hooks/useTrackPageView';
@@ -61,7 +61,7 @@ const AlertsOverview: React.FC = () => {
     fetchPolicy: 'cache-and-network',
     variables: {
       input: {
-        metricNames: ['eventsProcessed', 'totalAlertsDelta', 'alertsBySeverity', 'alertsByRuleID'],
+        metricNames: ['totalAlertsDelta', 'alertsBySeverity', 'alertsByRuleID'],
         ...initialValues,
       },
     },
@@ -89,9 +89,13 @@ const AlertsOverview: React.FC = () => {
       <AlertsOverviewBreadcrumbFilters initialValues={initialValues} />
       <SimpleGrid columns={1} spacingY={4}>
         <Panel title="Alerts Overview">
-          <Flex>
-            <AlertSummary data={totalAlertsDelta} />
-            <AlertsBySeverity alerts={alertsBySeverity} />
+          <Flex minHeight={320}>
+            <Card width="20%" variant="dark" px={6} pt={6} pb={4}>
+              <AlertSummary data={totalAlertsDelta} />
+            </Card>
+            <Card width="80%" variant="dark" ml={5} py={6} pl={6}>
+              <AlertsBySeverity alerts={alertsBySeverity} />
+            </Card>
           </Flex>
         </Panel>
         <Panel title="Top 5 High Priority Alerts">

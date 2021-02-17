@@ -27,7 +27,7 @@ const AlertsOverviewSkeleton: React.FC = () => {
       <FadeIn duration={400}>
         <SimpleGrid columns={1} spacingY={4}>
           <Panel title="Alerts Overview">
-            <TablePlaceholder rowCount={1} rowHeight={80} />
+            <TablePlaceholder rowCount={1} rowHeight={110} />
           </Panel>
           <Panel title="Top 5 High Priority Alerts">
             <TablePlaceholder rowHeight={36} />

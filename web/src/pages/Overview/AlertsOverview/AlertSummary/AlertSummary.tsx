@@ -17,8 +17,9 @@
  */
 
 import React from 'react';
-import { Box, Card, Flex, Heading } from 'pouncejs';
+import { Box, Flex, Heading } from 'pouncejs';
 import { slugify } from 'Helpers/utils';
+import NoDataFound from 'Components/NoDataFound';
 import { SingleValue } from 'Generated/schema';
 import DifferenceText from './DifferenceText';
 import PercentageBarChart from './PercentageBarChart';
@@ -28,6 +29,9 @@ interface AlertSummaryProps {
 }
 
 const AlertSummary: React.FC<AlertSummaryProps> = ({ data }) => {
+  if (!data) {
+    return <NoDataFound title="No alerts are present in the system" />;
+  }
   const alertsCurrentPeriod = data.find(d => d.label === 'Current Period').value;
   const alertPreviousPeriod = data.find(d => d.label === 'Previous Period').value;
 
@@ -40,7 +44,7 @@ const AlertSummary: React.FC<AlertSummaryProps> = ({ data }) => {
   }));
 
   return (
-    <Card width="25%" variant="dark" px={6} pt={6} pb={4}>
+    <Box>
       <Flex direction="column" align="center" justify="space-between">
         <Box width="100%" textAlign="center">
           <Box id={slugify('Total Alerts')} fontWeight="bold" fontSize="medium">
@@ -71,7 +75,7 @@ const AlertSummary: React.FC<AlertSummaryProps> = ({ data }) => {
           <PercentageBarChart data={alertsChartData} barHeight={24} />
         </Box>
       </Flex>
-    </Card>
+    </Box>
   );
 };
 

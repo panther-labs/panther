@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Card, Flex } from 'pouncejs';
+import { Flex } from 'pouncejs';
 import TimeSeriesChart from 'Components/charts/TimeSeriesChart';
 import { capitalize } from 'Helpers/utils';
 import { LongSeriesData } from 'Generated/schema';
@@ -27,25 +27,28 @@ interface AlertsBySeverityProps {
   alerts: LongSeriesData;
 }
 
-const AlertsBySeverity: React.FC<AlertsBySeverityProps> = ({ alerts: { series, timestamps } }) => {
-  const timeseriesData = React.useMemo(
-    () => ({
-      timestamps,
-      series: series.map(serie => ({ ...serie, label: capitalize(serie.label.toLowerCase()) })),
-    }),
-    [series, timestamps]
-  );
+const AlertsBySeverity: React.FC<AlertsBySeverityProps> = ({ alerts }) => {
+  const timeSeriesData = React.useMemo(() => {
+    if (!alerts) {
+      return null;
+    }
+    return {
+      timestamps: alerts.timestamps,
+      series: alerts.series.map(serie => ({
+        ...serie,
+        label: capitalize(serie.label.toLowerCase()),
+      })),
+    };
+  }, [alerts]);
 
-  if (!timeseriesData.series.length) {
+  if (!timeSeriesData?.series.length) {
     return <NoDataFound title="No alerts are present in the system" />;
   }
 
   return (
-    <Card width="80%" ml={5} variant="dark" py={6} pl={6}>
-      <Flex data-testid="alert-by-severity-chart" height="100%" position="relative">
-        <TimeSeriesChart data={timeseriesData} zoomable title="Severity" />
-      </Flex>
-    </Card>
+    <Flex data-testid="alert-by-severity-chart" height="100%" position="relative">
+      <TimeSeriesChart data={timeSeriesData} zoomable title="Severity" />
+    </Flex>
   );
 };
 

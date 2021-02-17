@@ -77,7 +77,7 @@ type Query {
   listComplianceIntegrations: [ComplianceIntegration!]!
   listDataModels(input: ListDataModelsInput!): ListDataModelsResponse!
   listLogIntegrations: [LogIntegration!]!
-  listPacks(input: ListPacksInput) : ListPacksResponse!
+  listPacks(input: ListPacksInput): ListPacksResponse!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   getLogAnalysisMetrics(input: LogAnalysisMetricsInput!): LogAnalysisMetricsResponse!
   rule(input: GetRuleInput!): Rule
@@ -529,7 +529,6 @@ type Pack {
   detectionTypes: DetectionTypes!
 }
 
-
 input SuppressPoliciesInput {
   policyIds: [ID]!
   resourcePatterns: [String]!
@@ -645,14 +644,14 @@ type SingleValue {
 }
 
 type LogAnalysisMetricsResponse {
-  eventsProcessed: LongSeriesData!
-  alertsBySeverity: LongSeriesData!
+  eventsProcessed: LongSeriesData
+  alertsBySeverity: LongSeriesData
   """
   TODO: uncomment when event latency data are fixed (PR #2509, Ticket #2492)
-  eventsLatency: FloatSeriesData!
+  eventsLatency: FloatSeriesData
   """
-  totalAlertsDelta: [SingleValue!]!
-  alertsByRuleID: [SingleValue!]!
+  totalAlertsDelta: [SingleValue!]
+  alertsByRuleID: [SingleValue!]
   fromDate: AWSDateTime!
   toDate: AWSDateTime!
   intervalMinutes: Int!
