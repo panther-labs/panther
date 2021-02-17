@@ -84,7 +84,7 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
             {!isCreatedByPanther ? (
               <Link
                 as={RRLink}
-                to={urls.logAnalysis.sources.edit(source.integrationId, sourceType)}
+                to={urls.integrations.logSources.edit(source.integrationId, sourceType)}
               >
                 {source.integrationLabel}
               </Link>

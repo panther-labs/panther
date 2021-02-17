@@ -42,7 +42,9 @@ func TestAPI_PutCustomLog(t *testing.T) {
 	}
 	ctx := context.Background()
 	assert := require.New(t)
-	expect := logtypesapi.SchemaUpdate{
+	expect := logtypesapi.SchemaRecord{
+		Revision:     1,
+		Name:         "Custom.Event",
 		Description:  "An example custom log type",
 		ReferenceURL: "https://example.com/docs",
 		Spec:         `{"version": 0, "fields": [{"name": "foo", "type": "string"}]}`,
@@ -50,31 +52,18 @@ func TestAPI_PutCustomLog(t *testing.T) {
 	reply, err := api.PutCustomLog(ctx, &logtypesapi.PutCustomLogInput{
 		Revision:     0,
 		LogType:      "Custom.Event",
-		SchemaUpdate: expect,
+		Description:  "An example custom log type",
+		ReferenceURL: "https://example.com/docs",
+		Spec:         `{"version": 0, "fields": [{"name": "foo", "type": "string"}]}`,
 	})
 	assert.NoError(err)
 	assert.NotNil(reply)
 	assert.Nil(reply.Error)
-	record := reply.Result
-	assert.Equal(&logtypesapi.SchemaUpdate{
-		Description:  record.Description,
-		ReferenceURL: record.ReferenceURL,
-		Spec:         record.Spec,
-	}, &record.SchemaUpdate)
-	assert.Equal(int64(1), record.Revision)
+	expect.UpdatedAt = reply.Result.UpdatedAt
+	expect.CreatedAt = reply.Result.CreatedAt
+	assert.Equal(&expect, reply.Result)
+	assert.Equal(int64(1), reply.Result.Revision)
 	assert.Equal(1, numDataCatalogCalls)
-	{
-		reply, err := api.GetCustomLog(ctx, &logtypesapi.GetCustomLogInput{
-			LogType:  "Custom.Event",
-			Revision: 1,
-		})
-		assert.NoError(err)
-		assert.NotNil(reply)
-		assert.Nil(reply.Error)
-		record := reply.Result
-		assert.Equal(&expect, &record.SchemaUpdate)
-		assert.Equal(int64(1), record.Revision)
-	}
 	{
 		reply, err := api.GetCustomLog(ctx, &logtypesapi.GetCustomLogInput{
 			LogType: "Custom.Event",
@@ -83,21 +72,11 @@ func TestAPI_PutCustomLog(t *testing.T) {
 		assert.NotNil(reply)
 		assert.Nil(reply.Error)
 		record := reply.Result
-		assert.Equal(&expect, &record.SchemaUpdate)
+		assert.Equal(&expect, reply.Result)
 		assert.Equal(int64(1), record.Revision)
 	}
 
-	{
-		reply, err := api.GetCustomLog(ctx, &logtypesapi.GetCustomLogInput{
-			LogType:  "Custom.Event",
-			Revision: 2,
-		})
-		assert.NotNil(err)
-		assert.Nil(reply)
-		assert.Equal(logtypesapi.ErrNotFound, logtypesapi.AsAPIError(err).Code)
-	}
-
-	expect = logtypesapi.SchemaUpdate{
+	expect = logtypesapi.SchemaRecord{
 		Description:  "An example custom log type",
 		ReferenceURL: "https://example.com/docs/v2",
 		Spec:         `{"version": 0, "fields": [{"name": "bar", "type": "string"}]}`,
@@ -105,7 +84,9 @@ func TestAPI_PutCustomLog(t *testing.T) {
 	reply, err = api.PutCustomLog(ctx, &logtypesapi.PutCustomLogInput{
 		Revision:     1,
 		LogType:      "Custom.Event",
-		SchemaUpdate: expect,
+		Description:  "An example custom log type",
+		ReferenceURL: "https://example.com/docs/v2",
+		Spec:         `{"version": 0, "fields": [{"name": "bar", "type": "string"}]}`,
 	})
 	assert.Error(err)
 	assert.Nil(reply)
@@ -127,7 +108,7 @@ func TestAPI_PutCustomLog(t *testing.T) {
 		})
 		assert.NoError(err)
 		assert.Nil(reply.Error)
-		assert.Equal(3, numDataCatalogCalls)
+		assert.Equal(2, numDataCatalogCalls)
 	}
 	{
 		reply, err := api.DelCustomLog(ctx, &logtypesapi.DelCustomLogInput{

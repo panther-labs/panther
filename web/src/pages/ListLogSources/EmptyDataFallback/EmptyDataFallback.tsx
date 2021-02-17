@@ -31,7 +31,7 @@ const EmptyDataFallback: React.FC = () => (
     <Text color="gray-300" textAlign="center" mb={8}>
       You don{"'"}t seem to have any Log sources connected to our system. <br />
     </Text>
-    <LinkButton to={urls.logAnalysis.sources.create()}>Onboard your logs</LinkButton>
+    <LinkButton to={urls.integrations.logSources.create()}>Onboard your logs</LinkButton>
   </Flex>
 );
 

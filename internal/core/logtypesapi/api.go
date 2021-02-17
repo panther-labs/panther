@@ -47,21 +47,10 @@ type LogTypesAPI struct {
 
 // SchemaDatabase handles the external actions required for LogTypesAPI to be implemented
 type SchemaDatabase interface {
-	// Create a new user schema record
-	CreateUserSchema(ctx context.Context, id string, upd SchemaUpdate) (*SchemaRecord, error)
-
 	// GetSchema gets a single schema record
-	GetSchema(ctx context.Context, id string, revision int64) (*SchemaRecord, error)
-
-	// UpdateSchema updates a managed schema to the release version provided
-	UpdateUserSchema(ctx context.Context, id string, rev int64, upd SchemaUpdate) (*SchemaRecord, error)
-
-	// UpdateManagedSchema updates a managed schema to the release version provided
-	UpdateManagedSchema(ctx context.Context, id string, rev int64, release string, upd SchemaUpdate) (*SchemaRecord, error)
-
-	// ToggleSchema enables/disables a schema record
-	ToggleSchema(ctx context.Context, id string, enabled bool) error
-
+	GetSchema(ctx context.Context, id string) (*SchemaRecord, error)
+	// PutSchema puts a single schema record
+	PutSchema(ctx context.Context, id string, record *SchemaRecord) (*SchemaRecord, error)
 	// ScanSchemas iterates through all schema records as long as scan returns true
 	ScanSchemas(ctx context.Context, scan ScanSchemaFunc) error
 }
@@ -75,7 +64,6 @@ const (
 	ErrNotFound         = "NotFound"
 	ErrInUse            = "InUse"
 	ErrInvalidUpdate    = "InvalidUpdate"
-	ErrInvalidMetadata  = "InvalidMetadata"
 	ErrInvalidSyntax    = "InvalidSyntax"
 	ErrInvalidLogSchema = "InvalidLogSchema"
 	ErrServerError      = "ServerError"

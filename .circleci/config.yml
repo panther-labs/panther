@@ -1,5 +1,8 @@
 version: 2.1
 
+aliases:
+  - &TEST_PARALLELISM 20
+
 # The images that jobs can have
 executors:
   panther-buildpack:
@@ -179,6 +182,7 @@ jobs:
           command: /tmp/panther/magebin test:python
 
   test_web:
+    parallelism: *TEST_PARALLELISM
     executor: panther-buildpack
     resource_class: xlarge
     steps:

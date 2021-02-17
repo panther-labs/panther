@@ -40,13 +40,16 @@ const LogSourceCardOptions: React.FC<LogSourceCardOptionsProps> = ({ source }) =
   switch (source.integrationType) {
     case LogIntegrationsEnum.sqs:
       castedSource = source as SqsLogSourceIntegration;
-      logSourceEditUrl = urls.logAnalysis.sources.edit(source.integrationId, 'sqs');
+      logSourceEditUrl = urls.integrations.logSources.edit(source.integrationId, 'sqs');
       break;
     case LogIntegrationsEnum.s3:
     default:
       castedSource = source as S3LogIntegration;
       description = `Deleting this source will not delete the associated Cloudformation stack. You will need to manually delete the stack ${castedSource.stackName} from the AWS Account ${castedSource.awsAccountId}`;
-      logSourceEditUrl = urls.logAnalysis.sources.edit(source.integrationId, 's3');
+      if (castedSource.managedS3Resources?.topicARN) {
+        description += `. The SNS topic created by Panther will also be kept (${castedSource.managedS3Resources.topicARN})`;
+      }
+      logSourceEditUrl = urls.integrations.logSources.edit(source.integrationId, 's3');
   }
 
   return (

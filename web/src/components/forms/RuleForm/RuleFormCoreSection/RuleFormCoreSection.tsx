@@ -83,7 +83,7 @@ const RuleFormCoreSection: React.FC = () => {
       return (
         <FormHelperText id="outputIds-description" mt={2} mr={1}>
           You have not configured any destinations, create one
-          <Link ml={1} as={RRLink} to={urls.settings.destinations.create()}>
+          <Link ml={1} as={RRLink} to={urls.integrations.destinations.create()}>
             here
           </Link>
         </FormHelperText>
