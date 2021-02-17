@@ -24,15 +24,17 @@ import gql from 'graphql-tag';
 import * as ApolloReactCommon from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client';
 
-export type GetOverviewAlertsVariables = {};
+export type GetOverviewAlertsVariables = {
+  input?: Types.Maybe<Types.ListAlertsInput>;
+};
 
 export type GetOverviewAlerts = {
   alerts?: Types.Maybe<{ alertSummaries: Array<Types.Maybe<AlertSummaryFull>> }>;
 };
 
 export const GetOverviewAlertsDocument = gql`
-  query GetOverviewAlerts {
-    alerts(input: { severity: [CRITICAL, HIGH], pageSize: 5, status: [OPEN] }) {
+  query GetOverviewAlerts($input: ListAlertsInput) {
+    alerts(input: $input) {
       alertSummaries {
         ...AlertSummaryFull
       }
@@ -53,6 +55,7 @@ export const GetOverviewAlertsDocument = gql`
  * @example
  * const { data, loading, error } = useGetOverviewAlerts({
  *   variables: {
+ *      input: // value for 'input'
  *   },
  * });
  */

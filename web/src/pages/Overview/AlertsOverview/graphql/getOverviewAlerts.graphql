@@ -1,5 +1,5 @@
-query GetOverviewAlerts {
-  alerts(input: { severity: [CRITICAL, HIGH], pageSize: 5, status: [OPEN] }) {
+query GetOverviewAlerts($input: ListAlertsInput) {
+  alerts(input: $input) {
     alertSummaries {
       ...AlertSummaryFull
     }

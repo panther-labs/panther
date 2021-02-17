@@ -22,7 +22,7 @@ import { extractErrorMessage, getGraphqlSafeDateRange } from 'Helpers/utils';
 import { PageViewEnum } from 'Helpers/analytics';
 import useTrackPageView from 'Hooks/useTrackPageView';
 import useRequestParamsWithoutPagination from 'Hooks/useRequestParamsWithoutPagination';
-import { LogAnalysisMetricsInput } from 'Generated/schema';
+import { AlertStatusesEnum, LogAnalysisMetricsInput, SeverityEnum } from 'Generated/schema';
 import AlertCard from 'Components/cards/AlertCard';
 import NoResultsFound from 'Components/NoResultsFound';
 import Panel from 'Components/Panel';
@@ -53,8 +53,18 @@ const AlertsOverview: React.FC = () => {
     };
   }, [intervalMinutes, fromDate, toDate]);
 
+  const [utcDaysAgo, utcNow] = getGraphqlSafeDateRange({ days: 1 });
   const { loading: loadingAlerts, data: alertsData } = useGetOverviewAlerts({
     fetchPolicy: 'cache-and-network',
+    variables: {
+      input: {
+        severity: [SeverityEnum.Critical, SeverityEnum.High],
+        pageSize: 5,
+        status: [AlertStatusesEnum.Open],
+        createdAtAfter: utcDaysAgo,
+        createdAtBefore: utcNow,
+      },
+    },
   });
 
   const { loading, data, error } = useGetLogAnalysisMetrics({
