@@ -505,7 +505,7 @@ class Rule:
                     )
                 )
         else:
-            if not isinstance(expected_type, list) or not all([isinstance(x, (str, bool)) for x in result]):
+            if not isinstance(result, list) or not all([isinstance(x, (str, bool)) for x in result]):
                 raise Exception(
                     'rule [{}] function [{}] returned [{}], expected a list'.format(self.rule_id, function.__name__,
                                                                                     type(result).__name__)
