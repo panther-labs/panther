@@ -44,8 +44,6 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ isSelected, isFocused, childr
   return (
     <Tab>
       <Box
-        size="x-small"
-        zIndex={5}
         mr={4}
         pl={4}
         pr={6}
