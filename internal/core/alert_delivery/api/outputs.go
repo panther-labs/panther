@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	"sort"
 	"time"
 
@@ -98,7 +99,7 @@ func getOutputsByDynamicDestinations(alert *deliverymodel.Alert, outputs []*outp
 		for _, outputID := range alert.Destinations {
 			if *output.OutputID == outputID {
 				alertOutputs = append(alertOutputs, output)
-			} else if *output.DisplayName == outputID {
+			} else if aws.StringValue(output.DisplayName) == outputID {
 				alertOutputs = append(alertOutputs, output)
 			}
 		}
