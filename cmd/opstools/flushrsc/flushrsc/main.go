@@ -1,4 +1,4 @@
-// flushdeletedresources opstool removes all entries from the panther-resources table where deleted=true
+// flushrsc opstool removes all entries from the panther-resources table where deleted=true
 package main
 
 /**
@@ -20,7 +20,6 @@ package main
  */
 
 import (
-	// Go Packages
 	"flag"
 	"fmt"
 	"io"
@@ -29,21 +28,18 @@ import (
 	"strings"
 	"time"
 
-	// Internal / panther packages
-	"github.com/panther-labs/panther/cmd/opstools"
-	"github.com/panther-labs/panther/pkg/awsbatch/dynamodbbatch"
-
-	// AWS packages
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-
-	// Logging and errors
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+
+	"github.com/panther-labs/panther/cmd/opstools"
+	"github.com/panther-labs/panther/pkg/awsbatch/dynamodbbatch"
+	"github.com/panther-labs/panther/tools/mage/util"
 )
 
 const tableName = "panther-resources"
@@ -51,12 +47,7 @@ const maxBackoff = 60 * time.Second
 
 // version set by mage build:tools
 var version string
-
-func check(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
+var log *zap.SugaredLogger
 
 // Main will
 // Get user input to determine flush, inspect, or save
@@ -64,147 +55,84 @@ func check(err error) {
 // If inspect, ignore save and flush
 func main() {
 	startTime := time.Now()
+	defer handlePanic()
 
+	// CMD line options
 	debug, flush, inspect, save, versionOpt := getOpts()
 
-	if versionOpt {
-		_, BIN, ARCH, OS := binMeta()
-		printfln("ARCH=%v", ARCH)
-		printfln("BIN=%v", BIN)
-		printfln("OS=%v", OS)
-		printfln("VERSION=%v", version)
-		return
-	}
+	// Guaruntee:
+	//   -version overwrites all other options
+	//   - inspect overwrites save and flush
+	//   - save overwrites flush
+	flush = flush && !save && !inspect && !versionOpt
+	save = save && !inspect && !versionOpt
+	inspect = inspect && !versionOpt
 
-	log := opstools.MustBuildLogger(debug)
+	// log is the only package level variable (not including version from ops tool)
+	log = opstools.MustBuildLogger(debug)
+	log.Debug("MUST LOGGER SUCCESS")
 	log.Debug("STARTEPOCH=", startTime.Unix())
 
-	// Debug log the CLI options values
-	if !flush && !save && !inspect {
-		flag.Usage()
-	}
+	// writeCloser used to pass either nil or *os.File
+	var saveWriteCloser io.WriteCloser
+	var savePath string
 
-	// Save, Flush and Inspect require an aws session which can take a few seconds to fail so
-	// we print the command before proceeding for user experience
-	if save {
-		printfln("SAVE")
-	}
-	if flush {
-		printfln("FLUSH")
-	}
-	if inspect {
-		printfln("INSPECT")
-	}
-
-	var saveFile *os.File
-
-	// This will catch any calls to panic. This method will always call the cleanup method which
-	// closes/removes the save file if necessary
-	defer func() {
-		var recoveryErr error = nil
-		exitCode := 0
-
-		// Catches calls to panic
-		if r := recover(); r != nil {
-			log.Debug("PANIC ERROR RECOVERY")
-			if err, ok := r.(error); ok {
-				recoveryErr = err
-			}
-		}
-
-		// cleanup will close the file and remove it if the file size is zero and:
-		// param3 is true or cleanup recovers from a panic error and fsize is zero
-		if err := cleanup(log, saveFile, true); err != nil {
-			log.Error(err)
-			exitCode = 1
-		}
-
-		if recoveryErr != nil {
-			exitCode = 1
-			if awsErr, ok := recoveryErr.(awserr.Error); ok {
-				switch awsErr {
-				case credentials.ErrNoValidProvidersFoundInChain:
-					log.Debug("credentials.ErrNoValidProvidersFoundInChain")
-					log.Error("AWS NoCredentialProviders Error: No valid providers in chain")
-				default:
-					log.Debug("Unhandled aws error")
-					log.Error("aws error: %v", awsErr)
+	// Print and init options / option depts
+	switch {
+	case flush:
+		log.Info("FLUSH")
+	case inspect:
+		log.Info("INSPECT")
+	case save: // -save Save the IDS to the os.File returned from getSaveFile(startTime)
+		log.Info("SAVE")
+		saveWriteCloser, savePath = mustGetSaver(startTime)
+		defer func() {
+			log.Infof("%s", savePath)
+			saveWriteCloser.Close()
+			if err := recover(); err != nil {
+				if err, ok := err.(error); ok && err != nil {
+					log.Error("save encountered an error... removing save file")
+					rmerr := os.Remove(savePath)
+					check(rmerr)
+					// Check the original error
+					check(err)
 				}
-			} else {
-				log.Error("\n%v\n", recoveryErr)
 			}
-		}
-
-		printfln("Completed in %.2f seconds", time.Since(startTime).Seconds())
-		os.Exit(exitCode)
-	}()
-
-	if save {
-		// basename
-		writeFName := fmt.Sprintf("flush_resource_ids_%v", startTime.Unix())
-		log.Debug("WRITEFNAME=", writeFName)
-
-		// destination directory path
-		writeDir, err := os.Getwd()
-		check(err)
-		log.Debug("WRITEDIR=", writeDir)
-
-		// Audit file full path
-		saveFilePath := filepath.Join(writeDir, writeFName)
-		log.Debug("SAVEFILEPATH=", saveFilePath)
-
-		// Create the file
-		saveFile, err = os.Create(saveFilePath)
-		check(err)
+		}()
+	case versionOpt: // -version prints build metadata
+		_, BIN, ARCH, OS := buildInfo()
+		log.Info("ARCH=", ARCH)
+		log.Info("BIN=", BIN)
+		log.Info("OS=", OS)
+		log.Info("VERSION=", version)
+		return // exit without proceeding
+	default:
+		usage()
+		return // exit without proceeding
 	}
 
-	// init dynamodb svc client
-	awsSession, err := session.NewSession()
-	check(err)
+	// we need aws for only after this point.
+	awsSession := session.Must(session.NewSession())
+	log.Debug("AWS SESSION MUST SUCCESS")
+	dbSvc := dynamodb.New(awsSession)
 
-	// Execute the scan, save, and flush (depending on params)
-	FlushSaveInspectResources(dynamodb.New(awsSession), saveFile, flush, save, inspect)
-}
-
-// Closes save file and removes it if the file size is 0 and (rmEmptyFile is true or we recover from an error)
-func cleanup(log *zap.SugaredLogger, saveFile *os.File, rmEmptyFile bool) error {
-	log.Debug("RMEMPTYFILE=", rmEmptyFile)
-	// Check / close the save file
-	if saveFile == nil {
-		return nil
-	}
-	saveFPath := saveFile.Name()
-	log.Debug("SAVEFILEPATH=", saveFPath)
-	// Close the file after getting the file stats, check for stat errors after closing the file
-	saveFStat, err := saveFile.Stat()
-	log.Debug("Close saveFile")
-	saveFile.Close()
-	if err != nil {
-		return err
-	}
-	saveFSize := saveFStat.Size()
-	if !rmEmptyFile || saveFSize > 0 {
-		return nil
-	}
-	log.Debug("SAVEFILESIZE=", saveFSize)
-	if err = os.Remove(saveFPath); err != nil {
-		return err
-	}
-	log.Debug("Removed ", saveFPath)
-	return nil
+	// Execute the scanpages, save, and flush (depending on params)
+	MustFlushSaveInspectResources(log, dbSvc, flush, inspect, saveWriteCloser)
+	log.Infof("Completed in %.2f Seconds", time.Since(startTime).Seconds())
 }
 
 // Flush runs all the inspect, flush, and save commands. This method can be called on its own
 // assuming the inputs are valid.
-func FlushSaveInspectResources(svc *dynamodb.DynamoDB, saveWriter io.Writer, flush, save, inspect bool) {
+func MustFlushSaveInspectResources(logger *zap.SugaredLogger, svc *dynamodb.DynamoDB, flush, inspect bool, saveWriter io.Writer) {
+	// check inputs or panic with inputs requires
+	switch {
+	case flush, inspect, saveWriter != nil:
+	default:
+		check(errors.New("MustFlushSaveInspectResources requires flush, inspect, or a valid writer"))
+	}
+
 	// Ensure inspect over-rides any flush or save
 	flush = flush && !inspect
-	save = save && !inspect
-
-	// Check if the scanAuditFlushResources method has nothing to do
-	if !flush && !save && !inspect {
-		check(errors.New("FlushSaveInspectResources requires flush, inspect, or a valid writer and save"))
-	}
 
 	// Store write requests for items scanned in svc.ScanPages using the scanInput expression
 	deleteRequests := []*dynamodb.WriteRequest{}
@@ -225,12 +153,13 @@ func FlushSaveInspectResources(svc *dynamodb.DynamoDB, saveWriter io.Writer, flu
 	}
 	resultScanner := func(page *dynamodb.ScanOutput, lastPage bool) bool {
 		for _, item := range page.Items {
-			deleteEntry := &dynamodb.WriteRequest{DeleteRequest: &dynamodb.DeleteRequest{Key: item}}
-			if save {
+			if saveWriter != nil {
 				_, err := saveWriter.Write([]byte(*item["id"].S + "\n"))
 				check(err)
+				continue
 			}
-			// Add the delete request to the set
+			// Add delete request to the batch set
+			deleteEntry := &dynamodb.WriteRequest{DeleteRequest: &dynamodb.DeleteRequest{Key: item}}
 			deleteRequests = append(deleteRequests, deleteEntry)
 		}
 		return !lastPage
@@ -239,30 +168,28 @@ func FlushSaveInspectResources(svc *dynamodb.DynamoDB, saveWriter io.Writer, flu
 	// SCAN THE DYNAMODB
 	check(svc.ScanPages(scanInput, resultScanner))
 	flush = flush && len(deleteRequests) > 0
-
-	printfln("Items pending deletion: %v", len(deleteRequests))
-
 	if inspect && len(deleteRequests) > 0 {
+		logger.Infof("items pending delete: %v", len(deleteRequests))
 		// Set initial size to length of items to add size of required newline characters
 		var sumSz int64 = int64(len(deleteRequests))
 		for _, item := range deleteRequests {
 			sumSz += int64(len(*item.DeleteRequest.Key["id"].S))
 		}
-		printfln("Save file estimated size: %v", humanByteSize(sumSz))
+		logger.Infof("Save file estimated size: %v", util.ByteCountSI(sumSz))
 	}
 	if flush {
 		// Batch write request parameter containing set of delete item requests
 		batchWriteInput := &dynamodb.BatchWriteItemInput{
 			RequestItems: map[string][]*dynamodb.WriteRequest{tableName: deleteRequests},
 		}
-		printfln("Beginning Batch Delete")
+		logger.Debug("Beginning Batch Delete")
 		check(dynamodbbatch.BatchWriteItem(svc, maxBackoff, batchWriteInput))
-		printfln("Completed Batch Delete")
+		logger.Debug("Completed Batch Delete")
 	}
 }
 
-// Parses the name of the binary to retrieve the GOOS, GOARCH, Binary Name and the tool Name.
-func binMeta() (NAME, BIN, ARCH, OS string) {
+// returns tool Name, GOOS, GOARCH, Binary Name,.
+func buildInfo() (NAME, BIN, ARCH, OS string) {
 	BIN = filepath.Base(os.Args[0])
 	versionMeta := strings.Split(BIN, "-")
 	ARCH = versionMeta[2]
@@ -271,9 +198,15 @@ func binMeta() (NAME, BIN, ARCH, OS string) {
 	return
 }
 
-// returns values of the required cli options where true means the option was specified in the cli args.
+// panic on any non nil error
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+// parses user input for options -debug, -flush, -inspect, -save, -version
 func getOpts() (debug, flush, inspect, save, versionOpt bool) {
-	flag.Usage = usage
 	cliDebug := flag.Bool("debug", false, "Enable debug logging")
 	cliFlush := flag.Bool("flush", false, "Remove entries from the panther-resources table where deleted=true")
 	cliInspect := flag.Bool("inspect", false, "Print number of panther-resources entries where delete=true and the estimated save file size")
@@ -291,10 +224,59 @@ func getOpts() (debug, flush, inspect, save, versionOpt bool) {
 	return
 }
 
-// COSMETIC Helpers:
+// Error handler for all errors in this ops tool.
+func handlePanic() {
+	if err := recover(); err != nil {
+		if err, ok := err.(awserr.Error); ok {
+			switch err {
+			case credentials.ErrNoValidProvidersFoundInChain:
+				log.Debug("credentials.ErrNoValidProvidersFoundInChain")
+				log.Error("AWS NoCredentialProviders Error: No valid providers in chain")
+				log.Info("Double check your aws credentials")
+			default:
+				log.Debug("Unhandled aws error")
+				log.Error("aws error: %v", err)
+			}
+		} else {
+			log.Debug("UNHANDLED ERROR", err)
+			log.Error("%v", err)
+		}
+	}
+}
+
+// Returns the current working directory, panic if error
+func mustCWD() string {
+	cwd, err := os.Getwd()
+	check(err)
+	return cwd
+}
+
+// Returns an io.WriteCloser with *os.File as the underlying struct
+func mustGetSaver(filePostfix time.Time) (result io.WriteCloser, saveFPath string) {
+	// save file basename
+	basename := fmt.Sprintf("flush_resource_ids_%v", filePostfix.Unix())
+	// full path where our save file will be created
+	saveFPath = filepath.Join(mustCWD(), basename)
+	// Create the file, must, assign the return interface
+	saveFile, err := os.Create(saveFPath)
+	check(err)
+	result = saveFile
+	return
+}
+
+// Prints tool usage
 func usage() {
-	NAME, BIN, _, _ := binMeta()
-	printfln("\n%v\n", NAME)
+	// This makes things pretty
+	printfln := func(args ...interface{}) {
+		if len(args) == 1 {
+			fmt.Fprintf(flag.CommandLine.Output(), args[0].(string))
+		} else if len(args) > 1 {
+			fmt.Fprintf(flag.CommandLine.Output(), args[0].(string), args[1:]...)
+		}
+		fmt.Fprintf(flag.CommandLine.Output(), "\n")
+	}
+	name, binary, _, _ := buildInfo()
+	printfln("\n%v\n", name)
 	printfln("  Remove entries from the resources table where entry deleted=true\n")
 	printfln("  Entries in the resources table are set as deleted and scheduled for deletion.")
 	printfln("  This can lead to a large number of entries that have been deleted from Panther")
@@ -311,31 +293,8 @@ func usage() {
 	printfln("  This tool requires aws credentials with dynamodb panther-resources table permissions:\n")
 	printfln("  BatchWriteItem")
 	printfln("  Scan\n")
-	printfln("USAGE:\n\n  %v <options>\n", BIN)
+	printfln("USAGE:\n\n  %v <options>\n", binary)
 	printfln("Where options are:\n")
 	flag.PrintDefaults()
 	printfln()
-	os.Exit(0)
-}
-func printfln(args ...interface{}) {
-	if len(args) == 1 {
-		fmt.Fprintf(flag.CommandLine.Output(), args[0].(string))
-	} else if len(args) > 1 {
-		fmt.Fprintf(flag.CommandLine.Output(), args[0].(string), args[1:]...)
-	}
-	fmt.Fprintf(flag.CommandLine.Output(), "\n")
-}
-func humanByteSize(b int64) string {
-	if b < 1000 {
-		return fmt.Sprintf("%d Bytes", b)
-	}
-	divider := int64(1000)
-	exponent := 0
-	for n := b / 1000; n >= 1000; n /= 1000 {
-		divider *= 1000
-		exponent++
-	}
-	szUnits := [5]string{"kB", "MB", "GB", "TB"}
-	unitSz := float64(b) / float64(divider)
-	return fmt.Sprintf("%.2f %s", unitSz, szUnits[exponent])
 }
