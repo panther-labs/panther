@@ -19,10 +19,10 @@
 import React from 'react';
 import { Box, Card, Flex, Heading } from 'pouncejs';
 import { slugify } from 'Helpers/utils';
-import NoDataFound from 'Components/NoDataFound';
 import { SingleValue } from 'Generated/schema';
+import NoDataFound from 'Components/NoDataFound';
+import PercentageBarChart from 'Components/charts/PercentageBarChart';
 import DifferenceText from './DifferenceText';
-import PercentageBarChart from './PercentageBarChart';
 
 interface AlertSummaryProps {
   data: SingleValue[];
