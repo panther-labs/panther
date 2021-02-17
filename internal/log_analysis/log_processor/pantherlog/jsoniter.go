@@ -61,7 +61,6 @@ var (
 	typByteSlice     = reflect.TypeOf([]byte{})
 	typTime          = reflect.TypeOf(time.Time{})
 	typResult        = reflect.TypeOf(Result{})
-	emptyJSON        = []byte("{}")
 )
 
 // Special encoder for *Result. It extends the event JSON object with all the required Panther fields.
