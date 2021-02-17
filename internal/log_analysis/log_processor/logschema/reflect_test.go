@@ -60,7 +60,7 @@ func TestArrayIndicators(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(1, len(goFields))
 	assert.Equal(reflect.TypeOf([]null.String{}), goFields[0].Type)
-	assert.Equal(`json:"remote_ips,omitempty" panther:"ip" description:"remote ip addresses"`, string(goFields[0].Tag))
+	assert.Equal(`json:"remote_ips,omitempty"  panther:"ip" description:"remote ip addresses"`, string(goFields[0].Tag))
 }
 
 func TestAllowDeny(t *testing.T) {

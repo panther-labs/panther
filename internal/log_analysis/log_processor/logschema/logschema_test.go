@@ -169,7 +169,7 @@ func TestLogSpec_UnmarshalYAML(t *testing.T) {
 			},
 			{
 				Name:        `duration_s`,
-				Description: `The number of seconds the request took to complete`,
+				Description: `The number of seconds the request "took" to complete`,
 				ValueSchema: ValueSchema{
 					Type: TypeFloat,
 				},
