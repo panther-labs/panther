@@ -65,3 +65,17 @@ type Test struct {
 	Resource       interface{} `yaml:"Resource"`
 	ResourceType   string      `yaml:"ResourceType"`
 }
+
+// PackConfig is specifically for pack definitions
+type PackConfig struct {
+	AnalysisType   string         `yaml:"AnalysisType"`
+	Description    string         `yaml:"Description"`
+	PackDefinition PackDefinition `yaml:"PackDefinition"`
+	DisplayName    string         `yaml:"DisplayName"`
+	PackID         string         `yaml:"PackID"`
+}
+
+// DetectionPattern defines what makes up a pack
+type PackDefinition struct {
+	IDs []string `yaml:"IDs"`
+}

@@ -16,28 +16,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import React from 'react';
-import { Pack, PackVersion } from 'Generated/schema';
+import { AnalysisPack, AnalysisPackVersion } from 'Generated/schema';
 import { Button, Flex, Box, Combobox } from 'pouncejs';
 import { compareSemanticVersion } from 'Helpers/utils';
 
 interface UpdateVersionProps {
-  pack: Pick<Pack, 'availableVersions' | 'packVersion' | 'enabled'>;
+  pack: Pick<AnalysisPack, 'availableVersions' | 'packVersion' | 'enabled'>;
   onPatch: (values: UpdateVersionFormValues) => void;
 }
 
 export interface UpdateVersionFormValues {
   packVersion: {
-    id: string;
-    name: string;
+    id: number;
+    semVer: string;
   };
 }
+
+const versionToString = v => v.semVer;
 
 const UpdateVersion: React.FC<UpdateVersionProps> = ({
   pack: { enabled, availableVersions, packVersion: current },
   onPatch,
 }) => {
-  availableVersions.sort((a, b) => compareSemanticVersion(b.name, a.name));
-  const [selectedVersion, setSelectedVersion] = React.useState<PackVersion>(availableVersions[0]);
+  const sortedVersions = [...availableVersions];
+  sortedVersions.sort((a, b) => compareSemanticVersion(b.semVer, a.semVer));
+  const [selectedVersion, setSelectedVersion] = React.useState<AnalysisPackVersion>(
+    sortedVersions[0]
+  );
 
   return (
     <Flex spacing={4}>
@@ -47,14 +52,14 @@ const UpdateVersion: React.FC<UpdateVersionProps> = ({
           value={selectedVersion}
           disabled={!enabled}
           onChange={setSelectedVersion}
-          items={availableVersions}
-          itemToString={v => v.name}
+          items={sortedVersions}
+          itemToString={versionToString}
         />
       </Box>
       <Box width={130}>
-        {compareSemanticVersion(selectedVersion.name, current.name) >= 0 ? (
+        {compareSemanticVersion(selectedVersion.semVer, current.semVer) >= 0 ? (
           <Button
-            disabled={!enabled || selectedVersion.name === current.name}
+            disabled={!enabled || selectedVersion.semVer === current.semVer}
             onClick={() => onPatch({ packVersion: selectedVersion })}
           >
             Update Pack
@@ -62,7 +67,7 @@ const UpdateVersion: React.FC<UpdateVersionProps> = ({
         ) : (
           <Button
             variantColor="violet"
-            disabled={!enabled || selectedVersion.name === current.name}
+            disabled={!enabled || selectedVersion.semVer === current.semVer}
             onClick={() => onPatch({ packVersion: selectedVersion })}
           >
             Revert Pack
