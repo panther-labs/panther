@@ -32,6 +32,12 @@ import {
   AlertSummary,
   AlertSummaryPolicyInfo,
   AlertSummaryRuleInfo,
+  AnalysisPack,
+  AnalysisPackDefinition,
+  AnalysisPackEnumeration,
+  AnalysisPackTypes,
+  AnalysisPackVersion,
+  AnalysisPackVersionInput,
   AsanaConfig,
   AsanaConfigInput,
   ComplianceIntegration,
@@ -60,7 +66,6 @@ import {
   Detection,
   DetectionTestDefinition,
   DetectionTestDefinitionInput,
-  DetectionTypes,
   Error,
   FloatSeries,
   FloatSeriesData,
@@ -84,6 +89,8 @@ import {
   JiraConfigInput,
   ListAlertsInput,
   ListAlertsResponse,
+  ListAnalysisPacksInput,
+  ListAnalysisPacksResponse,
   ListAvailableLogTypesResponse,
   ListComplianceItemsResponse,
   ListDataModelsInput,
@@ -92,8 +99,6 @@ import {
   ListDetectionsResponse,
   ListGlobalPythonModuleInput,
   ListGlobalPythonModulesResponse,
-  ListPacksInput,
-  ListPacksResponse,
   ListResourcesInput,
   ListResourcesResponse,
   LogAnalysisMetricsInput,
@@ -109,10 +114,6 @@ import {
   OrganizationReportBySeverity,
   OrganizationStatsInput,
   OrganizationStatsResponse,
-  Pack,
-  PackDetectionsPatterns,
-  PackVersion,
-  PackVersionInput,
   PagerDutyConfig,
   PagerDutyConfigInput,
   PagingData,
@@ -153,9 +154,9 @@ import {
   TestRuleRecordFunctions,
   TestRuleResponse,
   UpdateAlertStatusInput,
+  UpdateAnalysisPackInput,
   UpdateComplianceIntegrationInput,
   UpdateGeneralSettingsInput,
-  UpdatePackInput,
   UpdatePolicyInput,
   UpdateRuleInput,
   UpdateS3LogIntegrationInput,
@@ -419,6 +420,85 @@ export const buildAlertSummaryRuleInfo = (
     ruleId: 'ruleId' in overrides ? overrides.ruleId : '8780849b-30b8-4ce2-934b-bf033369b110',
     logTypes: 'logTypes' in overrides ? overrides.logTypes : ['Personal Loan Account'],
     eventsMatched: 'eventsMatched' in overrides ? overrides.eventsMatched : 240,
+  };
+};
+
+export const buildAnalysisPack = (overrides: Partial<AnalysisPack> = {}): AnalysisPack => {
+  return {
+    __typename: 'AnalysisPack',
+    id: 'id' in overrides ? overrides.id : '41e839d4-fb36-45dd-9a94-d4d16d33bc06',
+    enabled: 'enabled' in overrides ? overrides.enabled : true,
+    updateAvailable: 'updateAvailable' in overrides ? overrides.updateAvailable : true,
+    description: 'description' in overrides ? overrides.description : 'Shoes',
+    displayName: 'displayName' in overrides ? overrides.displayName : 'SCSI',
+    packVersion: 'packVersion' in overrides ? overrides.packVersion : buildAnalysisPackVersion(),
+    availableVersions:
+      'availableVersions' in overrides ? overrides.availableVersions : [buildAnalysisPackVersion()],
+    createdBy:
+      'createdBy' in overrides ? overrides.createdBy : '977948bf-1ffd-4b92-873b-1afc9ea18233',
+    lastModifiedBy:
+      'lastModifiedBy' in overrides
+        ? overrides.lastModifiedBy
+        : '9d35ee12-43c6-489b-a496-9da72ed3b111',
+    createdAt: 'createdAt' in overrides ? overrides.createdAt : '2020-12-06T16:07:43.058Z',
+    lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-09-10T22:10:17.287Z',
+    packDefinition:
+      'packDefinition' in overrides ? overrides.packDefinition : buildAnalysisPackDefinition(),
+    packTypes: 'packTypes' in overrides ? overrides.packTypes : buildAnalysisPackTypes(),
+    enumeration:
+      'enumeration' in overrides ? overrides.enumeration : buildAnalysisPackEnumeration(),
+  };
+};
+
+export const buildAnalysisPackDefinition = (
+  overrides: Partial<AnalysisPackDefinition> = {}
+): AnalysisPackDefinition => {
+  return {
+    __typename: 'AnalysisPackDefinition',
+    IDs: 'IDs' in overrides ? overrides.IDs : ['eeb1295e-4117-4ed1-aa61-405860cc7393'],
+  };
+};
+
+export const buildAnalysisPackEnumeration = (
+  overrides: Partial<AnalysisPackEnumeration> = {}
+): AnalysisPackEnumeration => {
+  return {
+    __typename: 'AnalysisPackEnumeration',
+    paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
+    detections: 'detections' in overrides ? overrides.detections : [buildDetection()],
+    models: 'models' in overrides ? overrides.models : [buildDataModel()],
+    globals: 'globals' in overrides ? overrides.globals : [buildGlobalPythonModule()],
+  };
+};
+
+export const buildAnalysisPackTypes = (
+  overrides: Partial<AnalysisPackTypes> = {}
+): AnalysisPackTypes => {
+  return {
+    __typename: 'AnalysisPackTypes',
+    GLOBAL: 'GLOBAL' in overrides ? overrides.GLOBAL : 119,
+    RULE: 'RULE' in overrides ? overrides.RULE : 464,
+    DATAMODEL: 'DATAMODEL' in overrides ? overrides.DATAMODEL : 44,
+    POLICY: 'POLICY' in overrides ? overrides.POLICY : 883,
+  };
+};
+
+export const buildAnalysisPackVersion = (
+  overrides: Partial<AnalysisPackVersion> = {}
+): AnalysisPackVersion => {
+  return {
+    __typename: 'AnalysisPackVersion',
+    id: 'id' in overrides ? overrides.id : 359,
+    semVer: 'semVer' in overrides ? overrides.semVer : 'eyeballs',
+  };
+};
+
+export const buildAnalysisPackVersionInput = (
+  overrides: Partial<AnalysisPackVersionInput> = {}
+): AnalysisPackVersionInput => {
+  return {
+    id: 'id' in overrides ? overrides.id : 633,
+    semVer: 'semVer' in overrides ? overrides.semVer : 'Handcrafted Steel Pizza',
   };
 };
 
@@ -779,15 +859,6 @@ export const buildDetectionTestDefinitionInput = (
   };
 };
 
-export const buildDetectionTypes = (overrides: Partial<DetectionTypes> = {}): DetectionTypes => {
-  return {
-    __typename: 'DetectionTypes',
-    GLOBAL: 'GLOBAL' in overrides ? overrides.GLOBAL : 675,
-    RULE: 'RULE' in overrides ? overrides.RULE : 48,
-    POLICY: 'POLICY' in overrides ? overrides.POLICY : 936,
-  };
-};
-
 export const buildError = (overrides: Partial<Error> = {}): Error => {
   return {
     __typename: 'Error',
@@ -1030,6 +1101,29 @@ export const buildListAlertsResponse = (
   };
 };
 
+export const buildListAnalysisPacksInput = (
+  overrides: Partial<ListAnalysisPacksInput> = {}
+): ListAnalysisPacksInput => {
+  return {
+    enabled: 'enabled' in overrides ? overrides.enabled : false,
+    updateAvailable: 'updateAvailable' in overrides ? overrides.updateAvailable : false,
+    nameContains: 'nameContains' in overrides ? overrides.nameContains : 'matrix',
+    sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
+    pageSize: 'pageSize' in overrides ? overrides.pageSize : 113,
+    page: 'page' in overrides ? overrides.page : 325,
+  };
+};
+
+export const buildListAnalysisPacksResponse = (
+  overrides: Partial<ListAnalysisPacksResponse> = {}
+): ListAnalysisPacksResponse => {
+  return {
+    __typename: 'ListAnalysisPacksResponse',
+    packs: 'packs' in overrides ? overrides.packs : [buildAnalysisPack()],
+    paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
+  };
+};
+
 export const buildListAvailableLogTypesResponse = (
   overrides: Partial<ListAvailableLogTypesResponse> = {}
 ): ListAvailableLogTypesResponse => {
@@ -1129,31 +1223,6 @@ export const buildListGlobalPythonModulesResponse = (
     __typename: 'ListGlobalPythonModulesResponse',
     paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
     globals: 'globals' in overrides ? overrides.globals : [buildGlobalPythonModule()],
-  };
-};
-
-export const buildListPacksInput = (overrides: Partial<ListPacksInput> = {}): ListPacksInput => {
-  return {
-    ids: 'ids' in overrides ? overrides.ids : ['1004df7e-2f2b-4cc8-983d-51c8755448b1'],
-    exclusiveStartKey: 'exclusiveStartKey' in overrides ? overrides.exclusiveStartKey : 'approach',
-    contains: 'contains' in overrides ? overrides.contains : 'virtual',
-    createdBefore:
-      'createdBefore' in overrides ? overrides.createdBefore : '2020-12-18T06:01:14.683Z',
-    createdAfter: 'createdAfter' in overrides ? overrides.createdAfter : '2020-09-06T06:26:32.447Z',
-    userId: 'userId' in overrides ? overrides.userId : 'babecc5a-ee30-4e0c-98c0-f755157ad03e',
-    sortDir: 'sortDir' in overrides ? overrides.sortDir : SortDirEnum.Ascending,
-    pageSize: 'pageSize' in overrides ? overrides.pageSize : 303,
-    page: 'page' in overrides ? overrides.page : 639,
-  };
-};
-
-export const buildListPacksResponse = (
-  overrides: Partial<ListPacksResponse> = {}
-): ListPacksResponse => {
-  return {
-    __typename: 'ListPacksResponse',
-    packs: 'packs' in overrides ? overrides.packs : [buildPack()],
-    paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
   };
 };
 
@@ -1321,60 +1390,6 @@ export const buildOrganizationStatsResponse = (
       'topFailingPolicies' in overrides ? overrides.topFailingPolicies : [buildPolicy()],
     topFailingResources:
       'topFailingResources' in overrides ? overrides.topFailingResources : [buildResourceSummary()],
-  };
-};
-
-export const buildPack = (overrides: Partial<Pack> = {}): Pack => {
-  return {
-    __typename: 'Pack',
-    id: 'id' in overrides ? overrides.id : '1578714e-d0a4-4b15-8b2f-5a01491e6250',
-    enabled: 'enabled' in overrides ? overrides.enabled : true,
-    updateAvailable: 'updateAvailable' in overrides ? overrides.updateAvailable : true,
-    description: 'description' in overrides ? overrides.description : 'Human',
-    displayName: 'displayName' in overrides ? overrides.displayName : 'Regional',
-    packVersion: 'packVersion' in overrides ? overrides.packVersion : buildPackVersion(),
-    availableVersions:
-      'availableVersions' in overrides ? overrides.availableVersions : [buildPackVersion()],
-    createdBy:
-      'createdBy' in overrides ? overrides.createdBy : 'd28f3971-92e4-4d7c-b8ec-25309861c0d1',
-    lastModifiedBy:
-      'lastModifiedBy' in overrides
-        ? overrides.lastModifiedBy
-        : '0784eeea-c28c-4ad9-afeb-4be7ea05ee08',
-    createdAt: 'createdAt' in overrides ? overrides.createdAt : '2020-03-12T10:42:13.067Z',
-    lastModified: 'lastModified' in overrides ? overrides.lastModified : '2020-01-13T14:33:23.011Z',
-    detectionsPatterns:
-      'detectionsPatterns' in overrides
-        ? overrides.detectionsPatterns
-        : buildPackDetectionsPatterns(),
-    detectionTypes:
-      'detectionTypes' in overrides ? overrides.detectionTypes : buildDetectionTypes(),
-  };
-};
-
-export const buildPackDetectionsPatterns = (
-  overrides: Partial<PackDetectionsPatterns> = {}
-): PackDetectionsPatterns => {
-  return {
-    __typename: 'PackDetectionsPatterns',
-    IDs: 'IDs' in overrides ? overrides.IDs : ['29535cdd-7ce3-4006-a706-e502d29c7601'],
-  };
-};
-
-export const buildPackVersion = (overrides: Partial<PackVersion> = {}): PackVersion => {
-  return {
-    __typename: 'PackVersion',
-    id: 'id' in overrides ? overrides.id : 'Unbranded',
-    name: 'name' in overrides ? overrides.name : 'Shirt',
-  };
-};
-
-export const buildPackVersionInput = (
-  overrides: Partial<PackVersionInput> = {}
-): PackVersionInput => {
-  return {
-    id: 'id' in overrides ? overrides.id : 'Garden',
-    name: 'name' in overrides ? overrides.name : 'plum',
   };
 };
 
@@ -1900,6 +1915,16 @@ export const buildUpdateAlertStatusInput = (
   };
 };
 
+export const buildUpdateAnalysisPackInput = (
+  overrides: Partial<UpdateAnalysisPackInput> = {}
+): UpdateAnalysisPackInput => {
+  return {
+    enabled: 'enabled' in overrides ? overrides.enabled : true,
+    id: 'id' in overrides ? overrides.id : '1211a15a-1baa-40e5-b473-f7c5a650d2f9',
+    versionId: 'versionId' in overrides ? overrides.versionId : 413,
+  };
+};
+
 export const buildUpdateComplianceIntegrationInput = (
   overrides: Partial<UpdateComplianceIntegrationInput> = {}
 ): UpdateComplianceIntegrationInput => {
@@ -1923,14 +1948,6 @@ export const buildUpdateGeneralSettingsInput = (
     errorReportingConsent:
       'errorReportingConsent' in overrides ? overrides.errorReportingConsent : true,
     analyticsConsent: 'analyticsConsent' in overrides ? overrides.analyticsConsent : false,
-  };
-};
-
-export const buildUpdatePackInput = (overrides: Partial<UpdatePackInput> = {}): UpdatePackInput => {
-  return {
-    enabled: 'enabled' in overrides ? overrides.enabled : true,
-    id: 'id' in overrides ? overrides.id : 'cf999351-d016-4ca1-b52e-c9a8c1a47331',
-    packVersion: 'packVersion' in overrides ? overrides.packVersion : buildPackVersionInput(),
   };
 };
 
