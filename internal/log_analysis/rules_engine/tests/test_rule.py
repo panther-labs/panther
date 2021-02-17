@@ -364,3 +364,27 @@ class TestRule(TestCase):  # pylint: disable=too-many-public-methods
         )
         result = rule.run(PantherEvent({}, None))
         self.assertEqual(expected_result, result)
+
+    def test_rule_with_invalid_destinations_type(self) -> None:
+        rule_body = 'def rule(event):\n\treturn True\n' \
+                    'def alert_context(event):\n\treturn {}\n' \
+                    'def title(event):\n\treturn "test_rule_with_valid_severity_case_insensitive"\n' \
+                    'def severity(event):\n\treturn "cRiTiCaL"\n' \
+                    'def destinations(event):\n\treturn "bad input"\n'
+        rule = Rule({'id': 'test_rule_with_valid_severity_case_insensitive', 'body': rule_body, 'versionId': 'versionId'})
+
+        expected_result = RuleResult(
+            matched=True,
+            alert_context='{}',
+            title_output='test_rule_with_valid_severity_case_insensitive',
+            dedup_output='test_rule_with_valid_severity_case_insensitive',
+            severity_output="CRITICAL",
+            destinations_output=None,
+            destinations_exception=Exception('rule [{}] function [{}] returned [{}], expected a list'.format(
+                rule.rule_id, 'destinations', 'str'
+            ))
+        )
+        result = rule.run(PantherEvent({}, None), batch_mode=False)
+        self.assertEqual(str(expected_result), str(result))
+        self.assertTrue(result.errored)
+        self.assertIsNotNone(result.destinations_exception)
