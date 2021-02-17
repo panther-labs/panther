@@ -77,7 +77,7 @@ const ListAnalysisPacks = () => {
   }
 
   // Get query results while protecting against exceptions
-  const packItems = data?.listAnalysisPacks.analysisPacks;
+  const packItems = data?.listAnalysisPacks.packs;
   const pagingData = data?.listAnalysisPacks.paging;
 
   return (

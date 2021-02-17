@@ -1121,7 +1121,7 @@ export const buildListAnalysisPacksResponse = (
 ): ListAnalysisPacksResponse => {
   return {
     __typename: 'ListAnalysisPacksResponse',
-    analysisPacks: 'analysisPacks' in overrides ? overrides.analysisPacks : [buildAnalysisPack()],
+    packs: 'packs' in overrides ? overrides.packs : [buildAnalysisPack()],
     paging: 'paging' in overrides ? overrides.paging : buildPagingData(),
   };
 };

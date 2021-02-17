@@ -696,7 +696,7 @@ export type ListAnalysisPacksInput = {
 
 export type ListAnalysisPacksResponse = {
   __typename?: 'ListAnalysisPacksResponse';
-  analysisPacks: Array<AnalysisPack>;
+  packs: Array<AnalysisPack>;
   paging: PagingData;
 };
 
@@ -2718,7 +2718,7 @@ export type ListAnalysisPacksResponseResolvers<
   ContextType = any,
   ParentType extends ResolversParentTypes['ListAnalysisPacksResponse'] = ResolversParentTypes['ListAnalysisPacksResponse']
 > = {
-  analysisPacks?: Resolver<Array<ResolversTypes['AnalysisPack']>, ParentType, ContextType>;
+  packs?: Resolver<Array<ResolversTypes['AnalysisPack']>, ParentType, ContextType>;
   paging?: Resolver<ResolversTypes['PagingData'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };

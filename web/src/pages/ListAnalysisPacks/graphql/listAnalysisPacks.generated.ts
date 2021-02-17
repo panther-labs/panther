@@ -30,7 +30,7 @@ export type ListAnalysisPacksVariables = {
 
 export type ListAnalysisPacks = {
   listAnalysisPacks: {
-    analysisPacks: Array<AnalysisPackSummary>;
+    packs: Array<AnalysisPackSummary>;
     paging: Pick<Types.PagingData, 'totalPages' | 'thisPage' | 'totalItems'>;
   };
 };
@@ -38,7 +38,7 @@ export type ListAnalysisPacks = {
 export const ListAnalysisPacksDocument = gql`
   query ListAnalysisPacks($input: ListAnalysisPacksInput!) {
     listAnalysisPacks(input: $input) {
-      analysisPacks {
+      packs {
         ...AnalysisPackSummary
       }
       paging {

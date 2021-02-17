@@ -228,7 +228,7 @@ type ListDetectionsResponse {
   paging: PagingData!
 }
 type ListAnalysisPacksResponse {
-  analysisPacks: [AnalysisPack!]!
+  packs: [AnalysisPack!]!
   paging: PagingData!
 }
 

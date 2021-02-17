@@ -1,6 +1,6 @@
 query ListAnalysisPacks($input: ListAnalysisPacksInput!) {
     listAnalysisPacks(input: $input) {
-        analysisPacks {
+        packs {
             ...AnalysisPackSummary
         }
         paging {
