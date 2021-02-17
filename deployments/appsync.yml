@@ -1388,7 +1388,7 @@ Resources:
           "operation": "Invoke",
           "payload": $util.toJson({
             "enumeratePack": {
-              "id": $ctx.args.id
+              "id": $ctx.source.id
             }
           })
         }
