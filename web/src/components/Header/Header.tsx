@@ -19,8 +19,20 @@
 import React from 'react';
 import Breadcrumbs from 'Components/Breadcrumbs';
 import { Box, Flex } from 'pouncejs';
+import useRouter from 'Hooks/useRouter';
+import urls from 'Source/urls';
+
+/** Array containing urls without header */
+const excludedUrls = [urls.overview.home()];
 
 const Header = () => {
+  const {
+    location: { pathname },
+  } = useRouter();
+  if (excludedUrls.includes(pathname)) {
+    return null;
+  }
+
   return (
     <Flex id="main-header" as="header" width={1} align="center" justify="space-between" py={6}>
       <Box py={14}>

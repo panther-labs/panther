@@ -108,7 +108,11 @@ const Navigation = () => {
         <Flex direction="column" as="ul" flex="1 0 auto" px={4}>
           <Divider width="100%" color="navyblue-300" />
           <Box as="li" mb={2}>
-            <NavLink icon="dashboard-alt" to={urls.overview.home()} label="Overview" />
+            <NavLink
+              icon="dashboard-alt"
+              to={`${urls.overview.home()}?tab=alerts`}
+              label="Overview"
+            />
           </Box>
           <Box as="li" mb={2}>
             <NavLink

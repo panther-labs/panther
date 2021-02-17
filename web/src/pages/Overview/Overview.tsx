@@ -51,8 +51,11 @@ const Overview: React.FC = () => {
   }, [tab, useUrlParams]);
 
   return (
-    <Box>
-      <Tabs index={tabToIndex[tab]} onChange={index => setUrlParams({ tab: indexToTab[index] })}>
+    <Box mt={6}>
+      <Tabs
+        index={tabToIndex[tab] || 0}
+        onChange={index => setUrlParams({ tab: indexToTab[index] })}
+      >
         <TabList>
           <OverviewTab>
             <Icon type="alert-circle" />
