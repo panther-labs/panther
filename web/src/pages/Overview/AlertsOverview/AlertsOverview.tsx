@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { Alert, Box, Flex, SimpleGrid } from 'pouncejs';
+import { Alert, Box, Text, Flex, SimpleGrid, Icon, Tooltip } from 'pouncejs';
 import { extractErrorMessage, getGraphqlSafeDateRange } from 'Helpers/utils';
 import { PageViewEnum } from 'Helpers/analytics';
 import useTrackPageView from 'Hooks/useTrackPageView';
@@ -104,7 +104,16 @@ const AlertsOverview: React.FC = () => {
             <AlertsBySeverity alerts={alertsBySeverity} />
           </Flex>
         </Panel>
-        <Panel title="Top 5 High Priority Alerts">
+        <Panel
+          title={
+            <Flex spacing={2} align="center">
+              <Text>Top 5 High Priority Alerts</Text>
+              <Tooltip content={<Text>Alerts that need your immediate reaction</Text>}>
+                <Icon type="info" size="medium" />
+              </Tooltip>
+            </Flex>
+          }
+        >
           <Flex direction="column" spacing={2}>
             {topAlertSummaries.length ? (
               topAlertSummaries.map(alert => <AlertCard key={alert.alertId} alert={alert} />)
