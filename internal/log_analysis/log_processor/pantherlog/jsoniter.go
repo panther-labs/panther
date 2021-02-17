@@ -61,6 +61,7 @@ var (
 	typByteSlice     = reflect.TypeOf([]byte{})
 	typTime          = reflect.TypeOf(time.Time{})
 	typResult        = reflect.TypeOf(Result{})
+	emptyJSON        = []byte("{}")
 )
 
 // Special encoder for *Result. It extends the event JSON object with all the required Panther fields.
@@ -92,6 +93,11 @@ func (e *resultEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	att := stream.Attachment
 	stream.Attachment = result
 	stream.WriteVal(result.Event)
+	// If the result.Event has no serializable content, it will be serialized to `{}`
+	if len(stream.Buffer()) == 2 {
+		// Just clear the buffer and start fresh
+		stream.Reset(nil)
+	}
 	stream.Attachment = att
 
 	// Extend the JSON object in the stream buffer with the required Panther fields
