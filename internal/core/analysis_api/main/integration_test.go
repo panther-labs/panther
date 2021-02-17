@@ -409,12 +409,12 @@ func TestIntegrationAPI(t *testing.T) {
 	t.Run("PollPack", func(t *testing.T) {
 		t.Run("PollAnalysisPacks", pollPacks)
 	})
-	t.Run("ListAnalysisPacks", func(t *testing.T) {
+	t.Run("ListPacks", func(t *testing.T) {
 		t.Run("GetPack", getPack)
-		t.Run("ListAnalysisPacks", listPacks)
+		t.Run("ListPacks", listPacks)
 	})
 	t.Run("Patch", func(t *testing.T) {
-		t.Run("ListAnalysisPacks", listPacks)
+		t.Run("ListPacks", listPacks)
 		t.Run("PatchPack", patchPack)
 		t.Run("EnumeratePack", enumeratePack)
 	})
@@ -2945,7 +2945,7 @@ func pollPacks(t *testing.T) {
 	// test success
 	// no packs exist yet
 	input := models.LambdaInput{
-		ListAnalysisPacks: &models.ListPacksInput{},
+		ListPacks: &models.ListPacksInput{},
 	}
 	var result models.ListPacksOutput
 	statusCode, err := apiClient.Invoke(&input, &result)
@@ -2973,7 +2973,7 @@ func pollPacks(t *testing.T) {
 	assert.Equal(t, http.StatusOK, statusCode)
 	// packs should now exist and are disabled
 	input = models.LambdaInput{
-		ListAnalysisPacks: &models.ListPacksInput{},
+		ListPacks: &models.ListPacksInput{},
 	}
 	statusCode, err = apiClient.Invoke(&input, &result)
 	require.NoError(t, err)
@@ -3002,7 +3002,7 @@ func pollPacks(t *testing.T) {
 	assert.NoError(t, err)
 	// test name contains filter
 	input = models.LambdaInput{
-		ListAnalysisPacks: &models.ListPacksInput{
+		ListPacks: &models.ListPacksInput{
 			NameContains: "standard",
 		},
 	}
@@ -3050,7 +3050,7 @@ func getPack(t *testing.T) {
 func listPacks(t *testing.T) {
 	// success: no filter
 	input := models.LambdaInput{
-		ListAnalysisPacks: &models.ListPacksInput{},
+		ListPacks: &models.ListPacksInput{},
 	}
 	var result models.ListPacksOutput
 	statusCode, err := apiClient.Invoke(&input, &result)
