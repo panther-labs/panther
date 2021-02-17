@@ -305,6 +305,7 @@ type S3LogIntegrationHealth {
   s3BucketStatus: IntegrationItemHealthStatus!
   kmsKeyStatus: IntegrationItemHealthStatus!
   getObjectStatus: IntegrationItemHealthStatus # can be null for sources created in Panther<1.16
+  bucketNotificationsStatus: IntegrationItemHealthStatus
 }
 
 type SqsLogIntegrationHealth {

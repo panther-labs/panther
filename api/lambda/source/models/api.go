@@ -58,10 +58,11 @@ type CheckIntegrationInput struct {
 	EnableCWESetup    *bool `json:"enableCWESetup"`
 	EnableRemediation *bool `json:"enableRemediation"`
 
-	// Checks for log analysis integrations
-	S3Bucket         string           `json:"s3Bucket"`
-	S3PrefixLogTypes S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty"`
-	KmsKey           string           `json:"kmsKey"`
+	// Checks for s3 integrations
+	S3Bucket                   string           `json:"s3Bucket"`
+	S3PrefixLogTypes           S3PrefixLogtypes `json:"s3PrefixLogTypes,omitempty"`
+	KmsKey                     string           `json:"kmsKey"`
+	ManagedBucketNotifications bool             `json:"managedBucketNotifications"`
 
 	// Checks for Sqs configuration
 	SqsConfig *SqsConfig `json:"sqsConfig,omitempty"`
