@@ -38,28 +38,6 @@ const PackCard: React.FC<PackCardProps> = ({ pack }) => {
   const { pushSnackbar } = useSnackbar();
 
   const [updatePack, { loading }] = useUpdateAnalysisPack({
-    // This hook ensures we also update the PackDetails item in the cache
-    update: (cache, { data }) => {
-      const dataId = cache.identify({
-        __typename: 'AnalysisPack',
-        id: data.updateAnalysisPack.id,
-      });
-      cache.modify(dataId, {
-        enabled: () => data.updateAnalysisPack.enabled,
-        packVersion: () => data.updateAnalysisPack.packVersion,
-      });
-      // TODO: when apollo client is updated to 3.0.0-rc.12+, use this code
-      // cache.modify({
-      //   id: cache.identify({
-      //     __typename: 'PackDetails',
-      //     id: data.updatePack.alertId,
-      //   }),
-      //   fields: {
-      //     packVersion: () => data.updatePack.packVersion,
-      //     enabled: () => data.updatePack.enabled,
-      //   },
-      // });
-    },
     onCompleted: data => {
       trackEvent({
         event: EventEnum.UpdatedPack,

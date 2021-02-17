@@ -100,7 +100,7 @@ const DropdownFilters: React.FC = () => {
                         items={booleanOptions}
                         itemToString={enabledFilterToString}
                         label="Update Available"
-                        placeholder="Only show packs that available update?"
+                        placeholder="Only show packs with an available update?"
                       />
                     </Box>
                     <Box pb={4}>

@@ -53,9 +53,7 @@ const ListPacksFilters: React.FC = () => {
       <Formik<ListPackInlineFiltersValues>
         enableReinitialize
         initialValues={initialFilterValues}
-        onSubmit={(values: ListPackInlineFiltersValues) => {
-          updateRequestParams(values);
-        }}
+        onSubmit={updateRequestParams}
       >
         <Form>
           <FormikAutosave threshold={200} />

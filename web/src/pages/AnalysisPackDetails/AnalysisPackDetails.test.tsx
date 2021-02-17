@@ -50,7 +50,7 @@ describe('AnalysisPackDetails', () => {
       }),
     ];
 
-    const { getByText, getByTestId } = render(
+    const { getByText, getAllByAriaLabel } = render(
       <Route exact path={urls.packs.details(':id')}>
         <AnalysisPackDetails />
       </Route>,
@@ -59,7 +59,7 @@ describe('AnalysisPackDetails', () => {
         initialRoute: `${urls.packs.details(pack.id)}`,
       }
     );
-    const loadingInterfaceElement = getByTestId('pack-details-loading');
+    const loadingInterfaceElement = getAllByAriaLabel('Loading interface...');
     expect(loadingInterfaceElement).toBeTruthy();
 
     await waitForElementToBeRemoved(loadingInterfaceElement);
@@ -94,7 +94,7 @@ describe('AnalysisPackDetails', () => {
       }),
     ];
 
-    const { getAllByTestId, getByTestId } = render(
+    const { getAllByTestId, getAllByAriaLabel } = render(
       <Route exact path={urls.packs.details(':id')}>
         <AnalysisPackDetails />
       </Route>,
@@ -104,7 +104,7 @@ describe('AnalysisPackDetails', () => {
       }
     );
 
-    const loadingInterfaceElement = getByTestId('pack-details-loading');
+    const loadingInterfaceElement = getAllByAriaLabel('Loading interface...');
     expect(loadingInterfaceElement).toBeTruthy();
 
     await waitForElementToBeRemoved(loadingInterfaceElement);
@@ -138,7 +138,7 @@ describe('AnalysisPackDetails', () => {
       }),
     ];
 
-    const { getByText, getByTestId, history } = render(
+    const { getByText, getAllByAriaLabel, history } = render(
       <Route exact path={urls.packs.details(':id')}>
         <AnalysisPackDetails />
       </Route>,
@@ -147,7 +147,7 @@ describe('AnalysisPackDetails', () => {
         initialRoute: `${urls.packs.details(pack.id)}`,
       }
     );
-    const loadingInterfaceElement = getByTestId('pack-details-loading');
+    const loadingInterfaceElement = getAllByAriaLabel('Loading interface...');
     expect(loadingInterfaceElement).toBeTruthy();
 
     await waitForElementToBeRemoved(loadingInterfaceElement);
@@ -182,7 +182,7 @@ describe('AnalysisPackDetails', () => {
       }),
     ];
 
-    const { getByText, getByTestId } = render(
+    const { getByText, getAllByAriaLabel, getByTestId } = render(
       <Route exact path={urls.packs.details(':id')}>
         <AnalysisPackDetails />
       </Route>,
@@ -191,7 +191,7 @@ describe('AnalysisPackDetails', () => {
         initialRoute: `${urls.packs.details(pack.id)}`,
       }
     );
-    const loadingInterfaceElement = getByTestId('pack-details-loading');
+    const loadingInterfaceElement = getAllByAriaLabel('Loading interface...');
     expect(loadingInterfaceElement).toBeTruthy();
     await waitForElementToBeRemoved(loadingInterfaceElement);
     fireEvent.click(getByText('Rules'));
@@ -231,7 +231,7 @@ describe('AnalysisPackDetails', () => {
       }),
     ];
 
-    const { getByText, getByTestId } = render(
+    const { getByText, getAllByAriaLabel, getByTestId } = render(
       <Route exact path={urls.packs.details(':id')}>
         <AnalysisPackDetails />
       </Route>,
@@ -240,7 +240,7 @@ describe('AnalysisPackDetails', () => {
         initialRoute: `${urls.packs.details(pack.id)}`,
       }
     );
-    const loadingInterfaceElement = getByTestId('pack-details-loading');
+    const loadingInterfaceElement = getAllByAriaLabel('Loading interface...');
     expect(loadingInterfaceElement).toBeTruthy();
     await waitForElementToBeRemoved(loadingInterfaceElement);
     fireEvent.click(getByText('Rules'));

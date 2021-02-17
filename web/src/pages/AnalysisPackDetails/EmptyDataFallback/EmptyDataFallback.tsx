@@ -20,16 +20,9 @@ import React from 'react';
 import { Flex, Heading } from 'pouncejs';
 import EmptyBoxImg from 'Assets/illustrations/empty-box.svg';
 
-const EmptyData: React.FC<{ message: string }> = ({ message }) => {
+const EmptyDataFallback: React.FC<{ message: string }> = ({ message }) => {
   return (
-    <Flex
-      justify="center"
-      align="center"
-      direction="column"
-      my={8}
-      spacing={8}
-      data-testid="empty-data"
-    >
+    <Flex justify="center" align="center" direction="column" my={8} spacing={8}>
       <img alt="Empty Box Illustration" src={EmptyBoxImg} width="auto" height={200} />
       <Heading size="small" color="navyblue-100">
         {message}
@@ -38,4 +31,4 @@ const EmptyData: React.FC<{ message: string }> = ({ message }) => {
   );
 };
 
-export default React.memo(EmptyData);
+export default React.memo(EmptyDataFallback);

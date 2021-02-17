@@ -29,7 +29,7 @@ import ErrorBoundary from 'Components/ErrorBoundary';
 import RuleCard from 'Components/cards/RuleCard';
 import { RuleSummary } from 'Source/graphql/fragments/RuleSummary.generated';
 import { PolicySummary } from 'Source/graphql/fragments/PolicySummary.generated';
-import EmptyData from 'Pages/AnalysisPackDetails/EmptyData';
+import EmptyDataFallback from 'Pages/AnalysisPackDetails/EmptyDataFallback';
 import PolicyCard from 'Components/cards/PolicyCard';
 import GlobalPythonModuleItem from 'Pages/ListGlobalPythonModules/GlobalPythonModuleItem/GlobalPythonModuleItem';
 import DataModelCard from 'Pages/ListDataModels/DataModelCard';
@@ -63,6 +63,17 @@ const PackDetailsPage: React.FC = () => {
     },
   });
 
+  const [rules, policies] = React.useMemo(() => {
+    const ruleData = (data?.getAnalysisPack?.analysisPackEnumeration?.detections.filter(
+      d => d.analysisType === 'RULE'
+    ) || []) as RuleSummary[];
+
+    const policyData = (data?.getAnalysisPack?.analysisPackEnumeration?.detections.filter(
+      d => d.analysisType === 'POLICY'
+    ) || []) as PolicySummary[];
+    return [ruleData, policyData];
+  }, [data]);
+
   if (loading) {
     return <PackDetailsPageSkeleton />;
   }
@@ -81,13 +92,6 @@ const PackDetailsPage: React.FC = () => {
       </Box>
     );
   }
-
-  const rules = (data?.getAnalysisPack?.analysisPackEnumeration?.detections.filter(
-    d => d.analysisType === 'RULE'
-  ) || []) as RuleSummary[];
-  const policies = (data?.getAnalysisPack?.analysisPackEnumeration?.detections.filter(
-    d => d.analysisType === 'POLICY'
-  ) || []) as PolicySummary[];
 
   const models = data?.getAnalysisPack?.analysisPackEnumeration?.models || [];
 
@@ -129,7 +133,7 @@ const PackDetailsPage: React.FC = () => {
               </TabList>
               <BorderTabDivider />
               <TabPanels>
-                <TabPanel data-testid="pack-rules-tabpanel">
+                <TabPanel data-testid="pack-rules-tabpanel" lazy unmountWhenInactive>
                   {rules.length ? (
                     <SimpleGrid spacing={4} p={6}>
                       {rules.map(rule => (
@@ -137,10 +141,10 @@ const PackDetailsPage: React.FC = () => {
                       ))}
                     </SimpleGrid>
                   ) : (
-                    <EmptyData message="No Rules on pack" />
+                    <EmptyDataFallback message="No Rules on pack" />
                   )}
                 </TabPanel>
-                <TabPanel data-testid="pack-policies-tabpanel">
+                <TabPanel data-testid="pack-policies-tabpanel" lazy unmountWhenInactive>
                   {policies.length ? (
                     <SimpleGrid spacing={4} p={6}>
                       {policies.map(policy => (
@@ -148,10 +152,10 @@ const PackDetailsPage: React.FC = () => {
                       ))}
                     </SimpleGrid>
                   ) : (
-                    <EmptyData message="No Policies on pack" />
+                    <EmptyDataFallback message="No Policies on pack" />
                   )}
                 </TabPanel>
-                <TabPanel data-testid="pack-helpers-tabpanel">
+                <TabPanel data-testid="pack-helpers-tabpanel" lazy unmountWhenInactive>
                   {helpers.length ? (
                     <SimpleGrid spacing={4} column={2} p={6}>
                       {helpers.map(helper => (
@@ -159,7 +163,7 @@ const PackDetailsPage: React.FC = () => {
                       ))}
                     </SimpleGrid>
                   ) : (
-                    <EmptyData message="No Helpers on pack" />
+                    <EmptyDataFallback message="No Helpers on pack" />
                   )}
                 </TabPanel>
                 <TabPanel data-testid="pack-models-tabpanel" lazy unmountWhenInactive>
@@ -170,7 +174,7 @@ const PackDetailsPage: React.FC = () => {
                       ))}
                     </SimpleGrid>
                   ) : (
-                    <EmptyData message="No Data Models on pack" />
+                    <EmptyDataFallback message="No Data Models on pack" />
                   )}
                 </TabPanel>
               </TabPanels>
