@@ -60,7 +60,7 @@ func main() {
 	// CMD line options
 	debug, flush, inspect, save, versionOpt := getOpts()
 
-	// Guaruntee:
+	// Guarantee:
 	//   -version overwrites all other options
 	//   - inspect overwrites save and flush
 	//   - save overwrites flush
