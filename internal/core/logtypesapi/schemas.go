@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/customlogs"
+	"github.com/panther-labs/panther/pkg/stringset"
 )
 
 // GetSchemaInput specifies the schema id and revision to retrieve.
@@ -82,4 +83,49 @@ func (r *SchemaRecord) IsManaged() bool {
 func (r *SchemaRecord) IsCustom() bool {
 	const prefix = customlogs.LogTypePrefix + "."
 	return strings.HasPrefix(r.Name, prefix)
+}
+
+// ListSchemas lists a schema records
+func (api *LogTypesAPI) ListSchemas(ctx context.Context, input *ListSchemasInput) (*ListSchemasOutput, error) {
+	var (
+		inUse   []string
+		results = make([]*SchemaRecord, 0)
+		scan    = func(s *SchemaRecord) bool {
+			if input.Managed != nil && s.Managed != *input.Managed {
+				return true
+			}
+			if input.Disabled != nil && s.Disabled != *input.Disabled {
+				return true
+			}
+			if inUse != nil && stringset.Contains(inUse, s.Name) != *input.Active {
+				return true
+			}
+			results = append(results, s)
+			return true
+		}
+		err error
+	)
+	if input.Active != nil {
+		inUse, err = api.LogTypesInUse(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if err := api.Database.ScanSchemas(ctx, scan); err != nil {
+		return nil, err
+	}
+	return &ListSchemasOutput{
+		Results: results,
+	}, nil
+}
+
+type ListSchemasInput struct {
+	Disabled *bool `json:"isDisabled"`
+	Managed  *bool `json:"isManaged"`
+	Active   *bool `json:"isActive"`
+}
+
+type ListSchemasOutput struct {
+	Results []*SchemaRecord `json:"results,omitempty"`
+	Error   *APIError       `json:"error,omitempty" description:"An error that occurred while fetching the record"`
 }

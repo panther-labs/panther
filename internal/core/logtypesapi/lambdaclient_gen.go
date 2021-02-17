@@ -48,6 +48,7 @@ type LogTypesAPIPayload struct {
 	ListManagedSchemaUpdates *ListManagedSchemaUpdatesInput `json:"ListManagedSchemaUpdates,omitempty"`
 	UpdateManagedSchemas     *UpdateManagedSchemasInput     `json:"UpdateManagedSchemas,omitempty"`
 	GetSchema                *GetSchemaInput                `json:"GetSchema,omitempty"`
+	ListSchemas              *ListSchemasInput              `json:"ListSchemas,omitempty"`
 }
 
 func (c *LogTypesAPILambdaClient) ListAvailableLogTypes(ctx context.Context) (*AvailableLogTypes, error) {
@@ -161,6 +162,20 @@ func (c *LogTypesAPILambdaClient) GetSchema(ctx context.Context, input *GetSchem
 		GetSchema: input,
 	}
 	reply := GetSchemaOutput{}
+	if err := c.invoke(ctx, &payload, &reply); err != nil {
+		return nil, err
+	}
+	return &reply, nil
+}
+
+func (c *LogTypesAPILambdaClient) ListSchemas(ctx context.Context, input *ListSchemasInput) (*ListSchemasOutput, error) {
+	if input == nil {
+		input = &ListSchemasInput{}
+	}
+	payload := LogTypesAPIPayload{
+		ListSchemas: input,
+	}
+	reply := ListSchemasOutput{}
 	if err := c.invoke(ctx, &payload, &reply); err != nil {
 		return nil, err
 	}

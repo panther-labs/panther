@@ -41,6 +41,8 @@ type LogTypesAPI interface {
 	UpdateManagedSchemas(input UpdateManagedSchemasInput) (UpdateManagedSchemasResponse, error)
 
 	GetSchema(input GetSchemaInput) (GetSchemaResponse, error)
+
+	ListSchemas(input ListSchemasInput) (ListSchemasResponse, error)
 }
 
 // Models for LogTypesAPI
@@ -56,6 +58,7 @@ type LogTypesAPIPayload struct {
 	ListManagedSchemaUpdates *ListManagedSchemaUpdatesInput
 	UpdateManagedSchemas     *UpdateManagedSchemasInput
 	GetSchema                *GetSchemaInput
+	ListSchemas              *ListSchemasInput
 }
 
 type DelCustomLogInput struct {
@@ -155,6 +158,31 @@ type ListManagedSchemaUpdatesResponse struct {
 		Description string `json:"description"`
 		ManifestURL string `json:"manifestURL"`
 	} `json:"releases,omitempty" description:"Available release updates"`
+	Error struct {
+		Code    string `json:"code" validate:"required"`
+		Message string `json:"message" validate:"required"`
+	} `json:"error,omitempty" description:"An error that occurred while fetching the record"`
+}
+
+type ListSchemasInput struct {
+	Disabled bool `json:"isDisabled"`
+	Managed  bool `json:"isManaged"`
+	Active   bool `json:"isActive"`
+}
+
+type ListSchemasResponse struct {
+	Results []struct {
+		Name         string    `json:"logType" dynamodbav:"logType" validate:"required" description:"The schema id"`
+		Revision     int64     `json:"revision" validate:"required,min=1" description:"Schema record revision"`
+		Release      string    `json:"release,omitempty" description:"Managed schema release version"`
+		UpdatedAt    time.Time `json:"updatedAt" description:"Last update timestamp of the record"`
+		CreatedAt    time.Time `json:"createdAt" description:"Creation timestamp of the record"`
+		Managed      bool      `json:"managed,omitempty" description:"Schema is managed by Panther"`
+		Disabled     bool      `json:"disabled,omitempty" dynamodbav:"IsDeleted"  description:"Log record is deleted"`
+		Description  string    `json:"description" description:"Log type description"`
+		ReferenceURL string    `json:"referenceURL" description:"A URL with reference docs for the schema"`
+		Spec         string    `json:"logSpec" dynamodbav:"logSpec" validate:"required" description:"The schema spec in YAML or JSON format"`
+	} `json:"results,omitempty"`
 	Error struct {
 		Code    string `json:"code" validate:"required"`
 		Message string `json:"message" validate:"required"`
