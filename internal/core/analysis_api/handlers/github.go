@@ -37,7 +37,7 @@ const (
 	pantherGithubOwner = "panther-labs"
 	pantherGithubRepo  = "panther-analysis"
 	// signing key information
-	pantherSigningKeyID     = ""
+	pantherSigningKeyID     = "arn:aws:kms:us-west-2:349240696275:key/57e3be93-237b-4de2-886f-d1e1aaa38b09"
 	pantherSigningAlgorithm = kms.SigningAlgorithmSpecRsassaPkcs1V15Sha512
 	// source filenames
 	pantherSourceFilename    = "panther-analysis-all.zip"
