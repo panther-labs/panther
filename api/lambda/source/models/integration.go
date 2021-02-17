@@ -195,6 +195,10 @@ type SourceIntegrationHealth struct {
 	KMSKeyStatus         SourceIntegrationItemStatus `json:"kmsKeyStatus,omitempty"`
 	// GetObject check is not available to sources created in Panther<1.16
 	GetObjectStatus *SourceIntegrationItemStatus `json:"getObjectStatus,omitempty"`
+	// BucketNotificationsStatus is the result of checking the bucket's notifications configuration.
+	// It is populated only the log processing role has the s3:GetBucketNotification permission. This is
+	// added to our provided CFN template if user opts for Panther-managed bucket notifications.
+	BucketNotificationsStatus *SourceIntegrationItemStatus `json:"bucketNotificationsStatus,omitempty"`
 
 	// Checks for Sqs integrations
 	SqsStatus SourceIntegrationItemStatus `json:"sqsStatus"`

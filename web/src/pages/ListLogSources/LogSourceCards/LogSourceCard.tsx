@@ -61,6 +61,9 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
         if (sourceHealth.getObjectStatus) {
           checks.push(sourceHealth.getObjectStatus);
         }
+        if (sourceHealth.bucketNotificationsStatus) {
+          checks.push(sourceHealth.bucketNotificationsStatus);
+        }
         return checks;
       }
       default:
@@ -84,7 +87,7 @@ const LogSourceCard: React.FC<LogSourceCardProps> = ({ source, children, logo })
             {!isCreatedByPanther ? (
               <Link
                 as={RRLink}
-                to={urls.logAnalysis.sources.edit(source.integrationId, sourceType)}
+                to={urls.integrations.logSources.edit(source.integrationId, sourceType)}
               >
                 {source.integrationLabel}
               </Link>

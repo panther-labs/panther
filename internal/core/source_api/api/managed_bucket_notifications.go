@@ -58,13 +58,11 @@ func ManageBucketNotifications(
 
 	managed := &source.ManagedS3Resources
 
-	stsSess, err := session.NewSession(&aws.Config{
-		MaxRetries:  aws.Int(5),
-		Credentials: stscreds.NewCredentials(pantherSess, source.RequiredLogProcessingRole()),
+	stsSess := pantherSess.Copy(&aws.Config{
+		MaxRetries:          aws.Int(5),
+		STSRegionalEndpoint: endpoints.RegionalSTSEndpoint,
+		Credentials:         stscreds.NewCredentials(pantherSess, source.RequiredLogProcessingRole()),
 	})
-	if err != nil {
-		return errors.Wrap(err, "failed to create sts session")
-	}
 
 	bucketRegion, err := getBucketLocation(stsSess, source.S3Bucket)
 	if err != nil {
@@ -128,9 +126,10 @@ func RemoveBucketNotifications(pantherSess *session.Session, source *models.Sour
 		return nil
 	}
 
-	stsSess := session.Must(session.NewSession(&aws.Config{
-		Credentials: stscreds.NewCredentials(pantherSess, source.RequiredLogProcessingRole()),
-	}))
+	stsSess := pantherSess.Copy(&aws.Config{
+		STSRegionalEndpoint: endpoints.RegionalSTSEndpoint,
+		Credentials:         stscreds.NewCredentials(pantherSess, source.RequiredLogProcessingRole()),
+	})
 
 	bucketRegion, err := getBucketLocation(stsSess, source.S3Bucket)
 	if err != nil {

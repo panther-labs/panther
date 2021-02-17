@@ -18,5 +18,6 @@
 
 export { default as ComplianceNavigation } from './ComplianceNavigation';
 export { default as LogAnalysisNavigation } from './LogAnalysisNavigation';
+export { default as IntegrationsNavigation } from './IntegrationsNavigation';
 export { default as SettingsNavigation } from './SettingsNavigation';
 export { analysisNavigationsLinks as AnalysisNavigationLinks } from './LogAnalysisNavigation';

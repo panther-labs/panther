@@ -264,7 +264,7 @@ exports[`DestinationTestPanel should show a success message for successful test-
               </div>
               <a
                 class="panther-11"
-                href="/settings/destinations/"
+                href="/integrations/destinations/"
               >
                 Finish Setup
               </a>
@@ -554,7 +554,7 @@ exports[`DestinationTestPanel should show a success message for successful test-
               </p>
               <a
                 class="panther-10"
-                href="/settings/destinations/"
+                href="/integrations/destinations/"
               >
                 <span
                   class="panther-9"
@@ -921,7 +921,7 @@ exports[`DestinationTestPanel should show error details for a failing test-alert
               </p>
               <a
                 class="panther-21"
-                href="/settings/destinations/8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7/edit/"
+                href="/integrations/destinations/8c0eb672-b7bb-4ef0-9d96-a2bc1abe94d7/edit/"
               >
                 <span
                   class="panther-20"
@@ -932,7 +932,7 @@ exports[`DestinationTestPanel should show error details for a failing test-alert
               </a>
               <a
                 class="panther-22"
-                href="/settings/destinations/"
+                href="/integrations/destinations/"
               >
                 Skip Testing
               </a>

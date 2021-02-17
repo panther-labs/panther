@@ -139,7 +139,7 @@ function BaseDestinationForm<AdditionalValues extends Partial<DestinationConfigI
                 variantColor="darkgray"
                 icon="close-outline"
                 aria-label="Cancel destination editing"
-                to={urls.settings.destinations.list()}
+                to={urls.integrations.destinations.list()}
               >
                 Cancel
               </LinkButton>

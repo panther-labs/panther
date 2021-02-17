@@ -24,6 +24,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/aws/aws-sdk-go/service/kms"
+	"github.com/aws/aws-sdk-go/service/kms/kmsiface"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
@@ -35,6 +37,7 @@ import (
 	"github.com/panther-labs/panther/internal/core/logtypesapi"
 	"github.com/panther-labs/panther/pkg/awsretry"
 	"github.com/panther-labs/panther/pkg/gatewayapi"
+	githubwrapper "github.com/panther-labs/panther/pkg/github"
 )
 
 const systemUserID = "00000000-0000-4000-8000-000000000000"
@@ -45,6 +48,8 @@ var (
 
 	awsSession       *session.Session
 	dynamoClient     dynamodbiface.DynamoDBAPI
+	githubClient     *githubwrapper.Client
+	kmsClient        kmsiface.KMSAPI
 	s3Client         s3iface.S3API
 	sqsClient        sqsiface.SQSAPI
 	complianceClient gatewayapi.API
@@ -59,6 +64,7 @@ type envConfig struct {
 	Bucket               string `required:"true" split_words:"true"`
 	LayerManagerQueueURL string `required:"true" split_words:"true"`
 	RulesEngine          string `required:"true" split_words:"true"`
+	PackTable            string `required:"true" split_words:"true"`
 	PolicyEngine         string `required:"true" split_words:"true"`
 	ResourceQueueURL     string `required:"true" split_words:"true"`
 	Table                string `required:"true" split_words:"true"`
@@ -74,6 +80,9 @@ func Setup() {
 
 	awsSession = session.Must(session.NewSession())
 	dynamoClient = dynamodb.New(awsSession)
+	githubClient = githubwrapper.NewClient(nil)
+	// panther verify kms key is in us-west-2; where this client must be specified
+	kmsClient = kms.New(awsSession, aws.NewConfig().WithRegion("us-west-2"))
 	s3Client = s3.New(awsSession)
 	sqsClient = sqs.New(awsSession)
 	lambdaClient := lambda.New(awsSession)

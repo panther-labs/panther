@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>icon_filled_white</title>
+    <g id="Log-Sources-✅" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Log-Sources---Add-New-Source---Step-3-Setup-Verified-Healthcheck-Fail" transform="translate(-565.000000, -448.000000)">
+            <g id="Step-3" transform="translate(290.000000, 92.000000)">
+                <g id="Group-2-Copy" transform="translate(259.000000, 340.000000)">
+                    <g id="Group-3" transform="translate(16.000000, 16.000000)">
+                        <circle id="Oval-Copy-3" fill="#934357" cx="12" cy="12" r="12"></circle>
+                        <path d="M12.936,14.022 L13.206,5.4 L10.74,5.4 L10.992,14.022 L12.936,14.022 Z M12.018,18.126 C12.426,18.126 12.765,17.994 13.035,17.73 C13.305,17.466 13.44,17.148 13.44,16.776 C13.44,16.392 13.305,16.068 13.035,15.804 C12.765,15.54 12.426,15.408 12.018,15.408 C11.586,15.408 11.235,15.54 10.965,15.804 C10.695,16.068 10.56,16.392 10.56,16.776 C10.56,17.148 10.695,17.466 10.965,17.73 C11.235,17.994 11.586,18.126 12.018,18.126 Z" id="!-copy" fill="#F6F6F6" fill-rule="nonzero"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

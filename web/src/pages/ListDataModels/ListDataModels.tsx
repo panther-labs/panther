@@ -76,7 +76,7 @@ const ListDataModels = () => {
           {dataModels.length > 0 ? (
             <Flex direction="column" spacing={2}>
               {dataModels.map(dataModel => (
-                <DataModelCard key={dataModel.id} dataModel={dataModel} />
+                <DataModelCard key={dataModel.id} dataModel={dataModel} selectionEnabled />
               ))}
             </Flex>
           ) : (
