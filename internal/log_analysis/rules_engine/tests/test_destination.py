@@ -86,7 +86,7 @@ class TestDestination(TestCase):  # pylint: disable=too-many-public-methods
                 "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
                 "displayName": "Test",
             })
-        except:  # pylint: disable=broad-except
+        except:  # pylint: disable=bare-except
             exception = True
         self.assertFalse(exception)
 

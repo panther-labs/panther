@@ -46,7 +46,8 @@ def _mock_invoke(**unused_kwargs: Any) -> Dict[str, Any]:
                         'statusCode': 200,
                     }
                 ).encode('utf-8')
-            )
+            ),
+        'StatusCode': 200
     }
 
 
