@@ -325,10 +325,17 @@ Resources:
           BUCKET: !Ref AnalysisVersionsBucket
           DEBUG: !Ref Debug
           LAYER_MANAGER_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-layer-manager-queue
+          PACK_TABLE: !Ref AnalysisPackTable
           POLICY_ENGINE: panther-policy-engine
           RULES_ENGINE: panther-rules-engine
           RESOURCE_QUEUE_URL: !Sub https://sqs.${AWS::Region}.${AWS::URLSuffix}/${AWS::AccountId}/panther-resources-queue
           TABLE: !Ref AnalysisTable
+      Events:
+        SchedulePolling:
+          Type: Schedule
+          Properties:
+            Input: '{"PollPacks": {}}'
+            Schedule: rate(24 hours)
       FunctionName: panther-analysis-api
       # <cfndoc>
       # This lambda implements the analysis API which is responsible for
@@ -365,6 +372,12 @@ Resources:
               Resource: !GetAtt AnalysisTable.Arn
             - Effect: Allow
               Action:
+                - dynamodb:*Item
+                - dynamodb:Query
+                - dynamodb:Scan
+              Resource: !GetAtt AnalysisPackTable.Arn
+            - Effect: Allow
+              Action:
                 - s3:DeleteObject # Does NOT grant permission to permanently delete versions
                 - s3:GetObject*
                 - s3:PutObject
@@ -389,6 +402,13 @@ Resources:
                 - kms:Decrypt
                 - kms:GenerateDataKey
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
+        - Id: VerifyPantherAnalysis
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - kms:Verify
+              Resource: arn:aws:kms:us-west-2:349240696275:key/57e3be93-237b-4de2-886f-d1e1aaa38b09
 
   AnalysisApiLogGroup:
     Type: AWS::Logs::LogGroup
@@ -444,6 +464,37 @@ Resources:
       CustomResourceVersion: !Ref CustomResourceVersion
       ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
       TableName: panther-analysis
+
+  AnalysisPackTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: True
+      SSESpecification:
+        SSEEnabled: True
+      TableName: panther-analysis-packs
+      # <cfndoc>
+      # This ddb table holds the packs that manages packs in `panther-analysis-packs` ddb and
+      # is managed by the `panther-analysis-api`.
+      #
+      # Failure Impact
+      # * Updates or rollbacks to enabled detection packs could be delayed
+      # </cfndoc>
+
+  AnalysisPackTableAlarms:
+    Type: Custom::DynamoDBAlarms
+    Properties:
+      AlarmTopicArn: !Ref AlarmTopicArn
+      CustomResourceVersion: !Ref CustomResourceVersion
+      ServiceToken: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-cfn-custom-resources
+      TableName: panther-analysis-packs
 
   ##### Outputs API #####
   OutputsTable:

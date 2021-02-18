@@ -21,6 +21,7 @@ package structfields
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/fatih/structtag"
@@ -101,4 +102,12 @@ func Describe(field reflect.StructField) string {
 		return "Anonymous field"
 	}
 	return fmt.Sprintf("%s field", field.Name)
+}
+
+// FormatTag formats a struct tag escaping quotes.
+func FormatTag(tag, name string, options ...string) string {
+	parts := append([]string{name}, options...)
+	opts := strings.Join(parts, ",")
+	opts = strconv.Quote(opts)
+	return tag + ":" + opts
 }

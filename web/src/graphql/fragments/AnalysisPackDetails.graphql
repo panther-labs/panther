@@ -1,0 +1,25 @@
+fragment AnalysisPackDetails on AnalysisPack {
+    ...AnalysisPackSummary
+    enumeration {
+        paging {
+            thisPage
+            totalPages
+            totalItems
+        }
+        globals {
+            ...GlobalPythonModuleFull
+        }
+        models {
+            ...DataModelFull
+        }
+        detections {
+            ... on Rule {
+                ...RuleSummary
+            }
+
+            ... on Policy {
+                ...PolicySummary
+            }
+        }
+    }
+}

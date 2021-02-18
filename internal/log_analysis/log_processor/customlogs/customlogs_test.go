@@ -30,6 +30,7 @@ https://github.com/panther-labs/panther-enterprise/pull/1505*
 import (
 	"fmt"
 	"io/ioutil"
+	"reflect"
 	"testing"
 	"time"
 
@@ -72,7 +73,7 @@ func ExampleBuild() {
 		"schema": "SampleAPI",
 		"version": 0,
 		"fields": [
-			{ "name": "remote_ip", "type": "string", "indicators": ["ip"] , "description": "remote ip address" },
+			{ "name": "remote_ip", "type": "string", "indicators": ["ip"] , "description": "remote \"ip\" address" },
 			{ "name": "path", "type": "string", "description": "request URI path" },
 			{ "name": "time", "type": "timestamp", "timeFormat": "rfc3339", "isEventTime": true, "description": "event timestamp" },
 			{ "name": "method", "type":"string", "description": "request method" },
@@ -219,6 +220,9 @@ func TestBuild(t *testing.T) {
 			entry, err := customlogs.Build(logSchema.Schema, &logSchema)
 			assert.NoError(err)
 			assert.NotNil(entry)
+			x := entry.Schema()
+			assert.NotNil(x)
+			assert.Equal(reflect.Struct, reflect.TypeOf(x).Elem().Kind())
 		})
 	}
 }

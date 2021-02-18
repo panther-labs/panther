@@ -30,6 +30,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/panther-labs/panther/internal/log_analysis/log_processor/pantherlog"
+	"github.com/panther-labs/panther/pkg/x/structfields"
 )
 
 // This file provides utils conversion from logschema.ValueSchema to go reflect.Type
@@ -115,21 +116,50 @@ func fieldNameGo(name string) string {
 }
 
 func buildStructTag(schema *FieldSchema) reflect.StructTag {
+	var parts []string
 	name := fieldNameJSON(schema)
 	if name == "" {
 		name = "-"
 	}
-	tag := fmt.Sprintf(`json:"%s,omitempty"`, name)
-	if schema.Required {
-		tag += ` validate:"required"`
-	}
-	tag = extendStructTag(&schema.ValueSchema, tag)
+	parts = append(parts, structfields.FormatTag("json", name, "omitempty"))
+	parts = append(parts, buildValidate(schema))
+	parts = extendStructTag(parts, &schema.ValueSchema)
 	desc := normalizeSpace(schema.Description)
 	if desc == "" {
 		desc = schema.Name
 	}
-	tag += fmt.Sprintf(` description:"%s"`, desc)
-	return reflect.StructTag(tag)
+	parts = append(parts, structfields.FormatTag("description", desc))
+	return reflect.StructTag(strings.Join(parts, " "))
+}
+
+func buildValidate(s *FieldSchema) string {
+	var rules []string
+	// The precedence is Allow > Deny
+	if v := s.Validate; v != nil {
+		if len(v.Allow) > 0 {
+			rules = append(rules, formatRule("eq", v.Allow...))
+		} else if len(v.Deny) > 0 {
+			rules = append(rules, formatRule("ne", v.Deny...))
+		}
+	}
+	if s.Required {
+		return structfields.FormatTag("validate", "required", rules...)
+	}
+	if len(rules) == 0 {
+		return ""
+	}
+	return structfields.FormatTag("validate", "omitempty", rules...)
+}
+
+func formatRule(op string, values ...string) string {
+	rule := make([]string, len(values))
+	for i, v := range values {
+		// We need to escape , and | to make sure validation rule syntax is not broken
+		v = strings.ReplaceAll(v, ",", "0x2C")
+		v = strings.ReplaceAll(v, "|", "0x7C")
+		rule[i] = op + "=" + v
+	}
+	return strings.Join(rule, "|")
 }
 
 func normalizeSpace(input string) string {
@@ -145,18 +175,18 @@ func normalizeSpace(input string) string {
 	return strings.Join(nonEmptyLines, " ")
 }
 
-func extendStructTag(schema *ValueSchema, tag string) string {
+func extendStructTag(parts []string, schema *ValueSchema) []string {
 	switch schema.Type {
 	case TypeArray:
-		return extendStructTag(schema.Element, tag)
+		return extendStructTag(parts, schema.Element)
 	case TypeString:
-		if len(schema.Indicators) == 0 {
-			return tag
+		if len(schema.Indicators) > 0 {
+			parts = append(parts, structfields.FormatTag("panther", schema.Indicators[0], schema.Indicators[1:]...))
 		}
-		return tag + fmt.Sprintf(` panther:"%s"`, strings.Join(schema.Indicators, ","))
+		return parts
 	case TypeTimestamp:
 		if schema.IsEventTime {
-			tag = tag + ` event_time:"true"`
+			parts = append(parts, structfields.FormatTag("event_time", "true"))
 		}
 		var codec string
 		switch timeFormat := schema.TimeFormat; timeFormat {
@@ -169,9 +199,9 @@ func extendStructTag(schema *ValueSchema, tag string) string {
 		default:
 			codec = "strftime=" + timeFormat
 		}
-		return tag + fmt.Sprintf(` tcodec:"%s"`, codec)
+		return append(parts, structfields.FormatTag("tcodec", codec))
 	default:
-		return tag
+		return parts
 	}
 }
 

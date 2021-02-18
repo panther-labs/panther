@@ -21,8 +21,8 @@ import * as Types from '../../../__generated__/schema';
 import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
-export type PackDetails = Pick<
-  Types.Pack,
+export type AnalysisPackSummary = Pick<
+  Types.AnalysisPack,
   | 'id'
   | 'displayName'
   | 'description'
@@ -33,14 +33,14 @@ export type PackDetails = Pick<
   | 'createdAt'
   | 'createdBy'
 > & {
-  packVersion: Pick<Types.PackVersion, 'id' | 'name'>;
-  availableVersions: Array<Pick<Types.PackVersion, 'id' | 'name'>>;
-  detectionTypes: Pick<Types.DetectionTypes, 'GLOBAL' | 'POLICY' | 'RULE'>;
-  detectionsPatterns: Pick<Types.PackDetectionsPatterns, 'IDs'>;
+  packVersion: Pick<Types.AnalysisPackVersion, 'id' | 'semVer'>;
+  availableVersions: Array<Pick<Types.AnalysisPackVersion, 'id' | 'semVer'>>;
+  packTypes: Pick<Types.AnalysisPackTypes, 'GLOBAL' | 'POLICY' | 'RULE' | 'DATAMODEL'>;
+  packDefinition: Pick<Types.AnalysisPackDefinition, 'IDs'>;
 };
 
-export const PackDetails = gql`
-  fragment PackDetails on Pack {
+export const AnalysisPackSummary = gql`
+  fragment AnalysisPackSummary on AnalysisPack {
     id
     displayName
     description
@@ -48,18 +48,19 @@ export const PackDetails = gql`
     updateAvailable
     packVersion {
       id
-      name
+      semVer
     }
     availableVersions {
       id
-      name
+      semVer
     }
-    detectionTypes {
+    packTypes {
       GLOBAL
       POLICY
       RULE
+      DATAMODEL
     }
-    detectionsPatterns {
+    packDefinition {
       IDs
     }
     lastModified
