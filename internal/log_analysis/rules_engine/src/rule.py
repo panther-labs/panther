@@ -199,10 +199,11 @@ class Rule:
         """Used to expose the loaded python module to the engine, solely added in to support unit test mocking"""
         return self._module
 
-    def run(self, event: PantherEvent, batch_mode: bool = True) -> RuleResult:
+    def run(self, event: PantherEvent, outputs: dict, batch_mode: bool = True) -> RuleResult:
         """
         Analyze a log line with this rule and return True, False, or an error.
         :param event: The event to run the rule against
+        :param outputs: Destinations loaded from the panther-outputs-api
         :param batch_mode: Whether the rule runs as part of the log analysis or as part of a simple rule test.
         In batch mode, title/dedup functions are not checked if the rule won't trigger an alert and also title()/dedup()
         won't raise exceptions, so that an alert won't be missed.
@@ -250,7 +251,7 @@ class Rule:
             rule_result.runbook_exception = err
 
         try:
-            rule_result.destinations_output = self._get_destinations(event, use_default_on_exception=batch_mode)
+            rule_result.destinations_output = self._get_destinations(event, outputs, use_default_on_exception=batch_mode)
         except Exception as err:  # pylint: disable=broad-except
             rule_result.destinations_exception = err
 
@@ -351,7 +352,7 @@ class Rule:
             return description[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
         return description
 
-    def _get_destinations(self, event: PantherEvent, use_default_on_exception: bool = True) -> Optional[List[str]]:
+    def _get_destinations(self, event: PantherEvent, outputs: dict, use_default_on_exception: bool = True) -> Optional[List[str]]:
         if not hasattr(self._module, 'destinations'):
             return None
 
@@ -364,14 +365,38 @@ class Rule:
                 return []
             raise
 
-        if len(destinations) > MAX_DESTINATIONS_SIZE:
+        invalid_destinations = []
+        # Map display names to destinations
+        outputs_display_names = {v.destination_display_name: v for k, v in outputs.items()} \
+            if outputs is not None else {}
+        standardized_destinations = []
+
+        # Standardize the destinations
+        for each_destination in destinations:
+            # case for valid display name
+            if each_destination in outputs_display_names and \
+                    outputs_display_names[each_destination].destination_id not in standardized_destinations:
+                standardized_destinations.append(outputs_display_names[each_destination].destination_id)
+            # case for valid UUIDv4
+            elif each_destination in outputs and each_destination not in standardized_destinations:
+                standardized_destinations.append(each_destination)
+            else:
+                invalid_destinations.append(each_destination)
+
+        if invalid_destinations:
+            if use_default_on_exception:
+                self.logger.warning('destinations method yielded invalid destinations: %s', str(invalid_destinations))
+                return []
+            raise ValueError('Invalid Destinations: {}'.format(str(invalid_destinations)))
+
+        if len(standardized_destinations) > MAX_DESTINATIONS_SIZE:
             # If generated field exceeds max size, truncate it
             self.logger.warning(
                 'maximum len of destinations [%d] for rule with ID [%s] is [%d] fields. Truncating.', MAX_DESTINATIONS_SIZE, self.rule_id,
-                len(destinations)
+                len(standardized_destinations)
             )
-            return destinations[:MAX_DESTINATIONS_SIZE]
-        return destinations
+            return standardized_destinations[:MAX_DESTINATIONS_SIZE]
+        return standardized_destinations
 
     def _get_reference(self, event: PantherEvent, use_default_on_exception: bool = True) -> Optional[str]:
         if not hasattr(self._module, 'reference'):

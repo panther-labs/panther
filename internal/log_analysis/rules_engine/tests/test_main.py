@@ -105,7 +105,7 @@ class TestMainDirectAnalysis(TestCase):
                     'def reference(event):\n\treturn "generated reference"\n' \
                     'def severity(event):\n\treturn "HIGH"\n' \
                     'def runbook(event):\n\treturn "generated runbook"\n' \
-                    'def destinations(event):\n\treturn ["destination1", "destination2"]'
+                    'def destinations(event):\n\treturn []'
         payload = {'rules': [{'id': 'rule_id', 'body': rule_body}], 'events': [{'id': 'event_id', 'data': {'key': 'value'}}]}
         expected_response: dict = {
             'results':
@@ -127,7 +127,7 @@ class TestMainDirectAnalysis(TestCase):
                         'severityError': None,
                         'runbookOutput': 'generated runbook',
                         'runbookError': None,
-                        'destinationsOutput': ["destination1", "destination2"],
+                        'destinationsOutput': [],
                         'destinationsError': None,
                         'dedupOutput': 'generated title',
                         'dedupError': None,
