@@ -22,7 +22,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"go.uber.org/zap"
 
 	deliverymodel "github.com/panther-labs/panther/api/lambda/delivery/models"
@@ -98,8 +97,6 @@ func getOutputsByDynamicDestinations(alert *deliverymodel.Alert, outputs []*outp
 	for _, output := range outputs {
 		for _, outputID := range alert.Destinations {
 			if *output.OutputID == outputID {
-				alertOutputs = append(alertOutputs, output)
-			} else if aws.StringValue(output.DisplayName) == outputID {
 				alertOutputs = append(alertOutputs, output)
 			}
 		}
