@@ -169,6 +169,8 @@ func (*resultEncoder) writePantherFields(r *Result, stream *jsoniter.Stream) {
 func extendJSON(data []byte) bool {
 	// Swap JSON object closing brace ('}') with comma (',') to extend the object
 	// Don't try to do the swap for empty JSON `{}`
+	// Note that we have the `n < len(data)` to avoid the runtime check imposed by the go compiler when we do index operations below.
+	// This effectively allows the function to be inlined. (Boundary Check Elimination)
 	if n := len(data) - 1; 2 <= n && n < len(data) && data[n] == '}' {
 		data[n] = ','
 		return true
