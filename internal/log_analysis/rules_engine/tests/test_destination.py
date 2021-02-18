@@ -28,11 +28,7 @@ class TestDestination(TestCase):  # pylint: disable=too-many-public-methods
         try:
             Destination(
                 {
-                    "alertTypes": [
-                        "RULE",
-                        "RULE_ERROR",
-                        "POLICY"
-                    ],
+                    "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
                     "createdBy": "12345678-9012-3456-7890-123456789012",
                     "creationTime": "2021-01-13T21:29:27Z",
                     "lastModifiedBy": "12345678-9012-3456-7890-123456789012",
@@ -61,11 +57,7 @@ class TestDestination(TestCase):  # pylint: disable=too-many-public-methods
         try:
             Destination(
                 {
-                    "alertTypes": [
-                        "RULE",
-                        "RULE_ERROR",
-                        "POLICY"
-                    ],
+                    "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
                     "createdBy": "12345678-9012-3456-7890-123456789012",
                     "creationTime": "2021-01-13T21:29:27Z",
                     "displayName": "Test",
@@ -90,12 +82,10 @@ class TestDestination(TestCase):  # pylint: disable=too-many-public-methods
     def test_optional_fields_missing(self) -> None:
         exception = False
         try:
-            Destination(
-                {
-                    "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-                    "displayName": "Test",
-                }
-            )
+            Destination({
+                "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                "displayName": "Test",
+            })
         except:  # pylint: disable=broad-except
             exception = True
         self.assertFalse(exception)
@@ -105,11 +95,7 @@ class TestDestination(TestCase):  # pylint: disable=too-many-public-methods
         try:
             Destination(
                 {
-                    "alertTypes": [
-                        "RULE",
-                        "RULE_ERROR",
-                        "POLICY"
-                    ],
+                    "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
                     "createdBy": "12345678-9012-3456-7890-123456789012",
                     "creationTime": "2021-01-13T21:29:27Z",
                     "displayName": "Test",

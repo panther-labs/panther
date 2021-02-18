@@ -42,11 +42,7 @@ class TestEngine(TestCase):
         outputs_api = mock.MagicMock()
         outputs_api.get_outputs.return_value = [
             {
-                "alertTypes": [
-                    "RULE",
-                    "RULE_ERROR",
-                    "POLICY"
-                ],
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
                 "createdBy": "12345678-9012-3456-7890-123456789012",
                 "creationTime": "2021-01-13T21:29:27Z",
                 "displayName": "Test",
@@ -80,11 +76,7 @@ class TestEngine(TestCase):
         outputs_api = mock.MagicMock()
         outputs_api.get_outputs.return_value = [
             {
-                "alertTypes": [
-                    "RULE",
-                    "RULE_ERROR",
-                    "POLICY"
-                ],
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
                 "createdBy": "12345678-9012-3456-7890-123456789012",
                 "creationTime": "2021-01-13T21:29:27Z",
                 "displayName": "Test",
@@ -121,11 +113,7 @@ class TestEngine(TestCase):
         outputs_api = mock.MagicMock()
         outputs_api.get_outputs.return_value = [
             {
-                "alertTypes": [
-                    "RULE",
-                    "RULE_ERROR",
-                    "POLICY"
-                ],
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
                 "createdBy": "12345678-9012-3456-7890-123456789012",
                 "creationTime": "2021-01-13T21:29:27Z",
                 "displayName": "Test",
@@ -188,11 +176,7 @@ class TestEngine(TestCase):
         outputs_api = mock.MagicMock()
         outputs_api.get_outputs.return_value = [
             {
-                "alertTypes": [
-                    "RULE",
-                    "RULE_ERROR",
-                    "POLICY"
-                ],
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
                 "createdBy": "12345678-9012-3456-7890-123456789012",
                 "creationTime": "2021-01-13T21:29:27Z",
                 "displayName": "Test",
@@ -264,11 +248,7 @@ class TestEngine(TestCase):
         outputs_api = mock.MagicMock()
         outputs_api.get_outputs.return_value = [
             {
-                "alertTypes": [
-                    "RULE",
-                    "RULE_ERROR",
-                    "POLICY"
-                ],
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
                 "createdBy": "12345678-9012-3456-7890-123456789012",
                 "creationTime": "2021-01-13T21:29:27Z",
                 "displayName": "Test",
@@ -322,11 +302,7 @@ class TestEngine(TestCase):
         outputs_api = mock.MagicMock()
         outputs_api.get_outputs.return_value = [
             {
-                "alertTypes": [
-                    "RULE",
-                    "RULE_ERROR",
-                    "POLICY"
-                ],
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
                 "createdBy": "12345678-9012-3456-7890-123456789012",
                 "creationTime": "2021-01-13T21:29:27Z",
                 "displayName": "Test",
@@ -382,11 +358,7 @@ class TestEngine(TestCase):
         outputs_api = mock.MagicMock()
         outputs_api.get_outputs.return_value = [
             {
-                "alertTypes": [
-                    "RULE",
-                    "RULE_ERROR",
-                    "POLICY"
-                ],
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
                 "createdBy": "12345678-9012-3456-7890-123456789012",
                 "creationTime": "2021-01-13T21:29:27Z",
                 "displayName": "Test",
@@ -449,11 +421,7 @@ class TestEngine(TestCase):
         outputs_api = mock.MagicMock()
         outputs_api.get_outputs.return_value = [
             {
-                "alertTypes": [
-                    "RULE",
-                    "RULE_ERROR",
-                    "POLICY"
-                ],
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
                 "createdBy": "12345678-9012-3456-7890-123456789012",
                 "creationTime": "2021-01-13T21:29:27Z",
                 "displayName": "Test",
@@ -508,11 +476,7 @@ class TestEngine(TestCase):
         outputs_api = mock.MagicMock()
         outputs_api.get_outputs.return_value = [
             {
-                "alertTypes": [
-                    "RULE",
-                    "RULE_ERROR",
-                    "POLICY"
-                ],
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
                 "createdBy": "12345678-9012-3456-7890-123456789012",
                 "creationTime": "2021-01-13T21:29:27Z",
                 "displayName": "Test",
