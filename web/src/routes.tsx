@@ -66,7 +66,8 @@ import EditDataModelPage from 'Pages/EditDataModel';
 import ListDataModelsPage from 'Pages/ListDataModels';
 import EditCustomLogPage from 'Pages/EditCustomLog';
 import ListDetectionsPage from 'Pages/ListDetections';
-import ListPacksPage from 'Pages/ListPacks';
+import ListAnalysisPacks from 'Pages/ListAnalysisPacks';
+import AnalysisPackDetails from 'Pages/AnalysisPackDetails';
 
 // Main page container for the web application, Navigation bar and Content body goes here
 const PrimaryPageLayout: React.FunctionComponent = () => {
@@ -211,7 +212,8 @@ const PrimaryPageLayout: React.FunctionComponent = () => {
                   from={`${urls.logAnalysis.sources.list()}:type`}
                   to={urls.logAnalysis.sources.list()}
                 />
-                <Route exact path={urls.packs.list()} component={ListPacksPage} />
+                <Route exact path={urls.packs.list()} component={ListAnalysisPacks} />
+                <Route exact path={urls.packs.details(':id')} component={AnalysisPackDetails} />
                 {/* ******************* SETTINGS ***************************** */}
                 <Redirect exact from={urls.settings.home()} to={urls.settings.general()} />
                 <Route exact path={urls.settings.general()} component={GeneralSettingsPage} />

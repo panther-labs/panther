@@ -1321,6 +1321,104 @@ Resources:
         }
       ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCodeNoBody, VTL]
 
+  GetAnalysisPackResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: getAnalysisPack
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "getPack": {
+              "id": $ctx.args.id
+            }
+          })
+        }
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
+
+  UpdateAnalysisPackResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Mutation
+      FieldName: updateAnalysisPack
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        #set ($input = $ctx.args.input)
+        $util.qr($input.put("userId", $ctx.identity.username))
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "patchPack": $input
+          })
+        }
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
+
+  ListAnalysisPacksResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: Query
+      FieldName: listAnalysisPacks
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "listPacks": $util.defaultIfNull($ctx.args.input, {})
+          })
+        }
+      ResponseMappingTemplate: !FindInMap [ResponseTemplates, LambdaStatusCode, VTL]
+
+  EnumeratePackResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !Ref ApiId
+      TypeName: AnalysisPack
+      FieldName: enumeration
+      DataSourceName: !GetAtt AnalysisAPILambdaDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation": "Invoke",
+          "payload": $util.toJson({
+            "enumeratePack": {
+              "id": $ctx.source.id
+            }
+          })
+        }
+      ResponseMappingTemplate: |
+        #if($ctx.error)
+          $util.error($ctx.error.errorMessage, $ctx.error.errorType, {})
+        #else
+          #set($result = $util.parseJson($ctx.result.body))
+          #set($detections = [])
+
+          #foreach($item in $result.detections)
+            #if ($item.analysisType == "RULE")
+              $util.qr($item.put("__typename", "Rule"))
+            #elseif ($item.analysisType == "POLICY")
+              $util.qr($item.put("__typename", "Policy"))
+            #else
+              $util.error("Invalid analysisType found")
+            #end
+            $util.qr($detections.add($item))
+          #end
+
+          $util.toJson({
+              "detections": $detections,
+              "globals": $result.globals,
+              "models": $result.models,
+              "paging": $result.paging
+          })
+        #end
+
   SendTestAlertResolver:
     Type: AWS::AppSync::Resolver
     Properties:

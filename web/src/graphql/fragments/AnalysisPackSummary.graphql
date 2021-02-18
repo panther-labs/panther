@@ -1,4 +1,4 @@
-fragment PackDetails on Pack {
+fragment AnalysisPackSummary on AnalysisPack {
     id
     displayName
     description
@@ -7,19 +7,20 @@ fragment PackDetails on Pack {
 
     packVersion {
         id
-        name
+        semVer
     }
 
     availableVersions {
         id
-        name
+        semVer
     }
-    detectionTypes {
+    packTypes {
         GLOBAL
         POLICY
         RULE
+        DATAMODEL
     }
-    detectionsPatterns {
+    packDefinition {
         IDs
     }
 

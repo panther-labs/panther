@@ -29,14 +29,22 @@ import DataModelCardOptions from './DataModelCardOptions';
 
 interface DataModelCardProps {
   dataModel: DataModel;
+  selectionEnabled?: boolean;
+  isSelected?: boolean;
 }
 
-const DataModelCard: React.FC<DataModelCardProps> = ({ dataModel }) => {
+const DataModelCard: React.FC<DataModelCardProps> = ({
+  dataModel,
+  isSelected = false,
+  selectionEnabled = false,
+}) => {
   return (
-    <GenericItemCard>
-      <Box transform="translate3d(-12px,-12px,0)">
-        <SelectCheckbox selectionItem={dataModel} />
-      </Box>
+    <GenericItemCard isHighlighted={isSelected}>
+      {selectionEnabled && (
+        <Box transform="translate3d(-12px,-12px,0)">
+          <SelectCheckbox selectionItem={dataModel} />
+        </Box>
+      )}
       <GenericItemCard.Body>
         <GenericItemCard.Header>
           <GenericItemCard.Heading>
