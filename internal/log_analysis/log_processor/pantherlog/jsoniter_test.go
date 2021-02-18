@@ -170,3 +170,51 @@ func TestResultEncoder(t *testing.T) {
 	}`, tm.In(loc).Format(time.RFC3339Nano), tm.UTC().Format(time.RFC3339Nano), now.UTC().Format(time.RFC3339Nano))
 	assert.JSONEq(expect, actual)
 }
+
+func TestResultEncoderEmptyEvent(t *testing.T) {
+	now := time.Now()
+	assert := require.New(t)
+	type T struct {
+		Data string `json:"data,omitempty"`
+	}
+	event := T{}
+	result := Result{
+		CoreFields: CoreFields{
+			PantherLogType:   "Foo.Bar",
+			PantherRowID:     "id",
+			PantherParseTime: now.UTC(),
+		},
+		Event: &event,
+	}
+	actual, err := jsoniter.MarshalToString(&result)
+	assert.NoError(err)
+	expect := fmt.Sprintf(`{
+		"p_row_id": "id",
+		"p_event_time": "%s",
+		"p_parse_time": "%s",
+		"p_log_type": "Foo.Bar"
+	}`, now.UTC().Format(time.RFC3339Nano), now.UTC().Format(time.RFC3339Nano))
+	assert.JSONEq(expect, actual)
+}
+
+func TestResultEncoderNilEvent(t *testing.T) {
+	now := time.Now()
+	assert := require.New(t)
+	result := Result{
+		CoreFields: CoreFields{
+			PantherLogType:   "Foo.Bar",
+			PantherRowID:     "id",
+			PantherParseTime: now.UTC(),
+		},
+		Event: nil,
+	}
+	actual, err := jsoniter.MarshalToString(&result)
+	assert.NoError(err)
+	expect := fmt.Sprintf(`{
+		"p_row_id": "id",
+		"p_event_time": "%s",
+		"p_parse_time": "%s",
+		"p_log_type": "Foo.Bar"
+	}`, now.UTC().Format(time.RFC3339Nano), now.UTC().Format(time.RFC3339Nano))
+	assert.JSONEq(expect, actual)
+}
