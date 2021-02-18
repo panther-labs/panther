@@ -33,8 +33,7 @@ class OutputsAPIClient:
         response = self.client.invoke(FunctionName='panther-outputs-api', Payload=json.dumps(get_input).encode('utf-8'))
         gateway_response = json.loads(response['Payload'].read())
 
-        if response.get('FunctionError') or gateway_response['statusCode'] != 200:
-            raise RuntimeError('failed to get outputs: ' + str(gateway_response))
+        if response.get('FunctionError') or response.get('StatusCode') != 200:
+            raise RuntimeError('failed to get outputs: ' + str(response))
 
-        result = json.loads(gateway_response['body'])
-        return result
+        return gateway_response
