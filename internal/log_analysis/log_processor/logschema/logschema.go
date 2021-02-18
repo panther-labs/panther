@@ -104,6 +104,12 @@ type ValueSchema struct {
 	Indicators  []string      `json:"indicators,omitempty" yaml:"indicators,omitempty"`
 	TimeFormat  string        `json:"timeFormat,omitempty" yaml:"timeFormat,omitempty"`
 	IsEventTime bool          `json:"isEventTime,omitempty" yaml:"isEventTime,omitempty"`
+	Validate    *Validation   `json:"validate,omitempty" yaml:"validate,omitempty"`
+}
+
+type Validation struct {
+	Allow []string `json:"allow,omitempty" yaml:"allow,omitempty"`
+	Deny  []string `json:"deny,omitempty" yaml:"deny,omitempty"`
 }
 
 func (v *ValueSchema) Clone() *ValueSchema {

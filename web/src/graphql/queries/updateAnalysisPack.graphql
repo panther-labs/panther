@@ -1,0 +1,5 @@
+mutation UpdateAnalysisPack($input: UpdateAnalysisPackInput!) {
+    updateAnalysisPack(input: $input) {
+        ...AnalysisPackSummary
+    }
+}

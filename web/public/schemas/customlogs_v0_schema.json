@@ -167,20 +167,56 @@
       },
       "required": ["type"]
     },
+    "validateSpec": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["allow"],
+          "properties": {
+            "allow": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["deny"],
+          "properties": {
+            "deny": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
     "stringSpec": {
       "type": "object",
+      "required": ["type"],
       "properties": {
         "type": {
           "const": "string"
         },
         "indicators": {
           "type": "array",
+          "minLength": 1,
           "items": {
             "$ref": "#/definitions/indicator"
           }
+        },
+        "validate": {
+          "$ref": "#/definitions/validateSpec"
         }
-      },
-      "required": ["type"]
+      }
     },
     "indicator": {
       "type": "string",

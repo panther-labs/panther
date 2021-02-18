@@ -41,7 +41,7 @@ fields:
     type: string
     indicators: [ip]
   - name: duration_s
-    description: The number of seconds the request took to complete
+    description: The number of seconds the request "took" to complete
     type: float
   - name: format
     description: Response format

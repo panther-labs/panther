@@ -45,6 +45,25 @@ func (API) GetDataModel(input *models.GetDataModelInput) *events.APIGatewayProxy
 	return handleGet(input.ID, input.VersionID, models.TypeDataModel)
 }
 
+func (API) GetPack(input *models.GetPackInput) *events.APIGatewayProxyResponse {
+	var item *packTableItem
+	item, err := dynamoGetPack(input.ID, false)
+
+	if err != nil {
+		return &events.APIGatewayProxyResponse{
+			Body:       fmt.Sprintf("Internal error finding %s (%s)", input.ID, models.TypePack),
+			StatusCode: http.StatusInternalServerError,
+		}
+	}
+	if item == nil {
+		return &events.APIGatewayProxyResponse{
+			Body:       fmt.Sprintf("Cannot find %s (%s)", input.ID, models.TypePack),
+			StatusCode: http.StatusNotFound,
+		}
+	}
+	return gatewayapi.MarshalResponse(item.Pack(), http.StatusOK)
+}
+
 // Handle GET request for GetPolicy, GetRule, and GetGlobal
 func handleGet(itemID, versionID string, codeType models.DetectionType) *events.APIGatewayProxyResponse {
 	var err error

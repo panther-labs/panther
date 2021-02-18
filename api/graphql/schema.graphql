@@ -47,7 +47,7 @@ type Mutation {
   updateUser(input: UpdateUserInput!): User!
   uploadDetections(input: UploadDetectionsInput!): UploadDetectionsResponse
   updateGlobalPythonlModule(input: ModifyGlobalPythonModuleInput!): GlobalPythonModule!
-  updatePack(input: UpdatePackInput!): Pack!
+  updateAnalysisPack(input: UpdateAnalysisPackInput!): AnalysisPack!
 }
 
 type Query {
@@ -77,38 +77,36 @@ type Query {
   listComplianceIntegrations: [ComplianceIntegration!]!
   listDataModels(input: ListDataModelsInput!): ListDataModelsResponse!
   listLogIntegrations: [LogIntegration!]!
-  listPacks(input: ListPacksInput) : ListPacksResponse!
+  listAnalysisPacks(input: ListAnalysisPacksInput) : ListAnalysisPacksResponse!
   organizationStats(input: OrganizationStatsInput): OrganizationStatsResponse
   getLogAnalysisMetrics(input: LogAnalysisMetricsInput!): LogAnalysisMetricsResponse!
   rule(input: GetRuleInput!): Rule
+  getAnalysisPack(id: ID!): AnalysisPack!
   listGlobalPythonModules(input: ListGlobalPythonModuleInput!): ListGlobalPythonModulesResponse!
   users: [User!]!
   getCustomLog(input: GetCustomLogInput!): GetCustomLogOutput!
   listCustomLogs: [CustomLogRecord!]!
 }
 
-input ListPacksInput {
-  ids: [ID!]
-  exclusiveStartKey: String
-  contains: String
-  createdBefore: AWSDateTime
-  createdAfter: AWSDateTime
-  userId: ID
+input ListAnalysisPacksInput {
+  enabled: Boolean
+  updateAvailable: Boolean
+  nameContains: String
   sortDir: SortDirEnum # defaults to `ascending`
   # Paging
   pageSize: Int # defaults to `25`
   page: Int # defaults to `1`
 }
 
-input PackVersionInput {
-  id: String!
-  name: String!
+input AnalysisPackVersionInput {
+  id: Int!
+  semVer: String!
 }
 
-input UpdatePackInput {
+input UpdateAnalysisPackInput {
   enabled: Boolean
   id: ID!
-  packVersion: PackVersionInput
+  versionId: Int
 }
 
 input ListDetectionsInput {
@@ -229,8 +227,8 @@ type ListDetectionsResponse {
   detections: [Detection!]!
   paging: PagingData!
 }
-type ListPacksResponse {
-  packs: [Pack!]!
+type ListAnalysisPacksResponse {
+  packs: [AnalysisPack!]!
   paging: PagingData!
 }
 
@@ -494,42 +492,50 @@ type Rule implements Detection {
   analysisType: DetectionTypeEnum!
 }
 
-type PackVersion {
-  id: String!
-  name: String!
+type AnalysisPackVersion {
+  id: Int!
+  semVer: String!
 }
 
-type PackDetectionsPatterns {
+type AnalysisPackDefinition {
   # This is an array Detection['id'] that are related to the pack
   IDs: [ID!]
 }
 
-type DetectionTypes {
-  GLOBAL: Int!
-  RULE: Int!
-  POLICY: Int!
+type AnalysisPackTypes {
+  GLOBAL: Int
+  RULE: Int
+  DATAMODEL: Int
+  POLICY: Int
 }
 
-type Pack {
+type AnalysisPack {
   id: ID!
   enabled: Boolean!
   updateAvailable: Boolean!
 
   description: String!
   displayName: String!
-  packVersion: PackVersion!
+  packVersion: AnalysisPackVersion!
+  availableVersions: [AnalysisPackVersion!]!
 
-  availableVersions: [PackVersion!]!
   createdBy: ID!
   lastModifiedBy: ID!
-
   createdAt: AWSDateTime!
   lastModified: AWSDateTime!
 
-  detectionsPatterns: PackDetectionsPatterns!
-  detectionTypes: DetectionTypes!
+  packDefinition: AnalysisPackDefinition!
+  packTypes: AnalysisPackTypes!
+
+  enumeration: AnalysisPackEnumeration!
 }
 
+type AnalysisPackEnumeration {
+  paging: PagingData!
+  detections: [Detection!]!
+  models: [DataModel!]!
+  globals: [GlobalPythonModule!]!
+}
 
 input SuppressPoliciesInput {
   policyIds: [ID]!
