@@ -77,7 +77,7 @@ func (api *API) UpdateIntegrationSettings(input *models.UpdateIntegrationSetting
 		}
 	}
 
-	existingIntegration := itemToIntegration(existingItem)
+	existingIntegration := ddb.ItemToIntegration(existingItem)
 
 	if existingIntegration.IntegrationType == models.IntegrationTypeAWS3 &&
 		existingIntegration.ManagedBucketNotifications {

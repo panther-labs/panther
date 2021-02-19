@@ -147,7 +147,7 @@ func checkBucketNotifications(
 		AccountID: input.AWSAccountID,
 		Resource:  "panther-notifications-topic",
 	}.String()
-	// an SNS notification should exist for each one of the prefixes
+	// An SNS notification should exist for each one of the prefixes.
 	prefixes := reduceNoPrefixStrings(input.S3PrefixLogTypes.S3Prefixes())
 	var notFound []string // keep the prefixes which we didn't find notifications for
 	for _, p := range prefixes {
@@ -164,16 +164,14 @@ func checkBucketNotifications(
 				continue
 			}
 
-			// Check filter rules. The prefix should be equal to p. Missing prefix is also fine if p is empty.
-			// Note we can't validate the suffix. User may have added a suffix to further break down which log files
-			// reach Panther.
+			// Check filter rules. The prefix should be an str prefix to p. Missing prefix is also fine if p is empty.
 			rulePrefix := ""
 			for _, r := range c.Filter.Key.FilterRules {
 				if strings.ToLower(aws.StringValue(r.Name)) == "prefix" {
 					rulePrefix = aws.StringValue(r.Value)
 				}
 			}
-			ok = rulePrefix == p
+			ok = strings.HasPrefix(p, rulePrefix)
 			if ok {
 				break
 			}

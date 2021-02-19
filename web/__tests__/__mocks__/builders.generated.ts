@@ -1589,8 +1589,6 @@ export const buildS3LogIntegration = (
         : true,
     health: 'health' in overrides ? overrides.health : buildS3LogIntegrationHealth(),
     stackName: 'stackName' in overrides ? overrides.stackName : 'River',
-    managedS3Resources:
-      'managedS3Resources' in overrides ? overrides.managedS3Resources : buildManagedS3Resources(),
   };
 };
 

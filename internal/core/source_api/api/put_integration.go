@@ -96,7 +96,13 @@ func (api *API) PutIntegration(input *models.PutIntegrationInput) (newIntegratio
 }
 
 func (api *API) handleManagedBucketNotifications(source *models.SourceIntegration) {
-	err := ManageBucketNotifications(api.AwsSession, api.Config.AccountID, api.Config.AWSPartition, api.Config.LogProcessorQueueArn, source)
+	panther := pantherDeployment{
+		sess:          api.AwsSession,
+		accountID:     api.Config.AccountID,
+		partition:     api.Config.AWSPartition,
+		inputQueueARN: api.Config.LogProcessorQueueArn,
+	}
+	err := ManageBucketNotifications(api.DdbClient, panther, source)
 	source.NotificationsConfigurationSucceeded = err == nil
 	if err != nil {
 		zap.L().Error("failed to manage bucket notifications", zap.Error(err))
