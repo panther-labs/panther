@@ -35,7 +35,7 @@ _RULES_CACHE_DURATION = timedelta(minutes=5)
 MISSING_UDM_EXCEPTION = AttributeError("'dict' object has no attribute 'udm'")
 
 
-class Engine:
+class Engine:  # pylint: disable=too-many-instance-attributes
     """The engine that runs Python rules."""
 
     def __init__(self, analysis_api: AnalysisAPIClient, outputs_api: OutputsAPIClient) -> None:
@@ -44,6 +44,7 @@ class Engine:
         self.log_type_to_data_models: Dict[str, DataModel] = collections.defaultdict()
         self.log_type_to_rules: Dict[str, List[Rule]] = collections.defaultdict(list)
         self.destinations: Dict[str, Destination] = collections.defaultdict()
+        self.display_name_to_destination: Dict[str, Destination] = collections.defaultdict()
         self._analysis_client = analysis_api
         self._outputs_client = outputs_api
         self._populate_rules()
@@ -71,9 +72,9 @@ class Engine:
 
         if mock_methods:
             with patch.multiple(rule.module, **mock_methods):
-                rule_result = rule.run(event, self.destinations, batch_mode=False)
+                rule_result = rule.run(event, self.destinations, self.display_name_to_destination, batch_mode=False)
         else:
-            rule_result = rule.run(event, self.destinations, batch_mode=False)
+            rule_result = rule.run(event, self.destinations, self.display_name_to_destination, batch_mode=False)
 
         format_exception = lambda exc: '{}: {}'.format(type(exc).__name__, exc) if exc else exc
         # for tests against rules using the `udm` method, you must specify `p_log_type`
@@ -125,7 +126,7 @@ class Engine:
 
         for rule in self.log_type_to_rules[log_type]:
             self.logger.debug("running rule [%s]", rule.rule_id)
-            result = rule.run(panther_event, self.destinations, batch_mode=True)
+            result = rule.run(panther_event, self.destinations, self.display_name_to_destinations, batch_mode=True)
             if result.errored:
                 rule_error = EngineResult(
                     rule_id=rule.rule_id,
@@ -244,6 +245,9 @@ class Engine:
         end = default_timer()
         self.logger.info('Imported %d destinations in %d seconds', import_count, end - start)
         self._last_update = datetime.utcnow()
+
+        # Map display names to destinations
+        self.display_name_to_destinations = {v.destination_display_name: v for k, v in self.destinations.items()}
 
     def _get_rules(self) -> List[Dict[str, Any]]:
         """Retrieves all enabled rules.

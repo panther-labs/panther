@@ -199,11 +199,12 @@ class Rule:
         """Used to expose the loaded python module to the engine, solely added in to support unit test mocking"""
         return self._module
 
-    def run(self, event: PantherEvent, outputs: dict, batch_mode: bool = True) -> RuleResult:
+    def run(self, event: PantherEvent, outputs: dict, outputs_names: dict, batch_mode: bool = True) -> RuleResult:
         """
         Analyze a log line with this rule and return True, False, or an error.
         :param event: The event to run the rule against
         :param outputs: Destinations loaded from the panther-outputs-api
+        :param outputs_names: Destinations mapped by their display name
         :param batch_mode: Whether the rule runs as part of the log analysis or as part of a simple rule test.
         In batch mode, title/dedup functions are not checked if the rule won't trigger an alert and also title()/dedup()
         won't raise exceptions, so that an alert won't be missed.
@@ -251,7 +252,8 @@ class Rule:
             rule_result.runbook_exception = err
 
         try:
-            rule_result.destinations_output = self._get_destinations(event, outputs, use_default_on_exception=batch_mode)
+            rule_result.destinations_output = self._get_destinations(event, outputs,  outputs_names,
+                                                                     use_default_on_exception=batch_mode)
         except Exception as err:  # pylint: disable=broad-except
             rule_result.destinations_exception = err
 
@@ -352,7 +354,8 @@ class Rule:
             return description[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
         return description
 
-    def _get_destinations(self, event: PantherEvent, outputs: dict, use_default_on_exception: bool = True) -> Optional[List[str]]:
+    def _get_destinations(self, event: PantherEvent, outputs: dict, outputs_display_names: dict,
+                          use_default_on_exception: bool = True) -> Optional[List[str]]:
         if not hasattr(self._module, 'destinations'):
             return None
 
@@ -365,10 +368,8 @@ class Rule:
                 return []
             raise
 
+        # Check for (in)valid destinations
         invalid_destinations = []
-        # Map display names to destinations
-        outputs_display_names = {v.destination_display_name: v for k, v in outputs.items()} \
-            if outputs is not None else {}
         standardized_destinations = []
 
         # Standardize the destinations
