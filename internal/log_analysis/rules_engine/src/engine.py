@@ -126,7 +126,7 @@ class Engine:  # pylint: disable=too-many-instance-attributes
 
         for rule in self.log_type_to_rules[log_type]:
             self.logger.debug("running rule [%s]", rule.rule_id)
-            result = rule.run(panther_event, self.destinations, self.display_name_to_destinations, batch_mode=True)
+            result = rule.run(panther_event, self.destinations, self.display_name_to_destination, batch_mode=True)
             if result.errored:
                 rule_error = EngineResult(
                     rule_id=rule.rule_id,
@@ -247,7 +247,7 @@ class Engine:  # pylint: disable=too-many-instance-attributes
         self._last_update = datetime.utcnow()
 
         # Map display names to destinations
-        self.display_name_to_destinations = {v.destination_display_name: v for k, v in self.destinations.items()}
+        self.display_name_to_destination = {v.destination_display_name: v for k, v in self.destinations.items()}
 
     def _get_rules(self) -> List[Dict[str, Any]]:
         """Retrieves all enabled rules.
