@@ -252,8 +252,7 @@ class Rule:
             rule_result.runbook_exception = err
 
         try:
-            rule_result.destinations_output = self._get_destinations(event, outputs,  outputs_names,
-                                                                     use_default_on_exception=batch_mode)
+            rule_result.destinations_output = self._get_destinations(event, outputs, outputs_names, use_default_on_exception=batch_mode)
         except Exception as err:  # pylint: disable=broad-except
             rule_result.destinations_exception = err
 
@@ -354,7 +353,10 @@ class Rule:
             return description[:num_characters_to_keep] + TRUNCATED_STRING_SUFFIX
         return description
 
-    def _get_destinations(self, event: PantherEvent, outputs: dict, outputs_display_names: dict,
+    def _get_destinations(self,
+                          event: PantherEvent,
+                          outputs: dict,
+                          outputs_display_names: dict,
                           use_default_on_exception: bool = True) -> Optional[List[str]]:
         if not hasattr(self._module, 'destinations'):
             return None
