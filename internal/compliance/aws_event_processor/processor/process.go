@@ -252,12 +252,25 @@ var (
 		"CreateClusterParameterGroup":       {},
 
 		// s3
-		"UploadPart":              {},
-		"CreateMultipartUpload":   {},
+		"AbortMultipartUpload": {},
 		"CompleteMultipartUpload": {},
+		"CopyObject": {},
+		"CreateMultipartUpload":   {},
+		"DeleteObject": {},
+		"DeleteObjects": {},
+		"DeleteObjectTagging": {},
 		"HeadBucket":              {},
-		"HeadObject":              {},
-		"PutObject":               {},
+		"HeadObject": {},
+		"PutObject": {},
+		"PutObjectAcl": {},
+		"PutObjectLegalHold": {},
+		"PutObjectLockConfiguration": {},
+		"PutObjectRetention": {},
+		"PutObjectTagging": {},
+		"RestoreObject": {},
+		"SelectObjectContent": {},
+		"UploadPart":              {},
+		"UploadPartCopy": {},
 
 		// waf, waf-regional
 		// TODO get suffixes
