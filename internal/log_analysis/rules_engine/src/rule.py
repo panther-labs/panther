@@ -389,7 +389,7 @@ class Rule:
         if invalid_destinations:
             if use_default_on_exception:
                 self.logger.warning('destinations method yielded invalid destinations: %s', str(invalid_destinations))
-                return []
+                return None
             raise ValueError('Invalid Destinations: {}'.format(str(invalid_destinations)))
 
         if len(standardized_destinations) > MAX_DESTINATIONS_SIZE:
