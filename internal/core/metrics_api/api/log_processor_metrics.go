@@ -37,14 +37,14 @@ func getEventsProcessed(input *models.GetMetricsInput, output *models.GetMetrics
 	// First determine applicable metric dimensions
 	var listMetricsResponse []*cloudwatch.Metric
 	err := cloudwatchClient.ListMetricsPages(&cloudwatch.ListMetricsInput{
-		MetricName: aws.String(logmetrics.MetricLogProcessorEventLatency),
+		MetricName: aws.String(logmetrics.MetricLogProcessorEventsProcessed),
 		Namespace:  aws.String(input.Namespace),
 	}, func(page *cloudwatch.ListMetricsOutput, _ bool) bool {
 		listMetricsResponse = append(listMetricsResponse, page.Metrics...)
 		return true
 	})
 	if err != nil {
-		zap.L().Error("unable to list metrics", zap.String("metric", logmetrics.MetricLogProcessorEventLatency), zap.Error(err))
+		zap.L().Error("unable to list metrics", zap.String("metric", logmetrics.MetricLogProcessorEventsProcessed), zap.Error(err))
 		return metricsInternalError
 	}
 	zap.L().Debug("found applicable metrics", zap.Any("metrics", listMetricsResponse))
