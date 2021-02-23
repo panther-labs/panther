@@ -75,9 +75,6 @@ type SourceIntegrationMetadata struct {
 	LogProcessingRole string           `json:"logProcessingRole,omitempty"`
 	// Whether Panther should configure the user's bucket notifications.
 	ManagedBucketNotifications bool `json:"managedBucketNotifications"`
-	// The resources that Panther created. This may be partial if an error occurred
-	// while creating a resource.
-	ManagedS3Resources ManagedS3Resources `json:"managedS3Resources,omitempty"`
 	// This is only needed for the API response, so that the UI can show a warning message
 	// if Panther couldn't setup bucket notifications. Failing to do so doesn't
 	// block any other source operations like saving to the DB.
@@ -196,7 +193,7 @@ type SourceIntegrationHealth struct {
 	// GetObject check is not available to sources created in Panther<1.16
 	GetObjectStatus *SourceIntegrationItemStatus `json:"getObjectStatus,omitempty"`
 	// BucketNotificationsStatus is the result of checking the bucket's notifications configuration.
-	// It is populated only the log processing role has the s3:GetBucketNotification permission. This is
+	// It is populated only if the log processing role has the s3:GetBucketNotification permission. This is
 	// added to our provided CFN template if user opts for Panther-managed bucket notifications.
 	BucketNotificationsStatus *SourceIntegrationItemStatus `json:"bucketNotificationsStatus,omitempty"`
 
