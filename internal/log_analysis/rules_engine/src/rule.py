@@ -305,7 +305,7 @@ class Rule:
             dedup_string = self._run_command(command, event, str)
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.warning('dedup method raised exception. Defaulting dedup string to "%s". Exception: %s', self.rule_id, err)
+                self.logger.info('dedup method raised exception. Defaulting dedup string to "%s". Exception: %s', self.rule_id, err)
                 return self._default_dedup_string
             raise
 
@@ -315,7 +315,7 @@ class Rule:
 
         if len(dedup_string) > MAX_DEDUP_STRING_SIZE:
             # If dedup_string exceeds max size, truncate it
-            self.logger.warning(
+            self.logger.info(
                 'maximum dedup string size is [%d] characters. Dedup string for rule with ID [%s] is [%d] characters. Truncating.',
                 MAX_DEDUP_STRING_SIZE,
                 self.rule_id,
@@ -335,7 +335,7 @@ class Rule:
             description = self._run_command(command, event, str)
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.warning(
+                self.logger.info(
                     'description method for rule with id [%s] raised exception. Using default Exception: %s', self.rule_id, err
                 )
                 return ''
@@ -343,7 +343,7 @@ class Rule:
 
         if len(description) > MAX_GENERATED_FIELD_SIZE:
             # If generated field exceeds max size, truncate it
-            self.logger.warning(
+            self.logger.info(
                 'maximum field [description] length is [%d]. [%d] for rule with ID [%s] . Truncating.',
                 MAX_GENERATED_FIELD_SIZE,
                 len(description),
@@ -366,8 +366,8 @@ class Rule:
             destinations = self._run_command(command, event, list())
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.warning('destinations method raised exception. Exception: %s', err)
-                return []
+                self.logger.info('destinations method raised exception. Exception: %s', err)
+                return None
             raise
 
         # Check for (in)valid destinations
@@ -388,13 +388,13 @@ class Rule:
 
         if invalid_destinations:
             if use_default_on_exception:
-                self.logger.warning('destinations method yielded invalid destinations: %s', str(invalid_destinations))
+                self.logger.info('destinations method yielded invalid destinations: %s', str(invalid_destinations))
                 return None
             raise ValueError('Invalid Destinations: {}'.format(str(invalid_destinations)))
 
         if len(standardized_destinations) > MAX_DESTINATIONS_SIZE:
             # If generated field exceeds max size, truncate it
-            self.logger.warning(
+            self.logger.info(
                 'maximum len of destinations [%d] for rule with ID [%s] is [%d] fields. Truncating.', MAX_DESTINATIONS_SIZE, self.rule_id,
                 len(standardized_destinations)
             )
@@ -410,7 +410,7 @@ class Rule:
             reference = self._run_command(command, event, str)
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.warning(
+                self.logger.info(
                     'reference method for rule with id [%s] raised exception. Using default. Exception: %s', self.rule_id, err
                 )
                 return ''
@@ -418,7 +418,7 @@ class Rule:
 
         if len(reference) > MAX_GENERATED_FIELD_SIZE:
             # If generated field exceeds max size, truncate it
-            self.logger.warning(
+            self.logger.info(
                 'maximum field [reference] length is [%d]. [%d] for rule with ID [%s] . Truncating.',
                 MAX_GENERATED_FIELD_SIZE,
                 len(reference),
@@ -437,7 +437,7 @@ class Rule:
             runbook = self._run_command(command, event, str)
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.warning(
+                self.logger.info(
                     'runbook method for rule with id [%s] raised exception. Using default. Exception: %s', self.rule_id, err
                 )
                 return ''
@@ -445,7 +445,7 @@ class Rule:
 
         if len(runbook) > MAX_GENERATED_FIELD_SIZE:
             # If generated field exceeds max size, truncate it
-            self.logger.warning(
+            self.logger.info(
                 'maximum field [runbook] length is [%d]. [%d] for rule with ID [%s] . Truncating.',
                 MAX_GENERATED_FIELD_SIZE,
                 len(runbook),
@@ -463,7 +463,7 @@ class Rule:
             command = getattr(self._module, 'severity')
             severity = self._run_command(command, event, str).upper()
             if severity not in SEVERITY_TYPES:
-                self.logger.warning(
+                self.logger.info(
                     'severity method for rule with id [%s] yielded [%s], expected [%s]', self.rule_id, severity, str(SEVERITY_TYPES)
                 )
                 raise AssertionError(
@@ -471,7 +471,7 @@ class Rule:
                 )
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.warning(
+                self.logger.info(
                     'severity method for rule with id [%s] raised exception. Using default (INFO). Exception: %s', self.rule_id, err
                 )
                 return 'INFO'
@@ -487,13 +487,13 @@ class Rule:
             title = self._run_command(command, event, str)
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.warning('title method for rule with id [%s] raised exception. Using default. Exception: %s', self.rule_id, err)
+                self.logger.info('title method for rule with id [%s] raised exception. Using default. Exception: %s', self.rule_id, err)
                 return self.rule_id
             raise
 
         if len(title) > MAX_GENERATED_FIELD_SIZE:
             # If generated field exceeds max size, truncate it
-            self.logger.warning(
+            self.logger.info(
                 'maximum field [title] length is [%d]. [%d] for rule with ID [%s] . Truncating.',
                 MAX_GENERATED_FIELD_SIZE,
                 len(title),
