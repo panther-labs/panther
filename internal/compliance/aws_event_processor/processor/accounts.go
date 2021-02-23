@@ -81,6 +81,8 @@ func refreshAccounts() error {
 		zap.L().Debug("using cached accounts")
 		return nil
 	}
+	// When the cache is expired, reset it
+	resetAccountCache()
 
 	zap.L().Debug("populating account cache")
 	input := &models.LambdaInput{
