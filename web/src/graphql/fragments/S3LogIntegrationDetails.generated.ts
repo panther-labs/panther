@@ -45,7 +45,6 @@ export type S3LogIntegrationDetails = Pick<
     getObjectStatus?: Types.Maybe<IntegrationItemHealthDetails>;
     bucketNotificationsStatus?: Types.Maybe<IntegrationItemHealthDetails>;
   };
-  managedS3Resources?: Types.Maybe<Pick<Types.ManagedS3Resources, 'topicARN'>>;
 };
 
 export const S3LogIntegrationDetails = gql`
@@ -82,9 +81,6 @@ export const S3LogIntegrationDetails = gql`
       bucketNotificationsStatus {
         ...IntegrationItemHealthDetails
       }
-    }
-    managedS3Resources {
-      topicARN
     }
   }
   ${IntegrationItemHealthDetails}

@@ -734,7 +734,6 @@ type S3LogIntegration {
   notificationsConfigurationSucceeded: Boolean!
   health: S3LogIntegrationHealth!
   stackName: String!
-  managedS3Resources: ManagedS3Resources
 }
 
 type ManagedS3Resources {

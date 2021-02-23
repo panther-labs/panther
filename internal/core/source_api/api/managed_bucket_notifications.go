@@ -19,6 +19,7 @@ package api
  */
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -34,124 +35,133 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/pkg/awsutils"
 	"github.com/panther-labs/panther/pkg/stringset"
 )
 
-// The name of the topic that Panther will manage. S3 notifications for new objects will be sent
-// to this topic.
-const pantherNotificationsTopic = "panther-notifications-topic"
+const (
+	// The name of the topic that Panther will create. S3 notifications for new objects will be sent
+	// to this topic.
+	pantherNotificationsTopic = "panther-notifications-topic"
+	// A prefix for the name of the notifications that will be managed by Panther.
+	namePrefix = "panther-managed-"
+)
+
+// info for a Panther AWS deployment
+type pantherDeployment struct {
+	sess          *session.Session
+	accountID     string
+	partition     string
+	inputQueueARN string
+}
+
+// info to access an S3 bucket
+type bucketInfo struct {
+	name    string
+	owner   string
+	roleARN string // a role ARN with access to read the bucket
+}
 
 // Creates the necessary AWS resources (topic, subscription to Panther queue) and configures the
-// topic notifications for the source's bucket.
+// bucket notifications for the source's bucket.
+// For every different (and non overlapping) s3 prefix, there should be a bucket notification.
+// Note: There may be multiple sources with the same bucket in the db. The s3 prefixes from all of them
+// are taken into account, so that the resulting bucket configuration satisfies them all.
 //
 // This function can be run either for creating or updating bucket notifications and is idempotent.
-// The source.ManagedS3Resources field is mutated to contain the managed resources.
-// Even if this function returns an error, source.ManagedS3Resources is updated with the resources that
-// were created before the error occurred.
-func ManageBucketNotifications(
-	pantherSess *session.Session,
-	pantherAccountID,
-	pantherPartition,
-	pantherInputDataQueueARN string,
-	source *models.SourceIntegration) error {
+func ManageBucketNotifications(dbClient *ddb.DDB, panther pantherDeployment, source *models.SourceIntegration) error {
+	prefixes, err := compilePrefixes(dbClient, source)
+	if err != nil {
+		return errors.Wrap(err, "failed to fetch sources from db")
+	}
 
-	managed := &source.ManagedS3Resources
+	bucket := bucketInfo{
+		name:    source.S3Bucket,
+		owner:   source.AWSAccountID,
+		roleARN: source.RequiredLogProcessingRole(),
+	}
+	return configureBucketNotifications(panther, bucket, prefixes)
+}
 
-	stsSess := pantherSess.Copy(&aws.Config{
+// compilePrefixes gathers all the s3 prefixes from sources with the same bucket as the source's bucket,
+// appends the source's prefix to them and returns them.
+func compilePrefixes(dbClient *ddb.DDB, source *models.SourceIntegration) (prefixes []string, err error) {
+	// Take the prefixes from all sources with this bucket into account.
+	sources, err := dbClient.ListS3SourcesWithBucket(context.TODO(), source.S3Bucket)
+	if err != nil {
+		return nil, err
+	}
+	for _, dbSource := range sources {
+		if dbSource.IntegrationID == source.IntegrationID {
+			// User input (source) is the source of truth, which may be an update of the existing dbSource.
+			// We will append it after the loop.
+			continue
+		}
+		prefixes = append(prefixes, dbSource.S3PrefixLogTypes.S3Prefixes()...)
+	}
+	prefixes = append(prefixes, source.S3PrefixLogTypes.S3Prefixes()...)
+	return prefixes, nil
+}
+
+// RemoveBucketNotifications removes the bucket notifications that are required to match the s3 prefixes
+// of source.
+func RemoveBucketNotifications(dbClient *ddb.DDB, panther pantherDeployment, source models.SourceIntegration) error {
+	source.S3PrefixLogTypes = nil // don't keep any bucket notifications for this source
+	return ManageBucketNotifications(dbClient, panther, &source)
+}
+
+func configureBucketNotifications(panther pantherDeployment, bucket bucketInfo, prefixes []string) error {
+	stsSess := panther.sess.Copy(&aws.Config{
 		MaxRetries:          aws.Int(5),
 		STSRegionalEndpoint: endpoints.RegionalSTSEndpoint,
-		Credentials:         stscreds.NewCredentials(pantherSess, source.RequiredLogProcessingRole()),
+		Credentials:         stscreds.NewCredentials(panther.sess, bucket.roleARN),
 	})
 
-	bucketRegion, err := getBucketLocation(stsSess, source.S3Bucket)
+	bucketRegion, err := getBucketLocation(stsSess, bucket.name)
 	if err != nil {
 		return errors.Wrap(err, "failed to get bucket location")
 	}
 
 	// Create the topic if it wasn't created previously. This saves some API requests during
 	// source updates.
-	if managed.TopicARN == nil {
-		topicARN, err := createSNSResources(stsSess, bucketRegion, pantherAccountID, pantherPartition, pantherInputDataQueueARN)
-		if err != nil {
-			return err
-		}
-		managed.TopicARN = topicARN
-	}
-
-	// Setup bucket notifications
-	s3Client := s3.New(stsSess, &aws.Config{Region: bucketRegion})
-
-	bucket, prefixes := source.S3Info()
-	prefixes = reduceNoPrefixStrings(prefixes)
-	managedTopicConfigIDs, err := updateBucketTopicConfigurations(
-		s3Client, bucket, source.AWSAccountID, source.ManagedS3Resources.TopicConfigurationIDs, prefixes, managed.TopicARN)
+	topicARN, err := createSNSResources(stsSess, bucketRegion, panther)
 	if err != nil {
-		return errors.WithMessage(err, "failed to replace bucket configuration")
+		return err
 	}
-	managed.TopicConfigurationIDs = managedTopicConfigIDs
-	zap.S().Debugf("replaced bucket topic configurations for %s", source.S3Bucket)
 
+	s3Client := s3.New(stsSess, &aws.Config{Region: &bucketRegion})
+	configuredNotificationIDs, err := updateBucketTopicConfigurations(s3Client, bucket.name, bucket.owner, prefixes, topicARN)
+	if err != nil {
+		return errors.Wrap(err, "failed to replace bucket configuration")
+	}
+	// Keep a log to make it easier to track back operations and troubleshoot potential issues.
+	// Logging at DEBUG level won't help. By the time DEBUG is enabled, the previous operations trail is lost.
+	zap.L().Info("configured bucket notifications",
+		zap.String("bucket", bucket.name), zap.Strings("notificationIds", configuredNotificationIDs))
 	return nil
 }
 
-func createSNSResources(
-	stsSess *session.Session,
-	bucketRegion *string,
-	pantherAccountID,
-	pantherPartition,
-	pantherInputDataQueueARN string) (*string, error) {
-
+func createSNSResources(stsSess *session.Session, bucketRegion string, panther pantherDeployment) (*string, error) {
 	// Create the topic with policy and subscribe to Panther input data queue.
-	snsClient := sns.New(stsSess, &aws.Config{Region: bucketRegion})
+	snsClient := sns.New(stsSess, &aws.Config{Region: &bucketRegion})
 
-	topicARN, err := createTopic(snsClient, pantherAccountID, pantherPartition)
+	topicARN, err := createTopic(snsClient, panther)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create topic")
 	}
 	zap.S().Debugf("created topic %s", *topicARN)
 
-	err = subscribeTopicToQueue(snsClient, topicARN, pantherInputDataQueueARN)
+	err = subscribeTopicToQueue(snsClient, topicARN, panther.inputQueueARN)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to subscribe topic %s to %s", *topicARN, pantherInputDataQueueARN)
+		return nil, errors.Wrapf(err, "failed to subscribe topic %s to %s", *topicARN, panther.inputQueueARN)
 	}
-	zap.S().Debugf("subscribed topic %s to %s", *topicARN, pantherInputDataQueueARN)
+	zap.S().Debugf("subscribed topic %s to %s", *topicARN, panther.inputQueueARN)
 
 	return topicARN, nil
 }
 
-func RemoveBucketNotifications(pantherSess *session.Session, source *models.SourceIntegration) error {
-	if source.ManagedS3Resources.TopicARN == nil {
-		// If Panther didn't manage to create a topic, it didn't configure any bucket notifications either.
-		return nil
-	}
-
-	stsSess := pantherSess.Copy(&aws.Config{
-		STSRegionalEndpoint: endpoints.RegionalSTSEndpoint,
-		Credentials:         stscreds.NewCredentials(pantherSess, source.RequiredLogProcessingRole()),
-	})
-
-	bucketRegion, err := getBucketLocation(stsSess, source.S3Bucket)
-	if err != nil {
-		return errors.Wrap(err, "failed to get bucket location")
-	}
-	s3Client := s3.New(stsSess, &aws.Config{Region: bucketRegion})
-
-	var prefixes []string // No Panther-managed notifications should be kept in the bucket
-	_, err = updateBucketTopicConfigurations(s3Client,
-		source.S3Bucket,
-		source.AWSAccountID,
-		source.ManagedS3Resources.TopicConfigurationIDs,
-		prefixes,
-		source.ManagedS3Resources.TopicARN)
-	if err != nil {
-		return errors.Wrap(err, "failed to update bucket notifications configuration")
-	}
-
-	return nil
-}
-
-func createTopic(snsClient *sns.SNS, pantherAccountID, pantherPartition string) (*string, error) {
+func createTopic(snsClient *sns.SNS, panther pantherDeployment) (*string, error) {
 	topic, err := snsClient.CreateTopic(&sns.CreateTopicInput{
 		Name: aws.String(pantherNotificationsTopic),
 	})
@@ -183,7 +193,7 @@ func createTopic(snsClient *sns.SNS, pantherAccountID, pantherPartition string) 
 				Effect: "Allow",
 				Action: "sns:Subscribe",
 				Principal: awsutils.Principal{
-					AWS: fmt.Sprintf("arn:%s:iam::%s:root", pantherPartition, pantherAccountID),
+					AWS: fmt.Sprintf("arn:%s:iam::%s:root", panther.partition, panther.accountID),
 				},
 				Resource: *topic.TopicArn,
 			},
@@ -226,7 +236,7 @@ func subscribeTopicToQueue(snsClient *sns.SNS, topicARN *string, queueARN string
 // bucket, a new configuration is added.
 //  - Passing empty/nil as prefixes will remove all Panther-managed notifications. Note that existingConfigIDs should be
 // provided.
-func updateBucketTopicConfigurations(s3Client *s3.S3, bucket, bucketOwner string, existingConfigIDs, prefixes []string, topicARN *string) (
+func updateBucketTopicConfigurations(s3Client *s3.S3, bucket, bucketOwner string, prefixes []string, topicARN *string) (
 	newManagedConfigIDs []string, err error) {
 
 	getInput := s3.GetBucketNotificationConfigurationRequest{
@@ -238,7 +248,7 @@ func updateBucketTopicConfigurations(s3Client *s3.S3, bucket, bucketOwner string
 		return nil, errors.Wrap(err, "failed to get bucket notifications")
 	}
 
-	config.TopicConfigurations, newManagedConfigIDs = updateTopicConfigs(config.TopicConfigurations, existingConfigIDs, prefixes, topicARN)
+	config.TopicConfigurations, newManagedConfigIDs = updateTopicConfigs(config.TopicConfigurations, prefixes, topicARN)
 
 	putInput := s3.PutBucketNotificationConfigurationInput{
 		Bucket:                    &bucket,
@@ -252,28 +262,40 @@ func updateBucketTopicConfigurations(s3Client *s3.S3, bucket, bucketOwner string
 	return newManagedConfigIDs, nil
 }
 
-// updateTopicConfigs returns a new s3.TopicConfiguration slice given an existing s3.TopicConfiguration,
-// the managedConfigIDs and the prefixes that should be part of the result. Any non Panther-managed
+// updateTopicConfigs returns a new list of s3.TopicConfiguration items, given an existing s3.TopicConfiguration,
+// and the prefixes that should be part of the result. Any non Panther-managed
 // configuration that exists in bucketTopicConfigs should also be returned in the result.
-func updateTopicConfigs(bucketTopicConfigs []*s3.TopicConfiguration, managedConfigIDs, prefixes []string, topicARN *string) (
+func updateTopicConfigs(bucketTopicConfigs []*s3.TopicConfiguration, prefixes []string, topicARN *string) (
 	[]*s3.TopicConfiguration, []string) {
+
+	// AWS will return an error if there are notification configurations with overlapping prefixes.
+	prefixes = reduceNoPrefixStrings(prefixes)
 
 	var newConfigs []*s3.TopicConfiguration
 	var newManagedConfigIDs []string
 
+	isPantherCreated := func(c *s3.TopicConfiguration) bool {
+		return strings.HasPrefix(aws.StringValue(c.Id), namePrefix)
+	}
+
 	added := make(map[string]struct{})
 	for _, c := range bucketTopicConfigs {
-		if stringset.Contains(managedConfigIDs, *c.Id) {
-			// Panther-created. Keep it only if its prefix is included in prefixes.
-			pref := prefixFromFilterRules(c.Filter.Key.FilterRules)
-			if pref != nil && stringset.Contains(prefixes, *pref) {
-				newConfigs = append(newConfigs, c)
-				added[*pref] = struct{}{}
-				newManagedConfigIDs = append(newManagedConfigIDs, *c.Id)
-			}
-		} else {
-			// User-created, keep it
+		if !isPantherCreated(c) {
+			// User-created, keep it anyway
 			newConfigs = append(newConfigs, c)
+			continue
+		}
+		// Panther created. Keep it only if prefixes include pref.
+		pref, ok := prefixFromFilterRules(c.Filter.Key.FilterRules)
+		if !ok {
+			// Must not be reached if there isn't a bug when we update the bucket notifications configuration.
+			zap.S().Warn("prefix filter wasn't defined in bucket notification %s", *c.Id)
+			continue
+		}
+		if stringset.Contains(prefixes, pref) {
+			newConfigs = append(newConfigs, c)
+			added[pref] = struct{}{}
+			newManagedConfigIDs = append(newManagedConfigIDs, *c.Id)
 		}
 	}
 
@@ -282,7 +304,7 @@ func updateTopicConfigs(bucketTopicConfigs []*s3.TopicConfiguration, managedConf
 			continue
 		}
 		c := s3.TopicConfiguration{
-			Id:     aws.String("panther-managed-" + uuid.New().String()),
+			Id:     aws.String(namePrefix + uuid.New().String()),
 			Events: []*string{aws.String("s3:ObjectCreated:*")},
 			Filter: &s3.NotificationConfigurationFilter{
 				Key: &s3.KeyFilter{
@@ -301,23 +323,23 @@ func updateTopicConfigs(bucketTopicConfigs []*s3.TopicConfiguration, managedConf
 	return newConfigs, newManagedConfigIDs
 }
 
-func prefixFromFilterRules(rules []*s3.FilterRule) *string {
+func prefixFromFilterRules(rules []*s3.FilterRule) (pref string, ok bool) {
 	for _, fr := range rules {
 		if strings.ToLower(aws.StringValue(fr.Name)) == "prefix" {
-			return fr.Value
+			return aws.StringValue(fr.Value), true
 		}
 	}
-	return nil
+	return "", false
 }
 
-func getBucketLocation(stsSess *session.Session, bucket string) (*string, error) {
+func getBucketLocation(stsSess *session.Session, bucket string) (string, error) {
 	s3Client := s3.New(stsSess)
 	bucketLoc, err := s3Client.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: &bucket})
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	if bucketLoc.LocationConstraint == nil {
-		return aws.String(endpoints.UsEast1RegionID), nil
+		return endpoints.UsEast1RegionID, nil
 	}
-	return bucketLoc.LocationConstraint, nil
+	return aws.StringValue(bucketLoc.LocationConstraint), nil
 }
