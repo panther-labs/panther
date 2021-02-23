@@ -46,10 +46,14 @@ const LogSourceCardOptions: React.FC<LogSourceCardOptionsProps> = ({ source }) =
     default:
       castedSource = source as S3LogIntegration;
       description = `Deleting this source will not delete the associated Cloudformation stack. You will need to manually delete the stack ${castedSource.stackName} from the AWS Account ${castedSource.awsAccountId}`;
+<<<<<<< HEAD
       if (castedSource.managedS3Resources?.topicARN) {
         description += `. The SNS topic created by Panther will also be kept (${castedSource.managedS3Resources.topicARN})`;
       }
       logSourceEditUrl = urls.logAnalysis.sources.edit(source.integrationId, 's3');
+=======
+      logSourceEditUrl = urls.integrations.logSources.edit(source.integrationId, 's3');
+>>>>>>> 9c75bb31 (Make managed-notifications play well with multiple sources for the same bucket (#2710))
   }
 
   return (

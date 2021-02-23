@@ -24,6 +24,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -77,8 +78,14 @@ func (api *API) DeleteIntegration(input *models.DeleteIntegrationInput) error {
 		}
 
 		if integrationItem.ManagedBucketNotifications {
-			source := itemToIntegration(integrationItem)
-			err = RemoveBucketNotifications(api.AwsSession, source)
+			source := ddb.ItemToIntegration(integrationItem)
+			panther := pantherDeployment{
+				sess:          api.AwsSession,
+				accountID:     api.Config.AccountID,
+				partition:     api.Config.AWSPartition,
+				inputQueueARN: api.Config.LogProcessorQueueArn,
+			}
+			err = RemoveBucketNotifications(api.DdbClient, panther, *source)
 			if err != nil {
 				// Handle the error here and allow the delete operation to succeed. The users may have already deleted
 				// the IAM role we assume to configure bucket notifications.

@@ -1381,7 +1381,6 @@ export type S3LogIntegration = {
   notificationsConfigurationSucceeded: Scalars['Boolean'];
   health: S3LogIntegrationHealth;
   stackName: Scalars['String'];
-  managedS3Resources?: Maybe<ManagedS3Resources>;
 };
 
 export type S3LogIntegrationHealth = {
@@ -1843,7 +1842,6 @@ export type ResolversTypes = {
   S3LogIntegration: ResolverTypeWrapper<S3LogIntegration>;
   S3PrefixLogTypes: ResolverTypeWrapper<S3PrefixLogTypes>;
   S3LogIntegrationHealth: ResolverTypeWrapper<S3LogIntegrationHealth>;
-  ManagedS3Resources: ResolverTypeWrapper<ManagedS3Resources>;
   GetS3LogIntegrationTemplateInput: GetS3LogIntegrationTemplateInput;
   SqsLogSourceIntegration: ResolverTypeWrapper<SqsLogSourceIntegration>;
   SqsConfig: ResolverTypeWrapper<SqsConfig>;
@@ -1961,6 +1959,7 @@ export type ResolversTypes = {
   FloatSeries: ResolverTypeWrapper<FloatSeries>;
   Float: ResolverTypeWrapper<Scalars['Float']>;
   FloatSeriesData: ResolverTypeWrapper<FloatSeriesData>;
+  ManagedS3Resources: ResolverTypeWrapper<ManagedS3Resources>;
   ListPoliciesSortFieldsEnum: ListPoliciesSortFieldsEnum;
   ListRulesSortFieldsEnum: ListRulesSortFieldsEnum;
   AccountTypeEnum: AccountTypeEnum;
@@ -2035,7 +2034,6 @@ export type ResolversParentTypes = {
   S3LogIntegration: S3LogIntegration;
   S3PrefixLogTypes: S3PrefixLogTypes;
   S3LogIntegrationHealth: S3LogIntegrationHealth;
-  ManagedS3Resources: ManagedS3Resources;
   GetS3LogIntegrationTemplateInput: GetS3LogIntegrationTemplateInput;
   SqsLogSourceIntegration: SqsLogSourceIntegration;
   SqsConfig: SqsConfig;
@@ -2155,6 +2153,7 @@ export type ResolversParentTypes = {
   FloatSeries: FloatSeries;
   Float: Scalars['Float'];
   FloatSeriesData: FloatSeriesData;
+  ManagedS3Resources: ManagedS3Resources;
   ListPoliciesSortFieldsEnum: ListPoliciesSortFieldsEnum;
   ListRulesSortFieldsEnum: ListRulesSortFieldsEnum;
   AccountTypeEnum: AccountTypeEnum;
@@ -3429,11 +3428,6 @@ export type S3LogIntegrationResolvers<
   >;
   health?: Resolver<ResolversTypes['S3LogIntegrationHealth'], ParentType, ContextType>;
   stackName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  managedS3Resources?: Resolver<
-    Maybe<ResolversTypes['ManagedS3Resources']>,
-    ParentType,
-    ContextType
-  >;
   __isTypeOf?: IsTypeOfResolverFn<ParentType>;
 };
 

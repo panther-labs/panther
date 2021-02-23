@@ -22,6 +22,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panther-labs/panther/api/lambda/source/models"
+	"github.com/panther-labs/panther/internal/core/source_api/ddb"
 	"github.com/panther-labs/panther/pkg/genericapi"
 )
 
@@ -45,7 +46,7 @@ func (api *API) ListIntegrations(
 			// breaking Panther upgrades. Skip these sources.
 			continue
 		}
-		integ := itemToIntegration(item)
+		integ := ddb.ItemToIntegration(item)
 		// This is required for backwards compatibility
 		// Before https://github.com/panther-labs/panther/issues/2031 , the Compliance sources
 		// didn't have the InputDataBucket and InputDataRoleArn populated

@@ -298,7 +298,7 @@ func TestS3PrefixLogTypes_BackwardsCompatibility(t *testing.T) {
 			S3PrefixLogTypes: nil, // new field
 		}
 
-		source := itemToIntegration(sourceItem)
+		source := ddb.ItemToIntegration(sourceItem)
 
 		expected := &models.SourceIntegration{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
@@ -325,7 +325,7 @@ func TestS3PrefixLogTypes_BackwardsCompatibility(t *testing.T) {
 			S3PrefixLogTypes: models.S3PrefixLogtypes{{S3Prefix: "prefix/", LogTypes: []string{"A.LogType"}}},
 		}
 
-		source := itemToIntegration(sourceItem)
+		source := ddb.ItemToIntegration(sourceItem)
 
 		expected := &models.SourceIntegration{
 			SourceIntegrationMetadata: models.SourceIntegrationMetadata{
