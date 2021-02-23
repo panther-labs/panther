@@ -108,20 +108,19 @@ class TestEngine(unittest.TestCase):
                             },
                             'id': 'github.com/panther-labs/policy-api',
                             'type': 'Github.Repo'
-                        },
-                        {
+                        }, {
                             'attributes': {
                                 'key': 'value'
                             },
                             'id': 'bad-mock',
                             'type': 'AWS.S3.Bucket',
-                            'mocks': {
-                                'boto3': 'example_boto3_return_value',
-                                'date': 'example_date_return_value',
-                                'bad_mock': 'example_bad_mock_return_value',
-                            }
-                        },
-                        {
+                            'mocks':
+                                {
+                                    'boto3': 'example_boto3_return_value',
+                                    'date': 'example_date_return_value',
+                                    'bad_mock': 'example_bad_mock_return_value',
+                                }
+                        }, {
                             'attributes': {
                                 'key': 'value'
                             },
@@ -150,13 +149,17 @@ class TestEngine(unittest.TestCase):
         with open(os.path.join(_TMP, 'panther-5.py'), 'w') as policy_file:
             policy_file.write('def policy(resource): return 0/0')
         with open(os.path.join(_TMP, 'panther-6.py'), 'w') as policy_file:
-            policy_file.write('import boto3\nfrom datetime import date\nfrom unittest.mock import MagicMock\n'
-                              'def policy(resource): return all([isinstance(boto3, MagicMock), '
-                              'isinstance(boto3.client, MagicMock), isinstance(date, MagicMock)])')
+            policy_file.write(
+                'import boto3\nfrom datetime import date\nfrom unittest.mock import MagicMock\n'
+                'def policy(resource): return all([isinstance(boto3, MagicMock), '
+                'isinstance(boto3.client, MagicMock), isinstance(date, MagicMock)])'
+            )
         with open(os.path.join(_TMP, 'panther-7.py'), 'w') as policy_file:
-            policy_file.write('import boto3\nfrom datetime import date\nfrom unittest.mock import MagicMock\n'
-                              'def policy(resource): return all([isinstance(boto3, MagicMock), '
-                              'isinstance(boto3.client, MagicMock), isinstance(date, MagicMock)])')
+            policy_file.write(
+                'import boto3\nfrom datetime import date\nfrom unittest.mock import MagicMock\n'
+                'def policy(resource): return all([isinstance(boto3, MagicMock), '
+                'isinstance(boto3.client, MagicMock), isinstance(date, MagicMock)])'
+            )
 
         engine.main()
         mock_read.assert_called_once()
@@ -185,46 +188,39 @@ class TestEngine(unittest.TestCase):
                             ],
                         'failed': ['panther-4'],
                         'passed': ['panther-2', 'panther-3']
-                    },
-                    {
+                    }, {
                         'id': 'github.com/panther-labs/policy-engine',
                         'errored': [],
                         'failed': ['panther-2'],
                         'passed': ['panther-4']
-                    },
-                    {
+                    }, {
                         'id': 'github.com/panther-labs/policy-api',
                         'errored': [],
                         'failed': ['panther-2', 'panther-4'],
                         'passed': []
-                    },
-                    {
+                    }, {
                         'id': 'bad-mock',
-                        'errored': [
-                            {
-                                'id': 'panther-2',
-                                'message': "Bad Mock Data: ['boto3', 'date', 'bad_mock']"
-                            },
-                            {
-                                'id': 'panther-6',
-                                'message': "Bad Mock Data: ['bad_mock']"
-                            },
-                            {
-                                'id': 'panther-7',
-                                'message': "Bad Mock Data: ['bad_mock']"
-                            }
-                        ],
+                        'errored':
+                            [
+                                {
+                                    'id': 'panther-2',
+                                    'message': "Bad Mock Data: ['boto3', 'date', 'bad_mock']"
+                                }, {
+                                    'id': 'panther-6',
+                                    'message': "Bad Mock Data: ['bad_mock']"
+                                }, {
+                                    'id': 'panther-7',
+                                    'message': "Bad Mock Data: ['bad_mock']"
+                                }
+                            ],
                         'failed': ['panther-2', 'panther-6', 'panther-7'],
                         'passed': []
-                    },
-                    {
+                    }, {
                         'id': 'valid-mock',
-                        'errored': [
-                            {
-                                'id': 'panther-2',
-                                'message': "Bad Mock Data: ['boto3', 'date']"
-                            },
-                        ],
+                        'errored': [{
+                            'id': 'panther-2',
+                            'message': "Bad Mock Data: ['boto3', 'date']"
+                        },],
                         'failed': ['panther-2'],
                         'passed': ['panther-6', 'panther-7']
                     }
