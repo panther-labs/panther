@@ -410,9 +410,7 @@ class Rule:
             reference = self._run_command(command, event, str)
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.info(
-                    'reference method for rule with id [%s] raised exception. Using default. Exception: %s', self.rule_id, err
-                )
+                self.logger.info('reference method for rule with id [%s] raised exception. Using default. Exception: %s', self.rule_id, err)
                 return ''
             raise
 
@@ -437,9 +435,7 @@ class Rule:
             runbook = self._run_command(command, event, str)
         except Exception as err:  # pylint: disable=broad-except
             if use_default_on_exception:
-                self.logger.info(
-                    'runbook method for rule with id [%s] raised exception. Using default. Exception: %s', self.rule_id, err
-                )
+                self.logger.info('runbook method for rule with id [%s] raised exception. Using default. Exception: %s', self.rule_id, err)
                 return ''
             raise
 
