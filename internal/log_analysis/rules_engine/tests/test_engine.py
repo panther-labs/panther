@@ -474,12 +474,10 @@ class TestEngine(TestCase):
             }
         ]
         outputs_api = mock.MagicMock()
-        outputs_api.get_outputs.return_value = [
-            {
-                "displayName": "Test",
-                "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-            }
-        ]
+        outputs_api.get_outputs.return_value = [{
+            "displayName": "Test",
+            "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        }]
 
         rule_body = [
             'import boto3', 'from datetime import date', 'from unittest.mock import MagicMock', 'def rule(event):',
@@ -538,12 +536,10 @@ class TestEngine(TestCase):
             }
         ]
         outputs_api = mock.MagicMock()
-        outputs_api.get_outputs.return_value = [
-            {
-                "displayName": "Test",
-                "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-            }
-        ]
+        outputs_api.get_outputs.return_value = [{
+            "displayName": "Test",
+            "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        }]
 
         rule_body = 'def rule(event):\n\treturn True\ndef destinations(event):\n\treturn ["Test", "TestTest"]'
         event = {'id': 'event_id', 'data': {'is_dst': True, 'p_log_type': 'log'}}
@@ -591,12 +587,10 @@ class TestEngine(TestCase):
             }
         ]
         outputs_api = mock.MagicMock()
-        outputs_api.get_outputs.return_value = [
-            {
-                "displayName": "Test",
-                "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-            }
-        ]
+        outputs_api.get_outputs.return_value = [{
+            "displayName": "Test",
+            "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        }]
 
         rule_body = 'def rule(event):\n\treturn True\ndef destinations(event):\n\treturn ' \
                     '["Test", "Test", "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"]'
@@ -620,9 +614,7 @@ class TestEngine(TestCase):
             'runbookOutput': None,
             'runbookError': None,
             'destinationsOutput': None,
-            'destinationsError': "ValueError: Invalid Destinations: {}".format(
-                str(["Test", "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"])
-            ),
+            'destinationsError': "ValueError: Invalid Destinations: {}".format(str(["Test", "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"])),
             'dedupOutput': 'defaultDedupString:rule_id',
             'dedupError': None,
             'alertContextOutput': None,
@@ -651,8 +643,7 @@ class TestEngine(TestCase):
             {
                 "displayName": "Test",
                 "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-            },
-            {
+            }, {
                 "displayName": "TestTest",
                 "outputId": "YYYYYYYY-YYYY-YYYY-YYYY-YYYYYYYYYYYY",
             }
