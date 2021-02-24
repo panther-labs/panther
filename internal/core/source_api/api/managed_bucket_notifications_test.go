@@ -20,6 +20,7 @@ package api
 
 import (
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -34,14 +35,23 @@ var (
 
 type sortableTopicConfigs []*s3.TopicConfiguration
 
-func (c sortableTopicConfigs) Len() int           { return len(c) }
-func (c sortableTopicConfigs) Less(i, j int) bool { return *c[i].Id < *c[j].Id }
-func (c sortableTopicConfigs) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
+func (c sortableTopicConfigs) Len() int            { return len(c) }
+func (c sortableTopicConfigs) Less(i, j int) bool  { return prefixFilter(c[i]) < prefixFilter(c[j]) }
+func (c sortableTopicConfigs) Swap(i, j int)       { c[i], c[j] = c[j], c[i] }
+func prefixFilter(c *s3.TopicConfiguration) string { return *c.Filter.Key.FilterRules[0].Value }
 
 func Test_updateTopicConfigs(t *testing.T) {
 	t.Parallel()
 
 	requireEqualSorted := func(t *testing.T, expected, actual []*s3.TopicConfiguration, msgAndArgs ...interface{}) {
+		for _, configs := range [][]*s3.TopicConfiguration{expected, actual} {
+			for _, c := range configs {
+				if strings.HasPrefix(*c.Id, namePrefix) {
+					// Remove the UUID suffix to facilitate equality testing. We only care it's Panther-managed.
+					*c.Id = namePrefix
+				}
+			}
+		}
 		sort.Sort(sortableTopicConfigs(expected))
 		sort.Sort(sortableTopicConfigs(actual))
 		require.Equal(t, expected, actual, msgAndArgs)
@@ -120,7 +130,7 @@ func Test_updateTopicConfigs(t *testing.T) {
 		expected := []*s3.TopicConfiguration{
 			topicConfig(newManagedConfigIDs[0], "prefix", "", events, topic),
 		}
-		requireEqualSorted(t, expected, topicConfigs)
+		require.Equal(t, expected, topicConfigs)
 		require.Len(t, newManagedConfigIDs, 1)
 	})
 }
