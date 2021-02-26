@@ -24,8 +24,10 @@ from unittest.mock import patch, MagicMock
 from . import EngineResult
 from .analysis_api import AnalysisAPIClient
 from .data_model import DataModel
+from .destination import Destination
 from .enriched_event import PantherEvent
 from .logging import get_logger
+from .outputs_api import OutputsAPIClient
 from .rule import Rule
 
 _RULES_CACHE_DURATION = timedelta(minutes=5)
@@ -33,17 +35,21 @@ _RULES_CACHE_DURATION = timedelta(minutes=5)
 MISSING_UDM_EXCEPTION = AttributeError("'dict' object has no attribute 'udm'")
 
 
-class Engine:
+class Engine:  # pylint: disable=too-many-instance-attributes
     """The engine that runs Python rules."""
 
-    def __init__(self, analysis_api: AnalysisAPIClient) -> None:
+    def __init__(self, analysis_api: AnalysisAPIClient, outputs_api: OutputsAPIClient) -> None:
         self.logger = get_logger()
         self._last_update = datetime.utcfromtimestamp(0)
         self.log_type_to_data_models: Dict[str, DataModel] = collections.defaultdict()
         self.log_type_to_rules: Dict[str, List[Rule]] = collections.defaultdict(list)
+        self.destinations: Dict[str, Destination] = collections.defaultdict()
+        self.display_name_to_destination: Dict[str, Destination] = collections.defaultdict()
         self._analysis_client = analysis_api
+        self._outputs_client = outputs_api
         self._populate_rules()
         self._populate_data_models()
+        self._populate_destinations()
 
     def analyze_single_rule(self, raw_rule: dict, test_spec: Mapping) -> Dict[str, Any]:
         """ Test a single rule against an event. """
@@ -66,9 +72,9 @@ class Engine:
 
         if mock_methods:
             with patch.multiple(rule.module, **mock_methods):
-                rule_result = rule.run(event, batch_mode=False)
+                rule_result = rule.run(event, self.destinations, self.display_name_to_destination, batch_mode=False)
         else:
-            rule_result = rule.run(event, batch_mode=False)
+            rule_result = rule.run(event, self.destinations, self.display_name_to_destination, batch_mode=False)
 
         format_exception = lambda exc: '{}: {}'.format(type(exc).__name__, exc) if exc else exc
         # for tests against rules using the `udm` method, you must specify `p_log_type`
@@ -120,7 +126,7 @@ class Engine:
 
         for rule in self.log_type_to_rules[log_type]:
             self.logger.debug("running rule [%s]", rule.rule_id)
-            result = rule.run(panther_event, batch_mode=True)
+            result = rule.run(panther_event, self.destinations, self.display_name_to_destination, batch_mode=True)
             if result.errored:
                 rule_error = EngineResult(
                     rule_id=rule.rule_id,
@@ -214,6 +220,35 @@ class Engine:
         self.logger.info('Imported %d data models in %d seconds', import_count, end - start)
         self._last_update = datetime.utcnow()
 
+    def _populate_destinations(self) -> None:
+        """Import all destinations."""
+        import_count = 0
+        start = default_timer()
+        destinations = self._get_destinations()
+        end = default_timer()
+        self.logger.info('Retrieved %d destinations in %s seconds', len(destinations), end - start)
+        start = default_timer()
+
+        # Clear old destinations
+        self.destinations.clear()
+
+        for raw_destination in destinations:
+            try:
+                destination = Destination(raw_destination)
+            except Exception as err:  # pylint: disable=broad-except
+                self.logger.error('Failed to import destination. Error: [%s]', err)
+                continue
+
+            import_count = import_count + 1
+            self.destinations[destination.destination_id] = destination
+
+        end = default_timer()
+        self.logger.info('Imported %d destinations in %d seconds', import_count, end - start)
+        self._last_update = datetime.utcnow()
+
+        # Map display names to destinations
+        self.display_name_to_destination = {v.destination_display_name: v for k, v in self.destinations.items()}
+
     def _get_rules(self) -> List[Dict[str, Any]]:
         """Retrieves all enabled rules.
 
@@ -229,3 +264,11 @@ class Engine:
             An array of Dict['id': data_model_id, 'body': body, 'mappings': [...] ...] that contain all fields of a data model.
         """
         return self._analysis_client.get_enabled_data_models()
+
+    def _get_destinations(self) -> List[Dict[str, Any]]:
+        """Retrieves all configured destinations.
+
+        Returns:
+            An array of Dict['displayName': display_name, 'outputId': output_id, ...] that contain all fields of a destination.
+        """
+        return self._outputs_client.get_outputs()

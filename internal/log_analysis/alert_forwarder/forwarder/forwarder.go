@@ -220,6 +220,7 @@ func (h *Handler) sendAlertNotification(rule *ruleModel.Rule, alertDedup *alertA
 		Runbook:             getRunbook(rule, alertDedup),
 		Severity:            getSeverity(rule, alertDedup),
 		Title:               getTitle(rule, alertDedup),
+		Destinations:        getDestinations(alertDedup),
 	}
 
 	if alertDedup.AlertContext != nil {
@@ -296,6 +297,13 @@ func getOutputIds(rule *ruleModel.Rule, alertDedup *alertApiModels.AlertDedupEve
 		return alertDedup.GeneratedDestinations
 	}
 	return rule.OutputIDs
+}
+
+func getDestinations(alertDedup *alertApiModels.AlertDedupEvent) []string {
+	if alertDedup.GeneratedDestinations != nil && len(alertDedup.GeneratedDestinations) == 0 {
+		return skipOutput
+	}
+	return alertDedup.GeneratedDestinations
 }
 
 func getRuleDisplayName(rule *ruleModel.Rule) *string {
