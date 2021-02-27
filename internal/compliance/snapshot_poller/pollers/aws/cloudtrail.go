@@ -247,6 +247,11 @@ func PollCloudTrails(pollerInput *awsmodels.ResourcePollerInput) (
 		zap.L().Debug("building CloudTrail snapshots", zap.String("region", *regionID))
 		cloudTrailSvc, err := getCloudTrailClient(pollerInput, *regionID)
 		if err != nil {
+			var e *RegionIgnoreListError
+			if errors.As(err, &e) {
+				zap.L().Debug("Skipping denied region in CloudTrail scan")
+				continue
+			}
 			return nil, nil, err
 		}
 

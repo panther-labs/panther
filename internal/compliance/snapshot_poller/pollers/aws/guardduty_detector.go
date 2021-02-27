@@ -186,6 +186,11 @@ func PollGuardDutyDetectors(pollerInput *awsmodels.ResourcePollerInput) ([]apimo
 	for _, regionID := range regions {
 		guardDutySvc, err := getGuardDutyClient(pollerInput, *regionID)
 		if err != nil {
+			var e *RegionIgnoreListError
+			if errors.As(err, &e) {
+				zap.L().Debug("Skipping denied region in GuardDuty scan")
+				continue
+			}
 			return nil, nil, err
 		}
 
