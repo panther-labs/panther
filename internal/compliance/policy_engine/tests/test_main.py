@@ -36,7 +36,7 @@ class TestMain(unittest.TestCase):
     def test_error(self, mock_logger: mock.MagicMock) -> None:
         """Error is logged and re-raised"""
         lambda_event = {'policies': [], 'resources': [1, 2, 3]}
-        with self.assertRaises(TypeError):
+        with self.assertRaises(AttributeError):
             main.lambda_handler(lambda_event, None)
 
         mock_logger.assert_has_calls([

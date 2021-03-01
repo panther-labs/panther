@@ -116,7 +116,8 @@ class PolicySet:
                         result = policy.run(resource['attributes'])
                 except AttributeError as err:
                     result = False
-                    errored.append({'id': policy.policy_id, 'message': f'Bad Mock Data: {err}'})
+                    missing = str(err).split(' ')[-1]
+                    errored.append({'id': policy.policy_id, 'message': f'Bad Mock Data: {missing}'})
             else:
                 result = policy.run(resource['attributes'])
             if isinstance(result, Exception):

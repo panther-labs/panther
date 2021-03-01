@@ -76,17 +76,11 @@ class TestEngine(unittest.TestCase):
                             'resourceTypes': ['AWS.CloudTrail']
                         },
                         {
-                            # Bad Mocking
+                            # Bad and Valid Mocking
                             'body': os.path.join(_TMP, 'panther-6.py'),
                             'id': 'panther-6',
                             'resourceTypes': ['AWS.S3.Bucket']
                         },
-                        {
-                            # Valid Mocking
-                            'body': os.path.join(_TMP, 'panther-7.py'),
-                            'id': 'panther-7',
-                            'resourceTypes': ['AWS.S3.Bucket']
-                        }
                     ],
                 'resources':
                     [
@@ -154,12 +148,6 @@ class TestEngine(unittest.TestCase):
                 'def policy(resource): return all([isinstance(boto3, MagicMock), '
                 'isinstance(boto3.client, MagicMock), isinstance(date, MagicMock)])'
             )
-        with open(os.path.join(_TMP, 'panther-7.py'), 'w') as policy_file:
-            policy_file.write(
-                'import boto3\nfrom datetime import date\nfrom unittest.mock import MagicMock\n'
-                'def policy(resource): return all([isinstance(boto3, MagicMock), '
-                'isinstance(boto3.client, MagicMock), isinstance(date, MagicMock)])'
-            )
 
         engine.main()
         mock_read.assert_called_once()
@@ -204,25 +192,22 @@ class TestEngine(unittest.TestCase):
                             [
                                 {
                                     'id': 'panther-2',
-                                    'message': "Bad Mock Data: ['boto3', 'date', 'bad_mock']"
+                                    'message': "Bad Mock Data: 'boto3'"
                                 }, {
                                     'id': 'panther-6',
-                                    'message': "Bad Mock Data: ['bad_mock']"
-                                }, {
-                                    'id': 'panther-7',
-                                    'message': "Bad Mock Data: ['bad_mock']"
-                                }
+                                    'message': "Bad Mock Data: 'bad_mock'"
+                                },
                             ],
-                        'failed': ['panther-2', 'panther-6', 'panther-7'],
+                        'failed': ['panther-2', 'panther-6'],
                         'passed': []
                     }, {
                         'id': 'valid-mock',
                         'errored': [{
                             'id': 'panther-2',
-                            'message': "Bad Mock Data: ['boto3', 'date']"
+                            'message': "Bad Mock Data: 'boto3'"
                         },],
                         'failed': ['panther-2'],
-                        'passed': ['panther-6', 'panther-7']
+                        'passed': ['panther-6']
                     }
                 ]
         }

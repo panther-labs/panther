@@ -148,7 +148,7 @@ class TestPolicySet(unittest.TestCase):
         expected = {
             'errored': [{
                 'id': 'test-id',
-                'message': "Bad Mock Data: ['bad_mock']"
+                'message': "Bad Mock Data: 'bad_mock'"
             }],
             'failed': ['test-id'],
             'id': 'bad-mock',
