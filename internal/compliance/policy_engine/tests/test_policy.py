@@ -182,4 +182,4 @@ class TestPolicySet(unittest.TestCase):
             'type': 'resource',
         }
         expected = {'errored': [], 'failed': ['test-id'], 'id': 'no-mock', 'passed': []}
-        self.assertEqual(expected, policy_set.analyze(test_resource, dict()))
+        self.assertEqual(expected, policy_set.analyze(test_resource))
