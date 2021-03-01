@@ -193,7 +193,8 @@ class TestEngine(unittest.TestCase):
                                 {
                                     'id': 'panther-2',
                                     'message': "Bad Mock Data: 'boto3'"
-                                }, {
+                                },
+                                {
                                     'id': 'panther-6',
                                     'message': "Bad Mock Data: 'bad_mock'"
                                 },
