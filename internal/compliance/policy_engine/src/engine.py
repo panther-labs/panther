@@ -28,7 +28,7 @@ def analyze(data: Dict[str, Any]) -> Dict[str, Any]:
     analysis_results = list()
     for resource in data["resources"]:
         event_mocks = dict()
-        if "mocks" in resource and resource["mocks"]:
+        if resource.get("mocks"):
             event_mocks = {k: MagicMock(return_value=v) for k, v in resource["mocks"].items()}
         analysis_results.append(policy_set.analyze(resource, event_mocks))
     return {"resources": analysis_results}
