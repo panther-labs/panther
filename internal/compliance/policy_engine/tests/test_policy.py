@@ -175,12 +175,6 @@ class TestPolicySet(unittest.TestCase):
     def test_policy_set_no_mock(self) -> None:
         """Bad Mock data provided"""
         path = os.path.join(tempfile.gettempdir(), 'panther-mock.py')
-        with open(path, 'w') as policy_file:
-            policy_file.write(
-                'import boto3\nfrom datetime import date\nfrom unittest.mock import MagicMock\n'
-                'def policy(resource): return all([isinstance(boto3, MagicMock), '
-                'isinstance(boto3.client, MagicMock), isinstance(date, MagicMock)])'
-            )
         policy_set = PolicySet([{'id': 'test-id', 'body': path, 'resourceTypes': ['resource']}])
         test_resource = {
             'attributes': {},
