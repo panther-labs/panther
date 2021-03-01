@@ -185,6 +185,11 @@ func PollConfigServices(pollerInput *awsmodels.ResourcePollerInput) ([]apimodels
 		zap.L().Debug("building Config snapshots", zap.String("region", *regionID))
 		configServiceSvc, err := getConfigServiceClient(pollerInput, *regionID)
 		if err != nil {
+			var e *RegionIgnoreListError
+			if errors.As(err, &e) {
+				zap.L().Debug("Skipping denied region in Config scan")
+				continue
+			}
 			return nil, nil, err
 		}
 

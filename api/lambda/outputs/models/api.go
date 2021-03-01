@@ -144,7 +144,7 @@ type AlertOutput struct {
 	// The user ID of the user that created the alert output
 	CreatedBy *string `json:"createdBy"`
 
-	// The time in epoch seconds when the alert output was created
+	// The time when the alert output was created
 	CreationTime *string `json:"creationTime"`
 
 	// DisplayName is the user-provided name, e.g. "alert-channel".
@@ -153,7 +153,7 @@ type AlertOutput struct {
 	// The user ID of the user that last modified the alert output last
 	LastModifiedBy *string `json:"lastModifiedBy"`
 
-	// The time in epoch seconds when the alert output was last modified
+	// The time when the alert output was last modified
 	LastModifiedTime *string `json:"lastModifiedTime"`
 
 	// Identifies uniquely an alert output (table sort key)

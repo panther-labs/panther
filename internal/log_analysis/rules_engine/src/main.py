@@ -26,10 +26,11 @@ from .aws_clients import S3_CLIENT
 from .engine import Engine
 from .logging import get_logger
 from .output import MatchedEventsBuffer
+from .outputs_api import OutputsAPIClient
 
 _LOGGER = get_logger()
 
-_RULES_ENGINE = Engine(AnalysisAPIClient())
+_RULES_ENGINE = Engine(AnalysisAPIClient(), OutputsAPIClient())
 
 
 #  pylint: disable=unsubscriptable-object

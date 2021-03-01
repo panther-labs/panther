@@ -39,7 +39,26 @@ class TestEngine(TestCase):
                 }]
             }
         ]
-        engine = Engine(analysis_api)
+        outputs_api = mock.MagicMock()
+        outputs_api.get_outputs.return_value = [
+            {
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
+                "createdBy": "12345678-9012-3456-7890-123456789012",
+                "creationTime": "2021-01-13T21:29:27Z",
+                "displayName": "Test",
+                "lastModifiedBy": "12345678-9012-3456-7890-123456789012",
+                "lastModifiedTime": "2021-01-13T21:29:27Z",
+                "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                "outputType": "sns",
+                "outputConfig": {
+                    "sns": {
+                        "topicArn": "arn:aws:sns:us-east-1:123456789012:test"
+                    }
+                },
+                "defaultForSeverity": [],
+            }
+        ]
+        engine = Engine(analysis_api, outputs_api)
         self.assertEqual(len(engine.log_type_to_data_models.keys()), 1)
         self.assertEqual(len(engine.log_type_to_data_models['log'].paths), 1)
         self.assertEqual(len(engine.log_type_to_data_models['log'].methods), 1)
@@ -54,7 +73,26 @@ class TestEngine(TestCase):
                 'versionId': 'version'
             }
         ]
-        engine = Engine(analysis_api)
+        outputs_api = mock.MagicMock()
+        outputs_api.get_outputs.return_value = [
+            {
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
+                "createdBy": "12345678-9012-3456-7890-123456789012",
+                "creationTime": "2021-01-13T21:29:27Z",
+                "displayName": "Test",
+                "lastModifiedBy": "12345678-9012-3456-7890-123456789012",
+                "lastModifiedTime": "2021-01-13T21:29:27Z",
+                "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                "outputType": "sns",
+                "outputConfig": {
+                    "sns": {
+                        "topicArn": "arn:aws:sns:us-east-1:123456789012:test"
+                    }
+                },
+                "defaultForSeverity": [],
+            }
+        ]
+        engine = Engine(analysis_api, outputs_api)
         self.assertEqual(len(engine.log_type_to_rules), 1)
         self.assertEqual(len(engine.log_type_to_rules['log']), 1)
         self.assertEqual(engine.log_type_to_rules['log'][0].rule_id, 'rule_id')
@@ -70,6 +108,25 @@ class TestEngine(TestCase):
                     'name': 'destination',
                     'path': 'is_dst'
                 }]
+            }
+        ]
+        outputs_api = mock.MagicMock()
+        outputs_api.get_outputs.return_value = [
+            {
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
+                "createdBy": "12345678-9012-3456-7890-123456789012",
+                "creationTime": "2021-01-13T21:29:27Z",
+                "displayName": "Test",
+                "lastModifiedBy": "12345678-9012-3456-7890-123456789012",
+                "lastModifiedTime": "2021-01-13T21:29:27Z",
+                "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                "outputType": "sns",
+                "outputConfig": {
+                    "sns": {
+                        "topicArn": "arn:aws:sns:us-east-1:123456789012:test"
+                    }
+                },
+                "defaultForSeverity": [],
             }
         ]
         rule_body = 'def rule(event):\n\treturn event.udm("destination")'
@@ -99,7 +156,7 @@ class TestEngine(TestCase):
             'alertContextOutput': None,
             'alertContextError': None
         }
-        engine = Engine(analysis_api)
+        engine = Engine(analysis_api, outputs_api)
         result = engine.analyze_single_rule(rule, event)
         self.assertEqual(expected_response, result)
 
@@ -114,6 +171,25 @@ class TestEngine(TestCase):
                     'name': 'destination',
                     'path': 'is_dst'
                 }]
+            }
+        ]
+        outputs_api = mock.MagicMock()
+        outputs_api.get_outputs.return_value = [
+            {
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
+                "createdBy": "12345678-9012-3456-7890-123456789012",
+                "creationTime": "2021-01-13T21:29:27Z",
+                "displayName": "Test",
+                "lastModifiedBy": "12345678-9012-3456-7890-123456789012",
+                "lastModifiedTime": "2021-01-13T21:29:27Z",
+                "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                "outputType": "sns",
+                "outputConfig": {
+                    "sns": {
+                        "topicArn": "arn:aws:sns:us-east-1:123456789012:test"
+                    }
+                },
+                "defaultForSeverity": [],
             }
         ]
         rule_body = 'def rule(event):\n\treturn event.udm("destination")'
@@ -143,7 +219,7 @@ class TestEngine(TestCase):
             'alertContextOutput': None,
             'alertContextError': None
         }
-        engine = Engine(analysis_api)
+        engine = Engine(analysis_api, outputs_api)
         result = engine.analyze_single_rule(rule, event)
         self.assertEqual(expected_response, result)
 
@@ -169,7 +245,26 @@ class TestEngine(TestCase):
             }
         ]
         log_entry = {'is_dst': True}
-        engine = Engine(analysis_api)
+        outputs_api = mock.MagicMock()
+        outputs_api.get_outputs.return_value = [
+            {
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
+                "createdBy": "12345678-9012-3456-7890-123456789012",
+                "creationTime": "2021-01-13T21:29:27Z",
+                "displayName": "Test",
+                "lastModifiedBy": "12345678-9012-3456-7890-123456789012",
+                "lastModifiedTime": "2021-01-13T21:29:27Z",
+                "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                "outputType": "sns",
+                "outputConfig": {
+                    "sns": {
+                        "topicArn": "arn:aws:sns:us-east-1:123456789012:test"
+                    }
+                },
+                "defaultForSeverity": [],
+            }
+        ]
+        engine = Engine(analysis_api, outputs_api)
         result = engine.analyze('log', log_entry)
         expected_event_matches = [
             EngineResult(
@@ -204,7 +299,26 @@ class TestEngine(TestCase):
                 'versionId': 'version'
             }  # This rule shouldn't match the event
         ]
-        engine = Engine(analysis_api)
+        outputs_api = mock.MagicMock()
+        outputs_api.get_outputs.return_value = [
+            {
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
+                "createdBy": "12345678-9012-3456-7890-123456789012",
+                "creationTime": "2021-01-13T21:29:27Z",
+                "displayName": "Test",
+                "lastModifiedBy": "12345678-9012-3456-7890-123456789012",
+                "lastModifiedTime": "2021-01-13T21:29:27Z",
+                "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                "outputType": "sns",
+                "outputConfig": {
+                    "sns": {
+                        "topicArn": "arn:aws:sns:us-east-1:123456789012:test"
+                    }
+                },
+                "defaultForSeverity": [],
+            }
+        ]
+        engine = Engine(analysis_api, outputs_api)
         result = engine.analyze('log', {})
 
         expected_event_matches = [
@@ -241,7 +355,26 @@ class TestEngine(TestCase):
                 'versionId': 'version'
             }
         ]
-        engine = Engine(analysis_api)
+        outputs_api = mock.MagicMock()
+        outputs_api.get_outputs.return_value = [
+            {
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
+                "createdBy": "12345678-9012-3456-7890-123456789012",
+                "creationTime": "2021-01-13T21:29:27Z",
+                "displayName": "Test",
+                "lastModifiedBy": "12345678-9012-3456-7890-123456789012",
+                "lastModifiedTime": "2021-01-13T21:29:27Z",
+                "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                "outputType": "sns",
+                "outputConfig": {
+                    "sns": {
+                        "topicArn": "arn:aws:sns:us-east-1:123456789012:test"
+                    }
+                },
+                "defaultForSeverity": [],
+            }
+        ]
+        engine = Engine(analysis_api, outputs_api)
         result = engine.analyze('log', {})
 
         expected_event_matches = [
@@ -285,7 +418,26 @@ class TestEngine(TestCase):
                 'versionId': 'version'
             }
         ]
-        engine = Engine(analysis_api)
+        outputs_api = mock.MagicMock()
+        outputs_api.get_outputs.return_value = [
+            {
+                "alertTypes": ["RULE", "RULE_ERROR", "POLICY"],
+                "createdBy": "12345678-9012-3456-7890-123456789012",
+                "creationTime": "2021-01-13T21:29:27Z",
+                "displayName": "Test",
+                "lastModifiedBy": "12345678-9012-3456-7890-123456789012",
+                "lastModifiedTime": "2021-01-13T21:29:27Z",
+                "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                "outputType": "sns",
+                "outputConfig": {
+                    "sns": {
+                        "topicArn": "arn:aws:sns:us-east-1:123456789012:test"
+                    }
+                },
+                "defaultForSeverity": [],
+            }
+        ]
+        engine = Engine(analysis_api, outputs_api)
         result = engine.analyze('log', {'key': {'nested_key': 'value'}})
 
         expected_event_matches = [
@@ -321,6 +473,11 @@ class TestEngine(TestCase):
                 }]
             }
         ]
+        outputs_api = mock.MagicMock()
+        outputs_api.get_outputs.return_value = [{
+            "displayName": "Test",
+            "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        }]
 
         rule_body = [
             'import boto3', 'from datetime import date', 'from unittest.mock import MagicMock', 'def rule(event):',
@@ -360,7 +517,166 @@ class TestEngine(TestCase):
             'alertContextOutput': '{}',
             'alertContextError': None,
         }
-
-        engine = Engine(analysis_api)
+        engine = Engine(analysis_api, outputs_api)
         result = engine.analyze_single_rule(rule, event)
         self.assertEqual(expected_result, result)
+
+    def test_analyze_single_rule_with_invalid_destination(self) -> None:
+        """ Tests a rule with a destinations function defined but returns an unknown destination. """
+        analysis_api = mock.MagicMock()
+        analysis_api.get_enabled_data_models.return_value = [
+            {
+                'id': 'data_model_id',
+                'logTypes': ['log'],
+                'versionId': 'version',
+                'mappings': [{
+                    'name': 'destination',
+                    'path': 'is_dst'
+                }]
+            }
+        ]
+        outputs_api = mock.MagicMock()
+        outputs_api.get_outputs.return_value = [{
+            "displayName": "Test",
+            "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        }]
+
+        rule_body = 'def rule(event):\n\treturn True\ndef destinations(event):\n\treturn ["Test", "TestTest"]'
+        event = {'id': 'event_id', 'data': {'is_dst': True, 'p_log_type': 'log'}}
+        rule = {'id': 'rule_id', 'body': rule_body}
+        expected_response = {
+            'id': 'event_id',
+            'ruleId': 'rule_id',
+            'genericError': None,
+            'errored': True,
+            'ruleOutput': True,
+            'ruleError': None,
+            'titleOutput': None,
+            'titleError': None,
+            'descriptionOutput': None,
+            'descriptionError': None,
+            'referenceOutput': None,
+            'referenceError': None,
+            'severityOutput': None,
+            'severityError': None,
+            'runbookOutput': None,
+            'runbookError': None,
+            'destinationsOutput': None,
+            'destinationsError': "ValueError: Invalid Destinations: {}".format(str(["TestTest"])),
+            'dedupOutput': 'defaultDedupString:rule_id',
+            'dedupError': None,
+            'alertContextOutput': None,
+            'alertContextError': None
+        }
+        engine = Engine(analysis_api, outputs_api)
+        result = engine.analyze_single_rule(rule, event)
+        self.assertEqual(str(expected_response), str(result))
+
+    def test_analyze_single_rule_with_duplicate_destination(self) -> None:
+        """ Tests a rule with a destinations function defined but returns a duplicate destination. """
+        analysis_api = mock.MagicMock()
+        analysis_api.get_enabled_data_models.return_value = [
+            {
+                'id': 'data_model_id',
+                'logTypes': ['log'],
+                'versionId': 'version',
+                'mappings': [{
+                    'name': 'destination',
+                    'path': 'is_dst'
+                }]
+            }
+        ]
+        outputs_api = mock.MagicMock()
+        outputs_api.get_outputs.return_value = [{
+            "displayName": "Test",
+            "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        }]
+
+        rule_body = 'def rule(event):\n\treturn True\ndef destinations(event):\n\treturn ' \
+                    '["Test", "Test", "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"]'
+        event = {'id': 'event_id', 'data': {'is_dst': True, 'p_log_type': 'log'}}
+        rule = {'id': 'rule_id', 'body': rule_body}
+        expected_response = {
+            'id': 'event_id',
+            'ruleId': 'rule_id',
+            'genericError': None,
+            'errored': True,
+            'ruleOutput': True,
+            'ruleError': None,
+            'titleOutput': None,
+            'titleError': None,
+            'descriptionOutput': None,
+            'descriptionError': None,
+            'referenceOutput': None,
+            'referenceError': None,
+            'severityOutput': None,
+            'severityError': None,
+            'runbookOutput': None,
+            'runbookError': None,
+            'destinationsOutput': None,
+            'destinationsError': "ValueError: Invalid Destinations: {}".format(str(["Test", "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"])),
+            'dedupOutput': 'defaultDedupString:rule_id',
+            'dedupError': None,
+            'alertContextOutput': None,
+            'alertContextError': None
+        }
+        engine = Engine(analysis_api, outputs_api)
+        result = engine.analyze_single_rule(rule, event)
+        self.assertEqual(str(expected_response), str(result))
+
+    def test_analyze_single_rule_with_valid_destinations(self) -> None:
+        """ Tests a rule with a destinations function defined that uses both UUIDv4 and Display name. """
+        analysis_api = mock.MagicMock()
+        analysis_api.get_enabled_data_models.return_value = [
+            {
+                'id': 'data_model_id',
+                'logTypes': ['log'],
+                'versionId': 'version',
+                'mappings': [{
+                    'name': 'destination',
+                    'path': 'is_dst'
+                }]
+            }
+        ]
+        outputs_api = mock.MagicMock()
+        outputs_api.get_outputs.return_value = [
+            {
+                "displayName": "Test",
+                "outputId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+            }, {
+                "displayName": "TestTest",
+                "outputId": "YYYYYYYY-YYYY-YYYY-YYYY-YYYYYYYYYYYY",
+            }
+        ]
+
+        rule_body = 'def rule(event):\n\treturn True\ndef destinations(event):\n\treturn ' \
+                    '["XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX", "TestTest"]'
+        event = {'id': 'event_id', 'data': {'is_dst': True, 'p_log_type': 'log'}}
+        rule = {'id': 'rule_id', 'body': rule_body}
+        expected_response = {
+            'id': 'event_id',
+            'ruleId': 'rule_id',
+            'genericError': None,
+            'errored': False,
+            'ruleOutput': True,
+            'ruleError': None,
+            'titleOutput': None,
+            'titleError': None,
+            'descriptionOutput': None,
+            'descriptionError': None,
+            'referenceOutput': None,
+            'referenceError': None,
+            'severityOutput': None,
+            'severityError': None,
+            'runbookOutput': None,
+            'runbookError': None,
+            'destinationsOutput': ["XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX", "YYYYYYYY-YYYY-YYYY-YYYY-YYYYYYYYYYYY"],
+            'destinationsError': None,
+            'dedupOutput': 'defaultDedupString:rule_id',
+            'dedupError': None,
+            'alertContextOutput': None,
+            'alertContextError': None
+        }
+        engine = Engine(analysis_api, outputs_api)
+        result = engine.analyze_single_rule(rule, event)
+        self.assertEqual(str(expected_response), str(result))

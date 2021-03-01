@@ -954,7 +954,9 @@ Resources:
               Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${SqsKeyId}
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
+              Resource:
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-analysis-api
+                - !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:panther-outputs-api
             - Effect: Allow
               Action: s3:GetObject
               Resource:
