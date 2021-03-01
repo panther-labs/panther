@@ -114,13 +114,9 @@ class PolicySet:
                 try:
                     with patch.multiple(policy.module, **mock_methods):
                         result = policy.run(resource['attributes'])
-                except AttributeError:
+                except AttributeError as err:
                     result = False
-                    missing = list()
-                    for each_mock in mock_methods:
-                        if each_mock not in dir(policy.module):
-                            missing.append(each_mock)
-                    errored.append({'id': policy.policy_id, 'message': f'Bad Mock Data: {missing}'})
+                    errored.append({'id': policy.policy_id, 'message': f'Bad Mock Data: {err}'})
             else:
                 result = policy.run(resource['attributes'])
             if isinstance(result, Exception):
