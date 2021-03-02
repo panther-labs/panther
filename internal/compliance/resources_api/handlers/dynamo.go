@@ -143,7 +143,7 @@ func scanPages(inputs []*dynamodb.ScanInput, includeCompliance bool,
 				for _, entry := range items {
 					if !includeCompliance {
 						segmentResources = append(segmentResources, entry.Resource(""))
-						return true
+						continue
 					}
 
 					var status *complianceStatus
@@ -190,6 +190,7 @@ func scanPages(inputs []*dynamodb.ScanInput, includeCompliance bool,
 	var mergedResources []models.Resource
 	for range inputs {
 		result := <-results
+		zap.L().Debug("received scan segment results", zap.Any("results", len(result.resources)), zap.Error(result.err))
 		if result.err != nil {
 			err = result.err
 			continue
