@@ -140,20 +140,33 @@ func scanPages(inputs []*dynamodb.ScanInput, includeCompliance bool,
 					return false // stop paginating
 				}
 
-				for _, entry := range items {
-					if !includeCompliance {
+				if !includeCompliance {
+					for _, entry := range items {
 						segmentResources = append(segmentResources, entry.Resource(""))
-						return true
 					}
+					return true
+				}
 
+				if requiredComplianceStatus == "" {
+					for _, entry := range items {
+						var status *complianceStatus
+						status, handlerErr = getComplianceStatus(entry.ID)
+						if handlerErr != nil {
+							return false
+						}
+						segmentResources = append(segmentResources, entry.Resource(status.Status))
+					}
+					return true
+				}
+
+				for _, entry := range items {
 					var status *complianceStatus
 					status, handlerErr = getComplianceStatus(entry.ID)
 					if handlerErr != nil {
 						return false
 					}
-
 					// Filter on the compliance status (if applicable)
-					if requiredComplianceStatus == "" || requiredComplianceStatus == status.Status {
+					if requiredComplianceStatus == status.Status {
 						// Resource passed all of the filters - add it to the result set
 						segmentResources = append(segmentResources, entry.Resource(status.Status))
 					}
@@ -190,6 +203,7 @@ func scanPages(inputs []*dynamodb.ScanInput, includeCompliance bool,
 	var mergedResources []models.Resource
 	for range inputs {
 		result := <-results
+		zap.L().Debug("received scan segment results", zap.Any("results", len(result.resources)), zap.Error(result.err))
 		if result.err != nil {
 			err = result.err
 			continue
