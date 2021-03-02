@@ -491,8 +491,7 @@ class TestEngine(TestCase):
             {
                 'object_name': 'boto3',
                 'return_value': 'boto3_return_value',
-            },
-            {
+            }, {
                 'object_name': 'date',
                 'return_value': 'date_return_value',
             }
